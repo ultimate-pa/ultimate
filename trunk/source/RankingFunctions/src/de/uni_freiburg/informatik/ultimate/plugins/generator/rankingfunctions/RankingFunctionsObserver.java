@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
-import de.uni_freiburg.informatik.ultimate.result.RankingFunctionResult;
+import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
@@ -234,14 +234,15 @@ public class RankingFunctionsObserver implements IUnmanagedObserver {
 						} else {
 							shortMessage = rf.getClass().getName();
 						}
-						RankingFunctionResult<RcfgElement> rankRes = 
-								new RankingFunctionResult<RcfgElement>(
+						TerminationArgumentResult<RcfgElement> rankRes = 
+								new TerminationArgumentResult<RcfgElement>(
 								honda,
 								Activator.s_PLUGIN_NAME,
+								null,
+								"LinearRankingFunction",
+								null,
 								UltimateServices.getInstance().getTranslatorSequence(),
-								honda.getAstNode().getLocation().getOrigin(),
-								shortMessage,
-								longMessage.toString());
+								honda.getAstNode().getLocation().getOrigin());
 						reportResult(rankRes);
 						return false;
 					}

@@ -576,11 +576,12 @@ public class BuchiCegarLoop {
 					+ " length loop: " + loop.length());
 			s_Logger.info(longDescr);
 			IResult reportRes= new TerminationArgumentResult<RcfgElement>(honda, 
-					Activator.s_PLUGIN_ID, 
+					Activator.s_PLUGIN_ID,
+					null,
+					"LinearRankingFunction",
+					null,
 					UltimateServices.getInstance().getTranslatorSequence(), 
-					honda.getPayload().getLocation(), 
-					"Derived linear ranking function", 
-					longDescr.toString());
+					honda.getPayload().getLocation());
 			BuchiAutomizerObserver.reportResult(reportRes);
 		}
 		
