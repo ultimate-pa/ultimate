@@ -16,7 +16,7 @@ int rec(int x) {
     }
 }
 
- void main() {
+int main() {
     int x = __VERIFIER_nondet_int();
     int y;
 	y = rec(x);

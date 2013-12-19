@@ -10,27 +10,23 @@
 
 extern int __VERIFIER_nondet_int(void);
 
-int f(int i, int x);
-
-int g(int a, int b, int c);
-
-int f(int i, int x) {
-	if (i==0) {
+int f(int x, int y) {
+	if (y == 0) {
 		return x;
 	} else {
-		return g(i-1,x,i);
+		if (x == 0) {
+			return f(y, y-1);
+		} else {
+			return f(y, x-1);
+		}
 	}
 }
 
-int g(int a, int b, int c) {
-	return f(a,b+c);
-}
-
 int main() {
-	int i = __VERIFIER_nondet_int();
 	int x = __VERIFIER_nondet_int();
-	if ( i >= 0 && x >= 0) {
-		f(i,x);
+	int y = __VERIFIER_nondet_int();
+	if ( x >= 0 && y >= 0) {
+		f(x,y);
 	}
 	return 0;
 }

@@ -5,7 +5,7 @@
  */
 
   
-void main() {
+int main() {
    int j = 1;
    for (int i = 10000; i-j >= 1; i--) {
      j++;

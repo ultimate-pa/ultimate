@@ -8,16 +8,6 @@
  */
 extern int __VERIFIER_nondet_int(void);
 
-int main()
-{
-	int x,y;
-	
-	x = __VERIFIER_nondet_int();
-	y = __VERIFIER_nondet_int();
-	
-	gcd(x,y);
-}
-
 int gcd(int x, int y)	
 {
 	int r;
@@ -35,3 +25,15 @@ int gcd(int x, int y)
 	}
 	return x;
 }
+
+int main()
+{
+	int x,y;
+
+	x = __VERIFIER_nondet_int();
+	y = __VERIFIER_nondet_int();
+
+	gcd(x,y);
+}
+
+
