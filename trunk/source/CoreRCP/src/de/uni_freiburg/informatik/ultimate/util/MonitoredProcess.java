@@ -111,7 +111,7 @@ public final class MonitoredProcess {
 					return;
 				}
 			}
-			mLogger.warn("Forcibly destorying the process started with "
+			mLogger.warn("Forcibly destroying the process started with "
 					+ mCommand);
 			try {
 				mProcess.destroy();
