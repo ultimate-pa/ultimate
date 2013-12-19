@@ -7,7 +7,7 @@
  * needs the for the lower bound to be able to depend on c.
  */
 
-procedure Sydney() returns (x: int)
+procedure Mysore() returns (x: int)
 {
   var c: int;
   assume(c > 1);

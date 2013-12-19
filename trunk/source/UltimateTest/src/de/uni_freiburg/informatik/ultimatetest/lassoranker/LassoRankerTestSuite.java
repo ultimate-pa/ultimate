@@ -3,8 +3,6 @@ package de.uni_freiburg.informatik.ultimatetest.lassoranker;
 import java.io.File;
 import java.util.*;
 
-import org.junit.Ignore;
-
 import de.uni_freiburg.informatik.junit_helper.testfactory.TestFactory;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
@@ -14,6 +12,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.Util;
 import de.uni_freiburg.informatik.ultimatetest.lassoranker.LassoRankerTestResultDecider.ExpectedResult;
+
 
 /**
  * Test Suite for the LassoRanker plugin
@@ -47,7 +46,6 @@ import de.uni_freiburg.informatik.ultimatetest.lassoranker.LassoRankerTestResult
  * 
  * @author Jan Leike
  */
-@Ignore
 public class LassoRankerTestSuite extends UltimateTestSuite {
 	public static final String s_test_files_dir = "examples/lassos";
 	public static final String s_toolchain = "examples/toolchains/LassoRanker.xml";

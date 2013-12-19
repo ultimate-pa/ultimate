@@ -283,6 +283,8 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	 * @param arg
 	 */
 	private void reportNonTerminationResult(NonTerminationArgument arg) {
+		// TODO: translate BoogieVars to Expressions?
+		// m_RootNode.getRootAnnot().getBoogie2Smt().translate(term)
 		NonTerminationArgumentResult<RcfgElement> result = 
 				new NonTerminationArgumentResult<RcfgElement>(
 					m_Honda,

@@ -6,7 +6,7 @@
  *
  */
 
-procedure Mysore(y: int) returns (x: int)
+procedure Mysore2(y: int) returns (x: int)
 {
   var b, d:int;
   assume(d >= 1);

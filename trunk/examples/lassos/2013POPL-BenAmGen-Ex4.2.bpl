@@ -17,9 +17,11 @@
 procedure main() returns () {
     var x1, x2: int;
     var x1old, x2old: int;
+    
+    assume(true);
     while (-x1 + x2 <= 0 && -x1 - x2 <= -1) {
-        x1old = x1;
-        x2old = x2;
+        x1old := x1;
+        x2old := x2;
         x2 := x2 - 2*x1 + 1;
         assume (-x1old + x1 <= -1);
         assume (x1old - 3*x1 <= 1);

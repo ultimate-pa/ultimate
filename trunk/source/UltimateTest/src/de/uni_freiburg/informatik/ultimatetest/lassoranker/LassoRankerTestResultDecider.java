@@ -1,19 +1,17 @@
 package de.uni_freiburg.informatik.ultimatetest.lassoranker;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.Map.Entry;
+import java.io.*;
+import java.util.*;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.NoResult;
+import de.uni_freiburg.informatik.ultimate.result.NonTerminationArgumentResult;
+import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.Util;
 
@@ -76,20 +74,20 @@ public class LassoRankerTestResultDecider implements ITestResultDecider {
 		if (line != null && line.startsWith("//#r")) {
 			String expected = line.substring(4);
 			switch (expected.toLowerCase()) {
-				case "ignore":
-					return ExpectedResult.IGNORE;
-				case "termination":
-					return ExpectedResult.TERMINATION;
-				case "terminationderivable":
-					return ExpectedResult.TERMINATIONDERIVABLE;
-				case "nontermination":
-					return ExpectedResult.NONTERMINATION;
-				case "nonterminationderivable":
-					return ExpectedResult.NONTERMINATIONDERIVABLE;
-				case "unknown":
-					return ExpectedResult.UNKNOWN;
-				case "error":
-					return ExpectedResult.ERROR;
+			case "ignore":
+				return ExpectedResult.IGNORE;
+			case "termination":
+				return ExpectedResult.TERMINATION;
+			case "terminationderivable":
+				return ExpectedResult.TERMINATIONDERIVABLE;
+			case "nontermination":
+				return ExpectedResult.NONTERMINATION;
+			case "nonterminationderivable":
+				return ExpectedResult.NONTERMINATIONDERIVABLE;
+			case "unknown":
+				return ExpectedResult.UNKNOWN;
+			case "error":
+				return ExpectedResult.ERROR;
 			}
 			return null;
 		}
@@ -112,11 +110,37 @@ public class LassoRankerTestResultDecider implements ITestResultDecider {
 		} else if (m_expected_result == ExpectedResult.UNSPECIFIED) {
 			customMessages.add("No expected results defined in the input file");
 		} else {
-			customMessages.add(m_expected_result.toString());
-			Set<Entry<String, List<IResult>>> resultSet = UltimateServices
-					.getInstance().getResultMap().entrySet();
-			customMessages.add(resultSet.toString());
-			// TODO: check result
+			customMessages.add("Expected Result: " +
+					m_expected_result.toString());
+			Map<String, List<IResult>> resultMap =
+					UltimateServices.getInstance().getResultMap();
+			List<IResult> results = resultMap.get(Activator.s_PLUGIN_ID);
+			IResult lastResult = results.get(results.size() - 1);
+			customMessages.add("Results: " + results.toString());
+			
+			switch (m_expected_result) {
+			case TERMINATION:
+				fail = lastResult instanceof NonTerminationArgumentResult;
+				break;
+			case TERMINATIONDERIVABLE:
+				fail = !(lastResult instanceof TerminationArgumentResult);
+				break;
+			case NONTERMINATION:
+				fail = lastResult instanceof TerminationArgumentResult;
+				break;
+			case NONTERMINATIONDERIVABLE:
+				fail = !(lastResult instanceof NonTerminationArgumentResult);
+				break;
+			case UNKNOWN:
+				fail = !(lastResult instanceof NoResult);
+				break;
+			case ERROR:
+				fail = !(lastResult instanceof SyntaxErrorResult);
+				break;
+			default:
+				fail = true;
+				break;
+			}
 		}
 		
 		Util.logResults(logger, m_input_file_name, fail, customMessages);
