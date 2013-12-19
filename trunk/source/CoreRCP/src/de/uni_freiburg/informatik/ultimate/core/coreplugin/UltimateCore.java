@@ -1237,7 +1237,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	 */
 	public boolean continueProcessing() {
 		boolean cancel = mCurrentToolchainMonitor.isCanceled()
-				|| System.currentTimeMillis() < mDeadline;
+				|| System.currentTimeMillis() > mDeadline;
 		if(cancel){
 			mLogger.debug("Tool knows that it should cancel! It called continueProcessing and received false.");
 		}
