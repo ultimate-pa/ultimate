@@ -21,7 +21,6 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.ui.IViewPart;
@@ -46,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 
@@ -83,6 +83,8 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		// Second we need to set the .dummy-File
 		// We cannot use absolute Paths here, because we are in
 		// Plugin-Development
+//		File file = new File("/home/matthias/stalin/trunk/examples/settings/buchiAutomizer/staged300");
+//		app.setSettingsFile(file);
 
 		File dummyFile = null;
 		Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
@@ -215,6 +217,18 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 				} else if (result instanceof InvariantResult) {
 					InvariantResult invar = (InvariantResult) result;
 					// We found an invariant, this information for the user!
+					if (loc.getcNode() != null) {
+						reportProblem(CCheckerDescriptor.IN_ID, loc.getcNode(),
+								invar.getShortDescription());
+					} else {
+						// We have an AST-Node
+						// ACSLNode acslNode = loc.getAcslNode();
+						reportProblem(CCheckerDescriptor.IN_ID, this.getFile(),
+								loc.getStartLine(),
+								invar.getShortDescription());
+					}
+				} else if (result instanceof TerminationArgumentResult) {
+					TerminationArgumentResult invar = (TerminationArgumentResult) result;
 					if (loc.getcNode() != null) {
 						reportProblem(CCheckerDescriptor.IN_ID, loc.getcNode(),
 								invar.getShortDescription());
