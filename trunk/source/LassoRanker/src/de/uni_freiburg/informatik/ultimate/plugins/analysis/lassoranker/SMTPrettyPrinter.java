@@ -5,6 +5,12 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
+
+/**
+ * Static class for pretty-printing SMT formulae
+ * 
+ * @author Jan Leike
+ */
 public class SMTPrettyPrinter {
 	private static final String s_indentation = "    ";
 	private static final String[] s_infix_functions =
@@ -75,6 +81,12 @@ public class SMTPrettyPrinter {
 		return null;
 	}
 	
+	/**
+	 * Convert an SMT term into a human readable format
+	 * 
+	 * @param term an SMT term
+	 * @return a human-readable representation of the term
+	 */
 	public static String print(Term term) {
 		return print(term, 0);
 	}
