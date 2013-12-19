@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -84,13 +85,13 @@ public class BinaryStatePredicateManager {
 		m_Script = smtManager.getScript();
 		m_SmtManager = smtManager;
 		Boogie2SMT boogie2Smt = smtManager.getBoogie2Smt();
-		m_OldRankVariable = constructGlobalBoogieVar(s_OldRankIdentifier, boogie2Smt);
-		m_UnseededVariable = constructGlobalBoogieVar(s_UnseededIdentifier, boogie2Smt);
+		m_OldRankVariable = constructGlobalBoogieVar(s_OldRankIdentifier, boogie2Smt, BoogieType.intType);
+		m_UnseededVariable = constructGlobalBoogieVar(s_UnseededIdentifier, boogie2Smt, BoogieType.boolType);
 		
 		m_OldRankVariables = new BoogieVar[s_MaxLexComponents];
 		for (int i=0; i<s_MaxLexComponents; i++) {
 			String name = s_OldRankIdentifier + i;
-			m_OldRankVariables[i] = constructGlobalBoogieVar(name, boogie2Smt);
+			m_OldRankVariables[i] = constructGlobalBoogieVar(name, boogie2Smt, BoogieType.intType);
 		}
 	}
 
@@ -98,14 +99,15 @@ public class BinaryStatePredicateManager {
 	/**
 	 * Construct a global BoogieVar and the corresponding oldVar. Return the
 	 * global var.
+	 * @param type 
 	 */
 	private BoogieVar constructGlobalBoogieVar(String name,
-			Boogie2SMT boogie2Smt) {
+			Boogie2SMT boogie2Smt, PrimitiveType type) {
 		BoogieVar globalBv;
 		globalBv = boogie2Smt.constructBoogieVar(
-				name, null, BoogieType.intType, false, null);
+				name, null, type, false, null);
 		boogie2Smt.constructBoogieVar(
-				name, null, BoogieType.intType, true, null);
+				name, null, type, true, null);
 		return globalBv;
 	}
 	
