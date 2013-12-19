@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -16,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.PreferencesInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.*;
@@ -46,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorT
  * solving. The generated constraints are non-linear algebraic constraints.
  * We use an external SMT solver to solve these constraints.
  * 
- * @see SMTSolver SMTSolver for access to the smt solver script
+ * @see LassoRankerTerminationAnalysis
  * @author Matthias Heizmann, Jan Leike
  */
 public class LassoRankerObserver implements IUnmanagedObserver {
@@ -66,25 +68,27 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	 * @param preferences
 	 * @return the templates specified in the preferences
 	 */
-	private RankingFunctionTemplate[] getTemplates(Preferences preferences) {
+	private RankingFunctionTemplate[] getTemplates() {
+		UltimatePreferenceStore store =
+				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		List<RankingFunctionTemplate> templates =
 				new ArrayList<RankingFunctionTemplate>();
 		
-		if (preferences.use_affine_template) {
+		if (store.getBoolean(PreferencesInitializer.LABEL_enable_affine_template)) {
 			templates.add(new AffineTemplate());
 		}
-		if (preferences.use_multiphase_template) {
-			templates.add(new MultiphaseTemplate(
-					preferences.multiphase_template_size));
+		if (store.getBoolean(PreferencesInitializer.LABEL_enable_multiphase_template)) {
+			templates.add(new MultiphaseTemplate(store.getInt(
+					PreferencesInitializer.LABEL_multiphase_template_size)));
 		}
-		if (preferences.use_piecewise_template) {
+		if (store.getBoolean(PreferencesInitializer.LABEL_enable_piecewise_template)) {
 			s_Logger.error("Piecewise Template is currently broken. :'("); // FIXME
-			templates.add(new PiecewiseTemplate(
-					preferences.piecewise_template_size));
+			templates.add(new PiecewiseTemplate(store.getInt(
+					PreferencesInitializer.LABEL_piecewise_template_size)));
 		}
-		if (preferences.use_lex_template) {
-			templates.add(new LexicographicTemplate(
-					preferences.lex_template_size));
+		if (store.getBoolean(PreferencesInitializer.LABEL_enable_lex_template)) {
+			templates.add(new LexicographicTemplate(store.getInt(
+					PreferencesInitializer.LABEL_lex_template_size)));
 		}
 		return templates.toArray(new RankingFunctionTemplate[0]);
 	}
@@ -173,8 +177,9 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	
 	@Override
 	public boolean process(IElement root) {
-		// TODO: insert preferences here
-		Preferences preferences = new Preferences();
+		UltimatePreferenceStore store =
+				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		Preferences preferences = Preferences.getGuiPreferences();
 		s_Logger.info("Preferences:\n" + preferences.show());
 		
 		assert(root instanceof RootNode);
@@ -196,18 +201,21 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		}
 		
 		// Try to prove non-termination
-		try {
-			NonTerminationArgument arg = tanalysis.checkNonTermination(0);
-			if (arg != null) {
-				reportNonTerminationResult(arg);
-				return false;
+		if (store.getBoolean(PreferencesInitializer.LABEL_check_for_nontermination)) {
+			try {
+				NonTerminationArgument arg = tanalysis.checkNonTermination(0);
+				if (arg != null) {
+					reportNonTerminationResult(arg);
+					return false;
+				}
+			} catch (SMTLIBException e) {
+				s_Logger.error(e);
 			}
-		} catch (SMTLIBException e) {
-			s_Logger.error(e);
 		}
 		
 		// Try all given templates
-		for (RankingFunctionTemplate template : getTemplates(preferences)) {
+		RankingFunctionTemplate[] templates = getTemplates();
+		for (RankingFunctionTemplate template : templates) {
 			try {
 				TerminationArgument arg = tanalysis.tryTemplate(template, 0);
 				if (arg != null) {
@@ -221,7 +229,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 			}
 		}
 		tanalysis.cleanUp();
-		reportNoResult(preferences);
+		reportNoResult(templates);
 		return false;
 	}
 	
@@ -303,7 +311,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	 * Report that no result has been found to Ultimate's toolchain
 	 * @param preferences the current preferences
 	 */
-	private void reportNoResult(Preferences preferences) {
+	private void reportNoResult(RankingFunctionTemplate[] templates) {
 		NoResult<RcfgElement> result = new NoResult<RcfgElement>(
 				m_Honda,
 				Activator.s_PLUGIN_NAME,
@@ -315,7 +323,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		sb.append("LassoRanker could not prove termination " +
 				"or nontermination of the given linear lasso program.\n");
 		sb.append("Templates: ");
-		for (RankingFunctionTemplate template : getTemplates(preferences)) {
+		for (RankingFunctionTemplate template : templates) {
 			sb.append(template.getClass().getName());
 		}
 		result.setLongDescription(sb.toString());

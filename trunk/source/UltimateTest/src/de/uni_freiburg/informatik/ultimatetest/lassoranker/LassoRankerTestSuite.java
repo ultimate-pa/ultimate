@@ -65,14 +65,15 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 		String logPattern = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
 				.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
 		for (File inputFile : inputFiles) {
-
 			UltimateStarter starter = new UltimateStarter(
 					inputFile,
 					settingsFile,
 					toolchainFile,
 					s_deadline,
-					new File(Util.generateLogFilename(inputFile, "LassoRanker")),
-					logPattern);
+					null,
+					null);
+//					new File(Util.generateLogFilename(inputFile, "LassoRanker")),
+//					logPattern);
 			LassoRankerTestResultDecider decider = new LassoRankerTestResultDecider(
 					inputFile);
 			if (decider.getExpectedResult() == ExpectedResult.IGNORE) {

@@ -54,7 +54,7 @@ public class RankingFunctionsObserver implements IUnmanagedObserver {
 	
 	private ProgramPoint honda;
 	
-	public static final boolean m_ExternalSolver = false;
+	public static final boolean m_ExternalSolver = true;
 	
 	public RankingFunctionsObserver() {
 		m_templates = new ArrayList<Class<? extends RankingTemplate>>();

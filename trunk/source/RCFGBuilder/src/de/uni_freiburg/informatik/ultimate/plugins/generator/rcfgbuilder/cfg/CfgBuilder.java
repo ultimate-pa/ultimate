@@ -97,10 +97,6 @@ public class CfgBuilder {
 	 */
 	public static final String START_PROCEDURE = "ULTIMATE.start";
 	
-	
-	public static final String Z3_COMMAND =
-			"z3 SMTLIB2_COMPLIANT=true -memory:2256 -smt2 -in";
-	
 	/**
      * Root Node of this Ultimate model. I use this to store information that
      * should be passed to the next plugin. The Successors of this node are

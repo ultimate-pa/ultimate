@@ -2,10 +2,22 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.prefere
 
 import java.io.Serializable;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+
 
 /**
- * Accumulation of various settings for LassoRanker.
+ * Accumulation of preferences for LassoRanker.
  * 
+ * These are the preferences that you might want to change when using
+ * LassoRanker as a library through the class LassoRankerTerminationAnalysis.
+ * 
+ * The prefences in the Ultimate GUI have some additional preferences that
+ * are relevent when using LassoRanker as a standalone plugin in the toolchain.
+ * 
+ * This class functions much like a struct and is implemented like one.
+ * 
+ * @see PreferencesInitializer
  * @author Jan Leike
  */
 public class Preferences implements Serializable {
@@ -53,7 +65,7 @@ public class Preferences implements Serializable {
 	 */
 	public boolean enable_disjunction = true; // Default: true
 	
-	public enum UseDivision {
+	public enum DivisionImplementation {
 		C_STYLE,    // C style division: x := a / k  -->  k*x <= a < (k+1)*x
 		SAFE,       // Safe division: x := a / k can be executed iff k divides a
 		RATIONALS_ONLY, // Division is only supported for rational numbers
@@ -63,7 +75,8 @@ public class Preferences implements Serializable {
 	/**
 	 * If and in which manner should division be supported?
 	 */
-	public final UseDivision use_division = UseDivision.C_STYLE; // Default: C_STYLE
+	public DivisionImplementation division_implementation =
+			DivisionImplementation.C_STYLE; // Default: C_STYLE
 	
 	/**
 	 * Add annotations to terms for debugging purposes and/or to make use
@@ -73,44 +86,14 @@ public class Preferences implements Serializable {
 		// Note: currently broken
 	
 	/**
-	 * Try to instantiate the linear template?
+	 * Use a nonlinear SMT query for checking nontermination?
 	 */
-	public boolean use_affine_template = true; // Default: true
-	
-	/**
-	 * Try to instantiate the multiphase template?
-	 */
-	public boolean use_multiphase_template = true; // Default: true
-	
-	/**
-	 * How many phases in the multiphase template?
-	 */
-	public int multiphase_template_size = 2; // Default: 3
-	
-	/**
-	 * Try to instantiate the lexicographic template?
-	 */
-	public boolean use_lex_template = true; // Default: true
-	
-	/**
-	 * How many lexicographic entries in the lexicographic template?
-	 */
-	public int lex_template_size = 3; // Default: 3
-	
-	/**
-	 * Try to instantiate the piecewise template?
-	 */
-	public boolean use_piecewise_template = false; // Default: true
-	
-	/**
-	 * How many pieces in the piecewise template?
-	 */
-	public int piecewise_template_size = 2; // Default: 2
+	public boolean nontermination_check_nonlinear = true; // Default: true
 	
 	/**
 	 * What shell command should be used to call the external smt solver?
 	 */
-	public String smt_solver_command = "z3 -smt2 -in";
+	public String smt_solver_command = "z3 -smt2 -in -rs:42";
 	
 	/**
 	 * Build a string descriptions of the current preferences
@@ -127,23 +110,61 @@ public class Preferences implements Serializable {
 		sb.append(this.compute_integral_hull);
 		sb.append("\nEnable disjunction: ");
 		sb.append(this.enable_disjunction);
-		sb.append("\nDivision: ");
-		sb.append(this.use_division);
+		sb.append("\nDivision implementation: ");
+		sb.append(this.division_implementation);
 		sb.append("\nTerm annotations enables: ");
 		sb.append(this.annotate_terms);
-		sb.append("\nAffine template enabled: ");
-		sb.append(this.use_affine_template);
-		sb.append("\nMultiphase template enabled: ");
-		sb.append(this.use_multiphase_template);
-		sb.append(" (" + this.multiphase_template_size + " phases)");
-		sb.append("\nLexicographic template enabled: ");
-		sb.append(this.use_lex_template);
-		sb.append(" (" + this.lex_template_size + " functions)");
-		sb.append("\nPiecewise template enabled: ");
-		sb.append(this.use_piecewise_template);
-		sb.append(" (" + this.piecewise_template_size + " pieces)");
+		sb.append("\nNonlinear nontermination check: ");
+		sb.append(this.nontermination_check_nonlinear);
 		sb.append("\nSMT solver command: ");
 		sb.append(this.smt_solver_command);
 		return sb.toString();
+	}
+	
+	/**
+	 * @return the preferences currently set in the GUI
+	 */
+	public static Preferences getGuiPreferences() {
+		UltimatePreferenceStore store =
+				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		Preferences preferences = new Preferences();
+		preferences.num_strict_invariants = store.getInt(
+				PreferencesInitializer.LABEL_num_strict_invariants,
+				preferences.num_strict_invariants
+		);
+		preferences.num_non_strict_invariants = store.getInt(
+				PreferencesInitializer.LABEL_num_non_strict_invariants,
+				preferences.num_non_strict_invariants
+		);
+		preferences.only_nondecreasing_invariants = store.getBoolean(
+				PreferencesInitializer.LABEL_only_nondecreasing_invariants,
+				preferences.only_nondecreasing_invariants
+		);
+		preferences.compute_integral_hull = store.getBoolean(
+				PreferencesInitializer.LABEL_compute_integral_hull,
+				preferences.compute_integral_hull
+		);
+		preferences.enable_disjunction = store.getBoolean(
+				PreferencesInitializer.LABEL_enable_disjunction,
+				preferences.enable_disjunction
+		);
+		preferences.division_implementation = store.getEnum(
+				PreferencesInitializer.LABEL_division_implementation,
+				preferences.division_implementation,
+				DivisionImplementation.class
+		);
+		preferences.annotate_terms = store.getBoolean(
+				PreferencesInitializer.LABEL_annotate_terms,
+				preferences.annotate_terms
+		);
+		preferences.nontermination_check_nonlinear = store.getBoolean(
+				PreferencesInitializer.LABEL_nontermination_check_nonlinear,
+				preferences.nontermination_check_nonlinear
+		);
+		preferences.smt_solver_command = store.getString(
+				PreferencesInitializer.LABEL_smt_solver_command,
+				preferences.smt_solver_command
+		);
+		return preferences;
 	}
 }

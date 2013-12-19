@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences.UseDivision;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences.DivisionImplementation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.*;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
@@ -98,18 +98,18 @@ public class LassoRankerTerminationAnalysis {
 		
 		m_stem_transition = stem;
 		if (stem != null) {
-			s_Logger.debug("Stem transition:\n" + m_stem);
+			s_Logger.debug("Stem transition:\n" + m_stem_transition);
 			m_stem = preprocess(m_stem_transition);
-			s_Logger.debug("Preprocessed stem:\n" + m_stem_transition);
+			s_Logger.debug("Preprocessed stem:\n" + m_stem);
 		} else {
 			m_stem = null;
 		}
 		
 		assert(loop != null);
-		s_Logger.debug("Loop transition:\n" + m_loop);
 		m_loop_transition = loop;
+		s_Logger.debug("Loop transition:\n" + m_loop_transition);
 		m_loop = preprocess(m_loop_transition);
-		s_Logger.debug("Preprocessed loop:\n" + m_loop_transition);
+		s_Logger.debug("Preprocessed loop:\n" + m_loop);
 	}
 	
 	/**
@@ -140,7 +140,7 @@ public class LassoRankerTerminationAnalysis {
 				preferences.num_non_strict_invariants == 0) {
 			s_Logger.warn("Generation of supporting invariants is disabled.");
 		}
-		if (preferences.use_division == UseDivision.C_STYLE
+		if (preferences.division_implementation == DivisionImplementation.C_STYLE
 				&& !preferences.enable_disjunction) {
 			s_Logger.warn("Using C-style integer division, but support for " +
 				"disjunctions is disabled.");
@@ -153,7 +153,7 @@ public class LassoRankerTerminationAnalysis {
 	 */
 	protected PreProcessor[] getPreProcessors() {
 		return new PreProcessor[] {
-				new RewriteDivision(m_preferences.use_division),
+				new RewriteDivision(m_preferences.division_implementation),
 				new RewriteBooleans(),
 				new RewriteEquality(),
 				new DNF(),
@@ -168,14 +168,14 @@ public class LassoRankerTerminationAnalysis {
 	 * @param stem a transition formula corresponding to the lasso's stem
 	 * @throws TermException 
 	 */
-	public void addStem(TransFormula stem) throws TermException {
+	public void addStem(TransFormula stem_transition) throws TermException {
 		if (m_stem != null) {
 			s_Logger.warn("Adding a stem to a lasso that already had one.");
 		}
-		s_Logger.debug("Adding stem transition:\n" + m_stem);
-		m_stem_transition = stem;
-		m_stem = preprocess(stem);
-		s_Logger.debug("Preprocessed stem:\n" + m_stem_transition);
+		m_stem_transition = stem_transition;
+		s_Logger.debug("Adding stem transition:\n" + stem_transition);
+		m_stem = preprocess(stem_transition);
+		s_Logger.debug("Preprocessed stem:\n" + m_stem);
 	}
 	
 	/**
