@@ -20,11 +20,38 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 	private Script m_script;
 	private AuxVarGenerator m_auxVarGenerator;
 	
+	/**
+	 * Collects the translation of boolean variables and their real replacements
+	 */
+	private Map<String, TermVariable> m_Translation;
+	
+	public RewriteBooleans() {
+		m_Translation = new HashMap<String, TermVariable>();
+	}
+	
 	@Override
 	public String getDescription() {
 		return "Replaces a boolean variable b with b_bool > 0 "
 				+ "where b_bool is a new variable";
 	}
+	
+	/**
+	 * Returns the auxiliary real variables corresponding to this variable name
+	 * if one exists, otherwise return a fresh variable.
+	 * 
+	 * @param name a variable name
+	 * @return the real auxiliary variable corresponding to this variable
+	 */
+	private TermVariable getAuxVar(String name) {
+		if (m_Translation.containsKey(name)) {
+			return m_Translation.get(name);
+		}
+		TermVariable auxVar = m_auxVarGenerator.newAuxVar(name + s_auxInfix,
+				m_script.sort("Real"));
+		m_Translation.put(name, auxVar);
+		return auxVar;
+	}
+	
 	@Override
 	public Term process(Script script, Term term) {
 		m_script = script;
@@ -44,9 +71,7 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 		assert(m_script != null);
 		if (term instanceof TermVariable &&
 				term.getSort().getName().equals("Bool")) {
-			String prefix = ((TermVariable) term).getName() + s_auxInfix;
-			TermVariable auxVar = m_auxVarGenerator.newAuxVar(prefix,
-					m_script.sort("Real"));
+			TermVariable auxVar = getAuxVar(((TermVariable) term).getName());
 			setResult(m_script.term(">", auxVar, m_script.decimal("0")));
 			return;
 		}

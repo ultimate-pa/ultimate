@@ -112,9 +112,13 @@ public class AffineFunction implements Serializable {
 			first = false;
 		}
 		if (!m_constant.equals(BigInteger.ZERO) || first) {
-			sb.append(m_constant.compareTo(BigInteger.ZERO) < 0
-					? " - " : " + ");
-			sb.append(m_constant.abs());
+			if (!first) {
+				sb.append(m_constant.compareTo(BigInteger.ZERO) < 0
+						? " - " : " + ");
+				sb.append(m_constant.abs());
+			} else {
+				sb.append(m_constant);
+			}
 		}
 		return sb.toString();
 	}

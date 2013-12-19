@@ -10,7 +10,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
@@ -216,22 +215,6 @@ class TerminationArgumentSynthesizer {
 					+ "disabling supporting invariant generation.");
 			m_preferences.num_strict_invariants = 0;
 			m_preferences.num_non_strict_invariants = 0;
-		}
-		
-		// Check if the loop transition is trivial
-		if (m_loop_transition.getFormula() instanceof ApplicationTerm) {
-			ApplicationTerm loopf = (ApplicationTerm)
-					m_loop_transition.getFormula();
-			if (loopf.getFunction().getName() == "false") {
-				s_Logger.info("Loop transition is equivalent to false.");
-				m_ranking_function =
-						new LinearRankingFunction(new AffineFunction());
-				return true;
-			}
-			if (loopf.getFunction().getName() == "true") {
-				s_Logger.info("Loop transition is equivalent to true.");
-				return false;
-			}
 		}
 		
 		// List of all used supporting invariant generators

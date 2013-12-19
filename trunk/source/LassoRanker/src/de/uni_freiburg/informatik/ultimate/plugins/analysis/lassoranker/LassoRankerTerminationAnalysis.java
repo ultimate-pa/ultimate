@@ -154,6 +154,7 @@ public class LassoRankerTerminationAnalysis {
 		return new PreProcessor[] {
 				new RewriteDivision(m_preferences.division_implementation),
 				new RewriteBooleans(),
+				new RewriteTrueFalse(),
 				new RewriteEquality(),
 				new DNF(),
 				new RemoveNegation()
