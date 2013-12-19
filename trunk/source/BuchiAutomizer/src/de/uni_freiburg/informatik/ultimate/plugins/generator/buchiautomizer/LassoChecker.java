@@ -20,6 +20,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LassoRankerTerminationAnalysis;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.NonTerminationArgument;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.TerminationArgument;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.AffineTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.RankingFunctionsSynthesizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.TermIsNotAffineException;
@@ -308,7 +314,7 @@ public class LassoChecker {
 	
 	private void checkLoopTermination(TransFormula loopTF) {
 		assert !m_Bspm.providesPredicates() : "termination already checked";
-		m_LassoTermination = synthesize(false, null, loopTF);
+		m_LassoTermination = synthesize2(false, null, loopTF);
 		if (m_LassoTermination) {
 			assert m_Bspm.providesPredicates();
 			assert areSupportingInvariantsCorrect();
@@ -323,7 +329,7 @@ public class LassoChecker {
 	private void checkLassoTermination(TransFormula stemTF, TransFormula loopTF) {
 		assert !m_Bspm.providesPredicates() : "termination already checked";
 		assert loopTF != null;
-		m_LassoTermination = synthesize(true, stemTF, loopTF);
+		m_LassoTermination = synthesize2(true, stemTF, loopTF);
 		if (m_LassoTermination) {
 			assert m_Bspm.providesPredicates();
 			assert areSupportingInvariantsCorrect();
@@ -479,6 +485,39 @@ public class LassoChecker {
 		script.setOption(":produce-models", true);
 		script.setLogic(nonlinear ? "QF_NRA" : "QF_LRA");
 		return script;
+	}
+	
+	
+	private boolean synthesize2(final boolean withStem, TransFormula stemTF, final TransFormula loopTF) {
+		if (!withStem) {
+			stemTF = getDummyTF();
+		}
+		Preferences pref = new Preferences();
+		LassoRankerTerminationAnalysis lrta = null;
+		try {
+			 lrta =	new LassoRankerTerminationAnalysis(m_SmtManager.getScript(), loopTF, loopTF, pref);
+		} catch (TermException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw new AssertionError("TermException");
+		}
+		NonTerminationArgument test = lrta.checkNonTermination(99);
+		AffineTemplate template = new AffineTemplate();
+		TerminationArgument termArg;
+		try {
+			termArg = lrta.tryTemplate(template, 99);
+		} catch (SMTLIBException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw new AssertionError("TermException");
+		} catch (TermException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw new AssertionError("TermException");
+		}
+		de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction m_LinRf = (de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction) termArg.getRankingFunction();
+		Collection<de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SupportingInvariant> m_SiList = termArg.getSupportingInvariants();
+		return withStem;
 	}
 	
 }
