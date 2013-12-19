@@ -501,11 +501,11 @@ public class LassoChecker {
 			e.printStackTrace();
 			throw new AssertionError("TermException");
 		}
-		NonTerminationArgument test = lrta.checkNonTermination(99);
+		NonTerminationArgument test = lrta.checkNonTermination();
 		AffineTemplate template = new AffineTemplate();
 		TerminationArgument termArg;
 		try {
-			termArg = lrta.tryTemplate(template, 99);
+			termArg = lrta.tryTemplate(template);
 		} catch (SMTLIBException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
