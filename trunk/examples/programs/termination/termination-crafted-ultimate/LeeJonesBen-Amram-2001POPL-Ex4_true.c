@@ -1,5 +1,5 @@
 /*
- * Program from Ex.2 of
+ * Program from Ex.4 of
  * 2001POPL - Lee,Jones,Ben-Amram - The size-change principle for program termination
  *
  * Date: 12.12.2013

@@ -1,5 +1,5 @@
 /*
- * Program from Ex.2 of
+ * Program from Ex.6 of
  * 2001POPL - Lee,Jones,Ben-Amram - The size-change principle for program termination
  * where we abstracted lists by their size.
  *
