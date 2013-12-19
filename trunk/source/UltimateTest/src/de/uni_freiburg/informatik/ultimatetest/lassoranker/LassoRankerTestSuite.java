@@ -53,8 +53,10 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 	public static final String s_test_files_dir = "examples/lassos";
 	public static final String s_toolchain =
 			"examples/toolchains/LassoRanker.xml";
+	public static final String s_settings_file =
+			"examples/settings/LassoRankerTest";
 	
-	public static final long s_deadline = 100000;
+	public static final long s_deadline = 100;
 	
 	@Override
 	@TestFactory
@@ -64,9 +66,10 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 		Collections.sort(inputFiles);
 		
 		File toolchainFile = new File(Util.getPathFromTrunk(s_toolchain));
+		File settingsFile = new File(Util.getPathFromTrunk(s_settings_file));
 		
 		for (File inputFile : inputFiles) {
-			UltimateStarter starter = new UltimateStarter(inputFile, null,
+			UltimateStarter starter = new UltimateStarter(inputFile, settingsFile,
 					toolchainFile, s_deadline, null, null);
 			LassoRankerTestResultDecider decider =
 					new LassoRankerTestResultDecider(inputFile);

@@ -1,0 +1,22 @@
+#Mon Dec 16 19:10:48 CET 2013
+\!/instance/JungVisualization=
+file_export_version=3.0
+/instance/JungVisualization/shapeForNodePreference=RoundRectangle
+@JungVisualization=0.0.1
+#Mon Dec 16 19:10:48 CET 2013
+file_export_version=3.0
+/instance/RCFGBuilder/Simplify\ code\ blocks=true
+\!/instance/RCFGBuilder=
+/instance/RCFGBuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+@RCFGBuilder=0.0.1
+#Mon Dec 16 19:10:48 CET 2013
+file_export_version=3.0
+\!/instance/UltimateCore=
+@UltimateCore=0.0.1
+/instance/UltimateCore/ultimate.logging.details=LassoRanker\=INFO;
+#Mon Dec 16 19:10:48 CET 2013
+file_export_version=3.0
+\!/instance/UltimateGui=
+/instance/UltimateGui/LASTTOOLCHAINPATH=
+/instance/UltimateGui/LASTPATH=
+@UltimateGui=0.0.1
