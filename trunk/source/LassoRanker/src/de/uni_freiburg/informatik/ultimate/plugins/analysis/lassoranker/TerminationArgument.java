@@ -2,14 +2,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.util.*;
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.result.IResult;
 
 
 /**
- * Represents a termination argument for a linear lasso program. It consists of
+ * Represents a termination argument for a lasso program.
  * 
+ * The termination argument consists of
  * <ul>
  * <li> a ranking function, and
  * <li> a set of supporting invariants that are required to prove the ranking
@@ -18,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.result.IResult;
  * 
  * @author Jan Leike
  */
-public class TerminationArgument implements IResult {
+public class TerminationArgument {
 	private RankingFunction m_ranking_function;
 	private Collection<SupportingInvariant> m_supporting_invariants;
 	
@@ -50,18 +49,7 @@ public class TerminationArgument implements IResult {
 		return Collections.unmodifiableCollection(m_supporting_invariants);
 	}
 	
-	@Override
-	public ILocation getLocation() {
-		return null;
-	}
-	
-	@Override
-	public String getShortDescription() {
-		return "Termination argument";
-	}
-	
-	@Override
-	public String getLongDescription() {
+	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Termination argument consisting of:\n");
 		sb.append("Ranking function ");
@@ -70,9 +58,5 @@ public class TerminationArgument implements IResult {
 		sb.append("Supporting invariants ");
 		sb.append(m_supporting_invariants);
 		return sb.toString();
-	}
-	
-	public String toString() {
-		return this.getLongDescription();
 	}
 }

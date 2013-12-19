@@ -5,70 +5,103 @@ import java.util.*;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.IResult;
 
 
 /**
- * Represents a non-termination argument in form of an infinite execution
- * of the lasso program. It is composed of
+ * Represents a non-termination argument for a lasso program in form of an
+ * infinite execution.
  * 
+ * It is composed of
  * <ul>
- * <li> an execution of the stem, i.e., up until the first node occuring
- *   infinitely often,
- * <li> an execution of the loop, and
- * <li> a recurrent set.
+ * <li> an initial state at the begin of the lasso,
+ * <li> a state at first visit of the honda,
+ * <li> a ray of the loop's transition polyhedron, and
+ * <li> a discount factor lambda.
  * </ul>
+ * 
+ * The infinite execution described by this nontermination argument is
+ * 
+ * state_init, state_honda,
+ * state_honda + ray, state_honda + (1 + lambda) ray,
+ * state_honda + (1 + lambda + lambda^2) ray, ...
  * 
  * @author Jan Leike
  */
-public class NonTerminationArgument implements IResult {
+public class NonTerminationArgument {
 	
-	private Map<BoogieVar, Rational> m_state0;
-	private Map<BoogieVar, Rational> m_state1;
-	private Map<BoogieVar, Rational> m_ray;
-	private Rational m_lambda;
+	private Map<BoogieVar, Rational> m_StateInit;
+	private Map<BoogieVar, Rational> m_StateHonda;
+	private Map<BoogieVar, Rational> m_Ray;
+	private Rational m_Lambda;
 	
-	public NonTerminationArgument(Map<BoogieVar, Rational> state0,
-			Map<BoogieVar, Rational> state1, Map<BoogieVar, Rational> ray,
+	/**
+	 * Construct a non-termination argument
+	 * 
+	 * The infinite execution described by this nontermination argument is
+	 * 
+	 * state_init, state_honda,
+	 * state_honda + ray, state_honda + (1 + lambda) ray,
+	 * state_honda + (1 + lambda + lambda^2) ray, ...
+	 * 
+	 * @param state_init initial state
+	 * @param state_honda state at the lasso's honda
+	 * @param ray ray of the lasso's polyhedron
+	 * @param lambda discount factor
+	 */
+	public NonTerminationArgument(Map<BoogieVar, Rational> state_init,
+			Map<BoogieVar, Rational> state_honda,
+			Map<BoogieVar, Rational> ray,
 			Rational lambda) {
-		assert(state0 != null);
-		m_state0 = state0;
-		assert(state1 != null);
-		m_state1 = state1;
+		assert(state_init != null);
+		m_StateInit = state_init;
+		assert(state_honda != null);
+		m_StateHonda = state_honda;
 		assert(lambda != null);
-		m_lambda = lambda;
+		m_Lambda = lambda;
 		assert(ray != null);
-		m_ray = ray;
+		m_Ray = ray;
 	}
 	
-	@Override
-	public ILocation getLocation() {
-		return null;
+	/**
+	 * @return the initial state
+	 */
+	public Map<BoogieVar, Rational> getStateInit() {
+		return Collections.unmodifiableMap(m_StateInit);
 	}
 	
-	@Override
-	public String getShortDescription() {
-		return "Non-Termination Argument";
+	/**
+	 * @return the state at the lasso's honda
+	 */
+	public Map<BoogieVar, Rational> getStateHonda() {
+		return Collections.unmodifiableMap(m_StateHonda);
 	}
 	
-	@Override
-	public String getLongDescription() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("Non-Termination argument consisting of:\n");
-		sb.append("Initial state: ");
-		sb.append(m_state0);
-		sb.append("\nCut state: ");
-		sb.append(m_state1);
-		sb.append("\nRay: ");
-		sb.append(m_ray);
-		sb.append("\nLambda: ");
-		sb.append(m_lambda);
-		return sb.toString();
+	/**
+	 * @return the ray of the loop's transition polyhedron 
+	 */
+	public Map<BoogieVar, Rational> getRay() {
+		return Collections.unmodifiableMap(m_Ray);
+	}
+	
+	/**
+	 * @return the discount factor
+	 */
+	public Rational getLambda() {
+		return m_Lambda;
 	}
 	
 	public String toString() {
-		return this.getLongDescription();
+		StringBuilder sb = new StringBuilder();
+		sb.append("Non-Termination argument consisting of:\n");
+		sb.append("Initial state: ");
+		sb.append(m_StateInit);
+		sb.append("\nHonda state: ");
+		sb.append(m_StateHonda);
+		sb.append("\nRay: ");
+		sb.append(m_Ray);
+		sb.append("\nLambda: ");
+		sb.append(m_Lambda);
+		return sb.toString();
 	}
 	
 	public Expression asRecurrentSet() {

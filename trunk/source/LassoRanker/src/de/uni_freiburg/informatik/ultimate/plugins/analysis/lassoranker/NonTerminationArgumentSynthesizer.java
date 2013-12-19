@@ -34,8 +34,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Tra
  * makes a bunch of assumptions regarding how the constraints are generated,
  * including the mandatory use of Motzkin's Theorem.
  * 
- * Eventually this should probably go into its own ULTIMATE plugin.
- * 
  * @author Jan Leike
  */
 public class NonTerminationArgumentSynthesizer {
@@ -249,6 +247,9 @@ public class NonTerminationArgumentSynthesizer {
 	private Map<BoogieVar, Rational> extractState(Map<BoogieVar, Term> vars)
 			throws SMTLIBException, UnsupportedOperationException,
 			TermException {
+		if (vars.isEmpty()) {
+			return Collections.emptyMap();
+		}
 		assert(m_script.checkSat() == LBool.SAT);
 		Map<Term, Rational> val = AuxiliaryMethods.preprocessValuation(
 				m_script.getValue(vars.values().toArray(new Term[0])));
