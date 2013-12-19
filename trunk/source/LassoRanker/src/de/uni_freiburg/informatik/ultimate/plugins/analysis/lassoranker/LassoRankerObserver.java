@@ -203,7 +203,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		// Try to prove non-termination
 		if (store.getBoolean(PreferencesInitializer.LABEL_check_for_nontermination)) {
 			try {
-				NonTerminationArgument arg = tanalysis.checkNonTermination(0);
+				NonTerminationArgument arg = tanalysis.checkNonTermination();
 				if (arg != null) {
 					reportNonTerminationResult(arg);
 					return false;
@@ -216,8 +216,12 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		// Try all given templates
 		RankingFunctionTemplate[] templates = getTemplates();
 		for (RankingFunctionTemplate template : templates) {
+			if (!UltimateServices.getInstance().continueProcessing()) {
+				// Timeout or abort
+				return false;
+			}
 			try {
-				TerminationArgument arg = tanalysis.tryTemplate(template, 0);
+				TerminationArgument arg = tanalysis.tryTemplate(template);
 				if (arg != null) {
 					reportTerminationResult(arg);
 					return false;

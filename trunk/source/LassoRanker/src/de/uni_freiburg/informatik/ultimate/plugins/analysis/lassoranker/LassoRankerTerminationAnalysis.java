@@ -245,17 +245,21 @@ public class LassoRankerTerminationAnalysis {
 	/**
 	 * Try to find a non-termination argument for the lasso program.
 	 * 
-	 * @param timeout time limit (0 = unlimited time)
 	 * @return the non-termination argument or null of none is found
 	 */
-	public NonTerminationArgument checkNonTermination(long timeout) {
-		// TODO: respect timeout
+	public NonTerminationArgument checkNonTermination() {
 		s_Logger.info("Checking for non-termination...");
 		
 		m_script.push(1);
 		NonTerminationArgumentSynthesizer synthesizer =
-				new NonTerminationArgumentSynthesizer(true, m_script, m_stem,
-						m_loop, m_stem_transition, m_loop_transition); // FIXME: use preferences
+				new NonTerminationArgumentSynthesizer(
+						m_preferences.nontermination_check_nonlinear,
+						m_script,
+						m_stem,
+						m_loop,
+						m_stem_transition,
+						m_loop_transition
+				);
 		boolean nonterminating = synthesizer.checkForNonTermination();
 		if (nonterminating) {
 			s_Logger.info("Proved non-termination.");
@@ -270,13 +274,10 @@ public class LassoRankerTerminationAnalysis {
 	 * the given ranking function template.
 	 * 
 	 * @param template the ranking function template
-	 * @param timeout time limit (0 = unlimited time)
 	 * @return the non-termination argument or null of none is found
 	 */
-	public TerminationArgument tryTemplate(RankingFunctionTemplate template,
-			long timeout) throws SMTLIBException, TermException {
-		// TODO: respect timeout
-		// Add preferences: sort of SIs
+	public TerminationArgument tryTemplate(RankingFunctionTemplate template)
+			throws SMTLIBException, TermException {
 		// ignore stem
 		s_Logger.info("Using template '" + template.getClass().getSimpleName()
 				+ "'.");

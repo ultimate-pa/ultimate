@@ -12,9 +12,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferen
 /**
  * Main class of Plug-In LassoRanker
  * 
- *
- * TODO: refine comments
- * 
+ * @see LassoRankerObserver
+ * @see LassoRankerTerminationAnalysis
  */
 public class LassoRanker implements IAnalysis {
 
@@ -33,8 +32,7 @@ public class LassoRanker implements IAnalysis {
 	}
 
 	/**
-	 * Method which returns ID of the Plugin.
-	 * @return String containing Plugin ID
+	 * @return the plugin ID
 	 */
 	@Override
 	public String getPluginID() {
@@ -42,8 +40,8 @@ public class LassoRanker implements IAnalysis {
 	}
 
 	/**
-	 * Initialisation
-	 * method is called by core after the plugin is loaded
+	 * Initialization
+	 * Method is called by core after the plugin is loaded
 	 */
 	@Override
 	public int init(Object param) {
@@ -58,7 +56,6 @@ public class LassoRanker implements IAnalysis {
 
 	@Override
 	public List<String> getDesiredToolID() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
