@@ -14,7 +14,7 @@ Require-Bundle: Library-junit-helper,
  CDTParser,
  BoogiePreprocessor,
  BlockEncoding,
- LassoRanker;bundle-version="0.0.1"
+ LassoRanker
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,

@@ -326,7 +326,10 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 		mSourcePlugins = new ArrayList<ISource>();
 		mGeneratorPlugins = new ArrayList<IGenerator>();
 		mAnalysisPlugins = new ArrayList<IAnalysis>();
-		mDeadline = Long.MAX_VALUE;
+
+		if (mDeadline == 0) {
+			mDeadline = Long.MAX_VALUE;
+		}
 		mIdToTool = new HashMap<String, ITool>();
 		mCurrentParser = null;
 		mCurrentFiles = null;
@@ -1233,10 +1236,12 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	 * exceeded.
 	 */
 	public boolean continueProcessing() {
-		if (mCurrentToolchainMonitor.isCanceled()) {
-			return false;
+		boolean cancel = mCurrentToolchainMonitor.isCanceled()
+				|| System.currentTimeMillis() < mDeadline;
+		if(cancel){
+			mLogger.debug("Tool knows that it should cancel! It called continueProcessing and received false.");
 		}
-		return System.currentTimeMillis() < mDeadline;
+		return !cancel;
 	}
 
 	public void setSubtask(String task) {
@@ -1257,7 +1262,14 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	 *            stopped.
 	 */
 	public void setDeadline(long date) {
+		if (System.currentTimeMillis() >= date) {
+			mLogger.warn(String
+					.format("Deadline was set to a date in the past, "
+							+ "effectively stopping the toolchain. "
+							+ "Is this what you intended? Value of date was %,d",
+							date));
 
+		}
 		mDeadline = date;
 	}
 
