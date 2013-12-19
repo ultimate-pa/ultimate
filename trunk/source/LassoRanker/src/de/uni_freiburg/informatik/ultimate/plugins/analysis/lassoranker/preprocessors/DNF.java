@@ -20,9 +20,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.nor
  * @author Jan Leike
  */
 public class DNF implements PreProcessor {
-	
-	private Script m_script;
-	
 	@Override
 	public String getDescription() {
 		return "Transform the given term into disjunctive normal form.";
@@ -30,6 +27,7 @@ public class DNF implements PreProcessor {
 	
 	@Override
 	public Term process(Script script, Term term) throws TermException {
+		// Use the DNF transformer from RCFGBuilder
 		Dnf dnf_transformer = new Dnf(script);
 		return dnf_transformer.transform(term);
 	}

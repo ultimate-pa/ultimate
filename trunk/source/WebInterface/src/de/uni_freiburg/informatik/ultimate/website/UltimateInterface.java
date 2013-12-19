@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
-import de.uni_freiburg.informatik.ultimate.result.RankingFunctionResult;
+import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
@@ -389,7 +389,7 @@ public class UltimateInterface extends HttpServlet {
 						} else if (r instanceof PositiveResult) {
 							type = "positive";
 							packagedResult.logLvl = "info";
-						} else if (r instanceof RankingFunctionResult) {
+						} else if (r instanceof TerminationArgumentResult) {
 							type = "invariant";
 							packagedResult.logLvl = "info";
 						} else if (r instanceof UnprovableResult) {

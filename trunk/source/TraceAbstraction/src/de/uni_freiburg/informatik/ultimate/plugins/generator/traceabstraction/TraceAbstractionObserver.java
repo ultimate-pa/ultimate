@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
@@ -32,18 +31,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.RcfgProgramExecutionBuilder;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.BackTranslationWorkaround;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
+
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -120,7 +119,10 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		if (taPrefs.computeHoareAnnotation() && m_OverallResult != Result.TIMEOUT 
 				&& UltimateServices.getInstance().continueProcessing()) {
 			assert (smtManager.cfgInductive((RootNode) root));
-
+			
+			List<ITranslator<?, ?, ?, ?>> translator_sequence = 
+					UltimateServices.getInstance().getTranslatorSequence();
+			
 			Map<String, ProgramPoint> finalNodes = rootAnnot.getExitNodes();
 			for (String proc : finalNodes.keySet()) {
 				if (isAuxilliaryProcedure(proc)) {
@@ -135,14 +137,15 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 							new ProcedureContractResult<RcfgElement, Expression>(
 							finalNode,
 							Activator.s_PLUGIN_NAME,
-							UltimateServices.getInstance().getTranslatorSequence(),
+							translator_sequence,
 							implementation.getLocation().getOrigin(),
 							proc);
 					Term formula = hoare.getFormula();
 					Expression expr = rootAnnot.getBoogie2Smt().translate(
 							formula);
 					invResult.setInvariant(expr);
-					String ppExpr = backtranslateExprWorkaround(expr);
+					String ppExpr = BackTranslationWorkaround.backtranslate(
+							translator_sequence, expr);
 					invResult.setLongDescription(ppExpr);
 					s_Logger.warn("Derived contract for procedure " + proc
 							+ ": " + formula.toString() + "   "
@@ -160,13 +163,14 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 							new InvariantResult<RcfgElement, Expression>(
 							locNode,
 							Activator.s_PLUGIN_NAME,
-							UltimateServices.getInstance().getTranslatorSequence(),
+							translator_sequence,
 							loopLocations.get(locNode).getOrigin());
 					Term formula = hoare.getFormula();
 					Expression expr = rootAnnot.getBoogie2Smt().translate(
 							formula);
 					invResult.setInvariant(expr);
-					String ppExpr = backtranslateExprWorkaround(expr);
+					String ppExpr = BackTranslationWorkaround.backtranslate(
+							translator_sequence, expr);
 					invResult.setLongDescription(ppExpr);
 					s_Logger.warn("Derived loop invarinat at "
 							+ locNode.getAstNode().getLocation() + ": "
@@ -295,26 +299,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		reportTimingStatistics(root, timingStatistics);	
 	}
 	
-	private String backtranslateExprWorkaround(Expression expr) {
-		List<ITranslator<?, ?, ?, ?>> translators = 
-				UltimateServices.getInstance().getTranslatorSequence();
-		List<ITranslator<?, ?, ?, ?>> copy = new ArrayList<ITranslator<?, ?, ?, ?>>(translators);
-		ITranslator<?, ?, ?, ?> first = copy.remove(0);
-		Object backExpr = first.translateExpressionIteratively(expr, copy.toArray(new ITranslator[0]));
-		String ppExpr;
-		if (backExpr instanceof String) {
-			ppExpr = (String) backExpr;
-//			ppExpr += "  Internal BoogieExpression: ";
-//			ppExpr += BoogieStatementPrettyPrinter.print((Expression) expr);
-		} else if (backExpr instanceof Expression) {
-			ppExpr = BoogieStatementPrettyPrinter.print((Expression) backExpr);
-		} else {
-			throw new AssertionError();
-		}
-		return ppExpr;
-	}
-	
-
 	private void reportPositiveResult(Collection<ProgramPoint> errorLocs) {
 		if (errorLocs.isEmpty()) {
 			String shortDescription = "No specification checked";

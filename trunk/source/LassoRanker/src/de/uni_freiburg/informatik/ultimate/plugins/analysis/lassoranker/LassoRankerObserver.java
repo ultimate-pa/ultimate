@@ -7,15 +7,13 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.INode;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.Ordinal;
@@ -32,17 +30,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
+import de.uni_freiburg.informatik.ultimate.result.BackTranslationWorkaround;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
-import de.uni_freiburg.informatik.ultimate.result.RankingFunctionResult;
+import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
 
 /**
- * Observer for LassoRanker.
+ * Observer for LassoRanker
  * 
- * Extract the lasso program's stem and loop transition from the RCFG builder's
+ * Extracts the lasso program's stem and loop transition from the RCFG builder's
  * transition graph. This is then passed to the LassoRankerTerminationAnalysis
  * class, which serves as an interface to LassoRanker's termination and
  * non-termination analysis methods.
@@ -57,8 +56,14 @@ import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorT
 public class LassoRankerObserver implements IUnmanagedObserver {
 	private static Logger s_Logger =
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
+	private static final String s_lasso_error =
+			"This is not a lasso program (a lasso program is a single " +
+			"procedure with a single while loop and without branching, " +
+			"neither in the stem nor in the body of the while loop)";
 	
-	private ProgramPoint honda;
+	
+	private ProgramPoint m_Honda;
+	private RootNode m_RootNode;
 	
 	/**
 	 * Build a list of templates
@@ -66,21 +71,24 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	 * @return the templates specified in the preferences
 	 */
 	private RankingFunctionTemplate[] getTemplates(Preferences preferences) {
-		Collection<RankingFunctionTemplate> templates =
+		List<RankingFunctionTemplate> templates =
 				new ArrayList<RankingFunctionTemplate>();
 		
 		if (preferences.use_affine_template) {
 			templates.add(new AffineTemplate());
 		}
 		if (preferences.use_multiphase_template) {
-			templates.add(new MultiphaseTemplate(preferences.multiphase_template_size));
+			templates.add(new MultiphaseTemplate(
+					preferences.multiphase_template_size));
 		}
 		if (preferences.use_piecewise_template) {
 			s_Logger.error("Piecewise Template is currently broken. :'("); // FIXME
-			templates.add(new PiecewiseTemplate(preferences.piecewise_template_size));
+			templates.add(new PiecewiseTemplate(
+					preferences.piecewise_template_size));
 		}
 		if (preferences.use_lex_template) {
-			templates.add(new LexicographicTemplate(preferences.lex_template_size));
+			templates.add(new LexicographicTemplate(
+					preferences.lex_template_size));
 		}
 		return templates.toArray(new RankingFunctionTemplate[0]);
 	}
@@ -107,16 +115,24 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 			}
 		}
 		
+		// getTranslatorSequence() is marked deprecated, but an alternative
+		// has yet to arise
+		List<ITranslator<?, ?, ?, ?>> translator_sequence = 
+						UltimateServices.getInstance().getTranslatorSequence();
+		
 		StringBuilder sb = new StringBuilder();
 		if (rf instanceof LinearRankingFunction) {
 			LinearRankingFunction linRf = (LinearRankingFunction) rf;
 			Expression[] rfLexExp = linRf.asLexExpression(script, smt2boogie);
-			String rfString = backtranslateExprWorkaround(rfLexExp[0]);
+			String rfString =
+					BackTranslationWorkaround.backtranslate(translator_sequence,
+							rfLexExp[0]);
 			String siString = "";
 			for (SupportingInvariant si : si_list) {
 				if (!si.isTrue()) {
 					Expression siExp = si.asExpression(script, smt2boogie);
-					siString += backtranslateExprWorkaround(siExp) + ", ";
+					siString += BackTranslationWorkaround.backtranslate(
+							translator_sequence, siExp) + ", ";
 				}
 			}
 			sb.append("Found linear ranking function ");
@@ -142,169 +158,15 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		return sb.toString();
 	}
 	
-	@Override
-	public boolean process(IElement root) {
-		// TODO: insert preferences here
-		Preferences preferences = new Preferences();
-		s_Logger.info("Preferences:\n" + preferences.show());
-		
-		RootNode rootNode = (RootNode) root;
-		List<RCFGNode> rootSucc = rootNode.getOutgoingNodes();
-		RCFGNode firstNode;
-		if (rootSucc.size() == 1) {
-			firstNode = rootSucc.get(0);
-		} else {
-			firstNode = checkIfTwoNodesAndOneFromInit(rootSucc);
-			if (firstNode == null) {
-				for (RCFGNode succ : rootSucc) {
-					if (!isProgramPointOfInitProcedure((ProgramPoint) succ)) {
-						reportUnuspportedSyntax((ProgramPoint) succ);
-					}
-				}
-			}
-		}
-//		assert(rootSucc.size() == 1);
-		List<RCFGEdge> stemEdges = firstNode.getOutgoingEdges();
-//		assert(stemEdges.size() == 1);
-		CodeBlock stemEdge = (CodeBlock) stemEdges.get(0);
-		honda = (ProgramPoint) stemEdge.getTarget();
-		CodeBlock loopEdge = null;
-		if (honda.getOutgoingEdges().size() != 2) {
-			reportUnuspportedSyntax(honda);
-			return false;
-		}
-		for (RCFGEdge hondaSucc : honda.getOutgoingEdges()) {
-			if (hondaSucc.getTarget() == honda) {
-				loopEdge = (CodeBlock) hondaSucc;
-			} else {
-				ProgramPoint interposition = (ProgramPoint) hondaSucc.getTarget();
-				for (RCFGEdge interpositionSucc : interposition.getOutgoingEdges()) {
-					if (interpositionSucc.getTarget() == honda) {
-						loopEdge = (CodeBlock) interpositionSucc;
-					}					
-				}
-			}
-		}
-		if (loopEdge == null) {
-			reportUnuspportedSyntax(honda);
-			return false;
-		}
-		
-		Script script = rootNode.getRootAnnot().getScript();
-		TransFormula stem;
-		TransFormula loop;
-		{
-			stem = stemEdge.getTransitionFormula();
-			loop = loopEdge.getTransitionFormula();
-			//			stem = stem.sequentialComposition(stem, loop, script);
-			TermVariableRenamer tvr = new TermVariableRenamer(script);
-			stem = tvr.renameVars(stem, "Stem");
-			loop = tvr.renameVars(loop, "Loop");
-		}
-		
-		// To the termination analysis
-		LassoRankerTerminationAnalysis tanalysis;
-		try {
-			tanalysis = new LassoRankerTerminationAnalysis(script, stem, loop,
-							preferences);
-		} catch (TermException e) {
-			s_Logger.error(e);
-			return false;
-		} catch (SMTLIBException e) {
-			s_Logger.error(e);
-			return false;
-		} catch (Exception e) {
-			s_Logger.error(e);
-			return false;
-		}
-		
-		// Try to prove non-termination
-		try {
-			NonTerminationArgument arg = tanalysis.checkNonTermination(0);
-			if (arg != null) {
-				reportResult(arg);
-				return true;
-			}
-		} catch (SMTLIBException e) {
-			s_Logger.error(e);
-		} catch (Exception e) {
-			s_Logger.error(e);
-		}
-		
-		// Try a number of possible templates
-		for (RankingFunctionTemplate template : getTemplates(preferences)) {
-			try {
-				TerminationArgument arg = tanalysis.tryTemplate(template, 0);
-				
-				if (arg != null) {
-					RankingFunction rf = arg.getRankingFunction();
-					Collection<SupportingInvariant> si_list =
-							arg.getSupportingInvariants();
-					assert(rf != null);
-					assert(si_list != null);
-					
-					String longMessage = resultMessage(arg, script,
-							rootNode.getRootAnnot().getBoogie2Smt());
-					s_Logger.info(longMessage);
-					
-					@SuppressWarnings("deprecation")
-					RankingFunctionResult<RcfgElement> rankRes = 
-							new RankingFunctionResult<RcfgElement>(
-							honda,
-							Activator.s_PLUGIN_NAME,
-							UltimateServices.getInstance().getTranslatorSequence(),
-							honda.getAstNode().getLocation().getOrigin(),
-							rf.getClass().getName(),
-							longMessage.toString());
-					reportResult(rankRes);
-					return false;
-				}
-				if (template instanceof AffineTemplate) {
-					String shortMessage = "No ranking function found";
-					String longMessage = "No linear ranking function with linear supporting invariant found.";
-					
-					@SuppressWarnings("deprecation")
-					NoResult<RcfgElement> rankRes = 
-							new NoResult<RcfgElement>(
-							honda,
-							Activator.s_PLUGIN_NAME,
-							UltimateServices.getInstance().getTranslatorSequence(),
-							honda.getAstNode().getLocation().getOrigin());
-					rankRes.setShortDescription(shortMessage);
-					rankRes.setLongDescription(longMessage.toString());
-					reportResult(rankRes);
-				}
-				s_Logger.info("No ranking function has been found " +
-						"with this template.");
-			} catch (TermException e) {
-				s_Logger.error(e);
-			} catch (SMTLIBException e) {
-				s_Logger.error(e);
-			} catch (Exception e) {
-				s_Logger.error(e);
-			}
-		}
-		s_Logger.info("There are no more templates to try. I give up. :/");
-		return false;
-	}
-	
-	private void reportResult(IResult res) {
-		UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, res);
-	}
-	
-	/**
-	 * @return the root of the CFG.
-	 */
-	public INode getRoot(){
-		return null;
-	}
+	private TransFormula m_Stem;
+	private TransFormula m_Loop;
 	
 	/**
 	 * Check if List contains exactly two nodes and one node is from the 
 	 * ULTIMATE.init procedure. If this is the case, return the other node.
 	 * Otherwise return null.
 	 */
-	private RCFGNode checkIfTwoNodesAndOneFromInit (List<RCFGNode> rootSucc) {
+	private RCFGNode checkIfTwoNodesAndOneFromInit(List<RCFGNode> rootSucc) {
 		if (rootSucc.size() != 2) {
 			return null;
 		}
@@ -321,40 +183,233 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		return pp.getProcedure().equals("ULTIMATE.init");
 	}
 	
-	private void reportUnuspportedSyntax(ProgramPoint position) {
-		String message = "This is not a lasso program (a lasso program is a single procedure with a single while loop and without branching, neither in the stem nor in the body of the while loop)";
+	private boolean extractLasso() {
+		List<RCFGNode> rootSucc = m_RootNode.getOutgoingNodes();
+		RCFGNode firstNode;
+		if (rootSucc.size() == 1) {
+			firstNode = rootSucc.get(0);
+		} else {
+			firstNode = checkIfTwoNodesAndOneFromInit(rootSucc);
+			if (firstNode == null) {
+				for (RCFGNode succ : rootSucc) {
+					if (!isProgramPointOfInitProcedure((ProgramPoint) succ)) {
+						reportUnuspportedSyntax((ProgramPoint) succ,
+								s_lasso_error);
+					}
+				}
+			}
+		}
+//		assert(rootSucc.size() == 1);
+		List<RCFGEdge> stemEdges = firstNode.getOutgoingEdges();
+//		assert(stemEdges.size() == 1);
+		CodeBlock stemEdge = (CodeBlock) stemEdges.get(0);
+		m_Honda = (ProgramPoint) stemEdge.getTarget();
+		CodeBlock loopEdge = null;
+		if (m_Honda.getOutgoingEdges().size() != 2) {
+			reportUnuspportedSyntax(m_Honda, s_lasso_error);
+			return false;
+		}
+		for (RCFGEdge hondaSucc : m_Honda.getOutgoingEdges()) {
+			if (hondaSucc.getTarget() == m_Honda) {
+				loopEdge = (CodeBlock) hondaSucc;
+			} else {
+				ProgramPoint interposition = (ProgramPoint) hondaSucc.getTarget();
+				for (RCFGEdge interpositionSucc : interposition.getOutgoingEdges()) {
+					if (interpositionSucc.getTarget() == m_Honda) {
+						loopEdge = (CodeBlock) interpositionSucc;
+					}					
+				}
+			}
+		}
+		if (loopEdge == null) {
+			reportUnuspportedSyntax(m_Honda, s_lasso_error);
+			return false;
+		}
+		
+		Script script = m_RootNode.getRootAnnot().getScript();
+		{
+			m_Stem = stemEdge.getTransitionFormula();
+			m_Loop = loopEdge.getTransitionFormula();
+//			stem = stem.sequentialComposition(stem, loop, script);
+			TermVariableRenamer tvr = new TermVariableRenamer(script);
+			m_Stem = tvr.renameVars(m_Stem, "Stem");
+			m_Loop = tvr.renameVars(m_Loop, "Loop");
+		}
+		return true;
+	}
+	
+	@Override
+	public boolean process(IElement root) {
+		// TODO: insert preferences here
+		Preferences preferences = new Preferences();
+		s_Logger.info("Preferences:\n" + preferences.show());
+		
+		assert(root instanceof RootNode);
+		m_RootNode = (RootNode) root;
+		
+		if (!extractLasso()) {
+			return false;
+		}
+		Script script = m_RootNode.getRootAnnot().getScript();
+		
+		// Do the termination analysis
+		LassoRankerTerminationAnalysis tanalysis;
+		try {
+			tanalysis = new LassoRankerTerminationAnalysis(script, m_Stem,
+					m_Loop, preferences);
+		} catch(Exception e) {
+			reportUnuspportedSyntax(m_Honda, e.getMessage());
+			return false;
+		}
+		
+		// Try to prove non-termination
+		try {
+			NonTerminationArgument arg = tanalysis.checkNonTermination(0);
+			if (arg != null) {
+				reportNonTerminationResult(arg);
+				return false;
+			}
+		} catch (Exception e) {
+			s_Logger.error(e);
+		}
+		
+		// Try all given templates
+		for (RankingFunctionTemplate template : getTemplates(preferences)) {
+			try {
+				TerminationArgument arg = tanalysis.tryTemplate(template, 0);
+				if (arg != null) {
+					reportTerminationResult(arg);
+					return false;
+				}
+			} catch (Exception e) {
+				s_Logger.error(e);
+			}
+		}
+		tanalysis.cleanUp();
+		reportNoResult(preferences);
+		return false;
+	}
+	
+	/**
+	 * @return the current translator sequence for building results
+	 */
+	private List<ITranslator<?, ?, ?, ?>> getTranslatorSequence() {
+		// Deprecated method without replacement
+		@SuppressWarnings("deprecation")
+		List<ITranslator<?, ?, ?, ?>> translator_sequence =
+			UltimateServices.getInstance().getTranslatorSequence();
+		return translator_sequence;
+	}
+	
+	/**
+	 * @return the current location for building results
+	 */
+	private ILocation getLocation() {
+		// Deprecated method without replacement
+		@SuppressWarnings("deprecation")
+		ILocation location = m_Honda.getAstNode().getLocation().getOrigin();
+		return location;
+	}
+	
+	/**
+	 * Report a termination argument back to Ultimate's toolchain.
+	 * @param arg the termination argument
+	 */
+	private void reportTerminationResult(TerminationArgument arg) {
+		RankingFunction rf = arg.getRankingFunction();
+		Collection<SupportingInvariant> si_list = arg.getSupportingInvariants();
+		
+		Script script = m_RootNode.getRootAnnot().getScript();
+		Smt2Boogie smt2boogie = m_RootNode.getRootAnnot().getBoogie2Smt();
+		
+		Expression[] supporting_invariants = new Expression[si_list.size()];
+		int i = 0;
+		for (SupportingInvariant si : si_list) {
+			supporting_invariants[i] = si.asExpression(script, smt2boogie);
+			++i;
+		}
+		
+		TerminationArgumentResult<RcfgElement> result = 
+				new TerminationArgumentResult<RcfgElement>(
+					m_Honda,
+					Activator.s_PLUGIN_NAME,
+					rf.asLexExpression(script, smt2boogie),
+					rf.getClass().getName(),
+					supporting_invariants,
+					getTranslatorSequence(),
+					getLocation()
+				);
+		reportResult(result);
+	}
+	
+	/**
+	 * Report a nontermination argument back to Ultimate's toolchain
+	 * @param arg
+	 */
+	private void reportNonTerminationResult(NonTerminationArgument arg) {
+		
+		assert(false);
+		
+		IResult result = null; // TODO
+		
+		reportResult(result);
+	}
+	
+	/**
+	 * Report that no result has been found to Ultimate's toolchain
+	 * @param preferences the current preferences
+	 */
+	private void reportNoResult(Preferences preferences) {
+		NoResult<RcfgElement> result = new NoResult<RcfgElement>(
+				m_Honda,
+				Activator.s_PLUGIN_NAME,
+				getTranslatorSequence(),
+				getLocation()
+		);
+		result.setShortDescription("LassoRanker could not prove termination");
+		StringBuilder sb = new StringBuilder();
+		sb.append("LassoRanker could not prove termination " +
+				"or nontermination of the given linear lasso program.\n");
+		sb.append("Templates: ");
+		for (RankingFunctionTemplate template : getTemplates(preferences)) {
+			sb.append(template.getClass().getName());
+		}
+		result.setLongDescription(sb.toString());
+		reportResult(result);
+	}
+	
+	private void reportUnuspportedSyntax(ProgramPoint position, String message) {
 		s_Logger.error(message);
 		
-		@SuppressWarnings("deprecation") // Daniels ModelContainer
-		SyntaxErrorResult<RcfgElement> unsupp = 
+		SyntaxErrorResult<RcfgElement> result = 
 				new SyntaxErrorResult<RcfgElement>(
 				position,
 				Activator.s_PLUGIN_NAME,
-				UltimateServices.getInstance().getTranslatorSequence(),
-				position.getAstNode().getLocation().getOrigin(),
+				getTranslatorSequence(),
+				getLocation(),
 				SyntaxErrorType.UnsupportedSyntax);
-		unsupp.setLongDescription(message);
-		reportResult(unsupp);
+		result.setLongDescription(message);
+		reportResult(result);
 	}
 	
-	public static String backtranslateExprWorkaround(Expression expr) {
-		@SuppressWarnings("deprecation") // Daniels ModelContainer
-		ITranslator<?, ?, Expression, ?> iback = 
-				(ITranslator<?, ?, Expression, ?>) UltimateServices.getInstance().getTranslatorSequence().get(0);
-		Object backExpr = iback.translateExpression(expr);
-		String ppExpr;
-		if (backExpr instanceof String) {
-			ppExpr = (String) backExpr;
-//			ppExpr += "  Internal BoogieExpression: ";
-//			ppExpr += BoogieStatementPrettyPrinter.print((Expression) expr);
-		} else if (backExpr instanceof Expression) {
-			ppExpr = BoogieStatementPrettyPrinter.print((Expression) backExpr);
-		} else {
-			throw new AssertionError();
-		}
-		return ppExpr;
+	/**
+	 * Report a result back to the Ultimate toolchain
+	 * @param result the result
+	 */
+	private void reportResult(IResult result) {
+		UltimateServices.getInstance().reportResult(
+				Activator.s_PLUGIN_ID,
+				result
+		);
 	}
-
+	
+	/**
+	 * @return the root of the CFG.
+	 */
+	public INode getRoot(){
+		return null;
+	}
+	
 	@Override
 	public void init() {
 		Ordinal.testcases();

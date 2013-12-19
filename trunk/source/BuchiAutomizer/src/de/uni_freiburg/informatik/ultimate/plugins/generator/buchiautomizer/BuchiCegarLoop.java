@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.result.RankingFunctionResult;
+import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 
 public class BuchiCegarLoop {
 	protected final static Logger s_Logger = 
@@ -575,7 +575,7 @@ public class BuchiCegarLoop {
 			longDescr.append("length stem: " + stem.length()
 					+ " length loop: " + loop.length());
 			s_Logger.info(longDescr);
-			IResult reportRes= new RankingFunctionResult<RcfgElement>(honda, 
+			IResult reportRes= new TerminationArgumentResult<RcfgElement>(honda, 
 					Activator.s_PLUGIN_ID, 
 					UltimateServices.getInstance().getTranslatorSequence(), 
 					honda.getPayload().getLocation(), 
