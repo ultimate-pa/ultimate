@@ -4,7 +4,6 @@ import java.util.*;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -30,17 +29,17 @@ public class InequalityConverter {
 	 * @throws TermException if the input term cannot be reduced to a
 	 *         LinearInequality
 	 */
-	private static LinearInequality convertAtom(Script script,
-			ApplicationTerm term) throws TermException {
+	private static LinearInequality convertAtom(ApplicationTerm term)
+			throws TermException {
 		if (term.getParameters().length != 2) {
 			throw new TermIsNotAffineException(
 					"Unsupported number of parameters", term);
 		}
 		String fname = term.getFunction().getName();
-		LinearInequality li1 = LinearInequality.fromTerm(script,
-				term.getParameters()[0]);
-		LinearInequality li2 = LinearInequality.fromTerm(script,
-				term.getParameters()[1]);
+		LinearInequality li1 =
+				LinearInequality.fromTerm(term.getParameters()[0]);
+		LinearInequality li2 =
+				LinearInequality.fromTerm(term.getParameters()[1]);
 		LinearInequality res;
 		if (fname == ">=") {
 			li2.mult(Rational.MONE);
@@ -69,13 +68,12 @@ public class InequalityConverter {
 	}
 	
 	/**
-	 * Convert
-	 * @param script
-	 * @param term
-	 * @return
-	 * @throws TermException
+	 * Convert a term into a polyhedron
+	 * @param term the input term
+	 * @return the polyhedron described by term
+	 * @throws TermException if term is not a conjunction of linear inequalities
 	 */
-	public static List<LinearInequality> convert(Script script, Term term)
+	public static List<LinearInequality> convert(Term term)
 			throws TermException {
 		List<LinearInequality> terms = new ArrayList<LinearInequality>();
 		if (term instanceof ApplicationTerm) {
@@ -83,7 +81,7 @@ public class InequalityConverter {
 			String fname = appt.getFunction().getName();
 			if (fname == "and") {
 				for (Term t : appt.getParameters()) {
-					terms.addAll(convert(script, t));
+					terms.addAll(convert(t));
 				}
 			} else if (fname == "true") {
 				// Add trivial linear inequality 0 ≤ 0.
@@ -93,7 +91,7 @@ public class InequalityConverter {
 				Term param0 = appt.getParameters()[0];
 				Sort param0sort = param0.getSort();
 				if (param0sort.isNumericSort()) {
-					terms.add(convertAtom(script, appt));
+					terms.add(convertAtom(appt));
 				} else if (param0sort.getName().equals("Bool")) {
 					throw new TermException("Term is not in DNF", term);
 				} else {
@@ -101,7 +99,7 @@ public class InequalityConverter {
 				}
 			} else if (fname == "<" || fname == ">"
 					|| fname == "<=" || fname == ">=") {
-				terms.add(convertAtom(script, appt));
+				terms.add(convertAtom(appt));
 			} else {
 				throw new UnknownFunctionException(appt);
 			}

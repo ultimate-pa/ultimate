@@ -1,9 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.util.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;

@@ -5,7 +5,6 @@ import java.util.*;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -45,12 +44,12 @@ public class LassoRankerTerminationAnalysis {
 	/**
 	 * Stem formula of the linear lasso program as linear inequalities in DNF
 	 */
-	private List<List<LinearInequality>> m_stem;
+	private LinearTransition m_stem;
 	
 	/**
 	 * Loop formula of the linear lasso program as linear inequalities in DNF
 	 */
-	private List<List<LinearInequality>> m_loop;
+	private LinearTransition m_loop;
 	
 	/**
 	 * SMT script that created the transition formulae
@@ -179,28 +178,6 @@ public class LassoRankerTerminationAnalysis {
 	}
 	
 	/**
-	 * Convert a term into a list of clauses
-	 * @param term a term in disjunctive normal form
-	 * @return list of clauses
-	 */
-	private static List<Term> toClauses(Term term) {
-		List<Term> l = new ArrayList<Term>();
-		if (!(term instanceof ApplicationTerm)) {
-			l.add(term);
-			return l;
-		}
-		ApplicationTerm appt = (ApplicationTerm) term;
-		if (!appt.getFunction().getName().equals("or")) {
-			l.add(term);
-			return l;
-		}
-		for (Term t : appt.getParameters()) {
-			l.addAll(toClauses(t));
-		}
-		return l;
-	}
-	
-	/**
 	 * Preprocess the stem or loop transition. This applies the preprocessor
 	 * classes and transforms the formula into a list of inequalities in DNF.
 	 * 
@@ -209,7 +186,7 @@ public class LassoRankerTerminationAnalysis {
 	 * @see PreProcessor
 	 * @throws TermException
 	 */
-	protected List<List<LinearInequality>> preprocess(TransFormula transition)
+	protected LinearTransition preprocess(TransFormula transition)
 			throws TermException {
 		s_Logger.info("Starting preprocessing step...");
 		
@@ -221,25 +198,15 @@ public class LassoRankerTerminationAnalysis {
 			m_auxVars.addAll(preprocessor.getAuxVars());
 		}
 		
-		// Extract clauses
-		Collection<Term> clauses = toClauses(trans_term);
-		
-		if (!m_preferences.enable_disjunction && clauses.size() > 1) {
+		LinearTransition linear_trans = LinearTransition.fromTerm(trans_term);
+		if (!m_preferences.enable_disjunction
+				&& !linear_trans.isConjunctive()) {
 			throw new UnsupportedOperationException(
 					"Support for non-conjunctive lasso programs " +
 					"is disabled.");
 		}
 		
-		// Transform the transition into linear inequalities
-		List<List<LinearInequality>> ieq_dnf = new ArrayList<List<LinearInequality>>();
-		for (Term clause : clauses) {
-			List<LinearInequality> li_list = InequalityConverter.convert(m_old_script, clause);
-			if (m_preferences.compute_integral_hull) {
-				li_list.addAll(IntegralHull.compute(li_list));
-			}
-			ieq_dnf.add(li_list);
-		}
-		return ieq_dnf;
+		return linear_trans;
 	}
 	
 	/**

@@ -55,11 +55,10 @@ public class LinearInequality {
 	
 	/**
 	 * Construct an linear inequality from a Term instance.
-	 * @throws TermIsNotAffineException if the term was not an affine-linear sum
 	 * @param term an affine-linear sum of values with termvariables
-	 * @param domain variable domain to be used during construction 
+	 * @throws TermIsNotAffineException if the term was not an affine-linear sum 
 	 */
-	public static LinearInequality fromTerm(Script script, Term term)
+	public static LinearInequality fromTerm(Term term)
 			throws TermException {
 		LinearInequality li;
 		if (term instanceof ConstantTerm) {
@@ -72,26 +71,26 @@ public class LinearInequality {
 		} else if (term instanceof ApplicationTerm) {
 			ApplicationTerm appt = (ApplicationTerm) term;
 			if (appt.getFunction().getName() == "+") {
-				li = fromTerm(script, appt.getParameters()[0]);
+				li = fromTerm(appt.getParameters()[0]);
 				for (int i = 1; i < appt.getParameters().length; ++i)
-					li.add(fromTerm(script, appt.getParameters()[i]));
+					li.add(fromTerm(appt.getParameters()[i]));
 			} else if (appt.getFunction().getName() == "-") {
 				if (appt.getFunction().getParameterSorts().length == 1) {
 					// unary minus
-					li = fromTerm(script, appt.getParameters()[0]);
+					li = fromTerm(appt.getParameters()[0]);
 					li.mult(Rational.MONE);
 				} else { // binary minus (and polyary minus)
-					li = fromTerm(script, appt.getParameters()[0]);
+					li = fromTerm(appt.getParameters()[0]);
 					li.mult(Rational.MONE);
 					for (int i = 1; i < appt.getParameters().length; ++i)
-						li.add(fromTerm(script, appt.getParameters()[i]));
+						li.add(fromTerm(appt.getParameters()[i]));
 					li.mult(Rational.MONE);
 				}
 			} else if (appt.getFunction().getName() == "*") {
 				li = new LinearInequality();
 				li.m_constant = new ParameterizedRational(Rational.ONE);
 				for (Term u : appt.getParameters()) {
-					LinearInequality liu = fromTerm(script, u);
+					LinearInequality liu = fromTerm(u);
 					if (li.isConstant()) {
 						liu.mult(li.m_constant.coefficient);
 						li = liu;
@@ -105,10 +104,8 @@ public class LinearInequality {
 				}
 			} else if (appt.getFunction().getName() == "/") {
 				assert(appt.getParameters().length == 2);
-				LinearInequality divident = fromTerm(script,
-						appt.getParameters()[0]);
-				LinearInequality divisor  = fromTerm(script,
-						appt.getParameters()[1]);
+				LinearInequality divident = fromTerm(appt.getParameters()[0]);
+				LinearInequality divisor  = fromTerm(appt.getParameters()[1]);
 				if (!divisor.isConstant()) {
 					throw new TermIsNotAffineException("Non-constant divisor.",
 							appt);
@@ -162,6 +159,13 @@ public class LinearInequality {
 	 */
 	public String getInequalitySymbol() {
 		return m_strict ? ">" : ">=";
+	}
+	
+	/**
+	 * Returns '<' if this is a strict inequality and '<=' otherwise
+	 */
+	public String getInequalitySymbolReverse() {
+		return m_strict ? "<" : "<=";
 	}
 	
 	/**
@@ -257,6 +261,9 @@ public class LinearInequality {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
+		sb.append("0 ");
+		sb.append(getInequalitySymbolReverse());
+		sb.append(" ");
 		boolean first = true;
 		for (Map.Entry<TermVariable, ParameterizedRational> entry
 				: m_coefficients.entrySet()) {
@@ -297,9 +304,6 @@ public class LinearInequality {
 				sb.append(s);
 			}
 		}
-		sb.append(" ");
-		sb.append(getInequalitySymbol());
-		sb.append(" 0");
 		return sb.toString();
 	}
 }

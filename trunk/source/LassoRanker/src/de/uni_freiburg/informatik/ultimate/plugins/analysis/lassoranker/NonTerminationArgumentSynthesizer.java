@@ -66,8 +66,8 @@ public class NonTerminationArgumentSynthesizer {
 	private TransFormula m_loop_transition;
 	
 	// Stem and loop transitions as linear inequalities in DNF
-	private List<List<LinearInequality>> m_stem;
-	private List<List<LinearInequality>> m_loop;
+	private LinearTransition m_stem;
+	private LinearTransition m_loop;
 	
 	/**
 	 * Contains the NonTerminationArgument object after successful discovery
@@ -75,8 +75,8 @@ public class NonTerminationArgumentSynthesizer {
 	private NonTerminationArgument m_argument = null;
 	
 	public NonTerminationArgumentSynthesizer(boolean non_decreasing, Script script,
-			List<List<LinearInequality>> stem,
-			List<List<LinearInequality>> loop,
+			LinearTransition stem,
+			LinearTransition loop,
 			TransFormula stem_transition,
 			TransFormula loop_transition) {
 		m_non_decreasing = non_decreasing;
@@ -168,14 +168,15 @@ public class NonTerminationArgumentSynthesizer {
 	}
 	
 	private Term generateConstraint(TransFormula trans_formula,
-			List<List<LinearInequality>> trans_ieqs,
+			LinearTransition linear_transition,
 			Map<BoogieVar, Term> varsIn,
 			Map<BoogieVar, Term> varsOut,
 			boolean rays) {
 		Map<TermVariable, Term> auxVars = new HashMap<TermVariable, Term>();
-		Term[] disjunction = new Term[trans_ieqs.size()];
+		Term[] disjunction = new Term[linear_transition.getNumPolyhedra()];
 		int i = 0;
-		for (List<LinearInequality> trans_conj : trans_ieqs) {
+		for (List<LinearInequality> trans_conj
+				: linear_transition.getPolyhedra()) {
 			Term[] conjunction = new Term[trans_conj.size()];
 			int j = 0;
 			for (LinearInequality ieq : trans_conj) {

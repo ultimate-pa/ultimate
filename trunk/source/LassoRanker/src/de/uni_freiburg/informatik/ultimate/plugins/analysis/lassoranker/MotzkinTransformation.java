@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 import java.util.*;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -11,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
+
 
 /**
  * This class applies the equivalence transformation given by
@@ -286,23 +286,8 @@ public class MotzkinTransformation extends InstanceCounting {
 			sb.append("\n    ");
 			sb.append(li);
 		}
-		sb.append("\nConstraints:");
-		Term constraint = transform();
-		if (constraint instanceof ApplicationTerm) {
-			ApplicationTerm appt = (ApplicationTerm) constraint;
-			if (appt.getFunction().getName().equals("and")) {
-				for (Term t : appt.getParameters()) {
-					sb.append("\n    ");
-					sb.append(t);
-				}
-			} else {
-				sb.append("\n    ");
-				sb.append(appt);
-			}
-		} else {
-			sb.append("\n    ");
-			sb.append(constraint);
-		}
+		sb.append("\nConstraints:\n");
+		sb.append(SMTPrettyPrinter.print(this.transform()));
 		return sb.toString();
 	}
 }

@@ -36,8 +36,8 @@ class TerminationArgumentSynthesizer {
 	private TransFormula m_loop_transition;
 	
 	// Stem and loop transitions as linear inequalities in DNF
-	private List<List<LinearInequality>> m_stem;
-	private List<List<LinearInequality>> m_loop;
+	private LinearTransition m_stem;
+	private LinearTransition m_loop;
 	
 	// Objects resulting from the synthesis process
 	private RankingFunction m_ranking_function = null;
@@ -53,8 +53,8 @@ class TerminationArgumentSynthesizer {
 	 * @throws Exception If something goes wrong ;)
 	 */
 	public TerminationArgumentSynthesizer(Script script, TransFormula stem_transition,
-			TransFormula loop_transition, List<List<LinearInequality>> stem,
-			List<List<LinearInequality>> loop, Preferences preferences) {
+			TransFormula loop_transition, LinearTransition stem,
+			LinearTransition loop, Preferences preferences) {
 		m_preferences = preferences;
 		m_script = script;
 		
@@ -100,8 +100,9 @@ class TerminationArgumentSynthesizer {
 						m_loop_transition.getOutVars());
 		List<String> annotations = template.getAnnotations();
 		
-		s_Logger.info("We have " + m_loop.size() + " loop conjunction(s) and "
-				+ templateConstraints.size() + " template conjuncts.");
+		s_Logger.info("We have " + m_loop.getNumPolyhedra()
+				+ " loop disjuncts and " + templateConstraints.size()
+				+ " template conjuncts.");
 		
 		// Negate template inequalities
 		for (List<LinearInequality> templateDisj : templateConstraints) {
@@ -112,7 +113,7 @@ class TerminationArgumentSynthesizer {
 		
 		// loop(x, x') /\ si(x) -> template(x, x')
 		// Iterate over the loop conjunctions and template disjunctions
-		for (List<LinearInequality> loopConj : m_loop) {
+		for (List<LinearInequality> loopConj : m_loop.getPolyhedra()) {
 			for (int m = 0; m < templateConstraints.size(); ++m) {
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script,
@@ -151,7 +152,7 @@ class TerminationArgumentSynthesizer {
 				+ " supporting invariants.");
 		for (SupportingInvariantGenerator sig : si_generators) {
 			// stem(x0) -> si(x0)
-			for (List<LinearInequality> stemConj : m_stem) {
+			for (List<LinearInequality> stemConj : m_stem.getPolyhedra()) {
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script,
 								m_preferences.annotate_terms);
@@ -165,7 +166,7 @@ class TerminationArgumentSynthesizer {
 				conj.add(motzkin.transform());
 			}
 			// si(x) /\ loop(x, x') -> si(x')
-			for (List<LinearInequality> loopConj : m_loop) {
+			for (List<LinearInequality> loopConj : m_loop.getPolyhedra()) {
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script,
 								m_preferences.annotate_terms);
