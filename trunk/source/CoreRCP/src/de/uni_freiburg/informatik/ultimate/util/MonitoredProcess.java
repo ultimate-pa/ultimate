@@ -55,6 +55,7 @@ public final class MonitoredProcess {
 			throws IOException {
 		final MonitoredProcess mp = new MonitoredProcess(Runtime.getRuntime()
 				.exec(command), command, exitCommand);
+
 		UltimateServices.getInstance().registerProcess(mp);
 		mp.mMonitor = new Thread(new Runnable() {
 
@@ -76,7 +77,9 @@ public final class MonitoredProcess {
 				}
 			}
 		}, command);
-
+		mp.mLogger.info(String.format(
+				"Starting monitored process with %s (exit command is %s)",
+				mp.mCommand, mp.mExitCommand));
 		mp.mMonitor.start();
 		return mp;
 	}
@@ -99,7 +102,8 @@ public final class MonitoredProcess {
 							+ mExitCommand, e);
 				}
 				try {
-					wait(100);
+					mMonitor.join(200);
+
 				} catch (InterruptedException e) {
 					// not necessary to do anything here
 				}
@@ -109,7 +113,17 @@ public final class MonitoredProcess {
 			}
 			mLogger.warn("Forcibly destorying the process started with "
 					+ mCommand);
-			mProcess.destroy();
+			try {
+				mProcess.destroy();
+			} catch (NullPointerException ex) {
+				mLogger.warn("Rare case: The thread was killed right after we checked if it "
+						+ "was killed and before we wanted to kill it manually");
+			} catch (Exception ex) {
+				mLogger.fatal(String.format(
+						"Something unexpected happened: %s%n%s", ex,
+						ExceptionUtils.getStackTrace(ex)));
+
+			}
 		}
 		return;
 	}

@@ -585,19 +585,6 @@ public class BuchiCegarLoop {
 			BuchiAutomizerObserver.reportResult(reportRes);
 		}
 		
-
-		
-
-		
-
-		
-
-		
-
-
-
-
-		
 		public static Collection<Set<IPredicate>> computePartition(INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
 			s_Logger.info("Start computation of initial partition.");
 			Collection<IPredicate> states = automaton.getStates();

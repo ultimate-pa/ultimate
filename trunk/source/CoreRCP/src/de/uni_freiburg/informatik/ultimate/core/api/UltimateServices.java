@@ -38,8 +38,9 @@ import de.uni_freiburg.informatik.ultimate.util.MonitoredProcess;
  * <br/>
  * 
  * Usage: Plug-ins obtain a singleton instance via the static getter
- * {@link UltimateServices#getInstance()}. The instance is created and maintained
- * by {@link UltimateCore} and has knowledge of all necessary internal states.
+ * {@link UltimateServices#getInstance()}. The instance is created and
+ * maintained by {@link UltimateCore} and has knowledge of all necessary
+ * internal states.
  * 
  * 
  * @since 2.0
@@ -56,7 +57,8 @@ public class UltimateServices {
 	 * @param application
 	 *            the current instance of {@link UltimateCore}
 	 */
-	private UltimateServices(IModelManager modelManager, UltimateCore application) {
+	private UltimateServices(IModelManager modelManager,
+			UltimateCore application) {
 		this.m_Application = application;
 		this.m_ModelManager = modelManager;
 		this.m_ResultMap = new HashMap<String, List<IResult>>();
@@ -74,15 +76,15 @@ public class UltimateServices {
 
 	private IModelManager m_ModelManager;
 	private UltimateCore m_Application;
-	
+
 	/**
-	 * Here we store the parsed AST from the CDT-Plugin.
-	 * It is used by a dummy parser which delegates it to the translator plugin.
+	 * Here we store the parsed AST from the CDT-Plugin. It is used by a dummy
+	 * parser which delegates it to the translator plugin.
 	 */
 	private Object m_ParsedAST;
 	/**
-	 * Here we store the found Results as a list.
-	 * The key is the PluginID of the plugin
+	 * Here we store the found Results as a list. The key is the PluginID of the
+	 * plugin
 	 */
 	private HashMap<String, List<IResult>> m_ResultMap;
 	/**
@@ -94,27 +96,31 @@ public class UltimateServices {
 	 * Workaround. Needed until Daniels ModelContainer is ready.
 	 */
 	@Deprecated
-	private List<ITranslator<?,?,?,?>> m_TranslatorSequence;
+	private List<ITranslator<?, ?, ?, ?>> m_TranslatorSequence;
 
-	
 	private List<MonitoredProcess> mMonitoredProcesses;
-	
-	public void registerProcess(MonitoredProcess mp){
-		mMonitoredProcesses.add(mp);
-	}
-	
-	public void unregisterProcess(MonitoredProcess mp){
-		mMonitoredProcesses.remove(mp);
-	}
-	
-	public void terminateExternalProcesses(){
-		for(MonitoredProcess mp : mMonitoredProcesses){
-			mp.forceShutdown();
+
+	public void registerProcess(MonitoredProcess mp) {
+		synchronized (mMonitoredProcesses) {
+			mMonitoredProcesses.add(mp);
 		}
-		mMonitoredProcesses.clear();
 	}
-	
-	
+
+	public void unregisterProcess(MonitoredProcess mp) {
+		synchronized (mMonitoredProcesses) {
+			mMonitoredProcesses.remove(mp);
+		}
+	}
+
+	public void terminateExternalProcesses() {
+		synchronized (mMonitoredProcesses) {
+			for (MonitoredProcess mp : mMonitoredProcesses) {
+				mp.forceShutdown();
+			}
+			mMonitoredProcesses.clear();
+		}
+	}
+
 	/**
 	 * Getter for the singleton instance. Plug-ins should always call this
 	 * method to obtain a instance of UltimateServices. The core takes care that
@@ -270,8 +276,8 @@ public class UltimateServices {
 	/**
 	 * Gets the correct logger for an asking external tool This method should be
 	 * called by all external tools that want to access their {@link Logger}.
-	 * Appenders are set as defaults and log levels are set using the preferences
-	 * <br/>
+	 * Appenders are set as defaults and log levels are set using the
+	 * preferences <br/>
 	 * 
 	 * Not to be used for plug-ins!
 	 * 
@@ -289,8 +295,7 @@ public class UltimateServices {
 	 * Gets the correct logger for the controller plug-in. This method should be
 	 * called by all controller plug-ins that want to access their
 	 * {@link Logger}. Appenders are set as defaults and log levels are set
-	 * using the Eclipse IPreferenceStore 
-	 * <br/>
+	 * using the Eclipse IPreferenceStore <br/>
 	 * 
 	 * @return Logger for the current controller.
 	 */
@@ -372,26 +377,26 @@ public class UltimateServices {
 	public boolean removeModel(String id) {
 		return this.m_ModelManager.removeItem(id);
 	}
-	
+
 	/**
-	 * Return true iff cancellation of toolchain is requested or deadline is 
+	 * Return true iff cancellation of toolchain is requested or deadline is
 	 * exceeded.
 	 */
 	public boolean continueProcessing() {
 		return this.m_Application.continueProcessing();
 	}
-	
+
 	public void setSubtask(String task) {
 		m_Application.setSubtask(task);
 	}
 
 	/**
-	 * Set point in time where the toolchain should be stopped. 
+	 * Set point in time where the toolchain should be stopped.
 	 */
 	public void setDeadline(long time) {
 		m_Application.setDeadline(time);
 	}
-	
+
 	/**
 	 * Stop toolchain as soon as possible. Execution of the current toolchain
 	 * will be canceled after the current plugin.
@@ -408,7 +413,8 @@ public class UltimateServices {
 	}
 
 	/**
-	 * @param m_ParsedAST the m_ParsedAST to set
+	 * @param m_ParsedAST
+	 *            the m_ParsedAST to set
 	 */
 	public void setParsedAST(Object m_ParsedAST) {
 		this.m_ParsedAST = m_ParsedAST;
@@ -420,7 +426,7 @@ public class UltimateServices {
 	public HashMap<String, List<IResult>> getResultMap() {
 		return this.m_ResultMap;
 	}
-	
+
 	/**
 	 * Clear all results for the next toolchain run
 	 */
@@ -453,36 +459,38 @@ public class UltimateServices {
 		list.add(result);
 		m_ResultMap.put(id, list);
 	}
-	
+
 	/**
 	 * Workaround. Needed until Daniels ModelContainer is ready.
 	 */
 	@Deprecated
 	public void initializeTranslatorSequence() {
-		m_TranslatorSequence = new ArrayList<ITranslator<?,?,?,?>>();
+		m_TranslatorSequence = new ArrayList<ITranslator<?, ?, ?, ?>>();
 	}
+
 	/**
 	 * Workaround. Needed until Daniels ModelContainer is ready.
 	 */
 	@Deprecated
-	public List<ITranslator<?,?,?,?>> getTranslatorSequence() {
+	public List<ITranslator<?, ?, ?, ?>> getTranslatorSequence() {
 		return m_TranslatorSequence;
 	}
 
-    /**
-     * @return the identifierMapping
-     */
-    public Map<String, String> getIdentifierMapping() {
-        return identifierMapping;
-    }
+	/**
+	 * @return the identifierMapping
+	 */
+	public Map<String, String> getIdentifierMapping() {
+		return identifierMapping;
+	}
 
-    /**
-     * @param identifierMapping the identifierMapping to set
-     */
-    public void setIdentifierMapping(Map<String, String> identifierMapping) {
-        this.identifierMapping = identifierMapping;
-    }
-    
+	/**
+	 * @param identifierMapping
+	 *            the identifierMapping to set
+	 */
+	public void setIdentifierMapping(Map<String, String> identifierMapping) {
+		this.identifierMapping = identifierMapping;
+	}
+
 	/**
 	 * Searches for a payload an element of the specified model.
 	 * 
