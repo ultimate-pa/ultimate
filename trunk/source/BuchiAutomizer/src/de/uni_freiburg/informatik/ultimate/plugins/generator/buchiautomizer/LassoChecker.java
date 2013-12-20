@@ -50,6 +50,7 @@ public class LassoChecker {
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
 	enum ContinueDirective { REFINE_FINITE, REFINE_BUCHI, REPORT_NONTERMINATION, REPORT_UNKNOWN }
+	enum SynthesisResult { TERMINATING, NONTERMINATIG, UNKNOWN, UNCHECKED }
 	
 	//////////////////////////////// settings /////////////////////////////////
 	
@@ -99,7 +100,8 @@ public class LassoChecker {
 	
 	private ContinueDirective m_ContinueDirective;
 
-	private Boolean m_LassoTermination;
+	private SynthesisResult m_LoopTermination = SynthesisResult.UNCHECKED;
+	private SynthesisResult m_LassoTermination = SynthesisResult.UNCHECKED;
 	
 	public ContinueDirective getContinueDirective() {
 		assert m_ContinueDirective != null;
@@ -177,7 +179,7 @@ public class LassoChecker {
 			if (loop.getLength() < stem.getLength()) {
 				TransFormula loopTF = computeLoopTF();
 				checkLoopTermination(loopTF);
-				if (m_LassoTermination) {
+				if (m_LoopTermination == SynthesisResult.TERMINATING) {
 					m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
 					return;
 				} else {
@@ -214,17 +216,19 @@ public class LassoChecker {
 					// check termination
 					TransFormula loopTF = computeLoopTF();
 					checkLoopTermination(loopTF);
-					if (m_LassoTermination) {
+					if (m_LoopTermination == SynthesisResult.TERMINATING) {
 						m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
 						return;
 					} else {
 						TransFormula stemTF = computeStemTF();
 						checkLassoTermination(stemTF, loopTF);
-						if (m_LassoTermination) {
+						if (m_LassoTermination == SynthesisResult.TERMINATING) {
 							m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
 							return;
+						} else if (m_LassoTermination == SynthesisResult.NONTERMINATIG) {
+							m_ContinueDirective = ContinueDirective.REPORT_NONTERMINATION;
+							return;
 						} else {
-							// check nontermination
 							m_ContinueDirective = ContinueDirective.REPORT_UNKNOWN;
 							return;
 						}
@@ -311,14 +315,7 @@ public class LassoChecker {
 	
 	private void checkLoopTermination(TransFormula loopTF) {
 		assert !m_Bspm.providesPredicates() : "termination already checked";
-		m_LassoTermination = synthesize(false, null, loopTF);
-		if (m_LassoTermination) {
-			assert m_Bspm.providesPredicates();
-			assert areSupportingInvariantsCorrect() : "incorrect supporting invariants";
-			assert isRankingFunctionCorrect() : "incorrect ranking functions";
-		} else {
-			assert !m_Bspm.providesPredicates();
-		}
+		m_LoopTermination = synthesize(false, null, loopTF);
 	}
 
 
@@ -327,13 +324,6 @@ public class LassoChecker {
 		assert !m_Bspm.providesPredicates() : "termination already checked";
 		assert loopTF != null;
 		m_LassoTermination = synthesize(true, stemTF, loopTF);
-		if (m_LassoTermination) {
-			assert m_Bspm.providesPredicates();
-			assert areSupportingInvariantsCorrect();
-			assert isRankingFunctionCorrect();
-		} else {
-			assert !m_Bspm.providesPredicates();
-		}
 	}
 
 	/**
@@ -398,7 +388,7 @@ public class LassoChecker {
 		return rfCorrect;
 	}
 	
-	private boolean synthesize(final boolean withStem, TransFormula stemTF, final TransFormula loopTF) {
+	private SynthesisResult synthesize(final boolean withStem, TransFormula stemTF, final TransFormula loopTF) {
 		if (!withStem) {
 			stemTF = getDummyTF();
 		}
@@ -406,18 +396,19 @@ public class LassoChecker {
 		int loopVars = loopTF.getFormula().getFreeVars().length;
 		s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars); 
 		Preferences pref = new Preferences();
-		pref.num_non_strict_invariants = 0;
+		pref.num_non_strict_invariants = 2;
 		pref.num_strict_invariants = 0;
-		pref.only_nondecreasing_invariants = true;
+		pref.only_nondecreasing_invariants = false;
 		LassoRankerTerminationAnalysis lrta = null;
 		try {
-			 lrta =	new LassoRankerTerminationAnalysis(m_SmtManager.getScript(), loopTF, loopTF, pref);
+			 lrta =	new LassoRankerTerminationAnalysis(m_SmtManager.getScript(), stemTF, loopTF, pref);
 		} catch (TermException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			throw new AssertionError("TermException");
 		}
-		NonTerminationArgument test = lrta.checkNonTermination();
+		NonTerminationArgument nonTermArgument = lrta.checkNonTermination();
+
 		AffineTemplate template = new AffineTemplate();
 		TerminationArgument termArg;
 		try {
@@ -431,13 +422,19 @@ public class LassoChecker {
 			e.printStackTrace();
 			throw new AssertionError("TermException");
 		}
+		assert (nonTermArgument == null || termArg == null) : " terminating and nonterminating";
 		if (termArg != null) {
 			assert termArg.getRankingFunction() != null;
 			assert termArg.getSupportingInvariants() != null;
 			m_Bspm.computePredicates(!withStem, termArg);
-			return true;
+			assert m_Bspm.providesPredicates();
+			assert areSupportingInvariantsCorrect();
+			assert isRankingFunctionCorrect();
+			return SynthesisResult.TERMINATING;
+		} else if (nonTermArgument != null) {
+			return SynthesisResult.NONTERMINATIG;
 		} else {
-			return false;
+			return SynthesisResult.UNKNOWN;
 		}
 	}
 	

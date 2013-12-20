@@ -135,6 +135,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 //				s_Logger.info(longDescr + " line" + loc.getStartLine());
 				reportResult(reportRes);
 //			}
+		} else if (result == Result.NONTERMINATING) {
+			s_Logger.info("Nontermination!!");
+			throw new AssertionError("Nontermination!!!!!!!!!!!!1111");
 		} else {
 			throw new AssertionError();
 		}
