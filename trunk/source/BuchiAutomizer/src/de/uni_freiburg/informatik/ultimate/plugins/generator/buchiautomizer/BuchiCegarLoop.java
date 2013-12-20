@@ -402,7 +402,7 @@ public class BuchiCegarLoop {
 			int stage = 0;
 			BuchiModGlobalVarManager bmgvm = new BuchiModGlobalVarManager(
 					lassoChecker.getBinaryStatePredicateManager().getUnseededVariable(), 
-					lassoChecker.getBinaryStatePredicateManager().getOldRankVariable(), 
+					lassoChecker.getBinaryStatePredicateManager().getOldRankVariables(), 
 					m_RootNode.getRootAnnot().getModGlobVarManager(),
 					m_RootNode.getRootAnnot().getBoogie2SMT());
 			for (RefinementSetting rs : m_BuchiRefinementSettingSequence) {

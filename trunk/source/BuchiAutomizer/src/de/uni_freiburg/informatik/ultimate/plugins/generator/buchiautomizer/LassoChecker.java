@@ -1,9 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.io.FileNotFoundException;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,9 +27,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Supporti
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.AffineTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.MultiphaseTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
@@ -394,11 +395,13 @@ public class LassoChecker {
 		}
 		int stemVars = stemTF.getFormula().getFreeVars().length;
 		int loopVars = loopTF.getFormula().getFreeVars().length;
-		s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars); 
+		s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars);
+		
 		Preferences pref = new Preferences();
 		pref.num_non_strict_invariants = 2;
 		pref.num_strict_invariants = 0;
 		pref.only_nondecreasing_invariants = false;
+
 		LassoRankerTerminationAnalysis lrta = null;
 		try {
 			 lrta =	new LassoRankerTerminationAnalysis(m_SmtManager.getScript(), stemTF, loopTF, pref);
@@ -408,19 +411,57 @@ public class LassoChecker {
 			throw new AssertionError("TermException");
 		}
 		NonTerminationArgument nonTermArgument = lrta.checkNonTermination();
+		
+		List<RankingFunctionTemplate> rankingFunctionTemplates = 
+				new ArrayList<RankingFunctionTemplate>();
+		rankingFunctionTemplates.add(new AffineTemplate());
+		rankingFunctionTemplates.add(new MultiphaseTemplate(1));
+		rankingFunctionTemplates.add(new MultiphaseTemplate(2));
+		rankingFunctionTemplates.add(new MultiphaseTemplate(3));
+		rankingFunctionTemplates.add(new MultiphaseTemplate(4));
 
-		AffineTemplate template = new AffineTemplate();
-		TerminationArgument termArg;
-		try {
-			termArg = lrta.tryTemplate(template);
-		} catch (SMTLIBException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw new AssertionError("TermException");
-		} catch (TermException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw new AssertionError("TermException");
+		RankingFunctionTemplate firstSuccessfullTemplate = null;
+		for (RankingFunctionTemplate rft : rankingFunctionTemplates) {
+			TerminationArgument termArg;
+			try {
+				termArg = lrta.tryTemplate(rft);
+			} catch (SMTLIBException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw new AssertionError("TermException");
+			} catch (TermException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw new AssertionError("TermException");
+			}
+			assert (nonTermArgument == null || termArg == null) : " terminating and nonterminating";
+			if (termArg != null) {
+				if (firstSuccessfullTemplate == null) {
+					firstSuccessfullTemplate = rft;
+				}
+				assert termArg.getRankingFunction() != null;
+				assert termArg.getSupportingInvariants() != null;
+				m_Bspm.computePredicates(!withStem, termArg);
+				assert m_Bspm.providesPredicates();
+				assert areSupportingInvariantsCorrect();
+				assert isRankingFunctionCorrect();
+				m_Bspm.clearPredicates();
+			}
+			
+		}
+		TerminationArgument termArg = null;
+		if (firstSuccessfullTemplate != null) {
+			try {
+				termArg = lrta.tryTemplate(firstSuccessfullTemplate);
+			} catch (SMTLIBException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw new AssertionError("TermException");
+			} catch (TermException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw new AssertionError("TermException");
+			}
 		}
 		assert (nonTermArgument == null || termArg == null) : " terminating and nonterminating";
 		if (termArg != null) {
@@ -437,6 +478,16 @@ public class LassoChecker {
 			return SynthesisResult.UNKNOWN;
 		}
 	}
+	
+//	private List<LassoRankerParam> getLassoRankerParameters() {
+//		List<LassoRankerParam> lassoRankerParams = new ArrayList<LassoRankerParam>();
+//		Preferences pref = new Preferences();
+//		pref.num_non_strict_invariants = 2;
+//		pref.num_strict_invariants = 0;
+//		pref.only_nondecreasing_invariants = false;
+//		lassoRankerParams.add(new LassoRankerParam(new AffineTemplate(), pref));
+//		return lassoRankerParams;
+//	}
 	
 	private	TransFormula getDummyTF() {
 		Term term = m_SmtManager.getScript().term("true");
@@ -483,6 +534,23 @@ public class LassoChecker {
 		script.setLogic(nonlinear ? "QF_NRA" : "QF_LRA");
 		return script;
 	}
+	
+//	private class LassoRankerParam {
+//		private final RankingFunctionTemplate m_RankingFunctionTemplate;
+//		private final Preferences m_Preferences;
+//		public LassoRankerParam(RankingFunctionTemplate rankingFunctionTemplate,
+//				Preferences preferences) {
+//			super();
+//			this.m_RankingFunctionTemplate = rankingFunctionTemplate;
+//			this.m_Preferences = preferences;
+//		}
+//		public RankingFunctionTemplate getRankingFunctionTemplate() {
+//			return m_RankingFunctionTemplate;
+//		}
+//		public Preferences getPreferences() {
+//			return m_Preferences;
+//		}
+//	}
 	
 	
 }

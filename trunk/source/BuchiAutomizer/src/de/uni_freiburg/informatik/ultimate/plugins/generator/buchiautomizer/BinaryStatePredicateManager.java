@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -39,12 +40,12 @@ public class BinaryStatePredicateManager {
 	public final static String s_UnseededIdentifier = "unseeded";
 	public final static String s_OldRankIdentifier = "oldRank";
 	public final static int s_MaxLexComponents = 10;
+	private final static boolean s_Annotate = false;
 	
 
 	
 	private final Script m_Script;
 	private final SmtManager m_SmtManager;
-	private final BoogieVar m_OldRankVariable;
 	private final BoogieVar m_UnseededVariable;
 	private final BoogieVar[] m_OldRankVariables;
 	
@@ -80,7 +81,6 @@ public class BinaryStatePredicateManager {
 		m_Script = smtManager.getScript();
 		m_SmtManager = smtManager;
 		Boogie2SMT boogie2Smt = smtManager.getBoogie2Smt();
-		m_OldRankVariable = constructGlobalBoogieVar(s_OldRankIdentifier, boogie2Smt, BoogieType.intType);
 		m_UnseededVariable = constructGlobalBoogieVar(s_UnseededIdentifier, boogie2Smt, BoogieType.boolType);
 		
 		m_OldRankVariables = new BoogieVar[s_MaxLexComponents];
@@ -156,9 +156,9 @@ public class BinaryStatePredicateManager {
 		return m_UnseededVariable;
 	}
 	
-	public BoogieVar getOldRankVariable() {
+	public BoogieVar[] getOldRankVariables() {
 		assert m_ProvidesPredicates;
-		return m_OldRankVariable;
+		return m_OldRankVariables;
 	}
 	
 	public void clearPredicates() {
@@ -198,10 +198,11 @@ public class BinaryStatePredicateManager {
 					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula()); 
 		}
 		RankingFunction rf = m_TerminationArgument.getRankingFunction();
-		Term[] lexTerms = rf.asLexTerm(m_Script);
-		assert lexTerms.length == 1;
-		Term rfTerm = lexTerms[0];
-		IPredicate rankEquality = getRankEquality(rfTerm);
+		decodeLex(rf);
+//		Term[] lexTerms = rf.asLexTerm(m_Script);
+//		assert lexTerms.length == 1;
+//		Term rfTerm = lexTerms[0];
+		IPredicate rankEquality = getRankEquality();
 		if (siConjunctionIsTrue) {
 			m_RankEqualityAndSi = rankEquality;
 		} else {
@@ -209,7 +210,7 @@ public class BinaryStatePredicateManager {
 			m_RankEqualityAndSi = m_SmtManager.newPredicate(tvp.getFormula(), 
 					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula()); 
 		}
-		m_RankDecrease = getRankDecrease(rfTerm);
+		m_RankDecrease = getRankDecrease();
 		IPredicate unseededOrRankDecrease; 
 		{
 			TermVarsProc tvp = m_SmtManager.or(unseededPredicate, m_RankDecrease);
@@ -308,33 +309,40 @@ public class BinaryStatePredicateManager {
 		return result;
 	}
 	
-	private IPredicate getRankEquality(Term rfTerm) {
-		return getRankInEquality(rfTerm, "=", m_OldRankVariable, false);
-	}
-	
-	private IPredicate getRankDecrease(Term rfTerm) {
-		return getRankInEquality(rfTerm, ">", m_OldRankVariable, true);
-	}
+//	private IPredicate getRankEquality(Term rfTerm) {
+//		return getRankInEquality(rfTerm, "=", m_OldRankVariable, false);
+//	}
+//	
+//	private IPredicate getRankDecrease(Term rfTerm) {
+//		return getRankInEquality(rfTerm, ">", m_OldRankVariable, true);
+//	}
 	
 	private void decodeLex(RankingFunction rf) {
-		Term lexTerms[] = rf.asLexTerm(m_Script);
-		assert lexTerms.length == 1;
-		Term term = lexTerms[0];
-		m_LexTerms = new Term[] { term };
+		m_LexTerms = rf.asLexTerm(m_Script);
 		m_LexEquality = new IPredicate[m_LexTerms.length];
 		for (int i=0; i<m_LexTerms.length; i++) {
 			m_LexEquality[i] = getRankInEquality(
-					m_LexTerms[i], "=", m_OldRankVariable, false);
+					m_LexTerms[i], "=", m_OldRankVariables[i], false);
+			if (s_Annotate) {
+				String name = "equality" + i;
+				Annotation annot = new Annotation(":named", name);
+				m_LexTerms[i] = m_Script.annotate(m_LexTerms[i], annot);
+			}
 		}
 		m_LexDecrease = new IPredicate[m_LexTerms.length];
 		for (int i=0; i<m_LexTerms.length; i++) {
 			m_LexDecrease[i] = getRankInEquality(
-					m_LexTerms[i], "=", m_OldRankVariable, false);
+					m_LexTerms[i], ">", m_OldRankVariables[i], false);
+			if (s_Annotate) {
+				String name = "strictDecrease" + i;
+				Annotation annot = new Annotation(":named", name);
+				m_LexTerms[i] = m_Script.annotate(m_LexTerms[i], annot);
+			}
 		}
 	}
 	
 	
-	private IPredicate getRankEquality(Term[] lexTerms) {
+	private IPredicate getRankEquality() {
 		TermVarsProc tvp = m_SmtManager.and(m_LexEquality);
 		IPredicate result = m_SmtManager.newPredicate(tvp.getFormula(), 
 				tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
@@ -342,12 +350,12 @@ public class BinaryStatePredicateManager {
 	}
 	
 	
-	private IPredicate getRankDecrease(Term[] lexTerms) {
-		IPredicate[] disjuncts = new IPredicate[lexTerms.length];
-		for (int i=lexTerms.length-1; i>=0; i--) {
-			IPredicate[] conjuncts = new IPredicate[lexTerms.length-i];
-			for (int j=lexTerms.length-1; j>=i+1; j--) {
-				conjuncts[lexTerms.length-j] = m_LexEquality[j];
+	private IPredicate getRankDecrease() {
+		IPredicate[] disjuncts = new IPredicate[m_LexTerms.length];
+		for (int i=m_LexTerms.length-1; i>=0; i--) {
+			IPredicate[] conjuncts = new IPredicate[m_LexTerms.length-i];
+			for (int j=m_LexTerms.length-1; j>=i+1; j--) {
+				conjuncts[m_LexTerms.length-j] = m_LexEquality[j];
 			}
 			conjuncts[0] = m_LexDecrease[i];
 			TermVarsProc tvp = m_SmtManager.and(conjuncts);

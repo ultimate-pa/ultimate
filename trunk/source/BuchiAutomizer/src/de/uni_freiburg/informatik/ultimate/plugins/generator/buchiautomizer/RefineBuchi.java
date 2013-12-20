@@ -193,8 +193,7 @@ public class RefineBuchi {
 			BuchiCegarLoop.writeAutomatonToFile(m_InterpolAutomaton, m_DumpPath, filename);
 		}
 		EdgeChecker ec = new BuchiEdgeChecker(m_SmtManager, buchiModGlobalVarManager,
-				bspm.getHondaPredicate(), bspm.getRankEqAndSi(), 
-				bspm.getUnseededVariable(), bspm.getOldRankVariable());
+				bspm.getHondaPredicate(), bspm.getRankEqAndSi());
 		assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true)).getResult();
 		assert (new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton,m_Counterexample.getNestedLassoWord())).getResult();
 		
