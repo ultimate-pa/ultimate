@@ -10,7 +10,7 @@
 procedure Mysore() returns (x: int)
 {
   var c: int;
-  assume(c > 1);
+  assume(c >= 2);
   while (x + c >= 0) {
     x := x - c;
     c := c + 1;

@@ -48,7 +48,7 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 	public static final String s_toolchain = "examples/toolchains/LassoRanker.xml";
 	public static final String s_settings_file = "examples/settings/LassoRankerTest";
 
-	public static final long s_deadline = 100;
+	public static final long s_deadline = 60000; // in ms
 
 	@Override
 	@TestFactory
