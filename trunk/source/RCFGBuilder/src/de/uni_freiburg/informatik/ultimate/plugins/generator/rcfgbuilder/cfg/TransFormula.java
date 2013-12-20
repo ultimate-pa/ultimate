@@ -94,7 +94,7 @@ public class TransFormula implements Serializable {
 			Set<TermVariable> auxVars,
 			Set<TermVariable> branchEncoders,
 			Infeasibility infeasibility,
-			Term closedFormula) {
+			Term closedFormula, boolean allowSuperflousInVars) {
 		m_Formula = formula;
 		m_InVars = inVars;
 		m_OutVars = outVars;
@@ -105,7 +105,7 @@ public class TransFormula implements Serializable {
 		assert (branchEncoders.size() > 0 || closedFormula.getFreeVars().length == 0);
 		m_Vars = new HashSet<TermVariable>(Arrays.asList(m_Formula.getFreeVars()));
 		assert allSubsetInOutAuxBranch() : "unexpected vars in TransFormula";
-		assert InAuxSubsetAll() : "superfluous vars in TransFormula";
+		assert InAuxSubsetAll(allowSuperflousInVars) : "superfluous vars in TransFormula";
 		
 		// compute the assigned/updated variables. A variable is updated by this
 		// transition if it occurs as outVar and 
@@ -118,6 +118,17 @@ public class TransFormula implements Serializable {
 				m_AssignedVars.add(var);
 			}
 		}
+	}
+	
+	public TransFormula(Term formula,
+			Map<BoogieVar, TermVariable> inVars,
+			Map<BoogieVar, TermVariable> outVars,
+			Set<TermVariable> auxVars,
+			Set<TermVariable> branchEncoders,
+			Infeasibility infeasibility,
+			Term closedFormula) {
+		this(formula, inVars, outVars, auxVars, branchEncoders, infeasibility, 
+				closedFormula, false);
 	}
 	
 	
@@ -281,11 +292,13 @@ public class TransFormula implements Serializable {
 	 * Returns true each auxVar is in allVars and 
 	 * each inVar occurs in allVars. 
 	 */
-	private boolean InAuxSubsetAll() {
+	private boolean InAuxSubsetAll(boolean allowSuperflousInVars) {
 		boolean result = true;
-		for (BoogieVar bv : m_InVars.keySet()) {
-			result &= (m_Vars.contains(m_InVars.get(bv)));
-			assert result : "superfluous inVar";
+		if (!allowSuperflousInVars) {
+			for (BoogieVar bv : m_InVars.keySet()) {
+				result &= (m_Vars.contains(m_InVars.get(bv)));
+				assert result : "superfluous inVar";
+			}
 		}
 		for (TermVariable tv : m_auxVars) {
 			result &= m_Vars.contains(tv);
