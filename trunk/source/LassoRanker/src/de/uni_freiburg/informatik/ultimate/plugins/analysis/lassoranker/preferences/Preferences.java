@@ -112,7 +112,7 @@ public class Preferences implements Serializable {
 		sb.append(this.enable_disjunction);
 		sb.append("\nDivision implementation: ");
 		sb.append(this.division_implementation);
-		sb.append("\nTerm annotations enables: ");
+		sb.append("\nTerm annotations enabled: ");
 		sb.append(this.annotate_terms);
 		sb.append("\nNonlinear nontermination check: ");
 		sb.append(this.nontermination_check_nonlinear);
