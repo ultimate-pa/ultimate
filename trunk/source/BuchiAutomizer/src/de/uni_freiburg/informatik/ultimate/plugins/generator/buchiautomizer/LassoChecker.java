@@ -404,7 +404,7 @@ public class LassoChecker {
 
 		LassoRankerTerminationAnalysis lrta = null;
 		try {
-			 lrta =	new LassoRankerTerminationAnalysis(m_SmtManager.getScript(), stemTF, loopTF, pref);
+			 lrta =	new LassoRankerTerminationAnalysis(m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), stemTF, loopTF, pref);
 		} catch (TermException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
