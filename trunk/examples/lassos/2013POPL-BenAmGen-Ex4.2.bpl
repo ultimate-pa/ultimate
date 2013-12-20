@@ -19,12 +19,13 @@ procedure main() returns () {
     var x1old, x2old: int;
     
     assume(true);
-    while (-x1 + x2 <= 0 && -x1 - x2 <= -1) {
+    while (4*x1 >= x2 && x2 >= 1) {
         x1old := x1;
-        x2old := x2;
-        x2 := x2 - 2*x1 + 1;
-        assume (-x1old + x1 <= -1);
-        assume (x1old - 3*x1 <= 1);
+        havoc x1;
+        assume(5*x1 <= 2*x1old + 1);
+        assume(5*x1 >= 2*x1old - 3);
+        assume(-x1old + x1 <= -1);
+        assume(x1old - 3*x1 <= 1);
     }
 }
 
