@@ -9,7 +9,7 @@
 
 procedure WhileFalse() returns (x: int)
 {
-  while (x>0 && x<0) {
+  while (false) {
   }
 }
 
