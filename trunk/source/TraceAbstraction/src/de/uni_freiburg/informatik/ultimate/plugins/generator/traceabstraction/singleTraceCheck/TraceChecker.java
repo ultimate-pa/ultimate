@@ -638,10 +638,6 @@ public class TraceChecker {
 	}
 	
 
-	public void finishTraceCheckWithoutWitness() {
-		
-	}
-
 	/**
 	 * After start of a trace check until the computation of interpolants or a
 	 * RcfgProgramExecution the SmtManager is locked. If you do not compute 
