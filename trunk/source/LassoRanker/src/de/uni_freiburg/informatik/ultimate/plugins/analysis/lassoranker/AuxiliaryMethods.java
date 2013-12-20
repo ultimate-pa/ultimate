@@ -85,9 +85,13 @@ public class AuxiliaryMethods {
 			BigDecimal d = (BigDecimal) ct.getValue();
 			return (Rational) AuxiliaryMethods.decimalToRational(d);
 		} else if (ct.getSort().getName().equals("Int")) {
-			Rational r = Rational.valueOf((BigInteger) ct.getValue(),
+			if (ct.getValue() instanceof Rational) {
+				return (Rational) ct.getValue();
+			} else {
+				Rational r = Rational.valueOf((BigInteger) ct.getValue(),
 					BigInteger.ONE);
-			return r;
+				return r;
+			}
 		} else
 			throw new TermException(
 					"Trying to convert a ConstantTerm of unknown sort.", ct);
