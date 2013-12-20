@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.util.*;
-import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
@@ -200,7 +199,7 @@ public class NonTerminationArgumentSynthesizer {
 				Collection<TermVariable> added_vars = new HashSet<TermVariable>();
 				
 				// outVars
-				for (Entry<BoogieVar, TermVariable> entry :
+				for (Map.Entry<BoogieVar, TermVariable> entry :
 						trans_formula.getOutVars().entrySet()) {
 					if (!varsOut.containsKey(entry.getKey())) {
 						continue;
@@ -211,7 +210,7 @@ public class NonTerminationArgumentSynthesizer {
 				}
 				
 				// inVars
-				for (Entry<BoogieVar, TermVariable> entry :
+				for (Map.Entry<BoogieVar, TermVariable> entry :
 						trans_formula.getInVars().entrySet()) {
 					if (added_vars.contains(entry.getValue())) {
 						// the transition implicitly requires that
@@ -281,7 +280,7 @@ public class NonTerminationArgumentSynthesizer {
 				m_script.getValue(vars.values().toArray(new Term[0])));
 		// Concatenate vars and val
 		Map<BoogieVar, Rational> state = new HashMap<BoogieVar, Rational>();
-		for (Entry<BoogieVar, Term> entry : vars.entrySet()) {
+		for (Map.Entry<BoogieVar, Term> entry : vars.entrySet()) {
 			assert(val.containsKey(entry.getValue()));
 			state.put(entry.getKey(), val.get(entry.getValue()));
 		}

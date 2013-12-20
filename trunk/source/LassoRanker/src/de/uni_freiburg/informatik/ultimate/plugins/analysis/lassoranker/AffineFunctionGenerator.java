@@ -1,11 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.*;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -66,7 +62,7 @@ public class AffineFunctionGenerator {
 	public LinearInequality generate(Map<BoogieVar, TermVariable> vars) {
 		LinearInequality li = new LinearInequality();
 		li.add(new ParameterizedRational(m_constant));
-		for (Entry<BoogieVar, TermVariable> entry : vars.entrySet()) {
+		for (Map.Entry<BoogieVar, TermVariable> entry : vars.entrySet()) {
 			if (m_coefficients.containsKey(entry.getKey())) {
 				li.add(entry.getValue(), new ParameterizedRational(
 						m_coefficients.get(entry.getKey())));

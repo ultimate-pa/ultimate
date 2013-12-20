@@ -1,9 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
-import java.util.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Map.Entry;
+import java.util.*;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -160,7 +159,7 @@ public class AuxiliaryMethods {
 	static Map<Term, Rational> preprocessValuation(Map<Term, Term> val)
 			throws TermException {
 		Map<Term, Rational> new_val = new HashMap<Term, Rational>();
-		for (Entry<Term, Term> entry : val.entrySet()) {
+		for (Map.Entry<Term, Term> entry : val.entrySet()) {
 			new_val.put(entry.getKey(),
 					AuxiliaryMethods.const2Rational(entry.getValue()));
 		}
@@ -178,10 +177,12 @@ public class AuxiliaryMethods {
 	 * @param formula input
 	 * @return copy of the input formula with more inVars
 	 */
-	static TransFormula matchInVars(Boogie2SMT boogie2smt, TransFormula formula) {
+	static TransFormula matchInVars(Boogie2SMT boogie2smt,
+			TransFormula formula) {
 		Map<BoogieVar, TermVariable> inVars =
 				new HashMap<BoogieVar, TermVariable>(formula.getInVars());
-		for (Entry<BoogieVar, TermVariable> entry : formula.getOutVars().entrySet()) {
+		for (Map.Entry<BoogieVar, TermVariable> entry :
+				formula.getOutVars().entrySet()) {
 			if (!inVars.containsKey(entry.getKey())) {
 				TermVariable inVar = TransFormula.getFreshVariable(boogie2smt,
 						entry.getKey(), entry.getValue().getSort());
