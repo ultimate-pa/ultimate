@@ -195,7 +195,8 @@ public class AuxiliaryMethods {
 				new HashSet<TermVariable>(formula.getAuxVars()),
 				new HashSet<TermVariable>(formula.getBranchEncoders()),
 				formula.isInfeasible(),
-				formula.getClosedFormula()
+				formula.getClosedFormula(),
+				true
 		);
 	}
 }
