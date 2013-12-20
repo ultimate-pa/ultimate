@@ -93,7 +93,7 @@ public class Preferences implements Serializable {
 	/**
 	 * What shell command should be used to call the external smt solver?
 	 */
-	public String smt_solver_command = "z3 -smt2 -in -rs:42";
+	public String smt_solver_command = "z3 -smt2 -in";
 	
 	/**
 	 * Build a string descriptions of the current preferences
