@@ -4,6 +4,9 @@ import java.io.File;
 import java.util.*;
 
 import de.uni_freiburg.informatik.junit_helper.testfactory.TestFactory;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
@@ -47,6 +50,7 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 	public static final String s_test_files_dir = "examples/lassos";
 	public static final String s_toolchain = "examples/toolchains/LassoRanker.xml";
 	public static final String s_settings_file = "examples/settings/LassoRankerTest";
+	public static final boolean s_produceLogFiles = false;
 
 	public static final long s_deadline = 60000; // in ms
 
@@ -56,21 +60,20 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 		ArrayList<UltimateTestCase> rtr = new ArrayList<UltimateTestCase>();
 		ArrayList<File> inputFiles = new ArrayList<File>(getInputFiles());
 		Collections.sort(inputFiles);
-
+		
 		File toolchainFile = new File(Util.getPathFromTrunk(s_toolchain));
 		File settingsFile = new File(Util.getPathFromTrunk(s_settings_file));
-//		String logPattern = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
-//				.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
+		String logPattern = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
+				.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
 		for (File inputFile : inputFiles) {
 			UltimateStarter starter = new UltimateStarter(
 					inputFile,
 					settingsFile,
 					toolchainFile,
 					s_deadline,
-					null,
-					null);
-//					new File(Util.generateLogFilename(inputFile, "LassoRanker")),
-//					logPattern);
+					s_produceLogFiles ? new File(Util.generateLogFilename(
+							inputFile, "LassoRanker")) : null,
+					s_produceLogFiles ? logPattern : null);
 			LassoRankerTestResultDecider decider = new LassoRankerTestResultDecider(
 					inputFile);
 			if (decider.getExpectedResult() == ExpectedResult.IGNORE) {
