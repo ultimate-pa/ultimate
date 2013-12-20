@@ -32,12 +32,12 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.structure.BasePayloadContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SupportingInvariant;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.TerminationArgument;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RefineBuchi.RefinementSetting;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.RankingFunctionsObserver;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.SupportingInvariant;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
-import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 
 public class BuchiCegarLoop {
@@ -338,8 +337,8 @@ public class BuchiCegarLoop {
 						}
 						ISLPredicate hondaISLP = (ISLPredicate) m_Counterexample.getLoop().getStateAtPosition(0);
 						ProgramPoint hondaPP = hondaISLP.getProgramPoint();
-						reportRankingFunction(bspm.getLinRf(), bspm.getSiList(), hondaPP, m_Counterexample.getStem().getWord(), m_Counterexample.getLoop().getWord());
-						m_RankingFunction.put(m_Iteration, bspm.getLinRf().asExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie()));
+						reportTerminationArgument(bspm.getTerminationArgument(), hondaPP, m_Counterexample.getStem().getWord(), m_Counterexample.getLoop().getWord());
+						m_RankingFunction.put(m_Iteration, bspm.getTerminationArgument().getRankingFunction().asLexExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie())[0]);
 
 						
 						INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
@@ -540,50 +539,73 @@ public class BuchiCegarLoop {
 		
 
 
-
-
-		
-		
-		private void reportRankingFunction(LinearRankingFunction m_LinRf,
-				Collection<SupportingInvariant> m_SiList, ProgramPoint honda, NestedWord<CodeBlock> stem,
+		private void reportTerminationArgument(
+				TerminationArgument terminationArgument, 
+				ProgramPoint honda, NestedWord<CodeBlock> stem,
 				NestedWord<CodeBlock> loop) {
-			Expression rfExp = m_LinRf.asExpression(m_SmtManager.getScript(),
-					m_SmtManager.getSmt2Boogie());
-			String rfString = RankingFunctionsObserver
-					.backtranslateExprWorkaround(rfExp);
-			StringBuilder longDescr = new StringBuilder();
-			longDescr.append("Derived linear ranking function ");
-			longDescr.append(rfString);
-			longDescr.append(System.getProperty("line.separator"));
-			longDescr.append(" with linear supporting invariants");
-			for (SupportingInvariant si : m_SiList) {
-				Expression siExp = si.asExpression(m_SmtManager.getScript(),
-						m_SmtManager.getSmt2Boogie());
-				String siString = RankingFunctionsObserver
-						.backtranslateExprWorkaround(siExp);
-				longDescr.append(" " + siString);
+			RankingFunction rf = terminationArgument.getRankingFunction();
+			Collection<SupportingInvariant> si_list = terminationArgument.getSupportingInvariants();
+			Expression[] supporting_invariants = new Expression[si_list.size()];
+			int i = 0;
+			for (SupportingInvariant si : terminationArgument.getSupportingInvariants()) {
+				supporting_invariants[i] = si.asExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie());
+				++i;
 			}
-			longDescr.append(System.getProperty("line.separator"));
-			longDescr.append("For the following lasso. ");
-			longDescr.append(System.getProperty("line.separator"));
-			longDescr.append("Stem: ");
-			longDescr.append(stem);
-			longDescr.append(System.getProperty("line.separator"));
-			longDescr.append("Loop: ");
-			longDescr.append(loop);
-			longDescr.append(System.getProperty("line.separator"));
-			longDescr.append("length stem: " + stem.length()
-					+ " length loop: " + loop.length());
-			s_Logger.info(longDescr);
-			IResult reportRes= new TerminationArgumentResult<RcfgElement>(honda, 
-					Activator.s_PLUGIN_ID,
-					null,
-					"LinearRankingFunction",
-					null,
-					UltimateServices.getInstance().getTranslatorSequence(), 
-					honda.getPayload().getLocation());
-			BuchiAutomizerObserver.reportResult(reportRes);
+			TerminationArgumentResult<RcfgElement> result = 
+					new TerminationArgumentResult<RcfgElement>(
+							honda,
+							Activator.s_PLUGIN_NAME,
+							rf.asLexExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie()),
+							rf.getClass().getName(),
+							supporting_invariants,
+							UltimateServices.getInstance().getTranslatorSequence(),
+							honda.getPayload().getLocation()
+							);
+			BuchiAutomizerObserver.reportResult(result);
 		}
+		
+		
+//		private void reportRankingFunction(LinearRankingFunction m_LinRf,
+//				Collection<SupportingInvariant> m_SiList, ProgramPoint honda, NestedWord<CodeBlock> stem,
+//				NestedWord<CodeBlock> loop) {
+//			TerminationArgumentResult<>
+//			Expression rfExp = m_LinRf.asExpression(m_SmtManager.getScript(),
+//					m_SmtManager.getSmt2Boogie());
+//			String rfString = RankingFunctionsObserver
+//					.backtranslateExprWorkaround(rfExp);
+//			StringBuilder longDescr = new StringBuilder();
+//			longDescr.append("Derived linear ranking function ");
+//			longDescr.append(rfString);
+//			longDescr.append(System.getProperty("line.separator"));
+//			longDescr.append(" with linear supporting invariants");
+//			for (SupportingInvariant si : m_SiList) {
+//				Expression siExp = si.asExpression(m_SmtManager.getScript(),
+//						m_SmtManager.getSmt2Boogie());
+//				String siString = RankingFunctionsObserver
+//						.backtranslateExprWorkaround(siExp);
+//				longDescr.append(" " + siString);
+//			}
+//			longDescr.append(System.getProperty("line.separator"));
+//			longDescr.append("For the following lasso. ");
+//			longDescr.append(System.getProperty("line.separator"));
+//			longDescr.append("Stem: ");
+//			longDescr.append(stem);
+//			longDescr.append(System.getProperty("line.separator"));
+//			longDescr.append("Loop: ");
+//			longDescr.append(loop);
+//			longDescr.append(System.getProperty("line.separator"));
+//			longDescr.append("length stem: " + stem.length()
+//					+ " length loop: " + loop.length());
+//			s_Logger.info(longDescr);
+//			IResult reportRes= new TerminationArgumentResult<RcfgElement>(honda, 
+//					Activator.s_PLUGIN_ID,
+//					null,
+//					"LinearRankingFunction",
+//					null,
+//					UltimateServices.getInstance().getTranslatorSequence(), 
+//					honda.getPayload().getLocation());
+//			BuchiAutomizerObserver.reportResult(reportRes);
+//		}
 		
 		public static Collection<Set<IPredicate>> computePartition(INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
 			s_Logger.info("Start computation of initial partition.");

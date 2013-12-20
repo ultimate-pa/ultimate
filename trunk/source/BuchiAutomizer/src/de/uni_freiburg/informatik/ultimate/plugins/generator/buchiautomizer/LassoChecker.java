@@ -22,16 +22,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LassoRankerTerminationAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.NonTerminationArgument;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.AffineTemplate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.RankingFunctionsSynthesizer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.SupportingInvariant;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.TermIsNotAffineException;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions.LinearRankingFunction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.templates.LinearTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
@@ -314,11 +311,11 @@ public class LassoChecker {
 	
 	private void checkLoopTermination(TransFormula loopTF) {
 		assert !m_Bspm.providesPredicates() : "termination already checked";
-		m_LassoTermination = synthesize2(false, null, loopTF);
+		m_LassoTermination = synthesize(false, null, loopTF);
 		if (m_LassoTermination) {
 			assert m_Bspm.providesPredicates();
-			assert areSupportingInvariantsCorrect();
-			assert isRankingFunctionCorrect();
+			assert areSupportingInvariantsCorrect() : "incorrect supporting invariants";
+			assert isRankingFunctionCorrect() : "incorrect ranking functions";
 		} else {
 			assert !m_Bspm.providesPredicates();
 		}
@@ -329,7 +326,7 @@ public class LassoChecker {
 	private void checkLassoTermination(TransFormula stemTF, TransFormula loopTF) {
 		assert !m_Bspm.providesPredicates() : "termination already checked";
 		assert loopTF != null;
-		m_LassoTermination = synthesize2(true, stemTF, loopTF);
+		m_LassoTermination = synthesize(true, stemTF, loopTF);
 		if (m_LassoTermination) {
 			assert m_Bspm.providesPredicates();
 			assert areSupportingInvariantsCorrect();
@@ -386,7 +383,7 @@ public class LassoChecker {
 			// do nothing
 			// TODO: check that si is equivalent to true
 		} else {
-			for (SupportingInvariant si : m_Bspm.getSiList()) {
+			for (SupportingInvariant si : m_Bspm.getTerminationArgument().getSupportingInvariants()) {
 				siCorrect &= m_Bspm.checkSupportingInvariant(
 						si, stem, loop, m_ModifiableGlobalVariableManager);
 			}
@@ -408,37 +405,40 @@ public class LassoChecker {
 		int stemVars = stemTF.getFormula().getFreeVars().length;
 		int loopVars = loopTF.getFormula().getFreeVars().length;
 		s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars); 
-		RankingFunctionsSynthesizer synthesizer = null;
+		Preferences pref = new Preferences();
+		pref.num_non_strict_invariants = 0;
+		pref.num_strict_invariants = 0;
+		pref.only_nondecreasing_invariants = true;
+		LassoRankerTerminationAnalysis lrta = null;
 		try {
-			synthesizer = new RankingFunctionsSynthesizer(
-					m_SmtManager.getScript(), new_Script(false), stemTF,
-					loopTF);
-		} catch (Exception e1) {
-			e1.printStackTrace();
-			throw new AssertionError(e1);
+			 lrta =	new LassoRankerTerminationAnalysis(m_SmtManager.getScript(), loopTF, loopTF, pref);
+		} catch (TermException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw new AssertionError("TermException");
 		}
-		boolean found = false;
+		NonTerminationArgument test = lrta.checkNonTermination();
+		AffineTemplate template = new AffineTemplate();
+		TerminationArgument termArg;
 		try {
-			found = synthesizer.synthesize(LinearTemplate.class);
-			if (found) {
-				
-				RankingFunction rf = synthesizer.getRankingFunction();
-				assert (rf != null);
-				LinearRankingFunction m_LinRf = (LinearRankingFunction) rf;
-				Collection<SupportingInvariant> m_SiList = synthesizer.getSupportingInvariants();
-				assert (m_SiList != null);
-				m_Bspm.computePredicates(!withStem, m_LinRf, m_SiList);
-			} 
+			termArg = lrta.tryTemplate(template);
 		} catch (SMTLIBException e) {
-			throw new AssertionError(e.getMessage());
-		} catch (TermIsNotAffineException e) {
-			throw new AssertionError(e.getMessage());
-		} catch (InstantiationException e) {
-			throw new AssertionError(e.getMessage());
-		} catch (AssertionError e) {
-			throw new AssertionError(e.getMessage());
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw new AssertionError("TermException");
+		} catch (TermException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw new AssertionError("TermException");
 		}
-		return found;
+		if (termArg != null) {
+			assert termArg.getRankingFunction() != null;
+			assert termArg.getSupportingInvariants() != null;
+			m_Bspm.computePredicates(!withStem, termArg);
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	private	TransFormula getDummyTF() {
@@ -487,37 +487,5 @@ public class LassoChecker {
 		return script;
 	}
 	
-	
-	private boolean synthesize2(final boolean withStem, TransFormula stemTF, final TransFormula loopTF) {
-		if (!withStem) {
-			stemTF = getDummyTF();
-		}
-		Preferences pref = new Preferences();
-		LassoRankerTerminationAnalysis lrta = null;
-		try {
-			 lrta =	new LassoRankerTerminationAnalysis(m_SmtManager.getScript(), loopTF, loopTF, pref);
-		} catch (TermException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw new AssertionError("TermException");
-		}
-		NonTerminationArgument test = lrta.checkNonTermination();
-		AffineTemplate template = new AffineTemplate();
-		TerminationArgument termArg;
-		try {
-			termArg = lrta.tryTemplate(template);
-		} catch (SMTLIBException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw new AssertionError("TermException");
-		} catch (TermException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw new AssertionError("TermException");
-		}
-		de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction m_LinRf = (de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction) termArg.getRankingFunction();
-		Collection<de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SupportingInvariant> m_SiList = termArg.getSupportingInvariants();
-		return withStem;
-	}
 	
 }

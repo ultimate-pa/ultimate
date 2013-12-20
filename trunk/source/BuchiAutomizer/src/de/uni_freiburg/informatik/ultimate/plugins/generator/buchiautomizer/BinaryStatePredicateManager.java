@@ -15,20 +15,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.SupportingInvariant;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions.LinearRankingFunction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions.RankingFunction;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SupportingInvariant;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.TerminationArgument;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -66,10 +62,7 @@ public class BinaryStatePredicateManager {
 
 	private IPredicate m_RankDecrease;
 
-	
-	private Collection<SupportingInvariant> m_SiList;
-	private LinearRankingFunction m_LinRf;
-	
+	private TerminationArgument m_TerminationArgument;
 	
 	private Term[] m_LexTerms;
 	private IPredicate[] m_LexEquality;
@@ -79,6 +72,8 @@ public class BinaryStatePredicateManager {
 	 * Is the loop also terminating without the stem?
 	 */
 	private Boolean m_LoopTermination;
+
+	
 	
 	
 	public BinaryStatePredicateManager(SmtManager smtManager) {
@@ -121,15 +116,20 @@ public class BinaryStatePredicateManager {
 		return m_LoopTermination;
 	}
 	
-	public LinearRankingFunction getLinRf() {
+	public TerminationArgument getTerminationArgument() {
 		assert m_ProvidesPredicates;
-		return m_LinRf;
+		return m_TerminationArgument;
 	}
-
-	public Collection<SupportingInvariant> getSiList() {
-		assert m_ProvidesPredicates;
-		return m_SiList;
-	}
+	
+//	public RankingFunction getLinRf() {
+//		assert m_ProvidesPredicates;
+//		return m_LinRf;
+//	}
+//
+//	public Collection<SupportingInvariant> getSiList() {
+//		assert m_ProvidesPredicates;
+//		return m_SiList;
+//	}
 
 	public IPredicate getStemPrecondition() {
 		assert m_ProvidesPredicates;
@@ -166,8 +166,7 @@ public class BinaryStatePredicateManager {
 			throw new AssertionError("no predicates provided cannot clear");
 		}
 		m_LoopTermination = null;
-		m_SiList = null;
-		m_LinRf = null;
+		m_TerminationArgument = null;
 		m_StemPrecondition = null;
 		m_StemPostcondition = null;
 		m_Honda = null;
@@ -176,23 +175,20 @@ public class BinaryStatePredicateManager {
 		m_ProvidesPredicates = false;
 	}
 
-	public void computePredicates(boolean loopTermination,
-			LinearRankingFunction linRf, 
-			Collection<SupportingInvariant> siList) {
+	public void computePredicates(boolean loopTermination, TerminationArgument termArg) {
 		assert m_LoopTermination == null;
-		assert m_SiList == null;
-		assert m_LinRf == null;
+		assert m_TerminationArgument == null;
 		assert m_StemPrecondition == null;
 		assert m_StemPostcondition == null;
 		assert m_Honda == null;
 		assert m_RankEqualityAndSi == null;
 		assert m_RankDecrease == null;
 		m_LoopTermination = loopTermination;
-		m_SiList = siList;
-		m_LinRf = linRf;
+		m_TerminationArgument = termArg;
 		IPredicate unseededPredicate = unseededPredicate();
 		m_StemPrecondition = unseededPredicate;
-		IPredicate siConjunction = computeSiConjunction(m_SiList);
+		IPredicate siConjunction = computeSiConjunction(
+				m_TerminationArgument.getSupportingInvariants());
 		boolean siConjunctionIsTrue = isTrue(siConjunction);
 		if (siConjunctionIsTrue) {
 			m_StemPostcondition = unseededPredicate;
@@ -201,7 +197,10 @@ public class BinaryStatePredicateManager {
 			m_StemPostcondition = m_SmtManager.newPredicate(tvp.getFormula(), 
 					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula()); 
 		}
-		Term rfTerm = m_LinRf.asFormula(m_Script, m_SmtManager.getSmt2Boogie());
+		RankingFunction rf = m_TerminationArgument.getRankingFunction();
+		Term[] lexTerms = rf.asLexTerm(m_Script);
+		assert lexTerms.length == 1;
+		Term rfTerm = lexTerms[0];
 		IPredicate rankEquality = getRankEquality(rfTerm);
 		if (siConjunctionIsTrue) {
 			m_RankEqualityAndSi = rankEquality;
@@ -298,8 +297,8 @@ public class BinaryStatePredicateManager {
 	
 	
 	private IPredicate supportingInvariant2Predicate(SupportingInvariant si) {
-		Set<BoogieVar> coefficients = si.getCoefficients().keySet();
-		Term formula = si.asTerm(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie());
+		Collection<BoogieVar> coefficients = si.getVariables();
+		Term formula = si.asTerm(m_SmtManager.getScript());
 		formula = m_SmtManager.simplify(formula);
 		TermVarsProc termVarsProc = m_SmtManager.computeTermVarsProc(formula);
 		assert termVarsProc.getVars().equals(coefficients);
@@ -317,8 +316,10 @@ public class BinaryStatePredicateManager {
 		return getRankInEquality(rfTerm, ">", m_OldRankVariable, true);
 	}
 	
-	private void decodeLex(LinearRankingFunction rf) {
-		Term term = m_LinRf.asFormula(m_Script, m_SmtManager.getSmt2Boogie());
+	private void decodeLex(RankingFunction rf) {
+		Term lexTerms[] = rf.asLexTerm(m_Script);
+		assert lexTerms.length == 1;
+		Term term = lexTerms[0];
 		m_LexTerms = new Term[] { term };
 		m_LexEquality = new IPredicate[m_LexTerms.length];
 		for (int i=0; i<m_LexTerms.length; i++) {
@@ -407,6 +408,7 @@ public class BinaryStatePredicateManager {
 //			IPredicate[] interpolants = m_TraceChecker.getInterpolants(new TraceChecker.AllIntegers());
 //			interpolants.toString();
 		} else {
+			traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 			result = false;			
 		}
 		traceChecker = new TraceChecker(siPred, siPred, null, stem, m_SmtManager,
@@ -417,6 +419,7 @@ public class BinaryStatePredicateManager {
 //			IPredicate[] interpolants = m_TraceChecker.getInterpolants(new TraceChecker.AllIntegers());
 //			interpolants.toString();
 		} else {
+			traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 			result = false;
 		}
 		return result;
@@ -428,11 +431,7 @@ public class BinaryStatePredicateManager {
 				m_RankDecrease, null, loop, m_SmtManager, modGlobVarManager);
 		LBool loopCheck = traceChecker.isCorrect();
 		traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
-		if (loopCheck == LBool.UNSAT) {
-			return true;
-		} else {
-			return false;
-		}
+		return (loopCheck == LBool.UNSAT);
 	}
 	
 
