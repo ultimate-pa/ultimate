@@ -20,17 +20,25 @@ class SMTSolver {
 	 */
 	static Script newScript(String smt_solver_command,
 			boolean produce_unsat_cores) {
-		// This code is copied from 
-		// de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder
-		
 		Logger solverLogger = Logger.getLogger("interpolLogger");
 		Script script = new Scriptor(smt_solver_command, solverLogger);
-		
+		initScript(script, produce_unsat_cores);
+		return script;
+	}
+	
+	/**
+	 * Reset an SMT script so that it forgets everything that happend
+	 */
+	static void resetScript(Script script, boolean produce_unsat_cores) {
+		script.reset();
+		initScript(script, produce_unsat_cores);
+	}
+	
+	private static void initScript(Script script, boolean produce_unsat_cores) {
 		if (produce_unsat_cores) {
 			script.setOption(":produce-unsat-cores", true);
 		}
 		script.setOption(":produce-models", true);
 		script.setLogic("QF_NRA"); // non-linear algebraic constraint solving
-		return script;
 	}
 }

@@ -326,8 +326,9 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		StringBuilder sb = new StringBuilder();
 		sb.append("LassoRanker could not prove termination " +
 				"or nontermination of the given linear lasso program.\n");
-		sb.append("Templates: ");
+		sb.append("Templates:");
 		for (RankingFunctionTemplate template : templates) {
+			sb.append(" ");
 			sb.append(template.getClass().getSimpleName());
 		}
 		result.setLongDescription(sb.toString());

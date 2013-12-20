@@ -218,7 +218,6 @@ public class LassoRankerTerminationAnalysis {
 	public NonTerminationArgument checkNonTermination() {
 		s_Logger.info("Checking for non-termination...");
 		
-		m_script.push(1);
 		NonTerminationArgumentSynthesizer synthesizer =
 				new NonTerminationArgumentSynthesizer(
 						m_preferences.nontermination_check_nonlinear,
@@ -233,7 +232,7 @@ public class LassoRankerTerminationAnalysis {
 			s_Logger.info("Proved non-termination.");
 			s_Logger.info(synthesizer.getArgument());
 		}
-		m_script.pop(1);
+		SMTSolver.resetScript(m_script, m_preferences.annotate_terms);
 		return nonterminating ? synthesizer.getArgument() : null;
 	}
 	
@@ -252,7 +251,6 @@ public class LassoRankerTerminationAnalysis {
 		s_Logger.info("Template has degree " + template.getDegree() + ".");
 		s_Logger.debug(template);
 		
-		m_script.push(1);
 		TerminationArgumentSynthesizer synthesizer =
 				new TerminationArgumentSynthesizer(m_script, m_stem_transition,
 				m_loop_transition, m_stem, m_loop, m_preferences);
@@ -261,7 +259,7 @@ public class LassoRankerTerminationAnalysis {
 			s_Logger.info("Proved termination.");
 			s_Logger.info(synthesizer.getArgument());
 		}
-		m_script.pop(1);
+		SMTSolver.resetScript(m_script, m_preferences.annotate_terms);
 		return terminating ? synthesizer.getArgument() : null;
 	}
 	

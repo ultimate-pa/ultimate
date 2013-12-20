@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingf
  */
 public class LexicographicTemplate extends RankingFunctionTemplate {
 	
-	public final int lex;
+	public final int size;
 	
 	private static final String s_name_delta = "delta";
 	private static final String s_name_function = "rank";
@@ -45,15 +45,15 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 	 */
 	public LexicographicTemplate(int num_lex) {
 		assert(num_lex > 0);
-		lex = num_lex;
-		m_deltas = new Term[lex];
-		m_fgens = new AffineFunctionGenerator[lex];
+		size = num_lex;
+		m_deltas = new Term[size];
+		m_fgens = new AffineFunctionGenerator[size];
 	}
 	
 	@Override
 	public void init(Script script, Collection<BoogieVar> vars) {
 		super.init(script, vars);
-		for (int i = 0; i < lex; ++i) {
+		for (int i = 0; i < size; ++i) {
 			m_deltas[i] = RankingFunctionTemplate.newDelta(script,
 					s_name_delta + i);
 			m_fgens[i] = new AffineFunctionGenerator(script, vars,
@@ -64,15 +64,15 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(lex);
+		sb.append(size);
 		sb.append("-lex template:\n   ");
-		for (int i = 0; i < lex; ++i) {
+		for (int i = 0; i < size; ++i) {
 			sb.append("delta_" + i + " > 0\n/\\ ");
 		}
-		for (int i = 0; i < lex; ++i) {
+		for (int i = 0; i < size; ++i) {
 			sb.append("f_" + i + "(x) > 0\n/\\ ");
 		}
-		for (int i = 0; i < lex - 1; ++i) {
+		for (int i = 0; i < size - 1; ++i) {
 			sb.append("( f_" + i + "(x') <= f_" + i + "(x)");
 			for (int j = i - 1; j >= 0; --j) {
 				sb.append(" \\/ f_" + j + "(x') < f_" + j + "(x) - delta_" + j);
@@ -80,9 +80,9 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 			sb.append(" )\n/\\ ");
 		}
 		sb.append("( ");
-		for (int i = 0; i < lex; ++i) {
+		for (int i = 0; i < size; ++i) {
 			sb.append("f_" + i + "(x') < f_" + i + "(x) - delta_" + i);
-			if (i < lex - 1) {
+			if (i < size - 1) {
 				sb.append(" \\/ ");
 			}
 		}
@@ -99,7 +99,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 				new ArrayList<List<LinearInequality>>();
 		
 		// /\_i f_i(x) > 0
-		for (int i = 0; i < lex; ++i) {
+		for (int i = 0; i < size; ++i) {
 			LinearInequality li = m_fgens[i].generate(inVars);
 			li.setStrict(true);
 			li.needs_motzkin_coefficient = false;
@@ -107,7 +107,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 		}
 		
 		// /\_(i < k) f_i(x') ≤ f_i(x) \/ \/_(j<i) f_j(x') < f_j(x) - δ_j
-		for (int i = 0; i < lex - 1; ++i) {
+		for (int i = 0; i < size - 1; ++i) {
 			List<LinearInequality> disjunction =
 					new ArrayList<LinearInequality>();
 			LinearInequality li = m_fgens[i].generate(inVars);
@@ -136,7 +136,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 		
 		// \/_i f_i(x') < f_i(x) - δ_i
 		List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
-		for (int i = 0; i < lex; ++i) {
+		for (int i = 0; i < size; ++i) {
 			LinearInequality li = m_fgens[i].generate(inVars);
 			LinearInequality li2 = m_fgens[i].generate(outVars);
 			li2.negate();
@@ -145,7 +145,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 			p.coefficient = Rational.MONE;
 			li.add(p);
 			li.setStrict(true);
-			li.needs_motzkin_coefficient = i > 0 && i < lex - 1;
+			li.needs_motzkin_coefficient = i > 0 && i < size - 1;
 			disjunction.add(li);
 		}
 		conjunction.add(disjunction);
@@ -157,7 +157,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 	@Override
 	public Collection<Term> getVariables() {
 		Collection<Term> list = new ArrayList<Term>();
-		for (int i = 0; i < lex; ++i) {
+		for (int i = 0; i < size; ++i) {
 			list.addAll(m_fgens[i].getVariables());
 			list.add(m_deltas[i]);
 		}
@@ -168,7 +168,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
 			throws SMTLIBException {
 		List<AffineFunction> fs = new ArrayList<AffineFunction>();
-		for (int i = 0; i < lex; ++i) {
+		for (int i = 0; i < size; ++i) {
 			AffineFunction f = m_fgens[i].extractAffineFunction(val);
 			fs.add(f);
 		}
@@ -178,10 +178,10 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 	@Override
 	public List<String> getAnnotations() {
 		List<String> annotations = new ArrayList<String>();
-		for (int i = 0; i < lex; ++i) {
+		for (int i = 0; i < size; ++i) {
 			annotations.add("rank f" + i + " is bounded");
 		}
-		for (int i = 0; i < lex - 1; ++i) {
+		for (int i = 0; i < size - 1; ++i) {
 			annotations.add("rank f" + i + " is not increasing unless "
 					+ "a smaller index decreases");
 		}
@@ -191,7 +191,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 
 	@Override
 	public int getDegree() {
-		assert(lex > 0);
-		return (lex - 1)*(lex - 2) / 2;
+		assert(size > 0);
+		return (size - 1)*(size - 2) / 2;
 	}
 }
