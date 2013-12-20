@@ -16,8 +16,8 @@ modifies x,y,xOld,yOld;
 {
   assume (x+y>=0);
   while (x<=N) {
-    xOld := xOld;
-    yOld := yOld;
+    xOld := x;
+    yOld := y;
     if(*) {
       havoc x,y;
       assume(x >= xOld + yOld);

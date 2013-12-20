@@ -7,7 +7,7 @@
  */
 
 procedure Moscow(c: int) returns (x: int, y: int)
-free requires c > 0;
+free requires c >= 1;
 {
   while (2*x + y >= 0) {
     x := x - c;
