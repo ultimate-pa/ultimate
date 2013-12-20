@@ -7,13 +7,11 @@ file_export_version=3.0
 file_export_version=3.0
 /instance/RCFGBuilder/Simplify\ code\ blocks=true
 \!/instance/RCFGBuilder=
-/instance/RCFGBuilder/Size\ of\ a\ code\ block=SequenceOfStatements
 @RCFGBuilder=0.0.1
 #Fri Dec 20 10:46:28 CET 2013
 file_export_version=3.0
 @LassoRanker=0.0.1
 \!/instance/LassoRanker=
-/instance/LassoRanker/Number\ of\ phases\ in\ the\ multiphase\ template=4
 #Fri Dec 20 10:46:28 CET 2013
 file_export_version=3.0
 \!/instance/UltimateCore=
