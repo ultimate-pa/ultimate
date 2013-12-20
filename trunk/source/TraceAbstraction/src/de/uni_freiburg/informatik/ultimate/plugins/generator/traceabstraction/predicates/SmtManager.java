@@ -2500,15 +2500,25 @@ public class SmtManager {
 		}
 		
 		for (BoogieVar bv : callerPred.getVars()) {
-			if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
-				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-				varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
-				varsToQuantify.add(freshVar);
+			if (!bv.isGlobal() ) {
+				if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
+					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+					varsToQuantify.add(freshVar);
+				}
+			} else {
+				if (!varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
+					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
+					varsToQuantify.add(freshVar);
+				}
 			}
 				
 		}
 		Term retPredRenamed = new Substitution(varsToRenameInCallerAndReturnPred, m_Script).transform(returnerPred.getFormula());
+		retPredRenamed = new Substitution(varsToRenameInReturnPred, m_Script).transform(retPredRenamed);
 		Term callerPredRenamed = new Substitution(varsToRenameInCallerAndReturnPred, m_Script).transform(callerPred.getFormula());
+		callerPredRenamed = new Substitution(varsToRenameInCallerPred, m_Script).transform(callerPredRenamed);
 		
 		// Add aux vars to quantify them
 		varsToQuantify.addAll(callTF.getAuxVars());
