@@ -328,9 +328,10 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 				"or nontermination of the given linear lasso program.\n");
 		sb.append("Templates: ");
 		for (RankingFunctionTemplate template : templates) {
-			sb.append(template.getClass().getName());
+			sb.append(template.getClass().getSimpleName());
 		}
 		result.setLongDescription(sb.toString());
+		s_Logger.info(sb.toString());
 		reportResult(result);
 	}
 	
@@ -341,7 +342,6 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	 */
 	private void reportUnuspportedSyntax(ProgramPoint position, String message) {
 		s_Logger.error(message);
-		
 		SyntaxErrorResult<RcfgElement> result = 
 				new SyntaxErrorResult<RcfgElement>(
 				position,

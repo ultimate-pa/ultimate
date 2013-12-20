@@ -32,7 +32,15 @@ public class TerminationArgument {
 		assert(ranking_function != null);
 		m_ranking_function = ranking_function;
 		assert(supporting_invariants != null);
-		m_supporting_invariants = supporting_invariants;
+		
+		// Add only non-trivial supporting invariants
+		m_supporting_invariants = new ArrayList<SupportingInvariant>();
+		for (SupportingInvariant si : supporting_invariants) {
+			if (!si.isTrue()) {
+				m_supporting_invariants.add(si);
+			}
+		}
+		
 	}
 	
 	/**
