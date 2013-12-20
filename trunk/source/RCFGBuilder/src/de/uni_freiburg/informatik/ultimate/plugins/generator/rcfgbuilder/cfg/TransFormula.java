@@ -1,14 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -31,7 +25,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.NaiveDestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -308,19 +301,19 @@ public class TransFormula implements Serializable {
 	}
 
 	public Map<BoogieVar, TermVariable> getInVars() {
-		return m_InVars;
+		return Collections.unmodifiableMap(m_InVars);
 	}
 
 	public Map<BoogieVar, TermVariable> getOutVars() {
-		return m_OutVars;
+		return Collections.unmodifiableMap(m_OutVars);
 	}
 
 	public Set<TermVariable> getAuxVars() {
-		return m_auxVars;
+		return Collections.unmodifiableSet(m_auxVars);
 	}
 	
 	public Set<TermVariable> getBranchEncoders() {
-		return m_BranchEncoders;
+		return Collections.unmodifiableSet(m_BranchEncoders);
 	}
 
 	public Term getClosedFormula() {
@@ -331,7 +324,7 @@ public class TransFormula implements Serializable {
 	 * @return the m_AssignedVars
 	 */
 	public Set<BoogieVar> getAssignedVars() {
-		return m_AssignedVars;
+		return Collections.unmodifiableSet(m_AssignedVars);
 	}
 
 	@Override
