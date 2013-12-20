@@ -257,7 +257,6 @@ public class RootAnnot extends AbstractAnnotations {
 		return m_BoogieVar2SmtVar;
 	}
 	
-	@Deprecated
 	public Boogie2SMT getBoogie2SMT() {
 		return m_Boogie2SMT;
 	}

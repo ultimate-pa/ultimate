@@ -74,7 +74,7 @@ public class RewriteDivision extends TermTransformer implements PreProcessor {
 			return;
 		}
 		assert(appt.getParameters().length == 2);
-		Term divident = transform(appt.getParameters()[0]);
+		Term divident = transform(appt.getParameters()[0]); // FIXME
 		Term divisor  = transform(appt.getParameters()[1]);
 		TermVariable auxVar = m_auxVarGenerator.newAuxVar(s_auxPrefix,
 				m_script.sort("Int"));

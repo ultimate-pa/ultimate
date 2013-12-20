@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences.DivisionImplementation;
@@ -72,6 +73,11 @@ public class LassoRankerTerminationAnalysis {
 	protected Preferences m_preferences;
 	
 	/**
+	 * The boogie2smt object that created the TransFormulas
+	 */
+	private Boogie2SMT m_boogie2smt;
+	
+	/**
 	 * Constructor for the LassoRanker interface. Calling this invokes the
 	 * preprocessor on the stem and loop formula.
 	 * 
@@ -79,15 +85,18 @@ public class LassoRankerTerminationAnalysis {
 	 * addStem().
 	 * 
 	 * @param script the SMT script used to construct the transition formulae
+	 * @param boogie2smt the boogie2smt object that created the TransFormulas
 	 * @param stem a transition formula corresponding to the lasso's stem
 	 * @param loop a transition formula corresponding to the lasso's loop
 	 * @param preferences configuration options for this plugin
 	 * @throws TermException if preprocessing fails
 	 */
-	public LassoRankerTerminationAnalysis(Script script, TransFormula stem,
-			TransFormula loop, Preferences preferences) throws TermException {
+	public LassoRankerTerminationAnalysis(Script script, Boogie2SMT boogie2smt,
+			TransFormula stem, TransFormula loop, Preferences preferences)
+					throws TermException {
 		m_preferences = preferences;
 		checkPreferences(preferences);
+		m_boogie2smt = boogie2smt;
 		
 		m_old_script = script;
 		m_script = SMTSolver.newScript(preferences.smt_solver_command,
@@ -97,6 +106,7 @@ public class LassoRankerTerminationAnalysis {
 		
 		m_stem_transition = stem;
 		if (stem != null) {
+			m_stem_transition = AuxiliaryMethods.matchInVars(boogie2smt, m_stem_transition);
 			s_Logger.debug("Stem transition:\n" + m_stem_transition);
 			m_stem = preprocess(m_stem_transition);
 			s_Logger.debug("Preprocessed stem:\n" + m_stem);
@@ -105,7 +115,7 @@ public class LassoRankerTerminationAnalysis {
 		}
 		
 		assert(loop != null);
-		m_loop_transition = loop;
+		m_loop_transition = AuxiliaryMethods.matchInVars(boogie2smt, loop);
 		s_Logger.debug("Loop transition:\n" + m_loop_transition);
 		m_loop = preprocess(m_loop_transition);
 		s_Logger.debug("Preprocessed loop:\n" + m_loop);
@@ -119,13 +129,14 @@ public class LassoRankerTerminationAnalysis {
 	 * be added later by calling addStem().
 	 * 
 	 * @param script the SMT script used to construct the transition formulae
+	 * @param boogie2smt the boogie2smt object that created the TransFormulas
 	 * @param loop a transition formula corresponding to the lasso's loop
 	 * @param preferences configuration options for this plugin
 	 * @throws TermException if preprocessing fails
 	 */
-	public LassoRankerTerminationAnalysis(Script script, TransFormula loop,
-			Preferences preferences) throws TermException {
-		this(script, null, loop, preferences);
+	public LassoRankerTerminationAnalysis(Script script, Boogie2SMT boogie2smt,
+			TransFormula loop, Preferences preferences) throws TermException {
+		this(script, boogie2smt, null, loop, preferences);
 	}
 	
 	/**
@@ -172,7 +183,8 @@ public class LassoRankerTerminationAnalysis {
 		if (m_stem != null) {
 			s_Logger.warn("Adding a stem to a lasso that already had one.");
 		}
-		m_stem_transition = stem_transition;
+		m_stem_transition = AuxiliaryMethods.matchInVars(m_boogie2smt,
+				stem_transition);
 		s_Logger.debug("Adding stem transition:\n" + stem_transition);
 		m_stem = preprocess(stem_transition);
 		s_Logger.debug("Preprocessed stem:\n" + m_stem);

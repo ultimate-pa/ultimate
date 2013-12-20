@@ -179,7 +179,7 @@ class TerminationArgumentSynthesizer {
 						!m_preferences.only_nondecreasing_invariants;
 				li.negate();
 				motzkin.add_inequality(li);
-//				s_Logger.debug(motzkin);
+				s_Logger.debug(motzkin);
 				conj.add(motzkin.transform());
 			}
 		}

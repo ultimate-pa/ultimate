@@ -193,8 +193,9 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		// Do the termination analysis
 		LassoRankerTerminationAnalysis tanalysis;
 		try {
-			tanalysis = new LassoRankerTerminationAnalysis(script, m_Stem,
-					m_Loop, preferences);
+			tanalysis = new LassoRankerTerminationAnalysis(script,
+					m_RootNode.getRootAnnot().getBoogie2SMT(),
+					m_Stem, m_Loop, preferences);
 		} catch (TermException e) {
 			reportUnuspportedSyntax(m_Honda, e.getMessage());
 			return false;
