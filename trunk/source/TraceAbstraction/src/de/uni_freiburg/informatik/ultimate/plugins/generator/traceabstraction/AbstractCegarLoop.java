@@ -590,45 +590,5 @@ public abstract class AbstractCegarLoop {
 	
 	
 	
-	public static List<ILocation> trace2path(List<CodeBlock> word) {
-		List<ILocation> failurePath = new ArrayList<ILocation>();
-		for (int i=0; i<word.size(); i++) {
-			CodeBlock codeBlock = word.get(i);
-			addToFailurePath(codeBlock, i , failurePath);
-		}
-		return failurePath;
-	}
-	
-	/**
-	 * Recursive method used by getFailurePath
-	 */
-	private static void addToFailurePath(CodeBlock codeBlock, int pos, 
-												List<ILocation> failurePath) {
-		if (codeBlock instanceof Call) {
-			Statement st = ((Call) codeBlock).getCallStatement();
-			failurePath.add(st.getLocation());
-		} else if (codeBlock instanceof Return) {
-			Statement st = ((Return) codeBlock).getCallStatement();
-			failurePath.add(st.getLocation());
-		} else if (codeBlock instanceof Summary) {
-			Statement st = ((Summary) codeBlock).getCallStatement();
-			failurePath.add(st.getLocation());
-		} else if (codeBlock instanceof StatementSequence) {
-			List<Statement> stmtsOfTrans = ((StatementSequence) codeBlock).getStatements();
-			for (Statement st : stmtsOfTrans) {
-				failurePath.add(st.getLocation());
-			}
-		} else if (codeBlock instanceof SequentialComposition) {
-			SequentialComposition seqComp = (SequentialComposition) codeBlock;
-			for (CodeBlock cb : seqComp.getCodeBlocks()) {
-				addToFailurePath(cb, pos, failurePath);
-			}
-		} else if (codeBlock instanceof ParallelComposition) {
-			throw new UnsupportedOperationException();
-		} else {
-			throw new IllegalArgumentException("unkown code block");
-		}
-	}
-	
 	
 }
