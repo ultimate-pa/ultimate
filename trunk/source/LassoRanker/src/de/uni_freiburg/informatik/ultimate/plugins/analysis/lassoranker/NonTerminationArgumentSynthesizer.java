@@ -279,7 +279,7 @@ public class NonTerminationArgumentSynthesizer {
 		assert(m_script.checkSat() == LBool.SAT);
 		Map<Term, Rational> val = AuxiliaryMethods.preprocessValuation(
 				m_script.getValue(vars.values().toArray(new Term[0])));
-		// Concatinate vars and val
+		// Concatenate vars and val
 		Map<BoogieVar, Rational> state = new HashMap<BoogieVar, Rational>();
 		for (Entry<BoogieVar, Term> entry : vars.entrySet()) {
 			assert(val.containsKey(entry.getValue()));
