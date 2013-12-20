@@ -30,41 +30,39 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	 * Preferences Labels
 	 */
 	public static final String LABEL_num_strict_invariants =
-			"Number of strict supporting invariants for each Motzkin " +
-			"transformation.";
+			"Number of strict supporting invariants";
 	public static final String LABEL_num_non_strict_invariants =
-			"Number of non-strict supporting invariants for each Motzkin " +
-			"transformation.";
+			"Number of non-strict supporting invariants";
 	public static final String LABEL_only_nondecreasing_invariants =
-			"Only use non-decreasing invariants.";
+			"Non-decreasing invariants only";
 	public static final String LABEL_compute_integral_hull =
-			"Compute integral hull?";
+			"Compute integral hull";
 	public static final String LABEL_enable_disjunction =
-			"Allow disjunctions?";
+			"Allow disjunctions";
 	public static final String LABEL_division_implementation =
-			"How should division be handled?";
+			"Division implementation";
 	public static final String LABEL_annotate_terms =
-			"Add annotations to SMT terms?";
+			"Add annotations to SMT terms";
 	public static final String LABEL_check_for_nontermination =
-			"Check for nontermination?";
+			"Check for nontermination";
 	public static final String LABEL_nontermination_check_nonlinear =
-			"Use nonlinear SMT query for nontermination check?";
+			"Nonlinear SMT query for nontermination check";
 	public static final String LABEL_enable_affine_template =
-			"Use the affine template?";
+			"Affine template";
 	public static final String LABEL_enable_multiphase_template =
-			"Use the multiphase template?";
+			"Multiphase template";
 	public static final String LABEL_multiphase_template_size =
-			"Number of phases in the multiphase template";
+			"Multiphase template size";
 	public static final String LABEL_enable_lex_template =
-			"Use the lexicographic template?";
+			"Lexicographic template";
 	public static final String LABEL_lex_template_size =
-			"Number of components in the lexicographic template";
+			"Lexicographic template size";
 	public static final String LABEL_enable_piecewise_template =
-			"Use the piecewise template?";
+			"Piecewise template";
 	public static final String LABEL_piecewise_template_size =
-			"Number of pieces in the piecewise template";
+			"Piecewise template size";
 	public static final String LABEL_smt_solver_command =
-			"Shell command to the external smt solver";
+			"Smt solver command";
 	
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
