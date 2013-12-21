@@ -1,0 +1,56 @@
+#Mon Dec 02 04:10:45 CET 2013
+\!/instance/AutomataScriptInterpreter=
+file_export_version=3.0
+/instance/AutomataScriptInterpreter/Timeout=609999
+@AutomataScriptInterpreter=0.0.1
+#Mon Dec 02 04:10:45 CET 2013
+file_export_version=3.0
+/instance/BlockEncoding/Minimize\ Call\ and\ Return\ Edges=true
+@BlockEncoding=0.0.1
+\!/instance/BlockEncoding=
+/instance/BlockEncoding/Enter\ Rating-Boundary\ (empty\ for\ LBE)\:=0
+/instance/BlockEncoding/Choose\ the\ strategy\ for\ the\ edge\ rating\:=DISJUNCTIVE_RATING
+#Mon Dec 02 04:10:45 CET 2013
+\!/instance/BuchiAutomizer=
+file_export_version=3.0
+/instance/BuchiAutomizer/Buchi\ interpolant\ automaton=Staged
+@BuchiAutomizer=0.0.1
+/instance/BuchiAutomizer/ScroogeNondeterminism\ stem=false
+/instance/BuchiAutomizer/Determinization\ on\ demand=true
+/instance/BuchiAutomizer/Bouncer\ stem=false
+/instance/BuchiAutomizer/Cannibalize\ loop=true
+#Mon Dec 02 04:10:45 CET 2013
+\!/instance/CACSL2BoogieTranslator=
+file_export_version=3.0
+@CACSL2BoogieTranslator=0.0.1
+/instance/CACSL2BoogieTranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
+/instance/CACSL2BoogieTranslator/Translation-Mode=SV_COMP14
+#Mon Dec 02 04:10:45 CET 2013
+@LTL2aut=0.0.1
+\!/instance/LTL2aut=
+file_export_version=3.0
+/instance/LTL2aut/Property\ to\ check\:=(a U  [] b)\na\: x > 0\nb\: x \= 0\n
+/instance/LTL2aut/Path\ to\ ltl->ba\ tool\ (LTL2BA,\ LTL3BA)\ \:=/home/matthias/qYv/uni/mentor/2013-LTLSoftwareModelChecking/langenfeld/svn\:externals/ltl2baTools/ltl2ba-1.1/ltl2ba
+#Mon Dec 02 04:10:45 CET 2013
+file_export_version=3.0
+/instance/RCFGBuilder/Simplify\ code\ blocks=true
+\!/instance/RCFGBuilder=
+/instance/RCFGBuilder/Remove\ goto\ edges\ from\ RCFG=false
+/instance/RCFGBuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+/instance/RCFGBuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=false
+/instance/RCFGBuilder/Convert\ code\ blocks\ to\ CNF=true
+@RCFGBuilder=0.0.1
+#Mon Dec 02 04:10:45 CET 2013
+/instance/TraceAbstraction/Interpolant\ automaton=SINGLETRACE
+file_export_version=3.0
+@TraceAbstraction=0.0.1
+/instance/TraceAbstraction/Timeout\ in\ seconds=300
+/instance/TraceAbstraction/Determinization\ algorithm=EAGERPOST
+\!/instance/TraceAbstraction=
+/instance/TraceAbstraction/Compute\ Interpolants\ along\ a\ Counterexample=Craig_NestedInterpolation
+#Mon Dec 02 04:10:45 CET 2013
+file_export_version=3.0
+\!/instance/UltimateGui=
+/instance/UltimateGui/LASTTOOLCHAINPATH=/mnt/storage/stalin/trunk/examples/toolchains/BuchiAutomizerCWithBlockEncoding.xml
+/instance/UltimateGui/LASTPATH=/mnt/storage/stalin/trunk/examples/programs/termination/CookSeeZuleger-2013TACAS-Fig3.c
+@UltimateGui=0.0.1
