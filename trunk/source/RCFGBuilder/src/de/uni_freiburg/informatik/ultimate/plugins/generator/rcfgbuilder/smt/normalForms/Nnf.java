@@ -79,7 +79,11 @@ public class Nnf {
 					return;
 				} else if (functionName.equals("=>")) {
 					Term[] params = appTerm.getParameters();
-					super.convert(Util.or(m_Script, negateAllButLast(params)));
+					// do not descend to children (super.convert(...), but 
+					// recursively call this procedure. Necessary because
+					// the result of Util.or may have been simplified to
+					// a formula that is not an or-term.
+					convert(Util.or(m_Script, negateAllButLast(params)));
 					return;
 				} else {
 					//consider term as atom
