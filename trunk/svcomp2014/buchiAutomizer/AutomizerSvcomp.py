@@ -14,6 +14,11 @@ settingsFileTermination = './BuchiAutomizerSvcomp.settings'
 safetyString = 'Ultimate proved your program to be correct'
 unsafetyString = 'Ultimate proved your program to be incorrect'
 unknownSafetyString = 'Ultimate could not prove your program'
+
+terminationString = 'Buchi Automizer proved that your program is terminating'
+notterminationString = 'Ultimate proved your program to be incorrect'
+unknownTerminationString = 'Buchi Automizer was unable to prove termination'
+
 memDerefUltimateString = 'pointer dereference may fail'
 memFreeUltimateString = 'free of unallocated memory possible'
 memMemtrackUltimateString = 'not all allocated memory was freed' 
@@ -105,6 +110,12 @@ while True:
 		memResult = memFreeResult
 	if (line.find(memMemtrackUltimateString) != -1):
 		memResult = memMemtrackResult
+	if (line.find(terminationString) != -1):
+		terminationResult = 'TRUE'
+	if (line.find(notterminationString) != -1):
+		terminationResult = 'FALSE'
+	if (line.find(unknownTerminationString) != -1):
+		terminationResult = 'UNKNOWN'
 	if (line.find(errorPathBeginString) != -1):
 		readingErrorPath = True
 	if (line.find(errorPathEndString) != -1):
@@ -127,9 +138,10 @@ if safetyResult == 'FALSE':
 	errOutputFile = open(errorPathFileName, 'wb')
 	errOutputFile.write(errorPath.encode('utf-8'))
 
-if (memSafetyMode and safetyResult == 'FALSE'):
-	result = 'FALSE({})'.format(memResult)
-else:
-	result = safetyResult
+result = terminationResult
+#if (memSafetyMode and safetyResult == 'FALSE'):
+	#result = 'FALSE({})'.format(memResult)
+#else:
+	#result = safetyResult
 print('Result:') 
 print(result)
