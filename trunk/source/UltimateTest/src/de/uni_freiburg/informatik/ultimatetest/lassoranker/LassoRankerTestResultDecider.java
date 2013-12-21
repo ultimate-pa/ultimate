@@ -72,24 +72,24 @@ public class LassoRankerTestResultDecider implements ITestResultDecider {
 			line = null;
 		}
 		if (line != null && line.startsWith("//#r")) {
-			String expected = line.substring(4);
-			switch (expected.toLowerCase()) {
-			case "ignore":
+			String expected = line.substring(4).toLowerCase();
+			if (expected.equals("ignore")) {
 				return ExpectedResult.IGNORE;
-			case "termination":
+			} else if (expected.equals("termination")) {
 				return ExpectedResult.TERMINATION;
-			case "terminationderivable":
+			} else if (expected.equals("terminationderivable")) {
 				return ExpectedResult.TERMINATIONDERIVABLE;
-			case "nontermination":
+			} else if (expected.equals("nontermination")) {
 				return ExpectedResult.NONTERMINATION;
-			case "nonterminationderivable":
+			} else if (expected.equals("nonterminationderivable")) {
 				return ExpectedResult.NONTERMINATIONDERIVABLE;
-			case "unknown":
+			} else if (expected.equals("unknown")) {
 				return ExpectedResult.UNKNOWN;
-			case "error":
+			} else if (expected.equals("error")) {
 				return ExpectedResult.ERROR;
+			} else {
+				return null;
 			}
-			return null;
 		}
 		if (line != null) {
 			return ExpectedResult.UNSPECIFIED;
