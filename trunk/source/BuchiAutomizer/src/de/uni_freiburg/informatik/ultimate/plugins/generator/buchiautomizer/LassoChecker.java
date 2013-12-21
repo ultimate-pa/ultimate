@@ -443,8 +443,8 @@ public class LassoChecker {
 				assert termArg.getSupportingInvariants() != null;
 				m_Bspm.computePredicates(!withStem, termArg);
 				assert m_Bspm.providesPredicates();
-				assert areSupportingInvariantsCorrect();
-				assert isRankingFunctionCorrect();
+				assert areSupportingInvariantsCorrect() : "incorrect supporting invariant";
+				assert isRankingFunctionCorrect() : "incorrect ranking function";
 				m_Bspm.clearPredicates();
 			}
 			
