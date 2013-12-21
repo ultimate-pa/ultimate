@@ -15,11 +15,11 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.TestFileInterpreter.LoggerSeverity;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitions;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.NestedwordAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetTransition;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionList.Pair;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitionsAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.NestedwordAutomatonAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetAutomatonAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetTransitionAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionListAST.Pair;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
@@ -55,21 +55,21 @@ public class AutomataDefinitionInterpreter {
 	 * 
 	 * @param automata the definitions of automata
 	 */
-	public void interpret(AutomataDefinitions automata) {
+	public void interpret(AutomataDefinitionsAST automata) {
 		List<? extends AtsASTNode> children = automata.getListOfAutomataDefinitions();
 		for (AtsASTNode n : children) {
-			if (n instanceof NestedwordAutomaton) {
+			if (n instanceof NestedwordAutomatonAST) {
 				try {
-					interpret((NestedwordAutomaton) n);
+					interpret((NestedwordAutomatonAST) n);
 				} catch (Exception e) {
 					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
 							+ System.getProperty("line.separator") + e.getStackTrace(),
 							"Exception thrown", n.getLocation());
 				}
 
-			} else if (n instanceof PetriNetAutomaton) {
+			} else if (n instanceof PetriNetAutomatonAST) {
 				try {
-					interpret((PetriNetAutomaton) n);
+					interpret((PetriNetAutomatonAST) n);
 				} catch (Exception e) {
 					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
 							+ System.getProperty("line.separator") + e.getStackTrace(), 
@@ -80,7 +80,7 @@ public class AutomataDefinitionInterpreter {
 		
 	}
 	
-	public void interpret(NestedwordAutomaton nwa) throws IllegalArgumentException {
+	public void interpret(NestedwordAutomatonAST nwa) throws IllegalArgumentException {
 		m_errorLocation = nwa.getLocation();
 		Set<String> internalAlphabet = new HashSet<String>(nwa.getInternalAlphabet());
 		Set<String> callAlphabet = new HashSet<String>(nwa.getCallAlphabet());
@@ -141,7 +141,7 @@ public class AutomataDefinitionInterpreter {
 		
 	}
 	
-	public void interpret(PetriNetAutomaton pna) throws IllegalArgumentException {
+	public void interpret(PetriNetAutomatonAST pna) throws IllegalArgumentException {
 		m_errorLocation = pna.getLocation();
 		PetriNetJulian<String, String> net = new PetriNetJulian<String, String>(
 				new HashSet<String>(pna.getAlphabet()), 
@@ -157,7 +157,7 @@ public class AutomataDefinitionInterpreter {
 
 
 		// Add the transitions
-		for (PetriNetTransition ptrans : pna.getTransitions()) {
+		for (PetriNetTransitionAST ptrans : pna.getTransitions()) {
 			Collection<Place<String,String>> preds = new ArrayList<Place<String,String>>();
 			Collection<Place<String,String>> succs = new ArrayList<Place<String,String>>();
 			for (String pred : ptrans.getPreds()) {

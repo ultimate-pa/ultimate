@@ -2408,12 +2408,9 @@ public class SmtManager {
 		Map<TermVariable, Term> varsToRenameInCallerAndReturnPred = new HashMap<TermVariable, Term>();
 		Map<TermVariable, Term> varsToRenameInReturnPred = new HashMap<TermVariable, Term>();
 		Map<TermVariable, Term> varsToRenameInCallerPred = new HashMap<TermVariable, Term>();
-//		Set<BoogieVar> returnerPredVars = returnerPred.getVars();
-//		Set<BoogieVar> callerPredVars = callerPred.getVars();
 		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
 		// 1. Compute those global variable assignments, i.e. x_global = old(x_global) if x_global is
 		// a global variable.
-//		Set<BoogieVar> modifiableGlobalVarsAsBoogieVars = globalVarsAssignments.getAssignedVars();
 		// 1.1 Rename the invars in global variable assignments.
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
 		for (BoogieVar bv : globalVarsAssignments.getInVars().keySet()) {
@@ -2470,14 +2467,10 @@ public class SmtManager {
 		Term callTF_InVarsRenamed = new Substitution(substitution, m_Script).transform(callTF.getFormula());
 		substitution.clear();
 		for (BoogieVar bv : callTF.getOutVars().keySet()) {
-//			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-//			varsToQuantify.add(callTF.getOutVars().get(bv));
 			substitution.put(callTF.getOutVars().get(bv), bv.getTermVariable());
 		}
 		Term callTFRenamed = new Substitution(substitution, m_Script).transform(callTF_InVarsRenamed);
 		
-//		Term retPredRenamed = new Substitution(varsToRenameInCallerAndReturnPred, m_Script).transform(returnerPred.getFormula());
-//		Term callerPredRenamed = new Substitution(varsToRenameInCallerAndReturnPred, m_Script).transform(callerPred.getFormula());
 		// Quantify all the other local vars.
 		for (BoogieVar bv : returnerPred.getVars()) {
 			if (bv.isOldvar()) {
@@ -2536,10 +2529,6 @@ public class SmtManager {
 			resultQuantified = PartialQuantifierElimination.quantifier(m_Script, Script.FORALL,
 					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 					result, (Term[][])null);
-//			resultQuantified = m_Script.quantifier(Script.FORALL, 
-//					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]), 
-//					result, (Term[][])null);
-			
 		}
 		Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
 		Integer quantifier = quantifiersContainedInFormula(resultQuantified, quantifiedVariables);

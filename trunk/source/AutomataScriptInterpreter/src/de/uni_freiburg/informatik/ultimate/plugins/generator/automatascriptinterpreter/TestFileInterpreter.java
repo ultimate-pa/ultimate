@@ -36,27 +36,27 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AutomataScriptLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AssignmentExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFile;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.BreakStatement;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.ConditionalBooleanExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.ConditionalBooleanOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.ConstantExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.ContinueStatement;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.ForStatement;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.IfElseStatement;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.IfStatement;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.NestedLassoword;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.Nestedword;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.OperationInvocationExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.RelationalExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.ReturnStatement;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.StatementList;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AssignmentExpressionAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.BinaryExpressionAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.BreakStatementAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.ConditionalBooleanExpressionAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.ConditionalBooleanOperatorAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.ConstantExpressionAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.ContinueStatementAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.ForStatementAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.IfElseStatementAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.IfStatementAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.NestedLassowordAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.NestedwordAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.OperationInvocationExpressionAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.RelationalExpressionAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.ReturnStatementAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.StatementListAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.UnaryExpressionAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableDeclarationAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableExpressionAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.WhileStatementAST;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 
@@ -119,39 +119,39 @@ public class TestFileInterpreter {
 		}
 		
 		private void checkType(AtsASTNode n) throws IllegalArgumentException {
-			if (n instanceof AssignmentExpression) {
-				checkType((AssignmentExpression) n);
-			} else if (n instanceof BinaryExpression) {
-				checkType((BinaryExpression) n);
-			}  else if (n instanceof ConditionalBooleanExpression) {
-				checkType((ConditionalBooleanExpression) n);
-			} else if (n instanceof ForStatement) {
-				checkType((ForStatement) n);
-			} else if (n instanceof IfElseStatement) {
-				checkType((IfElseStatement) n);
-			} else if (n instanceof IfStatement) {
-				checkType((IfStatement) n);
-			} else if (n instanceof OperationInvocationExpression) {
-				checkType((OperationInvocationExpression) n);
-			} else if (n instanceof RelationalExpression) {
-				checkType((RelationalExpression) n);
-			} else if (n instanceof StatementList) {
-				for (AtsASTNode stmt : ((StatementList)n).getOutgoingNodes()) {
+			if (n instanceof AssignmentExpressionAST) {
+				checkType((AssignmentExpressionAST) n);
+			} else if (n instanceof BinaryExpressionAST) {
+				checkType((BinaryExpressionAST) n);
+			}  else if (n instanceof ConditionalBooleanExpressionAST) {
+				checkType((ConditionalBooleanExpressionAST) n);
+			} else if (n instanceof ForStatementAST) {
+				checkType((ForStatementAST) n);
+			} else if (n instanceof IfElseStatementAST) {
+				checkType((IfElseStatementAST) n);
+			} else if (n instanceof IfStatementAST) {
+				checkType((IfStatementAST) n);
+			} else if (n instanceof OperationInvocationExpressionAST) {
+				checkType((OperationInvocationExpressionAST) n);
+			} else if (n instanceof RelationalExpressionAST) {
+				checkType((RelationalExpressionAST) n);
+			} else if (n instanceof StatementListAST) {
+				for (AtsASTNode stmt : ((StatementListAST)n).getOutgoingNodes()) {
 					checkType(stmt);
 				}
-			} else if (n instanceof UnaryExpression) {
-				checkType((UnaryExpression) n);
-			} else if (n instanceof VariableDeclaration) {
-				checkType((VariableDeclaration) n);
-			} else if (n instanceof VariableExpression) {
-				checkType((VariableExpression) n);
-			} else if (n instanceof WhileStatement) {
-				checkType((WhileStatement) n);
+			} else if (n instanceof UnaryExpressionAST) {
+				checkType((UnaryExpressionAST) n);
+			} else if (n instanceof VariableDeclarationAST) {
+				checkType((VariableDeclarationAST) n);
+			} else if (n instanceof VariableExpressionAST) {
+				checkType((VariableExpressionAST) n);
+			} else if (n instanceof WhileStatementAST) {
+				checkType((WhileStatementAST) n);
 			}
 				
 		}
 		
-		private void checkType(AssignmentExpression as) throws IllegalArgumentException {
+		private void checkType(AssignmentExpressionAST as) throws IllegalArgumentException {
 			List<AtsASTNode> children = as.getOutgoingNodes();
 			m_errorLocation = as.getLocation();
 			if (children.size() != 2) {
@@ -166,7 +166,7 @@ public class TestFileInterpreter {
 			checkType(children.get(0));
 			checkType(children.get(1));
 			
-			VariableExpression var = (VariableExpression) children.get(0);
+			VariableExpressionAST var = (VariableExpressionAST) children.get(0);
 			// Check whether the right-hand side has expected type.
 			for (Class<?> c : getTypes(children.get(1))) {
 				children.get(1).setType(c);
@@ -183,7 +183,7 @@ public class TestFileInterpreter {
 			
 		}
 		
-		private void checkType(BinaryExpression be)  throws IllegalArgumentException {
+		private void checkType(BinaryExpressionAST be)  throws IllegalArgumentException {
 			List<AtsASTNode> children = be.getOutgoingNodes();
 			m_errorLocation = be.getLocation();
 			if (children.size() != 2) {
@@ -230,20 +230,20 @@ public class TestFileInterpreter {
 			throw new IllegalArgumentException(message);
 		}
 		
-		private void checkType(ConditionalBooleanExpression cbe)  throws IllegalArgumentException {
+		private void checkType(ConditionalBooleanExpressionAST cbe)  throws IllegalArgumentException {
 			List<AtsASTNode> children = cbe.getOutgoingNodes();
 			m_errorLocation = cbe.getLocation();
-			if ((cbe.getOperator() == ConditionalBooleanOperator.NOT) && (children.size() != 1)) {
+			if ((cbe.getOperator() == ConditionalBooleanOperatorAST.NOT) && (children.size() != 1)) {
 				m_shortDescription = "Error";
 				String message = "\"!\" operator should have 1 operand." + System.getProperty("line.separator") + "Num of operands: " + children.size();
 				m_longDescription = message;
 				throw new IllegalArgumentException(message);
-			} else if ((cbe.getOperator() == ConditionalBooleanOperator.AND) && (children.size() != 2)) {
+			} else if ((cbe.getOperator() == ConditionalBooleanOperatorAST.AND) && (children.size() != 2)) {
 				m_shortDescription = "Error";
 				String message = "\"&&\" operator should have 2 operands." + System.getProperty("line.separator") + "Num of operands: " + children.size();
 				m_longDescription = message;
 				throw new IllegalArgumentException(message);
-			} else if ((cbe.getOperator() == ConditionalBooleanOperator.OR) && (children.size() != 2)) {
+			} else if ((cbe.getOperator() == ConditionalBooleanOperatorAST.OR) && (children.size() != 2)) {
 				m_shortDescription = "Error";
 				String message = " \"||\" operator should have 2 operands." + System.getProperty("line.separator") + "Num of operands: " + children.size();
 				m_longDescription = message;
@@ -279,7 +279,7 @@ public class TestFileInterpreter {
 			}
 		}
 		
-		private void checkType(ForStatement fs)  throws IllegalArgumentException {
+		private void checkType(ForStatementAST fs)  throws IllegalArgumentException {
 			List<AtsASTNode> children = fs.getOutgoingNodes();
 			m_errorLocation = fs.getLocation();
 			if (children.size() != 4) {
@@ -298,7 +298,7 @@ public class TestFileInterpreter {
 			}
 		}
 		
-		private void checkType(IfElseStatement is)  throws IllegalArgumentException {
+		private void checkType(IfElseStatementAST is)  throws IllegalArgumentException {
 			List<AtsASTNode> children = is.getOutgoingNodes();
 			m_errorLocation = is.getLocation();
 			if (children.size() != 3) {
@@ -318,7 +318,7 @@ public class TestFileInterpreter {
 			}
 		}
 		
-		private void checkType(IfStatement is)  throws IllegalArgumentException {
+		private void checkType(IfStatementAST is)  throws IllegalArgumentException {
 			List<AtsASTNode> children = is.getOutgoingNodes();
 			m_errorLocation = is.getLocation();
 			if (children.size() != 2) {
@@ -339,7 +339,7 @@ public class TestFileInterpreter {
 			}
 		}
 		
-		private void checkType(OperationInvocationExpression oe) throws IllegalArgumentException {
+		private void checkType(OperationInvocationExpressionAST oe) throws IllegalArgumentException {
 			m_errorLocation = oe.getLocation();
 			String opName = oe.getOperationName().toLowerCase();
 			if (!m_existingOperations.containsKey(opName)) {
@@ -373,7 +373,7 @@ public class TestFileInterpreter {
 			
 		}
 		
-		private void checkType(RelationalExpression re)  throws IllegalArgumentException {
+		private void checkType(RelationalExpressionAST re)  throws IllegalArgumentException {
 			List<AtsASTNode> children = re.getOutgoingNodes();
 			m_errorLocation = re.getLocation();
 			if (children.size() != 2) {
@@ -411,7 +411,7 @@ public class TestFileInterpreter {
 			throw new IllegalArgumentException(message);
 		}
 		
-		private void checkType(UnaryExpression ue)  throws IllegalArgumentException {
+		private void checkType(UnaryExpressionAST ue)  throws IllegalArgumentException {
 			List<AtsASTNode> children = ue.getOutgoingNodes();
 			m_errorLocation = ue.getLocation();
 			if (children.size() != 1) {
@@ -423,7 +423,7 @@ public class TestFileInterpreter {
 			// Check children for correct type
 			checkType(children.get(0));
 			
-			if (!(children.get(0) instanceof VariableExpression)) {
+			if (!(children.get(0) instanceof VariableExpressionAST)) {
 				m_shortDescription = "Error";
 				String message = "Unary operators are applicable only on variables." + System.getProperty("line.separator") + "You want to apply it on " + children.get(0).getClass().getSimpleName();
 				m_longDescription = message;
@@ -442,7 +442,7 @@ public class TestFileInterpreter {
 			throw new IllegalArgumentException(message);
 		}
 		
-		private void checkType(VariableExpression v) {
+		private void checkType(VariableExpressionAST v) {
 			m_errorLocation = v.getLocation();
 			if (m_localVariables.containsKey(v.getIdentifier())) {
 				v.setType(m_localVariables.get(v.getIdentifier()));
@@ -454,7 +454,7 @@ public class TestFileInterpreter {
 			}
 		}
 		
-		private void checkType(VariableDeclaration vd)  throws IllegalArgumentException {
+		private void checkType(VariableDeclarationAST vd)  throws IllegalArgumentException {
 			List<AtsASTNode> children = vd.getOutgoingNodes();
 			m_errorLocation = vd.getLocation();
 	    	if ((children.size() != 0) && (children.size() != 1)) {
@@ -482,7 +482,7 @@ public class TestFileInterpreter {
 	    	throw new IllegalArgumentException(message);
 		}
 		
-		private void checkType(WhileStatement ws)  throws IllegalArgumentException {
+		private void checkType(WhileStatementAST ws)  throws IllegalArgumentException {
 			List<AtsASTNode> children = ws.getOutgoingNodes();
 			m_errorLocation = ws.getLocation();
 			if (children.size() != 2) {
@@ -513,8 +513,8 @@ public class TestFileInterpreter {
 		 * has no declared method called "getResult".
 		 */
 		private Set<Class<?>> getTypes(AtsASTNode n) throws UnsupportedOperationException {
-			if (n instanceof OperationInvocationExpression) {
-				OperationInvocationExpression oe = (OperationInvocationExpression) n;
+			if (n instanceof OperationInvocationExpressionAST) {
+				OperationInvocationExpressionAST oe = (OperationInvocationExpressionAST) n;
 				String opName = oe.getOperationName().toLowerCase();
 				Set<Class<?>> returnTypes = new HashSet<Class<?>>();
 				if (opName.equals("print") || opName.equals("assert")) {
@@ -656,9 +656,9 @@ public class TestFileInterpreter {
 	 * @return the result of the automatascript test file, which is either an automaton or null.
 	 */
 	public Object interpretTestFile(AtsASTNode node) {
-		AutomataTestFile ats = null;
-		if (node instanceof AutomataTestFile) {
-			ats = (AutomataTestFile) node;
+		AutomataTestFileAST ats = null;
+		if (node instanceof AutomataTestFileAST) {
+			ats = (AutomataTestFileAST) node;
 		}
 		Finished interpretationFinished = Finished.FINISHED;
 		reportToLogger(LoggerSeverity.DEBUG, "Interpreting automata definitions...");
@@ -729,9 +729,9 @@ public class TestFileInterpreter {
 		return m_LastPrintedAutomaton;
 	}
 	
-	private Object interpret(AssignmentExpression as) throws InterpreterException {
+	private Object interpret(AssignmentExpressionAST as) throws InterpreterException {
 		List<AtsASTNode> children = as.getOutgoingNodes();
-		VariableExpression var = (VariableExpression) children.get(0);
+		VariableExpressionAST var = (VariableExpressionAST) children.get(0);
 		if (!m_variables.containsKey(var.getIdentifier())) {
 			String message = as.getLocation().getStartLine() + ": Variable \"" + var.getIdentifier() + "\" was not declared before.";
 			throw new InterpreterException(as.getLocation(), message);
@@ -773,49 +773,49 @@ public class TestFileInterpreter {
 		
 	private Object interpret(AtsASTNode node) throws InterpreterException {
 		Object result = null;
-		if (node instanceof AssignmentExpression) {
-			result = interpret((AssignmentExpression) node);
-		} else if (node instanceof BinaryExpression) {
-			result = interpret((BinaryExpression) node);
-		} else if (node instanceof BreakStatement) {
-			result = interpret((BreakStatement) node);
-		} else if (node instanceof ConditionalBooleanExpression) {
-			result = interpret((ConditionalBooleanExpression) node);
-		} else if (node instanceof ConstantExpression) {
-			result = interpret((ConstantExpression) node);
-		} else if (node instanceof ContinueStatement) {
-			result = interpret((ContinueStatement) node);
-		} else if (node instanceof ForStatement) {
-			result = interpret((ForStatement) node);
-		} else if (node instanceof IfElseStatement) {
-			result = interpret((IfElseStatement) node);
-		} else if (node instanceof IfStatement) {
-			result = interpret((IfStatement) node);
-		} else if (node instanceof Nestedword) {
-			result = interpret((Nestedword) node);
-		} else if (node instanceof NestedLassoword) {
-			result = interpret((NestedLassoword) node);
-		} else if (node instanceof OperationInvocationExpression) {
-			result = interpret((OperationInvocationExpression) node);
-		} else if (node instanceof RelationalExpression) {
-			result = interpret((RelationalExpression) node);
-		} else if (node instanceof ReturnStatement) {
-			result = interpret((ReturnStatement) node);
-		} else if (node instanceof StatementList) {
-			result = interpret((StatementList) node);
-		} else if (node instanceof UnaryExpression) {
-			result = interpret((UnaryExpression) node);
-		} else if (node instanceof VariableDeclaration) {
-			result = interpret((VariableDeclaration) node);
-		} else if (node instanceof VariableExpression) {
-			result = interpret((VariableExpression) node);
-		} else if (node instanceof WhileStatement) {
-			result = interpret((WhileStatement) node);
+		if (node instanceof AssignmentExpressionAST) {
+			result = interpret((AssignmentExpressionAST) node);
+		} else if (node instanceof BinaryExpressionAST) {
+			result = interpret((BinaryExpressionAST) node);
+		} else if (node instanceof BreakStatementAST) {
+			result = interpret((BreakStatementAST) node);
+		} else if (node instanceof ConditionalBooleanExpressionAST) {
+			result = interpret((ConditionalBooleanExpressionAST) node);
+		} else if (node instanceof ConstantExpressionAST) {
+			result = interpret((ConstantExpressionAST) node);
+		} else if (node instanceof ContinueStatementAST) {
+			result = interpret((ContinueStatementAST) node);
+		} else if (node instanceof ForStatementAST) {
+			result = interpret((ForStatementAST) node);
+		} else if (node instanceof IfElseStatementAST) {
+			result = interpret((IfElseStatementAST) node);
+		} else if (node instanceof IfStatementAST) {
+			result = interpret((IfStatementAST) node);
+		} else if (node instanceof NestedwordAST) {
+			result = interpret((NestedwordAST) node);
+		} else if (node instanceof NestedLassowordAST) {
+			result = interpret((NestedLassowordAST) node);
+		} else if (node instanceof OperationInvocationExpressionAST) {
+			result = interpret((OperationInvocationExpressionAST) node);
+		} else if (node instanceof RelationalExpressionAST) {
+			result = interpret((RelationalExpressionAST) node);
+		} else if (node instanceof ReturnStatementAST) {
+			result = interpret((ReturnStatementAST) node);
+		} else if (node instanceof StatementListAST) {
+			result = interpret((StatementListAST) node);
+		} else if (node instanceof UnaryExpressionAST) {
+			result = interpret((UnaryExpressionAST) node);
+		} else if (node instanceof VariableDeclarationAST) {
+			result = interpret((VariableDeclarationAST) node);
+		} else if (node instanceof VariableExpressionAST) {
+			result = interpret((VariableExpressionAST) node);
+		} else if (node instanceof WhileStatementAST) {
+			result = interpret((WhileStatementAST) node);
 		}
 		return result;
 	}
 
-	private Object interpret(BinaryExpression be) throws InterpreterException {
+	private Object interpret(BinaryExpressionAST be) throws InterpreterException {
 		List<AtsASTNode> children = be.getOutgoingNodes();
 		// If the return type is 'String', we just call the toString method of each operand
 		// and return the concatenation of these strings.
@@ -836,13 +836,13 @@ public class TestFileInterpreter {
 		}
 	}
 	
-	private Object interpret(BreakStatement bst) {
+	private Object interpret(BreakStatementAST bst) {
 		// Change the flow
 		m_flow = Flow.BREAK;
 		return null;
 	}
 	
-	private Boolean interpret(ConditionalBooleanExpression cbe) throws InterpreterException {
+	private Boolean interpret(ConditionalBooleanExpressionAST cbe) throws InterpreterException {
 		List<AtsASTNode> children = cbe.getOutgoingNodes();
 		switch (cbe.getOperator()) {
 		case NOT: return !((Boolean) interpret(children.get(0)));
@@ -865,17 +865,17 @@ public class TestFileInterpreter {
 		}
 	}
 
-	private Object interpret(ConstantExpression ce) {
+	private Object interpret(ConstantExpressionAST ce) {
 		return ce.getValue();
 	}
 	
-	private Object interpret(ContinueStatement cst) {
+	private Object interpret(ContinueStatementAST cst) {
 		// Change the flow
 		m_flow  =  Flow.CONTINUE;
 		return null;
 	}
 	
-	private Object interpret(ForStatement fs) throws InterpreterException {
+	private Object interpret(ForStatementAST fs) throws InterpreterException {
 		List<AtsASTNode> children = fs.getOutgoingNodes();
 		
 		Boolean loopCondition = false;
@@ -941,7 +941,7 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private Object interpret(IfElseStatement is) throws InterpreterException {
+	private Object interpret(IfElseStatementAST is) throws InterpreterException {
 		List<AtsASTNode> children = is.getOutgoingNodes();
 		
 		// children(0) is the condition
@@ -953,7 +953,7 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private Object interpret(IfStatement is) throws InterpreterException {
+	private Object interpret(IfStatementAST is) throws InterpreterException {
 		List<AtsASTNode> children = is.getOutgoingNodes();
 		if ((Boolean) interpret(children.get(0))) {
 			for (int i = 1; i < children.size(); i++) {
@@ -963,17 +963,17 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private NestedWord<String> interpret(Nestedword nw) {
+	private NestedWord<String> interpret(NestedwordAST nw) {
 		return new NestedWord<String>(nw.getWordSymbols(), nw.getNestingRelation());
 	}
 	
-	private NestedLassoWord<String> interpret(NestedLassoword nw) {
+	private NestedLassoWord<String> interpret(NestedLassowordAST nw) {
 		NestedWord<String> stem = interpret(nw.getStem());
 		NestedWord<String> loop = interpret(nw.getLoop());
 		return new NestedLassoWord<String>(stem, loop);
 	}
 	
-	private Object interpret(OperationInvocationExpression oe) throws InterpreterException {
+	private Object interpret(OperationInvocationExpressionAST oe) throws InterpreterException {
 		List<AtsASTNode> children = oe.getOutgoingNodes();
 		if (children.size() != 1) {
 			String message = "OperationExpression should have only 1 child (ArgumentList)";
@@ -1055,7 +1055,7 @@ public class TestFileInterpreter {
 		return result;
 	}
 	
-	private Boolean interpret(RelationalExpression re) throws InterpreterException {
+	private Boolean interpret(RelationalExpressionAST re) throws InterpreterException {
 		List<AtsASTNode> children = re.getOutgoingNodes();
 		if (re.getExpectingType() == Integer.class) {
 			int v1 = (Integer) interpret(children.get(0));
@@ -1074,7 +1074,7 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private Object interpret(ReturnStatement rst) throws InterpreterException {
+	private Object interpret(ReturnStatementAST rst) throws InterpreterException {
 		List<AtsASTNode> children = rst.getOutgoingNodes();
 		// Change the flow
 		m_flow = Flow.RETURN;
@@ -1085,17 +1085,17 @@ public class TestFileInterpreter {
 		}
 	}
 	
-	private Object interpret(StatementList stmtList) throws InterpreterException {
+	private Object interpret(StatementListAST stmtList) throws InterpreterException {
 		for (AtsASTNode stmt : stmtList.getOutgoingNodes()) {
 				interpret(stmt);
 		}
 		return null;
 	}
 	
-    private Integer interpret(UnaryExpression ue) throws InterpreterException {
+    private Integer interpret(UnaryExpressionAST ue) throws InterpreterException {
 		  List<AtsASTNode> children = ue.getOutgoingNodes();
 		  
-		  VariableExpression var = (VariableExpression) children.get(0);
+		  VariableExpressionAST var = (VariableExpressionAST) children.get(0);
 		  Integer oldVal = (Integer) interpret(var);
 	      
 	      switch(ue.getOperator()) {
@@ -1122,7 +1122,7 @@ public class TestFileInterpreter {
 	      }
 		}
 	
-    private Object interpret(VariableDeclaration vd) throws InterpreterException {
+    private Object interpret(VariableDeclarationAST vd) throws InterpreterException {
     	List<AtsASTNode> children = vd.getOutgoingNodes();
     	Object value = null;
     	if (children.size() == 1) {
@@ -1139,7 +1139,7 @@ public class TestFileInterpreter {
     	return null;
     }
     
-	private Object interpret(VariableExpression v) throws InterpreterException {
+	private Object interpret(VariableExpressionAST v) throws InterpreterException {
 		if (!m_variables.containsKey(v.getIdentifier())) {
 			String longDescr = "Variable \"" + v.getIdentifier() + "\" was not declared before.";
 			throw new InterpreterException(v.getLocation(), longDescr);
@@ -1147,7 +1147,7 @@ public class TestFileInterpreter {
 		return m_variables.get(v.getIdentifier());
 	}
 	
-	private Object interpret(WhileStatement ws) throws InterpreterException {
+	private Object interpret(WhileStatementAST ws) throws InterpreterException {
 		List<AtsASTNode> children = ws.getOutgoingNodes();
 		Boolean loopCondition = (Boolean) interpret(children.get(0));
 		while (loopCondition) {
@@ -1282,7 +1282,7 @@ public class TestFileInterpreter {
 	 * @throws UnsupportedOperationException if the operation does not exist
 	 */
 	
-	private IOperation<String,String> getAutomataOperation(OperationInvocationExpression oe, ArrayList<Object> arguments) throws InterpreterException  {
+	private IOperation<String,String> getAutomataOperation(OperationInvocationExpressionAST oe, ArrayList<Object> arguments) throws InterpreterException  {
 		String operationName = oe.getOperationName().toLowerCase();
 		IOperation<String,String> result = null;
 		if (m_existingOperations.containsKey(operationName)) {

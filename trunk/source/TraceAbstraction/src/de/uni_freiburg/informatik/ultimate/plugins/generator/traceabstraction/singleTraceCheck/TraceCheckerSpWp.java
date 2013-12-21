@@ -124,6 +124,30 @@ public class TraceCheckerSpWp extends TraceChecker {
 		return m_InterpolantsWp[i];
 	}
 	
+	private IPredicate getBackwardPredicateAtPosition(int i, IPredicate tracePostcondition, boolean backwardPredicate) {
+		if (i >= m_InterpolantsWp.length) {
+			return tracePostcondition;
+		} else {
+			assert i >= 0;
+			if (!backwardPredicate) 
+				return m_InterpolantsWp[i];
+			else
+				return m_InterpolantsBp[i];
+		}
+	}
+	
+	
+	private IPredicate getForwardPredicateAtPosition(int i, IPredicate tracePrecondition, boolean forwardPredicate) {
+		if (i < 0) {
+			return tracePrecondition;
+		} else {
+			assert i < m_InterpolantsSp.length;
+			if (!forwardPredicate) 
+				return m_InterpolantsSp[i];
+			else
+				return m_InterpolantsFp[i];
+		}
+	}
 	
 	/**
 	 * Computes the sequential composition of the statements from the given trace, where the trace doesn't contain
@@ -240,56 +264,44 @@ public class TraceCheckerSpWp extends TraceChecker {
 			m_InterpolantsSp = new IPredicate[trace.length()-1];
 
 			s_Logger.debug("Computing strongest postcondition for given trace ...");
-			
 			if (trace.length() > 1) {
-				if (trace.getSymbol(0) instanceof Call) {
-					IPredicate p = m_SmtManager.strongestPostcondition(tracePrecondition,
-							rv.getLocalVarAssignment(0),
-							rv.getGlobalVarAssignment(0),
-							rv.getOldVarAssignment(0),
-							trace.isPendingCall(0));							
-					m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
-							p.getProcedures());
-				} else {
-					IPredicate p = m_SmtManager.strongestPostcondition(tracePrecondition,
-							rv.getFormulaFromNonCallPos(0));
-					m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
-							p.getProcedures());
+				for (int i=0; i<m_InterpolantsSp.length; i++) {
+					if (trace.getSymbol(i) instanceof Call) {
+						IPredicate p = m_SmtManager.strongestPostcondition(
+								getForwardPredicateAtPosition(i-1, tracePrecondition, false),
+								rv.getLocalVarAssignment(i),
+								rv.getGlobalVarAssignment(i),
+								rv.getOldVarAssignment(i),
+								((NestedWord<CodeBlock>) trace).isPendingCall(i));
+							m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
+									p.getProcedures());
+					} else if (trace.getSymbol(i) instanceof Return) {
+							int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i);
+							assert call_pos >= 0 && call_pos <= i : "Bad call position!";
+							IPredicate callerPred = tracePrecondition;
+							if (call_pos > 0) {
+								callerPred = m_InterpolantsSp[call_pos - 1];
+							}
+							IPredicate p = m_SmtManager.strongestPostcondition(
+									getForwardPredicateAtPosition(i-1, tracePrecondition, false), 
+									callerPred,
+									rv.getFormulaFromNonCallPos(i),
+									rv.getLocalVarAssignment(call_pos),
+									rv.getGlobalVarAssignment(call_pos)
+									);
+							m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
+									p.getProcedures());
+
+					} else {
+							IPredicate p = m_SmtManager.strongestPostcondition(
+									getForwardPredicateAtPosition(i-1, tracePrecondition, false),
+									rv.getFormulaFromNonCallPos(i));
+							m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
+									p.getProcedures());
+					}
 				}
 			}
 
-			for (int i=1; i<m_InterpolantsSp.length; i++) {
-				if (trace.getSymbol(i) instanceof Call) {
-					IPredicate p = m_SmtManager.strongestPostcondition(m_InterpolantsSp[i-1],
-							rv.getLocalVarAssignment(i),
-							rv.getGlobalVarAssignment(i),
-							rv.getOldVarAssignment(i),
-							((NestedWord<CodeBlock>) trace).isPendingCall(i));
-						m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
-								p.getProcedures());
-				} else if (trace.getSymbol(i) instanceof Return) {
-						int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i);
-						assert call_pos >= 0 && call_pos <= i : "Bad call position!";
-						IPredicate callerPred = tracePrecondition;
-						if (call_pos > 0) {
-							callerPred = m_InterpolantsSp[call_pos - 1];
-						}
-						IPredicate p = m_SmtManager.strongestPostcondition(m_InterpolantsSp[i-1], 
-								callerPred,
-								rv.getFormulaFromNonCallPos(i),
-								rv.getLocalVarAssignment(call_pos),
-								rv.getGlobalVarAssignment(call_pos)
-								);
-						m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
-								p.getProcedures());
-
-				} else {
-						IPredicate p = m_SmtManager.strongestPostcondition(m_InterpolantsSp[i-1],
-								rv.getFormulaFromNonCallPos(i));
-						m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
-								p.getProcedures());
-				}
-			}
 			s_Logger.debug("Checking strongest postcondition...");
 			assert checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, 
 					tracePostcondition, "SP with unsat core") : "invalid Hoare triple in SP with unsat core";
@@ -302,108 +314,60 @@ public class TraceCheckerSpWp extends TraceChecker {
 			Map<Integer, IPredicate> callerPredicatesComputed = new HashMap<Integer, IPredicate>();
 			s_Logger.debug("Computing weakest precondition for given trace ...");
 			if (trace.length() > 1) {
-				if (trace.getSymbol(m_InterpolantsWp.length) instanceof Call) {
-					// If the trace contains a Call statement, then it must be a NestedWord
-					NestedWord<CodeBlock> traceAsNW = ((NestedWord<CodeBlock>) trace);
-					IPredicate p = m_SmtManager.weakestPrecondition(
-							tracePostcondition, 
-							rv.getLocalVarAssignment(m_InterpolantsWp.length),
-							rv.getGlobalVarAssignment(m_InterpolantsWp.length),
-							rv.getOldVarAssignment(m_InterpolantsWp.length),
-							traceAsNW.isPendingCall(m_InterpolantsWp.length));
-					m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
-							p.getVars(), p.getProcedures());
-
-				} else if (trace.getSymbol(m_InterpolantsWp.length) instanceof Return) {
-					int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(m_InterpolantsWp.length);
-					IPredicate callerPred = null;
-					TransFormula callTF = rv.getLocalVarAssignment(call_pos);
-					TransFormula globalVarsAssignments = rv.getGlobalVarAssignment(call_pos);
-					if ((m_InterpolantsWp.length - call_pos) >= call_pos) {
+				for (int i = m_InterpolantsWp.length - 1; i >= 0; i--) {
+					if (trace.getSymbol(i+1) instanceof Call) {
+						if (callerPredicatesComputed.containsKey(i+1)) {
+							IPredicate p = callerPredicatesComputed.get(i+1);
+							m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
+									p.getVars(), p.getProcedures());
+						} else {
+							IPredicate p = m_SmtManager.weakestPrecondition(
+									getBackwardPredicateAtPosition(i+1, tracePostcondition, false), 
+									rv.getLocalVarAssignment(i+1),
+									rv.getGlobalVarAssignment(i+1),
+									rv.getOldVarAssignment(i+1),
+									true);
+							m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
+									p.getVars(), p.getProcedures());
+							
+						}
+					} else if (trace.getSymbol(i+1) instanceof Return) {
+						int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i+1);
+						IPredicate callerPred = null;
+						TransFormula callTF = rv.getLocalVarAssignment(call_pos);
+						TransFormula globalVarsAssignments = rv.getGlobalVarAssignment(call_pos);
+						
 						TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace), rv, 0);
 						callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
 						// If callerPred contains quantifier, compute it via the 2nd method
 						if(callerPred instanceof BasicPredicateExplicitQuantifier) {
-							summary = computeSummaryForTrace(getSubTrace(call_pos, m_InterpolantsWp.length - 1, trace), callTF,
-									rv.getFormulaFromNonCallPos(m_InterpolantsWp.length), 
+							summary = computeSummaryForTrace(getSubTrace(call_pos, i, trace), callTF,
+									rv.getFormulaFromNonCallPos(i+1), 
 									globalVarsAssignments,
 									rv, call_pos);
-							callerPred = m_SmtManager.weakestPrecondition(m_Postcondition, summary);
+							callerPred = m_SmtManager.weakestPrecondition(
+									getBackwardPredicateAtPosition(i+1, tracePostcondition, false), 
+									summary);
 						}
-					} else {
-						// If the sub-trace between call_pos and returnPos (here: i) is shorter, than compute the
-						// callerPred in this way.
-						TransFormula summary = computeSummaryForTrace(getSubTrace(call_pos, m_InterpolantsWp.length - 1, trace), callTF,
-								rv.getFormulaFromNonCallPos(m_InterpolantsWp.length), 
-								globalVarsAssignments,
-								rv, call_pos);
-						callerPred = m_SmtManager.weakestPrecondition(m_Postcondition, summary);
-					}
-					callerPredicatesComputed.put(call_pos, callerPred);
-					IPredicate p = m_SmtManager.weakestPrecondition(tracePostcondition,
-							callerPred, 
-							rv.getFormulaFromNonCallPos(m_InterpolantsWp.length),
-							callTF, globalVarsAssignments);
-					m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
-							p.getVars(), p.getProcedures());
-				}
-				else {
-					IPredicate p = m_SmtManager.weakestPrecondition(
-							tracePostcondition, rv.getFormulaFromNonCallPos(m_InterpolantsWp.length));
-					m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
-							p.getVars(), p.getProcedures());
-				}
-			}
-			for (int i=m_InterpolantsWp.length-2; i>=0; i--) {
-				if (trace.getSymbol(i+1) instanceof Call) {
-					if (callerPredicatesComputed.containsKey(i+1)) {
-						IPredicate p = callerPredicatesComputed.get(i+1);
+						callerPredicatesComputed.put(call_pos, callerPred);
+						IPredicate p = m_SmtManager.weakestPrecondition(
+								getBackwardPredicateAtPosition(i+1, tracePostcondition, false), 
+								callerPred, 
+								rv.getFormulaFromNonCallPos(i+1), callTF, 
+								globalVarsAssignments); 
 						m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
 								p.getVars(), p.getProcedures());
 					} else {
 						IPredicate p = m_SmtManager.weakestPrecondition(
-								m_InterpolantsWp[i+1], 
-								rv.getLocalVarAssignment(i+1),
-								rv.getGlobalVarAssignment(i+1),
-								rv.getOldVarAssignment(i+1),
-								true);
+								getBackwardPredicateAtPosition(i+1, tracePostcondition, false),
+								rv.getFormulaFromNonCallPos(i+1));
 						m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
 								p.getVars(), p.getProcedures());
-						
 					}
-				} else if (trace.getSymbol(i+1) instanceof Return) {
-					int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i+1);
-					IPredicate callerPred = null;
-					TransFormula callTF = rv.getLocalVarAssignment(call_pos);
-					TransFormula globalVarsAssignments = rv.getGlobalVarAssignment(call_pos);
-					
-					TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace), rv, 0);
-					callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
-					// If callerPred contains quantifier, compute it via the 2nd method
-					if(callerPred instanceof BasicPredicateExplicitQuantifier) {
-						summary = computeSummaryForTrace(getSubTrace(call_pos, i, trace), callTF,
-								rv.getFormulaFromNonCallPos(i+1), 
-								globalVarsAssignments,
-								rv, call_pos);
-						callerPred = m_SmtManager.weakestPrecondition(m_InterpolantsWp[i+1], 
-								summary);
-					}
-					callerPredicatesComputed.put(call_pos, callerPred);
-					IPredicate p = m_SmtManager.weakestPrecondition(
-							m_InterpolantsWp[i+1], 
-							callerPred, 
-							rv.getFormulaFromNonCallPos(i+1), callTF, 
-							globalVarsAssignments); 
-					m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
-							p.getVars(), p.getProcedures());
-				} else {
-					IPredicate p = m_SmtManager.weakestPrecondition(
-							m_InterpolantsWp[i+1], rv.getFormulaFromNonCallPos(i+1));
-					m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
-							p.getVars(), p.getProcedures());
 				}
+				
 			}
-
+		
 			s_Logger.debug("Checking weakest precondition...");
 			assert checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition,
 					tracePostcondition, "WP with unsat core") : "invalid Hoare triple in WP with unsat core";
@@ -425,6 +389,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 			m_Interpolants = m_InterpolantsFp;
 		} else if (m_ComputeInterpolantsSp) {
 			m_Interpolants = m_InterpolantsSp;
+		} else if (m_ComputeInterpolantsBp) {
+			m_Interpolants = m_InterpolantsBp;
 		} else {
 			assert m_InterpolantsWp != null;
 			m_Interpolants = m_InterpolantsWp;
@@ -457,26 +423,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 	
-	
-	
-	@Deprecated
-	private boolean formulaContainsExistentialQuantifier(Term formula) {
-		if (formula instanceof ApplicationTerm) {
-			Term[] parameters = ((ApplicationTerm) formula).getParameters();
-			for (int i = 0; i < parameters.length; i++) {
-				if (formulaContainsExistentialQuantifier(parameters[i])) {
-					return true;
-				}
-			}
-		} else if (formula instanceof QuantifiedFormula) {
-			if (((QuantifiedFormula) formula).getQuantifier() == QuantifiedFormula.EXISTS) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-		return false;
-	}
 	
 	
 	/**
@@ -547,80 +493,58 @@ public class TraceCheckerSpWp extends TraceChecker {
 		m_InterpolantsFp = new IPredicate[m_InterpolantsSp.length];
 		
 		if (trace.length() > 1) {
-			IPredicate sp = null;
-			if (trace.getSymbol(0) instanceof Call) {
-				IPredicate p = m_SmtManager.strongestPostcondition(tracePrecondition,
-						rv.getLocalVarAssignment(0),
-						rv.getGlobalVarAssignment(0),
-						rv.getOldVarAssignment(0),
-						trace.isPendingCall(0));							
-				m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
-						p.getProcedures());
-			} else {
-				sp = m_SmtManager.strongestPostcondition(tracePrecondition,
-						rv.getFormulaFromNonCallPos(0));
-				m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(sp.getFormula(), sp.getVars(),
-						sp.getProcedures());
-			}
-			IPredicate fp = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[0], relevantVars[1]);
-			m_InterpolantsFp[0] = m_PredicateUnifier.getOrConstructPredicate(fp.getFormula(), fp.getVars(), fp.getProcedures());
-			if (m_CollectInformationAboutQuantifiedPredicates) {
-				if (sp instanceof BasicPredicateExplicitQuantifier) {
-					m_NumberOfQuantifiedPredicates[0]++;
-				}
-				if (fp instanceof BasicPredicateExplicitQuantifier) {
-					m_NumberOfQuantifiedPredicates[1]++;
-				}
-			}
-		}
-		
-		for (int i=1; i<m_InterpolantsSp.length; i++) {
-			IPredicate sp = null;
-			if (trace.getSymbol(i) instanceof Call) {
-				 sp = m_SmtManager.strongestPostcondition(m_InterpolantsFp[i-1],
-						rv.getLocalVarAssignment(i),
-						rv.getGlobalVarAssignment(i),
-						rv.getOldVarAssignment(i),
-						((NestedWord<CodeBlock>) trace).isPendingCall(i));
-					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(sp.getFormula(), sp.getVars(),
-							sp.getProcedures());
-			} else if (trace.getSymbol(i) instanceof Return) {
-					int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i);
-					assert call_pos >= 0 && call_pos <= i : "Bad call position!";
-					IPredicate callerPred = tracePrecondition;
-					if (call_pos > 0) {
-						callerPred = m_InterpolantsFp[call_pos - 1];
-					}
-					sp = m_SmtManager.strongestPostcondition(m_InterpolantsFp[i-1], 
-							callerPred,
-							rv.getFormulaFromNonCallPos(i),
-							rv.getLocalVarAssignment(call_pos),
-							rv.getGlobalVarAssignment(call_pos)
-							);
-					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(sp.getFormula(), sp.getVars(),
-							sp.getProcedures());
+			for (int i=0; i<m_InterpolantsSp.length; i++) {
+				IPredicate sp = null;
+				if (trace.getSymbol(i) instanceof Call) {
+					 sp = m_SmtManager.strongestPostcondition(
+							getForwardPredicateAtPosition(i-1, tracePrecondition, true),
+							rv.getLocalVarAssignment(i),
+							rv.getGlobalVarAssignment(i),
+							rv.getOldVarAssignment(i),
+							((NestedWord<CodeBlock>) trace).isPendingCall(i));
+						m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(sp.getFormula(), sp.getVars(),
+								sp.getProcedures());
+				} else if (trace.getSymbol(i) instanceof Return) {
+						int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i);
+						assert call_pos >= 0 && call_pos <= i : "Bad call position!";
+						IPredicate callerPred = tracePrecondition;
+						if (call_pos > 0) {
+							callerPred = m_InterpolantsFp[call_pos - 1];
+						}
+						sp = m_SmtManager.strongestPostcondition(
+								getForwardPredicateAtPosition(i-1, tracePrecondition, true), 
+								callerPred,
+								rv.getFormulaFromNonCallPos(i),
+								rv.getLocalVarAssignment(call_pos),
+								rv.getGlobalVarAssignment(call_pos)
+								);
+						m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(sp.getFormula(), sp.getVars(),
+								sp.getProcedures());
 
-			} else {
-					sp = m_SmtManager.strongestPostcondition(m_InterpolantsFp[i-1],
-							rv.getFormulaFromNonCallPos(i));
-					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(sp.getFormula(), sp.getVars(),
-							sp.getProcedures());
-			}
-			IPredicate fp = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[i], relevantVars[i+1]);
-			m_InterpolantsFp[i] = m_PredicateUnifier.getOrConstructPredicate(fp.getFormula(), fp.getVars(), fp.getProcedures());
-			if (m_CollectInformationAboutQuantifiedPredicates) {
-				if (sp != null && sp instanceof BasicPredicateExplicitQuantifier) {
-					m_NumberOfQuantifiedPredicates[0]++;
+				} else {
+						sp = m_SmtManager.strongestPostcondition(
+								getForwardPredicateAtPosition(i-1, tracePrecondition, true),
+								rv.getFormulaFromNonCallPos(i));
+						m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(sp.getFormula(), sp.getVars(),
+								sp.getProcedures());
 				}
-				if (fp instanceof BasicPredicateExplicitQuantifier) {
-					m_NumberOfQuantifiedPredicates[1]++;
+				IPredicate fp = m_SmtManager.computeForwardRelevantPredicate(
+						getForwardPredicateAtPosition(i, tracePrecondition, false), relevantVars[i+1]);
+				m_InterpolantsFp[i] = m_PredicateUnifier.getOrConstructPredicate(fp.getFormula(), fp.getVars(), fp.getProcedures());
+				if (m_CollectInformationAboutQuantifiedPredicates) {
+					if (sp != null && sp instanceof BasicPredicateExplicitQuantifier) {
+						m_NumberOfQuantifiedPredicates[0]++;
+					}
+					if (fp instanceof BasicPredicateExplicitQuantifier) {
+						m_NumberOfQuantifiedPredicates[1]++;
+					}
 				}
 			}
 		}
 		
 	}
 	
-	
+	@Deprecated
 	private void computeBackwardRelevantPredicates(Set<BoogieVar>[] relevantVars) {
 		assert m_InterpolantsWp != null : "Interpolants WP_i have not been computed!";
 		m_InterpolantsBp = new IPredicate[m_InterpolantsWp.length];

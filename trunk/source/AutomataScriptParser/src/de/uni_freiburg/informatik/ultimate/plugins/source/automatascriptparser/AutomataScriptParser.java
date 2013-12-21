@@ -14,9 +14,9 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitions;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFile;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.Automaton;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitionsAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomatonAST;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 
@@ -62,16 +62,16 @@ public class AutomataScriptParser implements ISource {
 
 		
 		s_Logger.debug("'" + file.getName() + "' successfully parsed");
-		if (result instanceof AutomataTestFile) {
-			AutomataTestFile ats = (AutomataTestFile)result;
-			AutomataDefinitions autDefs = ats.getAutomataDefinitions();
+		if (result instanceof AutomataTestFileAST) {
+			AutomataTestFileAST ats = (AutomataTestFileAST)result;
+			AutomataDefinitionsAST autDefs = ats.getAutomataDefinitions();
 			// parser contains files to parse, if the operation parseAutomata(pathToFile) was called at least
 			// once.
 			if (parser.containsOtherAutomataFilesToParse()) {
 				String baseDir = parser.getFilePath().substring(0, parser.getFilePath().lastIndexOf(File.separator) + 1);
-				List<Automaton> automataDefinitionsFromOtherFiles = parseAutomataDefinitions(parser.getFilesToParse(), baseDir);
+				List<AutomatonAST> automataDefinitionsFromOtherFiles = parseAutomataDefinitions(parser.getFilesToParse(), baseDir);
 				// Check if automata from other files, were already defined in current file.
-				for (Automaton a : automataDefinitionsFromOtherFiles) {
+				for (AutomatonAST a : automataDefinitionsFromOtherFiles) {
 					if (autDefs.hasAutomaton(a)) {
 						s_Logger.debug("Automaton \"" + a.getName() + "\" was already declared in file \"" + file.getName() + "\".");
 					} else {
@@ -94,8 +94,8 @@ public class AutomataScriptParser implements ISource {
 	 * @param baseDir 
 	 * @return list of automata, which are parsed from given files.
 	 */
-	private List<Automaton> parseAutomataDefinitions(List<String> filesToParse, String baseDir) {
-		List<Automaton> parsedAutomata = new ArrayList<Automaton>();
+	private List<AutomatonAST> parseAutomataDefinitions(List<String> filesToParse, String baseDir) {
+		List<AutomatonAST> parsedAutomata = new ArrayList<AutomatonAST>();
 		for (String fileToParse : filesToParse) {
 			Lexer lexer = null;
 			String fileSeparatorOfFileToParse = getFileSeparator(fileToParse);
@@ -125,11 +125,11 @@ public class AutomataScriptParser implements ISource {
 				s_Logger.debug("Parsing file \"" + fileToParse + "\" failed!");
 				continue;
 			}
-			if ((result != null) && (result instanceof AutomataTestFile)) {
-				AutomataTestFile ats = (AutomataTestFile) result;
+			if ((result != null) && (result instanceof AutomataTestFileAST)) {
+				AutomataTestFileAST ats = (AutomataTestFileAST) result;
 				if (!ats.getAutomataDefinitions().isEmpty()) {
-					List<Automaton> newAutomataDefinitions = ats.getAutomataDefinitions().getListOfAutomataDefinitions();
-					for (Automaton a : newAutomataDefinitions) {
+					List<AutomatonAST> newAutomataDefinitions = ats.getAutomataDefinitions().getListOfAutomataDefinitions();
+					for (AutomatonAST a : newAutomataDefinitions) {
 						if (parsedAutomata.contains(a)) {
 							s_Logger.debug("Automaton \"" + a.getName() + "\" from file \"" + fileToParse + " already declared in other file.");
 						} else {

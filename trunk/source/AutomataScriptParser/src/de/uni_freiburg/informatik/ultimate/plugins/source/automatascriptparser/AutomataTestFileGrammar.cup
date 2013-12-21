@@ -18,7 +18,7 @@ action code {:
 
     private List<String> m_filesToParse = new ArrayList<String>();
 
-    private AutomataDefinitions m_automataDefinitions = new AutomataDefinitions();
+    private AutomataDefinitionsAST m_automataDefinitions = new AutomataDefinitionsAST();
     
     public ILocation getLocation(Symbol sBegin, Symbol sEnd) {
        int startLine = sBegin.left + 1;
@@ -174,16 +174,16 @@ terminal Object FOR; // for_statement
 terminal Object BREAK; // break_statement
 terminal Object CONTINUE; // continue_statement
 terminal Object RETURN; // return_statement
-terminal UnaryOperator PLUSPLUS; // postincrement_expression
-terminal UnaryOperator MINUSMINUS; // postdecrement_expression
-terminal BinaryOperator PLUS, MINUS, DIV, MULT, MOD;
-terminal RelationalOperator LT, GT, LTEQ, GTEQ; // relational_expression, and call or return symbol for nested words
-terminal RelationalOperator EQEQ, NOTEQ; // equality_expression
-terminal ConditionalBooleanOperator NOT; 
-terminal ConditionalBooleanOperator ANDAND; // conditional_and_expression
-terminal ConditionalBooleanOperator OROR; // conditional_or_expression
+terminal UnaryOperatorAST PLUSPLUS; // postincrement_expression
+terminal UnaryOperatorAST MINUSMINUS; // postdecrement_expression
+terminal BinaryOperatorAST PLUS, MINUS, DIV, MULT, MOD;
+terminal RelationalOperatorAST LT, GT, LTEQ, GTEQ; // relational_expression, and call or return symbol for nested words
+terminal RelationalOperatorAST EQEQ, NOTEQ; // equality_expression
+terminal ConditionalBooleanOperatorAST NOT; 
+terminal ConditionalBooleanOperatorAST ANDAND; // conditional_and_expression
+terminal ConditionalBooleanOperatorAST OROR; // conditional_or_expression
 terminal Object QUESTION; // conditional_expression
-terminal AssignmentOperator MULTEQ, DIVEQ, MODEQ, PLUSEQ, MINUSEQ; // assignment_operator
+terminal AssignmentOperatorAST MULTEQ, DIVEQ, MODEQ, PLUSEQ, MINUSEQ; // assignment_operator
 
 terminal Object NESTED_WORD, NESTED_LASSO_WORD; 
 
@@ -230,14 +230,14 @@ non terminal AtsASTNode return_statement;
 non terminal AtsASTNode expression_opt, expression;
 non terminal AtsASTNode operation_invocation;
 non terminal AtsASTNode primary;
-non terminal ArgumentList argument_list_opt, argument_list;
+non terminal ArgumentListAST argument_list_opt, argument_list;
 non terminal AtsASTNode postfix_expression;
 non terminal AtsASTNode postincrement_expression, postdecrement_expression;
 non terminal AtsASTNode preincrement_expression, predecrement_expression;
 non terminal AtsASTNode unary_expression;
 non terminal AtsASTNode multiplicative_expression, additive_expression;
 non terminal AtsASTNode assignment;
-non terminal AssignmentOperator assignment_operator;
+non terminal AssignmentOperatorAST assignment_operator;
 non terminal AtsASTNode left_hand_side;
 // 7.1 Boolean Expressions
 non terminal AtsASTNode conditional_expression;
@@ -246,7 +246,7 @@ non terminal AtsASTNode relational_expression, equality_expression;
 non terminal AtsASTNode unary_expression_not_plus_minus;
 // 8. Words
 non terminal AtsASTNode word_literal;
-non terminal Nestedword nested_word, nested_word_symbols_opt, nested_word_symbols; 
+non terminal NestedwordAST nested_word, nested_word_symbols_opt, nested_word_symbols; 
 non terminal Object nested_word_symbol;
 
  /* -------------------- Specification of Automata DEFINITION Files-----------------------*/
@@ -262,22 +262,22 @@ terminal Object NET_TRANSITIONS, INTERNAL_TRANSITIONS, CALL_TRANSITIONS, RETURN_
 // 5. 
 terminal Object INITIAL_MARKINGS, ACCEPTING_PLACES;
  /* -------------------- Specification of non-terminals   -----------------------*/
-non terminal IdentifierList identifier_list_opt, identifier_list;
+non terminal IdentifierListAST identifier_list_opt, identifier_list;
 // Automata types
-non terminal Automaton nwa_definition, petrinetJulian_definition;
+non terminal AutomatonAST nwa_definition, petrinetJulian_definition;
 // Alphabets
-non terminal IdentifierList alphabet_opt, petrinet_alphabet, call_alphabet, return_alphabet_opt, return_alphabet, internal_alphabet_opt, internal_alphabet;
+non terminal IdentifierListAST alphabet_opt, petrinet_alphabet, call_alphabet, return_alphabet_opt, return_alphabet, internal_alphabet_opt, internal_alphabet;
 // States & Places
-non terminal IdentifierList states_opt, states, initial_states_opt, initial_states, final_states_opt, final_states;  
-non terminal IdentifierList places, accepting_places;
+non terminal IdentifierListAST states_opt, states, initial_states_opt, initial_states, final_states_opt, final_states;  
+non terminal IdentifierListAST places, accepting_places;
 // Transitions & Markings
-non terminal TransitionList call_transitions_opt, call_transitions, internal_transitions_opt, internal_transitions; 
-non terminal TransitionList return_transitions_opt, return_transitions, transition_list, transition_list_opt;
-non terminal IdentifierList transition;
-non terminal TransitionList net_transitions, net_transition_list_opt, net_transition_list; 
-non terminal PetriNetTransition  net_transition;
-non terminal IdentifierList marking;
-non terminal PetriNetMarkingList initial_markings;
+non terminal TransitionListAST call_transitions_opt, call_transitions, internal_transitions_opt, internal_transitions; 
+non terminal TransitionListAST return_transitions_opt, return_transitions, transition_list, transition_list_opt;
+non terminal IdentifierListAST transition;
+non terminal TransitionListAST net_transitions, net_transition_list_opt, net_transition_list; 
+non terminal PetriNetTransitionAST  net_transition;
+non terminal IdentifierListAST marking;
+non terminal PetriNetMarkingListAST initial_markings;
 
 
 
@@ -287,20 +287,20 @@ start with automata_test_file;
 
 // 1. Start of the grammar
 automata_test_file ::= test_statement_block:stmtList
-                       {: AutomataTestFile ats = new AutomataTestFile(stmtList, m_automataDefinitions); 
+                       {: AutomataTestFileAST ats = new AutomataTestFileAST(stmtList, m_automataDefinitions); 
                           RESULT = ats; :};
 
 // 2. Lexical Structure
 literal ::=	INTEGER_LITERAL:i 
-                {: ConstantExpression c = new ConstantExpression(i);
+                {: ConstantExpressionAST c = new ConstantExpressionAST(i);
                    c.setLocation(getLocation(i$, i$));
                    RESULT = c;:}
     	|	BOOLEAN_LITERAL:b
-                {: ConstantExpression c = new ConstantExpression(b);
+                {: ConstantExpressionAST c = new ConstantExpressionAST(b);
                    c.setLocation(getLocation(b$, b$));
                    RESULT = c;:}
         |       STRING_LITERAL:s
-                {: ConstantExpression c = new ConstantExpression(s);
+                {: ConstantExpressionAST c = new ConstantExpressionAST(s);
                    c.setLocation(getLocation(s$, s$));
                    RESULT = c; :}
         |       word_literal:w
@@ -315,7 +315,7 @@ word_literal ::= LBRACK:l nested_word:nw RBRACK:r /* Parse a nested word */
                  {: nw.setLocation(getLocation(l$, r$));
                     RESULT = nw; :}
         |        LBRACK:l nested_word:nw1 COMMA nested_word:nw2 RBRACK:r /* Parse lasso word */
-        		 {: NestedLassoword nlw = new NestedLassoword(nw1, nw2);
+        		 {: NestedLassowordAST nlw = new NestedLassowordAST(nw1, nw2);
                     nlw.setLocation(getLocation(l$, r$)); 
                     RESULT = nlw; :}
         ;
@@ -323,35 +323,35 @@ word_literal ::= LBRACK:l nested_word:nw RBRACK:r /* Parse a nested word */
 
 nested_word ::= nested_word_symbols_opt:nw {: RESULT = nw; :};
 
-nested_word_symbols_opt ::= nested_word_symbols:nw {: RESULT = nw; :} | {: RESULT = new Nestedword(); :};
+nested_word_symbols_opt ::= nested_word_symbols:nw {: RESULT = nw; :} | {: RESULT = new NestedwordAST(); :};
 
 nested_word_symbols ::= nested_word_symbol:sym
-						{: Nestedword nw = new Nestedword();
-						   if (sym instanceof CallSymbol) {
-							   nw.addSymbol((CallSymbol)sym);
-						   } else if (sym instanceof InternalSymbol) {
-							   nw.addSymbol((InternalSymbol)sym);
-						   } else if (sym instanceof ReturnSymbol) {
-							   nw.addSymbol((ReturnSymbol)sym);
+						{: NestedwordAST nw = new NestedwordAST();
+						   if (sym instanceof CallSymbolAST) {
+							   nw.addSymbol((CallSymbolAST)sym);
+						   } else if (sym instanceof InternalSymbolAST) {
+							   nw.addSymbol((InternalSymbolAST)sym);
+						   } else if (sym instanceof ReturnSymbolAST) {
+							   nw.addSymbol((ReturnSymbolAST)sym);
 						   }
 						  RESULT = nw; :}
                       | nested_word_symbols:nsw nested_word_symbol:sym
-						{:  if (sym instanceof CallSymbol) {
-							   nsw.addSymbol((CallSymbol)sym);
-						   } else if (sym instanceof InternalSymbol) {
-							   nsw.addSymbol((InternalSymbol)sym);
-						   } else if (sym instanceof ReturnSymbol) {
-							   nsw.addSymbol((ReturnSymbol)sym);
+						{:  if (sym instanceof CallSymbolAST) {
+							   nsw.addSymbol((CallSymbolAST)sym);
+						   } else if (sym instanceof InternalSymbolAST) {
+							   nsw.addSymbol((InternalSymbolAST)sym);
+						   } else if (sym instanceof ReturnSymbolAST) {
+							   nsw.addSymbol((ReturnSymbolAST)sym);
 						   }
 						  RESULT = nsw; :}
                       ;
 
 nested_word_symbol ::= identifier:i        /* This is an internal symbol */ 
-                       {: RESULT = new InternalSymbol(i); :}
+                       {: RESULT = new InternalSymbolAST(i); :}
         |              identifier:i LT  /* This is a call symbol */
-                       {: RESULT = new CallSymbol(i); :}
+                       {: RESULT = new CallSymbolAST(i); :}
         |              GT identifier:i    /* This is a return symbol */
-                       {: RESULT = new ReturnSymbol(i); :}
+                       {: RESULT = new ReturnSymbolAST(i); :}
         ;
           
 // 3. Types
@@ -380,8 +380,8 @@ variable_declaration ::=
                 {: RESULT = varLst;
 				   varLst.setLocation(getLocation(t$, varLst$));
 				   varLst.setType(t);
-                   if (varLst instanceof VariableDeclaration) {
-                	  for (String id : ((VariableDeclaration) varLst).getIdentifiers()) {
+                   if (varLst instanceof VariableDeclarationAST) {
+                	  for (String id : ((VariableDeclarationAST) varLst).getIdentifiers()) {
                 		  m_varDeclarations.put(id, t);
                 	  }
                    }:}
@@ -395,7 +395,7 @@ variable_declaration ::=
           {: if (t.equals(PetriNetJulian.class))
                 { petri.setType(t);
                   m_automataDefinitions.addAutomaton(petri);}
-             else {reportError(true, "AutomataDefiniton: Type error \"" + t.getSimpleName() + "\" is not compatible with \"PetriNetAutomaton\""); }
+             else {reportError(true, "AutomataDefiniton: Type error \"" + t.getSimpleName() + "\" is not compatible with \"PetriNetAutomatonAST\""); }
              RESULT = null;:}
 	;
 variable_declarators ::=
@@ -405,19 +405,19 @@ variable_declarators ::=
 	|	variable_declarators:varLst COMMA variable_declarator:v
                 {: RESULT = null;
 		   varLst.setLocation(getLocation(varLst$, v$));
-                	if (v instanceof VariableDeclaration) {
-                	((VariableDeclaration)varLst).addVariables(((VariableDeclaration)v).getIdentifiers());
+                	if (v instanceof VariableDeclarationAST) {
+                	((VariableDeclarationAST)varLst).addVariables(((VariableDeclarationAST)v).getIdentifiers());
                    } 
                    RESULT = varLst;:}
 	;
 variable_declarator ::=
 		variable_identifier:v
-                {: VariableDeclaration var = new VariableDeclaration(v);
+                {: VariableDeclarationAST var = new VariableDeclarationAST(v);
                    var.setLocation(getLocation(v$, v$)); 
                    RESULT = var; :}
 	|	variable_identifier:v EQ expression:e
                 {: RESULT = null;
-                   VariableDeclaration var = new VariableDeclaration(v);
+                   VariableDeclarationAST var = new VariableDeclarationAST(v);
                    var.setLocation(getLocation(v$, e$));
 	               if (e instanceof AtsASTNode) {
                    var.addOutgoingNode((AtsASTNode) e);
@@ -435,7 +435,7 @@ test_statements_opt   ::= test_statements:stmts {: RESULT = stmts; :}  | {: RESU
 
 test_statements ::= 
 		test_statement:stmt
-                {:StatementList stmts = new StatementList();
+                {:StatementListAST stmts = new StatementListAST();
 				  stmts.setLocation(getLocation(stmt$, stmt$));
                   RESULT = null;
                   if (stmt instanceof AtsASTNode) {
@@ -446,11 +446,11 @@ test_statements ::=
 	|	test_statements:stmtList test_statement:stmt
                 {: RESULT = stmtList;
                   if (stmtList == null) {
-                    stmtList = new StatementList();
+                    stmtList = new StatementListAST();
                   }
                   stmtList.setLocation(getLocation(stmtList$, stmt$));
-                  if ((stmt instanceof AtsASTNode) && (stmtList instanceof StatementList)) {
-                    ((StatementList) stmtList).addOutgoingNode((AtsASTNode) stmt);
+                  if ((stmt instanceof AtsASTNode) && (stmtList instanceof StatementListAST)) {
+                    ((StatementListAST) stmtList).addOutgoingNode((AtsASTNode) stmt);
                     RESULT = stmtList;
                   } 
                   :}
@@ -488,11 +488,11 @@ statement_without_trailing_substatement ::=
 	|	expression_statement:e
                 {: RESULT = e; :}
 	|	break_statement:b
-                {: BreakStatement bs = new BreakStatement();
+                {: BreakStatementAST bs = new BreakStatementAST();
 	               bs.setLocation(getLocation(b$, b$)); 
 	               RESULT = bs; :}
 	|	continue_statement:c
-                {: ContinueStatement cs = new ContinueStatement();
+                {: ContinueStatementAST cs = new ContinueStatementAST();
 	               cs.setLocation(getLocation(c$, c$));
 	               RESULT = cs; :}
 	|	return_statement:rt
@@ -523,8 +523,8 @@ statement_expression ::=
             {:  RESULT = null;
               ILocation loc  = getLocation(n$, e$);
               if ((e instanceof AtsASTNode)) {
-                ConditionalBooleanExpression cbe = new ConditionalBooleanExpression((AtsASTNode) e);
-                cbe.setOperator(ConditionalBooleanOperator.NOT);
+                ConditionalBooleanExpressionAST cbe = new ConditionalBooleanExpressionAST((AtsASTNode) e);
+                cbe.setOperator(ConditionalBooleanOperatorAST.NOT);
                 cbe.setLocation(loc);
                 RESULT = cbe;
               } else {
@@ -541,7 +541,7 @@ if_then_statement ::=
                 {: RESULT = null;
 	           ILocation loc = getLocation(i$, r$);
                    if ((e instanceof AtsASTNode) && (stmts instanceof AtsASTNode)) {
-                     IfStatement is = new IfStatement((AtsASTNode) e, (AtsASTNode) stmts);
+                     IfStatementAST is = new IfStatementAST((AtsASTNode) e, (AtsASTNode) stmts);
                      is.setLocation(loc);
                      RESULT = is;
                    } 
@@ -555,7 +555,7 @@ if_then_else_statement ::=
                   RESULT = null;
                   ILocation loc = getLocation(i$, r$);
                   if ((e instanceof AtsASTNode) && (stmts1 instanceof AtsASTNode) && (stmts2 instanceof AtsASTNode)) {
-                    IfElseStatement is = new IfElseStatement((AtsASTNode) e, (AtsASTNode) stmts1, (AtsASTNode) stmts2);
+                    IfElseStatementAST is = new IfElseStatementAST((AtsASTNode) e, (AtsASTNode) stmts1, (AtsASTNode) stmts2);
                     is.setLocation(loc);
                     RESULT = is;
                   }
@@ -569,7 +569,7 @@ while_statement ::=
                 {: RESULT = null;
                   ILocation loc = getLocation(w$, r$);
                   if ((e instanceof AtsASTNode) && (stmts instanceof AtsASTNode)) {
-                    WhileStatement ws = new WhileStatement((AtsASTNode) e, (AtsASTNode) stmts);
+                    WhileStatementAST ws = new WhileStatementAST((AtsASTNode) e, (AtsASTNode) stmts);
                     ws.setLocation(loc);
                     RESULT = ws;
                   }
@@ -583,10 +583,10 @@ for_statement ::=
                   ILocation loc = getLocation(f$, r$);
                   if (((init_op == null) || (init_op instanceof AtsASTNode)) && (e instanceof AtsASTNode) && (stmts instanceof AtsASTNode) && (update instanceof AtsASTNode)) {
                     if (init_op != null) {
-                      RESULT = new ForStatement((AtsASTNode) init_op, (AtsASTNode) e, (AtsASTNode) update, (AtsASTNode) stmts);
+                      RESULT = new ForStatementAST((AtsASTNode) init_op, (AtsASTNode) e, (AtsASTNode) update, (AtsASTNode) stmts);
                       RESULT.setLocation(loc);
                     } else {
-                      RESULT = new ForStatement(null, (AtsASTNode) e, (AtsASTNode) update, (AtsASTNode) stmts);
+                      RESULT = new ForStatementAST(null, (AtsASTNode) e, (AtsASTNode) update, (AtsASTNode) stmts);
                       RESULT.setLocation(loc);
                     }
 
@@ -608,7 +608,7 @@ for_update ::=	statement_expression_list:e {: RESULT = e; :} ;
 statement_expression_list ::=
 		statement_expression:stmt
                 {: RESULT = null;
-                  StatementList stmts = new StatementList();
+                  StatementListAST stmts = new StatementListAST();
                   stmts.setLocation(getLocation(stmt$, stmt$));
                   if (stmt instanceof AtsASTNode) {
                     stmts.addOutgoingNode((AtsASTNode) stmt);
@@ -619,7 +619,7 @@ statement_expression_list ::=
                 {: RESULT = null;
                   ILocation loc = getLocation(stmtlst$, stmt$);
                   if (stmt instanceof AtsASTNode) {
-                    ((StatementList) stmtlst).addOutgoingNode((AtsASTNode) stmt);
+                    ((StatementListAST) stmtlst).addOutgoingNode((AtsASTNode) stmt);
                     stmtlst.setLocation(loc);
                     RESULT = stmtlst;
                   } 
@@ -631,7 +631,7 @@ break_statement ::= BREAK SEMICOLON {:RESULT = null; :} ;
 continue_statement ::= CONTINUE SEMICOLON{:RESULT = null; :} ;
 return_statement ::=
 		RETURN:r expression_opt:e SEMICOLON
-                {: ReturnStatement rst = new ReturnStatement();
+                {: ReturnStatementAST rst = new ReturnStatementAST();
                   rst.setLocation(getLocation(r$, e$)); 	
                   if ((e != null) &&(e instanceof AtsASTNode)) {
                     rst.addOutgoingNode((AtsASTNode) e);
@@ -656,27 +656,27 @@ conditional_expression ::=
 	;
 assignment ::=	left_hand_side:v assignment_operator:op expression:e
                 {: RESULT = null;
-                  VariableExpression var = null;
-                  if (v instanceof VariableExpression) {
-                    var = (VariableExpression) v;
+                  VariableExpressionAST var = null;
+                  if (v instanceof VariableExpressionAST) {
+                    var = (VariableExpressionAST) v;
                   } else {
                     reportError(false, v.getLocation());
-                    reportError(true, "AssignmentExpression: Left-hand side was not a Variable");
+                    reportError(true, "AssignmentExpressionAST: Left-hand side was not a Variable");
                   }
                   if (m_varDeclarations.containsKey(var.getIdentifier())) {
                     var.setType(m_varDeclarations.get(var.getIdentifier()));
                   } 
                   if ((e != null) && (e instanceof AtsASTNode)) {
-                    RESULT = new AssignmentExpression(var, op, (AtsASTNode) e);
+                    RESULT = new AssignmentExpressionAST(var, op, (AtsASTNode) e);
                     RESULT.setLocation(getLocation(v$, e$));
                   } else if (e == null) {
-                    RESULT = new AssignmentExpression(var, op, null);
+                    RESULT = new AssignmentExpressionAST(var, op, null);
                     RESULT.setLocation(getLocation(v$, v$));
                   }
                     :} ;
 
 left_hand_side ::= variable_identifier:v 
-		{: VariableExpression var = new VariableExpression(v);
+		{: VariableExpressionAST var = new VariableExpressionAST(v);
                   var.setLocation(getLocation(v$, v$));
                   if ((v != null) && (m_varDeclarations.containsKey(v))) { 
                     var.setType(m_varDeclarations.get(v));
@@ -686,17 +686,17 @@ left_hand_side ::= variable_identifier:v
 
 assignment_operator ::=
 		EQ
-                {: RESULT = AssignmentOperator.ASSIGN; :}
+                {: RESULT = AssignmentOperatorAST.ASSIGN; :}
 	|	MULTEQ
-                {: RESULT = AssignmentOperator.MULTASSIGN; :}
+                {: RESULT = AssignmentOperatorAST.MULTASSIGN; :}
 	|	DIVEQ
-                {: RESULT = AssignmentOperator.DIVASSIGN; :}
+                {: RESULT = AssignmentOperatorAST.DIVASSIGN; :}
 	|	MODEQ
-                {: RESULT = AssignmentOperator.MODASSIGN; :}
+                {: RESULT = AssignmentOperatorAST.MODASSIGN; :}
 	|	PLUSEQ
-                {: RESULT = AssignmentOperator.PLUSASSIGN; :}
+                {: RESULT = AssignmentOperatorAST.PLUSASSIGN; :}
 	|	MINUSEQ
-                {: RESULT = AssignmentOperator.MINUSASSIGN; :}
+                {: RESULT = AssignmentOperatorAST.MINUSASSIGN; :}
 	;
 conditional_or_expression ::=
 		conditional_and_expression:c
@@ -705,8 +705,8 @@ conditional_or_expression ::=
                 {: RESULT = null;
                   ILocation loc = getLocation(c1$, c2$);	
                   if ((c1 instanceof AtsASTNode) && (c2 instanceof AtsASTNode)) {
-                    ConditionalBooleanExpression cbe = new ConditionalBooleanExpression((AtsASTNode) c1,(AtsASTNode)  c2);
-                    cbe.setOperator(ConditionalBooleanOperator.OR);
+                    ConditionalBooleanExpressionAST cbe = new ConditionalBooleanExpressionAST((AtsASTNode) c1,(AtsASTNode)  c2);
+                    cbe.setOperator(ConditionalBooleanOperatorAST.OR);
                     cbe.setLocation(loc);
                     RESULT = cbe;
                   } :} ;
@@ -718,8 +718,8 @@ conditional_and_expression ::=
                 {: RESULT = null;
                   ILocation loc = getLocation(c1$, c2$);	
                   if ((c1 instanceof AtsASTNode) && (c2 instanceof AtsASTNode)) {
-                    ConditionalBooleanExpression cbe = new ConditionalBooleanExpression((AtsASTNode) c1,(AtsASTNode)  c2);
-                    cbe.setOperator(ConditionalBooleanOperator.AND);
+                    ConditionalBooleanExpressionAST cbe = new ConditionalBooleanExpressionAST((AtsASTNode) c1,(AtsASTNode)  c2);
+                    cbe.setOperator(ConditionalBooleanOperatorAST.AND);
                     cbe.setLocation(loc);
                     RESULT = cbe;
                   } :}
@@ -730,22 +730,22 @@ equality_expression ::=
 	|	equality_expression:e1 EQEQ relational_expression:e2
                 {: RESULT = null;
                   ILocation loc = getLocation(e1$, e2$);
-                  RelationalExpression re = new RelationalExpression();
+                  RelationalExpressionAST re = new RelationalExpressionAST();
                   if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
                     re.addOutgoingNode((AtsASTNode) e1);
                     re.addOutgoingNode((AtsASTNode) e2);
-                    re.setOperator(RelationalOperator.EQ);
+                    re.setOperator(RelationalOperatorAST.EQ);
                     re.setLocation(loc);
                     RESULT = re;
                   } :}
 	|	equality_expression:e1 NOTEQ relational_expression:e2
                 {: RESULT = null;
                   ILocation loc = getLocation(e1$, e2$);
-                  RelationalExpression re = new RelationalExpression();
+                  RelationalExpressionAST re = new RelationalExpressionAST();
                   if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
                     re.addOutgoingNode((AtsASTNode) e1);
                     re.addOutgoingNode((AtsASTNode) e2);
-                    re.setOperator(RelationalOperator.NOT_EQ);
+                    re.setOperator(RelationalOperatorAST.NOT_EQ);
                     re.setLocation(loc);
                     RESULT = re;
 	               } :} ;
@@ -756,44 +756,44 @@ relational_expression ::=
 	|	relational_expression:e1 LT additive_expression:e2
                 {: RESULT = null;
                   ILocation loc = getLocation(e1$, e2$);
-                  RelationalExpression re = new RelationalExpression();
+                  RelationalExpressionAST re = new RelationalExpressionAST();
                   if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
                     re.addOutgoingNode((AtsASTNode) e1);
                     re.addOutgoingNode((AtsASTNode) e2);
-                    re.setOperator(RelationalOperator.LESSTHAN);
+                    re.setOperator(RelationalOperatorAST.LESSTHAN);
                     re.setLocation(loc);
                     RESULT = re;
                   } :}
 	|	relational_expression:e1 GT additive_expression:e2
                 {: RESULT = null;
                   ILocation loc = getLocation(e1$, e2$);
-                  RelationalExpression re = new RelationalExpression();
+                  RelationalExpressionAST re = new RelationalExpressionAST();
                   if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
                     re.addOutgoingNode((AtsASTNode) e1);
                     re.addOutgoingNode((AtsASTNode) e2);
-                    re.setOperator(RelationalOperator.GREATERTHAN);
+                    re.setOperator(RelationalOperatorAST.GREATERTHAN);
                     re.setLocation(loc);
                     RESULT = re;
                   } :}
 	|	relational_expression:e1 LTEQ additive_expression:e2
                 {: RESULT = null;
                   ILocation loc = getLocation(e1$, e2$);
-                  RelationalExpression re = new RelationalExpression();
+                  RelationalExpressionAST re = new RelationalExpressionAST();
                   if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
                     re.addOutgoingNode((AtsASTNode) e1);
                     re.addOutgoingNode((AtsASTNode) e2);
-                    re.setOperator(RelationalOperator.LESS_EQ_THAN);
+                    re.setOperator(RelationalOperatorAST.LESS_EQ_THAN);
                     re.setLocation(loc);
                     RESULT = re;
                   } :}
 	|	relational_expression:e1 GTEQ additive_expression:e2
                 {: RESULT = null;
                   ILocation loc = getLocation(e1$, e2$);
-                  RelationalExpression re = new RelationalExpression();
+                  RelationalExpressionAST re = new RelationalExpressionAST();
                   if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
                     re.addOutgoingNode((AtsASTNode) e1);
                     re.addOutgoingNode((AtsASTNode) e2);
-                    re.setOperator(RelationalOperator.GREATER_EQ_THAN);
+                    re.setOperator(RelationalOperatorAST.GREATER_EQ_THAN);
                     re.setLocation(loc);
                     RESULT = re;
                   } :} ;
@@ -805,8 +805,8 @@ additive_expression ::=
                 {: RESULT = null;
                   ILocation loc = getLocation(a$, m$);
                   if ((a instanceof AtsASTNode) && (m instanceof AtsASTNode)) {
-                    BinaryExpression be = new BinaryExpression((AtsASTNode) a, (AtsASTNode) m);
-                    be.setOperator(BinaryOperator.PLUS);
+                    BinaryExpressionAST be = new BinaryExpressionAST((AtsASTNode) a, (AtsASTNode) m);
+                    be.setOperator(BinaryOperatorAST.PLUS);
                     be.setLocation(loc);
                     RESULT = be;
                   } :}
@@ -814,8 +814,8 @@ additive_expression ::=
                 {: RESULT = null;
                   ILocation loc = getLocation(a$, m$);
                   if ((a instanceof AtsASTNode) && (m instanceof AtsASTNode)) {
-                    BinaryExpression be = new BinaryExpression((AtsASTNode) a, (AtsASTNode) m);
-                    be.setOperator(BinaryOperator.MINUS);
+                    BinaryExpressionAST be = new BinaryExpressionAST((AtsASTNode) a, (AtsASTNode) m);
+                    be.setOperator(BinaryOperatorAST.MINUS);
                     be.setLocation(loc);
                     RESULT = be;
                   } :} ;
@@ -827,8 +827,8 @@ multiplicative_expression ::=
                 {: RESULT = null;
                   ILocation loc = getLocation(a$, m$);
                   if ((a instanceof AtsASTNode) && (m instanceof AtsASTNode)) {
-                    BinaryExpression be = new BinaryExpression((AtsASTNode) a, (AtsASTNode) m);
-                    be.setOperator(BinaryOperator.MULTIPLICATION);
+                    BinaryExpressionAST be = new BinaryExpressionAST((AtsASTNode) a, (AtsASTNode) m);
+                    be.setOperator(BinaryOperatorAST.MULTIPLICATION);
                     be.setLocation(loc);
                     RESULT = be;
                   } :}
@@ -836,8 +836,8 @@ multiplicative_expression ::=
                 {: RESULT = null;
                   ILocation loc = getLocation(a$, m$);
                   if ((a instanceof AtsASTNode) && (m instanceof AtsASTNode)) {
-                    BinaryExpression be = new BinaryExpression((AtsASTNode) a, (AtsASTNode) m);
-                    be.setOperator(BinaryOperator.DIVISION);
+                    BinaryExpressionAST be = new BinaryExpressionAST((AtsASTNode) a, (AtsASTNode) m);
+                    be.setOperator(BinaryOperatorAST.DIVISION);
                     be.setLocation(loc);
                     RESULT = be;
                   } :}
@@ -845,8 +845,8 @@ multiplicative_expression ::=
                 {: RESULT = null;
                   ILocation loc = getLocation(a$, m$);
                   if ((a instanceof AtsASTNode) && (m instanceof AtsASTNode)) {
-                    BinaryExpression be = new BinaryExpression((AtsASTNode) a, (AtsASTNode) m);
-                    be.setOperator(BinaryOperator.MODULO);
+                    BinaryExpressionAST be = new BinaryExpressionAST((AtsASTNode) a, (AtsASTNode) m);
+                    be.setOperator(BinaryOperatorAST.MODULO);
                     be.setLocation(loc);
                     RESULT = be;
                   } :} ;
@@ -858,15 +858,15 @@ primary ::=
 	|	operation_invocation:oi {: RESULT = oi; :}
 	;
 
-argument_list_opt ::= argument_list:args {: RESULT = args; :} | {:RESULT = new ArgumentList(); :} ;
+argument_list_opt ::= argument_list:args {: RESULT = args; :} | {:RESULT = new ArgumentListAST(); :} ;
 
 argument_list ::=
 		expression:e
-                {: ArgumentList al = new ArgumentList(e);
+                {: ArgumentListAST al = new ArgumentListAST(e);
                   al.setLocation(getLocation(e$, e$)); 
                   RESULT = al; :}
 	|	argument_list:argList COMMA expression:e
-                {: ((ArgumentList) argList).addArg(e);
+                {: ((ArgumentListAST) argList).addArg(e);
                   argList.setLocation(getLocation(argList$, e$));
                   RESULT = argList; :} ;
 
@@ -875,15 +875,15 @@ operation_invocation ::=
                 {:
                   if (opName.equals("parseAutomata")) {
                     for (Object arg : args.getArguments()) {
-                      if (arg instanceof VariableExpression) {
-                        m_filesToParse.add(((VariableExpression) arg).getIdentifier());
-                      } else if (arg instanceof ConstantExpression) {
-                        m_filesToParse.add(((ConstantExpression) arg).getValue().toString());
+                      if (arg instanceof VariableExpressionAST) {
+                        m_filesToParse.add(((VariableExpressionAST) arg).getIdentifier());
+                      } else if (arg instanceof ConstantExpressionAST) {
+                        m_filesToParse.add(((ConstantExpressionAST) arg).getValue().toString());
                       }
                     }
                     RESULT = null;
                   } else {
-                    OperationInvocationExpression op = new OperationInvocationExpression(opName, args);
+                    OperationInvocationExpressionAST op = new OperationInvocationExpressionAST(opName, args);
                     op.setLocation(getLocation(opName$, r$));
                     RESULT = op; 
                   }
@@ -893,7 +893,7 @@ postfix_expression ::=
 		primary:p
                 {: RESULT = p; :}
 	|	variable_identifier:v
-		{: VariableExpression var = new VariableExpression(v);
+		{: VariableExpressionAST var = new VariableExpressionAST(v);
                   var.setLocation(getLocation(v$, v$));
                   if ((v != null) && (m_varDeclarations.containsKey(v))) { 
                     var.setType(m_varDeclarations.get(v));
@@ -909,9 +909,9 @@ postincrement_expression ::=
 		postfix_expression:e PLUSPLUS
                 {: RESULT = null;
                   ILocation loc  = getLocation(e$, e$);
-                  if ((e instanceof VariableExpression)) {
-                    UnaryExpression ue = new UnaryExpression((VariableExpression) e);
-                    ue.setOperator(UnaryOperator.EXPR_PLUSPLUS);
+                  if ((e instanceof VariableExpressionAST)) {
+                    UnaryExpressionAST ue = new UnaryExpressionAST((VariableExpressionAST) e);
+                    ue.setOperator(UnaryOperatorAST.EXPR_PLUSPLUS);
                     ue.setLocation(loc);
                     RESULT = ue;
                 } :} ;
@@ -920,9 +920,9 @@ postdecrement_expression ::=
 		postfix_expression:e MINUSMINUS
                 {: RESULT = null;
                   ILocation loc  = getLocation(e$, e$);
-                  if ((e instanceof VariableExpression)) {
-                    UnaryExpression ue = new UnaryExpression((VariableExpression) e);
-                    ue.setOperator(UnaryOperator.EXPR_MINUSMINUS);
+                  if ((e instanceof VariableExpressionAST)) {
+                    UnaryExpressionAST ue = new UnaryExpressionAST((VariableExpressionAST) e);
+                    ue.setOperator(UnaryOperatorAST.EXPR_MINUSMINUS);
                     ue.setLocation(loc);
                     RESULT = ue;
                 } :} ;
@@ -935,8 +935,8 @@ unary_expression ::=
                 {: RESULT = null;
                   ILocation loc  = getLocation(e$, e$);
                   if ((e instanceof AtsASTNode)) {
-                    BinaryExpression be = new BinaryExpression(new ConstantExpression(0), (AtsASTNode) e);
-                    be.setOperator(BinaryOperator.PLUS);
+                    BinaryExpressionAST be = new BinaryExpressionAST(new ConstantExpressionAST(0), (AtsASTNode) e);
+                    be.setOperator(BinaryOperatorAST.PLUS);
                     be.setLocation(loc);
                     RESULT = be;
                   } 
@@ -945,8 +945,8 @@ unary_expression ::=
                 {:  RESULT = null;
                   ILocation loc  = getLocation(e$, e$);
                   if ((e instanceof AtsASTNode)) {
-                    BinaryExpression be = new BinaryExpression(new ConstantExpression(0), (AtsASTNode) e);
-                    be.setOperator(BinaryOperator.MINUS);
+                    BinaryExpressionAST be = new BinaryExpressionAST(new ConstantExpressionAST(0), (AtsASTNode) e);
+                    be.setOperator(BinaryOperatorAST.MINUS);
                     be.setLocation(loc);
                     RESULT = be;
                   } 
@@ -958,9 +958,9 @@ preincrement_expression ::=
 		PLUSPLUS unary_expression:e
                 {: RESULT = null;
                   ILocation loc  = getLocation(e$, e$);
-                  if ((e instanceof VariableExpression)) {
-                    UnaryExpression ue = new UnaryExpression((VariableExpression) e);
-                    ue.setOperator(UnaryOperator.PLUSPLUS_EXPR);
+                  if ((e instanceof VariableExpressionAST)) {
+                    UnaryExpressionAST ue = new UnaryExpressionAST((VariableExpressionAST) e);
+                    ue.setOperator(UnaryOperatorAST.PLUSPLUS_EXPR);
                     ue.setLocation(loc);
                     RESULT = ue;
                   } :} ;
@@ -969,9 +969,9 @@ predecrement_expression ::=
 		MINUSMINUS unary_expression:e
                 {: RESULT = null;
                   ILocation loc  = getLocation(e$, e$);
-                  if ((e instanceof VariableExpression)) {
-                    UnaryExpression ue = new UnaryExpression((VariableExpression) e);
-                    ue.setOperator(UnaryOperator.MINUSMINUS_EXPR);
+                  if ((e instanceof VariableExpressionAST)) {
+                    UnaryExpressionAST ue = new UnaryExpressionAST((VariableExpressionAST) e);
+                    ue.setOperator(UnaryOperatorAST.MINUSMINUS_EXPR);
                     ue.setLocation(loc);
                     RESULT = ue;
                   } :} ;
@@ -983,8 +983,8 @@ unary_expression_not_plus_minus ::=
                 {:  RESULT = null;
                   ILocation loc  = getLocation(n$, e$);
                   if ((e instanceof AtsASTNode)) {
-                    ConditionalBooleanExpression cbe = new ConditionalBooleanExpression((AtsASTNode) e);
-                    cbe.setOperator(ConditionalBooleanOperator.NOT);
+                    ConditionalBooleanExpressionAST cbe = new ConditionalBooleanExpressionAST((AtsASTNode) e);
+                    cbe.setOperator(ConditionalBooleanOperatorAST.NOT);
                     cbe.setLocation(loc);
                     RESULT = cbe;
                   } :} ;
@@ -1002,7 +1002,7 @@ nwa_definition ::=      variable_identifier:id EQ
                                internal_transitions_opt:int_trans COMMA
                                return_transitions_opt:ret_trans
                         RPAREN:r
-                        {: NestedwordAutomaton nwa = new NestedwordAutomaton(id);
+                        {: NestedwordAutomatonAST nwa = new NestedwordAutomatonAST(id);
                           nwa.setCallAlphabet(call.getIdentifierList());
                           nwa.setInternalAlphabet(intern.getIdentifierList());
                           nwa.setReturnAlphabet(ret.getIdentifierList());
@@ -1013,7 +1013,7 @@ nwa_definition ::=      variable_identifier:id EQ
                           nwa.setCallTransitions(call_trans);
                           nwa.setReturnTransitions(ret_trans);
                           nwa.setLocation(getLocation(l$, r$));
-                          m_varDeclarations.put(id, NestedwordAutomaton.class);
+                          m_varDeclarations.put(id, NestedwordAutomatonAST.class);
                           RESULT = nwa; :} ;
 
 
@@ -1021,10 +1021,10 @@ call_alphabet ::=  CALL_ALPHABET EQ LBRACE:l identifier_list_opt:idList  RBRACE:
 				   {:idList.setLocation(getLocation(l$, r$));
 					   RESULT = idList; :} ;
 
-identifier_list_opt ::= identifier_list:idList {:RESULT = idList; :} | {:RESULT = new IdentifierList(); :};
+identifier_list_opt ::= identifier_list:idList {:RESULT = idList; :} | {:RESULT = new IdentifierListAST(); :};
 
 identifier_list ::= identifier:id
-                    {: IdentifierList idList = new IdentifierList();
+                    {: IdentifierListAST idList = new IdentifierListAST();
                       idList.addId(id);
                       RESULT = idList; :} 
                     | identifier_list:idList identifier:id
@@ -1033,13 +1033,13 @@ identifier_list ::= identifier:id
 
 alphabet_opt ::= call_alphabet:a {:RESULT = a; :} | petrinet_alphabet:a {:RESULT = a; :} | {:RESULT = null; :} ;
 
-internal_alphabet_opt ::= internal_alphabet:intern {:RESULT = intern; :} | {: RESULT = new IdentifierList(); :};
+internal_alphabet_opt ::= internal_alphabet:intern {:RESULT = intern; :} | {: RESULT = new IdentifierListAST(); :};
 
 internal_alphabet ::= INTERNAL_ALPHABET EQ LBRACE:l identifier_list_opt:idList  RBRACE:r
 					  {:idList.setLocation(getLocation(l$, r$));
 						RESULT = idList; :};
 
-return_alphabet_opt ::= return_alphabet:ret {:RESULT = ret; :} | {:RESULT = new IdentifierList(); :};
+return_alphabet_opt ::= return_alphabet:ret {:RESULT = ret; :} | {:RESULT = new IdentifierListAST(); :};
 
 return_alphabet ::= RETURN_ALPHABET EQ LBRACE:l identifier_list_opt:idList RBRACE:r
 					{:idList.setLocation(getLocation(l$, r$));
@@ -1051,19 +1051,19 @@ states ::= STATES EQ LBRACE:l identifier_list_opt:idList RBRACE:r
 		   {:idList.setLocation(getLocation(l$, r$));
 			 RESULT = idList; :} ;
 
-initial_states_opt ::= initial_states:init {:RESULT = init; :} | {:RESULT = new IdentifierList(); :};
+initial_states_opt ::= initial_states:init {:RESULT = init; :} | {:RESULT = new IdentifierListAST(); :};
 
 initial_states ::= INITIAL_STATES EQ LBRACE:l identifier_list_opt:idList RBRACE:r
 				   {:idList.setLocation(getLocation(l$, r$));
 				     RESULT = idList; :} ;
 
-final_states_opt ::= final_states:fin {:RESULT = fin; :} | {:RESULT = new IdentifierList(); :};
+final_states_opt ::= final_states:fin {:RESULT = fin; :} | {:RESULT = new IdentifierListAST(); :};
 
 final_states ::= FINAL_STATES EQ LBRACE:l identifier_list_opt:idList RBRACE:r
 				{:idList.setLocation(getLocation(l$, r$));
 				  RESULT = idList; :} ;
 
-call_transitions_opt ::= call_transitions:c {:RESULT = c; :} | {:RESULT = new TransitionList(); :};
+call_transitions_opt ::= call_transitions:c {:RESULT = c; :} | {:RESULT = new TransitionListAST(); :};
 
 call_transitions ::= CALL_TRANSITIONS EQ LBRACE:l transition_list_opt:tList RBRACE:r
 					{: if (tList != null) {
@@ -1071,7 +1071,7 @@ call_transitions ::= CALL_TRANSITIONS EQ LBRACE:l transition_list_opt:tList RBRA
 					}
 						RESULT = tList; :};
 
-internal_transitions_opt ::= internal_transitions:i {:RESULT = i; :} | {:RESULT = new TransitionList(); :} ;
+internal_transitions_opt ::= internal_transitions:i {:RESULT = i; :} | {:RESULT = new TransitionListAST(); :} ;
 
 internal_transitions ::= INTERNAL_TRANSITIONS EQ LBRACE:l transition_list_opt:tList RBRACE:r
 						{:if (tList != null) {
@@ -1079,7 +1079,7 @@ internal_transitions ::= INTERNAL_TRANSITIONS EQ LBRACE:l transition_list_opt:tL
 						}
 						  RESULT = tList; :};
 
-return_transitions_opt ::= return_transitions:ret {:RESULT = ret; :} | {:RESULT = new TransitionList(); :} ;
+return_transitions_opt ::= return_transitions:ret {:RESULT = ret; :} | {:RESULT = new TransitionListAST(); :} ;
 
 return_transitions ::= RETURN_TRANSITIONS EQ LBRACE:l transition_list_opt:tList RBRACE:r
 						{: if (tList != null) {
@@ -1087,10 +1087,10 @@ return_transitions ::= RETURN_TRANSITIONS EQ LBRACE:l transition_list_opt:tList 
 						}
 						  RESULT = tList; :};
 						  
-transition_list_opt ::= transition_list:tList {: RESULT = tList; :} | {:RESULT = new TransitionList(); :} ;						  
+transition_list_opt ::= transition_list:tList {: RESULT = tList; :} | {:RESULT = new TransitionListAST(); :} ;						  
 
 transition_list ::= transition:idList 
-					{:TransitionList tList = new TransitionList();
+					{:TransitionListAST tList = new TransitionListAST();
  						tList.addTransition(idList);
 						RESULT = tList; :} 
                    | transition_list:tList transition:idList
@@ -1110,7 +1110,7 @@ petrinetJulian_definition ::= variable_identifier:id EQ LPAREN:l
                               net_transitions:net_trans COMMA
                               initial_markings:init_mark COMMA
                               accepting_places:acc_places RPAREN:r
-                              {: PetriNetAutomaton petri = new PetriNetAutomaton(id);
+                              {: PetriNetAutomatonAST petri = new PetriNetAutomatonAST(id);
                                  petri.setAlphabet(alpha.getIdentifierList());
                                  petri.setPlaces(p.getIdentifierList());
                                  petri.setTransitions(net_trans.getNetTransitions());
@@ -1136,10 +1136,10 @@ places ::= PLACES EQ LBRACE:l  identifier_list_opt:idList RBRACE:r
 net_transitions ::= NET_TRANSITIONS EQ LBRACE net_transition_list_opt:net_trans RBRACE
                     {: RESULT = net_trans; :} ;
 
-net_transition_list_opt ::= net_transition_list:trans {: RESULT = trans; :}  | {: RESULT = new TransitionList(); :} ;
+net_transition_list_opt ::= net_transition_list:trans {: RESULT = trans; :}  | {: RESULT = new TransitionListAST(); :} ;
 
 net_transition_list ::= net_transition:net_trans 
-			{: TransitionList tList = new TransitionList();
+			{: TransitionListAST tList = new TransitionListAST();
                           tList.addNetTransition(net_trans);
                           RESULT = tList; :} 
                       | net_transition_list:tList net_transition:net_trans
@@ -1149,12 +1149,12 @@ net_transition_list ::= net_transition:net_trans
 
 
 net_transition ::= LPAREN:l marking:m1 identifier:id marking:m2 RPAREN:r
-                   {: PetriNetTransition net_trans = new PetriNetTransition(m1, id, m2);
+                   {: PetriNetTransitionAST net_trans = new PetriNetTransitionAST(m1, id, m2);
                      net_trans.setLocation(getLocation(l$, r$));
                      RESULT = net_trans;
                       :} ; 
 
-initial_markings ::= INITIAL_MARKINGS EQ marking:m {:RESULT = new PetriNetMarkingList(m); :}  ;
+initial_markings ::= INITIAL_MARKINGS EQ marking:m {:RESULT = new PetriNetMarkingListAST(m); :}  ;
 
 marking ::= LBRACE:l identifier_list:idList RBRACE:r
             {: idList.setLocation(getLocation(l$, r$));
