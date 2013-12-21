@@ -171,132 +171,146 @@ public class NonTerminationArgumentSynthesizer {
 		Collection<BoogieVar> boogieVars = getBoogieVars();
 		
 		// A_stem * (x0, x0') <= b_stem
-		Term t1 = this.generateConstraint(m_stem_transition, m_stem, vars_init,
-				vars_honda, false);
+		List<Term> disjunction = new ArrayList<Term>(m_stem.getNumPolyhedra());
+		for (List<LinearInequality> polyhedron : m_stem.getPolyhedra()) {
+			disjunction.add(generateConstraint(
+					m_stem_transition,
+					polyhedron,
+					vars_init,
+					vars_honda,
+					false
+			));
+		}
+		Term t1 = Util.or(m_script, disjunction.toArray(new Term[0]));
 		
-		// A_loop * (x0', x0' + y) <= b_loop
-		Map<BoogieVar, Term> vars_end_plus_ray = new HashMap<BoogieVar, Term>();
+		// vars_end + vars_ray
+		Map<BoogieVar, Term> vars_end_plus_ray =
+				new HashMap<BoogieVar, Term>();
 		vars_end_plus_ray.putAll(vars_honda);
 		for (BoogieVar bv : boogieVars) {
 			vars_end_plus_ray.put(bv, m_script.term("+", vars_honda.get(bv),
 					vars_ray.get(bv)));
 		}
-		Term t2 = this.generateConstraint(m_loop_transition, m_loop, vars_honda,
-				vars_end_plus_ray, false);
-		
-		// A_loop * (y, lambda * y) <= 0
-		Term t3, t4;
+		// vars_ray * lambda
+		Map<BoogieVar, Term> vars_ray_times_lambda =
+				new HashMap<BoogieVar, Term>();
 		if (!m_non_decreasing) {
-			Map<BoogieVar, Term> vars_ray_times_lambda =
-					new HashMap<BoogieVar, Term>();
 			for (BoogieVar bv : boogieVars) {
 				vars_ray_times_lambda.put(bv,
 						m_script.term("*", vars_ray.get(bv), lambda));
 			}
-			t3 = this.generateConstraint(m_loop_transition, m_loop, vars_ray,
-					vars_ray_times_lambda, true);
-			
-			// lambda >= 0
-			t4 = m_script.term(">=", lambda, m_script.decimal("0"));
-			return m_script.term("and", t1, t2, t3, t4);
-		} else {
-			t3 = this.generateConstraint(m_loop_transition, m_loop, vars_ray,
-					vars_ray, true);
-			t4 = m_script.term("=", lambda,
-					m_integer_mode ? m_script.numeral(BigInteger.ONE)
-								: m_script.decimal("1"));
 		}
-		return m_script.term("and", t1, t2, t3, t4);
+		
+		disjunction = new ArrayList<Term>(m_loop.getNumPolyhedra());
+		for (List<LinearInequality> polyhedron : m_loop.getPolyhedra()) {
+			// A_loop * (x0', x0' + y) <= b_loop
+			Term t_honda = this.generateConstraint(m_loop_transition, polyhedron,
+					vars_honda, vars_end_plus_ray, false);
+			
+			// A_loop * (y, lambda * y) <= 0
+			Term t_ray = this.generateConstraint(
+					m_loop_transition,
+					polyhedron,
+					vars_ray,
+					m_non_decreasing ? vars_ray : vars_ray_times_lambda,
+					true
+			);
+			disjunction.add(Util.and(m_script, t_honda, t_ray));
+		}
+		Term t2 = Util.or(m_script, disjunction.toArray(new Term[0]));
+		
+		Term t3;
+		if (!m_non_decreasing) {
+			// lambda >= 0
+			t3 = m_script.term(">=", lambda, m_script.decimal("0"));
+		} else {
+			t3 = m_script.term("=", lambda,
+				m_integer_mode ? m_script.numeral(BigInteger.ONE)
+							: m_script.decimal("1"));
+		}
+		return m_script.term("and", t1, t2, t3);
 	}
 	
 	private Term generateConstraint(TransFormula trans_formula,
-			LinearTransition linear_transition,
+			List<LinearInequality> polyhedron,
 			Map<BoogieVar, Term> varsIn,
 			Map<BoogieVar, Term> varsOut,
 			boolean rays) {
 		Map<TermVariable, Term> auxVars = new HashMap<TermVariable, Term>();
-		Term[] disjunction = new Term[linear_transition.getNumPolyhedra()];
-		int i = 0;
-		for (List<LinearInequality> trans_conj
-				: linear_transition.getPolyhedra()) {
-			List<Term> conjunction = new ArrayList<Term>(trans_conj.size());
-			for (LinearInequality ieq : trans_conj) {
-				List<Term> summands = new ArrayList<Term>();
-				Collection<TermVariable> added_vars = new HashSet<TermVariable>();
-				
-				// outVars
-				for (Map.Entry<BoogieVar, TermVariable> entry :
-						trans_formula.getOutVars().entrySet()) {
-					if (!varsOut.containsKey(entry.getKey())) {
-						continue;
-					}
-					ParameterizedRational c =
-							ieq.getCoefficient(entry.getValue());
-					summands.add(m_script.term("*", varsOut.get(entry.getKey()),
+		List<Term> conjunction = new ArrayList<Term>(polyhedron.size());
+		for (LinearInequality ieq : polyhedron) {
+			List<Term> summands = new ArrayList<Term>();
+			Collection<TermVariable> added_vars = new HashSet<TermVariable>();
+			
+			// outVars
+			for (Map.Entry<BoogieVar, TermVariable> entry :
+					trans_formula.getOutVars().entrySet()) {
+				if (!varsOut.containsKey(entry.getKey())) {
+					continue;
+				}
+				ParameterizedRational c =
+						ieq.getCoefficient(entry.getValue());
+				summands.add(m_script.term("*", varsOut.get(entry.getKey()),
+					m_integer_mode ? c.asIntTerm(m_script)
+							: c.asRealTerm(m_script)));
+				added_vars.add(entry.getValue());
+			}
+			
+			// inVars
+			for (Map.Entry<BoogieVar, TermVariable> entry :
+					trans_formula.getInVars().entrySet()) {
+				if (added_vars.contains(entry.getValue())) {
+					// the transition implicitly requires that
+					// entry.getKey() is constant
+					conjunction.add(m_script.term(
+							"=",
+							varsIn.get(entry.getKey()),
+							varsOut.get(entry.getKey())
+					));
+					continue;
+				}
+				ParameterizedRational c =
+						ieq.getCoefficient(entry.getValue());
+				summands.add(m_script.term("*", varsIn.get(entry.getKey()),
 						m_integer_mode ? c.asIntTerm(m_script)
 								: c.asRealTerm(m_script)));
-					added_vars.add(entry.getValue());
-				}
-				
-				// inVars
-				for (Map.Entry<BoogieVar, TermVariable> entry :
-						trans_formula.getInVars().entrySet()) {
-					if (added_vars.contains(entry.getValue())) {
-						// the transition implicitly requires that
-						// entry.getKey() is constant
-						conjunction.add(m_script.term(
-								"=",
-								varsIn.get(entry.getKey()),
-								varsOut.get(entry.getKey())
-						));
-						continue;
-					}
-					ParameterizedRational c =
-							ieq.getCoefficient(entry.getValue());
-					summands.add(m_script.term("*", varsIn.get(entry.getKey()),
-							m_integer_mode ? c.asIntTerm(m_script)
-									: c.asRealTerm(m_script)));
-					added_vars.add(entry.getValue());
-				}
-				
-				// tmpVars
-				Set<TermVariable> all_vars =
-						new HashSet<TermVariable>(ieq.getVariables());
-				all_vars.removeAll(added_vars);
-				for (TermVariable var : all_vars) {
-					Term v;
-					if (auxVars.containsKey(var)) {
-						v = auxVars.get(var);
-					} else {
-						v = AuxiliaryMethods.newConstant(m_script,
-								s_prefix_aux + m_aux_counter,
-								m_integer_mode ? "Int" : "Real");
-						auxVars.put(var, v);
-					}
-					ParameterizedRational c = ieq.getCoefficient(var);
-					summands.add(m_script.term("*", v,
-							m_integer_mode ? c.asIntTerm(m_script)
-									: c.asRealTerm(m_script)));
-					++m_aux_counter;
-				}
-				if (!rays) {
-					ParameterizedRational c = ieq.getConstant();
-					summands.add(m_integer_mode ? c.asIntTerm(m_script)
-							: c.asRealTerm(m_script));
-				}
-				conjunction.add(m_script.term(ieq.getInequalitySymbol(),
-						UtilExperimental.sum(m_script,
-								m_integer_mode ? m_script.sort("Int")
-										: m_script.sort("Real"),
-								summands.toArray(new Term[0])),
-						m_integer_mode ? m_script.numeral(BigInteger.ZERO)
-								: m_script.decimal("0")));
+				added_vars.add(entry.getValue());
 			}
-			disjunction[i] = Util.and(m_script,
-					conjunction.toArray(new Term[0]));
-			++i;
+			
+			// tmpVars
+			Set<TermVariable> all_vars =
+					new HashSet<TermVariable>(ieq.getVariables());
+			all_vars.removeAll(added_vars);
+			for (TermVariable var : all_vars) {
+				Term v;
+				if (auxVars.containsKey(var)) {
+					v = auxVars.get(var);
+				} else {
+					v = AuxiliaryMethods.newConstant(m_script,
+							s_prefix_aux + m_aux_counter,
+							m_integer_mode ? "Int" : "Real");
+					auxVars.put(var, v);
+				}
+				ParameterizedRational c = ieq.getCoefficient(var);
+				summands.add(m_script.term("*", v,
+						m_integer_mode ? c.asIntTerm(m_script)
+								: c.asRealTerm(m_script)));
+				++m_aux_counter;
+			}
+			if (!rays) {
+				ParameterizedRational c = ieq.getConstant();
+				summands.add(m_integer_mode ? c.asIntTerm(m_script)
+						: c.asRealTerm(m_script));
+			}
+			conjunction.add(m_script.term(ieq.getInequalitySymbol(),
+					UtilExperimental.sum(m_script,
+							m_integer_mode ? m_script.sort("Int")
+									: m_script.sort("Real"),
+							summands.toArray(new Term[0])),
+					m_integer_mode ? m_script.numeral(BigInteger.ZERO)
+							: m_script.decimal("0")));
 		}
-		return Util.or(m_script, disjunction);
+		return Util.and(m_script, conjunction.toArray(new Term[0]));
 	}
 	
 	/**
