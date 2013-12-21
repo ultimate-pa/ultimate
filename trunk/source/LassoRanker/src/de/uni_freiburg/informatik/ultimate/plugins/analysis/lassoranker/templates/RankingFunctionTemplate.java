@@ -108,7 +108,7 @@ public abstract class RankingFunctionTemplate {
 	 * @return the new variable as a term
 	 */
 	public static Term newDelta(Script script, String name) {
-		Term delta = AuxiliaryMethods.newRealConstant(script, name);
+		Term delta = AuxiliaryMethods.newConstant(script, name, "Real");
 		Term t = script.term(">", delta, script.decimal("0"));
 		script.assertTerm(t);
 		return delta;

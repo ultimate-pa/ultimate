@@ -45,12 +45,12 @@ public class AffineFunctionGenerator {
 	public AffineFunctionGenerator(Script script,
 			Collection<BoogieVar> variables, String prefix) {
 		// Create variables
-		m_constant = AuxiliaryMethods.newRealConstant(script,
-				constName(prefix));
+		m_constant = AuxiliaryMethods.newConstant(script, constName(prefix),
+				"Real");
 		m_coefficients = new HashMap<BoogieVar, Term>();
 		for (BoogieVar var : variables) {
-			m_coefficients.put(var, AuxiliaryMethods.newRealConstant(script,
-					coeffName(prefix, var)));
+			m_coefficients.put(var, AuxiliaryMethods.newConstant(script,
+					coeffName(prefix, var), "Real"));
 		}
 	}
 	

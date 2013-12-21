@@ -138,8 +138,8 @@ public class MotzkinTransformation extends InstanceCounting {
 		int num_coefficients = m_inequalities.size();
 		m_coefficients = new ArrayList<Term>();
 		for (int i = 0; i < num_coefficients; ++i) {
-			Term coefficient = AuxiliaryMethods.newRealConstant(m_script,
-					s_motzkin_prefix + m_instance + "_" + i);
+			Term coefficient = AuxiliaryMethods.newConstant(m_script,
+					s_motzkin_prefix + m_instance + "_" + i, "Real");
 			m_coefficients.add(coefficient);
 		}
 	}
@@ -156,7 +156,7 @@ public class MotzkinTransformation extends InstanceCounting {
 			return t;
 		}
 		if (!p.isZero()) {
-			return m_script.term("*", t, p.asTerm(m_script));
+			return m_script.term("*", t, p.asRealTerm(m_script));
 		}
 		return null;
 	}

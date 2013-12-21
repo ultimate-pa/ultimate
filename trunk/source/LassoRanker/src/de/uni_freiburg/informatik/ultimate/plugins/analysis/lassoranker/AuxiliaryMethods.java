@@ -25,21 +25,31 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Tra
  */
 public class AuxiliaryMethods {
 	/**
-	 * Define a new constant of sort "Real".
+	 * Define a new constant
 	 * @param script SMT Solver
 	 * @param name name of the new constant
+	 * @param sort the sort of the variable
 	 * @return the new variable as a term
 	 * @throws SMTLIBException if something goes wrong, e.g. the name is
 	 *          already defined
 	 */
-	public static Term newRealConstant(Script script, String name)
+	public static Term newConstant(Script script, String name, String sort)
 			throws SMTLIBException {
-		script.declareFun(name, new Sort[0], script.sort("Real"));
+		script.declareFun(name, new Sort[0], script.sort(sort));
 		return script.term(name);
 	}
 	
 	/**
-	 * Convert a Rational into a decimal instance.
+	 * Convert a rational to a numeral instance.
+	 * (The rational's denominator must be 1.)
+	 */
+	static Term rationalToNumeral(Script script, Rational r) {
+		assert(r.isIntegral());
+		return script.numeral(r.numerator());
+	}
+	
+	/**
+	 * Convert a rational into a decimal instance.
 	 */
 	static Term rationalToDecimal(Script script, Rational a) {
 		Term num = script.decimal(a.numerator().abs().toString());

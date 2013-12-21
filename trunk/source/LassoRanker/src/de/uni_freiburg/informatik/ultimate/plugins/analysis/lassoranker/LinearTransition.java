@@ -6,6 +6,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.InequalityConverter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.IntegralHull;
@@ -22,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preproce
 public class LinearTransition {
 	
 	private List<List<LinearInequality>> m_polyhedra;
+	private boolean m_contains_integers;
 	
 	public LinearTransition(List<List<LinearInequality>> polyhedra) {
 		assert(polyhedra != null);
@@ -29,6 +31,18 @@ public class LinearTransition {
 			assert(polyhedron != null);
 		}
 		m_polyhedra = polyhedra;
+		
+		m_contains_integers = false;
+		for (List<LinearInequality> polyhedron : polyhedra) {
+			for (LinearInequality ieq : polyhedron) {
+				for (TermVariable var : ieq.getVariables()) {
+					if (var.getSort().getName().equals("Int")) {
+						m_contains_integers = true;
+						return;
+					}
+				}
+			}
+		}
 	}
 	
 	/**
@@ -70,6 +84,13 @@ public class LinearTransition {
 			polyhedra.add(InequalityConverter.convert(disjunct));
 		}
 		return new LinearTransition(polyhedra);
+	}
+	
+	/**
+	 * @return whether this linear transition contains any integer variables
+	 */
+	public boolean containsIntegers() {
+		return m_contains_integers;
 	}
 	
 	/**

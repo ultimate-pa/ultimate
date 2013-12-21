@@ -39,6 +39,5 @@ class SMTSolver {
 			script.setOption(":produce-unsat-cores", true);
 		}
 		script.setOption(":produce-models", true);
-		script.setLogic("QF_NRA"); // non-linear algebraic constraint solving
 	}
 }

@@ -1,10 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.math.BigInteger;
 import java.util.*;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -53,7 +55,12 @@ public class NonTerminationArgumentSynthesizer {
 	/**
 	 * Is the ray non-decreasing?
 	 */
-	private boolean m_non_decreasing;
+	private final boolean m_non_decreasing;
+	
+	/**
+	 * Do we have to handle integers (QF_LIA logic)?
+	 */
+	private final boolean m_integer_mode;
 	
 	/**
 	 * SMT script for the template instance
@@ -78,14 +85,26 @@ public class NonTerminationArgumentSynthesizer {
 			LinearTransition loop,
 			TransFormula stem_transition,
 			TransFormula loop_transition) {
-		m_non_decreasing = non_decreasing;
 		m_script = script;
+		
+		m_integer_mode = stem.containsIntegers() || loop.containsIntegers();
+		if (!m_integer_mode) {
+			script.setLogic(Logics.QF_NRA);
+		} else {
+			s_Logger.info("Using integer mode.");
+			if (!non_decreasing) {
+				s_Logger.warn("Integer program; non-termination SMT query must "
+						+ "be linear!");
+			}
+			script.setLogic(Logics.QF_LIA);
+		}
+		m_non_decreasing = non_decreasing || m_integer_mode;
+		
 		m_stem = stem;
 		m_loop = loop;
 		m_stem_transition = stem_transition;
 		m_loop_transition = loop_transition;
 	}
-	
 	
 	/**
 	 * @return all BoogieVars that occur in the program
@@ -105,19 +124,22 @@ public class NonTerminationArgumentSynthesizer {
 	 * @return whether nontermination has been proven
 	 */
 	public boolean checkForNonTermination() {
+		String sort = m_integer_mode ? "Int" : "Real";
+		
 		// Create new variables
 		Map<BoogieVar, Term> vars_init = new HashMap<BoogieVar, Term>();
 		Map<BoogieVar, Term> vars_honda = new HashMap<BoogieVar, Term>();
 		Map<BoogieVar, Term> vars_ray = new HashMap<BoogieVar, Term>();
 		for (BoogieVar var : getBoogieVars()) {
-			vars_init.put(var, AuxiliaryMethods.newRealConstant(m_script,
-					s_prefix_init + var.getIdentifier()));
-			vars_honda.put(var, AuxiliaryMethods.newRealConstant(m_script,
-					s_prefix_honda + var.getIdentifier()));
-			vars_ray.put(var, AuxiliaryMethods.newRealConstant(m_script,
-					s_prefix_ray + var.getIdentifier()));
+			vars_init.put(var, AuxiliaryMethods.newConstant(m_script,
+					s_prefix_init + var.getIdentifier(), sort));
+			vars_honda.put(var, AuxiliaryMethods.newConstant(m_script,
+					s_prefix_honda + var.getIdentifier(), sort));
+			vars_ray.put(var, AuxiliaryMethods.newConstant(m_script,
+					s_prefix_ray + var.getIdentifier(), sort));
 		}
-		Term lambda = AuxiliaryMethods.newRealConstant(m_script, s_lambda_name);
+		Term lambda = AuxiliaryMethods.newConstant(m_script, s_lambda_name,
+					sort);
 		
 		Term constraints = generateConstraints(vars_init, vars_honda, vars_ray,
 				lambda);
@@ -148,9 +170,6 @@ public class NonTerminationArgumentSynthesizer {
 			Term lambda) {
 		Collection<BoogieVar> boogieVars = getBoogieVars();
 		
-		// lambda >= 0
-		Term t0 = m_script.term(">=", lambda, m_script.decimal("0"));
-		
 		// A_stem * (x0, x0') <= b_stem
 		Term t1 = this.generateConstraint(m_stem_transition, m_stem, vars_init,
 				vars_honda, false);
@@ -166,7 +185,7 @@ public class NonTerminationArgumentSynthesizer {
 				vars_end_plus_ray, false);
 		
 		// A_loop * (y, lambda * y) <= 0
-		Term t3;
+		Term t3, t4;
 		if (!m_non_decreasing) {
 			Map<BoogieVar, Term> vars_ray_times_lambda =
 					new HashMap<BoogieVar, Term>();
@@ -176,11 +195,18 @@ public class NonTerminationArgumentSynthesizer {
 			}
 			t3 = this.generateConstraint(m_loop_transition, m_loop, vars_ray,
 					vars_ray_times_lambda, true);
+			
+			// lambda >= 0
+			t4 = m_script.term(">=", lambda, m_script.decimal("0"));
+			return m_script.term("and", t1, t2, t3, t4);
 		} else {
 			t3 = this.generateConstraint(m_loop_transition, m_loop, vars_ray,
 					vars_ray, true);
+			t4 = m_script.term("=", lambda,
+					m_integer_mode ? m_script.numeral(BigInteger.ONE)
+								: m_script.decimal("1"));
 		}
-		return m_script.term("and", t0, t1, t2, t3);
+		return m_script.term("and", t1, t2, t3, t4);
 	}
 	
 	private Term generateConstraint(TransFormula trans_formula,
@@ -204,8 +230,11 @@ public class NonTerminationArgumentSynthesizer {
 					if (!varsOut.containsKey(entry.getKey())) {
 						continue;
 					}
+					ParameterizedRational c =
+							ieq.getCoefficient(entry.getValue());
 					summands.add(m_script.term("*", varsOut.get(entry.getKey()),
-						ieq.getCoefficient(entry.getValue()).asTerm(m_script)));
+						m_integer_mode ? c.asIntTerm(m_script)
+								: c.asRealTerm(m_script)));
 					added_vars.add(entry.getValue());
 				}
 				
@@ -222,9 +251,11 @@ public class NonTerminationArgumentSynthesizer {
 						));
 						continue;
 					}
+					ParameterizedRational c =
+							ieq.getCoefficient(entry.getValue());
 					summands.add(m_script.term("*", varsIn.get(entry.getKey()),
-							ieq.getCoefficient(
-									entry.getValue()).asTerm(m_script)));
+							m_integer_mode ? c.asIntTerm(m_script)
+									: c.asRealTerm(m_script)));
 					added_vars.add(entry.getValue());
 				}
 				
@@ -237,22 +268,29 @@ public class NonTerminationArgumentSynthesizer {
 					if (auxVars.containsKey(var)) {
 						v = auxVars.get(var);
 					} else {
-						v = AuxiliaryMethods.newRealConstant(m_script,
-								s_prefix_aux + m_aux_counter);
+						v = AuxiliaryMethods.newConstant(m_script,
+								s_prefix_aux + m_aux_counter,
+								m_integer_mode ? "Int" : "Real");
 						auxVars.put(var, v);
 					}
+					ParameterizedRational c = ieq.getCoefficient(var);
 					summands.add(m_script.term("*", v,
-							ieq.getCoefficient(var).asTerm(m_script)
-					));
+							m_integer_mode ? c.asIntTerm(m_script)
+									: c.asRealTerm(m_script)));
 					++m_aux_counter;
 				}
 				if (!rays) {
-					summands.add(ieq.getConstant().asTerm(m_script));
+					ParameterizedRational c = ieq.getConstant();
+					summands.add(m_integer_mode ? c.asIntTerm(m_script)
+							: c.asRealTerm(m_script));
 				}
 				conjunction.add(m_script.term(ieq.getInequalitySymbol(),
-						UtilExperimental.sum(m_script, m_script.sort("Real"),
+						UtilExperimental.sum(m_script,
+								m_integer_mode ? m_script.sort("Int")
+										: m_script.sort("Real"),
 								summands.toArray(new Term[0])),
-						m_script.decimal("0")));
+						m_integer_mode ? m_script.numeral(BigInteger.ZERO)
+								: m_script.decimal("0")));
 			}
 			disjunction[i] = Util.and(m_script,
 					conjunction.toArray(new Term[0]));

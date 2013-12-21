@@ -211,6 +211,8 @@ public class LassoRankerTerminationAnalysis {
 			m_auxVars.addAll(preprocessor.getAuxVars());
 		}
 		
+		s_Logger.debug(SMTPrettyPrinter.print(trans_term));
+		
 		LinearTransition linear_trans = LinearTransition.fromTerm(trans_term);
 		if (!m_preferences.enable_disjunction
 				&& !linear_trans.isConjunctive()) {
@@ -232,7 +234,7 @@ public class LassoRankerTerminationAnalysis {
 		
 		NonTerminationArgumentSynthesizer synthesizer =
 				new NonTerminationArgumentSynthesizer(
-						m_preferences.nontermination_check_nonlinear,
+						!m_preferences.nontermination_check_nonlinear,
 						m_script,
 						m_stem,
 						m_loop,

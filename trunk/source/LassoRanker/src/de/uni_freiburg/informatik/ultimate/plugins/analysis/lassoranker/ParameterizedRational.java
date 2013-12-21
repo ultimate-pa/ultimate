@@ -73,10 +73,22 @@ public class ParameterizedRational {
 	
 	/**
 	 * @param script current SMT script
-	 * @return the parameter as a term
+	 * @return the parameter as a term of sort "Real"
 	 */
-	public Term asTerm(Script script) {
+	public Term asRealTerm(Script script) {
 		Term c = AuxiliaryMethods.rationalToDecimal(script, coefficient);
+		if (variable == null) {
+			return c;
+		}
+		return script.term("*", c, variable);
+	}
+	
+	/**
+	 * @param script current SMT script
+	 * @return the parameter as a term of sort "Int"
+	 */
+	public Term asIntTerm(Script script) {
+		Term c = AuxiliaryMethods.rationalToNumeral(script, coefficient);
 		if (variable == null) {
 			return c;
 		}

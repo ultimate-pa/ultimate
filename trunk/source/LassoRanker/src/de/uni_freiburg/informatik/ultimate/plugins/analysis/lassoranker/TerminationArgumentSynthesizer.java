@@ -56,6 +56,7 @@ class TerminationArgumentSynthesizer {
 			LinearTransition loop, Preferences preferences) {
 		m_preferences = preferences;
 		m_script = script;
+		script.setLogic(Logics.QF_NRA);
 		
 		m_supporting_invariants = new ArrayList<SupportingInvariant>();
 		
