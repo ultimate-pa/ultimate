@@ -89,12 +89,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 						longDescr, Severity.INFO);
 //				s_Logger.info(shortDescr + longDescr + " line" + loc.getStartLine());
 				reportResult(reportRes);
-			s_Logger.info("Ultimate Buchi Automizer: Termination proven.");
+			s_Logger.info(shortDescr);
 		} else if (result == Result.UNKNOWN) {
 			NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
 			IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
 			ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
-			String shortDescr = "Buchi Automizer was unable to prove termination";
+			String shortDescr = "Buchi Automizer was unable to decide termination";
 			StringBuilder longDescr = new StringBuilder();
 //			longDescr.append("Maybe this program point can be visited infinitely often. ");
 			longDescr.append("Maybe your program is nonterminating!?! ");
@@ -114,7 +114,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					longDescr.toString(), Severity.ERROR);
 //			s_Logger.info(shortDescr + longDescr + " line" + loc.getStartLine());
 			reportResult(reportRes);
-			s_Logger.info("Ultimate Buchi Automizer: Unable to prove termination. Nonterminating?");
+			s_Logger.info(shortDescr);
 		} else if (result == Result.TIMEOUT) {
 			ProgramPoint position = rootAnnot.getEntryNodes().values().iterator().next();
 			String longDescr = "Timeout while trying to prove termination";
@@ -137,7 +137,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 //			}
 		} else if (result == Result.NONTERMINATING) {
 			s_Logger.info("Nontermination!!");
-			throw new AssertionError("Nontermination!!!!!!!!!!!!1111");
+			String shortDescr = "Buchi Automizer found a nonterminating execution";
+			s_Logger.info(shortDescr);
 		} else {
 			throw new AssertionError();
 		}
