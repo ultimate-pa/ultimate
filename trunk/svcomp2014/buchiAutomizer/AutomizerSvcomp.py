@@ -16,8 +16,8 @@ unsafetyString = 'Ultimate proved your program to be incorrect'
 unknownSafetyString = 'Ultimate could not prove your program'
 
 terminationString = 'Buchi Automizer proved that your program is terminating'
-notterminationString = 'Ultimate proved your program to be incorrect'
-unknownTerminationString = 'Buchi Automizer was unable to prove termination'
+notterminationString = 'Buchi Automizer found a nonterminating execution'
+unknownTerminationString = 'Buchi Automizer was unable to decide termination'
 
 memDerefUltimateString = 'pointer dereference may fail'
 memFreeUltimateString = 'free of unallocated memory possible'
