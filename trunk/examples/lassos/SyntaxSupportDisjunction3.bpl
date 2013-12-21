@@ -8,6 +8,7 @@
 procedure SyntaxSupportDisjunction3() returns (x: int)
 {
   var random: int;
+  assume(true);
   while (x >= 0) {
     havoc random;
     if (random > 0) {
