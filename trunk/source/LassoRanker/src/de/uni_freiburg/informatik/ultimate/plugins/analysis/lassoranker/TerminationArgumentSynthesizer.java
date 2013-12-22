@@ -67,18 +67,24 @@ class TerminationArgumentSynthesizer {
 	}
 	
 	/**
-	 * @return Boogie variables that are relevant for supporting invariants
+	 * @return Boogie variables that are relevant for supporting invariants.
+	 * Variables that occur as outVars of the stem but are not read by the loop
+	 * (i.e., do not occur as inVar of the loop) are not relevant for
+	 * supporting invariants.
 	 */
 	private Collection<BoogieVar> getSIVars() { 
-		return m_stem_transition.getOutVars().keySet();
+		Set<BoogieVar> result = 
+				new HashSet<BoogieVar>(m_stem_transition.getOutVars().keySet());
+		result.retainAll(m_loop_transition.getInVars().keySet());
+		return result;
 	}
 	
 	/**
 	 * @return Boogie variables that are relevant for ranking functions
 	 */
 	private Collection<BoogieVar> getRankVars() {
-		Collection<BoogieVar> vars = new HashSet<BoogieVar>();
-		vars.addAll(m_loop_transition.getOutVars().keySet());
+		Collection<BoogieVar> vars = 
+				new HashSet<BoogieVar>(m_loop_transition.getOutVars().keySet());
 		vars.retainAll(m_loop_transition.getInVars().keySet());
 		return vars;
 	}
