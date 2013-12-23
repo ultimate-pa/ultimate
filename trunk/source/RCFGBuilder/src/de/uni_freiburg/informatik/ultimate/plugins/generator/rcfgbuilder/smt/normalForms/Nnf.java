@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 
 
 /**
@@ -85,6 +86,34 @@ public class Nnf {
 					// a formula that is not an or-term.
 					convert(Util.or(m_Script, negateAllButLast(params)));
 					return;
+				} else if (functionName.equals("=") && 
+						SmtUtils.hasBooleanParams(appTerm)) {
+					Term[] params = appTerm.getParameters();
+					if (params.length > 2) {
+						Term binarized = SmtUtils.binarize(m_Script, appTerm);
+						super.convert(binarized);
+					} else {
+						assert params.length == 2;
+						Term bothTrue = Util.and(m_Script, params[0], params[1]);
+						Term bothFalse = Util.and(m_Script, 
+								Util.not(m_Script, params[0]), 
+								Util.not(m_Script, params[1]));
+						convert(Util.or(m_Script, bothTrue, bothFalse));
+					}
+				} else if (functionName.equals("distinct") && 
+						SmtUtils.hasBooleanParams(appTerm)) {
+					Term[] params = appTerm.getParameters();
+					if (params.length > 2) {
+						Term binarized = SmtUtils.binarize(m_Script, appTerm);
+						super.convert(binarized);
+					} else {
+						assert params.length == 2;
+						Term firstTrue = Util.and(m_Script, 
+								Util.not(m_Script, params[0]), params[1]);
+						Term secondTrue = Util.and(m_Script, params[0], 
+								Util.not(m_Script, params[1]));
+						convert(Util.or(m_Script, firstTrue, secondTrue));
+					}
 				} else {
 					//consider term as atom
 					setResult(term);
