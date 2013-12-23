@@ -232,7 +232,8 @@ do
 	RESULT_INSUFFICIENT_ITERATIONS=`echo "$Ultimate_OUTPUT" | grep -c "RESULT: Ultimate could not prove your program: Insufficient iterations to proof correctness"`
 	RESULT_NORESULT=`echo "$Ultimate_OUTPUT" | grep -c "RESULT: Ultimate could not prove your program: Toolchain returned no Result."`
 	RESULT_PROVEN_TERMINATION=`echo "$Ultimate_OUTPUT" | grep "Buchi Automizer proved that your program is terminating"`
-	RESULT_NOTPROVEN_TERMINATION=`echo "$Ultimate_OUTPUT" | grep "Buchi Automizer was unable to prove termination"`
+	RESULT_UNKNOWN_TERMINATION=`echo "$Ultimate_OUTPUT" | grep "Buchi Automizer was unable to decide termination"`
+	RESULT_FALSE_TERMINATION=`echo "$Ultimate_OUTPUT" | grep "Buchi Automizer found a nonterminating execution"`
 	BUG_24=`echo "$Ultimate_OUTPUT" | grep "at de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ConvertFormula.addClause(ConvertFormula.java:349)"`
 	BUG_14=`echo "$Ultimate_OUTPUT" | grep "at de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ConvertFormula.convertFormula(ConvertFormula.java:"`
 	BUG_22=`echo "$Ultimate_OUTPUT" | grep "java.lang.AssertionError: Z3 says unsat, SmtInterpol says sat!"`
@@ -468,9 +469,14 @@ do
         printf "$RESULT_PROVEN_TERMINATION"
     fi
     
-    if [ "$RESULT_NOTPROVEN_TERMINATION" ]; then
-        printf "Buchi Automizer terminated after $TOTALRUNTIME and says: Unable to prove termination \n"
-        printf "$RESULT_PROVEN_TERMINATION"
+     if [ "$RESULT_FALSE_TERMINATION" ]; then
+        printf "Buchi Automizer terminated after $TOTALRUNTIME and says: Nontermination possible \n"
+        printf "$RESULT_FALSE_TERMINATION"
+    fi
+    
+    if [ "$RESULT_UNKNOWN_TERMINATION" ]; then
+        printf "Buchi Automizer terminated after $TOTALRUNTIME and says: Unable to decide termination \n"
+        printf "$RESULT_UNKNOWN_TERMINATION"
     fi
 
 	if [ "$RESULT_NORESULT" ]; then
