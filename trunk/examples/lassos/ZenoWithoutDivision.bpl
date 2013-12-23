@@ -1,5 +1,7 @@
 //#rNontermination
 /* Simple example with Zeno behavior (example does not use division).
+ * (See Wellington.bpl for a modification of this lasso
+ * that uses int instead of real).
  *
  * Date: 23.12.2013
  * Author: heizmann@informatik.uni-freiburg.de
