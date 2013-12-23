@@ -20,7 +20,7 @@ public class RewriteEquality extends TermTransformer implements PreProcessor {
 	
 	@Override
 	public String getDescription() {
-		return "Replaces atoms of the form a = b with (a <= b \\/ a >= b).";
+		return "Replaces atoms of the form a = b with (a <= b /\\ a >= b).";
 	}
 
 	@Override
