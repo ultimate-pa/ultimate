@@ -40,10 +40,6 @@ public class AutomataScriptLocation implements ILocation {
 		this.m_EndLine = m_EndLine;
 	}
 	
-	
-
-
-
 
 
 	@Override

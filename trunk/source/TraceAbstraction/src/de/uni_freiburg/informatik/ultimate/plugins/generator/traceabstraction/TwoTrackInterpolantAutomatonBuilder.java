@@ -27,6 +27,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 //	private ArrayList<IPredicate> m_StateSequence;
 	NestedWordAutomaton<CodeBlock, IPredicate> m_TTIA;
 	private final SmtManager m_SmtManager;
+	private static boolean m_TotalTransitions = true;
 	
 	
 	public TwoTrackInterpolantAutomatonBuilder(
@@ -51,139 +52,112 @@ public class TwoTrackInterpolantAutomatonBuilder {
 		Set<CodeBlock> returnAlphabet = new HashSet<CodeBlock>(0);
 
 		if (abstraction instanceof INestedWordAutomatonSimple) {
-			INestedWordAutomatonSimple<CodeBlock, IPredicate> nwa = (INestedWordAutomatonSimple<CodeBlock, IPredicate>) abstraction;
-			callAlphabet = nwa.getCallAlphabet();
-			returnAlphabet = nwa.getReturnAlphabet();
+			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstractionAsNwa = (INestedWordAutomatonSimple<CodeBlock, IPredicate>) abstraction;
+			callAlphabet = abstractionAsNwa.getCallAlphabet();
+			returnAlphabet = abstractionAsNwa.getReturnAlphabet();
 		}
 		
-		m_TTIA = new NestedWordAutomaton<CodeBlock, IPredicate>(
-				internalAlphabet,
-				callAlphabet,
-				returnAlphabet,
-				tAContentFactory);
-		m_TTIA.addState(true, false, m_TraceCheckerSpWp.getPrecondition());
-		m_TTIA.addState(false, true, m_TraceCheckerSpWp.getPostcondition());
+		NestedWordAutomaton<CodeBlock, IPredicate> nwa = new NestedWordAutomaton<CodeBlock, IPredicate>(
+				internalAlphabet, callAlphabet, returnAlphabet, tAContentFactory);
 		
-		for (int i=0; i<m_NestedWord.length(); i++) {
-			if (i < (m_NestedWord.length() - 1)) {
-				if (m_TraceCheckerSpWp.interpolantsSPComputed()) {
-				// 1. Add a state which contains the assertion computed via SP
-					boolean isFinal = isFalsePredicate(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
-					if (!m_TTIA.getStates().contains(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i))) {
-						m_TTIA.addState(false, isFinal, m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
-					}
-				}
-				// 2. Add a state which contains the assertion computed via WP
-				if (m_TraceCheckerSpWp.interpolantsWPComputed()) {
-					boolean isFinal = isFalsePredicate(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
-					if (!m_TTIA.getStates().contains(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i))) {
-						m_TTIA.addState(false, isFinal, m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
-					}
-				}
-			}
-			if (i == 0) {
-				if (m_TraceCheckerSpWp.interpolantsSPComputed()) {
-					addTransition(m_TraceCheckerSpWp.getPrecondition(), i,
-							m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
-					// Try to add a self-loop labelled with stmt i on the current state 
-					if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i)) {
-						addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i,
-								m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
-					}// Try to add a self-loop labelled with stmt (i+1) on the current state 
-					else if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i)) {
-						addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), (i+1),
-								m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
-					}
-				}
-				
-				
-				if (m_TraceCheckerSpWp.interpolantsWPComputed()) {
-					addTransition(m_TraceCheckerSpWp.getPrecondition(), i,
-							m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
-					// Try to add a self-loop labelled with stmt i on the current state 
-					if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i)) {
-						addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i,
-								m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
-					}// Try to add a self-loop labelled with stmt (i+1) on the current state 
-					else if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i)) {
-						addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), (i+1),
-								m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
-					}
-				}
-				
-			} else if (i == (m_NestedWord.length() - 1)) {
-				if (m_TraceCheckerSpWp.interpolantsSPComputed()) {
-					addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i-1), i,
-							m_TraceCheckerSpWp.getPostcondition());
-					// Try to add a self-loop labelled with stmt i on the current state 
-					if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i)) {
-						addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i,
-								m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
-					}
-				}
-				if (m_TraceCheckerSpWp.interpolantsWPComputed()) {
-					addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i-1), i,
-							m_TraceCheckerSpWp.getPostcondition());
-					// Try to add a self-loop labelled with stmt i on the current state 
-					if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i)) {
-						addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i,
-								m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
-					}
-				}
-			} else {
-				if (m_TraceCheckerSpWp.interpolantsSPComputed()) {
-					addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i-1), i,
-							m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
-					if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i)) {
-						addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i,
-								m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
-					}// Try to add a self-loop labelled with stmt (i+1) on the current state 
-					else if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i)) {
-						addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), (i+1),
-								m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
-					}
-				}
-				if (m_TraceCheckerSpWp.interpolantsWPComputed()) {
-					addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i-1), i,
-							m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
-					// Try to add a self-loop labelled with stmt i on the current state 
-					if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i)) {
-						addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i,
-								m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
-					}// Try to add a self-loop labelled with stmt (i+1) on the current state 
-					else if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i)) {
-						addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), (i+1),
-								m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
-					}
-				}
-				// 1. Try to add a transition from state annotated with the assertion computed via SP to
-				// to a state annotated with the assertion computed via WP.
-				if (m_TraceCheckerSpWp.interpolantsSPComputed() && m_TraceCheckerSpWp.interpolantsWPComputed()) {
-					if (transitionFromSPtoWPOrVVAllowed(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i),
-							i,
-							m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i),true)) { 
-						addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i,
-								m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
-					}
-				}
-				// 2. Try to add a transition from state annotated with the assertion computed via WP to
-				// to a state annotated with the assertion computed via SP.
-				if (m_TraceCheckerSpWp.interpolantsSPComputed() && m_TraceCheckerSpWp.interpolantsWPComputed()) {
-					if (transitionFromSPtoWPOrVVAllowed(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i),
-							i,
-							m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i),false)) { 
-						addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i,
-								m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
-					}
-				}
-			}
+		// 1. Ensure that forward predicates has been computed.
+		assert m_TraceCheckerSpWp.forwardsPredicatesComputed() : "Forward predicates has not been computed!" ;
+		// 2. Ensure that backward predicates has been computed.
+		assert m_TraceCheckerSpWp.backwardsPredicatesComputed() : "Backward predicates has not been computed" ;
+		
+		nwa.addState(true, false, m_TraceCheckerSpWp.getPrecondition());
+		nwa.addState(false, true, m_TraceCheckerSpWp.getPostcondition());
+		
+		// Add states, which contains the predicates computed via SP, WP.
+		addStatesAccordingToPredicates(nwa);
+		addBasicTransitions(nwa);
+		
+		if (m_TotalTransitions) {
+			addTotalTransitionsNaively(nwa);
 		}
+		
 			
-		return m_TTIA;
+		return nwa;
+	}
+	
+	/**
+	 * Add a state for each forward predicate and for each backward predicate.
+	 * @param nwa - the automaton to which the states are added
+	 */
+	private void addStatesAccordingToPredicates(NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
+		for (int i=0; i < m_NestedWord.length() - 1; i++) {
+			// 1. Add a state which contains the predicate computed via SP
+			boolean isFinal = isFalsePredicate(m_TraceCheckerSpWp.getForwardPredicateAtPosition(i));
+			if (!nwa.getStates().contains(m_TraceCheckerSpWp.getForwardPredicateAtPosition(i))) {
+				nwa.addState(false, isFinal, m_TraceCheckerSpWp.getForwardPredicateAtPosition(i));
+			}
+			// 2. Add a state which contains the predicate computed via WP
+			isFinal = isFalsePredicate(m_TraceCheckerSpWp.getBackwardPredicateAtPosition(i));
+			if (!nwa.getStates().contains(m_TraceCheckerSpWp.getBackwardPredicateAtPosition(i))) {
+				nwa.addState(false, isFinal, m_TraceCheckerSpWp.getBackwardPredicateAtPosition(i));
+			}
+		}
+	}
+	
+	/**
+	 * Add basic transitions in 3 steps.
+	 * 1. For each predicate type add a transition from the precondition to the first predicate.
+	 * (i.e. add transition (preCondition, st_0, FP_0), add transition (preCondition, st_0, BP_0))
+	 * 2. For each predicate type add a transition from the previous predicate to the current predicate.
+	 * (i.e. add transition (FP_i-1, st_i, FP_i), add transition (BP_i-1, st_i, BP_i))
+	 * 3. For each predicate type add a transition from the last predicate to the post-condition.
+	 * (i.e. add transition (FP_n-1, st_n, postCondition), add transition (BP_n-1, st_n, postCondition))
+	 * @param nwa - the automaton to which the basic transition are added
+	 */
+	private void addBasicTransitions(NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
+		// 1. For each predicate type add a transition from the precondition to the first predicate.
+		addTransition(nwa, m_TraceCheckerSpWp.getPrecondition(), 0,
+				m_TraceCheckerSpWp.getForwardPredicateAtPosition(0), true);
+
+		addTransition(nwa, m_TraceCheckerSpWp.getPrecondition(), 0,
+				m_TraceCheckerSpWp.getBackwardPredicateAtPosition(0), false);
+		// 2. For each predicate type add a transition from the previous predicate to the current predicate.
+		for (int i = 1; i < m_NestedWord.length() - 1; i++) {
+			addTransition(nwa, m_TraceCheckerSpWp.getForwardPredicateAtPosition(i-1), i,
+					m_TraceCheckerSpWp.getForwardPredicateAtPosition(i), true);
+			addTransition(nwa, m_TraceCheckerSpWp.getBackwardPredicateAtPosition(i-1), i,
+					m_TraceCheckerSpWp.getBackwardPredicateAtPosition(i), false);
+		}
+		// 3. For each predicate type add a transition from the last predicate to the post-condition.
+		addTransition(nwa, m_TraceCheckerSpWp.getForwardPredicateAtPosition(m_NestedWord.length()-2), m_NestedWord.length()-1,
+				m_TraceCheckerSpWp.getPostcondition(), true);
+		addTransition(nwa, m_TraceCheckerSpWp.getBackwardPredicateAtPosition(m_NestedWord.length()-2), m_NestedWord.length()-1,
+				m_TraceCheckerSpWp.getPostcondition(), false);
+		
+		
 	}
 	
 	private boolean selfLoopAllowed(IPredicate p1, int symbolPos) {
 		return transitionFromSPtoWPOrVVAllowed(p1, symbolPos, p1, true);
+	}
+	
+	/**
+	 * This is a naive strategy to add transitions between the two interpolant types.
+	 * Transitions are added as follows:
+	 * 1. For each forwards predicate FP_i: 
+	 * 2.     for each backwards predicate BP_j:
+	 * 3.          try to add the transition (FP_i, st_j, BP_j)
+	 * 4.          try to add the transition (BP_j, st_j, FP_i) 
+	 * @param nwa - the automaton to which the transitions are added.
+	 */
+	private void addTotalTransitionsNaively(NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
+		for (int i = 0; i < m_NestedWord.length(); i++) {
+			IPredicate fp_i = m_TraceCheckerSpWp.getForwardPredicateAtPosition(i);
+			for (int j = 0; j < m_NestedWord.length(); j++) {
+				IPredicate bp_j = m_TraceCheckerSpWp.getBackwardPredicateAtPosition(j); 
+				if (transitionFromSPtoWPOrVVAllowed(fp_i, j, bp_j, true)) {
+					addTransition(nwa, fp_i, j, bp_j, true);
+				}
+				if (transitionFromSPtoWPOrVVAllowed(bp_j, j, fp_i, false)) {
+					addTransition(nwa, bp_j, j, fp_i, false);
+				}
+			}
+		}
 	}
 	
 	/**
@@ -198,9 +172,11 @@ public class TwoTrackInterpolantAutomatonBuilder {
 			return (m_SmtManager.isInductiveCall(p1, (Call) statement, p2) == LBool.UNSAT);
 		} else if (m_NestedWord.isReturnPosition(symbolPos)) {
 			int callPos= m_NestedWord.getCallPosition(symbolPos);
-			IPredicate callerPred = m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(callPos-1);
-			if (!fromSPToWP) {
-				callerPred = m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(callPos-1);
+			IPredicate callerPred = null;
+			if (fromSPToWP) {
+				m_TraceCheckerSpWp.getForwardPredicateAtPosition(callPos-1);
+			} else {
+				callerPred = m_TraceCheckerSpWp.getBackwardPredicateAtPosition(callPos-1);
 			}
 			return (m_SmtManager.isInductiveReturn(p1, callerPred,(Return) statement, p2) == LBool.UNSAT);
 		} else {
@@ -208,6 +184,12 @@ public class TwoTrackInterpolantAutomatonBuilder {
 		}
 	}
 	
+	
+	/**
+	 * TODO: What if the post-condition is not the "False-Predicate"?
+	 * @param p
+	 * @return
+	 */
 	private boolean isFalsePredicate(IPredicate p) {
 		if (p == m_TraceCheckerSpWp.getPostcondition()) {
 			return true;
@@ -217,24 +199,31 @@ public class TwoTrackInterpolantAutomatonBuilder {
 		}
 	}
 	
-	private void addTransition(IPredicate pred, int symbolPos, IPredicate succ) {
+	
+	private void addTransition(NestedWordAutomaton<CodeBlock, IPredicate> nwa, 
+			IPredicate pred, int symbolPos, IPredicate succ, boolean forwardsPredicate) {
 		CodeBlock symbol = m_NestedWord.getSymbol(symbolPos);
 		if (m_NestedWord.isCallPosition(symbolPos)) {
-			m_TTIA.addCallTransition(pred, symbol, succ);
+			nwa.addCallTransition(pred, symbol, succ);
 //			if (getInterpolant(prePos) != getInterpolant(symbolPos)) {
 //				addAlternativeCallPredecessor(symbolPos, getInterpolant(prePos));
 //			}
 		}
 		else if (m_NestedWord.isReturnPosition(symbolPos)) {
 			int callPos= m_NestedWord.getCallPosition(symbolPos);
-			IPredicate hier = m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(callPos-1);
-			m_TTIA.addReturnTransition(pred, hier, symbol, succ);
+			IPredicate hier = null;
+			if (forwardsPredicate) {
+				hier = m_TraceCheckerSpWp.getForwardPredicateAtPosition(callPos-1);
+			} else {
+				hier = m_TraceCheckerSpWp.getBackwardPredicateAtPosition(callPos-1);
+			}
+			nwa.addReturnTransition(pred, hier, symbol, succ);
 //			if(m_AdditionalEdges == InterpolantAutomaton.CANONICAL) {
 //				addAlternativeReturnTransitions(pred, callPos, symbol, succ);
 //			}
 		}
 		else {
-			m_TTIA.addInternalTransition(pred, symbol,  succ);
+			nwa.addInternalTransition(pred, symbol,  succ);
 		}
 	}
 	

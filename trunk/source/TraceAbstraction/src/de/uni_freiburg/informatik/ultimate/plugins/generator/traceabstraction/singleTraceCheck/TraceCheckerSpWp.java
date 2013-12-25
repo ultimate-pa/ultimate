@@ -110,6 +110,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 	
+	@Deprecated
 	public IPredicate getInterpolanstsSPAtPosition(int i) {
 		assert m_InterpolantsSp != null : "InterpolantsSP hasn't been computed, yet.";
 		assert i >= 0 && i < m_InterpolantsSp.length : ("The given position "+ i
@@ -118,10 +119,41 @@ public class TraceCheckerSpWp extends TraceChecker {
 		return m_InterpolantsSp[i];
 	}
 	
+	@Deprecated
 	public IPredicate getInterpolanstsWPAtPosition(int i) {
 		assert m_InterpolantsWp != null : "InterpolantsWP hasn't been computed, yet.";
 		assert i >= 0 && i < m_InterpolantsWp.length : "The given position "+ i + " is not a correct position!";
 		return m_InterpolantsWp[i];
+	}
+	
+	@Deprecated
+	public boolean interpolantsSPComputed() {
+		return m_ComputeInterpolantsSp;
+	}
+	@Deprecated
+	public boolean interpolantsWPComputed() {
+		return m_ComputeInterpolantsWp;
+	}
+
+	public boolean forwardsPredicatesComputed() {
+		return m_ComputeInterpolantsFp;
+	}
+	
+	public boolean backwardsPredicatesComputed() {
+		return m_ComputeInterpolantsBp;
+	}
+	
+	public IPredicate getForwardPredicateAtPosition(int i) {
+		assert i >= 0 && i < m_InterpolantsFp.length : ("The given position "+ i
+				+ " is not a correct position. #Interpolants = " 
+				+ m_InterpolantsFp.length);
+		return m_InterpolantsFp[i];
+	}
+	
+	public IPredicate getBackwardPredicateAtPosition(int i) {
+		assert i >= 0 && i < m_InterpolantsBp.length : ("The given position "+ i + 
+				" is not a correct position! #Interpolants = " + m_InterpolantsBp.length);
+		return m_InterpolantsBp[i];
 	}
 	
 	private IPredicate getBackwardPredicateAtPosition(int i, IPredicate tracePostcondition, boolean backwardPredicate) {
@@ -174,14 +206,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 		return TransFormula.sequentialCompositionWithCallAndReturn(m_SmtManager.getBoogie2Smt(), true, false, Call, oldVarsAssignment, procedureSummary, Return);
 	}
 	
-	
-	public boolean interpolantsSPComputed() {
-		return m_ComputeInterpolantsSp;
-	}
-
-	public boolean interpolantsWPComputed() {
-		return m_ComputeInterpolantsWp;
-	}
 
 	private void computeInterpolantsWithUsageOfUnsatCore(Set<Integer> interpolatedPositions) {
 		m_NumberOfQuantifiedPredicates = new int[4];

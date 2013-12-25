@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
@@ -36,8 +37,13 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 					if (result instanceof PositiveResult) {
 						fail = false;
 						break;
+					} else if (result instanceof CounterExampleResult) {
+						fail = false;
+						break;
+						// TODO: Check whether the file is unSafe.
 					}
-					// TODO(musab): Are any other things to do here? Why do we have a set of results? 
+					// (musab): If the result is  neither an instance of PositiveResult nor an
+					// instance of CounterExampleResult, then the test case is categorized as "failed".
 				}
 			}
 		}
