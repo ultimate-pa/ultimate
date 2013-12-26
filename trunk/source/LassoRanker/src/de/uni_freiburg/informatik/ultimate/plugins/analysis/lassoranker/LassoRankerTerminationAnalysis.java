@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preproce
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteBooleans;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteDivision;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteEquality;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteStrictInequalities;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteTrueFalse;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
@@ -169,7 +170,8 @@ public class LassoRankerTerminationAnalysis {
 				new RewriteTrueFalse(),
 				new RewriteEquality(),
 				new DNF(),
-				new RemoveNegation()
+				new RemoveNegation(),
+				new RewriteStrictInequalities()
 		};
 	}
 	
