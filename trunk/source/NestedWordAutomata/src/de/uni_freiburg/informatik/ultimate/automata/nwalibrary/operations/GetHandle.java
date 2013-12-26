@@ -35,20 +35,21 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
 
-	INestedWordAutomaton<LETTER, STATE> m_Operand;
-	NestedRun<LETTER,STATE> m_Handle;
+	private final INestedWordAutomaton<LETTER, STATE> m_Operand;
+	private NestedRun<LETTER,STATE> m_Handle;
+	private enum NoHandleReason { MULTI_INITIAL, CYCLE_SHAPE, MULTI_INIT_SUCC }
+	private NoHandleReason m_NoHandleReason;
 
 	public GetHandle(INestedWordAutomaton<LETTER, STATE> operand) throws OperationCanceledException {
 		m_Operand = operand;
 		s_Logger.info(startMessage());
 		if (m_Operand.getInitialStates().size() != 1) {
-			s_Logger.debug("not exactly one initial state, automaton has no handle");
-			// do nothing
+			m_NoHandleReason = NoHandleReason.MULTI_INITIAL;
 		} else {
 			STATE singleInitial = m_Operand.getInitialStates().iterator().next();
 			m_Handle = getSingleSuccessor(singleInitial);
 			if (m_Handle == null) {
-				// do nothing
+				m_NoHandleReason = NoHandleReason.MULTI_INIT_SUCC;
 			} else {
 				while (true) {
 					STATE knownPredecessor = m_Handle.getStateAtPosition(m_Handle.getLength()-2);
@@ -66,6 +67,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 					if (m_Handle.getLength() > m_Operand.size()) {
 						s_Logger.info("automaton has cycle shape");
 						m_Handle = null;
+						m_NoHandleReason = NoHandleReason.CYCLE_SHAPE;
 						break;
 					}
 				}
@@ -164,7 +166,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	public String exitMessage() {
 		String result = "Finished " + operationName();
 		if (m_Handle == null) {
-			result += ". Automaton has no handle. ";
+			result += ". Automaton has no handle. Reason: " + m_NoHandleReason;
 		} else {
 			result += ". Found word of length " + m_Handle.getLength();
 		}
