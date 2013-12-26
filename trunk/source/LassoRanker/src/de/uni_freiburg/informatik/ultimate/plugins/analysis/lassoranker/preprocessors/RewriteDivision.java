@@ -54,13 +54,14 @@ public class RewriteDivision implements PreProcessor {
 	 * that is obtained by existentially quantifying each auxiliary variable in
 	 * the result term.
 	 */
-	private static final boolean s_CheckResultWithQuantifiers = true;
+	private static final boolean s_CheckResultWithQuantifiers = false;
 	
 	@Override
 	public String getDescription() {
 		return "Replace integer division by equivalent linear constraints";
 	}
 	
+	@SuppressWarnings("unused")
 	@Override
 	public Term process(Script script, Term term) {
 		assert m_Script == null;
@@ -105,7 +106,7 @@ public class RewriteDivision implements PreProcessor {
 		Term inputWithDefinitions = 
 				m_Script.term("and", input, conjunctionOfAuxVarDefintions()); 
 		return (Util.checkSat(m_Script, m_Script.term("distinct", 
-				inputWithDefinitions, result)) != LBool.SAT);
+				inputWithDefinitions, result)) == LBool.SAT);
 	}
 
 	/**
@@ -128,7 +129,7 @@ public class RewriteDivision implements PreProcessor {
 		Term inputWithDefinitions = 
 				m_Script.term("and", input, conjunctionOfAuxVarDefintions()); 
 		return (Util.checkSat(m_Script, m_Script.term("distinct", 
-				inputWithDefinitions, result)) != LBool.SAT);
+				inputWithDefinitions, result)) == LBool.SAT);
 	}
 	
 	
