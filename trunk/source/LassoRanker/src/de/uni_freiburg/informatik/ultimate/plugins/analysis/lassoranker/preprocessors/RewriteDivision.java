@@ -19,7 +19,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxVarGe
 
 /**
  * Replace integer division and modulo by auxiliary variables and add 
- * (auxiliary)linear constraints that define these auxiliary variables.
+ * (auxiliary) linear constraints that define these auxiliary variables.
+ * 
+ * We use the semantics of SMTLIB2 where the remainder is always positive.
+ * http://smtlib.cs.uiowa.edu/theories/Ints.smt2
+ * This is different from the semantics of C99 where "truncation towards 0" is
+ * used
+ * http://www.open-std.org/JTC1/SC22/WG14/www/docs/n1256.pdf (Section 6.5.5)
  * 
  * Does not check if all statements are linear.
  * 
