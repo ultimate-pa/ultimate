@@ -148,7 +148,7 @@ public class BuchiCegarLoop {
 		private final TreeMap<Integer,Integer> m_ModuleSizeTrivial = new TreeMap<Integer,Integer>();
 		private final TreeMap<Integer,Integer> m_ModuleSizeDeterministic = new TreeMap<Integer,Integer>();
 		private final TreeMap<Integer,Integer> m_ModuleSizeNondeterministic = new TreeMap<Integer,Integer>();
-		private final TreeMap<Integer,Expression> m_RankingFunction = new TreeMap<Integer,Expression>();
+		private final TreeMap<Integer,RankingFunction> m_RankingFunction = new TreeMap<Integer,RankingFunction>();
 
 		
 
@@ -338,7 +338,7 @@ public class BuchiCegarLoop {
 						ISLPredicate hondaISLP = (ISLPredicate) m_Counterexample.getLoop().getStateAtPosition(0);
 						ProgramPoint hondaPP = hondaISLP.getProgramPoint();
 						reportTerminationArgument(bspm.getTerminationArgument(), hondaPP, m_Counterexample.getStem().getWord(), m_Counterexample.getLoop().getWord());
-						m_RankingFunction.put(m_Iteration, bspm.getTerminationArgument().getRankingFunction().asLexExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie())[0]);
+						m_RankingFunction.put(m_Iteration, bspm.getTerminationArgument().getRankingFunction());
 
 						
 						INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
@@ -352,7 +352,7 @@ public class BuchiCegarLoop {
 					default:
 						break;
 					}
-				
+					// .asLexExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie())[0]
 					s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
 //					s_Logger.info("Interpolant automaton has " + m_RefineBuchi.getInterpolAutomatonUsedInRefinement().sizeInformation());
 					
@@ -668,7 +668,7 @@ public class BuchiCegarLoop {
 			return m_ModuleSizeNondeterministic;
 		}
 
-		public TreeMap<Integer, Expression> getRankingFunction() {
+		public TreeMap<Integer, RankingFunction> getRankingFunction() {
 			return m_RankingFunction;
 		}
 		

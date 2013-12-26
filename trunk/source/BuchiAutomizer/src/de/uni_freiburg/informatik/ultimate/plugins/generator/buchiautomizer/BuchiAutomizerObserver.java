@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -26,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.result.BackTranslationWorkaround;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
@@ -210,20 +212,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private String backtranslateExprWorkaround(Expression expr) {
 		List<ITranslator<?, ?, ?, ?>> translators = 
 				UltimateServices.getInstance().getTranslatorSequence();
-		List<ITranslator<?, ?, ?, ?>> copy = new ArrayList<ITranslator<?, ?, ?, ?>>(translators);
-		ITranslator<?, ?, ?, ?> first = copy.remove(0);
-		Object backExpr = first.translateExpressionIteratively(expr, copy.toArray(new ITranslator[0]));
-		String ppExpr;
-		if (backExpr instanceof String) {
-			ppExpr = (String) backExpr;
-//			ppExpr += "  Internal BoogieExpression: ";
-//			ppExpr += BoogieStatementPrettyPrinter.print((Expression) expr);
-		} else if (backExpr instanceof Expression) {
-			ppExpr = BoogieStatementPrettyPrinter.print((Expression) backExpr);
-		} else {
-			throw new AssertionError();
-		}
-		return ppExpr;
+		return BackTranslationWorkaround.backtranslate(translators, expr);
 	}
 	
 	
@@ -231,7 +220,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private String statistics(BuchiCegarLoop bcl) {
 //		TreeMap<Integer, Integer> ms = bcl.getModuleSize();
 		int modules = bcl.getModuleSizeTrivial().size() + bcl.getModuleSizeDeterministic().size() + bcl.getModuleSizeNondeterministic().size();
-		TreeMap<Integer, Expression> rf = bcl.getRankingFunction();
+		TreeMap<Integer, RankingFunction> rf = bcl.getRankingFunction();
 		if (modules == 0) {
 			return "Trivially terminating. There is no loop in your program.";
 		}
@@ -250,8 +239,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		sb.append(" nondeterministic)");
 		for (Entry<Integer, Integer> entry  : bcl.getModuleSizeDeterministic().entrySet()) {
 			if (rf.containsKey(entry.getKey())) {
-				sb.append("One deterministic module has ranking function ");
-				sb.append(backtranslateExprWorkaround(rf.get(entry.getKey())));
+				sb.append("One deterministic module has ");
+				sb.append(prettyPrintRankingFunction(rf.get(entry.getKey())));
 				sb.append(" and consists of ");
 				sb.append(entry.getValue());
 				sb.append(" states. ");
@@ -264,8 +253,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		}
 		for (Entry<Integer, Integer> entry  : bcl.getModuleSizeNondeterministic().entrySet()) {
 			if (rf.containsKey(entry.getKey())) {
-				sb.append("One nondeterministic module has ranking function ");
-				sb.append(backtranslateExprWorkaround(rf.get(entry.getKey())));
+				sb.append("One nondeterministic module has ");
+				sb.append(prettyPrintRankingFunction(rf.get(entry.getKey())));
 				sb.append(" and consists of ");
 				sb.append(entry.getValue());
 				sb.append(" states. ");
@@ -283,7 +272,16 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		return sb.toString();
 	}
 	
-
+	private String prettyPrintRankingFunction(RankingFunction rf) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(rf.getClass().getSimpleName());
+		sb.append(" ");
+		Expression[] lex = rf.asLexExpression(smtManager.getScript(), smtManager.getSmt2Boogie());
+		for (Expression expr : lex) {
+			sb.append(backtranslateExprWorkaround(expr));
+		}
+		return sb.toString();
+	}
 	
 
 	@Override
