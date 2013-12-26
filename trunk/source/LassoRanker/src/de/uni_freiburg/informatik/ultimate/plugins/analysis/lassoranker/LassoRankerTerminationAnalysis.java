@@ -163,7 +163,7 @@ public class LassoRankerTerminationAnalysis {
 	 */
 	protected PreProcessor[] getPreProcessors() {
 		return new PreProcessor[] {
-				new RewriteDivision(m_preferences.division_implementation),
+				new RewriteDivision(),
 				new RewriteBooleans(),
 				new RewriteTrueFalse(),
 				new RewriteEquality(),

@@ -132,11 +132,11 @@ public class NonTerminationArgumentSynthesizer {
 		Map<BoogieVar, Term> vars_ray = new HashMap<BoogieVar, Term>();
 		for (BoogieVar var : getBoogieVars()) {
 			vars_init.put(var, AuxiliaryMethods.newConstant(m_script,
-					s_prefix_init + var.getIdentifier(), sort));
+					s_prefix_init + var.toString(), sort));
 			vars_honda.put(var, AuxiliaryMethods.newConstant(m_script,
-					s_prefix_honda + var.getIdentifier(), sort));
+					s_prefix_honda + var.toString(), sort));
 			vars_ray.put(var, AuxiliaryMethods.newConstant(m_script,
-					s_prefix_ray + var.getIdentifier(), sort));
+					s_prefix_ray + var.toString(), sort));
 		}
 		Term lambda = AuxiliaryMethods.newConstant(m_script, s_lambda_name,
 					sort);
