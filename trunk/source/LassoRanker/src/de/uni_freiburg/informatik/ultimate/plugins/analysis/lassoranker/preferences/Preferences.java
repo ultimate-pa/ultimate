@@ -65,19 +65,6 @@ public class Preferences implements Serializable {
 	 */
 	public boolean enable_disjunction = true; // Default: true
 	
-	public enum DivisionImplementation {
-		C_STYLE,    // C style division: x := a / k  -->  k*x <= a < (k+1)*x
-		SAFE,       // Safe division: x := a / k can be executed iff k divides a
-		RATIONALS_ONLY, // Division is only supported for rational numbers
-		DISABLED    // Throw an error if division is used
-	}
-	
-	/**
-	 * If and in which manner should division be supported?
-	 */
-	public DivisionImplementation division_implementation =
-			DivisionImplementation.C_STYLE; // Default: C_STYLE
-	
 	/**
 	 * Add annotations to terms for debugging purposes and/or to make use
 	 * of unsatisfiable cores
@@ -110,8 +97,6 @@ public class Preferences implements Serializable {
 		sb.append(this.compute_integral_hull);
 		sb.append("\nEnable disjunction: ");
 		sb.append(this.enable_disjunction);
-		sb.append("\nDivision implementation: ");
-		sb.append(this.division_implementation);
 		sb.append("\nTerm annotations enabled: ");
 		sb.append(this.annotate_terms);
 		sb.append("\nNonlinear nontermination check: ");
@@ -147,11 +132,6 @@ public class Preferences implements Serializable {
 		preferences.enable_disjunction = store.getBoolean(
 				PreferencesInitializer.LABEL_enable_disjunction,
 				preferences.enable_disjunction
-		);
-		preferences.division_implementation = store.getEnum(
-				PreferencesInitializer.LABEL_division_implementation,
-				preferences.division_implementation,
-				DivisionImplementation.class
 		);
 		preferences.annotate_terms = store.getBoolean(
 				PreferencesInitializer.LABEL_annotate_terms,

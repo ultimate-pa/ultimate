@@ -4,7 +4,6 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences.DivisionImplementation;
 
 
 /**
@@ -88,11 +87,6 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 						LABEL_enable_disjunction,
 						preferences.enable_disjunction,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<DivisionImplementation>(
-						LABEL_division_implementation,
-						preferences.division_implementation,
-						PreferenceType.Combo,
-						DivisionImplementation.values()),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_annotate_terms,
 						preferences.annotate_terms,
