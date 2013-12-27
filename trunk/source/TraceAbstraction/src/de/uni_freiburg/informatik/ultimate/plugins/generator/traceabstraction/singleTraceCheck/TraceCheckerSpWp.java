@@ -92,7 +92,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				m_ComputeInterpolantsWp = true;
 				m_ComputeInterpolantsBp = true;
 				break;
-			case FPandSP:
+			case FPandBP:
 				m_ComputeInterpolantsSp = true;
 				m_ComputeInterpolantsFp = true;
 				m_ComputeInterpolantsWp = true;

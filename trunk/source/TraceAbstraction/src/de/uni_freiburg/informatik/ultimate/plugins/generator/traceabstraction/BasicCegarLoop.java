@@ -152,7 +152,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
-		case FPandSP:
+		case FPandBP:
 			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, 
 					NestedWord.nestedWord(m_Counterexample.getWord()),m_SmtManager,
 					m_RootNode.getRootAnnot().getModGlobVarManager());

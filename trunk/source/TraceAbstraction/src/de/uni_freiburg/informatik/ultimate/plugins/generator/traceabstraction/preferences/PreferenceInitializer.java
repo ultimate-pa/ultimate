@@ -146,7 +146,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final boolean DEF_PreserveGotoEdges = false;
 
 	public enum INTERPOLATION {
-		Craig_NestedInterpolation, Craig_TreeInterpolation, ForwardPredicates, BackwardPredicates, FPandSP
+		Craig_NestedInterpolation, Craig_TreeInterpolation, ForwardPredicates, BackwardPredicates, FPandBP
 	}
 	
 
