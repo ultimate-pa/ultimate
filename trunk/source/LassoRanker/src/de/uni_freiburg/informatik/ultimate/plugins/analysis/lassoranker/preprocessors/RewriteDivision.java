@@ -80,8 +80,10 @@ public class RewriteDivision implements PreProcessor {
 		result = Util.and(script, result,
 				Util.and(script, m_AuxTerms.toArray(new Term[0])));
 		
-		assert !s_CheckResult || !isIncorrect(term, result);
-		assert !s_CheckResultWithQuantifiers || !isIncorrectWithQuantifiers(term, result);
+		assert !s_CheckResult || !isIncorrect(term, result) 
+				: "rewrite division unsound";
+		assert !s_CheckResultWithQuantifiers ||	!isIncorrectWithQuantifiers(term, result) 
+				: "rewrite division unsound";
 		
 		return result;
 	}
