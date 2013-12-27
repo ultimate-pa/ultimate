@@ -1,11 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.util.HashSet;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -108,6 +110,13 @@ public class LassoRankerTerminationAnalysis {
 		m_old_script = script;
 		m_script = SMTSolver.newScript(preferences.smt_solver_command,
 				preferences.annotate_terms);
+		if (preferences.dumpSmtSolverScript) {
+		   try {			
+			   m_script = new LoggingScript(m_script, preferences.fileNameOfDumpedScript, true);
+		   } catch (FileNotFoundException e) {
+			   throw new AssertionError(e);
+		   }
+		}
 		
 		m_auxVars = new HashSet<TermVariable>();
 		

@@ -80,7 +80,17 @@ public class Preferences implements Serializable {
 	/**
 	 * What shell command should be used to call the external smt solver?
 	 */
-	public String smt_solver_command = "z3 -smt2 -in";
+	public String smt_solver_command = "z3 -smt2 -in SMTLIB2_COMPLIANT=true ";
+	
+	/**
+	 * Write SMT solver script to file.
+	 */
+	public boolean dumpSmtSolverScript = !false;
+	
+	/**
+	 * File to which the SMT solver script is written.
+	 */
+	public String fileNameOfDumpedScript = "LassoRankerScript.smt2";
 	
 	/**
 	 * Build a string descriptions of the current preferences
@@ -103,6 +113,10 @@ public class Preferences implements Serializable {
 		sb.append(this.nontermination_check_nonlinear);
 		sb.append("\nSMT solver command: ");
 		sb.append(this.smt_solver_command);
+		sb.append("\nDump SMT script to file: ");
+		sb.append(this.dumpSmtSolverScript);
+		sb.append("\nFilename of dumped script: ");
+		sb.append(this.fileNameOfDumpedScript);
 		return sb.toString();
 	}
 	

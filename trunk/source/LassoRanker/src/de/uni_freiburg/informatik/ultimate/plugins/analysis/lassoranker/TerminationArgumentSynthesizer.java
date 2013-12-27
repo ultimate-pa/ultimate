@@ -261,6 +261,15 @@ class TerminationArgumentSynthesizer {
 						val_si));
 			}
 			success = true;
+		} else if (m_script.checkSat() == LBool.UNKNOWN) {
+			s_Logger.info("Statistics: template " + 
+					template.getClass().getSimpleName() + 
+					" with degree " + template.getDegree() + 
+					" too complicated for solver");
+			// Problem: If we use the following line we can receive the 
+			// following response which is not SMTLIB2 compliant.
+			// (:reason-unknown canceled)
+			// Object reason = m_script.getInfo(":reason-unknown");
 		}
 		
 		return success;
