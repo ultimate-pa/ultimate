@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.result;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
@@ -43,6 +42,16 @@ public class BackTranslationWorkaround {
 			result = backExpr.toString();
 		}
 		return result;
+	}
+	
+	public static String backtranslate(
+			List<ITranslator<?, ?, ?, ?>> translator_sequence,
+			IProgramExecution<?, ?> programExecution) {
+		List<ITranslator<?, ?, ?, ?>> translators_copy = new ArrayList<ITranslator<?, ?, ?, ?>>(translator_sequence);
+		ITranslator<?, ?, ?, ?> first = translators_copy.remove(0);
+		Object backPE = first.translateExpressionIteratively(programExecution,
+				translators_copy.toArray(new ITranslator[0]));
+		return backPE.toString();
 	}
 	
 }
