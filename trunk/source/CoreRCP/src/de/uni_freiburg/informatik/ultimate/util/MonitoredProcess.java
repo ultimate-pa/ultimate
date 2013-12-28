@@ -103,8 +103,7 @@ public final class MonitoredProcess {
 							+ mExitCommand, e);
 				}
 				try {
-					mLogger.error("trying to join");
-					mMonitor.join(999999999);
+					mMonitor.join(200);
 
 				} catch (InterruptedException e) {
 					// not necessary to do anything here
