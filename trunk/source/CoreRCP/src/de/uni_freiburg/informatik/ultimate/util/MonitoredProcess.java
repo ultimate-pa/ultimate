@@ -34,6 +34,7 @@ public final class MonitoredProcess {
 	}
 
 	public boolean isRunning() {
+		assert mProcessCompleted ^ mProcess != null;
 		return !mProcessCompleted;
 	}
 
@@ -102,7 +103,8 @@ public final class MonitoredProcess {
 							+ mExitCommand, e);
 				}
 				try {
-					mMonitor.join(200);
+					mLogger.error("trying to join");
+					mMonitor.join(999999999);
 
 				} catch (InterruptedException e) {
 					// not necessary to do anything here

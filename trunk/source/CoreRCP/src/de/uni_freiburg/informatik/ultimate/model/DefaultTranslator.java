@@ -26,7 +26,6 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 public class DefaultTranslator<STE, TTE, SE, TE> 
 									implements ITranslator<STE, TTE, SE, TE> {
 
-	@Override
 	public List<TTE> translateTrace(List<STE> trace) {
 		List<TTE> result = null;
 		try {
@@ -58,7 +57,29 @@ public class DefaultTranslator<STE, TTE, SE, TE>
 	@Override
 	public IProgramExecution<TTE, TE> translateProgramExecution(
 			IProgramExecution<STE, SE> programExecution) {
-		return (IProgramExecution<TTE, TE>) programExecution;
+		IProgramExecution<TTE, TE> result = null;
+		try {
+			result = (IProgramExecution<TTE, TE>) programExecution;
+			assert (consistsOfTargetTraceElements(programExecution));
+		} catch (ClassCastException e) {
+			String message = "Type of source trace element and type of target" 
+					+ " trace element are different. DefaultTranslator can"
+					+ " only be applied to traces of same type.";
+			throw new AssertionError(message);
+		}
+		return result;
+	}
+	
+	/**
+	 * Returns true if all elements of IProgramExecution are of type TTE, 
+	 * throws a ClassCastException otherwise.
+	 */
+	private boolean consistsOfTargetTraceElements(IProgramExecution<STE, SE> programExecution) {
+		List<TTE> auxilliaryList = new ArrayList<TTE>(programExecution.getLength());
+		for (int i=0; i<programExecution.getLength(); i++) {
+			auxilliaryList.add((TTE) programExecution.getTraceElement(i));
+		}
+		return true;
 	}
 	
 	/**
