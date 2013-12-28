@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -16,8 +18,10 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
@@ -30,7 +34,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.result.BackTranslationWorkaround;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.NonTerminationArgumentResult;
+import de.uni_freiburg.informatik.ultimate.result.NonterminatingLassoResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 
 /**
@@ -138,9 +145,27 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				reportResult(reportRes);
 //			}
 		} else if (result == Result.NONTERMINATING) {
-			s_Logger.info("Nontermination!!");
-			String shortDescr = "Buchi Automizer found a nonterminating execution";
-			s_Logger.info(shortDescr);
+			NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
+			IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
+			ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
+			NonTerminationArgument nta = bcl.getNonTerminationArgument();
+			Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
+			RcfgProgramExecution stemPE = new RcfgProgramExecution(
+					counterexample.getStem().getWord().lettersAsList(), partialProgramStateMapping, null);
+			RcfgProgramExecution loopPE = new RcfgProgramExecution(
+					counterexample.getLoop().getWord().lettersAsList(), partialProgramStateMapping, null);
+			IResult reportRes = new NonterminatingLassoResult<RcfgElement>(
+					honda, Activator.s_PLUGIN_ID, 
+					UltimateServices.getInstance().getTranslatorSequence(), 
+					stemPE, loopPE, honda.getPayload().getLocation());
+//			IResult reportRes = new NonTerminationArgumentResult<RcfgElement>(
+//					honda, Activator.s_PLUGIN_ID, nta.getStateInit(), 
+//					nta.getStateHonda(), nta.getRay(), nta.getLambda(),
+//					UltimateServices.getInstance().getTranslatorSequence(), 
+//					honda.getPayload().getLocation());
+			reportResult(reportRes);
+			s_Logger.info(reportRes.getShortDescription());
+			s_Logger.info(reportRes.getLongDescription());
 		} else {
 			throw new AssertionError();
 		}
@@ -189,11 +214,6 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 ////			feasibility = checkFeasibility(ctx, rootAnnot);
 //		}
 //		m_TraceChecker.forgetTrace();
-
-
-		
-
-
 		return false;
 	}
 	

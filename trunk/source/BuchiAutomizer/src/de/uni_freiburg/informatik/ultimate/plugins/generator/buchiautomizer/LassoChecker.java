@@ -104,6 +104,8 @@ public class LassoChecker {
 	private SynthesisResult m_LoopTermination = SynthesisResult.UNCHECKED;
 	private SynthesisResult m_LassoTermination = SynthesisResult.UNCHECKED;
 	
+	private NonTerminationArgument m_NonterminationArgument;
+	
 	public ContinueDirective getContinueDirective() {
 		assert m_ContinueDirective != null;
 		return m_ContinueDirective;
@@ -132,6 +134,10 @@ public class LassoChecker {
 
 	public BinaryStatePredicateManager getBinaryStatePredicateManager() {
 		return m_Bspm;
+	}
+	
+	public NonTerminationArgument getNonTerminationArgument() {
+		return m_NonterminationArgument;
 	}
 
 
@@ -411,6 +417,9 @@ public class LassoChecker {
 			throw new AssertionError("TermException " + e);
 		}
 		NonTerminationArgument nonTermArgument = lrta.checkNonTermination();
+		if (withStem) {
+			m_NonterminationArgument = nonTermArgument;
+		}
 		
 		List<RankingFunctionTemplate> rankingFunctionTemplates = 
 				new ArrayList<RankingFunctionTemplate>();
@@ -428,11 +437,11 @@ public class LassoChecker {
 			} catch (SMTLIBException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				throw new AssertionError("TermException");
+				throw new AssertionError("SMTLIBException " + e);
 			} catch (TermException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				throw new AssertionError("TermException");
+				throw new AssertionError("TermException " + e);
 			}
 			assert (nonTermArgument == null || termArg == null) : " terminating and nonterminating";
 			if (termArg != null) {

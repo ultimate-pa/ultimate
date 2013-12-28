@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.structure.BasePayloadContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
@@ -169,6 +170,11 @@ public class BuchiCegarLoop {
 		private final RefineBuchi m_RefineBuchi;
 		private final List<RefineBuchi.RefinementSetting> m_BuchiRefinementSettingSequence;
 
+		private NonTerminationArgument m_NonterminationArgument;
+		
+		public NonTerminationArgument getNonTerminationArgument() {
+			return m_NonterminationArgument;
+		}
 
 		public BuchiCegarLoop(RootNode rootNode,
 				SmtManager smtManager,
@@ -348,6 +354,7 @@ public class BuchiCegarLoop {
 					case REPORT_UNKNOWN:
 						return Result.UNKNOWN;
 					case REPORT_NONTERMINATION:
+						m_NonterminationArgument = lassoChecker.getNonTerminationArgument();
 						return Result.NONTERMINATING;
 					default:
 						break;
