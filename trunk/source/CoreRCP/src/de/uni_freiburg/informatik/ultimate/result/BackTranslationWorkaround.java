@@ -44,12 +44,12 @@ public class BackTranslationWorkaround {
 		return result;
 	}
 	
-	public static String backtranslate(
+	public static <TE, E> String backtranslate(
 			List<ITranslator<?, ?, ?, ?>> translator_sequence,
-			IProgramExecution<?, ?> programExecution) {
+			IProgramExecution<TE, E> programExecution) {
 		List<ITranslator<?, ?, ?, ?>> translators_copy = new ArrayList<ITranslator<?, ?, ?, ?>>(translator_sequence);
-		ITranslator<?, ?, ?, ?> first = translators_copy.remove(0);
-		Object backPE = first.translateExpressionIteratively(programExecution,
+		ITranslator<TE, ?, E, ?> first = (ITranslator<TE, ?, E, ?>) translators_copy.remove(0);
+		Object backPE = first.translateProgramExecutionIteratively(programExecution,
 				translators_copy.toArray(new ITranslator[0]));
 		return backPE.toString();
 	}
