@@ -26,7 +26,6 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 public class DefaultTranslator<STE, TTE, SE, TE> 
 									implements ITranslator<STE, TTE, SE, TE> {
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public List<TTE> translateTrace(List<STE> trace) {
 		List<TTE> result = null;
@@ -42,7 +41,6 @@ public class DefaultTranslator<STE, TTE, SE, TE>
 		return result;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public TE translateExpression(SE expression) {
 		TE result;
@@ -57,11 +55,16 @@ public class DefaultTranslator<STE, TTE, SE, TE>
 		return result;
 	}
 	
+	@Override
+	public IProgramExecution<TTE, TE> translateProgramExecution(
+			IProgramExecution<STE, SE> programExecution) {
+		return (IProgramExecution<TTE, TE>) programExecution;
+	}
+	
 	/**
 	 * Returns true if all elements of trace are of type TTE, throws a
 	 * ClassCastException otherwise.
 	 */
-	@SuppressWarnings("unchecked")
 	private boolean consistsOfTargetTraceElements(List<STE> trace) {
 		List<TTE> auxilliaryList = new ArrayList<TTE>(trace.size());
 		for (STE ste : trace) {
@@ -74,7 +77,6 @@ public class DefaultTranslator<STE, TTE, SE, TE>
 		return true;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public <E> TE translateExpressionIteratively(E expr,
 			ITranslator<?, ?, ?, ?>... iTranslators) {
@@ -93,11 +95,28 @@ public class DefaultTranslator<STE, TTE, SE, TE>
 		return result;
 	}
 	
-	public IProgramExecution<TTE, TE> translateProgramExecution(
-			IProgramExecution<STE, SE> programExecution) {
-		return (IProgramExecution<TTE, TE>) programExecution;
+	
+	@Override
+	public List<TTE> translateTraceIteratively(
+			List<STE> trace, ITranslator<?,?,?,?>...iTranslators) {
+		List<TTE> result;
+		List<STE> traceOfSourceType;
+		if (iTranslators.length == 0) {
+			traceOfSourceType = (List<STE>) trace;
+		} else {
+			ITranslator<?, ?, TE, TTE> last = 
+					(ITranslator<?, ?, TE, TTE>) iTranslators[iTranslators.length-1];
+			ITranslator<?, ?, ?, ?>[] allButLast = 
+					Arrays.copyOf(iTranslators, iTranslators.length-1);
+			traceOfSourceType = (List<STE>)
+					last.translateExpressionIteratively(trace, allButLast);
+		}
+		result = translateTrace(traceOfSourceType);
+		return result;
 	}
+	
 
+	@Override
 	public IProgramExecution<TTE, TE> translateProgramExecutionIteratively(
 			IProgramExecution<STE, SE> programExecution, ITranslator<?,?,?,?>...iTranslators) {
 		IProgramExecution<TTE, TE> result;

@@ -34,6 +34,11 @@ public interface ITranslator<STE, TTE, SE, TE> {
 	 */
 	public List<TTE> translateTrace(List<STE> trace);
 	
+
+	public IProgramExecution<TTE, TE> translateProgramExecution(
+			IProgramExecution<STE, SE> programExecution);
+
+	
 	
 	/**
 	 * Translate an expression of an arbitrary type E to the target expression 
@@ -51,9 +56,7 @@ public interface ITranslator<STE, TTE, SE, TE> {
 	 */
 	public <E> TE translateExpressionIteratively(E expr, ITranslator<?,?,?,?>...iTranslators);
 	
-	
-	public IProgramExecution<TTE, TE> translateProgramExecution(
-								IProgramExecution<STE, SE> programExecution);
+	public List<TTE> translateTraceIteratively(List<STE> trace, ITranslator<?,?,?,?>...iTranslators);
 	
 	public IProgramExecution<TTE, TE> translateProgramExecutionIteratively(
 			IProgramExecution<STE, SE> programExecution, ITranslator<?,?,?,?>...iTranslators);
