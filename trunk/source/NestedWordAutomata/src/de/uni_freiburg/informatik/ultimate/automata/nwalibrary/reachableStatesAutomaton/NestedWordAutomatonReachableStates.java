@@ -1561,7 +1561,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
             		+ m_AllStatesOfSccsWithoutCallAndReturn.size());
         }
         
-        public void computeNestedLassoRuns(boolean onePerScc) {
+        public void computeNestedLassoRuns(boolean onePerScc) throws OperationCanceledException {
         	if (onePerScc) {
         		throw new UnsupportedOperationException("not yet implemented");
         	}
@@ -1596,7 +1596,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
             }        	
         }
         
-        public void computeShortNestedLassoRun() {
+        public void computeShortNestedLassoRun() throws OperationCanceledException {
         	StateContainer<LETTER, STATE> lowestSerialNumber = null;
         	StateContainer<LETTER, STATE> newlowestSerialNumber = null;
         	SCC sccOfLowest = null;
@@ -1629,7 +1629,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
     
         
         
-        public List<NestedLassoRun<LETTER, STATE>> getAllNestedLassoRuns() {
+        public List<NestedLassoRun<LETTER, STATE>> getAllNestedLassoRuns() throws OperationCanceledException {
         	if (buchiIsEmpty()) {
         		return Collections.emptyList();
         	} else {
@@ -1640,7 +1640,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
         	}
         }
         
-        public NestedLassoRun<LETTER, STATE> getNestedLassoRun() {
+        public NestedLassoRun<LETTER, STATE> getNestedLassoRun() throws OperationCanceledException {
         	if (buchiIsEmpty()) {
         		return null;
         	} else {

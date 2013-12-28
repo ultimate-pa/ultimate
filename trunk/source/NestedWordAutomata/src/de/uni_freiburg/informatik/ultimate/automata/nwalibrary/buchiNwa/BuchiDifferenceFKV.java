@@ -150,7 +150,7 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand1, 
 			INestedWordAutomatonOldApi<LETTER, STATE> operand2,
-			boolean underApproximationOfComplement) {
+			boolean underApproximationOfComplement) throws OperationCanceledException {
 		boolean correct;
 		boolean op1 = (new BuchiAccepts<LETTER, STATE>(operand1, nlw)).getResult();
 		boolean op2 = (new BuchiAccepts<LETTER, STATE>(operand2, nlw)).getResult();

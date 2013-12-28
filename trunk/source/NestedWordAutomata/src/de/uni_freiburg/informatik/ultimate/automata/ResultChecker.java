@@ -80,23 +80,23 @@ public class ResultChecker<LETTER,STATE> {
 		return correct;
 	}
 	
-	public static boolean buchiEmptiness(INestedWordAutomatonOldApi operand,
-										 NestedLassoRun result) {
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
-		resultCheckStackHeight++;
-		s_Logger.info("Testing correctness of buchiEmptiness");
-
-		boolean correct = true;
-		if (result == null) {
-			s_Logger.warn("No check for positive buchiEmptiness");
-		} else {
-			correct = (new BuchiAccepts(operand, result.getNestedLassoWord())).getResult();
-		}
-
-		s_Logger.info("Finished testing correctness of buchiEmptiness");
-		resultCheckStackHeight--;
-		return correct;
-	}
+//	public static boolean buchiEmptiness(INestedWordAutomatonOldApi operand,
+//										 NestedLassoRun result) {
+//		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
+//		resultCheckStackHeight++;
+//		s_Logger.info("Testing correctness of buchiEmptiness");
+//
+//		boolean correct = true;
+//		if (result == null) {
+//			s_Logger.warn("No check for positive buchiEmptiness");
+//		} else {
+//			correct = (new BuchiAccepts(operand, result.getNestedLassoWord())).getResult();
+//		}
+//
+//		s_Logger.info("Finished testing correctness of buchiEmptiness");
+//		resultCheckStackHeight--;
+//		return correct;
+//	}
 	
 	
 	public static boolean buchiIntersect(INestedWordAutomatonOldApi operand1,

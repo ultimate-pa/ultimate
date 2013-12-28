@@ -172,7 +172,7 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	
 	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand , 
-			boolean underApproximationOfComplement) {
+			boolean underApproximationOfComplement) throws OperationCanceledException {
 		boolean op = (new BuchiAccepts<LETTER, STATE>(operand, nlw)).getResult();
 		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Result, nlw)).getResult();
 		boolean correct;

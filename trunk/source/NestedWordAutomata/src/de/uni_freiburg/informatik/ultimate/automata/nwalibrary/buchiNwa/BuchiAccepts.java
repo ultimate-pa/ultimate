@@ -89,8 +89,9 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 * automaton here
 	 * @return true iff nlw is accepted by nwa. Note that here a nested lasso word is
 	 *  always rejected its loop contains pending returns.  
+	 * @throws OperationCanceledException 
 	 */
-	public BuchiAccepts(INestedWordAutomatonOldApi<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw){
+	public BuchiAccepts(INestedWordAutomatonOldApi<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw) throws OperationCanceledException{
 		m_Nwa = nwa;
 		
 		m_Stem = nlw.getStem();
@@ -125,7 +126,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		s_Logger.info(exitMessage());
 	}
 
-	private boolean buchiAccepts() {
+	private boolean buchiAccepts() throws OperationCanceledException {
 		// First compute all states in which the automaton can be after 
 		// processing the stem and lasso^*
 		// Honda denotes the part of the lasso where stem and loop are connected.
@@ -136,6 +137,9 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 			for (int i = 0; i < m_Stem.length(); i++) {
 				currentConfigs = successorConfigurations(currentConfigs, m_Stem, i,
 						m_Nwa, false);
+				if (!UltimateServices.getInstance().continueProcessing()) {
+					throw new OperationCanceledException();
+				}
 			}
 			hondaStates = getTopMostStackElemets(currentConfigs);
 		}
@@ -147,6 +151,9 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 			for (int i = 0; i < m_Loop.length(); i++) {
 				currentConfigs = successorConfigurations(
 						currentConfigs, m_Loop, i, m_Nwa, false);
+				if (!UltimateServices.getInstance().continueProcessing()) {
+					throw new OperationCanceledException();
+				}
 			}
 			newHondaStates = getTopMostStackElemets(currentConfigs);
 		 } while (!hondaStates.containsAll(newHondaStates));
@@ -163,8 +170,9 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 * Compute for each hondaState if processing m_Loop repeatedly can lead to
 	 * a run that contains an accepting state and brings the automaton back to
 	 * the honda state.
+	 * @throws OperationCanceledException 
 	 */
-	private boolean repeatedLoopLeadsAgainToHondaState(STATE hondaState) {
+	private boolean repeatedLoopLeadsAgainToHondaState(STATE hondaState) throws OperationCanceledException {
 		// Store in currentConfigsVisitedAccepting / currentConfigsNotVisitedAccepting
 		// which configurations belong to a run which has already visited an
 		// accepting state.
@@ -191,6 +199,9 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 				Set<Stack<STATE>> justVisitedAccepting = 
 						removeAcceptingConfigurations(currentConfigsNotVisitedAccepting, m_Nwa);
 				currentConfigsVisitedAccepting.addAll(justVisitedAccepting);
+				if (!UltimateServices.getInstance().continueProcessing()) {
+					throw new OperationCanceledException();
+				}
 			}
 			
 			// since pending returns are not allowed we omit considering stack:

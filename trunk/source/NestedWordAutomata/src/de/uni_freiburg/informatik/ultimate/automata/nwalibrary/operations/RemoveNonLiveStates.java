@@ -184,7 +184,7 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 	}
 	
 	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand) {
+			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
 		boolean op = (new BuchiAccepts<LETTER, STATE>(operand, nlw)).getResult();
 		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Result, nlw)).getResult();
 		boolean correct = (op == res);

@@ -154,7 +154,7 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand1,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand2) {
+			INestedWordAutomatonOldApi<LETTER, STATE> operand2) throws OperationCanceledException {
 		boolean op1 = (new BuchiAccepts<LETTER, STATE>(operand1, nlw)).getResult();
 		boolean op2 = (new BuchiAccepts<LETTER, STATE>(operand2, nlw)).getResult();
 		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Result, nlw)).getResult();

@@ -12,6 +12,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.HashRelation;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
@@ -46,7 +47,7 @@ class LassoExtractor<LETTER, STATE> {
 	public LassoExtractor(NestedWordAutomatonReachableStates<LETTER, STATE> nwars,
 			StateContainer<LETTER, STATE> honda, 
 			SCC scc, 
-			HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries) {
+			HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries) throws OperationCanceledException {
 		m_Nwars = nwars;
 		Set<SuccInfo> forbiddenSummaries = Collections.emptySet();
 		LoopFinder lf = new LoopFinder(honda, scc, true, 

@@ -65,7 +65,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);	
 	
 	
-	public NestedLassoRun<LETTER,STATE> getAcceptingNestedLassoRun() {
+	public NestedLassoRun<LETTER,STATE> getAcceptingNestedLassoRun() throws OperationCanceledException {
 		if (m_Result) {
 			s_Logger.info("There is no accepting nested lasso run");
 			return null;
