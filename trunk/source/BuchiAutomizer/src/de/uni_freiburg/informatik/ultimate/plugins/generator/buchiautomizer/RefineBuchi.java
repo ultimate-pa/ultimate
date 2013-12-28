@@ -295,7 +295,7 @@ public class RefineBuchi {
 					buchiModGlobalVarManager);
 		case ForwardPredicates:
 		case BackwardPredicates:
-		case FPandSP:
+		case FPandBP:
 			return new TraceCheckerSpWp(precond, postcond, 
 					NestedWord.nestedWord(word),m_SmtManager,
 					buchiModGlobalVarManager);

@@ -173,6 +173,9 @@ public class BinaryStatePredicateManager {
 		m_RankEqualityAndSi = null;
 		m_RankDecrease = null;
 		m_ProvidesPredicates = false;
+		m_LexDecrease = null;
+		m_LexEquality = null;
+		m_LexTerms = null;
 	}
 
 	public void computePredicates(boolean loopTermination, TerminationArgument termArg) {
@@ -183,6 +186,9 @@ public class BinaryStatePredicateManager {
 		assert m_Honda == null;
 		assert m_RankEqualityAndSi == null;
 		assert m_RankDecrease == null;
+		assert m_LexDecrease == null;
+		assert m_LexEquality == null;
+		assert m_LexTerms == null;
 		m_LoopTermination = loopTermination;
 		m_TerminationArgument = termArg;
 		IPredicate unseededPredicate = unseededPredicate();

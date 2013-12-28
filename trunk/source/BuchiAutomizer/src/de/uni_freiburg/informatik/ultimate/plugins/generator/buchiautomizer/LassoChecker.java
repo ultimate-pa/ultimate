@@ -208,17 +208,16 @@ public class LassoChecker {
 				m_ContinueDirective = ContinueDirective.REFINE_FINITE;
 				return;
 			} else {
-				checkConcatFeasibility();
-				if (m_ConcatInfeasible) {
-					s_Logger.info("concat infeasible");
-					m_ContinueDirective = ContinueDirective.REFINE_FINITE;
+				TransFormula loopTF = computeLoopTF();
+				checkLoopTermination(loopTF);
+				if (m_LoopTermination == SynthesisResult.TERMINATING) {
+					m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
 					return;
 				} else {
-					// check termination
-					TransFormula loopTF = computeLoopTF();
-					checkLoopTermination(loopTF);
-					if (m_LoopTermination == SynthesisResult.TERMINATING) {
-						m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
+					checkConcatFeasibility();
+					if (m_ConcatInfeasible) {
+						s_Logger.info("concat infeasible");
+						m_ContinueDirective = ContinueDirective.REFINE_FINITE;
 						return;
 					} else {
 						TransFormula stemTF = computeStemTF();
@@ -295,7 +294,7 @@ public class LassoChecker {
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
-		case FPandSP:
+		case FPandBP:
 			result = new TraceCheckerSpWp(m_TruePredicate, m_FalsePredicate, 
 					run.getWord(),m_SmtManager,
 					m_ModifiableGlobalVariableManager);
@@ -401,7 +400,7 @@ public class LassoChecker {
 		pref.num_non_strict_invariants = 2;
 		pref.num_strict_invariants = 0;
 		pref.only_nondecreasing_invariants = false;
-		pref.smt_solver_command = "z3 -smt2 -in -t:20";
+		pref.smt_solver_command = "z3 -smt2  SMTLIB2_COMPLIANT=true -in -t:200";
 
 		LassoRankerTerminationAnalysis lrta = null;
 		try {
@@ -409,7 +408,7 @@ public class LassoChecker {
 		} catch (TermException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			throw new AssertionError("TermException");
+			throw new AssertionError("TermException " + e);
 		}
 		NonTerminationArgument nonTermArgument = lrta.checkNonTermination();
 		
