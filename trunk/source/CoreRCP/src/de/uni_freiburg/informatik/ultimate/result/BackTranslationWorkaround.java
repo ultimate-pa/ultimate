@@ -23,11 +23,11 @@ public class BackTranslationWorkaround {
 	 * @param expr the resulting expression
 	 * @return a string corresponding to the backtranslated expression
 	 */
-	public static String backtranslate(
+	public static <SE> String backtranslate(
 			List<ITranslator<?, ?, ?, ?>> translator_sequence,
-			Expression expr) {
+			SE expr) {
 		List<ITranslator<?, ?, ?, ?>> translators_copy = new ArrayList<ITranslator<?, ?, ?, ?>>(translator_sequence);
-		ITranslator<?, ?, ?, ?> first = translators_copy.remove(0);
+		ITranslator<?, ?, SE, ?> first = (ITranslator<?, ?, SE, ?>) translators_copy.remove(0);
 		Object backExpr = first.translateExpressionIteratively(expr,
 				translators_copy.toArray(new ITranslator[0]));
 		

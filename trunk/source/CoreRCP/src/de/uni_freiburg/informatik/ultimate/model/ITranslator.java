@@ -54,11 +54,11 @@ public interface ITranslator<STE, TTE, SE, TE> {
 	 * expression expr)
 	 * </ul>  
 	 */
-	public <E> TE translateExpressionIteratively(E expr, ITranslator<?,?,?,?>...iTranslators);
+	public <STE, TTE, SE, TE> TE translateExpressionIteratively(SE expr, ITranslator<?,?,?,?>...iTranslators);
 	
-	public List<TTE> translateTraceIteratively(List<STE> trace, ITranslator<?,?,?,?>...iTranslators);
+	public <STE, TTE, SE, TE> List<TTE> translateTraceIteratively(List<STE> trace, ITranslator<?,?,?,?>...iTranslators);
 	
-	public IProgramExecution<TTE, TE> translateProgramExecutionIteratively(
+	public <STE, TTE, SE, TE> IProgramExecution<TTE, TE> translateProgramExecutionIteratively(
 			IProgramExecution<STE, SE> programExecution, ITranslator<?,?,?,?>...iTranslators);
 
 	

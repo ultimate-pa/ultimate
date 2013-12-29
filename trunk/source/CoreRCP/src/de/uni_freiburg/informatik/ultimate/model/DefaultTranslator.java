@@ -99,60 +99,60 @@ public class DefaultTranslator<STE, TTE, SE, TE>
 	}
 
 	@Override
-	public <E> TE translateExpressionIteratively(E expr,
+	public <STE, TTE, SE, TE> TE translateExpressionIteratively(SE expr,
 			ITranslator<?, ?, ?, ?>... iTranslators) {
 		TE result;
-		SE expressionOfSourceType;
+		
 		if (iTranslators.length == 0) {
-			expressionOfSourceType = (SE) expr;
+			result = (TE) expr;
 		} else {
-			ITranslator<?, ?, E, ?> last = 
-					(ITranslator<?, ?, E, ?>) iTranslators[iTranslators.length-1];
+			ITranslator<STE, ?, SE, ?> last = 
+					(ITranslator<STE, ?, SE, ?>) iTranslators[iTranslators.length-1];
 			ITranslator<?, ?, ?, ?>[] allButLast = 
 					Arrays.copyOf(iTranslators, iTranslators.length-1);
-			expressionOfSourceType = (SE) last.translateExpressionIteratively(expr, allButLast);
+			Object expressionOfIntermediateType = last.translateExpression(expr); 
+			result = (TE) last.translateExpressionIteratively(expressionOfIntermediateType, allButLast);
 		}
-		result = translateExpression(expressionOfSourceType);
 		return result;
 	}
 	
 	
 	@Override
-	public List<TTE> translateTraceIteratively(
+	public <STE, TTE, SE, TE> List<TTE> translateTraceIteratively(
 			List<STE> trace, ITranslator<?,?,?,?>...iTranslators) {
 		List<TTE> result;
 		List<STE> traceOfSourceType;
 		if (iTranslators.length == 0) {
-			traceOfSourceType = (List<STE>) trace;
+			result = (List<TTE>) trace;
 		} else {
-			ITranslator<?, ?, TE, TTE> last = 
-					(ITranslator<?, ?, TE, TTE>) iTranslators[iTranslators.length-1];
+			ITranslator<STE, ?, SE, ?> last = 
+					(ITranslator<STE, ?, SE, ?>) iTranslators[iTranslators.length-1];
 			ITranslator<?, ?, ?, ?>[] allButLast = 
 					Arrays.copyOf(iTranslators, iTranslators.length-1);
-			traceOfSourceType = (List<STE>)
+			List<?> traceOfIntermediateType = last.translateTrace(trace); 
+			result = (List<TTE>)
 					last.translateExpressionIteratively(trace, allButLast);
 		}
-		result = translateTrace(traceOfSourceType);
 		return result;
 	}
 	
 
 	@Override
-	public IProgramExecution<TTE, TE> translateProgramExecutionIteratively(
+	public <STE, TTE, SE, TE> IProgramExecution<TTE, TE> translateProgramExecutionIteratively(
 			IProgramExecution<STE, SE> programExecution, ITranslator<?,?,?,?>...iTranslators) {
 		IProgramExecution<TTE, TE> result;
 		IProgramExecution<STE, SE> programExecutionOfSourceType;
 		if (iTranslators.length == 0) {
-			programExecutionOfSourceType = (IProgramExecution<STE, SE>) programExecution;
+			result = (IProgramExecution<TTE, TE>) programExecution;
 		} else {
-			ITranslator<?, ?, TE, TTE> last = 
-					(ITranslator<?, ?, TE, TTE>) iTranslators[iTranslators.length-1];
+			ITranslator<STE, ?, SE, ?> last = 
+					(ITranslator<STE, ?, SE, ?>) iTranslators[iTranslators.length-1];
 			ITranslator<?, ?, ?, ?>[] allButLast = 
 					Arrays.copyOf(iTranslators, iTranslators.length-1);
-			programExecutionOfSourceType = (IProgramExecution<STE, SE>) 
-					last.translateExpressionIteratively(programExecution, allButLast);
+			IProgramExecution<?, ?> peOfIntermediateType = last.translateProgramExecution(programExecution);
+			result = (IProgramExecution<TTE, TE>) 
+					last.translateExpressionIteratively(peOfIntermediateType, allButLast);
 		}
-		result = translateProgramExecution(programExecutionOfSourceType);
 		return result;
 	}
 
