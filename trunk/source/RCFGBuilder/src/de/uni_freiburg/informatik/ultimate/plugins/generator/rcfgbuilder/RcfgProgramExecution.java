@@ -29,6 +29,9 @@ public class RcfgProgramExecution implements IProgramExecution<RcfgElement, Expr
 			Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
 			Map<TermVariable, Boolean>[] branchEncoders) {
 		super();
+		assert trace != null;
+		assert partialProgramStateMapping != null;
+		assert branchEncoders != null;
 		m_Trace = trace;
 		m_PartialProgramStateMapping = partialProgramStateMapping;
 		m_BranchEncoders = branchEncoders;
