@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -150,10 +151,15 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
 			NonTerminationArgument nta = bcl.getNonTerminationArgument();
 			Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
+			
 			RcfgProgramExecution stemPE = new RcfgProgramExecution(
-					counterexample.getStem().getWord().lettersAsList(), partialProgramStateMapping, null);
+					counterexample.getStem().getWord().lettersAsList(), 
+					partialProgramStateMapping, 
+					new Map[counterexample.getStem().getLength()]);
 			RcfgProgramExecution loopPE = new RcfgProgramExecution(
-					counterexample.getLoop().getWord().lettersAsList(), partialProgramStateMapping, null);
+					counterexample.getLoop().getWord().lettersAsList(), 
+					partialProgramStateMapping, 
+					new Map[counterexample.getLoop().getLength()]);
 			IResult reportRes = new NonterminatingLassoResult<RcfgElement>(
 					honda, Activator.s_PLUGIN_ID, 
 					UltimateServices.getInstance().getTranslatorSequence(), 
