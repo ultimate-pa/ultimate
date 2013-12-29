@@ -50,6 +50,7 @@ public class NonterminatingLassoResult<P> extends AbstractResultWithLasso<P> {
 		sb.append(System.getProperty("line.separator"));
 		sb.append(DefaultTranslator.translateProgramExecutionIteratively(m_Loop, 
 				m_TranslatorSequence.toArray(new ITranslator[0])));
+		sb.append("End of lasso representation.");
 		return sb.toString();
 	}
 
