@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.result;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
@@ -43,10 +44,12 @@ public class NonterminatingLassoResult<P> extends AbstractResultWithLasso<P> {
 		sb.append(System.getProperty("line.separator"));
 		sb.append("Stem:");
 		sb.append(System.getProperty("line.separator"));
-		sb.append(BackTranslationWorkaround.backtranslate(m_TranslatorSequence, m_Stem));
+		sb.append(DefaultTranslator.translateProgramExecutionIteratively(m_Stem, 
+				m_TranslatorSequence.toArray(new ITranslator[0])));
 		sb.append("Loop:");
 		sb.append(System.getProperty("line.separator"));
-		sb.append(BackTranslationWorkaround.backtranslate(m_TranslatorSequence, m_Loop));
+		sb.append(DefaultTranslator.translateProgramExecutionIteratively(m_Loop, 
+				m_TranslatorSequence.toArray(new ITranslator[0])));
 		return sb.toString();
 	}
 

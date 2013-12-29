@@ -37,33 +37,4 @@ public interface ITranslator<STE, TTE, SE, TE> {
 
 	public IProgramExecution<TTE, TE> translateProgramExecution(
 			IProgramExecution<STE, SE> programExecution);
-
-	
-	
-	/**
-	 * Translate an expression of an arbitrary type E to the target expression 
-	 * type of this ITranslator.
-	 * @param iTranslators is a sequence of ITranslaters itrans_0,...,itrans_n
-	 * such that
-	 * <ul> 
-	 * <li> the target expression type of itrans_0 is the source expression type of
-	 * this ITranslator,  
-	 * <li> for 0<i<n the source expression type of iTrans_i coincides
-	 * with the target expression type of iTrans_{i+1}, and 
-	 * <li> the source expression type of itrans_n is E (the type of the 
-	 * expression expr)
-	 * </ul>  
-	 */
-	public <STE, TTE, SE, TE> TE translateExpressionIteratively(SE expr, ITranslator<?,?,?,?>...iTranslators);
-	
-	public <STE, TTE, SE, TE> List<TTE> translateTraceIteratively(List<STE> trace, ITranslator<?,?,?,?>...iTranslators);
-	
-	public <STE, TTE, SE, TE> IProgramExecution<TTE, TE> translateProgramExecutionIteratively(
-			IProgramExecution<STE, SE> programExecution, ITranslator<?,?,?,?>...iTranslators);
-
-	
-	
-	
-
-
 }

@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.result;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
@@ -26,10 +27,7 @@ public class BackTranslationWorkaround {
 	public static <SE> String backtranslate(
 			List<ITranslator<?, ?, ?, ?>> translator_sequence,
 			SE expr) {
-		List<ITranslator<?, ?, ?, ?>> translators_copy = new ArrayList<ITranslator<?, ?, ?, ?>>(translator_sequence);
-		ITranslator<?, ?, SE, ?> first = (ITranslator<?, ?, SE, ?>) translators_copy.remove(0);
-		Object backExpr = first.translateExpressionIteratively(expr,
-				translators_copy.toArray(new ITranslator[0]));
+		Object backExpr = DefaultTranslator.translateExpressionIteratively(expr, translator_sequence.toArray(new ITranslator[0]));
 		
 		// If the result is a Boogie expression, we use the Boogie pretty
 		// printer
@@ -50,7 +48,7 @@ public class BackTranslationWorkaround {
 		List<ITranslator<?, ?, ?, ?>> translators_copy = new ArrayList<ITranslator<?, ?, ?, ?>>(translator_sequence);
 		ITranslator<TE, ?, E, ?> first = (ITranslator<TE, ?, E, ?>) translators_copy.remove(0);
 		Object backPE = first.translateProgramExecutionIteratively(programExecution,
-				translators_copy.toArray(new ITranslator[0]));
+				translator_sequence.toArray(new ITranslator[0]));
 		return backPE.toString();
 	}
 	
