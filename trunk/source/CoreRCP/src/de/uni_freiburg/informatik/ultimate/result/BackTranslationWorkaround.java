@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
@@ -27,7 +26,8 @@ public class BackTranslationWorkaround {
 	public static <SE> String backtranslate(
 			List<ITranslator<?, ?, ?, ?>> translator_sequence,
 			SE expr) {
-		Object backExpr = DefaultTranslator.translateExpressionIteratively(expr, translator_sequence.toArray(new ITranslator[0]));
+		Object backExpr = DefaultTranslator.translateExpressionIteratively(
+				expr, translator_sequence.toArray(new ITranslator[0]));
 		
 		// If the result is a Boogie expression, we use the Boogie pretty
 		// printer
@@ -41,15 +41,4 @@ public class BackTranslationWorkaround {
 		}
 		return result;
 	}
-	
-	public static <TE, E> String backtranslate(
-			List<ITranslator<?, ?, ?, ?>> translator_sequence,
-			IProgramExecution<TE, E> programExecution) {
-		List<ITranslator<?, ?, ?, ?>> translators_copy = new ArrayList<ITranslator<?, ?, ?, ?>>(translator_sequence);
-		ITranslator<TE, ?, E, ?> first = (ITranslator<TE, ?, E, ?>) translators_copy.remove(0);
-		Object backPE = first.translateProgramExecutionIteratively(programExecution,
-				translator_sequence.toArray(new ITranslator[0]));
-		return backPE.toString();
-	}
-	
 }
