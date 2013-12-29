@@ -143,7 +143,7 @@ public class DefaultTranslator<STE, TTE, SE, TE>
 					Arrays.copyOf(iTranslators, iTranslators.length-1);
 			List<?> traceOfIntermediateType = last.translateTrace(trace); 
 			result = (List<TTE>)
-					translateExpressionIteratively(trace, allButLast);
+					translateTraceIteratively(trace, allButLast);
 		}
 		return result;
 	}
@@ -162,7 +162,7 @@ public class DefaultTranslator<STE, TTE, SE, TE>
 					Arrays.copyOf(iTranslators, iTranslators.length-1);
 			IProgramExecution<?, ?> peOfIntermediateType = last.translateProgramExecution(programExecution);
 			result = (IProgramExecution<TTE, TE>) 
-					translateExpressionIteratively(peOfIntermediateType, allButLast);
+					translateProgramExecutionIteratively(peOfIntermediateType, allButLast);
 		}
 		return result;
 	}
