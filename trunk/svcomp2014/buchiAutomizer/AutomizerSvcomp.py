@@ -16,14 +16,15 @@ unsafetyString = 'Ultimate proved your program to be incorrect'
 unknownSafetyString = 'Ultimate could not prove your program'
 
 terminationString = 'Buchi Automizer proved that your program is terminating'
-notterminationString = 'Buchi Automizer found a nonterminating execution'
+notterminationString = 'Found a nonterminating execution'
 unknownTerminationString = 'Buchi Automizer was unable to decide termination'
+decompositionIntoModulesString = 'Buchi Automizer proved that your program is terminating  Your program was decomposed'
 
 memDerefUltimateString = 'pointer dereference may fail'
 memFreeUltimateString = 'free of unallocated memory possible'
 memMemtrackUltimateString = 'not all allocated memory was freed' 
-errorPathBeginString = '=== Start of program execution'
-errorPathEndString = '=== End of program execution'
+errorPathBeginString = 'Found a nonterminating execution for the following lasso shaped sequence of statements.'
+errorPathEndString = 'End of lasso representation.'
 memDerefResult = 'valid-deref'
 memFreeResult = 'valid-free'
 memMemtrackResult = 'valid-memtrack'
@@ -85,6 +86,7 @@ except:
 
 safetyResult = 'UNKNOWN'
 memResult = 'NONE'
+terminationResult = 'EXCEPTION'
 readingErrorPath = False
 
 #poll the output
@@ -120,6 +122,8 @@ while True:
 		readingErrorPath = True
 	if (line.find(errorPathEndString) != -1):
 		readingErrorPath = False
+	if (line.find(decompositionIntoModulesString) != -1):
+		print(line)
 	if (line == ''):
 		print('wrong executable or arguments?')
 		break
@@ -134,6 +138,11 @@ if writeUltimateOutputToFile:
 	outputFile.write(ultimateOutput.encode('utf-8'))
 
 if safetyResult == 'FALSE':
+	print('writing output to file {}'.format(errorPathFileName))
+	errOutputFile = open(errorPathFileName, 'wb')
+	errOutputFile.write(errorPath.encode('utf-8'))
+
+if terminationResult == 'FALSE':
 	print('writing output to file {}'.format(errorPathFileName))
 	errOutputFile = open(errorPathFileName, 'wb')
 	errOutputFile.write(errorPath.encode('utf-8'))
