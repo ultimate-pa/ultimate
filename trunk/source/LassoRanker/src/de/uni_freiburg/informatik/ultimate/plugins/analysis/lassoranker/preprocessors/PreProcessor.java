@@ -29,8 +29,8 @@ public interface PreProcessor {
 	 */
 	public Term process(Script script, Term term) throws TermException;
 	
-	/**
-	 * @return collection of all generated auxiliary variables
-	 */
-	public Collection<TermVariable> getAuxVars();
+//	/**
+//	 * @return collection of all generated auxiliary variables
+//	 */
+//	public Collection<TermVariable> getAuxVars();
 }

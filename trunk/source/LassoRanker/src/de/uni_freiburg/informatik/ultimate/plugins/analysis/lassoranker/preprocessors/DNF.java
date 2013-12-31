@@ -32,8 +32,8 @@ public class DNF implements PreProcessor {
 		return dnf_transformer.transform(term);
 	}
 	
-	@Override
-	public Collection<TermVariable> getAuxVars() {
-		return Collections.emptyList();
-	}
+//	@Override
+//	public Collection<TermVariable> getAuxVars() {
+//		return Collections.emptyList();
+//	}
 }

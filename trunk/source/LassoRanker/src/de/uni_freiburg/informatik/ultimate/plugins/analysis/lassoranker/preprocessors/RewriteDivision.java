@@ -3,9 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preproc
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -14,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxVarGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxVarManager;
 
 
 /**
@@ -40,15 +37,16 @@ public class RewriteDivision implements PreProcessor {
 	private static final String s_ModAuxPrefix = "mod_aux";
 	
 	private Script m_Script;
-	private AuxVarGenerator m_AuxVarGenerator;
 	private Collection<Term> m_AuxTerms;
+	private final AuxVarManager m_AuxVarManager;
+	private final Collection<TermVariable> m_AuxVars;
 	
-	/**
-	 * Maps each new auxiliary variable to an equivalent term without 
-	 * these new auxiliary variables.
-	 */
-	private Map<TermVariable,Term> m_AuxVar2Definition = 
-			new HashMap<TermVariable,Term>();
+//	/**
+//	 * Maps each new auxiliary variable to an equivalent term without 
+//	 * these new auxiliary variables.
+//	 */
+//	private Map<TermVariable,Term> m_AuxVar2Definition = 
+//			new HashMap<TermVariable,Term>();
 	
 	/**
 	 * Use assert statement to check if result is equivalent to the conjunction
@@ -67,14 +65,18 @@ public class RewriteDivision implements PreProcessor {
 		return "Replace integer division by equivalent linear constraints";
 	}
 	
+	public RewriteDivision(AuxVarManager auxVarManager) {
+		super();
+		m_AuxVarManager = auxVarManager;
+		m_AuxVars = new ArrayList<TermVariable>();
+	}
+	
 	@SuppressWarnings("unused")
 	@Override
 	public Term process(Script script, Term term) {
 		assert m_Script == null;
-		assert m_AuxVarGenerator == null;
 		assert m_AuxTerms == null;
 		m_Script = script;
-		m_AuxVarGenerator = new AuxVarGenerator(script, term);
 		m_AuxTerms = new ArrayList<Term>();
 		Term result = (new RewriteDivisionHelper()).transform(term);
 		result = Util.and(script, result,
@@ -88,18 +90,18 @@ public class RewriteDivision implements PreProcessor {
 		return result;
 	}
 	
-	/**
-	 * @return the auxiliary variables generated during the process
-	 */
-	public Collection<TermVariable> getAuxVars() {
-		return m_AuxVarGenerator.getAuxVars();
-	}
+//	/**
+//	 * @return the auxiliary variables generated during the process
+//	 */
+//	public Collection<TermVariable> getAuxVars() {
+//		return m_AuxVarGenerator.getAuxVars();
+//	}
 	
 	private Term conjunctionOfAuxVarDefintions() {
-		Term[] conjunction = new Term[m_AuxVar2Definition.size()];
+		Term[] conjunction = new Term[m_AuxVars.size()];
 		int i=0;
-		for (Entry<TermVariable, Term> entry  : m_AuxVar2Definition.entrySet()) {
-			conjunction[i] = m_Script.term("=", entry.getKey(), entry.getValue());
+		for (TermVariable auxVar : m_AuxVars) {
+			conjunction[i] = m_Script.term("=", auxVar, m_AuxVarManager.getDefinition(auxVar));
 			i++;
 		}
 		return Util.and(m_Script, conjunction);
@@ -124,15 +126,14 @@ public class RewriteDivision implements PreProcessor {
 	 */
 	private boolean isIncorrectWithQuantifiers(Term input, Term result) {
 		Term quantified;
-		if (m_AuxVarGenerator.getAuxVars().size() > 0) {
+		if (m_AuxVars.size() > 0) {
 			quantified = m_Script.quantifier(0, 
-					m_AuxVarGenerator.getAuxVars().toArray(new TermVariable[0]), result);
+					m_AuxVars.toArray(new TermVariable[0]), result);
 		} else {
 			quantified = m_Script.term("true");
 		}
 		assert (Util.checkSat(m_Script, m_Script.term("distinct", 
 				input, quantified)) != LBool.SAT);
-		
 		
 		Term inputWithDefinitions = 
 				m_Script.term("and", input, conjunctionOfAuxVarDefintions()); 
@@ -156,9 +157,10 @@ public class RewriteDivision implements PreProcessor {
 				assert(appTerm.getParameters().length == 2);
 				Term dividend = newArgs[0];
 				Term divisor = newArgs[1];
-				TermVariable quotientAuxVar = m_AuxVarGenerator.newAuxVar(
-						s_DivAuxPrefix,	m_Script.sort("Int"));
-				addDivAuxVarDefinition(dividend, divisor, quotientAuxVar);
+				TermVariable quotientAuxVar = m_AuxVarManager.constructAuxVar(
+						s_DivAuxPrefix, 
+						getDivAuxVarDefinition(dividend, divisor));
+				m_AuxVars.add(quotientAuxVar);
 				Term divAuxiliaryTerm = computeDivAuxiliaryTerms(
 						dividend, divisor, quotientAuxVar);
 				m_AuxTerms.add(divAuxiliaryTerm);
@@ -168,12 +170,14 @@ public class RewriteDivision implements PreProcessor {
 				assert(appTerm.getParameters().length == 2);
 				Term dividend = newArgs[0];
 				Term divisor = newArgs[1];
-				TermVariable quotientAuxVar = m_AuxVarGenerator.newAuxVar(
-						s_DivAuxPrefix,	m_Script.sort("Int"));
-				TermVariable remainderAuxVar = m_AuxVarGenerator.newAuxVar(
-						s_ModAuxPrefix,	m_Script.sort("Int"));
-				addModAuxVarDefinition(dividend, divisor, quotientAuxVar, 
-						remainderAuxVar);
+				TermVariable quotientAuxVar = m_AuxVarManager.constructAuxVar(
+						s_DivAuxPrefix, 
+						getDivAuxVarDefinition(dividend, divisor));
+				m_AuxVars.add(quotientAuxVar);
+				TermVariable remainderAuxVar = m_AuxVarManager.constructAuxVar(
+						s_ModAuxPrefix, 
+						getModAuxVarDefinition(dividend, divisor));
+				m_AuxVars.add(remainderAuxVar);
 				Term modAuxiliaryTerms = computeModAuxiliaryTerms(dividend, 
 						divisor, quotientAuxVar, remainderAuxVar);
 				m_AuxTerms.add(modAuxiliaryTerms);
@@ -227,27 +231,37 @@ public class RewriteDivision implements PreProcessor {
 		}
 
 		/**
-		 * Store the auxiliary variable definition
-		 * quotientAuxVar = divident / divisor
+		 * Get the term <i>dividend / divisor</i> which defines the
+		 * div auxiliary variable.
 		 */
-		private void addDivAuxVarDefinition(Term dividend, Term divisor,
-				TermVariable quotientAuxVar) {
-			m_AuxVar2Definition.put(quotientAuxVar, 
-					m_Script.term("div", dividend, divisor));
+		private Term getDivAuxVarDefinition(Term dividend, Term divisor) {
+					return m_Script.term("div", dividend, divisor);
+		}
+		
+		/**
+		 * Get the term <i>divident % divisor</i> which defines the
+		 * mod auxiliary variable.
+		 */
+		private Term getModAuxVarDefinition(Term dividend, Term divisor) {
+					return m_Script.term("mod", dividend, divisor);
 		}
 
-		/**
-		 * Store the auxiliary variable definitions
-		 * quotientAuxVar = divident / divisor
-		 * remainderAuxVar = divident % divisor
-		 */
-		private void addModAuxVarDefinition(Term dividend, Term divisor,
-				TermVariable quotientAuxVar, TermVariable remainderAuxVar) {
-			m_AuxVar2Definition.put(quotientAuxVar, 
-					m_Script.term("div", dividend, divisor));
-			m_AuxVar2Definition.put(remainderAuxVar, 
-					m_Script.term("mod", dividend, divisor));
-		}
+		
+		
+		
+
+//		/**
+//		 * Store the auxiliary variable definitions
+//		 * quotientAuxVar = divident / divisor
+//		 * remainderAuxVar = divident % divisor
+//		 */
+//		private void addModAuxVarDefinition(Term dividend, Term divisor,
+//				TermVariable quotientAuxVar, TermVariable remainderAuxVar) {
+//			m_AuxVar2Definition.put(quotientAuxVar, 
+//					m_Script.term("div", dividend, divisor));
+//			m_AuxVar2Definition.put(remainderAuxVar, 
+//					m_Script.term("mod", dividend, divisor));
+//		}
 		
 		/**
 		 * Return the conjunction of the following three formulas

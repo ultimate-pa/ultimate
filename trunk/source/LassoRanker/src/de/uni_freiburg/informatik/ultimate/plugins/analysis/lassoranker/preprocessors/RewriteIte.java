@@ -25,9 +25,9 @@ public class RewriteIte implements PreProcessor {
 		return "Remove ite terms.";
 	}
 
-	@Override
-	public Collection<TermVariable> getAuxVars() {
-		return Collections.emptyList();
-	}
+//	@Override
+//	public Collection<TermVariable> getAuxVars() {
+//		return Collections.emptyList();
+//	}
 
 }

@@ -64,8 +64,8 @@ private Script m_script;
 		super.convert(term);
 	}
 	
-	@Override
-	public Collection<TermVariable> getAuxVars() {
-		return Collections.emptyList();
-	}
+//	@Override
+//	public Collection<TermVariable> getAuxVars() {
+//		return Collections.emptyList();
+//	}
 }

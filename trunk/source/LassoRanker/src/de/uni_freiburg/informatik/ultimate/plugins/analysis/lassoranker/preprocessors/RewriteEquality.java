@@ -46,8 +46,8 @@ public class RewriteEquality extends TermTransformer implements PreProcessor {
 		super.convert(term);
 	}
 	
-	@Override
-	public Collection<TermVariable> getAuxVars() {
-		return Collections.emptyList();
-	}
+//	@Override
+//	public Collection<TermVariable> getAuxVars() {
+//		return Collections.emptyList();
+//	}
 }

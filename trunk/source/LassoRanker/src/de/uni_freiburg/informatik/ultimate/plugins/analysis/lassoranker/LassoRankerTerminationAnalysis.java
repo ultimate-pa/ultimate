@@ -170,12 +170,13 @@ public class LassoRankerTerminationAnalysis {
 	}
 	
 	/**
+	 * @param avm 
 	 * @return an array of all preprocessors that should be called before
 	 *         termination analysis
 	 */
-	protected PreProcessor[] getPreProcessors() {
+	protected PreProcessor[] getPreProcessors(AuxVarManager avm) {
 		return new PreProcessor[] {
-				new RewriteDivision(),
+				new RewriteDivision(avm),
 				new RewriteBooleans(),
 				new RewriteIte(),
 				new RewriteTrueFalse(),
@@ -219,11 +220,13 @@ public class LassoRankerTerminationAnalysis {
 		
 		Term trans_term = transition.getFormula();
 		
+		AuxVarManager avm = new AuxVarManager(m_old_script);
+		
 		// Apply preprocessors
-		for (PreProcessor preprocessor : this.getPreProcessors()) {
+		for (PreProcessor preprocessor : this.getPreProcessors(avm)) {
 			trans_term = preprocessor.process(m_old_script, trans_term);
-			m_auxVars.addAll(preprocessor.getAuxVars());
 		}
+		m_auxVars = avm.getAuxVars();
 		
 		s_Logger.debug(SMTPrettyPrinter.print(trans_term));
 		
