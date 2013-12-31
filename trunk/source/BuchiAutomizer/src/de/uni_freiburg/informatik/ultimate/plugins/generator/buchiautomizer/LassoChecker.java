@@ -163,7 +163,7 @@ public class LassoChecker {
 			} else {
 				assert m_ConcatCheck != null;
 				if (m_ConcatInfeasible) {
-					assert m_ContinueDirective == ContinueDirective.REFINE_FINITE;
+//					assert m_ContinueDirective == ContinueDirective.REFINE_FINITE;
 					assert m_ConcatenatedCounterexample != null;
 				} else {
 					assert m_ContinueDirective != ContinueDirective.REFINE_FINITE;
@@ -214,18 +214,33 @@ public class LassoChecker {
 				m_ContinueDirective = ContinueDirective.REFINE_FINITE;
 				return;
 			} else {
-				TransFormula loopTF = computeLoopTF();
-				checkLoopTermination(loopTF);
+
+				
+				checkConcatFeasibility();
+				if (m_ConcatInfeasible) {
+					s_Logger.info("concat infeasible");
+					if (loop.getLength() < stem.getLength()) {
+						TransFormula loopTF = computeLoopTF();
+						checkLoopTermination(loopTF);
+						if (m_LoopTermination == SynthesisResult.TERMINATING) {
+							m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
+							return;
+						} else {
+							m_ContinueDirective = ContinueDirective.REFINE_FINITE;
+							return;
+						}
+					} else {
+						m_ContinueDirective = ContinueDirective.REFINE_FINITE;
+						return;
+					}
+				} else {
+					TransFormula loopTF = computeLoopTF();
+					checkLoopTermination(loopTF);
 				if (m_LoopTermination == SynthesisResult.TERMINATING) {
 					m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
 					return;
 				} else {
-					checkConcatFeasibility();
-					if (m_ConcatInfeasible) {
-						s_Logger.info("concat infeasible");
-						m_ContinueDirective = ContinueDirective.REFINE_FINITE;
-						return;
-					} else {
+
 						TransFormula stemTF = computeStemTF();
 						checkLassoTermination(stemTF, loopTF);
 						if (m_LassoTermination == SynthesisResult.TERMINATING) {
