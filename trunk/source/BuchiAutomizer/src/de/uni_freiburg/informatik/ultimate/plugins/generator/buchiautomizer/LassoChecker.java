@@ -505,13 +505,15 @@ public class LassoChecker {
 				m_Bspm.clearPredicates();
 			}
 		}
-		
-		assert firstTerminationArgument.getRankingFunction() != null;
-		assert firstTerminationArgument.getSupportingInvariants() != null;
-		m_Bspm.computePredicates(!withStem, firstTerminationArgument);
-		assert m_Bspm.providesPredicates();
-
-		return firstTerminationArgument;
+		if (firstTerminationArgument != null) {
+			assert firstTerminationArgument.getRankingFunction() != null;
+			assert firstTerminationArgument.getSupportingInvariants() != null;
+			m_Bspm.computePredicates(!withStem, firstTerminationArgument);
+			assert m_Bspm.providesPredicates();
+			return firstTerminationArgument;
+		} else {
+			return null;
+		}
 	}
 	
 //	private List<LassoRankerParam> getLassoRankerParameters() {
