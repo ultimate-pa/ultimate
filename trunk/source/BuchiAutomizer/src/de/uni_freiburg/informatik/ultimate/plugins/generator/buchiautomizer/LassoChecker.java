@@ -50,13 +50,18 @@ public class LassoChecker {
 	private final static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
-	enum ContinueDirective { REFINE_FINITE, REFINE_BUCHI, REPORT_NONTERMINATION, REPORT_UNKNOWN }
+	enum ContinueDirective { REFINE_FINITE, REFINE_BUCHI, REPORT_NONTERMINATION, REPORT_UNKNOWN, REFINE_BOTH }
 	enum SynthesisResult { TERMINATING, NONTERMINATIG, UNKNOWN, UNCHECKED }
 	
 	//////////////////////////////// settings /////////////////////////////////
 	
 	private static final boolean m_SimplifyStemAndLoop = true;
 	private static final boolean m_ExternalSolver = false;
+	/**
+	 * Try all templates but use the one that was found first. This is only
+	 * useful to test all templates at once.  
+	 */
+	private static final boolean s_TryAllTemplates = false;
 	
 	private final INTERPOLATION m_Interpolation;
 
@@ -163,7 +168,8 @@ public class LassoChecker {
 			} else {
 				assert m_ConcatCheck != null;
 				if (m_ConcatInfeasible) {
-//					assert m_ContinueDirective == ContinueDirective.REFINE_FINITE;
+					assert m_ContinueDirective == ContinueDirective.REFINE_FINITE || 
+							m_ContinueDirective == ContinueDirective.REFINE_BOTH;
 					assert m_ConcatenatedCounterexample != null;
 				} else {
 					assert m_ContinueDirective != ContinueDirective.REFINE_FINITE;
@@ -187,7 +193,7 @@ public class LassoChecker {
 				TransFormula loopTF = computeLoopTF();
 				checkLoopTermination(loopTF);
 				if (m_LoopTermination == SynthesisResult.TERMINATING) {
-					m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
+					m_ContinueDirective = ContinueDirective.REFINE_BOTH;
 					return;
 				} else {
 					m_ContinueDirective = ContinueDirective.REFINE_FINITE;
@@ -223,7 +229,7 @@ public class LassoChecker {
 						TransFormula loopTF = computeLoopTF();
 						checkLoopTermination(loopTF);
 						if (m_LoopTermination == SynthesisResult.TERMINATING) {
-							m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
+							m_ContinueDirective = ContinueDirective.REFINE_BOTH;
 							return;
 						} else {
 							m_ContinueDirective = ContinueDirective.REFINE_FINITE;
@@ -444,7 +450,31 @@ public class LassoChecker {
 		rankingFunctionTemplates.add(new MultiphaseTemplate(3));
 		rankingFunctionTemplates.add(new MultiphaseTemplate(4));
 
-		RankingFunctionTemplate firstSuccessfullTemplate = null;
+		TerminationArgument termArg = tryTemplatesAndComputePredicates(
+				withStem, lrta, rankingFunctionTemplates);
+		assert (nonTermArgument == null || termArg == null) : " terminating and nonterminating";
+		if (termArg != null) {
+			return SynthesisResult.TERMINATING;
+		} else if (nonTermArgument != null) {
+			return SynthesisResult.NONTERMINATIG;
+		} else {
+			return SynthesisResult.UNKNOWN;
+		}
+	}
+
+	/**
+	 * @param withStem
+	 * @param lrta
+	 * @param nonTermArgument
+	 * @param rankingFunctionTemplates
+	 * @return
+	 * @throws AssertionError
+	 */
+	private TerminationArgument tryTemplatesAndComputePredicates(
+			final boolean withStem, LassoRankerTerminationAnalysis lrta,
+			List<RankingFunctionTemplate> rankingFunctionTemplates)
+			throws AssertionError {
+		TerminationArgument firstTerminationArgument = null;
 		for (RankingFunctionTemplate rft : rankingFunctionTemplates) {
 			TerminationArgument termArg;
 			try {
@@ -458,49 +488,30 @@ public class LassoChecker {
 				e.printStackTrace();
 				throw new AssertionError("TermException " + e);
 			}
-			assert (nonTermArgument == null || termArg == null) : " terminating and nonterminating";
 			if (termArg != null) {
-				if (firstSuccessfullTemplate == null) {
-					firstSuccessfullTemplate = rft;
-				}
 				assert termArg.getRankingFunction() != null;
 				assert termArg.getSupportingInvariants() != null;
 				m_Bspm.computePredicates(!withStem, termArg);
 				assert m_Bspm.providesPredicates();
 				assert areSupportingInvariantsCorrect() : "incorrect supporting invariant";
 				assert isRankingFunctionCorrect() : "incorrect ranking function";
+				if (!s_TryAllTemplates) {
+					return termArg;
+				} else {
+					if (firstTerminationArgument == null) {
+						firstTerminationArgument = termArg;
+					}
+				}
 				m_Bspm.clearPredicates();
 			}
-			
 		}
-		TerminationArgument termArg = null;
-		if (firstSuccessfullTemplate != null) {
-			try {
-				termArg = lrta.tryTemplate(firstSuccessfullTemplate);
-			} catch (SMTLIBException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				throw new AssertionError("TermException");
-			} catch (TermException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				throw new AssertionError("TermException");
-			}
-		}
-		assert (nonTermArgument == null || termArg == null) : " terminating and nonterminating";
-		if (termArg != null) {
-			assert termArg.getRankingFunction() != null;
-			assert termArg.getSupportingInvariants() != null;
-			m_Bspm.computePredicates(!withStem, termArg);
-			assert m_Bspm.providesPredicates();
-			assert areSupportingInvariantsCorrect();
-			assert isRankingFunctionCorrect();
-			return SynthesisResult.TERMINATING;
-		} else if (nonTermArgument != null) {
-			return SynthesisResult.NONTERMINATIG;
-		} else {
-			return SynthesisResult.UNKNOWN;
-		}
+		
+		assert firstTerminationArgument.getRankingFunction() != null;
+		assert firstTerminationArgument.getSupportingInvariants() != null;
+		m_Bspm.computePredicates(!withStem, firstTerminationArgument);
+		assert m_Bspm.providesPredicates();
+
+		return firstTerminationArgument;
 	}
 	
 //	private List<LassoRankerParam> getLassoRankerParameters() {

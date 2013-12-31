@@ -330,10 +330,12 @@ public class BuchiCegarLoop {
 				
 				try {
 					switch (lassoChecker.getContinueDirective()) {
+						
 					case REFINE_FINITE:
 						refineFinite(lassoChecker);
 						m_Infeasible++;
 						break;
+					case REFINE_BOTH:
 					case REFINE_BUCHI:
 						BinaryStatePredicateManager bspm = lassoChecker.getBinaryStatePredicateManager();
 						if (bspm.isLoopWithoutStemTerminating()) {
@@ -359,26 +361,11 @@ public class BuchiCegarLoop {
 					default:
 						break;
 					}
-					// .asLexExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie())[0]
 					s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
 //					s_Logger.info("Interpolant automaton has " + m_RefineBuchi.getInterpolAutomatonUsedInRefinement().sizeInformation());
 					
 					if (m_ReduceAbstractionSize ) {
-						m_Abstraction = (new RemoveNonLiveStates<CodeBlock, IPredicate>(m_Abstraction)).getResult();
-						m_Abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) (new BuchiClosureNwa(m_Abstraction));
-						m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Abstraction)).getResult();
-						s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
-						Collection<Set<IPredicate>> partition = BuchiCegarLoop.computePartition(m_Abstraction);
-						MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = 
-								new MinimizeSevpa<CodeBlock, IPredicate>(m_Abstraction, partition, false, false, m_StateFactoryForRefinement);
-						assert (minimizeOp.checkResult(m_DefaultStateFactory));
-						INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
-						if (m_Pref.computeHoareAnnotation()) {
-							Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
-							throw new AssertionError("not supported");
-						}
-						m_Abstraction = minimized;
-						s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
+						reduceAbstractionSize();
 					}
 
 
@@ -403,6 +390,30 @@ public class BuchiCegarLoop {
 				
 			}
 			return Result.TIMEOUT;
+		}
+
+		/**
+		 * @throws OperationCanceledException
+		 * @throws AutomataLibraryException
+		 * @throws AssertionError
+		 */
+		private void reduceAbstractionSize() throws OperationCanceledException,
+				AutomataLibraryException, AssertionError {
+			m_Abstraction = (new RemoveNonLiveStates<CodeBlock, IPredicate>(m_Abstraction)).getResult();
+			m_Abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) (new BuchiClosureNwa(m_Abstraction));
+			m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Abstraction)).getResult();
+			s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
+			Collection<Set<IPredicate>> partition = BuchiCegarLoop.computePartition(m_Abstraction);
+			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = 
+					new MinimizeSevpa<CodeBlock, IPredicate>(m_Abstraction, partition, false, false, m_StateFactoryForRefinement);
+			assert (minimizeOp.checkResult(m_DefaultStateFactory));
+			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
+			if (m_Pref.computeHoareAnnotation()) {
+				Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
+				throw new AssertionError("not supported");
+			}
+			m_Abstraction = minimized;
+			s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
 		}
 		
 		private INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi(LassoChecker lassoChecker) throws AutomataLibraryException {
