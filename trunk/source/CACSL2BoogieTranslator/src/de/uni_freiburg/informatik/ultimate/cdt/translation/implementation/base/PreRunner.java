@@ -98,7 +98,8 @@ public class PreRunner extends ASTVisitor {
      * @return true if the MM is required.
      */
     public boolean isMMRequired() {
-    	return this.isMMRequired;
+    	//return this.isMMRequired;
+    	return false;
     }
 
     @Override
