@@ -1,80 +1,73 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors;
 
-import java.util.*;
+import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxVarGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxVarManager;
 
 
 /**
- * Replaces booleans variables b with b_bool > 0 where b_bool is a new variable
+ * Replaces booleans variables b by integer auxiliary variables aux_b whose
+ * meaning is aux_b = (ite b 1 0) 
  * 
- * @author Jan Leike
+ * @author Jan Leike, Matthias Heizmann
  */
 public class RewriteBooleans extends TermTransformer implements PreProcessor {
 	private static final String s_auxInfix = "_bool";
 	
-	private Script m_script;
-	private AuxVarGenerator m_auxVarGenerator;
+	private Script m_Script;
+	private final AuxVarManager m_AuxVarManager;
 	
-	/**
-	 * Collects the translation of boolean variables and their real replacements
-	 */
-	private Map<String, TermVariable> m_Translation;
-	
-	public RewriteBooleans() {
-		m_Translation = new HashMap<String, TermVariable>();
+	public RewriteBooleans(AuxVarManager auxVarManager) {
+		m_AuxVarManager = auxVarManager;
 	}
 	
 	@Override
 	public String getDescription() {
-		return "Replaces a boolean variable b with b_bool > 0 "
-				+ "where b_bool is a new variable";
+		return "Replaces boolean variables b by auxiliary integer variables";
 	}
-	
-	/**
-	 * Returns the auxiliary real variables corresponding to this variable name
-	 * if one exists, otherwise return a fresh variable.
-	 * 
-	 * @param name a variable name
-	 * @return the real auxiliary variable corresponding to this variable
-	 */
-	private TermVariable getAuxVar(String name) {
-		if (m_Translation.containsKey(name)) {
-			return m_Translation.get(name);
-		}
-		TermVariable auxVar = m_auxVarGenerator.newAuxVar(name + s_auxInfix,
-				m_script.sort("Real"));
-		m_Translation.put(name, auxVar);
-		return auxVar;
-	}
+
 	
 	@Override
 	public Term process(Script script, Term term) {
-		m_script = script;
-		m_auxVarGenerator = new AuxVarGenerator(script, term);
-		return transform(term);
+		m_Script = script;
+		return (new RewriteBooleanHelper()).transform(term);
+	}
+
+	
+	/**
+	 * Given the Term booleanTerm whose Sort is "Bool" return the term
+	 * (ite booleanTerm one zero)
+	 */
+	private Term getDefinition(Term booleanTerm) {
+		assert booleanTerm.getSort().getName().equals("Bool");
+		Term one = m_Script.numeral(BigInteger.ONE);
+		Term zero = m_Script.numeral(BigInteger.ZERO);
+		return m_Script.term("ite", booleanTerm, one, zero);
 	}
 	
 	/**
-	 * @return the auxiliary variables generated during the process
+	 * TermTransformer that replaces Boolean TermVariables.  
+	 *
 	 */
-	public Collection<TermVariable> getAuxVars() {
-		return m_auxVarGenerator.getAuxVars();
-	}
-	
-	@Override
-	protected void convert(Term term) {
-		assert(m_script != null);
-		if (term instanceof TermVariable &&
-				term.getSort().getName().equals("Bool")) {
-			TermVariable auxVar = getAuxVar(((TermVariable) term).getName());
-			setResult(m_script.term(">", auxVar, m_script.decimal("0")));
-			return;
+	private class RewriteBooleanHelper extends TermTransformer {
+		@Override
+		protected void convert(Term term) {
+			assert(m_Script != null);
+			if (term instanceof TermVariable &&
+					term.getSort().getName().equals("Bool")) {
+				Term definition = getDefinition(term);
+				Term one = m_Script.numeral(BigInteger.ONE);
+				TermVariable auxVar = 
+						m_AuxVarManager.constructAuxVar(s_auxInfix, definition);
+				Term auxTerm = m_Script.term(">=", auxVar, one);
+				setResult(auxTerm);
+				return;
+			}
+			super.convert(term);
 		}
-		super.convert(term);
 	}
 }

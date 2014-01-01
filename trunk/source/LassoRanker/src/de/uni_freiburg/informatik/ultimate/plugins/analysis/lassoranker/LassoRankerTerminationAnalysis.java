@@ -177,7 +177,7 @@ public class LassoRankerTerminationAnalysis {
 	protected PreProcessor[] getPreProcessors(AuxVarManager avm) {
 		return new PreProcessor[] {
 				new RewriteDivision(avm),
-				new RewriteBooleans(),
+				new RewriteBooleans(avm),
 				new RewriteIte(),
 				new RewriteTrueFalse(),
 				new RewriteEquality(),
