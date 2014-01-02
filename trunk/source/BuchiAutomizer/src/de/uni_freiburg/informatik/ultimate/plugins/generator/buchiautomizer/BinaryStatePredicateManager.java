@@ -323,6 +323,14 @@ public class BinaryStatePredicateManager {
 //		return getRankInEquality(rfTerm, ">", m_OldRankVariable, true);
 //	}
 	
+	
+	/**
+	 * Given a RankingFunction with lex terms (f_0, ..., f_n), initialize the
+	 * array m_LexEquality with the terms 
+	 *     (oldrank_0 = f_0, ..., oldrank_n = f_n)
+	 * and initialize the array m_LexDecrease with the terms
+	 *     (oldrank_0 > f_0 && f_0 >= 0, ..., oldrank_n > f_n && f_n >= n).
+	 */
 	private void decodeLex(RankingFunction rf) {
 		m_LexTerms = rf.asLexTerm(m_Script);
 		m_LexEquality = new IPredicate[m_LexTerms.length];
@@ -338,7 +346,7 @@ public class BinaryStatePredicateManager {
 		m_LexDecrease = new IPredicate[m_LexTerms.length];
 		for (int i=0; i<m_LexTerms.length; i++) {
 			m_LexDecrease[i] = getRankInEquality(
-					m_LexTerms[i], ">", m_OldRankVariables[i], false);
+					m_LexTerms[i], ">", m_OldRankVariables[i], true);
 			if (s_Annotate) {
 				String name = "strictDecrease" + i;
 				Annotation annot = new Annotation(":named", name);
