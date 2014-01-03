@@ -1,3 +1,4 @@
+//#mSafe
 /* 
 Simple file, where our current computation of Call and  Return stmts fails.
 

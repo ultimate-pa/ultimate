@@ -1,4 +1,4 @@
-/* #safe
+/* #mSafe
 */
 
 var x_glob, y_glob, z_glob: int;

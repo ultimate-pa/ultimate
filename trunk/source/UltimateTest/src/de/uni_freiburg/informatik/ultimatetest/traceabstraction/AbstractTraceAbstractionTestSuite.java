@@ -20,7 +20,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 
 		File toolchainFile = new File(
 				Util.getPathFromTrunk("examples/toolchains/TraceAbstraction.xml"));
-		long deadline = 5; // in seconds
+		long deadline = 10; // in seconds
 		// load preferences file, with following preferences:
 		// Interpolation: BackwardPredicates, Timeout: 5 s 
 		File backwardsPredicatesSettings = new File(Util.getPathFromTrunk("examples/settings/traceAbstractionTestSuite/backwardsPredicateJUnitTetstSettings"));
@@ -30,7 +30,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 			UltimateStarter starter = new UltimateStarter(inputFile, backwardsPredicatesSettings,
 					toolchainFile, deadline, null, null);
 			rtr.add(new UltimateTestCase(starter,
-					new TraceAbstractionTestResultDecider(inputFile.getAbsolutePath()), inputFile
+					new TraceAbstractionTestResultDecider(inputFile), inputFile
 							.getAbsolutePath()));
 		}
 

@@ -1,3 +1,4 @@
+//#mUnsafe
 var g : int;
 implementation main() returns ()
 {

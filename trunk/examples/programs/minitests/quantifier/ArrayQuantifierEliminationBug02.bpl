@@ -1,3 +1,4 @@
+//#mSafe
 implementation nonMain(#in~p.base:int, #in~p.offset:int, #in~q.base:int, #in~q.offset:int) returns (#res:int)
 {
     var ~p.base : int, ~p.offset : int;

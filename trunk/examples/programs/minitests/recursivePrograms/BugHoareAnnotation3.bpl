@@ -1,3 +1,4 @@
+//#mUnsafe
 var g : int;
 var nondet : int;
 implementation callee(b:int) returns (res:int)
