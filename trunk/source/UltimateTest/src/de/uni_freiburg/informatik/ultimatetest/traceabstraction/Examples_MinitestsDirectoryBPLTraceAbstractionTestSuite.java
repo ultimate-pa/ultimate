@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimatetest.Util;
  * @author musab@informatik.uni-freiburg.de
  *
  */
-@Ignore
+
 public class Examples_MinitestsDirectoryBPLTraceAbstractionTestSuite extends
 		AbstractTraceAbstractionTestSuite {
 

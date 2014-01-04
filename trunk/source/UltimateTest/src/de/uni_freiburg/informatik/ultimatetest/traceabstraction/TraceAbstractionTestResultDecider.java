@@ -17,26 +17,32 @@ import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.Util;
 
 public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 	private String m_InputFile;
 	private ExpectedResult m_ExpectedResult;
+	private ITestSummary m_Summary;
 	private enum ExpectedResult {
 		SAFE,
 		UNSAFE,
 		UNSPECIFIED
 	}
-	public TraceAbstractionTestResultDecider(File inputFile) {
+	public TraceAbstractionTestResultDecider(File inputFile, ITestSummary testSummary) {
 		m_InputFile = inputFile.getAbsolutePath();
 		m_ExpectedResult = getExpectedResult(inputFile);
+		if (testSummary == null) {
+			throw new ExceptionInInitializerError("summary may not be null");
+		}
+		m_Summary = testSummary;
 	}
 	
 	/**
 	 * Read the expected result from an input file
 	 * 
 	 * Expected results are expected to be specified in an input file's
-	 * first line and start with '//#mUnsafe' or '//#mSafe'.
+	 * first line and start with '//#mUnsafe', '//#iUnsafe', '//#mSafe' or '//#iSafe'.
 	 */
 	private static ExpectedResult getExpectedResult(File inputFile) {
 		BufferedReader br;
@@ -87,6 +93,19 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 			case UNSPECIFIED:
 				customMessages.add("Result of TraceAbstraction: " + result.toString());
 				fail = true;
+			}
+			if (!fail) {
+				m_Summary.addSuccess(result, m_InputFile, "File has been proven to be " + 
+			(m_ExpectedResult == ExpectedResult.SAFE ? " correct." : " incorrect via a counter-example."));
+			} else {
+				if (m_ExpectedResult == ExpectedResult.UNSPECIFIED) {
+					m_Summary.addUnknown(result, m_InputFile, "File wasn't annotated.");
+				} else {
+					m_Summary.addFail(result, m_InputFile, (m_ExpectedResult == ExpectedResult.SAFE ? 
+							"Correctness couldn't be proven." : 
+							"No counterexample found."));
+				}
+				
 			}
 		}
 		Util.logResults(log, m_InputFile, fail, customMessages);

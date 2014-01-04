@@ -24,7 +24,7 @@ public class LiveVariables {
 	private Set<Term>[] m_LiveConstants;
 	private Set<Term>[] m_ForwardLiveConstants;
 	private Set<Term>[] m_BackwardLiveConstants;
-	//m_LiveVariables[i] are the live variables _before_ statements i
+	//m_LiveVariables[i] are the live variables _before_ statement i
 	private Set<BoogieVar>[] m_LiveVariables;
 	private Map<Term,BoogieVar> m_Constants2BoogieVar;
 	private ModifiableNestedFormulas<Map<TermVariable,Term>, Map<TermVariable,Term>> m_TraceWithConstants;
@@ -46,16 +46,18 @@ public class LiveVariables {
 		m_ConstantsForEachPosition = new Collection[traceWithConstants.getTrace().length() + 2];
 		m_ForwardLiveConstants = new Set[m_ConstantsForEachPosition.length + 1];
 		m_BackwardLiveConstants = new Set[m_ForwardLiveConstants.length];
-		m_LiveConstants = new Set[m_ForwardLiveConstants.length];
-		m_LiveVariables = new Set[m_ForwardLiveConstants.length];
+		m_LiveConstants = new Set[m_ConstantsForEachPosition.length];
+		m_LiveVariables = new Set[m_ConstantsForEachPosition.length];
 		m_modifiableGlobals = modifiedGlobals;
 		
 		computeLiveVariables();
 	}
 	
 	/**
-	 * TODO: documentation
-	 * TODO: add constants for post-condition, too.
+	 * Gather the term constants for the precondition, for each statement of the trace and for the post-condition.
+	 * - at pos = 0, there are the constant terms of the precondition
+	 * - at pos = trace.length + 1, there are the constant terms of the post-condition
+	 * - at post > 0 and pos <= trace.length there are the constant terms of the statements of the trace.
 	 */
 	private void fetchConstantsForEachPosition() {
 		assert m_ConstantsForEachPosition != null;
@@ -97,14 +99,23 @@ public class LiveVariables {
 		generateLiveVariablesFromLiveConstants();
 	}
 	
+	/**
+	 * Compute the constant terms along the trace with the precondition and the post-condition,
+	 * that are live. Compute the liveness of constants between position <b> (i+1) </b> and position <b> i </b> in the following way:
+	 * - add the live constants between position (i+1) and (i+2)
+	 * - add constant terms from position i
+	 * - remove the constants that correspond to auxiliary variables
+	 * - remove the constants with the same index 
+	 */
 	private void computeLiveConstants() {
 		assert m_LiveConstants != null;
-		m_LiveConstants[m_LiveConstants.length - 1] = new HashSet<Term>();
-		for (int i = m_ConstantsForEachPosition.length - 1; i >= 0; i--) {
+		for (int i = m_LiveConstants.length - 1; i >= 0; i--) {
 			Set<Term> liveConstants = new HashSet<Term>();
 			Set<Term> liveConstantsTemp = new HashSet<Term>();
 			liveConstantsTemp.addAll(m_ConstantsForEachPosition[i]);
-			liveConstantsTemp.addAll(m_LiveConstants[i+1]);
+			if (i+1 < m_LiveConstants.length) {
+				liveConstantsTemp.addAll(m_LiveConstants[i+1]);
+			}
 			for (Term t : liveConstantsTemp) {
 				BoogieVar bv = m_Constants2BoogieVar.get(t);
 				if (bv == null) {
@@ -125,9 +136,20 @@ public class LiveVariables {
 		}
 	}
 	
+	/**
+	 * Compute live variables from the live constants in the following way:
+	 * For each constant term at position i, get the corresponding Boogie variable and proceed as follows: 
+	 * - if the Boogie variable is a global variable, then add it to the set of live variables
+	 * - - add the corresponding oldVariable or the nonOldVariable respectively, too
+	 * - if the Boogie variable is local one, then add it to the set of live variables, iff
+	 * -- the corresponding procedure equals the procedure from statement at position (i-1) 
+	 */
 	private void generateLiveVariablesFromLiveConstants() {
 		assert m_LiveVariables != null;
 		m_LiveVariables[0] = new HashSet<BoogieVar>(); 
+		// Live constants at pos = 0 belong to the precondition, therefore we don't need
+		// to check for procedure equality, because the variables occurring in the precondition
+		// are either global or local to the procedure, for which the precondition is specified.
 		{
 			for (Term t : m_LiveConstants[0]) {
 				BoogieVar bv = m_Constants2BoogieVar.get(t);
@@ -155,15 +177,20 @@ public class LiveVariables {
 						liveVars.add(m_SmtManager.getOldVar(bv));
 					}
 				} else {
-					CodeBlock cb = m_TraceWithConstants.getTrace().getSymbolAt(i-1);
-					if (cb.getSucceedingProcedure().equals(bv.getProcedure())) {
+					if (i <= m_TraceWithConstants.getTrace().length()) {
+						CodeBlock cb = m_TraceWithConstants.getTrace().getSymbolAt(i-1);
+						if (cb.getSucceedingProcedure().equals(bv.getProcedure())) {
+							liveVars.add(bv);
+						}
+					} else {
+						// Case: Live constans/variables belong to post-condition
 						liveVars.add(bv);
 					}
 				}
 			}
 			m_LiveVariables[i] = liveVars;
 		}
-		for (int i = 1; i < m_LiveConstants.length-2; i++) {
+		for (int i = 1; i < m_LiveConstants.length-1; i++) {
 			if (m_TraceWithConstants.getTrace().isCallPosition(i-1)) {
 				if(!m_TraceWithConstants.getTrace().isPendingCall(i-1)) {
 					addNonModifiableGlobalsAlongCalledProcedure(m_LiveVariables[i-1], i-1);
