@@ -144,7 +144,8 @@ public class RefineBuchi {
 			int m_Iteration,
 			RefinementSetting setting,
 			BinaryStatePredicateManager bspm,
-			BuchiModGlobalVarManager buchiModGlobalVarManager) throws AutomataLibraryException {
+			BuchiModGlobalVarManager buchiModGlobalVarManager, 
+			INTERPOLATION interpolation) throws AutomataLibraryException {
 		NestedWord<CodeBlock> stem = m_Counterexample.getStem().getWord();
 //		if (emptyStem(m_Counterexample)) {
 //			stem = m_Counterexample.getLoop().getWord();
@@ -224,7 +225,8 @@ public class RefineBuchi {
 			loopInterpolantsForRefinement.addAll(pu.cannibalize(bspm.getRankEqAndSi().getFormula()));
 			
 				LoopCannibalizer lc = new LoopCannibalizer(m_Counterexample, 
-						loopInterpolantsForRefinement, bspm, pu, m_SmtManager, buchiModGlobalVarManager);
+						loopInterpolantsForRefinement, bspm, pu, m_SmtManager, 
+						buchiModGlobalVarManager, interpolation);
 				loopInterpolantsForRefinement = lc.getResult();
 			} else {
 				loopInterpolantsForRefinement = new HashSet<IPredicate>(Arrays.asList(loopInterpolants));

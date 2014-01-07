@@ -430,7 +430,8 @@ public class BuchiCegarLoop {
 
 				
 				INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = 
-						m_RefineBuchi.refineBuchi(m_Abstraction, m_Counterexample, m_Iteration, rs, lassoChecker.getBinaryStatePredicateManager(), bmgvm);
+						m_RefineBuchi.refineBuchi(m_Abstraction, 
+								m_Counterexample, m_Iteration, rs, lassoChecker.getBinaryStatePredicateManager(), bmgvm, m_Pref.interpolation());
 				if (newAbstraction != null) {
 					switch (rs.getInterpolantAutomaton()) {
 					case Deterministic:
