@@ -1,10 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors;
 
-import java.util.*;
-
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Dnf;
 
@@ -31,9 +28,4 @@ public class DNF implements PreProcessor {
 		Dnf dnf_transformer = new Dnf(script);
 		return dnf_transformer.transform(term);
 	}
-	
-//	@Override
-//	public Collection<TermVariable> getAuxVars() {
-//		return Collections.emptyList();
-//	}
 }

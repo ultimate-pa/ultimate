@@ -1,15 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors;
 
 import java.math.BigInteger;
-import java.util.Collection;
-import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 
@@ -31,11 +28,6 @@ public class RewriteStrictInequalities implements PreProcessor {
 	public String getDescription() {
 		return "Replace strict inequalities by non-strict inequalities";
 	}
-
-//	@Override
-//	public Collection<TermVariable> getAuxVars() {
-//		return Collections.emptySet();
-//	}
 	
 	@Override
 	public Term process(Script script, Term term) {
@@ -111,5 +103,4 @@ public class RewriteStrictInequalities implements PreProcessor {
 			return result;
 		}
 	}
-
 }

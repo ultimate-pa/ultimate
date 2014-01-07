@@ -26,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxVarMa
  * 
  * Does not check if all statements are linear.
  * 
- * TOOD: (Matthias) this transformation is probably not equivalent if
+ * TODO: (Matthias) this transformation is probably not equivalent if
  * divisor is 0. But I think in this will lead to problems before this
  * transformation is used.
  * 
@@ -132,13 +132,13 @@ public class RewriteDivision implements PreProcessor {
 		} else {
 			quantified = m_Script.term("true");
 		}
-		assert (Util.checkSat(m_Script, m_Script.term("distinct", 
-				input, quantified)) != LBool.SAT);
+		assert Util.checkSat(m_Script, m_Script.term("distinct", 
+				input, quantified)) != LBool.SAT;
 		
 		Term inputWithDefinitions = 
 				m_Script.term("and", input, conjunctionOfAuxVarDefintions()); 
-		return (Util.checkSat(m_Script, m_Script.term("distinct", 
-				inputWithDefinitions, result)) == LBool.SAT);
+		return Util.checkSat(m_Script, m_Script.term("distinct", 
+				inputWithDefinitions, result)) == LBool.SAT;
 	}
 	
 	

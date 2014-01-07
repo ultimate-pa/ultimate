@@ -1,10 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors;
 
-import java.util.Collection;
-
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 
 
@@ -28,9 +25,4 @@ public interface PreProcessor {
 	 * @throws TermException if an error occurred while traversing the term
 	 */
 	public Term process(Script script, Term term) throws TermException;
-	
-//	/**
-//	 * @return collection of all generated auxiliary variables
-//	 */
-//	public Collection<TermVariable> getAuxVars();
 }

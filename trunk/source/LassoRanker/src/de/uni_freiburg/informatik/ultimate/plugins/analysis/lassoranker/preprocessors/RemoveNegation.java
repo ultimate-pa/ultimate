@@ -1,12 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors;
 
-import java.util.*;
-
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 
 /**
@@ -42,9 +39,6 @@ private Script m_script;
 				assert(appt.getParameters().length == 1);
 				Term param = appt.getParameters()[0];
 				assert(param instanceof ApplicationTerm);
-//				if (!(param instanceof ApplicationTerm)) {
-//					throw new TermException("Expected inequality: " + appt);
-//				}
 				ApplicationTerm appt2 = (ApplicationTerm)param;
 				if (appt2.getFunction().getName() == "<=") {
 					setResult(m_script.term(">", appt2.getParameters()));
@@ -56,16 +50,10 @@ private Script m_script;
 					setResult(m_script.term("<=", appt2.getParameters()));
 				} else {
 					assert(false);
-//					throw new TermException("Expected inequality: " + appt);
 				}
 				return;
 			}
 		}
 		super.convert(term);
 	}
-	
-//	@Override
-//	public Collection<TermVariable> getAuxVars() {
-//		return Collections.emptyList();
-//	}
 }

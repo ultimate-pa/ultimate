@@ -1,11 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.IteRemover;
 
 
@@ -24,10 +20,4 @@ public class RewriteIte implements PreProcessor {
 	public String getDescription() {
 		return "Remove ite terms.";
 	}
-
-//	@Override
-//	public Collection<TermVariable> getAuxVars() {
-//		return Collections.emptyList();
-//	}
-
 }
