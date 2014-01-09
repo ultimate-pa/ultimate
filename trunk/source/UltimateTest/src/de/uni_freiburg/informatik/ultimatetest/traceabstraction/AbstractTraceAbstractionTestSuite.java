@@ -26,10 +26,12 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 		// load preferences file, with following preferences:
 		// Interpolation: BackwardPredicates, Timeout: 5 s 
 		File backwardsPredicatesSettings = new File(Util.getPathFromTrunk("examples/settings/traceAbstractionTestSuite/backwardsPredicateJUnitTetstSettings"));
+		String interpolationType = "TraceAbstraction via Backward Predicates (WP)";
 		
 		String summaryLogFileName = "TraceAbstractionTestsResultSummary";
-		ITestSummary summary = new TraceAbstractionTestSummary(this.getClass().getCanonicalName(),
-				summaryLogFileName);
+		TraceAbstractionTestSummary summary = new TraceAbstractionTestSummary(this.getClass().getCanonicalName(),
+				summaryLogFileName,
+				interpolationType);
 		Collection<ITestSummary> summaries = getSummaries();
 		summaries.add(summary);
 		

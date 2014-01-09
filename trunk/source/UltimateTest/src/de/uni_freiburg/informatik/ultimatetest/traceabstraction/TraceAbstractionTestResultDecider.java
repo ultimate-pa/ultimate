@@ -13,23 +13,25 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.Util;
 
 public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 	private String m_InputFile;
 	private ExpectedResult m_ExpectedResult;
-	private ITestSummary m_Summary;
+	private TraceAbstractionTestSummary m_Summary;
+	private String m_ShortDescription = "Ultimate Automizer runtime statistics";
+	private String m_SeqInLongDescr = "Ultimate Automizer took ";
 	private enum ExpectedResult {
 		SAFE,
 		UNSAFE,
 		UNSPECIFIED
 	}
-	public TraceAbstractionTestResultDecider(File inputFile, ITestSummary testSummary) {
+	public TraceAbstractionTestResultDecider(File inputFile, TraceAbstractionTestSummary testSummary) {
 		m_InputFile = inputFile.getAbsolutePath();
 		m_ExpectedResult = getExpectedResult(inputFile);
 		if (testSummary == null) {
@@ -95,15 +97,16 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 				fail = true;
 			}
 			if (!fail) {
-				m_Summary.addSuccess(result, m_InputFile, "File has been proven to be " + 
-			(m_ExpectedResult == ExpectedResult.SAFE ? " correct." : " incorrect via a counter-example."));
+				String annotationAndModelCheckerResult = m_ExpectedResult == ExpectedResult.SAFE ?  "\"SAFE\"" : "\"UNSAFE\""; 
+				m_Summary.addSuccess(result, m_InputFile, "Annotation says: " + annotationAndModelCheckerResult + 
+						"\tModel checker says: " + annotationAndModelCheckerResult);
 			} else {
 				if (m_ExpectedResult == ExpectedResult.UNSPECIFIED) {
 					m_Summary.addUnknown(result, m_InputFile, "File wasn't annotated.");
 				} else {
 					m_Summary.addFail(result, m_InputFile, (m_ExpectedResult == ExpectedResult.SAFE ? 
-							"Correctness couldn't be proven." : 
-							"No counterexample found."));
+							"Annotation says: \"SAFE\" \t Model checker says: \"UNSAFE\"" : 
+							"Annotation says: \"UNSAFE\" \t Model checker says: \"SAFE\""));
 				}
 				
 			}
@@ -112,6 +115,7 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 		return fail;
 	}
 
+	// TODO: Ensure that null can't be returned, or handle this case in the calling method.
 	private IResult getResultOfSet(Set<Entry<String, List<IResult>>> resultSet) {
 		for (Entry<String, List<IResult>> entry : resultSet) {
 			for (IResult res : entry.getValue()) {
@@ -124,6 +128,28 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 				}
 			}
 		}
+		return null;
+	}
+	
+	private String getStatisticsOfResultSet(Set<Entry<String, List<IResult>>> resultSet) {
+		for (Entry<String, List<IResult>> entry : resultSet) {
+			for (IResult res : entry.getValue()) {
+				if (res instanceof GenericResult) {
+					if (genericResultContainsStatistics((GenericResult<?>)res)) {
+						
+					}
+				}
+			}
+		}
+		return null;
+	}
+	
+	private boolean genericResultContainsStatistics(GenericResult<?> result) {
+		return (result.getLongDescription().equals(m_ShortDescription) && 
+				result.getShortDescription().contains(m_SeqInLongDescr));
+	}
+	
+	private String collectStatisticInformation(GenericResult<?> result) {
 		return null;
 	}
 }
