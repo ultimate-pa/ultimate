@@ -118,13 +118,13 @@ DecIntegerLiteral = 0 | [1-9][0-9]*
   ","             { return symbol(ReqSymbols.COMMA); }
   "."             { return symbol(ReqSymbols.DOT); }
   ";"             { return symbol(ReqSymbols.SEMI); }
-  "="             { return symbol(ReqSymbols.BINOP, "="); }
-  "<"             { return symbol(ReqSymbols.BINOP, "<"); }
-  ">"             { return symbol(ReqSymbols.BINOP, ">"); }
-  "<="            { return symbol(ReqSymbols.BINOP, "<="); }
-  "\u2264"        { return symbol(ReqSymbols.BINOP, "<="); }
-  ">="            { return symbol(ReqSymbols.BINOP, ">="); }
-  "\u2265"        { return symbol(ReqSymbols.BINOP, ">="); }
+  "="             { return symbol(ReqSymbols.BINOP, "_EQ_"); }
+  "<"             { return symbol(ReqSymbols.BINOP, "_LT_"); }
+  ">"             { return symbol(ReqSymbols.BINOP, "_GT_"); }
+  "<="            { return symbol(ReqSymbols.BINOP, "_LTEQ_"); }
+  "\u2264"        { return symbol(ReqSymbols.BINOP, "_LTEQ_"); }
+  ">="            { return symbol(ReqSymbols.BINOP, "_GTEQ_"); }
+  "\u2265"        { return symbol(ReqSymbols.BINOP, "_GTEQ_"); }
   
   "!"             { return symbol(ReqSymbols.LNOT); }
   "\u00ac"        { return symbol(ReqSymbols.LNOT); }
