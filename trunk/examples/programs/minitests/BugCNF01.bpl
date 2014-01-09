@@ -18,7 +18,7 @@ modifies x,y,a,b;
   while (*) {
       assume(true);
     }
-  assert(x == y);
+  assert(a == b);
 }
 
 
