@@ -105,5 +105,9 @@ public class TimingStatistics {
 		return seconds + "." + tenthDigit + "s";
 	}
 	
+	@Override
+	public String toString() {
+		return printTimingStatistics();
+	}
 
 }

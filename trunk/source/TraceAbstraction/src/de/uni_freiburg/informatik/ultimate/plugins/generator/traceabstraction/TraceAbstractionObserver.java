@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
@@ -396,20 +397,21 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private void reportTimingStatistics(RootNode root, TimingStatistics timingStatistics) {
 		String shortDescription = "Ultimate Automizer runtime statistics";
 		long time = System.currentTimeMillis() - m_StartingTime;
-		String longDescription = "Ultimate Automizer took " + time + "ms";
-		longDescription += timingStatistics.printTimingStatistics();
-		s_Logger.warn(longDescription);
 		if (root.getOutgoingNodes().isEmpty()) {
 			s_Logger.warn("No procedure was checked. I don't know any location."
 					+ "Will not report any timing statistics.");
 			return;
 		}
 		RCFGNode someNode = root.getOutgoingNodes().iterator().next();
-		GenericResult<RcfgElement> res = new GenericResult<RcfgElement>(
-				someNode, Activator.s_PLUGIN_NAME, 
+		BenchmarkResult<RcfgElement> res = new 
+				BenchmarkResult<RcfgElement>(someNode,  Activator.s_PLUGIN_NAME, 
 				UltimateServices.getInstance().getTranslatorSequence(), 
-				someNode.getPayload().getLocation(),
-				shortDescription, longDescription, Severity.INFO);
+				someNode.getPayload().getLocation(), shortDescription, 
+				timingStatistics);
+		s_Logger.warn(res.getLongDescription());
+
+//		String longDescription = "Ultimate Automizer took " + time + "ms";
+//		longDescription += timingStatistics.printTimingStatistics();
 		reportResult(res);
 	}
 	
