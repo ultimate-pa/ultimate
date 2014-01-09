@@ -1,0 +1,7 @@
+<toolchain>
+	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor" />
+	<plugin id="RCFGBuilder" />
+	<plugin id="LTL2aut" />
+	<plugin id="BuchiProgramProrduct" /> 
+	<plugin id="BuchiAutomizer" /> 
+</toolchain>
