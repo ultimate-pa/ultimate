@@ -42,6 +42,18 @@ NestedWordAutomaton finitelyManyB = (
 	returnTransitions = { }
 );
 
+NestedWordAutomaton finitelyManyAWithSinkState = (
+    callAlphabet = { },
+    internalAlphabet = {a b},
+    returnAlphabet = { },
+    states = {q f s},
+    initialStates = {q},
+    finalStates = {f},
+    callTransitions = { },
+    internalTransitions = { (q a q) (q b q) (q b f) (f b f) (f a s) (s a s) (s b s) }, 
+    returnTransitions = { }
+);
+
 
 
 
