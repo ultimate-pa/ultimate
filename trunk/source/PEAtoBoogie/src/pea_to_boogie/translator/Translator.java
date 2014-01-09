@@ -175,7 +175,8 @@ public class Translator {
           VarList deltaVar = new VarList(blVar, extraVars.toArray(new String[extraVars.size()]),
         		  astType);
           List<VarList> varList = new ArrayList<VarList>();
-          varList.add(clockVars);
+          if (!this.clockIds.isEmpty())
+        	  varList.add(clockVars);
           varList.add(pcVar);
           varList.add(deltaVar);
           
@@ -215,17 +216,15 @@ public class Translator {
      * @return the CNF of a list of expressions.
      */
     public Expression genCNF (List<Expression> exprs, BoogieLocation bl) {
-    	List<Expression> exprList = new ArrayList<Expression>();
-    	for (int i = 0; i < exprs.size(); i++) {   		
-      		if (exprList.size() == 0) {
-                exprList.add(exprs.get(i));
-      		} else {
-      			BinaryExpression binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.LOGICAND,
-       	     			exprList.get(exprList.size()-1), exprs.get(i));
-       	        exprList.add(binaryExpr);
-      		}
+    	Iterator<Expression> it = exprs.iterator();
+    	if (!it.hasNext())
+    		return new BooleanLiteral(bl, true);
+    	Expression cnf = it.next();
+    	while (it.hasNext()) {
+    		cnf = new BinaryExpression(bl, BinaryExpression.Operator.LOGICAND,
+    				cnf, it.next());
   	    }
-    	return exprList.get(exprList.size()-1);
+    	return cnf;
     }
     /**
      * Generate time passing.
@@ -567,24 +566,27 @@ public class Translator {
     	return statements;
     }
     public Expression genClockInit (BoogieLocation bl) {
-    	List<Expression> exprList = new ArrayList<Expression>();
+    	Expression initializer = null;
     	for (int i = 0; i < this.clockIds.size(); i++) {
  	     	IdentifierExpression identifier = new IdentifierExpression(bl, this.clockIds.get(i));
  	     	RealLiteral realLiteral = new RealLiteral(bl, Double.toString(0));
  	     	BinaryExpression binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ,
  	     			identifier, realLiteral);
-    		if (exprList.size() == 0) {
-              exprList.add(binaryExpr);
+    		if (initializer == null) {
+    			initializer = binaryExpr;
     		} else {
-     	        binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.LOGICAND,
-     	     			exprList.get(exprList.size()-1), binaryExpr);
-     	        exprList.add(binaryExpr);
+     	        initializer = new BinaryExpression(bl, BinaryExpression.Operator.LOGICAND,
+     	     			initializer, binaryExpr);
     		}
     	}
-
-    	return exprList.get(exprList.size()-1);
+    	if (initializer == null)
+    		initializer = new BooleanLiteral(bl, true);
+    	return initializer;
     }
     public Statement[] genClockInitSmts (BoogieLocation bl) {
+    	if (clockIds.isEmpty()) {
+    		return new Statement[0];
+    	}
     	VariableLHS[] clocks = new VariableLHS[clockIds.size()];
     	int i=0;
     	for (String clkId : this.clockIds)
@@ -608,17 +610,11 @@ public class Translator {
      *        Statements of the procedure body which includes one assignment and one while-statement.
      */
     public Statement[] genProcBodySmts (BoogieLocation bl) {
-     
-    	Statement[] initPhasesSmts = genInitialPhasesSmts (bl);
-    	Statement[] clockInitSmts = genClockInitSmts (bl);
-    	Statement whileStatement = genWhileSmt(bl);    	
-    	Statement[] statements = new Statement[5];
-        statements[0] = initPhasesSmts[0];
-        statements[1] = initPhasesSmts[1];
-        statements[2] = clockInitSmts [0];
-        statements[3] = clockInitSmts [1];
-        statements[4] = whileStatement;
-    	return statements;
+    	List<Statement> statements = new ArrayList<Statement>();
+    	statements.addAll(Arrays.asList(genInitialPhasesSmts (bl)));
+    	statements.addAll(Arrays.asList(genClockInitSmts (bl)));
+    	statements.add(genWhileSmt(bl));
+    	return statements.toArray(new Statement[statements.size()]);
     }
     /**
      * The procedure statement is initialized. It is deployed to the unit.
