@@ -248,11 +248,10 @@ public class NonTerminationArgumentSynthesizer {
 				if (!varsOut.containsKey(entry.getKey())) {
 					continue;
 				}
-				ParameterizedRational c =
-						ieq.getCoefficient(entry.getValue());
+				AffineTerm a = ieq.getCoefficient(entry.getValue());
 				summands.add(m_script.term("*", varsOut.get(entry.getKey()),
-					m_integer_mode ? c.asIntTerm(m_script)
-							: c.asRealTerm(m_script)));
+					m_integer_mode ? a.asIntTerm(m_script)
+							: a.asRealTerm(m_script)));
 				added_vars.add(entry.getValue());
 			}
 			
@@ -269,11 +268,10 @@ public class NonTerminationArgumentSynthesizer {
 					));
 					continue;
 				}
-				ParameterizedRational c =
-						ieq.getCoefficient(entry.getValue());
+				AffineTerm a = ieq.getCoefficient(entry.getValue());
 				summands.add(m_script.term("*", varsIn.get(entry.getKey()),
-						m_integer_mode ? c.asIntTerm(m_script)
-								: c.asRealTerm(m_script)));
+						m_integer_mode ? a.asIntTerm(m_script)
+								: a.asRealTerm(m_script)));
 				added_vars.add(entry.getValue());
 			}
 			
@@ -291,16 +289,16 @@ public class NonTerminationArgumentSynthesizer {
 							m_integer_mode ? "Int" : "Real");
 					auxVars.put(var, v);
 				}
-				ParameterizedRational c = ieq.getCoefficient(var);
+				AffineTerm a = ieq.getCoefficient(var);
 				summands.add(m_script.term("*", v,
-						m_integer_mode ? c.asIntTerm(m_script)
-								: c.asRealTerm(m_script)));
+						m_integer_mode ? a.asIntTerm(m_script)
+								: a.asRealTerm(m_script)));
 				++m_aux_counter;
 			}
 			if (!rays) {
-				ParameterizedRational c = ieq.getConstant();
-				summands.add(m_integer_mode ? c.asIntTerm(m_script)
-						: c.asRealTerm(m_script));
+				AffineTerm a = ieq.getConstant();
+				summands.add(m_integer_mode ? a.asIntTerm(m_script)
+						: a.asRealTerm(m_script));
 			}
 			conjunction.add(m_script.term(ieq.getInequalitySymbol(),
 					UtilExperimental.sum(m_script,

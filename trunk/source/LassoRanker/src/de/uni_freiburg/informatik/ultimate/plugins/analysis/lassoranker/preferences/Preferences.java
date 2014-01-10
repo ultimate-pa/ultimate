@@ -70,7 +70,7 @@ public class Preferences implements Serializable {
 	 * of unsatisfiable cores
 	 */
 	public boolean annotate_terms = false; // Default: false
-		// Note: currently broken
+		// FIXME: currently broken
 	
 	/**
 	 * Use a nonlinear SMT query for checking nontermination?

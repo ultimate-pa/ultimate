@@ -10,8 +10,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunctionGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ParameterizedRational;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.PiecewiseRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 
@@ -125,9 +125,8 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 				LinearInequality li4 = m_fgens[j].generate(outVars);
 				li4.negate();
 				li3.add(li4);
-				ParameterizedRational p = new ParameterizedRational(m_delta);
-				p.coefficient = Rational.MONE;
-				li3.add(p);
+				AffineTerm a = new AffineTerm(m_delta, Rational.MONE);
+				li3.add(a);
 				li3.setStrict(true);
 				li3.needs_motzkin_coefficient = false;
 				disjunction.add(li3);

@@ -10,8 +10,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunctionGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ParameterizedRational;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LexicographicRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 
@@ -123,10 +123,8 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 				LinearInequality li3 = m_fgens[j].generate(outVars);
 				li3.negate();
 				li.add(li3);
-				ParameterizedRational p =
-						new ParameterizedRational(m_deltas[j]);
-				p.coefficient = Rational.MONE;
-				li.add(p);
+				AffineTerm a = new AffineTerm(m_deltas[j], Rational.MONE);
+				li.add(a);
 				li.setStrict(true);
 				li.needs_motzkin_coefficient = j > 0;
 				disjunction.add(li);
@@ -141,9 +139,8 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 			LinearInequality li2 = m_fgens[i].generate(outVars);
 			li2.negate();
 			li.add(li2);
-			ParameterizedRational p = new ParameterizedRational(m_deltas[i]);
-			p.coefficient = Rational.MONE;
-			li.add(p);
+			AffineTerm a = new AffineTerm(m_deltas[i], Rational.MONE);
+			li.add(a);
 			li.setStrict(true);
 			li.needs_motzkin_coefficient = i > 0 && i < size - 1;
 			disjunction.add(li);

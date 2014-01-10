@@ -61,11 +61,12 @@ public class AffineFunctionGenerator {
 	 */
 	public LinearInequality generate(Map<BoogieVar, TermVariable> vars) {
 		LinearInequality li = new LinearInequality();
-		li.add(new ParameterizedRational(m_constant));
+		li.add(new AffineTerm(m_constant, Rational.ONE));
 		for (Map.Entry<BoogieVar, TermVariable> entry : vars.entrySet()) {
 			if (m_coefficients.containsKey(entry.getKey())) {
-				li.add(entry.getValue(), new ParameterizedRational(
-						m_coefficients.get(entry.getKey())));
+				li.add(entry.getValue(),
+						new AffineTerm(m_coefficients.get(entry.getKey()),
+								Rational.ONE));
 			}
 		}
 		return li;

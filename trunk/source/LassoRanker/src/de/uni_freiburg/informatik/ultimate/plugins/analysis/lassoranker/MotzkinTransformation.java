@@ -151,12 +151,12 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * @param t the second factor
 	 * @return p*t as a term
 	 */
-	private Term product(ParameterizedRational p, Term t) {
-		if (p.isConstant() && p.coefficient.equals(Rational.ONE)) {
+	private Term product(AffineTerm a, Term t) {
+		if (a.isConstant() && a.getConstant().equals(Rational.ONE)) {
 			return t;
 		}
-		if (!p.isZero()) {
-			return m_script.term("*", t, p.asRealTerm(m_script));
+		if (!a.isZero()) {
+			return m_script.term("*", t, a.asRealTerm(m_script));
 		}
 		return null;
 	}

@@ -10,8 +10,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunctionGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ParameterizedRational;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 
@@ -67,9 +67,8 @@ public class AffineTemplate extends RankingFunctionTemplate {
 			LinearInequality li2 = m_fgen.generate(outVars);
 			li2.negate();
 			li.add(li2);
-			ParameterizedRational p = new ParameterizedRational(m_delta);
-			p.coefficient = Rational.MONE;
-			li.add(p);
+			AffineTerm a = new AffineTerm(m_delta, Rational.MONE);
+			li.add(a);
 			li.setStrict(true);
 			li.needs_motzkin_coefficient = false;
 			conjunction.add(Collections.singletonList(li));
