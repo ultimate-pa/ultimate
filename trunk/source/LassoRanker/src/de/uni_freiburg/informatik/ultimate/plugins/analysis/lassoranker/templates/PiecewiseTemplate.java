@@ -130,6 +130,7 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 				li3.setStrict(true);
 				li3.needs_motzkin_coefficient = false;
 				disjunction.add(li3);
+				conjunction.add(disjunction);
 			}
 		}
 		
