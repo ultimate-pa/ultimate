@@ -275,13 +275,6 @@ public class Scriptor extends NoopScript {
 	}
 	
 	@Override
-	protected void finalize() throws Throwable {
-		exit();
-		m_Executor = null;
-		super.finalize();
-	}
-
-	@Override
 	public Term simplify(Term term) throws SMTLIBException {
 		throw new UnsupportedOperationException();
 	}
