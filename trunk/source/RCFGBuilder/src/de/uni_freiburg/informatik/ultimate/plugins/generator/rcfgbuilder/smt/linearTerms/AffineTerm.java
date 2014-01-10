@@ -1,10 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms;
 
-import java.util.ArrayDeque;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.*;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -49,6 +45,23 @@ public class AffineTerm extends Term {
 	private final Sort m_Sort;
 	
 	/**
+	 * Convert a rational into a Term.
+	 */
+	private static Term rationalToTerm(Script script, Rational r) {
+		Term num = script.decimal(r.numerator().abs().toString());
+		Term denom = script.decimal(r.denominator().abs().toString());
+		boolean neg = r.numerator().signum() * r.denominator().signum() == -1;
+		Term  t = num;
+		if (!r.isIntegral()) {
+			t = script.term("/", num, denom);
+		}
+		if (neg) {
+			t = script.term("-", t);
+		}
+		return t;
+	}
+	
+	/**
 	 * AffineTerm that represents the Rational r of sort sort. 
 	 */
 	public AffineTerm(Sort s, Rational r) {
@@ -88,7 +101,8 @@ public class AffineTerm extends Term {
 		m_Variable2Coefficient = new HashMap<Term, Rational>();
 		Rational constant = Rational.ZERO;
 		for (AffineTerm affineTerm : affineTerms) {
-			for (Entry<Term, Rational> summand  : affineTerm.m_Variable2Coefficient.entrySet()) {
+			for (Map.Entry<Term, Rational> summand :
+					affineTerm.m_Variable2Coefficient.entrySet()) {
 				assert summand.getKey().getSort() == m_Sort;
 				Rational coeff = m_Variable2Coefficient.get(summand.getKey());
 				if (coeff == null) {
@@ -111,7 +125,8 @@ public class AffineTerm extends Term {
 		m_Variable2Coefficient = new HashMap<Term, Rational>();
 		m_Constant = affineTerm.m_Constant.mul(multiplier);
 		m_Sort = affineTerm.getSort();
-		for (Entry<Term, Rational> summand  : affineTerm.m_Variable2Coefficient.entrySet()) {
+		for (Map.Entry<Term, Rational> summand :
+				affineTerm.m_Variable2Coefficient.entrySet()) {
 			m_Variable2Coefficient.put(summand.getKey(), summand.getValue().mul(multiplier));
 		}
 	}
@@ -145,10 +160,18 @@ public class AffineTerm extends Term {
 	
 
 	/**
-	 * @return true iff the affine term is just a constant
+	 * @return whether this affine term is just a constant
 	 */
 	public boolean isConstant() {
 		return m_Variable2Coefficient.isEmpty();
+	}
+	
+	/**
+	 * @return whether this affine term is zero
+	 */
+	public boolean isZero() {
+		return m_Constant.equals(Rational.ZERO)
+				&& m_Variable2Coefficient.isEmpty();
 	}
 	
 	/**
@@ -170,12 +193,28 @@ public class AffineTerm extends Term {
 	 * @param script Script for that this term is constructed.
 	 */
 	public Term toTerm(Script script) {
-		Term[] summands = new Term[m_Variable2Coefficient.size()+1];
-		int i=0;
-		for (Entry<Term, Rational> entry : m_Variable2Coefficient.entrySet()) {
-			assert entry.getValue().isIntegral();
-			Term coeff = script.numeral(entry.getValue().numerator());
+		Term[] summands = new Term[m_Variable2Coefficient.size() + 1];
+		int i = 0;
+		for (Map.Entry<Term, Rational> entry :
+				m_Variable2Coefficient.entrySet()) {
+			Term coeff = null;
+			if (m_Sort.getName().equals("Real")) {
+				coeff = rationalToTerm(script, entry.getValue());
+			} else if (m_Sort.getName().equals("Int")) {
+				assert entry.getValue().isIntegral();
+				coeff = script.numeral(entry.getValue().numerator());
+			} else {
+				assert false;
+			}
 			summands[i] = script.term("*", coeff, entry.getKey());
+		}
+		if (m_Sort.getName().equals("Real")) {
+			summands[i + 1] = rationalToTerm(script, m_Constant);
+		} else if (m_Sort.getName().equals("Int")) {
+			assert m_Constant.isIntegral();
+			summands[i + 1] = script.numeral(m_Constant.numerator());
+		} else {
+			assert false;
 		}
 		Term result = UtilExperimental.sum(script, m_Sort, summands);
 		return result;
@@ -203,16 +242,15 @@ public class AffineTerm extends Term {
 		
 		return result;
 	}
-
+	
 	@Override
 	public Sort getSort() {
 		return m_Sort;
 	}
-
+	
 	@Override
 	public void toStringHelper(ArrayDeque<Object> m_Todo) {
 		throw new UnsupportedOperationException(
 				"This is an auxilliary Term and not supported by the solver");
 	}
-	
 }
