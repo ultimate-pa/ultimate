@@ -8,6 +8,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
+
+/**
+ * Class that does the same as AnnotateAndAsserter but we do not assert the
+ * SSA term but their conjuncts. Furthermore we store which conjunct 
+ * corresponds to which original term.
+ * @author Matthias Heizmann
+ *
+ */
 public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 	
 	Map<Term,Term> m_Annotated2Original = new HashMap<Term,Term>();
@@ -21,10 +29,19 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 	
 	
 	/**
-	 * @param name
-	 * @param original
-	 * @param indexed
-	 * @return
+	 * Take transition in single static assignment form (Term indexed), take
+	 * its conjuncts, annotate each conjunct, assert the annotation, and
+	 * store in m_Annotated2Original which indexed conjunct corresponds to
+	 * which original conjunct.
+	 * 
+	 * @param name Prefix of this terms annotation (e.g., ssa_23, 
+	 * LocVarAssigCall_42, precond, or any other of the static strings in the
+	 * superclass).
+	 * @param original Term that describes this transition as it occurs in the
+	 * original TransFormula
+	 * @param indexed Term that describes this transition in single static 
+	 * assignment form.
+	 * @return conjunction of annotated terms
 	 */
 	private Term annotateAndAssertConjuncts(String name, Term original,	Term indexed) {
 		Term[] originalConjuncts = PartialQuantifierElimination.getConjuncts(original);
@@ -39,6 +56,17 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 			m_Annotated2Original.put(annotatedConjuncts[i], originalConjunct);
 		}
 		return Util.and(m_Script, annotatedConjuncts);
+	}
+	
+	
+	/**
+	 * Do the same as annotateAndAssertConjuncts() but do not split the term
+	 * into conjuncts.
+	 */
+	private Term annotateAndAssertConjunction(String name, Term original, Term indexed) {
+		Term annotated = super.annotateAndAssertTerm(indexed, name);
+		m_Annotated2Original.put(annotated, original);
+		return annotated;
 	}
 	
 	@Override
@@ -56,7 +84,7 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 		String name = super.postcondAnnotation();
 		Term original = m_DefaultTransFormulas.getPostcondition().getFormula();
 		Term indexed = m_Script.term("not", m_SSA.getPostcondition());
-		return annotateAndAssertConjuncts(name, original, indexed);
+		return annotateAndAssertConjunction(name, original, indexed);
 	}
 
 	@Override
@@ -127,7 +155,7 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
-
+	
 	protected Term annotateAndAssertTerm(Term term, String name, int conjunct) {
 		name += "_conjunct" + conjunct;
 		return super.annotateAndAssertTerm(term, name);
