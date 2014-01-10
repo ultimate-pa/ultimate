@@ -33,7 +33,7 @@ public final class MonitoredProcess {
 		mMonitor = null;
 	}
 
-	public boolean isRunning() {
+	private boolean isRunning() {
 		assert mProcessCompleted ^ mProcess != null;
 		return !mProcessCompleted;
 	}

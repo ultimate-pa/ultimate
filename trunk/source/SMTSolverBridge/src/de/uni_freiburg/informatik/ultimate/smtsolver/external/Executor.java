@@ -77,18 +77,14 @@ class Executor {
 	}
 	
 	public void exit(){
+		
 		input("(exit)");
 		parseSuccess();
 		m_Process.forceShutdown();
 		m_Process = null;
 		
 	}
-	
-	@Override
-	protected void finalize() throws Throwable {
-		exit();
-		super.finalize();
-	}
+
 
 	private List<Symbol> parseSexpr(Lexer lexer) throws IOException {
 		ArrayList<Symbol> result = new ArrayList<Symbol>();
