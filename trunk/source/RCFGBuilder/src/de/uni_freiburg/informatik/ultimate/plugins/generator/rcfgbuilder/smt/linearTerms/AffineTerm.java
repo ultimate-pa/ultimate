@@ -207,12 +207,13 @@ public class AffineTerm extends Term {
 				assert false;
 			}
 			summands[i] = script.term("*", coeff, entry.getKey());
+			++i;
 		}
 		if (m_Sort.getName().equals("Real")) {
-			summands[i + 1] = rationalToTerm(script, m_Constant);
+			summands[i] = rationalToTerm(script, m_Constant);
 		} else if (m_Sort.getName().equals("Int")) {
 			assert m_Constant.isIntegral();
-			summands[i + 1] = script.numeral(m_Constant.numerator());
+			summands[i] = script.numeral(m_Constant.numerator());
 		} else {
 			assert false;
 		}
@@ -225,17 +226,19 @@ public class AffineTerm extends Term {
 		if (isErrorTerm()) {
 			return "auxilliaryErrorTerm";
 		}
-		String result = "";
-		for (Map.Entry<Term, Rational> entry : m_Variable2Coefficient.entrySet()) {
-			result += entry.getValue().isNegative() ? " - " : " + ";
-			result += entry.getValue().abs() + "*" + entry.getKey();
+		StringBuilder sb = new StringBuilder();
+		for (Map.Entry<Term, Rational> entry :
+				m_Variable2Coefficient.entrySet()) {
+			sb.append(entry.getValue().isNegative() ? " - " : " + ");
+			sb.append(entry.getValue().abs() + "*" + entry.getKey());
 		}
-		if (!m_Constant.equals(Rational.ZERO) || result.isEmpty()) {
-			if (m_Constant.isNegative() || !result.isEmpty()) {
-				result += m_Constant.isNegative() ? " - " : " + ";
+		if (!m_Constant.equals(Rational.ZERO) || sb.length() == 0) {
+			if (m_Constant.isNegative() || sb.length() > 0) {
+				sb.append(m_Constant.isNegative() ? " - " : " + ");
 			}
-			result += m_Constant.abs();
+			sb.append(m_Constant.abs());
 		}
+		String result = sb.toString();
 		if (result.charAt(0) == ' ') {
 			result = result.substring(1); // Drop first space
 		}
