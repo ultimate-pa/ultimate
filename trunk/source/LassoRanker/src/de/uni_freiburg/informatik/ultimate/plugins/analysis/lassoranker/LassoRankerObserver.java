@@ -82,7 +82,6 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 					PreferencesInitializer.LABEL_multiphase_template_size)));
 		}
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_piecewise_template)) {
-			s_Logger.error("Piecewise Template is currently broken. :'("); // FIXME
 			templates.add(new PiecewiseTemplate(store.getInt(
 					PreferencesInitializer.LABEL_piecewise_template_size)));
 		}

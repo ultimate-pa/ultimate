@@ -22,7 +22,7 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	public static final int     s_multiphase_template_size = 2;
 	public static final boolean s_enable_lex_template = true;
 	public static final int     s_lex_template_size = 2;
-	public static final boolean s_enable_piecewise_template = false; // FIXME: broken
+	public static final boolean s_enable_piecewise_template = true;
 	public static final int     s_piecewise_template_size = 2;
 	
 	/*
