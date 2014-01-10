@@ -139,5 +139,11 @@ public final class MonitoredProcess {
 	public InputStream getInputStream() {
 		return mProcess.getInputStream();
 	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		forceShutdown();
+		super.finalize();
+	}
 
 }
