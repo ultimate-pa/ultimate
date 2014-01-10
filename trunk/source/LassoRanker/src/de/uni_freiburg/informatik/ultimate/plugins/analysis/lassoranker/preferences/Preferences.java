@@ -85,7 +85,7 @@ public class Preferences implements Serializable {
 	/**
 	 * Write SMT solver script to file.
 	 */
-	public boolean dumpSmtSolverScript = !false;
+	public boolean dumpSmtSolverScript = false;
 	
 	/**
 	 * File to which the SMT solver script is written.

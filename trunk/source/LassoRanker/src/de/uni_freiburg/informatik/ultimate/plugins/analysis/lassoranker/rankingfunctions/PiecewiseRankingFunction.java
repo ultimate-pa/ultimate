@@ -39,7 +39,7 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(m_ranking.size());
-		sb.append("-priece ranking function:\n");
+		sb.append("-piece ranking function:\n");
 		sb.append("  f(");
 		boolean first = true;
 		for (BoogieVar var : m_ranking.get(0).getVariables()) {
@@ -62,7 +62,6 @@ public class PiecewiseRankingFunction extends RankingFunction {
 				sb.append(".");
 			}
 		}
-		sb.append(">");
 		return sb.toString();
 	}
 	

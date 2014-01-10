@@ -1,4 +1,4 @@
-//#rNontermination
+//#rNonterminationDerivable
 // Author: Matthias Heizmann
 // Date: 21.12.2013
 

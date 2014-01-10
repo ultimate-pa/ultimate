@@ -47,10 +47,10 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 	private AffineFunctionGenerator[] m_pgens; // discriminatory predicates
 	
 	/**
-	 * @param num_functions number of lexicographic entries
+	 * @param num_functions number of pieces
 	 */
 	public PiecewiseTemplate(int num_pieces) {
-		assert(num_pieces > 0);
+		assert(num_pieces >= 2);
 		size = num_pieces;
 		m_fgens = new AffineFunctionGenerator[size];
 		m_pgens = new AffineFunctionGenerator[size];
@@ -72,12 +72,12 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(size);
-		sb.append("-piece template:\n   ");
+		sb.append("-piece template:\n");
 		sb.append("   delta > 0\n");
 		for (int i = 0; i < size; ++i) {
 			for (int j = 0; j < size; ++j) {
-				sb.append("/\\ ( g_" + i + "(x) < 0 \\/");
-				sb.append("g_" + j + "(x') < 0 \\/");
+				sb.append("/\\ ( g_" + i + "(x) < 0 \\/ ");
+				sb.append("g_" + j + "(x') < 0 \\/ ");
 				sb.append("f_" + j + "(x') < f_" + i + "(x) - delta )\n");
 			}
 		}

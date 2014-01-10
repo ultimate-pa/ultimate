@@ -154,21 +154,26 @@ public class AffineTerm {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
+		boolean first = true;
 		for (Map.Entry<Term, Rational> entry : m_Coefficients.entrySet()) {
-			sb.append(entry.getValue().isNegative() ? " - " : " + ");
+			if (m_Constant.isNegative() || !first) {
+				if (!first) {
+					sb.append(" ");
+				}
+				sb.append(entry.getValue().isNegative() ? "- " : "+ ");
+			}
 			sb.append(entry.getValue().abs() + "*" + entry.getKey());
+			first = false;
 		}
 		if (!m_Constant.equals(Rational.ZERO) || sb.length() == 0) {
-			if (m_Constant.isNegative() || sb.length() > 0) {
-				sb.append(m_Constant.isNegative() ? " - " : " + ");
+			if (m_Constant.isNegative() || !first) {
+				if (!first) {
+					sb.append(" ");
+				}
+				sb.append(m_Constant.isNegative() ? "- " : "+ ");
 			}
 			sb.append(m_Constant.abs());
 		}
-		String result = sb.toString();
-		if (result.charAt(0) == ' ') {
-			result = result.substring(1); // Drop first space
-		}
-		
-		return result;
+		return sb.toString();
 	}
 }

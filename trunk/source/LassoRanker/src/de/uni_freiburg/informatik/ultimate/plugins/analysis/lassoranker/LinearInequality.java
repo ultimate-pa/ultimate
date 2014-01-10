@@ -278,7 +278,7 @@ public class LinearInequality {
 			String param = entry.getValue().toString();
 			if (param.startsWith("-")) {
 				if (!first) {
-					sb.append(" - ");
+					sb.append(" -");
 					sb.append(param.substring(1));
 				} else {
 					sb.append(param);
@@ -297,7 +297,7 @@ public class LinearInequality {
 			String s = m_constant.toString();
 			if (s.startsWith("-")) {
 				if (!first) {
-					sb.append(" - ");
+					sb.append(" -");
 					sb.append(s.substring(1));
 				} else {
 					sb.append(s);
