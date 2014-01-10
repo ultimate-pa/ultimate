@@ -27,8 +27,8 @@ public final class MonitoredProcess {
 				Activator.s_PLUGIN_ID);
 		mProcess = process;
 		mProcessCompleted = false;
-		mExitCommand = null;
 		mCommand = command;
+		mExitCommand = exitCommand;
 		mReturnCode = -1;
 		mMonitor = null;
 	}
@@ -64,6 +64,7 @@ public final class MonitoredProcess {
 			public void run() {
 				try {
 					mp.mReturnCode = mp.mProcess.waitFor();
+					mp.mLogger.debug("Finished waiting for process!");
 					mp.mProcessCompleted = true;
 				} catch (InterruptedException e) {
 					mp.mLogger.error(
@@ -103,10 +104,13 @@ public final class MonitoredProcess {
 							+ mExitCommand, e);
 				}
 				try {
+					mLogger.debug("About to join with the monitor thread... ");
 					mMonitor.join(200);
+					mLogger.debug("Successfully joined ");
 
 				} catch (InterruptedException e) {
 					// not necessary to do anything here
+					mLogger.debug("Interrupted during join ");
 				}
 				if (!isRunning()) {
 					return;
