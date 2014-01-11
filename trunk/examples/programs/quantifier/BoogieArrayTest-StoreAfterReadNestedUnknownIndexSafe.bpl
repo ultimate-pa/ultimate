@@ -1,4 +1,7 @@
 //#mSafe
+// Example where we are not able to eliminate quantifier. In fact, we get rid 
+// of a quantified array, but have to introduce an auxiliary quantified 
+// variable.
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 29.08.2013
 
