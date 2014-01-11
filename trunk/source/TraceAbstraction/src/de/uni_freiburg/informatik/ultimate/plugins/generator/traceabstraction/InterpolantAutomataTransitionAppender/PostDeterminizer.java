@@ -22,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class PostDeterminizer 
 		implements IStateDeterminizer<CodeBlock, IPredicate> {
 	
-	private final TAPreferences m_TaPreferences;
+	private final boolean m_ComputeHoareAnnotation;
 	protected final NestedWordAutomaton<CodeBlock, IPredicate> m_Ia;
 	private final StateFactory<IPredicate> m_StateFactory;
 	private final boolean m_Eager;
@@ -49,13 +49,14 @@ public class PostDeterminizer
 	
 	protected final EdgeChecker m_EdgeChecker;
 	
+	
 
 	public PostDeterminizer(EdgeChecker edgeChecker,
-			TAPreferences taPreferences,
+			boolean computeHoareAnnotation,
 			NestedWordAutomaton<CodeBlock, IPredicate> mNwa,
 			boolean eager) {
 		m_EdgeChecker = edgeChecker;
-		m_TaPreferences = taPreferences;
+		m_ComputeHoareAnnotation = computeHoareAnnotation;
 		m_Ia = mNwa;
 		m_StateFactory = mNwa.getStateFactory();
 		m_Eager = eager;
@@ -193,7 +194,7 @@ public class PostDeterminizer
 		}
 
 		clearAssertionStack();
-		if (m_TaPreferences.computeHoareAnnotation()) {
+		if (m_ComputeHoareAnnotation) {
 			assert(m_EdgeChecker.getSmtManager().isInductive(detState.getContent(m_StateFactory), 
 						symbol, 
 						detSucc.getContent(m_StateFactory)) == Script.LBool.UNSAT ||
@@ -281,7 +282,7 @@ public class PostDeterminizer
 
 		}
 		clearAssertionStack();
-		if (m_TaPreferences.computeHoareAnnotation()) {
+		if (m_ComputeHoareAnnotation) {
 			assert(m_EdgeChecker.getSmtManager().isInductiveCall(detState.getContent(m_StateFactory), 
 						(Call) symbol, 
 						detSucc.getContent(m_StateFactory)) == Script.LBool.UNSAT ||
@@ -370,7 +371,7 @@ public class PostDeterminizer
 			}
 		}
 		clearAssertionStack();
-		if (m_TaPreferences.computeHoareAnnotation()) {
+		if (m_ComputeHoareAnnotation) {
 			assert(m_EdgeChecker.getSmtManager().isInductiveReturn(detState.getContent(m_StateFactory),
 					detHier.getContent(m_StateFactory),
 					(Return) symbol, 

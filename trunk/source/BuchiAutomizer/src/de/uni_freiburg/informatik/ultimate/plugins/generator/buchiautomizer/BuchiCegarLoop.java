@@ -408,10 +408,6 @@ public class BuchiCegarLoop {
 					new MinimizeSevpa<CodeBlock, IPredicate>(m_Abstraction, partition, false, false, m_StateFactoryForRefinement);
 			assert (minimizeOp.checkResult(m_DefaultStateFactory));
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
-			if (m_Pref.computeHoareAnnotation()) {
-				Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
-				throw new AssertionError("not supported");
-			}
 			m_Abstraction = minimized;
 			s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
 		}
@@ -513,8 +509,9 @@ public class BuchiCegarLoop {
 			}
 			constructInterpolantAutomaton(traceChecker, run);
 			EdgeChecker ec = new EdgeChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
+			boolean computeHoareAnnotation = false;
 			PostDeterminizer spd = new PostDeterminizer(
-					ec, m_Pref, m_InterpolAutomaton, true);
+					ec, computeHoareAnnotation, m_InterpolAutomaton, true);
 			DifferenceDD<CodeBlock, IPredicate> diff = null;
 			try {
 				diff = new DifferenceDD<CodeBlock, IPredicate>(

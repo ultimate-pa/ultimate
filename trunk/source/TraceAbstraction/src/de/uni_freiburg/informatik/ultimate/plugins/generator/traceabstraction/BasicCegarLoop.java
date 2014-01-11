@@ -285,7 +285,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			break;
 			
 			case EAGERPOST:	
-				PostDeterminizer epd = new PostDeterminizer(edgeChecker, m_Pref, 
+				PostDeterminizer epd = new PostDeterminizer(edgeChecker, m_Pref.computeHoareAnnotation(), 
 									m_InterpolAutomaton,true);
 				if (m_Pref.differenceSenwa()) {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
@@ -315,7 +315,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			break;
 			
 			case LAZYPOST:	
-				PostDeterminizer lpd = new PostDeterminizer(edgeChecker,	m_Pref, 
+				PostDeterminizer lpd = new PostDeterminizer(edgeChecker,	m_Pref.computeHoareAnnotation(), 
 									m_InterpolAutomaton,false);
 				if (m_Pref.differenceSenwa()) {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
@@ -635,7 +635,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		break;
 		case EAGERPOST:
 			PostDeterminizer epd = 
-				new PostDeterminizer(edgeChecker,	m_Pref, 
+				new PostDeterminizer(edgeChecker,	m_Pref.computeHoareAnnotation(), 
 									m_InterpolAutomaton,true);
 			DeterminizeDD<CodeBlock, IPredicate> dep = 
 				new DeterminizeDD<CodeBlock, IPredicate>(
@@ -644,7 +644,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		break;
 		case LAZYPOST:
 			PostDeterminizer lpd = 
-				new PostDeterminizer(edgeChecker,	m_Pref, 
+				new PostDeterminizer(edgeChecker,	m_Pref.computeHoareAnnotation(), 
 									m_InterpolAutomaton,true);
 			DeterminizeDD<CodeBlock, IPredicate> dlpd = 
 				new DeterminizeDD<CodeBlock, IPredicate>(
