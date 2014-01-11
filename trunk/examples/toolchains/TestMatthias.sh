@@ -66,8 +66,8 @@ fi
 
 if [ "$1" = "svcompMatthias" ]; then
 echo "specified folder in a test setting"
-trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 $2 \
-"TraceAbstraction.xml;TraceAbstractionC.xml;AutomizerSvcomp.settings"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh -ea 20 $2 \
+"TraceAbstraction.xml;TraceAbstractionC.xml;AutomizerSvcompSafety1Minute.bpl"
 fi
 
 

@@ -115,10 +115,8 @@ do
     FILENAME_FALSE=`echo "$f" | grep -i "false"`
     # stores the first line of $f if this line contains one of the following keywords, is empty otherwise
     KEYWORD_SYNTAX=`head -n 1 "$f" | grep "#Syntax"`
-    KEYWORD_MSAFE=`head -n 1 "$f" | grep "#mSafe"`
-    KEYWORD_MUNSAFE=`head -n 1 "$f" | grep "#mUnsafe"`
-    KEYWORD_ISAFE=`head -n 1 "$f" | grep "#iSafe"`
-    KEYWORD_IUNSAFE=`head -n 1 "$f" | grep "#iUnsafe"`
+    KEYWORD_SAFE=`head -n 1 "$f" | grep "#Safe"`
+    KEYWORD_UNSAFE=`head -n 1 "$f" | grep "#Unsafe"`
     VCCPRELUDE=`head -n 1 "$f" | grep "#VccPrelude"`
 
     # stores "1" if program is safe (resp. unsafe), is empty otherwise
@@ -146,25 +144,13 @@ do
 		PROGRAM_UNSAFE="1"
 		fi
 		
-		if [ "$KEYWORD_MSAFE" ]; then 
+		if [ "$KEYWORD_SAFE" ]; then 
 		WHO_DEFINED_SOLUTION="Solution given by EvrenKeyword is: "
 		PROGRAM_SAFE="1"
 		PROGRAM_UNSAFE=
 		fi
 
-		if [ "$KEYWORD_MUNSAFE" ]; then 
-		WHO_DEFINED_SOLUTION="Solution given by EvrenKeyword is: "
-		PROGRAM_SAFE=
-		PROGRAM_UNSAFE="1"
-		fi
-
-		if [ "$KEYWORD_ISAFE" ]; then 
-		WHO_DEFINED_SOLUTION="Solution given by EvrenKeyword is: "
-		PROGRAM_SAFE="1"
-		PROGRAM_UNSAFE=
-		fi
-
-		if [ "$KEYWORD_IUNSAFE" ]; then 
+		if [ "$KEYWORD_UNSAFE" ]; then 
 		WHO_DEFINED_SOLUTION="Solution given by EvrenKeyword is: "
 		PROGRAM_SAFE=
 		PROGRAM_UNSAFE="1"
