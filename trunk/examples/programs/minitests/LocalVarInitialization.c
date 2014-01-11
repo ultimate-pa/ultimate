@@ -1,4 +1,4 @@
-/* #mUnsafe
+/* #Unsafe
  * 
  * Test that we may not expect that local var a has been initialized.
  * TODO: More detailed explantation what kind of variable a is according to

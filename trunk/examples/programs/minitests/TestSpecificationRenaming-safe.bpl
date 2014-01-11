@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 /*
  * Author: heizmann@informatik.uni-freiburg.de
  * Date: 19.3.2012

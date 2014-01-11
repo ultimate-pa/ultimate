@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * Program depicted in Figure 7 of
  * 1997FMSD - Halbwachs,Proy,Roumanoff - Verification of Real-Time Systems using Linear Relation Analysis

@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 /*
  * Bug in sequential composition in r6186
  * 

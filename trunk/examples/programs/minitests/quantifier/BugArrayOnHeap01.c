@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 /*
  * In SVCOMP2014 we say (incorrectly) that this program is unsound.
  * We go to the error location with the following assume

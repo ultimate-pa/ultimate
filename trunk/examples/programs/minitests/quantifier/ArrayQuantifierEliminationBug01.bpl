@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * Bug: p != q missing after second malloc
  * Date: September 2013

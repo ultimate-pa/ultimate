@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 /*
  * At the moment we are unable to find a the loop invariant x==y,
  * because we obtain the interpolants

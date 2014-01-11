@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 4.2.2013
 // TODO: extend this example by an example where we also short circuit 

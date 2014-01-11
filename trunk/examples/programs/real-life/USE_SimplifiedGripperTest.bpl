@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 //author: unknown
 //added by nutz
 

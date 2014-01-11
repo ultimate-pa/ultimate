@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 // Author: Evren, Alex
 
 procedure main() {

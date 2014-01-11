@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * Bug in r7069. Local BoogieVar for left hand side of call was created instead
  * of using the global variable.

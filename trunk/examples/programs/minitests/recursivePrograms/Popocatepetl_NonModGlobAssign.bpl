@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * Example where non-modifiable global variable is result of procedure call.
  * Author: Betim Musa and heizmann@informatik.uni-freiburg.de

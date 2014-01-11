@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * Program depicted in Figure 3 of
  * 2007POPL - Gulwani,Jojic - Program Verification as Probabilistic Inference

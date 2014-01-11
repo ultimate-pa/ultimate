@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 //author: nutz@informatik.uni-freiburg.de
 /*
  * computes x + y by incrementing x y times. then checks it with the internal computation

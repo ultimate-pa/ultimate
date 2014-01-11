@@ -1,4 +1,4 @@
-/* #mSafe
+/* #Safe
  * Author: lindenmm@informatik.uni-freiburg.de
  * Date: 16.08.2012
  * contains examples from: http://www2.informatik.uni-halle.de/lehre/c/c_struct.html

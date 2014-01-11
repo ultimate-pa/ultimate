@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 
 procedure main() {
 	var is_room_x: bool;

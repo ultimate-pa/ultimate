@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 /*
  * Program obtained by the program transformation which the Ramsey based
  * TERMINATOR uses to prove that the loop

@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 /*
  * Version of ManyFactsAboutX that might also show advantages of trace
  * abstraction if LBE is used.

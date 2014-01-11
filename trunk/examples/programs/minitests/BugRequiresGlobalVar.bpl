@@ -1,4 +1,4 @@
-//#mUnsafe
+//#Unsafe
 // Reveals bug in r9602 global vars in requires of procedure are
 // interpreted as the variable after executing the procedure (instead of
 // before executing the procedure. According to this wrong implementation

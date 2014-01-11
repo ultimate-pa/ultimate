@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 
 /* Precedural version of the "Locking Example" which occurs in e.g.
  *

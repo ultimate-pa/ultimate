@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 //added by nutz@informatik.uni-freiburg.de
 //would be scalable (if someone is interested..)
 /*

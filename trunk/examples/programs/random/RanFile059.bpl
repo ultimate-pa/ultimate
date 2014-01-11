@@ -1,4 +1,4 @@
-//#mSafe;  Generated random file with w 4 and h 6 and bs 3
+//#Safe;  Generated random file with w 4 and h 6 and bs 3
 
 procedure main() {
 	 var qrrswwv : int ;

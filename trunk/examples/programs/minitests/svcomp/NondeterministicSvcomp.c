@@ -1,4 +1,4 @@
-/* #mUnsafe
+/* #Unsafe
  * 
  * Variables initialized with __VERIFIER_nondet_int which returns 
  * nondeterministically some value.

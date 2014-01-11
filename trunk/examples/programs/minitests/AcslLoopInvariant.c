@@ -1,4 +1,4 @@
-// #mSafe
+// #Safe
 /*
  * Variable i of ACSL loop invariant occurs in two diffent scopes.
  * We have to translated this to Boogie program where loop invariant uses "the

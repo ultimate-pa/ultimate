@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 // Bug in QE. a[i] replaced by 23, information i!=j ist lost.
 //
 // Author: heizmann@informatik.uni-freiburg.de

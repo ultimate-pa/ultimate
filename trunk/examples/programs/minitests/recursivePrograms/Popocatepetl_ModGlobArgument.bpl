@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * Example where modifiable global variable is argument of procedure call.
  * Author: Betim Musa and heizmann@informatik.uni-freiburg.de

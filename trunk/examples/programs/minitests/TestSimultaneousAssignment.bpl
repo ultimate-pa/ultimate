@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 /*
  * revealed bug in revision <=r5522
  * Author: heizmann@informatik.uni-freiburg.de

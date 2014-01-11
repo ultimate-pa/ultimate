@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 /*
  * Version of the LockingExample with arrays.
  * Date: 24.08.2013

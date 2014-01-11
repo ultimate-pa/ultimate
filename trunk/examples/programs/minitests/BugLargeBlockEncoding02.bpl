@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /* Bug in BlockEncoding in r10041.
  * Call-Return minimization crashes if call predecessor is dead code.
  * 

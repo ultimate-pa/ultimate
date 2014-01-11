@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * The ackermann function.
  * Implementation the version defined by Rózsa Péter.

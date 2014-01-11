@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 procedure Counter () 
 {
 var x0, x1, x2, x3 : int;

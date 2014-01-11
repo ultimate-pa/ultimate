@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 4.2.2013
 // apparently useless inner while loop is used to check that no auxilliary

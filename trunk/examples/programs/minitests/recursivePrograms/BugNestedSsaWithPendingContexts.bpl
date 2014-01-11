@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * Reveals bug that can be reproduced using the old computation of nested
  * interpolants in r9719

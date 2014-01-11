@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 /*
  * Example from 
  * 2001TACAS - Ball,Podelski,Rajamani - Boolean and Cartesian Abstraction for 

@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * Recursive program which is correct with respect to the assert statement in
  * procedure Main.

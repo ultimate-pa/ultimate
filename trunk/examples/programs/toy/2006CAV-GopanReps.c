@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * Program depicted in Figure 1 of
  * 2006CAV - Gopan,Reps - Lookahead Widening

@@ -1,4 +1,4 @@
-/* #iSafe
+/* #Safe
  * 
  * Test that global var g has been initialized.
  * TODO: More detailed explantation what kind of variable g is according to

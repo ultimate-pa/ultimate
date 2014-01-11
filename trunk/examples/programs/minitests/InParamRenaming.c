@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 // Author: lindenmm@informatik.uni-freiburg.de
 // Date: 16.08.2012
 int method1(int, int);

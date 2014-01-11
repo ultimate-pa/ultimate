@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 
 procedure nBitCounter() {
 	var n, i, j, k, of:int;

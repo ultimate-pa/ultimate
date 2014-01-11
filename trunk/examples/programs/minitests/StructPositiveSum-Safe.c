@@ -1,4 +1,4 @@
-/* #mSafe
+/* #Safe
  * Author: heizmann@informatik.uni-freiburg.de
  * Date: 08.02.2012
  * simple example where structs occur in loop invariant

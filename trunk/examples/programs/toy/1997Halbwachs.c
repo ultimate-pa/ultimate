@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * Program taken from Halbwachs et al. 1997, P. 14, F. 7.
  * 

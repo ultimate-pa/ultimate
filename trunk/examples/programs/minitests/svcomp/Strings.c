@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 22.10.2012
 // Test if our bogus translation of Strings (to int) works.

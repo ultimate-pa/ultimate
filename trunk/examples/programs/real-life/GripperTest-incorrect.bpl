@@ -1,4 +1,4 @@
-//#mUnsafe
+//#Unsafe
 // Program is incorrect because on pickup room is not check if already 0.
 
 procedure main() {

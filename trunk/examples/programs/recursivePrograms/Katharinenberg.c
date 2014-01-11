@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * Example taken from a draft titled
  * "Using Program-specific Summaries in Deductive Verification" 

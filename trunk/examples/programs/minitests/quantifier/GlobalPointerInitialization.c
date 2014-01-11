@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * Global variable (without further modifiers - TODO check details in C99 
  * standard) is initialized with 0.

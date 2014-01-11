@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 /*
  * Variant of CountTillBound where a while loop is replaced by recursion.
  * Date: 23.09.2013

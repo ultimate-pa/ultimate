@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 /*
  * Ultimate Automizer ist not are unable to prove safety (efficiently) because
  * (in r9676) we get the following interpolants.

@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * Recursive computation of fibonacci numbers.
  * 

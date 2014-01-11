@@ -1,4 +1,4 @@
-//#mUnsafe
+//#Unsafe
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 22.10.2012
 // Test if __VERIFIER_nondet_int() is able to assign different values

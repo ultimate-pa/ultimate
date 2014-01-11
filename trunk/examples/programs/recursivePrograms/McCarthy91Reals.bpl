@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * Variant of McCarthy's 91 function over the reals. The program is correct with
  * respect to assertions.

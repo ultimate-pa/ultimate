@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 //author: nutz
 //toy example that exposes a problem with the simple redirecting strategy in the impulse algorithm
 procedure foo() {

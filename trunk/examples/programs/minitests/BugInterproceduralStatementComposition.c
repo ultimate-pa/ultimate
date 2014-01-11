@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 // Author: wisserts@informatik.uni-freiburg.de
 // Date: 03.05.2013
 // Bug in interprocedural sequential composition.

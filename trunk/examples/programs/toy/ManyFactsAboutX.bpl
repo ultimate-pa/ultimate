@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 /*
  * Example where in each iteration a different fact about the same variable
  * (here: x multiple of 2, x multiple of 3, x multiple of 4,) is important.

@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * Implementation of McCarthy's 91 function. The program is correct with
  * respect to assertions.

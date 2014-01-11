@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 implementation method1(a:int, b:int) returns (#res:int)
 {
  var #in~a : int;

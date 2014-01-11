@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * For each assert statement a contract has to be inferred.
  * Author: heizmann@informatik.uni-freiburg.de

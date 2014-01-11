@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 /*
  * Variant of Goanna example where x is not initialized, but there is no
  * memory leak.

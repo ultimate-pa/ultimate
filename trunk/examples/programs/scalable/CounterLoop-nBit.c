@@ -1,4 +1,4 @@
-//#mSafe;NOPRELUDE
+//#Safe;NOPRELUDE
 
 main() {
 	int n, i, j, k, of;

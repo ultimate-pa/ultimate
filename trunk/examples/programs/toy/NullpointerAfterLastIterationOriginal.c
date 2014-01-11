@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 /*
  * Pointer free abstraction of example that Andreas discussed during his stay
  * at NICTA in Australia.

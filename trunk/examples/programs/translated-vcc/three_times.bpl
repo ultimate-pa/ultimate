@@ -1,4 +1,4 @@
-//#VccPrelude #iSafe #mSafe
+//#VccPrelude #Safe
 procedure three_times(P#n: int) returns ($result: int);
   requires P#n >= 0;
   requires $_mul(3, P#n) < 2147483647;

@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 //author: ermis@informatik.uni-freiburg.de
 /*
  * Test global variables for Chainsaw

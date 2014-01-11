@@ -1,4 +1,4 @@
-//#VccPrelude #iSafe #mUnsafe
+//#VccPrelude #Safe
 axiom $arch_ptr_size == 8;
 
 axiom $arch_spec_ptr_start == $max.u8;

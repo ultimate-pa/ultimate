@@ -1,4 +1,4 @@
-//#mSafe
+//#Safe
 //author: nutz@informatik.uni-freiburg.de
 procedure SAS09paper()
 {

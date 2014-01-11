@@ -1,4 +1,4 @@
-// #iSafe
+// #Safe
 /*
  * If we extend the SequentialComposition to Calls without considering
  * the "oldVar assignments" large block encoding is unsound.

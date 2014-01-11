@@ -1,4 +1,4 @@
-//#iSafe
+//#Safe
 /*
  * Bug in r9906 sizeof roflcopter leads to Exception
  * Bug in later versions sizeof(node*) translated to the same constant

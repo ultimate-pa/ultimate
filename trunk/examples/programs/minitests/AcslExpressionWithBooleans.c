@@ -1,4 +1,4 @@
-// #mSafe
+// #Safe
 /*
  * Date: 07.10.2013
  * Author: Matthias Heizmann
