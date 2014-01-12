@@ -33,37 +33,10 @@ public class AuxiliaryMethods {
 	 * @throws SMTLIBException if something goes wrong, e.g. the name is
 	 *          already defined
 	 */
-	public static Term newConstant(Script script, String name, String sort)
+	public static Term newConstant(Script script, String name, String sortname)
 			throws SMTLIBException {
-		script.declareFun(name, new Sort[0], script.sort(sort));
+		script.declareFun(name, new Sort[0], script.sort(sortname));
 		return script.term(name);
-	}
-	
-	/**
-	 * Convert a rational to a numeral instance.
-	 * (The rational's denominator must be 1.)
-	 */
-	static Term rationalToNumeral(Script script, Rational r) {
-		assert(r.isIntegral());
-		return script.numeral(r.numerator());
-	}
-	
-	/**
-	 * Convert a rational into a decimal instance.
-	 */
-	static Term rationalToDecimal(Script script, Rational a) {
-		Term num = script.decimal(a.numerator().abs().toString());
-		Term denom = script.decimal(a.denominator().abs().toString());
-		boolean negative = a.numerator().signum() * a.denominator().signum()
-				== -1;
-		Term  t = num;
-		if (!a.isIntegral()) {
-			t = script.term("/", num, denom);
-		}
-		if (negative) {
-			t = script.term("-", t);
-		}
-		return t;
 	}
 	
 	/**

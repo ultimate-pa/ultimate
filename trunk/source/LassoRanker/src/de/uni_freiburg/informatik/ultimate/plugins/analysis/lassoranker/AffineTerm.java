@@ -125,12 +125,11 @@ public class AffineTerm {
 		Term[] summands = new Term[m_Coefficients.size() + 1];
 		int i = 0;
 		for (Map.Entry<Term, Rational> entry : m_Coefficients.entrySet()) {
-			Term coeff = AuxiliaryMethods.rationalToDecimal(script,
-					entry.getValue());
+			Term coeff = entry.getValue().toTerm(script.sort("Real")); 
 			summands[i] = script.term("*", coeff, entry.getKey());
 			++i;
 		}
-		summands[i] = AuxiliaryMethods.rationalToDecimal(script, m_Constant);
+		summands[i] = m_Constant.toTerm(script.sort("Real"));
 		return UtilExperimental.sum(script, script.sort("Real"), summands);
 	}
 	
@@ -142,12 +141,13 @@ public class AffineTerm {
 		Term[] summands = new Term[m_Coefficients.size() + 1];
 		int i = 0;
 		for (Map.Entry<Term, Rational> entry : m_Coefficients.entrySet()) {
-			Term coeff = AuxiliaryMethods.rationalToNumeral(script,
-					entry.getValue());
+			assert entry.getValue().isIntegral();
+			Term coeff = script.numeral(entry.getValue().numerator());
 			summands[i] = script.term("*", coeff, entry.getKey());
 			++i;
 		}
-		summands[i] = AuxiliaryMethods.rationalToNumeral(script, m_Constant);
+		assert m_Constant.isIntegral();
+		summands[i] = script.numeral(m_Constant.numerator());
 		return UtilExperimental.sum(script, script.sort("Int"), summands);
 	}
 	

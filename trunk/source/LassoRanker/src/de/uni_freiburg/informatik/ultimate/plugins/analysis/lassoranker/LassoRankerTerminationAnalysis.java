@@ -301,4 +301,11 @@ public class LassoRankerTerminationAnalysis {
 		m_script.exit();
 		m_script = null;
 	}
+	
+	public void finalize() {
+		if (m_script != null) {
+			m_script.exit();
+			m_script = null;
+		}
+	}
 }
