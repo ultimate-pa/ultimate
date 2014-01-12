@@ -1,10 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -26,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Terminat
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -290,16 +289,20 @@ public class BinaryStatePredicateManager {
 		return result;
 	}
 	
-	private IPredicate computeSiConjunction(Iterable<SupportingInvariant> siList) {
-		List<IPredicate> siPreds = new ArrayList<IPredicate>();
+	private IPredicate computeSiConjunction(Collection<SupportingInvariant> siList) {
+		Term[] siTerms = new Term[siList.size()];
+		int i=0;
 		for (SupportingInvariant si : siList) {
-			IPredicate siPred = supportingInvariant2Predicate(si);
-			siPreds.add(siPred);
+			Term formula = si.asTerm(m_SmtManager.getScript());
+			siTerms[i] = formula;
+			i++;
 		}
-		TermVarsProc tvp = m_SmtManager.and(siPreds.toArray(new IPredicate[0]));
-		IPredicate siConjunction = m_SmtManager.newPredicate(tvp.getFormula(), 
-				tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula()); 
-		return siConjunction;
+		assert i == siList.size();
+		Term conjunction = Util.and(m_Script, siTerms);
+		Term simplified = m_SmtManager.simplify(conjunction);
+		Term normalized = (new AffineSubtermNormalizer(m_SmtManager.getScript())).transform(simplified);
+		TermVarsProc tvp = m_SmtManager.computeTermVarsProc(normalized);
+		return m_SmtManager.newPredicate(tvp);
 	}
 	
 	
@@ -309,7 +312,6 @@ public class BinaryStatePredicateManager {
 		formula = m_SmtManager.simplify(formula);
 		TermVarsProc termVarsProc = m_SmtManager.computeTermVarsProc(formula);
 		assert termVarsProc.getVars().equals(coefficients);
-		
 		IPredicate result = m_SmtManager.newPredicate(termVarsProc.getFormula(),
 				termVarsProc.getProcedures(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return result;
