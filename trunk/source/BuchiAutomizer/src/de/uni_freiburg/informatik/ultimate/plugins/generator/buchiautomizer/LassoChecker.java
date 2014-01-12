@@ -427,8 +427,8 @@ public class LassoChecker {
 		pref.num_non_strict_invariants = 2;
 		pref.num_strict_invariants = 0;
 		pref.only_nondecreasing_invariants = false;
-//		pref.smt_solver_command = "z3 -smt2  SMTLIB2_COMPLIANT=true -in -t:200";
-		pref.smt_solver_command = "z3 -smt2  SMTLIB2_COMPLIANT=true -in";
+		pref.smt_solver_command = "z3 -smt2  SMTLIB2_COMPLIANT=true -in -t:200";
+//		pref.smt_solver_command = "z3 -smt2  SMTLIB2_COMPLIANT=true -in";
 
 		LassoRankerTerminationAnalysis lrta = null;
 		try {
