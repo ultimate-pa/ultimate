@@ -1,3 +1,4 @@
-Further examples can be found in the folloing repositories.
+Further examples can be found in the following repositories.
 
+https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/
 https://svn.sosy-lab.org/software/sv-benchmarks/tags/svcomp13/ (ca. 600MiB)
