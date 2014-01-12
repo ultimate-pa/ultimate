@@ -32,6 +32,12 @@ trunk/examples/toolchains/TraceAbstractionTestDir.sh -ea 120 "$2" \
  "BuchiAutomizerWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/withoutBouncer"
 fi
 
+if [ "$1" = "defaultTest" ]; then
+echo "specified folder in default Test setting"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh -ea 20 $2 \
+"TraceAbstraction.xml;TraceAbstractionC.xml;hoare10.settings"
+fi
+
 
 
 if [ "$1" = "determinization" ]; then
