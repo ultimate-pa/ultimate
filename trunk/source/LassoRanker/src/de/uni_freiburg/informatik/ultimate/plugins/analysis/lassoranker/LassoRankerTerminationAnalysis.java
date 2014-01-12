@@ -2,7 +2,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.io.FileNotFoundException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -12,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
@@ -123,7 +126,7 @@ public class LassoRankerTerminationAnalysis {
 		
 		m_stem_transition = stem;
 		if (stem != null) {
-			m_stem_transition = AuxiliaryMethods.matchInVars(boogie2smt, m_stem_transition);
+			m_stem_transition = matchInVars(boogie2smt, m_stem_transition);
 			s_Logger.debug("Stem transition:\n" + m_stem_transition);
 			m_stem = preprocess(m_stem_transition);
 			s_Logger.debug("Preprocessed stem:\n" + m_stem);
@@ -132,7 +135,7 @@ public class LassoRankerTerminationAnalysis {
 		}
 		
 		assert(loop != null);
-		m_loop_transition = AuxiliaryMethods.matchInVars(boogie2smt, loop);
+		m_loop_transition = matchInVars(boogie2smt, loop);
 		s_Logger.debug("Loop transition:\n" + m_loop_transition);
 		m_loop = preprocess(m_loop_transition);
 		s_Logger.debug("Preprocessed loop:\n" + m_loop);
@@ -154,6 +157,42 @@ public class LassoRankerTerminationAnalysis {
 	public LassoRankerTerminationAnalysis(Script script, Boogie2SMT boogie2smt,
 			TransFormula loop, Preferences preferences) throws TermException {
 		this(script, boogie2smt, null, loop, preferences);
+	}
+	
+
+	/**
+	 * Create a new TransForumla that has an inVar for all outVars.
+	 * 
+	 * This is required to prevent a problem that was reported by Matthias
+	 * in Madrid.bpl. This problem occurs when there are outVars that do not
+	 * have a corresponding inVar. Supporting invariant generation then becomes
+	 * unsound for the inductiveness property.
+	 * 
+	 * @param formula input
+	 * @return copy of the input formula with more inVars
+	 */
+	static TransFormula matchInVars(Boogie2SMT boogie2smt,
+			TransFormula formula) {
+		Map<BoogieVar, TermVariable> inVars =
+				new HashMap<BoogieVar, TermVariable>(formula.getInVars());
+		for (Map.Entry<BoogieVar, TermVariable> entry :
+				formula.getOutVars().entrySet()) {
+			if (!inVars.containsKey(entry.getKey())) {
+				TermVariable inVar = TransFormula.getFreshVariable(boogie2smt,
+						entry.getKey(), entry.getValue().getSort());
+				inVars.put(entry.getKey(), inVar);
+			}
+		}
+		return new TransFormula(
+				formula.getFormula(),
+				inVars,
+				new HashMap<BoogieVar, TermVariable>(formula.getOutVars()),
+				new HashSet<TermVariable>(formula.getAuxVars()),
+				new HashSet<TermVariable>(formula.getBranchEncoders()),
+				formula.isInfeasible(),
+				formula.getClosedFormula(),
+				true
+		);
 	}
 	
 	/**
@@ -198,8 +237,7 @@ public class LassoRankerTerminationAnalysis {
 		if (m_stem != null) {
 			s_Logger.warn("Adding a stem to a lasso that already had one.");
 		}
-		m_stem_transition = AuxiliaryMethods.matchInVars(m_boogie2smt,
-				stem_transition);
+		m_stem_transition = matchInVars(m_boogie2smt, stem_transition);
 		s_Logger.debug("Adding stem transition:\n" + stem_transition);
 		m_stem = preprocess(stem_transition);
 		s_Logger.debug("Preprocessed stem:\n" + m_stem);

@@ -105,6 +105,7 @@ class TerminationArgumentSynthesizer {
 				template.constraints(m_loop_transition.getInVars(),
 						m_loop_transition.getOutVars());
 		List<String> annotations = template.getAnnotations();
+		assert annotations.size() == templateConstraints.size();
 		
 		s_Logger.info("We have " + m_loop.getNumPolyhedra()
 				+ " loop disjuncts and " + templateConstraints.size()

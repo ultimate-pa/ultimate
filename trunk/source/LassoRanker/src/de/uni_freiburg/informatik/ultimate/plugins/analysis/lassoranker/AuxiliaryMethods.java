@@ -11,11 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 
 
 /**
@@ -143,44 +139,8 @@ public class AuxiliaryMethods {
 			throws TermException {
 		Map<Term, Rational> new_val = new HashMap<Term, Rational>();
 		for (Map.Entry<Term, Term> entry : val.entrySet()) {
-			new_val.put(entry.getKey(),
-					AuxiliaryMethods.const2Rational(entry.getValue()));
+			new_val.put(entry.getKey(), const2Rational(entry.getValue()));
 		}
 		return new_val;
-	}
-	
-	/**
-	 * Create a new TransForumla that has an inVar for all outVars.
-	 * 
-	 * This is required to prevent a problem that was reported by Matthias
-	 * in Madrid.bpl. This problem occurs when there are outVars that do not
-	 * have a corresponding inVar. Supporting invariant generation then becomes
-	 * unsound for the inductiveness property.
-	 * 
-	 * @param formula input
-	 * @return copy of the input formula with more inVars
-	 */
-	static TransFormula matchInVars(Boogie2SMT boogie2smt,
-			TransFormula formula) {
-		Map<BoogieVar, TermVariable> inVars =
-				new HashMap<BoogieVar, TermVariable>(formula.getInVars());
-		for (Map.Entry<BoogieVar, TermVariable> entry :
-				formula.getOutVars().entrySet()) {
-			if (!inVars.containsKey(entry.getKey())) {
-				TermVariable inVar = TransFormula.getFreshVariable(boogie2smt,
-						entry.getKey(), entry.getValue().getSort());
-				inVars.put(entry.getKey(), inVar);
-			}
-		}
-		return new TransFormula(
-				formula.getFormula(),
-				inVars,
-				new HashMap<BoogieVar, TermVariable>(formula.getOutVars()),
-				new HashSet<TermVariable>(formula.getAuxVars()),
-				new HashSet<TermVariable>(formula.getBranchEncoders()),
-				formula.isInfeasible(),
-				formula.getClosedFormula(),
-				true
-		);
 	}
 }
