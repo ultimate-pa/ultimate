@@ -134,7 +134,7 @@ public class TraceChecker {
 			NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals) {
 		m_SmtManager = smtManager;
-		m_PredicateUnifier = new PredicateUnifier(m_SmtManager);
+		m_PredicateUnifier = null;
 		m_ModifiedGlobals = modifiedGlobals;
 		m_Trace = trace;
 		m_Precondition = precondition;
@@ -161,7 +161,7 @@ public class TraceChecker {
 			ModifiableGlobalVariableManager modifiedGlobals,
 			DefaultTransFormulas defaultTransFormulas) {
 		m_SmtManager = smtManager;
-		m_PredicateUnifier = new PredicateUnifier(m_SmtManager);
+		m_PredicateUnifier = null;
 		m_ModifiedGlobals = modifiedGlobals;
 		m_Trace = trace;
 		m_Precondition = precondition;
@@ -387,6 +387,7 @@ public class TraceChecker {
 	public void computeInterpolants(Set<Integer> interpolatedPositions,
 										PredicateUnifier predicateUnifier, 
 										INTERPOLATION interpolation) {
+		assert m_PredicateUnifier == null;
 		m_PredicateUnifier = predicateUnifier;
 		assert predicateUnifier.isRepresentative(m_Precondition);
 		assert predicateUnifier.isRepresentative(m_Postcondition);
