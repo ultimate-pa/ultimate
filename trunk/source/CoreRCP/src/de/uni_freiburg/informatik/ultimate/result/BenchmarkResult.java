@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * Result that should be used to report benchmark informations like (e.g., 
  * runtime, number of iterations, size of automata, size of predicates, ...).
  * These benchmark informations are stored in the m_Benchmark object. The
- * toString() method of this object has do return the benchmark results in
+ * toString() method of this object has to return the benchmark results in
  * human readable form.  
  * @author Matthias Heizmann
  */

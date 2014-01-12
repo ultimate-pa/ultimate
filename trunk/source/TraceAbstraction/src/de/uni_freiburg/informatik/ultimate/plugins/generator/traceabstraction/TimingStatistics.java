@@ -1,7 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
+/*
+ * TODO: Rename class to Benchmark...
+ */
 public class TimingStatistics {
 	private final SmtManager mSmtManager;
 	private long traceCheck = 0;
@@ -24,9 +30,21 @@ public class TimingStatistics {
 	private long automataMinimization = 0;
 	private long automataMinimizationStartTime = 0;
 	
+	// m_NumberOfQuantifierFreePredicates[0] : #quantified predicates of SP
+	// m_NumberOfQuantifierFreePredicates[1] : #quantified predicates of FP
+	// m_NumberOfQuantifierFreePredicates[2] : #quantified predicates of WP
+	// m_NumberOfQuantifierFreePredicates[3] : #quantified predicates of BP
+	private List<int[]> m_NumberOfQuantifiedPredicates;
+	private List<int[]> m_SizeOfPredicatesFP;
+	private List<int[]> m_SizeOfPredicatesBP;
+	
+	
 	
 	public TimingStatistics(SmtManager mSmtManager) {
 		this.mSmtManager = mSmtManager;
+		m_NumberOfQuantifiedPredicates = new ArrayList<int[]>();
+		m_SizeOfPredicatesBP = new ArrayList<int[]>();
+		m_SizeOfPredicatesFP = new ArrayList<int[]>();
 	}
 
 	public void startTraceCheck() {
@@ -105,9 +123,35 @@ public class TimingStatistics {
 		return seconds + "." + tenthDigit + "s";
 	}
 	
+	
 	@Override
 	public String toString() {
 		return printTimingStatistics();
+	}
+
+	public List<int[]> getNumberOfQuantifiedPredicates() {
+		return m_NumberOfQuantifiedPredicates;
+	}
+
+	public void addNumberOfQuantifiedPredicates(
+			int[] numberOfQuantifiedPredicates) {
+		this.m_NumberOfQuantifiedPredicates.add(numberOfQuantifiedPredicates);
+	}
+
+	public List<int[]> getSizeOfPredicatesFP() {
+		return m_SizeOfPredicatesFP;
+	}
+
+	public void addSizeOfPredicatesFP(int[] sizeOfPredicatesFP) {
+		this.m_SizeOfPredicatesFP.add(sizeOfPredicatesFP);
+	}
+
+	public List<int[]> getSizeOfPredicatesBP() {
+		return m_SizeOfPredicatesBP;
+	}
+
+	public void addSizeOfPredicatesBP(int[] m_SizeOfPredicatesBP) {
+		this.m_SizeOfPredicatesBP.add(m_SizeOfPredicatesBP);
 	}
 
 }

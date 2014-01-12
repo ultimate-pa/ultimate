@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.PreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 
 /**
@@ -171,8 +172,14 @@ public class TraceChecker {
 		m_IsSafe = checkTrace();
 	}
 	
-	
-	
+	/**
+	 * Returns the size of a predicate. 
+	 * Attention: The size is unconventionally computed. (Same sub-formulas are counted
+	 * only once.)
+	 */
+	protected int getSizeOfPredicate(IPredicate p) {
+		return (new DAGSize()).size(p.getFormula());
+	}
 	
 	/**
 	 * Returns 

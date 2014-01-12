@@ -1716,13 +1716,7 @@ public class SmtManager {
 		Set<TermVariable> irrelevantVars = computeIrrelevantVariables(relevantVars, p);
 		Term formula = PartialQuantifierElimination.quantifier(m_Script, quantifier,
 				irrelevantVars.toArray(new TermVariable[0]), p.getFormula(), (Term[][]) null);
-		Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
-		Integer quantifierContainedInFormula = quantifiersContainedInFormula(formula, quantifiedVariables);
-		if (quantifierContainedInFormula == null) {
-			return constructBasicPredicate(formula);
-		} else {
-			return constructBasicPredicateExplicitQuantifier(formula, quantifierContainedInFormula, quantifiedVariables);
-		}
+		return constructPredicate(formula);
 	}
 	
 	
@@ -1816,13 +1810,7 @@ public class SmtManager {
 			result = PartialQuantifierElimination.quantifier(m_Script, Script.EXISTS,
 					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]), result, (Term[][]) null);
 		}
-		Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
-		Integer quantifier = quantifiersContainedInFormula(result, quantifiedVariables);
-		if (quantifier == null) {
-			return constructBasicPredicate(result);
-		} else {
-			return constructBasicPredicateExplicitQuantifier(result, quantifier, quantifiedVariables);
-		}
+		return constructPredicate(result);
 	}
 	
 	/**
@@ -1974,13 +1962,7 @@ public class SmtManager {
 					varsToQuantifyPendingCall.toArray(new TermVariable[varsToQuantifyPendingCall.size()]),
 					predANDCallANDGlobalVars, (Term[][])null);
 			
-			Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
-			Integer quantifier = quantifiersContainedInFormula(result, quantifiedVariables);
-			if (quantifier == null) {
-				return constructBasicPredicate(result);
-			} else {
-				return constructBasicPredicateExplicitQuantifier(result, quantifier, quantifiedVariables);
-			}
+			return constructPredicate(result);
 		} else {
 			Term predRenamed = new Substitution(varsToRenameInPredNonPendingCall, m_Script).transform(predNonModOldVarsRenamed);
 			varsToQuantifyNonPendingCall.addAll(varsToQuantifyNonModOldVars);
@@ -1990,13 +1972,7 @@ public class SmtManager {
 					varsToQuantifyNonPendingCall.toArray(new TermVariable[varsToQuantifyNonPendingCall.size()]),
 					Util.and(m_Script, predRenamed, globalVarsInVarsRenamedOutVarsRenamed),
 					(Term[][])null);
-			Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
-			Integer quantifier = quantifiersContainedInFormula(result, quantifiedVariables);
-			if (quantifier == null) {
-				return constructBasicPredicate(result);
-			} else {
-				return constructBasicPredicateExplicitQuantifier(result, quantifier, quantifiedVariables);
-			}
+			return constructPredicate(result);
 		}
 	}
 	
@@ -2189,12 +2165,20 @@ public class SmtManager {
 						calleRPredANDCallTFRenamedQuantified),
 				(Term[][])null);
 		
+		return constructPredicate(result);
+	}
+
+	/**
+	 * @param term
+	 * @return
+	 */
+	private IPredicate constructPredicate(Term term) {
 		Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
-		Integer quantifier = quantifiersContainedInFormula(result, quantifiedVariables);
+		Integer quantifier = quantifiersContainedInFormula(term, quantifiedVariables);
 		if (quantifier == null) {
-			return constructBasicPredicate(result);
+			return constructBasicPredicate(term);
 		} else {
-			return constructBasicPredicateExplicitQuantifier(result, quantifier, quantifiedVariables);
+			return constructBasicPredicateExplicitQuantifier(term, quantifier, quantifiedVariables);
 		}
 	}
 
@@ -2269,13 +2253,7 @@ public class SmtManager {
 //					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 //					result, (Term[][]) null);
 		} 
-		Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
-		Integer quantifier = quantifiersContainedInFormula(result, quantifiedVariables);
-		if (quantifier == null) {
-			return constructBasicPredicate(result);
-		} else {
-			return constructBasicPredicateExplicitQuantifier(result, quantifier, quantifiedVariables);
-		}
+		return constructPredicate(result);
 	}
 	
 	/**
@@ -2375,13 +2353,7 @@ public class SmtManager {
 						varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 						result, (Term[][])null);
 			}
-			Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
-			Integer quantifier = quantifiersContainedInFormula(result, quantifiedVariables);
-			if (quantifier == null) {
-				return constructBasicPredicate(result);
-			} else {
-				return constructBasicPredicateExplicitQuantifier(result, quantifier, quantifiedVariables);
-			}
+			return constructPredicate(result);
 		} else {
 			throw new UnsupportedOperationException("WP for non-pending Call is not implemented yet!");
 		}
@@ -2521,22 +2493,39 @@ public class SmtManager {
 				globalVars_InVarsRenamed_OutVarsRenamed);
 		
 		Term result = Util.or(m_Script, Util.not(m_Script, callerPredANDCallANDReturnAndGlobalVars), retPredRenamed);
-		Term resultQuantified = result;
 		varsToQuantify.addAll(returnTF.getAuxVars());
 		varsToQuantify.addAll(callTF.getAuxVars());
 		varsToQuantify.addAll(globalVarsAssignments.getAuxVars());
 		if (varsToQuantify.size() > 0) {
-			resultQuantified = PartialQuantifierElimination.quantifier(m_Script, Script.FORALL,
+			result = PartialQuantifierElimination.quantifier(m_Script, Script.FORALL,
 					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 					result, (Term[][])null);
 		}
-		Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
-		Integer quantifier = quantifiersContainedInFormula(resultQuantified, quantifiedVariables);
-		if (quantifier == null) {
-			return constructBasicPredicate(resultQuantified);
-		} else {
-			return constructBasicPredicateExplicitQuantifier(resultQuantified, quantifier, quantifiedVariables);
+		return constructPredicate(result);
+	}
+	
+	/**
+	 * Substitutes each variable that doesn't occur in the given procedure by a fresh variable.
+	 * @param tf
+	 * @param thisProc
+	 * @return
+	 */
+	public IPredicate renameVarsOfOtherProcsToFreshVars(IPredicate p, String thisProc) {
+		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
+		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
+		// Substitute the vars if necessary
+		for (BoogieVar bv : p.getVars()) {
+			if (bv.getProcedure() != thisProc) {
+				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				substitution.put(bv.getTermVariable(), freshVar);
+				varsToQuantify.add(freshVar);
+			}
 		}
+		Term predicateRenamed = new Substitution(substitution, m_Script).transform(p.getFormula());
+		Term predicateRenamedQuantified = PartialQuantifierElimination.quantifier(m_Script, Script.EXISTS,
+				varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
+				predicateRenamed, (Term[][])null);
+		return constructPredicate(predicateRenamedQuantified);
 	}
 	
 	//FIXME: does not work im SmtInterpol2

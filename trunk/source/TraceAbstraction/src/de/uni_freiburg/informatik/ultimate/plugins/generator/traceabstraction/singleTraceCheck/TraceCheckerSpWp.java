@@ -8,8 +8,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
@@ -28,7 +26,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.PreferenceInitializer.INTERPOLATION;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class TraceCheckerSpWp extends TraceChecker {
 	/*
@@ -59,22 +56,27 @@ public class TraceCheckerSpWp extends TraceChecker {
 	private final static boolean m_useLiveVariables = true;
 	private final static boolean m_LogInformation = true;
 	private final static boolean m_CollectInformationAboutQuantifiedPredicates = true;
+	private final static boolean m_CollectInformationAboutSizeOfPredicates = true;
 	// m_NumberOfQuantifierFreePredicates[0] : #quantified predicates of SP
 	// m_NumberOfQuantifierFreePredicates[1] : #quantified predicates of FP
 	// m_NumberOfQuantifierFreePredicates[2] : #quantified predicates of WP
 	// m_NumberOfQuantifierFreePredicates[3] : #quantified predicates of BP
 	private int[] m_NumberOfQuantifiedPredicates;
+	private int[] m_SizeOfPredicatesFP;
+	private int[] m_SizeOfPredicatesBP;
 	private boolean m_ComputeInterpolantsSp;
 	private boolean m_ComputeInterpolantsFp;
 	private boolean m_ComputeInterpolantsBp;
 	private boolean m_ComputeInterpolantsWp;
 	
+
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
 			NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals) {
 		super(precondition, postcondition, null, trace, smtManager, modifiedGlobals);
 		m_NumberOfQuantifiedPredicates = new int[4];
 	}
+	
 
 	@Override
 	public void computeInterpolants(Set<Integer> interpolatedPositions, 
@@ -102,7 +104,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 				throw new UnsupportedOperationException("unsupportedInterpolation");
 			}
 		m_PredicateUnifier = predicateUnifier;
-		
 		if (m_useUnsatCore) {
 			computeInterpolantsWithUsageOfUnsatCore(interpolatedPositions);
 		} else {
@@ -110,6 +111,16 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 	
+	public int[] getSizeOfPredicatesFP() {
+		return m_SizeOfPredicatesFP;
+	}
+
+
+	public int[] getSizeOfPredicatesBP() {
+		return m_SizeOfPredicatesBP;
+	}
+
+
 	@Deprecated
 	public IPredicate getInterpolanstsSPAtPosition(int i) {
 		assert m_InterpolantsSp != null : "InterpolantsSP hasn't been computed, yet.";
@@ -341,10 +352,13 @@ public class TraceCheckerSpWp extends TraceChecker {
 				for (int i = m_InterpolantsWp.length - 1; i >= 0; i--) {
 					if (trace.getSymbol(i+1) instanceof Call) {
 						if (callerPredicatesComputed.containsKey(i+1)) {
-							IPredicate p = callerPredicatesComputed.get(i+1);
+							
+							IPredicate p = m_SmtManager.renameVarsOfOtherProcsToFreshVars(callerPredicatesComputed.get(i+1),
+									((Call) trace.getSymbol(i+1)).getPreceedingProcedure());
 							m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
 									p.getVars(), p.getProcedures());
 						} else {
+							//((Call) trace.getSymbol(i+1)).getCallStatement().getMethodName()
 							IPredicate p = m_SmtManager.weakestPrecondition(
 									getBackwardPredicateAtPosition(i+1, tracePostcondition, false), 
 									rv.getLocalVarAssignment(i+1),
@@ -357,12 +371,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 						}
 					} else if (trace.getSymbol(i+1) instanceof Return) {
 						int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i+1);
-						IPredicate callerPred = null;
 						TransFormula callTF = rv.getLocalVarAssignment(call_pos);
 						TransFormula globalVarsAssignments = rv.getGlobalVarAssignment(call_pos);
 						
 						TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace), rv, 0);
-						callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
+						IPredicate callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
 						// If callerPred contains quantifier, compute it via the 2nd method
 						if(callerPred instanceof BasicPredicateExplicitQuantifier) {
 							summary = computeSummaryForTrace(getSubTrace(call_pos, i, trace), callTF,
@@ -401,6 +414,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 				s_Logger.debug("Checking inductivity of backward relevant predicates...");
 				assert checkInterpolantsCorrect(m_InterpolantsBp, trace, tracePrecondition,
 						tracePostcondition, "BP") : "invalid Hoare triple in BP";
+				if (m_CollectInformationAboutSizeOfPredicates) {
+					computeSizeOfPredicates(m_InterpolantsBp, m_SizeOfPredicatesBP);
+				}
 			}
 
 		}
@@ -450,7 +466,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	
 	/**
-	 * TODO: documentation
+	 * Checks whether the trace consisting of only relevant statements
+	 * is still infeasible. This check is desired, when we use unsatisfiable 
+	 * cores of finer granularity. 
 	 */
 	private boolean stillInfeasible(RelevantTransFormulas rv) {
 		TraceChecker tc = new TraceChecker(rv.getPrecondition(), 
@@ -565,7 +583,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 				}
 			}
 		}
-		
+		if (m_CollectInformationAboutSizeOfPredicates) {
+			computeSizeOfPredicates(m_InterpolantsFp, m_SizeOfPredicatesFP);
+		}
 	}
 	
 	@Deprecated
@@ -856,7 +876,12 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 	
-	
+	private void computeSizeOfPredicates(IPredicate[] predicates, int[] sizeOfPredicates) {
+		sizeOfPredicates = new int[predicates.length];
+		for (int i = 0; i < predicates.length; i++) {
+			sizeOfPredicates[i] = getSizeOfPredicate(predicates[i]);
+		}
+	}
 	
 
 

@@ -29,7 +29,8 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 	private enum ExpectedResult {
 		SAFE,
 		UNSAFE,
-		UNSPECIFIED
+		NOSPECIFICATION,
+		NOANNOTATION
 	}
 	public TraceAbstractionTestResultDecider(File inputFile, TraceAbstractionTestSummary testSummary) {
 		m_InputFile = inputFile.getAbsolutePath();
@@ -44,7 +45,7 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 	 * Read the expected result from an input file
 	 * 
 	 * Expected results are expected to be specified in an input file's
-	 * first line and start with '//#mUnsafe', '//#iUnsafe', '//#mSafe' or '//#iSafe'.
+	 * first line and start with '//#Unsafe', '//#Safe' or '//#NoSpec'.
 	 */
 	private static ExpectedResult getExpectedResult(File inputFile) {
 		BufferedReader br;
@@ -57,15 +58,17 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 			line = null;
 		}
 		if (line != null) {
-			if (line.contains("#mSafe") || line.contains("#iSafe")) {
+			if (line.contains("#Safe")) {
 				return ExpectedResult.SAFE;
-			} else if (line.contains("#mUnsafe") || line.contains("#iUnsafe")) {
+			} else if (line.contains("#Unsafe")) {
 				return ExpectedResult.UNSAFE;
+			} else if (line.contains("#NoSpec"))  {
+				return ExpectedResult.NOSPECIFICATION;
 			} else {
-				return ExpectedResult.UNSPECIFIED;
+				return ExpectedResult.NOANNOTATION;
 			}
 		}
-		return ExpectedResult.UNSPECIFIED;
+		return ExpectedResult.NOANNOTATION;
 	}
 	
 	@Override
@@ -75,10 +78,11 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 		boolean fail = true;
 		Set<Entry<String, List<IResult>>> resultSet = UltimateServices
 				.getInstance().getResultMap().entrySet();
-		if (m_ExpectedResult == ExpectedResult.UNSPECIFIED) {
+		if (m_ExpectedResult == ExpectedResult.NOANNOTATION) {
 			customMessages
 			.add("Couldn't understand the specification of the file \"" + m_InputFile + "\".\n" +
-			     "Use \"//#mSafe\" or \"//#mUnsafe\" to indicate that the program is safe resp. unsafe.");
+			     "Use //#Safe or //#Unsafe to indicate that the program is safe resp. unsafe. Use "+
+					"//#NoSpec if there is still no decision about the specification.");
 		}
 		if (resultSet.size() == 0) {
 			customMessages
@@ -92,27 +96,43 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 			case UNSAFE:
 				fail = !(result instanceof CounterExampleResult);
 				break;
-			case UNSPECIFIED:
-				customMessages.add("Result of TraceAbstraction: " + result.toString());
-				fail = true;
+			case NOSPECIFICATION:
+				fail = resultSetContainsGenericResultWithNoSpecification(resultSet);
 			}
 			if (!fail) {
-				String annotationAndModelCheckerResult = m_ExpectedResult == ExpectedResult.SAFE ?  "\"SAFE\"" : "\"UNSAFE\""; 
+				String annotationAndModelCheckerResult = m_ExpectedResult == ExpectedResult.SAFE ?  "\"SAFE\"" : 
+					(m_ExpectedResult == ExpectedResult.UNSAFE ? "\"UNSAFE\"" : "\"NoSpecification\""); 
 				m_Summary.addSuccess(result, m_InputFile, "Annotation says: " + annotationAndModelCheckerResult + 
 						"\tModel checker says: " + annotationAndModelCheckerResult);
 			} else {
-				if (m_ExpectedResult == ExpectedResult.UNSPECIFIED) {
+				if (m_ExpectedResult == ExpectedResult.NOANNOTATION) {
 					m_Summary.addUnknown(result, m_InputFile, "File wasn't annotated.");
 				} else {
 					m_Summary.addFail(result, m_InputFile, (m_ExpectedResult == ExpectedResult.SAFE ? 
-							"Annotation says: \"SAFE\" \t Model checker says: \"UNSAFE\"" : 
-							"Annotation says: \"UNSAFE\" \t Model checker says: \"SAFE\""));
+							"Annotation says: \"SAFE\" \t Model checker says: \"UNSAFE\"" :
+							(m_ExpectedResult == ExpectedResult.UNSAFE ? 	
+							"Annotation says: \"UNSAFE\" \t Model checker says: \"SAFE\"" :
+							"Annotation says: \"NOSPEC\" \t Model checker says something else.")));
 				}
 				
 			}
 		}
 		Util.logResults(log, m_InputFile, fail, customMessages);
 		return fail;
+	}
+	private boolean resultSetContainsGenericResultWithNoSpecification(Set<Entry<String, List<IResult>>> resultSet) {
+		for (Entry<String, List<IResult>> entry : resultSet) {
+			for (IResult res : entry.getValue()) {
+				if (res instanceof GenericResult) {
+					if (((GenericResult<?>)res).getShortDescription() == "No specification checked" &&
+							((GenericResult<?>)res).getShortDescription() == "We were not able to verify any" +
+									" specifiation because the program does not contain any specification.") {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	// TODO: Ensure that null can't be returned, or handle this case in the calling method.
@@ -131,25 +151,5 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 		return null;
 	}
 	
-	private String getStatisticsOfResultSet(Set<Entry<String, List<IResult>>> resultSet) {
-		for (Entry<String, List<IResult>> entry : resultSet) {
-			for (IResult res : entry.getValue()) {
-				if (res instanceof GenericResult) {
-					if (genericResultContainsStatistics((GenericResult<?>)res)) {
-						
-					}
-				}
-			}
-		}
-		return null;
-	}
 	
-	private boolean genericResultContainsStatistics(GenericResult<?> result) {
-		return (result.getLongDescription().equals(m_ShortDescription) && 
-				result.getShortDescription().contains(m_SeqInLongDescr));
-	}
-	
-	private String collectStatisticInformation(GenericResult<?> result) {
-		return null;
-	}
 }
