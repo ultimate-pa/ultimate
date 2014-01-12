@@ -243,7 +243,8 @@ class TerminationArgumentSynthesizer {
 		
 		// Check for a model
 		boolean success = false;
-		if (m_script.checkSat() == LBool.SAT) {
+		LBool sat = m_script.checkSat();
+		if (sat == LBool.SAT) {
 			s_Logger.debug("Found a model, " +
 					"proceeding to extract ranking function.");
 			
@@ -262,7 +263,7 @@ class TerminationArgumentSynthesizer {
 						val_si));
 			}
 			success = true;
-		} else if (m_script.checkSat() == LBool.UNKNOWN) {
+		} else if (sat == LBool.UNKNOWN) {
 			s_Logger.info("Statistics: template " + 
 					template.getClass().getSimpleName() + 
 					" with degree " + template.getDegree() + 
