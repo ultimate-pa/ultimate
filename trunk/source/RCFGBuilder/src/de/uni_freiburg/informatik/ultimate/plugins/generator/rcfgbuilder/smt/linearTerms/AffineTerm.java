@@ -78,7 +78,8 @@ public class AffineTerm extends Term {
 		super(0);
 		m_Sort = tv.getSort();
 		m_Constant = Rational.ZERO;
-		m_Variable2Coefficient = Collections.singletonMap((Term) tv, Rational.ONE);
+		m_Variable2Coefficient = 
+				Collections.singletonMap((Term) tv, Rational.ONE);
 	}
 	
 	/**
@@ -88,9 +89,56 @@ public class AffineTerm extends Term {
 	public AffineTerm(ApplicationTerm appTerm) {
 		super(0);
 		m_Sort = appTerm.getSort();
-		m_Variable2Coefficient = Collections.singletonMap((Term) appTerm, Rational.ONE);
 		m_Constant = Rational.ZERO;
+		m_Variable2Coefficient = 
+				Collections.singletonMap((Term) appTerm, Rational.ONE);
+
 	}
+	
+	/**
+	 * AffineTerm whose variables are given by an array of terms, whose 
+	 * corresponding coefficients are given by the array coefficients, and
+	 * whose constant term is given by the Rational constant.
+	 */
+	public AffineTerm(Sort s, Term[] terms, Rational[] coefficients, Rational constant) {
+		super(0);
+		m_Sort = s;
+		m_Constant = constant;
+		if (terms.length != coefficients.length) {
+			throw new IllegalArgumentException(
+					"numer of variables and coefficients different");
+		}
+		switch (terms.length) {
+		case 0:
+			m_Variable2Coefficient = Collections.emptyMap();
+			break;
+		case 1:
+			Term variable = terms[0];
+			checkIfTermIsLegalVariable(variable);
+			m_Variable2Coefficient = 
+					Collections.singletonMap(variable, coefficients[0]);
+			break;
+		default:
+			m_Variable2Coefficient = new HashMap<Term, Rational>();
+			for (int i=0; i<terms.length; i++) {
+				checkIfTermIsLegalVariable(terms[i]);
+				m_Variable2Coefficient.put(terms[i], coefficients[i]);
+			}
+		}
+	}
+	
+	/**
+	 * Check if term is of a type that may be a variable of an AffineTerm.
+	 */
+	public void checkIfTermIsLegalVariable(Term term) {
+		if (term instanceof TermVariable || term instanceof ApplicationTerm) {
+			// term is ok
+		} else {
+			throw new IllegalArgumentException(
+					"Variable of AffineTerm has to be TermVariable or ApplicationTerm");
+		}
+	}
+	
 	
 	/**
 	 * AffineTerm that represents the sum of affineTerms.
