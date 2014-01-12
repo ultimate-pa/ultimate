@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
  */
 public class AffineTerm extends Term {
 	/**
-	 * All summands that contain a variable.
+	 * Map from Variables to coeffcients. Coefficient Zero is forbidden.
 	 */
 	private final Map<Term, Rational> m_Variable2Coefficient;
 	
@@ -43,23 +43,6 @@ public class AffineTerm extends Term {
 	 * Sort of this term. E.g, "Int" or "Real".
 	 */
 	private final Sort m_Sort;
-	
-	/**
-	 * Convert a rational into a Term.
-	 */
-	private static Term rationalToTerm(Script script, Rational r) {
-		Term num = script.decimal(r.numerator().abs().toString());
-		Term denom = script.decimal(r.denominator().abs().toString());
-		boolean neg = r.numerator().signum() * r.denominator().signum() == -1;
-		Term  t = num;
-		if (!r.isIntegral()) {
-			t = script.term("/", num, denom);
-		}
-		if (neg) {
-			t = script.term("-", t);
-		}
-		return t;
-	}
 	
 	/**
 	 * AffineTerm that represents the Rational r of sort sort. 
@@ -115,14 +98,20 @@ public class AffineTerm extends Term {
 		case 1:
 			Term variable = terms[0];
 			checkIfTermIsLegalVariable(variable);
-			m_Variable2Coefficient = 
-					Collections.singletonMap(variable, coefficients[0]);
+			if (coefficients[0].equals(Rational.ZERO)) {
+				m_Variable2Coefficient = Collections.emptyMap();
+			} else {
+				m_Variable2Coefficient = 
+						Collections.singletonMap(variable, coefficients[0]);
+			}
 			break;
 		default:
 			m_Variable2Coefficient = new HashMap<Term, Rational>();
 			for (int i=0; i<terms.length; i++) {
 				checkIfTermIsLegalVariable(terms[i]);
-				m_Variable2Coefficient.put(terms[i], coefficients[i]);
+				if (!coefficients[i].equals(Rational.ZERO)) {
+					m_Variable2Coefficient.put(terms[i], coefficients[i]);
+				}
 			}
 		}
 	}
@@ -157,7 +146,11 @@ public class AffineTerm extends Term {
 					m_Variable2Coefficient.put(summand.getKey(), summand.getValue());
 				} else {
 					Rational newCoeff = coeff.add(summand.getValue());
-					m_Variable2Coefficient.put(summand.getKey(), newCoeff);
+					if (newCoeff.equals(Rational.ZERO)) {
+						m_Variable2Coefficient.remove(summand.getKey());
+					} else {
+						m_Variable2Coefficient.put(summand.getKey(), newCoeff);
+					}
 				}
 			}
 			constant = constant.add(affineTerm.m_Constant);
@@ -170,12 +163,18 @@ public class AffineTerm extends Term {
 	 */
 	public AffineTerm(AffineTerm affineTerm, Rational multiplier) {
 		super(0);
-		m_Variable2Coefficient = new HashMap<Term, Rational>();
-		m_Constant = affineTerm.m_Constant.mul(multiplier);
-		m_Sort = affineTerm.getSort();
-		for (Map.Entry<Term, Rational> summand :
+		if (multiplier.equals(Rational.ZERO)) {
+			m_Sort = affineTerm.getSort();
+			m_Constant = Rational.ZERO;
+			m_Variable2Coefficient = Collections.emptyMap();
+		} else {
+			m_Variable2Coefficient = new HashMap<Term, Rational>();
+			m_Constant = affineTerm.m_Constant.mul(multiplier);
+			m_Sort = affineTerm.getSort();
+			for (Map.Entry<Term, Rational> summand :
 				affineTerm.m_Variable2Coefficient.entrySet()) {
-			m_Variable2Coefficient.put(summand.getKey(), summand.getValue().mul(multiplier));
+				m_Variable2Coefficient.put(summand.getKey(), summand.getValue().mul(multiplier));
+			}
 		}
 	}
 
@@ -245,26 +244,18 @@ public class AffineTerm extends Term {
 		int i = 0;
 		for (Map.Entry<Term, Rational> entry :
 				m_Variable2Coefficient.entrySet()) {
-			Term coeff = null;
-			if (m_Sort.getName().equals("Real")) {
-				coeff = rationalToTerm(script, entry.getValue());
-			} else if (m_Sort.getName().equals("Int")) {
-				assert entry.getValue().isIntegral();
-				coeff = script.numeral(entry.getValue().numerator());
+			assert !entry.getValue().equals(Rational.ZERO) : 
+								"zero is no legal coefficient in AffineTerm";
+			if (entry.getValue().equals(Rational.ONE)) {
+				summands[i] = entry.getKey();
 			} else {
-				assert false;
+				Term coeff = entry.getValue().toTerm(m_Sort);
+				summands[i] = script.term("*", coeff, entry.getKey());
 			}
-			summands[i] = script.term("*", coeff, entry.getKey());
 			++i;
 		}
-		if (m_Sort.getName().equals("Real")) {
-			summands[i] = rationalToTerm(script, m_Constant);
-		} else if (m_Sort.getName().equals("Int")) {
-			assert m_Constant.isIntegral();
-			summands[i] = script.numeral(m_Constant.numerator());
-		} else {
-			assert false;
-		}
+		assert m_Constant.isIntegral() || m_Sort.getName().equals("Real");
+		summands[i] = m_Constant.toTerm(m_Sort);
 		Term result = UtilExperimental.sum(script, m_Sort, summands);
 		return result;
 	}
