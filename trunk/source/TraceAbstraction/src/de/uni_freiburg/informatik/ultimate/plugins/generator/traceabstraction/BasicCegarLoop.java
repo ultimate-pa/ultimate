@@ -68,14 +68,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	private PredicateFactoryRefinement m_StateFactoryForRefinement;
 	
-	private final TimingStatistics m_TimingStatistics;
+	private final TraceAbstractionBenchmarks m_TimingStatistics;
 
 
 	
 	
 	public BasicCegarLoop(String name, RootNode rootNode,
 			SmtManager smtManager,
-			TimingStatistics timingStatistics,
+			TraceAbstractionBenchmarks timingStatistics,
 			TAPreferences taPrefs,
 			Collection<ProgramPoint> errorLocs) {
 	

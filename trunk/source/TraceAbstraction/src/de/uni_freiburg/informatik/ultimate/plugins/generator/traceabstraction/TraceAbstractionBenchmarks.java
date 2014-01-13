@@ -5,10 +5,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
-/*
- * TODO: Rename class to Benchmark...
- */
-public class TimingStatistics {
+public class TraceAbstractionBenchmarks {
 	private final SmtManager mSmtManager;
 	private long traceCheck = 0;
 	private long traceCheckStartTime = 0;
@@ -40,7 +37,7 @@ public class TimingStatistics {
 	
 	
 	
-	public TimingStatistics(SmtManager mSmtManager) {
+	public TraceAbstractionBenchmarks(SmtManager mSmtManager) {
 		this.mSmtManager = mSmtManager;
 		m_NumberOfQuantifiedPredicates = new ArrayList<int[]>();
 		m_SizeOfPredicatesBP = new ArrayList<int[]>();

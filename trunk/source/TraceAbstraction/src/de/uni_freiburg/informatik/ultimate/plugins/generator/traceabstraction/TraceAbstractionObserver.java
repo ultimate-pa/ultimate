@@ -85,7 +85,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		SmtManager smtManager = new SmtManager(rootAnnot.getBoogie2SMT(),
 				rootAnnot.getGlobalVars(),
 				rootAnnot.getModGlobVarManager());
-		TimingStatistics timingStatistics = new TimingStatistics(smtManager);
+		TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(smtManager);
 
 		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
 		Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();
@@ -241,7 +241,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	}
 
 	private void iterate(String name, RootNode root, TAPreferences taPrefs,
-			SmtManager smtManager, TimingStatistics timingStatistics,
+			SmtManager smtManager, TraceAbstractionBenchmarks timingStatistics,
 			Collection<ProgramPoint> errorLocs) {
 		AbstractCegarLoop abstractCegarLoop;
 		if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
@@ -394,7 +394,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		s_Logger.warn(uknMessage);
 	}
 	
-	private void reportTimingStatistics(RootNode root, TimingStatistics timingStatistics) {
+	private void reportTimingStatistics(RootNode root, TraceAbstractionBenchmarks timingStatistics) {
 		String shortDescription = "Ultimate Automizer runtime statistics";
 		long time = System.currentTimeMillis() - m_StartingTime;
 		if (root.getOutgoingNodes().isEmpty()) {

@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Rcf
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TimingStatistics;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -63,7 +63,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 					rootNode.getRootAnnot().getBoogie2SMT(),
 					rootNode.getRootAnnot().getGlobalVars(),
 					rootNode.getRootAnnot().getModGlobVarManager());
-		TimingStatistics timingStatistics = new TimingStatistics(smtManager);
+		TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(smtManager);
 		
 		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
 		Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();

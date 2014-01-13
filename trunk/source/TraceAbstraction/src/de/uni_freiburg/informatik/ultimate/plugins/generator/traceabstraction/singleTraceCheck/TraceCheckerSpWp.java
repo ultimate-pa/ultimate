@@ -121,6 +121,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 	}
 
 
+	public int[] getNumberOfQuantifiedPredicates() {
+		return m_NumberOfQuantifiedPredicates;
+	}
+
+
 	@Deprecated
 	public IPredicate getInterpolanstsSPAtPosition(int i) {
 		assert m_InterpolantsSp != null : "InterpolantsSP hasn't been computed, yet.";

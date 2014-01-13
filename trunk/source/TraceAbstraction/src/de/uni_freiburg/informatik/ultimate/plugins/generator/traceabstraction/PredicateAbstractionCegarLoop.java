@@ -19,7 +19,7 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 
 	public PredicateAbstractionCegarLoop(String name, RootNode rootNode,
 			SmtManager smtManager,
-			TimingStatistics timingStatistics,
+			TraceAbstractionBenchmarks timingStatistics,
 			TAPreferences taPrefs,
 			Collection<ProgramPoint> errorLocs) {
 	

@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.RunAnalyzer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TimingStatistics;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -39,7 +39,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 
 
 	public CegarLoopJulian(String name, RootNode rootNode, SmtManager smtManager,
-			TimingStatistics timingStatistics,
+			TraceAbstractionBenchmarks timingStatistics,
 			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs) {
 		super(name, rootNode, smtManager, timingStatistics, taPrefs, errorLocs);
 
