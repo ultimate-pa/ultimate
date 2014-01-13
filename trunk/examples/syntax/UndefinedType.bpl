@@ -1,4 +1,4 @@
-//#Syntax
+//#SyntaxError
 /*
  * Author: heizmann@informatik.uni-freiburg.de
  * Date: 24.5.2012
