@@ -1,6 +1,6 @@
 //#Safe
 //author: nutz@informatik.uni-freiburg.de
-procedure SAS09paper()
+procedure main()
 {
   var x: int;
 
