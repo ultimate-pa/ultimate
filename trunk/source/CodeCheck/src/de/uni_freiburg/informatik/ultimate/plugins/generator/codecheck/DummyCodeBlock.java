@@ -32,5 +32,10 @@ public class DummyCodeBlock extends CodeBlock {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	@Override
+	public String toString() {
+		return "DUMMYCODEBLOCK";
+	}
 
 }

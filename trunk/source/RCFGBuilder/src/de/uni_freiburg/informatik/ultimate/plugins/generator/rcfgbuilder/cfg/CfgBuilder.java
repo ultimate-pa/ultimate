@@ -1634,6 +1634,11 @@ public class CfgBuilder {
 			return new GotoEdge(source, target);
 		}
 
+		@Override
+		public String toString() {
+			return "goto;";
+		}
+
 	}
 	
 	
@@ -1659,4 +1664,5 @@ public class CfgBuilder {
 			st.getPayload().getAnnotations().putAll(annots);
 		}
 	}
+
 }

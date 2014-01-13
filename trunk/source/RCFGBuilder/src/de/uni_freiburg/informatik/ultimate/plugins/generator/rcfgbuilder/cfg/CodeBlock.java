@@ -162,7 +162,7 @@ public abstract class CodeBlock extends RCFGEdge {
 		if (source != null) {
 			setSource(source);
 			source.addOutgoing(this);
-			s_Logger.debug("Edge " + this + " is successor of Node " + source);
+//			s_Logger.debug("Edge " + this + " is successor of Node " + source);
 		}
 	}
 
@@ -170,7 +170,7 @@ public abstract class CodeBlock extends RCFGEdge {
 		if (target != null) {
 			setTarget(target);
 			target.addIncoming(this);
-			s_Logger.debug("Node " + target + " is successor of Edge " + this);
+//			s_Logger.debug("Node " + target + " is successor of Edge " + this);
 		}
 	}
 	
@@ -199,8 +199,6 @@ public abstract class CodeBlock extends RCFGEdge {
 	}
 
 	@Override
-	public String toString() {
-		return this.getPayload().getName();
-	}
+	public abstract String toString();
 
 }

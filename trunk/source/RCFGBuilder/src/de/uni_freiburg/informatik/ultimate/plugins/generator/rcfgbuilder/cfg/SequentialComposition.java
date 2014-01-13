@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 
 
@@ -223,6 +225,16 @@ public class SequentialComposition extends CodeBlock {
 			
 		}
 		return result;
+	}
+	
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		for (CodeBlock cb : m_CodeBlocks) {
+			sb.append(cb.toString());
+		}
+		return sb.toString();
 	}
 	
 }

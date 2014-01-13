@@ -115,6 +115,16 @@ public class ParallelComposition extends CodeBlock {
 				"transition formula is computed in constructor");
 	}
 	
-	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("BeginParallelComposition{");
+		for (int i=0; i<m_CodeBlocks.length; i++) {
+			sb.append("ParallelCodeBlock" + i + ": ");
+			sb.append(m_CodeBlocks[i]);
+		}
+		sb.append("}EndParallelComposition");
+		return sb.toString();
+	}
 
 }

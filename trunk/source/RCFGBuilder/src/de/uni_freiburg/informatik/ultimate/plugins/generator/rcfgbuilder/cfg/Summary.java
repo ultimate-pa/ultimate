@@ -88,6 +88,11 @@ public class Summary extends CodeBlock {
 		return m_PrettyPrintedStatements;
 	}
 
+	@Override
+	public String toString() {
+		return "SUMMARY";
+	}
+
 	
 	
 

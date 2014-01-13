@@ -106,6 +106,7 @@ public class TransFormula implements Serializable {
 		m_Vars = new HashSet<TermVariable>(Arrays.asList(m_Formula.getFreeVars()));
 		assert allSubsetInOutAuxBranch() : "unexpected vars in TransFormula";
 		assert InAuxSubsetAll(allowSuperflousInVars) : "superfluous vars in TransFormula";
+//		assert m_OutVars.keySet().containsAll(m_InVars.keySet()) : " strange inVar";
 		
 		// compute the assigned/updated variables. A variable is updated by this
 		// transition if it occurs as outVar and 

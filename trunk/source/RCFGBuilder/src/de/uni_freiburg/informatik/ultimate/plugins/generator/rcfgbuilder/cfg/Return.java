@@ -82,4 +82,9 @@ public class Return extends CodeBlock {
 		return m_CorrespondingCall.getCallStatement();
 	}
 
+	@Override
+	public String toString() {
+		return "return;";
+	}
+
 }

@@ -80,4 +80,9 @@ public class ShortcutCodeBlock extends CodeBlock {
 		return codeBlocks;
 	}
 
+	@Override
+	public String toString() {
+		return "SHORTCUTCODEBLOCK";
+	}
+
 }

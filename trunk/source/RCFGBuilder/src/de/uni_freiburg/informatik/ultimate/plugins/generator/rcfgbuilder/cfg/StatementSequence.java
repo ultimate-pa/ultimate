@@ -138,6 +138,15 @@ public class StatementSequence extends CodeBlock {
 	public Origin getOrigin() {
 		return m_Origin;
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		for (Statement st : m_Statements) {
+			sb.append(BoogieStatementPrettyPrinter.print(st));
+		}
+		return sb.toString();
+	}
 
 	
 

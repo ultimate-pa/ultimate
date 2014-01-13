@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 
 /**
@@ -84,6 +85,11 @@ public class Call extends CodeBlock {
 	
 	public String getPrettyPrintedStatements() {
 		return m_PrettyPrintedStatements;
+	}
+	
+	@Override
+	public String toString() {
+		return BoogieStatementPrettyPrinter.print(m_CallStatement);
 	}
 	
 }
