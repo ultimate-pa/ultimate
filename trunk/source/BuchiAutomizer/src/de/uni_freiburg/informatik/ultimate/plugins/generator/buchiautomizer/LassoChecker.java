@@ -28,7 +28,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Terminat
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.AffineTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.LexicographicTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.MultiphaseTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.PiecewiseTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
@@ -446,10 +448,21 @@ public class LassoChecker {
 		List<RankingFunctionTemplate> rankingFunctionTemplates = 
 				new ArrayList<RankingFunctionTemplate>();
 		rankingFunctionTemplates.add(new AffineTemplate());
+
 		rankingFunctionTemplates.add(new MultiphaseTemplate(1));
 		rankingFunctionTemplates.add(new MultiphaseTemplate(2));
 		rankingFunctionTemplates.add(new MultiphaseTemplate(3));
 		rankingFunctionTemplates.add(new MultiphaseTemplate(4));
+		rankingFunctionTemplates.add(new MultiphaseTemplate(5));
+		rankingFunctionTemplates.add(new MultiphaseTemplate(6));
+		rankingFunctionTemplates.add(new MultiphaseTemplate(7));
+	
+		rankingFunctionTemplates.add(new PiecewiseTemplate(2));
+		rankingFunctionTemplates.add(new PiecewiseTemplate(3));
+		
+		rankingFunctionTemplates.add(new LexicographicTemplate(1));
+		rankingFunctionTemplates.add(new LexicographicTemplate(2));
+		rankingFunctionTemplates.add(new LexicographicTemplate(3));
 
 		TerminationArgument termArg = tryTemplatesAndComputePredicates(
 				withStem, lrta, rankingFunctionTemplates);
@@ -494,8 +507,10 @@ public class LassoChecker {
 				assert termArg.getSupportingInvariants() != null;
 				m_Bspm.computePredicates(!withStem, termArg);
 				assert m_Bspm.providesPredicates();
-				assert areSupportingInvariantsCorrect() : "incorrect supporting invariant";
-				assert isRankingFunctionCorrect() : "incorrect ranking function";
+				assert areSupportingInvariantsCorrect() : 
+					"incorrect supporting invariant with" + rft.getClass().getSimpleName();
+				assert isRankingFunctionCorrect() : 
+					"incorrect ranking function with" + rft.getClass().getSimpleName();
 				if (!s_TryAllTemplates) {
 					return termArg;
 				} else {
