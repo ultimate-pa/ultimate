@@ -44,7 +44,7 @@ struct element2 testWArray;
 element0 globalStruct;
 
 void test0(void) {
-	d = e;
+	// d = e; commented out by alex: C does not allow assignments between arrays
 	d[0] = e[0];
 	if (e[0].a != 0) {
 		//@ assert \false;
