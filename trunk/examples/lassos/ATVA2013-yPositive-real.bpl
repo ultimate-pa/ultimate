@@ -1,6 +1,6 @@
 //#rTerminationDerivable
 /*
- * Lasso program depicted in Figure 1 of our CAV2013 submission.
+ * Lasso program depicted in Figure 1 of our ATVA2013 submission.
  * 
  * Has linear Ranking function f(x,y)=x 
  * with non-decreasing linear supporting invariant y>=1

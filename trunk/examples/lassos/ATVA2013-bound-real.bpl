@@ -1,5 +1,5 @@
 /*
- * Lasso program depicted in Figure 3 of our CAV2013 submission.
+ * Lasso program depicted in Figure 3 of our ATVA2013 submission.
  * 
  * Has linear Ranking function f(x,y)=x-y
  * with non-decreasing linear supporting invariant 0>=0
@@ -11,10 +11,10 @@
 
 procedure main() returns ()
 {
-  var x, y: int;
-  y := 23;
+  var x, y: real;
+  y := 23.0;
   while (x >= y) {
-    x := x - 1;
+    x := x - 1.0;
   }
 }
 
