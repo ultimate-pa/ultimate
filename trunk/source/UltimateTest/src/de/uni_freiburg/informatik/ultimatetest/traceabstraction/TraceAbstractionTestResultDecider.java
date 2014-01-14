@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.Util;
@@ -24,12 +25,12 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 	private String m_InputFile;
 	private ExpectedResult m_ExpectedResult;
 	private TraceAbstractionTestSummary m_Summary;
-	private String m_ShortDescription = "Ultimate Automizer runtime statistics";
-	private String m_SeqInLongDescr = "Ultimate Automizer took ";
+	private static String m_KeyOfResultsFromTraceAbstraction = "TraceAbstraction";
 	private enum ExpectedResult {
 		SAFE,
 		UNSAFE,
 		NOSPECIFICATION,
+		SYNTAXERROR,
 		NOANNOTATION
 	}
 	public TraceAbstractionTestResultDecider(File inputFile, TraceAbstractionTestSummary testSummary) {
@@ -64,9 +65,16 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 				return ExpectedResult.UNSAFE;
 			} else if (line.contains("#NoSpec"))  {
 				return ExpectedResult.NOSPECIFICATION;
+			} else if (line.contains("#SyntaxError")) { 
+				return ExpectedResult.SYNTAXERROR;
 			} else {
 				return ExpectedResult.NOANNOTATION;
 			}
+		}
+		if (inputFile.getName().contains("-safe")) {
+			return ExpectedResult.SAFE;
+		} else if (inputFile.getName().contains("-unsafe")) {
+			return ExpectedResult.UNSAFE;
 		}
 		return ExpectedResult.NOANNOTATION;
 	}
@@ -88,7 +96,7 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 			customMessages
 					.add("There were no results. Therefore an exception has been thrown.");
 		} else {
-			IResult result = getResultOfSet(resultSet);
+			IResult result = getTraceAbstractionResultOfSet(resultSet);
 			switch (m_ExpectedResult) {
 			case SAFE:
 				fail = !(result instanceof PositiveResult);
@@ -98,23 +106,23 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 				break;
 			case NOSPECIFICATION:
 				fail = resultSetContainsGenericResultWithNoSpecification(resultSet);
+				break;
+			case SYNTAXERROR:
+				fail = !(result instanceof SyntaxErrorResult);
 			}
 			if (!fail) {
-				String annotationAndModelCheckerResult = m_ExpectedResult == ExpectedResult.SAFE ?  "\"SAFE\"" : 
-					(m_ExpectedResult == ExpectedResult.UNSAFE ? "\"UNSAFE\"" : "\"NoSpecification\""); 
-				m_Summary.addSuccess(result, m_InputFile, "Annotation says: " + annotationAndModelCheckerResult + 
-						"\tModel checker says: " + annotationAndModelCheckerResult);
+				m_Summary.addSuccess(result, m_InputFile, "Annotation says: " + m_ExpectedResult + 
+						"\tModel checker says: " + m_ExpectedResult);
 			} else {
-				if (m_ExpectedResult == ExpectedResult.NOANNOTATION) {
-					m_Summary.addUnknown(result, m_InputFile, "File wasn't annotated.");
+				if (result instanceof TimeoutResult) {
+					m_Summary.addUnknown(result, m_InputFile, "Annotation says: " + m_ExpectedResult +
+							"\tModel checker says: Time out");
+				} else if (m_ExpectedResult == ExpectedResult.NOANNOTATION) {
+					m_Summary.addUnknown(result, m_InputFile, "File was neither annotated nor does the filename contain a specification.");
 				} else {
-					m_Summary.addFail(result, m_InputFile, (m_ExpectedResult == ExpectedResult.SAFE ? 
-							"Annotation says: \"SAFE\" \t Model checker says: \"UNSAFE\"" :
-							(m_ExpectedResult == ExpectedResult.UNSAFE ? 	
-							"Annotation says: \"UNSAFE\" \t Model checker says: \"SAFE\"" :
-							"Annotation says: \"NOSPEC\" \t Model checker says something else.")));
+					m_Summary.addFail(result, m_InputFile, "Annotation says: " + m_ExpectedResult + 
+							"\tModel checker says: " + (result != null ? result.getShortDescription() : "NULL"));
 				}
-				
 			}
 		}
 		Util.logResults(log, m_InputFile, fail, customMessages);
@@ -122,12 +130,14 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 	}
 	private boolean resultSetContainsGenericResultWithNoSpecification(Set<Entry<String, List<IResult>>> resultSet) {
 		for (Entry<String, List<IResult>> entry : resultSet) {
-			for (IResult res : entry.getValue()) {
-				if (res instanceof GenericResult) {
-					if (((GenericResult<?>)res).getShortDescription() == "No specification checked" &&
-							((GenericResult<?>)res).getShortDescription() == "We were not able to verify any" +
-									" specifiation because the program does not contain any specification.") {
-						return true;
+			if (entry.getKey() == m_KeyOfResultsFromTraceAbstraction) {
+				for (IResult res : entry.getValue()) {
+					if (res instanceof GenericResult) {
+						if (((GenericResult<?>)res).getShortDescription() == "No specification checked" &&
+								((GenericResult<?>)res).getShortDescription() == "We were not able to verify any" +
+								" specifiation because the program does not contain any specification.") {
+							return true;
+						}
 					}
 				}
 			}
@@ -136,19 +146,25 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 	}
 
 	// TODO: Ensure that null can't be returned, or handle this case in the calling method.
-	private IResult getResultOfSet(Set<Entry<String, List<IResult>>> resultSet) {
+	private IResult getTraceAbstractionResultOfSet(Set<Entry<String, List<IResult>>> resultSet) {
+		IResult result = null;
 		for (Entry<String, List<IResult>> entry : resultSet) {
-			for (IResult res : entry.getValue()) {
-				if (res instanceof PositiveResult) {
-					return res;
-				} else if (res instanceof CounterExampleResult) {
-					return res;
-				} else if (res instanceof TimeoutResult) {
-					return res;
+			if (entry.getKey() == m_KeyOfResultsFromTraceAbstraction) {
+				for (IResult res : entry.getValue()) {
+					result = res;
+					if (res instanceof PositiveResult) {
+						return res;
+					} else if (res instanceof CounterExampleResult) {
+						return res;
+					} else if (res instanceof TimeoutResult) {
+						return res;
+					} else if (res instanceof SyntaxErrorResult) {
+						return res;
+					}
 				}
 			}
 		}
-		return null;
+		return result;
 	}
 	
 	
