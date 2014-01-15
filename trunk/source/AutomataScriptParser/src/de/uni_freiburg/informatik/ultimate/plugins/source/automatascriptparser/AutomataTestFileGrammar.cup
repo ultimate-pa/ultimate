@@ -397,6 +397,16 @@ variable_declaration ::=
                   m_automataDefinitions.addAutomaton(petri);}
              else {reportError(true, "AutomataDefiniton: Type error \"" + t.getSimpleName() + "\" is not compatible with \"PetriNetAutomatonAST\""); }
              RESULT = null;:}
+//         | type:t alternatingFiniteAutomata_definition:afa
+//                {:
+//                 if (t.equals(AlterinatingAutomata.class)) {
+/*                        m_automataDefinitions.addAutomaton(afa);
+                 } else {
+                        reportError(true, "AutomataDefiniton: Type error \"" + 
+                        t.getSimpleName() + "\" is not compatible with \"AlternatingAutomaton\""); }
+                 }
+                :}
+                */
 	;
 variable_declarators ::=
 		variable_declarator:v
