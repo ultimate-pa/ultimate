@@ -34,14 +34,20 @@ public class TraceAbstractionBenchmarks {
 	private List<int[]> m_NumberOfQuantifiedPredicates;
 	private List<int[]> m_SizeOfPredicatesFP;
 	private List<int[]> m_SizeOfPredicatesBP;
+	private long m_StartingTime;
 	
 	
 	
 	public TraceAbstractionBenchmarks(SmtManager mSmtManager) {
 		this.mSmtManager = mSmtManager;
+		m_StartingTime = System.currentTimeMillis();
 		m_NumberOfQuantifiedPredicates = new ArrayList<int[]>();
 		m_SizeOfPredicatesBP = new ArrayList<int[]>();
 		m_SizeOfPredicatesFP = new ArrayList<int[]>();
+	}
+	
+	public long getRuntime() {
+		return System.currentTimeMillis() - m_StartingTime;
 	}
 
 	public void startTraceCheck() {
@@ -94,22 +100,23 @@ public class TraceAbstractionBenchmarks {
 	
 	public String printTimingStatistics() {
 		StringBuilder sb  = new StringBuilder();
-		sb.append("Statistics: ");
+		sb.append("Trace Abstraction runtime: ");
+		sb.append(prettyprintNanoseconds(getRuntime()));
 		sb.append("Determine feasibility of statement sequence: ");
 		sb.append(prettyprintNanoseconds(traceCheck));
 		sb.append(" (thereof: SMT solver sat check ");
 		sb.append(prettyprintNanoseconds(traceCheckSat));
 		sb.append(", SMT solver interpolation ");
 		sb.append(prettyprintNanoseconds(traceCheckInterpolation));
-		sb.append(") Construction basic interpolant automaton ");
+		sb.append(") Construction basic interpolant automaton: ");
 		sb.append(prettyprintNanoseconds(basicInterpolantAutomaton));
-		sb.append(" Automata difference operation ");
+		sb.append(" Automata difference operation: ");
 		sb.append(prettyprintNanoseconds(differenceTotal - differenceSmtManager));
-		sb.append(" Checking validity of Hoare triples ");
+		sb.append(" Checking validity of Hoare triples: ");
 		sb.append(prettyprintNanoseconds(differenceSmtManager));
 		sb.append(" (thereof SMT solver ");
 		sb.append(prettyprintNanoseconds(differenceSmtSolver));
-		sb.append(") Automata minimization ");
+		sb.append(") Automata minimization: ");
 		sb.append(prettyprintNanoseconds(automataMinimization));
 		return sb.toString();
 	}
