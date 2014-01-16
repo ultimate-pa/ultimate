@@ -111,20 +111,26 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 	
-	public int[] getSizeOfPredicatesFP() {
+	private int[] getSizeOfPredicatesFP() {
+		assert m_SizeOfPredicatesFP != null;
 		return m_SizeOfPredicatesFP;
 	}
 
 
-	public int[] getSizeOfPredicatesBP() {
+	private int[] getSizeOfPredicatesBP() {
+		assert m_SizeOfPredicatesBP != null;
 		return m_SizeOfPredicatesBP;
 	}
 
-
-	public int[] getNumberOfQuantifiedPredicates() {
-		return m_NumberOfQuantifiedPredicates;
+	public Integer getNumberOfQuantifiedPredicatesFP() {
+		assert m_NumberOfQuantifiedPredicates != null;
+		return m_NumberOfQuantifiedPredicates[1];
 	}
-
+	
+	public Integer getNumberOfQuantifiedPredicatesBP() {
+		assert m_NumberOfQuantifiedPredicates != null;
+		return m_NumberOfQuantifiedPredicates[3];
+	}
 
 	@Deprecated
 	public IPredicate getInterpolanstsSPAtPosition(int i) {
@@ -420,7 +426,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				assert checkInterpolantsCorrect(m_InterpolantsBp, trace, tracePrecondition,
 						tracePostcondition, "BP") : "invalid Hoare triple in BP";
 				if (m_CollectInformationAboutSizeOfPredicates) {
-					computeSizeOfPredicates(m_InterpolantsBp, m_SizeOfPredicatesBP);
+					m_SizeOfPredicatesBP = computeSizeOfPredicates(m_InterpolantsBp);
 				}
 			}
 
@@ -517,17 +523,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 		return codeBlocksInUnsatCore;
 	}
 
-	@Deprecated
-	private void computeForwardRelevantPredicates(Set<BoogieVar>[] relevantVars) {
-		assert m_InterpolantsSp != null : "Interpolants SP_i have not been computed!";
-		m_InterpolantsFp = new IPredicate[m_InterpolantsSp.length];
-		for (int i = 0; i < m_InterpolantsSp.length; i++) {
-			IPredicate p = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[i], relevantVars[i+1]);
-			m_InterpolantsFp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
-					p.getVars(), p.getProcedures());
-		}
-	}
-	
 	/**
 	 * Compute forward relevant predicates for each position directly after the strongest post-condition has been
 	 * computed. Formally, we have
@@ -589,7 +584,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 		}
 		if (m_CollectInformationAboutSizeOfPredicates) {
-			computeSizeOfPredicates(m_InterpolantsFp, m_SizeOfPredicatesFP);
+			m_SizeOfPredicatesFP = computeSizeOfPredicates(m_InterpolantsFp);
 		}
 	}
 	
@@ -881,13 +876,28 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 	
-	private void computeSizeOfPredicates(IPredicate[] predicates, int[] sizeOfPredicates) {
-		sizeOfPredicates = new int[predicates.length];
-		for (int i = 0; i < predicates.length; i++) {
-			sizeOfPredicates[i] = getSizeOfPredicate(predicates[i]);
+	@Override
+	public int[] getSizeOfPredicates(INTERPOLATION interpolation) {
+		switch (interpolation) {
+		case ForwardPredicates:
+			return getSizeOfPredicatesFP();
+		case BackwardPredicates:
+			return getSizeOfPredicatesBP();
+		default:
+			return super.getSizeOfPredicates(interpolation);
 		}
 	}
-	
+	@Override
+	public int getTotalNumberOfPredicates(INTERPOLATION interpolation) {
+		switch (interpolation) {
+		case ForwardPredicates:
+			return m_InterpolantsFp != null ? m_InterpolantsFp.length : 0;
+		case BackwardPredicates:
+			return m_InterpolantsBp != null ? m_InterpolantsBp.length : 0;
+		default:
+			return super.getTotalNumberOfPredicates(interpolation);
+		}
+	}
 
 
 }

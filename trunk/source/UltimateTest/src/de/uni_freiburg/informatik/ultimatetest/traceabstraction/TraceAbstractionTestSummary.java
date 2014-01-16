@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimatetest.TestSummary;
-import de.uni_freiburg.informatik.ultimatetest.TestSummary.Summary;
 
 public class TraceAbstractionTestSummary extends TestSummary {
 
@@ -14,7 +13,10 @@ public class TraceAbstractionTestSummary extends TestSummary {
 
 	private String mLogFilePath;
 	private String m_InterpolationType;
-	private Map<Integer, Integer> testCase2Iterations;
+	/**
+	 * A map from file names to benchmark results.
+	 */
+	private Map<String, String> m_TraceAbstractionBenchmarks;
 	
 	public TraceAbstractionTestSummary(String testSuiteCanonicalName, String logFilePath,
 			String interpolationType) {
@@ -22,11 +24,11 @@ public class TraceAbstractionTestSummary extends TestSummary {
 		mLogFilePath = logFilePath;
 		mCount = 0;
 		m_InterpolationType = interpolationType;
-		testCase2Iterations = new HashMap<Integer, Integer>();
+		m_TraceAbstractionBenchmarks = new HashMap<String, String>();
 	}
 	
-	public void setIterationsOfTestCase(Integer testCase, Integer iterations) {
-		testCase2Iterations.put(testCase, iterations);
+	public void addTraceAbstractionBenchmarks(String filename, String benchmarkResults) {
+		m_TraceAbstractionBenchmarks.put(filename, benchmarkResults);
 	}
 	
 	@Override
@@ -57,9 +59,6 @@ public class TraceAbstractionTestSummary extends TestSummary {
 		sb.append("Unknown:\t" + unknown).append("\n");
 		sb.append("Failures:\t" + fail).append("\n");
 		sb.append("Total:\t\t" + total);
-		for (int i = 0; i < testCase2Iterations.size(); i++) {
-			sb.append("Iterations at testcase " + i + ":\t\t " + testCase2Iterations.get(new Integer(i)));
-		}
 		return sb.toString();
 	
 	}
@@ -74,6 +73,8 @@ public class TraceAbstractionTestSummary extends TestSummary {
 					.entrySet()) {
 				sb.append("\t\t").append(fileMsgPair.getKey()).append(": ")
 						.append(fileMsgPair.getValue()).append("\n");
+				// Add TraceAbstraction benchmarks
+				sb.append(m_TraceAbstractionBenchmarks.get(fileMsgPair.getKey())).append("\n");
 			}
 
 			sb.append("\tCount for ").append(entry.getKey()).append(": ")

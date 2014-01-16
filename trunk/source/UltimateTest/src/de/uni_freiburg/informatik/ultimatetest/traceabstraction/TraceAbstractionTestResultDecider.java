@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,9 +13,11 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.NoResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
@@ -26,6 +29,7 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 	private ExpectedResult m_ExpectedResult;
 	private TraceAbstractionTestSummary m_Summary;
 	private static String m_KeyOfResultsFromTraceAbstraction = "TraceAbstraction";
+	
 	private enum ExpectedResult {
 		SAFE,
 		UNSAFE,
@@ -47,6 +51,8 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 	 * 
 	 * Expected results are expected to be specified in an input file's
 	 * first line and start with '//#Unsafe', '//#Safe' or '//#NoSpec'.
+	 * If this is not case, the expected result may be specified within the file name via the suffix
+	 * "-safe" or "-unsafe".
 	 */
 	private static ExpectedResult getExpectedResult(File inputFile) {
 		BufferedReader br;
@@ -84,19 +90,19 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 		Logger log = Logger.getLogger(TraceAbstractionTestResultDecider.class);
 		Collection<String> customMessages = new LinkedList<String>();
 		boolean fail = true;
-		Set<Entry<String, List<IResult>>> resultSet = UltimateServices
-				.getInstance().getResultMap().entrySet();
+		List<IResult> traceAbstractionResults = getResultsFromTraceAbstraction(UltimateServices
+				.getInstance().getResultMap().entrySet());
 		if (m_ExpectedResult == ExpectedResult.NOANNOTATION) {
 			customMessages
 			.add("Couldn't understand the specification of the file \"" + m_InputFile + "\".\n" +
 			     "Use //#Safe or //#Unsafe to indicate that the program is safe resp. unsafe. Use "+
 					"//#NoSpec if there is still no decision about the specification.");
 		}
-		if (resultSet.size() == 0) {
+		if (traceAbstractionResults.size() == 0) {
 			customMessages
 					.add("There were no results. Therefore an exception has been thrown.");
 		} else {
-			IResult result = getTraceAbstractionResultOfSet(resultSet);
+			IResult result = getTraceAbstractionResultOfSet(traceAbstractionResults);
 			switch (m_ExpectedResult) {
 			case SAFE:
 				fail = !(result instanceof PositiveResult);
@@ -105,7 +111,7 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 				fail = !(result instanceof CounterExampleResult);
 				break;
 			case NOSPECIFICATION:
-				fail = resultSetContainsGenericResultWithNoSpecification(resultSet);
+				fail = resultSetContainsGenericResultWithNoSpecification(traceAbstractionResults);
 				break;
 			case SYNTAXERROR:
 				fail = !(result instanceof SyntaxErrorResult);
@@ -124,44 +130,67 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 							"\tModel checker says: " + (result != null ? result.getShortDescription() : "NULL"));
 				}
 			}
+			// Add benchmark results to TraceAbstraction summary
+			BenchmarkResult<?> benchmarkResult = getBenchmarkResultOfResultSet(traceAbstractionResults);
+			if (benchmarkResult != null) {
+				m_Summary.addTraceAbstractionBenchmarks(m_InputFile, benchmarkResult.getLongDescription());
+			} else {
+				m_Summary.addTraceAbstractionBenchmarks(m_InputFile, "No benchmark results available.");
+			}
+			
 		}
 		Util.logResults(log, m_InputFile, fail, customMessages);
 		return fail;
 	}
-	private boolean resultSetContainsGenericResultWithNoSpecification(Set<Entry<String, List<IResult>>> resultSet) {
-		for (Entry<String, List<IResult>> entry : resultSet) {
-			if (entry.getKey() == m_KeyOfResultsFromTraceAbstraction) {
-				for (IResult res : entry.getValue()) {
-					if (res instanceof GenericResult) {
-						if (((GenericResult<?>)res).getShortDescription() == "No specification checked" &&
-								((GenericResult<?>)res).getShortDescription() == "We were not able to verify any" +
-								" specifiation because the program does not contain any specification.") {
-							return true;
-						}
-					}
+	
+	private BenchmarkResult<?> getBenchmarkResultOfResultSet(List<IResult> results) {
+		for (IResult res : results) {
+			if (res instanceof BenchmarkResult<?>) {
+				return ((BenchmarkResult<?>) res); 
+			}
+		}
+		return null;
+	}
+	
+	private boolean resultSetContainsGenericResultWithNoSpecification(List<IResult> results) {
+		for (IResult res : results) {
+			if (res instanceof GenericResult) {
+				if (((GenericResult<?>)res).getShortDescription() == "No specification checked" &&
+						((GenericResult<?>)res).getShortDescription() == "We were not able to verify any" +
+						" specifiation because the program does not contain any specification.") {
+					return true;
 				}
 			}
 		}
 		return false;
 	}
-
-	// TODO: Ensure that null can't be returned, or handle this case in the calling method.
-	private IResult getTraceAbstractionResultOfSet(Set<Entry<String, List<IResult>>> resultSet) {
-		IResult result = null;
+	
+	private List<IResult> getResultsFromTraceAbstraction(Set<Entry<String, List<IResult>>> resultSet) {
+		List<IResult> results = new ArrayList<IResult>();
 		for (Entry<String, List<IResult>> entry : resultSet) {
 			if (entry.getKey() == m_KeyOfResultsFromTraceAbstraction) {
-				for (IResult res : entry.getValue()) {
-					result = res;
-					if (res instanceof PositiveResult) {
-						return res;
-					} else if (res instanceof CounterExampleResult) {
-						return res;
-					} else if (res instanceof TimeoutResult) {
-						return res;
-					} else if (res instanceof SyntaxErrorResult) {
-						return res;
-					}
-				}
+				results.addAll(entry.getValue());
+			}
+		}
+		return results;
+	}
+	
+
+	// TODO: Ensure that null can't be returned, or handle this case in the calling method.
+	private IResult getTraceAbstractionResultOfSet(List<IResult> results) {
+		IResult result = null;
+		for (IResult res : results) {
+			result = res;
+			if (res instanceof PositiveResult) {
+				return res;
+			} else if (res instanceof CounterExampleResult) {
+				return res;
+			} else if (res instanceof TimeoutResult) {
+				return res;
+			} else if (res instanceof SyntaxErrorResult) {
+				return res;
+			} else if (res instanceof NoResult) {
+				return res;
 			}
 		}
 		return result;

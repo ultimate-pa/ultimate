@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Mod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.PreferenceInitializer.INTERPOLATION;
@@ -360,6 +361,18 @@ public class TraceChecker {
 
 	
 	
+	public int[] getSizeOfPredicates(INTERPOLATION interpolation) {
+		return computeSizeOfPredicates(m_Interpolants);
+	}
+	
+	/**
+	 * 
+	 * @param interpolation
+	 * @return
+	 */
+	public int getTotalNumberOfPredicates(INTERPOLATION interpolation) {
+		return m_Interpolants != null ? m_Interpolants.length : 0;
+	}
 
 
 	
@@ -391,7 +404,8 @@ public class TraceChecker {
 	 * @param interpolation TODO
 	 */
 	
-	public void computeInterpolants(Set<Integer> interpolatedPositions,
+	
+public void computeInterpolants(Set<Integer> interpolatedPositions,
 										PredicateUnifier predicateUnifier, 
 										INTERPOLATION interpolation) {
 		assert m_PredicateUnifier == null;
@@ -459,6 +473,9 @@ public class TraceChecker {
 		return m_Interpolants;
 	}
 	
+	public TraceAbstractionBenchmarks getTraceAbstractionBenchmarks() {
+		return null;
+	}
 
 	/**
 	 * Return the RcfgProgramExecution that has been computed by 
@@ -713,6 +730,14 @@ public class TraceChecker {
 	}
 	
 	
+	protected int[] computeSizeOfPredicates(IPredicate[] predicates) {
+		int[] sizeOfPredicates = new int[predicates.length];
+		for (int i = 0; i < predicates.length; i++) {
+			sizeOfPredicates[i] = getSizeOfPredicate(predicates[i]);
+		}
+		return sizeOfPredicates;
+	}
+
 	private static boolean isCallPosition(int i, Word<CodeBlock> word) {
 		if (word instanceof NestedWord) {
 			return ((NestedWord<CodeBlock>) word).isCallPosition(i);

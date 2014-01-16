@@ -27,11 +27,10 @@ public class TraceAbstractionBenchmarks {
 	private long automataMinimization = 0;
 	private long automataMinimizationStartTime = 0;
 	
-	// m_NumberOfQuantifierFreePredicates[0] : #quantified predicates of SP
-	// m_NumberOfQuantifierFreePredicates[1] : #quantified predicates of FP
-	// m_NumberOfQuantifierFreePredicates[2] : #quantified predicates of WP
-	// m_NumberOfQuantifierFreePredicates[3] : #quantified predicates of BP
-	private List<int[]> m_NumberOfQuantifiedPredicates;
+	// Contains for each trace, the sum of predicates computed for that trace.
+	private List<Integer> m_totalNumberOfPredicates;
+	private List<Integer> m_NumberOfQuantifiedPredicatesFP;
+	private List<Integer> m_NumberOfQuantifiedPredicatesBP;
 	private List<int[]> m_SizeOfPredicatesFP;
 	private List<int[]> m_SizeOfPredicatesBP;
 	private long m_StartingTime;
@@ -41,9 +40,9 @@ public class TraceAbstractionBenchmarks {
 	public TraceAbstractionBenchmarks(SmtManager mSmtManager) {
 		this.mSmtManager = mSmtManager;
 		m_StartingTime = System.currentTimeMillis();
-		m_NumberOfQuantifiedPredicates = new ArrayList<int[]>();
 		m_SizeOfPredicatesBP = new ArrayList<int[]>();
 		m_SizeOfPredicatesFP = new ArrayList<int[]>();
+		
 	}
 	
 	public long getRuntime() {
@@ -98,7 +97,7 @@ public class TraceAbstractionBenchmarks {
 		automataMinimizationStartTime = 0;
 	}
 	
-	public String printTimingStatistics() {
+	public String printBenchmarkResults() {
 		StringBuilder sb  = new StringBuilder();
 		sb.append("Trace Abstraction runtime: ");
 		sb.append(prettyprintNanoseconds(getRuntime()));
@@ -118,9 +117,49 @@ public class TraceAbstractionBenchmarks {
 		sb.append(prettyprintNanoseconds(differenceSmtSolver));
 		sb.append(") Automata minimization: ");
 		sb.append(prettyprintNanoseconds(automataMinimization));
+		sb.append("\n");
+		if (m_totalNumberOfPredicates != null && !m_totalNumberOfPredicates.isEmpty()) {
+			sb.append("Total num of predicates: " + getSumOfIntegerList(m_totalNumberOfPredicates));
+		}
+		if (m_NumberOfQuantifiedPredicatesFP != null && !m_NumberOfQuantifiedPredicatesFP.isEmpty()) {
+			sb.append("\tNum of quantified predicates FP: " + getSumOfIntegerList(m_NumberOfQuantifiedPredicatesFP));
+		}
+		if (m_NumberOfQuantifiedPredicatesBP != null && !m_NumberOfQuantifiedPredicatesBP.isEmpty()) {
+			sb.append("\tNum of quantified predicates BP: " + getSumOfIntegerList(m_NumberOfQuantifiedPredicatesBP));
+		}
+		if (m_SizeOfPredicatesFP != null && !m_SizeOfPredicatesFP.isEmpty()) {
+			sb.append("\tSize of predicates FP: " + getSumOfIntegerArrays(m_SizeOfPredicatesFP));
+		}
+		if (m_SizeOfPredicatesBP != null && !m_SizeOfPredicatesBP.isEmpty()) {
+			sb.append("\tSize of predicates BP: " + getSumOfIntegerArrays(m_SizeOfPredicatesBP));
+		}
 		return sb.toString();
 	}
 	
+	private int getSumOfIntegerArrays(List<int[]> list) {
+		int sum = 0; 
+		for (int i = 0; i < list.size(); i++) {
+			sum += getSumOfIntArray(list.get(i));
+		}
+		return sum;
+	}
+	
+	private int getSumOfIntegerList(List<Integer> list) {
+		int sum = 0; 
+		for (int i = 0; i < list.size(); i++) {
+			sum += list.get(i);
+		}
+		return sum;
+	}
+	
+	private int getSumOfIntArray(int[] arr) {
+		int sum = 0; 
+		for (int i = 0; i < arr.length; i++) {
+			sum += arr[i];
+		}
+		return sum;
+	}
+
 	public static String prettyprintNanoseconds(long time) {
 		long seconds = time/1000000000;
 		long tenthDigit = (time/100000000) % 10;
@@ -130,32 +169,56 @@ public class TraceAbstractionBenchmarks {
 	
 	@Override
 	public String toString() {
-		return printTimingStatistics();
+		return printBenchmarkResults();
 	}
 
-	public List<int[]> getNumberOfQuantifiedPredicates() {
-		return m_NumberOfQuantifiedPredicates;
+	public void addTotalNumberOfPredicates(Integer totalNumberOfPredicates) {
+		if (m_totalNumberOfPredicates != null) {
+			m_totalNumberOfPredicates.add(totalNumberOfPredicates);
+		} else {
+			m_totalNumberOfPredicates = new ArrayList<Integer>();
+			m_totalNumberOfPredicates.add(totalNumberOfPredicates);
+		}
 	}
 
-	public void addNumberOfQuantifiedPredicates(
-			int[] numberOfQuantifiedPredicates) {
-		this.m_NumberOfQuantifiedPredicates.add(numberOfQuantifiedPredicates);
+	public void addNumberOfQuantifiedPredicatesFP(Integer numberOfQuantifiedPredicatesFP) {
+		if (m_NumberOfQuantifiedPredicatesFP != null) {
+			m_NumberOfQuantifiedPredicatesFP.add(numberOfQuantifiedPredicatesFP);
+		} else {
+			m_NumberOfQuantifiedPredicatesFP = new ArrayList<Integer>();
+			m_NumberOfQuantifiedPredicatesFP.add(numberOfQuantifiedPredicatesFP);
+		}
 	}
 
-	public List<int[]> getSizeOfPredicatesFP() {
-		return m_SizeOfPredicatesFP;
+	public void addNumberOfQuantifiedPredicatesBP(Integer numberOfQuantifiedPredicatesBP) {
+		if (m_NumberOfQuantifiedPredicatesBP != null) {
+			m_NumberOfQuantifiedPredicatesBP.add(numberOfQuantifiedPredicatesBP);
+		} else {
+			m_NumberOfQuantifiedPredicatesBP = new ArrayList<Integer>();
+			m_NumberOfQuantifiedPredicatesBP.add(numberOfQuantifiedPredicatesBP);
+		}
 	}
+
+
 
 	public void addSizeOfPredicatesFP(int[] sizeOfPredicatesFP) {
-		this.m_SizeOfPredicatesFP.add(sizeOfPredicatesFP);
+		if (m_SizeOfPredicatesFP != null) {
+			this.m_SizeOfPredicatesFP.add(sizeOfPredicatesFP);
+		} else {
+			m_SizeOfPredicatesFP = new ArrayList<int[]>();
+			this.m_SizeOfPredicatesFP.add(sizeOfPredicatesFP);
+		}
 	}
 
-	public List<int[]> getSizeOfPredicatesBP() {
-		return m_SizeOfPredicatesBP;
-	}
 
 	public void addSizeOfPredicatesBP(int[] m_SizeOfPredicatesBP) {
-		this.m_SizeOfPredicatesBP.add(m_SizeOfPredicatesBP);
+		if (this.m_SizeOfPredicatesBP != null) {
+			this.m_SizeOfPredicatesBP.add(m_SizeOfPredicatesBP);
+		} else {
+			this.m_SizeOfPredicatesBP = new ArrayList<int[]>();
+			this.m_SizeOfPredicatesBP.add(m_SizeOfPredicatesBP);
+		}
+		
 	}
-
+	
 }

@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.PreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
@@ -68,19 +69,19 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	private PredicateFactoryRefinement m_StateFactoryForRefinement;
 	
-	private final TraceAbstractionBenchmarks m_TimingStatistics;
+	private final TraceAbstractionBenchmarks m_TraceAbstractionBenchmarks;
 
 
 	
 	
 	public BasicCegarLoop(String name, RootNode rootNode,
 			SmtManager smtManager,
-			TraceAbstractionBenchmarks timingStatistics,
+			TraceAbstractionBenchmarks traceAbstractionBenchmarks,
 			TAPreferences taPrefs,
 			Collection<ProgramPoint> errorLocs) {
 	
 		super(name, rootNode, smtManager, taPrefs, errorLocs);
-		m_TimingStatistics = timingStatistics;
+		m_TraceAbstractionBenchmarks = traceAbstractionBenchmarks;
 		m_Haf = new HoareAnnotationFragments(rootNode.getRootAnnot(),super.m_SmtManager);
 		m_StateFactoryForRefinement = new PredicateFactoryRefinement(
 				m_RootNode.getRootAnnot().getProgramPoints(),
@@ -139,7 +140,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	@Override
 	protected LBool isCounterexampleFeasible() {
-		m_TimingStatistics.startTraceCheck();
+		m_TraceAbstractionBenchmarks.startTraceCheck();
 		IPredicate truePredicate = m_SmtManager.newTruePredicate();
 		IPredicate falsePredicate = m_SmtManager.newFalsePredicate();
 		
@@ -187,7 +188,26 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					truePredicate, falsePredicate);
 			m_TraceChecker.computeInterpolants(allInt, predicateUnifier, m_Pref.interpolation());
 		}
-		m_TimingStatistics.finishTraceCheck();
+		m_TraceAbstractionBenchmarks.finishTraceCheck();
+		switch (m_Pref.interpolation()) {
+		case ForwardPredicates:
+			m_TraceAbstractionBenchmarks.addSizeOfPredicatesFP(m_TraceChecker.getSizeOfPredicates(m_Pref.interpolation()));
+			m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesFP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesFP());
+			m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(m_Pref.interpolation()));
+			break;
+		case BackwardPredicates:
+			m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesBP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesBP());
+			m_TraceAbstractionBenchmarks.addSizeOfPredicatesBP(m_TraceChecker.getSizeOfPredicates(m_Pref.interpolation()));
+			m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(m_Pref.interpolation()));
+			break;
+		case FPandBP:
+			m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(INTERPOLATION.ForwardPredicates));
+			m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesFP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesFP());
+			m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesBP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesBP());
+			m_TraceAbstractionBenchmarks.addSizeOfPredicatesFP(m_TraceChecker.getSizeOfPredicates(INTERPOLATION.ForwardPredicates));
+			m_TraceAbstractionBenchmarks.addSizeOfPredicatesBP(m_TraceChecker.getSizeOfPredicates(INTERPOLATION.BackwardPredicates));
+			
+		}
 		return feasibility;
 	}
 	
@@ -197,7 +217,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	@Override
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
-		m_TimingStatistics.startBasicInterpolantAutomaton();
+		m_TraceAbstractionBenchmarks.startBasicInterpolantAutomaton();
 		if (m_Pref.interpolantAutomaton() == InterpolantAutomaton.TWOTRACK) {
 			TwoTrackInterpolantAutomatonBuilder ttiab = 
 					new TwoTrackInterpolantAutomatonBuilder(m_Counterexample,m_SmtManager, m_TraceChecker,
@@ -214,7 +234,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				m_Abstraction, m_Abstraction.getStateFactory());
 			s_Logger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 		}
-		m_TimingStatistics.finishBasicInterpolantAutomaton();		
+		m_TraceAbstractionBenchmarks.finishBasicInterpolantAutomaton();		
 		assert(accepts(m_InterpolAutomaton, m_Counterexample.getWord())) :
 			"Interpolant automaton broken!";
 		assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
@@ -230,7 +250,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_StateFactoryForRefinement.setIteration(super.m_Iteration);
 //		howDifferentAreInterpolants(m_InterpolAutomaton.getStates());
 		
-		m_TimingStatistics.startDifference();
+		m_TraceAbstractionBenchmarks.startDifference();
 		boolean explointSigmaStarConcatOfIA = !m_Pref.computeHoareAnnotation();
 		
 		PredicateFactory predicateFactory = (PredicateFactory) m_Abstraction.getStateFactory();
@@ -452,14 +472,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 //		}
 
 //		(new RemoveDeadEnds<CodeBlock, IPredicate>((INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction)).getResult();
-		m_TimingStatistics.finishDifference();
+		m_TraceAbstractionBenchmarks.finishDifference();
 		
 		if (m_Pref.minimize()) {
 			if (m_Pref.dumpAutomata()) {
 				String filename = "AbstractionBeforeMinimization_Iteration" + m_Iteration; 
 				super.writeAutomatonToFile(m_Abstraction, filename);
 			}
-			m_TimingStatistics.startAutomataMinimization();
+			m_TraceAbstractionBenchmarks.startAutomataMinimization();
 			long startTime = System.currentTimeMillis();
 			int oldSize = m_Abstraction.size();
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
@@ -492,7 +512,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				throw new AssertionError("Minimization increased state space");
 			}
 			m_StatesRemovedByMinimization += (oldSize - newSize);
-			m_TimingStatistics.finishAutomataMinimization();
+			m_TraceAbstractionBenchmarks.finishAutomataMinimization();
 		}
 		
 		
