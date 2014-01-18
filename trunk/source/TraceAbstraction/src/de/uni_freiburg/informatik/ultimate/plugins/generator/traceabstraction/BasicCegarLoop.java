@@ -189,24 +189,29 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			m_TraceChecker.computeInterpolants(allInt, predicateUnifier, m_Pref.interpolation());
 		}
 		m_TraceAbstractionBenchmarks.finishTraceCheck();
-		switch (m_Pref.interpolation()) {
-		case ForwardPredicates:
-			m_TraceAbstractionBenchmarks.addSizeOfPredicatesFP(m_TraceChecker.getSizeOfPredicates(m_Pref.interpolation()));
-			m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesFP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesFP());
-			m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(m_Pref.interpolation()));
-			break;
-		case BackwardPredicates:
-			m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesBP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesBP());
-			m_TraceAbstractionBenchmarks.addSizeOfPredicatesBP(m_TraceChecker.getSizeOfPredicates(m_Pref.interpolation()));
-			m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(m_Pref.interpolation()));
-			break;
-		case FPandBP:
-			m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(INTERPOLATION.ForwardPredicates));
-			m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesFP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesFP());
-			m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesBP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesBP());
-			m_TraceAbstractionBenchmarks.addSizeOfPredicatesFP(m_TraceChecker.getSizeOfPredicates(INTERPOLATION.ForwardPredicates));
-			m_TraceAbstractionBenchmarks.addSizeOfPredicatesBP(m_TraceChecker.getSizeOfPredicates(INTERPOLATION.BackwardPredicates));
-			
+		if (feasibility == LBool.UNSAT) {
+			// interpolants are only in case of an infeasible trace computed
+			switch (m_Pref.interpolation()) {
+			case ForwardPredicates:
+				m_TraceAbstractionBenchmarks.addSizeOfPredicatesFP(m_TraceChecker.getSizeOfPredicates(m_Pref.interpolation()));
+				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesFP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesFP());
+				m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(m_Pref.interpolation()));
+				break;
+			case BackwardPredicates:
+				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesBP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesBP());
+				m_TraceAbstractionBenchmarks.addSizeOfPredicatesBP(m_TraceChecker.getSizeOfPredicates(m_Pref.interpolation()));
+				m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(m_Pref.interpolation()));
+				break;
+			case FPandBP:
+				m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(INTERPOLATION.ForwardPredicates));
+				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesFP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesFP());
+				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesBP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesBP());
+				m_TraceAbstractionBenchmarks.addSizeOfPredicatesFP(m_TraceChecker.getSizeOfPredicates(INTERPOLATION.ForwardPredicates));
+				m_TraceAbstractionBenchmarks.addSizeOfPredicatesBP(m_TraceChecker.getSizeOfPredicates(INTERPOLATION.BackwardPredicates));
+
+			}
+		} else {
+			m_TraceAbstractionBenchmarks.setCounterExampleFeasible();
 		}
 		return feasibility;
 	}

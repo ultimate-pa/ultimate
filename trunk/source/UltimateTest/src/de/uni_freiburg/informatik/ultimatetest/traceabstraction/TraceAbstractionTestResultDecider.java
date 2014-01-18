@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
-import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -28,7 +26,9 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 	private String m_InputFile;
 	private ExpectedResult m_ExpectedResult;
 	private TraceAbstractionTestSummary m_Summary;
+	// Just the plugin-ids
 	private static String m_KeyOfResultsFromTraceAbstraction = "TraceAbstraction";
+	private static String m_KeyOfResultsFromPreprocessor = "de.uni_freiburg.informatik.ultimate.boogie.preprocessor";
 	
 	private enum ExpectedResult {
 		SAFE,
@@ -77,9 +77,9 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 				return ExpectedResult.NOANNOTATION;
 			}
 		}
-		if (inputFile.getName().contains("-safe")) {
+		if (inputFile.getName().toLowerCase().contains("-safe")) {
 			return ExpectedResult.SAFE;
-		} else if (inputFile.getName().contains("-unsafe")) {
+		} else if (inputFile.getName().toLowerCase().contains("-unsafe")) {
 			return ExpectedResult.UNSAFE;
 		}
 		return ExpectedResult.NOANNOTATION;
@@ -90,8 +90,15 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 		Logger log = Logger.getLogger(TraceAbstractionTestResultDecider.class);
 		Collection<String> customMessages = new LinkedList<String>();
 		boolean fail = true;
-		List<IResult> traceAbstractionResults = getResultsFromTraceAbstraction(UltimateServices
-				.getInstance().getResultMap().entrySet());
+		List<IResult> traceAbstractionResults = new ArrayList<IResult>();
+		if (UltimateServices.getInstance().getResultMap().containsKey(m_KeyOfResultsFromTraceAbstraction)) {
+			traceAbstractionResults.addAll(UltimateServices.getInstance().getResultMap().get(m_KeyOfResultsFromTraceAbstraction));
+		}
+		if (UltimateServices.getInstance().getResultMap().containsKey(m_KeyOfResultsFromPreprocessor)) {
+			// Add results from the preprocessor
+			traceAbstractionResults.addAll(UltimateServices.getInstance().getResultMap().get(m_KeyOfResultsFromPreprocessor));
+		}
+		
 		if (m_ExpectedResult == ExpectedResult.NOANNOTATION) {
 			customMessages
 			.add("Couldn't understand the specification of the file \"" + m_InputFile + "\".\n" +
@@ -127,7 +134,7 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 					m_Summary.addUnknown(result, m_InputFile, "File was neither annotated nor does the filename contain a specification.");
 				} else {
 					m_Summary.addFail(result, m_InputFile, "Annotation says: " + m_ExpectedResult + 
-							"\tModel checker says: " + (result != null ? result.getShortDescription() : "NULL"));
+							"\tModel checker says: " + (result != null ? result.getShortDescription() : "NoResult"));
 				}
 			}
 			// Add benchmark results to TraceAbstraction summary
@@ -165,22 +172,9 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 		return false;
 	}
 	
-	private List<IResult> getResultsFromTraceAbstraction(Set<Entry<String, List<IResult>>> resultSet) {
-		List<IResult> results = new ArrayList<IResult>();
-		for (Entry<String, List<IResult>> entry : resultSet) {
-			if (entry.getKey() == m_KeyOfResultsFromTraceAbstraction) {
-				results.addAll(entry.getValue());
-			}
-		}
-		return results;
-	}
-	
 
-	// TODO: Ensure that null can't be returned, or handle this case in the calling method.
 	private IResult getTraceAbstractionResultOfSet(List<IResult> results) {
-		IResult result = null;
 		for (IResult res : results) {
-			result = res;
 			if (res instanceof PositiveResult) {
 				return res;
 			} else if (res instanceof CounterExampleResult) {
@@ -193,7 +187,7 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 				return res;
 			}
 		}
-		return result;
+		return new NoResult(null, null, null, null);
 	}
 	
 	

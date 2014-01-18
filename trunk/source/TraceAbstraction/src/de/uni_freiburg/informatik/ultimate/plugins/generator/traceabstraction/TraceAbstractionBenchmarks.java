@@ -34,6 +34,7 @@ public class TraceAbstractionBenchmarks {
 	private List<int[]> m_SizeOfPredicatesFP;
 	private List<int[]> m_SizeOfPredicatesBP;
 	private long m_StartingTime;
+	private boolean m_CounterExampleFeasible;
 	
 	
 	
@@ -42,7 +43,7 @@ public class TraceAbstractionBenchmarks {
 		m_StartingTime = System.currentTimeMillis();
 		m_SizeOfPredicatesBP = new ArrayList<int[]>();
 		m_SizeOfPredicatesFP = new ArrayList<int[]>();
-		
+		m_CounterExampleFeasible = false;
 	}
 	
 	public long getRuntime() {
@@ -97,45 +98,53 @@ public class TraceAbstractionBenchmarks {
 		automataMinimizationStartTime = 0;
 	}
 	
+	
 	public String printBenchmarkResults() {
 		StringBuilder sb  = new StringBuilder();
 		sb.append("Trace Abstraction runtime: ");
 		sb.append(prettyprintNanoseconds(getRuntime()));
-		sb.append("Determine feasibility of statement sequence: ");
-		sb.append(prettyprintNanoseconds(traceCheck));
-		sb.append(" (thereof: SMT solver sat check ");
-		sb.append(prettyprintNanoseconds(traceCheckSat));
-		sb.append(", SMT solver interpolation ");
-		sb.append(prettyprintNanoseconds(traceCheckInterpolation));
-		sb.append(") Construction basic interpolant automaton: ");
-		sb.append(prettyprintNanoseconds(basicInterpolantAutomaton));
-		sb.append(" Automata difference operation: ");
-		sb.append(prettyprintNanoseconds(differenceTotal - differenceSmtManager));
-		sb.append(" Checking validity of Hoare triples: ");
-		sb.append(prettyprintNanoseconds(differenceSmtManager));
-		sb.append(" (thereof SMT solver ");
-		sb.append(prettyprintNanoseconds(differenceSmtSolver));
-		sb.append(") Automata minimization: ");
-		sb.append(prettyprintNanoseconds(automataMinimization));
-		sb.append("\n");
-		if (m_totalNumberOfPredicates != null && !m_totalNumberOfPredicates.isEmpty()) {
-			sb.append("Total num of predicates: " + getSumOfIntegerList(m_totalNumberOfPredicates));
-		}
-		if (m_NumberOfQuantifiedPredicatesFP != null && !m_NumberOfQuantifiedPredicatesFP.isEmpty()) {
-			sb.append("\tNum of quantified predicates FP: " + getSumOfIntegerList(m_NumberOfQuantifiedPredicatesFP));
-		}
-		if (m_NumberOfQuantifiedPredicatesBP != null && !m_NumberOfQuantifiedPredicatesBP.isEmpty()) {
-			sb.append("\tNum of quantified predicates BP: " + getSumOfIntegerList(m_NumberOfQuantifiedPredicatesBP));
-		}
-		if (m_SizeOfPredicatesFP != null && !m_SizeOfPredicatesFP.isEmpty()) {
-			sb.append("\tSize of predicates FP: " + getSumOfIntegerArrays(m_SizeOfPredicatesFP));
-		}
-		if (m_SizeOfPredicatesBP != null && !m_SizeOfPredicatesBP.isEmpty()) {
-			sb.append("\tSize of predicates BP: " + getSumOfIntegerArrays(m_SizeOfPredicatesBP));
+		if (!m_CounterExampleFeasible) {
+			sb.append("Determine feasibility of statement sequence: ");
+			sb.append(prettyprintNanoseconds(traceCheck));
+			sb.append(" (thereof: SMT solver sat check ");
+			sb.append(prettyprintNanoseconds(traceCheckSat));
+			sb.append(", SMT solver interpolation ");
+			sb.append(prettyprintNanoseconds(traceCheckInterpolation));
+			sb.append(") Construction basic interpolant automaton: ");
+			sb.append(prettyprintNanoseconds(basicInterpolantAutomaton));
+			sb.append(" Automata difference operation: ");
+			sb.append(prettyprintNanoseconds(differenceTotal - differenceSmtManager));
+			sb.append(" Checking validity of Hoare triples: ");
+			sb.append(prettyprintNanoseconds(differenceSmtManager));
+			sb.append(" (thereof SMT solver ");
+			sb.append(prettyprintNanoseconds(differenceSmtSolver));
+			sb.append(") Automata minimization: ");
+			sb.append(prettyprintNanoseconds(automataMinimization));
+			sb.append("\n\t\t");
+			if (m_totalNumberOfPredicates != null && !m_totalNumberOfPredicates.isEmpty()) {
+				sb.append("Total num of predicates: " + getSumOfIntegerList(m_totalNumberOfPredicates));
+			}
+			if (m_NumberOfQuantifiedPredicatesFP != null && !m_NumberOfQuantifiedPredicatesFP.isEmpty()) {
+				sb.append("\tNum of quantified predicates FP: " + getSumOfIntegerList(m_NumberOfQuantifiedPredicatesFP));
+			}
+			if (m_NumberOfQuantifiedPredicatesBP != null && !m_NumberOfQuantifiedPredicatesBP.isEmpty()) {
+				sb.append("\tNum of quantified predicates BP: " + getSumOfIntegerList(m_NumberOfQuantifiedPredicatesBP));
+			}
+			if (m_SizeOfPredicatesFP != null && !m_SizeOfPredicatesFP.isEmpty()) {
+				sb.append("\tSize of predicates FP: " + getSumOfIntegerArrays(m_SizeOfPredicatesFP));
+			}
+			if (m_SizeOfPredicatesBP != null && !m_SizeOfPredicatesBP.isEmpty()) {
+				sb.append("\tSize of predicates BP: " + getSumOfIntegerArrays(m_SizeOfPredicatesBP));
+			}
 		}
 		return sb.toString();
 	}
 	
+	public void setCounterExampleFeasible() {
+		m_CounterExampleFeasible = true;
+	}
+	
+
 	private int getSumOfIntegerArrays(List<int[]> list) {
 		int sum = 0; 
 		for (int i = 0; i < list.size(); i++) {

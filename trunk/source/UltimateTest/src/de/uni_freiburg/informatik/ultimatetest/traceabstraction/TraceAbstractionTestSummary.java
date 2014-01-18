@@ -74,7 +74,7 @@ public class TraceAbstractionTestSummary extends TestSummary {
 				sb.append("\t\t").append(fileMsgPair.getKey()).append(": ")
 						.append(fileMsgPair.getValue()).append("\n");
 				// Add TraceAbstraction benchmarks
-				sb.append(m_TraceAbstractionBenchmarks.get(fileMsgPair.getKey())).append("\n");
+				sb.append("\t\t").append(m_TraceAbstractionBenchmarks.get(fileMsgPair.getKey())).append("\n");
 			}
 
 			sb.append("\tCount for ").append(entry.getKey()).append(": ")

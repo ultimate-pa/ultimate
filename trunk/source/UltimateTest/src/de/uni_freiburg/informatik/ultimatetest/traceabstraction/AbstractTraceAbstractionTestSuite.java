@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimatetest.Util;
 public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuite {
 	private List<UltimateTestCase> m_testCases;
 	private String m_summaryLogFileName;
+	private TraceAbstractionTestSummary m_Summary;
 	
 	protected static final String m_ToolchainTraceAbstraction = "TraceAbstraction.xml";
 	protected static final String m_ToolchainTraceAbstractionC = "TraceAbstractionC.xml";
@@ -86,16 +87,18 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 			m_summaryLogFileName = Util.generateSummaryLogFilename(
 					Util.getPathFromSurefire(".", this.getClass().getCanonicalName()), description);
 		}
-		TraceAbstractionTestSummary summary = new TraceAbstractionTestSummary(this.getClass().getCanonicalName(),
-				m_summaryLogFileName,
-				description);
-		getSummaries().add(summary);
+		if (m_Summary == null) {
+			m_Summary = new TraceAbstractionTestSummary(this.getClass().getCanonicalName(),
+					m_summaryLogFileName,
+					description);
+		}
+		getSummaries().add(m_Summary);
 		
 		for (File inputFile : inputFiles) {
 			UltimateStarter starter = new UltimateStarter(inputFile, settingsFile,
 					toolchainFile, deadline, null, null);
 			m_testCases.add(new UltimateTestCase(starter,
-					new TraceAbstractionTestResultDecider(inputFile, summary), 
+					new TraceAbstractionTestResultDecider(inputFile, m_Summary), 
 					inputFile.getAbsolutePath()));
 		}
 	}
