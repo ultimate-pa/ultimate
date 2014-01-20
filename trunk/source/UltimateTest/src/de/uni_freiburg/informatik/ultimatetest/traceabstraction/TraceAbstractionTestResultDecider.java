@@ -89,7 +89,7 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 	public boolean isResultFail() {
 		Logger log = Logger.getLogger(TraceAbstractionTestResultDecider.class);
 		Collection<String> customMessages = new LinkedList<String>();
-		boolean fail = true;
+		final boolean fail;
 		List<IResult> traceAbstractionResults = new ArrayList<IResult>();
 		if (UltimateServices.getInstance().getResultMap().containsKey(m_KeyOfResultsFromTraceAbstraction)) {
 			traceAbstractionResults.addAll(UltimateServices.getInstance().getResultMap().get(m_KeyOfResultsFromTraceAbstraction));
@@ -122,6 +122,12 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 				break;
 			case SYNTAXERROR:
 				fail = !(result instanceof SyntaxErrorResult);
+				break;
+			case NOANNOTATION:
+				fail = true;
+				break;
+			default:
+				throw new AssertionError("unexpected case");
 			}
 			if (!fail) {
 				m_Summary.addSuccess(result, m_InputFile, "Annotation says: " + m_ExpectedResult + 
