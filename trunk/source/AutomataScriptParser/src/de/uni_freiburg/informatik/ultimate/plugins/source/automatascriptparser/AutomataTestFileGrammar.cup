@@ -266,13 +266,17 @@ non terminal IdentifierListAST identifier_list_opt, identifier_list;
 // Automata types
 non terminal AutomatonAST nwa_definition, petrinetJulian_definition;
 // Alphabets
-non terminal IdentifierListAST alphabet_opt, petrinet_alphabet, call_alphabet, return_alphabet_opt, return_alphabet, internal_alphabet_opt, internal_alphabet;
+non terminal IdentifierListAST alphabet, call_alphabet, return_alphabet, internal_alphabet;
+//non terminal IdentifierListAST alphabet_opt, petrinet_alphabet, call_alphabet, return_alphabet_opt, return_alphabet, internal_alphabet_opt, internal_alphabet;
 // States & Places
-non terminal IdentifierListAST states_opt, states, initial_states_opt, initial_states, final_states_opt, final_states;  
+non terminal IdentifierListAST states, initial_states, final_states;  
+//non terminal IdentifierListAST states_opt, states, initial_states_opt, initial_states, final_states_opt, final_states;  
 non terminal IdentifierListAST places, accepting_places;
 // Transitions & Markings
-non terminal TransitionListAST call_transitions_opt, call_transitions, internal_transitions_opt, internal_transitions; 
-non terminal TransitionListAST return_transitions_opt, return_transitions, transition_list, transition_list_opt;
+non terminal TransitionListAST call_transitions, internal_transitions; 
+//non terminal TransitionListAST call_transitions_opt, call_transitions, internal_transitions_opt, internal_transitions; 
+non terminal TransitionListAST return_transitions, transition_list, transition_list_opt;
+//non terminal TransitionListAST return_transitions_opt, return_transitions, transition_list, transition_list_opt;
 non terminal IdentifierListAST transition;
 non terminal TransitionListAST net_transitions, net_transition_list_opt, net_transition_list; 
 non terminal PetriNetTransitionAST  net_transition;
@@ -1002,15 +1006,15 @@ unary_expression_not_plus_minus ::=
 /* -------------------- Specification of Rules for Automata DEFINITION Files-----------------------*/
 
 nwa_definition ::=      variable_identifier:id EQ
-                        LPAREN:l alphabet_opt:call COMMA
-                               internal_alphabet_opt:intern COMMA
-                               return_alphabet_opt:ret COMMA
-                               states_opt:states COMMA
-                               initial_states_opt:init_states COMMA
-                               final_states_opt:fin_states COMMA
-                               call_transitions_opt:call_trans COMMA
-                               internal_transitions_opt:int_trans COMMA
-                               return_transitions_opt:ret_trans
+                        LPAREN:l call_alphabet:call COMMA
+                               internal_alphabet:intern COMMA
+                               return_alphabet:ret COMMA
+                               states:states COMMA
+                               initial_states:init_states COMMA
+                               final_states:fin_states COMMA
+                               call_transitions:call_trans COMMA
+                               internal_transitions:int_trans COMMA
+                               return_transitions:ret_trans
                         RPAREN:r
                         {: NestedwordAutomatonAST nwa = new NestedwordAutomatonAST(id);
                           nwa.setCallAlphabet(call.getIdentifierList());
@@ -1041,39 +1045,39 @@ identifier_list ::= identifier:id
                       {:idList.addId(id);
                     	RESULT = idList; :};
 
-alphabet_opt ::= call_alphabet:a {:RESULT = a; :} | petrinet_alphabet:a {:RESULT = a; :} | {:RESULT = null; :} ;
+//alphabet_opt ::= call_alphabet:a {:RESULT = a; :} | petrinet_alphabet:a {:RESULT = a; :} | {:RESULT = null; :} ;
 
-internal_alphabet_opt ::= internal_alphabet:intern {:RESULT = intern; :} | {: RESULT = new IdentifierListAST(); :};
+//internal_alphabet_opt ::= internal_alphabet:intern {:RESULT = intern; :} | {: RESULT = new IdentifierListAST(); :};
 
 internal_alphabet ::= INTERNAL_ALPHABET EQ LBRACE:l identifier_list_opt:idList  RBRACE:r
 					  {:idList.setLocation(getLocation(l$, r$));
 						RESULT = idList; :};
 
-return_alphabet_opt ::= return_alphabet:ret {:RESULT = ret; :} | {:RESULT = new IdentifierListAST(); :};
+//return_alphabet_opt ::= return_alphabet:ret {:RESULT = ret; :} | {:RESULT = new IdentifierListAST(); :};
 
 return_alphabet ::= RETURN_ALPHABET EQ LBRACE:l identifier_list_opt:idList RBRACE:r
 					{:idList.setLocation(getLocation(l$, r$));
 					  RESULT = idList; :} ;
 
-states_opt ::= states:st {:RESULT = st; :} | {:RESULT = null; :} ;
+//states_opt ::= states:st {:RESULT = st; :} | {:RESULT = null; :} ;
 
 states ::= STATES EQ LBRACE:l identifier_list_opt:idList RBRACE:r
 		   {:idList.setLocation(getLocation(l$, r$));
 			 RESULT = idList; :} ;
 
-initial_states_opt ::= initial_states:init {:RESULT = init; :} | {:RESULT = new IdentifierListAST(); :};
+//initial_states_opt ::= initial_states:init {:RESULT = init; :} | {:RESULT = new IdentifierListAST(); :};
 
 initial_states ::= INITIAL_STATES EQ LBRACE:l identifier_list_opt:idList RBRACE:r
 				   {:idList.setLocation(getLocation(l$, r$));
 				     RESULT = idList; :} ;
 
-final_states_opt ::= final_states:fin {:RESULT = fin; :} | {:RESULT = new IdentifierListAST(); :};
+//final_states_opt ::= final_states:fin {:RESULT = fin; :} | {:RESULT = new IdentifierListAST(); :};
 
 final_states ::= FINAL_STATES EQ LBRACE:l identifier_list_opt:idList RBRACE:r
 				{:idList.setLocation(getLocation(l$, r$));
 				  RESULT = idList; :} ;
 
-call_transitions_opt ::= call_transitions:c {:RESULT = c; :} | {:RESULT = new TransitionListAST(); :};
+//call_transitions_opt ::= call_transitions:c {:RESULT = c; :} | {:RESULT = new TransitionListAST(); :};
 
 call_transitions ::= CALL_TRANSITIONS EQ LBRACE:l transition_list_opt:tList RBRACE:r
 					{: if (tList != null) {
@@ -1081,7 +1085,7 @@ call_transitions ::= CALL_TRANSITIONS EQ LBRACE:l transition_list_opt:tList RBRA
 					}
 						RESULT = tList; :};
 
-internal_transitions_opt ::= internal_transitions:i {:RESULT = i; :} | {:RESULT = new TransitionListAST(); :} ;
+//internal_transitions_opt ::= internal_transitions:i {:RESULT = i; :} | {:RESULT = new TransitionListAST(); :} ;
 
 internal_transitions ::= INTERNAL_TRANSITIONS EQ LBRACE:l transition_list_opt:tList RBRACE:r
 						{:if (tList != null) {
@@ -1089,7 +1093,7 @@ internal_transitions ::= INTERNAL_TRANSITIONS EQ LBRACE:l transition_list_opt:tL
 						}
 						  RESULT = tList; :};
 
-return_transitions_opt ::= return_transitions:ret {:RESULT = ret; :} | {:RESULT = new TransitionListAST(); :} ;
+//return_transitions_opt ::= return_transitions:ret {:RESULT = ret; :} | {:RESULT = new TransitionListAST(); :} ;
 
 return_transitions ::= RETURN_TRANSITIONS EQ LBRACE:l transition_list_opt:tList RBRACE:r
 						{: if (tList != null) {
@@ -1115,7 +1119,7 @@ transition ::= LPAREN:l identifier_list_opt:idList RPAREN:r
 
 
 petrinetJulian_definition ::= variable_identifier:id EQ LPAREN:l
-                              alphabet_opt:alpha COMMA
+                              alphabet:alpha COMMA
                               places:p COMMA
                               net_transitions:net_trans COMMA
                               initial_markings:init_mark COMMA
@@ -1131,7 +1135,7 @@ petrinetJulian_definition ::= variable_identifier:id EQ LPAREN:l
                             	 RESULT = petri; :}
                               ;
 
-petrinet_alphabet ::= ALPHABET EQ LBRACE:l identifier_list_opt:idList RBRACE:r
+alphabet ::= ALPHABET EQ LBRACE:l identifier_list_opt:idList RBRACE:r
 						{:if (idList == null) {
 							RESULT = null;
 						} else {
