@@ -3,10 +3,9 @@
  */
 package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 
-import java.io.File;
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.Util;
+import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
 /**
  * @author musab@informatik.uni-freiburg.de
@@ -14,23 +13,54 @@ import de.uni_freiburg.informatik.ultimatetest.Util;
  */
 public class AllExamplesTraceAbstractionTestSuite extends
 		AbstractTraceAbstractionTestSuite {
+	private static final String m_Path = "examples/programs/";
 	
-	private static final String m_PathToAllExamples = "examples/programs/";
+	// Time out for each test case in seconds
+	private static int m_Timeout = 20;
 
+	private static final boolean m_TraceAbstractionWithForwardPredicates = false;
+	private static final boolean m_TraceAbstractionWithBackwardPredicates = true;
+	private static final boolean m_TraceAbstractionCWithForwardPredicates = false;
+	private static final boolean m_TraceAbstractionCWithBackwardPredicates = true;
 	
-	
-	public AllExamplesTraceAbstractionTestSuite() {
-		m_TestBoogieFiles = true;
-		m_TestCFiles = false;
-		m_useForwardPredicates = false;
-		m_useBackwardPredicates = true;
-		m_Timeout = 20;
-	}
-
 	@Override
-	protected Collection<File> getInputFiles(String[] fileEndings) {
-		return Util.getFiles(new File(Util.getPathFromTrunk(m_PathToAllExamples)),
-				fileEndings);
+	public Collection<UltimateTestCase> createTestCases() {
+		if (m_TraceAbstractionWithForwardPredicates) {
+			addTestCases(
+					"TraceAbstraction.xml",
+					"settingsForwardPredicates",
+				    m_Path,
+				    new String[] {".bpl"},
+				    "TraceAbstraction via Forward Predicates (SP)",
+				    m_Timeout);
+		} 
+		if (m_TraceAbstractionWithBackwardPredicates) {
+			addTestCases(
+					"TraceAbstraction.xml",
+					"settingsBackwardPredicates",
+				    m_Path,
+				    new String[] {".bpl"},
+				    "TraceAbstraction via Backward Predicates (WP)",
+				    m_Timeout);
+		}
+		if (m_TraceAbstractionCWithForwardPredicates) {
+			addTestCases(
+					"TraceAbstractionC.xml",
+					"settingsForwardPredicates",
+				    m_Path,
+				    new String[] {".c", ".i"},
+				    "TraceAbstraction via Forward Predicates (SP)",
+				    m_Timeout);
+		}
+		if (m_TraceAbstractionCWithBackwardPredicates) {
+			addTestCases(
+					"TraceAbstractionC.xml",
+					"settingsBackwardPredicates",
+				    m_Path,
+				    new String[] {".c", ".i"},
+				    "TraceAbstraction via Backward Predicates (WP)",
+				    m_Timeout);
+		}
+		return super.createTestCases();
 	}
-
 }
