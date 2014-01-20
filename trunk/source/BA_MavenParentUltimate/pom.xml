@@ -8,7 +8,7 @@
 
 	<properties>
 		<!-- maven tool versions -->
-		<tycho-version>0.18.1</tycho-version>
+		<tycho-version>0.19.0</tycho-version>
 
 		<!-- reference to workspace root -->
 		<workspaceDir>${basedir}/..</workspaceDir>
@@ -43,11 +43,11 @@
 			<layout>p2</layout>
 			<url>http://download.eclipse.org/releases/indigo</url>
 		</repository>
-		<!-- <repository> -->
-		<!-- <id>eclipse-kepler</id> -->
-		<!-- <layout>p2</layout> -->
-		<!-- <url>http://download.eclipse.org/releases/kepler</url> -->
-		<!-- </repository> -->
+<!--		 <repository> 
+		 <id>eclipse-kepler</id> 
+		 <layout>p2</layout> 
+		 <url>http://download.eclipse.org/releases/kepler</url> 
+		 </repository> -->
 		<repository>
 			<id>javaxRepository</id>
 			<name>Java.net Repository for Maven</name>
@@ -55,6 +55,8 @@
 			<layout>default</layout>
 		</repository>
 	</repositories>
+
+
 
 	<build>
 		<plugins>
@@ -232,6 +234,13 @@
 
 		<profile>
 			<id>coverage</id>
+<!--<dependencies>
+<dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.7</version>
+    </dependency>
+</dependencies>-->
 			
 			<properties>
 				<!-- Jacoco version -->

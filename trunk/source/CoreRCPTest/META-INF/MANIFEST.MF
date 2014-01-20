@@ -7,7 +7,11 @@ Bundle-ActivationPolicy: lazy
 Fragment-Host: UltimateCore;bundle-version="0.0.1"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: Library-junit-helper,
- Library-log4j
+ Library-log4j,
+ org.junit
 Import-Package: de.uni_freiburg.informatik.ultimate.core.coreplugin,
  org.junit,
- org.junit.runner
+ org.junit.runner,
+ org.junit.runners,
+ junit.framework,
+ org.junit.runner.notification
