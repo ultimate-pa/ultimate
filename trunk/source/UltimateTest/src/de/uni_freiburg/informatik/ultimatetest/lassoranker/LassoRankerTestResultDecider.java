@@ -146,4 +146,10 @@ public class LassoRankerTestResultDecider implements ITestResultDecider {
 		Util.logResults(logger, m_input_file_name, fail, customMessages);
 		return fail;
 	}
+
+	@Override
+	public boolean isResultFail(Exception e) {
+		//TODO: check if this exception is desired behavior
+		return true;
+	}
 }

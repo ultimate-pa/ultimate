@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
@@ -106,6 +107,7 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 					"//#NoSpec if there is still no decision about the specification.");
 		}
 		if (traceAbstractionResults.size() == 0) {
+			fail = true;
 			customMessages
 					.add("There were no results. Therefore an exception has been thrown.");
 		} else {
@@ -194,6 +196,12 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 			}
 		}
 		return new NoResult(null, null, null, null);
+	}
+	
+	@Override
+	public boolean isResultFail(Exception e) {
+		//TODO: check if this exception is desired behavior
+		return true;
 	}
 	
 	

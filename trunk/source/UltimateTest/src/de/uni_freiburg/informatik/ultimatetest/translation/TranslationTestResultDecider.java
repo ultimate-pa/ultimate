@@ -48,5 +48,11 @@ class TranslationTestResultDecider implements ITestResultDecider {
 		Util.logResults(log, mInputFile, fail, customMessages);
 		return fail;
 	}
+	
+	@Override
+	public boolean isResultFail(Exception e) {
+		//TODO: check if this exception is desired behavior
+		return true;
+	}
 
 }

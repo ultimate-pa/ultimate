@@ -157,5 +157,11 @@ public class SVCOMP14TestResultDecider implements ITestResultDecider {
 						"Toolchain result was: " + toolchainresult));
 
 	}
+	
+	@Override
+	public boolean isResultFail(Exception e) {
+		//TODO: check if this exception is desired behavior
+		return true;
+	}
 
 }

@@ -29,6 +29,7 @@ public class UltimateTestCase {
 			mStarter.runUltimate();
 			success = !mDecider.isResultFail();
 		} catch (Exception e) {
+			success = !mDecider.isResultFail(e);
 			mLogger.fatal(String.format(
 					"There was an exception during the execution of Ultimate: %s%n%s", e,
 					ExceptionUtils.getStackTrace(e)));
