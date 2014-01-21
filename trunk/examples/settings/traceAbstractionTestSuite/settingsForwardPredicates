@@ -6,12 +6,9 @@ file_export_version=3.0
 #Wed Jan 15 21:36:24 CET 2014
 file_export_version=3.0
 \!/instance/RCFGBuilder=
-/instance/RCFGBuilder/To\ the\ following\ directory=C\:\\Ultimate\\dumps
-/instance/RCFGBuilder/Dump\ SMT\ script\ to\ file=true
 @RCFGBuilder=0.0.1
 /instance/RCFGBuilder/Convert\ code\ blocks\ to\ CNF=false
 #Wed Jan 15 21:36:24 CET 2014
-/instance/TraceAbstraction/Dump\ formulas\ of\ problems\ in\ the\ following\ path=C\:\\Ultimate\\dumps
 file_export_version=3.0
 @TraceAbstraction=0.0.1
 /instance/TraceAbstraction/Timeout\ in\ seconds=300
