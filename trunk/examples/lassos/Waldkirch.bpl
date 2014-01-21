@@ -6,8 +6,10 @@
  * Ranking function: f(x) = x
  *
  */
+var x : int;
 
-procedure Waldkirch(c: int) returns (x: int)
+procedure Waldkirch() returns ()
+modifies x;
 {
   assume true;
   while (x >= 0) {
