@@ -105,6 +105,7 @@ public class CommandlineController implements IController {
 			tcj.schedule();
 			// in non-GUI mode, we must wait until job has finished!
 			tcj.join();
+			
 		} catch (InterruptedException e) {
 			s_Logger.error("Exception in Toolchain", e);
 			return -1;
@@ -228,7 +229,7 @@ public class CommandlineController implements IController {
 	}
 
 	@Override
-	public void displayException(String description, Exception ex) {
+	public void displayException(String description, Throwable ex) {
 		// TODO Auto-generated method stub
 		
 	}

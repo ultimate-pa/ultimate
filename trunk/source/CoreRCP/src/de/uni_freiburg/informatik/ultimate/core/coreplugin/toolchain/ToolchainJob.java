@@ -124,7 +124,7 @@ public class ToolchainJob extends Job {
 
 			returnstatus = this.mCore.processToolchain(monitor);
 
-		} catch (final Exception e) {
+		} catch (final Throwable e) {
 			mLogger.fatal("The toolchain threw an exception:" + e.getMessage());
 			mController.displayException("The toolchain threw an exception", e);
 			returnstatus = Status.CANCEL_STATUS;

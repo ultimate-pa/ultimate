@@ -272,7 +272,7 @@ public class InteractiveConsoleController implements IController {
 	}
 
 	@Override
-	public void displayException(String description, Exception ex) {
+	public void displayException(String description, Throwable ex) {
 		// TODO Auto-generated method stub
 		
 	}

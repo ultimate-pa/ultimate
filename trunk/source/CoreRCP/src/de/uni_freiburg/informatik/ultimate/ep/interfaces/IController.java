@@ -72,7 +72,7 @@ public interface IController extends IRCPPlugin {
 	 * @param description
 	 * @param ex
 	 */
-	void displayException(String description, Exception ex);
+	void displayException(String description, Throwable ex);
 	
 
 }

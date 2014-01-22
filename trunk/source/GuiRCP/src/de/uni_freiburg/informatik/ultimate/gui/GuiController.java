@@ -188,12 +188,12 @@ public class GuiController implements IController {
 	}
 
 	@Override
-	public void displayException(final String description, final Exception ex) {
+	public void displayException(final String description, final Throwable ex) {
 		mDisplay.asyncExec(new Runnable() {
 			public void run() {
 				Shell shell = new Shell(mDisplay);
 				MessageDialog.openError(shell, "An error occured", description
-						+ ex.getMessage());
+						+ " " + ex.getMessage());
 			}
 		});
 
@@ -203,8 +203,5 @@ public class GuiController implements IController {
 	public UltimatePreferenceInitializer getPreferences() {
 		return null;
 	}
-	
-
-
 
 }
