@@ -1,7 +1,6 @@
 #Thu Dec 19 17:31:04 CET 2013
 file_export_version=3.0
 @TraceAbstraction=0.0.1
-/instance/TraceAbstraction/Timeout\ in\ seconds=5
 \!/instance/TraceAbstraction=
 /instance/TraceAbstraction/Compute\ Interpolants\ along\ a\ Counterexample=BackwardPredicates
 #Thu Dec 19 17:31:04 CET 2013
