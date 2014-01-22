@@ -125,7 +125,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	 */
 	public static final boolean DEF_INTERPROCEDUTAL = true;
 	public static final int DEF_ITERATIONS = 10000;
-	public static final int DEF_TIMEOUT = 1000;
+	public static final int DEF_TIMEOUT = 0;
 	public static final String DEF_ARTIFACT = VALUE_RCFG;
 	public static final int DEF_WATCHITERATION = 1000;
 	public static final boolean DEF_HOARE = false;
