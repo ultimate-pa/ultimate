@@ -23,8 +23,8 @@ public class ExamplesInMinitestsDirectoryTraceAbstractionTestSuite extends
 	private static final boolean m_TraceAbstractionWithForwardPredicates = true;
 	private static final boolean m_TraceAbstractionCWithBackwardPredicates = true;
 	private static final boolean m_TraceAbstractionCWithForwardPredicates = true;		
-	// Time out for each test case in seconds
-	private final static int m_Timeout = 10;
+	// Time out for each test case in milliseconds
+	private final static int m_Timeout = 10000;
 	
 	
 	@Override
