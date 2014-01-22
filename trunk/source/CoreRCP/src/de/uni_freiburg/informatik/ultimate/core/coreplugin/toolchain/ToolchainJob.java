@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+import de.uni_freiburg.informatik.ultimate.result.ThrowableResult;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -79,7 +80,7 @@ public class ToolchainJob extends Job {
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
 
-		IStatus returnstatus = Status.OK_STATUS;
+	IStatus returnstatus = Status.OK_STATUS;
 
 		try {
 			boolean retval;
@@ -128,6 +129,9 @@ public class ToolchainJob extends Job {
 			mLogger.fatal("The toolchain threw an exception:" + e.getMessage());
 			mController.displayException("The toolchain threw an exception", e);
 			returnstatus = Status.CANCEL_STATUS;
+			String idOfCore = Activator.s_PLUGIN_ID;
+			ThrowableResult<?> result =	new ThrowableResult<Object>(idOfCore, e); 
+			UltimateServices.getInstance().reportResult(idOfCore, result);
 			e.printStackTrace();
 		} finally {
 			monitor.done();
