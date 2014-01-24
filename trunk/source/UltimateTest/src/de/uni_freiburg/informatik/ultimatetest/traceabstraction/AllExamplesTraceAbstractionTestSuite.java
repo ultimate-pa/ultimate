@@ -32,6 +32,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 				    m_Path,
 				    new String[] {".bpl"},
 				    "TraceAbstraction via Forward Predicates (SP)",
+				    "BoogieFilesForwardPredicates",
 				    m_Timeout);
 		} 
 		if (m_TraceAbstractionWithBackwardPredicates) {
@@ -41,6 +42,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 				    m_Path,
 				    new String[] {".bpl"},
 				    "TraceAbstraction via Backward Predicates (WP)",
+				    "BoogieFilesBackwardPredicates",
 				    m_Timeout);
 		}
 		if (m_TraceAbstractionCWithForwardPredicates) {
@@ -50,6 +52,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 				    m_Path,
 				    new String[] {".c", ".i"},
 				    "TraceAbstraction via Forward Predicates (SP)",
+				    "CFilesForwardPredicates",
 				    m_Timeout);
 		}
 		if (m_TraceAbstractionCWithBackwardPredicates) {
@@ -59,6 +62,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 				    m_Path,
 				    new String[] {".c", ".i"},
 				    "TraceAbstraction via Backward Predicates (WP)",
+				    "CFilesBackwardPredicates",
 				    m_Timeout);
 		}
 		return super.createTestCases();

@@ -12,18 +12,15 @@ public class TraceAbstractionTestSummary extends TestSummary {
 	private int mCount;
 
 	private String mLogFilePath;
-	private String m_InterpolationType;
 	/**
 	 * A map from file names to benchmark results.
 	 */
 	private Map<String, String> m_TraceAbstractionBenchmarks;
 	
-	public TraceAbstractionTestSummary(String testSuiteCanonicalName, String logFilePath,
-			String interpolationType) {
+	public TraceAbstractionTestSummary(String testSuiteCanonicalName, String logFilePath) {
 		super(testSuiteCanonicalName);
 		mLogFilePath = logFilePath;
 		mCount = 0;
-		m_InterpolationType = interpolationType;
 		m_TraceAbstractionBenchmarks = new HashMap<String, String>();
 	}
 	
@@ -38,7 +35,7 @@ public class TraceAbstractionTestSummary extends TestSummary {
 		int total = 0;
 		mCount = 0;
 
-		sb.append("################# ").append(m_InterpolationType)
+		sb.append("################# ").append("Trace Abstraction Test Summary")
 				.append(" #################").append("\n");
 
 		sb.append(getSummaryLog(mSuccess, "SUCCESSFUL TESTS"));
@@ -53,7 +50,7 @@ public class TraceAbstractionTestSummary extends TestSummary {
 		int fail = mCount;
 		total = total + mCount;
 		sb.append("\n");
-		sb.append("====== SUMMARY for ").append(m_InterpolationType)
+		sb.append("====== SUMMARY for ").append("Trace Abstraction")
 				.append(" ======").append("\n");
 		sb.append("Success:\t" + success).append("\n");
 		sb.append("Unknown:\t" + unknown).append("\n");

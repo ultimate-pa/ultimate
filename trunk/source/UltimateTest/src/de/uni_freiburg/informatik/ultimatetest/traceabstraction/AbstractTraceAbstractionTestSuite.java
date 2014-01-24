@@ -27,6 +27,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 	protected void addTestCases(File toolchainFile, File settingsFile,
 			Collection<File> inputFiles,
 			String description,
+			String uniqueString,
 			long deadline) {
 		if (m_testCases == null) {
 			m_testCases = new ArrayList<UltimateTestCase>();
@@ -37,25 +38,32 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 		}
 		if (m_Summary == null) {
 			m_Summary = new TraceAbstractionTestSummary(this.getClass().getCanonicalName(),
-					m_summaryLogFileName,
-					description);
+					m_summaryLogFileName);
 		}
 		getSummaries().add(m_Summary);
-		
 		for (File inputFile : inputFiles) {
 			UltimateStarter starter = new UltimateStarter(inputFile, settingsFile,
 					toolchainFile, deadline, null, null);
 			m_testCases.add(new UltimateTestCase(starter,
-					new TraceAbstractionTestResultDecider(inputFile, m_Summary), 
-					inputFile.getAbsolutePath()));
+					new TraceAbstractionTestResultDecider(inputFile, m_Summary, uniqueString), 
+					uniqueString + "_" + inputFile.getAbsolutePath()));
 		}
 	}
-	
-	// TODO: Test file names has to be unique! Otherwise, duplicates will be skipped.
+	/**
+	 * 
+	 * @param toolchain
+	 * @param settings
+	 * @param directory
+	 * @param fileEndings
+	 * @param description
+	 * @param uniqueString
+	 * @param deadline
+	 */
 	protected void addTestCases(String toolchain, String settings,
 			String directory,
 			String[] fileEndings,
 			String description,
+			String uniqueString,
 			long deadline) {
 		
 		File toolchainFile = new File(
@@ -63,7 +71,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 		File settingsFile = new File(Util.getPathFromTrunk(
 				m_PathToSettings + settings));
 		Collection<File> testFiles = getInputFiles(directory, fileEndings);
-		addTestCases(toolchainFile, settingsFile, testFiles, description, deadline);
+		addTestCases(toolchainFile, settingsFile, testFiles, description, uniqueString, deadline);
 	}
 	
 	private Collection<File> getInputFiles(String directory, String[] fileEndings) {

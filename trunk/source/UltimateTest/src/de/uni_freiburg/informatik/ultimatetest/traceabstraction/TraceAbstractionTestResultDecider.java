@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.result.ThrowableResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.Util;
@@ -27,9 +28,11 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 	private String m_InputFile;
 	private ExpectedResult m_ExpectedResult;
 	private TraceAbstractionTestSummary m_Summary;
+	private String m_UniqueString;
 	// Just the plugin-ids
 	private static String m_KeyOfResultsFromTraceAbstraction = "TraceAbstraction";
 	private static String m_KeyOfResultsFromPreprocessor = "de.uni_freiburg.informatik.ultimate.boogie.preprocessor";
+	private static String m_KeyOfResultsFromUltimateCore = "UltimateCore";
 	
 	private enum ExpectedResult {
 		SAFE,
@@ -38,13 +41,15 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 		SYNTAXERROR,
 		NOANNOTATION
 	}
-	public TraceAbstractionTestResultDecider(File inputFile, TraceAbstractionTestSummary testSummary) {
+	public TraceAbstractionTestResultDecider(File inputFile, TraceAbstractionTestSummary testSummary,
+			String uniqueString) {
 		m_InputFile = inputFile.getAbsolutePath();
 		m_ExpectedResult = getExpectedResult(inputFile);
 		if (testSummary == null) {
 			throw new ExceptionInInitializerError("summary may not be null");
 		}
 		m_Summary = testSummary;
+		m_UniqueString = uniqueString;
 	}
 	
 	/**
@@ -74,8 +79,6 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 				return ExpectedResult.NOSPECIFICATION;
 			} else if (line.contains("#SyntaxError")) { 
 				return ExpectedResult.SYNTAXERROR;
-			} else {
-				return ExpectedResult.NOANNOTATION;
 			}
 		}
 		if (inputFile.getName().toLowerCase().contains("-safe")) {
@@ -99,6 +102,10 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 			// Add results from the preprocessor
 			traceAbstractionResults.addAll(UltimateServices.getInstance().getResultMap().get(m_KeyOfResultsFromPreprocessor));
 		}
+		if (UltimateServices.getInstance().getResultMap().containsKey(m_KeyOfResultsFromUltimateCore)) {
+			// Add results from UltimateCore (UltimateCore reports usually only a ThrowableResult)
+			traceAbstractionResults.addAll(UltimateServices.getInstance().getResultMap().get(m_KeyOfResultsFromUltimateCore));
+		}
 		
 		if (m_ExpectedResult == ExpectedResult.NOANNOTATION) {
 			customMessages
@@ -106,10 +113,13 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 			     "Use //#Safe or //#Unsafe to indicate that the program is safe resp. unsafe. Use "+
 					"//#NoSpec if there is still no decision about the specification.");
 		}
+		String uniqueStringPrefixOfInputFile = m_UniqueString + "_" + m_InputFile;
 		if (traceAbstractionResults.size() == 0) {
 			fail = true;
 			customMessages
 					.add("There were no results. Therefore an exception has been thrown.");
+			m_Summary.addFail(null, uniqueStringPrefixOfInputFile, "Error: There were no results at all. "+
+																	"Tool didn't exit normally.");
 		} else {
 			IResult result = getTraceAbstractionResultOfSet(traceAbstractionResults);
 			switch (m_ExpectedResult) {
@@ -132,27 +142,28 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 				throw new AssertionError("unexpected case");
 			}
 			if (!fail) {
-				m_Summary.addSuccess(result, m_InputFile, "Annotation says: " + m_ExpectedResult + 
+				m_Summary.addSuccess(result, uniqueStringPrefixOfInputFile, "Annotation says: " + m_ExpectedResult + 
 						"\tModel checker says: " + m_ExpectedResult);
 			} else {
-				if (result instanceof TimeoutResult) {
-					m_Summary.addUnknown(result, m_InputFile, "Annotation says: " + m_ExpectedResult +
+				if (result instanceof ThrowableResult) {
+					m_Summary.addFail(result, uniqueStringPrefixOfInputFile, "Error: " + result.getLongDescription());
+				} else if (result instanceof TimeoutResult) {
+					m_Summary.addUnknown(result, uniqueStringPrefixOfInputFile, "Annotation says: " + m_ExpectedResult +
 							"\tModel checker says: Time out");
 				} else if (m_ExpectedResult == ExpectedResult.NOANNOTATION) {
-					m_Summary.addUnknown(result, m_InputFile, "File was neither annotated nor does the filename contain a specification.");
+					m_Summary.addUnknown(result, uniqueStringPrefixOfInputFile, "File was neither annotated nor does the filename contain a specification.");
 				} else {
-					m_Summary.addFail(result, m_InputFile, "Annotation says: " + m_ExpectedResult + 
-							"\tModel checker says: " + (result != null ? result.getShortDescription() : "NoResult"));
+					m_Summary.addFail(result, uniqueStringPrefixOfInputFile, "Annotation says: " + m_ExpectedResult + 
+							"\tModel checker says: " + (result.getShortDescription() != "" ? result.getShortDescription() : "NoResult"));
 				}
 			}
-			// Add benchmark results to TraceAbstraction summary
-			BenchmarkResult<?> benchmarkResult = getBenchmarkResultOfResultSet(traceAbstractionResults);
-			if (benchmarkResult != null) {
-				m_Summary.addTraceAbstractionBenchmarks(m_InputFile, benchmarkResult.getLongDescription());
-			} else {
-				m_Summary.addTraceAbstractionBenchmarks(m_InputFile, "No benchmark results available.");
-			}
-			
+		}
+		// Add benchmark results to TraceAbstraction summary
+		BenchmarkResult<?> benchmarkResult = getBenchmarkResultOfResultSet(traceAbstractionResults);
+		if (benchmarkResult != null) {
+			m_Summary.addTraceAbstractionBenchmarks(uniqueStringPrefixOfInputFile, benchmarkResult.getLongDescription());
+		} else {
+			m_Summary.addTraceAbstractionBenchmarks(uniqueStringPrefixOfInputFile, "No benchmark results available.");
 		}
 		Util.logResults(log, m_InputFile, fail, customMessages);
 		return fail;
@@ -193,14 +204,19 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 				return res;
 			} else if (res instanceof NoResult) {
 				return res;
+			} else if (res instanceof ThrowableResult) {
+				return res;
 			}
 		}
 		return new NoResult(null, null, null, null);
 	}
 	
-	@Override
 	public boolean isResultFail(Exception e) {
-		//TODO: check if this exception is desired behavior
+		m_Summary.addFail(new NoResult(null, null, null, null), m_InputFile, "Exception of type " + e.getClass().getName() + " thrown.\t"+
+		                                       "Message: " + e.getMessage());
+		m_Summary.addTraceAbstractionBenchmarks(m_InputFile, "No benchmark results available.");
+		Logger log = Logger.getLogger(TraceAbstractionTestResultDecider.class);
+		Util.logResults(log, m_InputFile, true, new LinkedList<String>());
 		return true;
 	}
 	
