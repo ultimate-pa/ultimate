@@ -220,7 +220,7 @@ public class StructExpander extends BoogieTransformer implements
         	}
     		BoogieType[] indexTypes = flattenedIndices.toArray
     				(new BoogieType[flattenedIndices.size()]);
-    		BoogieType valueType = at.getValueType();
+    		BoogieType valueType = flattenType(at.getValueType());
     		if (valueType instanceof StructType) {
     			StructType st = (StructType) valueType;
     			String[] names = st.getFieldIds();
