@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -74,9 +75,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		settings += " Determinization: " + taPrefs.determinization();
 		settings += " Timeout:" + taPrefs.timeout();
 //		System.out.println(settings);
-		long timoutMilliseconds = taPrefs.timeout() * 1000L;
-		UltimateServices.getInstance().setDeadline(
-				System.currentTimeMillis() + timoutMilliseconds);
+		TraceAbstractionObserver.setTimeout(taPrefs);
 
 		smtManager = new SmtManager(rootAnnot.getBoogie2SMT(),
 				rootAnnot.getGlobalVars(), rootAnnot.getModGlobVarManager());

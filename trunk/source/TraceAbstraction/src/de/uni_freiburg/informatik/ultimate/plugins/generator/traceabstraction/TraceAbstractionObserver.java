@@ -93,14 +93,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		int timeoutInPreferences = taPrefs.timeout();
-		if (timeoutInPreferences == 0) {
-			// do not set any timout
-		} else {
-			long timoutMilliseconds = timeoutInPreferences * 1000L;
-			UltimateServices.getInstance().setDeadline(
-					System.currentTimeMillis() + timoutMilliseconds);
-		}
+		setTimeout(taPrefs);
 		m_OverallIterations = 0;
 		m_OverallBiggestAbstraction = 0;
 		m_OverallResult = Result.SAFE;
@@ -243,6 +236,17 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		m_graphroot = m_Artifact;
 
 		return false;
+	}
+
+	public static void setTimeout(TAPreferences taPrefs) {
+		int timeoutInPreferences = taPrefs.timeout();
+		if (timeoutInPreferences == 0) {
+			// do not set any timout
+		} else {
+			long timoutMilliseconds = timeoutInPreferences * 1000L;
+			UltimateServices.getInstance().setDeadline(
+					System.currentTimeMillis() + timoutMilliseconds);
+		}
 	}
 
 	private void iterate(String name, RootNode root, TAPreferences taPrefs,
