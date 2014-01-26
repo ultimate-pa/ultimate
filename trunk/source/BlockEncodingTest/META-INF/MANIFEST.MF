@@ -5,7 +5,4 @@ Bundle-SymbolicName: BlockEncodingTest
 Bundle-Version: 0.0.1
 Fragment-Host: BlockEncoding
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Import-Package: junit.framework,
- org.junit;version="4.11.0",
- org.junit.runner;version="4.11.0",
- org.junit.runner.notification;version="4.11.0"
+Require-Bundle: org.junit4;bundle-version="4.8.1"
