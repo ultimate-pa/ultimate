@@ -15,6 +15,7 @@
       <plugin id="CACSL2BoogieTranslator"/>
       <plugin id="CDTParser"/>
       <plugin id="JavaCup"/>
+      <plugin id="LassoRanker"/>
       <plugin id="Library-Batik"/>
       <plugin id="Library-ModelCheckerUtils"/>
       <plugin id="Library-log4j"/>
@@ -93,6 +94,7 @@
       <plugin id="CACSL2BoogieTranslator" autoStart="true" startLevel="0" />
       <plugin id="CDTParser" autoStart="true" startLevel="0" />
       <plugin id="JavaCup" autoStart="true" startLevel="0" />
+      <plugin id="LassoRanker" autoStart="true" startLevel="0" />
       <plugin id="Library-Batik" autoStart="true" startLevel="0" />
       <plugin id="Library-ModelCheckerUtils" autoStart="true" startLevel="0" />
       <plugin id="Library-log4j" autoStart="true" startLevel="0" />
