@@ -176,105 +176,69 @@ public class RankingFunctionsObserver implements IUnmanagedObserver {
 				loop = tvr.renameVars(loop, "Loop");
 			}
 
-			// Try a number of possible templates
-			for (Class<? extends RankingTemplate> template : m_templates) {
-				try {
-					// Call the synthesizer
-					RankingFunctionsSynthesizer synthesizer =
-							new RankingFunctionsSynthesizer(old_script, script,
-									stem, loop);
+			try {
+				// Call the synthesizer
+				RankingFunctionsSynthesizer synthesizer =
+						new RankingFunctionsSynthesizer(old_script, script,
+								stem, loop);
 
-					if (synthesizer.synthesize(template)) {
-						RankingFunction rf = synthesizer.getRankingFunction();
-						assert(rf != null);
-						Collection<SupportingInvariant> si_list =
-								synthesizer.getSupportingInvariants();
-						assert(si_list != null);
+				if (synthesizer.synthesize(LinearTemplate.class)) {
+					RankingFunction rf = synthesizer.getRankingFunction();
+					assert(rf != null);
+					Collection<SupportingInvariant> si_list =
+							synthesizer.getSupportingInvariants();
+					assert(si_list != null);
 
-						StringBuilder longMessage = new StringBuilder();
-						if (rf instanceof LinearRankingFunction) {
-							LinearRankingFunction linRf = (LinearRankingFunction) rf;
-							Expression rfExp = linRf.asExpression(old_script, rootNode.getRootAnnot().getBoogie2Smt());
-							String rfString = backtranslateExprWorkaround(rfExp);
-							String siString = "";
-							if (si_list.size() <= 2) {
-								SupportingInvariant si = si_list.iterator().next();
-								Expression siExp = si.asExpression(old_script, rootNode.getRootAnnot().getBoogie2Smt());
-								siString = backtranslateExprWorkaround(siExp);
-							} else {
-								for (SupportingInvariant si : si_list) {
-									Expression siExp = si.asExpression(old_script, rootNode.getRootAnnot().getBoogie2Smt());
-									siString += backtranslateExprWorkaround(siExp) + ", ";
-								}
-//								throw new AssertionError("The linear template should not have more than two supporting invariants.");
-							}
-							longMessage.append("Found linear ranking function ");
-							longMessage.append(rfString);
-							longMessage.append(" with linear supporting invariant ");
-							longMessage.append(siString);
-						} else {
-							longMessage.append("A ranking function has been found:");
-							longMessage.append("\n" + rf);
-							boolean first = true;
-							for (SupportingInvariant si : si_list) {
-								if (!si.isTrivial()) {
-									if (first) {
-										longMessage.append("\n" + "Provided with the supporting "
-												+ "invariants:");
-										first = false;
-									}
-									longMessage.append("\n" + si);
-								}
-							}
-						}
-						s_Logger.info(longMessage);
-						String shortMessage;
-						if (rf instanceof LinearRankingFunction) {
-							shortMessage = "Found linear ranking function with supporting invariant";
-						} else {
-							shortMessage = rf.getClass().getName();
+					StringBuilder longMessage = new StringBuilder();
+					if (rf instanceof LinearRankingFunction) {
+						LinearRankingFunction linRf = (LinearRankingFunction) rf;
+						Expression rfExp = linRf.asExpression(old_script, rootNode.getRootAnnot().getBoogie2Smt());
+						Expression[] siExpressionArray = new Expression[si_list.size()];
+						int i = 0;
+						for (SupportingInvariant si : si_list) {
+							Expression siExp = si.asExpression(old_script, rootNode.getRootAnnot().getBoogie2Smt());
+							siExpressionArray[i] = siExp;
+							i++;
 						}
 						TerminationArgumentResult<RcfgElement> rankRes = 
 								new TerminationArgumentResult<RcfgElement>(
-								honda,
-								Activator.s_PLUGIN_NAME,
-								null,
-								"LinearRankingFunction",
-								null,
-								UltimateServices.getInstance().getTranslatorSequence(),
-								honda.getAstNode().getLocation().getOrigin());
+										honda,
+										Activator.s_PLUGIN_NAME,
+										new Expression[] {rfExp},
+										"LinearRankingFunction",
+										siExpressionArray,
+										UltimateServices.getInstance().getTranslatorSequence(),
+										honda.getAstNode().getLocation().getOrigin());
 						reportResult(rankRes);
-						return false;
+						s_Logger.info(rankRes.getShortDescription());
+						s_Logger.info(rankRes.getLongDescription());
+					} else {
+						throw new UnsupportedOperationException();
 					}
-					if (template.equals(LinearTemplate.class)) {
-						String shortMessage = "No ranking function found";
-						String longMessage = "No linear ranking function with linear supporting invariant found.";
-						NoResult<RcfgElement> rankRes = 
-								new NoResult<RcfgElement>(
-								honda,
-								Activator.s_PLUGIN_NAME,
-								UltimateServices.getInstance().getTranslatorSequence(),
-								honda.getAstNode().getLocation().getOrigin());
-						rankRes.setShortDescription(shortMessage);
-						rankRes.setLongDescription(longMessage.toString());
-						reportResult(rankRes);
-					}
+					return false;
+				} else {
+					String shortMessage = "No ranking function found";
+					String longMessage = "No linear ranking function with linear supporting invariant found.";
+					NoResult<RcfgElement> rankRes = 
+							new NoResult<RcfgElement>(
+									honda,
+									Activator.s_PLUGIN_NAME,
+									UltimateServices.getInstance().getTranslatorSequence(),
+									honda.getAstNode().getLocation().getOrigin());
+					rankRes.setShortDescription(shortMessage);
+					rankRes.setLongDescription(longMessage.toString());
+					reportResult(rankRes);
 					s_Logger.info("No ranking function has been found " +
 							"with this template.");
-				} catch (InstantiationException e) {
-					s_Logger.error("Failed to instantiate the template.");
-				} catch (TermIsNotAffineException e) {
-					s_Logger.error(e);
-				} catch (SMTLIBException e) {
-					s_Logger.error(e);
-				} catch (Exception e) {
-					s_Logger.error(e);
 				}
-			}
-			s_Logger.info("There are no more templates to try. I give up. :/");
-			
-			if (!Preferences.use_new_script) {
-				script.pop(1);
+			} catch (InstantiationException e) {
+				s_Logger.error("Failed to instantiate the template.");
+			} catch (TermIsNotAffineException e) {
+				s_Logger.error(e);
+			} catch (SMTLIBException e) {
+				s_Logger.error(e);
+			} catch (Exception e) {
+				s_Logger.error(e);
 			}
 		} else {
 			reportUnuspportedSyntax(honda);
