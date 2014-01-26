@@ -83,12 +83,12 @@ public class BoogieTraceAbstractionTC extends Toolchain {
 
         List<Setting> oTrAbs = new ArrayList<Setting>();
         List<Setting> mTrAbs = new ArrayList<Setting>();
-        oRCFGB.add(new Setting("/Compute\\ Interpolants\\ along\\ a\\ Counterexample", Setting.SettingType.STRING,
+        oTrAbs.add(new Setting("/Compute\\ Interpolants\\ along\\ a\\ Counterexample", Setting.SettingType.STRING,
                 "interpolation", "Craig_NestedInterpolation", false));
         oTrAbs.add(new Setting("/Compute\\ Hoare\\ Annotation\\ of\\ negated\\ interpolant\\ automaton,\\ abstraction\\ and\\ CFG", Setting.SettingType.BOOLEAN,
                 "Compute Hoare Annotation", "true", true));
         oTrAbs.add(new Setting("/Timeout", Setting.SettingType.INTEGER,
-                "Timeout", "60", false));
+                "Timeout", "20", false));
         mTrAbs.add(new Setting("/DumpPath", Setting.SettingType.STRING,
                 "Where to dump", "C:\\Code\\log\\dump", false));
         tools.add(new Tool("TraceAbstraction", oTrAbs, mTrAbs,

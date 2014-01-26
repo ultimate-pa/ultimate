@@ -92,23 +92,23 @@ public class Tasks {
 
 	}
 
-	/**
-	 * Convert a task name enum object into its representing string.
-	 * 
-	 * @param name
-	 *            the enum element to convert
-	 * @return the string representive
-	 */
-	public static final String toString(TaskNames name) {
-		if (taskString.isEmpty()) {
-			initTaskNames();
-		}
-		if (!taskString.containsKey(name)) {
-			throw new IllegalArgumentException(
-					"This name is not contained in the list: " + name);
-		}
-		return taskString.get(name);
-	}
+//	/**
+//	 * Convert a task name enum object into its representing string.
+//	 * 
+//	 * @param name
+//	 *            the enum element to convert
+//	 * @return the string representive
+//	 */
+//	public static final String toString(TaskNames name) {
+//		if (taskString.isEmpty()) {
+//			initTaskNames();
+//		}
+//		if (!taskString.containsKey(name)) {
+//			throw new IllegalArgumentException(
+//					"This name is not contained in the list: " + name);
+//		}
+//		return taskString.get(name);
+//	}
 
 	/**
 	 * Getter for the string representation of task names.

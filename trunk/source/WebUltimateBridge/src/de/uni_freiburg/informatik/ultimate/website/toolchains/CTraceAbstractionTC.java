@@ -103,7 +103,7 @@ public class CTraceAbstractionTC extends Toolchain {
         oTrAbs.add(new Setting("/Compute\\ Interpolants\\ along\\ a\\ Counterexample", Setting.SettingType.STRING,
                 "interpolation", "Craig_NestedInterpolation", false));
         oTrAbs.add(new Setting("Timeout\\ in\\ seconds", Setting.SettingType.INTEGER,
-                "Timeout", "60", false));
+                "Timeout", "20", false));
 //        oTrAbs.add(new Setting("/Edges2True", Setting.SettingType.BOOLEAN,
 //                "Edges to true", "true", true));
 //        oTrAbs.add(new Setting("/Interpolants", Setting.SettingType.STRING,
