@@ -54,16 +54,15 @@ public class TerminationArgumentResult<P> extends AbstractResult<P>
 	
 	@Override
 	public String getShortDescription() {
-		return "Termination Argument in form of "
-				+ m_RankingFunctionDescription;
+		return "Found " + m_RankingFunctionDescription;
 	}
 	
 	@Override
 	public String getLongDescription() {
 		StringBuilder sb =  new StringBuilder();
-		sb.append("Termination argument discovered consisting of\n");
+		sb.append("Found a termination argument consisting of the ");
 		sb.append(m_RankingFunctionDescription);
-		sb.append(": <");
+		sb.append(": [");
 		for (int i = 0; i < m_RankingFunction.length; ++i) {
 			if (i > 0) {
 				sb.append(", ");
@@ -71,8 +70,7 @@ public class TerminationArgumentResult<P> extends AbstractResult<P>
 			sb.append(BackTranslationWorkaround.backtranslate(
 					m_TranslatorSequence, m_RankingFunction[i]));
 		}
-		sb.append(">\n");
-		sb.append("Required supporting invariants: ");
+		sb.append("] and the following supporting invariants: ");
 		for (int i = 0; i < m_SupportingInvariants.length; ++i) {
 			if (i > 0) {
 				sb.append(", ");
