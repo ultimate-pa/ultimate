@@ -136,7 +136,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String DEF_DUMPPATH = ".";
 	public static final boolean DEF_DIFFERENCE_SENWA = false;
 	public static final boolean DEF_MINIMIZE = true;
-	public static final String DEF_CONCURRENCY = VALUE_PETRI_NET;
+	public static final String DEF_CONCURRENCY = VALUE_FINITE_AUTOMATON;
 	public static final boolean DEF_AllErrorsAtOnce = true;
 
 	public static final boolean DEF_cutOff = true;
