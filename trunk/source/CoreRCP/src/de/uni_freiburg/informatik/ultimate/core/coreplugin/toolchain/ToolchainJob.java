@@ -1,12 +1,15 @@
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain;
 
 import java.io.File;
+import java.util.List;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.ThrowableResult;
 
 import org.apache.log4j.Logger;
@@ -136,8 +139,33 @@ public class ToolchainJob extends Job {
 		} finally {
 			monitor.done();
 		}
-
+		
+		logResults();
 		return returnstatus;
+	}
+
+	/**
+	 * Write all IResults produced by the toolchain to the logger.
+	 */
+	private void logResults() {
+		for (Entry<String, List<IResult>> entry : 
+					UltimateServices.getInstance().getResultMap().entrySet()) {
+			for (IResult result : entry.getValue()) {
+				StringBuilder sb = new StringBuilder();
+				sb.append(result.getClass().getSimpleName());
+				sb.append(" from ");
+				sb.append(entry.getKey());
+				sb.append(".");
+				sb.append(" Short description: ");
+				sb.append(result.getShortDescription());
+				boolean appendLongDescription = false;
+				if (appendLongDescription) {
+					sb.append(" Long description: ");
+					sb.append(result.getLongDescription());
+				}
+				mLogger.info(sb.toString());
+			}
+		}
 	}
 
 }
