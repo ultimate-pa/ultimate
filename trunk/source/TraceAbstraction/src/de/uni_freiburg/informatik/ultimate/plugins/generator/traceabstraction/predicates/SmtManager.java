@@ -2807,6 +2807,15 @@ public class SmtManager {
 				termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return predicate;
 	}
+	
+	public MLPredicate newMLPredicate(ProgramPoint[] programPoints, 
+											TermVarsProc termVarsProc) {
+		MLPredicate predicate = new MLPredicate(programPoints, 
+				m_SerialNumber++,
+				termVarsProc.getProcedures(), termVarsProc.getFormula(), 
+				termVarsProc.getVars(), termVarsProc.getClosedFormula());
+		return predicate;
+	}
 
 	public IPredicate newTruePredicate() {
 		IPredicate pred = new BasicPredicate(m_SerialNumber++, m_NoProcedure,
@@ -2822,6 +2831,13 @@ public class SmtManager {
 
 	public UnknownState newDontCarePredicate(ProgramPoint pp) {
 		UnknownState pred = new UnknownState(pp, m_SerialNumber++);
+		return pred;
+	}
+	
+	public MLPredicate newMLDontCarePredicate(ProgramPoint[] pps) {
+		Set<BoogieVar> empty = Collections.emptySet();
+		MLPredicate pred = new MLPredicate(pps, m_SerialNumber++, new String[0],
+				getDontCareTerm(), empty, getDontCareTerm());
 		return pred;
 	}
 	

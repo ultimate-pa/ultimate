@@ -9,6 +9,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateWithHistory;
@@ -41,6 +42,12 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 
 	
 	public IPredicate intersection(IPredicate p1, IPredicate p2) {
+		if (p1 instanceof IMLPredicate) {
+			assert SmtManager.isDontCare(p2);
+			assert !m_Pref.computeHoareAnnotation();
+			return m_SmtManager.newMLDontCarePredicate(((IMLPredicate) p1).getProgramPoints());
+		}
+		
 		assert (p1 instanceof ISLPredicate);
 
 		ProgramPoint pp = ((ISLPredicate) p1).getProgramPoint();
@@ -150,4 +157,6 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 	public void setIteration(int i) {
 		m_Iteration = i;
 	}
+	
+
 }

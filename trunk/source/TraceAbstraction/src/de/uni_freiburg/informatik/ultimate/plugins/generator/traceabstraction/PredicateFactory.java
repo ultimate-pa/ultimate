@@ -1,14 +1,20 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.omg.PortableServer.ServantLocatorPOA;
+
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKVNwa.LevelRankingState;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
@@ -115,6 +121,30 @@ public class PredicateFactory extends StateFactory<IPredicate> {
 	
 	
 	
+	@Override
+	public IPredicate getContentOnConcurrentProduct(IPredicate c1,
+			IPredicate c2) {
+		if (!(c2 instanceof ISLPredicate)) {
+			throw new IllegalArgumentException(
+					"has to be predicate with single location");
+		}
+		ProgramPoint[] programPoints;
+		if (c1 instanceof ISLPredicate) {
+			programPoints = new ProgramPoint[2];
+			programPoints[0] = ((ISLPredicate) c1).getProgramPoint();
+		} else if (c1 instanceof IMLPredicate) {
+			IMLPredicate mlpred = (IMLPredicate) c1;
+			int newLength = mlpred.getProgramPoints().length + 1;
+			programPoints = Arrays.copyOf(mlpred.getProgramPoints(), newLength);
+		} else {
+			throw new UnsupportedOperationException();
+		}
+		ProgramPoint c2PP = ((ISLPredicate) c2).getProgramPoint();
+		programPoints[programPoints.length-1] = c2PP;
+		TermVarsProc tvp = m_SmtManager.and(c1, c2);
+		IMLPredicate result = m_SmtManager.newMLPredicate(programPoints, tvp);
+		return result;
+	}
 	
 	
 }
