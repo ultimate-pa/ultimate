@@ -9,6 +9,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.website.toolchains.AutomtaScriptTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieBuchiAutomizerTC;
+import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieConcurrentTraceAbstractionTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieLassoRankerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieTraceAbstractionTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CBuchiAutomizerTC;
@@ -30,7 +31,8 @@ public class Tasks {
 	private static final Class[] actTCs = {AutomtaScriptTC.class, 
 		BoogieTraceAbstractionTC.class,
 		CTraceAbstractionTC.class, BoogieLassoRankerTC.class, 
-		CLassoRankerTC.class, CBuchiAutomizerTC.class, BoogieBuchiAutomizerTC.class};
+		CLassoRankerTC.class, CBuchiAutomizerTC.class, 
+		BoogieBuchiAutomizerTC.class, BoogieConcurrentTraceAbstractionTC.class};
 	/**
 	 * The String representations of TaskNames.
 	 */
@@ -69,7 +71,11 @@ public class Tasks {
 		 */
 		AUTOMATA_SCRIPT,
 		/**
-		 * Run automata test file.
+		 * Verify concurrent Boogie.
+		 */
+		VerifyConcurrentBoogie,
+		/**
+		 * SmtScript. Not implemented yet.
 		 */
 		RunSmt2Script
 		// If you add something here, add a String representation to
@@ -89,7 +95,7 @@ public class Tasks {
 		taskString.put(TaskNames.TERMINATION_C, "Analyze Termination C");
 		taskString.put(TaskNames.RANK_SYNTHESIS_BOOGIE, "Synthesize ranking function Boogie");
 		taskString.put(TaskNames.RANK_SYNTHESIS_C, "Synthesize ranking function C");
-
+		taskString.put(TaskNames.VerifyConcurrentBoogie, "Verify concurrent Boogie");
 	}
 
 //	/**
@@ -139,15 +145,11 @@ public class Tasks {
 			// case RunSmt2Script:
 			// return "smt2";
 			case VerifyBoogie:
-				return "boogie";
-			case VerifyC:
-				return "c_cpp";
 			case TERMINATION_BOOGIE:
-				return "boogie";
-			case TERMINATION_C:
-				return "c_cpp";
 			case RANK_SYNTHESIS_BOOGIE:
 				return "boogie";
+			case VerifyC:
+			case TERMINATION_C:
 			case RANK_SYNTHESIS_C:
 				return "c_cpp";
 			default:
