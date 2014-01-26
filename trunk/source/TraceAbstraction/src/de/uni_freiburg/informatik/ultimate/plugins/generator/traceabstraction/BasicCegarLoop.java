@@ -127,10 +127,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			if (m_Pref.dumpAutomata()) {
 				dumpNestedRun(m_Counterexample, m_IterationPW);
 			}
-			m_RunAnalyzer = new RunAnalyzer(m_Counterexample);
+//			m_RunAnalyzer = new RunAnalyzer(m_Counterexample);
 			s_Logger.info("Found potential Counterexample");
-			s_Logger.info("Cutpoints: " + m_RunAnalyzer.getCutpoints());
-			s_Logger.debug(m_RunAnalyzer.getOccurence());
+//			s_Logger.info("Cutpoints: " + m_RunAnalyzer.getCutpoints());
+//			s_Logger.debug(m_RunAnalyzer.getOccurence());
 			return false;
 		}
 	}
