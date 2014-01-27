@@ -539,7 +539,7 @@ public class BuchiCegarLoop {
 							run,
 							traceChecker,
 							m_Pref.interpolantAutomaton(), m_Pref.edges2True(),
-							m_SmtManager, m_Pref,
+							m_SmtManager,
 							m_Iteration, null);
 			m_InterpolAutomaton = iab.buildInterpolantAutomaton(
 					m_Abstraction, m_Abstraction.getStateFactory());
