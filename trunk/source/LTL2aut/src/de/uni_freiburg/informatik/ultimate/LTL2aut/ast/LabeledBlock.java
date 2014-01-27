@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.LTL2aut.ast;
 
-import java.util.List;
-
 public class LabeledBlock extends AstNode {
 
 	private AstNode value;

@@ -214,12 +214,12 @@ public class MinModelConverter {
 		for (ProgramPoint oldVal : keySet) {
 			if (progPointMap.containsKey(oldVal)) {
 				ProgramPoint newVal = progPointMap.get(oldVal);
-				if (newVal.getAstNode() != null) {
+				if (newVal.getBoogieASTNode() != null) {
 					// Since hashCode(oldVal) == hashCode(newVal), this line
 					// overwrites the old entry, so that we do not remove it in
 					// the end!
 					rootAnnot.getLoopLocations().put(newVal,
-							newVal.getAstNode().getLocation());
+							newVal.getBoogieASTNode().getLocation());
 				}
 			}
 		}

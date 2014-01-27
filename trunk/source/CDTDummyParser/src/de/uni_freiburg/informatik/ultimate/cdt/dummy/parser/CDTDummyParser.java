@@ -14,8 +14,9 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.INode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
 /**
  * This dummy parser is used to pass the already parsed AST through Ultimate!
@@ -140,7 +141,7 @@ public class CDTDummyParser implements ISource {
 	 * .io.File)
 	 */
 	@Override
-	public INode parseAST(File file) throws Exception {
+	public IElement parseAST(File file) throws Exception {
 		Object ast = UltimateServices.getInstance().getParsedAST();
 		if (ast == null) {
 			s_Logger.error("There is no AST set in UltimateServices!");

@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;

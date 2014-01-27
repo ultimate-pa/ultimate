@@ -32,14 +32,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-//import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
@@ -51,12 +50,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
+//import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
 
 /**
  * Maps Boogie variables to the corresponding SMT variables. The SMT variables 
@@ -200,13 +197,13 @@ public class Smt2Boogie implements Serializable {
 	 * If the (type,sort) pair is not already stored in m_type2sort the 
 	 * corresponding sort is constructed and the pair (sort, type) is added to
 	 * m_sort2type which is used for a backtranslation.
-	 * @param astNode astNode for which Sort is computed 
+	 * @param BoogieASTNode BoogieASTNode for which Sort is computed 
 	 */
-	public Sort getSort(IType type, ASTNode astNode) {
+	public Sort getSort(IType type, BoogieASTNode BoogieASTNode) {
 		if (m_type2sort.containsKey(type)) {
 			return m_type2sort.get(type);
 		} else {
-			return constructSort(type, astNode);
+			return constructSort(type, BoogieASTNode);
 		}
 	}
 		
@@ -216,9 +213,9 @@ public class Smt2Boogie implements Serializable {
 	 * Construct the SMT sort for a boogie type.
 	 * Store the (type, sort) pair in m_type2sort. Store the (sort, type) pair 
 	 * in m_sort2type.
-	 * @param astNode astNode for which Sort is computed 
+	 * @param BoogieASTNode BoogieASTNode for which Sort is computed 
 	 */
-	private Sort constructSort(IType boogieType, ASTNode astNode) {
+	private Sort constructSort(IType boogieType, BoogieASTNode BoogieASTNode) {
 		Sort result;
 		if (boogieType instanceof PrimitiveType) {
 			if (boogieType.equals(PrimitiveType.boolType)) {
@@ -236,21 +233,21 @@ public class Smt2Boogie implements Serializable {
 		}
 		else if (boogieType instanceof ArrayType) {
 			ArrayType arrayType = (ArrayType) boogieType;
-			Sort rangeSort = constructSort(arrayType.getValueType(), astNode);
+			Sort rangeSort = constructSort(arrayType.getValueType(), BoogieASTNode);
 			if (m_BlackHoleArrays) {
 				result = rangeSort;
 			} else {
 				try {
 					for (int i = arrayType.getIndexCount() - 1; i >= 1; i--) {
-						Sort sorti = constructSort(arrayType.getIndexType(i), astNode);
+						Sort sorti = constructSort(arrayType.getIndexType(i), BoogieASTNode);
 						rangeSort = m_Script.sort("Array", sorti, rangeSort);
 					}
-					Sort domainSort = constructSort(arrayType.getIndexType(0), astNode);
+					Sort domainSort = constructSort(arrayType.getIndexType(0), BoogieASTNode);
 					result = m_Script.sort("Array", domainSort,rangeSort);
 				}
 				catch (SMTLIBException e) {
 					if (e.getMessage().equals("Sort Array not declared")) {
-						reportUnsupportedSyntax(astNode, "Solver does not support arrays");
+						reportUnsupportedSyntax(BoogieASTNode, "Solver does not support arrays");
 						throw e;
 					}
 					else {
@@ -662,11 +659,11 @@ public class Smt2Boogie implements Serializable {
 		return result;
 	}
 	
-	void reportUnsupportedSyntax(ASTNode astNode, String longDescription) {
+	void reportUnsupportedSyntax(BoogieASTNode BoogieASTNode, String longDescription) {
 		SyntaxErrorResult<?> result = new SyntaxErrorResult(null,
 				Activator.s_PLUGIN_NAME,
 				UltimateServices.getInstance().getTranslatorSequence(),
-				astNode.getLocation(), SyntaxErrorType.UnsupportedSyntax);
+				BoogieASTNode.getLocation(), SyntaxErrorType.UnsupportedSyntax);
 		result.setLongDescription(longDescription);
 		UltimateServices.getInstance().reportResult("Smt2Boogie", result);
 		UltimateServices.getInstance().cancelToolchain();

@@ -237,20 +237,20 @@ public class ImpulseChecker extends CodeChecker {
 		}
 		
 		//remove Last Edge
-		AnnotatedProgramPoint lastNode = copies[copies.length - 1];
+		AnnotatedProgramPoint lBoogieASTNode = copies[copies.length - 1];
 		AnnotatedProgramPoint errorLocation = nodes[nodes.length - 1];
-		if (lastNode.getOutgoingNodes().contains(errorLocation)) {
-//			if(lastNode.getOutgoingEdgeLabel(errorLocation) instanceof Return) {
+		if (lBoogieASTNode.getOutgoingNodes().contains(errorLocation)) {
+//			if(lBoogieASTNode.getOutgoingEdgeLabel(errorLocation) instanceof Return) {
 //				AnnotatedProgramPoint callPred = nodes[nestedWord.getCallPosition(nodes.length - 2)];
 //				// System.err.printf("Removing return edge %d:%d -> %d", nodes.length-2, nestedWords.getCallPosition(nodes.length-2), nodes.length-1); //for debugging
-//				lastNode.removeOutgoingReturnCallPred(errorLocation, callPred);
+//				lBoogieASTNode.removeOutgoingReturnCallPred(errorLocation, callPred);
 //			}
 //			else						
-			AppEdge edge = reconstructWhichEdge(lastNode, errorLocation, errorRun.getWord().getSymbol(nodes.length - 2), 
+			AppEdge edge = reconstructWhichEdge(lBoogieASTNode, errorLocation, errorRun.getWord().getSymbol(nodes.length - 2), 
 							errorRun.getWord().getSymbol(nodes.length - 2) instanceof Return ? 
 									errorRun.getStateAtPosition(errorRun.getWord().getCallPosition(nodes.length - 2)) : 
 										null);
-//			lastNode.disconnectOutgoing(errorLocation);
+//			lBoogieASTNode.disconnectOutgoing(errorLocation);
 			edge.disconnect();
 		}
 		

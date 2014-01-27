@@ -4,6 +4,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public class Emit {
@@ -11,6 +12,11 @@ public class Emit {
 	
 	protected PrintWriter writer;
 	protected Grammar grammar;
+	protected HashSet<String> enumTypes;
+	
+	public Emit(){
+		enumTypes = new HashSet<String>();
+	}
 	
 	public void setGrammar(Grammar grammar) {
 		this.grammar = grammar;
@@ -310,6 +316,7 @@ public class Emit {
                     writer.println("    }");
                     writer.println();
                     parameters[i].setType(enumName);
+                    enumTypes.add(enumName);
                 } else if (ptype.startsWith(",")) {
                     int idx = 0;
                     while (ptype.length() > 0) {
@@ -421,5 +428,7 @@ public class Emit {
         writer.println("}");
         writer.close();
     }
+    
+    
 
 }

@@ -34,8 +34,9 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.INode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
 /**
  * @author Markus Lindenmann
@@ -156,7 +157,7 @@ public class CDTParser implements ISource {
 	 * .io.File)
 	 */
 	@Override
-	public INode parseAST(File file) throws Exception {
+	public IElement parseAST(File file) throws Exception {
 
 		IParserLogService log = new DefaultLogService();
 

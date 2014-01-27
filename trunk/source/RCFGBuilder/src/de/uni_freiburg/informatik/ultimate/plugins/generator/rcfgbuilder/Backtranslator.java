@@ -8,9 +8,9 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -25,22 +25,22 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 
 public class Backtranslator extends DefaultTranslator<
-					RcfgElement, ASTNode, Expression, Expression> {
+					RcfgElement, BoogieASTNode, Expression, Expression> {
 	
-	private Map<Statement, ASTNode> m_CodeBlock2Statement = 
-			new HashMap<Statement, ASTNode>();
+	private Map<Statement, BoogieASTNode> m_CodeBlock2Statement = 
+			new HashMap<Statement, BoogieASTNode>();
 	
 
 
-	public ASTNode putAux(Statement aux, ASTNode source) {
+	public BoogieASTNode putAux(Statement aux, BoogieASTNode source) {
 		return m_CodeBlock2Statement.put(aux, source);
 	}
 
 
 	@Override
-	public List<ASTNode> translateTrace(List<RcfgElement> trace) {
+	public List<BoogieASTNode> translateTrace(List<RcfgElement> trace) {
 		List<RcfgElement> cbTrace = trace;
-		List<ASTNode> result = new ArrayList<ASTNode>();
+		List<BoogieASTNode> result = new ArrayList<BoogieASTNode>();
 		for (RcfgElement elem : cbTrace) {
 			if (elem instanceof CodeBlock) {
 				addCodeBlock((CodeBlock) elem, result);
@@ -54,12 +54,12 @@ public class Backtranslator extends DefaultTranslator<
 	}
 
 	
-	private void addCodeBlock(CodeBlock cb, List<ASTNode> resultTrace) {
+	private void addCodeBlock(CodeBlock cb, List<BoogieASTNode> resultTrace) {
 		if (cb instanceof StatementSequence) {
 			StatementSequence ss = (StatementSequence) cb;
 			for (Statement statement : ss.getStatements()) {
 				if (m_CodeBlock2Statement.containsKey(statement)) {
-					ASTNode source = m_CodeBlock2Statement.get(statement);
+					BoogieASTNode source = m_CodeBlock2Statement.get(statement);
 					resultTrace.add(source);
 				} else {
 					resultTrace.add(statement);
@@ -90,7 +90,7 @@ public class Backtranslator extends DefaultTranslator<
 
 
 	@Override
-	public IProgramExecution<ASTNode, Expression> translateProgramExecution(
+	public IProgramExecution<BoogieASTNode, Expression> translateProgramExecution(
 			IProgramExecution<RcfgElement, Expression> programExecution) {
 		if (!(programExecution instanceof RcfgProgramExecution)) {
 			throw new IllegalArgumentException();

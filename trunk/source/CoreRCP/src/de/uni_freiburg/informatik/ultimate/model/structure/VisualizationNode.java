@@ -43,12 +43,11 @@ public final class VisualizationNode implements
 
 	private static final long serialVersionUID = 1L;
 
-	private final WrapperNode mBacking;
+	private final VisualizationWrapperNode mBacking;
 	private List<VisualizationNode> mOutgoing;
-	
 
 	public VisualizationNode(final IExplicitEdgesMultigraph<?, ?> node) {
-		mBacking = new WrapperNode(node) {
+		mBacking = new VisualizationWrapperNode(node) {
 
 			@Override
 			protected void createIncoming() {
@@ -96,21 +95,20 @@ public final class VisualizationNode implements
 		};
 
 	}
-	
-
 
 	public <T extends ILabeledEdgesMultigraph<T, L>, L> VisualizationNode(
 			final ILabeledEdgesMultigraph<T, L> node) {
-		// TODO: We need to handle the case where L is an instance of an collection (i.e. multigraph) 
-		mBacking = new WrapperNode(node) {
-			
-			private IPayload extractPayload(L label){
+		// TODO: We need to handle the case where L is an instance of an
+		// collection (i.e. multigraph)
+		mBacking = new VisualizationWrapperNode(node) {
+
+			private IPayload extractPayload(L label) {
 				IPayload pay = null;
-				if(label instanceof IPayload){
-					pay = (IPayload)label;
-				} else if (label instanceof IElement){
+				if (label instanceof IPayload) {
+					pay = (IPayload) label;
+				} else if (label instanceof IElement) {
 					IElement ele = (IElement) label;
-					if(ele.hasPayload()){
+					if (ele.hasPayload()) {
 						pay = ele.getPayload();
 					}
 				}
@@ -123,13 +121,13 @@ public final class VisualizationNode implements
 				for (ILabeledEdgesMultigraph<T, L> pred : node
 						.getIncomingNodes()) {
 					VisualizationEdge ve;
-					IPayload pay = extractPayload(node.getIncomingEdgeLabel((T) pred));
-						
+					IPayload pay = extractPayload(node
+							.getIncomingEdgeLabel((T) pred));
+
 					if (pay != null) {
 						ve = new VisualizationEdge(
 								pred.getVisualizationGraph(),
-								VisualizationNode.this,
-								pay, null);
+								VisualizationNode.this, pay, null);
 					} else {
 						ve = new VisualizationEdge(
 								pred.getVisualizationGraph(),
@@ -146,12 +144,12 @@ public final class VisualizationNode implements
 				for (ILabeledEdgesMultigraph<T, L> succ : node
 						.getOutgoingNodes()) {
 					VisualizationEdge ve;
-					IPayload pay = extractPayload(node.getOutgoingEdgeLabel((T) succ));
+					IPayload pay = extractPayload(node
+							.getOutgoingEdgeLabel((T) succ));
 
-					if (pay != null ) {
+					if (pay != null) {
 						ve = new VisualizationEdge(VisualizationNode.this,
-								succ.getVisualizationGraph(),
-								pay, null);
+								succ.getVisualizationGraph(), pay, null);
 					} else {
 						ve = new VisualizationEdge(
 
@@ -176,13 +174,15 @@ public final class VisualizationNode implements
 						@SuppressWarnings("unchecked")
 						@Override
 						public boolean hasPayload() {
-							return extractPayload(node.getOutgoingEdgeLabel((T) child)) !=null;
+							return extractPayload(node
+									.getOutgoingEdgeLabel((T) child)) != null;
 						}
 
 						@SuppressWarnings("unchecked")
 						@Override
 						public IPayload getPayload() {
-							return extractPayload(node.getOutgoingEdgeLabel((T) child));
+							return extractPayload(node
+									.getOutgoingEdgeLabel((T) child));
 						}
 
 						@Override
@@ -195,11 +195,9 @@ public final class VisualizationNode implements
 			}
 		};
 	}
-	
-
 
 	public VisualizationNode(final ISimpleAST<?> node) {
-		mBacking = new WrapperNode(node) {
+		mBacking = new VisualizationWrapperNode(node) {
 
 			private Logger mLogger = UltimateServices.getInstance().getLogger(
 					Activator.s_PLUGIN_ID);
@@ -217,6 +215,9 @@ public final class VisualizationNode implements
 				mIncoming = new ArrayList<VisualizationEdge>();
 
 				for (ISimpleAST<?> succ : node.getOutgoingNodes()) {
+					if(succ == null){
+						continue;
+					}
 					VisualizationEdge ve;
 					if (succ.hasPayload()) {
 						ve = new VisualizationEdge(VisualizationNode.this,
@@ -227,7 +228,7 @@ public final class VisualizationNode implements
 								succ.getVisualizationGraph(), succ);
 					}
 					mOutgoing.add(ve);
-					succ.getVisualizationGraph().getIncomingEdges().add(ve);
+//					succ.getVisualizationGraph().getIncomingEdges().add(ve);
 				}
 			}
 
@@ -235,22 +236,22 @@ public final class VisualizationNode implements
 			protected void createIncoming() {
 				// we only warn here, because after a call to getOutgoingEdges
 				// the incomingEdges should be initialized
-				mLogger.warn("ISimpleAST does not support parent pointer -- try calling getOutgoingEdges() first");
+				// mLogger.warn("ISimpleAST does not support parent pointer -- try calling getOutgoingEdges() first");
 			}
 		};
 	}
 
 	public VisualizationNode(final IDirectedGraph<?> node) {
-		this(node, new HashMap<IElement, WrapperNode>());
+		this(node, new HashMap<IElement, VisualizationWrapperNode>());
 	}
-	
+
 	private VisualizationNode(final IDirectedGraph<?> node,
-			final HashMap<IElement, WrapperNode> backingDirectory) {
+			final HashMap<IElement, VisualizationWrapperNode> backingDirectory) {
 		if (backingDirectory.containsKey(node)) {
 			mBacking = backingDirectory.get(node);
 		} else {
 
-			mBacking = new WrapperNode(node) {
+			mBacking = new VisualizationWrapperNode(node) {
 
 				@SuppressWarnings({ "unchecked", "rawtypes" })
 				@Override
@@ -342,22 +343,27 @@ public final class VisualizationNode implements
 
 	@Override
 	public String toString() {
-		return mBacking.toString();
+		String s = mBacking.toString();
+		if(s.length()>30){
+			int offset = s.length() - 30;
+			s = s.substring(offset);
+		}
+		return s;
 	}
 
 	/* ------------------- WrapperNode ------------------ */
 
-	private abstract class WrapperNode {
-		
+	private abstract class VisualizationWrapperNode {
+
 		private final IElement mBackingNode;
 
 		protected List<VisualizationEdge> mOutgoing;
 		protected List<VisualizationEdge> mIncoming;
 
-		protected WrapperNode(IElement backing) {
+		protected VisualizationWrapperNode(IElement backing) {
 			mBackingNode = backing;
 		}
-		
+
 		protected IPayload getPayload() {
 			return mBackingNode.getPayload();
 		}
@@ -394,8 +400,9 @@ public final class VisualizationNode implements
 
 		@Override
 		public boolean equals(Object obj) {
-			if (obj instanceof WrapperNode) {
-				return mBackingNode.equals(((WrapperNode) obj).mBackingNode);
+			if (obj instanceof VisualizationWrapperNode) {
+				return mBackingNode
+						.equals(((VisualizationWrapperNode) obj).mBackingNode);
 			}
 			return super.equals(obj);
 		}

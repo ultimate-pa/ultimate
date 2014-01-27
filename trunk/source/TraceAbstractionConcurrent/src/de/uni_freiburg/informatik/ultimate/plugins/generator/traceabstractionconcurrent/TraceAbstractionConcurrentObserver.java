@@ -195,7 +195,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 	private void reportPositiveResult(Collection<ProgramPoint> errorLocs) {
 		for (ProgramPoint errorLoc : errorLocs) {
-			ILocation origin = errorLoc.getAstNode().getLocation().getOrigin();
+			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(
 					errorLoc,
 					Activator.s_PLUGIN_NAME,
@@ -238,7 +238,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	
 	private void reportTimoutResult(Collection<ProgramPoint> errorLocs, int timeout) {
 		for (ProgramPoint errorLoc : errorLocs) {
-			ILocation origin = errorLoc.getAstNode().getLocation().getOrigin();
+			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Timout! (" + timeout + "s) Unable to prove that " +
 					origin.checkedSpecification().getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
@@ -322,7 +322,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			IAnnotations check = errorLoc.getPayload().getAnnotations().get(Check.getIdentifier());
 			return (Check) check;
 		}
-		return errorLoc.getAstNode().getLocation().getOrigin().checkedSpecification();
+		return errorLoc.getBoogieASTNode().getLocation().getOrigin().checkedSpecification();
 	}
 	
 	public ProgramPoint getErrorPP(RcfgProgramExecution rcfgProgramExecution) {

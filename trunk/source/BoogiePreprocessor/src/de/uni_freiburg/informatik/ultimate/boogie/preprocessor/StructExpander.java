@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
 /**
  * This class removes our Boogie syntax extension of structs and
@@ -290,8 +290,8 @@ public class StructExpander extends BoogieTransformer implements
      */
     @Override
     public boolean process(IElement root) {
-        if (root instanceof WrapperNode) {
-            Unit unit = (Unit) ((WrapperNode) root).getBacking();
+    	if (root instanceof Unit) {
+			Unit unit = (Unit) root;
             ArrayDeque<Declaration> newDecls = new ArrayDeque<Declaration>();
             for (Declaration d : unit.getDeclarations()) {
                 Declaration[] funcs = expandDeclaration(d);

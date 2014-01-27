@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
@@ -52,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -786,11 +786,11 @@ public class CfgBuilder {
 		
 		
 		/**
-		 * construct error location astNode in procedure procName add
+		 * construct error location BoogieASTNode in procedure procName add
 		 * constructed location to m_procLocNodes and m_ErrorNodes.
 		 * @return 
 		 */
-		private ProgramPoint addErrorNode(String procName, ASTNode astNode) {
+		private ProgramPoint addErrorNode(String procName, BoogieASTNode BoogieASTNode) {
 			Collection<ProgramPoint> errorNodes = m_RootAnnot.m_ErrorNodes.get(procName);
 			if (errorNodes == null) {
 				errorNodes = new ArrayList<ProgramPoint>();
@@ -798,13 +798,13 @@ public class CfgBuilder {
 			}
 			int locNodeNumber = m_RootAnnot.m_ErrorNodes.get(procName).size();
 			String errorLocLabel;
-			if (astNode instanceof AssertStatement) {
+			if (BoogieASTNode instanceof AssertStatement) {
 				errorLocLabel = procName + "Err" + locNodeNumber + "AssertViolation";
 			}
-			else if (astNode instanceof EnsuresSpecification) {
+			else if (BoogieASTNode instanceof EnsuresSpecification) {
 				errorLocLabel = procName + "Err" + locNodeNumber + "EnsuresViolation";
 			}
-			else if (astNode instanceof CallStatement) {
+			else if (BoogieASTNode instanceof CallStatement) {
 				errorLocLabel = procName + "Err" + locNodeNumber + "RequiresViolation";
 			}
 			else {
@@ -813,7 +813,7 @@ public class CfgBuilder {
 			ProgramPoint errorLocNode = new ProgramPoint(errorLocLabel,
 					procName,
 					true,
-					astNode);
+					BoogieASTNode);
 			m_procLocNodes.put(errorLocLabel, errorLocNode);
 			errorNodes.add(errorLocNode);
 			return errorLocNode;
@@ -1432,9 +1432,9 @@ public class CfgBuilder {
 				transEdge.setSource(newLocNode);
 			}
 			oldLocNode.clearOutgoing();
-			if (oldLocNode.getAstNode() != null && 
-					oldLocNode.getAstNode().getLocation().isLoop()) {
-				s_Logger.debug("LocNode does not have to Location of the while loop" + oldLocNode.getAstNode().getLocation());
+			if (oldLocNode.getBoogieASTNode() != null && 
+					oldLocNode.getBoogieASTNode().getLocation().isLoop()) {
+				s_Logger.debug("LocNode does not have to Location of the while loop" + oldLocNode.getBoogieASTNode().getLocation());
 			}
 
 			m_procLocNodes.remove(oldLocNode.getPosition());
@@ -1651,14 +1651,14 @@ public class CfgBuilder {
 	
 	
 	
-	private static void passAllAnnotations(ASTNode node, RcfgElement cb) {
+	private static void passAllAnnotations(BoogieASTNode node, RcfgElement cb) {
 		if (node.getPayload().hasAnnotation()) {
 			HashMap<String, IAnnotations> annots = node.getPayload().getAnnotations();
 			cb.getPayload().getAnnotations().putAll(annots);
 		}
 	}
 	
-	private static void passAllAnnotations(ASTNode node, Statement st) {
+	private static void passAllAnnotations(BoogieASTNode node, Statement st) {
 		if (node.getPayload().hasAnnotation()) {
 			HashMap<String, IAnnotations> annots = node.getPayload().getAnnotations();
 			st.getPayload().getAnnotations().putAll(annots);

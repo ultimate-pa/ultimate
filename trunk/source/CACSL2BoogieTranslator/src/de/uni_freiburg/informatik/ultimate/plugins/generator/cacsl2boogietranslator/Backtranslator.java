@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpressio
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitVectorAccessExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
@@ -22,22 +23,21 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 
 /**
  * Translation from Boogie to C for traces and expressions.
  */
-public class Backtranslator extends DefaultTranslator<ASTNode, CACSLLocation, Expression, String> {
+public class Backtranslator extends DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, String> {
 
-	Map<ASTNode, CACSLLocation> m_Position = 
-			new HashMap<ASTNode, CACSLLocation>();
+	Map<BoogieASTNode, CACSLLocation> m_Position = 
+			new HashMap<BoogieASTNode, CACSLLocation>();
 	Boogie2C m_boogie2C;
 
 	public Backtranslator() {
 	}
 	
 	@Override
-	public List<CACSLLocation> translateTrace(List<ASTNode> trace) {
+	public List<CACSLLocation> translateTrace(List<BoogieASTNode> trace) {
 		// TODO Auto-generated method stub
 		return super.translateTrace(trace);
 	}

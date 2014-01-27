@@ -3,12 +3,11 @@ package de.uni_freiburg.informatik.ultimate.boogie.DSITransformer;
 import java.util.Collections;
 import java.util.List;
 
-
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.INode;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 /**
  * This Class transforms a Boogie AST into a new one to generate data structure invariants
@@ -33,7 +32,7 @@ public class DSITransformer implements IGenerator {
 		return null;
 	}
 
-    public INode getModel() {
+    public IElement getModel() {
 		return this.m_Observer.getRoot();
 	}
 

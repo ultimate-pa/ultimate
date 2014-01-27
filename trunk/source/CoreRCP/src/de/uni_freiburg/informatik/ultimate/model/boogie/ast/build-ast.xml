@@ -8,7 +8,7 @@
 
     <target name="generate_ast">
         <java classname="de.uni_freiburg.informatik.ultimate.astbuilder.Main" classpath="${astbuilderDir}:${cupDir}" fork="true">
-        	<arg value="-ultimate" />
+        	<arg value="-ultimatenew" />
             <arg value="Boogie.ast" />
         </java>
     </target>

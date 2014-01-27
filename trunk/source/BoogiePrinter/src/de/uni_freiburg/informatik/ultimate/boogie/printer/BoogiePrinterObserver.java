@@ -16,8 +16,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.printer.preferences.Preference
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieOutput;
+import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
 /**
  * @author hoenicke
@@ -38,10 +38,10 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 	 */
 	@Override
 	public boolean process(IElement root) {
-		if (root instanceof WrapperNode) {
-			PrintWriter writer = openTempFile((WrapperNode) root);
+		if (root instanceof Unit) {
+			PrintWriter writer = openTempFile(root);
 			if (writer != null) {
-				Unit unit = (Unit) ((WrapperNode) root).getBacking();
+				Unit unit = (Unit) root;
 				BoogieOutput output = new BoogieOutput(writer);
 				output.printBoogieProgram(unit);
 				writer.close();
@@ -51,7 +51,7 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 		return true;
 	}
 
-	private PrintWriter openTempFile(WrapperNode root) {
+	private PrintWriter openTempFile(IElement root) {
 
 		String path;
 		String filename;

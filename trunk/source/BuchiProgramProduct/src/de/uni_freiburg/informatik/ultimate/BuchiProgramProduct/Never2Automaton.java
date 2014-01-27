@@ -21,12 +21,12 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 
 
 /**
@@ -41,10 +41,10 @@ public class Never2Automaton{
 	
 	private AstNode ast;
 	
-	private NestedWordAutomaton<ASTNode, String> automaton;
+	private NestedWordAutomaton<BoogieASTNode, String> automaton;
 	
 	/**
-	 * The Never2Automaton instance will build a Büchi automaton
+	 * The Never2Automaton instance will build a Bï¿½chi automaton
 	 * from the input.
 	 * @param ast
 	 * @throws Exception 
@@ -54,7 +54,7 @@ public class Never2Automaton{
 		this.ast = ast;
 		
 		
-		this.automaton = new NestedWordAutomaton<ASTNode,String>(
+		this.automaton = new NestedWordAutomaton<BoogieASTNode,String>(
 				this.collectAlphabet(), 
 				null, //call
 				null, //return
@@ -69,7 +69,7 @@ public class Never2Automaton{
 	 * get the constructed automaton
 	 * @return automaton
 	 */
-	public NestedWordAutomaton<ASTNode, String> getAutomaton()
+	public NestedWordAutomaton<BoogieASTNode, String> getAutomaton()
 	{
 		return this.automaton;
 	}
@@ -103,7 +103,7 @@ public class Never2Automaton{
 			return;
 		else if (branch instanceof OptionStatement) 	//add transitions
 		{
-			ASTNode cond = this.toBoogieAst(((OptionStatement)branch).getCondition());
+			BoogieASTNode cond = this.toBoogieAst(((OptionStatement)branch).getCondition());
 			//			  option.body                     		 .goto					    .name
 			String succ = ((Name)branch.getOutgoingNodes().get(0).getOutgoingNodes().get(0)).getIdent();
 			
@@ -127,15 +127,15 @@ public class Never2Automaton{
 	 * @return
 	 * @throws Exception 
 	 */
-	public Set<ASTNode> collectAlphabet() throws Exception
+	public Set<BoogieASTNode> collectAlphabet() throws Exception
 	{
-		Set<ASTNode> symbols = new HashSet<ASTNode>();
+		Set<BoogieASTNode> symbols = new HashSet<BoogieASTNode>();
 
 		this.visitAstForSymbols(this.ast, symbols);
 		
 		return symbols;
 	}
-	private void visitAstForSymbols(AstNode branch, Set<ASTNode> symbols) throws Exception
+	private void visitAstForSymbols(AstNode branch, Set<BoogieASTNode> symbols) throws Exception
 	{
 		if (branch instanceof BoolLiteral)
 			return;

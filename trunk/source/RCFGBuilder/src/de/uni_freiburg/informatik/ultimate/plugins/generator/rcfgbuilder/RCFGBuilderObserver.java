@@ -1,19 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ITranslator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-
-import org.apache.log4j.Logger;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -50,13 +45,13 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	 * child of procedure node to CFG
 	 */
 	public boolean process(IElement root) {
-		if (!(root instanceof WrapperNode)) {
+		if (!(root instanceof Unit)) {
 			//TODO
 			s_Logger.debug("No WrapperNode. Let Ultimate process with next node");
 			return true;
 		}
 		else {
-			Unit unit = (Unit) ((WrapperNode)root).getBacking();
+			Unit unit = (Unit) root;
 			Backtranslator translator =	new Backtranslator();
 			CfgBuilder recCFGBuilder = new CfgBuilder(unit, translator);
 			try {

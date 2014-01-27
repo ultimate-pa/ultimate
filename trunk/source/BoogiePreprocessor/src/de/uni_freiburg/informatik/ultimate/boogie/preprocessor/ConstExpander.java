@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,8 +36,8 @@ public class ConstExpander extends BoogieTransformer
 
 	@Override
 	public boolean process(IElement root) {
-		if (root instanceof WrapperNode) {
-			Unit unit = (Unit) ((WrapperNode) root).getBacking();
+		if (root instanceof Unit) {
+			Unit unit = (Unit) root;
 			ArrayList<Declaration> newDecls = new ArrayList<Declaration>();
 			for (Declaration decl: unit.getDeclarations()) {
 				if (decl instanceof ConstDeclaration) {

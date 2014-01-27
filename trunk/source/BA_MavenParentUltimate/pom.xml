@@ -43,11 +43,6 @@
 			<layout>p2</layout>
 			<url>http://download.eclipse.org/releases/indigo</url>
 		</repository>
-<!--		 <repository> 
-		 <id>eclipse-kepler</id> 
-		 <layout>p2</layout> 
-		 <url>http://download.eclipse.org/releases/kepler</url> 
-		 </repository> -->
 		<repository>
 			<id>javaxRepository</id>
 			<name>Java.net Repository for Maven</name>
@@ -234,14 +229,7 @@
 
 		<profile>
 			<id>coverage</id>
-<!--<dependencies>
-<dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.7</version>
-    </dependency>
-</dependencies>-->
-			
+		
 			<properties>
 				<!-- Jacoco version -->
 				<jacoco.version>0.5.6.201201232323</jacoco.version>

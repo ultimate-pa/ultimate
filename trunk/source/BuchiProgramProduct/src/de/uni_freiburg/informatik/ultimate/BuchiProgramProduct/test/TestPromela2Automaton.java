@@ -5,12 +5,11 @@ import java.util.Arrays;
 import java.util.Set;
 
 import junit.framework.TestCase;
-
 import de.uni_freiburg.informatik.ultimate.BuchiProgramProduct.Never2Automaton;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.*;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 
 public class TestPromela2Automaton extends TestCase{
 
@@ -27,8 +26,8 @@ public class TestPromela2Automaton extends TestCase{
 		AstNode never = new NeverStatement(lb1);
 		
 		Never2Automaton na = new Never2Automaton(never);
-		Set<ASTNode> symbset = na.collectAlphabet();
-		ASTNode[] symbols = symbset.toArray(new ASTNode[symbset.size()]);
+		Set<BoogieASTNode> symbset = na.collectAlphabet();
+		BoogieASTNode[] symbols = symbset.toArray(new BoogieASTNode[symbset.size()]);
 		
 		assertEquals(1,symbols.length);
 		assertTrue(symbols[0] instanceof BooleanLiteral); 	
@@ -60,12 +59,12 @@ public class TestPromela2Automaton extends TestCase{
 		never.addOutgoing(new LabeledBlock(new Name("accept_n2"), new ConditionalBlock(new ArrayList<AstNode>(Arrays.asList(o1,o2,o3)))));
 		
 		Never2Automaton na = new Never2Automaton(never);	
-		Set<ASTNode> symbols = na.collectAlphabet();
+		Set<BoogieASTNode> symbols = na.collectAlphabet();
 		
 		
 		assertEquals(4,symbols.size());
 		ArrayList<String> symbstrings = new ArrayList<String>();
-		for(ASTNode a : symbols)
+		for(BoogieASTNode a : symbols)
 		{
 			symbstrings.add(a.toString());
 		}
@@ -88,7 +87,7 @@ public class TestPromela2Automaton extends TestCase{
 		AstNode never = new NeverStatement(lb1);
 		
 		Never2Automaton na = new Never2Automaton(never);
-		NestedWordAutomaton<ASTNode, String> aut = na.getAutomaton();
+		NestedWordAutomaton<BoogieASTNode, String> aut = na.getAutomaton();
 	
 		assertTrue(aut.getInitialStates().contains("accept_init"));
 		assertTrue(aut.getFinalStates().contains("accept_init"));

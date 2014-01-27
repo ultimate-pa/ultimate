@@ -155,7 +155,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			Map<ProgramPoint, ILocation> loopLocations = rootAnnot
 					.getLoopLocations();
 			for (ProgramPoint locNode : loopLocations.keySet()) {
-				assert (locNode.getAstNode() != null) : "locNode without ASTNode";
+				assert (locNode.getBoogieASTNode() != null) : "locNode without BoogieASTNode";
 				HoareAnnotation hoare = getHoareAnnotation(locNode);
 				if (hoare != null) {
 					InvariantResult<RcfgElement, Expression> invResult = 
@@ -172,7 +172,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 							translator_sequence, expr);
 					invResult.setLongDescription(ppExpr);
 					s_Logger.warn("Derived loop invarinat at "
-							+ locNode.getAstNode().getLocation() + ": "
+							+ locNode.getBoogieASTNode().getLocation() + ": "
 							+ formula.toString() + expr + "   "
 							+ ppExpr);
 					reportResult(invResult);
@@ -325,7 +325,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			reportResult(gr);
 		} else {
 			for (ProgramPoint errorLoc : errorLocs) {
-				ILocation origin = errorLoc.getAstNode().getLocation().getOrigin();
+				ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(
 						errorLoc,
 						Activator.s_PLUGIN_NAME,
@@ -369,7 +369,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	
 	private void reportTimoutResult(Collection<ProgramPoint> errorLocs) {
 		for (ProgramPoint errorLoc : errorLocs) {
-			ILocation origin = errorLoc.getAstNode().getLocation().getOrigin();
+			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that " +
 					getCheckedSpecification(errorLoc).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
@@ -432,7 +432,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			IAnnotations check = errorLoc.getPayload().getAnnotations().get(Check.getIdentifier());
 			return (Check) check;
 		}
-		return errorLoc.getAstNode().getLocation().getOrigin().checkedSpecification();
+		return errorLoc.getBoogieASTNode().getLocation().getOrigin().checkedSpecification();
 	}
 	
 	

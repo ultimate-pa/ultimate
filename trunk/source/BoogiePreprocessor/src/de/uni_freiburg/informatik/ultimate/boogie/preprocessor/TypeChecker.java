@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
@@ -74,8 +75,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
@@ -1000,12 +999,12 @@ public class TypeChecker implements IUnmanagedObserver {
      * @return BoogieType of the checked variable. errorType if the variable was
      *         not declared.
      */
-    private BoogieType checkVarModification(ASTNode astNode, String var) {
+    private BoogieType checkVarModification(BoogieASTNode BoogieASTNode, String var) {
         if (m_InParams.contains(var)) {
             String message = "Local variable " + var + " modified in "
                     + " procedure " + m_CurrentProcedure + " but is an "
                     + "in-parameter of this procedure";
-            typeError(astNode, message);
+            typeError(BoogieASTNode, message);
             return findVariable(var).getType();
         } else if (m_OutParams.contains(var)) {
             // var is out parameter (may shadow global var), modification is
@@ -1022,13 +1021,13 @@ public class TypeChecker implements IUnmanagedObserver {
                 String message = "Global variable " + var + " modified in "
                         + " procedure " + m_CurrentProcedure + " but not "
                         + "contained in procedures modifies clause.";
-                typeError(astNode, message);
+                typeError(BoogieASTNode, message);
             }
             return findVariable(var).getType();
         } else {
             String message = "Variable " + var + " modified in procedure "
                     + m_CurrentProcedure + " but not declared";
-            typeError(astNode, message);
+            typeError(BoogieASTNode, message);
             return errorType;
         }
     }
@@ -1175,8 +1174,8 @@ public class TypeChecker implements IUnmanagedObserver {
     }
 
     public boolean process(IElement root) {
-        if (root instanceof WrapperNode) {
-            Unit unit = (Unit) ((WrapperNode) root).getBacking();
+        if (root instanceof Unit) {
+            Unit unit = (Unit) root;
             declaredVars = new HashMap<String, VariableInfo>();
             declaredFunctions = new HashMap<String, FunctionInfo>();
             declaredProcedures = new HashMap<String, ProcedureInfo>();
@@ -1230,16 +1229,16 @@ public class TypeChecker implements IUnmanagedObserver {
         return true;
     }
 
-    private static void typeError(ASTNode astNode, String message) {
-        SyntaxErrorResult<ASTNode> result = new SyntaxErrorResult<ASTNode>(
-        		astNode,
+    private static void typeError(BoogieASTNode BoogieASTNode, String message) {
+        SyntaxErrorResult<BoogieASTNode> result = new SyntaxErrorResult<BoogieASTNode>(
+        		BoogieASTNode,
         		Activator.PLUGIN_ID,
         		UltimateServices.getInstance().getTranslatorSequence(),
-        		astNode.getLocation(),
+        		BoogieASTNode.getLocation(),
                 SyntaxErrorType.TypeError);
         result.setLongDescription(message);
         UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID)
-                .error(astNode.getLocation() + ": " + message);
+                .error(BoogieASTNode.getLocation() + ": " + message);
         UltimateServices us = UltimateServices.getInstance();
         us.reportResult(Activator.PLUGIN_ID, result);
         us.cancelToolchain();

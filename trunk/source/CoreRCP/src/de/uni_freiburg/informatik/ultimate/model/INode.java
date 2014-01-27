@@ -5,11 +5,13 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
 
 /**
- * This is the main interface for all nodes in graphs or trees
+ * This is the _OLD_ main interface for all nodes in graphs or trees
  * 
+ * It is superseeded by IElement 
  * 
  * @author dietsch / bisser $LastChangedBy: björn buchhold
  */
+@Deprecated
 public interface INode extends IElement, IWalkable {
 
 	/**

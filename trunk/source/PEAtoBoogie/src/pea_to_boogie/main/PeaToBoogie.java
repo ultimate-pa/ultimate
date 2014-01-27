@@ -16,8 +16,6 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
 
 public class PeaToBoogie implements ISource {
     protected static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
@@ -64,8 +62,7 @@ public class PeaToBoogie implements ISource {
     	int combinationNum = Math.min(patterns.length, 3); //TODO preference
  		translator.setCombinationNum(combinationNum);
  		translator.setInputFilePath(inputPath);
- 		Unit unit = translator.genBoogie(patterns);	
- 		return new WrapperNode(null, unit);
+ 		return translator.genBoogie(patterns);	
 	}
 
 

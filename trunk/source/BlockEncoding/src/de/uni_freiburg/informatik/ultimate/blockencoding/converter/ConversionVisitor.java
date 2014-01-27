@@ -27,8 +27,8 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.Disjunct
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -288,23 +288,23 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		if (refNodeMap.containsKey(node)) {
 			return refNodeMap.get(node);
 		} else {
-			ASTNode astNode = node.getOriginalNode().getAstNode();
-			if (astNode == null
+			BoogieASTNode BoogieASTNode = node.getOriginalNode().getBoogieASTNode();
+			if (BoogieASTNode == null
 					&& node.getOriginalNode().getPayload().hasLocation()) {
 				ILocation loc = node.getOriginalNode().getPayload()
 						.getLocation();
 				if (loc instanceof BoogieLocation) {
-					astNode = ((BoogieLocation) loc).getASTNode();
+					BoogieASTNode = ((BoogieLocation) loc).getBoogieASTNode();
 					if (loc.getOrigin() != null) {
 						// we have to update the ast node with the original
 						// location
-						astNode.getPayload().setLocation(loc.getOrigin());
+						BoogieASTNode.getPayload().setLocation(loc.getOrigin());
 					}
 				}
 			}
 			ProgramPoint newNode = new ProgramPoint(node.getOriginalNode()
 					.getPosition(), node.getOriginalNode().getProcedure(), node
-					.getOriginalNode().isErrorLocation(), astNode);
+					.getOriginalNode().isErrorLocation(), BoogieASTNode);
 			refNodeMap.put(node, newNode);
 			// to reset the rootAnnot, we need to keep a map from the original
 			// program points, to the new ones. And since we only create

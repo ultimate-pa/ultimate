@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
 public class SymbolTableVisitor extends BoogieTransformer
 {

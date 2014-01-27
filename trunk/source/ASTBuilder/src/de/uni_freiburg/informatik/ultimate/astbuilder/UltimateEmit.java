@@ -17,7 +17,7 @@ public class UltimateEmit extends Emit {
                 + "class "
                 + node.getName()
                 + (node.getParent() != null ? " extends " + node.getParent()
-                        : " extends ASTNode") + " {");
+                        : " extends BoogieASTNode") + " {");
         formatComment(writer, "    ", "The serial version UID.");
         writer.println("    private static final long serialVersionUID = 1L;");
     }
@@ -81,7 +81,7 @@ public class UltimateEmit extends Emit {
         writer.println("import java.util.List;");
         writer.println("import de.uni_freiburg.informatik.ultimate.model.location.ILocation;");
         if (node.getParent() == null)
-            writer.println("import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;");
+            writer.println("import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.BoogieASTNode;");
 
     }
 

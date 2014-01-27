@@ -5,30 +5,22 @@ package de.uni_freiburg.informatik.ultimate.BuchiProgramProduct;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -49,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  */
 public class Product {
 	
-	private NestedWordAutomaton<ASTNode, String> aut;
+	private NestedWordAutomaton<BoogieASTNode, String> aut;
 	private RootNode rcfg;	
 	private List<ProgramPoint> rcfgLocations = new ArrayList<ProgramPoint>();
 	
@@ -61,7 +53,7 @@ public class Product {
 
 	HashMap< ProgramPoint, ArrayList<Call>> callEdges = new HashMap< ProgramPoint, ArrayList<Call>>();
 	
-	public Product(NestedWordAutomaton<ASTNode, String> aut, RootNode rcfg) throws Exception 
+	public Product(NestedWordAutomaton<BoogieASTNode, String> aut, RootNode rcfg) throws Exception 
 	{
 		this.aut = aut;
 		this.rcfg = rcfg;
@@ -146,7 +138,7 @@ public class Product {
 										helperName,
 										currentpp.getProcedure(), 
 										false, 
-										currentpp.getAstNode());
+										currentpp.getBoogieASTNode());
 							this.rootNode.getRootAnnot().getProgramPoints().get(currentpp.getProcedure()).put(helperName, helper);
 							
 			
@@ -166,7 +158,7 @@ public class Product {
 							//From the helpernode, the original call target is connected with a new
 							//edge with the fitting assumption of the call. The edge is calculated 
 							//like any other edge in the graph.
-							for(OutgoingInternalTransition<ASTNode, String> autTrans: this.aut.internalSuccessors(n)){
+							for(OutgoingInternalTransition<BoogieASTNode, String> autTrans: this.aut.internalSuccessors(n)){
 								targetpp = this.productLocations.get(
 										this.stateNameGenerator(
 												((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),
@@ -194,7 +186,7 @@ public class Product {
 									helperName,
 									((ProgramPoint)rcfgEdge.getTarget()).getProcedure(), 
 									false, 
-									((ProgramPoint)rcfgEdge.getTarget()).getAstNode());
+									((ProgramPoint)rcfgEdge.getTarget()).getBoogieASTNode());
 							//add helper node to procedures nodes
 							//note that this node is already behin the return and in the NEXT procedure
 							this.rootNode.getRootAnnot().getProgramPoints().get(
@@ -236,7 +228,7 @@ public class Product {
 							//From the helpernode, the original call target is connected with a new
 							//edge with the fitting assumption of the call. The edge is calculated 
 							//like any other edge in the graph.
-							for(OutgoingInternalTransition<ASTNode, String> autTrans: this.aut.internalSuccessors(n)){
+							for(OutgoingInternalTransition<BoogieASTNode, String> autTrans: this.aut.internalSuccessors(n)){
 								targetpp = this.productLocations.get(
 										this.stateNameGenerator(
 												((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),
@@ -294,7 +286,7 @@ public class Product {
 							}*/
 						} else if(rcfgEdge instanceof StatementSequence){
 							if (mode == 1) continue; 
-							for(OutgoingInternalTransition<ASTNode, String> autTrans: this.aut.internalSuccessors(n)){
+							for(OutgoingInternalTransition<BoogieASTNode, String> autTrans: this.aut.internalSuccessors(n)){
 								targetpp = this.productLocations.get(
 										this.stateNameGenerator(
 												((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),
@@ -341,7 +333,7 @@ public class Product {
 									this.stateNameGenerator(pp.getLocationName(), n),
 									pp.getProcedure(),
 									false,
-									pp.getAstNode());
+									pp.getBoogieASTNode());
 				
 				this.productLocations.put(this.stateNameGenerator(pp.getLocationName(), n), productNode);
 					

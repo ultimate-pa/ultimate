@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 
 /**
  * Specification that should be checked at position 
@@ -168,12 +168,12 @@ public class Check extends AbstractAnnotations {
 	}
 
     /**
-     * Adds this Check object to the annotations of an ASTNode.
+     * Adds this Check object to the annotations of an BoogieASTNode.
      * 
-     * @param node the ASTNode
+     * @param node the BoogieASTNode
      * @author Christian
      */
-    public final void addToNodeAnnot(ASTNode node) {
+    public final void addToNodeAnnot(BoogieASTNode node) {
         node.getPayload().getAnnotations().put(getIdentifier(), this);
     }
 }

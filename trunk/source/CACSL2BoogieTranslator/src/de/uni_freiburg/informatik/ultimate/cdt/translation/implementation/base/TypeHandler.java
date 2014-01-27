@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -71,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 

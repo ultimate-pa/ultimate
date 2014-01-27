@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
 public class CriticalSectionTransformer extends BoogieTransformer {
 	

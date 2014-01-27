@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -38,10 +39,9 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
 /**
  * Convert structured Boogie-Code (code containing while-loops, if-then-else constructs,
@@ -110,8 +110,8 @@ public class UnstructureCode implements IUnmanagedObserver {
 	 * unstructureBody on it.
 	 */
 	public boolean process(IElement root) {
-		if (root instanceof WrapperNode) {
-			Unit unit = (Unit) ((WrapperNode) root).getBacking();
+		if (root instanceof Unit) {
+			Unit unit = (Unit) root;
 			for (Declaration decl: unit.getDeclarations()) {
 				if (decl instanceof Procedure) {
 					Procedure proc = (Procedure) decl;

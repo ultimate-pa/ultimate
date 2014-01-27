@@ -208,7 +208,7 @@ public class RankingFunctionsObserver implements IUnmanagedObserver {
 										"LinearRankingFunction",
 										siExpressionArray,
 										UltimateServices.getInstance().getTranslatorSequence(),
-										honda.getAstNode().getLocation().getOrigin());
+										honda.getBoogieASTNode().getLocation().getOrigin());
 						reportResult(rankRes);
 						s_Logger.info(rankRes.getShortDescription());
 						s_Logger.info(rankRes.getLongDescription());
@@ -224,7 +224,7 @@ public class RankingFunctionsObserver implements IUnmanagedObserver {
 									honda,
 									Activator.s_PLUGIN_NAME,
 									UltimateServices.getInstance().getTranslatorSequence(),
-									honda.getAstNode().getLocation().getOrigin());
+									honda.getBoogieASTNode().getLocation().getOrigin());
 					rankRes.setShortDescription(shortMessage);
 					rankRes.setLongDescription(longMessage.toString());
 					reportResult(rankRes);
@@ -311,7 +311,7 @@ public class RankingFunctionsObserver implements IUnmanagedObserver {
 				position,
 				Activator.s_PLUGIN_NAME,
 				UltimateServices.getInstance().getTranslatorSequence(),
-				position.getAstNode().getLocation().getOrigin(),
+				position.getBoogieASTNode().getLocation().getOrigin(),
 				SyntaxErrorType.UnsupportedSyntax);
 		unsupp.setLongDescription(message);
 		reportResult(unsupp);

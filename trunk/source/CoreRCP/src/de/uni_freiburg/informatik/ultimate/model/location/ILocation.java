@@ -7,7 +7,7 @@ import de.uni_freiburg.informatik.ultimate.result.Check;
 
 /**
  * Defines an area in a text file.
- * Used to specify where an ASTNode is defined.
+ * Used to specify where an BoogieASTNode is defined.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *

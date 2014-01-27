@@ -22,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -113,8 +113,8 @@ public class FunctionInliner extends BoogieTransformer
 	 */
 	public boolean process(IElement root) {
 		// Check if node is the first node of the AST.
-		if (root instanceof WrapperNode) {
-			Unit unit = (Unit) ((WrapperNode) root).getBacking();
+		if (root instanceof Unit) {
+			Unit unit = (Unit) root;
 			List<Declaration> newDeclarations = new ArrayList<Declaration>();
 			inlinedFunctions = new HashMap<String, FunctionDeclaration>();
 			

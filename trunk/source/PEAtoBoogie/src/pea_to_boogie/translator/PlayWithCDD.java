@@ -2,12 +2,13 @@ package pea_to_boogie.translator;
 import java.util.*;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import pea.*;
 
 import java.util.*;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 import de.uni_freiburg.informatik.ultimate.model.*;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.*;
 public class PlayWithCDD {

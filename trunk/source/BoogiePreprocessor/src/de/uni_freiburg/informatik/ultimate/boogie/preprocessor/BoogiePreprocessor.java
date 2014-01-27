@@ -8,7 +8,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferenceInitiali
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 
 /**
  * This class initializes the boogie preprocessor.
@@ -81,7 +81,7 @@ public class BoogiePreprocessor implements IAnalysis {
      * @param to node to add annotations to
      * @author Christian & Matthias
      */
-    public static void passAnnotations(ASTNode from, ASTNode to) {
+    public static void passAnnotations(BoogieASTNode from, BoogieASTNode to) {
         if (from.getPayload().hasAnnotation()) {
             to.getPayload().getAnnotations().putAll(
                     from.getPayload().getAnnotations());

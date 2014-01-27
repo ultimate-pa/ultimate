@@ -1,25 +1,17 @@
 package de.uni_freiburg.informatik.ultimate.BuchiProgramProduct;
 
-import java.util.List;
-
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.NeverStatement;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 public class BuchiProductObserver implements IUnmanagedObserver {
 	
-	private NestedWordAutomaton<ASTNode, String> automaton = null; 
+	private NestedWordAutomaton<BoogieASTNode, String> automaton = null; 
 	private RootNode rcfg = null;
 	
 	public Product product;

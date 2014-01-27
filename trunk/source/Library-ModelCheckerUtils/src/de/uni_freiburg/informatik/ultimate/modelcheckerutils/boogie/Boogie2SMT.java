@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
@@ -56,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 
@@ -197,14 +197,14 @@ public class Boogie2SMT {
 	 * @param procedure
 	 * @param iType
 	 * @param isOldvar
-	 * @param astNode astNode for which errors (e.g., unsupported syntax) are
+	 * @param BoogieASTNode BoogieASTNode for which errors (e.g., unsupported syntax) are
 	 * reported
 	 */
 	public BoogieVar constructBoogieVar(String identifier, String procedure, 
-			IType iType, boolean isOldvar, ASTNode astNode) {
+			IType iType, boolean isOldvar, BoogieASTNode BoogieASTNode) {
 		assert (!isOldvar || procedure == null);
 	
-		Sort sort = m_Smt2Boogie.getSort(iType, astNode);
+		Sort sort = m_Smt2Boogie.getSort(iType, BoogieASTNode);
 		String name;
 		if (isOldvar) {
 			name = "old(" + identifier + ")";
@@ -266,9 +266,9 @@ public class Boogie2SMT {
 	/**
 	 * Get SMT variable for boogieVar and add it to inVars.	
 	 */
-	private TermVariable createInVar(BoogieVar boogieVar, ASTNode astNode) {
+	private TermVariable createInVar(BoogieVar boogieVar, BoogieASTNode BoogieASTNode) {
 		TermVariable tv;
-		Sort sort = m_Smt2Boogie.getSort(boogieVar.getIType(), astNode);
+		Sort sort = m_Smt2Boogie.getSort(boogieVar.getIType(), BoogieASTNode);
 		if (boogieVar.isOldvar()) {
 			tv = boogieVar.getTermVariable();
 		}
@@ -285,7 +285,7 @@ public class Boogie2SMT {
 	 * construct SmtVariable for id. If inVars does not contain such a variable,
 	 * construct it an add it to invars and outvars.
 	 */
-	private Term getSmtIdentifier(String id, ASTNode astNode) {
+	private Term getSmtIdentifier(String id, BoogieASTNode BoogieASTNode) {
 		if (m_QuantifiedVariables.containsKey(id)) {
 			return m_QuantifiedVariables.get(id);
 		}
@@ -307,7 +307,7 @@ public class Boogie2SMT {
 			} else {
 				if (!inVars.containsKey(boogieVar)) {
 					s_Logger.debug(id + " is not in inVars!");
-					TermVariable tv = createInVar(boogieVar, astNode); 
+					TermVariable tv = createInVar(boogieVar, BoogieASTNode); 
 					if (!outVars.containsKey(boogieVar)) {
 						s_Logger.debug(id + " is not in outVars!");
 						outVars.put(boogieVar, tv);
@@ -334,7 +334,7 @@ public class Boogie2SMT {
 			
 			if (!inVars.containsKey(boogieVar)) {
 				s_Logger.debug(id + " is not in inVars!");
-				TermVariable tv = createInVar(boogieVar, astNode); 
+				TermVariable tv = createInVar(boogieVar, BoogieASTNode); 
 				if (!outVars.containsKey(boogieVar)) {
 					s_Logger.debug(id + " is not in outVars!");
 					outVars.put(boogieVar, tv);

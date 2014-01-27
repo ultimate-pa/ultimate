@@ -45,6 +45,8 @@ public final class MonitoredProcess {
 		return mReturnCode;
 	}
 
+	
+
 	/**
 	 * 
 	 * @param command
@@ -57,27 +59,8 @@ public final class MonitoredProcess {
 				.exec(command), command, exitCommand);
 
 		UltimateServices.getInstance().registerProcess(mp);
-		mp.mMonitor = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				try {
-					mp.mReturnCode = mp.mProcess.waitFor();
-					mp.mLogger.debug("Finished waiting for process!");
-					mp.mProcessCompleted = true;
-				} catch (InterruptedException e) {
-					mp.mLogger.error(
-							"The process started with "
-									+ mp.mCommand
-									+ " was interrupted. It will terminate abnormally.",
-							e);
-				} finally {
-					mp.mProcess.destroy();
-					mp.mProcess = null;
-					UltimateServices.getInstance().unregisterProcess(mp);
-				}
-			}
-		}, command);
+		
+		mp.mMonitor = new Thread(mp.createProcessRunner(), command);
 		mp.mLogger.info(String.format(
 				"Starting monitored process with %s (exit command is %s)",
 				mp.mCommand, mp.mExitCommand));
@@ -144,6 +127,39 @@ public final class MonitoredProcess {
 	protected void finalize() throws Throwable {
 		forceShutdown();
 		super.finalize();
+	}
+	
+	private ProcessRunner createProcessRunner(){
+		return new ProcessRunner(this);
+	}
+	
+	private class ProcessRunner implements Runnable{
+		
+		private MonitoredProcess mMonitoredProcess;
+		
+		private ProcessRunner(MonitoredProcess mp){
+			mMonitoredProcess = mp;
+		}
+		
+		@Override
+		public void run() {
+			try {
+				mMonitoredProcess.mReturnCode = mMonitoredProcess.mProcess.waitFor();
+				
+				mMonitoredProcess.mLogger.debug("Finished waiting for process!");
+				mMonitoredProcess.mProcessCompleted = true;
+			} catch (InterruptedException e) {
+				mMonitoredProcess.mLogger.error(
+						"The process started with "
+								+ mMonitoredProcess.mCommand
+								+ " was interrupted. It will terminate abnormally.",
+						e);
+			} finally {
+				mMonitoredProcess.mProcess.destroy();
+				mMonitoredProcess.mProcess = null;
+				UltimateServices.getInstance().unregisterProcess(mMonitoredProcess);
+			}
+		}
 	}
 
 }

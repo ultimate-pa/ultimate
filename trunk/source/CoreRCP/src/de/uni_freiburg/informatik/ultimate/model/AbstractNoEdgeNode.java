@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
  * @author Björn Buchhold
  * 
  */
+@Deprecated
 public abstract class AbstractNoEdgeNode extends AbstractElement implements
 		INode {
 

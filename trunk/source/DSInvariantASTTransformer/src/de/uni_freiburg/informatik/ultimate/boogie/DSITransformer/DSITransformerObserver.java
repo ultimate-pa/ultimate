@@ -14,7 +14,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.preferences.Pre
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.INode;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
@@ -50,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
@@ -205,7 +203,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	/**
 	 * Root of the newly created AST
 	 */
-	private WrapperNode root = null;
+	private Unit root = null;
 
 	/**
 	 * List containing the procedures to be summarized
@@ -293,7 +291,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	 * 
 	 * @return the root of the CFG.
 	 */
-	public INode getRoot() {
+	public IElement getRoot() {
 		return root;
 	}
 
@@ -356,76 +354,76 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	// @Override
 	public boolean process(IElement root) {
 		s_Logger.info("Scanning AST...");
-		if (root instanceof WrapperNode) {
-			if (((WrapperNode) root).getBacking() instanceof Unit) {
-				Unit unit = (Unit) ((WrapperNode) root).getBacking();
-				s_Logger.info("Unit found, processing declarations...");
-				Unit newUnit = new Unit(null, null);
-				this.root = new WrapperNode(null, newUnit);
-				List<Declaration> newDeclarations = new ArrayList<Declaration>();
+		if (root instanceof Unit) {
 
-				boolean captured;
-				for (Declaration d : unit.getDeclarations()) {
-					captured = false;
-					if (d instanceof Procedure) {
-						// Select the interesting procedures and collect them in
-						// a list: Procedures that have an implementation and
-						// aren't part of the prelude
-						Procedure proc = (Procedure) d;
-						if (!proc.getIdentifier().startsWith("$")
-								&& !proc.getIdentifier().contains("#")) {
-							captured = true;
-							ProcedureContainer pCont;
-							if (procedures.containsKey(proc.getIdentifier()))
-								pCont = procedures.get(proc.getIdentifier());
-							else {
-								pCont = new ProcedureContainer();
-								procedures.put(proc.getIdentifier(), pCont);
-							}
+			Unit unit = (Unit) root;
+			s_Logger.info("Unit found, processing declarations...");
+			Unit newUnit = new Unit(null, null);
+			this.root = newUnit;
+			List<Declaration> newDeclarations = new ArrayList<Declaration>();
 
-							if (proc.getBody() == null) {
-								pCont.declaration = (Procedure) processDeclaration(proc);
+			boolean captured;
+			for (Declaration d : unit.getDeclarations()) {
+				captured = false;
+				if (d instanceof Procedure) {
+					// Select the interesting procedures and collect them in
+					// a list: Procedures that have an implementation and
+					// aren't part of the prelude
+					Procedure proc = (Procedure) d;
+					if (!proc.getIdentifier().startsWith("$")
+							&& !proc.getIdentifier().contains("#")) {
+						captured = true;
+						ProcedureContainer pCont;
+						if (procedures.containsKey(proc.getIdentifier()))
+							pCont = procedures.get(proc.getIdentifier());
+						else {
+							pCont = new ProcedureContainer();
+							procedures.put(proc.getIdentifier(), pCont);
+						}
 
-								s_Logger.debug("Found procedure declaration: "
-										+ proc.getIdentifier());
-							} else {
-								pCont.implementation = (Procedure) processDeclaration(proc);
-								if (pCont.declaration == null)
-									pCont.declaration = pCont.implementation;
+						if (proc.getBody() == null) {
+							pCont.declaration = (Procedure) processDeclaration(proc);
 
-								s_Logger.debug("Found procedure implementation: "
-										+ proc.getIdentifier());
-							}
+							s_Logger.debug("Found procedure declaration: "
+									+ proc.getIdentifier());
+						} else {
+							pCont.implementation = (Procedure) processDeclaration(proc);
+							if (pCont.declaration == null)
+								pCont.declaration = pCont.implementation;
+
+							s_Logger.debug("Found procedure implementation: "
+									+ proc.getIdentifier());
 						}
 					}
-					// Leave intact if directed to or if the declaration wasn't
-					// captured for the loop.
-					if (leaveOriginalProcedures || !captured)
-						newDeclarations.add(super.processDeclaration(d));
 				}
-				// Process the collected procedures and add the newly created
-				// one to our unit
-				Procedure newProcedure = processProcedures();
-				if (newProcedure != null) {
-					if (allFunctions)
-						newDeclarations.add(new FunctionDeclaration(null,
-								new Attribute[] {}, "action", new String[] {},
-								new VarList[] { new VarList(null,
-										new String[] { "step" },
-										new PrimitiveType(null, "int")) },
-								new VarList(null, new String[] { "result" },
-										new PrimitiveType(null, "int"))));
-
-					newDeclarations.add(newProcedure);
-				}
-				newUnit.setDeclarations(newDeclarations
-						.toArray(new Declaration[newDeclarations.size()]));
-
-				s_Logger.info("Processed " + newUnit.getDeclarations().length
-						+ " declarations.");
-				return false;
+				// Leave intact if directed to or if the declaration wasn't
+				// captured for the loop.
+				if (leaveOriginalProcedures || !captured)
+					newDeclarations.add(super.processDeclaration(d));
 			}
+			// Process the collected procedures and add the newly created
+			// one to our unit
+			Procedure newProcedure = processProcedures();
+			if (newProcedure != null) {
+				if (allFunctions)
+					newDeclarations.add(new FunctionDeclaration(null,
+							new Attribute[] {}, "action", new String[] {},
+							new VarList[] { new VarList(null,
+									new String[] { "step" }, new PrimitiveType(
+											null, "int")) }, new VarList(null,
+									new String[] { "result" },
+									new PrimitiveType(null, "int"))));
+
+				newDeclarations.add(newProcedure);
+			}
+			newUnit.setDeclarations(newDeclarations
+					.toArray(new Declaration[newDeclarations.size()]));
+
+			s_Logger.info("Processed " + newUnit.getDeclarations().length
+					+ " declarations.");
+			return false;
 		}
+
 		return true;
 	}
 

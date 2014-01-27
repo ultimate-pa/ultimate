@@ -2,11 +2,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import de.uni_freiburg.informatik.ultimate.model.Payload;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
@@ -28,26 +28,26 @@ public class ProgramPoint extends RCFGNode {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private final ASTNode m_AstNode;
+	private final BoogieASTNode m_BoogieASTNode;
 
 	final private String m_Procedure;
 	final private String m_Position;
 	final private boolean m_IsErrorLocation;
 
 	public ProgramPoint(String position, String procedure, boolean isErrorLoc,
-			ASTNode astNode) {
+			BoogieASTNode BoogieASTNode) {
 		super();
 		this.m_Procedure = procedure;
 		this.m_Position = position;
 		this.m_IsErrorLocation = isErrorLoc;
-		this.m_AstNode = astNode;
+		this.m_BoogieASTNode = BoogieASTNode;
 
 		ILocation loc = null;
-		if (astNode instanceof Statement) {
-			Statement st = (Statement) astNode;
+		if (BoogieASTNode instanceof Statement) {
+			Statement st = (Statement) BoogieASTNode;
 			loc = st.getLocation();
-		} else if (astNode instanceof Specification) {
-			Specification spec = (Specification) astNode;
+		} else if (BoogieASTNode instanceof Specification) {
+			Specification spec = (Specification) BoogieASTNode;
 			loc = spec.getLocation();
 		}
 		mPayload = new Payload(loc, position);
@@ -74,20 +74,20 @@ public class ProgramPoint extends RCFGNode {
 		return m_IsErrorLocation;
 	}
 
-	public ASTNode getAstNode() {
-		return m_AstNode;
+	public BoogieASTNode getBoogieASTNode() {
+		return m_BoogieASTNode;
 	}
 
 	public String getLocationName() {
 		return getPosition();
 	}
 
-	public String astNodeType() {
-		if (m_AstNode instanceof AssertStatement) {
+	public String BoogieASTNodeType() {
+		if (m_BoogieASTNode instanceof AssertStatement) {
 			return "AssertStatement";
-		} else if (m_AstNode instanceof CallStatement) {
+		} else if (m_BoogieASTNode instanceof CallStatement) {
 			return "RequiresSpecification";
-		} else if (m_AstNode instanceof EnsuresSpecification) {
+		} else if (m_BoogieASTNode instanceof EnsuresSpecification) {
 			return "EnsuresSpecification";
 		} else {
 			throw new UnsupportedOperationException();

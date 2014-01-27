@@ -9,17 +9,13 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.boogie.parser.TreeNode;
 import de.uni_freiburg.informatik.ultimate.cookiefy.ContextPath.ContextPathNode;
-import de.uni_freiburg.informatik.ultimate.model.Edge;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.IEdge;
-import de.uni_freiburg.informatik.ultimate.model.INode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -39,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
 /**
  * Implementation of the Cookiefy Algorithm
@@ -53,7 +49,7 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 	 */
 	private WrapperNode root = null;
 
-	public INode getRoot() {
+	public IElement getRoot() {
 		return this.root;
 	}
 

@@ -255,7 +255,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	private ILocation getLocation() {
 		// Deprecated method without replacement
 		@SuppressWarnings("deprecation")
-		ILocation location = m_Honda.getAstNode().getLocation().getOrigin();
+		ILocation location = m_Honda.getBoogieASTNode().getLocation().getOrigin();
 		return location;
 	}
 	

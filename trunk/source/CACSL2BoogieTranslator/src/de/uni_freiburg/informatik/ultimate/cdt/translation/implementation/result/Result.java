@@ -3,7 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 
 /**
  * @author Markus Lindenmann
@@ -15,7 +15,7 @@ public class Result {
 	/**
 	 * AST node.
 	 */
-    public ASTNode node;
+    public BoogieASTNode node;
     
 	/**
 	 * Constructor.
@@ -23,7 +23,7 @@ public class Result {
 	 * @param node
 	 *            the node to hold in the line.
 	 */
-    public Result(ASTNode node) {
+    public Result(BoogieASTNode node) {
     	this.node = node;
     }
 }

@@ -38,7 +38,7 @@ public class ResultTypes extends Result {
      * Constructor.
      * 
      * @param node
-     *            the ASTNode to hold.
+     *            the BoogieASTNode to hold.
      * @param isConst
      *            boolean flag to determine constant.
      * @param isVoid
