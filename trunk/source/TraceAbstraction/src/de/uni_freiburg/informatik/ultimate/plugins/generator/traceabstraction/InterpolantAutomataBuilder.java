@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -55,7 +54,6 @@ public class InterpolantAutomataBuilder {
 	private final boolean m_SelfloopAtFinal = true;
 
 	private final SmtManager m_SmtManager;
-	private final TAPreferences m_Pref;
 	
 	private final int m_Iteration;
 	private final PrintWriter iterationPW;
