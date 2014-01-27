@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
  */
 public class BoogieParser implements ISource {
 	protected String[] m_FileTypes;
-	protected static Logger sLogger = UltimateServices.getInstance().getLogger(
+	protected static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.s_PLUGIN_ID);;
 	protected List<String> mFileNames;
 	protected Unit m_PreludeUnit;
@@ -153,7 +153,7 @@ public class BoogieParser implements ISource {
 	}
 
 	private Unit parseFile(File file) throws IOException {
-		sLogger.info("Parsing: '" + file.getAbsolutePath() + "'");
+		s_Logger.info("Parsing: '" + file.getAbsolutePath() + "'");
 		mFileNames.add(file.getAbsolutePath());
 		return reflectiveParse(file.getAbsolutePath());
 	}
@@ -210,7 +210,7 @@ public class BoogieParser implements ISource {
 			return new GraphType(getPluginID(), GraphType.Type.AST,
 					this.mFileNames);
 		} catch (Exception ex) {
-			sLogger.log(Level.FATAL, "syntax error: " + ex.getMessage());
+			s_Logger.log(Level.FATAL, "syntax error: " + ex.getMessage());
 			return null;
 		}
 	}
@@ -236,7 +236,7 @@ public class BoogieParser implements ISource {
 		try {
 			mainFile = (Unit) parser.parse().value;
 		} catch (Exception e) {
-			sLogger.fatal("syntax error: ", e);
+			s_Logger.fatal("syntax error: ", e);
 			// TODO: Declare to throw a parser exception
 			throw new RuntimeException(e);
 		}
@@ -266,7 +266,7 @@ public class BoogieParser implements ISource {
 			parser.setFileName(prelude.getPath());
 			m_PreludeUnit = (Unit) parser.parse().value;
 		} catch (Exception e) {
-			sLogger.fatal("syntax error: ", e);
+			s_Logger.fatal("syntax error: ", e);
 			throw new RuntimeException(e);
 		}
 	}
