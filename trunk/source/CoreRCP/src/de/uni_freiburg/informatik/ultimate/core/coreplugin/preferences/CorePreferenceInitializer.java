@@ -77,6 +77,12 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 						null, new LogLevelValidator()),
 				new UltimatePreferenceItem<String>(PREFID_DETAILS, "",
 						PreferenceType.String, true, null, null),
+						
+				// Toolchain
+				new UltimatePreferenceItem<Integer>(LABEL_TIMEOUT, VALUE_TIMEOUT,
+						PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(
+						0, 1000000)),
 
 		// Log levels for external tools
 
@@ -183,6 +189,9 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 			VALUE_DEBUG_LOGGING_PREF, VALUE_ERROR_LOGGING_PREF,
 			VALUE_FATAL_LOGGING_PREF, VALUE_INFO_LOGGING_PREF,
 			VALUE_TRACE_LOGGING_PREF, VALUE_WARN_LOGGING_PREF };
+	
+	public static final String LABEL_TIMEOUT = "Toolchain timeout in seconds";
+	public static final int VALUE_TIMEOUT = 0;
 
 	/**
 	 * Messages

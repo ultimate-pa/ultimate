@@ -4,19 +4,21 @@ import java.io.File;
 import java.util.List;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.result.ThrowableResult;
-
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+
+import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.ThrowableResult;
 
 /**
  * This class implements an Eclipse Job processing a Ultimate toolchain using
@@ -87,7 +89,8 @@ public class ToolchainJob extends Job {
 
 		try {
 			boolean retval;
-
+			
+			setTimeout();
 			UltimateServices.getInstance().initializeResultMap();
 			UltimateServices.getInstance().initializeTranslatorSequence();
 
@@ -165,6 +168,28 @@ public class ToolchainJob extends Job {
 				}
 				mLogger.info(sb.toString());
 			}
+		}
+	}
+	
+	/**
+	 * Use the timeout specified in the preferences of CoreRCP to set a
+	 * deadline for the toolchain execution.
+	 * Note that the ultimate core does not check that the toolchain execution 
+	 * complies with the deadline. Plugins should check if the deadline is 
+	 * overdue and abort.
+	 * A timeout of 0 means that we do not set any deadline.
+	 */
+	public void setTimeout() {
+		UltimatePreferenceStore ups = 
+				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		int timeoutInPreferences = 
+				ups.getInt(CorePreferenceInitializer.LABEL_TIMEOUT);
+		if (timeoutInPreferences == 0) {
+			// do not set any timout
+		} else {
+			long timoutMilliseconds = timeoutInPreferences * 1000L;
+			UltimateServices.getInstance().setDeadline(
+					System.currentTimeMillis() + timoutMilliseconds);
 		}
 	}
 
