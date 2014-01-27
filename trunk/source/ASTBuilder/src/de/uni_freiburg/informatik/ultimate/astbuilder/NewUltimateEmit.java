@@ -118,20 +118,19 @@ public class NewUltimateEmit extends Emit {
 		
 		// mostly primitives, but IType is also not a regular child --> it is no descendant of BoogieASTNode  
 		String trimmedType = type.replace("[", "").replace("]", "").trim();
-		switch (trimmedType) {
-		case "byte":
-		case "short":
-		case "int":
-		case "long":
-		case "float":
-		case "double":
-		case "char":
-		case "String":
-		case "Object":
-		case "boolean":
-		case "IType":
+		if (trimmedType.equals("byte")
+				|| trimmedType.equals("short")
+				|| trimmedType.equals("int")
+				|| trimmedType.equals("long")
+				|| trimmedType.equals("float")
+				|| trimmedType.equals("double")
+				|| trimmedType.equals("char")
+				|| trimmedType.equals("String")
+				|| trimmedType.equals("Object")
+				|| trimmedType.equals("boolean")
+				|| trimmedType.equals("IType")) {
 			return true;
-		default:
+		} else { 
 			return false;
 		}
 	}
