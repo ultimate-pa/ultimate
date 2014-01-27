@@ -80,7 +80,6 @@ public class InterpolantAutomataBuilder {
 			InterpolantAutomaton additionalEdges,
 			boolean selfloopAtInitial,
 			SmtManager smtManager,
-			TAPreferences taPreferences,
 			int iterationNumber,
 			PrintWriter iterationPW) {
 		this.m_Interpolants = traceChecker.getInterpolants();
@@ -99,7 +98,6 @@ public class InterpolantAutomataBuilder {
 		m_Iteration = iterationNumber;
 		this.iterationPW = iterationPW;
 		m_SelfloopAtInitial = selfloopAtInitial;
-		m_Pref = taPreferences;
 		m_TruePredicate = traceChecker.getPrecondition();
 		m_FalsePredicate = traceChecker.getPostcondition();
 	}
