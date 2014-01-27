@@ -44,7 +44,7 @@ public class BoogieConcurrentTraceAbstractionTC extends Toolchain {
 	 */
 	@Override
 	protected String setId() {
-		return "boogieConcurrentTraceAbstraction";
+		return "boogieConcurrentTraceAbstr";
 	}
 
 	/*
@@ -54,7 +54,7 @@ public class BoogieConcurrentTraceAbstractionTC extends Toolchain {
 	 */
 	@Override
 	protected TaskNames[] setTaskName() {
-		return new TaskNames[] { TaskNames.VerifyBoogie };
+		return new TaskNames[] { TaskNames.VerifyConcurrentBoogie };
 	}
 
 	/*
@@ -75,12 +75,11 @@ public class BoogieConcurrentTraceAbstractionTC extends Toolchain {
 		List<Setting> oRCFGB = new ArrayList<Setting>();
 		List<Setting> mRCFGB = new ArrayList<Setting>();
 		tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
-        oRCFGB.add(new Setting("/Use\\ external\\ solver\\ instead\\ of\\ SMTInterpol", Setting.SettingType.BOOLEAN,
+        mRCFGB.add(new Setting("/Use\\ external\\ solver\\ instead\\ of\\ SMTInterpol", Setting.SettingType.BOOLEAN,
                 "external solver", "false", false));
-        oRCFGB.add(new Setting("/BlockSize", "Type of Determinization",
-        		new String[] { "single program statement" }, false, new String[] {
-              "sequence of program statements", "single program statement", "loop free block" }, false));
-
+        mRCFGB.add(new Setting("/Size\\ of\\ a\\ code\\ block", "Size\\ of\\ a\\ code\\ block",
+        		new String[] { "SingleStatement" }, false, new String[] {
+              "SingleStatement", "SequenceOfStatements", "LoopFreeBlock" }, true));
         List<Setting> oTrAbs = new ArrayList<Setting>();
         List<Setting> mTrAbs = new ArrayList<Setting>();
         oTrAbs.add(new Setting("/Compute\\ Interpolants\\ along\\ a\\ Counterexample", Setting.SettingType.STRING,
@@ -94,6 +93,10 @@ public class BoogieConcurrentTraceAbstractionTC extends Toolchain {
         mTrAbs.add(new Setting("/DumpPath", Setting.SettingType.STRING,
                 "Where to dump", "C:\\Code\\log\\dump", false));
         tools.add(new Tool("TraceAbstraction", oTrAbs, mTrAbs,
+                LoggingLevel.WARN));
+		List<Setting> oTrConcur = new ArrayList<Setting>();
+		List<Setting> mTrConcur = new ArrayList<Setting>();
+        tools.add(new Tool("TraceAbstractionConcurrent", oTrConcur, mTrConcur,
                 LoggingLevel.WARN));
 		return tools;
 	}

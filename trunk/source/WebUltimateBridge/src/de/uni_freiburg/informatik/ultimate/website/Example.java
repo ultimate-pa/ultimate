@@ -100,7 +100,7 @@ public class Example {
 		Tasks.TaskNames[] verifyBoogie =  { Tasks.TaskNames.VerifyBoogie };
 		addAllFilesInExamplesSubfolder(list, "verifyBoogie/", verifyBoogie);
 		Tasks.TaskNames[] verifyConcurrentBoogie =  { Tasks.TaskNames.VerifyConcurrentBoogie };
-		addAllFilesInExamplesSubfolder(list, "verifyBoogie/", verifyConcurrentBoogie);
+		addAllFilesInExamplesSubfolder(list, "verifyConcurrentBoogie/", verifyConcurrentBoogie);
 		// TODO : add more/new examples here
 		for (Example e : list) {
 			try {

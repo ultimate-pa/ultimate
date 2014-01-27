@@ -147,6 +147,7 @@ public class Tasks {
 			case VerifyBoogie:
 			case TERMINATION_BOOGIE:
 			case RANK_SYNTHESIS_BOOGIE:
+			case VerifyConcurrentBoogie:
 				return "boogie";
 			case VerifyC:
 			case TERMINATION_C:

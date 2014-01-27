@@ -327,6 +327,8 @@ public class UltimateInterface extends HttpServlet {
 					fileExtension = ".c";
 				} else if (taskId.equals("RANK_SYNTHESIS_BOOGIE")) {
 					fileExtension = ".bpl";
+				} else if (taskId.equals("VerifyConcurrentBoogie")) {
+					fileExtension = ".bpl";
 				} else {
 					throw new IllegalArgumentException(
 							"The given taskId is unknown to UltimateInterface: "
