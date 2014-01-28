@@ -199,9 +199,6 @@ public final class VisualizationNode implements
 	public VisualizationNode(final ISimpleAST<?> node) {
 		mBacking = new VisualizationWrapperNode(node) {
 
-			private Logger mLogger = UltimateServices.getInstance().getLogger(
-					Activator.s_PLUGIN_ID);
-
 			@SuppressWarnings({ "unchecked", "rawtypes" })
 			@Override
 			protected List<IWalkable> getSuccessors() {
@@ -215,7 +212,7 @@ public final class VisualizationNode implements
 				mIncoming = new ArrayList<VisualizationEdge>();
 
 				for (ISimpleAST<?> succ : node.getOutgoingNodes()) {
-					if(succ == null){
+					if (succ == null) {
 						continue;
 					}
 					VisualizationEdge ve;
@@ -228,7 +225,7 @@ public final class VisualizationNode implements
 								succ.getVisualizationGraph(), succ);
 					}
 					mOutgoing.add(ve);
-//					succ.getVisualizationGraph().getIncomingEdges().add(ve);
+					// succ.getVisualizationGraph().getIncomingEdges().add(ve);
 				}
 			}
 
@@ -344,9 +341,8 @@ public final class VisualizationNode implements
 	@Override
 	public String toString() {
 		String s = mBacking.toString();
-		if(s.length()>30){
-			int offset = s.length() - 30;
-			s = s.substring(offset);
+		if (s.length() > 30) {
+			s = s.substring(0, 30);
 		}
 		return s;
 	}

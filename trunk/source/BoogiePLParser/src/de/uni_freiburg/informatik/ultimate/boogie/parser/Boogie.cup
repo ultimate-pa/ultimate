@@ -37,7 +37,7 @@ parser code {:
                     Integer.MAX_VALUE, Integer.MAX_VALUE, false);
             position = filename + ":EOF";
         }
-        BoogieParser.s_Logger.error(position + ": syntax error");
+        BoogieParser.sLogger.error(position + ": syntax error");
         SyntaxErrorResult<ILocation> syntaxErrorResult = 
                 new SyntaxErrorResult<ILocation>(loc, Activator.s_PLUGIN_ID, 
                 		UltimateServices.getInstance().getTranslatorSequence(),
