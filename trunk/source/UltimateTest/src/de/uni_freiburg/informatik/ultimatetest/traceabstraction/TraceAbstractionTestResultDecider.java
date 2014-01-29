@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
@@ -29,10 +30,6 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 	private ExpectedResult m_ExpectedResult;
 	private TraceAbstractionTestSummary m_Summary;
 	private String m_UniqueString;
-	// Just the plugin-ids
-	private static String m_KeyOfResultsFromTraceAbstraction = "TraceAbstraction";
-	private static String m_KeyOfResultsFromPreprocessor = "de.uni_freiburg.informatik.ultimate.boogie.preprocessor";
-	private static String m_KeyOfResultsFromUltimateCore = "UltimateCore";
 	
 	private enum ExpectedResult {
 		SAFE,
@@ -95,18 +92,9 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 		Collection<String> customMessages = new LinkedList<String>();
 		final boolean fail;
 		List<IResult> traceAbstractionResults = new ArrayList<IResult>();
-		if (UltimateServices.getInstance().getResultMap().containsKey(m_KeyOfResultsFromTraceAbstraction)) {
-			traceAbstractionResults.addAll(UltimateServices.getInstance().getResultMap().get(m_KeyOfResultsFromTraceAbstraction));
+		for (Entry<String, List<IResult>> entry : UltimateServices.getInstance().getResultMap().entrySet()) {
+			traceAbstractionResults.addAll(entry.getValue());
 		}
-		if (UltimateServices.getInstance().getResultMap().containsKey(m_KeyOfResultsFromPreprocessor)) {
-			// Add results from the preprocessor
-			traceAbstractionResults.addAll(UltimateServices.getInstance().getResultMap().get(m_KeyOfResultsFromPreprocessor));
-		}
-		if (UltimateServices.getInstance().getResultMap().containsKey(m_KeyOfResultsFromUltimateCore)) {
-			// Add results from UltimateCore (UltimateCore reports usually only a ThrowableResult)
-			traceAbstractionResults.addAll(UltimateServices.getInstance().getResultMap().get(m_KeyOfResultsFromUltimateCore));
-		}
-		
 		if (m_ExpectedResult == ExpectedResult.NOANNOTATION) {
 			customMessages
 			.add("Couldn't understand the specification of the file \"" + m_InputFile + "\".\n" +
