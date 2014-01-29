@@ -17,6 +17,8 @@ import de.uni_freiburg.informatik.ultimate.model.GraphNotFoundException;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IModelManager;
 import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
+import de.uni_freiburg.informatik.ultimate.util.Benchmark;
+
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubMonitor;
@@ -130,7 +132,7 @@ public class ToolchainWalker {
 			s_Logger.error("The Plugin "+plugin.getId()+" has thrown an Exception!", e);
 			return false;
 		}
-		m_Bench.stop();
+		m_Bench.stop(pc.toString());
 		// did the plug-in have a serialization child element?
 		SerializeType st = plugin.getSerialize();
 		if (st != null)

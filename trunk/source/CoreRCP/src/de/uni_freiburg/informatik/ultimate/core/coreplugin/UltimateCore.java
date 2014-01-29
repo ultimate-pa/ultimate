@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.xml.bind.JAXBException;
 
@@ -60,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.model.IModelManager;
 import de.uni_freiburg.informatik.ultimate.model.PersistenceAwareModelManager;
 import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.plugins.ResultNotifier;
+import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 
 /**
  * This class controls all aspects of the application's execution. This class
@@ -176,8 +178,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	 */
 	public UltimateCore(UltimateCore.Ultimate_Mode mode) {
 		if (mode != UltimateCore.Ultimate_Mode.EXTERNAL_EXECUTION) {
-			throw new IllegalArgumentException(
-					"We expect EXTERNAL_EXECUTION mode here!");
+			throw new IllegalArgumentException("We expect EXTERNAL_EXECUTION mode here!");
 		}
 		this.mCoreMode = mode;
 	}
@@ -213,8 +214,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 			mLogger.info("Exiting Ultimate with returncode " + returnCode);
 
 			// before we quit Ultimate, do we have to clear the model store?
-			boolean store_mm = new UltimatePreferenceStore(
-					Activator.s_PLUGIN_ID)
+			boolean store_mm = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
 					.getBoolean(CorePreferenceInitializer.LABEL_MM_DROP_MODELS);
 			if (store_mm) {
 				for (String s : this.mModelManager.getItemNames()) {
@@ -262,20 +262,17 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 		// at this point a gui or a cmd line controller may already be set.
 		// if no controller is set, the default cmd line controller
 		// without interactive mode is used as a fallback
-		if (this.mCoreMode == Ultimate_Mode.USEGUI
-				&& mCurrentController != null) {
+		if (this.mCoreMode == Ultimate_Mode.USEGUI && mCurrentController != null) {
 			this.initializeGUI();
 		} else if (mCurrentController != null) {
 			// run previously chosen command line controller
 			Object returnCode = mCurrentController.init(this);
-			mLogger.info("Preparing to exit Ultimate with return code "
-					+ returnCode);
+			mLogger.info("Preparing to exit Ultimate with return code " + returnCode);
 		}
 
 		// before we quit Ultimate, do we have to clear the model store?
-		boolean store_mm = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
-				.getBoolean(CorePreferenceInitializer.LABEL_MM_DROP_MODELS,
-						true);
+		boolean store_mm = new UltimatePreferenceStore(Activator.s_PLUGIN_ID).getBoolean(
+				CorePreferenceInitializer.LABEL_MM_DROP_MODELS, true);
 		if (store_mm) {
 			for (String s : this.mModelManager.getItemNames()) {
 				this.mModelManager.removeItem(s);
@@ -290,13 +287,11 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 		mLogger.info("Initializing GUI ...");
 		if (mCurrentController == null) {
 			mLogger.fatal("No GUI controller present although initializeGUI() was called !");
-			throw new NullPointerException(
-					"No GUI controller present although initializeGUI() was called !");
+			throw new NullPointerException("No GUI controller present although initializeGUI() was called !");
 		}
 		loadGuiLoggingWindow(Platform.getExtensionRegistry());
 		Object returnCode = mCurrentController.init(this);
-		mLogger.info("Preparing to exit Ultimate with return code "
-				+ returnCode);
+		mLogger.info("Preparing to exit Ultimate with return code " + returnCode);
 	}
 
 	/**
@@ -311,8 +306,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 		// Here we set the parsed AST for the cdt plugin
 		UltimateServices.getInstance().setParsedAST(mParsedAST);
 
-		mLogger = UltimateServices.getInstance().getLogger(
-				Activator.s_PLUGIN_ID);
+		mLogger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 
 		mLogger.info("Initializing application");
 
@@ -335,8 +329,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 		mCurrentFiles = null;
 		mBenchmark = new Benchmark();
 		// initialize walker with common variables
-		mToolchainWalker = new ToolchainWalker(this, mBenchmark, mModelManager,
-				mIdToTool);
+		mToolchainWalker = new ToolchainWalker(this, mBenchmark, mModelManager, mIdToTool);
 
 		UltimateServices.getInstance().setModelManager(mModelManager);
 		final Logger tmp = mLogger;
@@ -345,8 +338,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 			@Override
 			public void done(IJobChangeEvent event) {
 				if (event.getResult().getException() != null) {
-					tmp.error("Error during toolchain job processing:", event
-							.getResult().getException());
+					tmp.error("Error during toolchain job processing:", event.getResult().getException());
 					if (Platform.inDebugMode() || Platform.inDevelopmentMode())
 						event.getResult().getException().printStackTrace();
 				}
@@ -368,11 +360,9 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 		logDefaultPreferences(Activator.s_PLUGIN_ID);
 
 		if (mCurrentController == null) {
-			mLogger.warn("CurrentController is null (CurrentMode: " + mCoreMode
-					+ ")");
+			mLogger.warn("CurrentController is null (CurrentMode: " + mCoreMode + ")");
 		} else {
-			attachLogPreferenceChangeListenerToPlugin(mCurrentController
-					.getPluginID());
+			attachLogPreferenceChangeListenerToPlugin(mCurrentController.getPluginID());
 			logDefaultPreferences(mCurrentController.getPluginID());
 		}
 
@@ -402,12 +392,11 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 			IEclipsePreferences defaults = ups.getDefaultEclipsePreferences();
 			String prefix = "[" + pluginID + " (Current)] Preference \"";
 			for (String key : defaults.keys()) {
-				mLogger.debug(prefix + key + "\" = "
-						+ ups.getString(key, "NOT DEFINED"));
+				mLogger.debug(prefix + key + "\" = " + ups.getString(key, "NOT DEFINED"));
 			}
 		} catch (BackingStoreException e) {
-			mLogger.debug("An exception occurred during printing of default preferences for plugin "
-					+ pluginID + ":" + e.getMessage());
+			mLogger.debug("An exception occurred during printing of default preferences for plugin " + pluginID + ":"
+					+ e.getMessage());
 		}
 	}
 
@@ -419,37 +408,26 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	 */
 	private void attachLogPreferenceChangeListenerToPlugin(String pluginId) {
 
-		LogPreferenceChangeListener instanceListener = retrieveListener(
-				pluginId, "Instance");
-		LogPreferenceChangeListener configListener = retrieveListener(pluginId,
-				"Configuration");
-		LogPreferenceChangeListener defaultListener = retrieveListener(
-				pluginId, "Default");
+		LogPreferenceChangeListener instanceListener = retrieveListener(pluginId, "Instance");
+		LogPreferenceChangeListener configListener = retrieveListener(pluginId, "Configuration");
+		LogPreferenceChangeListener defaultListener = retrieveListener(pluginId, "Default");
 
-		InstanceScope.INSTANCE.getNode(pluginId)
-				.removePreferenceChangeListener(instanceListener);
-		InstanceScope.INSTANCE.getNode(pluginId).addPreferenceChangeListener(
-				instanceListener);
+		InstanceScope.INSTANCE.getNode(pluginId).removePreferenceChangeListener(instanceListener);
+		InstanceScope.INSTANCE.getNode(pluginId).addPreferenceChangeListener(instanceListener);
 
-		ConfigurationScope.INSTANCE.getNode(pluginId)
-				.removePreferenceChangeListener(configListener);
-		ConfigurationScope.INSTANCE.getNode(pluginId)
-				.addPreferenceChangeListener(configListener);
+		ConfigurationScope.INSTANCE.getNode(pluginId).removePreferenceChangeListener(configListener);
+		ConfigurationScope.INSTANCE.getNode(pluginId).addPreferenceChangeListener(configListener);
 
-		DefaultScope.INSTANCE.getNode(pluginId).removePreferenceChangeListener(
-				defaultListener);
-		DefaultScope.INSTANCE.getNode(pluginId).addPreferenceChangeListener(
-				defaultListener);
+		DefaultScope.INSTANCE.getNode(pluginId).removePreferenceChangeListener(defaultListener);
+		DefaultScope.INSTANCE.getNode(pluginId).addPreferenceChangeListener(defaultListener);
 	}
 
-	private LogPreferenceChangeListener retrieveListener(String pluginID,
-			String scope) {
+	private LogPreferenceChangeListener retrieveListener(String pluginID, String scope) {
 		String listenerID = pluginID + scope;
 		if (mActivePreferenceListener.containsKey(listenerID)) {
 			return mActivePreferenceListener.get(listenerID);
 		} else {
-			LogPreferenceChangeListener listener = new LogPreferenceChangeListener(
-					scope, pluginID);
+			LogPreferenceChangeListener listener = new LogPreferenceChangeListener(scope, pluginID);
 			mActivePreferenceListener.put(listenerID, listener);
 			return listener;
 		}
@@ -496,8 +474,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 			usegui = true;
 		}
 
-		IConfigurationElement[] configElements_ctr = reg
-				.getConfigurationElementsFor(ExtensionPoints.EP_CONTROLLER);
+		IConfigurationElement[] configElements_ctr = reg.getConfigurationElementsFor(ExtensionPoints.EP_CONTROLLER);
 
 		// create list of controllers that fulfill the desired GUI property (gui
 		// / nogui)
@@ -510,11 +487,9 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 		}
 
 		if (usegui) {
-			mLogger.info("Getting present graphical controllers ("
-					+ suitableControllers.size() + ")");
+			mLogger.info("Getting present graphical controllers (" + suitableControllers.size() + ")");
 		} else {
-			mLogger.info("Getting present non-graphical controllers ("
-					+ suitableControllers.size() + ")");
+			mLogger.info("Getting present non-graphical controllers (" + suitableControllers.size() + ")");
 		}
 
 		try {
@@ -522,8 +497,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 			this.mCurrentController = chooseController(suitableControllers);
 
 		} catch (FileNotFoundException e) {
-			mLogger.error("The specified file " + e.getMessage()
-					+ " was not found or couldn't be read.");
+			mLogger.error("The specified file " + e.getMessage() + " was not found or couldn't be read.");
 			this.mCmdLineArgs.printUsage();
 			mLogger.info("Exiting Ultimate.");
 		} catch (JAXBException e) {
@@ -551,14 +525,12 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	 * @throws JAXBException
 	 * @throws SAXException
 	 */
-	private IController chooseController(
-			List<IConfigurationElement> suitableControllers)
-			throws FileNotFoundException, JAXBException, SAXException {
+	private IController chooseController(List<IConfigurationElement> suitableControllers) throws FileNotFoundException,
+			JAXBException, SAXException {
 
 		// for external execution we need a "special" controller
 		if (this.mCoreMode == Ultimate_Mode.EXTERNAL_EXECUTION) {
-			return new ExtExecutionController(this.mToolchainXML.getPath(),
-					this.mInputFile);
+			return new ExtExecutionController(this.mToolchainXML.getPath(), this.mInputFile);
 		}
 
 		// command-line controller desired, return it
@@ -570,13 +542,11 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 			for (IConfigurationElement element : suitableControllers) {
 
 				// in interactive mode return interactive controller
-				if (element
-						.getAttribute("class")
-						.equals("de.uni_freiburg.informatik.ultimate.interactiveconsole.InteractiveConsoleController"))
+				if (element.getAttribute("class").equals(
+						"de.uni_freiburg.informatik.ultimate.interactiveconsole.InteractiveConsoleController"))
 					try {
 
-						return (IController) element
-								.createExecutableExtension("class");
+						return (IController) element.createExecutableExtension("class");
 					} catch (CoreException e1) {
 						mLogger.error("The desired controller for the interactive console could not be loaded!");
 					}
@@ -587,8 +557,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 			int availableControllersCount = suitableControllers.size();
 			if (availableControllersCount == 1) {
 				try {
-					return (IController) (suitableControllers.get(0)
-							.createExecutableExtension("class"));
+					return (IController) (suitableControllers.get(0).createExecutableExtension("class"));
 				} catch (CoreException e) {
 					mLogger.error("The desired gui controller could not be loaded!");
 				}
@@ -603,9 +572,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 				int return_value = 0;
 				if (return_value >= 0) {
 					try {
-						return (IController) (suitableControllers
-								.get(return_value)
-								.createExecutableExtension("class"));
+						return (IController) (suitableControllers.get(return_value).createExecutableExtension("class"));
 					} catch (CoreException e) {
 						mLogger.error("The desired gui controller could not be loaded!");
 					}
@@ -630,14 +597,11 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	 *            I find them); is obtained by Platform.getExtensionRegistry()
 	 */
 	private void loadOutputPlugins(IExtensionRegistry reg) {
-		IConfigurationElement[] configElements_out = reg
-				.getConfigurationElementsFor(ExtensionPoints.EP_OUTPUT);
-		mLogger.debug("We have " + configElements_out.length
-				+ " possible Output plugin(s)");
+		IConfigurationElement[] configElements_out = reg.getConfigurationElementsFor(ExtensionPoints.EP_OUTPUT);
+		mLogger.debug("We have " + configElements_out.length + " possible Output plugin(s)");
 		for (IConfigurationElement element : configElements_out) {
 			try {
-				IOutput output = (IOutput) element
-						.createExecutableExtension("class");
+				IOutput output = (IOutput) element.createExecutableExtension("class");
 				// skip gui plug-ins if not running in GUI mode
 				if (!(output.isGuiRequired() && this.mCoreMode != Ultimate_Mode.USEGUI))
 					mOutputPlugins.add(output);
@@ -660,14 +624,11 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	 *            I find them); is obtained by Platform.getExtensionRegistry()
 	 */
 	private void loadSourcePlugins(IExtensionRegistry reg) {
-		IConfigurationElement[] configElements_source = reg
-				.getConfigurationElementsFor(ExtensionPoints.EP_SOURCE);
-		mLogger.debug("We have " + configElements_source.length
-				+ " possible Source plugin(s)");
+		IConfigurationElement[] configElements_source = reg.getConfigurationElementsFor(ExtensionPoints.EP_SOURCE);
+		mLogger.debug("We have " + configElements_source.length + " possible Source plugin(s)");
 		for (IConfigurationElement element : configElements_source) {
 			try {
-				ISource source = (ISource) element
-						.createExecutableExtension("class");
+				ISource source = (ISource) element.createExecutableExtension("class");
 				mSourcePlugins.add(source);
 			} catch (CoreException e) {
 				mLogger.error("Can't load a Source Plugin !", e);
@@ -687,12 +648,10 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	 *            I find them); is obtained by Platform.getExtensionRegistry()
 	 */
 	private void loadGeneratorPlugins(IExtensionRegistry reg) {
-		IConfigurationElement[] configElements_gen = reg
-				.getConfigurationElementsFor(ExtensionPoints.EP_GENERATOR);
+		IConfigurationElement[] configElements_gen = reg.getConfigurationElementsFor(ExtensionPoints.EP_GENERATOR);
 		for (IConfigurationElement element : configElements_gen) {
 			try {
-				IGenerator generator = (IGenerator) element
-						.createExecutableExtension("class");
+				IGenerator generator = (IGenerator) element.createExecutableExtension("class");
 				// skip gui plug-ins if not running in GUI mode
 				if (!(generator.isGuiRequired() && this.mCoreMode != Ultimate_Mode.USEGUI)) {
 					mGeneratorPlugins.add(generator);
@@ -703,8 +662,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 				mLogger.error("Can't load a Generator Plugin !", e);
 			}
 		}
-		mLogger.info("Loaded " + mGeneratorPlugins.size()
-				+ " Generator Plugins");
+		mLogger.info("Loaded " + mGeneratorPlugins.size() + " Generator Plugins");
 	}
 
 	/**
@@ -717,14 +675,11 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	 *            I find them); is obtained by Platform.getExtensionRegistry()
 	 */
 	private void loadAnalysisPlugins(IExtensionRegistry reg) {
-		IConfigurationElement[] configElements_out = reg
-				.getConfigurationElementsFor(ExtensionPoints.EP_ANALYSIS);
-		mLogger.debug("We have " + configElements_out.length
-				+ " possible analysis plugin(s)");
+		IConfigurationElement[] configElements_out = reg.getConfigurationElementsFor(ExtensionPoints.EP_ANALYSIS);
+		mLogger.debug("We have " + configElements_out.length + " possible analysis plugin(s)");
 		for (IConfigurationElement element : configElements_out) {
 			try {
-				IAnalysis analysis = (IAnalysis) element
-						.createExecutableExtension("class");
+				IAnalysis analysis = (IAnalysis) element.createExecutableExtension("class");
 				// skip gui plug-ins if not running in GUI mode
 				if (!(analysis.isGuiRequired() && this.mCoreMode != Ultimate_Mode.USEGUI))
 					mAnalysisPlugins.add(analysis);
@@ -794,20 +749,15 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 		// receiving configuration elements (see exsd-files)
 		// which define class name in element "impl"
 		// and attribute "class".
-		IConfigurationElement[] configElements_out = reg
-				.getConfigurationElementsFor(ExtensionPoints.EP_LOGGINGWINDOW);
+		IConfigurationElement[] configElements_out = reg.getConfigurationElementsFor(ExtensionPoints.EP_LOGGINGWINDOW);
 		// iterate through every config element
 		for (IConfigurationElement element : configElements_out) {
 			try {
-				ILoggingWindow loggingWindow = (ILoggingWindow) element
-						.createExecutableExtension("class");
+				ILoggingWindow loggingWindow = (ILoggingWindow) element.createExecutableExtension("class");
 				loggingWindow.init(null);
 				// and add to plugin ArrayList
-				loggingWindow
-						.setLayout(new PatternLayout(
-								new UltimatePreferenceStore(
-										Activator.s_PLUGIN_ID)
-										.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)));
+				loggingWindow.setLayout(new PatternLayout(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
+						.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)));
 
 				// use the root logger to have this appender in all child
 				// loggers
@@ -885,8 +835,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	 */
 	@Override
 	public void letCoreRunParser() throws Exception {
-		boolean rtr_value = mModelManager.addItem(
-				runParser(this.mCurrentFiles, this.mCurrentParser),
+		boolean rtr_value = mModelManager.addItem(runParser(this.mCurrentFiles, this.mCurrentParser),
 				this.mCurrentParser.getOutputDefinition());
 
 		mLogger.debug("DataSafe ADD Operation successful: " + rtr_value);
@@ -948,7 +897,8 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	@Override
 	public IStatus processToolchain(IProgressMonitor monitor) throws Exception {
 
-		Date startDate = new Date();
+		Benchmark b = new Benchmark();
+		b.start("Core");
 		if (mModelManager.size() < 1) {
 			mLogger.error("no model present, aborting...");
 			throw new Exception("There is no model present");
@@ -957,26 +907,24 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 		mToolchainWalker.walk(monitor);
 		new ResultNotifier(mCurrentController).processResults();
 		mCurrentToolchain.clearStore();
-		Date endDate = new Date();
-		long elapsedTime = endDate.getTime() - startDate.getTime();
-
-		mLogger.info("Finished toolchain execution after " + elapsedTime + "ms");
+		b.stopAll();
+		mLogger.info(String.format("Finished toolchain execution after %.2f ms",
+				b.getElapsedTime("Core", TimeUnit.MILLISECONDS)));
 		mBenchmark.report();
 		mLogger.info("--------------------------------------------------------------------------------");
 
 		return Status.OK_STATUS;
 	}
 
-	private final IElement runParser(final File file, ISource parser)
-			throws Exception {
+	private final IElement runParser(final File file, ISource parser) throws Exception {
 
 		IElement root = null;
 		// parse the files to Graph
 		try {
 			mLogger.info("Parsing single file ...");
-			mBenchmark.start("Parser");
+			mBenchmark.start(parser.getName());
 			root = parser.parseAST(file);
-			mBenchmark.stop();
+			mBenchmark.stop(parser.getName());
 
 			/*
 			 * for testing purposes only for(ISerialization ser :
@@ -1007,8 +955,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 			}
 		}
 
-		boolean showusableparser = InstanceScope.INSTANCE.getNode(
-				Activator.s_PLUGIN_ID).getBoolean(
+		boolean showusableparser = InstanceScope.INSTANCE.getNode(Activator.s_PLUGIN_ID).getBoolean(
 				CorePreferenceInitializer.LABEL_SHOWUSABLEPARSER,
 				CorePreferenceInitializer.VALUE_SHOWUSABLEPARSER_DEFAULT);
 
@@ -1109,8 +1056,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 			if (o instanceof PluginType) {
 				PluginType plugin = (PluginType) o;
 				if (!mIdToTool.containsKey(plugin.getId())) {
-					mLogger.error("Did not find plugin with id \""
-							+ plugin.getId() + "\". Skipping execution...");
+					mLogger.error("Did not find plugin with id \"" + plugin.getId() + "\". Skipping execution...");
 					return false;
 				}
 			} else if (o instanceof SubchainType) {
@@ -1152,8 +1098,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 				FileInputStream fis = new FileInputStream(filename);
 				IStatus status = UltimatePreferenceStore.importPreferences(fis);
 				if (!status.isOK()) {
-					mLogger.warn("Failed to load preferences. Status is: "
-							+ status);
+					mLogger.warn("Failed to load preferences. Status is: " + status);
 					mLogger.warn("Did not attach debug property logger");
 				} else {
 					checkPreferencesForActivePlugins();
@@ -1161,8 +1106,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 
 				}
 			} catch (Exception e) {
-				mLogger.error(
-						"Could not load preferences because of exception: ", e);
+				mLogger.error("Could not load preferences because of exception: ", e);
 				mLogger.warn("Did not attach debug property logger");
 			} finally {
 				mLogger.debug("--------------------------------------------------------------------------------");
@@ -1182,8 +1126,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 				FileOutputStream fis = new FileOutputStream(filename);
 
 				for (IRCPPlugin plugin : getPlugins()) {
-					new UltimatePreferenceStore(plugin.getPluginID())
-							.exportPreferences(fis);
+					new UltimatePreferenceStore(plugin.getPluginID()).exportPreferences(fis);
 				}
 
 				fis.flush();
@@ -1236,9 +1179,8 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	 * exceeded.
 	 */
 	public boolean continueProcessing() {
-		boolean cancel = mCurrentToolchainMonitor.isCanceled()
-				|| System.currentTimeMillis() > mDeadline;
-		if(cancel){
+		boolean cancel = mCurrentToolchainMonitor.isCanceled() || System.currentTimeMillis() > mDeadline;
+		if (cancel) {
 			mLogger.debug("Tool knows that it should cancel! It called continueProcessing and received false.");
 		}
 		return !cancel;
@@ -1264,10 +1206,8 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	public void setDeadline(long date) {
 		if (System.currentTimeMillis() >= date) {
 			mLogger.warn(String
-					.format("Deadline was set to a date in the past, "
-							+ "effectively stopping the toolchain. "
-							+ "Is this what you intended? Value of date was %,d",
-							date));
+					.format("Deadline was set to a date in the past, " + "effectively stopping the toolchain. "
+							+ "Is this what you intended? Value of date was %,d", date));
 
 		}
 		mDeadline = date;
@@ -1337,8 +1277,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 		mToolchainWalker.requestCancel();
 	}
 
-	public class LogPreferenceChangeListener implements
-			IPreferenceChangeListener {
+	public class LogPreferenceChangeListener implements IPreferenceChangeListener {
 
 		private String mScope;
 		private String mPluginID;
@@ -1354,10 +1293,8 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 
 		@Override
 		public void preferenceChange(PreferenceChangeEvent event) {
-			mLogger.debug(mPrefix + event.getKey() + "\" changed: "
-					+ event.getOldValue() + " -> " + event.getNewValue()
-					+ " (actual value in store: "
-					+ mPreferences.getString(event.getKey()) + ")");
+			mLogger.debug(mPrefix + event.getKey() + "\" changed: " + event.getOldValue() + " -> "
+					+ event.getNewValue() + " (actual value in store: " + mPreferences.getString(event.getKey()) + ")");
 		}
 	}
 
@@ -1373,8 +1310,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 
 	@Override
 	public int init(Object params) {
-		throw new UnsupportedOperationException(
-				"The core does not initialize itself");
+		throw new UnsupportedOperationException("The core does not initialize itself");
 	}
 
 	@Override

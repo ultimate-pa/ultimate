@@ -8,7 +8,9 @@ import org.junit.Test;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 
 public class BenchmarkTest {
 

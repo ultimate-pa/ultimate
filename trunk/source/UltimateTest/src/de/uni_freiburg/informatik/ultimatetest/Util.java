@@ -13,6 +13,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 public class Util {
 
@@ -253,31 +254,11 @@ public class Util {
 
 		logger.info(String.format(
 				"Statistics: heapSize=%s heapFreeSize=%s heapMaxSize=%s",
-				humanReadableByteCount(heapSize, true),
-				humanReadableByteCount(heapFreeSize, true),
-				humanReadableByteCount(heapMaxSize, true)));
+				Utils.humanReadableByteCount(heapSize, true),
+				Utils.humanReadableByteCount(heapFreeSize, true),
+				Utils.humanReadableByteCount(heapMaxSize, true)));
 
 		logger.info("#################### END TEST RESULT ####################");
-	}
-
-	/**
-	 * Converts a number of bytes to a human readable String containing the byte
-	 * number as the highest compatible unit.
-	 * 
-	 * @param bytes
-	 *            A number of bytes
-	 * @param si
-	 *            true iff SI units should be used (base 1000, without the "i") 
-	 * @return
-	 */
-	public static String humanReadableByteCount(long bytes, boolean si) {
-		int unit = si ? 1000 : 1024;
-		if (bytes < unit)
-			return bytes + " B";
-		int exp = (int) (Math.log(bytes) / Math.log(unit));
-		String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1)
-				+ (si ? "" : "i");
-		return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
 	}
 
 	/**
