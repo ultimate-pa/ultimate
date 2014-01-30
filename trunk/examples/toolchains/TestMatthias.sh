@@ -39,13 +39,6 @@ trunk/examples/toolchains/TraceAbstractionTestDir.sh -ea 20 $2 \
 fi
 
 
-if [ "$1" = "forward" ]; then
-echo "test trace abstraction with ForwardPredicates"
-trunk/examples/toolchains/TraceAbstractionTestDir.sh -da 20 $2 \
-"TraceAbstraction.xml;TraceAbstractionC.xml;determinization/traceAbstractionTestSuite/settingsForwardPredicates"
-fi
-
-
 if [ "$1" = "determinization" ]; then
 echo "test trace abstraction with different determinizations"
 trunk/examples/toolchains/TraceAbstractionTestDir.sh -da 20 $2 \
