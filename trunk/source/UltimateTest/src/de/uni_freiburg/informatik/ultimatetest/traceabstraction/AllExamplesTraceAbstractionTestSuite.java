@@ -15,13 +15,13 @@ public class AllExamplesTraceAbstractionTestSuite extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String m_Path = "examples/programs/";
 	
-	// Time out for each test case in seconds
-	private static int m_Timeout = 20;
+	// Time out for each test case in milliseconds
+	private static int m_Timeout = 5000;
 
-	private static final boolean m_TraceAbstractionWithForwardPredicates = false;
-	private static final boolean m_TraceAbstractionWithBackwardPredicates = true;
-	private static final boolean m_TraceAbstractionCWithForwardPredicates = false;
-	private static final boolean m_TraceAbstractionCWithBackwardPredicates = true;
+	private static final boolean m_TraceAbstractionWithForwardPredicates = true;
+	private static final boolean m_TraceAbstractionWithBackwardPredicates = false;
+	private static final boolean m_TraceAbstractionCWithForwardPredicates = true;
+	private static final boolean m_TraceAbstractionCWithBackwardPredicates = false;
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {

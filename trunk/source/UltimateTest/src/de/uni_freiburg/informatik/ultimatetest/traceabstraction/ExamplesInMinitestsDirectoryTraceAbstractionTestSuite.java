@@ -16,11 +16,11 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
 public class ExamplesInMinitestsDirectoryTraceAbstractionTestSuite extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String m_Path = "examples/programs/minitests/";
+	private static final String m_Path = "examples/programs/minitests//";
 	// private static final String m_excludeFilesFromDir = "examples/programs/minitests/openbugs/";
 	
-	private static final boolean m_TraceAbstractionWithBackwardPredicates = false;
-	private static final boolean m_TraceAbstractionWithForwardPredicates = false;
+	private static final boolean m_TraceAbstractionWithBackwardPredicates = !false;
+	private static final boolean m_TraceAbstractionWithForwardPredicates = !false;
 	private static final boolean m_TraceAbstractionCWithBackwardPredicates = true;
 	private static final boolean m_TraceAbstractionCWithForwardPredicates = true;		
 	// Time out for each test case in milliseconds
