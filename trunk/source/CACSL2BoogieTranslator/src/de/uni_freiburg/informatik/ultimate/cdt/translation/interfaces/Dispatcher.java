@@ -311,13 +311,13 @@ public abstract class Dispatcher {
 	 * this auxVars map)
 	 */
 	public static List<HavocStatement> createHavocsForAuxVars(
-			Map<VariableDeclaration, CACSLLocation> auxVars) {
+			Map<VariableDeclaration, ILocation> auxVars) {
 		ArrayList<HavocStatement> result = new ArrayList<HavocStatement>();
 		for (VariableDeclaration varDecl : auxVars.keySet()) {
 			VarList[] varLists = varDecl.getVariables();
 			for (VarList varList : varLists) {
 				for (String varId : varList.getIdentifiers()) {
-					CACSLLocation originloc = auxVars.get(varDecl);
+					ILocation originloc = auxVars.get(varDecl);
 					result.add(new HavocStatement(originloc,
 							new VariableLHS[] { new VariableLHS(originloc,
 									varId) }));
@@ -331,7 +331,7 @@ public abstract class Dispatcher {
 	 * Returns true iff all auxvars in decls are contained in auxVars
 	 */
 	public boolean isAuxVarMapcomplete(List<Declaration> decls,
-			Map<VariableDeclaration, CACSLLocation> auxVars) {
+			Map<VariableDeclaration, ILocation> auxVars) {
 		boolean result = true;
 		for (Declaration rExprdecl : decls) {
 			assert (rExprdecl instanceof VariableDeclaration);

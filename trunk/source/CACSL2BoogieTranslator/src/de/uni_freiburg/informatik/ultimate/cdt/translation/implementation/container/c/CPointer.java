@@ -22,7 +22,8 @@ public class CPointer extends CType {
      *            the type, this pointer points to.
      */
     public CPointer(CType pointsToType) {
-        super(pointsToType.cDeclSpec);
+//        super();
+        super(false, false, false, false); //FIXME: integrate those flags
         this.pointsToType = pointsToType;
     }
 

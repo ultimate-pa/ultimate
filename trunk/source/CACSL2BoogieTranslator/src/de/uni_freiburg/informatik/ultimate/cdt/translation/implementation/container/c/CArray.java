@@ -46,9 +46,9 @@ public class CArray extends CType {
      * @param cDeclSpec
      *            the C declaration used.
      */
-    public CArray(IASTDeclSpecifier cDeclSpec, Expression[] dimensions,
+    public CArray(Expression[] dimensions,
             CType valueType) {
-        super(cDeclSpec);
+        super(false, false, false, false); //FIXME: integrate those flags
         this.dimensions = dimensions;
         this.valueType = valueType;
     }

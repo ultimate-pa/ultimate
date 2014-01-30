@@ -288,8 +288,11 @@ public class MainDispatcher extends Dispatcher {
         if (n instanceof IASTSimpleDeclaration) {
             return cHandler.visit(this, (IASTSimpleDeclaration) n);
         }
-        if (n instanceof IASTFunctionDeclarator) {
-            return cHandler.visit(this, (IASTFunctionDeclarator) n);
+        if (n instanceof IASTParameterDeclaration) {
+            return cHandler.visit(this, (IASTParameterDeclaration) n);
+        }
+        if (n instanceof IASTDeclarator) {
+            return cHandler.visit(this, (IASTDeclarator) n);
         }
         if (n instanceof IASTFunctionDefinition) {
             return cHandler.visit(this, (IASTFunctionDefinition) n);
@@ -303,9 +306,6 @@ public class MainDispatcher extends Dispatcher {
         }
         if (n instanceof IASTDeclaration) {
             return cHandler.visit(this, (IASTDeclaration) n);
-        }
-        if (n instanceof IASTDeclarator) {
-            return cHandler.visit(this, (IASTDeclarator) n);
         }
         if (n instanceof IASTDeclSpecifier) {
             // Here we decide which further Interface we want to visit, and
@@ -459,9 +459,6 @@ public class MainDispatcher extends Dispatcher {
         }
         if (n instanceof IASTName) {
             return cHandler.visit(this, (IASTName) n);
-        }
-        if (n instanceof IASTParameterDeclaration) {
-            return cHandler.visit(this, (IASTParameterDeclaration) n);
         }
         if (n instanceof IASTPointerOperator) {
             return cHandler.visit(this, (IASTPointerOperator) n);

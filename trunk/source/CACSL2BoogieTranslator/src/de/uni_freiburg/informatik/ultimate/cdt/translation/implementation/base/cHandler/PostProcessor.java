@@ -1,11 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.eclipse.cdt.internal.core.dom.parser.c.CPointerType;
@@ -22,10 +24,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -74,15 +78,16 @@ import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorT
  */
 public class PostProcessor {
 	/**
-	 * Holds the Boogie identifiers of the initialized global variables.
+	 * Holds the Boogie identifiers of the initialized global variables. Used
+	 * for filling the modifies clause of Ultimate.start and Ultimate.init.
 	 */
-	private HashSet<String> initializedGlobals;
+	private HashSet<String> mInitializedGlobals;
 
 	/**
 	 * Constructor.
 	 */
 	public PostProcessor() {
-		initializedGlobals = new HashSet<String>();
+		mInitializedGlobals = new HashSet<String>();
 	}
 
 	/**
@@ -106,21 +111,26 @@ public class PostProcessor {
 	 *            a list of used, but not declared types.
 	 * @param functions
 	 *            a list of functions to add to the TU.
+	 * @param mDeclarationsGlobalInBoogie 
 	 * @param uninitGlobalVars
 	 *            a set of uninitialized global variables.
 	 * @return a declaration list holding the init() and start() procedure.
 	 */
 	public ArrayList<Declaration> postProcess(Dispatcher main, ILocation loc,
-			MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler, StructHandler structHandler, ArrayList<Statement> initStatements,
+			MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler, StructHandler structHandler,
+//			ArrayList<Statement> initStatements,
 			HashMap<String, Procedure> procedures,
 			HashMap<String, HashSet<String>> modifiedGlobals,
 			Set<String> undefinedTypes,
-			Collection<? extends FunctionDeclaration> functions,
-			Collection<String> uninitGlobalVars) {
+			Collection<? extends FunctionDeclaration> functions, 
+			HashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie
+//			Collection<String> uninitGlobalVars
+			) {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 		decl.addAll(createUltimateInitProcedure(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler,
-				initStatements, uninitGlobalVars));
+//				initStatements, uninitGlobalVars
+				mDeclarationsGlobalInBoogie));
 		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler, procedures,
 				modifiedGlobals));
 		decl.addAll(functions);
@@ -157,6 +167,7 @@ public class PostProcessor {
 	 * @param arrayHandler
 	 *            a reference to the arrayHandler.
 	 * @param structHandler 
+	 * @param mDeclarationsGlobalInBoogie 
 	 * @param initStatements
 	 *            a list of all global init statements.
 	 * @param uninitGlobalVars
@@ -165,9 +176,12 @@ public class PostProcessor {
 	 */
 	private ArrayList<Declaration> createUltimateInitProcedure(ILocation loc,
 			Dispatcher main, MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler,   
-			StructHandler structHandler, ArrayList<Statement> initStatements,
-			Collection<String> uninitGlobalVars) {
+			StructHandler structHandler, HashMap<Declaration, CDeclaration> mDeclarationsGlobalInBoogie
+//			ArrayList<Statement> initStatements, Collection<String> uninitGlobalVars
+			) {
 		functionHandler.beginUltimateInit(main, loc, SFO.INIT);
+		ArrayList<Statement> initStatements = new ArrayList<Statement>();
+		
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		ArrayList<VariableDeclaration> initDecl = new ArrayList<VariableDeclaration>();
 		if (main.isMMRequired()) {
@@ -176,13 +190,13 @@ public class PostProcessor {
 					new Expression[] { new IntegerLiteral(loc, SFO.NR0) }) };
 			Expression[] rhs = new Expression[] { new BooleanLiteral(loc, false) };
 			initStatements.add(0, new AssignmentStatement(loc, lhs, rhs));
-			initializedGlobals.add(SFO.VALID);
+			mInitializedGlobals.add(SFO.VALID);
 
 			VariableLHS slhs = new VariableLHS(loc, SFO.NULL);
 			initStatements.add(0, new AssignmentStatement(loc, 
 					new LeftHandSide[] { slhs }, 
 					new Expression[] { MemoryHandler.constructNullPointer(loc)}));
-			initializedGlobals.add(SFO.NULL);
+			mInitializedGlobals.add(SFO.NULL);
 		}
 		for (Statement stmt : initStatements) {
 			if (stmt instanceof AssignmentStatement) {
@@ -190,46 +204,84 @@ public class PostProcessor {
 				assert ass.getLhs().length == 1; // by construction ...
 				LeftHandSide lhs = ass.getLhs()[0];
 				String id = BoogieASTUtil.getLHSId(lhs);
-				initializedGlobals.add(id);
+				mInitializedGlobals.add(id);
 			}
 		}
-		for (String bId : uninitGlobalVars) {
-			assert main.cHandler.getSymbolTable().containsBoogieSymbol(bId);
-			String cId = main.cHandler.getSymbolTable().getCID4BoogieID(bId,
-					loc);
-			assert main.cHandler.getSymbolTable().containsCSymbol(cId);
-			CACSLLocation lloc = (CACSLLocation) main.cHandler.getSymbolTable()
-					.get(cId, loc).getDecl().getLocation();
-			ASTType at = main.cHandler.getSymbolTable().getTypeOfVariable(cId,
-					lloc);
-			CType cvar = main.cHandler.getSymbolTable().get(cId, lloc)
-					.getCVariable();
-			LeftHandSide lhs = new VariableLHS(lloc, new InferredType(at), bId);
-			ResultExpression r = initVar(lloc, main, memoryHandler, arrayHandler, functionHandler, structHandler, lhs, 
-//					at,
-					cvar);
-			initStatements.addAll(r.stmt);
-			for (Declaration d : r.decl) {
-				assert d instanceof VariableDeclaration;
-				initDecl.add((VariableDeclaration) d);
-			}
-		}
-		initializedGlobals.addAll(uninitGlobalVars);
 		
-		initializedGlobals.addAll(functionHandler.getModifiedGlobals().get(SFO.INIT));
+		//old initialization for statics and other globals
+//		for (String bId : uninitGlobalVars) {
+//			assert main.cHandler.getSymbolTable().containsBoogieSymbol(bId);
+//			String cId = main.cHandler.getSymbolTable().getCID4BoogieID(bId,
+//					loc);
+//			assert main.cHandler.getSymbolTable().containsCSymbol(cId);
+//			CACSLLocation lloc = (CACSLLocation) main.cHandler.getSymbolTable()
+//					.get(cId, loc).getBoogieDecl().getLocation();
+////			ASTType at = main.cHandler.getSymbolTable().getTypeOfVariable(cId,
+////					lloc);
+//			CType cvar = main.cHandler.getSymbolTable().get(cId, lloc)
+//					.getCVariable();
+////			LeftHandSide lhs = new VariableLHS(lloc, new InferredType(at), bId);
+//			LeftHandSide lhs = new VariableLHS(lloc, new InferredType(cvar), bId);
+//			ResultExpression r = initVar(lloc, main, memoryHandler, arrayHandler, functionHandler, structHandler, lhs, 
+////					at,
+//					cvar);
+//			initStatements.addAll(r.stmt);
+//			for (Declaration d : r.decl) {
+//				assert d instanceof VariableDeclaration;
+//				initDecl.add((VariableDeclaration) d);
+//			}
+//		}
+//		mInitializedGlobals.addAll(uninitGlobalVars);
+		
+		//new initialization for statics and other globals
+		for (Entry<Declaration, CDeclaration> en : mDeclarationsGlobalInBoogie.entrySet()) {
+			if (en.getKey() instanceof TypeDeclaration)
+				continue;
+			ResultExpression initializer = en.getValue().getInitializer();
+			if (initializer != null) {
+				assert ((VariableDeclaration)en.getKey()).getVariables().length == 1 
+						&& ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers().length == 1;
+				String bId = ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers()[0].toString();
+				ResultExpression initRex = 
+						PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler, 
+								new VariableLHS(loc, bId), en.getValue().getType(), initializer);
+				initStatements.addAll(initRex.stmt);
+				for (Declaration d : initRex.decl)
+					initDecl.add((VariableDeclaration) d);
+//				initStatements.addAll(initializer.stmt);
+//				for (Declaration d : initializer.decl)
+//					initDecl.add((VariableDeclaration) d);
+			} else { //no initializer --> default initialization
+				for (VarList vl  : ((VariableDeclaration) en.getKey()).getVariables()) {
+					for (String id : vl.getIdentifiers()) {
+						ResultExpression nullInitializer = initVar(loc, main, 
+								memoryHandler, arrayHandler, functionHandler, structHandler, 
+										new VariableLHS(loc, id), en.getValue().getType(), null) ;
+						
+						initStatements.addAll(nullInitializer.stmt);
+						for (Declaration d : nullInitializer.decl)
+							initDecl.add((VariableDeclaration) d);
+					}
+				}
+			}
+			for (VarList vl  : ((VariableDeclaration) en.getKey()).getVariables())
+				mInitializedGlobals.addAll(Arrays.asList(vl.getIdentifiers()));
+		}
+		
+		mInitializedGlobals.addAll(functionHandler.getModifiedGlobals().get(SFO.INIT));
 //		initializedGlobals.addAll(arrayHandler.getModifiedGlobals());//alex: array on heap initialization means Ultimate.init has to modify it..
 		
 		Specification[] specsInit = new Specification[1];
-		VariableLHS[] modifyList = new VariableLHS[initializedGlobals.size()];
+		VariableLHS[] modifyList = new VariableLHS[mInitializedGlobals.size()];
 		int i = 0;
-		for (String var: initializedGlobals) {
+		for (String var: mInitializedGlobals) {
 			modifyList[i++] = new VariableLHS(loc, var);
 		}
 		specsInit[0] = new ModifiesSpecification(loc, false, modifyList);
 		Procedure initProcedureDecl = new Procedure(loc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], specsInit, null);
 //		decl.add(initProcedureDecl);
-		Body initBody = new Body(loc,
+		Body initBody = new Body(loc,//TODO: do we need auxVars here, too??
 				initDecl.toArray(new VariableDeclaration[0]),
 				initStatements.toArray(new Statement[0]));
 		decl.add(new Procedure(loc, new Attribute[0], SFO.INIT, new String[0],
@@ -280,10 +332,11 @@ public class PostProcessor {
 	 * 
 	 * @return a set of Statements, assigning values to the variables.
 	 */
-	public ResultExpression initVar(final CACSLLocation loc, Dispatcher main,
-			MemoryHandler memoryHandler, final ArrayHandler arrayHandler, FunctionHandler functionHandler, StructHandler structHandler, final LeftHandSide lhs,
+	public static ResultExpression initVar(ILocation loc, Dispatcher main,
+			MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler, 
+			StructHandler structHandler, final LeftHandSide lhs,
 //			final ASTType at, 
-			CType cvar) {
+			CType cvar, ResultExpression initializer) {
 		CType lCvar = cvar.getUnderlyingType();
 //		if (cvar instanceof CNamed) {
 //			lCvar = ((CNamed) cvar).getUnderlyingType();
@@ -295,51 +348,69 @@ public class PostProcessor {
 	
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+		Map<VariableDeclaration, ILocation> auxVars = new HashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-		InferredType it = new InferredType(lCvar);
+//		InferredType it = new InferredType(lCvar);
 		ArrayList<Expression> rhs = new ArrayList<Expression>();
 		if (lCvar instanceof CPrimitive) {
 			switch (((CPrimitive) lCvar).getType()) {
+			case BOOL:
 			case CHAR:
 			case CHAR16:
 			case CHAR32:
 			case WCHAR:
 			case INT:
-				rhs.add(new IntegerLiteral(loc, it, SFO.NR0));
+				if (initializer == null) {
+					rhs.add(new IntegerLiteral(loc, SFO.NR0));
+				} else {
+					rhs.add(initializer.lrVal.getValue());
+				}
+//				rhs.add(new IntegerLiteral(loc, it, SFO.NR0));
 				break;
 			case DOUBLE:
 			case FLOAT:
-				rhs.add(new RealLiteral(loc, it, SFO.NR0F));
+				if (initializer == null) {
+					rhs.add(new RealLiteral(loc, SFO.NR0F));
+				} else {
+					rhs.add(initializer.lrVal.getValue());
+				}
+//				rhs.add(new RealLiteral(loc, it, SFO.NR0F));
 			case VOID:
-				default:
+			default:
 				throw new AssertionError("unknown type to init");
 			}
 			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
 					rhs.toArray(new Expression[0])));
-//		} else if (at instanceof ArrayType) {
+			//		} else if (at instanceof ArrayType) {
 		} else if (lCvar instanceof CArray) {
-			String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
-			InferredType tmpIType = new InferredType(Type.Pointer);
-			VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc);
-			
-			ResultExpression mallocRex = memoryHandler.getMallocCall(
-					main, functionHandler, memoryHandler.calculateSizeOf(lCvar), new LocalLValue(new VariableLHS(loc, tmpIType, tmpId), lCvar), loc);
-			stmt.addAll(mallocRex.stmt);
-			decl.addAll(mallocRex.decl);
-			auxVars.putAll(mallocRex.auxVars);
-			overappr.addAll(mallocRex.overappr);
-			
-			Statement assign = new AssignmentStatement(loc, new LeftHandSide[] {lhs}, new Expression[] { mallocRex.lrVal.getValue()});
-			
-			stmt.add(assign);
-			decl.add(tVarDecl);
-			auxVars.put(tVarDecl, loc);
-			
-			stmt.addAll(arrayHandler.initArray(main, memoryHandler, structHandler, loc, null, 
-					CHandler.convertLHSToExpression(lhs),
-					functionHandler, (CArray) lCvar));
-			
+
+			if (onHeap) { 
+				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
+				//			InferredType tmpIType = new InferredType(Type.Pointer);
+				VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, MemoryHandler.POINTER_TYPE, loc);
+
+				ResultExpression mallocRex = memoryHandler.getMallocCall(
+						main, functionHandler, memoryHandler.calculateSizeOf(lCvar, loc), new LocalLValue(new VariableLHS(loc, tmpId), lCvar), loc);
+				stmt.addAll(mallocRex.stmt);
+				decl.addAll(mallocRex.decl);
+				auxVars.putAll(mallocRex.auxVars);
+				overappr.addAll(mallocRex.overappr);
+
+				Statement assign = new AssignmentStatement(loc, new LeftHandSide[] {lhs}, new Expression[] { mallocRex.lrVal.getValue()});
+
+				stmt.add(assign);
+				decl.add(tVarDecl);
+				auxVars.put(tVarDecl, loc);
+
+				stmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, structHandler, loc, 
+						initializer == null ? null : ((ResultExpressionListRec) initializer).list,
+						CHandler.convertLHSToExpression(lhs), functionHandler, (CArray) lCvar));
+			} else { //not on Heap
+				stmt.addAll(arrayHandler.initBoogieArray(main, memoryHandler, structHandler, functionHandler, loc,
+						initializer == null ? null : ((ResultExpressionListRec) initializer).list,
+						lhs, (CArray) lCvar));
+			}
+
 //			ArrayList<IdentifierExpression> tempIdc = new ArrayList<IdentifierExpression>();
 //			Expression[] arrSize = ((CArray) lCvar).getDimensions();
 //			Expression nr0 = new IntegerLiteral(loc, SFO.NR0);
@@ -404,15 +475,26 @@ public class PostProcessor {
 			
 			CStruct structType = (CStruct) lCvar;
 			//			for (VarList vl : ((StructType) at).getFields()) {
-			for (String fieldId : ((CStruct) lCvar).getFieldIds()) {
-				ResultExpression r = initVar(loc, main, memoryHandler, arrayHandler,functionHandler, structHandler, 
-						new StructLHS(loc, lhs, fieldId), 
-						structType.getFieldType(fieldId));
-				decl.addAll(r.decl);
-				stmt.addAll(r.stmt);
-				auxVars.putAll(r.auxVars);
-				overappr.addAll(r.overappr);
-			}
+			ResultExpression scRex = structHandler.makeStructConstructorFromRERL(main, 
+					loc, memoryHandler, arrayHandler, functionHandler, 
+					(ResultExpressionListRec) initializer,
+					structType, onHeap);
+			
+			stmt.addAll(scRex.stmt);
+			decl.addAll(scRex.decl);
+			overappr.addAll(scRex.overappr);
+			auxVars.putAll(scRex.auxVars);
+			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { scRex.lrVal.getValue() }));
+			
+//			for (String fieldId : ((CStruct) lCvar).getFieldIds()) {
+//				ResultExpression r = initVar(loc, main, memoryHandler, arrayHandler,functionHandler, structHandler, 
+//						new StructLHS(loc, lhs, fieldId), 
+//						structType.getFieldType(fieldId));
+//				decl.addAll(r.decl);
+//				stmt.addAll(r.stmt);
+//				auxVars.putAll(r.auxVars);
+//				overappr.addAll(r.overappr);
+//			}
 //		} else if ((at instanceof NamedType) && 
 		} else if (lCvar instanceof CPointer) {
 			LRValue nullPointer = new RValue(new IdentifierExpression(loc, new InferredType(lCvar), SFO.NULL), 
@@ -514,7 +596,7 @@ public class PostProcessor {
 						checkMethod, args.toArray(new Expression[0])));
 			}
 			HashSet<VariableLHS> startModifiesClause = new HashSet<VariableLHS>();
-			for (String id: initializedGlobals)
+			for (String id: mInitializedGlobals)
 				startModifiesClause.add(new VariableLHS(loc, id));
 			for (String id: modifiedGlobals.get(checkMethod))
 				startModifiesClause.add(new VariableLHS(loc, id));

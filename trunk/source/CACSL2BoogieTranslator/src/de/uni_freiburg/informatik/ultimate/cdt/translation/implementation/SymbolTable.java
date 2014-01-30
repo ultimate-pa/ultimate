@@ -10,9 +10,11 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
@@ -27,6 +29,8 @@ public class SymbolTable extends ScopedHashMap<String, SymbolTableValue> {
      * Holds a map from BoogieIDs and the corresponding CIDs.
      */
     private HashMap<String, String> boogieID2CID;
+    
+    private HashMap<CDeclaration, Declaration> mCDecl2BoogieDecl;
     /**
      * unique ID for current scope.
      */
@@ -41,6 +45,7 @@ public class SymbolTable extends ScopedHashMap<String, SymbolTableValue> {
         if (!main.typeHandler.isStructDeclaration()) {
             SymbolTableValue v = super.put(cId, value);
             boogieID2CID.put(value.getBoogieName(), cId);
+            mCDecl2BoogieDecl.put(value.getCDecl(), value.getBoogieDecl());
             return v;
         }
         return null;
@@ -115,6 +120,7 @@ public class SymbolTable extends ScopedHashMap<String, SymbolTableValue> {
     public SymbolTable(Dispatcher main) {
         super();
         this.boogieID2CID = new HashMap<String, String>();
+        this.mCDecl2BoogieDecl = new HashMap<CDeclaration, Declaration>();
         this.compoundCounter = 0;
         this.main = main;
     }
@@ -179,20 +185,24 @@ public class SymbolTable extends ScopedHashMap<String, SymbolTableValue> {
      * @return the found ASTType.
      */
     public ASTType getTypeOfVariable(String cId, ILocation loc) {
-        if (get(cId, loc).getDecl() instanceof VariableDeclaration) {
-            VariableDeclaration vd = (VariableDeclaration) get(cId, loc)
-                    .getDecl();
-            // on index 0, because the type is the same for all ...
-            return vd.getVariables()[0].getType();
-        } else if (get(cId, loc).getDecl() instanceof ConstDeclaration) {
-            ConstDeclaration cd = (ConstDeclaration) get(cId, loc).getDecl();
-            // on index 0, because the type is the same for all ...
-            return cd.getVarList().getType();
-        } else {
-            String msg = "Unexpected declaration in symbol table!";
-            Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
-            throw new UnsupportedSyntaxException(msg);
-        }
+    	return main.typeHandler.ctype2asttype(loc, this.get(cId, loc).getCVariable());
+//        if (this.get(cId, loc).getBoogieDecl() instanceof VariableDeclaration) {
+//            VariableDeclaration vd = (VariableDeclaration) get(cId, loc)
+//                    .getBoogieDecl();
+//            // on index 0, because the type is the same for all ...
+//            return vd.getVariables()[0].getType(); //FIXME ??
+//        } else if (this.get(cId, loc).getBoogieDecl() instanceof ConstDeclaration) {
+//            ConstDeclaration cd = (ConstDeclaration) get(cId, loc).getBoogieDecl();
+//            return cd.getVarList().getType();
+//        } else {
+//            String msg = "Unexpected declaration in symbol table!";
+//            Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
+//            throw new UnsupportedSyntaxException(msg);
+//        }
+    }
+    
+    public Declaration getBoogieDeclOfResultDecl(CDeclaration cDec) {
+    	return mCDecl2BoogieDecl.get(cDec);
     }
 
     /**

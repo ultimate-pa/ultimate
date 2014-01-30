@@ -27,21 +27,26 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultContract;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
@@ -283,11 +288,11 @@ public class FunctionHandler {
 		ResultTypes checkedType = main.cHandler.checkForPointer(main,
                 node.getDeclarators()[0].getPointerOperators(), returnType, false);
         if (returnType.isVoid &&
-                !(checkedType.cvar instanceof CPointer)) {
+                !(checkedType.cType instanceof CPointer)) {
 			if (methodsCalledBeforeDeclared.contains(methodName)) {
 				// this method was assumed to return int -> return int
 				out[0] = new VarList(loc, new String[] { SFO.RES },
-						new PrimitiveType(loc, new InferredType(Type.Integer),
+						new PrimitiveType(loc, /*new InferredType(Type.Integer),*/
 								SFO.INT));
 			} else {
 				// void, so there are no out vars
@@ -295,7 +300,8 @@ public class FunctionHandler {
 			}
 		} else {
 			// we found a type, so node is type ASTType
-			ASTType type = checkedType.getType();
+//			ASTType type = checkedType.getType();
+			ASTType type = main.typeHandler.ctype2asttype(loc, checkedType.cType);
 			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
 		}
 		if (!modifiedGlobals.containsKey(methodName)) {
@@ -307,12 +313,11 @@ public class FunctionHandler {
 		Procedure proc = new Procedure(loc, attr, methodName, typeParams, in,
 				out, spec, null);
 		procedures.put(methodName, proc);
-		procedureToReturnCType.put(methodName, returnType.cvar);
+		procedureToReturnCType.put(methodName, returnType.cType);
 		
 		// fill map of parameter types
 		ArrayList<CType> paramTypes =
 		        new ArrayList<CType>(proc.getInParams().length);
-		procedureToParamCType.put(methodName, paramTypes);
 		IASTDeclarator[] decls = node.getDeclarators();
 		assert (decls.length == 1) :
 		    "We do not support multiple function declarations.";
@@ -324,8 +329,9 @@ public class FunctionHandler {
 		    ResultTypes resType = (ResultTypes) main.dispatch(declSpec);
 		    resType = main.cHandler.checkForPointer(
 		            main, declarator.getPointerOperators(), resType, false);
-		    paramTypes.add(i, resType.cvar);
+		    paramTypes.add(i, resType.cType);
 		}
+		procedureToParamCType.put(methodName, paramTypes);
 		
 		// end scope for retranslation of ACSL specification
 //		main.cHandler.getSymbolTable().endScope();
@@ -404,7 +410,7 @@ public class FunctionHandler {
 				VarList var = new VarList(loc, new String[] { auxInvar }, type);
 				VariableDeclaration inVarDecl = new VariableDeclaration(loc,
 						new Attribute[0], new VarList[] { var });
-				decl.add(inVarDecl);
+//				decl.add(inVarDecl);//decls are made via symboltable, right?
 				
                 CType cvar = main.cHandler.getSymbolTable().get(cId, loc)
                         .getCVariable();
@@ -425,10 +431,10 @@ public class FunctionHandler {
                         makeAssignment(main, loc, stmt, hlv,
                             new RValue(rhsId, ((CPointer)cvar).pointsToType),
                             decls,
-                            new HashMap<VariableDeclaration, CACSLLocation>(),
+                            new HashMap<VariableDeclaration, ILocation>(),
                             new ArrayList<Overapprox>());
                     stmt = assign.stmt;
-                    decl = assign.decl;
+//                    decl = assign.decl;//decls are made via symboltable, right?
                 } else {
         			stmt.add(new AssignmentStatement(loc,
         					new LeftHandSide[] { tempLHS },
@@ -438,7 +444,10 @@ public class FunctionHandler {
 				// Overwrite the information in the symbolTable for cId, s.t. it
 				// points to the locally declared variable.
 				main.cHandler.getSymbolTable().put(cId,
-						new SymbolTableValue(auxInvar, inVarDecl, false, cvar, false));
+						new SymbolTableValue(auxInvar, inVarDecl, 
+								new CDeclaration(cvar, cId), false, 
+//								false));
+								StorageClass.UNSPECIFIED));
 			}
 		}
 	}
@@ -595,51 +604,48 @@ public class FunctionHandler {
 	 * @return the translation result.
 	 */
 	public Result handleFunctionDefinition(Dispatcher main, MemoryHandler memoryHandler,
-			IASTFunctionDefinition node) {
+			IASTFunctionDefinition node, ResultDeclaration funcDecl) {
 //		main.cHandler.getSymbolTable().beginScope();
 		main.cHandler.beginScope();
 		ILocation loc = new CACSLLocation(node);
-		IASTDeclarator decl = node.getDeclarator();
-        String methodName = decl.getName().toString();
-		VarList[] in = ((ResultVarList) main.dispatch(node.getDeclarator())).varList;
-		VarList[] out = new VarList[0]; // at most one out param in C
+		CDeclaration decl = funcDecl.getDeclarations().get(0);
+        String methodName = decl.getName();
 		// we check the type via typeHandler
 		ResultTypes resType = (ResultTypes) main.dispatch(node
 				.getDeclSpecifier());
-		procedureToReturnCType.put(methodName, resType.cvar);
+		procedureToReturnCType.put(methodName, resType.cType);
 		
 		// fill map of parameter types
         ArrayList<CType> paramTypes = new ArrayList<CType>();
-        procedureToParamCType.put(methodName, paramTypes);
-        IASTParameterDeclaration[] paramDecs =
-                ((CASTFunctionDeclarator)decl).getParameters();
+        CDeclaration[] paramDecs =
+                ((CFunction) decl.getType()).getParameterTypes();
+		VarList[] in  = new VarList[paramDecs.length];
+		VarList[] out = new VarList[0]; // at most one out param in C
         for (int i = 0; i < paramDecs.length; ++i) {
-            IASTParameterDeclaration paramDec = paramDecs[i];
-            IASTDeclSpecifier declSpec = paramDec.getDeclSpecifier();
-            IASTDeclarator declarator = paramDec.getDeclarator();
-            ResultTypes paramResType = (ResultTypes) main.dispatch(declSpec);
-            boolean isOnHeap = ((MainDispatcher) main).getVariablesForHeap().
-                    contains(paramDec);
-            paramResType = main.cHandler.checkForPointer(
-                    main, declarator.getPointerOperators(), paramResType, false);
-            if (isOnHeap) {
-                paramTypes.add(i, new CPointer(paramResType.cvar));
-            }
-            else {
-                paramTypes.add(i, paramResType.cvar);
-            }
+        	CDeclaration paramDec = paramDecs[i];
+        	
+        	ASTType type = ((TypeHandler) main.typeHandler).ctype2asttype(loc, paramDec.getType());
+        	String paramId = main.nameHandler.getInParamIdentifier(paramDec.getName());
+        	in[i] = new VarList(loc, new String[] { paramId}, type);
+//            FIXME: boolean isOnHeap = ((MainDispatcher) main).getVariablesForHeap().
+//                    contains(paramDec);
+            paramTypes.add(i, paramDec.getType());
+            main.cHandler.getSymbolTable().put(paramDec.getName(), 
+            		new SymbolTableValue(paramId, null, paramDec, false, null));
         }
+        procedureToParamCType.put(methodName, paramTypes);
         
-		ResultTypes checkedType = main.cHandler.checkForPointer(main, node
+		ResultTypes checkedType = main.cHandler.checkForPointer(main, node//FIXME -- is this call still necessary??
 				.getDeclarator().getPointerOperators(), resType, false);
-		ASTType type = checkedType.getType();
+//		ASTType type = checkedType.getType();
+		ASTType type = main.typeHandler.ctype2asttype(loc, checkedType.cType);
 		if (!checkedType.isVoid) { // void, so there are no out vars
 			out = new VarList[1];
 			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
 		} else if (methodsCalledBeforeDeclared.contains(methodName)) {
 			out = new VarList[1];
 			out[0] = new VarList(loc, new String[] { SFO.RES },
-					new PrimitiveType(loc, new InferredType(Type.Integer),
+					new PrimitiveType(loc, /*new InferredType(Type.Integer),*/
 							SFO.INT));
 		}
 		Procedure proc = procedures.get(methodName);
@@ -722,8 +728,8 @@ public class FunctionHandler {
 		 *    - havoc them
 		 *    - etc.
 		 * 2) dispatch body
-		 * 4) handle mallocs
-         * 3) add statements and declarations to new body
+		 * 3) handle mallocs
+         * 4) add statements and declarations to new body
 		 */
 		ArrayList<Statement> stmts = new ArrayList<Statement>();
 		ArrayList<Declaration> decls = new ArrayList<Declaration>();
@@ -735,9 +741,19 @@ public class FunctionHandler {
 		stmts.addAll(insertMallocs(main, loc, memoryHandler,
 		        new ArrayList<Statement>(Arrays.asList(body.getBlock()))));
 		// 4)
+		for (SymbolTableValue stv : main.cHandler.getSymbolTable().currentScopeValues())
+			if (!stv.isGlobalVar() && stv.getBoogieDecl() != null) { //there may be a null declaration in case of foo(void)
+//				((CHandler) main.cHandler).addInitStmtsAndDecls(main, loc, decls, stmts, stv);
+				decls.add(stv.getBoogieDecl());
+				
+			}
+//		for (Entry<String, ResultTypes>  en : main.typeHandler.getDefinedTypes().currentScopeEntries()) {
+//			decls.addAll(en.getValue().typeDeclarations);
+//		}
         for (VariableDeclaration declaration : body.getLocalVars()) {
             decls.add(declaration);
         }
+        
 		body = new Body(loc, decls.toArray(new VariableDeclaration[0]),
 		        stmts.toArray(new Statement[0]));
 		
@@ -755,7 +771,7 @@ public class FunctionHandler {
 	public ArrayList<Statement> insertMallocs(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, ArrayList<Statement> block) {
 		ArrayList<Statement> mallocs = new ArrayList<Statement>();
 		for (LocalLValue llv : this.mallocedAuxPointers.currentScopeKeys()) 
-			mallocs.addAll(memoryHandler.getMallocCall(main, this, memoryHandler.calculateSizeOf(llv.cType), llv, loc).stmt);
+			mallocs.addAll(memoryHandler.getMallocCall(main, this, memoryHandler.calculateSizeOf(llv.cType, loc), llv, loc).stmt);
 		ArrayList<Statement> frees = new ArrayList<Statement>();
 		for (LocalLValue llv : this.mallocedAuxPointers.currentScopeKeys())  //frees are inserted in handleReturnStm
 			frees.addAll(memoryHandler.getFreeCall(main, this, llv.getValue(), loc).stmt);
@@ -814,7 +830,7 @@ public class FunctionHandler {
 			Result sizeRes = main.dispatch(node.getArguments()[0]);
 			assert sizeRes instanceof ResultExpression;
 			ResultExpression sizeRex = ((ResultExpression) sizeRes)
-					.switchToRValue(main, memoryHandler, structHandler, loc);
+					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 //			return memoryHandler.getMallocCall(main, this, sizeRex.expr, loc);
 			return memoryHandler.getMallocCall(main, this, sizeRex.lrVal.getValue(), loc);
 		}
@@ -823,15 +839,15 @@ public class FunctionHandler {
 			Result pRes = main.dispatch(node.getArguments()[0]);
 			assert pRes instanceof ResultExpression;
 			ResultExpression pRex = ((ResultExpression) pRes)
-					.switchToRValue(main, memoryHandler, structHandler, loc);
+					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 //			return memoryHandler.getFreeCall(main, this, pRex.expr, loc);
 			return memoryHandler.getFreeCall(main, this, pRex.lrVal.getValue(), loc);
 		}
 
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		Map<VariableDeclaration, CACSLLocation> auxVars = 
-				new HashMap<VariableDeclaration, CACSLLocation>();
+		Map<VariableDeclaration, ILocation> auxVars = 
+				new HashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
 		Expression expr = null;
 
@@ -853,7 +869,7 @@ public class FunctionHandler {
 		for (int i = 0; i < node.getArguments().length; i++) {
 			IASTInitializerClause inParam = node.getArguments()[i];
 			ResultExpression in = ((ResultExpression) main.dispatch(inParam))
-					.switchToRValue(main, memoryHandler, structHandler, loc);
+					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			if (in.lrVal.getValue() == null) {
 				String msg = "Incorrect or invalid in-parameter! "
 						+ loc.toString();
@@ -892,9 +908,11 @@ public class FunctionHandler {
 			} else if (type.length == 1) { // one return value
 				String tmpId = main.nameHandler
 						.getTempVarUID(SFO.AUXVAR.RETURNED);
-				InferredType tmpIType = new InferredType(type[0].getType());
-				expr = new IdentifierExpression(loc, tmpIType, tmpId);
-				VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc); 
+//				InferredType tmpIType = new InferredType(type[0].getType());
+//				expr = new IdentifierExpression(loc, tmpIType, tmpId);
+				expr = new IdentifierExpression(loc, tmpId);
+//				VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc); 
+				VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpId, (PrimitiveType) type[0].getType(), loc); 
 				auxVars.put(tmpVar, loc);
 				decl.add(tmpVar);
 				VariableLHS tmpLhs = new VariableLHS(loc, tmpId);
@@ -914,7 +932,7 @@ public class FunctionHandler {
 			Dispatcher.warn(loc, "Unsoundness Warning", longDescription);
 			String ident = main.nameHandler.getTempVarUID(SFO.AUXVAR.RETURNED);
 			expr = new IdentifierExpression(loc,
-					new InferredType(Type.Integer), ident);
+					/*new InferredType(Type.Integer),*/ ident);
 			VarList tempVar = new VarList(loc, new String[] { ident },
 					new PrimitiveType(loc, SFO.INT));
 			VariableDeclaration tmpVar = new VariableDeclaration(loc,
@@ -947,7 +965,7 @@ public class FunctionHandler {
 			StructHandler structHandler, IASTReturnStatement node) {
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+		Map<VariableDeclaration, ILocation> auxVars = new HashMap<VariableDeclaration, ILocation>();
 		// The ReturnValue could be empty!
 		CACSLLocation loc = new CACSLLocation(node);
 		VarList[] outParams = this.currentProcedure.getOutParams();
@@ -960,7 +978,7 @@ public class FunctionHandler {
 			stmt.add(havoc);
 		} else if (node.getReturnValue() != null) {
 			ResultExpression exprResult = ((ResultExpression) main.dispatch(node
-					.getReturnValue())).switchToRValue(main, memoryHandler, structHandler, loc);
+					.getReturnValue())).switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			Expression rhs = (Expression) exprResult.lrVal.getValue();
 			stmt.addAll(exprResult.stmt);
 			decl.addAll(exprResult.decl);
@@ -989,8 +1007,8 @@ public class FunctionHandler {
 				stmt.addAll(memoryHandler.getFreeCall(main, this, entry.getKey().getValue(), loc).stmt);
 		
 		stmt.add(new ReturnStatement(loc));
-		Map<VariableDeclaration, CACSLLocation> emptyAuxVars =
-		        new HashMap<VariableDeclaration, CACSLLocation>(0);
+		Map<VariableDeclaration, ILocation> emptyAuxVars =
+		        new HashMap<VariableDeclaration, ILocation>(0);
 		return new ResultExpression(stmt, null, decl, emptyAuxVars);
 	}
 
@@ -1027,7 +1045,7 @@ public class FunctionHandler {
 			IASTDeclarator d = dec.getDeclarator();
 			ResultTypes checkedType = main.cHandler.checkForPointer(main,
 					d.getPointerOperators(), rt, false);
-			CType cvar = checkedType.cvar;
+			CType cvar = checkedType.cType;
 			ASTType type = checkedType.getType();
 			if (!(checkedType.isVoid && !(cvar instanceof CPointer))) {
 //				String cId = dec.getDeclarator().getName().getRawSignature();
@@ -1047,7 +1065,9 @@ public class FunctionHandler {
 				VariableDeclaration decl = new VariableDeclaration(loc,
 						new Attribute[0], new VarList[] { vl });
 				main.cHandler.getSymbolTable().put(cId,
-						new SymbolTableValue(boogieId, decl, false, cvar, false));
+						new SymbolTableValue(boogieId, decl, new CDeclaration(cvar, cId), false, 
+//								false));
+								StorageClass.UNSPECIFIED));
 				list.add(vl);
 			}
 		}

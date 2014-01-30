@@ -223,17 +223,19 @@ public final class SFO {
  * InferredType tmpIType at location loc.
  */
 public static VariableDeclaration getTempVarVariableDeclaration(
-		final String tmpName, final InferredType tmpIType, final ILocation loc) {
-	final VarList tempVar;
-	if (tmpIType.getType() == Type.Pointer) {
-		tempVar = new VarList(loc, new String[] { tmpName },
-                MemoryHandler.POINTER_TYPE);
-	} else {
-        ASTType tempType = new PrimitiveType(loc, tmpIType,
-                tmpIType.toString());
-		tempVar = new VarList(loc, new String[] { tmpName },
-                tempType);
-	}
+//		String tmpName, InferredType tmpIType, ILocation loc) {
+		String tmpName, ASTType astType, ILocation loc) {
+//	VarList tempVar;
+//	if (tmpIType.getType() == Type.Pointer) {
+//		tempVar = new VarList(loc, new String[] { tmpName },
+//                MemoryHandler.POINTER_TYPE);
+//	} else {
+//        ASTType tempType = new PrimitiveType(loc, tmpIType,
+//                tmpIType.toString());
+//		tempVar = new VarList(loc, new String[] { tmpName },
+//                pt);
+//	}
+	VarList tempVar = new VarList(loc, new String[] { tmpName }, astType);
 	return new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
 };
     	

@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
@@ -195,13 +196,11 @@ public class StructHandler {
 		CACSLLocation loc = new CACSLLocation(node);
 		String field = node.getFieldName().toString();
 		// get the type for the accessed field
-		Result fieldOwner = main.dispatch(node.getFieldOwner());
-		assert fieldOwner instanceof ResultExpression;
-		ResultExpression foRex = (ResultExpression) fieldOwner;
+		ResultExpression fieldOwner = (ResultExpression) main.dispatch(node.getFieldOwner());;
 
 		LRValue newValue = null;
 
-		CType foType = foRex.lrVal.cType;
+		CType foType = fieldOwner.lrVal.cType;
 		if (foType instanceof CNamed)
 			foType = ((CNamed) foType).getUnderlyingType();
 		foType = (node.isPointerDereference() ?
@@ -209,17 +208,17 @@ public class StructHandler {
 					foType);
 		CStruct cStructType = (CStruct) (foType instanceof CNamed ? ((CNamed) foType).getUnderlyingType() : foType);
 		CType cFieldType = cStructType.getFieldType(field);
-		InferredType fieldIt = new InferredType(cFieldType);
+//		InferredType fieldIt = new InferredType(cFieldType);
 
 		if (node.isPointerDereference()) {
-			ResultExpression rFieldOwnerRex = foRex.switchToRValue(main, memoryHandler, this, loc);
+			ResultExpression rFieldOwnerRex = fieldOwner.switchToRValueIfNecessary(main, memoryHandler, this, loc);
 			Expression address = rFieldOwnerRex.lrVal.getValue();
-			foRex = new ResultExpression(rFieldOwnerRex.stmt, new HeapLValue(address, rFieldOwnerRex.lrVal.cType), 
+			fieldOwner = new ResultExpression(rFieldOwnerRex.stmt, new HeapLValue(address, rFieldOwnerRex.lrVal.cType), 
 					rFieldOwnerRex.decl, rFieldOwnerRex.auxVars);
 		}
 
-		if (foRex.lrVal instanceof HeapLValue) {
-			HeapLValue fieldOwnerHlv = (HeapLValue) foRex.lrVal;
+		if (fieldOwner.lrVal instanceof HeapLValue) {
+			HeapLValue fieldOwnerHlv = (HeapLValue) fieldOwner.lrVal;
 
 			
 			Expression startAddress = fieldOwnerHlv.getAddress();
@@ -236,7 +235,7 @@ public class StructHandler {
 					newStartAddressBase,
 					new BinaryExpression(loc, new InferredType(Type.Integer), BinaryExpression.Operator.ARITHPLUS, 
 							newStartAddressOffset,
-							getStructOffsetConstantExpression(loc, field, cStructType)),
+							getStructOffsetConstantExpression(loc, memoryHandler, field, cStructType)),
 							loc);
 //			Expression newPointer = MemoryHandler.constructPointerFromBaseAndOffset(
 //					MemoryHandler.getPointerBaseAddress(fieldOwnerHlv.getAddress(), loc),
@@ -245,30 +244,38 @@ public class StructHandler {
 //							getStructOffsetConstantExpression(loc, field, cStructType)),
 //							loc);
 			newValue = new HeapLValue(newPointer, cFieldType);
-		} else if (foRex.lrVal instanceof RValue) {
-			RValue rVal = (RValue) foRex.lrVal;
-			StructAccessExpression sexpr = new StructAccessExpression(loc, fieldIt, 
+		} else if (fieldOwner.lrVal instanceof RValue) {
+			RValue rVal = (RValue) fieldOwner.lrVal;
+//			StructAccessExpression sexpr = new StructAccessExpression(loc, fieldIt, 
+			StructAccessExpression sexpr = new StructAccessExpression(loc, 
 					rVal.getValue(), field);
 			newValue = new RValue(sexpr, cFieldType);
 		} else { 
-			LocalLValue lVal = (LocalLValue) foRex.lrVal;
-			StructLHS slhs = new StructLHS(loc, fieldIt, 
+			LocalLValue lVal = (LocalLValue) fieldOwner.lrVal;
+//			StructLHS slhs = new StructLHS(loc, fieldIt, 
+			StructLHS slhs = new StructLHS(loc,
 					lVal.getLHS(), field);
 			newValue = new LocalLValue(slhs, cFieldType);
 		}
-		return new ResultExpression(foRex.stmt, newValue, foRex.decl, foRex.auxVars);
+		return new ResultExpression(fieldOwner.stmt, newValue, fieldOwner.decl, fieldOwner.auxVars);
 	}
 
 
 	public Result readFieldInTheStructAtAddress(Dispatcher main,
 			MemoryHandler memoryHandler, ILocation loc, String field,
-			InferredType it, Expression structAddress, CStruct structType) {
+//			InferredType it, Expression structAddress, CStruct structType) {
+			RValue address) {
 		Expression addressBaseOfFieldOwner;
 		Expression addressOffsetOfFieldOwner;
+		
+		Expression structAddress = address.getValue();
+		CStruct structType = (CStruct) address.cType;
 
 		addressBaseOfFieldOwner = new StructAccessExpression(loc, 
+//				structAddress, SFO.POINTER_BASE);
 				structAddress, SFO.POINTER_BASE);
 		addressOffsetOfFieldOwner = new StructAccessExpression(loc, 
+//				structAddress, SFO.POINTER_OFFSET);
 				structAddress, SFO.POINTER_OFFSET);
 
 		if (structType == null || !(structType instanceof CStruct)) {
@@ -277,7 +284,7 @@ public class StructHandler {
 			throw new IncorrectSyntaxException(msg);
 		}
 		IdentifierExpression additionalOffset = getStructOffsetConstantExpression(
-				loc, field, structType);
+				loc, memoryHandler, field, structType);
 		Expression newOffset;
 		if (isZero(addressOffsetOfFieldOwner)) {
 			newOffset = additionalOffset;
@@ -290,12 +297,19 @@ public class StructHandler {
 
 		CType resultType = structType.getFieldType(field);
 
+		RValue newAddress = new RValue(address);
+		newAddress.value = newPointer;
+//		newAddress.cType= new CPointer(resultType);
+		newAddress.cType= resultType;
+		
 		ResultExpression call = 
-				memoryHandler.getReadCall(main, it, newPointer, new CPointer(resultType));
+				memoryHandler.getReadCall(main, 
+//						it, newPointer, new CPointer(resultType));
+					newAddress);	
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		Map<VariableDeclaration, CACSLLocation> auxVars = 
-				new HashMap<VariableDeclaration, CACSLLocation>();
+		Map<VariableDeclaration, ILocation> auxVars = 
+				new HashMap<VariableDeclaration, ILocation>();
 		List<Overapprox> overappr = new ArrayList<Overapprox>();
 		stmt.addAll(call.stmt);
 		decl.addAll(call.decl);
@@ -308,9 +322,10 @@ public class StructHandler {
 	}
 
 	public static IdentifierExpression getStructOffsetConstantExpression(
-			ILocation loc, String fieldId, CType structCType) {
+			ILocation loc, MemoryHandler memoryHandler, String fieldId, CType structCType) {
 		String offset = SFO.OFFSET + structCType.toString() + "~" + fieldId;
 		IdentifierExpression additionalOffset = new IdentifierExpression(loc, offset);
+		memoryHandler.calculateSizeOf(structCType, loc);//needed such that offset constants are declared
 		return additionalOffset;
 	}
 
@@ -360,12 +375,12 @@ public class StructHandler {
 			//            return new ResultExpressionListRec(id, relr.stmt, relr.expr,
 			//                    relr.decl, relr.auxVars);
 			return new ResultExpressionListRec(id, relr.stmt, relr.lrVal,
-					relr.decl, relr.auxVars, relr.overappr).switchToRValue(
+					relr.decl, relr.auxVars, relr.overappr).switchToRValueIfNecessary(
 					        main, memoryHandler, structHandler, loc);
 		} else if (r instanceof ResultExpression) {
 			ResultExpression rex = (ResultExpression) r;
 			//            return new ResultExpressionListRec(id, rex.stmt, rex.expr, rex.decl, rex.auxVars);
-			return rex.switchToRValue(main, memoryHandler, structHandler, loc);
+			return rex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 		} else {
 			String msg = "Unexpected result";
 			Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
@@ -374,7 +389,7 @@ public class StructHandler {
 	}
 
 	public ResultExpression makeStructConstructorFromRERL(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, ArrayHandler arrayHandler,
-			FunctionHandler functionHandler, ResultExpressionListRec rerlIn, CStruct structType) {
+			FunctionHandler functionHandler, ResultExpressionListRec rerlIn, CStruct structType, boolean onHeap) {
 		ResultExpressionListRec rerl = null;
 		if (rerlIn == null)
 			rerl = new ResultExpressionListRec();
@@ -388,8 +403,8 @@ public class StructHandler {
 		//everything for the new Result
 		ArrayList<Statement> newStmt = new ArrayList<Statement>();
 		ArrayList<Declaration> newDecl = new ArrayList<Declaration>();
-		HashMap<VariableDeclaration, CACSLLocation> newAuxVars =
-		        new HashMap<VariableDeclaration, CACSLLocation>();
+		HashMap<VariableDeclaration, ILocation> newAuxVars =
+		        new HashMap<VariableDeclaration, ILocation>();
 		List<Overapprox> newOverappr = new ArrayList<Overapprox>();
 		
 		String[] fieldIds = structType.getFieldIds();
@@ -402,56 +417,73 @@ public class StructHandler {
 		for (int i = 0; i < fieldIds.length; i++) {
 			fieldIdentifiers.add(fieldIds[i]);
 
-			CType underlyingType;
+			CType underlyingFieldType;
 			if (fieldTypes[i] instanceof CNamed)
-				underlyingType = ((CNamed) fieldTypes[i]).getUnderlyingType();
+				underlyingFieldType = ((CNamed) fieldTypes[i]).getUnderlyingType();
 			else
-				underlyingType = fieldTypes[i];
+				underlyingFieldType = fieldTypes[i];
 
 			ResultExpression fieldContents = null; 
-			if(underlyingType instanceof CPrimitive) {
+			if(underlyingFieldType instanceof CPrimitive) {
 				if (i < rerl.list.size())
 					fieldContents = rerl.list.get(i);
 				else
 					fieldContents = new ResultExpression(new RValue(
-							new IntegerLiteral(loc, new InferredType(underlyingType), "0"), underlyingType));
-			} else if (underlyingType instanceof CPointer) {
+							new IntegerLiteral(loc, "0"), underlyingFieldType));
+//							new IntegerLiteral(loc, new InferredType(underlyingType), "0"), underlyingType));
+			} else if (underlyingFieldType instanceof CPointer) {
 				if (i < rerl.list.size())
 					fieldContents = rerl.list.get(i);
 				else
 					fieldContents = new ResultExpression(new RValue(
-							MemoryHandler.constructNullPointer(loc), underlyingType));
-			} else if (underlyingType instanceof CArray) {
+							MemoryHandler.constructNullPointer(loc), underlyingFieldType));
+			} else if (underlyingFieldType instanceof CArray) {
 				ArrayList<Statement> fieldStmt = new ArrayList<Statement>();
 				ArrayList<Declaration> fieldDecl = new ArrayList<Declaration>();
-				HashMap<VariableDeclaration, CACSLLocation> fieldAuxVars =
-						new HashMap<VariableDeclaration, CACSLLocation>();
+				HashMap<VariableDeclaration, ILocation> fieldAuxVars =
+						new HashMap<VariableDeclaration, ILocation>();
 				
 				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
-				InferredType tmpIType = new InferredType(Type.Pointer);
-				VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc);
-				fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
-				fieldDecl.add(tVarDecl);
-				Expression fieldEx = new IdentifierExpression(loc, tmpIType, tmpId);
+//				InferredType tmpIType = new InferredType(Type.Pointer);
+
 				
 				ResultExpressionListRec arrayInitRerl = null;
 				if (i < rerl.list.size())
 					arrayInitRerl = rerl.list.get(i);
 				
-				fieldStmt.addAll(arrayHandler.initArray(main, memoryHandler, this, loc, arrayInitRerl.list, fieldEx, 
-						functionHandler, (CArray) underlyingType));
-				
-				fieldContents = new ResultExpression(fieldStmt, new RValue(fieldEx, underlyingType), fieldDecl, fieldAuxVars);
-			} else if (underlyingType instanceof CEnum) {
+				Expression fieldEx = new IdentifierExpression(loc, tmpId);
+				RValue lrVal = new RValue(fieldEx, underlyingFieldType);
+				//FIXME: off heap case missing
+				if (onHeap) {			
+					VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, MemoryHandler.POINTER_TYPE, loc);
+					fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
+					fieldDecl.add(tVarDecl);
+					fieldStmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, this, loc, 
+						arrayInitRerl == null ? null : arrayInitRerl.list, 
+						fieldEx, functionHandler, (CArray) underlyingFieldType));
+				} else {
+					VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, 
+							main.typeHandler.ctype2asttype(loc, underlyingFieldType),
+							loc);
+					fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
+					fieldDecl.add(tVarDecl);
+					VariableLHS fieldLHS = new VariableLHS(loc, tmpId);
+					fieldStmt.addAll(arrayHandler.initBoogieArray(main, memoryHandler, this, functionHandler, loc, 
+						arrayInitRerl == null ? null : arrayInitRerl.list, 
+						fieldLHS, (CArray) underlyingFieldType));
+				}
+//				fieldContents = new ResultExpression(fieldStmt, new RValue(fieldEx, underlyingType), fieldDecl, fieldAuxVars);
+				fieldContents = new ResultExpression(fieldStmt, lrVal, fieldDecl, fieldAuxVars);
+			} else if (underlyingFieldType instanceof CEnum) {
 				throw new UnsupportedSyntaxException("..");
-			} else if (underlyingType instanceof CStruct) {
+			} else if (underlyingFieldType instanceof CStruct) {
 				if (i < rerl.list.size())
 					fieldContents = makeStructConstructorFromRERL(main, loc, memoryHandler, arrayHandler, 
-							functionHandler, rerl.list.get(i), (CStruct) underlyingType);
+							functionHandler, rerl.list.get(i), (CStruct) underlyingFieldType, onHeap);
 				else
 					fieldContents = makeStructConstructorFromRERL(main, loc, memoryHandler, arrayHandler,
-							functionHandler, new ResultExpressionListRec(), (CStruct) underlyingType);	
-			} else if (underlyingType instanceof CNamed) {
+							functionHandler, new ResultExpressionListRec(), (CStruct) underlyingFieldType, onHeap);	
+			} else if (underlyingFieldType instanceof CNamed) {
 				assert false : "This should not be the case as we took the underlying type.";
 			} else {
 				throw new UnsupportedSyntaxException("..");

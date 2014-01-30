@@ -58,7 +58,7 @@ public class ResultExpression extends Result {
 	/**
 	 * A description of the C variable.
 	 */
-	public final ArrayList<CType> declCTypes;
+//	public final ArrayList<CType> declCTypes;
 //	/**
 //	 * The description of the C type of this expression.
 //	 */
@@ -73,12 +73,16 @@ public class ResultExpression extends Result {
 	 * Auxiliary variables occurring in this result. The variable declaration
 	 * of the var is mapped to the exact location for that it was constructed.
 	 */
-	public final Map<VariableDeclaration, CACSLLocation> auxVars;
+	public final Map<VariableDeclaration, ILocation> auxVars;
 	
 	
 	/**
 	 * Use this to lock this ResultExpression. If the ResultExpression is locked
 	 * its fields should not obtain new elements any more.
+	 * (alex:) The purpose is that once we have read those fields --> and added them to another
+	 * ResultExpression <-- we want to be sure that they are not changed anymore in this,
+	 * as then the other expression might contain too few/many entries in these fields.
+	 * TODO: implement this consequently, make fields private
 	 */
 	private boolean m_Locked = false;
 	
@@ -105,14 +109,14 @@ public class ResultExpression extends Result {
     public ResultExpression(ArrayList<Statement> stmt, //Expression expr,
             LRValue lrVal,
             ArrayList<Declaration> decl,
-            Map<VariableDeclaration, CACSLLocation> auxVars,
+            Map<VariableDeclaration, ILocation> auxVars,
             List<Overapprox> overapproxList) {
         super(null);
         this.stmt = stmt;
         //      this.expr = expr;
         this.lrVal = lrVal;
         this.decl = decl;
-        this.declCTypes = new ArrayList<CType>();
+//        this.declCTypes = new ArrayList<CType>();
         this.auxVars = auxVars;
         this.overappr = overapproxList;
     }
@@ -120,14 +124,14 @@ public class ResultExpression extends Result {
     public ResultExpression(ArrayList<Statement> stmt, //Expression expr,
             LRValue lrVal,
             ArrayList<Declaration> decl,
-            Map<VariableDeclaration, CACSLLocation> auxVars) {
+            Map<VariableDeclaration, ILocation> auxVars) {
         this(stmt, lrVal, decl,
                 auxVars, new ArrayList<Overapprox>());
     }
 
 	public ResultExpression(//Expression expr,
 			LRValue lrVal,
-			Map<VariableDeclaration, CACSLLocation> auxVars,
+			Map<VariableDeclaration, ILocation> auxVars,
 			List<Overapprox> overapproxList) {
 	    this(new ArrayList<Statement>(), lrVal, new ArrayList<Declaration>(),
 	            auxVars, overapproxList);
@@ -136,7 +140,7 @@ public class ResultExpression extends Result {
 	
 	public ResultExpression(//Expression expr,
             LRValue lrVal,
-            Map<VariableDeclaration, CACSLLocation> auxVars) {
+            Map<VariableDeclaration, ILocation> auxVars) {
         this(new ArrayList<Statement>(), lrVal, new ArrayList<Declaration>(),
                 auxVars);
         //      this.expr = expr;
@@ -144,26 +148,40 @@ public class ResultExpression extends Result {
 
     public ResultExpression(
             LRValue lrVal) {
-        this(lrVal, new HashMap<VariableDeclaration, CACSLLocation>());
+        this(lrVal, new HashMap<VariableDeclaration, ILocation>());
+    }
+    
+    /**
+     * copy constructor
+     */
+    public ResultExpression(ResultExpression rex) {
+    	super(null);
+    	this.stmt = rex.stmt;
+    	this.lrVal = rex.lrVal;
+    	this.decl = rex.decl;
+    	this.auxVars = rex.auxVars;
+    	this.overappr = rex.overappr;
     }
 
-	public ResultExpression switchToRValue(Dispatcher main, MemoryHandler memoryHandler, 
+	public ResultExpression switchToRValueIfNecessary(Dispatcher main, MemoryHandler memoryHandler, 
 			StructHandler structHandler, ILocation loc) {
-		if (m_Locked) {
-			throw new AssertionError("this ResultExpression is already locked");
-		}
-		ResultExpression rex = null;
+
 		if (lrVal == null)
 			return this;
 		else if (lrVal instanceof RValue)
 			return this;
 		else if (lrVal instanceof LocalLValue) {
-			rex = new ResultExpression(
-					this.stmt, new RValue(((LocalLValue) lrVal).getValue(),
-					        lrVal.cType), this.decl, this.auxVars,
+			RValue newRVal = new RValue(((LocalLValue) lrVal).getValue(),
+					        lrVal.cType, lrVal.isBoogieBool, lrVal.isPointer);
+//					        lrVal.cType, lrVal.isWrappedBool, lrVal.isPointer, lrVal.isOnHeap);
+			return new ResultExpression(
+					this.stmt, newRVal, this.decl, this.auxVars,
 					        this.overappr);
-			return rex;
 		} else {
+			if (m_Locked) {
+				throw new AssertionError("this ResultExpression is already locked");
+			}
+			ResultExpression rex = null;
 			HeapLValue hlv = (HeapLValue) lrVal;
 			//			SymbolTable sT = ((MainDispatcher) main).cHandler.getSymbolTable();
 			//			Expression value = hlv.getAddress();
@@ -171,25 +189,32 @@ public class ResultExpression extends Result {
 			//retain already created stmt, decl, auxVars
 			ArrayList<Statement> newStmt = new ArrayList<Statement>(this.stmt);
 			ArrayList<Declaration> newDecl = new ArrayList<Declaration>(this.decl);
-			HashMap<VariableDeclaration, CACSLLocation> newAuxVars = 
-					new HashMap<VariableDeclaration, CACSLLocation>(this.auxVars); 
+			HashMap<VariableDeclaration, ILocation> newAuxVars = 
+					new HashMap<VariableDeclaration, ILocation>(this.auxVars); 
 			RValue newValue = null;
 
-			InferredType heapReadType = null;
+//			InferredType heapReadType = null;
 
 			CType underlyingType = this.lrVal.cType instanceof CNamed ? 
 					((CNamed) this.lrVal.cType).getUnderlyingType() :
 						this.lrVal.cType;
 
+//					RValue addressRVal = new RValue(hlv.getAddress(), new CPointer(this.lrVal.cType),
+					RValue addressRVal = new RValue(hlv.getAddress(), this.lrVal.cType, //has the type of what lies at that address
+											hlv.isBoogieBool, hlv.isPointer);
+//											hlv.isWrappedBool, hlv.isPointer, hlv.isOnHeap);
+					
+
 					if (underlyingType instanceof CPrimitive) {
 						CPrimitive cp = (CPrimitive) this.lrVal.cType;
-						ResultExpression readResult;
+//						ResultExpression readResult;
 						switch (cp.getType()) {
 						case CHAR:
 						case INT:
-							heapReadType = new InferredType(Type.Integer);
+//							heapReadType = new InferredType(Type.Integer);
 							rex = memoryHandler.getReadCall(
-									main, heapReadType, hlv.getAddress(), new CPointer(this.lrVal.cType));
+//									main, heapReadType, hlv.getAddress(), new CPointer(this.lrVal.cType));
+									main, addressRVal);
 							newStmt.addAll(rex.stmt);
 							newDecl.addAll(rex.decl);
 							newAuxVars.putAll(rex.auxVars);	
@@ -197,9 +222,10 @@ public class ResultExpression extends Result {
 							break;
 						case FLOAT:
 						case DOUBLE:
-							heapReadType = new InferredType(Type.Real);
+//							heapReadType = new InferredType(Type.Real);
 							rex = memoryHandler.getReadCall(
-									main, heapReadType, hlv.getAddress(), new CPointer(this.lrVal.cType));
+//									main, heapReadType, hlv.getAddress(), new CPointer(this.lrVal.cType));
+									main, addressRVal);
 							newStmt.addAll(rex.stmt);
 							newDecl.addAll(rex.decl);
 							newAuxVars.putAll(rex.auxVars);	
@@ -214,29 +240,33 @@ public class ResultExpression extends Result {
 							throw new UnsupportedSyntaxException("..");
 						}
 					} else if (underlyingType instanceof CPointer) {
-						heapReadType = new InferredType(Type.Pointer);
+//						heapReadType = new InferredType(Type.Pointer);
 						rex = memoryHandler.getReadCall(
-								main, heapReadType, hlv.getAddress(), new CPointer(this.lrVal.cType));
+//								main, heapReadType, hlv.getAddress(), new CPointer(this.lrVal.cType));
+									main, addressRVal);
 						newStmt.addAll(rex.stmt);
 						newDecl.addAll(rex.decl);
 						newAuxVars.putAll(rex.auxVars);	
 						newValue = (RValue) rex.lrVal;
 					} else if (underlyingType instanceof CArray) {
-						CArray caType = (CArray) underlyingType;
-						assert caType.getDimensions().length > 0 : "the outermost subscript should have removed the arrayType";
-//						heapReadType = new InferredType(caType.getValueType());
-						heapReadType = new InferredType(Type.Pointer);
-						rex = memoryHandler.getReadCall(
-								main, heapReadType, hlv.getAddress(), new CPointer(this.lrVal.cType));
-						newStmt.addAll(rex.stmt);
-						newDecl.addAll(rex.decl);
-						newAuxVars.putAll(rex.auxVars);	
-						newValue = (RValue) rex.lrVal;
+//						CArray caType = (CArray) underlyingType;
+//						assert caType.getDimensions().length > 0 : "the outermost subscript should have removed the arrayType";
+////						heapReadType = new InferredType(caType.getValueType());
+////						heapReadType = new InferredType(Type.Pointer);
+//						rex = memoryHandler.getReadCall(
+////								main, heapReadType, hlv.getAddress(), new CPointer(this.lrVal.cType));
+//									main, addressRVal);
+//						newStmt.addAll(rex.stmt);
+//						newDecl.addAll(rex.decl);
+//						newAuxVars.putAll(rex.auxVars);	
+//						newValue = (RValue) rex.lrVal;
+						return null; //"you can't assign arrays in C"
 					} else if (underlyingType instanceof CEnum) {
 					} else if (underlyingType instanceof CStruct) {
-						CStruct structType = (CStruct) underlyingType;
+//						CStruct structType = (CStruct) underlyingType;
 						rex = readStructFromHeap(main, structHandler, memoryHandler, loc, 
-								hlv.getAddress(), structType);
+//								hlv.getAddress(), structType);
+									addressRVal);
 						newStmt.addAll(rex.stmt);
 						newDecl.addAll(rex.decl);
 						newAuxVars.putAll(rex.auxVars);	
@@ -246,6 +276,9 @@ public class ResultExpression extends Result {
 					} else {
 						throw new UnsupportedSyntaxException("..");
 					}
+//					newValue.isOnHeap = lrVal.isOnHeap;
+					newValue.isPointer = lrVal.isPointer;
+					newValue.isBoogieBool = lrVal.isBoogieBool;
 					rex = new ResultExpression(newStmt, newValue, newDecl,
 					        newAuxVars, this.overappr);
 					return rex;
@@ -266,7 +299,13 @@ public class ResultExpression extends Result {
 	 */
 	ResultExpression readStructFromHeap(Dispatcher main, 
 			StructHandler structHandler, MemoryHandler memoryHandler, ILocation loc,
-			Expression structOnHeapAddress, CStruct structType) {
+			RValue address) {
+//			Expression structOnHeapAddress, CStruct structType) {
+		
+		Expression structOnHeapAddress = address.getValue();
+//		CStruct structType = (CStruct) ((CPointer) address.cType).pointsToType;
+		CStruct structType = (CStruct) address.cType;
+		
 		ResultExpression result = null;
 		
 		Expression startAddress = structOnHeapAddress;
@@ -285,7 +324,7 @@ public class ResultExpression extends Result {
 		//everything for the new Result
 		ArrayList<Statement> newStmt = new ArrayList<Statement>();
 		ArrayList<Declaration> newDecl = new ArrayList<Declaration>();
-		HashMap<VariableDeclaration, CACSLLocation> newAuxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+		HashMap<VariableDeclaration, ILocation> newAuxVars = new HashMap<VariableDeclaration, ILocation>();
 
 		String[] fieldIds = structType.getFieldIds();
 		CType[] fieldTypes = structType.getFieldTypes();
@@ -317,18 +356,22 @@ public class ResultExpression extends Result {
 					throw new UnsupportedSyntaxException("..");
 				}
 				fieldRead = (ResultExpression) structHandler.readFieldInTheStructAtAddress(
-						main, memoryHandler, loc, fieldIds[i], typeOnHeap,
-						structOnHeapAddress, //fieldTypes[i]);//TODO: or take the underlying type??
-						structType);
+						main, memoryHandler, loc, fieldIds[i], 
+//						typeOnHeap,
+//						structOnHeapAddress, //fieldTypes[i]);//TODO: or take the underlying type??
+//						structType);
+						address);
 				newStmt.addAll(fieldRead.stmt);
 				newDecl.addAll(fieldRead.decl);
 				newAuxVars.putAll(fieldRead.auxVars);
 			} else if (underlyingType instanceof CPointer) {
 				InferredType typeOnHeap = new InferredType(Type.Integer);
 				fieldRead = (ResultExpression) structHandler.readFieldInTheStructAtAddress(
-						main, memoryHandler, loc, fieldIds[i], typeOnHeap,
-						structOnHeapAddress, //fieldTypes[i]);//TODO: or take the underlying type??
-						structType);
+						main, memoryHandler, loc, fieldIds[i], 
+//						typeOnHeap,
+//						structOnHeapAddress, //fieldTypes[i]);//TODO: or take the underlying type??
+//						structType);
+						address);
 				newStmt.addAll(fieldRead.stmt);
 				newDecl.addAll(fieldRead.decl);
 				newAuxVars.putAll(fieldRead.auxVars);
@@ -339,16 +382,22 @@ public class ResultExpression extends Result {
 			} else if (underlyingType instanceof CStruct) {
 				//sae = {base: currentStructBaseAddress, offset: currentStructOffset + thisFieldOffset }
 				Expression innerStructOffset = 
-						StructHandler.getStructOffsetConstantExpression(loc, fieldIds[i], structType);
+						StructHandler.getStructOffsetConstantExpression(loc, memoryHandler, fieldIds[i], structType);
 //						StructHandler.getStructOffsetConstantExpression(loc, fieldIds[i], underlyingType);
 				Expression innerStructAddress = MemoryHandler.constructPointerFromBaseAndOffset(currentStructBaseAddress, 
 						new BinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, 
 								currentStructOffset, 
 								innerStructOffset),
 								loc);
+				
+				RValue newAddress = new RValue(address);
+				newAddress.value = innerStructAddress;
+//				newAddress.cType= new CPointer(underlyingType);
+				newAddress.cType= underlyingType;
 
 				fieldRead = readStructFromHeap(main, structHandler, memoryHandler, 
-						loc, innerStructAddress, (CStruct) underlyingType);
+//						loc, innerStructAddress, (CStruct) underlyingType);
+						loc, newAddress);
 
 				newStmt.addAll(fieldRead.stmt);
 				newDecl.addAll(fieldRead.decl);
@@ -384,6 +433,7 @@ public class ResultExpression extends Result {
 		this.decl.addAll(re.decl);
 		this.stmt.addAll(re.stmt);
 		this.auxVars.putAll(re.auxVars);
+		this.overappr.addAll(overappr);
 		re.lock();
 	}
 }

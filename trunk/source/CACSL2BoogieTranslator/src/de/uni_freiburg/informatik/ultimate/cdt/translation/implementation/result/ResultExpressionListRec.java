@@ -48,7 +48,7 @@ public class ResultExpressionListRec extends ResultExpression {
      *            the name of the field e.g. in designated initializers.
      */
     public ResultExpressionListRec(String field) {
-        super(null, new HashMap<VariableDeclaration, CACSLLocation>(0));
+        super(null, new HashMap<VariableDeclaration, ILocation>(0));
         this.field = field;
         this.list = new ArrayList<ResultExpressionListRec>();
     }
@@ -65,7 +65,7 @@ public class ResultExpressionListRec extends ResultExpression {
      */
     public ResultExpressionListRec(ArrayList<Statement> stmt, LRValue lrVal,
             ArrayList<Declaration> decl, 
-            Map<VariableDeclaration, CACSLLocation> auxVars,
+            Map<VariableDeclaration, ILocation> auxVars,
             List<Overapprox> overappr) {
         this(null, stmt, lrVal, decl, auxVars, overappr);
     }
@@ -84,7 +84,7 @@ public class ResultExpressionListRec extends ResultExpression {
      */
     public ResultExpressionListRec(String field, ArrayList<Statement> stmt,
             LRValue lrVal, ArrayList<Declaration> decl, 
-            Map<VariableDeclaration, CACSLLocation> auxVars,
+            Map<VariableDeclaration, ILocation> auxVars,
             List<Overapprox> overappr) {
         super(stmt, lrVal, decl, auxVars, overappr);
         this.field = field;
@@ -93,15 +93,15 @@ public class ResultExpressionListRec extends ResultExpression {
     
     
     @Override
-    public ResultExpressionListRec switchToRValue(Dispatcher main,
+    public ResultExpressionListRec switchToRValueIfNecessary(Dispatcher main,
     		MemoryHandler memoryHandler, StructHandler structHandler,
     		ILocation loc) {
-    	ResultExpression re = super.switchToRValue(main, memoryHandler, structHandler, loc);
+    	ResultExpression re = super.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
     	
     	ArrayList<ResultExpressionListRec> newList = new ArrayList<ResultExpressionListRec>();
     	if (list != null) {
     		for (ResultExpressionListRec innerRerl : this.list) 
-    			newList.add(innerRerl.switchToRValue(main, memoryHandler, structHandler, loc));
+    			newList.add(innerRerl.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc));
     	}
     	ResultExpressionListRec rerl = new ResultExpressionListRec(this.field,
     	        re.stmt, re.lrVal, re.decl, re.auxVars, re.overappr);

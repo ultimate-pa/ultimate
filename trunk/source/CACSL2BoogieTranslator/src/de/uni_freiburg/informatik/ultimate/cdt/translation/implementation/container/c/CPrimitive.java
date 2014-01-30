@@ -14,48 +14,65 @@ public class CPrimitive extends CType {
     /**
      * @author Markus Lindenmann
      * @date 18.09.2012 Describing primitive C types.
+     * (updated 10.12.2013 by nutz)
      */
     public static enum PRIMITIVE {
-        /**
-         * C type : int.
-         */
+    	/* Integer Types*/
+    	/* char */
+    	CHAR,
+    	/* signed char */
+    	SCHAR,
+    	/* unsigned char */
+    	UCHAR,
+    	/* ?? */
+        WCHAR,
+    	/* ?? */
+        CHAR32,
+    	/* ?? */
+        CHAR16,
+    	/* short, short int, signed short, signed short int */
+        SHORT,
+        /* unsigned short, unsigned short int */
+        USHORT,
+    	/* int, signed int */
         INT,
-        /**
-         * C type : char.
-         */
-        CHAR,
-        /**
-         * C type : float.
-         */
+    	/* unsigned, unsigned int */
+        UINT,
+        /* long, long int, signed long, signed long int */
+        LONG,
+        /* unsigned long, unsigned long int */
+        ULONG,
+        /* long long, long long int, signed long long, signed long long int */
+        LONGLONG,
+        /* unsigned long long, unsigned long long int */
+        ULONGLONG,
+        /* _Bool */
+        BOOL,
+    	/* Floating Types*/
+        /* float */
         FLOAT,
-        /**
-         * C type : double.
-         */
+        /* _Complex float */
+        COMPLEX_FLOAT,
+        /* double */
         DOUBLE,
-//        /**
-//         * C type : *.
-//         */
-//        POINTER,
+        /* _Complex double */
+        COMPLEX_DOUBLE,
+        /* long double */
+        LONGDOUBLE,
+         /* _Complex long double */
+        COMPLEX_LONGDOUBLE,
+        //TODO: something with "_imaginary"??
+        /*other type(s)*/
         /**
          * C type : void.
          */
         VOID,
-//        /**
-//         * C type : _Bool.
-//         */
-//        BOOL,
-        /**
-         * C type : ?.
-         */
-        WCHAR,
-        /**
-         * C type : ?.
-         */
-        CHAR32,
-        /**
-         * C type : ?.
-         */
-        CHAR16,
+    }
+    
+    public enum GENERALPRIMITIVE {
+    	INTTYPE,
+    	FLOATTYPE,
+    	VOID
     }
 
     /**
@@ -63,10 +80,52 @@ public class CPrimitive extends CType {
      */
     private final PRIMITIVE type;
     
+    /**
+     * more general type, i.e. inttype, floattype, void -- is derived from
+     * type
+     */
+    private GENERALPRIMITIVE generalType;
+    
     public CPrimitive(PRIMITIVE type) {
-    	super(null);
+        super(false, false, false, false); //FIXME: integrate those flags
     	this.type = type;
+    	setGeneralType(type);
     }
+
+	private void setGeneralType(PRIMITIVE type) throws AssertionError {
+		switch (type) {
+		case COMPLEX_DOUBLE:
+		case COMPLEX_FLOAT:
+		case COMPLEX_LONGDOUBLE:
+		case DOUBLE:
+		case FLOAT:
+			generalType = GENERALPRIMITIVE.FLOATTYPE;
+			break;
+		case BOOL:
+		case CHAR:
+		case CHAR16:
+		case CHAR32:
+		case INT:
+		case LONG:
+		case LONGDOUBLE:
+		case LONGLONG:
+		case SCHAR:
+		case SHORT:
+		case UCHAR:
+		case UINT:
+		case ULONG:
+		case ULONGLONG:
+		case USHORT:
+		case WCHAR:
+			generalType = GENERALPRIMITIVE.INTTYPE;
+			break;
+		case VOID:
+			generalType = GENERALPRIMITIVE.VOID;
+			break;
+		default:
+			throw new AssertionError("case missing");
+    	}
+	}
 
     /**
      * Constructor.
@@ -75,15 +134,20 @@ public class CPrimitive extends CType {
      *            the C declaration specifier.
      */
     public CPrimitive(IASTDeclSpecifier cDeclSpec) {
-        super(cDeclSpec);
+        super(false, false, false, false); //FIXME: integrate those flags
         if (cDeclSpec instanceof IASTSimpleDeclSpecifier) {
             IASTSimpleDeclSpecifier sds = (IASTSimpleDeclSpecifier) cDeclSpec;
             switch (sds.getType()) {
                 case IASTSimpleDeclSpecifier.t_bool:
-                    this.type = PRIMITIVE.INT;
+                    this.type = PRIMITIVE.BOOL;
                     break;
                 case IASTSimpleDeclSpecifier.t_char:
-                    this.type = PRIMITIVE.CHAR;
+                	if (sds.isSigned())
+                		this.type = PRIMITIVE.SCHAR;
+                	else if (sds.isUnsigned())
+                		this.type = PRIMITIVE.UCHAR;
+                	else
+                		this.type = PRIMITIVE.CHAR;
                     break;
                 case IASTSimpleDeclSpecifier.t_char16_t:
                     this.type = PRIMITIVE.CHAR16;
@@ -92,13 +156,32 @@ public class CPrimitive extends CType {
                     this.type = PRIMITIVE.CHAR32;
                     break;
                 case IASTSimpleDeclSpecifier.t_double:
-                    this.type = PRIMITIVE.DOUBLE;
+                	if (sds.isComplex())
+                		this.type = PRIMITIVE.COMPLEX_DOUBLE;
+                	else
+                		this.type = PRIMITIVE.DOUBLE;
                     break;
                 case IASTSimpleDeclSpecifier.t_float:
-                    this.type = PRIMITIVE.FLOAT;
+                 	if (sds.isComplex())
+                		this.type = PRIMITIVE.COMPLEX_FLOAT;
+                	else
+                		this.type = PRIMITIVE.FLOAT;
                     break;
                 case IASTSimpleDeclSpecifier.t_int:
-                    this.type = PRIMITIVE.INT;
+                	if (sds.isUnsigned())
+                		if (sds.isLong())
+                			this.type = PRIMITIVE.ULONG;
+                		else if (sds.isLongLong())
+                			this.type = PRIMITIVE.ULONGLONG;
+                		else
+                			this.type = PRIMITIVE.UINT;
+                	else                 		
+                		if (sds.isLong())
+                			this.type = PRIMITIVE.LONG;
+                		else if (sds.isLongLong())
+                			this.type = PRIMITIVE.LONGLONG;
+                		else
+                			this.type = PRIMITIVE.INT;
                     break;
                 case IASTSimpleDeclSpecifier.t_unspecified:
                     this.type = PRIMITIVE.INT;
@@ -116,98 +199,99 @@ public class CPrimitive extends CType {
         } else {
             throw new IllegalArgumentException("Unknown C Declaration!");
         }
+    	setGeneralType(type);
     }
 
-    /**
-     * Getter for the flag long long.
-     * 
-     * @return whether the variable is specified to be long long.
-     */
-    public boolean isLongLong() {
-        assert super.cDeclSpec instanceof IASTSimpleDeclSpecifier;
-        if (super.cDeclSpec instanceof IASTSimpleDeclSpecifier) {
-            return ((IASTSimpleDeclSpecifier) super.cDeclSpec).isLongLong();
-        }
-        return false;
-    }
-
-    /**
-     * Getter for the flag long.
-     * 
-     * @return whether the variable is specified to be long.
-     */
-    public boolean isLong() {
-        assert super.cDeclSpec instanceof IASTSimpleDeclSpecifier;
-        if (super.cDeclSpec instanceof IASTSimpleDeclSpecifier) {
-            return ((IASTSimpleDeclSpecifier) super.cDeclSpec).isLong();
-        }
-        return false;
-    }
-
-    /**
-     * Getter for the flag short.
-     * 
-     * @return whether the varibale is specified to be short.
-     */
-    public boolean isShort() {
-        assert super.cDeclSpec instanceof IASTSimpleDeclSpecifier;
-        if (super.cDeclSpec instanceof IASTSimpleDeclSpecifier) {
-            return ((IASTSimpleDeclSpecifier) super.cDeclSpec).isShort();
-        }
-        return false;
-    }
-
-    /**
-     * Getter for the flag short.
-     * 
-     * @return whether the varibale is specified to be short.
-     */
-    public boolean isComplex() {
-        assert super.cDeclSpec instanceof IASTSimpleDeclSpecifier;
-        if (super.cDeclSpec instanceof IASTSimpleDeclSpecifier) {
-            return ((IASTSimpleDeclSpecifier) super.cDeclSpec).isComplex();
-        }
-        return false;
-    }
-
-    /**
-     * Getter for the flag short.
-     * 
-     * @return whether the varibale is specified to be short.
-     */
-    public boolean isImaginary() {
-        assert super.cDeclSpec instanceof IASTSimpleDeclSpecifier;
-        if (super.cDeclSpec instanceof IASTSimpleDeclSpecifier) {
-            return ((IASTSimpleDeclSpecifier) super.cDeclSpec).isImaginary();
-        }
-        return false;
-    }
-
-    /**
-     * Getter for the flag short.
-     * 
-     * @return whether the varibale is specified to be short.
-     */
-    public boolean isSigned() {
-        assert super.cDeclSpec instanceof IASTSimpleDeclSpecifier;
-        if (super.cDeclSpec instanceof IASTSimpleDeclSpecifier) {
-            return ((IASTSimpleDeclSpecifier) super.cDeclSpec).isSigned();
-        }
-        return false;
-    }
-
-    /**
-     * Getter for the flag short.
-     * 
-     * @return whether the varibale is specified to be short.
-     */
-    public boolean isUnsinged() {
-        assert super.cDeclSpec instanceof IASTSimpleDeclSpecifier;
-        if (super.cDeclSpec instanceof IASTSimpleDeclSpecifier) {
-            return ((IASTSimpleDeclSpecifier) super.cDeclSpec).isUnsigned();
-        }
-        return false;
-    }
+//    /**
+//     * Getter for the flag long long.
+//     * 
+//     * @return whether the variable is specified to be long long.
+//     */
+//    public boolean isLongLong() {
+//        assert super.cDeclSpec instanceof IASTSimpleDeclSpecifier;
+//        if (super.cDeclSpec instanceof IASTSimpleDeclSpecifier) {
+//            return ((IASTSimpleDeclSpecifier) super.cDeclSpec).isLongLong();
+//        }
+//        return false;
+//    }
+//
+//    /**
+//     * Getter for the flag long.
+//     * 
+//     * @return whether the variable is specified to be long.
+//     */
+//    public boolean isLong() {
+//        assert super.cDeclSpec instanceof IASTSimpleDeclSpecifier;
+//        if (super.cDeclSpec instanceof IASTSimpleDeclSpecifier) {
+//            return ((IASTSimpleDeclSpecifier) super.cDeclSpec).isLong();
+//        }
+//        return false;
+//    }
+//
+//    /**
+//     * Getter for the flag short.
+//     * 
+//     * @return whether the varibale is specified to be short.
+//     */
+//    public boolean isShort() {
+//        assert super.cDeclSpec instanceof IASTSimpleDeclSpecifier;
+//        if (super.cDeclSpec instanceof IASTSimpleDeclSpecifier) {
+//            return ((IASTSimpleDeclSpecifier) super.cDeclSpec).isShort();
+//        }
+//        return false;
+//    }
+//
+//    /**
+//     * Getter for the flag short.
+//     * 
+//     * @return whether the varibale is specified to be short.
+//     */
+//    public boolean isComplex() {
+//        assert super.cDeclSpec instanceof IASTSimpleDeclSpecifier;
+//        if (super.cDeclSpec instanceof IASTSimpleDeclSpecifier) {
+//            return ((IASTSimpleDeclSpecifier) super.cDeclSpec).isComplex();
+//        }
+//        return false;
+//    }
+//
+//    /**
+//     * Getter for the flag short.
+//     * 
+//     * @return whether the varibale is specified to be short.
+//     */
+//    public boolean isImaginary() {
+//        assert super.cDeclSpec instanceof IASTSimpleDeclSpecifier;
+//        if (super.cDeclSpec instanceof IASTSimpleDeclSpecifier) {
+//            return ((IASTSimpleDeclSpecifier) super.cDeclSpec).isImaginary();
+//        }
+//        return false;
+//    }
+//
+//    /**
+//     * Getter for the flag short.
+//     * 
+//     * @return whether the varibale is specified to be short.
+//     */
+//    public boolean isSigned() {
+//        assert super.cDeclSpec instanceof IASTSimpleDeclSpecifier;
+//        if (super.cDeclSpec instanceof IASTSimpleDeclSpecifier) {
+//            return ((IASTSimpleDeclSpecifier) super.cDeclSpec).isSigned();
+//        }
+//        return false;
+//    }
+//
+//    /**
+//     * Getter for the flag short.
+//     * 
+//     * @return whether the varibale is specified to be short.
+//     */
+//    public boolean isUnsinged() {
+//        assert super.cDeclSpec instanceof IASTSimpleDeclSpecifier;
+//        if (super.cDeclSpec instanceof IASTSimpleDeclSpecifier) {
+//            return ((IASTSimpleDeclSpecifier) super.cDeclSpec).isUnsigned();
+//        }
+//        return false;
+//    }
 
     /**
      * Getter for the primitive type.
@@ -216,6 +300,10 @@ public class CPrimitive extends CType {
      */
     public PRIMITIVE getType() {
         return type;
+    }
+    
+    public GENERALPRIMITIVE getGeneralType() {
+    	return generalType;
     }
 
     @Override

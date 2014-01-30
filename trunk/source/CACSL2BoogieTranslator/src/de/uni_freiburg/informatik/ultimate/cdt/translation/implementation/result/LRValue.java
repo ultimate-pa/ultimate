@@ -17,6 +17,18 @@ public abstract class LRValue {
 	
 	public CType cType;
 	
+	/** 
+	 * This flag is supposed to be true iff the value-expression of this
+	 * LRValue is of boolean type in boogie.  
+	 * For instance if it is the translation of an comparator expression
+	 * like x == 0.
+	 */
+	public boolean isBoogieBool;
+	
+	public boolean isPointer;
+	
+//	public boolean isOnHeap;
+	
 	public String toString() {
 		if (this instanceof HeapLValue)
 			return "address: " + ((HeapLValue) this).getAddress();

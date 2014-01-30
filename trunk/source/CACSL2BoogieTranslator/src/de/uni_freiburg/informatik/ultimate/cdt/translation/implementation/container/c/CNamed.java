@@ -18,6 +18,11 @@ public class CNamed extends CType {
     private final CType mappedType;
 
     /**
+     * The name that is mapped.
+     */
+    private final String name;
+    
+    /**
      * Constructor.
      * 
      * @param decl
@@ -25,33 +30,20 @@ public class CNamed extends CType {
      * @param mappedType
      *            the type this named type is referring to.
      */
-    public CNamed(IASTNamedTypeSpecifier decl, CType mappedType) {
-        super(decl);
+    public CNamed(String name, CType mappedType) {
+//        super();
+        super(false, false, false, false); //FIXME: integrate those flags
+        this.name = name;
         this.mappedType = mappedType;
     }
     
-    
-    public CNamed(IASTElaboratedTypeSpecifier decl, CType mappedType) {
-    	super(decl);
-    	this.mappedType = mappedType;
-    }
-
     /**
      * Getter for the named declaration's name.
      * 
      * @return the named declaration's name.
      */
     public String getName() {
-    	IASTName name;
-		if (super.cDeclSpec instanceof IASTNamedTypeSpecifier) {
-    		name = ((IASTNamedTypeSpecifier) super.cDeclSpec).getName();
-    		
-    	} else if (super.cDeclSpec instanceof IASTElaboratedTypeSpecifier) {
-    		name = ((IASTElaboratedTypeSpecifier) super.cDeclSpec).getName();
-    	} else {
-    		throw new AssertionError("illegal decl");
-    	}
-        return name.getRawSignature();
+    	return name;
     }
 
     /**

@@ -38,9 +38,9 @@ public class CEnum extends CType {
      * @param id
      *            this enums identifier.
      */
-    public CEnum(IASTDeclSpecifier cDeclSpec, String id, String[] fNames,
+    public CEnum(String id, String[] fNames,
             IASTExpression[] fValues) {
-        super(cDeclSpec);
+        super(false, false, false, false); //FIXME: integrate those flags
         assert fNames.length == fValues.length;
         this.identifier = id;
         this.fNames = fNames;

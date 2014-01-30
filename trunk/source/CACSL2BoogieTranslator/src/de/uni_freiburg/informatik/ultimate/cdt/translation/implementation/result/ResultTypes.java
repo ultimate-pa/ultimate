@@ -32,7 +32,14 @@ public class ResultTypes extends Result {
     /**
      * C variable description.
      */
-    public final CType cvar;
+    public CType cType;
+    
+    /**
+     * Flag describing whether the Boogie variable that is declared according to the
+     * declarator that this ResultTypes is generated from should be stored on the heap
+     * (bc it is addressoffed later) or not.
+     */
+    public boolean isOnHeap = false;
 
     /**
      * Constructor.
@@ -52,9 +59,17 @@ public class ResultTypes extends Result {
         this.isConst = isConst;
         this.isVoid = isVoid;
         this.typeDeclarations = new ArrayList<TypeDeclaration>();
-        this.cvar = cvar;
+        this.cType = cvar;
     }
 
+    public ResultTypes(ResultTypes copy) {
+        super(copy.node);
+        this.isConst = copy.isConst;
+        this.isVoid = copy.isVoid;
+        this.typeDeclarations = new ArrayList<TypeDeclaration>(copy.typeDeclarations);
+        this.cType = copy.cType;
+        this.isOnHeap = copy.isOnHeap;
+    }
     /**
      * Getter for the type.
      * 
@@ -72,5 +87,10 @@ public class ResultTypes extends Result {
      */
     public void addTypeDeclarations(ArrayList<TypeDeclaration> tds) {
         this.typeDeclarations.addAll(tds);
+    }
+    
+    @Override
+    public String toString() {
+    	return "ResultTypes: " + cType;
     }
 }

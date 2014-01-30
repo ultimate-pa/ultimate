@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
@@ -120,13 +121,13 @@ public class SvComp14CHandler extends CHandler {
 
     @Override
     public Result visit(Dispatcher main, IASTFunctionCallExpression node) {
-        CACSLLocation loc = new CACSLLocation(node);
+        ILocation loc = new CACSLLocation(node);
         String methodName = node.getFunctionNameExpression().getRawSignature();
 
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		Map<VariableDeclaration, CACSLLocation> auxVars = 
-				new HashMap<VariableDeclaration, CACSLLocation>();
+		Map<VariableDeclaration, ILocation> auxVars = 
+				new HashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
         LRValue returnValue = null;
 
@@ -134,7 +135,7 @@ public class SvComp14CHandler extends CHandler {
             ArrayList<Expression> args = new ArrayList<Expression>();
             for (IASTInitializerClause inParam : node.getArguments()) {
                 ResultExpression in = ((ResultExpression) main
-                        .dispatch(inParam)).switchToRValue(main, memoryHandler, structHandler, loc);
+                        .dispatch(inParam)).switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
                 if (in.lrVal.getValue() == null) {
                     String msg = "Incorrect or invalid in-parameter! "
                             + loc.toString();
@@ -149,30 +150,36 @@ public class SvComp14CHandler extends CHandler {
             }
             assert args.size() == 1; // according to SV-Comp specification!
             stmt.add(new AssumeStatement(loc,
-            		ConvExpr.toBoolean(loc, args.get(0))));
+            		ConvExpr.toBoolean(loc, new RValue(args.get(0), 
+            				new CPrimitive(PRIMITIVE.INT))).getValue()));
             assert (main.isAuxVarMapcomplete(decl, auxVars));
             return new ResultExpression(stmt, returnValue, decl, auxVars,
                     overappr);
         }
         for (String t : NONDET_TYPE_STRINGS)
             if (methodName.equals(NONDET_STRING + t)) {
-                final InferredType type; 
+//                final InferredType type; 
+                final ASTType type; 
                 CType cType;
                 if (t.equals("float")) {
-                	type = new InferredType(Type.Real);
+//                	type = new InferredType(Type.Real);
+                	type = new PrimitiveType(loc, SFO.REAL);
                 	cType = new CPrimitive(PRIMITIVE.FLOAT);
                 } else if (t.equals("pointer")) {
-                    type = new InferredType(Type.Pointer);
+//                    type = new InferredType(Type.Pointer);
+                	type = new PrimitiveType(loc, SFO.POINTER);
                     cType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
                 } else {
-                	type = new InferredType(Type.Integer);
+//                	type = new InferredType(Type.Integer);
+                	type = new PrimitiveType(loc, SFO.INT);
                 	cType = new CPrimitive(PRIMITIVE.INT);
                 }
                 String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
                 VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
                 decl.add(tVarDecl);
                 auxVars.put(tVarDecl, loc);
-                returnValue = new RValue(new IdentifierExpression(loc, type, tmpName), cType);
+//                returnValue = new RValue(new IdentifierExpression(loc, type, tmpName), cType);
+                returnValue = new RValue(new IdentifierExpression(loc, tmpName), cType);
                 assert (main.isAuxVarMapcomplete(decl, auxVars));
                 return new ResultExpression(stmt, returnValue, decl, auxVars,
                         overappr);

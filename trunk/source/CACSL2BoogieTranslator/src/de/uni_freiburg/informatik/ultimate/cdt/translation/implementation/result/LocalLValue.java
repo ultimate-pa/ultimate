@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 
 public class LocalLValue extends LRValue {
 
-	LeftHandSide lhs;
+	public LeftHandSide lhs;
 
 	/**
 	 * A Value inside a ResultExpression that is not stored on the heap, but as
@@ -23,10 +23,21 @@ public class LocalLValue extends LRValue {
 	 * @param expr
 	 */
 	public LocalLValue(LeftHandSide lhs, CType cType) {
+		this(lhs, cType, false, false);
+	}
+	
+	
+	public LocalLValue(LeftHandSide lhs, CType cType, boolean wrappedBool, boolean isPtr) {
 		this.lhs = lhs;
 		this.cType = cType;
+		this.isBoogieBool = wrappedBool;
+		this.isPointer = isPtr;
 	}
 
+	public LocalLValue(LocalLValue llVal) {
+		this(llVal.lhs, llVal.cType, llVal.isBoogieBool, llVal.isPointer);
+	}
+	
 	public LeftHandSide getLHS() {
 		return lhs;
 	}

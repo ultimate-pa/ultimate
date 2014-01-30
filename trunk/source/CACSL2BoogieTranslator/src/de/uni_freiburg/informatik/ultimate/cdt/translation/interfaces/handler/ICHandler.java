@@ -11,6 +11,7 @@ import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTConditionalExpression;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
+import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTDefaultStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
@@ -29,6 +30,7 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
 import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNullStatement;
+import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTPointer;
 import org.eclipse.cdt.core.dom.ast.IASTPointerOperator;
 import org.eclipse.cdt.core.dom.ast.IASTProblem;
@@ -52,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
  * @author Markus Lindenmann
@@ -136,17 +139,6 @@ public interface ICHandler extends IHandler {
     public Result visit(Dispatcher main, IASTCompoundStatement node);
 
     /**
-     * Translates an IASTFunctionDeclarator.
-     * 
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-    public Result visit(Dispatcher main, IASTFunctionDeclarator node);
-
-    /**
      * Translates an IASTSimpleDeclaration.
      * 
      * @param main
@@ -156,6 +148,28 @@ public interface ICHandler extends IHandler {
      * @return a result object
      */
     public Result visit(Dispatcher main, IASTSimpleDeclaration node);
+
+    /**
+     * Translates an IASTParameterDeclaration.
+     * 
+     * @param main
+     *            a reference to the main dispatcher
+     * @param node
+     *            the node to visit
+     * @return a result object
+     */
+    public Result visit(Dispatcher main, IASTParameterDeclaration node);
+
+    /**
+     * Translates an IASTDeclarator.
+     * 
+     * @param main
+     *            a reference to the main dispatcher
+     * @param node
+     *            the node to visit
+     * @return a result object
+     */
+    public Result visit(Dispatcher main, IASTDeclarator node);
 
     /**
      * Translates an IASTLiteralExpression.
@@ -552,4 +566,6 @@ public interface ICHandler extends IHandler {
      * (f.i. symbolTable,..)
      */
     public void endScope();
+
+	public void addSizeOfConstants(CType cvar, ILocation loc);
 }

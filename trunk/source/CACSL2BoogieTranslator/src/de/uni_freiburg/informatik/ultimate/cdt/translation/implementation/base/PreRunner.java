@@ -98,8 +98,7 @@ public class PreRunner extends ASTVisitor {
      * @return true if the MM is required.
      */
     public boolean isMMRequired() {
-    	//return this.isMMRequired;
-    	return false;
+    	return this.isMMRequired;
     }
 
     @Override
@@ -161,7 +160,7 @@ public class PreRunner extends ASTVisitor {
             			if (decName.equals(identifier)) {
             				if (!(expression.getParent() instanceof IASTArraySubscriptExpression)) {
             					// if idex is an array and there is no array sub expr!
-            					//this.variablesOnHeap.add(d); //FIXME: if we want arrays that are not on the heap uncoment/rewrite this
+            					this.variablesOnHeap.add(dec); //FIXME: if we want arrays that are not on the heap uncoment/rewrite this
 //            					this.isMMRequired = true;
             					//                    }
             				}

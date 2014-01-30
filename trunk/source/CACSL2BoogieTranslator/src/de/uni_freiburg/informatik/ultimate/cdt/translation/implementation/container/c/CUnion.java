@@ -4,8 +4,8 @@ import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 
 public class CUnion extends CStruct {
 
-	public CUnion(IASTDeclSpecifier cDeclSpec, String[] fNames, CType[] fTypes) {
-		super(cDeclSpec, fNames, fTypes);
+	public CUnion(String[] fNames, CType[] fTypes) {
+		super(fNames, fTypes);
 		// TODO Auto-generated constructor stub
 	}
 

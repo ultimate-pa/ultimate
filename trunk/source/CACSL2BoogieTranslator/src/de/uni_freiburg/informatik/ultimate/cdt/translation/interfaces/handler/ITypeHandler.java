@@ -20,12 +20,15 @@ import org.eclipse.cdt.core.dom.ast.ITypedef;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
+import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
@@ -165,4 +168,33 @@ public interface ITypeHandler extends IHandler {
      * @return a list of undefined type identifiers
      */
     public Set<String> getUndefinedTypes();
+    
+    
+    /**
+     * Compute the corresponding ASTType from a given CType.
+     * @param loc
+     * @param cType
+     * @return
+     */
+	public ASTType ctype2asttype(ILocation loc, CType cType);
+	
+	/**
+	 * Begin a scope for all Scoped Maps and Sets. (Types are scoped, too..)
+	 */
+    public void beginScope();
+    
+    /**
+	 * Begin a scope for all Scoped Maps and Sets. (Types are scoped, too..)
+	 */
+    public void endScope();
+
+    /**
+     * Return the map of type aliases coming from C-typedefs.
+     */
+	ScopedHashMap<String, ResultTypes> getDefinedTypes();
+
+	ASTType ctype2asttype(ILocation loc, CType cType, boolean wrappedInt,
+			boolean isBool);
+
+	void addDefinedType(String id, ResultTypes type);
 }

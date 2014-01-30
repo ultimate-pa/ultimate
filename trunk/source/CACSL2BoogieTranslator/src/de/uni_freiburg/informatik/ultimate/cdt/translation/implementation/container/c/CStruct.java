@@ -40,16 +40,16 @@ public class CStruct extends CType {
      * @param cDeclSpec
      *            the C declaration used.
      */
-    public CStruct(IASTDeclSpecifier cDeclSpec, String[] fNames,
+    public CStruct(String[] fNames,
             CType[] fTypes) {
-        super(cDeclSpec);
+        super(false, false, false, false); //FIXME: integrate those flags
         this.fNames = fNames;
         this.fTypes = fTypes;
         this.isIncomplete = false;
     }
     
     public CStruct(IASTDeclSpecifier cDeclSpec, boolean isIncomplete) {
-        super(cDeclSpec);
+        super(false, false, false, false); //FIXME: integrate those flags
         if (!isIncomplete) {
         	throw new AssertionError("use different constructor for non-incomplete types");
         }

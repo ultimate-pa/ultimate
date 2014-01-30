@@ -212,11 +212,11 @@ public class ACSLHandler implements IACSLHandler {
     	CACSLLocation loc = new CACSLLocation(node);
         Expression left = (Expression) main.dispatch(node.getLeft()).node;
         Expression right = (Expression) main.dispatch(node.getRight()).node;
-        if (left.getType() != null && 
-        		left.getType().equals(new InferredType(InferredType.Type.Boolean))) {
-        	//convert to boolean if neccessary
-            right = ConvExpr.toBoolean(loc, right);
-        }
+//        if (left.getType() != null && //FIXME: (alex:) commenting this out bc of removal of InferredType -- replace with sth? 
+//        		left.getType().equals(new InferredType(InferredType.Type.Boolean))) {
+//        	//convert to boolean if neccessary
+//            right = ConvExpr.toBoolean(loc, right);
+//        }
         Operator op = getBoogieBinaryExprOperator(node.getOperator());
         if (op != null) {
             return new Result(new BinaryExpression(loc, op, left, right));
@@ -571,7 +571,7 @@ public class ACSLHandler implements IACSLHandler {
                 throw new IncorrectSyntaxException(msg);
             }
             expr = new de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression(
-                    loc, sae.getType(), sae, idx);
+                    loc, sae, idx);
         } else {
             String msg = "Unexpected result type on left side of array!";
             Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);

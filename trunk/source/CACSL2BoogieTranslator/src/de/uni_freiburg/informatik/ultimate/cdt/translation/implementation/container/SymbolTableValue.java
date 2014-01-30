@@ -5,6 +5,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 
@@ -13,34 +14,55 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
  * @date 13.07.2012
  */
 public class SymbolTableValue {
+	
+	/**
+	 * Enum representing the C storageclass (e.g. typedef,..) of the SymbolTableValue
+	 * @author alex
+	 */
+	public static enum StorageClass {
+		AUTO, EXTERN, /*LAST,*/ MUTABLE, REGISTER, STATIC, TYPEDEF, UNSPECIFIED
+	}
+	
     /**
      * The variable name in the Boogie program.
      */
     private final String boogieName;
+    
+    /**
+     * the C-style declaration of the symbol
+     */
+    private final CDeclaration cDecl;
+    
     /**
      * The variable declaration in the Boogie program.
      */
-    private final Declaration decl;
+    private final Declaration boogieDecl;
     /**
      * Whether the variable is a global variable in the C program or not.
      */
     private final boolean isGlobalVar;
+    
+    /**
+     * the storageClass of this symbol
+     */
+    StorageClass storageClass;
+    
     /**
      * The description of the C variable.
      */
-    private final CType cvar;
+//    private final CType cvar;
     
-    /**
-     * True iff this C variable has static storage class.
-     */
-    private final boolean isStatic;
+//    /**
+//     * True iff this C variable has static storage class.
+//     */
+//    private final boolean isStatic;
 
     /**
      * Constructor.
      * 
      * @param bId
      *            Boogie identifier.
-     * @param decl
+     * @param cdecl
      *            Boogie variable declaration.
      * @param isGlobal
      *            whether the variable is a global variable in the C program or
@@ -50,15 +72,18 @@ public class SymbolTableValue {
      * @param isStatic
      *            whether the variable is static in the C program or not
      */
-    public SymbolTableValue(String bId, Declaration decl,
-            boolean isGlobal, CType cvar, boolean isStatic) {
+    public SymbolTableValue(String bId, Declaration boogieDecl, CDeclaration cdecl,
+            boolean isGlobal, StorageClass sc) {
+//            , boolean isStatic) {
         assert bId != null && !bId.equals(SFO.EMPTY);
         this.boogieName = bId;
-        assert decl != null;
-        this.decl = decl;
+        assert cdecl != null;
+        this.cDecl = cdecl;
+        this.boogieDecl = boogieDecl;
         this.isGlobalVar = isGlobal;
-        this.cvar = cvar;
-        this.isStatic = isStatic;
+        this.storageClass = sc;
+//        this.cvar = cvar;
+//        this.isStatic = isStatic;
     }
 
     /**
@@ -75,10 +100,13 @@ public class SymbolTableValue {
      * 
      * @return the decl
      */
-    public Declaration getDecl() {
-        return decl;
+    public CDeclaration getCDecl() {
+        return cDecl;
     }
-
+    
+    public Declaration getBoogieDecl() {
+        return boogieDecl;
+    }
     /**
      * Return whether the variable is global in the C program or not.
      * 
@@ -94,10 +122,10 @@ public class SymbolTableValue {
      * @return the C variable description.
      */
     public CType getCVariable() {
-        return this.cvar;
+        return this.cDecl.getType();
     }
     
     public boolean isStatic() {
-    	return this.isStatic;
+    	return this.storageClass == StorageClass.STATIC;
     }
 }
