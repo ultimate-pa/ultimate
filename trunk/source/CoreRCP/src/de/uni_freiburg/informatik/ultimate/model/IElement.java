@@ -22,7 +22,7 @@ public interface IElement extends Serializable {
 	 * @return The current IPayload object of the implementation.
 	 */
 	IPayload getPayload();
-
+	
 	/**
 	 * Reports if the IPayload object has been initialized. This method should
 	 * be used to check whether a IPayload instance exists if one does not want

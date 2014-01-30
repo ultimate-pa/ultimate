@@ -8,8 +8,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfgelements.CFGEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfgelements.CFGExplicitNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.annotations.SMTEdgeAnnotations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.annotations.SMTNodeAnnotations;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;

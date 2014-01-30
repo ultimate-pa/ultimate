@@ -23,18 +23,6 @@ import org.apache.log4j.Logger;
  */
 public class Benchmark {
 
-	// long heapSize = Runtime.getRuntime().totalMemory();
-	//
-	// long heapFreeSize = Runtime.getRuntime().freeMemory();
-	//
-	// long heapMaxSize = Runtime.getRuntime().maxMemory();
-	//
-	// logger.info(String.format(
-	// "Statistics: heapSize=%s heapFreeSize=%s heapMaxSize=%s",
-	// humanReadableByteCount(heapSize, true),
-	// humanReadableByteCount(heapFreeSize, true),
-	// humanReadableByteCount(heapMaxSize, true)));
-
 	private long mStartTime;
 
 	// Get current size of heap in bytes
@@ -140,6 +128,7 @@ public class Benchmark {
 		Collections.sort(sortedWatches, new Comparator<Watch>() {
 			@Override
 			public int compare(Watch o1, Watch o2) {
+				
 				return Integer.compare(o1.mIndex, o2.mIndex);
 			}
 		});
