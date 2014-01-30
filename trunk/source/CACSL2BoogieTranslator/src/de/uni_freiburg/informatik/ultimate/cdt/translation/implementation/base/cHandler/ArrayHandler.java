@@ -74,8 +74,7 @@ public class ArrayHandler {
 
 	public ResultExpression handleArrayDeclarationOnHeap(Dispatcher main,
 			MemoryHandler memoryHandler, StructHandler structHandler,
-			FunctionHandler functionHandler, //HashMap<Declaration, CType> globalVariables,
-			//HashMap<Declaration, ArrayList<Statement>> globalVariablesInits,
+			FunctionHandler functionHandler,
 			IASTArrayDeclarator d, IASTDeclSpecifier iastDeclSpecifier, ResultTypes resType, String bId, CACSLLocation loc) {
 
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -105,47 +104,15 @@ public class ArrayHandler {
 
 		//malloc the space on the heap for the array
 		functionHandler.addMallocedAuxPointer(main, arrayId);
-//		ResultExpression mallocCall = null;
-//		Expression mallocSize = null;
-//		mallocSize = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
-//				overallSize,
-//				sizeOfCell,
-//				loc);
-		
-//		mallocCall = memoryHandler.getMallocCall(main, functionHandler, 
-//				mallocSize, arrayId, loc);	
-//		stmt.addAll(mallocCall.stmt);
-//		decl.addAll(mallocCall.decl);
-//		auxVars.putAll(mallocCall.auxVars);
-		
+
 		//handle initialization
 		if (d.getInitializer() != null) {			
-
-//			arrayPointer = mallocCall.lrVal;
-//			arrayPointer.cType = arrayType;
-			
-//			Statement assingPtrToArray = new AssignmentStatement(loc, 
-//					new LeftHandSide[]{ arrayId.getLHS() }, 
-//					new Expression[]{ arrayPointer.getValue() });
-//			stmt.add(assingPtrToArray);
 			
 			//evaluate the initializer and fill the heapspace of the array
 			ResultExpressionListRec init = (ResultExpressionListRec) main.dispatch(d.getInitializer());
 			ArrayList<Statement> arrayWrites = initArrayOnHeap(main, memoryHandler, structHandler, loc, init.list, 
 					arrayId.getValue(), functionHandler, arrayType);
 			stmt.addAll(arrayWrites);
-
-//			if (functionHandler.getCurrentProcedureID() != null) {
-//				for (String t : new String[] { SFO.INT, SFO.POINTER,
-//						SFO.REAL, SFO.BOOL }) {
-//					functionHandler.getModifiedGlobals()
-//					.get(functionHandler.getCurrentProcedureID())
-//					.add(SFO.MEMORY + "_" + t);
-//				}
-//			} else { //our initialized array belongs to a global variable
-//				modifyingTheHeapGlobally = true;
-//				modifiedGlobals.add(bId);
-//			}
 		}
 		return new ResultExpression(stmt, arrayId, decl, auxVars, overappr);
 	}
@@ -162,7 +129,6 @@ public class ArrayHandler {
 			.add(SFO.MEMORY + "_" + t);
 		}
 		
-//		Integer currentSizeInt = sizeConstantsAsInt.get(depth);
 		Expression sizeOfCell = memoryHandler.calculateSizeOf(arrayType.getValueType(), loc); 
 		Expression[] dimensions = arrayType.getDimensions();
 		Integer currentSizeInt = null;
@@ -182,18 +148,12 @@ public class ArrayHandler {
 			newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
 		}
 
-//		if (depth == dimensions.size() - 1) {
 		if (dimensions.length == 1) {
 			RValue val = null;
 
 			for (int i = 0; i < currentSizeInt; i++) {
 				//TODO: we may need to pass statements, decls, ...
 				if (list != null && list.size() > i && list.get(i).lrVal != null) {
-//					if (list.get(i).lrVal == null) { 
-//						assert arrayType.getValueType().getUnderlyingType() instanceof CStruct;
-//						val = (RValue) structHandler.makeStructConstructorFromRERL(main, loc, memoryHandler, this, list.get(i), 
-//								(CStruct) arrayType.getValueType().getUnderlyingType()).lrVal;
-//					} else
 					val = (RValue) list.get(i).lrVal; 
 				} else {
 					CType valueType = arrayType.getValueType().getUnderlyingType();
@@ -292,7 +252,7 @@ public class ArrayHandler {
 			for (int i = 0; i < currentSizeInt; i++) {
 				//TODO: we may need to pass statements, decls, ...
 				if (list != null && list.size() > i && list.get(i).lrVal != null) {
-					val = (RValue) list.get(i).lrVal; //if not enough values are given, fill the rest with the last
+					val = (RValue) list.get(i).lrVal; //if not enough values are given, fill the rest with the last --> wrong? FIXME
 				} else {
 					CType valueType = arrayType.getValueType().getUnderlyingType();
 
@@ -311,39 +271,26 @@ public class ArrayHandler {
 						throw new UnsupportedSyntaxException("trying to init unknown type");
 					}
 				}
-//				arrayWrites.addAll(memoryHandler.getWriteCall(new HeapLValue(writeLocation, null), val));
 				Expression[] newIndices = null;
 				LeftHandSide newLHS = null;
 				if (innerArrayAccessLHS instanceof ArrayLHS) {
 					ArrayList<Expression> innerIndices = 
 							new ArrayList<Expression>(Arrays.asList(((ArrayLHS) innerArrayAccessLHS).getIndices()));
-//					innerIndices.add(val.getValue());
 					innerIndices.add(new IntegerLiteral(loc, new Integer(i).toString()));
 					newIndices = innerIndices.toArray(new Expression[0]);
 					newLHS = ((ArrayLHS) innerArrayAccessLHS).getArray();
-				} else { //if (innerArrayAccessLHS instanceof VariableLHS) {
-//					newIndices = new Expression[] { val.getValue() };
+				} else {
 					newIndices = new Expression[] { new IntegerLiteral(loc, new Integer(i).toString()) };
 					newLHS = innerArrayAccessLHS;
-//				} else {
-//					throw new AssertionError();
 				}
 				
-//				ArrayLHS arrayAccessLHS = new ArrayLHS(loc, innerArrayAccessLHS, 
-//						newIndices);
 				ArrayLHS arrayAccessLHS = new ArrayLHS(loc, newLHS, newIndices);
-//						new Expression[] { new IntegerLiteral(loc, new Integer(i).toString()) });
 				arrayWrites.add(new AssignmentStatement(loc, 
 						new LeftHandSide[] { arrayAccessLHS }, new Expression[] { val.getValue() }));
 			}
 		} else {
 			for (int i = 0; i < currentSizeInt; i++) { 
 
-//				ArrayList<Expression> offsets = new ArrayList<Expression>();
-				
-//				for (int j = 1; j < dimensions.length; j++) {
-//					offsets.add(dimensions[j]);
-//				}
 				Expression[] newIndices = null;
 				LeftHandSide newLHS = null;
 				if (innerArrayAccessLHS instanceof ArrayLHS) {
@@ -352,12 +299,10 @@ public class ArrayHandler {
 					innerIndices.add(new IntegerLiteral(loc, new Integer(i).toString()));
 					newIndices = innerIndices.toArray(new Expression[0]);
 					newLHS = ((ArrayLHS) innerArrayAccessLHS).getArray();
-				} else { //if (innerArrayAccessLHS instanceof VariableLHS) {
+				} else { 
 					newIndices = new Expression[] { new IntegerLiteral(loc, new Integer(i).toString()) };
 					newLHS = innerArrayAccessLHS;
-//				} else {
-//					throw new AssertionError();
-				}		//	offsets.add(new IntegerLiteral(loc, new Integer(i).toString()));
+				}
 			
 				ArrayList<Expression> innerDims = new ArrayList<Expression>(Arrays.asList(arrayType.getDimensions()));
 				innerDims.remove(0);//TODO ??
@@ -395,28 +340,13 @@ public class ArrayHandler {
 				!(node.getArrayExpression() instanceof IASTArraySubscriptExpression);
 		ResultExpression innerResult = null;
 		if (innerMostSubscript) {
-//			 innerResult = handleArrayInnerMostSubscriptExpression(main, 
-//					 node.getArrayExpression());
 			innerResult = ((ResultExpression) main.dispatch(node.getArrayExpression()));
-//					.switchToRValue(main, memoryHandler, structHandler, loc);
 		} else {
 			innerResult = handleArraySubscriptExpression(main, memoryHandler, 
 					structHandler, (IASTArraySubscriptExpression) node.getArrayExpression());
 		}
-//		assert innerResult.lrVal instanceof RValue; 
-		
-//		ArrayList<Statement> stmt = new ArrayList<Statement>();
-//		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-//		HashMap<VariableDeclaration, ILocation> auxVars = new HashMap<VariableDeclaration, ILocation>();
-//		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-//		LRValue lrVal;
 		
 		ResultExpression result = new ResultExpression(innerResult);
-//				innerResult.stmt, 
-//				innerResult.lrVal, 
-//				innerResult.decl, 
-//				innerResult.auxVars, 
-//				innerResult.overappr);
 		
 		ResultExpression currentSubscriptRex = mCollectedSubscripts.pop();
 		result.stmt.addAll(currentSubscriptRex.stmt);
@@ -438,8 +368,6 @@ public class ArrayHandler {
 							.getDimensions()));
 			CType newCType = null;
 			if (newDimensions.size() == 1) {
-//				newCType = new CArray(newDimensions.toArray(new Expression[0]), 
-//						((CArray) result.lrVal.cType).getValueType());
 				newCType = ((CArray) result.lrVal.cType).getValueType();
 			} else {
 				newDimensions.remove(0);
@@ -447,17 +375,14 @@ public class ArrayHandler {
 						((CArray) result.lrVal.cType).getValueType());
 			}
 
-//			if (result.lrVal.isOnHeap) {
 			if (result.lrVal instanceof HeapLValue) {
 				result.lrVal = new HeapLValue(((CHandler) main.cHandler).doPointerArith(
 						main, IASTBinaryExpression.op_plus, loc, 
-//						(RValue) result.lrVal, 
 						((HeapLValue) result.lrVal).getAddress(),
 						currentSubscriptRex.lrVal.getValue(),
 						newCType), newCType);
 			} else if (result.lrVal instanceof LocalLValue) {
 				LocalLValue newLLVal = new LocalLValue((LocalLValue) result.lrVal);
-//				newLLVal.lhs = new ArrayAccessExpression(loc, result.lrVal.getValue(), 
 				LeftHandSide innerArrayLHS = ((LocalLValue) result.lrVal).getLHS();
 				if (innerArrayLHS instanceof ArrayLHS) {
 					ArrayList<Expression> innerIndices = new ArrayList<Expression>(
@@ -470,11 +395,7 @@ public class ArrayHandler {
 							innerArrayLHS, new Expression[] { currentSubscriptRex.lrVal.getValue() });	
 				}
 				
-//				newLLVal.lhs = new ArrayLHS(loc, ((LocalLValue) result.lrVal).getLHS(), 
-//						new Expression[] { currentSubscriptRex.lrVal.getValue() });
 				newLLVal.cType = newCType;
-//						new CArray(newDimensions.toArray(new Expression[0]), 
-//						((CArray) newLLVal.cType).getValueType());
 				result.lrVal = newLLVal;
 			} else {
 				throw new AssertionError("should not happen");
@@ -483,115 +404,6 @@ public class ArrayHandler {
 		
 		return result;
 	}
-	
-//	public ResultExpression handleArrayInnerMostSubscriptExpression(Dispatcher main, 
-//			IASTExpression array) {
-//		/*
-//		 * array might be:
-//		 * - a pointer that is accessed like an array
-//		 *  --> then it has type CPointer
-//		 * - an array identifier
-//		 *  -- on heap
-//		 *  -- off heap
-//		 * - a struct access expression
-//		 *  --> then we need to know whether the struct is on/off heap
-//		 * - the result of a function call
-//		 * 
-//		 */ 
-////		main.cHandler.getSymbolTable().get(cId);
-//		ResultExpression arrayRex = (ResultExpression) main.dispatch(array);
-//		
-//		
-//		return arrayRex;
-//	}
-	
-
-//	public Result handleArrayOnHeapSubscriptionExpression(Dispatcher main,
-//			MemoryHandler memoryHandler, StructHandler structHandler,
-//			ILocation loc, ResultExpression array, ResultExpression subscript, 
-//			boolean innerMostSubscript) {
-//
-//		
-//		ArrayList<Statement> stmt = new ArrayList<Statement>();
-//		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-//		HashMap<VariableDeclaration, ILocation> auxVars = new HashMap<VariableDeclaration, ILocation>();
-//		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-//
-//		//catch the case where we are doing a subscript on a pointer
-//		if (array.lrVal.cType instanceof CPointer) {
-//			ResultExpression arrayR = array.switchToRValue(main, memoryHandler, structHandler, loc);
-//			stmt.addAll(arrayR.stmt);
-//			decl.addAll(arrayR.decl);
-//			auxVars.putAll(arrayR.auxVars);
-//			overappr.addAll(arrayR.overappr);
-//			
-//			RValue newPointer = ((CHandler) main.cHandler).doPointerArith(main, IASTBinaryExpression.op_plus, loc, 
-//					(RValue) arrayR.lrVal, (RValue) subscriptR.lrVal);
-//			HeapLValue newHlv = new HeapLValue(newPointer.getValue(), ((CPointer) array.lrVal.cType).pointsToType);
-//			return new ResultExpression(stmt, newHlv, decl, auxVars, overappr);
-//		}
-//		
-//		// we really have an array
-//		CArray arrayCType = (CArray) array.lrVal.cType;
-//
-//		ArrayList<Expression> newDimensions = new ArrayList<Expression>(Arrays.asList(arrayCType.getDimensions()));
-//		newDimensions.remove(0);//FIXME: first or last??
-//		CType newCType = null;
-//		if (newDimensions.size() == 0)
-//			newCType = arrayCType.getValueType();
-//		else
-//			newCType = new CArray(
-//				newDimensions.toArray(new Expression[0]), arrayCType.getValueType());
-//	
-//
-//		Expression offset = subscriptR.lrVal.getValue();
-//		offset = computeSubscriptMultiplier(main, memoryHandler, loc,
-//				arrayCType, offset);	
-//
-//		Expression arrayBase = null;
-//		Expression arrayOffset = null;
-//		if (!innerMostSubscript) {
-//			stmt.addAll(array.stmt);
-//			decl.addAll(array.decl);
-//			auxVars.putAll(array.auxVars);
-//			
-//			HeapLValue arrayHlv = (HeapLValue) array.lrVal;
-//			StructConstructor ptr = (StructConstructor) arrayHlv.getAddress();
-//			arrayBase = ptr.getFieldValues()[0];
-//			arrayOffset = ptr.getFieldValues()[1];
-//		} else{
-//			ResultExpression arrayR = array.switchToRValue(main, memoryHandler, structHandler, loc);
-//			stmt.addAll(arrayR.stmt);
-//			decl.addAll(arrayR.decl);
-//			auxVars.putAll(arrayR.auxVars);
-//	
-////			Expression arrayAddress = arrayR.lrVal.getValue();
-//			
-//			Expression startAddress = arrayR.lrVal.getValue();
-//			arrayBase = null;
-//			arrayOffset = null;
-//			if (startAddress instanceof StructConstructor) {
-//				arrayBase = ((StructConstructor) startAddress).getFieldValues()[0];
-//				arrayOffset = ((StructConstructor) startAddress).getFieldValues()[1];
-//			} else {
-//				arrayBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
-//				arrayOffset = MemoryHandler.getPointerOffset(startAddress, loc);
-//			}	
-//			
-////			arrayBase = MemoryHandler.getPointerBaseAddress(arrayAddress, loc);
-////			arrayOffset = MemoryHandler.getPointerOffset(arrayAddress, loc);
-//		}
-//
-//		offset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus,
-//				arrayOffset,
-//				offset, 
-//				loc);	
-//
-//		Expression newPointer = MemoryHandler
-//				.constructPointerFromBaseAndOffset(arrayBase, offset, loc);
-//
-//		return new ResultExpression(stmt, new HeapLValue(newPointer, newCType), decl, auxVars);
-//	}
 
 	private Expression computeSubscriptMultiplier(Dispatcher main,
 			MemoryHandler memoryHandler, ILocation loc, CArray arrayCType,

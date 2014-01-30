@@ -61,126 +61,9 @@ import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorT
  * 
  * @author Markus Lindenmann
  * @date 12.10.2012
+ * modified (a lot) by Alexander Nutz in later 2013/early 2014
  */
 public class StructHandler {
-
-	//    /**
-	//     * Extracted method to handle IASTSimpleDeclaration holding a
-	//     * StructDeclaration.
-	//     * 
-	//     * @param main
-	//     *            the main dispatcher
-	//     * @param arrayHandler
-	//     *            Reference to the array handler.
-	//     * @param loc
-	//     *            the location of this struct's declaration.
-	//     * @param t
-	//     *            the type of the struct to initialize.
-	//     * @param cvar
-	//     *            the corresponding C variable description.
-	//     * @param lhs
-	//     *            the struct to initialize.
-	//     * @param relr
-	//     *            the initializer-list tree.
-	//     * @param idc
-	//     *            an array list, initially empty.
-	//     * @param pos
-	//     *            initially -1. The current dimension.
-	//     * @return a list of assert and assign statements. Maybe there are also some
-	//     *         declarations of temp. vars.
-	//     */
-	//    public ResultExpression handleStructInit(Dispatcher main, MemoryHandler memoryHandler,
-	//            ArrayHandler arrayHandler, final CACSLLocation loc, StructType t,
-	//            CStruct cvar, final LeftHandSide lhs, ResultExpressionListRec relr,
-	//            ArrayList<Integer> idc, int pos) {
-	//        ArrayList<Statement> stmt = new ArrayList<Statement>();
-	//        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-	//		Map<VariableDeclaration, CACSLLocation> auxVars = 
-	//				new HashMap<VariableDeclaration, CACSLLocation>();
-	//		
-	//		relr = relr.switchToRValue(main, memoryHandler, this, loc);//TODO right?
-	//
-	//        String fId = null;
-	//        ASTType fieldType = null;
-	//        if (pos >= 0) {
-	//            if (relr.field != null) {
-	//                fId = relr.field;
-	//                assert !fId.equals(SFO.EMPTY);
-	//                for (VarList f : t.getFields()) {
-	//                    assert f.getIdentifiers().length == 1;
-	//                    if (f.getIdentifiers()[0].equals(fId)) {
-	//                        fieldType = f.getType();
-	//                        break;
-	//                    }
-	//                }
-	//                if (fieldType == null) {
-	//                    String msg = "Field '" + fId + "' not found in type + '"
-	//                            + t + "'";
-	//                    Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
-	//                    throw new IncorrectSyntaxException(msg);
-	//                }
-	//            } else {
-	//                assert idc.get(pos) >= 0 && idc.get(pos) < t.getFields().length;
-	//                VarList field = t.getFields()[idc.get(pos)];
-	//                // index 0 is OK; field only holds one ID by construction!
-	//                assert field.getIdentifiers().length == 1;
-	//                fId = field.getIdentifiers()[0];
-	//                assert !fId.equals(SFO.EMPTY);
-	//                fieldType = field.getType();
-	//                assert fieldType != null;
-	//            }
-	//            if (fieldType instanceof StructType)
-	//                t = (StructType) fieldType;
-	//        }
-	//
-	//        if (relr.list == null) {
-	//            if (relr.decl != null)
-	//                decl.addAll(relr.decl);
-	//            if (relr.stmt != null)
-	//                stmt.addAll(relr.stmt);
-	//            if (relr.lrVal.getValue() != null) {
-	//                assert fieldType != null;
-	//                assert fId != null;
-	//                LeftHandSide assLhs = new StructLHS(loc,
-	//                        new InferredType(fieldType), lhs, fId);
-	//                //FIXME: do we need a switchtoRValue here? --> there might be a deref inside, right?..
-	////                relr.lrVal = new RValue(main.typeHandler.convertArith2Boolean(loc, fType,
-	////                        relr.lrVal.getValue()));
-	//                relr.lrVal = new RValue(main.typeHandler.convertArith2Boolean(loc, fieldType,
-	//                        relr.lrVal.getValue()), null);  //FIXME: CType??
-	////                relr = relr.switchToRValue(main, ((CHandler) (((MainDispatcher) main).cHandler)).memoryHandler, this, loc);
-	//                stmt.add(new AssignmentStatement(loc,
-	//                        new LeftHandSide[] { assLhs },
-	//                        new Expression[] { relr.lrVal.getValue() }));
-	//            }
-	//        } else {
-	//            for (ResultExpressionListRec child : relr.list) {
-	//                if (idc.size() <= pos + 1)
-	//                    idc.add(-1);
-	//                idc.set(pos + 1, idc.get(pos + 1) + 1);
-	//                LeftHandSide newLhs = (fId != null ? new StructLHS(loc, lhs,
-	//                        fId) : lhs);
-	//                ResultExpression r;
-	//                if (fieldType instanceof ArrayType) {
-	//                    int[] indices = new int[((ArrayType) fieldType).getIndexTypes().length];
-	//                    Arrays.fill(indices, -1);
-	//                    r = arrayHandler.handleArrayInit(main, memoryHandler, this, loc,
-	//                            ((ArrayType) fieldType),
-	//                            (CArray) cvar.getFieldType(fId), newLhs, child,
-	//                            indices, -1);
-	//                } else {
-	//                    r = handleStructInit(main, memoryHandler, arrayHandler, loc, t, cvar,
-	//                            newLhs, child, idc, pos + 1);
-	//                }
-	//                decl.addAll(r.decl);
-	//                stmt.addAll(r.stmt);
-	//                auxVars.putAll(r.auxVars);
-	//            }
-	//            idc.set(pos + 1, -1);
-	//        }
-	//        assert (main.isAuxVarMapcomplete(decl, auxVars));
-	//        return new ResultExpression(stmt, null, decl, auxVars);
-	//    }
 
 	/**
 	 * Handle IASTFieldReference.
@@ -195,7 +78,7 @@ public class StructHandler {
 	public Result handleFieldReference(Dispatcher main, IASTFieldReference node, MemoryHandler memoryHandler) {
 		CACSLLocation loc = new CACSLLocation(node);
 		String field = node.getFieldName().toString();
-		// get the type for the accessed field
+		
 		ResultExpression fieldOwner = (ResultExpression) main.dispatch(node.getFieldOwner());;
 
 		LRValue newValue = null;
@@ -208,7 +91,6 @@ public class StructHandler {
 					foType);
 		CStruct cStructType = (CStruct) (foType instanceof CNamed ? ((CNamed) foType).getUnderlyingType() : foType);
 		CType cFieldType = cStructType.getFieldType(field);
-//		InferredType fieldIt = new InferredType(cFieldType);
 
 		if (node.isPointerDereference()) {
 			ResultExpression rFieldOwnerRex = fieldOwner.switchToRValueIfNecessary(main, memoryHandler, this, loc);
@@ -237,22 +119,14 @@ public class StructHandler {
 							newStartAddressOffset,
 							getStructOffsetConstantExpression(loc, memoryHandler, field, cStructType)),
 							loc);
-//			Expression newPointer = MemoryHandler.constructPointerFromBaseAndOffset(
-//					MemoryHandler.getPointerBaseAddress(fieldOwnerHlv.getAddress(), loc),
-//					new BinaryExpression(loc, new InferredType(Type.Integer), BinaryExpression.Operator.ARITHPLUS, 
-//							MemoryHandler.getPointerOffset(fieldOwnerHlv.getAddress(), loc),
-//							getStructOffsetConstantExpression(loc, field, cStructType)),
-//							loc);
 			newValue = new HeapLValue(newPointer, cFieldType);
 		} else if (fieldOwner.lrVal instanceof RValue) {
 			RValue rVal = (RValue) fieldOwner.lrVal;
-//			StructAccessExpression sexpr = new StructAccessExpression(loc, fieldIt, 
 			StructAccessExpression sexpr = new StructAccessExpression(loc, 
 					rVal.getValue(), field);
 			newValue = new RValue(sexpr, cFieldType);
 		} else { 
 			LocalLValue lVal = (LocalLValue) fieldOwner.lrVal;
-//			StructLHS slhs = new StructLHS(loc, fieldIt, 
 			StructLHS slhs = new StructLHS(loc,
 					lVal.getLHS(), field);
 			newValue = new LocalLValue(slhs, cFieldType);
@@ -263,7 +137,6 @@ public class StructHandler {
 
 	public Result readFieldInTheStructAtAddress(Dispatcher main,
 			MemoryHandler memoryHandler, ILocation loc, String field,
-//			InferredType it, Expression structAddress, CStruct structType) {
 			RValue address) {
 		Expression addressBaseOfFieldOwner;
 		Expression addressOffsetOfFieldOwner;
@@ -272,10 +145,8 @@ public class StructHandler {
 		CStruct structType = (CStruct) address.cType;
 
 		addressBaseOfFieldOwner = new StructAccessExpression(loc, 
-//				structAddress, SFO.POINTER_BASE);
 				structAddress, SFO.POINTER_BASE);
 		addressOffsetOfFieldOwner = new StructAccessExpression(loc, 
-//				structAddress, SFO.POINTER_OFFSET);
 				structAddress, SFO.POINTER_OFFSET);
 
 		if (structType == null || !(structType instanceof CStruct)) {
@@ -299,12 +170,10 @@ public class StructHandler {
 
 		RValue newAddress = new RValue(address);
 		newAddress.value = newPointer;
-//		newAddress.cType= new CPointer(resultType);
 		newAddress.cType= resultType;
 		
 		ResultExpression call = 
 				memoryHandler.getReadCall(main, 
-//						it, newPointer, new CPointer(resultType));
 					newAddress);	
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
@@ -341,8 +210,6 @@ public class StructHandler {
 		}
 	}
 
-
-
 	/**
 	 * Handle IASTDesignatedInitializer.
 	 * 
@@ -372,14 +239,11 @@ public class StructHandler {
 				named.list.addAll(relr.list);
 				return named;
 			}
-			//            return new ResultExpressionListRec(id, relr.stmt, relr.expr,
-			//                    relr.decl, relr.auxVars);
 			return new ResultExpressionListRec(id, relr.stmt, relr.lrVal,
 					relr.decl, relr.auxVars, relr.overappr).switchToRValueIfNecessary(
 					        main, memoryHandler, structHandler, loc);
 		} else if (r instanceof ResultExpression) {
 			ResultExpression rex = (ResultExpression) r;
-			//            return new ResultExpressionListRec(id, rex.stmt, rex.expr, rex.decl, rex.auxVars);
 			return rex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 		} else {
 			String msg = "Unexpected result";
@@ -430,7 +294,6 @@ public class StructHandler {
 				else
 					fieldContents = new ResultExpression(new RValue(
 							new IntegerLiteral(loc, "0"), underlyingFieldType));
-//							new IntegerLiteral(loc, new InferredType(underlyingType), "0"), underlyingType));
 			} else if (underlyingFieldType instanceof CPointer) {
 				if (i < rerl.list.size())
 					fieldContents = rerl.list.get(i);
@@ -444,8 +307,6 @@ public class StructHandler {
 						new HashMap<VariableDeclaration, ILocation>();
 				
 				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
-//				InferredType tmpIType = new InferredType(Type.Pointer);
-
 				
 				ResultExpressionListRec arrayInitRerl = null;
 				if (i < rerl.list.size())
@@ -472,7 +333,6 @@ public class StructHandler {
 						arrayInitRerl == null ? null : arrayInitRerl.list, 
 						fieldLHS, (CArray) underlyingFieldType));
 				}
-//				fieldContents = new ResultExpression(fieldStmt, new RValue(fieldEx, underlyingType), fieldDecl, fieldAuxVars);
 				fieldContents = new ResultExpression(fieldStmt, lrVal, fieldDecl, fieldAuxVars);
 			} else if (underlyingFieldType instanceof CEnum) {
 				throw new UnsupportedSyntaxException("..");

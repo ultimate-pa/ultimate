@@ -168,7 +168,6 @@ public class MemoryHandler {
         InferredType boolIT = new InferredType(Type.Boolean);
         ASTType intType = new PrimitiveType(tuLoc, intIT, SFO.INT);
         ASTType boolType = new PrimitiveType(tuLoc, boolIT, SFO.BOOL);
-        // type finite $Pointer$ = { base:int, offset:int };
         VarList fBase = new VarList(tuLoc, new String[] { SFO.POINTER_BASE },
                 intType);
         VarList fOffset = new VarList(tuLoc,
@@ -749,14 +748,6 @@ public class MemoryHandler {
     private boolean isPointer(CType ctype) {
     	CType ut = ctype.getUnderlyingType();
     	return ut instanceof CPointer || ut instanceof CArray;
-//    	if (ctype instanceof CPointer) {
-//    		return true;
-//    	} else if (ctype instanceof CNamed) {
-//    		CNamed cnamed = (CNamed) ctype;
-//    		return (cnamed.getMappedType() instanceof CPointer);
-//    	} else {
-//    		return false;
-//    	}
     }
 
     /**
@@ -777,14 +768,9 @@ public class MemoryHandler {
     public ResultExpression getMallocCall(Dispatcher main, FunctionHandler fh,
             Expression size, CACSLLocation loc) {
     	String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
-//        InferredType tmpIType = new InferredType(Type.Pointer);
         VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, MemoryHandler.POINTER_TYPE, loc);
-//        auxVars.put(tVarDecl, loc);
-//        decl.add(tVarDecl);
-//        Expression e = new IdentifierExpression(loc, it, tmpId);
         
         ResultExpression mallocRex = getMallocCall(main, fh, size, 
-//        		new LocalLValue(new VariableLHS(loc, tmpIType, tmpId), 
         		new LocalLValue(new VariableLHS(loc, tmpId), 
         				new CPointer(new CPrimitive(PRIMITIVE.VOID))), loc);
         
@@ -794,62 +780,13 @@ public class MemoryHandler {
         
 		assert (main.isAuxVarMapcomplete(mallocRex.decl, mallocRex.auxVars));
 		return mallocRex;
-//        if (!(size.getType() instanceof InferredType)
-//                || ((InferredType) size.getType()).getType() != Type.Integer) {
-//            String msg = "Invalid parameter for " + SFO.MALLOC;
-//            Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
-//            throw new IncorrectSyntaxException(msg);
-//        }
-//        // Further checks are done in the precondition of ~malloc()!
-//        // ~malloc(SIZE);
-//        ArrayList<Statement> stmt = new ArrayList<Statement>();
-//        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-//		Map<VariableDeclaration, CACSLLocation> auxVars = 
-//				new HashMap<VariableDeclaration, CACSLLocation>();
-//		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-//        InferredType it = new InferredType(Type.Pointer);
-//        Expression[] args = new Expression[] { size };
-//        String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
-//        InferredType tmpIType = new InferredType(Type.Pointer);
-//        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc);
-//        auxVars.put(tVarDecl, loc);
-//        decl.add(tVarDecl);
-//        stmt.add(new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, tmpId) },
-//                SFO.MALLOC, args));
-//        Expression e = new IdentifierExpression(loc, it, tmpId);
-//        // add required information to function handler.
-//        if (fh.getCurrentProcedureID() != null) {
-//            HashSet<String> mgM = new HashSet<String>();
-//            mgM.add(SFO.VALID);
-//            mgM.add(SFO.LENGTH);
-//            if (!fh.getModifiedGlobals().containsKey(SFO.MALLOC)) {
-//                fh.getModifiedGlobals().put(SFO.MALLOC, mgM);
-//                fh.getCallGraph().put(SFO.MALLOC, new HashSet<String>());
-//            }
-//            fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.MALLOC);
-//        } else { //we are initialzing something global
-//        	
-//        }
-//		assert (main.isAuxVarMapcomplete(decl, auxVars));
-////        return new ResultExpression(stmt, new HeapLValue(e), decl, auxVars);
-//        return new ResultExpression(stmt, new RValue(e, null), decl, auxVars,
-//                overappr);//FIXME pointsToType??
     }
 
     public ResultExpression getMallocCall(Dispatcher main,
 			FunctionHandler fh, Expression size,
 			LocalLValue resultPointer, ILocation loc) {
-//    	if (!(size.getType() instanceof InferredType)
-//    			|| ((InferredType) size.getType()).getType() != Type.Integer) {
-//    		String msg = "Invalid parameter for " + SFO.MALLOC;
-//    		Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
-//    		throw new IncorrectSyntaxException(msg);
-//    	}
-    	// Further checks are done in the precondition of ~malloc()!
-        // ~malloc(SIZE);
         ArrayList<Statement> stmt = new ArrayList<Statement>();
 
-//        InferredType it = new InferredType(Type.Pointer);
         Expression[] args = new Expression[] { size };
         
         //TODO: extract this block and the one below to make the other getMallocCall nicer
@@ -906,8 +843,6 @@ public class MemoryHandler {
             if (cvar instanceof CArray) {
                 CArray ca = (CArray) cvar;
                 Expression valSize = calculateSizeOf(ca.getValueType(), loc);
-//                Expression nrElem = new IntegerLiteral(loc, SFO.EMPTY
-//                        + ca.getDimensions().length);
                 Expression nrElem = new IntegerLiteral(loc, "1");
                 for (Expression dim : ca.getDimensions()) 
                 	nrElem = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, nrElem, dim, loc);
@@ -990,25 +925,6 @@ public class MemoryHandler {
 //        return new AssertStatement(assertLoc, formula);
 //    }
     
-    
-//    /**
-//     * Construct a pointer whose address is (addressBase,addressOffset).
-//     * The result is the boogie expression <code>{ base : addressBasse, offset : addressOffset}</code>. 
-//     */
-//    public ResultExpression auxiliaryPointer(Dispatcher main, CACSLLocation loc,
-//    		Expression addressBase, Expression addressOffset) {
-//    	assert addressBase != null : "no base address";
-//		if (addressOffset == null)
-//			addressOffset = new IntegerLiteral(loc, new InferredType(Type.Integer), "0");
-//    	
-//		Map<VariableDeclaration, CACSLLocation> auxVars = 
-//				new HashMap<VariableDeclaration, CACSLLocation>();
-//		Expression auxPointer = new StructConstructor(loc, 
-//				new String[] { SFO.POINTER_BASE,  SFO.POINTER_OFFSET },
-//				new Expression[] { addressBase, addressOffset });
-//		return new ResultExpression(new RValue(auxPointer), auxVars);
-//    }
-    
 
     /**
      * Generates a call of the read procedure and writes the returned value to a
@@ -1027,24 +943,16 @@ public class MemoryHandler {
      *         plus an identifierExpression holding the read value.
      */
     public ResultExpression getReadCall(Dispatcher main,
-//            final InferredType it, 
-//            Expression tPointer, CPointer pointerCType) {
     		RValue address) {
-//        assert tPointer.getType() instanceof InferredType
-//                && ((InferredType) tPointer.getType()).getType() == Type.Pointer;
-        // assert #valid[tPointer!base];
-        // tmp = "read_$Pointer$(tPointer);"
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = 
 				new HashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
         ILocation loc = (ILocation) address.getValue().getLocation();
-//        CType resultCType = ((CPointer) address.cType).pointsToType;
         
-//        String t = getHeapTypeStringOfCType(resultCType);
         ASTType heapType = getHeapTypeOfLRVal(address);
-//        ASTType heapType = main.typeHandler.ctype2asttype(loc, resultCType);
+        
         String heapTypeName = "";
         if (heapType.equals(MemoryHandler.POINTER_TYPE)) {
         	heapTypeName = SFO.POINTER;
@@ -1053,11 +961,9 @@ public class MemoryHandler {
         }
         
         String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD);
-//        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, it, loc);
         VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, heapType, loc);
         auxVars.put(tVarDecl, loc);
         decl.add(tVarDecl);
-//        VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, it, tmpId) };
         VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, tmpId) };
         CallStatement call = new CallStatement(loc, false, lhs, "read~" + heapTypeName,//heapType.toString(),
                 new Expression[] { address.getValue() });
@@ -1068,7 +974,6 @@ public class MemoryHandler {
         stmt.add(call);
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
         return new ResultExpression(stmt, 
-//        		new RValue(new IdentifierExpression(loc, tmpId), resultCType),
         		new RValue(new IdentifierExpression(loc, tmpId), address.cType),
         		decl, auxVars, overappr);
     }
@@ -1076,9 +981,7 @@ public class MemoryHandler {
     ASTType getHeapTypeOfLRVal(LRValue lrVal) {
     	CType ct = lrVal.cType;
     	
-//    	boolean isOnHeap = lrVal.isOnHeap;
     	if (/*lrVal.isOnHeap*/ lrVal.isPointer)
-//    	if (/*lrVal.isOnHeap*/ isOnHeap || lrVal.isPointer)
     		return POINTER_TYPE;
     	
     	if (lrVal.isBoogieBool)
@@ -1088,50 +991,27 @@ public class MemoryHandler {
     	if (ut instanceof CNamed)
     		ut = ((CNamed) ut).getUnderlyingType();
     	
-//    	ASTType result = null;
     	if (ut instanceof CPrimitive) {
 			CPrimitive cp = (CPrimitive) ut;
 			switch (cp.getType()) {
 			case CHAR:
 			case INT:
-//				result = new PrimitiveType(lrVal.getValue().getLocation(), SFO.INT);
 				return new PrimitiveType(lrVal.getValue().getLocation(), SFO.INT);
-//				result = SFO.INT;
-//				break;
 			case FLOAT:
 			case DOUBLE:
-//				result = new PrimitiveType(lrVal.getValue().getLocation(), SFO.REAL);
 				return new PrimitiveType(lrVal.getValue().getLocation(), SFO.REAL);
-//			    result = SFO.REAL;
-//			    break;
-//			case BOOL:
 			default:
 				throw new UnsupportedSyntaxException("unsupported cType " + ct);
 			}
 		} else if (ut instanceof CPointer) {
-//			result = new PrimitiveType(lrVal.getValue().getLocation(), SFO.POINTER);
 			return MemoryHandler.POINTER_TYPE;
-//			result = SFO.POINTER;
-//		} else if (ut instanceof CArray) {
-//			result = SFO.POINTER;
-//			if (((CArray) ut).getDimensions().length == 0)
-//				return getHeapTypeStringOfCType(((CArray) ut).getValueType());
-//			else
-//				throw new UnsupportedSyntaxException("usupported cType " + ct); //not yet treated (as in switchToRValue..)
-//		} else if (ut instanceof CEnum) {
-//				throw new UnsupportedSyntaxException("usupported cType " + ct);
-//		} else if (ut instanceof CStruct) {
-//				throw new UnsupportedSyntaxException("usupported cType " + ct);
-			//TODO: or do we really need POINTER for Struct and Array and so on?
 		} else if (ut instanceof CNamed) {
 			assert false : "This should not be the case as we took the underlying type.";
 			throw new UnsupportedSyntaxException("non-heap type?: " + ct);
 		} else {
 			throw new UnsupportedSyntaxException("non-heap type?: " + ct);
 		}
-//    	return result;
     }
-    
 
     /**
      * Generates a procedure call to writeT(val, ptr), writing val to the
@@ -1155,7 +1035,6 @@ public class MemoryHandler {
         
         String t = SFO.EMPTY;
         if (rType instanceof CPrimitive) {
-//        	switch (((CPrimitive) rType).getType()) {
         	switch (((CPrimitive) rType).getGeneralType()) {
         	case INTTYPE:
         		t = SFO.INT;	        
@@ -1195,11 +1074,9 @@ public class MemoryHandler {
 						StructHandler.getStructOffsetConstantExpression(loc, this, fieldId, rStructType);
         		Expression newOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
         				newStartAddressOffset,
-//        				getPointerOffset(hlv.getAddress(), loc), 
         				fieldOffset, loc);
         		HeapLValue fieldHlv = new HeapLValue(
         				constructPointerFromBaseAndOffset(newStartAddressBase,
-//        						getPointerBaseAddress(hlv.getAddress(), loc),
         				newOffset, loc), fieldType);
         		stmt.addAll(getWriteCall(fieldHlv, new RValue(sae, fieldType)));
         	}

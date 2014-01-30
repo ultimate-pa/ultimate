@@ -118,18 +118,15 @@ public class PostProcessor {
 	 */
 	public ArrayList<Declaration> postProcess(Dispatcher main, ILocation loc,
 			MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler, StructHandler structHandler,
-//			ArrayList<Statement> initStatements,
 			HashMap<String, Procedure> procedures,
 			HashMap<String, HashSet<String>> modifiedGlobals,
 			Set<String> undefinedTypes,
 			Collection<? extends FunctionDeclaration> functions, 
 			HashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie
-//			Collection<String> uninitGlobalVars
 			) {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 		decl.addAll(createUltimateInitProcedure(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler,
-//				initStatements, uninitGlobalVars
 				mDeclarationsGlobalInBoogie));
 		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler, procedures,
 				modifiedGlobals));
@@ -208,32 +205,8 @@ public class PostProcessor {
 			}
 		}
 		
-		//old initialization for statics and other globals
-//		for (String bId : uninitGlobalVars) {
-//			assert main.cHandler.getSymbolTable().containsBoogieSymbol(bId);
-//			String cId = main.cHandler.getSymbolTable().getCID4BoogieID(bId,
-//					loc);
-//			assert main.cHandler.getSymbolTable().containsCSymbol(cId);
-//			CACSLLocation lloc = (CACSLLocation) main.cHandler.getSymbolTable()
-//					.get(cId, loc).getBoogieDecl().getLocation();
-////			ASTType at = main.cHandler.getSymbolTable().getTypeOfVariable(cId,
-////					lloc);
-//			CType cvar = main.cHandler.getSymbolTable().get(cId, lloc)
-//					.getCVariable();
-////			LeftHandSide lhs = new VariableLHS(lloc, new InferredType(at), bId);
-//			LeftHandSide lhs = new VariableLHS(lloc, new InferredType(cvar), bId);
-//			ResultExpression r = initVar(lloc, main, memoryHandler, arrayHandler, functionHandler, structHandler, lhs, 
-////					at,
-//					cvar);
-//			initStatements.addAll(r.stmt);
-//			for (Declaration d : r.decl) {
-//				assert d instanceof VariableDeclaration;
-//				initDecl.add((VariableDeclaration) d);
-//			}
-//		}
-//		mInitializedGlobals.addAll(uninitGlobalVars);
-		
-		//new initialization for statics and other globals
+	
+		//initialization for statics and other globals
 		for (Entry<Declaration, CDeclaration> en : mDeclarationsGlobalInBoogie.entrySet()) {
 			if (en.getKey() instanceof TypeDeclaration)
 				continue;
@@ -248,9 +221,6 @@ public class PostProcessor {
 				initStatements.addAll(initRex.stmt);
 				for (Declaration d : initRex.decl)
 					initDecl.add((VariableDeclaration) d);
-//				initStatements.addAll(initializer.stmt);
-//				for (Declaration d : initializer.decl)
-//					initDecl.add((VariableDeclaration) d);
 			} else { //no initializer --> default initialization
 				for (VarList vl  : ((VariableDeclaration) en.getKey()).getVariables()) {
 					for (String id : vl.getIdentifiers()) {
@@ -269,7 +239,6 @@ public class PostProcessor {
 		}
 		
 		mInitializedGlobals.addAll(functionHandler.getModifiedGlobals().get(SFO.INIT));
-//		initializedGlobals.addAll(arrayHandler.getModifiedGlobals());//alex: array on heap initialization means Ultimate.init has to modify it..
 		
 		Specification[] specsInit = new Specification[1];
 		VariableLHS[] modifyList = new VariableLHS[mInitializedGlobals.size()];
@@ -280,14 +249,12 @@ public class PostProcessor {
 		specsInit[0] = new ModifiesSpecification(loc, false, modifyList);
 		Procedure initProcedureDecl = new Procedure(loc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], specsInit, null);
-//		decl.add(initProcedureDecl);
 		Body initBody = new Body(loc,//TODO: do we need auxVars here, too??
 				initDecl.toArray(new VariableDeclaration[0]),
 				initStatements.toArray(new Statement[0]));
 		decl.add(new Procedure(loc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], null, initBody));
 		
-//		functionHandler.handleMallocs(main, loc, memoryHandler, block) //TODO..?
 		functionHandler.endUltimateInit(main, initProcedureDecl, SFO.INIT);
 		return decl;
 	}
@@ -335,12 +302,9 @@ public class PostProcessor {
 	public static ResultExpression initVar(ILocation loc, Dispatcher main,
 			MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler, 
 			StructHandler structHandler, final LeftHandSide lhs,
-//			final ASTType at, 
 			CType cvar, ResultExpression initializer) {
 		CType lCvar = cvar.getUnderlyingType();
-//		if (cvar instanceof CNamed) {
-//			lCvar = ((CNamed) cvar).getUnderlyingType();
-//		}
+		
 		//TODO: deal with varsOnHeap
 		boolean onHeap = false;
 		if (lhs instanceof VariableLHS) 
@@ -365,7 +329,6 @@ public class PostProcessor {
 				} else {
 					rhs.add(initializer.lrVal.getValue());
 				}
-//				rhs.add(new IntegerLiteral(loc, it, SFO.NR0));
 				break;
 			case DOUBLE:
 			case FLOAT:
@@ -374,19 +337,16 @@ public class PostProcessor {
 				} else {
 					rhs.add(initializer.lrVal.getValue());
 				}
-//				rhs.add(new RealLiteral(loc, it, SFO.NR0F));
 			case VOID:
 			default:
 				throw new AssertionError("unknown type to init");
 			}
 			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
 					rhs.toArray(new Expression[0])));
-			//		} else if (at instanceof ArrayType) {
 		} else if (lCvar instanceof CArray) {
 
 			if (onHeap) { 
 				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
-				//			InferredType tmpIType = new InferredType(Type.Pointer);
 				VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, MemoryHandler.POINTER_TYPE, loc);
 
 				ResultExpression mallocRex = memoryHandler.getMallocCall(
@@ -410,67 +370,6 @@ public class PostProcessor {
 						initializer == null ? null : ((ResultExpressionListRec) initializer).list,
 						lhs, (CArray) lCvar));
 			}
-
-//			ArrayList<IdentifierExpression> tempIdc = new ArrayList<IdentifierExpression>();
-//			Expression[] arrSize = ((CArray) lCvar).getDimensions();
-//			Expression nr0 = new IntegerLiteral(loc, SFO.NR0);
-//			for (int i = 0; i < arrSize.length; i++) {
-//				String tempVarName = main.nameHandler
-//						.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
-//				InferredType tempVarIType = new InferredType(Type.Integer);
-//				tempIdc.add(new IdentifierExpression(loc, tempVarIType,
-//						tempVarName));
-//				VariableDeclaration tVarDecl = SFO
-//						.getTempVarVariableDeclaration(tempVarName,
-//								tempVarIType, loc);
-//				auxVars.put(tVarDecl, loc);
-//				decl.add(tVarDecl);
-//				if (i == 0) {
-//					stmt.add(new AssignmentStatement(loc,
-//							new LeftHandSide[] { new VariableLHS(loc,
-//									tempVarName) }, new Expression[] { nr0 }));
-//				}
-//			}
-//			assert arrSize.length == tempIdc.size();
-//			ArrayList<Statement> whileBody = new ArrayList<Statement>();
-//			ArrayLHS arrLhs = new ArrayLHS(loc, new InferredType(at), lhs,
-//					tempIdc.toArray(new Expression[0]));
-//			ResultExpression r = initVar(loc, main, arrayHandler, arrLhs,
-//					((ArrayType) at).getValueType(),
-//					((CArray) lCvar).getValueType());
-//			decl.addAll(r.decl);
-//			auxVars.putAll(r.auxVars);
-//			overappr.addAll(r.overappr);
-//			WhileStatement ws = null;
-//			Expression nr1 = new IntegerLiteral(loc, SFO.NR1);
-//			for (int i = arrSize.length - 1; i >= 0; i--) {
-//				if (i == arrSize.length - 1) {
-//					whileBody.addAll(r.stmt);
-//				} else {
-//					VariableLHS tmpLhsNext = new VariableLHS(loc, tempIdc.get(
-//							i + 1).getIdentifier());
-//					whileBody.add(new AssignmentStatement(loc,
-//							new LeftHandSide[] { tmpLhsNext },
-//							new Expression[] { nr0 }));
-//					whileBody.add(ws);
-//				}
-//				VariableLHS tmpLhs = new VariableLHS(loc, tempIdc.get(i)
-//						.getIdentifier());
-//				whileBody.add(new AssignmentStatement(loc,
-//						new LeftHandSide[] { tmpLhs },
-//						new Expression[] { new BinaryExpression(loc,
-//								new InferredType(Type.Integer),
-//								Operator.ARITHPLUS, tempIdc.get(i), nr1) }));
-//				ws = new WhileStatement(loc, new BinaryExpression(loc,
-//						new InferredType(Type.Integer),
-//						BinaryExpression.Operator.COMPLT, tempIdc.get(i),
-//						arrSize[i]), new LoopInvariantSpecification[0],
-//						whileBody.toArray(new Statement[0]));
-//				whileBody.clear();
-//
-//			}
-//			stmt.add(ws);
-//		} else if (at instanceof StructType) {
 		} else if (lCvar instanceof CStruct) {
 			
 			CStruct structType = (CStruct) lCvar;
@@ -485,32 +384,11 @@ public class PostProcessor {
 			overappr.addAll(scRex.overappr);
 			auxVars.putAll(scRex.auxVars);
 			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { scRex.lrVal.getValue() }));
-			
-//			for (String fieldId : ((CStruct) lCvar).getFieldIds()) {
-//				ResultExpression r = initVar(loc, main, memoryHandler, arrayHandler,functionHandler, structHandler, 
-//						new StructLHS(loc, lhs, fieldId), 
-//						structType.getFieldType(fieldId));
-//				decl.addAll(r.decl);
-//				stmt.addAll(r.stmt);
-//				auxVars.putAll(r.auxVars);
-//				overappr.addAll(r.overappr);
-//			}
-//		} else if ((at instanceof NamedType) && 
 		} else if (lCvar instanceof CPointer) {
 			LRValue nullPointer = new RValue(new IdentifierExpression(loc, new InferredType(lCvar), SFO.NULL), 
 					null);
 			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
 					new Expression[] { nullPointer.getValue() } ));
-	
-//		} else if ((at instanceof NamedType) && 
-//				((NamedType) at).getName().equals(SFO.POINTER)){
-//			assert lCvar instanceof CPointer || lCvar instanceof CArray; //FIXME is this correct? -- for arrays on the heap i mean..
-//			//result is pointer to 0
-//			LRValue nullPointer = new RValue(new IdentifierExpression(loc, at.getBoogieType(), SFO.NULL), 
-//					null);
-//			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
-//					new Expression[] { nullPointer.getValue() } ));
-//		}
 		} else {
 			String msg = "Unknown type - don't know how to initialize!";
 			Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);

@@ -240,7 +240,6 @@ public class FunctionHandler {
 		assert cDecl instanceof IASTFunctionDeclarator;
 		String methodName = cDecl.getName().toString();
 		// begin new scope for retranslation of ACSL specification
-//		main.cHandler.getSymbolTable().beginScope();
 		main.cHandler.beginScope();
 		ResultVarList res = ((ResultVarList) main.dispatch(cDecl));
 		VarList[] in = res.varList;
@@ -300,7 +299,6 @@ public class FunctionHandler {
 			}
 		} else {
 			// we found a type, so node is type ASTType
-//			ASTType type = checkedType.getType();
 			ASTType type = main.typeHandler.ctype2asttype(loc, checkedType.cType);
 			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
 		}
@@ -334,7 +332,6 @@ public class FunctionHandler {
 		procedureToParamCType.put(methodName, paramTypes);
 		
 		// end scope for retranslation of ACSL specification
-//		main.cHandler.getSymbolTable().endScope();
 		main.cHandler.endScope();
 		return new ResultSkip();
 	}
@@ -349,8 +346,6 @@ public class FunctionHandler {
 	// main.cHandler.getSymbolTable().put(cId, value);
 	// }
 	// }
-	//
-	//
 	// }
 
 	/**
@@ -410,7 +405,6 @@ public class FunctionHandler {
 				VarList var = new VarList(loc, new String[] { auxInvar }, type);
 				VariableDeclaration inVarDecl = new VariableDeclaration(loc,
 						new Attribute[0], new VarList[] { var });
-//				decl.add(inVarDecl);//decls are made via symboltable, right?
 				
                 CType cvar = main.cHandler.getSymbolTable().get(cId, loc)
                         .getCVariable();
@@ -434,7 +428,6 @@ public class FunctionHandler {
                             new HashMap<VariableDeclaration, ILocation>(),
                             new ArrayList<Overapprox>());
                     stmt = assign.stmt;
-//                    decl = assign.decl;//decls are made via symboltable, right?
                 } else {
         			stmt.add(new AssignmentStatement(loc,
         					new LeftHandSide[] { tempLHS },
@@ -446,7 +439,6 @@ public class FunctionHandler {
 				main.cHandler.getSymbolTable().put(cId,
 						new SymbolTableValue(auxInvar, inVarDecl, 
 								new CDeclaration(cvar, cId), false, 
-//								false));
 								StorageClass.UNSPECIFIED));
 			}
 		}
@@ -637,7 +629,6 @@ public class FunctionHandler {
         
 		ResultTypes checkedType = main.cHandler.checkForPointer(main, node//FIXME -- is this call still necessary??
 				.getDeclarator().getPointerOperators(), resType, false);
-//		ASTType type = checkedType.getType();
 		ASTType type = main.typeHandler.ctype2asttype(loc, checkedType.cType);
 		if (!checkedType.isVoid) { // void, so there are no out vars
 			out = new VarList[1];
@@ -743,13 +734,9 @@ public class FunctionHandler {
 		// 4)
 		for (SymbolTableValue stv : main.cHandler.getSymbolTable().currentScopeValues())
 			if (!stv.isGlobalVar() && stv.getBoogieDecl() != null) { //there may be a null declaration in case of foo(void)
-//				((CHandler) main.cHandler).addInitStmtsAndDecls(main, loc, decls, stmts, stv);
 				decls.add(stv.getBoogieDecl());
 				
 			}
-//		for (Entry<String, ResultTypes>  en : main.typeHandler.getDefinedTypes().currentScopeEntries()) {
-//			decls.addAll(en.getValue().typeDeclarations);
-//		}
         for (VariableDeclaration declaration : body.getLocalVars()) {
             decls.add(declaration);
         }
@@ -763,7 +750,6 @@ public class FunctionHandler {
 				proc.getTypeParams(), in, proc.getOutParams(), null, body);
 		currentProcedure = null;
 		currentProcedureIsVoid = false;
-//		main.cHandler.getSymbolTable().endScope();
 		main.cHandler.endScope();
 		return new Result(impl);
 	}
@@ -783,7 +769,6 @@ public class FunctionHandler {
 	}
 
 	void beginUltimateInit(Dispatcher main, ILocation loc, String startOrInit) {
-//		main.cHandler.getSymbolTable().beginScope();
 		main.cHandler.beginScope();
 		callGraph.put(startOrInit, new HashSet<String>());
 		currentProcedure = new Procedure(loc, new Attribute[0], startOrInit, new String[0], new VarList[0], new VarList[0], new Specification[0], null);
@@ -794,7 +779,6 @@ public class FunctionHandler {
 	
 	void endUltimateInit(Dispatcher main, Procedure initDecl, String startOrInit) {
 		procedures.put(startOrInit, initDecl);
-//		main.cHandler.getSymbolTable().endScope();
 		main.cHandler.endScope();
 	}
 
@@ -831,7 +815,6 @@ public class FunctionHandler {
 			assert sizeRes instanceof ResultExpression;
 			ResultExpression sizeRex = ((ResultExpression) sizeRes)
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-//			return memoryHandler.getMallocCall(main, this, sizeRex.expr, loc);
 			return memoryHandler.getMallocCall(main, this, sizeRex.lrVal.getValue(), loc);
 		}
 		if (methodName.equals("free")) {
@@ -840,7 +823,6 @@ public class FunctionHandler {
 			assert pRes instanceof ResultExpression;
 			ResultExpression pRex = ((ResultExpression) pRes)
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-//			return memoryHandler.getFreeCall(main, this, pRex.expr, loc);
 			return memoryHandler.getFreeCall(main, this, pRex.lrVal.getValue(), loc);
 		}
 
@@ -887,10 +869,6 @@ public class FunctionHandler {
 			                new IntegerLiteral(loc, "0"), arg, loc);
 			    }
 			} 
-//			else {
-//				throw new UnsupportedSyntaxException("procedure not found in procedure list, " +
-//						"maybe not declared at call position?");
-//			}
 			args.add(arg);
 			stmt.addAll(in.stmt);
 			decl.addAll(in.decl);
@@ -908,10 +886,7 @@ public class FunctionHandler {
 			} else if (type.length == 1) { // one return value
 				String tmpId = main.nameHandler
 						.getTempVarUID(SFO.AUXVAR.RETURNED);
-//				InferredType tmpIType = new InferredType(type[0].getType());
-//				expr = new IdentifierExpression(loc, tmpIType, tmpId);
 				expr = new IdentifierExpression(loc, tmpId);
-//				VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc); 
 				VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpId, (PrimitiveType) type[0].getType(), loc); 
 				auxVars.put(tmpVar, loc);
 				decl.add(tmpVar);
@@ -1048,7 +1023,6 @@ public class FunctionHandler {
 			CType cvar = checkedType.cType;
 			ASTType type = checkedType.getType();
 			if (!(checkedType.isVoid && !(cvar instanceof CPointer))) {
-//				String cId = dec.getDeclarator().getName().getRawSignature();
 				String cId = dec.getDeclarator().getName().toString();
 				if (cId.equals(SFO.EMPTY)) {
 					cId = SFO.UNNAMED
@@ -1066,7 +1040,6 @@ public class FunctionHandler {
 						new Attribute[0], new VarList[] { vl });
 				main.cHandler.getSymbolTable().put(cId,
 						new SymbolTableValue(boogieId, decl, new CDeclaration(cvar, cId), false, 
-//								false));
 								StorageClass.UNSPECIFIED));
 				list.add(vl);
 			}
