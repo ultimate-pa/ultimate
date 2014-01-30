@@ -1,0 +1,18 @@
+#Thu Jan 30 13:20:28 CET 2014
+\!/instance/CACSL2BoogieTranslator=
+file_export_version=3.0
+@CACSL2BoogieTranslator=0.0.1
+/instance/CACSL2BoogieTranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=IGNORE
+/instance/CACSL2BoogieTranslator/Pointer\ to\ allocated\ memory\ at\ dereference=IGNORE
+/instance/CACSL2BoogieTranslator/Translation\ Mode\:=SV_COMP14
+/instance/CACSL2BoogieTranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
+#Thu Jan 30 13:20:28 CET 2014
+file_export_version=3.0
+\!/instance/RCFGBuilder=
+/instance/RCFGBuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=false
+@RCFGBuilder=0.0.1
+/instance/RCFGBuilder/Convert\ code\ blocks\ to\ CNF=false
+@TraceAbstraction=0.0.1
+\!/instance/TraceAbstraction=
+/instance/TraceAbstraction/Compute\ Interpolants\ along\ a\ Counterexample=Craig_TreeInterpolation
+/instance/TraceAbstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
