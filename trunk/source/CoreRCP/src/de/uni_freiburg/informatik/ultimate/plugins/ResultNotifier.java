@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins;
 
 import java.util.List;
+
 import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;

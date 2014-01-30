@@ -6,11 +6,11 @@ package de.uni_freiburg.informatik.ultimate.model;
 import java.io.Serializable;
 import java.util.HashSet;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
-
-import org.apache.log4j.Logger;
 
 /**
  * This class is the general model container. It should preselect walkers and
@@ -106,7 +106,7 @@ public class ModelContainer implements Serializable {
 			return currentRoot.getPayload();
 		} else {
 			if (currentRoot instanceof IWalkable) {
-				for (IElement n : ((IWalkable) currentRoot).getSuccessors()) {
+				for (IWalkable n : ((IWalkable) currentRoot).getSuccessors()) {
 					IPayload rtr_Value = findNode(id, n, visited);
 					if (rtr_Value != null) {
 						return rtr_Value;

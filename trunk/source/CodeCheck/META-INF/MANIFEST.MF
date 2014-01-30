@@ -7,6 +7,8 @@ Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.codechec
 Require-Bundle: UltimateCore,
  Library-log4j,
  Library-ModelCheckerUtils,
+ Library-UltimateUtil,
+  Library-SMTLIB,
  NestedWordAutomata,
  RCFGBuilder,
  TraceAbstraction

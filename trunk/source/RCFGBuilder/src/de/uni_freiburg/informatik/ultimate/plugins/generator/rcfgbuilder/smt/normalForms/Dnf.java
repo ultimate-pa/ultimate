@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.no
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.util.Util;
 
 /**
  * Transform Boolean Term into disjunctive normal form.

@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors;
 
-import java.util.*;
+import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
 

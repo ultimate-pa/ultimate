@@ -5,12 +5,13 @@ Bundle-SymbolicName: LassoRanker;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator
 Require-Bundle: org.eclipse.core.runtime,
- Library-log4j;bundle-version="1.2.15",
+ Library-log4j,
+ Library-SMTLIB,
  UltimateCore,
- SmtInterpol;bundle-version="2.0.0",
- SMTSolverBridge;bundle-version="0.0.1",
- Library-ModelCheckerUtils;bundle-version="0.0.1",
- RCFGBuilder;bundle-version="0.0.1"
+ SmtInterpol,
+ SMTSolverBridge,
+ Library-ModelCheckerUtils,
+ RCFGBuilder
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker,

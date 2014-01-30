@@ -10,12 +10,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+import org.eclipse.core.runtime.Assert;
+
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.Constants;
-
-import org.apache.log4j.Logger;
-import org.eclipse.core.runtime.Assert;
 
 
 /**

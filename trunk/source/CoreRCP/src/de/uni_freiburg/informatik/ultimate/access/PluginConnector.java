@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.access;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.access.walker.CFGWalker;
 import de.uni_freiburg.informatik.ultimate.access.walker.DFSTreeWalker;
 import de.uni_freiburg.informatik.ultimate.access.walker.IWalker;
@@ -16,8 +18,6 @@ import de.uni_freiburg.informatik.ultimate.model.GraphNotFoundException;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IModelManager;
-
-import org.apache.log4j.Logger;
 
 //@formatter:off
 /**

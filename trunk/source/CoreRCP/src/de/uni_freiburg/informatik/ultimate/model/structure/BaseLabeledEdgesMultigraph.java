@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.model.structure;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.model.IPayload;

@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
 
@@ -11,7 +9,6 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;

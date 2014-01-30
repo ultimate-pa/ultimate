@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.Branc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.PetriNetToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.INode;
 
 
 public class NestedWordAutomataObserver implements IUnmanagedObserver {
@@ -38,7 +37,7 @@ public class NestedWordAutomataObserver implements IUnmanagedObserver {
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean process(IElement node){
-		Object printedAutomaton = parseAst( (INode) node);
+		Object printedAutomaton = parseAst(node);
 		if (printedAutomaton == null) {
 			NestedWordAutomaton<String,String> dummyAutomaton = 
 				new NestedWordAutomaton<String,String>(
@@ -100,7 +99,7 @@ public class NestedWordAutomataObserver implements IUnmanagedObserver {
 	 * @return the automaton that should be printed according to the Automaton
 	 * Test File. Returns null if there is no print test case.
 	 */
-	private Object parseAst(INode node) {
+	private Object parseAst(IElement node) {
 		return node;
 	}
 

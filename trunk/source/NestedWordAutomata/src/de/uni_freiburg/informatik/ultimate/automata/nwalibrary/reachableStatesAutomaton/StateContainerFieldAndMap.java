@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTra
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.ReachProp;
 
 /**
  * Contains STATES and information of transitions.

@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
 import org.eclipse.core.runtime.Plugin;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.osgi.framework.BundleContext;
 
 /**

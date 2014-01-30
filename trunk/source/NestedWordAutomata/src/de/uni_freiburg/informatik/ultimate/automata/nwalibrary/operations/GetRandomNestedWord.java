@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.Stack;

@@ -4,12 +4,12 @@ import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceInitializer.EdgeCheckOptimization;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 
 
 /**

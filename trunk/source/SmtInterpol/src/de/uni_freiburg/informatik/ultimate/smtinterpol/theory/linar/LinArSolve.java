@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.MutableRational;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.logic.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.EqualityProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
@@ -55,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Value;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ArrayMap;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ScopedArrayList;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 

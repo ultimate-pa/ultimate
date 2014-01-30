@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;

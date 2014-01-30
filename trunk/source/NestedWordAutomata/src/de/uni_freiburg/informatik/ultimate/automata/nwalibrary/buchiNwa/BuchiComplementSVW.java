@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
 import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;

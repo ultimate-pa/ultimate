@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 

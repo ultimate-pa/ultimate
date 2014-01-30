@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;

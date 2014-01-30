@@ -16,20 +16,21 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.irs.dependencies.Activator;
-import de.uni_freiburg.informatik.ultimate.model.IEdge;
+import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 
 public class DebugFileWriterNutz {
 
 	private static Logger sLogger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
-	private List<List<IEdge>> mPaths;
+	private List<List<RCFGEdge>> mPaths;
 	private final int mUnrollingDepth;
 	private final static String sFolderPath = "F:\\repos\\ultimate fresher co\\trunk\\examples\\unrolling-tests\\";
 
-	public DebugFileWriterNutz(List<List<IEdge>> paths, int unrollingDepth) {
+	public DebugFileWriterNutz(List<List<RCFGEdge>> paths, int unrollingDepth) {
 		if (paths == null) {
 			throw new IllegalArgumentException("Parameter may not be null");
 		}
@@ -40,9 +41,9 @@ public class DebugFileWriterNutz {
 	public void run() {
 		HashMap<RootEdge, ArrayList<ArrayList<CodeBlock>>> tmp = new HashMap<>();
 
-		for (List<IEdge> path : mPaths) {
+		for (List<RCFGEdge> path : mPaths) {
 			if (path.size() > 0) {
-				IEdge first = path.get(0);
+				IWalkable first = path.get(0);
 				if (first instanceof RootEdge) {
 					RootEdge r = (RootEdge) first;
 					if (!tmp.containsKey(r)) {

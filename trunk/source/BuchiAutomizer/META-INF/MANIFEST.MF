@@ -5,15 +5,16 @@ Bundle-SymbolicName: BuchiAutomizer;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator
 Require-Bundle: org.eclipse.core.runtime,
- Library-log4j;bundle-version="1.2.15",
+ Library-log4j,
+ Library-SMTLIB,
+ Library-ModelCheckerUtils,
  UltimateCore,
- NestedWordAutomata;bundle-version="0.0.1",
+ NestedWordAutomata,
  SmtInterpol,
  SMTSolverBridge,
  BoogiePreprocessor,
- Library-ModelCheckerUtils,
- RCFGBuilder;bundle-version="0.0.1",
- TraceAbstraction;bundle-version="0.0.1",
- LassoRanker;bundle-version="0.0.1"
+ RCFGBuilder,
+ TraceAbstraction,
+ LassoRanker
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

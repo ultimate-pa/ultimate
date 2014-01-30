@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;

@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
 /**

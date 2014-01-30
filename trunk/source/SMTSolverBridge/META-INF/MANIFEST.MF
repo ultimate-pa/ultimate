@@ -3,8 +3,11 @@ Bundle-ManifestVersion: 2
 Bundle-Name: SMTSolverBridge
 Bundle-SymbolicName: SMTSolverBridge
 Bundle-Version: 0.0.1
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.uni_freiburg.informatik.ultimate.smtsolver.external
 Require-Bundle: JavaCup,
- UltimateCore,
+ Library-SMTLIB,
+ Library-UltimateUtil,
+ Library-log4j,
  SmtInterpol,
- Library-log4j
+ UltimateCore

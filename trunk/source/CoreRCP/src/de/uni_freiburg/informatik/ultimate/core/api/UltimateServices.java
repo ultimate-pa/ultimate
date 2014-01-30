@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore.Ultimate_Mode;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.IStorable;
+import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 import de.uni_freiburg.informatik.ultimate.logging.UltimateLoggerFactory;
 import de.uni_freiburg.informatik.ultimate.model.GraphNotFoundException;
@@ -28,7 +29,6 @@ import de.uni_freiburg.informatik.ultimate.model.UltimateUID;
 import de.uni_freiburg.informatik.ultimate.model.repository.IRepository;
 import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.util.MonitoredProcess;
 
 /**
  * UltimateServices

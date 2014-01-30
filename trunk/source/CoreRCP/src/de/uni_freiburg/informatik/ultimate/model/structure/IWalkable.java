@@ -4,9 +4,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.access.walker.IWalker;
-import de.uni_freiburg.informatik.ultimate.model.IEdge;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.INode;
 
 /***
  * This interface is a temporary bridge between old ({@link INode},{@link IEdge}

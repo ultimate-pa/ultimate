@@ -1,31 +1,26 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.model.IEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public class RCFG2AnnotatedRCFG {
 	
-	private SmtManager m_smtManager;
+	
 	
 //	HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>> m_callPredToReturnPreds;
 	
 	HashMap<ProgramPoint, AnnotatedProgramPoint> m_oldPpTonew;
 				
 	public RCFG2AnnotatedRCFG(SmtManager smtMan) {
-		m_smtManager = smtMan;
 	}
 	
 	public ImpRootNode convert(RootNode oldRoot, IPredicate truePredicate) {

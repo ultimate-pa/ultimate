@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -8,8 +11,8 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
+import de.uni_freiburg.informatik.ultimate.logic.util.Util;
+import de.uni_freiburg.informatik.ultimate.logic.util.UtilExperimental;
 
 
 /**

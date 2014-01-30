@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 

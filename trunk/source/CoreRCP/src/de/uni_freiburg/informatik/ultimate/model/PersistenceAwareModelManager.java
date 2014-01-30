@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.model.repository.DataAccessException;
@@ -22,8 +24,6 @@ import de.uni_freiburg.informatik.ultimate.model.repository.PersistentObjectType
 import de.uni_freiburg.informatik.ultimate.model.repository.SerializationRepository;
 import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.plugins.Constants;
-
-import org.apache.log4j.Logger;
 
 /**
  * PersistenceAwareModelManager

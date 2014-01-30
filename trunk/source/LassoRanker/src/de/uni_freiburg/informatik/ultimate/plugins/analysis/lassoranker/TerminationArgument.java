@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 

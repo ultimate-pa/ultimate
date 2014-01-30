@@ -223,6 +223,8 @@
 		<module>../Library-PEA</module>
 		<module>../Library-CZT</module>
 		<module>../Library-jdom</module>
+		<module>../Library-UltimateUtil</module>
+		<module>../Library-SMTLIB</module>
 	</modules>
 
 	<profiles>

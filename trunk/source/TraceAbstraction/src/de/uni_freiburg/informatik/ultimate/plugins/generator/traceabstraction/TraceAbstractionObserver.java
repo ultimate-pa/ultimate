@@ -31,12 +31,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.result.BackTranslationWorkaround;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
-import de.uni_freiburg.informatik.ultimate.result.BackTranslationWorkaround;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;

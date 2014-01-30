@@ -7,7 +7,8 @@ Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2bo
 Require-Bundle: Library-log4j,
  UltimateCore,
  org.eclipse.cdt.core;bundle-version="5.3.1",
- ACSLParser
+ ACSLParser,
+ Library-UltimateUtil
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.uni_freiburg.informatik.ultimate.cdt.translation.implementation

@@ -5,3 +5,4 @@ Bundle-SymbolicName: ASTBuilder
 Bundle-Version: 0.0.1
 Require-Bundle: JavaCup
 Export-Package: de.uni_freiburg.informatik.ultimate.astbuilder
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7

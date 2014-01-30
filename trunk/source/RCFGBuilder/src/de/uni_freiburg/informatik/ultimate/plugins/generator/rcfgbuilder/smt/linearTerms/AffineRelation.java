@@ -8,9 +8,9 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.util.Util;
+import de.uni_freiburg.informatik.ultimate.logic.util.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.BinaryNumericRelation.NotBinaryNumericRelationException;
 
 /**

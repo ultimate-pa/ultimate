@@ -11,4 +11,6 @@ Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.annotation
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.transfomers
 Require-Bundle: UltimateCore,
  Library-log4j,
+ Library-SMTLIB,
+ Library-UltimateUtil,
  BoogiePreprocessor

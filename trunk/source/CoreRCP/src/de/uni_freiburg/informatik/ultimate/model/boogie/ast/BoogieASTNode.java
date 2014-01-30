@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.model.boogie.ast;
 
-import java.util.Arrays;
-
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.structure.BaseSimpleAST;

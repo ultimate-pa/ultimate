@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -13,11 +12,9 @@ import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
@@ -38,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.result.NonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.NonterminatingLassoResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 

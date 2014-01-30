@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.Check;
 
 /**
  * Annotation for transition (e.g., CodeBlock) that indicates that it was not

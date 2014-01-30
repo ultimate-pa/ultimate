@@ -17,11 +17,11 @@ import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.model.ModelContainer;
-
-import org.apache.log4j.Logger;
 
 /**
  * SerializationRepository

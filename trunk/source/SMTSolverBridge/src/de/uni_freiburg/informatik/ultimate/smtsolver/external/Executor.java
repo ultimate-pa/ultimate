@@ -13,12 +13,12 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import java_cup.runtime.Symbol;
+import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.MonitoredProcess;
 
 /**
  * This class runs an external SMT solver.  The main methods are 

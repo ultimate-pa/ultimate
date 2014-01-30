@@ -17,12 +17,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
+import de.uni_freiburg.informatik.ultimate.logic.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.logic.util.Util;
+import de.uni_freiburg.informatik.ultimate.logic.util.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination.EqualityInformation;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 

@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;

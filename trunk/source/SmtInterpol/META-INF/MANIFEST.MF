@@ -9,6 +9,8 @@ Export-Package: de.uni_freiburg.informatik.ultimate.smtinterpol.proof,
  de.uni_freiburg.informatik.ultimate.smtinterpol.util 
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
-Require-Bundle: UltimateCore;visibility:=reexport,
+Require-Bundle: UltimateCore,
+ Library-SMTLIB,
  JavaCup,
- Library-log4j;visibility:=reexport
+ Library-log4j,
+ Library-UltimateUtil

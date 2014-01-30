@@ -1,6 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * An iterator over the collection of all sublists of a list

@@ -1,12 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
 public class ImpRootAnnot extends RootAnnot {
 	

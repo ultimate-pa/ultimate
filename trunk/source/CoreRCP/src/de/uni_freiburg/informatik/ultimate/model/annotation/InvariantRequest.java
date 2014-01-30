@@ -2,8 +2,6 @@ package de.uni_freiburg.informatik.ultimate.model.annotation;
 
 import java.util.Arrays;
 
-import de.uni_freiburg.informatik.ultimate.result.Check;
-
 /**
  * Annotation that indicates that model checkers should infer an invariant
  * for the annotated node.

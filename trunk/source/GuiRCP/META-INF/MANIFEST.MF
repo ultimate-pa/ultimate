@@ -6,6 +6,7 @@ Bundle-Version: 0.0.1
 Require-Bundle: 
  org.eclipse.ui;visibility:=reexport,
  Library-log4j,
+ Library-SMTLIB,
  UltimateCore
 Export-Package: 
  de.uni_freiburg.informatik.ultimate.gui;uses:="org.eclipse.ui,de.uni_freiburg.informatik.ultimate.ep.interfaces",

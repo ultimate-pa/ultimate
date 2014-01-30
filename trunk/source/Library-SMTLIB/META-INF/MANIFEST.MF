@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Library-SMTLIB
+Bundle-SymbolicName: Library-SMTLIB
+Bundle-Version: 0.0.1
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Require-Bundle: Library-UltimateUtil
+Export-Package: de.uni_freiburg.informatik.ultimate.logic,
+ de.uni_freiburg.informatik.ultimate.logic.simplification,
+ de.uni_freiburg.informatik.ultimate.logic.util

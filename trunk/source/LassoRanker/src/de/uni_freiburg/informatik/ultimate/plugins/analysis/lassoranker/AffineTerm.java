@@ -1,11 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
+import de.uni_freiburg.informatik.ultimate.logic.util.UtilExperimental;
 
 
 /**

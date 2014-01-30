@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -11,16 +13,19 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.INode;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.PreferencesInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.PreferencesInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.*;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.AffineTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.LexicographicTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.MultiphaseTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.PiecewiseTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -31,9 +36,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Tra
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
 import de.uni_freiburg.informatik.ultimate.result.NonTerminationArgumentResult;
-import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
+import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 
 
 /**
@@ -368,7 +373,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	/**
 	 * @return the root of the CFG.
 	 */
-	public INode getRoot(){
+	public IElement getRoot(){
 		return null;
 	}
 	

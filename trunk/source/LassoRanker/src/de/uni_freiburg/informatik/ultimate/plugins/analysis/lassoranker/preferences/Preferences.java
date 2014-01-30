@@ -2,8 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.prefere
 
 import java.io.Serializable;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
 
 
 /**

@@ -27,6 +27,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.logic.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
@@ -41,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTermPairHash.Info.Entry;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ArrayQueue;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 public class CClosure implements ITheory {

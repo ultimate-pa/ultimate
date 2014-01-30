@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
@@ -64,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAAnnotation
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinVar;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffinTerm;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 
 public class Interpolator {

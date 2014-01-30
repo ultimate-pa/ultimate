@@ -6,6 +6,8 @@ Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator
 Require-Bundle: UltimateCore,
  Library-log4j,
+ Library-SMTLIB,
+ Library-UltimateUtil,
  SMTSolverBridge,
  SmtInterpol,
  Library-ModelCheckerUtils,

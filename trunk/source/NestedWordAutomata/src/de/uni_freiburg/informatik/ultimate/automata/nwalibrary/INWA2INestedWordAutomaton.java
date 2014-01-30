@@ -4,10 +4,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.Word;
-
 public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 		INestedWordAutomatonOldApi<LETTER, STATE> {
 	

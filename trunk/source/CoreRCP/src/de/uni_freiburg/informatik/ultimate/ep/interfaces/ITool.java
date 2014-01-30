@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.ep.interfaces;
 
 import java.util.List;
 
-
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 

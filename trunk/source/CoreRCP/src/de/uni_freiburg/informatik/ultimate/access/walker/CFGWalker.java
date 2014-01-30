@@ -2,21 +2,15 @@ package de.uni_freiburg.informatik.ultimate.access.walker;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.access.IManagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions.Command;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
 import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
-
-import org.apache.log4j.Logger;
 
 public class CFGWalker extends BaseWalker {
 

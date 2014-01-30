@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.templates;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 

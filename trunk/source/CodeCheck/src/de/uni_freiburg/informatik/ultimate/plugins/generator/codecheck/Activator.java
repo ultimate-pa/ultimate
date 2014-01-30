@@ -1,10 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-
+import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;
-import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
 /**

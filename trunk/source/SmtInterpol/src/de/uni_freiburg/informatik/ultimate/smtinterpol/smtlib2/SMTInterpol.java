@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
+import de.uni_freiburg.informatik.ultimate.logic.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
@@ -67,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofTermGenerator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.PropProofChecker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.Transformations.AvailableTransformations;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.UnsatCoreCollector;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ScopedArrayList;
 
 

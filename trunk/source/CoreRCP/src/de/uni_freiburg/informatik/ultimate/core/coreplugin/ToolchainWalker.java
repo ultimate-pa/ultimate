@@ -3,6 +3,10 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.apache.log4j.Logger;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.SubMonitor;
+
 import de.uni_freiburg.informatik.ultimate.access.PluginConnector;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DropmodelType;
@@ -18,10 +22,6 @@ import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IModelManager;
 import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
-
-import org.apache.log4j.Logger;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.SubMonitor;
 
 public class ToolchainWalker {
 	

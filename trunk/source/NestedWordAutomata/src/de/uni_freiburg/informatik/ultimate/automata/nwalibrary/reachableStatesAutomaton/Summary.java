@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton;
 
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
 
 class Summary<LETTER, STATE> {

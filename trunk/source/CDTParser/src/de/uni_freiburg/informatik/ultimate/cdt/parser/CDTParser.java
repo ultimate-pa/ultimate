@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.INode;
 import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
 /**
@@ -145,7 +144,7 @@ public class CDTParser implements ISource {
 	 * .io.File[])
 	 */
 	@Override
-	public INode parseAST(File[] files) throws Exception {
+	public IElement parseAST(File[] files) throws Exception {
 		return null;
 	}
 

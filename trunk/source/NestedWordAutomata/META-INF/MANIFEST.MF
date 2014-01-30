@@ -5,7 +5,9 @@ Bundle-SymbolicName: NestedWordAutomata;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.automata.Activator
 Require-Bundle: UltimateCore,
- Library-log4j
+ Library-log4j,
+ Library-SMTLIB,
+ Library-UltimateUtil
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.automata;
   uses:="org.eclipse.jface.resource,

@@ -2,9 +2,9 @@ package de.uni_freiburg.informatik.ultimate.core.api;
 
 import java.io.File;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-
 import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 
 public class PreludeProvider {
 

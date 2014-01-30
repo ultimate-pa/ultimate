@@ -11,6 +11,10 @@ import java.util.List;
 
 import javax.xml.bind.JAXBException;
 
+import org.apache.log4j.Logger;
+import org.eclipse.equinox.app.IApplication;
+import org.xml.sax.SAXException;
+
 import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
@@ -20,10 +24,6 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
-
-import org.apache.log4j.Logger;
-import org.eclipse.equinox.app.IApplication;
-import org.xml.sax.SAXException;
 
 /**
  * Implements standard fallback controller for the command-line.

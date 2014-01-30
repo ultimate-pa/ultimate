@@ -3,9 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableExplicitEdgesMultigraph;
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableLabeledEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
