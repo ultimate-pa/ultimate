@@ -266,7 +266,7 @@
 			</build>
 
 			<modules>
-				<module>../CoreRCPTest</module>
+				<!-- <module>../CoreRCPTest</module> -->
 				<module>../UltimateTest</module>
 				<module>../Library-junit-helper</module>
 			</modules>
