@@ -30,7 +30,8 @@
 								<echo>CoreRCP: astbuilderBinaries is ${astbuilderBinaries}</echo>
 
 								<java classname="de.uni_freiburg.informatik.ultimate.astbuilder.Main"
-									classpath="${astbuilderBinaries}:${cupDir}" fork="true" dir="${boogieastDir}">
+									classpath="${astbuilderBinaries}:${cupDir}" fork="true"
+									dir="${boogieastDir}">
 									<arg value="-ultimate" />
 									<arg value="Boogie.ast" />
 								</java>
@@ -58,6 +59,9 @@
 							<includes>
 								<include>*.java</include>
 							</includes>
+							<excludes>
+								<exclude>BoogieASTNode.java</exclude>
+							</excludes>
 						</fileset>
 						<fileset>
 							<directory>${workspaceDir}/CoreRCP/src/de/uni_freiburg/informatik/ultimate/core/coreplugin/toolchain</directory>
