@@ -8,6 +8,8 @@ import java.util.Collection;
 
 import org.apache.log4j.Logger;
 import org.junit.AfterClass;
+import org.junit.Rule;
+import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 
 import de.uni_freiburg.informatik.junit_helper.testfactory.FactoryTestRunner;
@@ -22,6 +24,9 @@ public abstract class UltimateTestSuite {
 	public UltimateTestSuite() {
 		mLogger = Logger.getLogger(UltimateStarter.class);
 	}
+
+	@Rule
+	public Timeout globalTimeout = new Timeout(0);
 
 	@TestFactory
 	public abstract Collection<UltimateTestCase> createTestCases();
@@ -56,8 +61,7 @@ public abstract class UltimateTestSuite {
 	private static void writeSummary(ITestSummary summary) {
 		File summaryLogFile = summary.getSummaryLogFile();
 
-		File logFile = new File(Util.getPathFromSurefire(
-				summaryLogFile.getName(), summary.getTestSuiteCanonicalName()));
+		File logFile = new File(Util.getPathFromSurefire(summaryLogFile.getName(), summary.getTestSuiteCanonicalName()));
 
 		if (!logFile.isDirectory()) {
 			logFile.getParentFile().mkdirs();
@@ -71,9 +75,7 @@ public abstract class UltimateTestSuite {
 		try {
 			FileWriter fw = new FileWriter(logFile);
 			Logger.getLogger(UltimateTestSuite.class).info(
-					"Writing summary for "
-							+ summary.getTestSuiteCanonicalName() + " to "
-							+ logFile.getAbsolutePath());
+					"Writing summary for " + summary.getTestSuiteCanonicalName() + " to " + logFile.getAbsolutePath());
 			fw.write(summaryLog);
 			fw.close();
 		} catch (IOException e) {
