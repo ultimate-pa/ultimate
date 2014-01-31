@@ -53,66 +53,42 @@ public class EqualityProxy {
 		}
 	}
 	
-	private static final TrueEqualityProxy g_True = new TrueEqualityProxy();
-	private static final FalseEqualityProxy g_False = new FalseEqualityProxy();
+	private static final TrueEqualityProxy TRUE = new TrueEqualityProxy();
+	private static final FalseEqualityProxy FALSE = new FalseEqualityProxy();
 	
 	public static TrueEqualityProxy getTrueProxy() {
-		return g_True;
+		return TRUE;
 	}
 	
 	public static FalseEqualityProxy getFalseProxy() {
-		return g_False;
+		return FALSE;
 	}
 	
 	private final class RemoveAtom extends Clausifier.TrailObject {
 
 		@Override
 		public void undo() {
-			m_eqAtom = null;
+			mEqAtom = null;
 		}
 
 	}
 	
-	final Clausifier m_Clausifier;
+	final Clausifier mClausifier;
 	final SharedTerm mLhs, mRhs;
-	DPLLAtom m_eqAtom;
+	DPLLAtom mEqAtom;
 	
 	public EqualityProxy(Clausifier clausifier, SharedTerm lhs, SharedTerm rhs) {
-		m_Clausifier = clausifier;
+		mClausifier = clausifier;
 		mLhs = lhs;
 		mRhs = rhs;
 	}
 
-//	@Override
-//	public CCTerm toCCTerm() {
-//		if (m_ccterm == null && mRhs == m_converter.TRUE) {
-//			m_ccterm = mLhs.toCCTerm();
-//			FlatFormula eqFalse = 
-//				m_converter.createEqualityFormula(mLhs, m_converter.FALSE);
-//			FlatFormula excludedMiddle = 
-//				m_converter.convertDisjunction(this, eqFalse); 
-//			excludedMiddle.addAsAxiom(null);
-//			m_converter.m_UnshareCC.add(this);
-//			return m_ccterm;
-//		}
-//		return super.toCCTerm();
-//	}
-//	
-//	//@Override
-//	public Term getSMTTerm(boolean useAuxVars) {
-//		Theory t = m_converter.getTheory();
-//		Sort sort = mLhs.getSort();
-//		FunctionSymbol neq = 
-//			t.getFunction("=", new Sort[] { sort, sort });
-//		return t.term(neq, mLhs.getSMTTerm(useAuxVars), mRhs.getSMTTerm(useAuxVars)); 
-//	}
-	
 	public LAEquality createLAEquality() {
 		/* create la part */
-		MutableAffinTerm at = m_Clausifier.createMutableAffinTerm(mLhs);
-		at.add(Rational.MONE, m_Clausifier.createMutableAffinTerm(mRhs));
-		return m_Clausifier.getLASolver().createEquality
-			(m_Clausifier.getStackLevel(), at);
+		MutableAffinTerm at = mClausifier.createMutableAffinTerm(mLhs);
+		at.add(Rational.MONE, mClausifier.createMutableAffinTerm(mRhs));
+		return mClausifier.getLASolver().createEquality(
+		        mClausifier.getStackLevel(), at);
 	}
 	
 	/**
@@ -128,36 +104,36 @@ public class EqualityProxy {
 	 * @return The created (or cached) CCEquality.
 	 */
 	public CCEquality createCCEquality(SharedTerm lhs, SharedTerm rhs) {
-		assert lhs.m_ccterm != null && rhs.m_ccterm != null;
+		assert lhs.mCCterm != null && rhs.mCCterm != null;
 		LAEquality laeq;
-		if (m_eqAtom == null) {
-			m_eqAtom = laeq = createLAEquality();
-			m_Clausifier.addToUndoTrail(new RemoveAtom());
-		} else if (m_eqAtom instanceof CCEquality) {
-			CCEquality eq = (CCEquality) m_eqAtom;
+		if (mEqAtom == null) {
+			mEqAtom = laeq = createLAEquality();
+			mClausifier.addToUndoTrail(new RemoveAtom());
+		} else if (mEqAtom instanceof CCEquality) {
+			CCEquality eq = (CCEquality) mEqAtom;
 			laeq = eq.getLASharedData();
 			if (laeq == null) {
-				MutableAffinTerm at = m_Clausifier.createMutableAffinTerm(mLhs);
-				at.add(Rational.MONE, m_Clausifier.createMutableAffinTerm(mRhs));
+				MutableAffinTerm at = mClausifier.createMutableAffinTerm(mLhs);
+				at.add(Rational.MONE, mClausifier.createMutableAffinTerm(mRhs));
 				Rational normFactor = at.getGCD().inverse();
 				laeq = createLAEquality();
 				laeq.addDependentAtom(eq);
 				eq.setLASharedData(laeq, normFactor);
 			}
 		} else {
-			laeq = (LAEquality) m_eqAtom;
+			laeq = (LAEquality) mEqAtom;
 		}
 		for (CCEquality eq : laeq.getDependentEqualities()) {
 			assert (eq.getLASharedData() == laeq);
-			if (eq.getLhs() == lhs.m_ccterm && eq.getRhs() == rhs.m_ccterm)
+			if (eq.getLhs() == lhs.mCCterm && eq.getRhs() == rhs.mCCterm)
 				return eq;
-			if (eq.getRhs() == lhs.m_ccterm && eq.getLhs() == rhs.m_ccterm)
+			if (eq.getRhs() == lhs.mCCterm && eq.getLhs() == rhs.mCCterm)
 				return eq;
 		}
-		CCEquality eq = m_Clausifier.getCClosure().createCCEquality
-			(m_Clausifier.getStackLevel(), lhs.m_ccterm, rhs.m_ccterm);
-		MutableAffinTerm at = m_Clausifier.createMutableAffinTerm(lhs);
-		at.add(Rational.MONE, m_Clausifier.createMutableAffinTerm(rhs));
+		CCEquality eq = mClausifier.getCClosure().createCCEquality(
+		        mClausifier.getStackLevel(), lhs.mCCterm, rhs.mCCterm);
+		MutableAffinTerm at = mClausifier.createMutableAffinTerm(lhs);
+		at.add(Rational.MONE, mClausifier.createMutableAffinTerm(rhs));
 		Rational normFactor = at.getGCD().inverse();
 		laeq.addDependentAtom(eq);
 		eq.setLASharedData(laeq, normFactor);
@@ -166,48 +142,48 @@ public class EqualityProxy {
 
 	private DPLLAtom createAtom() {
 		
-		if (mLhs.m_ccterm == null && mRhs.m_ccterm == null) {
+		if (mLhs.mCCterm == null && mRhs.mCCterm == null) {
 			/* if both terms do not exist in CClosure yet, it may be better to
 			 * create them in linear arithmetic.
 			 * Do this, if we don't have a CClosure, or the other term is
 			 * already in linear arithmetic.
 			 */
-			if (m_Clausifier.getCClosure() == null 
-					|| mLhs.m_offset != null && mRhs.m_offset == null)
+			if (mClausifier.getCClosure() == null 
+					|| mLhs.mOffset != null && mRhs.mOffset == null)
 				//m_Clausifier.createMutableAffinTerm(mRhs);
 				mRhs.shareWithLinAr();
-			if (m_Clausifier.getCClosure() == null 
-					|| mLhs.m_offset == null && mRhs.m_offset != null)
+			if (mClausifier.getCClosure() == null 
+					|| mLhs.mOffset == null && mRhs.mOffset != null)
 				//m_Clausifier.createMutableAffinTerm(mLhs);
 				mLhs.shareWithLinAr();
 		}
 		
 		/* check if the shared terms share at least one theory. */
-		if (! ( (mLhs.m_ccterm != null && mRhs.m_ccterm != null)
-				|| (mLhs.m_offset != null && mRhs.m_offset != null))) {
+		if (!((mLhs.mCCterm != null && mRhs.mCCterm != null)
+				|| (mLhs.mOffset != null && mRhs.mOffset != null))) {
 			/* let them share congruence closure */
-			CCTermBuilder cc = m_Clausifier.new CCTermBuilder();
+			CCTermBuilder cc = mClausifier.new CCTermBuilder();
 			cc.convert(mLhs.getTerm());
 			cc.convert(mRhs.getTerm());
 		}
 
 		/* Get linear arithmetic info, if both are arithmetic */
-		if (mLhs.m_offset != null && mRhs.m_offset != null) {
+		if (mLhs.mOffset != null && mRhs.mOffset != null) { // NOPMD
 			return createLAEquality();
 		} else {
 			/* create CC equality */
-			return m_Clausifier.getCClosure().createCCEquality
-				(m_Clausifier.getStackLevel(), mLhs.m_ccterm, mRhs.m_ccterm);
+			return mClausifier.getCClosure().createCCEquality(
+			        mClausifier.getStackLevel(), mLhs.mCCterm, mRhs.mCCterm);
 		}		
 	}
 	
 	public DPLLAtom getLiteral() {
-		if (m_eqAtom == null) {
-			m_eqAtom = createAtom();
-			if (m_Clausifier.getLogger().isDebugEnabled())
-				m_Clausifier.getLogger().debug("Created Equality: " + m_eqAtom);
+		if (mEqAtom == null) {
+			mEqAtom = createAtom();
+			if (mClausifier.getLogger().isDebugEnabled())
+				mClausifier.getLogger().debug("Created Equality: " + mEqAtom);
 		}
-		return m_eqAtom;
+		return mEqAtom;
 	}
 	
 	public String toString() {

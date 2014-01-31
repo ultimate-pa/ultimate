@@ -35,14 +35,14 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @author hoenicke
  */
 public class ApplicationTerm extends Term {
-	final FunctionSymbol m_Function;
-	final Term[] m_Parameters;
+	final FunctionSymbol mFunction;
+	final Term[] mParameters;
 
 	ApplicationTerm(FunctionSymbol function, Term[] parameters, int hash) {
 		super(hash);
 		function.typecheck(parameters);
-		this.m_Function   = function;
-		this.m_Parameters = parameters;
+		this.mFunction   = function;
+		this.mParameters = parameters;
 	}
 
 	/**
@@ -51,7 +51,7 @@ public class ApplicationTerm extends Term {
 	 * @see FunctionSymbol#getName()
 	 */
 	public FunctionSymbol getFunction() {
-		return m_Function;
+		return mFunction;
 	}
 
 	/**
@@ -60,14 +60,14 @@ public class ApplicationTerm extends Term {
 	 * Never write to this array!
 	 */
 	public Term[] getParameters() {
-		return m_Parameters;
+		return mParameters;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	public Sort getSort() {
-		return m_Function.m_ReturnSort.getRealSort();
+		return mFunction.mReturnSort.getRealSort();
 	}
 		
 	static final int hashApplication(
@@ -87,7 +87,7 @@ public class ApplicationTerm extends Term {
 		} else {
 			// Add arguments to stack.
 			m_Todo.addLast(")");
-			for (int i = args.length-1; i >= 0; i--) {
+			for (int i = args.length - 1; i >= 0; i--) {
 				m_Todo.addLast(args[i]);
 				m_Todo.addLast(" ");
 			}

@@ -71,7 +71,7 @@ public class LAAnnotation implements IAnnotation {
 	 * the inequalities the literal must be negated first and then multiplied
 	 * with the coefficient from this map.
 	 */
-	private Map<Literal, Rational> m_coefficients;
+	private Map<Literal, Rational> mCoefficients;
 	/**
 	 * Map from sub-annotations to a Farkas coefficient.  The sub-annotations
 	 * must all have the same parent annotation as this annotation (and must
@@ -79,73 +79,73 @@ public class LAAnnotation implements IAnnotation {
 	 * summing up the inequalities, the bound explained by the sub-annotation
 	 * must be multiplied with the coefficient from this map.
 	 */
-	private Map<LAAnnotation, Rational> m_auxAnnotations;
+	private Map<LAAnnotation, Rational> mAuxAnnotations;
 	
 	/**
 	 * The linvar on which this sub-annotation explains a bound, or null
 	 * if this is the top-most annotation.
 	 * If this is a sub-annotation, it explains a bound on a linear variable.
 	 */
-	private LinVar m_linvar;
+	private LinVar mLinvar;
 	/**
 	 * The linvar on which this sub-annotation explains a bound, or null
 	 * if this is the top-most annotation.
 	 * If this is a sub-annotation, it explains a bound on a linear variable.
 	 */
-	private InfinitNumber m_bound;
+	private InfinitNumber mBound;
 	/**
 	 * True, if this is a sub-annotation that explains an upper bound on a
 	 * linear variable.
 	 * If this is a sub-annotation, it explains a bound on a linear variable,
 	 * either a lower or an upper bound.
 	 */
-	private boolean m_isUpper;
+	private boolean mIsUpper;
 
 	public LAAnnotation() {
-		m_coefficients   = new HashMap<Literal, Rational>();
-		m_auxAnnotations = new HashMap<LAAnnotation, Rational>();
+		mCoefficients   = new HashMap<Literal, Rational>();
+		mAuxAnnotations = new HashMap<LAAnnotation, Rational>();
 	}
 	
 	public LAAnnotation(LAReason reason) {
 		this();
-		m_linvar = reason.getVar();
-		m_bound = reason.getBound();
-		m_isUpper = reason.isUpper();
+		mLinvar = reason.getVar();
+		mBound = reason.getBound();
+		mIsUpper = reason.isUpper();
 	}
 	
 	public Map<Literal, Rational> getCoefficients() {
-		return m_coefficients;
+		return mCoefficients;
 	}
 
 	public Map<LAAnnotation, Rational> getAuxAnnotations() {
-		return m_auxAnnotations;
+		return mAuxAnnotations;
 	}
 
 	public void addFarkas(LAAnnotation annot, Rational coeff) { 
-		Rational r = m_auxAnnotations.get(annot);
+		Rational r = mAuxAnnotations.get(annot);
 		if (r == null)
 			r = Rational.ZERO;
 		assert(r.signum() * coeff.signum() >= 0);
 		r = r.add(coeff);
-		m_auxAnnotations.put(annot, r);
+		mAuxAnnotations.put(annot, r);
 	}
 
 	public void addFarkas(Literal lit, Rational coeff) {
-		Rational r = m_coefficients.get(lit);
+		Rational r = mCoefficients.get(lit);
 		if (r == null)
 			r = Rational.ZERO;
 		assert(lit.getAtom() instanceof LAEquality
 			   || r.signum() * coeff.signum() >= 0);
 		r = r.add(coeff);
 		if (r == Rational.ZERO)
-			m_coefficients.remove(lit);
+			mCoefficients.remove(lit);
 		else
-			m_coefficients.put(lit, r);
+			mCoefficients.put(lit, r);
 	}
 	
 	MutableAffinTerm addLiterals() {
 		MutableAffinTerm mat = new MutableAffinTerm();
-		for (Map.Entry<Literal, Rational> entry : m_coefficients.entrySet()) {
+		for (Map.Entry<Literal, Rational> entry : mCoefficients.entrySet()) {
 			Rational coeff = entry.getValue(); 
 			Literal lit = entry.getKey();
 			if (lit.getAtom() instanceof BoundConstraint) {
@@ -159,42 +159,41 @@ public class LAAnnotation implements IAnnotation {
 				mat.add(bound.mul(coeff.negate()));
 			} else {
 				LAEquality lasd = (LAEquality) lit.getAtom();
-				if (lasd != lit) {
-					mat.add(coeff, lasd.getVar());
-					mat.add(lasd.getBound().mul(coeff.negate()));
-				} else {
+				if (lasd == lit) {
 					assert coeff.abs().equals(Rational.ONE);
 					// TODO check that matching inequality is present.
 					mat.add(lasd.getVar().getEpsilon());
+				} else {
+					mat.add(coeff, lasd.getVar());
+					mat.add(lasd.getBound().mul(coeff.negate()));
 				}
 			}
 		}
-		for (Map.Entry<LAAnnotation, Rational> entry : m_auxAnnotations.entrySet()) {
+		for (Map.Entry<LAAnnotation, Rational> entry : mAuxAnnotations.entrySet()) {
 			Rational coeff = entry.getValue(); 
 			LAAnnotation annot = entry.getKey();
-			assert ((coeff.signum() > 0) == annot.m_isUpper);
-			mat.add(coeff, annot.m_linvar);
-			mat.add(annot.m_bound.mul(coeff.negate()));
+			assert ((coeff.signum() > 0) == annot.mIsUpper);
+			mat.add(coeff, annot.mLinvar);
+			mat.add(annot.mBound.mul(coeff.negate()));
 		}
 		return mat;
 	}
 	
 	public String toString() {
-		return m_coefficients.toString() + m_auxAnnotations.toString();
+		return mCoefficients.toString() + mAuxAnnotations.toString();
 	}
 
 	@Override
 	public String toSExpr(Theory smtTheory) {
-		StringBuilder sb = new StringBuilder();
-		sb.append('(');
-		sb.append(":farkas (");
-		for (Map.Entry<Literal, Rational> me : m_coefficients.entrySet()) {
+		StringBuilder sb = new StringBuilder(32);
+		sb.append("(:farkas (");
+		for (Map.Entry<Literal, Rational> me : mCoefficients.entrySet()) {
 			sb.append("(* ").append(me.getValue().toString()).append(' ');
 			sb.append(me.getKey().negate().getSMTFormula(smtTheory)).append(')');
 		}
 		sb.append(')');
-		if (m_auxAnnotations != null && !m_auxAnnotations.isEmpty()) {
-			for (Map.Entry<LAAnnotation, Rational> me : m_auxAnnotations.entrySet()) {
+		if (mAuxAnnotations != null && !mAuxAnnotations.isEmpty()) {
+			for (Map.Entry<LAAnnotation, Rational> me : mAuxAnnotations.entrySet()) {
 				sb.append(" (:subproof (* ").append(me.getValue().toString());
 				sb.append(' ').append(me.getKey().toSExpr(smtTheory));
 				sb.append("))");
@@ -206,24 +205,23 @@ public class LAAnnotation implements IAnnotation {
 	
 	@Override
 	public Term toTerm(Clause ignored, Theory theory) {
-		assert(m_coefficients != null);
+		assert(mCoefficients != null);
 		return new AnnotationToProofTerm().convert(this, theory);
 	}
 	
 	public int hashCode() {
-		return m_linvar == null ? 0 : 
-			HashUtils.hashJenkins(m_bound.hashCode(), m_linvar);
+		return mLinvar == null ? 0 : HashUtils.hashJenkins(mBound.hashCode(), mLinvar);
 	}
 	
 	public LinVar getLinVar() {
-		return m_linvar;
+		return mLinvar;
 	}
 	
 	public InfinitNumber getBound() {
-		return m_bound;
+		return mBound;
 	}
 	
 	public boolean isUpper() {
-		return m_isUpper;
+		return mIsUpper;
 	}
 }

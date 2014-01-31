@@ -21,76 +21,76 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class InterpolationInfo {
-	Term[] m_Partitions;
-	int[] m_StartOfSubTrees;
-	int   m_Size = 0;
-	boolean m_IsAndTerm = false;
+	Term[] mPartitions;
+	int[] mStartOfSubTrees;
+	int   mSize = 0;
+	boolean mIsAndTerm = false;
 	
 	public InterpolationInfo() {
-		m_Partitions = new Term[5];
-		m_StartOfSubTrees = new int[5];
+		mPartitions = new Term[5];
+		mStartOfSubTrees = new int[5];
 	}
 	
 	private void grow(int minsize) {
-		int newsize = 2*m_Partitions.length;
+		int newsize = 2 * mPartitions.length;
 		if (newsize < minsize)
 			newsize = minsize + 1;
 		Term[] newPartitions = new Term[newsize];
 		int[] newStartOfSubTrees = new int[newsize];
-		System.arraycopy(m_Partitions, 0, newPartitions, 0, m_Size);
-		System.arraycopy(m_StartOfSubTrees, 0, newStartOfSubTrees, 0, m_Size);
-		m_Partitions = newPartitions;
-		m_StartOfSubTrees = newStartOfSubTrees;
+		System.arraycopy(mPartitions, 0, newPartitions, 0, mSize);
+		System.arraycopy(mStartOfSubTrees, 0, newStartOfSubTrees, 0, mSize);
+		mPartitions = newPartitions;
+		mStartOfSubTrees = newStartOfSubTrees;
 	}
 	
 	public void makeAndTerm() {
-		m_IsAndTerm = true;
+		mIsAndTerm = true;
 	}
 	
 	public void addParent(Term partition) {
-		if (m_Size + 1 >= m_Partitions.length)
-			grow(m_Size + 1);
-		m_Partitions[m_Size] = partition;
-		m_StartOfSubTrees[m_Size] = 0;
-		m_Size++;
+		if (mSize + 1 >= mPartitions.length)
+			grow(mSize + 1);
+		mPartitions[mSize] = partition;
+		mStartOfSubTrees[mSize] = 0;
+		mSize++;
 	}
 	
 	public void addSibling(InterpolationInfo sibling) {
-		if (m_Size + sibling.m_Size >= m_Partitions.length)
-			grow(m_Size + sibling.m_Size);
-		System.arraycopy(sibling.m_Partitions, 0, m_Partitions, m_Size, sibling.m_Size);
-		for (int i = 0; i < sibling.m_Size; i++)
-			m_StartOfSubTrees[m_Size + i] = m_Size + sibling.m_StartOfSubTrees[i];
-		m_Size += sibling.m_Size;
+		if (mSize + sibling.mSize >= mPartitions.length)
+			grow(mSize + sibling.mSize);
+		System.arraycopy(sibling.mPartitions, 0, mPartitions, mSize, sibling.mSize);
+		for (int i = 0; i < sibling.mSize; i++)
+			mStartOfSubTrees[mSize + i] = mSize + sibling.mStartOfSubTrees[i];
+		mSize += sibling.mSize;
 	}
 	
 	public Term[] getPartition() {
-		if (m_Partitions.length != m_Size) {
-			Term[] newPartitions = new Term[m_Size];
-			System.arraycopy(m_Partitions, 0, newPartitions, 0, m_Size);
+		if (mPartitions.length != mSize) {
+			Term[] newPartitions = new Term[mSize];
+			System.arraycopy(mPartitions, 0, newPartitions, 0, mSize);
 			return newPartitions;
 		}
-		return m_Partitions;
+		return mPartitions;
 	}
 
 	public int[] getTreeStructure() {
-		if (m_StartOfSubTrees.length != m_Size) {
-			int[] newStartOfSubtrees = new int[m_Size];
-			System.arraycopy(m_StartOfSubTrees, 0, newStartOfSubtrees, 0, m_Size);
+		if (mStartOfSubTrees.length != mSize) {
+			int[] newStartOfSubtrees = new int[mSize];
+			System.arraycopy(mStartOfSubTrees, 0, newStartOfSubtrees, 0, mSize);
 			return newStartOfSubtrees;
 		}
-		return m_StartOfSubTrees;
+		return mStartOfSubTrees;
 	}
 	
 	public boolean isEmpty() {
-		return m_Size == 0;
+		return mSize == 0;
 	}
 
 	public boolean isAndTerm() {
-		return m_IsAndTerm;
+		return mIsAndTerm;
 	}
 	
 	public boolean isClosedTree() {
-		return !m_IsAndTerm && m_Size > 0 && m_StartOfSubTrees[m_Size-1] == 0;
+		return !mIsAndTerm && mSize > 0 && mStartOfSubTrees[mSize - 1] == 0;
 	}
 }

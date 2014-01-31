@@ -45,19 +45,20 @@ public class FormulaUnLet extends TermTransformer {
 		 */
 		EXPAND_DEFINITIONS(false, true);
 		/**
-		 * True for lazy let semantics.  The normal semantics of SMTLIB is non-lazy,
-		 * i.e. the values of a let are evaluated before they are assigned to 
-		 * the corresponding variable.  With lazy let, the value is expanded only
-		 * when the variable is used later.  This was useful once for interpolation.
+		 * True for lazy let semantics.  The normal semantics of SMTLIB is
+		 * non-lazy, i.e. the values of a let are evaluated before they are
+		 * assigned to the corresponding variable.  With lazy let, the value is
+		 * expanded only when the variable is used later.  This was useful once
+		 * for interpolation.
 		 */
-		final boolean m_IsLazy;
+		final boolean mIsLazy;
 		/**
 		 * Should defined functions be expanded.  Defaults to false.
 		 */
-		final boolean m_ExpandDefinitions;
+		final boolean mExpandDefinitions;
 		UnletType(boolean lazy, boolean expandDefinitions) {
-			m_IsLazy = lazy;
-			m_ExpandDefinitions = expandDefinitions;
+			mIsLazy = lazy;
+			mExpandDefinitions = expandDefinitions;
 		}
 	}
 	
@@ -66,12 +67,13 @@ public class FormulaUnLet extends TermTransformer {
 	 * or a quantifier on the todo stack.  It gives the mapping for each 
 	 * term variable defined in that scope to the corresponding term.
 	 */
-	private ScopedHashMap<TermVariable,Term> m_LetMap = new ScopedHashMap<TermVariable, Term>();
+	private final ScopedHashMap<TermVariable,Term> mLetMap =
+			new ScopedHashMap<TermVariable, Term>();
 
 	/**
 	 * The type of this unletter.
 	 */
-	private UnletType m_Type;
+	private final UnletType mType;
 	
 	/**
 	 * Create a FormulaUnLet with the standard SMT-LIB semantics for let.
@@ -85,7 +87,7 @@ public class FormulaUnLet extends TermTransformer {
 	 * @param type  The type of the unletter.
 	 */
 	public FormulaUnLet(UnletType type) {
-		m_Type = type;
+		mType = type;
 	}
 	
 	/**
@@ -96,7 +98,7 @@ public class FormulaUnLet extends TermTransformer {
 	 * the term with which they should be substituted. 
 	 */
 	public void addSubstitutions(Map<TermVariable, Term> termSubst) {
-		m_LetMap.putAll(termSubst);
+		mLetMap.putAll(termSubst);
 	}
 
 	/**
@@ -112,15 +114,15 @@ public class FormulaUnLet extends TermTransformer {
 	@Override
 	public void convert(Term term) {
 		if (term instanceof TermVariable) {
-			Term value = m_LetMap.get((TermVariable)term);
+			Term value = mLetMap.get((TermVariable)term);
 			if (value == null) {
 				setResult(term);
-			} else if (m_Type.m_IsLazy) {
+			} else if (mType.mIsLazy) {
 				pushTerm(value);
 			} else {
 				setResult(value);
 			}
-		} else if (m_Type.m_IsLazy && term instanceof LetTerm) {
+		} else if (mType.mIsLazy && term instanceof LetTerm) {
 			LetTerm letTerm = (LetTerm) term;
 			preConvertLet(letTerm, letTerm.getValues());
 		} else if (term instanceof QuantifiedFormula) {
@@ -130,25 +132,26 @@ public class FormulaUnLet extends TermTransformer {
 
 			/* check which variables are in the image of the substitution */
 			HashSet<TermVariable> used = new HashSet<TermVariable>();
-			for (Map.Entry<TermVariable,Term> substTerms : m_LetMap.entrySet()) {
+			for (Map.Entry<TermVariable,Term> substTerms : mLetMap.entrySet()) {
 				if (!Arrays.asList(vars).contains(substTerms.getKey()))
-					used.addAll(Arrays.asList(substTerms.getValue().getFreeVars()));
+					used.addAll(
+							Arrays.asList(substTerms.getValue().getFreeVars()));
 			}
-			m_LetMap.beginScope();
+			mLetMap.beginScope();
 			for (int i = 0; i < vars.length; i++) {
 				if (used.contains(vars[i])) {
-					m_LetMap.put(vars[i], theory
+					mLetMap.put(vars[i], theory
 						.createFreshTermVariable("unlet", vars[i].getSort()));
 				} else {
-					if (m_LetMap.containsKey(vars[i]))
-						m_LetMap.remove(vars[i]);
+					if (mLetMap.containsKey(vars[i]))
+						mLetMap.remove(vars[i]);
 				}
 			}
 			super.convert(term);
 		} else if (term instanceof ApplicationTerm) {
 			ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (m_Type.m_ExpandDefinitions &&
-					appTerm.getFunction().getDefinition() != null) {
+			if (mType.mExpandDefinitions
+					&& appTerm.getFunction().getDefinition() != null) {
 				FunctionSymbol defed = appTerm.getFunction();
 				Term fakeLet = appTerm.getTheory().let(
 						defed.getDefinitionVars(), appTerm.getParameters(),
@@ -163,17 +166,17 @@ public class FormulaUnLet extends TermTransformer {
 
 	@Override
 	public void preConvertLet(LetTerm oldLet, Term[] newValues) {
-		m_LetMap.beginScope();
+		mLetMap.beginScope();
 		TermVariable[] vars = oldLet.getVariables();
 		for (int i = 0; i < vars.length; i++)
-			m_LetMap.put(vars[i], newValues[i]);
+			mLetMap.put(vars[i], newValues[i]);
 		super.preConvertLet(oldLet, newValues);
 	}
 	
 	@Override
 	public void postConvertLet(LetTerm oldLet, Term[] newValues, Term newBody) {
 		setResult(newBody);
-		m_LetMap.endScope();
+		mLetMap.endScope();
 	}
 	
 	/**
@@ -188,21 +191,21 @@ public class FormulaUnLet extends TermTransformer {
 		TermVariable[] vars = old.getVariables();
 		TermVariable[] newVars = vars;
 		for (int i = 0; i < vars.length; i++) {
-			Term newVar = m_LetMap.get(vars[i]);
+			Term newVar = mLetMap.get(vars[i]);
 			if (newVar != null) {
 				if (vars == newVars)
 					newVars = vars.clone();
 				newVars[i] = (TermVariable) newVar; 
 			}
 		}
-		m_LetMap.endScope();
-		if (vars != newVars || old.getSubformula() != newBody) {
+		mLetMap.endScope();
+		if (vars == newVars && old.getSubformula() == newBody)
+			setResult(old);
+		else {
 			Theory theory = old.getTheory();
 			setResult(old.getQuantifier() == QuantifiedFormula.EXISTS
 					? theory.exists(newVars, newBody)
 					: theory.forall(newVars, newBody));
-		} else {
-			setResult(old);
 		}
 	}
 }

@@ -22,7 +22,11 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CollectionsHelper {
+public final class CollectionsHelper {
+	
+	private CollectionsHelper() {
+		// Hide constructor
+	}
 	/**
 	 * Check whether <code>c2</code> contains any element in <code>c1</code>.
 	 * @param <E> The type of the arguments.

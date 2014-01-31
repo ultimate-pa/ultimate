@@ -33,13 +33,17 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTLIB2Parser;
  * SMTInterpol.
  * @author Juergen Christ
  */
-public class Main {
+public final class Main {
+	
+	private Main() {
+		// Hide constructor
+	}
 
 	private static void usage() {
 		System.err.println("USAGE:");
 		System.err.println(
-"smtinterpol [-transform <output>] [-script <class>] [-no-success] [-q] [-v] [-t <num>] [-r <num>] [-smt2] [-smt] [-d] [inputfile]");
-		System.err.println("\t-transform <output>\t\tTransform to smtlib2 file.");
+"smtinterpol [-transform <output>] [-script <class>] [-no-success] [-q] [-v] [-t <num>] [-r <num>] [-smt2] [-smt] [-d] [inputfile]");// NOCHECKSTYLE
+		System.err.println("\t-transform <output>\t\tTransform to smtlib2 file.");// NOCHECKSTYLE
 		System.err.println("\t-script <class>\t\tUse different script.");
 		System.err.println("\t-no-success\t\tDon't print success messages.");
 		System.err.println("\t-q\t\tRun in quiet mode");
@@ -68,45 +72,42 @@ public class Main {
         		paramctr++;
         		break;
         	} else if (param[paramctr].equals("-transform")
-     			   && paramctr+1 < param.length) {
+     			   && paramctr + 1 < param.length) {
     			paramctr++;
         		solver = new LoggingScript(param[paramctr], true);
         	} else if (param[paramctr].equals("-script")
-     			   && paramctr+1 < param.length) {
+     			   && paramctr + 1 < param.length) {
      			paramctr++;
      			Class<?> scriptClass = Class.forName(param[paramctr]);
      			solver = (Script) scriptClass.newInstance();
         	} else if (param[paramctr].equals("-no-success")) {
         		printSuccess = false;
         	} else if (param[paramctr].equals("-v")) {
-        		verbosity = BigInteger.valueOf(5);
+        		verbosity = BigInteger.valueOf(5);// NOCHECKSTYLE
         	} else if (param[paramctr].equals("-q")) {
-        		verbosity = BigInteger.valueOf(2);
-        	} else if (param[paramctr].equals("-t") && 
-        			++paramctr < param.length) {
+        		verbosity = BigInteger.valueOf(2);// NOCHECKSTYLE
+        	} else if (param[paramctr].equals("-t")
+        			&& ++paramctr < param.length) {
         		try {
         			timeout = new BigInteger(param[paramctr]);
         			if (timeout.signum() <= 0) {
         				timeout = null;
-        				System.err.println("Cannot parse timeout " +
-        						"argument: Non-positive number");
+        				System.err.println(
+        						"Cannot parse timeout argument: Non-positive number");// NOCHECKSTYLE
         			}
-        		} catch (NumberFormatException nfe) {
-        			System.err.println("Cannot parse timeout " +
-        					"argument: Not a number");
+        		} catch (NumberFormatException enfe) {
+        			System.err.println("Cannot parse timeout argument: Not a number");// NOCHECKSTYLE
         		}
-        	} else if (param[paramctr].equals("-r") &&
-        			++paramctr < param.length) {
+        	} else if (param[paramctr].equals("-r")
+        			&& ++paramctr < param.length) {
         		try {
         			seed = new BigInteger(param[paramctr]);
         			if (seed.signum() < 0) {
-        				System.err.println("Cannot parse random seed " +
-        						"argument: Negative number");
+        				System.err.println("Cannot parse random seed argument: Negative number");// NOCHECKSTYLE
         				seed = null;
         			}
-        		} catch (NumberFormatException nfe) {
-    				System.err.println("Cannot parse random seed " +
-        					"argument: Not a number");
+        		} catch (NumberFormatException enfe) {
+    				System.err.println("Cannot parse random seed argument: Not a number");// NOCHECKSTYLE
         		}
         	} else if (param[paramctr].equals("-smt2")) {
         		parser = new SMTLIB2Parser();
@@ -124,7 +125,6 @@ public class Main {
         	}
         	++paramctr;
         }
-        int exitCode = 0;
         String filename = null;
 		if (paramctr < param.length)
 			filename = param[paramctr++];
@@ -141,7 +141,7 @@ public class Main {
 			solver.setOption(":timeout", timeout);
 		if (seed != null)
 			solver.setOption(":random-seed", seed);
-		exitCode = parser.run(solver, filename);
+		int exitCode = parser.run(solver, filename);
 		System.exit(exitCode);
 	}
 

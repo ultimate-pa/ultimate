@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IProofTracker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
+import de.uni_freiburg.informatik.ultimate.util.UnifyHash;
 
 /**
  * Build a representation of the formula where only not, or, ite and =/2 are
@@ -50,27 +51,29 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
  */
 public class TermCompiler extends TermTransformer {
 	
-	private boolean m_By0Seen = false;
-	private Map<Term, Set<String>> m_Names;
+	private boolean mBy0Seen = false;
+	private Map<Term, Set<String>> mNames;
 	
-	private IProofTracker m_Tracker;
-	private Utils m_Utils;
-	private FormulaUnLet m_Unletter = new FormulaUnLet();
+	private IProofTracker mTracker;
+	private Utils mUtils;
+	private final FormulaUnLet mUnletter = new FormulaUnLet();
+	private final UnifyHash<SMTAffineTerm> mAffineUnifier
+		= new UnifyHash<SMTAffineTerm>();
 	
 	public void setProofTracker(IProofTracker tracker) {
-		m_Tracker = tracker;
-		m_Utils = new Utils(tracker);
+		mTracker = tracker;
+		mUtils = new Utils(tracker, this);
 	}
 	
 	public void setAssignmentProduction(boolean on) {
 		if (on) {
-			m_Names = new HashMap<Term, Set<String>>();
+			mNames = new HashMap<Term, Set<String>>();
 		} else
-			m_Names = null;
+			mNames = null;
 	}
 	
 	public Map<Term, Set<String>> getNames() {
-		return m_Names;
+		return mNames;
 	}
 
 	public void convert(Term term) {
@@ -80,7 +83,7 @@ public class TermCompiler extends TermTransformer {
 			Term[] params = appTerm.getParameters();
 			if (fsym.isLeftAssoc() && params.length > 2) {
 				Theory theory = appTerm.getTheory();
-				if (fsym == theory.m_And || fsym == theory.m_Or) {
+				if (fsym == theory.mAnd || fsym == theory.mOr) {
 					// We keep n-ary and/or
 					enqueueWalker(new BuildApplicationTerm(appTerm));
 					pushTerms(params);
@@ -88,9 +91,9 @@ public class TermCompiler extends TermTransformer {
 				}
 //				m_Tracker.expand(appTerm);
 				enqueueWalker(new RewriteAdder(appTerm, null));
-				BuildApplicationTerm dummy = new BuildApplicationTerm
-						(theory.term(fsym, params[0], params[1]));
-				for (int i = params.length-1; i > 0; i--) {
+				BuildApplicationTerm dummy = new BuildApplicationTerm(
+				        theory.term(fsym, params[0], params[1]));
+				for (int i = params.length - 1; i > 0; i--) {
 					enqueueWalker(dummy);
 					pushTerm(params[i]);
 				}
@@ -99,7 +102,7 @@ public class TermCompiler extends TermTransformer {
 			}
 			if (fsym.isRightAssoc() && params.length > 2) {
 				Theory theory = appTerm.getTheory();
-				if (fsym == theory.m_Implies) {
+				if (fsym == theory.mImplies) {
 					// We keep n-ary implies
 					enqueueWalker(new BuildApplicationTerm(appTerm));
 					pushTerms(params);
@@ -107,28 +110,28 @@ public class TermCompiler extends TermTransformer {
 				}
 //				m_Tracker.expand(appTerm);
 				enqueueWalker(new RewriteAdder(appTerm, null));
-				BuildApplicationTerm dummy = new BuildApplicationTerm
-					(theory.term(fsym, params[params.length-2], 
-							params[params.length-1]));
-				for (int i = params.length-1; i > 0; i--)
+				BuildApplicationTerm dummy = new BuildApplicationTerm(
+				        theory.term(fsym, params[params.length - 2], 
+							params[params.length - 1]));
+				for (int i = params.length - 1; i > 0; i--)
 					enqueueWalker(dummy);
 				pushTerms(params);
 				return;
 			}
-			if (fsym.isChainable() && params.length > 2 && 
-					!fsym.getName().equals("=")) {
+			if (fsym.isChainable() && params.length > 2 
+					&& !fsym.getName().equals("=")) {
 //				m_Tracker.expand(appTerm);
 				enqueueWalker(new RewriteAdder(appTerm, null));
 				Theory theory = appTerm.getTheory();
-				BuildApplicationTerm and = new BuildApplicationTerm
-						(theory.term("and", theory.TRUE, theory.TRUE));
-				BuildApplicationTerm dummy = new BuildApplicationTerm
-						(theory.term(fsym, params[0], params[1]));
-				for (int i = params.length-1; i > 1; i--) {
+				BuildApplicationTerm and = new BuildApplicationTerm(
+				        theory.term("and", theory.mTrue, theory.mTrue));
+				BuildApplicationTerm dummy = new BuildApplicationTerm(
+						theory.term(fsym, params[0], params[1]));
+				for (int i = params.length - 1; i > 1; i--) {
 					enqueueWalker(and);
 					enqueueWalker(dummy);
 					pushTerm(params[i]);
-					pushTerm(params[i-1]);
+					pushTerm(params[i - 1]);
 				}
 				enqueueWalker(dummy);
 				pushTerm(params[1]);
@@ -137,7 +140,7 @@ public class TermCompiler extends TermTransformer {
 			}
 		} else if (term instanceof ConstantTerm) {
 			SMTAffineTerm res = SMTAffineTerm.create(term);
-			m_Tracker.normalized((ConstantTerm) term, res);
+			mTracker.normalized((ConstantTerm) term, res);
 			setResult(res);
 			return;
 		}
@@ -151,43 +154,43 @@ public class TermCompiler extends TermTransformer {
 	 * we transformed the expanded term.
 	 */
 	private static class RewriteAdder implements Walker {
-		private ApplicationTerm m_AppTerm;
-		private Term m_Expanded;
+		private final ApplicationTerm mAppTerm;
+		private final Term mExpanded;
 		
 		public RewriteAdder(ApplicationTerm term, Term expanded) {
-			m_AppTerm = term;
-			m_Expanded = expanded;
+			mAppTerm = term;
+			mExpanded = expanded;
 		}
 		
 		public void walk(NonRecursive engine) {
 			TermCompiler transformer = (TermCompiler) engine;
-			if (m_Expanded == null)
-				transformer.m_Tracker.expand(m_AppTerm);
+			if (mExpanded == null)
+				transformer.mTracker.expand(mAppTerm);
 			else
-				transformer.m_Tracker.expandDef(m_AppTerm, m_Expanded);
+				transformer.mTracker.expandDef(mAppTerm, mExpanded);
 		}
 
 		public String toString() {
-			return "addrewrite " + m_AppTerm.getFunction().getApplicationString();
+			return "addrewrite " + mAppTerm.getFunction().getApplicationString();
 		}
 	}
 
 	@Override
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] args) {
 		FunctionSymbol fsym = appTerm.getFunction();
-		Sort[] paramSorts = fsym.getParameterSorts();
 		Theory theory = appTerm.getTheory();
 		
  		if (fsym.getDefinition() != null) {
 			Term definition = theory.let(
 					fsym.getDefinitionVars(), appTerm.getParameters(), 
 					fsym.getDefinition());
-			Term expanded = m_Unletter.unlet(definition);
+			Term expanded = mUnletter.unlet(definition);
 			enqueueWalker(new RewriteAdder(appTerm, expanded));
 			pushTerm(expanded);
 			return;
-		} 
-		 		
+		}
+ 		
+		Sort[] paramSorts = fsym.getParameterSorts();
 		Term[] origArgs = null;
 		if (theory.getLogic().isIRA()
 			&& paramSorts.length == 2 
@@ -199,7 +202,7 @@ public class TermCompiler extends TermTransformer {
 			for (int i = 0; i < args.length; i++) {
 				if (args[i].getSort().getName().equals("Int")) {
 					if (origArgs == null)
-						origArgs = m_Tracker.prepareIRAHack(args);
+						origArgs = mTracker.prepareIRAHack(args);
 					args[i] = SMTAffineTerm.create(args[i])
 						.toReal(paramSorts[0]);
 				}
@@ -208,101 +211,99 @@ public class TermCompiler extends TermTransformer {
 		
 		for (int i = 0; i < args.length; ++i) {
 			if (args[i] instanceof SMTAffineTerm) {
-				args[i] = ((SMTAffineTerm) args[i]).normalize();
+				args[i] = ((SMTAffineTerm) args[i]).normalize(this);
 			}
 		}
 		if (origArgs != null)
-			m_Tracker.desugar(appTerm, origArgs, args);
+			mTracker.desugar(appTerm, origArgs, args);
 		
 		if (fsym.isIntern()) {
-			if (fsym == theory.m_Not) {
-				setResult(m_Utils.createNot(args[0]));
+			if (fsym == theory.mNot) {
+				setResult(mUtils.createNot(args[0]));
 				return;
 			}
-			if (fsym == theory.m_And) {
-				setResult(m_Utils.createAnd(args));
+			if (fsym == theory.mAnd) {
+				setResult(mUtils.createAnd(args));
 				return;
 			}
-			if (fsym == theory.m_Or) {
-				setResult(m_Utils.createOr(args));
+			if (fsym == theory.mOr) {
+				setResult(mUtils.createOr(args));
 				return;
 			}
-			if (fsym == theory.m_Xor) {
-				m_Tracker.removeConnective(args,
+			if (fsym == theory.mXor) {
+				mTracker.removeConnective(args,
 						null, ProofConstants.RW_XOR_TO_DISTINCT);
-				setResult(m_Utils.createDistinct(args));
+				setResult(mUtils.createDistinct(args));
 				return;
 			}
-			if (fsym == theory.m_Implies) {
-				m_Tracker.removeConnective(
+			if (fsym == theory.mImplies) {
+				mTracker.removeConnective(
 						args, null, ProofConstants.RW_IMP_TO_OR);
 				Term[] tmp = new Term[args.length];
 				// We move the conclusion in front (see Simplify tech report)
 				for (int i = 1; i < args.length; ++i)
-					tmp[i] = m_Utils.createNot(args[i - 1]);
+					tmp[i] = mUtils.createNot(args[i - 1]);
 				tmp[0] = args[args.length - 1];
-				setResult(m_Utils.createOr(tmp));
+				setResult(mUtils.createOr(tmp));
 				return;
 			}
 			if (fsym.getName().equals("ite")) {
-				setResult(m_Utils.createIte(args[0], args[1], args[2]));
+				setResult(mUtils.createIte(args[0], args[1], args[2]));
 				return;
 			}
 			if (fsym.getName().equals("=")) {
-				setResult(m_Utils.createEq(args));
+				setResult(mUtils.createEq(args));
 				return;
 			}
 			if (fsym.getName().equals("distinct")) {
-				setResult(m_Utils.createDistinct(args));
+				setResult(mUtils.createDistinct(args));
 				return;
 			}
 			if (fsym.getName().equals("<=")) {
 				SMTAffineTerm res = SMTAffineTerm.create(args[0])
 						.add(SMTAffineTerm.create(Rational.MONE, args[1]));
-				m_Tracker.removeConnective(
+				mTracker.removeConnective(
 						args, res, ProofConstants.RW_LEQ_TO_LEQ0);
-				setResult(m_Utils.createLeq0(res));
+				setResult(mUtils.createLeq0(res));
 				return;
 			}
 			if (fsym.getName().equals(">=")) {
 				SMTAffineTerm res = SMTAffineTerm.create(args[1])
 						.add(SMTAffineTerm.create(Rational.MONE, args[0]));
-				m_Tracker.removeConnective(
+				mTracker.removeConnective(
 						args, res, ProofConstants.RW_GEQ_TO_LEQ0);
-				setResult(m_Utils.createLeq0(res));
+				setResult(mUtils.createLeq0(res));
 				return;
 			}
 			if (fsym.getName().equals(">")) {
 				SMTAffineTerm res = SMTAffineTerm.create(args[0])
 						.add(SMTAffineTerm.create(Rational.MONE, args[1]));
-				m_Tracker.removeConnective(
+				mTracker.removeConnective(
 						args, res, ProofConstants.RW_GT_TO_LEQ0);
-				setResult(m_Utils.createNot(m_Utils.createLeq0(res)));
+				setResult(mUtils.createNot(mUtils.createLeq0(res)));
 				return;
 			}
 			if (fsym.getName().equals("<")) {
 				SMTAffineTerm res = SMTAffineTerm.create(args[1])
 						.add(SMTAffineTerm.create(Rational.MONE, args[0]));
-				m_Tracker.removeConnective(
+				mTracker.removeConnective(
 						args, res, ProofConstants.RW_LT_TO_LEQ0);
-				setResult(m_Utils.createNot(m_Utils.createLeq0(res)));
+				setResult(mUtils.createNot(mUtils.createLeq0(res)));
 				return;
 			}
 			if (fsym.getName().equals("+")) {
 				SMTAffineTerm res = SMTAffineTerm.create(args[0])
 						.add(SMTAffineTerm.create(args[1]));
-				m_Tracker.sum(fsym, args, res);
+				mTracker.sum(fsym, args, res);
 				setResult(res);
 				return;
-			}
-			else if (fsym.getName().equals("-") && paramSorts.length == 2) {
+			} else if (fsym.getName().equals("-") && paramSorts.length == 2) {
 				SMTAffineTerm res = SMTAffineTerm.create(args[0])
 						.add(SMTAffineTerm.create(Rational.MONE, args[1]));
-				m_Tracker.sum(fsym, args, res);
+				mTracker.sum(fsym, args, res);
 				setResult(res);
 				return;
-			} 
-			else if (fsym.getName().equals("*")) {
+			} else if (fsym.getName().equals("*")) {
 				SMTAffineTerm arg0 = SMTAffineTerm.create(args[0]);
 				SMTAffineTerm arg1 = SMTAffineTerm.create(args[1]);
 				SMTAffineTerm res;
@@ -312,7 +313,7 @@ public class TermCompiler extends TermTransformer {
 					res = arg0.mul(arg1.getConstant());
 				else
 					throw new UnsupportedOperationException("Unsupported non-linear arithmetic");
-				m_Tracker.sum(fsym, args, res);
+				mTracker.sum(fsym, args, res);
 				setResult(res);
 				return;
 			} else if (fsym.getName().equals("/")) {
@@ -320,11 +321,11 @@ public class TermCompiler extends TermTransformer {
 				SMTAffineTerm arg1 = SMTAffineTerm.create(args[1]);
 				if (arg1.isConstant()) {
 					if (arg1.getConstant().equals(Rational.ZERO)) {
-						m_By0Seen = true;
+						mBy0Seen = true;
 						setResult(theory.term("@/0", arg0));
 					} else {
 						SMTAffineTerm res = arg0.mul(arg1.getConstant().inverse());
-						m_Tracker.sum(fsym, args, res);
+						mTracker.sum(fsym, args, res);
 						setResult(res);
 					}
 					return;
@@ -337,15 +338,15 @@ public class TermCompiler extends TermTransformer {
 				Rational divisor = arg1.getConstant();
 				if (arg1.isConstant() && divisor.isIntegral()) {
 				    if (divisor.equals(Rational.ZERO)) {
-				    	m_By0Seen = true;
+				    	mBy0Seen = true;
 				    	setResult(theory.term("@div0", arg0));
 				    } else if (divisor.equals(Rational.ONE)) {
-				    	m_Tracker.div(arg0, arg1, arg0,
+				    	mTracker.div(arg0, arg1, arg0,
 				    			ProofConstants.RW_DIV_ONE);
 				    	setResult(arg0);
 				    } else if (divisor.equals(Rational.MONE)) {
 				    	SMTAffineTerm res = arg0.negate();
-				    	m_Tracker.div(arg0, arg1, res,
+				    	mTracker.div(arg0, arg1, res,
 				    			ProofConstants.RW_DIV_MONE);
 				    	setResult(res);
 				    } else if (arg0.isConstant()) {
@@ -354,7 +355,7 @@ public class TermCompiler extends TermTransformer {
 				    			arg1.getConstant());
 				    	SMTAffineTerm res = SMTAffineTerm.create(
 				    			theory.constant(div, arg0.getSort()));
-				    	m_Tracker.div(arg0, arg1, res,
+				    	mTracker.div(arg0, arg1, res,
 				    			ProofConstants.RW_DIV_CONST);
 				    	setResult(res);
 				    } else {
@@ -370,20 +371,20 @@ public class TermCompiler extends TermTransformer {
 				Rational divisor = arg1.getConstant();
 				if (arg1.isConstant() && divisor.isIntegral()) {
 				    if (divisor.equals(Rational.ZERO)) {
-				    	m_By0Seen = true;
+				    	mBy0Seen = true;
 				    	setResult(theory.term("@mod0", arg0));
 				    } else if (divisor.equals(Rational.ONE)) {
 				    	// (mod x 1) == 0
 				    	SMTAffineTerm res = SMTAffineTerm.create(
 				    			theory.constant(Rational.ZERO, arg0.getSort()));
-				    	m_Tracker.mod(arg0, arg1, res,
+				    	mTracker.mod(arg0, arg1, res,
 				    			ProofConstants.RW_MODULO_ONE);
 				    	setResult(res);
 				    } else if (divisor.equals(Rational.MONE)) {
 				    	// (mod x -1) == 0
 				    	SMTAffineTerm res = SMTAffineTerm.create(
 				    			theory.constant(Rational.ZERO, arg0.getSort()));
-				    	m_Tracker.mod(arg0, arg1, res,
+				    	mTracker.mod(arg0, arg1, res,
 				    			ProofConstants.RW_MODULO_MONE);
 				    	setResult(res);
 				    } else if (arg0.isConstant()) {
@@ -393,7 +394,7 @@ public class TermCompiler extends TermTransformer {
 				    	Rational mod = c0.sub(constDiv(c0, c1).mul(c1));
 				    	SMTAffineTerm res = SMTAffineTerm.create(
 				    			theory.constant(mod, arg0.getSort()));
-				    	m_Tracker.mod(arg0, arg1, res,
+				    	mTracker.mod(arg0, arg1, res,
 				    			ProofConstants.RW_MODULO_CONST);
 				    	setResult(res);
 				    } else {
@@ -403,7 +404,7 @@ public class TermCompiler extends TermTransformer {
 				    			mul(arg1.getConstant());
 				    	Term res = arg0.add(ydiv.negate());
 				    	setResult(res);
-				    	m_Tracker.modulo(appTerm, res);
+				    	mTracker.modulo(appTerm, res);
 				    }
 					return;
 				} else {
@@ -411,14 +412,14 @@ public class TermCompiler extends TermTransformer {
 				}
 			} else if (fsym.getName().equals("-") && paramSorts.length == 1) {
 				SMTAffineTerm res = SMTAffineTerm.create(args[0]).negate();
-				m_Tracker.sum(fsym, args, res);
+				mTracker.sum(fsym, args, res);
 				setResult(res);
 				return;
 			} else if (fsym.getName().equals("to_real")) {
 				SMTAffineTerm arg = SMTAffineTerm.create(args[0]);
 				SMTAffineTerm res = arg.toReal(fsym.getReturnSort());
 				setResult(res);
-				m_Tracker.toReal(arg, res);
+				mTracker.toReal(arg, res);
 				return;
 			} else if (fsym.getName().equals("to_int")) {
 				// We don't convert to_int here but defer it to the clausifier
@@ -428,7 +429,7 @@ public class TermCompiler extends TermTransformer {
 					SMTAffineTerm res = SMTAffineTerm.create(
 							arg0.getConstant().floor().toTerm(
 									fsym.getReturnSort()));
-					m_Tracker.toInt(arg0, res);
+					mTracker.toInt(arg0, res);
 					setResult(res);
 					return;
 				}
@@ -439,18 +440,17 @@ public class TermCompiler extends TermTransformer {
 						arg0.getSort());
 				Term res;
 				if (arg1.getConstant().equals(Rational.ONE))
-					res = theory.TRUE;
+					res = theory.mTrue;
 				else if (arg0.isConstant()) {
 					Rational c0 = arg0.getConstant();
 					Rational c1 = arg1.getConstant();
 					Rational mod = c0.sub(constDiv(c0, c1).mul(c1));
-					res = mod.equals(Rational.ZERO) ? 
-							theory.TRUE : theory.FALSE;
+					res = mod.equals(Rational.ZERO) ? theory.mTrue : theory.mFalse;
 				} else
 					res = theory.term("=", arg0, SMTAffineTerm.create(
 						theory.term("div", arg0, arg1)).mul(arg1.getConstant()));
 				setResult(res);
-				m_Tracker.divisible(appTerm.getFunction(), arg0, res);
+				mTracker.divisible(appTerm.getFunction(), arg0, res);
 				return;
 			} else if (fsym.getName().equals("store")) {
 				Term array = args[0];
@@ -460,13 +460,13 @@ public class TermCompiler extends TermTransformer {
 					// Check for store-over-store
 					SMTAffineTerm diff = SMTAffineTerm.create(idx).add(
 							SMTAffineTerm.create(nestedIdx).negate());
-					if (diff.isConstant() && 
-							diff.getConstant().equals(Rational.ZERO)) {
+					if (diff.isConstant() && diff.getConstant().equals(
+					        Rational.ZERO)) {
 						// Found store-over-store => ignore inner store
 						ApplicationTerm appArray = (ApplicationTerm) array;
 						Term result = theory.term(fsym,
 								appArray.getParameters()[0], args[1], args[2]);
-						m_Tracker.arrayRewrite(args, result,
+						mTracker.arrayRewrite(args, result,
 								ProofConstants.RW_STORE_OVER_STORE);
 						setResult(result);
 						return;
@@ -486,15 +486,15 @@ public class TermCompiler extends TermTransformer {
 						if (diff.getConstant().equals(Rational.ZERO)) {
 							// => transform into value
 							Term result = appArray.getParameters()[2];
-							m_Tracker.arrayRewrite(args, result,
+							mTracker.arrayRewrite(args, result,
 									ProofConstants.RW_SELECT_OVER_STORE);
 							setResult(result);
 							return;
-						}else { // Both indices are numerical and distinct.
+						} else { // Both indices are numerical and distinct.
 							// => transform into (select a idx)
 							Term result = theory.term("select",
 									appArray.getParameters()[0], idx);
-							m_Tracker.arrayRewrite(args, result,
+							mTracker.arrayRewrite(args, result,
 									ProofConstants.RW_SELECT_OVER_STORE);
 							setResult(result);
 							return;
@@ -503,7 +503,8 @@ public class TermCompiler extends TermTransformer {
 				}
 			} else if (fsym.getName().equals("@undefined"))
 				throw new SMTLIBException("Undefined value in input");
-		}// intern function symbols
+		}
+		// not an intern function symbols
 		super.convertApplicationTerm(appTerm, args);
 	}
 	
@@ -516,8 +517,7 @@ public class TermCompiler extends TermTransformer {
 		if (array instanceof ApplicationTerm) {
 			ApplicationTerm appArray = (ApplicationTerm) array;
 			FunctionSymbol arrayFunc = appArray.getFunction();
-			if (arrayFunc.isIntern() &&
-					arrayFunc.getName().equals("store"))
+			if (arrayFunc.isIntern() &&	arrayFunc.getName().equals("store"))
 				// (store a i v)
 				return appArray.getParameters()[1];
 		}
@@ -531,9 +531,9 @@ public class TermCompiler extends TermTransformer {
 		else {
 			// We should create (forall (x) (newBody x))
 			// This becomes (not (exists (x) (not (newBody x))))
-			Term negNewBody = m_Utils.createNot(newBody);
+			Term negNewBody = mUtils.createNot(newBody);
 			Theory t = old.getTheory();
-			Term res = t.term(t.m_Not,
+			Term res = t.term(t.mNot,
 					t.exists(old.getVariables(), negNewBody));
 			setResult(res);
 		}
@@ -542,21 +542,21 @@ public class TermCompiler extends TermTransformer {
 	@Override
 	public void postConvertAnnotation(AnnotatedTerm old,
 			Annotation[] newAnnots, Term newBody) {
-		if (m_Names != null &&
-				newBody.getSort() == newBody.getTheory().getBooleanSort()) {
+		if (mNames != null
+		        && newBody.getSort() == newBody.getTheory().getBooleanSort()) {
 			Annotation[] oldAnnots = old.getAnnotations();
 			for (Annotation annot : oldAnnots) {
 				if (annot.getKey().equals(":named")) {
-					Set<String> oldNames = m_Names.get(newBody);
+					Set<String> oldNames = mNames.get(newBody);
 					if (oldNames == null) {
 						oldNames = new HashSet<String>();
-						m_Names.put(newBody, oldNames);
+						mNames.put(newBody, oldNames);
 					}
 					oldNames.add(annot.getValue().toString());
 				}
 			}
 		}
-		m_Tracker.strip(old);
+		mTracker.strip(old);
 		setResult(newBody);
 	}
 	/**
@@ -564,8 +564,12 @@ public class TermCompiler extends TermTransformer {
 	 * @return The old division-by-0 seen flag.
 	 */
 	public boolean resetBy0Seen() {
-		boolean old = m_By0Seen;
-		m_By0Seen = false;
+		boolean old = mBy0Seen;
+		mBy0Seen = false;
 		return old;
+	}
+	
+	public SMTAffineTerm unify(SMTAffineTerm affine) {
+		return mAffineUnifier.unify(affine);
 	}
 }

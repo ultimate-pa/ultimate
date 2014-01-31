@@ -37,12 +37,12 @@ public class LeafNode extends ProofNode {
 	/// NO equality propagation
 	public final static int EQ = ProofConstants.AUX_EQ;
 
-	private final int m_LeafKind;
-	private IAnnotation m_Annotation;
+	private final int mLeafKind;
+	private IAnnotation mAnnotation;
 	
 	public LeafNode(int leafKind, IAnnotation annot) {
-		m_LeafKind = leafKind;
-		m_Annotation = annot;
+		mLeafKind = leafKind;
+		mAnnotation = annot;
 	}
 	
 	@Override
@@ -54,14 +54,14 @@ public class LeafNode extends ProofNode {
 	 * @return Identifier for the theory which created this leaf.
 	 */
 	public int getLeafKind() {
-		return m_LeafKind;
+		return mLeafKind;
 	}
 	/**
 	 * Is this the annotation for a tautology?
 	 * @return <code>true</code> if this annotation represents a tautology.
 	 */
 	public boolean isTautology() {
-		return m_LeafKind >= 0;
+		return mLeafKind >= 0;
 	}
 	/**
 	 * Can this leaf node be colored for interpolation?
@@ -69,24 +69,24 @@ public class LeafNode extends ProofNode {
 	 */
 	public boolean isColorable() {
 		// Only leaves and non-eq tautologies
-		return m_LeafKind == NO_THEORY ||
-				(isTautology() && m_LeafKind != ProofConstants.AUX_EQ); 
+		return mLeafKind == NO_THEORY
+				|| (isTautology() && mLeafKind != ProofConstants.AUX_EQ); 
 	}
 	/**
 	 * Get theory specific annotations.
 	 * @return Theory specific annotations.
 	 */
 	public IAnnotation getTheoryAnnotation() {
-		return m_Annotation;
+		return mAnnotation;
 	}
 	/**
 	 * Set theory specific annotations.
 	 * @param annot New theory specific annotations.
 	 */
 	public void setTheoryAnnotation(IAnnotation annot) {
-		m_Annotation = annot;
+		mAnnotation = annot;
 	}
 	public String toString() {
-		return "[" + m_Annotation + "]";
+		return "[" + mAnnotation + "]";
 	}
 }

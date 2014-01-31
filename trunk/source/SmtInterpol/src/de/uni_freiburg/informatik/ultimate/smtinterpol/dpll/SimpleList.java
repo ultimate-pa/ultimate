@@ -44,28 +44,29 @@ import java.util.Iterator;
  * @author hoenicke
  *
  */
-public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E> implements Iterable<E> {
+public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E>
+    implements Iterable<E> {
 	public SimpleList() {
-		next = prev = this;
+		mNext = mPrev = this;
 	}
 	
 	public boolean isEmpty() {
-		return next == this;
+		return mNext == this;
 	}
 	
 	public E removeFirst() {
-		SimpleListable<E> entry = next;
-		next = entry.next;
-		next.prev = this;
-		entry.next = entry.prev = null;
+		SimpleListable<E> entry = mNext;
+		mNext = entry.mNext;
+		mNext.mPrev = this;
+		entry.mNext = entry.mPrev = null;
 		return entry.getElem();			
 	}
 	
 	public E removeLast() {
-		SimpleListable<E> entry = prev;
-		prev = entry.prev;
-		prev.next = this;
-		entry.next = entry.prev = null;
+		SimpleListable<E> entry = mPrev;
+		mPrev = entry.mPrev;
+		mPrev.mNext = this;
+		entry.mNext = entry.mPrev = null;
 		return entry.getElem();			
 	}
 	
@@ -76,23 +77,23 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E> i
 	 * @param entry Entry to remove.
 	 */
 	public void prepareRemove(E entry) {
-		if (next == entry) {
-			if (prev == entry)
-				next = prev = this;
+		if (mNext == entry) {
+			if (mPrev == entry)
+				mNext = mPrev = this;
 			else
-				next = entry.next;
-		} else if (prev == entry)
-			prev = entry.prev;
+				mNext = entry.mNext;
+		} else if (mPrev == entry)
+			mPrev = entry.mPrev;
 	}
 	
 	/**
 	 * Append an entry to the end of the list.  
 	 */
 	public void append(E entry) {
-		assert (prev.next == this);
-		entry.prev = prev;
-		entry.next = this;
-		this.prev = prev.next = entry;
+		assert (mPrev.mNext == this);
+		entry.mPrev = mPrev;
+		entry.mNext = this;
+		this.mPrev = mPrev.mNext = entry;
 	}
 
 	/**
@@ -100,11 +101,11 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E> i
 	 * @param entry the element to prepend.
 	 */
 	public void prepend(E entry) {
-		assert (next.prev == this);
-		entry.next = next;
-		entry.prev = this;
-		next.prev = entry;
-		next = entry;
+		assert (mNext.mPrev == this);
+		entry.mNext = mNext;
+		entry.mPrev = this;
+		mNext.mPrev = entry;
+		mNext = entry;
 	}
 
 	/**
@@ -116,7 +117,19 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E> i
 	 * @param entry the element to prepend.
 	 */
 	public void prependIntoJoined(E entry, boolean isLast) {
-		if (entry.next != null) {
+		if (entry.mNext == null) {
+			if (this != mNext || isLast) { // NOPMD
+				/* only if list is not empty or in the last step, 
+				 * we can set entry.next */
+				entry.mNext = mNext;
+				entry.mPrev = mNext.mPrev;
+				if (mNext.mPrev != this)
+					mNext.mPrev.mNext = entry;
+			}
+			/* link entry into the list */
+			mNext.mPrev = entry;
+			mNext = entry;
+		} else {
 			/* The entry was already added in a previous call to a non-empty
 			 * list.  Since the remaining lists have been joined with the list,
 			 * they contain the element entry.next.  
@@ -125,20 +138,8 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E> i
 			 * entry.next.prev.  However, if the list starts with entry.next
 			 * we still have to add entry to the list.
 			 */
-			if (next == entry.next)
-				next = entry;
-		} else {
-			if (this != next || isLast) {
-				/* only if list is not empty or in the last step, 
-				 * we can set entry.next */
-				entry.next = next;
-				entry.prev = next.prev;
-				if (next.prev != this)
-					next.prev.next = entry;
-			}
-			/* link entry into the list */
-			next.prev = entry;
-			next = entry;
+			if (mNext == entry.mNext)
+				mNext = entry;
 		}
 	}
 
@@ -148,13 +149,13 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E> i
 	 */
 	public void moveAll(SimpleList<E> source) {
 		/* If source is empty this is a no-op */
-		if (source.next == source)
+		if (source.mNext == source)
 			return;
-		source.next.prev = this.prev;
-		source.prev.next = this;
-		this.prev.next = source.next;
-		this.prev = source.prev;
-		source.next = source.prev = source;
+		source.mNext.mPrev = this.mPrev;
+		source.mPrev.mNext = this;
+		this.mPrev.mNext = source.mNext;
+		this.mPrev = source.mPrev;
+		source.mNext = source.mPrev = source;
 	}
 	
 	/**
@@ -166,14 +167,14 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E> i
 	 */
 	public void joinList(SimpleList<E> source) {
 		/* If source is empty this is a no-op */
-		if (source.next == source)
+		if (source.mNext == source)
 			return;
 		/* Otherwise concatenate the lists.
 		 * Do not change the source list head, so that unjoin works. */
-		prev.next = source.next;
-		source.next.prev = prev;
-		prev = source.prev;
-		prev.next = this;
+		mPrev.mNext = source.mNext;
+		source.mNext.mPrev = mPrev;
+		mPrev = source.mPrev;
+		mPrev.mNext = this;
 	}
 	
 	/**
@@ -187,33 +188,33 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E> i
 		 * of the source list.
 		 */
 		// Unlink source list from this list.
-		source.prev.next.prev = source.next.prev;
-		source.next.prev.next = source.prev.next;
+		source.mPrev.mNext.mPrev = source.mNext.mPrev;
+		source.mNext.mPrev.mNext = source.mPrev.mNext;
 		// And link it to source.
-		source.next.prev = source;
-		source.prev.next = source;
+		source.mNext.mPrev = source;
+		source.mPrev.mNext = source;
 	}
 	
 	public Iterator<E> iterator() {
 		return new Iterator<E>() {
-			SimpleListable<E> cur = SimpleList.this;
-			SimpleListable<E> prev = null;
+			SimpleListable<E> mCur = SimpleList.this;
+			SimpleListable<E> mPrev = null;
 			public boolean hasNext() {
-				return cur != SimpleList.this.prev;
+				return mCur != SimpleList.this.mPrev;
 			}
 			public E next() {
-				prev = cur;
-				cur = cur.next;
-				return cur.getElem();
+				mPrev = mCur;
+				mCur = mCur.mNext;
+				return mCur.getElem();
 			}
 			public void remove() {
-				assert (prev != null);
-				prev.next = cur.next;
-				cur.next.prev = prev;
-				cur.next = null;
-				cur.prev = null;
-				cur = prev;
-				prev = null;
+				assert (mPrev != null);
+				mPrev.mNext = mCur.mNext;
+				mCur.mNext.mPrev = mPrev;
+				mCur.mNext = null;
+				mCur.mPrev = null;
+				mCur = mPrev;
+				mPrev = null;
 			}
 		};
 	}
@@ -222,18 +223,18 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E> i
 		return new Iterable<E>() {
 			public Iterator<E> iterator() {
 				return new Iterator<E>() {
-					SimpleListable<E> cur = SimpleList.this.prev;
+					SimpleListable<E> mCur = SimpleList.this.mPrev;
 					public boolean hasNext() {
-						return cur != SimpleList.this;
+						return mCur != SimpleList.this;
 					}
 					public E next() {
-						E data = cur.getElem();
-						cur = cur.prev;
+						E data = mCur.getElem();
+						mCur = mCur.mPrev;
 						return data;
 					}
 					public void remove() {
-						cur.next = cur.next.next;
-						cur.next.prev = cur;
+						mCur.mNext = mCur.mNext.mNext;
+						mCur.mNext.mPrev = mCur;
 					}
 				};
 			}
@@ -244,56 +245,56 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E> i
 	 * Remove all elements from this list.
 	 */
 	public void clear() {
-		next = prev = this;
+		mNext = mPrev = this;
 	}
 	
 	public boolean wellformed() {
-		if (next.prev != this) {
+		if (mNext.mPrev != this) {
 			System.err.println("Not in this list!!!!");
 			return false;
 		}
-		SimpleListable<E> entry = next;
+		SimpleListable<E> entry = mNext;
 		while (!(entry instanceof SimpleList<?>)) {
-			if (entry.next.prev != entry) {
+			if (entry.mNext.mPrev != entry) {
 				System.err.println("Wrong links!!!!");
 				return false;
 			}
-			entry = entry.next;
+			entry = entry.mNext;
 		}
 		return entry == this;
 	}
 
 	public boolean wellformedPart() {
-		SimpleListable<E> entry = next;
-		while (entry != prev) {
+		SimpleListable<E> entry = mNext;
+		while (entry != mPrev) {
 			if (entry instanceof SimpleList<?>)
 				return false;
-			if (entry.next.prev != entry)
+			if (entry.mNext.mPrev != entry)
 				return false;
-			entry = entry.next;
+			entry = entry.mNext;
 		}
 		return true;
 	}
 	
 	public boolean contains(E elem) {
-		SimpleListable<E> entry = next;
+		SimpleListable<E> entry = mNext;
 		while (entry != this) {
 			if (entry.getElem().equals(elem))
 				return true;
-			entry = entry.next;
+			entry = entry.mNext;
 		}
 		return false;
 	}
 	
 	public String toString() {
-		if (next == this)
+		if (mNext == this)
 			return "[]";
 		StringBuilder sb = new StringBuilder();
-		if (next.prev != this)
+		if (mNext.mPrev != this)
 			sb.append("~");
 		sb.append("[");
 		SimpleListable<E> entry;
-		for (entry = next; entry != prev; entry = entry.next) {
+		for (entry = mNext; entry != mPrev; entry = entry.mNext) {
 			sb.append(entry).append(",");
 		}
 		sb.append(entry);
@@ -303,11 +304,11 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E> i
 
 	public SimpleList<E> cloneJoinedList() {
 		SimpleList<E> clonedList = new SimpleList<E>();
-		clonedList.next = this.next;
-		clonedList.prev = this.prev;
-		if (this.next.prev == this) {
-			this.next.prev = clonedList;
-			this.prev.next = clonedList;
+		clonedList.mNext = this.mNext;
+		clonedList.mPrev = this.mPrev;
+		if (this.mNext.mPrev == this) {
+			this.mNext.mPrev = clonedList;
+			this.mPrev.mNext = clonedList;
 		}
 		return clonedList;
 	}

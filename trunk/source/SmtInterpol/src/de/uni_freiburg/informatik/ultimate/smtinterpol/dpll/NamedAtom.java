@@ -25,30 +25,30 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 
 public class NamedAtom extends DPLLAtom {
-	public final static Annotation[] g_quoted = new Annotation[] {
+	public final static Annotation[] QUOTED = new Annotation[] {
 		new Annotation(":quoted", null)
 	};
-	final Term smtAtom;
+	final Term mSmtAtom;
 	
 	public NamedAtom(Term smtAtom, int assertionstacklevel) {
 		super(smtAtom.hashCode(), assertionstacklevel);
-		this.smtAtom = SMTAffineTerm.cleanup(smtAtom);
+		this.mSmtAtom = SMTAffineTerm.cleanup(smtAtom);
 	}
 	
 	public String toString() {
-		return smtAtom.toString();
+		return mSmtAtom.toString();
 	}
 
 	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
-		return quoted ? smtTheory.annotatedTerm(g_quoted, smtAtom) : smtAtom; 
+		return quoted ? smtTheory.annotatedTerm(QUOTED, mSmtAtom) : mSmtAtom; 
 	}
 	
 	public int containsTerm(TermVariable tv) {
 		return 0;
 	}
 	
-	public boolean equals(Object other) {
-		return other instanceof NamedAtom &&
-			((NamedAtom) other).smtAtom == smtAtom;
+	public boolean equals(Object other) { // NOCHECKSTYLE see Literal.hashCode()
+		return other instanceof NamedAtom
+			&& ((NamedAtom) other).mSmtAtom == mSmtAtom;
 	}
 }

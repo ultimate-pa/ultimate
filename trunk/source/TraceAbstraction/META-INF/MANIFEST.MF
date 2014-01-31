@@ -10,7 +10,7 @@ Require-Bundle: Library-log4j,
  Library-UltimateUtil,
  UltimateCore,
  NestedWordAutomata,
- SmtInterpol,
+ SMTInterpol,
  RCFGBuilder,
  SMTSolverBridge
 Bundle-ActivationPolicy: lazy

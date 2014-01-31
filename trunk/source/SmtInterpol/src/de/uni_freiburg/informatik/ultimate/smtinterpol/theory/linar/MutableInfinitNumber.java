@@ -35,33 +35,33 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
  */
 public class MutableInfinitNumber implements Comparable<MutableInfinitNumber> {
 	// Real part
-	MutableRational ma;
+	MutableRational mA;
 	// Infinitesimal part
-	int meps;
+	int mEps;
 	/// --- Construction ---
 	public MutableInfinitNumber() {
 		this(Rational.ZERO,0);
 	}
 	public MutableInfinitNumber(Rational a, int eps) {
-		ma = new MutableRational(a);
-		meps = eps;
+		mA = new MutableRational(a);
+		mEps = eps;
 	}
 	public MutableInfinitNumber(InfinitNumber other) {
-		ma = new MutableRational(other.ma);
-		meps = other.meps;
+		mA = new MutableRational(other.mA);
+		mEps = other.mEps;
 	}
 	public MutableInfinitNumber(MutableInfinitNumber other) {
-		ma = new MutableRational(other.ma);
-		meps = other.meps;
+		mA = new MutableRational(other.mA);
+		mEps = other.mEps;
 	}
 	MutableInfinitNumber assign(MutableInfinitNumber other) {
-		ma = new MutableRational(other.ma);
-		meps = other.meps;
+		mA = new MutableRational(other.mA);
+		mEps = other.mEps;
 		return this;
 	}
 	MutableInfinitNumber assign(InfinitNumber other) {
-		ma = new MutableRational(other.ma);
-		meps = other.meps;
+		mA = new MutableRational(other.mA);
+		mEps = other.mEps;
 		return this;
 	}
 	/// --- Arithmetic ---
@@ -69,32 +69,32 @@ public class MutableInfinitNumber implements Comparable<MutableInfinitNumber> {
 	 * Returns this + other.
 	 */
 	public MutableInfinitNumber add(InfinitNumber other) {
-		ma.add(other.ma);
-		meps = InfinitNumber.normEpsilon(meps + other.meps);
+		mA.add(other.mA);
+		mEps = InfinitNumber.normEpsilon(mEps + other.mEps);
 		return this;
 	}
 	/**
 	 * Returns this - other.
 	 */
 	public MutableInfinitNumber sub(InfinitNumber other) {
-		ma.sub(other.ma);
-		meps = InfinitNumber.normEpsilon(meps - other.meps);
+		mA.sub(other.mA);
+		mEps = InfinitNumber.normEpsilon(mEps - other.mEps);
 		return this;
 	}
 	/**
 	 * Returns c*this.
 	 */
 	public MutableInfinitNumber mul(Rational c) {
-		ma.mul(c);
-		meps *= c.signum();
+		mA.mul(c);
+		mEps *= c.signum();
 		return this;
 	}
 	/**
 	 * Returns this/c.
 	 */
 	public MutableInfinitNumber div(Rational c) {
-		ma.div(c);
-		meps *= c.signum();
+		mA.div(c);
+		mEps *= c.signum();
 		return this;
 	}
 	/**
@@ -104,8 +104,8 @@ public class MutableInfinitNumber implements Comparable<MutableInfinitNumber> {
 	 * @return
 	 */
 	public MutableInfinitNumber addmul(InfinitNumber fac1,Rational fac2) {
-		ma.addmul(fac1.ma,fac2);
-		meps = InfinitNumber.normEpsilon(meps + fac1.meps * fac2.signum());
+		mA.addmul(fac1.mA,fac2);
+		mEps = InfinitNumber.normEpsilon(mEps + fac1.mEps * fac2.signum());
 		return this;
 	}
 	/**
@@ -115,8 +115,8 @@ public class MutableInfinitNumber implements Comparable<MutableInfinitNumber> {
 	 * @return
 	 */
 	public MutableInfinitNumber addmul(InfinitNumber fac1,BigInteger fac2) {
-		ma.addmul(fac1.ma,fac2);
-		meps = InfinitNumber.normEpsilon(meps + fac1.meps * fac2.signum());
+		mA.addmul(fac1.mA,fac2);
+		mEps = InfinitNumber.normEpsilon(mEps + fac1.mEps * fac2.signum());
 		return this;
 	}
 	/**
@@ -126,49 +126,49 @@ public class MutableInfinitNumber implements Comparable<MutableInfinitNumber> {
 	 * @return
 	 */
 	public MutableInfinitNumber subdiv(InfinitNumber s,Rational d) {
-		ma.subdiv(s.ma,d);
-		meps = InfinitNumber.normEpsilon(meps - s.meps)*d.signum();
+		mA.subdiv(s.mA,d);
+		mEps = InfinitNumber.normEpsilon(mEps - s.mEps) * d.signum();
 		return this;
 	}
 	public MutableInfinitNumber negate() {
-		ma.negate();
-		meps = -meps;
+		mA.negate();
+		mEps = -mEps;
 		return this;
 	}
 	/// --- Comparing ---
 	@Override
 	public int compareTo(MutableInfinitNumber arg0) {
-		int ac = ma.compareTo(arg0.ma);
-		if( ac == 0 )
-			return meps - arg0.meps;
+		int ac = mA.compareTo(arg0.mA);
+		if (ac == 0)
+			return mEps - arg0.mEps;
 		return ac;
 	}
 	public boolean equals(Object o) {
-		if( o instanceof InfinitNumber ) {
+		if (o instanceof InfinitNumber) {
 			InfinitNumber n = (InfinitNumber)o;
-			return ma.equals(n.ma) && meps == n.meps;
+			return mA.equals(n.mA) && mEps == n.mEps;
 		}
-		if( o instanceof MutableInfinitNumber ) {
+		if (o instanceof MutableInfinitNumber) {
 			MutableInfinitNumber n = (MutableInfinitNumber) o;
-			return ma.equals(n.ma) && meps == n.meps;
+			return mA.equals(n.mA) && mEps == n.mEps;
 		}
 		return false;
 	}
 	public int hashCode() {
-		return ma.hashCode() + 257 * meps;
+		return mA.hashCode() + 257 * mEps;
 	}
 	/// --- Checks ---
 	public boolean isInfinity() {
-		return ma.equals(Rational.POSITIVE_INFINITY) || ma.equals(Rational.NEGATIVE_INFINITY);
+		return mA.equals(Rational.POSITIVE_INFINITY) || mA.equals(Rational.NEGATIVE_INFINITY);
 	}
 	
 	public String toString() {
-		if (meps == 0)
-			return ma.toString();
-		return ma + (meps > 0 ? "+" : "-") + "eps";
+		if (mEps == 0)
+			return mA.toString();
+		return mA + (mEps > 0 ? "+" : "-") + "eps";
 	}
 
 	public InfinitNumber toInfinitNumber() {
-		return new InfinitNumber(ma.toRational(),meps);
+		return new InfinitNumber(mA.toRational(),mEps);
 	}
 }

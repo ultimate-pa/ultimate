@@ -9,10 +9,10 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: Library-log4j,
  Library-SMTLIB,
  UltimateCore,
- SmtInterpol,
+ SMTInterpol,
  SMTSolverBridge,
  Library-ModelCheckerUtils,
- RCFGBuilder 
+ RCFGBuilder
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.templates

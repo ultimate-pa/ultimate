@@ -36,52 +36,48 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.BooleanVarAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ITheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CClosure;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.QuantifierTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinArSolve;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Coercion;
 
 public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 	
-	private HashMap<Sort, SortInterpretation> m_Sorts =
+	private final HashMap<Sort, SortInterpretation> mSorts =
 		new HashMap<Sort, SortInterpretation>();
 	
-	private HashMap<FunctionSymbol, ExecTerm> m_FuncVals =
+	private final HashMap<FunctionSymbol, ExecTerm> mFuncVals =
 		new HashMap<FunctionSymbol, ExecTerm>();
 	
-	private Theory m_Theory;
+	private final Theory mTheory;
 	
-	private ModelEvaluator m_Eval;
+	private final ModelEvaluator mEval;
 	
-	private FormulaUnLet m_Unlet = new FormulaUnLet(
+	private final FormulaUnLet mUnlet = new FormulaUnLet(
 			FormulaUnLet.UnletType.EXPAND_DEFINITIONS);
 	
-	private boolean m_PartialModels;
+	private final boolean mPartialModels;
 	
 	public Model(Clausifier clausifier, Theory t, boolean partial) {
-		m_Theory = t;
-		m_PartialModels = partial;
+		mTheory = t;
+		mPartialModels = partial;
 		// Extract Boolean model
-		Value trueValue = new Value(t.TRUE);
-		Value falseValue = new Value(t.FALSE);
+		Value trueValue = new Value(t.mTrue);
+		Value falseValue = new Value(t.mFalse);
 		for (BooleanVarAtom atom : clausifier.getBooleanVars()) {
 			ApplicationTerm at = (ApplicationTerm) atom.getSMTFormula(t);
 			Value value;
-			if (atom.getDecideStatus() != null)
-				value = atom.getDecideStatus() == atom ? trueValue : falseValue;
+			if (atom.getDecideStatus() == null)
+				value = atom.getPreferredStatus() == atom 
+						? trueValue : falseValue;
 			else
-				value = atom.getPreferredStatus() == atom ? 
-						trueValue : falseValue;
-			m_FuncVals.put(at.getFunction(), value);
+				value = atom.getDecideStatus() == atom ? trueValue : falseValue;
+			mFuncVals.put(at.getFunction(), value);
 		}
 		// Extract different theories
 		CClosure cc = clausifier.getCClosure();
 		LinArSolve la = null;
-		QuantifierTheory qf = null;
 		for (ITheory theory : clausifier.getEngine().getAttachedTheories()) {
 			if (theory instanceof LinArSolve)
 				la = (LinArSolve) theory;
-			else if (theory instanceof QuantifierTheory)
-				qf = (QuantifierTheory) theory;
 			else if (theory != cc)
 				throw new InternalError(
 					"Modelproduction for theory not implemented: " + theory);
@@ -91,21 +87,19 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 			la.fillInModel(this, t, ste);
 		if (cc != null)
 			cc.fillInModel(this, t, ste);
-		if (qf != null)
-			qf.fillInModel(this, t, ste);
-		m_Eval = new ModelEvaluator(this);
+		mEval = new ModelEvaluator(this);
 	}
 	
 	ExecTerm getDefault(ExecTerm term) {
-		if (m_PartialModels)
-			return new Undefined(term.toSMTLIB(m_Theory, null).getSort());
+		if (mPartialModels)
+			return new Undefined(term.toSMTLIB(mTheory, null).getSort());
 		return term;
 	}
 	
 	@Override
 	public Term evaluate(Term input) {
-		Term unletted = m_Unlet.unlet(input);
-		return m_Eval.evaluate(unletted);
+		Term unletted = mUnlet.unlet(input);
+		return mEval.evaluate(unletted);
 	}
 
 	@Override
@@ -119,7 +113,7 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 	public void extend(FunctionSymbol symb, ExecTerm value) {
 		assert(symb.getParameterSorts().length == 0);
 		extendSortInterpretation(symb.getReturnSort(), value);
-		if (!m_FuncVals.containsKey(symb)) {
+		if (!mFuncVals.containsKey(symb)) {
 			Term tmp = value.toSMTLIB(symb.getTheory(), null);
 			// LIRA hack needed here, too.
 			if (tmp.getSort() != symb.getReturnSort()) {
@@ -129,7 +123,7 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 				value = new Value(
 						((Rational) ct.getValue()).toTerm(symb.getReturnSort()));
 			}
-			m_FuncVals.put(symb, value);
+			mFuncVals.put(symb, value);
 		}
 //		else
 		// This assertion does not hold in LIRA logics since we might have to
@@ -143,19 +137,19 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		else {
 			value = coerce(value, symb.getReturnSort());
 			extendSortInterpretation(symb.getReturnSort(), value);
-			HashExecTerm het = (HashExecTerm) m_FuncVals.get(symb);
+			HashExecTerm het = (HashExecTerm) mFuncVals.get(symb);
 			if (het == null) {
 				het = new HashExecTerm(getDefault(value));
-				m_FuncVals.put(symb, het);
+				mFuncVals.put(symb, het);
 			}
 			het.extend(coerce(symb, args), value);
 		}
 	}
 	
 	private ExecTerm coerce(ExecTerm et, Sort expectedSort) {
-		Term t = et.toSMTLIB(m_Theory, null);
+		Term t = et.toSMTLIB(mTheory, null);
 		if (t.getSort() != expectedSort) {
-			assert m_Theory.getLogic().isIRA();
+			assert mTheory.getLogic().isIRA();
 			return new Value(Coercion.coerce(t, expectedSort));
 		}
 		return et;
@@ -175,32 +169,32 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		Term value = et.toSMTLIB(sort.getTheory(), null);
 		// Might be violated for internal sorts in LIRA logics 
 		assert (value.getSort() == sort);
-		SortInterpretation si = m_Sorts.get(sort);
+		SortInterpretation si = mSorts.get(sort);
 		if (si == null) {
 			si = new FiniteSortInterpretation();
-			m_Sorts.put(sort, si);
+			mSorts.put(sort, si);
 		}
 		si.extend(value);
 	}
 	
 	public String toString() {
 		ModelFormatter mf = new ModelFormatter();
-		if (!m_Sorts.isEmpty())
+		if (!mSorts.isEmpty())
 			mf.appendComment("Sort interpretations");
-		for (Map.Entry<Sort, SortInterpretation> me : m_Sorts.entrySet())
-			mf.appendSortInterpretation(me.getValue(), me.getKey(), m_Theory);
+		for (Map.Entry<Sort, SortInterpretation> me : mSorts.entrySet())
+			mf.appendSortInterpretation(me.getValue(), me.getKey(), mTheory);
 		// Only if we printed ";; Sort interpretations" we should print the
 		// delimiting comment ";; Function interpretations"
-		if (!m_Sorts.isEmpty())
+		if (!mSorts.isEmpty())
 			mf.appendComment("Function interpretations");
-		for (Map.Entry<FunctionSymbol, ExecTerm> me : m_FuncVals.entrySet())
+		for (Map.Entry<FunctionSymbol, ExecTerm> me : mFuncVals.entrySet())
 			if (!me.getKey().isIntern())
-				mf.appendValue(me.getKey(), me.getValue(), m_Theory);
+				mf.appendValue(me.getKey(), me.getValue(), mTheory);
 		return mf.finish();
 	}
 	
 	Theory getTheory() {
-		return m_Theory;
+		return mTheory;
 	}
 
 	public ExecTerm getValue(FunctionSymbol fun, ExecTerm[] args) {
@@ -210,23 +204,23 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 	}
 		
 	private ExecTerm evalExecTerm(FunctionSymbol fun, ExecTerm... args) {
-		ExecTerm et = m_FuncVals.get(fun);
+		ExecTerm et = mFuncVals.get(fun);
 		if (et == null) {
-			if (m_PartialModels)
+			if (mPartialModels)
 				return new Undefined(fun.getReturnSort());
 			// We have to dynamically adjust the model here...
 			Term value = null;
 			Sort returnSort = fun.getReturnSort();
 			// Internal sorts get a special value
 			if (returnSort.isInternal()) {
-				if (returnSort == m_Theory.getBooleanSort())
-					value = m_Theory.FALSE;
+				if (returnSort == mTheory.getBooleanSort())
+					value = mTheory.mFalse;
 				else if (returnSort.isNumericSort())
 					value = Rational.ZERO.toTerm(returnSort);
 				else
 					throw new InternalError();
 			} else {
-				SortInterpretation si = m_Sorts.get(returnSort);
+				SortInterpretation si = mSorts.get(returnSort);
 				/*
 				 * If we already have an interpretation for this sort, there is
 				 * no need to create a new value for this sort.  The function
@@ -241,8 +235,8 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 				if (value == null) {
 					Term[] targs = new Term[args.length];
 					for (int i = 0; i < args.length; ++i)
-						targs[i] = args[i].toSMTLIB(m_Theory, null);
-					value = m_Theory.term(fun, targs);
+						targs[i] = args[i].toSMTLIB(mTheory, null);
+					value = mTheory.term(fun, targs);
 				}
 			}
 			et = new Value(value);
@@ -254,35 +248,35 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 	
 	private final Rational rationalValue(ExecTerm t) {
 		assert (t instanceof Value);
-		return (Rational)((ConstantTerm) t.toSMTLIB(m_Theory, null)).getValue();
+		return (Rational)((ConstantTerm) t.toSMTLIB(mTheory, null)).getValue();
 	}
 	
 	private ExecTerm evalInternalFunction(FunctionSymbol fun, ExecTerm[] args) {
-		if (fun == m_Theory.TRUE.getFunction())
-			return new Value(m_Theory.TRUE);
-		if (fun == m_Theory.FALSE.getFunction())
-			return new Value(m_Theory.FALSE);
-		if (fun == m_Theory.m_And) {
+		if (fun == mTheory.mTrue.getFunction())
+			return new Value(mTheory.mTrue);
+		if (fun == mTheory.mFalse.getFunction())
+			return new Value(mTheory.mFalse);
+		if (fun == mTheory.mAnd) {
 			ExecTerm res = args[0];
 			for (ExecTerm arg : args) {
 				if (arg.isUndefined())
 					res = arg;
-				else if (arg.toSMTLIB(m_Theory, null) == m_Theory.FALSE)
+				else if (arg.toSMTLIB(mTheory, null) == mTheory.mFalse)
 					return arg;
-				assert (arg.isUndefined() || 
-						arg.toSMTLIB(m_Theory, null) == m_Theory.TRUE);
+				assert (arg.isUndefined() 
+						|| arg.toSMTLIB(mTheory, null) == mTheory.mTrue);
 			}
 			return res;
 		}
-		if (fun == m_Theory.m_Or) {
+		if (fun == mTheory.mOr) {
 			ExecTerm res = args[0];
 			for (ExecTerm arg : args) {
 				if (arg.isUndefined())
 					res = arg;
-				else if (arg.toSMTLIB(m_Theory, null) == m_Theory.TRUE)
+				else if (arg.toSMTLIB(mTheory, null) == mTheory.mTrue)
 					return arg;
-				assert (arg.isUndefined() ||
-						arg.toSMTLIB(m_Theory, null) == m_Theory.FALSE);
+				assert (arg.isUndefined()
+						|| arg.toSMTLIB(mTheory, null) == mTheory.mFalse);
 			}
 			return res;
 		}
@@ -290,31 +284,31 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		for (ExecTerm arg : args)
 			if (arg.isUndefined())
 				return new Undefined(fun.getReturnSort());
-		if (fun == m_Theory.m_Implies) {
-			Term val = args[0].toSMTLIB(m_Theory, null);
-			assert (val == m_Theory.TRUE || val == m_Theory.FALSE);
+		if (fun == mTheory.mImplies) {
+			Term val = args[0].toSMTLIB(mTheory, null);
+			assert (val == mTheory.mTrue || val == mTheory.mFalse);
 			for (int i = 1; i < args.length; ++i) {
-				Term argi = args[i].toSMTLIB(m_Theory, null);
-				assert(argi == m_Theory.TRUE || argi == m_Theory.FALSE);
-				val = val == m_Theory.FALSE ? m_Theory.TRUE : 
-					argi == m_Theory.TRUE ? m_Theory.TRUE : m_Theory.FALSE;
+				Term argi = args[i].toSMTLIB(mTheory, null);
+				assert(argi == mTheory.mTrue || argi == mTheory.mFalse);
+				val = val == mTheory.mFalse ? mTheory.mTrue
+					: argi == mTheory.mTrue ? mTheory.mTrue : mTheory.mFalse;
 			}
 			return new Value(val);
 		}
-		if (fun == m_Theory.m_Not) {
-			Term arg0 = args[0].toSMTLIB(m_Theory, null);
-			assert (args.length == 1 &&
-					(arg0 == m_Theory.TRUE || arg0 == m_Theory.FALSE));
+		if (fun == mTheory.mNot) {
+			Term arg0 = args[0].toSMTLIB(mTheory, null);
+			assert (args.length == 1
+					&& (arg0 == mTheory.mTrue || arg0 == mTheory.mFalse));
 			return new Value(
-					arg0 == m_Theory.TRUE ? m_Theory.FALSE : m_Theory.TRUE);
+					arg0 == mTheory.mTrue ? mTheory.mFalse : mTheory.mTrue);
 		}
-		if (fun == m_Theory.m_Xor) {
-			Term val = args[0].toSMTLIB(m_Theory, null);
-			assert(val == m_Theory.TRUE || val == m_Theory.FALSE);
+		if (fun == mTheory.mXor) {
+			Term val = args[0].toSMTLIB(mTheory, null);
+			assert(val == mTheory.mTrue || val == mTheory.mFalse);
 			for (int i = 1; i < args.length; ++i) {
-				Term argi = args[i].toSMTLIB(m_Theory, null);
-				assert(argi == m_Theory.TRUE || argi == m_Theory.FALSE);
-				val = argi != val ? m_Theory.TRUE : m_Theory.FALSE;
+				Term argi = args[i].toSMTLIB(mTheory, null);
+				assert(argi == mTheory.mTrue || argi == mTheory.mFalse);
+				val = argi == val ? mTheory.mFalse : mTheory.mTrue;
 			}
 			return new Value(val);
 		}
@@ -322,21 +316,21 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		if (name.equals("=")) {
 			for (int i = 1; i < args.length; ++i)
 				if (!args[i].equals(args[0]))
-					return new Value(m_Theory.FALSE);
-			return new Value(m_Theory.TRUE);
+					return new Value(mTheory.mFalse);
+			return new Value(mTheory.mTrue);
 		}
 		if (name.equals("distinct")) {
 			HashSet<ExecTerm> vals = new HashSet<ExecTerm>();
 			for (ExecTerm arg : args)
 				if (!vals.add(arg))
-					return new Value(m_Theory.FALSE);
-			return new Value(m_Theory.TRUE);
+					return new Value(mTheory.mFalse);
+			return new Value(mTheory.mTrue);
 		}
 		if (name.equals("ite")) {
-			assert(args.length == 3);
-			Term selector = args[0].toSMTLIB(m_Theory, null);
-			assert(selector == m_Theory.TRUE || selector == m_Theory.FALSE);
-			return selector == m_Theory.TRUE ? args[1] : args[2];
+			assert(args.length == 3);// NOCHECKSTYLE since ite has 3 parameters
+			Term selector = args[0].toSMTLIB(mTheory, null);
+			assert(selector == mTheory.mTrue || selector == mTheory.mFalse);
+			return selector == mTheory.mTrue ? args[1] : args[2];
 		}
 		if (name.equals("+")) {
 			Rational val = rationalValue(args[0]);
@@ -376,39 +370,39 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		}
 		if (name.equals("<=")) {
 			for (int i = 1; i < args.length; ++i) {
-				Rational arg1 = rationalValue(args[i-1]);
+				Rational arg1 = rationalValue(args[i - 1]);
 				Rational arg2 = rationalValue(args[i]);
 				if (arg1.compareTo(arg2) > 0)
-					return new Value(m_Theory.FALSE);
+					return new Value(mTheory.mFalse);
 			}
-			return new Value(m_Theory.TRUE);
+			return new Value(mTheory.mTrue);
 		}
 		if (name.equals("<")) {
 			for (int i = 1; i < args.length; ++i) {
-				Rational arg1 = rationalValue(args[i-1]);
+				Rational arg1 = rationalValue(args[i - 1]);
 				Rational arg2 = rationalValue(args[i]);
 				if (arg1.compareTo(arg2) >= 0)
-					return new Value(m_Theory.FALSE);
+					return new Value(mTheory.mFalse);
 			}
-			return new Value(m_Theory.TRUE);
+			return new Value(mTheory.mTrue);
 		}
 		if (name.equals(">=")) {
 			for (int i = 1; i < args.length; ++i) {
-				Rational arg1 = rationalValue(args[i-1]);
+				Rational arg1 = rationalValue(args[i - 1]);
 				Rational arg2 = rationalValue(args[i]);
 				if (arg1.compareTo(arg2) < 0)
-					return new Value(m_Theory.FALSE);
+					return new Value(mTheory.mFalse);
 			}
-			return new Value(m_Theory.TRUE);
+			return new Value(mTheory.mTrue);
 		}
 		if (name.equals(">")) {
 			for (int i = 1; i < args.length; ++i) {
-				Rational arg1 = rationalValue(args[i-1]);
+				Rational arg1 = rationalValue(args[i - 1]);
 				Rational arg2 = rationalValue(args[i]);
 				if (arg1.compareTo(arg2) <= 0)
-					return new Value(m_Theory.FALSE);
+					return new Value(mTheory.mFalse);
 			}
-			return new Value(m_Theory.TRUE);
+			return new Value(mTheory.mTrue);
 		}
 		if (name.equals("div")) {
 			// From the standard...
@@ -429,13 +423,13 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		}
 		if (name.equals("mod")) {
 			assert(args.length == 2);
-			Rational m = rationalValue(args[0]);
 			Rational n = rationalValue(args[1]);
 			if (n.equals(Rational.ZERO))
 				return evalExecTerm(
 						fun.getTheory().getFunction(
 								"@mod0", fun.getReturnSort()),
 								args[0]);
+			Rational m = rationalValue(args[0]);
 			Rational div = m.div(n);
 			div = n.isNegative() ? div.ceil() : div.floor();
 			return new Value(m.sub(div.mul(n)).toTerm(fun.getReturnSort()));
@@ -451,8 +445,8 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 			BigInteger[] indices = fun.getIndices();
 			assert(indices.length == 1);
 			Rational rdiv = Rational.valueOf(indices[0], BigInteger.ONE);
-			return arg.div(rdiv).isIntegral() ? 
-					new Value(m_Theory.TRUE) : new Value(m_Theory.FALSE);
+			return arg.div(rdiv).isIntegral()
+					? new Value(mTheory.mTrue) : new Value(mTheory.mFalse);
 		}
 		if (name.equals("to_int")) {
 			assert (args.length == 1);
@@ -467,8 +461,8 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		if (name.equals("is_int")) {
 			assert (args.length == 1);
 			Rational arg = rationalValue(args[0]);
-			return arg.isIntegral() ? 
-					new Value(m_Theory.TRUE) : new Value(m_Theory.FALSE);
+			return arg.isIntegral()
+					? new Value(mTheory.mTrue) : new Value(mTheory.mFalse);
 		}
 		if (name.equals("@/0") || name.equals("@div0") || name.equals("@mod0"))
 			return evalExecTerm(fun, args);
@@ -477,11 +471,11 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 
 	@Override
 	public Term constrainBySort(Term input) {
-		SortInterpretation si = m_Sorts.get(input.getSort());
+		SortInterpretation si = mSorts.get(input.getSort());
 		if (si != null)
-			return si.constrain(m_Theory, input);
+			return si.constrain(mTheory, input);
 		// No constraint on this sort.
-		return m_Theory.TRUE;
+		return mTheory.mTrue;
 	}
 
 }

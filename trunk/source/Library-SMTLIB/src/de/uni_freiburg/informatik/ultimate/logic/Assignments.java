@@ -37,46 +37,46 @@ public class Assignments {
 		/**
 		 * The value we want to filter.
 		 */
-		private Boolean m_TruthVal;
+		private final Boolean mTruthVal;
 		/**
 		 * The filtered iterator.
 		 */
-		private Iterator<Map.Entry<String, Boolean>> m_It;
+		private final Iterator<Map.Entry<String, Boolean>> mIt;
 		/**
 		 * The next value to return.
 		 */
-		private String m_NextVal;
+		private String mNextVal;
 		/**
 		 * Initialize the filter iterator.
 		 * @param truthVal
 		 */
 		public TruthIterator(Boolean truthVal) {
-			m_TruthVal = truthVal;
-			m_It = Assignments.this.m_Assignment.entrySet().iterator();
+			mTruthVal = truthVal;
+			mIt = Assignments.this.mAssignment.entrySet().iterator();
 			nextVal();
 		}
 		/**
 		 * Search for the next value to return.
 		 */
 		private void nextVal() {			
-			while (m_It.hasNext()) {
-				Map.Entry<String, Boolean> me = m_It.next();
-				if (me.getValue() == m_TruthVal) {
-					m_NextVal = me.getKey();
+			while (mIt.hasNext()) {
+				Map.Entry<String, Boolean> me = mIt.next();
+				if (me.getValue() == mTruthVal) {
+					mNextVal = me.getKey();
 					return;
 				}
 			}
-			m_NextVal = null;
+			mNextVal = null;
 		}
 		
 		@Override
 		public boolean hasNext() {
-			return m_NextVal != null;
+			return mNextVal != null;
 		}
 
 		@Override
 		public String next() {
-			String val = m_NextVal;
+			String val = mNextVal;
 			if (val == null)
 				throw new NoSuchElementException();
 			nextVal();
@@ -92,17 +92,17 @@ public class Assignments {
 	/**
 	 * Store the assignment.
 	 */
-	private Map<String, Boolean> m_Assignment;
+	private final Map<String, Boolean> mAssignment;
 	/**
 	 * The number of labels assigned to true.  This is lazily computed.
 	 */
-	private int m_NumTrue = -1;
+	private int mNumTrue = -1;
 	/**
 	 * Construct a new assignment.
 	 * @param assignment Map containing the assignments extracted by the solver.
 	 */
 	public Assignments(Map<String, Boolean> assignment) {
-		m_Assignment = assignment;
+		mAssignment = assignment;
 	}
 	/**
 	 * Get the assignment of a named Boolean term.
@@ -110,12 +110,12 @@ public class Assignments {
 	 * @return Truth value assigned to the corresponding named Boolean term.
 	 */
 	public Boolean getAssignment(String label) {
-		return m_Assignment.get(label);
+		return mAssignment.get(label);
 	}
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append('(');
-		for (Map.Entry<String, Boolean> me : m_Assignment.entrySet()) {
+		for (Map.Entry<String, Boolean> me : mAssignment.entrySet()) {
 			sb.append('(').append(me.getKey()).append(' ').
 				append(me.getValue()).append(')');
 		}
@@ -155,20 +155,20 @@ public class Assignments {
 	 * @return Number of labels assigned to true.
 	 */
 	public int getNumTrueAssignments() {
-		if (m_NumTrue == -1) {
-			m_NumTrue = 0;
-			for (Map.Entry<String, Boolean> me : m_Assignment.entrySet()) {
+		if (mNumTrue == -1) {
+			mNumTrue = 0;
+			for (Map.Entry<String, Boolean> me : mAssignment.entrySet()) {
 				if (me.getValue() == Boolean.TRUE)
-					++m_NumTrue;
+					++mNumTrue;
 			}
 		}
-		return m_NumTrue;
+		return mNumTrue;
 	}
 	/**
 	 * Get the number of labels assigned to false.
 	 * @return Number of labels assigned to false.
 	 */
 	public int getNumFalseAssignments() {
-		return m_Assignment.size() - getNumTrueAssignments();
+		return mAssignment.size() - getNumTrueAssignments();
 	}
 }

@@ -22,7 +22,7 @@ import java.math.BigInteger;
 
 /**
  * Represents a function symbol.  Each function symbol has a name, a sort and
- * zero or more parameter sorts.  A constant symbol is represented as a function 
+ * zero or more parameter sorts.  A constant symbol is represented as a function
  * symbols with zero parameters.
  * 
  * For parametric functions we create a different FunctionSymbol for every 
@@ -34,47 +34,46 @@ public class FunctionSymbol {
 	public static final int INTERNAL   = 1;
 	public static final int LEFTASSOC  = (1) << 1;
 	public static final int RIGHTASSOC = (2) << 1;
-	public static final int CHAINABLE  = (3) << 1;
-	public static final int PAIRWISE   = (4) << 1;
-	public static final int ASSOCMASK  = (7) << 1;
+	public static final int CHAINABLE  = (3) << 1;// NOCHECKSTYLE
+	public static final int PAIRWISE   = (4) << 1;// NOCHECKSTYLE
+	public static final int ASSOCMASK  = (7) << 1;// NOCHECKSTYLE
 
 	public static final int RETURNOVERLOAD = 16;
 
-	final String m_Name;
-	final BigInteger[] m_Indices;
-	final Sort[] m_ParamSort;
-	final Sort m_ReturnSort;
-	final int m_Flags;
-	final TermVariable[] m_DefinitionVars;
-	final Term m_Definition;
+	final String mName;
+	final BigInteger[] mIndices;
+	final Sort[] mParamSort;
+	final Sort mReturnSort;
+	final int mFlags;
+	final TermVariable[] mDefinitionVars;
+	final Term mDefinition;
 	
-	FunctionSymbol(String n, BigInteger[] i, Sort[] params, Sort result, TermVariable[] definitionVars,
-			       Term definition,
-			       int flags) {
-		m_Name = n;
-		m_Indices = i;
-		m_ParamSort = params;
-		m_ReturnSort = result;
-		this.m_Flags = flags;
-		this.m_Definition = definition;
-		this.m_DefinitionVars = definitionVars;
-		if (isLeftAssoc() && 
-				(params.length != 2 || !params[0].equalsSort(result)))
-			throw new IllegalArgumentException
-				("Wrong sorts for left-associative symbol");
-		if (isRightAssoc() && 
-				(params.length != 2 || !params[1].equalsSort(result)))
-			throw new IllegalArgumentException
-				("Wrong sorts for right-associative symbol");
-		if ((isChainable() || isPairwise()) && 
-				(params.length != 2 || !params[0].equalsSort(params[1]) ||
-                   	!result.equalsSort(getTheory().getBooleanSort())))
-			throw new IllegalArgumentException
-				("Wrong sorts for chainable symbol");
+	FunctionSymbol(String n, BigInteger[] i, Sort[] params, Sort result,
+			TermVariable[] definitionVars, Term definition, int flags) {
+		mName = n;
+		mIndices = i;
+		mParamSort = params;
+		mReturnSort = result;
+		this.mFlags = flags;
+		this.mDefinition = definition;
+		this.mDefinitionVars = definitionVars;
+		if (isLeftAssoc() 
+				&& (params.length != 2 || !params[0].equalsSort(result)))
+			throw new IllegalArgumentException(
+					"Wrong sorts for left-associative symbol");
+		if (isRightAssoc() 
+				&& (params.length != 2 || !params[1].equalsSort(result)))
+			throw new IllegalArgumentException(
+					"Wrong sorts for right-associative symbol");
+		if ((isChainable() || isPairwise())
+				&& (params.length != 2 || !params[0].equalsSort(params[1])
+                   	|| !result.equalsSort(getTheory().getBooleanSort())))
+			throw new IllegalArgumentException(
+					"Wrong sorts for chainable symbol");
 	}
 	
 	public int hashCode() {
-		return m_Name.hashCode();
+		return mName.hashCode();
 	}
 	
 	/**
@@ -85,11 +84,11 @@ public class FunctionSymbol {
 	 * @return the name of the function.
 	 */
 	public String getName() {
-		return m_Name;
+		return mName;
 	}
 	
 	public BigInteger[] getIndices() {
-		return m_Indices;
+		return mIndices;
 	}
 	/**
 	 * Check whether this function symbol is created by the solver.  Symbols
@@ -99,36 +98,36 @@ public class FunctionSymbol {
 	 * @return true if and only if the function symbol was flagged as internal.
 	 */
 	public boolean isIntern() {
-		return (m_Flags & INTERNAL) != 0;
+		return (mFlags & INTERNAL) != 0;
 	}
 	
 	public Theory getTheory() {
-		return m_ReturnSort.m_Symbol.m_Theory;
+		return mReturnSort.mSymbol.mTheory;
 	}
 	
 	/**
 	 * @deprecated use getParamterSorts().length 
 	 */
 	public int getParameterCount() {
-		return m_ParamSort.length;
+		return mParamSort.length;
 	}
 	
 	/**
 	 * @deprecated use getParamterSorts()[i] 
 	 */
 	public Sort getParameterSort(int i) {
-		return m_ParamSort[i];
+		return mParamSort[i];
 	}
 	/**
 	 * Retrieve the variables used in the definition of this function symbol.
-	 * A definition only exists if the function symbol is a macro created by the 
+	 * A definition only exists if the function symbol is a macro created by the
 	 * {@link Script#defineFun(String, TermVariable[], Sort, Term) define-fun}
 	 * command or a <code>:named</code> annotation.
 	 * @return The variables used in the definition of this function symbol or 
 	 *         <code>null</code> if this function symbol is not a macro.
 	 */
 	public TermVariable[] getDefinitionVars() {
-		return m_DefinitionVars;
+		return mDefinitionVars;
 	}
 	/**
 	 * Retrieve the definition of this function symbol.  A definition only
@@ -139,7 +138,7 @@ public class FunctionSymbol {
 	 *         this function symbol is not a macro.
 	 */
 	public Term getDefinition() {
-		return m_Definition;
+		return mDefinition;
 	}
 	
 	/**
@@ -147,7 +146,7 @@ public class FunctionSymbol {
 	 * @return the return sort.
 	 */
 	public Sort getReturnSort() {
-		return m_ReturnSort;
+		return mReturnSort;
 	}
 	
 	/**
@@ -155,21 +154,19 @@ public class FunctionSymbol {
 	 * @return An array with the parameter sorts.  Never write to this array!
 	 */
 	public Sort[] getParameterSorts() {
-		return m_ParamSort;
+		return mParamSort;
 	}
 	
-	private final void checkSort(Term arg, Sort sort, boolean mixRealInt)
-		throws SMTLIBException
-	{
+	private final void checkSort(Term arg, Sort sort, boolean mixRealInt) {
 		Sort argSort = arg.getSort();
 		if (!sort.equalsSort(argSort)) {
 			if (argSort.toString().equals(sort.toString()))
-				throw new SMTLIBException
-					("Argument "+arg+" comes from wrong theory.");
+				throw new SMTLIBException(
+						"Argument " + arg + " comes from wrong theory.");
 			else if (!mixRealInt || !argSort.getName().equals("Int"))
-				throw new SMTLIBException
-					("Argument "+arg+" has type "+argSort+
-					 " but function "+m_Name+" expects "+sort);
+				throw new SMTLIBException(
+						"Argument " + arg + " has type " + argSort
+						+ " but function " + mName + " expects " + sort);
 		}
 	}
 	
@@ -178,31 +175,31 @@ public class FunctionSymbol {
 	 * This throws an exception if the type check fails.
 	 * @param params the arguments for the function symbols.
 	 */
-	public void typecheck(Term[] params) throws SMTLIBException
-	{
+	public void typecheck(Term[] params) throws SMTLIBException {
 		boolean mixRealInt = false;
 		if (getTheory().getLogic() != null && getTheory().getLogic().isIRA()
-			&& m_ParamSort.length == 2
-			&& m_ParamSort[0] == m_ParamSort[1]
-			&& m_ParamSort[0] == getTheory().getSort("Real"))
+			&& mParamSort.length == 2
+			&& mParamSort[0] == mParamSort[1]
+			&& mParamSort[0] == getTheory().getSort("Real"))
 			mixRealInt = true;
-		if ((m_Flags & (ASSOCMASK)) != 0) {
+		if ((mFlags & (ASSOCMASK)) != 0) { // NOPMD
 			// All arguments should have the same type.
 			if (params.length < 2)
-				throw new SMTLIBException
-					("Function "+m_Name+" expects at least two arguments.");
-			checkSort(params[0], m_ParamSort[0], mixRealInt);
-			checkSort(params[params.length-1], m_ParamSort[1], mixRealInt);
-			Sort otherSort = isLeftAssoc() ? m_ParamSort[1] : m_ParamSort[0];
+				throw new SMTLIBException(
+					"Function " + mName + " expects at least two arguments.");
+			checkSort(params[0], mParamSort[0], mixRealInt);
+			checkSort(params[params.length - 1], mParamSort[1], mixRealInt);
+			Sort otherSort = isLeftAssoc() ? mParamSort[1] : mParamSort[0];
 			for (int i = 1; i < params.length - 1; i++) {
 				checkSort(params[i], otherSort, mixRealInt);
 			}
 		} else {
-			if (params.length != m_ParamSort.length)
-				throw new SMTLIBException
-					("Function "+m_Name+" expects "+m_ParamSort.length+" arguments.");
-			for (int i = 0; i < m_ParamSort.length; i++) {
-				checkSort(params[i], m_ParamSort[i], mixRealInt);
+			if (params.length != mParamSort.length)
+				throw new SMTLIBException(
+					"Function " + mName + " expects " + mParamSort.length
+						+ " arguments.");
+			for (int i = 0; i < mParamSort.length; i++) {
+				checkSort(params[i], mParamSort[i], mixRealInt);
 			}
 		}
 	}
@@ -215,31 +212,32 @@ public class FunctionSymbol {
 	public boolean typecheck(Sort[] params) {
 		boolean mixRealInt = false;
 		if (getTheory().getLogic().isIRA()
-			&& m_ParamSort.length == 2
-			&& m_ParamSort[0] == m_ParamSort[1]
-			&& m_ParamSort[0].getName().equals("Real"))
+			&& mParamSort.length == 2
+			&& mParamSort[0] == mParamSort[1]
+			&& mParamSort[0].getName().equals("Real"))
 			mixRealInt = true;
-		if ((m_Flags & (ASSOCMASK)) != 0) {
-			assert (m_ParamSort.length == 2);
+		if ((mFlags & (ASSOCMASK)) != 0) { // NOPMD
+			assert (mParamSort.length == 2);
 			if (params.length < 2)
 				return false;
-			if (!params[0].equalsSort(m_ParamSort[0])
+			if (!params[0].equalsSort(mParamSort[0])
 				&& (!mixRealInt || params[0] != getTheory().getSort("Int")))
 				return false;
-			if (!params[params.length-1].equalsSort(m_ParamSort[1])
-				&& (!mixRealInt || params[params.length-1] != getTheory().getSort("Int")))
+			if (!params[params.length - 1].equalsSort(mParamSort[1])
+				&& (!mixRealInt || params[params.length - 1]
+						!= getTheory().getSort("Int")))
 				return false;
-			Sort otherSort = isLeftAssoc() ? m_ParamSort[1] : m_ParamSort[0];
+			Sort otherSort = isLeftAssoc() ? mParamSort[1] : mParamSort[0];
 			for (int i = 1; i < params.length - 1; i++) {
 				if (!params[i].equalsSort(otherSort)
 					&& (!mixRealInt || params[i] != getTheory().getSort("Int")))
 					return false;
 			}
 		} else {
-			if (params.length != m_ParamSort.length)
+			if (params.length != mParamSort.length)
 				return false;
-			for (int i = 0; i < m_ParamSort.length; i++) {
-				if (!params[i].equalsSort(m_ParamSort[i])
+			for (int i = 0; i < mParamSort.length; i++) {
+				if (!params[i].equalsSort(mParamSort[i])
 					&& (!mixRealInt || params[i] != getTheory().getSort("Int")))
 					return false;
 			}
@@ -255,22 +253,22 @@ public class FunctionSymbol {
 	 */
 	public String toString() {
 		StringBuffer sb = new StringBuffer();
-		String name = PrintTerm.quoteIdentifier(m_Name);
-		sb.append("(");
-		if (m_Indices == null)
+		String name = PrintTerm.quoteIdentifier(mName);
+		sb.append('(');
+		if (mIndices == null)
 			sb.append(name);
 		else {
 			sb.append("(_ ").append(name);
-			for (BigInteger i : m_Indices) {
-				sb.append(" ").append(i);
+			for (BigInteger i : mIndices) {
+				sb.append(' ').append(i);
 			}
-			sb.append(")");
+			sb.append(')');
 		}
-		for (Sort s : m_ParamSort) {
-			sb.append(" ").append(s);
+		for (Sort s : mParamSort) {
+			sb.append(' ').append(s);
 		}
-		sb.append(" ").append(m_ReturnSort);
-		sb.append(")");
+		sb.append(' ').append(mReturnSort);
+		sb.append(')');
 		return sb.toString();
 	}
 
@@ -279,32 +277,32 @@ public class FunctionSymbol {
 	 * This should only be true for the internal equality function.
 	 * @return true if the function symbol is chainable.
 	 */
-	public boolean isChainable() {
-		return (m_Flags & ASSOCMASK) == CHAINABLE;
+	public final boolean isChainable() {
+		return (mFlags & ASSOCMASK) == CHAINABLE;
 	}
 	/**
 	 * Checks if this function symbol was declared as pairwise.
 	 * This should only be true for the internal distinct function.
 	 * @return true if the function symbol is pairwise.
 	 */
-	public boolean isPairwise() {
-		return (m_Flags & ASSOCMASK) == PAIRWISE;
+	public final boolean isPairwise() {
+		return (mFlags & ASSOCMASK) == PAIRWISE;
 	}
 	/**
 	 * Checks if this function symbol was declared as left associative.
 	 * This should only be true for internal function symbols.
 	 * @return true if the function symbol is left associative.
 	 */
-	public boolean isLeftAssoc() {
-		return (m_Flags & ASSOCMASK) == LEFTASSOC;
+	public final boolean isLeftAssoc() {
+		return (mFlags & ASSOCMASK) == LEFTASSOC;
 	}
 	/**
 	 * Checks if this function symbol was declared as right associative.
 	 * This should only be true for internal function symbols.
 	 * @return true if the function symbol is right associative.
 	 */
-	public boolean isRightAssoc() {
-		return (m_Flags & ASSOCMASK) == RIGHTASSOC;
+	public final boolean isRightAssoc() {
+		return (mFlags & ASSOCMASK) == RIGHTASSOC;
 	}
 	
 	/**
@@ -313,8 +311,8 @@ public class FunctionSymbol {
 	 * sort.
 	 * @return true if the sort was explicitly given, false if it is implicit.
 	 */
-	public boolean isReturnOverload() {
-		return (m_Flags & RETURNOVERLOAD) != 0;
+	public final boolean isReturnOverload() {
+		return (mFlags & RETURNOVERLOAD) != 0;
 	}
 
 	/**
@@ -323,22 +321,22 @@ public class FunctionSymbol {
 	 * @return the string representation.
 	 */
 	public String getApplicationString() {
-		String name = PrintTerm.quoteIdentifier(m_Name);
-		if (m_Indices == null && !isReturnOverload())
+		String name = PrintTerm.quoteIdentifier(mName);
+		if (mIndices == null && !isReturnOverload())
 			return name;
 		StringBuffer sb = new StringBuffer();
 		if (isReturnOverload())
 			sb.append("(as ");
-		if (m_Indices != null)
+		if (mIndices != null)
 			sb.append("(_ ");
 		sb.append(name);
-		if (m_Indices != null) {
-			for (BigInteger i : m_Indices)
-				sb.append(" ").append(i);
-			sb.append(")");
+		if (mIndices != null) {
+			for (BigInteger i : mIndices)
+				sb.append(' ').append(i);
+			sb.append(')');
 		}
 		if (isReturnOverload())
-			sb.append(" ").append(getReturnSort()).append(")");
+			sb.append(' ').append(getReturnSort()).append(')');
 		return sb.toString();
 	}
 	/**
@@ -348,6 +346,6 @@ public class FunctionSymbol {
 	 *         semantic.
 	 */
 	public boolean isInterpreted() {
-		return isIntern() && (!m_Name.startsWith("@") || !m_Name.endsWith("0"));
+		return isIntern() && (mName.charAt(0) != '@' || !mName.endsWith("0"));
 	}
 }

@@ -33,6 +33,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.logic.IRAConstantFormatter;
 import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -41,28 +42,28 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
 
 public class ParseEnvironment {
-	Script      m_Script;
-	private PrintWriter m_Out = new PrintWriter(System.out);
-	private boolean m_PrintSuccess = true;
-	private boolean m_PrintTermCSE = true;
-	private File m_Cwd = null;
+	final Script      mScript;
+	private PrintWriter mOut = new PrintWriter(System.out);
+	private boolean mPrintSuccess = true;
+	private boolean mPrintTermCSE = true;
+	private File mCwd = null;
 	// What to do when script exits
-	private ExitHook m_ExitHook;
+	private ExitHook mExitHook;
 	// Initialize this lazily.
-	private Deque<Long> m_Timing;// = new ArrayDeque<Long>();
-	private boolean m_ContinueOnError = true;
+	private Deque<Long> mTiming;
+	private boolean mContinueOnError = true;
 	
 	public ParseEnvironment(Script script) {
 		this(script, null);
 	}
 	
 	public ParseEnvironment(Script script, ExitHook exit) {
-		m_Script = script;
-		m_ExitHook = exit;
+		mScript = script;
+		mExitHook = exit;
 	}
 	
 	public Script getScript() {
-		return m_Script;
+		return mScript;
 	}
 
 	static boolean convertSexp(StringBuilder sb, Object o, int level) {
@@ -72,21 +73,21 @@ public class ParseEnvironment {
         		for (int i = 0; i < level; ++i)
         			sb.append(' ');
         	}
-            sb.append("(");
+            sb.append('(');
             Object[] array = (Object[])o;
             boolean subarray = false;
             String sep = "";
             for (Object el : array) {
-                    sb.append(sep);
-                    subarray |= convertSexp(sb, el, level + Config.INDENTATION);
-                    sep = " ";
+                sb.append(sep);
+                subarray |= convertSexp(sb, el, level + Config.INDENTATION);
+                sep = " ";
             }
             if (subarray && Config.RESULTS_ONE_PER_LINE) {
         		sb.append(System.getProperty("line.separator"));
         		for (int i = 0; i < level; ++i)
         			sb.append(' ');
         	}
-            sb.append(")");
+            sb.append(')');
             return true;
         } else
             sb.append(o);
@@ -94,7 +95,7 @@ public class ParseEnvironment {
 	}
 	
 	public void parseScript(String filename) throws SMTLIBException {
-		File oldcwd = m_Cwd;
+		File oldcwd = mCwd;
 		Reader reader;
 		try {
 			if (filename.equals("<stdin>")) {
@@ -102,22 +103,22 @@ public class ParseEnvironment {
 			} else {
 				File script = new File(filename);
 				if (!script.isAbsolute())
-					script = new File(m_Cwd, filename);
-				m_Cwd = script.getParentFile();
+					script = new File(mCwd, filename);
+				mCwd = script.getParentFile();
 				try {
 					reader = new FileReader(script);
 				} catch (FileNotFoundException ex) {
-					throw new SMTLIBException("File not found: "+script);
+					throw new SMTLIBException("File not found: " + filename);
 				}
 			}
 			parseStream(reader, filename);
 		} finally {
-			m_Cwd = oldcwd;
+			mCwd = oldcwd;
 		}
 	}
 	
 	public void parseStream(Reader reader, String streamname)
-	throws SMTLIBException {
+	    throws SMTLIBException {
 		MySymbolFactory symfactory = new MySymbolFactory();
 		Lexer lexer = new Lexer(reader);
 		lexer.setSymbolFactory(symfactory);
@@ -133,88 +134,90 @@ public class ParseEnvironment {
 	}
 	
 	public void include(String filename) throws SMTLIBException {
-		ExitHook oldexit = m_ExitHook;
-		m_ExitHook = new ExitHook() {
+		ExitHook oldexit = mExitHook;
+		mExitHook = new ExitHook() {
 			@Override
 			public void exitHook() {
 				/* ignore exit */
 			}
 		};
-		File oldcwd = m_Cwd;
+		File oldcwd = mCwd;
 		parseScript(filename);
-		m_Cwd = oldcwd;
-		m_ExitHook = oldexit;
+		mCwd = oldcwd;
+		mExitHook = oldexit;
 	}
 	
 	public void printSuccess() {
-		if (m_PrintSuccess) {
-			m_Out.println("success");
-			m_Out.flush();
+		if (mPrintSuccess) {
+			mOut.println("success");
+			mOut.flush();
 		}
 	}
 	
 	public void printError(String message) {
-		m_Out.print("(error \"");
-		m_Out.print(message);
-		m_Out.println("\")");
-		m_Out.flush();
-		if (!m_ContinueOnError)
+		mOut.print("(error \"");
+		mOut.print(message);
+		mOut.println("\")");
+		mOut.flush();
+		if (!mContinueOnError)
 			System.exit(1);
 	}
 	
 	public void printValues(Map<Term, Term> values) {
 		PrintTerm pt = new PrintTerm();
-		m_Out.print('(');
+		mOut.print('(');
 		String sep = "";
-		String itemSep = Config.RESULTS_ONE_PER_LINE ? 
-				System.getProperty("line.separator") + " " : " "; 
+		String itemSep = Config.RESULTS_ONE_PER_LINE 
+				? System.getProperty("line.separator") + " " : " "; 
 		for (Map.Entry<Term, Term> me : values.entrySet()) {
-			m_Out.print(sep);
-			m_Out.print('(');
-			pt.append(m_Out, me.getKey());
-			m_Out.print(' ');
-			pt.append(m_Out, me.getValue());
-			m_Out.print(')');
+			mOut.print(sep);
+			mOut.print('(');
+			pt.append(mOut, me.getKey());
+			mOut.print(' ');
+			pt.append(mOut, me.getValue().getTheory().getLogic().isIRA()
+					? new IRAConstantFormatter().transform(me.getValue())
+							: me.getValue());
+			mOut.print(')');
 			sep = itemSep;
 		}
-		m_Out.println(')');
-		m_Out.flush();
+		mOut.println(')');
+		mOut.flush();
 	}
 	
 	public void printResponse(Object response) {
-		if (!m_PrintTermCSE) {
+		if (!mPrintTermCSE) {
 			if (response instanceof Term) {
-				new PrintTerm().append(m_Out, (Term) response);
-				m_Out.println();
-				m_Out.flush();
+				new PrintTerm().append(mOut, (Term) response);
+				mOut.println();
+				mOut.flush();
 				return;
 			} else if (response instanceof Term[]) {
 				printTermResponse((Term[])response);
-				m_Out.flush();
+				mOut.flush();
 				return;
 			}
 		}
 		if (response instanceof Object[]) {
 			StringBuilder sb = new StringBuilder();
 			convertSexp(sb, response, 0);
-			m_Out.println(sb.toString());
+			mOut.println(sb.toString());
 		} else if (response instanceof Iterable) {
 			Iterable<?> it = (Iterable<?>) response;
-			m_Out.print("(");
+			mOut.print("(");
 			for (Object o : it)
 				printResponse(o);
-			m_Out.println(")");
+			mOut.println(")");
 		} else
-			m_Out.println(response);
-		m_Out.flush();
+			mOut.println(response);
+		mOut.flush();
 	}
 	
 	public void printInfoResponse(String info, Object response) {
 		StringBuilder sb = new StringBuilder();
 		sb.append('(').append(info).append(' ');
 		convertSexp(sb, response, 0);
-		m_Out.println(sb.append(')').toString());
-		m_Out.flush();
+		mOut.println(sb.append(')').toString());
+		mOut.flush();
 	}
 	
 	/**
@@ -227,27 +230,26 @@ public class ParseEnvironment {
 	public void printTermResponse(Term[] response) {
 		StringBuilder sb = new StringBuilder();
 		PrintTerm pt = new PrintTerm();
-		sb.append("(");
+		sb.append('(');
         String sep = "";
-        String itemSep = Config.RESULTS_ONE_PER_LINE ? 
-        		System.getProperty("line.separator") + " " : " ";
+        String itemSep = Config.RESULTS_ONE_PER_LINE 
+        		? System.getProperty("line.separator") + " " : " ";
         for (Term t : response) {
-                sb.append(sep);
-                pt.append(sb, t);
-                sep = itemSep;
+            sb.append(sep);
+            pt.append(sb, t);
+            sep = itemSep;
         }
-        sb.append(")");
-		m_Out.println(sb.toString());
-		m_Out.flush();
+        sb.append(')');
+		mOut.println(sb.toString());
+		mOut.flush();
 	}
 
 	public void exit() {
-		if (m_ExitHook != null)
-			m_ExitHook.exitHook();
-		else {
-			m_Script.exit();
+		if (mExitHook == null) {
+			mScript.exit();
 			Runtime.getRuntime().exit(0);
-		}
+		} else
+			mExitHook.exitHook();
 	}
 	
 	public PrintWriter createChannel(String file) throws IOException {
@@ -262,61 +264,61 @@ public class ParseEnvironment {
 	public void setOption(String opt, Object value) throws SMTLIBException {
 		if (opt.equals(":regular-output-channel")) {
 			try {
-				m_Out = new PrintWriter(createChannel((String) value));
+				mOut = new PrintWriter(createChannel((String) value));
 			} catch (IOException ex) {
 				throw new SMTLIBException(ex);
 			}
 		} else if (opt.equals(":print-success")) {
 			if (value instanceof Boolean)
-				m_PrintSuccess = (Boolean) value;
+				mPrintSuccess = (Boolean) value;
 			else if (value instanceof String)
-				m_PrintSuccess = Boolean.valueOf((String) value);
+				mPrintSuccess = Boolean.valueOf((String) value);
 		} else if (opt.equals(":print-terms-cse")) {
 			if (value instanceof Boolean)
-				m_PrintTermCSE = (Boolean) value;
+				mPrintTermCSE = (Boolean) value;
 			else if (value instanceof String)
-				m_PrintTermCSE = Boolean.valueOf((String) value);
+				mPrintTermCSE = Boolean.valueOf((String) value);
 		}
-		m_Script.setOption(opt, value);
+		mScript.setOption(opt, value);
 	}
 	
 	public void setInfo(String info, Object value) {
 		if (info.equals(":error-behavior")) {
 			if ("immediate-exit".equals(value))
-				m_ContinueOnError = false;
+				mContinueOnError = false;
 			else if ("continued-execution".equals(value))
-				m_ContinueOnError = true;
+				mContinueOnError = true;
 		}
-		m_Script.setInfo(info, value);
+		mScript.setInfo(info, value);
 	}
 	
 	public Object getInfo(String info) {
 		if (info.equals(":error-behavior"))
-			return m_ContinueOnError ? "continued-execution" : "immediate-exit";
-		return m_Script.getInfo(info);
+			return mContinueOnError ? "continued-execution" : "immediate-exit";
+		return mScript.getInfo(info);
 	}
 
 	public void setOutStream(PrintWriter stream) {
-		m_Out = stream;
+		mOut = stream;
 	}
 	
 	public void startTiming() {
-		if (m_Timing == null)
-			m_Timing = new ArrayDeque<Long>();
-		m_Out.print('(');
-		m_Timing.push(System.nanoTime());
+		if (mTiming == null)
+			mTiming = new ArrayDeque<Long>();
+		mOut.print('(');
+		mTiming.push(System.nanoTime());
 	}
 	
 	public void endTiming() {
-		long old = m_Timing.pop();
+		long old = mTiming.pop();
 		long duration = System.nanoTime() - old;
-		double secs = duration / 1000000000.0;
-		m_Out.printf((Locale) null, " :time %.3f)", secs);
-		m_Out.println();
-		m_Out.flush();
+		double secs = duration / 1000000000.0; // NOCHECKSTYLE
+		mOut.printf((Locale) null, " :time %.3f)", secs);
+		mOut.println();
+		mOut.flush();
 	}
 	
 	public boolean isContinueOnError() {
-		return m_ContinueOnError;
+		return mContinueOnError;
 	}
 }

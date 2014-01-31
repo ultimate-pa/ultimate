@@ -25,10 +25,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 public class Value implements ExecTerm {
 
-	private Term m_Val;
+	private final Term mVal;
 	
 	public Value(Term val) {
-		m_Val = val;
+		mVal = val;
 	}
 	
 	@Override
@@ -38,20 +38,20 @@ public class Value implements ExecTerm {
 
 	@Override
 	public Term toSMTLIB(Theory t, TermVariable[] vars) {
-		return m_Val;
+		return mVal;
 	}
 	
 	public int hashCode() {
-		return m_Val.hashCode();
+		return mVal.hashCode();
 	}
 	
 	public boolean equals(Object other) {
 		if (other instanceof Value) {
 			Value o = (Value) other;
-			if (m_Val instanceof ConstantTerm && o.m_Val instanceof ConstantTerm)
-				return ((ConstantTerm) m_Val).getValue().equals(
-						((ConstantTerm) o.m_Val).getValue());
-			return m_Val == ((Value) other).m_Val;
+			if (mVal instanceof ConstantTerm && o.mVal instanceof ConstantTerm)
+				return ((ConstantTerm) mVal).getValue().equals(
+						((ConstantTerm) o.mVal).getValue());
+			return mVal == ((Value) other).mVal;
 		}
 		return false;
 	}

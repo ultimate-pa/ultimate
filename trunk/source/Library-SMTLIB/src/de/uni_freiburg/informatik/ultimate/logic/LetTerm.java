@@ -34,44 +34,44 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @author hoenicke
  */
 public class LetTerm extends Term {
-	private TermVariable[] m_Variables;
-	private Term[] m_Values;
-	private Term m_Subterm;
+	private final TermVariable[] mVariables;
+	private final Term[] mValues;
+	private final Term mSubterm;
 	
 	/**
 	 * @return The variables
 	 */
 	public TermVariable[] getVariables() {
-		return m_Variables;
+		return mVariables;
 	}
 
 	/**
 	 * @return The values
 	 */
 	public Term[] getValues() {
-		return m_Values;
+		return mValues;
 	}
 
 	/**
 	 * @return The subformula
 	 */
 	public Term getSubTerm() {
-		return m_Subterm;
+		return mSubterm;
 	}
 
 	LetTerm(TermVariable[] vars, Term[] vals, Term t, int hash) {
 		super(hash);
-		this.m_Variables = vars;
-		this.m_Values = vals;
-		this.m_Subterm = t;
+		this.mVariables = vars;
+		this.mValues = vals;
+		this.mSubterm = t;
 	}
 	
 	@Override
 	public Sort getSort() {
 		LetTerm sortterm = this;
-		while (sortterm.m_Subterm instanceof LetTerm)
-			sortterm = (LetTerm) sortterm.m_Subterm;
-		return sortterm.m_Subterm.getSort();
+		while (sortterm.mSubterm instanceof LetTerm)
+			sortterm = (LetTerm) sortterm.mSubterm;
+		return sortterm.mSubterm.getSort();
 	}
 
 	public static final int hashLet(
@@ -92,11 +92,11 @@ public class LetTerm extends Term {
 		// Add assigned values to stack
 		TermVariable[] vars = getVariables();
 		Term[] values = getValues();
-		for (int i = values.length-1; i > 0; i--) {
+		for (int i = values.length - 1; i > 0; i--) {
 			m_Todo.addLast(values[i]);
-			m_Todo.addLast(") ("+vars[i].toString()+" ");
+			m_Todo.addLast(") (" + vars[i].toString() + " ");
 		}	
 		m_Todo.addLast(values[0]);
-		m_Todo.addLast("(let (("+vars[0].toString()+" ");
+		m_Todo.addLast("(let ((" + vars[0].toString() + " ");
 	}
 }

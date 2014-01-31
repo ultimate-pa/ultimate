@@ -16,15 +16,10 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.uni_freiburg.informatik.ultimate.logic.util;
+package de.uni_freiburg.informatik.ultimate.logic;
 
 import java.util.LinkedHashSet;
 
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
 /**
@@ -33,9 +28,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
  * 
  * @author christ, heizmann, hoenicke 
  */
-public class Util {
+public final class Util {
 	
-	private static Sort[] EMPTY_SORT_ARRAY = {};
+	private static final Sort[] EMPTY_SORT_ARRAY = {};
+	
+	private Util() {
+		// Prevent instantiation of this utility class
+	}
 	
 	/**
 	 * Check if {@code term} which may contain free {@code TermVariables} is
@@ -49,7 +48,7 @@ public class Util {
 		try {
 			TermVariable[] vars = term.getFreeVars();
 			Term[] values = new Term[vars.length];
-			for (int i=0; i<vars.length; i++)
+			for (int i = 0; i < vars.length; i++)
 				values[i] = termVariable2constant(script, vars[i]);
 			term = script.let(vars, values, term);
 			script.assertTerm(term);
@@ -71,8 +70,7 @@ public class Util {
 	/**
 	 * Return slightly simplified version of a negation.
 	 */
-	public static Term not(Script script, Term f)
-	{
+	public static Term not(Script script, Term f) {
 		if (f == script.term("true")) return script.term("false");
 		if (f == script.term("false")) return script.term("true");
 		if (f instanceof ApplicationTerm
@@ -95,8 +93,8 @@ public class Util {
 		return simplifyAndOr(script, "or", subforms);
 	}
 	
-	private static Term simplifyAndOr(Script script, String connector, Term... subforms)
-	{
+	private static Term simplifyAndOr(
+			Script script, String connector, Term... subforms) {
 		Term trueTerm = script.term("true");
 		Term falseTerm = script.term("false");
 		Term neutral, absorbing;
@@ -117,7 +115,8 @@ public class Util {
 
 			/* Normalize nested and/ors */
 			if (f instanceof ApplicationTerm
-				&& ((ApplicationTerm) f).getFunction().getName().equals(connector)) {
+				&& ((ApplicationTerm) f).getFunction().getName().equals(
+						connector)) {
 				for (Term subf : ((ApplicationTerm) f).getParameters())
 					formulas.add(subf);
 			} else
@@ -143,7 +142,8 @@ public class Util {
 	 * @param elsePart the else part.
 	 * @return the simplified if-then-else term.
 	 */
-	public static Term ite(Script script, Term cond, Term thenPart, Term elsePart) {
+	public static Term ite(
+			Script script, Term cond, Term thenPart, Term elsePart) {
 		Term trueTerm = script.term("true");
 		Term falseTerm = script.term("false");
 		if (cond == trueTerm || thenPart == elsePart) 
@@ -185,17 +185,17 @@ public class Util {
 	 */
 	public static Term implies(Script script, Term... subforms)	{
 		Term trueTerm = script.term("true");
-		Term falseTerm = script.term("false");
-		Term lastFormula = subforms[subforms.length-1];
+		Term lastFormula = subforms[subforms.length - 1];
 		if (lastFormula == trueTerm)
 			return trueTerm;
+		Term falseTerm = script.term("false");
 		if (lastFormula == falseTerm) {
-			Term[] allButLast = new Term[subforms.length-1];
-			System.arraycopy(subforms, 0, allButLast, 0, subforms.length-1);
+			Term[] allButLast = new Term[subforms.length - 1];
+			System.arraycopy(subforms, 0, allButLast, 0, subforms.length - 1);
 			return Util.not(script, Util.and(script, allButLast));
 		}
 		LinkedHashSet<Term> newSubforms = new LinkedHashSet<Term>();
-		for (int i=0; i<subforms.length-1; i++) {
+		for (int i = 0; i < subforms.length - 1; i++) {
 			if (subforms[i] == falseTerm)
 				return trueTerm;
 			if (subforms[i] != trueTerm)

@@ -38,8 +38,8 @@ public class SubtermChecker extends NonRecursive {
 		@Override
 		public void walk(NonRecursive walker) {
 			SubtermChecker sc = (SubtermChecker) walker;
-			if (getTerm() == sc.m_SubTerm) {
-				sc.m_Found = true;
+			if (getTerm() == sc.mSubTerm) {
+				sc.mFound = true;
 				// Clear the todo stack
 				sc.done();
 			} else if (getTerm() instanceof SMTAffineTerm) {
@@ -51,7 +51,9 @@ public class SubtermChecker extends NonRecursive {
 		}
 
 		@Override
-		public void walk(NonRecursive walker, ConstantTerm term) {}
+		public void walk(NonRecursive walker, ConstantTerm term) {
+			// Already checked in walk
+		}
 
 		@Override
 		public void walk(NonRecursive walker, AnnotatedTerm term) {
@@ -75,25 +77,27 @@ public class SubtermChecker extends NonRecursive {
 		}
 
 		@Override
-		public void walk(NonRecursive walker, TermVariable term) {}
+		public void walk(NonRecursive walker, TermVariable term) {
+			// Already checked in walk
+		}
 		
 	}
 	
-	private Term m_SubTerm;
-	private boolean m_Found = false;
+	private final Term mSubTerm;
+	private boolean mFound = false;
 	
 	public SubtermChecker(Term subterm) {
-		m_SubTerm = subterm;
+		mSubTerm = subterm;
 	}
 	
 	public boolean findSubterm(Term where) {
 		run(new IsSubterm(where));
-		return m_Found;
+		return mFound;
 	}
 	
 	public void reset() {
 		super.reset();
-		m_Found = false;
+		mFound = false;
 	}
 	
 	private void done() {

@@ -27,16 +27,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class Unletter extends LoggingScript {
 
-	private FormulaUnLet m_Unletter = new FormulaUnLet();
+	private final FormulaUnLet mUnletter = new FormulaUnLet();
 	
-	public Unletter()
-			throws FileNotFoundException {
+	public Unletter() throws FileNotFoundException {
 		super("<stdout>", true);
 	}
 
 	@Override
 	public LBool assertTerm(Term term) throws SMTLIBException {
-		return super.assertTerm(m_Unletter.unlet(term));
+		return super.assertTerm(mUnletter.unlet(term));
 	}
 
 }

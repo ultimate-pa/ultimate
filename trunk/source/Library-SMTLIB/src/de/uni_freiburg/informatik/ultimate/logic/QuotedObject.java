@@ -36,7 +36,7 @@ public class QuotedObject {
 	/**
 	 * The underlying Object.
 	 */
-	private Object m_value;
+	private final Object mValue;
 
 	/**
 	 * Create a quoted object.
@@ -44,7 +44,7 @@ public class QuotedObject {
 	 * 	without the quotes.
 	 */
 	public QuotedObject(Object value) {
-		m_value = value;
+		mValue = value;
 	}
 	
 	/**
@@ -52,7 +52,7 @@ public class QuotedObject {
 	 * @return the underlying object.
 	 */
 	public Object getValue() {
-		return m_value;
+		return mValue;
 	}
 
 	private static String quoteString(String str) {
@@ -81,6 +81,6 @@ public class QuotedObject {
 	 * @return the SMTLIB 2 compatible string representation.
 	 */
 	public String toString() {
-		return quoteString(m_value.toString());
+		return quoteString(mValue.toString());
 	}
 }

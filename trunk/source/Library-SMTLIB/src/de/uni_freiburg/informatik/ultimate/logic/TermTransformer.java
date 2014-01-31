@@ -43,7 +43,7 @@ public class TermTransformer extends NonRecursive {
 	/**
 	 * The term cache.  
 	 */
-	private ArrayDeque<HashMap<Term, Term>> m_Cache = 
+	private final ArrayDeque<HashMap<Term, Term>> mCache = 
 		new ArrayDeque<HashMap<Term,Term>>();
 	
 	/**
@@ -51,25 +51,25 @@ public class TermTransformer extends NonRecursive {
 	 * arguments of an application term, before the application term is
 	 * evaluated.
 	 */
-	private ArrayDeque<Term> m_Converted = new ArrayDeque<Term>();
+	private final ArrayDeque<Term> mConverted = new ArrayDeque<Term>();
 
 	/**
 	 * This class represents one item of work.  It consists of a term and
 	 * some task that still needs to be performed on the term.
 	 */
 	private static class Convert implements Walker {
-		private Term m_Term;
+		private final Term mTerm;
 		public Convert(Term term) {
-			m_Term = term;
+			mTerm = term;
 		}
 		
 		public String toString() {
-			return "Convert "+m_Term.toStringDirect();
+			return "Convert " + mTerm.toStringDirect();
 		}
 
 		@Override
 		public void walk(NonRecursive walker) {
-			((TermTransformer) walker).cacheConvert(m_Term);
+			((TermTransformer) walker).cacheConvert(mTerm);
 		}
 	}
 	
@@ -78,7 +78,7 @@ public class TermTransformer extends NonRecursive {
 	 * @param terms the array of terms.
 	 */
 	protected final void pushTerms(Term[] terms) {
-		for (int i = terms.length-1; i >= 0; i--)
+		for (int i = terms.length - 1; i >= 0; i--)
 			pushTerm(terms[i]);
 	}
 	
@@ -95,40 +95,40 @@ public class TermTransformer extends NonRecursive {
 	 * @param term the converted term.
 	 */
 	protected final void setResult(Term term) {
-		m_Converted.addLast(term);
+		mConverted.addLast(term);
 	}
 	
 	private static class AddCache implements Walker {
-		Term m_OldTerm;
+		Term mOldTerm;
 		public AddCache(Term term) {
-			m_OldTerm = term;
+			mOldTerm = term;
 		}
 		public void walk(NonRecursive engine) {
 			TermTransformer transformer = (TermTransformer) engine;
-			transformer.m_Cache.getLast().put(m_OldTerm, transformer.m_Converted.getLast());
+			transformer.mCache.getLast().put(
+					mOldTerm, transformer.mConverted.getLast());
 		}
 		
 		public String toString() {
-			return "AddCache["+m_OldTerm.toStringDirect()+"]";
+			return "AddCache[" + mOldTerm.toStringDirect() + "]";
 		}
 	}
 	
 	private void cacheConvert(Term term) {
-		Term newTerm = m_Cache.getLast().get(term);
-		if (newTerm != null)
-			setResult(newTerm);
-		else {
+		Term newTerm = mCache.getLast().get(term);
+		if (newTerm == null) {
 			enqueueWalker(new AddCache(term));
 			convert(term);
-		}
+		} else
+			setResult(newTerm);
 	}
 	
 	protected void beginScope() {
-		m_Cache.addLast(new HashMap<Term, Term>());
+		mCache.addLast(new HashMap<Term, Term>());
 	}
 	
 	protected void endScope() {
-		m_Cache.removeLast();
+		mCache.removeLast();
 	}
 	
 	/**
@@ -146,7 +146,7 @@ public class TermTransformer extends NonRecursive {
 	protected void convert(Term term) {
 		if (term instanceof ConstantTerm
 			|| term instanceof TermVariable) {
-			m_Converted.addLast(term);
+			mConverted.addLast(term);
 		} else if (term instanceof ApplicationTerm) {
 			enqueueWalker(new BuildApplicationTerm((ApplicationTerm) term));
 			pushTerms(((ApplicationTerm) term).getParameters());
@@ -161,7 +161,7 @@ public class TermTransformer extends NonRecursive {
 			AnnotatedTerm annterm = (AnnotatedTerm) term;
 			enqueueWalker(new BuildAnnotation(annterm));
 			Annotation[] annots = annterm.getAnnotations();
-			for (int i=annots.length-1; i >= 0; i--) {
+			for (int i = annots.length - 1; i >= 0; i--) {
 				Object value = annots[i].getValue();
 				if (value instanceof Term)
 					pushTerm((Term) value);
@@ -171,10 +171,11 @@ public class TermTransformer extends NonRecursive {
 			pushTerm(annterm.getSubterm());
 			return;
 		} else
-			throw new AssertionError("Unknown Term: "+term.toStringDirect());
+			throw new AssertionError("Unknown Term: " + term.toStringDirect());
 	}
 	
-	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+	public void convertApplicationTerm(
+			ApplicationTerm appTerm, Term[] newArgs) {
 		Term newTerm = appTerm;
 		if (newArgs != appTerm.getParameters()) {
 			FunctionSymbol fun = appTerm.getFunction(); 
@@ -194,7 +195,8 @@ public class TermTransformer extends NonRecursive {
 		Term result = oldLet; 
 		if (oldLet.getValues() != newValues
 			|| oldLet.getSubTerm() != newBody) {
-			result = oldLet.getTheory().let(oldLet.getVariables(), newValues, newBody);
+			result = oldLet.getTheory().let(
+					oldLet.getVariables(), newValues, newBody);
 		}
 		setResult(result);
 	}
@@ -228,7 +230,7 @@ public class TermTransformer extends NonRecursive {
 		beginScope();
 		run(new Convert(term));
 		endScope();
-		return m_Converted.removeLast();
+		return mConverted.removeLast();
 	}
 	
 	/**
@@ -238,7 +240,7 @@ public class TermTransformer extends NonRecursive {
 	 * @return the new converted term.  
 	 */
 	protected final Term getConverted() {
-		return m_Converted.removeLast();
+		return mConverted.removeLast();
 	}
 
 	/**
@@ -252,7 +254,7 @@ public class TermTransformer extends NonRecursive {
 	 */
 	protected final Term[] getConverted(Term[] oldArgs) {
 		Term[] newArgs = oldArgs;
-		for (int i = oldArgs.length-1; i >= 0; i--) {
+		for (int i = oldArgs.length - 1; i >= 0; i--) {
 			Term newTerm = getConverted();
 			if (newTerm != oldArgs[i]) {
 				if (newArgs == oldArgs)
@@ -268,25 +270,25 @@ public class TermTransformer extends NonRecursive {
 	 * and finish the conversion of appTerm.  This is called after the arguments
 	 * of appTerm have been converted.  It will put the converted term on
 	 * the converted stack and store it in the cache.
-	 * @param m_AppTerm the application term to convert.
+	 * @param mAppTerm the application term to convert.
 	 */
 	protected static class BuildApplicationTerm implements Walker {
-		private ApplicationTerm m_AppTerm;
+		private final ApplicationTerm mAppTerm;
 		
 		public BuildApplicationTerm(ApplicationTerm term) {
-			m_AppTerm = term;
+			mAppTerm = term;
 		}
 		
 		public void walk(NonRecursive engine) {
 			TermTransformer transformer = (TermTransformer) engine;
 			/* collect args and check if they have been changed */
-			Term[] oldArgs = m_AppTerm.getParameters();
+			Term[] oldArgs = mAppTerm.getParameters();
 			Term[] newArgs = transformer.getConverted(oldArgs);
-			transformer.convertApplicationTerm(m_AppTerm, newArgs);
+			transformer.convertApplicationTerm(mAppTerm, newArgs);
 		}
 
 		public String toString() {
-			return m_AppTerm.getFunction().getApplicationString();
+			return mAppTerm.getFunction().getApplicationString();
 		}
 	}
 
@@ -295,46 +297,46 @@ public class TermTransformer extends NonRecursive {
 	 * and before the let body starts.
 	 */
 	protected static class StartLetTerm implements Walker {
-		private LetTerm m_LetTerm;
+		private final LetTerm mLetTerm;
 		
 		public StartLetTerm(LetTerm term) {
-			m_LetTerm = term;
+			mLetTerm = term;
 		}
 		
 		public void walk(NonRecursive engine) {
 			TermTransformer transformer = (TermTransformer) engine;
-			Term[] values = transformer.getConverted(m_LetTerm.getValues());
-			transformer.preConvertLet(m_LetTerm, values);
+			Term[] values = transformer.getConverted(mLetTerm.getValues());
+			transformer.preConvertLet(mLetTerm, values);
 		}
 
 		public String toString() {
-			return "let"+Arrays.toString(m_LetTerm.getVariables());
+			return "let" + Arrays.toString(mLetTerm.getVariables());
 		}
 	}
 
 	/**
 	 * Collect the sub term and the values of a let term from the 
 	 * converted stack and finish the conversion of let term.  
-	 * @param m_AppTerm the let term to convert.
+	 * @param mAppTerm the let term to convert.
 	 */
 	protected static class BuildLetTerm implements Walker {
-		private LetTerm m_LetTerm;
-		private Term[] m_NewValues;
+		private final LetTerm mLetTerm;
+		private final Term[] mNewValues;
 		
 		public BuildLetTerm(LetTerm term, Term[] newValues) {
-			m_LetTerm = term;
-			m_NewValues = newValues;
+			mLetTerm = term;
+			mNewValues = newValues;
 		}
 		
 		public void walk(NonRecursive engine) {
 			TermTransformer transformer = (TermTransformer) engine;
 			Term newBody = transformer.getConverted();
-			transformer.postConvertLet(m_LetTerm, m_NewValues, newBody);
+			transformer.postConvertLet(mLetTerm, mNewValues, newBody);
 			transformer.endScope();
 		}
 
 		public String toString() {
-			return "let"+Arrays.toString(m_LetTerm.getVariables());
+			return "let" + Arrays.toString(mLetTerm.getVariables());
 		}
 	}
 
@@ -344,24 +346,24 @@ public class TermTransformer extends NonRecursive {
 	 * converted stack. 
 	 * It stores the converted quantifier on the converted stack and in the
 	 * cache.
-	 * @param m_AnnotatedTerm the quantifier to convert.
+	 * @param mAnnotatedTerm the quantifier to convert.
 	 */
 	protected static class BuildQuantifier implements Walker {
-		private QuantifiedFormula m_Quant;
+		private final QuantifiedFormula mQuant;
 		
 		public BuildQuantifier(QuantifiedFormula term) {
-			m_Quant = term;
+			mQuant = term;
 		}
 		
 		public void walk(NonRecursive engine) {
 			TermTransformer transformer = (TermTransformer) engine;
 			Term sub = transformer.getConverted();
-			transformer.postConvertQuantifier(m_Quant, sub);
+			transformer.postConvertQuantifier(mQuant, sub);
 			transformer.endScope();
 		}
 
 		public String toString() {
-			return m_Quant.getQuantifier() == QuantifiedFormula.EXISTS
+			return mQuant.getQuantifier() == QuantifiedFormula.EXISTS
 					? "exists" : "forall";
 		}
 	}
@@ -372,20 +374,20 @@ public class TermTransformer extends NonRecursive {
 	 * result in the cache and on the converted stack.
 	 * Note that only Annotations that are of type Term or Term[] are 
 	 * converted.
-	 * @param m_AnnotatedTerm the annotated term.
+	 * @param mAnnotatedTerm the annotated term.
 	 */
 	protected static class BuildAnnotation implements Walker {
-		private AnnotatedTerm m_AnnotatedTerm;
+		private final AnnotatedTerm mAnnotatedTerm;
 		
 		public BuildAnnotation(AnnotatedTerm term) {
-			m_AnnotatedTerm = term;
+			mAnnotatedTerm = term;
 		}
 		
 		public void walk(NonRecursive engine) {
 			TermTransformer transformer = (TermTransformer) engine;
-			Annotation[] annots = m_AnnotatedTerm.getAnnotations();
+			Annotation[] annots = mAnnotatedTerm.getAnnotations();
 			Annotation[] newAnnots = annots;
-			for (int i = annots.length-1; i >= 0; i--) {
+			for (int i = annots.length - 1; i >= 0; i--) {
 				Object value = annots[i].getValue();
 				Object newValue;
 				if (value instanceof Term)
@@ -401,7 +403,7 @@ public class TermTransformer extends NonRecursive {
 				}
 			}
 			Term sub = transformer.getConverted();
-			transformer.postConvertAnnotation(m_AnnotatedTerm, newAnnots, sub);
+			transformer.postConvertAnnotation(mAnnotatedTerm, newAnnots, sub);
 		}
 		
 		public String toString() {
@@ -411,7 +413,7 @@ public class TermTransformer extends NonRecursive {
 	
 	public void reset() {
 		super.reset();
-		m_Converted.clear();
-		m_Cache.clear();
+		mConverted.clear();
+		mCache.clear();
 	}
 }

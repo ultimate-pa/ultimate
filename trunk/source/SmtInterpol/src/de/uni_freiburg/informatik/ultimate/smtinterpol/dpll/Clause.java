@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * 
  */
 public class Clause extends SimpleListable<Clause> {
-	Literal[] m_literals;
+	Literal[] mLiterals;
 	
 	/**
 	 * The next watched clause on the watcher list.
@@ -44,7 +44,7 @@ public class Clause extends SimpleListable<Clause> {
 	 * is no real data structure for watchers, but a clause and a bit is used
 	 * to represent a watcher.
 	 */
-	Clause  nextFirstWatch, nextSecondWatch;
+	Clause  mNextFirstWatch, mNextSecondWatch;
 	/**
 	 * A bitset telling if the next watcher for nextFirstWatch/nextSecondWatch
 	 * is the first or second watcher in that clause.  Bit0 is 1, iff  the
@@ -52,7 +52,7 @@ public class Clause extends SimpleListable<Clause> {
 	 * second watcher of that clause.  Likewise Bit1 is 1, iff the next watcher
 	 * on the second list is the second watcher of the clause nextSecondWatch.
 	 */
-	int     nextIsSecond;
+	int     mNextIsSecond;
 	/**
 	 * A WatchList is a list of watchers.
 	 * Each clause has two watchers.  The first watching lit 0, the next lit1.
@@ -61,103 +61,103 @@ public class Clause extends SimpleListable<Clause> {
 	 * to represent a watcher.
 	 */
 	final static class WatchList {
-		Clause m_Head;
-		int    m_HeadIndex;
-		Clause m_Tail;
-		int    m_TailIndex;
-		int    m_Size;
+		Clause mHead;
+		int    mHeadIndex;
+		Clause mTail;
+		int    mTailIndex;
+		int    mSize;
 		
 		public WatchList() {
-			m_Head = m_Tail = null;
+			mHead = mTail = null;
 		}
 		
 		public boolean isEmpty() {
-			return m_Head == null;
+			return mHead == null;
 		}
 		
 		public int size() {
-			return m_Size;
+			return mSize;
 		}
 
 		public void prepend(Clause c, int index) {
-			if (m_Head == null) {
-				m_Tail = c;
-				m_TailIndex = index;
+			if (mHead == null) {
+				mTail = c;
+				mTailIndex = index;
 			} else {
 				if (index == 0) {
-					assert c.nextFirstWatch == null;
-					c.nextFirstWatch = m_Head;
-					c.nextIsSecond |= m_HeadIndex;
+					assert c.mNextFirstWatch == null;
+					c.mNextFirstWatch = mHead;
+					c.mNextIsSecond |= mHeadIndex;
 				} else {
-					assert c.nextSecondWatch == null;
-					c.nextSecondWatch = m_Head;
-					c.nextIsSecond |= m_HeadIndex<<1;
+					assert c.mNextSecondWatch == null;
+					c.mNextSecondWatch = mHead;
+					c.mNextIsSecond |= mHeadIndex << 1;
 				}
 			}
-			m_Head = c;
-			m_HeadIndex = index;
-			m_Size++;
+			mHead = c;
+			mHeadIndex = index;
+			mSize++;
 		}
 
 		public void append(Clause c, int index) {
-			if (m_Head == null) {
-				m_Head = c;
-				m_HeadIndex = index;
+			if (mHead == null) {
+				mHead = c;
+				mHeadIndex = index;
 			} else {
-				Clause t = m_Tail;
-				if (m_TailIndex == 0) {
-					assert t.nextFirstWatch == null;
-					t.nextFirstWatch = c;
-					t.nextIsSecond |= index;
+				Clause t = mTail;
+				if (mTailIndex == 0) {
+					assert t.mNextFirstWatch == null;
+					t.mNextFirstWatch = c;
+					t.mNextIsSecond |= index;
 				} else {
-					assert t.nextSecondWatch == null;
-					t.nextSecondWatch = c;
-					t.nextIsSecond |= index<<1;
+					assert t.mNextSecondWatch == null;
+					t.mNextSecondWatch = c;
+					t.mNextIsSecond |= index << 1;
 				}
 			}
-			m_Tail = c;
-			m_TailIndex = index;
-			m_Size++;
+			mTail = c;
+			mTailIndex = index;
+			mSize++;
 		}
 
 		public int getIndex() {
-			return m_HeadIndex;
+			return mHeadIndex;
 		}
 
 		public Clause removeFirst() {
-			Clause c = m_Head;
-			if (m_HeadIndex == 0) {
-				m_Head = c.nextFirstWatch;
-				m_HeadIndex = c.nextIsSecond & 1;
-				c.nextFirstWatch = null;
-				c.nextIsSecond &= 2;
+			Clause c = mHead;
+			if (mHeadIndex == 0) {
+				mHead = c.mNextFirstWatch;
+				mHeadIndex = c.mNextIsSecond & 1;
+				c.mNextFirstWatch = null;
+				c.mNextIsSecond &= 2;
 			} else {
-				m_Head = c.nextSecondWatch;
-				m_HeadIndex = (c.nextIsSecond & 2) >>1;
-				c.nextSecondWatch = null;
-				c.nextIsSecond &= 1;
+				mHead = c.mNextSecondWatch;
+				mHeadIndex = (c.mNextIsSecond & 2) >> 1;
+				c.mNextSecondWatch = null;
+				c.mNextIsSecond &= 1;
 			}
-			if (m_Head == null) {
-				m_Tail = null;
-				m_TailIndex = 0;
+			if (mHead == null) {
+				mTail = null;
+				mTailIndex = 0;
 			}
-			m_Size--;
+			mSize--;
 			return c;
 		}
 
 		public void moveAll(WatchList src) {
-			if (src.m_Head == null)
+			if (src.mHead == null)
 				return;
 
-			append(src.m_Head, src.m_HeadIndex);
-			m_Size += src.m_Size-1;
-			m_Tail = src.m_Tail;
-			m_TailIndex = src.m_TailIndex;
-			src.m_Head = null;
-			src.m_HeadIndex = 0;
-			src.m_Tail = null;
-			src.m_TailIndex = 0;
-			src.m_Size = 0;
+			append(src.mHead, src.mHeadIndex);
+			mSize += src.mSize - 1;
+			mTail = src.mTail;
+			mTailIndex = src.mTailIndex;
+			src.mHead = null;
+			src.mHeadIndex = 0;
+			src.mTail = null;
+			src.mTailIndex = 0;
+			src.mSize = 0;
 		}
 	}
 
@@ -165,101 +165,101 @@ public class Clause extends SimpleListable<Clause> {
 	 * The activity of a clause. Infinity for clauses that are not inferred. If
 	 * the activity drops below some point the clause is removed.
 	 */
-	double activity;
+	double mActivity;
 //	int usedTimes;
 	/**
 	 * The stacklevel this clause was introduced.
 	 */
-	final int stacklevel;
+	final int mStacklevel;
 
 	/**
 	 * Proof annotation
 	 */
-	ProofNode proof;
+	ProofNode mProof;
 
-	ClauseDeletionHook cleanupHook;
+	ClauseDeletionHook mCleanupHook;
 	
-	private int hash = 0;
+	private int mHash = 0;
 
 	public int getSize() {
-		return m_literals.length;
+		return mLiterals.length;
 	}
 
 	public Literal getLiteral(int i) {
-		return m_literals[i];
+		return mLiterals[i];
 	}
 
 	public Clause(Literal[] literals) {
-		this.m_literals = literals;
-		stacklevel = computeStackLevel();
+		this.mLiterals = literals;
+		mStacklevel = computeStackLevel();
 	}
 
 	public Clause(Literal[] literals, ProofNode proof) {
-		this.m_literals = literals;
-		this.proof = proof;
-		stacklevel = computeStackLevel();
+		this.mLiterals = literals;
+		this.mProof = proof;
+		mStacklevel = computeStackLevel();
 	}
 
 	public Clause(Literal[] literals, int stacklevel) {
-		this.m_literals = literals;
-		this.stacklevel = Math.max(stacklevel, computeStackLevel());
+		this.mLiterals = literals;
+		this.mStacklevel = Math.max(stacklevel, computeStackLevel());
 	}
 
 	public Clause(Literal[] literals, ResolutionNode proof, int stacklevel) {
-		this.m_literals = literals;
-		this.proof = proof;
-		this.stacklevel = Math.max(stacklevel, computeStackLevel());
+		this.mLiterals = literals;
+		this.mProof = proof;
+		this.mStacklevel = Math.max(stacklevel, computeStackLevel());
 	}
 
 	private final int computeStackLevel() {
 		int sl = 0;
-		for (Literal lit : m_literals)
-			if (lit.getAtom().assertionstacklevel > sl)
-				sl = lit.getAtom().assertionstacklevel;
+		for (Literal lit : mLiterals)
+			if (lit.getAtom().mAssertionstacklevel > sl)
+				sl = lit.getAtom().mAssertionstacklevel;
 		return sl;
 	}
 
 	public String toString() {
-		return Arrays.toString(m_literals);
+		return Arrays.toString(mLiterals);
 	}
 	
 	public String toSMTLIB(Theory smtTheory) {
-		if (m_literals.length == 0)
+		if (mLiterals.length == 0)
 			return "false";
-		if (m_literals.length == 1)
-			return m_literals[0].getSMTFormula(smtTheory, true).toString();
+		if (mLiterals.length == 1)
+			return mLiterals[0].getSMTFormula(smtTheory, true).toString();
 		StringBuilder sb = new StringBuilder("(or");
-		for (Literal l : m_literals)
+		for (Literal l : mLiterals)
 			sb.append(' ').append(l.getSMTFormula(smtTheory, true));
 		sb.append(')');
 		return sb.toString();
 	}
 
 	public void setActivityInfinite() {
-		activity = Double.POSITIVE_INFINITY;
+		mActivity = Double.POSITIVE_INFINITY;
 	}
 
 	public boolean equals(Object o) {
 		if (o instanceof Clause)
-			return Arrays.equals(m_literals, ((Clause) o).m_literals);
+			return Arrays.equals(mLiterals, ((Clause) o).mLiterals);
 		return false;
 	}
 
 	public void setProof(ProofNode proof) {
-		this.proof = proof;
+		this.mProof = proof;
 	}
 
 	public ProofNode getProof() {
-		return proof;
+		return mProof;
 	}
 
 	public void setDeletionHook(ClauseDeletionHook hook) {
-		cleanupHook = hook;
+		mCleanupHook = hook;
 	}
 
 	public boolean doCleanup(DPLLEngine engine) {
-		return cleanupHook != null ?
-				cleanupHook.clauseDeleted(this, engine) : true;
+		return mCleanupHook == null
+		        ? true : mCleanupHook.clauseDeleted(this, engine);
 	}
 
 	/**
@@ -268,7 +268,7 @@ public class Clause extends SimpleListable<Clause> {
 	 * @return true, if the clause contains the literal with the same polarity.
 	 */
 	public boolean contains(Literal lit) {
-		for (Literal l : m_literals) {
+		for (Literal l : mLiterals) {
 			if (l == lit)
 				return true;
 		}
@@ -276,22 +276,22 @@ public class Clause extends SimpleListable<Clause> {
 	}
 	
 	public int hashCode() {
-		if (hash == 0) {
-			hash = HashUtils.hashJenkins(0, (Object[]) m_literals);
-			if (hash == 0)
-				hash = 0xbadc0ded;
+		if (mHash == 0) {
+			mHash = HashUtils.hashJenkins(0, (Object[]) mLiterals);
+			if (mHash == 0)
+				mHash = 0xbadc0ded;
 		}
-		return hash;
+		return mHash;
 	}
 	
 	public Term toTerm(Theory theory) {
-		if (m_literals.length == 0)
-			return theory.FALSE;
-		if (m_literals.length == 1)
-			return m_literals[0].getSMTFormula(theory, true);
-		Term[] args = new Term[m_literals.length];
-		for (int i = 0; i < m_literals.length; ++i) 
-			args[i] = m_literals[i].getSMTFormula(theory, true);
+		if (mLiterals.length == 0)
+			return theory.mFalse;
+		if (mLiterals.length == 1)
+			return mLiterals[0].getSMTFormula(theory, true);
+		Term[] args = new Term[mLiterals.length];
+		for (int i = 0; i < mLiterals.length; ++i) 
+			args[i] = mLiterals[i].getSMTFormula(theory, true);
 		return theory.term("or", args);
 	}
 	

@@ -34,8 +34,8 @@ public class ResolutionNode extends ProofNode {
 	 * @author Juergen Christ
 	 */
 	public static class Antecedent {
-		public final Literal pivot;
-		public final Clause antecedent;
+		public final Literal mPivot;
+		public final Clause mAntecedent;
 		
 		/**
 		 * Create an pivot/antecedent entry for a resolution node.
@@ -44,25 +44,25 @@ public class ResolutionNode extends ProofNode {
 		 * @param antecedent
 		 */
 		public Antecedent(Literal pivot, Clause antecedent) {
-			assert(pivot != null);
-			assert(antecedent != null);
-			assert(antecedent.contains(pivot));
-			this.pivot = pivot;
-			this.antecedent = antecedent;
+			assert pivot != null;
+			assert antecedent != null;
+			assert antecedent.contains(pivot);
+			this.mPivot = pivot;
+			this.mAntecedent = antecedent;
 		}
 		public String toString() {
-			return pivot.toString() + " => " + antecedent;
+			return mPivot.toString() + " => " + mAntecedent;
 		}
 	}
 	/// Primary conflict target
-	private Clause m_primary;
+	private final Clause mPrimary;
 	/// Our antecedents of the hyper resolution.
-	private Antecedent[] m_antecedents;
+	private final Antecedent[] mAntecedents;
 	
 	public ResolutionNode(Clause primary, Antecedent[] antecedents) {
 		assert(primary != null);
-		m_primary = primary;
-		m_antecedents = antecedents;
+		mPrimary = primary;
+		mAntecedents = antecedents;
 	}
 	
 	@Override
@@ -70,7 +70,7 @@ public class ResolutionNode extends ProofNode {
 		return false;
 	}
 	public Clause getPrimary() {
-		return m_primary;
+		return mPrimary;
 	}
 	/**
 	 * Get the antecedents of this proof node. Result will be <code>null</code>
@@ -78,11 +78,11 @@ public class ResolutionNode extends ProofNode {
 	 * @return Antecedents or <code>null</code>.
 	 */
 	public Antecedent[] getAntecedents() {
-		return m_antecedents;
+		return mAntecedents;
 	}
 	
 	public String toString() {
-		return m_primary + " => " + Arrays.toString(m_antecedents);
+		return mPrimary + " => " + Arrays.toString(mAntecedents);
 	}
 
 }

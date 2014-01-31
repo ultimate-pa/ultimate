@@ -30,8 +30,8 @@ public abstract class InternAbstractTermWalker extends TermWalker {
 
 	@Override
 	public void walk(NonRecursive walker) {
-		if (m_Term instanceof SMTAffineTerm)
-			walk(walker, (SMTAffineTerm) m_Term);
+		if (mTerm instanceof SMTAffineTerm)
+			walk(walker, (SMTAffineTerm) mTerm);
 		else
 			super.walk(walker);
 	}

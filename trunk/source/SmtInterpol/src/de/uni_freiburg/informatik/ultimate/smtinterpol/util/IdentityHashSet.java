@@ -25,40 +25,40 @@ import java.util.Iterator;
 
 public class IdentityHashSet<E> extends AbstractSet<E> {
 
-	private IdentityHashMap<E, Object> m_Backing;
+	private final IdentityHashMap<E, Object> mBacking;
 	
 	public IdentityHashSet() {
-		m_Backing = new IdentityHashMap<E, Object>();
+		mBacking = new IdentityHashMap<E, Object>();
 	}
 	
 	@Override
 	public Iterator<E> iterator() {
-		return m_Backing.keySet().iterator();
+		return mBacking.keySet().iterator();
 	}
 
 	@Override
 	public int size() {
-		return m_Backing.size();
+		return mBacking.size();
 	}
 
 	@Override
 	public boolean contains(Object o) {
-		return m_Backing.containsKey(o);
+		return mBacking.containsKey(o);
 	}
 
 	@Override
 	public boolean add(E e) {
-		return m_Backing.put(e, this) == null;
+		return mBacking.put(e, this) == null;
 	}
 
 	@Override
 	public boolean remove(Object o) {
-		return m_Backing.remove(o) != null;
+		return mBacking.remove(o) != null;
 	}
 
 	@Override
 	public void clear() {
-		m_Backing.clear();
+		mBacking.clear();
 	}
 
 	@Override

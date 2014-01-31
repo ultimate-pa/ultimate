@@ -26,33 +26,33 @@ import java.util.Set;
 
 public class ArrayMap<K, V> extends AbstractMap<K, V> {
 
-	private K[] m_keys;
-	private V[] m_values;
-	public ArrayMap(K[] keys,V[] values){
+	private final K[] mKeys;
+	private final V[] mValues;
+	public ArrayMap(K[] keys,V[] values) {
 		if (keys.length != values.length)
 			throw new IllegalArgumentException("Unequal array lengths");
-		m_keys = keys;
-		m_values = values;
+		mKeys = keys;
+		mValues = values;
 	}
 	private class ArrayMapEntry implements Map.Entry<K, V> {
-		private int m_id;
+		private int mId;
 		public ArrayMapEntry(int id) {
-			m_id = id;
+			mId = id;
 		}
 		@Override
 		public K getKey() {
-			return m_keys[m_id];
+			return mKeys[mId];
 		}
 
 		@Override
 		public V getValue() {
-			return m_values[m_id];
+			return mValues[mId];
 		}
 
 		@Override
 		public V setValue(V value) {
-			V old = m_values[m_id];
-			m_values[m_id] = value;
+			V old = mValues[mId];
+			mValues[mId] = value;
 			return old;
 		}
 		
@@ -64,16 +64,16 @@ public class ArrayMap<K, V> extends AbstractMap<K, V> {
 			@Override
 			public Iterator<java.util.Map.Entry<K, V>> iterator() {
 				return new Iterator<java.util.Map.Entry<K, V>>() {
-					private int m_id = 0;
+					private int mId = 0;
 
 					@Override
 					public boolean hasNext() {
-						return m_id < m_keys.length;
+						return mId < mKeys.length;
 					}
 
 					@Override
 					public java.util.Map.Entry<K, V> next() {
-						return new ArrayMapEntry(m_id++);
+						return new ArrayMapEntry(mId++);
 					}
 
 					@Override
@@ -86,7 +86,7 @@ public class ArrayMap<K, V> extends AbstractMap<K, V> {
 
 			@Override
 			public int size() {
-				return m_keys.length;
+				return mKeys.length;
 			}
 			
 		};

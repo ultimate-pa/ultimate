@@ -22,23 +22,23 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 public class BooleanVarAtom extends DPLLAtom {
-	final Term m_Variable;
+	final Term mVariable;
 	
 	public BooleanVarAtom(Term var, int assertionstacklevel) {
 		super(var.hashCode(), assertionstacklevel);
-		m_Variable = var;
+		mVariable = var;
 	}
 	
 	public String toString() {
-		return m_Variable.toString();
+		return mVariable.toString();
 	}
 
 	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
-		return m_Variable;
+		return mVariable;
 	}
 	
-	public boolean equals(Object other) {
-		return other instanceof BooleanVarAtom && 
-			((BooleanVarAtom) other).m_Variable == m_Variable;
+	public boolean equals(Object other) { // NOCHECKSTYLE see Literal.hashCode()
+		return other instanceof BooleanVarAtom 
+			&& ((BooleanVarAtom) other).mVariable == mVariable;
 	}
 }

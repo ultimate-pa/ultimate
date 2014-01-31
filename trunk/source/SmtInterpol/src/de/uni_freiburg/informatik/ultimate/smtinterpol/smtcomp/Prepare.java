@@ -26,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 
 public class Prepare implements ExitHook {
 
-	Script m_Script;
+	Script mScript;
 	
 	/**
 	 * @param args
@@ -47,7 +47,7 @@ public class Prepare implements ExitHook {
 				track = Track.PROOF_GEN;
 			else {
 				System.out.println(
-				"USAGE: Prepare [--track <main | app | core | proof>] <files>");
+				    "USAGE: Prepare [--track <main | app | core | proof>] <files>");
 				return;
 			}
 		}
@@ -55,8 +55,8 @@ public class Prepare implements ExitHook {
 		while (fileStartIdx < args.length) {
 			StringBuilder target = new StringBuilder(args[fileStartIdx]);
 			// Insert .prep before .smt2
-			target.insert(target.length() - 5, ".prep");
-			ParseEnvironment pe = new ParseEnvironment(exit.m_Script =
+			target.insert(target.length() - 5, ".prep");// NOCHECKSTYLE
+			ParseEnvironment pe = new ParseEnvironment(exit.mScript =
 					new PrepareScript(track, target.toString()), exit);
 			pe.parseScript(args[fileStartIdx]);
 			++fileStartIdx;
@@ -65,7 +65,7 @@ public class Prepare implements ExitHook {
 
 	@Override
 	public void exitHook() {
-		m_Script.exit();
+		mScript.exit();
 	}
 
 }

@@ -31,57 +31,57 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
 public class CongruencePath {
 
-	CClosure closure;
+	final CClosure mClosure;
 	
 	public static class SubPath {
-		ArrayList<CCTerm> termsOnPath;
-		ArrayList<CCEquality> litsOnPath;
+		ArrayList<CCTerm> mTermsOnPath;
+		ArrayList<CCEquality> mLitsOnPath;
 		
 		public SubPath(CCTerm start) {
-			termsOnPath = new ArrayList<CCTerm>();
-			litsOnPath = new ArrayList<CCEquality>();
-			termsOnPath.add(start);
+			mTermsOnPath = new ArrayList<CCTerm>();
+			mLitsOnPath = new ArrayList<CCEquality>();
+			mTermsOnPath.add(start);
 		}
 
 		public void storeInto(CCTerm[][] paths, CCEquality[][] lits, int i) {
-			assert termsOnPath.size() == litsOnPath.size()+1;
-			paths[i] = termsOnPath.toArray(new CCTerm[termsOnPath.size()]);
-			lits[i] = litsOnPath.toArray(new CCEquality[litsOnPath.size()]);			
+			assert mTermsOnPath.size() == mLitsOnPath.size() + 1;
+			paths[i] = mTermsOnPath.toArray(new CCTerm[mTermsOnPath.size()]);
+			lits[i] = mLitsOnPath.toArray(new CCEquality[mLitsOnPath.size()]);			
 		}
 
 		public void addEntry(CCTerm term, CCEquality reason) {
-			termsOnPath.add(term);
-			litsOnPath.add(reason);
+			mTermsOnPath.add(term);
+			mLitsOnPath.add(reason);
 		}
 
 		public void addReverse(SubPath second) {
-			assert second.termsOnPath.size() == second.litsOnPath.size()+1;
-			assert second.termsOnPath.get(second.termsOnPath.size()-1)
-				== termsOnPath.get(termsOnPath.size()-1);
-			for (int i = second.litsOnPath.size()-1; i >= 0; i--) {
-				termsOnPath.add(second.termsOnPath.get(i));
-				litsOnPath.add(second.litsOnPath.get(i));
+			assert second.mTermsOnPath.size() == second.mLitsOnPath.size() + 1;
+			assert second.mTermsOnPath.get(second.mTermsOnPath.size() - 1)
+				== mTermsOnPath.get(mTermsOnPath.size() - 1);
+			for (int i = second.mLitsOnPath.size() - 1; i >= 0; i--) {
+				mTermsOnPath.add(second.mTermsOnPath.get(i));
+				mLitsOnPath.add(second.mLitsOnPath.get(i));
 			}
 		}
 	}
 
-	HashMap<SymmetricPair<CCTerm>,SubPath> visited;
-	SubPath mainPath;
-	Set<Literal> allLiterals;
+	final HashMap<SymmetricPair<CCTerm>,SubPath> mVisited;
+	SubPath mMainPath;
+	final Set<Literal> mAllLiterals;
 
 	public CongruencePath(CClosure closure) {
-		this.closure = closure;
-		visited = new HashMap<SymmetricPair<CCTerm>, SubPath>();
-		allLiterals = new HashSet<Literal>();
+		this.mClosure = closure;
+		mVisited = new HashMap<SymmetricPair<CCTerm>, SubPath>();
+		mAllLiterals = new HashSet<Literal>();
 	}
 	
 	private CCAnnotation createAnnotation(CCEquality diseq) {
-		CCTerm[][] paths = new CCTerm[visited.size()][];
-		CCEquality[][] lits  = new CCEquality[visited.size()][];
+		CCTerm[][] paths = new CCTerm[mVisited.size()][];
+		CCEquality[][] lits  = new CCEquality[mVisited.size()][];
 		int i = 0;
-		mainPath.storeInto(paths, lits, i++);
-		for (SubPath subPath : visited.values()) {
-			if (subPath != mainPath)
+		mMainPath.storeInto(paths, lits, i++);
+		for (SubPath subPath : mVisited.values()) {
+			if (subPath != mMainPath)
 				subPath.storeInto(paths, lits, i++);
 		}
 		return new CCAnnotation(diseq, paths, lits);
@@ -89,8 +89,8 @@ public class CongruencePath {
 	
 	private int computeDepth(CCTerm t) {
 		int depth = 0;
-		while (t.equalEdge != null) {
-			t = t.equalEdge;
+		while (t.mEqualEdge != null) {
+			t = t.mEqualEdge;
 			depth++;
 		}
 		return depth;
@@ -106,7 +106,7 @@ public class CongruencePath {
 	 * pointing to start in the circle.  The parameter tailNr should correspond to
 	 * the equality edge pointing to end in the circle.
 	 * 
-	 * @param visited a set of equality pairs that were already visited.  This is
+	 * @param mVisited a set of equality pairs that were already visited.  This is
 	 * used to prevent double work.
 	 * @param set  the set of literals in the conflict clause.
 	 * @param info the interpolation info containing head/tail interfaces, and collecting
@@ -119,17 +119,17 @@ public class CongruencePath {
 	private void computeCCPath(CCAppTerm start, CCAppTerm end) {
 		while (true) {
 			/* Compute path and interpolation info for func and arg */
-			computePath(start.arg, end.arg);
+			computePath(start.mArg, end.mArg);
 
 			/* We do not have explicit edges between partial function
 			 * applications.  Hence start.func and end.func must be equal 
 			 * or congruent.
 			 */
-			if (start.func == end.func)
+			if (start.mFunc == end.mFunc)
 				break;
 			
-			start = (CCAppTerm) start.func;
-			end = (CCAppTerm) end.func;
+			start = (CCAppTerm) start.mFunc;
+			end = (CCAppTerm) end.mFunc;
 		}
 	}
 	
@@ -143,7 +143,7 @@ public class CongruencePath {
 	 * The interpolation info should be empty, its head/max/lastNr should correspond 
 	 * to the last formula number of the edge preceding t in the circle.
 	 * 
-	 * @param visited a set of equality pairs that were already visited.  This is
+	 * @param mVisited a set of equality pairs that were already visited.  This is
 	 * used to prevent double work.
 	 * @param set  the set of literals in the conflict clause.
 	 * @param info the interpolation info containing head/tail interfaces, and collecting
@@ -155,7 +155,7 @@ public class CongruencePath {
 		SubPath path = new SubPath(t);
 		CCTerm startCongruence = t;
 		while (t != end) {
-			if (t.oldRep.reasonLiteral != null) {
+			if (t.mOldRep.mReasonLiteral != null) {
 				if (startCongruence != t) {
 					/* We have a congruence:  The terms startCongruence and t are congruent.
 					 * Compute the paths for the func and arg parts and merge into the 
@@ -165,11 +165,11 @@ public class CongruencePath {
 					path.addEntry(t, null);
 				}
 				/* Add the equality literal to conflict set */
-				path.addEntry(t.equalEdge, t.oldRep.reasonLiteral);
-				allLiterals.add(t.oldRep.reasonLiteral);
-				startCongruence = t.equalEdge;
+				path.addEntry(t.mEqualEdge, t.mOldRep.mReasonLiteral);
+				mAllLiterals.add(t.mOldRep.mReasonLiteral);
+				startCongruence = t.mEqualEdge;
 			}
-			t = t.equalEdge;
+			t = t.mEqualEdge;
 		}
 		assert (startCongruence == t);
 		return path;
@@ -183,7 +183,7 @@ public class CongruencePath {
 	 * should give the (last) formula number of the next equality after right.
 	 * On return info.tailNr is equal to tailNr.
 	 * 
-	 * @param visited a set of equality pairs that were already visited.  This is
+	 * @param mVisited a set of equality pairs that were already visited.  This is
 	 * used to prevent double work. 
 	 * @param set  the set of literals in the conflict clause.
 	 * @param info the interpolation info containing head/tail interfaces, and collecting
@@ -198,8 +198,8 @@ public class CongruencePath {
 			return null;
 		
 		SymmetricPair<CCTerm> key = new SymmetricPair<CCTerm>(left, right);
-		if (visited.containsKey(key))
-			return visited.get(key);
+		if (mVisited.containsKey(key))
+			return mVisited.get(key);
 
 		int leftDepth = computeDepth(left);
 		int rightDepth = computeDepth(right);
@@ -207,24 +207,24 @@ public class CongruencePath {
 		CCTerm rr = right;
 		CCTerm llWithReason = ll, rrWithReason = rr;
 		while (leftDepth > rightDepth) {
-			if (ll.oldRep.reasonLiteral != null)
-				llWithReason = ll.equalEdge;
-			ll = ll.equalEdge;
+			if (ll.mOldRep.mReasonLiteral != null)
+				llWithReason = ll.mEqualEdge;
+			ll = ll.mEqualEdge;
 			leftDepth--;
 		}
 		while (rightDepth > leftDepth) {
-			if (rr.oldRep.reasonLiteral != null)
-				rrWithReason = rr.equalEdge;
-			rr = rr.equalEdge;
+			if (rr.mOldRep.mReasonLiteral != null)
+				rrWithReason = rr.mEqualEdge;
+			rr = rr.mEqualEdge;
 			rightDepth--;
 		}
 		while (ll != rr) {
-			if (ll.oldRep.reasonLiteral != null)
-				llWithReason = ll.equalEdge;
-			if (rr.oldRep.reasonLiteral != null)
-				rrWithReason = rr.equalEdge;
-			ll = ll.equalEdge;
-			rr = rr.equalEdge;
+			if (ll.mOldRep.mReasonLiteral != null)
+				llWithReason = ll.mEqualEdge;
+			if (rr.mOldRep.mReasonLiteral != null)
+				rrWithReason = rr.mEqualEdge;
+			ll = ll.mEqualEdge;
+			rr = rr.mEqualEdge;
 		}
 		assert (ll != null);
 		SubPath path = computePathTo(left, llWithReason);
@@ -233,16 +233,16 @@ public class CongruencePath {
 			path.addEntry(rrWithReason, null);
 		}
 		path.addReverse(computePathTo(right, rrWithReason));
-		visited.put(key, path);
+		mVisited.put(key, path);
 		return path;
 	}
 	
 	public Clause computeCycle(CCEquality eq, boolean produceProofs) {
-		mainPath = computePath(eq.getLhs(), eq.getRhs());
-		Literal[] cycle = new Literal[allLiterals.size() + 1];
+		mMainPath = computePath(eq.getLhs(), eq.getRhs());
+		Literal[] cycle = new Literal[mAllLiterals.size() + 1];
 		int i = 0;
 		cycle[i++] = eq;
-		for (Literal l: allLiterals)
+		for (Literal l: mAllLiterals)
 			cycle[i++] = l.negate();
 		Clause c = new Clause(cycle);
 		if (produceProofs)
@@ -251,11 +251,11 @@ public class CongruencePath {
 	}
 	
 	public Clause computeCycle(CCTerm lconstant, CCTerm rconstant, boolean produceProofs) {
-		closure.engine.getLogger().debug("computeCycle for Constants");
-		mainPath = computePath(lconstant, rconstant);
-		Literal[] cycle = new Literal[allLiterals.size()];
+		mClosure.mEngine.getLogger().debug("computeCycle for Constants");
+		mMainPath = computePath(lconstant, rconstant);
+		Literal[] cycle = new Literal[mAllLiterals.size()];
 		int i = 0;
-		for (Literal l: allLiterals)
+		for (Literal l: mAllLiterals)
 			cycle[i++] = l.negate();
 		Clause c = new Clause(cycle);
 		if (produceProofs)
@@ -267,8 +267,8 @@ public class CongruencePath {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("CongruencePath[");
-		sb.append(allLiterals.toString());
-		sb.append("]");
+		sb.append(mAllLiterals.toString());
+		sb.append(']');
 		return sb.toString();
 	}
 

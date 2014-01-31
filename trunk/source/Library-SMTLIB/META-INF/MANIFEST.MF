@@ -7,4 +7,4 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Require-Bundle: Library-UltimateUtil
 Export-Package: de.uni_freiburg.informatik.ultimate.logic,
  de.uni_freiburg.informatik.ultimate.logic.simplification,
- de.uni_freiburg.informatik.ultimate.logic.util
+ de.uni_freiburg.informatik.ultimate.util

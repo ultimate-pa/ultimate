@@ -30,11 +30,11 @@ public class OccurrenceCounter {
 	/**
 	 * The stack of clauses to be processed.
 	 */
-	private Deque<Clause> m_Todo = new ArrayDeque<Clause>();
+	private final Deque<Clause> mTodo = new ArrayDeque<Clause>();
 	/**
 	 * The count map.
 	 */
-	private Map<Clause, Integer> m_Counts;
+	private Map<Clause, Integer> mCounts;
 	/**
 	 * Increments the occurrence counter of a clause.  Returns <code>true</code>
 	 * if this clause is seen for the first time.
@@ -42,9 +42,9 @@ public class OccurrenceCounter {
 	 * @return Is this clause seen for the first time in the proof tree.
 	 */
 	private boolean incCounter(Clause cls) {
-		Integer oldVal = m_Counts.get(cls);
-		int newVal = (oldVal != null) ? oldVal + 1 : 1;
-		return m_Counts.put(cls, newVal) == null;
+		Integer oldVal = mCounts.get(cls);
+		int newVal = (oldVal == null) ? 1 : oldVal + 1;
+		return mCounts.put(cls, newVal) == null;
 	}
 	/**
 	 * Compute for each clause in the proof tree the number of occurrences.
@@ -56,17 +56,17 @@ public class OccurrenceCounter {
 	 */
 	public Map<Clause, Integer> count(Clause unsat) {
 		assert unsat.getSize() == 0;
-		m_Counts = new HashMap<Clause, Integer>();
-		m_Todo.push(unsat);
+		mCounts = new HashMap<Clause, Integer>();
+		mTodo.push(unsat);
 		run();
-		return m_Counts;
+		return mCounts;
 	}
 	/**
 	 * Process all clauses until the todo stack is empty.
 	 */
 	private void run() {
-		while (!m_Todo.isEmpty()) {
-			Clause cls = m_Todo.pop();
+		while (!mTodo.isEmpty()) {
+			Clause cls = mTodo.pop();
 			if (incCounter(cls)) {
 				// Descend into the subproof.
 				ProofNode pn = cls.getProof();
@@ -75,8 +75,8 @@ public class OccurrenceCounter {
 					ResolutionNode rn = (ResolutionNode) pn;
 					Antecedent[] antes = rn.getAntecedents();
 					for (int i = antes.length - 1; i >= 0; --i)
-						m_Todo.push((antes[i].antecedent));
-					m_Todo.push(rn.getPrimary());
+						mTodo.push(antes[i].mAntecedent);
+					mTodo.push(rn.getPrimary());
 				}
 			}
 		}

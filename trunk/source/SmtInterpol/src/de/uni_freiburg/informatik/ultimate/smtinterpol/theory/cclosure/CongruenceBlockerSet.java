@@ -21,15 +21,15 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 import java.util.HashSet;
 
 public class CongruenceBlockerSet {
-	private HashSet<CongruenceBlockPair> m_Roots =
+	private final HashSet<CongruenceBlockPair> mRoots =
 		new HashSet<CongruenceBlockPair>();
 	public void block(CCAppTerm t) {
-		m_Roots.add(CongruenceBlockPair.getRootPair(t));
+		mRoots.add(CongruenceBlockPair.getRootPair(t));
 	}
 	public boolean isBlocked(CCAppTerm t) {
-		return m_Roots.contains(CongruenceBlockPair.getRootPair(t));
+		return mRoots.contains(CongruenceBlockPair.getRootPair(t));
 	}
 	public void reset() {
-		m_Roots.clear();
+		mRoots.clear();
 	}
 }

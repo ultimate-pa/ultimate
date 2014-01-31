@@ -261,7 +261,7 @@ public interface Script {
 	 *                         check did not return unknown.
 	 */
 	public Object getInfo(String info)
-	throws UnsupportedOperationException, SMTLIBException;
+		throws UnsupportedOperationException, SMTLIBException;
 	/**
 	 * Exit the solver.
 	 */

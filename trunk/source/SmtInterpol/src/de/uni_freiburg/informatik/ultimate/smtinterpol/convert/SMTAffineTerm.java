@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.util.UnifyHash;
 
 /**
  *  Represents an affine term.  An affine term is a sum
@@ -43,24 +42,23 @@ import de.uni_freiburg.informatik.ultimate.util.UnifyHash;
  *    
  *  @author hoenicke.
  */
-public class SMTAffineTerm extends Term {
+public final class SMTAffineTerm extends Term {
 	
-	private static UnifyHash<SMTAffineTerm> unifier =
-			new UnifyHash<SMTAffineTerm>();
-	private final Sort m_sort;
-	private final Map<Term, Rational> m_summands;
-	private final Rational m_constant;
+	private final Sort mSort;
+	private final Map<Term, Rational> mSummands;
+	private final Rational mConstant;
 
-	private SMTAffineTerm(Map<Term, Rational> summands, Rational constant, Sort sort) {
-		super (constant.hashCode() * 11 + summands.hashCode() +
-				1423 * sort.hashCode());
-		m_sort = sort;
-		m_summands = summands;
-		m_constant = constant;
+	private SMTAffineTerm(
+	        Map<Term, Rational> summands, Rational constant, Sort sort) {
+		super(constant.hashCode() * 11 + summands.hashCode()
+		        + 1423 * sort.hashCode());
+		mSort = sort;
+		mSummands = summands;
+		mConstant = constant;
 	}
 	
-	public static SMTAffineTerm create(Map<Term, Rational> summands, Rational constant, 
-			                    Sort sort) {
+	public static SMTAffineTerm create(
+	        Map<Term, Rational> summands, Rational constant, Sort sort) {
 		return new SMTAffineTerm(summands, constant, sort);
 	}
 
@@ -83,15 +81,16 @@ public class SMTAffineTerm extends Term {
 			constant = Rational.ZERO;
 		} else if (subterm instanceof SMTAffineTerm) {
 			SMTAffineTerm a = (SMTAffineTerm) subterm;
-			constant = a.m_constant.mul(factor);
+			constant = a.mConstant.mul(factor);
 			summands = new HashMap<Term, Rational>();
-			for (Map.Entry<Term,Rational> me : a.m_summands.entrySet()) {
+			for (Map.Entry<Term,Rational> me : a.mSummands.entrySet()) {
 				summands.put(me.getKey(), me.getValue().mul(factor));
 			}
 		} else if (subterm instanceof ConstantTerm) {
 			Object value = ((ConstantTerm) subterm).getValue();
 			if (value instanceof BigInteger) {
-				constant = Rational.valueOf((BigInteger) value, BigInteger.ONE).mul(factor);
+				constant = Rational.valueOf(
+				        (BigInteger) value, BigInteger.ONE).mul(factor);
 				summands = Collections.emptyMap();
 			} else if (value instanceof BigDecimal) {
 				BigDecimal decimal = (BigDecimal) value;
@@ -125,8 +124,8 @@ public class SMTAffineTerm extends Term {
 	
 	public SMTAffineTerm addUnchecked(SMTAffineTerm a2, boolean sortCorrect) {
 		Map<Term, Rational> summands = new HashMap<Term, Rational>();
-		summands.putAll(this.m_summands);
-		for (Map.Entry<Term,Rational> entry : a2.m_summands.entrySet()) {
+		summands.putAll(this.mSummands);
+		for (Map.Entry<Term,Rational> entry : a2.mSummands.entrySet()) {
 			Term var = entry.getKey();
 			if (summands.containsKey(var)) {
 				Rational r = summands.get(var).add(entry.getValue());
@@ -139,10 +138,10 @@ public class SMTAffineTerm extends Term {
 				summands.put(var, entry.getValue());
 			}
 		}
-		return create(summands, m_constant.add(a2.m_constant),
-				sortCorrect ? m_sort :
-					a2.getSort().getName().equals("Real") ? 
-							a2.getSort() : m_sort);
+		return create(summands, mConstant.add(a2.mConstant),
+				sortCorrect ? mSort
+					: a2.getSort().getName().equals("Real") 
+							? a2.getSort() : mSort);
 	}
 
 	/**
@@ -151,7 +150,7 @@ public class SMTAffineTerm extends Term {
 	 * @return the sum of this and the constant.
 	 */
 	public SMTAffineTerm add(Rational c) {
-		return create(m_summands, m_constant.add(c), m_sort);
+		return create(mSummands, mConstant.add(c), mSort);
 	}
 	
 	/**
@@ -161,7 +160,7 @@ public class SMTAffineTerm extends Term {
 	 * @param sort   the new sort.
 	 */
 	public SMTAffineTerm toReal(Sort realSort) {
-		return create(m_summands, m_constant, realSort);
+		return create(mSummands, mConstant, realSort);
 	}
 	
 	/**
@@ -171,14 +170,14 @@ public class SMTAffineTerm extends Term {
 	 */
 	public SMTAffineTerm mul(Rational factor) {
 		if (factor.equals(Rational.ZERO))
-			return create(Rational.ZERO, m_sort);
+			return create(Rational.ZERO, mSort);
 		
-		Rational constant = this.m_constant.mul(factor);
+		Rational constant = this.mConstant.mul(factor);
 		HashMap<Term, Rational> summands = new HashMap<Term, Rational>();
-		for (Map.Entry<Term,Rational> me : this.m_summands.entrySet()) {
+		for (Map.Entry<Term,Rational> me : this.mSummands.entrySet()) {
 			summands.put(me.getKey(), me.getValue().mul(factor));
 		}
-		return create(summands, constant, m_sort);
+		return create(summands, constant, mSort);
 	}
 	public SMTAffineTerm div(Rational c) {
 		return mul(c.inverse());
@@ -188,38 +187,38 @@ public class SMTAffineTerm extends Term {
 	}
 
 	public boolean isConstant() {
-		return m_summands.isEmpty();
+		return mSummands.isEmpty();
 	}
 	public Rational getConstant() {
-		return m_constant;
+		return mConstant;
 	}
 	
 	public boolean isIntegral() {
-		return m_sort.getName().equals("Int");
+		return mSort.getName().equals("Int");
 	}
 	
-	public boolean equals(Object o) {
+	public boolean equals(Object o) { // NOCHECKSTYLE
 		if (!(o instanceof SMTAffineTerm))
 			return false;
 		SMTAffineTerm l = (SMTAffineTerm) o;
-		return m_sort == l.m_sort 
-			&& m_constant.equals(l.m_constant)
-			&& m_summands.equals(l.m_summands);
+		return mSort == l.mSort 
+			&& mConstant.equals(l.mConstant)
+			&& mSummands.equals(l.mSummands);
 	}
 	
 	@Override
 	public Sort getSort() {
-		return m_sort;
+		return mSort;
 	}
 
 	Rational getCoefficient(Term subterm) {
-		Rational coeff = m_summands.get(subterm);
+		Rational coeff = mSummands.get(subterm);
 		return coeff == null ? Rational.ZERO : coeff;
 	}
 
 	public Rational getGcd() {
-		assert (!m_summands.isEmpty());
-		Iterator<Rational> it = m_summands.values().iterator();
+		assert (!mSummands.isEmpty());
+		Iterator<Rational> it = mSummands.values().iterator();
 		Rational gcd = it.next().abs(); 
 		while (it.hasNext()) {
 			gcd = gcd.gcd(it.next().abs());
@@ -228,7 +227,7 @@ public class SMTAffineTerm extends Term {
 	}
 	
 	public Map<Term, Rational> getSummands() {
-		return m_summands;
+		return mSummands;
 	}
 
 	/**
@@ -238,7 +237,8 @@ public class SMTAffineTerm extends Term {
 	 * terms.
 	 * @see SMTAffineTerm.cleanup
 	 */ 
-	private static Term toPlainTerm(Map<Term, Rational> summands, Rational constant, Sort sort) {
+	private static Term toPlainTerm(
+	        Map<Term, Rational> summands, Rational constant, Sort sort) {
 		assert sort.isNumericSort();
 		Theory t = sort.getTheory();
 		int size = summands.size();
@@ -267,7 +267,7 @@ public class SMTAffineTerm extends Term {
 	
 	@Override
 	public void toStringHelper(ArrayDeque<Object> m_Todo) {
-		m_Todo.addLast(toPlainTerm(m_summands, m_constant, m_sort));
+		m_Todo.addLast(toPlainTerm(mSummands, mConstant, mSort));
 	}
 	
 	public String toString() {
@@ -280,64 +280,66 @@ public class SMTAffineTerm extends Term {
 	 * @return an equivalent term without SMTAffineTerm classes.
 	 */
 	public static Term cleanup(Term term) {
-	    return new TermTransformer() {
-	    	public void convert(Term term) {
-	    		if (term instanceof SMTAffineTerm) {
-	    			final SMTAffineTerm affine = (SMTAffineTerm) term;
-	    			enqueueWalker(new Walker() {
+		return new TermTransformer() {
+			public void convert(Term term) {
+				if (term instanceof SMTAffineTerm) {
+					final SMTAffineTerm affine = (SMTAffineTerm) term;
+					enqueueWalker(new Walker() {
 						@Override
 						public void walk(NonRecursive engine) {
-							HashMap<Term, Rational> summands = new HashMap<Term, Rational>();
-							for (Rational v: affine.m_summands.values()) {
+							HashMap<Term, Rational> summands =
+							        new HashMap<Term, Rational>();
+							for (Rational v: affine.mSummands.values()) {
 								summands.put(getConverted(), v);
 							}
-							Term term =	SMTAffineTerm.toPlainTerm
-								(summands, affine.m_constant, affine.m_sort);
+							Term term =	SMTAffineTerm.toPlainTerm(
+							        summands, affine.mConstant, affine.mSort);
 							setResult(term);
 						}
-	    			});
-	    			for (Term t : affine.m_summands.keySet())
-	    				pushTerm(t);
-	    			return;
-	    		}
-	    		super.convert(term);
-	    	}
-	    }.transform(term);
+					});
+					for (Term t : affine.mSummands.keySet())
+						pushTerm(t);
+					return;
+				}
+				super.convert(term);
+			}
+		}.transform(term);
 	}
 	
 	/**
 	 * Normalize this term.  If this term corresponds to a singleton sum with
 	 * coefficient 1 and constant 0, it will return the singleton term.
 	 * Otherwise, it will return this.
+	 * @param compiler TermCompiler used to unify SMTAffineTerms
 	 * @return this or the singleton term corresponding to this.
 	 */
-	public Term normalize() {
-		if (m_constant.equals(Rational.ZERO) && m_summands.size() == 1) {
+	public Term normalize(TermCompiler compiler) {
+		if (mConstant.equals(Rational.ZERO) && mSummands.size() == 1) {
 			Map.Entry<Term, Rational> me =
-					m_summands.entrySet().iterator().next();
-			if (me.getValue().equals(Rational.ONE) &&
+					mSummands.entrySet().iterator().next();
+			if (me.getValue().equals(Rational.ONE)
 					// Fixes bug for to_real
-					me.getKey().getSort() == m_sort)
+					&& me.getKey().getSort() == mSort)
 				return me.getKey();
 		}
-		return unifier.unify(this);
+		return compiler.unify(this);
 	}
 	
-	public Term internalize() {
+	public Term internalize(TermCompiler compiler) {
 		SMTAffineTerm res = this;
-		if (getTheory().getLogic().isIRA() && m_sort.getName().equals("Real") &&
-				isAllInt())
-			res = create(m_summands, m_constant, getTheory().getSort("Int"));
-		return res.normalize();
+		if (getTheory().getLogic().isIRA() && mSort.getName().equals("Real")
+				&& isAllInt())
+			res = create(mSummands, mConstant, getTheory().getSort("Int"));
+		return res.normalize(compiler);
 	}
 	
 	private boolean isAllInt() {
-		for (Map.Entry<Term, Rational> me : m_summands.entrySet()) {
+		for (Map.Entry<Term, Rational> me : mSummands.entrySet()) {
 			if (!me.getKey().getSort().getName().equals("Int"))
 				return false;
 			if (!me.getValue().isIntegral())
 				return false;
 		}
-		return m_constant.isIntegral();
+		return mConstant.isIntegral();
 	}
 }

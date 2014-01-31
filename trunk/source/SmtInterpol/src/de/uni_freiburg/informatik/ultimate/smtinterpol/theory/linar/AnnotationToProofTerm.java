@@ -25,6 +25,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
@@ -36,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
  * @author Jochen Hoenicke
  */
 public class AnnotationToProofTerm {
-	private static final Annotation g_trichotomy =
+	private static final Annotation TRICHOTOMY =
 		new Annotation(":trichotomy", null);
 
 	/**
@@ -48,31 +49,28 @@ public class AnnotationToProofTerm {
 		 * Number of times this annotation is referenced in other annotation.
 		 * This is one for the base annotation.
 		 */
-		int  count;
+		int  mCount;
 		/**
 		 * Number of times this annotation was visited in the conversion 
 		 * process.  Only when it is visited for the last time, we do the
 		 * actual conversion.
 		 */
-		int  visited;
+		int  mVisited;
 		/**
 		 * SMT representation of the bound explained by this sub-annotation.
 		 * This is null for the base annotation.
 		 */
-		Term literal;
+		Term mLiteral;
 		/**
 		 * The negated form of literal.
 		 * This is null for the base annotation.
 		 */
-		Term negLiteral;
-	}
-	
-	public AnnotationToProofTerm() {
+		Term mNegLiteral;
 	}
 	
 	/**
 	 * Compute the gcd of all Farkas coefficients used in the annotation.
-	 * This is used to keep make the Farkas coefficients integral.
+	 * This is used to make the Farkas coefficients integral.
 	 * @param annot the annotation.
 	 * @return the gcd of all Farkas coefficients in annot.
 	 */
@@ -107,11 +105,11 @@ public class AnnotationToProofTerm {
 			at.add(annot.getLinVar().getEpsilon());
 		Term posTerm = at.toSMTLibLeq0(theory, true);
 		if (annot.isUpper()) {
-			info.literal = posTerm;
-			info.negLiteral = theory.term("not", posTerm);
+			info.mLiteral = posTerm;
+			info.mNegLiteral = theory.term("not", posTerm);
 		} else {
-			info.literal = theory.term("not", posTerm);
-			info.negLiteral = posTerm;
+			info.mLiteral = theory.term("not", posTerm);
+			info.mNegLiteral = posTerm;
 		}
 	}
 	
@@ -138,7 +136,7 @@ public class AnnotationToProofTerm {
 				if (annot.getLinVar() != null)
 					computeLiterals(annot, theory, info);
 			}
-			info.count++;
+			info.mCount++;
 			todo.addAll(annot.getAuxAnnotations().keySet());
 		}
 
@@ -148,8 +146,8 @@ public class AnnotationToProofTerm {
 		while (!todo.isEmpty()) {
 			LAAnnotation annot = todo.removeFirst();
 			AnnotationInfo info = infos.get(annot);
-			info.visited++;
-			if (info.visited < info.count)
+			info.mVisited++;
+			if (info.mVisited < info.mCount)
 				continue;
 
 			// The annotation was visited for the final time.
@@ -159,44 +157,43 @@ public class AnnotationToProofTerm {
 
 			// Now convert it to a clause and add it to antes.
 			Rational gcd = computeGcd(annot);
-			int numdisjs = annot.getCoefficients().size() +
-					annot.getAuxAnnotations().size() + 
-					(info.literal == null ? 0 : 1);
+			int numdisjs = annot.getCoefficients().size()
+					+ annot.getAuxAnnotations().size()
+					+ (info.mLiteral == null ? 0 : 1);
 			int i = 0;
 			Term[] disjs = new Term[numdisjs];
 			Term[] coeffs = new Term[numdisjs];
-			if (info.literal != null) {
+			if (info.mLiteral != null) {
 				Rational sign = annot.isUpper() ? Rational.MONE : Rational.ONE;
-				disjs[i] = info.literal;
-				coeffs[i] = sign.div(gcd).toSMTLIB(theory);
+				disjs[i] = info.mLiteral;
+				coeffs[i] = sign.div(gcd).toTerm(getSort(theory));
 				++i;
 			}
 			boolean trichotomy = false;
-			for (Map.Entry<Literal, Rational> me :
-				annot.getCoefficients().entrySet()) {
+			for (Map.Entry<Literal, Rational> me
+				: annot.getCoefficients().entrySet()) {
 				Literal lit = me.getKey();
 				if (lit instanceof LAEquality)
 					trichotomy = true;
 				disjs[i] = me.getKey().getSMTFormula(theory, true);
-				coeffs[i] = me.getValue().div(gcd).toSMTLIB(theory);
+				coeffs[i] = me.getValue().div(gcd).toTerm(getSort(theory));
 				++i;
 			}
-			for (Map.Entry<LAAnnotation, Rational> me :
-				annot.getAuxAnnotations().entrySet()) {
+			for (Map.Entry<LAAnnotation, Rational> me
+				: annot.getAuxAnnotations().entrySet()) {
 				AnnotationInfo auxInfo = infos.get(me.getKey());
 				// If the generated clause would just be of the form
 				// ell \/ not ell, we omit the sub-annotation from the
 				// proof.
-				if (disjs.length == 2 && auxInfo.literal == disjs[0])
+				if (disjs.length == 2 && auxInfo.mLiteral == disjs[0])
 					continue todo_loop;
-				disjs[i] = auxInfo.negLiteral;
-				coeffs[i] = me.getValue().div(gcd).toSMTLIB(theory);
+				disjs[i] = auxInfo.mNegLiteral;
+				coeffs[i] = me.getValue().div(gcd).toTerm(getSort(theory));
 				++i;
 			}
-			Term proofAnnot = theory.term(theory.m_Or, disjs);
+			Term proofAnnot = theory.term(theory.mOr, disjs);
 			Annotation[] annots = new Annotation[] {
-					trichotomy ? g_trichotomy :
-							new Annotation(":LA", coeffs)
+				trichotomy ? TRICHOTOMY : new Annotation(":LA", coeffs)
 			};
 			proofAnnot = theory.annotatedTerm(annots, proofAnnot);
 			proofAnnot = theory.term("@lemma", proofAnnot);
@@ -204,15 +201,27 @@ public class AnnotationToProofTerm {
 				// Since the base annotation should be translated first
 				// this must be a sub-annotation, so we should have the
 				// corresponding pivot literal.
-				assert (info.literal != null);
+				assert (info.mLiteral != null);
 				proofAnnot = theory.annotatedTerm(new Annotation[]{
-						new Annotation(":pivot", info.literal)
-					}, proofAnnot);
+					new Annotation(":pivot", info.mLiteral)
+				}, proofAnnot);
 			}
 			antes.add(proofAnnot);
 		}
 		if (antes.size() == 1)
 			return antes.getFirst();
 		return theory.term("@res", antes.toArray(new Term[antes.size()]));
+	}
+	
+	/**
+	 * Helper method to retrieve a sort used to convert Rationals.  By default,
+	 * we try to print Rationals as integers.  If this fails, we switch back to
+	 * reals.
+	 * @param t The theory used to create sorts and terms.
+	 * @return A sort to use for conversion of Rationals.
+	 */
+	private Sort getSort(Theory t) {
+		Sort res = t.getSort("Int");
+		return res == null ? t.getSort("Real") : res;
 	}
 }

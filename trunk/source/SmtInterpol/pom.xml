@@ -10,8 +10,8 @@
 	</parent>
 
 
-	<groupId>SmtInterpol</groupId>
-	<artifactId>SmtInterpol</artifactId>
+	<groupId>SMTInterpol</groupId>
+	<artifactId>SMTInterpol</artifactId>
 	<version>2.0.0</version>
 	<packaging>eclipse-plugin</packaging>
 

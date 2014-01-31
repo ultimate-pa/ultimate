@@ -24,7 +24,11 @@ import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
-public class InputTruncation {
+public final class InputTruncation {
+	
+	private InputTruncation() {
+		// Hide constructor
+	}
 
 	/**
 	 * @param args

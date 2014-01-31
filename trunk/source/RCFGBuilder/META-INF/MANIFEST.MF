@@ -9,7 +9,7 @@ Require-Bundle: UltimateCore,
  Library-SMTLIB,
  Library-UltimateUtil,
  SMTSolverBridge,
- SmtInterpol,
+ SMTInterpol,
  Library-ModelCheckerUtils,
  BoogiePrinter
 Bundle-ActivationPolicy: lazy

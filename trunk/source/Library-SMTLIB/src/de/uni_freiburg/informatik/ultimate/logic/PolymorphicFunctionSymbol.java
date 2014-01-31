@@ -24,48 +24,48 @@ import java.util.HashMap;
 
 public class PolymorphicFunctionSymbol extends FunctionSymbolFactory {
 	
-	private final Sort[] m_TypeParams;
-	private final Sort[] m_ParamSorts;
-	private final Sort m_ResultSort;
-	private final int  m_Flags;
+	private final Sort[] mTypeParams;
+	private final Sort[] mParamSorts;
+	private final Sort mResultSort;
+	private final int  mFlags;
 	
 	PolymorphicFunctionSymbol(String name, Sort[] typeParams, Sort[] params, 
 			Sort result, int flags) {
 		super(name);
-		m_TypeParams = typeParams;
-		m_ParamSorts = params;
-		m_ResultSort = result;
-		m_Flags      = flags;
+		mTypeParams = typeParams;
+		mParamSorts = params;
+		mResultSort = result;
+		mFlags      = flags;
 	}
 
 	public int getFlags(BigInteger[] indices, Sort[] paramSorts, Sort result) {
-		return m_Flags;
+		return mFlags;
 	}
 
-	public Sort getResultSort
-		(BigInteger[] indices, Sort[] paramSorts, Sort result) {
+	public Sort getResultSort(
+			BigInteger[] indices, Sort[] paramSorts, Sort result) {
 		if (indices != null)
 			return null;
-		if (paramSorts.length != m_ParamSorts.length)
+		if (paramSorts.length != mParamSorts.length)
 			return null;
 		HashMap<Sort,Sort> unifier = new HashMap<Sort, Sort>();
 		for (int i = 0; i < paramSorts.length; i++) {
-			if (!m_ParamSorts[i].unifySort(unifier, paramSorts[i]))
+			if (!mParamSorts[i].unifySort(unifier, paramSorts[i]))
 				return null;
 		}
-		if (result != null) {
-			if (!m_ResultSort.unifySort(unifier, result.getRealSort()))
+		if (result != null) { // NOPMD
+			if (!mResultSort.unifySort(unifier, result.getRealSort()))
 				return null;
 			return result;
 		} else {
-			Sort[] mapping = new Sort[m_TypeParams.length];
-			for (int i = 0; i < m_TypeParams.length; i++) {
-				mapping[i] = unifier.get(m_TypeParams[i]);
+			Sort[] mapping = new Sort[mTypeParams.length];
+			for (int i = 0; i < mTypeParams.length; i++) {
+				mapping[i] = unifier.get(mTypeParams[i]);
 				// check if there are still unresolved type parameters.
 				if (mapping[i] == null)
 					return null;
 			}
-			return m_ResultSort.mapSort(mapping);
+			return mResultSort.mapSort(mapping);
 		}
 	}
 }

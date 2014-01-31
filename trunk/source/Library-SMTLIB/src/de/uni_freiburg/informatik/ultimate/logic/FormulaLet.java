@@ -31,20 +31,21 @@ import java.util.Map;
  * @author hoenicke
  */
 public class FormulaLet extends NonRecursive {
-	private ArrayDeque<Map<Term, TermInfo>> m_Visited;
-	private ArrayDeque<Term> m_ResultStack;
-	private int m_CseNum;
-	private LetFilter m_Filter = null;
+	private ArrayDeque<Map<Term, TermInfo>> mVisited;
+	private ArrayDeque<Term> mResultStack;
+	private int mCseNum;
+	private LetFilter mFilter;
 	
 	public static interface LetFilter {
 		public boolean isLettable(Term t);
 	}
 	
 	public FormulaLet() {
+		this(null);
 	}
 
 	public FormulaLet(LetFilter filter) {
-		this.m_Filter = filter;
+		this.mFilter = filter;
 	}
 	/**
 	 * Compute the cse form of a term.  Note that all lets will be removed from
@@ -54,37 +55,38 @@ public class FormulaLet extends NonRecursive {
 	 */
 	public Term let(Term input) {
 		input = new FormulaUnLet().unlet(input);
-		m_CseNum = 0;
-		m_Visited = new ArrayDeque<Map<Term,TermInfo>>();
-		m_ResultStack = new ArrayDeque<Term>();
+		mCseNum = 0;
+		mVisited = new ArrayDeque<Map<Term,TermInfo>>();
+		mResultStack = new ArrayDeque<Term>();
 		run(new Letter(input));
-		Term result = m_ResultStack.removeLast();
-		assert m_ResultStack.size() == 0 && m_Visited.size() == 0;
+		Term result = mResultStack.removeLast();
+		assert mResultStack.size() == 0 && mVisited.size() == 0;
 		assert new TermEquivalence().equal(
 				new FormulaUnLet().unlet(result), input);
-		m_ResultStack = null;
-		m_Visited = null;
+		mResultStack = null;
+		mVisited = null;
 		return result;
 	}
 	
 	static class Letter implements Walker {
-		Term m_Term;
+		final Term mTerm;
 		public Letter(Term term) {
-			m_Term = term;
+			mTerm = term;
 		}
 		
 		public void walk(NonRecursive engine) {
-			if (m_Term instanceof TermVariable
-				|| m_Term instanceof ConstantTerm) {
-				((FormulaLet) engine).m_ResultStack.addLast(m_Term);
+			if (mTerm instanceof TermVariable
+				|| mTerm instanceof ConstantTerm) {
+				((FormulaLet) engine).mResultStack.addLast(mTerm);
 				return;
 			}
-			((FormulaLet) engine).m_Visited.addLast(new HashMap<Term, FormulaLet.TermInfo>());
-			TermInfo info = new TermInfo(m_Term);
-			((FormulaLet) engine).m_Visited.getLast().put(m_Term, info);
+			((FormulaLet) engine).mVisited.addLast(
+					new HashMap<Term, FormulaLet.TermInfo>());
+			TermInfo info = new TermInfo(mTerm);
+			((FormulaLet) engine).mVisited.getLast().put(mTerm, info);
 			engine.enqueueWalker(new Walker() {
 				public void walk(NonRecursive engine) {
-					((FormulaLet) engine).m_Visited.removeLast();
+					((FormulaLet) engine).mVisited.removeLast();
 				}
 			});
 			engine.enqueueWalker(new Transformer(info, true));
@@ -93,46 +95,46 @@ public class FormulaLet extends NonRecursive {
 	}
 	
 	private final static class TermInfo extends TermWalker {
-		int                 m_Count;
-		int                 m_Seen;
-		ArrayList<TermInfo> m_LettedTerms;
-		TermVariable        m_Subst;
-		TermInfo            m_Parent;
-		int                 m_pDepth;
+		int                 mCount;
+		int                 mSeen;
+		ArrayList<TermInfo> mLettedTerms;
+		TermVariable        mSubst;
+		TermInfo            mParent;
+		int                 mPDepth;
 		public TermInfo(Term term) {
 			super(term);
-			this.m_Count = 1;
+			this.mCount = 1;
 		}
 
 		public boolean shouldBuildLet() {
 			TermInfo info = this;
-			while (info.m_Count == 1) {
-				info = info.m_Parent;
+			while (info.mCount == 1) {
+				info = info.mParent;
 				if (info == null)
 					return false;
-				if (info.m_Subst != null)
+				if (info.mSubst != null)
 					return false;
 			}
 			return true;
 		}
 		
 		public void mergeParent(TermInfo parent) {
-			if (m_Parent == null) {
-				m_Parent = parent;
-				m_pDepth = parent.m_pDepth+1;
+			if (mParent == null) {
+				mParent = parent;
+				mPDepth = parent.mPDepth + 1;
 				return;
 			}
-			while (m_Parent != parent) {
-				if (parent.m_pDepth == m_Parent.m_pDepth) {
-					parent = parent.m_Parent;
-					m_Parent = m_Parent.m_Parent;
-				} else if (parent.m_pDepth > m_Parent.m_pDepth) {
-					parent = parent.m_Parent;
+			while (mParent != parent) {
+				if (parent.mPDepth == mParent.mPDepth) {
+					parent = parent.mParent;
+					mParent = mParent.mParent;
+				} else if (parent.mPDepth > mParent.mPDepth) {
+					parent = parent.mParent;
 				} else {
-					m_Parent = m_Parent.m_Parent;
+					mParent = mParent.mParent;
 				}
 			}
-			m_pDepth = m_Parent.m_pDepth + 1;
+			mPDepth = mParent.mPDepth + 1;
 		}
 		
 		@Override
@@ -155,7 +157,8 @@ public class FormulaLet extends NonRecursive {
 
 		@Override
 		public void walk(NonRecursive walker, LetTerm term) {
-			throw new InternalError("Let-Terms should not be in the formula anymore");
+			throw new InternalError(
+					"Let-Terms should not be in the formula anymore");
 		}
 
 		@Override
@@ -180,123 +183,122 @@ public class FormulaLet extends NonRecursive {
 				&& ((ApplicationTerm) term).getParameters().length == 0)
 				return;
 	
-			TermInfo child = let.m_Visited.getLast().get(term);
+			TermInfo child = let.mVisited.getLast().get(term);
 			if (child == null) {
 				child = new TermInfo(term);
-				let.m_Visited.getLast().put(term, child);
+				let.mVisited.getLast().put(term, child);
 				let.enqueueWalker(child);
 			} else {
-				child.m_Count++;
+				child.mCount++;
 			}
 		}
 	}
 	
 	static class Transformer implements Walker {
-		TermInfo m_TermInfo;
-		boolean m_IsCounted;
+		TermInfo mTermInfo;
+		boolean mIsCounted;
 		public Transformer(TermInfo parent, boolean isCounted) {
-			m_TermInfo = parent;
-			m_IsCounted = isCounted;
+			mTermInfo = parent;
+			mIsCounted = isCounted;
 		}
 		
 		public void walk(NonRecursive engine) {
 			FormulaLet let = ((FormulaLet) engine);
-			Term term = m_TermInfo.m_Term;
-			if (m_IsCounted) {
-				let.enqueueWalker(new BuildLet(m_TermInfo));
-				m_TermInfo.m_LettedTerms = new ArrayList<TermInfo>();
+			Term term = mTermInfo.mTerm;
+			if (mIsCounted) {
+				let.enqueueWalker(new BuildLet(mTermInfo));
+				mTermInfo.mLettedTerms = new ArrayList<TermInfo>();
 			}
 			if (term instanceof QuantifiedFormula) {
 				QuantifiedFormula quant = (QuantifiedFormula) term;
 				let.enqueueWalker(new BuildQuantifier(quant));
-				let.enqueueWalker
-					(new Letter(quant.getSubformula()));
+				let.enqueueWalker(new Letter(quant.getSubformula()));
 			} else if (term instanceof AnnotatedTerm) {
 				AnnotatedTerm at = (AnnotatedTerm) term;
 				let.enqueueWalker(new BuildAnnotatedTerm(at));
 				if (isNamed(at))
 					let.enqueueWalker(new Letter(at.getSubterm()));
 				else
-					let.enqueueWalker(new Converter(m_TermInfo, at.getSubterm(), m_IsCounted));
+					let.enqueueWalker(
+						new Converter(mTermInfo, at.getSubterm(), mIsCounted));
 			} else if (term instanceof ApplicationTerm) {
 				ApplicationTerm appTerm = (ApplicationTerm) term;
 				let.enqueueWalker(new BuildApplicationTerm(appTerm));
 				Term[] params = appTerm.getParameters();
-				for (int i = params.length-1; i >= 0; i--)
-					let.enqueueWalker(new Converter(m_TermInfo, params[i], m_IsCounted));
+				for (int i = params.length - 1; i >= 0; i--)
+					let.enqueueWalker(
+						new Converter(mTermInfo, params[i], mIsCounted));
 			} else {
-				let.m_ResultStack.addLast(term);
+				let.mResultStack.addLast(term);
 			}
 		}
 	}		
 	static class Converter implements Walker {
-		TermInfo m_Parent;
-		Term m_Term;
-		boolean m_IsCounted;
+		TermInfo mParent;
+		Term mTerm;
+		boolean mIsCounted;
 		public Converter(TermInfo parent, Term term, boolean isCounted) {
-			m_Parent = parent;
-			m_Term = term;
-			m_IsCounted = isCounted;
+			mParent = parent;
+			mTerm = term;
+			mIsCounted = isCounted;
 		}
 
 		public void walk(NonRecursive engine) {
 			FormulaLet let = ((FormulaLet) engine);
-			Term child = m_Term;
-			TermInfo info = let.m_Visited.getLast().get(child);
+			Term child = mTerm;
+			TermInfo info = let.mVisited.getLast().get(child);
 			if (info == null) {
-				let.m_ResultStack.addLast(child);
+				let.mResultStack.addLast(child);
 				return;
 			}
-			info.mergeParent(m_Parent);
-			if (info.shouldBuildLet() && info.m_Subst == null && 
-				(let.m_Filter == null || let.m_Filter.isLettable(child))) {
-				Term t = info.m_Term; 
-				info.m_Subst = t.getTheory().
-					createTermVariable(".cse" + let.m_CseNum++, t.getSort());
+			info.mergeParent(mParent);
+			if (info.shouldBuildLet() && info.mSubst == null 
+				&& (let.mFilter == null || let.mFilter.isLettable(child))) {
+				Term t = info.mTerm; 
+				info.mSubst = t.getTheory().
+					createTermVariable(".cse" + let.mCseNum++, t.getSort());
 			}
-			if (m_IsCounted) {
-				if (++info.m_Seen == info.m_Count) {
-					if (info.m_Subst == null)
-						let.enqueueWalker(new Transformer(info, true));
-					else {
-						let.m_ResultStack.addLast(info.m_Subst);
-						TermInfo ancestor = info.m_Parent;
-						TermInfo letPos = ancestor;
-						while (ancestor != null && ancestor.m_Subst == null) {
-							if (ancestor.m_Count > 1)
-								letPos = ancestor.m_Parent;
-							ancestor = ancestor.m_Parent;
-						}
-						letPos.m_LettedTerms.add(info);
+			if (mIsCounted && ++info.mSeen == info.mCount) {
+				if (info.mSubst == null)
+					let.enqueueWalker(new Transformer(info, true));
+				else {
+					let.mResultStack.addLast(info.mSubst);
+					TermInfo ancestor = info.mParent;
+					TermInfo letPos = ancestor;
+					while (ancestor != null && ancestor.mSubst == null) {
+						if (ancestor.mCount > 1)
+							letPos = ancestor.mParent;
+						ancestor = ancestor.mParent;
 					}
-					return;
+					letPos.mLettedTerms.add(info);
 				}
+				return;
 			}
 			
-			if (info.m_Subst != null)
-				let.m_ResultStack.addLast(info.m_Subst);
-			else
+			if (info.mSubst == null)
 				let.enqueueWalker(new Transformer(info, false));
+			else
+				let.mResultStack.addLast(info.mSubst);
 		}
 	}
 	
 	static class BuildLet implements Walker {
-		TermInfo m_TermInfo;
+		final TermInfo mTermInfo;
 		public BuildLet(TermInfo parent) {
-			m_TermInfo = parent;
+			mTermInfo = parent;
 		}
 		
 		public void walk(NonRecursive engine) {
-			FormulaLet let = ((FormulaLet) engine);
-			List<TermInfo> lettedTerms = m_TermInfo.m_LettedTerms;
+			List<TermInfo> lettedTerms = mTermInfo.mLettedTerms;
 			if (lettedTerms.isEmpty())
 				return;
+			FormulaLet let = ((FormulaLet) engine);
 			TermVariable[] tvs = new TermVariable[lettedTerms.size()];
 			let.enqueueWalker(this);
 			let.enqueueWalker(new BuildLetTerm(tvs));
 			int i = 0;
 			for (TermInfo ti : lettedTerms) {
-				tvs[i++] = ti.m_Subst;
+				tvs[i++] = ti.mSubst;
 				let.enqueueWalker(new Transformer(ti, true));
 			}
 			lettedTerms.clear();
@@ -304,73 +306,74 @@ public class FormulaLet extends NonRecursive {
 	}
 	
 	static class BuildLetTerm implements Walker {
-		TermVariable[] m_Vars;
+		final TermVariable[] mVars;
 		public BuildLetTerm(TermVariable[] vars) {
-			m_Vars = vars;
+			mVars = vars;
 		}
 		public void walk(NonRecursive engine) {
 			FormulaLet let = (FormulaLet)engine;
-			Term[] values = new Term[m_Vars.length];
+			Term[] values = new Term[mVars.length];
 			for (int i = 0; i < values.length; i++)
-				values[i] = let.m_ResultStack.removeLast();
-			Term newBody = let.m_ResultStack.removeLast();
+				values[i] = let.mResultStack.removeLast();
+			Term newBody = let.mResultStack.removeLast();
 			Theory theory = newBody.getTheory();
-			Term result = theory.let(m_Vars, values, newBody);
-			let.m_ResultStack.addLast(result);
+			Term result = theory.let(mVars, values, newBody);
+			let.mResultStack.addLast(result);
 		}
 	}
 
 	static class BuildApplicationTerm implements Walker {
-		ApplicationTerm m_OldTerm;
+		final ApplicationTerm mOldTerm;
 		public BuildApplicationTerm(ApplicationTerm term) {
-			m_OldTerm = term;
+			mOldTerm = term;
 		}
 		public void walk(NonRecursive engine) {
 			FormulaLet let = (FormulaLet)engine;
-			Term[] newParams = let.getTerms(m_OldTerm.getParameters());
-			Term result = m_OldTerm;
-			if (newParams != m_OldTerm.getParameters()) {
-				Theory theory = m_OldTerm.getTheory();
-				result = theory.term(m_OldTerm.getFunction(), newParams);
+			Term[] newParams = let.getTerms(mOldTerm.getParameters());
+			Term result = mOldTerm;
+			if (newParams != mOldTerm.getParameters()) {
+				Theory theory = mOldTerm.getTheory();
+				result = theory.term(mOldTerm.getFunction(), newParams);
 			}
-			let.m_ResultStack.addLast(result);
+			let.mResultStack.addLast(result);
 		}
 	}
 
 	static class BuildQuantifier implements Walker {
-		QuantifiedFormula m_OldTerm;
+		final QuantifiedFormula mOldTerm;
 		public BuildQuantifier(QuantifiedFormula term) {
-			m_OldTerm = term;
+			mOldTerm = term;
 		}
 		public void walk(NonRecursive engine) {
 			FormulaLet let = (FormulaLet)engine;
-			Term newBody = let.m_ResultStack.removeLast();
-			Term result = m_OldTerm;
-			if (newBody != m_OldTerm.getSubformula()) {
-				Theory theory = m_OldTerm.getTheory();
-				if (m_OldTerm.getQuantifier() == QuantifiedFormula.EXISTS)
-					result = theory.exists(m_OldTerm.getVariables(), newBody);
+			Term newBody = let.mResultStack.removeLast();
+			Term result = mOldTerm;
+			if (newBody != mOldTerm.getSubformula()) {
+				Theory theory = mOldTerm.getTheory();
+				if (mOldTerm.getQuantifier() == QuantifiedFormula.EXISTS)
+					result = theory.exists(mOldTerm.getVariables(), newBody);
 				else
-					result = theory.forall(m_OldTerm.getVariables(), newBody);
+					result = theory.forall(mOldTerm.getVariables(), newBody);
 			}
-			let.m_ResultStack.addLast(result);
+			let.mResultStack.addLast(result);
 		}
 	}
 
 	static class BuildAnnotatedTerm implements Walker {
-		AnnotatedTerm m_OldTerm;
+		final AnnotatedTerm mOldTerm;
 		public BuildAnnotatedTerm(AnnotatedTerm term) {
-			m_OldTerm = term;
+			mOldTerm = term;
 		}
 		public void walk(NonRecursive engine) {
 			FormulaLet let = (FormulaLet)engine;
-			Term newBody = let.m_ResultStack.removeLast();
-			Term result = m_OldTerm;
-			if (newBody != m_OldTerm.getSubterm()) {
-				Theory theory = m_OldTerm.getTheory();
-				result = theory.annotatedTerm(m_OldTerm.getAnnotations(), newBody);
+			Term newBody = let.mResultStack.removeLast();
+			Term result = mOldTerm;
+			if (newBody != mOldTerm.getSubterm()) {
+				Theory theory = mOldTerm.getTheory();
+				result = theory.annotatedTerm(
+						mOldTerm.getAnnotations(), newBody);
 			}
-			let.m_ResultStack.addLast(result);
+			let.mResultStack.addLast(result);
 		}
 	}
 
@@ -386,7 +389,7 @@ public class FormulaLet extends NonRecursive {
 	public Term[] getTerms(Term[] oldArgs) {
 		Term[] newArgs = oldArgs;
 		for (int i = oldArgs.length - 1; i >= 0; i--) {
-			Term newTerm = m_ResultStack.removeLast();
+			Term newTerm = mResultStack.removeLast();
 			if (newTerm != oldArgs[i]) {
 				if (newArgs == oldArgs)
 					newArgs = oldArgs.clone();

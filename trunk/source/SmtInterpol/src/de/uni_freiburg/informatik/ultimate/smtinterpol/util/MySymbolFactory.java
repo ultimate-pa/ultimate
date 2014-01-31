@@ -23,75 +23,80 @@ import java_cup.runtime.SymbolFactory;
 
 public class MySymbolFactory implements SymbolFactory {
 	public class LineColumnSymbol extends Symbol {
-		private final String name;
-		private final int lcolumn;
-		private final int rcolumn;
+		private final String mName;
+		private final int mLColumn;
+		private final int mRColumn;
  
  		public LineColumnSymbol(String name, int id, int state) {
  			super(id, state);
- 			this.name = name;
- 			this.lcolumn = -1;
- 			this.rcolumn = -1;
+ 			this.mName = name;
+ 			this.mLColumn = -1;
+ 			this.mRColumn = -1;
  		}
  		
  		public LineColumnSymbol(String name, int id, 
 	            int left, int lcolumn, int right, int rcolumn, 
 	            Object o) {
  			super(id, left, right, o);
- 			this.name = name;
- 			this.lcolumn = lcolumn;
- 			this.rcolumn = rcolumn;
+ 			this.mName = name;
+ 			this.mLColumn = lcolumn;
+ 			this.mRColumn = rcolumn;
  		}
 		
-		public LineColumnSymbol(String name, int id, Symbol left, Symbol right, Object o) {
+		public LineColumnSymbol(
+				String name, int id, Symbol left, Symbol right, Object o) {
 			super(id, left, right, o);
-			this.name = name;
+			this.mName = name;
 			if (left instanceof LineColumnSymbol)
-				lcolumn = ((LineColumnSymbol) left).lcolumn;
+				mLColumn = ((LineColumnSymbol) left).mLColumn;
 			else
-				lcolumn = 0;
+				mLColumn = 0;
 			if (right instanceof LineColumnSymbol)
-				rcolumn = ((LineColumnSymbol) left).rcolumn;
+				mRColumn = ((LineColumnSymbol) left).mRColumn;
 			else
-				rcolumn = 0;
+				mRColumn = 0;
 		}
 		
 		public String getLocation() {
-			if (lcolumn >= 0)
-				return ""+left+":"+lcolumn;
+			if (mLColumn >= 0)
+				return left + ":" + mLColumn;
 			else
-				return ""+left;
+				return Integer.toString(left);
 		}
 
 		public String getName() {
-			return name;
+			return mName;
 		}
 		
 		public String toString() {
-			return "("+name+" "+left+":"+lcolumn+"-"+right+":"+rcolumn+")";
+			return "(" + mName + " " + left + ":" + mLColumn + "-" + right + ":"
+					+ mRColumn + ")";
 		}
 	}
 	
     // Factory methods
-    public Symbol newSymbol(String name, int id, int lline, int lcol, int rline, int rcol, Object value){
+    public Symbol newSymbol(
+    		String name, int id, int lline, int lcol, int rline, int rcol, Object value) {
         return new LineColumnSymbol(name,id,lline,lcol,rline,rcol,value);
     }
-    public Symbol newSymbol(String name, int id, int lline, int lcol, int rline, int rcol){
+    public Symbol newSymbol(
+    		String name, int id, int lline, int lcol, int rline, int rcol) {
         return new LineColumnSymbol(name,id,lline,lcol,rline,rcol, null);
     }
-    public Symbol newSymbol(String name, int id, Symbol left, Symbol right, Object value){
+    public Symbol newSymbol(
+    		String name, int id, Symbol left, Symbol right, Object value) {
         return new LineColumnSymbol(name,id,left,right,value);
     }
-    public Symbol newSymbol(String name, int id, Symbol left, Symbol right){
+    public Symbol newSymbol(String name, int id, Symbol left, Symbol right) {
         return new LineColumnSymbol(name,id,left,right,null);
     }
-    public Symbol newSymbol(String name, int id){
+    public Symbol newSymbol(String name, int id) {
         return new LineColumnSymbol(name,id,-1,-1,-1,-1,null);
     }
-    public Symbol newSymbol(String name, int id, Object value){
+    public Symbol newSymbol(String name, int id, Object value) {
         return new LineColumnSymbol(name,id,-1,-1,-1,-1,value);
     }
-    public Symbol startSymbol(String name, int id, int state){
+    public Symbol startSymbol(String name, int id, int state) {
         LineColumnSymbol s = new LineColumnSymbol(name,id, state);
         return s;
     }

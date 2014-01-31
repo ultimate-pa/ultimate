@@ -44,21 +44,21 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.NamedAtom;
  *  @author hoenicke.
  */
 public class MutableAffinTerm {
-	TreeMap<LinVar, Rational> m_summands =
+	TreeMap<LinVar, Rational> mSummands =
 		new TreeMap<LinVar, Rational>();
-	InfinitNumber m_constant;
+	InfinitNumber mConstant;
 	
 	public MutableAffinTerm() {
-		m_constant = InfinitNumber.ZERO;
+		mConstant = InfinitNumber.ZERO;
 	}
 
 	public MutableAffinTerm add(Rational c) {
-		m_constant = m_constant.add(new InfinitNumber(c, 0));
+		mConstant = mConstant.add(new InfinitNumber(c, 0));
 		return this;
 	}
 	
 	public MutableAffinTerm add(InfinitNumber c) {
-		m_constant = m_constant.add(c);
+		mConstant = mConstant.add(c);
 		return this;
 	}
 	public MutableAffinTerm add(Rational c, SharedTerm term) {
@@ -89,31 +89,31 @@ public class MutableAffinTerm {
 	
 	private void addSimple(Rational c, LinVar term) {
 		assert (/*!term.getLinVar().isInitiallyBasic() &&*/ !c.equals(Rational.ZERO));
-		Rational oldc = m_summands.remove(term);
+		Rational oldc = mSummands.remove(term);
 		if (oldc != null) {
 			c = oldc.add(c);
 			if (c.equals(Rational.ZERO))
 				return;
 		}
-		m_summands.put(term,c);
+		mSummands.put(term,c);
 	}
 
 	public MutableAffinTerm add(Rational c, MutableAffinTerm a) {
 		if (c != Rational.ZERO) {
-			addMap(c, a.m_summands);
-			m_constant = m_constant.add(a.m_constant.mul(c));
+			addMap(c, a.mSummands);
+			mConstant = mConstant.add(a.mConstant.mul(c));
 		}
 		return this;
 	}
 
 	public MutableAffinTerm mul(Rational c) {
 		if (c.equals(Rational.ZERO))
-			m_summands.clear();
+			mSummands.clear();
 		else if (!c.equals(Rational.ONE)) {
-			for (Map.Entry<LinVar, Rational> summand : m_summands.entrySet()) {
+			for (Map.Entry<LinVar, Rational> summand : mSummands.entrySet()) {
 				summand.setValue(c.mul(summand.getValue()));
 			}
-			m_constant = m_constant.mul(c);
+			mConstant = mConstant.mul(c);
 		}
 		return this;
 	}
@@ -125,18 +125,18 @@ public class MutableAffinTerm {
 		return mul(Rational.MONE);
 	}
 	public boolean isConstant() {
-		return m_summands.isEmpty();
+		return mSummands.isEmpty();
 	}
 	public InfinitNumber getConstant() {
-		return m_constant;
+		return mConstant;
 	}
 	public TreeMap<LinVar,Rational> getSummands() {
-		return m_summands;
+		return mSummands;
 	}
 	
 	public Rational getGCD() {
-		assert (!m_summands.isEmpty());
-		Iterator<Rational> it = m_summands.values().iterator();
+		assert (!mSummands.isEmpty());
+		Iterator<Rational> it = mSummands.values().iterator();
 		Rational gcd = it.next(); 
 		boolean firstSign = gcd.isNegative();
 		gcd = gcd.abs();
@@ -159,7 +159,7 @@ public class MutableAffinTerm {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		boolean isFirst = true;
-		for (Entry<LinVar,Rational> entry : m_summands.entrySet()) {
+		for (Entry<LinVar,Rational> entry : mSummands.entrySet()) {
 			LinVar var = entry.getKey();
 			Rational fact = entry.getValue();
 			if (fact.isNegative()) {
@@ -169,20 +169,20 @@ public class MutableAffinTerm {
 			}
 			fact = fact.abs();
 			if (!fact.equals(Rational.ONE))
-				sb.append(fact).append("*");
+				sb.append(fact).append('*');
 			sb.append(var);
 			isFirst = false;
 		}
 		if (isFirst)
-			sb.append(m_constant);
+			sb.append(mConstant);
 		else {
-			int signum = m_constant.compareTo(InfinitNumber.ZERO); 
+			int signum = mConstant.compareTo(InfinitNumber.ZERO); 
 			if (signum < 0) {
 				sb.append(" - ");
-				sb.append(m_constant.mul(Rational.MONE));
-			} else if (signum > 0){
+				sb.append(mConstant.mul(Rational.MONE));
+			} else if (signum > 0) {
 				sb.append(" + ");
-				sb.append(m_constant);
+				sb.append(mConstant);
 			}
 		}
 		return sb.toString();
@@ -205,15 +205,15 @@ public class MutableAffinTerm {
 		FunctionSymbol negate = t.getFunction("-", numSort);
 		if (negate == null)
 			negate = t.getFunction("-", numSort);
-		assert (!isInt || m_constant.ma.isIntegral());
-		Term constTerm = m_constant.ma.equals(Rational.ZERO) ? null 
-			: isInt ? t.numeral(m_constant.ma.numerator())
-			: t.rational(m_constant.ma.numerator(), m_constant.ma.denominator());
-		Term[] terms = new Term[m_summands.size() + (constTerm == null ? 0 : 1)];
+		assert (!isInt || mConstant.mA.isIntegral());
+		Term constTerm = mConstant.mA.equals(Rational.ZERO) ? null 
+			: isInt ? t.numeral(mConstant.mA.numerator())
+			: t.rational(mConstant.mA.numerator(), mConstant.mA.denominator());
+		Term[] terms = new Term[mSummands.size() + (constTerm == null ? 0 : 1)];
 		if (constTerm != null)
-			terms[m_summands.size()] = constTerm;
+			terms[mSummands.size()] = constTerm;
 		int offset = 0;
-		for (Map.Entry<LinVar,Rational> me : m_summands.entrySet()) {
+		for (Map.Entry<LinVar,Rational> me : mSummands.entrySet()) {
 			LinVar lv = me.getKey();
 			Term convme = lv.getSharedTerm().getRealTerm();
 			// if affine term is integral it may only add integers.
@@ -242,16 +242,16 @@ public class MutableAffinTerm {
 	}
 	
 	public Rational getValue(LinArSolve linar) {
-		assert m_constant.meps == 0;
-		MutableRational val = new MutableRational(m_constant.ma);
-		for (Map.Entry<LinVar, Rational> me : m_summands.entrySet()) {
+		assert mConstant.mEps == 0;
+		MutableRational val = new MutableRational(mConstant.mA);
+		for (Map.Entry<LinVar, Rational> me : mSummands.entrySet()) {
 			val.add(me.getValue().mul(linar.realValue(me.getKey())));
 		}
 		return val.toRational();
 	}
 	
 	public boolean isInt() {
-		for (LinVar v : m_summands.keySet())
+		for (LinVar v : mSummands.keySet())
 			if (!v.isInt())
 				return false;
 		return true;
@@ -264,16 +264,16 @@ public class MutableAffinTerm {
 	 * @return The SMTLib term representing the formula <code>this <= 0</code>.
 	 */
 	public Term toSMTLibLeq0(Theory smtTheory, boolean quoted) {
-		assert m_constant.meps >= 0;
+		assert mConstant.mEps >= 0;
 		if (isConstant()) {
-			return m_constant.compareTo(InfinitNumber.ZERO) <= 0 
-				? smtTheory.TRUE : smtTheory.FALSE;
+			return mConstant.compareTo(InfinitNumber.ZERO) <= 0 
+				? smtTheory.mTrue : smtTheory.mFalse;
 		}
 		boolean isInt = isInt();
-		String comp = m_constant.meps == 0 ? "<=" : "<";
+		String comp = mConstant.mEps == 0 ? "<=" : "<";
 		Term zero = isInt ? smtTheory.numeral(BigInteger.ZERO)
 				: smtTheory.decimal(BigDecimal.ZERO);
 		Term res = smtTheory.term(comp, toSMTLib(smtTheory, isInt, quoted), zero);
-		return quoted ? smtTheory.annotatedTerm(NamedAtom.g_quoted, res) : res;
+		return quoted ? smtTheory.annotatedTerm(NamedAtom.QUOTED, res) : res;
 	}
 }

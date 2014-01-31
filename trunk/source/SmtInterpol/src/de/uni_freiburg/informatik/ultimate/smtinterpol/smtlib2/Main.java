@@ -22,10 +22,15 @@ import java.math.BigInteger;
 
 import org.apache.log4j.Logger;
 
-public class Main {
+public final class Main {
+    
+    private Main() {
+        // Hide constructor
+    }
 	
 	private static void usage() {
-		System.err.println("USAGE smtinterpol [-q] [-v] [-t <num>] [-r <num>] [file.smt2]");
+		System.err.println(
+		        "USAGE smtinterpol [-q] [-v] [-t <num>] [-r <num>] [file.smt2]");
 	}
 	
 	public static void main(String[] param) {
@@ -38,39 +43,33 @@ public class Main {
         		paramctr++;
         		break;
         	} else if (param[paramctr].equals("-v")) {
-        		benchmark.setOption(":verbosity", BigInteger.valueOf(5));
+        		benchmark.setOption(":verbosity", BigInteger.valueOf(5)); // NOCHECKSTYLE
         		paramctr++;
         	} else if (param[paramctr].equals("-q")) {
-        		benchmark.setOption(":verbosity", BigInteger.valueOf(3));
+        		benchmark.setOption(":verbosity", BigInteger.valueOf(3)); // NOCHECKSTYLE
         		paramctr++;
-        	} else if (param[paramctr].equals("-t") && 
-        			++paramctr < param.length) {
+        	} else if (param[paramctr].equals("-t") && ++paramctr < param.length) {
         		try {
         			int timeout = Integer.parseInt(param[paramctr]);
         			if (timeout < 0) {
-        				logger.error("Cannot parse timeout " +
-        						"argument: Negative number");
+        				logger.error("Cannot parse timeout argument: Negative number");
         			} else {
         				benchmark.setOption(":timeout", BigInteger.valueOf(timeout));
         			}
-        		} catch (NumberFormatException nfe) {
-    				logger.error("Cannot parse timeout " +
-        					"argument: Not a number");
+        		} catch (NumberFormatException enfe) {
+    				logger.error("Cannot parse timeout argument: Not a number");
         		}
         		paramctr++;
-        	} else if (param[paramctr].equals("-r") &&
-        			++paramctr < param.length) {
+        	} else if (param[paramctr].equals("-r") && ++paramctr < param.length) {
         		try {
         			int seed = Integer.parseInt(param[paramctr]);
         			if (seed < 0) {
-        				logger.error("Cannot parse random seed " +
-        						"argument: Negative number");
+        				logger.error("Cannot parse random seed argument: Negative number");
         			} else {
         				benchmark.setOption(":random-seed", BigInteger.valueOf(seed));
         			}
-        		} catch (NumberFormatException nfe) {
-    				logger.error("Cannot parse random seed " +
-        					"argument: Not a number");
+        		} catch (NumberFormatException enfe) {
+    				logger.error("Cannot parse random seed argument: Not a number");
         		}
         		paramctr++;
         	} else {

@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class DAGSize extends NonRecursive {
-	
+
 	private class TermOnceWalker extends NonRecursive.TermWalker {
 
 		public TermOnceWalker(Term term) {
@@ -44,14 +44,16 @@ public class DAGSize extends NonRecursive {
 
 		@Override
 		public void walk(NonRecursive walker) {
-			if (m_Seen.add(m_Term)) {
-				++m_Size;
+			if (mSeen.add(mTerm)) {
+				++mSize;
 				super.walk(walker);
 			}
 		}
 
 		@Override
-		public void walk(NonRecursive walker, ConstantTerm term) {}
+		public void walk(NonRecursive walker, ConstantTerm term) {
+			// No subterms to enqueue
+		}
 
 		@Override
 		public void walk(NonRecursive walker, AnnotatedTerm term) {
@@ -78,6 +80,7 @@ public class DAGSize extends NonRecursive {
 		@Override
 		public void walk(NonRecursive walker, TermVariable term) {
 			// TODO Do we want to count this???  It is unified...
+			// No subterms to enqueue
 		}
 		
 	}
@@ -105,30 +108,30 @@ public class DAGSize extends NonRecursive {
 		
 	}
 	
-	private Set<Term> m_Seen;
-	private int m_Size;
+	private Set<Term> mSeen;
+	private int mSize;
 	
 	public DAGSize() {
-		m_Seen = new HashSet<Term>();
-		m_Size = 0;
+		mSeen = new HashSet<Term>();
+		mSize = 0;
 	}
 	
 	public void reset() {
 		super.reset();
-		m_Seen.clear();
-		m_Size = 0;
+		mSeen.clear();
+		mSize = 0;
 	}
 	
 	public int size(Term term) {
 		run(new TermOnceWalker(new FormulaUnLet().unlet(term)));
-		return m_Size;
+		return mSize;
 	}
 	
 	public int treesize(Term term) {
-		Set<Term> old = m_Seen;
-		m_Seen = ConstantEmptySet.EMPTY;
+		Set<Term> old = mSeen;
+		mSeen = ConstantEmptySet.EMPTY;
 		run(new TermOnceWalker(new FormulaUnLet().unlet(term)));
-		m_Seen = old;
-		return m_Size;
+		mSeen = old;
+		return mSize;
 	}
 }

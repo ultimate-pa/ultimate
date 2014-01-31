@@ -24,44 +24,34 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 
 public class CCBaseTerm extends CCTerm {
-	Object symbol;
+	Object mSymbol;
 	
 	public CCBaseTerm(boolean isFunc, int parentPos, Object symb, SharedTerm term) {
 		super(isFunc, parentPos, term, symb.hashCode());
-		this.symbol = symb;
+		this.mSymbol = symb;
 	}
 
-	/**
-	 * Create a CCBaseTerm that is not part of the e-graph and is only used for interpolation.
-	 * @param symb
-	 */
-	public CCBaseTerm(Object symb) {
-		super();
-		this.symbol = symb;
-	}
-	
-	public Term toSMTTerm(Theory t, boolean useAuxVars)
-	{
-		assert !isFunc;
-		if (symbol instanceof SharedTerm)
-			return ((SharedTerm) symbol).getRealTerm();// TODO auxvar stuff
-		assert symbol instanceof FunctionSymbol;
-		FunctionSymbol func = (FunctionSymbol) symbol;
-		assert func.getParameterCount() == 0;
+	public Term toSMTTerm(Theory t, boolean useAuxVars) {
+		assert !mIsFunc;
+		if (mSymbol instanceof SharedTerm)
+			return ((SharedTerm) mSymbol).getRealTerm();// TODO auxvar stuff
+		assert mSymbol instanceof FunctionSymbol;
+		FunctionSymbol func = (FunctionSymbol) mSymbol;
+		assert func.getParameterSorts().length == 0;
 		return t.term(func);
 	}
 
 	public String toString() {
-		if (symbol instanceof FunctionSymbol)
-			return ((FunctionSymbol)symbol).getName();
-		return symbol.toString();
+		if (mSymbol instanceof FunctionSymbol)
+			return ((FunctionSymbol)mSymbol).getName();
+		return mSymbol.toString();
 	}
 
 	public FunctionSymbol getFunctionSymbol() {
-		return (FunctionSymbol) symbol;
+		return (FunctionSymbol) mSymbol;
 	}
 	
 	public boolean isFunctionSymbol() {
-		return symbol instanceof FunctionSymbol;
+		return mSymbol instanceof FunctionSymbol;
 	}
 }

@@ -25,16 +25,15 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.CuckooHashSet;
 public class CCTermPairHash extends CuckooHashSet<CCTermPairHash.Info> {
 	
 	public final static class Info {
-		CCEquality diseq;
-		SimpleList<CCEquality.Entry>  eqlits;
-		Entry lhsEntry, rhsEntry;
-		int arrayextadded;
+		CCEquality mDiseq;
+		final SimpleList<CCEquality.Entry>  mEqlits;
+		final Entry mLhsEntry, mRhsEntry;
 
 		class Entry extends SimpleListable<Entry> {
-			CCTerm other;
+			CCTerm mOther;
 			
-			Entry (CCTerm other) {
-				this.other = other;
+			Entry(CCTerm other) {
+				this.mOther = other;
 			}
 			
 			Info getInfo() {
@@ -42,8 +41,8 @@ public class CCTermPairHash extends CuckooHashSet<CCTermPairHash.Info> {
 			}
 			
 			Entry getOtherEntry() {
-				return Info.this.lhsEntry == this 
-					? Info.this.rhsEntry : Info.this.lhsEntry; 
+				return Info.this.mLhsEntry == this 
+					? Info.this.mRhsEntry : Info.this.mLhsEntry; 
 			}
 
 			public String toString() {
@@ -52,25 +51,24 @@ public class CCTermPairHash extends CuckooHashSet<CCTermPairHash.Info> {
 		}
 		
 		public Info(CCTerm l, CCTerm r) {
-			lhsEntry = new Entry(r);
-			rhsEntry = new Entry(l);
-			l.pairInfos.append(lhsEntry);
-			r.pairInfos.append(rhsEntry);
-			eqlits = new SimpleList<CCEquality.Entry>();
-			arrayextadded = 0;
+			mLhsEntry = new Entry(r);
+			mRhsEntry = new Entry(l);
+			l.mPairInfos.append(mLhsEntry);
+			r.mPairInfos.append(mRhsEntry);
+			mEqlits = new SimpleList<CCEquality.Entry>();
 		}
 		
 		public int hashCode() {
-			return pairHash(rhsEntry.other, lhsEntry.other);
+			return pairHash(mRhsEntry.mOther, mLhsEntry.mOther);
 		}
 		
 		public final boolean equals(CCTerm lhs, CCTerm rhs) {
-			return (this.rhsEntry.other == lhs && this.lhsEntry.other == rhs)
-					|| (this.rhsEntry.other == rhs && this.lhsEntry.other == lhs);
+			return (this.mRhsEntry.mOther == lhs && this.mLhsEntry.mOther == rhs)
+					|| (this.mRhsEntry.mOther == rhs && this.mLhsEntry.mOther == lhs);
 		}
 		
 		public String toString() {
-			return "Info["+rhsEntry.other+","+lhsEntry.other+"]";
+			return "Info[" + mRhsEntry.mOther + "," + mLhsEntry.mOther + "]";
 		}
 		
 //		public void addExtensionalityDiseq(ConvertFormula converter) {
@@ -81,14 +79,13 @@ public class CCTermPairHash extends CuckooHashSet<CCTermPairHash.Info> {
 //			}
 //		}
 
-		// TODO: Array and Quantifier support
 		public boolean isEmpty() {
-			return eqlits.isEmpty();
+			return mEqlits.isEmpty();
 		}
 	}
 	
 	private Info getInfoStash(CCTerm lhs, CCTerm rhs) {
-		StashList<Info> stash = this.stashList;
+		StashList<Info> stash = this.mStashList;
 		while (stash != null) {
 			if (stash.getEntry().equals(lhs,rhs))
 				return stash.getEntry();
@@ -100,13 +97,13 @@ public class CCTermPairHash extends CuckooHashSet<CCTermPairHash.Info> {
 	public Info getInfo(CCTerm lhs, CCTerm rhs) {
 		int hash = hash(pairHash(lhs, rhs));
 		int hash1 = hash1(hash);
-		Info bucket = (Info) buckets[hash1]; 
+		Info bucket = (Info) mBuckets[hash1]; 
   		if (bucket != null && bucket.equals(lhs, rhs))
 			return bucket;
-		bucket = (Info) buckets[hash2(hash) ^ hash1]; 
+		bucket = (Info) mBuckets[hash2(hash) ^ hash1]; 
   		if (bucket != null && bucket.equals(lhs, rhs))
 			return bucket;
-		return stashList != null ? getInfoStash(lhs, rhs) : null;
+		return mStashList == null ? null : getInfoStash(lhs, rhs);
 	}
 
 	private static int pairHash(CCTerm lhs, CCTerm rhs) {
@@ -115,8 +112,8 @@ public class CCTermPairHash extends CuckooHashSet<CCTermPairHash.Info> {
 
 	public void removePairInfo(Info info) {
 		// First remove this pair from the pairInfos-lists in the components
-		info.lhsEntry.removeFromList();
-		info.rhsEntry.removeFromList();
+		info.mLhsEntry.removeFromList();
+		info.mRhsEntry.removeFromList();
 		remove(info);
 	}
 }

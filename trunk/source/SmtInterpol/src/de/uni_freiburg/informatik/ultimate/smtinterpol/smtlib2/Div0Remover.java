@@ -42,23 +42,22 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 public class Div0Remover extends TermTransformer {
 
 	private static class BuildAnnotationTerm implements Walker {
-		private AnnotatedTerm m_Term;
+		private final AnnotatedTerm mTerm;
 		
 		public BuildAnnotationTerm(AnnotatedTerm term) {
-			m_Term = term;
+			mTerm = term;
 		}
 		@Override
 		public void walk(NonRecursive engine) {
 			Div0Remover remover = (Div0Remover) engine;
 			Annotation[] newAnnots =
-					remover.collectAnnotations(m_Term.getAnnotations());
+					remover.collectAnnotations(mTerm.getAnnotations());
 			Term sub = remover.getConverted();
-			if (newAnnots == m_Term.getAnnotations() && 
-					sub == m_Term.getSubterm())
-				remover.setResult(m_Term);
+			if (newAnnots == mTerm.getAnnotations() && sub == mTerm.getSubterm())
+				remover.setResult(mTerm);
 			else
 				remover.setResult(
-						m_Term.getTheory().annotatedTerm(newAnnots, sub));
+						mTerm.getTheory().annotatedTerm(newAnnots, sub));
 		}
 		
 	}
@@ -117,7 +116,7 @@ public class Div0Remover extends TermTransformer {
 	
 	Annotation[] collectAnnotations(Annotation[] oldAnnots) {
 		Annotation[] newAnnots = oldAnnots;
-		for (int i = oldAnnots.length-1; i >= 0; i--) {
+		for (int i = oldAnnots.length - 1; i >= 0; i--) {
 			Object value = oldAnnots[i].getValue();
 			Object newValue;
 			if (value instanceof Term)

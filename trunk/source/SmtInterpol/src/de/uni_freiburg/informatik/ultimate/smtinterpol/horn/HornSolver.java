@@ -48,48 +48,48 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 public class HornSolver extends NoopScript {
 	class HornClause {
-		List<TermVariable> m_Tvs;
-		ApplicationTerm m_Head;
-		List<ApplicationTerm> m_Body;
-		Term m_Phi;
+		List<TermVariable> mTvs;
+		ApplicationTerm mHead;
+		List<ApplicationTerm> mBody;
+		Term mPhi;
 		
 		public HornClause(List<TermVariable> tvs,
 				ApplicationTerm head, List<ApplicationTerm> body,
 				Term phi) {
-			m_Tvs = tvs;
-			m_Head = head;
-			m_Body = body;
-			m_Phi = phi;
+			mTvs = tvs;
+			mHead = head;
+			mBody = body;
+			mPhi = phi;
 		}
 	}
 	
 	class DerivationTreeNode {
-		ApplicationTerm m_Term;
-		Term m_Name;
-		DerivationTreeNode[] m_Children;
+		ApplicationTerm mTerm;
+		Term mName;
+		DerivationTreeNode[] mChildren;
 		public DerivationTreeNode(ApplicationTerm term) {
-			m_Term = term;
+			mTerm = term;
 		}
 		public void setName(Term name) {
 			
-			m_Name = name;
+			mName = name;
 		}
 		public void initChildren(int size) {
-			m_Children = new DerivationTreeNode[size];
+			mChildren = new DerivationTreeNode[size];
 		}
 		public DerivationTreeNode addChild(int pos, ApplicationTerm term) {
-			assert m_Children[pos] == null;
-			return m_Children[pos] = new DerivationTreeNode(term);
+			assert mChildren[pos] == null;
+			return mChildren[pos] = new DerivationTreeNode(term);
 		}
 		public int postOrderTraverse(ArrayList<Term> partition,
 				ArrayList<Integer> startOfSubtree) {
 			int pos = partition.size();
-			if (m_Children.length > 0) {
-				pos = m_Children[0].postOrderTraverse(partition, startOfSubtree);
-				for (int i = 1; i < m_Children.length; ++i)
-					m_Children[i].postOrderTraverse(partition, startOfSubtree);
+			if (mChildren.length > 0) {
+				pos = mChildren[0].postOrderTraverse(partition, startOfSubtree);
+				for (int i = 1; i < mChildren.length; ++i)
+					mChildren[i].postOrderTraverse(partition, startOfSubtree);
 			}
-			partition.add(m_Name);
+			partition.add(mName);
 			startOfSubtree.add(pos);
 			return pos;
 		}
@@ -98,12 +98,13 @@ public class HornSolver extends NoopScript {
 		}
 		
 		private int printSolutionRec(Term[] solution, int offset) {
-			for (DerivationTreeNode n : m_Children)
+			for (DerivationTreeNode n : mChildren)
 				offset += n.printSolutionRec(solution, offset);
-			System.err.print(m_Term);
+			System.err.print(mTerm);
 			System.err.print(" = ");
-			System.err.println((offset >= solution.length) ? "false" : solution[offset]);
-			SMTInterpol backend = (SMTInterpol) m_Backend;
+			System.err.println((offset >= solution.length)
+			        ? "false" : solution[offset]);
+			SMTInterpol backend = (SMTInterpol) mBackend;
 			SimplifyDDA simp = new SimplifyDDA(
 					new SMTInterpol(backend,
 							Collections.singletonMap(
@@ -118,15 +119,15 @@ public class HornSolver extends NoopScript {
 		}
 	}
 	
-	HashMap<FunctionSymbol, ArrayList<HornClause>> m_AllClauses;
-	Script m_Backend;
+	HashMap<FunctionSymbol, ArrayList<HornClause>> mAllClauses;
+	Script mBackend;
 		
 	public HornSolver() {
-		m_AllClauses = new HashMap<FunctionSymbol,ArrayList<HornClause>>();
-		m_Backend = new SMTInterpol();
-		m_Backend.setOption(":produce-interpolants", Boolean.TRUE);
+		mAllClauses = new HashMap<FunctionSymbol,ArrayList<HornClause>>();
+		mBackend = new SMTInterpol();
+		mBackend.setOption(":produce-interpolants", Boolean.TRUE);
 //		m_Backend.setOption(":interpolant-check-mode", Boolean.TRUE);
-		m_Backend.setOption(":verbosity", 2);
+		mBackend.setOption(":verbosity", 2);
 //		try {
 //			m_Backend = new LoggingScript(m_Backend, "/tmp/back.smt2", true);
 //		} catch (FileNotFoundException ex) {
@@ -135,25 +136,25 @@ public class HornSolver extends NoopScript {
 	}
 	
 	public void setLogic(String logic)
-	throws UnsupportedOperationException, SMTLIBException {
+	    throws UnsupportedOperationException, SMTLIBException {
 		if (!logic.equals("HORN"))
 			throw new SMTLIBException("No Horn logic");
 		super.setLogic(Logics.AUFLIRA);
-		m_Backend.setLogic(Logics.QF_LIA);
+		mBackend.setLogic(Logics.QF_LIA);
 	}	
 	
 	public void setOption(String opt, Object value) {
 		super.setOption(opt, value);
-		m_Backend.setOption(opt, value);
+		mBackend.setOption(opt, value);
 	}	
 	
 	public void setInfo(String info, Object value) {
 		super.setInfo(info, value);
 		if (info.equals(":status")) {
 			if (value.equals("sat"))
-				m_Backend.setInfo(info, "unsat");
+				mBackend.setInfo(info, "unsat");
 			else if (value.equals("unsat"))
-				m_Backend.setInfo(info, "sat");
+				mBackend.setInfo(info, "sat");
 		}
 	}	
 	
@@ -218,16 +219,18 @@ public class HornSolver extends NoopScript {
 
 	private Term toPrenex(Term term) {
 		class PrenexTransformer extends TermTransformer {
-			LinkedHashSet<TermVariable> m_tvs = new LinkedHashSet<TermVariable>();
+			LinkedHashSet<TermVariable> mTvs =
+			        new LinkedHashSet<TermVariable>();
 			
 			public void convert(Term term) {
 				while (term instanceof QuantifiedFormula) {
 					QuantifiedFormula qf = (QuantifiedFormula) term;
 					//TODO: check sign
 					for (TermVariable tv : qf.getVariables()) {
-						if (m_tvs.contains(tv))
-							throw new SMTLIBException("Variable "+tv+" occurs more than once");
-						m_tvs.add(tv);
+						if (mTvs.contains(tv))
+							throw new SMTLIBException(
+							        "Variable " + tv + " occurs more than once");
+						mTvs.add(tv);
 					}
 					term = qf.getSubformula();
 				}
@@ -236,9 +239,9 @@ public class HornSolver extends NoopScript {
 		}
 		PrenexTransformer trafo = new PrenexTransformer();
 		term = trafo.transform(term);
-		if (!trafo.m_tvs.isEmpty()) {
-			TermVariable[] vars = trafo.m_tvs.toArray
-					(new TermVariable[trafo.m_tvs.size()]);
+		if (!trafo.mTvs.isEmpty()) {
+			TermVariable[] vars = trafo.mTvs.toArray(
+			        new TermVariable[trafo.mTvs.size()]);
 			term = quantifier(FORALL, vars, term);
 		}
 		return term;
@@ -257,10 +260,10 @@ public class HornSolver extends NoopScript {
 		}
 		tvList.trimToSize();
 		body.trimToSize();
-		ArrayList<HornClause> clauses = m_AllClauses.get(head.getFunction());
+		ArrayList<HornClause> clauses = mAllClauses.get(head.getFunction());
 		if (clauses == null) {
 			clauses = new ArrayList<HornClause>(1);
-			m_AllClauses.put(head.getFunction(), clauses);
+			mAllClauses.put(head.getFunction(), clauses);
 		}
 		clauses.add(new HornClause(tvList, head, body, phiAsTerm));
 	}
@@ -269,23 +272,23 @@ public class HornSolver extends NoopScript {
 		return new TermTransformer() {
 			@Override
 			public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-				setResult(m_Backend.term(appTerm.getFunction().getName(), newArgs));
+				setResult(mBackend.term(appTerm.getFunction().getName(), newArgs));
 			}
 
 			@Override
 			public void convert(Term term) {
 				if (term instanceof TermVariable) {
 					TermVariable tv = (TermVariable) term;
-					Sort sort = m_Backend.sort(tv.getSort().getName());
-					setResult(m_Backend.variable(tv.getName(), sort));
+					Sort sort = mBackend.sort(tv.getSort().getName());
+					setResult(mBackend.variable(tv.getName(), sort));
 				} else if (term instanceof ConstantTerm) {
 					Object value = ((ConstantTerm)term).getValue();
 					if (value instanceof BigInteger) {
-						setResult(m_Backend.numeral((BigInteger)value));
+						setResult(mBackend.numeral((BigInteger)value));
 					} else if (value instanceof BigDecimal) {
-						setResult(m_Backend.decimal((BigDecimal)value));
+						setResult(mBackend.decimal((BigDecimal)value));
 					} else {
-						throw new AssertionError("Unknown constant: "+value);
+						throw new AssertionError("Unknown constant: " + value);
 					}
 				} else {
 					super.convert(term);
@@ -302,51 +305,52 @@ public class HornSolver extends NoopScript {
 				&& appTerm.getFunction().getName().equals("not");
 	}
 	
-	private int m_ClauseCtr = 0;
+	private int mClauseCtr = 0;
 	@Override
 	public LBool checkSat() {
 		FormulaUnLet unletter = new FormulaUnLet();
 		ArrayDeque<DerivationTreeNode> todo =
 				new ArrayDeque<DerivationTreeNode>();
 		DerivationTreeNode root;
-		todo.add(root = new DerivationTreeNode((ApplicationTerm) term("false")));
+		todo.add(root = new DerivationTreeNode(
+		        (ApplicationTerm) term("false")));
 		while (!todo.isEmpty()) {
 			DerivationTreeNode n = todo.removeFirst();
-			ApplicationTerm head = n.m_Term;
-			ArrayList<HornClause> hclist = m_AllClauses.get(head.getFunction());
+			ApplicationTerm head = n.mTerm;
+			ArrayList<HornClause> hclist = mAllClauses.get(head.getFunction());
 			if (hclist.size() > 1) {
 				System.err.println("Cannot solve disjunctive Horn Clauses, yet");
 				return LBool.UNKNOWN;
 			}
 			HornClause hc = hclist.get(0);
-			TermVariable[] tvs = hc.m_Tvs.toArray(new TermVariable[hc.m_Tvs.size()]);
+			TermVariable[] tvs = hc.mTvs.toArray(new TermVariable[hc.mTvs.size()]);
 			Term[] freshConstants = createConstants(tvs);
 			Term[] headParam = head.getParameters();
-			Term[] hcheadParam = hc.m_Head.getParameters();
+			Term[] hcheadParam = hc.mHead.getParameters();
 			Term[] eqs = new Term[headParam.length + 1];
-			eqs[0] = hc.m_Phi;
+			eqs[0] = hc.mPhi;
 			for (int i = 0; i < head.getParameters().length; i++) {
-				eqs[i+1] = term("=", headParam[i], hcheadParam[i]);
+				eqs[i + 1] = term("=", headParam[i], hcheadParam[i]);
 			}
 			Term term = eqs.length > 1 ? term("and", eqs) : eqs[0];
 			term = let(tvs, freshConstants, term);
 			term = unletter.transform(term);
 			term = translateToBackend(term);
-			String name = "X"+(m_ClauseCtr++);
-			term = m_Backend.annotate(term, new Annotation(":named", name));
-			m_Backend.assertTerm(term);
-			n.setName(m_Backend.term(name));
+			String name = "X" + mClauseCtr++;
+			term = mBackend.annotate(term, new Annotation(":named", name));
+			mBackend.assertTerm(term);
+			n.setName(mBackend.term(name));
 			//System.err.println("(assert "+term+")");
 			
-			n.initChildren(hc.m_Body.size());
+			n.initChildren(hc.mBody.size());
 			int i = 0;
-			for (ApplicationTerm appTerm : hc.m_Body) {
+			for (ApplicationTerm appTerm : hc.mBody) {
 				term = unletter.transform(let(tvs, freshConstants, appTerm));
 				todo.add(n.addChild(i++, (ApplicationTerm)term));
 			}
 		}
 		long nanotime = System.nanoTime();
-		LBool result = m_Backend.checkSat();
+		LBool result = mBackend.checkSat();
 		System.err.println("SAT Check Time: " + (System.nanoTime() - nanotime));
 		if (result == LBool.UNSAT) {
 			// Compute solution
@@ -359,27 +363,28 @@ public class HornSolver extends NoopScript {
 				sos[pos++] = i.intValue();
 			try {
 				nanotime = System.nanoTime();
-				Term[] solution = m_Backend.getInterpolants(
+				Term[] solution = mBackend.getInterpolants(
 						partition.toArray(new Term[partition.size()]), sos);
-				System.err.println("Interpolation Time: " + (System.nanoTime() - nanotime));
+				System.err.println("Interpolation Time: "
+						+ (System.nanoTime() - nanotime));
 				root.printSolution(solution);
-			} catch (SMTLIBException se) {
-				System.err.println(se);
+			} catch (SMTLIBException ese) {
+				System.err.println(ese);
 				System.exit(1);
 			}
 		}
 		return result == LBool.SAT ? LBool.UNSAT : LBool.SAT;
 	}
 
-	private int m_Ctr = 0;
+	private int mCtr = 0;
 	private Term[] createConstants(TermVariable[] tvs) {
 		Term[] values = new Term[tvs.length];
 		for (int i = 0; i < tvs.length; i++) {
-			String name = "x"+(m_Ctr++);
+			String name = "x" + mCtr++;
 			Sort sort = tvs[i].getSort();
 			declareFun(name, new Sort[0], sort);
-			Sort bsort = m_Backend.sort(sort.getName());
-			m_Backend.declareFun(name, new Sort[0], bsort);
+			Sort bsort = mBackend.sort(sort.getName());
+			mBackend.declareFun(name, new Sort[0], bsort);
 			//System.err.println("(declare-fun "+name+" () "+bsort+")");
 			values[i] = term(name);
 		}
@@ -389,9 +394,9 @@ public class HornSolver extends NoopScript {
 	@Override
 	public void reset() {
 		super.reset();
-		m_Backend.reset();
-		m_AllClauses.clear();
-		m_Ctr = 0;
-		m_ClauseCtr = 0;
+		mBackend.reset();
+		mAllClauses.clear();
+		mCtr = 0;
+		mClauseCtr = 0;
 	}
 }

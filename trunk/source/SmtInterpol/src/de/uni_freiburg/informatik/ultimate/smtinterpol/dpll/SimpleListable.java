@@ -40,15 +40,19 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.dpll;
  *
  */
 public class SimpleListable<E extends SimpleListable<E>> {
-	SimpleListable<E> next;
-	SimpleListable<E> prev;
+	SimpleListable<E> mNext;
+	SimpleListable<E> mPrev;
 	
+	/**
+	 * Create an element that is not part of any list.
+	 */
 	public SimpleListable() {
+		// Element in no list.
 	}
 
 	SimpleListable(SimpleListable<E> next, SimpleListable<E> prev) {
-		this.next = next;
-		this.prev = prev;
+		this.mNext = next;
+		this.mPrev = prev;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -57,23 +61,23 @@ public class SimpleListable<E extends SimpleListable<E>> {
 	}
 	
 	public final void removeFromList() {
-		prev.next = next;
-		next.prev = prev;
-		next = prev = null;
+		mPrev.mNext = mNext;
+		mNext.mPrev = mPrev;
+		mNext = mPrev = null;
 	}
 
 	public final void unlink() {
-		prev.next = next;
-		next.prev = prev;
+		mPrev.mNext = mNext;
+		mNext.mPrev = mPrev;
 	}
 
 	public final void relink() {
-		next = prev.next;
-		prev.next = this;
-		next.prev = this;
+		mNext = mPrev.mNext;
+		mPrev.mNext = this;
+		mNext.mPrev = this;
 	}
 
 	public boolean inList() {
-		return next != null;
+		return mNext != null;
 	}
 }

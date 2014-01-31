@@ -40,7 +40,7 @@ public class CutCreator {
 		}
 
 		public void negate() {
-			for (int i = 0 ; i < mCoeffs.length; i++)
+			for (int i = 0; i < mCoeffs.length; i++)
 				mCoeffs[i] = mCoeffs[i].negate();
 		}
 
@@ -99,7 +99,7 @@ public class CutCreator {
 			StringBuilder sb = new StringBuilder();
 			String plus = "";
 			for (int i = 0; i < mIndices.length; i++) {
-				sb.append(plus).append(mIndices[i].matrixpos)
+				sb.append(plus).append(mIndices[i].mMatrixpos)
 					.append(": ").append(mCoeffs[i]);
 				plus = ", ";
 			}
@@ -108,95 +108,95 @@ public class CutCreator {
 	}
 	
 	public class Row {
-		LinVar[] indices;
-		BigInteger[] coeffs;
-		InfinitNumber curval;
+		LinVar[] mIndices;
+		BigInteger[] mCoeffs;
+		InfinitNumber mCurval;
 		
 		public Row(LinVar nonbasic) {
 			if (nonbasic.isInitiallyBasic()) {
 				Map<LinVar, BigInteger> linterm = nonbasic.getLinTerm();
-				indices = new LinVar[linterm.size()];
-				coeffs = new BigInteger[linterm.size()];
+				mIndices = new LinVar[linterm.size()];
+				mCoeffs = new BigInteger[linterm.size()];
 				int i = 0;
-				for (Map.Entry<LinVar, BigInteger> entry :
-					linterm.entrySet()) {
-					indices[i] = entry.getKey();
-					coeffs[i] = entry.getValue();
+				for (Map.Entry<LinVar, BigInteger> entry
+					: linterm.entrySet()) {
+					mIndices[i] = entry.getKey();
+					mCoeffs[i] = entry.getValue();
 					i++;
 				}
 			} else {
-				indices = new LinVar[] { nonbasic };
-				coeffs = new BigInteger[] { BigInteger.ONE };
+				mIndices = new LinVar[] { nonbasic };
+				mCoeffs = new BigInteger[] { BigInteger.ONE };
 			}
-			assert (indices.length > 0);
-			curval = nonbasic.m_curval;
+			assert (mIndices.length > 0);
+			mCurval = nonbasic.mCurval;
 		}
 		
 		public void negate() {
-			for (int i = 0 ; i < coeffs.length; i++)
-				coeffs[i] = coeffs[i].negate();
-			curval = curval.negate();
+			for (int i = 0; i < mCoeffs.length; i++)
+				mCoeffs[i] = mCoeffs[i].negate();
+			mCurval = mCurval.negate();
 		}
 
 		public void addmul(Row other, BigInteger factor) {
-			LinVar[] newIndices = new LinVar[indices.length + other.indices.length];
+			LinVar[] newIndices = new LinVar[mIndices.length + other.mIndices.length];
 			BigInteger[] newCoeffs = new BigInteger[newIndices.length];
 			int idx = 0, oidx = 0, newidx = 0;
-			while (idx < indices.length && oidx < other.indices.length) {
-				if (indices[idx] == other.indices[oidx]) {
+			while (idx < mIndices.length && oidx < other.mIndices.length) {
+				if (mIndices[idx] == other.mIndices[oidx]) {
 					BigInteger newcoeff = 
-						coeffs[idx].add(other.coeffs[oidx].multiply(factor));
+						mCoeffs[idx].add(other.mCoeffs[oidx].multiply(factor));
 					if (newcoeff.signum() != 0) {
-						newIndices[newidx] = indices[idx];
+						newIndices[newidx] = mIndices[idx];
 						newCoeffs[newidx] = newcoeff;
 						newidx++;
 					}
 					idx++;
 					oidx++;
-				} else if (compare(indices[idx], other.indices[oidx]) < 0) {
-					newIndices[newidx] = indices[idx];
-					newCoeffs[newidx] = coeffs[idx];
+				} else if (compare(mIndices[idx], other.mIndices[oidx]) < 0) {
+					newIndices[newidx] = mIndices[idx];
+					newCoeffs[newidx] = mCoeffs[idx];
 					newidx++;
 					idx++;
 				} else {
-					newIndices[newidx] = other.indices[oidx];
-					newCoeffs[newidx] = other.coeffs[oidx].multiply(factor);
+					newIndices[newidx] = other.mIndices[oidx];
+					newCoeffs[newidx] = other.mCoeffs[oidx].multiply(factor);
 					newidx++;
 					oidx++;
 				}
 			}
-			while (idx < indices.length) {
-				newIndices[newidx] = indices[idx];
-				newCoeffs[newidx] = coeffs[idx];
+			while (idx < mIndices.length) {
+				newIndices[newidx] = mIndices[idx];
+				newCoeffs[newidx] = mCoeffs[idx];
 				newidx++;
 				idx++;
 			}
-			while (oidx < other.indices.length) {
-				newIndices[newidx] = other.indices[oidx];
-				newCoeffs[newidx] = other.coeffs[oidx].multiply(factor);
+			while (oidx < other.mIndices.length) {
+				newIndices[newidx] = other.mIndices[oidx];
+				newCoeffs[newidx] = other.mCoeffs[oidx].multiply(factor);
 				newidx++;
 				oidx++;
 			}
 			assert newidx > 0;
 			if (newidx < newCoeffs.length) {
-				indices = new LinVar[newidx];
-				coeffs = new BigInteger[newidx];
-				System.arraycopy(newIndices, 0, indices, 0, newidx);
-				System.arraycopy(newCoeffs, 0, coeffs, 0, newidx);
+				mIndices = new LinVar[newidx];
+				mCoeffs = new BigInteger[newidx];
+				System.arraycopy(newIndices, 0, mIndices, 0, newidx);
+				System.arraycopy(newCoeffs, 0, mCoeffs, 0, newidx);
 			} else {
-				indices = newIndices;
-				coeffs = newCoeffs;
+				mIndices = newIndices;
+				mCoeffs = newCoeffs;
 			}
 			Rational fac = Rational.valueOf(factor, BigInteger.ONE);
-			curval = curval.addmul(other.curval, fac);
+			mCurval = mCurval.addmul(other.mCurval, fac);
 		}
 		
 		public String getVar() {
 			StringBuilder sb = new StringBuilder();
 			String plus = "";
-			for (int i = 0; i < indices.length; i++) {
-				sb.append(plus).append(coeffs[i])
-					.append(" * (").append(indices[i]).append(")");
+			for (int i = 0; i < mIndices.length; i++) {
+				sb.append(plus).append(mCoeffs[i])
+					.append(" * (").append(mIndices[i]).append(')');
 				plus = " + ";
 			}
 			return sb.toString();
@@ -205,31 +205,31 @@ public class CutCreator {
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
 			sb.append(getVar());
-			sb.append(" == ").append(curval);
+			sb.append(" == ").append(mCurval);
 			return sb.toString();
 		}
 
 		public Literal createConstraint() {
 			MutableAffinTerm mat = new MutableAffinTerm();
 			int maxlevel = 0;
-			for (int i = 0; i < indices.length; i++) {
-				if (maxlevel < indices[i].assertionstacklevel)
-					maxlevel = indices[i].assertionstacklevel;
-				mat.add(Rational.valueOf(coeffs[i], BigInteger.ONE), indices[i]);
+			for (int i = 0; i < mIndices.length; i++) {
+				if (maxlevel < mIndices[i].mAssertionstacklevel)
+					maxlevel = mIndices[i].mAssertionstacklevel;
+				mat.add(Rational.valueOf(mCoeffs[i], BigInteger.ONE), mIndices[i]);
 			}
-			mat.add(curval.floor().negate());
-			return m_solver.generateConstraint(mat, false, maxlevel);
+			mat.add(mCurval.floor().negate());
+			return mSolver.generateConstraint(mat, false, maxlevel);
 		}		
 	}
 
-	LinArSolve m_solver;
-	Row[] m_rows;
-	Column[] m_columns;
+	LinArSolve mSolver;
+	Row[] mRows;
+	Column[] mColumns;
 	
 	private int compare(LinVar v1, LinVar v2) {
-		if (v1.misint != v2.misint)
-			return v1.misint ? 1 : -1;
-		return v1.matrixpos - v2.matrixpos;
+		if (v1.mIsInt != v2.mIsInt)
+			return v1.mIsInt ? 1 : -1;
+		return v1.mMatrixpos - v2.mMatrixpos;
 	}
 	
 	public void computeMatrix(LinArSolve solver) {
@@ -258,15 +258,15 @@ public class CutCreator {
 		}
 		Map<LinVar, Collection<LinVarBigInt>> colmap = 
 			new TreeMap<LinVar, Collection<LinVarBigInt>>();
-		for (LinVar lv : solver.m_linvars) {
-			if (lv.mbasic)
+		for (LinVar lv : solver.mLinvars) {
+			if (lv.mBasic)
 				continue;
 			boolean negated = false;
-			if (lv.m_curval.lesseq(lv.getLowerBound()))
+			if (lv.mCurval.lesseq(lv.getLowerBound()))
 				negated = true;
 			if (lv.isInitiallyBasic()) {
-				for (Map.Entry<LinVar, BigInteger> entry :
-					 lv.getLinTerm().entrySet()) {
+				for (Map.Entry<LinVar, BigInteger> entry
+					: lv.getLinTerm().entrySet()) {
 					if (entry.getKey().isInt()) {
 						BigInteger value = entry.getValue();
 						if (negated)
@@ -280,8 +280,8 @@ public class CutCreator {
 					.addToMap(colmap, lv);
 			}
 		}
-		m_columns = new Column[colmap.size()];
-		m_rows = new Row[colmap.size()];
+		mColumns = new Column[colmap.size()];
+		mRows = new Row[colmap.size()];
 		int i = 0;
 		for (Map.Entry<LinVar, Collection<LinVarBigInt>> e : colmap.entrySet()) {
 			Collection<LinVarBigInt> list = e.getValue();
@@ -291,70 +291,71 @@ public class CutCreator {
 			for (LinVarBigInt ib : list) {
 				indices[j] = ib.mRow;
 				coeffs[j] = ib.mCoeff;
-				assert (j == 0 || compare(indices[j-1], indices[j]) < 0);
+				assert (j == 0 || compare(indices[j - 1], indices[j]) < 0);
 				j++;
 			}
-			m_columns[i] = new Column(indices, coeffs);
-			m_rows[i] = new Row(e.getKey());
+			mColumns[i] = new Column(indices, coeffs);
+			mRows[i] = new Row(e.getKey());
 			i++;
 		}
 	}
 	
 	private void mgcdColumn(int nr) {
 		/* find row to work on. */
-		LinVar row = m_columns[nr].mIndices[0];
-		for (int i = nr+1; i < m_columns.length; i++) {
-			if (compare(m_columns[i].mIndices[0], row) < 0)
-				row = m_columns[i].mIndices[0];
+		LinVar row = mColumns[nr].mIndices[0];
+		for (int i = nr + 1; i < mColumns.length; i++) {
+			if (compare(mColumns[i].mIndices[0], row) < 0)
+				row = mColumns[i].mIndices[0];
 		}
 		
 		/* reorder columns: put zero columns at end,
 		 * put column with smallest absolute coeff at front.
 		 */
-		int end = m_columns.length;
+		int end = mColumns.length;
 		while (end > nr + 1) {
-			while (m_columns[end-1].mIndices[0] != row)
+			while (mColumns[end - 1].mIndices[0] != row)
 				end--;
 			assert(end > nr);
 			for (int i = nr; i < end; i++) {
-				assert m_columns[end-1].mIndices[0] == row;
-				if (m_columns[i].mIndices[0] != row) {
+				assert mColumns[end - 1].mIndices[0] == row;
+				if (mColumns[i].mIndices[0] != row) {
 					// move to end
-					Column tc = m_columns[i];
-					m_columns[i] = m_columns[--end];
-					m_columns[end] = tc;
+					Column tc = mColumns[i];
+					mColumns[i] = mColumns[--end];
+					mColumns[end] = tc;
 					
-					Row tr = m_rows[i];
-					m_rows[i] = m_rows[end];
-					m_rows[end] = tr;
+					Row tr = mRows[i];
+					mRows[i] = mRows[end];
+					mRows[end] = tr;
 				}
-				while (m_columns[end-1].mIndices[0] != row)
+				while (mColumns[end - 1].mIndices[0] != row)
 					end--;
-				assert m_columns[nr].mIndices[0] == row;
-				assert m_columns[i].mIndices[0] == row;
-				if (m_columns[nr].mCoeffs[0].abs().compareTo(m_columns[i].mCoeffs[0].abs()) > 0) {
+				assert mColumns[nr].mIndices[0] == row;
+				assert mColumns[i].mIndices[0] == row;
+				if (mColumns[nr].mCoeffs[0].abs().compareTo(
+						mColumns[i].mCoeffs[0].abs()) > 0) {
 					// move to front
-					Column tc = m_columns[i];
-					m_columns[i] = m_columns[nr];
-					m_columns[nr] = tc;
+					Column tc = mColumns[i];
+					mColumns[i] = mColumns[nr];
+					mColumns[nr] = tc;
 
-					Row tr = m_rows[i];
-					m_rows[i] = m_rows[nr];
-					m_rows[nr] = tr;
+					Row tr = mRows[i];
+					mRows[i] = mRows[nr];
+					mRows[nr] = tr;
 				}
 			}
 			// make positive
-			if (m_columns[nr].mCoeffs[0].signum() < 0) {
-				m_columns[nr].negate();
-				m_rows[nr].negate();
+			if (mColumns[nr].mCoeffs[0].signum() < 0) {
+				mColumns[nr].negate();
+				mRows[nr].negate();
 			}
 			
 			// now reduce all other rows with row[nr].
-			BigInteger coeffNr = m_columns[nr].mCoeffs[0];
+			BigInteger coeffNr = mColumns[nr].mCoeffs[0];
 			BigInteger coeffNr2 = coeffNr.shiftRight(1);
-			for (int i = nr+1; i < end; i++) {
-				assert(m_columns[i].mIndices[0] == row);
-				BigInteger coeffI = m_columns[i].mCoeffs[0];
+			for (int i = nr + 1; i < end; i++) {
+				assert(mColumns[i].mIndices[0] == row);
+				BigInteger coeffI = mColumns[i].mCoeffs[0];
 				if (coeffI.signum() < 0) {
 					coeffI = coeffI.subtract(coeffNr2);
 				} else {
@@ -362,30 +363,37 @@ public class CutCreator {
 				}
 				BigInteger div = coeffI.divide(coeffNr);
 				assert (div.signum() != 0);
-				m_columns[i].addmul(m_columns[nr], div.negate());
-				assert(m_columns[i].mIndices[0] != row
-					   || m_columns[i].mCoeffs[0].abs().compareTo(coeffNr2.abs())<=0);
-				m_rows[nr].addmul(m_rows[i], div);
+				mColumns[i].addmul(mColumns[nr], div.negate());
+				assert(mColumns[i].mIndices[0] != row
+						|| mColumns[i].mCoeffs[0].abs().compareTo(
+								coeffNr2.abs()) <= 0);
+				mRows[nr].addmul(mRows[i], div);
 			}
 		}
 		
+		// make positive
+		if (mColumns[nr].mCoeffs[0].signum() < 0) {
+			mColumns[nr].negate();
+			mRows[nr].negate();
+		}
+		
 		// Finally reduce the rows left of this column.
-		BigInteger coeffNr = m_columns[nr].mCoeffs[0];
+		BigInteger coeffNr = mColumns[nr].mCoeffs[0];
 		BigInteger coeffNrM1 = coeffNr.subtract(BigInteger.ONE);
 		BigInteger coeffNr2 = coeffNr.shiftRight(1);
-		BigInteger coeffNr32 = coeffNr.shiftRight(5);
+		BigInteger coeffNr32 = coeffNr.shiftRight(5);// NOCHECKSTYLE
 		for (int i = 0; i < nr; i++) {
 			int j = 0;
-			while (j < m_columns[i].mIndices.length
-					&& compare(m_columns[i].mIndices[j], row) < 0)
+			while (j < mColumns[i].mIndices.length
+					&& compare(mColumns[i].mIndices[j], row) < 0)
 				j++;
-			if (j == m_columns[i].mIndices.length
-				|| m_columns[i].mIndices[j] != row)
+			if (j == mColumns[i].mIndices.length
+				|| mColumns[i].mIndices[j] != row)
 				continue;
-			assert(m_columns[i].mIndices[j] == row);
-			BigInteger coeffI = m_columns[i].mCoeffs[j];
-			if (m_columns[i].mIndices[0].getUpperBound()
-				.equals(m_columns[i].mIndices[0].getLowerBound())) {
+			assert(mColumns[i].mIndices[j] == row);
+			BigInteger coeffI = mColumns[i].mCoeffs[j];
+			if (mColumns[i].mIndices[0].getUpperBound()
+				.equals(mColumns[i].mIndices[0].getLowerBound())) {
 				/* This is an equality constraint 
 				 * make remainder small, i.e rem.abs() <= coeffNr2
 				 */
@@ -405,34 +413,35 @@ public class CutCreator {
 			}
 			BigInteger div = coeffI.divide(coeffNr);
 			if (div.signum() != 0) {
-				m_columns[i].addmul(m_columns[nr], div.negate());
-				m_rows[nr].addmul(m_rows[i], div);
+				mColumns[i].addmul(mColumns[nr], div.negate());
+				mRows[nr].addmul(mRows[i], div);
 			}
 		}
-		assert(nr+1 == m_columns.length || m_columns[nr+1].mIndices[0] != row);
+		assert(nr + 1 == mColumns.length
+				|| mColumns[nr + 1].mIndices[0] != row);
 	}
 
 	private boolean isTight(LinVar linVar) {
-		return linVar.m_curval.lesseq(linVar.getLowerBound())
-			|| linVar.getUpperBound().lesseq(linVar.m_curval);
+		return linVar.mCurval.lesseq(linVar.getLowerBound())
+			|| linVar.getUpperBound().lesseq(linVar.mCurval);
 	}
 
 	private boolean[] computeTightness() {
-		boolean[] tight = new boolean[m_columns.length];
-		for (int i = 0; i < m_columns.length; i++)
+		boolean[] tight = new boolean[mColumns.length];
+		for (int i = 0; i < mColumns.length; i++)
 			tight[i] = true;
-		for (int i = 0; i < m_columns.length; i++) {
-			if (!isTight(m_columns[i].mIndices[0]))
+		for (int i = 0; i < mColumns.length; i++) {
+			if (!isTight(mColumns[i].mIndices[0]))
 				tight[i] = false;
 			if (!tight[i]) {
-				int k = i+1;
-				for (int j = 1; j < m_columns[i].mIndices.length; j++) {
-					while (k < m_columns.length 
-							&& compare(m_columns[k].mIndices[0], 
-									m_columns[i].mIndices[j]) < 0)
+				int k = i + 1;
+				for (int j = 1; j < mColumns[i].mIndices.length; j++) {
+					while (k < mColumns.length 
+							&& compare(mColumns[k].mIndices[0], 
+									mColumns[i].mIndices[j]) < 0)
 						k++;
-					if (k < m_columns.length 
-						&& m_columns[k].mIndices[0] == m_columns[i].mIndices[j])
+					if (k < mColumns.length 
+						&& mColumns[k].mIndices[0] == mColumns[i].mIndices[j])
 						tight[k] = false;
 				}
 			}
@@ -441,19 +450,19 @@ public class CutCreator {
 	}
 
 	private boolean[] computeBadness() {
-		boolean[] isBad = new boolean[m_columns.length];
-		for (int i = 0; i < m_columns.length; i++) {
-			if (m_rows[i].curval.isIntegral()) {
+		boolean[] isBad = new boolean[mColumns.length];
+		for (int i = 0; i < mColumns.length; i++) {
+			if (mRows[i].mCurval.isIntegral()) {
 				isBad[i] = true;
 			} else {
-				int k = i+1;
-				for (int j = 1; j < m_columns[i].mIndices.length; j++) {
-					while (k < m_columns.length 
-							&& compare(m_columns[k].mIndices[0], 
-								m_columns[i].mIndices[j]) < 0)
+				int k = i + 1;
+				for (int j = 1; j < mColumns[i].mIndices.length; j++) {
+					while (k < mColumns.length 
+							&& compare(mColumns[k].mIndices[0], 
+								mColumns[i].mIndices[j]) < 0)
 						k++;
-					if (k < m_columns.length 
-						&& m_columns[k].mIndices[0] == m_columns[i].mIndices[j])
+					if (k < mColumns.length 
+						&& mColumns[k].mIndices[0] == mColumns[i].mIndices[j])
 						isBad[k] = true;
 				}
 			}
@@ -462,49 +471,50 @@ public class CutCreator {
 	}
 
 	public void generateCut(int row, boolean isTight) {
-		assert m_rows[row].indices[0].misint;
-		assert !m_rows[row].curval.isIntegral();
-		BoundConstraint cut = (BoundConstraint) m_rows[row].createConstraint().getAtom();
+		assert mRows[row].mIndices[0].mIsInt;
+		assert !mRows[row].mCurval.isIntegral();
+		BoundConstraint cut = (BoundConstraint)
+				mRows[row].createConstraint().getAtom();
 		LinVar cutVar = cut.getVar();
-		if (cutVar.m_curval.less(cutVar.getLowerBound())) {
+		if (cutVar.mCurval.less(cutVar.getLowerBound())) {
 //			m_solver.mengine.getLogger().debug("cut: " + cut.negate());
-			m_solver.moob.add(cutVar);
-			m_solver.mproplist.add(cut.negate());
-			m_solver.numCuts++;
-		} else if (cutVar.getUpperBound().less(cutVar.m_curval)) {
+			mSolver.mOob.add(cutVar);
+			mSolver.mProplist.add(cut.negate());
+			mSolver.mNumCuts++;
+		} else if (cutVar.getUpperBound().less(cutVar.mCurval)) {
 //			m_solver.mengine.getLogger().debug("cut: " + cut);
-			m_solver.moob.add(cutVar);
-			m_solver.mproplist.add(cut);
-			m_solver.numCuts++;
+			mSolver.mOob.add(cutVar);
+			mSolver.mProplist.add(cut);
+			mSolver.mNumCuts++;
 		} else {
-			m_solver.mengine.getLogger().debug("branch on "+cut);
-			assert(!m_solver.moob.isEmpty() || cut.getAtom().getDecideStatus() == null);
-			m_solver.m_suggestions.add(cut);
-			m_solver.numBranches++;
+			mSolver.mEngine.getLogger().debug("branch on " + cut);
+			assert(!mSolver.mOob.isEmpty() || cut.getAtom().getDecideStatus() == null);
+			mSolver.mSuggestions.add(cut);
+			mSolver.mNumBranches++;
 		}
 	}
 
 	public CutCreator(LinArSolve solver) {
-		m_solver = solver;
+		mSolver = solver;
 		solver.calculateSimpVals();
 		computeMatrix(solver);
 	}
 	
 	public void generateCuts() {
-		for (int i = 0; i < m_columns.length; i++)
+		for (int i = 0; i < mColumns.length; i++)
 			mgcdColumn(i);
-		if (m_solver.mengine.getLogger().isDebugEnabled()) {
-			m_solver.mengine.getLogger().debug("Cuts From Proofs");
-			m_solver.mengine.getLogger().debug("cols");
-			for (int i = 0; i < m_columns.length; i++) {
-				if (m_columns[i].mCoeffs.length != 1
-						|| !m_columns[i].mCoeffs[0].equals(BigInteger.ONE))
-					m_solver.mengine.getLogger().debug("["+i+"] "+m_columns[i]);
+		if (mSolver.mEngine.getLogger().isDebugEnabled()) {
+			mSolver.mEngine.getLogger().debug("Cuts From Proofs");
+			mSolver.mEngine.getLogger().debug("cols");
+			for (int i = 0; i < mColumns.length; i++) {
+				if (mColumns[i].mCoeffs.length != 1
+						|| !mColumns[i].mCoeffs[0].equals(BigInteger.ONE))
+					mSolver.mEngine.getLogger().debug("[" + i + "] " + mColumns[i]);
 			}
-			m_solver.mengine.getLogger().debug("rows");
-			for (int i = 0; i < m_rows.length; i++) {
-				if (!m_rows[i].curval.isIntegral())
-					m_solver.mengine.getLogger().debug("["+i+"] "+m_rows[i]);
+			mSolver.mEngine.getLogger().debug("rows");
+			for (int i = 0; i < mRows.length; i++) {
+				if (!mRows[i].mCurval.isIntegral())
+					mSolver.mEngine.getLogger().debug("[" + i + "] " + mRows[i]);
 			}
 		}
 		
@@ -513,27 +523,27 @@ public class CutCreator {
 		int best = -1;
 		int bestlen = Integer.MAX_VALUE;
 		int bestsize = Integer.MAX_VALUE;
-		for (int i = 0; i < m_rows.length; i++) {
+		for (int i = 0; i < mRows.length; i++) {
 			if (isBad[i])
 				continue;
 			/* prefer cuts over branches */
 			if (!tight[i] && (best >= 0 && tight[best]))
 				continue;
 			/* prefer short cuts */
-			if (m_rows[i].coeffs.length > bestlen && tight[best] == tight[i])
+			if (mRows[i].mCoeffs.length > bestlen && tight[best] == tight[i])
 				continue;
 			/* prefer small cuts */
 			int max = 0;
-			for (BigInteger coeff : m_rows[i].coeffs)
+			for (BigInteger coeff : mRows[i].mCoeffs)
 				max = Math.max(max, coeff.bitLength());
 			if (max >= bestsize 
-				&& m_rows[i].coeffs.length == bestlen 
+				&& mRows[i].mCoeffs.length == bestlen 
 				&& tight[best] == tight[i])
 				continue;
 			
 			best = i;
 			bestsize = max;
-			bestlen = m_rows[i].coeffs.length;
+			bestlen = mRows[i].mCoeffs.length;
 		}
 		if (best != -1)
 			generateCut(best, tight[best]);

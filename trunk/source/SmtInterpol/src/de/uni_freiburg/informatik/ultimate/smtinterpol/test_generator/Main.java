@@ -31,8 +31,11 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 
 
-public class Main {
-
+public final class Main {
+    
+    private Main() {
+        // Hide constructor
+    }
 
 	private static void usage() {
 		System.err.println("USAGE smtinterpol [-q] [-v] [-t <num>] [-r <num>] [file.smt2]");
@@ -49,7 +52,7 @@ public class Main {
 		PrintWriter outfile;
 		if (paramctr < param.length) {
 			filename = param[paramctr++];
-			outfile = new PrintWriter(param[paramctr++]+"-check.smt2");
+			outfile = new PrintWriter(param[paramctr++] + "-check.smt2");
 		} else {
 			filename = "<stdin>";
 			outfile = new PrintWriter(System.out);
@@ -61,10 +64,10 @@ public class Main {
 				paramctr++;
 				break;
 			} else if (param[paramctr].equals("-v")) {
-				benchmark.setOption(":verbosity", BigInteger.valueOf(5));
+				benchmark.setOption(":verbosity", BigInteger.valueOf(5)); // NOCHECKSTYLE
 				paramctr++;
 			} else if (param[paramctr].equals("-q")) {
-				benchmark.setOption(":verbosity", BigInteger.valueOf(3));
+				benchmark.setOption(":verbosity", BigInteger.valueOf(3)); // NOCHECKSTYLE
 				paramctr++;
 			} else if (param[paramctr].equals("-t")
 					&& ++paramctr < param.length) {
@@ -77,7 +80,7 @@ public class Main {
 						benchmark.setOption(":timeout",
 								BigInteger.valueOf(timeout));
 					}
-				} catch (NumberFormatException nfe) {
+				} catch (NumberFormatException enfe) {
 					logger.error("Cannot parse timeout "
 							+ "argument: Not a number");
 				}
@@ -93,7 +96,7 @@ public class Main {
 						benchmark.setOption(":random-seed",
 								BigInteger.valueOf(seed));
 					}
-				} catch (NumberFormatException nfe) {
+				} catch (NumberFormatException enfe) {
 					logger.error("Cannot parse random seed "
 							+ "argument: Not a number");
 				}
@@ -113,8 +116,7 @@ public class Main {
 		env.parseScript(filename);
 	}
 	
-	public static List<String> getFiles(File path)
-	{
+	public static List<String> getFiles(File path) {
 		List<String> files = new ArrayList<String>();
 
 		if (path.isFile()) {
@@ -123,8 +125,7 @@ public class Main {
 		}
 		File [] children = path.listFiles();
 		
-		for (int i=0; i<children.length; i++)
-		{
+		for (int i = 0; i < children.length; i++) {
 			if (children[i].isFile())
 				files.add(children[i].toString());
 			else {

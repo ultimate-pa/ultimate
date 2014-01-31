@@ -19,33 +19,33 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.util;
 
 public class SymmetricPair<T> {
-	T fst, snd;
+	T mFst, mSnd;
 	public SymmetricPair(T f, T s) {
-		fst = f;
-		snd = s;
+		mFst = f;
+		mSnd = s;
 	}
 	
 	public T getFirst() {
-		return fst;
+		return mFst;
 	}
 	public T getSecond() {
-		return snd;
+		return mSnd;
 	}
 	
 	public int hashCode() {
-		return fst.hashCode() + snd.hashCode();
+		return mFst.hashCode() + mSnd.hashCode();
 	}
 
 	public boolean equals(Object o) {
 		if (o instanceof SymmetricPair<?>) {
 			SymmetricPair<?> p = (SymmetricPair<?>) o;
-			return (fst.equals(p.fst) && snd.equals(p.snd))
-			    || (fst.equals(p.snd) && snd.equals(p.fst));
+			return (mFst.equals(p.mFst) && mSnd.equals(p.mSnd))
+			    || (mFst.equals(p.mSnd) && mSnd.equals(p.mFst));
 		}
 		return false;
 	}
 	
 	public String toString() {
-		return "("+fst+","+snd+")";
+		return "(" + mFst + "," + mSnd + ")";
 	}
 }

@@ -28,13 +28,13 @@ public abstract class DPLLAtom extends Literal {
 
 		public TrueAtom() {
 			super(0, 0);
-			decideStatus = this;
-			decideLevel = 0;
+			mDecideStatus = this;
+			mDecideLevel = 0;
 		}
 
 		@Override
 		public Term getSMTFormula(Theory smtTheory, boolean quoted) {
-			return smtTheory.TRUE;
+			return smtTheory.mTrue;
 		}
 		
 	}
@@ -42,45 +42,45 @@ public abstract class DPLLAtom extends Literal {
 	public static class NegLiteral extends Literal {
 		public NegLiteral(DPLLAtom atom) {
 			super(~atom.hashCode());//TODO is bit-flipping a good hash??? 
-			this.atom = atom;
-			this.negated = atom;
+			this.mAtom = atom;
+			this.mNegated = atom;
 		}
 		public int getSign() {
 			return -1;
 		}
 		public String toString() {
-			return atom.toStringNegated();
+			return mAtom.toStringNegated();
 		}
 		public Term getSMTFormula(Theory smtTheory, boolean quoted) {
-			return atom.getNegatedSMTFormula(smtTheory, quoted);
+			return mAtom.getNegatedSMTFormula(smtTheory, quoted);
 		}
 	}
 	
 
-	int decideLevel = -1;
-	int stackPosition = -1;
-	Literal decideStatus;
-	Literal lastStatus;
-	double  activity;
-	public Object  explanation;
-	Clause.WatchList backtrackWatchers = new Clause.WatchList();
-	int m_atomQueueIndex = -1;
-	final int assertionstacklevel;
+	int mDecideLevel = -1;
+	int mStackPosition = -1;
+	Literal mDecideStatus;
+	Literal mLastStatus;
+	double  mActivity;
+	public Object  mExplanation;
+	Clause.WatchList mBacktrackWatchers = new Clause.WatchList();
+	int mAtomQueueIndex = -1;
+	final int mAssertionstacklevel;
 	
 	public DPLLAtom(int hash, int assertionstacklevel) {
 		super(hash);
-		this.atom = this;
-		this.negated = new NegLiteral(this);
-		this.assertionstacklevel = assertionstacklevel;
-		lastStatus = negated;
+		this.mAtom = this;
+		this.mNegated = new NegLiteral(this);
+		this.mAssertionstacklevel = assertionstacklevel;
+		mLastStatus = mNegated;
 	}
 	
 	/**
 	 * Compares two atoms with respect to their activity. Do not override!
 	 */
 	public final int compareActivityTo(DPLLAtom other) {
-		return activity < other.activity ? 1
-				: activity == other.activity ? 0 : -1;
+		return mActivity < other.mActivity ? 1
+				: mActivity == other.mActivity ? 0 : -1;
 	}
 
 	/**
@@ -91,11 +91,11 @@ public abstract class DPLLAtom extends Literal {
 	}
 	
 	public final int getDecideLevel() { 
-		return decideLevel;
+		return mDecideLevel;
 	}
 
 	public final int getStackPosition() { 
-		return stackPosition;
+		return mStackPosition;
 	}
 
 	/**
@@ -103,7 +103,7 @@ public abstract class DPLLAtom extends Literal {
 	 * Subclasses may overwrite this for pretty output.
 	 */
 	public String toStringNegated() {
-		return "!("+toString()+")";
+		return "!(" + toString() + ")";
 	}
 	
 	/**
@@ -121,19 +121,19 @@ public abstract class DPLLAtom extends Literal {
 	 * atom.negate() if atom should be false.
 	 */
 	public Literal getDecideStatus() {
-		return decideStatus;
+		return mDecideStatus;
 	}
 
 	public int getAssertionStackLevel() {
-		return assertionstacklevel;
+		return mAssertionstacklevel;
 	}
 
 	public void setPreferredStatus(Literal status) {
-		lastStatus = status;
+		mLastStatus = status;
 //		activity += 1.0;
 	}
 	
 	public Literal getPreferredStatus() {
-		return lastStatus;
+		return mLastStatus;
 	}
 }

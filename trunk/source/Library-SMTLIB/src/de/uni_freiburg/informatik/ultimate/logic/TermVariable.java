@@ -30,13 +30,13 @@ import java.util.ArrayDeque;
  * @author Juergen Christ
  */
 public class TermVariable extends Term {
-	private String m_Name;
-	private Sort m_Sort;
+	private final String mName;
+	private final Sort mSort;
 	
 	TermVariable(String n, Sort s, int hash) {
 		super(hash);
-		m_Name = n;
-		m_Sort = s;
+		mName = n;
+		mSort = s;
 	}
 	
 	/**
@@ -44,7 +44,7 @@ public class TermVariable extends Term {
 	 * @return the name of the variable.
 	 */
 	public String getName() {
-		return m_Name;
+		return mName;
 	}
 
 	/**
@@ -53,7 +53,7 @@ public class TermVariable extends Term {
 	 * This is not expanded if the sort is a defined sort.
 	 */
 	public Sort getDeclaredSort() {
-		return m_Sort;
+		return mSort;
 	}
 	
 	/**
@@ -61,14 +61,14 @@ public class TermVariable extends Term {
 	 * @return the expanded sort of the variable.
 	 */
 	public Sort getSort() {
-		return m_Sort.getRealSort();
+		return mSort.getRealSort();
 	}
 	
 	/**
 	 * The SMTLIB representation of the term.
 	 */
 	public String toString() {
-		return PrintTerm.quoteIdentifier(m_Name);
+		return PrintTerm.quoteIdentifier(mName);
 	}
 
 	static final int hashVariable(String name, Sort sort) {

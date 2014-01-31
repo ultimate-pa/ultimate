@@ -32,30 +32,30 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.IdentityHashSet;
  * @author Juergen Christ
  */
 public class UnsatCoreCollector {
-	private Script m_Script;
-	private HashSet<String> m_UnsatCoreIds;
-	private IdentityHashSet<Clause> m_Visited;
+	private final Script mScript;
+	private final HashSet<String> mUnsatCoreIds;
+	private final IdentityHashSet<Clause> mVisited;
 	public UnsatCoreCollector(Script script) {
-		m_Script = script;
-		m_UnsatCoreIds = new HashSet<String>();
-		m_Visited = new IdentityHashSet<Clause>();
+		mScript = script;
+		mUnsatCoreIds = new HashSet<String>();
+		mVisited = new IdentityHashSet<Clause>();
 	}
 	
 	public Term[] getUnsatCore(Clause unsat) {
 		try {
 			accept(unsat);
-			Term[] res = new Term[m_UnsatCoreIds.size()];
+			Term[] res = new Term[mUnsatCoreIds.size()];
 			int i = -1;
-			for (String s : m_UnsatCoreIds)
-				res[++i] = m_Script.term(s);
+			for (String s : mUnsatCoreIds)
+				res[++i] = mScript.term(s);
 			return res;
-		} catch (SMTLIBException se) {
-			throw new InternalError(se.getMessage());
+		} catch (SMTLIBException ese) {
+			throw new InternalError(ese.getMessage());
 		}
 	}
 	// Entry to the visitor.
 	private void accept(Clause c) {
-		if (m_Visited.add(c)) {
+		if (mVisited.add(c)) {
 			if (c.getProof().isLeaf())
 				visit((LeafNode) c.getProof());
 			else
@@ -67,19 +67,19 @@ public class UnsatCoreCollector {
 		accept(node.getPrimary());
 		Antecedent[] ants = node.getAntecedents();
 		for (Antecedent a : ants) {
-			accept(a.antecedent);
+			accept(a.mAntecedent);
 		}
 	}
 	// Visit leaf nodes
 	private void visit(LeafNode node) {
 		// Tautologies are not needed in an unsat core
-		if (node.getLeafKind() == LeafNode.NO_THEORY &&
-				node.getTheoryAnnotation() instanceof SourceAnnotation) {
+		if (node.getLeafKind() == LeafNode.NO_THEORY
+				&& node.getTheoryAnnotation() instanceof SourceAnnotation) {
 			String name = ((SourceAnnotation) node.getTheoryAnnotation()).
 				getAnnotation();
 			// Guard against unnamed clauses
 			if (!name.isEmpty())
-				m_UnsatCoreIds.add(name);
+				mUnsatCoreIds.add(name);
 		}
 	}
 }

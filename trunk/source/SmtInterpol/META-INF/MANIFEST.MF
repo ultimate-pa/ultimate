@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SMTInterpol - an Interpolating SMT Solver
-Bundle-SymbolicName: SmtInterpol
+Bundle-SymbolicName: SMTInterpol
 Bundle-Version: 2.0.0
 Export-Package: de.uni_freiburg.informatik.ultimate.smtinterpol.proof,
  de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib,
@@ -9,8 +9,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.smtinterpol.proof,
  de.uni_freiburg.informatik.ultimate.smtinterpol.util 
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
-Require-Bundle: UltimateCore,
+Require-Bundle: Library-log4j,
  Library-SMTLIB,
- JavaCup,
- Library-log4j,
- Library-UltimateUtil
+ Library-UltimateUtil,
+ JavaCup

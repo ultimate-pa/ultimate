@@ -32,26 +32,27 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 public class ArithDelay extends InternTermTransformer {
-	private ScopedHashMap<Rational, Term> m_ArithConsts = 
+	private final ScopedHashMap<Rational, Term> mArithConsts = 
 			new ScopedHashMap<Rational, Term>();
 
 	private final static Sort[] EMPTY_SORT_ARRAY = new Sort[0];
 	
 	private Term replace(Rational constant, Theory t, Sort s) {
-		Term replacement = m_ArithConsts.get(constant);
+		Term replacement = mArithConsts.get(constant);
 		if (replacement == null) {
 			String rep = "@" + constant.toString();
 			FunctionSymbol fsym = t.getFunction(rep);
 			if (fsym == null)
 				fsym = t.declareFunction(rep, EMPTY_SORT_ARRAY, s);
 			replacement = t.term(fsym);
-			m_ArithConsts.put(constant, replacement);
+			mArithConsts.put(constant, replacement);
 		}
 		return replacement;
 	}
 	
 	@Override
-	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+	public void convertApplicationTerm(
+			ApplicationTerm appTerm, Term[] newArgs) {
 		Theory t = appTerm.getTheory();
 		if (appTerm.getFunction().getName().equals("<=")) {
 			SMTAffineTerm arg0 = (SMTAffineTerm) newArgs[0];
@@ -90,17 +91,17 @@ public class ArithDelay extends InternTermTransformer {
 			@Override
 			public Iterator<Term> iterator() {
 				return new Iterator<Term>() {
-					private Iterator<Map.Entry<Rational, Term>> m_It =
-							m_ArithConsts.entrySet().iterator();
+					private Iterator<Map.Entry<Rational, Term>> mIt =
+							mArithConsts.entrySet().iterator();
 
 					@Override
 					public boolean hasNext() {
-						return m_It.hasNext();
+						return mIt.hasNext();
 					}
 
 					@Override
 					public Term next() {
-						Map.Entry<Rational, Term> me = m_It.next();
+						Map.Entry<Rational, Term> me = mIt.next();
 						Term val = me.getValue();
 						Theory t = val.getTheory();
 						return t.term("=",
@@ -119,7 +120,7 @@ public class ArithDelay extends InternTermTransformer {
 	
 	public TermTransformer getReverter() {
 		final HashMap<Term, Term> reverted = new HashMap<Term, Term>();
-		for (Map.Entry<Rational, Term> me : m_ArithConsts.entrySet()) {
+		for (Map.Entry<Rational, Term> me : mArithConsts.entrySet()) {
 			Term nkey = me.getValue();
 			reverted.put(nkey, me.getKey().toTerm(nkey.getSort()));
 		}
@@ -138,15 +139,15 @@ public class ArithDelay extends InternTermTransformer {
 	}
 
 	public boolean isEmpty() {
-		return m_ArithConsts.isEmpty();
+		return mArithConsts.isEmpty();
 	}
 	
 	public void push() {
-		m_ArithConsts.beginScope();
+		mArithConsts.beginScope();
 	}
 	
 	public void pop() {
-		m_ArithConsts.endScope();
+		mArithConsts.endScope();
 	}
 	
 }

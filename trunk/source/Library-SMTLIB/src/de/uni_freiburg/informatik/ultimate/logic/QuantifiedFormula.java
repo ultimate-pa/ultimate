@@ -42,22 +42,22 @@ public class QuantifiedFormula extends Term {
 	public static final int EXISTS = 0;
 	public static final int FORALL = 1;
 	
-	private int m_Quantifier;
-	private TermVariable[] m_Variables;
-	private Term m_SubFormula;
+	private final int mQuantifier;
+	private final TermVariable[] mVariables;
+	private final Term mSubFormula;
 	
 	QuantifiedFormula(int quant, TermVariable[] vars, Term f, int hash) {
 		super(hash);
-		this.m_Quantifier = quant;
-		this.m_Variables = vars;
-		this.m_SubFormula = f;
+		this.mQuantifier = quant;
+		this.mVariables = vars;
+		this.mSubFormula = f;
 	}
 	
 	/**
 	 * @return the quantifier
 	 */
 	public int getQuantifier() {
-		return m_Quantifier;
+		return mQuantifier;
 	}
 
 	/**
@@ -65,7 +65,7 @@ public class QuantifiedFormula extends Term {
 	 * @return the variables
 	 */
 	public TermVariable[] getVariables() {
-		return m_Variables;
+		return mVariables;
 	}
 
 	/**
@@ -73,16 +73,16 @@ public class QuantifiedFormula extends Term {
 	 * @return the sub-formula.
 	 */
 	public Term getSubformula() {
-		return m_SubFormula;
+		return mSubFormula;
 	}
 
 	@Override
 	public Sort getSort() {
-		return m_SubFormula.getSort();
+		return mSubFormula.getSort();
 	}
 
 	public int hashCode() {
-		return hashQuantifier(m_Quantifier, m_Variables, m_SubFormula);
+		return hashQuantifier(mQuantifier, mVariables, mSubFormula);
 	}
 	
 	public static final int hashQuantifier(
@@ -100,9 +100,9 @@ public class QuantifiedFormula extends Term {
 		
 		// Add variables
 		TermVariable[] vars = getVariables();
-		for (int i = vars.length-1; i > 0; i--) {
+		for (int i = vars.length - 1; i > 0; i--) {
 			m_Todo.addLast(vars[i].getSort());
-			m_Todo.addLast(") ("+vars[i]+" ");
+			m_Todo.addLast(") (" + vars[i] + " ");
 		}
 		m_Todo.addLast(vars[0].getSort());
 

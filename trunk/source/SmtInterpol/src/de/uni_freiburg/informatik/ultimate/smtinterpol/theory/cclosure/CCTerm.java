@@ -20,13 +20,13 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.logic.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.EqualityProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleList;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleListable;
+import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 
 /**
@@ -62,168 +62,160 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleListable;
  * @author hoenicke
  */
 public abstract class CCTerm extends SimpleListable<CCTerm> {
-	public static long invertEdgeTime, eqTime, ccTime, setRepTime;
-	public static long ccCount, mergeCount;
 	
 	/**
 	 * The destination of the outgoing equality edge.  Every term has at
 	 * most one equality edge, which was introduced by some merge operation.
 	 * The edges may be inverted to allow introducing new equality edges.
 	 */
-	CCTerm equalEdge;
+	CCTerm mEqualEdge;
 	/**
 	 * The representative of the congruence class.  The representative 
 	 * is the one that contains the members, ccpar and eqlits information.
 	 */
-	CCTerm repStar;
+	CCTerm mRepStar;
 	/**
 	 * Points to the next merged representative in the congruence class. 
 	 * This representative can have another representative of its own, if 
 	 * it is merged later with another class.
 	 * This field equals this, iff the term is the representative of its class.
 	 */
-	CCTerm rep;
+	CCTerm mRep;
 	/**
 	 * The representative of the source congruence class before the merge
 	 * that introduced this.equalEdge.  Note that due to inverting the edge
 	 * the old representative may be the representative of the destination
 	 * of the equality edge.
 	 */
-	CCTerm oldRep;
+	CCTerm mOldRep;
 	/**
 	 * oldRep.reasonLiteral contains the reason why equalEdge was introduced.
 	 */
-	CCEquality reasonLiteral;
+	CCEquality mReasonLiteral;
 	/**
 	 * the time stamp (or rather stack depth) when the merge of this node with
 	 * its representative rep took place.
 	 */
-	int mergeTime = Integer.MAX_VALUE;
-	CCParentInfo ccpars;
-	SimpleList<CCTerm> members;
-	int numMembers;
-	SimpleList<CCTermPairHash.Info.Entry> pairInfos;
-	SharedTerm sharedTerm;
-	SharedTerm flatTerm;
+	int mMergeTime = Integer.MAX_VALUE;
+	CCParentInfo mCCPars;
+	SimpleList<CCTerm> mMembers;
+	int mNumMembers;
+	SimpleList<CCTermPairHash.Info.Entry> mPairInfos;
+	SharedTerm mSharedTerm;
+	SharedTerm mFlatTerm;
 	
-	int hashCode;
+	int mHashCode;
 	
 	static class TermPairMergeInfo {
-		CCTermPairHash.Info.Entry info;
-		TermPairMergeInfo next;
+		CCTermPairHash.Info.Entry mInfo;
+		TermPairMergeInfo mNext;
 		public TermPairMergeInfo(CCTermPairHash.Info.Entry i, TermPairMergeInfo n) {
-			info = i;
-			next = n;
+			mInfo = i;
+			mNext = n;
 		}
 	}
 	static class CongruenceInfo {
-		CCAppTerm appTerm1;
-		CCAppTerm appTerm2;
-		boolean merged;
-		CongruenceInfo next;
+		CCAppTerm mAppTerm1;
+		CCAppTerm mAppTerm2;
+		boolean mMerged;
+		CongruenceInfo mNext;
 
 		public CongruenceInfo(CCAppTerm app1, CCAppTerm app2, CongruenceInfo next) {
-			this.appTerm1 = app1;
-			this.appTerm2 = app2;
-			this.next = next;
+			this.mAppTerm1 = app1;
+			this.mAppTerm2 = app2;
+			this.mNext = next;
 		}
 	}
 	
-	boolean isFunc;
-	int parentPosition;
+	boolean mIsFunc;
+	int mParentPosition;
 
 	protected CCTerm(boolean isFunc, int parentPos, SharedTerm term, int hash) {
-		this.isFunc = isFunc;
-		this.ccpars = null;
+		this.mIsFunc = isFunc;
+		this.mCCPars = null;
 		if (isFunc) {
-			parentPosition = parentPos;
+			mParentPosition = parentPos;
 		}
-		ccpars = new CCParentInfo();
-		rep = repStar = this;
-		members = new SimpleList<CCTerm>();
-		pairInfos = new SimpleList<CCTermPairHash.Info.Entry>();
-		members.append(this);
-		numMembers = 1;
+		mCCPars = new CCParentInfo();
+		mRep = mRepStar = this;
+		mMembers = new SimpleList<CCTerm>();
+		mPairInfos = new SimpleList<CCTermPairHash.Info.Entry>();
+		mMembers.append(this);
+		mNumMembers = 1;
 		assert invariant();
-		flatTerm = term;
-		hashCode = hash;
+		mFlatTerm = term;
+		mHashCode = hash;
 	}
 	
-	/**
-	 * Constructor for CCTerms that are not part of the E-graph, but only used temporarily for
-	 * interpolation generation.
-	 */
-	public CCTerm() {
-	}
-
 	boolean pairHashValid(CClosure engine) {
-		if (Config.EXPENSIVE_ASSERTS){
-			for (CCTermPairHash.Info.Entry pentry : pairInfos) {
+		if (Config.EXPENSIVE_ASSERTS) {
+			for (CCTermPairHash.Info.Entry pentry : mPairInfos) {
 				CCTermPairHash.Info info = pentry.getInfo();
-				assert pentry.getOtherEntry().other == this;
-				if (this == rep) {
-					assert engine.pairHash.getInfo(this, pentry.other) == info;
+				assert pentry.getOtherEntry().mOther == this;
+				if (this == mRep) {
+					assert engine.mPairHash.getInfo(this, pentry.mOther) == info;
 				}
 			}
 		}
 		return true;
 	}
 
-	boolean invariant() {
+	final boolean invariant() {
 		if (Config.EXPENSIVE_ASSERTS) {
-		boolean found = false;
-		for (CCTerm m : repStar.members) {
-			if (m == this)
-				found = true;
-		}
-		assert found;
-		assert(pairInfos.wellformed());
-		if (this == repStar)
-			assert(members.wellformed());
-		for (CCTermPairHash.Info.Entry pentry : pairInfos) {
-			assert pentry.getOtherEntry().other == this;
-			CCTerm other = pentry.other;
-			assert other.mergeTime >= this.mergeTime;
-			if (this == repStar || pentry.other == rep)
-				assert(pentry.getInfo().eqlits.wellformed());
-			else
-				assert(pentry.getInfo().eqlits.wellformedPart());
-		}
-		if (this == repStar) {
-			assert(ccpars != null);
-			for (CCParentInfo parInfo = ccpars.m_Next; 
-			     parInfo != null; parInfo = parInfo.m_Next) {
-				assert(parInfo.m_CCParents.wellformed());
-				assert(parInfo.m_Next == null || parInfo.m_FuncSymbNr < parInfo.m_Next.m_FuncSymbNr);
-			}
-			for (CCTerm m : members)
-				assert (m.repStar == this);
-		}
-		assert ((equalEdge == null) == (oldRep == null));
-		if (equalEdge != null) {
-			assert (repStar == equalEdge.repStar);
-		}
+    		boolean found = false;
+    		for (CCTerm m : mRepStar.mMembers) {
+    			if (m == this)
+    				found = true;
+    		}
+    		assert found;
+    		assert mPairInfos.wellformed();
+    		if (this == mRepStar)
+    			assert mMembers.wellformed();
+    		for (CCTermPairHash.Info.Entry pentry : mPairInfos) {
+    			assert pentry.getOtherEntry().mOther == this;
+    			CCTerm other = pentry.mOther;
+    			assert other.mMergeTime >= this.mMergeTime;
+    			if (this == mRepStar || pentry.mOther == mRep)
+    				assert pentry.getInfo().mEqlits.wellformed();
+    			else
+    				assert pentry.getInfo().mEqlits.wellformedPart();
+    		}
+    		if (this == mRepStar) {
+    			assert(mCCPars != null);
+    			for (CCParentInfo parInfo = mCCPars.mNext; 
+    			     parInfo != null; parInfo = parInfo.mNext) {
+    				assert parInfo.mCCParents.wellformed();
+    				assert parInfo.mNext == null 
+    						|| parInfo.mFuncSymbNr < parInfo.mNext.mFuncSymbNr;
+    			}
+    			for (CCTerm m : mMembers)
+    				assert m.mRepStar == this;
+    		}
+    		assert (mEqualEdge == null) == (mOldRep == null);
+    		if (mEqualEdge != null) {
+    			assert mRepStar == mEqualEdge.mRepStar;
+    		}
 		}
 		return true;
 	}
 
 	public final CCTerm getRepresentative() {
-		return repStar;
+		return mRepStar;
 	}
 
 	public void share(CClosure engine, SharedTerm sterm) {
-		if (this.sharedTerm != null) {
-			if (this.sharedTerm == sterm)
+		if (this.mSharedTerm != null) {
+			if (this.mSharedTerm == sterm)
 				return;
 			propagateSharedEquality(engine, sterm);
 		}
 		CCTerm term = this;
-		SharedTerm oldTerm = this.sharedTerm;
-		this.sharedTerm = sterm;
-		while (term.rep != term) {
-			term = term.rep;
-			if (term.sharedTerm == oldTerm)
-				term.sharedTerm = sterm;
+		SharedTerm oldTerm = this.mSharedTerm;
+		this.mSharedTerm = sterm;
+		while (term.mRep != term) {
+			term = term.mRep;
+			if (term.mSharedTerm == oldTerm)
+				term.mSharedTerm = sterm;
 			else {
 				term.propagateSharedEquality(engine, sterm);
 				break;
@@ -232,9 +224,9 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 	}
 	
 	public void unshare(SharedTerm sterm) {
-		assert this.sharedTerm == sterm;
-		assert this.rep == this;
-		this.sharedTerm = null;
+		assert this.mSharedTerm == sterm;
+		assert this.mRep == this;
+		this.mSharedTerm = null;
 	}
 	
 	private void propagateSharedEquality(CClosure engine, SharedTerm sterm) {
@@ -242,20 +234,20 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 		 * as sterm is a newly shared term, which must be linear independent
 		 * of all previously created terms. 
 		 */
-		EqualityProxy eqForm = sharedTerm.createEquality(sterm);
+		EqualityProxy eqForm = mSharedTerm.createEquality(sterm);
 		assert (eqForm != EqualityProxy.getTrueProxy());
 		assert (eqForm != EqualityProxy.getFalseProxy());
-		CCEquality cceq = eqForm.createCCEquality(this.sharedTerm, sterm);
-		if (engine.engine.getLogger().isDebugEnabled())
-			engine.engine.getLogger().debug("PL: "+cceq);
+		CCEquality cceq = eqForm.createCCEquality(this.mSharedTerm, sterm);
+		if (engine.mEngine.getLogger().isDebugEnabled())
+			engine.mEngine.getLogger().debug("PL: " + cceq);
 		engine.addPending(cceq);
 	}
 
 	/**
 	 * Clear the equal edge by inverting the edges.
 	 */
-	public void invertEqualEdges() {
-		if (equalEdge == null)
+	public void invertEqualEdges(CClosure engine) {
+		if (mEqualEdge == null)
 			return;
 
 		long time;
@@ -266,37 +258,38 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 		CCTerm next = this;
 		while (next != null) {
 			CCTerm t = next;
-			next = next.equalEdge;
-			t.equalEdge = last;
-			CCTerm nextRep = t.oldRep;
-			t.oldRep = lastRep;
+			next = next.mEqualEdge;
+			t.mEqualEdge = last;
+			CCTerm nextRep = t.mOldRep;
+			t.mOldRep = lastRep;
 			last = t;
 			lastRep = nextRep;
 		}
 		if (Config.PROFILE_TIME)
-			invertEdgeTime += System.nanoTime() - time;
+			engine.addInvertEdgeTime(System.nanoTime() - time);
 	}
 	
 	public Clause merge(CClosure engine, CCTerm lhs, CCEquality reason) {
-		assert(reason != null || (this instanceof CCAppTerm && lhs instanceof CCAppTerm));
-		assert(engine.mergeDepth == engine.merges.size());
+		assert reason != null 
+				|| (this instanceof CCAppTerm && lhs instanceof CCAppTerm);
+		assert engine.mMergeDepth == engine.mMerges.size();
 
 		/* Check the representatives of this */
-		CCTerm src = lhs.repStar;
-		CCTerm dest = this.repStar;
-		assert (src.invariant());
-		assert (src.pairHashValid(engine));
-		assert (dest.invariant());
-		assert (dest.pairHashValid(engine));
+		CCTerm src = lhs.mRepStar;
+		CCTerm dest = this.mRepStar;
+		assert src.invariant();
+		assert src.pairHashValid(engine);
+		assert dest.invariant();
+		assert dest.pairHashValid(engine);
 		if (src == dest) {
 			/* Terms are already merged. */
 			return null;
 		}
 
 		//Logger.getRootLogger().debug("M"+lhs+"=="+this);
-		mergeCount++;
+		engine.incMergeCount();
 		Clause res;
-		if (src.numMembers > dest.numMembers) {
+		if (src.mNumMembers > dest.mNumMembers) {
 			res = lhs.mergeInternal(engine, this, reason);
 			if (res == null && reason == null)
 				((CCAppTerm)this).markParentInfos();
@@ -305,185 +298,184 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 			if (res == null && reason == null)
 				((CCAppTerm)lhs).markParentInfos();
 		}
-		assert (engine.mergeDepth == engine.merges.size());
+		assert engine.mMergeDepth == engine.mMerges.size();
 		assert invariant();
-		assert (lhs.invariant());
-		assert (repStar.pairHashValid(engine));
+		assert lhs.invariant();
+		assert mRepStar.pairHashValid(engine);
 		return res;
 	}
 	
 	private Clause mergeInternal(CClosure engine, CCTerm lhs, CCEquality reason) {
 		/* Check the representatives of this */
-		CCTerm src = lhs.repStar;
-		CCTerm dest = this.repStar;
+		CCTerm src = lhs.mRepStar;
+		CCTerm dest = this.mRepStar;
 		
 		// Need to prevent MBTC when we get a conflict. Hence a two-way pass
 		CCEquality diseq = null;
-		{
-			CCTermPairHash.Info info = engine.pairHash.getInfo(src, dest);
-			if (info != null) {
-				diseq = info.diseq;
-			}
+		CCTermPairHash.Info diseqInfo = engine.mPairHash.getInfo(src, dest);
+		if (diseqInfo != null) {
+			diseq = diseqInfo.mDiseq;
 		}
 		boolean sharedTermConflict = false;
-		if (diseq == null && src.sharedTerm != null) {
-			if (dest.sharedTerm != null) {
+		if (diseq == null && src.mSharedTerm != null) {
+			if (dest.mSharedTerm == null) 
+				dest.mSharedTerm = src.mSharedTerm;
+			else {
 				EqualityProxy form = 
-					src.sharedTerm.createEquality(dest.sharedTerm);
+					src.mSharedTerm.createEquality(dest.mSharedTerm);
 				if (form == EqualityProxy.getFalseProxy())
 					sharedTermConflict = true;
 				else
-					form.createCCEquality(src.sharedTerm, dest.sharedTerm);
+					form.createCCEquality(src.mSharedTerm, dest.mSharedTerm);
 				// no need to remember the created equality. Is was inserted
 				// and will be found later automatically.
-			} else
-				dest.sharedTerm = src.sharedTerm;
+			}	
 		}
 		
 		/* Invert equivalence edges */
-		lhs.invertEqualEdges();
+		lhs.invertEqualEdges(engine);
 		/* Now create a new equaledge to dest. */
-		lhs.equalEdge = this;
-		lhs.oldRep = src;
-		src.reasonLiteral = reason;
+		lhs.mEqualEdge = this;
+		lhs.mOldRep = src;
+		src.mReasonLiteral = reason;
 		
 		/* Check for conflict */
 		if (sharedTermConflict || diseq != null) {
 			Clause conflict = sharedTermConflict 
-				? engine.computeCycle(src.sharedTerm.getCCTerm(), 
-									  dest.sharedTerm.getCCTerm())
+				? engine.computeCycle(src.mSharedTerm.getCCTerm(), 
+									  dest.mSharedTerm.getCCTerm())
 				: engine.computeCycle(diseq);
-			lhs.equalEdge = null;
-			lhs.oldRep = null;
-			src.reasonLiteral = null;
+			lhs.mEqualEdge = null;
+			lhs.mOldRep = null;
+			src.mReasonLiteral = null;
 			return conflict;
 		}
 
 		long time;
 
-		assert(engine.mergeDepth == engine.merges.size());
-		src.mergeTime = ++engine.mergeDepth;
-		engine.merges.push(lhs);
-		engine.engine.getLogger().debug(new DebugMessage("M {0} {1}", this, lhs));
-		assert(engine.merges.size() == engine.mergeDepth);
+		assert(engine.mMergeDepth == engine.mMerges.size());
+		src.mMergeTime = ++engine.mMergeDepth;
+		engine.mMerges.push(lhs);
+		engine.mEngine.getLogger().debug(new DebugMessage("M {0} {1}", this, lhs));
+		assert(engine.mMerges.size() == engine.mMergeDepth);
 
 		if (Config.PROFILE_TIME)
 			time = System.nanoTime();
 		/* Update rep fields */
-		src.rep = dest;
-		for (CCTerm t : src.members) {
-			t.repStar = dest;
+		src.mRep = dest;
+		for (CCTerm t : src.mMembers) {
+			t.mRepStar = dest;
 		}
 		if (Config.PROFILE_TIME)
-			setRepTime += System.nanoTime() - time;
-		dest.members.joinList(src.members);
-		dest.numMembers += src.numMembers;
+			engine.addSetRepTime(System.nanoTime() - time);
+		dest.mMembers.joinList(src.mMembers);
+		dest.mNumMembers += src.mNumMembers;
 		
 		if (Config.PROFILE_TIME)
 			time = System.nanoTime();
 //		System.err.println("Merge "+this+"+"+lhs+" -> "+src+" "+dest);
-		for (CCTermPairHash.Info.Entry pentry : src.pairInfos) {
+		for (CCTermPairHash.Info.Entry pentry : src.mPairInfos) {
 			CCTermPairHash.Info info = pentry.getInfo();
-			assert pentry.getOtherEntry().other == src;
-			CCTerm other = pentry.other;
-			assert other.repStar == other;
+			assert pentry.getOtherEntry().mOther == src;
+			CCTerm other = pentry.mOther;
+			assert other.mRepStar == other;
 			if (other == dest) {
-				assert (info.diseq == null);
-				for (CCEquality.Entry eq : info.eqlits) {
+				assert (info.mDiseq == null);
+				for (CCEquality.Entry eq : info.mEqlits) {
 					engine.addPending(eq.getCCEquality());
 				}
 			} else {
-				CCTermPairHash.Info destInfo = engine.pairHash.getInfo(dest, other);
+				CCTermPairHash.Info destInfo = engine.mPairHash.getInfo(dest, other);
 				if (destInfo == null) {
 					destInfo = new CCTermPairHash.Info(dest, other);
-					engine.pairHash.add(destInfo);
+					engine.mPairHash.add(destInfo);
 				}
-				destInfo.arrayextadded += info.arrayextadded;
 				//System.err.println("M "+src+" "+other+" "+dest);
 				/* Merge Infos */
-				if (destInfo.diseq == null && info.diseq != null) {
-					destInfo.diseq = info.diseq;
-					for (CCEquality.Entry eq : destInfo.eqlits) {
+				if (destInfo.mDiseq == null && info.mDiseq != null) {
+					destInfo.mDiseq = info.mDiseq;
+					for (CCEquality.Entry eq : destInfo.mEqlits) {
 						assert (eq.getCCEquality().getDecideStatus() != eq.getCCEquality());
 						if (eq.getCCEquality().getDecideStatus() == null) {
-							eq.getCCEquality().m_diseqReason = info.diseq;
+							eq.getCCEquality().mDiseqReason = info.mDiseq;
 							engine.addPending(eq.getCCEquality().negate());
 						}
 					}
-				} else if (destInfo.diseq != null && info.diseq == null) {
-					for (CCEquality.Entry eq : info.eqlits) {
+				} else if (destInfo.mDiseq != null && info.mDiseq == null) {
+					for (CCEquality.Entry eq : info.mEqlits) {
 						assert (eq.getCCEquality().getDecideStatus() != eq.getCCEquality());
 						if (eq.getCCEquality().getDecideStatus() == null) {
-							eq.getCCEquality().m_diseqReason = destInfo.diseq;
+							eq.getCCEquality().mDiseqReason = destInfo.mDiseq;
 							engine.addPending(eq.getCCEquality().negate());
 						}
 					}
 				}
-				destInfo.eqlits.joinList(info.eqlits);
+				destInfo.mEqlits.joinList(info.mEqlits);
 			}
 			pentry.getOtherEntry().unlink();
-			assert other.pairInfos.wellformed();
-			engine.pairHash.remove(info);
+			assert other.mPairInfos.wellformed();
+			engine.mPairHash.remove(info);
 		}
 		if (Config.PROFILE_TIME)
-			eqTime += System.nanoTime() - time;
+			engine.addEqTime(System.nanoTime() - time);
 
 		if (Config.PROFILE_TIME)
 			time = System.nanoTime();
 		/* Compute congruence closure */
-		// XXX Get candidates for reverse triggers registered on src and dest
-		if (isFunc) {
-			CCParentInfo srcParentInfo = src.ccpars.m_Next; 
-			CCParentInfo destParentInfo = dest.ccpars.m_Next;
+		if (mIsFunc) {
+			CCParentInfo srcParentInfo = src.mCCPars.mNext; 
+			CCParentInfo destParentInfo = dest.mCCPars.mNext;
 //			assert (srcParentInfo == null || srcParentInfo.m_Next == null);
 //			assert (destParentInfo == null || destParentInfo.m_Next == null);
 			if (srcParentInfo != null) {
-				assert(srcParentInfo.m_FuncSymbNr == destParentInfo.m_FuncSymbNr);
-				tloop: for (CCAppTerm.Parent t1 : srcParentInfo.m_CCParents) {
+				assert(srcParentInfo.mFuncSymbNr == destParentInfo.mFuncSymbNr);
+			tloop: 
+			    for (CCAppTerm.Parent t1 : srcParentInfo.mCCParents) {
 					if (t1.isMarked()) continue;
 					CCAppTerm t = t1.getData();
-					for (CCAppTerm.Parent u1 : destParentInfo.m_CCParents) {
+					for (CCAppTerm.Parent u1 : destParentInfo.mCCParents) {
 						if (u1.isMarked()) continue;
-						ccCount++;
-						if (t.arg.repStar == u1.getData().arg.repStar) {
+						engine.incCcCount();
+						if (t.mArg.mRepStar == u1.getData().mArg.mRepStar) {
 							engine.addPendingCongruence(t, u1.getData());
 							continue tloop;
 						}
 					}
 				}
-				destParentInfo.m_CCParents.joinList(srcParentInfo.m_CCParents);
+				destParentInfo.mCCParents.joinList(srcParentInfo.mCCParents);
 			}
 		} else {
-			CCParentInfo srcParentInfo = src.ccpars.m_Next; 
-			CCParentInfo destParentInfo = dest.ccpars.m_Next;
+			CCParentInfo srcParentInfo = src.mCCPars.mNext; 
+			CCParentInfo destParentInfo = dest.mCCPars.mNext;
 			while (srcParentInfo != null && destParentInfo != null) {
-				if (srcParentInfo.m_FuncSymbNr < destParentInfo.m_FuncSymbNr)
-					srcParentInfo = srcParentInfo.m_Next;
-				else if (srcParentInfo.m_FuncSymbNr > destParentInfo.m_FuncSymbNr)
-					destParentInfo = destParentInfo.m_Next;
+				if (srcParentInfo.mFuncSymbNr < destParentInfo.mFuncSymbNr)
+					srcParentInfo = srcParentInfo.mNext;
+				else if (srcParentInfo.mFuncSymbNr > destParentInfo.mFuncSymbNr)
+					destParentInfo = destParentInfo.mNext;
 				else {
-					assert(srcParentInfo.m_FuncSymbNr == destParentInfo.m_FuncSymbNr);
-					tloop: for (CCAppTerm.Parent t1 : srcParentInfo.m_CCParents) {
+					assert(srcParentInfo.mFuncSymbNr == destParentInfo.mFuncSymbNr);
+				tloop:
+				    for (CCAppTerm.Parent t1 : srcParentInfo.mCCParents) {
 						if (t1.isMarked()) continue;
 						CCAppTerm t = t1.getData();
-						for (CCAppTerm.Parent u1 : destParentInfo.m_CCParents) {
+						for (CCAppTerm.Parent u1 : destParentInfo.mCCParents) {
 							if (u1.isMarked()) continue;
-							ccCount++;
-							if (t.func.repStar == u1.getData().func.repStar) {
+							engine.incCcCount();
+							if (t.mFunc.mRepStar == u1.getData().mFunc.mRepStar) {
 								engine.addPendingCongruence(t, u1.getData());
 								continue tloop;
 							}
 						}
 					}
-					srcParentInfo = srcParentInfo.m_Next;
-					destParentInfo = destParentInfo.m_Next;
+					srcParentInfo = srcParentInfo.mNext;
+					destParentInfo = destParentInfo.mNext;
 				}
 			}
-			dest.ccpars.mergeParentInfo(src.ccpars);
+			dest.mCCPars.mergeParentInfo(src.mCCPars);
 		}
 
 		if (Config.PROFILE_TIME)
-			ccTime += System.nanoTime() - time;
+			engine.addCcTime(System.nanoTime() - time);
 		
 		assert invariant();
 		assert lhs.invariant();
@@ -494,97 +486,93 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 	}
 
 	public void undoMerge(CClosure engine, CCTerm lhs) {
-		engine.engine.getLogger().debug(new DebugMessage("U {0} {1}", lhs, this));
+		engine.mEngine.getLogger().debug(new DebugMessage("U {0} {1}", lhs, this));
 		long time;
 		CCTerm src, dest;
 
 		assert invariant();
 		assert lhs.invariant();
-		assert(repStar.pairHashValid(engine));
-		assert this.equalEdge == lhs;
-		assert repStar == lhs.repStar;
+		assert mRepStar.pairHashValid(engine);
+		assert this.mEqualEdge == lhs;
+		assert mRepStar == lhs.mRepStar;
 		
-		src = oldRep;
-		equalEdge = null;
-		oldRep = null;
-		dest = repStar;
-		dest.ccpars.unmergeParentInfo(src.ccpars);
+		src = mOldRep;
+		mEqualEdge = null;
+		mOldRep = null;
+		dest = mRepStar;
+		dest.mCCPars.unmergeParentInfo(src.mCCPars);
 		// Congruence merge
-		if (src.reasonLiteral == null) {
+		if (src.mReasonLiteral == null) {
 			((CCAppTerm)this).unmarkParentInfos();
-			// TODO Is this line needed? I don't think so...
-//			((CCAppTerm)lhs).unmarkParentInfos();
 		}
 		
 		//System.err.println("Unmerge "+this+"+"+lhs+" -> "+src+" "+dest);
 		//Logger.getRootLogger().debug("U"+lhs+"=="+this);
-		src.reasonLiteral = null;
-		for (CCTermPairHash.Info.Entry pentry : src.pairInfos.reverse()) {
+		src.mReasonLiteral = null;
+		for (CCTermPairHash.Info.Entry pentry : src.mPairInfos.reverse()) {
 			CCTermPairHash.Info info = pentry.getInfo();
-			assert pentry.getOtherEntry().other == src;
-			engine.pairHash.add(pentry.getInfo());
-			assert pentry.other.pairInfos.wellformed();
-			pentry.other.pairInfos.append(pentry.getOtherEntry());
-			assert pentry.other.pairInfos.wellformed();
-			CCTerm other = pentry.other;
-			assert other.repStar == other;
+			assert pentry.getOtherEntry().mOther == src;
+			engine.mPairHash.add(pentry.getInfo());
+			assert pentry.mOther.mPairInfos.wellformed();
+			pentry.mOther.mPairInfos.append(pentry.getOtherEntry());
+			assert pentry.mOther.mPairInfos.wellformed();
+			CCTerm other = pentry.mOther;
+			assert other.mRepStar == other;
 			if (other != dest) {
 				//System.err.println("UM "+src+" "+other+" "+dest);
-				CCTermPairHash.Info destInfo = engine.pairHash.getInfo(dest, other);
-				// FIXME: Is this correct?
+				CCTermPairHash.Info destInfo = engine.mPairHash.getInfo(dest, other);
 				if (destInfo == null)
 					continue;
-				destInfo.arrayextadded -= info.arrayextadded;
-				assert(destInfo.eqlits.wellformed());
-				destInfo.eqlits.unjoinList(info.eqlits);
-				assert(info.eqlits.wellformed() && destInfo.eqlits.wellformed());
-				if (destInfo.diseq == info.diseq)
-					destInfo.diseq = null;
+				assert destInfo.mEqlits.wellformed();
+				destInfo.mEqlits.unjoinList(info.mEqlits);
+				assert info.mEqlits.wellformed() && destInfo.mEqlits.wellformed();
+				if (destInfo.mDiseq == info.mDiseq)
+					destInfo.mDiseq = null;
 				/* Check if we can remove destInfo since it is empty now */
-				if (destInfo.diseq == null && destInfo.eqlits.isEmpty()) {
-					destInfo.lhsEntry.unlink();
-					destInfo.rhsEntry.unlink();
-					engine.pairHash.remove(destInfo);
+				if (destInfo.mDiseq == null && destInfo.mEqlits.isEmpty()) {
+					destInfo.mLhsEntry.unlink();
+					destInfo.mRhsEntry.unlink();
+					engine.mPairHash.remove(destInfo);
 				}
 			}
 		}
 		
-		dest.numMembers -= src.numMembers;
+		dest.mNumMembers -= src.mNumMembers;
 		if (Config.PROFILE_TIME)
 			time = System.nanoTime();
-		dest.members.unjoinList(src.members);
-		for (CCTerm t : src.members)
-			t.repStar = src;
-		src.rep = src;
+		dest.mMembers.unjoinList(src.mMembers);
+		for (CCTerm t : src.mMembers)
+			t.mRepStar = src;
+		src.mRep = src;
 		
-		assert src.mergeTime == engine.mergeDepth;
-		engine.mergeDepth--;
-		assert(engine.mergeDepth == engine.merges.size());
-		src.mergeTime = Integer.MAX_VALUE;
+		assert src.mMergeTime == engine.mMergeDepth;
+		engine.mMergeDepth--;
+		assert(engine.mMergeDepth == engine.mMerges.size());
+		src.mMergeTime = Integer.MAX_VALUE;
 		if (Config.PROFILE_TIME)
-			setRepTime += System.nanoTime() - time;
+			engine.addSetRepTime(System.nanoTime() - time);
 
-		if (dest.sharedTerm == src.sharedTerm)
-			dest.sharedTerm = null;
+		if (dest.mSharedTerm == src.mSharedTerm)
+			dest.mSharedTerm = null;
 		
 		assert invariant();
 		assert lhs.invariant();
 		assert src.invariant();
 		assert dest.invariant();
-		assert(src.pairHashValid(engine));
-		assert(dest.pairHashValid(engine));
+		assert src.pairHashValid(engine);
+		assert dest.pairHashValid(engine);
 	}
 	
 	public SharedTerm getSharedTerm() {
-		return sharedTerm;
+		return mSharedTerm;
 	}
 	
 	public int hashCode() {
-		return hashCode;
+		return mHashCode;
 	}
 
 	public SharedTerm getFlatTerm() {
-		return flatTerm;
+		return mFlatTerm;
 	}
 	
 	public abstract Term toSMTTerm(Theory t, boolean useAuxVars);

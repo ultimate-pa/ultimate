@@ -20,7 +20,11 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol;
 
 import java.util.Random;
 
-public class RandomSeedFinder {
+public final class RandomSeedFinder {
+	
+	private RandomSeedFinder() {
+		// Hide constructor
+	}
 	
 	private static boolean testSeed(long seed, int timesTillRandomSplit) {
 		Random random = new Random(seed);
@@ -38,11 +42,10 @@ public class RandomSeedFinder {
 	public static void main(String[] args) {
 		if (args.length == 1) {
 			int timesTillRandomSplit = Integer.parseInt(args[0]);
-			if (!testSeed(Config.RANDOM_SEED, timesTillRandomSplit))
-				System.out.println("Current seed is bad...");
-			else {
+			if (testSeed(Config.RANDOM_SEED, timesTillRandomSplit))
 				System.out.println("Current seed is good...");
-			}
+			else
+				System.out.println("Current seed is bad...");
 			// This might take a while...
 			for (long seed = 0; seed < Long.MAX_VALUE; ++seed) {
 				if (testSeed(seed, timesTillRandomSplit)) {

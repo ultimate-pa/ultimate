@@ -46,40 +46,39 @@ public final class Sort {
 	/**
 	 * The sort symbol.
 	 */
-	SortSymbol m_Symbol;
+	final SortSymbol mSymbol;
 	/**
 	 * The arguments of the sort symbol.  This is null if the sort symbol 
 	 * has no arguments, otherwise it is an array with m_Symbol.m_numParams
 	 * elements.
 	 */
-	Sort[]     m_Args;
+	final Sort[]     mArgs;
 	/**
 	 * The indices of the sort symbol.  For the sort BitVec this is an
 	 * array with one element containing the bit length.  This field is
 	 * null (instead of the empty array) if there are no indices.
 	 */
-	BigInteger[] m_Indices;
+	final BigInteger[] mIndices;
 	/**
 	 * The cached real sort.  This is null if real sort was not yet computed.
 	 * Otherwise it is this for a real sort and the real sort as which the
 	 * sort is defined in all other cases.
 	 */
 	//@ invariant m_RealSort == null || m_RealSort.getRealSort() == m_RealSort
-	Sort       m_RealSort;
+	Sort       mRealSort;
 	
-	private int m_Hash;
+	private int mHash;
 	
 	Sort(SortSymbol sym, BigInteger[] indices, Sort[] args) {
-		assert args.length == (sym.isParametric() ? 0 : sym.m_NumParams) 
+		assert args != null;
+		assert args.length == (sym.isParametric() ? 0 : sym.mNumParams) 
 				: "Sort created with wrong number of args";
-		m_Symbol = sym;
-		m_Indices = indices;
-		m_Args = args;
-		m_Hash = m_Symbol.hashCode();
-		if (m_Args != null)
-			m_Hash = HashUtils.hashJenkins(m_Hash, (Object[]) m_Args);
-		if (m_Indices != null)
-			m_Hash = HashUtils.hashJenkins(m_Hash, (Object[]) m_Indices);
+		mSymbol = sym;
+		mIndices = indices;
+		mArgs = args;
+		mHash = HashUtils.hashJenkins(mSymbol.hashCode(), (Object[]) mArgs);
+		if (mIndices != null)
+			mHash = HashUtils.hashJenkins(mHash, (Object[]) mIndices);
 	}
 	
 	/**
@@ -87,7 +86,7 @@ public final class Sort {
 	 * @return the name.
 	 */
 	public String getName() {
-		return m_Symbol.getName();
+		return mSymbol.getName();
 	}
 
 	/**
@@ -95,14 +94,14 @@ public final class Sort {
 	 * @return the name.
 	 */
 	public String getIndexedName() {
-		String name = PrintTerm.quoteIdentifier(m_Symbol.getName());
-		if (m_Indices == null)
+		String name = PrintTerm.quoteIdentifier(mSymbol.getName());
+		if (mIndices == null)
 			return name;
 		StringBuilder sb = new StringBuilder();
 		sb.append("(_ ").append(name);
-		for (BigInteger i : m_Indices)
-			sb.append(" ").append(i);
-		sb.append(")");
+		for (BigInteger i : mIndices)
+			sb.append(' ').append(i);
+		sb.append(')');
 		return sb.toString();
 	}
 	
@@ -112,7 +111,7 @@ public final class Sort {
 	 * @return the indices, null if this sort is not indexed.
 	 */
 	public BigInteger[] getIndices() {
-		return m_Indices;
+		return mIndices;
 	}
 	
 	/**
@@ -125,41 +124,42 @@ public final class Sort {
 	 * You must never write to this array.     
 	 */
 	public Sort[] getArguments() {
-		return m_Args;
+		return mArgs;
 	}
 	
 	/**
 	 * Get the real sort.  This is used for sorts that are defined with
 	 * {@link Script#defineSort(String, Sort[], Sort) define-sort}.
 	 * For other sorts this just returns this.
-	 * @return the sort representation where all sort definitions are expanded.     
+	 * @return the sort representation where all sort definitions are expanded.
 	 */
 	public Sort getRealSort() {
-		if (m_RealSort == null) {
-			if (m_Symbol.m_SortDefinition == null) {
-				if (m_Args.length == 0) {
-					m_RealSort = this;
+		if (mRealSort == null) {
+			if (mSymbol.mSortDefinition == null) {
+				if (mArgs.length == 0) {
+					mRealSort = this;
 				} else {
-					Sort[] newArgs = m_Args;
+					Sort[] newArgs = mArgs;
 					for (int i = 0; i < newArgs.length; i++) {
-						Sort realArg = m_Args[i].getRealSort();
-						if (realArg != m_Args[i]) {
-							if (newArgs == m_Args)
-								newArgs = m_Args.clone();
+						Sort realArg = mArgs[i].getRealSort();
+						if (realArg != mArgs[i]) {
+							if (newArgs == mArgs)
+								newArgs = mArgs.clone();
 							newArgs[i] = realArg;
 						}
 					}
-					if (newArgs == m_Args)
-						m_RealSort = this;
+					if (newArgs == mArgs)
+						mRealSort = this;
 					else
-						m_RealSort = m_Symbol.getSort(m_Indices, newArgs).getRealSort();
+						mRealSort =
+							mSymbol.getSort(mIndices, newArgs).getRealSort();
 				}
 			} else {
-				m_RealSort = 
-					m_Symbol.m_SortDefinition.mapSort(m_Args).getRealSort();
+				mRealSort = 
+					mSymbol.mSortDefinition.mapSort(mArgs).getRealSort();
 			}
 		}
-		return m_RealSort;
+		return mRealSort;
 	}
 	
 	boolean equalsSort(Sort other) {
@@ -185,13 +185,13 @@ public final class Sort {
 		if (last != null)
 			return last == concrete;
 		
-		if (!m_Symbol.isParametric()) {
+		if (!mSymbol.isParametric()) {
 			Sort me = getRealSort();
-			if (me.m_Symbol != concrete.m_Symbol)
+			if (me.mSymbol != concrete.mSymbol)
 				return false;
 
-			for (int i = 0; i < me.m_Args.length; i++) {
-				if (!me.m_Args[i].unifySort(unifier, concrete.m_Args[i]))
+			for (int i = 0; i < me.mArgs.length; i++) {
+				if (!me.mArgs[i].unifySort(unifier, concrete.mArgs[i]))
 					return false;
 			}
 		}
@@ -207,13 +207,13 @@ public final class Sort {
 	 * @return The substituted sort.
 	 */
     Sort mapSort(Sort[] substitution) {
-		if (m_Symbol.isParametric())
-			return substitution[m_Symbol.m_NumParams];
-		if (m_Args.length == 0)
+		if (mSymbol.isParametric())
+			return substitution[mSymbol.mNumParams];
+		if (mArgs.length == 0)
 			return this;
-    	if (m_Args.length == 1) {
-    		Sort arg = m_Args[0].mapSort(substitution);
-    		return m_Symbol.getSort(m_Indices, new Sort[] { arg });
+    	if (mArgs.length == 1) {
+    		Sort arg = mArgs[0].mapSort(substitution);
+    		return mSymbol.getSort(mIndices, new Sort[] { arg });
     	}
     	
     	// For more than two arguments create a cache to avoid exponential blow
@@ -231,19 +231,19 @@ public final class Sort {
 	 * @return The substituted sort.
 	 */
     Sort mapSort(Sort[] substitution, HashMap<Sort, Sort> cachedMappings) {
-		if (m_Symbol.isParametric())
-			return substitution[m_Symbol.m_NumParams];
+		if (mSymbol.isParametric())
+			return substitution[mSymbol.mNumParams];
     	Sort result = cachedMappings.get(this);
     	if (result != null)
     		return result;
-    	if (m_Args.length != 0) {
-			Sort[] newArgs = new Sort[m_Args.length];
-			for (int i = 0; i < m_Args.length; i++) {
-				newArgs[i] = m_Args[i].mapSort(substitution, cachedMappings);
-			}
-			result = m_Symbol.getSort(m_Indices, newArgs);
-    	} else {
+    	if (mArgs.length == 0) 
     		result = this;
+    	else {
+			Sort[] newArgs = new Sort[mArgs.length];
+			for (int i = 0; i < mArgs.length; i++) {
+				newArgs[i] = mArgs[i].mapSort(substitution, cachedMappings);
+			}
+			result = mSymbol.getSort(mIndices, newArgs);
     	}
 		cachedMappings.put(this, result);
 		return result;
@@ -257,7 +257,7 @@ public final class Sort {
 	 * @return true iff this is a sort variable.     
 	 */
 	public boolean isParametric() {
-		return m_Symbol.isParametric();
+		return mSymbol.isParametric();
 	}
 
 	/**
@@ -265,7 +265,7 @@ public final class Sort {
 	 * @return the SMTLIB string representation.     
 	 */
 	public String toString() {
-		if (m_Args.length == 0)
+		if (mArgs.length == 0)
 			return getIndexedName();
 		StringBuilder sb = new StringBuilder();
 		new PrintTerm().append(sb, this);
@@ -284,7 +284,7 @@ public final class Sort {
 			m_Todo.addLast(name);
 		} else {
 			m_Todo.addLast(")");
-			for (int i = args.length-1; i >= 0; i--) {
+			for (int i = args.length - 1; i >= 0; i--) {
 				m_Todo.addLast(args[i]);
 				m_Todo.addLast(" ");
 			}
@@ -294,7 +294,7 @@ public final class Sort {
 	}
 	
 	public Theory getTheory() {
-		return m_Symbol.m_Theory;
+		return mSymbol.mTheory;
 	}
 
 	/**
@@ -303,7 +303,7 @@ public final class Sort {
 	 * @return true if this is an array sort.
 	 */
 	public boolean isArraySort() {
-		return getRealSort().m_Symbol.isArray();
+		return getRealSort().mSymbol.isArray();
 	}
 	/**
 	 * Returns true if this is a numeric sort.  Numeric sorts are only the
@@ -311,7 +311,7 @@ public final class Sort {
 	 * @return true if this is a numeric sort.
 	 */
 	public boolean isNumericSort() {
-		return getRealSort().m_Symbol.isNumeric();
+		return getRealSort().mSymbol.isNumeric();
 	}
 
 	/**
@@ -320,10 +320,10 @@ public final class Sort {
 	 * @return true if the sort is internal, false if it is user defined.
 	 */
 	public boolean isInternal() {
-		return m_Symbol.isIntern();
+		return mSymbol.isIntern();
 	}
 	
 	public int hashCode() {
-		return m_Hash;
+		return mHash;
 	}
 }

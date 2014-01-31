@@ -20,6 +20,7 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.logic.IRAConstantFormatter;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -36,7 +37,7 @@ public class FiniteSortInterpretation implements SortInterpretation {
 	/**
 	 * The set of all terms.
 	 */
-	private HashSet<Term> m_Terms = new HashSet<Term>();
+	private final HashSet<Term> mTerms = new HashSet<Term>();
 	@Override
 	public boolean isFinite() {
 		return true;
@@ -44,31 +45,34 @@ public class FiniteSortInterpretation implements SortInterpretation {
 
 	@Override
 	public void extend(Term termOfSort) {
-		m_Terms.add(termOfSort);
+		mTerms.add(termOfSort);
 	}
 
 	@Override
 	public Term toSMTLIB(Theory t, Sort sort) {
+		IRAConstantFormatter format = t.getLogic().isIRA()
+				? new IRAConstantFormatter() : null;
 		TermVariable var = t.createTermVariable("@v", sort);
-		Term[] disj = new Term[m_Terms.size()];
+		Term[] disj = new Term[mTerms.size()];
 		int i = -1;
-		for (Term term : m_Terms)
-			disj[++i] = t.equals(var, term);
+		for (Term term : mTerms)
+			disj[++i] = t.equals(var, format == null
+				? term : format.transform(term));
 		return t.forall(new TermVariable[] {var}, t.or(disj));
 	}
 
 	@Override
 	public Term peek() {
-		if (m_Terms.isEmpty())
+		if (mTerms.isEmpty())
 			return null;
-		return m_Terms.iterator().next();
+		return mTerms.iterator().next();
 	}
 
 	@Override
 	public Term constrain(Theory t, Term input) {
-		Term[] disj = new Term[m_Terms.size()];
+		Term[] disj = new Term[mTerms.size()];
 		int i = -1;
-		for (Term term : m_Terms)
+		for (Term term : mTerms)
 			disj[++i] = t.equals(input, term);
 		return t.or(disj);
 	}

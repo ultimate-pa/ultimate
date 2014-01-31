@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2012 University of Freiburg
+ * Copyright (C) 2013 University of Freiburg
  *
  * This file is part of SMTInterpol.
  *
@@ -16,28 +16,13 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
+package de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2;
 
-public abstract class NonYieldTrigger extends CCTrigger {
+public final class Version {
+	
+	private Version() {
+	}
+	
+	public static final String VERSION = "Inofficial git checkout";
 
-	CCTrigger next;
-	
-	public NonYieldTrigger() {
-		this(null);
-	}
-	
-	public NonYieldTrigger(CCTrigger next) {
-		super();
-		this.next = next;
-	}
-
-	@Override
-	public CCTrigger next() {
-		return next;
-	}
-	
-	public void setNext(CCTrigger next) {
-		this.next = next;
-	}
-	
 }

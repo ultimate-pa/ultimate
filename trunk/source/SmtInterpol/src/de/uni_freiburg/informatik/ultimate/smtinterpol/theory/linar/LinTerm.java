@@ -31,21 +31,21 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
  */
 public class LinTerm {
 	// coefficient map has to be initialized before mvar!!!
-	Map<LinVar,BigInteger> mcoeffs;
+	Map<LinVar,BigInteger> mCoeffs;
 	/**
 	 * Generate a new linear term. Note that we do not make a copy of the given
 	 * map. 
 	 * @param coeffmap Coefficient map to use.
 	 */
 	LinTerm(Map<LinVar,BigInteger> coeffmap) {
-		mcoeffs = coeffmap;
+		mCoeffs = coeffmap;
 	}
 	public String toString() {
-		if (mcoeffs.isEmpty())
+		if (mCoeffs.isEmpty())
 			return "0";
 		StringBuilder sb = new StringBuilder();
 		boolean isFirst = true;
-		for (Entry<LinVar,BigInteger> entry : mcoeffs.entrySet()) {
+		for (Entry<LinVar,BigInteger> entry : mCoeffs.entrySet()) {
 			LinVar var = entry.getKey();
 			BigInteger fact = entry.getValue();
 			if (fact.signum() == -1) {
@@ -54,19 +54,19 @@ public class LinTerm {
 				sb.append(isFirst ? "" : " + ");
 			}
 			fact = fact.abs();
-			if (!fact.equals(Rational.ONE))
-				sb.append(fact).append("*");
+			if (!fact.equals(BigInteger.ONE))
+				sb.append(fact).append('*');
 			sb.append(var);
 			isFirst = false;
 		}
 		return sb.toString();
 	}
 	public int hashCode() {
-		return mcoeffs.hashCode();
+		return mCoeffs.hashCode();
 	}
 	public boolean equals(Object o) {
-		if( o instanceof LinTerm )
-			return mcoeffs.equals(((LinTerm)o).mcoeffs);
+		if (o instanceof LinTerm)
+			return mCoeffs.equals(((LinTerm)o).mCoeffs);
 		return false;
 	}
 }

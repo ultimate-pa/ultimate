@@ -17,8 +17,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 
 public class WeakestPrecondition extends BoogieTransformer {
 	

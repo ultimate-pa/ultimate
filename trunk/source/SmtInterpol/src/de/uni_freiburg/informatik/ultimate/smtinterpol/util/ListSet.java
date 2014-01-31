@@ -28,7 +28,7 @@ import java.util.Iterator;
  * 
  * Whenever a new scope is created, an empty list element is inserted into the
  * list (not into the set) and marks the beginning of this scope.  The scope is
- * unvisible for <code>ListSetIterator</code>, be can be retrieved using
+ * invisible for <code>ListSetIterator</code>, be can be retrieved using
  * <code>ScopeIterator</code>.  Note that scope iterators traverse only the top
  * most scope and in the opposite order of the input.
  * @author Juergen Christ
@@ -36,83 +36,83 @@ import java.util.Iterator;
 public class ListSet<E> extends AbstractSet<E> {
 	
 	private class ScopeIterator implements Iterator<E> {
-		ListSetElem<E> m_cur = m_root;
+		ListSetElem<E> mCur = mRoot;
 		@Override
 		public boolean hasNext() {
-			return m_cur.prev.elem != null;
+			return mCur.mPrev.mElem != null;
 		}
 
 		@Override
 		public E next() {
-			m_cur = m_cur.prev;
-			return m_cur.elem;
+			mCur = mCur.mPrev;
+			return mCur.mElem;
 		}
 
 		@Override
 		public void remove() {
-			m_cur = ListSet.this.remove(m_cur).next;
-			ListSet.this.m_elems.remove(m_cur);
+			mCur = ListSet.this.remove(mCur).mNext;
+			ListSet.this.mElems.remove(mCur);
 		}
 		
 	}
 	
 	public class ListSetIterator implements Iterator<E> {
 
-		ListSetElem<E> m_cur;
+		ListSetElem<E> mCur;
 		
 		ListSetIterator(ListSetElem<E> cur) {
-			m_cur = cur;
+			mCur = cur;
 		}
 		
 		@Override
 		public boolean hasNext() {
-			ListSetElem<E> walk = m_cur.next;
-			while (walk != m_root && walk.elem == null)
-				walk = walk.next;
-			return walk != m_root;
+			ListSetElem<E> walk = mCur.mNext;
+			while (walk != mRoot && walk.mElem == null)
+				walk = walk.mNext;
+			return walk != mRoot;
 		}
 
 		@Override
 		public E next() {
-			ListSetElem<E> walk = m_cur.next;
-			while (walk != m_root && walk.elem == null)
-				walk = walk.next;
-			m_cur = walk;
-			return m_cur.elem;
+			ListSetElem<E> walk = mCur.mNext;
+			while (walk != mRoot && walk.mElem == null)
+				walk = walk.mNext;
+			mCur = walk;
+			return mCur.mElem;
 		}
 
 		@Override
 		public void remove() {
-			m_cur = ListSet.this.remove(m_cur);
-			ListSet.this.m_elems.remove(m_cur);
+			mCur = ListSet.this.remove(mCur);
+			ListSet.this.mElems.remove(mCur);
 		}
 		
 	}
 	
 	private static class ListSetElem<E> {
-		E elem;
-		ListSetElem<E> next;
-		ListSetElem<E> prev;
+		E mElem;
+		ListSetElem<E> mNext;
+		ListSetElem<E> mPrev;
 		public ListSetElem(E elem) {
-			this.elem = elem;
-			next = prev = this;
+			this.mElem = elem;
+			mNext = mPrev = this;
 		}
 		public int hashCode() {
-			return elem == null ? 0 : elem.hashCode();
+			return mElem == null ? 0 : mElem.hashCode();
 		}
 		public boolean equals(Object other) {
 			if (other instanceof ListSetElem<?>)
-				other = ((ListSetElem<?>)other).elem;
-			return elem == null ? other == null : elem.equals(other);
+				other = ((ListSetElem<?>)other).mElem;
+			return mElem == null ? other == null : mElem.equals(other);
 		}
 	}
 	
-	private HashSet<ListSetElem<E>> m_elems;
-	private ListSetElem<E> m_root;
+	private final HashSet<ListSetElem<E>> mElems;
+	private final ListSetElem<E> mRoot;
 	
 	public ListSet() {
-		m_elems = new HashSet<ListSetElem<E>>();
-		m_root = new ListSetElem<E>(null);
+		mElems = new HashSet<ListSetElem<E>>();
+		mRoot = new ListSetElem<E>(null);
 	}
 	
 	public void beginScope() {
@@ -121,23 +121,23 @@ public class ListSet<E> extends AbstractSet<E> {
 	}
 	
 	public void endScope() {
-		ListSetElem<E> walk = m_root.prev;
-		while (walk.elem != null) {
-			m_elems.remove(walk);
+		ListSetElem<E> walk = mRoot.mPrev;
+		while (walk.mElem != null) {
+			mElems.remove(walk);
 			walk = remove(walk);
 		}
 	}
 	
 	private void addToList(ListSetElem<E> toAdd) {
-		m_root.prev.next = toAdd;
-		toAdd.next = m_root;
-		toAdd.prev = m_root.prev;
-		m_root.prev = toAdd;
+		mRoot.mPrev.mNext = toAdd;
+		toAdd.mNext = mRoot;
+		toAdd.mPrev = mRoot.mPrev;
+		mRoot.mPrev = toAdd;
 	}
 	
 	public boolean add(E elem) {
 		ListSetElem<E> toAdd = new ListSetElem<E>(elem);
-		if (m_elems.add(toAdd)) {
+		if (mElems.add(toAdd)) {
 			addToList(toAdd);
 			return true;
 		}
@@ -149,33 +149,33 @@ public class ListSet<E> extends AbstractSet<E> {
 	public Iterator<E> iterator() {
 		return new Iterator<E>() {
 
-			Iterator<ListSetElem<E>> m_it = m_elems.iterator();
-			ListSetElem<E> data;
+			Iterator<ListSetElem<E>> mIt = mElems.iterator();
+			ListSetElem<E> mData;
 			
 			@Override
 			public boolean hasNext() {
-				return m_it.hasNext();
+				return mIt.hasNext();
 			}
 
 			@Override
 			public E next() {
-				return (data = m_it.next()).elem;
+				return (mData = mIt.next()).mElem;
 			}
 
 			@Override
 			public void remove() {
-				ListSet.this.remove(data);
-				m_it.remove();
+				ListSet.this.remove(mData);
+				mIt.remove();
 			}
 			
 		};
 	}
 	
 	private ListSetElem<E> remove(ListSetElem<E> elem) {
-		ListSetElem<E> prev = elem.prev;
-		prev.next = elem.next;
-		elem.next.prev = prev;
-		elem.next = elem.prev = elem;
+		ListSetElem<E> prev = elem.mPrev;
+		prev.mNext = elem.mNext;
+		elem.mNext.mPrev = prev;
+		elem.mNext = elem.mPrev = elem;
 		// Don't do that since this method is called from the iterator
 //		m_elems.remove(elem);
 		return prev;
@@ -183,15 +183,15 @@ public class ListSet<E> extends AbstractSet<E> {
 
 	@Override
 	public int size() {
-		return m_elems.size();
+		return mElems.size();
 	}
 	
 	public ListSetIterator listIterator() {
-		return new ListSetIterator(m_root);
+		return new ListSetIterator(mRoot);
 	}
 	
 	public ListSetIterator successors(ListSetIterator it) {
-		return new ListSetIterator(it.m_cur);
+		return new ListSetIterator(it.mCur);
 	}
 	
 	public Iterator<E> scopeIterator() {

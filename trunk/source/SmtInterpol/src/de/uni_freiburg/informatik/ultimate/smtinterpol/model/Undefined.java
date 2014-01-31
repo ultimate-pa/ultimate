@@ -26,10 +26,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 public class Undefined implements ExecTerm {
 
-	private Sort m_Sort;
+	private final Sort mSort;
 	
 	public Undefined(Sort sort) {
-		m_Sort = sort;
+		mSort = sort;
 	}
 	
 	@Override
@@ -40,7 +40,7 @@ public class Undefined implements ExecTerm {
 	@Override
 	public Term toSMTLIB(Theory t, TermVariable[] vars) {
 		FunctionSymbol fsym = t.getFunctionWithResult(
-				"@undefined", null, m_Sort);
+				"@undefined", null, mSort);
 		return t.term(fsym);
 	}
 

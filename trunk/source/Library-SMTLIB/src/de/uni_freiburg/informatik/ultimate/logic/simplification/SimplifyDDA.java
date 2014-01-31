@@ -27,15 +27,15 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
-import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.util.Util;
+import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 /**
  * Simplify formulas, but keep their Boolean structure.
@@ -55,25 +55,27 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class SimplifyDDA extends NonRecursive {
 
 	private static class TermInfo {
-		int    m_numPredecessors;
-		int    m_seen;
-		int    m_prepared;
-		Term[] m_context;
-		Term   m_simplified;
+		int    mNumPredecessors;
+		int    mSeen;
+		int    mPrepared;
+		Term[] mContext;
+		Term   mSimplified;
 		
 		public String toString() {
-			return "TermInfo["+m_numPredecessors+","+m_seen+","+m_prepared
-			+(m_context != null ? ",context:"+Arrays.toString(m_context): "")
-			+(m_simplified != null ? "->"+m_simplified : "")+"]";
+			return "TermInfo[" + mNumPredecessors + "," + mSeen + ","
+					+ mPrepared 
+					+ (mContext == null 
+							? "" : ",context:" + Arrays.toString(mContext))
+					+ (mSimplified == null ? "" : "->" + mSimplified) + "]";
 		}
 	}
 	
-	HashMap<Term, TermInfo> m_termInfos; 
-	Term m_Result;
-	Script m_Script;
-	Term m_True;
-	Term m_False;
-	boolean m_SimplifyRepeatedly;
+	HashMap<Term, TermInfo> mTermInfos; 
+	Term mResult;
+	final Script mScript;
+	final Term mTrue;
+	final Term mFalse;
+	final boolean mSimplifyRepeatedly;
 
 	/**
 	 * This class counts the predecessors of every term to enable the
@@ -82,7 +84,7 @@ public class SimplifyDDA extends NonRecursive {
 	 * @author hoenicke
 	 */
 	private static class TermCounter implements Walker {
-		protected Term m_Term;
+		protected Term mTerm;
 		public TermCounter(Term term) {
 			/* directly descend into not-terms as if the not is not there */
 			while (term instanceof ApplicationTerm) {
@@ -92,30 +94,30 @@ public class SimplifyDDA extends NonRecursive {
 				else
 					break;
 			}
-			m_Term = term;
+			mTerm = term;
 		}
 
 		@Override
 		public void walk(NonRecursive engine) {
 			SimplifyDDA simplifier = (SimplifyDDA) engine;
-			TermInfo info = simplifier.m_termInfos.get(m_Term);
+			TermInfo info = simplifier.mTermInfos.get(mTerm);
 			if (info == null) {
 				info = new TermInfo();
-				simplifier.m_termInfos.put(m_Term, info);
+				simplifier.mTermInfos.put(mTerm, info);
 
-				if (m_Term instanceof ApplicationTerm) {
-					ApplicationTerm appTerm = (ApplicationTerm) m_Term;
+				if (mTerm instanceof ApplicationTerm) {
+					ApplicationTerm appTerm = (ApplicationTerm) mTerm;
 					String connective = appTerm.getFunction().getName();
 					
-					if (connective == "ite" || connective == "and" || 
-						connective == "or" || connective == "=>") {
+					if (connective == "ite" || connective == "and" 
+						|| connective == "or" || connective == "=>") {
 						for (Term subTerm : appTerm.getParameters()) {
 							engine.enqueueWalker(new TermCounter(subTerm));
 						}
 					}
 				}
 			}
-			info.m_numPredecessors++;
+			info.mNumPredecessors++;
 		}
 	}
 	
@@ -126,10 +128,10 @@ public class SimplifyDDA extends NonRecursive {
 	 * @author hoenicke
 	 */
 	private static class ContextCollector implements Walker {
-		boolean m_negated;
-		Term m_term;
-		ArrayDeque<Term> m_context;
-		int m_paramCtr;
+		final boolean mNegated;
+		final Term mTerm;
+		ArrayDeque<Term> mContext;
+		int mParamCtr;
 		
 		public ContextCollector(boolean negated, Term term, 
 				                ArrayDeque<Term> context) {
@@ -138,83 +140,91 @@ public class SimplifyDDA extends NonRecursive {
 				ApplicationTerm appTerm = (ApplicationTerm) term;
 				if (appTerm.getFunction().getName() == "not") {
 					term = appTerm.getParameters()[0];
-					negated = !negated;
+					negated ^= true;
 				} else
 					break;
 			}
-			m_negated = negated;
-			m_term = term;
-			m_context = context;
-			m_paramCtr = 0;
+			mNegated = negated;
+			mTerm = term;
+			mContext = context;
+			mParamCtr = 0;
 		}
 
 		@Override
 		public void walk(NonRecursive engine) {
 			SimplifyDDA simplifier = (SimplifyDDA) engine;
-			if (m_paramCtr > 0) {
+			if (mParamCtr > 0) {
 				walkNextParameter(simplifier);
 				return;
 			}
-			TermInfo info = simplifier.m_termInfos.get(m_term);
+			TermInfo info = simplifier.mTermInfos.get(mTerm);
 			assert info != null;
-			info.m_seen++;
-			assert info.m_seen <= info.m_numPredecessors;
-			if (info.m_numPredecessors > 1) {
+			info.mSeen++;
+			assert info.mSeen <= info.mNumPredecessors;
+			if (info.mNumPredecessors > 1) {
 				// merge context
-				if (info.m_context == null) {
-					info.m_context = m_context.toArray(new Term[m_context.size()]);
+				if (info.mContext == null) {
+					info.mContext = mContext.toArray(new Term[mContext.size()]);
 				} else {
-					HashSet<Term> oldContext = new HashSet<Term>(info.m_context.length);
-					oldContext.addAll(Arrays.asList(info.m_context));
-					ArrayList<Term> newContext = new ArrayList<Term>(info.m_context.length);
-					for (Term t : m_context) {
+					HashSet<Term> oldContext =
+							new HashSet<Term>(info.mContext.length);
+					oldContext.addAll(Arrays.asList(info.mContext));
+					ArrayList<Term> newContext =
+							new ArrayList<Term>(info.mContext.length);
+					for (Term t : mContext) {
 						if (oldContext.contains(t))
 							newContext.add(t);
 					}
-					info.m_context = newContext.toArray(new Term[newContext.size()]);
+					info.mContext =
+							newContext.toArray(new Term[newContext.size()]);
 				}
-				if (info.m_seen < info.m_numPredecessors)
+				if (info.mSeen < info.mNumPredecessors)
 					return;
 			}
 		
-			if (m_term instanceof ApplicationTerm) {
+			if (mTerm instanceof ApplicationTerm) {
 				walkNextParameter(simplifier);
 			}
 		}
 
 		public void walkNextParameter(SimplifyDDA simplifier) {
-			ApplicationTerm appTerm = (ApplicationTerm) m_term;
+			ApplicationTerm appTerm = (ApplicationTerm) mTerm;
 			String connective = appTerm.getFunction().getName();
 			Term[] params = appTerm.getParameters();
 				
 			if (connective == "ite") {
 				Term cond = params[0];
-				if (m_paramCtr == 0) {
+				if (mParamCtr == 0) {
 					simplifier.enqueueWalker(this);
-					simplifier.enqueueWalker(new ContextCollector(false, cond, m_context));
-				} else if (m_paramCtr == 1) {
-					m_context.push(cond);
+					simplifier.enqueueWalker(
+							new ContextCollector(false, cond, mContext));
+				} else if (mParamCtr == 1) {
+					mContext.push(cond);
 					simplifier.enqueueWalker(this);
-					simplifier.enqueueWalker(new ContextCollector(m_negated, params[1], m_context));
-				} else if (m_paramCtr == 2) {
-					m_context.pop();
-					m_context.push(Util.not(simplifier.m_Script, cond));
+					simplifier.enqueueWalker(new ContextCollector(
+							mNegated, params[1], mContext));
+				} else if (mParamCtr == 2) {
+					mContext.pop();
+					mContext.push(Util.not(simplifier.mScript, cond));
 					simplifier.enqueueWalker(this);
-					simplifier.enqueueWalker(new ContextCollector(m_negated, params[2], m_context));
-				} else if (m_paramCtr == 3) {
-					m_context.pop();
+					simplifier.enqueueWalker(new ContextCollector(
+							mNegated, params[2], mContext));
+				} else if (mParamCtr == 3) { // NOCHECKSTYLE 
+					mContext.pop();
 				}
-				m_paramCtr++;
-			} else if (connective == "and" || 
-					   connective == "or" || connective == "=>") {
-				if (m_paramCtr == 0) {
-					for (int i = params.length-1; i > 0; i--) {
-						Term sibling = simplifier.negateSibling(params[i], connective, i, params.length);
-						m_context.push(sibling);
+				mParamCtr++;
+			} else if (connective == "and"
+					   || connective == "or" || connective == "=>") {
+				if (mParamCtr == 0) {
+					for (int i = params.length - 1; i > 0; i--) {
+						Term sibling = simplifier.negateSibling(
+								params[i], connective, i, params.length);
+						mContext.push(sibling);
 					}
 					simplifier.enqueueWalker(this);
-					simplifier.enqueueWalker(new ContextCollector(m_negated, params[m_paramCtr], m_context));
-				} else if (m_paramCtr < params.length) {
+					simplifier.enqueueWalker(new ContextCollector(
+							mNegated, params[mParamCtr], mContext));
+				} else if (mParamCtr < params.length) {
 					// The context contains:
 					//  param[len-1] ... param[m_paramCtr] 
 					//      simplify(param[m_paramCtr-2])... simplify(param[0])
@@ -226,14 +236,16 @@ public class SimplifyDDA extends NonRecursive {
 						m_context.pop();
 					}
 					for (int i = m_paramCtr-1; i >= 0; i--) {
-						Term sibling = simplifier.negateSibling(params[i], connective, i, params.length);
+						Term sibling = simplifier.negateSibling(
+							params[i], connective, i, params.length);
 						sibling = simplifier.createSimplify(sibling);
 						m_context.push(sibling);
 					}
 					*/
-					m_context.pop();
+					mContext.pop();
 					simplifier.enqueueWalker(this);
-					simplifier.enqueueWalker(new ContextCollector(m_negated, params[m_paramCtr], m_context));
+					simplifier.enqueueWalker(new ContextCollector(
+							mNegated, params[mParamCtr], mContext));
 				} else {
 					/*
 					for (int i = 0; i < m_paramCtr-1; i++) {
@@ -241,7 +253,7 @@ public class SimplifyDDA extends NonRecursive {
 					}
 					*/
 				}
-				m_paramCtr++;
+				mParamCtr++;
 			}
 		}
 	}
@@ -254,7 +266,7 @@ public class SimplifyDDA extends NonRecursive {
 	 * @author hoenicke
 	 */
 	private static class PrepareSimplifier implements Walker {
-		Term m_term;
+		final Term mTerm;
 		
 		public PrepareSimplifier(boolean negated, Term term) {
 			/* directly descend into not-terms as if the not is not there */
@@ -265,55 +277,57 @@ public class SimplifyDDA extends NonRecursive {
 				} else
 					break;
 			}
-			m_term = term;
+			mTerm = term;
 		}
 
 		@Override
 		public void walk(NonRecursive engine) {
 			SimplifyDDA simplifier = (SimplifyDDA) engine;
-			TermInfo info = simplifier.m_termInfos.get(m_term);
-			if (info.m_prepared++ > 0)
+			TermInfo info = simplifier.mTermInfos.get(mTerm);
+			if (info.mPrepared++ > 0)
 				return;
 			
-			if (info.m_numPredecessors > 1) {
-				engine.enqueueWalker(new StoreSimplified(m_term));
-				engine.enqueueWalker(new Simplifier(false, m_term, info.m_context));
+			if (info.mNumPredecessors > 1) {
+				engine.enqueueWalker(new StoreSimplified(mTerm));
+				engine.enqueueWalker(
+						new Simplifier(false, mTerm, info.mContext));
 			}
-			if (m_term instanceof ApplicationTerm) {
-				ApplicationTerm appTerm = (ApplicationTerm) m_term;
+			if (mTerm instanceof ApplicationTerm) {
+				ApplicationTerm appTerm = (ApplicationTerm) mTerm;
 				String connective = appTerm.getFunction().getName();
 				Term[] params = appTerm.getParameters();
 			
-				if (connective == "ite" || connective == "and" || 
-					connective == "or" || connective == "=>") {
+				if (connective == "ite" || connective == "and" 
+					|| connective == "or" || connective == "=>") {
 					for (int i = 0; i < params.length; i++)
-						engine.enqueueWalker(new PrepareSimplifier(false, params[i]));
+						engine.enqueueWalker(
+								new PrepareSimplifier(false, params[i]));
 				}
 			}
 		}
 	}
 	
 	private static class StoreSimplified implements Walker {
-		Term m_term;
+		Term mTerm;
 		
 		public StoreSimplified(Term term) {
-			m_term = term;
+			mTerm = term;
 		}
 
 		@Override
 		public void walk(NonRecursive engine) {
 			SimplifyDDA simplifier = (SimplifyDDA) engine;
-			TermInfo info = simplifier.m_termInfos.get(m_term);
-			info.m_simplified = simplifier.popResult();
+			TermInfo info = simplifier.mTermInfos.get(mTerm);
+			info.mSimplified = simplifier.popResult();
 		}
 	}
 
 	private static class Simplifier implements Walker {
-		boolean m_negated;
-		Term m_term;
-		Term[] m_context;
-		int m_paramCtr;
-		Term[] m_simplifiedParams;
+		final boolean mNegated;
+		final Term mTerm;
+		final Term[] mContext;
+		int mParamCtr;
+		Term[] mSimplifiedParams;
 		
 		public Simplifier(boolean negated, Term term, Term[] context) {
 			/* directly descend into not-terms as if the not is not there */
@@ -321,14 +335,14 @@ public class SimplifyDDA extends NonRecursive {
 				ApplicationTerm appTerm = (ApplicationTerm) term;
 				if (appTerm.getFunction().getName() == "not") {
 					term = appTerm.getParameters()[0];
-					negated = !negated;
+					negated ^= true;
 				} else
 					break;
 			}
-			m_negated = negated;
-			m_term = term;
-			m_context = context;
-			m_paramCtr = 0;
+			mNegated = negated;
+			mTerm = term;
+			mContext = context;
+			mParamCtr = 0;
 		}
 
 		public Simplifier(boolean negated, Term term) {
@@ -337,124 +351,133 @@ public class SimplifyDDA extends NonRecursive {
 				ApplicationTerm appTerm = (ApplicationTerm) term;
 				if (appTerm.getFunction().getName() == "not") {
 					term = appTerm.getParameters()[0];
-					negated = !negated;
+					negated ^= true;
 				} else
 					break;
 			}
-			m_negated = negated;
-			m_term = term;
-			m_context = null;
-			m_paramCtr = 0;
+			mNegated = negated;
+			mTerm = term;
+			mContext = null;
+			mParamCtr = 0;
 		}
 
 		@Override
 		public void walk(NonRecursive engine) {		
 			SimplifyDDA simplifier = (SimplifyDDA) engine;
-			if (m_paramCtr > 0) {
+			if (mParamCtr > 0) {
 				walkParam(simplifier);
 				return;
 			}
-			if (m_context == null) {
+			if (mContext == null) {
 				/* check for redundancy, then for info */
-				Redundancy red = simplifier.getRedundancy(m_term);
+				Redundancy red = simplifier.getRedundancy(mTerm);
 				if (red != Redundancy.NOT_REDUNDANT) {
 					if (red == Redundancy.NON_RELAXING)
-						simplifier.setResult(m_negated, simplifier.m_False);
+						simplifier.setResult(mNegated, simplifier.mFalse);
 					else
-						simplifier.setResult(m_negated, simplifier.m_True);
+						simplifier.setResult(mNegated, simplifier.mTrue);
 					return;
 				}
 				
-				TermInfo info = simplifier.m_termInfos.get(m_term);
-				if (info.m_numPredecessors > 1) {
-					assert info.m_simplified != null;
-					simplifier.setResult(m_negated, info.m_simplified);
+				TermInfo info = simplifier.mTermInfos.get(mTerm);
+				if (info.mNumPredecessors > 1) {
+					assert info.mSimplified != null;
+					simplifier.setResult(mNegated, info.mSimplified);
 					return;
 				}
 			}
 			
-			if (m_context != null)
-				simplifier.pushContext(m_context);
+			if (mContext != null)
+				simplifier.pushContext(mContext);
 
-			if (m_term instanceof ApplicationTerm) {
-				ApplicationTerm appTerm = (ApplicationTerm) m_term;
+			if (mTerm instanceof ApplicationTerm) {
+				ApplicationTerm appTerm = (ApplicationTerm) mTerm;
 				String connective = appTerm.getFunction().getName();
 				Term[] params = appTerm.getParameters();
 
-				if (connective == "ite" || connective == "and" || 
-					connective == "or" || connective == "=>") {
-					m_simplifiedParams = new Term[params.length];
+				if (connective == "ite" || connective == "and"
+					|| connective == "or" || connective == "=>") {
+					mSimplifiedParams = new Term[params.length];
 					walkParam(simplifier);
 					return;
 				}
 			}
 			/* we could not simplify this term */
-			simplifier.setResult(m_negated, m_term);
-			if (m_context != null)
+			simplifier.setResult(mNegated, mTerm);
+			if (mContext != null)
 				simplifier.popContext();
 		}
 
 		private void walkParam(SimplifyDDA simplifier) {
-			ApplicationTerm appTerm = (ApplicationTerm) m_term;
+			ApplicationTerm appTerm = (ApplicationTerm) mTerm;
 			String connective = appTerm.getFunction().getName();
 			Term[] params = appTerm.getParameters();
 
-			if (m_paramCtr > 0)
-				m_simplifiedParams[m_paramCtr-1] = simplifier.popResult();
+			if (mParamCtr > 0)
+				mSimplifiedParams[mParamCtr - 1] = simplifier.popResult();
 
 			if (connective == "ite") {
-				switch (m_paramCtr++) {
+				switch (mParamCtr++) {
 				case 0:
 					simplifier.enqueueWalker(this);
 					simplifier.enqueueWalker(new Simplifier(false, params[0]));
 					break;
 				case 1:
 					simplifier.enqueueWalker(this);
-					simplifier.pushContext(m_simplifiedParams[0]);
-					simplifier.enqueueWalker(new Simplifier(m_negated, params[1]));
+					simplifier.pushContext(mSimplifiedParams[0]);
+					simplifier.enqueueWalker(
+							new Simplifier(mNegated, params[1]));
 					break;
 				case 2:
 					simplifier.enqueueWalker(this);
 					simplifier.popContext();
-					simplifier.pushContext(Util.not(simplifier.m_Script, m_simplifiedParams[0]));
-					simplifier.enqueueWalker(new Simplifier(m_negated, params[2]));
+					simplifier.pushContext(
+							Util.not(simplifier.mScript, mSimplifiedParams[0]));
+					simplifier.enqueueWalker(
+							new Simplifier(mNegated, params[2]));
 					break;
-				case 3:
+				case 3: // NOCHECKSTYLE
 					simplifier.popContext();
-					Term result = Util.ite(simplifier.m_Script, 
-							m_simplifiedParams[0], m_simplifiedParams[1], m_simplifiedParams[2]);
+					Term result = Util.ite(simplifier.mScript, 
+							mSimplifiedParams[0], mSimplifiedParams[1],
+							mSimplifiedParams[2]);
 					simplifier.setResult(false, result);
-					if (m_context != null)
+					if (mContext != null)
 						simplifier.popContext();
 					break;
+				default:
+					throw new InternalError("BUG!");
 				}
 			} else {
 				assert (connective == "and" || connective == "or" 
 					|| connective == "=>");
-				if (m_paramCtr == params.length) {
+				if (mParamCtr == params.length) {
 					simplifier.popContext();
 					ArrayList<Term> newparams = new ArrayList<Term>();
 					Term result = null;
-					for (int i = 0; i < m_simplifiedParams.length; i++) {
-						Term param = m_simplifiedParams[i];
-						if (param == simplifier.m_True) {
-							if (connective == "and" || 
-								(connective == "=>" && i < m_simplifiedParams.length - 1))
+					for (int i = 0; i < mSimplifiedParams.length; i++) {
+						Term param = mSimplifiedParams[i];
+						if (param == simplifier.mTrue) {
+							if (connective == "and"
+								|| (connective == "=>"
+									&& i < mSimplifiedParams.length - 1))
 								continue;
-							if (connective == "or" ||
-								(connective == "=>" && i == m_simplifiedParams.length - 1)) {
-								result = simplifier.m_True;
+							if (connective == "or"
+								|| (connective == "=>" 
+									&& i == mSimplifiedParams.length - 1)) {
+								result = simplifier.mTrue;
 								break;
 							}
-						} else if (param == simplifier.m_False) {
+						} else if (param == simplifier.mFalse) {
 							if (connective == "or")
 								continue;
 							if (connective == "and") {
-								result = simplifier.m_False;
+								result = simplifier.mFalse;
 								break;
 							}
-							if (connective == "=>" && i < m_simplifiedParams.length - 1) {
-								result = simplifier.m_True;
+							if (connective == "=>"
+									&& i < mSimplifiedParams.length - 1) {
+								result = simplifier.mTrue;
 								break;
 							}
 						}
@@ -462,36 +485,40 @@ public class SimplifyDDA extends NonRecursive {
 					}
 					if (result == null) {
 						if (newparams.isEmpty()) {
-							result = connective == "and" ? simplifier.m_True  
-									: simplifier.m_False;
+							result = connective == "and" ? simplifier.mTrue  
+									: simplifier.mFalse;
 						} else if (newparams.size() == 1) {
 							result = newparams.get(0);
 						} else {
-							Term[] p = newparams.toArray(new Term[newparams.size()]);
-							result = simplifier.m_Script.term(connective, p);
+							Term[] p = 
+								newparams.toArray(new Term[newparams.size()]);
+							result = simplifier.mScript.term(connective, p);
 						}
 					}
-					simplifier.setResult(m_negated, result);
-					if (m_context != null)
+					simplifier.setResult(mNegated, result);
+					if (mContext != null)
 						simplifier.popContext();
 					return;
 				}
-				if (m_paramCtr == 0) {
+				if (mParamCtr == 0) {
 					simplifier.pushContext();
-					for (int i = params.length-1; i >= 1; i--) {
-						Term sibling = simplifier.negateSibling(params[i], connective, i, params.length);
+					for (int i = params.length - 1; i >= 1; i--) {
+						Term sibling = simplifier.negateSibling(
+								params[i], connective, i, params.length);
 						simplifier.pushContext(sibling);
 					}
 				} else {
 					simplifier.popContext();
-					for (int i = 0; i < m_paramCtr; i++) {
-						Term sibling = simplifier.negateSibling(m_simplifiedParams[i], connective, i, params.length);
-						simplifier.m_Script.assertTerm(sibling);
+					for (int i = 0; i < mParamCtr; i++) {
+						Term sibling = simplifier.negateSibling(
+							mSimplifiedParams[i], connective, i, params.length);
+						simplifier.mScript.assertTerm(sibling);
 					}
 				}
 				simplifier.enqueueWalker(this);
-				simplifier.enqueueWalker(new Simplifier(false, params[m_paramCtr]));
-				m_paramCtr++;
+				simplifier.enqueueWalker(
+					new Simplifier(false, params[mParamCtr]));
+				mParamCtr++;
 			}
 		}	
 	}
@@ -514,18 +541,18 @@ public class SimplifyDDA extends NonRecursive {
 	 * fixpoint is reached.
 	 */
 	public SimplifyDDA(final Script script, boolean simplifyRepeatedly) {
-		m_Script = script;
-		m_True = m_Script.term("true");
-		m_False = m_Script.term("false");
-		m_SimplifyRepeatedly = simplifyRepeatedly;
+		mScript = script;
+		mTrue = mScript.term("true");
+		mFalse = mScript.term("false");
+		mSimplifyRepeatedly = simplifyRepeatedly;
 	}
 	
 	/**
 	 * Redundancy is a property of a subterm B with respect to its term A.
 	 * The subterm B is called:
 	 * <ul>
-	 * <li> NON_RELAXING if term A is equivalent to the term, where B is replaced
-	 * by false.
+	 * <li> NON_RELAXING if term A is equivalent to the term, where B is
+	 * replaced by false.
 	 * <li> NON_CONSTRAINING if term A is equivalent to the term, where B is
 	 * replaced by true.
 	 * <li> NOT_REDUNDANT B is neither NON_REAXING nor NON_CONSTRAINING with
@@ -541,17 +568,19 @@ public class SimplifyDDA extends NonRecursive {
 	 * Returns unsat if the terms are equivalent, sat if they are not and
 	 * unknown if it is not possible to determine.
 	 */
-	public LBool checkEquivalence (Term termA, Term termB) throws SMTLIBException {
-		Term equivalentTestTerm = m_Script.term("=", termA, termB);
+	public LBool checkEquivalence(Term termA, Term termB) {
+		Term equivalentTestTerm = mScript.term("=", termA, termB);
 		String checktype = null;
 		try {
-			checktype = (String) m_Script.getOption(":check-type");
-			m_Script.setOption(":check-type", "FULL");
-		} catch (UnsupportedOperationException ignored) {}
+			checktype = (String) mScript.getOption(":check-type");
+			mScript.setOption(":check-type", "FULL");
+		} catch (UnsupportedOperationException ignored) {
+			// Solver is not SMTInterpol
+		}
 		LBool areTermsEquivalent = 
-				Util.checkSat(m_Script, Util.not(m_Script, equivalentTestTerm));
+				Util.checkSat(mScript, Util.not(mScript, equivalentTestTerm));
 		if (checktype != null)
-			m_Script.setOption(":check-type", checktype);
+			mScript.setOption(":check-type", checktype);
 		return areTermsEquivalent;
 		
 	}
@@ -563,15 +592,14 @@ public class SimplifyDDA extends NonRecursive {
 	 * NON_RELAXING if term is equivalent to true,
 	 * NOT_REDUNDANT if term is not redundant.
 	 */
-	private Redundancy getRedundancy (Term term)
-			throws SMTLIBException {
+	private Redundancy getRedundancy(Term term) {
 		LBool isTermConstraining =
-				Util.checkSat(m_Script, Util.not(m_Script, term));
+				Util.checkSat(mScript, Util.not(mScript, term));
 		if (isTermConstraining == LBool.UNSAT) {
 			return Redundancy.NON_CONSTRAINING;
 		}
 				
-		LBool isTermRelaxing = Util.checkSat(m_Script, term);
+		LBool isTermRelaxing = Util.checkSat(mScript, term);
 		if (isTermRelaxing == LBool.UNSAT) {
 			return Redundancy.NON_RELAXING;
 		}
@@ -579,8 +607,7 @@ public class SimplifyDDA extends NonRecursive {
 		return Redundancy.NOT_REDUNDANT;
 	}
 	
-	private static Term termVariable2constant(Script script, TermVariable tv) 
-			throws SMTLIBException {
+	private static Term termVariable2constant(Script script, TermVariable tv) { 
 		String name = tv.getName() + "_const_" + tv.hashCode();
 		Sort[] paramSorts = {};
 		Sort resultSort = tv.getSort();
@@ -590,7 +617,7 @@ public class SimplifyDDA extends NonRecursive {
 	}
 	
 	public Term simplifyOnce(Term term) {
-		m_termInfos = new HashMap<Term, TermInfo>(); 
+		mTermInfos = new HashMap<Term, TermInfo>(); 
 
 		run(new TermCounter(term));
 		run(new ContextCollector(false, term, new ArrayDeque<Term>()));
@@ -598,7 +625,7 @@ public class SimplifyDDA extends NonRecursive {
 		run(new Simplifier(false, term));
 		Term output = popResult();
 
-		m_termInfos = null;
+		mTermInfos = null;
 		return output;
 	}
 
@@ -609,7 +636,7 @@ public class SimplifyDDA extends NonRecursive {
 	 * nor NON_RELAXING. Otherwise return a copy of term, where each
 	 * NON_CONSTRAINING subterm is replaced by true and each NON_RELAXING
 	 * subterm is replaced by false
-	 * @param term whose Sort is Boolean
+	 * @param mTerm whose Sort is Boolean
 	 */
 	public Term getSimplifiedTerm(Term inputTerm) throws SMTLIBException {
 //		m_Logger.debug("Simplifying " + term);
@@ -617,18 +644,17 @@ public class SimplifyDDA extends NonRecursive {
 		if (!inputTerm.getSort().getName().equals("Bool"))
 			return inputTerm;
 		Term term = inputTerm;
-		m_Script.push(1);
+		mScript.push(1);
 		final TermVariable[] vars = term.getFreeVars();
 		final Term[] values = new Term[vars.length];
-		for (int i=0; i<vars.length; i++) {
-			values[i] = termVariable2constant(m_Script, vars[i]);
-		}
-		term = m_Script.let(vars, values, term);
+		for (int i = 0; i < vars.length; i++)
+			values[i] = termVariable2constant(mScript, vars[i]);
+		term = mScript.let(vars, values, term);
 
 		term = new FormulaUnLet().unlet(term);
 
 		Term output = simplifyOnce(term);
-		if (m_SimplifyRepeatedly) {
+		if (mSimplifyRepeatedly) {
 			while (output != term) {
 				term = output;
 				output = simplifyOnce(term);
@@ -645,9 +671,10 @@ public class SimplifyDDA extends NonRecursive {
 						term = vars[i];
 				super.convert(term);
 			}
-		}.transform(term);
-		m_Script.pop(1);
-		assert (checkEquivalence(inputTerm, term) == LBool.UNSAT) : "Simplification unsound?";
+		}.transform(term);// NOCHECKSTYLE
+		mScript.pop(1);
+		assert (checkEquivalence(inputTerm, term) == LBool.UNSAT)
+			: "Simplification unsound?";
 		return term;
 	}
 	
@@ -666,35 +693,36 @@ public class SimplifyDDA extends NonRecursive {
 	 * siblings.
 	 */
 	private Term negateSibling(Term sibling, String connective, int i, int n) {
-		final boolean negate = (connective == "or" || connective == "=>" && i == n-1);
+		boolean negate =
+				(connective == "or" || connective == "=>" && i == n - 1);
 		if (negate) {
-			return Util.not(m_Script, sibling);
+			return Util.not(mScript, sibling);
 		} else {
 			return sibling;
 		}
 	}
 	
 	void pushContext(Term... context) {
-		m_Script.push(1);
+		mScript.push(1);
 		for (Term t : context) {
-			m_Script.assertTerm(t);
+			mScript.assertTerm(t);
 		}
 	}
 
 	void popContext() {
-		m_Script.pop(1);
+		mScript.pop(1);
 	}
 
 	void setResult(boolean negated, Term term) {
 		if (negated)
-			term = Util.not(m_Script, term);
-		assert (m_Result == null);
-		m_Result = term;
+			term = Util.not(mScript, term);
+		assert (mResult == null);
+		mResult = term;
 	}
 
 	Term popResult() {
-		Term result = m_Result;
-		m_Result = null;
+		Term result = mResult;
+		mResult = null;
 		return result;
 	}
 }

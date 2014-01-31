@@ -24,13 +24,19 @@ import java.util.ArrayDeque;
  * This is the base class for representing SMTLIB 2 terms.
  * You can assume that every term is one of the following sub-classes:
  * <ul>
- * <li>{@link ApplicationTerm} represents a function application <code>(name ...)</code>.</li>
- * <li>{@link AnnotatedTerm} represents an annotated term <code>(! term ...)</code>.</li>
- * <li>{@link ConstantTerm} represents a numeral, decimal, bit vector, or string literal.</li>
- * <li>{@link LetTerm} represents a let term <code>(let ((var term)...) term)</code>.</li>
- * <li>{@link TermVariable} represents a term variable <code>var</code> used in quantifier or let term.
+ * <li>{@link ApplicationTerm} represents a function application
+ * <code>(name ...)</code>.</li>
+ * <li>{@link AnnotatedTerm} represents an annotated term
+ * <code>(! term ...)</code>.</li>
+ * <li>{@link ConstantTerm} represents a numeral, decimal, bit vector, or string
+ * literal.</li>
+ * <li>{@link LetTerm} represents a let term 
+ * <code>(let ((var term)...) term)</code>.</li>
+ * <li>{@link TermVariable} represents a term variable <code>var</code> used in
+ * quantifier or let term.
  * 	    Note that constants are represented by ApplicationTerm.</li>
- * <li>{@link QuantifiedFormula} represents a quantified formula <code>(exists/forall ...)</code>.</li>
+ * <li>{@link QuantifiedFormula} represents a quantified formula
+ * <code>(exists/forall ...)</code>.</li>
  * </ul>
  * 
  * In principle it is possible to write your own sub-classes, but that is
@@ -39,23 +45,23 @@ import java.util.ArrayDeque;
  * @author Juergen Christ, Jochen Hoenicke
  */
 public abstract class Term {
-	private int m_Hash;
+	private final int mHash;
 	
 	/**
 	 * A temporary counter used e.g. to count the number of occurrences of this
 	 * term in a bigger term.
 	 * Don't use this!!!!
 	 */
-	public int tmpCtr;
+	public int mTmpCtr;
 	
-	TermVariable[] m_freeVars;
+	TermVariable[] mFreeVars;
 	
 	/**
 	 * Create a term.
 	 * @param hash the hash code of the term.  This should be stable.
 	 */
 	protected Term(int hash) {
-		m_Hash = hash;
+		mHash = hash;
 	}
 
 	/**
@@ -69,13 +75,13 @@ public abstract class Term {
 	 * @return the free variables.
 	 */
 	public TermVariable[] getFreeVars() {
-		if (m_freeVars == null)
+		if (mFreeVars == null)
 			new NonRecursive().run(new ComputeFreeVariables(this));
-		return m_freeVars;
+		return mFreeVars;
 	}
 
 	public Theory getTheory() {
-		return getSort().m_Symbol.m_Theory;
+		return getSort().mSymbol.mTheory;
 	}
 
 	/**
@@ -86,7 +92,7 @@ public abstract class Term {
 	 * @return an SMTLIB representation.
 	 */
 	public String toString() {
-		Term letted = (new FormulaLet()).let(this);
+		Term letted = new FormulaLet().let(this);
 		return letted.toStringDirect();
 	}
 	
@@ -103,7 +109,7 @@ public abstract class Term {
 	}
 	
 	public int hashCode() {
-		return m_Hash;
+		return mHash;
 	}
 
 	/**

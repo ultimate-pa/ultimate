@@ -41,24 +41,24 @@ public class UnitCollector {
 	/**
 	 * The occurrence map.
 	 */
-	private Map<Clause, Integer> m_Counts;
+	private Map<Clause, Integer> mCounts;
 	/**
 	 * The collected unit clauses.
 	 */
-	private Queue<Antecedent> m_Units;
+	private Queue<Antecedent> mUnits;
 	/**
 	 * The todo stack.
 	 */
-	private Deque<Clause> m_Todo = new ArrayDeque<Clause>();
+	private final Deque<Clause> mTodo = new ArrayDeque<Clause>();
 	/**
 	 * Set of all clauses already visited.
 	 */
-	private HashMap<Clause, Integer> m_Seen;
+	private HashMap<Clause, Integer> mSeen;
 	/**
 	 * Mapping of all root clauses to a set of unit literals.  This is needed to
 	 * create the map of the deleted nodes per context.
 	 */
-	private HashMap<Clause, Set<Literal>> m_DelUnits;
+	private HashMap<Clause, Set<Literal>> mDelUnits;
 	/**
 	 * Collect all unit clauses that occur more than once in the proof tree
 	 * rooted at <code>unsat</code>.
@@ -68,24 +68,24 @@ public class UnitCollector {
 	 */
 	public Queue<Antecedent> collectUnits(
 			Clause unsat, Map<Clause, Integer> counts) {
-		m_Counts = counts;
-		m_DelUnits = new HashMap<Clause, Set<Literal>>();
-		m_Units = new ArrayDeque<Antecedent>();
-		m_Seen = new HashMap<Clause, Integer>();
-		m_Todo.push(unsat);
+		mCounts = counts;
+		mDelUnits = new HashMap<Clause, Set<Literal>>();
+		mUnits = new ArrayDeque<Antecedent>();
+		mSeen = new HashMap<Clause, Integer>();
+		mTodo.push(unsat);
 		run();
-		return m_Units;
+		return mUnits;
 	}
 	/**
 	 * Process all clauses in a non-recursive way.
 	 */
 	private void run() {
-		while (!m_Todo.isEmpty()) {
-			Clause cls = m_Todo.pop();
+		while (!mTodo.isEmpty()) {
+			Clause cls = mTodo.pop();
 			if (seen(cls)) {
-				if (cls.getSize() == 1 && m_Counts.get(cls) > 1)
+				if (cls.getSize() == 1 && mCounts.get(cls) > 1)
 					// Unit with at least two children
-					m_Units.add(new Antecedent(cls.getLiteral(0), cls));
+					mUnits.add(new Antecedent(cls.getLiteral(0), cls));
 				ProofNode pn = cls.getProof();
 				if (!pn.isLeaf()) {
 					Set<Literal> deletions = null;
@@ -93,18 +93,18 @@ public class UnitCollector {
 					ResolutionNode rn = (ResolutionNode) pn;
 					Antecedent[] antes = rn.getAntecedents();
 					for (int i = antes.length - 1; i >= 0; --i) {
-						if (antes[i].antecedent.getSize() == 1 && 
-								m_Counts.get(antes[i].antecedent) > 1) {
+						if (antes[i].mAntecedent.getSize() == 1 
+								&& mCounts.get(antes[i].mAntecedent) > 1) {
 							// We will lower this unit => Mark it deleted
 							if (deletions == null)
 								deletions = new HashSet<Literal>();
-							deletions.add(antes[i].pivot);
+							deletions.add(antes[i].mPivot);
 						}
-						m_Todo.push(antes[i].antecedent);
+						mTodo.push(antes[i].mAntecedent);
 					}
-					m_Todo.push(rn.getPrimary());
+					mTodo.push(rn.getPrimary());
 					if (deletions != null)
-						m_DelUnits.put(cls, deletions);
+						mDelUnits.put(cls, deletions);
 				}
 			}
 		}
@@ -117,10 +117,10 @@ public class UnitCollector {
 	 * @return Is this clause reached for the last time?
 	 */
 	private boolean seen(Clause cls) {
-		Integer cnt = m_Seen.get(cls);
+		Integer cnt = mSeen.get(cls);
 		int newcnt = cnt == null ? 1 : cnt + 1;
-		m_Seen.put(cls, newcnt);
-		int total = m_Counts.get(cls);
+		mSeen.put(cls, newcnt);
+		int total = mCounts.get(cls);
 		assert (newcnt <= total);
 		return total == newcnt;
 	}
@@ -131,6 +131,6 @@ public class UnitCollector {
 	 * @return Deleted nodes per context.
 	 */
 	public Map<Clause, Set<Literal>> getDeletedNodes() {
-		return m_DelUnits;
+		return mDelUnits;
 	}
 }

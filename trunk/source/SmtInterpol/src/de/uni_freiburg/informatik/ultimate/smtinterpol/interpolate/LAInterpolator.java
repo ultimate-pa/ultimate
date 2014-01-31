@@ -38,77 +38,77 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinVar;
 
 public class LAInterpolator {
 
-	Interpolator m_Interpolator;
-	LAAnnotation m_Annotation;
+	Interpolator mInterpolator;
+	LAAnnotation mAnnotation;
 
-	HashMap<LAAnnotation, AnnotInfo> m_AuxInfos 
-	= new HashMap<LAAnnotation, AnnotInfo>();
+	HashMap<LAAnnotation, AnnotInfo> mAuxInfos 
+	    = new HashMap<LAAnnotation, AnnotInfo>();
 
 	class AnnotInfo extends Interpolator.Occurrence {
-		LAAnnotation m_myAnnotation;
+		LAAnnotation mMyAnnotation;
 		
-		private MutableAffinTerm m_Sum;		
-		Interpolant[] m_Interpolants;
+		private MutableAffinTerm mSum;		
+		Interpolant[] mInterpolants;
 
-		InterpolatorAffineTerm m_mixedSums[];
-		TermVariable m_AuxVar;
-		InfinitNumber m_Epsilon;
+		InterpolatorAffineTerm[] mMixedSums;
+		TermVariable mAuxVar;
+		InfinitNumber mEpsilon;
 		
 		public AnnotInfo(LAAnnotation auxAnnot) {
-			m_Interpolator.super();
-			m_myAnnotation = auxAnnot;
+			mInterpolator.super();
+			mMyAnnotation = auxAnnot;
 			//we only need sum and stuff for subannotations
-			if(!auxAnnot.equals(m_Annotation)) { 
+			if (!auxAnnot.equals(mAnnotation)) { 
 				computeSum();
 				color();
 				computeMixedSums();
 			}
 		}
 		
-		void computeSum() {
-			m_Sum = new MutableAffinTerm();
-			m_Sum.add(Rational.ONE, m_myAnnotation.getLinVar());
-			m_Sum.add(m_myAnnotation.getBound().negate());
-			m_Epsilon = m_myAnnotation.getLinVar().getEpsilon();
+		private void computeSum() {
+			mSum = new MutableAffinTerm();
+			mSum.add(Rational.ONE, mMyAnnotation.getLinVar());
+			mSum.add(mMyAnnotation.getBound().negate());
+			mEpsilon = mMyAnnotation.getLinVar().getEpsilon();
 		}
 		private void color() {
 			boolean isFirst = true;
-			for (LinVar lv : m_Sum.getSummands().keySet()) {
+			for (LinVar lv : mSum.getSummands().keySet()) {
 				Interpolator.Occurrence occ = 
-						m_Interpolator.m_SymbolPartition.get(lv.getSharedTerm());
+						mInterpolator.mSymbolPartition.get(lv.getSharedTerm());
 				assert (occ != null);
 				if (isFirst) {
-					m_inA.or(occ.m_inA);
-					m_inB.or(occ.m_inB);
+					mInA.or(occ.mInA);
+					mInB.or(occ.mInB);
 					isFirst = false;
 				} else {
-					m_inA.and(occ.m_inA);
-					m_inB.and(occ.m_inB);
+					mInA.and(occ.mInA);
+					mInB.and(occ.mInB);
 				}
 			}
 		}
 
 		private void computeMixedSums() {
 			BitSet shared = new BitSet();
-			shared.or(m_inA);
-			shared.or(m_inB);
-			if (shared.nextClearBit(0) == m_Interpolator.m_NumInterpolants)
+			shared.or(mInA);
+			shared.or(mInB);
+			if (shared.nextClearBit(0) == mInterpolator.mNumInterpolants)
 				return;
 			
-			m_mixedSums = new InterpolatorAffineTerm[m_Interpolator.m_NumInterpolants];
-			m_AuxVar = 
-				m_Interpolator.m_Theory.createFreshTermVariable("msaux", 
-						m_Sum.getSort(m_Interpolator.m_Theory));
+			mMixedSums = new InterpolatorAffineTerm[mInterpolator.mNumInterpolants];
+			mAuxVar = 
+				mInterpolator.mTheory.createFreshTermVariable("msaux", 
+						mSum.getSort(mInterpolator.mTheory));
 
-			for (int part = 0; part < m_Interpolator.m_NumInterpolants; part++) {
+			for (int part = 0; part < mInterpolator.mNumInterpolants; part++) {
 				if (isMixed(part)) {
 					InterpolatorAffineTerm sumApart = new InterpolatorAffineTerm();
 
-					LinVar lv = m_myAnnotation.getLinVar();
+					LinVar lv = mMyAnnotation.getLinVar();
 
-					for(Entry<LinVar, BigInteger> en : lv.getLinTerm().entrySet()) {
+					for (Entry<LinVar, BigInteger> en : lv.getLinTerm().entrySet()) {
 						Occurrence occ = 
-							m_Interpolator.m_SymbolPartition.get(
+							mInterpolator.mSymbolPartition.get(
 									en.getKey().getSharedTerm());
 
 						if (occ.isALocal(part)) {
@@ -117,9 +117,9 @@ public class LAInterpolator {
 							sumApart.add(coeff, en.getKey());
 						}
 					}
-					sumApart.add(Rational.MONE, m_AuxVar); 
+					sumApart.add(Rational.MONE, mAuxVar); 
 				
-					m_mixedSums[part] = sumApart;
+					mMixedSums[part] = sumApart;
 				}
 			}
 		}
@@ -128,23 +128,23 @@ public class LAInterpolator {
 		 * @return
 		 */
 		private MutableAffinTerm getSum() {
-			return m_Sum;
+			return mSum;
 			
 		}
 		
 		InterpolatorAffineTerm getMixedSum(int part) {
-			return m_mixedSums[part];
+			return mMixedSums[part];
 		}
 
 		public InfinitNumber getEpsilon() {
-			return m_Epsilon;
+			return mEpsilon;
 		}
 	}
 
 	public LAInterpolator(Interpolator interpolator,
 			LAAnnotation theoryAnnotation) {
-		m_Interpolator = interpolator;
-		m_Annotation = theoryAnnotation;
+		mInterpolator = interpolator;
+		mAnnotation = theoryAnnotation;
 	}
 
 	/**
@@ -156,21 +156,21 @@ public class LAInterpolator {
 	 * @return An AnnotInfo containing all the information.
 	 */
 	private AnnotInfo computeAuxAnnotations(LAAnnotation auxAnnot) {
-		AnnotInfo result = m_AuxInfos.get(auxAnnot);
+		AnnotInfo result = mAuxInfos.get(auxAnnot);
 		if (result != null)
 			return result;
 		
 		result = new AnnotInfo(auxAnnot);
-		result.m_Interpolants = new Interpolant[m_Interpolator.m_NumInterpolants];
-		for (int i = 0; i < m_Interpolator.m_NumInterpolants; i++)
-			result.m_Interpolants[i] = new Interpolant();
+		result.mInterpolants = new Interpolant[mInterpolator.mNumInterpolants];
+		for (int i = 0; i < mInterpolator.mNumInterpolants; i++)
+			result.mInterpolants[i] = new Interpolant();
  
 		for (LAAnnotation annot : auxAnnot.getAuxAnnotations().keySet())
 			computeAuxAnnotations(annot); 
 		interpolateLeaf(auxAnnot, result);
 		interpolateInnerNode(auxAnnot, result);
 
-		m_AuxInfos.put(auxAnnot, result);		
+		mAuxInfos.put(auxAnnot, result);		
 		return result;
 	}
 
@@ -189,12 +189,13 @@ public class LAInterpolator {
 	 * @param result the normalized and rounded summary of auxAnnot.
 	 */
 	private void interpolateLeaf(LAAnnotation auxAnnot, AnnotInfo result) {
-		InterpolatorAffineTerm[] ipl = new InterpolatorAffineTerm[m_Interpolator.m_NumInterpolants+1];
+		InterpolatorAffineTerm[] ipl =
+		        new InterpolatorAffineTerm[mInterpolator.mNumInterpolants + 1];
 		for (int part = 0; part < ipl.length; part++)
 			ipl[part] = new InterpolatorAffineTerm();
 		@SuppressWarnings("unchecked")
 		ArrayList<TermVariable>[] auxVars = 
-			new ArrayList[m_Interpolator.m_NumInterpolants];
+			new ArrayList[mInterpolator.mNumInterpolants];
 		/* these variables are used for trichotomy clauses.
 		 * The inequalityInfo will remember the information for
 		 * one of the inequalities to get the aux literal.
@@ -210,16 +211,16 @@ public class LAInterpolator {
 		 * To compute the interpolant we have to add the A-part
 		 * of the negated summary.
 		 */
-		if(auxAnnot != m_Annotation) {
+		if (auxAnnot != mAnnotation) {
 			// Sum A parts of negated auxAnnot.
-			int part = result.m_inB.nextClearBit(0);
+			int part = result.mInB.nextClearBit(0);
 			while (part < ipl.length) {
 				Rational coeff = auxAnnot.isUpper() ? Rational.MONE : Rational.ONE;
 				if (result.isMixed(part)) {
 					ipl[part].add(coeff, result.getMixedSum(part));
 					if (auxVars[part] == null)
 						auxVars[part] = new ArrayList<TermVariable>();
-					auxVars[part].add(result.m_AuxVar);
+					auxVars[part].add(result.mAuxVar);
 				}
 				if (result.isALocal(part)) {
 					ipl[part].add(coeff, result.getSum());
@@ -231,16 +232,16 @@ public class LAInterpolator {
 		/* Add the A-part of the summary for all used sub-annotations.
 		 */
 		for (Entry<LAAnnotation, Rational> entry : auxAnnot.getAuxAnnotations().entrySet()) {
-			AnnotInfo info = m_AuxInfos.get(entry.getKey());
+			AnnotInfo info = mAuxInfos.get(entry.getKey());
 			Rational coeff = entry.getValue();
 			// Sum A parts of info.
-			int part = info.m_inB.nextClearBit(0);
+			int part = info.mInB.nextClearBit(0);
 			while (part < ipl.length) {
 				if (info.isMixed(part)) {
 					ipl[part].add(coeff, info.getMixedSum(part));
 					if (auxVars[part] == null)
 						auxVars[part] = new ArrayList<TermVariable>();
-					auxVars[part].add(info.m_AuxVar);
+					auxVars[part].add(info.mAuxVar);
 				}
 				if (info.isALocal(part)) {
 					ipl[part].add(coeff, info.getSum());
@@ -270,20 +271,20 @@ public class LAInterpolator {
 					lv = eq.getVar();
 					bound = new InfinitNumber(eq.getBound(), 0);
 				}
-				LitInfo info = m_Interpolator.getLiteralInfo(lit.getAtom());
+				LitInfo info = mInterpolator.getLiteralInfo(lit.getAtom());
 				inequalityInfo = info;
 
-				int part = info.m_inB.nextClearBit(0);
+				int part = info.mInB.nextClearBit(0);
 				while (part < ipl.length) {
 					if (info.isMixed(part)) {
 						/* ab-mixed interpolation */
-						assert (info.m_MixedVar != null);
+						assert (info.mMixedVar != null);
 						ipl[part].add(factor, info.getAPart(part));
-						ipl[part].add(factor.negate(), info.m_MixedVar);
+						ipl[part].add(factor.negate(), info.mMixedVar);
 	
 						if (auxVars[part] == null)
 							auxVars[part] = new ArrayList<TermVariable>();
-						auxVars[part].add(info.m_MixedVar);
+						auxVars[part].add(info.mMixedVar);
 					}
 					if (info.isALocal(part)) {
 						/* Literal in A: add to sum */
@@ -298,12 +299,12 @@ public class LAInterpolator {
 				LAEquality eq = (LAEquality) equality;
 				//a trichotomy clause must contain exactly three parts
 				assert auxAnnot.getAuxAnnotations().size() + auxAnnot.getCoefficients().size()
-				    + (auxAnnot == m_Annotation ? 0 : 1) == 3;
+				    + (auxAnnot == mAnnotation ? 0 : 1) == 3;// NOCHECKSTYLE
 				assert equalityInfo == null;
-				equalityInfo = m_Interpolator.getLiteralInfo(eq);
+				equalityInfo = mInterpolator.getLiteralInfo(eq);
 				assert factor.abs() == Rational.ONE;
 
-				int part = equalityInfo.m_inB.nextClearBit(0);
+				int part = equalityInfo.mInB.nextClearBit(0);
 				while (part < ipl.length) {
 					if (equalityInfo.isALocal(part)) {
 						/* Literal in A: add epsilon to sum */
@@ -313,8 +314,8 @@ public class LAInterpolator {
 				}
 			}
 		}
-		assert (ipl[ipl.length-1].isConstant() 
-				&& InfinitNumber.ZERO.less(ipl[ipl.length-1].getConstant()));
+		assert (ipl[ipl.length - 1].isConstant() 
+				&& InfinitNumber.ZERO.less(ipl[ipl.length - 1].getConstant()));
 		
 		/*
 		 * Save the interpolants computed for this leaf into the result array.
@@ -323,13 +324,13 @@ public class LAInterpolator {
 			Rational normFactor = ipl[part].isConstant() ? Rational.ONE
 					: ipl[part].getGCD().inverse().abs();
 			ipl[part].mul(normFactor);
-			if (auxVars[part] != null) {
+			if (auxVars[part] != null) { // NOPMD
 				/* This is a mixed interpolant with auxiliary variables.
 				 * Prepare an LATerm that wraps the interpolant.
 				 */
 				InfinitNumber k;
 				Term F;
-				if (equalityInfo != null) {
+				if (equalityInfo != null) { // NOPMD
 					/* This is a mixed trichotomy class.  This requires a
 					 * very special interpolant.
 					 */
@@ -337,23 +338,24 @@ public class LAInterpolator {
 					assert auxVars[part].size() == 2;
 					assert normFactor == Rational.ONE;
 					InterpolatorAffineTerm less = 
-						new InterpolatorAffineTerm(ipl[part]).add(InfinitNumber.EPSILON);
+						new InterpolatorAffineTerm(ipl[part]).add(
+						        InfinitNumber.EPSILON);
 					k = InfinitNumber.ZERO;
-					F = m_Interpolator.m_Theory.and(
-							ipl[part].toLeq0(m_Interpolator.m_Theory),
-							m_Interpolator.m_Theory.or(less.toLeq0(m_Interpolator.m_Theory),
-							m_Interpolator.m_Theory.equals
-							(equalityInfo.getMixedVar(), 
-							 auxVars[part].iterator().next())));
+					F = mInterpolator.mTheory.and(
+							ipl[part].toLeq0(mInterpolator.mTheory),
+							mInterpolator.mTheory.or(less.toLeq0(mInterpolator.mTheory),
+							        mInterpolator.mTheory.equals(
+							                equalityInfo.getMixedVar(), 
+							                auxVars[part].iterator().next())));
 				} else {
 					if (ipl[part].isInt())
 						k = InfinitNumber.ONE.negate();
 					else
 						k = InfinitNumber.EPSILON.negate();
-					F = ipl[part].toLeq0(m_Interpolator.m_Theory);
+					F = ipl[part].toLeq0(mInterpolator.mTheory);
 				}
 				LATerm laTerm = new LATerm(ipl[part], k, F);
-				result.m_Interpolants[part].m_term = laTerm;
+				result.mInterpolants[part].mTerm = laTerm;
 			} else {
 				assert (equalityInfo == null 
 						|| !equalityInfo.isMixed(part));
@@ -366,11 +368,11 @@ public class LAInterpolator {
 					 */
 					Literal thisIpl = equalityInfo.isALocal(part) 
 						? equality.negate() : equality;
-					result.m_Interpolants[part].m_term = 
-						thisIpl.getSMTFormula(m_Interpolator.m_Theory);
+					result.mInterpolants[part].mTerm = 
+						thisIpl.getSMTFormula(mInterpolator.mTheory);
 				} else {
-					result.m_Interpolants[part].m_term = 
-						ipl[part].toLeq0(m_Interpolator.m_Theory);
+					result.mInterpolants[part].mTerm = 
+						ipl[part].toLeq0(mInterpolator.mTheory);
 				}
 			}
 		}
@@ -389,36 +391,39 @@ public class LAInterpolator {
 		for (Entry<LAAnnotation, Rational> auxAnn : auxAnnot.getAuxAnnotations().entrySet()) {
 			LAAnnotation annot = auxAnn.getKey();
 			AnnotInfo subInfo = computeAuxAnnotations(annot);
-			for (int part = 0; part < m_Interpolator.m_NumInterpolants; part++) {
+			for (int part = 0; part < mInterpolator.mNumInterpolants; part++) {
 				if (subInfo.isBLocal(part)) {
 					/* Literal in B: and */
-					result.m_Interpolants[part].m_term = m_Interpolator.m_Theory.
-							and(result.m_Interpolants[part].m_term, subInfo.m_Interpolants[part].m_term);
+					result.mInterpolants[part].mTerm = mInterpolator.mTheory.
+							and(result.mInterpolants[part].mTerm,
+							        subInfo.mInterpolants[part].mTerm);
 				} else if (subInfo.isMixed(part)) {
-					TermVariable mixedVar = subInfo.m_AuxVar;
-					result.m_Interpolants[part] = m_Interpolator.mixedPivotLA(
-							result.m_Interpolants[part], subInfo.m_Interpolants[part], mixedVar);
+					TermVariable mixedVar = subInfo.mAuxVar;
+					result.mInterpolants[part] = mInterpolator.mixedPivotLA(
+							result.mInterpolants[part],
+							subInfo.mInterpolants[part], mixedVar);
 				} else if (subInfo.isAB(part)) {
 					/* Literal is shared: ite */
 					MutableAffinTerm mat = new MutableAffinTerm();
 					Rational coeff = annot.isUpper() ? Rational.ONE : Rational.MONE;
 					mat.add(coeff, subInfo.getSum());
-					result.m_Interpolants[part].m_term = 
-						m_Interpolator.m_Theory.ifthenelse
-								(mat.toSMTLibLeq0(m_Interpolator.m_Theory, false), 
-								result.m_Interpolants[part].m_term, 
-								subInfo.m_Interpolants[part].m_term);
+					result.mInterpolants[part].mTerm = 
+						mInterpolator.mTheory.ifthenelse(
+								mat.toSMTLibLeq0(mInterpolator.mTheory, false), 
+								result.mInterpolants[part].mTerm, 
+								subInfo.mInterpolants[part].mTerm);
 				} else {
 					/* Literal in A: or */
-					result.m_Interpolants[part].m_term = m_Interpolator.m_Theory.
-							or(result.m_Interpolants[part].m_term, subInfo.m_Interpolants[part].m_term);
+					result.mInterpolants[part].mTerm = mInterpolator.mTheory.
+							or(result.mInterpolants[part].mTerm,
+							        subInfo.mInterpolants[part].mTerm);
 				}
 			}
 		}
 	}
 	
 	public Interpolant[] computeInterpolants() {
-		AnnotInfo annotInfo = computeAuxAnnotations(m_Annotation);
-		return annotInfo.m_Interpolants;
+		AnnotInfo annotInfo = computeAuxAnnotations(mAnnotation);
+		return annotInfo.mInterpolants;
 	}
 }

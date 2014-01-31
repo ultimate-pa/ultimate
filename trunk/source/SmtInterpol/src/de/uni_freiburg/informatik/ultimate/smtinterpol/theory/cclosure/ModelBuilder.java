@@ -38,52 +38,54 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Value;
 public class ModelBuilder {
 	
 	private static class Delay {
-		CCTerm m_Term;
-		ExecTerm m_Value;
+		final CCTerm mTerm;
+		// Might be null for delayed init
+		ExecTerm mValue;
 		public Delay(CCTerm term, ExecTerm value) {
-			m_Term = term;
-			m_Value = value;
+			mTerm = term;
+			mValue = value;
 		}
 	}
 	
-	private HashMap<CCTerm, ExecTerm> m_Produced =
+	private final HashMap<CCTerm, ExecTerm> mProduced =
 			new HashMap<CCTerm, ExecTerm>();
 	
-	private HashMap<CCTerm, Delay> m_Delayed = new HashMap<CCTerm, Delay>();
+	private final HashMap<CCTerm, Delay> mDelayed =
+			new HashMap<CCTerm, Delay>();
 	
-	private Deque<Delay> m_Todo = new ArrayDeque<Delay>();
+	private final Deque<Delay> mTodo = new ArrayDeque<Delay>();
 	
 	public ModelBuilder(List<CCTerm> terms, Model model, Theory t,
 			SharedTermEvaluator ste, CCTerm trueNode, CCTerm falseNode) {
 		Rational biggest = Rational.MONE;
 		Set<CCTerm> delayed = new HashSet<CCTerm>();
 		for (CCTerm term : terms) {
-			if (term == term.repStar) {
+			if (term == term.mRepStar) {
 				// Fill value for the whole equivalence class
-				Term value = term.getSharedTerm() == null ? term.toSMTTerm(t) :
-					ste.evaluate(term.getSharedTerm(), t);
+				Term value = term.getSharedTerm() == null ? term.toSMTTerm(t)
+					: ste.evaluate(term.getSharedTerm(), t);
 				if (value.getSort().isNumericSort()) {
 					// Delay numeral types if value is not shared
-					if (!(value instanceof ConstantTerm)) {
-						delayed.add(term);
-						continue;
-					} else {
+					if (value instanceof ConstantTerm) {
 						Rational v = (Rational) 
 							((ConstantTerm) value).getValue();
 						biggest = v.compareTo(biggest) > 0 ? v : biggest;
+					} else {
+						delayed.add(term);
+						continue;
 					}
 				}
 				// Fix Boolean terms
-				if (term.repStar == trueNode.repStar)
-					value = t.TRUE;
-				else if (term.repStar == falseNode.repStar || 
-						value.getSort() == t.getBooleanSort())
+				if (term.mRepStar == trueNode.mRepStar)
+					value = t.mTrue;
+				else if (term.mRepStar == falseNode.mRepStar 
+						|| value.getSort() == t.getBooleanSort())
 					// By convention, we convert to == TRUE.  Hence, if a value
 					// is not equal to TRUE but Boolean, we have to adjust the
 					// model and set it to false.
-					value = t.FALSE;
+					value = t.mFalse;
 				ExecTerm et = new Value(value);
-				for (CCTerm mem : term.members)
+				for (CCTerm mem : term.mMembers)
 					add(model, mem, et, t);
 			}
 		}
@@ -93,7 +95,7 @@ public class ModelBuilder {
 		for (CCTerm term : delayed) {
 			Term value = biggest.toTerm(term.getFlatTerm().getSort());
 			ExecTerm et = new Value(value);
-			for (CCTerm mem : term.members)
+			for (CCTerm mem : term.mMembers)
 				add(model, mem, et, t);
 			biggest = biggest.add(Rational.ONE);
 		}
@@ -106,18 +108,18 @@ public class ModelBuilder {
 			CCBaseTerm bt = (CCBaseTerm) term;
 			if (!bt.isFunctionSymbol()) {
 				// We have to remember the value of the term for applications
-				m_Produced.put(term, value);
+				mProduced.put(term, value);
 				return;
 			}
 			FunctionSymbol symb = bt.getFunctionSymbol();
 			if (!symb.isIntern()) {
 				model.extend(symb, value);
-				m_Produced.put(term, value);
+				mProduced.put(term, value);
 			}
 		} else {
 			// It is a CCAppTerm
 			CCAppTerm app = (CCAppTerm) term;
-			assert(!app.isFunc);
+			assert(!app.mIsFunc);
 			addApp(model, app, value, t);
 		}
 	}
@@ -128,24 +130,24 @@ public class ModelBuilder {
 		boolean enqueued = false;
 		while (walk instanceof CCAppTerm) {
 			CCAppTerm appwalk = (CCAppTerm) walk;
-			ExecTerm val = m_Produced.get(appwalk.getArg());
+			ExecTerm val = mProduced.get(appwalk.getArg());
 			if (val == null) {
 				if (!enqueued) {
-					Delay delay = m_Delayed.get(app);
+					Delay delay = mDelayed.get(app);
 					if (delay == null) {
 						delay = new Delay(app, value);
-						m_Delayed.put(app, delay);
+						mDelayed.put(app, delay);
 					} else
-						delay.m_Value = value;
-					m_Todo.push(delay);
+						delay.mValue = value;
+					mTodo.push(delay);
 					enqueued = true;
 				}
-				Delay delay = m_Delayed.get(appwalk.getArg());
+				Delay delay = mDelayed.get(appwalk.getArg());
 				if (delay == null) {
 					delay = new Delay(appwalk.getArg(), null);
-					m_Delayed.put(appwalk.getArg(), delay);
+					mDelayed.put(appwalk.getArg(), delay);
 				}
-				m_Todo.push(delay);
+				mTodo.push(delay);
 			} else
 				args.addFirst(val);
 			walk = appwalk.getFunc();
@@ -155,16 +157,16 @@ public class ModelBuilder {
 		if (!enqueued) {
 			FunctionSymbol fs = ((CCBaseTerm) walk).getFunctionSymbol();
 			model.extend(fs, args.toArray(new ExecTerm[args.size()]), value);
-			m_Produced.put(app, value);
+			mProduced.put(app, value);
 		}
 	}
 	
 	private void finishModel(Model model, Theory t) {
-		while (!m_Todo.isEmpty()) {
-			Delay d = m_Todo.pop();
-			if (!m_Produced.containsKey(d.m_Term)) {
-				assert(d.m_Value != null);
-				add(model, d.m_Term, d.m_Value, t);
+		while (!mTodo.isEmpty()) {
+			Delay d = mTodo.pop();
+			if (!mProduced.containsKey(d.mTerm)) {
+				assert(d.mValue != null);
+				add(model, d.mTerm, d.mValue, t);
 			}
 		}
 	}

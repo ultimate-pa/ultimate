@@ -33,42 +33,41 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
 public class SourceAnnotation implements IAnnotation {
 	public static final SourceAnnotation EMPTY_SOURCE_ANNOT =
 			new SourceAnnotation("", null);
-	private final String m_annot;
-	private final Term m_Source;
+	private final String mAnnot;
+	private final Term mSource;
 	public SourceAnnotation(String annot, Term source) {
-		m_annot = annot;
-		m_Source = source;
+		mAnnot = annot;
+		mSource = source;
 	}
 	public SourceAnnotation(SourceAnnotation orig, Term newSource) {
-		m_annot = orig.m_annot;
-		m_Source = newSource;
+		mAnnot = orig.mAnnot;
+		mSource = newSource;
 	}
 	public String getAnnotation() {
-		return m_annot;
+		return mAnnot;
 	}
 	public Term getSource() {
-		return m_Source;
+		return mSource;
 	}
 	public String toString() {
-		return m_annot;
+		return mAnnot;
 	}
 	@Override
 	public String toSExpr(Theory smtTheory) {
-		return m_annot.isEmpty() ? ":input" : ":input " + new QuotedObject(m_annot);
+		return mAnnot.isEmpty() ? ":input" : ":input " + new QuotedObject(mAnnot);
 	}
 	@Override
 	public Term toTerm(Clause cls, Theory theory) {
 		Term res = cls.toTerm(theory);
-		if (m_Source == null)
-			res = theory.term("@asserted", m_annot.isEmpty() ? res :
-					theory.annotatedTerm(new Annotation[] {
-							new Annotation(":input", m_annot)
-						}, res));
-		else {
+		if (mSource == null) {
+			// Partial proof mode
+			res = theory.term("@asserted", mAnnot.isEmpty() ? res
+					: theory.annotatedTerm(new Annotation[] {
+						new Annotation(":input", mAnnot)
+					}, res));
+		} else {
 			// Full proof mode
-			if (cls.getSize() <= 1)
-				return m_Source;
-			res = theory.term("@clause", m_Source, res);
+			res = theory.term("@clause", mSource, res);
 		}
 		return res;
 	}

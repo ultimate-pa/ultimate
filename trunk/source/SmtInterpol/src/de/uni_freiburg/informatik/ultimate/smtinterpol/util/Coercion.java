@@ -29,7 +29,11 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
  * Helper class to factor out coercions needed in IRA-Logics
  * @author Juergen Christ
  */
-public class Coercion {
+public final class Coercion {
+	
+	private Coercion() {
+		// Hide constructor
+	}
 	public static Term toInt(Term t) {
 		assert t.getSort().getName().equals("Real");
 		if (t instanceof ConstantTerm) {

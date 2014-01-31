@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
-import de.uni_freiburg.informatik.ultimate.logic.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
@@ -68,10 +67,26 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofTermGenerator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.PropProofChecker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.Transformations.AvailableTransformations;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.UnsatCoreCollector;
+import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ScopedArrayList;
 
-
+/**
+ * Implementation of the 
+ * {@link de.uni_freiburg.informatik.ultimate.logic.Script} interface to
+ * interact with SMTInterpol.
+ * 
+ * Users should however stick to the
+ * {@link de.uni_freiburg.informatik.ultimate.logic.Script} interface which
+ * provides most of the methods provided in this class.
+ * @author Juergen Christ
+ */
 public class SMTInterpol extends NoopScript {
+	
+	private static class NoUserCancellation implements TerminationRequest {
+		public boolean isTerminationRequested() {
+			return false; // NOPMD
+		}
+	}
 	
 	private static enum CheckType {
 		FULL {
@@ -98,9 +113,9 @@ public class SMTInterpol extends NoopScript {
 			try {
 				return CheckType.valueOf(
 								o.checkArg(value, ""/*dummy*/).toUpperCase());
-			} catch (IllegalArgumentException iae) {
+			} catch (IllegalArgumentException eiae) {
 				// The enum constant is not present
-				StringBuilder sb = new StringBuilder();
+				StringBuilder sb = new StringBuilder(53);// Should fit exactly
 				sb.append("Illegal value. Only ");
 				String sep = "";
 				for (CheckType t : CheckType.values()) {
@@ -116,10 +131,10 @@ public class SMTInterpol extends NoopScript {
 	private static class SMTInterpolSetup extends Theory.SolverSetup {
 		
 		private static class RewriteProofFactory extends FunctionSymbolFactory {
-			Sort m_ProofSort;
+			Sort mProofSort;
 			public RewriteProofFactory(String name, Sort proofSort) {
 				super(name);
-				m_ProofSort = proofSort;
+				mProofSort = proofSort;
 			}
 
 			@Override
@@ -135,7 +150,7 @@ public class SMTInterpol extends NoopScript {
 				if (indices != null
 					|| paramSorts.length == 0 || paramSorts.length > 2	
 					|| resultSort != null
-					|| paramSorts[0] != m_ProofSort)
+					|| paramSorts[0] != mProofSort)
 					return null;
 
 				if (paramSorts.length == 2 && paramSorts[0] != paramSorts[1])
@@ -145,10 +160,10 @@ public class SMTInterpol extends NoopScript {
 			}
 		}
 		
-		private int m_ProofMode;
+		private final int mProofMode;
 		
 		public SMTInterpolSetup(int proofMode) {
-			m_ProofMode = proofMode;
+			mProofMode = proofMode;
 		}
 
 		@Override
@@ -159,7 +174,7 @@ public class SMTInterpol extends NoopScript {
 			Sort[] proof2 = null;
 			Sort bool = theory.getSort("Bool");
 			Sort[] bool1 = {bool};
-			if (m_ProofMode > 0) {
+			if (mProofMode > 0) {
 				// Partial proofs.
 				// Declare all symbols needed for proof production
 				declareInternalSort(theory, "@Proof", 0, 0);
@@ -171,7 +186,7 @@ public class SMTInterpol extends NoopScript {
 				declareInternalFunction(theory, "@lemma", bool1, proof, 0);
 				declareInternalFunction(theory, "@asserted", bool1, proof, 0);
 			}
-			if (m_ProofMode > 1) {
+			if (mProofMode > 1) {
 				// Full proofs.
 				declareInternalFunction(theory, "@intern", bool1, proof, 0);
 				declareInternalFunction(
@@ -200,7 +215,7 @@ public class SMTInterpol extends NoopScript {
 			case QF_AUFLIA:
 			case AUFLIA:
 				declareArraySymbols(theory);
-				// Fallthrough
+				// fallthrough
 			case QF_UFLIA:
 			case QF_LIA:
 			case QF_IDL:
@@ -212,10 +227,10 @@ public class SMTInterpol extends NoopScript {
 			case AUFLIRA:
 			case AUFNIRA:
 				declareArraySymbols(theory);
-				// Fallthrough
+				// fallthrough
 			case QF_UFLIRA:
 				declareIntSymbols(theory);
-				// Fallthrough to real symbols since mixed logics.
+				// fallthrough to real symbols since mixed logics.
 			case LRA:
 			case QF_LRA:
 			case QF_NRA:
@@ -254,29 +269,29 @@ public class SMTInterpol extends NoopScript {
 	}
 	
 	private static abstract class Option {
-		private final String m_OptName;
-		private final String m_Description;
-		private final boolean m_OnlineModifyable;
-		private final int m_OptNum;
+		private final String mOptName;
+		private final String mDescription;
+		private final boolean mOnlineModifyable;
+		private final int mOptNum;
 		public Option(String optName, String description,
 				boolean onlineModifyable, int optnum) {
-			m_OptName = optName;
-			m_Description = description;
-			m_OnlineModifyable = onlineModifyable;
-			m_OptNum = optnum;
-			SMTInterpol.options.add(this);
+			mOptName = optName;
+			mDescription = description;
+			mOnlineModifyable = onlineModifyable;
+			mOptNum = optnum;
+			SMTInterpol.OPTIONS.add(this);
 		}
 		public String getName() {
-			return m_OptName;
+			return mOptName;
 		}
 		public String getDescription() {
-			return m_Description;
+			return mDescription;
 		}
 		public boolean isOnlineModifyable() {
-			return m_OnlineModifyable;
+			return mOnlineModifyable;
 		}
 		public int getOptionNumber() {
-			return m_OptNum;
+			return mOptNum;
 		}
 		public abstract <T> T checkArg(Object value, T curval)
 			throws SMTLIBException;
@@ -295,16 +310,16 @@ public class SMTInterpol extends NoopScript {
 				if (value.equals("true"))
 					return Boolean.TRUE;
 			}
-			throw new SMTLIBException("Option " + getName() +
-					" expects a Boolean value");
+			throw new SMTLIBException("Option " + getName()
+			        + " expects a Boolean value");
 		}
 		@SuppressWarnings("unchecked")
 		@Override
 		public <T> T checkArg(Object value, T curval) throws SMTLIBException {
 			if (curval instanceof Boolean)
 				return (T) checkArg(value);
-			throw new SMTLIBException("Option " + getName() +
-				" expects a Boolean value");
+			throw new SMTLIBException("Option " + getName()
+				+ " expects a Boolean value");
 		}
 	}
 	private static class IntOption extends Option {
@@ -322,19 +337,19 @@ public class SMTInterpol extends NoopScript {
 			if (value instanceof String) {
 				try {
 					return new BigInteger((String) value);
-				} catch (NumberFormatException ignored) {}
+				} catch (NumberFormatException ignored) { /* ignored */ }
 			}
-			throw new SMTLIBException("Option " + getName() +
-					" expects a numeral value");
+			throw new SMTLIBException("Option " + getName()
+					+ " expects a numeral value");
 		}
 		@SuppressWarnings("unchecked")
 		@Override
 		public <T> T checkArg(Object value, T curval) throws SMTLIBException {
-			if (curval instanceof BigInteger || curval instanceof Integer ||
-					curval instanceof Long)
+			if (curval instanceof BigInteger || curval instanceof Integer
+					|| curval instanceof Long)
 				return (T) checkArg(value);
-			throw new SMTLIBException("Option " + getName() +
-				" expects a numeral value");
+			throw new SMTLIBException("Option " + getName()
+				+ " expects a numeral value");
 		}
 	}
 	private static class StringOption extends Option {
@@ -345,42 +360,42 @@ public class SMTInterpol extends NoopScript {
 		public String checkArg(Object value) throws SMTLIBException {
 			if (value instanceof String)
 				return (String) value;
-			throw new SMTLIBException("Option " + getName() +
-					" expects a string value");
+			throw new SMTLIBException("Option " + getName()
+					+ " expects a string value");
 		}
 		@SuppressWarnings("unchecked")
 		@Override
 		public <T> T checkArg(Object value, T curval) throws SMTLIBException {
 			if (curval instanceof String)
 				return (T) checkArg(value);
-			throw new SMTLIBException("Option " + getName() +
-				" expects a string value");
+			throw new SMTLIBException("Option " + getName()
+				+ " expects a string value");
 		}
 	}
 	private static class OptionMap {
-		private Option[] options;
-		private int numOptions;
+		private Option[] mOptions;
+		private int mNumOptions;
 		public OptionMap() {
-			options = new Option[0x20];
-			numOptions = 0;
+			mOptions = new Option[0x20];
+			mNumOptions = 0;
 		}
 		private void grow() {
-			Option[] oldOptions = options;
-			options = new Option[options.length * 2];
+			Option[] oldOptions = mOptions;
+			mOptions = new Option[mOptions.length * 2];
 			for (Option o : oldOptions)
 				add_internal(o);
 		}
 		public void add(Option option) {
-			if (++numOptions > options.length)
+			if (++mNumOptions > mOptions.length)
 				grow();
 			add_internal(option);
 		}
 		private void add_internal(Option o) {
 			int hash = o.getName().hashCode();
-			for (int i = 0; i < options.length; ++i) {
-				int idx = (hash + i) & (options.length - 1);
-				if (options[idx] == null) {
-					options[idx] = o;
+			for (int i = 0; i < mOptions.length; ++i) {
+				int idx = (hash + i) & (mOptions.length - 1);
+				if (mOptions[idx] == null) {
+					mOptions[idx] = o;
 					return;
 				}
 			}
@@ -388,23 +403,23 @@ public class SMTInterpol extends NoopScript {
 		}
 		public Option find(String name) {
 			int hash = name.hashCode();
-			for (int i = 0; i < numOptions; ++i) {
-				int idx = (hash + i) & (options.length - 1);
-				if (options[idx] == null)
+			for (int i = 0; i < mNumOptions; ++i) {
+				int idx = (hash + i) & (mOptions.length - 1);
+				if (mOptions[idx] == null)
 					return null;
-				String optname = options[idx].getName();
+				String optname = mOptions[idx].getName();
 				if (optname.hashCode() == hash && optname.equals(name))
-					return options[idx];
+					return mOptions[idx];
 			}
 			return null;
 		}
 		public String[] getOptionNames() {
-			String[] res = new String[numOptions];
+			String[] res = new String[mNumOptions];
 			int pos = 0;
-			for (Option o : options) {
+			for (Option o : mOptions) {
 				if (o != null) {
 					res[pos] = o.getName();
-					if (++pos == numOptions)
+					if (++pos == mNumOptions)
 						return res;
 				}
 			}
@@ -412,74 +427,75 @@ public class SMTInterpol extends NoopScript {
 			return res;
 		}
 	}
-	private CheckType m_CheckType = CheckType.FULL;
-	private DPLLEngine m_Engine;
-	private Clausifier m_Clausifier;
-	private ScopedArrayList<Term> m_Assertions;
+	private CheckType mCheckType = CheckType.FULL;
+	private DPLLEngine mEngine;
+	private Clausifier mClausifier;
+	private ScopedArrayList<Term> mAssertions;
+	private final TerminationRequest mCancel;
 	
-	private String m_OutName = "stdout";
-	private PrintWriter m_Err = new PrintWriter(System.err);
-	private String m_ErrName = "stderr";
-	private SimpleLayout m_Layout;
-	private Logger m_Logger;
-	private WriterAppender m_Appender;
+	private String mOutName = "stdout";
+	private PrintWriter mErr = new PrintWriter(System.err);
+	private String mErrName = "stderr";
+	private SimpleLayout mLayout;
+	private Logger mLogger;
+	private WriterAppender mAppender;
 	
-	String m_ErrorMessage;
-	boolean m_ProduceModels = false;
-	long m_RandomSeed = Config.RANDOM_SEED;
-	boolean m_ProduceProofs = false;
-	boolean m_ProduceUnsatCores = false;
-	boolean m_ProduceAssignment = false;
-	boolean m_ProduceInterpolants = false;
+	String mErrorMessage;
+	boolean mProduceModels = false;
+	long mRandomSeed = Config.RANDOM_SEED;
+	boolean mProduceProofs = false;
+	boolean mProduceUnsatCores = false;
+	boolean mProduceAssignment = false;
+	boolean mProduceInterpolants = false;
 	/**
 	 * Current state of the option :print-success. If this is false,
 	 * the success output of the commands are not printed.
 	 */
-	boolean m_ReportSuccess = true;
+	boolean mReportSuccess = true;
 	/**
 	 * Current state of the option :print-terms-cse.  If this is 
 	 * true common subexpressions in output are eliminated by lets.
 	 */
-	boolean m_PrintCSE = true;
+	boolean mPrintCSE = true;
 	
-	boolean m_InterpolantCheckMode = false;
-	boolean m_UnsatCoreCheckMode = false;
-	boolean m_ModelCheckMode = false;
+	boolean mInterpolantCheckMode = false;
+	boolean mUnsatCoreCheckMode = false;
+	boolean mModelCheckMode = false;
 	
-	private int m_ProofMode;
+	private int mProofMode;
 	
-	de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model m_Model = null;
-	private boolean m_PartialModels = false;
+	de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model mModel = null;
+	private boolean mPartialModels = false;
 	
 	private final static Object NAME = new QuotedObject("SMTInterpol");
-	private final static Object VERSION = new QuotedObject("2.0");
+	private final static Object VERSION = new QuotedObject(Version.VERSION);
 	private final static Object AUTHORS = new QuotedObject(
 					"Jochen Hoenicke, Juergen Christ, and Alexander Nutz");
 	private final static Object INTERPOLATION_METHOD = new QuotedObject("tree");
 	// I assume an initial check s.t. first (get-info :status) returns sat
-	private LBool m_Status = LBool.SAT;
+	private LBool mStatus = LBool.SAT;
 	
 	// The status set in the benchmark
-	private String m_StatusSet = null;
-	private ReasonUnknown m_ReasonUnknown = null;
+	private String mStatusSet = null;
+	private ReasonUnknown mReasonUnknown = null;
 	// Soft timeout for the solver (in milliseconds)
-	private long m_Timeout;
+	private long mTimeout;
 	
 	// The assertion stack was modified after the last check-sat, i.e., the
 	// m_status field is not valid and we have to deactivate
 	// get-{value,model,interpolants,proof}.
-	private boolean m_AssertionStackModified = true;
+	private boolean mAssertionStackModified = true;
 	// The assertion stack level at which the first division-by-0 was
 	// encountered.  If it is -1, it means "never"
-	private int m_By0Seen = -1;
+	private int mBy0Seen = -1;
 	
 	// The proof transformation currently used.
-	private AvailableTransformations m_ProofTransformation =
+	private AvailableTransformations mProofTransformation =
 		AvailableTransformations.NONE;
 	
-	private boolean m_SimplifyInterpolants = false;
-	private CheckType m_SimplifyCheckType = CheckType.QUICK;
-	private boolean m_SimplifyRepeatedly = true;
+	private boolean mSimplifyInterpolants = false;
+	private CheckType mSimplifyCheckType = CheckType.QUICK;
+	private boolean mSimplifyRepeatedly = true;
 	
 	// The option numbers
 	private final static int OPT_PRINT_SUCCESS = 0;
@@ -507,7 +523,7 @@ public class SMTInterpol extends NoopScript {
 	//// Add a new option number for every new option
 	
 	// The Options Map
-	private final static OptionMap options = new OptionMap();
+	private final static OptionMap OPTIONS = new OptionMap();
 	
 	static {
 		new BoolOption(":print-success",
@@ -577,27 +593,82 @@ public class SMTInterpol extends NoopScript {
 	 * command that needed sat after last check got unsat: 4
 	 * command that needed unsat after last check got sat: 5
 	 */
-	private final boolean m_ddfriendly = 
-			System.getProperty("smtinterpol.ddfriendly") != null;
+	private final boolean mDDFriendly =
+	        !Config.COMPETITION 
+			    && System.getProperty("smtinterpol.ddfriendly") != null;
 	
+	/**
+	 * Default constructor using the root logger and no user termination
+	 * request.  If this constructor is used, SMTInterpol assumes ownership of
+	 * the logger.
+	 */
 	public SMTInterpol() {
-		this(Logger.getRootLogger(), true);
+		this(Logger.getRootLogger(), true, new NoUserCancellation());
 	}
 	
+	/**
+	 * Construct SMTInterpol with a user-owned logger but without user
+	 * termination request.  Note that the logger is assumed to be correctly set
+	 * up.
+	 * @param logger The logger owned by the caller.
+	 */
 	public SMTInterpol(Logger logger) {
-		this(logger, false);
+		this(logger, false, new NoUserCancellation());
 	}
 	
+	/**
+	 * Construct SMTInterpol with a but without user termination request.  The
+	 * logger has to be set up correctly if SMTInterpol should not take
+	 * ownership of it.
+	 * @param logger    The logger owned by the caller.
+	 * @param ownLogger Should SMTInterpol take ownership of the logger?
+	 */
 	public SMTInterpol(Logger logger, boolean ownLogger) {
-		m_Logger = logger;
+		this(logger, ownLogger, new NoUserCancellation());
+	}
+	
+	/**
+	 * Default constructor using the root logger and a given user termination
+	 * request.  If this constructor is used, SMTInterpol assumes ownership of
+	 * the logger.
+	 * @param cancel User termination request to poll during checks.
+	 */
+	public SMTInterpol(TerminationRequest cancel) {
+		this(Logger.getRootLogger(), true, cancel);
+	}
+	
+	/**
+	 * Construct SMTInterpol with a user-owned logger and a user termination
+	 * request.  Note that the logger is assumed to be correctly set up.
+	 * @param logger The logger owned by the caller.
+	 * @param cancel User termination request to poll during checks.
+	 */
+	public SMTInterpol(Logger logger, TerminationRequest cancel) {
+		this(logger, false, cancel);
+	}
+	
+	/**
+	 * Construct SMTInterpol with a user-owned logger but without user
+	 * termination request.  Note that the logger is assumed to be correctly set
+	 * up.
+	 * @param logger    The logger owned by the caller.
+	 * @param ownLogger Should SMTInterpol take ownership of the logger?
+	 * @param cancel    User termination request to poll during checks.
+	 */
+	public SMTInterpol(
+			Logger logger, boolean ownLogger, TerminationRequest cancel) {
+		if (cancel == null)
+			cancel = new NoUserCancellation();
+		mLogger = logger;
 		if (ownLogger) {
-			m_Layout = new SimpleLayout();
-			m_Appender = new WriterAppender(m_Layout, m_Err);
-	        m_Logger.addAppender(m_Appender);
-	        m_Logger.setLevel(Config.DEFAULT_LOG_LEVEL);
+			mLayout = new SimpleLayout();
+			mAppender = new WriterAppender(mLayout, mErr);
+			mLogger.addAppender(mAppender);
+			mLogger.setLevel(Config.DEFAULT_LOG_LEVEL);
 		}
-        m_Timeout = 0;
-        reset();
+		mTimeout = 0;
+		mCancel = cancel;
+		reset();
 	}
 	/**
 	 * Copy the current context and modify some pre-theory options.  The copy
@@ -613,90 +684,98 @@ public class SMTInterpol extends NoopScript {
 	 */
 	public SMTInterpol(SMTInterpol other, Map<String, Object> options) {
 		super(other.getTheory());
-		m_Logger = other.m_Logger;
-		m_Timeout = other.m_Timeout;
+		mLogger = other.mLogger;
+		mTimeout = other.mTimeout;
 		if (options != null)
 			for (Map.Entry<String, Object> me : options.entrySet())
 				setOption(me.getKey(), me.getValue());
-		m_Engine = new DPLLEngine(getTheory(), m_Logger);
-        m_Clausifier = new Clausifier(m_Engine, 0);
-		m_Clausifier.setLogic(getTheory().getLogic());
-		m_Engine.getRandom().setSeed(m_RandomSeed);
+		mCancel = other.mCancel;
+		mEngine = new DPLLEngine(getTheory(), mLogger, mCancel);
+		mClausifier = new Clausifier(mEngine, 0);
+		mClausifier.setLogic(getTheory().getLogic());
+		mEngine.getRandom().setSeed(mRandomSeed);
 	}
 	
-	public void reset() {
+	// Called in ctor => make it final
+	/**
+	 * Unset the logic and clear the assertion stack.  This does not reset
+	 * online modifyable options.
+	 */
+	public final void reset() {
 		super.reset();
-		m_Engine = null;
-		m_Model = null;
-		m_AssertionStackModified = true;
-        if (m_Assertions != null)
-        	m_Assertions.clear();
+		mEngine = null;
+		mModel = null;
+		mAssertionStackModified = true;
+        if (mAssertions != null)
+        	mAssertions.clear();
 	}
 	
+	@Override
 	public void push(int n) throws SMTLIBException {
 		super.push(n);
 		modifyAssertionStack();
 		while (n-- > 0) {
-			if (m_Assertions != null)
-				m_Assertions.beginScope();
-			m_Clausifier.push();
+			if (mAssertions != null)
+				mAssertions.beginScope();
+			mClausifier.push();
 		}
 	}
 	
+	@Override
 	public void pop(int n) throws SMTLIBException {
 		super.pop(n);
 		modifyAssertionStack();
 		int i = n;
 		while (i-- > 0) {
-			if (m_Assertions != null)
-				m_Assertions.endScope();
+			if (mAssertions != null)
+				mAssertions.endScope();
 		}
-		m_Clausifier.pop(n);
-		if (m_StackLevel < m_By0Seen)
+		mClausifier.pop(n);
+		if (mStackLevel < mBy0Seen)
 			// We've popped all division-by-0s.
-			m_By0Seen = -1;
+			mBy0Seen = -1;
 	}
-		
+	
+	@Override
 	public LBool checkSat() throws SMTLIBException {
-		if (m_Engine == null)
+		if (mEngine == null)
 			throw new SMTLIBException("No logic set!");
-		m_Model = null;
-		m_AssertionStackModified = false;
+		mModel = null;
+		mAssertionStackModified = false;
 		Timer timer = null;
-		if (m_Timeout > 0) {
+		if (mTimeout > 0) {
 			timer = new Timer("Timing thread",true);
 			timer.schedule(new TimerTask() {
 
 				@Override
 				public void run() {
-					synchronized (m_Engine) {
-						m_Engine.setCompleteness(DPLLEngine.INCOMPLETE_TIMEOUT);
-						m_Engine.stop();
+					synchronized (mEngine) {
+						mEngine.setCompleteness(DPLLEngine.INCOMPLETE_TIMEOUT);
+						mEngine.stop();
 					}
 				}
 			
-			}, m_Timeout);
+			}, mTimeout);
 		}
 		
 		LBool result = LBool.UNKNOWN;
-		m_ReasonUnknown = ReasonUnknown.INCOMPLETE;
-		m_Engine.setRandomSeed(m_RandomSeed);
+		mReasonUnknown = ReasonUnknown.INCOMPLETE;
+		mEngine.setRandomSeed(mRandomSeed);
 		try {
-			if (m_CheckType.check(m_Engine)) {
-				if (m_Engine.hasModel()) {
+			if (mCheckType.check(mEngine)) {
+				if (mEngine.hasModel()) {
 					result = LBool.SAT;
-					if (m_ModelCheckMode/* && m_ProduceModels*/) {
-						// Damn coding conventions!  There is no way to format
-						// this nicely!!!
-						m_Model = new de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model(
-								m_Clausifier, getTheory(), m_PartialModels);
-						for (Term asserted : m_Assertions) {
-							Term checkedResult = m_Model.evaluate(asserted);
-							if (checkedResult != getTheory().TRUE) {
-								if (m_ddfriendly)
+					if (mModelCheckMode/* && m_ProduceModels*/) {
+						mModel = new de.uni_freiburg.informatik.ultimate.
+						                smtinterpol.model.Model(
+								mClausifier, getTheory(), mPartialModels);
+						for (Term asserted : mAssertions) {
+							Term checkedResult = mModel.evaluate(asserted);
+							if (checkedResult != getTheory().mTrue) {
+								if (mDDFriendly)
 									System.exit(1);
-								m_Logger.fatal("Model does not satisfy " + 
-										asserted.toStringDirect());
+								mLogger.fatal("Model does not satisfy " 
+										+ asserted.toStringDirect());
 //								for (Term t : getSatisfiedLiterals())
 //									if (m_Model.evaluate(t) != getTheory().TRUE)
 //										m_Logger.fatal("Unsat lit: " + t.toStringDirect());
@@ -705,68 +784,72 @@ public class SMTInterpol extends NoopScript {
 					}
 				} else {
 					result = LBool.UNKNOWN;
-					switch(m_Engine.getCompleteness()) {
+					switch(mEngine.getCompleteness()) {
 					case DPLLEngine.COMPLETE:
-						if (m_CheckType == CheckType.FULL)
+						if (mCheckType == CheckType.FULL)
 							throw new InternalError("Complete but no model?");
-						m_ReasonUnknown = ReasonUnknown.INCOMPLETE;
+						mReasonUnknown = ReasonUnknown.INCOMPLETE;
+						break;
 					case DPLLEngine.INCOMPLETE_MEMOUT:
-						m_ReasonUnknown = ReasonUnknown.MEMOUT;
+						mReasonUnknown = ReasonUnknown.MEMOUT;
 						break;
 					case DPLLEngine.INCOMPLETE_TIMEOUT:
-						m_ReasonUnknown = ReasonUnknown.TIMEOUT;
+						mReasonUnknown = ReasonUnknown.TIMEOUT;
 						break;
 					case DPLLEngine.INCOMPLETE_QUANTIFIER:
 					case DPLLEngine.INCOMPLETE_THEORY:
-						m_ReasonUnknown = ReasonUnknown.INCOMPLETE;
+						mReasonUnknown = ReasonUnknown.INCOMPLETE;
 						break;
 					case DPLLEngine.INCOMPLETE_UNKNOWN:
-						m_ReasonUnknown = ReasonUnknown.CRASHED;
+						mReasonUnknown = ReasonUnknown.CRASHED;
 						break;
 					case DPLLEngine.INCOMPLETE_CHECK:
-						m_ReasonUnknown = ReasonUnknown.INCOMPLETE;
+						mReasonUnknown = ReasonUnknown.INCOMPLETE;
+						break;
+					case DPLLEngine.INCOMPLETE_CANCELLED:
+						mReasonUnknown = ReasonUnknown.CANCELLED;
 						break;
 					default:
 						throw new InternalError("Unknown incompleteness reason");
 					}
-					m_Logger.info(
+					mLogger.info(
 							new DebugMessage(
 									"Got {0} as reason to return unknown",
-									m_Engine.getCompletenessReason()));
+									mEngine.getCompletenessReason()));
 				}
 			} else {
 				result = LBool.UNSAT;
 			}
-		} catch (OutOfMemoryError oom) {
+		} catch (OutOfMemoryError eoom) {
 			// BUGFIX: Don't do this since log4j will produce another OOM.
 //			m_Logger.fatal("OOM during check ",oom);
-			m_ReasonUnknown = ReasonUnknown.MEMOUT;
+			mReasonUnknown = ReasonUnknown.MEMOUT;
 		} catch (Throwable ex) {
-			if (m_ddfriendly)
-				System.exit(3);
-			m_Logger.fatal("Error during check ",ex);
-			m_ReasonUnknown = ReasonUnknown.CRASHED;
+			if (mDDFriendly)
+				System.exit(3);// NOCHECKSTYLE
+			mLogger.fatal("Error during check ",ex);
+			mReasonUnknown = ReasonUnknown.CRASHED;
 		}
-		m_Status = result;
-		if (Config.CHECK_STATUS_SET) {
-			if (isStatusSet() && m_ReasonUnknown != ReasonUnknown.MEMOUT &&
-					!m_Status.toString().equals(m_StatusSet)) {
-				m_Logger.warn("Status differs: User said " + m_StatusSet +
-						" but we got " + m_Status);
-			}
+		mStatus = result;
+		if (Config.CHECK_STATUS_SET && isStatusSet() 
+				&& mReasonUnknown != ReasonUnknown.MEMOUT
+					&& !mStatus.toString().equals(mStatusSet)) {
+			mLogger.warn("Status differs: User said " + mStatusSet
+					+ " but we got " + mStatus);
 		}
-		m_StatusSet = null;
+		mStatusSet = null;
 		if (timer != null)
 			timer.cancel();
 		return result;
 	}
 	
 	private final boolean isStatusSet() {
-		return m_StatusSet != null && !m_StatusSet.equals("unknown");
+		return mStatusSet != null && !mStatusSet.equals("unknown");
 	}
 
+	@Override
 	public void setLogic(String logic)
-	throws UnsupportedOperationException, SMTLIBException {
+	    throws UnsupportedOperationException, SMTLIBException {
 		try {
 			setLogic(Logics.valueOf(logic));
 		} catch (IllegalArgumentException ex) {
@@ -776,58 +859,59 @@ public class SMTInterpol extends NoopScript {
 		}
 	}
 	
+	@Override
 	public void setLogic(Logics logic)
-	throws UnsupportedOperationException, SMTLIBException {
-		m_SolverSetup = new SMTInterpolSetup(m_ProofMode);
+		throws UnsupportedOperationException, SMTLIBException {
+		mSolverSetup = new SMTInterpolSetup(mProofMode);
 		super.setLogic(logic);
 		try {
-			m_Engine = new DPLLEngine(getTheory(), m_Logger);
-	        m_Clausifier = new Clausifier(m_Engine, m_ProofMode);
-	        // This has to be before set-logic since we need to capture
-	        // initialization of CClosure.
-	        m_Engine.setProofGeneration(
-					m_ProduceProofs || m_ProduceUnsatCores || m_ProduceInterpolants);
-			m_Clausifier.setLogic(logic);
-			m_Clausifier.setAssignmentProduction(m_ProduceAssignment);
-			m_Engine.setProduceAssignments(m_ProduceAssignment);
-			m_Engine.setRandomSeed(m_RandomSeed);
-		} catch (UnsupportedOperationException logicUnsupported) {
+			mEngine = new DPLLEngine(getTheory(), mLogger, mCancel);
+			mClausifier = new Clausifier(mEngine, mProofMode);
+			// This has to be before set-logic since we need to capture
+			// initialization of CClosure.
+			mEngine.setProofGeneration(
+					mProduceProofs || mProduceUnsatCores || mProduceInterpolants);
+			mClausifier.setLogic(logic);
+			mClausifier.setAssignmentProduction(mProduceAssignment);
+			mEngine.setProduceAssignments(mProduceAssignment);
+			mEngine.setRandomSeed(mRandomSeed);
+		} catch (UnsupportedOperationException eLogicUnsupported) {
 			super.reset();
-			m_Engine = null;
-			m_Clausifier = null;
-			throw logicUnsupported;
+			mEngine = null;
+			mClausifier = null;
+			throw eLogicUnsupported;
 		}
 	}
 
 	@Override
 	public LBool assertTerm(Term term) throws SMTLIBException {
-		if (m_Engine == null)
+		if (mEngine == null)
 			throw new SMTLIBException("No logic set!");
 		super.assertTerm(term);
 		if (!term.getSort().equals(getTheory().getBooleanSort())) {
-			if (term.getSort().getTheory() != getTheory())
-				throw new SMTLIBException("Asserted terms created with incompatible theory");
-			else
+			if (term.getSort().getTheory() == getTheory())
 				throw new SMTLIBException("Asserted terms must have sort Bool");
+			else
+				throw new SMTLIBException("Asserted terms created with incompatible theory");
 		}
 		if (Config.STRONG_USAGE_CHECKS && term.getFreeVars().length != 0)
 			throw new SMTLIBException("Asserted terms must be closed");
-		if (m_Assertions != null)
-			m_Assertions.add(term);
-		if (m_Engine.inconsistent()) {
-			m_Logger.info("Asserting into inconsistent context");
+		if (mAssertions != null)
+			mAssertions.add(term);
+		if (mEngine.inconsistent()) {
+			mLogger.info("Asserting into inconsistent context");
 			return LBool.UNSAT;
 		}
 		try {
 			modifyAssertionStack();
-			m_Clausifier.addFormula(term);
+			mClausifier.addFormula(term);
 			/* We always have to reset the flag, but only need to set the stack
 			 * level if it is not already set. 
 			 */
-			if (m_Clausifier.resetBy0Seen() && m_By0Seen == -1)
-				m_By0Seen = m_StackLevel;
-			if (!m_Engine.quickCheck()) {
-				m_Logger.info("Assertion made context inconsistent");
+			if (mClausifier.resetBy0Seen() && mBy0Seen == -1)
+				mBy0Seen = mStackLevel;
+			if (!mEngine.quickCheck()) {
+				mLogger.info("Assertion made context inconsistent");
 				return LBool.UNSAT;
 			}
 		} catch (UnsupportedOperationException ex) {
@@ -838,29 +922,29 @@ public class SMTInterpol extends NoopScript {
 
 	@Override
 	public Term[] getAssertions() throws SMTLIBException {
-		if (m_Engine == null)
+		if (mEngine == null)
 			throw new SMTLIBException("No logic set!");
-		if (m_Assertions != null)
-			return m_Assertions.toArray(new Term[m_Assertions.size()]);
+		if (mAssertions != null)
+			return mAssertions.toArray(new Term[mAssertions.size()]);
 		throw new SMTLIBException(
 				"Set option :interactive-mode to true to get assertions!");
 	}
 
 	@Override
 	public Assignments getAssignment() throws SMTLIBException {
-		if (m_Engine == null)
+		if (mEngine == null)
 			throw new SMTLIBException("No logic set!");
-		if (!m_Engine.isProduceAssignments())
+		if (!mEngine.isProduceAssignments())
 			throw new SMTLIBException(
 				"Set option :produce-assignments to true to generate assignments!");
 		checkAssertionStackModified();
-		return m_Engine.getAssignments();
+		return mEngine.getAssignments();
 	}
 
 	@Override
 	public Object getInfo(String info) throws UnsupportedOperationException {
 		if (":status".equals(info))
-			return m_Status;
+			return mStatus;
 		if (":name".equals(info))
 			return NAME;
 		if (":version".equals(info))
@@ -868,55 +952,55 @@ public class SMTInterpol extends NoopScript {
 		if (":authors".equals(info))
 			return AUTHORS;
 		if (":all-statistics".equals(info)) {
-			return m_Engine == null ? new Object[0] : m_Engine.getStatistics();
+			return mEngine == null ? new Object[0] : mEngine.getStatistics();
 		}
 		if (":status-set".equals(info))
-			return m_StatusSet;
+			return mStatusSet;
 		if (":options".equals(info)) {
-			return options.getOptionNames();
+			return OPTIONS.getOptionNames();
 		}
 		if (":reason-unknown".equals(info)) {
-			if (m_Status != LBool.UNKNOWN)
+			if (mStatus != LBool.UNKNOWN)
 				throw new SMTLIBException("Status not unknown");
-			return m_ReasonUnknown;
+			return mReasonUnknown;
 		}
 		if (":assertion-stack-levels".equals(info))
-			return m_StackLevel;
+			return mStackLevel;
 		// Info from our SMTLIB interpolation proposal
 		if (":interpolation-method".equals(info))
 			return INTERPOLATION_METHOD;
-		Option opt = options.find(info);
+		Option opt = OPTIONS.find(info);
 		if (opt != null) {
 			if (opt.isOnlineModifyable()) {
 				return new Object[] { 
-						":description",
-						new QuotedObject(opt.getDescription()),
-						":online-modifyable" };
+					":description",
+					new QuotedObject(opt.getDescription()),
+					":online-modifyable" };
 			}
 			return new Object[] {
-					":description", new QuotedObject(opt.getDescription()) };
+				":description", new QuotedObject(opt.getDescription()) };
 		}
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Object getOption(String opt) throws UnsupportedOperationException {
-		Option o = options.find(opt);
+		Option o = OPTIONS.find(opt);
 		if (o == null)
 			throw new UnsupportedOperationException();
 		switch (o.getOptionNumber()) {
 		case OPT_PRINT_SUCCESS:
-			return m_ReportSuccess;
+			return mReportSuccess;
 		case OPT_VERBOSITY:
-			switch(m_Logger.getLevel().toInt()) {
+			switch(mLogger.getLevel().toInt()) {
 			case Level.ALL_INT:
-				return BigInteger.valueOf(6);
+				return BigInteger.valueOf(6); // NOCHECKSTYLE
 			case Level.DEBUG_INT:
-				return BigInteger.valueOf(5);
+				return BigInteger.valueOf(5); // NOCHECKSTYLE
 			case Level.INFO_INT:
-				return BigInteger.valueOf(4);
+				return BigInteger.valueOf(4); // NOCHECKSTYLE
 			case Level.WARN_INT:
-				return BigInteger.valueOf(3);
+				return BigInteger.valueOf(3); // NOCHECKSTYLE
 			case Level.ERROR_INT:
 				return BigInteger.valueOf(2);
 			case Level.FATAL_INT:
@@ -925,45 +1009,45 @@ public class SMTInterpol extends NoopScript {
 				return BigInteger.valueOf(0);
 			}
 		case OPT_TIMEOUT:
-			return BigInteger.valueOf(m_Timeout);
+			return BigInteger.valueOf(mTimeout);
 		case OPT_REGULAR_OUTPUT_CHANNEL:
-			return m_OutName;
+			return mOutName;
 		case OPT_DIAGNOSTIC_OUTPUT_CHANNEL:
-			return m_ErrName;
+			return mErrName;
 		case OPT_PRODUCE_PROOFS:
-			return m_ProduceProofs;
+			return mProduceProofs;
 		case OPT_PRODUCE_MODELS:
-			return m_ProduceModels;
+			return mProduceModels;
 		case OPT_PRODUCE_ASSIGNMENTS:
-			return m_ProduceAssignment;
+			return mProduceAssignment;
 		case OPT_RANDOM_SEED:
-			return BigInteger.valueOf(m_RandomSeed);
+			return BigInteger.valueOf(mRandomSeed);
 		case OPT_INTERACTIVE_MODE:
-			return m_Assertions != null;
+			return mAssertions != null;
 		case OPT_INTERPOLANT_CHECK_MODE:
-			return m_InterpolantCheckMode;
+			return mInterpolantCheckMode;
 		case OPT_PRODUCE_UNSAT_CORES:
-			return m_ProduceUnsatCores;
+			return mProduceUnsatCores;
 		case OPT_UNSAT_CORE_CHECK_MODE:
-			return m_UnsatCoreCheckMode;
+			return mUnsatCoreCheckMode;
 		case OPT_PRINT_TERMS_CSE:
-			return m_PrintCSE;
+			return mPrintCSE;
 		case OPT_MODEL_CHECK_MODE:
-			return m_ModelCheckMode;
+			return mModelCheckMode;
 		case OPT_PROOF_TRANSFORMATION:
-			return m_ProofTransformation.name();
+			return mProofTransformation.name();
 		case OPT_PRODUCE_INTERPOLANTS:
-			return m_ProduceInterpolants;
+			return mProduceInterpolants;
 		case OPT_MODELS_PARTIAL:
-			return m_PartialModels;
+			return mPartialModels;
 		case OPT_CHECK_TYPE:
-			return m_CheckType.name().toLowerCase();
+			return mCheckType.name().toLowerCase();
 		case OPT_SIMPLIFY_INTERPOLANTS:
-			return m_SimplifyInterpolants;
+			return mSimplifyInterpolants;
 		case OPT_SIMPLIFY_CHECK_TYPE:
-			return m_SimplifyCheckType.name().toLowerCase();
+			return mSimplifyCheckType.name().toLowerCase();
 		case OPT_SIMPLIFY_REPEATEDLY:
-			return m_SimplifyRepeatedly;
+			return mSimplifyRepeatedly;
 		default:
 			throw new InternalError("This should be implemented!!!");
 		}
@@ -971,20 +1055,20 @@ public class SMTInterpol extends NoopScript {
 
 	@Override
 	public Term getProof()
-	throws SMTLIBException, UnsupportedOperationException {
-		if (m_Engine == null)
+	    throws SMTLIBException, UnsupportedOperationException {
+		if (mEngine == null)
 			throw new SMTLIBException("No logic set!");
 		int proofMode = 0;
-		if (m_ProduceInterpolants || m_ProduceUnsatCores)
+		if (mProduceInterpolants || mProduceUnsatCores)
 			proofMode = 1;
-		if (m_ProduceProofs)
+		if (mProduceProofs)
 			proofMode = 2;
 		if (proofMode == 0)
 			throw new SMTLIBException("Option :produce-proofs not set to true");
 		if (proofMode == 1)
-			m_Logger.warn("Using partial proofs (cut at CNF-level).  " +
-					"Set option :produce-proofs to true to get complete proofs."
-					);
+			mLogger.warn("Using partial proofs (cut at CNF-level).  "
+				+ "Set option :produce-proofs to true to get complete proofs."
+			);
 		checkAssertionStackModified();
 		Clause unsat = retrieveProof();
 		if (Config.CHECK_PROP_PROOF) {
@@ -995,39 +1079,39 @@ public class SMTInterpol extends NoopScript {
 		try {
 			ProofTermGenerator generator = new ProofTermGenerator(getTheory());
 			Term res = generator.convert(retrieveProof());
-			if (m_By0Seen != -1)
+			if (mBy0Seen != -1)
 				res = new Div0Remover().transform(res);
 			return res;
 		} catch (Exception exc) {	
-			throw new SMTLIBException(exc.getMessage() == null ? 
-					exc.toString() : exc.getMessage());
+			throw new SMTLIBException(exc.getMessage() == null 
+					? exc.toString() : exc.getMessage());
 		}
 	}
 	
 	@SuppressWarnings("unchecked")
+	@Override
 	public Term[] getInterpolants(Term[] partition, int[] startOfSubtree) {
-		if (m_Engine == null)
+		if (mEngine == null)
 			throw new SMTLIBException("No logic set!");
-		if (!m_ProduceProofs && !m_ProduceInterpolants)
+		if (!mProduceProofs && !mProduceInterpolants)
 			throw new SMTLIBException(
 					"Interpolant production not enabled.  Set either :produce-interpolants or :produce-proofs to true");
 		checkAssertionStackModified();
-		Clause refutation = retrieveProof();
 		if (partition.length != startOfSubtree.length)
 			throw new SMTLIBException(
-			"Partition table and subtree array need to have equal length");
+			    "Partition table and subtree array need to have equal length");
 		if (Config.STRONG_USAGE_CHECKS) {
 			for (int i = 0; i < partition.length; i++) {
 				if (startOfSubtree[i] < 0)
 					throw new SMTLIBException(
-					"subtree array must not contain negative element");
+					    "subtree array must not contain negative element");
 				int j = i;
 				while (startOfSubtree[i] < j)
-					j = startOfSubtree[j-1];
+					j = startOfSubtree[j - 1];
 				if (startOfSubtree[i] != j)
 					throw new SMTLIBException("malformed subtree array.");
 			}
-			if (startOfSubtree[partition.length-1] != 0)
+			if (startOfSubtree[partition.length - 1] != 0)
 				throw new SMTLIBException("malformed subtree array.");
 		}
 		Set<String>[] parts = new Set[partition.length];
@@ -1039,13 +1123,12 @@ public class SMTInterpol extends NoopScript {
 			}
 			FunctionSymbol fsym = ((ApplicationTerm) partition[i]).getFunction();
 			Term[] terms;
-			if (!fsym.isIntern()) {
-				terms = new Term[] { partition[i] };
-			} else {
+			if (fsym.isIntern()) {
 				if (!fsym.getName().equals("and"))
 					throw new SMTLIBException(errormsg);
 				terms = ((ApplicationTerm) partition[i]).getParameters();
-			}
+			} else
+				terms = new Term[] { partition[i] };
 			parts[i] = new HashSet<String>();
 			for (int j = 0; j < terms.length; j++) {
 				if (!(terms[j] instanceof ApplicationTerm)) {
@@ -1062,26 +1145,27 @@ public class SMTInterpol extends NoopScript {
 		SMTInterpol tmpBench = null;
 		SymbolCollector collector = null;
 		Set<FunctionSymbol> globals = null;
-		if (m_InterpolantCheckMode) {
+		if (mInterpolantCheckMode) {
 			HashSet<String> usedParts = new HashSet<String>();
 			for (Set<String> part : parts)
 				usedParts.addAll(part);
 			tmpBench = new SMTInterpol(this,
 					Collections.singletonMap(":interactive-mode",
 							(Object)Boolean.TRUE));
-			Level old = tmpBench.m_Logger.getLevel();
+			Level old = tmpBench.mLogger.getLevel();
 			try {
-				tmpBench.m_Logger.setLevel(Level.ERROR);
+				tmpBench.mLogger.setLevel(Level.ERROR);
 				// Clone the current context except for the parts used in the
 				// interpolation problem
 				collector = new SymbolCollector();
 				collector.startCollectTheory();
-				termloop: for (Term asserted : m_Assertions) {
+			termloop: 
+			    for (Term asserted : mAssertions) {
 					if (asserted instanceof AnnotatedTerm) {
 						AnnotatedTerm annot = (AnnotatedTerm) asserted;
 						for (Annotation an : annot.getAnnotations()) {
-							if (":named".equals(an.getKey()) && 
-									usedParts.contains(an.getValue()))
+							if (":named".equals(an.getKey()) 
+									&& usedParts.contains(an.getValue()))
 								continue termloop;
 						}
 					}
@@ -1090,26 +1174,27 @@ public class SMTInterpol extends NoopScript {
 				}
 				globals = collector.getTheorySymbols();
 			} finally {
-				tmpBench.m_Logger.setLevel(old);
+				tmpBench.mLogger.setLevel(old);
 			}
 			// free space
 			usedParts = null;
 		}
 		Interpolator interpolator =
-			new Interpolator(m_Logger, tmpBench, getTheory(), parts, startOfSubtree);
+			new Interpolator(mLogger, tmpBench, getTheory(), parts, startOfSubtree);
+		Clause refutation = retrieveProof();
 		Term[] ipls = interpolator.getInterpolants(refutation);
 		
-		if (m_By0Seen != -1) {
+		if (mBy0Seen != -1) {
 			Div0Remover rem = new Div0Remover();
 			for (int i = 0; i < ipls.length; ++i)
 				ipls[i] = rem.transform(ipls[i]);
 		}
 		
-		if (m_InterpolantCheckMode) {
+		if (mInterpolantCheckMode) {
 			boolean error = false;
-			Level old = tmpBench.m_Logger.getLevel();
+			Level old = tmpBench.mLogger.getLevel();
 			try {
-				tmpBench.m_Logger.setLevel(Level.ERROR);
+				tmpBench.mLogger.setLevel(Level.ERROR);
 				// Compute Symbol occurrence
 				Map<FunctionSymbol, Integer>[] occs =
 					new Map[partition.length];
@@ -1123,11 +1208,11 @@ public class SMTInterpol extends NoopScript {
 					int child = i - 1;
 					while (child >= startOfSubtree[i]) {
 						// join occurrence maps
-						for (Map.Entry<FunctionSymbol, Integer> me :
-							occs[child].entrySet()) {
+						for (Map.Entry<FunctionSymbol, Integer> me
+						        : occs[child].entrySet()) {
 							Integer ival = occs[i].get(me.getKey());
-							ival = ival == null ? me.getValue() :
-								ival + me.getValue();
+							ival = ival == null ? me.getValue()
+								: ival + me.getValue();
 							occs[i].put(me.getKey(), ival);
 						}
 						child = startOfSubtree[child] - 1;
@@ -1149,45 +1234,44 @@ public class SMTInterpol extends NoopScript {
 						if (i != ipls.length)
 							tmpBench.assertTerm(tmpBench.term("not", ipls[i]));
 					} catch (SMTLIBException exc) {
-						m_Logger.error("Could not assert interpolant", exc);
+						mLogger.error("Could not assert interpolant", exc);
 					}
 					LBool res = tmpBench.checkSat();
 					if (res != LBool.UNSAT) {
-						if (m_ddfriendly)
+						if (mDDFriendly)
 							System.exit(2);
-						m_Logger.error(new DebugMessage(
-								"Interpolant {0} not inductive: " +
-								" (Check returned {1})", i, res));
+						mLogger.error(new DebugMessage(
+						        "Interpolant {0} not inductive: "
+								+ " (Check returned {1})", i, res));
 						error = true;
 					}
 					tmpBench.pop(1);
 					// Check symbol condition
-					if (i != ipls.length) {
-						if (checker.check(ipls[i], occs[i], occs[ipls.length])) {
-							m_Logger.error(new DebugMessage(
-									"Symbol error in Interpolant {0}.  " +
-									"Subtree only symbols: {1}.  " +
-									"Non-subtree only symbols: {2}.", i,
-									checker.getLeftErrors(),
-									checker.getRightErrors()));
-							error = true;
-						}
+					if (i != ipls.length 
+						&& checker.check(ipls[i], occs[i], occs[ipls.length])) {
+						mLogger.error(new DebugMessage(
+								"Symbol error in Interpolant {0}.  "
+								+ "Subtree only symbols: {1}.  "
+								+ "Non-subtree only symbols: {2}.", i,
+								checker.getLeftErrors(),
+								checker.getRightErrors()));
+						error = true;
 					}
 				}
 			} finally {
-				tmpBench.m_Logger.setLevel(old);
+				tmpBench.mLogger.setLevel(old);
 				// Not needed for now, but maybe later...
 				tmpBench.exit();
 			}
 			if (error)
-				throw new SMTLIBException
-					("generated interpolants did not pass sanity check");
+				throw new SMTLIBException(
+				        "generated interpolants did not pass sanity check");
 		}
-		if (m_SimplifyInterpolants) {
+		if (mSimplifyInterpolants) {
 			SimplifyDDA simplifier = new SimplifyDDA(new SMTInterpol(this, 
 					Collections.singletonMap(
-							":check-type", (Object) m_SimplifyCheckType.name())),
-							m_SimplifyRepeatedly);
+							":check-type", (Object) mSimplifyCheckType.name())),
+							mSimplifyRepeatedly);
 			for (int i = 0; i < ipls.length; ++i)
 				ipls[i] = simplifier.getSimplifiedTerm(ipls[i]);
 		}
@@ -1196,34 +1280,34 @@ public class SMTInterpol extends NoopScript {
 	
 	@Override
 	public Term[] getUnsatCore()
-	throws SMTLIBException, UnsupportedOperationException {
-		if (m_Engine == null)
+	    throws SMTLIBException, UnsupportedOperationException {
+		if (mEngine == null)
 			throw new SMTLIBException("No logic set!");
-		if (!m_ProduceUnsatCores)
+		if (!mProduceUnsatCores)
 			throw new SMTLIBException(
 					"Set option :produce-unsat-cores to true before using get-unsat-cores");
 		checkAssertionStackModified();
-		UnsatCoreCollector ucc = new UnsatCoreCollector(this);
-		Clause unsat = m_Engine.getProof();
+		Clause unsat = mEngine.getProof();
 		if (unsat == null)
 			throw new SMTLIBException("Logical context not inconsistent!");
-		Term[] core = ucc.getUnsatCore(unsat);
-		if (m_UnsatCoreCheckMode) {
+		Term[] core = new UnsatCoreCollector(this).getUnsatCore(unsat);
+		if (mUnsatCoreCheckMode) {
 			HashSet<String> usedParts = new HashSet<String>();
 			for (Term t : core)
 				usedParts.add(((ApplicationTerm)t).getFunction().getName());
 			SMTInterpol tmpBench = new SMTInterpol(this, null);
-			Level old = tmpBench.m_Logger.getLevel();
+			Level old = tmpBench.mLogger.getLevel();
 			try {
-				tmpBench.m_Logger.setLevel(Level.ERROR);
+				tmpBench.mLogger.setLevel(Level.ERROR);
 				// Clone the current context except for the parts used in
 				// the unsat core
-				termloop: for (Term asserted : m_Assertions) {
+			termloop:
+			    for (Term asserted : mAssertions) {
 					if (asserted instanceof AnnotatedTerm) {
 						AnnotatedTerm annot = (AnnotatedTerm) asserted;
 						for (Annotation an : annot.getAnnotations()) {
-							if (":named".equals(an.getKey()) && 
-									usedParts.contains(an.getValue()))
+							if (":named".equals(an.getKey()) 
+									&& usedParts.contains(an.getValue()))
 								continue termloop;
 						}
 					}
@@ -1233,12 +1317,12 @@ public class SMTInterpol extends NoopScript {
 					tmpBench.assertTerm(t);
 				LBool isUnsat = tmpBench.checkSat();
 				if (isUnsat != LBool.UNSAT) {
-					m_Logger.error(new DebugMessage(
+					mLogger.error(new DebugMessage(
 							"Unsat core could not be proven unsat (Result is {0})",
 							isUnsat));
 				}
 			} finally {
-				tmpBench.m_Logger.setLevel(old);
+				tmpBench.mLogger.setLevel(old);
 				// Not needed for now, but maybe later...
 				tmpBench.exit();
 			}
@@ -1248,20 +1332,20 @@ public class SMTInterpol extends NoopScript {
 
 	@Override
 	public Map<Term, Term> getValue(Term[] terms)
-	throws SMTLIBException, UnsupportedOperationException {
-		if (m_Engine == null)
+	    throws SMTLIBException, UnsupportedOperationException {
+		if (mEngine == null)
 			throw new SMTLIBException("No logic set!");
 		buildModel();
-		return m_Model.evaluate(terms);
+		return mModel.evaluate(terms);
 	}
 	
 	@Override
 	public Model getModel() throws SMTLIBException,
 			UnsupportedOperationException {
-		if (m_Engine == null)
+		if (mEngine == null)
 			throw new SMTLIBException("No logic set!");
 		buildModel();
-		return m_Model;
+		return mModel;
 	}
 
 	@Override
@@ -1269,18 +1353,26 @@ public class SMTInterpol extends NoopScript {
 		if (info.equals(":status")
 			&& value instanceof String) {
 			if (value.equals("sat")) {
-				m_Status = LBool.SAT;
-				m_StatusSet = "sat";
+				mStatus = LBool.SAT;
+				mStatusSet = "sat";
 			} else if (value.equals("unsat")) {
-				m_Status = LBool.UNSAT;
-				m_StatusSet = "unsat";
+				mStatus = LBool.UNSAT;
+				mStatusSet = "unsat";
 			} else if (value.equals("unknown")) {
-				m_Status = LBool.UNKNOWN;
-				m_StatusSet = "unknown";
+				mStatus = LBool.UNKNOWN;
+				mStatusSet = "unknown";
 			}
 		}
 	}
 	
+	/**
+	 * Translates special files names specified by SMTLIB into PrintWriters.
+	 * 
+	 * The special file names are <pre>stdout</pre> and <pre>stderr</pre>.
+	 * @param file Name of a file or a special file name.
+	 * @return PrintWriter to write to this file.
+	 * @throws IOException Output file could not be opened for writing.
+	 */
 	public PrintWriter createChannel(String file) throws IOException {
 		if (file.equals("stdout"))
 			return new PrintWriter(System.out);
@@ -1291,135 +1383,134 @@ public class SMTInterpol extends NoopScript {
 	}
 	
 	private final void checkOnlineModifyable(Option opt) throws SMTLIBException {
-		if (m_Engine != null && !opt.isOnlineModifyable())
-			throw new SMTLIBException("Option " + opt.getName() + 
-					" can only be changed before setting the logic");
+		if (mEngine != null && !opt.isOnlineModifyable())
+			throw new SMTLIBException("Option " + opt.getName() 
+					+ " can only be changed before setting the logic");
 	}
 	
 	@Override
 	public void setOption(String opt, Object value)
-	throws UnsupportedOperationException, SMTLIBException {
-		Option o = options.find(opt);
+	    throws UnsupportedOperationException, SMTLIBException {
+		Option o = OPTIONS.find(opt);
 		if (o == null)
 			throw new UnsupportedOperationException();
 		checkOnlineModifyable(o);
 		switch (o.getOptionNumber()) {
 		case OPT_PRINT_SUCCESS:
-			m_ReportSuccess = o.checkArg(value, m_ReportSuccess);
+			mReportSuccess = o.checkArg(value, mReportSuccess);
 			break;
 		case OPT_VERBOSITY:
 			BigInteger blevel = o.checkArg(value, BigInteger.ZERO);// FAKE...
-			int level = blevel.bitLength() >= 32 ? 
+			int level = blevel.bitLength() >= 32 ?  // NOCHECKSTYLE
 					Integer.MAX_VALUE : blevel.intValue();
-			if (level > 5)
-				m_Logger.setLevel(Level.ALL);
-			else if (level > 4)
-				m_Logger.setLevel(Level.DEBUG);
-			else if (level > 3)
-				m_Logger.setLevel(Level.INFO);
+			if (level > 5) // NOCHECKSTYLE
+				mLogger.setLevel(Level.ALL);
+			else if (level > 4) // NOCHECKSTYLE
+				mLogger.setLevel(Level.DEBUG);
+			else if (level > 3) // NOCHECKSTYLE
+				mLogger.setLevel(Level.INFO);
 			else if (level > 2)
-				m_Logger.setLevel(Level.WARN);
+				mLogger.setLevel(Level.WARN);
 			else if (level > 1)
-				m_Logger.setLevel(Level.ERROR);
+				mLogger.setLevel(Level.ERROR);
 			else if (level > 0)
-				m_Logger.setLevel(Level.FATAL);
+				mLogger.setLevel(Level.FATAL);
 			else if (level == -1)
-				m_Logger.setLevel(Level.TRACE);
+				mLogger.setLevel(Level.TRACE);
 			else
-				m_Logger.setLevel(Level.OFF);
+				mLogger.setLevel(Level.OFF);
 			break;
 		case OPT_TIMEOUT:
 		{
 			BigInteger val = o.checkArg(value, BigInteger.ZERO);// FAKE...
 			if (val.signum() == -1)
-				m_Timeout = 0;
-			else if (val.bitLength() < 63)
-				m_Timeout = val.longValue();
+				mTimeout = 0;
+			else if (val.bitLength() < 63) // NOCHECKSTYLE
+				mTimeout = val.longValue();
 			else
 				// Don't think anyone will wait for that time...
-				m_Timeout = Long.MAX_VALUE;
+				mTimeout = Long.MAX_VALUE;
 			break;
 		}
 		case OPT_REGULAR_OUTPUT_CHANNEL:
-			m_OutName = o.checkArg(value, m_OutName);
+			mOutName = o.checkArg(value, mOutName);
 			break;
 		case OPT_DIAGNOSTIC_OUTPUT_CHANNEL:
-			if (m_Appender == null)
+			if (mAppender == null)
 				throw new SMTLIBException("SMTInterpol does not own the logger");
 			try {
-				String arg = o.checkArg(value, m_ErrName);
-				m_Err = createChannel(arg);
-				m_Appender.setWriter(m_Err);
-				m_ErrName = arg;
+				String arg = o.checkArg(value, mErrName);
+				mErr = createChannel(arg);
+				mAppender.setWriter(mErr);
+				mErrName = arg;
 			} catch (IOException ex) {
-				m_Logger.error(ex);
-				throw new SMTLIBException("file not found: "+value);
+				mLogger.error(ex);
+				throw new SMTLIBException("file not found: " + value);
 			}
 			break;
 		case OPT_PRODUCE_PROOFS:
-			if (m_ProduceProofs = o.checkArg(value, m_ProduceProofs))
-				m_ProofMode = 2;
+			if (mProduceProofs = o.checkArg(value, mProduceProofs))
+				mProofMode = 2;
 			break;
 		case OPT_PRODUCE_MODELS:
-			m_ProduceModels = o.checkArg(value, m_ProduceModels);
+			mProduceModels = o.checkArg(value, mProduceModels);
 			break;
 		case OPT_PRODUCE_ASSIGNMENTS:
-			if (m_ProduceAssignment = o.checkArg(value, m_ProduceAssignment)
-				&& m_ProofMode == 0)
-				m_ProofMode = 1;
+			if ((mProduceAssignment = o.checkArg(value, mProduceAssignment))
+				&& mProofMode == 0)
+				mProofMode = 1;
 			break;
 		case OPT_RANDOM_SEED:
 		{
 			BigInteger val = o.checkArg(value, BigInteger.ZERO);//FAKE...
-			m_RandomSeed = val.bitLength() < 64 ? 
+			mRandomSeed = val.bitLength() < 64 ?  // NOCHECKSTYLE
 					val.longValue() : Long.MAX_VALUE;
-			if (m_Engine != null)
-				m_Engine.setRandomSeed(m_RandomSeed);
+			if (mEngine != null)
+				mEngine.setRandomSeed(mRandomSeed);
 			break;
 		}
 		case OPT_INTERACTIVE_MODE:
 			if (o.checkArg(value, Boolean.TRUE) == Boolean.TRUE)// FAKE...
-				m_Assertions = new ScopedArrayList<Term>();
-			else if (!m_InterpolantCheckMode && !m_UnsatCoreCheckMode)
-				m_Assertions = null;
+				mAssertions = new ScopedArrayList<Term>();
+			else if (!mInterpolantCheckMode && !mUnsatCoreCheckMode)
+				mAssertions = null;
 			break;
 		case OPT_INTERPOLANT_CHECK_MODE:
-			if (m_InterpolantCheckMode =
-				o.checkArg(value, m_InterpolantCheckMode))
-				if (m_Assertions == null)
-					m_Assertions = new ScopedArrayList<Term>();
+			if ((mInterpolantCheckMode =
+				    o.checkArg(value, mInterpolantCheckMode)) 
+				&& mAssertions == null)
+					mAssertions = new ScopedArrayList<Term>();
 			break;
 		case OPT_PRODUCE_UNSAT_CORES:
-			if ((m_ProduceUnsatCores = o.checkArg(value, m_ProduceUnsatCores)) &&
-				m_ProofMode == 0)
-				m_ProofMode = 1;
+			if ((mProduceUnsatCores = o.checkArg(value, mProduceUnsatCores))
+				&& mProofMode == 0)
+				mProofMode = 1;
 			break;
 		case OPT_UNSAT_CORE_CHECK_MODE:
-			if (m_UnsatCoreCheckMode = o.checkArg(value, m_UnsatCoreCheckMode))
-				if (m_Assertions == null)
-					m_Assertions = new ScopedArrayList<Term>();
+			if ((mUnsatCoreCheckMode = o.checkArg(value, mUnsatCoreCheckMode))
+				 && mAssertions == null)
+					mAssertions = new ScopedArrayList<Term>();
 			break;
 		case OPT_PRINT_TERMS_CSE:
-			m_PrintCSE = o.checkArg(value, m_PrintCSE);
+			mPrintCSE = o.checkArg(value, mPrintCSE);
 			break;
 		case OPT_MODEL_CHECK_MODE:
-			if (m_ModelCheckMode = o.checkArg(value, m_ModelCheckMode))
-				if (m_Assertions == null)
-					m_Assertions = new ScopedArrayList<Term>();
+			if ((mModelCheckMode = o.checkArg(value, mModelCheckMode))
+				&& mAssertions == null)
+					mAssertions = new ScopedArrayList<Term>();
 			break;
 		case OPT_PROOF_TRANSFORMATION: {
 			String arg = o.checkArg(value, ""); // FAKE dummy
 			try {
 				AvailableTransformations tmp =
 					AvailableTransformations.valueOf(arg);
-				m_ProofTransformation = tmp;
-			} catch (IllegalArgumentException iae) {
+				mProofTransformation = tmp;
+			} catch (IllegalArgumentException eiae) {
 				// The enum constant is not present
 				StringBuilder sb = new StringBuilder();
 				sb.append("Illegal value. Only ");
 				String sep = "";
-				for (AvailableTransformations a :
-					AvailableTransformations.values()) {
+				for (AvailableTransformations a : AvailableTransformations.values()) {
 					sb.append(sep).append(a.name());
 					sep = ", ";
 				}
@@ -1429,25 +1520,25 @@ public class SMTInterpol extends NoopScript {
 			break;
 		}
 		case OPT_PRODUCE_INTERPOLANTS:
-			if (m_ProduceInterpolants = o.checkArg(value, m_ProduceInterpolants)
-				&& m_ProofMode == 0)
-				m_ProofMode = 1;
+			if ((mProduceInterpolants = o.checkArg(value, mProduceInterpolants))
+				&& mProofMode == 0)
+				mProofMode = 1;
 			break;
 		case OPT_MODELS_PARTIAL:
-			m_PartialModels = o.checkArg(value, m_PartialModels);
-			m_Model = null;
+			mPartialModels = o.checkArg(value, mPartialModels);
+			mModel = null;
 			break;
 		case OPT_CHECK_TYPE:
-			m_CheckType = CheckType.fromOption(o, value);
+			mCheckType = CheckType.fromOption(o, value);
 			break;
 		case OPT_SIMPLIFY_INTERPOLANTS:
-			m_SimplifyInterpolants = o.checkArg(value, m_SimplifyInterpolants);
+			mSimplifyInterpolants = o.checkArg(value, mSimplifyInterpolants);
 			break;
 		case OPT_SIMPLIFY_CHECK_TYPE:
-			m_SimplifyCheckType = CheckType.fromOption(o, value);
+			mSimplifyCheckType = CheckType.fromOption(o, value);
 			break;
 		case OPT_SIMPLIFY_REPEATEDLY:
-			m_SimplifyRepeatedly = o.checkArg(value, m_SimplifyRepeatedly);
+			mSimplifyRepeatedly = o.checkArg(value, mSimplifyRepeatedly);
 			break;
 		default:
 			throw new InternalError("This should be implemented!!!");
@@ -1455,15 +1546,15 @@ public class SMTInterpol extends NoopScript {
 	}
 	
 	public Term simplify(Term term) throws SMTLIBException {
-		CheckType old = m_CheckType;
-		int oldNumScopes = m_StackLevel;
+		CheckType old = mCheckType;
+		int oldNumScopes = mStackLevel;
 		try {
-			m_CheckType = m_SimplifyCheckType;
-			return new SimplifyDDA(this, m_SimplifyRepeatedly).
+			mCheckType = mSimplifyCheckType;
+			return new SimplifyDDA(this, mSimplifyRepeatedly).
 					getSimplifiedTerm(term);
 		} finally {
-			m_CheckType = old;
-			assert (m_StackLevel == oldNumScopes);
+			mCheckType = old;
+			assert (mStackLevel == oldNumScopes);
 		}
 	}
 
@@ -1473,7 +1564,7 @@ public class SMTInterpol extends NoopScript {
 	 * in the search tree. 
 	 */
 	public void flipDecisions() {
-		m_Engine.flipDecisions();
+		mEngine.flipDecisions();
 	}
 	
 	/**
@@ -1482,72 +1573,98 @@ public class SMTInterpol extends NoopScript {
 	 * @throws SMTLIBException If name not known.
 	 */
 	public void flipNamedLiteral(String name) throws SMTLIBException {
-		m_Engine.flipNamedLiteral(name);
+		mEngine.flipNamedLiteral(name);
 	}
 
+	/**
+	 * Access to the internal CNF transformer.  Should not be used by users.
+	 * @return Internal CNF transformer.
+	 */
 	public Clausifier getClausifier() {
-		return m_Clausifier;
+		return mClausifier;
 	}
 
+	/**
+	 * Access to the internal DPLL engine.  Should not be used by users.
+	 * @return Internal DPLL engine.
+	 */
 	public DPLLEngine getEngine() {
-		return m_Engine;
+		return mEngine;
 	}	
 
+	/**
+	 * Access to the logger used by SMTInterpol.
+	 * @return The logger used by SMTInterpol.
+	 */
 	public Logger getLogger() {
-		return m_Logger;
+		return mLogger;
 	}	
 
 	protected void setEngine(DPLLEngine engine) {
-		m_Engine = engine;
+		mEngine = engine;
 	}
 
 	protected void setClausifier(Clausifier clausifier) {
-		m_Clausifier = clausifier;
+		mClausifier = clausifier;
 	}
 	
 	private void checkAssertionStackModified() throws SMTLIBException {
-		if (m_AssertionStackModified)
+		if (mAssertionStackModified)
 			throw new SMTLIBException(
 					"Assertion stack has been modified since last check-sat!");
 	}
 	
 	private void modifyAssertionStack() {
-		m_AssertionStackModified = true;
-		m_Model = null;
+		mAssertionStackModified = true;
+		mModel = null;
 	}
 	
 	private void buildModel() throws SMTLIBException {
 		checkAssertionStackModified();
-		if (m_Engine.inconsistent()) {
-			if (m_ddfriendly)
-				System.exit(4);
+		if (mEngine.inconsistent()) {
+			if (mDDFriendly)
+				System.exit(4); // NOCHECKSTYLE
 			throw new SMTLIBException("Context is inconsistent");
 		}
-		if (m_Model == null) {
-			m_Model = new
+		if (mModel == null) {
+			mModel = new
 				de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model(
-					m_Clausifier, getTheory(), m_PartialModels);
+					mClausifier, getTheory(), mPartialModels);
 		}
 	}
 	
+	/**
+	 * Retrieve the proof in its internal format.  Users should use
+	 * {@link #getProof()} to retrieve the proof as a proof term.
+	 * @return Internal proof.
+	 * @throws SMTLIBException If no proof is present or the proof is found to
+	 *                         to be incorrect.
+	 */
 	public Clause retrieveProof() throws SMTLIBException {
-		Clause unsat = m_Engine.getProof();
+		Clause unsat = mEngine.getProof();
 		if (unsat == null) {
-			if (m_ddfriendly)
-				System.exit(5);
+			if (mDDFriendly)
+				System.exit(5); // NOCHECKSTYLE
 			throw new SMTLIBException("Logical context not inconsistent!");
 		}
-		Clause proof = m_ProofTransformation.transform(unsat);
-		if (Config.CHECK_PROP_PROOF) {
-			if (proof.getSize() != 0 || !new PropProofChecker().check(proof))
+		Clause proof = mProofTransformation.transform(unsat);
+		if (Config.CHECK_PROP_PROOF
+			&& (proof.getSize() != 0 || !new PropProofChecker().check(proof)))
 				throw new SMTLIBException("Proof incorrect");
-		}
 		return proof;
 	}
 	
+	/**
+	 * Get all literals currently set to true.  Note that this function might
+	 * also be called if SMTInterpol is currently in an unsat state.  Then, it
+	 * will simply return an empty array.
+	 * @return All literals currently set to true.
+	 * @throws SMTLIBException If the assertion stack is modified since the last
+	 *                         clean state.
+	 */
 	public Term[] getSatisfiedLiterals() throws SMTLIBException {
 		checkAssertionStackModified();
-		return m_Engine.getSatisfiedLiterals();
+		return mEngine.getSatisfiedLiterals();
 	}
 	
 	/**
@@ -1580,38 +1697,39 @@ public class SMTInterpol extends NoopScript {
 			fw.flush();
 			fw.close();
 			return true;
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
+		} catch (IOException eioe) {
+			eioe.printStackTrace();
 			return false;
 		}
 	}
 	
+	@Override
 	public Iterable<Term[]> checkAllsat(final Term[] input) {
 		final Literal[] lits = new Literal[input.length];
 		for (int i = 0; i < input.length; ++i) {
 			if (input[i].getSort() != getTheory().getBooleanSort())
 				throw new SMTLIBException("AllSAT over non-Boolean");
-			lits[i] = m_Clausifier.getCreateLiteral(input[i]);
+			lits[i] = mClausifier.getCreateLiteral(input[i]);
 		}
 		return new Iterable<Term[]>() {
 			
 			@Override
 			public Iterator<Term[]> iterator() {
-				return m_Engine.new AllSatIterator(lits, input);
+				return mEngine.new AllSatIterator(lits, input);
 			}
 		};
 	}
 	
 	@Override
 	public Term[] findImpliedEquality(Term[] x, Term[] y)
-			throws SMTLIBException, UnsupportedOperationException{
+		throws SMTLIBException, UnsupportedOperationException {
 		if (x.length != y.length)
 			throw new SMTLIBException("Different number of x's and y's");
 		if (x.length < 2)
 			throw new SMTLIBException("Need at least two elements to find equality");
 		for (int i = 0; i < x.length; ++i)
-			if (!x[i].getSort().isNumericSort() || 
-					!y[i].getSort().isNumericSort())
+			if (!x[i].getSort().isNumericSort() 
+					|| !y[i].getSort().isNumericSort())
 				throw new SMTLIBException("Only numeric types supported");
 		LBool isSat = checkSat();
 		if (isSat == LBool.UNSAT)
@@ -1649,8 +1767,8 @@ public class SMTInterpol extends NoopScript {
 		Rational c = y0.mul(x1).subdiv(x0.mul(y1), xdiff);
 		Sort s = x[0].getSort();
 		// Check for integers
-		if (x[0].getSort().getName().equals("Int") &&
-				y[0].getSort().getName().equals("Int")) {
+		if (x[0].getSort().getName().equals("Int")
+				&& y[0].getSort().getName().equals("Int")) {
 			if (!a.isIntegral()) {
 				BigInteger denom = a.denominator();
 				a = a.mul(denom);
@@ -1667,34 +1785,37 @@ public class SMTInterpol extends NoopScript {
 			s = sort("Real");
 		Term at = a.toTerm(s), bt = b.toTerm(s), ct = c.toTerm(s);
 		// Check implication
-		// This version only works with full checks.  If we forbid case splits,
-		// we cannot refute the disjunction created by this method.
-//		Term[] disj = new Term[x.length];
-//		for (int i = 0; i < x.length; ++i)
-//			disj[i] = term("not", term("=", term("*", at, x[i]),
-//						term("+", term("*", bt, y[i]), ct)));
-//		try {
-//			push(1);
-//			assertTerm(term("or", disj));
-//			LBool isImplied = checkSat();
-//			if (isImplied != LBool.UNSAT)
-//				return new Term[] {};
-//		} finally {
-//			pop(1);
-//		}
-		// This method works for all modes
-		for (int i = 0; i < x.length; ++i) {
-			Term neq = term("not", term("=", term("*", at, x[i]),
-					term("+", term("*", bt, y[i]), ct)));
-			try {
-				push(1);
-				assertTerm(neq);
-				LBool isImplied = checkSat();
-				if (isImplied != LBool.UNSAT)
-					return new Term[] {};
-			} finally {
-				pop(1);
-			}
+		if (mCheckType == CheckType.FULL) {
+		    // This version only works with full checks.  If we forbid case
+		    // splits, we cannot refute the disjunction created by this method.
+    		Term[] disj = new Term[x.length];
+    		for (int i = 0; i < x.length; ++i)
+    			disj[i] = term("not", term("=", term("*", at, x[i]),
+    						term("+", term("*", bt, y[i]), ct)));
+    		try {
+    			push(1);
+    			assertTerm(term("or", disj));
+    			LBool isImplied = checkSat();
+    			if (isImplied != LBool.UNSAT)
+    				return new Term[] {};
+    		} finally {
+    			pop(1);
+    		}
+		} else { 
+        	// This method works for all modes
+        	for (int i = 0; i < x.length; ++i) {
+        		Term neq = term("not", term("=", term("*", at, x[i]),
+        				term("+", term("*", bt, y[i]), ct)));
+        		try {
+        			push(1);
+        			assertTerm(neq);
+        			LBool isImplied = checkSat();
+        			if (isImplied != LBool.UNSAT)
+        				return new Term[] {};
+        		} finally {
+        			pop(1);
+        		}
+        	}
 		}
 		return new Term[] {at, bt, ct};
 	}

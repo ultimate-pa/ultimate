@@ -32,79 +32,80 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class Benchmark {
 	
-	private Script m_Script;
-	private int m_FormulaNum;
-	private final Map<String, Sort> m_SortTranslator;
-	private final Map<String, String> m_FunNameTranslator;
+	private final Script mScript;
+	private int mFormulaNum;
+	private final Map<String, Sort> mSortTranslator;
+	private final Map<String, String> mFunNameTranslator;
 	
 	public Benchmark(Script solver, boolean disableIPol) {
-		m_Script = solver;
-		m_FormulaNum = disableIPol ? -2 : -1;
-		m_SortTranslator = new HashMap<String, Sort>();
-		m_FunNameTranslator = new HashMap<String, String>();
-		m_Script.setOption(":produce-proofs", true);
+		mScript = solver;
+		mFormulaNum = disableIPol ? -2 : -1;// NOCHECKSTYLE
+		mSortTranslator = new HashMap<String, Sort>();
+		mFunNameTranslator = new HashMap<String, String>();
+		mScript.setOption(":produce-proofs", true);
 	}
 	
 	public void setOption(String option, Object value) {
-		m_Script.setOption(option, value);
+		mScript.setOption(option, value);
 	}
 	
 	public void note(String s) {
 		if ("Interpolation Problem starts here".equals(s))
-			++m_FormulaNum;
+			++mFormulaNum;
 	}
 
 	private final void mapFuns() {
 		// some benchmarks use abs/mod/div as uninterpreted functions.
 		// in smtlib2 they are predefined.  We rename the functions to save 
 		// names.
-		m_FunNameTranslator.put("abs", "abs$");
-		m_FunNameTranslator.put("mod", "mod$");
-		m_FunNameTranslator.put("div", "div$");
+		mFunNameTranslator.put("abs", "abs$");
+		mFunNameTranslator.put("mod", "mod$");
+		mFunNameTranslator.put("div", "div$");
 	}
 	
 	private final void mapArith() {
 		// smtlib1 used ~ for unary minus.
-		m_FunNameTranslator.put("~", "-");
+		mFunNameTranslator.put("~", "-");
 	}
 	
 	private final String translateFunName(String funname) {
-		String res = m_FunNameTranslator.get(funname);
+		String res = mFunNameTranslator.get(funname);
 		return res == null ? funname : res;
 	}
 	
 	public void setLogic(String logic) {
 		Logics l = Logics.valueOf(logic);
-		m_Script.setLogic(l);
+		mScript.setLogic(l);
 		switch (l) {
 		case QF_AX:
-			m_Script.declareSort("Index", 0);
-			m_Script.declareSort("Element", 0);
-			m_SortTranslator.put("Array",
-					m_Script.sort("Array", m_Script.sort("Index"),
-							m_Script.sort("Element")));
+			mScript.declareSort("Index", 0);
+			mScript.declareSort("Element", 0);
+			mSortTranslator.put("Array",
+					mScript.sort("Array", mScript.sort("Index"),
+							mScript.sort("Element")));
 			break;
 		case AUFLIRA:
 		case AUFNIRA:
-			Sort array1 = m_Script.sort("Array", m_Script.sort("Int"),
-					m_Script.sort("Real"));
-			m_SortTranslator.put("Array1", array1);
-			m_SortTranslator.put("Array2", m_Script.sort("Array", 
-					m_Script.sort("Int"), array1));
+			Sort array1 = mScript.sort("Array", mScript.sort("Int"),
+					mScript.sort("Real"));
+			mSortTranslator.put("Array1", array1);
+			mSortTranslator.put("Array2", mScript.sort("Array", 
+					mScript.sort("Int"), array1));
 			mapFuns();
 			mapArith();
 			break;
 		case QF_AUFLIA:
 		case AUFLIA:
-			m_SortTranslator.put("Array", m_Script.sort("Array",
-					m_Script.sort("Int"), m_Script.sort("Real")));
+			mSortTranslator.put("Array", mScript.sort("Array",
+					mScript.sort("Int"), mScript.sort("Real")));
+			// fallthrough
 		case QF_UFLIA:
 		case QF_UFLRA:
 			mapFuns();
 			mapArith();
 			break;
 		case QF_UF:
-			m_Script.declareSort("U", 0);
+			mScript.declareSort("U", 0);
 			break;
 		case LRA:
 		case QF_LIA:
@@ -119,73 +120,73 @@ public class Benchmark {
 	}
 	
 	public void setInfo(String info, String value) {
-		m_Script.setInfo(info, value);
+		mScript.setInfo(info, value);
 	}
 	
 	public void declareSort(String name) {
-		m_Script.declareSort(name, 0);
+		mScript.declareSort(name, 0);
 	}
 
 	public void declareFun(String name, Sort[] paramSorts, Sort resultSort) {
-		m_Script.declareFun(translateFunName(name), paramSorts, resultSort);
+		mScript.declareFun(translateFunName(name), paramSorts, resultSort);
 	}
 	
 	public Term term(String name, Term... params) {
-		return m_Script.term(translateFunName(name), params);
+		return mScript.term(translateFunName(name), params);
 	}
 	public Term annotateTerm(Term t, Annotation... annots) {
 		if (annots.length > 0)
-			t = m_Script.annotate(t, annots);
+			t = mScript.annotate(t, annots);
 		return t;
 	}
 	public Term quantifier(int quantor, TermVariable[] vars, Term body, 
 			Term[]...patterns) {
-		return m_Script.quantifier(quantor, vars, body, patterns);
+		return mScript.quantifier(quantor, vars, body, patterns);
 	}
 	public Term let(TermVariable var, Term value, Term body) {
-		return m_Script.let(new TermVariable[]{var}, new Term[]{value}, body);
+		return mScript.let(new TermVariable[]{var}, new Term[]{value}, body);
 	}
 	public Sort sort(String name) {
-		Sort res = m_SortTranslator.get(name);
+		Sort res = mSortTranslator.get(name);
 		if (res != null)
 			return res;
-		return m_Script.sort(name);
+		return mScript.sort(name);
 	}
 	public TermVariable variable(String name, Sort sort) {
-		return m_Script.variable(name, sort);
+		return mScript.variable(name, sort);
 	}
 	public Sort getBooleanSort() {
-		return m_Script.sort("Bool");
+		return mScript.sort("Bool");
 	}
 	public void assertTerm(Term t) {
-		if (m_FormulaNum >= 0)
-			t = m_Script.annotate(t,
-					new Annotation(":named", "IP_" + m_FormulaNum++));
-		m_Script.assertTerm(t);
+		if (mFormulaNum >= 0)
+			t = mScript.annotate(t,
+					new Annotation(":named", "IP_" + mFormulaNum++));
+		mScript.assertTerm(t);
 	}
 	public Term numeral(String num) {
-		return m_Script.numeral(num);
+		return mScript.numeral(num);
 	}
 	public Term decimal(String decimal) {
-		return m_Script.decimal(decimal);
+		return mScript.decimal(decimal);
 	}
-	public Term[] check() {
-		LBool res = m_Script.checkSat();
-		if (!(m_Script instanceof LoggingScript))
+	public Term[] check() { // NOPMD
+		LBool res = mScript.checkSat();
+		if (!(mScript instanceof LoggingScript))
 			System.out.println(res);
-		if (m_FormulaNum > 1) {
-			Term[] partition = new Term[m_FormulaNum];
-			for (int i = 0; i < m_FormulaNum; ++i)
-				partition[i] = m_Script.term("IP_" + i);
-			return m_Script.getInterpolants(partition);
+		if (mFormulaNum > 1) {
+			Term[] partition = new Term[mFormulaNum];
+			for (int i = 0; i < mFormulaNum; ++i)
+				partition[i] = mScript.term("IP_" + i);
+			return mScript.getInterpolants(partition);
 		}
 		return null;
 	}
 	public void close() {
-		m_Script.exit();
+		mScript.exit();
 	}
 
 	public void getProof() {
-		m_Script.getProof();
+		mScript.getProof();
 	}
 }

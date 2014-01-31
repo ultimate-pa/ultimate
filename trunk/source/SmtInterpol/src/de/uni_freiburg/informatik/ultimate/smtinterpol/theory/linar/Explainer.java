@@ -44,39 +44,39 @@ public class Explainer {
 	 * The linear arithmetic solver.  This is used to create new composite
 	 * literals.
 	 */
-	private LinArSolve m_solver;
+	private final LinArSolve mSolver;
 	/**
 	 * Mapping of explained reason to annotation.  The form is such that the
 	 * disjunction of the explained reason and the literals in the annotation
 	 * form a lemma.
 	 */
-	private Map<LAReason, LAAnnotation> m_subReasons;
+	private final Map<LAReason, LAAnnotation> mSubReasons;
 	/**
 	 * All literals in the conflict clause.
 	 */
-	private Set<Literal> m_allLiterals;
+	private final Set<Literal> mAllLiterals;
 	/**
 	 * The unit literal that should be explained.  It is used to avoid using
 	 * literals in the conflict that were only propagated after the literal
 	 * to be explained was propagated.
 	 */
-	private Literal m_explainedLiteral;
+	private final Literal mExplainedLiteral;
 
 	/**
 	 * The stack of reasons/annotations we are currently explaining. 
 	 */
-	private ArrayDeque<LAAnnotation> m_annotationStack;
+	private ArrayDeque<LAAnnotation> mAnnotationStack;
 	
 	
 	public Explainer(LinArSolve solver, boolean generateProofTree, 
 			Literal explainedLiteral) {
-		m_solver = solver;
-		m_allLiterals = new HashSet<Literal>();
-		m_explainedLiteral = explainedLiteral;
-		m_subReasons = new HashMap<LAReason, LAAnnotation>();
+		mSolver = solver;
+		mAllLiterals = new HashSet<Literal>();
+		mExplainedLiteral = explainedLiteral;
+		mSubReasons = new HashMap<LAReason, LAAnnotation>();
 		if (generateProofTree) {
-			m_annotationStack = new ArrayDeque<LAAnnotation>();
-			m_annotationStack.add(new LAAnnotation());
+			mAnnotationStack = new ArrayDeque<LAAnnotation>();
+			mAnnotationStack.add(new LAAnnotation());
 		}
 	}
 
@@ -93,10 +93,10 @@ public class Explainer {
 	public boolean canExplainWith(Literal lit) {
 		DPLLAtom atom = lit.getAtom();
 		return atom.getStackPosition() >= 0
-			&& (m_explainedLiteral == null
-			   || m_explainedLiteral.getAtom().getStackPosition() == -1
-			   || atom.getStackPosition() < 
-			m_explainedLiteral.getAtom().getStackPosition());
+			&& (mExplainedLiteral == null
+			   || mExplainedLiteral.getAtom().getStackPosition() == -1
+			   || atom.getStackPosition()
+			< mExplainedLiteral.getAtom().getStackPosition());
 	}
 
 	/**
@@ -107,60 +107,60 @@ public class Explainer {
 	public void addAnnotation(LAReason reason, Rational coeff) {
 		assert ((coeff.signum() > 0) == reason.isUpper());
 		Rational sign = Rational.valueOf(coeff.signum(), 1);
-		LAAnnotation annot = m_subReasons.get(reason);
+		LAAnnotation annot = mSubReasons.get(reason);
 		if (annot == null) {
 			annot = new LAAnnotation(reason);
-			m_subReasons.put(reason, annot);
-			if (m_annotationStack != null)
-				m_annotationStack.addLast(annot);
+			mSubReasons.put(reason, annot);
+			if (mAnnotationStack != null)
+				mAnnotationStack.addLast(annot);
 			reason.explain(this, reason.getVar().getEpsilon(), 
 					sign);
-			if (m_annotationStack != null)
-				m_annotationStack.removeLast();
+			if (mAnnotationStack != null)
+				mAnnotationStack.removeLast();
 		}
-		if (m_annotationStack != null)
-			m_annotationStack.getLast().addFarkas(annot, coeff);
+		if (mAnnotationStack != null)
+			mAnnotationStack.getLast().addFarkas(annot, coeff);
 	}
 
 	public void addEQAnnotation(LiteralReason reason, Rational coeff) {
 		// FIXME: make a special annotation for disequalities
 		assert ((coeff.signum() > 0) == reason.isUpper());
 		Rational sign = Rational.valueOf(coeff.signum(), 1); 
-		LAAnnotation annot = m_subReasons.get(reason);
+		LAAnnotation annot = mSubReasons.get(reason);
 		if (annot == null) {
 			annot = new LAAnnotation(reason);
-			m_subReasons.put(reason, annot);
-			if (m_annotationStack != null)
-				m_annotationStack.addLast(annot);
+			mSubReasons.put(reason, annot);
+			if (mAnnotationStack != null)
+				mAnnotationStack.addLast(annot);
 			if (reason.getOldReason() instanceof LiteralReason) 
 				reason.getOldReason().explain(this, reason.getVar().getEpsilon(), sign);
 			else
 				addAnnotation(reason.getOldReason(), sign);
 			addLiteral(reason.getLiteral().negate(), sign);
-			if (m_annotationStack != null)
-				m_annotationStack.removeLast();
+			if (mAnnotationStack != null)
+				mAnnotationStack.removeLast();
 		}
-		if (m_annotationStack != null)
-			m_annotationStack.getLast().addFarkas(annot, coeff);
+		if (mAnnotationStack != null)
+			mAnnotationStack.getLast().addFarkas(annot, coeff);
 	}
 
 	public void addLiteral(Literal lit, Rational coeff) {
-		if (m_annotationStack != null) {
-			m_annotationStack.getLast().addFarkas(lit, coeff);
+		if (mAnnotationStack != null) {
+			mAnnotationStack.getLast().addFarkas(lit, coeff);
 		}
 		// sanity check: a literal should never appear in both polarities
-		assert(!m_allLiterals.contains(lit.negate()));
-		m_allLiterals.add(lit);
+		assert(!mAllLiterals.contains(lit.negate()));
+		mAllLiterals.add(lit);
 	}
 	
 	private boolean validClause() {
-		if (m_annotationStack == null)
+		if (mAnnotationStack == null)
 			return true;
-		assert (m_annotationStack.size() == 1);
-		MutableAffinTerm mat = m_annotationStack.getFirst().addLiterals();
+		assert (mAnnotationStack.size() == 1);
+		MutableAffinTerm mat = mAnnotationStack.getFirst().addLiterals();
 		assert (mat.isConstant() && InfinitNumber.ZERO.less(mat.getConstant()));
-		for (Map.Entry<LAReason, LAAnnotation> reasonEntry : 
-			m_subReasons.entrySet()) {
+		for (Map.Entry<LAReason, LAAnnotation> reasonEntry
+			: mSubReasons.entrySet()) {
 			LAReason reason = reasonEntry.getKey();
 			mat = reasonEntry.getValue().addLiterals();
 			Rational coeff = reason.isUpper() ? Rational.MONE : Rational.ONE;
@@ -173,13 +173,14 @@ public class Explainer {
 	}
 	
 	public Clause createClause(DPLLEngine engine) {
-		Literal[] lits = m_allLiterals.toArray(new Literal[m_allLiterals.size()]);
+		Literal[] lits = mAllLiterals.toArray(new Literal[mAllLiterals.size()]);
 		Clause clause = new Clause(lits);
 		if (engine.isProofGenerationEnabled()) {
-			assert (m_annotationStack.size() == 1);
-			clause.setProof(new LeafNode(LeafNode.THEORY_LA, m_annotationStack.getFirst()));
+			assert (mAnnotationStack.size() == 1);
+			clause.setProof(new LeafNode(
+					LeafNode.THEORY_LA, mAnnotationStack.getFirst()));
 		}
-		assert(validClause());
+		assert validClause();
 		return clause;
 	}
 
@@ -190,12 +191,12 @@ public class Explainer {
 	 * decide level if a conflict is explained.
 	 */
 	public int getDecideLevel() {
-		return m_explainedLiteral == null 
-				? m_solver.mengine.getDecideLevel()
-				: m_explainedLiteral.getAtom().getDecideLevel();
+		return mExplainedLiteral == null 
+				? mSolver.mEngine.getDecideLevel()
+				: mExplainedLiteral.getAtom().getDecideLevel();
 	}
 
 	public Literal createComposite(CompositeReason reason) {
-		return m_solver.createCompositeLiteral(reason, m_explainedLiteral);
+		return mSolver.createCompositeLiteral(reason, mExplainedLiteral);
 	}
 }

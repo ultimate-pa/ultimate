@@ -47,13 +47,13 @@ public class ConstantTerm extends Term {
 	 * QuotedObject.  For terms returned by our model, we use Rational for all
 	 * numeric sorts.
 	 */
-	private Object m_Value;
-	private Sort m_Sort;
+	private final Object mValue;
+	private final Sort mSort;
 	
 	ConstantTerm(Object value, Sort sort, int hash) {
 		super(hash);
-		this.m_Value = value;
-		this.m_Sort = sort;
+		this.mValue = value;
+		this.mSort = sort;
 	}
 	
 	/**
@@ -68,23 +68,23 @@ public class ConstantTerm extends Term {
 	 * @return the value.
 	 */
 	public Object getValue() {
-		return m_Value;
+		return mValue;
 	}
 
 	public Sort getSort() {
-		return m_Sort;
+		return mSort;
 	}
 	
 	public String toString() {
-		if (m_Value instanceof BigDecimal) {
-			BigDecimal decimal = (BigDecimal)m_Value; 
+		if (mValue instanceof BigDecimal) {
+			BigDecimal decimal = (BigDecimal)mValue; 
 			String str = decimal.toPlainString();
 			return str;
 		}
-		if (m_Value instanceof Rational)
-			return getTheory().rational((Rational) m_Value, getSort()).
+		if (mValue instanceof Rational)
+			return getTheory().rational((Rational) mValue, getSort()).
 				toStringDirect();
-		return m_Value.toString();
+		return mValue.toString();
 	}
 	
 	public String toStringDirect() {

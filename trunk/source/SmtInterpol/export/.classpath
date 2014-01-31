@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<classpath>
-	<classpathentry excluding="**.flex|**.xml|**/*~|**/.svn/*" kind="src" path="src"/>
-	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="log4j-1.2.15.jar"/>
-	<classpathentry kind="lib" path="java-cup-12joho.jar"/>
-	<classpathentry kind="output" path="bin"/>
-</classpath>

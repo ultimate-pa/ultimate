@@ -27,62 +27,62 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinVar;
 
 public class SharedTerm {
 	
-	private final Clausifier m_Clausifier;
-	private final Term m_Term;
-	private final IAnnotation m_Annot;
+	private final Clausifier mClausifier;
+	private final Term mTerm;
+	private final IAnnotation mAnnot;
 	
 	// fields for theory.cclosure (Congruence Closure)
-	CCTerm m_ccterm;
+	CCTerm mCCterm;
 	
 	// fields for theory.linar (Linear Arithmetic)
-	LinVar m_linvar;
-	Rational m_factor, m_offset;
+	LinVar mLinVar;
+	Rational mFactor, mOffset;
 	
-	private Term m_RealTerm = null;
+	private Term mRealTerm = null;
 	
 	public SharedTerm(Clausifier clausifier, Term term) {
-		m_Clausifier = clausifier;
-		m_Term = term;
+		mClausifier = clausifier;
+		mTerm = term;
 		if (clausifier.getEngine().isProofGenerationEnabled())
-			m_Annot = m_Clausifier.getAnnotation();
+			mAnnot = mClausifier.getAnnotation();
 		else
-			m_Annot = null;
+			mAnnot = null;
 	}
 	
 	public void setLinVar(Rational factor, LinVar linvar, Rational offset) {
-		m_factor = factor;
-		m_linvar = linvar;
-		m_offset = offset;
+		mFactor = factor;
+		mLinVar = linvar;
+		mOffset = offset;
 	}
 	
 	public void share() {
-		if (m_Clausifier.getLogger().isInfoEnabled())
-			m_Clausifier.getLogger().info("Sharing term: "+this);
-		assert (m_ccterm != null && m_offset != null);
-		m_Clausifier.getLASolver().share(this);
-		m_ccterm.share(m_Clausifier.getCClosure(), this);
+		if (mClausifier.getLogger().isInfoEnabled())
+			mClausifier.getLogger().info("Sharing term: " + this);
+		assert (mCCterm != null && mOffset != null);
+		mClausifier.getLASolver().share(this);
+		mCCterm.share(mClausifier.getCClosure(), this);
 	}
 		
 	public void shareWithLinAr() {
-		if (m_offset != null)
+		if (mOffset != null)
 			return;
 		assert getSort().isNumericSort() : "Sharing non-numeric sort?";
 		
-		if (m_Term instanceof SMTAffineTerm) {
-			m_Clausifier.getLASolver().generateSharedVar(
-					this, m_Clausifier.createMutableAffinTerm(
-							(SMTAffineTerm) m_Term),
-					m_Clausifier.getStackLevel());
+		if (mTerm instanceof SMTAffineTerm) {
+			mClausifier.getLASolver().generateSharedVar(
+					this, mClausifier.createMutableAffinTerm(
+							(SMTAffineTerm) mTerm),
+					mClausifier.getStackLevel());
 		} else {
 			boolean isint = getSort().getName().equals("Int");
-			m_linvar = m_Clausifier.getLASolver().addVar(this, isint,
-					m_Clausifier.getStackLevel());
+			mLinVar = mClausifier.getLASolver().addVar(this, isint,
+					mClausifier.getStackLevel());
 			
-			m_factor = Rational.ONE;
-			m_offset = Rational.ZERO;
+			mFactor = Rational.ONE;
+			mOffset = Rational.ZERO;
 		}
-		m_Clausifier.addUnshareLA(this);
-		if (m_ccterm != null)
+		mClausifier.addUnshareLA(this);
+		if (mCCterm != null)
 			share();
 	}
 	
@@ -91,44 +91,44 @@ public class SharedTerm {
 		if (getSort() != other.getSort()) {
 			// LIRA: convert both terms to reals.
 			if (getSort().getName().equals("Real")) {
-				b = m_Clausifier.toReal(b);
+				b = mClausifier.toReal(b);
 			} else {
-				a = m_Clausifier.toReal(a);
+				a = mClausifier.toReal(a);
 			}
 		}
-		return m_Clausifier.createEqualityProxy(a, b);
+		return mClausifier.createEqualityProxy(a, b);
 	}
 
 	public void unshareLA() {
-		m_factor = null;
-		m_linvar = null;
-		m_offset = null;
+		mFactor = null;
+		mLinVar = null;
+		mOffset = null;
 	}
 	
 	public void unshareCC() {
-		m_ccterm = null;
+		mCCterm = null;
 	}
 
 	public LinVar getLinVar() {
-		return m_linvar;
+		return mLinVar;
 	}
 	public Rational getOffset() {
-		return m_offset;
+		return mOffset;
 	}
 	public Rational getFactor() {
-		return m_factor;
+		return mFactor;
 	}
 
 	public boolean validShared() {
-		return m_ccterm != null && m_offset != null;
+		return mCCterm != null && mOffset != null;
 	}
 	
 	public Sort getSort() {
-		return m_Term.getSort();
+		return mTerm.getSort();
 	}
 
 	public Term getTerm() {
-		return m_Term;
+		return mTerm;
 	}
 	/**
 	 * Get a term that can be used outside of SMTInterpol.  The result is equal
@@ -138,36 +138,36 @@ public class SharedTerm {
 	 * @return A cleaned up term.
 	 */
 	public Term getRealTerm() {
-		if (m_RealTerm == null)
-			m_RealTerm = SMTAffineTerm.cleanup(m_Term);
-		return m_RealTerm;
+		if (mRealTerm == null)
+			mRealTerm = SMTAffineTerm.cleanup(mTerm);
+		return mRealTerm;
 	}
 	
 	public IAnnotation getAnnotation() {
-		return m_Annot;
+		return mAnnot;
 	}
 	
 	public Clausifier getClausifier() {
-		return m_Clausifier;
+		return mClausifier;
 	}
 
 	public CCTerm getCCTerm() {
-		return m_ccterm;
+		return mCCterm;
 	}
 	
 	public int hashCode() {
-		return m_Term.hashCode();
+		return mTerm.hashCode();
 	}
 	
 	public String toString() {
-		return SMTAffineTerm.cleanup(m_Term).toString();
+		return SMTAffineTerm.cleanup(mTerm).toString();
 	}
 	
 	void setCCTerm(CCTerm ccterm) {
-		assert(m_ccterm == null);
-		m_ccterm = ccterm;
-		m_Clausifier.addUnshareCC(this);
-		if (m_offset != null)
+		assert(mCCterm == null);
+		mCCterm = ccterm;
+		mClausifier.addUnshareCC(this);
+		if (mOffset != null)
 			share();
 	}
 }

@@ -39,10 +39,9 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.convert;
 import java.util.AbstractSet;
 import java.util.Iterator;
 
-public class SimpleSet<E> extends AbstractSet<E> implements Cloneable
-{
-	E[] elementObjects;
-	int count = 0;
+public class SimpleSet<E> extends AbstractSet<E> implements Cloneable {
+	E[] mElementObjects;
+	int mCount = 0;
 
 	public SimpleSet() {
 		this(2);
@@ -50,11 +49,11 @@ public class SimpleSet<E> extends AbstractSet<E> implements Cloneable
 
 	@SuppressWarnings("unchecked")
 	public SimpleSet(int initialSize) {
-		elementObjects = (E[]) new Object[initialSize];
+		mElementObjects = (E[]) new Object[initialSize];
 	}
 
 	public int size() {
-		return count;
+		return mCount;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -62,17 +61,17 @@ public class SimpleSet<E> extends AbstractSet<E> implements Cloneable
 		if (element == null)
 			throw new NullPointerException();
 
-		for (int i=0; i< count; i++) {
-			if (element.equals(elementObjects[i]))
+		for (int i = 0; i < mCount; i++) {
+			if (element.equals(mElementObjects[i]))
 				return false;
 		}
 		
-		if (count == elementObjects.length) {
-			E[] newArray = (E[]) new Object[(count+1)*2];
-			System.arraycopy(elementObjects,0,newArray,0,count);
-			elementObjects = newArray;
+		if (mCount == mElementObjects.length) {
+			E[] newArray = (E[]) new Object[(mCount + 1) * 2];
+			System.arraycopy(mElementObjects,0,newArray,0,mCount);
+			mElementObjects = newArray;
 		}
-		elementObjects[count++] = element;
+		mElementObjects[mCount++] = element;
 		return true;
 	}
 		
@@ -80,7 +79,7 @@ public class SimpleSet<E> extends AbstractSet<E> implements Cloneable
 	public Object clone() {
 		try {
 			SimpleSet<E> other = (SimpleSet<E>) super.clone();
-			other.elementObjects = (E[]) elementObjects.clone();
+			other.mElementObjects = (E[]) mElementObjects.clone();
 			return other;
 		} catch (CloneNotSupportedException ex) {
 			throw new InternalError("Clone?");
@@ -89,22 +88,22 @@ public class SimpleSet<E> extends AbstractSet<E> implements Cloneable
 
 	public Iterator<E> iterator() {
 		return new Iterator<E>() {
-			int pos = 0;
+			int mPos = 0;
 
 			public boolean hasNext() {
-				return pos < count;
+				return mPos < mCount;
 			}
 			
 			public E next() {
-				return elementObjects[pos++];
+				return mElementObjects[mPos++];
 			}
 		  
 			public void remove() {
-				if (pos < count)
-					System.arraycopy(elementObjects, pos, 
-									 elementObjects, pos-1, count - pos);
-				count--;
-				pos--;
+				if (mPos < mCount)
+					System.arraycopy(mElementObjects, mPos, 
+									 mElementObjects, mPos - 1, mCount - mPos);
+				mCount--;
+				mPos--;
 			}
 		};
 	}

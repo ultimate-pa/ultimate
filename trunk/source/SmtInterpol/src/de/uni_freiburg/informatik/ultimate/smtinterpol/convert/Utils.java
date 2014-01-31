@@ -36,10 +36,13 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
  */
 public class Utils {
 	
-	private IProofTracker m_Tracker;
+	private final IProofTracker mTracker;
 	
-	public Utils(IProofTracker tracker) {
-		m_Tracker = tracker;
+	private final TermCompiler mCompiler;
+	
+	public Utils(IProofTracker tracker, TermCompiler compiler) {
+		mTracker = tracker;
+		mCompiler = compiler;
 	}
 	/**
 	 * Optimize nots.  Transforms (not true) to false, (not false) to true, and
@@ -49,18 +52,18 @@ public class Utils {
 	 */
 	public Term createNot(Term arg) {
 		Theory theory = arg.getTheory();
-		if (arg == theory.FALSE) {
-			m_Tracker.negation(arg, theory.TRUE, ProofConstants.RW_NOT_SIMP);
-			return theory.TRUE;
+		if (arg == theory.mFalse) {
+			mTracker.negation(arg, theory.mTrue, ProofConstants.RW_NOT_SIMP);
+			return theory.mTrue;
 		}
-		if (arg == theory.TRUE) {
-			m_Tracker.negation(arg, theory.FALSE, ProofConstants.RW_NOT_SIMP);
-			return theory.FALSE;
+		if (arg == theory.mTrue) {
+			mTracker.negation(arg, theory.mFalse, ProofConstants.RW_NOT_SIMP);
+			return theory.mFalse;
 		}
 		if ((arg instanceof ApplicationTerm)
 			&& ((ApplicationTerm) arg).getFunction().getName().equals("not")) {
 			Term res = ((ApplicationTerm) arg).getParameters()[0];
-			m_Tracker.negation(arg, res, ProofConstants.RW_NOT_SIMP);
+			mTracker.negation(arg, res, ProofConstants.RW_NOT_SIMP);
 			return res;
 		}
 		return theory.term("not", arg);
@@ -68,10 +71,10 @@ public class Utils {
 	
 	public static Term createNotUntracked(Term arg) {
 		Theory theory = arg.getTheory();
-		if (arg == theory.FALSE)
-			return theory.TRUE;
-		if (arg == theory.TRUE)
-			return theory.FALSE;
+		if (arg == theory.mFalse)
+			return theory.mTrue;
+		if (arg == theory.mTrue)
+			return theory.mFalse;
 		if ((arg instanceof ApplicationTerm)
 			&& ((ApplicationTerm) arg).getFunction().getName().equals("not"))
 			return ((ApplicationTerm) arg).getParameters()[0];
@@ -87,50 +90,51 @@ public class Utils {
 	public Term createOr(Term... args) {
 		LinkedHashSet<Term> ctx = new LinkedHashSet<Term>();
 		Theory theory = args[0].getTheory();
-		Term trueTerm = theory.TRUE;
-		Term falseTerm = theory.FALSE;
+		Term trueTerm = theory.mTrue;
+		Term falseTerm = theory.mFalse;
 		for (Term t : args) {
 			if (t == trueTerm) {
-				m_Tracker.or(args, t, ProofConstants.RW_OR_TAUT);
+				mTracker.or(args, t, ProofConstants.RW_OR_TAUT);
 				return t;
 			}
 			if (t != falseTerm) {
 				if (ctx.contains(createNotUntracked(t))) {
-					m_Tracker.or(args, trueTerm, ProofConstants.RW_OR_TAUT);
+					mTracker.or(args, trueTerm, ProofConstants.RW_OR_TAUT);
 					return trueTerm;
 				}
 				ctx.add(t);
 			}
 		}
 		// Handle disjunctions of false
-		if (ctx.size() == 0) {
-			m_Tracker.or(args, theory.FALSE, ProofConstants.RW_OR_SIMP);
-			return theory.FALSE;
+		if (ctx.isEmpty()) {
+			mTracker.or(args, theory.mFalse, ProofConstants.RW_OR_SIMP);
+			return theory.mFalse;
 		}
 		// Handle simplifications to unary or
 		if (ctx.size() == 1) {
 			Term res = ctx.iterator().next();
-			m_Tracker.or(args, res, ProofConstants.RW_OR_SIMP);
+			mTracker.or(args, res, ProofConstants.RW_OR_SIMP);
 			return res;
 		}
 		if (ctx.size() == args.length)
-			return theory.term(theory.m_Or, args);
-		Term res = theory.term(theory.m_Or, ctx.toArray(new Term[ctx.size()]));
-		m_Tracker.or(args, res, ProofConstants.RW_OR_SIMP);
+			return theory.term(theory.mOr, args);
+		Term res = theory.term(theory.mOr, ctx.toArray(new Term[ctx.size()]));
+		mTracker.or(args, res, ProofConstants.RW_OR_SIMP);
 		return res;
 	}
 	public Term createLeq0(SMTAffineTerm arg) {
 		if (arg.isConstant()) {
 			Theory t = arg.getTheory();
 			if (arg.getConstant().compareTo(Rational.ZERO) > 0) {
-				m_Tracker.leqSimp(arg, t.FALSE, ProofConstants.RW_LEQ_FALSE);
-				return t.FALSE;
+				mTracker.leqSimp(arg, t.mFalse, ProofConstants.RW_LEQ_FALSE);
+				return t.mFalse;
 			} else {
-				m_Tracker.leqSimp(arg, t.TRUE, ProofConstants.RW_LEQ_TRUE);
-				return t.TRUE;
+				mTracker.leqSimp(arg, t.mTrue, ProofConstants.RW_LEQ_TRUE);
+				return t.mTrue;
 			}
 		}
-		return arg.getTheory().term("<=", arg.normalize(), arg.mul(Rational.ZERO));
+		return arg.getTheory().term("<=", arg.normalize(mCompiler),
+				SMTAffineTerm.create(Rational.ZERO, arg.getSort()));
 	}
 	/**
 	 * Simplify ite terms.  This might destroy the ite if it is Boolean with
@@ -142,54 +146,54 @@ public class Utils {
 	 */
 	public Term createIte(Term cond, Term trueBranch, Term falseBranch) {
 		Theory theory = cond.getTheory();
-		if (cond == theory.TRUE) {
-			m_Tracker.ite(cond, trueBranch, falseBranch, trueBranch,
+		if (cond == theory.mTrue) {
+			mTracker.ite(cond, trueBranch, falseBranch, trueBranch,
 					ProofConstants.RW_ITE_TRUE);
 			return trueBranch;
 		}
-		if (cond == theory.FALSE){
-			m_Tracker.ite(cond, trueBranch, falseBranch, falseBranch,
+		if (cond == theory.mFalse) {
+			mTracker.ite(cond, trueBranch, falseBranch, falseBranch,
 					ProofConstants.RW_ITE_FALSE);
 			return falseBranch;
 		}
 		if (trueBranch == falseBranch) {
-			m_Tracker.ite(cond, trueBranch, falseBranch, trueBranch,
+			mTracker.ite(cond, trueBranch, falseBranch, trueBranch,
 					ProofConstants.RW_ITE_SAME);
 			return trueBranch;
 		}
-		if (trueBranch == theory.TRUE && falseBranch == theory.FALSE) {
-			m_Tracker.ite(cond, trueBranch, falseBranch, cond,
+		if (trueBranch == theory.mTrue && falseBranch == theory.mFalse) {
+			mTracker.ite(cond, trueBranch, falseBranch, cond,
 					ProofConstants.RW_ITE_BOOL_1);
 			return cond;
 		}
-		if (trueBranch == theory.FALSE && falseBranch == theory.TRUE) {
-			m_Tracker.ite(cond, trueBranch, falseBranch, null,
+		if (trueBranch == theory.mFalse && falseBranch == theory.mTrue) {
+			mTracker.ite(cond, trueBranch, falseBranch, null,
 					ProofConstants.RW_ITE_BOOL_2);
 			return createNot(cond);
 		}
-		if (trueBranch == theory.TRUE) {
+		if (trueBranch == theory.mTrue) {
 			// No need for createOr since we are already sure that we cannot
 			// simplify further
 			Term res = theory.term("or", cond, falseBranch);
-			m_Tracker.ite(cond, trueBranch, falseBranch, res,
+			mTracker.ite(cond, trueBranch, falseBranch, res,
 					ProofConstants.RW_ITE_BOOL_3);
 			return createOr(cond, falseBranch);
 		}
-		if (trueBranch == theory.FALSE) {
+		if (trueBranch == theory.mFalse) {
 			// /\ !cond falseBranch => !(\/ cond !falseBranch)
-			m_Tracker.ite(cond, trueBranch, falseBranch, null,
+			mTracker.ite(cond, trueBranch, falseBranch, null,
 					ProofConstants.RW_ITE_BOOL_4);
 			return createNot(createOr(cond, createNot(falseBranch)));
 		}
-		if (falseBranch == theory.TRUE) {
+		if (falseBranch == theory.mTrue) {
 			// => cond trueBranch => \/ !cond trueBranch
-			m_Tracker.ite(cond, trueBranch, falseBranch, null,
+			mTracker.ite(cond, trueBranch, falseBranch, null,
 					ProofConstants.RW_ITE_BOOL_5);
 			return createOr(createNot(cond), trueBranch);
 		}
-		if (falseBranch == theory.FALSE) {
+		if (falseBranch == theory.mFalse) {
 			// /\ cond trueBranch => !(\/ !cond !trueBranch)
-			m_Tracker.ite(cond, trueBranch, falseBranch, null,
+			mTracker.ite(cond, trueBranch, falseBranch, null,
 					ProofConstants.RW_ITE_BOOL_6);
 			return createNot(createOr(createNot(cond), createNot(trueBranch)));
 		}
@@ -215,9 +219,9 @@ public class Utils {
 						if (lastConst == null) {
 							lastConst = at.getConstant();
 						} else if (!lastConst.equals(at.getConstant())) {
-							m_Tracker.equality(args, theory.FALSE,
+							mTracker.equality(args, theory.mFalse,
 									ProofConstants.RW_CONST_DIFF);
-							return theory.FALSE;
+							return theory.mFalse;
 						}
 					}
 				}
@@ -232,44 +236,44 @@ public class Utils {
 			boolean foundTrue = false;
 			boolean foundFalse = false;
 			for (Term t : args) {
-				if (t == theory.TRUE) {
+				if (t == theory.mTrue) {
 					foundTrue = true;
 					if (foundFalse) {
-						m_Tracker.equality(args, theory.FALSE,
+						mTracker.equality(args, theory.mFalse,
 								ProofConstants.RW_TRUE_NOT_FALSE);
-						return theory.FALSE;
+						return theory.mFalse;
 					}
-				} else if (t == theory.FALSE) {
+				} else if (t == theory.mFalse) {
 					foundFalse = true;
 					if (foundTrue) {
-						m_Tracker.equality(args, theory.FALSE,
+						mTracker.equality(args, theory.mFalse,
 								ProofConstants.RW_TRUE_NOT_FALSE);
-						return theory.FALSE;
+						return theory.mFalse;
 					}
 				} else
 					tmp.add(t);
 			}
 			if (foundTrue) {
 				// take care of (= true true ... true)
-				if (tmp.size() == 0) {
-					m_Tracker.equality(args, theory.TRUE,
+				if (tmp.isEmpty()) {
+					mTracker.equality(args, theory.mTrue,
 							ProofConstants.RW_EQ_SAME);
-					return theory.TRUE;
+					return theory.mTrue;
 				}
 				Term[] tmpArgs = tmp.toArray(new Term[tmp.size()]);
-				m_Tracker.equality(args, tmpArgs, ProofConstants.RW_EQ_TRUE);
+				mTracker.equality(args, tmpArgs, ProofConstants.RW_EQ_TRUE);
 				if (tmpArgs.length == 1)
 					return tmpArgs[0];
 				return createAndInplace(tmpArgs);
 			}
 			if (foundFalse) {
-				if (tmp.size() == 0) {
-					m_Tracker.equality(args, theory.TRUE,
+				if (tmp.isEmpty()) {
+					mTracker.equality(args, theory.mTrue,
 							ProofConstants.RW_EQ_SAME);
-					return theory.TRUE;
+					return theory.mTrue;
 				}
 				Term[] tmpArgs = tmp.toArray(new Term[tmp.size()]);
-				m_Tracker.equality(args, tmpArgs, ProofConstants.RW_EQ_FALSE);
+				mTracker.equality(args, tmpArgs, ProofConstants.RW_EQ_FALSE);
 				if (tmpArgs.length == 1)
 					return createNot(tmpArgs[0]);
 				// take care of (= false false ... false)
@@ -281,22 +285,22 @@ public class Utils {
 		}
 		// We had (= a ... a)
 		if (tmp.size() == 1) {
-			m_Tracker.equality(args, theory.TRUE, ProofConstants.RW_EQ_SAME);
-			return theory.TRUE;
+			mTracker.equality(args, theory.mTrue, ProofConstants.RW_EQ_SAME);
+			return theory.mTrue;
 		}
 		// Make binary
-		Term[] tmpArray = tmp.size() == args.length ? 
-				args : tmp.toArray(new Term[tmp.size()]);
+		Term[] tmpArray = tmp.size() == args.length
+		        ? args : tmp.toArray(new Term[tmp.size()]);
 		if (args != tmpArray)
-			m_Tracker.equality(args, tmpArray, ProofConstants.RW_EQ_SIMP);
+			mTracker.equality(args, tmpArray, ProofConstants.RW_EQ_SIMP);
 		if (tmpArray.length == 2)
 			return makeBinaryEq(tmpArray);
 		Term[] conj = new Term[tmpArray.length - 1];
 		for (int i = 0; i < conj.length; ++i)
 			conj[i] = theory.term("not",
-					makeBinaryEq(tmpArray[i], tmpArray[i+1]));
+					makeBinaryEq(tmpArray[i], tmpArray[i + 1]));
 		Term res = theory.term("not", theory.term("or", conj));
-		m_Tracker.equality(tmpArray, res, ProofConstants.RW_EQ_BINARY);
+		mTracker.equality(tmpArray, res, ProofConstants.RW_EQ_BINARY);
 		return res;
 	}
 	
@@ -307,7 +311,7 @@ public class Utils {
 		// produce (select a i) = v
 		Term[] args = store.getParameters();
 		Term result = t.term("=", t.term("select", args[0], args[1]), args[2]);
-		m_Tracker.storeRewrite(store, result, arrayFirst);
+		mTracker.storeRewrite(store, result, arrayFirst);
 		return result;
 	}
 	private boolean isStore(Term t) {
@@ -355,58 +359,58 @@ public class Utils {
 		Theory theory = args[0].getTheory();
 		if (args[0].getSort() == theory.getBooleanSort()) {
 			if (args.length > 2) {
-				m_Tracker.distinct(args, theory.FALSE,
+				mTracker.distinct(args, theory.mFalse,
 						ProofConstants.RW_DISTINCT_BOOL);
-				return theory.FALSE;
+				return theory.mFalse;
 			}
 			Term t0 = args[0];
 			Term t1 = args[1];
 			if (t0 == t1) {
-				m_Tracker.distinct(args, theory.FALSE,
+				mTracker.distinct(args, theory.mFalse,
 						ProofConstants.RW_DISTINCT_SAME);
-				return theory.FALSE;
+				return theory.mFalse;
 			}
 			if (t0 == createNotUntracked(t1)) {
-				m_Tracker.distinct(args, theory.TRUE,
+				mTracker.distinct(args, theory.mTrue,
 						ProofConstants.RW_DISTINCT_NEG);
-				return theory.TRUE;
+				return theory.mTrue;
 			}
-			if (t0 == theory.TRUE) {
-				m_Tracker.distinct(args, null, ProofConstants.RW_DISTINCT_TRUE);
+			if (t0 == theory.mTrue) {
+				mTracker.distinct(args, null, ProofConstants.RW_DISTINCT_TRUE);
 				return createNot(t1);
 			}
-			if (t0 == theory.FALSE) {
-				m_Tracker.distinct(args, t1, ProofConstants.RW_DISTINCT_FALSE);
+			if (t0 == theory.mFalse) {
+				mTracker.distinct(args, t1, ProofConstants.RW_DISTINCT_FALSE);
 				return t1;
 			}
-			if (t1 == theory.TRUE) {
-				m_Tracker.distinct(args, null, ProofConstants.RW_DISTINCT_TRUE);
+			if (t1 == theory.mTrue) {
+				mTracker.distinct(args, null, ProofConstants.RW_DISTINCT_TRUE);
 				return createNot(t0);
 			}
-			if (t1 == theory.FALSE) {
-				m_Tracker.distinct(args, t0, ProofConstants.RW_DISTINCT_FALSE);
+			if (t1 == theory.mFalse) {
+				mTracker.distinct(args, t0, ProofConstants.RW_DISTINCT_FALSE);
 				return t0;
 			}
 			// Heuristics: Try to find an already negated term
 			if (isNegation(t0)) {
-				m_Tracker.distinctBinary(t0, t1, true);
+				mTracker.distinctBinary(t0, t1, true);
 				return theory.term("=", createNot(t0), t1);
 			}
-			m_Tracker.distinctBinary(t0, t1, false);
+			mTracker.distinctBinary(t0, t1, false);
 			return theory.term("=", t0, createNot(t1));
 		}
 		LinkedHashSet<Term> tmp = new LinkedHashSet<Term>();
 		for (Term t : args)
 			if (!tmp.add(t)) {
 				// We had (distinct a b a)
-				m_Tracker.distinct(args, theory.FALSE,
+				mTracker.distinct(args, theory.mFalse,
 						ProofConstants.RW_DISTINCT_SAME);
-				return theory.FALSE;
+				return theory.mFalse;
 			}
 		tmp = null;
 		if (args.length == 2) {
 			Term res = theory.term("not", theory.term("=", args));
-			m_Tracker.distinct(args, res, ProofConstants.RW_DISTINCT_BINARY);
+			mTracker.distinct(args, res, ProofConstants.RW_DISTINCT_BINARY);
 			return res;
 		}
 		// We need n * (n - 1) / 2 conjuncts
@@ -416,18 +420,18 @@ public class Utils {
 			for (int j = i + 1; j < args.length; ++j)
 				nconjs[pos++] = theory.term("=", args[i], args[j]);
 		Term res = theory.term("not", theory.term("or", nconjs));
-		m_Tracker.distinct(args, res, ProofConstants.RW_DISTINCT_BINARY);
+		mTracker.distinct(args, res, ProofConstants.RW_DISTINCT_BINARY);
 		return res;
 //		return theory.term("distinct", args);
 	}
 	public static boolean isNegation(Term t) {
 		if (t instanceof ApplicationTerm)
-			return ((ApplicationTerm) t).getFunction() == t.getTheory().m_Not;
+			return ((ApplicationTerm) t).getFunction() == t.getTheory().mNot;
 		return false;
 	}
 	public Term createAndInplace(Term... args) {
 		assert (args.length > 1) : "Invalid and in simplification";
-		m_Tracker.removeConnective(args, null, ProofConstants.RW_AND_TO_OR);
+		mTracker.removeConnective(args, null, ProofConstants.RW_AND_TO_OR);
 		for (int i = 0; i < args.length; ++i)
 			args[i] = createNot(args[i]);
 		return createNot(createOr(args));

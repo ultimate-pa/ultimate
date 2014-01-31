@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
 public class SymbolCollector extends TermTransformer {
 
-	private HashMap<FunctionSymbol, Integer> m_Symbols;
+	private HashMap<FunctionSymbol, Integer> mSymbols;
 	
 	/**
 	 * Collect all symbols occurring in a given formula.  Do not use the
@@ -39,27 +39,27 @@ public class SymbolCollector extends TermTransformer {
 	 * @param input The given formula.
 	 */
 	public final Map<FunctionSymbol, Integer> collect(Term input) {
-		Map<FunctionSymbol, Integer> res = m_Symbols = 
+		Map<FunctionSymbol, Integer> res = mSymbols = 
 			new HashMap<FunctionSymbol, Integer>();
 		FormulaUnLet unletter = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
 		Term t = unletter.unlet(input);
 		transform(t);
-		m_Symbols = null;
+		mSymbols = null;
 		return res;
 	}
 	
 	public void startCollectTheory() {
-		m_Symbols = new HashMap<FunctionSymbol, Integer>();
+		mSymbols = new HashMap<FunctionSymbol, Integer>();
 	}
 	
 	public Set<FunctionSymbol> getTheorySymbols() {
-		Set<FunctionSymbol> res = m_Symbols.keySet();
-		m_Symbols = null;
+		Set<FunctionSymbol> res = mSymbols.keySet();
+		mSymbols = null;
 		return res;
 	}
 	
 	public void addGlobalSymbols(Term input) {
-		assert m_Symbols != null : "call startCollectTheory() first";
+		assert mSymbols != null : "call startCollectTheory() first";
 		transform(input);
 	}
 	
@@ -67,9 +67,9 @@ public class SymbolCollector extends TermTransformer {
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
 		FunctionSymbol fs = appTerm.getFunction();
 		if (!fs.isIntern()) {
-			Integer old = m_Symbols.get(fs);
+			Integer old = mSymbols.get(fs);
 			int val = old == null ? 1 : old + 1;
-			m_Symbols.put(fs, val);
+			mSymbols.put(fs, val);
 		}
 		super.convertApplicationTerm(appTerm, newArgs);
 	}

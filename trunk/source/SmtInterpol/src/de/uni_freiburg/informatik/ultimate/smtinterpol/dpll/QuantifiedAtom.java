@@ -20,17 +20,15 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.dpll;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.TriggerData;
 
 public class QuantifiedAtom extends DPLLAtom {
 
-	private String mname;
-	private Term mSmtFormula;
-	private TriggerData[] mtriggers;
+	private final String mName;
+	private final Term mSmtFormula;
 	
 	public QuantifiedAtom(String name, Term smtFormula, int assertionstacklevel) {
 		super(smtFormula.hashCode(), assertionstacklevel);
-		mname = name;
+		mName = name;
 		mSmtFormula = smtFormula;
 	}
 	@Override
@@ -38,12 +36,6 @@ public class QuantifiedAtom extends DPLLAtom {
 		return mSmtFormula;
 	}
 	public String toString() {
-		return mname;
-	}
-	public TriggerData[] getTriggers() {
-		return mtriggers;
-	}
-	public void setTriggers(TriggerData[] trigs) {
-		mtriggers = trigs;
+		return mName;
 	}
 }

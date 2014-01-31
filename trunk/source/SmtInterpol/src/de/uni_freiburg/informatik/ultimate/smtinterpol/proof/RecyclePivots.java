@@ -84,29 +84,29 @@ public class RecyclePivots {
 		/**
 		 * The root of the sub proof.
 		 */
-		Clause m_Cls;
+		final Clause mCls;
 		/**
 		 * The set of literals safe for the root.
 		 * This is null, if all literals are safe (because the
 		 * clause is not reached in this path).
 		 */
-		Set<Literal> m_Safes;
+		Set<Literal> mSafes;
 		public SetAndExpand(Clause cls, Set<Literal> safes) {
-			m_Cls = cls;
-			m_Safes = safes;
+			mCls = cls;
+			mSafes = safes;
 		}
 		
 		@Override
 		public void work() {
-			if (seen(m_Cls)) {
-				Set<Literal> oldSafes = m_SafeLits.get(m_Cls);
-				if (m_Safes == null)
-					m_Safes = oldSafes;
+			if (seen(mCls)) {
+				Set<Literal> oldSafes = mSafeLits.get(mCls);
+				if (mSafes == null)
+					mSafes = oldSafes;
 				else if (oldSafes != null)
-					m_Safes.retainAll(oldSafes);
+					mSafes.retainAll(oldSafes);
 				
 				// Clause has been seen for the last time.
-				ProofNode pn = m_Cls.getProof();
+				ProofNode pn = mCls.getProof();
 				// We can skip leaf nodes since they cannot be regularized
 				if (!pn.isLeaf()) {
 					Set<Literal> delLits = null;
@@ -114,97 +114,97 @@ public class RecyclePivots {
 					Antecedent[] antes = rn.getAntecedents();
 					for (int i = antes.length - 1; i >= 0; --i) {
 						HashSet<Literal> newSafes = null;
-						if (m_Safes == null) {
+						if (mSafes == null) {
 							// do nothing, visit sub nodes with null
-						} else if (m_Safes.contains(antes[i].pivot.negate())) {
+						} else if (mSafes.contains(antes[i].mPivot.negate())) {
 							// negation of pivot is safe =>
 							// delete antecedent clause
 							if (delLits == null)
 								delLits = new HashSet<Literal>();
-							delLits.add(antes[i].pivot);
+							delLits.add(antes[i].mPivot);
 							// visit antecedent with null since we do not use it.
-						} else 	if (!antes[i].antecedent.getProof().isLeaf()) {
+						} else 	if (!antes[i].mAntecedent.getProof().isLeaf()) {
 							// Sub proof is not a leaf => try to regularize
 							// copy safes and add the pivot to get the 
 							// new safes set for the antecedent.
-							newSafes = new HashSet<Literal>(m_Safes);
-							newSafes.add(antes[i].pivot);
+							newSafes = new HashSet<Literal>(mSafes);
+							newSafes.add(antes[i].mPivot);
 						}
 						
-						if (!antes[i].antecedent.getProof().isLeaf()) {
-							m_Todo.push(new SetAndExpand(
-									antes[i].antecedent, newSafes));
+						if (!antes[i].mAntecedent.getProof().isLeaf()) {
+							mTodo.push(new SetAndExpand(
+									antes[i].mAntecedent, newSafes));
 						}
 
-						if (m_Safes != null && 
-							m_Safes.contains(antes[i].pivot)) {
+						if (mSafes != null 
+							&& mSafes.contains(antes[i].mPivot)) {
 							// pivot is safe => delete antecedent
 							if (delLits == null)
 								delLits = new HashSet<Literal>();
-							delLits.add(antes[i].pivot.negate());
-							m_Safes = null;
+							delLits.add(antes[i].mPivot.negate());
+							mSafes = null;
 						}							
-						if (m_Safes != null)
-							m_Safes.add(antes[i].pivot.negate());
+						if (mSafes != null)
+							mSafes.add(antes[i].mPivot.negate());
 					}
 					if (delLits != null)
-						m_Deleted.put(m_Cls, delLits);
+						mDeleted.put(mCls, delLits);
 					// Handle primary
 					if (!rn.getPrimary().getProof().isLeaf()) {
 						HashSet<Literal> newSafes = null;
-						if (m_Safes != null)
-							newSafes = new HashSet<Literal>(m_Safes);
-						m_Todo.push(new SetAndExpand(rn.getPrimary(), newSafes));
+						if (mSafes != null)
+							newSafes = new HashSet<Literal>(mSafes);
+						mTodo.push(new SetAndExpand(rn.getPrimary(), newSafes));
 					}
 				}
-			} else if (m_Safes != null) {
+			} else if (mSafes != null) {
 				// There are still parts left where we can reach this clause.
 				// Compute intersection of safe literals for the paths seen so
 				// far
-				Set<Literal> oldSafes = m_SafeLits.get(m_Cls);
+				Set<Literal> oldSafes = mSafeLits.get(mCls);
 				if (oldSafes == null)
-					m_SafeLits.put(m_Cls, m_Safes);
+					mSafeLits.put(mCls, mSafes);
 				else
-					oldSafes.retainAll(m_Safes);
+					oldSafes.retainAll(mSafes);
 			}
 		}
 	}
 	/**
 	 * The occurrence map.
 	 */
-	private Map<Clause, Integer> m_Counts;
+	private Map<Clause, Integer> mCounts;
 	/**
 	 * The todo stack.
 	 */
-	private Deque<Worker> m_Todo = new ArrayDeque<Worker>();
+	private final Deque<Worker> mTodo = new ArrayDeque<Worker>();
 	/**
 	 * Set of all clauses already visited.
 	 */
-	private HashMap<Clause, Integer> m_Seen;
+	private HashMap<Clause, Integer> mSeen;
 	
-	private HashMap<Object, Set<Literal>> m_SafeLits;
+	private HashMap<Object, Set<Literal>> mSafeLits;
 	
-	private Map<Clause, Set<Literal>> m_Deleted;
+	private Map<Clause, Set<Literal>> mDeleted;
 	
 	public Map<Clause, Set<Literal>> regularize(
 			Clause proof, Map<Clause, Integer> counts) {
-		m_Counts = counts;
-		m_SafeLits = new HashMap<Object, Set<Literal>>();
-		m_Deleted = new HashMap<Clause, Set<Literal>>();
-		m_Seen = new HashMap<Clause, Integer>();
+		mCounts = counts;
+		mSafeLits = new HashMap<Object, Set<Literal>>();
+		mDeleted = new HashMap<Clause, Set<Literal>>();
+		mSeen = new HashMap<Clause, Integer>();
 		Set<Literal> safe = new HashSet<Literal>();
 		for (int i = 0; i < proof.getSize(); ++i)
 			safe.add(proof.getLiteral(i));
-		m_Todo.push(new SetAndExpand(proof, safe));
+		mTodo.push(new SetAndExpand(proof, safe));
 		run();
-		return m_Deleted;
+		return mDeleted;
 	}
 	/**
 	 * Process all clauses in a non-recursive way.
 	 */
 	private void run() {
-		while (!m_Todo.isEmpty()) {
-			Worker w = m_Todo.pop();
+		while (!mTodo.isEmpty()) {
+			Worker w = mTodo.pop();
 			w.work();
 		}
 	}
@@ -216,10 +216,10 @@ public class RecyclePivots {
 	 * @return Is this clause reached for the last time?
 	 */
 	private boolean seen(Clause cls) {
-		Integer cnt = m_Seen.get(cls);
+		Integer cnt = mSeen.get(cls);
 		int newcnt = cnt == null ? 1 : cnt + 1;
-		m_Seen.put(cls, newcnt);
-		int total = m_Counts.get(cls);
+		mSeen.put(cls, newcnt);
+		int total = mCounts.get(cls);
 		assert (newcnt <= total);
 		return total == newcnt;
 	}

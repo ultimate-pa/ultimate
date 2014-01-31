@@ -65,7 +65,7 @@ public enum Logics {
 	 */
 	@SuppressWarnings("incomplete-switch")
 	public boolean isUF() {
-		switch (this) {
+		switch (this) { // NOCHECKSTYLE
 		case AUFLIA:
 		case AUFLIRA:
 		case AUFNIRA:
@@ -90,7 +90,7 @@ public enum Logics {
 	 */
 	@SuppressWarnings("incomplete-switch")
 	public boolean isArray() {
-		switch (this) {
+		switch (this) { // NOCHECKSTYLE
 		case AUFLIA:
 		case AUFLIRA:
 		case AUFNIRA:
@@ -109,7 +109,7 @@ public enum Logics {
 	 */
 	@SuppressWarnings("incomplete-switch")
 	public boolean isQuantified() {
-		switch (this) {
+		switch (this) { // NOCHECKSTYLE
 		case AUFLIA:
 		case AUFLIRA:
 		case AUFNIRA:

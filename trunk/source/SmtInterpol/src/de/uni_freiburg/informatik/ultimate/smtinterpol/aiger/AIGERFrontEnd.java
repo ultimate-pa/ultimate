@@ -4,16 +4,16 @@
  * This file is part of SMTInterpol.
  *
  * SMTInterpol is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * SMTInterpol is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.aiger;
@@ -38,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.IParser;
 
 public class AIGERFrontEnd implements IParser {
+	
+	private static final int BUFFER_SIZE = 4096;
 	
 	private final static boolean USE_DEFINITIONS = true;
 	
@@ -78,52 +80,52 @@ public class AIGERFrontEnd implements IParser {
 	 */
 	private static final int TT_BNUMBER = 8;
 
-	private int m_Line;
-	private int m_Col;
-	private String m_Filename;
-	private StringBuilder m_Buffer;
-	private InputStream m_InputStream;
-	private Script m_Solver;
+	private int mLine;
+	private int mCol;
+	private String mFilename;
+	private InputStream mInputStream;
+	private Script mSolver;
 	
 	// The header data
-	private BigInteger m_NumAnds;
-	private String[] m_Inputs;
+	private BigInteger mNumAnds;
+	private String[] mInputs;
 	
 	// Parsing data
-	private byte[] buffer = new byte[4096];
-	private int bufpos = 0;
-	private int bufsize = -1;
+	private byte[] mBuffer = new byte[BUFFER_SIZE];
+	private int mBufpos = 0;
+	private int mBufsize = -1;
 	
 	public AIGERFrontEnd() {
-		m_Line = 1;
-		m_Col = 0;
-		m_Buffer = new StringBuilder();
+		mLine = 1;
+		mCol = 0;
 	}
 
 	private void reportError(String msg) {
-		System.err.print(m_Filename);
+		System.err.print(mFilename);
 		System.err.print(':');
-		System.err.print(m_Line);
+		System.err.print(mLine);
 		System.err.print(':');
-		System.err.print(m_Col);
+		System.err.print(mCol);
 		System.err.print(':');
 		System.err.println(msg);
 		System.exit(2);
 	}
 
 	private final int nextChar() throws IOException {
-		if (bufpos >= bufsize) {
-			bufsize = m_InputStream.read(buffer);
-			if (bufsize == -1)
+		if (mBufpos >= mBufsize) {
+			mBufsize = mInputStream.read(mBuffer);
+			if (mBufsize == -1)
 				return -1; // EOF
-			bufpos = 0;
+			mBufpos = 0;
 		}
-		return buffer[bufpos++] & 0xff;
+		++mCol;
+		return mBuffer[mBufpos++] & 0xff;// NOCHECKSTYLE
 	}
 	
 	private final void ungetLastChar() {
-		assert(bufpos > 0);
-		--bufpos;
+		assert(mBufpos > 0);
+		--mCol;
+		--mBufpos;
 	}
 
 	private Object nextToken(int expected) {
@@ -149,44 +151,49 @@ public class AIGERFrontEnd implements IParser {
 					return null;
 				}
 			case TT_NUMBER:
+			{
+				StringBuilder buffer = new StringBuilder();
 				while (ch != -1 && Character.isDigit((char) ch)) {
-					m_Buffer.append((char) ch);
+					buffer.append((char) ch);
 					ch = nextChar();
 				}
 				ungetLastChar();
-				if (m_Buffer.length() == 0)
+				if (buffer.length() == 0)
 					return null;
-				result = m_Buffer.toString();
-				m_Buffer.setLength(0);
+				result = buffer.toString();
 				return result;
+			}
 			case TT_EOF:
 				if (ch == -1)
-					return ""; // Result has to be non-null but isn't interesting
+					return "";// Result has to be non-null but isn't interesting
 				ungetLastChar();
 				return null;
 			case TT_NEWLINE:
 				if (ch == '\n') {
-					++m_Line;
+					++mLine;
+					mCol = 0;
 					return "\n";
 				}
 				ungetLastChar();
 				return null;
 			case TT_STS:
 				if (ch == 'i' || ch == 'l' || ch == 'o')
-					return "" + (char) ch;
+					return Character.toString((char) ch);
 				ungetLastChar();
 				return null;
 			case TT_STRING:
+			{
+				StringBuilder buffer = new StringBuilder();
 				// Strings expand until the next newline
 				// They may contain any ascii symbol
 				while (ch != -1 && ch != '\n') {
-					m_Buffer.append((char) ch);
+					buffer.append((char) ch);
 					ch = nextChar();
 				}
 				ungetLastChar();
-				result = m_Buffer.toString();
-				m_Buffer.setLength(0);
+				result = buffer.toString();
 				return result;
+			}
 			case TT_COMMENT:
 				if (ch == 'c')
 					return "c";
@@ -195,29 +202,29 @@ public class AIGERFrontEnd implements IParser {
 			case TT_BNUMBER: {
 				BigInteger x = BigInteger.ZERO;
 				int i = 0;
-				while ((ch & 0x80) != 0) {
-					BigInteger tmp = BigInteger.valueOf(ch & 0x7f);
-					assert (7*i >= 0);
-					tmp = tmp.shiftLeft(7 * i++);
+				while ((ch & 0x80) != 0) { // NOCHECKSTYLE
+					BigInteger tmp = BigInteger.valueOf(ch & 0x7f);// NOCHECKSTYLE
+					assert (7*i >= 0);// NOCHECKSTYLE
+					tmp = tmp.shiftLeft(7 * i++);// NOCHECKSTYLE
 					x = x.or(tmp);
 					ch = nextChar();
 					if (ch == -1) {
 						System.err.println("File corrupted");
-						System.exit(5);
+						System.exit(5);// NOCHECKSTYLE
 					}
 				}
-				BigInteger tmp = BigInteger.valueOf(ch & 0x7f);
-				assert (7*i >= 0);
-				tmp = tmp.shiftLeft(7 * i);
+				BigInteger tmp = BigInteger.valueOf(ch & 0x7f);// NOCHECKSTYLE
+				assert (7*i >= 0);// NOCHECKSTYLE
+				tmp = tmp.shiftLeft(7 * i);// NOCHECKSTYLE
 				x = x.or(tmp);
 				return x;
 			}
-				default:
-					ungetLastChar();
-					return null;
+			default:
+				ungetLastChar();
+				return null;
 			}
-		} catch (IOException ioe) {
-			System.err.println(ioe.getMessage());
+		} catch (IOException eioe) {
+			System.err.println(eioe.getMessage());
 			System.exit(1);
 			// Unreachable, but Java does not detect this...
 			return null;
@@ -251,25 +258,25 @@ public class AIGERFrontEnd implements IParser {
 		getOneSpace();
 		BigInteger maxVarNum = new BigInteger(getNumber());
 		getOneSpace();
-		m_Inputs = new String[Integer.parseInt(getNumber())];
+		mInputs = new String[Integer.parseInt(getNumber())];
 		getOneSpace();
 		if (!getNumber().equals("0")) {
 			System.err.println("No latches allowed for SAT checking");
-			System.exit(3);
+			System.exit(3);// NOCHECKSTYLE
 		}
 		getOneSpace();
 		if (!getNumber().equals("1")) {
 			System.err.println("Only one output allowed for SAT checking");
-			System.exit(3);
+			System.exit(3);// NOCHECKSTYLE
 		}
 		getOneSpace();
-		m_NumAnds = new BigInteger(getNumber());
+		mNumAnds = new BigInteger(getNumber());
 		getNewline();
 		// Do a consistency check...
 		if (!maxVarNum.equals(
-				m_NumAnds.add(BigInteger.valueOf(m_Inputs.length)))) {
+				mNumAnds.add(BigInteger.valueOf(mInputs.length)))) {
 			System.err.println("File header corrupted!");
-			System.exit(5);
+			System.exit(5);// NOCHECKSTYLE
 		}
 	}
 	
@@ -286,7 +293,7 @@ public class AIGERFrontEnd implements IParser {
 			getNewline();
 			if (sts.equals("i")) {
 				int idx = Integer.parseInt(num);
-				m_Inputs[idx] = name;
+				mInputs[idx] = name;
 			}
 			// I ignore a possible name for the output
 		}
@@ -304,27 +311,27 @@ public class AIGERFrontEnd implements IParser {
 	
 	private Term toTerm(BigInteger lit) {
 		if (lit.equals(BigInteger.ZERO))
-			return m_Solver.term("false");
+			return mSolver.term("false");
 		if (lit.equals(BigInteger.ONE))
-			return m_Solver.term("true");
-		Term res = m_Solver.term("" + lit.shiftRight(1));
+			return mSolver.term("true");
+		Term res = mSolver.term(lit.shiftRight(1).toString());
 		if (lit.testBit(0))
-			res = m_Solver.term("not", res);
+			res = mSolver.term("not", res);
 		return res;
 	}
 	
 	private void parse() {
 		parseHeader();
-		Sort bool = m_Solver.sort("Bool");
+		Sort bool = mSolver.sort("Bool");
 		Sort[] empty = new Sort[0];
-		for (int i = 0; i < m_Inputs.length; ++i)
-			m_Solver.declareFun("" + (i + 1), empty, bool);
+		for (int i = 0; i < mInputs.length; ++i)
+			mSolver.declareFun(Integer.toString(i + 1), empty, bool);
 		// No latches...
 		BigInteger output = new BigInteger(getNumber());
 		getNewline();
 		TermVariable[] emptyVars = new TermVariable[0];
-		BigInteger start = BigInteger.valueOf(m_Inputs.length);
-		BigInteger end = start.add(m_NumAnds);
+		BigInteger start = BigInteger.valueOf(mInputs.length);
+		BigInteger end = start.add(mNumAnds);
 		for (start = start.add(BigInteger.ONE); start.compareTo(end) <= 0;
 				start = start.add(BigInteger.ONE)) {
 			BigInteger delta0 = (BigInteger) nextToken(TT_BNUMBER);
@@ -337,60 +344,60 @@ public class AIGERFrontEnd implements IParser {
 			assert (rhs0.compareTo(rhs1) >= 0);
 			args[1] = toTerm(rhs1);
 			if (USE_DEFINITIONS)
-				m_Solver.defineFun(start.toString(), emptyVars, bool,
-						m_Solver.term("and", args));
+				mSolver.defineFun(start.toString(), emptyVars, bool,
+						mSolver.term("and", args));
 			else {
 				String name = start.toString();
-				m_Solver.declareFun(name, empty, bool);
-				m_Solver.assertTerm(m_Solver.term("=",
-						m_Solver.term(name),
-						m_Solver.term("and", args)));
+				mSolver.declareFun(name, empty, bool);
+				mSolver.assertTerm(mSolver.term("=",
+						mSolver.term(name),
+						mSolver.term("and", args)));
 			}
 		}
 		parseSymbolTable();
 		parseCommentSection();
 		// Make some space for solving
-		buffer = null;
+		mBuffer = null;
 		Logger.getRootLogger().info("Finished parsing");
 		Term formula = toTerm(output);
 		if (USE_DEFINITIONS) {
 			FormulaUnLet unlet = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
-			m_Solver.assertTerm(unlet.unlet(formula));
+			mSolver.assertTerm(unlet.unlet(formula));
 		} else
-			m_Solver.assertTerm(formula);
+			mSolver.assertTerm(formula);
 		Logger.getRootLogger().info("Asserted formula");
 	}
 
 	@Override
 	public int run(Script solver, String filename) {
-		m_Solver = solver;
-		if (filename != null) {
-			try {
-				m_InputStream = new FileInputStream(filename);
-			} catch (FileNotFoundException fnfe) {
-				System.err.println(fnfe.getMessage());
-				return 4;
-			}
-		} else {
+		mSolver = solver;
+		if (filename == null) {
 			filename = "<stdin>";
-			m_InputStream = System.in;
+			mInputStream = System.in;
+		} else {
+			try {
+				mInputStream = new FileInputStream(filename);
+			} catch (FileNotFoundException efnfe) {
+				System.err.println(efnfe.getMessage());
+				return 4;// NOCHECKSTYLE
+			}
 		}
-		m_Filename = filename;
-		m_Solver.setOption(":produce-models", Boolean.TRUE);
-		m_Solver.setLogic(Logics.CORE);
+		mFilename = filename;
+		mSolver.setOption(":produce-models", Boolean.TRUE);
+		mSolver.setLogic(Logics.CORE);
 		parse();
-		LBool isSat = m_Solver.checkSat();
+		LBool isSat = mSolver.checkSat();
 		System.out.println(isSat);
 		if (isSat == LBool.SAT) {
 			System.out.println("Stimuli:");
-			Model m = m_Solver.getModel();
-			Term trueTerm = m_Solver.term("true");
-			for (int i = 0; i < m_Inputs.length; ++i) {
-				Term var = m_Solver.term("" + i);
+			Model m = mSolver.getModel();
+			Term trueTerm = mSolver.term("true");
+			for (int i = 0; i < mInputs.length; ++i) {
+				Term var = mSolver.term(Integer.toString(i));
 				if (m.evaluate(var) != trueTerm)
 					System.out.print("not ");
 				// Variable 0 is reserved for false...
-				System.out.println(m_Inputs[i] == null ? (i + 1) : m_Inputs[i]);
+				System.out.println(mInputs[i] == null ? (i + 1) : mInputs[i]);
 			}
 		}
 		return 0;

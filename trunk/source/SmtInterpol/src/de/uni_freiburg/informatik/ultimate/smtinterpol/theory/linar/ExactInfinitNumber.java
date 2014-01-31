@@ -21,33 +21,33 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 public class ExactInfinitNumber {
-	private Rational m_Real;
-	private Rational m_Eps;
+	private final Rational mReal;
+	private final Rational mEps;
 	public ExactInfinitNumber(Rational real, Rational eps) {
-		m_Real = real;
-		m_Eps = eps;
+		mReal = real;
+		mEps = eps;
 	}
 	public Rational getRealValue() {
-		return m_Real;
+		return mReal;
 	}
 	public Rational getEpsilon() {
-		return m_Eps;
+		return mEps;
 	}
 	public String toString() {
-		if (m_Eps.signum() == 0)
-			return m_Real.toString();
-		if (m_Eps.signum() > 0)
-			return m_Real.toString() + "+" + m_Eps.toString() + "eps";
-		return m_Real.toString() + "-" + m_Eps.abs().toString() + "eps";
+		if (mEps.signum() == 0)
+			return mReal.toString();
+		if (mEps.signum() > 0)
+			return mReal.toString() + "+" + mEps.toString() + "eps";
+		return mReal.toString() + "-" + mEps.abs().toString() + "eps";
 	}
 	public boolean equals(Object o) {
 		if (o instanceof ExactInfinitNumber) {
 			ExactInfinitNumber n = (ExactInfinitNumber) o;
-			return m_Real.equals(n.m_Real) && m_Eps.equals(n.m_Eps);
+			return mReal.equals(n.mReal) && mEps.equals(n.mEps);
 		}
 		return false;
 	}
 	public int hashCode() {
-		return m_Real.hashCode() + 65537 * m_Eps.hashCode();
+		return mReal.hashCode() + 65537 * mEps.hashCode();
 	}
 }

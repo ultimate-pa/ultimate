@@ -29,14 +29,14 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
 public class SymbolChecker extends TermTransformer {
 
-	private Map<FunctionSymbol, Integer> m_LeftAllowed;
-	private Map<FunctionSymbol, Integer> m_RightAllowed;
-	private HashSet<FunctionSymbol> m_LeftErrors;
-	private HashSet<FunctionSymbol> m_RightErrors;
-	private Set<FunctionSymbol> m_Globals;
+	private Map<FunctionSymbol, Integer> mLeftAllowed;
+	private Map<FunctionSymbol, Integer> mRightAllowed;
+	private HashSet<FunctionSymbol> mLeftErrors;
+	private HashSet<FunctionSymbol> mRightErrors;
+	private final Set<FunctionSymbol> mGlobals;
 	
 	public SymbolChecker(Set<FunctionSymbol> globals) {
-		m_Globals = globals;
+		mGlobals = globals;
 	}
 	
 	/**
@@ -49,36 +49,36 @@ public class SymbolChecker extends TermTransformer {
 	public final boolean check(Term interpolant,
 			Map<FunctionSymbol, Integer> leftAllowed,
 			Map<FunctionSymbol, Integer> rightAllowed) {
-		m_LeftAllowed = leftAllowed;
-		m_RightAllowed = rightAllowed;
-		m_LeftErrors = new HashSet<FunctionSymbol>();
-		m_RightErrors = new HashSet<FunctionSymbol>();
+		mLeftAllowed = leftAllowed;
+		mRightAllowed = rightAllowed;
+		mLeftErrors = new HashSet<FunctionSymbol>();
+		mRightErrors = new HashSet<FunctionSymbol>();
 		transform(interpolant);
-		return !(m_LeftErrors.isEmpty() && m_RightErrors.isEmpty());
+		return !(mLeftErrors.isEmpty() && mRightErrors.isEmpty());
 	}
 
 	@Override
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
 		FunctionSymbol fs = appTerm.getFunction();
-		if (!fs.isIntern() && !m_Globals.contains(fs)) {
-			Integer left = m_LeftAllowed.get(fs);
-			Integer right = m_RightAllowed.get(fs);
+		if (!fs.isIntern() && !mGlobals.contains(fs)) {
+			Integer left = mLeftAllowed.get(fs);
+			Integer right = mRightAllowed.get(fs);
 			if (left == null && right == null)
 				throw new InternalError("Detected new symbol in interpolant: " + fs);
 			else if (left == null)
-				m_RightErrors.add(fs);
+				mRightErrors.add(fs);
 			else if (right - left <= 0)
-				m_LeftErrors.add(fs);
+				mLeftErrors.add(fs);
 		}
 		super.convertApplicationTerm(appTerm, newArgs);
 	}
 	
 	public Set<FunctionSymbol> getLeftErrors() {
-		return m_LeftErrors;
+		return mLeftErrors;
 	}
 	
 	public Set<FunctionSymbol> getRightErrors() {
-		return m_RightErrors;
+		return mRightErrors;
 	}
 	
 }

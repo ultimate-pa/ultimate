@@ -29,12 +29,12 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Coercion;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class CCEquality extends DPLLAtom {
-	private CCTerm m_lhs, m_rhs;
-	CCEquality m_diseqReason;
-	private LAEquality m_lasd;
-	private Rational m_LAFactor;
-	private Entry m_entry;
-	int stackDepth = -1;
+	private final CCTerm mLhs, mRhs;
+	CCEquality mDiseqReason;
+	private LAEquality mLasd;
+	private Rational mLAFactor;
+	private final Entry mEntry;
+	int mStackDepth = -1;
 	
 	class Entry extends SimpleListable<Entry> {
 		public CCEquality getCCEquality() {
@@ -44,30 +44,30 @@ public class CCEquality extends DPLLAtom {
 	
 	CCEquality(int assertionstacklevel, CCTerm c1, CCTerm c2) {
 		super(HashUtils.hashJenkins(c1.hashCode(), c2), assertionstacklevel);
-		this.m_lhs = c1;
-		this.m_rhs = c2;
-		this.m_entry = new Entry();
+		this.mLhs = c1;
+		this.mRhs = c2;
+		this.mEntry = new Entry();
 	}	
 	
 	public CCTerm getLhs() {
-		return m_lhs;
+		return mLhs;
 	}
 
 	public CCTerm getRhs() {
-		return m_rhs;
+		return mRhs;
 	}
 	
 	public Entry getEntry() {
-		return m_entry;
+		return mEntry;
 	}
 	
 	public LAEquality getLASharedData() {
-		return m_lasd;
+		return mLasd;
 	}
 	
 	public void setLASharedData(LAEquality lasd, Rational factor) {
-		m_lasd = lasd;
-		m_LAFactor = factor;
+		mLasd = lasd;
+		mLAFactor = factor;
 	}
 	
 	/**
@@ -76,22 +76,22 @@ public class CCEquality extends DPLLAtom {
 	 * @return the factor.
 	 */
 	public Rational getLAFactor() {
-		return m_LAFactor;
+		return mLAFactor;
 	}
 
 	public void removeLASharedData() {
-		m_lasd = null;
-		m_LAFactor = null;
+		mLasd = null;
+		mLAFactor = null;
 	}
 	
 	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
-		Term lhs = m_lhs.toSMTTerm(smtTheory, quoted);
-		Term rhs = m_rhs.toSMTTerm(smtTheory, quoted);
+		Term lhs = mLhs.toSMTTerm(smtTheory, quoted);
+		Term rhs = mRhs.toSMTTerm(smtTheory, quoted);
 		Term res = Coercion.buildEq(lhs, rhs);
-		return quoted ? smtTheory.annotatedTerm(NamedAtom.g_quoted, res) : res;
+		return quoted ? smtTheory.annotatedTerm(NamedAtom.QUOTED, res) : res;
 	}
 
 	public String toString() {
-		return m_lhs + " == " + m_rhs;
+		return mLhs + " == " + mRhs;
 	}
 }

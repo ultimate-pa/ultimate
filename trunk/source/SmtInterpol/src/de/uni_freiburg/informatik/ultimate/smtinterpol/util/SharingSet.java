@@ -29,68 +29,69 @@ public class SharingSet<E> extends AbstractSet<E> {
 	
 	private static final class SharingSetData<E> {
 		SharingSetData() {
-			m_Rep = new HashSet<E>();
-			m_Sharing = 0;
+			mRep = new HashSet<E>();
+			mSharing = 0;
 		}
 		SharingSetData(SharingSetData<E> other) {
-			m_Rep = new HashSet<E>(other.m_Rep);
-			m_Sharing = 0;
+			mRep = new HashSet<E>(other.mRep);
+			mSharing = 0;
 		}
 		SharingSetData(E obj) {
-			m_Rep = Collections.singleton(obj);
+			mRep = Collections.singleton(obj);
 			// HACK: The first write modification has to copy the map since it
 			//       is immutable...
-			m_Sharing = 1;
+			mSharing = 1;
 		}
-		Set<E> m_Rep;
+		Set<E> mRep;
 		// XXX Should this be atomic for multi threading support
 		// Currently, we do not support multiple threads!!!
-		int m_Sharing;
+		int mSharing;
 		SharingSetData<E> share() {
-			++m_Sharing;
+			++mSharing;
 			return this;
 		}
 		SharingSetData<E> detach() {
-			if (m_Sharing != 0) {
+			if (mSharing != 0) {
 				// one shared access less
-				--m_Sharing;
+				--mSharing;
 				return new SharingSetData<E>(this);
 			}
 			return this;
 		}
 	}
 	
-	private SharingSetData<E> m_Data;
+	private SharingSetData<E> mData;
 	
 	public SharingSet() {
-		m_Data = new SharingSetData<E>();
+		mData = new SharingSetData<E>();
 	}
 	
 	public SharingSet(SharingSet<E> other) {
-		m_Data = other.m_Data.share();
+		mData = other.mData.share();
 	}
 	// UNMODIFIABLE sharing set...
 	public SharingSet(E obj) {
-		m_Data = new SharingSetData<E>(obj);
+		mData = new SharingSetData<E>(obj);
 	}
 
 	@Override
 	public Iterator<E> iterator() {
 		return new Iterator<E>() {
-			Iterator<E> sink = m_Data.m_Rep.iterator();
+			Iterator<E> mSink = mData.mRep.iterator();
 			@Override
 			public boolean hasNext() {
-				return sink.hasNext();
+				return mSink.hasNext();
 			}
 
 			@Override
 			public E next() {
-				return sink.next();
+				return mSink.next();
 			}
 
 			@Override
 			public void remove() {
-				throw new UnsupportedOperationException("remove not allowed on SharingSet iterator");
+				throw new UnsupportedOperationException(
+						"remove not allowed on SharingSet iterator");
 			}
 			
 		};
@@ -98,59 +99,59 @@ public class SharingSet<E> extends AbstractSet<E> {
 
 	@Override
 	public int size() {
-		return m_Data.m_Rep.size();
+		return mData.mRep.size();
 	}
 
 	@Override
 	public boolean removeAll(Collection<?> c) {
-		SharingSetData<E> data = m_Data.detach();
-		boolean res = data.m_Rep.removeAll(c);
+		SharingSetData<E> data = mData.detach();
+		boolean res = data.mRep.removeAll(c);
 		if (res)
-			m_Data = data;
+			mData = data;
 		return res;
 	}
 
 	@Override
 	public boolean add(E e) {
-		if (m_Data.m_Rep.contains(e))
+		if (mData.mRep.contains(e))
 			return false;
-		m_Data = m_Data.detach();
-		return m_Data.m_Rep.add(e);
+		mData = mData.detach();
+		return mData.mRep.add(e);
 	}
 
 	@Override
 	public boolean addAll(Collection<? extends E> c) {
-		if (m_Data.m_Rep.containsAll(c))
+		if (mData.mRep.containsAll(c))
 			return false;
-		m_Data = m_Data.detach();
-		return m_Data.m_Rep.addAll(c);
+		mData = mData.detach();
+		return mData.mRep.addAll(c);
 	}
 	// Optimization for sharing sets...
 	public boolean addShared(SharingSet<E> other) {
 		if (other == null)
 			return false;
-		if (m_Data.m_Rep.isEmpty() && m_Data.m_Sharing == 0) {
-			m_Data = other.m_Data.share();
+		if (mData.mRep.isEmpty() && mData.mSharing == 0) {
+			mData = other.mData.share();
 			return true;
 		}
-		return addAll(other.m_Data.m_Rep);
+		return addAll(other.mData.mRep);
 	}
 
 	@Override
 	public boolean contains(Object o) {
-		return m_Data.m_Rep.contains(o);
+		return mData.mRep.contains(o);
 	}
 
 	@Override
 	public boolean containsAll(Collection<?> c) {
-		return m_Data.m_Rep.containsAll(c);
+		return mData.mRep.containsAll(c);
 	}
 
 	@Override
 	public boolean remove(Object o) {
-		if (m_Data.m_Rep.contains(o)) {
-			m_Data = m_Data.detach();
-			return m_Data.m_Rep.remove(o);
+		if (mData.mRep.contains(o)) {
+			mData = mData.detach();
+			return mData.mRep.remove(o);
 		}
 		return false;
 	}

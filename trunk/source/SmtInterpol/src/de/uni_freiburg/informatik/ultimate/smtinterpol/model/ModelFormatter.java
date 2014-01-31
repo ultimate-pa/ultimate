@@ -21,6 +21,7 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.IRAConstantFormatter;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -29,89 +30,92 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.HashExecTerm.Index;
 
 public class ModelFormatter {
-	private String m_LineSep;
-	private StringBuilder m_String;
-	private int m_Indent;
+	private final String mLineSep;
+	private final StringBuilder mString;// NOPMD
+	private int mIndent;
 	
 	private void newline() {
-		m_String.append(m_LineSep);
-		for (int i = 0; i < m_Indent; ++i)
-			m_String.append(' ');
+		mString.append(mLineSep);
+		for (int i = 0; i < mIndent; ++i)
+			mString.append(' ');
 	}
 	
 	public ModelFormatter() {
-		m_LineSep = System.getProperty("line.separator");
-		m_String = new StringBuilder("(model ");
-		m_Indent = 0;
+		mLineSep = System.getProperty("line.separator");
+		mString = new StringBuilder("(model ");// NOPMD
+		mIndent = 0;
 	}
 	
 	public void appendComment(String comment) {
-		m_Indent += Config.INDENTATION;
+		mIndent += Config.INDENTATION;
 		newline();
-		m_String.append(";; ").append(comment);
-		m_Indent -= Config.INDENTATION;
+		mString.append(";; ").append(comment);
+		mIndent -= Config.INDENTATION;
 	}
 	
 	public void appendSortInterpretation(
 			SortInterpretation si, Sort sort, Theory t) {
-		m_Indent += Config.INDENTATION;
+		mIndent += Config.INDENTATION;
 		newline();
-		m_String.append(si.toSMTLIB(t, sort));
-		m_Indent -= Config.INDENTATION;
+		mString.append(si.toSMTLIB(t, sort));
+		mIndent -= Config.INDENTATION;
 	}
 	
 	public void appendValue(FunctionSymbol f, ExecTerm et, Theory t) {
-		m_Indent += Config.INDENTATION;
+		mIndent += Config.INDENTATION;
 		newline();
 		Sort[] paramSorts = f.getParameterSorts();
 		TermVariable[] vars = new TermVariable[paramSorts.length];
 		for (int i = 0; i < vars.length; ++i)
 			vars[i] = t.createTermVariable("@" + i, paramSorts[i]);
-		m_String.append("(define-fun ").append(f.getName()).append(" (");
+		mString.append("(define-fun ").append(f.getName()).append(" (");
 		for (int i = 0; i < vars.length; ++i)
-			m_String.append('(').append(vars[i]).append(' ').
+			mString.append('(').append(vars[i]).append(' ').
 				append(paramSorts[i]).append(')');
-		m_String.append(") ").append(f.getReturnSort());
-		m_Indent += Config.INDENTATION;
+		mString.append(") ").append(f.getReturnSort());
+		mIndent += Config.INDENTATION;
 		appendExecTerm(et, vars, t);
-		m_String.append(')');
-		m_Indent -= Config.INDENTATION;
-		m_Indent -= Config.INDENTATION;
+		mString.append(')');
+		mIndent -= Config.INDENTATION;
+		mIndent -= Config.INDENTATION;
 	}
 	
 	private void appendExecTerm(ExecTerm et, TermVariable[] vars, Theory t) {
 		if (et instanceof Value) {
 			newline();
-			m_String.append(et.toSMTLIB(t, vars));
-		}
-		else if (et instanceof HashExecTerm) {
+			mString.append(toModelTerm(et, vars, t));
+		} else if (et instanceof HashExecTerm) {
 			HashExecTerm het = (HashExecTerm) et;
-			Term defaultVal = het.getDefaultValue().toSMTLIB(t, null);
+			Term defaultVal = toModelTerm(het.getDefaultValue(), null, t);
 			int closing = 0;
 			for (Map.Entry<Index, ExecTerm> me : het.values().entrySet()) {
 				if (me.getValue() != defaultVal) {
 					newline();
-					m_String.append("(ite ").append(
+					mString.append("(ite ").append(
 							me.getKey().toSMTLIB(t, vars)).append(' ').append(
-									me.getValue().toSMTLIB(t, null));
+									toModelTerm(me.getValue(), null, t));
 					// We have to close one parenthesis;
 					++closing;
 				}
 			}
 			// Default value
-			m_Indent += Config.INDENTATION;
+			mIndent += Config.INDENTATION;
 			newline();
-			m_String.append(defaultVal);
+			mString.append(defaultVal);
 			for (int i = 0; i < closing; ++i)
-				m_String.append(')');
-			m_Indent -= Config.INDENTATION;
+				mString.append(')');
+			mIndent -= Config.INDENTATION;
 		} else
 			throw new InternalError();
 	}
 	
 	public String finish() {
-		return m_String.append(')').toString();
+		return mString.append(')').toString();
 	}
 	
-	
+	static Term toModelTerm(ExecTerm et, TermVariable[] vars, Theory t) {
+		Term val = et.toSMTLIB(t, vars);
+		return t.getLogic().isIRA() ? new IRAConstantFormatter().transform(val)
+				: val;
+	}
 }

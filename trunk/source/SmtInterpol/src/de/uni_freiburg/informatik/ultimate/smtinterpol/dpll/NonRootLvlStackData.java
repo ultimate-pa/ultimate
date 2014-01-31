@@ -30,21 +30,21 @@ import java.util.ListIterator;
  */
 public class NonRootLvlStackData extends StackData {
 	/// All atoms added on this level.
-	List<DPLLAtom> atoms;
+	List<DPLLAtom> mAtoms;
 	public NonRootLvlStackData(StackData prev) {
 		super(prev);
-		atoms = new ArrayList<DPLLAtom>();
+		mAtoms = new ArrayList<DPLLAtom>();
 	}
 	
 	public void addAtom(DPLLAtom atom) {
-		atoms.add(atom);
+		mAtoms.add(atom);
 	}
 	
 	public StackData restore(DPLLEngine engine, int targetlevel) {
-		ListIterator<DPLLAtom> it = atoms.listIterator(atoms.size());
+		ListIterator<DPLLAtom> it = mAtoms.listIterator(mAtoms.size());
 		while (it.hasPrevious())
 			engine.removeAtom(it.previous());
-		atoms.clear();
+		mAtoms.clear();
 		return super.restore(engine, targetlevel);
 	}
 }

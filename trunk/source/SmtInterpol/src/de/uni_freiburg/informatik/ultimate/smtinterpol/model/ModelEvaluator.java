@@ -46,10 +46,10 @@ public class ModelEvaluator extends NonRecursive {
 	 */
 	private static class ITESelector implements Walker {
 
-		private final ApplicationTerm m_Ite;
+		private final ApplicationTerm mIte;
 		
 		public ITESelector(ApplicationTerm ite) {
-			m_Ite = ite;
+			mIte = ite;
 		}
 		
 		@Override
@@ -58,12 +58,12 @@ public class ModelEvaluator extends NonRecursive {
 			ExecTerm execSelector = eval.getConverted();
 			if (execSelector.isUndefined())
 				eval.setResult(
-						new Undefined(m_Ite.getFunction().getReturnSort()));
+						new Undefined(mIte.getFunction().getReturnSort()));
 			else {
 				boolean selector = 
-						execSelector.toSMTLIB(m_Ite.getTheory(), null) == 
-						m_Ite.getTheory().TRUE;
-				eval.pushTerm(m_Ite.getParameters()[selector ? 1 : 2]);
+						execSelector.toSMTLIB(mIte.getTheory(), null) 
+						    == mIte.getTheory().mTrue;
+				eval.pushTerm(mIte.getParameters()[selector ? 1 : 2]);
 			}
 		}
 		
@@ -71,32 +71,32 @@ public class ModelEvaluator extends NonRecursive {
 	
 	private static class AddToCache implements Walker {
 		
-		private Term m_Term;
+		private final Term mTerm;
 		public AddToCache(Term t) {
-			m_Term = t;
+			mTerm = t;
 		}
 		
 		@Override
 		public void walk(NonRecursive engine) {
 			ModelEvaluator eval = (ModelEvaluator) engine;
-			eval.m_Cache.put(m_Term, eval.m_Evaluated.peekLast());
+			eval.mCache.put(mTerm, eval.mEvaluated.peekLast());
 		}
 		
 	}
 	
 	private static class Evaluator implements Walker {
 
-		private ApplicationTerm m_Term;
+		private final ApplicationTerm mTerm;
 		public Evaluator(ApplicationTerm term) {
-			m_Term = term;
+			mTerm = term;
 		}
 		
 		@Override
 		public void walk(NonRecursive engine) {
 			ModelEvaluator eval = (ModelEvaluator) engine;
 			ExecTerm[] args = eval.getConvertedArgs(
-					m_Term.getParameters().length);
-			eval.setResult(eval.m_Model.getValue(m_Term.getFunction(), args));
+					mTerm.getParameters().length);
+			eval.setResult(eval.mModel.getValue(mTerm.getFunction(), args));
 		}
 		
 	}
@@ -110,13 +110,12 @@ public class ModelEvaluator extends NonRecursive {
 		@Override
 		public void walk(NonRecursive walker) {
 			ModelEvaluator eval = (ModelEvaluator) walker;
-			ExecTerm cached = eval.m_Cache.get(m_Term);
-			if (cached != null)
-				eval.setResult(cached);
-			else {
-				eval.enqueueWalker(new AddToCache(m_Term));
+			ExecTerm cached = eval.mCache.get(mTerm);
+			if (cached == null) {
+				eval.enqueueWalker(new AddToCache(mTerm));
 				super.walk(walker);
-			}
+			} else
+				eval.setResult(cached);	
 		}
 		
 		@Override
@@ -179,16 +178,16 @@ public class ModelEvaluator extends NonRecursive {
 		
 	}
 	
-	HashMap<Term, ExecTerm> m_Cache = new HashMap<Term, ExecTerm>();
+	HashMap<Term, ExecTerm> mCache = new HashMap<Term, ExecTerm>();
 	
-	ArrayDeque<ExecTerm> m_Evaluated = new ArrayDeque<ExecTerm>();
+	ArrayDeque<ExecTerm> mEvaluated = new ArrayDeque<ExecTerm>();
 	
 	private ExecTerm getConverted() {
-		return m_Evaluated.removeLast();
+		return mEvaluated.removeLast();
 	}
 	
 	public void pushTerms(Term[] terms) {
-		for (int i = terms.length-1; i >= 0; i--)
+		for (int i = terms.length - 1; i >= 0; i--)
 			pushTerm(terms[i]);
 	}
 
@@ -204,13 +203,13 @@ public class ModelEvaluator extends NonRecursive {
 	}
 
 	private void setResult(ExecTerm t) {
-		m_Evaluated.addLast(t);
+		mEvaluated.addLast(t);
 	}
 	
-	private final Model m_Model;
+	private final Model mModel;
 
 	public ModelEvaluator(Model model) {
-		m_Model = model;
+		mModel = model;
 	}
 
 	public Term evaluate(Term input) {

@@ -26,13 +26,13 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 
 
 public class LiteralReason extends LAReason {
-	private Literal m_literal;
-	ArrayDeque<LAReason> m_dependents;
+	private Literal mLiteral;
+	ArrayDeque<LAReason> mDependents;
 	
 	public LiteralReason(LinVar var, InfinitNumber bound, boolean isUpper,
 			Literal lit, LiteralReason lastLit) {
 		super(var, bound, isUpper, lastLit);
-		m_literal = lit;
+		mLiteral = lit;
 	}
 
 	public LiteralReason(LinVar var, InfinitNumber bound, boolean isUpper,
@@ -41,32 +41,32 @@ public class LiteralReason extends LAReason {
 	}
 
 	public Literal getLiteral() {
-		return m_literal;
+		return mLiteral;
 	}
 	
 	public void addDependent(LAReason reason) {
 		assert getLastLiteral() == this;
-		if (m_dependents == null) {
-			m_dependents = new ArrayDeque<LAReason>();
+		if (mDependents == null) {
+			mDependents = new ArrayDeque<LAReason>();
 		}
-		m_dependents.addFirst(reason);
+		mDependents.addFirst(reason);
 	}
 	
 	public Iterable<LAReason> getDependents() {
-		if (m_dependents == null)
+		if (mDependents == null)
 			return Collections.emptySet();
-		return m_dependents;
+		return mDependents;
 	}
 
 	@Override
 	InfinitNumber explain(Explainer explainer, 
 			InfinitNumber slack, Rational factor) {
-		if (!explainer.canExplainWith(m_literal)) {
+		if (!explainer.canExplainWith(mLiteral)) {
 			assert getBound().equals(getOldReason().getBound());
 			return getOldReason().explain(explainer, slack, factor);
 		}
-		assert(m_literal.getAtom().getDecideStatus() == m_literal);
-		if (m_literal.negate() instanceof LAEquality) {
+		assert(mLiteral.getAtom().getDecideStatus() == mLiteral);
+		if (mLiteral.negate() instanceof LAEquality) {
 			InfinitNumber newSlack;
 			newSlack = slack.sub(getVar().getEpsilon());
 			if (newSlack.compareTo(InfinitNumber.ZERO) > 0) {
@@ -76,7 +76,7 @@ public class LiteralReason extends LAReason {
 				return slack;
 			}
 		}
-		explainer.addLiteral(m_literal.negate(), factor);
+		explainer.addLiteral(mLiteral.negate(), factor);
 		return slack;
 	}
 

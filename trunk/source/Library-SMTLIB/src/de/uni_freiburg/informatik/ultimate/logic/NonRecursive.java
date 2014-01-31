@@ -68,7 +68,7 @@ public class NonRecursive {
 	 * The todo stack. It contains the terms to convert and some info how much
 	 * was already processed of this term.
 	 */
-	private ArrayDeque<Walker> m_Todo = new ArrayDeque<Walker>();
+	private final ArrayDeque<Walker> mTodo = new ArrayDeque<Walker>();
 	
 	/**
 	 * Walker that does some piece of work.  This can be added to
@@ -92,7 +92,7 @@ public class NonRecursive {
 	 * stack.
 	 */
 	protected void reset() {
-		m_Todo.clear();
+		mTodo.clear();
 	}
 	
 	/**
@@ -100,7 +100,7 @@ public class NonRecursive {
 	 * @param item the walker to enqueue.
 	 */
 	public void enqueueWalker(Walker item) {
-		m_Todo.addLast(item);
+		mTodo.addLast(item);
 	}
 	
 	/**
@@ -109,7 +109,7 @@ public class NonRecursive {
 	 * @param item the walker to execute initially.
 	 */
 	public void run(Walker item) {
-		m_Todo.addLast(item);
+		mTodo.addLast(item);
 		run();
 	}
 	/**
@@ -118,13 +118,13 @@ public class NonRecursive {
 	 * the todo stack.
 	 */
 	public void run() {
-		while (!m_Todo.isEmpty()) {
-			m_Todo.removeLast().walk(this);
+		while (!mTodo.isEmpty()) {
+			mTodo.removeLast().walk(this);
 		}
 	}
 	
 	public String toString() {
-		return m_Todo.toString();
+		return mTodo.toString();
 	}
 	
 	/**
@@ -135,23 +135,23 @@ public class NonRecursive {
 	 * @author hoenicke
 	 */
 	public static abstract class TermWalker implements Walker {
-		protected Term m_Term;
+		protected Term mTerm;
 		public TermWalker(Term term) {
-			m_Term = term;
+			mTerm = term;
 		}
 		public void walk(NonRecursive walker) {
-			if (m_Term instanceof ApplicationTerm)
-				walk(walker, (ApplicationTerm) m_Term);
-			else if (m_Term instanceof LetTerm)
-				walk(walker, (LetTerm) m_Term);
-			else if (m_Term instanceof AnnotatedTerm)
-				walk(walker, (AnnotatedTerm) m_Term);
-			else if (m_Term instanceof QuantifiedFormula)
-				walk(walker, (QuantifiedFormula) m_Term);
-			else if (m_Term instanceof ConstantTerm)
-				walk(walker, (ConstantTerm) m_Term);
-			else if (m_Term instanceof TermVariable)
-				walk(walker, (TermVariable) m_Term);
+			if (mTerm instanceof ApplicationTerm)
+				walk(walker, (ApplicationTerm) mTerm);
+			else if (mTerm instanceof LetTerm)
+				walk(walker, (LetTerm) mTerm);
+			else if (mTerm instanceof AnnotatedTerm)
+				walk(walker, (AnnotatedTerm) mTerm);
+			else if (mTerm instanceof QuantifiedFormula)
+				walk(walker, (QuantifiedFormula) mTerm);
+			else if (mTerm instanceof ConstantTerm)
+				walk(walker, (ConstantTerm) mTerm);
+			else if (mTerm instanceof TermVariable)
+				walk(walker, (TermVariable) mTerm);
 		}
 
 		public abstract void walk(NonRecursive walker, ConstantTerm term);
@@ -162,11 +162,11 @@ public class NonRecursive {
 		public abstract void walk(NonRecursive walker, TermVariable term);
 		
 		public Term getTerm() {
-			return m_Term;
+			return mTerm;
 		}
 
 		public String toString() {
-			return getClass().getSimpleName()+":"+m_Term;
+			return getClass().getSimpleName() + ":" + mTerm;
 		}
 	}
 }

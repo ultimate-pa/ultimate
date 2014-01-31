@@ -24,77 +24,78 @@ import java.util.Iterator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 
 public class AtomQueue extends AbstractQueue<DPLLAtom> {
-	DPLLAtom[] m_atoms;
-	int m_size;
+	DPLLAtom[] mAtoms;
+	int mSize;
 	
 	public AtomQueue() {
-		m_atoms = new DPLLAtom[100];
-		m_size = 0;
+		mAtoms = new DPLLAtom[100];
+		mSize = 0;
 	}
 
 	@Override
 	public Iterator<DPLLAtom> iterator() {
 		return new Iterator<DPLLAtom>() {
-			int pos = 0;
+			int mPos = 0;
 			public boolean hasNext() {
-				return pos < m_size;
+				return mPos < mSize;
 			}
 			public DPLLAtom next() {
-				return m_atoms[pos++];
+				return mAtoms[mPos++];
 			}
 			public void remove() {
-				AtomQueue.this.remove(m_atoms[pos-1]);
+				AtomQueue.this.remove(mAtoms[mPos - 1]);
 			}
 		};
 	}
 
 	@Override
 	public int size() {
-		return m_size;
+		return mSize;
 	}
 	
 	private void sink(DPLLAtom atom, int pos) {
 		int parent;
-		while (pos > 0 && m_atoms[parent = (pos-1)/2].compareActivityTo(atom) > 0) {
-			m_atoms[pos] = m_atoms[parent];
-			m_atoms[pos].m_atomQueueIndex = pos;
+		while (pos > 0
+		        && mAtoms[parent = (pos - 1) / 2].compareActivityTo(atom) > 0) {
+			mAtoms[pos] = mAtoms[parent];
+			mAtoms[pos].mAtomQueueIndex = pos;
 			pos = parent;
 		}
-		m_atoms[pos] = atom;
-		atom.m_atomQueueIndex = pos;
+		mAtoms[pos] = atom;
+		atom.mAtomQueueIndex = pos;
 	}
 
 	@Override
 	public boolean offer(DPLLAtom atom) {
-		assert atom.m_atomQueueIndex == -1 
-			|| m_atoms[atom.m_atomQueueIndex] == atom;
+		assert atom.mAtomQueueIndex == -1 
+			|| mAtoms[atom.mAtomQueueIndex] == atom;
 		if (Config.EXPENSIVE_ASSERTS) {
-			for (int i = 0; i < m_size; i++) {
-				assert m_atoms[i].m_atomQueueIndex == i;
-				assert m_atoms[i].decideStatus == null;
+			for (int i = 0; i < mSize; i++) {
+				assert mAtoms[i].mAtomQueueIndex == i;
+				assert mAtoms[i].mDecideStatus == null;
 			}
 		}
-		if (atom.m_atomQueueIndex != -1)
+		if (atom.mAtomQueueIndex != -1)
 			return false;
-		if (m_size >= m_atoms.length) {
-			DPLLAtom[] newAtoms = new DPLLAtom[2*m_size];
-			System.arraycopy(m_atoms, 0, newAtoms, 0, m_size);
-			m_atoms = newAtoms;
+		if (mSize >= mAtoms.length) {
+			DPLLAtom[] newAtoms = new DPLLAtom[2 * mSize];
+			System.arraycopy(mAtoms, 0, newAtoms, 0, mSize);
+			mAtoms = newAtoms;
 		}
-		sink(atom, m_size++);
+		sink(atom, mSize++);
 		return true;
 	}
 
 	@Override
 	public DPLLAtom peek() {
-		assert m_size <= 1 || (m_atoms[0].compareActivityTo(m_atoms[1]) <= 0);
-		assert m_size <= 2 || (m_atoms[0].compareActivityTo(m_atoms[2]) <= 0);
-		return m_atoms[0];
+		assert mSize <= 1 || (mAtoms[0].compareActivityTo(mAtoms[1]) <= 0);
+		assert mSize <= 2 || (mAtoms[0].compareActivityTo(mAtoms[2]) <= 0);
+		return mAtoms[0];
 	}
 
 	@Override
 	public DPLLAtom poll() {
-		DPLLAtom atom = m_atoms[0];
+		DPLLAtom atom = mAtoms[0];
 		remove(atom);
 		return atom;
 	}
@@ -103,9 +104,9 @@ public class AtomQueue extends AbstractQueue<DPLLAtom> {
 	public boolean contains(Object o) {
 		if (!(o instanceof DPLLAtom))
 			return false;
-		assert (((DPLLAtom) o).m_atomQueueIndex == -1
-				|| m_atoms[((DPLLAtom) o).m_atomQueueIndex] == o);
-		return (((DPLLAtom) o).m_atomQueueIndex != -1);
+		assert (((DPLLAtom) o).mAtomQueueIndex == -1
+				|| mAtoms[((DPLLAtom) o).mAtomQueueIndex] == o);
+		return (((DPLLAtom) o).mAtomQueueIndex != -1);
 	}
 	
 	@Override
@@ -113,27 +114,27 @@ public class AtomQueue extends AbstractQueue<DPLLAtom> {
 		if (!(o instanceof DPLLAtom))
 			return false;
 		if (Config.EXPENSIVE_ASSERTS) {
-			for (int i = 0; i < m_size; i++) {
-				assert m_atoms[i].m_atomQueueIndex == i;
-				assert m_atoms[i].decideStatus == null || m_atoms[i] == o;
+			for (int i = 0; i < mSize; i++) {
+				assert mAtoms[i].mAtomQueueIndex == i;
+				assert mAtoms[i].mDecideStatus == null || mAtoms[i] == o;
 			}
 		}
 		DPLLAtom atom = (DPLLAtom) o;
-		if (atom.m_atomQueueIndex == -1)
+		if (atom.mAtomQueueIndex == -1)
 			return false;
-		assert m_atoms[atom.m_atomQueueIndex] == atom;
+		assert mAtoms[atom.mAtomQueueIndex] == atom;
 		
 		// remove the element
-		int pos = atom.m_atomQueueIndex;
-		atom.m_atomQueueIndex = -1;
+		int pos = atom.mAtomQueueIndex;
+		atom.mAtomQueueIndex = -1;
 
 		// Move children of pos downwards to make a free spot on a leaf.
-		while (2*pos+2 < m_size) {
-			int child = 2*pos + 1;
-			if (m_atoms[child].compareActivityTo(m_atoms[child+1]) > 0)
+		while (2 * pos + 2 < mSize) {
+			int child = 2 * pos + 1;
+			if (mAtoms[child].compareActivityTo(mAtoms[child + 1]) > 0)
 				child++;
-			m_atoms[pos] = m_atoms[child];
-			m_atoms[pos].m_atomQueueIndex = pos;
+			mAtoms[pos] = mAtoms[child];
+			mAtoms[pos].mAtomQueueIndex = pos;
 			pos = child;
 		}
 		// Now pos is a free position in the heap that is (or will be) a leaf.
@@ -145,12 +146,12 @@ public class AtomQueue extends AbstractQueue<DPLLAtom> {
 		// into the tree.
 		
 		// check if the new free position is at the end.
-		if (pos != --m_size) {
+		if (pos != --mSize) {
 			// move the element from the last position to the free leaf
 			// and then upwards
-			sink(m_atoms[m_size], pos);
+			sink(mAtoms[mSize], pos);
 		}
-		m_atoms[m_size] = null;
+		mAtoms[mSize] = null;
 		return true;
 	}
 }

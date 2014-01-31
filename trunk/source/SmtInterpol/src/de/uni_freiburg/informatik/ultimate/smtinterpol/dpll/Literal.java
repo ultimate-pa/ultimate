@@ -23,29 +23,29 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 
 public abstract class Literal {
-	DPLLAtom atom;
-	protected Literal  negated;
-	Clause.WatchList watchers = new Clause.WatchList();
+	DPLLAtom mAtom;
+	protected Literal  mNegated;
+	Clause.WatchList mWatchers = new Clause.WatchList();
 
-	private final int hash;
+	private final int mHash;
 	@Override
 	public final int hashCode() {
-		return hash;
+		return mHash;
 	}
 	
 	public Literal(int hash) {
-		this.hash = hash;
+		this.mHash = hash;
 	}
 	
 	/**
 	 * Returns the underlying atom.  If this literal is an atom, it returns
 	 * itself.
 	 */
-	public final DPLLAtom getAtom() { return atom; }
+	public final DPLLAtom getAtom() { return mAtom; }
 	/**
 	 * Returns the negated literal.
 	 */
-	public final Literal  negate()  { return negated; }
+	public final Literal  negate()  { return mNegated; }
 	/**
 	 * Returns the sign of the literal (1 for atom, -1 for negated atom).
 	 */

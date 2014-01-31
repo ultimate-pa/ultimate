@@ -33,12 +33,11 @@ public class DIMACSParser implements IParser {
 		try {
 			MySymbolFactory symfactory = new MySymbolFactory();
 			Reader reader;
-			if (filename != null) {
-				reader = new FileReader(filename);
-			} else {
+			if (filename == null) {
 				filename = "<stdin>";
-				reader = new InputStreamReader(System.in);
-			}
+				reader = new InputStreamReader(System.in);				
+			} else
+				reader = new FileReader(filename);
 			Lexer lexer = new Lexer(reader);
 			lexer.setSymbolFactory(symfactory);
 			Parser parser = new Parser(lexer, symfactory);

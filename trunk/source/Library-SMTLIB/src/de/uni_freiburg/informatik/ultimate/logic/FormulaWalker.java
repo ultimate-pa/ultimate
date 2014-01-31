@@ -30,7 +30,9 @@ public class FormulaWalker {
 		/**
 		 * Returns the new term corresponding to <code>input</code>.
 		 * @param input Input term.
-		 * @return OutputTerm or <code>null</code> iff walker should descend into subterms (only for ApplicationTerms with arguments and ITETerms).
+		 * @return OutputTerm or <code>null</code> iff walker should descend
+		 *         into subterms (only for ApplicationTerms with arguments and
+		 *         ITETerms).
 		 */
 		public Term term(Term input);
 		/**
@@ -66,23 +68,23 @@ public class FormulaWalker {
 		 */
 		public void endscope(TermVariable[] tv);
 	}
-	private SymbolVisitor m_Visitor;
+	private final SymbolVisitor mVisitor;
 
-	private Script m_Script;
+	private final Script mScript;
 	public FormulaWalker(SymbolVisitor visitor, Script script) {
-		m_Visitor = visitor;
-		m_Script = script;
+		mVisitor = visitor;
+		mScript = script;
 	}
 
-	public Term process(Term in) throws SMTLIBException {
-		return recursivewalk(in);
+	public Term process(Term term) throws SMTLIBException {
+		return recursivewalk(term);
 	}
-	private Term recursivewalk(Term in) throws SMTLIBException {
-		Term res = m_Visitor.term(in);
-		if( res != null )
+	private Term recursivewalk(Term term) throws SMTLIBException {
+		Term res = mVisitor.term(term);
+		if (res != null)
 			return res;
-		if (in instanceof LetTerm) {
-			LetTerm let = (LetTerm) in;
+		if (term instanceof LetTerm) {
+			LetTerm let = (LetTerm) term;
 			Term[] values = let.getValues();
 			Term[] newvalues = new Term[values.length];
 			boolean changed = false;
@@ -93,35 +95,35 @@ public class FormulaWalker {
 			}
 			if (!changed)
 				newvalues = values;
-			m_Visitor.let(let.getVariables(), newvalues);
+			mVisitor.let(let.getVariables(), newvalues);
 			try {
 				Term newsub = recursivewalk(let.getSubTerm());
-				return m_Visitor.unlet() ? newsub : 
-					newvalues == values && newsub == let.getSubTerm() ? let : 
-					m_Script.let(let.getVariables(), newvalues, newsub);
+				return mVisitor.unlet() ? newsub
+					: newvalues == values && newsub == let.getSubTerm() ? let 
+						: mScript.let(let.getVariables(), newvalues, newsub);
 			} finally {
-				m_Visitor.endscope(let.getVariables());
+				mVisitor.endscope(let.getVariables());
 			}
-		} else if (in instanceof QuantifiedFormula) {
-			QuantifiedFormula qf = (QuantifiedFormula)in;
+		} else if (term instanceof QuantifiedFormula) {
+			QuantifiedFormula qf = (QuantifiedFormula)term;
 			int quantifier = qf.getQuantifier();
 			TermVariable[] vars = qf.getVariables();
-			m_Visitor.quantifier(vars);
+			mVisitor.quantifier(vars);
 			try {
 				Term msub = recursivewalk(qf.getSubformula());
 				boolean changed = msub != qf.getSubformula();
-				return changed ? 
-						qf : m_Script.quantifier(quantifier, vars, msub);
+				return changed ? qf : mScript.quantifier(
+						quantifier, vars, msub);
 
 			} finally {
-				m_Visitor.endscope(vars);
+				mVisitor.endscope(vars);
 			}
-		} else if (in instanceof AnnotatedTerm) {
-			AnnotatedTerm annterm = (AnnotatedTerm) in;
+		} else if (term instanceof AnnotatedTerm) {
+			AnnotatedTerm annterm = (AnnotatedTerm) term;
 			Term sub = recursivewalk(annterm.getSubterm());
 			Annotation[] annots = annterm.getAnnotations();
 			Annotation[] newAnnots = annots;
-			for (int i=0; i < annots.length; i++) {
+			for (int i = 0; i < annots.length; i++) {
 				Object value = annots[i].getValue();
 				Object newValue;
 				if (value instanceof Term)
@@ -137,22 +139,24 @@ public class FormulaWalker {
 				}
 			}
 			if (sub == annterm.getSubterm()	&& newAnnots == annots)
-				return in;
-			return m_Script.annotate(sub, newAnnots);
-		} else if (in instanceof ApplicationTerm) {
-			ApplicationTerm at = (ApplicationTerm) in;
+				return term;
+			return mScript.annotate(sub, newAnnots);
+		} else if (term instanceof ApplicationTerm) {
+			ApplicationTerm at = (ApplicationTerm) term;
 			Term[] args = at.getParameters();
 			Term[] nargs = recursivewalk(args);
-			m_Visitor.done(in);
-			return args != nargs ? m_Script.term(at.getFunction().getName(),nargs) : in;
+			mVisitor.done(term);
+			return args == nargs ? term : mScript.term(
+					at.getFunction().getName(),nargs);
 		}
-		throw new RuntimeException("SymbolVisitor returned null-value for basic term!");
+		throw new RuntimeException(
+				"SymbolVisitor returned null-value for basic term!");
 	}
 
 	private Term[] recursivewalk(Term[] args) throws SMTLIBException {
 		Term[] nargs = new Term[args.length];
 		boolean changed = false;
-		for( int i = 0; i < args.length; ++i ) {
+		for (int i = 0; i < args.length; ++i) {
 			nargs[i] = recursivewalk(args[i]);
 			if (nargs[i] != args[i])
 				changed = true;

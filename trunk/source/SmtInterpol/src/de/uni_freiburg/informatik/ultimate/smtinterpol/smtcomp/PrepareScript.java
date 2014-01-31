@@ -38,11 +38,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class PrepareScript extends LoggingScript {
 
-	private Track m_Track;
+	private final Track mTrack;
 	
 	public PrepareScript(Track track, String file) throws FileNotFoundException {
 		super(file, false);
-		m_Track = track;
+		mTrack = track;
 		if (track.hasInitalOption())
 			setOption(track.getInitialOption(), track.getInitialOptionValue());
 	}
@@ -57,7 +57,7 @@ public class PrepareScript extends LoggingScript {
 
 	@Override
 	public void push(int levels) throws SMTLIBException {
-		if (!m_Track.isPushPopAllowed())
+		if (!mTrack.isPushPopAllowed())
 			throw new IllegalArgumentException(
 					"push not allowed in this track");
 		if (levels != 1)
@@ -67,7 +67,7 @@ public class PrepareScript extends LoggingScript {
 
 	@Override
 	public void pop(int levels) throws SMTLIBException {
-		if (!m_Track.isPushPopAllowed())
+		if (!mTrack.isPushPopAllowed())
 			throw new IllegalArgumentException(
 					"pop not allowed in this track");
 		if (levels != 1)
@@ -84,7 +84,7 @@ public class PrepareScript extends LoggingScript {
 	@Override
 	public Term getProof() throws SMTLIBException,
 			UnsupportedOperationException {
-		if (m_Track == Track.PROOF_GEN)
+		if (mTrack == Track.PROOF_GEN)
 			return super.getProof();
 		// Do nothing since command not allowed in this track
 		throw new UnsupportedOperationException("Not allowed in this trace");
@@ -93,7 +93,7 @@ public class PrepareScript extends LoggingScript {
 	@Override
 	public Term[] getUnsatCore() throws SMTLIBException,
 			UnsupportedOperationException {
-		if (m_Track == Track.UNSAT_CORE)
+		if (mTrack == Track.UNSAT_CORE)
 			return super.getUnsatCore();
 		// Do nothing since command not allowed in this track
 		return new Term[0];
@@ -134,14 +134,13 @@ public class PrepareScript extends LoggingScript {
 
 	@Override
 	public Term annotate(Term t, Annotation... annotations)
-			throws SMTLIBException {
+		throws SMTLIBException {
 		// By default, I allow :pattern
 		List<Annotation> allowed = new ArrayList<Annotation>();
 		for (Annotation annot : annotations) {
 			if (annot.getKey().equals(":pattern"))
 				allowed.add(annot);
-			else if (m_Track.isNamedAllowed() &&
-					annot.getKey().equals(":named"))
+			else if (mTrack.isNamedAllowed() && annot.getKey().equals(":named"))
 				allowed.add(annot);
 			// All other annotations are silently discarded...
 		}

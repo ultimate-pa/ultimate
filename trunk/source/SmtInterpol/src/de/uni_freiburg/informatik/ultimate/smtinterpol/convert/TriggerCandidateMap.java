@@ -35,32 +35,31 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.logic.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.CollectionsHelper;
+import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class TriggerCandidateMap {
-	private Logger mlogger;
-	private HashMap<FunctionSymbol, List<ApplicationTerm>> m_funcs;
-	private Set<ApplicationTerm> m_unitCandidates;
-	private Theory m_theory;
-	private Set<TermVariable> m_vars;
+	private final Logger mLogger;
+	private final HashMap<FunctionSymbol, List<ApplicationTerm>> mFuncs;
+	private final Set<ApplicationTerm> mUnitCandidates;
+	private final Theory mTheory;
+	private Set<TermVariable> mVars;
 	public TriggerCandidateMap(Logger logger,Theory theory,
 			Set<TermVariable> vars) {
-		mlogger = logger;
-		m_funcs = new HashMap<FunctionSymbol,List<ApplicationTerm>>();
+		mLogger = logger;
+		mFuncs = new HashMap<FunctionSymbol,List<ApplicationTerm>>();
 		// We need insertion order iterators since we want to extract minimal
 		// candidates first. Inserting child before parent guarantees this.
-		m_unitCandidates = new LinkedHashSet<ApplicationTerm>();
-		m_theory = theory;
-		m_vars = vars;
+		mUnitCandidates = new LinkedHashSet<ApplicationTerm>();
+		mTheory = theory;
+		mVars = vars;
 	}
 	
 	public void insert(Term term) {
-		assert term.getSort() == m_theory.getBooleanSort() : 
-			"Inserting non-boolean term";
+		assert term.getSort() == mTheory.getBooleanSort() :	"Inserting non-boolean term";
 		// Remove let terms and lift term-ites...
-		InferencePreparation ip = new InferencePreparation(m_theory,m_vars);
+		InferencePreparation ip = new InferencePreparation(mTheory,mVars);
 		recinsert(ip.prepare(term));
 	}
 	// return true iff term contains an internal subterm
@@ -79,14 +78,14 @@ public class TriggerCandidateMap {
 				return true;
 			FunctionSymbol fs = fat.getFunction();
 			if (isFunctionAllowedInTrigger(fs)) {
-				List<ApplicationTerm> fapps = m_funcs.get(fs);
+				List<ApplicationTerm> fapps = mFuncs.get(fs);
 				if (fapps == null) {
 					fapps = new ArrayList<ApplicationTerm>();
-					m_funcs.put(fs, fapps);
+					mFuncs.put(fs, fapps);
 				}
-				if (m_vars.containsAll(Arrays.asList(
+				if (mVars.containsAll(Arrays.asList(
 						term.getFreeVars())))
-					m_unitCandidates.add(fat);
+					mUnitCandidates.add(fat);
 				fapps.add(fat);
 				return false;
 			}
@@ -101,18 +100,18 @@ public class TriggerCandidateMap {
 	 * @return <code>true</code> if and only if <code>fs</code> can contribute.
 	 */
 	private final boolean isFunctionAllowedInTrigger(FunctionSymbol fs) {
-		return !fs.isIntern() || fs.getName().equals("=") || 
-			fs.getName().equals("select") || fs.getName().equals("store");
+		return !fs.isIntern() || fs.getName().equals("=") 
+			|| fs.getName().equals("select") || fs.getName().equals("store");
 	}
 
 	public boolean isLoopingPattern(ApplicationTerm candidate) {
-		List<ApplicationTerm> fapps = m_funcs.get(candidate.getFunction());
+		List<ApplicationTerm> fapps = mFuncs.get(candidate.getFunction());
 		assert (fapps != null) : "Pattern candidate does not occur in the sub";
 		for (ApplicationTerm at : fapps) {
 			if (at == candidate)
 				continue;
 			if (hasVarMatchError(candidate,at)) {
-				mlogger.debug(
+				mLogger.debug(
 						new DebugMessage(
 								"Pattern candidate {0} dropped. It is looping against {1}...",
 								candidate,at));
@@ -123,13 +122,11 @@ public class TriggerCandidateMap {
 	}
 	private boolean hasVarMatchError(Term candidate,
 			Term fat) {
-		if (candidate instanceof TermVariable && 
-				!(fat instanceof TermVariable))
-			return fat.getFreeVars() != null &&
-					Arrays.asList(fat.getFreeVars()).
-						contains(candidate);
-		if (candidate instanceof ApplicationTerm &&
-				fat instanceof ApplicationTerm) {
+		if (candidate instanceof TermVariable && !(fat instanceof TermVariable))
+			return fat.getFreeVars() != null
+			    && Arrays.asList(fat.getFreeVars()).contains(candidate);
+		if (candidate instanceof ApplicationTerm
+		        && fat instanceof ApplicationTerm) {
 			ApplicationTerm capp = (ApplicationTerm)candidate;
 			ApplicationTerm fapp = (ApplicationTerm)fat;
 			if (capp.getFunction() == fapp.getFunction()) {
@@ -148,9 +145,9 @@ public class TriggerCandidateMap {
 	 * Infer <strong>one</strong> multi trigger.
 	 * @return Multi trigger or <code>null</code> if none could be inferred.
 	 */
-	public Term[] getMultiTrigger() {
+	public Term[] getMultiTrigger() { // NOPMD
 		int trigsize = 2;
-		while (trigsize <= m_vars.size()) {
+		while (trigsize <= mVars.size()) {
 			Set<Term> trigs = getMultiTrigger(trigsize);
 			if (trigs != null) {
 				assert(trigs.size() == trigsize);
@@ -162,10 +159,10 @@ public class TriggerCandidateMap {
 	}
 	private Set<Term> getMultiTrigger(int trigsize) {
 		HashSet<TermVariable> uncovered =
-			new HashSet<TermVariable>(m_vars.size(),1);
-		uncovered.addAll(m_vars);
+			new HashSet<TermVariable>(mVars.size(),1);
+		uncovered.addAll(mVars);
 		HashSet<Term> candidate = new HashSet<Term>(trigsize,1);
-		for (List<ApplicationTerm> fapps : m_funcs.values()) {
+		for (List<ApplicationTerm> fapps : mFuncs.values()) {
 			for (ApplicationTerm fat : fapps) {
 				candidate.add(fat);
 				assert(fat.getFreeVars() != null && fat.getFreeVars().length != 0);
@@ -184,7 +181,7 @@ public class TriggerCandidateMap {
 			HashSet<TermVariable> uncovered,int trigsize) {
 		if (trigsize == 0)
 			return uncovered.isEmpty();
-		for (List<ApplicationTerm> fapps : m_funcs.values()) {
+		for (List<ApplicationTerm> fapps : mFuncs.values()) {
 			for (ApplicationTerm fat : fapps) {
 				Collection<TermVariable> tvs =
 					Arrays.asList(fat.getFreeVars());
@@ -212,8 +209,9 @@ public class TriggerCandidateMap {
 	public Term[] getAllUnitTriggers() {
 		HashSet<Term> unittrigs = new HashSet<Term>();
 		HashSet<Term> considered = new HashSet<Term>();
-		candidates: for (ApplicationTerm c : m_unitCandidates) {
-			for (Term t : c.getParameters())
+	candidates: 
+	    for (ApplicationTerm c : mUnitCandidates) {
+	        for (Term t : c.getParameters())
 				// All term with at least on considered children are considered as well...
 				if (considered.contains(t)) {
 					considered.add(c);
@@ -224,16 +222,16 @@ public class TriggerCandidateMap {
 				new HashSet<TermVariable>(fvars.length,1);
 			for (TermVariable tv : fvars)
 				vars.add(tv);
-			if (vars.equals(m_vars) && 
-					(!Config.FEATURE_BLOCK_LOOPING_PATTERN || 
-							!isLoopingPattern(c))) {
+			if (vars.equals(mVars) 
+					&& (!Config.FEATURE_BLOCK_LOOPING_PATTERN 
+					        || !isLoopingPattern(c))) {
 				// Consider this candidate
 				unittrigs.add(c);
 				considered.add(c);
 			}
 		}
-		return unittrigs.isEmpty() ? 
-				null : unittrigs.toArray(new Term[unittrigs.size()]);
+		return unittrigs.isEmpty()
+		        ? null : unittrigs.toArray(new Term[unittrigs.size()]);
 	}
 	/**
 	 * Reinitialize this map for inference for a different set of variables.
@@ -241,9 +239,8 @@ public class TriggerCandidateMap {
 	 * @param vars Variable to infer pattern for.
 	 */
 	public void reinit(Set<TermVariable> vars) {
-		m_funcs.clear();
-		m_unitCandidates.clear();
-		m_vars = vars;
+		mFuncs.clear();
+		mUnitCandidates.clear();
+		mVars = vars;
 	}
 }
-	

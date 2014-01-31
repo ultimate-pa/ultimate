@@ -31,9 +31,9 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.TermCompiler;
 
 public class TermCompilerTester extends LoggingScript {
 	
-	FormulaUnLet m_Unletter = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
-	TermCompiler m_Compiler = new TermCompiler();
-	FormulaLet m_Letter = new FormulaLet();
+	FormulaUnLet mUnletter = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
+	TermCompiler mCompiler = new TermCompiler();
+	FormulaLet mLetter = new FormulaLet();
 	
 	public TermCompilerTester() throws FileNotFoundException {
 		super("<stdout>", true);
@@ -41,8 +41,8 @@ public class TermCompilerTester extends LoggingScript {
 
 	@Override
 	public LBool assertTerm(Term term) throws SMTLIBException {
-		Term tmp = m_Unletter.unlet(term);
-		tmp = m_Compiler.transform(tmp);
+		Term tmp = mUnletter.unlet(term);
+		tmp = mCompiler.transform(tmp);
 //		Simplifier simp = new Simplifier();
 //		Term tmp2;
 //		int rounds = 0;
@@ -54,7 +54,7 @@ public class TermCompilerTester extends LoggingScript {
 //		System.err.printf("Simplified for %d rounds\n", rounds);
 //		System.exit(0);
 		tmp = SMTAffineTerm.cleanup(tmp);
-		return super.assertTerm(m_Letter.let(tmp));
+		return super.assertTerm(mLetter.let(tmp));
 	}
 	
 }

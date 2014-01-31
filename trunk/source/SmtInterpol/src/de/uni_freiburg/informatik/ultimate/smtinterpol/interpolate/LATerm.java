@@ -27,26 +27,26 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitNumbe
 public class LATerm extends Term {
 	public LATerm(InterpolatorAffineTerm s, InfinitNumber k, Term F) {
 		super(F.hashCode());
-		m_s = s;
-		m_k = k;
-		m_F = F;
+		mS = s;
+		mK = k;
+		mF = F;
 	}
 	
-	InterpolatorAffineTerm m_s;
-	InfinitNumber m_k;
-	Term m_F;
+	InterpolatorAffineTerm mS;
+	InfinitNumber mK;
+	Term mF;
 	
 	@Override
 	public Sort getSort() {
-		return m_F.getSort();
+		return mF.getSort();
 	}
 
 	@Override
 	public void toStringHelper(ArrayDeque<Object> mTodo) {
 		mTodo.addLast(")");
-		mTodo.addLast(m_F);
-		mTodo.addLast(", " + m_k + ", ");
-		mTodo.addLast(m_s);
+		mTodo.addLast(mF);
+		mTodo.addLast(", " + mK + ", ");
+		mTodo.addLast(mS);
 		mTodo.addLast("LA(");
 	}
 }

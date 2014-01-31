@@ -26,35 +26,42 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.dpll;
  */
 public class StackData {
 	/// The completeness flag known at this level.
-	int completeness;
+	int mCompleteness;
 	/// Data for the satelite theories.
-	Object[] satelliteData;
+	Object[] mSatelliteData;
 	/// The previous element of the stack
-	StackData prev;
+	StackData mPrev;
 	
 	public StackData() {
 		this(null);
 	}
 	
 	protected StackData(StackData prev) {
-		this.prev = prev;
+		this.mPrev = prev;
 	}
-	public void addAtom(DPLLAtom atom) {}
+	/**
+	 * Add an atom to this stack level.
+	 * @param atom The atom to add.
+	 */
+	public void addAtom(DPLLAtom atom) {
+		// At root level we never need to remove an atom.  So we don't remember
+		// it.
+	}
 	
 	public StackData save(DPLLEngine engine) {
-		completeness = engine.getCompleteness();
+		mCompleteness = engine.getCompleteness();
 		ITheory[] satellites = engine.getAttachedTheories();
-		satelliteData = new Object[satellites.length];
-		for (int i = 0; i < satelliteData.length; ++i)
-			satelliteData[i] = satellites[i].push();
+		mSatelliteData = new Object[satellites.length];
+		for (int i = 0; i < mSatelliteData.length; ++i)
+			mSatelliteData[i] = satellites[i].push();
 		return new NonRootLvlStackData(this);
 	}
 	
 	public StackData restore(DPLLEngine engine, int targetlevel) {
 		ITheory[] satellites = engine.getAttachedTheories();
-		for (int i = 0; i < prev.satelliteData.length; ++i)
-			satellites[i].pop(prev.satelliteData[i], targetlevel);
-		engine.setCompleteness(prev.completeness);
-		return prev;
+		for (int i = 0; i < mPrev.mSatelliteData.length; ++i)
+			satellites[i].pop(mPrev.mSatelliteData[i], targetlevel);
+		engine.setCompleteness(mPrev.mCompleteness);
+		return mPrev;
 	}
 }

@@ -24,28 +24,28 @@ public enum Track {
 	UNSAT_CORE(false, true, ":produce-unsat-cores", "true"),
 	PROOF_GEN(false, false, ":produce-proofs", "true");
 	Track(boolean ppAllowed, boolean namedAllowed, String io, String iov) {
-		m_PushPopAllowed = ppAllowed;
-		m_NamedAllowed = namedAllowed;
-		m_InitialOption = io;
-		m_InitialOptionValue = iov;
+		mPushPopAllowed = ppAllowed;
+		mNamedAllowed = namedAllowed;
+		mInitialOption = io;
+		mInitialOptionValue = iov;
 	}
 	public boolean isPushPopAllowed() {
-		return m_PushPopAllowed;
+		return mPushPopAllowed;
 	}
 	public boolean isNamedAllowed() {
-		return m_NamedAllowed;
+		return mNamedAllowed;
 	}
 	public boolean hasInitalOption() {
-		return m_InitialOption != null;
+		return mInitialOption != null;
 	}
 	public String getInitialOption() {
-		return m_InitialOption;
+		return mInitialOption;
 	}
 	public String getInitialOptionValue() {
-		return m_InitialOptionValue;
+		return mInitialOptionValue;
 	}
-	private boolean m_PushPopAllowed;
-	private boolean m_NamedAllowed;
-	private String m_InitialOption;
-	private String m_InitialOptionValue;
+	private boolean mPushPopAllowed;
+	private boolean mNamedAllowed;
+	private String mInitialOption;
+	private String mInitialOptionValue;
 }

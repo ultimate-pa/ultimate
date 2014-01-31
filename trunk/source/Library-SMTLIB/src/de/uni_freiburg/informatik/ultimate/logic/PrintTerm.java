@@ -30,7 +30,7 @@ public class PrintTerm {
 	/* This class iterates the term in a non-recursive way.  To achieve this
 	 * it uses a todo stack, which contains terms and/or strings.
 	 */
-	private ArrayDeque<Object> m_Todo = new ArrayDeque<Object>();
+	private final ArrayDeque<Object> mTodo = new ArrayDeque<Object>();
 	/**
 	 * Convert a term into an appendable.
 	 * @param appender The appendable.
@@ -38,7 +38,7 @@ public class PrintTerm {
 	 */
 	public void append(Appendable appender, Term term) {
 		try {
-			m_Todo.push(term);
+			mTodo.push(term);
 			run(appender);
 		} catch (IOException ex) {
 			throw new RuntimeException("Appender throws IOException", ex);
@@ -52,7 +52,7 @@ public class PrintTerm {
 	 */
 	public void append(Appendable appender, Sort sort) {
 		try {
-			m_Todo.push(sort);
+			mTodo.push(sort);
 			run(appender);
 		} catch (IOException ex) {
 			throw new RuntimeException("Appender throws IOException", ex);
@@ -65,7 +65,7 @@ public class PrintTerm {
 	 */
 	public void append(Appendable appender, Object[] sexpr) {
 		try {
-			m_Todo.push(sexpr);
+			mTodo.push(sexpr);
 			run(appender);
 		} catch (IOException ex) {
 			throw new RuntimeException("Appender throws IOException", ex);
@@ -86,25 +86,25 @@ public class PrintTerm {
 				&& !(c >= 'a' && c <= 'z')
 				&& !(c >= '0' && c <= '9' && idx > 0)
 				&& "~!@$%^&*_+-=<>.?/".indexOf(c) < 0)
-				return "|"+id+"|";
+				return "|" + id + "|";
 		}
 		return id;
 	}
 	
 	private void run(Appendable appender) throws IOException {
-		while (!m_Todo.isEmpty()) {
-			Object next = m_Todo.removeLast();
+		while (!mTodo.isEmpty()) {
+			Object next = mTodo.removeLast();
 			if (next instanceof Term) {
-				((Term)next).toStringHelper(m_Todo);
+				((Term)next).toStringHelper(mTodo);
 			} else if (next instanceof Sort) {
-				((Sort)next).toStringHelper(m_Todo);
+				((Sort)next).toStringHelper(mTodo);
 			} else if (next instanceof Object[]) {
 				Object[] arr = (Object[]) next;
-				m_Todo.addLast(")");
-				for (int i = arr.length-1; i >= 0; i--) {
-					m_Todo.addLast(arr[i]);
+				mTodo.addLast(")");
+				for (int i = arr.length - 1; i >= 0; i--) {
+					mTodo.addLast(arr[i]);
 					if (i > 0)
-						m_Todo.addLast(" ");
+						mTodo.addLast(" ");
 				}
 				appender.append('(');
 			} else {
@@ -114,6 +114,6 @@ public class PrintTerm {
 	}
 	
 	public String toString() {
-		return "[PrintTerm: " + m_Todo + "]";
+		return "[PrintTerm: " + mTodo + "]";
 	}
 }

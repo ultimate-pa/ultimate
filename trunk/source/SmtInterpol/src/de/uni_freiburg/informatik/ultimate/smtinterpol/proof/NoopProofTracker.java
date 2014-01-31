@@ -36,43 +36,50 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 public class NoopProofTracker implements IProofTracker {
 
 	@Override
-	public void reset() {}
+	public void reset() { /* Noop */ }
 
 	@Override
-	public void expand(ApplicationTerm orig) {}
+	public void expand(ApplicationTerm orig) { /* Noop */ }
 
 	@Override
-	public void distinct(Term[] args, Term res, int rule) {}
+	public void distinct(Term[] args, Term res, int rule) { /* Noop */ }
 
 	@Override
-	public void negation(Term pos, Term res, int rule) {}
+	public void negation(Term pos, Term res, int rule) { /* Noop */ }
 
 	@Override
-	public void or(Term[] args, Term res, int rule) {}
+	public void or(Term[] args, Term res, int rule) { /* Noop */ }
 
 	@Override
-	public void ite(Term cond, Term thenTerm, Term elseTerm, Term res, int rule) {}
+	public void ite(
+			Term cond, Term thenTerm, Term elseTerm, Term res, int rule) {
+		/* Noop */
+	}
 
 	@Override
-	public void strip(AnnotatedTerm orig) {}
+	public void strip(AnnotatedTerm orig) { /* Noop */ }
 
 	@Override
-	public void sum(FunctionSymbol fsym, Term[] args, Term res) {}
+	public void sum(FunctionSymbol fsym, Term[] args, Term res) { /* Noop */ }
 
 	@Override
-	public void toLeq0(Term orig, SMTAffineTerm leq, int rule) {}
+	public void toLeq0(Term orig, SMTAffineTerm leq, int rule) { /* Noop */ }
 
 	@Override
-	public void leqSimp(SMTAffineTerm leq, Term res, int rule) {}
+	public void leqSimp(SMTAffineTerm leq, Term res, int rule) { /* Noop */ }
 
 	@Override
-	public void desugar(ApplicationTerm orig, Term[] origArgs, Term[] newArgs) {}
+	public void desugar(ApplicationTerm orig, Term[] origArgs, Term[] newArgs) {
+	    // Noop
+	}
 
 	@Override
-	public void divisible(FunctionSymbol divn, Term div, Term res) {}
+	public void divisible(FunctionSymbol divn, Term div, Term res) {
+	    // Noop 
+	}
 
 	@Override
-	public void expandDef(Term orig, Term res) {}
+	public void expandDef(Term orig, Term res) { /* Noop */ }
 
 	@Override
 	public Term getRewriteProof(Term asserted) {
@@ -80,25 +87,29 @@ public class NoopProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public void equality(Term[] args, Object res, int rule) {}
+	public void equality(Term[] args, Object res, int rule) { /* Noop */ }
 
 	@Override
-	public void distinctBinary(Term lhs, Term rhs, boolean firstNegated) {}
+	public void distinctBinary(Term lhs, Term rhs, boolean firstNegated) {
+		/* Noop */
+	}
 
 	@Override
-	public void removeConnective(Term[] origArgs, Term result, int rule) {}
+	public void removeConnective(Term[] origArgs, Term result, int rule) {
+		/* Noop */
+	}
 
 	@Override
-	public void quoted(Term orig, Literal quote) {}
+	public void quoted(Term orig, Literal quote) { /* Noop */ }
 
 	@Override
-	public void eq(Term lhs, Term rhs, Term res) {}
+	public void eq(Term lhs, Term rhs, Term res) { /* Noop */ }
 
 	@Override
-	public void eq(Term lhs, Term rhs, DPLLAtom eqAtom) {}
+	public void eq(Term lhs, Term rhs, DPLLAtom eqAtom) { /* Noop */ }
 
 	@Override
-	public void leq0(SMTAffineTerm sum, Literal lit) {}
+	public void leq0(SMTAffineTerm sum, Literal lit) { /* Noop */ }
 
 	@Override
 	public Term split(Term res, Term proof, int splitKind) {
@@ -106,7 +117,7 @@ public class NoopProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public void intern(Term term, Literal lit) {}
+	public void intern(Term term, Literal lit) { /* Noop */ }
 
 	@Override
 	public Term clause(Term proof) {
@@ -125,55 +136,55 @@ public class NoopProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public void modulo(ApplicationTerm appTerm, Term res) {}
+	public void modulo(ApplicationTerm appTerm, Term res) { /* Noop */ }
 
 	@Override
 	public void mod(SMTAffineTerm x, SMTAffineTerm y, SMTAffineTerm res,
-			int rule) {}
+			int rule) { /* Noop */ }
 
 	@Override
 	public void div(SMTAffineTerm x, SMTAffineTerm y, SMTAffineTerm res,
-			int rule) {}
+			int rule) { /* Noop */ }
 
 	@Override
-	public void toInt(SMTAffineTerm arg, SMTAffineTerm res) {}
+	public void toInt(SMTAffineTerm arg, SMTAffineTerm res) { /* Noop */ }
 
 	@Override
-	public void negateLit(Literal lit, Theory theory) {}
+	public void negateLit(Literal lit, Theory theory) { /* Noop */ }
 
 	@Override
-	public Term[] prepareIRAHack(Term[] args) {
+	public Term[] prepareIRAHack(Term[] args) { // NOPMD
 		return null;
 	}
 
 	@Override
-	public void arrayRewrite(Term[] args, Term result, int rule) {}
+	public void arrayRewrite(Term[] args, Term result, int rule) { /* Noop */ }
 
 	@Override
-	public void flatten(Term[] args, boolean simpOr) {}
+	public void flatten(Term[] args, boolean simpOr) { /* Noop */ }
 
 	@Override
-	public void orSimpClause(Term[] args) {}
+	public void orSimpClause(Term[] args) { /* Noop */ }
 
 	@Override
-	public void markPosition() {}
+	public void markPosition() { /* Noop */ }
 
 	@Override
-	public Term[] produceAuxAxiom(Literal auxlit, Term... args) {
+	public Term[] produceAuxAxiom(Literal auxlit, Term... args) { // NOPMD
 		return null;
 	}
 
 	@Override
-	public void save() {}
+	public void save() { /* Noop */ }
 
 	@Override
-	public void restore() {}
+	public void restore() { /* Noop */ }
 
 	@Override
-	public void cleanSave() {}
+	public void cleanSave() { /* Noop */ }
 
 	@Override
-	public void normalized(ConstantTerm term, SMTAffineTerm res) {}
+	public void normalized(ConstantTerm term, SMTAffineTerm res) { /* Noop */ }
 
 	@Override
 	public boolean notifyLiteral(Literal lit, Term t) {
@@ -182,12 +193,15 @@ public class NoopProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public void notifyFalseLiteral(Term t) {}
+	public void notifyFalseLiteral(Term t) { /* Noop */ }
 
 	@Override
-	public void storeRewrite(ApplicationTerm store, Term result, boolean arrayFirst) {}
+	public void storeRewrite(
+			ApplicationTerm store, Term result, boolean arrayFirst) {
+	    // Noop
+	}
 
 	@Override
-	public void toReal(SMTAffineTerm arg, SMTAffineTerm res) {}
+	public void toReal(SMTAffineTerm arg, SMTAffineTerm res) { /* Noop */ }
 
 }

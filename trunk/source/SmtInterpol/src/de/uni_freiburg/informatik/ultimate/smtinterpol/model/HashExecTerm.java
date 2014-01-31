@@ -34,59 +34,60 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 public class HashExecTerm implements ExecTerm {
 	
 	static class Index {
-		private ExecTerm[] m_Args;
-		private int m_Hash;
+		private final ExecTerm[] mArgs;
+		private final int mHash;
 		public Index(ExecTerm[] args) {
-			m_Args = args;
-			m_Hash = Arrays.hashCode(args);
+			mArgs = args;
+			mHash = Arrays.hashCode(args);
 		}
 		public int hashCode() {
-			return m_Hash;
+			return mHash;
 		}
 		public boolean equals(Object other) {
 			if (other instanceof Index) {
 				Index o = (Index) other;
-				return Arrays.equals(m_Args, o.m_Args);
+				return Arrays.equals(mArgs, o.mArgs);
 			}
 			return false;
 		}
 		public Term toSMTLIB(Theory t, TermVariable[] vars) {
-			assert(vars.length == m_Args.length);
+			assert(vars.length == mArgs.length);
 			Term[] conj = new Term[vars.length];
 			for (int i = 0; i < vars.length; ++i)
-				conj[i] = t.equals(vars[i], m_Args[i].toSMTLIB(t, null));
+				conj[i] = t.equals(vars[i], ModelFormatter.toModelTerm(
+						mArgs[i], null, t));
 			return t.and(conj);
 		}
 	}
 	
-	private HashMap<Index, ExecTerm> m_Values;
-	private ExecTerm m_Default;
+	private HashMap<Index, ExecTerm> mValues;
+	private final ExecTerm mDefault;
 	
 	public HashExecTerm(ExecTerm defaultValue) {
-		m_Default = defaultValue;
+		mDefault = defaultValue;
 	}
 	
 	void extend(ExecTerm[] args, ExecTerm value) {
-		if (m_Values == null)
-			m_Values = new HashMap<Index, ExecTerm>();
-		ExecTerm old = m_Values.put(new Index(args), value);
+		if (mValues == null)
+			mValues = new HashMap<Index, ExecTerm>();
+		ExecTerm old = mValues.put(new Index(args), value);
 		assert(old == null || old.equals(value));
 	}
 
 	@Override
 	public ExecTerm evaluate(ExecTerm... args) {
-		if (m_Values == null)
-			return m_Default;
-		ExecTerm res = m_Values.get(new Index(args));
-		return res != null ? res : m_Default;
+		if (mValues == null)
+			return mDefault;
+		ExecTerm res = mValues.get(new Index(args));
+		return res == null ? mDefault : res;
 	}
 
 	@Override
 	public Term toSMTLIB(Theory t, TermVariable[] vars) {
-		if (m_Values == null)
-			return m_Default.toSMTLIB(t, null);
-		Term val = m_Default.toSMTLIB(t, null);
-		for (Map.Entry<Index, ExecTerm> me : m_Values.entrySet()) {
+		if (mValues == null)
+			return mDefault.toSMTLIB(t, null);
+		Term val = mDefault.toSMTLIB(t, null);
+		for (Map.Entry<Index, ExecTerm> me : mValues.entrySet()) {
 			// create (ite index value val)
 			Term indexform = me.getKey().toSMTLIB(t, vars);
 			val = t.ifthenelse(indexform, me.getValue().toSMTLIB(t, null), val);
@@ -95,11 +96,11 @@ public class HashExecTerm implements ExecTerm {
 	}
 	
 	Map<Index, ExecTerm> values() {
-		return m_Values;
+		return mValues;
 	}
 	
 	ExecTerm getDefaultValue() {
-		return m_Default;
+		return mDefault;
 	}
 
 	@Override

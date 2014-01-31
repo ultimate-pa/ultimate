@@ -1,12 +1,7 @@
-package de.uni_freiburg.informatik.ultimate.logic.util;
+package de.uni_freiburg.informatik.ultimate.logic;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * Class for all util methods that are not used in SmtInterpol.

@@ -46,121 +46,122 @@ public class ProofTermGenerator {
 	}
 	
 	private static class GenerateTerm implements Visitor {
-		private Clause m_Cls;
+		private final Clause mCls;
 		public GenerateTerm(Clause cls) {
 			assert cls.getProof() instanceof ResolutionNode;
-			m_Cls = cls;
+			mCls = cls;
 		}
 		public void visit(ProofTermGenerator engine) {
 			Theory t = engine.getTheory();
-			Antecedent[] antes = ((ResolutionNode) m_Cls.getProof()).
+			Antecedent[] antes = ((ResolutionNode) mCls.getProof()).
 					getAntecedents();
 			Term[] args = new Term[1 + antes.length];
 			args[0] = engine.getConverted();
 			for (int i = 0; i < antes.length; ++i)
-				args[i+1] = t.annotatedTerm(
+				args[i + 1] = t.annotatedTerm(
 						new Annotation[] {
-								new Annotation(":pivot",
-										antes[i].pivot.getSMTFormula(t, true))},
-										engine.getConverted());
+							new Annotation(":pivot",
+									antes[i].mPivot.getSMTFormula(t, true))},
+									engine.getConverted());
 			Term res = t.term("@res", args);
-			engine.setResult(m_Cls, res);
+			engine.setResult(mCls, res);
 			engine.pushConverted(res);
 		}
 	}
 	
 	private static class Expander implements Visitor {
-		private Clause m_Cls;
+		private final Clause mCls;
 		public Expander(Clause cls) {
-			m_Cls = cls;
+			mCls = cls;
 		}
 		public void visit(ProofTermGenerator engine) {
-			Theory t = engine.getTheory();
-			Term known = engine.getTerm(m_Cls);
+			Term known = engine.getTerm(mCls);
 			if (known != null) {
 				engine.pushConverted(known);
 				return;
 			}
-			ProofNode pn = m_Cls.getProof();
+			ProofNode pn = mCls.getProof();
 			if (pn.isLeaf()) {
 				LeafNode ln = (LeafNode) pn;
 				Term res;
+				Theory t = engine.getTheory();
 				if (ln.getLeafKind() == LeafNode.EQ) {
-					res = t.term("@tautology", t.annotatedTerm(new Annotation[] {
-							ProofConstants.AUXANNOTS[ProofConstants.AUX_EQ]
-					}, m_Cls.toTerm(t)));
+					res = t.term("@tautology", t.annotatedTerm(
+					        new Annotation[] {
+					            ProofConstants.AUXANNOTS[ProofConstants.AUX_EQ]
+					        }, mCls.toTerm(t)));
 				} else {
 					IAnnotation annot = ln.getTheoryAnnotation();
-					res = annot.toTerm(m_Cls, t);
+					res = annot.toTerm(mCls, t);
 				}
-				engine.setResult(m_Cls, res);
+				engine.setResult(mCls, res);
 				engine.pushConverted(res);
 			} else {
 				ResolutionNode rn = (ResolutionNode) pn;
-				engine.enqueue(new GenerateTerm(m_Cls));
+				engine.enqueue(new GenerateTerm(mCls));
 				engine.enqueue(new Expander(rn.getPrimary()));
 				Antecedent[] antes = rn.getAntecedents();
 				for (Antecedent ante : antes)
-					engine.enqueue(new Expander(ante.antecedent));
+					engine.enqueue(new Expander(ante.mAntecedent));
 			}
 		}
 	}
 	/**
 	 * The stack of pending visitors.
 	 */
-	private Deque<Visitor> m_Todo = new ArrayDeque<Visitor>();
+	private final Deque<Visitor> mTodo = new ArrayDeque<Visitor>();
 	/**
 	 * Enqueue a new visitor.
 	 * @param visitor Visitor to enqueue.
 	 */
 	void enqueue(Visitor visitor) {
-		m_Todo.push(visitor);
+		mTodo.push(visitor);
 	}
 	/**
 	 * Process visitors until all are processed.
 	 */
 	private void run() {
-		while (!m_Todo.isEmpty())
-			m_Todo.pop().visit(this);
+		while (!mTodo.isEmpty())
+			mTodo.pop().visit(this);
 	}
 	/**
 	 * Stack of recently produced antecedent names.
 	 */
-	private Deque<Term> m_Converted = new ArrayDeque<Term>();
+	private final Deque<Term> mConverted = new ArrayDeque<Term>();
 	/**
 	 * Theory used in sexpr conversion.
 	 */
-	private Theory m_Theory;
+	private final Theory mTheory;
 	/**
 	 * Mapping from clauses to terms representing the corresponding proof node.
 	 */
-	private Map<Clause, Term> m_Nodes = new HashMap<Clause, Term>();
+	private final Map<Clause, Term> mNodes = new HashMap<Clause, Term>();
 	/**
 	 * Initialize the generator with a theory.
 	 * @param t   The theory.
 	 */
 	public ProofTermGenerator(Theory t) {
-		m_Theory = t;
+		mTheory = t;
 	}
 	public Theory getTheory() {
-		return m_Theory;
+		return mTheory;
 	}
 	
 	Term getTerm(Clause cls) {
-		return m_Nodes.get(cls);
+		return mNodes.get(cls);
 	}
 	
 	Term getConverted() {
-		return m_Converted.pop();
+		return mConverted.pop();
 	}
 	
 	void pushConverted(Term res) {
-		assert(res.getSort().getName().equals("@Proof"));
-		m_Converted.push(res);
+		assert res.getSort().getName().equals("@Proof");
+		mConverted.push(res);
 	}
 	
 	void setResult(Clause cls, Term res) {
-		m_Nodes.put(cls, res);
+		mNodes.put(cls, res);
 	}
 	
 	public Term convert(Clause cls) {
@@ -168,7 +169,7 @@ public class ProofTermGenerator {
 		assert cls.getProof() != null;
 		enqueue(new Expander(cls));
 		run();
-		Term res = m_Converted.pop();
+		Term res = mConverted.pop();
 		return SMTAffineTerm.cleanup(res);
 	}
 	

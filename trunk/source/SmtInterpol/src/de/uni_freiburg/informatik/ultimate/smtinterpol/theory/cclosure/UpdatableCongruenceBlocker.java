@@ -22,28 +22,28 @@ import java.util.HashSet;
 
 public class UpdatableCongruenceBlocker {
 	// The added terms
-	private HashSet<CongruenceBlockPair> m_Blocked =
+	private final HashSet<CongruenceBlockPair> mBlocked =
 		new HashSet<CongruenceBlockPair>();
-	private HashSet<CongruenceBlockPair> m_Roots;
+	private HashSet<CongruenceBlockPair> mRoots;
 	/// Adding and removal of blocked terms
 	public void block(CCAppTerm t) {
-		m_Blocked.add(CongruenceBlockPair.getPair(t));
-		m_Roots.add(CongruenceBlockPair.getRootPair(t));
+		mBlocked.add(CongruenceBlockPair.getPair(t));
+		mRoots.add(CongruenceBlockPair.getRootPair(t));
 	}
 	public void remove(CCAppTerm t) {
-		m_Blocked.remove(CongruenceBlockPair.getPair(t));
+		mBlocked.remove(CongruenceBlockPair.getPair(t));
 	}
 	/// Congruence management
 	public void update() {
-		m_Roots = new HashSet<CongruenceBlockPair>();
-		for (CongruenceBlockPair p : m_Blocked)
-			m_Roots.add(p.getRoot());
+		mRoots = new HashSet<CongruenceBlockPair>();
+		for (CongruenceBlockPair p : mBlocked)
+			mRoots.add(p.getRoot());
 	}
 	public void done() {
-		m_Roots = null;
+		mRoots = null;
 	}
 	/// Blocking
 	public boolean isBlocked(CCAppTerm t) {
-		return m_Roots.contains(CongruenceBlockPair.getRootPair(t));
+		return mRoots.contains(CongruenceBlockPair.getRootPair(t));
 	}
 }

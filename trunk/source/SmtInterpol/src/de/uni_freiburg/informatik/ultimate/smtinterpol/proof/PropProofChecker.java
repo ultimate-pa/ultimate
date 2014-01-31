@@ -35,47 +35,47 @@ public class PropProofChecker {
 	/**
 	 * The list of clauses still to resolve.
 	 */
-	private ArrayDeque<Clause> m_Todo = new ArrayDeque<Clause>();
+	private final ArrayDeque<Clause> mTodo = new ArrayDeque<Clause>();
 	/**
 	 * The set of clauses that contain a valid proof.
 	 */
-	private HashSet<Clause> m_Correct = new HashSet<Clause>();
+	private final HashSet<Clause> mCorrect = new HashSet<Clause>();
 	public boolean check(Clause refutation) {
-		m_Todo.add(refutation);
+		mTodo.add(refutation);
 		return run();
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private boolean run() {
-		while (!m_Todo.isEmpty()) {
-			Clause clause = m_Todo.removeLast();
-			if (!m_Correct.contains(clause)) {
+		while (!mTodo.isEmpty()) {
+			Clause clause = mTodo.removeLast();
+			if (!mCorrect.contains(clause)) {
 				ProofNode pn = clause.getProof();
 				if (pn.isLeaf())
 					// I assume all leaves are correct!
-					m_Correct.add(clause);
+					mCorrect.add(clause);
 				else {
 					Antecedent[] antes = ((ResolutionNode) pn).getAntecedents();
 					Clause prim = ((ResolutionNode) pn).getPrimary();
 					boolean unknownChild = false;
-					if (!m_Correct.contains(prim)) {
+					if (!mCorrect.contains(prim)) {
 						if (!unknownChild)
 							// We add ourselves in front of all unknown
 							// children to be reevaluated after they have
 							// been processed.
-							m_Todo.addLast(clause);
+							mTodo.addLast(clause);
 						unknownChild = true;
-						m_Todo.addLast(prim);
+						mTodo.addLast(prim);
 					}
 					for (Antecedent ante : antes) {
-						if (!m_Correct.contains(ante.antecedent)) {
+						if (!mCorrect.contains(ante.mAntecedent)) {
 							if (!unknownChild)
 								// We add ourselves in front of all unknown
 								// children to be reevaluated after they have
 								// been processed.
-								m_Todo.addLast(clause);
+								mTodo.addLast(clause);
 							unknownChild = true;
-							m_Todo.addLast(ante.antecedent);
+							mTodo.addLast(ante.mAntecedent);
 						}
 					}
 					if (!unknownChild) {
@@ -84,21 +84,21 @@ public class PropProofChecker {
 						for (int i = 0; i < prim.getSize(); ++i)
 							clauselits.add(prim.getLiteral(i));
 						for (Antecedent ante : antes) {
-							Clause antecls = ante.antecedent;
-							if (!antecls.contains(ante.pivot)) {
-								System.err.println("Pivot literal " +
-										ante.pivot + " not in antecedent");
+							Clause antecls = ante.mAntecedent;
+							if (!antecls.contains(ante.mPivot)) {
+								System.err.println("Pivot literal "
+										+ ante.mPivot + " not in antecedent");
 								return false;
 							}
-							if (!clauselits.remove(ante.pivot.negate())) {
-								System.err.println("Negated pivot literal " + 
-										ante.pivot.negate() +
-										" not in primary");
+							if (!clauselits.remove(ante.mPivot.negate())) {
+								System.err.println("Negated pivot literal " 
+										+ ante.mPivot.negate()
+										+ " not in primary");
 								return false;
 							}
 							for (int i = 0; i < antecls.getSize(); ++i) {
 								Literal lit = antecls.getLiteral(i);
-								if (lit != ante.pivot)
+								if (lit != ante.mPivot)
 									clauselits.add(lit);
 							}
 						}
@@ -107,9 +107,9 @@ public class PropProofChecker {
 						HashSet<Literal> clslits = new HashSet<Literal>();
 						for (int i = 0; i < clause.getSize(); ++i)
 							clslits.add(clause.getLiteral(i));
-						if (clauselits.containsAll(clslits) &&
-								clslits.containsAll(clauselits))
-							m_Correct.add(clause);
+						if (clauselits.containsAll(clslits)
+								&& clslits.containsAll(clauselits))
+							mCorrect.add(clause);
 						else {
 							System.err.println("Result of resolution incorrect");
 							System.err.println();

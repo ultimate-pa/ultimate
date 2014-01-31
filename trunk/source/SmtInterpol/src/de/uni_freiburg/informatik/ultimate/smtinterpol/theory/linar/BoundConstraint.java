@@ -31,24 +31,24 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @author Juergen Christ
  */
 public class BoundConstraint extends DPLLAtom {
-	final InfinitNumber m_bound;
-	final InfinitNumber m_ibound;
-	final LinVar m_var;
+	final InfinitNumber mBound;
+	final InfinitNumber mIBound;
+	final LinVar mVar;
 
 	public BoundConstraint(InfinitNumber bound, LinVar var, int assertionstacklevel) {
 		super(HashUtils.hashJenkins(var.hashCode(), bound), assertionstacklevel);
-		assert(bound.meps <= 0);
-		assert(!var.misint || bound.isIntegral());
-		m_bound = bound;
-		m_ibound = bound.add(var.getEpsilon());
-		assert(!m_bound.equals(m_ibound));
-		m_var = var;
-		assert !m_var.mconstraints.containsKey(bound);
-		m_var.mconstraints.put(bound,this);
+		assert(bound.mEps <= 0);
+		assert(!var.mIsInt || bound.isIntegral());
+		mBound = bound;
+		mIBound = bound.add(var.getEpsilon());
+		assert(!mBound.equals(mIBound));
+		mVar = var;
+		assert !mVar.mConstraints.containsKey(bound);
+		mVar.mConstraints.put(bound,this);
 	}
 
 	public LinVar getVar() {
-		return m_var;
+		return mVar;
 	}
 
 	/**
@@ -57,7 +57,7 @@ public class BoundConstraint extends DPLLAtom {
 	 * @return Bound set during construction
 	 */
 	public InfinitNumber getBound() {
-		return m_bound;
+		return mBound;
 	}
 	
 	/**
@@ -66,23 +66,23 @@ public class BoundConstraint extends DPLLAtom {
 	 * @return Bound converted to lower bound.
 	 */
 	public InfinitNumber getInverseBound() {
-		return m_ibound;
+		return mIBound;
 	}
 
 	@Override
 	public String toStringNegated() {
 		InfinitNumber ibound = getInverseBound();
-		if (ibound.meps > 0)
-			return "["+hashCode()+"]"+m_var + " > " + ibound.ma;
+		if (ibound.mEps > 0)
+			return "[" + hashCode() + "]" + mVar + " > " + ibound.mA;
 		else
-			return "["+hashCode()+"]"+m_var + " >= " + ibound;
+			return "[" + hashCode() + "]" + mVar + " >= " + ibound;
 	}
 
 	public String toString() {
-		if (m_bound.meps < 0)
-			return "["+hashCode()+"]"+m_var + " < " + m_bound.ma;
+		if (mBound.mEps < 0)
+			return "[" + hashCode() + "]" + mVar + " < " + mBound.mA;
 		else
-			return "["+hashCode()+"]"+m_var + " <= " + m_bound;
+			return "[" + hashCode() + "]" + mVar + " <= " + mBound;
 	}
 
 	// / --- Implies checks ---
@@ -97,7 +97,7 @@ public class BoundConstraint extends DPLLAtom {
 	 * @return true iff this bound is bigger than <code>ubound</code>.
 	 */
 	boolean impliedByUpperBound(InfinitNumber ubound) {
-		return ubound.lesseq(m_bound);
+		return ubound.lesseq(mBound);
 	}
 
 	/**
@@ -117,15 +117,15 @@ public class BoundConstraint extends DPLLAtom {
 	@Override
 	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
 		MutableAffinTerm at = new MutableAffinTerm();
-		at.add(Rational.ONE, m_var);
-		at.add(m_bound.negate());
+		at.add(Rational.ONE, mVar);
+		at.add(mBound.negate());
 		return at.toSMTLibLeq0(smtTheory, quoted);
 	}
 
-	public boolean equals(Object other) {
+	public boolean equals(Object other) { //NOCHECKSTYLE
 		if (other instanceof BoundConstraint) {
 			BoundConstraint o = (BoundConstraint) other;
-			return o.m_var == m_var && o.m_bound.equals(m_bound);
+			return o.mVar == mVar && o.mBound.equals(mBound);
 		}
 		return false;
 	}

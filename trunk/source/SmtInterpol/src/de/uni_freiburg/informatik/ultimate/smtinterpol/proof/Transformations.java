@@ -34,7 +34,12 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode.Ante
  * Proofs via Partial Regularization"
  * @author Juergen Christ
  */
-public class Transformations {
+public final class Transformations {
+    
+    private Transformations() {
+        // Hide constructor
+    }
+    
 	public static enum AvailableTransformations {
 		NONE {
 
@@ -100,8 +105,8 @@ public class Transformations {
 			new ArrayDeque<Antecedent>(units.size());
 		while (!units.isEmpty()) {
 			Antecedent a = units.remove();
-			fixedUnits.add(new Antecedent(a.pivot,
-					fix.fix(a.antecedent, deletedNodes)));
+			fixedUnits.add(new Antecedent(a.mPivot,
+					fix.fix(a.mAntecedent, deletedNodes)));
 		}
 		// Clear space
 		counts = null;
@@ -119,12 +124,12 @@ public class Transformations {
 		int antepos = 0;
 		while (!fixedUnits.isEmpty()) {
 			Antecedent unit = fixedUnits.remove();
-			if (lits.contains(unit.pivot.negate())) {
+			if (lits.contains(unit.mPivot.negate())) {
 				antes[antepos++] = unit;
-				lits.remove(unit.pivot.negate());
-				for (int i = 0; i < unit.antecedent.getSize(); ++i) {
-					Literal l = unit.antecedent.getLiteral(i);
-					if (l != unit.pivot)
+				lits.remove(unit.mPivot.negate());
+				for (int i = 0; i < unit.mAntecedent.getSize(); ++i) {
+					Literal l = unit.mAntecedent.getLiteral(i);
+					if (l != unit.mPivot)
 						lits.add(l);
 				}
 			}

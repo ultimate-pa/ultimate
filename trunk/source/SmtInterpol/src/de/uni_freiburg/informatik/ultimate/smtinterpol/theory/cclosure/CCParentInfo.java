@@ -54,98 +54,98 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm
  *
  */
 public class CCParentInfo {
-	int m_FuncSymbNr;
-	SimpleList<Parent> m_CCParents;
-	CCParentInfo m_Next;
+	int mFuncSymbNr;
+	SimpleList<Parent> mCCParents;
+	CCParentInfo mNext;
 	
 	/**
 	 * Create an empty CCParentInfo as list head.
 	 */
 	public CCParentInfo() {
-		m_FuncSymbNr = -1;
+		mFuncSymbNr = -1;
 	}
 
 	private CCParentInfo(int funcSymbNr, CCParentInfo next) {
-		m_FuncSymbNr = funcSymbNr;
-		m_CCParents = new SimpleList<Parent>();
-		m_Next = next;
+		mFuncSymbNr = funcSymbNr;
+		mCCParents = new SimpleList<Parent>();
+		mNext = next;
 	}
 	
 	private CCParentInfo(CCParentInfo other, CCParentInfo next) {
-		this(other.m_FuncSymbNr, next);
-		m_CCParents.joinList(other.m_CCParents);
+		this(other.mFuncSymbNr, next);
+		mCCParents.joinList(other.mCCParents);
 	}
 	
 	public void addParentInfo(int funcSymbNr, Parent parent, boolean isLast, CClosure engine) {
 		CCParentInfo info = this;
-		while (info.m_Next != null && info.m_Next.m_FuncSymbNr <= funcSymbNr) {
-			info = info.m_Next;
-			if (info.m_FuncSymbNr == funcSymbNr) {
-				info.m_CCParents.prependIntoJoined(parent, isLast);
+		while (info.mNext != null && info.mNext.mFuncSymbNr <= funcSymbNr) {
+			info = info.mNext;
+			if (info.mFuncSymbNr == funcSymbNr) {
+				info.mCCParents.prependIntoJoined(parent, isLast);
 				return;
 			}
 		}
-		info.m_Next = new CCParentInfo(funcSymbNr, info.m_Next);
-		info.m_Next.m_CCParents.prependIntoJoined(parent, isLast);
+		info.mNext = new CCParentInfo(funcSymbNr, info.mNext);
+		info.mNext.mCCParents.prependIntoJoined(parent, isLast);
 	}
 	
 	public void mergeParentInfo(CCParentInfo other) {
 		CCParentInfo myInfo = this;
 		// skip head
-		other = other.m_Next;
+		other = other.mNext;
 		while (other != null) {
-			int funcSymbNr = other.m_FuncSymbNr;
+			int funcSymbNr = other.mFuncSymbNr;
 //			assert !other.m_CCParents.isEmpty() || !other.m_ReverseTriggers.isEmpty();
-			while (myInfo.m_Next != null && myInfo.m_Next.m_FuncSymbNr < funcSymbNr) {
-				myInfo = myInfo.m_Next;
+			while (myInfo.mNext != null && myInfo.mNext.mFuncSymbNr < funcSymbNr) {
+				myInfo = myInfo.mNext;
 			}
-			if (myInfo.m_Next != null && myInfo.m_Next.m_FuncSymbNr == funcSymbNr) {
+			if (myInfo.mNext != null && myInfo.mNext.mFuncSymbNr == funcSymbNr) {
 				/* merge infos */
-				myInfo = myInfo.m_Next;
-				myInfo.m_CCParents.joinList(other.m_CCParents);
+				myInfo = myInfo.mNext;
+				myInfo.mCCParents.joinList(other.mCCParents);
 			} else {
 				/* copy info */
 				/* FIXME: can we move info instead??  It saves creating lots of 
 				 * objects but really complicates things */
-				myInfo.m_Next = new CCParentInfo(other, myInfo.m_Next);
-				myInfo = myInfo.m_Next;
+				myInfo.mNext = new CCParentInfo(other, myInfo.mNext);
+				myInfo = myInfo.mNext;
 			}
-			other = other.m_Next;
+			other = other.mNext;
 		}
 	}
 	
 	public void unmergeParentInfo(CCParentInfo other) {
 		CCParentInfo myInfo = this;
 		// skip head
-		other = other.m_Next;
+		other = other.mNext;
 		while (other != null) {
-			int funcSymbNr = other.m_FuncSymbNr;
+			int funcSymbNr = other.mFuncSymbNr;
 //			assert !other.m_CCParents.isEmpty() || !other.m_ReverseTriggers.isEmpty();
-			while (myInfo.m_Next.m_FuncSymbNr < funcSymbNr) {
-				myInfo = myInfo.m_Next;
+			while (myInfo.mNext.mFuncSymbNr < funcSymbNr) {
+				myInfo = myInfo.mNext;
 			}
-			CCParentInfo next = myInfo.m_Next;
-			assert (next.m_FuncSymbNr == funcSymbNr);
+			CCParentInfo next = myInfo.mNext;
+			assert (next.mFuncSymbNr == funcSymbNr);
 			
 			/* unjoin lists */
-			next.m_CCParents.unjoinList(other.m_CCParents);
+			next.mCCParents.unjoinList(other.mCCParents);
 			/* FIXME: Do we really want to remove the entry if it gets empty?? 
 			 * OTOH, we would then need to create a new info more often.
 			 */
-			if (next.m_CCParents.isEmpty()) {
-				;//myInfo.m_Next = next.m_Next;
+			if (next.mCCParents.isEmpty()) {
+				/*myInfo.m_Next = next.m_Next;*/
 			} else {
 				myInfo = next;
 			}
-			other = other.m_Next;
+			other = other.mNext;
 		}
 	}
 
 	CCParentInfo getInfo(int funcSymbNr) {
 		CCParentInfo info = this;
-		while (info.m_Next != null && info.m_Next.m_FuncSymbNr <= funcSymbNr) {
-			info = info.m_Next;
-			if (info.m_FuncSymbNr == funcSymbNr) {
+		while (info.mNext != null && info.mNext.mFuncSymbNr <= funcSymbNr) {
+			info = info.mNext;
+			if (info.mFuncSymbNr == funcSymbNr) {
 				return info;
 			}
 		}
@@ -154,20 +154,20 @@ public class CCParentInfo {
 	
 	CCParentInfo createInfo(int funcSymbNr) {
 		CCParentInfo info = this;
-		while (info.m_Next != null && info.m_Next.m_FuncSymbNr <= funcSymbNr) {
-			info = info.m_Next;
-			if (info.m_FuncSymbNr == funcSymbNr) {
+		while (info.mNext != null && info.mNext.mFuncSymbNr <= funcSymbNr) {
+			info = info.mNext;
+			if (info.mFuncSymbNr == funcSymbNr) {
 				return info;
 			}
 		}
-		return info.m_Next = new CCParentInfo(funcSymbNr, info.m_Next);
+		return info.mNext = new CCParentInfo(funcSymbNr, info.mNext);
 	}
 	
 	CCParentInfo getExistingParentInfo(int funcSymbNr) {
 		CCParentInfo info = this;
-		while (info.m_Next != null && info.m_Next.m_FuncSymbNr <= funcSymbNr) {
-			info = info.m_Next;
-			if (info.m_FuncSymbNr == funcSymbNr) {
+		while (info.mNext != null && info.mNext.mFuncSymbNr <= funcSymbNr) {
+			info = info.mNext;
+			if (info.mFuncSymbNr == funcSymbNr) {
 				return info;
 			}
 		}
@@ -175,11 +175,11 @@ public class CCParentInfo {
 	}
 	
 	public SimpleList<Parent> getParentInfo(int funcSymbNr) {
-		CCParentInfo info = m_Next;
-		while (info != null && info.m_FuncSymbNr < funcSymbNr)
-			info = info.m_Next;
-		if (info != null && info.m_FuncSymbNr == funcSymbNr)
-			return info.m_CCParents;
+		CCParentInfo info = mNext;
+		while (info != null && info.mFuncSymbNr < funcSymbNr)
+			info = info.mNext;
+		if (info != null && info.mFuncSymbNr == funcSymbNr)
+			return info.mCCParents;
 		return new SimpleList<Parent>();
 	}
 }

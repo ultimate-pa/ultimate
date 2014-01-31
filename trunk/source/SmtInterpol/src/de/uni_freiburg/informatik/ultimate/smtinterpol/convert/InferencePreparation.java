@@ -32,37 +32,36 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.CollectionsHelper;
 
 
 public class InferencePreparation {
-	private Theory m_theory;
-	private Set<TermVariable> m_vars;
-	private Stack<Term> m_boolTerms;
-	private Term m_subst;
-	private ApplicationTerm m_ite;
+	private final Theory mTeory;
+	private final Set<TermVariable> mVars;
+	private final Stack<Term> mBoolTerms;
+	private Term mSubst;
+	private ApplicationTerm mIte;
 	
 	public InferencePreparation(Theory theory,Set<TermVariable> vars) {
-		m_theory = theory;
-		m_vars = vars;
-		m_boolTerms = new Stack<Term>();
+		mTeory = theory;
+		mVars = vars;
+		mBoolTerms = new Stack<Term>();
 	}
-	public Term prepare(Term in) {
-		assert in.getSort() == m_theory.getBooleanSort() : 
-			"Non-boolean term as quantifier sub?";
+	public Term prepare(Term body) {
+		assert body.getSort() == mTeory.getBooleanSort() : "Non-boolean term as quantifier sub?";
 		FormulaUnLet unflet = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
-		return recprepare(unflet.unlet(in));
+		return recprepare(unflet.unlet(body));
 	}
 	
-	private Term recprepare(Term in) {
-		if (!CollectionsHelper.containsAny(in.getFreeVars(), m_vars))
-			return in;
-		while (in instanceof AnnotatedTerm)
-			in = ((AnnotatedTerm)in).getSubterm();
-		if (in instanceof ApplicationTerm) {
-			ApplicationTerm app = (ApplicationTerm)in;
-			if (app.getSort() == m_theory.getBooleanSort()) {
-				m_boolTerms.push(in);
-			} else if (app.getFunction().isIntern() && 
-					app.getFunction().getName().equals("ite")) {
+	private Term recprepare(Term subterm) {
+		if (!CollectionsHelper.containsAny(subterm.getFreeVars(), mVars))
+			return subterm;
+		while (subterm instanceof AnnotatedTerm)
+			subterm = ((AnnotatedTerm)subterm).getSubterm();
+		if (subterm instanceof ApplicationTerm) {
+			ApplicationTerm app = (ApplicationTerm)subterm;
+			if (app.getSort() == mTeory.getBooleanSort()) {
+				mBoolTerms.push(subterm);
+			} else if (app.getFunction().isIntern() 
+					&& app.getFunction().getName().equals("ite")) {
 				// Here, we have a term-ite...
-				m_subst = m_ite = app;
+				mSubst = mIte = app;
 				return null;
 			}
 			Term[] params = app.getParameters();
@@ -72,35 +71,36 @@ public class InferencePreparation {
 				while (newparams[i] == null) {
 					// Found term ite in parameter i
 					// TODO This does not work: (and p q) vs. (p (f...))
-					if (m_boolTerms.peek() != in)
+					if (mBoolTerms.peek() != subterm)
 						return null;
-					if (m_boolTerms.peek() == in) {
-						m_boolTerms.pop();
-						return recprepare(generateIte(in));
+					if (mBoolTerms.peek() == subterm) {
+						mBoolTerms.pop();
+						return recprepare(generateIte(subterm));
 					}
 				}
 			}
-			if (m_boolTerms.peek() == in)
-				m_boolTerms.pop();
-			return m_theory.term(app.getFunction(), newparams);
+			if (mBoolTerms.peek() == subterm)
+				mBoolTerms.pop();
+			return mTeory.term(app.getFunction(), newparams);
 		}
-		return in;
+		return subterm;
 	}
-	private Term generateIte(Term in) {
-		Term trueCase = generateCase(in,true);
-		Term falseCase = generateCase(in,false);
-		Term res = m_theory.ifthenelse(m_ite.getParameters()[0], trueCase, falseCase);
-		m_ite = null; 
-		m_subst = null;
+	private Term generateIte(Term subterm) {
+		Term trueCase = generateCase(subterm,true);
+		Term falseCase = generateCase(subterm,false);
+		Term res = mTeory.ifthenelse(
+				mIte.getParameters()[0], trueCase, falseCase);
+		mIte = null; 
+		mSubst = null;
 		return res;
 	}
-	private Term generateCase(Term in,boolean which) {
-		while (in instanceof AnnotatedTerm)
-			in = ((AnnotatedTerm)in).getSubterm();
-		if (in == m_subst)
-			return m_ite.getParameters()[which ? 1 : 2];
-		if (in instanceof ApplicationTerm) {
-			ApplicationTerm at = (ApplicationTerm)in;
+	private Term generateCase(Term subterm,boolean which) {
+		while (subterm instanceof AnnotatedTerm)
+			subterm = ((AnnotatedTerm)subterm).getSubterm();
+		if (subterm == mSubst)
+			return mIte.getParameters()[which ? 1 : 2];
+		if (subterm instanceof ApplicationTerm) {
+			ApplicationTerm at = (ApplicationTerm)subterm;
 			Term[] params = at.getParameters();
 			Term[] newparams = new Term[params.length];
 			boolean changed = false;
@@ -108,9 +108,9 @@ public class InferencePreparation {
 				newparams[i] = generateCase(params[i], which);
 				changed |= params[i] != newparams[i];
 			}
-			return changed ? m_theory.term(at.getFunction(),newparams) : at;	
+			return changed ? mTeory.term(at.getFunction(),newparams) : at;	
 		}
-		return in;
+		return subterm;
 	}
 	
 }

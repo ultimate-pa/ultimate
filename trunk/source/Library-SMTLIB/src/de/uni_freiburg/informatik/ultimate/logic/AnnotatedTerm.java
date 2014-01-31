@@ -36,25 +36,25 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @author hoenicke
  */
 public class AnnotatedTerm extends Term {
-	Term m_Subterm;
-	private Annotation[] m_Annotations;
+	private final Term mSubterm;
+	private final Annotation[] mAnnotations;
 	
 	AnnotatedTerm(Annotation[] annots, Term term, int hash) {
 		super(hash);
-		this.m_Annotations = annots;
-		m_Subterm = term;
+		this.mAnnotations = annots;
+		mSubterm = term;
 	}
 	
 	@Override
 	public Sort getSort() {
-		return m_Subterm.getSort();
+		return mSubterm.getSort();
 	}
 	/**
 	 * Get the term that is annotated by the annotations stored in this term.
 	 * @return The subterm of this term.
 	 */
 	public Term getSubterm() {
-		return m_Subterm;
+		return mSubterm;
 	}
 	/**
 	 * Get all annotations stored in this term.  The resulting array should not
@@ -62,7 +62,7 @@ public class AnnotatedTerm extends Term {
 	 * @return The annotations stored in this term.
 	 */
 	public Annotation[] getAnnotations() {
-		return m_Annotations;
+		return mAnnotations;
 	}
 	
 	public static int hashAnnotations(Annotation[] annots, Term subTerm) {
@@ -75,12 +75,12 @@ public class AnnotatedTerm extends Term {
 		// Add annotations to stack.
 		m_Todo.addLast(")");
 		Annotation[] annots = getAnnotations();
-		for (int i = annots.length-1; i >= 0; i--) {
+		for (int i = annots.length - 1; i >= 0; i--) {
 			if (annots[i].getValue() != null) {
 				m_Todo.addLast(annots[i].getValue());
 				m_Todo.addLast(" ");
 			}
-			m_Todo.addLast(" "+annots[i].getKey());
+			m_Todo.addLast(" " + annots[i].getKey());
 		}
 		m_Todo.addLast(getSubterm());
 		m_Todo.addLast("(! ");

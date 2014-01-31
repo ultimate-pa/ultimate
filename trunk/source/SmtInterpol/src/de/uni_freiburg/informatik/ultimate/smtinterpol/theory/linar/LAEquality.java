@@ -33,66 +33,66 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 
 public class LAEquality extends DPLLAtom {
-	private LinVar m_Var;
-	private Rational m_Bound;
-	private ArrayList<CCEquality> m_dependentEqualities;
+	private final LinVar mVar;
+	private final Rational mBound;
+	private final ArrayList<CCEquality> mDependentEqualities;
 	
 	public LAEquality(int stackLevel, LinVar var, Rational bound) {
 		super(HashUtils.hashJenkins(~var.hashCode(), bound), stackLevel);
-		m_Var = var;
-		m_Bound = bound;
-		m_dependentEqualities = new ArrayList<CCEquality>();
+		mVar = var;
+		mBound = bound;
+		mDependentEqualities = new ArrayList<CCEquality>();
 	}
 
 	public Rational getBound() {
-		return m_Bound;
+		return mBound;
 	}
 
 	public LinVar getVar() {
-		return m_Var;
+		return mVar;
 	}
 	
 	@Override
 	public String toStringNegated() {
-		return "["+hashCode()+"]"+m_Var + " != " + m_Bound;
+		return "[" + hashCode() + "]" + mVar + " != " + mBound;
 	}
 
 	public String toString() {
-		return "["+hashCode()+"]"+m_Var + " == " + m_Bound;
+		return "[" + hashCode() + "]" + mVar + " == " + mBound;
 	}
 	
 	@Override
 	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
 		MutableAffinTerm at = new MutableAffinTerm();
-		at.add(Rational.ONE, m_Var);
-		at.add(m_Bound.negate());
-		Sort s = smtTheory.getSort(m_Var.misint ? "Int" : "Real");
+		at.add(Rational.ONE, mVar);
+		at.add(mBound.negate());
+		Sort s = smtTheory.getSort(mVar.mIsInt ? "Int" : "Real");
 		Sort[] binfunc = {s,s};
 		FunctionSymbol comp =  
 				smtTheory.getFunction("=", binfunc);
 		Term res = smtTheory.term(comp,
-				at.toSMTLib(smtTheory, m_Var.misint, quoted),
-				m_Var.misint ? smtTheory.numeral(BigInteger.ZERO) :
-					smtTheory.rational(BigInteger.ZERO,BigInteger.ONE));
-		return quoted ? smtTheory.annotatedTerm(NamedAtom.g_quoted, res) : res;
+				at.toSMTLib(smtTheory, mVar.mIsInt, quoted),
+				mVar.mIsInt ? smtTheory.numeral(BigInteger.ZERO)
+					: smtTheory.rational(BigInteger.ZERO,BigInteger.ONE));
+		return quoted ? smtTheory.annotatedTerm(NamedAtom.QUOTED, res) : res;
 	}
 
 	public void addDependentAtom(CCEquality eq) {
-		m_dependentEqualities.add(eq);
+		mDependentEqualities.add(eq);
 	}
 	
 	public void removeDependentAtom(CCEquality eq) {
-		m_dependentEqualities.remove(eq);
+		mDependentEqualities.remove(eq);
 	}
 	
 	public Iterable<CCEquality> getDependentEqualities() {
-		return m_dependentEqualities;
+		return mDependentEqualities;
 	}
 	
-	public boolean equals(Object other) {
+	public boolean equals(Object other) { // NOCHECKSTYLE
 		if (other instanceof LAEquality) {
 			LAEquality o = (LAEquality) other;
-			return o.m_Var == m_Var && o.m_Bound.equals(m_Bound);
+			return o.mVar == mVar && o.mBound.equals(mBound);
 		}
 		return false;
 	}

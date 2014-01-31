@@ -29,46 +29,46 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.util;
  */
 public class IntAllocator {
 	private static class IntervalNode {
-		int low,up;
-		IntervalNode left,right;
+		int mLow,mUp;
+		IntervalNode mLeft,mRight;
 		public IntervalNode(int low,int up) {
-			this.low = low;
-			this.up = up;
-			left = right = null;
+			this.mLow = low;
+			this.mUp = up;
+			mLeft = mRight = null;
 		}
 	}
-	private IntervalNode root;
+	private IntervalNode mRoot;
 	/**
 	 * Create an allocator for the interval <code>[low,up)</code>
 	 * @param low	Lower interval bound (inclusive).
 	 * @param up	Upper interval bound (exclusive).
 	 */
 	public IntAllocator(int low,int up) {
-		root = new IntervalNode(low,up);
+		mRoot = new IntervalNode(low,up);
 	}
 	public boolean isEmpty() {
-		return root == null;
+		return mRoot == null;
 	}
 	/**
 	 * Allocate the lowest unallocated integer managed by this allocator.
 	 * @return Lowest unallocated integer.
 	 */
 	public int alloc() {
-		if (root.low == root.up)
+		if (mRoot.mLow == mRoot.mUp)
 			throw new RuntimeException("Allocation on empty IntAllocator");
-		IntervalNode allocNode = root;
+		IntervalNode allocNode = mRoot;
 		IntervalNode parent = null;
-		while (allocNode.left != null) {
+		while (allocNode.mLeft != null) {
 			parent = allocNode;
-			allocNode = allocNode.left;
+			allocNode = allocNode.mLeft;
 		}
-		int res = allocNode.low++;
-		if (allocNode.low == allocNode.up) {
+		int res = allocNode.mLow++;
+		if (allocNode.mLow == allocNode.mUp) {
 			if (parent == null)
 				// empty allocator
-				root = allocNode.right;
+				mRoot = allocNode.mRight;
 			else {
-				parent.left = allocNode.right;
+				parent.mLeft = allocNode.mRight;
 			}
 		}
 		return res;
@@ -89,32 +89,32 @@ public class IntAllocator {
 	 * @param val	Integer to free.
 	 */
 	public void free(int val) {
-		if (root == null) {
-			root = new IntervalNode(val,val + 1);
+		if (mRoot == null) {
+			mRoot = new IntervalNode(val,val + 1);
 		} else {
-			IntervalNode insert = root;
+			IntervalNode insert = mRoot;
 			while (true) {
-				if (val + 1 == insert.low) {
+				if (val + 1 == insert.mLow) {
 					// lower extend
-					insert.low = val;
+					insert.mLow = val;
 					joinLeft(insert);
 					return;
-				} else if (val == insert.up) {
-					++insert.up;
+				} else if (val == insert.mUp) {
+					++insert.mUp;
 					joinRight(insert);
 					return;
-				} else if (val < insert.low) {
-					if (insert.left == null) {
-						insert.left = new IntervalNode(val,val + 1);
+				} else if (val < insert.mLow) {
+					if (insert.mLeft == null) {
+						insert.mLeft = new IntervalNode(val,val + 1);
 						return;
 					}
-					insert = insert.left;
+					insert = insert.mLeft;
 				} else {
-					if (insert.right == null) {
-						insert.right = new IntervalNode(val,val + 1);
+					if (insert.mRight == null) {
+						insert.mRight = new IntervalNode(val,val + 1);
 						return;
 					}
-					insert = insert.right;
+					insert = insert.mRight;
 				}
 			}
 		}
@@ -128,39 +128,39 @@ public class IntAllocator {
 			free(val);
 	}
 	private void joinLeft(IntervalNode insert) {
-		IntervalNode prev = insert.left;
-		IntervalNode parent = insert;
+		IntervalNode prev = insert.mLeft;
 		if (prev == null)
 			return;
-		while (prev.right != null) {
+		IntervalNode parent = insert;
+		while (prev.mRight != null) {
 			parent = prev;
-			prev = prev.right;
+			prev = prev.mRight;
 		}
-		if (insert.low == prev.up) {
-			insert.low = prev.low;
+		if (insert.mLow == prev.mUp) {
+			insert.mLow = prev.mLow;
 			// Remove prev
 			if (parent == insert)
-				parent.left = prev.left;
+				parent.mLeft = prev.mLeft;
 			else
-				parent.right = prev.left;
+				parent.mRight = prev.mLeft;
 		}
 	}
 	private void joinRight(IntervalNode insert) {
-		IntervalNode next = insert.right;
-		IntervalNode parent = insert;
+		IntervalNode next = insert.mRight;
 		if (next == null)
 			return;
-		while (next.left != null) {
+		IntervalNode parent = insert;
+		while (next.mLeft != null) {
 			parent = next;
-			next = next.left;
+			next = next.mLeft;
 		}
-		if (insert.up == next.low) {
-			insert.up = next.up;
+		if (insert.mUp == next.mLow) {
+			insert.mUp = next.mUp;
 			// Remove next
 			if (parent == insert)
-				parent.right = next.right;
+				parent.mRight = next.mRight;
 			else
-				parent.left = next.right;
+				parent.mLeft = next.mRight;
 		}
 	}
 	/**
@@ -168,11 +168,11 @@ public class IntAllocator {
 	 * @return Highest allocated value.
 	 */
 	public int peekLast() {
-		if (root.low == root.up)
-			return root.low - 1;
-		IntervalNode allocNode = root;
-		while (allocNode.right != null)
-			allocNode = allocNode.right;
-		return allocNode.low - 1;
+		if (mRoot.mLow == mRoot.mUp)
+			return mRoot.mLow - 1;
+		IntervalNode allocNode = mRoot;
+		while (allocNode.mRight != null)
+			allocNode = allocNode.mRight;
+		return allocNode.mLow - 1;
 	}
 }

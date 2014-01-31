@@ -55,19 +55,19 @@ public class FixProofDAG {
 		/**
 		 * The clause to collect.
 		 */
-		private Clause m_Cls;
+		private final Clause mCls;
 		/**
 		 * Set the clause to collect.
 		 * @param cls The clause to collect.
 		 */
 		public CollectClause(Clause cls) {
-			m_Cls = cls;
+			mCls = cls;
 		}
 		@Override
 		public void process(FixProofDAG engine) {
-			ResolutionNode rn = (ResolutionNode) m_Cls.getProof();
+			ResolutionNode rn = (ResolutionNode) mCls.getProof();
 			// Simplify rn
-			Set<Literal> removed = engine.m_DeletedNodes.get(m_Cls);
+			Set<Literal> removed = engine.mDeletedNodes.get(mCls);
 			Antecedent[] antes = rn.getAntecedents();
 			ArrayDeque<Antecedent> newAntes = 
 					new ArrayDeque<ResolutionNode.Antecedent>();
@@ -75,50 +75,50 @@ public class FixProofDAG {
 			boolean changed = false;
 			
 			Clause primary = null;
-			newprimary: {
+		newprimary:
+		    {
 				for (int i = antes.length - 1; i >= 0; --i) {
 					if (removed != null) {
-						if (removed.contains(antes[i].pivot)) {
+						if (removed.contains(antes[i].mPivot)) {
 							// Antecedent has been removed
 							changed = true;
 							continue;
 						}
-						deleted = removed.contains(antes[i].pivot.negate());
+						deleted = removed.contains(antes[i].mPivot.negate());
 					}
 					
-					Clause cls = engine.m_Transformed.get(antes[i].antecedent);
-					if (deleted || !cls.contains(antes[i].pivot)) {
+					Clause cls = engine.mTransformed.get(antes[i].mAntecedent);
+					if (deleted || !cls.contains(antes[i].mPivot)) {
 						primary = cls;
 						changed = true;
 						break newprimary;
 					}
 					
-					if (cls != antes[i].antecedent) {
-						newAntes.addFirst(new Antecedent(antes[i].pivot, cls));
-						changed = true;
-					} else
+					if (cls == antes[i].mAntecedent)
 						newAntes.addFirst(antes[i]);
+					else {
+						newAntes.addFirst(new Antecedent(antes[i].mPivot, cls));
+						changed = true;
+					}	
 				}
-				primary = engine.m_Transformed.get(rn.getPrimary());
+				primary = engine.mTransformed.get(rn.getPrimary());
 				changed |= primary != rn.getPrimary();
 			}
-			if (!changed)
-				engine.m_Transformed.put(m_Cls, m_Cls);
-			else {
+			if (changed) {
 				// recompute clause
 				HashSet<Literal> lits = new HashSet<Literal>();
 				for (int i = 0; i < primary.getSize(); ++i)
 					lits.add(primary.getLiteral(i));
 				for (Iterator<Antecedent> it = newAntes.iterator(); it.hasNext(); ) {
 					Antecedent a = it.next();
-					boolean resolutionStepUsed = lits.remove(a.pivot.negate());
+					boolean resolutionStepUsed = lits.remove(a.mPivot.negate());
 					if (!resolutionStepUsed) {
 						it.remove();
 						continue;
 					}
-					for (int j = 0; j < a.antecedent.getSize(); ++j) {
-						Literal lit = a.antecedent.getLiteral(j);
-						if (lit != a.pivot)
+					for (int j = 0; j < a.mAntecedent.getSize(); ++j) {
+						Literal lit = a.mAntecedent.getLiteral(j);
+						if (lit != a.mPivot)
 							lits.add(lit);
 					}
 				}
@@ -131,11 +131,12 @@ public class FixProofDAG {
 					result = new Clause(lits.toArray(new Literal[lits.size()]),
 						new ResolutionNode(primary, nantes));
 				}
-				engine.m_Transformed.put(m_Cls, result);
-			}
+				engine.mTransformed.put(mCls, result);
+			} else
+				engine.mTransformed.put(mCls, mCls);
 		}
 		public String toString() {
-			return "Collect: " + m_Cls.toString();
+			return "Collect: " + mCls.toString();
 		}
 	}
 	/**
@@ -146,64 +147,65 @@ public class FixProofDAG {
 		/**
 		 * The clause to expand.
 		 */
-		private Clause m_Cls;
+		private final Clause mCls;
 		/**
 		 * Set the clause to expand.
 		 * @param cls The clause to expand.
 		 */
 		public ExpandClause(Clause cls) {
-			m_Cls = cls;
+			mCls = cls;
 		}
 		
 		@Override
 		public void process(FixProofDAG engine) {
-			if (engine.m_Transformed.containsKey(m_Cls))
+			if (engine.mTransformed.containsKey(mCls))
 				return;
-			Set<Literal> removed = engine.m_DeletedNodes.get(m_Cls);
-			ProofNode pn = m_Cls.getProof();
-			if (!pn.isLeaf()) {
+			Set<Literal> removed = engine.mDeletedNodes.get(mCls);
+			ProofNode pn = mCls.getProof();
+			if (pn.isLeaf())
+				// m_Cls stays unchanged
+				engine.mTransformed.put(mCls, mCls);
+			else {
 				ResolutionNode rn = (ResolutionNode) pn;
-				engine.m_Todo.push(new CollectClause(m_Cls));
+				engine.mTodo.push(new CollectClause(mCls));
 				Antecedent[] antes = rn.getAntecedents();
 				boolean deleted = false;
 				for (int i = antes.length - 1; !deleted && i >= 0; --i) {
 					if (removed != null) {
-						if (removed.contains(antes[i].pivot))
+						if (removed.contains(antes[i].mPivot))
 							// Antecedent has been removed
 							continue;
-						deleted = removed.contains(antes[i].pivot.negate());
+						deleted = removed.contains(antes[i].mPivot.negate());
 					}
-					engine.m_Todo.push(new ExpandClause(antes[i].antecedent));
+					engine.mTodo.push(new ExpandClause(antes[i].mAntecedent));
 				}
 				if (!deleted)
-					engine.m_Todo.push(new ExpandClause(rn.getPrimary()));
-			} else
-				// m_Cls stays unchanged
-				engine.m_Transformed.put(m_Cls, m_Cls);
+					engine.mTodo.push(new ExpandClause(rn.getPrimary()));
+			}
 		}
 		public String toString() {
-			return "Expand: " + m_Cls.toString();
+			return "Expand: " + mCls.toString();
 		}
 	}
 	/**
 	 * The todo stack.
 	 */
-	private Deque<Worker> m_Todo = new ArrayDeque<Worker>();
+	private final Deque<Worker> mTodo = new ArrayDeque<Worker>();
 	/**
 	 * Mapping for input to replaced clauses.
 	 */
-	private HashMap<Clause, Clause> m_Transformed =
+	private HashMap<Clause, Clause> mTransformed =
 		new HashMap<Clause, Clause>();
 	/**
 	 * The set of deleted nodes.  This can either be clauses or antecedents
 	 * which are used to represent the result of a resolution step.
 	 */
-	private Map<Clause, Set<Literal>> m_DeletedNodes;
+	private Map<Clause, Set<Literal>> mDeletedNodes;
 	/**
 	 * Clear the transformation cache.
 	 */
 	public void reset() {
-		m_Transformed = new HashMap<Clause, Clause>();
+		mTransformed = new HashMap<Clause, Clause>();
 	}
 	/**
 	 * Fix a proof tree rooted at <code>rt</code>.  Note that <code>rt</code>
@@ -213,17 +215,17 @@ public class FixProofDAG {
 	 * @return A new proof tree with all removed nodes replaced.
 	 */
 	public Clause fix(Clause rt, Map<Clause, Set<Literal>> deletedNodes) {
-		m_DeletedNodes = deletedNodes;
-		m_Todo.push(new ExpandClause(rt));
+		mDeletedNodes = deletedNodes;
+		mTodo.push(new ExpandClause(rt));
 		run();
-		return m_Transformed.get(rt);
+		return mTransformed.get(rt);
 	}
 	/**
 	 * Non-recursive walk over the proof tree and process the nodes.
 	 */
 	private final void run() {
-		while (!m_Todo.isEmpty()) {
-			Worker w = m_Todo.pop();
+		while (!mTodo.isEmpty()) {
+			Worker w = mTodo.pop();
 			w.process(this);
 		}
 	}

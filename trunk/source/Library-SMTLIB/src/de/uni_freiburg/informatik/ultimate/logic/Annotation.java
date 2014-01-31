@@ -27,10 +27,11 @@ import java.util.Arrays;
  * @author Jochen Hoenicke
  */
 public class Annotation {
-	String m_Key;
+	String mKey;
 	/** 
 	 * The value of the annotation.
-	 * In concrete syntax an annotation is an sexpr, i.e., there are three cases:
+	 * In concrete syntax an annotation is an sexpr, i.e., there are three
+	 * cases:
 	 * <ul>
 	 * <li>symbol:  this is represented by a String object.</li>
 	 * <li>constant:  this is represented by a ConstantTerm object.</li>
@@ -40,41 +41,42 @@ public class Annotation {
 	 * However some annotations are preparsed.  E.g. the :pattern annotation
 	 * is represented as an array of Terms.
 	 */
-	Object m_Value;
+	Object mValue;
 	
 	public Annotation(String key, Object value) {
 		if (key == null)
 			throw new SMTLIBException("Empty annotations not allowed!");
-		m_Key = key;
-		m_Value = value;
+		mKey = key;
+		mValue = value;
 	}
 
 	public String getKey() {
-		return m_Key;
+		return mKey;
 	}
 
 	public Object getValue() {
-		return m_Value;
+		return mValue;
 	}
 	
 	public boolean equals(Object obj) {
 		if (obj instanceof Annotation) {
 			Annotation annot = (Annotation) obj;
-			return m_Key.equals(annot.m_Key)
-				&& m_Value == null ? annot.m_Value == null :
-					m_Value instanceof Object[] 
-					&& annot.m_Value instanceof Object[] ?
-						Arrays.deepEquals((Object[]) m_Value, 
-										  (Object[]) annot.m_Value)
-						: m_Value.equals(annot.m_Value);
+			return mKey.equals(annot.mKey)
+				&& mValue == null ? annot.mValue == null
+					: mValue instanceof Object[] 
+					&& annot.mValue instanceof Object[]
+						? Arrays.deepEquals((Object[]) mValue, 
+										  (Object[]) annot.mValue)
+						: mValue.equals(annot.mValue);
 		}
 		return false;
 	}
 	
 	public int hashCode() {
-		return m_Key.hashCode() * 31 + 
-			(m_Value == null ? 0 :
-			 m_Value instanceof Object[] ? Arrays.deepHashCode((Object[]) m_Value)
-					: m_Value.hashCode());
+		return mKey.hashCode() * 31 
+			+ (mValue == null ? 0
+			 : mValue instanceof Object[]
+					 ? Arrays.deepHashCode((Object[]) mValue)
+							 : mValue.hashCode());
 	}
 }

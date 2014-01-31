@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.uni_freiburg.informatik.ultimate.logic.util;
+package de.uni_freiburg.informatik.ultimate.util;
 
 import java.text.FieldPosition;
 import java.text.Format;
@@ -52,26 +52,26 @@ public class DebugMessage {
 		}
 		
 	}
-	private static final TermDirectFormat g_TermFormat = new TermDirectFormat();
-	private boolean termDirect;
-	private String msg;
-	private Object[] params;
+	private static final TermDirectFormat TERM_FORMAT = new TermDirectFormat();
+	private boolean mTermDirect;
+	private String mMsg;
+	private Object[] mParams;
 	public DebugMessage(String msg, Object... params) {
 		this(false, msg, params);
 	}
 	public DebugMessage(boolean termDirect, String msg, Object... params) {
-		this.termDirect = termDirect;
-		this.msg = msg;
-		this.params = params;
+		this.mTermDirect = termDirect;
+		this.mMsg = msg;
+		this.mParams = params;
 	}
 	public String toString() {
-		MessageFormat mf = new MessageFormat(msg);
-		if (termDirect) {
-			for (int i = 0; i < params.length; ++i)
-				if (params[i] instanceof Term) {
-					mf.setFormatByArgumentIndex(i, g_TermFormat);
+		MessageFormat mf = new MessageFormat(mMsg);
+		if (mTermDirect) {
+			for (int i = 0; i < mParams.length; ++i)
+				if (mParams[i] instanceof Term) {
+					mf.setFormatByArgumentIndex(i, TERM_FORMAT);
 				}
 		}
-		return mf.format(params, new StringBuffer(), null).toString();
+		return mf.format(mParams, new StringBuffer(), null).toString();
 	}
 }

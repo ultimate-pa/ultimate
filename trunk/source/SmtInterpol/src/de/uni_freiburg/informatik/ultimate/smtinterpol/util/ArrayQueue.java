@@ -24,14 +24,14 @@ import java.util.NoSuchElementException;
 import java.util.Queue;
 
 public class ArrayQueue<E> extends AbstractCollection<E> implements Queue<E> {
-	private int front, size;
-	private Object[] contents;
+	private int mFront, mSize;
+	private Object[] mContents;
 	
 	public ArrayQueue(int size) {
 		int i;
-		for (i = 1; i < size; i+=i);
-		contents = new Object[i];
-		front = size = 0;
+		for (i = 1; i < size; i += i) ;
+		mContents = new Object[i];
+		mFront = size = 0;
 	}
 	
 	public ArrayQueue() {
@@ -39,28 +39,28 @@ public class ArrayQueue<E> extends AbstractCollection<E> implements Queue<E> {
 	}
 	
 	private void resize() {
-		assert (size == contents.length);
-		Object[] oldcontents = contents;
-		contents = new Object[2*size];
-		System.arraycopy(oldcontents, front, contents, 0, size - front);
-		System.arraycopy(oldcontents, 0, contents, size-front, front);
-		front = 0;
+		assert (mSize == mContents.length);
+		Object[] oldcontents = mContents;
+		mContents = new Object[2 * mSize];
+		System.arraycopy(oldcontents, mFront, mContents, 0, mSize - mFront);
+		System.arraycopy(oldcontents, 0, mContents, mSize - mFront, mFront);
+		mFront = 0;
 	}
 
 	@Override
 	public boolean add(E e) {
-		if (size == contents.length)
+		if (mSize == mContents.length)
 			resize();
-		contents[(front+size++) & (contents.length - 1)] = e;
+		mContents[(mFront + mSize++) & (mContents.length - 1)] = e;
 		return true;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public E element() {
-		if (size == 0)
+		if (mSize == 0)
 			throw new NoSuchElementException();
-		return (E) contents[front];
+		return (E) mContents[mFront];
 	}
 
 	@Override
@@ -71,18 +71,18 @@ public class ArrayQueue<E> extends AbstractCollection<E> implements Queue<E> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public E peek() {
-		return (E) contents[front];
+		return (E) mContents[mFront];
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public E poll() {
-		if (size == 0)
+		if (mSize == 0)
 			return null;
-		E elem = (E) contents[front];
-		size--;
-		contents[front++] = null;
-		front &= contents.length-1;
+		E elem = (E) mContents[mFront];
+		mSize--;
+		mContents[mFront++] = null;
+		mFront &= mContents.length - 1;
 		return elem;
 	}
 
@@ -93,26 +93,26 @@ public class ArrayQueue<E> extends AbstractCollection<E> implements Queue<E> {
 
 	@Override
 	public void clear() {
-		if (front + size > contents.length) {
-			size -= contents.length - front;
-			while (front < contents.length)
-				contents[front++] = null;
-			front = 0;
+		if (mFront + mSize > mContents.length) {
+			mSize -= mContents.length - mFront;
+			while (mFront < mContents.length)
+				mContents[mFront++] = null;
+			mFront = 0;
 		}
-		while (size > 0)
-			contents[front + --size] = null;
+		while (mSize > 0)
+			mContents[mFront + --mSize] = null;
 	}
 
 	@Override
 	public Iterator<E> iterator() {
 		return new Iterator<E>() {
-			int ptr = front;
+			int mPtr = mFront;
 			public boolean hasNext() {
-				return ptr < front+size;
+				return mPtr < mFront + mSize;
 			}
 			@SuppressWarnings("unchecked")
 			public E next() {
-				return (E) contents[(ptr++) & (contents.length-1)];
+				return (E) mContents[(mPtr++) & (mContents.length - 1)];
 			}
 			public void remove() {
 				/* remove from inside is not supported */
@@ -123,6 +123,6 @@ public class ArrayQueue<E> extends AbstractCollection<E> implements Queue<E> {
 
 	@Override
 	public int size() {
-		return size;
+		return mSize;
 	}
 }

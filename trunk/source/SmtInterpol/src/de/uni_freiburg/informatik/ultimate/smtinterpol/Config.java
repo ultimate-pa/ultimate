@@ -33,7 +33,8 @@ public interface Config {
 	/// Create timing statistics
 	public final static boolean PROFILE_TIME = !COMPETITION;
 	/// Default log level
-	public final static Level DEFAULT_LOG_LEVEL = COMPETITION ? Level.ERROR : Level.INFO;
+	public final static Level DEFAULT_LOG_LEVEL = 
+			COMPETITION ? Level.ERROR : Level.INFO;
 	/// Check the status set by the user against our check-sat status
 	public final static boolean CHECK_STATUS_SET = !COMPETITION;
 
@@ -59,21 +60,19 @@ public interface Config {
 	/// When to restart
 	public final static int RESTART_FACTOR = 500;
 	/// The default random seed
-	public final static long RANDOM_SEED = 11350294L;// Currently delays random splits until the 10000th split...
+	// Currently delays random splits until the 10000th split...
+	public final static long RANDOM_SEED = 11350294L;
 	/// How often to split
 	public final static int RANDOM_SPLIT_BASE = 10000;
-	/// The frequency of random case splits (number per RANDOM_SPLIT_BASE elements)
-	public final static int RANDOM_SPLIT_FREQ = 2;//TODO find a good value for this
+	/// The frequency of random case splits 
+	/// (number per RANDOM_SPLIT_BASE elements)
+	public final static int RANDOM_SPLIT_FREQ = 2;
 	/// Compute an initial phase bias based on Jeruslaw Wang heuristics
 	public static final boolean INITIAL_PHASE_BIAS_JW = true;
+	/// Print information statistics on restarts
+	public static final boolean PRINT_STATISTICS = !COMPETITION;
 	
 	////// Quantifier Support
-	/// The property for the pattern compiler
-	public final static String PATTERNCOMPILER = 
-		"de.uni_freiburg.informatik.ultimate.smtinterpol.convert.patterncompiler";
-	/// The default pattern compiler
-	public final static String DEFAULT_PATTERNCOMPILER = 
-		"de.uni_freiburg.informatik.ultimate.smtinterpol.convert.DefaultPatternCompiler";
 	/// Debug unused variable elimination
 	public final static boolean DEBUG_QVAR_ELIMINATION = true;
 	/// Don't infer looping patterns

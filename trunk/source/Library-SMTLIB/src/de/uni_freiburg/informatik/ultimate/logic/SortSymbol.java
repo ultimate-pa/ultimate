@@ -60,31 +60,31 @@ public class SortSymbol {
 	 */
 	static final int ARRAY     = 0x10;
 	
-	Theory m_Theory;
-	String m_Name;
+	final Theory mTheory;
+	final String mName;
 	/**
 	 * The number of parameters this sort symbol expects.  If the TYPEPARAM
 	 * flag is set, this sort is a sort variable and takes no parameters; in
 	 * that case this gives the de-Bruijn-index of the sort variable.
 	 */
-	int m_NumParams;
+	final int mNumParams;
 	/**
 	 * The flags.  This is the bitwise or of INTERNAL, TYPEPARAM and 
 	 * INDEXED.
 	 */
-	int m_Flags;
+	final int mFlags;
 	/**
 	 * The sorts already created from this SortSymbol.
 	 * If m_NumParams is 0, this is the single sort corresponding to
 	 * this SortSymbol.  Otherwise this is a UnifyHash containing all
 	 * created sorts.
 	 */
-	Object m_Sorts;
+	final Object mSorts;
 	
 	/** 
 	 * The primitive sort if this is a sort definition.
 	 */
-	Sort m_SortDefinition;
+	final Sort mSortDefinition;
 	
 	/**
 	 * The constructor for sort symbols.
@@ -99,16 +99,16 @@ public class SortSymbol {
 	 */
 	SortSymbol(Theory theory, String name, int numParams, 
 			   Sort definition, int flags) {
-		m_Theory = theory;
-		m_Name = name;
-		m_Flags = flags;
-		m_NumParams = numParams;
-		m_SortDefinition = definition;
-		if ((m_Flags & TYPEPARAM) != 0
-			|| ((m_Flags & INDEXED) == 0 && m_NumParams == 0)) {
-			m_Sorts = new Sort(this, null, new Sort[0]);
+		mTheory = theory;
+		mName = name;
+		mFlags = flags;
+		mNumParams = numParams;
+		mSortDefinition = definition;
+		if ((mFlags & TYPEPARAM) != 0
+			|| ((mFlags & INDEXED) == 0 && mNumParams == 0)) {
+			mSorts = new Sort(this, null, new Sort[0]);
 		} else {
-			m_Sorts = new UnifyHash<Sort>();
+			mSorts = new UnifyHash<Sort>();
 		}
 	}
 	
@@ -117,7 +117,7 @@ public class SortSymbol {
 	 * @return true, if the sort is an internal sort.
 	 */
 	public boolean isIntern() {
-		return (m_Flags & INTERNAL) != 0;
+		return (mFlags & INTERNAL) != 0;
 	}
 	
 	/**
@@ -126,7 +126,7 @@ public class SortSymbol {
 	 * @return the name of the sort.
 	 */
 	public String getName() {
-		return m_Name;
+		return mName;
 	}
 	
 	/**
@@ -135,7 +135,7 @@ public class SortSymbol {
 	 * @return the string representation.
 	 */
 	public String toString() {
-		return "(" + PrintTerm.quoteIdentifier(m_Name) + " " + m_NumParams + ")";
+		return "(" + PrintTerm.quoteIdentifier(mName) + " " + mNumParams + ")";
 	}
 	
 	/**
@@ -149,10 +149,11 @@ public class SortSymbol {
 	 */
 	public void checkArity(BigInteger[] indices, int arity) {
 		if (indices != null)
-			throw new IllegalArgumentException("Indexed Sort "+m_Name+" undefined");
-		if (arity != ((m_Flags & TYPEPARAM) != 0 ? 0 : m_NumParams))
-				throw new IllegalArgumentException
-					("Wrong number of arguments for sort "+m_Name);
+			throw new IllegalArgumentException(
+					"Indexed Sort " + mName + " undefined");
+		if (arity != ((mFlags & TYPEPARAM) == 0 ? mNumParams : 0))
+				throw new IllegalArgumentException(
+						"Wrong number of arguments for sort " + mName);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -163,16 +164,17 @@ public class SortSymbol {
 	 * @param indices The indices of the sort, which are given by 
 	 *                (_ sortname indices).  This is null if no indices were
 	 *                used.
-	 * @param args The sort parameters; the empty array if no parameters were used.
+	 * @param args The sort parameters; the empty array if no parameters were 
+	 *             used.
 	 * @return the created sort.
 	 * @throws IllegalArgumentException if the indices or number of sort
 	 * parameters do not match.
 	 */
 	public Sort getSort(BigInteger[] indices, Sort... args) {
 		checkArity(indices, args.length);
-		if ((m_Flags & INDEXED) == 0 && args.length == 0)
-			return (Sort) m_Sorts;
-		UnifyHash<Sort> sortCache = (UnifyHash<Sort>) m_Sorts;
+		if ((mFlags & INDEXED) == 0 && args.length == 0)
+			return (Sort) mSorts;
+		UnifyHash<Sort> sortCache = (UnifyHash<Sort>) mSorts;
 		int hash = Arrays.hashCode(indices) ^ Arrays.hashCode(args);
 		for (Sort sort : sortCache.iterateHashCode(hash)) {
 			if (Arrays.equals(sort.getArguments(), args)
@@ -190,24 +192,24 @@ public class SortSymbol {
 	 * @return true if this is a sort variable.
 	 */
 	public boolean isParametric() {
-		return (m_Flags & TYPEPARAM) != 0;
+		return (mFlags & TYPEPARAM) != 0;
 	}
 	/**
 	 * Check if this sort symbol corresponds to a numeric sort.
 	 * @return true if this sort is numeric.
 	 */
 	public boolean isNumeric() {
-		return (m_Flags & NUMERIC) != 0;
+		return (mFlags & NUMERIC) != 0;
 	}
 	/**
 	 * Check if this sort symbol corresponds to an array sort.
 	 * @return true if this sort is an array sort.
 	 */
 	public boolean isArray() {
-		return (m_Flags & ARRAY) != 0;
+		return (mFlags & ARRAY) != 0;
 	}
 	
 	public int hashCode() {
-		return m_Name.hashCode();
+		return mName.hashCode();
 	}
 }

@@ -26,20 +26,20 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 public class InternTermTransformer extends TermTransformer {
 	private static class BuildSMTAffineTerm implements Walker {
 
-		private SMTAffineTerm m_Old;
+		private final SMTAffineTerm mOld;
 		
 		public BuildSMTAffineTerm(SMTAffineTerm old) {
-			m_Old = old;
+			mOld = old;
 		}
 		
 		@Override
 		public void walk(NonRecursive engine) {
 			InternTermTransformer transformer = (InternTermTransformer) engine;
 			/* collect args and check if they have been changed */
-			Term[] oldArgs = m_Old.getSummands().keySet().toArray(
-					new Term[m_Old.getSummands().size()]);
+			Term[] oldArgs = mOld.getSummands().keySet().toArray(
+					new Term[mOld.getSummands().size()]);
 			Term[] newArgs = transformer.getConverted(oldArgs);
-			transformer.convertSMTAffineTerm(m_Old, newArgs, oldArgs);
+			transformer.convertSMTAffineTerm(mOld, newArgs, oldArgs);
 		}
 		
 	}

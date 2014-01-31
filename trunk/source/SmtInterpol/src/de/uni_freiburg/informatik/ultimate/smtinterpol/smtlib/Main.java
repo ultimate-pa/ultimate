@@ -36,15 +36,18 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
 
-
-
-public class Main {
+public final class Main {
+    
+    private Main() {
+        // Hide constructor
+    }
 	private static void usage() {
-		System.err.println("USAGE smtinterpol [-q] [-v] [-t <num>] [-c <file>] [-d] [file.smt]");
+		System.err.println(
+		        "USAGE smtinterpol [-q] [-v] [-t <num>] [-c <file>] [-d] [file.smt]");
 	}
 	
 	public static void main(String[] param) throws Exception {
-		int verbosity = 4;
+		int verbosity = 4; // NOCHECKSTYLE
         int timeout = 0;
         int paramctr = 0;
         String conversionFile = null;
@@ -55,27 +58,23 @@ public class Main {
         		paramctr++;
         		break;
         	} else if (param[paramctr].equals("-v")) {
-        		verbosity = 5;
+        		verbosity = 5; // NOCHECKSTYLE
         		paramctr++;
         	} else if (param[paramctr].equals("-q")) {
         		verbosity = 2;
         		paramctr++;
-        	} else if (param[paramctr].equals("-t") && 
-        			++paramctr < param.length) {
+        	} else if (param[paramctr].equals("-t") && ++paramctr < param.length) {
         		try {
         			timeout = Integer.parseInt(param[paramctr]);
         			if (timeout < 0) {
         				timeout = 0;
-        				System.err.println("Cannot parse timeout " +
-        						"argument: Negative number");
+        				System.err.println("Cannot parse timeout argument: Negative number");
         			}
-        		} catch (NumberFormatException nfe) {
-        			System.err.println("Cannot parse timeout " +
-        					"argument: Not a number");
+        		} catch (NumberFormatException enfe) {
+        			System.err.println("Cannot parse timeout argument: Not a number");
         		}
         		paramctr++;
-        	} else if (param[paramctr].equals("-c") && 
-        			++paramctr < param.length) {
+        	} else if (param[paramctr].equals("-c") && ++paramctr < param.length) {
        			conversionFile = param[paramctr++];
         	} else if (param[paramctr].equals("-d")) {
         		disableIPol = true;
@@ -84,7 +83,6 @@ public class Main {
         		return;
         	}
         }
-		MySymbolFactory symfactory = new MySymbolFactory();
 		Reader reader;
 		String filename;
 		if (paramctr < param.length) {
@@ -98,12 +96,15 @@ public class Main {
 			usage();
 			return;
 		}
+		MySymbolFactory symfactory = new MySymbolFactory();
 		Lexer lexer = new Lexer(reader);
 		lexer.setSymbolFactory(symfactory);
 		Parser parser = new Parser(lexer, symfactory);
 		parser.setFileName(filename);
 		Script solver = null;
-		if (conversionFile != null) {
+		if (conversionFile == null) 
+			solver = new SMTInterpol(Logger.getRootLogger(), true);
+		else {
 			try {
 				solver = new LoggingScript(conversionFile, false);
 				Layout layout = new SimpleLayout();
@@ -114,10 +115,9 @@ public class Main {
 				exc.printStackTrace(System.err);
 				System.exit(1);
 			}
-		} else
-			solver = new SMTInterpol(Logger.getRootLogger(), true);
+		}	
 		parser.setSolver(solver, disableIPol);
-		if (verbosity != 4)
+		if (verbosity != 4) // NOCHECKSTYLE
 			parser.benchmark.setOption(":verbosity", verbosity);
 		if (timeout > 0)
 			parser.benchmark.setOption(":timeout", BigInteger.valueOf(timeout));
@@ -125,7 +125,7 @@ public class Main {
 		Term[] interpolants = parser.benchmark.check();
 		if (interpolants != null) {
 			for (int i = 0; i < interpolants.length; ++i)
-				System.out.println("Interpolant "+i+": "+interpolants[i]);
+				System.out.println("Interpolant " + i + ": " + interpolants[i]);
 		}
 		parser.benchmark.close();
 	}

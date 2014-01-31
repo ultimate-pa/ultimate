@@ -43,29 +43,29 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  */
 public abstract class LAReason {
 	
-	private LinVar m_var;
-	protected InfinitNumber m_bound;
-	private LAReason m_oldReason;
-	private boolean m_isUpper;
+	private final LinVar mVar;
+	protected InfinitNumber mBound;
+	private LAReason mOldReason;
+	private final boolean mIsUpper;
 	/**
 	 * The most recently asserted literal reason that caused this LAreason
 	 * to be created.  If this class is a LiteralReason and was created
 	 * by an asserted Literal this points to this class. 
 	 */
-	private LiteralReason m_lastlit;
+	private final LiteralReason mLastlit;
 	
 	public LAReason(LinVar var, InfinitNumber bound, boolean isUpper, LiteralReason lastLit) {
-		m_var = var;
-		m_bound = bound;
-		m_isUpper = isUpper;
-		m_lastlit = lastLit == null ? (LiteralReason) this : lastLit;
+		mVar = var;
+		mBound = bound;
+		mIsUpper = isUpper;
+		mLastlit = lastLit == null ? (LiteralReason) this : lastLit;
 	}
 	/**
 	 * Get the effective bound of this reason.
 	 * @return Effective bound of this reason.
 	 */
 	public InfinitNumber getBound() {
-		return m_bound;
+		return mBound;
 	}
 	
 	/**
@@ -73,23 +73,23 @@ public abstract class LAReason {
 	 * @return Exact bound of this reason.
 	 */
 	public InfinitNumber getExactBound() {
-		return m_bound;
+		return mBound;
 	}
 	
 	public LinVar getVar() {
-		return m_var;
+		return mVar;
 	}
 	
 	public boolean isUpper() {
-		return m_isUpper;
+		return mIsUpper;
 	}
 
 	public LAReason getOldReason() {
-		return m_oldReason;
+		return mOldReason;
 	}
 
 	public void setOldReason(LAReason old) {
-		m_oldReason = old;
+		mOldReason = old;
 	}
 
 	/**
@@ -99,7 +99,7 @@ public abstract class LAReason {
 	 * @return the literal reason.
 	 */
 	public LiteralReason getLastLiteral() {
-		return m_lastlit;
+		return mLastlit;
 	}
 	
 	/**
@@ -121,19 +121,19 @@ public abstract class LAReason {
 		InfinitNumber slack, Rational factor);
 
 	public String toString() {
-		return m_var + (m_isUpper ? "<=" : ">=") + m_bound;
+		return mVar + (mIsUpper ? "<=" : ">=") + mBound;
 	}
 	public int hashCode() {
-		return HashUtils.hashJenkins(m_bound.hashCode(), m_var);
+		return HashUtils.hashJenkins(mBound.hashCode(), mVar);
 	}
 	
 	public Term toSMTLIB(Theory smtTheory, boolean useAuxVars) {
 		MutableAffinTerm at = new MutableAffinTerm();
-		at.add(Rational.ONE, m_var);
-		at.add(m_bound.negate());
-		if (!m_isUpper)
-			at.add(m_var.getEpsilon());
+		at.add(Rational.ONE, mVar);
+		at.add(mBound.negate());
+		if (!mIsUpper)
+			at.add(mVar.getEpsilon());
 		Term posTerm = at.toSMTLibLeq0(smtTheory, useAuxVars);
-		return (m_isUpper ? posTerm : smtTheory.term("not", posTerm));
+		return (mIsUpper ? posTerm : smtTheory.term("not", posTerm));
 	}
 }

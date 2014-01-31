@@ -26,9 +26,9 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinArSolve;
 
 public class SharedTermEvaluator {
-	private LinArSolve m_La;
+	private final LinArSolve mLa;
 	public SharedTermEvaluator(LinArSolve la) {
-		m_La = la;
+		mLa = la;
 	}
 	public Term evaluate(SharedTerm st, Theory t) {
 		if (st.validShared()) {
@@ -37,7 +37,7 @@ public class SharedTermEvaluator {
 				assert sat.isConstant();
 				return sat.getConstant().toTerm(st.getSort());
 			}
-			Rational val = st.getFactor().mul(m_La.realValue(st.getLinVar())).
+			Rational val = st.getFactor().mul(mLa.realValue(st.getLinVar())).
 				add(st.getOffset());
 			return val.toTerm(st.getSort());
 		}

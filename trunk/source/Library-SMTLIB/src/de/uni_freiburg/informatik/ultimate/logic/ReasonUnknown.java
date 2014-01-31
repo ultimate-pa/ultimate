@@ -20,8 +20,8 @@ package de.uni_freiburg.informatik.ultimate.logic;
 
 /**
  * The reason why we returned unknown.  Note that the SMTLIB standard at the
- * moment only allows "memout" and "incomplete", but "timeout" and "crashed"
- * seem to be a good idea, too...
+ * moment only allows "memout" and "incomplete", but "timeout" and "crashed" and
+ * "cancelled" seem to be a good idea, too...
  * @author Juergen Christ
  */
 public enum ReasonUnknown {
@@ -43,6 +43,11 @@ public enum ReasonUnknown {
 	CRASHED {
 		public String toString() {
 			return "crashed";
+		}
+	},
+	CANCELLED {
+		public String toString() {
+			return "cancelled";
 		}
 	}
 }

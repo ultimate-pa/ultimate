@@ -21,16 +21,21 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class Interpolant {
-	Term m_term;
+	Term mTerm;
 
+	/**
+	 * Empty interpolant.  Use this constructor if you want to set the term
+	 * later.
+	 */
 	public Interpolant() {
+		// Provide default ctor
 	}
 
 	public Interpolant(Term term) {
-		m_term = term;
+		mTerm = term;
 	}
 
 	public String toString() {
-		return m_term.toStringDirect();
+		return mTerm.toStringDirect();
 	}
 }

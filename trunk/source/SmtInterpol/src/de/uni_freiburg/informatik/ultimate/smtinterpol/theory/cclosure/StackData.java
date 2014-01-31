@@ -20,12 +20,12 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
 public class StackData {
 	/// Size of the allTerms list.
-	int allTermsSize;
+	int mAllTermsSize;
 	/// numFuncPositions.
-	int numFuncPositions;
+	int mNumFuncPositions;
 	
 	public StackData(CClosure engine) {
-		allTermsSize = engine.allTerms.size();
-		numFuncPositions = engine.numFunctionPositions;
+		mAllTermsSize = engine.mAllTerms.size();
+		mNumFuncPositions = engine.mNumFunctionPositions;
 	}
 }

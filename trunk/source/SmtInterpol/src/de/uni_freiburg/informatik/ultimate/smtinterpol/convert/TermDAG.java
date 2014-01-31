@@ -41,32 +41,32 @@ public class TermDAG {
 	 * @author Juergen Christ
 	 */
 	public static class TermNode {
-		protected List<Edge> m_Incomming = new ArrayList<Edge>();
-		protected List<Edge> m_Outgoing = new ArrayList<Edge>();
-		int m_RegPos = -1;
-		public void addIncomming(Edge in) {
-			m_Incomming.add(in);
+		protected final List<Edge> mIncomming = new ArrayList<Edge>();
+		protected final List<Edge> mOutgoing = new ArrayList<Edge>();
+		int mRegPos = -1;
+		public void addIncomming(Edge in) { // NOPMD
+			mIncomming.add(in);
 		}
-		public void addOutgoing(Edge out) {
-			m_Outgoing.add(out);
+		public void addOutgoing(Edge out) { // NOPMD
+			mOutgoing.add(out);
 		}
 		public Iterable<Edge> getIncomming() {
-			return m_Incomming;
+			return mIncomming;
 		}
 		public Iterable<Edge> getOutgoing() {
-			return m_Outgoing;
+			return mOutgoing;
 		}
 		public void setRegPos(int regPos) {
-			m_RegPos = regPos;
+			mRegPos = regPos;
 		}
 		public int getRegPos() {
-			return m_RegPos;
+			return mRegPos;
 		}
 		public boolean isInRegister() {
-			return m_RegPos != -1;
+			return mRegPos != -1;
 		}
 		public void removeFromRegister() {
-			m_RegPos = -1;
+			mRegPos = -1;
 		}
 	}
 	/**
@@ -76,34 +76,34 @@ public class TermDAG {
 	 * @author Juergen Christ
 	 */
 	public static final class Edge {
-		boolean m_Marked;
-		TermNode m_From,m_To;
-		int m_Num;
+		boolean mMarked;
+		final TermNode mFrom,mTo;
+		final int mNum;
 		public Edge(TermNode from,TermNode to,int num) {
-			m_Marked = false;
-			m_From = from;
-			m_To = to;
-			m_Num = num;
+			mMarked = false;
+			mFrom = from;
+			mTo = to;
+			mNum = num;
 			from.addOutgoing(this);
 			to.addIncomming(this);
 		}
 		public void mark() {
-			m_Marked = true;
+			mMarked = true;
 		}
 		public boolean isMarked() {
-			return m_Marked;
+			return mMarked;
 		}
 		public int getNumber() {
-			return m_Num;
+			return mNum;
 		}
 		public TermNode getFrom() {
-			return m_From;
+			return mFrom;
 		}
 		public TermNode getTo() {
-			return m_To;
+			return mTo;
 		}
 		public String toString() {
-			return m_From + " --> " + m_To;
+			return mFrom + " --> " + mTo;
 		}
 	}
 	/**
@@ -112,24 +112,24 @@ public class TermDAG {
 	 * @author Juergen Christ
 	 */
 	public static class AppTermNode extends TermNode {
-		FunctionSymbol m_Symbol;
+		final FunctionSymbol mSymbol;
 		public AppTermNode(FunctionSymbol symbol) {
-			m_Symbol = symbol;
+			mSymbol = symbol;
 		}
 		public FunctionSymbol getSymbol() {
-			return m_Symbol;
+			return mSymbol;
 		}
 		public int getChildCount() {
-			assert(m_Outgoing.size() == m_Symbol.getParameterCount());
-			return m_Symbol.getParameterCount();
+			assert(mOutgoing.size() == mSymbol.getParameterSorts().length);
+			return mSymbol.getParameterSorts().length;
 		}
 		public void addChild(TermNode child,int pos) {
 			new Edge(this,child,pos);
 		}
 		public Edge getChild(int pos) {
-			Edge res = m_Outgoing.get(pos);
+			Edge res = mOutgoing.get(pos);
 			if (res.getNumber() != pos) {
-				for (Edge e : m_Outgoing) {
+				for (Edge e : mOutgoing) {
 					if (e.getNumber() == pos)
 						return e;
 				}
@@ -138,9 +138,9 @@ public class TermDAG {
 		}
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
-			sb.append('(').append(m_Symbol.getName());
-			for (Edge e : m_Outgoing) {
-				sb.append(' ').append(e.m_To);
+			sb.append('(').append(mSymbol.getName());
+			for (Edge e : mOutgoing) {
+				sb.append(' ').append(e.mTo);
 			}
 			sb.append(')');
 			return sb.toString();
@@ -152,16 +152,16 @@ public class TermDAG {
 	 * @author Juergen Christ
 	 */
 	public static class ConstTermNode extends TermNode {
-		Term m_Const;
+		final Term mConst;
 		public ConstTermNode(Term constant) {
 			assert(constant.getFreeVars().length == 0);
-			m_Const = constant;
+			mConst = constant;
 		}
 		public Term getConstant() {
-			return m_Const;
+			return mConst;
 		}
 		public String toString() {
-			return m_Const.toString();
+			return mConst.toString();
 		}
 	}
 	/**
@@ -169,26 +169,26 @@ public class TermDAG {
 	 * @author Juergen Christ
 	 */
 	public static class VarNode extends TermNode {
-		TermVariable m_Var;
+		final TermVariable mVar;
 		public VarNode(TermVariable var) {
-			m_Var = var;
+			mVar = var;
 		}
 		public TermVariable getVariable() {
-			return m_Var;
+			return mVar;
 		}
 		public String toString() {
-			return m_Var.toString();
+			return mVar.toString();
 		}
 	}
-	private LinkedHashSet<TermNode> m_Roots;
-	private ArrayList<ConstTermNode> m_Consts;
-	private ArrayList<VarNode> m_Vars;
-	private HashMap<Term, TermNode> m_Nodes;
+	private final LinkedHashSet<TermNode> mRoots;
+	private final ArrayList<ConstTermNode> mConsts;
+	private final ArrayList<VarNode> mVars;
+	private final HashMap<Term, TermNode> mNodes;
 	public TermDAG() {
-		m_Roots = new LinkedHashSet<TermNode>();
-		m_Consts = new ArrayList<ConstTermNode>();
-		m_Vars = new ArrayList<VarNode>();
-		m_Nodes = new HashMap<Term, TermNode>();
+		mRoots = new LinkedHashSet<TermNode>();
+		mConsts = new ArrayList<ConstTermNode>();
+		mVars = new ArrayList<VarNode>();
+		mNodes = new HashMap<Term, TermNode>();
 	}
 	/**
 	 * Build the DAG for all given triggers.
@@ -196,42 +196,42 @@ public class TermDAG {
 	 * @return Term DAG representing the triggers.
 	 */
 	public TermNode[] buildDAG(Term[] triggers) {
-		m_Roots.clear();
-		m_Consts.clear();
-		m_Vars.clear();
-		m_Nodes.clear();
+		mRoots.clear();
+		mConsts.clear();
+		mVars.clear();
+		mNodes.clear();
 		for (Term trig : triggers)
-			m_Roots.add(insert(trig));
-		return m_Roots.toArray(new TermNode[m_Roots.size()]);
+			mRoots.add(insert(trig));
+		return mRoots.toArray(new TermNode[mRoots.size()]);
 	}
 	public CCTerm[] getConstants(Clausifier converter) {
-		CCTerm[] res = new CCTerm[m_Consts.size()];
+		CCTerm[] res = new CCTerm[mConsts.size()];
 		int i = -1;
-		for (ConstTermNode ctn : m_Consts) {
+		for (ConstTermNode ctn : mConsts) {
 			res[++i] = converter.getSharedTerm(ctn.getConstant()).getCCTerm();
 			ctn.setRegPos(i);
 		}
 		return res;
 	}
 	public Iterable<ConstTermNode> getConstants() {
-		return m_Consts;
+		return mConsts;
 	}
 	public Iterable<VarNode> getVars() {
-		return m_Vars;
+		return mVars;
 	}
 	private TermNode insert(Term trig) {
-		TermNode cached = m_Nodes.get(trig);
+		TermNode cached = mNodes.get(trig);
 		if (cached != null)
 			return cached;
 		if (trig.getFreeVars().length == 0) {
 			ConstTermNode ctn = new ConstTermNode(trig);
-			m_Consts.add(ctn);
-			m_Nodes.put(trig,ctn);
+			mConsts.add(ctn);
+			mNodes.put(trig,ctn);
 			return ctn;
 		} else if (trig instanceof TermVariable) {
 			VarNode vn = new VarNode((TermVariable)trig);
-			m_Nodes.put(trig,vn);
-			m_Vars.add(vn);
+			mNodes.put(trig,vn);
+			mVars.add(vn);
 			return vn;
 		} else {
 			assert(trig instanceof ApplicationTerm);
@@ -240,7 +240,7 @@ public class TermDAG {
 			Term[] params = at.getParameters();
 			for (int i = 0; i < params.length; ++i)
 				atn.addChild(insert(params[i]), i);
-			m_Nodes.put(trig,atn);
+			mNodes.put(trig,atn);
 			return atn;
 		}
 	}
