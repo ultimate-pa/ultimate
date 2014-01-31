@@ -24,9 +24,9 @@
 		<boogieastDir>${workspaceDir}/CoreRCP/src/de/uni_freiburg/informatik/ultimate/model/boogie/ast</boogieastDir>
 		<toolchainDir>${workspaceDir}/CoreRCP/src/de/uni_freiburg/informatik/ultimate/core/coreplugin/toolchain</toolchainDir>
 		<interactiveconsoledir>${workspaceDir}/InteractiveConsole/src/de/uni_freiburg/informatik/ultimate/interactiveconsole</interactiveconsoledir>
-		<smtlibDir>${workspaceDir}/SmtInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib</smtlibDir>
-		<smtlib2Dir>${workspaceDir}/SmtInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2</smtlib2Dir>
-		<dimacsDir>${workspaceDir}/SmtInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/dimacs</dimacsDir>
+		<smtlibDir>${workspaceDir}/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib</smtlibDir>
+		<smtlib2Dir>${workspaceDir}/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2</smtlib2Dir>
+		<dimacsDir>${workspaceDir}/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/dimacs</dimacsDir>
 		<externalsmtsolverDir>${workspaceDir}/SMTSolverBridge/src/de/uni_freiburg/informatik/ultimate/smtsolver/external</externalsmtsolverDir>
 		<automatascriptparserDir>${workspaceDir}/AutomataScriptParser/src/de/uni_freiburg/informatik/ultimate/plugins/source/automatascriptparser</automatascriptparserDir>
 		<srparseparserDir>${workspaceDir}/Library-srParse/src/srParse</srparseparserDir>
