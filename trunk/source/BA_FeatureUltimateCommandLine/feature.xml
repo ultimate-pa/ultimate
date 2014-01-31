@@ -54,12 +54,6 @@
          unpack="false"/>
 
    <plugin
-         id="SmtInterpol"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"/>
-
-   <plugin
          id="SMTSolverBridge"
          download-size="0"
          install-size="0"
@@ -180,6 +174,27 @@
 
    <plugin
          id="BoogiePrinter"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="SMTInterpol"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="Library-SMTLIB"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="Library-UltimateUtil"
          download-size="0"
          install-size="0"
          version="0.0.0"
