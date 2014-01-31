@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.util;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -143,6 +144,54 @@ public class Benchmark {
 		} else {
 			return getNanosecondsToUnit(watch.mElapsedTime, unit);
 		}
+	}
+	
+	public long getStartHeapSize(String title){
+		Watch watch = mWatches.get(title);
+		if (watch == null) {
+			return -1;
+		} else {
+			return watch.mStartHeapSize;
+		}		
+	}
+	
+	public long getStopHeapSize(String title){
+		Watch watch = mWatches.get(title);
+		if (watch == null) {
+			return -1;
+		} else {
+			return watch.mStopHeapSize;
+		}		
+	}
+
+	public long getStartHeapFreeSize(String title){
+		Watch watch = mWatches.get(title);
+		if (watch == null) {
+			return -1;
+		} else {
+			return watch.mStartHeapFreeSize;
+		}		
+	}
+	
+	public long getStopHeapFreeSize(String title){
+		Watch watch = mWatches.get(title);
+		if (watch == null) {
+			return -1;
+		} else {
+			return watch.mStopHeapFreeSize;
+		}		
+	}
+	
+	public long getMaxHeapSize(String title){
+		return mMaxHeapSize;
+	}
+	
+	public Collection<String> getTitles(){
+		ArrayList<String> rtr = new ArrayList<String>();
+		for(Watch w : mWatches.values()){
+			rtr.add(w.mTitle);
+		}
+		return rtr;
 	}
 
 	private String getUnitString(TimeUnit unit) {

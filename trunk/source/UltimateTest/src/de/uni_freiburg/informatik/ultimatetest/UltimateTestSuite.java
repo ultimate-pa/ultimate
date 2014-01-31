@@ -9,10 +9,7 @@ import java.util.Collection;
 import org.apache.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.Rule;
-import org.junit.internal.AssumptionViolatedException;
-import org.junit.rules.TestWatcher;
 import org.junit.rules.Timeout;
-import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 
 import de.uni_freiburg.informatik.junit_helper.testfactory.FactoryTestRunner;
@@ -27,8 +24,6 @@ public abstract class UltimateTestSuite {
 	 */
 	public Timeout mGlobalTimeout;
 	
-//	@Rule
-//	public TestWatcher mTestWatcher;
 
 	private static Collection<ITestSummary> sSummaries;
 	protected Logger mLogger;
@@ -36,6 +31,7 @@ public abstract class UltimateTestSuite {
 	public UltimateTestSuite() {
 		mLogger = Logger.getLogger(UltimateStarter.class);
 		mGlobalTimeout = new Timeout(10000);
+
 	}
 
 	@TestFactory
