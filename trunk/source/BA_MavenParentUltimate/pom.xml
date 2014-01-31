@@ -101,12 +101,15 @@
 					<useUIHarness>false</useUIHarness>
 					<useUIThread>false</useUIThread>
 					<showEclipseLog>true</showEclipseLog>
-					<!-- if we use argline, jacocos argline will be overwritten, resulting in no coverage -->  
-					<!--<argLine>-Xmx2048M</argLine>-->
+					<!-- if we use argline, jacocos argline will be overwritten, resulting 
+						in no coverage -->
+					<!--<argLine>-Xmx2048M</argLine> -->
 					<systemProperties>
 						<svcompdir>../svcomp</svcompdir>
 					</systemProperties>
-					<forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
+
+					<!-- Use this for global timeouts per class -->
+					<!-- <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds> -->
 					<includes>
 						<include>**/*.java</include>
 					</includes>
@@ -231,7 +234,7 @@
 
 		<profile>
 			<id>coverage</id>
-		
+
 			<properties>
 				<!-- Jacoco version -->
 				<jacoco.version>0.5.6.201201232323</jacoco.version>
