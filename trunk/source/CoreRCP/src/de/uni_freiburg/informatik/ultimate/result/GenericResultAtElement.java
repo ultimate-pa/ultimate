@@ -39,6 +39,7 @@ public class GenericResultAtElement<ELEM extends IElement>
 		return m_LongDescription;
 	}
 
+	@Override
 	public Severity getSeverity() {
 		return m_Severity;
 	}
