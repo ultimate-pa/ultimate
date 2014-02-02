@@ -1232,8 +1232,7 @@ public class TypeChecker implements IUnmanagedObserver {
         TypeErrorResult<BoogieASTNode> result = new TypeErrorResult<BoogieASTNode>(
         		BoogieASTNode,
         		Activator.PLUGIN_ID,
-        		UltimateServices.getInstance().getTranslatorSequence());
-        result.setLongDescription(message);
+        		UltimateServices.getInstance().getTranslatorSequence(), message);
         UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID)
                 .error(BoogieASTNode.getLocation() + ": " + message);
         UltimateServices us = UltimateServices.getInstance();

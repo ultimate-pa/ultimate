@@ -11,7 +11,8 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
  *
  * @param <P>
  */
-public class GenericResultAtElement<P extends IElement> extends AbstractResultWithPosition<P> implements IResultWithSeverity {
+public class GenericResultAtElement<P extends IElement> 
+		extends AbstractResultAtElement<P> implements IResultWithSeverity {
 
 	private final String m_ShortDescription;
 	private final String m_LongDescription;

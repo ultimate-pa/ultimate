@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
-public class NoResult<P extends IElement> extends AbstractResultWithPosition<P> implements IResult {
+public class NoResult<P extends IElement> extends AbstractResultAtElement<P> implements IResult {
 	private ILocation m_Location;
 	private String shortDescription;
 	private String longDescription;

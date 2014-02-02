@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 
 /**
@@ -10,10 +8,10 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * was thrown by the toolchain.
  * @author Matthias Heizmann
  */
-public class ThrowableResult extends AbstractResult {
+public class ExceptionOrErrorResult extends AbstractResult {
 	Throwable m_Throwable;
 
-	public ThrowableResult(String plugin, Throwable throwable) {
+	public ExceptionOrErrorResult(String plugin, Throwable throwable) {
 		super(plugin);
 		m_Throwable = throwable;
 	}

@@ -7,21 +7,16 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
- * Class to describe one of the following results
- * <ul>
- * <li> we have detected a syntax error 
- * <li> we have detected a type error (e.g. an int value was assigned to a
- *  Boolean variable)
- * <li> we have detected syntax which is not (yet) supported by out tool or not
- * supported in a specific setting (e.g. input is program that uses arrays but
- * solver setting uses logic that does not support arrays) 
- * </ul>
+ * Report that some syntax is not (yet?) supported by our implementation 
+ * (e.g. input is program that uses arrays but solver setting uses logic that
+ * does not support arrays) .
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class UnsupportedSyntaxResult<P extends IElement> extends AbstractResult implements IResult {
+public class UnsupportedSyntaxResult<ELEM extends IElement> 
+						extends AbstractResult implements IResultWithLocation {
 	
-	private final P m_Position;
+	private final ELEM m_Position;
 	protected final List<ITranslator<?, ?, ?, ?>> m_TranslatorSequence;
 	private final ILocation m_Location;
 	private String m_LongDescription;
@@ -30,7 +25,7 @@ public class UnsupportedSyntaxResult<P extends IElement> extends AbstractResult 
 	 * @param location
 	 * @param syntaxErrorType
 	 */
-	public UnsupportedSyntaxResult(P position, String plugin, 
+	public UnsupportedSyntaxResult(ELEM position, String plugin, 
 			List<ITranslator<?,?,?,?>> translatorSequence, String longDescription) {
 		super(plugin);
 		m_Position = position;
@@ -68,7 +63,7 @@ public class UnsupportedSyntaxResult<P extends IElement> extends AbstractResult 
 		}
 	}
 
-	public final P getPosition() {
+	public final ELEM getElement() {
 		return m_Position;
 	}
 

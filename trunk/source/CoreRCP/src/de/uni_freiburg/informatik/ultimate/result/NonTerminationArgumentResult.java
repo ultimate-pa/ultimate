@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Jan Leike
  * @param <P> program position class
  */
-public class NonTerminationArgumentResult<P extends IElement> extends AbstractResultWithPosition<P>
+public class NonTerminationArgumentResult<P extends IElement> extends AbstractResultAtElement<P>
 		implements IResult {
 	/**
 	 * How many steps the infinite execution should be schematically unwinded

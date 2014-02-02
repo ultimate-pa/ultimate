@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Matthias Heizmann, Jan Leike
  * @param <P> program position class
  */
-public class TerminationArgumentResult<P extends IElement> extends AbstractResultWithPosition<P>
+public class TerminationArgumentResult<P extends IElement> extends AbstractResultAtElement<P>
 		implements IResult {
 	private final Expression[] m_RankingFunction;
 	private final Expression[] m_SupportingInvariants;

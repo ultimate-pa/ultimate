@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
+
 public interface IResultWithSeverity {
 
 	/**
@@ -8,5 +9,5 @@ public interface IResultWithSeverity {
 	 */
 	public enum Severity { ERROR, WARNING, INFO }
 	
-	
+	public Severity getSeverity();
 }

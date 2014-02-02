@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.ThrowableResult;
+import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.Util;
@@ -135,7 +135,7 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 				m_Summary.addSuccess(result, uniqueStringPrefixOfInputFile, "Annotation says: " + m_ExpectedResult + 
 						"\tModel checker says: " + m_ExpectedResult);
 			} else {
-				if (result instanceof ThrowableResult) {
+				if (result instanceof ExceptionOrErrorResult) {
 					m_Summary.addFail(result, uniqueStringPrefixOfInputFile, "Error: " + result.getLongDescription());
 				} else if (result instanceof TimeoutResult) {
 					m_Summary.addUnknown(result, uniqueStringPrefixOfInputFile, "Annotation says: " + m_ExpectedResult +
@@ -194,7 +194,7 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 				return res;
 			} else if (res instanceof NoResult) {
 				return res;
-			} else if (res instanceof ThrowableResult) {
+			} else if (res instanceof ExceptionOrErrorResult) {
 				return res;
 			}
 		}

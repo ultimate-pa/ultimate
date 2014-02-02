@@ -39,8 +39,7 @@ parser code {:
         BoogieParser.s_Logger.error(position + ": syntax error");
         SyntaxErrorResult syntaxErrorResult = 
                 new SyntaxErrorResult(Activator.s_PLUGIN_ID, 
-                		loc);
-        syntaxErrorResult.setLongDescription(String.valueOf(sym));
+                		loc, String.valueOf(sym));
         UltimateServices us = UltimateServices.getInstance();
         us.reportResult(Activator.s_PLUGIN_ID, syntaxErrorResult);
         us.cancelToolchain();

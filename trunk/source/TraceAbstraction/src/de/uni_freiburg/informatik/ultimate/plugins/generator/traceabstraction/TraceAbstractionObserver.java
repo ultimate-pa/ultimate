@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
@@ -132,24 +131,17 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				if (hoare != null) {
 					Procedure implementation = rootAnnot.getProcedures().get(
 							proc);
-					ProcedureContractResult<RcfgElement, Expression> invResult = 
-							new ProcedureContractResult<RcfgElement, Expression>(
-							finalNode,
-							Activator.s_PLUGIN_NAME,
-							translator_sequence,
-							implementation.getLocation().getOrigin(),
-							proc);
 					Term formula = hoare.getFormula();
 					Expression expr = rootAnnot.getBoogie2Smt().translate(
 							formula);
-					invResult.setInvariant(expr);
-					String ppExpr = BackTranslationWorkaround.backtranslate(
-							translator_sequence, expr);
-					invResult.setLongDescription(ppExpr);
-					s_Logger.warn("Derived contract for procedure " + proc
-							+ ": " + formula.toString() + "   "
-							+ ppExpr);
-					reportResult(invResult);
+					ProcedureContractResult<RcfgElement, Expression> result = 
+							new ProcedureContractResult<RcfgElement, Expression>(
+							Activator.s_PLUGIN_NAME,
+							finalNode,
+							translator_sequence,
+							proc, expr);
+					s_Logger.warn(result.getShortDescription()                                                );
+					reportResult(result);
 				}
 			}
 			Map<ProgramPoint, ILocation> loopLocations = rootAnnot
@@ -158,23 +150,15 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				assert (locNode.getBoogieASTNode() != null) : "locNode without BoogieASTNode";
 				HoareAnnotation hoare = getHoareAnnotation(locNode);
 				if (hoare != null) {
-					InvariantResult<RcfgElement, Expression> invResult = 
-							new InvariantResult<RcfgElement, Expression>(
-							locNode,
-							Activator.s_PLUGIN_NAME,
-							translator_sequence,
-							loopLocations.get(locNode).getOrigin());
 					Term formula = hoare.getFormula();
 					Expression expr = rootAnnot.getBoogie2Smt().translate(
 							formula);
-					invResult.setInvariant(expr);
-					String ppExpr = BackTranslationWorkaround.backtranslate(
+					InvariantResult<RcfgElement, Expression> invResult = 
+							new InvariantResult<RcfgElement, Expression>(
+							Activator.s_PLUGIN_NAME,
+							locNode,
 							translator_sequence, expr);
-					invResult.setLongDescription(ppExpr);
-					s_Logger.warn("Derived loop invarinat at "
-							+ locNode.getBoogieASTNode().getLocation() + ": "
-							+ formula.toString() + expr + "   "
-							+ ppExpr);
+					s_Logger.warn(invResult.getLongDescription());
 					reportResult(invResult);
 				}
 			}

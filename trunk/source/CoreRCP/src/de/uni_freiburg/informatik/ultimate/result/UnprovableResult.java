@@ -26,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Oleksii Saukh
  * @date 02.01.2012
  */
-public class UnprovableResult<P extends IElement> extends AbstractResultWithPosition<P> implements IResultWithTrace {
+public class UnprovableResult<P extends IElement> extends AbstractResultAtElement<P> implements IResultWithTrace {
 	private String shortDescription;
 	private String longDescription;
 	private List<ILocation> failurePath;

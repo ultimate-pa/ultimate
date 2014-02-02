@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Oleksii Saukh
  * @date 27.03.2012
  */
-public class PositiveResult<P extends IElement> extends AbstractResultWithPosition<P> implements IResult {
+public class PositiveResult<P extends IElement> extends AbstractResultAtElement<P> implements IResult {
 	private String m_ShortDescription;
 	private String m_LongDescription;
 

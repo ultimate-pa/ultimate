@@ -5,10 +5,9 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 /**
  * Object for all results for which ULTIMATE does not offer a special result class.
  * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <P>
  */
-public class GenericResultAtLocation extends AbstractResult implements IResultWithSeverity, IResultWithLocation  {
+public class GenericResultAtLocation extends AbstractResult 
+						implements IResultWithSeverity, IResultWithLocation  {
 
 	private final ILocation m_Location;
 	private final String m_ShortDescription;

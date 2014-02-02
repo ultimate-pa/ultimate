@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
  * @author Matthias Heizmann
  */
 public abstract class AbstractResultWithLasso<P extends IElement> 
-										extends AbstractResultWithPosition<P> {
+										extends AbstractResultAtElement<P> {
 	protected final IProgramExecution<P, ?> m_Stem;
 	protected final IProgramExecution<P, ?> m_Loop;
 	

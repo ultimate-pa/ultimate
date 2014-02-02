@@ -9,12 +9,9 @@ package de.uni_freiburg.informatik.ultimate.result;
  */
 public class GenericResult extends AbstractResult implements IResultWithSeverity {
 
-
-	
 	private final String m_ShortDescription;
 	private final String m_LongDescription;
 	private final Severity m_Severity;
-	
 
 	public GenericResult(String plugin, String shortDescription, 
 			String longDescription,	Severity severity) {

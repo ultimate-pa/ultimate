@@ -6,15 +6,24 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
-public class TimeoutResult<P extends IElement> extends AbstractResultWithPosition<P> implements IResult{
+/**
+ * Use this to report that there was a timeout.
+ * The ELEM of this object is a node in the Ultimate model that is related to
+ * the problem that was analyzed when this timeout occurred.
+ * @author Matthias Heizmann
+ *
+ * @param <ELEM>
+ */
+public class TimeoutResult<ELEM extends IElement> 
+					extends AbstractResultAtElement<ELEM> implements IResult{
 	
 	private final String m_longDescription;
 
 
-	public TimeoutResult(P position, String plugin, 
+	public TimeoutResult(ELEM element, String plugin, 
 			List<ITranslator<?,?,?,?>> translatorSequence, ILocation location, 
 			String longDescription) {
-		super(position, plugin, translatorSequence);
+		super(element, plugin, translatorSequence);
 		this.m_longDescription = longDescription;
 	}
 	

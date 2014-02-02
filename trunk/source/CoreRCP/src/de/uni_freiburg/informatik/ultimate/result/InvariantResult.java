@@ -1,90 +1,41 @@
-/**
- * Thats what Codan needs as a List from Ultimate for invariant results.
- */
 package de.uni_freiburg.informatik.ultimate.result;
 
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-
-
 
 /**
- * Result to store that at a location some property holds. The property is given
- * as a Boogie Expression.
- * @author Markus Lindenmann
- * @author Stefan Wissert
- * @author Oleksii Saukh
- * @date 02.01.2012
+ * Report an invariant that holds at ELEM which is a node in an Ultimate model.
+ * The invariant is given as an expression of type E.
+ * @author Matthias Heizmann
  */
-public class InvariantResult<P extends IElement, E> extends AbstractResultWithPosition<P> implements IResult {
+public class InvariantResult<ELEM extends IElement, E> 
+		extends AbstractResultAtElement<ELEM> implements IResultWithLocation {
 	
+	private final E m_Invariant;
 	
-	private final ILocation m_Location;
-	private String longDescription;
-	private E invariant;
-	
-	/**
-	 * Constructor.
-	 * @param location the Location
-	 */
-	public InvariantResult(P position, String plugin, 
-			List<ITranslator<?,?,?,?>> translatorSequence, 
-			ILocation location) {
-		super(position, plugin, translatorSequence);
-		this.m_Location = location;
-		this.longDescription = new String();
-		this.invariant = null;
+	public InvariantResult(String plugin, ELEM element, 
+			List<ITranslator<?,?,?,?>> translatorSequence, E invariant) {
+		super(element, plugin, translatorSequence);
+		this.m_Invariant = invariant;
 	}
 	
-	/**
-	 * Getter for invariant.
-	 * @return the invariant
-	 */
 	public E getInvariant() {
-		return invariant;
+		return m_Invariant;
 	}
 
-	/**
-	 * Setter for invariant.
-	 * @param invariant the invariant to set
-	 */
-	public void setInvariant(E invariant) {
-		this.invariant = invariant;
-	}
-
-	/**
-	 * Setter for long description.
-	 * @param longDescription the longDescription to set
-	 */
-	public void setLongDescription(String longDescription) {
-		this.longDescription = longDescription;
-	}
-
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.result.IResultNode#getShortDescription()
-	 */
 	@Override
 	public String getShortDescription() {
 		return "Loop Invariant";
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.result.IResultNode#getLongDescription()
-	 */
 	@Override
 	public String getLongDescription() {
-//		StringBuffer sb = new StringBuffer(longDescription);
-//		sb.append(System.getProperty("line.separator"));
-//		sb.append("We found an Invariant:");
-//		sb.append(System.getProperty("line.separator"));
-//		// TODO Should be somehow human readable!
-//		if (invariant != null) {
-//			sb.append(invariant.toString());
-//		}
-//		return sb.toString();
-		return longDescription;
+		StringBuffer sb = new StringBuffer();
+		sb.append("Derived loop invariant: ");
+		sb.append(BackTranslationWorkaround.backtranslate(
+				m_TranslatorSequence, m_Invariant));
+		return sb.toString();
 	}
 }
