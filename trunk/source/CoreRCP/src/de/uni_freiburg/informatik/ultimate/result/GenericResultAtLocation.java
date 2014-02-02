@@ -39,6 +39,7 @@ public class GenericResultAtLocation extends AbstractResult
 		return m_LongDescription;
 	}
 
+	@Override
 	public Severity getSeverity() {
 		return m_Severity;
 	}
