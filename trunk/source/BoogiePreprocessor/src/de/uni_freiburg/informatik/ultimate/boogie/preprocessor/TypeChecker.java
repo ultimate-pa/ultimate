@@ -75,8 +75,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
+import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
 
 /**
  * This class is a AST-Visitor for creating textual representations of the tree.
@@ -1230,12 +1229,10 @@ public class TypeChecker implements IUnmanagedObserver {
     }
 
     private static void typeError(BoogieASTNode BoogieASTNode, String message) {
-        SyntaxErrorResult<BoogieASTNode> result = new SyntaxErrorResult<BoogieASTNode>(
+        TypeErrorResult<BoogieASTNode> result = new TypeErrorResult<BoogieASTNode>(
         		BoogieASTNode,
         		Activator.PLUGIN_ID,
-        		UltimateServices.getInstance().getTranslatorSequence(),
-        		BoogieASTNode.getLocation(),
-                SyntaxErrorType.TypeError);
+        		UltimateServices.getInstance().getTranslatorSequence());
         result.setLongDescription(message);
         UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID)
                 .error(BoogieASTNode.getLocation() + ": " + message);

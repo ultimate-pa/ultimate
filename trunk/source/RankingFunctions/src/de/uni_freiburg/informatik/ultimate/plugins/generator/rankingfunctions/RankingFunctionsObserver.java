@@ -31,8 +31,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
+import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
@@ -305,14 +304,11 @@ public class RankingFunctionsObserver implements IUnmanagedObserver {
 	private void reportUnuspportedSyntax(ProgramPoint position) {
 		String message = "This is not a lasso program (a lasso program is a single procedure with a single while loop and without branching, neither in the stem nor in the body of the while loop)";
 		s_Logger.error(message);
-		SyntaxErrorResult<RcfgElement> unsupp = 
-				new SyntaxErrorResult<RcfgElement>(
+		UnsupportedSyntaxResult<RcfgElement> unsupp = 
+				new UnsupportedSyntaxResult<RcfgElement>(
 				position,
 				Activator.s_PLUGIN_NAME,
-				UltimateServices.getInstance().getTranslatorSequence(),
-				position.getBoogieASTNode().getLocation().getOrigin(),
-				SyntaxErrorType.UnsupportedSyntax);
-		unsupp.setLongDescription(message);
+				UltimateServices.getInstance().getTranslatorSequence(),message);
 		reportResult(unsupp);
 	}
 	

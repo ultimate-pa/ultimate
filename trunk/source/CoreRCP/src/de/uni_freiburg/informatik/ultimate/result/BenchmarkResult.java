@@ -13,24 +13,16 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * human readable form.  
  * @author Matthias Heizmann
  */
-public class BenchmarkResult<P> extends AbstractResult<P> {
+public class BenchmarkResult extends AbstractResult {
 	
-	private final ILocation m_Location;
 	private final String m_ShortDescrption;
 	private final Object m_Benchmark;
 
-	public BenchmarkResult(P position, String plugin,
-			List<ITranslator<?, ?, ?, ?>> translatorSequence,
-			ILocation m_Location, String m_ShortDescrption, Object m_Benchmark) {
-		super(position, plugin, translatorSequence);
-		this.m_Location = m_Location;
-		this.m_ShortDescrption = m_ShortDescrption;
+	public BenchmarkResult(String plugin, String shortDescrption, 
+			Object m_Benchmark) {
+		super(plugin);
+		this.m_ShortDescrption = shortDescrption;
 		this.m_Benchmark = m_Benchmark;
-	}
-
-	@Override
-	public ILocation getLocation() {
-		return m_Location;
 	}
 
 	@Override

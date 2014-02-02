@@ -36,8 +36,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Tra
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
 import de.uni_freiburg.informatik.ultimate.result.NonTerminationArgumentResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
+import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 
 
@@ -348,14 +347,11 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	 */
 	private void reportUnuspportedSyntax(ProgramPoint position, String message) {
 		s_Logger.error(message);
-		SyntaxErrorResult<RcfgElement> result = 
-				new SyntaxErrorResult<RcfgElement>(
+		UnsupportedSyntaxResult<RcfgElement> result = 
+				new UnsupportedSyntaxResult<RcfgElement>(
 				position,
 				Activator.s_PLUGIN_NAME,
-				getTranslatorSequence(),
-				getLocation(),
-				SyntaxErrorType.UnsupportedSyntax);
-		result.setLongDescription(message);
+				getTranslatorSequence(),message);
 		reportResult(result);
 	}
 	

@@ -23,6 +23,7 @@ import org.eclipse.ui.texteditor.MarkerUtilities;
 
 import de.uni_freiburg.informatik.ultimate.cdt.codan.CDTResultStore;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithLocation;
 
 /**
  * This new View is basically a replacement for the not really handy
@@ -94,13 +95,20 @@ public class ResultDetails extends ViewPart {
 		String[] parts = id.split(Pattern.quote("."));
 		String resName = parts[parts.length - 1];
 		List<IResult> results = CDTResultStore.getResults(path);
-		IResult foundRes = null;
-		for (IResult res : results) {
-			if (res.getLocation().getStartLine() == lineNumber) {
-				if (resName.equals(res.getClass().getSimpleName())) {
-					foundRes = res;
-					break;
+		IResultWithLocation foundRes = null;
+		for (IResult ires : results) {
+			if (ires instanceof IResultWithLocation) {
+				IResultWithLocation res = (IResultWithLocation) ires;
+				if (res.getLocation().getStartLine() == lineNumber) {
+					if (resName.equals(res.getClass().getSimpleName())) {
+						foundRes = res;
+						break;
+					}
 				}
+			} else {
+				//FIXME: implement result without location
+				throw new UnsupportedOperationException(
+						"result without location not implemented yet");
 			}
 		}
 		StringBuilder sb = new StringBuilder();

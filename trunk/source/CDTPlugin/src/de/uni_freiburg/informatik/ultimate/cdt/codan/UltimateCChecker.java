@@ -38,9 +38,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.views.resultlist.ResultList;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
+import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithLocation;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
@@ -179,7 +180,13 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 					.getResultMap().get(toolID));
 			List<IResult> resultsOfTool = UltimateServices.getInstance().getResultMap()
 					.get(toolID);
-			for (IResult result : resultsOfTool) {
+			for (IResult iresult : resultsOfTool) {
+				if (!(iresult instanceof IResultWithLocation)) {
+					//FIXME: implement result without location
+					throw new UnsupportedOperationException(
+							"result without location not implemented yet");
+				}
+				IResultWithLocation result = (IResultWithLocation) iresult;
 				if (!(result.getLocation() instanceof CACSLLocation)) {
 					continue;
 				}
@@ -291,8 +298,8 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 								this.getFile(), loc.getStartLine(),
 								err.getShortDescription());
 					}
-				} else if (result instanceof GenericResult<?>) {
-					GenericResult<?> err = (GenericResult<?>) result;
+				} else if (result instanceof GenericResultAtElement<?>) {
+					GenericResultAtElement<?> err = (GenericResultAtElement<?>) result;
 					String id;
 					if (err.getSeverity().equals(Severity.INFO)) {
 						id = CCheckerDescriptor.GENERIC_INFO_RESULT_ID;

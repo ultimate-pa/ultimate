@@ -9,20 +9,13 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * Exception). The Throwable stored in the result has to be the Throwable that
  * was thrown by the toolchain.
  * @author Matthias Heizmann
- * FIXME remove Position, solve unnecessary getLocation()-problem
  */
-public class ThrowableResult<P> extends AbstractResult<P> {
+public class ThrowableResult extends AbstractResult {
 	Throwable m_Throwable;
 
 	public ThrowableResult(String plugin, Throwable throwable) {
-		super(null, plugin, null);
+		super(plugin);
 		m_Throwable = throwable;
-	}
-
-	@Override
-	public ILocation getLocation() {
-		ILocation dummyLocation = new BoogieLocation("",0,0,0,0,false);
-		return dummyLocation;
 	}
 
 	@Override
@@ -34,5 +27,4 @@ public class ThrowableResult<P> extends AbstractResult<P> {
 	public String getLongDescription() {
 		return m_Throwable.toString();
 	}
-
 }

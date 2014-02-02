@@ -8,12 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 import org.eclipse.cdt.core.dom.ast.IType;
 
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NextACSL;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IS
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
@@ -36,9 +37,10 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResultAtLocation;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
+import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
 /**
  * @author Markus Lindenmann
@@ -47,6 +49,9 @@ import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorT
  * @date 01.02.2012
  */
 public abstract class Dispatcher {
+	
+	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
+			Activator.s_PLUGIN_ID);
 	/**
 	 * The side effect handler.
 	 */
@@ -171,6 +176,27 @@ public abstract class Dispatcher {
 	 */
 	public abstract NextACSL nextACSLStatement() throws ParseException;
 
+//	/**
+//	 * Report a syntax error to Ultimate. This will cancel the toolchain.
+//	 * 
+//	 * @param loc
+//	 *            where did it happen?
+//	 * @param type
+//	 *            why did it happen?
+//	 * @param msg
+//	 *            description.
+//	 */
+//	public static void error(ILocation loc, SyntaxErrorType type, String msg) {
+//		SyntaxErrorResult<ILocation> result = new SyntaxErrorResult<ILocation>(
+//				loc, Activator.s_PLUGIN_NAME, UltimateServices.getInstance()
+//						.getTranslatorSequence(), loc, type);
+//		result.setLongDescription(msg);
+//		UltimateServices us = UltimateServices.getInstance();
+//		us.getLogger(Activator.s_PLUGIN_ID).warn(msg);
+//		us.reportResult(Activator.s_PLUGIN_ID, result);
+//		us.cancelToolchain();
+//	}
+	
 	/**
 	 * Report a syntax error to Ultimate. This will cancel the toolchain.
 	 * 
@@ -181,69 +207,35 @@ public abstract class Dispatcher {
 	 * @param msg
 	 *            description.
 	 */
-	public static void error(ILocation loc, SyntaxErrorType type, String msg) {
-		SyntaxErrorResult<ILocation> result = new SyntaxErrorResult<ILocation>(
-				loc, Activator.s_PLUGIN_NAME, UltimateServices.getInstance()
-						.getTranslatorSequence(), loc, type);
-		result.setLongDescription(msg);
+	public static void syntaxError(ILocation loc, String msg) {
+		SyntaxErrorResult result = 
+				new SyntaxErrorResult(Activator.s_PLUGIN_NAME, loc, msg);
+		s_Logger.warn(msg);
 		UltimateServices us = UltimateServices.getInstance();
-		us.getLogger(Activator.s_PLUGIN_ID).warn(msg);
 		us.reportResult(Activator.s_PLUGIN_ID, result);
 		us.cancelToolchain();
 	}
-
+	
 	/**
-	 * Report a warning to Ultimate.
+	 * Report a unsupported syntax to Ultimate. This will cancel the toolchain.
 	 * 
 	 * @param loc
 	 *            where did it happen?
 	 * @param type
 	 *            why did it happen?
-	 * @param longDescription
+	 * @param msg
 	 *            description.
 	 */
-	public static void warn(ILocation loc, String shortDescription,
-			String longDescription) {
-		GenericResult<ILocation> result = new GenericResult<ILocation>(loc,
-				Activator.s_PLUGIN_NAME, UltimateServices.getInstance()
-						.getTranslatorSequence(), loc, shortDescription,
-				longDescription, GenericResult.Severity.WARNING);
+	public static void unsupportedSyntax(ILocation loc, String msg) {
+		UnsupportedSyntaxResult<IElement> result = 
+				new UnsupportedSyntaxResult<IElement>(Activator.s_PLUGIN_NAME, loc, msg);
+		s_Logger.warn(msg);
 		UltimateServices us = UltimateServices.getInstance();
-		us.getLogger(Activator.s_PLUGIN_ID).warn(longDescription);
-		// if (!REPORT_WARNINGS)
-		// return;
 		us.reportResult(Activator.s_PLUGIN_ID, result);
+		us.cancelToolchain();
 	}
-
-	// /**
-	// * Report a unknown issue to Ultimate.
-	// *
-	// * @param loc
-	// * where did it happen?
-	// * @param longDesc
-	// * description.
-	// * @param shortDesc
-	// * the short description.
-	// */
-	// public static void unknown(ILocation loc, String longDesc, String
-	// shortDesc) {
-	// UnprovableResult<ILocation> result =
-	// new UnprovableResult<ILocation>(loc,
-	// Activator.s_PLUGIN_NAME,
-	// UltimateServices.getInstance().getTranslatorSequence(),
-	// loc);
-	// result.setLongDescription(longDesc);
-	// result.setShortDescription(shortDesc);
-	// UltimateServices us = UltimateServices.getInstance();
-	// if (us.getLogger(Activator.s_PLUGIN_ID).isInfoEnabled()) {
-	// us.getLogger(Activator.s_PLUGIN_ID).info(longDesc);
-	// } else {
-	// us.getLogger(Activator.s_PLUGIN_ID).warn(longDesc);
-	// }
-	// if (!REPORT_WARNINGS)
-	// return;
-	// us.reportResult(Activator.s_PLUGIN_ID, result);
-	// }
+	
+	
 
 	/**
 	 * Report possible source of unsoundness to Ultimate.
@@ -252,23 +244,14 @@ public abstract class Dispatcher {
 	 *            where did it happen?
 	 * @param longDesc
 	 *            description.
-	 * @param shortDesc
-	 *            the short description.
 	 */
-	public static void unsoundnessWarning(ILocation loc, String longDesc,
-			String shortDesc) {
-		GenericResult<ILocation> result = new GenericResult<ILocation>(loc,
-				Activator.s_PLUGIN_NAME, UltimateServices.getInstance()
-						.getTranslatorSequence(), loc, shortDesc, longDesc,
-				GenericResult.Severity.WARNING);
+	public static void warn(ILocation loc, String longDescription) {
+		String shortDescription = "Unsoundness Warning";
+		s_Logger.warn(shortDescription + " " + longDescription);
+		GenericResultAtLocation result = new GenericResultAtLocation(
+				Activator.s_PLUGIN_NAME, loc, shortDescription, 
+				longDescription, Severity.WARNING);
 		UltimateServices us = UltimateServices.getInstance();
-		if (us.getLogger(Activator.s_PLUGIN_ID).isInfoEnabled()) {
-			us.getLogger(Activator.s_PLUGIN_ID).info(longDesc);
-		} else {
-			us.getLogger(Activator.s_PLUGIN_ID).warn(longDesc);
-		}
-		if (!REPORT_WARNINGS)
-			return;
 		us.reportResult(Activator.s_PLUGIN_ID, result);
 	}
 

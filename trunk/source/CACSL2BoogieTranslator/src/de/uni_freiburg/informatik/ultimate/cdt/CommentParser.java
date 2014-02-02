@@ -18,8 +18,8 @@ import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieTranslator;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
 /**
  * @author Markus Lindenmann
@@ -122,10 +122,8 @@ public class CommentParser {
                 } catch (ACSLSyntaxErrorException e) {
                     ACSLNode node = e.getLocation();
                     node.setFileName(comment.getFileLocation().getFileName());
-                    Dispatcher
-                            .error(new CACSLLocation(node),
-                                    SyntaxErrorType.IncorrectSyntax,
-                                    e.getMessageText());
+                    ILocation loc = new CACSLLocation(node);
+                    Dispatcher.syntaxError(loc, e.getMessageText());
                 } catch (Exception e) {
                     throw new IllegalArgumentException(
                             "Exception should be cached: " + e.getMessage());

@@ -8,6 +8,7 @@ import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.swt.graphics.Image;
 
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithLocation;
 
 /**
  * @author Stefan Wissert
@@ -83,11 +84,21 @@ public class ResultListLabelProvider implements ITableLabelProvider {
 			IResult res = (IResult)element;
 			switch(columnIndex) {
 			case 0:
-				return Integer.toString(res.getLocation().getStartLine());
+				if (res instanceof IResultWithLocation) {
+					return Integer.toString(((IResultWithLocation) res).getLocation().getStartLine());
+				} else {
+					// FIXME: check appropriate String
+					return "-";
+				}
 			case 1:
 				return res.getShortDescription();
 			case 2:
-				return res.getLocation().toString();
+				if (res instanceof IResultWithLocation) {
+					return ((IResultWithLocation) res).getLocation().toString();
+				} else {
+					// FIXME: check appropriate String
+					return "-";
+				}
 			}
 		}
 		return "";

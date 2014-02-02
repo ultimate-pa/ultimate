@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
@@ -313,13 +314,11 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			String shortDescription = "No specification checked";
 			String longDescription = "We were not able to verify any" +
 					" specifiation because the program does not contain any specification.";
-			GenericResult<RcfgElement> gr = new GenericResult<RcfgElement>(
-					null, Activator.s_PLUGIN_NAME, 
-					UltimateServices.getInstance().getTranslatorSequence(), 
-					new BoogieLocation("unknown", 0, 0, 0, 0, false),
+			GenericResult gr = new GenericResult(
+					Activator.s_PLUGIN_NAME, 
 					shortDescription,
 					longDescription,
-					GenericResult.Severity.WARNING);
+					GenericResultAtElement.Severity.WARNING);
 			s_Logger.warn(shortDescription + " " + longDescription);
 			reportResult(gr);
 		} else {
@@ -411,11 +410,9 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			return;
 		}
 		RCFGNode someNode = root.getOutgoingNodes().iterator().next();
-		BenchmarkResult<RcfgElement> res = new 
-				BenchmarkResult<RcfgElement>(someNode,  Activator.s_PLUGIN_NAME, 
-				UltimateServices.getInstance().getTranslatorSequence(), 
-				someNode.getPayload().getLocation(), shortDescription, 
-				timingStatistics);
+		BenchmarkResult res = new 
+				BenchmarkResult(Activator.s_PLUGIN_NAME, 
+				shortDescription, timingStatistics);
 		s_Logger.warn(res.getLongDescription());
 
 //		String longDescription = "Ultimate Automizer took " + time + "ms";

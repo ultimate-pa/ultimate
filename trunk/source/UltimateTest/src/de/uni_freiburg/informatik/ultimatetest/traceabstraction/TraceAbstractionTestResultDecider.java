@@ -15,7 +15,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
@@ -149,7 +149,7 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 			}
 		}
 		// Add benchmark results to TraceAbstraction summary
-		BenchmarkResult<?> benchmarkResult = getBenchmarkResultOfResultSet(traceAbstractionResults);
+		BenchmarkResult benchmarkResult = getBenchmarkResultOfResultSet(traceAbstractionResults);
 		if (benchmarkResult != null) {
 			m_Summary.addTraceAbstractionBenchmarks(uniqueStringPrefixOfInputFile, benchmarkResult.getLongDescription());
 		} else {
@@ -159,10 +159,10 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 		return fail;
 	}
 	
-	private BenchmarkResult<?> getBenchmarkResultOfResultSet(List<IResult> results) {
+	private BenchmarkResult getBenchmarkResultOfResultSet(List<IResult> results) {
 		for (IResult res : results) {
-			if (res instanceof BenchmarkResult<?>) {
-				return ((BenchmarkResult<?>) res); 
+			if (res instanceof BenchmarkResult) {
+				return ((BenchmarkResult) res); 
 			}
 		}
 		return null;
@@ -170,9 +170,9 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 	
 	private boolean resultSetContainsGenericResultWithNoSpecification(List<IResult> results) {
 		for (IResult res : results) {
-			if (res instanceof GenericResult) {
-				if (((GenericResult<?>)res).getShortDescription() == "No specification checked" &&
-						((GenericResult<?>)res).getShortDescription() == "We were not able to verify any" +
+			if (res instanceof GenericResultAtElement) {
+				if (((GenericResultAtElement<?>)res).getShortDescription() == "No specification checked" &&
+						((GenericResultAtElement<?>)res).getShortDescription() == "We were not able to verify any" +
 						" specifiation because the program does not contain any specification.") {
 					return true;
 				}

@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.result;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
@@ -25,8 +26,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Oleksii Saukh
  * @date 02.01.2012
  */
-public class UnprovableResult<P> extends AbstractResult<P> implements IResultWithTrace {
-	private ILocation m_Location;
+public class UnprovableResult<P extends IElement> extends AbstractResultWithPosition<P> implements IResultWithTrace {
 	private String shortDescription;
 	private String longDescription;
 	private List<ILocation> failurePath;
@@ -38,18 +38,9 @@ public class UnprovableResult<P> extends AbstractResult<P> implements IResultWit
 	public UnprovableResult(P position, String plugin, 
 			List<ITranslator<?,?,?,?>> translatorSequence, ILocation location) {
 		super(position, plugin, translatorSequence);
-		this.m_Location = location;
 		this.shortDescription = new String();
 		this.longDescription = new String();
 		this.failurePath = new ArrayList<ILocation>();
-	}
-
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.result.IResultNode#getLocation()
-	 */
-	@Override
-	public ILocation getLocation() {
-		return m_Location;
 	}
 
 	/* (non-Javadoc)
@@ -66,14 +57,6 @@ public class UnprovableResult<P> extends AbstractResult<P> implements IResultWit
 	@Override
 	public String getLongDescription() {
 		return longDescription;
-	}
-
-	/**
-	 * Setter for the Location.
-	 * @param Location the Location to set
-	 */
-	public void setLocation(ILocation Location) {
-		this.m_Location = Location;
 	}
 
 	/**

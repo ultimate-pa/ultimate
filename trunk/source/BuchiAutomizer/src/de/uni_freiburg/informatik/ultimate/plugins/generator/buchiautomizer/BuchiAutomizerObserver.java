@@ -31,10 +31,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.result.BackTranslationWorkaround;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
+import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.NonterminatingLassoResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 
@@ -86,10 +86,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				String shortDescr = "Buchi Automizer proved that your program is terminating";
 				String longDescr = statistics(bcl);
 				ILocation loc = position.getPayload().getLocation();
-				IResult reportRes= new GenericResult<RcfgElement>(position, 
+				IResult reportRes= new GenericResultAtElement<RcfgElement>(position, 
 						Activator.s_PLUGIN_ID, 
 						UltimateServices.getInstance().getTranslatorSequence(), 
-						loc, 
 						shortDescr, 
 						longDescr, Severity.INFO);
 //				s_Logger.info(shortDescr + longDescr + " line" + loc.getStartLine());
@@ -111,10 +110,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			longDescr.append("Loop: ");
 			longDescr.append(counterexample.getLoop().getWord());			
 			ILocation loc = honda.getPayload().getLocation();
-			IResult reportRes= new GenericResult<RcfgElement>(honda, 
+			IResult reportRes= new GenericResultAtElement<RcfgElement>(honda, 
 					Activator.s_PLUGIN_ID, 
 					UltimateServices.getInstance().getTranslatorSequence(), 
-					loc, 
 					shortDescr, 
 					longDescr.toString(), Severity.ERROR);
 //			s_Logger.info(shortDescr + longDescr + " line" + loc.getStartLine());

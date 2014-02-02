@@ -4,35 +4,27 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
-import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
-import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTElaboratedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier.IASTEnumerator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
-import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
-import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
-import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
-import org.eclipse.cdt.core.dom.ast.IASTTypeId;
 import org.eclipse.cdt.core.dom.ast.IArrayType;
 import org.eclipse.cdt.core.dom.ast.IBasicType;
 import org.eclipse.cdt.core.dom.ast.ITypedef;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTTypedefNameSpecifier;
 import org.eclipse.cdt.internal.core.dom.parser.c.CPointerType;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -49,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultDeclaration;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
@@ -60,25 +51,12 @@ import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 /**
@@ -126,8 +104,8 @@ public class TypeHandler implements ITypeHandler {
     @Override
     public Result visit(Dispatcher main, IASTNode node) {
         String msg = "TypeHandler: Not yet implemented: " + node.toString();
-        Dispatcher.error(new CACSLLocation(node),
-                SyntaxErrorType.UnsupportedSyntax, msg);
+        ILocation loc = new CACSLLocation(node);
+        Dispatcher.unsupportedSyntax(loc, msg);
         throw new UnsupportedSyntaxException(msg);
     }
 
@@ -154,8 +132,10 @@ public class TypeHandler implements ITypeHandler {
                 result = (new ResultTypes(null, false, true, cvar));
                 break;
             case IASTSimpleDeclSpecifier.t_unspecified:
-            	Dispatcher.warn(loc, "unspecified type, defaulting to int", 
-            			"unspecified type, defaulting to int");
+            {
+            	String msg = "unspecified type, defaulting to int";
+            	Dispatcher.warn(loc, msg);
+            }
             case IASTSimpleDeclSpecifier.t_bool:
             case IASTSimpleDeclSpecifier.t_char:
             case IASTSimpleDeclSpecifier.t_int:
@@ -183,8 +163,7 @@ public class TypeHandler implements ITypeHandler {
                 // if we do not find a type we cancel with Exception
                 String msg = "TypeHandler: We do not support this type!"
                         + node.getType();
-                Dispatcher.error(loc,
-                        SyntaxErrorType.UnsupportedSyntax, msg);
+                Dispatcher.unsupportedSyntax(loc, msg);
                 throw new UnsupportedSyntaxException(msg);
         }
         return result;
@@ -202,8 +181,7 @@ public class TypeHandler implements ITypeHandler {
 
         }
         String msg = "Unknown or unsupported type! " + node.toString();
-        Dispatcher.error(new CACSLLocation(node),
-                SyntaxErrorType.UnsupportedSyntax, msg);
+        Dispatcher.unsupportedSyntax(loc, msg);
         throw new UnsupportedSyntaxException(msg);
     }
 
@@ -298,7 +276,7 @@ public class TypeHandler implements ITypeHandler {
         }
         String msg = "Not yet implemented: Spec [" + node.getKind() + "] of "
                 + node.getClass();
-        Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
+        Dispatcher.unsupportedSyntax(loc, msg);
         throw new UnsupportedSyntaxException(msg);
     }
     
@@ -325,7 +303,7 @@ public class TypeHandler implements ITypeHandler {
             } else if (r instanceof ResultSkip) { // skip ;)
             } else {
                 String msg = "Unexpected syntax in struct declaration!";
-                Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
+                Dispatcher.unsupportedSyntax(loc, msg);
                 throw new UnsupportedSyntaxException(msg);
             }
         }
@@ -372,7 +350,7 @@ public class TypeHandler implements ITypeHandler {
     		String msg = "TypeHandler: Not yet implemented: "
     				+ type.getClass().toString();
     		// TODO : no idea what location should be set to ...
-    		Dispatcher.error(null, SyntaxErrorType.UnsupportedSyntax, msg);
+            Dispatcher.unsupportedSyntax(null, msg);
     		return new InferredType(Type.Unknown);
     	}
     }
@@ -382,7 +360,7 @@ public class TypeHandler implements ITypeHandler {
         if (!m_DefinedTypes.containsKey(type.getName())) {
             String msg = "Unknown C typedef: " + type.getName();
             // TODO : no idea what location should be set to ...
-            Dispatcher.error(null, SyntaxErrorType.IncorrectSyntax, msg);
+            Dispatcher.syntaxError(null, msg);
             throw new IncorrectSyntaxException(msg);
         }
         return new InferredType(m_DefinedTypes.get(type.getName()).getType());
@@ -454,11 +432,11 @@ public class TypeHandler implements ITypeHandler {
                 }
             }
             String msg = "Field '" + flat[i] + "' not found in " + t;
-            Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+            Dispatcher.syntaxError(loc, msg);
             throw new IncorrectSyntaxException(msg);
         }
         String msg = "Something went wrong while determining types!";
-        Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
+        Dispatcher.unsupportedSyntax(loc, msg);
         throw new UnsupportedSyntaxException(msg);
     }
 

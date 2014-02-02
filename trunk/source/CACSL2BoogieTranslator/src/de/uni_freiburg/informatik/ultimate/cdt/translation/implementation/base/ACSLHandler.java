@@ -6,7 +6,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Stack;
 
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
@@ -25,7 +24,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultContract;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IACSLHandler;
@@ -63,18 +61,14 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.Check;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
 /**
  * @author Markus Lindenmann
@@ -124,8 +118,8 @@ public class ACSLHandler implements IACSLHandler {
     @Override
     public Result visit(Dispatcher main, ACSLNode node) {
         String msg = "ACSLHandler: Not yet implemented: " + node.toString();
-        Dispatcher.error(new CACSLLocation(node),
-                SyntaxErrorType.UnsupportedSyntax, msg);
+        ILocation loc = new CACSLLocation(node);
+        Dispatcher.unsupportedSyntax(loc, msg);
         throw new UnsupportedSyntaxException(msg);
     }
 
@@ -143,8 +137,8 @@ public class ACSLHandler implements IACSLHandler {
         }
         // TODO : other cases
         String msg = "ACSLHandler: Not yet implemented: " + node.toString();
-        Dispatcher.error(new CACSLLocation(node),
-                SyntaxErrorType.UnsupportedSyntax, msg);
+        ILocation loc = new CACSLLocation(node);
+        Dispatcher.unsupportedSyntax(loc, msg);
         throw new UnsupportedSyntaxException(msg);
     }
 
@@ -244,7 +238,7 @@ public class ACSLHandler implements IACSLHandler {
             default:
                 String msg = "Unknown or unsupported binary operation: "
                         + node.getOperator();
-                Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
+                Dispatcher.unsupportedSyntax(loc, msg);
                 throw new UnsupportedSyntaxException(msg);
         }
     }
@@ -270,7 +264,7 @@ public class ACSLHandler implements IACSLHandler {
             default:
                 String msg = "Unknown or unsupported unary operation: "
                         + node.getOperator();
-                Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
+                Dispatcher.unsupportedSyntax(loc, msg);
                 throw new UnsupportedSyntaxException(msg);
         }
     }
@@ -315,7 +309,7 @@ public class ACSLHandler implements IACSLHandler {
                 } else {
                     String msg = "It is not allowed to assign to in parameters! Should be global variables! ["
                             + node.getIdentifier() + "]";
-                    Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+            		Dispatcher.syntaxError(loc, msg);
                     throw new IncorrectSyntaxException(msg);
                 }
                 break;
@@ -342,7 +336,7 @@ public class ACSLHandler implements IACSLHandler {
                 break;
             default:
                 String msg = "The type of specType should be in some type!";
-                Dispatcher.error(loc, SyntaxErrorType.TypeError, msg);
+                Dispatcher.syntaxError(loc, msg);
                 throw new TypeErrorException(msg);
         }
         
@@ -391,7 +385,7 @@ public class ACSLHandler implements IACSLHandler {
         // First we catch the case that a contract is at a FunctionDefinition
         if (node instanceof IASTFunctionDefinition) {
             String msg = "Syntax Error, Contracts on FunctionDefinition are not allowed";
-            Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+    		Dispatcher.syntaxError(loc, msg);
             throw new IncorrectSyntaxException(msg);
         }
 
@@ -400,7 +394,7 @@ public class ACSLHandler implements IACSLHandler {
         }
         if (node.getBehaviors() != null && node.getBehaviors().length != 0) {
             String msg = "Not yet implemented: Behaviour";
-            Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
+            Dispatcher.unsupportedSyntax(loc, msg);
             throw new UnsupportedSyntaxException(msg);
         }
         // TODO : node.getCompleteness();
@@ -430,7 +424,7 @@ public class ACSLHandler implements IACSLHandler {
             // variable declaration not yet translated, hence we cannot
             // translate this access expression!
             String msg = "Ensures specification on struct types is not supported!";
-            Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
+            Dispatcher.unsupportedSyntax(loc, msg);
             throw new UnsupportedSyntaxException(msg);
         }
         specType = ACSLHandler.SPEC_TYPE.ENSURES;
@@ -454,10 +448,9 @@ public class ACSLHandler implements IACSLHandler {
                 identifiers.add(((IdentifierExpression) main.dispatch(e).node)
                         .getIdentifier());
             } else {
-                Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax,
-                        "Unexpected Expression: " + e.getClass());
-                throw new UnsupportedSyntaxException("Unexpected Expression: "
-                        + e.getClass());
+            	String msg = "Unexpected Expression: " + e.getClass();
+                Dispatcher.unsupportedSyntax(loc, msg);
+                throw new UnsupportedSyntaxException(msg);
             }
         }
         VariableLHS[] identifiersVarLHS = new VariableLHS[identifiers.size()];
@@ -479,11 +472,10 @@ public class ACSLHandler implements IACSLHandler {
     public Result visit(Dispatcher main, LoopAnnot node) {
         if (node.getLoopBehavior() != null
                 && node.getLoopBehavior().length != 0) {
-            Dispatcher.error(new CACSLLocation(node),
-                    SyntaxErrorType.UnsupportedSyntax,
-                    "Not yet implemented: Behaviour");
-            throw new UnsupportedSyntaxException(
-                    "Not yet implemented: Behaviour");
+        	String msg = "Not yet implemented: Behaviour";
+        	ILocation loc = new CACSLLocation(node);
+            Dispatcher.unsupportedSyntax(loc, msg);
+            throw new UnsupportedSyntaxException(msg);
         }
         ArrayList<Specification> specs = new ArrayList<Specification>();
         for (LoopStatement lst : node.getLoopStmt()) {
@@ -510,18 +502,18 @@ public class ACSLHandler implements IACSLHandler {
 
     @Override
     public Result visit(Dispatcher main, LoopVariant node) {
-        Dispatcher.error(new CACSLLocation(node),
-                SyntaxErrorType.UnsupportedSyntax,
-                "Not yet implemented: LoopVariant");
-        throw new UnsupportedSyntaxException("Not yet implemented: LoopVariant");
+    	String msg = "Not yet implemented: LoopVariant";
+    	ILocation loc = new CACSLLocation(node);
+        Dispatcher.unsupportedSyntax(loc, msg);
+        throw new UnsupportedSyntaxException(msg);
     }
 
     @Override
     public Result visit(Dispatcher main, LoopAssigns node) {
-        Dispatcher.error(new CACSLLocation(node),
-                SyntaxErrorType.UnsupportedSyntax,
-                "Not yet implemented: LoopAssigns");
-        throw new UnsupportedSyntaxException("Not yet implemented: LoopAssigns");
+    	String msg = "Not yet implemented: LoopAssigns";
+    	ILocation loc = new CACSLLocation(node);
+        Dispatcher.unsupportedSyntax(loc, msg);
+        throw new UnsupportedSyntaxException(msg);
     }
 
     @Override
@@ -567,14 +559,14 @@ public class ACSLHandler implements IACSLHandler {
                     main.cHandler.getSymbolTable(), loc, lhs);
             if (!(t instanceof ArrayType)) {
                 String msg = "Type mismatch - cannot take index on a not-array element!";
-                Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+        		Dispatcher.syntaxError(loc, msg);
                 throw new IncorrectSyntaxException(msg);
             }
             expr = new de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression(
                     loc, sae, idx);
         } else {
             String msg = "Unexpected result type on left side of array!";
-            Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
+            Dispatcher.unsupportedSyntax(loc, msg);
             throw new UnsupportedSyntaxException(msg);
         }
         return new Result(expr);

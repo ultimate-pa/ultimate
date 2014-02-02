@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.result;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
@@ -15,21 +16,13 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  *
  * @param <P>
  */
-public class NonterminatingLassoResult<P> extends AbstractResultWithLasso<P> {
+public class NonterminatingLassoResult<P extends IElement> extends AbstractResultWithLasso<P> {
 	
-	private final ILocation m_Location;
-
 	public NonterminatingLassoResult(P position, String plugin,
 			List<ITranslator<?, ?, ?, ?>> translatorSequence,
 			IProgramExecution<P, ?> stem, IProgramExecution<P, ?> loop,
 			ILocation location) {
 		super(position, plugin, translatorSequence, stem, loop);
-		m_Location = location;
-	}
-
-	@Override
-	public ILocation getLocation() {
-		return m_Location;
 	}
 
 	@Override

@@ -20,9 +20,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
@@ -79,7 +79,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer.POINTER_BASE_VALIDITY;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
 /**
  * @author Markus Lindenmann
@@ -705,7 +704,7 @@ public class MemoryHandler {
         if (!main.cHandler.getSymbolTable().containsBoogieSymbol(bId)) {
             String msg = "Cannot free variable " + bId
                     + " as it is not in the current scope!";
-            Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+            Dispatcher.syntaxError(loc, msg);
             throw new IncorrectSyntaxException(msg);
         }
         String cId = main.cHandler.getSymbolTable().getCID4BoogieID(bId, loc);
@@ -713,7 +712,7 @@ public class MemoryHandler {
                 .getCVariable();
         if (!isPointer(cvar)) {
             String msg = "Cannot free the non pointer variable " + cId;
-            Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+            Dispatcher.syntaxError(loc, msg);
             throw new IncorrectSyntaxException(msg);
         }
         // Further checks are done in the precondition of ~free()!

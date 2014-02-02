@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -30,14 +31,13 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Jan Leike
  * @param <P> program position class
  */
-public class NonTerminationArgumentResult<P> extends AbstractResult<P>
+public class NonTerminationArgumentResult<P extends IElement> extends AbstractResultWithPosition<P>
 		implements IResult {
 	/**
 	 * How many steps the infinite execution should be schematically unwinded
 	 */
 	private final static int s_schematic_execution_length = 3;
 	
-	private final ILocation m_Location;
 	private final Map<BoogieVar, Rational> m_StateInit;
 	private final Map<BoogieVar, Rational> m_StateHonda;
 	private final Map<BoogieVar, Rational> m_Ray;
@@ -68,12 +68,6 @@ public class NonTerminationArgumentResult<P> extends AbstractResult<P>
 		this.m_StateHonda = state_honda;
 		this.m_Ray = ray;
 		this.m_Lambda = lambda;
-		this.m_Location = location;
-	}
-	
-	@Override
-	public ILocation getLocation() {
-		return m_Location;
 	}
 	
 	@Override

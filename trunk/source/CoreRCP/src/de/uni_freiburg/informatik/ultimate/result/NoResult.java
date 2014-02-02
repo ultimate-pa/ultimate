@@ -2,10 +2,11 @@ package de.uni_freiburg.informatik.ultimate.result;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
-public class NoResult<P> extends AbstractResult<P> implements IResult {
+public class NoResult<P extends IElement> extends AbstractResultWithPosition<P> implements IResult {
 	private ILocation m_Location;
 	private String shortDescription;
 	private String longDescription;
@@ -54,16 +55,6 @@ public class NoResult<P> extends AbstractResult<P> implements IResult {
 	 */
 	public void setLongDescription(String longDescription) {
 		this.longDescription = longDescription;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.result.IResultNode#getLocation()
-	 */
-	@Override
-	public ILocation getLocation() {
-		return m_Location;
 	}
 
 	/*

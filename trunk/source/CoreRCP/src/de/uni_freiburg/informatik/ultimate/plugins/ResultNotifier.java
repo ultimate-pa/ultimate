@@ -7,7 +7,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
@@ -58,7 +58,7 @@ public class ResultNotifier {
 						toolchainResult = ResultNotifier.TIMEOUT;
 						description = "Timeout";
 					}
-				} else if (result instanceof GenericResult) {
+				} else if (result instanceof GenericResultAtElement) {
 					if (toolchainResult <= ResultNotifier.GENERICRESULT) {
 						toolchainResult = ResultNotifier.GENERICRESULT;
 						description = result.getShortDescription() + "  " 

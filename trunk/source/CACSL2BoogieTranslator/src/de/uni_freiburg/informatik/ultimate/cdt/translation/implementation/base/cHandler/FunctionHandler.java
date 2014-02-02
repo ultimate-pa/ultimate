@@ -18,7 +18,6 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
@@ -28,10 +27,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -41,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -85,9 +81,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.Check;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
-import de.uni_freiburg.informatik.ultimate.util.ScopedHashSet;
 
 /**
  * Class that handles translation of functions.
@@ -652,7 +646,7 @@ public class FunctionHandler {
 			if (procedures.containsKey(methodName)) {
 				String msg = "Duplicated method identifier: " + methodName
 						+ ". C does not support function overloading!";
-				Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+				Dispatcher.syntaxError(loc, msg);
 				throw new IncorrectSyntaxException(msg);
 			}
 			procedures.put(methodName, proc);
@@ -676,7 +670,7 @@ public class FunctionHandler {
 					checkInParams = false;
 				} else {
 					String msg = "Implementation does not match declaration!";
-					Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+					Dispatcher.syntaxError(loc, msg);
 					throw new IncorrectSyntaxException(msg);
 				}
 			}
@@ -686,8 +680,7 @@ public class FunctionHandler {
 							.equals(proc.getInParams()[i].getType().toString()))) {
 						String msg = "Implementation does not match declaration!"
 								+ "Type missmatch on in-parameters!";
-						Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax,
-								msg);
+						Dispatcher.syntaxError(loc, msg);
 						throw new IncorrectSyntaxException(msg);
 					}
 				}
@@ -802,7 +795,7 @@ public class FunctionHandler {
 		if (!(functionName instanceof IASTIdExpression)) {
 			String msg = "Function pointer or similar is not supported. "
 					+ loc.toString();
-			Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+			Dispatcher.syntaxError(loc, msg);
 			throw new IncorrectSyntaxException(msg);
 		}
 		//don't use getRawSignature because it refers to the code before preprocessing 
@@ -843,7 +836,7 @@ public class FunctionHandler {
 					&& procedures.get(methodName).getInParams()[0].getType() == null && node
 						.getArguments().length == 0)) {
 				String msg = "Function call has incorrect number of in-params!";
-				Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+				Dispatcher.syntaxError(loc, msg);
 				throw new IncorrectSyntaxException(msg);
 			} // else: this means param of declaration is void and parameter
 				// list of call is empty! --> OK
@@ -855,7 +848,7 @@ public class FunctionHandler {
 			if (in.lrVal.getValue() == null) {
 				String msg = "Incorrect or invalid in-parameter! "
 						+ loc.toString();
-				Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+				Dispatcher.syntaxError(loc, msg);
 				throw new IncorrectSyntaxException(msg);
 			}
 			Expression arg = in.lrVal.getValue();
@@ -896,7 +889,7 @@ public class FunctionHandler {
 			} else { // unsupported!
 				String msg = "Cannot handle multiple out params! "
 						+ loc.toString();
-				Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
+				Dispatcher.unsupportedSyntax(loc, msg);
 				throw new IncorrectSyntaxException(msg);
 			}
 		} else {
@@ -904,7 +897,7 @@ public class FunctionHandler {
 			String longDescription = "Return value of method '"
 					+ methodName
 					+ "' unknown! Methods should be declared, before they are used! Return value assumed to be int ...";
-			Dispatcher.warn(loc, "Unsoundness Warning", longDescription);
+			Dispatcher.warn(loc, longDescription);
 			String ident = main.nameHandler.getTempVarUID(SFO.AUXVAR.RETURNED);
 			expr = new IdentifierExpression(loc,
 					/*new InferredType(Type.Integer),*/ ident);
@@ -962,10 +955,10 @@ public class FunctionHandler {
 				// void method which is returning something! We remove the
 				// return value!
 				String msg = "This method is declared to be void, but returning a value!";
-				Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+				Dispatcher.syntaxError(loc, msg);
 			} else if (outParams.length != 1) {
 				String msg = "We do not support several output parameters for functions";
-				Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
+				Dispatcher.unsupportedSyntax(loc, msg);
 				throw new UnsupportedSyntaxException(msg);
 			} else {
 				String id = outParams[0].getIdentifiers()[0];

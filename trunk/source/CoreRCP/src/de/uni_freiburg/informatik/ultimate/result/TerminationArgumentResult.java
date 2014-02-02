@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.result;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -14,9 +15,8 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Matthias Heizmann, Jan Leike
  * @param <P> program position class
  */
-public class TerminationArgumentResult<P> extends AbstractResult<P>
+public class TerminationArgumentResult<P extends IElement> extends AbstractResultWithPosition<P>
 		implements IResult {
-	private final ILocation m_Location;
 	private final Expression[] m_RankingFunction;
 	private final Expression[] m_SupportingInvariants;
 	private final String m_RankingFunctionDescription;
@@ -41,15 +41,9 @@ public class TerminationArgumentResult<P> extends AbstractResult<P>
 			List<ITranslator<?,?,?,?>> translatorSequence,
 			ILocation location) {
 		super(position, plugin, translatorSequence);
-		this.m_Location = location;
 		this.m_RankingFunction = ranking_function;
 		this.m_RankingFunctionDescription = rankingFunctionDescription;
 		this.m_SupportingInvariants = supporting_invariants;
-	}
-	
-	@Override
-	public ILocation getLocation() {
-		return m_Location;
 	}
 	
 	@Override

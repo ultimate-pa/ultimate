@@ -28,9 +28,10 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore.Ultimate_Mode;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
+import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithLocation;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
@@ -406,8 +407,8 @@ public class UltimateInterface extends HttpServlet {
 //						} else if (r instanceof PossibleUnsoundnessWarningResult<?>) {
 //							type = "warning";
 //							packagedResult.logLvl = "warning";
-						} else if (r instanceof GenericResult<?>) {
-							GenericResult<?> rGen = (GenericResult<?>) r;
+						} else if (r instanceof GenericResultAtElement<?>) {
+							GenericResultAtElement<?> rGen = (GenericResultAtElement<?>) r;
 							if (rGen.getSeverity().equals(Severity.ERROR)) {
 								type = "error";
 								packagedResult.logLvl = "error";
@@ -425,16 +426,23 @@ public class UltimateInterface extends HttpServlet {
 							packagedResult.logLvl = "warning";
 						}
 						// TODO : Add new "Out of resource" result here ...
-						ILocation loc = r.getLocation();
-						if (r.getLocation() == null) {
-							throw new IllegalArgumentException("Location is null");
+						if (r instanceof IResultWithLocation) {
+							ILocation loc = ((IResultWithLocation) r).getLocation();
+							if (((IResultWithLocation) r).getLocation() == null) {
+								throw new IllegalArgumentException("Location is null");
+							}
+							packagedResult.startLNr = loc.getStartLine();
+							packagedResult.endLNr = loc.getEndLine();
+							packagedResult.startCol = loc.getStartColumn();
+							packagedResult.endCol = loc.getEndColumn();
+						} else {
+							packagedResult.startLNr = -1;
+							packagedResult.endLNr = -1;
+							packagedResult.startCol = -1;
+							packagedResult.endCol = -1;
 						}
 						packagedResult.shortDesc = String.valueOf(r.getShortDescription());
 						packagedResult.longDesc = String.valueOf(r.getLongDescription());
-						packagedResult.startLNr = loc.getStartLine();
-						packagedResult.endLNr = loc.getEndLine();
-						packagedResult.startCol = loc.getStartColumn();
-						packagedResult.endCol = loc.getEndColumn();
 						packagedResult.type = type;
 						resultList.add(new JSONObject(packagedResult));
 					}

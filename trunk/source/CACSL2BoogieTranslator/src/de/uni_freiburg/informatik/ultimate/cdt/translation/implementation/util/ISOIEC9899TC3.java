@@ -8,7 +8,6 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
 /**
  * This class holds methods, that help translating constants.
@@ -61,9 +60,8 @@ public final class ISOIEC9899TC3 {
         if (val.startsWith("L")) {
             // ignore wide character prefix
             val = val.substring(1, val.length());
-            Dispatcher.unsoundnessWarning(loc,
-                    "Char-Sequence wide character suffix L dropped",
-                    IGNORED_SUFFIX);
+            String msg = IGNORED_SUFFIX + "Char-Sequence wide character suffix L dropped";
+            Dispatcher.warn(loc, msg);
         }
 		if (!val.startsWith("'") || !val.endsWith("'")) {
 			throw new UnsupportedOperationException();
@@ -138,8 +136,8 @@ public final class ISOIEC9899TC3 {
         for (String s : SUFFIXES_FLOAT) {
             if (val.endsWith(s)) {
                 value = val.substring(0, val.length() - s.length());
-                Dispatcher.unsoundnessWarning(loc, "Float suffix ignored: " + s,
-                        IGNORED_SUFFIX);
+                String msg = IGNORED_SUFFIX + " " + "Float suffix ignored: " + s;
+                Dispatcher.warn(loc, msg);
                 break;
             }
         }
@@ -151,15 +149,15 @@ public final class ISOIEC9899TC3 {
                 // this case is awful! do not want to support it!
                 // we would have to split the number, parse the values
                 // separately and then merge them to a new base 10 float
-                Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax,
-                        "hexadecimal float constants are not yet supported!");
+            	String msg = "hexadecimal float constants are not yet supported!";
+            	Dispatcher.unsupportedSyntax(loc, msg);
                 return value;
             } // else
             Float.parseFloat(value); // check if correct!
             return value;
         } catch (NumberFormatException nfe) {
             String msg = "Unable to translate float!";
-            Dispatcher.error(loc, SyntaxErrorType.TypeError, msg);
+            Dispatcher.syntaxError(loc, msg);
             throw new IncorrectSyntaxException(msg);
         }
     }
@@ -181,8 +179,8 @@ public final class ISOIEC9899TC3 {
         for (String s : SUFFIXES_INT) {
             if (val.endsWith(s)) {
                 value = val.substring(0, val.length() - s.length());
-                Dispatcher.unsoundnessWarning(loc, "Integer suffix ignored: " + s,
-                        IGNORED_SUFFIX);
+                String msg = IGNORED_SUFFIX + " " + "Integer suffix ignored: " + s;
+                Dispatcher.warn(loc, msg);
                 break;
             }
         }
@@ -199,7 +197,7 @@ public final class ISOIEC9899TC3 {
             }
         } catch (NumberFormatException nfe) {
             String msg = "Unable to translate int!";
-            Dispatcher.error(loc, SyntaxErrorType.TypeError, msg);
+            Dispatcher.syntaxError(loc, msg);
             throw new IncorrectSyntaxException(msg);
         }
     }

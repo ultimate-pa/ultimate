@@ -9,15 +9,11 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 /**
@@ -77,7 +73,7 @@ public class SymbolTable extends ScopedHashMap<String, SymbolTableValue> {
         if (!containsKey(cId)) {
             String msg = "Variable is neither declared globally nor locally! ID="
                     + cId;
-            Dispatcher.error(errorLoc, SyntaxErrorType.IncorrectSyntax, msg);
+            Dispatcher.syntaxError(errorLoc, msg);
             throw new IncorrectSyntaxException(msg);
         }
         return super.get(cId);
@@ -142,7 +138,7 @@ public class SymbolTable extends ScopedHashMap<String, SymbolTableValue> {
         if (old != null && !old.equals(cIdentifier)) {
             String msg = "Variable with this name was already declared before:"
                     + cIdentifier;
-            Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+            Dispatcher.syntaxError(loc, msg);
             throw new IncorrectSyntaxException(msg);
         }
     }
@@ -159,7 +155,7 @@ public class SymbolTable extends ScopedHashMap<String, SymbolTableValue> {
     public String getCID4BoogieID(String boogieIdentifier, ILocation loc) {
         if (!boogieID2CID.containsKey(boogieIdentifier)) {
             String msg = "Variable not found: " + boogieIdentifier;
-            Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+            Dispatcher.syntaxError(loc, msg);
             throw new IncorrectSyntaxException(msg);
         }
         return boogieID2CID.get(boogieIdentifier);

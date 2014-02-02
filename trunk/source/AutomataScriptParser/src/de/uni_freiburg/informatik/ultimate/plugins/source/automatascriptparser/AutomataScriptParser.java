@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.print.attribute.standard.Severity;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -17,8 +19,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitionsAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomatonAST;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
+import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 
 
 public class AutomataScriptParser implements ISource {
@@ -53,7 +54,7 @@ public class AutomataScriptParser implements ISource {
 			if (longErrorMessage == null) {
 				longErrorMessage = e.getMessage();
 			}
-			reportToUltimate(Severity.ERROR, longErrorMessage,
+			reportSyntaxError(Severity.ERROR, longErrorMessage,
 					shortErrorMessage, 
 					location);
 			s_Logger.info("Parsing aborted.");
@@ -215,18 +216,12 @@ public class AutomataScriptParser implements ISource {
 
 
 	/**
-	 * Reports the given string with the given severity to Ultimate as a GenericResult
-	 * @param sev the severity
+	 * Reports syntax error to Ultimate
 	 * @param longMessage the string to be reported
 	 * @param loc the location of the string
 	 */
-	private static void reportToUltimate(Severity sev, String longMessage, String shortMessage, ILocation loc) {
-		    GenericResult<Integer> res = new GenericResult<Integer>((loc != null? loc.getStartLine() : -1),
-		    		                     Activator.s_PLUGIN_ID,
-		    		                     null,
-		    		                     loc,
-		    		                     shortMessage, longMessage, 
-		    		                     sev);
+	private static void reportSyntaxError(Severity sev, String longMessage, String shortMessage, ILocation loc) {
+			SyntaxErrorResult res = new SyntaxErrorResult(Activator.s_PLUGIN_ID, loc, longMessage);
 			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, res);
 			s_Logger.info(shortMessage + " " + longMessage);
 	}

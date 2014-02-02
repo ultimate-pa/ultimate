@@ -136,7 +136,7 @@ public class ToolchainJob extends Job {
 			mController.displayException("The toolchain threw an exception", e);
 			returnstatus = Status.CANCEL_STATUS;
 			String idOfCore = Activator.s_PLUGIN_ID;
-			ThrowableResult<?> result =	new ThrowableResult<Object>(idOfCore, e); 
+			ThrowableResult result = new ThrowableResult(idOfCore, e); 
 			UltimateServices.getInstance().reportResult(idOfCore, result);
 			e.printStackTrace();
 		} finally {

@@ -27,7 +27,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -44,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Tra
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.NaiveDestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
 /**
  * Provides methods to build TransitionsFormulas for the nodes and edges of a
@@ -192,7 +190,7 @@ public class TransFormulaBuilder {
 		}
 		catch (SMTLIBException e) {
 			if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
-				reportUnsupportedSyntax(cb, new BoogieLocation("",0,0,0,0, false),e.getMessage());
+				reportUnsupportedSyntax(cb,e.getMessage());
 			}
 			throw e;
 		}
@@ -335,12 +333,9 @@ public class TransFormulaBuilder {
 	
 
 
-	void reportUnsupportedSyntax(CodeBlock cb, ILocation loc, String longDescription) {
-		SyntaxErrorResult result = new SyntaxErrorResult(cb,
-				Activator.PLUGIN_NAME,
-				UltimateServices.getInstance().getTranslatorSequence(),
-				loc, SyntaxErrorType.UnsupportedSyntax);
-		result.setLongDescription(longDescription);
+	void reportUnsupportedSyntax(CodeBlock cb, String longDescription) {
+		ILocation loc = cb.getPayload().getLocation();
+		SyntaxErrorResult result = new SyntaxErrorResult(Activator.PLUGIN_NAME,loc,longDescription);
 		UltimateServices.getInstance().reportResult(Activator.PLUGIN_ID, result);
 		UltimateServices.getInstance().cancelToolchain();
 	}

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.FileLocator;
 
@@ -35,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AutomataScriptLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AssignmentExpressionAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.BinaryExpressionAST;
@@ -58,7 +58,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableExpressionAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.WhileStatementAST;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
+import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
+import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 
 
 /**
@@ -606,7 +608,7 @@ public class TestFileInterpreter {
 	 * If an error occurred during the interpretation this is set to true
 	 * and further interpretation is aborted.
 	 */
-	private final List<GenericResult<ILocation>> m_ResultOfAssertStatements;
+	private final List<GenericResultAtElement<AtsASTNode>> m_ResultOfAssertStatements;
 //	private boolean m_ErrorOccured = false;
 	
 	
@@ -618,7 +620,7 @@ public class TestFileInterpreter {
 		m_tChecker = new AutomataScriptTypeChecker();
 		m_existingOperations = getOperationClasses();
 		m_LastPrintedAutomaton = null;
-		m_ResultOfAssertStatements = new ArrayList<GenericResult<ILocation>>();
+		m_ResultOfAssertStatements = new ArrayList<GenericResultAtElement<AtsASTNode>>();
 		UltimateServices.getInstance().setDeadline(System.currentTimeMillis() + (m_timeout * 1000));
 		if (m_printAutomataToFile) {
 			String path = m_path + File.separator + "automatascriptOutput" + getDateTime() + ".ats";
@@ -669,7 +671,7 @@ public class TestFileInterpreter {
 			reportToLogger(LoggerSeverity.INFO, "Error during interpreting automata definitions.");
 			reportToLogger(LoggerSeverity.INFO, "Error: " + e.getMessage());
 			reportToLogger(LoggerSeverity.INFO, "Interpretation of testfile cancelled.");
-			reportToUltimate(Severity.ERROR, e.getMessage() + " Interpretation of testfile cancelled.", "Error", m_automInterpreter.getErrorLocation());
+			reportToUltimate(Severity.ERROR, e.getMessage() + " Interpretation of testfile cancelled.", "Error", node);
 			interpretationFinished = Finished.ERROR;
 		}
 		
@@ -683,7 +685,7 @@ public class TestFileInterpreter {
 			} catch (IllegalArgumentException e) {
 				reportToLogger(LoggerSeverity.INFO, "Error: " + e.getMessage());
 				reportToLogger(LoggerSeverity.INFO,	"Interpretation of testfile cancelled.");
-				reportToUltimate(Severity.ERROR, m_tChecker.getLongDescription(), m_tChecker.getShortDescription(),	m_tChecker.getErrorLocation());
+				reportToUltimate(Severity.ERROR, m_tChecker.getLongDescription(), m_tChecker.getShortDescription(),	node);
 				interpretationFinished = Finished.ERROR;
 			}
 		}
@@ -709,7 +711,7 @@ public class TestFileInterpreter {
 					printMessage(Severity.ERROR, LoggerSeverity.INFO,
 							e.getLongDescription(),
 							"Interpretation of ats file failed",
-							e.getLocation());
+							node);
 				}
 			}
 		}
@@ -998,18 +1000,16 @@ public class TestFileInterpreter {
 			result = arguments.get(0);
 			if (result instanceof Boolean) {
 				if ((Boolean) result) {
-					m_ResultOfAssertStatements.add(new GenericResult<ILocation>(oe.getLocation(), 
+					m_ResultOfAssertStatements.add(new GenericResultAtElement<AtsASTNode>(oe, 
 									Activator.s_PLUGIN_ID, 
-							        null,
-							        oe.getLocation(), 
+							        UltimateServices.getInstance().getTranslatorSequence(),
 							        "Assertion holds.", 
 							        oe.getAsString(), 
 							        Severity.INFO));
 				} else {
-					m_ResultOfAssertStatements.add(new GenericResult<ILocation>(oe.getLocation(), 
+					m_ResultOfAssertStatements.add(new GenericResultAtElement<AtsASTNode>(oe, 
 									Activator.s_PLUGIN_ID, 
-									null,
-									oe.getLocation(), 
+									UltimateServices.getInstance().getTranslatorSequence(),
 									"Assertion violated!", 
 									oe.getAsString(), 
 									Severity.ERROR));
@@ -1029,7 +1029,7 @@ public class TestFileInterpreter {
 				} else {
 					text = String.valueOf(o);
 				}
-				printMessage(Severity.INFO, LoggerSeverity.INFO, text, oe.getAsString(), loc);
+				printMessage(Severity.INFO, LoggerSeverity.INFO, text, oe.getAsString(), oe);
 				if (m_printAutomataToFile) {
 					String comment = "/* " + oe.getAsString() + " */";
 					m_printWriter.println(comment);
@@ -1181,7 +1181,7 @@ public class TestFileInterpreter {
 	private void reportResult(Finished finished) {
 		s_Logger.info("----------------- Test Summary -----------------");
 		boolean oneOrMoreAssertionsFailed = false;
-		for (GenericResult<ILocation> test : m_ResultOfAssertStatements) {
+		for (GenericResultAtElement<AtsASTNode> test : m_ResultOfAssertStatements) {
 			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, test);
 			if (test.getSeverity() == Severity.ERROR) {
 				oneOrMoreAssertionsFailed = true; 
@@ -1225,7 +1225,7 @@ public class TestFileInterpreter {
 			userSeverity = Severity.ERROR;
 			longDescr += "Some assert statements have been evaluated to false.";
 		}
-		printMessage(userSeverity, loggerSeverity, longDescr, shortDescr, getPseudoLocation());
+		printMessage(userSeverity, loggerSeverity, longDescr, shortDescr, null);
 	}
 	
 	
@@ -1234,10 +1234,11 @@ public class TestFileInterpreter {
 	 * and to Ultimate as a GenericResult.
 	 * @param sev the Severity
 	 * @param longDescr the string to be reported
-	 * @param loc the location of the String
+	 * @param node AtsASTNode for which this String is reported
 	 */
-	static void printMessage(Severity severityForResult, LoggerSeverity severityForLogger, String longDescr, String shortDescr, ILocation loc) {
-		reportToUltimate(severityForResult, longDescr, shortDescr, loc);
+	static void printMessage(Severity severityForResult, 
+			LoggerSeverity severityForLogger, String longDescr, String shortDescr, AtsASTNode node) {
+		reportToUltimate(severityForResult, longDescr, shortDescr, node);
 		reportToLogger(severityForLogger, longDescr);
 	}
 	
@@ -1245,17 +1246,23 @@ public class TestFileInterpreter {
 	 * Reports the given string with the given severity to Ultimate as a GenericResult
 	 * @param sev the severity
 	 * @param longDescr the string to be reported
-	 * @param loc the location of the string
+	 * @param node AtsASTNode for which this String is reported
 	 */
-	private static void reportToUltimate(Severity sev, String longDescr, String shortDescr, ILocation loc) {
-			GenericResult<Integer> res = new GenericResult<Integer> ((loc != null ? loc.getStartLine() : 0),
-					                     Activator.s_PLUGIN_ID, null,
-					                     loc,
+	private static void reportToUltimate(Severity sev, String longDescr, String shortDescr, AtsASTNode node) {
+			IResult result;
+			if (node == null) {
+				result = new GenericResult(
+	                     Activator.s_PLUGIN_ID,
+	                     shortDescr, longDescr, 
+	                     sev);
+			} else { 
+				result = new GenericResultAtElement<AtsASTNode> (node,
+					                     Activator.s_PLUGIN_ID, UltimateServices.getInstance().getTranslatorSequence(),
 					                     shortDescr, longDescr, 
 					                     sev);
-			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, res);
+			}
+			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, result);
 	}
-	
 	
 	/**
 	 * Reports the given string with the given severity to the logger 
@@ -1340,7 +1347,7 @@ public class TestFileInterpreter {
 				longDescr += argument.getClass().getSimpleName() + " ";
 			}
 			longDescr += ")";
-			printMessage(Severity.ERROR, LoggerSeverity.DEBUG, longDescr, shortDescr, oe.getLocation());
+			printMessage(Severity.ERROR, LoggerSeverity.DEBUG, longDescr, shortDescr, oe);
 			throw new InterpreterException(oe.getLocation(), longDescr);
 		}
 	}
@@ -1501,11 +1508,6 @@ public class TestFileInterpreter {
 		String[] files = dirFile.list();
 		return files;
 	}
-	
-	private static ILocation getPseudoLocation() {
-		return new AutomataScriptLocation("", 0, 0, 0, 0);
-	}
-	
 	
 	private class InterpreterException extends Exception {
 		private static final long serialVersionUID = -7514869048479460179L;

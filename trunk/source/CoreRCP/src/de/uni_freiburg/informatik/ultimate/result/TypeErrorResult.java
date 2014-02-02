@@ -19,33 +19,22 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class SyntaxErrorResult extends AbstractResult implements IResultWithLocation {
+public class TypeErrorResult<P extends IElement> extends AbstractResultWithPosition<P> implements IResult {
 	
 	private String m_LongDescription;
-	private final ILocation m_Location;
 
 	/**
 	 * @param location
 	 * @param syntaxErrorType
 	 */
-	@Deprecated
-	public SyntaxErrorResult(String plugin, 
-			ILocation location) {
-		super(plugin);
-		m_Location = location;
-	}
-	
-	public SyntaxErrorResult(String plugin, 
-			ILocation location,
-			String longDescription) {
-		super(plugin);
-		m_Location = location;
-		m_LongDescription = longDescription;
+	public TypeErrorResult(P position, String plugin, 
+			List<ITranslator<?,?,?,?>> translatorSequence) {
+		super(position, plugin, translatorSequence);
 	}
 
 	@Override
 	public String getShortDescription() {
-		return "Incorrect Syntax";
+		return "Type Error";
 	}
 
 	@Override
@@ -53,14 +42,8 @@ public class SyntaxErrorResult extends AbstractResult implements IResultWithLoca
 		return m_LongDescription;
 	}
 
-	@Deprecated
 	public void setLongDescription(String longDescription) {
 		m_LongDescription = longDescription;
-	}
-	
-	@Override
-	public ILocation getLocation() {
-		return m_Location;
 	}
 
 	

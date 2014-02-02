@@ -5,6 +5,7 @@ package de.uni_freiburg.informatik.ultimate.result;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
@@ -18,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Oleksii Saukh
  * @date 02.01.2012
  */
-public class InvariantResult<P, E> extends AbstractResult<P> implements IResult {
+public class InvariantResult<P extends IElement, E> extends AbstractResultWithPosition<P> implements IResult {
 	
 	
 	private final ILocation m_Location;
@@ -60,14 +61,6 @@ public class InvariantResult<P, E> extends AbstractResult<P> implements IResult 
 	 */
 	public void setLongDescription(String longDescription) {
 		this.longDescription = longDescription;
-	}
-
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.result.IResultNode#getLocation()
-	 */
-	@Override
-	public ILocation getLocation() {
-		return m_Location;
 	}
 
 	/* (non-Javadoc)

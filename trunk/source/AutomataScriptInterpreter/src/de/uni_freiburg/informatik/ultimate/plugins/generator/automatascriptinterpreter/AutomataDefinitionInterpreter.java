@@ -5,6 +5,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinte
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -12,6 +13,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.TestFileInterpreter.LoggerSeverity;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
@@ -20,13 +25,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetTransitionAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionListAST.Pair;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
-
-import java.util.Collections;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 
 /**
  * 
@@ -64,7 +63,7 @@ public class AutomataDefinitionInterpreter {
 				} catch (Exception e) {
 					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
 							+ System.getProperty("line.separator") + e.getStackTrace(),
-							"Exception thrown", n.getLocation());
+							"Exception thrown", n);
 				}
 
 			} else if (n instanceof PetriNetAutomatonAST) {
@@ -73,7 +72,7 @@ public class AutomataDefinitionInterpreter {
 				} catch (Exception e) {
 					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
 							+ System.getProperty("line.separator") + e.getStackTrace(), 
-							"Exception thrown", n.getLocation());
+							"Exception thrown", n);
 				}
 			}
 		}

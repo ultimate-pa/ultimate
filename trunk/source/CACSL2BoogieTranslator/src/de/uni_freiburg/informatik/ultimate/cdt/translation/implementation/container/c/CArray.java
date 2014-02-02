@@ -3,8 +3,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
-import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
-
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
@@ -18,9 +16,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.Check;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
 /**
  * @author Markus Lindenmann
@@ -82,7 +78,7 @@ public class CArray extends CType {
         if (dimensions.length <= 0
                 || accessedIndices.length != dimensions.length) {
             String msg = "Invalid array access! Too many or too few dimensions!";
-            Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+            Dispatcher.syntaxError(loc, msg);
             throw new IncorrectSyntaxException(msg);
         }
         Expression int0 = new IntegerLiteral(loc, new InferredType(

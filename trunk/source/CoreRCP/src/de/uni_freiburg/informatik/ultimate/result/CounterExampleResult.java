@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.result;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
@@ -16,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Oleksii Saukh
  * @date 02.01.2012
  */
-public class CounterExampleResult<P> extends AbstractResult<P> implements IResultWithTrace {
+public class CounterExampleResult<P extends IElement> extends AbstractResultWithPosition<P> implements IResultWithTrace {
 	private ILocation m_Location;
 	private String shortDescription;
 	private String longDescription;
@@ -89,16 +90,6 @@ public class CounterExampleResult<P> extends AbstractResult<P> implements IResul
 	 */
 	public void setLongDescription(String longDescription) {
 		this.longDescription = longDescription;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.result.IResultNode#getLocation()
-	 */
-	@Override
-	public ILocation getLocation() {
-		return m_Location;
 	}
 
 	/*

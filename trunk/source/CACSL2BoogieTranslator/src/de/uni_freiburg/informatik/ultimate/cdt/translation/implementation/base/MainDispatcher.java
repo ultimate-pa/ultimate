@@ -40,7 +40,6 @@ import org.eclipse.cdt.core.dom.ast.IASTFieldDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
-import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionStyleMacroParameter;
 import org.eclipse.cdt.core.dom.ast.IASTGotoStatement;
@@ -171,8 +170,8 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Backtranslator;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
 /**
  * @author Markus Lindenmann
@@ -514,11 +513,10 @@ public class MainDispatcher extends Dispatcher {
             // -> should be at the end of the parent if for performance
             return cHandler.visit(this, (IASTProblemTypeId) n);
         }
-        Dispatcher.error(new CACSLLocation(n),
-                SyntaxErrorType.UnsupportedSyntax,
-                "MainDispatcher: AST node type unknown: " + n.getClass());
-        throw new UnsupportedSyntaxException(
-                "MainDispatcher: AST node type unknown: " + n.getClass());
+        String msg = "MainDispatcher: AST node type unknown: " + n.getClass();
+        ILocation loc = new CACSLLocation(n);
+        Dispatcher.unsupportedSyntax(loc, msg);
+        throw new UnsupportedSyntaxException(msg);
     }
 
     @Override
@@ -718,11 +716,10 @@ public class MainDispatcher extends Dispatcher {
         if (n instanceof ACSLNode) {
             return acslHandler.visit(this, (ACSLNode) n);
         }
-        Dispatcher.error(new CACSLLocation(n),
-                SyntaxErrorType.UnsupportedSyntax,
-                "MainDispatcher: ACSL node type unknown: " + n.getClass());
-        throw new UnsupportedSyntaxException(
-                "MainDispatcher: ACSL node type unknown!" + n.getClass());
+        String msg = "MainDispatcher: ACSL node type unknown: " + n.getClass();
+        ILocation loc = new CACSLLocation(n);
+        Dispatcher.unsupportedSyntax(loc, msg);
+        throw new UnsupportedSyntaxException(msg);
     }
 
     @Override

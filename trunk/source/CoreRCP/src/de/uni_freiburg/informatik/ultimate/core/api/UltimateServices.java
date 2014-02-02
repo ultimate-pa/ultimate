@@ -29,6 +29,8 @@ import de.uni_freiburg.informatik.ultimate.model.UltimateUID;
 import de.uni_freiburg.informatik.ultimate.model.repository.IRepository;
 import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithLocation;
+
 
 /**
  * UltimateServices
@@ -443,8 +445,10 @@ public class UltimateServices {
 	 *            the found results.
 	 */
 	public void reportResult(String id, IResult result) {
-		if (result.getLocation() == null) {
-			throw new IllegalArgumentException("Location is null");
+		if (result instanceof IResultWithLocation) {
+			if (((IResultWithLocation) result).getLocation() == null) {
+				throw new IllegalArgumentException("Location is null");
+			}
 		}
 		if (result.getShortDescription() == null) {
 			throw new IllegalArgumentException("ShortDescription is null");

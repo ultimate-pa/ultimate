@@ -50,10 +50,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
+import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
-//import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
 
 /**
  * Maps Boogie variables to the corresponding SMT variables. The SMT variables 
@@ -660,11 +658,9 @@ public class Smt2Boogie implements Serializable {
 	}
 	
 	void reportUnsupportedSyntax(BoogieASTNode BoogieASTNode, String longDescription) {
-		SyntaxErrorResult<?> result = new SyntaxErrorResult(null,
+		UnsupportedSyntaxResult<BoogieASTNode> result = new UnsupportedSyntaxResult<BoogieASTNode>(BoogieASTNode,
 				Activator.s_PLUGIN_NAME,
-				UltimateServices.getInstance().getTranslatorSequence(),
-				BoogieASTNode.getLocation(), SyntaxErrorType.UnsupportedSyntax);
-		result.setLongDescription(longDescription);
+				UltimateServices.getInstance().getTranslatorSequence(),longDescription);
 		UltimateServices.getInstance().reportResult("Smt2Boogie", result);
 		UltimateServices.getInstance().cancelToolchain();
 	}

@@ -27,7 +27,6 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
 /**
  * @author Markus Lindenmann
@@ -111,8 +110,6 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		} catch (Throwable t) {
 			String message = "There was an error during the translation process! ["
 					+ t.getClass() + ", " + t.getMessage() + "]";
-
-			SyntaxErrorResult<CACSLLocation> result;
 			if (t instanceof UnsupportedSyntaxException
 					|| t instanceof IncorrectSyntaxException
 					|| t instanceof TypeErrorException) {
@@ -121,11 +118,8 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 				// something unexpected happened
 				// report it to the user ...
 				CACSLLocation loc = new CACSLLocation(inputTU);
-				result = new SyntaxErrorResult<CACSLLocation>(loc,
-						Activator.s_PLUGIN_NAME, UltimateServices.getInstance()
-								.getTranslatorSequence(), loc,
-						SyntaxErrorType.UnsupportedSyntax);
-				result.setLongDescription(message);
+				SyntaxErrorResult result = new SyntaxErrorResult(
+						Activator.s_PLUGIN_NAME, loc, message);
 				us.reportResult(Activator.s_PLUGIN_ID, result);
 				// Terminate the compile process with a "real" Exception,
 				// visible to the Ultimate toolchain executer! Something

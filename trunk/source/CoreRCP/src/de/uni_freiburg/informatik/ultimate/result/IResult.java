@@ -1,13 +1,9 @@
-/**
- * Thats what Codan needs as a List from Ultimate.
- */
 package de.uni_freiburg.informatik.ultimate.result;
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
- * Result produced by a plugin of ULTIMATE and visualized by a frontend of 
- * ULTIMATE.
+ * Interface for the results that are produced while running a toolchain.
+ * These results are shown by the frontends of ULTIMATE. 
  * @author Markus Lindenmann
  * @author Stefan Wissert
  * @author Oleksii Saukh
@@ -15,10 +11,11 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @date 02.01.2012
  */
 public interface IResult {
+	
 	/**
-	 * Location of the input to which this result is related.
+	 * Plugin that derived this IResult.
 	 */
-	public ILocation getLocation();
+	public String getPlugin();
 	
 	/**
 	 * Kind of Result, in a few words. E.g., "procedure precondition can be

@@ -11,7 +11,6 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
 
 parser Parser;
@@ -38,11 +37,9 @@ parser code {:
             position = filename + ":EOF";
         }
         BoogieParser.s_Logger.error(position + ": syntax error");
-        SyntaxErrorResult<ILocation> syntaxErrorResult = 
-                new SyntaxErrorResult<ILocation>(loc, Activator.s_PLUGIN_ID, 
-                		UltimateServices.getInstance().getTranslatorSequence(),
-                		loc,
-                		SyntaxErrorType.IncorrectSyntax);
+        SyntaxErrorResult syntaxErrorResult = 
+                new SyntaxErrorResult(Activator.s_PLUGIN_ID, 
+                		loc);
         syntaxErrorResult.setLongDescription(String.valueOf(sym));
         UltimateServices us = UltimateServices.getInstance();
         us.reportResult(Activator.s_PLUGIN_ID, syntaxErrorResult);

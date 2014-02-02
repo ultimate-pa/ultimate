@@ -30,7 +30,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 /**
@@ -128,9 +127,9 @@ public class PreRunner extends ASTVisitor {
     							&& ((IASTUnaryExpression) owner).getOperator() == IASTUnaryExpression.op_star) { 
     						n = null; // already on the heap
     					} else {
-    						String m = "PR: Unsupported operand in UnaryExpression!";
-    						Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, m);
-    						throw new UnsupportedSyntaxException(m);
+    						String msg = "PR: Unsupported operand in UnaryExpression!";
+    				        Dispatcher.unsupportedSyntax(loc, msg);
+    						throw new UnsupportedSyntaxException(msg);
     					}
     				}
                 }
@@ -281,15 +280,15 @@ public class PreRunner extends ASTVisitor {
      * @param n
      *            the String name of the variable to retrieve from the symbol
      *            table.
-     * @param l
+     * @param loc
      *            the location for the error, if the String is not contained.
      * @return the corresponding declaration for the given name.
      */
-    private IASTNode get(String n, ILocation l) {
+    private IASTNode get(String n, ILocation loc) {
         if (!sT.containsKey(n)) {
-            String m = "PR: Missing declaration of " + n;
-            Dispatcher.error(l, SyntaxErrorType.IncorrectSyntax, m);
-            throw new IncorrectSyntaxException(m);
+            String msg = "PR: Missing declaration of " + n;
+            Dispatcher.syntaxError(loc, msg);
+            throw new IncorrectSyntaxException(msg);
         }
         return sT.get(n);
     }
