@@ -78,9 +78,11 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 				return ExpectedResult.SYNTAXERROR;
 			}
 		}
-		if (inputFile.getName().toLowerCase().contains("-safe")) {
+		if (inputFile.getName().toLowerCase().contains("-safe") ||
+				inputFile.getName().toLowerCase().contains("_safe")) {
 			return ExpectedResult.SAFE;
-		} else if (inputFile.getName().toLowerCase().contains("-unsafe")) {
+		} else if (inputFile.getName().toLowerCase().contains("-unsafe") || 
+				inputFile.getName().toLowerCase().contains("_unsafe")) {
 			return ExpectedResult.UNSAFE;
 		}
 		return ExpectedResult.NOANNOTATION;

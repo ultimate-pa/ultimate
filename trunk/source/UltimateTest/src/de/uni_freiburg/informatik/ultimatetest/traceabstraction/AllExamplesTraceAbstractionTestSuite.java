@@ -5,6 +5,8 @@ package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 
 import java.util.Collection;
 
+import org.junit.rules.Timeout;
+
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
 /**
@@ -16,12 +18,16 @@ public class AllExamplesTraceAbstractionTestSuite extends
 	private static final String m_Path = "examples/programs/";
 	
 	// Time out for each test case in milliseconds
-	private static int m_Timeout = 5000;
+	private static int m_Timeout = 20000;
 
-	private static final boolean m_TraceAbstractionWithForwardPredicates = true;
-	private static final boolean m_TraceAbstractionWithBackwardPredicates = false;
-	private static final boolean m_TraceAbstractionCWithForwardPredicates = true;
-	private static final boolean m_TraceAbstractionCWithBackwardPredicates = false;
+	private static final boolean m_TraceAbstractionWithForwardPredicates = false;
+	private static final boolean m_TraceAbstractionWithBackwardPredicates = !false;
+	private static final boolean m_TraceAbstractionCWithForwardPredicates = false;
+	private static final boolean m_TraceAbstractionCWithBackwardPredicates = !false;
+	
+	public AllExamplesTraceAbstractionTestSuite() {
+		mGlobalTimeout = new Timeout(m_Timeout); // in ms
+	}
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
@@ -31,7 +37,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 					"settingsForwardPredicates",
 				    m_Path,
 				    new String[] {".bpl"},
-				    "TraceAbstraction via Forward Predicates (SP)",
+				    "Trace Abstraction via Forward Predicates (SP)",
 				    "BoogieFilesForwardPredicates",
 				    m_Timeout);
 		} 
@@ -41,7 +47,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 					"settingsBackwardPredicates",
 				    m_Path,
 				    new String[] {".bpl"},
-				    "TraceAbstraction via Backward Predicates (WP)",
+				    "Trace Abstraction via Backward Predicates (WP)",
 				    "BoogieFilesBackwardPredicates",
 				    m_Timeout);
 		}
@@ -51,7 +57,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 					"settingsForwardPredicates",
 				    m_Path,
 				    new String[] {".c", ".i"},
-				    "TraceAbstraction via Forward Predicates (SP)",
+				    "Trace Abstraction via Forward Predicates (SP)",
 				    "CFilesForwardPredicates",
 				    m_Timeout);
 		}
@@ -61,7 +67,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 					"settingsBackwardPredicates",
 				    m_Path,
 				    new String[] {".c", ".i"},
-				    "TraceAbstraction via Backward Predicates (WP)",
+				    "Trace Abstraction via Backward Predicates (WP)",
 				    "CFilesBackwardPredicates",
 				    m_Timeout);
 		}

@@ -2249,9 +2249,6 @@ public class SmtManager {
 			result = PartialQuantifierElimination.quantifier(m_Script, Script.FORALL,
 					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 					result, (Term[][]) null);
-//			result = m_Script.quantifier(Script.FORALL,
-//					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
-//					result, (Term[][]) null);
 		} 
 		return constructPredicate(result);
 	}
@@ -2383,7 +2380,7 @@ public class SmtManager {
 		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
 		// 1. Compute those global variable assignments, i.e. x_global = old(x_global) if x_global is
 		// a global variable.
-		// 1.1 Rename the invars in global variable assignments.
+		// 1.1 Rename the invars in global variable assignments (old_vars).
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
 		for (BoogieVar bv : globalVarsAssignments.getInVars().keySet()) {
 			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
@@ -2472,10 +2469,20 @@ public class SmtManager {
 					varsToQuantify.add(freshVar);
 				}
 			} else {
+				// TODO: if a global variable isn't modifiable by the returned proc. then do not quantify it 
+				// TODO: Is the occurrence of the global variable in the return Predicate just a special case, or
+				// is the way  described above generally possible
 				if (!varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
 					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
 					varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
 					varsToQuantify.add(freshVar);
+					// TODO: document this additional step
+					if (returnerPred.getVars().contains(bv) && 
+							!globalVarsAssignments.getOutVars().containsKey(bv)) {
+						if (!varsToRenameInReturnPred.containsKey(bv.getTermVariable())) {
+							varsToRenameInReturnPred.put(bv.getTermVariable(), freshVar);
+						}
+					}
 				}
 			}
 				
@@ -2515,7 +2522,9 @@ public class SmtManager {
 		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
 		// Substitute the vars if necessary
 		for (BoogieVar bv : p.getVars()) {
-			if (bv.getProcedure() != thisProc) {
+			// if the current var bv is not a global and if it does belong to another
+			// procedure, than replace it by a a fresh var
+			if (bv.getProcedure() != null && !bv.getProcedure().equals(thisProc)) {
 				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
 				substitution.put(bv.getTermVariable(), freshVar);
 				varsToQuantify.add(freshVar);

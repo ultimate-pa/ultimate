@@ -388,7 +388,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 						TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace), rv, 0);
 						IPredicate callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
 						// If callerPred contains quantifier, compute it via the 2nd method
-						if(callerPred instanceof BasicPredicateExplicitQuantifier) {
+						if (callerPred instanceof BasicPredicateExplicitQuantifier) {
 							summary = computeSummaryForTrace(getSubTrace(call_pos, i, trace), callTF,
 									rv.getFormulaFromNonCallPos(i+1), 
 									globalVarsAssignments,
