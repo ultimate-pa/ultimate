@@ -137,7 +137,7 @@ public class InferredType implements IType {
 				type = Type.String;
 				break;
 			default:
-				throw new UnsupportedSyntaxException("..");
+				throw new UnsupportedSyntaxException(null , "..");
 			}
 		} else if (underlyingType instanceof CPointer) {
 			type = Type.Pointer;
@@ -150,7 +150,7 @@ public class InferredType implements IType {
 		} else if (underlyingType instanceof CNamed) {
 			assert false : "This should not be the case as we took the underlying type.";
 		} else {
-			throw new UnsupportedSyntaxException("..");
+			throw new UnsupportedSyntaxException(null, "..");
 		}	
     }
 

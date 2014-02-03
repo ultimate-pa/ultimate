@@ -135,7 +135,7 @@ public class ArrayHandler {
 		try {
 			currentSizeInt = Integer.parseInt(((IntegerLiteral) dimensions[0]).getValue());
 		} catch (NumberFormatException nfe) {
-			throw new UnsupportedSyntaxException("trying to initialize an array whose size we don't know");
+			throw new UnsupportedSyntaxException(loc, "trying to initialize an array whose size we don't know");
 		}
 
 		Expression newStartAddressBase = null;
@@ -170,7 +170,7 @@ public class ArrayHandler {
 							|| valueType instanceof CPointer) {
 						val = new RValue(CHandler.getInitExpr(valueType), valueType);
 					} else {
-						throw new UnsupportedSyntaxException("trying to init unknown type");
+						throw new UnsupportedSyntaxException(loc, "trying to init unknown type");
 					}
 				}
 
@@ -243,7 +243,7 @@ public class ArrayHandler {
 		try {
 			currentSizeInt = Integer.parseInt(((IntegerLiteral) dimensions[0]).getValue());
 		} catch (NumberFormatException nfe) {
-			throw new UnsupportedSyntaxException("trying to initialize an array whose size we don't know");
+			throw new UnsupportedSyntaxException(loc, "trying to initialize an array whose size we don't know");
 		}
 
 		if (dimensions.length == 1) {
@@ -268,7 +268,7 @@ public class ArrayHandler {
 							|| valueType instanceof CPointer) {
 						val = new RValue(CHandler.getInitExpr(valueType), valueType);
 					} else {
-						throw new UnsupportedSyntaxException("trying to init unknown type");
+						throw new UnsupportedSyntaxException(loc, "trying to init unknown type");
 					}
 				}
 				Expression[] newIndices = null;

@@ -34,7 +34,7 @@ public class InvariantResult<ELEM extends IElement, E>
 	public String getLongDescription() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("Derived loop invariant: ");
-		sb.append(BackTranslationWorkaround.backtranslate(
+		sb.append(ResultUtil.backtranslationWorkaround(
 				m_TranslatorSequence, m_Invariant));
 		return sb.toString();
 	}

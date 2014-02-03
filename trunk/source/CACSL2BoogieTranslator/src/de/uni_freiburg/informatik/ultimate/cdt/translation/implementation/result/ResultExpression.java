@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
@@ -237,7 +236,7 @@ public class ResultExpression extends Result {
 							break;
 //						case BOOL:
 						default:
-							throw new UnsupportedSyntaxException("..");
+							throw new UnsupportedSyntaxException(loc, "..");
 						}
 					} else if (underlyingType instanceof CPointer) {
 //						heapReadType = new InferredType(Type.Pointer);
@@ -274,7 +273,7 @@ public class ResultExpression extends Result {
 					} else if (underlyingType instanceof CNamed) {
 						assert false : "This should not be the case as we took the underlying type.";
 					} else {
-						throw new UnsupportedSyntaxException("..");
+						throw new UnsupportedSyntaxException(loc, "..");
 					}
 //					newValue.isOnHeap = lrVal.isOnHeap;
 					newValue.isPointer = lrVal.isPointer;
@@ -353,7 +352,7 @@ public class ResultExpression extends Result {
 					break;
 //				case BOOL:
 				default:
-					throw new UnsupportedSyntaxException("..");
+					throw new UnsupportedSyntaxException(loc, "..");
 				}
 				fieldRead = (ResultExpression) structHandler.readFieldInTheStructAtAddress(
 						main, memoryHandler, loc, fieldIds[i], 
@@ -376,9 +375,9 @@ public class ResultExpression extends Result {
 				newDecl.addAll(fieldRead.decl);
 				newAuxVars.putAll(fieldRead.auxVars);
 			} else if (underlyingType instanceof CArray) {
-				throw new UnsupportedSyntaxException("..");
+				throw new UnsupportedSyntaxException(loc, "..");
 			} else if (underlyingType instanceof CEnum) {
-				throw new UnsupportedSyntaxException("..");
+				throw new UnsupportedSyntaxException(loc, "..");
 			} else if (underlyingType instanceof CStruct) {
 				//sae = {base: currentStructBaseAddress, offset: currentStructOffset + thisFieldOffset }
 				Expression innerStructOffset = 
@@ -405,7 +404,7 @@ public class ResultExpression extends Result {
 			} else if (underlyingType instanceof CNamed) {
 				assert false : "This should not be the case as we took the underlying type.";
 			} else {
-				throw new UnsupportedSyntaxException("..");
+				throw new UnsupportedSyntaxException(loc, "..");
 			}	
 
 

@@ -105,8 +105,7 @@ public class TypeHandler implements ITypeHandler {
     public Result visit(Dispatcher main, IASTNode node) {
         String msg = "TypeHandler: Not yet implemented: " + node.toString();
         ILocation loc = new CACSLLocation(node);
-        Dispatcher.unsupportedSyntax(loc, msg);
-        throw new UnsupportedSyntaxException(msg);
+        throw new UnsupportedSyntaxException(loc, msg);
     }
 
     /**
@@ -163,8 +162,7 @@ public class TypeHandler implements ITypeHandler {
                 // if we do not find a type we cancel with Exception
                 String msg = "TypeHandler: We do not support this type!"
                         + node.getType();
-                Dispatcher.unsupportedSyntax(loc, msg);
-                throw new UnsupportedSyntaxException(msg);
+                throw new UnsupportedSyntaxException(loc, msg);
         }
         return result;
     }
@@ -181,8 +179,7 @@ public class TypeHandler implements ITypeHandler {
 
         }
         String msg = "Unknown or unsupported type! " + node.toString();
-        Dispatcher.unsupportedSyntax(loc, msg);
-        throw new UnsupportedSyntaxException(msg);
+        throw new UnsupportedSyntaxException(loc, msg);
     }
 
     @Override
@@ -276,8 +273,7 @@ public class TypeHandler implements ITypeHandler {
         }
         String msg = "Not yet implemented: Spec [" + node.getKind() + "] of "
                 + node.getClass();
-        Dispatcher.unsupportedSyntax(loc, msg);
-        throw new UnsupportedSyntaxException(msg);
+        throw new UnsupportedSyntaxException(loc, msg);
     }
     
   
@@ -303,8 +299,7 @@ public class TypeHandler implements ITypeHandler {
             } else if (r instanceof ResultSkip) { // skip ;)
             } else {
                 String msg = "Unexpected syntax in struct declaration!";
-                Dispatcher.unsupportedSyntax(loc, msg);
-                throw new UnsupportedSyntaxException(msg);
+                throw new UnsupportedSyntaxException(loc, msg);
             }
         }
         structCounter--;
@@ -360,8 +355,7 @@ public class TypeHandler implements ITypeHandler {
         if (!m_DefinedTypes.containsKey(type.getName())) {
             String msg = "Unknown C typedef: " + type.getName();
             // TODO : no idea what location should be set to ...
-            Dispatcher.syntaxError(null, msg);
-            throw new IncorrectSyntaxException(msg);
+            throw new IncorrectSyntaxException(null, msg);
         }
         return new InferredType(m_DefinedTypes.get(type.getName()).getType());
     }
@@ -432,12 +426,10 @@ public class TypeHandler implements ITypeHandler {
                 }
             }
             String msg = "Field '" + flat[i] + "' not found in " + t;
-            Dispatcher.syntaxError(loc, msg);
-            throw new IncorrectSyntaxException(msg);
+            throw new IncorrectSyntaxException(loc, msg);
         }
         String msg = "Something went wrong while determining types!";
-        Dispatcher.unsupportedSyntax(loc, msg);
-        throw new UnsupportedSyntaxException(msg);
+        throw new UnsupportedSyntaxException(loc, msg);
     }
 
     @Override
@@ -472,7 +464,7 @@ public class TypeHandler implements ITypeHandler {
 			case DOUBLE:
 				return new PrimitiveType(loc, SFO.REAL);
 			default:
-				throw new UnsupportedSyntaxException("unknown primitive type");
+				throw new UnsupportedSyntaxException(loc, "unknown primitive type");
 			}
 		} else if (cType instanceof CPointer) {
 			return MemoryHandler.POINTER_TYPE;
@@ -499,9 +491,9 @@ public class TypeHandler implements ITypeHandler {
 			//should work as we save the unique typename we computed in CNamed, not the name from the source c file
 			return new NamedType(loc, ((CNamed) cType).getName(), new ASTType[0]);
 		} else if (cType instanceof CFunction) {
-				throw new UnsupportedSyntaxException("how to translate function type?");
+				throw new UnsupportedSyntaxException(loc, "how to translate function type?");
 		}
-		throw new UnsupportedSyntaxException("unknown type");
+		throw new UnsupportedSyntaxException(loc, "unknown type");
 	}
     
     public void beginScope() {

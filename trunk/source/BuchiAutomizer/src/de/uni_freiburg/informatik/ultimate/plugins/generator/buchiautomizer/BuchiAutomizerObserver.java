@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.result.BackTranslationWorkaround;
+import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
@@ -231,7 +231,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private String backtranslateExprWorkaround(Expression expr) {
 		List<ITranslator<?, ?, ?, ?>> translators = 
 				UltimateServices.getInstance().getTranslatorSequence();
-		return BackTranslationWorkaround.backtranslate(translators, expr);
+		return ResultUtil.backtranslationWorkaround(translators, expr);
 	}
 	
 	

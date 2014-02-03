@@ -704,16 +704,14 @@ public class MemoryHandler {
         if (!main.cHandler.getSymbolTable().containsBoogieSymbol(bId)) {
             String msg = "Cannot free variable " + bId
                     + " as it is not in the current scope!";
-            Dispatcher.syntaxError(loc, msg);
-            throw new IncorrectSyntaxException(msg);
+            throw new IncorrectSyntaxException(loc, msg);
         }
         String cId = main.cHandler.getSymbolTable().getCID4BoogieID(bId, loc);
         CType cvar = main.cHandler.getSymbolTable().get(cId, loc)
                 .getCVariable();
         if (!isPointer(cvar)) {
             String msg = "Cannot free the non pointer variable " + cId;
-            Dispatcher.syntaxError(loc, msg);
-            throw new IncorrectSyntaxException(msg);
+            throw new IncorrectSyntaxException(loc, msg);
         }
         // Further checks are done in the precondition of ~free()!
         // ~free(E);
@@ -1000,15 +998,15 @@ public class MemoryHandler {
 			case DOUBLE:
 				return new PrimitiveType(lrVal.getValue().getLocation(), SFO.REAL);
 			default:
-				throw new UnsupportedSyntaxException("unsupported cType " + ct);
+				throw new UnsupportedSyntaxException(null, "unsupported cType " + ct);
 			}
 		} else if (ut instanceof CPointer) {
 			return MemoryHandler.POINTER_TYPE;
 		} else if (ut instanceof CNamed) {
 			assert false : "This should not be the case as we took the underlying type.";
-			throw new UnsupportedSyntaxException("non-heap type?: " + ct);
+			throw new UnsupportedSyntaxException(null, "non-heap type?: " + ct);
 		} else {
-			throw new UnsupportedSyntaxException("non-heap type?: " + ct);
+			throw new UnsupportedSyntaxException(null, "non-heap type?: " + ct);
 		}
     }
 
@@ -1046,7 +1044,7 @@ public class MemoryHandler {
         				new Expression[] { rval.getValue(), hlv.getAddress() }));
         		break;	
         	default:
-        		throw new UnsupportedSyntaxException("we don't recognize this type");
+        		throw new UnsupportedSyntaxException(loc, "we don't recognize this type");
         	}
         } else if (rType instanceof CPointer) {
         	t = SFO.POINTER;	        
@@ -1081,9 +1079,9 @@ public class MemoryHandler {
         	}
         	
         } else if (rType instanceof CArray) {
-        	throw new UnsupportedSyntaxException("todo: write to arrays on the heap");
+        	throw new UnsupportedSyntaxException(loc, "todo: write to arrays on the heap");
         } else
-        	throw new UnsupportedSyntaxException("we don't recognize this type");
+        	throw new UnsupportedSyntaxException(loc, "we don't recognize this type");
 		
         return stmt;
     }

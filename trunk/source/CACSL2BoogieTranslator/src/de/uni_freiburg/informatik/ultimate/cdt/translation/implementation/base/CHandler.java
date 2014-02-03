@@ -289,8 +289,7 @@ public class CHandler implements ICHandler {
 				+ node.getRawSignature() + "\" (Type: "
 				+ node.getClass().getName() + ")";
 		ILocation loc = new CACSLLocation(node);
-        Dispatcher.unsupportedSyntax(loc, msg);
-		throw new UnsupportedSyntaxException(msg);
+		throw new UnsupportedSyntaxException(loc, msg);
 	}
 
 	/**
@@ -353,8 +352,7 @@ public class CHandler implements ICHandler {
 							String msg = "Unexpected ACSL comment: "
 									+ acslResult.node.getClass();
 							ILocation loc = new CACSLLocation(parent);
-							Dispatcher.syntaxError(loc, msg);
-							throw new IncorrectSyntaxException(msg);
+							throw new IncorrectSyntaxException(loc, msg);
 						}
 					}
 				} // ELSE:
@@ -376,8 +374,7 @@ public class CHandler implements ICHandler {
 							String msg = "Unexpected ACSL comment: "
 									+ acslNode.getClass();
 							ILocation loc = new CACSLLocation(next);
-									Dispatcher.syntaxError(loc, msg);
-							throw new IncorrectSyntaxException(msg);
+							throw new IncorrectSyntaxException(loc, msg);
 						}
 					} else {
 						// this means we are in the translation unit
@@ -462,8 +459,7 @@ public class CHandler implements ICHandler {
 		decl.addAll(mAxioms);
 		if (!functionHandler.isEveryCalledProcedureDeclared()) {
 			String msg = "A method was called but never declared!";
-			Dispatcher.syntaxError(loc, msg);
-			throw new IncorrectSyntaxException(msg);
+			throw new IncorrectSyntaxException(loc, msg);
 		}
 
 		decl.addAll(postProcessor.postProcess(main, loc, memoryHandler, arrayHandler, functionHandler, structHandler,
@@ -669,8 +665,7 @@ public class CHandler implements ICHandler {
 			return result;
 		}
 		String msg = "Unknown result type: " + r.getClass();
-		Dispatcher.unsupportedSyntax(loc, msg);
-		throw new UnsupportedSyntaxException(msg);
+		throw new UnsupportedSyntaxException(loc, msg);
 	}
 		
 	@Override
@@ -722,7 +717,7 @@ public class CHandler implements ICHandler {
 			for (int i = 0; i < paramDecls.length; i++) {
 				ResultDeclaration decl = (ResultDeclaration) main.dispatch(paramDecls[i]);
 				if (decl.getDeclarations().size() != 1)
-					throw new UnsupportedSyntaxException("Multiple names in parameter declaration");
+					throw new UnsupportedSyntaxException(loc, "Multiple names in parameter declaration");
 				paramsParsed[i] = decl.getDeclarations().get(0);
 			}
 			CFunction funcType = new CFunction(newResType.cType, paramsParsed);
@@ -730,7 +725,7 @@ public class CHandler implements ICHandler {
 		} else if (node instanceof CASTDeclarator) {
 			/* nothing */
 		} else {
-			throw new UnsupportedSyntaxException("Unknown Declarator " + node.getClass());
+			throw new UnsupportedSyntaxException(loc, "Unknown Declarator " + node.getClass());
 		}
 		if (node.getNestedDeclarator() != null) {
 			mCurrentDeclaredTypes.push(newResType);
@@ -933,8 +928,7 @@ public class CHandler implements ICHandler {
 					new CPrimitive(PRIMITIVE.INT)));
 		default:
 			String msg = "Unknown or unsupported kind of IASTLiteralExpression";
-			Dispatcher.unsupportedSyntax(loc, msg);
-			throw new UnsupportedSyntaxException(msg);
+			throw new UnsupportedSyntaxException(loc, msg);
 		}
 	}
 
@@ -1210,8 +1204,7 @@ public class CHandler implements ICHandler {
 		default:
 			String msg = "Unknown or unsupported unary operation: "
 					+ node.getOperator();
-			Dispatcher.unsupportedSyntax(loc, msg);
-			throw new UnsupportedSyntaxException(msg);
+			throw new UnsupportedSyntaxException(loc, msg);
 		}
 	}
 
@@ -1690,8 +1683,7 @@ public class CHandler implements ICHandler {
 		}
 		default:
 			String msg = "Unknown or unsupported unary operation";
-			Dispatcher.unsupportedSyntax(loc, msg);
-			throw new UnsupportedSyntaxException(msg);
+			throw new UnsupportedSyntaxException(loc, msg);
 		}
 	}
 
@@ -1783,8 +1775,7 @@ public class CHandler implements ICHandler {
 			//            	break;
 		default:
 			String msg = "Unknown or unsupported arithmetic expression";
-			Dispatcher.unsupportedSyntax(loc, msg);
-			throw new UnsupportedSyntaxException(msg);
+			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		return new BinaryExpression(loc, operator, left, right);
 	}
@@ -1833,8 +1824,7 @@ public class CHandler implements ICHandler {
     			break;
     		default:
     			String msg = "Unknown or unsupported arithmetic expression";
-    			Dispatcher.unsupportedSyntax(loc, msg);
-    			throw new UnsupportedSyntaxException(msg);
+    			throw new UnsupportedSyntaxException(loc, msg);
     		}
         }
 
@@ -1928,8 +1918,7 @@ public class CHandler implements ICHandler {
 		}
 		String msg = "We always convert to AssignmentStatement, other options raise this error!";
 		ILocation loc = new CACSLLocation(node);
-		Dispatcher.unsupportedSyntax(loc, msg);
-		throw new UnsupportedSyntaxException(msg);
+		throw new UnsupportedSyntaxException(loc, msg);
 	}
 
 	@Override
@@ -1963,8 +1952,7 @@ public class CHandler implements ICHandler {
 				decl.addAll(Arrays.asList(thenPart.getLocalVars()));
 			} else {
 				String msg = "Error: unexpected dispatch result";
-				Dispatcher.syntaxError(loc, msg);
-				throw new IncorrectSyntaxException(msg);
+				throw new IncorrectSyntaxException(loc, msg);
 			}
 		}
 
@@ -1984,8 +1972,7 @@ public class CHandler implements ICHandler {
 				}
 			} else {
 				String msg = "Error: unexpected dispatch result";
-				Dispatcher.syntaxError(loc, msg);
-				throw new IncorrectSyntaxException(msg);
+				throw new IncorrectSyntaxException(loc, msg);
 			}
 		}
 		assert thenStmt != null;
@@ -2049,8 +2036,7 @@ public class CHandler implements ICHandler {
 				} else {
 					String msg = "Uninplemented type of for loop initialization: "
 							+ initializer.getClass();
-					Dispatcher.unsupportedSyntax(loc, msg);
-					throw new UnsupportedSyntaxException(msg);
+					throw new UnsupportedSyntaxException(loc, msg);
 				}
 			}
 
@@ -2086,8 +2072,7 @@ public class CHandler implements ICHandler {
 			} else {
 				String msg = "Error: unexpected dispatch result"
 						+ bodyResult.getClass();
-				Dispatcher.unsupportedSyntax(loc, msg);
-				throw new UnsupportedSyntaxException(msg);
+				throw new UnsupportedSyntaxException(loc, msg);
 			}
 		}
 
@@ -2113,8 +2098,7 @@ public class CHandler implements ICHandler {
 			} else {
 				String msg = "Uninplemented type of loop iterator: "
 						+ iterator.getClass();
-				Dispatcher.unsupportedSyntax(loc, msg);
-				throw new UnsupportedSyntaxException(msg);
+				throw new UnsupportedSyntaxException(loc, msg);
 			}
 		}
 
@@ -2248,8 +2232,7 @@ public class CHandler implements ICHandler {
 				result.auxVars.putAll(((ResultExpression) r).auxVars);
 			} else {
 				String msg = "Unexpected result";
-				Dispatcher.unsupportedSyntax(loc, msg);
-				throw new UnsupportedSyntaxException(msg);
+				throw new UnsupportedSyntaxException(loc, msg);
 			}
 		}
 		return result;
@@ -2312,8 +2295,7 @@ public class CHandler implements ICHandler {
 			if (isFirst
 					&& !(child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement)) {
 				String msg = "A case/default statement is expected at the beginning of a switch block!";
-				Dispatcher.syntaxError(locC, msg);
-				throw new IncorrectSyntaxException(msg);
+				throw new IncorrectSyntaxException(locC, msg);
 			}
 			checkForACSL(main, ifBlock, child, null);
 			Result r = main.dispatch(child);
@@ -2442,8 +2424,7 @@ public class CHandler implements ICHandler {
 			} else {
 				String msg = "Unexpected boogie AST node type: "
 						+ r.node.getClass();
-				Dispatcher.unsupportedSyntax(loc, msg);
-				throw new UnsupportedSyntaxException(msg);
+				throw new UnsupportedSyntaxException(loc, msg);
 			}
 			return new ResultExpression(stmt, expr, decl, emptyAuxVars);
 		}
@@ -2485,8 +2466,7 @@ public class CHandler implements ICHandler {
 			} else {
 				String msg = "Unexpected boogie AST node type: "
 						+ r.node.getClass();
-				Dispatcher.unsupportedSyntax(loc, msg);
-				throw new UnsupportedSyntaxException(msg);
+				throw new UnsupportedSyntaxException(loc, msg);
 			}
 			return new ResultExpression(stmt, expr, decl, emptyAuxVars,
 			        overappr);
@@ -2531,7 +2511,7 @@ public class CHandler implements ICHandler {
 		    }
 		    // cast from pointer to pointer is ignored
 		    else if (!(newCType.getUnderlyingType() instanceof CPointer)) {
-                throw new UnsupportedSyntaxException(
+                throw new UnsupportedSyntaxException(loc,
                         "Explicit cast from pointer not supported.");
             }
 		}
@@ -2670,8 +2650,7 @@ public class CHandler implements ICHandler {
 		String msg = "Syntax error (statement problem) in C program: "
 				+ node.getProblem().getMessage();
 		ILocation loc = new CACSLLocation(node);
-		Dispatcher.syntaxError(loc, msg);
-		throw new IncorrectSyntaxException(msg);
+		throw new IncorrectSyntaxException(loc, msg);
 	}
 
 	@Override
@@ -2679,8 +2658,7 @@ public class CHandler implements ICHandler {
 		String msg = "Syntax error (declaration problem) in C program: "
 				+ node.getProblem().getMessage();
 		ILocation loc = new CACSLLocation(node);
-		Dispatcher.syntaxError(loc, msg);
-		throw new IncorrectSyntaxException(msg);
+		throw new IncorrectSyntaxException(loc, msg);
 	}
 
 	@Override
@@ -2688,17 +2666,14 @@ public class CHandler implements ICHandler {
 		String msg = "Syntax error (expression problem) in C program: "
 				+ node.getProblem().getMessage();
 		ILocation loc = new CACSLLocation(node);
-		Dispatcher.syntaxError(loc, msg);
-		throw new IncorrectSyntaxException(msg);
+		throw new IncorrectSyntaxException(loc, msg);
 	}
 
 	@Override
 	public Result visit(Dispatcher main, IASTProblem node) {
 		String msg = "Syntax error in C program: " + node.getMessage();
 		ILocation loc = new CACSLLocation(node);
-		Dispatcher.syntaxError(loc, msg);
-
-		throw new IncorrectSyntaxException(msg);
+		throw new IncorrectSyntaxException(loc, msg);
 	}
 
 	@Override
@@ -2706,8 +2681,7 @@ public class CHandler implements ICHandler {
 		String msg = "Syntax error (type ID problem) in C program: "
 				+ node.getProblem().getMessage();
 		ILocation loc = new CACSLLocation(node);
-		Dispatcher.syntaxError(loc, msg);
-		throw new IncorrectSyntaxException(msg);
+		throw new IncorrectSyntaxException(loc, msg);
 	}
 
 	@Override
@@ -2725,8 +2699,7 @@ public class CHandler implements ICHandler {
 			break;
 		}
 		String msg = "Unsupported boogie AST node type: " + node.getClass();
-		Dispatcher.unsupportedSyntax(loc, msg);
-		throw new UnsupportedSyntaxException(msg);
+		throw new UnsupportedSyntaxException(loc, msg);
 	}
 
 

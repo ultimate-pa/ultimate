@@ -128,8 +128,7 @@ public class PreRunner extends ASTVisitor {
     						n = null; // already on the heap
     					} else {
     						String msg = "PR: Unsupported operand in UnaryExpression!";
-    				        Dispatcher.unsupportedSyntax(loc, msg);
-    						throw new UnsupportedSyntaxException(msg);
+    						throw new UnsupportedSyntaxException(loc, msg);
     					}
     				}
                 }
@@ -287,8 +286,7 @@ public class PreRunner extends ASTVisitor {
     private IASTNode get(String n, ILocation loc) {
         if (!sT.containsKey(n)) {
             String msg = "PR: Missing declaration of " + n;
-            Dispatcher.syntaxError(loc, msg);
-            throw new IncorrectSyntaxException(msg);
+            throw new IncorrectSyntaxException(loc, msg);
         }
         return sT.get(n);
     }

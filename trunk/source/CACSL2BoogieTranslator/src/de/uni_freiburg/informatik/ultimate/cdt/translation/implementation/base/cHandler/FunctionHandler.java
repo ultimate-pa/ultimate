@@ -646,8 +646,7 @@ public class FunctionHandler {
 			if (procedures.containsKey(methodName)) {
 				String msg = "Duplicated method identifier: " + methodName
 						+ ". C does not support function overloading!";
-				Dispatcher.syntaxError(loc, msg);
-				throw new IncorrectSyntaxException(msg);
+				throw new IncorrectSyntaxException(loc, msg);
 			}
 			procedures.put(methodName, proc);
 		} else { // check declaration against its implementation
@@ -670,8 +669,7 @@ public class FunctionHandler {
 					checkInParams = false;
 				} else {
 					String msg = "Implementation does not match declaration!";
-					Dispatcher.syntaxError(loc, msg);
-					throw new IncorrectSyntaxException(msg);
+					throw new IncorrectSyntaxException(loc, msg);
 				}
 			}
 			if (checkInParams) {
@@ -680,8 +678,7 @@ public class FunctionHandler {
 							.equals(proc.getInParams()[i].getType().toString()))) {
 						String msg = "Implementation does not match declaration!"
 								+ "Type missmatch on in-parameters!";
-						Dispatcher.syntaxError(loc, msg);
-						throw new IncorrectSyntaxException(msg);
+						throw new IncorrectSyntaxException(loc,msg);
 					}
 				}
 			}
@@ -795,8 +792,7 @@ public class FunctionHandler {
 		if (!(functionName instanceof IASTIdExpression)) {
 			String msg = "Function pointer or similar is not supported. "
 					+ loc.toString();
-			Dispatcher.syntaxError(loc, msg);
-			throw new IncorrectSyntaxException(msg);
+			throw new IncorrectSyntaxException(loc, msg);
 		}
 		//don't use getRawSignature because it refers to the code before preprocessing 
 		// f.i. we get a wrong methodname here in defineFunction.c, because of a #define in the original code
@@ -836,8 +832,7 @@ public class FunctionHandler {
 					&& procedures.get(methodName).getInParams()[0].getType() == null && node
 						.getArguments().length == 0)) {
 				String msg = "Function call has incorrect number of in-params!";
-				Dispatcher.syntaxError(loc, msg);
-				throw new IncorrectSyntaxException(msg);
+				throw new IncorrectSyntaxException(loc, msg);
 			} // else: this means param of declaration is void and parameter
 				// list of call is empty! --> OK
 		}
@@ -848,8 +843,7 @@ public class FunctionHandler {
 			if (in.lrVal.getValue() == null) {
 				String msg = "Incorrect or invalid in-parameter! "
 						+ loc.toString();
-				Dispatcher.syntaxError(loc, msg);
-				throw new IncorrectSyntaxException(msg);
+				throw new IncorrectSyntaxException(loc, msg);
 			}
 			Expression arg = in.lrVal.getValue();
 			
@@ -889,8 +883,7 @@ public class FunctionHandler {
 			} else { // unsupported!
 				String msg = "Cannot handle multiple out params! "
 						+ loc.toString();
-				Dispatcher.unsupportedSyntax(loc, msg);
-				throw new IncorrectSyntaxException(msg);
+				throw new IncorrectSyntaxException(loc, msg);
 			}
 		} else {
 			methodsCalledBeforeDeclared.add(methodName);
@@ -958,8 +951,7 @@ public class FunctionHandler {
 				Dispatcher.syntaxError(loc, msg);
 			} else if (outParams.length != 1) {
 				String msg = "We do not support several output parameters for functions";
-				Dispatcher.unsupportedSyntax(loc, msg);
-				throw new UnsupportedSyntaxException(msg);
+				throw new UnsupportedSyntaxException(loc, msg);
 			} else {
 				String id = outParams[0].getIdentifiers()[0];
 				VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };

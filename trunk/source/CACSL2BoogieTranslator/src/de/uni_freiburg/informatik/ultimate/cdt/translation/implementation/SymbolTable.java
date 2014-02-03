@@ -73,8 +73,7 @@ public class SymbolTable extends ScopedHashMap<String, SymbolTableValue> {
         if (!containsKey(cId)) {
             String msg = "Variable is neither declared globally nor locally! ID="
                     + cId;
-            Dispatcher.syntaxError(errorLoc, msg);
-            throw new IncorrectSyntaxException(msg);
+            throw new IncorrectSyntaxException(errorLoc, msg);
         }
         return super.get(cId);
     }
@@ -138,8 +137,7 @@ public class SymbolTable extends ScopedHashMap<String, SymbolTableValue> {
         if (old != null && !old.equals(cIdentifier)) {
             String msg = "Variable with this name was already declared before:"
                     + cIdentifier;
-            Dispatcher.syntaxError(loc, msg);
-            throw new IncorrectSyntaxException(msg);
+            throw new IncorrectSyntaxException(loc, msg);
         }
     }
 
@@ -155,8 +153,7 @@ public class SymbolTable extends ScopedHashMap<String, SymbolTableValue> {
     public String getCID4BoogieID(String boogieIdentifier, ILocation loc) {
         if (!boogieID2CID.containsKey(boogieIdentifier)) {
             String msg = "Variable not found: " + boogieIdentifier;
-            Dispatcher.syntaxError(loc, msg);
-            throw new IncorrectSyntaxException(msg);
+            throw new IncorrectSyntaxException(loc, msg);
         }
         return boogieID2CID.get(boogieIdentifier);
     }

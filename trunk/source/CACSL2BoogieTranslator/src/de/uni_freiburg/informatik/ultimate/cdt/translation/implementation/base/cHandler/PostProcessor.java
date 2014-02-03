@@ -373,8 +373,7 @@ public class PostProcessor {
 					new Expression[] { nullPointer.getValue() } ));
 		} else {
 			String msg = "Unknown type - don't know how to initialize!";
-			Dispatcher.unsupportedSyntax(loc, msg);
-			throw new UnsupportedSyntaxException(msg);
+			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
 		// LRValue is null because it is not needed, we need only the statement.

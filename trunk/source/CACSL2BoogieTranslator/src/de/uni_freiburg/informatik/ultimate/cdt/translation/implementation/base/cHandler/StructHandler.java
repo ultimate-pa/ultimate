@@ -140,8 +140,7 @@ public class StructHandler {
 
 		if (structType == null || !(structType instanceof CStruct)) {
 			String msg = "Incorrect or unexpected field owner!";
-			Dispatcher.syntaxError(loc, msg);
-			throw new IncorrectSyntaxException(msg);
+			throw new IncorrectSyntaxException(loc, msg);
 		}
 		IdentifierExpression additionalOffset = getStructOffsetConstantExpression(
 				loc, memoryHandler, field, structType);
@@ -236,8 +235,7 @@ public class StructHandler {
 			return rex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 		} else {
 			String msg = "Unexpected result";
-			Dispatcher.unsupportedSyntax(loc, msg);
-			throw new UnsupportedSyntaxException(msg);
+			throw new UnsupportedSyntaxException(loc, msg);
 		}
 	}
 
@@ -324,7 +322,7 @@ public class StructHandler {
 				}
 				fieldContents = new ResultExpression(fieldStmt, lrVal, fieldDecl, fieldAuxVars);
 			} else if (underlyingFieldType instanceof CEnum) {
-				throw new UnsupportedSyntaxException("..");
+				throw new UnsupportedSyntaxException(loc, "..");
 			} else if (underlyingFieldType instanceof CStruct) {
 				if (i < rerl.list.size())
 					fieldContents = makeStructConstructorFromRERL(main, loc, memoryHandler, arrayHandler, 
@@ -335,7 +333,7 @@ public class StructHandler {
 			} else if (underlyingFieldType instanceof CNamed) {
 				assert false : "This should not be the case as we took the underlying type.";
 			} else {
-				throw new UnsupportedSyntaxException("..");
+				throw new UnsupportedSyntaxException(loc, "..");
 			}	
 			newStmt.addAll(fieldContents.stmt);
 			newDecl.addAll(fieldContents.decl);

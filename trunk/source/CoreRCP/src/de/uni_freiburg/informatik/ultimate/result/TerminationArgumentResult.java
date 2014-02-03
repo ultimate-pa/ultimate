@@ -61,7 +61,7 @@ public class TerminationArgumentResult<P extends IElement> extends AbstractResul
 			if (i > 0) {
 				sb.append(", ");
 			}
-			sb.append(BackTranslationWorkaround.backtranslate(
+			sb.append(ResultUtil.backtranslationWorkaround(
 					m_TranslatorSequence, m_RankingFunction[i]));
 		}
 		sb.append("] and the following supporting invariants: ");
@@ -69,7 +69,7 @@ public class TerminationArgumentResult<P extends IElement> extends AbstractResul
 			if (i > 0) {
 				sb.append(", ");
 			}
-			sb.append(BackTranslationWorkaround.backtranslate(
+			sb.append(ResultUtil.backtranslationWorkaround(
 					m_TranslatorSequence, m_SupportingInvariants[i]));
 		}
 		return sb.toString();

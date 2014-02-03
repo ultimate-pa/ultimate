@@ -137,8 +137,7 @@ public class SvComp14CHandler extends CHandler {
                 if (in.lrVal.getValue() == null) {
                     String msg = "Incorrect or invalid in-parameter! "
                             + loc.toString();
-                    Dispatcher.syntaxError(loc, msg);
-                    throw new IncorrectSyntaxException(msg);
+                    throw new IncorrectSyntaxException(loc, msg);
                 }
                 args.add(in.lrVal.getValue());
                 stmt.addAll(in.stmt);

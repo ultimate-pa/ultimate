@@ -1,17 +1,17 @@
-/**
- * The exception, which is thrown if the compiler does not yet support a specific syntax.
- */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception;
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+
 /**
- * @author Markus Lindenmann
+ * @author Markus Lindenmann, Matthias Heizmann
  * @since 26.04.2012
  */
-public class UnsupportedSyntaxException extends UnsupportedOperationException {
+public class UnsupportedSyntaxException extends RuntimeException {
 	/**
 	 * The serial version UID.
 	 */
 	private static final long serialVersionUID = -868222134936145470L;
+	private final ILocation m_Location;
 
 	/**
 	 * Constructs an UnsupportedSyntaxException with the specified detail
@@ -20,7 +20,12 @@ public class UnsupportedSyntaxException extends UnsupportedOperationException {
 	 * @param msg
 	 *            the detail message
 	 */
-	public UnsupportedSyntaxException(final String msg) {
+	public UnsupportedSyntaxException(ILocation location, String msg) {
 		super(msg);
+		m_Location = location;
+	}
+	
+	public ILocation getLocation() {
+		return m_Location;
 	}
 }

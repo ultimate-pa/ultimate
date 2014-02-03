@@ -3,18 +3,18 @@ package de.uni_freiburg.informatik.ultimate.result;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
+import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 
 
 /**
- * This is a workaround until the promised day comes where He bestoweth us
- * with a proper back-translation infrastructure.
  * 
  * @author Matthias Heizmann, Jan Leike
  */
-public class BackTranslationWorkaround {
+public class ResultUtil {
 	
 	/**
 	 * Use Ultimate's translator sequence do translate a result expression
@@ -23,7 +23,7 @@ public class BackTranslationWorkaround {
 	 * @param expr the resulting expression
 	 * @return a string corresponding to the backtranslated expression
 	 */
-	public static <SE> String backtranslate(
+	public static <SE> String backtranslationWorkaround(
 			List<ITranslator<?, ?, ?, ?>> translator_sequence,
 			SE expr) {
 		Object backExpr = DefaultTranslator.translateExpressionIteratively(
@@ -40,5 +40,17 @@ public class BackTranslationWorkaround {
 			result = backExpr.toString();
 		}
 		return result;
+	}
+	
+	/**
+	 * Return the checked specification that is checked at the error location.
+	 */
+	public static <ELEM extends IElement> Check getCheckedSpecification(ELEM element) {
+		if (element.getPayload().hasAnnotation()) {
+			IAnnotations check = element.getPayload().getAnnotations().get(Check.getIdentifier());
+			return (Check) check;
+		} else {
+			return element.getPayload().getLocation().getOrigin().checkedSpecification();
+		}
 	}
 }

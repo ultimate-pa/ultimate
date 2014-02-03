@@ -26,21 +26,22 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Oleksii Saukh
  * @date 02.01.2012
  */
-public class UnprovableResult<P extends IElement> extends AbstractResultAtElement<P> implements IResultWithTrace {
-	private String shortDescription;
-	private String longDescription;
-	private List<ILocation> failurePath;
+public class UnprovableResult<ELEM extends IElement, TE, E> 
+			extends AbstractResultAtElement<ELEM> implements IResultWithTrace {
+	
+	private final Check m_CheckedSpecification;
+	private final IProgramExecution<TE, E> m_ProgramExecution;
 	
 	/**
 	 * Constructor.
 	 * @param location the Location
 	 */
-	public UnprovableResult(P position, String plugin, 
-			List<ITranslator<?,?,?,?>> translatorSequence, ILocation location) {
+	public UnprovableResult(String plugin, ELEM position,  
+			List<ITranslator<?,?,?,?>> translatorSequence, 
+			IProgramExecution<TE, E> programExecution) {
 		super(position, plugin, translatorSequence);
-		this.shortDescription = new String();
-		this.longDescription = new String();
-		this.failurePath = new ArrayList<ILocation>();
+		m_CheckedSpecification = ResultUtil.getCheckedSpecification(position);
+		m_ProgramExecution = programExecution;
 	}
 
 	/* (non-Javadoc)
@@ -48,7 +49,7 @@ public class UnprovableResult<P extends IElement> extends AbstractResultAtElemen
 	 */
 	@Override
 	public String getShortDescription() {
-		return shortDescription;
+		return "Unable to prove that " + m_CheckedSpecification;
 	}
 
 	/* (non-Javadoc)
@@ -56,23 +57,7 @@ public class UnprovableResult<P extends IElement> extends AbstractResultAtElemen
 	 */
 	@Override
 	public String getLongDescription() {
-		return longDescription;
-	}
-
-	/**
-	 * Setter for the short description.
-	 * @param shortDescription the shortDescription to set
-	 */
-	public void setShortDescription(String shortDescription) {
-		this.shortDescription = shortDescription;
-	}
-
-	/**
-	 * Setter for long description.
-	 * @param longDescription the longDescription to set
-	 */
-	public void setLongDescription(String longDescription) {
-		this.longDescription = longDescription;
+		return "Unable to prove that " + m_CheckedSpecification;
 	}
 
     /**
@@ -80,14 +65,6 @@ public class UnprovableResult<P extends IElement> extends AbstractResultAtElemen
      * @return the failurePath
      */
     public List<ILocation> getFailurePath() {
-        return failurePath;
-    }
-
-    /**
-     * Setter for the failure path.
-     * @param failurePath the failurePath to set
-     */
-    public void setFailurePath(List<ILocation> failurePath) {
-        this.failurePath = failurePath;
+        throw new UnsupportedOperationException("not yet implemented");
     }
 }

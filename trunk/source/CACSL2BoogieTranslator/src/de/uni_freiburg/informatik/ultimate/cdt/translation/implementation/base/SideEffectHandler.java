@@ -26,8 +26,7 @@ public class SideEffectHandler implements ISideEffectHandler {
         String msg = "SideEffectHandler: Not yet implemented: "
                 + node.toString();
         ILocation loc = new CACSLLocation(node);
-        Dispatcher.unsupportedSyntax(loc, msg);
-        throw new UnsupportedSyntaxException(msg);
+        throw new UnsupportedSyntaxException(loc, msg);
     }
 
     @Override
@@ -35,7 +34,6 @@ public class SideEffectHandler implements ISideEffectHandler {
         String msg = "SideEffectHandler: Not yet implemented: "
                 + node.toString();
         ILocation loc = new CACSLLocation(node);
-        Dispatcher.unsupportedSyntax(loc, msg);
-        throw new UnsupportedSyntaxException(msg);
+        throw new UnsupportedSyntaxException(loc, msg);
     }
 }

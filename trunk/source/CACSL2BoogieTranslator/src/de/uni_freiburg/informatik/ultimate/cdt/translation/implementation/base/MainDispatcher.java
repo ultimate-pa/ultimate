@@ -515,8 +515,7 @@ public class MainDispatcher extends Dispatcher {
         }
         String msg = "MainDispatcher: AST node type unknown: " + n.getClass();
         ILocation loc = new CACSLLocation(n);
-        Dispatcher.unsupportedSyntax(loc, msg);
-        throw new UnsupportedSyntaxException(msg);
+        throw new UnsupportedSyntaxException(loc, msg);
     }
 
     @Override
@@ -718,8 +717,7 @@ public class MainDispatcher extends Dispatcher {
         }
         String msg = "MainDispatcher: ACSL node type unknown: " + n.getClass();
         ILocation loc = new CACSLLocation(n);
-        Dispatcher.unsupportedSyntax(loc, msg);
-        throw new UnsupportedSyntaxException(msg);
+        throw new UnsupportedSyntaxException(loc, msg);
     }
 
     @Override

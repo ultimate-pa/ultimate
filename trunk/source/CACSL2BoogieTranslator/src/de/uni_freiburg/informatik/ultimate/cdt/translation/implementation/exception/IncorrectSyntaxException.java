@@ -1,17 +1,18 @@
-/**
- * The exception, which is thrown if the specified syntax is incorrect.
- */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception;
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+
 /**
- * @author Markus Lindenmann
+ * @author Markus Lindenmann, Matthias Heizmann
  * @since 26.04.2012
  */
-public class IncorrectSyntaxException extends IllegalArgumentException {
+public class IncorrectSyntaxException extends RuntimeException {
 	/**
 	 * The serial version UID.
 	 */
 	private static final long serialVersionUID = -1309056833732436476L;
+	
+	private final ILocation m_Location;
 
 	/**
 	 * Constructs an IncorrectSyntaxException with the specified detail
@@ -20,7 +21,12 @@ public class IncorrectSyntaxException extends IllegalArgumentException {
 	 * @param msg
 	 *            the detail message
 	 */
-	public IncorrectSyntaxException(final String msg) {
+	public IncorrectSyntaxException(ILocation location, String msg) {
 		super(msg);
+		m_Location = location;
+	}
+	
+	public ILocation getLocation() {
+		return m_Location;
 	}
 }

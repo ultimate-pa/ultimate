@@ -78,8 +78,7 @@ public class CArray extends CType {
         if (dimensions.length <= 0
                 || accessedIndices.length != dimensions.length) {
             String msg = "Invalid array access! Too many or too few dimensions!";
-            Dispatcher.syntaxError(loc, msg);
-            throw new IncorrectSyntaxException(msg);
+            throw new IncorrectSyntaxException(loc, msg);
         }
         Expression int0 = new IntegerLiteral(loc, new InferredType(
                 InferredType.Type.Integer), SFO.NR0);
@@ -188,14 +187,14 @@ public class CArray extends CType {
                 return left % right;
             }
             else {
-                throw new UnsupportedSyntaxException(
+                throw new UnsupportedSyntaxException(e.getLocation(),
                         "arithmetic expression with oeprator " + operator);
             }
         } else {
             UnaryExpression ue = (UnaryExpression)e;
             UnaryExpression.Operator operator = ue.getOperator();
             if (! operator.equals(UnaryExpression.Operator.ARITHNEGATIVE)) {
-                throw new UnsupportedSyntaxException(
+                throw new UnsupportedSyntaxException(e.getLocation(),
                         "arithmetic expression with oeprator " + operator);
             }
             return 0 - getArithmeticResultAsInteger(ue.getExpr());

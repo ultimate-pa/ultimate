@@ -14,10 +14,8 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.cdt.CommentParser;
 import de.uni_freiburg.informatik.ultimate.cdt.FunctionLineVisitor;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.TypeErrorException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.SvComp14MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -26,7 +24,11 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult;
+import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
 /**
  * @author Markus Lindenmann
@@ -108,19 +110,24 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			us.setIdentifierMapping(main.getIdentifierMapping());
 			us.getTranslatorSequence().add(backtranslator);
 		} catch (Throwable t) {
+			final IResult result;
 			String message = "There was an error during the translation process! ["
 					+ t.getClass() + ", " + t.getMessage() + "]";
-			if (t instanceof UnsupportedSyntaxException
-					|| t instanceof IncorrectSyntaxException
-					|| t instanceof TypeErrorException) {
-				// already handled - skip
+			if (t instanceof IncorrectSyntaxException) {
+				result = new SyntaxErrorResult(Activator.s_PLUGIN_NAME, 
+						((IncorrectSyntaxException) t).getLocation(), 
+						t.getLocalizedMessage());
+			} else if (t instanceof UnsupportedSyntaxException) {
+				result = new UnsupportedSyntaxResult<IElement>(Activator.s_PLUGIN_NAME, 
+						((UnsupportedSyntaxException) t).getLocation(), 
+						t.getLocalizedMessage());
 			} else {
 				// something unexpected happened
 				// report it to the user ...
-				CACSLLocation loc = new CACSLLocation(inputTU);
-				SyntaxErrorResult result = new SyntaxErrorResult(
-						Activator.s_PLUGIN_NAME, loc, message);
-				us.reportResult(Activator.s_PLUGIN_ID, result);
+				String shortDescription = t.getClass().getSimpleName();
+				String longDescription = t.getLocalizedMessage();
+				result = new GenericResult(Activator.s_PLUGIN_ID, 
+						shortDescription, longDescription, Severity.ERROR);
 				// Terminate the compile process with a "real" Exception,
 				// visible to the Ultimate toolchain executer! Something
 				// really went wrong! The core will decide what to do next!
@@ -129,7 +136,8 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 				}
 				throw new RuntimeException(message);
 			}
-			s_Logger.warn(message);
+			us.reportResult(Activator.s_PLUGIN_ID, result);
+			s_Logger.warn(result.getShortDescription() + " " + result.getLongDescription());
 			us.cancelToolchain();
 		}
 		return false;

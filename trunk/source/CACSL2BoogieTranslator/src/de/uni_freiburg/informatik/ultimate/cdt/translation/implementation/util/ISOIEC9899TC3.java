@@ -157,8 +157,7 @@ public final class ISOIEC9899TC3 {
             return value;
         } catch (NumberFormatException nfe) {
             String msg = "Unable to translate float!";
-            Dispatcher.syntaxError(loc, msg);
-            throw new IncorrectSyntaxException(msg);
+            throw new IncorrectSyntaxException(loc, msg);
         }
     }
 
@@ -197,8 +196,7 @@ public final class ISOIEC9899TC3 {
             }
         } catch (NumberFormatException nfe) {
             String msg = "Unable to translate int!";
-            Dispatcher.syntaxError(loc, msg);
-            throw new IncorrectSyntaxException(msg);
+            throw new IncorrectSyntaxException(loc, msg);
         }
     }
 }

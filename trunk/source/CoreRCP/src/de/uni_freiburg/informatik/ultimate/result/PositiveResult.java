@@ -17,9 +17,8 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Oleksii Saukh
  * @date 27.03.2012
  */
-public class PositiveResult<P extends IElement> extends AbstractResultAtElement<P> implements IResult {
-	private String m_ShortDescription;
-	private String m_LongDescription;
+public class PositiveResult<ELEM extends IElement> extends AbstractResultAtElement<ELEM> implements IResult {
+	private final Check m_CheckedSpecification;
 
 	/**
 	 * Constructor.
@@ -27,54 +26,33 @@ public class PositiveResult<P extends IElement> extends AbstractResultAtElement<
 	 * @param location
 	 *            the location
 	 */
-	public PositiveResult(P position, String plugin, 
-			List<ITranslator<?,?,?,?>> translatorSequence, ILocation location) {
+	public PositiveResult(String plugin, ELEM position, 
+			List<ITranslator<?,?,?,?>> translatorSequence) {
 		super(position, plugin, translatorSequence);
-		this.m_ShortDescription = new String();
-		this.m_LongDescription = new String();
+		m_CheckedSpecification = ResultUtil.getCheckedSpecification(position);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.result.IResultNode#getShortDescription
-	 * ()
-	 */
 	@Override
 	public String getShortDescription() {
-		return m_ShortDescription;
+		if (m_CheckedSpecification == null) {
+			return "some specification holds - ERROR (information lost during translation process)";
+		} else {
+			return m_CheckedSpecification.getPositiveMessage();
+		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.result.IResultNode#getLongDescription
-	 * ()
-	 */
 	@Override
 	public String getLongDescription() {
-		return m_LongDescription;
+		if (m_CheckedSpecification == null) {
+			return "some specification holds - ERROR (information lost during translation process)";
+		} else {
+			StringBuilder sb = new StringBuilder();
+			sb.append("For all program executions holds that ");
+			sb.append(m_CheckedSpecification.getPositiveMessage());
+			sb.append(" holds at this location");
+			return sb.toString();
+		}
+
 	}
 
-	/**
-	 * Setter for short description.
-	 * 
-	 * @param shortDescription
-	 *            the shortDescription to set
-	 */
-	public void setShortDescription(String shortDescription) {
-		this.m_ShortDescription = shortDescription;
-	}
-
-	/**
-	 * Setter for long description.
-	 * 
-	 * @param longDescription
-	 *            the longDescription to set
-	 */
-	public void setLongDescription(String longDescription) {
-		this.m_LongDescription = longDescription;
-	}
 }

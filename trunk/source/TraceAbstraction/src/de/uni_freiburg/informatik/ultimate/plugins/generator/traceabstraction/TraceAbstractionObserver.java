@@ -13,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -30,9 +29,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.result.BackTranslationWorkaround;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
@@ -40,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
+import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 
@@ -307,17 +305,11 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			reportResult(gr);
 		} else {
 			for (ProgramPoint errorLoc : errorLocs) {
-				ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(
-						errorLoc,
 						Activator.s_PLUGIN_NAME,
-						UltimateServices.getInstance().getTranslatorSequence(),
-						origin);
-				String pMessage = getCheckedSpecification(errorLoc).getPositiveMessage();
-				pResult.setShortDescription(pMessage);
-				pMessage += " (line " + origin.getStartLine() + ")";			
+						errorLoc,
+						UltimateServices.getInstance().getTranslatorSequence());
 				reportResult(pResult);
-				s_Logger.warn(pMessage);
 			}
 		}
 	}
@@ -337,7 +329,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				Activator.s_PLUGIN_NAME,
 				translatorSequence,
 				origin, null);
-		String ctxMessage = getCheckedSpecification(errorPP).getNegativeMessage();
+		String ctxMessage = ResultUtil.getCheckedSpecification(errorPP).getNegativeMessage();
 		ctxRes.setShortDescription(ctxMessage);		
 		ctxMessage += " (line " + origin.getStartLine() + ")";
 		Backtranslator backtrans = (Backtranslator) translatorSequence.get(translatorSequence.size()-1);
@@ -353,7 +345,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		for (ProgramPoint errorLoc : errorLocs) {
 			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that " +
-					getCheckedSpecification(errorLoc).getPositiveMessage();
+					ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
 			TimeoutResult<RcfgElement> timeOutRes = new TimeoutResult<RcfgElement>(
 					errorLoc,
@@ -368,21 +360,13 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		
 	private void reportUnproveableResult(RcfgProgramExecution pe) {
 		ProgramPoint errorPP = getErrorPP(pe);
-		List<ILocation> failurePath = pe.getLocationList();
-		ILocation origin = errorPP.getPayload().getLocation().getOrigin();
-		UnprovableResult<RcfgElement> uknRes = new UnprovableResult<RcfgElement>(
-				errorPP,
+		UnprovableResult<RcfgElement, RcfgElement, Expression> uknRes = 
+				new UnprovableResult<RcfgElement, RcfgElement, Expression>(
 				Activator.s_PLUGIN_NAME,
+				errorPP,
 				UltimateServices.getInstance().getTranslatorSequence(),
-				origin);
-		uknRes.setFailurePath(failurePath);
-		String uknMessage = "Unable to prove that " + 
-				getCheckedSpecification(errorPP).getPositiveMessage();
-		uknRes.setShortDescription(uknMessage);
-		uknMessage += " (line " + origin.getStartLine() + ")";
-		uknRes.setLongDescription(failurePath.toString());
+				pe);
 		reportResult(uknRes);
-		s_Logger.warn(uknMessage);
 	}
 	
 	private void reportTimingStatistics(RootNode root, TraceAbstractionBenchmarks timingStatistics) {
@@ -404,18 +388,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		reportResult(res);
 	}
 	
-	/**
-	 * Return the checked specification that is checked at the error location.
-	 */
-	private static Check getCheckedSpecification(ProgramPoint errorLoc) {
-		if (errorLoc.getPayload().hasAnnotation()) {
-			IAnnotations check = errorLoc.getPayload().getAnnotations().get(Check.getIdentifier());
-			return (Check) check;
-		}
-		return errorLoc.getBoogieASTNode().getLocation().getOrigin().checkedSpecification();
-	}
-	
-	
+
 	private static boolean isAuxilliaryProcedure(String proc) {
 		if (proc.equals("ULTIMATE.init") || proc.equals("ULTIMATE.start")) {
 			return true;

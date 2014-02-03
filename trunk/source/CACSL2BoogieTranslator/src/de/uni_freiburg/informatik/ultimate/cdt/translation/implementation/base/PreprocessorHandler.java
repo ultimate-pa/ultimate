@@ -36,8 +36,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
     public Result visit(Dispatcher main, IASTNode node) {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
         ILocation loc = new CACSLLocation(node);
-        Dispatcher.unsupportedSyntax(loc, msg);
-        throw new UnsupportedSyntaxException(msg);
+        throw new UnsupportedSyntaxException(loc, msg);
     }
 
     /**
@@ -77,8 +76,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
     public Result visit(Dispatcher main, IASTPreprocessorErrorStatement node) {
         String msg = "PreprocessorHandler: There was an error while parsing the preprocessor statements!";
         ILocation loc = new CACSLLocation(node);
-        Dispatcher.unsupportedSyntax(loc, msg);
-        throw new IncorrectSyntaxException(msg);
+        throw new IncorrectSyntaxException(loc, msg);
     }
 
     @Override
