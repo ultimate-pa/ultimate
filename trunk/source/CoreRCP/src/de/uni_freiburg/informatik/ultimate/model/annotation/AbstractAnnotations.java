@@ -14,9 +14,9 @@ import java.util.Set;
 
 /**
  * DefaultAnnotations
- *
+ * 
  * @author Björn Buchhold
- *
+ * 
  */
 public abstract class AbstractAnnotations implements IAnnotations {
 	/**
@@ -25,20 +25,19 @@ public abstract class AbstractAnnotations implements IAnnotations {
 	private static final long serialVersionUID = -3930174445763628926L;
 
 	/**
-	 * The backing map.  Cached on first call.
+	 * The backing map. Cached on first call.
 	 */
 	private transient Map<String, Object> backingMap;
-	
+
 	/**
-	 * Returns the array of keys of this annotation.  Subclasses must
-	 * override this to specify which fields are available.
+	 * Returns the array of keys of this annotation. Subclasses must override
+	 * this to specify which fields are available. May not return null!
 	 */
 	protected abstract String[] getFieldNames();
-	
+
 	/**
-	 * Returns for a key in the annotation the corresponding object. 
-	 * Subclasses must override this to return the value of the 
-	 * corresponding field.
+	 * Returns for a key in the annotation the corresponding object. Subclasses
+	 * must override this to return the value of the corresponding field.
 	 */
 	protected abstract Object getFieldValue(String field);
 
@@ -46,14 +45,13 @@ public abstract class AbstractAnnotations implements IAnnotations {
 	public Map<String, Object> getAnnotationsAsMap() {
 		if (backingMap == null) {
 			backingMap = new AbstractMap<String, Object>() {
-				private Set<Entry<String, Object>> m_EntrySet =
-					new AbstractSet<Entry<String, Object>>() {
-					
+				private Set<Entry<String, Object>> m_EntrySet = new AbstractSet<Entry<String, Object>>() {
+
 					private String[] m_AttribFields = getFieldNames();
 
 					@Override
 					public Iterator<Entry<String, Object>> iterator() {
-						return new Iterator<Entry<String,Object>>() {
+						return new Iterator<Entry<String, Object>>() {
 							int fieldCount = 0;
 
 							@Override
@@ -64,9 +62,7 @@ public abstract class AbstractAnnotations implements IAnnotations {
 							@Override
 							public Entry<String, Object> next() {
 								String field = m_AttribFields[fieldCount++];
-								return new AbstractMap.SimpleImmutableEntry
-									<String, Object>
-									(field, getFieldValue(field));
+								return new AbstractMap.SimpleImmutableEntry<String, Object>(field, getFieldValue(field));
 							}
 
 							@Override
@@ -90,10 +86,10 @@ public abstract class AbstractAnnotations implements IAnnotations {
 		}
 		return backingMap;
 	}
-	
+
 	/**
-	 * Return a string representation of this class.  The default implementation
-	 * will print the class name of the annotation followed by colon and the 
+	 * Return a string representation of this class. The default implementation
+	 * will print the class name of the annotation followed by colon and the
 	 * attribute map.
 	 */
 	@Override

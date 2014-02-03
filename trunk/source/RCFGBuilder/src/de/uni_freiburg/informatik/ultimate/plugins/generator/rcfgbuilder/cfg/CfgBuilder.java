@@ -1620,13 +1620,13 @@ public class CfgBuilder {
 
 		@Override
 		public String getPrettyPrintedStatements() {
-			throw new UnsupportedOperationException();
+			return "goto";
 		}
 
 
 		@Override
 		protected String[] getFieldNames() {
-			return null;
+			return new String[] {};
 		}
 
 		@Override

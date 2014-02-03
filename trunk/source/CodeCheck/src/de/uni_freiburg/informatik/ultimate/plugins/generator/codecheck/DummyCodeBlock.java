@@ -5,11 +5,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 
 public class DummyCodeBlock extends CodeBlock {
 
-//	public DummyCodeBlock(ProgramPoint source, ProgramPoint target) {
-//		super(source, target);
-//		// TODO Auto-generated constructor stub
-//	}
-	
+	private static final long serialVersionUID = 1L;
+
 	public DummyCodeBlock() {
 		super(null, null);
 		// TODO Auto-generated constructor stub
@@ -17,8 +14,7 @@ public class DummyCodeBlock extends CodeBlock {
 
 	@Override
 	protected String[] getFieldNames() {
-		// TODO Auto-generated method stub
-		return null;
+		return new String[] {};
 	}
 
 	@Override

@@ -44,7 +44,7 @@ class Executor {
 		createProcess();
 	}
 	
-	public void createProcess()
+	private void createProcess()
 	{
 //		m_Logger = Logger.getRootLogger();
 		try {

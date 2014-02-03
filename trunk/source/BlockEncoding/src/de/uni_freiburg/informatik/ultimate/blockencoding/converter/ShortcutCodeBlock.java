@@ -42,7 +42,7 @@ public class ShortcutCodeBlock extends CodeBlock {
 	 */
 	@Override
 	protected String[] getFieldNames() {
-		return null;
+		return new String[] {};
 	}
 
 	/*

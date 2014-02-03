@@ -5,8 +5,6 @@ package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 
 import java.util.Collection;
 
-import org.junit.rules.Timeout;
-
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
 /**
@@ -24,10 +22,6 @@ public class AllExamplesTraceAbstractionTestSuite extends
 	private static final boolean m_TraceAbstractionWithBackwardPredicates = !false;
 	private static final boolean m_TraceAbstractionCWithForwardPredicates = false;
 	private static final boolean m_TraceAbstractionCWithBackwardPredicates = !false;
-	
-	public AllExamplesTraceAbstractionTestSuite() {
-		mGlobalTimeout = new Timeout(m_Timeout); // in ms
-	}
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {

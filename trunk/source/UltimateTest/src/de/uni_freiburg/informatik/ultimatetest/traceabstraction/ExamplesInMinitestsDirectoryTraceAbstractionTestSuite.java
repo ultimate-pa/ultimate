@@ -27,13 +27,6 @@ public class ExamplesInMinitestsDirectoryTraceAbstractionTestSuite extends
 	// Time out for each test case in milliseconds
 	private final static int m_Timeout = 10000;
 	
-	
-	public ExamplesInMinitestsDirectoryTraceAbstractionTestSuite() {
-		super();
-		mGlobalTimeout = new Timeout(100);
-	}
-	
-	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (m_TraceAbstractionWithForwardPredicates) {
