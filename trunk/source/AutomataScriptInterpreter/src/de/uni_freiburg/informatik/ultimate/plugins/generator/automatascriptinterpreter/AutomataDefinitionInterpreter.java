@@ -20,12 +20,19 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJuli
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.TestFileInterpreter.LoggerSeverity;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AlternatingAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitionsAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.NestedwordAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetTransitionAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionListAST.Pair;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AlternatingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 
 /**
  * 
@@ -75,9 +82,79 @@ public class AutomataDefinitionInterpreter {
 							"Exception thrown", n);
 				}
 			}
+			else if (n instanceof AlternatingAutomatonAST){
+				try {
+					interpret((AlternatingAutomatonAST) n);
+				} catch (Exception e) {
+					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
+							+ System.getProperty("line.separator") + e.getStackTrace(), 
+							"Exception thrown", n.getLocation());
+				}
+				
+			}
 		}
 		
 	}
+	
+	public void interpret(AlternatingAutomatonAST aa) throws IllegalArgumentException {
+		m_errorLocation = aa.getLocation();
+		Set<String> Alphabet = new HashSet<String>(aa.getAlphabet());
+		
+		AlternatingAutomaton<String, String> saa = new AlternatingAutomaton<String, String>(
+				                                     Collections.unmodifiableSet(Alphabet), 
+				                                     new StringFactory());
+		
+		/*
+		 * Now add the states to the NestedWordAutomaton 
+		 */
+		List<String> initStates = aa.getInitialStates();
+		List<String> finalStates = aa.getFinalStates();
+//		List<String> exStates = aa.getExStates();
+//		List<String> uniStates = aa.getUniStates();
+		
+		for (String state : aa.getExStates()) {
+			if (initStates.contains(state)) {
+				if (finalStates.contains(state)) {
+					saa.addState(true, true, true, state);
+				} else {
+					saa.addState(true, false, true, state);
+				}
+			} else if (finalStates.contains(state)) {
+				saa.addState(false, true, true, state);
+			} else {
+				saa.addState(false, false, true, state);
+			}
+		}
+		
+		for (String state : aa.getUniStates()) {
+			if (initStates.contains(state)) {
+				if (finalStates.contains(state)) {
+					saa.addState(true, true, false, state);
+				} else {
+					saa.addState(true, false, false, state);
+				}
+			} else if (finalStates.contains(state)) {
+				saa.addState(false, true, false, state);
+			} else {
+				saa.addState(false, false, false, state);
+			}
+		}
+		
+		
+		/*
+		 * Now add the transitions to the NestedWordAutomaton
+		 */
+		for (Entry<Pair<String, String>, Set<String>> entry : aa.getTransitions().entrySet()) {
+			for (String succ : entry.getValue()) {
+				saa.addTransition(entry.getKey().left, entry.getKey().right, succ);
+			}
+			
+		}
+		
+		m_Automata.put(aa.getName(), saa);
+		
+	}
+
 	
 	public void interpret(NestedwordAutomatonAST nwa) throws IllegalArgumentException {
 		m_errorLocation = nwa.getLocation();

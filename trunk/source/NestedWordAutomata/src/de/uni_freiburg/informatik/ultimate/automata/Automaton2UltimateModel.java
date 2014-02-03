@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.AAToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.NwaToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
@@ -28,8 +30,13 @@ public class Automaton2UltimateModel<LETTER,STATE> {
 			BranchingProcessToUltimateModel transformer = new BranchingProcessToUltimateModel();
 			return transformer.getUltimateModelOfBranchingProcess(bp);
 		}
+		else if (automaton instanceof AlternatingAutomaton) {
+			AlternatingAutomaton aa = (AlternatingAutomaton) automaton;
+			AAToUltimateModel transformer = new AAToUltimateModel();
+			return transformer.getUltimateModelOfAA(aa);
+		}
 		else {
-			throw new IllegalArgumentException("Only nwa and net supported");
+			throw new IllegalArgumentException("Only nwa, aa and net supported");
 		}
 	}
 }

@@ -110,6 +110,12 @@ StringCharacter = [^\r\n\"\\]
   "returnTransitions"           { m_LastToken = m_CurToken; m_CurToken = "returnTransitions"; return symbol(sym.RETURN_TRANSITIONS); }
   "places"                      { m_LastToken = m_CurToken; m_CurToken = "places"; return symbol(sym.PLACES); }
 
+
+  /* AlternatingAutomata */
+  "AlternatingAutomaton"        { m_LastToken = m_CurToken; m_CurToken = "AlternatingAutomaton"; return symbol(sym.ALTERNATING_AUTOMATON); }
+  "universalStates"		        { m_LastToken = m_CurToken; m_CurToken = "universalStates"; return symbol(sym.UNIVERSAL_STATES); }
+  "existentialStates"		    { m_LastToken = m_CurToken; m_CurToken = "existentialStates"; return symbol(sym.EXISTENTIAL_STATES); }
+  
   // Net transitions  
   "transitions"                     { m_LastToken = m_CurToken; m_CurToken = "transitions"; return symbol(sym.NET_TRANSITIONS); }
   "initialMarking"                  { m_LastToken = m_CurToken; m_CurToken = "initialMarking"; return symbol(sym.INITIAL_MARKINGS); }

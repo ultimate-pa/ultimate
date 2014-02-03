@@ -6,6 +6,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.*;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AutomataScriptLocation; 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -252,11 +253,11 @@ non terminal Object nested_word_symbol;
  /* -------------------- Specification of Automata DEFINITION Files-----------------------*/
  /* -------------------- Specification of terminals   -----------------------*/
  // 1. Automata Types
- terminal Object NESTEDWORD_AUTOMATA, PETRINET_AUTOMATA, BRANCHINGPROCESS_AUTOMATA;
+ terminal Object NESTEDWORD_AUTOMATA, PETRINET_AUTOMATA, BRANCHINGPROCESS_AUTOMATA, ALTERNATING_AUTOMATON;
  // 2. Alphabets
  terminal Object ALPHABET, CALL_ALPHABET, INTERNAL_ALPHABET, RETURN_ALPHABET;
 // 3. States & Places
-terminal Object STATES, PLACES, INITIAL_STATES, FINAL_STATES;
+terminal Object STATES, PLACES, INITIAL_STATES, FINAL_STATES, EXISTENTIAL_STATES, UNIVERSAL_STATES;
 // 4. Transitions
 terminal Object NET_TRANSITIONS, INTERNAL_TRANSITIONS, CALL_TRANSITIONS, RETURN_TRANSITIONS;
 // 5. 
@@ -264,12 +265,12 @@ terminal Object INITIAL_MARKINGS, ACCEPTING_PLACES;
  /* -------------------- Specification of non-terminals   -----------------------*/
 non terminal IdentifierListAST identifier_list_opt, identifier_list;
 // Automata types
-non terminal AutomatonAST nwa_definition, petrinetJulian_definition;
+non terminal AutomatonAST nwa_definition, petrinetJulian_definition, aa_definition;
 // Alphabets
 non terminal IdentifierListAST alphabet, call_alphabet, return_alphabet, internal_alphabet;
 //non terminal IdentifierListAST alphabet_opt, petrinet_alphabet, call_alphabet, return_alphabet_opt, return_alphabet, internal_alphabet_opt, internal_alphabet;
 // States & Places
-non terminal IdentifierListAST states, initial_states, final_states;  
+non terminal IdentifierListAST states, initial_states, final_states, existential_states, universal_states;  
 //non terminal IdentifierListAST states_opt, states, initial_states_opt, initial_states, final_states_opt, final_states;  
 non terminal IdentifierListAST places, accepting_places;
 // Transitions & Markings
@@ -375,6 +376,8 @@ type	::=     INT
                 {: RESULT = PetriNetJulian.class; :}
         |       BRANCHINGPROCESS_AUTOMATA         
                 {: RESULT = BranchingProcess.class; :}
+        |       ALTERNATING_AUTOMATON         
+                {: RESULT = AlternatingAutomaton.class; :}
                 
         ;
 
@@ -401,16 +404,16 @@ variable_declaration ::=
                   m_automataDefinitions.addAutomaton(petri);}
              else {reportError(true, "AutomataDefiniton: Type error \"" + t.getSimpleName() + "\" is not compatible with \"PetriNetAutomatonAST\""); }
              RESULT = null;:}
-//         | type:t alternatingFiniteAutomata_definition:afa
-//                {:
-//                 if (t.equals(AlterinatingAutomata.class)) {
-/*                        m_automataDefinitions.addAutomaton(afa);
+         | type:t aa_definition:aa
+                {:
+                 if (t.equals(AlternatingAutomaton.class)) {
+                 		aa.setType(t);
+                        m_automataDefinitions.addAutomaton(aa);
                  } else {
                         reportError(true, "AutomataDefiniton: Type error \"" + 
-                        t.getSimpleName() + "\" is not compatible with \"AlternatingAutomaton\""); }
+                        t.getSimpleName() + "\" is not compatible with \"AlternatingAutomaton\""); 
                  }
-                :}
-                */
+                RESULT = null;:}
 	;
 variable_declarators ::=
 		variable_declarator:v
@@ -1179,3 +1182,30 @@ accepting_places ::= ACCEPTING_PLACES EQ LBRACE:l identifier_list:idList RBRACE:
 	RESULT = idList; :} ;
 
 
+aa_definition ::=      variable_identifier:id EQ
+                        LPAREN:l alphabet:alpha COMMA
+                               existential_states:ex_states COMMA
+                               universal_states:uni_states COMMA
+                               initial_states:init_states COMMA
+                               final_states:fin_states COMMA
+                               internal_transitions:trans
+                        RPAREN:r
+                        {: AlternatingAutomatonAST aa = new AlternatingAutomatonAST(id);
+                          aa.setAlphabet(alpha.getIdentifierList());
+                          aa.setInitialStates(init_states.getIdentifierList());
+                          aa.setFinalStates(fin_states.getIdentifierList());
+                          aa.setExistentialStates(ex_states.getIdentifierList());
+                          aa.setUniversalStates(uni_states.getIdentifierList());
+                          aa.setTransitions(trans);
+                          aa.setLocation(getLocation(l$, r$));
+                          m_varDeclarations.put(id, AlternatingAutomatonAST.class);
+                          RESULT = aa; :} ;
+
+                          
+existential_states ::= EXISTENTIAL_STATES EQ LBRACE:l identifier_list_opt:idList RBRACE:r
+				   {:idList.setLocation(getLocation(l$, r$));
+				     RESULT = idList; :} ;
+				     
+universal_states ::= UNIVERSAL_STATES EQ LBRACE:l identifier_list_opt:idList RBRACE:r
+				   {:idList.setLocation(getLocation(l$, r$));
+				     RESULT = idList; :} ;
