@@ -41,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -408,11 +408,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				+ codeChecker.memoizationReturnHitsUnsat);
 
 		if (overallResult == Result.CORRECT) {
-			PositiveResult<CodeBlock> result = new PositiveResult<CodeBlock>(
-					null, Activator.s_PLUGIN_NAME, UltimateServices
-							.getInstance().getTranslatorSequence(),
-					this.m_graphRoot.getPayload().getLocation());
-			result.setShortDescription("Program is safe!");
+			String shortDescription = "Program is safe!";
+			String longDescription = "Program is safe!";
+			GenericResult result = new GenericResult(
+					Activator.s_PLUGIN_NAME, shortDescription, longDescription,
+					Severity.INFO);
 			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID,
 					result);
 			// reportResult(result);
@@ -423,9 +423,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							realErrorFailurePath,
 					realErrorProgramExecution);
 		} else {
-			UnprovableResult<CodeBlock> result = new UnprovableResult<CodeBlock>(
-					null, Activator.s_PLUGIN_NAME, UltimateServices
-							.getInstance().getTranslatorSequence(), null);
+			String shortDescription = "Unable to decide if program is safe!";
+			String longDescription = "Unable to decide if program is safe!";
+			GenericResult result = new GenericResult(
+					Activator.s_PLUGIN_NAME, shortDescription, longDescription,
+					Severity.INFO);
 			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID,
 					result);
 		}

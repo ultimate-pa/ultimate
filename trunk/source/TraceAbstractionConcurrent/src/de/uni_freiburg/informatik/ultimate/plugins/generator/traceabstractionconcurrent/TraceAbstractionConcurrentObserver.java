@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.ResultNotifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
@@ -193,19 +194,13 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	
 
 
-	private void reportPositiveResult(Collection<ProgramPoint> errorLocs) {
-		for (ProgramPoint errorLoc : errorLocs) {
-			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
+	private void reportPositiveResult(Collection<ProgramPoint> errorPPs) {
+		for (ProgramPoint errorPP : errorPPs) {
 			PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(
-					errorLoc,
 					Activator.s_PLUGIN_NAME,
-					UltimateServices.getInstance().getTranslatorSequence(),
-					origin);
-			String pMessage = origin.checkedSpecification().getPositiveMessage();
-			pResult.setShortDescription(pMessage);
-			pMessage += " (line " + origin.getStartLine() + ")";			
+					errorPP,
+					UltimateServices.getInstance().getTranslatorSequence());
 			reportResult(pResult);
-			s_Logger.warn(pMessage);
 		}
 	}
 	
@@ -255,21 +250,13 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		
 	private void reportUnproveableResult(RcfgProgramExecution pe) {
 		ProgramPoint errorPP = getErrorPP(pe);
-		List<ILocation> failurePath = pe.getLocationList();
-		ILocation origin = errorPP.getPayload().getLocation().getOrigin();
-		UnprovableResult<RcfgElement> uknRes = new UnprovableResult<RcfgElement>(
-				errorPP,
+		UnprovableResult<RcfgElement, RcfgElement, Expression> uknRes = 
+				new UnprovableResult<RcfgElement, RcfgElement, Expression>(
 				Activator.s_PLUGIN_NAME,
+				errorPP,
 				UltimateServices.getInstance().getTranslatorSequence(),
-				origin);
-		uknRes.setFailurePath(failurePath);
-		String uknMessage = "Unable to prove that " + 
-				getCheckedSpecification(errorPP).getPositiveMessage();
-		uknRes.setShortDescription(uknMessage);
-		uknMessage += " (line " + origin.getStartLine() + ")";
-		uknRes.setLongDescription(failurePath.toString());
+				pe);
 		reportResult(uknRes);
-		s_Logger.warn(uknMessage);
 	}
 	
 	private void reportResult(IResult res) {
