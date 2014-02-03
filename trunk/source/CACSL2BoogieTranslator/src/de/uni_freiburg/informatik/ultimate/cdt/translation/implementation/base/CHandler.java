@@ -606,12 +606,11 @@ public class CHandler implements ICHandler {
 				//update symbol table
 				for (CDeclaration cDec : declResult.getDeclarations()) {
 					
-					if (d instanceof IASTFunctionDeclarator) {
+					if (cDec.getType() instanceof CFunction) {
 						functionHandler.handleFunctionDeclarator(main, contract, 
 								(IASTFunctionDeclarator) d, (CFunction) cDec.getType(), resType);
 						continue;
 					}	
-					
 					
 					boolean onHeap = cDec.isOnHeap();
 					String bId = main.nameHandler.getUniqueIdentifier(node, cDec.getName(), 
@@ -957,44 +956,37 @@ public class CHandler implements ICHandler {
 	        CType ctype = new CPointer(new CPrimitive(PRIMITIVE.VOID));
 		    
 		    return new ResultExpression(new ArrayList<Statement>(0),
-	                new RValue(new IdentifierExpression(loc,
-	                        new InferredType(Type.Pointer), SFO.NULL), ctype),
+	                new RValue(new IdentifierExpression(loc, SFO.NULL), ctype),
 	                new ArrayList<Declaration>(0),
 	                new HashMap<VariableDeclaration, ILocation>(0));
 		}
 		
-		InferredType t;
 		String bId;
-		CType cT;
+		CType cType;
 		boolean useHeap;
 		
 		// Christian: function name, handle separately
 		IASTFunctionDefinition funDef =
 		        ((MainDispatcher) main).getFunctionPointers().get(cId);
 		if (funDef != null) {
-            cT = new CPointer(new CFunction(null, null));
+            cType = new CPointer(new CFunction(null, null));
 //		    t = new InferredType(cT);
     		bId = SFO.FUNCTION_ADDRESS + cId;
     		useHeap = true;
 		}
 		else {
-    		CType ct = symbolTable.get(cId, loc).getCVariable();
     		bId = symbolTable.get(cId, loc).getBoogieName();
-    		cT = symbolTable.get(cId, loc).getCVariable();
+    		cType = symbolTable.get(cId, loc).getCVariable();
     		useHeap = isHeapVar(bId);
 		}
 
 		LRValue lrVal = null;
 		if (useHeap) {
-			// cType has to be set to the type of the dereferenced expression
-			// while the inferredType of the inner expression has to remain Pointer
-			// (intuition: t is the type of the address inside the heapLval while cT is the 
-			// type after the switch to an RValue
 			IdentifierExpression idExp = new IdentifierExpression(loc, bId);
-			lrVal = new HeapLValue(idExp, cT);
+			lrVal = new HeapLValue(idExp, cType);
 		} else {
 			VariableLHS idLhs = new VariableLHS(loc, bId);
-			lrVal = new LocalLValue(idLhs, cT);
+			lrVal = new LocalLValue(idLhs, cType);
 		}
 		ResultExpression result = new ResultExpression(new ArrayList<Statement>(0),
 				lrVal, new ArrayList<Declaration>(0), new HashMap<VariableDeclaration,

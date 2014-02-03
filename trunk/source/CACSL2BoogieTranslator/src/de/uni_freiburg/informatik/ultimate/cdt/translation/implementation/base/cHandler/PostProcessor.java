@@ -296,7 +296,16 @@ public class PostProcessor {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = new HashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-//		InferredType it = new InferredType(lCvar);
+		
+		//if (f.i.) the initializer comes from a function call, it has statements and declarations that we need to
+		//carry over
+		if (initializer != null) {
+			stmt.addAll(initializer.stmt);
+			decl.addAll(initializer.decl);
+			overappr.addAll(initializer.overappr);
+			auxVars.putAll(initializer.auxVars);
+		}
+		
 		ArrayList<Expression> rhs = new ArrayList<Expression>();
 		if (lCvar instanceof CPrimitive) {
 			switch (((CPrimitive) lCvar).getType()) {
@@ -376,7 +385,8 @@ public class PostProcessor {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
-		// LRValue is null because it is not needed, we need only the statement.
+
+		// LRValue is null because it is not needed, we need only the statement(s) and declaration(s)
 		return new ResultExpression(stmt, null, decl, auxVars, overappr);
 	}
 
