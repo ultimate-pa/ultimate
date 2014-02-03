@@ -100,7 +100,11 @@
 					<providerHint>junit47</providerHint>
 					<useUIHarness>false</useUIHarness>
 					<useUIThread>false</useUIThread>
+					<parallel>none</parallel>
+					<reuseForks>false</reuseForks>
 					<showEclipseLog>true</showEclipseLog>
+					<threadCount>1</threadCount>
+					<trimStackTrace>false</trimStackTrace>
 					<!-- if we use argline, jacocos argline will be overwritten, resulting 
 						in no coverage -->
 					<!--<argLine>-Xmx2048M</argLine> -->
