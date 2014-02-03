@@ -100,7 +100,6 @@
 					<providerHint>junit47</providerHint>
 					<useUIHarness>false</useUIHarness>
 					<useUIThread>false</useUIThread>
-					<parallel>none</parallel>
 					<reuseForks>false</reuseForks>
 					<showEclipseLog>true</showEclipseLog>
 					<threadCount>1</threadCount>
