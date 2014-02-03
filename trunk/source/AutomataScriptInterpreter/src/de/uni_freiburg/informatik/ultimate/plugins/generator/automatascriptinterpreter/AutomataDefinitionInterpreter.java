@@ -27,7 +27,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetTransitionAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionListAST.Pair;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
@@ -86,9 +85,9 @@ public class AutomataDefinitionInterpreter {
 				try {
 					interpret((AlternatingAutomatonAST) n);
 				} catch (Exception e) {
-					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
-							+ System.getProperty("line.separator") + e.getStackTrace(), 
-							"Exception thrown", n.getLocation());
+//					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
+//							+ System.getProperty("line.separator") + e.getStackTrace(), 
+//							"Exception thrown", n.getLocation());
 				}
 				
 			}
