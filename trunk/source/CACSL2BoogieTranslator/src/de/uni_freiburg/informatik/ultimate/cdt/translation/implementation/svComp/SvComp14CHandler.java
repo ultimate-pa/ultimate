@@ -29,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompArrayHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompFunctionHandler;
+//import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -87,7 +87,7 @@ public class SvComp14CHandler extends CHandler {
     public SvComp14CHandler(Dispatcher main, Backtranslator backtranslator) {
         super(main, backtranslator, false);
         super.arrayHandler = new SVCompArrayHandler();
-        super.functionHandler = new SVCompFunctionHandler();
+//        super.functionHandler = new SVCompFunctionHandler();
     }
 
     @Override

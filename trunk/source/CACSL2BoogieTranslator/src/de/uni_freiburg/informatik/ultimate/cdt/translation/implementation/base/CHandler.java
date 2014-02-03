@@ -34,6 +34,7 @@ import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTGotoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
@@ -535,10 +536,8 @@ public class CHandler implements ICHandler {
 		checkForACSL(main, stmt, null, node);
 		if (isNewScopeRequired(parent)){
 			stmt = functionHandler.insertMallocs(main, loc, memoryHandler, stmt);
-			//			symbolTable.endScope();
 			for (SymbolTableValue stv : symbolTable.currentScopeValues()) {
 				if (!stv.isGlobalVar()) {
-//					addInitStmtsAndDecls(main, loc, decl, stmt, stv);	
 					decl.add(stv.getBoogieDecl());
 				}
 			}
@@ -552,9 +551,16 @@ public class CHandler implements ICHandler {
 
 	/**
 	 * Visit the SimpleDeclaration (which may be quite complex in fact..).
-	 * The return value here is only used for (in C) global variables, otherwise
-	 * the entries that are made in the symbolTable and mDeclarationsGlobalInBoogie
-	 * are relevant. 
+	 * The return value here may have different uses:
+	 *  - for global variables and declarations inside of struct definitions, it is a
+	 *    ResultDeclaration (containing the Boogie Declaration of the variable)
+	 *  - for local variables that have an initializer, a ResultExpression is returned
+	 *    which contains (Boogie) statements and declarations that make the initialization
+	 *    according to the initializer
+	 * The declarations themselves of the local variables (and f.i. typedefs) are stored in the 
+	 * symbolTable and inserted into the Boogie code at the next endScope() 
+	 * Declarations of static variables are added to mDeclarationsGlobalInBoogie such that they
+	 * can be declared and initialized globally.
 	 * Variables/types that are global in Boogie but not in C are stored in the 
 	 * Symboltable to keep the association of BoogieId and CId.
 	 */
@@ -599,6 +605,14 @@ public class CHandler implements ICHandler {
 				
 				//update symbol table
 				for (CDeclaration cDec : declResult.getDeclarations()) {
+					
+					if (d instanceof IASTFunctionDeclarator) {
+						functionHandler.handleFunctionDeclarator(main, contract, 
+								(IASTFunctionDeclarator) d, (CFunction) cDec.getType(), resType);
+						continue;
+					}	
+					
+					
 					boolean onHeap = cDec.isOnHeap();
 					String bId = main.nameHandler.getUniqueIdentifier(node, cDec.getName(), 
 							symbolTable.getCompoundCounter(), onHeap);

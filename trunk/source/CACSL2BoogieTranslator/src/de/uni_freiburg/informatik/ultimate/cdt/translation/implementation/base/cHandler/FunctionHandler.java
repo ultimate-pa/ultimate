@@ -201,23 +201,23 @@ public class FunctionHandler {
 		}
 	}
 
-	/**
-	 * Extracted method to handle IASTSimpleDeclaration holding a
-	 * FunctionDeclarator.
-	 * 
-	 * @param main
-	 *            the main dispatcher reference.
-	 * @param contract
-	 *            the function contract - can be null.
-	 * @param node
-	 *            the node to translate. the simple declaration holding the
-	 *            function.
-	 * @return the handled Result.
-	 */
-	public Result handleFunctionDeclaration(Dispatcher main,
-			List<ACSLNode> contract, IASTSimpleDeclaration node) {
-		return handleFunctionDeclaration(main, contract, node, 0);
-	}
+//	/**
+//	 * Extracted method to handle IASTSimpleDeclaration holding a
+//	 * FunctionDeclarator.
+//	 * 
+//	 * @param main
+//	 *            the main dispatcher reference.
+//	 * @param contract
+//	 *            the function contract - can be null.
+//	 * @param node
+//	 *            the node to translate. the simple declaration holding the
+//	 *            function.
+//	 * @return the handled Result.
+//	 */
+//	public Result handleFunctionDeclaration(Dispatcher main,
+//			List<ACSLNode> contract, IASTSimpleDeclaration node) {
+//		return handleFunctionDeclaration(main, contract, node, 0);
+//	}
 	
 	/**
 	 * Has additional index.
@@ -225,21 +225,14 @@ public class FunctionHandler {
 	 * @see handleFunctionDeclaration()
 	 * @param index index of the declaration list
 	 */
-	public Result handleFunctionDeclaration(Dispatcher main,
-			List<ACSLNode> contract, IASTSimpleDeclaration node,
-			int index) {
-		CACSLLocation loc = new CACSLLocation(node);
-		assert (index >= 0 && index < node.getDeclarators().length);
-        IASTDeclarator cDecl = node.getDeclarators()[index];
-		assert cDecl instanceof IASTFunctionDeclarator;
+	public Result handleFunctionDeclarator(Dispatcher main,
+			List<ACSLNode> contract, IASTFunctionDeclarator cDecl, CFunction funcType, ResultTypes returnType) {
+		CACSLLocation loc = new CACSLLocation(cDecl);
 		String methodName = cDecl.getName().toString();
 		// begin new scope for retranslation of ACSL specification
 		main.cHandler.beginScope();
-		ResultVarList res = ((ResultVarList) main.dispatch(cDecl));
-		VarList[] in = res.varList;
-		if (in == null) {
-			in = new VarList[0];
-		}
+//		ResultVarList res = ((ResultVarList) main.dispatch(cDecl));
+
 		Attribute[] attr = new Attribute[0];
 		String[] typeParams = new String[0];
 		Specification[] spec;
@@ -276,10 +269,11 @@ public class FunctionHandler {
 		// OUT VARLIST : only one out param in C
 		VarList[] out = new VarList[1];
 		// we check the type via typeHandler
-		ResultTypes returnType = (ResultTypes) main.dispatch(node
-				.getDeclSpecifier());
+//		ResultTypes returnType = (ResultTypes) main.dispatch(node
+//				.getDeclSpecifier());
 		ResultTypes checkedType = main.cHandler.checkForPointer(main,
-                node.getDeclarators()[0].getPointerOperators(), returnType, false);
+//                node.getDeclarators()[0].getPointerOperators(), returnType, false);
+                cDecl.getPointerOperators(), returnType, false);
         if (returnType.isVoid &&
                 !(checkedType.cType instanceof CPointer)) {
 			if (methodsCalledBeforeDeclared.contains(methodName)) {
@@ -302,6 +296,22 @@ public class FunctionHandler {
 		if (!callGraph.containsKey(methodName)) {
 			callGraph.put(methodName, new HashSet<String>());
 		}
+		
+		ArrayList<CType> paramCTypes = new ArrayList<CType>();
+		ArrayList<VarList> paramVls = new ArrayList<VarList>();
+		for (CDeclaration  paramCDec : funcType.getParameterTypes()) {
+			ASTType bType = main.typeHandler.ctype2asttype(loc, paramCDec.getType());
+			VarList vl = new VarList(loc, new String[] { paramCDec.getName() }, bType);
+			paramVls.add(vl);
+			paramCTypes.add(paramCDec.getType());
+		}
+		VarList[] in = paramVls.toArray(new VarList[0]);
+		procedureToParamCType.put(methodName, paramCTypes);
+//		VarList[] in = res.varList;
+//		if (in == null) {
+//			in = new VarList[0];
+//		}
+		
 		Procedure proc = new Procedure(loc, attr, methodName, typeParams, in,
 				out, spec, null);
 		procedures.put(methodName, proc);
@@ -310,20 +320,21 @@ public class FunctionHandler {
 		// fill map of parameter types
 		ArrayList<CType> paramTypes =
 		        new ArrayList<CType>(proc.getInParams().length);
-		IASTDeclarator[] decls = node.getDeclarators();
-		assert (decls.length == 1) :
-		    "We do not support multiple function declarations.";
-		IASTParameterDeclaration[] funDec =
-		        ((CASTFunctionDeclarator)decls[0]).getParameters();
-		for (int i = 0; i < funDec.length; ++i) {
-		    IASTDeclSpecifier declSpec = funDec[i].getDeclSpecifier();
-		    IASTDeclarator declarator = funDec[i].getDeclarator();
-		    ResultTypes resType = (ResultTypes) main.dispatch(declSpec);
-		    resType = main.cHandler.checkForPointer(
-		            main, declarator.getPointerOperators(), resType, false);
-		    paramTypes.add(i, resType.cType);
-		}
-		procedureToParamCType.put(methodName, paramTypes);
+//		IASTDeclarator[] decls = node.getDeclarators();
+//		assert (decls.length == 1) :
+//		    "We do not support multiple function declarations.";
+//		IASTParameterDeclaration[] funDec =
+////		        ((CASTFunctionDeclarator)decls[0]).getParameters();
+//				((CASTFunctionDeclarator) cDecl).getParameters();
+//		for (int i = 0; i < funDec.length; ++i) {
+//		    IASTDeclSpecifier declSpec = funDec[i].getDeclSpecifier();
+//		    IASTDeclarator declarator = funDec[i].getDeclarator();
+//		    ResultTypes resType = (ResultTypes) main.dispatch(declSpec);
+//		    resType = main.cHandler.checkForPointer(
+//		            main, declarator.getPointerOperators(), resType, false);
+//		    paramTypes.add(i, resType.cType);
+//		}
+//		procedureToParamCType.put(methodName, paramTypes);
 		
 		// end scope for retranslation of ACSL specification
 		main.cHandler.endScope();
@@ -982,55 +993,59 @@ public class FunctionHandler {
 	private static final boolean isInParamVoid(VarList[] in) {
 		if (in.length > 0 && in[0] == null)
 			throw new IllegalArgumentException("In-param cannot be null!");
-		return ((in.length == 1 && in[0].getType() == null));
+		// convention (necessary probably only because of here):
+		// typeHandler.ctype2boogietype yields "null" for CPrimitive(PRIMITIVE.VOID)
+		return (in.length == 1 && in[0].getType() == null);
 	}
 
-	/**
-	 * Handles the translation of IASTFunctionDeclarator.
-	 * 
-	 * @param main
-	 *            a reference to the main dispatcher.
-	 * @param node
-	 *            the node to translate.
-	 * @return the translation result.
-	 */
-	public Result handleFunctionDeclarator(Dispatcher main,
-			IASTFunctionDeclarator node) {
-		ILocation loc = new CACSLLocation(node);
-		ArrayList<VarList> list = new ArrayList<VarList>();
-		for (IASTParameterDeclaration dec : ((CASTFunctionDeclarator) node)
-				.getParameters()) {
-			ResultTypes rt = (ResultTypes) main
-					.dispatch(dec.getDeclSpecifier());
-			IASTDeclarator d = dec.getDeclarator();
-			ResultTypes checkedType = main.cHandler.checkForPointer(main,
-					d.getPointerOperators(), rt, false);
-			CType cvar = checkedType.cType;
-			ASTType type = checkedType.getType();
-			if (!(checkedType.isVoid && !(cvar instanceof CPointer))) {
-				String cId = dec.getDeclarator().getName().toString();
-				if (cId.equals(SFO.EMPTY)) {
-					cId = SFO.UNNAMED
-							+ dec.getDeclarator().getName().hashCode();
-				}
-				String boogieId = main.nameHandler.getInParamIdentifier(cId);
-				if (cvar instanceof CPointer && checkedType.isVoid) {
-					// FIXME : Well the type seems to be void * in C ... we will
-					// represent this with a int in Boogie.
-					// should be changed to a real "void pointer" in the MM!
-					rt.node = new PrimitiveType(loc, SFO.INT);
-				}
-				VarList vl = new VarList(loc, new String[] { boogieId }, type);
-				VariableDeclaration decl = new VariableDeclaration(loc,
-						new Attribute[0], new VarList[] { vl });
-				main.cHandler.getSymbolTable().put(cId,
-						new SymbolTableValue(boogieId, decl, new CDeclaration(cvar, cId), false, 
-								StorageClass.UNSPECIFIED));
-				list.add(vl);
-			}
-		}
-		return new ResultVarList(list.toArray(new VarList[0]));
-	}
+	// should be obsolete: basically it seems to just compute the list of InParams, this (and more)
+	// is done by the new visit(Declarator) which returns the complete CType
+//	/**
+//	 * Handles the translation of IASTFunctionDeclarator. //FIXME: when was this used the last time?? what for??
+//	 * 
+//	 * @param main
+//	 *            a reference to the main dispatcher.
+//	 * @param node
+//	 *            the node to translate.
+//	 * @return the translation result.
+//	 */
+//	public Result handleFunctionDeclarator(Dispatcher main,
+//			IASTFunctionDeclarator node) {
+//		ILocation loc = new CACSLLocation(node);
+//		ArrayList<VarList> list = new ArrayList<VarList>();
+//		for (IASTParameterDeclaration dec : ((CASTFunctionDeclarator) node)
+//				.getParameters()) {
+//			ResultTypes rt = (ResultTypes) main
+//					.dispatch(dec.getDeclSpecifier());
+//			IASTDeclarator d = dec.getDeclarator();
+//			ResultTypes checkedType = main.cHandler.checkForPointer(main,
+//					d.getPointerOperators(), rt, false);
+//			CType cvar = checkedType.cType;
+//			ASTType type = checkedType.getType();
+//			if (!(checkedType.isVoid && !(cvar instanceof CPointer))) {
+//				String cId = dec.getDeclarator().getName().toString();
+//				if (cId.equals(SFO.EMPTY)) {
+//					cId = SFO.UNNAMED
+//							+ dec.getDeclarator().getName().hashCode();
+//				}
+//				String boogieId = main.nameHandler.getInParamIdentifier(cId);
+//				if (cvar instanceof CPointer && checkedType.isVoid) {
+//					// FIXME : Well the type seems to be void * in C ... we will
+//					// represent this with a int in Boogie.
+//					// should be changed to a real "void pointer" in the MM!
+//					rt.node = new PrimitiveType(loc, SFO.INT);
+//				}
+//				VarList vl = new VarList(loc, new String[] { boogieId }, type);
+//				VariableDeclaration decl = new VariableDeclaration(loc,
+//						new Attribute[0], new VarList[] { vl });
+//				main.cHandler.getSymbolTable().put(cId,
+//						new SymbolTableValue(boogieId, decl, new CDeclaration(cvar, cId), false, 
+//								StorageClass.UNSPECIFIED));
+//				list.add(vl);
+//			}
+//		}
+//		return new ResultVarList(list.toArray(new VarList[0]));
+//	}
 
 	/**
 	 * Getter for modified globals.
