@@ -330,12 +330,32 @@ public class BuchiCegarLoop {
 				
 				try {
 					switch (lassoChecker.getContinueDirective()) {
-						
+					
+					case REFINE_BOTH:
+					{
+						BinaryStatePredicateManager bspm = lassoChecker.getBinaryStatePredicateManager();
+						if (bspm.isLoopWithoutStemTerminating()) {
+							m_RankWithoutSi++;	
+						} else {
+							m_RankWithSi++;
+						}
+						ISLPredicate hondaISLP = (ISLPredicate) m_Counterexample.getLoop().getStateAtPosition(0);
+						ProgramPoint hondaPP = hondaISLP.getProgramPoint();
+						reportTerminationArgument(bspm.getTerminationArgument(), hondaPP, m_Counterexample.getStem().getWord(), m_Counterexample.getLoop().getWord());
+						m_RankingFunction.put(m_Iteration, bspm.getTerminationArgument().getRankingFunction());
+
+						INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
+						m_Abstraction = newAbstraction;
+						m_BinaryStatePredicateManager.clearPredicates();
+						refineFinite(lassoChecker);
+						m_Infeasible++;
+					}
+						break;
 					case REFINE_FINITE:
 						refineFinite(lassoChecker);
 						m_Infeasible++;
 						break;
-					case REFINE_BOTH:
+
 					case REFINE_BUCHI:
 						BinaryStatePredicateManager bspm = lassoChecker.getBinaryStatePredicateManager();
 						if (bspm.isLoopWithoutStemTerminating()) {
