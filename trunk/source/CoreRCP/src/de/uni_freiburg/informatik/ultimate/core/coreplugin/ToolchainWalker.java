@@ -76,9 +76,7 @@ public class ToolchainWalker {
 			// Otherwise deal with the current toolchain element
 			if (o instanceof PluginType) {
 				PluginType plugin = (PluginType) o;
-				if (!processPlugin(plugin)) {
-					return;
-				}
+				processPlugin(plugin);
 				// each successful plugin advances progress bar by 1
 				progress.worked(1);
 				work_remain--;
@@ -104,8 +102,9 @@ public class ToolchainWalker {
 	 * 
 	 * @param plugin
 	 * @return true/false, depending on whether plugin could be successfully processed
+	 * @throws Exception 
 	 */
-	private final boolean processPlugin(PluginType plugin) {
+	private final void processPlugin(PluginType plugin) throws Exception {
 		
 		// get tool belonging to id
 		ITool tool = this.m_Id2Plugin.get(plugin.getId());
@@ -113,7 +112,7 @@ public class ToolchainWalker {
 			s_Logger.error("Couldn't identify tool for plugin id "
 					+ plugin.getId() + "!");
 			this.m_ToolchainCancelRequest = true;
-			return true;
+			return;
 		}
 		
 		PluginConnector pc;
@@ -126,24 +125,26 @@ public class ToolchainWalker {
 		
 
 		m_Bench.start(pc.toString());
+		
 		try {
 			pc.run();
 		} catch (Exception e) {
 			s_Logger.error("The Plugin "+plugin.getId()+" has thrown an Exception!", e);
-			return false;
-		}
-		m_Bench.stop(pc.toString());
-		// did the plug-in have a serialization child element?
-		SerializeType st = plugin.getSerialize();
-		if (st != null)
-			processSerializeStmt(st);
-		
-		// did the plug-in have a dropmodels child element?
-		DropmodelType dt = plugin.getDropmodels();
-		if (dt != null) 
-			processDropmodelStmt(dt);
-
-		return true;
+			throw e;
+			
+		} finally{
+			m_Bench.stop(pc.toString());
+			// did the plug-in have a serialization child element?
+			SerializeType st = plugin.getSerialize();
+			if (st != null)
+				processSerializeStmt(st);
+			
+			// did the plug-in have a dropmodels child element?
+			DropmodelType dt = plugin.getDropmodels();
+			if (dt != null) 
+				processDropmodelStmt(dt);
+			
+		}		
 	}
 	
 	/**
@@ -152,9 +153,10 @@ public class ToolchainWalker {
 	 * @param chain
 	 * @param monitor
 	 * @return true/false, depending on whether subchain could be successfully processed
+	 * @throws Exception 
 	 */
 	private final boolean processSubchain(SubchainType chain,
-			IProgressMonitor monitor) {
+			IProgressMonitor monitor) throws Exception {
 		// again, convert monitor into SubMonitor with certain number of ticks
 		// depending of length of subchain
 		int work_remain = chain.getPluginOrSubchain().size();
@@ -195,9 +197,7 @@ public class ToolchainWalker {
 					}
 					if (o instanceof PluginType) {
 						PluginType plugin = (PluginType) o;
-						if (!processPlugin(plugin)) {
-							return false;
-						}
+						processPlugin(plugin);
 						progress.worked(1);
 						work_remain--;
 						progress.setWorkRemaining(work_remain);
