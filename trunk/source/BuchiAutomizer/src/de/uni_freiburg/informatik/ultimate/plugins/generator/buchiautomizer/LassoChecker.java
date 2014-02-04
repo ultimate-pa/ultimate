@@ -426,9 +426,9 @@ public class LassoChecker {
 		s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars);
 		
 		Preferences pref = new Preferences();
-		pref.num_non_strict_invariants = 2;
+		pref.num_non_strict_invariants = 1;
 		pref.num_strict_invariants = 0;
-		pref.only_nondecreasing_invariants = false;
+		pref.only_nondecreasing_invariants = true;
 		pref.smt_solver_command = "z3 -smt2  SMTLIB2_COMPLIANT=true -in -t:10123";
 //		pref.smt_solver_command = "z3 -smt2  SMTLIB2_COMPLIANT=true -in";
 
@@ -449,20 +449,20 @@ public class LassoChecker {
 				new ArrayList<RankingFunctionTemplate>();
 		rankingFunctionTemplates.add(new AffineTemplate());
 
-		rankingFunctionTemplates.add(new MultiphaseTemplate(1));
-		rankingFunctionTemplates.add(new MultiphaseTemplate(2));
-		rankingFunctionTemplates.add(new MultiphaseTemplate(3));
-		rankingFunctionTemplates.add(new MultiphaseTemplate(4));
-		rankingFunctionTemplates.add(new MultiphaseTemplate(5));
-		rankingFunctionTemplates.add(new MultiphaseTemplate(6));
-		rankingFunctionTemplates.add(new MultiphaseTemplate(7));
+//		rankingFunctionTemplates.add(new MultiphaseTemplate(1));
+//		rankingFunctionTemplates.add(new MultiphaseTemplate(2));
+//		rankingFunctionTemplates.add(new MultiphaseTemplate(3));
+//		rankingFunctionTemplates.add(new MultiphaseTemplate(4));
+//		rankingFunctionTemplates.add(new MultiphaseTemplate(5));
+//		rankingFunctionTemplates.add(new MultiphaseTemplate(6));
+//		rankingFunctionTemplates.add(new MultiphaseTemplate(7));
 	
-		rankingFunctionTemplates.add(new PiecewiseTemplate(2));
-		rankingFunctionTemplates.add(new PiecewiseTemplate(3));
-		
-		rankingFunctionTemplates.add(new LexicographicTemplate(1));
-		rankingFunctionTemplates.add(new LexicographicTemplate(2));
-		rankingFunctionTemplates.add(new LexicographicTemplate(3));
+//		rankingFunctionTemplates.add(new PiecewiseTemplate(2));
+//		rankingFunctionTemplates.add(new PiecewiseTemplate(3));
+//		
+//		rankingFunctionTemplates.add(new LexicographicTemplate(1));
+//		rankingFunctionTemplates.add(new LexicographicTemplate(2));
+//		rankingFunctionTemplates.add(new LexicographicTemplate(3));
 
 		TerminationArgument termArg = tryTemplatesAndComputePredicates(
 				withStem, lrta, rankingFunctionTemplates);
