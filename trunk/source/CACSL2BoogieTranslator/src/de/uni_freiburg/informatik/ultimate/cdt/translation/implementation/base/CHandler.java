@@ -731,6 +731,13 @@ public class CHandler implements ICHandler {
 				ResultDeclaration decl = (ResultDeclaration) main.dispatch(paramDecls[i]);
 				if (decl.getDeclarations().size() != 1)
 					throw new UnsupportedSyntaxException(loc, "Multiple names in parameter declaration");
+				if (decl.getDeclarations().get(0).getName() == "") {
+					assert paramDecls.length == 1 
+							&& decl.getDeclarations().get(0).getType() instanceof CPrimitive 
+							&& ((CPrimitive) decl.getDeclarations().get(0).getType()).getType().equals(PRIMITIVE.VOID);
+					paramsParsed = new CDeclaration[0];
+					break;
+				}
 				paramsParsed[i] = decl.getDeclarations().get(0);
 			}
 			CFunction funcType = new CFunction(newResType.cType, paramsParsed);
@@ -1032,7 +1039,7 @@ public class CHandler implements ICHandler {
 			 * becomes <code>!y ? 1 : 0</code>
 			 */
 			/** int <code>x</code> becomes <code>x == 0 ? 1 : 0</code> */
-			ResultExpression ropToBool = rexToBool(loc, rop);
+			ResultExpression ropToBool = rexToBoolIfNecessary(loc, rop);
 			Expression negated = new UnaryExpression(loc,
 					UnaryExpression.Operator.LOGICNEG,
 					ropToBool.lrVal.getValue());
@@ -1419,8 +1426,8 @@ public class CHandler implements ICHandler {
 					decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_logicalAnd: {
-			ResultExpression rlToBool = rexToBool(loc, rl);
-			ResultExpression rrToBool = rexToBool(loc, rr);
+			ResultExpression rlToBool = rexToBoolIfNecessary(loc, rl);
+			ResultExpression rrToBool = rexToBoolIfNecessary(loc, rr);
 
 			stmt.addAll(rlToBool.stmt);
 			// NOTE: no rr.stmt
@@ -1458,7 +1465,7 @@ public class CHandler implements ICHandler {
 					new IdentifierExpression(loc, resName),
 					new CPrimitive(PRIMITIVE.INT));
 			RValue resRval = tmpRval;
-			tmpRval = ConvExpr.toBoolean(loc, tmpRval);
+			tmpRval = ConvExpr.toBoolean(loc, tmpRval);//FIXME: does it make sense to first create, then immediately convert it??
 			// #t~AND~UID = left
 		
 			AssignmentStatement aStat = new AssignmentStatement(loc,
@@ -1487,8 +1494,8 @@ public class CHandler implements ICHandler {
 					decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_logicalOr: {
-			ResultExpression rlToBool = rexToBool(loc, rl);
-			ResultExpression rrToBool = rexToBool(loc, rr);
+			ResultExpression rlToBool = rexToBoolIfNecessary(loc, rl);
+			ResultExpression rrToBool = rexToBoolIfNecessary(loc, rr);
 
 			stmt.addAll(rlToBool.stmt);
 			// NOTE: no rr.stmt
@@ -1693,7 +1700,7 @@ public class CHandler implements ICHandler {
 		}
 	}
 
-	private ResultExpression rexToBool(ILocation loc, ResultExpression rl) {
+	private ResultExpression rexToBoolIfNecessary(ILocation loc, ResultExpression rl) {
 		ResultExpression rlToBool = null;
 		if (rl.lrVal.isBoogieBool) {
 			rlToBool = rl;
@@ -1937,6 +1944,7 @@ public class CHandler implements ICHandler {
 		ResultExpression condResult = (ResultExpression) main.dispatch(
 				node.getConditionExpression());
 		condResult = condResult.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		condResult = rexToBoolIfNecessary(loc, condResult);
 		RValue cond = (RValue) condResult.lrVal;
 		decl.addAll(condResult.decl);
 		stmt.addAll(condResult.stmt);
@@ -1983,8 +1991,8 @@ public class CHandler implements ICHandler {
 		}
 		assert thenStmt != null;
 		assert elseStmt != null;
-		if (!cond.isBoogieBool)
-			cond = ConvExpr.toBoolean(loc, cond);
+//		if (!cond.isBoogieBool) //done for condREsult already
+//			cond = ConvExpr.toBoolean(loc, cond);
 		// TODO : handle if(pointer), if(pointer==NULL) and if(pointer==0)
 		IfStatement ifStmt = new IfStatement(loc, cond.getValue(), thenStmt.toArray(new Statement[0]),
 				elseStmt.toArray(new Statement[0]));
@@ -2109,8 +2117,10 @@ public class CHandler implements ICHandler {
 		}
 
 		condResult = condResult.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		condResult = rexToBoolIfNecessary(loc, condResult);
 		decl.addAll(condResult.decl);
-		RValue condRVal = ConvExpr.toBoolean(loc, (RValue) condResult.lrVal);
+//		RValue condRVal = ConvExpr.toBoolean(loc, (RValue) condResult.lrVal);
+		RValue condRVal = (RValue) condResult.lrVal;
 		IfStatement ifStmt;
 		{
 			Expression cond = new UnaryExpression(loc,
@@ -2550,6 +2560,7 @@ public class CHandler implements ICHandler {
 		assert resLocCond instanceof ResultExpression;
 		ResultExpression reLocCond = (ResultExpression) resLocCond;
 		reLocCond = reLocCond.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		reLocCond = rexToBoolIfNecessary(loc, reLocCond);
 
 		Result rPositive = main.dispatch(node.getPositiveResultExpression());
 		assert rPositive instanceof ResultExpression;
@@ -2574,7 +2585,7 @@ public class CHandler implements ICHandler {
 		VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpType, loc);
 		decl.add(tmpVar);
 		RValue condition = (RValue) reLocCond.lrVal;
-		condition = ConvExpr.toBoolean(loc, condition);
+//		condition = ConvExpr.toBoolean(loc, condition); //done for relocCond
 		List<Statement> ifStatements = new ArrayList<Statement>();
 		{
 			ifStatements.addAll(rePositive.stmt);
