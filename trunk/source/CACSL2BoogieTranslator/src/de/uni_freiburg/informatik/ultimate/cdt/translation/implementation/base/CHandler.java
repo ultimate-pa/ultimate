@@ -641,7 +641,10 @@ public class CHandler implements ICHandler {
 						globalInBoogie = true;
 						mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
 					} else {
-						 if (cDec.getInitializer() != null && !functionHandler.noCurrentProcedure()) { 
+						if (cDec.getInitializer() == null && !functionHandler.noCurrentProcedure()) { 
+							//in case of a local variable declaration without an initializer, we don't modify
+							// the result
+						} else if (cDec.getInitializer() != null && !functionHandler.noCurrentProcedure()) { 
 							//in case of a local variable declaration with an initializer, the statements and delcs
 							// necessary for the initialization are the result
 							ResultExpression initRex = 
@@ -649,7 +652,7 @@ public class CHandler implements ICHandler {
 											new VariableLHS(loc, bId), cDec.getType(), cDec.getInitializer());
 							if (result instanceof ResultSkip)
 								result = new ResultExpression((LRValue) null);
-							
+
 							((ResultExpression) result).stmt.addAll(initRex.stmt);
 							((ResultExpression) result).decl.addAll(initRex.decl);
 							((ResultExpression) result).auxVars.putAll(initRex.auxVars);
@@ -657,7 +660,7 @@ public class CHandler implements ICHandler {
 						} else {
 							//in case of global variables, the result is the declaration, initialization is
 							//done in the postProcessor
-							//in this simpleDeclaration is part of a struct definition, we also need the 
+							//in case this simpleDeclaration is part of a struct definition, we also need the 
 							//Declarations as a result
 							if (result instanceof ResultSkip)
 								result = new ResultDeclaration();
