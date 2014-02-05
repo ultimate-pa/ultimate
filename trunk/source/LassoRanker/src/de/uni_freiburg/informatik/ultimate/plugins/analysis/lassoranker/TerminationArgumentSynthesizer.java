@@ -65,7 +65,13 @@ class TerminationArgumentSynthesizer {
 			LinearTransition loop, Preferences preferences) {
 		m_preferences = preferences;
 		m_script = script;
-		script.setLogic(Logics.QF_NRA);
+		
+		// Set logic
+		if (preferences.nontermination_check_nonlinear) {
+			script.setLogic(Logics.QF_NRA);
+		} else {
+			script.setLogic(Logics.QF_LRA);
+		}
 		
 		m_supporting_invariants = new ArrayList<SupportingInvariant>();
 		
@@ -159,7 +165,8 @@ class TerminationArgumentSynthesizer {
 							m_loop_transition.getInVars()));
 				}
 				s_Logger.debug(motzkin);
-				conj.add(motzkin.transform());
+				conj.add(motzkin.transform(
+						m_preferences.nontermination_check_nonlinear));
 			}
 		}
 		
@@ -179,7 +186,8 @@ class TerminationArgumentSynthesizer {
 				li.negate();
 				motzkin.add_inequality(li);
 //				s_Logger.debug(motzkin);
-				conj.add(motzkin.transform());
+				conj.add(motzkin.transform(
+						m_preferences.nontermination_check_nonlinear));
 			}
 			// si(x) /\ loop(x, x') -> si(x')
 			for (List<LinearInequality> loopConj : m_loop.getPolyhedra()) {
@@ -197,7 +205,8 @@ class TerminationArgumentSynthesizer {
 				li.negate();
 				motzkin.add_inequality(li);
 //				s_Logger.debug(motzkin);
-				conj.add(motzkin.transform());
+				conj.add(motzkin.transform(
+						m_preferences.nontermination_check_nonlinear));
 			}
 		}
 		return conj;
@@ -222,6 +231,9 @@ class TerminationArgumentSynthesizer {
 	 */
 	public boolean synthesize(RankingFunctionTemplate template)
 			throws SMTLIBException, TermException {
+		assert m_preferences.nontermination_check_nonlinear
+				|| template.getDegree() == 0
+				: "Linear SMT queries work only on templates of degree 0.";
 		Collection<BoogieVar> rankVars = getRankVars();
 		Collection<BoogieVar> siVars = getSIVars();
 		template.init(m_script, rankVars);

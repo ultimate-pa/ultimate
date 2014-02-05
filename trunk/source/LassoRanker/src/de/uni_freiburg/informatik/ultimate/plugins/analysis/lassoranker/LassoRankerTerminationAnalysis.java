@@ -200,8 +200,11 @@ public class LassoRankerTerminationAnalysis {
 	 * Issues a bunch of logger infos and warnings.
 	 */
 	protected void checkPreferences(Preferences preferences) {
-		assert(preferences.num_strict_invariants >= 0);
-		assert(preferences.num_non_strict_invariants >= 0);
+		assert preferences.num_strict_invariants >= 0;
+		assert preferences.num_non_strict_invariants >= 0;
+		assert preferences.nontermination_check_nonlinear
+				|| preferences.only_nondecreasing_invariants
+				: "Use nondecreasing invariants with a linear SMT query.";
 		if (preferences.num_strict_invariants == 0 &&
 				preferences.num_non_strict_invariants == 0) {
 			s_Logger.warn("Generation of supporting invariants is disabled.");
