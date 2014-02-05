@@ -286,22 +286,28 @@ public class MotzkinTransformation extends InstanceCounting {
 			int[] fixed_indeces = new int[m_coefficients.length];
 				// This array is way to big, but I don't care
 			for (int i = 0; i < m_inequalities.size(); ++i) {
-				if (!m_inequalities.get(i).needs_motzkin_coefficient) {
+				LinearInequality li = m_inequalities.get(i);
+				if (!li.needs_motzkin_coefficient
+						&& li.motzkin_coefficient_can_be_zero) {
 					fixed_indeces[num_fixed_coeffs] = i;
 					++num_fixed_coeffs;
 				}
 			}
 			assert num_fixed_coeffs < 31 : "Too many fixed coefficients!";
 			
-			// Create a new coefficients array so that we can edit it
-			Term[] fixed_coefficients = new Term[m_coefficients.length];
-			for (int i = 0; i < m_coefficients.length; ++i) {
-				fixed_coefficients[i] = m_coefficients[i];
-			}
-			
 			// Fixed values
 			Term zero = m_script.decimal("0");
 			Term one = m_script.decimal("1");
+			
+			// Create a new coefficients array so that we can edit it
+			Term[] fixed_coefficients = new Term[m_coefficients.length];
+			for (int i = 0; i < m_coefficients.length; ++i) {
+				if (m_inequalities.get(i).motzkin_coefficient_can_be_zero) {
+					fixed_coefficients[i] = m_coefficients[i];
+				} else {
+					fixed_coefficients[i] = one;
+				}
+			}
 			
 			List<Term> disjunction = new ArrayList<Term>();
 			for (int i = 0; i < (1 << num_fixed_coeffs); ++i) {
@@ -324,11 +330,19 @@ public class MotzkinTransformation extends InstanceCounting {
 					LinearInequality li = m_inequalities.get(i);
 					if (!li.needs_motzkin_coefficient) {
 						Term coefficient = m_coefficients[i];
-						conjunction.add(Util.or(m_script,
-							m_script.term("=", coefficient, m_script.decimal("0")),
-							m_script.term("=", coefficient, m_script.decimal("1"))
-						));
-						// TODO: allow fixing to { 1 }.
+						if (li.motzkin_coefficient_can_be_zero) {
+							// Fixing Motzkin coefficient to { 0, 1 }
+							conjunction.add(Util.or(m_script,
+								m_script.term("=",
+										coefficient, m_script.decimal("0")),
+								m_script.term("=",
+										coefficient, m_script.decimal("1"))
+							));
+						} else {
+							// Fixing Motzkin coefficient to { 1 }
+							conjunction.add(m_script.term("=",
+									coefficient, m_script.decimal("1")));
+						}
 					}
 				}
 			}

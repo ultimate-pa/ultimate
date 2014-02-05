@@ -164,8 +164,10 @@ class TerminationArgumentSynthesizer {
 							new SupportingInvariantGenerator(m_script, siVars,
 									false);
 					si_generators.add(sig);
-					motzkin.add_inequality(sig.generate(
-							m_loop_transition.getInVars()));
+					LinearInequality li =
+							sig.generate(m_loop_transition.getInVars());
+					li.motzkin_coefficient_can_be_zero = false;
+					motzkin.add_inequality(li);
 				}
 				s_Logger.debug(motzkin);
 				conj.add(motzkin.transform());
@@ -192,6 +194,8 @@ class TerminationArgumentSynthesizer {
 				LinearInequality li =
 						sig.generate(m_stem_transition.getOutVars());
 				li.negate();
+				li.motzkin_coefficient_can_be_zero = false;
+					// otherwise the stem is unsat
 				motzkin.add_inequality(li);
 //				s_Logger.debug(motzkin);
 				conj.add(motzkin.transform());

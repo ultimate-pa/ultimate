@@ -43,6 +43,12 @@ public class LinearInequality {
 	public boolean needs_motzkin_coefficient = true;
 	
 	/**
+	 * Whether the Motzkin coefficient corresponding to this inequality
+	 * needs to be able to be zero
+	 */
+	public boolean motzkin_coefficient_can_be_zero = true;
+	
+	/**
 	 * List of variables including rational coefficients
 	 */
 	private Map<TermVariable, AffineTerm> m_coefficients;
