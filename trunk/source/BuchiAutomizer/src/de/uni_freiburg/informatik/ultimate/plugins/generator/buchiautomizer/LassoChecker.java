@@ -63,7 +63,15 @@ public class LassoChecker {
 	 * Try all templates but use the one that was found first. This is only
 	 * useful to test all templates at once.  
 	 */
-	private static final boolean s_TryAllTemplates = !false;
+	private static final boolean s_TryAllTemplates = false;
+	
+	/**
+	 * If true we check if the loop has a ranking function even if the stem
+	 * or the concatenation of stem and loop are already infeasible.
+	 * If false we make this additional check only if the loop is smaller than
+	 * the stem.
+	 */
+	private static final boolean s_AlwaysAdditionalLoopTerminationCheck = true;
 	
 	private final INTERPOLATION m_Interpolation;
 
@@ -227,7 +235,8 @@ public class LassoChecker {
 				checkConcatFeasibility();
 				if (m_ConcatInfeasible) {
 					s_Logger.info("concat infeasible");
-					if (loop.getLength() < stem.getLength()) {
+					if (s_AlwaysAdditionalLoopTerminationCheck || 
+							loop.getLength() < stem.getLength()) {
 						TransFormula loopTF = computeLoopTF();
 						checkLoopTermination(loopTF);
 						if (m_LoopTermination == SynthesisResult.TERMINATING) {
