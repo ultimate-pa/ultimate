@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -24,6 +26,8 @@ public class SMTPrettyPrinter {
 	
 	private static String print(Term term, int indentation) {
 		assert(indentation >= 0);
+		
+		StringBuilder sb = new StringBuilder();
 		if (term instanceof ConstantTerm) {
 			return term.toString();
 		} else if (term instanceof TermVariable) {
@@ -37,7 +41,6 @@ public class SMTPrettyPrinter {
 			}
 			
 			// Recursively convert parameters
-			StringBuilder sb = new StringBuilder();
 			sb.append("(");
 			boolean infix = false;
 			for (String infix_fname : s_infix_functions) {
@@ -74,11 +77,21 @@ public class SMTPrettyPrinter {
 				indent(sb, indentation);
 			}
 			sb.append(")");
-			return sb.toString();
+		} else if (term instanceof AnnotatedTerm) {
+			AnnotatedTerm annot = (AnnotatedTerm) term;
+			for (Annotation a : annot.getAnnotations()) {
+				indent(sb, indentation);
+				sb.append("{");
+				sb.append(a.getKey());
+				sb.append(" ");
+				sb.append(a.getValue());
+				sb.append("}\n");
+			}
+			sb.append(print(annot.getSubterm(), indentation));
 		} else {
 			assert(false); // Not implemented
 		}
-		return null;
+		return sb.toString();
 	}
 	
 	/**

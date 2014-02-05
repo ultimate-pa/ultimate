@@ -135,12 +135,15 @@ class TerminationArgumentSynthesizer {
 		
 		// loop(x, x') /\ si(x) -> template(x, x')
 		// Iterate over the loop conjunctions and template disjunctions
+		int j = 0;
 		for (List<LinearInequality> loopConj : m_loop.getPolyhedra()) {
+			++j;
 			for (int m = 0; m < templateConstraints.size(); ++m) {
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script,
+								!m_preferences.nontermination_check_nonlinear,
 								m_preferences.annotate_terms);
-				motzkin.annotation = annotations.get(m);
+				motzkin.annotation = annotations.get(m) + " " + j;
 				motzkin.add_inequalities(loopConj);
 				motzkin.add_inequalities(templateConstraints.get(m));
 				
@@ -165,36 +168,44 @@ class TerminationArgumentSynthesizer {
 							m_loop_transition.getInVars()));
 				}
 				s_Logger.debug(motzkin);
-				conj.add(motzkin.transform(
-						m_preferences.nontermination_check_nonlinear));
+				conj.add(motzkin.transform());
 			}
 		}
 		
 		// Add constraints for the supporting invariants
 		s_Logger.debug("Adding the constraints for " + si_generators.size()
 				+ " supporting invariants.");
+		int i = 0;
 		for (SupportingInvariantGenerator sig : si_generators) {
+			++i;
+			
 			// stem(x0) -> si(x0)
+			j = 0;
 			for (List<LinearInequality> stemConj : m_stem.getPolyhedra()) {
+				++j;
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script,
+								!m_preferences.nontermination_check_nonlinear,
 								m_preferences.annotate_terms);
-				motzkin.annotation = "invariant initiation";
+				motzkin.annotation = "invariant " + i + " initiation " + j;
 				motzkin.add_inequalities(stemConj);
 				LinearInequality li =
 						sig.generate(m_stem_transition.getOutVars());
 				li.negate();
 				motzkin.add_inequality(li);
 //				s_Logger.debug(motzkin);
-				conj.add(motzkin.transform(
-						m_preferences.nontermination_check_nonlinear));
+				conj.add(motzkin.transform());
 			}
+			
 			// si(x) /\ loop(x, x') -> si(x')
+			j = 0;
 			for (List<LinearInequality> loopConj : m_loop.getPolyhedra()) {
+				++j;
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script,
+								!m_preferences.nontermination_check_nonlinear,
 								m_preferences.annotate_terms);
-				motzkin.annotation = "invariant consecution";
+				motzkin.annotation = "invariant " + i + " consecution " + j;
 				motzkin.add_inequalities(loopConj);
 				motzkin.add_inequality(sig.generate(
 						m_loop_transition.getInVars())); // si(x)
@@ -205,8 +216,7 @@ class TerminationArgumentSynthesizer {
 				li.negate();
 				motzkin.add_inequality(li);
 //				s_Logger.debug(motzkin);
-				conj.add(motzkin.transform(
-						m_preferences.nontermination_check_nonlinear));
+				conj.add(motzkin.transform());
 			}
 		}
 		return conj;

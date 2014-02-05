@@ -68,17 +68,22 @@ public class MotzkinTransformation extends InstanceCounting {
 	/**
 	 * Whether the generated terms should be annotated
 	 */
-	private boolean m_annotate_terms = false;
+	private boolean m_annotate_terms;
+	
+	/**
+	 * Whether the transformed formula should be linear
+	 */
+	private boolean m_linear;
 	
 	/**
 	 * An optional description string
 	 */
-	public String annotation = null;
+	public String annotation = null; // Must be unique!
 	
 	/**
 	 * List of Motzkin coefficients
 	 */
-	private List<Term> m_coefficients = null;
+	private Term[] m_coefficients = null;
 	
 	/**
 	 * Construct the MotzkinApplication object with a script instance.
@@ -88,11 +93,15 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * Transposition Theorem.
 	 * 
 	 * @param script The SMTLib script
+	 * @param linear should the transformed formula be linear?
+	 * @param annotate annotate the transformed term?
 	 */
-	public MotzkinTransformation(Script script, boolean annotate) {
+	public MotzkinTransformation(Script script, boolean linear,
+			boolean annotate) {
 		m_script = script;
 		m_inequalities = new ArrayList<LinearInequality>();
 		m_annotate_terms = annotate;
+		m_linear = linear;
 	}
 	
 	/**
@@ -139,11 +148,13 @@ public class MotzkinTransformation extends InstanceCounting {
 		}
 		
 		int num_coefficients = m_inequalities.size();
-		m_coefficients = new ArrayList<Term>();
+		m_coefficients = new Term[num_coefficients];
 		for (int i = 0; i < num_coefficients; ++i) {
-			Term coefficient = AuxiliaryMethods.newConstant(m_script,
-					s_motzkin_prefix + m_instance + "_" + i, "Real");
-			m_coefficients.add(coefficient);
+			if (m_inequalities.get(i).needs_motzkin_coefficient || !m_linear) {
+				Term coefficient = AuxiliaryMethods.newConstant(m_script,
+						s_motzkin_prefix + m_instance + "_" + i, "Real");
+				m_coefficients[i] = coefficient;
+			}
 		}
 	}
 	
@@ -164,26 +175,20 @@ public class MotzkinTransformation extends InstanceCounting {
 		return null;
 	}
 	
-	private Term doTransform(List<Term> coefficients,
-			Collection<TermVariable> vars) throws SMTLIBException {
-		int num_coefficients = coefficients.size();
+	private Term doTransform(Term[] coefficients, Collection<TermVariable> vars)
+			throws SMTLIBException {
+		int num_coefficients = coefficients.length;
 		assert(num_coefficients == m_inequalities.size());
 		
 		List<Term> conjunction = new ArrayList<Term>(); // Conjunctions of the
 			// resulting formula
-		
-		// λ ≥ 0 /\ μ ≥ 0
-		for (Term coefficient : m_coefficients) {
-			conjunction.add(m_script.term(">=", coefficient,
-					m_script.decimal("0")));
-		}
 		
 		// λ*A + μ*B = 0
 		for (TermVariable var : vars) {
 			List<Term> summands = new ArrayList<Term>();
 			for (int i = 0; i < num_coefficients; ++i) {
 				Term s = product(m_inequalities.get(i).getCoefficient(var),
-						m_coefficients.get(i));
+						coefficients[i]);
 				if (s != null) {
 					summands.add(s);
 				}
@@ -198,7 +203,7 @@ public class MotzkinTransformation extends InstanceCounting {
 			List<Term> summands = new ArrayList<Term>();
 			for (int i = 0; i < num_coefficients; ++i) {
 				LinearInequality li = m_inequalities.get(i);
-				Term s = product(li.getConstant(), m_coefficients.get(i));
+				Term s = product(li.getConstant(), coefficients[i]);
 				if (s != null) {
 					summands.add(s);
 				}
@@ -213,7 +218,7 @@ public class MotzkinTransformation extends InstanceCounting {
 			List<Term> summands = new ArrayList<Term>();
 			for (int i = 0; i < num_coefficients; ++i) {
 				LinearInequality li = m_inequalities.get(i);
-				Term s = product(li.getConstant(), m_coefficients.get(i));
+				Term s = product(li.getConstant(), coefficients[i]);
 				if (!li.isStrict() && s != null) {
 					// only non-strict inequalities
 					summands.add(s);
@@ -229,7 +234,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				LinearInequality li = m_inequalities.get(i);
 				if (li.isStrict()) {
 					// only strict inequalities
-					summands.add(m_coefficients.get(i));
+					summands.add(coefficients[i]);
 				}
 			}
 			sum = UtilExperimental.sum(m_script, m_script.sort("Real"),
@@ -248,7 +253,7 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * @return a formula equivalent to the negated conjunction of the
 	 *         inequalities
 	 */
-	public Term transform(boolean nonlinear) throws SMTLIBException {
+	public Term transform() throws SMTLIBException {
 		registerMotzkinCoefficients();
 		
 		// Gather all occurring variables
@@ -257,7 +262,16 @@ public class MotzkinTransformation extends InstanceCounting {
 			vars.addAll(li.getVariables());
 		}
 		
-		Term transformedTerm = null;
+		List<Term> conjunction = new ArrayList<Term>();
+		
+		// λ ≥ 0 /\ μ ≥ 0
+		for (Term coefficient : m_coefficients) {
+			if (coefficient != null) {
+				conjunction.add(m_script.term(">=", coefficient,
+						m_script.decimal("0")));
+			}
+		}
+		
 		/*
 		 * With a nonlinear query, we think it is more efficient to
 		 * use variables for Motzkin coefficients that are fixed to
@@ -266,32 +280,10 @@ public class MotzkinTransformation extends InstanceCounting {
 		 * This cannot be done when we need a linear query, so we have to
 		 * build a big disjunction.
 		 */
-		if (nonlinear) {
-			List<Term> conjunction = new ArrayList<Term>();
-			conjunction.add(doTransform(m_coefficients, vars));
-			
-			// Fixed Motzkin coefficients
-			{
-				for (int i = 0; i < m_inequalities.size(); ++i) {
-					LinearInequality li = m_inequalities.get(i);
-					if (!li.needs_motzkin_coefficient) {
-						Term coefficient = m_coefficients.get(i);
-						conjunction.add(Util.or(m_script,
-							m_script.term("=", coefficient, m_script.decimal("0")),
-							m_script.term("=", coefficient, m_script.decimal("1"))
-						));
-						// TODO: allow fixing to { 1 }.
-					}
-				}
-			}
-			transformedTerm =
-					Util.and(m_script, conjunction.toArray(new Term[0]));
-		} else {
-			assert !nonlinear;
-			
+		if (m_linear) {
 			// Count the number of Motzkin coefficients that need to be fixed
 			int num_fixed_coeffs = 0;
-			int[] fixed_indeces = new int[m_coefficients.size()];
+			int[] fixed_indeces = new int[m_coefficients.length];
 				// This array is way to big, but I don't care
 			for (int i = 0; i < m_inequalities.size(); ++i) {
 				if (!m_inequalities.get(i).needs_motzkin_coefficient) {
@@ -302,9 +294,9 @@ public class MotzkinTransformation extends InstanceCounting {
 			assert num_fixed_coeffs < 31 : "Too many fixed coefficients!";
 			
 			// Create a new coefficients array so that we can edit it
-			Term[] fixed_coefficients = new Term[m_coefficients.size()];
-			for (int i = 0; i < m_coefficients.size(); ++i) {
-				fixed_coefficients[i] = m_coefficients.get(i);
+			Term[] fixed_coefficients = new Term[m_coefficients.length];
+			for (int i = 0; i < m_coefficients.length; ++i) {
+				fixed_coefficients[i] = m_coefficients[i];
 			}
 			
 			// Fixed values
@@ -318,20 +310,37 @@ public class MotzkinTransformation extends InstanceCounting {
 					fixed_coefficients[fixed_indeces[j]] =
 							(i & (1 << j)) == 0 ? zero : one;
 				}
-				disjunction.add(doTransform(m_coefficients, vars));
+				disjunction.add(doTransform(fixed_coefficients, vars));
 			}
-			transformedTerm = Util.or(m_script,
-					disjunction.toArray(new Term[0]));
+			conjunction.add(
+					Util.or(m_script, disjunction.toArray(new Term[0])));
+		} else {
+			assert !m_linear;
+			conjunction.add(doTransform(m_coefficients, vars));
+			
+			// Fixed Motzkin coefficients
+			{
+				for (int i = 0; i < m_inequalities.size(); ++i) {
+					LinearInequality li = m_inequalities.get(i);
+					if (!li.needs_motzkin_coefficient) {
+						Term coefficient = m_coefficients[i];
+						conjunction.add(Util.or(m_script,
+							m_script.term("=", coefficient, m_script.decimal("0")),
+							m_script.term("=", coefficient, m_script.decimal("1"))
+						));
+						// TODO: allow fixing to { 1 }.
+					}
+				}
+			}
 		}
+		Term t = Util.and(m_script, conjunction.toArray(new Term[0]));
 		
 		// Possibly annotate the term
-		if (m_annotate_terms) {
-			transformedTerm = m_script.annotate(
-				transformedTerm,
-				new Annotation(":named", annotation)
-			);
+		if (m_annotate_terms && annotation != null) {
+			t = m_script.annotate(t, new Annotation(":named",
+					annotation.replace(" ", "_")));
 		}
-		return transformedTerm;
+		return t;
 	}
 	
 	@Override
@@ -349,7 +358,10 @@ public class MotzkinTransformation extends InstanceCounting {
 			sb.append(li);
 		}
 		sb.append("\nConstraints:\n");
-		sb.append(SMTPrettyPrinter.print(this.transform(true)));
+		boolean annotate_terms = m_annotate_terms;
+		m_annotate_terms = false;
+		sb.append(SMTPrettyPrinter.print(this.transform()));
+		m_annotate_terms = annotate_terms;
 		return sb.toString();
 	}
 }

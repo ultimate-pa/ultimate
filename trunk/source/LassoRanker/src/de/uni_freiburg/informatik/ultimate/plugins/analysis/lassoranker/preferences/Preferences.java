@@ -69,8 +69,7 @@ public class Preferences implements Serializable {
 	 * Add annotations to terms for debugging purposes and/or to make use
 	 * of unsatisfiable cores
 	 */
-	public boolean annotate_terms = false; // Default: false
-		// FIXME: currently broken
+	public boolean annotate_terms = false; // Default: true
 	
 	/**
 	 * Use a nonlinear SMT query for checking nontermination?
