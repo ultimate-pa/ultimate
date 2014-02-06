@@ -644,9 +644,11 @@ public class CHandler implements ICHandler {
 						if (cDec.getInitializer() == null && !functionHandler.noCurrentProcedure()) { 
 							//in case of a local variable declaration without an initializer, we don't modify
 							// the result
+							assert result instanceof ResultSkip || result instanceof ResultExpression;
 						} else if (cDec.getInitializer() != null && !functionHandler.noCurrentProcedure()) { 
 							//in case of a local variable declaration with an initializer, the statements and delcs
 							// necessary for the initialization are the result
+							assert result instanceof ResultSkip || result instanceof ResultExpression;
 							ResultExpression initRex = 
 									PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler, 
 											new VariableLHS(loc, bId), cDec.getType(), cDec.getInitializer());
@@ -662,6 +664,7 @@ public class CHandler implements ICHandler {
 							//done in the postProcessor
 							//in case this simpleDeclaration is part of a struct definition, we also need the 
 							//Declarations as a result
+							assert result instanceof ResultSkip || result instanceof ResultDeclaration;
 							if (result instanceof ResultSkip)
 								result = new ResultDeclaration();
 							((ResultDeclaration) result).addDeclaration(cDec);

@@ -303,7 +303,7 @@ public class ResultExpression extends Result {
 		
 		Expression structOnHeapAddress = address.getValue();
 //		CStruct structType = (CStruct) ((CPointer) address.cType).pointsToType;
-		CStruct structType = (CStruct) address.cType;
+		CStruct structType = (CStruct) address.cType.getUnderlyingType();
 		
 		ResultExpression result = null;
 		

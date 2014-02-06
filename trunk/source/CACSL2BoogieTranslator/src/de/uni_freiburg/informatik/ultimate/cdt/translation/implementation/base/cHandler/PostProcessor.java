@@ -284,8 +284,9 @@ public class PostProcessor {
 	public static ResultExpression initVar(ILocation loc, Dispatcher main,
 			MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler, 
 			StructHandler structHandler, final LeftHandSide lhs,
-			CType cvar, ResultExpression initializer) {
+			CType cvar, ResultExpression initializerRaw) {
 		CType lCvar = cvar.getUnderlyingType();
+		
 		
 		//TODO: deal with varsOnHeap
 		boolean onHeap = false;
@@ -299,7 +300,10 @@ public class PostProcessor {
 		
 		//if (f.i.) the initializer comes from a function call, it has statements and declarations that we need to
 		//carry over
-		if (initializer != null) {
+		ResultExpression initializer = null;
+		if (initializerRaw != null) {
+			initializer = 
+					initializerRaw.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			stmt.addAll(initializer.stmt);
 			decl.addAll(initializer.decl);
 			overappr.addAll(initializer.overappr);

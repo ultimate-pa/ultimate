@@ -131,7 +131,7 @@ public class StructHandler {
 		Expression addressOffsetOfFieldOwner;
 		
 		Expression structAddress = address.getValue();
-		CStruct structType = (CStruct) address.cType;
+		CStruct structType = (CStruct) address.cType.getUnderlyingType();
 
 		addressBaseOfFieldOwner = new StructAccessExpression(loc, 
 				structAddress, SFO.POINTER_BASE);
