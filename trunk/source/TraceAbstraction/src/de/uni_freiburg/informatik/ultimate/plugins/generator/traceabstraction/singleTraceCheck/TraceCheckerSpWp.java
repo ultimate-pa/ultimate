@@ -802,14 +802,13 @@ public class TraceCheckerSpWp extends TraceChecker {
 		for (int i=-1; i<interpolants.length; i++) {
 			 result = isHoareTriple(i+1, tracePrecondition, tracePostcondition, 
 						interpolants, trace);
-			 assert result == LBool.UNSAT || result == LBool.UNKNOWN : 
-				 "invalid Hoare triple in " + computation;
 			 if (result == LBool.SAT) {
 				 s_Logger.debug("Trace length: " + trace.length());
 				 s_Logger.debug("Stmt: " + (i+1));
 				 return false;
 			 }
-
+			 assert result == LBool.UNSAT || result == LBool.UNKNOWN : 
+				 "invalid Hoare triple in " + computation;
 		}
 		return true;
 	}
@@ -850,8 +849,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 			ec.assertHierPred(callPredecessor);
 			result = ec.postReturnImplies(post);
 			ec.unAssertHierPred();
-			 assert result == LBool.UNSAT || result == LBool.UNKNOWN : 
-				 "invalid Hoare triple in ";
 		} else if (cb instanceof InterproceduralSequentialComposition) {
 			result = ec.postInternalImplies(post); 
 		} else {
@@ -866,7 +863,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 		s_Logger.debug("Hoare triple {" + pre + "}, " + cb + " {" 
 											+ post + "} is " + (result == LBool.UNSAT ? "valid" :
 												(result == LBool.SAT ? "not valid" : result)));
-
 		return result;
 	}
 	
