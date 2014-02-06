@@ -737,10 +737,12 @@ public class CHandler implements ICHandler {
 				ResultDeclaration decl = (ResultDeclaration) main.dispatch(paramDecls[i]);
 				if (decl.getDeclarations().size() != 1)
 					throw new UnsupportedSyntaxException(loc, "Multiple names in parameter declaration");
-				if (decl.getDeclarations().get(0).getName() == "") {
-					assert paramDecls.length == 1 
-							&& decl.getDeclarations().get(0).getType() instanceof CPrimitive 
-							&& ((CPrimitive) decl.getDeclarations().get(0).getType()).getType().equals(PRIMITIVE.VOID);
+				if (decl.getDeclarations().get(0).getName() == ""
+						&& decl.getDeclarations().get(0).getType() instanceof CPrimitive
+						&& ((CPrimitive) decl.getDeclarations().get(0).getType()).getType().equals(PRIMITIVE.VOID)) {
+					assert paramDecls.length == 1;
+//							&& decl.getDeclarations().get(0).getType() instanceof CPrimitive 
+//							&& ((CPrimitive) decl.getDeclarations().get(0).getType()).getType().equals(PRIMITIVE.VOID);
 					paramsParsed = new CDeclaration[0];
 					break;
 				}
