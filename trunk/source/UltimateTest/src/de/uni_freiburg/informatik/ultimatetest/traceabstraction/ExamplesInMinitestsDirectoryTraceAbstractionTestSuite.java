@@ -20,9 +20,9 @@ public class ExamplesInMinitestsDirectoryTraceAbstractionTestSuite extends
 	private static final String m_Path = "examples/programs/minitests//";
 	// private static final String m_excludeFilesFromDir = "examples/programs/minitests/openbugs/";
 	
-	private static final boolean m_TraceAbstractionWithBackwardPredicates = !false;
-	private static final boolean m_TraceAbstractionWithForwardPredicates = !false;
-	private static final boolean m_TraceAbstractionCWithBackwardPredicates = true;
+	private static final boolean m_TraceAbstractionWithBackwardPredicates = false;
+	private static final boolean m_TraceAbstractionWithForwardPredicates = true;
+	private static final boolean m_TraceAbstractionCWithBackwardPredicates = false;
 	private static final boolean m_TraceAbstractionCWithForwardPredicates = true;		
 	// Time out for each test case in milliseconds
 	private final static int m_Timeout = 10000;
