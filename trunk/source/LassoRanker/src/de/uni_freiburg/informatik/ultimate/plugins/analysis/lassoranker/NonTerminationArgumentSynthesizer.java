@@ -94,7 +94,10 @@ public class NonTerminationArgumentSynthesizer {
 			TransFormula loop_transition) {
 		m_script = script;
 		
-		m_integer_mode = stem.containsIntegers() || loop.containsIntegers();
+		//FIXME: Hack by Matthias. If non_decreasing (==linear constraints only)
+		// is set we use the integer mode. Necessary in cases where
+		// loop is equivalent to false and hence does not contain integers
+		m_integer_mode = stem.containsIntegers() || loop.containsIntegers() || non_decreasing;
 		if (!m_integer_mode) {
 			script.setLogic(Logics.QF_NRA);
 		} else {
