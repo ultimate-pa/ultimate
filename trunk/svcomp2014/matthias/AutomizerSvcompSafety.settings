@@ -7,7 +7,7 @@ file_export_version=3.0
 \!/instance/CACSL2BoogieTranslator=
 file_export_version=3.0
 @CACSL2BoogieTranslator=0.0.1
-/instance/CACSL2BoogieTranslator/Check\ for\ the\ main\ procedure\ if\ all\ allocated\ memory\ was\ freed=true
+/instance/CACSL2BoogieTranslator/Check\ for\ the\ main\ procedure\ if\ all\ allocated\ memory\ was\ freed=false
 /instance/CACSL2BoogieTranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 /instance/CACSL2BoogieTranslator/Translation\ Mode\:=SV_COMP14
 #Wed Nov 06 12:37:10 CET 2013
