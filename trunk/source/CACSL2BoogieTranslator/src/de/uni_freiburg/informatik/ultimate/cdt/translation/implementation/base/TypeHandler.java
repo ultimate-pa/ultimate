@@ -246,7 +246,8 @@ public class TypeHandler implements ITypeHandler {
 //            	ctype = new CStruct(true);
             	ctype = new CStruct(type);
             } else if (node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
-            	ctype = new CUnion(true);
+//            	ctype = new CUnion(true);
+            	ctype = new CUnion(type);
             } else {
             	throw new UnsupportedOperationException("TODO: enums");
             }

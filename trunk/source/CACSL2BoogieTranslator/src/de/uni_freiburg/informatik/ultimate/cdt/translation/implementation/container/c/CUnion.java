@@ -9,8 +9,9 @@ public class CUnion extends CStruct {
 		// TODO Auto-generated constructor stub
 	}
 
-	public CUnion(boolean isIncomplete) {
-		super(isIncomplete);
+	public CUnion(String incompleteName) {
+//	public CUnion(boolean isIncomplete) {
+		super(incompleteName);
 		// TODO Auto-generated constructor stub
 	}
 	
