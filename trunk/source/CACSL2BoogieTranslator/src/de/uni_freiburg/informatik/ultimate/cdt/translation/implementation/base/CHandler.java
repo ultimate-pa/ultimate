@@ -631,7 +631,9 @@ public class CHandler implements ICHandler {
 					if (storageClass == StorageClass.TYPEDEF) {
 						boogieDec = new TypeDeclaration(loc, new Attribute[0], false, 
 								bId, new String[0] , translatedType);
-						main.typeHandler.addDefinedType(bId, mCurrentDeclaredTypes.peek());
+//						main.typeHandler.addDefinedType(bId, mCurrentDeclaredTypes.peek());
+						main.typeHandler.addDefinedType(bId, 
+								new ResultTypes(new NamedType(loc, cDec.getName(), null), false, false, cDec.getType()));
 						//TODO: add a sizeof-constant for the type??
 						globalInBoogie = true;
 						mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
@@ -1242,8 +1244,8 @@ public class CHandler implements ICHandler {
 		 * TODO Alex+Christian: Only handles integer literals and variables.
 		 * This fixes most issues, but is surely no general solution.
 		 */
-		CType lType = lrVal.cType;
-		CType rType = rVal.cType;
+		CType lType = lrVal.cType.getUnderlyingType();
+		CType rType = rVal.cType.getUnderlyingType();
         Expression rExpr = rVal.getValue();
 		boolean convertToPointer = false;
         if (lType instanceof CPointer) {
@@ -1270,12 +1272,18 @@ public class CHandler implements ICHandler {
         }
         // convert to pointer
         if (convertToPointer) {
-            rightHandSide = new RValue(
-                    MemoryHandler.constructPointerFromBaseAndOffset(
-                    new IntegerLiteral(
-                            loc, new InferredType(Type.Integer), "0"),
-                        rExpr, loc),
-                    null);
+        	if (((IntegerLiteral) rExpr).getValue().equals("0")) {
+        		rightHandSide = new RValue(
+            		new IdentifierExpression(loc, SFO.NULL),
+                    new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+        	} else {
+        		rightHandSide = new RValue(
+        				MemoryHandler.constructPointerFromBaseAndOffset(
+        						new IntegerLiteral(
+        								loc, new InferredType(Type.Integer), "0"),
+        								rExpr, loc),
+        								new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+        	}
         }
 
 		if (lrVal instanceof HeapLValue) {

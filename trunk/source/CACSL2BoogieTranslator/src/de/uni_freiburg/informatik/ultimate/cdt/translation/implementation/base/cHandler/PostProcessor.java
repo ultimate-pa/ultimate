@@ -380,7 +380,7 @@ public class PostProcessor {
 			auxVars.putAll(scRex.auxVars);
 			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { scRex.lrVal.getValue() }));
 		} else if (lCvar instanceof CPointer) {
-			LRValue nullPointer = new RValue(new IdentifierExpression(loc, new InferredType(lCvar), SFO.NULL), 
+			LRValue nullPointer = new RValue(new IdentifierExpression(loc, SFO.NULL), 
 					null);
 			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
 					new Expression[] { nullPointer.getValue() } ));

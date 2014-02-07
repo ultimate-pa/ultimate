@@ -181,7 +181,6 @@ public class TypeHandler implements ITypeHandler {
             String bId = main.cHandler.getSymbolTable().get(cId, loc).getBoogieName();
             return new ResultTypes(new NamedType(loc, bId, null), false, false, //TODO: replace constants
             		new CNamed(bId, m_DefinedTypes.get(bId).cType));
-
         }
         String msg = "Unknown or unsupported type! " + node.toString();
         throw new UnsupportedSyntaxException(loc, msg);
