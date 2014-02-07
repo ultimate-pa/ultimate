@@ -1128,7 +1128,12 @@ public class MemoryHandler {
         return new ResultExpression(stmt, null, decl, emptyAuxVars);
     }
     
-    
+    /**
+     * Takes a pointer Expression and returns the pointers base address.
+     * If it is already given as a struct, then the first field is returned,
+     * otherwise a StructAccessExpression pointer!base is returned.
+     * @param pointer
+     */
 	public static Expression getPointerBaseAddress(Expression pointer, ILocation loc) {
 	    if (pointer instanceof StructConstructor) {
             return ((StructConstructor) pointer).getFieldValues()[0];
@@ -1136,6 +1141,12 @@ public class MemoryHandler {
 		return new StructAccessExpression(loc, new InferredType(Type.Integer), pointer, "base");
 	}
 	
+	/**
+     * Takes a pointer Expression and returns the pointers base address.
+     * If it is already given as a struct, then the second field is returned,
+     * otherwise a StructAccessExpression pointer!offset is returned.
+     * @param pointer
+     */
 	public static Expression getPointerOffset(Expression pointer, ILocation loc) {
 	    if (pointer instanceof StructConstructor) {
             return ((StructConstructor) pointer).getFieldValues()[1];
@@ -1148,6 +1159,7 @@ public class MemoryHandler {
 				new String[]{"base", "offset"}, new Expression[]{base, offset}); 
 	}
 	
+	@Deprecated //use NULL instead
 	public static StructConstructor constructNullPointer(ILocation loc) {
 	    return new StructConstructor(loc, new InferredType(Type.Pointer), 
                 new String[]{"base", "offset"}, new Expression[]{new IntegerLiteral(loc, "0"), new IntegerLiteral(loc, "0")}); 

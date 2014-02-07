@@ -356,6 +356,7 @@ public class ArrayHandler {
 		
 		if (result.lrVal.cType instanceof CPointer) {
 			//we have a pointer that is accessed like an array
+			result = result.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			result.lrVal = ((CHandler) main.cHandler).doPointerArith(
 					main, IASTBinaryExpression.op_plus, loc, 
 					(RValue) result.lrVal, 

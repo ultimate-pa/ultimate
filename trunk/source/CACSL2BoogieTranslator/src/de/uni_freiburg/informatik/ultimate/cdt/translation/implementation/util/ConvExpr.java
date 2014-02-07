@@ -83,8 +83,9 @@ public class ConvExpr {
 					default:
 				}
 			} else if (rVal.cType instanceof CPointer) {
-				resultEx = new BinaryExpression(loc, new InferredType(
-						InferredType.Type.Boolean),
+				resultEx = new BinaryExpression(loc, 
+//						new InferredType(
+//						InferredType.Type.Boolean),
 						BinaryExpression.Operator.COMPNEQ, e,
 						MemoryHandler.constructNullPointer(loc));
 			} else {
@@ -96,27 +97,6 @@ public class ConvExpr {
 		return new RValue(resultEx, new CPrimitive(PRIMITIVE.INT), true, rVal.isPointer);
 	}
 
-	/**
-	 * Tries to unwrap an expression that was wrapped before. That is, it checks
-	 * whether a given integer expression is wrapped in an if-then-else
-	 * expression or not.
-	 */
-//	public static Expression unwrapInt2Boolean(final Expression expr) {
-//		if (expr instanceof IfThenElseExpression) {
-//			final IfThenElseExpression iteEx = (IfThenElseExpression)expr;
-//			final Expression thenPart = iteEx.getThenPart();
-//			if ((thenPart instanceof IntegerLiteral) &&
-//					(((IntegerLiteral)thenPart).getValue() == SFO.NR1)) {
-//				final Expression elsePart = iteEx.getElsePart();
-//				if ((elsePart instanceof IntegerLiteral) &&
-//						(((IntegerLiteral)elsePart).getValue() == SFO.NR0)) {
-//					return iteEx.getCondition();
-//				}
-//			}
-//		}
-//		return null;
-//	}
-
 	public static RValue boolToInt(ILocation loc, RValue rVal) {
 		assert rVal.isBoogieBool;
 		return new RValue(
@@ -126,22 +106,4 @@ public class ConvExpr {
 					false,
 					rVal.isPointer);
 	}
-
-	public static Expression doStrangeThings(ASTType type, Expression expr) {
-		if (type != null && type instanceof ArrayType) {
-			type = ((ArrayType) type).getValueType();
-			throw new AssertionError("formerly did the following, "
-					+ "Matthias does not understand this.");
-			//  } else if (type != null && type instanceof ArrayType) {
-			//  return convertArith2Boolean(loc,
-			//              ((ArrayType) type).getValueType(), e);
-			//}
-		}
-		return expr;
-	}
-
-
-
-
-
 }
