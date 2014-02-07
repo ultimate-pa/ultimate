@@ -23,12 +23,21 @@ public class CStruct extends CType {
     
     /**
      * Indicates if this represents an incomplete type.
+     * If 'this' is complete, this String is empty,
+     * otherwise it holds the name of the incomplete struct.
      */
-    private boolean isIncomplete;
+//    private boolean isIncomplete;
+    private String incompleteName = "";
 
     public boolean isIncomplete() {
-		return isIncomplete;
+//		return isIncomplete;
+    	return !incompleteName.isEmpty();
+//    	return incompleteName.equals("");
 	}
+    
+    public String getIncompleteName() {
+    	return incompleteName;
+    }
 
 	/**
      * Constructor.
@@ -45,17 +54,19 @@ public class CStruct extends CType {
         super(false, false, false, false); //FIXME: integrate those flags
         this.fNames = fNames;
         this.fTypes = fTypes;
-        this.isIncomplete = false;
+//        this.isIncomplete = false;
+        this.incompleteName = "";
     }
     
-    public CStruct(IASTDeclSpecifier cDeclSpec, boolean isIncomplete) {
+    public CStruct(String name) { //boolean isIncomplete) {
         super(false, false, false, false); //FIXME: integrate those flags
-        if (!isIncomplete) {
-        	throw new AssertionError("use different constructor for non-incomplete types");
-        }
+//        if (!isIncomplete) {
+//        	throw new AssertionError("use different constructor for non-incomplete types");
+//        }
         this.fNames = null;
         this.fTypes = null;
-        this.isIncomplete = isIncomplete;
+//        this.isIncomplete = isIncomplete;
+        this.incompleteName = name;
     }
 
     /**
@@ -103,8 +114,9 @@ public class CStruct extends CType {
 
     @Override
     public String toString() {
-    	if (isIncomplete) {
-    		return "STRUCT#~incomplete";
+//    	if (isIncomplete) {
+    	if (this.isIncomplete()) {
+    		return "STRUCT#~incomplete~" + incompleteName;
     	} else {
     		StringBuilder id = new StringBuilder("STRUCT#");
     		for (int i = 0; i < getFieldCount(); i++) {
@@ -156,7 +168,8 @@ public class CStruct extends CType {
 		if (!isIncomplete()) {
 			throw new AssertionError("only incomplete structs can be completed");
 		}
-		isIncomplete = false;
+//		isIncomplete = false;
+		incompleteName = "";
 		fNames = cvar.fNames;
 		fTypes = cvar.fTypes;
 	}

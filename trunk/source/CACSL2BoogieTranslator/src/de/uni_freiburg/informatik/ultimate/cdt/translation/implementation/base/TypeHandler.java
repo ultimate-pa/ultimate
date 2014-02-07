@@ -5,6 +5,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
@@ -27,6 +28,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Symbol
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -51,10 +54,12 @@ import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
@@ -210,7 +215,7 @@ public class TypeHandler implements ITypeHandler {
         if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct
                 || node.getKind() == IASTElaboratedTypeSpecifier.k_enum
                 || node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
-            String type = node.getName().getRawSignature();
+            String type = node.getName().toString();
             String name;
             if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
             	name = "STRUCT~" + type;
@@ -238,9 +243,10 @@ public class TypeHandler implements ITypeHandler {
             }
             CType ctype;
             if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
-            	ctype = new CStruct(node, true);
+//            	ctype = new CStruct(true);
+            	ctype = new CStruct(type);
             } else if (node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
-            	ctype = new CUnion(node, true);
+            	ctype = new CUnion(true);
             } else {
             	throw new UnsupportedOperationException("TODO: enums");
             }
@@ -325,6 +331,21 @@ public class TypeHandler implements ITypeHandler {
             m_IncompleteType.remove(name);
             ResultTypes incompleteType = m_DefinedTypes.get(cId);
             CStruct incompleteStruct = (CStruct) incompleteType.cType;
+            //search for any typedefs that were made for the incomplete type
+            //typedefs are made globally, so the CHandler has to do this
+            ((CHandler) main.cHandler).completeTypeDeclaration(incompleteStruct, cvar);
+//            for (Entry<String, SymbolTableValue> ste : main.cHandler.getSymbolTable().currentScopeEntries()) {
+////            	if (ste.getValue().getCDecl().getType().equals(incompleteType)) {
+//            	if (((CStruct) ste.getValue().getCDecl().getType()).getIncompleteName().equals(cId)) {
+//            		String bId = ste.getValue().getBoogieName();
+//            		ASTType translatedType = this.ctype2asttype(loc, cvar);
+//            		TypeDeclaration newTypeDec = new TypeDeclaration(loc, new Attribute[0], false, 
+//								bId, new String[0] , translatedType);
+//            		main.cHandler.getSymbolTable().put(ste.getKey(), new SymbolTableValue(ste.getValue().getBoogieName(), 
+//            				newTypeDec,
+//            				ste.getValue().getCDecl(), ste.getValue().isGlobalVar(), StorageClass.TYPEDEF));
+//            	}
+//            }
             incompleteStruct.complete(cvar);
         }
         
@@ -479,6 +500,8 @@ public class TypeHandler implements ITypeHandler {
 			return new ArrayType(loc, typeParams, indexTypes, this.ctype2asttype(loc, cart.getValueType()));
 		} else if (cType instanceof CStruct) {
 			CStruct cstruct = (CStruct) cType;
+			if (cstruct.isIncomplete())
+				return null;
 			VarList[] fields = new VarList[cstruct.getFieldCount()];
 			for (int i = 0; i < cstruct.getFieldCount(); i++) {
 				fields[i] = new VarList(loc, 

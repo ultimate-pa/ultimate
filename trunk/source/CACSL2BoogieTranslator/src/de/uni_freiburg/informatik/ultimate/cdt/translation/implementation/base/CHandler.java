@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTArrayModifier;
@@ -226,6 +227,7 @@ public class CHandler implements ICHandler {
 	 *    initialized using this map in PostProcessor.createInit..()
 	 */
 	protected HashMap<Declaration, CDeclaration> mDeclarationsGlobalInBoogie;
+	
 	/**
 	 * A collection of axioms generated during translation process.
 	 */
@@ -2727,6 +2729,33 @@ public class CHandler implements ICHandler {
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 
+	/**
+	 * m_declarationsGlobalInBoogie may contain type declarations that 
+	 * stem from typedefs using an incomplete struct type. This method
+	 * is called when the struct type is completed.
+	 * @param cvar 
+	 * @param incompleteStruct 
+	 */
+	public void completeTypeDeclaration(CStruct incompleteStruct, CStruct cvar) {
+		assert incompleteStruct.isIncomplete();
+		TypeDeclaration oldDec = null;
+		CDeclaration oldCDec = null;
+		TypeDeclaration newDec = null;
+		for (Entry<Declaration, CDeclaration> en : mDeclarationsGlobalInBoogie.entrySet()) {
+			if (en.getValue().getType().toString().equals(incompleteStruct.toString())) {
+				oldDec = (TypeDeclaration) en.getKey();
+				oldCDec = en.getValue();
+				newDec = new TypeDeclaration(oldDec.getLocation(), oldDec.getAttributes(),
+						oldDec.isFinite(), oldDec.getIdentifier(), oldDec.getTypeParams(),
+						typeHandler.ctype2asttype(oldDec.getLocation(), cvar));
+				break; //the if should be entered only once, anyway
+			}
+		}
+		if (oldDec != null) {
+			mDeclarationsGlobalInBoogie.remove(oldDec);
+			mDeclarationsGlobalInBoogie.put(newDec, oldCDec);
+		}
+	}
 
 	/**
 	 * @param bId Boogie ID

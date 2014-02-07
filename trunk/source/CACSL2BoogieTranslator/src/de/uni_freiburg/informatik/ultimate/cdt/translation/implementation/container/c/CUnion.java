@@ -9,8 +9,8 @@ public class CUnion extends CStruct {
 		// TODO Auto-generated constructor stub
 	}
 
-	public CUnion(IASTDeclSpecifier cDeclSpec, boolean isIncomplete) {
-		super(cDeclSpec, isIncomplete);
+	public CUnion(boolean isIncomplete) {
+		super(isIncomplete);
 		// TODO Auto-generated constructor stub
 	}
 	
