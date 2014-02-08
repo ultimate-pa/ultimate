@@ -67,7 +67,7 @@ class TerminationArgumentSynthesizer {
 		m_script = script;
 		
 		// Set logic
-		if (preferences.nontermination_check_nonlinear) {
+		if (preferences.termination_check_nonlinear) {
 			script.setLogic(Logics.QF_NRA);
 		} else {
 			script.setLogic(Logics.QF_LRA);
@@ -141,7 +141,7 @@ class TerminationArgumentSynthesizer {
 			for (int m = 0; m < templateConstraints.size(); ++m) {
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script,
-								!m_preferences.nontermination_check_nonlinear,
+								!m_preferences.termination_check_nonlinear,
 								m_preferences.annotate_terms);
 				motzkin.annotation = annotations.get(m) + " " + j;
 				motzkin.add_inequalities(loopConj);
@@ -187,7 +187,7 @@ class TerminationArgumentSynthesizer {
 				++j;
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script,
-								!m_preferences.nontermination_check_nonlinear,
+								!m_preferences.termination_check_nonlinear,
 								m_preferences.annotate_terms);
 				motzkin.annotation = "invariant " + i + " initiation " + j;
 				motzkin.add_inequalities(stemConj);
@@ -207,7 +207,7 @@ class TerminationArgumentSynthesizer {
 				++j;
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script,
-								!m_preferences.nontermination_check_nonlinear,
+								!m_preferences.termination_check_nonlinear,
 								m_preferences.annotate_terms);
 				motzkin.annotation = "invariant " + i + " consecution " + j;
 				motzkin.add_inequalities(loopConj);
@@ -245,7 +245,7 @@ class TerminationArgumentSynthesizer {
 	 */
 	public boolean synthesize(RankingFunctionTemplate template)
 			throws SMTLIBException, TermException {
-		assert m_preferences.nontermination_check_nonlinear
+		assert m_preferences.termination_check_nonlinear
 				|| template.getDegree() == 0
 				: "Linear SMT queries work only on templates of degree 0.";
 		Collection<BoogieVar> rankVars = getRankVars();

@@ -202,7 +202,7 @@ public class LassoRankerTerminationAnalysis {
 	protected void checkPreferences(Preferences preferences) {
 		assert preferences.num_strict_invariants >= 0;
 		assert preferences.num_non_strict_invariants >= 0;
-		assert preferences.nontermination_check_nonlinear
+		assert preferences.termination_check_nonlinear
 				|| preferences.only_nondecreasing_invariants
 				: "Use nondecreasing invariants with a linear SMT query.";
 		if (preferences.num_strict_invariants == 0 &&

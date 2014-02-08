@@ -73,9 +73,13 @@ public class Preferences implements Serializable {
 	
 	/**
 	 * Use a nonlinear SMT query for checking nontermination?
-	 * FIXME: currently this setting is not only used for nontermination check
 	 */
 	public boolean nontermination_check_nonlinear = true; // Default: true
+	
+	/**
+	 * Use a nonlinear SMT query for checking termination?
+	 */
+	public boolean termination_check_nonlinear = true; // Default: true
 	
 	/**
 	 * What shell command should be used to call the external smt solver?
@@ -111,6 +115,8 @@ public class Preferences implements Serializable {
 		sb.append(this.annotate_terms);
 		sb.append("\nNonlinear nontermination check: ");
 		sb.append(this.nontermination_check_nonlinear);
+		sb.append("\nNonlinear termination check: ");
+		sb.append(this.termination_check_nonlinear);
 		sb.append("\nSMT solver command: ");
 		sb.append(this.smt_solver_command);
 		sb.append("\nDump SMT script to file: ");

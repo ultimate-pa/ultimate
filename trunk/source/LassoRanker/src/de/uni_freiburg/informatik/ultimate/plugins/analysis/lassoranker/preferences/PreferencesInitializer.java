@@ -46,6 +46,8 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 			"Check for nontermination";
 	public static final String LABEL_nontermination_check_nonlinear =
 			"Nonlinear SMT query for nontermination check";
+	public static final String LABEL_termination_check_nonlinear =
+			"Nonlinear SMT query for termination check";
 	public static final String LABEL_enable_affine_template =
 			"Affine template";
 	public static final String LABEL_enable_multiphase_template =
@@ -98,6 +100,10 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_nontermination_check_nonlinear,
 						preferences.nontermination_check_nonlinear,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_termination_check_nonlinear,
+						preferences.termination_check_nonlinear,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_enable_affine_template,
