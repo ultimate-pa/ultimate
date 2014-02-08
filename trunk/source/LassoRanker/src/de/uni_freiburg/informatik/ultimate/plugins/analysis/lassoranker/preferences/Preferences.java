@@ -73,6 +73,7 @@ public class Preferences implements Serializable {
 	
 	/**
 	 * Use a nonlinear SMT query for checking nontermination?
+	 * FIXME: currently this setting is not only used for nontermination check
 	 */
 	public boolean nontermination_check_nonlinear = true; // Default: true
 	
