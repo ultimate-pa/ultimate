@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions;
 
 import java.math.BigInteger;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -27,6 +29,15 @@ public class MultiphaseRankingFunction extends RankingFunction {
 		m_ranking = ranking;
 		phases = ranking.size();
 		assert(phases > 0);
+	}
+	
+	@Override
+	public Set<BoogieVar> getVariables() {
+		Set<BoogieVar> vars = new HashSet<BoogieVar>();
+		for (AffineFunction af : m_ranking) {
+			vars.addAll(af.getVariables());
+		}
+		return vars;
 	}
 	
 	public List<AffineFunction> getComponents() {

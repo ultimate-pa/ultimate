@@ -2,10 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.io.Serializable;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -69,9 +66,9 @@ public class AffineFunction implements Serializable {
 	}
 	
 	/**
-	 * @return a collection of the variables that occur in this function
+	 * @return a set of the variables that occur in this function
 	 */
-	public Collection<BoogieVar> getVariables() {
+	public Set<BoogieVar> getVariables() {
 		return m_coefficients.keySet();
 	}
 	

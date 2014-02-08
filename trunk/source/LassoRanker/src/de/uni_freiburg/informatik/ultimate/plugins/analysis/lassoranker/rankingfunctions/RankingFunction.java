@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ranking
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -18,6 +19,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
  */
 public abstract class RankingFunction implements Serializable {
 	private static final long serialVersionUID = 4774387985755366720L;
+	
+	/**
+	 * @return the set of all variables occurring in the ranking function
+	 */
+	public abstract Set<BoogieVar> getVariables();
 	
 	/**
 	 * Evaluate the ranking function

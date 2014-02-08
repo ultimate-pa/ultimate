@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions;
 
 import java.math.BigInteger;
-import java.util.Map;
+import java.util.*;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -23,6 +23,11 @@ public class LinearRankingFunction extends RankingFunction {
 	
 	public LinearRankingFunction(AffineFunction ranking) {
 		m_ranking = ranking;
+	}
+	
+	@Override
+	public Set<BoogieVar> getVariables() {
+		return Collections.unmodifiableSet(m_ranking.getVariables());
 	}
 	
 	public AffineFunction getComponent() {

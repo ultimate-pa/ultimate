@@ -2,8 +2,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ranking
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -33,6 +35,15 @@ public class PiecewiseRankingFunction extends RankingFunction {
 		assert(pieces == predicates.size());
 	}
 	
+	@Override
+	public Set<BoogieVar> getVariables() {
+		Set<BoogieVar> vars = new HashSet<BoogieVar>();
+		for (AffineFunction af : m_ranking) {
+			vars.addAll(af.getVariables());
+		}
+		return vars;
+	}
+	
 	public List<AffineFunction> getComponents() {
 		List<AffineFunction> l = new ArrayList<AffineFunction>();
 		l.addAll(m_ranking);
@@ -47,7 +58,7 @@ public class PiecewiseRankingFunction extends RankingFunction {
 		sb.append("-piece ranking function:\n");
 		sb.append("  f(");
 		boolean first = true;
-		for (BoogieVar var : m_ranking.get(0).getVariables()) {
+		for (BoogieVar var : getVariables()) {
 			if (!first) {
 				sb.append(", ");
 			}

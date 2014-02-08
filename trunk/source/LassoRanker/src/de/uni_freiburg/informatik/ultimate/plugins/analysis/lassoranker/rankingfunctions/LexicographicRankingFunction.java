@@ -1,8 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -34,13 +33,22 @@ public class LexicographicRankingFunction extends RankingFunction {
 	}
 	
 	@Override
+	public Set<BoogieVar> getVariables() {
+		Set<BoogieVar> vars = new HashSet<BoogieVar>();
+		for (AffineFunction af : m_ranking) {
+			vars.addAll(af.getVariables());
+		}
+		return vars;
+	}
+	
+	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(m_ranking.size());
 		sb.append("-lexicographic ranking function:\n");
 		sb.append("  f(");
 		boolean first = true;
-		for (BoogieVar var : m_ranking.get(0).getVariables()) {
+		for (BoogieVar var : getVariables()) {
 			if (!first) {
 				sb.append(", ");
 			}
