@@ -74,6 +74,12 @@ public class LassoChecker {
 	private static final boolean s_AlwaysAdditionalLoopTerminationCheck = true;
 	
 	private final INTERPOLATION m_Interpolation;
+	
+	/**
+	 * use z3 and non-linear templates if true
+	 * use SMTinterpol and only linear templates if false
+	 */
+	private final boolean m_UseZ3 = true;
 
 	
 	//////////////////////////////// input /////////////////////////////////
@@ -438,10 +444,12 @@ public class LassoChecker {
 		pref.num_non_strict_invariants = 1;
 		pref.num_strict_invariants = 0;
 		pref.only_nondecreasing_invariants = true;
-		pref.smt_solver_command = "";
-//		pref.smt_solver_command = "z3 -smt2  SMTLIB2_COMPLIANT=true -in -t:10123";
-//		pref.smt_solver_command = "z3 -smt2  SMTLIB2_COMPLIANT=true -in";
-		pref.nontermination_check_nonlinear = false;
+		if (m_UseZ3) {
+			pref.smt_solver_command = "z3 -smt2  SMTLIB2_COMPLIANT=true -in -t:10123";
+		} else {
+			pref.smt_solver_command = "";
+		}
+		pref.nontermination_check_nonlinear = m_UseZ3;
 
 		LassoRankerTerminationAnalysis lrta = null;
 		try {
@@ -459,21 +467,23 @@ public class LassoChecker {
 		List<RankingFunctionTemplate> rankingFunctionTemplates = 
 				new ArrayList<RankingFunctionTemplate>();
 		rankingFunctionTemplates.add(new AffineTemplate());
+		
+		if (m_UseZ3) {
+			rankingFunctionTemplates.add(new MultiphaseTemplate(1));
+			rankingFunctionTemplates.add(new MultiphaseTemplate(2));
+			rankingFunctionTemplates.add(new MultiphaseTemplate(3));
+			//		rankingFunctionTemplates.add(new MultiphaseTemplate(4));
+			//		rankingFunctionTemplates.add(new MultiphaseTemplate(5));
+			//		rankingFunctionTemplates.add(new MultiphaseTemplate(6));
+			//		rankingFunctionTemplates.add(new MultiphaseTemplate(7));
 
-//		rankingFunctionTemplates.add(new MultiphaseTemplate(1));
-//		rankingFunctionTemplates.add(new MultiphaseTemplate(2));
-//		rankingFunctionTemplates.add(new MultiphaseTemplate(3));
-//		rankingFunctionTemplates.add(new MultiphaseTemplate(4));
-//		rankingFunctionTemplates.add(new MultiphaseTemplate(5));
-//		rankingFunctionTemplates.add(new MultiphaseTemplate(6));
-//		rankingFunctionTemplates.add(new MultiphaseTemplate(7));
-	
-//		rankingFunctionTemplates.add(new PiecewiseTemplate(2));
-//		rankingFunctionTemplates.add(new PiecewiseTemplate(3));
-//		
-//		rankingFunctionTemplates.add(new LexicographicTemplate(1));
-//		rankingFunctionTemplates.add(new LexicographicTemplate(2));
-//		rankingFunctionTemplates.add(new LexicographicTemplate(3));
+			//		rankingFunctionTemplates.add(new PiecewiseTemplate(2));
+			//		rankingFunctionTemplates.add(new PiecewiseTemplate(3));
+			//		
+			//		rankingFunctionTemplates.add(new LexicographicTemplate(1));
+			//		rankingFunctionTemplates.add(new LexicographicTemplate(2));
+			//		rankingFunctionTemplates.add(new LexicographicTemplate(3));
+		}
 
 		TerminationArgument termArg = tryTemplatesAndComputePredicates(
 				withStem, lrta, rankingFunctionTemplates);
