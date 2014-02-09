@@ -17,8 +17,10 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePrefe
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithLocation;
 
 /**
  * This class implements an Eclipse Job processing a Ultimate toolchain using
@@ -159,6 +161,11 @@ public class ToolchainJob extends Job {
 				sb.append(" from ");
 				sb.append(entry.getKey());
 				sb.append(".");
+				if (result instanceof IResultWithLocation) {
+					sb.append(" Line: ");
+					ILocation loc = ((IResultWithLocation) result).getLocation();
+					sb.append(loc.getStartLine());
+				}
 				sb.append(" Short description: ");
 				sb.append(result.getShortDescription());
 				boolean appendLongDescription = false;
