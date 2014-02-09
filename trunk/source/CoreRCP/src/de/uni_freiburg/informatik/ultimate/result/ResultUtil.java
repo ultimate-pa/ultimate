@@ -24,10 +24,10 @@ public class ResultUtil {
 	 * @return a string corresponding to the backtranslated expression
 	 */
 	public static <SE> String backtranslationWorkaround(
-			List<ITranslator<?, ?, ?, ?>> translator_sequence,
+			List<ITranslator<?, ?, ?, ?>> translatorSequence,
 			SE expr) {
 		Object backExpr = DefaultTranslator.translateExpressionIteratively(
-				expr, translator_sequence.toArray(new ITranslator[0]));
+				expr, translatorSequence.toArray(new ITranslator[0]));
 		
 		// If the result is a Boogie expression, we use the Boogie pretty
 		// printer
@@ -40,6 +40,20 @@ public class ResultUtil {
 			result = backExpr.toString();
 		}
 		return result;
+	}
+	
+	public static <SE> String backtranslationWorkaround(
+			List<ITranslator<?, ?, ?, ?>> translatorSequence,
+			SE[] exprArray) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < exprArray.length; ++i) {
+			if (i > 0) {
+				sb.append(", ");
+			}
+			sb.append(ResultUtil.backtranslationWorkaround(
+					translatorSequence, exprArray[i]));
+		}
+		return sb.toString();
 	}
 	
 	/**

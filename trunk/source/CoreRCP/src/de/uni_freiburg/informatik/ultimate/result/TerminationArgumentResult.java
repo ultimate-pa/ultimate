@@ -57,21 +57,12 @@ public class TerminationArgumentResult<P extends IElement> extends AbstractResul
 		sb.append("Found a termination argument consisting of the ");
 		sb.append(m_RankingFunctionDescription);
 		sb.append(": [");
-		for (int i = 0; i < m_RankingFunction.length; ++i) {
-			if (i > 0) {
-				sb.append(", ");
-			}
-			sb.append(ResultUtil.backtranslationWorkaround(
-					m_TranslatorSequence, m_RankingFunction[i]));
-		}
+		sb.append(ResultUtil.backtranslationWorkaround(
+				m_TranslatorSequence, m_RankingFunction));
 		sb.append("] and the following supporting invariants: ");
-		for (int i = 0; i < m_SupportingInvariants.length; ++i) {
-			if (i > 0) {
-				sb.append(", ");
-			}
-			sb.append(ResultUtil.backtranslationWorkaround(
-					m_TranslatorSequence, m_SupportingInvariants[i]));
-		}
+		sb.append(ResultUtil.backtranslationWorkaround(
+				m_TranslatorSequence, m_SupportingInvariants));
+
 		return sb.toString();
 	}
 
