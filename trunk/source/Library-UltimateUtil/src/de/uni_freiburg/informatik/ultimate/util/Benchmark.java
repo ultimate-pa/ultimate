@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.LogManager;
@@ -12,10 +13,7 @@ import org.apache.log4j.Logger;
 
 /**
  * 
- * This class should provide timing functions to measure runtime and perhaps
- * other aspects of tool and parser performance
- * 
- * still under construction
+ * This class provides functions to measure runtime and memory consumption
  * 
  * @author dietsch
  * 
@@ -38,6 +36,7 @@ public class Benchmark {
 
 	private int mCurrentIndex;
 	private HashMap<String, Watch> mWatches;
+	
 	private Logger mLogger;
 
 	public Benchmark() {
@@ -88,31 +87,54 @@ public class Benchmark {
 		}
 	}
 
+	public void pause(String title) {
+		stop(title);
+		Watch watch = mWatches.get(title);
+		if (watch == null) {
+			return;
+		}
+		Watch oldWatch = watch.copy();
+		if(watch.mPausedWatches == null){
+			watch.mPausedWatches = new ArrayList<Watch>();
+		}
+		watch.mPausedWatches.add(oldWatch);
+	}
+
+	public void unpause(String title) {
+		Watch watch = mWatches.get(title);
+		if (watch == null) {
+			return;
+		}
+		start(title);
+	}
+
+
 	private void stopWatch(String title, long stopDate, long stopHeapSize, long stopHeapFreeSize) {
 		Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return;
 		}
-
+		
+	
 		if (watch.mStartTime == -1 && mStartTime == -1) {
 			return;
 		}
 
 		if (watch.mStartTime == -1) {
 			// this watch was started via startAll
-			watch.mElapsedTime = stopDate - mStartTime;
+			watch.mStartTime = mStartTime;
 			watch.mStartHeapSize = mStartHeapSize;
 			watch.mStartHeapFreeSize = mStartHeapFreeSize;
-		} else {
-			// this watch was started via start(title)
-			watch.mElapsedTime = stopDate - watch.mStartTime;
-		}
-
+		} 
+		
+		watch.mElapsedTime = stopDate - watch.mStartTime + watch.mElapsedTime;
 		watch.mStopHeapSize = stopHeapSize;
 		watch.mStopHeapFreeSize = stopHeapFreeSize;
-
 	}
 
+	/**
+	 * Resets the benchmark object and clears all watches.
+	 */
 	public void reset() {
 		mStartTime = -1;
 		mStartHeapSize = -1;
@@ -127,7 +149,7 @@ public class Benchmark {
 		Collections.sort(sortedWatches, new Comparator<Watch>() {
 			@Override
 			public int compare(Watch o1, Watch o2) {
-				
+
 				return Integer.compare(o1.mIndex, o2.mIndex);
 			}
 		});
@@ -135,6 +157,14 @@ public class Benchmark {
 		for (Watch s : sortedWatches) {
 			mLogger.info(s);
 		}
+	}
+	
+	public String getReportString(String title){
+		Watch watch = mWatches.get(title);
+		if (watch == null) {
+			return "";
+		}
+		return watch.toString();
 	}
 
 	public double getElapsedTime(String title, TimeUnit unit) {
@@ -145,50 +175,50 @@ public class Benchmark {
 			return getNanosecondsToUnit(watch.mElapsedTime, unit);
 		}
 	}
-	
-	public long getStartHeapSize(String title){
+
+	public long getStartHeapSize(String title) {
 		Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
 		} else {
 			return watch.mStartHeapSize;
-		}		
+		}
 	}
-	
-	public long getStopHeapSize(String title){
+
+	public long getStopHeapSize(String title) {
 		Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
 		} else {
 			return watch.mStopHeapSize;
-		}		
+		}
 	}
 
-	public long getStartHeapFreeSize(String title){
+	public long getStartHeapFreeSize(String title) {
 		Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
 		} else {
 			return watch.mStartHeapFreeSize;
-		}		
+		}
 	}
-	
-	public long getStopHeapFreeSize(String title){
+
+	public long getStopHeapFreeSize(String title) {
 		Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
 		} else {
 			return watch.mStopHeapFreeSize;
-		}		
+		}
 	}
-	
-	public long getMaxHeapSize(String title){
+
+	public long getMaxHeapSize(String title) {
 		return mMaxHeapSize;
 	}
-	
-	public Collection<String> getTitles(){
+
+	public Collection<String> getTitles() {
 		ArrayList<String> rtr = new ArrayList<String>();
-		for(Watch w : mWatches.values()){
+		for (Watch w : mWatches.values()) {
 			rtr.add(w.mTitle);
 		}
 		return rtr;
@@ -250,19 +280,36 @@ public class Benchmark {
 		private long mStartHeapFreeSize;
 		private long mStopHeapFreeSize;
 
+		private List<Watch> mPausedWatches;
+
 		private Watch(String title, int index) {
 			mTitle = title;
 			mIndex = index;
+			reset();
+		}
 
+		private void reset() {
 			mStartTime = -1;
-			mElapsedTime = -1;
+			mElapsedTime = 0;
 
-			mStartHeapSize = -1;
-			mStartHeapFreeSize = -1;
+			mStartHeapSize = 0;
+			mStartHeapFreeSize = 0;
 
-			mStopHeapSize = -1;
-			mStopHeapFreeSize = -1;
+			mStopHeapSize = 0;
+			mStopHeapFreeSize = 0;
+		}
+		
+		private Watch copy(){
+			Watch m = new Watch(mTitle, mIndex);
+			m.mStartTime = mStartTime ;
+			m.mElapsedTime = mElapsedTime;
 
+			m.mStartHeapSize = mStartHeapSize;
+			m.mStartHeapFreeSize = mStartHeapFreeSize;
+
+			m.mStopHeapSize = mStopHeapSize;
+			m.mStopHeapFreeSize = mStopHeapFreeSize;
+			return m;
 		}
 
 		@Override
@@ -271,7 +318,7 @@ public class Benchmark {
 		}
 
 		public String toString(TimeUnit timeUnit, int decimals) {
-			if (mElapsedTime == -1) {
+			if (mStartTime == -1) {
 				return String.format("%s was not measured", mTitle);
 			}
 
@@ -290,12 +337,16 @@ public class Benchmark {
 						Utils.humanReadableByteCount(mMaxHeapSize, true));
 
 			} else {
+
+				String heapPrefix = heapDelta < 0 ? "-" : "";
+				heapDelta = Math.abs(heapDelta);
+
 				return String
 						.format("%s took %."
 								+ decimals
-								+ "f %s. The heap size changed %s, it used %s heap space and currently, %s are free. Max. heap size is %s.",
+								+ "f %s. The heap size changed %s%s, it used %s%s heap space and currently, %s are free. Max. heap size is %s.",
 								mTitle, getNanosecondsToUnit(mElapsedTime, timeUnit), getUnitString(timeUnit),
-								Utils.humanReadableByteCount(heapDelta, true), prefix,
+								heapPrefix, Utils.humanReadableByteCount(heapDelta, true), prefix,
 								Utils.humanReadableByteCount(freeDelta, true),
 								Utils.humanReadableByteCount(mStopHeapFreeSize, true),
 								Utils.humanReadableByteCount(mMaxHeapSize, true));

@@ -1,5 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.util;
 
+import java.util.Collection;
+import java.util.Iterator;
+
+
 public class Utils {
 
 	/**
@@ -21,5 +25,18 @@ public class Utils {
 				+ (si ? "" : "i");
 		return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
 	}
+	
+	public static String join(Collection<?> s, String delimiter) {
+	     StringBuilder builder = new StringBuilder();
+	     Iterator<?> iter = s.iterator();
+	     while (iter.hasNext()) {
+	         builder.append(iter.next());
+	         if (!iter.hasNext()) {
+	           break;                  
+	         }
+	         builder.append(delimiter);
+	     }
+	     return builder.toString();
+	 }
 
 }
