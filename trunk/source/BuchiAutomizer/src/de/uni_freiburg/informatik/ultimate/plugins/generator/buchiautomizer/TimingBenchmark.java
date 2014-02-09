@@ -68,7 +68,7 @@ public class TimingBenchmark {
 		sb.append(twoDForm.format(m_Benchmark.getElapsedTime(s_LassoAnalysis, TimeUnit.SECONDS)));
 		sb.append("s. ");
 		double buchiInclusionTotal = m_Benchmark.getElapsedTime(s_BuchiInclusion, TimeUnit.SECONDS);
-		double buchiInclusionSolver = m_SmtSolverElapsedTimeDuringBuchiInclusion / 1000000000;
+		double buchiInclusionSolver = ((double) m_SmtSolverElapsedTimeDuringBuchiInclusion) / 1000000000;
 		double buchiInclusionAutomata = buchiInclusionTotal - buchiInclusionSolver;
 		sb.append("Time for construction of modules ");
 		sb.append(twoDForm.format(buchiInclusionSolver));
