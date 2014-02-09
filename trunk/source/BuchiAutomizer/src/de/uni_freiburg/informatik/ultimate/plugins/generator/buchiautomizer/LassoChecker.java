@@ -184,18 +184,25 @@ public class LassoChecker {
 		checkFeasibility();
 		assert m_ContinueDirective != null;
 		assert m_StemInfeasible != null;
-		if (!m_StemInfeasible) {
-			if (m_ConcatInfeasible == null) {
-				assert m_Bspm.providesPredicates();
+		assert m_LoopInfeasible != null;
+		if (m_StemInfeasible) {
+			assert m_ContinueDirective == ContinueDirective.REFINE_FINITE || 
+					m_ContinueDirective == ContinueDirective.REFINE_BOTH;
+		} else {
+			if (m_LoopInfeasible) {
+				assert m_ContinueDirective == ContinueDirective.REFINE_FINITE;
 			} else {
-				assert m_ConcatCheck != null;
-				if (m_ConcatInfeasible) {
-					assert m_ContinueDirective == ContinueDirective.REFINE_FINITE || 
-							m_ContinueDirective == ContinueDirective.REFINE_BOTH;
-					assert m_ConcatenatedCounterexample != null;
+				if (m_ConcatInfeasible == null) {
+					assert m_Bspm.providesPredicates();
 				} else {
-					assert m_ContinueDirective != ContinueDirective.REFINE_FINITE;
-					
+					assert m_ConcatCheck != null;
+					if (m_ConcatInfeasible) {
+						assert m_ContinueDirective == ContinueDirective.REFINE_FINITE || 
+								m_ContinueDirective == ContinueDirective.REFINE_BOTH;
+						assert m_ConcatenatedCounterexample != null;
+					} else {
+						assert m_ContinueDirective != ContinueDirective.REFINE_FINITE;
+					}
 				}
 			}
 		}
