@@ -354,9 +354,9 @@ public class BuchiCegarLoop {
 						m_Abstraction = newAbstraction;
 						m_BinaryStatePredicateManager.clearPredicates();
 						
-						if (m_ReduceAbstractionSize ) {
-							reduceAbstractionSize();
-						}
+//						if (m_ReduceAbstractionSize ) {
+//							reduceAbstractionSize();
+//						}
 						
 						refineFinite(lassoChecker);
 						m_Infeasible++;
