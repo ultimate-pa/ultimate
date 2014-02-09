@@ -28,9 +28,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Terminat
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.AffineTemplate;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.LexicographicTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.MultiphaseTemplate;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.PiecewiseTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
@@ -79,7 +77,7 @@ public class LassoChecker {
 	 * use z3 and non-linear templates if true
 	 * use SMTinterpol and only linear templates if false
 	 */
-	private final boolean m_UseZ3 = true;
+	private final boolean m_UseZ3 = false;
 
 	
 	//////////////////////////////// input /////////////////////////////////
@@ -135,9 +133,17 @@ public class LassoChecker {
 	public boolean isStemInfeasible() {
 		return m_StemInfeasible;
 	}
-
+	
 	public TraceChecker getStemCheck() {
 		return m_StemCheck;
+	}
+	
+	public boolean isLoopInfeasible() {
+		return m_LoopInfeasible;
+	}
+	
+	public TraceChecker getLoopCheck() {
+		return m_LoopCheck;
 	}
 
 	public boolean isConcatInfeasible() {
@@ -205,65 +211,39 @@ public class LassoChecker {
 		checkStemFeasibility();
 		if (m_StemInfeasible) {
 			s_Logger.info("stem already infeasible");
-			if (loop.getLength() < stem.getLength()) {
-				TransFormula loopTF = computeLoopTF();
-				checkLoopTermination(loopTF);
-				if (m_LoopTermination == SynthesisResult.TERMINATING) {
+		}
+		checkLoopFeasibility();
+		if (m_LoopInfeasible) {
+			s_Logger.info("loop already infeasible");
+			m_ContinueDirective = ContinueDirective.REFINE_FINITE;
+			return;
+		} else {
+			TransFormula loopTF = computeLoopTF();
+			checkLoopTermination(loopTF);
+			if (m_LoopTermination == SynthesisResult.TERMINATING) {
+				if (m_StemInfeasible) {
 					m_ContinueDirective = ContinueDirective.REFINE_BOTH;
 					return;
 				} else {
-					m_ContinueDirective = ContinueDirective.REFINE_FINITE;
-					return;
-				}
-			} else {
-				m_ContinueDirective = ContinueDirective.REFINE_FINITE;
-				return;
-			}
-		} else {
-			checkLoopFeasibility();
-			if (m_LoopInfeasible) {
-				s_Logger.info("loop already infeasible");
-				// because BuchiCegarLoop can not continue with the loop
-				// compute this information for concat.
-				// TODO: this is a hack find better solution
-				checkConcatFeasibility();
-				if (!m_ConcatInfeasible) {
-					throw new AssertionError("stem infeasible, loop" +
-						" infeasible but not concat? If this happens there is" +
-						" a bug or there some problem with UNKNOWN that is" +
-						" not implemented yet.");
-				}
-				m_ContinueDirective = ContinueDirective.REFINE_FINITE;
-				return;
-			} else {
-
-				
-				checkConcatFeasibility();
-				if (m_ConcatInfeasible) {
-					s_Logger.info("concat infeasible");
-					if (s_AlwaysAdditionalLoopTerminationCheck || 
-							loop.getLength() < stem.getLength()) {
-						TransFormula loopTF = computeLoopTF();
-						checkLoopTermination(loopTF);
-						if (m_LoopTermination == SynthesisResult.TERMINATING) {
-							m_ContinueDirective = ContinueDirective.REFINE_BOTH;
-							return;
-						} else {
-							m_ContinueDirective = ContinueDirective.REFINE_FINITE;
-							return;
-						}
+					checkConcatFeasibility();
+					if (m_ConcatInfeasible) {
+						m_ContinueDirective = ContinueDirective.REFINE_BOTH;
+						return;
 					} else {
-						m_ContinueDirective = ContinueDirective.REFINE_FINITE;
+						m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
 						return;
 					}
-				} else {
-					TransFormula loopTF = computeLoopTF();
-					checkLoopTermination(loopTF);
-				if (m_LoopTermination == SynthesisResult.TERMINATING) {
-					m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
+				}
+			} else {
+				if (m_StemInfeasible) {
+					m_ContinueDirective = ContinueDirective.REFINE_FINITE;
 					return;
 				} else {
-
+					checkConcatFeasibility();
+					if (m_ConcatInfeasible) {
+						m_ContinueDirective = ContinueDirective.REFINE_FINITE;
+						return;
+					} else {
 						TransFormula stemTF = computeStemTF();
 						checkLassoTermination(stemTF, loopTF);
 						if (m_LassoTermination == SynthesisResult.TERMINATING) {
@@ -277,11 +257,86 @@ public class LassoChecker {
 							return;
 						}
 					}
-					
 				}
 			}
 		}
-		// boolean thisCodeShouldBeUnreachalbe = true;
+		
+//			if (s_AlwaysAdditionalLoopTerminationCheck ||
+//					loop.getLength() < stem.getLength()) {
+//				TransFormula loopTF = computeLoopTF();
+//				checkLoopTermination(loopTF);
+//				if (m_LoopTermination == SynthesisResult.TERMINATING) {
+//					m_ContinueDirective = ContinueDirective.REFINE_BOTH;
+//					return;
+//				} else {
+//					m_ContinueDirective = ContinueDirective.REFINE_FINITE;
+//					return;
+//				}
+//			} else {
+//				m_ContinueDirective = ContinueDirective.REFINE_FINITE;
+//				return;
+//			}
+//		} else {
+//			checkLoopFeasibility();
+//			if (m_LoopInfeasible) {
+//				s_Logger.info("loop already infeasible");
+////				// because BuchiCegarLoop can not continue with the loop
+////				// compute this information for concat.
+////				// TODO: this is a hack find better solution
+////				checkConcatFeasibility();
+////				if (!m_ConcatInfeasible) {
+////					throw new AssertionError("stem infeasible, loop" +
+////						" infeasible but not concat? If this happens there is" +
+////						" a bug or there some problem with UNKNOWN that is" +
+////						" not implemented yet.");
+////				}
+//				m_ContinueDirective = ContinueDirective.REFINE_FINITE;
+//				return;
+//			} else {
+//				checkConcatFeasibility();
+//				if (m_ConcatInfeasible) {
+//					s_Logger.info("concat infeasible");
+//					if (s_AlwaysAdditionalLoopTerminationCheck || 
+//							loop.getLength() < stem.getLength()) {
+//						TransFormula loopTF = computeLoopTF();
+//						checkLoopTermination(loopTF);
+//						if (m_LoopTermination == SynthesisResult.TERMINATING) {
+//							m_ContinueDirective = ContinueDirective.REFINE_BOTH;
+//							return;
+//						} else {
+//							m_ContinueDirective = ContinueDirective.REFINE_FINITE;
+//							return;
+//						}
+//					} else {
+//						m_ContinueDirective = ContinueDirective.REFINE_FINITE;
+//						return;
+//					}
+//				} else {
+//					TransFormula loopTF = computeLoopTF();
+//					checkLoopTermination(loopTF);
+//				if (m_LoopTermination == SynthesisResult.TERMINATING) {
+//					m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
+//					return;
+//				} else {
+//
+//						TransFormula stemTF = computeStemTF();
+//						checkLassoTermination(stemTF, loopTF);
+//						if (m_LassoTermination == SynthesisResult.TERMINATING) {
+//							m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
+//							return;
+//						} else if (m_LassoTermination == SynthesisResult.NONTERMINATIG) {
+//							m_ContinueDirective = ContinueDirective.REPORT_NONTERMINATION;
+//							return;
+//						} else {
+//							m_ContinueDirective = ContinueDirective.REPORT_UNKNOWN;
+//							return;
+//						}
+//					}
+//					
+//				}
+//			}
+//		}
+		 // boolean thisCodeShouldBeUnreachalbe = true;
 	}
 	
 	private void checkStemFeasibility() {
