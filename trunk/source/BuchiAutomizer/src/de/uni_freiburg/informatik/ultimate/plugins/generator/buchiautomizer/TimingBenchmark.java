@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+import java.text.DecimalFormat;
 import java.util.concurrent.TimeUnit;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;;
 
 public class TimingBenchmark {
@@ -10,43 +12,73 @@ public class TimingBenchmark {
 	private final static String s_BuchiInclusion = "BuchiInclusion";
 	private final static String s_Minimization = "Minimization";
 	
-	void startLassoAnalysis() {
+	private long m_SmtSolverElapsedTimeDuringBuchiInclusion = 0;
+	private long m_SmtSolverTimeBeforeBuchiInclusion = 0;
+	private long m_SmtSolverTimeAfterBuchiInclusion = 0;
+	private final SmtManager m_SmtManager;
+	
+	public TimingBenchmark(SmtManager smtManager) {
+		m_SmtManager = smtManager;
 		m_Benchmark.start(s_LassoAnalysis);
+		m_Benchmark.pause(s_LassoAnalysis);
+		m_Benchmark.start(s_BuchiInclusion);
+		m_Benchmark.pause(s_BuchiInclusion);
+		m_Benchmark.start(s_Minimization);
+		m_Benchmark.pause(s_Minimization);
+	}
+	
+	void startLassoAnalysis() {
+		m_Benchmark.unpause(s_LassoAnalysis);
 	}
 	
 	void stopLassoAnalysis() {
-		m_Benchmark.stop(s_LassoAnalysis);
+		m_Benchmark.pause(s_LassoAnalysis);
 	}
 	
 	void startBuchiInclusion() {
-		m_Benchmark.start(s_BuchiInclusion);
+		assert m_SmtSolverTimeBeforeBuchiInclusion == 0;
+		assert m_SmtSolverTimeAfterBuchiInclusion == 0;
+		m_SmtSolverTimeBeforeBuchiInclusion = m_SmtManager.getSatCheckTime();
+		m_Benchmark.unpause(s_BuchiInclusion);
 	}
 	
 	void stopBuchiInclusion() {
-		m_Benchmark.stop(s_BuchiInclusion);
+		m_Benchmark.pause(s_BuchiInclusion);
+		m_SmtSolverTimeAfterBuchiInclusion = m_SmtManager.getSatCheckTime();
+		assert m_SmtSolverTimeAfterBuchiInclusion >= m_SmtSolverTimeBeforeBuchiInclusion;
+		long diff = (m_SmtSolverTimeAfterBuchiInclusion - m_SmtSolverTimeBeforeBuchiInclusion);
+		m_SmtSolverElapsedTimeDuringBuchiInclusion += diff;
+		m_SmtSolverTimeBeforeBuchiInclusion = 0;
+		m_SmtSolverTimeAfterBuchiInclusion = 0;
 	}
 	
 	void startMinimization() {
-		m_Benchmark.start(s_Minimization);
+		m_Benchmark.unpause(s_Minimization);
 	}
 	
 	void stopMinimization() {
-		m_Benchmark.stop(s_Minimization);
+		m_Benchmark.pause(s_Minimization);
 	}
 	
 	@Override
 	public String toString() {
-		m_Benchmark.stop("myTest");
+		DecimalFormat twoDForm = new DecimalFormat("#0.00");
 		StringBuilder sb = new StringBuilder();
 		sb.append("Time for termination analysis of lassos ");
-		sb.append(m_Benchmark.getElapsedTime(s_LassoAnalysis, TimeUnit.MILLISECONDS));
-		sb.append(" ");
-		sb.append("Time for Büchi inclusion ");
-		sb.append(m_Benchmark.getElapsedTime(s_BuchiInclusion, TimeUnit.MILLISECONDS));
-		sb.append(" ");
-		sb.append("Time for automata minimization ");
-		sb.append(m_Benchmark.getElapsedTime(s_Minimization, TimeUnit.MILLISECONDS));
-		sb.append(" ");
+		sb.append(twoDForm.format(m_Benchmark.getElapsedTime(s_LassoAnalysis, TimeUnit.SECONDS)));
+		sb.append("s. ");
+		double buchiInclusionTotal = m_Benchmark.getElapsedTime(s_BuchiInclusion, TimeUnit.SECONDS);
+		double buchiInclusionSolver = m_SmtSolverElapsedTimeDuringBuchiInclusion / 1000000000;
+		double buchiInclusionAutomata = buchiInclusionTotal - buchiInclusionSolver;
+		sb.append("Time for construction of modules ");
+		sb.append(twoDForm.format(buchiInclusionSolver));
+		sb.append("s. ");
+		sb.append("Time for Büchi inclusion check ");
+		sb.append(twoDForm.format(buchiInclusionAutomata));
+		sb.append("s. ");
+		sb.append("Time for Büchi automata minimization ");
+		sb.append(twoDForm.format(m_Benchmark.getElapsedTime(s_Minimization, TimeUnit.SECONDS)));
+		sb.append("s.");
 		return sb.toString();
 	}
 }

@@ -150,8 +150,7 @@ public class BuchiCegarLoop {
 		private ModuleDecompositionBenchmark m_MDBenchmark = 
 				new ModuleDecompositionBenchmark();
 		
-		private TimingBenchmark m_TimingBenchmark =
-				new TimingBenchmark();
+		private TimingBenchmark m_TimingBenchmark;
 
 		
 
@@ -185,6 +184,7 @@ public class BuchiCegarLoop {
 			this.m_RootNode = rootNode;
 			this.m_SmtManager = smtManager;
 			this.m_BinaryStatePredicateManager = new BinaryStatePredicateManager(m_SmtManager);
+			m_TimingBenchmark =	new TimingBenchmark(m_SmtManager);
 //			this.buchiModGlobalVarManager = new BuchiModGlobalVarManager(
 //					m_Bspm.getUnseededVariable(), m_Bspm.getOldRankVariable(), 
 //					m_RootNode.getRootAnnot().getModGlobVarManager(),
@@ -202,6 +202,7 @@ public class BuchiCegarLoop {
 					m_Pref,
 					false && m_Pref.computeHoareAnnotation(),
 					m_Haf);
+			
 			
 			UltimatePreferenceStore baPref = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 			
@@ -337,12 +338,6 @@ public class BuchiCegarLoop {
 					switch (cd) {
 					case REFINE_BOTH:
 					{
-						refineFinite(lassoChecker);
-						m_Infeasible++;
-						if (m_ReduceAbstractionSize ) {
-							reduceAbstractionSize();
-						}
-						
 						BinaryStatePredicateManager bspm = lassoChecker.getBinaryStatePredicateManager();
 						if (bspm.isLoopWithoutStemTerminating()) {
 							m_RankWithoutSi++;	
@@ -358,7 +353,13 @@ public class BuchiCegarLoop {
 						INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
 						m_Abstraction = newAbstraction;
 						m_BinaryStatePredicateManager.clearPredicates();
-
+						
+						if (m_ReduceAbstractionSize ) {
+							reduceAbstractionSize();
+						}
+						
+						refineFinite(lassoChecker);
+						m_Infeasible++;
 					}
 						break;
 					case REFINE_FINITE:
