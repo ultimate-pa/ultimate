@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.NonTermi
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.ContinueDirective;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RefineBuchi.RefinementSetting;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BInterpolantAutomaton;
@@ -329,8 +330,8 @@ public class BuchiCegarLoop {
 						m_Counterexample);
 				
 				try {
-					switch (lassoChecker.getContinueDirective()) {
-					
+					ContinueDirective cd = lassoChecker.getContinueDirective();
+					switch (cd) {
 					case REFINE_BOTH:
 					{
 						BinaryStatePredicateManager bspm = lassoChecker.getBinaryStatePredicateManager();
@@ -517,11 +518,23 @@ public class BuchiCegarLoop {
 
 		
 		private void refineFinite(LassoChecker lassoChecker) throws OperationCanceledException {
-			TraceChecker traceChecker;
-			NestedRun<CodeBlock, IPredicate> run;
+			final TraceChecker traceChecker;
+			final NestedRun<CodeBlock, IPredicate> run;
 			if (lassoChecker.isStemInfeasible()) {
-				traceChecker = lassoChecker.getStemCheck();
-				run = m_Counterexample.getStem();
+				// if both (stem and loop) are infeasible we take the smaller
+				// one.
+				int stemSize = m_Counterexample.getStem().getLength();
+				int loopSize = m_Counterexample.getLoop().getLength();
+				if (lassoChecker.isLoopInfeasible() && loopSize <= stemSize) {
+					traceChecker = lassoChecker.getLoopCheck();
+					run = m_Counterexample.getLoop();
+				} else {
+					traceChecker = lassoChecker.getStemCheck();
+					run = m_Counterexample.getStem();
+				}
+			} else if (lassoChecker.isLoopInfeasible()) {
+				traceChecker = lassoChecker.getLoopCheck();
+				run = m_Counterexample.getLoop();
 			} else {
 				assert lassoChecker.isConcatInfeasible();
 				traceChecker = lassoChecker.getConcatCheck();
