@@ -1,8 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -125,6 +123,19 @@ public class LinearTransition {
 			num += polyhedron.size();
 		}
 		return num;
+	}
+	
+	/**
+	 * @return all variables occuring in any of the inequalities
+	 */
+	public Set<TermVariable> getVariables() {
+		Set<TermVariable> vars = new HashSet<TermVariable>();
+		for (List<LinearInequality> polyhedron : m_polyhedra) {
+			for (LinearInequality li : polyhedron) {
+				vars.addAll(li.getVariables());
+			}
+		}
+		return vars;
 	}
 	
 	/**

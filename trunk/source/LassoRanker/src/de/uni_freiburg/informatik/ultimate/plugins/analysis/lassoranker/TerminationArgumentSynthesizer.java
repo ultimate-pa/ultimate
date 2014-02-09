@@ -47,6 +47,18 @@ class TerminationArgumentSynthesizer {
 	private LinearTransition m_stem;
 	private LinearTransition m_loop;
 	
+	/**
+	 * List of supporting invariant generators used by the last synthesize()
+	 * call
+	 */
+	private Collection<SupportingInvariantGenerator> m_si_generators = null;
+	
+	/**
+	 * Number of Motzkin's Theorem applications used by the last synthesize()
+	 * call
+	 */
+	private int m_num_motzkin = 0;
+	
 	// Objects resulting from the synthesis process
 	private RankingFunction m_ranking_function = null;
 	private Collection<SupportingInvariant> m_supporting_invariants = null;
@@ -261,16 +273,15 @@ class TerminationArgumentSynthesizer {
 		}
 		
 		// List of all used supporting invariant generators
-		Collection<SupportingInvariantGenerator> si_generators =
-				new ArrayList<SupportingInvariantGenerator>();
+		m_si_generators = new ArrayList<SupportingInvariantGenerator>();
 		
 		// Assert all conjuncts generated from the template
 		Collection<Term> constraints =
-				buildConstraints(template, si_generators);
-		int num_motzkin = constraints.size();
-		s_Logger.info("We have " + num_motzkin
+				buildConstraints(template, m_si_generators);
+		m_num_motzkin = constraints.size();
+		s_Logger.info("We have " + getNumMotzkin()
 				+ " Motzkin's Theorem applications.");
-		s_Logger.info("A total of " + si_generators.size()
+		s_Logger.info("A total of " + getNumSIs()
 				+ " supporting invariants were added.");
 		for (Term constraint : constraints) {
 			m_script.assertTerm(constraint);
@@ -290,7 +301,7 @@ class TerminationArgumentSynthesizer {
 			m_ranking_function = template.extractRankingFunction(val_rf);
 			
 			// Extract supporting invariants
-			for (SupportingInvariantGenerator sig : si_generators) {
+			for (SupportingInvariantGenerator sig : m_si_generators) {
 				Map<Term, Rational> val_si =
 						AuxiliaryMethods.preprocessValuation(m_script.getValue(
 								sig.getVariables().toArray(new Term[0])));
@@ -311,6 +322,23 @@ class TerminationArgumentSynthesizer {
 		
 		return success;
 	}
+	
+	/**
+	 * @return the number of supporting invariants used
+	 */
+	public int getNumSIs() {
+		assert m_si_generators != null : "Call synthesize() first";
+		return m_si_generators.size();
+	}
+	
+	/**
+	 * @return the number of Motzkin's Theorem applications
+	 */
+	public int getNumMotzkin() {
+		assert m_si_generators != null : "Call synthesize() first";
+		return m_num_motzkin;
+	}
+	
 	
 	public TerminationArgument getArgument() {
 		return new TerminationArgument(m_ranking_function,
