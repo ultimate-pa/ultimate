@@ -58,13 +58,6 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 	}
 
 	
-	@Override
-	public IPayload getPayload() {
-		// TODO Auto-generated method stub
-		return new Payload();
-	}
-
-	
 	public AtsASTNode getIncomingNode() {
 		return m_parent;
 	}
