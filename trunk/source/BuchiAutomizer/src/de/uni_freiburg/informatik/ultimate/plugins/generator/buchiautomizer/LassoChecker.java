@@ -505,6 +505,7 @@ public class LassoChecker {
 			pref.smt_solver_command = "";
 		}
 		pref.nontermination_check_nonlinear = m_UseZ3;
+		pref.termination_check_nonlinear = m_UseZ3;
 
 		LassoRankerTerminationAnalysis lrta = null;
 		try {
