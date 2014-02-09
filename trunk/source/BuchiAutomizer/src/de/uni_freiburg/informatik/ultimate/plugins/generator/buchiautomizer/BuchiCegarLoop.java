@@ -337,6 +337,12 @@ public class BuchiCegarLoop {
 					switch (cd) {
 					case REFINE_BOTH:
 					{
+						refineFinite(lassoChecker);
+						m_Infeasible++;
+						if (m_ReduceAbstractionSize ) {
+							reduceAbstractionSize();
+						}
+						
 						BinaryStatePredicateManager bspm = lassoChecker.getBinaryStatePredicateManager();
 						if (bspm.isLoopWithoutStemTerminating()) {
 							m_RankWithoutSi++;	
@@ -352,8 +358,7 @@ public class BuchiCegarLoop {
 						INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
 						m_Abstraction = newAbstraction;
 						m_BinaryStatePredicateManager.clearPredicates();
-						refineFinite(lassoChecker);
-						m_Infeasible++;
+
 					}
 						break;
 					case REFINE_FINITE:
