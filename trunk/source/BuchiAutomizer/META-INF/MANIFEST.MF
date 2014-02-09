@@ -6,6 +6,7 @@ Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator
 Require-Bundle: org.eclipse.core.runtime,
  Library-log4j,
+ Library-UltimateUtil;bundle-version="0.0.1",
  Library-SMTLIB,
  Library-ModelCheckerUtils,
  UltimateCore,

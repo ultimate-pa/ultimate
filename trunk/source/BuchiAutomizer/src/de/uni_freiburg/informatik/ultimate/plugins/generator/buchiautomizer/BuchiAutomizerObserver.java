@@ -84,7 +84,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		if (result == Result.TERMINATING) {
 			ProgramPoint position = rootAnnot.getEntryNodes().values().iterator().next();
 				String shortDescr = "Buchi Automizer proved that your program is terminating";
-				String longDescr = statistics(bcl);
+				String longDescr = bcl.getMDBenchmark().toString();
+				longDescr += bcl.getTimingBenchmark().toString();
 				ILocation loc = position.getPayload().getLocation();
 				IResult reportRes= new GenericResultAtElement<RcfgElement>(position, 
 						Activator.s_PLUGIN_ID, 
@@ -236,60 +237,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	
 	
 
-	private String statistics(BuchiCegarLoop bcl) {
-//		TreeMap<Integer, Integer> ms = bcl.getModuleSize();
-		int modules = bcl.getModuleSizeTrivial().size() + bcl.getModuleSizeDeterministic().size() + bcl.getModuleSizeNondeterministic().size();
-		TreeMap<Integer, RankingFunction> rf = bcl.getRankingFunction();
-		if (modules == 0) {
-			return "Trivially terminating. There is no loop in your program.";
-		}
-		int modulesWithTrivialRankingFunction = 0;
-		int maxNumberOfStatesOfModuleWithTrivialRankingFunction = 0;
-		StringBuilder sb = new StringBuilder();
-		sb.append("Your program was decomposed into ");
-		sb.append(modules);
-		sb.append(" modules. ");
-		sb.append("(");
-		sb.append(bcl.getModuleSizeTrivial().size());
-		sb.append(" trivial, ");
-		sb.append(bcl.getModuleSizeDeterministic().size());
-		sb.append(" deterministic, ");
-		sb.append(bcl.getModuleSizeNondeterministic().size());
-		sb.append(" nondeterministic)");
-		for (Entry<Integer, Integer> entry  : bcl.getModuleSizeDeterministic().entrySet()) {
-			if (rf.containsKey(entry.getKey())) {
-				sb.append("One deterministic module has ");
-				sb.append(prettyPrintRankingFunction(rf.get(entry.getKey())));
-				sb.append(" and consists of ");
-				sb.append(entry.getValue());
-				sb.append(" states. ");
-			} else {
-				modulesWithTrivialRankingFunction++;
-				if (entry.getValue() > maxNumberOfStatesOfModuleWithTrivialRankingFunction) {
-					maxNumberOfStatesOfModuleWithTrivialRankingFunction = entry.getValue();
-				}
-			}
-		}
-		for (Entry<Integer, Integer> entry  : bcl.getModuleSizeNondeterministic().entrySet()) {
-			if (rf.containsKey(entry.getKey())) {
-				sb.append("One nondeterministic module has ");
-				sb.append(prettyPrintRankingFunction(rf.get(entry.getKey())));
-				sb.append(" and consists of ");
-				sb.append(entry.getValue());
-				sb.append(" states. ");
-			} else {
-				modulesWithTrivialRankingFunction++;
-				if (entry.getValue() > maxNumberOfStatesOfModuleWithTrivialRankingFunction) {
-					maxNumberOfStatesOfModuleWithTrivialRankingFunction = entry.getValue();
-				}
-			}
-		}
-		sb.append(modulesWithTrivialRankingFunction);
-		sb.append(" modules have a trivial ranking function, the largest among these consists of ");
-		sb.append(maxNumberOfStatesOfModuleWithTrivialRankingFunction);
-		sb.append(" states.");
-		return sb.toString();
-	}
+
 	
 	private String prettyPrintRankingFunction(RankingFunction rf) {
 		StringBuilder sb = new StringBuilder();

@@ -147,10 +147,11 @@ public class BuchiCegarLoop {
 
 		private PredicateFactoryRefinement m_StateFactoryForRefinement;
 
-		private final TreeMap<Integer,Integer> m_ModuleSizeTrivial = new TreeMap<Integer,Integer>();
-		private final TreeMap<Integer,Integer> m_ModuleSizeDeterministic = new TreeMap<Integer,Integer>();
-		private final TreeMap<Integer,Integer> m_ModuleSizeNondeterministic = new TreeMap<Integer,Integer>();
-		private final TreeMap<Integer,RankingFunction> m_RankingFunction = new TreeMap<Integer,RankingFunction>();
+		private ModuleDecompositionBenchmark m_MDBenchmark = 
+				new ModuleDecompositionBenchmark();
+		
+		private TimingBenchmark m_TimingBenchmark =
+				new TimingBenchmark();
 
 		
 
@@ -323,11 +324,13 @@ public class BuchiCegarLoop {
 					return Result.TERMINATING;
 				}
 				
+				m_TimingBenchmark.startLassoAnalysis();
 				LassoChecker lassoChecker = new LassoChecker(
 						m_Pref.interpolation(), m_SmtManager, 
 						m_RootNode.getRootAnnot().getModGlobVarManager(),
 						m_BinaryStatePredicateManager,
 						m_Counterexample);
+				m_TimingBenchmark.stopLassoAnalysis();
 				
 				try {
 					ContinueDirective cd = lassoChecker.getContinueDirective();
@@ -343,7 +346,8 @@ public class BuchiCegarLoop {
 						ISLPredicate hondaISLP = (ISLPredicate) m_Counterexample.getLoop().getStateAtPosition(0);
 						ProgramPoint hondaPP = hondaISLP.getProgramPoint();
 						reportTerminationArgument(bspm.getTerminationArgument(), hondaPP, m_Counterexample.getStem().getWord(), m_Counterexample.getLoop().getWord());
-						m_RankingFunction.put(m_Iteration, bspm.getTerminationArgument().getRankingFunction());
+						RankingFunction rf = bspm.getTerminationArgument().getRankingFunction();
+						m_MDBenchmark.reportRankingFunction(m_Iteration, rf.getClass().getSimpleName(), rf.asLexExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie()));
 
 						INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
 						m_Abstraction = newAbstraction;
@@ -367,7 +371,8 @@ public class BuchiCegarLoop {
 						ISLPredicate hondaISLP = (ISLPredicate) m_Counterexample.getLoop().getStateAtPosition(0);
 						ProgramPoint hondaPP = hondaISLP.getProgramPoint();
 						reportTerminationArgument(bspm.getTerminationArgument(), hondaPP, m_Counterexample.getStem().getWord(), m_Counterexample.getLoop().getWord());
-						m_RankingFunction.put(m_Iteration, bspm.getTerminationArgument().getRankingFunction());
+						RankingFunction rf = bspm.getTerminationArgument().getRankingFunction();
+						m_MDBenchmark.reportRankingFunction(m_Iteration, rf.getClass().getSimpleName(), rf.asLexExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie()));
 
 						
 						INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
@@ -420,6 +425,7 @@ public class BuchiCegarLoop {
 		 */
 		private void reduceAbstractionSize() throws OperationCanceledException,
 				AutomataLibraryException, AssertionError {
+			m_TimingBenchmark.startMinimization();
 			m_Abstraction = (new RemoveNonLiveStates<CodeBlock, IPredicate>(m_Abstraction)).getResult();
 			m_Abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) (new BuchiClosureNwa(m_Abstraction));
 			m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Abstraction)).getResult();
@@ -431,9 +437,11 @@ public class BuchiCegarLoop {
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
 			m_Abstraction = minimized;
 			s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
+			m_TimingBenchmark.stopMinimization();
 		}
 		
 		private INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi(LassoChecker lassoChecker) throws AutomataLibraryException {
+			m_TimingBenchmark.startBuchiInclusion();
 			int stage = 0;
 			BuchiModGlobalVarManager bmgvm = new BuchiModGlobalVarManager(
 					lassoChecker.getBinaryStatePredicateManager().getUnseededVariable(), 
@@ -453,21 +461,21 @@ public class BuchiCegarLoop {
 					switch (rs.getInterpolantAutomaton()) {
 					case Deterministic:
 					case LassoAutomaton:
-						m_ModuleSizeDeterministic.put(m_Iteration,m_RefineBuchi.getInterpolAutomatonUsedInRefinement().size());
+						m_MDBenchmark.reportDeterminsticModule(m_Iteration,m_RefineBuchi.getInterpolAutomatonUsedInRefinement().size());
 						break;
 					case ScroogeNondeterminism:
 					case EagerNondeterminism:
-						m_ModuleSizeNondeterministic.put(m_Iteration,m_RefineBuchi.getInterpolAutomatonUsedInRefinement().size());
+						m_MDBenchmark.reportNonDeterminsticModule(m_Iteration,m_RefineBuchi.getInterpolAutomatonUsedInRefinement().size());
 						break;
 					default:
 						throw new AssertionError("unsupported");
 					}
+					m_TimingBenchmark.stopBuchiInclusion();
 					return newAbstraction;
 				}
 				stage++;
 			}
 			throw new AssertionError("no settings was sufficient");
-			
 		}
 
 
@@ -518,6 +526,7 @@ public class BuchiCegarLoop {
 
 		
 		private void refineFinite(LassoChecker lassoChecker) throws OperationCanceledException {
+			m_TimingBenchmark.startBuchiInclusion();
 			final TraceChecker traceChecker;
 			final NestedRun<CodeBlock, IPredicate> run;
 			if (lassoChecker.isStemInfeasible()) {
@@ -562,9 +571,10 @@ public class BuchiCegarLoop {
 				String filename = "interpolAutomatonUsedInRefinement"+m_Iteration+"after";
 				writeAutomatonToFile(m_InterpolAutomaton, m_Pref.dumpPath(), filename);
 			}
-			m_ModuleSizeTrivial.put(m_Iteration,m_InterpolAutomaton.size());
+			m_MDBenchmark.reportTrivialModule(m_Iteration,m_InterpolAutomaton.size());
 			assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true)).getResult();
 			m_Abstraction = diff.getResult();
+			m_TimingBenchmark.stopBuchiInclusion();
 		}
 		
 		protected void constructInterpolantAutomaton(TraceChecker traceChecker, NestedRun<CodeBlock, IPredicate> run) throws OperationCanceledException {
@@ -703,25 +713,15 @@ public class BuchiCegarLoop {
 		}
 
 
+		public ModuleDecompositionBenchmark getMDBenchmark() {
+			return m_MDBenchmark;
+		}
+
+		public TimingBenchmark getTimingBenchmark() {
+			return m_TimingBenchmark;
+		}
+	
 		
-		
-		public TreeMap<Integer, Integer> getModuleSizeTrivial() {
-			return m_ModuleSizeTrivial;
-		}
-
-		public TreeMap<Integer, Integer> getModuleSizeDeterministic() {
-			return m_ModuleSizeDeterministic;
-		}
-
-		public TreeMap<Integer, Integer> getModuleSizeNondeterministic() {
-			return m_ModuleSizeNondeterministic;
-		}
-
-		public TreeMap<Integer, RankingFunction> getRankingFunction() {
-			return m_RankingFunction;
-		}
-		
-
 
 		
 }
