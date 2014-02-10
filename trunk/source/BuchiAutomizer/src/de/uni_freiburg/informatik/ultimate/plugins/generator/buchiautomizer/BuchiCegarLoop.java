@@ -155,7 +155,7 @@ public class BuchiCegarLoop {
 		
 
 
-		private static final boolean m_ReduceAbstractionSize = true;
+		private static final boolean s_ReduceAbstractionSize = true;
 		
 		
 		private final boolean m_Difference;
@@ -354,9 +354,9 @@ public class BuchiCegarLoop {
 						m_Abstraction = newAbstraction;
 						m_BinaryStatePredicateManager.clearPredicates();
 						
-//						if (m_ReduceAbstractionSize ) {
-//							reduceAbstractionSize();
-//						}
+						if (s_ReduceAbstractionSize ) {
+							reduceAbstractionSize();
+						}
 						
 						refineFinite(lassoChecker);
 						m_Infeasible++;
@@ -396,7 +396,7 @@ public class BuchiCegarLoop {
 					s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
 //					s_Logger.info("Interpolant automaton has " + m_RefineBuchi.getInterpolAutomatonUsedInRefinement().sizeInformation());
 					
-					if (m_ReduceAbstractionSize ) {
+					if (s_ReduceAbstractionSize ) {
 						reduceAbstractionSize();
 					}
 
