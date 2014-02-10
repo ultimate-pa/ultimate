@@ -72,6 +72,8 @@ public class BoogieBuchiAutomizerTC extends Toolchain {
 		tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
 		List<Setting> oRank = new ArrayList<Setting>();
 		List<Setting> mRank = new ArrayList<Setting>();
+        oRCFGB.add(new Setting("/Use\\ external\\ solver\\ instead\\ of\\ SMTInterpol", Setting.SettingType.BOOLEAN,
+                "external solver", "false", false));
         oRCFGB.add(new Setting("/HoareAnnotation", Setting.SettingType.BOOLEAN,
                 "Compute Hoare Annotation", "false", true));
         oRCFGB.add(new Setting("/Timeout", Setting.SettingType.INTEGER,

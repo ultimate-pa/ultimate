@@ -61,8 +61,8 @@ public class CBuchiAutomizerTC extends Toolchain {
 	protected List<Tool> setTools() {
 		List<Tool> tools = new ArrayList<Tool>();
         List<Setting> oCACSL = new ArrayList<Setting>();
-//      oCACSL.add(new Setting("/CheckedMethod", Setting.SettingType.STRING,
-//              "Checked Method: ", "main", true));
+        oCACSL.add(new Setting("/Checked\\ method.\\ Library\\ mode\\ if\\ empty.", Setting.SettingType.STRING,
+                "Starting procedure: ", "main", true));
       List<Setting> mCACSL = new ArrayList<Setting>();
       tools.add(new Tool("CACSL2BoogieTranslator", oCACSL, mCACSL,
               LoggingLevel.WARN));
@@ -78,6 +78,8 @@ public class CBuchiAutomizerTC extends Toolchain {
 		tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
 		List<Setting> oRank = new ArrayList<Setting>();
 		List<Setting> mRank = new ArrayList<Setting>();
+        oRCFGB.add(new Setting("/Use\\ external\\ solver\\ instead\\ of\\ SMTInterpol", Setting.SettingType.BOOLEAN,
+                "external solver", "false", false));
         oRCFGB.add(new Setting("/HoareAnnotation", Setting.SettingType.BOOLEAN,
                 "Compute Hoare Annotation", "false", true));
         oRCFGB.add(new Setting("/Timeout", Setting.SettingType.INTEGER,

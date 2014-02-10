@@ -18,6 +18,16 @@ import java.util.Set;
  */
 public abstract class Toolchain {
 	/**
+	 * Timeout used for all toolchains.
+	 */
+	private static final int s_TimeoutInSeconds = 20;
+	
+	/**
+	 * String that identifies the timeout setting from the core preferences.
+	 */
+	private static final String s_TimeoutString = 
+			"Toolchain\\ timeout\\ in\\ seconds";
+	/**
 	 * The toolchain name to be shown on the website.
 	 */
 	private String name;
@@ -173,6 +183,7 @@ public abstract class Toolchain {
 		settings.append("file_export_version=3.0").append(EOL);
 		settings.append("\\!/instance/UltimateCore=").append(EOL);
 		settings.append("@UltimateCore=1.0.0").append(EOL);
+		settings.append("/instance/UltimateCore/"+s_TimeoutString+"="+s_TimeoutInSeconds).append(EOL);
 		settings.append("/instance/UltimateCore/ultimate.logfile=true").append(EOL);
 		settings.append("/instance/UltimateCore/ultimate.logging.tools=");
 		settings.append(getToolsLoggingLevel()).append(EOL);
