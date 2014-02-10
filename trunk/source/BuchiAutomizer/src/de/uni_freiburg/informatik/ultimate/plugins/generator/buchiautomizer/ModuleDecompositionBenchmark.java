@@ -64,7 +64,6 @@ public class ModuleDecompositionBenchmark {
 		if (modules == 0) {
 			return "Trivially terminating. There is no loop in your program.";
 		}
-		int modulesWithTrivialRankingFunction = 0;
 		int maxNumberOfStatesOfModuleWithTrivialRankingFunction = 0;
 		StringBuilder sb = new StringBuilder();
 		sb.append("Your program was decomposed into ");
@@ -78,35 +77,26 @@ public class ModuleDecompositionBenchmark {
 		sb.append(m_ModuleSizeNondeterministic.size());
 		sb.append(" nondeterministic) ");
 		for (Entry<Integer, Integer> entry  : m_ModuleSizeDeterministic.entrySet()) {
-			if (m_RankingFunction.containsKey(entry.getKey())) {
-				sb.append("One deterministic module has ");
-				sb.append(m_RankingFunction.get(entry.getKey()).toString());
-				sb.append(" and consists of ");
-				sb.append(entry.getValue());
-				sb.append(" locations. ");
-			} else {
-				modulesWithTrivialRankingFunction++;
-				if (entry.getValue() > maxNumberOfStatesOfModuleWithTrivialRankingFunction) {
-					maxNumberOfStatesOfModuleWithTrivialRankingFunction = entry.getValue();
-				}
-			}
+			sb.append("One deterministic module has ");
+			sb.append(m_RankingFunction.get(entry.getKey()).toString());
+			sb.append(" and consists of ");
+			sb.append(entry.getValue());
+			sb.append(" locations. ");
 		}
 		for (Entry<Integer, Integer> entry : m_ModuleSizeNondeterministic.entrySet()) {
-			if (m_RankingFunction.containsKey(entry.getKey())) {
-				sb.append("One nondeterministic module has ");
-				sb.append(m_RankingFunction.get(entry.getKey()).toString());
-				sb.append(" and consists of ");
-				sb.append(entry.getValue());
-				sb.append(" locations. ");
-			} else {
-				modulesWithTrivialRankingFunction++;
-				if (entry.getValue() > maxNumberOfStatesOfModuleWithTrivialRankingFunction) {
-					maxNumberOfStatesOfModuleWithTrivialRankingFunction = entry.getValue();
-				}
+			sb.append("One nondeterministic module has ");
+			sb.append(m_RankingFunction.get(entry.getKey()).toString());
+			sb.append(" and consists of ");
+			sb.append(entry.getValue());
+			sb.append(" locations. ");
+		}
+		for (Entry<Integer, Integer> entry : m_ModuleSizeTrivial.entrySet()) {
+			if (entry.getValue() > maxNumberOfStatesOfModuleWithTrivialRankingFunction) {
+				maxNumberOfStatesOfModuleWithTrivialRankingFunction = entry.getValue();
 			}
 		}
-		if (modulesWithTrivialRankingFunction > 0) {
-			sb.append(modulesWithTrivialRankingFunction);
+		if (m_ModuleSizeTrivial.size() > 0) {
+			sb.append(m_ModuleSizeTrivial.size());
 			sb.append(" modules have a trivial ranking function, the largest among these consists of ");
 			sb.append(maxNumberOfStatesOfModuleWithTrivialRankingFunction);
 			sb.append(" locations.");
