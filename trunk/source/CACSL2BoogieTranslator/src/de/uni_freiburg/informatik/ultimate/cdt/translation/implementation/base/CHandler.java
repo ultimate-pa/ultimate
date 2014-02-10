@@ -1035,7 +1035,7 @@ public class CHandler implements ICHandler {
 
 		switch (node.getOperator()) {
 		case IASTUnaryExpression.op_minus:
-			ResultExpression ropToInt = rexToInt(loc, rop);
+			ResultExpression ropToInt = rexToIntIfNecessary(loc, rop);
 			return new ResultExpression(
 					ropToInt.stmt,
 					new RValue(new UnaryExpression(loc,
@@ -1063,7 +1063,7 @@ public class CHandler implements ICHandler {
 			re.addAll(ropToBool);
 			return re;
 		case IASTUnaryExpression.op_plus:
-			ropToInt = rexToInt(loc, rop);
+			ropToInt = rexToIntIfNecessary(loc, rop);
 			return new ResultExpression(ropToInt.stmt, ropToInt.lrVal, ropToInt.decl,
 			        ropToInt.auxVars, ropToInt.overappr);
 		case IASTUnaryExpression.op_postFixIncr:
@@ -1369,7 +1369,7 @@ public class CHandler implements ICHandler {
 			overappr.addAll(l.overappr);
 			overappr.addAll(rr.overappr);
 			if (l.lrVal.cType instanceof CPrimitive && ((CPrimitive) l.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				ResultExpression rrToInt = rexToInt(loc,rr);
+				ResultExpression rrToInt = rexToIntIfNecessary(loc,rr);
 				return makeAssignment(main, loc, stmt, l.lrVal, (RValue) rrToInt.lrVal, decl, auxVars, overappr);//, r.lrVal.cType);
 			} else {
 				return makeAssignment(main, loc, stmt, l.lrVal,(RValue) rr.lrVal, decl, auxVars, overappr);//, r.lrVal.cType);
@@ -1465,15 +1465,14 @@ public class CHandler implements ICHandler {
 						new CPrimitive(CPrimitive.PRIMITIVE.INT), true, false);
 								
 				
-				return new ResultExpression(stmt, 
-						//new RValue(wrapBinaryBoolean2Int(loc,BinaryExpression.Operator.LOGICAND, lBool, rBool), 
-						newRVal, decl, auxVars, overappr);
+				return new ResultExpression(stmt, newRVal, decl, auxVars, overappr);
 			}
 			// create and add tmp var #t~AND~UID
 			String resName = main.nameHandler
 					.getTempVarUID(SFO.AUXVAR.SHORTCIRCUIT);
 			VarList tempVar = new VarList(loc, new String[] { resName },
-					new PrimitiveType(loc, SFO.INT));
+					new PrimitiveType(loc, SFO.BOOL));
+//					new PrimitiveType(loc, SFO.INT));
 			VariableDeclaration tmpVar = new VariableDeclaration(loc,
 					new Attribute[0], new VarList[] { tempVar });
 			auxVars.put(tmpVar, loc);
@@ -1481,9 +1480,9 @@ public class CHandler implements ICHandler {
 			VariableLHS lhs = new VariableLHS(loc, resName);
 			RValue tmpRval = new RValue(
 					new IdentifierExpression(loc, resName),
-					new CPrimitive(PRIMITIVE.INT));
+					new CPrimitive(PRIMITIVE.INT), true, false);
 			RValue resRval = tmpRval;
-			tmpRval = ConvExpr.toBoolean(loc, tmpRval);//FIXME: does it make sense to first create, then immediately convert it??
+//			tmpRval = ConvExpr.toBoolean(loc, tmpRval);//FIXME: does it make sense to first create, then immediately convert it??
 			// #t~AND~UID = left
 		
 			AssignmentStatement aStat = new AssignmentStatement(loc,
@@ -1539,7 +1538,8 @@ public class CHandler implements ICHandler {
 			String resName = main.nameHandler
 					.getTempVarUID(SFO.AUXVAR.SHORTCIRCUIT);
 			VarList tempVar = new VarList(loc, new String[] { resName },
-					new PrimitiveType(loc, SFO.INT));
+					new PrimitiveType(loc, SFO.BOOL));
+//					new PrimitiveType(loc, SFO.INT));
 			VariableDeclaration tmpVar = new VariableDeclaration(loc,
 					new Attribute[0], new VarList[] { tempVar });
 			auxVars.put(tmpVar, loc);
@@ -1547,9 +1547,9 @@ public class CHandler implements ICHandler {
 			VariableLHS lhs = new VariableLHS(loc, resName);
 			RValue tmpRval = new RValue(
 					new IdentifierExpression(loc, resName),
-					new CPrimitive(PRIMITIVE.INT));
+					new CPrimitive(PRIMITIVE.INT), true, false);
 			RValue resRval = tmpRval;
-			tmpRval = ConvExpr.toBoolean(loc, tmpRval); //FIXME: does it make sense to first create, then immediately convert it??
+//			tmpRval = ConvExpr.toBoolean(loc, tmpRval); //FIXME: does it make sense to first create, then immediately convert it??
 			// #t~OR~UID = left
 			AssignmentStatement aStat = new AssignmentStatement(loc,
 					new LeftHandSide[] { lhs }, new Expression[] { rlToBool.lrVal.getValue() });
@@ -1581,8 +1581,8 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_modulo:
 		case IASTBinaryExpression.op_multiply:
 		case IASTBinaryExpression.op_divide: {
-			ResultExpression rlToInt = rexToInt(loc, rl);
-			ResultExpression rrToInt = rexToInt(loc, rr);
+			ResultExpression rlToInt = rexToIntIfNecessary(loc, rl);
+			ResultExpression rrToInt = rexToIntIfNecessary(loc, rr);
 			stmt.addAll(rlToInt.stmt);
 			stmt.addAll(rrToInt.stmt);
 			decl.addAll(rlToInt.decl);
@@ -1729,7 +1729,7 @@ public class CHandler implements ICHandler {
 		return rlToBool;
 	}
 
-	private ResultExpression rexToInt(ILocation loc, ResultExpression rl) {
+	private ResultExpression rexToIntIfNecessary(ILocation loc, ResultExpression rl) {
 		ResultExpression rlToInt = null;
 		if (rl.lrVal.isBoogieBool) {
 			rlToInt = new ResultExpression(ConvExpr.boolToInt(loc, (RValue) rl.lrVal));
