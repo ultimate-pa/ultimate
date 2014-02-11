@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 public abstract class RCFGWalker implements IRCFGWalker {
 
 	protected ObserverDispatcher mDispatcher;
-	protected static Logger sLogger = UltimateServices.getInstance().getLogger(
+	protected static Logger mLogger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID).getLogger("RCFGWalker");
 
 	public RCFGWalker(ObserverDispatcher dispatcher) {

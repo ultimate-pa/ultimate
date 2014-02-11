@@ -22,6 +22,7 @@ public abstract class UltimateTestSuite {
 
 	public UltimateTestSuite() {
 		mLogger = Logger.getLogger(UltimateStarter.class);
+		
 	}
 
 	@TestFactory

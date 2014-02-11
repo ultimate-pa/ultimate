@@ -167,7 +167,7 @@ public class DebugFileWriterDietsch {
 				.entrySet()) {
 			for (int i = prefixPos; i < maxTraceLength; ++i) {
 				for (ArrayList<CodeBlock> trace : en.getValue()) {
-					if (i < trace.size() - suffixOffset + 1) {
+					if (i < trace.size() - suffixOffset ) {
 						CodeBlock current = trace.get(i);
 						if (!renaming.containsKey(current)) {
 							maxSymbols++;
@@ -243,7 +243,7 @@ public class DebugFileWriterDietsch {
 					sb.append(getLetter(0));
 					sb.append(",");
 				}
-				for (int i = prefixPos; i < trace.size() - suffixOffset + 1; ++i) {
+				for (int i = prefixPos; i < trace.size() - suffixOffset ; ++i) {
 					sb.append(getLetter(renaming.get(trace.get(i))));
 					sb.append(",");
 				}

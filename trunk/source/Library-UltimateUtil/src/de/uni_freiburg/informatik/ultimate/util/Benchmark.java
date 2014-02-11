@@ -12,7 +12,6 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 /**
- * 
  * This class provides functions to measure runtime and memory consumption
  * 
  * @author dietsch
@@ -36,7 +35,7 @@ public class Benchmark {
 
 	private int mCurrentIndex;
 	private HashMap<String, Watch> mWatches;
-	
+
 	private Logger mLogger;
 
 	public Benchmark() {
@@ -44,22 +43,53 @@ public class Benchmark {
 		reset();
 	}
 
+	/**
+	 * Register a new watch, but do not start it. Useful for starting many
+	 * watches at the same time with {@link #startAll()}, and then stopping them
+	 * separately.
+	 * 
+	 * @param title
+	 *            The title of the watch to register. Titles have to be unique
+	 *            and non-null.
+	 */
 	public void register(String title) {
 		if (!mWatches.containsKey(title)) {
 			mWatches.put(title, new Watch(title, mCurrentIndex++));
 		}
 	}
 
+	/**
+	 * Unregisters a specific watch.
+	 * 
+	 * @param title
+	 *            The title of the watch to unregister. If the watch does not
+	 *            exist, this method will do nothing.
+	 */
 	public void unregister(String title) {
 		mWatches.remove(title);
 	}
 
+	/**
+	 * Starts a specific watch. Starting means taking the starting time and the
+	 * various heap sizes. If the watch is not already registered, it will be
+	 * afterwards.
+	 * 
+	 * @param title
+	 *            The title of the watch to register. Titles have to be unique
+	 *            and non-null. If the watch did not exists previously, it will
+	 *            be registered automatically.
+	 */
 	public void start(String title) {
 		Watch watch = mWatches.get(title);
 		if (watch == null) {
 			watch = new Watch(title, mCurrentIndex++);
 			mWatches.put(title, watch);
 		}
+		watch.reset();
+		startInternal(watch);
+	}
+
+	private void startInternal(Watch watch) {
 		watch.mStartHeapSize = Runtime.getRuntime().totalMemory();
 		watch.mStartHeapFreeSize = Runtime.getRuntime().freeMemory();
 		watch.mStartTime = System.nanoTime();
@@ -94,7 +124,7 @@ public class Benchmark {
 			return;
 		}
 		Watch oldWatch = watch.copy();
-		if(watch.mPausedWatches == null){
+		if (watch.mPausedWatches == null) {
 			watch.mPausedWatches = new ArrayList<Watch>();
 		}
 		watch.mPausedWatches.add(oldWatch);
@@ -105,17 +135,15 @@ public class Benchmark {
 		if (watch == null) {
 			return;
 		}
-		start(title);
+		startInternal(watch);
 	}
-
 
 	private void stopWatch(String title, long stopDate, long stopHeapSize, long stopHeapFreeSize) {
 		Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return;
 		}
-		
-	
+
 		if (watch.mStartTime == -1 && mStartTime == -1) {
 			return;
 		}
@@ -125,8 +153,8 @@ public class Benchmark {
 			watch.mStartTime = mStartTime;
 			watch.mStartHeapSize = mStartHeapSize;
 			watch.mStartHeapFreeSize = mStartHeapFreeSize;
-		} 
-		
+		}
+
 		watch.mElapsedTime = stopDate - watch.mStartTime + watch.mElapsedTime;
 		watch.mStopHeapSize = stopHeapSize;
 		watch.mStopHeapFreeSize = stopHeapFreeSize;
@@ -158,8 +186,8 @@ public class Benchmark {
 			mLogger.info(s);
 		}
 	}
-	
-	public String getReportString(String title){
+
+	public String getReportString(String title) {
 		Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return "";
@@ -298,10 +326,10 @@ public class Benchmark {
 			mStopHeapSize = 0;
 			mStopHeapFreeSize = 0;
 		}
-		
-		private Watch copy(){
+
+		private Watch copy() {
 			Watch m = new Watch(mTitle, mIndex);
-			m.mStartTime = mStartTime ;
+			m.mStartTime = mStartTime;
 			m.mElapsedTime = mElapsedTime;
 
 			m.mStartHeapSize = mStartHeapSize;

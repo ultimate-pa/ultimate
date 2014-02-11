@@ -7,6 +7,7 @@ Bundle-Activator: de.uni_freiburg.informatik.ultimate.irsdependencies.Activator
 Require-Bundle: UltimateCore,
  Library-log4j,
  Library-ModelCheckerUtils,
+ Library-UltimateUtil,
  BoogieParser,
  RCFGBuilder
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7

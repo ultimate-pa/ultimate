@@ -35,7 +35,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 	public RCFGWalkerUnroller(ObserverDispatcher dispatcher, int unrollings) {
 		super(dispatcher);
 		mUnrollings = unrollings;
-		sLogger.setLevel(Level.INFO);
+		mLogger.setLevel(Level.INFO);
 	}
 
 	@Override
@@ -43,7 +43,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		init();
 		RCFGEdge start = searchMainEdge(node);
 		if (start == null) {
-			sLogger.error("No main procedure found");
+			mLogger.error("No main procedure found");
 			return;
 		}
 		process(start, new ArrayList<ARTEdge>());
@@ -78,7 +78,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 			}
 			mFinalPaths.add(newPath);
 		}
-		sLogger.info("Processed "+mFinalPaths.size()+" traces");
+		mLogger.info("Processed "+mFinalPaths.size()+" traces");
 
 		mGraph = null;
 		mPaths = null;
@@ -89,21 +89,21 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 	}
 
 	protected void printPath(List<ARTEdge> path) {
-		sLogger.debug(path.get(0).getSource());
+		mLogger.debug(path.get(0).getSource());
 		for (ARTEdge e : path) {
-			sLogger.debug(e.mBacking);
-			sLogger.debug(e.getTarget());
+			mLogger.debug(e.mBacking);
+			mLogger.debug(e.getTarget());
 		}
 	}
 
 	protected RCFGEdge searchMainEdge(final RootNode node) {
-		sLogger.debug("Searching for procedure \"" + sMainProcedureName + "\"");
+		mLogger.debug("Searching for procedure \"" + sMainProcedureName + "\"");
 		for (RCFGEdge edge : node.getOutgoingEdges()) {
 			ProgramPoint possibleMain = (ProgramPoint) edge.getTarget();
-			sLogger.debug("Candidate: \"" + possibleMain.getProcedure() + "\"");
+			mLogger.debug("Candidate: \"" + possibleMain.getProcedure() + "\"");
 			if (possibleMain.getProcedure()
 					.equalsIgnoreCase(sMainProcedureName)) {
-				sLogger.debug("Found match");
+				mLogger.debug("Found match");
 				return edge;
 			}
 		}
@@ -116,11 +116,11 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 			findLoopEntryExit(currentEdge.getTarget());
 		}
 
-		sLogger.debug("processing: " + current);
+		mLogger.debug("processing: " + current);
 
 		if (current.isVisited(mUnrollings)) {
-			sLogger.debug("--reached unrolling limit");
-			sLogger.debug("");
+			mLogger.debug("--reached unrolling limit");
+			mLogger.debug("");
 			return;
 		} else {
 			current.visit();
@@ -128,16 +128,16 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 
 		if (currentEdge instanceof Call) {
 			mCalls.push(currentEdge);
-			sLogger.debug("--push (call) " + currentEdge);
-			sLogger.debug("----old mGraph: " + mGraph.values());
-			sLogger.debug("----new mGraph: fresh");
+			mLogger.debug("--push (call) " + currentEdge);
+			mLogger.debug("----old mGraph: " + mGraph.values());
+			mLogger.debug("----new mGraph: fresh");
 
 			mGraphs.push(mGraph);
 			mGraph = new HashMap<>();
 
 			if (isMaxCallDepth(currentEdge)) {
-				sLogger.debug("--reached unrolling limit (call)");
-				sLogger.debug("");
+				mLogger.debug("--reached unrolling limit (call)");
+				mLogger.debug("");
 				return;
 			}
 		} else if (currentEdge instanceof Return) {
@@ -145,24 +145,24 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 			String old = mGraph.values().toString();
 			mGraph = mGraphs.pop();
 			current.mLastGraphState = mGraph;
-			sLogger.debug("--pop (return) " + currentEdge);
-			sLogger.debug("----old mGraph: " + old);
-			sLogger.debug("----new mGraph: " + mGraph.values());
+			mLogger.debug("--pop (return) " + currentEdge);
+			mLogger.debug("----old mGraph: " + old);
+			mLogger.debug("----new mGraph: " + mGraph.values());
 		}
 
 		if (current.isNestedLoopEntry()) {
-			sLogger.debug("--push (nestedLoop) " + currentEdge);
+			mLogger.debug("--push (nestedLoop) " + currentEdge);
 			mNestedLoops.push(currentEdge);
 			if (isMaxLoopDepth(current)) {
-				sLogger.debug("--reached unrolling limit (nestedLoop)");
-				sLogger.debug("----mNestedLoops: " + mNestedLoops);
+				mLogger.debug("--reached unrolling limit (nestedLoop)");
+				mLogger.debug("----mNestedLoops: " + mNestedLoops);
 				mNestedLoops.pop();
-				sLogger.debug("----pop mNestedLoops: " + mNestedLoops);
-				sLogger.debug("");
+				mLogger.debug("----pop mNestedLoops: " + mNestedLoops);
+				mLogger.debug("");
 				return;
 			}
-			sLogger.debug("----old mGraph: " + mGraph.values());
-			sLogger.debug("----new mGraph: fresh");
+			mLogger.debug("----old mGraph: " + mGraph.values());
+			mLogger.debug("----new mGraph: fresh");
 			mGraphs.push(mGraph);
 			mGraph = new HashMap<>();
 
@@ -171,9 +171,9 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 			String old = mGraph.values().toString();
 			mGraph = mGraphs.pop();
 			current.mLastGraphState = mGraph;
-			sLogger.debug("--push (nestedLoop) " + currentEdge);
-			sLogger.debug("----old mGraph: " + old);
-			sLogger.debug("----new mGraph: " + mGraph.values());
+			mLogger.debug("--push (nestedLoop) " + currentEdge);
+			mLogger.debug("----old mGraph: " + old);
+			mLogger.debug("----new mGraph: " + mGraph.values());
 		}
 
 		processed.add(current);
@@ -183,12 +183,12 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 
 		if (current.getTarget().getOutgoingEdges().isEmpty()) {
 			mPaths.add(new ArrayList<>(processed));
-			sLogger.debug("");
-			sLogger.debug("Trace: " + traceToString(processed));
-			sLogger.debug("mCalls: " + mCalls);
-			sLogger.debug("mNestedLoops: " + mNestedLoops);
-			sLogger.debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ End @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-			sLogger.debug("");
+			mLogger.debug("");
+			mLogger.debug("Trace: " + traceToString(processed));
+			mLogger.debug("mCalls: " + mCalls);
+			mLogger.debug("mNestedLoops: " + mNestedLoops);
+			mLogger.debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ End @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+			mLogger.debug("");
 			programExitReached();
 			return;
 		}
@@ -200,17 +200,17 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 				post(current.mBacking.getTarget());
 
 			} else {
-				sLogger.debug("--infeasible: " + next);
+				mLogger.debug("--infeasible: " + next);
 			}
 		}
 		backtrack(current, processed);
 	}
 
 	protected void backtrack(ARTEdge stop, List<ARTEdge> processed) {
-		sLogger.debug("--backtracking--");
+		mLogger.debug("--backtracking--");
 		for (int i = processed.size() - 1; i >= 0; --i) {
 			ARTEdge current = processed.get(i);
-			sLogger.debug("----remove from trace prefix: " + current);
+			mLogger.debug("----remove from trace prefix: " + current);
 			processed.remove(i);
 			mCurrentPath.remove(i);
 
@@ -219,16 +219,16 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 				mGraphs.push(mGraph);
 				String old = mGraph.values().toString();
 				mGraph = current.mLastGraphState;
-				sLogger.debug("----pop (nestedLoopExit) " + current.mBacking);
-				sLogger.debug("------old mGraph: " + old);
-				sLogger.debug("------new mGraph: " + mGraph.values());
+				mLogger.debug("----pop (nestedLoopExit) " + current.mBacking);
+				mLogger.debug("------old mGraph: " + old);
+				mLogger.debug("------new mGraph: " + mGraph.values());
 			} else if (current.isNestedLoopEntry()) {
 				mNestedLoops.pop();
 				String old = mGraph.values().toString();
 				mGraph = mGraphs.pop();
-				sLogger.debug("----pop (nestedLoopEntry) " + current.mBacking);
-				sLogger.debug("------old mGraph: " + old);
-				sLogger.debug("------new mGraph: " + mGraph.values());
+				mLogger.debug("----pop (nestedLoopEntry) " + current.mBacking);
+				mLogger.debug("------old mGraph: " + old);
+				mLogger.debug("------new mGraph: " + mGraph.values());
 			}
 
 			if (current.mBacking instanceof Return) {
@@ -237,22 +237,22 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 				mGraphs.push(mGraph);
 				String old = mGraph.values().toString();
 				mGraph = current.mLastGraphState;
-				sLogger.debug("----push (return) " + current.mBacking);
-				sLogger.debug("------old mGraph: " + old);
-				sLogger.debug("------new mGraph: " + mGraph.values());
+				mLogger.debug("----push (return) " + current.mBacking);
+				mLogger.debug("------old mGraph: " + old);
+				mLogger.debug("------new mGraph: " + mGraph.values());
 			} else if (current.mBacking instanceof Call) {
 				mCalls.pop();
 				String old = mGraph.values().toString();
 				mGraph = mGraphs.pop();
-				sLogger.debug("----pop (call) " + current.mBacking);
-				sLogger.debug("------old mGraph: " + old);
-				sLogger.debug("------new mGraph: " + mGraph.values());
+				mLogger.debug("----pop (call) " + current.mBacking);
+				mLogger.debug("------old mGraph: " + old);
+				mLogger.debug("------new mGraph: " + mGraph.values());
 			}
 
-			sLogger.debug("----change visit counter in mGraph: "
+			mLogger.debug("----change visit counter in mGraph: "
 					+ current.mBacking);
 			if (!mGraph.containsKey(current.mBacking)) {
-				sLogger.debug("------not in current mGraph (so visit is 0): "
+				mLogger.debug("------not in current mGraph (so visit is 0): "
 						+ current.mBacking);
 			} else {
 				// instead of removing, just reduce the visit counter by one
@@ -264,11 +264,11 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 				break;
 			}
 		}
-		sLogger.debug("--trace prefix: " + traceToString(processed));
-		sLogger.debug("--mCalls: " + mCalls);
-		sLogger.debug("--mNestedLoops: " + mNestedLoops);
-		sLogger.debug("--end backtracking--");
-		sLogger.debug("");
+		mLogger.debug("--trace prefix: " + traceToString(processed));
+		mLogger.debug("--mCalls: " + mCalls);
+		mLogger.debug("--mNestedLoops: " + mNestedLoops);
+		mLogger.debug("--end backtracking--");
+		mLogger.debug("");
 	}
 
 	protected void findLoopEntryExit(RCFGNode loopNode) {
