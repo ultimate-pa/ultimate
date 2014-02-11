@@ -69,7 +69,7 @@ public class BoogieLassoRankerTC extends Toolchain {
 		
 		List<Setting> oRCFGB = new ArrayList<Setting>();
 		List<Setting> mRCFGB = new ArrayList<Setting>();
-        oRCFGB.add(new Setting("/Use\\ external\\ solver\\ instead\\ of\\ SMTInterpol", Setting.SettingType.BOOLEAN,
+        oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_ExternalSolver, Setting.SettingType.BOOLEAN,
                 "external solver", "false", false));
 		mRCFGB.add(new Setting("/simplifyCodeBlocks", Setting.SettingType.BOOLEAN,
 				"simplifyCodeBlocks", "false", false));

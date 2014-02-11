@@ -75,11 +75,11 @@ public class BoogieConcurrentTraceAbstractionTC extends Toolchain {
 		List<Setting> oRCFGB = new ArrayList<Setting>();
 		List<Setting> mRCFGB = new ArrayList<Setting>();
 		tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
-        mRCFGB.add(new Setting("/Use\\ external\\ solver\\ instead\\ of\\ SMTInterpol", Setting.SettingType.BOOLEAN,
+        mRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_ExternalSolver, Setting.SettingType.BOOLEAN,
                 "external solver", "false", false));
-        mRCFGB.add(new Setting("/Size\\ of\\ a\\ code\\ block", "Size\\ of\\ a\\ code\\ block",
-        		new String[] { "SingleStatement" }, false, new String[] {
-              "SingleStatement", "SequenceOfStatements", "LoopFreeBlock" }, true));
+        mRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_BlockSize, PrefStrings.s_RCFG_LABEL_BlockSize,
+        		new String[] { PrefStrings.s_RCFG_VALUE_Single }, false, new String[] {
+        		PrefStrings.s_RCFG_VALUE_Single, PrefStrings.s_RCFG_VALUE_Seq, PrefStrings.s_RCFG_VALUE_Block }, true));
         List<Setting> oTrAbs = new ArrayList<Setting>();
         List<Setting> mTrAbs = new ArrayList<Setting>();
         oTrAbs.add(new Setting("/Compute\\ Interpolants\\ along\\ a\\ Counterexample", Setting.SettingType.STRING,
