@@ -17,9 +17,9 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  */
 public class TerminationArgumentResult<P extends IElement> extends AbstractResultAtElement<P>
 		implements IResult {
+	private final String m_RankingFunctionDescription;
 	private final Expression[] m_RankingFunction;
 	private final Expression[] m_SupportingInvariants;
-	private final String m_RankingFunctionDescription;
 	
 	/**
 	 * Construct a termination argument result
@@ -65,5 +65,19 @@ public class TerminationArgumentResult<P extends IElement> extends AbstractResul
 
 		return sb.toString();
 	}
+
+	public String getRankingFunctionDescription() {
+		return m_RankingFunctionDescription;
+	}
+
+	public Expression[] getRankingFunction() {
+		return m_RankingFunction;
+	}
+
+	public Expression[] getSupportingInvariants() {
+		return m_SupportingInvariants;
+	}
+	
+	
 
 }
