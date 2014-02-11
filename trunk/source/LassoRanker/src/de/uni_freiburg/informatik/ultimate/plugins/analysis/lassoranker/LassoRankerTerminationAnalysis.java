@@ -399,6 +399,10 @@ public class LassoRankerTerminationAnalysis {
 		if (terminating) {
 			s_Logger.info("Proved termination.");
 			s_Logger.info(synthesizer.getArgument());
+//			Term[] lexTerm = synthesizer.getArgument().getRankingFunction().asLexTerm(m_old_script);
+//			for (Term t : lexTerm) {
+//				s_Logger.debug(SMTPrettyPrinter.print(t));
+//			}
 		}
 		m_numSIs = synthesizer.getNumSIs();
 		m_numMotzkin = synthesizer.getNumMotzkin();

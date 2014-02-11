@@ -157,7 +157,7 @@ public class AffineTerm {
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
 		for (Map.Entry<Term, Rational> entry : m_Coefficients.entrySet()) {
-			if (m_Constant.isNegative() || !first) {
+			if (entry.getValue().isNegative() || !first) {
 				if (!first) {
 					sb.append(" ");
 				}

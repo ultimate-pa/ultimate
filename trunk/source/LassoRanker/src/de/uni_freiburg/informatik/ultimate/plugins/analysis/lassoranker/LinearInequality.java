@@ -299,7 +299,13 @@ public class LinearInequality {
 				if (!first) {
 					sb.append(" + ");
 				}
-				sb.append(param);
+				if (param.contains(" ")) {
+					sb.append("(");
+					sb.append(param);
+					sb.append(")");
+				} else {
+					sb.append(param);
+				}
 			}
 			sb.append("*");
 			sb.append(entry.getKey());
