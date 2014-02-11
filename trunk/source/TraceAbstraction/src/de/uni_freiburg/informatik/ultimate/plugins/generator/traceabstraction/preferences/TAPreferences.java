@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.PreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 
 public class TAPreferences {
 
@@ -43,43 +43,43 @@ public class TAPreferences {
 		m_Prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 
 		m_Interprocedural = m_Prefs
-				.getBoolean(PreferenceInitializer.LABEL_INTERPROCEDUTAL);
+				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPROCEDUTAL);
 
 		m_MaxIterations = m_Prefs
-				.getInt(PreferenceInitializer.LABEL_ITERATIONS);
+				.getInt(TraceAbstractionPreferenceInitializer.LABEL_ITERATIONS);
 		m_watchIteration = m_Prefs
-				.getInt(PreferenceInitializer.LABEL_WATCHITERATION);
+				.getInt(TraceAbstractionPreferenceInitializer.LABEL_WATCHITERATION);
 
-		m_Artifact = m_Prefs.getEnum(PreferenceInitializer.LABEL_ARTIFACT,
+		m_Artifact = m_Prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ARTIFACT,
 				Artifact.class);
 
-		m_Hoare = m_Prefs.getBoolean(PreferenceInitializer.LABEL_HOARE,
-				PreferenceInitializer.DEF_HOARE);
+		m_Hoare = m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HOARE,
+				TraceAbstractionPreferenceInitializer.DEF_HOARE);
 
 		m_Interpolation = m_Prefs.getEnum(
-				PreferenceInitializer.LABEL_INTERPOLATED_LOCS,
+				TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
 				INTERPOLATION.class);
 
 		m_Edges2True = m_Prefs
-				.getBoolean(PreferenceInitializer.LABEL_EDGES2TRUE);
+				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_EDGES2TRUE);
 
 		m_InterpolantAutomaton = m_Prefs.getEnum(
-				PreferenceInitializer.LABEL_InterpolantAutomaton,
+				TraceAbstractionPreferenceInitializer.LABEL_InterpolantAutomaton,
 				InterpolantAutomaton.class);
 
 		m_DumpAutomata = m_Prefs
-				.getBoolean(PreferenceInitializer.LABEL_DUMPAUTOMATA);
+				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMPAUTOMATA);
 
-		m_DumpPath = m_Prefs.getString(PreferenceInitializer.LABEL_DUMPPATH);
+		m_DumpPath = m_Prefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMPPATH);
 
 		m_Determiniation = m_Prefs.getEnum(
-				PreferenceInitializer.LABEL_DETERMINIZATION,
+				TraceAbstractionPreferenceInitializer.LABEL_DETERMINIZATION,
 				Determinization.class);
 
-		m_Minimize = m_Prefs.getBoolean(PreferenceInitializer.LABEL_MINIMIZE);
+		m_Minimize = m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE);
 
 		m_Concurrency = m_Prefs.getEnum(
-				PreferenceInitializer.LABEL_CONCURRENCY, Concurrency.class);
+				TraceAbstractionPreferenceInitializer.LABEL_CONCURRENCY, Concurrency.class);
 
 		if (artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 			throw new IllegalArgumentException("Show negated interpolant"
@@ -102,7 +102,7 @@ public class TAPreferences {
 	}
 
 	public boolean allErrorLocsAtOnce() {
-		return m_Prefs.getBoolean(PreferenceInitializer.LABEL_AllErrorsAtOnce);
+		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_AllErrorsAtOnce);
 	}
 
 
@@ -110,7 +110,7 @@ public class TAPreferences {
 	 * @return the timeout in seconds
 	 */
 	public int timeout() {
-		return m_Prefs.getInt(PreferenceInitializer.LABEL_TIMEOUT);
+		return m_Prefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_TIMEOUT);
 	}
 
 	/**
@@ -180,7 +180,7 @@ public class TAPreferences {
 	 * @return the difference
 	 */
 	public boolean differenceSenwa() {
-		return m_Prefs.getBoolean(PreferenceInitializer.LABEL_DIFFERENCE_SENWA);
+		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DIFFERENCE_SENWA);
 	}
 
 	/**
@@ -203,15 +203,15 @@ public class TAPreferences {
 	}
 
 	public boolean cutOffRequiresSameTransition() {
-		return m_Prefs.getBoolean(PreferenceInitializer.LABEL_cutOff);
+		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_cutOff);
 	}
 
 	public boolean unfoldingToNet() {
-		return m_Prefs.getBoolean(PreferenceInitializer.LABEL_unfolding2Net);
+		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_unfolding2Net);
 	}
 
 	public String order() {
-		return m_Prefs.getString(PreferenceInitializer.LABEL_Order);
+		return m_Prefs.getString(TraceAbstractionPreferenceInitializer.LABEL_Order);
 	}
 
 

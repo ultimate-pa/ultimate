@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Determinization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
 
-public class PreferenceInitializer extends UltimatePreferenceInitializer {
+public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {

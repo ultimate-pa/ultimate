@@ -8,7 +8,7 @@
     <extension
        point="org.eclipse.core.runtime.preferences">
     <initializer
-          class="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.PreferenceInitializer">
+          class="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer">
     </initializer>
  </extension>
 </plugin>

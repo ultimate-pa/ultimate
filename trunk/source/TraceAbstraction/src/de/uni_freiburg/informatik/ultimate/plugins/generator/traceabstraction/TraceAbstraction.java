@@ -8,7 +8,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 
 /**
  * Main class of Plug-In TraceAbstraction
@@ -111,6 +111,6 @@ public class TraceAbstraction implements IGenerator {
 	
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
-		return new PreferenceInitializer();
+		return new TraceAbstractionPreferenceInitializer();
 	}
 }
