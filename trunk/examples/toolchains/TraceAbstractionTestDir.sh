@@ -351,6 +351,7 @@ do
 
 
 	echo "$Ultimate_OUTPUT" | grep "Statistics:" | cut -c67-
+	echo "$Ultimate_OUTPUT" | grep "BenchmarkResult:" | cut -c65-
 	RUNTIME=`echo "$Ultimate_OUTPUT" | grep "TraceAbstraction took" | cut -c73-`
     TOTALRUNTIME=`echo "$Ultimate_OUTPUT" | grep "Finished toolchain execution after " | cut -c91-`
 
