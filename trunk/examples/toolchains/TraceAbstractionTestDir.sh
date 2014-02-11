@@ -214,7 +214,7 @@ do
 	RESULT_SYNTAX=`echo "$Ultimate_OUTPUT" | egrep "RESULT:\ Ultimate\ could\ not\ prove\ your\ program:\ Incorrect\ Syntax|RESULT:\ Ultimate\ could\ not\ prove\ your\ program:\ Type\ Error"`
 	UNSUPPORTED_SYNTAX=`echo "$Ultimate_OUTPUT" | grep "RESULT: Ultimate could not prove your program: Unsupported Syntax"`
 	RESULT_TIMEOUT=`echo "$Ultimate_OUTPUT" | grep "RESULT: Ultimate could not prove your program: Timeout"`
-	RESULT_UNKNOWN=`echo "$Ultimate_OUTPUT" | grep "Program might be incorrect, check conterexample."`
+	RESULT_UNKNOWN=`echo "$Ultimate_OUTPUT" | grep "Unable to decide correctness. Please check the following counterexample manually."`
 	RESULT_INSUFFICIENT_ITERATIONS=`echo "$Ultimate_OUTPUT" | grep -c "RESULT: Ultimate could not prove your program: Insufficient iterations to proof correctness"`
 	RESULT_NORESULT=`echo "$Ultimate_OUTPUT" | grep -c "RESULT: Ultimate could not prove your program: Toolchain returned no Result."`
 	RESULT_PROVEN_TERMINATION=`echo "$Ultimate_OUTPUT" | grep "Buchi Automizer proved that your program is terminating"`
