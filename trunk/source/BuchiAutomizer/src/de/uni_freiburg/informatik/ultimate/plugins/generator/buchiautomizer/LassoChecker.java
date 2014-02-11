@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Tra
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.PreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
@@ -498,9 +498,13 @@ public class LassoChecker {
 		if (!withStem) {
 			stemTF = getDummyTF();
 		}
-		int stemVars = stemTF.getFormula().getFreeVars().length;
 		int loopVars = loopTF.getFormula().getFreeVars().length;
-		s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars);
+		if (stemTF == null) {
+			s_Logger.info("Statistics: no stem, loopVars: " + loopVars);
+		} else {
+			int stemVars = stemTF.getFormula().getFreeVars().length;
+			s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars);
+		}
 		
 		Preferences pref = new Preferences();
 		pref.num_non_strict_invariants = 1;

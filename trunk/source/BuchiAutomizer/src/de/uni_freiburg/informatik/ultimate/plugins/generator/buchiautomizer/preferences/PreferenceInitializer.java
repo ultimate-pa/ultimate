@@ -5,6 +5,8 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
@@ -32,7 +34,12 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Integer>(LABEL_LoopUnwindings, 2,
 						PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(
-								0, 1000000))
+								0, 1000000)),
+				new UltimatePreferenceItem<INTERPOLATION>(
+						TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS, 
+						TraceAbstractionPreferenceInitializer.DEF_INTERPOLANTS,
+						PreferenceType.Combo, 
+						TraceAbstractionPreferenceInitializer.INTERPOLATION.values())
 		};
 	}
 

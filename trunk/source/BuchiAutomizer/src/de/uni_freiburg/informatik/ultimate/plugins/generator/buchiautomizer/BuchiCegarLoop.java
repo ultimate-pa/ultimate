@@ -56,7 +56,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 
@@ -168,6 +170,8 @@ public class BuchiCegarLoop {
 		private final boolean m_CannibalizeLoop;
 		private final int m_MaxNumberOfLoopUnwindings;
 		
+		private final INTERPOLATION m_Interpolation;
+		
 		private final RefineBuchi m_RefineBuchi;
 		private final List<RefineBuchi.RefinementSetting> m_BuchiRefinementSettingSequence;
 
@@ -221,10 +225,11 @@ public class BuchiCegarLoop {
 			}
 			m_CannibalizeLoop = baPref.getBoolean(PreferenceInitializer.LABEL_CannibalizeLoop);
 			m_MaxNumberOfLoopUnwindings = baPref.getInt(PreferenceInitializer.LABEL_LoopUnwindings);
+			m_Interpolation = baPref.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS, INTERPOLATION.class);
 			
 			m_RefineBuchi = new RefineBuchi(m_SmtManager, m_Pref.dumpAutomata(), 
 					m_Difference, m_DefaultStateFactory, m_StateFactoryForRefinement, m_UseDoubleDeckers, 
-					m_Pref.dumpPath(), m_Pref.interpolation());
+					m_Pref.dumpPath(), m_Interpolation);
 			m_BuchiRefinementSettingSequence = new ArrayList<RefineBuchi.RefinementSetting>();
 			switch (m_InterpolantAutomaton) {
 			case Staged:
@@ -265,7 +270,7 @@ public class BuchiCegarLoop {
 		public final Result iterate() {
 			s_Logger.info("Interprodecural is " + m_Pref.interprocedural());		
 			s_Logger.info("Hoare is " + m_Pref.computeHoareAnnotation());
-			s_Logger.info("Compute interpolants for " + m_Pref.interpolation());
+			s_Logger.info("Compute interpolants for " + m_Interpolation);
 			s_Logger.info("Backedges2True is " + m_Pref.edges2True());
 			s_Logger.info("Backedges is " + m_Pref.interpolantAutomaton());
 			s_Logger.info("Determinization is " + m_Pref.determinization());
@@ -302,9 +307,11 @@ public class BuchiCegarLoop {
 				initalAbstractionCorrect = isAbstractionCorrect();
 			} catch (OperationCanceledException e1) {
 				s_Logger.warn("Verification cancelled");
+				m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), false);
 				return Result.TIMEOUT;
 			}
 			if (initalAbstractionCorrect) {
+				m_MDBenchmark.reportNoRemainderModule();
 				return Result.TERMINATING;
 			}
 			
@@ -319,15 +326,17 @@ public class BuchiCegarLoop {
 					abstractionCorrect = isAbstractionCorrect();
 				} catch (OperationCanceledException e1) {
 					s_Logger.warn("Verification cancelled");
+					m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), false);
 					return Result.TIMEOUT;
 				}
 				if (abstractionCorrect) {
+					m_MDBenchmark.reportNoRemainderModule();
 					return Result.TERMINATING;
 				}
 				
 				m_TimingBenchmark.startLassoAnalysis();
 				LassoChecker lassoChecker = new LassoChecker(
-						m_Pref.interpolation(), m_SmtManager, 
+						m_Interpolation, m_SmtManager, 
 						m_RootNode.getRootAnnot().getModGlobVarManager(),
 						m_BinaryStatePredicateManager,
 						m_Counterexample);
@@ -346,9 +355,9 @@ public class BuchiCegarLoop {
 						}
 						ISLPredicate hondaISLP = (ISLPredicate) m_Counterexample.getLoop().getStateAtPosition(0);
 						ProgramPoint hondaPP = hondaISLP.getProgramPoint();
-						reportTerminationArgument(bspm.getTerminationArgument(), hondaPP, m_Counterexample.getStem().getWord(), m_Counterexample.getLoop().getWord());
-						RankingFunction rf = bspm.getTerminationArgument().getRankingFunction();
-						m_MDBenchmark.reportRankingFunction(m_Iteration, rf.getClass().getSimpleName(), rf.asLexExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie()));
+						TerminationArgumentResult<RcfgElement> tar =  
+								constructTAResult(bspm.getTerminationArgument(), hondaPP, m_Counterexample.getStem().getWord(), m_Counterexample.getLoop().getWord());
+						m_MDBenchmark.reportRankingFunction(m_Iteration, tar);
 
 						INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
 						m_Abstraction = newAbstraction;
@@ -376,22 +385,23 @@ public class BuchiCegarLoop {
 						}
 						ISLPredicate hondaISLP = (ISLPredicate) m_Counterexample.getLoop().getStateAtPosition(0);
 						ProgramPoint hondaPP = hondaISLP.getProgramPoint();
-						reportTerminationArgument(bspm.getTerminationArgument(), hondaPP, m_Counterexample.getStem().getWord(), m_Counterexample.getLoop().getWord());
-						RankingFunction rf = bspm.getTerminationArgument().getRankingFunction();
-						m_MDBenchmark.reportRankingFunction(m_Iteration, rf.getClass().getSimpleName(), rf.asLexExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie()));
-
+						TerminationArgumentResult<RcfgElement> tar =  
+								constructTAResult(bspm.getTerminationArgument(), hondaPP, m_Counterexample.getStem().getWord(), m_Counterexample.getLoop().getWord());
+						m_MDBenchmark.reportRankingFunction(m_Iteration, tar);
 						
 						INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
 						m_Abstraction = newAbstraction;
 						m_BinaryStatePredicateManager.clearPredicates();
 						break;
 					case REPORT_UNKNOWN:
+						m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), false);
 						return Result.UNKNOWN;
 					case REPORT_NONTERMINATION:
 						m_NonterminationArgument = lassoChecker.getNonTerminationArgument();
+						m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), true);
 						return Result.NONTERMINATING;
 					default:
-						break;
+						throw new AssertionError("impossible case");
 					}
 					s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
 //					s_Logger.info("Interpolant automaton has " + m_RefineBuchi.getInterpolAutomatonUsedInRefinement().sizeInformation());
@@ -462,7 +472,7 @@ public class BuchiCegarLoop {
 				
 				INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = 
 						m_RefineBuchi.refineBuchi(m_Abstraction, 
-								m_Counterexample, m_Iteration, rs, lassoChecker.getBinaryStatePredicateManager(), bmgvm, m_Pref.interpolation());
+								m_Counterexample, m_Iteration, rs, lassoChecker.getBinaryStatePredicateManager(), bmgvm, m_Interpolation);
 				if (newAbstraction != null) {
 					switch (rs.getInterpolantAutomaton()) {
 					case Deterministic:
@@ -603,8 +613,8 @@ public class BuchiCegarLoop {
 		
 		
 
-
-		private void reportTerminationArgument(
+		
+		private TerminationArgumentResult<RcfgElement> constructTAResult(
 				TerminationArgument terminationArgument, 
 				ProgramPoint honda, NestedWord<CodeBlock> stem,
 				NestedWord<CodeBlock> loop) {
@@ -621,56 +631,39 @@ public class BuchiCegarLoop {
 							honda,
 							Activator.s_PLUGIN_NAME,
 							rf.asLexExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie()),
-							rf.getClass().getName(),
+							rf.getClass().getSimpleName(),
 							supporting_invariants,
 							UltimateServices.getInstance().getTranslatorSequence(),
 							honda.getPayload().getLocation()
 							);
-			BuchiAutomizerObserver.reportResult(result);
+			return result;
 		}
-		
-		
-//		private void reportRankingFunction(LinearRankingFunction m_LinRf,
-//				Collection<SupportingInvariant> m_SiList, ProgramPoint honda, NestedWord<CodeBlock> stem,
+
+//		private void reportTerminationArgument(
+//				TerminationArgument terminationArgument, 
+//				ProgramPoint honda, NestedWord<CodeBlock> stem,
 //				NestedWord<CodeBlock> loop) {
-//			TerminationArgumentResult<>
-//			Expression rfExp = m_LinRf.asExpression(m_SmtManager.getScript(),
-//					m_SmtManager.getSmt2Boogie());
-//			String rfString = RankingFunctionsObserver
-//					.backtranslateExprWorkaround(rfExp);
-//			StringBuilder longDescr = new StringBuilder();
-//			longDescr.append("Derived linear ranking function ");
-//			longDescr.append(rfString);
-//			longDescr.append(System.getProperty("line.separator"));
-//			longDescr.append(" with linear supporting invariants");
-//			for (SupportingInvariant si : m_SiList) {
-//				Expression siExp = si.asExpression(m_SmtManager.getScript(),
-//						m_SmtManager.getSmt2Boogie());
-//				String siString = RankingFunctionsObserver
-//						.backtranslateExprWorkaround(siExp);
-//				longDescr.append(" " + siString);
+//			RankingFunction rf = terminationArgument.getRankingFunction();
+//			Collection<SupportingInvariant> si_list = terminationArgument.getSupportingInvariants();
+//			Expression[] supporting_invariants = new Expression[si_list.size()];
+//			int i = 0;
+//			for (SupportingInvariant si : terminationArgument.getSupportingInvariants()) {
+//				supporting_invariants[i] = si.asExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie());
+//				++i;
 //			}
-//			longDescr.append(System.getProperty("line.separator"));
-//			longDescr.append("For the following lasso. ");
-//			longDescr.append(System.getProperty("line.separator"));
-//			longDescr.append("Stem: ");
-//			longDescr.append(stem);
-//			longDescr.append(System.getProperty("line.separator"));
-//			longDescr.append("Loop: ");
-//			longDescr.append(loop);
-//			longDescr.append(System.getProperty("line.separator"));
-//			longDescr.append("length stem: " + stem.length()
-//					+ " length loop: " + loop.length());
-//			s_Logger.info(longDescr);
-//			IResult reportRes= new TerminationArgumentResult<RcfgElement>(honda, 
-//					Activator.s_PLUGIN_ID,
-//					null,
-//					"LinearRankingFunction",
-//					null,
-//					UltimateServices.getInstance().getTranslatorSequence(), 
-//					honda.getPayload().getLocation());
-//			BuchiAutomizerObserver.reportResult(reportRes);
+//			TerminationArgumentResult<RcfgElement> result = 
+//					new TerminationArgumentResult<RcfgElement>(
+//							honda,
+//							Activator.s_PLUGIN_NAME,
+//							rf.asLexExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie()),
+//							rf.getClass().getName(),
+//							supporting_invariants,
+//							UltimateServices.getInstance().getTranslatorSequence(),
+//							honda.getPayload().getLocation()
+//							);
+//			BuchiAutomizerObserver.reportResult(result);
 //		}
+		
 		
 		public static Collection<Set<IPredicate>> computePartition(INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
 			s_Logger.info("Start computation of initial partition.");

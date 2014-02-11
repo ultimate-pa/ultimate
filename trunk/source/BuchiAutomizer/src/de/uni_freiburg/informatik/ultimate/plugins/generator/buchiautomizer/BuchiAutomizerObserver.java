@@ -1,10 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.text.MessageFormat;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -13,11 +10,8 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.NonTerminationArgument;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -30,7 +24,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
@@ -64,13 +59,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		rootAnnot = ((RootNode) root).getRootAnnot();
 		TAPreferences taPrefs = new TAPreferences();
 		m_graphroot = root;
-		
-		String settings = "Automizer settings:";
-		settings += " Hoare:"+ taPrefs.computeHoareAnnotation();
-		settings += " " + (taPrefs.differenceSenwa() ? "SeNWA" : "NWA");
-		settings += " Determinization: " + taPrefs.determinization();
-		settings += " Timeout:" + taPrefs.timeout();
-//		System.out.println(settings);
+
 		TraceAbstractionObserver.setTimeout(taPrefs);
 
 		smtManager = new SmtManager(rootAnnot.getBoogie2SMT(),
@@ -81,44 +70,49 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		BuchiCegarLoop bcl = new BuchiCegarLoop((RootNode) root, smtManager, m_Pref);
 		Result result = bcl.iterate();
 		
+		s_Logger.info(MessageFormat.format("Statistics: Counterexamples: {0} infeasible" +
+				"  {1} rank without si  {2} rank only with si", 
+				bcl.m_Infeasible, bcl.m_RankWithoutSi, bcl.m_RankWithSi));
+		
+		IResult benchDecomp = new BenchmarkResult(Activator.s_PLUGIN_ID,
+				"Constructed decomposition of program", bcl.getMDBenchmark());
+		reportResult(benchDecomp);
+		s_Logger.info(benchDecomp.getShortDescription() + ": " + benchDecomp.getLongDescription());
+		
+		IResult benchTiming = new BenchmarkResult(Activator.s_PLUGIN_ID,
+				"Timing statistics", bcl.getTimingBenchmark());
+		reportResult(benchTiming);
+		s_Logger.info(benchTiming.getShortDescription() + ": " + benchTiming.getLongDescription());
+		
 		if (result == Result.TERMINATING) {
-			ProgramPoint position = rootAnnot.getEntryNodes().values().iterator().next();
-				String shortDescr = "Buchi Automizer proved that your program is terminating";
-				String longDescr = bcl.getMDBenchmark().toString();
-				longDescr += bcl.getTimingBenchmark().toString();
-				ILocation loc = position.getPayload().getLocation();
-				IResult reportRes= new GenericResultAtElement<RcfgElement>(position, 
+				String shortDescr = "Termination proven";
+				String longDescr = "Buchi Automizer proved that your program is terminating";
+				IResult reportRes= new GenericResult( 
 						Activator.s_PLUGIN_ID, 
-						UltimateServices.getInstance().getTranslatorSequence(), 
 						shortDescr, 
 						longDescr, Severity.INFO);
-//				s_Logger.info(shortDescr + longDescr + " line" + loc.getStartLine());
 				reportResult(reportRes);
-			s_Logger.info(shortDescr);
+			s_Logger.info(shortDescr + ": " + longDescr);
 		} else if (result == Result.UNKNOWN) {
 			NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
 			IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
 			ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
-			String shortDescr = "Buchi Automizer was unable to decide termination";
+			String shortDescr = "Unable to decide termination";
 			StringBuilder longDescr = new StringBuilder();
-//			longDescr.append("Maybe this program point can be visited infinitely often. ");
-			longDescr.append("Maybe your program is nonterminating!?! ");
-			longDescr.append("I was unable to synthesize ranking function for the following lasso. ");
+			longDescr.append("Buchi Automizer is unable to decide termination for the following lasso. ");
 			longDescr.append(System.getProperty("line.separator"));
 			longDescr.append("Stem: ");
 			longDescr.append(counterexample.getStem().getWord());
 			longDescr.append(System.getProperty("line.separator"));
 			longDescr.append("Loop: ");
 			longDescr.append(counterexample.getLoop().getWord());			
-			ILocation loc = honda.getPayload().getLocation();
 			IResult reportRes= new GenericResultAtElement<RcfgElement>(honda, 
 					Activator.s_PLUGIN_ID, 
 					UltimateServices.getInstance().getTranslatorSequence(), 
 					shortDescr, 
 					longDescr.toString(), Severity.ERROR);
-//			s_Logger.info(shortDescr + longDescr + " line" + loc.getStartLine());
 			reportResult(reportRes);
-			s_Logger.info(shortDescr);
+			s_Logger.info(shortDescr + ": " + longDescr);
 		} else if (result == Result.TIMEOUT) {
 			ProgramPoint position = rootAnnot.getEntryNodes().values().iterator().next();
 			String longDescr = "Timeout while trying to prove termination";
@@ -127,19 +121,16 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					UltimateServices.getInstance().getTranslatorSequence(), 
 					position.getPayload().getLocation(), 
 					longDescr);
-//			for (String proc : rootAnnot.getEntryNodes().keySet()) {
-//				ProgramPoint position = rootAnnot.getEntryNodes().get(proc);
-//				String longDescr = "Unable to prove termination of procedure" + proc;
-//				ILocation loc = position.getPayload().getLocation();
-//				IResult reportRes= new TimeoutResult<RcfgElement>(position, 
-//						Activator.s_PLUGIN_ID, 
-//						UltimateServices.getInstance().getTranslatorSequence(), 
-//						loc, 
-//						longDescr);
-//				s_Logger.info(longDescr + " line" + loc.getStartLine());
 				reportResult(reportRes);
-//			}
 		} else if (result == Result.NONTERMINATING) {
+			String shortDescr = "Nontermination possible";
+			String longDescr = "Buchi Automizer proved that your program may not terminate";
+			IResult reportRes= new GenericResult( 
+					Activator.s_PLUGIN_ID, 
+					shortDescr, 
+					longDescr, Severity.ERROR);
+			reportResult(reportRes);
+		s_Logger.info(shortDescr + ": " + longDescr);
 			NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
 			IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
 			ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
@@ -154,66 +145,16 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					counterexample.getLoop().getWord().lettersAsList(), 
 					partialProgramStateMapping, 
 					new Map[counterexample.getLoop().getLength()]);
-			IResult reportRes = new NonterminatingLassoResult<RcfgElement>(
+			IResult ntreportRes = new NonterminatingLassoResult<RcfgElement>(
 					honda, Activator.s_PLUGIN_ID, 
 					UltimateServices.getInstance().getTranslatorSequence(), 
 					stemPE, loopPE, honda.getPayload().getLocation());
-//			IResult reportRes = new NonTerminationArgumentResult<RcfgElement>(
-//					honda, Activator.s_PLUGIN_ID, nta.getStateInit(), 
-//					nta.getStateHonda(), nta.getRay(), nta.getLambda(),
-//					UltimateServices.getInstance().getTranslatorSequence(), 
-//					honda.getPayload().getLocation());
-			reportResult(reportRes);
-			s_Logger.info(reportRes.getShortDescription());
-			s_Logger.info(reportRes.getLongDescription());
+			reportResult(ntreportRes);
+			s_Logger.info(ntreportRes.getShortDescription());
+			s_Logger.info(ntreportRes.getLongDescription());
 		} else {
 			throw new AssertionError();
 		}
-		s_Logger.info(MessageFormat.format("Statistics: Counterexamples: {0} infeasible" +
-				"  {1} rank without si  {2} rank only with si", 
-				bcl.m_Infeasible, bcl.m_RankWithoutSi, bcl.m_RankWithSi));;
-
-//		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
-//		Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();
-//		for (Collection<ProgramPoint> errNodeOfProc : proc2errNodes.values()) {
-//			errNodesOfAllProc.addAll(errNodeOfProc);
-//		}
-//
-//		long timoutMilliseconds = taPrefs.timeout() * 1000;
-//		UltimateServices.getInstance().setDeadline(
-//				System.currentTimeMillis() + timoutMilliseconds);
-//		
-//
-//		BuchiIsEmpty<CodeBlock, IPredicate> ec = null;
-//
-//		NestedLassoRun<CodeBlock, IPredicate> ctx = null;
-//		NestedWord<CodeBlock> stem = ctx.getStem().getWord();
-//		s_Logger.info("Stem: " + stem);
-//		NestedWord<CodeBlock> loop = ctx.getLoop().getWord();
-//		s_Logger.info("Loop: " + loop);
-//		m_Iteration = 0;
-//		LBool feasibility = null;
-//		while (feasibility == LBool.UNSAT) {
-//
-//			try {
-//				ec = new BuchiIsEmpty<CodeBlock, IPredicate>(m_Abstraction);
-//			} catch (OperationCanceledException e) {
-//				s_Logger.info("Statistics: Timout");
-//				return false;
-//			}
-//			ctx = ec.getAcceptingNestedLassoRun();
-//			if (ctx == null) {
-//				s_Logger.warn("Statistics: Trivially terminating");
-//				return false;
-//			}
-//			stem = ctx.getStem().getWord();
-//			s_Logger.info("Stem: " + stem);
-//			loop = ctx.getLoop().getWord();
-//			s_Logger.info("Loop: " + loop);
-//			m_Iteration++;
-////			feasibility = checkFeasibility(ctx, rootAnnot);
-//		}
-//		m_TraceChecker.forgetTrace();
 		return false;
 	}
 	
@@ -225,31 +166,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 	
 
-			
-			
 
-	
-	private String backtranslateExprWorkaround(Expression expr) {
-		List<ITranslator<?, ?, ?, ?>> translators = 
-				UltimateServices.getInstance().getTranslatorSequence();
-		return ResultUtil.backtranslationWorkaround(translators, expr);
-	}
-	
-	
-
-
-	
-	private String prettyPrintRankingFunction(RankingFunction rf) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(rf.getClass().getSimpleName());
-		sb.append(" ");
-		Expression[] lex = rf.asLexExpression(smtManager.getScript(), smtManager.getSmt2Boogie());
-		for (Expression expr : lex) {
-			sb.append(backtranslateExprWorkaround(expr));
-		}
-		return sb.toString();
-	}
-	
 
 	@Override
 	public void finish() {
