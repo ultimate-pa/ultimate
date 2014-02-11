@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -31,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.template
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.LexicographicTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.MultiphaseTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
@@ -57,13 +59,6 @@ public class LassoChecker {
 	//////////////////////////////// settings /////////////////////////////////
 	
 	private static final boolean m_SimplifyStemAndLoop = true;
-	private static final boolean m_ExternalSolver = false;
-	/**
-	 * Try all templates but use the one that was found first. This is only
-	 * useful to test all templates at once.  
-	 */
-	private static final boolean s_TryAllTemplates = false;
-	
 	/**
 	 * If true we check if the loop has a ranking function even if the stem
 	 * or the concatenation of stem and loop are already infeasible.
@@ -75,11 +70,17 @@ public class LassoChecker {
 	private final INTERPOLATION m_Interpolation;
 	
 	/**
-	 * use z3 and non-linear templates if true
-	 * use SMTinterpol and only linear templates if false
+	 * Command of the solver that is used for rank synthesis.
+	 * If this String is empty, we use SMTInterpol.
 	 */
-	private final boolean m_UseZ3 = !false;
-
+	private final String m_ExternalSolverCommand_RankSynthesis;
+	private final boolean m_AllowNonLinearConstraints;
+	
+	/**
+	 * Try all templates but use the one that was found first. This is only
+	 * useful to test all templates at once.  
+	 */
+	private final boolean m_TemplateBenchmarkMode;
 	
 	//////////////////////////////// input /////////////////////////////////
 	/**
@@ -174,6 +175,10 @@ public class LassoChecker {
 			BinaryStatePredicateManager bspm,
 			NestedLassoRun<CodeBlock, IPredicate> counterexample) {
 		super();
+		UltimatePreferenceStore baPref = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		m_ExternalSolverCommand_RankSynthesis = baPref.getString(PreferenceInitializer.LABEL_ExtSolverCommandRank);
+		m_AllowNonLinearConstraints = baPref.getBoolean(PreferenceInitializer.LABEL_NonLinearConstraints);
+		m_TemplateBenchmarkMode = baPref.getBoolean(PreferenceInitializer.LABEL_TemplateBenchmarkMode);
 		m_Interpolation = interpolation;
 		m_SmtManager = smtManager;
 		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
@@ -511,13 +516,9 @@ public class LassoChecker {
 		pref.num_non_strict_invariants = 1;
 		pref.num_strict_invariants = 0;
 		pref.only_nondecreasing_invariants = true;
-		if (m_UseZ3) {
-			pref.smt_solver_command = "z3 -smt2  SMTLIB2_COMPLIANT=true -in -t:10123";
-		} else {
-			pref.smt_solver_command = "";
-		}
-		pref.nontermination_check_nonlinear = m_UseZ3;
-		pref.termination_check_nonlinear = m_UseZ3;
+		pref.smt_solver_command = m_ExternalSolverCommand_RankSynthesis;
+		pref.nontermination_check_nonlinear = m_AllowNonLinearConstraints;
+		pref.termination_check_nonlinear = m_AllowNonLinearConstraints;
 
 		LassoRankerTerminationAnalysis lrta = null;
 		try {
@@ -536,7 +537,7 @@ public class LassoChecker {
 				new ArrayList<RankingFunctionTemplate>();
 		rankingFunctionTemplates.add(new AffineTemplate());
 		
-		if (m_UseZ3) {
+		if (m_AllowNonLinearConstraints) {
 			rankingFunctionTemplates.add(new MultiphaseTemplate(1));
 			rankingFunctionTemplates.add(new MultiphaseTemplate(2));
 			rankingFunctionTemplates.add(new MultiphaseTemplate(3));
@@ -600,7 +601,7 @@ public class LassoChecker {
 					"incorrect supporting invariant with" + rft.getClass().getSimpleName();
 				assert isRankingFunctionCorrect() : 
 					"incorrect ranking function with" + rft.getClass().getSimpleName();
-				if (!s_TryAllTemplates) {
+				if (!m_TemplateBenchmarkMode) {
 					return termArg;
 				} else {
 					if (firstTerminationArgument == null) {
@@ -641,40 +642,6 @@ public class LassoChecker {
 		Term closedFormula = term;
 		return new TransFormula(term, inVars, outVars, auxVars, branchEncoders, 
 				infeasibility, closedFormula);
-	}
-	
-	Script new_Script(boolean nonlinear) {
-		// This code is essentially copied from 
-		// de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder
-		// since there is no obvious way to implement it as shared code.
-		
-		TAPreferences taPref = new TAPreferences();
-		Logger solverLogger = Logger.getLogger("interpolLogger");
-		Script script;
-		
-		if (m_ExternalSolver) {
-			script = new Scriptor("z3 -smt2 -in", solverLogger);
-		} else {
-			script = new SMTInterpol(solverLogger,false);
-		}
-		
-		if (false) {
-			String dumpFileName = taPref.dumpPath();
-			String fileSep = System.getProperty("file.separator");
-			dumpFileName += (dumpFileName.endsWith(fileSep) ? "" : fileSep);
-			dumpFileName = dumpFileName + "rankingFunctions.smt2";
-			// FIXME: add file name
-			try {
-				script = new LoggingScript(script, dumpFileName, true);
-			} catch (FileNotFoundException e) {
-				throw new AssertionError(e);
-			}
-		}
-		
-		script.setOption(":produce-unsat-cores", true);
-		script.setOption(":produce-models", true);
-		script.setLogic(nonlinear ? "QF_NRA" : "QF_LRA");
-		return script;
 	}
 	
 //	private class LassoRankerParam {
