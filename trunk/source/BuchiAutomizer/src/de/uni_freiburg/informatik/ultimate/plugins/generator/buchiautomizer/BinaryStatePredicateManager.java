@@ -338,7 +338,7 @@ public class BinaryStatePredicateManager {
 		m_LexEquality = new IPredicate[m_LexTerms.length];
 		for (int i=0; i<m_LexTerms.length; i++) {
 			m_LexEquality[i] = getRankInEquality(
-					m_LexTerms[i], "=", m_OldRankVariables[i], false);
+					m_LexTerms[i], "=", m_OldRankVariables[i], true);
 			if (s_Annotate) {
 				String name = "equality" + i;
 				Annotation annot = new Annotation(":named", name);
@@ -368,12 +368,12 @@ public class BinaryStatePredicateManager {
 	
 	private IPredicate getRankDecrease() {
 		IPredicate[] disjuncts = new IPredicate[m_LexTerms.length];
-		for (int i=m_LexTerms.length-1; i>=0; i--) {
-			IPredicate[] conjuncts = new IPredicate[m_LexTerms.length-i];
-			for (int j=m_LexTerms.length-1; j>=i+1; j--) {
-				conjuncts[m_LexTerms.length-j] = m_LexEquality[j];
+		for (int i=0; i<m_LexTerms.length; i++) {
+			IPredicate[] conjuncts = new IPredicate[i+1];
+			for (int j=0; j<i; j++) {
+				conjuncts[j] = m_LexEquality[j];
 			}
-			conjuncts[0] = m_LexDecrease[i];
+			conjuncts[i] = m_LexDecrease[i];
 			TermVarsProc tvp = m_SmtManager.and(conjuncts);
 			disjuncts[i] = m_SmtManager.newPredicate(tvp);
 		}
