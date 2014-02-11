@@ -8,22 +8,28 @@
       <plugin id="AutomataScriptInterpreter"/>
       <plugin id="AutomataScriptParser"/>
       <plugin id="BlockEncoding"/>
+      <plugin id="BlockEncodingTest" fragment="true"/>
       <plugin id="BoogieParser"/>
       <plugin id="BoogiePreprocessor"/>
+      <plugin id="BoogiePreprocessorTest" fragment="true"/>
       <plugin id="BoogiePrinter"/>
       <plugin id="BuchiAutomizer"/>
       <plugin id="CACSL2BoogieTranslator"/>
       <plugin id="CDTParser"/>
+      <plugin id="CoreRCPTest" fragment="true"/>
       <plugin id="JavaCup"/>
       <plugin id="LassoRanker"/>
       <plugin id="Library-Batik"/>
       <plugin id="Library-ModelCheckerUtils"/>
+      <plugin id="Library-SMTLIB"/>
+      <plugin id="Library-UltimateUtil"/>
+      <plugin id="Library-junit-helper"/>
       <plugin id="Library-log4j"/>
       <plugin id="NestedWordAutomata"/>
       <plugin id="RCFGBuilder"/>
       <plugin id="RankingFunctions"/>
+      <plugin id="SMTInterpol"/>
       <plugin id="SMTSolverBridge"/>
-      <plugin id="SmtInterpol"/>
       <plugin id="TraceAbstraction"/>
       <plugin id="TraceAbstractionConcurrent"/>
       <plugin id="UltimateCore"/>
@@ -79,6 +85,8 @@
       <plugin id="org.eclipse.text"/>
       <plugin id="org.eclipse.ui"/>
       <plugin id="org.eclipse.ui.workbench"/>
+      <plugin id="org.hamcrest.core"/>
+      <plugin id="org.junit"/>
    </plugins>
 
    <configurations>
@@ -97,12 +105,15 @@
       <plugin id="LassoRanker" autoStart="true" startLevel="0" />
       <plugin id="Library-Batik" autoStart="true" startLevel="0" />
       <plugin id="Library-ModelCheckerUtils" autoStart="true" startLevel="0" />
+      <plugin id="Library-SMTLIB" autoStart="true" startLevel="0" />
+      <plugin id="Library-UltimateUtil" autoStart="true" startLevel="0" />
+      <plugin id="Library-junit-helper" autoStart="true" startLevel="0" />
       <plugin id="Library-log4j" autoStart="true" startLevel="0" />
       <plugin id="NestedWordAutomata" autoStart="true" startLevel="0" />
       <plugin id="RCFGBuilder" autoStart="true" startLevel="0" />
       <plugin id="RankingFunctions" autoStart="true" startLevel="0" />
+      <plugin id="SMTInterpol" autoStart="true" startLevel="0" />
       <plugin id="SMTSolverBridge" autoStart="true" startLevel="0" />
-      <plugin id="SmtInterpol" autoStart="true" startLevel="0" />
       <plugin id="TraceAbstraction" autoStart="true" startLevel="0" />
       <plugin id="TraceAbstractionConcurrent" autoStart="true" startLevel="0" />
       <plugin id="UltimateCore" autoStart="true" startLevel="0" />
@@ -150,6 +161,8 @@
       <plugin id="org.eclipse.text" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.ui" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.ui.workbench" autoStart="true" startLevel="0" />
+      <plugin id="org.hamcrest.core" autoStart="true" startLevel="0" />
+      <plugin id="org.junit" autoStart="true" startLevel="0" />
    </configurations>
 
    <warConfiguration webXml="/WebsiteEclipseBridge/WEB-INF/web.xml" launchIni="/WebsiteEclipseBridge/WEB-INF/launch.ini">
