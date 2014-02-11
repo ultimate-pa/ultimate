@@ -24,12 +24,12 @@ import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
  * means of non-negative combinations of the equations:
  * 
  * <pre>
- * ∀x. ¬(A*x ≥ b /\ B*x > d)
+ * ∀x. ¬(A*x ≤ b /\ B*x < d)
  * 
  * if and only if
  * 
- * ∃λ, μ. λ ≥ 0 /\ μ ≥ 0 /\ λ*A + μ*B = 0 /\ λ*b + μ*d ≥ 0 /\
- *        (λ*b > 0 \/ μ ≠ 0)
+ * ∃λ, μ. λ ≥ 0 /\ μ ≥ 0 /\ λ*A + μ*B = 0 /\ λ*b + μ*d ≤ 0 /\
+ *        (λ*b < 0 \/ μ ≠ 0)
  * </pre>
  * 
  * Here A and B are matrices, x, b and d are column vectors, and
@@ -229,17 +229,17 @@ public class MotzkinTransformation extends InstanceCounting {
 			Term classical = m_script.term("<", sum, m_script.decimal("0"));
 			
 			// μ ≠ 0   -- strict inequalities
-			summands = new ArrayList<Term>();
+			List<Term> disjunction = new ArrayList<Term>();
 			for (int i = 0; i < num_coefficients; ++i) {
 				LinearInequality li = m_inequalities.get(i);
 				if (li.isStrict()) {
 					// only strict inequalities
-					summands.add(coefficients[i]);
+					disjunction.add(m_script.term("not", m_script.term("=",
+							coefficients[i], m_script.decimal("0"))));
 				}
 			}
-			sum = UtilExperimental.sum(m_script, m_script.sort("Real"),
-					summands.toArray(new Term[0]));
-			Term non_classical = m_script.term(">", sum, m_script.decimal("0"));
+			Term non_classical = Util.or(m_script,
+					disjunction.toArray(new Term[0]));
 			
 			conjunction.add(Util.or(m_script, classical, non_classical));
 			return Util.and(m_script, conjunction.toArray(new Term[0]));
