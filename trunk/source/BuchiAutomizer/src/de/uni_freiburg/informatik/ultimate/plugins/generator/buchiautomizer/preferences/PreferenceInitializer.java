@@ -37,7 +37,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 								0, 1000000)),
 				new UltimatePreferenceItem<INTERPOLATION>(
 						TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS, 
-						TraceAbstractionPreferenceInitializer.DEF_INTERPOLANTS,
+						INTERPOLATION.Craig_TreeInterpolation,
 						PreferenceType.Combo, 
 						TraceAbstractionPreferenceInitializer.INTERPOLATION.values())
 		};

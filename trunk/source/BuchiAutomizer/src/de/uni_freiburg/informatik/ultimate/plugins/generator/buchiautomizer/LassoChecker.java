@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Terminat
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.AffineTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.LexicographicTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.MultiphaseTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -77,7 +78,7 @@ public class LassoChecker {
 	 * use z3 and non-linear templates if true
 	 * use SMTinterpol and only linear templates if false
 	 */
-	private final boolean m_UseZ3 = false;
+	private final boolean m_UseZ3 = !false;
 
 	
 	//////////////////////////////// input /////////////////////////////////
@@ -547,9 +548,9 @@ public class LassoChecker {
 			//		rankingFunctionTemplates.add(new PiecewiseTemplate(2));
 			//		rankingFunctionTemplates.add(new PiecewiseTemplate(3));
 			//		
-			//		rankingFunctionTemplates.add(new LexicographicTemplate(1));
-			//		rankingFunctionTemplates.add(new LexicographicTemplate(2));
-			//		rankingFunctionTemplates.add(new LexicographicTemplate(3));
+					rankingFunctionTemplates.add(new LexicographicTemplate(1));
+					rankingFunctionTemplates.add(new LexicographicTemplate(2));
+					rankingFunctionTemplates.add(new LexicographicTemplate(3));
 		}
 
 		TerminationArgument termArg = tryTemplatesAndComputePredicates(
