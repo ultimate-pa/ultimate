@@ -36,3 +36,4 @@ file_export_version=3.0
 /instance/UltimateGui/LASTTOOLCHAINPATH=/mnt/storage/stalin/trunk/examples/toolchains/BuchiAutomizerCWithBlockEncoding.xml
 /instance/UltimateGui/LASTPATH=/mnt/storage/stalin/trunk/examples/programs/termination/CookSeeZuleger-2013TACAS-Fig3.c
 @UltimateGui=0.0.1
+/instance/UltimateCore/Toolchain\ timeout\ in\ seconds=300
