@@ -3,6 +3,9 @@
  * Example that reveales minor bug in our nontermination analysis. We have to
  * transform each constraint into homogenized form.
  * 
+ * Discussion with Jan showed that this is no bug. Out method will not find a
+ * nontermination argument.
+ * 
  * Date: 26.01.2014
  * Author: heizmann@informatik.uni-freiburg.de
  *

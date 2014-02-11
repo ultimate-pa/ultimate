@@ -9,6 +9,10 @@
  *        a := -a;
  *   }
  * 
+ * Discussion with Jan showed that this is no bug. That we can not find a
+ * nontermination argument even if we transform the program into homogenized
+ * form.
+ * 
  * Date: 29.01.2014
  * Author: heizmann@informatik.uni-freiburg.de
  */
