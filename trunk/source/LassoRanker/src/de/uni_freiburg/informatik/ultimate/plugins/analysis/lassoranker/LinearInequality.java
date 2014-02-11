@@ -288,7 +288,14 @@ public class LinearInequality {
 				continue;
 			}
 			String param = entry.getValue().toString();
-			if (param.startsWith("-")) {
+			if (param.length() > 2 && param.substring(2).contains(" ")) {
+				if (!first) {
+					sb.append(" + ");
+				}
+				sb.append("(");
+				sb.append(param);
+				sb.append(")");
+			} else if (param.startsWith("-")) {
 				if (!first) {
 					sb.append(" -");
 					sb.append(param.substring(1));
@@ -299,13 +306,7 @@ public class LinearInequality {
 				if (!first) {
 					sb.append(" + ");
 				}
-				if (param.contains(" ")) {
-					sb.append("(");
-					sb.append(param);
-					sb.append(")");
-				} else {
-					sb.append(param);
-				}
+				sb.append(param);
 			}
 			sb.append("*");
 			sb.append(entry.getKey());

@@ -180,7 +180,7 @@ public class MotzkinTransformation extends InstanceCounting {
 		int num_coefficients = coefficients.length;
 		assert(num_coefficients == m_inequalities.size());
 		
-		List<Term> conjunction = new ArrayList<Term>(); // Conjunctions of the
+		List<Term> conjunction = new ArrayList<Term>(); // Conjunction of the
 			// resulting formula
 		
 		// λ*A + μ*B = 0
@@ -229,17 +229,19 @@ public class MotzkinTransformation extends InstanceCounting {
 			Term classical = m_script.term("<", sum, m_script.decimal("0"));
 			
 			// μ ≠ 0   -- strict inequalities
-			List<Term> disjunction = new ArrayList<Term>();
+			summands = new ArrayList<Term>();
 			for (int i = 0; i < num_coefficients; ++i) {
 				LinearInequality li = m_inequalities.get(i);
 				if (li.isStrict()) {
 					// only strict inequalities
-					disjunction.add(m_script.term("not", m_script.term("=",
-							coefficients[i], m_script.decimal("0"))));
+					summands.add(coefficients[i]);
 				}
 			}
-			Term non_classical = Util.or(m_script,
-					disjunction.toArray(new Term[0]));
+			// since all μ are nonnegative, we can use sum(μ) > 0 equivalently
+			Term non_classical = m_script.term(">",
+					UtilExperimental.sum(m_script, m_script.sort("Real"),
+							summands.toArray(new Term[0])),
+					m_script.decimal("0"));
 			
 			conjunction.add(Util.or(m_script, classical, non_classical));
 			return Util.and(m_script, conjunction.toArray(new Term[0]));
