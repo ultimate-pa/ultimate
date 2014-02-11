@@ -66,11 +66,13 @@ class TerminationArgumentSynthesizer {
 	public final Preferences m_preferences;
 	
 	/**
-	 * Constructor for the ranking function synthesizer.
-	 * @param stem transition formula for the program's stem
-	 * @param loop transition formula for the program's loop
+	 * Constructor for the termination argument function synthesizer.
 	 * @param script SMT Solver
-	 * @throws Exception If something goes wrong ;)
+	 * @param stem_transition transition formula for the program's stem
+	 * @param loop_transition transition formula for the program's loop
+	 * @param stem program stem as a union of polyhedra
+	 * @param loop program stem as a union of polyhedra
+	 * @param preferences arguments to the synthesis process
 	 */
 	public TerminationArgumentSynthesizer(Script script, TransFormula stem_transition,
 			TransFormula loop_transition, LinearTransition stem,

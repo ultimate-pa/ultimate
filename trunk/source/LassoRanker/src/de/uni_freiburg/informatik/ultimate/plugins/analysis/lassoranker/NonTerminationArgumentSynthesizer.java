@@ -60,7 +60,7 @@ public class NonTerminationArgumentSynthesizer {
 	public static long m_aux_counter = 0;
 	
 	/**
-	 * Is the ray non-decreasing?
+	 * Is the ray non-decreasing? (lambda = 1)
 	 */
 	private final boolean m_non_decreasing;
 	
@@ -87,19 +87,27 @@ public class NonTerminationArgumentSynthesizer {
 	 */
 	private NonTerminationArgument m_argument = null;
 	
-	public NonTerminationArgumentSynthesizer(boolean non_decreasing, Script script,
-			LinearTransition stem,
-			LinearTransition loop,
-			TransFormula stem_transition,
-			TransFormula loop_transition) {
+	/**
+	 * Constructor for the termination argument function synthesizer.
+	 * @param non_decreasing produce only linear constraints? (lambda = 1)
+	 * @param script SMT Solver
+	 * @param stem_transition transition formula for the program's stem
+	 * @param loop_transition transition formula for the program's loop
+	 * @param stem program stem as a union of polyhedra
+	 * @param loop program stem as a union of polyhedra
+	 */
+	public NonTerminationArgumentSynthesizer(boolean non_decreasing,
+			Script script, LinearTransition stem, LinearTransition loop,
+			TransFormula stem_transition, TransFormula loop_transition) {
 		m_script = script;
 		
-		//FIXME: Hack by Matthias. If non_decreasing (==linear constraints only)
-		// is set we use the integer mode. Necessary in cases where
-		// loop is equivalent to false and hence does not contain integers
-		m_integer_mode = stem.containsIntegers() || loop.containsIntegers() || non_decreasing;
+		m_integer_mode = stem.containsIntegers() || loop.containsIntegers();
 		if (!m_integer_mode) {
-			script.setLogic(Logics.QF_NRA);
+			if (non_decreasing) {
+				script.setLogic(Logics.QF_LRA);
+			} else {
+				script.setLogic(Logics.QF_NRA);
+			}
 		} else {
 			s_Logger.info("Using integer mode.");
 			if (!non_decreasing) {
