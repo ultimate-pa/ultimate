@@ -591,10 +591,6 @@ public class TestFileInterpreter {
 	 */
 	private IAutomaton<?, ?> m_LastPrintedAutomaton;
 	/**
-	 * 
-	 */
-	private int m_timeout = 60;
-	/**
 	 * Indicates whether the automaton, which is output by a print operation, should
 	 * also be printed to a .ats-file.
 	 */
@@ -621,7 +617,6 @@ public class TestFileInterpreter {
 		m_existingOperations = getOperationClasses();
 		m_LastPrintedAutomaton = null;
 		m_ResultOfAssertStatements = new ArrayList<GenericResultAtElement<AtsASTNode>>();
-		UltimateServices.getInstance().setDeadline(System.currentTimeMillis() + (m_timeout * 1000));
 		if (m_printAutomataToFile) {
 			String path = m_path + File.separator + "automatascriptOutput" + getDateTime() + ".ats";
 			File file = new File(path);
@@ -636,7 +631,6 @@ public class TestFileInterpreter {
 	
 	private void readPreferences() {
 		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		m_timeout = prefs.getInt(PreferenceInitializer.Name_Timeout);
 		m_printAutomataToFile = prefs.getBoolean(PreferenceInitializer.Name_WriteToFile);
 		m_path = prefs.getString(PreferenceInitializer.Name_Path);
 	}

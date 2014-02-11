@@ -72,11 +72,6 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 		
-		long timoutMilliseconds = taPrefs.timeout() * 1000;
-		UltimateServices.getInstance().setDeadline(
-				System.currentTimeMillis() + timoutMilliseconds);
-	
-
 		AbstractCegarLoop abstractCegarLoop;
 		
 		String name = "AllErrorsAtOnce";
@@ -111,7 +106,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			break;
 		}
 		case TIMEOUT:
-			reportTimoutResult(errNodesOfAllProc, taPrefs.timeout());
+			reportTimoutResult(errNodesOfAllProc);
 			break;
 		case UNKNOWN:
 		{
@@ -231,10 +226,10 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		s_Logger.warn(ctxMessage);
 	}
 	
-	private void reportTimoutResult(Collection<ProgramPoint> errorLocs, int timeout) {
+	private void reportTimoutResult(Collection<ProgramPoint> errorLocs) {
 		for (ProgramPoint errorLoc : errorLocs) {
 			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
-			String timeOutMessage = "Timout! (" + timeout + "s) Unable to prove that " +
+			String timeOutMessage = "Timout! Unable to prove that " +
 					origin.checkedSpecification().getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
 			TimeoutResult<RcfgElement> timeOutRes = new TimeoutResult<RcfgElement>(

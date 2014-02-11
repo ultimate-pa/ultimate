@@ -107,13 +107,6 @@ public class TAPreferences {
 
 
 	/**
-	 * @return the timeout in seconds
-	 */
-	public int timeout() {
-		return m_Prefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_TIMEOUT);
-	}
-
-	/**
 	 * @return the maxIterations
 	 */
 	public int maxIterations() {

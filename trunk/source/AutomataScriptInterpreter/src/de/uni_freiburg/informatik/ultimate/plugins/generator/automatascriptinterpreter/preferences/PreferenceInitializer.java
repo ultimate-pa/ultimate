@@ -14,9 +14,6 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<Integer>(Name_Timeout,
-						Default_Timeout, PreferenceType.Integer,
-						new TimeoutValidator()),
 				new UltimatePreferenceItem<Boolean>(Name_WriteToFile,
 						Default_WriteToFile, PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(Name_Path, Default_Path,
@@ -39,23 +36,5 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public static final String Name_Path = "Directory";
 	public static final String Default_Path = ".";
-
-	public static final String Name_Timeout = "Timeout";
-	public static final int Default_Timeout = 60;
-
-	private class TimeoutValidator implements
-			IUltimatePreferenceItemValidator<Integer> {
-
-		@Override
-		public boolean isValid(Integer value) {
-			return 0 <= value && value <= 10000000;
-		}
-
-		@Override
-		public String getInvalidValueErrorMessage(Integer value) {
-			return "Valid range is 0 <= value <= 10000000";
-		}
-
-	}
 
 }

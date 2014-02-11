@@ -60,8 +60,6 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		TAPreferences taPrefs = new TAPreferences();
 		m_graphroot = root;
 
-		TraceAbstractionObserver.setTimeout(taPrefs);
-
 		smtManager = new SmtManager(rootAnnot.getBoogie2SMT(),
 				rootAnnot.getGlobalVars(), rootAnnot.getModGlobVarManager());
 

@@ -76,7 +76,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		settings += " " + (taPrefs.differenceSenwa() ? "SeNWA" : "NWA");
 		settings += " Interpolation:"+ taPrefs.interpolation();
 		settings += " Determinization: " + taPrefs.determinization();
-		settings += " Timeout:" + taPrefs.timeout();
 		System.out.println(settings);
 
 		SmtManager smtManager = new SmtManager(rootAnnot.getBoogie2SMT(),
@@ -90,7 +89,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		setTimeout(taPrefs);
 		m_OverallIterations = 0;
 		m_OverallBiggestAbstraction = 0;
 		m_OverallResult = Result.SAFE;
@@ -204,12 +202,12 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 //			ResultNotifier.programIncorrect();
 			break;
 		case TIMEOUT:
-			s_Logger.warn("Insufficient iterations to proof correctness");
+			s_Logger.warn("Timeout");
 //			ResultNotifier
-//					.programUnknown("Insufficient iterations to proof correctness");
+//					.programUnknown("Timeout");
 			break;
 		case UNKNOWN:
-			s_Logger.warn("Program might be incorrect, check conterexample.");
+			s_Logger.warn("Unable to decide correctness. Please check the following counterexample manually.");
 //			ResultNotifier.programUnknown("Program might be incorrect, check"
 //					+ " conterexample.");
 			break;
@@ -218,17 +216,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		m_graphroot = m_Artifact;
 
 		return false;
-	}
-
-	public static void setTimeout(TAPreferences taPrefs) {
-		int timeoutInPreferences = taPrefs.timeout();
-		if (timeoutInPreferences == 0) {
-			// do not set any timout
-		} else {
-			long timoutMilliseconds = timeoutInPreferences * 1000L;
-			UltimateServices.getInstance().setDeadline(
-					System.currentTimeMillis() + timoutMilliseconds);
-		}
 	}
 
 	private void iterate(String name, RootNode root, TAPreferences taPrefs,

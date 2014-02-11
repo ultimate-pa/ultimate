@@ -19,10 +19,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						DEF_INTERPROCEDUTAL, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_AllErrorsAtOnce,
 						DEF_AllErrorsAtOnce, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Integer>(LABEL_TIMEOUT, DEF_TIMEOUT,
-						PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(
-								0, 1000000)),
 				new UltimatePreferenceItem<Integer>(LABEL_ITERATIONS,
 						DEF_ITERATIONS, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(
@@ -85,7 +81,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 */
 	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
 	public static final String LABEL_AllErrorsAtOnce = "Check all specifiacations at once";
-	public static final String LABEL_TIMEOUT = "Timeout in seconds";
 	public static final String LABEL_ITERATIONS = "Iterations until the model checker surrenders";
 	public static final String LABEL_ARTIFACT = "Kind of artifact that is visualized";
 	public static final String LABEL_WATCHITERATION = "Number of iteration whose artifact is visualized";
@@ -125,7 +120,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 */
 	public static final boolean DEF_INTERPROCEDUTAL = true;
 	public static final int DEF_ITERATIONS = 1000000;
-	public static final int DEF_TIMEOUT = 0;
 	public static final String DEF_ARTIFACT = VALUE_RCFG;
 	public static final int DEF_WATCHITERATION = 1000000;
 	public static final boolean DEF_HOARE = false;
