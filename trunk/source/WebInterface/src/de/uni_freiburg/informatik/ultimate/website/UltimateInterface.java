@@ -28,18 +28,24 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore.Ultimate_Mode;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithLocation;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
+import de.uni_freiburg.informatik.ultimate.result.NonterminatingLassoResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
+import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.website.Setting.SettingType;
 
 /**
@@ -380,7 +386,10 @@ public class UltimateInterface extends HttpServlet {
 					for (IResult r : rList) {
 						String type = "UNDEF";
 						UltimateResult packagedResult = new UltimateResult();
-						if (r instanceof CounterExampleResult) {
+						if (r instanceof ExceptionOrErrorResult) {
+							type = "ExceptionOrError";
+							packagedResult.logLvl = "error";
+						} else if (r instanceof CounterExampleResult) {
 							type = "counter";
 							packagedResult.logLvl = "error";
 						} else if (r instanceof ProcedureContractResult) {
@@ -392,7 +401,13 @@ public class UltimateInterface extends HttpServlet {
 						} else if (r instanceof PositiveResult) {
 							type = "positive";
 							packagedResult.logLvl = "info";
+						} else if (r instanceof BenchmarkResult) {
+							type = "benchmark";
+							packagedResult.logLvl = "info";
 						} else if (r instanceof TerminationArgumentResult) {
+							type = "invariant";
+							packagedResult.logLvl = "info";
+						} else if (r instanceof NonterminatingLassoResult<?>) {
 							type = "invariant";
 							packagedResult.logLvl = "info";
 						} else if (r instanceof UnprovableResult) {
@@ -401,21 +416,24 @@ public class UltimateInterface extends HttpServlet {
 						} else if (r instanceof SyntaxErrorResult) {
 							type = "syntaxError";
 							packagedResult.logLvl = "error";
+						} else if (r instanceof UnsupportedSyntaxResult) {
+							type = "syntaxUnsupported";
+							packagedResult.logLvl = "error";
 						} else if (r instanceof TimeoutResult) {
 							type = "timeout";
 							packagedResult.logLvl = "error";
-//						} else if (r instanceof PossibleUnsoundnessWarningResult<?>) {
-//							type = "warning";
-//							packagedResult.logLvl = "warning";
-						} else if (r instanceof GenericResultAtElement<?>) {
-							GenericResultAtElement<?> rGen = (GenericResultAtElement<?>) r;
-							if (rGen.getSeverity().equals(Severity.ERROR)) {
+						} else if (r instanceof TypeErrorResult<?>) {
+							type = "typeError";
+							packagedResult.logLvl = "error";
+						} else if (r instanceof IResultWithSeverity) {
+							IResultWithSeverity rws = (IResultWithSeverity) r;
+							if (rws.getSeverity().equals(Severity.ERROR)) {
 								type = "error";
 								packagedResult.logLvl = "error";
-							} else if (rGen.getSeverity().equals(Severity.WARNING)) {
+							} else if (rws.getSeverity().equals(Severity.WARNING)) {
 								type = "warning";
 								packagedResult.logLvl = "warning";
-							} else if (rGen.getSeverity().equals(Severity.INFO)) {
+							} else if (rws.getSeverity().equals(Severity.INFO)) {
 								type = "info";
 								packagedResult.logLvl = "info";
 							} else {
