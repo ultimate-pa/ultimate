@@ -338,7 +338,7 @@ public class BinaryStatePredicateManager {
 		m_LexEquality = new IPredicate[m_LexTerms.length];
 		for (int i=0; i<m_LexTerms.length; i++) {
 			m_LexEquality[i] = getRankInEquality(
-					m_LexTerms[i], "=", m_OldRankVariables[i], true);
+					m_LexTerms[i], "=", m_OldRankVariables[i], false);
 			if (s_Annotate) {
 				String name = "equality" + i;
 				Annotation annot = new Annotation(":named", name);
