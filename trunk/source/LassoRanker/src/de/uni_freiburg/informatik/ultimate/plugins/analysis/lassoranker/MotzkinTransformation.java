@@ -229,6 +229,7 @@ public class MotzkinTransformation extends InstanceCounting {
 			Term classical = m_script.term("<", sum, m_script.decimal("0"));
 			
 			// μ ≠ 0   -- strict inequalities
+			// since all μ are nonnegative, we can use sum(μ) > 0 equivalently
 			summands = new ArrayList<Term>();
 			for (int i = 0; i < num_coefficients; ++i) {
 				LinearInequality li = m_inequalities.get(i);
@@ -237,7 +238,6 @@ public class MotzkinTransformation extends InstanceCounting {
 					summands.add(coefficients[i]);
 				}
 			}
-			// since all μ are nonnegative, we can use sum(μ) > 0 equivalently
 			Term non_classical = m_script.term(">",
 					UtilExperimental.sum(m_script, m_script.sort("Real"),
 							summands.toArray(new Term[0])),

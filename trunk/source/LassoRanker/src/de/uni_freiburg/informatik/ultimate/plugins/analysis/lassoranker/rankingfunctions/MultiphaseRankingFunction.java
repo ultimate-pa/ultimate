@@ -63,16 +63,15 @@ public class MultiphaseRankingFunction extends RankingFunction {
 	@Override
 	public Term[] asLexTerm(Script script) throws SMTLIBException {
 		BigInteger n = BigInteger.ZERO;
-		Term value = script.numeral(n);
 		Term phase = m_ranking.get(m_ranking.size() - 1).asTerm(script);
+		Term value = script.numeral(n);
 		for (int i = m_ranking.size() - 2; i >= 0; --i) {
 			n = n.add(BigInteger.ONE);
-			
 			Term f_term = m_ranking.get(i).asTerm(script);
 			Term cond = script.term(">", f_term,
 					script.numeral(BigInteger.ZERO));
-			value = script.term("ite", cond, script.numeral(n), value);
-			phase = script.term("ite", cond, f_term, phase);
+			phase = script.term("ite", cond, script.numeral(n), phase);
+			value = script.term("ite", cond, f_term, value);
 		}
 		return new Term[] { phase, value };
 	}
