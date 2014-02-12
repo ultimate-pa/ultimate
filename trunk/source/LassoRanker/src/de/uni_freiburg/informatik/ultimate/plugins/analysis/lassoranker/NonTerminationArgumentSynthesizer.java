@@ -101,7 +101,8 @@ public class NonTerminationArgumentSynthesizer {
 			TransFormula stem_transition, TransFormula loop_transition) {
 		m_script = script;
 		
-		m_integer_mode = stem.containsIntegers() || loop.containsIntegers();
+		m_integer_mode = (stem != null && stem.containsIntegers())
+				|| loop.containsIntegers();
 		if (!m_integer_mode) {
 			if (non_decreasing) {
 				script.setLogic(Logics.QF_LRA);
@@ -129,9 +130,11 @@ public class NonTerminationArgumentSynthesizer {
 	 */
 	private Collection<BoogieVar> getBoogieVars() {
 		Collection<BoogieVar> boogieVars = new HashSet<BoogieVar>();
-		boogieVars.addAll(m_stem_transition.getAssignedVars());
-		boogieVars.addAll(m_stem_transition.getInVars().keySet());
-		boogieVars.addAll(m_stem_transition.getOutVars().keySet());
+		if (m_stem_transition != null) {
+			boogieVars.addAll(m_stem_transition.getAssignedVars());
+			boogieVars.addAll(m_stem_transition.getInVars().keySet());
+			boogieVars.addAll(m_stem_transition.getOutVars().keySet());
+		}
 		boogieVars.addAll(m_loop_transition.getAssignedVars());
 		boogieVars.addAll(m_loop_transition.getInVars().keySet());
 		boogieVars.addAll(m_loop_transition.getOutVars().keySet());
@@ -189,17 +192,20 @@ public class NonTerminationArgumentSynthesizer {
 		Collection<BoogieVar> boogieVars = getBoogieVars();
 		
 		// A_stem * (x0, x0') <= b_stem
-		List<Term> disjunction = new ArrayList<Term>(m_stem.getNumPolyhedra());
-		for (List<LinearInequality> polyhedron : m_stem.getPolyhedra()) {
-			disjunction.add(generateConstraint(
-					m_stem_transition,
-					polyhedron,
-					vars_init,
-					vars_honda,
-					false
-			));
+		Term t1 = m_script.term("true");
+		if (m_stem != null) {
+			List<Term> disjunction = new ArrayList<Term>(m_stem.getNumPolyhedra());
+			for (List<LinearInequality> polyhedron : m_stem.getPolyhedra()) {
+				disjunction.add(generateConstraint(
+						m_stem_transition,
+						polyhedron,
+						vars_init,
+						vars_honda,
+						false
+				));
+			}
+			t1 = Util.or(m_script, disjunction.toArray(new Term[0]));
 		}
-		Term t1 = Util.or(m_script, disjunction.toArray(new Term[0]));
 		
 		// vars_end + vars_ray
 		Map<BoogieVar, Term> vars_end_plus_ray =
@@ -219,7 +225,7 @@ public class NonTerminationArgumentSynthesizer {
 			}
 		}
 		
-		disjunction = new ArrayList<Term>(m_loop.getNumPolyhedra());
+		List<Term> disjunction = new ArrayList<Term>(m_loop.getNumPolyhedra());
 		for (List<LinearInequality> polyhedron : m_loop.getPolyhedra()) {
 			// A_loop * (x0', x0' + y) <= b_loop
 			Term t_honda = this.generateConstraint(m_loop_transition, polyhedron,
@@ -373,7 +379,8 @@ public class NonTerminationArgumentSynthesizer {
 			Map<BoogieVar, Rational> ray = extractState(vars_ray);
 			Rational lambda = AuxiliaryMethods.const2Rational(
 					m_script.getValue(new Term[] {var_lambda}).get(var_lambda));
-			return new NonTerminationArgument(state0, state1, ray, lambda);
+			return new NonTerminationArgument(m_stem != null ? state0 : state1,
+					state1, ray, lambda);
 		} catch (UnsupportedOperationException e) {
 			// do nothing
 		} catch (TermException e) {

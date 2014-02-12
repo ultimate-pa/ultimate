@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -101,7 +102,10 @@ class TerminationArgumentSynthesizer {
 	 * (i.e., do not occur as inVar of the loop) are not relevant for
 	 * supporting invariants.
 	 */
-	private Collection<BoogieVar> getSIVars() { 
+	private Collection<BoogieVar> getSIVars() {
+		if (m_stem_transition == null) {
+			return Collections.emptyList();
+		}
 		Set<BoogieVar> result = 
 				new HashSet<BoogieVar>(m_stem_transition.getOutVars().keySet());
 		result.retainAll(m_loop_transition.getInVars().keySet());
