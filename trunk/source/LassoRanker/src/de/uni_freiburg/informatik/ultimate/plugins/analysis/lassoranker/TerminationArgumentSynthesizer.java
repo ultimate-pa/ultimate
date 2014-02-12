@@ -252,12 +252,14 @@ class TerminationArgumentSynthesizer {
 	 * using the methods getRankingFunction() and getSupportingInvariant().
 	 * 
 	 * @param template the ranking template to be used
-	 * @return whether a ranking function was found
+	 * @return SAT if a termination argument was found, UNSAT if existence of
+	 *  a termination argument was refuted, UNKNOWN if the solver was not able
+	 *  to decide existence of a termination argument
 	 * @throws SMTLIBException error with the SMT solver
 	 * @throws TermException if the supplied transitions contain
 	 *          non-affine update statements
 	 */
-	public boolean synthesize(RankingFunctionTemplate template)
+	public LBool synthesize(RankingFunctionTemplate template)
 			throws SMTLIBException, TermException {
 		assert m_preferences.termination_check_nonlinear
 				|| template.getDegree() == 0
@@ -290,7 +292,6 @@ class TerminationArgumentSynthesizer {
 		}
 		
 		// Check for a model
-		boolean success = false;
 		LBool sat = m_script.checkSat();
 		if (sat == LBool.SAT) {
 			s_Logger.debug("Found a model, " +
@@ -310,7 +311,6 @@ class TerminationArgumentSynthesizer {
 				m_supporting_invariants.add(sig.extractSupportingInvariant(
 						val_si));
 			}
-			success = true;
 		} else if (sat == LBool.UNKNOWN) {
 			s_Logger.info("Statistics: template " + 
 					template.getClass().getSimpleName() + 
@@ -321,8 +321,7 @@ class TerminationArgumentSynthesizer {
 			// (:reason-unknown canceled)
 			// Object reason = m_script.getInfo(":reason-unknown");
 		}
-		
-		return success;
+		return sat;
 	}
 	
 	/**

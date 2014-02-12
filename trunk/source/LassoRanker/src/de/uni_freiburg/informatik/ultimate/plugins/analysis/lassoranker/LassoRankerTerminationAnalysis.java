@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
@@ -395,20 +396,32 @@ public class LassoRankerTerminationAnalysis {
 		TerminationArgumentSynthesizer synthesizer =
 				new TerminationArgumentSynthesizer(m_script, m_stem_transition,
 				m_loop_transition, m_stem, m_loop, m_preferences);
-		boolean terminating = synthesizer.synthesize(template);
-		if (terminating) {
+		final LBool constraintSat = synthesizer.synthesize(template);
+		m_numSIs = synthesizer.getNumSIs();
+		m_numMotzkin = synthesizer.getNumMotzkin();
+
+		if (constraintSat == LBool.SAT) {
 			s_Logger.info("Proved termination.");
 			s_Logger.info(synthesizer.getArgument());
 //			Term[] lexTerm = synthesizer.getArgument().getRankingFunction().asLexTerm(m_old_script);
 //			for (Term t : lexTerm) {
 //				s_Logger.debug(SMTPrettyPrinter.print(t));
 //			}
+		} else if (constraintSat == LBool.UNKNOWN) {
+			s_Logger.info("Statistics: template " + 
+					template.getClass().getSimpleName() + 
+					" with degree " + template.getDegree() + 
+					" too complicated for solver");
+//			public int getLoopVarNum()
+//			public int getStemVarNum()
+//			public int getLoopDisjuncts()
+//			public int getStemDisjuncts()
+//			public int getNumSis()
+//			public int getNumMotzkin()
 		}
-		m_numSIs = synthesizer.getNumSIs();
-		m_numMotzkin = synthesizer.getNumMotzkin();
 		
 		SMTSolver.resetScript(m_script, m_preferences.annotate_terms);
-		return terminating ? synthesizer.getArgument() : null;
+		return constraintSat == LBool.SAT ? synthesizer.getArgument() : null;
 	}
 	
 	/**
