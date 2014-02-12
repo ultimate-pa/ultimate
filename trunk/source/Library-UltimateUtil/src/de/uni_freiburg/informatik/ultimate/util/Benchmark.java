@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.util;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryPoolMXBean;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -7,7 +9,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -19,24 +20,15 @@ import org.apache.log4j.Logger;
  */
 public class Benchmark {
 
-	private long mStartTime;
-
-	// Get current size of heap in bytes
-	private long mStartHeapSize;
-
-	// Get amount of free memory within the heap in bytes. This size will
-	// increase after garbage collection and decrease as new objects are
-	// created.
-	private long mStartHeapFreeSize;
-
 	// Get maximum size of heap in bytes. The heap cannot grow beyond this
 	// size. Any attempt will result in an OutOfMemoryException.
-	private long mMaxHeapSize;
+	private long mMaxMemorySize;
 
 	private int mCurrentIndex;
 	private HashMap<String, Watch> mWatches;
 
 	private Logger mLogger;
+	private Watch mGlobalWatch;
 
 	public Benchmark() {
 		mLogger = LogManager.getLogger(getClass());
@@ -86,48 +78,48 @@ public class Benchmark {
 			mWatches.put(title, watch);
 		}
 		watch.reset();
-		startInternal(watch);
-	}
-
-	private void startInternal(Watch watch) {
-		watch.mStartHeapSize = Runtime.getRuntime().totalMemory();
-		watch.mStartHeapFreeSize = Runtime.getRuntime().freeMemory();
-		watch.mStartTime = System.nanoTime();
+		watch.start();
 	}
 
 	public void startAll() {
-		mStartTime = System.nanoTime();
-		mStartHeapSize = Runtime.getRuntime().totalMemory();
-		mStartHeapFreeSize = Runtime.getRuntime().freeMemory();
+		mGlobalWatch.reset();
+		mGlobalWatch.start();
 	}
 
 	public void stop(String title) {
-		long stopDate = System.nanoTime();
-		long stopHeapSize = Runtime.getRuntime().totalMemory();
-		long stopHeapFreeSize = Runtime.getRuntime().freeMemory();
-		stopWatch(title, stopDate, stopHeapSize, stopHeapFreeSize);
+		stopInternal(title, System.nanoTime());
 	}
 
 	public void stopAll() {
-		long stopDate = System.nanoTime();
-		long stopHeapSize = Runtime.getRuntime().totalMemory();
-		long stopHeapFreeSize = Runtime.getRuntime().freeMemory();
+		long stopTime = System.nanoTime();
+
 		for (String key : mWatches.keySet()) {
-			stopWatch(key, stopDate, stopHeapSize, stopHeapFreeSize);
+			stopInternal(key, stopTime);
 		}
 	}
 
-	public void pause(String title) {
-		stop(title);
+	private void stopInternal(String title, long stopTime) {
 		Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return;
 		}
-		Watch oldWatch = watch.copy();
-		if (watch.mPausedWatches == null) {
-			watch.mPausedWatches = new ArrayList<Watch>();
+
+		if (watch.mStartTime == -1 && mGlobalWatch.mStartTime == -1) {
+			return;
 		}
-		watch.mPausedWatches.add(oldWatch);
+
+		if (watch.mStartTime == -1) {
+			// this watch was started via startAll
+			watch.mStartTime = mGlobalWatch.mStartTime;
+			watch.mStartMemorySize = mGlobalWatch.mStartMemorySize;
+			watch.mStartMemoryFreeSize = mGlobalWatch.mStartMemoryFreeSize;
+			watch.mStartPeakMemorySize = mGlobalWatch.mStartPeakMemorySize;
+		}
+		watch.stop(stopTime);
+	}
+
+	public void pause(String title) {
+		stop(title);
 	}
 
 	public void unpause(String title) {
@@ -135,40 +127,16 @@ public class Benchmark {
 		if (watch == null) {
 			return;
 		}
-		startInternal(watch);
-	}
-
-	private void stopWatch(String title, long stopDate, long stopHeapSize, long stopHeapFreeSize) {
-		Watch watch = mWatches.get(title);
-		if (watch == null) {
-			return;
-		}
-
-		if (watch.mStartTime == -1 && mStartTime == -1) {
-			return;
-		}
-
-		if (watch.mStartTime == -1) {
-			// this watch was started via startAll
-			watch.mStartTime = mStartTime;
-			watch.mStartHeapSize = mStartHeapSize;
-			watch.mStartHeapFreeSize = mStartHeapFreeSize;
-		}
-
-		watch.mElapsedTime = stopDate - watch.mStartTime + watch.mElapsedTime;
-		watch.mStopHeapSize = stopHeapSize;
-		watch.mStopHeapFreeSize = stopHeapFreeSize;
+		watch.start();
 	}
 
 	/**
 	 * Resets the benchmark object and clears all watches.
 	 */
 	public void reset() {
-		mStartTime = -1;
-		mStartHeapSize = -1;
-		mStartHeapFreeSize = -1;
-		mMaxHeapSize = Runtime.getRuntime().maxMemory();
-		mCurrentIndex = 0;
+		mCurrentIndex = 1;
+		mGlobalWatch = new Watch("Global", 0);
+		mMaxMemorySize = Runtime.getRuntime().maxMemory();
 		mWatches = new HashMap<String, Watch>();
 	}
 
@@ -209,7 +177,7 @@ public class Benchmark {
 		if (watch == null) {
 			return -1;
 		} else {
-			return watch.mStartHeapSize;
+			return watch.mStartMemorySize;
 		}
 	}
 
@@ -218,30 +186,39 @@ public class Benchmark {
 		if (watch == null) {
 			return -1;
 		} else {
-			return watch.mStopHeapSize;
+			return watch.mStopMemorySize;
 		}
 	}
 
-	public long getStartHeapFreeSize(String title) {
+	public long getStartMemoryFreeSize(String title) {
 		Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
 		} else {
-			return watch.mStartHeapFreeSize;
+			return watch.mStartMemoryFreeSize;
 		}
 	}
 
-	public long getStopHeapFreeSize(String title) {
+	public long getStopMemoryFreeSize(String title) {
 		Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
 		} else {
-			return watch.mStopHeapFreeSize;
+			return watch.mStopMemoryFreeSize;
+		}
+	}
+
+	public long getPeakMemoryConsumed(String title) {
+		Watch watch = mWatches.get(title);
+		if (watch == null) {
+			return -1;
+		} else {
+			return watch.mPeakMemorySize - watch.mStartPeakMemorySize;
 		}
 	}
 
 	public long getMaxHeapSize(String title) {
-		return mMaxHeapSize;
+		return mMaxMemorySize;
 	}
 
 	public Collection<String> getTitles() {
@@ -294,6 +271,19 @@ public class Benchmark {
 		}
 	}
 
+	private boolean isHeap(String memoryPoolName) {
+		switch (memoryPoolName) {
+		case "Code Cache":
+		case "PS Perm Gen":
+			return false;
+		case "PS Eden Space":
+		case "PS Survivor Space":
+		case "PS Old Gen":
+			return true;
+		}
+		throw new IllegalArgumentException();
+	}
+
 	private class Watch {
 
 		private String mTitle;
@@ -302,42 +292,65 @@ public class Benchmark {
 		private long mStartTime;
 		private long mElapsedTime;
 
-		private long mStartHeapSize;
-		private long mStopHeapSize;
+		private long mStartMemorySize;
+		private long mStopMemorySize;
 
-		private long mStartHeapFreeSize;
-		private long mStopHeapFreeSize;
+		private long mStartMemoryFreeSize;
+		private long mStopMemoryFreeSize;
 
-		private List<Watch> mPausedWatches;
+		private long mStartPeakMemorySize;
+		private long mPeakMemorySize;
+
+		private List<MemoryPoolMXBean> mMemoryPoolBeans;
 
 		private Watch(String title, int index) {
 			mTitle = title;
 			mIndex = index;
+			mMemoryPoolBeans = ManagementFactory.getMemoryPoolMXBeans();
 			reset();
+		}
+
+		private void start() {
+			mStartMemorySize = Runtime.getRuntime().totalMemory();
+			mStartMemoryFreeSize = Runtime.getRuntime().freeMemory();
+
+			long startMemoryUsage = 0;
+			for (MemoryPoolMXBean bean : mMemoryPoolBeans) {
+				bean.resetPeakUsage();
+				if (isHeap(bean.getName())) {
+					startMemoryUsage = startMemoryUsage + bean.getPeakUsage().getUsed();
+				}
+			}
+			mStartPeakMemorySize = startMemoryUsage;
+			mStartTime = System.nanoTime();
+		}
+
+		private void stop(long stopTime) {
+			mElapsedTime = stopTime - mStartTime + mElapsedTime;
+			mStopMemorySize = Runtime.getRuntime().totalMemory();
+			mStopMemoryFreeSize = Runtime.getRuntime().freeMemory();
+
+			long stopMemoryUsage = 0;
+			for (MemoryPoolMXBean bean : mMemoryPoolBeans) {
+				if (isHeap(bean.getName())) {
+					stopMemoryUsage = stopMemoryUsage + bean.getPeakUsage().getUsed();
+				}
+			}
+			mPeakMemorySize = Math.max(mPeakMemorySize, Math.max(stopMemoryUsage, mStartPeakMemorySize));
 		}
 
 		private void reset() {
 			mStartTime = -1;
 			mElapsedTime = 0;
 
-			mStartHeapSize = 0;
-			mStartHeapFreeSize = 0;
+			mStartMemorySize = 0;
+			mStartMemoryFreeSize = 0;
 
-			mStopHeapSize = 0;
-			mStopHeapFreeSize = 0;
-		}
+			mStopMemorySize = 0;
+			mStopMemoryFreeSize = 0;
 
-		private Watch copy() {
-			Watch m = new Watch(mTitle, mIndex);
-			m.mStartTime = mStartTime;
-			m.mElapsedTime = mElapsedTime;
-
-			m.mStartHeapSize = mStartHeapSize;
-			m.mStartHeapFreeSize = mStartHeapFreeSize;
-
-			m.mStopHeapSize = mStopHeapSize;
-			m.mStopHeapFreeSize = mStopHeapFreeSize;
-			return m;
+			mStartPeakMemorySize = 0;
+			mPeakMemorySize = 0;
 		}
 
 		@Override
@@ -350,36 +363,51 @@ public class Benchmark {
 				return String.format("%s was not measured", mTitle);
 			}
 
-			long heapDelta = mStopHeapSize - mStartHeapSize;
-			long freeDelta = mStartHeapFreeSize - mStopHeapFreeSize;
-			String prefix = freeDelta < 0 ? "-" : "";
-			freeDelta = Math.abs(freeDelta);
+			long memoryDelta = mStopMemorySize - mStartMemorySize;
+			long freeMemoryDelta = mStartMemoryFreeSize - mStopMemoryFreeSize;
+			String freeMemoryDeltaPrefix = freeMemoryDelta < 0 ? "-" : "";
+			freeMemoryDelta = Math.abs(freeMemoryDelta);
 
-			if (heapDelta == 0) {
+			long peakMemoryDelta = mPeakMemorySize - mStartPeakMemorySize;
+			String peakMemoryDeltaPrefix = peakMemoryDelta < 0 ? "-" : "";
+			peakMemoryDelta = Math.abs(peakMemoryDelta);
 
-				return String.format("%s took %." + decimals
-						+ "f %s. It used %s%s heap space. Currently, %s are free. Max. heap size is %s.", mTitle,
-						getNanosecondsToUnit(mElapsedTime, timeUnit), getUnitString(timeUnit), prefix,
-						Utils.humanReadableByteCount(freeDelta, true),
-						Utils.humanReadableByteCount(mStopHeapFreeSize, true),
-						Utils.humanReadableByteCount(mMaxHeapSize, true));
+			StringBuilder sb = new StringBuilder();
 
+			sb.append(String.format("%s took %." + decimals + "f %s.", mTitle,
+					getNanosecondsToUnit(mElapsedTime, timeUnit), getUnitString(timeUnit)));
+
+			if (memoryDelta != 0) {
+				String heapPrefix = memoryDelta < 0 ? "-" : "";
+				memoryDelta = Math.abs(memoryDelta);
+				sb.append(String.format(" Allocated memory was %s in the beginning and %s in the end (delta: %s%s).",
+						Utils.humanReadableByteCount(mStartMemorySize, true),
+						Utils.humanReadableByteCount(mStopMemorySize, true), heapPrefix,
+						Utils.humanReadableByteCount(memoryDelta, true)));
 			} else {
-
-				String heapPrefix = heapDelta < 0 ? "-" : "";
-				heapDelta = Math.abs(heapDelta);
-
-				return String
-						.format("%s took %."
-								+ decimals
-								+ "f %s. The heap size changed %s%s, it used %s%s heap space and currently, %s are free. Max. heap size is %s.",
-								mTitle, getNanosecondsToUnit(mElapsedTime, timeUnit), getUnitString(timeUnit),
-								heapPrefix, Utils.humanReadableByteCount(heapDelta, true), prefix,
-								Utils.humanReadableByteCount(freeDelta, true),
-								Utils.humanReadableByteCount(mStopHeapFreeSize, true),
-								Utils.humanReadableByteCount(mMaxHeapSize, true));
-
+				sb.append(String.format(" Allocated memory is still %s.",
+						Utils.humanReadableByteCount(mStartMemorySize, true)));
 			}
+
+			if (freeMemoryDelta != 0) {
+				sb.append(String.format(" Free memory was %s in the beginning and %s in the end (delta: %s%s).",
+						Utils.humanReadableByteCount(mStartMemoryFreeSize, true),
+						Utils.humanReadableByteCount(mStopMemoryFreeSize, true), freeMemoryDeltaPrefix,
+						Utils.humanReadableByteCount(freeMemoryDelta, true)));
+			} else {
+				sb.append(String.format(" Free memory is still %s.",
+						Utils.humanReadableByteCount(mStartMemoryFreeSize, true)));
+			}
+
+			if (peakMemoryDelta != 0) {
+				sb.append(String.format(" Peak memory consumption was %s%s.", peakMemoryDeltaPrefix,
+						Utils.humanReadableByteCount(peakMemoryDelta, true)));
+			} else {
+				sb.append(" There was no memory consumed.");
+			}
+
+			sb.append(String.format(" Max. memory is %s", Utils.humanReadableByteCount(mMaxMemorySize, true)));
+			return sb.toString();
 
 		}
 

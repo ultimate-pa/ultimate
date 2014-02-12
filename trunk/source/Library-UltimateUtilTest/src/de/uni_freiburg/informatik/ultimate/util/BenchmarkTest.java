@@ -5,7 +5,6 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 
 /***
@@ -26,7 +25,7 @@ public class BenchmarkTest {
 		long actualTime = 100;
 		double measuredTime = -1;
 		double allowedEpsilon = 1;
-		String title = "Test";
+		String title = "TimeStartStopSingle";
 
 		Benchmark bench = new Benchmark();
 
@@ -55,7 +54,7 @@ public class BenchmarkTest {
 
 		long measuredHeapDelta = -1;
 		double allowedEpsilon = 0;
-		String title = "Test";
+		String title = "HeapStartStopSingle";
 
 		Benchmark bench = new Benchmark();
 		System.gc();
@@ -68,12 +67,14 @@ public class BenchmarkTest {
 		Thread.sleep(100);
 		bench.stop(title);
 
-		long startSize = bench.getStartHeapFreeSize(title);
-		long stopSize = bench.getStopHeapFreeSize(title);
+		long startSize = bench.getStartMemoryFreeSize(title);
+		long stopSize = bench.getStopMemoryFreeSize(title);
 		measuredHeapDelta = startSize - stopSize;
 
 		System.out.println("sizeof(int) = " + intSize + " byte");
-		System.out.println("Measured heap delta was " + measuredHeapDelta + " byte, and should be " + actualHeapSize
+		System.out.println("Measured memory delta was " + measuredHeapDelta + " byte, and should be " + actualHeapSize
+				+ " byte");
+		System.out.println("Measured memory consumed was " + bench.getPeakMemoryConsumed(title) + " byte, and should be " + actualHeapSize
 				+ " byte");
 		System.out.println("Benchmark.Report(): " + bench.getReportString(title));
 		System.out.println("We print a random array element to keep the array from being thrown away: "
@@ -81,6 +82,7 @@ public class BenchmarkTest {
 		System.out.println("--");
 
 		Assert.assertTrue(Math.abs(actualHeapSize - measuredHeapDelta) <= allowedEpsilon);
+		Assert.assertTrue(measuredHeapDelta == bench.getPeakMemoryConsumed(title));
 	}
 
 	@Test
@@ -89,7 +91,7 @@ public class BenchmarkTest {
 		long actualTime = 100;
 		double measuredTime = -1;
 		double allowedEpsilon = 1;
-		String title = "Test";
+		String title = "TimePauseSingle";
 
 		Benchmark bench = new Benchmark();
 
@@ -127,7 +129,7 @@ public class BenchmarkTest {
 		double measuredTime = -1;
 		double allowedEpsilon = 1;
 		long actualTime = 2 * sleepTime;
-		String title = "Test";
+		String title = "AllSingle";
 
 		Benchmark bench = new Benchmark();
 
@@ -188,7 +190,7 @@ public class BenchmarkTest {
 
 		String[] titles = new String[watches];
 		for (int i = watches - 1; i >= 0; i--) {
-			titles[i] = "Test-" + i;
+			titles[i] = "AllMultiple-" + i;
 		}
 
 		Benchmark bench = new Benchmark();
@@ -212,12 +214,14 @@ public class BenchmarkTest {
 		// except watch 0, which measured 2 periods.
 		for (int i = watches - 1; i > 0; i--) {
 			measuredTime = bench.getElapsedTime(titles[i], TimeUnit.MILLISECONDS);
-			System.out.println(titles[i]+": Measured time was " + measuredTime + "ms, and should be " + actualTime + "ms");
+			System.out.println(titles[i] + ": Measured time was " + measuredTime + "ms, and should be " + actualTime
+					+ "ms");
 			Assert.assertTrue(Math.abs(actualTime - measuredTime) <= allowedEpsilon);
 		}
 		actualTime = 2 * sleepTime;
 		measuredTime = bench.getElapsedTime(titles[0], TimeUnit.MILLISECONDS);
-		System.out.println(titles[0]+": Measured time was " + measuredTime + "ms, and should be " + actualTime + "ms");
+		System.out
+				.println(titles[0] + ": Measured time was " + measuredTime + "ms, and should be " + actualTime + "ms");
 		Assert.assertTrue(Math.abs(actualTime - measuredTime) <= allowedEpsilon);
 		System.out.println("--");
 
