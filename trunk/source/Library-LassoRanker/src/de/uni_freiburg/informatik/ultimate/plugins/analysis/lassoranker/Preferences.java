@@ -1,9 +1,6 @@
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.io.Serializable;
-
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
 
 
 /**
@@ -124,47 +121,5 @@ public class Preferences implements Serializable {
 		sb.append("\nFilename of dumped script: ");
 		sb.append(this.fileNameOfDumpedScript);
 		return sb.toString();
-	}
-	
-	/**
-	 * @return the preferences currently set in the GUI
-	 */
-	public static Preferences getGuiPreferences() {
-		UltimatePreferenceStore store =
-				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		Preferences preferences = new Preferences();
-		preferences.num_strict_invariants = store.getInt(
-				PreferencesInitializer.LABEL_num_strict_invariants,
-				preferences.num_strict_invariants
-		);
-		preferences.num_non_strict_invariants = store.getInt(
-				PreferencesInitializer.LABEL_num_non_strict_invariants,
-				preferences.num_non_strict_invariants
-		);
-		preferences.only_nondecreasing_invariants = store.getBoolean(
-				PreferencesInitializer.LABEL_only_nondecreasing_invariants,
-				preferences.only_nondecreasing_invariants
-		);
-		preferences.compute_integral_hull = store.getBoolean(
-				PreferencesInitializer.LABEL_compute_integral_hull,
-				preferences.compute_integral_hull
-		);
-		preferences.enable_disjunction = store.getBoolean(
-				PreferencesInitializer.LABEL_enable_disjunction,
-				preferences.enable_disjunction
-		);
-		preferences.annotate_terms = store.getBoolean(
-				PreferencesInitializer.LABEL_annotate_terms,
-				preferences.annotate_terms
-		);
-		preferences.nontermination_check_nonlinear = store.getBoolean(
-				PreferencesInitializer.LABEL_nontermination_check_nonlinear,
-				preferences.nontermination_check_nonlinear
-		);
-		preferences.smt_solver_command = store.getString(
-				PreferencesInitializer.LABEL_smt_solver_command,
-				preferences.smt_solver_command
-		);
-		return preferences;
 	}
 }

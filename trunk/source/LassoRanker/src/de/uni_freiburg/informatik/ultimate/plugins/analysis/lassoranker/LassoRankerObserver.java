@@ -17,9 +17,13 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LassoRankerTerminationAnalysis;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.NonTerminationArgument;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SupportingInvariant;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.TermVariableRenamer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.PreferencesInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.AffineTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.LexicographicTemplate;
@@ -182,7 +186,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	public boolean process(IElement root) {
 		UltimatePreferenceStore store =
 				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		Preferences preferences = Preferences.getGuiPreferences();
+		Preferences preferences = PreferencesInitializer.getGuiPreferences();
 		s_Logger.info("Preferences:\n" + preferences.show());
 		
 		assert(root instanceof RootNode);

@@ -8,7 +8,7 @@
    <extension
        point="org.eclipse.core.runtime.preferences">
     <initializer
-          class="de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.PreferencesInitializer">
+          class="de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.PreferencesInitializer">
     </initializer>
  </extension>
 </plugin>

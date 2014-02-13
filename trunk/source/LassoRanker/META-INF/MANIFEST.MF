@@ -4,18 +4,12 @@ Bundle-Name: LassoRanker
 Bundle-SymbolicName: LassoRanker;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator
-Require-Bundle: org.eclipse.core.runtime,
- Library-log4j,
+Require-Bundle: Library-log4j,
  Library-SMTLIB,
- UltimateCore,
- SMTInterpol,
- SMTSolverBridge,
  Library-ModelCheckerUtils,
+ Library-LassoRanker,
+ UltimateCore,
  RCFGBuilder
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker,
- de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions,
- de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences,
- de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions,
- de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates
+Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker
