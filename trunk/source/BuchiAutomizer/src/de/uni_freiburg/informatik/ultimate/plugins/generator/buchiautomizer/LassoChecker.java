@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferen
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.AffineTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.LexicographicTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.MultiphaseTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.PiecewiseTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -541,17 +542,18 @@ public class LassoChecker {
 			rankingFunctionTemplates.add(new MultiphaseTemplate(1));
 			rankingFunctionTemplates.add(new MultiphaseTemplate(2));
 			rankingFunctionTemplates.add(new MultiphaseTemplate(3));
-			//		rankingFunctionTemplates.add(new MultiphaseTemplate(4));
-			//		rankingFunctionTemplates.add(new MultiphaseTemplate(5));
-			//		rankingFunctionTemplates.add(new MultiphaseTemplate(6));
-			//		rankingFunctionTemplates.add(new MultiphaseTemplate(7));
+			rankingFunctionTemplates.add(new MultiphaseTemplate(4));
+			rankingFunctionTemplates.add(new MultiphaseTemplate(5));
+			rankingFunctionTemplates.add(new MultiphaseTemplate(6));
+			rankingFunctionTemplates.add(new MultiphaseTemplate(7));
 
-			//		rankingFunctionTemplates.add(new PiecewiseTemplate(2));
-			//		rankingFunctionTemplates.add(new PiecewiseTemplate(3));
-			//		
-					rankingFunctionTemplates.add(new LexicographicTemplate(1));
-					rankingFunctionTemplates.add(new LexicographicTemplate(2));
-					rankingFunctionTemplates.add(new LexicographicTemplate(3));
+			rankingFunctionTemplates.add(new LexicographicTemplate(1));
+			rankingFunctionTemplates.add(new LexicographicTemplate(2));
+			rankingFunctionTemplates.add(new LexicographicTemplate(3));
+			rankingFunctionTemplates.add(new LexicographicTemplate(4));
+			
+			rankingFunctionTemplates.add(new PiecewiseTemplate(2));
+			rankingFunctionTemplates.add(new PiecewiseTemplate(3));
 		}
 
 		TerminationArgument termArg = tryTemplatesAndComputePredicates(
