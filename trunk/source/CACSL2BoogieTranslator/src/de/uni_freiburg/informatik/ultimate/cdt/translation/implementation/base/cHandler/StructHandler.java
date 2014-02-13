@@ -77,12 +77,12 @@ public class StructHandler {
 
 		LRValue newValue = null;
 
-		CType foType = fieldOwner.lrVal.cType;
-		if (foType instanceof CNamed)
-			foType = ((CNamed) foType).getUnderlyingType();
+		CType foType = fieldOwner.lrVal.cType.getUnderlyingType();
+		
 		foType = (node.isPointerDereference() ?
 				((CPointer)foType).pointsToType :
 					foType);
+		
 		CStruct cStructType = (CStruct) (foType instanceof CNamed ? ((CNamed) foType).getUnderlyingType() : foType);
 		CType cFieldType = cStructType.getFieldType(field);
 
@@ -125,7 +125,20 @@ public class StructHandler {
 					lVal.getLHS(), field);
 			newValue = new LocalLValue(slhs, cFieldType);
 		}
-		return new ResultExpression(fieldOwner.stmt, newValue, fieldOwner.decl, fieldOwner.auxVars);
+		
+		
+		HashMap<String, CType> unionFieldToCType = null;
+		if (foType instanceof CUnion) {
+			unionFieldToCType = new HashMap<String, CType>();
+			for (String fieldId : ((CUnion) foType).getFieldIds()) {
+				if (!fieldId.equals(field)) {
+					unionFieldToCType.put(fieldId, ((CUnion) foType).getFieldType(fieldId));
+				}
+			}
+		}
+		
+		return new ResultExpression(fieldOwner.stmt, newValue, fieldOwner.decl, fieldOwner.auxVars, 
+				fieldOwner.overappr, unionFieldToCType);
 	}
 
 
@@ -285,6 +298,7 @@ public class StructHandler {
 			
 			if (isUnion) {
 				assert rerl.list.size() == 0 || rerl.list.size() == 1 : "union initializers must have only one field";
+				//TODO: maybe not use auxiliary variables so lavishly
 				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
 				if (!unionAlreadyInitialized
 						&& rerl.list.size() == 1 

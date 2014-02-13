@@ -265,20 +265,12 @@ public class PostProcessor {
 	 * types. Array and structure types are collectively called aggregate
 	 * types."</i></blockquote>
 	 * 
-	 * @param loc
-	 *            the location of the variables declaration.
-	 * @param main
-	 *            a reference to the main dispatcher.
-	 * @param memoryHandler 
-	 * @param arrayHandler
-	 *            a reference to the arrayHandler.
-	 * @param structHandler 
 	 * @param lhs
-	 *            the LeftHandSide to initialize.
-	 * @param at
-	 *            the type of this variable.
+	 *            the LeftHandSide to initialize. If this is null, the initializing value
+	 *            is returned in the lrValue of the returned ResultExpression which otherwise
+	 *            is null.
 	 * @param cvar
-	 *            the corresponding C variable description.
+	 *            The CType of the initialized variable
 	 * 
 	 * @return 
 	 */
@@ -287,7 +279,6 @@ public class PostProcessor {
 			StructHandler structHandler, final LeftHandSide lhs,
 			CType cvar, ResultExpression initializerRaw) {
 		CType lCvar = cvar.getUnderlyingType();
-		
 		
 		//TODO: deal with varsOnHeap
 		boolean onHeap = false;
@@ -314,21 +305,15 @@ public class PostProcessor {
 		
 		Expression rhs = null;
 		if (lCvar instanceof CPrimitive) {
-			switch (((CPrimitive) lCvar).getType()) {
-			case BOOL:
-			case CHAR:
-			case CHAR16:
-			case CHAR32:
-			case WCHAR:
-			case INT:
+			switch (((CPrimitive) lCvar).getGeneralType()) {
+			case INTTYPE:
 				if (initializer == null) {
 					rhs = new IntegerLiteral(loc, SFO.NR0);
 				} else {
 					rhs = initializer.lrVal.getValue();
 				}
 				break;
-			case DOUBLE:
-			case FLOAT:
+			case FLOATTYPE:
 				if (initializer == null) {
 					rhs = new RealLiteral(loc, SFO.NR0F);
 				} else {
@@ -346,11 +331,7 @@ public class PostProcessor {
 			}
 		} else if (lCvar instanceof CPointer) {
 			if (initializer == null) {
-//				LRValue nullPointer = new RValue(new IdentifierExpression(loc, SFO.NULL), 
-//						null);
 				rhs = new IdentifierExpression(loc, SFO.NULL);
-//				stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
-//						new Expression[] { nullPointer.getValue() } ));
 			} else {
 				if (initializer.lrVal.cType instanceof CPointer) {
 					rhs = initializer.lrVal.getValue();
@@ -405,7 +386,6 @@ public class PostProcessor {
 		} else if (lCvar instanceof CStruct) {
 			
 			CStruct structType = (CStruct) lCvar;
-			//			for (VarList vl : ((StructType) at).getFields()) {
 			ResultExpression scRex = structHandler.makeStructConstructorFromRERL(main, 
 					loc, memoryHandler, arrayHandler, functionHandler, 
 					(ResultExpressionListRec) initializer,

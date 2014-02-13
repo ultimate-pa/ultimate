@@ -76,6 +76,13 @@ public class ResultExpression extends Result {
 	
 	
 	/**
+	 * especially for the havocs when writign a union.
+	 * contains the field that must be havoced if this union
+	 * is written.
+	 */
+	public final Map<String, CType> unionFieldIdToCType;
+	
+	/**
 	 * Use this to lock this ResultExpression. If the ResultExpression is locked
 	 * its fields should not obtain new elements any more.
 	 * (alex:) The purpose is that once we have read those fields --> and added them to another
@@ -109,7 +116,8 @@ public class ResultExpression extends Result {
             LRValue lrVal,
             ArrayList<Declaration> decl,
             Map<VariableDeclaration, ILocation> auxVars,
-            List<Overapprox> overapproxList) {
+            List<Overapprox> overapproxList,
+            Map<String, CType> uField2CType) {
         super(null);
         this.stmt = stmt;
         //      this.expr = expr;
@@ -118,14 +126,24 @@ public class ResultExpression extends Result {
 //        this.declCTypes = new ArrayList<CType>();
         this.auxVars = auxVars;
         this.overappr = overapproxList;
+        this.unionFieldIdToCType = uField2CType;
     }
+    
+    
+    public ResultExpression(ArrayList<Statement> stmt, //Expression expr,
+            LRValue lrVal,
+            ArrayList<Declaration> decl,
+            Map<VariableDeclaration, ILocation> auxVars,
+            List<Overapprox> overapproxList) {
+    	this(stmt, lrVal, decl, auxVars, overapproxList, null);
+    }
     
     public ResultExpression(ArrayList<Statement> stmt, //Expression expr,
             LRValue lrVal,
             ArrayList<Declaration> decl,
             Map<VariableDeclaration, ILocation> auxVars) {
         this(stmt, lrVal, decl,
-                auxVars, new ArrayList<Overapprox>());
+                auxVars, new ArrayList<Overapprox>(), null);
     }
 
 	public ResultExpression(//Expression expr,
@@ -133,7 +151,7 @@ public class ResultExpression extends Result {
 			Map<VariableDeclaration, ILocation> auxVars,
 			List<Overapprox> overapproxList) {
 	    this(new ArrayList<Statement>(), lrVal, new ArrayList<Declaration>(),
-	            auxVars, overapproxList);
+	            auxVars, overapproxList, null);
 		//		this.expr = expr;
 	}
 	
@@ -160,6 +178,7 @@ public class ResultExpression extends Result {
     	this.decl = rex.decl;
     	this.auxVars = rex.auxVars;
     	this.overappr = rex.overappr;
+    	this.unionFieldIdToCType = rex.unionFieldIdToCType;
     }
 
 	public ResultExpression switchToRValueIfNecessary(Dispatcher main, MemoryHandler memoryHandler, 
@@ -175,7 +194,7 @@ public class ResultExpression extends Result {
 //					        lrVal.cType, lrVal.isWrappedBool, lrVal.isPointer, lrVal.isOnHeap);
 			return new ResultExpression(
 					this.stmt, newRVal, this.decl, this.auxVars,
-					        this.overappr);
+					        this.overappr, this.unionFieldIdToCType);
 		} else {
 			if (m_Locked) {
 				throw new AssertionError("this ResultExpression is already locked");
@@ -279,7 +298,7 @@ public class ResultExpression extends Result {
 					newValue.isPointer = lrVal.isPointer;
 					newValue.isBoogieBool = lrVal.isBoogieBool;
 					rex = new ResultExpression(newStmt, newValue, newDecl,
-					        newAuxVars, this.overappr);
+					        newAuxVars, this.overappr, this.unionFieldIdToCType);
 					return rex;
 		}
 	}
@@ -417,7 +436,7 @@ public class ResultExpression extends Result {
 				fieldValues.toArray(new Expression[0]));
 
 		result = new ResultExpression(newStmt, new RValue(sc, structType),
-		        newDecl, newAuxVars, this.overappr);
+		        newDecl, newAuxVars, this.overappr, this.unionFieldIdToCType);
 
 		return result;
 	}

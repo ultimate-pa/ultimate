@@ -1232,11 +1232,18 @@ public class CHandler implements ICHandler {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 	}
-
+	
 	public ResultExpression makeAssignment(Dispatcher main, ILocation loc, ArrayList<Statement> stmt,
 			LRValue lrVal, RValue rVal, ArrayList<Declaration> decl,
 			Map<VariableDeclaration, ILocation> auxVars,
 			List<Overapprox> overappr) {
+		return makeAssignment(main, loc, stmt, lrVal, rVal, decl, auxVars, overappr, null);	
+	}
+	
+	public ResultExpression makeAssignment(Dispatcher main, ILocation loc, ArrayList<Statement> stmt,
+			LRValue lrVal, RValue rVal, ArrayList<Declaration> decl,
+			Map<VariableDeclaration, ILocation> auxVars,
+			List<Overapprox> overappr, Map<String, CType> unionFieldsToCType) {
 		RValue rightHandSide = rVal;
 		
 		/*
@@ -1279,23 +1286,39 @@ public class CHandler implements ICHandler {
         	} else {
         		rightHandSide = new RValue(
         				MemoryHandler.constructPointerFromBaseAndOffset(
-        						new IntegerLiteral(
-        								loc, new InferredType(Type.Integer), "0"),
-        								rExpr, loc),
-        								new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+        						new IntegerLiteral(loc, "0"), rExpr, loc),
+        						new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+        	}
+        }
+        
+        //add havocs if we have a write to a union
+        if (unionFieldsToCType != null) {
+        	LeftHandSide structLHS = ((StructLHS) ((LocalLValue) lrVal).getLHS()).getStruct();
+        	for (Entry<String, CType>  en : unionFieldsToCType.entrySet()) {
+				//TODO: maybe not use auxiliary variables so lavishly
+				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
+				decl.add(new VariableDeclaration(loc, new Attribute[0], 
+						new VarList[] { new VarList(loc, new String[] { tmpId }, 
+								main.typeHandler.ctype2asttype(loc, en.getValue())) } ));
+				
+				stmt.add(new AssignmentStatement(loc, 
+						new LeftHandSide[] { new StructLHS(loc, structLHS, en.getKey()) }, 
+						new Expression[] { new IdentifierExpression(loc, tmpId) } ));
         	}
         }
 
 		if (lrVal instanceof HeapLValue) {
 			HeapLValue hlv = (HeapLValue) lrVal; 
-			ResultExpression rex = new ResultExpression(memoryHandler.getWriteCall(hlv, rVal), null, 
-					new ArrayList<Declaration>(), new HashMap<VariableDeclaration, ILocation>(0),
-					overappr);
+//			ResultExpression rex = new ResultExpression(
+//					memoryHandler.getWriteCall(hlv, rVal), null, 
+//					new ArrayList<Declaration>(), new HashMap<VariableDeclaration, ILocation>(0),
+//					overappr);
+			stmt.addAll(memoryHandler.getWriteCall(hlv, rVal));
 
-			stmt.addAll(rex.stmt);
-			decl.addAll(rex.decl);
-			auxVars.putAll(rex.auxVars);
-			overappr.addAll(rex.overappr);
+//			stmt.addAll(rex.stmt);
+//			decl.addAll(rex.decl);
+//			auxVars.putAll(rex.auxVars);
+//			overappr.addAll(rex.overappr);
 			
 			for (String t : new String[] { SFO.INT, SFO.POINTER,
 					SFO.REAL, SFO.BOOL }) {
@@ -1370,9 +1393,11 @@ public class CHandler implements ICHandler {
 			overappr.addAll(rr.overappr);
 			if (l.lrVal.cType instanceof CPrimitive && ((CPrimitive) l.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 				ResultExpression rrToInt = rexToIntIfNecessary(loc,rr);
-				return makeAssignment(main, loc, stmt, l.lrVal, (RValue) rrToInt.lrVal, decl, auxVars, overappr);//, r.lrVal.cType);
+				return makeAssignment(main, loc, stmt, l.lrVal, (RValue) rrToInt.lrVal, 
+						decl, auxVars, overappr, l.unionFieldIdToCType);//, r.lrVal.cType);
 			} else {
-				return makeAssignment(main, loc, stmt, l.lrVal,(RValue) rr.lrVal, decl, auxVars, overappr);//, r.lrVal.cType);
+				return makeAssignment(main, loc, stmt, l.lrVal,(RValue) rr.lrVal, 
+						decl, auxVars, overappr, l.unionFieldIdToCType);//, r.lrVal.cType);
 			}
 		}
 		case IASTBinaryExpression.op_equals:
