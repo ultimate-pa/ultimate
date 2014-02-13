@@ -1,2 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?><templates><template autoinsert="false" context="constructorbody_context" deleted="false" description="Code in created constructor stubs" enabled="true" id="org.eclipse.jdt.ui.text.codetemplates.constructorbody" name="constructorbody">// ${todo} Fill with content.
-${body_statement}</template></templates>
