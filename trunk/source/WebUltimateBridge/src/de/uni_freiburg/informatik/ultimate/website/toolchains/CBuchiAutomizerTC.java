@@ -101,7 +101,8 @@ public class CBuchiAutomizerTC extends Toolchain {
 		List<Setting> mBA = new ArrayList<Setting>();
 		oBA.add(new Setting(PrefStrings.s_TA_LABEL_Interpol, Setting.SettingType.STRING,
                 "interpolation", PrefStrings.s_TA_VALUE_CraigTree, false));
-		
+		oBA.add(new Setting(PrefStrings.s_BA_LABEL_ExtSolverRank, Setting.SettingType.STRING,
+				"external solver (rank)", " ", false));
 		tools.add(new Tool("BuchiAutomizer", oBA, mBA,
 				LoggingLevel.WARN));
 		return tools;

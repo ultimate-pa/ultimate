@@ -19,5 +19,6 @@ public class PrefStrings {
 	public final static String s_RCFG_VALUE_Block = "LoopFreeBlock";
 	public final static String s_TA_LABEL_Interpol = "/Compute\\ Interpolants\\ along\\ a\\ Counterexample";
 	public final static String s_TA_VALUE_CraigTree = "Craig_TreeInterpolation";
+	public final static String s_BA_LABEL_ExtSolverRank = "Command\\ for\\ external\\ solver\\ (rank\\ synthesis)";
 
 }
