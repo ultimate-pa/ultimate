@@ -341,10 +341,6 @@ class TerminationArgumentSynthesizer {
 						val_si));
 			}
 		} else if (sat == LBool.UNKNOWN) {
-			s_Logger.info("Statistics: template " + 
-					template.getClass().getSimpleName() + 
-					" with degree " + template.getDegree() + 
-					" too complicated for solver");
 			// Problem: If we use the following line we can receive the 
 			// following response which is not SMTLIB2 compliant.
 			// (:reason-unknown canceled)

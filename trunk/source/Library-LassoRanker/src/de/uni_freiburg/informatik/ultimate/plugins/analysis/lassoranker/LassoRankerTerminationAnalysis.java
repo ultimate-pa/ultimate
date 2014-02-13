@@ -384,15 +384,15 @@ public class LassoRankerTerminationAnalysis {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Number of variables in the stem: ");
 		sb.append(getStemVarNum());
-		sb.append("\nNumber of variables in the loop: ");
+		sb.append("  Number of variables in the loop: ");
 		sb.append(getLoopVarNum());
-		sb.append("\nNumber of disjunctions in the stem: ");
+		sb.append("  Number of disjunctions in the stem: ");
 		sb.append(getStemDisjuncts());
-		sb.append("\nNumber of disjunctions in the loop: ");
+		sb.append("  Number of disjunctions in the loop: ");
 		sb.append(getLoopDisjuncts());
-		sb.append("\nNumber of supporting invariants: ");
+		sb.append("  Number of supporting invariants: ");
 		sb.append(getNumSIs());
-		sb.append("\nNumber of Motzkin applications: ");
+		sb.append("  Number of Motzkin applications: ");
 		sb.append(getNumMotzkin());
 		return sb.toString();
 	}
@@ -444,7 +444,8 @@ public class LassoRankerTerminationAnalysis {
 		final LBool constraintSat = synthesizer.synthesize(template);
 		m_numSIs = synthesizer.getNumSIs();
 		m_numMotzkin = synthesizer.getNumMotzkin();
-
+		
+		s_Logger.info(benchmarkScriptMessage(constraintSat, template));
 		if (constraintSat == LBool.SAT) {
 			s_Logger.info("Proved termination.");
 			s_Logger.info(synthesizer.getArgument());
@@ -452,18 +453,26 @@ public class LassoRankerTerminationAnalysis {
 			for (Term t : lexTerm) {
 				s_Logger.debug(SMTPrettyPrinter.print(t));
 			}
-		} else if (constraintSat == LBool.UNKNOWN) {
-			s_Logger.info("Statistics: template " + 
-					template.getClass().getSimpleName() + 
-					" with degree " + template.getDegree() + 
-					" too complicated for solver");
-			s_Logger.debug(getStatistics());
-		}
-		
+		} 		
 		SMTSolver.resetScript(m_script, m_preferences.annotate_terms);
 		return constraintSat == LBool.SAT ? synthesizer.getArgument() : null;
 	}
 	
+	
+	private String benchmarkScriptMessage(LBool constraintSat,
+			RankingFunctionTemplate template) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("BenchmarkResult: ");
+		sb.append(constraintSat);
+		sb.append(" for template ");
+		sb.append(template.getClass().getSimpleName());
+		sb.append(" with degree ");
+		sb.append(template.getDegree());
+		sb.append(". ");
+		sb.append(getStatistics());
+		return sb.toString();
+	}
+
 	/**
 	 * Perform cleanup actions
 	 */
