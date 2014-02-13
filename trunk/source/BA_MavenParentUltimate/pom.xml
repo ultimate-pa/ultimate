@@ -231,6 +231,7 @@
 		<module>../Library-jdom</module>
 		<module>../Library-UltimateUtil</module>
 		<module>../Library-SMTLIB</module>
+		<module>../Library-LassoRanker</module>
 	</modules>
 
 	<profiles>
