@@ -60,16 +60,16 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	private final static boolean differenceInsteadOfIntersection = true;
 	
-	private final static boolean m_RemoveDeadEnds = true;
+	protected final static boolean m_RemoveDeadEnds = true;
 
 	
 	protected HoareAnnotationFragments m_Haf;
 
 	protected RunAnalyzer m_RunAnalyzer;
 
-	private PredicateFactoryRefinement m_StateFactoryForRefinement;
+	protected PredicateFactoryRefinement m_StateFactoryForRefinement;
 	
-	private final TraceAbstractionBenchmarks m_TraceAbstractionBenchmarks;
+	protected final TraceAbstractionBenchmarks m_TraceAbstractionBenchmarks;
 
 
 	
@@ -576,7 +576,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		return partition;
 	}
 
-	private static Collection<Set<IPredicate>> computePartition(INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
+	protected Collection<Set<IPredicate>> computePartition(INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
 		s_Logger.info("Start computation of initial partition.");
 		Collection<IPredicate> states = automaton.getStates();
 		Map<ProgramPoint, Set<IPredicate>> pp2p = new HashMap<ProgramPoint, Set<IPredicate>>();

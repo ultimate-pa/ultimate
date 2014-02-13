@@ -22,12 +22,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.RunAnalyzer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TwoTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
 
 
 public class CegarLoopJulian extends BasicCegarLoop {
@@ -69,6 +72,26 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	}
 	
 
+	
+	@Override
+	protected void constructInterpolantAutomaton() throws OperationCanceledException {
+		m_TraceAbstractionBenchmarks.startBasicInterpolantAutomaton();
+
+			InterpolantAutomataBuilder iab = new InterpolantAutomataBuilder(
+						m_Counterexample,
+						m_TraceChecker,
+						InterpolantAutomaton.SINGLETRACE, m_Pref.edges2True(),
+						m_SmtManager,
+						m_Iteration, m_IterationPW);
+			m_InterpolAutomaton = iab.buildInterpolantAutomaton(
+				m_Abstraction, m_Abstraction.getStateFactory());
+			s_Logger.info("Interpolatants " + m_InterpolAutomaton.getStates());
+			
+		m_TraceAbstractionBenchmarks.finishBasicInterpolantAutomaton();		
+		assert(accepts(m_InterpolAutomaton, m_Counterexample.getWord())) :
+			"Interpolant automaton broken!";
+		assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
+	}
 	
 	
 	@Override

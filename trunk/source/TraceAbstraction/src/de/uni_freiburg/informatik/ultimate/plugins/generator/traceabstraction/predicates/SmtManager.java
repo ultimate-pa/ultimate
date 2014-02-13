@@ -2789,10 +2789,10 @@ public class SmtManager {
 	}
 	
 	
-	public SPredicate newSPredicate(ProgramPoint pp, Term term,
-			String[] procedures, Set<BoogieVar> vars, Term closedFormula) {
-		SPredicate pred = new SPredicate(pp, m_SerialNumber++, procedures,
-				term, vars, closedFormula);
+	public SPredicate newSPredicate(ProgramPoint pp, TermVarsProc termVarsProc) {
+		SPredicate pred = new SPredicate(pp, m_SerialNumber++, 
+				termVarsProc.getProcedures(), termVarsProc.getFormula(), 
+				termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return pred;
 	}
 	
@@ -2858,9 +2858,8 @@ public class SmtManager {
 	public ISLPredicate newEmptyStackPredicate() {
 		ProgramPoint pp = new ProgramPoint("noCaller", "noCaller", false, 
 				null);
-//		m_SmtManager.getScript().variable(
-//	"emptyStack", m_SmtManager.getScript().sort("Bool"));
-		return newSPredicate(pp, m_EmptyStackTerm, m_NoProcedure, m_EmptyVars, m_EmptyStackTerm);
+		return newSPredicate(pp, new TermVarsProc(m_EmptyStackTerm, 
+				m_EmptyVars, m_NoProcedure, m_EmptyStackTerm));
 		
 	}
 	

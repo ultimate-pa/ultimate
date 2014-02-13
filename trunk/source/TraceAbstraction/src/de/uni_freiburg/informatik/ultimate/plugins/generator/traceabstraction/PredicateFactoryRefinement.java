@@ -70,8 +70,7 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 					tvp.getClosedFormula(),
 					history);
 		} else {
-			result = m_SmtManager.newSPredicate(pp, tvp.getFormula(), 
-					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
+			result = m_SmtManager.newSPredicate(pp, tvp);
 		}
 		
 		if (m_MaintainHoareAnnotationFragments) {
@@ -113,18 +112,34 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 	public IPredicate minimize(Collection<IPredicate> states) {
 		assert sameProgramPoints(states);
 		IPredicate someElement = states.iterator().next();
-		ProgramPoint pp = ((ISLPredicate) someElement).getProgramPoint();
-		if (states.isEmpty()) {
-			assert false : "minimize empty set???";
+		if (someElement instanceof ISLPredicate) {
+			ProgramPoint pp = ((ISLPredicate) someElement).getProgramPoint();
+			if (states.isEmpty()) {
+				assert false : "minimize empty set???";
 			return m_SmtManager.newDontCarePredicate(pp);
-		}
-		TermVarsProc tvp = m_SmtManager.or(
-				states.toArray(new IPredicate[0]));
-		if (tvp.getFormula() == m_SmtManager.getDontCareTerm()) {
-			return m_SmtManager.newDontCarePredicate(pp);
+			}
+			TermVarsProc tvp = m_SmtManager.or(
+					states.toArray(new IPredicate[0]));
+			if (tvp.getFormula() == m_SmtManager.getDontCareTerm()) {
+				return m_SmtManager.newDontCarePredicate(pp);
+			} else {
+				return m_SmtManager.newSPredicate(pp, tvp);
+			}
+		} else if (someElement instanceof IMLPredicate) {
+			ProgramPoint[] pps = ((IMLPredicate) someElement).getProgramPoints();
+			if (states.isEmpty()) {
+				assert false : "minimize empty set???";
+			return m_SmtManager.newMLDontCarePredicate(pps);
+			}
+			TermVarsProc tvp = m_SmtManager.or(
+					states.toArray(new IPredicate[0]));
+			if (tvp.getFormula() == m_SmtManager.getDontCareTerm()) {
+				return m_SmtManager.newMLDontCarePredicate(pps);
+			} else {
+				return m_SmtManager.newMLPredicate(pps, tvp);
+			}
 		} else {
-			return m_SmtManager.newSPredicate(pp, tvp.getFormula(), 
-					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
+			throw new AssertionError("unknown predicate");
 		}
 	}
 	
@@ -132,12 +147,18 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 	private static boolean sameProgramPoints(Collection<IPredicate> states) {
 		Iterator<IPredicate> it = states.iterator();
 		IPredicate firstPredicate = it.next();
-		ProgramPoint firstProgramPoint = ((ISLPredicate) firstPredicate).getProgramPoint();
-		while (it.hasNext()) {
-			ProgramPoint pp = ((ISLPredicate) it.next()).getProgramPoint();
-			if (pp != firstProgramPoint) {
-				return false;
+		if (firstPredicate instanceof ISLPredicate) {
+			ProgramPoint firstProgramPoint = ((ISLPredicate) firstPredicate).getProgramPoint();
+			while (it.hasNext()) {
+				ProgramPoint pp = ((ISLPredicate) it.next()).getProgramPoint();
+				if (pp != firstProgramPoint) {
+					return false;
+				}
 			}
+		} else if (firstPredicate instanceof IMLPredicate) {
+			System.out.println("Warning, check not implemented");
+		} else {
+			throw new AssertionError("unsupported predicate");
 		}
 		return true;
 	}

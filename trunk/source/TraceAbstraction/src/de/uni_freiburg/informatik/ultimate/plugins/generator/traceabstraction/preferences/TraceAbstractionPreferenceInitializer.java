@@ -52,7 +52,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<Boolean>(LABEL_MINIMIZE,
 						DEF_MINIMIZE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Concurrency>(LABEL_CONCURRENCY,
-						Concurrency.PETRI_NET, PreferenceType.Combo,
+						Concurrency.FINITE_AUTOMATA, PreferenceType.Combo,
 						Concurrency.values()),
 				new UltimatePreferenceItem<String>(LABEL_Order, DEF_Order,
 						PreferenceType.Combo, new String[] { VALUE_KMM,
