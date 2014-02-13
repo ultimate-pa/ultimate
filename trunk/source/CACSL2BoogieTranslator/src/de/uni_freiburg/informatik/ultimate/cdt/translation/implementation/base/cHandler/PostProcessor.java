@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
@@ -279,7 +280,7 @@ public class PostProcessor {
 	 * @param cvar
 	 *            the corresponding C variable description.
 	 * 
-	 * @return a set of Statements, assigning values to the variables.
+	 * @return 
 	 */
 	public static ResultExpression initVar(ILocation loc, Dispatcher main,
 			MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler, 
@@ -290,13 +291,14 @@ public class PostProcessor {
 		
 		//TODO: deal with varsOnHeap
 		boolean onHeap = false;
-		if (lhs instanceof VariableLHS) 
+		if (lhs != null && lhs instanceof VariableLHS) 
 			onHeap = ((CHandler )main.cHandler).isHeapVar(((VariableLHS) lhs).getIdentifier());
 	
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = new HashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
+		LRValue lrVal = null;
 		
 		//if (f.i.) the initializer comes from a function call, it has statements and declarations that we need to
 		//carry over
@@ -310,7 +312,7 @@ public class PostProcessor {
 			auxVars.putAll(initializer.auxVars);
 		}
 		
-		ArrayList<Expression> rhs = new ArrayList<Expression>();
+		Expression rhs = null;
 		if (lCvar instanceof CPrimitive) {
 			switch (((CPrimitive) lCvar).getType()) {
 			case BOOL:
@@ -320,24 +322,57 @@ public class PostProcessor {
 			case WCHAR:
 			case INT:
 				if (initializer == null) {
-					rhs.add(new IntegerLiteral(loc, SFO.NR0));
+					rhs = new IntegerLiteral(loc, SFO.NR0);
 				} else {
-					rhs.add(initializer.lrVal.getValue());
+					rhs = initializer.lrVal.getValue();
 				}
 				break;
 			case DOUBLE:
 			case FLOAT:
 				if (initializer == null) {
-					rhs.add(new RealLiteral(loc, SFO.NR0F));
+					rhs = new RealLiteral(loc, SFO.NR0F);
 				} else {
-					rhs.add(initializer.lrVal.getValue());
+					rhs = initializer.lrVal.getValue();
 				}
 			case VOID:
 			default:
 				throw new AssertionError("unknown type to init");
 			}
-			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
-					rhs.toArray(new Expression[0])));
+			if (lhs != null) {
+				stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
+						new Expression[] { rhs } ));
+			} else {
+				lrVal = new RValue(rhs, lCvar);
+			}
+		} else if (lCvar instanceof CPointer) {
+			if (initializer == null) {
+//				LRValue nullPointer = new RValue(new IdentifierExpression(loc, SFO.NULL), 
+//						null);
+				rhs = new IdentifierExpression(loc, SFO.NULL);
+//				stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
+//						new Expression[] { nullPointer.getValue() } ));
+			} else {
+				if (initializer.lrVal.cType instanceof CPointer) {
+					rhs = initializer.lrVal.getValue();
+				} else if (initializer.lrVal.cType instanceof CPrimitive 
+						&& ((CPrimitive) initializer.lrVal.cType).getType() == PRIMITIVE.INT){
+					String offset = ((IntegerLiteral) initializer.lrVal.getValue()).getValue();
+					if (offset.equals("0")) {
+						rhs = new IdentifierExpression(loc, SFO.NULL);
+					} else {
+						rhs = MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc, "0"), 
+								new IntegerLiteral(loc, offset), loc);
+					}
+				} else {
+					throw new AssertionError("trying to initialize a pointer with something different from int and pointer");
+				}
+			}
+			if (lhs != null) {
+				stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
+						new Expression[] { rhs } ));
+			} else {
+				lrVal = new RValue(rhs, lCvar);
+			}
 		} else if (lCvar instanceof CArray) {
 
 			if (onHeap) { 
@@ -345,7 +380,8 @@ public class PostProcessor {
 				VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, MemoryHandler.POINTER_TYPE, loc);
 
 				ResultExpression mallocRex = memoryHandler.getMallocCall(
-						main, functionHandler, memoryHandler.calculateSizeOf(lCvar, loc), new LocalLValue(new VariableLHS(loc, tmpId), lCvar), loc);
+						main, functionHandler, memoryHandler.calculateSizeOf(lCvar, loc), 
+						new LocalLValue(new VariableLHS(loc, tmpId), lCvar), loc);
 				stmt.addAll(mallocRex.stmt);
 				decl.addAll(mallocRex.decl);
 				auxVars.putAll(mallocRex.auxVars);
@@ -365,6 +401,7 @@ public class PostProcessor {
 						initializer == null ? null : ((ResultExpressionListRec) initializer).list,
 						lhs, (CArray) lCvar));
 			}
+			assert lhs != null;
 		} else if (lCvar instanceof CStruct) {
 			
 			CStruct structType = (CStruct) lCvar;
@@ -378,20 +415,20 @@ public class PostProcessor {
 			decl.addAll(scRex.decl);
 			overappr.addAll(scRex.overappr);
 			auxVars.putAll(scRex.auxVars);
-			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { scRex.lrVal.getValue() }));
-		} else if (lCvar instanceof CPointer) {
-			LRValue nullPointer = new RValue(new IdentifierExpression(loc, SFO.NULL), 
-					null);
-			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
-					new Expression[] { nullPointer.getValue() } ));
+			
+			if (lhs != null) {
+				stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { scRex.lrVal.getValue() }));
+			} else {
+				lrVal = new RValue(rhs, lCvar);
+			}
 		} else {
 			String msg = "Unknown type - don't know how to initialize!";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
 
-		// LRValue is null because it is not needed, we need only the statement(s) and declaration(s)
-		return new ResultExpression(stmt, null, decl, auxVars, overappr);
+		// lrVal is null in case we got a lhs to assign to, the initializing value otherwise
+		return new ResultExpression(stmt, lrVal, decl, auxVars, overappr);
 	}
 
 	/**

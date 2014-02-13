@@ -200,7 +200,12 @@ public final class SFO {
 	    * Auxiliary variable used for arrow operator (field access of 
 	    * dereferenced pointer.
 	    */
-	   ARROW("arrow");
+	   ARROW("arrow"),
+	   
+	   /**
+	    * Auxiliary variable used for union initialisation.
+	    */
+	   UNION("union");
 	   
 	   String m_Id;
 	   

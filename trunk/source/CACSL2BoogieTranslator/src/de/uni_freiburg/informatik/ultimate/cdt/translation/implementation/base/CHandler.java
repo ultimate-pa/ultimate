@@ -1472,7 +1472,6 @@ public class CHandler implements ICHandler {
 					.getTempVarUID(SFO.AUXVAR.SHORTCIRCUIT);
 			VarList tempVar = new VarList(loc, new String[] { resName },
 					new PrimitiveType(loc, SFO.BOOL));
-//					new PrimitiveType(loc, SFO.INT));
 			VariableDeclaration tmpVar = new VariableDeclaration(loc,
 					new Attribute[0], new VarList[] { tempVar });
 			auxVars.put(tmpVar, loc);
@@ -1482,7 +1481,6 @@ public class CHandler implements ICHandler {
 					new IdentifierExpression(loc, resName),
 					new CPrimitive(PRIMITIVE.INT), true, false);
 			RValue resRval = tmpRval;
-//			tmpRval = ConvExpr.toBoolean(loc, tmpRval);//FIXME: does it make sense to first create, then immediately convert it??
 			// #t~AND~UID = left
 		
 			AssignmentStatement aStat = new AssignmentStatement(loc,
@@ -1539,7 +1537,6 @@ public class CHandler implements ICHandler {
 					.getTempVarUID(SFO.AUXVAR.SHORTCIRCUIT);
 			VarList tempVar = new VarList(loc, new String[] { resName },
 					new PrimitiveType(loc, SFO.BOOL));
-//					new PrimitiveType(loc, SFO.INT));
 			VariableDeclaration tmpVar = new VariableDeclaration(loc,
 					new Attribute[0], new VarList[] { tempVar });
 			auxVars.put(tmpVar, loc);
@@ -1549,7 +1546,6 @@ public class CHandler implements ICHandler {
 					new IdentifierExpression(loc, resName),
 					new CPrimitive(PRIMITIVE.INT), true, false);
 			RValue resRval = tmpRval;
-//			tmpRval = ConvExpr.toBoolean(loc, tmpRval); //FIXME: does it make sense to first create, then immediately convert it??
 			// #t~OR~UID = left
 			AssignmentStatement aStat = new AssignmentStatement(loc,
 					new LeftHandSide[] { lhs }, new Expression[] { rlToBool.lrVal.getValue() });

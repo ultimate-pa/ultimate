@@ -10,6 +10,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFieldDesignator;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -19,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
@@ -31,16 +33,19 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -214,7 +219,7 @@ public class StructHandler {
 		assert node.getDesignators().length == 1;
 		assert node.getDesignators()[0] instanceof CASTFieldDesignator;
 		CASTFieldDesignator fr = (CASTFieldDesignator) node.getDesignators()[0];
-		String id = fr.getName().getRawSignature();
+		String id = fr.getName().toString();
 		Result r = main.dispatch(node.getOperand());
 		if (r instanceof ResultExpressionListRec) {
 			ResultExpressionListRec relr = (ResultExpressionListRec) r;
@@ -250,6 +255,12 @@ public class StructHandler {
 		if (rerl.lrVal != null) //we have an identifier (or sth else too?)
 			return new ResultExpression(rerl.stmt, rerl.lrVal, rerl.decl,
 			        rerl.auxVars, rerl.overappr);
+		
+		boolean isUnion = (structType instanceof CUnion);
+		//in a union, only one field of the underlying struct may be initialized
+		//we do the first, if no fieldname is given, this variable stores whether
+		//we already initialized a field
+		boolean unionAlreadyInitialized = false;
 
 		//everything for the new Result
 		ArrayList<Statement> newStmt = new ArrayList<Statement>();
@@ -268,73 +279,103 @@ public class StructHandler {
 		for (int i = 0; i < fieldIds.length; i++) {
 			fieldIdentifiers.add(fieldIds[i]);
 
-			CType underlyingFieldType;
-			if (fieldTypes[i] instanceof CNamed)
-				underlyingFieldType = ((CNamed) fieldTypes[i]).getUnderlyingType();
-			else
-				underlyingFieldType = fieldTypes[i];
-
+			CType underlyingFieldType = fieldTypes[i].getUnderlyingType();
+							
 			ResultExpression fieldContents = null; 
-			if(underlyingFieldType instanceof CPrimitive) {
-				if (i < rerl.list.size())
-					fieldContents = rerl.list.get(i);
-				else
-					fieldContents = new ResultExpression(new RValue(
-							new IntegerLiteral(loc, "0"), underlyingFieldType));
-			} else if (underlyingFieldType instanceof CPointer) {
-				if (i < rerl.list.size())
-					fieldContents = rerl.list.get(i);
-				else
-					fieldContents = new ResultExpression(new RValue(
-							MemoryHandler.constructNullPointer(loc), underlyingFieldType));
-			} else if (underlyingFieldType instanceof CArray) {
-				ArrayList<Statement> fieldStmt = new ArrayList<Statement>();
-				ArrayList<Declaration> fieldDecl = new ArrayList<Declaration>();
-				HashMap<VariableDeclaration, ILocation> fieldAuxVars =
-						new HashMap<VariableDeclaration, ILocation>();
-				
-				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
-				
-				ResultExpressionListRec arrayInitRerl = null;
-				if (i < rerl.list.size())
-					arrayInitRerl = rerl.list.get(i);
-				
-				Expression fieldEx = new IdentifierExpression(loc, tmpId);
-				RValue lrVal = new RValue(fieldEx, underlyingFieldType);
-				//FIXME: off heap case missing
-				if (onHeap) {			
-					VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, MemoryHandler.POINTER_TYPE, loc);
-					fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
-					fieldDecl.add(tVarDecl);
-					fieldStmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, this, loc, 
-						arrayInitRerl == null ? null : arrayInitRerl.list, 
-						fieldEx, functionHandler, (CArray) underlyingFieldType));
+			
+			if (isUnion) {
+				assert rerl.list.size() == 0 || rerl.list.size() == 1 : "union initializers must have only one field";
+				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
+				if (!unionAlreadyInitialized
+						&& rerl.list.size() == 1 
+						&& (rerl.list.get(0).field == null || rerl.list.get(0).field.equals("")
+								|| fieldIds[i].equals(rerl.list.get(0).field))
+						&& (underlyingFieldType instanceof CStruct
+							|| rerl.list.get(0).lrVal.cType.equals(underlyingFieldType))) {
+					//use the value from the rerl to initialize the union
+					fieldContents = PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, 
+							functionHandler, this, new VariableLHS(loc, tmpId), underlyingFieldType, rerl.list.get(0));
+					fieldContents.lrVal = new RValue(new IdentifierExpression(loc, tmpId), underlyingFieldType);
+					unionAlreadyInitialized = true;
 				} else {
-					VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, 
-							main.typeHandler.ctype2asttype(loc, underlyingFieldType),
-							loc);
-					fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
-					fieldDecl.add(tVarDecl);
-					VariableLHS fieldLHS = new VariableLHS(loc, tmpId);
-					fieldStmt.addAll(arrayHandler.initBoogieArray(main, memoryHandler, this, functionHandler, loc, 
-						arrayInitRerl == null ? null : arrayInitRerl.list, 
-						fieldLHS, (CArray) underlyingFieldType));
+					//fill in the uninitialized aux variable (havoc should not be necessary)
+					fieldContents = new ResultExpression(
+							new RValue(new IdentifierExpression(loc, tmpId), underlyingFieldType));
+//					fieldContents.stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tmpId) }));
 				}
-				fieldContents = new ResultExpression(fieldStmt, lrVal, fieldDecl, fieldAuxVars);
-			} else if (underlyingFieldType instanceof CEnum) {
-				throw new UnsupportedSyntaxException(loc, "..");
-			} else if (underlyingFieldType instanceof CStruct) {
-				if (i < rerl.list.size())
-					fieldContents = makeStructConstructorFromRERL(main, loc, memoryHandler, arrayHandler, 
-							functionHandler, rerl.list.get(i), (CStruct) underlyingFieldType, onHeap);
-				else
-					fieldContents = makeStructConstructorFromRERL(main, loc, memoryHandler, arrayHandler,
-							functionHandler, new ResultExpressionListRec(), (CStruct) underlyingFieldType, onHeap);	
-			} else if (underlyingFieldType instanceof CNamed) {
-				assert false : "This should not be the case as we took the underlying type.";
+				fieldContents.decl.add(new VariableDeclaration(loc, new Attribute[0], 
+						new VarList[] { new VarList(loc, new String[] { tmpId }, 
+								main.typeHandler.ctype2asttype(loc, underlyingFieldType)) } ));
 			} else {
-				throw new UnsupportedSyntaxException(loc, "..");
-			}	
+				if(underlyingFieldType instanceof CPrimitive) {
+//					if (i < rerl.list.size())
+//						fieldContents = rerl.list.get(i);
+//					else
+//						fieldContents = new ResultExpression(new RValue(
+//								new IntegerLiteral(loc, "0"), underlyingFieldType));
+					fieldContents = PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, 
+							functionHandler, this, null, underlyingFieldType, 
+							i < rerl.list.size() ? rerl.list.get(i) : null);
+				} else if (underlyingFieldType instanceof CPointer) {
+//					if (i < rerl.list.size())
+//						fieldContents = rerl.list.get(i);
+//					else
+//						fieldContents = new ResultExpression(
+//								new RValue(
+//										new IdentifierExpression(loc, SFO.NULL), 
+//										underlyingFieldType));
+					fieldContents = PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, 
+							functionHandler, this, null, underlyingFieldType, 
+							i < rerl.list.size() ? rerl.list.get(i) : null);
+				} else if (underlyingFieldType instanceof CArray) {
+					ArrayList<Statement> fieldStmt = new ArrayList<Statement>();
+					ArrayList<Declaration> fieldDecl = new ArrayList<Declaration>();
+					HashMap<VariableDeclaration, ILocation> fieldAuxVars =
+							new HashMap<VariableDeclaration, ILocation>();
+
+					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
+
+					ResultExpressionListRec arrayInitRerl = null;
+					if (i < rerl.list.size())
+						arrayInitRerl = rerl.list.get(i);
+
+					Expression fieldEx = new IdentifierExpression(loc, tmpId);
+					RValue lrVal = new RValue(fieldEx, underlyingFieldType);
+					//FIXME: off heap case missing
+					if (onHeap) {			
+						VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, MemoryHandler.POINTER_TYPE, loc);
+						fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
+						fieldDecl.add(tVarDecl);
+						fieldStmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, this, loc, 
+								arrayInitRerl == null ? null : arrayInitRerl.list, 
+										fieldEx, functionHandler, (CArray) underlyingFieldType));
+					} else {
+						VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, 
+								main.typeHandler.ctype2asttype(loc, underlyingFieldType),
+								loc);
+						fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
+						fieldDecl.add(tVarDecl);
+						VariableLHS fieldLHS = new VariableLHS(loc, tmpId);
+						fieldStmt.addAll(arrayHandler.initBoogieArray(main, memoryHandler, this, functionHandler, loc, 
+								arrayInitRerl == null ? null : arrayInitRerl.list, 
+										fieldLHS, (CArray) underlyingFieldType));
+					}
+					fieldContents = new ResultExpression(fieldStmt, lrVal, fieldDecl, fieldAuxVars);
+				} else if (underlyingFieldType instanceof CEnum) {
+					throw new UnsupportedSyntaxException(loc, "..");
+				} else if (underlyingFieldType instanceof CStruct) {
+					if (i < rerl.list.size())
+						fieldContents = makeStructConstructorFromRERL(main, loc, memoryHandler, arrayHandler, 
+								functionHandler, rerl.list.get(i), (CStruct) underlyingFieldType, onHeap);
+					else
+						fieldContents = makeStructConstructorFromRERL(main, loc, memoryHandler, arrayHandler,
+								functionHandler, new ResultExpressionListRec(), (CStruct) underlyingFieldType, onHeap);	
+				} else if (underlyingFieldType instanceof CNamed) {
+					assert false : "This should not be the case as we took the underlying type.";
+				} else {
+					throw new UnsupportedSyntaxException(loc, "..");
+				}	
+			}
 			newStmt.addAll(fieldContents.stmt);
 			newDecl.addAll(fieldContents.decl);
 			newAuxVars.putAll(fieldContents.auxVars);
