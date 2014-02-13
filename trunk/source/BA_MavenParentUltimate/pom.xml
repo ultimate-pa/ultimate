@@ -112,7 +112,7 @@
 					</systemProperties>
 
 					<!-- Use this for global timeouts per class -->
-					<forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds> 
+					<forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds>
 					<includes>
 						<include>**/*.java</include>
 					</includes>
@@ -274,7 +274,8 @@
 
 			<modules>
 				<!-- <module>../CoreRCPTest</module> -->
-				<module>../UltimateTest</module>
+				<module>../Library-UltimateUtilTest</module>
+				<!-- <module>../UltimateTest</module> -->
 				<module>../Library-junit-helper</module>
 			</modules>
 		</profile>
