@@ -568,7 +568,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		else {
 			STATE resState = m_StateFactoryConstruction.intersection(
 					diffState.getMinuendState(), 
-					diffState.getSubtrahendDeterminizedState().getContent(minuend.getStateFactory()));
+					diffState.getSubtrahendDeterminizedState().getContent(m_StateFactoryConstruction));
 			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addState(false, diffState.isFinal(), resState);
 			diff2res.put(diffState,resState);
 			res2diff.put(resState,diffState);
