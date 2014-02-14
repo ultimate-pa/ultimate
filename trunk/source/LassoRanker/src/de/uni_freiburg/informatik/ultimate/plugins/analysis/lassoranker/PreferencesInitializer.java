@@ -63,8 +63,10 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 			"Piecewise template";
 	public static final String LABEL_piecewise_template_size =
 			"Piecewise template size";
+	public static final String LABEL_use_external_solver =
+			"Use external SMT solver";
 	public static final String LABEL_smt_solver_command =
-			"Smt solver command";
+			"SMT solver command";
 	
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -134,6 +136,10 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 						LABEL_piecewise_template_size,
 						s_piecewise_template_size,
 						PreferenceType.Integer),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_use_external_solver,
+						true,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(
 						LABEL_smt_solver_command,
 						preferences.smt_solver_command,
@@ -151,36 +157,31 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 		UltimatePreferenceStore store =
 				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		preferences.num_strict_invariants = store.getInt(
-				LABEL_num_strict_invariants,
-				preferences.num_strict_invariants
+				LABEL_num_strict_invariants
 		);
 		preferences.num_non_strict_invariants = store.getInt(
-				LABEL_num_non_strict_invariants,
-				preferences.num_non_strict_invariants
+				LABEL_num_non_strict_invariants
 		);
 		preferences.only_nondecreasing_invariants = store.getBoolean(
-				LABEL_only_nondecreasing_invariants,
-				preferences.only_nondecreasing_invariants
+				LABEL_only_nondecreasing_invariants
 		);
 		preferences.compute_integral_hull = store.getBoolean(
-				LABEL_compute_integral_hull,
-				preferences.compute_integral_hull
+				LABEL_compute_integral_hull
 		);
 		preferences.enable_disjunction = store.getBoolean(
-				LABEL_enable_disjunction,
-				preferences.enable_disjunction
+				LABEL_enable_disjunction
 		);
 		preferences.annotate_terms = store.getBoolean(
-				LABEL_annotate_terms,
-				preferences.annotate_terms
+				LABEL_annotate_terms
 		);
 		preferences.nontermination_check_nonlinear = store.getBoolean(
-				LABEL_nontermination_check_nonlinear,
-				preferences.nontermination_check_nonlinear
+				LABEL_nontermination_check_nonlinear
+		);
+		preferences.externalSolver = store.getBoolean(
+				LABEL_use_external_solver
 		);
 		preferences.smt_solver_command = store.getString(
-				LABEL_smt_solver_command,
-				preferences.smt_solver_command
+				LABEL_smt_solver_command
 		);
 		return preferences;
 	}

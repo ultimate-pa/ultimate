@@ -70,8 +70,11 @@ public class LassoChecker {
 	private final INTERPOLATION m_Interpolation;
 	
 	/**
-	 * Command of the solver that is used for rank synthesis.
-	 * If this String is empty, we use SMTInterpol.
+	 * Use an external solver. If false, we use SMTInterpol.
+	 */
+	private boolean m_ExternalSolver_RankSynthesis;
+	/**
+	 * Command of external solver.
 	 */
 	private final String m_ExternalSolverCommand_RankSynthesis;
 	private final boolean m_AllowNonLinearConstraints;
@@ -126,6 +129,7 @@ public class LassoChecker {
 	private SynthesisResult m_LassoTermination = SynthesisResult.UNCHECKED;
 	
 	private NonTerminationArgument m_NonterminationArgument;
+
 	
 	public ContinueDirective getContinueDirective() {
 		assert m_ContinueDirective != null;
@@ -176,6 +180,7 @@ public class LassoChecker {
 			NestedLassoRun<CodeBlock, IPredicate> counterexample) {
 		super();
 		UltimatePreferenceStore baPref = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		m_ExternalSolver_RankSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_ExtSolverRank);
 		m_ExternalSolverCommand_RankSynthesis = baPref.getString(PreferenceInitializer.LABEL_ExtSolverCommandRank);
 		m_AllowNonLinearConstraints = baPref.getBoolean(PreferenceInitializer.LABEL_NonLinearConstraints);
 		m_TemplateBenchmarkMode = baPref.getBoolean(PreferenceInitializer.LABEL_TemplateBenchmarkMode);
@@ -516,6 +521,7 @@ public class LassoChecker {
 		pref.num_non_strict_invariants = 1;
 		pref.num_strict_invariants = 0;
 		pref.only_nondecreasing_invariants = true;
+		pref.externalSolver = m_ExternalSolver_RankSynthesis;
 		pref.smt_solver_command = m_ExternalSolverCommand_RankSynthesis;
 		pref.nontermination_check_nonlinear = m_AllowNonLinearConstraints;
 		pref.termination_check_nonlinear = m_AllowNonLinearConstraints;

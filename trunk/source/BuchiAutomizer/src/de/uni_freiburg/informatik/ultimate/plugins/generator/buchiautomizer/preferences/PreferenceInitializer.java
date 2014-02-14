@@ -40,6 +40,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						INTERPOLATION.Craig_TreeInterpolation,
 						PreferenceType.Combo, 
 						TraceAbstractionPreferenceInitializer.INTERPOLATION.values()),
+				new UltimatePreferenceItem<Boolean>(LABEL_ExtSolverRank,
+						true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommandRank,
 						DEF_ExtSolverCommandRank, PreferenceType.String),
 				new UltimatePreferenceItem<Boolean>(LABEL_NonLinearConstraints,
@@ -68,6 +70,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_ScroogeNondeterminismLoop = "ScroogeNondeterminism loop";
 	public static final String LABEL_CannibalizeLoop = "Cannibalize loop";
 	public static final String LABEL_LoopUnwindings = "Max number of loop unwindings";
+	public static final String LABEL_ExtSolverRank = "Use external solver (rank synthesis)";
 	public static final String LABEL_ExtSolverCommandRank = "Command for external solver (rank synthesis)";
 	public static final String DEF_ExtSolverCommandRank = "z3 SMTLIB2_COMPLIANT=true -memory:256 -smt2 -in -t:5000";
 	public static final String LABEL_NonLinearConstraints = "Allow nonlinear constraints";

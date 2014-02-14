@@ -150,7 +150,8 @@ public class LassoRankerTerminationAnalysis {
 		m_boogie2smt = boogie2smt;
 		
 		m_old_script = script;
-		m_script = SMTSolver.newScript(preferences.smt_solver_command,
+		m_script = SMTSolver.newScript(preferences.externalSolver,
+				preferences.smt_solver_command,
 				preferences.annotate_terms);
 		if (preferences.dumpSmtSolverScript) {
 			try {

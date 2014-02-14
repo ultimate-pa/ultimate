@@ -105,6 +105,12 @@ public class Preferences implements Serializable {
 	public boolean termination_check_nonlinear = true; // Default: true
 	
 	/**
+	 * If true, we use an external tool to solve the constraints. If false,
+	 * we use SMTInterpol to solve the constraints. 
+	 */
+	public boolean externalSolver = true;
+	
+	/**
 	 * What shell command should be used to call the external smt solver?
 	 */
 	public String smt_solver_command = "z3 -smt2 -in SMTLIB2_COMPLIANT=true ";
@@ -140,6 +146,8 @@ public class Preferences implements Serializable {
 		sb.append(this.nontermination_check_nonlinear);
 		sb.append("\nNonlinear termination check: ");
 		sb.append(this.termination_check_nonlinear);
+		sb.append("\nUse exernal solver: ");
+		sb.append(this.externalSolver);
 		sb.append("\nSMT solver command: ");
 		sb.append(this.smt_solver_command);
 		sb.append("\nDump SMT script to file: ");

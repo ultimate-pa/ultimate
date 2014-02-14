@@ -44,18 +44,19 @@ class SMTSolver {
 	
 	/**
 	 * Create a new SMT solver instance.
-	 * If the smt_solver_command is the empty String we use SMTInterpol,
-	 * otherwise we use the Scriptor to start the external SMT solver
-	 * that will be started by the smt_solver_command.
+	 * If useExternalSolver is true, we use the Scriptor to start the external 
+	 * SMT solver with the smt_solver_command.
+	 * If useExternalSolver is false, we use SMTInterpol.
 	 */
-	static Script newScript(String smt_solver_command,
+	static Script newScript(boolean useExternalSolver,
+			String smt_solver_command,
 			boolean produce_unsat_cores) {
-		Logger solverLogger = Logger.getLogger("interpolLogger");
+		Logger solverLogger = Logger.getLogger("constraintLogger");
 		final Script script; 
-		if (smt_solver_command.equals("")) {
-			script = new SMTInterpol(solverLogger);
-		} else {
+		if (useExternalSolver) {
 			script = new Scriptor(smt_solver_command, solverLogger);
+		} else {
+			script = new SMTInterpol(solverLogger);
 		}
 		initScript(script, produce_unsat_cores);
 		return script;
