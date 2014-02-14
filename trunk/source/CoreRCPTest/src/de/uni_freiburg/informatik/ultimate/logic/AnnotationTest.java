@@ -17,8 +17,8 @@ public class AnnotationTest {
 	}
 	
 	@Test
-	@Ignore
 	public void gtest23333sdfg() {
+		System.out.println("Some output");
 		Assert.assertEquals("this test should fail!", false, true);
 	}
 

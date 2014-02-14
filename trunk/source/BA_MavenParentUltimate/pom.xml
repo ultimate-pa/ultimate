@@ -273,10 +273,11 @@
 			</build>
 
 			<modules>
-				<!-- <module>../CoreRCPTest</module> -->
+				<module>../CoreRCPTest</module>
 				<module>../Library-UltimateUtilTest</module>
-				<!-- <module>../UltimateTest</module> -->
 				<module>../Library-junit-helper</module>
+				<module>../Library-UltimateTest</module>
+				<module>../UltimateRegressionTest</module>
 			</modules>
 		</profile>
 	</profiles>

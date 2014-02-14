@@ -3,11 +3,12 @@ Bundle-ManifestVersion: 2
 Bundle-Name: UltimateTest
 Bundle-SymbolicName: UltimateTest;singleton:=true
 Bundle-Version: 0.0.1
-Fragment-Host: UltimateCore
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
-Require-Bundle: Library-junit-helper,
+Require-Bundle: UltimateCore,
+ Library-junit-helper,
  Library-log4j,
+ Library-UltimateTest,
  CodeCheck,
  RCFGBuilder,
  CACSL2BoogieTranslator,
@@ -15,7 +16,7 @@ Require-Bundle: Library-junit-helper,
  BoogiePreprocessor,
  BlockEncoding,
  org.junit,
- Library-LassoRanker
+ Library-LassoRanker 
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,

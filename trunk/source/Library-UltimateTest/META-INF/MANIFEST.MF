@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Library-UltimateTest
+Bundle-SymbolicName: Library-UltimateTest
+Bundle-Version: 0.0.1
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Require-Bundle: UltimateCore, 
+ Library-UltimateUtil,
+ Library-junit-helper,
+ Library-log4j,
+ org.junit
+Import-Package: org.junit,
+ org.junit.experimental.categories,
+ org.junit.runner,
+ org.junit.runners
+Export-Package: de.uni_freiburg.informatik.ultimatetest

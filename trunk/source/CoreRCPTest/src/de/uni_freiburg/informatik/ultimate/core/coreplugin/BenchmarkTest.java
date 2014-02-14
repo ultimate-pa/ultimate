@@ -32,40 +32,40 @@ public class BenchmarkTest {
  		UltimateServices.createInstance(null);
 	}
 
-	/**
-	 * Example of testing an private field. Methods are similar.
-	 */
-	@Test
-	// @Category(ExampleCategory.class)
-	public void testbenchmarkTestA() {
+//	/**
+//	 * Example of testing an private field. Methods are similar.
+//	 */
+//	@Test
+//	// @Category(ExampleCategory.class)
+//	public void testbenchmarkTestA() {
+//
+//		Benchmark b = new Benchmark();
+//
+//		Assert.assertEquals("'toString' should contain be empty", "",
+//				b.toString());
+//
+//	}
 
-		Benchmark b = new Benchmark();
-
-		Assert.assertEquals("'toString' should contain be empty", "",
-				b.toString());
-
-	}
-
-	@Test
-	// @Category(ExampleCategory.class)
-	public void benchmarkTestPrivateField() {
-
-		Field field;
-		try {
-			Benchmark benchmark_instance = new Benchmark();
-			benchmark_instance.start("testtitle");
-
-			field = Benchmark.class.getDeclaredField("m_Title");
-			field.setAccessible(true);
-			String field_value = (String) field.get(benchmark_instance);
-
-			Assert.assertEquals("testtitle", field_value);
-
-		} catch (Exception e) {
-			Assert.fail(e.getMessage());
-		}
-
-	}
+//	@Test
+//	// @Category(ExampleCategory.class)
+//	public void benchmarkTestPrivateField() {
+//
+//		Field field;
+//		try {
+//			Benchmark benchmark_instance = new Benchmark();
+//			benchmark_instance.start("testtitle");
+//
+//			field = Benchmark.class.getDeclaredField("m_Title");
+//			field.setAccessible(true);
+//			String field_value = (String) field.get(benchmark_instance);
+//
+//			Assert.assertEquals("testtitle", field_value);
+//
+//		} catch (Exception e) {
+//			Assert.fail(e.getMessage());
+//		}
+//
+//	}
 
 	/*
 	 * @Test
