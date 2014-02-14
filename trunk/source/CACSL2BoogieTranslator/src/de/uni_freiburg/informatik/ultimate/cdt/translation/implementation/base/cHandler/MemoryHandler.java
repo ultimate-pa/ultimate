@@ -4,8 +4,8 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
@@ -96,7 +98,7 @@ public class MemoryHandler {
     /**
      * The set holding the Ids of all sizeof constants.
      */
-    private HashSet<String> sizeofConsts;
+    private LinkedHashSet<String> sizeofConsts;
     /**
      * The type describing a pointer.
      */
@@ -106,12 +108,12 @@ public class MemoryHandler {
      * A set of constants, required for the memory model. E.g. sizeof and offset
      * constants.
      */
-    private final HashSet<ConstDeclaration> constants;
+    private final LinkedHashSet<ConstDeclaration> constants;
     /**
      * A set of axioms, required for the memory model. E.g. for sizeof and
      * offset constants.
      */
-    private final HashSet<Axiom> axioms;
+    private final LinkedHashSet<Axiom> axioms;
     
     /**
      * Add also implementations of malloc, free, write and read functions.
@@ -131,9 +133,9 @@ public class MemoryHandler {
      * @param checkPointerValidity 
      */
     public MemoryHandler(boolean checkPointerValidity) {
-        this.sizeofConsts = new HashSet<String>();
-        this.axioms = new HashSet<Axiom>();
-        this.constants = new HashSet<ConstDeclaration>();
+        this.sizeofConsts = new LinkedHashSet<String>();
+        this.axioms = new LinkedHashSet<Axiom>();
+        this.constants = new LinkedHashSet<ConstDeclaration>();
     	m_PointerBaseValidity = 
 				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
 				getEnum(PreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, POINTER_BASE_VALIDITY.class);
@@ -721,16 +723,16 @@ public class MemoryHandler {
                 new Expression[] { e }));
         // add required information to function handler.
         if (fh.getCurrentProcedureID() != null) {
-            HashSet<String> mgM = new HashSet<String>();
+            LinkedHashSet<String> mgM = new LinkedHashSet<String>();
             mgM.add(SFO.VALID);
             if (!fh.getModifiedGlobals().containsKey(SFO.FREE)) {
                 fh.getModifiedGlobals().put(SFO.FREE, mgM);
-                fh.getCallGraph().put(SFO.FREE, new HashSet<String>());
+                fh.getCallGraph().put(SFO.FREE, new LinkedHashSet<String>());
             }
             fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.FREE);
         }
 		Map<VariableDeclaration, ILocation> emptyAuxVars = 
-				new HashMap<VariableDeclaration, ILocation>(0);
+				new LinkedHashMap<VariableDeclaration, ILocation>(0);
 		assert (main.isAuxVarMapcomplete(decl, emptyAuxVars));
         return new ResultExpression(stmt, null, decl, emptyAuxVars);
     }
@@ -801,18 +803,18 @@ public class MemoryHandler {
         
         // add required information to function handler.
         if (fh.getCurrentProcedureID() != null) {
-            HashSet<String> mgM = new HashSet<String>();
+            LinkedHashSet<String> mgM = new LinkedHashSet<String>();
             mgM.add(SFO.VALID);
             mgM.add(SFO.LENGTH);
             if (!fh.getModifiedGlobals().containsKey(SFO.MALLOC)) {
                 fh.getModifiedGlobals().put(SFO.MALLOC, mgM);
-                fh.getCallGraph().put(SFO.MALLOC, new HashSet<String>());
+                fh.getCallGraph().put(SFO.MALLOC, new LinkedHashSet<String>());
             }
             fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.MALLOC);
         }
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = 
-				new HashMap<VariableDeclaration, ILocation>();
+				new LinkedHashMap<VariableDeclaration, ILocation>();
         return new ResultExpression(stmt, resultPointer, decl, auxVars);//FIXME pointsToType??
 	}
 
@@ -828,8 +830,7 @@ public class MemoryHandler {
 //        ILocation loc = cvar.getCASTLocation();
         ASTType intT = new PrimitiveType(loc, SFO.INT);
         String id = SFO.SIZEOF + cvar.toString();
-        IdentifierExpression idex = new IdentifierExpression(
-        		loc, new InferredType(Type.Integer), id);
+        IdentifierExpression idex = new IdentifierExpression(loc, id);
         Attribute[] attr = new Attribute[0];
         if (!sizeofConsts.contains(id)) {
             this.constants.add(new ConstDeclaration(loc, attr, false,
@@ -862,12 +863,27 @@ public class MemoryHandler {
                 				new VarList(loc, new String[] { oId }, intT), null,
                 				false));
                 		Expression offIdEx = new IdentifierExpression(loc, oId);
-                		Expression f = new BinaryExpression(loc, Operator.COMPEQ,
-                				offIdEx, nextOffset);
-                		this.axioms.add(new Axiom(loc, attr, f));
+                		Expression offsetOfField = null;
+                		if (cvar instanceof CUnion) {//in a union every field begins at 0
+                			//(optimization: don't use so many constants where all are 0, but this way it is more 
+                			//consisten with struct treatment, thus easier, for now)
+                			offsetOfField = new BinaryExpression(loc, Operator.COMPEQ,
+                					offIdEx, new IntegerLiteral(loc, SFO.NR0));
+                		} else {
+                			offsetOfField = new BinaryExpression(loc, Operator.COMPEQ,
+                					offIdEx, nextOffset);
+                		}
+                		this.axioms.add(new Axiom(loc, attr, offsetOfField));
                 		Expression fieldSize = calculateSizeOf(csf, loc);
-                		nextOffset = new BinaryExpression(loc, Operator.ARITHPLUS,
-                				nextOffset, fieldSize);
+                		if (cvar instanceof CUnion) { //in case of union we need max() instead of plus()
+                			nextOffset = new IfThenElseExpression(loc, 
+                					new BinaryExpression(loc, Operator.COMPGT, nextOffset, fieldSize), 
+                					fieldSize, 
+                					nextOffset);
+                		} else {
+                			nextOffset = new BinaryExpression(loc, Operator.ARITHPLUS,
+                					nextOffset, fieldSize);
+                		}
                 	}
                 	// add an axiom : sizeof cvar (>)= nextOffset
                 	Expression f = new BinaryExpression(loc, Operator.COMPGEQ,
@@ -944,7 +960,7 @@ public class MemoryHandler {
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = 
-				new HashMap<VariableDeclaration, ILocation>();
+				new LinkedHashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
         ILocation loc = (ILocation) address.getValue().getLocation();
         
@@ -1068,7 +1084,7 @@ public class MemoryHandler {
         		StructAccessExpression sae = new StructAccessExpression(loc, 
         				rval.getValue(), fieldId);
         		Expression fieldOffset = 
-						StructHandler.getStructOffsetConstantExpression(loc, this, fieldId, rStructType);
+						StructHandler.getStructOrUnionOffsetConstantExpression(loc, this, fieldId, rStructType);
         		Expression newOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
         				newStartAddressOffset,
         				fieldOffset, loc);
@@ -1124,7 +1140,7 @@ public class MemoryHandler {
         // stmt.add(new AssertStatement(loc, new BinaryExpression(loc,
         // Operator.COMPGEQ, ptrOffset, new IntegerLiteral(loc, SFO.NR0))));
 		Map<VariableDeclaration, ILocation> emptyAuxVars = 
-				new HashMap<VariableDeclaration, ILocation>(0);
+				new LinkedHashMap<VariableDeclaration, ILocation>(0);
         return new ResultExpression(stmt, null, decl, emptyAuxVars);
     }
     

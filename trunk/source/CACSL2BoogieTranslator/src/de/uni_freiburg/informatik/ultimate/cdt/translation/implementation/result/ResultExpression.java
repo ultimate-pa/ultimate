@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
@@ -80,7 +81,7 @@ public class ResultExpression extends Result {
 	 * contains the field that must be havoced if this union
 	 * is written.
 	 */
-	public final Map<String, CType> unionFieldIdToCType;
+	public final Map<StructLHS, CType> unionFieldIdToCType;
 	
 	/**
 	 * Use this to lock this ResultExpression. If the ResultExpression is locked
@@ -117,7 +118,7 @@ public class ResultExpression extends Result {
             ArrayList<Declaration> decl,
             Map<VariableDeclaration, ILocation> auxVars,
             List<Overapprox> overapproxList,
-            Map<String, CType> uField2CType) {
+            Map<StructLHS, CType> uField2CType) {
         super(null);
         this.stmt = stmt;
         //      this.expr = expr;
@@ -400,7 +401,7 @@ public class ResultExpression extends Result {
 			} else if (underlyingType instanceof CStruct) {
 				//sae = {base: currentStructBaseAddress, offset: currentStructOffset + thisFieldOffset }
 				Expression innerStructOffset = 
-						StructHandler.getStructOffsetConstantExpression(loc, memoryHandler, fieldIds[i], structType);
+						StructHandler.getStructOrUnionOffsetConstantExpression(loc, memoryHandler, fieldIds[i], structType);
 //						StructHandler.getStructOffsetConstantExpression(loc, fieldIds[i], underlyingType);
 				Expression innerStructAddress = MemoryHandler.constructPointerFromBaseAndOffset(currentStructBaseAddress, 
 						new BinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, 

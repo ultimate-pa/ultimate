@@ -3,14 +3,13 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -64,13 +63,13 @@ public class PostProcessor {
 	 * Holds the Boogie identifiers of the initialized global variables. Used
 	 * for filling the modifies clause of Ultimate.start and Ultimate.init.
 	 */
-	private HashSet<String> mInitializedGlobals;
+	private LinkedHashSet<String> mInitializedGlobals;
 
 	/**
 	 * Constructor.
 	 */
 	public PostProcessor() {
-		mInitializedGlobals = new HashSet<String>();
+		mInitializedGlobals = new LinkedHashSet<String>();
 	}
 
 	/**
@@ -101,11 +100,11 @@ public class PostProcessor {
 	 */
 	public ArrayList<Declaration> postProcess(Dispatcher main, ILocation loc,
 			MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler, StructHandler structHandler,
-			HashMap<String, Procedure> procedures,
-			HashMap<String, HashSet<String>> modifiedGlobals,
+			LinkedHashMap<String, Procedure> procedures,
+			LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals,
 			Set<String> undefinedTypes,
 			Collection<? extends FunctionDeclaration> functions, 
-			HashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie
+			LinkedHashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie
 			) {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
@@ -156,7 +155,7 @@ public class PostProcessor {
 	 */
 	private ArrayList<Declaration> createUltimateInitProcedure(ILocation loc,
 			Dispatcher main, MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler,   
-			StructHandler structHandler, HashMap<Declaration, CDeclaration> mDeclarationsGlobalInBoogie
+			StructHandler structHandler, LinkedHashMap<Declaration, CDeclaration> mDeclarationsGlobalInBoogie
 //			ArrayList<Statement> initStatements, Collection<String> uninitGlobalVars
 			) {
 		functionHandler.beginUltimateInit(main, loc, SFO.INIT);
@@ -287,7 +286,7 @@ public class PostProcessor {
 	
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		Map<VariableDeclaration, ILocation> auxVars = new HashMap<VariableDeclaration, ILocation>();
+		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
 		LRValue lrVal = null;
 		
@@ -428,8 +427,8 @@ public class PostProcessor {
 	 */
 	private ArrayList<Declaration> createUltimateStartProcedure(
 			Dispatcher main, ILocation loc, FunctionHandler functionHandler,
-			HashMap<String, Procedure> procedures,
-			HashMap<String, HashSet<String>> modifiedGlobals) {
+			LinkedHashMap<String, Procedure> procedures,
+			LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals) {
 		functionHandler.beginUltimateInit(main, loc, SFO.START);
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		String checkMethod = main.getCheckedMethod();
@@ -438,7 +437,7 @@ public class PostProcessor {
 		Specification[] specsStart = new Specification[0];
 		
 		if (functionHandler.getCallGraph().containsKey(SFO.START))
-				functionHandler.getCallGraph().put(SFO.START, new HashSet<String>());
+				functionHandler.getCallGraph().put(SFO.START, new LinkedHashSet<String>());
 		functionHandler.getCallGraph().get(SFO.START).add(SFO.INIT);
 		
 		if (!checkMethod.equals(SFO.EMPTY)
@@ -485,7 +484,7 @@ public class PostProcessor {
 				startStmt.add(new CallStatement(loc, false, new VariableLHS[0],
 						checkMethod, args.toArray(new Expression[0])));
 			}
-			HashSet<VariableLHS> startModifiesClause = new HashSet<VariableLHS>();
+			LinkedHashSet<VariableLHS> startModifiesClause = new LinkedHashSet<VariableLHS>();
 			for (String id: mInitializedGlobals)
 				startModifiesClause.add(new VariableLHS(loc, id));
 			for (String id: modifiedGlobals.get(checkMethod))

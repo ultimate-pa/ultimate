@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Stack;
 
 /**
@@ -22,19 +22,19 @@ public final class TarjanSCC {
     /**
      * The graph to work on. Map of vertex id to its successor ids.
      */
-    private HashMap<String, HashSet<String>> graph;
+    private LinkedHashMap<String, LinkedHashSet<String>> graph;
     /**
      * The SCCs to return.
      */
-    private HashSet<HashSet<String>> sccs;
+    private LinkedHashSet<LinkedHashSet<String>> sccs;
     /**
      * The Tarjan indices for the vertices.
      */
-    private HashMap<String, Integer> indices;
+    private LinkedHashMap<String, Integer> indices;
     /**
      * The Tarjan lowlinks for the vertices.
      */
-    private HashMap<String, Integer> lowLink;
+    private LinkedHashMap<String, Integer> lowLink;
 
     /**
      * Calculate SCCs for the given graph.
@@ -43,17 +43,17 @@ public final class TarjanSCC {
      *            the graph to work on
      * @return a list of SCCs
      */
-    public HashSet<HashSet<String>> getSCCs(
-            final HashMap<String, HashSet<String>> graph) {
+    public LinkedHashSet<LinkedHashSet<String>> getSCCs(
+            final LinkedHashMap<String, LinkedHashSet<String>> graph) {
         if (graph == null || graph.values().contains(null)) {
             throw new IllegalArgumentException();
         }
         this.graph = graph;
         this.maxIndex = 0;
         this.stack = new Stack<String>();
-        this.sccs = new HashSet<HashSet<String>>();
-        this.indices = new HashMap<String, Integer>();
-        this.lowLink = new HashMap<String, Integer>();
+        this.sccs = new LinkedHashSet<LinkedHashSet<String>>();
+        this.indices = new LinkedHashMap<String, Integer>();
+        this.lowLink = new LinkedHashMap<String, Integer>();
         for (String v : this.graph.keySet()) {
             if (!this.indices.containsKey(v)) {
                 this.strongConnect(v);
@@ -95,7 +95,7 @@ public final class TarjanSCC {
             }
         }
         if (this.lowLink.get(v).equals(this.indices.get(v))) {
-            HashSet<String> set = new HashSet<String>();
+            LinkedHashSet<String> set = new LinkedHashSet<String>();
             String s;
             do {
                 s = this.stack.pop();

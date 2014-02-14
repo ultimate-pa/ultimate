@@ -2,8 +2,8 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -93,7 +93,7 @@ public class FunctionHandler {
 	/**
 	 * A map from procedure name to procedure declaration.
 	 */
-	private HashMap<String, Procedure> procedures;
+	private LinkedHashMap<String, Procedure> procedures;
 	/**
 	 * The currently handled procedure.
 	 */
@@ -102,11 +102,11 @@ public class FunctionHandler {
 	 * Whether the modified globals is user defined or not. If it is in this
 	 * set, then it is a modifies clause defined by the user.
 	 */
-	private HashSet<String> modifiedGlobalsIsUserDefined;
+	private LinkedHashSet<String> modifiedGlobalsIsUserDefined;
 	/**
 	 * A map from method name to all called methods of the specified one.
 	 */
-	private HashMap<String, HashSet<String>> callGraph;
+	private LinkedHashMap<String, LinkedHashSet<String>> callGraph;
 	/**
 	 * Whether the current procedure is declared to return void.
 	 */
@@ -114,12 +114,12 @@ public class FunctionHandler {
 	/**
 	 * Modified global variables of the current function.
 	 */
-	private HashMap<String, HashSet<String>> modifiedGlobals;
+	private LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals;
 	/**
 	 * Methods that have been called before they were declared. These methods
 	 * need a special treatment, as they are assumed to be returning int!
 	 */
-	private HashSet<String> methodsCalledBeforeDeclared;
+	private LinkedHashSet<String> methodsCalledBeforeDeclared;
 	
 	/**
 	 * This set contains those pointers that we have to malloc at the beginning
@@ -130,8 +130,8 @@ public class FunctionHandler {
 	 * map that is used to communicate the returned CType of a procedure from 
 	 * its declaration to its definition.
 	 */
-	private HashMap<String, CType> procedureToReturnCType;
-	private HashMap<String, ArrayList<CType>> procedureToParamCType;
+	private LinkedHashMap<String, CType> procedureToReturnCType;
+	private LinkedHashMap<String, ArrayList<CType>> procedureToParamCType;
 	
 	private final boolean m_CheckMemoryLeakAtEndOfMain;
 
@@ -139,14 +139,14 @@ public class FunctionHandler {
 	 * Constructor.
 	 */
 	public FunctionHandler() {
-		this.callGraph = new HashMap<String, HashSet<String>>();
+		this.callGraph = new LinkedHashMap<String, LinkedHashSet<String>>();
 		this.currentProcedureIsVoid = false;
-		this.modifiedGlobals = new HashMap<String, HashSet<String>>();
-		this.methodsCalledBeforeDeclared = new HashSet<String>();
-		this.procedures = new HashMap<String, Procedure>();
-		this.procedureToReturnCType = new HashMap<String, CType>();
-		this.procedureToParamCType = new HashMap<String, ArrayList<CType>>(); 
-		this.modifiedGlobalsIsUserDefined = new HashSet<String>();
+		this.modifiedGlobals = new LinkedHashMap<String, LinkedHashSet<String>>();
+		this.methodsCalledBeforeDeclared = new LinkedHashSet<String>();
+		this.procedures = new LinkedHashMap<String, Procedure>();
+		this.procedureToReturnCType = new LinkedHashMap<String, CType>();
+		this.procedureToParamCType = new LinkedHashMap<String, ArrayList<CType>>(); 
+		this.modifiedGlobalsIsUserDefined = new LinkedHashSet<String>();
 		this.mallocedAuxPointers = new ScopedHashMap<LocalLValue, Integer>();
 		m_CheckMemoryLeakAtEndOfMain = 
 				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
@@ -237,7 +237,7 @@ public class FunctionHandler {
 				if (spec[i] instanceof ModifiesSpecification) {
 					modifiedGlobalsIsUserDefined.add(methodName);
 					ModifiesSpecification ms = (ModifiesSpecification) spec[i];
-					HashSet<String> modifiedSet = new HashSet<String>();
+					LinkedHashSet<String> modifiedSet = new LinkedHashSet<String>();
 					for (VariableLHS var : ms.getIdentifiers()) 
 						modifiedSet.add(var.getIdentifier());
 					modifiedGlobals.put(methodName, modifiedSet);
@@ -272,10 +272,10 @@ public class FunctionHandler {
 			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
 		}
 		if (!modifiedGlobals.containsKey(methodName)) {
-			modifiedGlobals.put(methodName, new HashSet<String>());
+			modifiedGlobals.put(methodName, new LinkedHashSet<String>());
 		}
 		if (!callGraph.containsKey(methodName)) {
-			callGraph.put(methodName, new HashSet<String>());
+			callGraph.put(methodName, new LinkedHashSet<String>());
 		}
 		
 		ArrayList<CType> paramCTypes = new ArrayList<CType>();
@@ -392,7 +392,7 @@ public class FunctionHandler {
                         makeAssignment(main, loc, stmt, hlv,
                             new RValue(rhsId, ((CPointer)cvar).pointsToType),
                             decls,
-                            new HashMap<VariableDeclaration, ILocation>(),
+                            new LinkedHashMap<VariableDeclaration, ILocation>(),
                             new ArrayList<Overapprox>());
                     stmt = assign.stmt;
                 } else {
@@ -439,32 +439,32 @@ public class FunctionHandler {
 		assert isEveryCalledProcedureDeclared();
 		// calculate SCCs and a mapping for each methodId to its SCC
 		// O(|edges| + |calls|)
-		HashSet<HashSet<String>> sccs = new TarjanSCC().getSCCs(callGraph);
-		HashMap<String, HashSet<String>> mapping = new HashMap<String, HashSet<String>>();
-		for (HashSet<String> scc : sccs) { // O(|proc|)
+		LinkedHashSet<LinkedHashSet<String>> sccs = new TarjanSCC().getSCCs(callGraph);
+		LinkedHashMap<String, LinkedHashSet<String>> mapping = new LinkedHashMap<String, LinkedHashSet<String>>();
+		for (LinkedHashSet<String> scc : sccs) { // O(|proc|)
 			for (String s : scc) {
 				mapping.put(s, scc);
 			}
 		}
-		HashMap<HashSet<String>, Integer> incomingEdges = new HashMap<HashSet<String>, Integer>();
-		for (HashSet<String> scc : sccs) {
+		LinkedHashMap<LinkedHashSet<String>, Integer> incomingEdges = new LinkedHashMap<LinkedHashSet<String>, Integer>();
+		for (LinkedHashSet<String> scc : sccs) {
 			incomingEdges.put(scc, 0);
 		}
 		// calculate the SCC update graph without loops and dead ends
-		Queue<HashSet<String>> deadEnds = new LinkedList<HashSet<String>>();
+		Queue<LinkedHashSet<String>> deadEnds = new LinkedList<LinkedHashSet<String>>();
 		deadEnds.addAll(sccs);
-		HashMap<HashSet<String>, HashSet<HashSet<String>>> updateGraph = new HashMap<HashSet<String>, HashSet<HashSet<String>>>();
+		LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<LinkedHashSet<String>>> updateGraph = new LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<LinkedHashSet<String>>>();
 		for (String p : callGraph.keySet()) { // O(|calls|)
 			for (String s : callGraph.get(p)) { // foreach s : succ(p)
 				// edge (p, s), means p calls s
-				HashSet<String> sccP = mapping.get(p);
-				HashSet<String> sccS = mapping.get(s);
+				LinkedHashSet<String> sccP = mapping.get(p);
+				LinkedHashSet<String> sccS = mapping.get(s);
 				if (sccP == sccS)
 					continue; // skip self loops
 				if (updateGraph.containsKey(sccS)) {
 					updateGraph.get(sccS).add(sccP);
 				} else {
-					HashSet<HashSet<String>> predSCCs = new HashSet<HashSet<String>>();
+					LinkedHashSet<LinkedHashSet<String>> predSCCs = new LinkedHashSet<LinkedHashSet<String>>();
 					predSCCs.add(sccP);
 					updateGraph.put(sccS, predSCCs);
 				}
@@ -477,14 +477,14 @@ public class FunctionHandler {
 		// But: They don't need an update anyway!
 
 		// calculate transitive modifies clause
-		HashMap<HashSet<String>, HashSet<String>> modGlobals = new HashMap<HashSet<String>, HashSet<String>>();
+		LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<String>> modGlobals = new LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<String>>();
 		while (!deadEnds.isEmpty()) {
 			// O (|proc| + |edges in updateGraph|), where
 			// |edges in updateGraph| <= |calls|
-			HashSet<String> d = deadEnds.poll();
+			LinkedHashSet<String> d = deadEnds.poll();
 			for (String p : d) {
 				if (!modGlobals.containsKey(d)) {
-					HashSet<String> n = new HashSet<String>();
+					LinkedHashSet<String> n = new LinkedHashSet<String>();
 					n.addAll(modifiedGlobals.get(p));
 					modGlobals.put(d, n);
 				} else {
@@ -493,9 +493,9 @@ public class FunctionHandler {
 			}
 			if (updateGraph.get(d) == null)
 				continue;
-			for (HashSet<String> next : updateGraph.get(d)) {
+			for (LinkedHashSet<String> next : updateGraph.get(d)) {
 				if (!modGlobals.containsKey(next)) {
-					HashSet<String> n = new HashSet<String>();
+					LinkedHashSet<String> n = new LinkedHashSet<String>();
 					n.addAll(modGlobals.get(d));
 					modGlobals.put(next, n);
 				} else {
@@ -516,7 +516,7 @@ public class FunctionHandler {
 			CACSLLocation loc = (CACSLLocation) procDecl.getLocation();
 			if (!modifiedGlobalsIsUserDefined.contains(mId)) {
 				assert mapping.get(mId) != null;
-				HashSet<String> currModClause = modGlobals
+				LinkedHashSet<String> currModClause = modGlobals
 						.get(mapping.get(mId));
 				assert currModClause != null : "No modifies clause proc " + mId;
 				modifiedGlobals.put(mId, currModClause);
@@ -668,11 +668,11 @@ public class FunctionHandler {
 		currentProcedureIsVoid = resType.isVoid;
 		if (!modifiedGlobals.containsKey(currentProcedure.getIdentifier())) {
 			modifiedGlobals.put(currentProcedure.getIdentifier(),
-					new HashSet<String>());
+					new LinkedHashSet<String>());
 		}
 		if (!callGraph.containsKey(currentProcedure.getIdentifier())) {
 			callGraph.put(currentProcedure.getIdentifier(),
-					new HashSet<String>());
+					new LinkedHashSet<String>());
 		}
 		
 		/*
@@ -733,11 +733,11 @@ public class FunctionHandler {
 
 	void beginUltimateInit(Dispatcher main, ILocation loc, String startOrInit) {
 		main.cHandler.beginScope();
-		callGraph.put(startOrInit, new HashSet<String>());
+		callGraph.put(startOrInit, new LinkedHashSet<String>());
 		currentProcedure = new Procedure(loc, new Attribute[0], startOrInit, new String[0], new VarList[0], new VarList[0], new Specification[0], null);
 		procedures.put(startOrInit, currentProcedure);
 		modifiedGlobals.put(currentProcedure.getIdentifier(),
-				new HashSet<String>());
+				new LinkedHashSet<String>());
 	}
 	
 	void endUltimateInit(Dispatcher main, Procedure initDecl, String startOrInit) {
@@ -791,7 +791,7 @@ public class FunctionHandler {
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = 
-				new HashMap<VariableDeclaration, ILocation>();
+				new LinkedHashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
 		Expression expr = null;
 
@@ -899,7 +899,7 @@ public class FunctionHandler {
 			StructHandler structHandler, IASTReturnStatement node) {
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		Map<VariableDeclaration, ILocation> auxVars = new HashMap<VariableDeclaration, ILocation>();
+		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 		// The ReturnValue could be empty!
 		CACSLLocation loc = new CACSLLocation(node);
 		VarList[] outParams = this.currentProcedure.getOutParams();
@@ -941,7 +941,7 @@ public class FunctionHandler {
 		
 		stmt.add(new ReturnStatement(loc));
 		Map<VariableDeclaration, ILocation> emptyAuxVars =
-		        new HashMap<VariableDeclaration, ILocation>(0);
+		        new LinkedHashMap<VariableDeclaration, ILocation>(0);
 		return new ResultExpression(stmt, null, decl, emptyAuxVars);
 	}
 
@@ -965,7 +965,7 @@ public class FunctionHandler {
 	 * 
 	 * @return modified globals.
 	 */
-	public HashMap<String, HashSet<String>> getModifiedGlobals() {
+	public LinkedHashMap<String, LinkedHashSet<String>> getModifiedGlobals() {
 		return this.modifiedGlobals;
 	}
 
@@ -974,7 +974,7 @@ public class FunctionHandler {
 	 * 
 	 * @return procedures.
 	 */
-	public HashMap<String, Procedure> getProcedures() {
+	public LinkedHashMap<String, Procedure> getProcedures() {
 		return this.procedures;
 	}
 
@@ -999,7 +999,7 @@ public class FunctionHandler {
 	 * 
 	 * @return the call graph.
 	 */
-	public HashMap<String, HashSet<String>> getCallGraph() {
+	public LinkedHashMap<String, LinkedHashSet<String>> getCallGraph() {
 		return this.callGraph;
 	}
 	

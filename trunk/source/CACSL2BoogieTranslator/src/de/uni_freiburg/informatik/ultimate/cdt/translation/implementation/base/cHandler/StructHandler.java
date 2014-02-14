@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
@@ -76,6 +77,7 @@ public class StructHandler {
 		ResultExpression fieldOwner = (ResultExpression) main.dispatch(node.getFieldOwner());;
 
 		LRValue newValue = null;
+		Map<StructLHS, CType> unionFieldToCType = fieldOwner.unionFieldIdToCType;
 
 		CType foType = fieldOwner.lrVal.cType.getUnderlyingType();
 		
@@ -96,7 +98,7 @@ public class StructHandler {
 		if (fieldOwner.lrVal instanceof HeapLValue) {
 			HeapLValue fieldOwnerHlv = (HeapLValue) fieldOwner.lrVal;
 
-			
+			//TODO: different calculations for unions
 			Expression startAddress = fieldOwnerHlv.getAddress();
 			Expression newStartAddressBase = null;
 			Expression newStartAddressOffset = null;
@@ -111,7 +113,7 @@ public class StructHandler {
 					newStartAddressBase,
 					new BinaryExpression(loc, new InferredType(Type.Integer), BinaryExpression.Operator.ARITHPLUS, 
 							newStartAddressOffset,
-							getStructOffsetConstantExpression(loc, memoryHandler, field, cStructType)),
+							getStructOrUnionOffsetConstantExpression(loc, memoryHandler, field, cStructType)),
 							loc);
 			newValue = new HeapLValue(newPointer, cFieldType);
 		} else if (fieldOwner.lrVal instanceof RValue) {
@@ -124,19 +126,20 @@ public class StructHandler {
 			StructLHS slhs = new StructLHS(loc,
 					lVal.getLHS(), field);
 			newValue = new LocalLValue(slhs, cFieldType);
-		}
-		
-		
-		HashMap<String, CType> unionFieldToCType = null;
-		if (foType instanceof CUnion) {
-			unionFieldToCType = new HashMap<String, CType>();
-			for (String fieldId : ((CUnion) foType).getFieldIds()) {
-				if (!fieldId.equals(field)) {
-					unionFieldToCType.put(fieldId, ((CUnion) foType).getFieldType(fieldId));
+			
+			//only here -- assuming the RValue case means that no write is taking place..
+			if (foType instanceof CUnion) {
+				if (unionFieldToCType == null)
+					unionFieldToCType = new LinkedHashMap<StructLHS, CType>();
+				for (String fieldId : ((CUnion) foType).getFieldIds()) {
+					if (!fieldId.equals(field)) {
+						StructLHS havocSlhs = new StructLHS(loc, lVal.getLHS(), fieldId);
+						unionFieldToCType.put(havocSlhs, ((CUnion) foType).getFieldType(fieldId));
+					}
 				}
 			}
 		}
-		
+	
 		return new ResultExpression(fieldOwner.stmt, newValue, fieldOwner.decl, fieldOwner.auxVars, 
 				fieldOwner.overappr, unionFieldToCType);
 	}
@@ -160,7 +163,7 @@ public class StructHandler {
 			String msg = "Incorrect or unexpected field owner!";
 			throw new IncorrectSyntaxException(loc, msg);
 		}
-		IdentifierExpression additionalOffset = getStructOffsetConstantExpression(
+		IdentifierExpression additionalOffset = getStructOrUnionOffsetConstantExpression(
 				loc, memoryHandler, field, structType);
 		Expression newOffset;
 		if (isZero(addressOffsetOfFieldOwner)) {
@@ -184,7 +187,7 @@ public class StructHandler {
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = 
-				new HashMap<VariableDeclaration, ILocation>();
+				new LinkedHashMap<VariableDeclaration, ILocation>();
 		List<Overapprox> overappr = new ArrayList<Overapprox>();
 		stmt.addAll(call.stmt);
 		decl.addAll(call.decl);
@@ -196,7 +199,7 @@ public class StructHandler {
 		return result;
 	}
 
-	public static IdentifierExpression getStructOffsetConstantExpression(
+	public static IdentifierExpression getStructOrUnionOffsetConstantExpression(
 			ILocation loc, MemoryHandler memoryHandler, String fieldId, CType structCType) {
 		String offset = SFO.OFFSET + structCType.toString() + "~" + fieldId;
 		IdentifierExpression additionalOffset = new IdentifierExpression(loc, offset);
@@ -278,8 +281,8 @@ public class StructHandler {
 		//everything for the new Result
 		ArrayList<Statement> newStmt = new ArrayList<Statement>();
 		ArrayList<Declaration> newDecl = new ArrayList<Declaration>();
-		HashMap<VariableDeclaration, ILocation> newAuxVars =
-		        new HashMap<VariableDeclaration, ILocation>();
+		Map<VariableDeclaration, ILocation> newAuxVars =
+		        new LinkedHashMap<VariableDeclaration, ILocation>();
 		List<Overapprox> newOverappr = new ArrayList<Overapprox>();
 		
 		String[] fieldIds = structType.getFieldIds();
@@ -344,8 +347,8 @@ public class StructHandler {
 				} else if (underlyingFieldType instanceof CArray) {
 					ArrayList<Statement> fieldStmt = new ArrayList<Statement>();
 					ArrayList<Declaration> fieldDecl = new ArrayList<Declaration>();
-					HashMap<VariableDeclaration, ILocation> fieldAuxVars =
-							new HashMap<VariableDeclaration, ILocation>();
+					Map<VariableDeclaration, ILocation> fieldAuxVars =
+							new LinkedHashMap<VariableDeclaration, ILocation>();
 
 					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
 
