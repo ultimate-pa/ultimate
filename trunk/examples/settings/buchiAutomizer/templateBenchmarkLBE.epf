@@ -1,0 +1,29 @@
+#Wed Feb 12 16:57:46 CET 2014
+\!/instance/BuchiAutomizer=
+file_export_version=3.0
+/instance/BuchiAutomizer/Template\ benchmark\ mode=true
+@BuchiAutomizer=0.0.1
+/instance/BuchiAutomizer/Allow\ nonlinear\ constraints=true
+#Wed Feb 12 16:57:46 CET 2014
+\!/instance/CACSL2BoogieTranslator=
+file_export_version=3.0
+@CACSL2BoogieTranslator=0.0.1
+/instance/CACSL2BoogieTranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=IGNORE
+/instance/CACSL2BoogieTranslator/Pointer\ to\ allocated\ memory\ at\ dereference=IGNORE
+/instance/CACSL2BoogieTranslator/Translation\ Mode\:=SV_COMP14
+/instance/CACSL2BoogieTranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
+#Wed Feb 12 16:57:46 CET 2014
+file_export_version=3.0
+/instance/UltimateCore/Toolchain\ timeout\ in\ seconds=100
+\!/instance/UltimateCore=
+@UltimateCore=0.0.1
+/instance/RCFGBuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=false
+/instance/RCFGBuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+/instance/RCFGBuilder/Remove\ goto\ edges\ from\ RCFG=false
+#Fri Feb 14 14:21:10 CET 2014
+file_export_version=3.0
+/instance/BlockEncoding/Minimize\ Call\ and\ Return\ Edges=true
+@BlockEncoding=0.0.1
+\!/instance/BlockEncoding=
+/instance/BlockEncoding/Enter\ Rating-Boundary\ (empty\ for\ LBE)\:=20
+/instance/BlockEncoding/Choose\ the\ strategy\ for\ the\ edge\ rating\:=DISJUNCTIVE_RATING
