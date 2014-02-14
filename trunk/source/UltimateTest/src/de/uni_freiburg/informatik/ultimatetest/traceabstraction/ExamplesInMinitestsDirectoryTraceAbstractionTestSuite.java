@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
 public class ExamplesInMinitestsDirectoryTraceAbstractionTestSuite extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String m_Path = "examples/programs/minitests//";
+	private static final String m_Path = "examples/programs/regression//";
 	// private static final String m_excludeFilesFromDir = "examples/programs/minitests/openbugs/";
 	
 	private static final boolean m_TraceAbstractionWithBackwardPredicates = !false;
