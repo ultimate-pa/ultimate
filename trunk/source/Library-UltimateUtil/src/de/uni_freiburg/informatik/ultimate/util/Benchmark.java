@@ -221,7 +221,7 @@ public class Benchmark {
 		return mMaxMemorySize;
 	}
 
-	public Collection<String> getTitles() {
+	public List<String> getTitles() {
 		ArrayList<String> rtr = new ArrayList<String>();
 		for (Watch w : mWatches.values()) {
 			rtr.add(w.mTitle);
