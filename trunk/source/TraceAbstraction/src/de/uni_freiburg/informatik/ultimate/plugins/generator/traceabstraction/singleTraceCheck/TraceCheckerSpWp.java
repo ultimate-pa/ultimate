@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
@@ -228,6 +230,72 @@ public class TraceCheckerSpWp extends TraceChecker {
 		return TransFormula.sequentialCompositionWithCallAndReturn(m_SmtManager.getBoogie2Smt(), true, false, Call, oldVarsAssignment, procedureSummary, Return);
 	}
 	
+	/**
+	 * Computes a summary for the given trace, but only for the statements from position "start" to position "end".
+	 *TODO: Document parameters!
+	 * @param rv - 
+	 * @param start
+	 * @param end
+	 * @return - a summary for the statements from the given trace from position "start" to position "end"
+	 */
+	private TransFormula computeSummaryForInterproceduralTrace(NestedWord<CodeBlock> trace, RelevantTransFormulas rv, int start, int end) {
+		LinkedList<TransFormula> transformulasToComputeSummaryFor = new LinkedList<TransFormula>();
+		for (int i = start; i < end; i++) {
+			if (trace.getSymbol(i) instanceof Call) {
+				String proc = ((Call)trace.getSymbol(i)).getCallStatement().getMethodName();
+				if (!trace.isPendingCall(i)) {
+					// Case: non-pending call
+					// Compute a summary for Call and corresponding Return, but only if the position of the corresponding
+					// Return is smaller than the position "end"
+					int returnPosition = trace.getReturnPosition(i);
+					if (returnPosition < end) {
+						// 1. Compute a summary for the statements between this non-pending Call
+						// and the corresponding  Return recursively
+						TransFormula summaryBetweenCallAndReturn = computeSummaryForInterproceduralTrace(trace,
+								rv,
+								i+1, returnPosition);
+						/** FIXME: Here, we have to assign the original statements for Call and Return as parameters, because
+						 the method {@link TransFormula.sequentialCompositionWithCallAndReturn} expects CodeBlocks and not
+						 TransFormulas.
+						 */
+						transformulasToComputeSummaryFor.addLast(TransFormula.sequentialCompositionWithCallAndReturn(
+								m_SmtManager.getBoogie2Smt(), true, false,
+								trace.getSymbol(i).getTransitionFormula(),
+								m_ModifiedGlobals.getOldVarsAssignment(proc), summaryBetweenCallAndReturn, 
+								trace.getSymbol(returnPosition).getTransitionFormula()));
+						i = returnPosition;
+					} else {
+						// If the position of the corresponding Return is >= "end", 
+						// then we handle this case as a pending-call
+						TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(
+								trace, rv,
+								i+1,
+								end);
+						return TransFormula.sequentialCompositionWithPendingCall(m_SmtManager.getBoogie2Smt(), 
+								true, false, transformulasToComputeSummaryFor.toArray(new TransFormula[0]),
+								rv.getLocalVarAssignment(i), 
+								m_ModifiedGlobals.getOldVarsAssignment(proc), summaryAfterPendingCall);
+					}
+				} else {
+					TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(
+							trace, rv,
+							i+1,
+							end);
+					return TransFormula.sequentialCompositionWithPendingCall(m_SmtManager.getBoogie2Smt(), 
+							true, false, transformulasToComputeSummaryFor.toArray(new TransFormula[0]),
+							rv.getLocalVarAssignment(i), 
+							m_ModifiedGlobals.getOldVarsAssignment(proc), summaryAfterPendingCall);
+				}
+			} else if (trace.getSymbol(i) instanceof Return) {
+				// Nothing to do
+			} else {
+				transformulasToComputeSummaryFor.addLast(rv.getFormulaFromNonCallPos(i));
+			}
+		}
+		return TransFormula.sequentialComposition(m_SmtManager.getBoogie2Smt(), true, false, 
+				transformulasToComputeSummaryFor.toArray(new TransFormula[0]));
+		
+	}
 
 	private void computeInterpolantsWithUsageOfUnsatCore(Set<Integer> interpolatedPositions) {
 		m_NumberOfQuantifiedPredicates = new int[4];
@@ -385,7 +453,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 						TransFormula callTF = rv.getLocalVarAssignment(call_pos);
 						TransFormula globalVarsAssignments = rv.getGlobalVarAssignment(call_pos);
 						
-						TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace), rv, 0);
+						TransFormula summary = computeSummaryForInterproceduralTrace(trace, rv, 0, call_pos);
 						IPredicate callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
 						// If callerPred contains quantifier, compute it via the 2nd method
 						if (callerPred instanceof BasicPredicateExplicitQuantifier) {
