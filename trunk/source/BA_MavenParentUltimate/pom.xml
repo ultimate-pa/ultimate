@@ -35,6 +35,7 @@
 
 		<!-- Sonar parameters -->
 		<sonar.language>java</sonar.language>
+		<sonar.java.source>1.7</sonar.java.source>
 	</properties>
 
 	<repositories>
