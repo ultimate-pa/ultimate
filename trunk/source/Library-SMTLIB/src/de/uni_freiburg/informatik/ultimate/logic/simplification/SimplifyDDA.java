@@ -169,12 +169,13 @@ public class SimplifyDDA extends NonRecursive {
 					HashSet<Term> oldContext =
 							new HashSet<Term>(info.mContext.length);
 					oldContext.addAll(Arrays.asList(info.mContext));
-					ArrayList<Term> newContext =
-							new ArrayList<Term>(info.mContext.length);
+					ArrayDeque<Term> newContext =
+							new ArrayDeque<Term>(info.mContext.length);
 					for (Term t : mContext) {
 						if (oldContext.contains(t))
 							newContext.add(t);
 					}
+					mContext = newContext;
 					info.mContext =
 							newContext.toArray(new Term[newContext.size()]);
 				}
@@ -305,6 +306,9 @@ public class SimplifyDDA extends NonRecursive {
 				}
 			}
 		}
+		public String toString() {
+			return "PrepareSimplifier["+mTerm+"]"; 
+		}
 	}
 	
 	private static class StoreSimplified implements Walker {
@@ -319,6 +323,9 @@ public class SimplifyDDA extends NonRecursive {
 			SimplifyDDA simplifier = (SimplifyDDA) engine;
 			TermInfo info = simplifier.mTermInfos.get(mTerm);
 			info.mSimplified = simplifier.popResult();
+		}
+		public String toString() {
+			return "StoreSimplified["+mTerm+"]"; 
 		}
 	}
 
@@ -520,7 +527,10 @@ public class SimplifyDDA extends NonRecursive {
 					new Simplifier(false, params[mParamCtr]));
 				mParamCtr++;
 			}
-		}	
+		}
+		public String toString() {
+			return "Simplifier["+mTerm+", param: "+mParamCtr+"]"; 
+		}
 	}
 	
 	/**
@@ -673,7 +683,7 @@ public class SimplifyDDA extends NonRecursive {
 			}
 		}.transform(term);// NOCHECKSTYLE
 		mScript.pop(1);
-		assert (checkEquivalence(inputTerm, term) != LBool.SAT)
+		assert (checkEquivalence(inputTerm, term) == LBool.UNSAT)
 			: "Simplification unsound?";
 		return term;
 	}
