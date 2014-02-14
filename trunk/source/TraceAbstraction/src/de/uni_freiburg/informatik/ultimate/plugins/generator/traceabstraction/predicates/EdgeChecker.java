@@ -589,7 +589,18 @@ public class EdgeChecker {
 	
 	
 	
-	
+	/**
+	 * Idea: If the formula of the code block is satisfiable,
+	 * the predecessor is satisfiable and the vars of predecessor are disjoint
+	 * from the inVars of the code block, then a transition to false is not
+	 * inductive.
+	 * Idea with UNKNOWN: if the solver was unable to decide feasibility of cb, 
+	 * the predecessor is satisfiable and the vars of predecessor are disjoint
+	 * from the inVars of the code block, then the solver will be unable to
+	 * show that a transition to false is inductive. 
+	 *
+	 * FIXME: Check for precondition false, not for precondition true.
+	 */
 	public LBool sdecInternalToFalse(IPredicate pre, CodeBlock cb) {
 		Infeasibility infeasiblity = cb.getTransitionFormula().isInfeasible();
 		if (infeasiblity == Infeasibility.UNPROVEABLE) {
@@ -619,7 +630,7 @@ public class EdgeChecker {
 	
 	
 	/**
-	 * Returns true iff the variables occuring in state are disjoint from the
+	 * Returns true iff the variables occurring in state are disjoint from the
 	 * inVars of CodeBlock letter.
 	 * @param state
 	 * @param symbol
@@ -635,14 +646,30 @@ public class EdgeChecker {
 	}
 	
 	
-	
+	/**
+	 * FIXME: Mention assumptions.
+	 * Idea: If 
+	 * <ul>
+	 * <li> the formula of the code block is satisfiable, 
+	 * <li> the predecessor is satisfiable,
+	 * <li> the successor is not unsatisfiable,
+	 * <li> the variables of the predecessor are disjoint from the invars
+	 * of the code block, and
+	 * <li> the variables of the successor are disjoint from the outvars of the
+	 * code block, from the invars of the code block and from the vars of the
+	 * predecessor,
+	 * </ul>
+	 * then a transition (pre, cb, post) is not inductive. 
+	 *
+	 * FIXME: Check for preconditions, postcondition? Check at least for
+	 * infeasibility flag of TransFormula.
+	 */
 	public LBool sdecInteral(IPredicate pre, CodeBlock cb, IPredicate post) {
 		for (BoogieVar bv : pre.getVars()) {
 			if (cb.getTransitionFormula().getInVars().containsKey(bv)) {
 				return null;
 			}
 		}
-		
 		for (BoogieVar bv : post.getVars()) {
 			if (pre.getVars().contains(bv)) {
 				return null;
