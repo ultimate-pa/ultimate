@@ -9,6 +9,8 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
@@ -45,6 +47,18 @@ class TranslationTestResultDecider implements ITestResultDecider {
 				}
 			}
 		}
+		
+		if(!fail){
+			
+			BoogieStatementPrettyPrinter bpl = new BoogieStatementPrettyPrinter();
+			for(GraphType t : UltimateServices.getInstance().getModelsInMemory()){
+				if(t.getFileNames().contains(mInputFile)){
+					
+				}
+			}
+			
+		}
+		
 		Util.logResults(log, mInputFile, fail, customMessages);
 		return fail;
 	}

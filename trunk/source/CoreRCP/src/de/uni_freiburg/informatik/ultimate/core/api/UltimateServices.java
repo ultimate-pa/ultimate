@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 import de.uni_freiburg.informatik.ultimate.logging.UltimateLoggerFactory;
 import de.uni_freiburg.informatik.ultimate.model.GraphNotFoundException;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IModelManager;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
@@ -507,5 +508,9 @@ public class UltimateServices {
 	 */
 	public IPayload search(GraphType modelId, String id) {
 		return this.m_ModelManager.search(modelId, id);
+	}
+	
+	public IElement getModel(GraphType modelId) throws GraphNotFoundException{
+		return this.m_ModelManager.getRootNode(modelId);
 	}
 }
