@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<classpath>
-	<classpathentry excluding="**.flex|**.xml|**/*~|**/.svn/*|local/stalin/smt/trigger/**" kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/JavaCup"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/log4j"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/CoreRCP"/>
-	<classpathentry kind="output" path="bin"/>
-</classpath>

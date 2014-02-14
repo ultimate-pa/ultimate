@@ -1,7 +1,0 @@
-Manifest-Version: 1.0
-Bundle-ManifestVersion: 2
-Bundle-Name: CFG2SMTtest
-Bundle-SymbolicName: CFG2SMTtest
-Bundle-Version: 1.0.0.qualifier
-Fragment-Host: CFG2SMT
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6

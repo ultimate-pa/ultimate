@@ -1,5 +1,0 @@
-1299512375428	Rename type 'UNComparator'
-1299513144645	Extract method 'updateVarNamesToTermsMapping'
-1299752256764	Rename local variable 'crannot'
-1299752760970	Rename field 'm_crAnnot'
-1299753967226	Rename field 'm_declarationsByProcName'

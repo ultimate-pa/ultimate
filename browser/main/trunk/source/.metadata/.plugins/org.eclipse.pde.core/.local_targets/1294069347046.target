@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?pde version="3.5"?>
-
-<target name="Base RCP (Binary Only)">
-<locations>
-<location id="org.eclipse.rcp" path="${eclipse_home}" type="Feature"/>
-</locations>
-</target>

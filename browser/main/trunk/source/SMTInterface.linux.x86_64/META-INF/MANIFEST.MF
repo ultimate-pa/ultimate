@@ -1,9 +1,0 @@
-Manifest-Version: 1.0
-Bundle-ManifestVersion: 2
-Bundle-Name: Natives Z3 Linux X86_64 Fragment
-Bundle-SymbolicName: SMTInterface.linux.x86_64
-Bundle-Version: 1.0.0
-Fragment-Host: SMTInterface;bundle-version="1.0.0"
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Bundle-NativeCode: libs/libnativez3.so; libs/libz3.so; osname = linux; processor=x86_64
-Eclipse-PlatformFilter: (&(osgi.os=linux) (osgi.arch=x86_64))
