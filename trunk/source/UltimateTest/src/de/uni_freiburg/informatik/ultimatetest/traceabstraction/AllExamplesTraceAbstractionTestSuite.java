@@ -27,7 +27,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 	public Collection<UltimateTestCase> createTestCases() {
 		if (m_TraceAbstractionWithForwardPredicates) {
 			addTestCases(
-					"TraceAbstraction.xml",
+					"AutomizerBpl.xml",
 					"settingsForwardPredicates",
 				    m_Path,
 				    new String[] {".bpl"},
@@ -37,7 +37,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 		} 
 		if (m_TraceAbstractionWithBackwardPredicates) {
 			addTestCases(
-					"TraceAbstraction.xml",
+					"AutomizerBpl.xml",
 					"settingsBackwardPredicates",
 				    m_Path,
 				    new String[] {".bpl"},
@@ -47,8 +47,8 @@ public class AllExamplesTraceAbstractionTestSuite extends
 		}
 		if (m_TraceAbstractionCWithForwardPredicates) {
 			addTestCases(
-					"TraceAbstractionC.xml",
-					"settingsForwardPredicates",
+					"AutomizerC.xml",
+					"settingsForwardPredicates.epf",
 				    m_Path,
 				    new String[] {".c", ".i"},
 				    "Trace Abstraction via Forward Predicates (SP)",
@@ -57,8 +57,8 @@ public class AllExamplesTraceAbstractionTestSuite extends
 		}
 		if (m_TraceAbstractionCWithBackwardPredicates) {
 			addTestCases(
-					"TraceAbstractionC.xml",
-					"settingsBackwardPredicates",
+					"AutomizerC.xml",
+					"settingsBackwardPredicates.epf",
 				    m_Path,
 				    new String[] {".c", ".i"},
 				    "Trace Abstraction via Backward Predicates (WP)",

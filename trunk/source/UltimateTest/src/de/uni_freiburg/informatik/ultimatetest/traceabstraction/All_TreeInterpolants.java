@@ -25,7 +25,7 @@ public class All_TreeInterpolants extends
 	public Collection<UltimateTestCase> createTestCases() {
 		if (s_Boogie_TreeInterpolants) {
 			addTestCases(
-					"TraceAbstraction.xml",
+					"AutomizerBpl.xml",
 					"TreeInterpolants.epf",
 				    m_Path,
 				    new String[] {".bpl"},
@@ -35,7 +35,7 @@ public class All_TreeInterpolants extends
 		} 
 		if (s_C_TreeInterpolants) {
 			addTestCases(
-					"TraceAbstractionC.xml",
+					"AutomizerC.xml",
 					"TreeInterpolants.epf",
 				    m_Path,
 				    new String[] {".c", ".i"},
