@@ -4,9 +4,19 @@ Bundle-Name: UltimateRegressionTest
 Bundle-SymbolicName: UltimateRegressionTest
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Require-Bundle: 
- Library-UltimateTest,
+Require-Bundle: UltimateCore,
+ Library-junit-helper,
  Library-log4j,
- UltimateCore
-Import-Package: org.junit
-
+ Library-UltimateTest,
+ CodeCheck,
+ RCFGBuilder,
+ CACSL2BoogieTranslator,
+ CDTParser,
+ BoogiePreprocessor,
+ BlockEncoding,
+ org.junit,
+ Library-LassoRanker 
+Import-Package: org.junit,
+ org.junit.experimental.categories,
+ org.junit.runner,
+ org.junit.runners
