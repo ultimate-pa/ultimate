@@ -30,8 +30,7 @@ public class Util {
 			name = name + description + "_";
 		}
 
-		name = name + originalFileName + "_"
-				+ dateFormat.format(Calendar.getInstance().getTime()) + ".log";
+		name = name + originalFileName + "_" + dateFormat.format(Calendar.getInstance().getTime()) + ".log";
 		name = name.replaceAll(" ", "_");
 		return dir + name;
 	}
@@ -54,24 +53,28 @@ public class Util {
 		return relative.getAbsolutePath();
 	}
 
-	public static String getPathFromSurefire(String path,
-			String canonicalClassName) {
+	public static String getPathFromSurefire(String path, String canonicalClassName) {
 		File trunk = new File(System.getProperty("user.dir"));
-		File relative = new File(trunk.getAbsolutePath() + File.separator
-				+ "target" + File.separator + "surefire-reports"
-				+ File.separator + canonicalClassName + File.separator + path);
+		File relative = new File(trunk.getAbsolutePath() + File.separator + "target" + File.separator
+				+ "surefire-reports" + File.separator + canonicalClassName + File.separator + path);
 
 		return relative.getAbsolutePath();
 	}
 
 	public static String getPathFromTrunk(String path) {
-		File trunk = new File(System.getProperty("user.dir")).getParentFile()
-				.getParentFile();
-		File relative = new File(trunk.getAbsolutePath() + File.separator
-				+ path);
+		File trunk = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
+		File relative = new File(trunk.getAbsolutePath() + File.separator + path);
 		return relative.getAbsolutePath();
 	}
 
+	/***
+	 * Filters a list of files based on a given regex. Returns a collection of
+	 * files of which the path matches the regex.
+	 * 
+	 * @param files
+	 * @param regex
+	 * @return
+	 */
 	public static Collection<File> filter(Collection<File> files, String regex) {
 		ArrayList<File> singleFiles = new ArrayList<File>();
 
@@ -85,8 +88,7 @@ public class Util {
 		return singleFiles;
 	}
 
-	public static String generateSummaryLogFilename(String directory,
-			String description) {
+	public static String generateSummaryLogFilename(String directory, String description) {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS");
 
 		if (description == null) {
@@ -105,8 +107,8 @@ public class Util {
 		} else {
 			dir = f.getParent() + File.separator;
 		}
-		String name = "UltimateTest Summary " + description
-				+ dateFormat.format(Calendar.getInstance().getTime()) + ".log";
+		String name = "UltimateTest Summary " + description + dateFormat.format(Calendar.getInstance().getTime())
+				+ ".log";
 
 		return dir + name;
 	}
@@ -209,18 +211,15 @@ public class Util {
 		return rtr;
 	}
 
-	public static void logResults(Logger logger, String inputFile,
-			boolean fail, Collection<String> customMessages) {
+	public static void logResults(Logger logger, String inputFile, boolean fail, Collection<String> customMessages) {
 
 		logger.info("#################### TEST RESULT ####################");
 		logger.info("Results for " + inputFile);
 
-		for (Entry<String, List<IResult>> entry : UltimateServices
-				.getInstance().getResultMap().entrySet()) {
+		for (Entry<String, List<IResult>> entry : UltimateServices.getInstance().getResultMap().entrySet()) {
 			int i = 0;
 			for (IResult result : entry.getValue()) {
-				logger.info("[" + i + "] " + entry.getKey() + " --> ["
-						+ result.getClass().getSimpleName() + "] "
+				logger.info("[" + i + "] " + entry.getKey() + " --> [" + result.getClass().getSimpleName() + "] "
 						+ result.getLongDescription());
 				++i;
 			}
@@ -252,10 +251,8 @@ public class Util {
 		// size.// Any attempt will result in an OutOfMemoryException.
 		long heapMaxSize = Runtime.getRuntime().maxMemory();
 
-		logger.info(String.format(
-				"Statistics: heapSize=%s heapFreeSize=%s heapMaxSize=%s",
-				Utils.humanReadableByteCount(heapSize, true),
-				Utils.humanReadableByteCount(heapFreeSize, true),
+		logger.info(String.format("Statistics: heapSize=%s heapFreeSize=%s heapMaxSize=%s",
+				Utils.humanReadableByteCount(heapSize, true), Utils.humanReadableByteCount(heapFreeSize, true),
 				Utils.humanReadableByteCount(heapMaxSize, true)));
 
 		logger.info("#################### END TEST RESULT ####################");

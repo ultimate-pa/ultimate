@@ -4,3 +4,9 @@ Bundle-Name: UltimateRegressionTest
 Bundle-SymbolicName: UltimateRegressionTest
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Require-Bundle: 
+ Library-UltimateTest,
+ Library-log4j,
+ UltimateCore
+Import-Package: org.junit
+
