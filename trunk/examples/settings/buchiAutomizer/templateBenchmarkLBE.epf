@@ -27,3 +27,4 @@ file_export_version=3.0
 \!/instance/BlockEncoding=
 /instance/BlockEncoding/Enter\ Rating-Boundary\ (empty\ for\ LBE)\:=20
 /instance/BlockEncoding/Choose\ the\ strategy\ for\ the\ edge\ rating\:=DISJUNCTIVE_RATING
+/instance/TraceAbstraction/Determinization\ algorithm=EAGERPOST
