@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferen
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.AffineTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.LexicographicTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.MultiphaseTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.NestedTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.PiecewiseTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
@@ -544,6 +545,14 @@ public class LassoChecker {
 		rankingFunctionTemplates.add(new AffineTemplate());
 		
 		if (m_AllowNonLinearConstraints) {
+			rankingFunctionTemplates.add(new NestedTemplate(1));
+			rankingFunctionTemplates.add(new NestedTemplate(2));
+			rankingFunctionTemplates.add(new NestedTemplate(3));
+			rankingFunctionTemplates.add(new NestedTemplate(4));
+			rankingFunctionTemplates.add(new NestedTemplate(5));
+			rankingFunctionTemplates.add(new NestedTemplate(6));
+			rankingFunctionTemplates.add(new NestedTemplate(7));
+			
 			rankingFunctionTemplates.add(new MultiphaseTemplate(1));
 			rankingFunctionTemplates.add(new MultiphaseTemplate(2));
 			rankingFunctionTemplates.add(new MultiphaseTemplate(3));
