@@ -19,6 +19,8 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	 */
 	public static final boolean s_check_for_nontermination = true;
 	public static final boolean s_enable_affine_template = true;
+	public static final boolean s_enable_nested_template = true;
+	public static final int     s_nested_template_size = 2;
 	public static final boolean s_enable_multiphase_template = true;
 	public static final int     s_multiphase_template_size = 2;
 	public static final boolean s_enable_lex_template = true;
@@ -51,6 +53,10 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 			"Nonlinear SMT query for termination check";
 	public static final String LABEL_enable_affine_template =
 			"Affine template";
+	public static final String LABEL_enable_nested_template =
+			"Nested template";
+	public static final String LABEL_nested_template_size =
+			"Nested template size";
 	public static final String LABEL_enable_multiphase_template =
 			"Multiphase template";
 	public static final String LABEL_multiphase_template_size =
@@ -112,6 +118,14 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 						LABEL_enable_affine_template,
 						s_enable_affine_template,
 						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_enable_nested_template,
+						s_enable_nested_template,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Integer>(
+						LABEL_nested_template_size,
+						s_nested_template_size,
+						PreferenceType.Integer),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_enable_multiphase_template,
 						s_enable_multiphase_template,

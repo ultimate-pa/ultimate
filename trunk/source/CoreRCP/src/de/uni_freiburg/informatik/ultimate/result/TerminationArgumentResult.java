@@ -48,7 +48,7 @@ public class TerminationArgumentResult<P extends IElement> extends AbstractResul
 	
 	@Override
 	public String getShortDescription() {
-		return "Found " + m_RankingFunctionDescription;
+		return "Found " + m_RankingFunctionDescription + " ranking function";
 	}
 	
 	@Override
@@ -56,6 +56,7 @@ public class TerminationArgumentResult<P extends IElement> extends AbstractResul
 		StringBuilder sb =  new StringBuilder();
 		sb.append("Found a termination argument consisting of the ");
 		sb.append(m_RankingFunctionDescription);
+		sb.append(" ranking function");
 		sb.append(": [");
 		sb.append(ResultUtil.backtranslationWorkaround(
 				m_TranslatorSequence, m_RankingFunction));
