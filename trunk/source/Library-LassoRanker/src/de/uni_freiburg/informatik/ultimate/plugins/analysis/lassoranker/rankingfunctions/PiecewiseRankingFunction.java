@@ -49,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFu
 public class PiecewiseRankingFunction extends RankingFunction {
 	private static final long serialVersionUID = 1605612582853046558L;
 	
-	private List<AffineFunction> m_ranking;
-	private List<AffineFunction> m_predicates;
+	private final List<AffineFunction> m_ranking;
+	private final List<AffineFunction> m_predicates;
 	public final int pieces;
 	
 	public PiecewiseRankingFunction(List<AffineFunction> ranking, List<AffineFunction> predicates) {
@@ -60,6 +60,12 @@ public class PiecewiseRankingFunction extends RankingFunction {
 		assert(pieces > 0);
 		assert(pieces == predicates.size());
 	}
+	
+	@Override
+	public String getName() {
+		return m_ranking.size() + "-piece";
+	}
+
 	
 	@Override
 	public Set<BoogieVar> getVariables() {

@@ -92,6 +92,11 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 	}
 	
 	@Override
+	public String getName() {
+		return size + "-lex";
+	}
+	
+	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(size);

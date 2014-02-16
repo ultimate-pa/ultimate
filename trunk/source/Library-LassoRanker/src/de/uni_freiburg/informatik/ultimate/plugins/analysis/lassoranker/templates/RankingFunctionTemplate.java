@@ -80,6 +80,13 @@ public abstract class RankingFunctionTemplate {
 		assert(m_variables != null);
 	}
 	
+	
+	/**
+	 * Returns the name of the template (e.g., affine, 2-phase, or 3-nested)
+	 * 
+	 */
+	public abstract String getName();
+	
 	/**
 	 * Generate the Farkas' Lemma applications for this template
 	 * 

@@ -45,13 +45,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFu
 public class LexicographicRankingFunction extends RankingFunction {
 	private static final long serialVersionUID = -7426526617632086331L;
 	
-	private List<AffineFunction> m_ranking;
+	private final List<AffineFunction> m_ranking;
 	public final int lex;
 	
 	public LexicographicRankingFunction(List<AffineFunction> ranking) {
 		m_ranking = ranking;
 		lex = ranking.size();
 		assert(lex > 0);
+	}
+	
+	@Override
+	public String getName() {
+		return m_ranking.size() + "-lex";
 	}
 	
 	public List<AffineFunction> getComponents() {

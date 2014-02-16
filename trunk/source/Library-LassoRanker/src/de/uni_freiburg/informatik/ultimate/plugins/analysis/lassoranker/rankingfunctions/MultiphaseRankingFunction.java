@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFu
 public class MultiphaseRankingFunction extends RankingFunction {
 	private static final long serialVersionUID = 5376322220596462295L;
 	
-	private List<AffineFunction> m_ranking;
+	private final List<AffineFunction> m_ranking;
 	public final int phases;
 	
 	public MultiphaseRankingFunction(List<AffineFunction> ranking) {
@@ -56,6 +56,12 @@ public class MultiphaseRankingFunction extends RankingFunction {
 		phases = ranking.size();
 		assert(phases > 0);
 	}
+	
+	@Override
+	public String getName() {
+		return m_ranking.size() + "-phase";
+	}
+
 	
 	@Override
 	public Set<BoogieVar> getVariables() {

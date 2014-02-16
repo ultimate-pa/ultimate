@@ -99,6 +99,11 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 	}
 	
 	@Override
+	public String getName() {
+		return size + "-piece";
+	}
+	
+	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(size);

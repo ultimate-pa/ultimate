@@ -52,6 +52,11 @@ public class LinearRankingFunction extends RankingFunction {
 	}
 	
 	@Override
+	public String getName() {
+		return "affine";
+	}
+	
+	@Override
 	public Set<BoogieVar> getVariables() {
 		return Collections.unmodifiableSet(m_ranking.getVariables());
 	}

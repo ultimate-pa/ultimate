@@ -91,6 +91,11 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 	}
 	
 	@Override
+	public String getName() {
+		return size + "-phase";
+	}
+	
+	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(size);
@@ -147,7 +152,6 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 			li.setStrict(true);
 			li.needs_motzkin_coefficient = false;
 			disjunction.add(li);
-			
 			for (int j = i - 1; j >= 0; --j) {
 				LinearInequality li3 = m_fgens[j].generate(inVars);
 				li3.setStrict(true);

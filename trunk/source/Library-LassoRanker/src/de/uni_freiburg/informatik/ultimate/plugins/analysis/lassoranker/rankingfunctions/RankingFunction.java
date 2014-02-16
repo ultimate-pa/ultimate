@@ -48,6 +48,11 @@ public abstract class RankingFunction implements Serializable {
 	private static final long serialVersionUID = 4774387985755366720L;
 	
 	/**
+	 * @return Name of this ranking function (e.g., affine, 2-phase, 3-nesting)
+	 */
+	public abstract String getName();
+	
+	/**
 	 * @return the set of all variables occurring in the ranking function
 	 */
 	public abstract Set<BoogieVar> getVariables();

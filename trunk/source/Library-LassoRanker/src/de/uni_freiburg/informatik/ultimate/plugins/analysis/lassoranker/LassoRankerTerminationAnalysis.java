@@ -434,7 +434,7 @@ public class LassoRankerTerminationAnalysis {
 	public TerminationArgument tryTemplate(RankingFunctionTemplate template)
 			throws SMTLIBException, TermException {
 		// ignore stem
-		s_Logger.info("Using template '" + template.getClass().getSimpleName()
+		s_Logger.info("Using template '" + template.getName()
 				+ "'.");
 		s_Logger.info("Template has degree " + template.getDegree() + ".");
 		s_Logger.debug(template);
@@ -466,7 +466,7 @@ public class LassoRankerTerminationAnalysis {
 		sb.append("BenchmarkResult: ");
 		sb.append(constraintSat);
 		sb.append(" for template ");
-		sb.append(template.getClass().getSimpleName());
+		sb.append(template.getName());
 		sb.append(" with degree ");
 		sb.append(template.getDegree());
 		sb.append(". ");
