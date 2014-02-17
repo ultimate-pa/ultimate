@@ -1,4 +1,4 @@
-//#rTerminationDerivable
+//#rTermination
 /*
  * Date: 2012-08-10
  * Author: leike@informatik.uni-freiburg.de
@@ -9,6 +9,9 @@
  * f_2(c, x, y, z, w) = y
  * f_3(c, x, y, z, w) = x
  * provided with the supporting invariant c > 0.
+ *
+ * FourPhase is not set to 'TerminationDerivable' because we don't let the
+ * test cases run with the 4-phase template.
  */
 
 procedure FourPhase(c: int) returns (x: int, y: int, z: int, w: int)

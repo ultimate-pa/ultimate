@@ -1,4 +1,4 @@
-//#rTermination
+//#rIgnore
 /*
  * Date: 07.10.2013
  * Author: leike@informatik.uni-freiburg.de
@@ -6,6 +6,8 @@
  * Amir M. Ben-Amram. Size-change termination, monotonicity constraints and
  * ranking functions. Logical Methods in Computer Science, 6(3), 2010.
  * Example 2.3
+ *
+ * Note: solver takes too long; should be rTermination
  */
 
 procedure main() returns (x: int, y: int, z: int) {

@@ -1,4 +1,4 @@
-//#rTerminationDerivable
+//#rTermination
 /*
  * Date: 10.07.2013
  * Author: heizmann@informatik.uni-freiburg.de

@@ -20,8 +20,8 @@
 procedure main() returns ()
 {
 var a : real;
-  a := 1;
-  while (a >= -1) {
-    a := -a;
+  a := 1.0;
+  while (a >= (0.0 - 1.0)) {
+    a := 0.0 - a;
   }
 }

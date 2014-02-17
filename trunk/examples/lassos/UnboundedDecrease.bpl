@@ -1,4 +1,4 @@
-//#rTerminationDeriveable
+//#rTerminationDerivable
 /*
  * Example that shows that the decrease of the ranking function may be 
  * unbounded. (y has no upper bound in this example)

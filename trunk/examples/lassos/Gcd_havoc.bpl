@@ -1,4 +1,4 @@
-//#rTermination
+//#rTerminationDerivable
 /*
  * Date: 2012-05-09
  *

@@ -1,10 +1,10 @@
-//#rTermination
+//#rNonTerminationDerivable
 /*
  * Date: 2012-02-12
  * Author: leike@informatik.uni-freiburg.de
  *
  * Does not terminate for 0 <= x <= 10
- * due to rounding issues with integer division.
+ * due to rounding in integer division.
  */
 
 procedure Division(x: int) returns (y: int)
