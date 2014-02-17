@@ -113,7 +113,8 @@
 					</systemProperties>
 
 					<!-- Use this for global timeouts per class -->
-					<forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds>
+					<!-- <forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds> -->
+					
 					<includes>
 						<include>**/*.java</include>
 					</includes>
