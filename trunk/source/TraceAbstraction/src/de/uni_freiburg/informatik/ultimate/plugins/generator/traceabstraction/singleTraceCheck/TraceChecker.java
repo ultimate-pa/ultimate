@@ -405,7 +405,7 @@ public class TraceChecker {
 	 */
 	
 	
-public void computeInterpolants(Set<Integer> interpolatedPositions,
+	public void computeInterpolants(Set<Integer> interpolatedPositions,
 										PredicateUnifier predicateUnifier, 
 										INTERPOLATION interpolation) {
 		assert m_PredicateUnifier == null;
@@ -469,8 +469,20 @@ public void computeInterpolants(Set<Integer> interpolatedPositions,
 	}
 
 	public IPredicate[] getInterpolants() {
+		if (m_Interpolants == null) {
+			throw new UnsupportedOperationException(
+					"Interpolants have not yet been computed");
+		}
 		assert m_Interpolants.length == m_Trace.length()-1;
 		return m_Interpolants;
+	}
+	
+	public PredicateUnifier getPredicateUnifier() {
+		if (m_Interpolants == null) {
+			throw new UnsupportedOperationException(
+				"PredicateUnifier only available after computation of interpolants");
+		}
+		return m_PredicateUnifier;
 	}
 	
 	public TraceAbstractionBenchmarks getTraceAbstractionBenchmarks() {

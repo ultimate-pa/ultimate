@@ -16,7 +16,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ComplementDeterministicNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
@@ -33,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.BestApproximationDeterminizer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.EagerInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.SelfloopDeterminizer;
@@ -408,6 +411,23 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				} else {
 					EagerInterpolantAutomaton determinized = 
 							new EagerInterpolantAutomaton(edgeChecker, m_InterpolAutomaton);
+					PowersetDeterminizer<CodeBlock, IPredicate> psd2 = 
+							new PowersetDeterminizer<CodeBlock, IPredicate>(determinized, true);
+					diff = new Difference<CodeBlock, IPredicate>(
+							oldAbstraction, determinized, psd2, 
+							m_StateFactoryForRefinement,
+							explointSigmaStarConcatOfIA);
+					determinized.finishConstruction();
+					assert(edgeChecker.isAssertionStackEmpty());
+				}
+				break;
+			case CODENAME_PROJECT_BELLWALD:
+				if (m_Pref.differenceSenwa()) {
+					throw new UnsupportedOperationException();
+				} else {
+					DeterministicInterpolantAutomaton determinized = 
+							new DeterministicInterpolantAutomaton(m_SmtManager, edgeChecker, oldAbstraction, m_TraceChecker);
+//					ComplementDeterministicNwa<CodeBlock, IPredicate> cdnwa = new ComplementDeterministicNwa<>(dia);
 					PowersetDeterminizer<CodeBlock, IPredicate> psd2 = 
 							new PowersetDeterminizer<CodeBlock, IPredicate>(determinized, true);
 					diff = new Difference<CodeBlock, IPredicate>(

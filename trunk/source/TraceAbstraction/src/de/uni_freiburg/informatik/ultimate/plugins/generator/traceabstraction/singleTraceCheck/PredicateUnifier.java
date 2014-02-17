@@ -69,6 +69,10 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 			}
 		}
 		
+		public IPredicate getOrConstructPredicate(TermVarsProc tvp) {
+			return getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures());
+		}
+		
 		/**
 		 * Get the predicate for term. If there is not yet a predicate for term,
 		 * construct the predicate using vars.
@@ -232,7 +236,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 			Term[] conjuncts = PartialQuantifierElimination.getConjuncts(cnf);
 			for (Term conjunct : conjuncts) {
 				TermVarsProc tvp = m_SmtManager.computeTermVarsProc(conjunct);
-				IPredicate predicate = getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures());
+				IPredicate predicate = getOrConstructPredicate(tvp);
 				result.add(predicate);
 			}
 			return result;
