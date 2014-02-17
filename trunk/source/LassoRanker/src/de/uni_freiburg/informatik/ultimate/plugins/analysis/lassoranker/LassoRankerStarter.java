@@ -170,19 +170,19 @@ public class LassoRankerStarter {
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_multiphase_template)) {
 			int maxSize = store.getInt(PreferencesInitializer.LABEL_multiphase_template_size);
 			for (int i = 2; i <= maxSize; i++) {
-				templates.add(new NestedTemplate(i));
+				templates.add(new MultiphaseTemplate(i));
 			}
 		}
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_piecewise_template)) {
 			int maxSize = store.getInt(PreferencesInitializer.LABEL_piecewise_template_size);
 			for (int i = 2; i <= maxSize; i++) {
-				templates.add(new NestedTemplate(i));
+				templates.add(new PiecewiseTemplate(i));
 			}
 		}
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_lex_template)) {
 			int maxSize = store.getInt(PreferencesInitializer.LABEL_lex_template_size);
 			for (int i = 2; i <= maxSize; i++) {
-				templates.add(new NestedTemplate(i));
+				templates.add(new LexicographicTemplate(i));
 			}
 		}
 		return templates.toArray(new RankingFunctionTemplate[0]);
@@ -251,6 +251,9 @@ public class LassoRankerStarter {
 		// check ranking function
 		boolean rfCorrect = bspm.checkRankDecrease(loopNw, 
 				m_RootAnnot.getModGlobVarManager());
+		if (siCorrect && rfCorrect) {
+			s_Logger.info("Termination argument has been successfully verified.");
+		}
 		return siCorrect && rfCorrect;
 	}
 	
