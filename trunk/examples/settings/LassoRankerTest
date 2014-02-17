@@ -9,6 +9,7 @@ file_export_version=3.0
 \!/instance/RCFGBuilder=
 @RCFGBuilder=0.0.1
 #Fri Dec 20 10:46:28 CET 2013
+/instance/LassoRanker/SMT\ solver\ command=z3 -smt2 -in SMTLIB2_COMPLIANT\=true -t\:60000
 file_export_version=3.0
 @LassoRanker=0.0.1
 \!/instance/LassoRanker=
