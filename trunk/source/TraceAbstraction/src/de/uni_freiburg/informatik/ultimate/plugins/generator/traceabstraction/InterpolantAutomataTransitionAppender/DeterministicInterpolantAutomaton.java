@@ -382,7 +382,7 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 			if ((resPred == succCand) &&
 				(m_EdgeChecker.sdecReturnSelfloopPre(resPred, (Return) letter) == LBool.UNSAT)) {
 				return true;
-			} else if ((resPred == succCand) &&
+			} else if ((resHier == succCand) &&
 					(m_EdgeChecker.sdecReturnSelfloopHier(resHier, (Return) letter) == LBool.UNSAT)) {
 				return true;
 			} else {
