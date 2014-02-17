@@ -296,45 +296,45 @@ do
 	fi
 
 	if [ "$BUG_24" ]; then 
-	    echo "!Warning! AssertionError - Probably Bug #24";
+	    echo "!Warning! AssertionError - Probably Bug #24 \n";
 	    continue;
 	fi
 
 
 	if [ "$EXCEPTION"  ]; then
 	    if [ "$PRELUDE_ERROR" ]; then
-		echo "!Warning! Exception thrown - Undeclared variable - Forgotten to load VCC Prelude?"
+		echo "!Warning! Exception thrown - Undeclared variable - Forgotten to load VCC Prelude? \n"
 		continue;
 	    fi
 	    if [ "$TYPE_ERROR" ]; then
-		echo "!Warning! Exception thrown - Type Error - Forgotten to load VCC Prelude?"
+		echo "!Warning! Exception thrown - Type Error - Forgotten to load VCC Prelude? \n"
 		continue;
 	    fi
 	    if [ "$BUG_14" ]; then
-		echo "!Warning! Exception thrown - Probably Bug #14"
+		echo "!Warning! Exception thrown - Probably Bug #14 \n"
 		continue;
 	    fi
 	    if [ "$ARRAY_ERROR" ]; then
-		echo "!Warning! Exception thrown - $ARRAY_ERROR"
+		echo "!Warning! Exception thrown - $ARRAY_ERROR \n"
 		continue;
 	    fi
 	    if [ "$OOM_HEAP" ]; then
-		echo "!Warning! Exception thrown - $OOM_HEAP"
+		echo "!Warning! Exception thrown - $OOM_HEAP \n"
 		continue;
 	    fi
 	    if [ "$OOM_GC" ]; then
-		echo "!Warning! Exception thrown - $OOM_GC"
+		echo "!Warning! Exception thrown - $OOM_GC \n"
 		continue;
 	    fi
-	    echo "!!!FAIL!!! Exception thrown";
+	    echo "!!!FAIL!!! Exception thrown \n";
 	    continue;
 	else 
 	    if [ "$OOM_HEAP" ]; then
-		echo "!Warning! $OOM_HEAP"
+		echo "!Warning! $OOM_HEAP \n"
 		continue;
 	    fi
 	    if [ "$OOM_GC" ]; then
-		echo "!Warning! $OOM_GC"
+		echo "!Warning! $OOM_GC \n"
 		continue;
 	    fi
 	fi 
@@ -447,31 +447,31 @@ do
 
 	if [ "$RESULT_UNKNOWN" ]; then
 	    printf "!Warning! "
-	    printf "TraceAbstraction terminated after $RUNTIME and says: Insufficient iterations."
+	    printf "TraceAbstraction terminated after $RUNTIME and says: Insufficient iterations. \n"
 	    continue;
 	fi
 	
 	if [ "$RESULT_PROVEN_TERMINATION" ]; then
         printf "Buchi Automizer terminated after $TOTALRUNTIME and says: Termination proven \n"
-        printf "$RESULT_PROVEN_TERMINATION"
+        printf "$RESULT_PROVEN_TERMINATION \n"
         continue;
     fi
     
      if [ "$RESULT_FALSE_TERMINATION" ]; then
         printf "Buchi Automizer terminated after $TOTALRUNTIME and says: Nontermination possible \n"
-        printf "$RESULT_FALSE_TERMINATION"
+        printf "$RESULT_FALSE_TERMINATION \n"
         continue;
     fi
     
     if [ "$RESULT_UNKNOWN_TERMINATION" ]; then
         printf "Buchi Automizer terminated after $TOTALRUNTIME and says: Unable to decide termination \n"
-        printf "$RESULT_UNKNOWN_TERMINATION"
+        printf "$RESULT_UNKNOWN_TERMINATION \n"
         continue;
     fi
 
 	if [ "$RESULT_NORESULT" ]; then
 	    printf "!Warning! "
-	    printf "Ultimate Automizer terminated after $RUNTIME and says: No Result."
+	    printf "Ultimate Automizer terminated after $RUNTIME and says: No Result. \n"
 	    
 	    continue;
 	fi
@@ -481,9 +481,9 @@ do
 
 
 	if [ "$INITIALIZED" ]; then
-	      printf "!!!FAIL!!! started Ultimate, received no answer after $timeout seconds"
+	      printf "!!!FAIL!!! started Ultimate, received no answer after $timeout seconds \n"
 	    else
-	      printf "!!!FAIL!!! unknown program behaviour"
+	      printf "!!!FAIL!!! unknown program behaviour \n"
 	fi
 
     done;
