@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: UltimateRegressionTest
-Bundle-SymbolicName: UltimateRegressionTest
+Bundle-SymbolicName: UltimateRegressionTest;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Require-Bundle: UltimateCore,
@@ -21,3 +21,4 @@ Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,
  org.junit.runners
+Bundle-ActivationPolicy: lazy
