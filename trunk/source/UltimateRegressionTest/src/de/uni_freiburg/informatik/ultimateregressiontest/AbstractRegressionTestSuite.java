@@ -18,7 +18,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	public AbstractRegressionTestSuite() {
 		mTimeout = 1000;
-		mFilterRegex = "*";
+		mFilterRegex = ".*";
 	}
 
 	@Override
