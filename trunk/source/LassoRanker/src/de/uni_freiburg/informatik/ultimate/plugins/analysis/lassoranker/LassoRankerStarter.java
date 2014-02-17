@@ -64,7 +64,7 @@ public class LassoRankerStarter {
 		UltimatePreferenceStore store =
 				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		Preferences preferences = PreferencesInitializer.getGuiPreferences();
-		s_Logger.info("Preferences:\n" + preferences.show());
+		s_Logger.info("Preferences:\n" + preferences.toString());
 		
 		LassoExtractorNaive lassoExtractor = new LassoExtractorNaive(rootNode);
 		if (!lassoExtractor.wasLassoFound()) {

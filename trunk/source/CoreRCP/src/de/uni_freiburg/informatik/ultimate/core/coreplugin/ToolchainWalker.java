@@ -144,7 +144,7 @@ public class ToolchainWalker {
 			if (dt != null) 
 				processDropmodelStmt(dt);
 			
-		}		
+		}
 	}
 	
 	/**
