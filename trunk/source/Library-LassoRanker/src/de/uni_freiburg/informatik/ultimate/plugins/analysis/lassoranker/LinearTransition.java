@@ -70,6 +70,27 @@ public class LinearTransition {
 	}
 	
 	/**
+	 * @return the maximal transition (0 <= 0)
+	 */
+	public static LinearTransition getTranstionTrue() {
+		LinearInequality eqTrue = new LinearInequality();
+		return new LinearTransition(
+				Collections.singletonList(Collections.singletonList(eqTrue))
+		);
+	}
+	
+	/**
+	 * @return the empty transition (0 < 0)
+	 */
+	public static LinearTransition getTranstionFalse() {
+		LinearInequality eqFalse = new LinearInequality();
+		eqFalse.setStrict(true);
+		return new LinearTransition(
+				Collections.singletonList(Collections.singletonList(eqFalse))
+		);
+	}
+	
+	/**
 	 * Convert a term into a list of clauses
 	 * @param term a term in disjunctive normal form
 	 * @return list of clauses

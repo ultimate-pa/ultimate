@@ -117,6 +117,10 @@ class TerminationArgumentSynthesizer {
 		
 		m_stem_transition = stem_transition;
 		m_stem = stem;
+		if (m_stem == null) {
+			m_stem = LinearTransition.getTranstionTrue();
+		}
+		
 		m_loop_transition = loop_transition;
 		m_loop = loop;
 	}
@@ -305,6 +309,12 @@ class TerminationArgumentSynthesizer {
 			m_preferences.num_strict_invariants = 0;
 			m_preferences.num_non_strict_invariants = 0;
 		} */
+		if (m_stem_transition == null) {
+			s_Logger.info("There is no stem transition; "
+					+ "disabling supporting invariant generation.");
+			m_preferences.num_strict_invariants = 0;
+			m_preferences.num_non_strict_invariants = 0;
+		}
 		
 		// List of all used supporting invariant generators
 		m_si_generators = new ArrayList<SupportingInvariantGenerator>();
