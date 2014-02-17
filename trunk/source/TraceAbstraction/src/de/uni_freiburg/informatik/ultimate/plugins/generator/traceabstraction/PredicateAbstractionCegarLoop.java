@@ -63,19 +63,20 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 		IPredicate[] predicates = pg.extractPredicates((NestedWord<CodeBlock>) m_Counterexample.getWord());
 
 		NestedWordAutomaton<CodeBlock, IPredicate> abstraction = (NestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;
-		m_InterpolAutomaton = 
+		NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton = 
 				new NestedWordAutomaton<CodeBlock, IPredicate>(
 						abstraction.getInternalAlphabet(),
 						abstraction.getCallAlphabet(),
 						abstraction.getReturnAlphabet(),
 						abstraction.getStateFactory());
 		IPredicate trueTerm = m_SmtManager.newTruePredicate(); 
-		m_InterpolAutomaton.addState(true, false, trueTerm);
+		interpolantAutomaton.addState(true, false, trueTerm);
 		IPredicate falseTerm = m_SmtManager.newFalsePredicate();
-		m_InterpolAutomaton.addState(false, true, falseTerm);
+		interpolantAutomaton.addState(false, true, falseTerm);
 		for (IPredicate sf : predicates) {
-			m_InterpolAutomaton.addState(false, false, sf);
+			interpolantAutomaton.addState(false, false, sf);
 		}
+		m_InterpolAutomaton = interpolantAutomaton;
 	}
 	
 	

@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
@@ -29,7 +30,7 @@ public class SelfloopDeterminizer
 	SmtManager m_SmtManager;
 	PowersetDeterminizer<CodeBlock, IPredicate> m_PowersetDeterminizer;
 	
-	INestedWordAutomatonOldApi<CodeBlock, IPredicate> m_InterpolantAutomaton;
+	INestedWordAutomaton<CodeBlock, IPredicate> m_InterpolantAutomaton;
 	private final StateFactory<IPredicate> m_StateFactory;
 	IPredicate m_InterpolantAutomatonFinalState;
 	
@@ -46,16 +47,18 @@ public class SelfloopDeterminizer
 	
 	public SelfloopDeterminizer(SmtManager mSmtManager,
 			TAPreferences taPreferences,
-			INestedWordAutomatonOldApi<CodeBlock, IPredicate> interpolantAutom) {
+			INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutom) {
 		super();
 		m_SmtManager = mSmtManager;
 		m_InterpolantAutomaton = interpolantAutom;
 		m_StateFactory = interpolantAutom.getStateFactory();
 		m_PowersetDeterminizer = 
 			new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolantAutomaton, true);
-		for (IPredicate state : m_InterpolantAutomaton.getFinalStates()) {
+		for (IPredicate state : m_InterpolantAutomaton.getStates()) {
 			if (m_InterpolantAutomatonFinalState == null) {
-				m_InterpolantAutomatonFinalState = state;
+				if (m_InterpolantAutomaton.isFinal(state)) {
+					m_InterpolantAutomatonFinalState = state;
+				}
 			}
 			else {
 				throw new IllegalArgumentException("Interpolant Automaton" +

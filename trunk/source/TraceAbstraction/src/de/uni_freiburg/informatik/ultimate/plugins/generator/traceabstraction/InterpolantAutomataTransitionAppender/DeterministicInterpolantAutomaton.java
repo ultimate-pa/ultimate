@@ -42,7 +42,7 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 	
 	private final IPredicate m_IaFalseState;
 	private final IPredicate m_IaTrueState;
-	private List<IPredicate> m_NonTrivialPredicates;
+	private Set<IPredicate> m_NonTrivialPredicates;
 
 	private boolean m_UseLazyEdgeChecks;
 	
@@ -66,7 +66,7 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 		m_InSucComp = new InternalSuccessorComputation();
 		m_CaSucComp = new CallSuccessorComputation();
 		m_ReSucComp = new ReturnSuccessorComputation();
-		m_NonTrivialPredicates = new ArrayList<IPredicate>();
+		m_NonTrivialPredicates = new HashSet<IPredicate>();
 		for (IPredicate pred : traceChecker.getInterpolants()) {
 			if (pred != m_IaTrueState && pred != m_IaFalseState) {
 				m_NonTrivialPredicates.add(pred);
