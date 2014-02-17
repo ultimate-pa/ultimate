@@ -38,11 +38,13 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Senwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.StateDeterminizerCache;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceSadd;
@@ -135,14 +137,22 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	
 	
 	public DifferenceSenwa(
-			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
-			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend,
+			INestedWordAutomaton<LETTER,STATE> minuend,
+			INestedWordAutomaton<LETTER,STATE> subtrahend,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer,
 			boolean removeDeadEndsImmediately)
 					throws OperationCanceledException {
 		contentFactory = minuend.getStateFactory();
-		this.minuend = minuend;
-		this.subtrahend = subtrahend;
+		if (minuend instanceof INestedWordAutomatonOldApi) {
+			this.minuend = (INestedWordAutomatonOldApi<LETTER, STATE>) minuend;
+		} else {
+			this.minuend = (new RemoveUnreachable<LETTER,STATE>(minuend)).getResult();
+		}
+		if (subtrahend instanceof INestedWordAutomatonOldApi) {
+			this.subtrahend = (INestedWordAutomatonOldApi<LETTER, STATE>) minuend;
+		} else {
+			this.subtrahend = (new RemoveUnreachable<LETTER,STATE>(minuend)).getResult();
+		}
 		s_Logger.info(startMessage());
 		
 		

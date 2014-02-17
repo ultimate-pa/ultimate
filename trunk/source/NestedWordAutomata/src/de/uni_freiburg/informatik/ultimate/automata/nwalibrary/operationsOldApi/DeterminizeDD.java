@@ -40,11 +40,13 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
@@ -54,7 +56,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 	protected static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
-	protected INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
+	protected INestedWordAutomaton<LETTER,STATE> m_Operand;
 	protected IStateDeterminizer<LETTER,STATE> stateDeterminizer;
 	protected StateFactory<STATE> contentFactory;
 	
@@ -95,7 +97,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 	
 	
 	
-	public DeterminizeDD(INestedWordAutomatonOldApi<LETTER,STATE> input, 
+	public DeterminizeDD(INestedWordAutomaton<LETTER,STATE> input, 
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer) 
 											throws OperationCanceledException {
 		this.contentFactory = input.getStateFactory();
@@ -245,7 +247,8 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 		boolean correct = true;
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
 			s_Logger.info("Testing correctness of determinization");
-			INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = (new DeterminizeSadd<LETTER,STATE>(m_Operand)).getResult();
+			INestedWordAutomatonOldApi<LETTER, STATE> operandOld = (new RemoveUnreachable(m_Operand)).getResult();
+			INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = (new DeterminizeSadd<LETTER,STATE>(operandOld)).getResult();
 			correct &= (ResultChecker.nwaLanguageInclusion(resultSadd,m_TraversedNwa, stateFactory) == null);
 			correct &= (ResultChecker.nwaLanguageInclusion(m_TraversedNwa,resultSadd, stateFactory) == null);
 			s_Logger.info("Finished testing correctness of determinization");
