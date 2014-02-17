@@ -128,7 +128,7 @@ public class Preferences implements Serializable {
 	/**
 	 * Build a string descriptions of the current preferences
 	 */
-	public String show() {
+	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Number of strict supporting invariants: ");
 		sb.append(this.num_strict_invariants);

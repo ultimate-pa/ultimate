@@ -77,7 +77,7 @@ public class AffineTemplate extends RankingFunctionTemplate {
 	@Override
 	public String toString() {
 		return "Affine template:\n"
-			+ "   delta > 0\n/\\ f(x) >= 0\n/\\ f(x) >= f(x') + delta";
+			+ "   delta > 0\n/\\ f(x) > 0\n/\\ f(x) > f(x') + delta";
 	}
 	
 	@Override

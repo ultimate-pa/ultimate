@@ -449,8 +449,9 @@ public class LassoRankerTerminationAnalysis {
 		s_Logger.info(benchmarkScriptMessage(constraintSat, template));
 		if (constraintSat == LBool.SAT) {
 			s_Logger.info("Proved termination.");
-			s_Logger.info(synthesizer.getArgument());
-			Term[] lexTerm = synthesizer.getArgument().getRankingFunction().asLexTerm(m_old_script);
+			TerminationArgument arg = synthesizer.getArgument();
+			s_Logger.info(arg);
+			Term[] lexTerm = arg.getRankingFunction().asLexTerm(m_old_script);
 			for (Term t : lexTerm) {
 				s_Logger.debug(SMTPrettyPrinter.print(t));
 			}
@@ -458,7 +459,6 @@ public class LassoRankerTerminationAnalysis {
 		SMTSolver.resetScript(m_script, m_preferences.annotate_terms);
 		return constraintSat == LBool.SAT ? synthesizer.getArgument() : null;
 	}
-	
 	
 	private String benchmarkScriptMessage(LBool constraintSat,
 			RankingFunctionTemplate template) {
@@ -473,7 +473,7 @@ public class LassoRankerTerminationAnalysis {
 		sb.append(getStatistics());
 		return sb.toString();
 	}
-
+	
 	/**
 	 * Perform cleanup actions
 	 */

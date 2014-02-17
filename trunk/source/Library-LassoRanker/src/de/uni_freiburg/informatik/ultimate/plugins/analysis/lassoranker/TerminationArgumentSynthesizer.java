@@ -63,11 +63,11 @@ class TerminationArgumentSynthesizer {
 	/**
 	 * SMT script for the template instance
 	 */
-	private Script m_script;
+	private final Script m_script;
 	
 	// Stem and loop transitions for the linear lasso program
-	private TransFormula m_stem_transition;
-	private TransFormula m_loop_transition;
+	private final TransFormula m_stem_transition;
+	private final TransFormula m_loop_transition;
 	
 	// Stem and loop transitions as linear inequalities in DNF
 	private LinearTransition m_stem;
@@ -298,12 +298,13 @@ class TerminationArgumentSynthesizer {
 		template.init(m_script, rankVars);
 		s_Logger.debug("Variables for ranking functions: " + rankVars);
 		s_Logger.debug("Variables for supporting invariants: " + siVars);
+/*		// The following code makes examples like StemUnsat.bpl fail
 		if (siVars.isEmpty()) {
 			s_Logger.info("There is no variables for invariants; "
 					+ "disabling supporting invariant generation.");
 			m_preferences.num_strict_invariants = 0;
 			m_preferences.num_non_strict_invariants = 0;
-		}
+		} */
 		
 		// List of all used supporting invariant generators
 		m_si_generators = new ArrayList<SupportingInvariantGenerator>();
