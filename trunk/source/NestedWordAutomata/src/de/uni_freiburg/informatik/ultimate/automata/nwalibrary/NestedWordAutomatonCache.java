@@ -129,7 +129,7 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 		return this.m_StateFactory;
 	}
 	
-	boolean contains(STATE state) {
+	public boolean contains(STATE state) {
 		return m_InternalOut.containsKey(state);
 	}
 	
