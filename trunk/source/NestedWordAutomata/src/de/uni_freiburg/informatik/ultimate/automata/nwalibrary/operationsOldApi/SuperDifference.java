@@ -174,7 +174,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 				m_minuend.isFinal(r) && !m_subtrahend.isFinal(s), q);
 
 		// get the epimorph state
-		STATE h_r = m_epimorphism.GetMapping(r);
+		STATE h_r = m_epimorphism.getMapping(r);
 
 		// check if there exists a mapping to r in the epimorphism
 		if (h_r == s) {
@@ -187,7 +187,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 					// the goal state for the edges
 					STATE q2 = null;
 					// check if there exists a mapping to r2 in the epimorphism
-					STATE h_r2 = m_epimorphism.GetMapping(r2);
+					STATE h_r2 = m_epimorphism.getMapping(r2);
 					if (h_r2 != null
 							&& ((Collection) m_subtrahend.succInternal(h_r, label)).contains(
 									h_r2)) {

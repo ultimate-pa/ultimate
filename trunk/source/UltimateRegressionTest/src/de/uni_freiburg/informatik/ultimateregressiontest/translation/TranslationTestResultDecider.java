@@ -1,8 +1,6 @@
 package de.uni_freiburg.informatik.ultimateregressiontest.translation;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -14,8 +12,6 @@ import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.Path;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
