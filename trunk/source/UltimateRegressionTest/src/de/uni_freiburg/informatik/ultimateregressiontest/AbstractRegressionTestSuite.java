@@ -15,10 +15,12 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	protected long mTimeout;
 	protected String mRootFolder;
 	protected String mFilterRegex;
+	protected String[] mFiletypesToConsider;
 
 	public AbstractRegressionTestSuite() {
 		mTimeout = 1000;
 		mFilterRegex = ".*";
+		mFiletypesToConsider = new String[] { ".c", ".bpl" };
 	}
 
 	@Override
@@ -49,13 +51,8 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	private Collection<Pair> getRunConfiguration() {
 		ArrayList<Pair> rtr = new ArrayList<>();
 		
-		if(mRootFolder == null){
-			return rtr;
-		}
-		
-		File root = new File(mRootFolder);
-		
-		if(!root.exists() || !root.isDirectory()){
+		File root = getRootFolder(mRootFolder);
+		if(root == null){
 			return rtr;
 		}
 		
@@ -80,9 +77,27 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 		return rtr;
 	}
+	
+	/***
+	 * 
+	 * @return null if the path to the folder is invalid, a File representing the path otherwise
+	 */
+	protected static File getRootFolder(String path){
+		if(path == null){
+			return null;
+		}
+		
+		File root = new File(path);
+		
+		if(!root.exists() || !root.isDirectory()){
+			return null;
+		}
+		
+		return root;
+	}
 
 	protected Collection<File> getInputFiles(File rootFolder) {
-		return Util.getFiles(rootFolder, new String[] { ".c", ".bpl" });
+		return Util.getFiles(rootFolder, mFiletypesToConsider);
 	}
 
 	protected abstract ITestResultDecider getTestResultDecider(File inputFile);

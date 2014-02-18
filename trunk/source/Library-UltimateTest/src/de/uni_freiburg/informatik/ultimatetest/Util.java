@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimatetest;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -17,6 +20,30 @@ import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 public class Util {
 
+	
+	public static String readFile(File file) throws IOException{
+		return readFile(file.getAbsolutePath());
+	}
+	
+	public static String readFile(String filename) throws IOException
+	{
+		BufferedReader br = new BufferedReader(new FileReader(filename));
+	    try {
+	        StringBuilder sb = new StringBuilder();
+	        String line = br.readLine();
+
+	        while (line != null) {
+	            sb.append(line);
+	            sb.append("\n");
+	            line = br.readLine();
+	        }
+	        return sb.toString();
+	    } finally {
+	        br.close();
+	    }
+	}
+	
+	
 	public static String generateLogFilename(File inputFile, String description) {
 
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");

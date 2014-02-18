@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimateregressiontest.generic;
 
 import java.io.File;
+
+import org.junit.Ignore;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestSuite;
@@ -8,6 +10,7 @@ import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.Util;
 
 
+@Ignore
 public class RegressionTestSuite extends AbstractRegressionTestSuite {
 
 	public RegressionTestSuite(){
