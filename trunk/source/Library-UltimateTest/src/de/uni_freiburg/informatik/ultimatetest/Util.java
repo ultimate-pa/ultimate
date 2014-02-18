@@ -20,30 +20,27 @@ import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 public class Util {
 
-	
-	public static String readFile(File file) throws IOException{
+	public static String readFile(File file) throws IOException {
 		return readFile(file.getAbsolutePath());
 	}
-	
-	public static String readFile(String filename) throws IOException
-	{
-		BufferedReader br = new BufferedReader(new FileReader(filename));
-	    try {
-	        StringBuilder sb = new StringBuilder();
-	        String line = br.readLine();
 
-	        while (line != null) {
-	            sb.append(line);
-	            sb.append("\n");
-	            line = br.readLine();
-	        }
-	        return sb.toString();
-	    } finally {
-	        br.close();
-	    }
+	public static String readFile(String filename) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(filename));
+		try {
+			StringBuilder sb = new StringBuilder();
+			String line = br.readLine();
+
+			while (line != null) {
+				sb.append(line);
+				sb.append("\n");
+				line = br.readLine();
+			}
+			return sb.toString();
+		} finally {
+			br.close();
+		}
 	}
-	
-	
+
 	public static String generateLogFilename(File inputFile, String description) {
 
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
@@ -141,7 +138,6 @@ public class Util {
 	}
 
 	public static Collection<File> getFiles(File root, String[] endings) {
-
 		ArrayList<File> rtr = new ArrayList<File>();
 
 		if (root.isFile()) {
@@ -186,7 +182,6 @@ public class Util {
 	 * @return
 	 */
 	public static Collection<File> getFilesRegex(File root, String[] regex) {
-
 		ArrayList<File> rtr = new ArrayList<File>();
 
 		if (root.isFile()) {
@@ -246,8 +241,11 @@ public class Util {
 		for (Entry<String, List<IResult>> entry : UltimateServices.getInstance().getResultMap().entrySet()) {
 			int i = 0;
 			for (IResult result : entry.getValue()) {
-				logger.info("[" + i + "] " + entry.getKey() + " --> [" + result.getClass().getSimpleName() + "] "
-						+ result.getLongDescription());
+				logger.info(String.format("[%s] %s --> [%s] %s", 
+						i, 
+						entry.getKey(), 
+						result.getClass().getSimpleName(),
+						result.getLongDescription()));
 				++i;
 			}
 		}

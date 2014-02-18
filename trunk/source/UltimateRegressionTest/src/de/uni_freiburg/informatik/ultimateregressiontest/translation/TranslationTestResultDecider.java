@@ -39,8 +39,8 @@ class TranslationTestResultDecider implements ITestResultDecider {
 		} else {
 			for (Entry<String, List<IResult>> x : resultSet) {
 				for (IResult result : x.getValue()) {
-					customMessages.add(String.format("Result %s: %s", result.getShortDescription(),
-							result.getLongDescription()));
+//					customMessages.add(String.format("Result %s: %s", result.getShortDescription(),
+//							result.getLongDescription()));
 					if (result instanceof SyntaxErrorResult) {
 						fail = true;
 					}

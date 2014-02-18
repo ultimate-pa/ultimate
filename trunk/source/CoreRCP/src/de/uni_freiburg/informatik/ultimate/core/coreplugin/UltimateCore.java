@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import javax.xml.bind.JAXBException;
 
@@ -60,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.model.IModelManager;
 import de.uni_freiburg.informatik.ultimate.model.PersistenceAwareModelManager;
 import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.plugins.ResultNotifier;
+import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 
 /**
@@ -897,20 +897,25 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	public IStatus processToolchain(IProgressMonitor monitor) throws Exception {
 
 		Benchmark b = new Benchmark();
-		b.start("Core");
-		if (mModelManager.size() < 1) {
-			mLogger.error("no model present, aborting...");
-			throw new Exception("There is no model present");
+		b.start("Toolchain (without parser)");
+		try {
+			if (mModelManager.size() < 1) {
+				mLogger.error("no model present, aborting...");
+				throw new Exception("There is no model present");
+			}
+			mCurrentToolchainMonitor = monitor;
+			mToolchainWalker.walk(monitor);
+			mCurrentToolchain.clearStore();
+		} finally {
+			b.stopAll();
+			mLogger.info("--------------------------------------------------------------------------------");
+			b.report();
+			mBenchmark.report();
+			mLogger.info("--------------------------------------------------------------------------------");
+			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID,
+					new BenchmarkResult(Activator.s_PLUGIN_ID, "Toolchain Benchmarks", mBenchmark));
+			new ResultNotifier(mCurrentController).processResults();
 		}
-		mCurrentToolchainMonitor = monitor;
-		mToolchainWalker.walk(monitor);
-		new ResultNotifier(mCurrentController).processResults();
-		mCurrentToolchain.clearStore();
-		b.stopAll();
-		mLogger.info(String.format("Finished toolchain execution after %.2f ms",
-				b.getElapsedTime("Core", TimeUnit.MILLISECONDS)));
-		mBenchmark.report();
-		mLogger.info("--------------------------------------------------------------------------------");
 
 		return Status.OK_STATUS;
 	}

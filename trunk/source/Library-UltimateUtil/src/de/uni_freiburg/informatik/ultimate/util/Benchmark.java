@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -141,6 +142,24 @@ public class Benchmark {
 	}
 
 	public void report() {
+		for (Watch s : getSortedWatches()) {
+			mLogger.info(s);
+		}
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		String lineSeparator = System.getProperty("line.separator");
+		sb.append("Benchmark results are:").append(lineSeparator);
+		for (Watch s : getSortedWatches()) {
+			sb.append(" * ").append(s).append(lineSeparator);
+		}
+		sb.delete(sb.length()-lineSeparator.length(), sb.length());
+		return sb.toString();
+	}
+	
+	private Collection<Watch> getSortedWatches(){
 		ArrayList<Watch> sortedWatches = new ArrayList<Watch>(mWatches.values());
 		Collections.sort(sortedWatches, new Comparator<Watch>() {
 			@Override
@@ -149,10 +168,7 @@ public class Benchmark {
 				return Integer.compare(o1.mIndex, o2.mIndex);
 			}
 		});
-
-		for (Watch s : sortedWatches) {
-			mLogger.info(s);
-		}
+		return sortedWatches;
 	}
 
 	public String getReportString(String title) {
