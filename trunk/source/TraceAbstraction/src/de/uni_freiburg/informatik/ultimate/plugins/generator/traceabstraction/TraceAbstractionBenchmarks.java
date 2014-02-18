@@ -40,14 +40,14 @@ public class TraceAbstractionBenchmarks {
 	
 	public TraceAbstractionBenchmarks(SmtManager mSmtManager) {
 		this.mSmtManager = mSmtManager;
-		m_StartingTime = System.currentTimeMillis();
+		m_StartingTime = System.nanoTime();
 		m_SizeOfPredicatesBP = new ArrayList<int[]>();
 		m_SizeOfPredicatesFP = new ArrayList<int[]>();
 		m_CounterExampleFeasible = false;
 	}
 	
 	public long getRuntime() {
-		return System.currentTimeMillis() - m_StartingTime;
+		return System.nanoTime() - m_StartingTime;
 	}
 
 	public void startTraceCheck() {
@@ -104,7 +104,7 @@ public class TraceAbstractionBenchmarks {
 		sb.append("Trace Abstraction runtime: ");
 		sb.append(prettyprintNanoseconds(getRuntime()));
 		if (!m_CounterExampleFeasible) {
-			sb.append("Determine feasibility of statement sequence: ");
+			sb.append(" Determine feasibility of statement sequence: ");
 			sb.append(prettyprintNanoseconds(traceCheck));
 			sb.append(" (thereof: SMT solver sat check ");
 			sb.append(prettyprintNanoseconds(traceCheckSat));
