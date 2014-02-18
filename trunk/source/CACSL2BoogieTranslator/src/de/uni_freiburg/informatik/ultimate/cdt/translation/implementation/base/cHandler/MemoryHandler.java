@@ -877,7 +877,7 @@ public class MemoryHandler {
                 		Expression fieldSize = calculateSizeOf(csf, loc);
                 		if (cvar instanceof CUnion) { //in case of union we need max() instead of plus()
                 			nextOffset = new IfThenElseExpression(loc, 
-                					new BinaryExpression(loc, Operator.COMPGT, nextOffset, fieldSize), 
+                					new BinaryExpression(loc, Operator.COMPLT, nextOffset, fieldSize), 
                 					fieldSize, 
                 					nextOffset);
                 		} else {

@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
 
 /**
  * @author Markus Lindenmann
@@ -75,7 +75,7 @@ public class TypeHandler implements ITypeHandler {
      * Maps the cIdentifier of a struct, enumeration, or union (when this is
      *  implemented) to the ResultType that represents this type at the moment
      */
-    private final ScopedHashMap<String, ResultTypes> m_DefinedTypes;
+    private final LinkedScopedHashMap<String, ResultTypes> m_DefinedTypes;
     /**
      * Undefined struct types.
      */
@@ -89,7 +89,7 @@ public class TypeHandler implements ITypeHandler {
      * Constructor.
      */
     public TypeHandler() {
-        this.m_DefinedTypes = new ScopedHashMap<String, ResultTypes>();
+        this.m_DefinedTypes = new LinkedScopedHashMap<String, ResultTypes>();
         this.m_IncompleteType = new LinkedHashSet<String>();
     }
 
@@ -459,7 +459,7 @@ public class TypeHandler implements ITypeHandler {
     }
     
     @Override
-    public  ScopedHashMap<String,ResultTypes> getDefinedTypes() {
+    public  LinkedScopedHashMap<String,ResultTypes> getDefinedTypes() {
         return m_DefinedTypes;
     }
     

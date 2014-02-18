@@ -81,7 +81,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.Check;
-import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
 
 /**
  * Class that handles translation of functions.
@@ -125,7 +125,7 @@ public class FunctionHandler {
 	 * This set contains those pointers that we have to malloc at the beginning
 	 * and free at the end of the current procedure;
 	 */
-	ScopedHashMap<LocalLValue, Integer> mallocedAuxPointers;
+	LinkedScopedHashMap<LocalLValue, Integer> mallocedAuxPointers;
 	/**
 	 * map that is used to communicate the returned CType of a procedure from 
 	 * its declaration to its definition.
@@ -147,7 +147,7 @@ public class FunctionHandler {
 		this.procedureToReturnCType = new LinkedHashMap<String, CType>();
 		this.procedureToParamCType = new LinkedHashMap<String, ArrayList<CType>>(); 
 		this.modifiedGlobalsIsUserDefined = new LinkedHashSet<String>();
-		this.mallocedAuxPointers = new ScopedHashMap<LocalLValue, Integer>();
+		this.mallocedAuxPointers = new LinkedScopedHashMap<LocalLValue, Integer>();
 		m_CheckMemoryLeakAtEndOfMain = 
 				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
 				getBoolean(PreferenceInitializer.LABEL_CHECK_MemoryLeakInMain);
@@ -1008,7 +1008,7 @@ public class FunctionHandler {
 			this.mallocedAuxPointers.put(thisLVal, mallocedAuxPointers.getActiveScopeNum());
 	}
 	
-	public ScopedHashMap<LocalLValue, Integer> getMallocedAuxPointers() {
+	public LinkedScopedHashMap<LocalLValue, Integer> getMallocedAuxPointers() {
 		return mallocedAuxPointers;
 	}
 }

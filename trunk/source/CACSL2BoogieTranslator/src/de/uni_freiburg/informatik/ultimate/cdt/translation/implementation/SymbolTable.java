@@ -14,13 +14,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
 
 /**
  * @author Markus Lindenmann
  * @since 13.07.2012
  */
-public class SymbolTable extends ScopedHashMap<String, SymbolTableValue> {
+public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
     /**
      * Holds a map from BoogieIDs and the corresponding CIDs.
      */

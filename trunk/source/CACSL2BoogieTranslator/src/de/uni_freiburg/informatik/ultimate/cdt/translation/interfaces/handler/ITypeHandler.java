@@ -28,7 +28,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
-import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
@@ -191,7 +191,7 @@ public interface ITypeHandler extends IHandler {
     /**
      * Return the map of type aliases coming from C-typedefs.
      */
-	ScopedHashMap<String, ResultTypes> getDefinedTypes();
+	LinkedScopedHashMap<String, ResultTypes> getDefinedTypes();
 
 	ASTType ctype2asttype(ILocation loc, CType cType, boolean wrappedInt,
 			boolean isBool);
