@@ -209,7 +209,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesBP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesBP());
 				m_TraceAbstractionBenchmarks.addSizeOfPredicatesFP(m_TraceChecker.getSizeOfPredicates(INTERPOLATION.ForwardPredicates));
 				m_TraceAbstractionBenchmarks.addSizeOfPredicatesBP(m_TraceChecker.getSizeOfPredicates(INTERPOLATION.BackwardPredicates));
-
 			}
 		} else {
 			m_TraceAbstractionBenchmarks.setCounterExampleFeasible();
@@ -436,13 +435,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					assert(edgeChecker.isAssertionStackEmpty());
 					INestedWordAutomaton<CodeBlock, IPredicate> test = 
 							(new RemoveUnreachable<CodeBlock, IPredicate>(determinized)).getResult();
-					boolean ctxAccepted = (new Accepts<CodeBlock, IPredicate>(
-							(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) test, 
-							(NestedWord<CodeBlock>) m_Counterexample.getWord())).getResult();
-					if (!ctxAccepted) {
-						throw new AssertionError("counterexample not accepted by interpolant automaton");
-					}
-					m_SmtManager.checkInductivity(test, false, true);
+//					boolean ctxAccepted = (new Accepts<CodeBlock, IPredicate>(
+//							(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) test, 
+//							(NestedWord<CodeBlock>) m_Counterexample.getWord())).getResult();
+//					if (!ctxAccepted) {
+//						throw new AssertionError("counterexample not accepted by interpolant automaton");
+//					}
+					assert (m_SmtManager.checkInductivity(test, false, true));
 				}
 				break;
 			default:
