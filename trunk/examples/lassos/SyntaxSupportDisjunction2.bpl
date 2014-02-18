@@ -1,9 +1,11 @@
-//#rTerminationDerivable
+//#rTermination
 /*
  * Date: 2013-12-20
  * Author: leike@informatik.uni-freiburg.de
  *
  * Test case for the correct handling of disjunctions in the loop condition
+ *
+ * FIXME: should be TerminationDerivable
  */
 
 procedure SyntaxSupportDisjunction2() returns (x: int, y:int)

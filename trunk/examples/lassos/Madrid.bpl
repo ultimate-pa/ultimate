@@ -1,5 +1,4 @@
-//#Ignore
-// NonTermination FIXME: z3 timeout
+//#rNonTermination
 /*
  * Date: 02.05.2013
  * Author: heizmann@informatik.uni-freiburg.de

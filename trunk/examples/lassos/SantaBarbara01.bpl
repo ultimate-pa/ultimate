@@ -1,5 +1,4 @@
-//#rIgnore
-// NonTermination FIXME: z3 timeout
+//#rNonTermination
 /*
  * Program whose nontermination can be proven with our current method, if our 
  * analysis considers the following homogenized program.

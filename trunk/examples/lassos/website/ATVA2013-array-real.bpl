@@ -1,3 +1,4 @@
+//#rTerminationDerivable
 /*
  * Lasso program depicted in Figure 7 of our ATVA2013 submission.
  * 
