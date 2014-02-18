@@ -73,7 +73,7 @@ public abstract class AbstractCegarLoop {
 	
 	/**
 	 * Node of a recursive control flow graph which stores additional 
-	 * information about the 
+	 * information about the  												<< TODO: add missing word
 	 */
 	protected final RootNode m_RootNode;
 	
@@ -111,7 +111,7 @@ public abstract class AbstractCegarLoop {
 	 * Abstraction of this iteration. The language of m_Abstraction is a set
 	 * of traces which is <ul>
 	 * <li> a superset of the feasible program traces.
-	 * <li> a subset of the traces which respect the control flow of of the
+	 * <li> a subset of the traces which respect the control flow of the
 	 * program.
 	 */
 	protected IAutomaton<CodeBlock, IPredicate> m_Abstraction;
@@ -154,6 +154,7 @@ public abstract class AbstractCegarLoop {
 	public long m_MinimizationTime;
 	public int m_StatesRemovedByMinimization;
 
+	
 	
 	
 	public AbstractCegarLoop(String name, RootNode rootNode,
@@ -289,7 +290,8 @@ public abstract class AbstractCegarLoop {
 		
 		
 		if (m_Iteration <= m_Pref.watchIteration() && 
-				(m_Pref.artifact() == Artifact.ABSTRACTION || m_Pref.artifact() == Artifact.RCFG)) {
+				(m_Pref.artifact() == Artifact.ABSTRACTION || m_Pref.artifact() == Artifact.RCFG)) 
+		{
 			m_ArtifactAutomaton = m_Abstraction;
 		}
 		if (m_Pref.dumpAutomata()) {

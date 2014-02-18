@@ -118,8 +118,13 @@ public class AutomatonEpimorphism<STATE> {
 	 * Returns the state, where the epimorphism points to
 	 * @param s
 	 */
-	public STATE GetMapping(STATE s)
+	public STATE getMapping(STATE s)
 	{
 		return m_epimorphism.get(s);
+	}
+	
+	public void insert(STATE from, STATE to)
+	{
+		m_epimorphism.put(from, to);
 	}
 }
