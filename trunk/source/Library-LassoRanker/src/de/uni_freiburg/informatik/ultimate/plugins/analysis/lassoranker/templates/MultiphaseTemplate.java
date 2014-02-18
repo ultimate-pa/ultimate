@@ -80,8 +80,9 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 	}
 	
 	@Override
-	public void init(Script script, Collection<BoogieVar> vars) {
-		super.init(script, vars);
+	public void init(Script script, Collection<BoogieVar> vars,
+			boolean linear) {
+		super.init(script, vars, linear);
 		for (int i = 0; i < size; ++i) {
 			m_deltas[i] = RankingFunctionTemplate.newDelta(script,
 					s_name_delta + i);
@@ -135,7 +136,7 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 		for (int i = 0; i < size; ++i) {
 			LinearInequality li = m_fgens[i].generate(inVars);
 			li.setStrict(true);
-			li.needs_motzkin_coefficient = i > 0;
+			li.needs_motzkin_coefficient = !m_linear && i > 0;
 			disjunction.add(li);
 		}
 		conjunction.add(disjunction);
@@ -155,7 +156,7 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 			for (int j = i - 1; j >= 0; --j) {
 				LinearInequality li3 = m_fgens[j].generate(inVars);
 				li3.setStrict(true);
-				li3.needs_motzkin_coefficient = j > 0;
+				li3.needs_motzkin_coefficient = !m_linear && j > 0;
 				disjunction.add(li3);
 			}
 			conjunction.add(disjunction);

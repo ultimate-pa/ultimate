@@ -107,6 +107,7 @@ class TerminationArgumentSynthesizer {
 		m_script = script;
 		
 		// Set logic
+//		script.reset();
 		if (preferences.termination_check_nonlinear) {
 			script.setLogic(Logics.QF_NRA);
 		} else {
@@ -294,12 +295,15 @@ class TerminationArgumentSynthesizer {
 	 */
 	public LBool synthesize(RankingFunctionTemplate template)
 			throws SMTLIBException, TermException {
-		assert m_preferences.termination_check_nonlinear
-				|| template.getDegree() == 0
-				: "Linear SMT queries work only on templates of degree 0.";
+		if (!m_preferences.termination_check_nonlinear
+				&& template.getDegree() > 0) {
+			s_Logger.warn("Using a linear SMT query and a templates of degree "
+					+ "> 0, hence this method is incomplete.");
+		}
 		Collection<BoogieVar> rankVars = getRankVars();
 		Collection<BoogieVar> siVars = getSIVars();
-		template.init(m_script, rankVars);
+		template.init(m_script, rankVars,
+				!m_preferences.termination_check_nonlinear);
 		s_Logger.debug("Variables for ranking functions: " + rankVars);
 		s_Logger.debug("Variables for supporting invariants: " + siVars);
 /*		// The following code makes examples like StemUnsat.bpl fail

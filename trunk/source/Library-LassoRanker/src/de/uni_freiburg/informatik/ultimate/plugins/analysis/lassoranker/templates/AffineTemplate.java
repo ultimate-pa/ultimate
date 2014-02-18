@@ -63,8 +63,9 @@ public class AffineTemplate extends RankingFunctionTemplate {
 	private AffineFunctionGenerator m_fgen;
 	
 	@Override
-	public void init(Script script, Collection<BoogieVar> vars) {
-		super.init(script, vars);
+	public void init(Script script, Collection<BoogieVar> vars,
+			boolean linear) {
+		super.init(script, vars, linear);
 		m_delta = RankingFunctionTemplate.newDelta(script, s_name_delta);
 		m_fgen = new AffineFunctionGenerator(script, vars, s_name_function);
 	}

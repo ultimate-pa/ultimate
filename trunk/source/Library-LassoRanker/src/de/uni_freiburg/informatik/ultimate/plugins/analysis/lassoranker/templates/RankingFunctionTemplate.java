@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingf
 public abstract class RankingFunctionTemplate {
 	protected Script m_script;
 	protected Collection<BoogieVar> m_variables;
+	protected boolean m_linear = true;
 	
 	private boolean m_initialized = false;
 	
@@ -62,12 +63,14 @@ public abstract class RankingFunctionTemplate {
 	/**
 	 * Initialize the template; call this before constaints()
 	 * @param script The SMTLib script
-	 * @param vars A collection of all variables that are relevant for
-	 *                   ranking
+	 * @param vars A collection of all variables that are relevant for ranking
+	 * @param linear generate a linear SMT query?
 	 */
-	public void init(Script script, Collection<BoogieVar> vars) {
+	public void init(Script script, Collection<BoogieVar> vars,
+			boolean linear) {
 		m_script = script;
 		m_variables = vars;
+		m_linear = linear;
 		m_initialized = true;
 	}
 	

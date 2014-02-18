@@ -82,8 +82,9 @@ public class NestedTemplate extends RankingFunctionTemplate {
 	}
 	
 	@Override
-	public void init(Script script, Collection<BoogieVar> vars) {
-		super.init(script, vars);
+	public void init(Script script, Collection<BoogieVar> vars,
+			boolean linear) {
+		super.init(script, vars, linear);
 		m_delta = RankingFunctionTemplate.newDelta(script, s_name_delta);
 		for (int i = 0; i < m_Size; ++i) {
 			m_fgens[i] = new AffineFunctionGenerator(script, vars,

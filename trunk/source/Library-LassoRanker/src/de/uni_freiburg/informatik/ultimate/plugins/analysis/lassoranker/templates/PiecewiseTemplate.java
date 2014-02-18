@@ -87,8 +87,9 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 	}
 	
 	@Override
-	public void init(Script script, Collection<BoogieVar> vars) {
-		super.init(script, vars);
+	public void init(Script script, Collection<BoogieVar> vars,
+			boolean linear) {
+		super.init(script, vars, linear);
 		m_delta = RankingFunctionTemplate.newDelta(script, s_name_delta);
 		for (int i = 0; i < size; ++i) {
 			m_fgens[i] = new AffineFunctionGenerator(script, vars,
@@ -147,13 +148,13 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 				LinearInequality li1 = m_pgens[i].generate(inVars);
 				li1.negate();
 				li1.setStrict(true);
-				li1.needs_motzkin_coefficient = i != j;
+				li1.needs_motzkin_coefficient = !m_linear && i != j;
 				disjunction.add(li1);
 				
 				LinearInequality li2 = m_pgens[j].generate(outVars);
 				li2.negate();
 				li2.setStrict(true);
-				li2.needs_motzkin_coefficient = true;
+				li2.needs_motzkin_coefficient = !m_linear;
 				disjunction.add(li2);
 				
 				LinearInequality li3 = m_fgens[i].generate(inVars);
@@ -182,7 +183,7 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 		for (int i = 0; i < size; ++i) {
 			LinearInequality li = m_pgens[i].generate(inVars);
 			li.setStrict(false);
-			li.needs_motzkin_coefficient = i > 0;
+			li.needs_motzkin_coefficient = !m_linear && i > 0;
 			disjunction.add(li);
 		}
 		conjunction.add(disjunction);
