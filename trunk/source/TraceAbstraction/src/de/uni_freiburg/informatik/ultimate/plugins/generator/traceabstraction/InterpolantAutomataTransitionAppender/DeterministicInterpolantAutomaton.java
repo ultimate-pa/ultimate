@@ -42,9 +42,9 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 	
 	private final IPredicate m_IaFalseState;
 	private final IPredicate m_IaTrueState;
-	private Set<IPredicate> m_NonTrivialPredicates;
+	private final Set<IPredicate> m_NonTrivialPredicates;
 
-	private boolean m_UseLazyEdgeChecks;
+	private final boolean m_UseLazyEdgeChecks;
 	
 	private final InternalSuccessorComputation m_InSucComp;
 	private final CallSuccessorComputation m_CaSucComp;
@@ -57,6 +57,7 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 	public DeterministicInterpolantAutomaton(SmtManager smtManager, EdgeChecker edgeChecker,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, TraceChecker traceChecker) {
 		super(smtManager,edgeChecker, abstraction);
+		m_UseLazyEdgeChecks = false;
 		m_IaTrueState = traceChecker.getPrecondition();
 		assert m_IaTrueState.getFormula().toString().equals("true");
 		m_Result.addState(true, false, m_IaTrueState);
@@ -305,7 +306,7 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 			assert resHier == null;
 			// TODO:
 			// there could be a contradiction if the Call is not a simple call
-			// but interprodecural sequential composition 
+			// but interprocedural sequential composition 
 			return null;
 		}
 
@@ -372,7 +373,7 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 		@Override
 		protected LBool sdecToFalse(IPredicate resPred, IPredicate resHier,
 				CodeBlock letter) {
-			//TODO: is there some usefull rule?
+			//TODO: is there some useful rule?
 			return null;
 		}
 
@@ -425,6 +426,7 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 			IPredicate resSucc = m_InputPreds2ResultPreds.get(succs);
 			if (resSucc == null) {
 				TermVarsProc conjunction = m_SmtManager.and(succs.toArray(new IPredicate[0]));
+				clearAssertionStack();
 				resSucc = m_PredicateUnifier.getOrConstructPredicate(conjunction);
 				m_InputPreds2ResultPreds.put(succs, resSucc);
 				if (!m_Result.contains(resSucc)) {
