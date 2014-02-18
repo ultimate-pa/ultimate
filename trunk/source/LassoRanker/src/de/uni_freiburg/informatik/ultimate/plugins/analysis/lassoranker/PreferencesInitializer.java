@@ -191,6 +191,9 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 		preferences.nontermination_check_nonlinear = store.getBoolean(
 				LABEL_nontermination_check_nonlinear
 		);
+		preferences.termination_check_nonlinear = store.getBoolean(
+				LABEL_nontermination_check_nonlinear
+		);
 		preferences.externalSolver = store.getBoolean(
 				LABEL_use_external_solver
 		);

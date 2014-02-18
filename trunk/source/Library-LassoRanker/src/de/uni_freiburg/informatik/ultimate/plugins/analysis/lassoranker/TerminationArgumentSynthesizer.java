@@ -107,7 +107,7 @@ class TerminationArgumentSynthesizer {
 		m_script = script;
 		
 		// Set logic
-//		script.reset();
+		script.reset();
 		if (preferences.termination_check_nonlinear) {
 			script.setLogic(Logics.QF_NRA);
 		} else {
