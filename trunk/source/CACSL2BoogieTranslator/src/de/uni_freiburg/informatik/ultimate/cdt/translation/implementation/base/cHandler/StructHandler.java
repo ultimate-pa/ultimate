@@ -85,7 +85,7 @@ public class StructHandler {
 				((CPointer)foType).pointsToType :
 					foType);
 		
-		CStruct cStructType = (CStruct) (foType instanceof CNamed ? ((CNamed) foType).getUnderlyingType() : foType);
+		CStruct cStructType = (CStruct) foType.getUnderlyingType();
 		CType cFieldType = cStructType.getFieldType(field);
 
 		if (node.isPointerDereference()) {

@@ -4,7 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -48,7 +48,7 @@ public class ResultExpressionListRec extends ResultExpression {
      *            the name of the field e.g. in designated initializers.
      */
     public ResultExpressionListRec(String field) {
-        super(null, new HashMap<VariableDeclaration, ILocation>(0));
+        super(null, new LinkedHashMap<VariableDeclaration, ILocation>(0));
         this.field = field;
         this.list = new ArrayList<ResultExpressionListRec>();
     }

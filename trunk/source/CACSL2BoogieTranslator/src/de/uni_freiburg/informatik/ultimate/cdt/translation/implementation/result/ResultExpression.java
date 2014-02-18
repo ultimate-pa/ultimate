@@ -4,7 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -166,7 +166,7 @@ public class ResultExpression extends Result {
 
     public ResultExpression(
             LRValue lrVal) {
-        this(lrVal, new HashMap<VariableDeclaration, ILocation>());
+        this(lrVal, new LinkedHashMap<VariableDeclaration, ILocation>());
     }
     
     /**
@@ -208,8 +208,8 @@ public class ResultExpression extends Result {
 			//retain already created stmt, decl, auxVars
 			ArrayList<Statement> newStmt = new ArrayList<Statement>(this.stmt);
 			ArrayList<Declaration> newDecl = new ArrayList<Declaration>(this.decl);
-			HashMap<VariableDeclaration, ILocation> newAuxVars = 
-					new HashMap<VariableDeclaration, ILocation>(this.auxVars); 
+			LinkedHashMap<VariableDeclaration, ILocation> newAuxVars = 
+					new LinkedHashMap<VariableDeclaration, ILocation>(this.auxVars); 
 			RValue newValue = null;
 
 //			InferredType heapReadType = null;
@@ -343,7 +343,7 @@ public class ResultExpression extends Result {
 		//everything for the new Result
 		ArrayList<Statement> newStmt = new ArrayList<Statement>();
 		ArrayList<Declaration> newDecl = new ArrayList<Declaration>();
-		HashMap<VariableDeclaration, ILocation> newAuxVars = new HashMap<VariableDeclaration, ILocation>();
+		LinkedHashMap<VariableDeclaration, ILocation> newAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 
 		String[] fieldIds = structType.getFieldIds();
 		CType[] fieldTypes = structType.getFieldTypes();

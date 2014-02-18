@@ -2,8 +2,8 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Stack;
 
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
@@ -59,9 +59,9 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 public class ArrayHandler {
 	
 	boolean modifyingTheHeapGlobally = false;
-	HashSet<String> modifiedGlobals = new HashSet<String>();
+	LinkedHashSet<String> modifiedGlobals = new LinkedHashSet<String>();
 	
-	public HashSet<String> getModifiedGlobals() {
+	public LinkedHashSet<String> getModifiedGlobals() {
 		if (modifyingTheHeapGlobally) {
 			for (String t : new String[] { SFO.INT, SFO.POINTER,
 					SFO.REAL, SFO.BOOL }) {
@@ -79,8 +79,8 @@ public class ArrayHandler {
 
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		HashMap<VariableDeclaration, ILocation> auxVars =
-				new HashMap<VariableDeclaration, ILocation>();
+		LinkedHashMap<VariableDeclaration, ILocation> auxVars =
+				new LinkedHashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
 
 		ArrayList<Expression> sizeConstants = new ArrayList<Expression>();

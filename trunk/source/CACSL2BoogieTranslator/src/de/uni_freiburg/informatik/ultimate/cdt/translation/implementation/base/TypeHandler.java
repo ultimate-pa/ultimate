@@ -4,7 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -79,7 +79,7 @@ public class TypeHandler implements ITypeHandler {
     /**
      * Undefined struct types.
      */
-    private HashSet<String> m_IncompleteType;
+    private LinkedHashSet<String> m_IncompleteType;
     /**
      * counting levels of struct declaration.
      */
@@ -90,7 +90,7 @@ public class TypeHandler implements ITypeHandler {
      */
     public TypeHandler() {
         this.m_DefinedTypes = new ScopedHashMap<String, ResultTypes>();
-        this.m_IncompleteType = new HashSet<String>();
+        this.m_IncompleteType = new LinkedHashSet<String>();
     }
 
     @Override

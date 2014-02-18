@@ -645,11 +645,11 @@ public class CHandler implements ICHandler {
 						globalInBoogie = true;
 						mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
 					} else {
-						if (cDec.getInitializer() == null && !functionHandler.noCurrentProcedure()) { 
+						if (cDec.getInitializer() == null && !functionHandler.noCurrentProcedure() && !typeHandler.isStructDeclaration()) { 
 							//in case of a local variable declaration without an initializer, we don't modify
 							// the result
 							assert result instanceof ResultSkip || result instanceof ResultExpression;
-						} else if (cDec.getInitializer() != null && !functionHandler.noCurrentProcedure()) { 
+						} else if (cDec.getInitializer() != null && !functionHandler.noCurrentProcedure() && !typeHandler.isStructDeclaration()) { 
 							//in case of a local variable declaration with an initializer, the statements and delcs
 							// necessary for the initialization are the result
 							assert result instanceof ResultSkip || result instanceof ResultExpression;
@@ -1255,7 +1255,7 @@ public class CHandler implements ICHandler {
 		CType rType = rVal.cType.getUnderlyingType();
         Expression rExpr = rVal.getValue();
 		boolean convertToPointer = false;
-		if (lType instanceof CPointer) {
+		if (lType instanceof CPointer) { //TODO: not yet sure about this..
 			if (!(rType instanceof CPointer)) {
 				if (rExpr instanceof IntegerLiteral) {
 					convertToPointer = true;
