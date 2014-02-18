@@ -864,31 +864,32 @@ public class MemoryHandler {
                 				false));
                 		Expression offIdEx = new IdentifierExpression(loc, oId);
                 		Expression offsetOfField = null;
-                		if (cvar instanceof CUnion) {//in a union every field begins at 0
-                			//(optimization: don't use so many constants where all are 0, but this way it is more 
-                			//consisten with struct treatment, thus easier, for now)
-                			offsetOfField = new BinaryExpression(loc, Operator.COMPEQ,
-                					offIdEx, new IntegerLiteral(loc, SFO.NR0));
-                		} else {
-                			offsetOfField = new BinaryExpression(loc, Operator.COMPEQ,
+//                		if (cvar instanceof CUnion) {//in a union every field begins at 0
+//                			//(optimization: don't use so many constants where all are 0, but this way it is more 
+//                			//consisten with struct treatment, thus easier, for now)
+//                			offsetOfField = new BinaryExpression(loc, Operator.COMPEQ,
+//                					offIdEx, new IntegerLiteral(loc, SFO.NR0));
+//                		} else {
+                		offsetOfField = new BinaryExpression(loc, Operator.COMPEQ,
                 					offIdEx, nextOffset);
-                		}
+//                		}
                 		this.axioms.add(new Axiom(loc, attr, offsetOfField));
                 		Expression fieldSize = calculateSizeOf(csf, loc);
-                		if (cvar instanceof CUnion) { //in case of union we need max() instead of plus()
-                			nextOffset = new IfThenElseExpression(loc, 
-                					new BinaryExpression(loc, Operator.COMPLT, nextOffset, fieldSize), 
-                					fieldSize, 
-                					nextOffset);
-                		} else {
+                		
+                		if (cvar instanceof CUnion) {
+                			this.axioms.add(new Axiom(loc, attr, 
+                					new BinaryExpression(loc, Operator.COMPGEQ, idex, fieldSize)));
+                		} else {//only in the struct case, the offsets grow, in the union case they stay at 0
                 			nextOffset = new BinaryExpression(loc, Operator.ARITHPLUS,
                 					nextOffset, fieldSize);
                 		}
                 	}
-                	// add an axiom : sizeof cvar (>)= nextOffset
-                	Expression f = new BinaryExpression(loc, Operator.COMPGEQ,
-                			idex, nextOffset);
-                	this.axioms.add(new Axiom(loc, attr, f));
+                	if (!(cvar instanceof CUnion)) { //we have a normal struct
+                		// add an axiom : sizeof cvar (>)= nextOffset
+                		Expression f = new BinaryExpression(loc, Operator.COMPGEQ,
+                				idex, nextOffset);
+                		this.axioms.add(new Axiom(loc, attr, f));
+                	}
                 }
             } else if (cvar instanceof CNamed) {
                 // add an axiom, binding the sizeof of the named type to

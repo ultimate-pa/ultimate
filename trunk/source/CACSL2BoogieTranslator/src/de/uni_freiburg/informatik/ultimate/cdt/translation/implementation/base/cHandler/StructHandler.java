@@ -315,14 +315,16 @@ public class StructHandler {
 					fieldContents.lrVal = new RValue(new IdentifierExpression(loc, tmpId), underlyingFieldType);
 					unionAlreadyInitialized = true;
 				} else {
-					//fill in the uninitialized aux variable (havoc should not be necessary)
+					//fill in the uninitialized aux variable
 					fieldContents = new ResultExpression(
 							new RValue(new IdentifierExpression(loc, tmpId), underlyingFieldType));
-//					fieldContents.stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tmpId) }));
 				}
-				fieldContents.decl.add(new VariableDeclaration(loc, new Attribute[0], 
+//				fieldContents.stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tmpId) }));
+				VariableDeclaration auxVarDec = new VariableDeclaration(loc, new Attribute[0], 
 						new VarList[] { new VarList(loc, new String[] { tmpId }, 
-								main.typeHandler.ctype2asttype(loc, underlyingFieldType)) } ));
+								main.typeHandler.ctype2asttype(loc, underlyingFieldType)) } );
+				fieldContents.decl.add(auxVarDec);
+				fieldContents.auxVars.put(auxVarDec, loc);
 			} else {
 				if(underlyingFieldType instanceof CPrimitive) {
 //					if (i < rerl.list.size())

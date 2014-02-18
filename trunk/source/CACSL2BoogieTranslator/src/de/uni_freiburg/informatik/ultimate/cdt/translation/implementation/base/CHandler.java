@@ -660,8 +660,9 @@ public class CHandler implements ICHandler {
 								result = new ResultExpression((LRValue) null);
 
 							((ResultExpression) result).stmt.addAll(initRex.stmt);
+							((ResultExpression) result).stmt.addAll(Dispatcher.createHavocsForAuxVars(initRex.auxVars));//FIXME: is this the right place??
 							((ResultExpression) result).decl.addAll(initRex.decl);
-							((ResultExpression) result).auxVars.putAll(initRex.auxVars);
+//							((ResultExpression) result).auxVars.putAll(initRex.auxVars); //once havoced we don't need them, right??
 							((ResultExpression) result).overappr.addAll(initRex.overappr);
 						} else {
 							//in case of global variables, the result is the declaration, initialization is
@@ -763,6 +764,13 @@ public class CHandler implements ICHandler {
 			mCurrentDeclaredTypes.push(newResType);
 			ResultDeclaration result = (ResultDeclaration) main.dispatch(node.getNestedDeclarator());
 			mCurrentDeclaredTypes.pop();
+			if (node.getInitializer() != null) {
+				assert result.getDeclarations().size() == 1;
+				CDeclaration cdec = result.getDeclarations().remove(0);
+				result.addDeclaration(cdec.getType(), cdec.getName(), 
+						(ResultExpression) main.dispatch(node.getInitializer()), 
+						cdec.isOnHeap());
+			}	
 			return result;
 		} else {
 			ResultExpression initializer = null;
@@ -1294,17 +1302,9 @@ public class CHandler implements ICHandler {
 
 		if (lrVal instanceof HeapLValue) {
 			HeapLValue hlv = (HeapLValue) lrVal; 
-//			ResultExpression rex = new ResultExpression(
-//					memoryHandler.getWriteCall(hlv, rVal), null, 
-//					new ArrayList<Declaration>(), new LinkedHashMap<VariableDeclaration, ILocation>(0),
-//					overappr);
+			
 			stmt.addAll(memoryHandler.getWriteCall(hlv, rVal));
 
-//			stmt.addAll(rex.stmt);
-//			decl.addAll(rex.decl);
-//			auxVars.putAll(rex.auxVars);
-//			overappr.addAll(rex.overappr);
-			
 			for (String t : new String[] { SFO.INT, SFO.POINTER,
 					SFO.REAL, SFO.BOOL }) {
 				functionHandler.getModifiedGlobals()
@@ -1325,7 +1325,6 @@ public class CHandler implements ICHandler {
 
 			//add havocs if we have a write to a union (which is not on heap, otherwise the heap model should deal with everything)
 			if (unionFieldsToCType != null) {
-				//        	LeftHandSide structLHS = ((StructLHS) ((LocalLValue) lrVal).getLHS()).getStruct();
 				for (Entry<StructLHS, CType>  en : unionFieldsToCType.entrySet()) {
 					//TODO: maybe not use auxiliary variables so lavishly
 					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
@@ -1335,8 +1334,8 @@ public class CHandler implements ICHandler {
 
 					stmt.add(new AssignmentStatement(loc, 
 							new LeftHandSide[] { en.getKey() },
-							//						new LeftHandSide[] { new StructLHS(loc, structLHS, en.getKey()) }, 
 							new Expression[] { new IdentifierExpression(loc, tmpId) } ));
+					stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tmpId) }));
 				}
 			}
 
