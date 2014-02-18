@@ -51,7 +51,7 @@ fi
 
 if [ "$1" = "bellwald" ]; then
 echo "test trace abstraction with new determinization"
-trunk/examples/toolchains/AutomizerTestDir.sh -da 20 $2 \
+trunk/examples/toolchains/AutomizerTestDir.sh -da 350 $2 \
 "AutomizerBpl.xml;AutomizerC.xml;SvcompBellwald.epf" \
 "AutomizerBpl.xml;AutomizerC.xml;SvcompStrongest.epf"
 fi
