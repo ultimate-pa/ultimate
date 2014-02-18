@@ -49,6 +49,13 @@ trunk/examples/toolchains/AutomizerTestDir.sh -ea 20 $2 \
 "AutomizerBpl.xml;AutomizerC.xml;hoare10.epf"
 fi
 
+if [ "$1" = "bellwald" ]; then
+echo "test trace abstraction with new determinization"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 20 $2 \
+"AutomizerBpl.xml;AutomizerC.xml;SvcompBellwald.epf" \
+"AutomizerBpl.xml;AutomizerC.xml;SvcompStrongest.epf"
+fi
+
 
 if [ "$1" = "determinization" ]; then
 echo "test trace abstraction with different determinizations"

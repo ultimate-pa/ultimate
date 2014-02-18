@@ -1,0 +1,24 @@
+#Tue Feb 18 19:58:15 CET 2014
+\!/instance/CACSL2BoogieTranslator=
+/instance/CACSL2BoogieTranslator/Check\ if\ freed\ pointer\ was\ valid=false
+file_export_version=3.0
+@CACSL2BoogieTranslator=0.0.1
+/instance/CACSL2BoogieTranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=IGNORE
+/instance/CACSL2BoogieTranslator/Pointer\ to\ allocated\ memory\ at\ dereference=IGNORE
+/instance/CACSL2BoogieTranslator/Translation\ Mode\:=SV_COMP14
+/instance/CACSL2BoogieTranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
+#Tue Feb 18 19:58:15 CET 2014
+file_export_version=3.0
+\!/instance/RCFGBuilder=
+/instance/RCFGBuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+@RCFGBuilder=0.0.1
+#Tue Feb 18 19:58:15 CET 2014
+file_export_version=3.0
+@TraceAbstraction=0.0.1
+/instance/TraceAbstraction/Determinization\ algorithm=CODENAME_PROJECT_BELLWALD
+\!/instance/TraceAbstraction=
+#Tue Feb 18 19:58:15 CET 2014
+file_export_version=3.0
+/instance/UltimateCore/Toolchain\ timeout\ in\ seconds=300
+\!/instance/UltimateCore=
+@UltimateCore=0.0.1
