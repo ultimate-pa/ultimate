@@ -7,10 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.TreeMap;
 
-import javax.sql.rowset.Predicate;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -19,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.SuperDifference;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -28,7 +26,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
 
 /**
  * @author haettigj@informatik.uni-freiburg.de
@@ -54,7 +51,7 @@ public class CegarLoopSequentialWithBackedges extends BasicCegarLoop
 	protected NestedRun<CodeBlock, IPredicate> m_CounterExamplePath;
 
 	/**
-	 * Used for computing the interpolants of additional paths.
+	 * Used for computing the interpolants of additional paths
 	 */
 	protected TraceChecker m_ExtraTraceChecker;
 
@@ -298,6 +295,43 @@ public class CegarLoopSequentialWithBackedges extends BasicCegarLoop
 		}
 	}
  
+	
+	/**
+	 * Construct the new programm abstraction by subtraction the
+	 * interpolant automaton from the abstraction
+	 * @return true iff the trace of m_Counterexample (which was accepted by the
+	 * old m_Abstraction) is not accepted by the m_Abstraction.
+	 */
+	@Override
+	protected boolean refineAbstraction() throws OperationCanceledException
+	{
+
+		SuperDifference<CodeBlock, IPredicate> diff = new SuperDifference<CodeBlock, IPredicate>(
+				m_Abstraction, m_InterpolAutomaton, m_Epimorphism, false);
+
+		m_Abstraction = diff.getResult();
+	
+//		if (m_Pref.minimize())
+//		{
+//			m_ContentFactory.refinementOperationFinished();
+//			diff.removeStatesThatCanNotReachFinal(true);
+//			removedDoubleDeckers = diff.getRemovedDoubleDeckers();
+//			context2entry = diff.getCallSuccOfRemovedDown();
+//		}
+		
+		if (m_BiggestAbstractionSize < m_Abstraction.size()) {
+			m_BiggestAbstractionSize = m_Abstraction.size();
+			m_BiggestAbstractionIteration = m_Iteration;
+		}
+
+		s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
+		s_Logger.info("Interpolant automaton has "
+				+ m_InterpolAutomaton.sizeInformation());
+		
+		return true;
+	}
+	
+	
 	//	if (m_Pref.interpolatedLocs() == InterpolatedLocs.GUESS)
 	//	{
 	//
@@ -342,9 +376,9 @@ public class CegarLoopSequentialWithBackedges extends BasicCegarLoop
 	/**
 	 * TODO commentary
 	 */
-	@Override
-	protected boolean refineAbstraction() throws OperationCanceledException 
-	{
+//	@Override
+//	protected boolean refineAbstraction()  
+//	{
 		//		if (m_Pref.minimize()) {
 		//			m_ContentFactory.beginRefinementOperation(m_Haf);
 		//		}
@@ -477,10 +511,7 @@ public class CegarLoopSequentialWithBackedges extends BasicCegarLoop
 		//		// (INestedWordAutomaton) m_Abstraction, true, false).getResult();
 		//		// }
 		//
-		//		if (m_BiggestAbstractionSize < m_Abstraction.size()) {
-		//			m_BiggestAbstractionSize = m_Abstraction.size();
-		//			m_BiggestAbstractionIteration = m_Iteration;
-		//		}
+
 		//
 		//		if (m_Pref.computeHoareAnnotation()) {
 		//			assert (m_SmtManager
@@ -511,6 +542,6 @@ public class CegarLoopSequentialWithBackedges extends BasicCegarLoop
 		//		} else {
 		//			return true;
 		//		}
-		return true;
-	}
+//		return true;
+//	}
 }

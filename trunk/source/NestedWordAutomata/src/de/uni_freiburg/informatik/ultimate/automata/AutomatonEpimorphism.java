@@ -70,7 +70,7 @@ public class AutomatonEpimorphism<STATE> {
 	 *            automaton where the epimorphism maps to
 	 * @return an epimorphism structure from a1 to a2
 	 */
-	public static AutomatonEpimorphism<String> GetFromAutomatonLabels(
+	public static AutomatonEpimorphism<String> createFromAutomatonLabels(
 			INestedWordAutomatonOldApi<String, String> a1,
 			INestedWordAutomatonOldApi<String, String> a2) {
 		AutomatonEpimorphism<String> epimorphism = new AutomatonEpimorphism<String>();
