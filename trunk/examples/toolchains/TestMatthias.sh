@@ -14,13 +14,13 @@ fi
 
 if [ "$1" = "templateBenchmark" ]; then
 echo "buchiAutomizer for folder $2"
-trunk/examples/toolchains/AutomizerTestDir.sh -ea 120 "$2" \
+trunk/examples/toolchains/AutomizerTestDir.sh -ea 350 "$2" \
  "BuchiAutomizerBpl.xml;BuchiAutomizerC.xml;buchiAutomizer/templateBenchmark.epf"
 fi
 
 if [ "$1" = "templateBenchmarkLBE" ]; then
 echo "buchiAutomizer for folder $2"
-trunk/examples/toolchains/AutomizerTestDir.sh -ea 120 "$2" \
+trunk/examples/toolchains/AutomizerTestDir.sh -ea 350 "$2" \
  "BuchiAutomizerBplWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/templateBenchmarkLBE.epf"
 fi
 

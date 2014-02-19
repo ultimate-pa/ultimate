@@ -296,45 +296,45 @@ do
 	fi
 
 	if [ "$BUG_24" ]; then 
-	    echo "!Warning! AssertionError - Probably Bug #24 \n";
+	    echo "!Warning! AssertionError - Probably Bug #24 "$'\n'
 	    continue;
 	fi
 
 
 	if [ "$EXCEPTION"  ]; then
 	    if [ "$PRELUDE_ERROR" ]; then
-		echo "!Warning! Exception thrown - Undeclared variable - Forgotten to load VCC Prelude? \n"
+		echo "!Warning! Exception thrown - Undeclared variable - Forgotten to load VCC Prelude? "$'\n'
 		continue;
 	    fi
 	    if [ "$TYPE_ERROR" ]; then
-		echo "!Warning! Exception thrown - Type Error - Forgotten to load VCC Prelude? \n"
+		echo "!Warning! Exception thrown - Type Error - Forgotten to load VCC Prelude? "$'\n'
 		continue;
 	    fi
 	    if [ "$BUG_14" ]; then
-		echo "!Warning! Exception thrown - Probably Bug #14 \n"
+		echo "!Warning! Exception thrown - Probably Bug #14 "$'\n'
 		continue;
 	    fi
 	    if [ "$ARRAY_ERROR" ]; then
-		echo "!Warning! Exception thrown - $ARRAY_ERROR \n"
+		echo "!Warning! Exception thrown - $ARRAY_ERROR "$'\n'
 		continue;
 	    fi
 	    if [ "$OOM_HEAP" ]; then
-		echo "!Warning! Exception thrown - $OOM_HEAP \n"
+		echo "!Warning! Exception thrown - $OOM_HEAP "$'\n'
 		continue;
 	    fi
 	    if [ "$OOM_GC" ]; then
-		echo "!Warning! Exception thrown - $OOM_GC \n"
+		echo "!Warning! Exception thrown - $OOM_GC "$'\n'
 		continue;
 	    fi
-	    echo "!!!FAIL!!! Exception thrown \n"
+	    echo "!!!FAIL!!! Exception thrown"$'\n'
 	    continue;
 	else 
 	    if [ "$OOM_HEAP" ]; then
-		echo "!Warning! $OOM_HEAP \n"
+		echo "!Warning! $OOM_HEAP "$'\n'
 		continue;
 	    fi
 	    if [ "$OOM_GC" ]; then
-		echo "!Warning! $OOM_GC \n"
+		echo "!Warning! $OOM_GC "$'\n'
 		continue;
 	    fi
 	fi 
@@ -352,7 +352,7 @@ do
 
 	echo "$Ultimate_OUTPUT" | grep "Statistics:" | cut -c67-
 	echo "$Ultimate_OUTPUT" | grep "BenchmarkResult:" | cut -c65-
-	RUNTIME=`echo "$Ultimate_OUTPUT" | grep "TraceAbstraction took" | cut -c73-`
+	RUNTIME=`echo "$Ultimate_OUTPUT" | grep "TraceAbstraction took" | cut -c74-85`
     TOTALRUNTIME=`echo "$Ultimate_OUTPUT" | grep "Finished toolchain execution after " | cut -c91-`
 
 	if [ "$RESULT_SYNTAX" ]; then
