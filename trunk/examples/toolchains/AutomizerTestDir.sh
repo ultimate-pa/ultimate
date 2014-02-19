@@ -326,7 +326,7 @@ do
 		echo "!Warning! Exception thrown - $OOM_GC \n"
 		continue;
 	    fi
-	    echo "!!!FAIL!!! Exception thrown \n";
+	    echo "!!!FAIL!!! Exception thrown \n"
 	    continue;
 	else 
 	    if [ "$OOM_HEAP" ]; then
