@@ -8,6 +8,6 @@ Require-Bundle: Library-log4j,
  UltimateCore,
  JavaCup
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: de.uni_freiburg.informatik.ultimate.LTL2aut.ast
 Import-Package: org.apache.commons.io

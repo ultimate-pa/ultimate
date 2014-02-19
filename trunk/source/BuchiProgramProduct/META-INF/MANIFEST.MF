@@ -8,7 +8,7 @@ Require-Bundle: Library-log4j,
  UltimateCore,
  JavaCup
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Import-Package: de.uni_freiburg.informatik.ultimate.LTL2aut.ast,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,

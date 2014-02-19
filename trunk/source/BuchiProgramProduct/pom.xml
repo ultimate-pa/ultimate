@@ -10,61 +10,8 @@
 	</parent>
 
 
-	<groupId>Never2Aut</groupId>
-	<artifactId>Never2Aut</artifactId>
+	<groupId>BuchiProgramProduct</groupId>
+	<artifactId>BuchiProgramProduct</artifactId>
 	<version>0.0.1</version>
 	<packaging>eclipse-plugin</packaging>
-
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-antrun-plugin</artifactId>
-				<version>1.7</version>
-				<executions>
-					<execution>
-						<id>generate parser sources</id>
-						<phase>generate-sources</phase>
-						<configuration>
-							<tasks>
-								<echo>AutomataScriptParser: workspaceDir is ${workspaceDir}</echo>
-								<echo>AutomataScriptParser: cupDir is ${cupDir}</echo>
-								<echo>AutomataScriptParser: automatascriptparserDir is
-									${automatascriptparserDir}</echo>
-								<echo>AutomataScriptParser: flexBinary is ${flexBinary}</echo>
-
-								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
-									dir="${automatascriptparserDir}">
-									<arg line="-parser Parser" />
-									<arg value="AutPomela.cup" />
-								</java>
-								<java jar="${flexBinary}" fork="true" dir="${automatascriptparserDir}">
-									<arg value="AutPomela.flex" />
-								</java>
-							</tasks>
-						</configuration>
-						<goals>
-							<goal>run</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-clean-plugin</artifactId>
-				<version>2.4.1</version>
-				<configuration>
-					<filesets>
-						<fileset>
-							<directory>${automatascriptparserDir}</directory>
-							<includes>
-								<include>Parser.java</include>
-								<include>Lexer.java</include>
-								<include>Lexer.java~</include>
-								<include>sym.java</include>
-							</includes>
-						</fileset>
-					</filesets>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 </project>

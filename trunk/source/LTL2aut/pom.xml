@@ -10,8 +10,8 @@
 	</parent>
 
 
-	<groupId>Never2Aut</groupId>
-	<artifactId>Never2Aut</artifactId>
+	<groupId>LTL2aut</groupId>
+	<artifactId>LTL2aut</artifactId>
 	<version>0.0.1</version>
 	<packaging>eclipse-plugin</packaging>
 
@@ -33,12 +33,21 @@
 								<echo>AutomataScriptParser: flexBinary is ${flexBinary}</echo>
 
 								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
-									dir="${automatascriptparserDir}">
+									dir="${ltl2autParserDir}">
 									<arg line="-parser Parser" />
-									<arg value="AutPomela.cup" />
+									<arg value="AutPromela.cup" />
 								</java>
-								<java jar="${flexBinary}" fork="true" dir="${automatascriptparserDir}">
-									<arg value="AutPomela.flex" />
+								<java jar="${flexBinary}" fork="true" dir="${ltl2autParserDir}">
+									<arg value="AutPromela.flex" />
+								</java>
+
+								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
+									dir="${ltl2autParserDir}">
+									<arg line="-parser Parser" />
+									<arg value="Apformula.cup" />
+								</java>
+								<java jar="${flexBinary}" fork="true" dir="${ltl2autParserDir}">
+									<arg value="Apformula.flex" />
 								</java>
 							</tasks>
 						</configuration>
@@ -54,12 +63,16 @@
 				<configuration>
 					<filesets>
 						<fileset>
-							<directory>${automatascriptparserDir}</directory>
+							<directory>${ltl2autParserDir}</directory>
 							<includes>
 								<include>Parser.java</include>
+								<include>ParserAP.java</include>
 								<include>Lexer.java</include>
 								<include>Lexer.java~</include>
-								<include>sym.java</include>
+								<include>LexerAP.java</include>
+								<include>LexerAP.java~</include>
+								<include>Symbols.java</include>
+								<include>SymbolsAP.java</include>
 							</includes>
 						</fileset>
 					</filesets>
