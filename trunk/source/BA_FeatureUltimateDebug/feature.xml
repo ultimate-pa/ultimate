@@ -228,4 +228,18 @@
          version="0.0.0"
          unpack="false"/>
 
+   <plugin
+         id="LTL2aut"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="BuchiProgramProduct"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
 </feature>
