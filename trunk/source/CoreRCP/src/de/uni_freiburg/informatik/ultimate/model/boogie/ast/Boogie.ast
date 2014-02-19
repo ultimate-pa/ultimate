@@ -137,7 +137,7 @@ Declaration ::=
 		 */
 		body        : ?Expression
 	| {/**
-		* A variable declaration declares global variables.
+		* A variable declaration declares global variables or local variables.
 		*/
 		VariableDeclaration}
 		/* The declared variables
