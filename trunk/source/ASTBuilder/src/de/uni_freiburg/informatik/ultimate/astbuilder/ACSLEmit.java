@@ -14,8 +14,10 @@ public class ACSLEmit extends Emit {
                 + (node.isAbstract() ? "abstract " : "")
                 + "class "
                 + node.getName()
-                + (node.getParent() != null ? " extends " + node.getParent()
-                        : " extends ACSLNode") + " {");
+                + (node.getParent() != null ? " extends " + node.getParent().getName()
+                        : " extends ACSLNode")
+                + (node.getInterfaces() != null ? " implements "+node.getInterfaces() : "")
+                + " {");
     }
 
     @Override
