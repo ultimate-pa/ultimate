@@ -423,7 +423,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					throw new UnsupportedOperationException();
 				} else {
 					DeterministicInterpolantAutomaton determinized = 
-							new DeterministicInterpolantAutomaton(m_SmtManager, edgeChecker, oldAbstraction, m_TraceChecker);
+							new DeterministicInterpolantAutomaton(m_SmtManager, edgeChecker, oldAbstraction, m_InterpolAutomaton, m_TraceChecker);
 //					ComplementDeterministicNwa<CodeBlock, IPredicate> cdnwa = new ComplementDeterministicNwa<>(dia);
 					PowersetDeterminizer<CodeBlock, IPredicate> psd2 = 
 							new PowersetDeterminizer<CodeBlock, IPredicate>(determinized, true);

@@ -1,16 +1,17 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.HashRelation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -38,8 +39,10 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 	
 	private final Map<Set<IPredicate>, IPredicate> m_InputPreds2ResultPreds = 
 			new HashMap<Set<IPredicate>, IPredicate>();
+	private final HashRelation<IPredicate, IPredicate> m_ResPred2InputPreds = 
+			new HashRelation<IPredicate, IPredicate>();
 
-	
+	private final NestedWordAutomaton<CodeBlock, IPredicate> m_InterpolantAutomaton;
 	private final IPredicate m_IaFalseState;
 	private final IPredicate m_IaTrueState;
 	private final Set<IPredicate> m_NonTrivialPredicates;
@@ -55,22 +58,30 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 	
 
 	public DeterministicInterpolantAutomaton(SmtManager smtManager, EdgeChecker edgeChecker,
-			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, TraceChecker traceChecker) {
+			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
+			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
+			TraceChecker traceChecker) {
 		super(smtManager,edgeChecker, abstraction);
 		m_UseLazyEdgeChecks = false;
+		m_InterpolantAutomaton = interpolantAutomaton;
 		m_IaTrueState = traceChecker.getPrecondition();
 		assert m_IaTrueState.getFormula().toString().equals("true");
+		assert m_InterpolantAutomaton.getStates().contains(m_IaTrueState);
 		m_Result.addState(true, false, m_IaTrueState);
+		m_ResPred2InputPreds.addPair(m_IaTrueState, m_IaTrueState);
 		m_IaFalseState = traceChecker.getPostcondition();
 		assert m_IaFalseState.getFormula().toString().equals("false");
+		assert m_InterpolantAutomaton.getStates().contains(m_IaFalseState);
 		m_Result.addState(false, true, m_IaFalseState);
+		m_ResPred2InputPreds.addPair(m_IaFalseState, m_IaFalseState);
 		m_InSucComp = new InternalSuccessorComputation();
 		m_CaSucComp = new CallSuccessorComputation();
 		m_ReSucComp = new ReturnSuccessorComputation();
 		m_NonTrivialPredicates = new HashSet<IPredicate>();
-		for (IPredicate pred : traceChecker.getInterpolants()) {
-			if (pred != m_IaTrueState && pred != m_IaFalseState) {
-				m_NonTrivialPredicates.add(pred);
+		for (IPredicate state : m_InterpolantAutomaton.getStates()) {
+			if (state != m_IaTrueState && state != m_IaFalseState) {
+				m_ResPred2InputPreds.addPair(state, state);
+				m_NonTrivialPredicates.add(state);
 			}
 		}
 		m_PredicateUnifier = traceChecker.getPredicateUnifier();
@@ -150,9 +161,12 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 				}
 			}
 			// check all other predicates
-			Set<IPredicate> inputSuccs = new HashSet<IPredicate>();
+			final Set<IPredicate> inputSuccs = new HashSet<IPredicate>();
+			final Collection<IPredicate> automatonSuccs = getConjunctSuccsInterpolantAutomaton(resPred, resHier, letter);
 			for (IPredicate succCand : m_NonTrivialPredicates) {
-				if (isInductiveSefloop(resPred, resHier, letter, succCand)) {
+				if (automatonSuccs.contains(succCand)) {
+					inputSuccs.add(succCand);
+				} else if (isInductiveSefloop(resPred, resHier, letter, succCand)) {
 					inputSuccs.add(succCand);
 				} else {
 					LBool sat = null;
@@ -175,6 +189,61 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 		}
 
 
+		/**
+		 * Returns all successors of resPred, resHier, and letter in automaton.
+		 * If resPred and resHier were constructed as a conjunction of 
+		 * inputPredicates, we also take the conjuncts.
+		 */
+		private Collection<IPredicate> getConjunctSuccsInterpolantAutomaton(
+				IPredicate resPred, IPredicate resHier, CodeBlock letter) {
+			final Set<IPredicate> resPredConjuncts = m_ResPred2InputPreds.getImage(resPred);
+			assert resPredConjuncts != null;
+			final Set<IPredicate> resHierConjuncts;
+			if (resHier == null) {
+				resHierConjuncts = null;
+			} else {
+				resHierConjuncts = m_ResPred2InputPreds.getImage(resHier);
+			}
+			Collection<IPredicate> result;
+			if (resPredConjuncts.size() == 1 && 
+					(resHier == null || resHierConjuncts.size() == 1)) {
+				result = getSuccsInterpolantAutomaton(resPred, resHier, letter);
+			} else {
+				result = new HashSet<IPredicate>();
+				for (IPredicate inputPred : resPredConjuncts) {
+					if (resHier == null) {
+						result = getSuccsInterpolantAutomaton(inputPred, null, letter);
+					} else {
+						for (IPredicate inputHier : resHierConjuncts) {
+							result = getSuccsInterpolantAutomaton(inputPred, inputHier, letter);
+						}
+					}
+				}
+			}
+			return result;
+		}
+
+
+		/**
+		 * Returns true iff  both of the following are true: 
+		 *  - m_InterpolantAutomaton contains resPred
+		 *  - resHier is null or m_InterpolantAutomaton contains resHier
+		 */
+		private boolean interpolantAutomatonContainsStates(IPredicate resPred,
+				IPredicate resHier) {
+			Collection<IPredicate> states = m_InterpolantAutomaton.getStates();
+			if (states.contains(resPred)) {
+				if (resHier == null || states.contains(resHier)) {
+					return true;
+				} else {
+					return false;
+				}
+			} else {
+				return false;
+			}
+		}
+
+
 		protected abstract boolean isLinearPredecessorFalse(IPredicate resPred);
 		
 		protected abstract boolean isHierarchicalPredecessorFalse(IPredicate resPred);
@@ -187,10 +256,13 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 		
 		protected abstract LBool sdecToFalse(IPredicate resPred, IPredicate resHier,
 				CodeBlock letter);
+
+		protected abstract Collection<IPredicate> getSuccsInterpolantAutomaton(IPredicate resPred,
+				IPredicate resHier, CodeBlock letter);
 		
 		protected abstract boolean isInductiveSefloop(IPredicate resPred,
 				IPredicate resHier, CodeBlock letter, IPredicate succCand);
-
+		
 		protected abstract LBool sdec(IPredicate resPred, IPredicate resHier,
 				CodeBlock letter, IPredicate succCand);
 
@@ -234,6 +306,19 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 				CodeBlock letter) {
 			assert resHier == null;
 			return m_EdgeChecker.sdecInternalToFalse(resPred, letter);
+		}
+		
+		@Override
+		protected Collection<IPredicate> getSuccsInterpolantAutomaton(IPredicate resPred,
+				IPredicate resHier, CodeBlock letter) {
+			assert resHier == null;
+			Collection<IPredicate> succs = 
+					m_InterpolantAutomaton.succInternal(resPred, letter);
+			if (succs == null) {
+				return Collections.emptySet();
+			} else {
+				return succs;
+			}
 		}
 
 		@Override
@@ -309,6 +394,19 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 			// but interprocedural sequential composition 
 			return null;
 		}
+		
+		@Override
+		protected Collection<IPredicate> getSuccsInterpolantAutomaton(IPredicate resPred,
+				IPredicate resHier, CodeBlock letter) {
+			assert resHier == null;
+			Collection<IPredicate> succs = 
+					m_InterpolantAutomaton.succCall(resPred, letter);
+			if (succs == null) {
+				return Collections.emptySet();
+			} else {
+				return succs;
+			}
+		}
 
 		@Override
 		protected boolean isInductiveSefloop(IPredicate resPred,
@@ -376,6 +474,18 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 			//TODO: is there some useful rule?
 			return null;
 		}
+		
+		@Override
+		protected Collection<IPredicate> getSuccsInterpolantAutomaton(IPredicate resPred,
+				IPredicate resHier, CodeBlock letter) {
+			Collection<IPredicate> succs = 
+					m_InterpolantAutomaton.succReturn(resPred, resHier, letter);
+			if (succs == null) {
+				return Collections.emptySet();
+			} else {
+				return succs;
+			}
+		}
 
 		@Override
 		protected boolean isInductiveSefloop(IPredicate resPred,
@@ -429,6 +539,11 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 				clearAssertionStack();
 				resSucc = m_PredicateUnifier.getOrConstructPredicate(conjunction);
 				m_InputPreds2ResultPreds.put(succs, resSucc);
+				for (IPredicate succ : succs) {
+					if (m_NonTrivialPredicates.contains(succ)) {
+						m_ResPred2InputPreds.addPair(resSucc, succ);
+					}
+				}
 				if (!m_Result.contains(resSucc)) {
 					m_Result.addState(false, false, resSucc);
 				}
