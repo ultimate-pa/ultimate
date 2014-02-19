@@ -15,7 +15,12 @@ public class Node {
     /**
      * The parent of this node.
      */
-    String parent;
+    Node parent;
+
+    /**
+     * The interfaces of this node.
+     */
+    String interfaces;
 
     /**
      * The comment of this node.
@@ -41,15 +46,34 @@ public class Node {
      * The constructor taking initial values.
      * @param name the name of this node.
      * @param parent the parent of this node.
+     * @param interfaces the interfaces of this node.
+     * @param comment the comment of this node.
+     * @param usedTypes the used types of this node.
+     */
+    public Node(String name, Node parent, String interfaces, String comment, HashSet<String> usedTypes) {
+        super();
+        this.name = name;
+        this.parent = parent;
+        this.interfaces = interfaces;
+        this.comment = comment;
+        this.usedTypes = usedTypes;
+    }
+
+    /**
+     * The constructor taking initial values.
+     * @param name the name of this node.
+     * @param parent the parent of this node.
+     * @param interfaces the interfaces of this node.
      * @param comment the comment of this node.
      * @param usedTypes the used types of this node.
      * @param isAbstract true iff this node is abstract.
      * @param parameters the parameters of this node.
      */
-    public Node(String name, String parent, String comment, HashSet<String> usedTypes, boolean isAbstract, Parameter[] parameters) {
+    public Node(String name, Node parent, String interfaces, String comment, HashSet<String> usedTypes, boolean isAbstract, Parameter[] parameters) {
         super();
         this.name = name;
         this.parent = parent;
+        this.interfaces = interfaces;
         this.comment = comment;
         this.usedTypes = usedTypes;
         this.isAbstract = isAbstract;
@@ -64,6 +88,7 @@ public class Node {
         sb.append("Node").append('[');
         sb.append(name);
         sb.append(',').append(parent);
+        sb.append(',').append(interfaces);
         sb.append(',').append(comment);
         sb.append(',').append(usedTypes);
         sb.append(',').append(isAbstract);
@@ -93,8 +118,16 @@ public class Node {
      * Gets the parent of this node.
      * @return the parent of this node.
      */
-    public String getParent() {
+    public Node getParent() {
         return parent;
+    }
+
+    /**
+     * Gets the interfaces of this node.
+     * @return the interfaces of this node.
+     */
+    public String getInterfaces() {
+        return interfaces;
     }
 
     /**
@@ -122,10 +155,26 @@ public class Node {
     }
 
     /**
+     * Sets iff this node is abstract.
+     * @param isAbstract true iff this node is abstract.
+     */
+    public void setAbstract(boolean isAbstract) {
+        this.isAbstract = isAbstract;
+    }
+
+    /**
      * Gets the parameters of this node.
      * @return the parameters of this node.
      */
     public Parameter[] getParameters() {
         return parameters;
+    }
+
+    /**
+     * Sets the parameters of this node.
+     * @param parameters the parameters of this node.
+     */
+    public void setParameters(Parameter[] parameters) {
+        this.parameters = parameters;
     }
 }

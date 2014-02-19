@@ -16,21 +16,23 @@ public class UltimateEmit extends Emit {
                 + (node.isAbstract() ? "abstract " : "")
                 + "class "
                 + node.getName()
-                + (node.getParent() != null ? " extends " + node.getParent()
-                        : " extends BoogieASTNode") + " {");
+                + (node.getParent() != null ? " extends " + node.getParent().getName()
+                        : " extends BoogieASTNode")
+                + (node.getInterfaces() != null ? " implements "+node.getInterfaces() : "")
+                        + " {");
         formatComment(writer, "    ", "The serial version UID.");
         writer.println("    private static final long serialVersionUID = 1L;");
     }
 
-    public String getConstructorParam(String nodeName, boolean optional) {
-        if (nodeName == null)
+    public String getConstructorParam(Node node, boolean optional) {
+        if (node == null)
             return "loc";
-        return super.getConstructorParam(nodeName, optional);
+        return super.getConstructorParam(node, optional);
     }
 
     protected void fillConstructorParamComment(Node node, StringBuffer param,
             StringBuffer comment, boolean optional) {
-        String parent = node.getParent();
+        Node parent = node.getParent();
         if (parent == null) {
             param.append("ILocation loc");
             comment.append("\n@param loc the node's location");
@@ -54,7 +56,7 @@ public class UltimateEmit extends Emit {
                 if (!p.isOptional())
                     numNotOptionalParams++;
             }
-            ancestor = grammar.getNodeTable().get(ancestor.getParent());
+            ancestor = ancestor.getParent();
         }
         if (numNotOptionalParams == 0 || numNotWriteableParams == 0) {
             formatComment(writer, "    ", "The default constructor.");

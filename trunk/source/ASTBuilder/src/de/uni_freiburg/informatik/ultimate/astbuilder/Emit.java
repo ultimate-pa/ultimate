@@ -118,7 +118,7 @@ public class Emit {
                     String type = importStr.substring(dotIndex+1);
                     if (ancestor.getUsedTypes().contains(type))
                     	found = true;
-                    ancestor = grammar.getNodeTable().get(ancestor.getParent());
+                    ancestor = ancestor.getParent();
                 }
                 if (!found)
                     continue;
@@ -132,16 +132,17 @@ public class Emit {
     {
         writer.println("public "+ (node.isAbstract() ? "abstract ": "")+ 
                 "class "+node.getName()+
-                ( node.getParent() != null ? " extends "+node.getParent() : "")+ " {");
+                ( node.getParent() != null ? " extends "+node.getParent().getName() : "")+
+                ( node.getInterfaces() != null ? " implements "+node.getInterfaces() : "")+
+                " {");
     }
     
-    public String getConstructorParam(String name, boolean optional) {
-    	if (name == null) {
+    public String getConstructorParam(Node node, boolean optional) {
+    	if (node == null) {
     		return "";
     	}
     	
 		StringBuffer sb = new StringBuffer();
-		Node node = grammar.getNodeTable().get(name);
 
 		sb.append(getConstructorParam(node.getParent(), optional));
 
@@ -164,10 +165,10 @@ public class Emit {
                                                StringBuffer param, 
                                                StringBuffer comment,
                                                boolean optional) {
-        String parent = node.getParent();
+        Node parent = node.getParent();
         if (parent != null) {
             fillConstructorParamComment
-                (grammar.getNodeTable().get(parent), param, comment, optional);
+                (parent, param, comment, optional);
         }
         String comma = "";
         if (param.length() > 0)
@@ -233,7 +234,7 @@ public class Emit {
         		if (!p.isOptional())
         			numNotOptionalParams++;
         	}
-        	ancestor = grammar.getNodeTable().get(ancestor.getParent());
+        	ancestor = ancestor.getParent();
         }
         if (numNotOptionalParams == 0 || numNotWriteableParams == 0) {
         	formatComment(writer, "    ", "The default constructor.");

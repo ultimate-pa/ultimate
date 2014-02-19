@@ -194,6 +194,8 @@ public class Lexer implements Scanner {
                         return new Symbol(sym.PACKAGE, left, getLineCol());
                     else if (ident.equals("import"))
                         return new Symbol(sym.IMPORT, left, getLineCol());
+                    else if (ident.equals("implements"))
+                        return new Symbol(sym.IMPLEMENTS, left, getLineCol());
                     else
                         return new Symbol(sym.IDENT, left, getLineCol(), 
                                           ident);

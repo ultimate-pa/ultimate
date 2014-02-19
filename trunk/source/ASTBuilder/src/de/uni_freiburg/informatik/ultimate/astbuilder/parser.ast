@@ -11,11 +11,12 @@ Grammar ::=
 
 Node ::=
         name		: String
-        parent		: String
+        parent		: Node
+        interfaces	: String
         comment		: String
         usedTypes	: HashSet<String>
-        isAbstract	: boolean
-        parameters	: Parameter[]
+        isAbstract	: &?boolean
+        parameters	: &?Parameter[]
         ;
 
 Parameter ::=

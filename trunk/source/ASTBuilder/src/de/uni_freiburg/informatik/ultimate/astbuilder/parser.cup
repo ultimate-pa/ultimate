@@ -29,11 +29,8 @@ action code {:
     private static final int WRITEABLE = 1;
     private static final int OPTIONAL  = 2;
 
-    String currentNode = null;
-    Stack<String>  nodeNameStack = new Stack<String>();
-    Stack<HashSet<String>> usedTypesStack = new Stack<HashSet<String>>();
+    Node currentNode = null;
     HashMap<String,Node> symbolTable = new HashMap<String,Node>();
-    HashSet<String>      usedTypes;
     boolean hasError = false;
 
     public void report_error(int left, int right, String message)
@@ -45,27 +42,24 @@ action code {:
             + message);
     }
 
-    void pushNode(String name) {
-        nodeNameStack.push(currentNode);
-        usedTypesStack.push(usedTypes);
-        currentNode = name;
-        usedTypes = new HashSet<String>();
-    }
-
     void popNode() {
-        currentNode = nodeNameStack.pop();
-        usedTypes = usedTypesStack.pop();
+        currentNode = currentNode.getParent();
     }
 
-    void buildNode(String name, String parent, String comment,
-                   List<Parameter> pl, boolean isAbstract, int left, int right) {
+    Node buildNode(String name, String ifaces, String comment) {
+        Node parent = currentNode;
         if (comment == null)
-            comment = Emit.buildClassComment(name, parent);
+            comment = Emit.buildClassComment(name, parent == null ? null : parent.getName());
         else if (!comment.endsWith("."))
             comment += ".";
-        Parameter[] params = pl.toArray(new Parameter[pl.size()]);
-        Node node = new Node(name, parent, comment, usedTypes, isAbstract, params);
-        Object previous = symbolTable.put(name, node);
+        currentNode = new Node(name, parent, ifaces, comment, new HashSet<String>());
+       	return currentNode;
+    }
+    
+    void fillNode(Node node, List<Parameter> pl, boolean isAbstract, int left, int right) {
+        node.setAbstract(isAbstract);
+        node.setParameters(pl.toArray(new Parameter[pl.size()]));
+        Object previous = symbolTable.put(node.getName(), node);
         if (previous != null)
             report_error(left, right,
                          "Double definition of "+currentNode);
@@ -75,7 +69,7 @@ action code {:
 
 terminal String IDENT;
 terminal String DOCCOMMENT;
-terminal IMPORT, PACKAGE, DOT, DDEF, COLON, BAR, STAR, SEMI, COMMA;
+terminal IMPORT, PACKAGE, IMPLEMENTS, DOT, DDEF, COLON, BAR, STAR, SEMI, COMMA;
 terminal LBRACE, RBRACE, LBRACKET, RBRACKET, LPAREN, RPAREN, LANGLE, RANGLE;
 terminal WRITEABLE, OPTIONAL;
 
@@ -84,8 +78,8 @@ non terminal Grammar goal;
 non terminal Boolean Choice_opt, ChoiceDefinition, ChoiceDefinition_Part;
 non terminal ArrayList<Parameter> Parameter_List, Parameter_List_opt;
 non terminal Parameter Parameter;
-non terminal String DeclName;
-non terminal String BracedDeclName;
+non terminal Node DeclName, BracedDeclName;
+non terminal String Implements_opt;
 non terminal String Comment_opt;
 non terminal ArrayList<String> Import_List;
 non terminal String PackageDefinition_opt, Import;
@@ -147,13 +141,13 @@ NodeDefinitionList
 
 NodeDefinition 
  ::= DeclName:comment DDEF Parameter_List:list Choice_opt:c SEMI
-     {: buildNode(currentNode, null, comment, list, !c.booleanValue(),
-                  comment$.left, comment$.right); 
+     {: fillNode(currentNode, list, !c.booleanValue(), 
+                 comment$.left, comment$.right); 
         popNode(); :}
    | DeclName:comment DDEF ChoiceDefinition:c SEMI
-     {: buildNode(currentNode, null, comment, 
-                  new ArrayList<Parameter>(0), !c.booleanValue(),
-                  comment$.left, comment$.right); 
+     {: fillNode(currentNode, 
+                 new ArrayList<Parameter>(0), !c.booleanValue(),
+                 comment$.left, comment$.right);
         popNode(); :}
    | DeclName DDEF Parameter_List Choice_opt error:err
      {: popNode(); report_error(err$.left, err$.right, "`;' expected!"); :}
@@ -166,13 +160,19 @@ NodeDefinition
    ;
 
 DeclName
- ::= Comment_opt:comment IDENT:node
-     {: pushNode(node); RESULT = comment; :}
+ ::= Comment_opt:comment IDENT:node Implements_opt:ifaces
+     {: RESULT = buildNode(node, ifaces, comment); :}
+   ;
+   
+Implements_opt
+ ::= {: RESULT = null; :}
+   | IMPLEMENTS IdentList_tail:l IDENT:i 
+     {: RESULT = l + i; :}
    ;
 
 BracedDeclName
- ::= LBRACE Comment_opt:comment IDENT:node RBRACE
-     {: pushNode(node); RESULT = comment; :}
+ ::= LBRACE DeclName:comment RBRACE
+     {: RESULT = comment; :}
    ;
 
 ChoiceDefinition
@@ -194,7 +194,7 @@ Choice_opt
 ChoiceDefinition_Part
  ::= BracedDeclName:comment Parameter_List_opt:list Choice_opt:c
      {: 
-        buildNode(currentNode, nodeNameStack.peek(), comment, list, !c.booleanValue(),
+        fillNode(currentNode, list, !c.booleanValue(),
                   comment$.left, comment$.right); 
         popNode(); 
         RESULT = Boolean.FALSE;
@@ -218,7 +218,7 @@ Parameter_List_opt
 Parameter
  ::= Comment_opt:comment IDENT:name COLON Flags:flags Type:type
      {: if (comment == null)
-            comment = Emit.buildFieldComment(currentNode, name, type);
+            comment = Emit.buildFieldComment(currentNode.getName(), name, type);
         else if (!comment.endsWith("."))
             comment += ".";
         boolean writeable = (flags.intValue() & WRITEABLE) != 0;
@@ -235,9 +235,9 @@ Parameter
 
 Type
  ::= FullQualifiedName:name
-     {: RESULT = name; usedTypes.add(name); :}
+     {: RESULT = name; currentNode.getUsedTypes().add(name); :}
    | FullQualifiedName:name LANGLE TypeArgsCommaPlus:ta RANGLE
-     {: RESULT = name + "<" + ta + ">"; usedTypes.add(name); :}
+     {: RESULT = name + "<" + ta + ">"; currentNode.getUsedTypes().add(name); :}
    | Type:name LBRACKET RBRACKET
      {: RESULT = name + "[]"; :}
    | LBRACE IdentList_tail:l IDENT:i RBRACE

@@ -16,22 +16,23 @@ public class NewUltimateEmit extends Emit {
 				+ (node.isAbstract() ? "abstract " : "")
 				+ "class "
 				+ node.getName()
-				+ (node.getParent() != null ? " extends " + node.getParent()
-						: " extends BoogieASTNode") + " {");
+				+ (node.getParent() != null ? " extends " + node.getParent().getName()
+						: " extends BoogieASTNode")
+                + (node.getInterfaces() != null ? " implements "+node.getInterfaces() : "")
+						+ " {");
 		formatComment(writer, "    ", "The serial version UID.");
 		writer.println("    private static final long serialVersionUID = 1L;");
 	}
 
-	public String getConstructorParam(String nodeName, boolean optional) {
-		if (nodeName == null)
+	public String getConstructorParam(Node node, boolean optional) {
+		if (node == null)
 			return "loc";
-		return super.getConstructorParam(nodeName, optional);
+		return super.getConstructorParam(node, optional);
 	}
 
 	protected void fillConstructorParamComment(Node node, StringBuffer param,
 			StringBuffer comment, boolean optional) {
-		String parent = node.getParent();
-		if (parent == null) {
+		if (node.getParent() == null) {
 			param.append("ILocation loc");
 			comment.append("\n@param loc the node's location");
 		}
@@ -54,7 +55,7 @@ public class NewUltimateEmit extends Emit {
 				if (!p.isOptional())
 					numNotOptionalParams++;
 			}
-			ancestor = grammar.getNodeTable().get(ancestor.getParent());
+			ancestor = ancestor.getParent();
 		}
 		if (numNotOptionalParams == 0 || numNotWriteableParams == 0) {
 			formatComment(writer, "    ", "The default constructor.");
@@ -110,29 +111,9 @@ public class NewUltimateEmit extends Emit {
 	}
 
 	private boolean isNoRegularChild(String type) {
-		
-		if(enumTypes.contains(type)){
-			//its an enum type
-			return true;
-		}
-		
-		// mostly primitives, but IType is also not a regular child --> it is no descendant of BoogieASTNode  
-		String trimmedType = type.replace("[", "").replace("]", "").trim();
-		if (trimmedType.equals("byte")
-				|| trimmedType.equals("short")
-				|| trimmedType.equals("int")
-				|| trimmedType.equals("long")
-				|| trimmedType.equals("float")
-				|| trimmedType.equals("double")
-				|| trimmedType.equals("char")
-				|| trimmedType.equals("String")
-				|| trimmedType.equals("Object")
-				|| trimmedType.equals("boolean")
-				|| trimmedType.equals("IType")) {
-			return true;
-		} else { 
-			return false;
-		}
+		while (type.endsWith("[]"))
+			type = type.substring(0, type.length()-2);
+		return ! (grammar.getNodeTable().containsKey(type));
 	}
 
 	private boolean needsArraysPackage(Node node){
