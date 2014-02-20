@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -35,19 +36,49 @@ public class EdgeChecker {
 	private TransFormula m_TransFormula;
 	private ScopedHashMap<BoogieVar, Term> m_HierConstants;
 	public final static boolean m_AddDebugInformation = false;
-	public final static boolean m_UnletTerms = true; 
+	public final static boolean m_UnletTerms = true;
 	
+	private final InCaReCounter m_SdEdgeChecks;
+	private final InCaReCounter m_LazySdEdgeChecks;
+	private final InCaReCounter m_SolverEdgeChecks;
 	
-	public EdgeChecker(SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager) {
+	public EdgeChecker(SmtManager smtManager, 
+			ModifiableGlobalVariableManager modGlobVarManager, 
+			EdgeCheckerBenchmark ecb) {
 		m_SmtManager = smtManager;
 		m_ModifiableGlobalVariableManager = modGlobVarManager;
 		m_Script = smtManager.getScript();
+		if (ecb == null) {
+			m_SdEdgeChecks = new InCaReCounter();
+			m_LazySdEdgeChecks = new InCaReCounter();
+			m_SolverEdgeChecks = new InCaReCounter();
+		} else {
+			m_SdEdgeChecks = ecb.getSdCounter();
+			m_LazySdEdgeChecks = ecb.getSdLazyCounter();
+			m_SolverEdgeChecks = ecb.getSolverCounter();
+		}
+	}
+	
+	public EdgeChecker(SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager) {
+		this(smtManager, modGlobVarManager, null);
 	}
 	
 	public SmtManager getSmtManager() {
 		return m_SmtManager;
 	}
 	
+	public InCaReCounter getSdEdgeChecks() {
+		return m_SdEdgeChecks;
+	}
+
+	public InCaReCounter getLazySdEdgeChecks() {
+		return m_LazySdEdgeChecks;
+	}
+
+	public InCaReCounter getSolverEdgeChecks() {
+		return m_SolverEdgeChecks;
+	}
+
 	public LBool assertPrecondition(IPredicate p) {
 		if (m_SmtManager.getStatus() == SmtManager.Status.IDLE) {
 			m_SmtManager.setStatus(Status.EDGECHECK);
@@ -269,7 +300,7 @@ public class EdgeChecker {
 			startTime = System.nanoTime();
 			isSat = m_Script.checkSat();
 		}
-		m_SmtManager.m_NontrivialEdgeCheckQueries++;
+		m_SolverEdgeChecks.incIn();
 		m_Script.pop(1);
 		m_SmtManager.m_SatCheckTime += (System.nanoTime() - startTime);
 		return isSat;
@@ -307,7 +338,7 @@ public class EdgeChecker {
 			startTime = System.nanoTime();
 			isSat = m_Script.checkSat();
 		}
-		m_SmtManager.m_NontrivialEdgeCheckQueries++;
+		m_SolverEdgeChecks.incCa();
 		m_Script.pop(1);
 		m_SmtManager.m_SatCheckTime += (System.nanoTime() - startTime);
 		return isSat;
@@ -361,7 +392,7 @@ public class EdgeChecker {
 			startTime = System.nanoTime();
 			isSat = m_Script.checkSat();
 		}
-		m_SmtManager.m_NontrivialEdgeCheckQueries++;
+		m_SolverEdgeChecks.incRe();
 		m_Script.pop(1);
 		m_HierConstants.endScope();
 		m_SmtManager.m_SatCheckTime += (System.nanoTime() - startTime);
@@ -605,11 +636,11 @@ public class EdgeChecker {
 		Infeasibility infeasiblity = cb.getTransitionFormula().isInfeasible();
 		if (infeasiblity == Infeasibility.UNPROVEABLE) {
 			if (pre.getFormula() == m_Script.term("true")) {
-				m_SmtManager.m_TrivialEdgeCheckQueries++;
+				m_SdEdgeChecks.incIn();
 				return LBool.UNKNOWN;
 			} else {
 				if (varsDisjoinedFormInVars(pre, cb)) {
-					m_SmtManager.m_TrivialEdgeCheckQueries++;
+					m_SdEdgeChecks.incIn();
 					return LBool.SAT;
 				} else  {
 					return null;
@@ -617,7 +648,7 @@ public class EdgeChecker {
 			}
 						
 		} else if (infeasiblity == Infeasibility.INFEASIBLE) {
-			m_SmtManager.m_TrivialEdgeCheckQueries++;
+			m_SdEdgeChecks.incIn();
 			return LBool.UNSAT;
 		} else if (infeasiblity == Infeasibility.NOT_DETERMINED) {
 			return null;
@@ -679,7 +710,7 @@ public class EdgeChecker {
 				return null;
 			}
 		}
-		m_SmtManager.m_TrivialEdgeCheckQueries++;
+		m_SdEdgeChecks.incIn();
 		return LBool.SAT;
 	}
 	
@@ -706,7 +737,7 @@ public class EdgeChecker {
 				continue;
 			}
 			// occurs neither in pre not in codeBlock, probably unsat
-			m_SmtManager.m_LazyEdgeCheckQueries++;
+			m_LazySdEdgeChecks.incIn();
 			return LBool.SAT;
 		}
 		return null;
@@ -717,6 +748,7 @@ public class EdgeChecker {
 		// there could be a contradiction if the Call is not a simple call
 		// but interprocedural sequential composition 			
 		if (cb instanceof Call) {
+			m_SdEdgeChecks.incCa();
 			return LBool.SAT;
 		} else {
 			return null;
@@ -742,7 +774,7 @@ public class EdgeChecker {
 			return null;
 		}
 		if (preHierIndependent(post, pre, (Call) cb)) {
-			m_SmtManager.m_TrivialEdgeCheckQueries++;
+			m_SdEdgeChecks.incCa();
 			return LBool.SAT;
 		}
 		return null;
@@ -765,7 +797,7 @@ public class EdgeChecker {
 					}
 				}
 			}
-			m_SmtManager.m_LazyEdgeCheckQueries++;
+			m_LazySdEdgeChecks.getCall();
 			return LBool.SAT;
 		}
 		return null;
@@ -778,7 +810,7 @@ public class EdgeChecker {
 		if (hierPostIndependent(hier, ret, post) 
 				&& preHierIndependent(pre, hier, call)
 				&& prePostIndependent(pre, ret, post)) {
-			m_SmtManager.m_TrivialEdgeCheckQueries++;
+			m_SdEdgeChecks.incRe();
 			return LBool.SAT;
 
 		}
@@ -812,7 +844,7 @@ public class EdgeChecker {
 		 */
 		Set<BoogieVar> parameters = call.getTransitionFormula().getAssignedVars();
 		if (!varSetDisjoint(parameters, pre.getVars())) {
-			m_SmtManager.m_LazyEdgeCheckQueries++;
+			m_LazySdEdgeChecks.incRe();
 			return null;
 		}
 
@@ -860,7 +892,7 @@ public class EdgeChecker {
 					}
 				}
 			}
-			m_SmtManager.m_LazyEdgeCheckQueries++;
+			m_LazySdEdgeChecks.incRe();
 			return LBool.SAT;
 		}
 		return null;
@@ -1058,6 +1090,30 @@ public class EdgeChecker {
 		} else {
 			return false;
 		}
+	}
+	
+	public static class EdgeCheckerBenchmark {
+		private final InCaReCounter m_SdCounter;
+		private final InCaReCounter m_SdLazyCounter;
+		private final InCaReCounter m_SolverCounter;
+		public EdgeCheckerBenchmark(InCaReCounter sdCounter,
+				InCaReCounter sdLazyCounter, InCaReCounter solverCounter) {
+			super();
+			m_SdCounter = sdCounter;
+			m_SdLazyCounter = sdLazyCounter;
+			m_SolverCounter = solverCounter;
+		}
+		public InCaReCounter getSdCounter() {
+			return m_SdCounter;
+		}
+		public InCaReCounter getSdLazyCounter() {
+			return m_SdLazyCounter;
+		}
+		public InCaReCounter getSolverCounter() {
+			return m_SolverCounter;
+		}
+		
+		
 	}
 	
 	

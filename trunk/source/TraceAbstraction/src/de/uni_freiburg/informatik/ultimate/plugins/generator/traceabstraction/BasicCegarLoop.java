@@ -265,7 +265,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
 		Map<IPredicate, IPredicate> context2entry = null;
 		EdgeChecker edgeChecker = new EdgeChecker(m_SmtManager, 
-				m_RootNode.getRootAnnot().getModGlobVarManager());
+				m_RootNode.getRootAnnot().getModGlobVarManager(),
+				m_TraceAbstractionBenchmarks.getEdgeCheckerBenchmark());
 		if (differenceInsteadOfIntersection) {
 			s_Logger.debug("Start constructing difference");
 			assert(oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());

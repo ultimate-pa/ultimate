@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public class TraceAbstractionBenchmarks {
@@ -36,6 +38,8 @@ public class TraceAbstractionBenchmarks {
 	private long m_StartingTime;
 	private boolean m_CounterExampleFeasible;
 	
+	private final EdgeCheckerBenchmark m_EdgeCheckerBenchmark;
+	
 	
 	
 	public TraceAbstractionBenchmarks(SmtManager mSmtManager) {
@@ -44,6 +48,12 @@ public class TraceAbstractionBenchmarks {
 		m_SizeOfPredicatesBP = new ArrayList<int[]>();
 		m_SizeOfPredicatesFP = new ArrayList<int[]>();
 		m_CounterExampleFeasible = false;
+		m_EdgeCheckerBenchmark = new EdgeCheckerBenchmark(new InCaReCounter(), 
+				new InCaReCounter(), new InCaReCounter());
+	}
+	
+	public EdgeCheckerBenchmark getEdgeCheckerBenchmark() {
+		return m_EdgeCheckerBenchmark;
 	}
 	
 	public long getRuntime() {

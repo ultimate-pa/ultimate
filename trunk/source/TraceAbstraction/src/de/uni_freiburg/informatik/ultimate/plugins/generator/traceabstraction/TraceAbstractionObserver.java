@@ -172,9 +172,9 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		stat += smtManager.getTrivialCoverQueries() + " tivial, ";
 		stat += smtManager.getNontrivialCoverQueries() + " nontrivial.";	
 		stat += " EdgeCheck queries: ";
-		stat += smtManager.getTrivialEdgeCheckQueries() + " tivial, ";
-		stat += smtManager.getLazyEdgeCheckQueries() + " lazy, ";
-		stat += smtManager.getNontrivialEdgeCheckQueries() + " nontrivial.";
+		stat += timingStatistics.getEdgeCheckerBenchmark().getSdCounter() + " trivial, ";
+		stat += timingStatistics.getEdgeCheckerBenchmark().getSdLazyCounter() + " lazy, ";
+		stat += timingStatistics.getEdgeCheckerBenchmark().getSolverCounter() + " nontrivial.";
 		stat += " Satisfiability queries: ";
 		stat += smtManager.getTrivialSatQueries() + " tivial, ";
 		stat += smtManager.getNontrivialSatQueries() + " nontrivial.";
@@ -188,7 +188,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		s_Logger.warn("PC#: " + smtManager.getInterpolQueries());
 		s_Logger.warn("TIME#: " + smtManager.getInterpolQuriesTime());
 		s_Logger.warn("ManipulationTIME#: " + smtManager.getTraceCheckTime());
-		s_Logger.warn("EC#: " + smtManager.getNontrivialEdgeCheckQueries());
+		s_Logger.warn("EC#: " + timingStatistics.getEdgeCheckerBenchmark().getSolverCounter());
 		s_Logger.warn("TIME#: " + smtManager.getSatCheckTime());
 		s_Logger.warn("ManipulationTIME#: "	+ smtManager.getSatCheckTime());
 		s_Logger.warn(timingStatistics.printBenchmarkResults());

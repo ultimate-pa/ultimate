@@ -79,9 +79,9 @@ public class SmtManager {
 	private int m_TrivialCoverQueries = 0;
 	private int m_NontrivialCoverQueries = 0;
 	
-	int m_LazyEdgeCheckQueries = 0;
-	int m_TrivialEdgeCheckQueries = 0;
-	int m_NontrivialEdgeCheckQueries = 0;
+//	int m_LazyEdgeCheckQueries = 0;
+//	int m_TrivialEdgeCheckQueries = 0;
+//	int m_NontrivialEdgeCheckQueries = 0;
 	
 	private int m_VarSetMinimalSolverQueries = 0;
 	private long m_VarSetMinimalComputationTime = 0;
@@ -192,17 +192,17 @@ public class SmtManager {
 		return m_SatCheckTime;
 	}
 	
-	public int getTrivialEdgeCheckQueries() {
-		return m_TrivialEdgeCheckQueries;
-	}
-	
-	public int getLazyEdgeCheckQueries() {
-		return m_LazyEdgeCheckQueries;
-	}
-
-	public int getNontrivialEdgeCheckQueries() {
-		return m_NontrivialEdgeCheckQueries;
-	}
+//	public int getTrivialEdgeCheckQueries() {
+//		return m_TrivialEdgeCheckQueries;
+//	}
+//	
+//	public int getLazyEdgeCheckQueries() {
+//		return m_LazyEdgeCheckQueries;
+//	}
+//
+//	public int getNontrivialEdgeCheckQueries() {
+//		return m_NontrivialEdgeCheckQueries;
+//	}
 	
 	public int getTrivialCoverQueries() {
 		return m_TrivialCoverQueries;
