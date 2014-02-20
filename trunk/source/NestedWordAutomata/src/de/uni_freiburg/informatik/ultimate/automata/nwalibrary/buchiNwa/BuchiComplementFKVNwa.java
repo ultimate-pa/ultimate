@@ -178,7 +178,13 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		return m_HighestRank;
 	}
 
+	public int getPowersetStates() {
+		return m_res2det.size();
+	}
 
+	public int getRankStates() {
+		return m_res2lrk.size();
+	}
 	
 
 
@@ -413,7 +419,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 
 	@Override
 	public int size() {
-		throw new UnsupportedOperationException();
+		return m_Cache.size();
 	}
 
 	@Override

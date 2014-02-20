@@ -78,7 +78,11 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 				m_FstOperand.sizeInformation() + ". Second operand " + 
 				m_SndOperand.sizeInformation() + " Result " + 
 				m_Result.sizeInformation() + 
-			"the highest rank that occured is " + m_SndComplemented.getHighesRank();
+				" Complement of second has " + m_SndComplemented.size() +
+				" states " +
+				m_SndComplemented.getPowersetStates() + " powerset states" +
+				m_SndComplemented.getRankStates() + " rank states" +
+			" the highest rank that occured is " + m_SndComplemented.getHighesRank();
 	}
 	
 	
@@ -127,6 +131,14 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 			throws OperationCanceledException {
 		return m_Result;
 	}
+	
+	
+	
+
+	public BuchiComplementFKVNwa<LETTER, STATE> getSndComplemented() {
+		return m_SndComplemented;
+	}
+
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
