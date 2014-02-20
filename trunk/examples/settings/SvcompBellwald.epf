@@ -19,6 +19,6 @@ file_export_version=3.0
 \!/instance/TraceAbstraction=
 #Tue Feb 18 19:58:15 CET 2014
 file_export_version=3.0
-/instance/UltimateCore/Toolchain\ timeout\ in\ seconds=300
+/instance/UltimateCore/Toolchain\ timeout\ in\ seconds=100
 \!/instance/UltimateCore=
 @UltimateCore=0.0.1
