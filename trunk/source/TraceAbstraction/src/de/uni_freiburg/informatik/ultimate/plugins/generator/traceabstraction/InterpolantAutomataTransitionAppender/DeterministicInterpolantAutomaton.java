@@ -149,8 +149,15 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 				addTransition(resPred, resHier, letter, m_IaFalseState);
 				return;
 			}
+			// get all successor whose inductivity we already know from the
+			// input interpolant automaton
+			final Collection<IPredicate> automatonSuccs = 
+					getConjunctSuccsInterpolantAutomaton(resPred, resHier, letter);
 			// check if false is implied
-			{
+			if (automatonSuccs.contains(m_IaFalseState)){
+				addTransition(resPred, resHier, letter, m_IaFalseState);
+				return;
+			} else {
 				LBool sat = sdecToFalse(resPred, resHier, letter);
 				if (sat == null) {
 					sat = computeSuccWithSolver(resPred, resHier, letter, m_IaFalseState);
@@ -162,7 +169,6 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 			}
 			// check all other predicates
 			final Set<IPredicate> inputSuccs = new HashSet<IPredicate>();
-			final Collection<IPredicate> automatonSuccs = getConjunctSuccsInterpolantAutomaton(resPred, resHier, letter);
 			for (IPredicate succCand : m_NonTrivialPredicates) {
 				if (automatonSuccs.contains(succCand)) {
 					inputSuccs.add(succCand);
@@ -389,10 +395,7 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 		protected LBool sdecToFalse(IPredicate resPred, IPredicate resHier,
 				CodeBlock letter) {
 			assert resHier == null;
-			// TODO:
-			// there could be a contradiction if the Call is not a simple call
-			// but interprocedural sequential composition 
-			return null;
+			return m_EdgeChecker.sdecCallToFalse(resPred, letter);
 		}
 		
 		@Override
@@ -471,8 +474,9 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 		@Override
 		protected LBool sdecToFalse(IPredicate resPred, IPredicate resHier,
 				CodeBlock letter) {
-			//TODO: is there some useful rule?
-			return null;
+			// sat if (not only if!) resPred and resHier are independent,
+			// hence we can use the "normal" sdec method
+			return m_EdgeChecker.sdecReturn(resPred, resHier, letter, m_IaFalseState);
 		}
 		
 		@Override

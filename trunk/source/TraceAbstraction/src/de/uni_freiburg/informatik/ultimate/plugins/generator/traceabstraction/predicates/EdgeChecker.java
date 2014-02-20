@@ -712,7 +712,16 @@ public class EdgeChecker {
 		return null;
 	}
 	
-	
+	public LBool sdecCallToFalse(IPredicate pre, CodeBlock cb) {
+		// TODO:
+		// there could be a contradiction if the Call is not a simple call
+		// but interprocedural sequential composition 			
+		if (cb instanceof Call) {
+			return LBool.SAT;
+		} else {
+			return null;
+		}
+	}
 	
 	public LBool sdecCall(IPredicate pre, CodeBlock cb, IPredicate post) {
 		for (BoogieVar bv : post.getVars()) {
