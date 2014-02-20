@@ -44,6 +44,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.HashRelation;
+import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
@@ -98,6 +99,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	private Map<STATE,Map<LETTER,Map<STATE,Set<STATE>>>> m_ReturnSummary =
 			new HashMap<STATE,Map<LETTER,Map<STATE,Set<STATE>>>>();
 
+	InCaReCounter m_NumberTransitions = new InCaReCounter();
 	
 	
 
@@ -250,7 +252,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	@Override
 	public String sizeInformation() {
 		int states = m_States.size();
-		return states + " states.";
+		return states + " states and " + m_NumberTransitions + " transitions.";
 	}
 
 	@Override
@@ -795,6 +797,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					"Operand contains transition twice: " + state + trans.getSucc();
 				cont.addInternalOutgoing(trans);
 				succSC.addInternalIncoming(new IncomingInternalTransition<LETTER, STATE>(state, trans.getLetter()));
+				m_NumberTransitions.incIn();
 			}
 		}
 		
@@ -821,6 +824,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				cont.addCallOutgoing(trans);
 				succCont.addCallIncoming(
 						new IncomingCallTransition<LETTER, STATE>(state, trans.getLetter()));
+				m_NumberTransitions.incCa();
 			}
 			if (addedSelfloop) {
 				HashSet<STATE> newDownStates = new HashSet<STATE>(1);
@@ -858,6 +862,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				succCont.addReturnIncoming(
 						new IncomingReturnTransition<LETTER, STATE>(cont.getState(), down, trans.getLetter()));
 				addReturnSummary(state, down, trans.getLetter(), succ);
+				m_NumberTransitions.incRe();
 //				addSummary(downCont, succCont);
 			}
 			if (addedSelfloop) {
