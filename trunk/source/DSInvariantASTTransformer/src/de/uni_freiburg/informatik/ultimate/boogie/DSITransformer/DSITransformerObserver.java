@@ -16,6 +16,8 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
@@ -448,7 +450,8 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 					// list of locals
 					IdentifierExpression result = new IdentifierExpression(
 							null, e.getType(),
-							procLocals.get(e.getIdentifier()));
+							procLocals.get(e.getIdentifier()),
+							e.getDeclarationInformation());
 					ModelUtils.mergeAnnotations(expr, result);
 
 					s_Logger.debug("Renamed in expression: "

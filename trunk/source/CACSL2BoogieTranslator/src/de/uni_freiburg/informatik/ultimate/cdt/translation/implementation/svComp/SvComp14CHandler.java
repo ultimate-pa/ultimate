@@ -196,7 +196,7 @@ public class SvComp14CHandler extends CHandler {
             auxVars.put(tVarDecl, loc);
             decl.add(tVarDecl);
             stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId)}));
-            returnValue = new RValue(new IdentifierExpression(loc, type, tId), null);
+            returnValue = new RValue(new IdentifierExpression(loc, type, tId, null), null);
             assert (main.isAuxVarMapcomplete(decl, auxVars));
             return new ResultExpression(stmt, returnValue, decl, auxVars,
                     overappr);

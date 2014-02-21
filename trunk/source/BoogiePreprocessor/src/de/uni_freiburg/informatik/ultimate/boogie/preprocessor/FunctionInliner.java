@@ -1,11 +1,18 @@
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
@@ -22,12 +29,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 
 /**
  * This class removes function bodies by either inlining them (if the attribute
@@ -149,10 +150,16 @@ public class FunctionInliner extends BoogieTransformer
 						int anonctr = 0;
 						for (VarList vl : fdecl.getInParams()) {
 							if (vl.getIdentifiers().length == 0) {
-								params.add(new IdentifierExpression(vl.getLocation(), vl.getType().getBoogieType(), "#"+(anonctr++)));
+								params.add(new IdentifierExpression(vl.getLocation(), 
+										vl.getType().getBoogieType(), 
+										"#"+(anonctr++), 
+										new DeclarationInformation(StorageClass.QUANTIFIED,  null)));
 							} else {
 								for (String i: vl.getIdentifiers()) {
-									params.add(new IdentifierExpression(vl.getLocation(), vl.getType().getBoogieType(), i));
+									params.add(new IdentifierExpression(vl.getLocation(), 
+											vl.getType().getBoogieType(), i, 
+											new DeclarationInformation(StorageClass.QUANTIFIED,  null)
+											));
 								}
 							}
 						}
@@ -285,7 +292,9 @@ public class FunctionInliner extends BoogieTransformer
 							newname = ids[idNr]+"$"+(ctr++);
 						} while (currentScope.clashes(newname));
 						newIds[idNr] = newname;
-						currentScope.addRenaming(ids[idNr], new IdentifierExpression(vl[vlNr].getLocation(), vl[vlNr].getType().getBoogieType(), newname));
+						currentScope.addRenaming(ids[idNr], new IdentifierExpression(
+								vl[vlNr].getLocation(), vl[vlNr].getType().getBoogieType(), 
+								newname, new DeclarationInformation(StorageClass.QUANTIFIED, null)));
 					}
 					if (newIds != ids) {
 						if (newVl == vl) {

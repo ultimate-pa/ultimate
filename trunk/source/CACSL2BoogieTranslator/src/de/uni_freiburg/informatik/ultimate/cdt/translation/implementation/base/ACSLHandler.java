@@ -361,10 +361,10 @@ public class ACSLHandler implements IACSLHandler {
         // the necessary auxiliary statements on.
         LRValue lrVal;
         if (((CHandler) main.cHandler).isHeapVar(id)) {
-            IdentifierExpression idExp = new IdentifierExpression(loc, type, id);
+            IdentifierExpression idExp = new IdentifierExpression(loc, type, id, null);
         	lrVal = new HeapLValue(idExp, cType);
         } else {
-            VariableLHS idLhs = new VariableLHS(loc, type, id);
+            VariableLHS idLhs = new VariableLHS(loc, type, id, null);
         	lrVal = new LocalLValue(idLhs, cType);
         }
         

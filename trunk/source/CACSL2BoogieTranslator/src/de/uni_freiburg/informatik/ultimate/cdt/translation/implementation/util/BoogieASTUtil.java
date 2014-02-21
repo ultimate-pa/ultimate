@@ -106,7 +106,7 @@ public class BoogieASTUtil {
         ILocation loc = e.getLocation();
         if (e instanceof IdentifierExpression) {
             IdentifierExpression ie = (IdentifierExpression) e;
-            return new VariableLHS(loc, ie.getType(), ie.getIdentifier());
+            return new VariableLHS(loc, ie.getType(), ie.getIdentifier(), null);
         }
         if (e instanceof StructAccessExpression) {
             StructAccessExpression sae = (StructAccessExpression) e;

@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -13,7 +12,6 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
@@ -21,7 +19,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -41,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
 /**
  * Convert structured Boogie-Code (code containing while-loops, if-then-else constructs,
@@ -201,10 +197,12 @@ public class UnstructureCode implements IUnmanagedObserver {
 		if (lhs instanceof ArrayLHS) { 
 			ArrayLHS arrlhs = (ArrayLHS) lhs;
 			Expression array = getLHSExpression(arrlhs.getArray());
-			expr = new ArrayAccessExpression(lhs.getLocation(), lhs.getType(), array, arrlhs.getIndices());
+			expr = new ArrayAccessExpression(lhs.getLocation(), lhs.getType(), 
+					array, arrlhs.getIndices());
 		} else {
 			VariableLHS varlhs = (VariableLHS) lhs;
-			expr = new IdentifierExpression(lhs.getLocation(), lhs.getType(), varlhs.getIdentifier());
+			expr = new IdentifierExpression(lhs.getLocation(), lhs.getType(), 
+					varlhs.getIdentifier(), varlhs.getDeclarationInformation());
 		}
 		return expr;
 	}

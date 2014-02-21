@@ -4,6 +4,7 @@ import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.result.FailureType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 
 Project ::= units: Unit[];
  
@@ -302,6 +303,7 @@ Expression ::=
 	     */
 	    IdentifierExpression }
 		identifier : String
+		declarationInformation : ?&DeclarationInformation
 	| { /** Represents a function application of a (mathematical) function
 	     * declared by a {@see FunctionDeclaration}.	     
 	     */
@@ -528,6 +530,7 @@ LeftHandSide ::=
 	     * a local variable or an output parameter of a procedure.
 	     */
 		identifier : String
+		declarationInformation : ?&DeclarationInformation
 	| { /**
 	     * An array left-hand-side represents an element of an array.
 	     */

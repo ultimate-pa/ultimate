@@ -75,8 +75,8 @@ public class ConstExpander extends BoogieTransformer
 		HashSet<String> uniqueValues = new HashSet<String>();
 		ASTType asttype = cdlist.get(0).getVarList().getType();
 		IType type = asttype.getBoogieType();
-		IdentifierExpression var = new IdentifierExpression(asttype.getLocation(), type, "$$");
-		IdentifierExpression var2 = new IdentifierExpression(asttype.getLocation(), type, "$$2");
+		IdentifierExpression var = new IdentifierExpression(asttype.getLocation(), type, "$$",/*FIXME: ask Jochen about storage class*/ null);
+		IdentifierExpression var2 = new IdentifierExpression(asttype.getLocation(), type, "$$2",/*FIXME: ask Jochen about storage class*/ null);
 		for (ConstDeclaration c : cdlist) {
 			ParentEdge[] parents = c.getParentInfo();
 			for (String child : c.getVarList().getIdentifiers()) {
@@ -84,11 +84,11 @@ public class ConstExpander extends BoogieTransformer
 					uniqueValues.add(child);
 				
 				if (parents != null) {
-					IdentifierExpression cid = new IdentifierExpression(c.getLocation(), type, child);
+					IdentifierExpression cid = new IdentifierExpression(c.getLocation(), type, child,/*FIXME: ask Jochen about storage class*/ null);
 					Expression polist = null;
 					for (ParentEdge p: parents) {
 						String parent = p.getIdentifier();
-						IdentifierExpression pid = new IdentifierExpression(c.getLocation(), type, parent);
+						IdentifierExpression pid = new IdentifierExpression(c.getLocation(), type, parent,/*FIXME: ask Jochen about storage class*/ null);
 						Expression partorder = new BinaryExpression(c.getLocation(), 
 								PrimitiveType.boolType, 
 								BinaryExpression.Operator.COMPPO,
@@ -108,7 +108,7 @@ public class ConstExpander extends BoogieTransformer
 							BinaryExpression.Operator.COMPEQ, cid, var);
 					for (ParentEdge p: parents) {
 						String parent = p.getIdentifier();
-						IdentifierExpression pid = new IdentifierExpression(c.getLocation(), type, parent);
+						IdentifierExpression pid = new IdentifierExpression(c.getLocation(), type, parent,/*FIXME: ask Jochen about storage class*/ null);
 						List<String> childList = childrens.get(parent);
 						if (childList == null) {
 							childList = new ArrayList<String>();
@@ -153,7 +153,7 @@ public class ConstExpander extends BoogieTransformer
 		for (ConstDeclaration c : cdlist) {
 			if (c.isComplete()) {
 				for (String parent : c.getVarList().getIdentifiers()) {
-					IdentifierExpression pid = new IdentifierExpression(c.getLocation(), type, parent);
+					IdentifierExpression pid = new IdentifierExpression(c.getLocation(), type, parent,/*FIXME: ask Jochen about storage class*/ null);
 					Expression polist = new BinaryExpression(c.getLocation(), 
 							PrimitiveType.boolType,
 							BinaryExpression.Operator.COMPEQ, var, pid);
@@ -161,7 +161,7 @@ public class ConstExpander extends BoogieTransformer
 					if (childList == null)
 						childList = Collections.emptyList();
 					for (String child: childList) {
-						IdentifierExpression cid = new IdentifierExpression(c.getLocation(), type, child);
+						IdentifierExpression cid = new IdentifierExpression(c.getLocation(), type, child,/*FIXME: ask Jochen about storage class*/ null);
 						Expression partorder = new BinaryExpression(c.getLocation(), 
 								PrimitiveType.boolType, 
 								BinaryExpression.Operator.COMPPO,
@@ -191,7 +191,7 @@ public class ConstExpander extends BoogieTransformer
 	
 		Collection<String> uniqueParents = uniqueChildrens.keySet();
 		for (String p1 : uniqueParents) {
-			IdentifierExpression p1id = new IdentifierExpression(null, type, p1);
+			IdentifierExpression p1id = new IdentifierExpression(null, type, p1,/*FIXME: ask Jochen about storage class*/ null);
 			Collection<String> p2list = uniqueParents;
 			if (uniqueValues.contains(p1))
 				p2list = Collections.singleton(p1);
@@ -205,18 +205,18 @@ public class ConstExpander extends BoogieTransformer
 					p2id = p1id;
 					pre = null;
 				} else {
-					p2id = new IdentifierExpression(null, type, p2);
+					p2id = new IdentifierExpression(null, type, p2,/*FIXME: ask Jochen about storage class*/ null);
 					pre = new BinaryExpression(null, PrimitiveType.boolType,
 							BinaryExpression.Operator.COMPEQ,
 							p1id, p2id);
 				}
 				for (String c1 : uniqueChildrens.get(p1)) {
-					IdentifierExpression c1id = new IdentifierExpression(null, type, c1);
+					IdentifierExpression c1id = new IdentifierExpression(null, type, c1,/*FIXME: ask Jochen about storage class*/ null);
 					for (String c2: uniqueChildrens.get(p2)) {
 						if (p1.equals(p2) && c1.compareTo(c2) >= 0
 							|| c1.equals(c2))
 							continue;
-						IdentifierExpression c2id = new IdentifierExpression(null, type, c2);
+						IdentifierExpression c2id = new IdentifierExpression(null, type, c2,/*FIXME: ask Jochen about storage class*/ null);
 						Expression pre2 = pre;
 						if (!uniqueValues.contains(c1)
 							|| !uniqueValues.contains(c2)) {
@@ -288,10 +288,10 @@ public class ConstExpander extends BoogieTransformer
 		}
 		for (int i = 0; i < identifiers.size(); i++) {
 			IdentifierExpression id1 = 
-				new IdentifierExpression(null, type, identifiers.get(i));
+				new IdentifierExpression(null, type, identifiers.get(i),/*FIXME: ask Jochen about storage class*/ null);
 			for (int j = i+1; j < identifiers.size(); j++) {
 				IdentifierExpression id2 = 
-					new IdentifierExpression(null, type, identifiers.get(j));
+					new IdentifierExpression(null, type, identifiers.get(j),/*FIXME: ask Jochen about storage class*/ null);
 				Expression diseq = new BinaryExpression(null, PrimitiveType.boolType,
 						BinaryExpression.Operator.COMPNEQ, id1, id2);
 				/* Add the axioms one by one.  This prevents the syntax tree from getting

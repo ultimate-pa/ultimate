@@ -141,7 +141,8 @@ public class RcfgProgramExecutionBuilder {
 					new HashMap<Expression,Collection<Expression>>();
 			for (Entry<BoogieVar, Expression> entry  : varValAtPos.entrySet()) {
 				IdentifierExpression idExpr = new IdentifierExpression(null, 
-						entry.getKey().getIType(), entry.getKey().getIdentifier());
+						entry.getKey().getIType(), entry.getKey().getIdentifier(), 
+						null /*FIXME: add declaration information*/);
 				variable2Values.put(idExpr, Collections.singleton(entry.getValue()));
 			}
 			ProgramState<Expression> pps = new ProgramState<Expression>(variable2Values);

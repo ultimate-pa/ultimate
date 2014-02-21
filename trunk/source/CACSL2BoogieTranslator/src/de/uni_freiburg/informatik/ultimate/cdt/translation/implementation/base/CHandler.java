@@ -836,7 +836,7 @@ public class CHandler implements ICHandler {
 			ConstDeclaration cd = new ConstDeclaration(loc, new Attribute[0],
 					false, vl, null, false);
 			mDeclarationsGlobalInBoogie.put(cd, null);
-			Expression l = new IdentifierExpression(loc, it, bId);
+			Expression l = new IdentifierExpression(loc, it, bId, null);
 			Expression newValue = oldValue;
 			if (oldValue == null && rex == null) {
 				newValue = new IntegerLiteral(loc, SFO.NR0);
@@ -951,7 +951,7 @@ public class CHandler implements ICHandler {
             CPrimitive charType = new CPrimitive(PRIMITIVE.CHAR);
             CPointer cPointer = new CPointer(charType);
             RValue rvalue = new RValue(new IdentifierExpression(
-            		loc, new InferredType(Type.Struct), tId), cPointer);
+            		loc, new InferredType(Type.Struct), tId, null), cPointer);
             ArrayList<Declaration> decls = new ArrayList<Declaration>();
             decls.add(tVarDecl);
     		Map<VariableDeclaration, ILocation> auxVars = 
@@ -2831,7 +2831,7 @@ public class CHandler implements ICHandler {
 				throw new AssertionError("unknown type to init");
 			}
 		} else if (ut instanceof CPointer) {
-			return new IdentifierExpression(null, it, SFO.NULL);
+			return new IdentifierExpression(null, it, SFO.NULL, null);
 		} else if (ut instanceof CArray) {
 				throw new AssertionError("wrong type to init");
 		} else if (ut instanceof CStruct) {
@@ -2844,7 +2844,7 @@ public class CHandler implements ICHandler {
 	public static Expression convertLHSToExpression(LeftHandSide lhs) {
 		if (lhs instanceof VariableLHS) {
 			return new IdentifierExpression(lhs.getLocation(), lhs.getType(),
-					((VariableLHS) lhs).getIdentifier());
+					((VariableLHS) lhs).getIdentifier(), null);
 		} else if (lhs instanceof ArrayLHS) {
 			ArrayLHS alhs = (ArrayLHS) lhs;
 			Expression array = convertLHSToExpression(alhs.getArray());

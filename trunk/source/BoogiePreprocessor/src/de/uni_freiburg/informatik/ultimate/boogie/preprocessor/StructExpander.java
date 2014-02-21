@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
 /**
  * This class removes our Boogie syntax extension of structs and
@@ -445,13 +444,14 @@ public class StructExpander extends BoogieTransformer implements
 
     	StructType st = (StructType) bt;
         if (e instanceof IdentifierExpression) {
-        	String id = ((IdentifierExpression) e).getIdentifier();
+        	IdentifierExpression ie = (IdentifierExpression) e;
+        	String id = ie.getIdentifier();
     		Expression[] flattened = new Expression[st.getFieldCount()];
     		for (int i = 0; i < flattened.length; i++) {
     			String ident = id + DOT + st.getFieldIds()[i];
     			IType type = st.getFieldType(i);
-    			flattened[i] =
-    					new IdentifierExpression(e.getLocation(), type, ident);
+    			flattened[i] =	new IdentifierExpression(e.getLocation(), type, 
+    					ident, ie.getDeclarationInformation());
     		}
     		return flattened;
         } else if (e instanceof ArrayAccessExpression) {
@@ -603,13 +603,14 @@ public class StructExpander extends BoogieTransformer implements
     	StructType st = (StructType) bt;
 
         if (lhs instanceof VariableLHS) {
-        	String id = ((VariableLHS) lhs).getIdentifier();
+        	VariableLHS vlhs = (VariableLHS) lhs;
+        	String id = vlhs.getIdentifier();
         	VariableLHS[] flattened = new VariableLHS[st.getFieldCount()];
         	for (int i = 0; i < flattened.length; i++) {
         		String ident = id + DOT + st.getFieldIds()[i];
         		IType type = st.getFieldType(i);
-        		flattened[i] =
-        			new VariableLHS(lhs.getLocation(), type, ident);
+        		flattened[i] = new VariableLHS(lhs.getLocation(), type, ident, 
+        				vlhs.getDeclarationInformation());
         	}
         	return flattened;
         } else if (lhs instanceof ArrayLHS) {

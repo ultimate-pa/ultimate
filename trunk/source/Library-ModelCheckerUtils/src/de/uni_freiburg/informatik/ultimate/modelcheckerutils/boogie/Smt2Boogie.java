@@ -32,6 +32,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
@@ -272,7 +274,8 @@ public class Smt2Boogie implements Serializable {
 	
 	public void declareConst(String id, Term term) {
 		IdentifierExpression ie;
-		ie = new IdentifierExpression(null, getType(term.getSort()),id);
+		ie = new IdentifierExpression(null, getType(term.getSort()),id,
+				new DeclarationInformation(StorageClass.GLOBAL, null));
 		m_SmtTerm2Const.put(term, ie);
 	}
 	
@@ -518,18 +521,21 @@ public class Smt2Boogie implements Serializable {
 			VarList varList = m_QuantifiedVariables.get(term);
 			assert varList.getIdentifiers().length == 1;
 			String id = varList.getIdentifiers()[0];
-			result = new IdentifierExpression(null, type, id);
+			result = new IdentifierExpression(null, type, id,
+					new DeclarationInformation(StorageClass.QUANTIFIED, null));
 		} else if (getBoogieVar(term) == null) {
 			//Case where term contains some auxilliary variable that was 
 			//introduced during model checking. 
 			//TODO: Matthias: I think we want closed expressions, we should
 			//quantify auxilliary variables
-			result = new IdentifierExpression(null, type, getFreshIdenfier());
+			result = new IdentifierExpression(null, type, getFreshIdenfier(),
+					new DeclarationInformation(StorageClass.QUANTIFIED, null));
 			m_freeVariables.add((IdentifierExpression) result);
 		}
 		else {
 			BoogieVar var = getBoogieVar(term);
-			result = new IdentifierExpression(null, type, var.getIdentifier());
+			result = new IdentifierExpression(null, type, var.getIdentifier(), 
+					null /* FIXME: obtain declaration info from bv*/);
 			if (var.isOldvar()) {
 				assert(var.isGlobal());
 				result = new UnaryExpression(null, type, UnaryExpression.Operator.OLD, result);

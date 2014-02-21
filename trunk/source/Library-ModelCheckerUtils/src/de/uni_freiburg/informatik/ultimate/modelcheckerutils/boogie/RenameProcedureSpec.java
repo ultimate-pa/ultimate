@@ -96,7 +96,9 @@ public class RenameProcedureSpec extends BoogieTransformer {
 			IdentifierExpression id = (IdentifierExpression) expr;
 			String newName = renaming.get(id.getIdentifier());
 			if (newName != null) {
-			    IdentifierExpression newExpr = new IdentifierExpression(expr.getLocation(), expr.getType(), newName);
+			    IdentifierExpression newExpr = new IdentifierExpression(
+			    		expr.getLocation(), expr.getType(), newName, 
+			    		id.getDeclarationInformation());
 			    ModelUtils.mergeAnnotations(expr, newExpr);
 			    return newExpr;
 			}

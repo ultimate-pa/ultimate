@@ -593,12 +593,12 @@ public class MemoryHandler {
         // ensures #res!base != 0;
         // ensures #length = old(#length)[#res!base := ~size];
         // modifies #length, #valid;
-        Expression res = new IdentifierExpression(tuLoc, pointerIT, SFO.RES);
+        Expression res = new IdentifierExpression(tuLoc, pointerIT, SFO.RES, null);
         Expression length = new IdentifierExpression(tuLoc, SFO.LENGTH);
         Expression[] idcMalloc = new Expression[] { new StructAccessExpression(
                 tuLoc, intIT, res, SFO.POINTER_BASE) };
         Expression bLTrue = new BooleanLiteral(tuLoc, boolIT, true);
-        IdentifierExpression size = new IdentifierExpression(tuLoc, intIT, SIZE);
+        IdentifierExpression size = new IdentifierExpression(tuLoc, intIT, SIZE, null);
         List<Specification> specMalloc = new ArrayList<Specification>();
         if (m_CheckMallocNonNegative) {
         	RequiresSpecification nonNegative = new RequiresSpecification(tuLoc,
@@ -673,7 +673,7 @@ public class MemoryHandler {
         					idcAddrBase, size) });
         	block[5] = new AssignmentStatement(
         			tuLoc,
-        			new LeftHandSide[] { new VariableLHS(tuLoc, pointerIT, SFO.RES) },
+        			new LeftHandSide[] { new VariableLHS(tuLoc, pointerIT, SFO.RES, null) },
         			new Expression[] { addr });
         	Body bodyMalloc = new Body(tuLoc, localVars, block);
         	decl.add(new Procedure(tuLoc, new Attribute[0], SFO.MALLOC,
