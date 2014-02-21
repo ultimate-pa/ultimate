@@ -12,97 +12,99 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
-
 /**
- * This plugin implements the product algorithm described in the Masterthesis 
- *  "Automatische Generierungvon Buchi-Programmen".
- *  
- *  
+ * This plugin implements the product algorithm described in the Masterthesis
+ * "Automatische Generierungvon Buchi-Programmen".
+ * 
+ * 
  * @author Langenfeld
  * 
- *
+ * 
  */
 public class BuchiProgramProduct implements IGenerator {
-	
-	 protected static Logger Logger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 
-	 protected List<String> m_FileNames = new ArrayList<String>();
-	 
-	 private BuchiProductObserver buchiProductObserver;
+	protected static Logger mLogger;
+	protected List<String> mFileNames;
+
+	private BuchiProductObserver mBuchiProductObserver;
+	private boolean mProcess;
 
 	@Override
 	public GraphType getOutputDefinition() {
 		List<String> filenames = new ArrayList<String>();
 		filenames.add("Product");
-		
+
 		return new GraphType(Activator.PLUGIN_ID, GraphType.Type.OTHER, filenames);
 	}
 
-
-
 	@Override
 	public boolean isGuiRequired() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
-
-
 	@Override
 	public QueryKeyword getQueryKeyword() {
-		return  QueryKeyword.ALL;
+		return QueryKeyword.ALL;
 	}
-
 
 	@Override
 	public void setInputDefinition(GraphType graphType) {
-		// TODO Auto-generated method stub
+		switch (graphType.getCreator()) {
+		case "LTL2aut":
+		case "RCFGBuilder":
+			mProcess = true;
+			break;
+		default:
+			mProcess = false;
+			break;
+		}
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
-		observers.add(this.buchiProductObserver);
+		if (mProcess) {
+			observers.add(mBuchiProductObserver);
+		}
 		return observers;
 	}
 
-
-
 	@Override
 	public int init(Object params) {
-		this.buchiProductObserver = new BuchiProductObserver();
+		mBuchiProductObserver = new BuchiProductObserver();
+		mProcess = false;
+		mFileNames = new ArrayList<String>();
+		mLogger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 		return 0;
 	}
 
 	@Override
 	public String getName() {
-		 return Activator.PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
 	public String getPluginID() {
-		 return Activator.PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
 	public IElement getModel() {
-		if (this.buchiProductObserver.product != null)
-			return this.buchiProductObserver.product.getRCFG();
-		else 
+		if (mBuchiProductObserver.getProduct() != null) {
+			return mBuchiProductObserver.getProduct().getRCFG();
+		} else {
 			return null;
+		}
 	}
 
 	@Override
 	public List<String> getDesiredToolID() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
-		// TODO Auto-generated method stub
 		return null;
 	}
-	 
-	
+
 }

@@ -63,6 +63,10 @@ public class DFSTreeWalker extends BaseWalker {
 
 	protected void runObserver(IElement element, IUnmanagedObserver v) {
 
+		if(element == null || v == null){
+			return;
+		}
+		
 		IElement tobeproccessed = element;
 
 		if (element instanceof WrapperNode) {

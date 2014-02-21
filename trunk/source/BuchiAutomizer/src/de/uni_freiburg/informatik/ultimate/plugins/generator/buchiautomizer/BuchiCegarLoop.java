@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -130,7 +129,7 @@ public class BuchiCegarLoop {
 		
 		protected IAutomaton<CodeBlock, IPredicate> m_ArtifactAutomaton;
 		
-		private static final String LTL_MODE_IDENTIFIER = "BuchiProgramProrduct";
+		private static final String LTL_MODE_IDENTIFIER = "BuchiProgramProduct";
 		
 		// used for the collection of statistics
 		public int m_BiggestAbstractionIteration = 0;

@@ -15,15 +15,15 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 public class LTL2aut implements IGenerator {
 	
-	 protected static Logger Logger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+	 protected static Logger sLogger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 
-	 protected List<String> m_FileNames = new ArrayList<String>();
+	 protected List<String> mFileNames = new ArrayList<String>();
 	 
-	 private DummyLTL2autObserver obs;
+	 private DummyLTL2autObserver mObserver;
 	 
 	@Override
 	public int init(Object params) {
-		this.obs = new DummyLTL2autObserver(); 
+		mObserver = new DummyLTL2autObserver(); 
 		return 0;
 	} 
 
@@ -47,7 +47,6 @@ public class LTL2aut implements IGenerator {
 
 	@Override
 	public boolean isGuiRequired() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -58,26 +57,24 @@ public class LTL2aut implements IGenerator {
 
 	@Override
 	public List<String> getDesiredToolID() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void setInputDefinition(GraphType graphType) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
-		observers.add(this.obs);
+		observers.add(this.mObserver);
 		return observers;
 	}
 
 	@Override
 	public IElement getModel() {
-		return this.obs.rootNode;
+		return mObserver.getRootNode();
 	}
 	
 

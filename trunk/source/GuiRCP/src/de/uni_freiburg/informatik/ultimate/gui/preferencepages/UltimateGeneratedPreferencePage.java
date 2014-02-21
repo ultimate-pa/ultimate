@@ -8,6 +8,7 @@ import org.eclipse.jface.preference.ComboFieldEditor;
 import org.eclipse.jface.preference.DirectoryFieldEditor;
 import org.eclipse.jface.preference.FieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
+import org.eclipse.jface.preference.FileFieldEditor;
 import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.jface.preference.PathEditor;
 import org.eclipse.jface.preference.RadioGroupFieldEditor;
@@ -79,6 +80,9 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 			case Path:
 				editor = createPathFieldEditor(item);
 				break;
+			case File:
+				editor = createFileFieldEditor(item);
+				break;
 			case MultilineString:
 				editor = createMultilineFieldEditor(item.getLabel());
 				break;
@@ -94,6 +98,8 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 		}
 
 	}
+
+
 
 
 
@@ -153,6 +159,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 			case Directory:
 			case Path:
 			case String:
+			case File:
 				validateField(
 						(IUltimatePreferenceItemValidator<String>) validator,
 						((StringFieldEditor) editor).getStringValue());
@@ -184,6 +191,12 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 		}
 	}
 
+	private FileFieldEditor createFileFieldEditor(UltimatePreferenceItem<?> item) {
+		FileFieldEditor editor = new FileFieldEditor(item.getLabel(), item.getLabel(), getFieldEditorParent());
+		addField(editor);
+		return editor;
+	}
+	
 	private MultiLineTextFieldEditor createMultilineFieldEditor(String label) {
 		MultiLineTextFieldEditor editor = new MultiLineTextFieldEditor(label,label,getFieldEditorParent());
 		addField(editor);

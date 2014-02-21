@@ -56,6 +56,7 @@ public abstract class UltimatePreferenceInitializer extends
 			case Combo:
 			case Radio:
 			case Path:
+			case File:
 				defaults.put(item.getLabel(), item.getDefaultValue().toString());
 				break;
 			case Label:

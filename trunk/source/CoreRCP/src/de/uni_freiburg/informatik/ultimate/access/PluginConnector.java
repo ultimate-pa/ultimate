@@ -34,8 +34,7 @@ import de.uni_freiburg.informatik.ultimate.model.IModelManager;
 // @formatter:on
 public class PluginConnector {
 
-	private static Logger sLogger = UltimateServices.getInstance().getLogger(
-			Activator.s_PLUGIN_ID);
+	private static Logger sLogger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 
 	private IModelManager mModelManager;
 
@@ -48,8 +47,7 @@ public class PluginConnector {
 	private int mCurrent;
 	private int mMax;
 
-	public PluginConnector(IModelManager modelmanager, ITool tool,
-			IController control) {
+	public PluginConnector(IModelManager modelmanager, ITool tool, IController control) {
 		mModelManager = modelmanager;
 		mController = control;
 		mTool = tool;
@@ -105,16 +103,14 @@ public class PluginConnector {
 		}
 	}
 
-	private void runObserver(IObserver observer, GraphType currentModel,
-			IElement entryNode) {
+	private void runObserver(IObserver observer, GraphType currentModel, IElement entryNode) {
 		logObserverRun(observer, currentModel);
 		IWalker walker = selectWalker(currentModel, observer.getWalkerOptions());
 		walker.addObserver(observer);
 		observer.init();
 		walker.run(entryNode);
 		observer.finish();
-		mHasPerformedChanges = mHasPerformedChanges
-				|| observer.performedChanges();
+		mHasPerformedChanges = mHasPerformedChanges || observer.performedChanges();
 	}
 
 	private void logObserverRun(IObserver observer, GraphType model) {
@@ -149,9 +145,9 @@ public class PluginConnector {
 		if (element != null && type != null) {
 			mModelManager.addItem(element, type);
 		} else {
-			sLogger.error(tool.getName()
-					+ " did return invalid model for observer " + observer
-					+ ", skipping insertion in model container");
+			sLogger.warn(String.format(
+					"%s did return invalid model for observer %s, skipping insertion in model container",
+					tool.getName(), observer));
 		}
 	}
 
@@ -168,8 +164,7 @@ public class PluginConnector {
 				if (UltimateServices.getInstance().getUltimateMode() == Ultimate_Mode.FALLBACK_CMDLINE) {
 					models.add(mModelManager.getLastAdded());
 				} else {
-					for (String s : mController.selectModel(mModelManager
-							.getItemNames())) {
+					for (String s : mController.selectModel(mModelManager.getItemNames())) {
 						GraphType t = mModelManager.getGraphTypeById(s);
 						if (t != null) {
 							models.add(t);
@@ -206,8 +201,7 @@ public class PluginConnector {
 				break;
 			}
 		default:
-			IllegalStateException ex = new IllegalStateException(
-					"Unknown Query type");
+			IllegalStateException ex = new IllegalStateException("Unknown Query type");
 			sLogger.fatal("Unknown Query type", ex);
 			throw ex;
 		}

@@ -70,8 +70,8 @@ public class ToolchainJob extends Job {
 	 * @param preludefile
 	 *            - Do we want a prelude file to be passed to the parser?
 	 */
-	public ToolchainJob(String name, ICore core, IController controller,
-			File boogieFiles, Chain_Mode mode_arg, PreludeProvider preludefile) {
+	public ToolchainJob(String name, ICore core, IController controller, File boogieFiles, Chain_Mode mode_arg,
+			PreludeProvider preludefile) {
 		super(name);
 		setUser(true);
 		setSystem(false);
@@ -80,33 +80,30 @@ public class ToolchainJob extends Job {
 		mInputFile = boogieFiles;
 		mJobMode = mode_arg;
 		mPreludeFile = preludefile;
-		mLogger = UltimateServices.getInstance().getLogger(
-				Activator.s_PLUGIN_ID);
+		mLogger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	}
 
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
 
-	IStatus returnstatus = Status.OK_STATUS;
+		IStatus returnstatus = Status.OK_STATUS;
 
 		try {
 			boolean retval;
-			
+
 			setTimeout();
 			UltimateServices.getInstance().initializeResultMap();
 			UltimateServices.getInstance().initializeTranslatorSequence();
 
 			if ((this.mJobMode == Chain_Mode.RERUN_TOOLCHAIN || this.mJobMode == Chain_Mode.RUN_OLDTOOLCHAIN)
 					&& !this.mCore.canRerun()) {
-				throw new Exception(
-						"Rerun called without previous run! Aborting...");
+				throw new Exception("Rerun called without previous run! Aborting...");
 			}
 			// all modes requires this
 			this.mCore.resetCore();
 
 			// only RUN_TOOLCHAIN and RUN_OLDTOOLCHAIN require this
-			if (this.mJobMode == Chain_Mode.RUN_TOOLCHAIN
-					|| this.mJobMode == Chain_Mode.RUN_OLDTOOLCHAIN) {
+			if (this.mJobMode == Chain_Mode.RUN_TOOLCHAIN || this.mJobMode == Chain_Mode.RUN_OLDTOOLCHAIN) {
 				this.mCore.setInputFile(mInputFile);
 
 			}
@@ -119,13 +116,11 @@ public class ToolchainJob extends Job {
 			}
 
 			// only RUN_TOOLCHAIN and RUN_NEWTOOLCHAIN require this
-			if (this.mJobMode == Chain_Mode.RUN_TOOLCHAIN
-					|| this.mJobMode == Chain_Mode.RUN_NEWTOOLCHAIN) {
+			if (this.mJobMode == Chain_Mode.RUN_TOOLCHAIN || this.mJobMode == Chain_Mode.RUN_NEWTOOLCHAIN) {
 				this.mChain = this.mCore.makeToolSelection();
 				if (this.mChain == null) {
 					mLogger.warn("Toolchain selection failed, aborting...");
-					return new Status(Status.CANCEL, Activator.s_PLUGIN_ID,
-							"Toolchain selection canceled");
+					return new Status(Status.CANCEL, Activator.s_PLUGIN_ID, "Toolchain selection canceled");
 				}
 			}
 
@@ -134,18 +129,17 @@ public class ToolchainJob extends Job {
 			returnstatus = this.mCore.processToolchain(monitor);
 
 		} catch (final Throwable e) {
-			mLogger.fatal("The toolchain threw an exception:" + e.getMessage());
+			mLogger.fatal(String.format("The toolchain threw an exception: %s", e.getMessage()));
 			mController.displayException("The toolchain threw an exception", e);
 			returnstatus = Status.CANCEL_STATUS;
 			String idOfCore = Activator.s_PLUGIN_ID;
-			ExceptionOrErrorResult result = new ExceptionOrErrorResult(idOfCore, e); 
-			UltimateServices.getInstance().reportResult(idOfCore, result);
+			UltimateServices.getInstance().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));
 			e.printStackTrace();
 		} finally {
 			monitor.done();
+			logResults();
 		}
-		
-		logResults();
+
 		return returnstatus;
 	}
 
@@ -153,50 +147,54 @@ public class ToolchainJob extends Job {
 	 * Write all IResults produced by the toolchain to the logger.
 	 */
 	private void logResults() {
-		for (Entry<String, List<IResult>> entry : 
-					UltimateServices.getInstance().getResultMap().entrySet()) {
+		mLogger.info(" --- Results ---");
+		for (Entry<String, List<IResult>> entry : UltimateServices.getInstance().getResultMap().entrySet()) {
+			mLogger.info(String.format(" * Results from %s:", entry.getKey()));
+
 			for (IResult result : entry.getValue()) {
 				StringBuilder sb = new StringBuilder();
+
+				sb.append("  - ");
 				sb.append(result.getClass().getSimpleName());
-				sb.append(" from ");
-				sb.append(entry.getKey());
-				sb.append(".");
 				if (result instanceof IResultWithLocation) {
-					sb.append(" Line: ");
+					sb.append(" [Line: ");
 					ILocation loc = ((IResultWithLocation) result).getLocation();
-					sb.append(loc.getStartLine());
+					sb.append(loc.getStartLine()).append("]");
 				}
-				sb.append(" Short description: ");
+				sb.append(": ");
 				sb.append(result.getShortDescription());
-				boolean appendLongDescription = false;
-				if (appendLongDescription) {
-					sb.append(" Long description: ");
-					sb.append(result.getLongDescription());
-				}
 				mLogger.info(sb.toString());
+				
+				boolean appendCompleteLongDescription = false;
+				String[] s = result.getLongDescription().split("\n");
+				if (appendCompleteLongDescription) {
+					mLogger.info(String.format("    %s", result.getLongDescription()));
+				}else {
+					mLogger.info(String.format("    %s", s[0].replaceAll("\\n|\\r", "")));
+					if(s.length>1){
+						mLogger.info("    [...]");	
+					}
+				}
+				
 			}
 		}
 	}
-	
+
 	/**
-	 * Use the timeout specified in the preferences of CoreRCP to set a
-	 * deadline for the toolchain execution.
-	 * Note that the ultimate core does not check that the toolchain execution 
-	 * complies with the deadline. Plugins should check if the deadline is 
-	 * overdue and abort.
-	 * A timeout of 0 means that we do not set any deadline.
+	 * Use the timeout specified in the preferences of CoreRCP to set a deadline
+	 * for the toolchain execution. Note that the ultimate core does not check
+	 * that the toolchain execution complies with the deadline. Plugins should
+	 * check if the deadline is overdue and abort. A timeout of 0 means that we
+	 * do not set any deadline.
 	 */
 	public void setTimeout() {
-		UltimatePreferenceStore ups = 
-				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		int timeoutInPreferences = 
-				ups.getInt(CorePreferenceInitializer.LABEL_TIMEOUT);
+		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		int timeoutInPreferences = ups.getInt(CorePreferenceInitializer.LABEL_TIMEOUT);
 		if (timeoutInPreferences == 0) {
 			// do not set any timout
 		} else {
 			long timoutMilliseconds = timeoutInPreferences * 1000L;
-			UltimateServices.getInstance().setDeadline(
-					System.currentTimeMillis() + timoutMilliseconds);
+			UltimateServices.getInstance().setDeadline(System.currentTimeMillis() + timoutMilliseconds);
 		}
 	}
 

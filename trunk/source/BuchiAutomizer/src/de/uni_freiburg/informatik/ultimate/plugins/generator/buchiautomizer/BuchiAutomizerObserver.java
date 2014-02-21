@@ -19,7 +19,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -45,17 +44,11 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	private RootAnnot rootAnnot;
 	
-	
-	
-
-	
-	
-
-	
-	
-	
 	@Override
 	public boolean process(IElement root) {
+		if(!(root instanceof RootNode)){
+			return false;
+		}
 		rootAnnot = ((RootNode) root).getRootAnnot();
 		TAPreferences taPrefs = new TAPreferences();
 		m_graphroot = root;

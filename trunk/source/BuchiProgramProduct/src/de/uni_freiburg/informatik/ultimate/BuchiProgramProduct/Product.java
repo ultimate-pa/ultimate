@@ -10,8 +10,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
@@ -41,40 +44,48 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  */
 public class Product {
 	
-	private NestedWordAutomaton<BoogieASTNode, String> aut;
-	private RootNode rcfg;	
-	private List<ProgramPoint> rcfgLocations = new ArrayList<ProgramPoint>();
+	private NestedWordAutomaton<BoogieASTNode, String> mNWA;
+	private RootNode mRCFG;	
+	private List<ProgramPoint> mRCFGLocations;
 	
-	private HashMap<String,ProgramPoint> productLocations = new HashMap<String, ProgramPoint>();
+	private HashMap<String,ProgramPoint> mProductLocations;
 	
-	private RootNode rootNode;
+	private RootNode mRootNode;
 	
-	private int helperUnifique = 0;
+	private int mHelperUnifique = 0;
 
-	HashMap< ProgramPoint, ArrayList<Call>> callEdges = new HashMap< ProgramPoint, ArrayList<Call>>();
+	private HashMap< ProgramPoint, ArrayList<Call>> mCallEdges;
+	
+	private Logger mLogger;
 	
 	public Product(NestedWordAutomaton<BoogieASTNode, String> aut, RootNode rcfg) throws Exception 
 	{
-		this.aut = aut;
-		this.rcfg = rcfg;
+		mLogger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+		mRCFGLocations = new ArrayList<ProgramPoint>();
+		mProductLocations = new HashMap<String, ProgramPoint>();
+		mCallEdges = new HashMap< ProgramPoint, ArrayList<Call>>();
+		
+		mNWA = aut;
+		mRCFG = rcfg;
+		
 		
 		/*
 		 * Can't acces the items in general so just making a copy and
 		 * clearing the maps.
 		 */
 		//TODO: make deep copy of rootannot 
-		this.rootNode = new RootNode(this.rcfg.getRootAnnot());
+		mRootNode = new RootNode(this.mRCFG.getRootAnnot());
 		//will be refilled when generating product nodes
-		this.rootNode.getRootAnnot().getProgramPoints().clear();
+		mRootNode.getRootAnnot().getProgramPoints().clear();
 		//note: used only for iterating procedures in automaizer, so 
 		//may or may not work empty...
-		this.rootNode.getRootAnnot().getEntryNodes().clear();
-		this.rootNode.getRootAnnot().getExitNodes().clear();
-		this.rootNode.getRootAnnot().getLoopLocations().clear();
+		mRootNode.getRootAnnot().getEntryNodes().clear();
+		mRootNode.getRootAnnot().getExitNodes().clear();
+		mRootNode.getRootAnnot().getLoopLocations().clear();
 		
 		
 		final AcceptingNodeAnnotation acceptingNodeAnnotation = new AcceptingNodeAnnotation();
-		this.rootNode.getPayload().getAnnotations().put(Activator.PLUGIN_ID, acceptingNodeAnnotation);
+		this.mRootNode.getPayload().getAnnotations().put(Activator.PLUGIN_ID, acceptingNodeAnnotation);
 		
 		
 		this.collectRCFGLocations();
@@ -86,8 +97,8 @@ public class Product {
 	
 	private void generateTransFormula()
 	{
-		Boogie2SMT b2smt = this.rootNode.getRootAnnot().getBoogie2SMT();
-		RootAnnot rootAnnot = this.rootNode.getRootAnnot();
+		Boogie2SMT b2smt = this.mRootNode.getRootAnnot().getBoogie2SMT();
+		RootAnnot rootAnnot = this.mRootNode.getRootAnnot();
 		TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, rootAnnot);
 
 		for (String procIdent : rootAnnot.getImplementations().keySet()) {
@@ -96,7 +107,7 @@ public class Product {
 		
 			for (ProgramPoint node : rootAnnot.getProgramPoints().get(procIdent).values()){
 				if (node.getLocationName().startsWith("h_"))
-					System.out.println(node.getLocationName());
+					mLogger.debug(node.getLocationName());
 				for(RCFGEdge edge: node.getOutgoingEdges())
 					if(edge instanceof StatementSequence)
 						tfb.addTransitionFormulas(edge);
@@ -116,16 +127,16 @@ public class Product {
 		ProgramPoint targetpp, currentpp;
 		
 		TransFormulaBuilder transFormulaBuilder = new TransFormulaBuilder(
-				this.rootNode.getRootAnnot().getBoogie2SMT(),
-				this.rootNode.getRootAnnot()
+				this.mRootNode.getRootAnnot().getBoogie2SMT(),
+				this.mRootNode.getRootAnnot()
 				);
 		
 		//for Node x Node 
 		for(int mode = 0; mode < 2; mode ++)
-		for(ProgramPoint pp: this.rcfgLocations){
-			System.out.println(pp.toString());
-			for(String n: this.aut.getStates()){
-				currentpp = this.productLocations.get(this.stateNameGenerator(pp.getLocationName(), n));
+		for(ProgramPoint pp: this.mRCFGLocations){
+			mLogger.debug(pp.toString());
+			for(String n: this.mNWA.getStates()){
+				currentpp = this.mProductLocations.get(this.stateNameGenerator(pp.getLocationName(), n));
 				// For Edge of Node x Edge of node
 				for(RCFGEdge rcfgEdge: pp.getOutgoingEdges())
 						//distinguish between the different Edges of the RCFG in the input
@@ -133,13 +144,13 @@ public class Product {
 							if (mode == 1) continue; 
 							//Call has to have a helper node, so that first the call can targeta
 							//the helper node	
-							String helperName = this.getHelperLoc(this.helperUnifique+currentpp.getPosition());
+							String helperName = this.getHelperLoc(this.mHelperUnifique+currentpp.getPosition());
 							ProgramPoint helper = new ProgramPoint(
 										helperName,
 										currentpp.getProcedure(), 
 										false, 
 										currentpp.getBoogieASTNode());
-							this.rootNode.getRootAnnot().getProgramPoints().get(currentpp.getProcedure()).put(helperName, helper);
+							this.mRootNode.getRootAnnot().getProgramPoints().get(currentpp.getProcedure()).put(helperName, helper);
 							
 			
 							Call c = new Call(
@@ -150,16 +161,16 @@ public class Product {
 							c.setTransitionFormula(((Call) rcfgEdge).getTransitionFormula());
 							
 							//store all call edge s in hashmap for later return edge generation
-							if (!this.callEdges.containsKey(pp))
-								this.callEdges.put(pp,new ArrayList<Call>());
-							this.callEdges.get(pp).add(c);
+							if (!this.mCallEdges.containsKey(pp))
+								this.mCallEdges.put(pp,new ArrayList<Call>());
+							this.mCallEdges.get(pp).add(c);
 							
 							
 							//From the helpernode, the original call target is connected with a new
 							//edge with the fitting assumption of the call. The edge is calculated 
 							//like any other edge in the graph.
-							for(OutgoingInternalTransition<BoogieASTNode, String> autTrans: this.aut.internalSuccessors(n)){
-								targetpp = this.productLocations.get(
+							for(OutgoingInternalTransition<BoogieASTNode, String> autTrans: this.mNWA.internalSuccessors(n)){
+								targetpp = this.mProductLocations.get(
 										this.stateNameGenerator(
 												((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),
 												autTrans.getSucc().toString()
@@ -189,7 +200,7 @@ public class Product {
 									((ProgramPoint)rcfgEdge.getTarget()).getBoogieASTNode());
 							//add helper node to procedures nodes
 							//note that this node is already behin the return and in the NEXT procedure
-							this.rootNode.getRootAnnot().getProgramPoints().get(
+							this.mRootNode.getRootAnnot().getProgramPoints().get(
 									((ProgramPoint)rcfgEdge.getTarget()).getProcedure())
 										.put(helperName, helper);
 							//for all possible call origins: CallPP x LTLStates be able to return to the helper state
@@ -211,7 +222,7 @@ public class Product {
 												);
 								call.setTransitionFormula(((Return)rcfgEdge).getCorrespondingCall().getTransitionFormula());*/
 							ProgramPoint key = 	((ProgramPoint)((Return)rcfgEdge).getCallerProgramPoint());
-							for(Call call: this.callEdges.get(key)){
+							for(Call call: this.mCallEdges.get(key)){
 								Return r = new Return(
 										currentpp,
 										helper,
@@ -228,8 +239,8 @@ public class Product {
 							//From the helpernode, the original call target is connected with a new
 							//edge with the fitting assumption of the call. The edge is calculated 
 							//like any other edge in the graph.
-							for(OutgoingInternalTransition<BoogieASTNode, String> autTrans: this.aut.internalSuccessors(n)){
-								targetpp = this.productLocations.get(
+							for(OutgoingInternalTransition<BoogieASTNode, String> autTrans: this.mNWA.internalSuccessors(n)){
+								targetpp = this.mProductLocations.get(
 										this.stateNameGenerator(
 												((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),
 												autTrans.getSucc().toString()
@@ -286,8 +297,8 @@ public class Product {
 							}*/
 						} else if(rcfgEdge instanceof StatementSequence){
 							if (mode == 1) continue; 
-							for(OutgoingInternalTransition<BoogieASTNode, String> autTrans: this.aut.internalSuccessors(n)){
-								targetpp = this.productLocations.get(
+							for(OutgoingInternalTransition<BoogieASTNode, String> autTrans: this.mNWA.internalSuccessors(n)){
+								targetpp = this.mProductLocations.get(
 										this.stateNameGenerator(
 												((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),
 												autTrans.getSucc().toString()
@@ -317,17 +328,17 @@ public class Product {
 	 */
 	private void createProductStates()
 	{
-		Map<String, Map<String, ProgramPoint>> productLocations = this.rootNode.getRootAnnot().getProgramPoints();
+		Map<String, Map<String, ProgramPoint>> productLocations = this.mRootNode.getRootAnnot().getProgramPoints();
 		
 		ProgramPoint productNode;
 		final AcceptingNodeAnnotation acceptingNodeAnnotation = new AcceptingNodeAnnotation();
 		
-		for(ProgramPoint pp: this.rcfgLocations){
+		for(ProgramPoint pp: this.mRCFGLocations){
 			if (!productLocations.containsKey(pp.getProcedure())){
 				productLocations.put(pp.getProcedure(), new HashMap<String, ProgramPoint>());
-				System.out.println(pp.getProcedure());
+				mLogger.debug(pp.getProcedure());
 			}
-			for(String n: this.aut.getStates()){ 
+			for(String n: this.mNWA.getStates()){ 
 				productNode = new ProgramPoint
 									(		
 									this.stateNameGenerator(pp.getLocationName(), n),
@@ -335,19 +346,19 @@ public class Product {
 									false,
 									pp.getBoogieASTNode());
 				
-				this.productLocations.put(this.stateNameGenerator(pp.getLocationName(), n), productNode);
+				this.mProductLocations.put(this.stateNameGenerator(pp.getLocationName(), n), productNode);
 					
 				//accepting states (just check for AcceptingNodeAnnotation)
-				if(this.aut.isFinal(n)){
+				if(this.mNWA.isFinal(n)){
 					productNode.getPayload().getAnnotations().put(Activator.PLUGIN_ID, acceptingNodeAnnotation);
 				}
 					
 				//inital states
 				if (pp.getLocationName().equals("ULTIMATE.startENTRY"))
-					if (this.aut.isInitial(n))
+					if (this.mNWA.isInitial(n))
 					{
-						new RootEdge(this.rootNode, productNode);
-						this.rootNode.getRootAnnot().getEntryNodes().put("ULTIMATE.start", productNode);
+						new RootEdge(this.mRootNode, productNode);
+						this.mRootNode.getRootAnnot().getEntryNodes().put("ULTIMATE.start", productNode);
 					}
 				
 				//add to annotation
@@ -365,7 +376,7 @@ public class Product {
 	{
 		Queue<ProgramPoint> unhandledLocations = new ArrayDeque<ProgramPoint>();
 		
-		for (RCFGEdge p: ((RootNode)this.rcfg).getOutgoingEdges())
+		for (RCFGEdge p: ((RootNode)this.mRCFG).getOutgoingEdges())
 			unhandledLocations.offer((ProgramPoint) p.getTarget());
 		//collect all Nodes in the RCFG for the product
 		ProgramPoint cp;
@@ -373,11 +384,11 @@ public class Product {
 		{
 			cp = unhandledLocations.poll();
 			//if (!this.RCFGLocations.contains(cp))
-				this.rcfgLocations.add(cp);
+				this.mRCFGLocations.add(cp);
 			for (RCFGEdge p: cp.getOutgoingEdges())
 			{
 				if (p instanceof Summary) continue;
-				if(!(this.rcfgLocations.contains(p.getTarget()) || unhandledLocations.contains(p.getTarget())))
+				if(!(this.mRCFGLocations.contains(p.getTarget()) || unhandledLocations.contains(p.getTarget())))
 					unhandledLocations.offer((ProgramPoint)p.getTarget());
 			}
 			//append selfloopst o leafs of the rcfg
@@ -398,7 +409,7 @@ public class Product {
 	 */
 	private String stateNameGenerator(String name1, String name2)
 	{
-		if (name1.equals("ULTIMATE.startENTRY") && this.aut.isInitial(name2))
+		if (name1.equals("ULTIMATE.startENTRY") && this.mNWA.isInitial(name2))
 			return "ULTIMATE.start";
 		else
 			return name1 + "__" + name2;
@@ -406,13 +417,13 @@ public class Product {
 	
 	public RootNode getRCFG()
 	{
-		return this.rootNode;
+		return this.mRootNode;
 	}
 	
 	private String getHelperLoc(String location)
 	{
-		this.helperUnifique++;
-		return "h_" + Integer.toString(this.helperUnifique) + location;
+		this.mHelperUnifique++;
+		return "h_" + Integer.toString(this.mHelperUnifique) + location;
 	}
 
 }
