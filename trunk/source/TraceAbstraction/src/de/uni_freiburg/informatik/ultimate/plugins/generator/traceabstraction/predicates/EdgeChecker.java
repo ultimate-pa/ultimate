@@ -844,7 +844,6 @@ public class EdgeChecker {
 		 */
 		Set<BoogieVar> parameters = call.getTransitionFormula().getAssignedVars();
 		if (!varSetDisjoint(parameters, pre.getVars())) {
-			m_LazySdEdgeChecks.incRe();
 			return null;
 		}
 
