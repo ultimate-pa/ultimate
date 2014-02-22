@@ -544,8 +544,8 @@ public class LassoChecker {
 				new ArrayList<RankingFunctionTemplate>();
 		rankingFunctionTemplates.add(new AffineTemplate());
 		
-		if (m_AllowNonLinearConstraints) {
-			rankingFunctionTemplates.add(new NestedTemplate(1));
+//		if (m_AllowNonLinearConstraints) {
+//			rankingFunctionTemplates.add(new NestedTemplate(1));
 			rankingFunctionTemplates.add(new NestedTemplate(2));
 			rankingFunctionTemplates.add(new NestedTemplate(3));
 			rankingFunctionTemplates.add(new NestedTemplate(4));
@@ -553,7 +553,7 @@ public class LassoChecker {
 			rankingFunctionTemplates.add(new NestedTemplate(6));
 			rankingFunctionTemplates.add(new NestedTemplate(7));
 			
-			rankingFunctionTemplates.add(new MultiphaseTemplate(1));
+//			rankingFunctionTemplates.add(new MultiphaseTemplate(1));
 			rankingFunctionTemplates.add(new MultiphaseTemplate(2));
 			rankingFunctionTemplates.add(new MultiphaseTemplate(3));
 			rankingFunctionTemplates.add(new MultiphaseTemplate(4));
@@ -561,14 +561,15 @@ public class LassoChecker {
 			rankingFunctionTemplates.add(new MultiphaseTemplate(6));
 			rankingFunctionTemplates.add(new MultiphaseTemplate(7));
 
-			rankingFunctionTemplates.add(new LexicographicTemplate(1));
+//			rankingFunctionTemplates.add(new LexicographicTemplate(1));
 			rankingFunctionTemplates.add(new LexicographicTemplate(2));
 			rankingFunctionTemplates.add(new LexicographicTemplate(3));
 			rankingFunctionTemplates.add(new LexicographicTemplate(4));
 			
 			rankingFunctionTemplates.add(new PiecewiseTemplate(2));
 			rankingFunctionTemplates.add(new PiecewiseTemplate(3));
-		}
+			rankingFunctionTemplates.add(new PiecewiseTemplate(4));
+//		}
 
 		TerminationArgument termArg = tryTemplatesAndComputePredicates(
 				withStem, lrta, rankingFunctionTemplates);
