@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -15,14 +16,19 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiClosureNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKVNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiDifferenceFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BInterpolantAutomaton;
@@ -240,7 +246,7 @@ public class RefineBuchi {
 					BuchiCegarLoop.emptyStem(m_Counterexample) ? null : stem.getSymbol(stem.length()-1), 
 					loop.getSymbol(loop.length()-1), m_Abstraction, 
 					setting.isScroogeNondeterminismStem(), setting.isScroogeNondeterminismLoop(), 
-					setting.isBouncerStem(), setting.isBouncerLoop());
+					setting.isBouncerStem(), setting.isBouncerLoop(), m_StateFactory);
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");
@@ -254,6 +260,15 @@ public class RefineBuchi {
 							m_Abstraction, m_InterpolAutomatonUsedInRefinement, 
 							stateDeterminizer, m_StateFactoryForRefinement);
 			finishComputation(m_InterpolAutomatonUsedInRefinement,setting);
+//			
+//			s_Logger.warn("START: minimization test");
+//			BuchiComplementFKVNwa<CodeBlock, IPredicate> compl1 = diff.getSndComplemented();
+//			INestedWordAutomatonOldApi<CodeBlock, IPredicate> compl = (new RemoveNonLiveStates<CodeBlock, IPredicate>(compl1)).getResult();
+//			BuchiClosureNwa<CodeBlock, IPredicate> bc = (new BuchiClosureNwa<CodeBlock, IPredicate>(compl));
+//			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = 
+//					new MinimizeSevpa<CodeBlock, IPredicate>(bc,null,false,false,m_StateFactory);
+//			s_Logger.warn("END: minimization test");
+//			
 			assert diff.checkResult(m_StateFactory);
 			newAbstraction = diff.getResult();
 		} else {

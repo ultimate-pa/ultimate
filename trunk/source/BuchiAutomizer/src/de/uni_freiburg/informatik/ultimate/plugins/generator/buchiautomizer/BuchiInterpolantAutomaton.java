@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.BuchiPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
@@ -85,7 +86,8 @@ public class BuchiInterpolantAutomaton implements
 			Set<IPredicate> loopInterpolants, CodeBlock hondaEntererStem, CodeBlock hondaEntererLoop,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			boolean scroogeNondeterminismStem, boolean scroogeNondeterminismLoop,
-			boolean hondaBouncerStem, boolean hondaBouncerLoop) {
+			boolean hondaBouncerStem, boolean hondaBouncerLoop, 
+			PredicateFactory predicateFactory) {
 		super();
 		m_SmtManager = smtManager;
 		m_EdgeChecker = edgeChecker;
@@ -93,17 +95,17 @@ public class BuchiInterpolantAutomaton implements
 				abstraction.getInternalAlphabet(), 
 				abstraction.getCallAlphabet(), 
 				abstraction.getReturnAlphabet(), 
-				abstraction.getStateFactory());
+				predicateFactory);
 		m_RejectionCache = new NestedWordAutomatonCache<CodeBlock, IPredicate>(
 				abstraction.getInternalAlphabet(), 
 				abstraction.getCallAlphabet(), 
 				abstraction.getReturnAlphabet(), 
-				abstraction.getStateFactory());
+				predicateFactory);
 		m_Result = new NestedWordAutomatonCache<CodeBlock, IPredicate>(
 				abstraction.getInternalAlphabet(), 
 				abstraction.getCallAlphabet(), 
 				abstraction.getReturnAlphabet(), 
-				abstraction.getStateFactory());
+				predicateFactory);
 		m_InputStemPredicates = new HashSet<IPredicate>();
 		m_InputLoopPredicates = new HashSet<IPredicate>();
 		m_ResultStemPredicates = new HashSet<IPredicate>();

@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetHan
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -33,11 +34,12 @@ public class BuchiInterpolantAutomatonWithHandle extends
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			boolean scroogeNondeterminismStem,
 			boolean scroogeNondeterminismLoop, boolean hondaBouncerStem,
-			boolean hondaBouncerLoop) {
+			boolean hondaBouncerLoop, PredicateFactory predicateFactory) {
 		super(smtManager, edgeChecker, emptyStem, precondition, stemInterpolants,
 				hondaPredicate, loopInterpolants, hondaEntererStem,
 				hondaEntererLoop, abstraction, scroogeNondeterminismStem,
-				scroogeNondeterminismLoop, hondaBouncerStem, hondaBouncerLoop);
+				scroogeNondeterminismLoop, hondaBouncerStem, hondaBouncerLoop, 
+				predicateFactory);
 		GetHandle<CodeBlock, IPredicate> gh;
 		try {
 			gh = new GetHandle<CodeBlock, IPredicate>(abstraction);

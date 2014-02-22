@@ -57,7 +57,7 @@ public class ModuleDecompositionBenchmark {
 	private String prettyPrintRankingFunction(TerminationArgumentResult<RcfgElement> tar) {
 		List<ITranslator<?, ?, ?, ?>> translatorSequence = 
 				UltimateServices.getInstance().getTranslatorSequence();
-		return tar.getRankingFunctionDescription() + " " + 
+		return tar.getRankingFunctionDescription() + " ranking function " + 
 						ResultUtil.backtranslationWorkaround(
 								translatorSequence, tar.getRankingFunction());
 	}
