@@ -1,3 +1,4 @@
+//#rTerminationDerivable
 /*
  * Example depicted in Figure 2 of our ATVA2013 submission.
  * 
