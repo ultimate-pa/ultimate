@@ -9,8 +9,8 @@
  *
  */
 
-procedure main() returns (x: int, y: int, z: int) {
-    assume(true);
+procedure main() returns () {
+    var x,y,z: int;
     while (x > 0 && y > 0 && z > 0) {
         if (y > x) {
             y := z;
