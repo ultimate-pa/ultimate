@@ -3,7 +3,7 @@
  * Date: 21.09.2013
  * Author: leike@informatik.uni-freiburg.de
  *
- * This example is from
+ * This is the program "ERRATIC" from Fig.1 of
  * A. R. Bradley, Z. Manna, and H. B. Sipma.
  * The Polyranking Principle.
  * In ICALP, pages 1349–1361. Springer, 2005.
@@ -11,7 +11,7 @@
  * This program has a lexicographic multiphase ranking function.
  */
 
-procedure erraticPolyranking(N: int) returns (x: int, y: int)
+procedure main(N: int) returns (x: int, y: int)
 {
   var p: int;
   var q: int;
@@ -19,7 +19,6 @@ procedure erraticPolyranking(N: int) returns (x: int, y: int)
   var e: int;
 
   var x_old, y_old, n_old, e_old, q_old: int;
-  var random: int;
   assume(p >= 0 && q >= 1 && x == 0 && y == 0);
   while (true) {
     x_old := x;
@@ -27,8 +26,7 @@ procedure erraticPolyranking(N: int) returns (x: int, y: int)
     n_old := n;
     e_old := e;
     
-    havoc random;
-    if (random <= -10) {
+    if (*) {
       assume(x + y <= N);
       havoc x;
       assume(x_old + e_old - q <= x && x <= x_old + e_old + q);
@@ -37,7 +35,7 @@ procedure erraticPolyranking(N: int) returns (x: int, y: int)
       havoc n;
       havoc e;
       assume(n_old + e_old + 1 <= n + e && n + e <= n_old + e_old + p);
-    } else if (random >= 20) {
+    } else if (*) {
       assume(x + y <= N && n + e >= 2*q + 1);
       havoc x;
       assume(x_old + e_old - q <= x && x <= x_old + e_old + q);
