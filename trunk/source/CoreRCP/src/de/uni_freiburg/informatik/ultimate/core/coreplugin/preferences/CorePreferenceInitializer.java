@@ -142,13 +142,13 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_LOGFILE = "Create a Logfile";
 	public static final boolean VALUE_LOGFILE = false;
 
-	public static final String LABEL_APPEXLOGFILE = "Append to exisiting Logfile: ";
+	public static final String LABEL_APPEXLOGFILE = "Append to exisiting Logfile";
 	public static final boolean VALUE_APPEXLOGFILE = false;
 
-	public static final String LABEL_LOGFILE_NAME = "Name of the Logfile:";
+	public static final String LABEL_LOGFILE_NAME = "Name of the Logfile";
 	public static final String VALUE_LOGFILE_NAME = "ultimate.log";
 
-	public static final String LABEL_LOGFILE_DIR = "Directory: (default: instance location):";
+	public static final String LABEL_LOGFILE_DIR = "Directory (default: instance location)";
 	public static final String VALUE_LOGFILE_DIR = Platform
 			.getInstanceLocation().getURL().getPath();
 
