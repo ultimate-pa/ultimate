@@ -4,7 +4,6 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
  * Use this to report that there was a timeout.
@@ -21,8 +20,7 @@ public class TimeoutResult<ELEM extends IElement>
 
 
 	public TimeoutResult(ELEM element, String plugin, 
-			List<ITranslator<?,?,?,?>> translatorSequence, ILocation location, 
-			String longDescription) {
+			List<ITranslator<?,?,?,?>> translatorSequence, String longDescription) {
 		super(element, plugin, translatorSequence);
 		this.m_longDescription = longDescription;
 	}

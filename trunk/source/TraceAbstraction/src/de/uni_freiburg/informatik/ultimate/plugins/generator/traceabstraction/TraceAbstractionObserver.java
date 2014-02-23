@@ -338,7 +338,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 					errorLoc,
 					Activator.s_PLUGIN_NAME,
 					UltimateServices.getInstance().getTranslatorSequence(),
-					origin,
 					timeOutMessage);
 			reportResult(timeOutRes);
 			s_Logger.warn(timeOutMessage);

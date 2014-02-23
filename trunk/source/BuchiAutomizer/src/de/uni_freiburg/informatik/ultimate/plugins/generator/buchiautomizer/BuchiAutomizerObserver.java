@@ -110,7 +110,6 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			IResult reportRes= new TimeoutResult<RcfgElement>(position, 
 					Activator.s_PLUGIN_ID, 
 					UltimateServices.getInstance().getTranslatorSequence(), 
-					position.getPayload().getLocation(), 
 					longDescr);
 				reportResult(reportRes);
 		} else if (result == Result.NONTERMINATING) {

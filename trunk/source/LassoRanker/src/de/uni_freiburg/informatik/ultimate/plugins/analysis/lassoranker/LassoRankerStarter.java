@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
 import de.uni_freiburg.informatik.ultimate.result.NonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
+import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
 /**
@@ -118,6 +119,7 @@ public class LassoRankerStarter {
 		RankingFunctionTemplate[] templates = getTemplates();
 		for (RankingFunctionTemplate template : templates) {
 			if (!UltimateServices.getInstance().continueProcessing()) {
+				reportTimeoutResult(templates, template);
 				// Timeout or abort
 				return;
 			}
@@ -354,6 +356,31 @@ public class LassoRankerStarter {
 		s_Logger.info(sb.toString());
 		reportResult(result);
 	}
+	
+	/**
+	 * Report that there was a timeout.
+	 * TODO: which templates already failed, where did the timeout occur.
+	 */
+	private void reportTimeoutResult(RankingFunctionTemplate[] templates, 
+			RankingFunctionTemplate templateWhereTimeoutOccurred) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("LassoRanker could not prove termination " +
+				"or nontermination of the given linear lasso program.\n");
+		sb.append("Templates:");
+		for (RankingFunctionTemplate template : templates) {
+			sb.append(" ");
+			sb.append(template.getClass().getSimpleName());
+		}
+		TimeoutResult<RcfgElement> result = new TimeoutResult<RcfgElement>(
+				m_Honda,
+				Activator.s_PLUGIN_NAME,
+				getTranslatorSequence(),
+				sb.toString()
+		);
+		s_Logger.info(sb.toString());
+		reportResult(result);
+	}
+	
 	
 	/**
 	 * Report that unsupported syntax was discovered
