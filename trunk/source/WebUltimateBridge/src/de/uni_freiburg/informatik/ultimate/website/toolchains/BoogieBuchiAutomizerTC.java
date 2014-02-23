@@ -5,6 +5,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.website.Setting;
 import de.uni_freiburg.informatik.ultimate.website.Tasks.TaskNames;
+import de.uni_freiburg.informatik.ultimate.website.Toolchain.LoggingLevel;
 import de.uni_freiburg.informatik.ultimate.website.Tool;
 import de.uni_freiburg.informatik.ultimate.website.Toolchain;
 
@@ -59,6 +60,10 @@ public class BoogieBuchiAutomizerTC extends Toolchain {
 	 */
 	@Override
 	protected List<Tool> setTools() {
+		return boogieTools();
+	}
+	
+	static List<Tool> boogieTools() {
 		List<Tool> tools = new ArrayList<Tool>();
 		
 		List<Setting> oPre = new ArrayList<Setting>();
@@ -70,22 +75,33 @@ public class BoogieBuchiAutomizerTC extends Toolchain {
 		List<Setting> oRCFGB = new ArrayList<Setting>();
 		List<Setting> mRCFGB = new ArrayList<Setting>();
 		tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
-		List<Setting> oRank = new ArrayList<Setting>();
-		List<Setting> mRank = new ArrayList<Setting>();
         oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_ExternalSolver, Setting.SettingType.BOOLEAN,
-                "external solver", "false", false));
-        oRCFGB.add(new Setting("/HoareAnnotation", Setting.SettingType.BOOLEAN,
-                "Compute Hoare Annotation", "false", true));
-        oRCFGB.add(new Setting("/Timeout", Setting.SettingType.INTEGER,
-                "Timeout", "20", false));
-        oRCFGB.add(new Setting("/Determinization", "Type of Determinization",
-        		new String[] { "EagerPost" }, false, new String[] {
-              "LazyPost", "EagerPost", "Best Approximation" }, false));
-        oRCFGB.add(new Setting("/BlockSize", "Type of Determinization",
-        		new String[] { "sequence of program statements" }, false, new String[] {
-              "sequence of program statements", "single program statement", "loop free block" }, false));
-		tools.add(new Tool("BuchiAutomizer", oRank, mRank,
-				LoggingLevel.WARN));
+        		PrefStrings.s_RCFG_LABEL_ExternalSolver, "false", false));
+        oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_BlockSize, PrefStrings.s_RCFG_LABEL_BlockSize,
+        		new String[] { PrefStrings.s_RCFG_VALUE_Seq }, false, new String[] {
+        		PrefStrings.s_RCFG_VALUE_Single, PrefStrings.s_RCFG_VALUE_Seq, PrefStrings.s_RCFG_VALUE_Block }, false));
+        
+		List<Setting> oBE = new ArrayList<Setting>();
+		List<Setting> mBE = new ArrayList<Setting>();
+		tools.add(new Tool("BlockEncoding", oBE, mBE, LoggingLevel.WARN));
+		oBE.add(new Setting(PrefStrings.s_BE_LABEL_CALLMINIMIZE, Setting.SettingType.BOOLEAN,
+				PrefStrings.s_BE_LABEL_CALLMINIMIZE, "true", false));
+		oBE.add(new Setting(PrefStrings.s_BE_LABEL_STRATEGY, PrefStrings.s_BE_LABEL_STRATEGY,
+        		new String[] { PrefStrings.s_BE_VALUE_DisjunctiveRating }, false, new String[] {
+				PrefStrings.s_BE_VALUE_DisjunctiveRating, PrefStrings.s_BE_VALUE_LargeBlock }, true));
+		oBE.add(new Setting(PrefStrings.s_BE_LABEL_RATINGBOUND, Setting.SettingType.STRING,
+				PrefStrings.s_BE_LABEL_RATINGBOUND, "0", false));
+		
+        
+		List<Setting> oBA = new ArrayList<Setting>();
+		List<Setting> mBA = new ArrayList<Setting>();
+		oBA.add(new Setting(PrefStrings.s_TA_LABEL_Interpol, Setting.SettingType.STRING,
+                "interpolation", PrefStrings.s_TA_VALUE_CraigTree, false));
+		oBA.add(new Setting(PrefStrings.s_BA_LABEL_ExtSolverRank, Setting.SettingType.BOOLEAN,
+				PrefStrings.s_BA_LABEL_ExtSolverRank, "false", false));
+		oBA.add(new Setting(PrefStrings.s_BA_LABEL_Nonlinear, Setting.SettingType.BOOLEAN,
+				"AllowNonlinearConstraints", "false", false));
+		tools.add(new Tool("BuchiAutomizer", oBA, mBA, LoggingLevel.WARN));
 		return tools;
 	}
 

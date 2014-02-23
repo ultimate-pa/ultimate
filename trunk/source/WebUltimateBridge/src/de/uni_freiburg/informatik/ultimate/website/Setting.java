@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.website;
 
 
+
 /**
  * @author Markus Lindenmann
  * @author Oleksii Saukh
@@ -206,7 +207,7 @@ public class Setting {
 		if (id.equals("")) {
 			throw new IllegalArgumentException("identifier: empty name given!");
 		}
-		if (id.length() > 35) {
+		if (id.length() > 135) {
 			throw new IllegalArgumentException("identifier name too long: "
 					+ id);
 		}

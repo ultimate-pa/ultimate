@@ -5,6 +5,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.website.Setting;
 import de.uni_freiburg.informatik.ultimate.website.Tasks.TaskNames;
+import de.uni_freiburg.informatik.ultimate.website.Toolchain.LoggingLevel;
 import de.uni_freiburg.informatik.ultimate.website.Tool;
 import de.uni_freiburg.informatik.ultimate.website.Toolchain;
 
@@ -67,22 +68,8 @@ public class CLassoRankerTC extends Toolchain {
       tools.add(new Tool("CACSL2BoogieTranslator", oCACSL, mCACSL,
               LoggingLevel.WARN));
 		
-		List<Setting> oPre = new ArrayList<Setting>();
-		List<Setting> mPre = new ArrayList<Setting>();
-		tools.add(new Tool(
-				"de.uni_freiburg.informatik.ultimate.boogie.preprocessor",
-				oPre, mPre, LoggingLevel.WARN));
-		
-		List<Setting> oRCFGB = new ArrayList<Setting>();
-		List<Setting> mRCFGB = new ArrayList<Setting>();
-		tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
-        oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_ExternalSolver, Setting.SettingType.BOOLEAN,
-                "external solver", "false", false));
-		List<Setting> oRank = new ArrayList<Setting>();
-		List<Setting> mRank = new ArrayList<Setting>();
-		tools.add(new Tool("RankingFunctions", oRank, mRank,
-				LoggingLevel.WARN));
-		return tools;
+      tools.addAll(BoogieLassoRankerTC.boogieTools());
+      return tools;
 	}
 
 	/*

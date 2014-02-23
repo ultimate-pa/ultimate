@@ -165,7 +165,20 @@ public abstract class Toolchain {
 		toolchainXML.append("</toolchain>");
 		return toolchainXML.toString();
 	}
+	
+	public static final String s_LABEL_LogLevelPlugins = "Log\\ Level\\ for\\ Plugins";
 
+	/**
+	 * Given preference foo and value 0, this method returns the String
+	 * /instance/UltimateCore/foo=0
+	 * with a line separator at the end.
+	 */
+	private static String buildCoreSettingString(String preference, String value) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("/instance/UltimateCore/");
+		sb.append(preference).append("=").append(value).append(EOL);
+		return sb.toString();
+	}
 	/**
 	 * Getter for the setting file.<br />
 	 * This messages collects information about this toolchain and returns them
@@ -183,13 +196,17 @@ public abstract class Toolchain {
 		settings.append("file_export_version=3.0").append(EOL);
 		settings.append("\\!/instance/UltimateCore=").append(EOL);
 		settings.append("@UltimateCore=1.0.0").append(EOL);
-		settings.append("/instance/UltimateCore/"+s_TimeoutString+"="+s_TimeoutInSeconds).append(EOL);
-		settings.append("/instance/UltimateCore/ultimate.logfile=true").append(EOL);
-		settings.append("/instance/UltimateCore/ultimate.logging.tools=");
-		settings.append(getToolsLoggingLevel()).append(EOL);
-		settings.append("/instance/UltimateCore/ultimate.logging.plugins=info");
-		settings.append(getPluginsLoggingLevel()).append(EOL);
-		settings.append("/instance/UltimateCore/ultimate.logging.tooldetails=");
+		settings.append(buildCoreSettingString(s_TimeoutString, String.valueOf(s_TimeoutInSeconds)));
+		settings.append(buildCoreSettingString("Root\\ Log\\ Level", "INFO"));
+		
+		settings.append(buildCoreSettingString("Log\\ Level\\ for\\ Core\\ Plugin", "WARN"));
+		settings.append(buildCoreSettingString("Log\\ Level\\ for\\ Plugins", getPluginsLoggingLevel()));
+		settings.append(buildCoreSettingString("Log\\ Level\\ for\\ External\\ Tools", "WARN"));
+		settings.append(buildCoreSettingString("Log\\ Level\\ for\\ Controller\\ Plugin", "INFO"));
+		settings.append(buildCoreSettingString("Create\\ a\\ Logfile", "true"));
+		settings.append(buildCoreSettingString("Append\\ to\\ exisiting\\ Logfile", "true"));
+		settings.append(buildCoreSettingString("Name\\ of\\ the\\ Logfile", "Kandersteg"));
+
 		for (Tool t : tools) {
 			settings.append(t.getId()).append("\\=");
 			settings.append(t.getLoggingLevel());
@@ -204,6 +221,7 @@ public abstract class Toolchain {
 				}
 				settings.append("/instance/");
 				settings.append(t.getId());
+				settings.append("/");
 				settings.append(s.getSettingString());
 				settings.append("=");
 				settings.append(s.getSetValues());
@@ -215,6 +233,7 @@ public abstract class Toolchain {
 			for (Setting s : t.getUserChangeableSettings()) {
 				settings.append("/instance/");
 				settings.append(t.getId());
+				settings.append("/");
 				settings.append(s.getSettingString());
 				settings.append("=");
 				settings.append(s.getSetValues());
