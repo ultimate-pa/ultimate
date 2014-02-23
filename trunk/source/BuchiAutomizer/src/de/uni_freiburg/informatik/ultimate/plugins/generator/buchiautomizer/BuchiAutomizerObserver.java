@@ -114,7 +114,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				reportResult(reportRes);
 		} else if (result == Result.NONTERMINATING) {
 			String shortDescr = "Nontermination possible";
-			String longDescr = "Buchi Automizer proved that your program may not terminate";
+			String longDescr = "Buchi Automizer proved that your program is nonterminating for some inputs";
 			IResult reportRes= new GenericResult( 
 					Activator.s_PLUGIN_ID, 
 					shortDescr, 
