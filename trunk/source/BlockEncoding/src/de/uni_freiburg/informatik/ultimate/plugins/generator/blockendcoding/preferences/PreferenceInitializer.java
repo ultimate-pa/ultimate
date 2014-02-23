@@ -42,12 +42,12 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_EXECUTETESTS = "Execute Unit-Tests, with special Observer";
 
-	public static final String LABEL_STRATEGY = "Choose the strategy for the edge rating:";
+	public static final String LABEL_STRATEGY = "Strategy for the edge rating";
 
-	public static final String LABEL_RATINGBOUND = "Enter Rating-Boundary (empty for LBE):";
+	public static final String LABEL_RATINGBOUND = "Rating-Boundary (empty for LBE)";
 
-	public static final String LABEL_USESTATHEURISTIC = "Enable Statistic-Based Heuristic: ";
+	public static final String LABEL_USESTATHEURISTIC = "Enable Statistic-Based Heuristic ";
 
-	public static final String LABEL_USEDYNAMICHEURISTIC = "Enable Dynamic-Based Heuristic: ";
+	public static final String LABEL_USEDYNAMICHEURISTIC = "Enable Dynamic-Based Heuristic ";
 
 }
