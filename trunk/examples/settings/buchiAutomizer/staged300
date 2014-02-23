@@ -19,7 +19,6 @@ file_export_version=3.0
 /instance/BuchiAutomizer/Determinization\ on\ demand=true
 /instance/BuchiAutomizer/Bouncer\ stem=false
 /instance/BuchiAutomizer/Cannibalize\ loop=true
-/instance/BuchiAutomizer/Use\ external\ solver\ (rank\ synthesis)=false
 #Mon Dec 02 04:10:45 CET 2013
 \!/instance/CACSL2BoogieTranslator=
 file_export_version=3.0
@@ -49,10 +48,13 @@ file_export_version=3.0
 /instance/TraceAbstraction/Determinization\ algorithm=EAGERPOST
 \!/instance/TraceAbstraction=
 /instance/TraceAbstraction/Compute\ Interpolants\ along\ a\ Counterexample=Craig_NestedInterpolation
-#Mon Dec 02 04:10:45 CET 2013
+#Sun Feb 23 01:41:58 CET 2014
 file_export_version=3.0
-\!/instance/UltimateGui=
-/instance/UltimateGui/LASTTOOLCHAINPATH=/mnt/storage/stalin/trunk/examples/toolchains/BuchiAutomizerCWithBlockEncoding.xml
-/instance/UltimateGui/LASTPATH=/mnt/storage/stalin/trunk/examples/programs/termination/CookSeeZuleger-2013TACAS-Fig3.c
-@UltimateGui=0.0.1
+/instance/UltimateCore/Log\ Level\ for\ Controller\ Plugin=INFO
+/instance/UltimateCore/Log\ Level\ for\ Core\ Plugin=INFO
+\!/instance/UltimateCore=
+/instance/UltimateCore/Log\ Level\ for\ External\ Tools=INFO
+@UltimateCore=0.0.1
+/instance/UltimateCore/Root\ Log\ Level=INFO
+/instance/UltimateCore/Log\ Level\ for\ Plugins=INFO
 /instance/UltimateCore/Toolchain\ timeout\ in\ seconds=300
