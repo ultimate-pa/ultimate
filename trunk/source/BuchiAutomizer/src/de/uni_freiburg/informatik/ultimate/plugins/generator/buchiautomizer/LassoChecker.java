@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,19 +14,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LassoRankerTerminationAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.NonTerminationArgument;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.AffineTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.LexicographicTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.MultiphaseTemplate;
@@ -43,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Tra
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
@@ -67,6 +63,12 @@ public class LassoChecker {
 	 * the stem.
 	 */
 	private static final boolean s_AlwaysAdditionalLoopTerminationCheck = true;
+	
+	/**
+	 * For debugging only. Check for termination arguments even if we found a
+	 * nontermination argument. This may reveal unsoundness bugs.
+	 */
+	private static final boolean s_CheckTerminationEvenIfNonterminating = false;
 	
 	private final INTERPOLATION m_Interpolation;
 	
@@ -538,6 +540,9 @@ public class LassoChecker {
 		NonTerminationArgument nonTermArgument = lrta.checkNonTermination();
 		if (withStem) {
 			m_NonterminationArgument = nonTermArgument;
+		}
+		if (!s_CheckTerminationEvenIfNonterminating && nonTermArgument != null) {
+			return SynthesisResult.NONTERMINATIG;
 		}
 		
 		List<RankingFunctionTemplate> rankingFunctionTemplates = 
