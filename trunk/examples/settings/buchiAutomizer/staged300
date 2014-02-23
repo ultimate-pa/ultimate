@@ -19,6 +19,7 @@ file_export_version=3.0
 /instance/BuchiAutomizer/Determinization\ on\ demand=true
 /instance/BuchiAutomizer/Bouncer\ stem=false
 /instance/BuchiAutomizer/Cannibalize\ loop=true
+/instance/BuchiAutomizer/Use\ external\ solver\ (rank\ synthesis)=false
 #Mon Dec 02 04:10:45 CET 2013
 \!/instance/CACSL2BoogieTranslator=
 file_export_version=3.0
