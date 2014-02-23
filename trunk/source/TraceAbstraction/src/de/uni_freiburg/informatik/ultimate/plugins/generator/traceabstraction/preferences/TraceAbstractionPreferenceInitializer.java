@@ -45,7 +45,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<String>(LABEL_DUMPPATH,
 						DEF_DUMPPATH, PreferenceType.Directory),
 				new UltimatePreferenceItem<Determinization>(
-						LABEL_DETERMINIZATION, Determinization.STRONGESTPOST,
+						LABEL_DETERMINIZATION, Determinization.CODENAME_PROJECT_BELLWALD,
 						PreferenceType.Combo, Determinization.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_DIFFERENCE_SENWA,
 						DEF_DIFFERENCE_SENWA, PreferenceType.Boolean),
