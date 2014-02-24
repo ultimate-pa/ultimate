@@ -1,0 +1,43 @@
+This is Ultimate Büchi Automizer a tool for analyzing termination of C programs.
+    
+
+
+Requirements:
+64bit Linux system with Java
+
+
+
+Usage:
+If you want to analyze termination of the program foo.c then execute the
+shellscript
+./buchiAutomizer.sh foo.c
+
+
+
+Website:
+http://ultimate.informatik.uni-freiburg.de/BuchiAutomizer/
+
+
+
+Maintainer:
+heizmann@informatik.uni-freiburg.de
+
+
+
+Limitations:
+This version of the tool uses the SMT solver SMTInterpol and 
+- supports only C programs without pointers or arrays
+- supports only linear ranking functions.
+(For a version without these limitations, please have a look at our website.)
+
+
+Interesting Examples:
+Examples from the demonstration category on termination at the SV-COMP 2014
+http://sv-comp.sosy-lab.org/2014/
+https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/termination-crafted/
+
+The Examples from
+  2013CAV - Brockschmidt,Cook,Fuhs - Better termination proving through cooperation
+which is available at the following website.
+http://verify.rwth-aachen.de/brockschmidt/Cooperating-T2/
+http://verify.rwth-aachen.de/brockschmidt/Cooperating-T2/all_examples.c.tar.gz
