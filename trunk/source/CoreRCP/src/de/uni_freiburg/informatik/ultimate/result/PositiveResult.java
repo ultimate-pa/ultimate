@@ -4,7 +4,6 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
  * Result to store that the specification given at some location always holds. 

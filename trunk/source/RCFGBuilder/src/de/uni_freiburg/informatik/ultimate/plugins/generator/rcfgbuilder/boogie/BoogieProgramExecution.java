@@ -95,15 +95,6 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 		return sb.toString();
 	}
 	
-	public List<ILocation> getLocationSequence() {
-		List<ILocation> result = new ArrayList<ILocation>();
-		for (int i=0; i<m_Trace.size(); i++) {
-			Statement st = m_Trace.get(i);
-			result.add(st.getLocation());
-		}
-		return result;
-	}
-	
 	public IValuation getValuation() {
 		return new IValuation() {
 			@Override

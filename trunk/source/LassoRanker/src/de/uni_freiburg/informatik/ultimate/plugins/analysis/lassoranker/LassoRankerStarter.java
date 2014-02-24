@@ -340,8 +340,7 @@ public class LassoRankerStarter {
 		NoResult<RcfgElement> result = new NoResult<RcfgElement>(
 				m_Honda,
 				Activator.s_PLUGIN_NAME,
-				getTranslatorSequence(),
-				getLocation()
+				getTranslatorSequence()
 		);
 		result.setShortDescription("LassoRanker could not prove termination");
 		StringBuilder sb = new StringBuilder();

@@ -7,34 +7,19 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 public class NoResult<P extends IElement> extends AbstractResultAtElement<P> implements IResult {
-	private ILocation m_Location;
 	private String shortDescription;
 	private String longDescription;
 
 	/**
 	 * Constructor.
-	 * 
-	 * @param location
-	 *            the location
 	 * @param valuation
 	 *            the valuation
 	 */
 	public NoResult(P position, String plugin, 
-			List<ITranslator<?,?,?,?>> translatorSequence, ILocation location) {
+			List<ITranslator<?,?,?,?>> translatorSequence) {
 		super(position, plugin, translatorSequence);
-		this.m_Location = location;
 		this.shortDescription = new String();
 		this.longDescription = new String();
-	}
-
-	/**
-	 * Setter for Location.
-	 * 
-	 * @param location
-	 *            the Location to set
-	 */
-	public void setLocation(ILocation location) {
-		this.m_Location = location;
 	}
 
 	/**

@@ -5,6 +5,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
@@ -17,12 +18,11 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Oleksii Saukh
  * @date 02.01.2012
  */
-public class CounterExampleResult<P extends IElement> extends AbstractResultAtElement<P> implements IResultWithTrace {
-	private ILocation m_Location;
-	private String shortDescription;
+public class CounterExampleResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM> implements IResultWithTrace {
+	private final Check m_CheckedSpecification;
 	private String longDescription;
-	private List<ILocation> failurePath;
-	private IValuation valuation;
+	private final List<ILocation> failurePath;
+	private final IValuation valuation;
 
 	/**
 	 * Constructor.
@@ -32,14 +32,13 @@ public class CounterExampleResult<P extends IElement> extends AbstractResultAtEl
 	 * @param valuation
 	 *            the valuation
 	 */
-	public CounterExampleResult(P position, String plugin, 
-			List<ITranslator<?,?,?,?>> translatorSequence, ILocation location, 
+	public CounterExampleResult(ELEM position, String plugin, 
+			List<ITranslator<?,?,?,?>> translatorSequence, IProgramExecution<ELEM, E> pe, 
 			IValuation valuation) {
 		super(position, plugin, translatorSequence);
-		this.m_Location = location;
-		this.shortDescription = new String();
+		m_CheckedSpecification = ResultUtil.getCheckedSpecification(position);
 		this.longDescription = new String();
-		this.failurePath = new ArrayList<ILocation>();
+		this.failurePath = getLocationSequence(pe);
 		this.valuation = valuation;
 	}
 
@@ -53,36 +52,6 @@ public class CounterExampleResult<P extends IElement> extends AbstractResultAtEl
 	}
 
 	/**
-	 * Setter for the valuation.
-	 * 
-	 * @param valuation
-	 *            the valuation
-	 */
-	public void setValuation(IValuation valuation) {
-		this.valuation = valuation;
-	}
-
-	/**
-	 * Setter for Location.
-	 * 
-	 * @param location
-	 *            the Location to set
-	 */
-	public void setLocation(ILocation location) {
-		this.m_Location = location;
-	}
-
-	/**
-	 * Setter for short description.
-	 * 
-	 * @param shortDescription
-	 *            the shortDescription to set
-	 */
-	public void setShortDescription(String shortDescription) {
-		this.shortDescription = shortDescription;
-	}
-
-	/**
 	 * Setter for long description.
 	 * 
 	 * @param longDescription
@@ -92,16 +61,13 @@ public class CounterExampleResult<P extends IElement> extends AbstractResultAtEl
 		this.longDescription = longDescription;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.result.IResultNode#getShortDescription
-	 * ()
-	 */
 	@Override
 	public String getShortDescription() {
-		return shortDescription;
+		if (m_CheckedSpecification == null) {
+			return "some specification holds - ERROR (information lost during translation process)";
+		} else {
+			return m_CheckedSpecification.getNegativeMessage();
+		}
 	}
 
 	/*
@@ -134,14 +100,15 @@ public class CounterExampleResult<P extends IElement> extends AbstractResultAtEl
 	public List<ILocation> getFailurePath() {
 		return failurePath;
 	}
-
-	/**
-	 * Setter for the failure path.
-	 * 
-	 * @param failurePath
-	 *            the failurePath to set
-	 */
-	public void setFailurePath(List<ILocation> failurePath) {
-		this.failurePath = failurePath;
+	
+	
+	private static <TE extends IElement, E> List<ILocation> getLocationSequence(IProgramExecution<TE, E> pe) {
+		List<ILocation> result = new ArrayList<ILocation>();
+		for (int i=0; i<pe.getLength(); i++) {
+			TE te = pe.getTraceElement(i);
+			result.add(te.getPayload().getLocation());
+		}
+		return result;
 	}
+	
 }

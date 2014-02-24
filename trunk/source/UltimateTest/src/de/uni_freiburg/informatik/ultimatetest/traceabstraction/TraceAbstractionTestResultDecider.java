@@ -198,11 +198,11 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 				return res;
 			}
 		}
-		return new NoResult(null, null, null, null);
+		return new NoResult(null, null, null);
 	}
 	
 	public boolean isResultFail(Exception e) {
-		m_Summary.addFail(new NoResult(null, null, null, null), m_InputFile, "Exception of type " + e.getClass().getName() + " thrown.\t"+
+		m_Summary.addFail(new NoResult(null, null, null), m_InputFile, "Exception of type " + e.getClass().getName() + " thrown.\t"+
 		                                       "Message: " + e.getMessage());
 		m_Summary.addTraceAbstractionBenchmarks(m_InputFile, "No benchmark results available.");
 		Logger log = Logger.getLogger(TraceAbstractionTestResultDecider.class);

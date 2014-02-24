@@ -311,19 +311,16 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			reportUnproveableResult(pe);
 			return;
 		}
-		CounterExampleResult<RcfgElement> ctxRes = new CounterExampleResult<RcfgElement>(
-				errorPP,
-				Activator.s_PLUGIN_NAME,
-				translatorSequence,
-				origin, null);
 		String ctxMessage = ResultUtil.getCheckedSpecification(errorPP).getNegativeMessage();
-		ctxRes.setShortDescription(ctxMessage);		
 		ctxMessage += " (line " + origin.getStartLine() + ")";
 		Backtranslator backtrans = (Backtranslator) translatorSequence.get(translatorSequence.size()-1);
 		BoogieProgramExecution bpe = (BoogieProgramExecution) backtrans.translateProgramExecution(pe);
+		CounterExampleResult<RcfgElement, Expression> ctxRes = new CounterExampleResult<RcfgElement, Expression>(
+				errorPP,
+				Activator.s_PLUGIN_NAME,
+				translatorSequence,
+				pe, bpe.getValuation());
 		ctxRes.setLongDescription(bpe.toString());
-		ctxRes.setFailurePath(bpe.getLocationSequence());
-		ctxRes.setValuation(bpe.getValuation());
 		reportResult(ctxRes);
 		s_Logger.warn(ctxMessage);
 	}

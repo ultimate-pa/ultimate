@@ -490,23 +490,20 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		List<ITranslator<?, ?, ?, ?>> translatorSequence = UltimateServices
 				.getInstance().getTranslatorSequence();
-		CounterExampleResult<RcfgElement> ctxRes = new CounterExampleResult<RcfgElement>(
-				position, Activator.s_PLUGIN_NAME, translatorSequence, origin,
-				null);
 		String ctxMessage = origin.checkedSpecification().getNegativeMessage();
-		ctxRes.setShortDescription(ctxMessage);
 		ctxMessage += " (line " + origin.getStartLine() + ")";
 		Backtranslator backtrans = (Backtranslator) translatorSequence
 				.get(translatorSequence.size() - 1);
 		BoogieProgramExecution bpe = (BoogieProgramExecution) backtrans
 				.translateProgramExecution(pe);
+		CounterExampleResult<RcfgElement, Expression> ctxRes = new CounterExampleResult<RcfgElement, Expression>(
+				position, Activator.s_PLUGIN_NAME, translatorSequence, pe,
+				bpe.getValuation());
 		ctxRes.setLongDescription(bpe.toString());
-		ctxRes.setFailurePath(bpe.getLocationSequence());
-		ctxRes.setValuation(bpe.getValuation());
 		
 		System.out.println("=== Start of program execution");
 		System.out.println("--- Error Path: ---");
-		for (ILocation loc : bpe.getLocationSequence()) {
+		for (ILocation loc : ctxRes.getFailurePath()) {
 			System.out.println(loc.toString());
 		}
 		System.out.println("--- Valuation: ---");

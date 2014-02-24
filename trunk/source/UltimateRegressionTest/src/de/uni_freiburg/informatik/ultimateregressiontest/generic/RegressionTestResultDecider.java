@@ -195,7 +195,7 @@ public class RegressionTestResultDecider implements ITestResultDecider {
 				return res;
 			}
 		}
-		return new NoResult(null, null, null, null);
+		return new NoResult(null, null, null);
 	}
 
 	public boolean isResultFail(Exception e) {

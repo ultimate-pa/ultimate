@@ -221,8 +221,7 @@ public class RankingFunctionsObserver implements IUnmanagedObserver {
 							new NoResult<RcfgElement>(
 									honda,
 									Activator.s_PLUGIN_NAME,
-									UltimateServices.getInstance().getTranslatorSequence(),
-									honda.getBoogieASTNode().getLocation().getOrigin());
+									UltimateServices.getInstance().getTranslatorSequence());
 					rankRes.setShortDescription(shortMessage);
 					rankRes.setLongDescription(longMessage.toString());
 					reportResult(rankRes);
