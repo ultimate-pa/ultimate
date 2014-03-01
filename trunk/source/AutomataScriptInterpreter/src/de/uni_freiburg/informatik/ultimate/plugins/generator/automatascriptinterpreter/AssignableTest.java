@@ -35,22 +35,24 @@ public class AssignableTest {
 	 * primitive types. 
 	 * @param left the type of the operand on the left-side of the assignment
 	 * @param right the type of the operand on the right-side of the assignment
-	 * @return true if and only if the right operand is equal to or a sub-type of the left operand,
-	 * otherwise false.
+	 * @return true if and only if the right operand is equal to or a sub-type 
+	 * of the left operand, otherwise false.
 	 */
 	public static boolean isAssignableFrom(Class<?> left, Class<?> right) {
-		Class<?> leftSide = left;
-		Class<?> rightSide = right;
+		Class<?> leftWithoutPrimitive = left;
+		Class<?> rightWithoutPrimitive = right;
+		boolean result;
 		if (m_primitiveToClassTypes.containsKey(left)) {
-			leftSide = m_primitiveToClassTypes.get(left);
+			leftWithoutPrimitive = m_primitiveToClassTypes.get(left);
 		}
 		if (m_primitiveToClassTypes.containsKey(right)) {
-			rightSide = m_primitiveToClassTypes.get(right);
+			rightWithoutPrimitive = m_primitiveToClassTypes.get(right);
 		}
-		if (leftSide != null && rightSide != null) {
-			return leftSide.isAssignableFrom(rightSide);
+		if (leftWithoutPrimitive != null && rightWithoutPrimitive != null) {
+			result = leftWithoutPrimitive.isAssignableFrom(rightWithoutPrimitive);
 		} else {
-			return false; 
+			result = false; 
 		}
+		return result;
 	}
 }
