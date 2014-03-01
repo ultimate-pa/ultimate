@@ -20,3 +20,4 @@ Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstr
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck
+Import-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences
