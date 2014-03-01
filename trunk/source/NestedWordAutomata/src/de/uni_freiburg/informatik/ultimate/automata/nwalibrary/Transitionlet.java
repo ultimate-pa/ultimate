@@ -38,5 +38,4 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 public interface Transitionlet<LETTER,STATE> {
 	
 	public LETTER getLetter();
-
 }

@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
@@ -126,5 +127,13 @@ public class AutomatonEpimorphism<STATE> {
 	public void insert(STATE from, STATE to)
 	{
 		m_epimorphism.put(from, to);
+	}
+
+	public void Print() 
+	{
+		for(Entry<STATE, STATE> e : m_epimorphism.entrySet())
+		{
+			s_Logger.debug(e.getKey().toString() + " --> " + e.getValue());
+		}		
 	}
 }

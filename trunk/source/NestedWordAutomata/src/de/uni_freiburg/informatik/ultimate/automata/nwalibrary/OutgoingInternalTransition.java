@@ -58,4 +58,22 @@ public class OutgoingInternalTransition<LETTER,STATE> implements Transitionlet<L
 		return MessageFormat.format("( _ , {0} , {1} )", getLetter(), getSucc());
 	}
 	
+	@Override
+	public int hashCode()
+	{
+		return m_Letter.hashCode() + m_Succ.hashCode();
+	}
+	
+	//@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
+	@Override
+	public boolean equals(Object other)
+	{
+		if(other instanceof OutgoingInternalTransition<?,?>)
+		{		
+			return m_Letter.equals(((OutgoingInternalTransition) other).m_Letter)
+					&& m_Succ.equals(((OutgoingInternalTransition) other).m_Succ);
+		}
+		return false;	
+	}
 }
