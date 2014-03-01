@@ -506,7 +506,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 //		(new RemoveDeadEnds<CodeBlock, IPredicate>((INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction)).getResult();
 		m_TraceAbstractionBenchmarks.finishDifference();
 		
-		// #123, TODO: outsource
 		if (m_Pref.minimize()) {
 			if (m_Pref.dumpAutomata()) {
 				String filename = "AbstractionBeforeMinimization_Iteration" + m_Iteration; 
@@ -547,7 +546,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			m_StatesRemovedByMinimization += (oldSize - newSize);
 			m_TraceAbstractionBenchmarks.finishAutomataMinimization();
 		}
-		// #1234
+		
 		
 //		MinimizeSevpa<CodeBlock, Predicate> sev = new MinimizeSevpa<CodeBlock, Predicate>(abstraction);
 //		new MinimizeSevpa<CodeBlock, Predicate>.Partitioning(0);
