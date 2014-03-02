@@ -97,7 +97,7 @@ RESULT_INCORRECT=`echo "$Ultimate_OUTPUT" | grep "Some assert statements have be
 RESULT_NOTESTCASES=`echo "$Ultimate_OUTPUT" | grep "not used any assert statement in your automata"`
 RESULT_TIMEOUT=`echo "$Ultimate_OUTPUT" | grep "Timeout during interpretation of automata script"`
 RESULT_OOM=`echo "$Ultimate_OUTPUT" | grep "Run out of memory during interpretation of automata script"`
-RUNTIME=`echo "$Ultimate_OUTPUT" | grep "AutomataScriptInterpreter took" | cut -c82-`
+RUNTIME=`echo "$Ultimate_OUTPUT" | grep "AutomataScriptInterpreter took" | cut -c83-94`
 
 
 if [ "$RESULT_TIMEOUT" ]; then
