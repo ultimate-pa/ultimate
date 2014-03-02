@@ -7,8 +7,8 @@ file_export_version=3.0
 /instance/BlockEncoding/Minimize\ Call\ and\ Return\ Edges=true
 @BlockEncoding=0.0.1
 \!/instance/BlockEncoding=
-/instance/BlockEncoding/Enter\ Rating-Boundary\ (empty\ for\ LBE)\:=0
-/instance/BlockEncoding/Choose\ the\ strategy\ for\ the\ edge\ rating\:=DISJUNCTIVE_RATING
+/instance/BlockEncoding/Enter\ Rating-Boundary\ (empty\ for\ LBE)=0
+/instance/BlockEncoding/Choose\ the\ strategy\ for\ the\ edge\ rating=DISJUNCTIVE_RATING
 #Fri Nov 15 04:23:00 CET 2013
 \!/instance/BuchiAutomizer=
 file_export_version=3.0
