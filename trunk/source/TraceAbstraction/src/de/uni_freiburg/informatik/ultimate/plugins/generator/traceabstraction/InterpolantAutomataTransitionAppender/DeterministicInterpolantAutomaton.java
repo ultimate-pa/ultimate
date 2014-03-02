@@ -54,7 +54,7 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
 			TraceChecker traceChecker) {
-		super(smtManager,edgeChecker, abstraction, null, null);
+		super(smtManager,edgeChecker, abstraction, traceChecker.getPostcondition(), interpolantAutomaton);
 		m_UseLazyEdgeChecks = false;
 		m_InterpolantAutomaton = interpolantAutomaton;
 		m_IaTrueState = traceChecker.getPrecondition();
