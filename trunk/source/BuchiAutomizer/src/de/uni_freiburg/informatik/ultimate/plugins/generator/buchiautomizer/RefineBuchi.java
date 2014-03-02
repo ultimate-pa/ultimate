@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
@@ -238,7 +239,9 @@ public class RefineBuchi {
 				loopInterpolantsForRefinement = new HashSet<IPredicate>(Arrays.asList(loopInterpolants));
 				loopInterpolantsForRefinement.add(bspm.getRankEqAndSi());
 			}
-			m_InterpolAutomatonUsedInRefinement = new BuchiInterpolantAutomaton(
+			TermVarsProc tvp = m_SmtManager.computeTermVarsProc(m_SmtManager.getScript().term("false"));
+			IPredicate falsePred = pu.getOrConstructPredicate(tvp);
+			m_InterpolAutomatonUsedInRefinement = new BuchiInterpolantAutomatonBouncer(
 					m_SmtManager, ec,  BuchiCegarLoop.emptyStem(m_Counterexample),
 					bspm.getStemPrecondition(), 
 					stemInterpolantsForRefinement, bspm.getHondaPredicate(), 
@@ -246,7 +249,7 @@ public class RefineBuchi {
 					BuchiCegarLoop.emptyStem(m_Counterexample) ? null : stem.getSymbol(stem.length()-1), 
 					loop.getSymbol(loop.length()-1), m_Abstraction, 
 					setting.isScroogeNondeterminismStem(), setting.isScroogeNondeterminismLoop(), 
-					setting.isBouncerStem(), setting.isBouncerLoop(), m_StateFactory);
+					setting.isBouncerStem(), setting.isBouncerLoop(), m_StateFactory, pu, pu, falsePred);
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");
@@ -360,7 +363,7 @@ public class RefineBuchi {
 			break;
 		case ScroogeNondeterminism:
 		case Deterministic:
-			((BuchiInterpolantAutomaton) interpolantAutomaton).finishConstruction();
+			((BuchiInterpolantAutomatonBouncer) interpolantAutomaton).finishConstruction();
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");

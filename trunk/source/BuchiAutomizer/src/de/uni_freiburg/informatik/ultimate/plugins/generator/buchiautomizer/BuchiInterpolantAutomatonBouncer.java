@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -80,6 +81,8 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		if (!emtpyStem) {
 			m_InputStemPredicates.add(precondition);
 			m_Result.addState(true, false, precondition);
+			m_StemInputPreds2ResultPreds.put(Collections.singleton(precondition), precondition);
+			m_StemResPred2InputPreds.addPair(precondition,precondition);
 			for (IPredicate stemPredicate : stemInterpolants) {
 				if (!m_InputStemPredicates.contains(stemPredicate)) {
 					m_InputStemPredicates.add(stemPredicate);
@@ -157,6 +160,10 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		if (isPredHierLetterFalse(resPred, resHier, letter, sch)) {
 			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
 		} else if (isFalseSucc(resPred, resHier, letter, sch)) {
+			if (!m_Result.contains(m_IaFalseState)) {
+				m_Result.addState(false, true, m_IaFalseState);
+				s_Logger.warn("BenchmarkResult: Transition to False Predicate");
+			}
 			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
 		} else if (m_StemResPred2InputPreds.getDomain().contains(resPred)) {
 			computeSuccsStem(resPred, resHier, letter, sch);
@@ -178,7 +185,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 			result = true;
 		} else if (sch.isLinearPredecessorFalse(resPred)) {
 			result = true;
-		} else if (sch.isHierarchicalPredecessorFalse(resPred)) {
+		} else if (sch.isHierarchicalPredecessorFalse(resHier)) {
 			result = true;
 		} else {
 			result = false;
@@ -265,6 +272,8 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		if (succs.size() == 1) {
 			result = succs.iterator().next();
 			if (!m_Result.contains(result)) {
+				inputPreds2ResultPreds.put(Collections.singleton(result), result);
+				resPred2InputPreds.addPair(result, result);
 				m_Result.addState(false, false, result);
 			}
 		} else {
