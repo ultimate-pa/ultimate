@@ -507,44 +507,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_TraceAbstractionBenchmarks.finishDifference();
 		
 		if (m_Pref.minimize()) {
-			if (m_Pref.dumpAutomata()) {
-				String filename = "AbstractionBeforeMinimization_Iteration" + m_Iteration; 
-				super.writeAutomatonToFile(m_Abstraction, filename);
-			}
-			m_TraceAbstractionBenchmarks.startAutomataMinimization();
-			long startTime = System.currentTimeMillis();
-			int oldSize = m_Abstraction.size();
-			INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
-			Collection<Set<IPredicate>> partition = computePartition(newAbstraction);
-			boolean shrinkNwa = m_Pref.cutOffRequiresSameTransition();
-			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized;
-			if (false && shrinkNwa) {
-				ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(
-						newAbstraction, partition, m_StateFactoryForRefinement, true, false, false, 200, false, 0, false, false);
-				assert minimizeOp.checkResult(predicateFactory);
-				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(minimizeOp.getResult())).getResult();
-				if (m_Pref.computeHoareAnnotation()) {
-					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
-					m_Haf.updateOnMinimization(oldState2newState, minimized);
-				}
-			} else {
-				MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(newAbstraction, partition, false, false, m_StateFactoryForRefinement);
-				assert minimizeOp.checkResult(predicateFactory);
-				minimized = minimizeOp.getResult();
-				if (m_Pref.computeHoareAnnotation()) {
-					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
-					m_Haf.updateOnMinimization(oldState2newState, minimized);
-				}
-
-			}
-			int newSize = minimized.size();
-			m_Abstraction = minimized;
-			m_MinimizationTime += (System.currentTimeMillis() - startTime);
-			if (oldSize != 0 && oldSize < newSize) {
-				throw new AssertionError("Minimization increased state space");
-			}
-			m_StatesRemovedByMinimization += (oldSize - newSize);
-			m_TraceAbstractionBenchmarks.finishAutomataMinimization();
+			minimizeAbstraction(m_StateFactoryForRefinement, predicateFactory);
 		}
 		
 		
@@ -565,6 +528,61 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			return true;
 		}
 
+	}
+
+
+
+
+	/**
+	 * Automata theoretic minimization of the automaton stored in m_Abstraction.
+	 * Expects that m_Abstraction does not have dead ends.
+	 * @param abstractionPredFac PredicateFactory for the construction of the
+	 * new (minimized) abstraction. 
+	 * @param resultCheckPredFac PredicateFactory used for auxiliary automata
+	 * used for checking correctness of the result (if assertions are enabled). 
+	 */
+	protected void minimizeAbstraction(PredicateFactory abstractionPredFac,
+			PredicateFactory resultCheckPredFac)
+			throws OperationCanceledException, AutomataLibraryException,
+			AssertionError {
+		if (m_Pref.dumpAutomata()) {
+			String filename = "AbstractionBeforeMinimization_Iteration" + m_Iteration; 
+			super.writeAutomatonToFile(m_Abstraction, filename);
+		}
+		m_TraceAbstractionBenchmarks.startAutomataMinimization();
+		long startTime = System.currentTimeMillis();
+		int oldSize = m_Abstraction.size();
+		INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
+		Collection<Set<IPredicate>> partition = computePartition(newAbstraction);
+		boolean shrinkNwa = m_Pref.cutOffRequiresSameTransition();
+		INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized;
+		if (false && shrinkNwa) {
+			ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(
+					newAbstraction, partition, abstractionPredFac, true, false, false, 200, false, 0, false, false);
+			assert minimizeOp.checkResult(resultCheckPredFac);
+			minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(minimizeOp.getResult())).getResult();
+			if (m_Pref.computeHoareAnnotation()) {
+				Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
+				m_Haf.updateOnMinimization(oldState2newState, minimized);
+			}
+		} else {
+			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(newAbstraction, partition, false, false, abstractionPredFac);
+			assert minimizeOp.checkResult(resultCheckPredFac);
+			minimized = minimizeOp.getResult();
+			if (m_Pref.computeHoareAnnotation()) {
+				Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
+				m_Haf.updateOnMinimization(oldState2newState, minimized);
+			}
+
+		}
+		int newSize = minimized.size();
+		m_Abstraction = minimized;
+		m_MinimizationTime += (System.currentTimeMillis() - startTime);
+		if (oldSize != 0 && oldSize < newSize) {
+			throw new AssertionError("Minimization increased state space");
+		}
+		m_StatesRemovedByMinimization += (oldSize - newSize);
+		m_TraceAbstractionBenchmarks.finishAutomataMinimization();
 	}
 	
 	
