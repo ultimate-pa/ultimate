@@ -297,7 +297,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	}
 	
 	@Override
-	public Collection<STATE> succInternal(STATE state, LETTER letter) {
+	public Set<STATE> succInternal(STATE state, LETTER letter) {
 		assert contains(state);
 		Map<LETTER, Set<STATE>> map = m_InternalOut.get(state);
 		if (map == null) {
@@ -308,7 +308,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	}
 	
 	@Override
-	public Collection<STATE> predInternal(STATE state, LETTER letter) {
+	public Set<STATE> predInternal(STATE state, LETTER letter) {
 		assert contains(state);
 		Map<LETTER, Set<STATE>> map = m_InternalIn.get(state);
 		if (map == null) {
@@ -319,7 +319,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	}
 	
 	@Override
-	public Collection<STATE> succCall(STATE state, LETTER letter) {
+	public Set<STATE> succCall(STATE state, LETTER letter) {
 		assert contains(state);
 		Map<LETTER, Set<STATE>> map = m_CallOut.get(state);
 		if (map == null) {
@@ -330,7 +330,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	}
 	
 	@Override
-	public Collection<STATE> predCall(STATE state, LETTER letter) {
+	public Set<STATE> predCall(STATE state, LETTER letter) {
 		assert contains(state);
 		Map<LETTER, Set<STATE>> map = m_CallIn.get(state);
 		if (map == null) {
@@ -341,7 +341,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	}
 	
 	@Override
-	public Collection<STATE> hierPred(STATE state, LETTER letter) {
+	public Set<STATE> hierPred(STATE state, LETTER letter) {
 		assert contains(state);
 		Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnOut.get(state);
 		if (map == null) {
@@ -352,7 +352,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	}
 	
 	@Override
-	public Collection<STATE> succReturn(STATE state, STATE hier, LETTER letter) {
+	public Set<STATE> succReturn(STATE state, STATE hier, LETTER letter) {
 		assert contains(state);
 		assert contains(hier);
 		Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnOut.get(state);
@@ -368,7 +368,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	}
 	
 	@Override
-	public Collection<STATE> predReturnLin(STATE state, LETTER letter, STATE hier) {
+	public Set<STATE> predReturnLin(STATE state, LETTER letter, STATE hier) {
 		assert contains(state);
 		assert contains(hier);
 		Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2preds  = m_ReturnIn.get(state);
@@ -384,7 +384,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	}
 	
 	@Override
-	public Collection<STATE> predReturnHier(STATE state, LETTER letter) {
+	public Set<STATE> predReturnHier(STATE state, LETTER letter) {
 		assert contains(state);
 		Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2preds  = m_ReturnIn.get(state);
 		if (letter2hier2preds == null) {
