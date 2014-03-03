@@ -16,13 +16,14 @@ public interface IObserver {
 	 * Before an observer is executed on a model, UltimateCore calls init() on
 	 * the observer. If there are many observers, init() is called repeatedly.
 	 */
-	public void init();
+	public void init() throws Throwable;
 
 	/**
 	 * After an observer has finished executing on a model (or chosen to ignore
 	 * it), UlimateCore calls finish() on the observer.
+	 * @throws Throwable 
 	 */
-	public void finish();
+	public void finish() throws Throwable;
 
 	/**
 	 * Before calling init() or executing an observer, UltimateCore calls

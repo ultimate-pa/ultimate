@@ -32,7 +32,8 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void finish() {
+	public void finish() throws Throwable 
+	{
 		// if everything is found, execute produrct
 		if (mAutomaton != null && mRcfg != null) {
 			mLogger.debug("Beginning generation of product automation...");
@@ -42,6 +43,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 			} catch (Exception e) {
 				mLogger.error(String.format("BuchiProgramProduct encountered an error during product generation:\n %s",
 						e));
+				throw e;
 			}
 		}
 	}
