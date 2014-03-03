@@ -61,7 +61,7 @@ public class DFSTreeWalker extends BaseWalker {
 
 	}
 
-	protected void runObserver(IElement element, IUnmanagedObserver v) {
+	protected void runObserver(IElement element, IUnmanagedObserver v) throws Throwable {
 
 		if(element == null || v == null){
 			return;

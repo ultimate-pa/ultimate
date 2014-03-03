@@ -65,7 +65,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 	 * Collect one RCFG and one LTL2Aut.AST and execute the product 
 	 * algorithm on them.
 	 */
-	public boolean process(IElement root) {
+	public boolean process(IElement root) throws Exception {
 
 		// collect root nodes of Buechi automaton
 		if (root instanceof NeverStatement && this.mAutomaton == null) {
@@ -76,6 +76,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 			} catch (Exception e) {
 				mLogger.error(String.format(
 						"BuchiProgramProduct encountered an error during neverclaim to Buchi transformation:\n %s", e));
+				throw e;
 			}
 			return false;
 		}

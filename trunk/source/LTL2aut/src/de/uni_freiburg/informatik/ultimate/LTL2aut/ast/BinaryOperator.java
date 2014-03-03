@@ -26,6 +26,7 @@ public class BinaryOperator extends AstNode {
 		if (this.type == BinaryType.minus) op = " - ";
 		if (this.type == BinaryType.plus) op = " + ";
 		if (this.type == BinaryType.times) op = " * ";
+		if (this.type == BinaryType.divide) op = " / ";
 	 	
 		String result = "( ";
 		int i = 0;

@@ -59,7 +59,7 @@ public class PluginConnector {
 		mCurrent = mMax = 0;
 	}
 
-	public void run() throws Exception {
+	public void run() throws Throwable {
 		init();
 		List<GraphType> models = selectModels();
 		if (models.isEmpty()) {
@@ -87,7 +87,7 @@ public class PluginConnector {
 		return mTool.getName();
 	}
 
-	private void runTool(List<IObserver> observers, GraphType currentModel) {
+	private void runTool(List<IObserver> observers, GraphType currentModel) throws Throwable {
 		IElement entryNode = getEntryPoint(currentModel);
 
 		if (mTool instanceof IGenerator) {
@@ -103,7 +103,7 @@ public class PluginConnector {
 		}
 	}
 
-	private void runObserver(IObserver observer, GraphType currentModel, IElement entryNode) {
+	private void runObserver(IObserver observer, GraphType currentModel, IElement entryNode) throws Throwable {
 		logObserverRun(observer, currentModel);
 		IWalker walker = selectWalker(currentModel, observer.getWalkerOptions());
 		walker.addObserver(observer);

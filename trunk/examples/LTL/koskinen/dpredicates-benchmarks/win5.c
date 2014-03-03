@@ -9,6 +9,12 @@
 
 // Benchmark: win5.c
 // Property: G(a => F r)
+// 
+// [DD] Ultimate LTL Model Checker Property: 
+// [](a -> <>b)
+// a: lock = 1
+// b: lock = 0 
+// [/DD]
 
 #define NTSTATUS int
 #define PIRP int

@@ -1,28 +1,22 @@
 package de.uni_freiburg.informatik.ultimate.BuchiProgramProduct;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AtomicProposition;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.BinaryOperator;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.BoolLiteral;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.ComperativeOperator;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.IntLiteral;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.LabeledBlock;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.Name;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.NeverStatement;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.Not;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.OptionStatement;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.SkipStatement;
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
@@ -176,6 +170,9 @@ public class Never2Automaton {
 				break;
 			case times:
 				op = BinaryExpression.Operator.ARITHMUL;
+				break;
+			case divide:
+				op = BinaryExpression.Operator.ARITHDIV;
 				break;
 			default:
 				throw new Exception("Binary Operator unknown");

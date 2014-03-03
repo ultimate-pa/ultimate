@@ -50,8 +50,9 @@ public abstract class BaseWalker implements IWalker {
 	 * 
 	 * @param inode
 	 *            usually the starting point
+	 * @throws Throwable iff an error occurs during plugin execution and the toolchain should be aborted. 
 	 */
-	public void run(IElement inode) {
+	public void run(IElement inode) throws Throwable {
 		if (inode != null) {
 			for (IObserver v : mObservers) {
 				runObserver(inode, v);
@@ -59,7 +60,7 @@ public abstract class BaseWalker implements IWalker {
 		}
 	}
 
-	private void runObserver(IElement root, IObserver observer) {
+	private void runObserver(IElement root, IObserver observer) throws Throwable {
 		if (observer instanceof IUnmanagedObserver) {
 			runObserver(root, (IUnmanagedObserver) observer);
 		} else if (observer instanceof IManagedObserver) {
@@ -69,7 +70,7 @@ public abstract class BaseWalker implements IWalker {
 		}
 	}
 	
-	protected abstract void runObserver(IElement root, IUnmanagedObserver observer);
+	protected abstract void runObserver(IElement root, IUnmanagedObserver observer) throws Throwable;
 	protected abstract void runObserver(IElement root, IManagedObserver observer);
 
 }

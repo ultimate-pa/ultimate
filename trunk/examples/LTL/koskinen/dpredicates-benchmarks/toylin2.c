@@ -9,6 +9,12 @@
 
 // Benchmark: toylin2.c
 // Property: c > servers / 2 => F(resp > servers / 2)
+// [DD] Ultimate LTL Model Checker Property: 
+// a -> <>b
+// a: c > servers / 2
+// b: resp > servers / 2
+// [/DD]
+
 
 unsigned int c;
 int servers ;

@@ -95,6 +95,21 @@ public class AstTest extends TestCase {
 		
 		assertEquals("( a * b * c * d )", a.toString() );
 	}
+	
+	public void testDivideOperator()
+	{
+		BinaryOperator a = new BinaryOperator(BinaryType.divide);
+		a.addOutgoing(new Name("a"));
+		a.addOutgoing(new Name("b"));
+		
+		assertEquals("( a / b )", a.toString() );
+		
+		a.addOutgoing(new Name("c"));
+		a.addOutgoing(new Name("d"));
+		
+		assertEquals("( a / b / c / d )", a.toString() );
+	}
+	
 		
 
 }

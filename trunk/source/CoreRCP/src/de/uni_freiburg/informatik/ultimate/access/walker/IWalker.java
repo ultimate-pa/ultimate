@@ -27,5 +27,5 @@ public interface IWalker {
 	
 	public abstract boolean containsObserver(IObserver observer);
 	
-	public void run(IElement node);
+	public void run(IElement node) throws Throwable;
 }

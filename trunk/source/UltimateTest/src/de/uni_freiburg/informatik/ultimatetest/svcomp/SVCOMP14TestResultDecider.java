@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import javax.sql.rowset.Predicate;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -44,7 +46,7 @@ public class SVCOMP14TestResultDecider implements ITestResultDecider {
 		if (inputFile == null) {
 			throw new ExceptionInInitializerError("inputFile may not be null");
 		}
-
+		
 		mLogger = Logger.getLogger(SVCOMP14TestResultDecider.class);
 		mSummary = summary;
 		mShouldBeSafe = shouldbesafe;

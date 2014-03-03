@@ -894,7 +894,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	 * (org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	@Override
-	public IStatus processToolchain(IProgressMonitor monitor) throws Exception {
+	public IStatus processToolchain(IProgressMonitor monitor) throws Throwable {
 
 		Benchmark b = new Benchmark();
 		b.start("Toolchain (without parser)");

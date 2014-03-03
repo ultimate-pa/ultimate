@@ -64,7 +64,7 @@ public class CFGWalker extends BaseWalker {
 
 	}
 
-	protected void runObserver(IElement element, IUnmanagedObserver observer) {
+	protected void runObserver(IElement element, IUnmanagedObserver observer) throws Throwable {
 		IElement tobeproccessed = element;
 		if (element instanceof WrapperNode) {
 			WrapperNode wnode = (WrapperNode) element;

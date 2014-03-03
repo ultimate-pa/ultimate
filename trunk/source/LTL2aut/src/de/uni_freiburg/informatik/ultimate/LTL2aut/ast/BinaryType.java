@@ -6,5 +6,6 @@ public enum BinaryType {
 	or,
 	plus,
 	minus,
-	times
+	times,
+	divide
 }

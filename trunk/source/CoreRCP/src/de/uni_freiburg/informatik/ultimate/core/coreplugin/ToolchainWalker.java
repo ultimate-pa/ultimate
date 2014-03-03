@@ -57,7 +57,7 @@ public class ToolchainWalker {
 		m_OpenPlugins = new HashMap<String, PluginConnector>();
 	}
 	
-	public void walk(IProgressMonitor monitor) throws Exception {
+	public void walk(IProgressMonitor monitor) throws Throwable {
 		Toolchain chain = m_Core.getStoredToolchainUse();
 		
 		// convert monitor to submonitor
@@ -104,7 +104,7 @@ public class ToolchainWalker {
 	 * @return true/false, depending on whether plugin could be successfully processed
 	 * @throws Exception 
 	 */
-	private final void processPlugin(PluginType plugin) throws Exception {
+	private final void processPlugin(PluginType plugin) throws Throwable {
 		
 		// get tool belonging to id
 		ITool tool = this.m_Id2Plugin.get(plugin.getId());
@@ -128,7 +128,7 @@ public class ToolchainWalker {
 		
 		try {
 			pc.run();
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			s_Logger.error("The Plugin "+plugin.getId()+" has thrown an Exception!", e);
 			throw e;
 			
@@ -156,7 +156,7 @@ public class ToolchainWalker {
 	 * @throws Exception 
 	 */
 	private final boolean processSubchain(SubchainType chain,
-			IProgressMonitor monitor) throws Exception {
+			IProgressMonitor monitor) throws Throwable {
 		// again, convert monitor into SubMonitor with certain number of ticks
 		// depending of length of subchain
 		int work_remain = chain.getPluginOrSubchain().size();

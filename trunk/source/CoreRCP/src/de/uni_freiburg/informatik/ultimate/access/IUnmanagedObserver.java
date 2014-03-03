@@ -1,15 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.access;
 
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+
 /**
  * 
- * This class provides unmanaged access to the data structures of Ultimate. 
+ * This class provides unmanaged access to the data structures of Ultimate.
  * 
  * @author dietsch
- *
+ * 
  */
 public interface IUnmanagedObserver extends IObserver {
-	
+
 	/**
 	 * Supplies a INode of a selected structure in the order determined by
 	 * getWalkerOptions(). The return value determines if the walker continues
@@ -24,7 +25,8 @@ public interface IUnmanagedObserver extends IObserver {
 	 *            subgraph or subtree.
 	 * @return true if the walker should descent to the children of the current
 	 *         node, false if it should skip them.
+	 * @throws Throwable iff the toolchain should be aborted 
 	 */
-	
-	public abstract boolean process(IElement root);
+
+	public abstract boolean process(IElement root) throws Throwable;
 }

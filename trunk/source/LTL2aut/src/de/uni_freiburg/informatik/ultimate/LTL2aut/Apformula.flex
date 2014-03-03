@@ -52,6 +52,7 @@ Int = [0-9]+
 	"+"				{ return symbol(SymbolsAP.PLUS); }
 	"-"				{ return symbol(SymbolsAP.MINUS); }
 	"*"				{ return symbol(SymbolsAP.TIMES); }
+	"/"				{ return symbol(SymbolsAP.DIVIDE); }
 
 	"="				{ return symbol(SymbolsAP.EQUALS); }
 	">"				{ return symbol(SymbolsAP.GREATER); }

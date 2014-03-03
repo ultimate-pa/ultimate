@@ -8,7 +8,7 @@ parser ParserAP;
 option symbols=SymbolsAP;
 
 /* exprinals (tokens returned by the scanner). */
-terminal           	COLON, LPAR, RPAR, PLUS, MINUS , TIMES, EQUALS, GREATER, GEQ, UMINUS, TRUE, FALSE;
+terminal           	COLON, LPAR, RPAR, PLUS, MINUS , TIMES, DIVIDE, EQUALS, GREATER, GEQ, UMINUS, TRUE, FALSE;
 terminal String 			NAME;
 terminal Integer 				INT;
 
@@ -16,7 +16,7 @@ terminal Integer 				INT;
 non terminal AstNode     		 ap, assign, name, expr;
 
 precedence left PLUS, MINUS;
-precedence left TIMES;
+precedence left TIMES, DIVIDE;
 precedence left UMINUS;
 
 start with assign;
@@ -26,33 +26,50 @@ start with assign;
 assign ::= NAME:n COLON ap:a
 	{: RESULT = new AtomicProposition(n, a); :};
 
-ap ::= expr:e1 EQUALS expr:e2
+ap ::= 
+	expr:e1 EQUALS expr:e2
 	{: RESULT = new ComperativeOperator(ComperativeType.equals, e1, e2); :}
+	
 	| expr:e1 GREATER expr:e2
 	{: RESULT = new ComperativeOperator(ComperativeType.greater, e1, e2); :}
+	
 	| expr:e1 GEQ expr:e2
 	{: RESULT = new ComperativeOperator(ComperativeType.geq, e1, e2); :}
+	
 	| TRUE
 	{: RESULT = new BoolLiteral(true); :}
+	
 	| FALSE
 	{: RESULT = new BoolLiteral(false); :};
 	
-expr ::= expr:e1 PLUS expr:e2
+expr ::= 
+	expr:e1 PLUS expr:e2
 	{: RESULT = new BinaryOperator(BinaryType.plus, e1, e2); :}
+	
 	| expr:e1 MINUS expr:e2
 	{: RESULT = new BinaryOperator(BinaryType.minus, e1, e2); :}
+	
 	| expr:e1 TIMES expr:e2
 	{: RESULT = new BinaryOperator(BinaryType.times, e1, e2); :}
+	
+	| expr:e1 DIVIDE expr:e2
+	{: RESULT = new BinaryOperator(BinaryType.divide, e1, e2); :}
+	
 	| MINUS expr:e1 		
 	{: RESULT = RESULT = new IntLiteral(((IntLiteral)e1).getValue() * -1); :} %prec UMINUS
+	
 	| LPAR expr:e1 RPAR
 	{: RESULT = e1; :}
+	
 	| name:n	
 	{: RESULT = n; :}
+	
 	| INT:i
 	{: RESULT = new IntLiteral(i); :}
+	
 	| TRUE
 	{: RESULT = new BoolLiteral(true); :}
+	
 	| FALSE
 	{: RESULT = new BoolLiteral(false); :};
 	

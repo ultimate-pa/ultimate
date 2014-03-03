@@ -50,7 +50,7 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public boolean process(IElement root)  {
+	public boolean process(IElement root) throws Throwable {
 
 		AstNode node;
 		String line;
@@ -67,7 +67,7 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 			// translate to ba with external tool and get AST
 			WrapLTL2Never wrap = new WrapLTL2Never();
 			node = wrap.ltl2Ast(line);
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			mLogger.error(String.format("Exception during LTL->BA execution: %s", e));
 			return false;
 		}
@@ -81,6 +81,7 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 			while (line != null) {
 				LexerAP lexer = new LexerAP(new InputStreamReader(IOUtils.toInputStream(line)));
 				ParserAP p = new ParserAP(lexer);
+				mLogger.debug("Parsing LTL property...");
 				AstNode nodea = (AstNode) p.parse().value;
 				// append node to dictionary of atomic propositions
 				if (nodea instanceof AtomicProposition)
@@ -93,9 +94,13 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 
 			this.mRootNode = node;
 
-		} catch (Exception e) {
-			mLogger.error(String.format("Exception while parsing the atomic propositions: %s",e));
-			return false;
+		} catch (Throwable e) {
+			if (line != null) {
+				mLogger.error(String.format("Exception while parsing the atomic proposition \"%s\": %s", line, e));
+			} else {
+				mLogger.error(String.format("Exception while parsing the atomic propositions: %s", e));
+			}
+			throw e;
 		}
 
 		return false;

@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
  * @author Bj�rn Buchhold, Christian Simon
  *
  */
-@SuppressWarnings("restriction")
 public class Toolchain {
 
 	    private ObjectFactory of;
@@ -65,6 +64,7 @@ public class Toolchain {
 	     * @throws JAXBException
 	     * @throws FileNotFoundException
 	     * @throws SAXException 
+	     * @throws MalformedURLException 
 	     */
 	    @SuppressWarnings({ "unchecked" })
 		public Toolchain(String xmlfile) throws JAXBException, FileNotFoundException, SAXException {
@@ -86,6 +86,7 @@ public class Toolchain {
 	                e.printStackTrace();
 	            }
 	        }
+	        
 			Unmarshaller u = jc.createUnmarshaller();
 			u.setSchema(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(fullPathString));
 
