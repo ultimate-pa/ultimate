@@ -69,7 +69,7 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 			node = wrap.ltl2Ast(line);
 		} catch (Throwable e) {
 			mLogger.error(String.format("Exception during LTL->BA execution: %s", e));
-			return false;
+			throw e;
 		}
 
 		try {
