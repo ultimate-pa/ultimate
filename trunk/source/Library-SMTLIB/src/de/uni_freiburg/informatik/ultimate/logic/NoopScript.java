@@ -452,4 +452,9 @@ public class NoopScript implements Script {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public QuotedObject echo(QuotedObject msg) {
+		return msg;
+	}
+
 }

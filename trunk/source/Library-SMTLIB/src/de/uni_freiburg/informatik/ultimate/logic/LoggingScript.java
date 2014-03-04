@@ -455,4 +455,12 @@ public class LoggingScript implements Script {
 		mPw.println("))");
 		return mScript.findImpliedEquality(x, y);
 	}
+	
+	@Override
+	public QuotedObject echo(QuotedObject msg) {
+		mPw.print("(echo ");
+		mPw.print(msg);
+		mPw.println(')');
+		return mScript.echo(msg);
+	}
 }

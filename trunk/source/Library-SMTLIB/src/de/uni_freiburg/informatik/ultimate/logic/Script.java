@@ -501,4 +501,13 @@ public interface Script {
 	 * @return Array of length 3 or array of length 0 if no equality is implied.
 	 */
 	public Term[] findImpliedEquality(Term[] x, Term[] y);
+	/**
+	 * Echo a message on the regular output channel of the solver.  Although
+	 * this function is not specified in the SMTLIB standard, we do not expect
+	 * implementations to throw any exceptions.  Instead, if the command is
+	 * unsupported, it should simply be implemented as the identity function.  
+	 * @param msg The message to print.
+	 * @return The message.
+	 */
+	public QuotedObject echo(QuotedObject msg);
 }

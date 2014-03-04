@@ -1162,6 +1162,9 @@ public class DPLLEngine {
 			mCompleteness = INCOMPLETE_UNKNOWN;
 			if (System.getProperty("smtinterpol.ddfriendly") != null)
 				System.exit(3); 
+		} finally {
+			for (ITheory t : mTheories)
+				t.endCheck();
 		}
 		return true;
 	}
