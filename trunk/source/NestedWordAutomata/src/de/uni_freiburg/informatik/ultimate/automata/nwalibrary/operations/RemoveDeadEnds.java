@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
@@ -48,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
-	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Input;
+	private final INestedWordAutomatonSimple<LETTER,STATE> m_Input;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Reach;
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
 
@@ -66,7 +67,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * @param nwa
 	 * @throws OperationCanceledException
 	 */
-	public RemoveDeadEnds(INestedWordAutomatonOldApi<LETTER,STATE> nwa)
+	public RemoveDeadEnds(INestedWordAutomatonSimple<LETTER,STATE> nwa)
 			throws OperationCanceledException {
 		m_Input = nwa;
 		s_Logger.info(startMessage());
@@ -109,7 +110,14 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 //		correct &= (ResultChecker.nwaLanguageInclusion(m_Input, m_Result) == null);
 //		correct &= (ResultChecker.nwaLanguageInclusion(m_Result, m_Input) == null);
 		assert correct;
-		ReachableStatesCopy<LETTER, STATE> rsc = (new ReachableStatesCopy<LETTER, STATE>(m_Input, false, false, false, false));
+		INestedWordAutomatonOldApi<LETTER, STATE> input;
+		if (m_Input instanceof INestedWordAutomatonOldApi) {
+			input = (INestedWordAutomatonOldApi<LETTER, STATE>) m_Input;
+		} else {
+			input = (new RemoveUnreachable<LETTER, STATE>(m_Input)).getResult(); 
+		}
+		ReachableStatesCopy<LETTER, STATE> rsc = 
+				(new ReachableStatesCopy<LETTER, STATE>(input, false, false, false, false));
 //		Set<UpDownEntry<STATE>> rsaEntries = new HashSet<UpDownEntry<STATE>>();
 //		for (UpDownEntry<STATE> rde : m_Reach.getRemovedUpDownEntry()) {
 //			rsaEntries.add(rde);
