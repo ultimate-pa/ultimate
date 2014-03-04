@@ -169,14 +169,14 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		stat += errNodesOfAllProc.size();
 		stat += " error locations.";
 		stat += " Cover queries: ";
-		stat += smtManager.getTrivialCoverQueries() + " tivial, ";
+		stat += smtManager.getTrivialCoverQueries() + " trivial, ";
 		stat += smtManager.getNontrivialCoverQueries() + " nontrivial.";	
 		stat += " EdgeCheck queries: ";
 		stat += timingStatistics.getEdgeCheckerBenchmark().getSdCounter() + " trivial, ";
 		stat += timingStatistics.getEdgeCheckerBenchmark().getSdLazyCounter() + " lazy, ";
 		stat += timingStatistics.getEdgeCheckerBenchmark().getSolverCounter() + " nontrivial.";
 		stat += " Satisfiability queries: ";
-		stat += smtManager.getTrivialSatQueries() + " tivial, ";
+		stat += smtManager.getTrivialSatQueries() + " trivial, ";
 		stat += smtManager.getNontrivialSatQueries() + " nontrivial.";
 		stat += " DeadEndRemovalTime: " + m_OverallDeadEndRemovalTime;
 		stat += " Minimization removed " + m_OverallStatesRemovedByMinimization;
