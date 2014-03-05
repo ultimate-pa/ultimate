@@ -88,10 +88,10 @@ oldAssertionString=
 	oldEA=`grep "\-ea$" "$UltimateINI"`
 	if [ "$oldDA" ]; then
 		echo "status of assertions before: -da"
-		sed -i "s/-da/$assertionString/g" "$UltimateINI"
+		sed -i "s/-da$/$assertionString/g" "$UltimateINI"
 	elif [ "$oldEA" ]; then
 		echo "status of assertions before: -ea"
-		sed -i "s/-ea/$assertionString/g" "$UltimateINI"
+		sed -i "s/-ea$/$assertionString/g" "$UltimateINI"
 	else 
 		echo "assertions were not set before"
 		echo "$assertionString" >> "$UltimateINI"
