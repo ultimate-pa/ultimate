@@ -49,6 +49,8 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.s_PLUGIN_ID);
+	
+	public static final String s_NoSpec = "No specification checked";
 	/**
 	 * Root Node of this Ultimate model. I use this to store information that
 	 * should be passed to the next plugin. The Successors of this node exactly
@@ -280,7 +282,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	
 	private void reportPositiveResult(Collection<ProgramPoint> errorLocs) {
 		if (errorLocs.isEmpty()) {
-			String shortDescription = "No specification checked";
+			String shortDescription = s_NoSpec;
 			String longDescription = "We were not able to verify any" +
 					" specifiation because the program does not contain any specification.";
 			GenericResult gr = new GenericResult(
