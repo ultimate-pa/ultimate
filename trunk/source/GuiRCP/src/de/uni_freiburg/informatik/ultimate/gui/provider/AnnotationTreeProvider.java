@@ -20,10 +20,13 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 
 /**
  * @author dietsch
- *
+ * 
  */
 public class AnnotationTreeProvider implements ITreeContentProvider {
 
@@ -41,26 +44,26 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 	}
 
 	public Object getParent(Object element) {
-		if(element instanceof IPayload){
+		if (element instanceof IPayload) {
 			return null;
 		}
-		if(element instanceof GroupEntry){
-			return ((GroupEntry)element).getParent();
+		if (element instanceof GroupEntry) {
+			return ((GroupEntry) element).getParent();
 		}
-		if(element instanceof Entry){
-			return ((Entry)element).getParent();
+		if (element instanceof Entry) {
+			return ((Entry) element).getParent();
 		}
 		return null;
 	}
 
 	public boolean hasChildren(Object element) {
-		if(element instanceof IPayload){
-			return generateChildren((IPayload)element).length!=0;
+		if (element instanceof IPayload) {
+			return generateChildren((IPayload) element).length != 0;
 		}
-		if(element instanceof GroupEntry){
-			return ((GroupEntry)element).getEntries().length!=0;
+		if (element instanceof GroupEntry) {
+			return ((GroupEntry) element).getEntries().length != 0;
 		}
-		if(element instanceof Entry){
+		if (element instanceof Entry) {
 			return false;
 		}
 		return false;
@@ -78,31 +81,33 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 
 	}
 
-	private Object[] generateChildren(IPayload node){
+	private Object[] generateChildren(IPayload node) {
 		ArrayList<Object> returnObj = new ArrayList<Object>();
-		GroupEntry general = new GroupEntry("General",null);
-//		general.addEntry(new Entry("Depth",Integer.toString(node.getDepth()),general));
-		general.addEntry(new Entry("Name",node.getName(),general));
-		general.addEntry(new Entry("UID",node.getID().toString(),general));
-		GroupEntry location = new GroupEntry("Location",general);
+		GroupEntry general = new GroupEntry("General", null);
+		// general.addEntry(new
+		// Entry("Depth",Integer.toString(node.getDepth()),general));
+		general.addEntry(new Entry("Name", node.getName(), general));
+		general.addEntry(new Entry("UID", node.getID().toString(), general));
+		GroupEntry location = new GroupEntry("Location", general);
 		general.addEntry(location);
-		location.addEntry(new Entry("Source Info",node.getLocation().toString(),location));
-		location.addEntry(new Entry("Filename",node.getLocation().getFileName(),location));
-		location.addEntry(new Entry("Start Line Number",Integer.toString(node.getLocation().getStartLine()),location));
-		location.addEntry(new Entry("Start Column Number",Integer.toString(node.getLocation().getStartColumn()),location));
-		location.addEntry(new Entry("End Line Number",Integer.toString(node.getLocation().getEndLine()),location));
-		location.addEntry(new Entry("End Column Number",Integer.toString(node.getLocation().getEndColumn()),location));
-		GroupEntry annotation = new GroupEntry("Annotations",null);
-	
-		for(String outer: node.getAnnotations().keySet()){
-			GroupEntry group = new GroupEntry(outer,annotation);
-			IAnnotations subhash = node.getAnnotations().get(outer); 
-			
-			for(String inner: subhash.getAnnotationsAsMap().keySet()){
+		location.addEntry(new Entry("Source Info", node.getLocation().toString(), location));
+		location.addEntry(new Entry("Filename", node.getLocation().getFileName(), location));
+		location.addEntry(new Entry("Start Line Number", Integer.toString(node.getLocation().getStartLine()), location));
+		location.addEntry(new Entry("Start Column Number", Integer.toString(node.getLocation().getStartColumn()),
+				location));
+		location.addEntry(new Entry("End Line Number", Integer.toString(node.getLocation().getEndLine()), location));
+		location.addEntry(new Entry("End Column Number", Integer.toString(node.getLocation().getEndColumn()), location));
+		GroupEntry annotation = new GroupEntry("Annotations", null);
+
+		for (String outer : node.getAnnotations().keySet()) {
+			GroupEntry group = new GroupEntry(outer, annotation);
+			IAnnotations subhash = node.getAnnotations().get(outer);
+
+			for (String inner : subhash.getAnnotationsAsMap().keySet()) {
 				group.addEntry(convertEntry(inner, subhash.getAnnotationsAsMap().get(inner), group));
 			}
 			annotation.addEntry(group);
-			
+
 		}
 		returnObj.add(general);
 		returnObj.add(annotation);
@@ -111,55 +116,20 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 
 	@SuppressWarnings("unchecked")
 	private TreeViewEntry convertEntry(String name, Object value, GroupEntry parent) {
-		if (value instanceof Map) {
-			GroupEntry group = new GroupEntry(name, parent);
-			for (Map.Entry<Object,Object> e: ((Map<Object,Object>) value).entrySet()) {
-				group.addEntry(convertEntry(e.getKey().toString(), e.getValue(), group));
-			}
-			return group;
-		}
-		if (value instanceof Collection) {
-			GroupEntry group = new GroupEntry(name, parent);
-			int cnt = 0;
-			for (Object o: (Collection<?>) value) {
-				group.addEntry(convertEntry(String.valueOf(cnt++), o, group));
-			}
-			return group;
-		}
-		if (value instanceof Object[]) {
-			GroupEntry group = new GroupEntry(name, parent);
-			Object[] arr = (Object[]) value;
-			for (int i = 0; i < arr.length; i++) {
-				group.addEntry(convertEntry(String.valueOf(i), arr[i], group));
-			}
-			return group;
-		}
-		if (value instanceof IAnnotations) {
-			Map<String,Object> mapping = 
-								((IAnnotations) value).getAnnotationsAsMap();
-			GroupEntry group = new GroupEntry(name, parent);
-			for (String attrib : mapping.keySet()) {
-				group.addEntry(convertEntry(attrib,mapping.get(attrib),group));
-			}
-			return group;
-		}
 		if (value instanceof AnnotatedTerm) {
 			AnnotatedTerm form = (AnnotatedTerm) value;
 			GroupEntry group = new GroupEntry(name + " - annotation", parent);
-			for (int i = 0; i< form.getAnnotations().length; i++) {
-				group.addEntry(convertEntry(String.valueOf(i), 
-						       				form.getAnnotations()[i], group));
+			for (int i = 0; i < form.getAnnotations().length; i++) {
+				group.addEntry(convertEntry(String.valueOf(i), form.getAnnotations()[i], group));
 			}
 			group.addEntry(convertEntry("subform", form.getSubterm(), group));
 			return group;
 		}
 		if (value instanceof ApplicationTerm) {
 			ApplicationTerm form = (ApplicationTerm) value;
-			GroupEntry group = 
-					new GroupEntry(name + " - "+ form.getFunction(), parent);
-			for (int i = 0; i< form.getParameters().length; i++) {
-				group.addEntry(convertEntry(String.valueOf(i), 
-						       				form.getParameters()[i], group));
+			GroupEntry group = new GroupEntry(name + " - " + form.getFunction(), parent);
+			for (int i = 0; i < form.getParameters().length; i++) {
+				group.addEntry(convertEntry(String.valueOf(i), form.getParameters()[i], group));
 			}
 			return group;
 		}
@@ -179,6 +149,69 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			group.addEntry(convertEntry("subform", form.getSubformula(), group));
 			return group;
 		}
+		if (value instanceof Map) {
+			GroupEntry group = new GroupEntry(name, parent);
+			for (Map.Entry<Object, Object> e : ((Map<Object, Object>) value).entrySet()) {
+				group.addEntry(convertEntry(e.getKey().toString(), e.getValue(), group));
+			}
+			return group;
+		}
+		if (value instanceof Collection) {
+			GroupEntry group = new GroupEntry(name, parent);
+			int cnt = 0;
+			for (Object o : (Collection<?>) value) {
+				group.addEntry(convertEntry(String.valueOf(cnt++), o, group));
+			}
+			return group;
+		}
+		if (value instanceof Object[]) {
+			GroupEntry group = new GroupEntry(name, parent);
+			Object[] arr = (Object[]) value;
+			for (int i = 0; i < arr.length; i++) {
+				group.addEntry(convertEntry(String.valueOf(i), arr[i], group));
+			}
+			return group;
+		}
+		if (value instanceof IAnnotations) {
+			Map<String, Object> mapping = ((IAnnotations) value).getAnnotationsAsMap();
+			GroupEntry group = new GroupEntry(name, parent);
+			for (String attrib : mapping.keySet()) {
+				group.addEntry(convertEntry(attrib, mapping.get(attrib), group));
+			}
+			return group;
+		}
+
+		if (value instanceof BoogieASTNode) {
+			return convertEntry(name, (BoogieASTNode) value, parent);
+		}
+
+		return new Entry(name, String.valueOf(value), parent);
+	}
+
+	private TreeViewEntry convertEntry(String name, BoogieASTNode value, GroupEntry parent) {
+//		BoogieTransformer bt = new BoogieTransformer() {
+//			
+//			
+//			
+//			public void process(BoogieASTNode node){
+//				
+//			}
+//			
+//			@Override
+//			protected ASTType processType(ASTType type) {
+//				// TODO Auto-generated method stub
+//				return super.processType(type);
+//			}
+//			
+//			@Override
+//			protected ASTType[] processTypes(ASTType[] types) {
+//				// TODO Auto-generated method stub
+//				return super.processTypes(types);
+//			}
+//		};
+		
+		//TODO: Expand expressions as small boogie tree 
+		
 		return new Entry(name, String.valueOf(value), parent);
 	}
 

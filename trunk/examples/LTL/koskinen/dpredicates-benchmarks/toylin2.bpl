@@ -26,7 +26,7 @@ modifies c,servers,resp,curr_serv,serversdiv2;
   curr_serv := servers;
 }
 
-procedure body() 
+procedure somebody() 
 modifies c,curr_serv,resp;
 {
   var ddd : int; 
@@ -43,10 +43,13 @@ modifies c,curr_serv,resp;
     }
   }
   while(true) { 
-	
 	ddd:=ddd; 
   }
 }
 
 procedure main() 
-{}
+modifies c,servers,resp,curr_serv,serversdiv2;
+{
+	call init();
+	call somebody();
+}

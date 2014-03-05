@@ -35,23 +35,7 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void finish() {
-
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
-	}
-
-	@Override
-	public boolean performedChanges() {
-		return false;
-	}
-
-	@Override
-	public boolean process(IElement root) throws Throwable {
-
+	public void finish() throws Throwable {
 		AstNode node;
 		String line;
 
@@ -92,7 +76,7 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 			// substitute props in AST
 			new SubstituteAPVisitor(aps, node);
 
-			this.mRootNode = node;
+			mRootNode = node;
 
 		} catch (Throwable e) {
 			if (line != null) {
@@ -102,8 +86,21 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 			}
 			throw e;
 		}
+	}
 
+	@Override
+	public WalkerOptions getWalkerOptions() {
+		return null;
+	}
+
+	@Override
+	public boolean performedChanges() {
 		return false;
+	}
+
+	@Override
+	public boolean process(IElement root) throws Throwable {
+return false;
 	}
 
 	public AstNode getRootNode() {

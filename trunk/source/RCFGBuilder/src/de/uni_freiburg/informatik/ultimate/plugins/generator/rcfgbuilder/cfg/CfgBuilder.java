@@ -209,8 +209,9 @@ public class CfgBuilder {
 			else if (decl instanceof Procedure) {
 				Procedure proc = (Procedure) decl;
 				if (proc.getSpecification() != null && proc.getBody() != null) {
-					s_Logger.warn("Specification and implementation of " + "procedure" + proc.getIdentifier()
-							+ " given in " + "one single declaration");
+					s_Logger.warn(String.format(
+							"Specification and implementation of procedure %s given in one single declaration",
+							proc.getIdentifier()));
 				}
 
 				if (proc.getSpecification() != null) {
@@ -1440,7 +1441,7 @@ public class CfgBuilder {
 
 		@Override
 		public String getPrettyPrintedStatements() {
-			return "goto "+mTarget.toString();
+			return "goto " + mTarget.toString();
 		}
 
 		@Override

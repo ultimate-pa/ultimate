@@ -6,15 +6,15 @@ Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.BuchiProgramProduct.Activator
 Require-Bundle: Library-log4j,
  UltimateCore,
- JavaCup
+ Library-ModelCheckerUtils,
+ BoogiePreprocessor,
+ LTL2aut,
+ RCFGBuilder,
+ JavaCup,
+ NestedWordAutomata
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Import-Package: de.uni_freiburg.informatik.ultimate.LTL2aut.ast,
- de.uni_freiburg.informatik.ultimate.automata.nwalibrary,
- de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg,
- junit.framework,
+Import-Package: junit.framework,
  org.apache.commons.io,
  org.junit,
  org.junit.runner,

@@ -5,6 +5,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTableConstructor;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
@@ -65,6 +66,7 @@ public class BoogiePreprocessor implements IAnalysis {
         observers.add(new StructExpander());
         observers.add(new UnstructureCode());
         observers.add(new FunctionInliner());
+        observers.add(new BoogieSymbolTableConstructor());
         return observers;
     }
 

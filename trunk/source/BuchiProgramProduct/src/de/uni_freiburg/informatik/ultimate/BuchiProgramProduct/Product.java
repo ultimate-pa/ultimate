@@ -400,7 +400,7 @@ public class Product {
 			return name1 + "__" + name2;
 	}
 
-	public RootNode getRCFG() {
+	public RootNode getProductRCFG() {
 		return this.mRootNode;
 	}
 

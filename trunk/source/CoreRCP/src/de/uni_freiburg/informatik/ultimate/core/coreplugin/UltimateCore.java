@@ -925,7 +925,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 		IElement root = null;
 		// parse the files to Graph
 		try {
-			mLogger.info("Parsing single file ...");
+			mLogger.info(String.format("Parsing single file: %s", file.getAbsolutePath()));
 			mBenchmark.start(parser.getName());
 			root = parser.parseAST(file);
 			mBenchmark.stop(parser.getName());

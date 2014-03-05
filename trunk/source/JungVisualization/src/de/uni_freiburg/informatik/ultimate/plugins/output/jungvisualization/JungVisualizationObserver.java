@@ -38,31 +38,41 @@ import edu.uci.ics.jung.visualization.VisualizationViewer;
 
 public class JungVisualizationObserver implements IUnmanagedObserver {
 
-	private Map<IElement, String> mseenlist;
-	private int mnumroots;
-	private VisualizationNode rootNode;
-	private Graph<VisualizationNode, VisualizationEdge> g = new DirectedOrderedSparseMultigraph<VisualizationNode, VisualizationEdge>();
-	private Layout<VisualizationNode, VisualizationEdge> layout = new FRLayout2<VisualizationNode, VisualizationEdge>(
-			g);
-	private VisualizationViewer<VisualizationNode, VisualizationEdge> vv = new VisualizationViewer<VisualizationNode, VisualizationEdge>(
-			layout);
+	private Map<IElement, String> mSeenList;
+	private int mNumberOfRoots;
+	private VisualizationNode mUltimateRootNode;
+	private Graph<VisualizationNode, VisualizationEdge> mGraph;
+	private Layout<VisualizationNode, VisualizationEdge> mGraphLayout;
+	private VisualizationViewer<VisualizationNode, VisualizationEdge> mVisualizationViewer;
 
-	private static Logger sLogger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID);
+	private Logger mLogger;
 
 	private boolean mOpenWindow;
+
+	public JungVisualizationObserver() {
+		mLogger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+		mGraph = new DirectedOrderedSparseMultigraph<VisualizationNode, VisualizationEdge>();
+		mGraphLayout = new FRLayout2<VisualizationNode, VisualizationEdge>(mGraph);
+		mVisualizationViewer = new VisualizationViewer<VisualizationNode, VisualizationEdge>(mGraphLayout);
+	}
+
+	@Override
+	public void init() {
+		mSeenList = new HashMap<IElement, String>();
+		mNumberOfRoots = -1;
+	}
 
 	@Override
 	public boolean process(IElement root) {
 		if (root instanceof IVisualizable) {
-			rootNode = ((IVisualizable) root).getVisualizationGraph();
-			g.addVertex(rootNode);
-			dfstraverse(rootNode, "" + (++mnumroots));
-			GraphHandler.getInstance().addVisualizationViewer(vv);
-			GraphProperties.getInstance().setGraphProperties(vv, g, rootNode);
+			mUltimateRootNode = ((IVisualizable) root).getVisualizationGraph();
+			mGraph.addVertex(mUltimateRootNode);
+			dfstraverse(mUltimateRootNode, Integer.toString(++mNumberOfRoots));
+			GraphHandler.getInstance().addVisualizationViewer(mVisualizationViewer);
+			GraphProperties.getInstance().setGraphProperties(mVisualizationViewer, mGraph, mUltimateRootNode);
 			mOpenWindow = true;
 		} else {
-			sLogger.error("Model is not visualizable: " + root);
+			mLogger.error("Model is not visualizable: " + root);
 			mOpenWindow = false;
 		}
 		return false;
@@ -75,8 +85,7 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 			UIJob job = new UIJob("Jung Graph View Display") {
 				public IStatus runInUIThread(IProgressMonitor mon) {
 					// here we are in UI-thread so we can call
-					IWorkbenchWindow window = PlatformUI.getWorkbench()
-							.getActiveWorkbenchWindow();
+					IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 
 					openGraphEditor(window);
 					return Status.OK_STATUS;
@@ -99,38 +108,22 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 		JungEditorInput editorInput = new JungEditorInput("JUNG");
 
 		try {
-			workbenchWindow.getActivePage().openEditor(editorInput,
-					JungEditor.ID, true);
+			workbenchWindow.getActivePage().openEditor(editorInput, JungEditor.ID, true);
 		} catch (PartInitException pie) {
 			MessageDialog.openError(workbenchWindow.getShell(), "Error",
 					"Error opening JungEditor:\n" + pie.getMessage());
-			// s_Logger.error(pie.getMessage() + " ~~ " + pie.getCause() +
-			// " ~~ "
-			// + Arrays.toString(pie.getStackTrace()));
 		} catch (Exception ex) {
-			// s_Logger.fatal("An unknown exception has occured: "
-			// + ex.getMessage());
 		}
 	}
 
 	@Override
 	public WalkerOptions getWalkerOptions() {
-		// Not needed...
 		return null;
-	}
-
-	@Override
-	public void init() {
-		mseenlist = new HashMap<IElement, String>();
-		mnumroots = -1;
-		// m_Logger = Logger.getRootLogger();
 	}
 
 	private void dfstraverse(VisualizationNode node, String numbering) {
 
-		mseenlist.put(node, numbering);
-		// m_Logger.info("Node " + numbering + "; Name: " + node.toString() +
-		// ";Annotations: " + node.getPayload().toString());
+		mSeenList.put(node, numbering);
 		List<VisualizationNode> newnodes = new ArrayList<VisualizationNode>();
 		List<VisualizationNode> children = node.getOutgoingNodes();
 
@@ -138,42 +131,37 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 			int num = -1;
 			// Add new nodes and detect back edges...
 			for (VisualizationNode n : children) {
-				String backedge = mseenlist.get(n);
+				String backedge = mSeenList.get(n);
 
 				if (backedge != null) {
-					// m_Logger.info("Back edge from " + numbering + " to " +
-					// backedge);
 				} else {
-					String newnumbering = numbering + "." + (++num);
-					mseenlist.put(n, newnumbering);
+					String newnumbering = String.format("%s.%s", numbering, ++num);
+					mSeenList.put(n, newnumbering);
 					newnodes.add(n);
 					// add nodes to the graph
-					g.addVertex(n);
+					mGraph.addVertex(n);
 
 				}
 				// add edges to the graph
-				Iterator<VisualizationEdge> outEdges = node.getOutgoingEdges()
-						.iterator();
+				Iterator<VisualizationEdge> outEdges = node.getOutgoingEdges().iterator();
 				while (outEdges.hasNext()) {
 					VisualizationEdge tmpEdge = outEdges.next();
 
-					if (tmpEdge.getTarget().equals(n)
-							&& (!mseenlist.containsKey(tmpEdge))) {
-						g.addEdge(tmpEdge, node, n, EdgeType.DIRECTED);
-						mseenlist.put(tmpEdge, "Edge");
+					if (tmpEdge.getTarget().equals(n) && (!mSeenList.containsKey(tmpEdge))) {
+						mGraph.addEdge(tmpEdge, node, n, EdgeType.DIRECTED);
+						mSeenList.put(tmpEdge, "Edge");
 					}
 				}
 
 			}
 		}
 		for (VisualizationNode n : newnodes) {
-			dfstraverse(n, mseenlist.get(n));
+			dfstraverse(n, mSeenList.get(n));
 		}
 	}
 
 	@Override
 	public boolean performedChanges() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 

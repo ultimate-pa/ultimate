@@ -91,7 +91,7 @@ public class BuchiProgramProduct implements IGenerator {
 	@Override
 	public IElement getModel() {
 		if (mBuchiProductObserver.getProduct() != null) {
-			return mBuchiProductObserver.getProduct().getRCFG();
+			return mBuchiProductObserver.getProduct().getProductRCFG();
 		} else {
 			return null;
 		}

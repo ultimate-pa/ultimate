@@ -12,7 +12,7 @@ public class DeclarationInformation {
 	 * Defines where the declaration of a variable/constant is stored. 
 	 */
 	public static enum StorageClass { GLOBAL, PROC_INPARAM, PROC_OUTPARAM, 
-		FUNC_INPARAM, FUNC_OUTPARAM, LOCAL, QUANTIFIED }
+		FUNC_INPARAM, FUNC_OUTPARAM, LOCAL, QUANTIFIED, PROC_FUNC_NAME }
 	
 	private final StorageClass m_StorageClass;
 	private final String m_Procedure;

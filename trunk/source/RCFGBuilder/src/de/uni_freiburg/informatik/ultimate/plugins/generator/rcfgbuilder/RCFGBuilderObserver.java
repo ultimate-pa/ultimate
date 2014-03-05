@@ -6,6 +6,7 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -56,6 +57,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 			CfgBuilder recCFGBuilder = new CfgBuilder(unit, translator);
 			try {
 				m_graphroot = recCFGBuilder.getRootNode(unit);
+				ModelUtils.mergeAnnotations(unit, m_graphroot);
 				UltimateServices.getInstance().getTranslatorSequence().add(translator);
 			} catch (SMTLIBException e) {
 				if (e.getMessage().equals("Cannot create quantifier in quantifier-free logic")) {

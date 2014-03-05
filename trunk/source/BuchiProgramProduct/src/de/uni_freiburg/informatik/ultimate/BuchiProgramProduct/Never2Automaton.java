@@ -16,7 +16,10 @@ import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.Not;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.OptionStatement;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.SkipStatement;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
@@ -27,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 
 /**
  * Never2Automaton converts the never claim description of an automaton into an
- * an automaton off the nwa lib.
+ * an NWA automaton of the AutomataLibrary.
  * 
  * @author Langenfeld
  * @note the transformation from Ast to Automaton also bringst a transformation
@@ -37,25 +40,27 @@ public class Never2Automaton {
 
 	private AstNode mAST;
 	private Logger mLogger;
+	private BoogieSymbolTable mBoogieSymbolTable;
 
 	private NestedWordAutomaton<BoogieASTNode, String> mAutomaton;
 
 	/**
-	 * The Never2Automaton instance will build a B�chi automaton from the input.
+	 * The Never2Automaton instance will build a Büchi automaton from the input.
 	 * 
 	 * @param ast
 	 * @throws Exception
 	 */
-	public Never2Automaton(AstNode ast) throws Exception {
+	public Never2Automaton(AstNode ast, BoogieSymbolTable boogieSymbolTable) throws Exception {
 		mLogger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 		mAST = ast;
+		mBoogieSymbolTable = boogieSymbolTable;
 
-		mAutomaton = new NestedWordAutomaton<BoogieASTNode, String>(this.collectAlphabet(), null, // call
+		mAutomaton = new NestedWordAutomaton<BoogieASTNode, String>(collectAlphabet(), null, // call
 				null, // return
 				new DummyStateFactory<String>() // state factory?!?
 		);
 
-		collectStates(this.mAST, null);
+		collectStates(mAST, null);
 
 		mLogger.debug(String.format("Resulting automaton is:\n%s", mAutomaton));
 	}
@@ -66,7 +71,7 @@ public class Never2Automaton {
 	 * @return automaton
 	 */
 	public NestedWordAutomaton<BoogieASTNode, String> getAutomaton() {
-		return this.mAutomaton;
+		return mAutomaton;
 	}
 
 	/**
@@ -83,33 +88,36 @@ public class Never2Automaton {
 		if (branch instanceof LabeledBlock) // add nodes
 		{
 			String n = ((Name) ((LabeledBlock) branch).getValue()).getIdent();
-			if (!this.mAutomaton.getStates().contains(n)) {
-				this.mAutomaton.addState(n.endsWith("init"), n.startsWith("accept"), n);
+			if (!mAutomaton.getStates().contains(n)) {
+				mAutomaton.addState(n.endsWith("init"), n.startsWith("accept"), n);
 			}
-			for (AstNode a : branch.getOutgoingNodes())
-				this.collectStates(a, n);
-		} else if (branch instanceof BoolLiteral)
+			for (AstNode a : branch.getOutgoingNodes()) {
+				collectStates(a, n);
+			}
+		} else if (branch instanceof BoolLiteral) {
 			return;
-		else if (branch instanceof SkipStatement) {
+		} else if (branch instanceof SkipStatement) {
 			// case " accept_all: skip
-			this.mAutomaton.addInternalTransition(pred, new BooleanLiteral(null, true), pred);
+			mAutomaton.addInternalTransition(pred, new BooleanLiteral(null, true), pred);
 			return;
-		} else if (branch instanceof Name)
+		} else if (branch instanceof Name) {
 			return;
-		else if (branch instanceof OptionStatement) // add transitions
-		{
-			BoogieASTNode cond = this.toBoogieAst(((OptionStatement) branch).getCondition());
+		} else if (branch instanceof OptionStatement) {
+			// add transitions
+
+			BoogieASTNode cond = toBoogieAst(((OptionStatement) branch).getCondition());
 			// option.body .goto .name
 			String succ = ((Name) branch.getOutgoingNodes().get(0).getOutgoingNodes().get(0)).getIdent();
 
-			if (!this.mAutomaton.getStates().contains(succ)) {
-				this.mAutomaton.addState(succ.endsWith("init"), succ.startsWith("accept"), succ);
+			if (!mAutomaton.getStates().contains(succ)) {
+				mAutomaton.addState(succ.endsWith("init"), succ.startsWith("accept"), succ);
 			}
 
-			this.mAutomaton.addInternalTransition(pred, cond, succ);
+			mAutomaton.addInternalTransition(pred, cond, succ);
 		} else {
-			for (AstNode a : branch.getOutgoingNodes())
-				this.collectStates(a, pred);
+			for (AstNode a : branch.getOutgoingNodes()) {
+				collectStates(a, pred);
+			}
 		}
 	}
 
@@ -125,7 +133,7 @@ public class Never2Automaton {
 	public Set<BoogieASTNode> collectAlphabet() throws Exception {
 		Set<BoogieASTNode> symbols = new HashSet<BoogieASTNode>();
 
-		this.visitAstForSymbols(this.mAST, symbols);
+		visitAstForSymbols(mAST, symbols);
 
 		return symbols;
 	}
@@ -138,10 +146,11 @@ public class Never2Automaton {
 		else if (branch instanceof Name)
 			return;
 		else if (branch instanceof OptionStatement) {
-			symbols.add(this.toBoogieAst(((OptionStatement) branch).getCondition()));
+			symbols.add(toBoogieAst(((OptionStatement) branch).getCondition()));
 		} else {
-			for (AstNode a : branch.getOutgoingNodes())
-				this.visitAstForSymbols(a, symbols);
+			for (AstNode a : branch.getOutgoingNodes()) {
+				visitAstForSymbols(a, symbols);
+			}
 		}
 	}
 
@@ -178,18 +187,18 @@ public class Never2Automaton {
 				throw new Exception("Binary Operator unknown");
 			}
 			BinaryExpression b;
-			b = new BinaryExpression(null, null, op, this.toBoogieAst(branch.getOutgoingNodes().get(0)),
-					this.toBoogieAst(branch.getOutgoingNodes().get(1)));
+			b = new BinaryExpression(null, null, op, toBoogieAst(branch.getOutgoingNodes().get(0)), toBoogieAst(branch
+					.getOutgoingNodes().get(1)));
 			if (branch.getOutgoingNodes().size() > 2) {
 				for (int i = 2; i < branch.getOutgoingNodes().size(); i++) {
-					b = new BinaryExpression(null, null, op, b, this.toBoogieAst(branch.getOutgoingNodes().get(i)));
+					b = new BinaryExpression(null, null, op, b, toBoogieAst(branch.getOutgoingNodes().get(i)));
 				}
 			}
 			return b;
 
-		} else if (branch instanceof BoolLiteral)
+		} else if (branch instanceof BoolLiteral) {
 			return new BooleanLiteral(null, ((BoolLiteral) branch).getValue());
-		else if (branch instanceof ComperativeOperator) {
+		} else if (branch instanceof ComperativeOperator) {
 			BinaryExpression.Operator op;
 			switch (((ComperativeOperator) branch).getType()) {
 			case equals:
@@ -204,18 +213,28 @@ public class Never2Automaton {
 			default:
 				throw new Exception("Binary Operator unknown");
 			}
-			return new BinaryExpression(null, null, op, this.toBoogieAst(branch.getOutgoingNodes().get(0)),
-					this.toBoogieAst(branch.getOutgoingNodes().get(1)));
-		} else if (branch instanceof IntLiteral)
+			return new BinaryExpression(null, null, op, toBoogieAst(branch.getOutgoingNodes().get(0)),
+					toBoogieAst(branch.getOutgoingNodes().get(1)));
+		} else if (branch instanceof IntLiteral) {
 			return new IntegerLiteral(null, Integer.toString(((IntLiteral) branch).getValue()));
-		else if (branch instanceof Name)
-			return new IdentifierExpression(null, ((Name) branch).getIdent());
-		else if (branch instanceof Not)
-			return new UnaryExpression(null, UnaryExpression.Operator.LOGICNEG, this.toBoogieAst(branch
-					.getOutgoingNodes().get(0)));
+		} else if (branch instanceof Name) {
+			String identifier = ((Name) branch).getIdent();
+			IType type = mBoogieSymbolTable.getTypeForVariableSymbol(identifier, StorageClass.GLOBAL, null);
 
-		throw new Exception("Type " + branch.getClass().toString()
-				+ " should not occur as part of a atomic Proposition in LTL");
+			if (type == null) {
+				// there is no such symbol in the program; we should abort
+				throw new IllegalArgumentException(String.format(
+						"The symbol %s is not in the program. Check your atomic propositions.", identifier));
+			}
+			return new IdentifierExpression(null, type, identifier, null);
+
+		} else if (branch instanceof Not) {
+			return new UnaryExpression(null, UnaryExpression.Operator.LOGICNEG, toBoogieAst(branch.getOutgoingNodes()
+					.get(0)));
+		}
+
+		throw new Exception(String.format("Type %s should not occur as part of a atomic Proposition in LTL", branch
+				.getClass().toString()));
 
 	}
 }

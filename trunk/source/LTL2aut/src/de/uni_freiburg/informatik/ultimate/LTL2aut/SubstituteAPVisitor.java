@@ -8,7 +8,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.*;
 
 /**
- * Substitute the identifiers inside an AST of a Promela B�chi automaton description
+ * Substitute the identifiers inside an AST of a Promela Büchi automaton description
  * by the correct atomic propositions.
  * 
  * @author Langenfeld
@@ -23,7 +23,7 @@ public class SubstituteAPVisitor {
 	/**
 	 * 	Go visit and replace
 	 * @param aps: map ident->Ast of the atomic propositions
-	 * @param ast: ast of the Promela description of the B�chi automaton 
+	 * @param ast: ast of the Promela description of the Büchi automaton 
 	 */
 	public SubstituteAPVisitor(Map<String, AstNode> aps, AstNode ast)
 	{
