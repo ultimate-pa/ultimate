@@ -104,7 +104,7 @@ public class BoogieLassoRankerTC extends Toolchain {
 		mRank.add(new Setting(PrefStrings.s_LR_LABEL_lex_template_size, Setting.SettingType.INTEGER,
 				PrefStrings.s_LR_LABEL_lex_template_size, "5", false));
 		mRank.add(new Setting(PrefStrings.s_LR_LABEL_piecewise_template_size, Setting.SettingType.INTEGER,
-				PrefStrings.s_LR_LABEL_piecewise_template_size, "5", false));
+				PrefStrings.s_LR_LABEL_piecewise_template_size, "3", false));
 		return tools;
 	}
 	
