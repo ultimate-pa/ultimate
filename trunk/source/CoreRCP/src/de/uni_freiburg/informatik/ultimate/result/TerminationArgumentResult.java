@@ -60,10 +60,14 @@ public class TerminationArgumentResult<P extends IElement> extends AbstractResul
 		sb.append(": [");
 		sb.append(ResultUtil.backtranslationWorkaround(
 				m_TranslatorSequence, m_RankingFunction));
-		sb.append("] and the following supporting invariants: ");
-		sb.append(ResultUtil.backtranslationWorkaround(
-				m_TranslatorSequence, m_SupportingInvariants));
-
+		sb.append("]");
+		if (m_SupportingInvariants.length > 0) {
+			sb.append(" and the following supporting invariants: ");
+			sb.append(ResultUtil.backtranslationWorkaround(
+					m_TranslatorSequence, m_SupportingInvariants));
+		} else {
+			sb.append(" for which no supporting invariant is required.");
+		}
 		return sb.toString();
 	}
 
