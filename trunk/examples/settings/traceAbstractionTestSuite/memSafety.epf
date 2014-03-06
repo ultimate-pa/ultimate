@@ -1,0 +1,12 @@
+#Thu Mar 06 20:23:14 CET 2014
+\!/instance/CACSL2BoogieTranslator=
+file_export_version=3.0
+@CACSL2BoogieTranslator=0.0.1
+/instance/CACSL2BoogieTranslator/Check\ for\ the\ main\ procedure\ if\ all\ allocated\ memory\ was\ freed=true
+/instance/CACSL2BoogieTranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
+#Sun Jan 12 16:12:50 CET 2014
+file_export_version=3.0
+@TraceAbstraction=0.0.1
+\!/instance/TraceAbstraction=
+/instance/TraceAbstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
+/instance/UltimateCore/Toolchain\ timeout\ in\ seconds=10
