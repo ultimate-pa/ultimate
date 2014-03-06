@@ -34,7 +34,7 @@ LineTerminator = \r|\n|\r\n
 InputCharacter = [^\r\n]
 WhiteSpace     = {LineTerminator} | [ \t\f]
 
-Identifier = [a-zA-Z~][a-zA-Z0-9_-~]*
+Identifier = [a-zA-Z~][a-zA-Z0-9_-~#]*
 Int = [0-9]+
  
 %%

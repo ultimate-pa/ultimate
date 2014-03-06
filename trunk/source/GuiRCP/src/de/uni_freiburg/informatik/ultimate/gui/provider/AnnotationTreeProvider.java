@@ -5,6 +5,8 @@ package de.uni_freiburg.informatik.ultimate.gui.provider;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jface.viewers.ITreeContentProvider;
@@ -20,9 +22,8 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.model.structure.ITree;
+import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
 
 /**
  * @author dietsch
@@ -81,37 +82,51 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 
 	}
 
+	private Map<IPayload,Object[]> mBuffer;
+
 	private Object[] generateChildren(IPayload node) {
-		ArrayList<Object> returnObj = new ArrayList<Object>();
-		GroupEntry general = new GroupEntry("General", null);
-		// general.addEntry(new
-		// Entry("Depth",Integer.toString(node.getDepth()),general));
-		general.addEntry(new Entry("Name", node.getName(), general));
-		general.addEntry(new Entry("UID", node.getID().toString(), general));
-		GroupEntry location = new GroupEntry("Location", general);
-		general.addEntry(location);
-		location.addEntry(new Entry("Source Info", node.getLocation().toString(), location));
-		location.addEntry(new Entry("Filename", node.getLocation().getFileName(), location));
-		location.addEntry(new Entry("Start Line Number", Integer.toString(node.getLocation().getStartLine()), location));
-		location.addEntry(new Entry("Start Column Number", Integer.toString(node.getLocation().getStartColumn()),
-				location));
-		location.addEntry(new Entry("End Line Number", Integer.toString(node.getLocation().getEndLine()), location));
-		location.addEntry(new Entry("End Column Number", Integer.toString(node.getLocation().getEndColumn()), location));
-		GroupEntry annotation = new GroupEntry("Annotations", null);
-
-		for (String outer : node.getAnnotations().keySet()) {
-			GroupEntry group = new GroupEntry(outer, annotation);
-			IAnnotations subhash = node.getAnnotations().get(outer);
-
-			for (String inner : subhash.getAnnotationsAsMap().keySet()) {
-				group.addEntry(convertEntry(inner, subhash.getAnnotationsAsMap().get(inner), group));
-			}
-			annotation.addEntry(group);
-
+		if(mBuffer == null){
+			mBuffer = new HashMap<IPayload,Object[]>();
 		}
-		returnObj.add(general);
-		returnObj.add(annotation);
-		return returnObj.toArray();
+		
+		Object[] currentBuffer = mBuffer.get(node);
+		
+		if (currentBuffer == null) {
+			ArrayList<Object> returnObj = new ArrayList<Object>();
+			GroupEntry general = new GroupEntry("General", null);
+			// general.addEntry(new
+			// Entry("Depth",Integer.toString(node.getDepth()),general));
+			general.addEntry(new Entry("Name", node.getName(), general));
+			general.addEntry(new Entry("UID", node.getID().toString(), general));
+			GroupEntry location = new GroupEntry("Location", general);
+			general.addEntry(location);
+			location.addEntry(new Entry("Source Info", node.getLocation().toString(), location));
+			location.addEntry(new Entry("Filename", node.getLocation().getFileName(), location));
+			location.addEntry(new Entry("Start Line Number", Integer.toString(node.getLocation().getStartLine()),
+					location));
+			location.addEntry(new Entry("Start Column Number", Integer.toString(node.getLocation().getStartColumn()),
+					location));
+			location.addEntry(new Entry("End Line Number", Integer.toString(node.getLocation().getEndLine()), location));
+			location.addEntry(new Entry("End Column Number", Integer.toString(node.getLocation().getEndColumn()),
+					location));
+			GroupEntry annotation = new GroupEntry("Annotations", null);
+
+			for (String outer : node.getAnnotations().keySet()) {
+				GroupEntry group = new GroupEntry(outer, annotation);
+				IAnnotations subhash = node.getAnnotations().get(outer);
+
+				for (String inner : subhash.getAnnotationsAsMap().keySet()) {
+					group.addEntry(convertEntry(inner, subhash.getAnnotationsAsMap().get(inner), group));
+				}
+				annotation.addEntry(group);
+
+			}
+			returnObj.add(general);
+			returnObj.add(annotation);
+			currentBuffer = returnObj.toArray();
+			mBuffer.put(node, currentBuffer);
+		}
+		return currentBuffer;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -149,6 +164,18 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			group.addEntry(convertEntry("subform", form.getSubformula(), group));
 			return group;
 		}
+		if (value instanceof ITree) {
+			return convertEntry(String.valueOf(value), (ITree) value, parent);
+		}
+		if (value instanceof IAnnotations) {
+			Map<String, Object> mapping = ((IAnnotations) value).getAnnotationsAsMap();
+			GroupEntry group = new GroupEntry(name, parent);
+			for (String attrib : mapping.keySet()) {
+				group.addEntry(convertEntry(attrib, mapping.get(attrib), group));
+			}
+			return group;
+		}
+
 		if (value instanceof Map) {
 			GroupEntry group = new GroupEntry(name, parent);
 			for (Map.Entry<Object, Object> e : ((Map<Object, Object>) value).entrySet()) {
@@ -172,47 +199,22 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			}
 			return group;
 		}
-		if (value instanceof IAnnotations) {
-			Map<String, Object> mapping = ((IAnnotations) value).getAnnotationsAsMap();
+
+		return new Entry(name, String.valueOf(value), parent);
+	}
+
+	private TreeViewEntry convertEntry(String name, ITree value, GroupEntry parent) {
+		List<IWalkable> children = value.getSuccessors();
+		if (children != null && children.size() > 0) {
 			GroupEntry group = new GroupEntry(name, parent);
-			for (String attrib : mapping.keySet()) {
-				group.addEntry(convertEntry(attrib, mapping.get(attrib), group));
+			for (IWalkable child : children) {
+				if (child instanceof ITree) {
+					group.addEntry(convertEntry(child.toString(), child, group));
+				}
 			}
 			return group;
+		} else {
+			return new Entry(name, String.valueOf(value), parent);
 		}
-
-		if (value instanceof BoogieASTNode) {
-			return convertEntry(name, (BoogieASTNode) value, parent);
-		}
-
-		return new Entry(name, String.valueOf(value), parent);
 	}
-
-	private TreeViewEntry convertEntry(String name, BoogieASTNode value, GroupEntry parent) {
-//		BoogieTransformer bt = new BoogieTransformer() {
-//			
-//			
-//			
-//			public void process(BoogieASTNode node){
-//				
-//			}
-//			
-//			@Override
-//			protected ASTType processType(ASTType type) {
-//				// TODO Auto-generated method stub
-//				return super.processType(type);
-//			}
-//			
-//			@Override
-//			protected ASTType[] processTypes(ASTType[] types) {
-//				// TODO Auto-generated method stub
-//				return super.processTypes(types);
-//			}
-//		};
-		
-		//TODO: Expand expressions as small boogie tree 
-		
-		return new Entry(name, String.valueOf(value), parent);
-	}
-
 }

@@ -108,32 +108,34 @@ public class SVCOMP14TestResultDecider implements ITestResultDecider {
 		if (finalResult != null) {
 			longDescription = finalResult.getLongDescription();
 		}
+		
+		String finalResultCategory = finalResult == null ? "NULL" : finalResult.getClass().toString();
 
 		switch (toolchainResult) {
 		case SYNTAXERROR:
 		case UNPROVABLE:
 		case TIMEOUT:
 		case NORESULT:
-			summary.addUnknown(finalResult, mInputFile.getAbsolutePath(),
+			summary.addUnknown(finalResultCategory, mInputFile.getAbsolutePath(),
 					longDescription);
 			fail = true;
 			break;
 		case INCORRECT:
 			if (mShouldBeSafe) {
-				summary.addFail(finalResult, mInputFile.getAbsolutePath(),
+				summary.addFail(finalResultCategory, mInputFile.getAbsolutePath(),
 						"SHOULD BE SAFE! Real message is: " + longDescription);
 			} else {
-				summary.addSuccess(finalResult, mInputFile.getAbsolutePath(),
+				summary.addSuccess(finalResultCategory, mInputFile.getAbsolutePath(),
 						longDescription);
 			}
 			fail = mShouldBeSafe;
 			break;
 		case CORRECT:
 			if (mShouldBeSafe) {
-				summary.addSuccess(finalResult, mInputFile.getAbsolutePath(),
+				summary.addSuccess(finalResultCategory, mInputFile.getAbsolutePath(),
 						longDescription);
 			} else {
-				summary.addFail(finalResult, mInputFile.getAbsolutePath(),
+				summary.addFail(finalResultCategory, mInputFile.getAbsolutePath(),
 						"SHOULD BE UNSAFE! Real message is: " + longDescription);
 			}
 			fail = !mShouldBeSafe;

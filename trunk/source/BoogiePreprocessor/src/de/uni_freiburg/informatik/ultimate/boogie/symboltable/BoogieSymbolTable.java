@@ -21,61 +21,71 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
  */
 public class BoogieSymbolTable {
 
-	private Map<StorageClass, Map<String, Map<String, Declaration>>> mSymbolTable;
+	private Map<StorageClass, Map<String, Map<String, ISymbolDescriptor>>> mSymbolTable;
 
 	public BoogieSymbolTable() {
 		mSymbolTable = new LinkedHashMap<>();
 	}
 
 	protected void addProcedureOrFunctionDeclaration(String procedureOrFunctionName, Declaration decl) {
-		addSymbol(StorageClass.PROC_FUNC_NAME, null, procedureOrFunctionName, decl);
+
+		Map<String, ISymbolDescriptor> procMap = getMap(StorageClass.PROC_INPARAM, StorageClass.PROC_INPARAM.toString());
+
+		ProcedureDescriptor procDesc = (ProcedureDescriptor) procMap.get(procedureOrFunctionName);
+		if (procDesc == null) {
+			procDesc = new ProcedureDescriptor(decl);
+			procMap.put(procedureOrFunctionName, procDesc);
+		} else {
+			assert procDesc.getSpecificationDeclaration() == null;
+			procDesc.setSpecificationDeclaration(decl);
+		}
 	}
 
 	protected void addProcInParams(String procedureOrFunctionName, String paramName, Declaration decl) {
-		addSymbol(StorageClass.PROC_INPARAM, procedureOrFunctionName, paramName, decl);
+		addVariableSymbol(StorageClass.PROC_INPARAM, procedureOrFunctionName, paramName, decl);
 	}
 
 	protected void addProcOutParams(String procedureOrFunctionName, String paramName, Declaration decl) {
-		addSymbol(StorageClass.PROC_OUTPARAM, procedureOrFunctionName, paramName, decl);
+		addVariableSymbol(StorageClass.PROC_OUTPARAM, procedureOrFunctionName, paramName, decl);
 	}
 
 	protected void addFuncInParams(String procedureOrFunctionName, String paramName, Declaration decl) {
-		addSymbol(StorageClass.FUNC_INPARAM, procedureOrFunctionName, paramName, decl);
+		addVariableSymbol(StorageClass.FUNC_INPARAM, procedureOrFunctionName, paramName, decl);
 	}
 
 	protected void addFuncOutParams(String procedureOrFunctionName, String paramName, Declaration decl) {
-		addSymbol(StorageClass.FUNC_OUTPARAM, procedureOrFunctionName, paramName, decl);
+		addVariableSymbol(StorageClass.FUNC_OUTPARAM, procedureOrFunctionName, paramName, decl);
 	}
 
 	protected void addLocalVariable(String procedureName, String variableName, Declaration decl) {
-		addSymbol(StorageClass.LOCAL, procedureName, variableName, decl);
+		addVariableSymbol(StorageClass.LOCAL, procedureName, variableName, decl);
 	}
 
 	protected void addGlobalVariable(String variableName, Declaration decl) {
-		addSymbol(StorageClass.GLOBAL, null, variableName, decl);
+		addVariableSymbol(StorageClass.GLOBAL, null, variableName, decl);
 	}
 
-	private void addSymbol(StorageClass sc, String scopeName, String symbolName, Declaration decl) {
+	private void addVariableSymbol(StorageClass sc, String scopeName, String symbolName, Declaration decl) {
 		if (scopeName == null) {
 			scopeName = sc.toString();
 		}
 		AssertIsEmpty(sc, scopeName, symbolName);
-		getMap(sc, scopeName).put(symbolName, decl);
+		getMap(sc, scopeName).put(symbolName, new SymbolDescriptor(decl));
 	}
 
 	private void AssertIsEmpty(StorageClass sc, String scopeName, String symbolName) {
-		assert (!getMap(sc, scopeName).containsKey(symbolName));
+		// assert (!getMap(sc, scopeName).containsKey(symbolName));
 	}
 
-	private Map<String, Declaration> getMap(StorageClass sc, String scopeName) {
+	private Map<String, ISymbolDescriptor> getMap(StorageClass sc, String scopeName) {
 		scopeName = checkScopeName(sc, scopeName);
 
 		switch (sc) {
 		case PROC_FUNC_NAME:
 		case GLOBAL:
 			if (!mSymbolTable.containsKey(sc)) {
-				Map<String, Map<String, Declaration>> outer = new LinkedHashMap<String, Map<String, Declaration>>();
-				Map<String, Declaration> inner = new LinkedHashMap<String, Declaration>();
+				Map<String, Map<String, ISymbolDescriptor>> outer = new LinkedHashMap<String, Map<String, ISymbolDescriptor>>();
+				Map<String, ISymbolDescriptor> inner = new LinkedHashMap<String, ISymbolDescriptor>();
 				outer.put(scopeName, inner);
 				mSymbolTable.put(sc, outer);
 			}
@@ -87,21 +97,21 @@ public class BoogieSymbolTable {
 		case QUANTIFIED:
 		case LOCAL:
 			if (!mSymbolTable.containsKey(sc)) {
-				Map<String, Map<String, Declaration>> outer = new LinkedHashMap<String, Map<String, Declaration>>();
-				Map<String, Declaration> inner = new LinkedHashMap<String, Declaration>();
+				Map<String, Map<String, ISymbolDescriptor>> outer = new LinkedHashMap<String, Map<String, ISymbolDescriptor>>();
+				Map<String, ISymbolDescriptor> inner = new LinkedHashMap<String, ISymbolDescriptor>();
 				outer.put(scopeName, inner);
 				mSymbolTable.put(sc, outer);
 			}
-			Map<String, Map<String, Declaration>> scopeMap = mSymbolTable.get(sc);
+			Map<String, Map<String, ISymbolDescriptor>> scopeMap = mSymbolTable.get(sc);
 			if (!scopeMap.containsKey(scopeName)) {
-				scopeMap.put(scopeName, new LinkedHashMap<String, Declaration>());
+				scopeMap.put(scopeName, new LinkedHashMap<String, ISymbolDescriptor>());
 			}
 			return scopeMap.get(scopeName);
 		default:
 			throw new UnsupportedOperationException(String.format("Extend this method for the new scope %s", sc));
 		}
 	}
-	
+
 	private void appendLocals(StringBuilder builder, String currentFunctionSymbol) {
 
 		StorageClass[] locals = new StorageClass[] { StorageClass.LOCAL, StorageClass.FUNC_INPARAM,
@@ -120,14 +130,14 @@ public class BoogieSymbolTable {
 		}
 
 	}
-	
+
 	private String[] getSymbolNames(StorageClass scope, String scopeName) {
 		scopeName = checkScopeName(scope, scopeName);
 
 		if (!mSymbolTable.containsKey(scope)) {
 			return new String[0];
 		}
-		Map<String, Declaration> decls = getMap(scope, scopeName);
+		Map<String, ISymbolDescriptor> decls = getMap(scope, scopeName);
 		if (decls == null) {
 			return new String[0];
 		}
@@ -163,23 +173,26 @@ public class BoogieSymbolTable {
 	 * @return
 	 */
 	public Declaration getDeclaration(String symbolname, StorageClass scope, String scopeName) {
-		return getMap(scope, scopeName).get(symbolname);
+		ISymbolDescriptor sd = getMap(scope, scopeName).get(symbolname);
+		if (sd != null) {
+			return sd.getPrimaryDeclaration();
+		}
+		return null;
 	}
 
-
-	public IType getTypeForVariableSymbol(String symbolname, StorageClass scope, String scopeName){
+	public IType getTypeForVariableSymbol(String symbolname, StorageClass scope, String scopeName) {
 		Declaration decl = getDeclaration(symbolname, scope, scopeName);
-		if(decl == null){
+		if (decl == null) {
 			return null;
 		}
 		return findType(decl, symbolname);
 	}
-	
-	private IType findType(Declaration decl, String symbolname){
-		if(decl instanceof VariableDeclaration){
-			for(VarList vl : ((VariableDeclaration)decl).getVariables()){
-				for(String s : vl.getIdentifiers()){
-					if(s.equals(symbolname)){
+
+	private IType findType(Declaration decl, String symbolname) {
+		if (decl instanceof VariableDeclaration) {
+			for (VarList vl : ((VariableDeclaration) decl).getVariables()) {
+				for (String s : vl.getIdentifiers()) {
+					if (s.equals(symbolname)) {
 						return vl.getType().getBoogieType();
 					}
 				}
@@ -187,7 +200,6 @@ public class BoogieSymbolTable {
 		}
 		return null;
 	}
-	
 
 	/**
 	 * 
@@ -195,8 +207,9 @@ public class BoogieSymbolTable {
 	 * @return
 	 */
 	public String prettyPrintSymbolTable() {
+
 		StringBuilder globals = new StringBuilder();
-		Map<String, Declaration> globalsMap = getMap(StorageClass.GLOBAL, null);
+		Map<String, ISymbolDescriptor> globalsMap = getMap(StorageClass.GLOBAL, null);
 		for (String s : globalsMap.keySet()) {
 			globals.append(" * ").append(s).append(" := ").append(globalsMap.get(s)).append("\n");
 		}
@@ -240,10 +253,56 @@ public class BoogieSymbolTable {
 
 	}
 
-	
-
 	@Override
 	public String toString() {
 		return prettyPrintSymbolTable();
 	}
+
+	private interface ISymbolDescriptor {
+		Declaration getPrimaryDeclaration();
+
+		void setPrimaryDeclaration(Declaration decl);
+	}
+
+	private class ProcedureDescriptor extends SymbolDescriptor {
+		protected Declaration mSpecDeclaration;
+
+		private ProcedureDescriptor(Declaration primary) {
+			super(primary);
+		}
+
+		public Declaration getSpecificationDeclaration() {
+			return mSpecDeclaration;
+		}
+
+		public void setSpecificationDeclaration(Declaration decl) {
+			mSpecDeclaration = decl;
+		}
+
+	}
+
+	private class SymbolDescriptor implements ISymbolDescriptor {
+		protected Declaration mDeclaration;
+
+		private SymbolDescriptor(Declaration decl) {
+			assert decl != null;
+			setPrimaryDeclaration(decl);
+		}
+
+		@Override
+		public Declaration getPrimaryDeclaration() {
+			return mDeclaration;
+		}
+
+		@Override
+		public void setPrimaryDeclaration(Declaration decl) {
+			mDeclaration = decl;
+		}
+
+		@Override
+		public String toString() {
+			return mDeclaration.toString();
+		}
+	}
+
 }

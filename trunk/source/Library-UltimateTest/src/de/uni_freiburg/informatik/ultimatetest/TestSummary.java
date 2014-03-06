@@ -18,10 +18,10 @@ public abstract class TestSummary implements ITestSummary{
 		mTestSuiteCanonicalName =  testSuiteCanonicalName;
 	}
 
-	private Summary getSummary(HashMap<String, Summary> map, IResult result) {
+	private Summary getSummary(HashMap<String, Summary> map, String result) {
 		String typename = "NULL";
 		if (result != null) {
-			typename = result.getClass().getName();
+			typename = result;
 		}
 		Summary s = null;
 		if (map.containsKey(typename)) {
@@ -33,16 +33,16 @@ public abstract class TestSummary implements ITestSummary{
 		return s;
 	}
 
-	public void addFail(IResult result, String filename, String message) {
-		add(getSummary(mFailure, result), filename, message);
+	public void addFail(String category, String filename, String message) {
+		add(getSummary(mFailure, category), filename, message);
 	}
 
-	public void addUnknown(IResult result, String filename, String message) {
-		add(getSummary(mUnknown, result), filename, message);
+	public void addUnknown(String category, String filename, String message) {
+		add(getSummary(mUnknown, category), filename, message);
 	}
 
-	public void addSuccess(IResult result, String filename, String message) {
-		add(getSummary(mSuccess, result), filename, message);
+	public void addSuccess(String category, String filename, String message) {
+		add(getSummary(mSuccess, category), filename, message);
 	}
 
 	private void add(Summary s, String filename, String message) {

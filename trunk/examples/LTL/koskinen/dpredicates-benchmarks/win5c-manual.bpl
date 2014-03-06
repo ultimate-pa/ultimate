@@ -1,6 +1,8 @@
 // [](a -> <>b)
-// a: lock = 1
-// b: lock = 0 
+// a: ~#lock~1 = 1
+// b: ~#lock~1 = 0 
+
+// read~int(~#lock~1) = 1
 
 implementation nondet() returns (#res : int)
 {

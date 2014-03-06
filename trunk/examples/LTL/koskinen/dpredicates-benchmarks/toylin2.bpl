@@ -26,7 +26,7 @@ modifies c,servers,resp,curr_serv,serversdiv2;
   curr_serv := servers;
 }
 
-procedure somebody() 
+procedure body() 
 modifies c,curr_serv,resp;
 {
   var ddd : int; 
@@ -47,9 +47,9 @@ modifies c,curr_serv,resp;
   }
 }
 
-procedure main() 
+procedure ULTIMATE.start() 
 modifies c,servers,resp,curr_serv,serversdiv2;
 {
 	call init();
-	call somebody();
+	call body();
 }

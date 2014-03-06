@@ -28,7 +28,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
  * @see IElement
  * @see IModifiableSimpleAST
  */
-public interface ISimpleAST<T extends ISimpleAST<T>> extends IElement, IVisualizable, IWalkable {
+public interface ISimpleAST<T extends ISimpleAST<T>> extends IElement, IVisualizable, IWalkable, ITree {
 
 	/***
 	 * The method returns the direct successor nodes of the current AST node. If

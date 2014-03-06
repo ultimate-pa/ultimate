@@ -99,8 +99,9 @@ public class NewUltimateEmit extends Emit {
 			}
 
 			if (isArray(parameters[i].getType())) {
-				writer.println("        children.addAll(Arrays.asList("
-						+ parameters[i].getName() + "));");
+				writer.println(String.format("        if(%s!=null){", parameters[i].getName()));
+				writer.println(String.format("            children.addAll(Arrays.asList(%s));",parameters[i].getName()));
+				writer.println("        }");
 			} else {
 				writer.println("        children.add("
 						+ parameters[i].getName() + ");");

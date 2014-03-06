@@ -131,19 +131,22 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 			default:
 				throw new AssertionError("unexpected case");
 			}
+			
+			String resultCategory = convertResultToCategory(result);
+			
 			if (!fail) {
-				m_Summary.addSuccess(result, uniqueStringPrefixOfInputFile, "Annotation says: " + m_ExpectedResult + 
+				m_Summary.addSuccess(resultCategory, uniqueStringPrefixOfInputFile, "Annotation says: " + m_ExpectedResult + 
 						"\tModel checker says: " + m_ExpectedResult);
 			} else {
 				if (result instanceof ExceptionOrErrorResult) {
-					m_Summary.addFail(result, uniqueStringPrefixOfInputFile, "Error: " + result.getLongDescription());
+					m_Summary.addFail(resultCategory, uniqueStringPrefixOfInputFile, "Error: " + result.getLongDescription());
 				} else if (result instanceof TimeoutResult) {
-					m_Summary.addUnknown(result, uniqueStringPrefixOfInputFile, "Annotation says: " + m_ExpectedResult +
+					m_Summary.addUnknown(resultCategory, uniqueStringPrefixOfInputFile, "Annotation says: " + m_ExpectedResult +
 							"\tModel checker says: Time out");
 				} else if (m_ExpectedResult == ExpectedResult.NOANNOTATION) {
-					m_Summary.addUnknown(result, uniqueStringPrefixOfInputFile, "File was neither annotated nor does the filename contain a specification.");
+					m_Summary.addUnknown(resultCategory, uniqueStringPrefixOfInputFile, "File was neither annotated nor does the filename contain a specification.");
 				} else {
-					m_Summary.addFail(result, uniqueStringPrefixOfInputFile, "Annotation says: " + m_ExpectedResult + 
+					m_Summary.addFail(resultCategory, uniqueStringPrefixOfInputFile, "Annotation says: " + m_ExpectedResult + 
 							"\tModel checker says: " + (result.getShortDescription() != "" ? result.getShortDescription() : "NoResult"));
 				}
 			}
@@ -159,6 +162,10 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 		return fail;
 	}
 	
+	private String convertResultToCategory(IResult result) {
+		return result == null ? "NULL" : result.getClass().toString();
+	}
+
 	private BenchmarkResult getBenchmarkResultOfResultSet(List<IResult> results) {
 		for (IResult res : results) {
 			if (res instanceof BenchmarkResult) {
@@ -202,7 +209,7 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 	}
 	
 	public boolean isResultFail(Exception e) {
-		m_Summary.addFail(new NoResult(null, null, null), m_InputFile, "Exception of type " + e.getClass().getName() + " thrown.\t"+
+		m_Summary.addFail(convertResultToCategory(new NoResult(null, null, null)), m_InputFile, "Exception of type " + e.getClass().getName() + " thrown.\t"+
 		                                       "Message: " + e.getMessage());
 		m_Summary.addTraceAbstractionBenchmarks(m_InputFile, "No benchmark results available.");
 		Logger log = Logger.getLogger(TraceAbstractionTestResultDecider.class);
