@@ -30,5 +30,9 @@ public class BenchmarkResult extends AbstractResult {
 	public String getLongDescription() {
 		return m_Benchmark.toString();
 	}
+	
+	public Object getBenchmark() {
+		return m_Benchmark;
+	}
 
 }
