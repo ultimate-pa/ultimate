@@ -338,7 +338,7 @@ public class BinaryStatePredicateManager {
 		m_LexEquality = new IPredicate[m_LexTerms.length];
 		for (int i=0; i<m_LexTerms.length; i++) {
 			m_LexEquality[i] = getRankInEquality(
-					m_LexTerms[i], "=", m_OldRankVariables[i], false);
+					m_LexTerms[i], ">=", m_OldRankVariables[i], false);
 			if (s_Annotate) {
 				String name = "equality" + i;
 				Annotation annot = new Annotation(":named", name);
@@ -387,7 +387,7 @@ public class BinaryStatePredicateManager {
 	
 	private IPredicate getRankInEquality(Term rfTerm, String symbol, 
 			BoogieVar oldRankVariable,boolean addGeq0) {
-		assert symbol.equals("=") || symbol.equals(">");
+		assert symbol.equals(">=") || symbol.equals(">");
 		TermVarsProc termVarsProc = m_SmtManager.computeTermVarsProc(rfTerm);
 
 		Term equality = m_Script.term(symbol, oldRankVariable.getTermVariable(), rfTerm);
