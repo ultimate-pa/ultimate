@@ -5,6 +5,6 @@
 //Bug in r8195.  ACSL Parser unable to handle paranthesis.
 
 
-int main(int n) {
+int main() {
     //@ assert (1==1 || 1==0) && 0==1;
 }

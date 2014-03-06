@@ -5,6 +5,10 @@
 
 int g = 0;
 
+int proc() {
+  return g++;
+}
+
 int main() {
     int a = -1;
     a = proc();
@@ -12,6 +16,3 @@ int main() {
    
 }
 
-int proc() {
-  return g++;
-}
