@@ -11,8 +11,17 @@ public class DeclarationInformation {
 	/**
 	 * Defines where the declaration of a variable/constant is stored. 
 	 */
-	public static enum StorageClass { GLOBAL, PROC_INPARAM, PROC_OUTPARAM, 
-		FUNC_INPARAM, FUNC_OUTPARAM, LOCAL, QUANTIFIED, PROC_FUNC_NAME }
+	public static enum StorageClass { 
+		GLOBAL, 
+		PROCEDURE_INPARAM, 
+		PROCEDURE_OUTPARAM,
+		IMPLEMENTATION_INPARAM, 
+		IMPLEMENTATION_OUTPARAM,
+		LOCAL, 
+		QUANTIFIED, 
+		IMPLEMENTATION,
+		PROCEDURE	
+	}
 	
 	private final StorageClass m_StorageClass;
 	private final String m_Procedure;
@@ -37,26 +46,18 @@ public class DeclarationInformation {
 	private boolean isValid(StorageClass storageClass, String procedure) {
 		final boolean result;
 		switch (storageClass) {
-		case FUNC_INPARAM:
-			result = (procedure == null);
-			break;
-		case FUNC_OUTPARAM:
-			result = (procedure == null);
-			break;
+		case IMPLEMENTATION:
+		case PROCEDURE:
 		case GLOBAL:
-			result = (procedure == null);
-			break;
-		case LOCAL:
-			result = (procedure != null);
-			break;
-		case PROC_INPARAM:
-			result = (procedure != null);
-			break;
-		case PROC_OUTPARAM:
-			result = (procedure != null);
-			break;
 		case QUANTIFIED:
 			result = (procedure == null);
+			break;
+		case PROCEDURE_INPARAM: 
+		case PROCEDURE_OUTPARAM:
+		case IMPLEMENTATION_INPARAM: 
+		case IMPLEMENTATION_OUTPARAM:
+		case LOCAL:
+			result = (procedure != null);
 			break;
 		default:
 			throw new AssertionError("unknown StorageClass");

@@ -164,9 +164,9 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			group.addEntry(convertEntry("subform", form.getSubformula(), group));
 			return group;
 		}
-		if (value instanceof ITree) {
-			return convertEntry(String.valueOf(value), (ITree) value, parent);
-		}
+//		if (value instanceof ITree) {
+//			return convertEntry(String.valueOf(value), (ITree) value, parent);
+//		}
 		if (value instanceof IAnnotations) {
 			Map<String, Object> mapping = ((IAnnotations) value).getAnnotationsAsMap();
 			GroupEntry group = new GroupEntry(name, parent);

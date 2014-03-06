@@ -85,21 +85,21 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 	@Override
 	protected void visit(FunctionDeclaration decl) {
 		mCurrentDeclaration = decl;
-		mCurrentScope = StorageClass.PROC_FUNC_NAME;
+		mCurrentScope = StorageClass.PROCEDURE;
 		mCurrentScopeName = decl.getIdentifier();
-		mSymbolTable.addProcedureOrFunctionDeclaration(decl.getIdentifier(), decl);
+		mSymbolTable.addProcedureOrFunction(decl.getIdentifier(), decl);
 
 		if (decl.getInParams() != null) {
 			for (VarList vl : decl.getInParams()) {
 				for (String name : vl.getIdentifiers()) {
-					mSymbolTable.addFuncInParams(decl.getIdentifier(), name, decl);
+					mSymbolTable.addInParams(decl.getIdentifier(), name, decl);
 				}
 			}
 		}
 
 		if (decl.getOutParam() != null) {
 			for (String name : decl.getOutParam().getIdentifiers()) {
-				mSymbolTable.addFuncInParams(decl.getIdentifier(), name, decl);
+				mSymbolTable.addOutParams(decl.getIdentifier(), name, decl);
 			}
 		}
 
@@ -109,14 +109,14 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 	@Override
 	protected void visit(Procedure decl) {
 		mCurrentDeclaration = decl;
-		mCurrentScope = StorageClass.PROC_FUNC_NAME;
+		mCurrentScope = StorageClass.PROCEDURE;
 		mCurrentScopeName = decl.getIdentifier();
-		mSymbolTable.addProcedureOrFunctionDeclaration(decl.getIdentifier(), decl);
+		mSymbolTable.addProcedureOrFunction(decl.getIdentifier(), decl);
 
 		if (decl.getInParams() != null) {
 			for (VarList vl : decl.getInParams()) {
 				for (String name : vl.getIdentifiers()) {
-					mSymbolTable.addFuncInParams(decl.getIdentifier(), name, decl);
+					mSymbolTable.addInParams(decl.getIdentifier(), name, decl);
 				}
 			}
 		}
@@ -124,7 +124,7 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 		if (decl.getOutParams() != null) {
 			for (VarList vl : decl.getOutParams()) {
 				for (String name : vl.getIdentifiers()) {
-					mSymbolTable.addFuncInParams(decl.getIdentifier(), name, decl);
+					mSymbolTable.addOutParams(decl.getIdentifier(), name, decl);
 				}
 			}
 		}
@@ -153,7 +153,7 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 				mSymbolTable.addGlobalVariable(name, mCurrentDeclaration);
 			}
 			break;
-		case PROC_FUNC_NAME:
+		case PROCEDURE:
 			break;
 		default:
 			throw new UnsupportedOperationException(String.format("Extend this method for the new scope %s",
