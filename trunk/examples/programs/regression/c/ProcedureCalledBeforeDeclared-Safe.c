@@ -10,6 +10,6 @@ int main() {
 	return 0;
 }
 
-int inc(i) {
+int inc(int i) {
 	return i + 1;
 }

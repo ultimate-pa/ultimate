@@ -1,4 +1,4 @@
-//#NoSpec
+//#Safe
 /*
  * Bug in parallel composition in r8308.
  * y occured unneccessarily as inVar which might lead to problems in following
