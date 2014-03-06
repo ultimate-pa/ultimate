@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.Util;
 
 /**
- * Decide if a Ultimate Automizer verified file correctly.
+ * Decide if Ultimate Automizer verified a program correctly.
  * 
  * @author Betim Musa, Matthias Heizmann
  *
