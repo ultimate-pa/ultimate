@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
@@ -311,6 +312,7 @@ public class PostProcessor {
 				if (initializer == null) {
 					rhs = new IntegerLiteral(loc, SFO.NR0);
 				} else {
+					initializer = ConvExpr.rexToIntIfNecessary(loc, initializer);
 					rhs = initializer.lrVal.getValue();
 				}
 				break;

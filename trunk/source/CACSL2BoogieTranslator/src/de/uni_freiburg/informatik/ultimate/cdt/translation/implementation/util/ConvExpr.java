@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
@@ -105,5 +106,28 @@ public class ConvExpr {
 					rVal.cType,
 					false,
 					rVal.isPointer);
+	}
+	
+	
+	public static ResultExpression rexToBoolIfNecessary(ILocation loc, ResultExpression rl) {
+		ResultExpression rlToBool = null;
+		if (rl.lrVal.isBoogieBool) {
+			rlToBool = rl;
+		} else {
+			rlToBool = new ResultExpression(ConvExpr.toBoolean(loc, (RValue) rl.lrVal));
+			rlToBool.addAll(rl);
+		}
+		return rlToBool;
+	}
+
+	public static ResultExpression rexToIntIfNecessary(ILocation loc, ResultExpression rl) {
+		ResultExpression rlToInt = null;
+		if (rl.lrVal.isBoogieBool) {
+			rlToInt = new ResultExpression(ConvExpr.boolToInt(loc, (RValue) rl.lrVal));
+			rlToInt.addAll(rl);
+		} else {
+			rlToInt = rl;
+		}
+		return rlToInt;
 	}
 }
