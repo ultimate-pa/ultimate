@@ -809,6 +809,7 @@ public class Boogie2SMT {
 
 		} else if (exp instanceof IdentifierExpression) {
 			IdentifierExpression var = (IdentifierExpression) exp;
+			assert var.getDeclarationInformation() != null : " no declaration information";
 			Term result = getSmtIdentifier(var.getIdentifier(), exp);
 			assert result != null;
 			return result;
@@ -961,6 +962,7 @@ public class Boogie2SMT {
 		for (int i = 0; i < lhs.length; i++) {
 			/* ArrayLHS are removed by preprocessor */
 			VariableLHS vlhs = (VariableLHS) lhs[i];
+			assert vlhs.getDeclarationInformation() != null : " no declaration information";
 			String name = vlhs.getIdentifier();
 			BoogieVar boogieVar = m_CurrentLocals.containsKey(name) ? m_CurrentLocals.get(name) : globals.get(name);
 			assert (boogieVar != null);
@@ -994,6 +996,7 @@ public class Boogie2SMT {
 	public void addHavoc(HavocStatement havoc) {
 		// ArrayList<TermVariable> vars = new ArrayList<TermVariable>();
 		for (VariableLHS lhs : havoc.getIdentifiers()) {
+			assert lhs.getDeclarationInformation() != null : " no declaration information";
 			String id = lhs.getIdentifier();
 			BoogieVar boogieVar = m_CurrentLocals.containsKey(id) ? m_CurrentLocals.get(id) : globals.get(id);
 			assert (boogieVar != null);
