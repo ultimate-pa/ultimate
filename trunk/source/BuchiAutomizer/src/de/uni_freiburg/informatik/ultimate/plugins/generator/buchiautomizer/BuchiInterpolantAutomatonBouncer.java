@@ -30,10 +30,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomaton {
 	
-	private final NwaCacheBookkeeping<CodeBlock, IPredicate> m_ResultBookkeeping;
+	private final NwaCacheBookkeeping<CodeBlock, IPredicate> m_ResultBookkeeping = 
+			new NwaCacheBookkeeping<CodeBlock, IPredicate>();
 	
-	private final Set<IPredicate> m_InputStemPredicates;
-	private final Set<IPredicate> m_InputLoopPredicates;
+	private final Set<IPredicate> m_InputStemPredicates = new HashSet<IPredicate>();
+	private final Set<IPredicate> m_InputLoopPredicates = new HashSet<IPredicate>();
 	private final IPredicate m_HondaPredicate;
 	
 	private final CodeBlock m_HondaEntererStem;
@@ -70,31 +71,12 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 			boolean hondaBouncerStem, boolean hondaBouncerLoop, 
 			PredicateFactory predicateFactory, PredicateUnifier stemPU, PredicateUnifier loopPU, IPredicate falsePredicate) {
 		super(smtManager,edgeChecker,abstraction, falsePredicate, null);
-		m_InputStemPredicates = new HashSet<IPredicate>();
-		m_InputLoopPredicates = new HashSet<IPredicate>();
 		m_StemPU = stemPU;
 		m_LoopPU = loopPU;
 
 		m_HondaPredicate = hondaPredicate;
-		boolean hondaIsInitial = emtpyStem;
-		m_Result.addState(hondaIsInitial, true, hondaPredicate);
-		if (!emtpyStem) {
-			m_InputStemPredicates.add(precondition);
-			m_Result.addState(true, false, precondition);
-			m_StemInputPreds2ResultPreds.put(Collections.singleton(precondition), precondition);
-			m_StemResPred2InputPreds.addPair(precondition,precondition);
-			for (IPredicate stemPredicate : stemInterpolants) {
-				if (!m_InputStemPredicates.contains(stemPredicate)) {
-					m_InputStemPredicates.add(stemPredicate);
-				}
-			}
-		}
-		for (IPredicate loopPredicate : loopInterpolants) {
-			if (!m_InputLoopPredicates.contains(loopPredicate)) {
-				m_InputLoopPredicates.add(loopPredicate);
-			}
-		}
-		m_ResultBookkeeping = new NwaCacheBookkeeping<CodeBlock, IPredicate>();
+		initializeConstruction(emtpyStem, precondition, stemInterpolants,
+				hondaPredicate, loopInterpolants);
 		m_HondaEntererStem = hondaEntererStem;
 		m_HondaEntererLoop = hondaEntererLoop;
 		/**
@@ -117,6 +99,29 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		 */
 		m_HondaBouncerLoop = hondaBouncerLoop;
 		s_Logger.info(startMessage());
+	}
+
+	private void initializeConstruction(boolean emtpyStem,
+			IPredicate precondition, Set<IPredicate> stemInterpolants,
+			IPredicate hondaPredicate, Set<IPredicate> loopInterpolants) {
+		boolean hondaIsInitial = emtpyStem;
+		m_Result.addState(hondaIsInitial, true, hondaPredicate);
+		if (!emtpyStem) {
+			m_InputStemPredicates.add(precondition);
+			m_Result.addState(true, false, precondition);
+			m_StemInputPreds2ResultPreds.put(Collections.singleton(precondition), precondition);
+			m_StemResPred2InputPreds.addPair(precondition,precondition);
+			for (IPredicate stemPredicate : stemInterpolants) {
+				if (!m_InputStemPredicates.contains(stemPredicate)) {
+					m_InputStemPredicates.add(stemPredicate);
+				}
+			}
+		}
+		for (IPredicate loopPredicate : loopInterpolants) {
+			if (!m_InputLoopPredicates.contains(loopPredicate)) {
+				m_InputLoopPredicates.add(loopPredicate);
+			}
+		}
 	}
 	
 	@Override
