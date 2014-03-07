@@ -164,9 +164,9 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			group.addEntry(convertEntry("subform", form.getSubformula(), group));
 			return group;
 		}
-//		if (value instanceof ITree) {
-//			return convertEntry(String.valueOf(value), (ITree) value, parent);
-//		}
+		if (value instanceof ITree) {
+			return convertITreeEntry(String.valueOf(value), (ITree) value, parent);
+		}
 		if (value instanceof IAnnotations) {
 			Map<String, Object> mapping = ((IAnnotations) value).getAnnotationsAsMap();
 			GroupEntry group = new GroupEntry(name, parent);
@@ -203,13 +203,13 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 		return new Entry(name, String.valueOf(value), parent);
 	}
 
-	private TreeViewEntry convertEntry(String name, ITree value, GroupEntry parent) {
+	private TreeViewEntry convertITreeEntry(String name, ITree value, GroupEntry parent) {
 		List<IWalkable> children = value.getSuccessors();
 		if (children != null && children.size() > 0) {
 			GroupEntry group = new GroupEntry(name, parent);
 			for (IWalkable child : children) {
 				if (child instanceof ITree) {
-					group.addEntry(convertEntry(child.toString(), child, group));
+					group.addEntry(convertITreeEntry(child.toString(), (ITree)child, group));
 				}
 			}
 			return group;

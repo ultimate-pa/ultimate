@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor;
 
 import java.awt.BorderLayout;
-import java.awt.ComponentOrientation;
 import java.awt.Frame;
 
 import javax.swing.JPanel;
@@ -14,6 +13,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.grap
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.selection.JungSelectionProvider;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.awt.SWT_AWT;
 import org.eclipse.swt.widgets.Composite;
@@ -28,10 +30,10 @@ import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import edu.uci.ics.jung.visualization.control.ModalGraphMouse;
 
-
 /**
  * Defines an editor for the JungVisualization plug-in.
- * @see {@link EditorPart} 
+ * 
+ * @see {@link EditorPart}
  * @see {@link IPartListener}
  * @author lenalena
  */
@@ -39,26 +41,25 @@ public class JungEditor extends EditorPart implements IPartListener {
 
 	public static final String ID = "de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditor";
 	public static final String VV_ID_EDITOR_PROPERTY_KEY = "VisualizationViewerID";
-	
+
 	@Override
 	public void doSave(IProgressMonitor monitor) {
-		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void doSaveAs() {
-		// TODO Auto-generated method stub
-		
+
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.eclipse.ui.part.EditorPart#init(org.eclipse.ui.IEditorSite, org.eclipse.ui.IEditorInput)
+	 * 
+	 * @see org.eclipse.ui.part.EditorPart#init(org.eclipse.ui.IEditorSite,
+	 * org.eclipse.ui.IEditorInput)
 	 */
 	@Override
-	public void init(IEditorSite site, IEditorInput input)
-			throws PartInitException {
+	public void init(IEditorSite site, IEditorInput input) throws PartInitException {
 		setSite(site);
 		setInput(input);
 		setPartName(((JungEditorInput) input).getName());
@@ -67,23 +68,30 @@ public class JungEditor extends EditorPart implements IPartListener {
 
 	@Override
 	public boolean isDirty() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	/*
 	 * (non-Javadoc)
+	 * 
 	 * @see org.eclipse.ui.part.EditorPart#isSaveAsAllowed()
 	 */
 	@Override
 	public boolean isSaveAsAllowed() {
-		// TODO Auto-generated method stub
+		return false;
+	}
+	
+	@Override
+	public boolean isSaveOnCloseNeeded() {
 		return false;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.eclipse.ui.part.WorkbenchPart#createPartControl(org.eclipse.swt.widgets.Composite)
+	 * 
+	 * @see
+	 * org.eclipse.ui.part.WorkbenchPart#createPartControl(org.eclipse.swt.widgets
+	 * .Composite)
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
@@ -91,45 +99,47 @@ public class JungEditor extends EditorPart implements IPartListener {
 
 		String currentVVID = GraphHandler.getInstance().getLastCreatedVisualizationViewerID();
 		this.setPartProperty(VV_ID_EDITOR_PROPERTY_KEY, currentVVID);
-		
-		Composite comp = new Composite(parent,SWT.EMBEDDED);
+
+		Composite comp = new Composite(parent, SWT.EMBEDDED);
 		Frame awt = SWT_AWT.new_Frame(comp);
-		
+
 		JPanel panel = new JPanel();
 		panel.setLayout(new BorderLayout());
-		final VisualizationViewer<VisualizationNode, VisualizationEdge> vv = GraphHandler.getInstance().getVisualizationViewer(currentVVID);
+		final VisualizationViewer<VisualizationNode, VisualizationEdge> vv = GraphHandler.getInstance()
+				.getVisualizationViewer(currentVVID);
 		vv.setPreferredSize(panel.getSize());
 
 		JungSelectionProvider jsp = new JungSelectionProvider();
 		getSite().setSelectionProvider(jsp);
-		
+
 		GraphListener gl = new GraphListener(jsp);
-	    
-		DefaultModalGraphMouse graphMouse = new DefaultModalGraphMouse();
+
+		DefaultModalGraphMouse<VisualizationNode, VisualizationEdge> graphMouse = new DefaultModalGraphMouse<VisualizationNode, VisualizationEdge>();
 		graphMouse.setZoomAtMouse(true);
-		
-		if (System.getProperty(MenuActions.SYSTEM_MODE) == null || System.getProperty(MenuActions.SYSTEM_MODE).equals(MenuActions.MODE_PICKING)){
+
+		if (System.getProperty(MenuActions.SYSTEM_MODE) == null
+				|| System.getProperty(MenuActions.SYSTEM_MODE).equals(MenuActions.MODE_PICKING)) {
 			MenuActions.setMode(MenuActions.MODE_PICKING);
 			graphMouse.setMode(ModalGraphMouse.Mode.PICKING);
-		}
-		else {
+		} else {
 			MenuActions.setMode(MenuActions.MODE_TRANSFORMING);
 			graphMouse.setMode(ModalGraphMouse.Mode.TRANSFORMING);
 		}
-		
+
 		graphMouse.add(gl);
 
 		vv.setGraphMouse(graphMouse);
-		
+
 		panel.add(vv, BorderLayout.CENTER);
-		
-        panel.setVisible(true);
-        awt.add(panel);
-        
+
+		panel.setVisible(true);
+		awt.add(panel);
+
 	}
 
 	/*
 	 * (non-Javadoc)
+	 * 
 	 * @see org.eclipse.ui.part.WorkbenchPart#setFocus()
 	 */
 	@Override
@@ -140,18 +150,18 @@ public class JungEditor extends EditorPart implements IPartListener {
 	@Override
 	public void partActivated(IWorkbenchPart part) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void partBroughtToTop(IWorkbenchPart part) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void partClosed(IWorkbenchPart part) {
-		if (part == this){
+		if (part == this) {
 			GraphHandler.getInstance().removeVisualizationViewer(this.getPartProperty(VV_ID_EDITOR_PROPERTY_KEY));
 			part.getSite().getWorkbenchWindow().getPartService().removePartListener(this);
 		}
@@ -160,13 +170,13 @@ public class JungEditor extends EditorPart implements IPartListener {
 	@Override
 	public void partDeactivated(IWorkbenchPart part) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void partOpened(IWorkbenchPart part) {
 		// TODO Auto-generated method stub
-		
+
 	}
-		
+
 }

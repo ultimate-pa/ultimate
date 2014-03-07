@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
@@ -226,7 +227,7 @@ public class Never2Automaton {
 				throw new IllegalArgumentException(String.format(
 						"The symbol %s is not in the program. Check your atomic propositions.", identifier));
 			}
-			return new IdentifierExpression(null, type, identifier, null);
+			return new IdentifierExpression(null, type, identifier, new DeclarationInformation(StorageClass.GLOBAL, null));
 
 		} else if (branch instanceof Not) {
 			return new UnaryExpression(null, UnaryExpression.Operator.LOGICNEG, toBoogieAst(branch.getOutgoingNodes()

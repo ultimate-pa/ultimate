@@ -56,15 +56,21 @@ public class NodeView extends ViewPart implements ISelectionListener {
 		if (selection instanceof IPayloadSelection) {
 			UIJob job = new UIJob("Selection changed...") {
 				public IStatus runInUIThread(IProgressMonitor mon) {
+					treeViewer.setSelection(null);
 					treeViewer.setInput(((IPayloadSelection) selection).getPayload());
 					treeViewer.expandAll();
+					treeViewer.refresh();
 					return Status.OK_STATUS;
 				}
 			};
 			job.setPriority(UIJob.INTERACTIVE); 
 			job.schedule(); 
-			
 		}
-
 	}
+	
+	
+	
+	
+	
+
 }

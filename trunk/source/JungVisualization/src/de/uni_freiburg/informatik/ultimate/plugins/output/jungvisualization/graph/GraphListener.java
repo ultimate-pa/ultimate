@@ -65,7 +65,6 @@ public class GraphListener implements MouseListener, GraphMousePlugin {
 	 */
 	@Override
 	public void mouseExited(MouseEvent e) {
-
 	}
 
 	/*
@@ -101,7 +100,6 @@ public class GraphListener implements MouseListener, GraphMousePlugin {
 	 */
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		
 		//deselect elements
 		Iterator<IElement> elementIt = selectedElements.iterator();
 		

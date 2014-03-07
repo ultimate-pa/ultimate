@@ -12,14 +12,9 @@ public class NewUltimateEmit extends Emit {
 	 */
 	// @Override
 	public void emitClassDeclaration(Node node) throws IOException {
-		writer.println("public "
-				+ (node.isAbstract() ? "abstract " : "")
-				+ "class "
-				+ node.getName()
-				+ (node.getParent() != null ? " extends " + node.getParent().getName()
-						: " extends BoogieASTNode")
-                + (node.getInterfaces() != null ? " implements "+node.getInterfaces() : "")
-						+ " {");
+		writer.println("public " + (node.isAbstract() ? "abstract " : "") + "class " + node.getName()
+				+ (node.getParent() != null ? " extends " + node.getParent().getName() : " extends BoogieASTNode")
+				+ (node.getInterfaces() != null ? " implements " + node.getInterfaces() : "") + " {");
 		formatComment(writer, "    ", "The serial version UID.");
 		writer.println("    private static final long serialVersionUID = 1L;");
 	}
@@ -30,8 +25,7 @@ public class NewUltimateEmit extends Emit {
 		return super.getConstructorParam(node, optional);
 	}
 
-	protected void fillConstructorParamComment(Node node, StringBuffer param,
-			StringBuffer comment, boolean optional) {
+	protected void fillConstructorParamComment(Node node, StringBuffer param, StringBuffer comment, boolean optional) {
 		if (node.getParent() == null) {
 			param.append("ILocation loc");
 			comment.append("\n@param loc the node's location");
@@ -82,8 +76,8 @@ public class NewUltimateEmit extends Emit {
 		writer.println("import java.util.List;");
 		writer.println("import de.uni_freiburg.informatik.ultimate.model.location.ILocation;");
 		writer.println("import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;");
-		if(needsArraysPackage(node)){
-			writer.println("import java.util.Arrays;");	
+		if (needsArraysPackage(node)) {
+			writer.println("import java.util.Arrays;");
 		}
 	}
 
@@ -92,19 +86,20 @@ public class NewUltimateEmit extends Emit {
 		writer.println("    public List<BoogieASTNode> getOutgoingNodes() {");
 		writer.println("        List<BoogieASTNode> children = super.getOutgoingNodes();");
 		Parameter[] parameters = node.getParameters();
+		System.out.println(node.getName() + " has " + parameters.length + " parameters");
 		for (int i = 0; i < parameters.length; i++) {
 
 			if (isNoRegularChild(parameters[i].getType())) {
 				continue;
 			}
-
+			System.out.println(parameters[i].getName() + " is an array? " + isArray(parameters[i].getType()));
+			
 			if (isArray(parameters[i].getType())) {
 				writer.println(String.format("        if(%s!=null){", parameters[i].getName()));
-				writer.println(String.format("            children.addAll(Arrays.asList(%s));",parameters[i].getName()));
+				writer.println(String.format("            children.addAll(Arrays.asList(%s));", parameters[i].getName()));
 				writer.println("        }");
 			} else {
-				writer.println("        children.add("
-						+ parameters[i].getName() + ");");
+				writer.println("        children.add(" + parameters[i].getName() + ");");
 			}
 		}
 		writer.println("        return children;");
@@ -113,19 +108,24 @@ public class NewUltimateEmit extends Emit {
 
 	private boolean isNoRegularChild(String type) {
 		while (type.endsWith("[]"))
-			type = type.substring(0, type.length()-2);
-		return ! (grammar.getNodeTable().containsKey(type));
+			type = type.substring(0, type.length() - 2);
+		return !(grammar.getNodeTable().containsKey(type));
 	}
 
-	private boolean needsArraysPackage(Node node){
-		for(Parameter s : node.getParameters()){
-			if(isArray(s.getType())){
+	private boolean needsArraysPackage(Node node) {
+		for (Parameter s : node.getParameters()) {
+			
+			if(isNoRegularChild(s.getType())){
+				continue;
+			}
+			
+			if (isArray(s.getType())) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
+
 	private boolean isArray(String type) {
 		return type.contains("[");
 	}

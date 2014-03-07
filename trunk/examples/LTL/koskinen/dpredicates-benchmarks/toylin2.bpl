@@ -1,12 +1,16 @@
 // Based on benchmark toylin2.c
 // manually translated by DD
 // [DD] Ultimate LTL Model Checker Property: 
-// a -> <>b
+// x U (!x && (a -> <>b))
 // a: c > (servers / 2)
 // b: resp > (servers / 2)
+// x: init = 0
 // [/DD]
-// c was an unsigned int 
+// additional comments: 
+// * c was an unsigned int 
+// * init is new and necessary to state that the property should only be analysed after init 
 var c,servers,resp,curr_serv,serversdiv2 : int;
+var init : int;
 
 procedure init() 
 modifies c,servers,resp,curr_serv,serversdiv2;
@@ -48,8 +52,10 @@ modifies c,curr_serv,resp;
 }
 
 procedure ULTIMATE.start() 
-modifies c,servers,resp,curr_serv,serversdiv2;
+modifies c,servers,resp,curr_serv,serversdiv2,init;
 {
+	init := 0;
 	call init();
+	init := 1;
 	call body();
 }
