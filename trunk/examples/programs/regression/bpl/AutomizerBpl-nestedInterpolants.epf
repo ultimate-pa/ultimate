@@ -16,3 +16,10 @@ file_export_version=3.0
 \!/instance/TraceAbstraction=
 /instance/TraceAbstraction/Compute\ Interpolants\ along\ a\ Counterexample=Craig_NestedInterpolation
 /instance/TraceAbstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
+
+#Fri Mar 07 12:08:07 CET 2014
+/instance/UltimateCore/Log\ Level\ for\ Controller\ Plugin=DEBUG
+/instance/UltimateCore/Log\ Level\ for\ Core\ Plugin=DEBUG
+/instance/UltimateCore/Log\ Level\ for\ External\ Tools=DEBUG
+/instance/UltimateCore/Root\ Log\ Level=DEBUG
+/instance/UltimateCore/Log\ Level\ for\ Plugins=DEBUG

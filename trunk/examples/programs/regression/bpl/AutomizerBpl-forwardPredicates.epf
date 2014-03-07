@@ -13,14 +13,10 @@ file_export_version=3.0
 @TraceAbstraction=0.0.1
 \!/instance/TraceAbstraction=
 /instance/TraceAbstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
-#Wed Jan 15 21:36:24 CET 2014
-file_export_version=3.0
-\!/instance/UltimateCore=
-/instance/UltimateCore/Show\ Result\ in\ Pop-Up\ Window\ after\ Toolchain\ Execution=true
-@UltimateCore=0.0.1
-#Wed Jan 15 21:36:24 CET 2014
-file_export_version=3.0
-\!/instance/UltimateGui=
-/instance/UltimateGui/LASTTOOLCHAINPATH=C\:\\Ultimate\\examples\\toolchains\\TraceAbstraction.xml
-/instance/UltimateGui/LASTPATH=C\:\\Ultimate\\examples\\Automata\\atsTestFiles\\atsPres\\testAutomataDefinitions.ats
-@UltimateGui=0.0.1
+
+#Fri Mar 07 12:08:07 CET 2014
+/instance/UltimateCore/Log\ Level\ for\ Controller\ Plugin=DEBUG
+/instance/UltimateCore/Log\ Level\ for\ Core\ Plugin=DEBUG
+/instance/UltimateCore/Log\ Level\ for\ External\ Tools=DEBUG
+/instance/UltimateCore/Root\ Log\ Level=DEBUG
+/instance/UltimateCore/Log\ Level\ for\ Plugins=DEBUG
