@@ -322,6 +322,7 @@ public class PostProcessor {
 				} else {
 					rhs = initializer.lrVal.getValue();
 				}
+				break;
 			case VOID:
 			default:
 				throw new AssertionError("unknown type to init");
