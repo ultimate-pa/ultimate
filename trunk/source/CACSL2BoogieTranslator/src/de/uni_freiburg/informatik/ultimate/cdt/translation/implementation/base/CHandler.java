@@ -559,6 +559,8 @@ public class CHandler implements ICHandler {
 	 *  - for local variables that have an initializer, a ResultExpression is returned
 	 *    which contains (Boogie) statements and declarations that make the initialization
 	 *    according to the initializer
+	 *    for local variables without an initializer, a havoc statement is inserted into the
+	 *    ResultExpression instead 
 	 * The declarations themselves of the local variables (and f.i. typedefs) are stored in the 
 	 * symbolTable and inserted into the Boogie code at the next endScope() 
 	 * Declarations of static variables are added to mDeclarationsGlobalInBoogie such that they
@@ -646,9 +648,13 @@ public class CHandler implements ICHandler {
 						mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
 					} else {
 						if (cDec.getInitializer() == null && !functionHandler.noCurrentProcedure() && !typeHandler.isStructDeclaration()) { 
-							//in case of a local variable declaration without an initializer, we don't modify
-							// the result
+							//in case of a local variable declaration without an initializer, we need to insert a
+							//havoc statement (because otherwise the variable is always the same within a loop which
+							//may lead to unsoundness)
 							assert result instanceof ResultSkip || result instanceof ResultExpression;
+							result = new ResultExpression((LRValue) null);
+							((ResultExpression) result).stmt.add(
+									new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, bId) }));
 						} else if (cDec.getInitializer() != null && !functionHandler.noCurrentProcedure() && !typeHandler.isStructDeclaration()) { 
 							//in case of a local variable declaration with an initializer, the statements and delcs
 							// necessary for the initialization are the result
@@ -1267,8 +1273,7 @@ public class CHandler implements ICHandler {
 			if (!(rType instanceof CPointer)) {
 				if (rExpr instanceof IntegerLiteral) {
 					convertToPointer = true;
-				}
-				else if (rExpr instanceof IdentifierExpression) {
+				} else if (rExpr instanceof IdentifierExpression) {
 					String varId = ((IdentifierExpression)rExpr).getIdentifier();
 					if (symbolTable.containsBoogieSymbol(varId)) {
 						String cId = symbolTable.getCID4BoogieID(varId, loc);
@@ -1278,8 +1283,7 @@ public class CHandler implements ICHandler {
 							convertToPointer = true;
 						}
 					}
-				}
-				else if (rType instanceof CPrimitive &&
+				} else if (rType instanceof CPrimitive &&
 						((CPrimitive) rType).getType() == PRIMITIVE.INT) {
 					convertToPointer = true;
 				}
@@ -1308,10 +1312,10 @@ public class CHandler implements ICHandler {
 			for (String t : new String[] { SFO.INT, SFO.POINTER,
 					SFO.REAL, SFO.BOOL }) {
 				functionHandler.getModifiedGlobals()
-				.get(functionHandler.getCurrentProcedureID())
-				.add(SFO.MEMORY + "_" + t);
+						.get(functionHandler.getCurrentProcedureID())
+						.add(SFO.MEMORY + "_" + t);
 			}
-			
+
 			return new ResultExpression(stmt, rightHandSide, decl, auxVars, overappr);
 		} else if (lrVal instanceof LocalLValue){
 			LocalLValue lValue = (LocalLValue) lrVal;
