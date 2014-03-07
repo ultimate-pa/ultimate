@@ -1,12 +1,14 @@
-//#Unsafe
+//#Safe
 /*
  * Date: September 2013
  * Author: heizmann@informtik.uni-freiburg.de
  * 
  */
 
+#include <stdlib.h>
+
 int main() {
-    int *p;
-    p = 4;
-    *p = 3;
+    int *p = malloc(sizeof(int));
+    free(p);
+    return 0;
 }

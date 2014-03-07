@@ -5,6 +5,8 @@
  * 
  */
 
+#include <stdlib.h>
+
 struct treeNode {
 	int data;
 	struct treeNode* leftChild;

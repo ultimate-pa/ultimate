@@ -5,6 +5,8 @@
  * 
  */
 
+#include <stdlib.h>
+
 //int* intPointer;
 typedef int* intPointer;
 

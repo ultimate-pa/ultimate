@@ -5,8 +5,10 @@
  * 
  */
 
+#include <stdlib.h>
+
 int main() {
-    int *p = malloc(sizeof(int));
-    free(p);
+    int *p;
+    p = (int *) 4;
     *p = 3;
 }

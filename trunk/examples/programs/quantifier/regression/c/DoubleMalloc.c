@@ -5,9 +5,12 @@
  * 
  */
 
+#include <stdlib.h>
+
 int main() {
     int *p = malloc(sizeof(int));
-    *p = 3;
+    int *q = malloc(sizeof(int));
+    // @assert  p != q;
     free(p);
-    return 0;
+    free(q);
 }

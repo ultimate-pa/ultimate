@@ -5,8 +5,10 @@
  * 
  */
 
-int nonMain() {
+#include <stdlib.h>
+
+int main() {
     int *p = malloc(sizeof(int));
-    // @assert *p == 0;
-    return 0;
+    free(p);
+    *p = 3;
 }
