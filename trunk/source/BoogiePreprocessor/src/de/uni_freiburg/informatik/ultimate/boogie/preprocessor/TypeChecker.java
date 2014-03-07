@@ -22,6 +22,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.StructType;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
@@ -384,6 +386,7 @@ public class TypeChecker implements IUnmanagedObserver {
                         + " in " + expr);
                 resultType = errorType;
             } else {
+            	idexpr.setDeclarationInformation(info.getDeclarationInformation());
                 resultType = info.getType().getUnderlyingType();
             }
         } else if (expr instanceof FunctionApplication) {
@@ -436,12 +439,14 @@ public class TypeChecker implements IUnmanagedObserver {
                     quant.getTypeParams());
             typeManager.pushTypeScope(typeParams);
 
+            DeclarationInformation declInfo = 
+            		new DeclarationInformation(StorageClass.QUANTIFIED, null);
             VarList[] parameters = quant.getParameters();
             List<VariableInfo> vinfo = new ArrayList<VariableInfo>();
             for (VarList p : parameters) {
                 BoogieType type = typeManager.resolveType(p.getType());
                 for (String id : p.getIdentifiers()) {
-                    vinfo.add(new VariableInfo(true, null, id, type));
+                    vinfo.add(new VariableInfo(true, null, id, type, declInfo));
                 }
             }
             if (!typeParams.fullyUsed())
@@ -473,6 +478,8 @@ public class TypeChecker implements IUnmanagedObserver {
         if (lhs instanceof VariableLHS) {
             String name = ((VariableLHS) lhs).getIdentifier();
             resultType = checkVarModification(lhs, name);
+            VariableInfo info = findVariable(name);
+            ((VariableLHS) lhs).setDeclarationInformation(info.getDeclarationInformation());
         } else if (lhs instanceof StructLHS) {
             StructLHS slhs = (StructLHS) lhs;
             BoogieType type = typecheckLeftHandSide(slhs.getStruct())
@@ -563,23 +570,27 @@ public class TypeChecker implements IUnmanagedObserver {
     }
 
     private void processVariableDeclaration(VariableDeclaration varDecl) {
+        DeclarationInformation declInfo = 
+        		new DeclarationInformation(StorageClass.GLOBAL, null);
         for (VarList varlist : varDecl.getVariables()) {
             BoogieType type = typeManager.resolveType(varlist.getType());
             for (String id : varlist.getIdentifiers()) {
                 // s_logger.info("Declaring variable "+id+":"+type);
                 declaredVars
-                        .put(id, new VariableInfo(false, varDecl, id, type));
+                        .put(id, new VariableInfo(false, varDecl, id, type, declInfo));
                 m_Globals.add(id);
             }
         }
     }
 
     private void processConstDeclaration(ConstDeclaration constDecl) {
+        DeclarationInformation declInfo = 
+        		new DeclarationInformation(StorageClass.GLOBAL, null);
         VarList varList = constDecl.getVarList();
         BoogieType type = typeManager.resolveType(varList.getType());
         for (String id : varList.getIdentifiers()) {
             // s_logger.info("Declaring constant "+id+":"+type);
-            declaredVars.put(id, new VariableInfo(true, constDecl, id, type));
+            declaredVars.put(id, new VariableInfo(true, constDecl, id, type, declInfo));
         }
     }
 
@@ -649,6 +660,8 @@ public class TypeChecker implements IUnmanagedObserver {
         FunctionInfo fi = declaredFunctions.get(name);
         TypeParameters typeParams = fi.getTypeParameters();
 
+        DeclarationInformation declInfo = new DeclarationInformation(
+        		StorageClass.PROCEDURE_INPARAM, name);
         typeManager.pushTypeScope(typeParams);
         FunctionSignature fs = fi.getSignature();
         List<VariableInfo> vinfo = new ArrayList<VariableInfo>();
@@ -656,7 +669,7 @@ public class TypeChecker implements IUnmanagedObserver {
         for (int i = 0; i < paramCount; i++) {
             if (fs.getParamName(i) != null) {
                 vinfo.add(new VariableInfo(true, null, fs.getParamName(i), fs
-                        .getParamType(i)));
+                        .getParamType(i), declInfo));
             }
         }
         VariableInfo[] scope = vinfo.toArray(new VariableInfo[vinfo.size()]);
@@ -685,22 +698,26 @@ public class TypeChecker implements IUnmanagedObserver {
         TypeParameters typeParams = new TypeParameters(proc.getTypeParams());
         typeManager.pushTypeScope(typeParams);
 
+        DeclarationInformation declInfoInParam = new DeclarationInformation(
+        		StorageClass.PROCEDURE_INPARAM, proc.getIdentifier());
         LinkedList<VariableInfo> inParams = new LinkedList<VariableInfo>();
         for (VarList vl : proc.getInParams()) {
             BoogieType type = typeManager.resolveType(vl.getType());
             for (String id : vl.getIdentifiers()) {
                 inParams.add(new VariableInfo(true /* in params are rigid */,
-                        proc, id, type));
+                        proc, id, type, declInfoInParam));
             }
         }
         if (!typeParams.fullyUsed())
             typeError(proc,
                     "Type args not fully used in procedure parameter: " + proc);
+        DeclarationInformation declInfoOutParam = new DeclarationInformation(
+        		StorageClass.PROCEDURE_OUTPARAM, proc.getIdentifier());
         LinkedList<VariableInfo> outParams = new LinkedList<VariableInfo>();
         for (VarList vl : proc.getOutParams()) {
             BoogieType type = typeManager.resolveType(vl.getType());
             for (String id : vl.getIdentifiers()) {
-                outParams.add(new VariableInfo(false, proc, id, type));
+                outParams.add(new VariableInfo(false, proc, id, type, declInfoOutParam));
             }
         }
 
@@ -1050,7 +1067,9 @@ public class TypeChecker implements IUnmanagedObserver {
         }
     }
 
-    private void processBody(Body body) {
+    private void processBody(Body body, String prodecureId) {
+        DeclarationInformation declInfo = new DeclarationInformation(
+        		StorageClass.LOCAL, prodecureId);
         LinkedList<VariableInfo> localVarList = new LinkedList<VariableInfo>();
         for (VariableDeclaration decl : body.getLocalVars()) {
             for (VarList vl : decl.getVariables()) {
@@ -1058,7 +1077,7 @@ public class TypeChecker implements IUnmanagedObserver {
                 for (String id : vl.getIdentifiers()) {
                     checkIfAlreadyInOutLocal(vl, id);
                     m_LocalVars.add(id);
-                    localVarList.add(new VariableInfo(false, decl, id, type));
+                    localVarList.add(new VariableInfo(false, decl, id, type, declInfo));
                 }
             }
         }
@@ -1102,6 +1121,10 @@ public class TypeChecker implements IUnmanagedObserver {
         m_InParams = new HashSet<String>();
         m_OutParams = new HashSet<String>();
         m_LocalVars = new HashSet<String>();
+        DeclarationInformation declInfoInParam = new DeclarationInformation(
+        		StorageClass.IMPLEMENTATION_INPARAM, impl.getIdentifier());
+        DeclarationInformation declInfoOutParam = new DeclarationInformation(
+        		StorageClass.IMPLEMENTATION_OUTPARAM, impl.getIdentifier());
         LinkedList<VariableInfo> allParams = new LinkedList<VariableInfo>();
         VariableInfo[] procInParams = procInfo.getInParams();
         VariableInfo[] procOutParams = procInfo.getOutParams();
@@ -1119,7 +1142,7 @@ public class TypeChecker implements IUnmanagedObserver {
                 checkIfAlreadyInOutLocal(vl, id);
                 m_InParams.add(id);
                 allParams.add(new VariableInfo(true /* in params are rigid */,
-                        impl, id, type));
+                        impl, id, type, declInfoInParam));
             }
         }
         if (i < procInParams.length)
@@ -1140,7 +1163,7 @@ public class TypeChecker implements IUnmanagedObserver {
                 }
                 checkIfAlreadyInOutLocal(vl, id);
                 m_OutParams.add(id);
-                allParams.add(new VariableInfo(false, impl, id, type));
+                allParams.add(new VariableInfo(false, impl, id, type, declInfoOutParam));
 
             }
         }
@@ -1150,7 +1173,7 @@ public class TypeChecker implements IUnmanagedObserver {
 
         varScopes.push(allParams.toArray(new VariableInfo[allParams.size()]));
 
-        processBody(impl.getBody());
+        processBody(impl.getBody(), impl.getIdentifier());
 
         varScopes.pop();
         typeManager.popTypeScope();
