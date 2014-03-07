@@ -30,4 +30,4 @@ Export-Package: de.uni_freiburg.informatik.ultimate.access,
  de.uni_freiburg.informatik.ultimate.model.structure,
  de.uni_freiburg.informatik.ultimate.plugins,
  de.uni_freiburg.informatik.ultimate.result
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
