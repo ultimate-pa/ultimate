@@ -286,6 +286,16 @@
 				<module>../UltimateRegressionTest</module>
 			</modules>
 		</profile>
+		
+		<profile>
+			<id>manualtest</id>
+		
+			<modules>
+				<module>../Library-junit-helper</module>
+				<module>../Library-UltimateTest</module>
+				<module>../UltimateTest</module>
+			</modules>
+		</profile>
 	</profiles>
 
 </project>

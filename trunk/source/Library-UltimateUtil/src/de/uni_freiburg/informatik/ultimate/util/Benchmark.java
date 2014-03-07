@@ -290,14 +290,20 @@ public class Benchmark {
 	private boolean isHeap(String memoryPoolName) {
 		switch (memoryPoolName) {
 		case "Code Cache":
+		case "Perm Gen":
 		case "PS Perm Gen":
+		case "Perm Gen [shared-ro]":
+		case "Perm Gen [shared-rw]":
 			return false;
+		case "Eden Space":
 		case "PS Eden Space":
 		case "PS Survivor Space":
+		case "Survivor Space":
 		case "PS Old Gen":
+		case "Tenured Gen":
 			return true;
 		}
-		throw new IllegalArgumentException();
+				throw new IllegalArgumentException("Unknown memory pool name "+memoryPoolName);
 	}
 
 	private class Watch {

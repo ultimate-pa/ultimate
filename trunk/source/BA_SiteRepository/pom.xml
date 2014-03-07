@@ -13,7 +13,9 @@
 	<artifactId>UltimateRepository</artifactId>
 	<version>0.0.1</version>
 	<packaging>eclipse-repository</packaging>
-
+<profiles>
+<profile>
+<id>materialize</id>
 
 	<build>
 		<plugins>
@@ -61,5 +63,7 @@
 			</plugin>
 		</plugins>
 	</build>
+</profile>
+	</profiles>
 
 </project>
