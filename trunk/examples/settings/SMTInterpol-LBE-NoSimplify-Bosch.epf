@@ -2,3 +2,8 @@
 /instance/RCFGBuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=false
 /instance/RCFGBuilder/Convert\ code\ blocks\ to\ CNF=false
 /instance/TraceAbstraction/Compute\ Interpolants\ along\ a\ Counterexample=Craig_TreeInterpolation
+/instance/UltimateCore/Log\ Level\ for\ Controller\ Plugin=DEBUG
+/instance/UltimateCore/Log\ Level\ for\ Core\ Plugin=DEBUG
+/instance/UltimateCore/Log\ Level\ for\ External\ Tools=DEBUG
+/instance/UltimateCore/Root\ Log\ Level=DEBUG
+/instance/UltimateCore/Log\ Level\ for\ Plugins=INFO
