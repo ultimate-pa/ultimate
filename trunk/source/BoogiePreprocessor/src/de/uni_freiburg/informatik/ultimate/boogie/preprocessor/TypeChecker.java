@@ -479,7 +479,9 @@ public class TypeChecker implements IUnmanagedObserver {
             String name = ((VariableLHS) lhs).getIdentifier();
             resultType = checkVarModification(lhs, name);
             VariableInfo info = findVariable(name);
-            ((VariableLHS) lhs).setDeclarationInformation(info.getDeclarationInformation());
+            if (info != null) {
+            	((VariableLHS) lhs).setDeclarationInformation(info.getDeclarationInformation());
+            }
         } else if (lhs instanceof StructLHS) {
             StructLHS slhs = (StructLHS) lhs;
             BoogieType type = typecheckLeftHandSide(slhs.getStruct())
