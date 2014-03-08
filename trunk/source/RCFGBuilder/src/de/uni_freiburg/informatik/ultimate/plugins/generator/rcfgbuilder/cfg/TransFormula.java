@@ -171,7 +171,7 @@ public class TransFormula implements Serializable {
 			substitutionMapping.put(outVars.get(bv), bv.getPrimedConstant());
 		}
 		for (TermVariable tv : auxVars) {
-			substitutionMapping.put(tv, boogie2smt.getFreshConstant(tv));
+			substitutionMapping.put(tv, boogie2smt.getVariableManager().constructConstant(tv));
 		}
 		Term closedTerm = (new Substitution(substitutionMapping, boogie2smt.getScript())).transform(formula);
 		return closedTerm;

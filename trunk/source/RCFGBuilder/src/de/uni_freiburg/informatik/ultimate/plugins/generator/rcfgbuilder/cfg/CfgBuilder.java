@@ -168,7 +168,7 @@ public class CfgBuilder {
 			blackHolesArrays = false;
 		}
 
-		m_Boogie2smt = new Boogie2SMT(m_Script, false, blackHolesArrays);
+		m_Boogie2smt = new Boogie2SMT(m_Script, blackHolesArrays);
 		m_RootAnnot = new RootAnnot(m_Boogie2smt, m_Backtranslator);
 
 	}

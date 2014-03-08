@@ -121,8 +121,6 @@ public class Boogie2SMT {
 	private static final boolean debugMessages = false;
 	Smt2Boogie m_Smt2Boogie;
 
-	private final boolean m_addBoogieInformation;
-
 	/**
 	 * if set to true array access returns arbitrary values array store returns
 	 * arbitrary arrays
@@ -141,8 +139,7 @@ public class Boogie2SMT {
 		// generation++;
 	}
 
-	public Boogie2SMT(Script script, boolean addBoogieInformation, boolean blackHoleArrays) {
-		m_addBoogieInformation = addBoogieInformation;
+	public Boogie2SMT(Script script, boolean blackHoleArrays) {
 		m_BlackHoleArrays = blackHoleArrays;
 		this.m_Script = script;
 		m_VariableManager = new VariableManager(m_Script);
@@ -528,15 +525,15 @@ public class Boogie2SMT {
 		m_Id2Specification.put(proc.getIdentifier(), proc);
 	}
 
-	public Specification[] getProcedureSpecs(Procedure procImpl) {
-		if (debugMessages)
-			s_Logger.info("Starting to build specs for procedure " + procImpl.getIdentifier());
-
-		Procedure procDecl = this.m_Id2Specification.get(procImpl.getIdentifier());
-		if (procDecl == procImpl)
-			return procDecl.getSpecification();
-		return new RenameProcedureSpec().renameSpecs(procDecl, procImpl);
-	}
+//	public Specification[] getProcedureSpecs(Procedure procImpl) {
+//		if (debugMessages)
+//			s_Logger.info("Starting to build specs for procedure " + procImpl.getIdentifier());
+//
+//		Procedure procDecl = this.m_Id2Specification.get(procImpl.getIdentifier());
+//		if (procDecl == procImpl)
+//			return procDecl.getSpecification();
+//		return new RenameProcedureSpec().renameSpecs(procDecl, procImpl);
+//	}
 
 	public void removeLocals(Procedure proc) {
 		// identStack.pop();
@@ -947,7 +944,7 @@ public class Boogie2SMT {
 	private Term assumes;
 	private Term asserts;
 
-	private int m_freshConstantCounter = 0;
+//	private int m_freshConstantCounter = 0;
 
 	public void startBlock() {
 		outVars = new HashMap<BoogieVar, TermVariable>();
@@ -990,11 +987,11 @@ public class Boogie2SMT {
 		for (TermVariable tv : addedEqualities.keySet()) {
 			Term rhsTerm = translateTerm(addedEqualities.get(tv));
 			Term eq = m_Script.term("=", tv, rhsTerm);
-			if (m_addBoogieInformation) {
-				Annotation locationAnnotation = new Annotation(":location", assign.getPayload().getLocation());
-				Annotation statementAnnotation = new Annotation(":statement", assign);
-				eq = m_Script.annotate(eq, new Annotation[] { locationAnnotation, statementAnnotation });
-			}
+//			if (m_addBoogieInformation) {
+//				Annotation locationAnnotation = new Annotation(":location", assign.getPayload().getLocation());
+//				Annotation statementAnnotation = new Annotation(":statement", assign);
+//				eq = m_Script.annotate(eq, new Annotation[] { locationAnnotation, statementAnnotation });
+//			}
 			assumes = Util.and(m_Script, eq, assumes);
 			asserts = Util.implies(m_Script, eq, asserts);
 			assert (assumes.toString() instanceof Object);
@@ -1030,11 +1027,11 @@ public class Boogie2SMT {
 
 	public void addAssume(AssumeStatement assume) {
 		Term f = translateTerm(assume.getFormula());
-		if (m_addBoogieInformation) {
-			Annotation locationAnnotation = new Annotation(":location", assume.getPayload().getLocation());
-			Annotation statementAnnotation = new Annotation(":statement", assume);
-			f = m_Script.annotate(f, new Annotation[] { locationAnnotation, statementAnnotation });
-		}
+//		if (m_addBoogieInformation) {
+//			Annotation locationAnnotation = new Annotation(":location", assume.getPayload().getLocation());
+//			Annotation statementAnnotation = new Annotation(":statement", assume);
+//			f = m_Script.annotate(f, new Annotation[] { locationAnnotation, statementAnnotation });
+//		}
 		assumes = Util.and(m_Script, f, assumes);
 		asserts = Util.implies(m_Script, f, asserts);
 		assert (assumes.toString() instanceof Object);
@@ -1042,11 +1039,11 @@ public class Boogie2SMT {
 
 	public void addAssert(AssertStatement assertstmt) {
 		Term f = translateTerm(assertstmt.getFormula());
-		if (m_addBoogieInformation) {
-			Annotation locationAnnotation = new Annotation(":location", assertstmt.getPayload().getLocation());
-			Annotation statementAnnotation = new Annotation(":statement", assertstmt);
-			f = m_Script.annotate(f, new Annotation[] { locationAnnotation, statementAnnotation });
-		}
+//		if (m_addBoogieInformation) {
+//			Annotation locationAnnotation = new Annotation(":location", assertstmt.getPayload().getLocation());
+//			Annotation statementAnnotation = new Annotation(":statement", assertstmt);
+//			f = m_Script.annotate(f, new Annotation[] { locationAnnotation, statementAnnotation });
+//		}
 		// Formula label = generateLabel(assertstmt);
 		assumes = Util.and(m_Script, f, assumes);
 		asserts = Util.and(m_Script, f, asserts);
@@ -1239,11 +1236,11 @@ public class Boogie2SMT {
 		return terms;
 	}
 
-	public Term getFreshConstant(TermVariable tv) {
-		String name = "c_" + tv.getName() + "_" + m_freshConstantCounter++;
-		Sort sort = tv.getSort();
-		m_Script.declareFun(name, new Sort[0], sort);
-		return m_Script.term(name);
-	}
+//	public Term getFreshConstant(TermVariable tv) {
+//		String name = "c_" + tv.getName() + "_" + m_freshConstantCounter++;
+//		Sort sort = tv.getSort();
+//		m_Script.declareFun(name, new Sort[0], sort);
+//		return m_Script.term(name);
+//	}
 
 }
