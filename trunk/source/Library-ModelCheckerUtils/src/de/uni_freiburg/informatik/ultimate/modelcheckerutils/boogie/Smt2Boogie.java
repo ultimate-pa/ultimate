@@ -66,6 +66,7 @@ public class Smt2Boogie implements Serializable {
 
 	private static final long serialVersionUID = -4519646474900935398L;
 
+
 	private final Script m_Script;
 	
 	private final Map<String, BoogieVar> m_Globals;
@@ -112,6 +113,7 @@ public class Smt2Boogie implements Serializable {
 		m_sort2type.put(intSort, intType);
 
 	}
+
 	
 
 //	/**

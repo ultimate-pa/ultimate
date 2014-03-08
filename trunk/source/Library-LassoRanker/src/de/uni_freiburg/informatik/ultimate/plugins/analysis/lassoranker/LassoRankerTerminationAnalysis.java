@@ -218,8 +218,8 @@ public class LassoRankerTerminationAnalysis {
 		for (Map.Entry<BoogieVar, TermVariable> entry :
 				formula.getOutVars().entrySet()) {
 			if (!inVars.containsKey(entry.getKey())) {
-				TermVariable inVar = TransFormula.getFreshVariable(boogie2smt,
-						entry.getKey(), entry.getValue().getSort());
+				TermVariable inVar = boogie2smt.getVariableManager().
+									constructFreshTermVariable(entry.getKey()); 
 				inVars.put(entry.getKey(), inVar);
 			}
 		}

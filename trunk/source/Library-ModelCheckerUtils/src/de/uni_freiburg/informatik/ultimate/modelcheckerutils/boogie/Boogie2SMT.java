@@ -65,8 +65,11 @@ public class Boogie2SMT {
 	// private ArrayList<FunctionSymbol> selectStores = new
 	// ArrayList<FunctionSymbol>();
 	// private Sort intSort, realSort;
+	
+	
+	private final VariableManager m_VariableManager;
 
-	private Stack<TermVariable> typeStack = new Stack<TermVariable>();
+//	private Stack<TermVariable> typeStack = new Stack<TermVariable>();
 	private Stack<HashMap<String, Term>> identStack = new Stack<HashMap<String, Term>>();
 	// private HashMap<String, FunctionSymbol> typeSymbols = new HashMap<String,
 	// FunctionSymbol>();
@@ -142,6 +145,7 @@ public class Boogie2SMT {
 		m_addBoogieInformation = addBoogieInformation;
 		m_BlackHoleArrays = blackHoleArrays;
 		this.m_Script = script;
+		m_VariableManager = new VariableManager(m_Script);
 		m_VariableSSAManager = new VariableSSAManager(m_Script);
 		m_VariableSSAManager.reset();
 		// intSort = script.sort("Int");
@@ -179,6 +183,10 @@ public class Boogie2SMT {
 		/* TODO: axioms for mod, div and mul ??? */
 
 		identStack.add(globalConsts);
+	}
+	
+	public VariableManager getVariableManager() {
+		return m_VariableManager;
 	}
 
 	public Script getScript() {
@@ -532,8 +540,8 @@ public class Boogie2SMT {
 
 	public void removeLocals(Procedure proc) {
 		// identStack.pop();
-		for (int i = 0; i < proc.getTypeParams().length; i++)
-			typeStack.pop();
+//		for (int i = 0; i < proc.getTypeParams().length; i++)
+//			typeStack.pop();
 		m_CurrentLocals.clear();
 	}
 

@@ -74,7 +74,7 @@ public class TransFormula implements Serializable {
 	static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 
-	private static int s_FreshVarNumber = 10000; 
+//	private static int s_FreshVarNumber = 10000; 
 	
 //	private final static boolean s_TransformToCNF = false;
 	
@@ -362,26 +362,26 @@ public class TransFormula implements Serializable {
 	}
 	
 	
-	public static TermVariable getFreshAuxVariable(Boogie2SMT boogie2smt, String id, Sort sort) {
-		String name = id + "_" + s_FreshVarNumber++;
-		TermVariable newVar = boogie2smt.getScript().variable(name, sort);
-		return newVar;
-	}
+//	public static TermVariable getFreshAuxVariable(Boogie2SMT boogie2smt, String id, Sort sort) {
+//		String name = id + "_" + s_FreshVarNumber++;
+//		TermVariable newVar = boogie2smt.getScript().variable(name, sort);
+//		return newVar;
+//	}
 	
-	public static TermVariable getFreshVariable(Boogie2SMT boogie2smt, BoogieVar var, Sort sort) {
-		String name;
-		if (var.isGlobal()) {
-			if (var.isOldvar()) {
-				name = "old(" + var.getIdentifier() + ")";
-			} else {
-				name = var.getIdentifier();
-			}
-		} else {
-			name = var.getProcedure() + "_" + var.getIdentifier();
-		}
-		name += "_" + s_FreshVarNumber++;
-		return boogie2smt.getScript().variable(name, sort);
-	}
+//	public static TermVariable getFreshVariable(Boogie2SMT boogie2smt, BoogieVar var, Sort sort) {
+//		String name;
+//		if (var.isGlobal()) {
+//			if (var.isOldvar()) {
+//				name = "old(" + var.getIdentifier() + ")";
+//			} else {
+//				name = var.getIdentifier();
+//			}
+//		} else {
+//			name = var.getProcedure() + "_" + var.getIdentifier();
+//		}
+//		name += "_" + s_FreshVarNumber++;
+//		return boogie2smt.getScript().variable(name, sort);
+//	}
 	
 	/**
 	 * @return the relational composition (concatenation) of transformula1 und
@@ -407,7 +407,7 @@ public class TransFormula implements Serializable {
 					newOutVar = inVars.get(var);
 				} else {
 					Sort sort = outVar.getSort();
-					newOutVar = getFreshVariable(boogie2smt,var, sort); 
+					newOutVar = boogie2smt.getVariableManager().constructFreshTermVariable(var);
 				}
 				subsitutionMapping.put(outVar, newOutVar);
 				// add to outvars if var is not outvar
@@ -428,7 +428,7 @@ public class TransFormula implements Serializable {
 				} else {
 					// case: var is read and written
 					Sort sort = outVar.getSort();
-					TermVariable newInVar = getFreshVariable(boogie2smt,var, sort);
+					TermVariable newInVar = boogie2smt.getVariableManager().constructFreshTermVariable(var);
 					subsitutionMapping.put(inVar, newInVar);
 					inVars.put(var, newInVar);
 					if (outVars.get(var) != newOutVar) {
@@ -438,7 +438,8 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (TermVariable auxVar : transFormula[i].getAuxVars()) {
-				TermVariable newAuxVar = getFreshAuxVariable(boogie2smt, auxVar.getName(), auxVar.getSort());
+				TermVariable newAuxVar = boogie2smt.getVariableManager().
+						constructFreshTermVariable(auxVar.getName(), auxVar.getSort());
 				subsitutionMapping.put(auxVar, newAuxVar);
 				auxVars.add(newAuxVar);
 			}
@@ -456,7 +457,7 @@ public class TransFormula implements Serializable {
 						newInVar = inVars.get(var);
 					} else {
 						Sort sort = inVar.getSort();
-						newInVar = getFreshVariable(boogie2smt,var, sort); 
+						newInVar = boogie2smt.getVariableManager().constructFreshTermVariable(var);
 						inVars.put(var, newInVar);
 					}
 					subsitutionMapping.put(inVar, newInVar);
