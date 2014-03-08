@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
@@ -50,7 +51,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.s_PLUGIN_ID);
 	
-	public static final String s_NoSpec = "No specification checked";
 	/**
 	 * Root Node of this Ultimate model. I use this to store information that
 	 * should be passed to the next plugin. The Successors of this node exactly
@@ -244,7 +244,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 		switch (result) {
 		case SAFE:
-			reportPositiveResult(errorLocs);
+			reportPositiveResults(errorLocs);
 			break;
 		case UNSAFE: 
 			{
@@ -280,19 +280,13 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		reportTimingStatistics(root, timingStatistics);	
 	}
 	
-	private void reportPositiveResult(Collection<ProgramPoint> errorLocs) {
+	private void reportPositiveResults(Collection<ProgramPoint> errorLocs) {
+		final String longDescription;
 		if (errorLocs.isEmpty()) {
-			String shortDescription = s_NoSpec;
-			String longDescription = "We were not able to verify any" +
+			longDescription = "We were not able to verify any" +
 					" specifiation because the program does not contain any specification.";
-			GenericResult gr = new GenericResult(
-					Activator.s_PLUGIN_NAME, 
-					shortDescription,
-					longDescription,
-					GenericResultAtElement.Severity.WARNING);
-			s_Logger.warn(shortDescription + " " + longDescription);
-			reportResult(gr);
 		} else {
+			longDescription = errorLocs.size() + " specifications checked. All of them hold";
 			for (ProgramPoint errorLoc : errorLocs) {
 				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(
 						Activator.s_PLUGIN_NAME,
@@ -301,6 +295,10 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				reportResult(pResult);
 			}
 		}
+		AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(
+				Activator.s_PLUGIN_NAME, longDescription);
+		reportResult(result);
+		s_Logger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}
 	
 	private void reportCounterexampleResult(RcfgProgramExecution pe) {

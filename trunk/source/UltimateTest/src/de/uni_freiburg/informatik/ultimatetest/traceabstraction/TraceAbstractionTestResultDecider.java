@@ -17,6 +17,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionObserver;
+import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
@@ -314,14 +315,8 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 	
 
 	private AutomizerResult extractResult(IResult result) {
-		if (result instanceof GenericResult) {
-			if (result.getShortDescription().equals(TraceAbstractionObserver.s_NoSpec)) {
-				return new AutomizerResult(AutomizerResultType.SAFE, null);
-			} else {
-				return null;
-			}
-		} else if (result instanceof PositiveResult) {
-			return new AutomizerResult(AutomizerResultType.SAFE, null);
+		if (result instanceof AllSpecificationsHoldResult) {
+			return new AutomizerResult(AutomizerResultType.SAFE, result);
 		} else if (result instanceof CounterExampleResult) {
 			return new AutomizerResult(AutomizerResultType.UNSAFE, null);
 		} else if (result instanceof UnprovableResult) {
