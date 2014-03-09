@@ -73,8 +73,8 @@ public class NestedSsaBuilder {
 	private final static String s_GotosUnsupportedMessage = 
 			"TraceChecker is only applicable to RCFGs whose auxilliary goto edges have been removed";
 	
-	final Script m_Script;
-	final SmtManager m_SmtManager;
+	private final Script m_Script;
+	private final SmtManager m_SmtManager;
 
 
 	/**
@@ -97,11 +97,11 @@ public class NestedSsaBuilder {
 			new Stack<Map<BoogieVar,Term>>();
 	
 
-	Integer startOfCallingContext;
-	final Stack<Integer> startOfCallingContextStack =new Stack<Integer>();
+	private Integer startOfCallingContext;
+	private final Stack<Integer> startOfCallingContextStack =new Stack<Integer>();
 
 	
-	final Map<BoogieVar,TreeMap<Integer,Term>> m_IndexedVarRepresentative =
+	private final Map<BoogieVar,TreeMap<Integer,Term>> m_IndexedVarRepresentative =
 			new HashMap<BoogieVar,TreeMap<Integer,Term>>();
 	
 	public Map<BoogieVar, TreeMap<Integer, Term>> getIndexedVarRepresentative() {
