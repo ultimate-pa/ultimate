@@ -254,7 +254,7 @@ public class TransFormulaBuilder {
 		Term[] argTerms = m_Boogie2smt.expressions2terms(st.getArguments(), inVars, allVars);
 		for (VarList varList : calleeImpl.getInParams()) {
 			IType type = varList.getType().getBoogieType();
-			Sort sort = m_Boogie2smt.getSmt2Boogie().getSort(type, varList);
+			Sort sort = m_Boogie2smt.getTypeSortTranslator().getSort(type, varList);
 			for (String var : varList.getIdentifiers()) {
 				BoogieVar boogieVar = m_Boogie2smt.getLocalBoogieVar(callee, var);
 				String varname = callee + "_" + var + "_" + "InParam";
@@ -295,7 +295,7 @@ public class TransFormulaBuilder {
 		int offset = 0;
 		for (VarList varList : impl.getOutParams()) {
 			IType type = varList.getType().getBoogieType();
-			Sort sort = m_Boogie2smt.getSmt2Boogie().getSort(type, varList);
+			Sort sort = m_Boogie2smt.getTypeSortTranslator().getSort(type, varList);
 			for (String outVar : varList.getIdentifiers()) {
 				BoogieVar outBoogieVar = m_Boogie2smt.getLocalBoogieVar(callee, outVar); 
 				String outTvName = callee + "_" + outVar + "_" + "OutParam";

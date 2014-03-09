@@ -148,6 +148,8 @@ public class Boogie2SMT {
 	
 	private InternalState m_InternalState = InternalState.INIT;
 
+	private final TypeSortTranslator m_TypeSortTranslator;
+
 	public void incGeneration() {
 		VariableSSAManager.incAllIndices();
 		// generation++;
@@ -157,12 +159,13 @@ public class Boogie2SMT {
 		m_BlackHoleArrays = blackHoleArrays;
 		this.m_Script = script;
 		m_VariableManager = new VariableManager(m_Script);
+		m_TypeSortTranslator = new TypeSortTranslator(m_Script, m_BlackHoleArrays);
 		m_VariableSSAManager = new VariableSSAManager(m_Script);
 		m_VariableSSAManager.reset();
 		// intSort = script.sort("Int");
 		// realSort = script.sort("Real");
 
-		m_Smt2Boogie = new Smt2Boogie(m_Script, globals, oldGlobals, blackHoleArrays);
+		m_Smt2Boogie = new Smt2Boogie(m_Script, globals, oldGlobals, m_TypeSortTranslator);
 		//
 
 		// ONE = script.numeral("1");
@@ -208,10 +211,16 @@ public class Boogie2SMT {
 		return m_Smt2Boogie;
 	}
 	
+	
+	
+	public TypeSortTranslator getTypeSortTranslator() {
+		return m_TypeSortTranslator;
+	}
+
 	public void declareTypes(Collection<TypeDeclaration> declarations) {
 		assert m_InternalState == InternalState.INIT : "declared in wrong order";
 		for (TypeDeclaration decl : declarations) {
-			this.declareType(decl);
+			m_TypeSortTranslator.declareType(decl);
 		}
 		m_InternalState = InternalState.TYPES_DECLARED;
 	}
@@ -253,7 +262,9 @@ public class Boogie2SMT {
 	
 	
 	
-	
+	private Sort getSort(IType itype, BoogieASTNode astNode) {
+		return m_TypeSortTranslator.getSort(itype, astNode);
+	}
 	
 	
 	
@@ -282,7 +293,7 @@ public class Boogie2SMT {
 			BoogieASTNode BoogieASTNode) {
 		assert (!isOldvar || procedure == null);
 
-		Sort sort = m_Smt2Boogie.getSort(iType, BoogieASTNode);
+		Sort sort = getSort(iType, BoogieASTNode);
 		String name;
 		if (isOldvar) {
 			name = "old(" + identifier + ")";
@@ -344,7 +355,7 @@ public class Boogie2SMT {
 	 */
 	private TermVariable createInVar(BoogieVar boogieVar, BoogieASTNode BoogieASTNode) {
 		TermVariable tv;
-		Sort sort = m_Smt2Boogie.getSort(boogieVar.getIType(), BoogieASTNode);
+		Sort sort = getSort(boogieVar.getIType(), BoogieASTNode);
 		if (boogieVar.isOldvar()) {
 			tv = boogieVar.getTermVariable();
 		} else {
@@ -450,19 +461,6 @@ public class Boogie2SMT {
 	// typeSymbols.put(id, func);
 	// }
 
-	private void declareType(TypeDeclaration typedecl) {
-		String id = typedecl.getIdentifier();
-		String[] typeParams = typedecl.getTypeParams();
-		if (typeParams.length != 0) {
-			throw new IllegalArgumentException("Only types without parameters supported");
-		}
-		if (typedecl.getSynonym() == null) {
-			m_Script.declareSort(id, 0);
-		} else {
-			Sort synonymSort = m_Smt2Boogie.getSort(typedecl.getSynonym().getBoogieType(), typedecl);
-			m_Script.defineSort(id, new Sort[0], synonymSort);
-		}
-	}
 
 	private void declareFunction(FunctionDeclaration funcdecl) {
 		// for (Attribute attr : funcdecl.getAttributes()) {
@@ -493,12 +491,12 @@ public class Boogie2SMT {
 			int ids = vl.getIdentifiers().length;
 			if (ids == 0)
 				ids = 1;
-			Sort sort = m_Smt2Boogie.getSort(vl.getType().getBoogieType(), funcdecl);
+			Sort sort = getSort(vl.getType().getBoogieType(), funcdecl);
 			for (int i = 0; i < ids; i++) {
 				paramSorts[paramNr++] = sort;
 			}
 		}
-		Sort resultSort = m_Smt2Boogie.getSort(funcdecl.getOutParam().getType().getBoogieType(), funcdecl);
+		Sort resultSort = getSort(funcdecl.getOutParam().getType().getBoogieType(), funcdecl);
 		m_Script.declareFun(smtID, paramSorts, resultSort);
 		m_Smt2Boogie.m_BoogieFunction2SmtFunction.put(id, smtID);
 		m_Smt2Boogie.m_SmtFunction2BoogieFunction.put(smtID, id);
@@ -529,7 +527,7 @@ public class Boogie2SMT {
 		Sort[] paramTypes = new Sort[0];
 
 		for (String id : varlist.getIdentifiers()) {
-			m_Script.declareFun(id, paramTypes, m_Smt2Boogie.getSort(varlist.getType().getBoogieType(), varlist));
+			m_Script.declareFun(id, paramTypes, getSort(varlist.getType().getBoogieType(), varlist));
 			// PredicateSymbol sym = script.createPredicate("c_"+quoteId(id),
 			// paramTypes);
 			globalConsts.put(id, m_Script.term(id));
@@ -868,7 +866,7 @@ public class Boogie2SMT {
 			// }
 			Sort[] params = new Sort[func.getArguments().length];
 			for (int i = 0; i < func.getArguments().length; i++) {
-				params[i] = m_Smt2Boogie.getSort(func.getArguments()[i].getType(), exp);
+				params[i] = getSort(func.getArguments()[i].getType(), exp);
 			}
 			String funcSymb = func.getIdentifier();
 			Term[] parameters = new Term[func.getArguments().length];
@@ -922,7 +920,7 @@ public class Boogie2SMT {
 			m_QuantifiedVariables.beginScope();
 			for (int i = 0; i < variables.length; i++) {
 				IType type = variables[i].getType().getBoogieType();
-				Sort sort = m_Smt2Boogie.getSort(type, exp);
+				Sort sort = getSort(type, exp);
 				for (int j = 0; j < variables[i].getIdentifiers().length; j++) {
 					String identifier = variables[i].getIdentifiers()[j];
 					String smtVarName = "q" + quoteId(variables[i].getIdentifiers()[j]);
@@ -1155,7 +1153,7 @@ public class Boogie2SMT {
 				for (VariableLHS var : ((ModifiesSpecification) spec).getIdentifiers()) {
 					String id = var.getIdentifier();
 					BoogieVar boogieVar = globals.get(id);
-					Sort sort = m_Smt2Boogie.getSort(boogieVar.getIType(), spec);
+					Sort sort = getSort(boogieVar.getIType(), spec);
 					// String inName =
 					// "v_"+quoteId(boogieVar.getIdentifier())+"_"+
 					// VariableSSAManager.getNextVariableIndex(boogieVar);

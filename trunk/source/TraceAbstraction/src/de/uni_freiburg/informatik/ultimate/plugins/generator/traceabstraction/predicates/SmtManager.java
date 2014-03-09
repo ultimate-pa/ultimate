@@ -1227,7 +1227,7 @@ public class SmtManager {
 		String name = procString+ "_" + varString;
 		Term constant = m_IndexedConstants.get(name);
 		if (constant == null) {
-			Sort resultSort = m_Smt2Boogie.getSort(var.getIType(), null);
+			Sort resultSort = m_Boogie2Smt.getTypeSortTranslator().getSort(var.getIType(), null);
 			Sort[] emptySorts = {};
 			m_Script.declareFun(name, emptySorts, resultSort);
 			Term[] emptyTerms = {};
@@ -1251,7 +1251,7 @@ public class SmtManager {
 		String name = procString+ "_" + varString + "_" + indexString;
 		Term constant = m_IndexedConstants.get(name);
 		if (constant == null) {
-			Sort resultSort = m_Smt2Boogie.getSort(var.getIType(), null);
+			Sort resultSort = m_Boogie2Smt.getTypeSortTranslator().getSort(var.getIType(), null);
 			Sort[] emptySorts = {};
 			m_Script.declareFun(name, emptySorts, resultSort);
 			Term[] emptyTerms = {};

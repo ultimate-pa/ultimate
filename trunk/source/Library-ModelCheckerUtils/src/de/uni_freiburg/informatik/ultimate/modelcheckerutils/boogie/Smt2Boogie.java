@@ -11,10 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
@@ -25,9 +22,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.IType;
@@ -72,9 +67,6 @@ public class Smt2Boogie implements Serializable {
 	private final Map<String, BoogieVar> m_Globals;
 	private final Map<String, BoogieVar> m_OldGlobals;
 	
-	private final Map<IType, Sort> m_type2sort = new HashMap<IType, Sort>();
-	private final Map<Sort, IType> m_sort2type = new HashMap<Sort, IType>();
-	
 	final Map<TermVariable,BoogieVar> m_SmtVar2SmtBoogieVar;
 	
 	final Map<String,String> m_BoogieFunction2SmtFunction
@@ -89,28 +81,20 @@ public class Smt2Boogie implements Serializable {
 
 	
 	private int m_freshIdentiferCounter = 0;
-	
-	private final boolean m_BlackHoleArrays;
+
+
+	private TypeSortTranslator m_TypeSortTranslator;
 	
 	
 	public Smt2Boogie(Script script, Map<String, BoogieVar> globals, 
 									 Map<String, BoogieVar> oldGlobals,
-									 boolean blackHoleArrays) {
-		m_BlackHoleArrays = blackHoleArrays;
+									 TypeSortTranslator tsTranslation) {
 		m_Script = script;
+		m_TypeSortTranslator = tsTranslation;
 		m_Globals = globals;
 		m_OldGlobals = oldGlobals;
 		m_SmtVar2SmtBoogieVar = new HashMap<TermVariable,BoogieVar>();
 		m_SmtTerm2Const = new HashMap<Term, IdentifierExpression>();
-		
-		Sort boolSort = m_Script.sort("Bool");
-		IType boolType = BoogieType.boolType;
-		m_type2sort.put(boolType, boolSort);
-		m_sort2type.put(boolSort, boolType);
-		Sort intSort = m_Script.sort("Int");
-		IType intType = BoogieType.intType;
-		m_type2sort.put(intType, intSort);
-		m_sort2type.put(intSort, intType);
 
 	}
 
@@ -171,104 +155,7 @@ public class Smt2Boogie implements Serializable {
 		return Collections.unmodifiableMap(m_OldGlobals);
 	}
 
-	public IType getType(Sort sort) {
-		IType type = m_sort2type.get(sort);
-		if (type == null) {
-			//TODO Matthias: The following special treatment of arrays is only
-			//necessary if we allow to backtranslate to arrays that do not occur
-			//in the boogie program. Might be useful if we allow store
-			// expressions in interpolants and don't replace them by select
-			// expressions.
-			if (sort.isArraySort()) {
-				assert sort.getName().equals("Array");
-				Sort indexSort = sort.getArguments()[0];
-				Sort valueSort = sort.getArguments()[1];
-				BoogieType[] indexTypes = { (BoogieType) getType(indexSort) };
-				BoogieType valueType = (BoogieType) getType(valueSort);
-				type = BoogieType.createArrayType(0, indexTypes, valueType);
-			} else {
-				throw new IllegalArgumentException("Unknown sort" + sort);
-			}
-		}
-		return type;
-	}
-	
-	
-	/**
-	 * Return the SMT sort for a boogie type.
-	 * If the (type,sort) pair is not already stored in m_type2sort the 
-	 * corresponding sort is constructed and the pair (sort, type) is added to
-	 * m_sort2type which is used for a backtranslation.
-	 * @param BoogieASTNode BoogieASTNode for which Sort is computed 
-	 */
-	public Sort getSort(IType type, BoogieASTNode BoogieASTNode) {
-		if (m_type2sort.containsKey(type)) {
-			return m_type2sort.get(type);
-		} else {
-			return constructSort(type, BoogieASTNode);
-		}
-	}
-		
-		
-		
-	/**
-	 * Construct the SMT sort for a boogie type.
-	 * Store the (type, sort) pair in m_type2sort. Store the (sort, type) pair 
-	 * in m_sort2type.
-	 * @param BoogieASTNode BoogieASTNode for which Sort is computed 
-	 */
-	private Sort constructSort(IType boogieType, BoogieASTNode BoogieASTNode) {
-		Sort result;
-		if (boogieType instanceof PrimitiveType) {
-			if (boogieType.equals(PrimitiveType.boolType)) {
-				result = m_Script.sort("Bool");
-			}
-			else if (boogieType.equals(PrimitiveType.intType)) {
-				result = m_Script.sort("Int");
-			}
-			else if (boogieType.equals(PrimitiveType.realType)) {
-				result = m_Script.sort("Real");
-			}
-			else {
-				throw new IllegalArgumentException("Unsupported primitive type");
-			}
-		}
-		else if (boogieType instanceof ArrayType) {
-			ArrayType arrayType = (ArrayType) boogieType;
-			Sort rangeSort = constructSort(arrayType.getValueType(), BoogieASTNode);
-			if (m_BlackHoleArrays) {
-				result = rangeSort;
-			} else {
-				try {
-					for (int i = arrayType.getIndexCount() - 1; i >= 1; i--) {
-						Sort sorti = constructSort(arrayType.getIndexType(i), BoogieASTNode);
-						rangeSort = m_Script.sort("Array", sorti, rangeSort);
-					}
-					Sort domainSort = constructSort(arrayType.getIndexType(0), BoogieASTNode);
-					result = m_Script.sort("Array", domainSort,rangeSort);
-				}
-				catch (SMTLIBException e) {
-					if (e.getMessage().equals("Sort Array not declared")) {
-						reportUnsupportedSyntax(BoogieASTNode, "Solver does not support arrays");
-						throw e;
-					}
-					else {
-						throw new AssertionError(e);
-					}
-				}
-			}
-		}
-		else if (boogieType instanceof ConstructedType) {
-			ConstructedType constructedType = (ConstructedType) boogieType;
-			String name = constructedType.getConstr().getName();
-			result = m_Script.sort(name);
-		} else {
-			throw new IllegalArgumentException("Unsupported type" + boogieType);
-		}
-		m_type2sort.put(boogieType, result);
-		m_sort2type.put(result, boogieType);
-		return result;
-	}
+
 
 	
 	
@@ -276,7 +163,7 @@ public class Smt2Boogie implements Serializable {
 	
 	public void declareConst(String id, Term term) {
 		IdentifierExpression ie;
-		ie = new IdentifierExpression(null, getType(term.getSort()),id,
+		ie = new IdentifierExpression(null, m_TypeSortTranslator.getType(term.getSort()),id,
 				new DeclarationInformation(StorageClass.GLOBAL, null));
 		m_SmtTerm2Const.put(term, ie);
 	}
@@ -322,7 +209,7 @@ public class Smt2Boogie implements Serializable {
 	
 	private Expression translate(ApplicationTerm term) {
 		FunctionSymbol symb = term.getFunction();
-		IType type = getType(symb.getReturnSort());
+		IType type = m_TypeSortTranslator.getType(symb.getReturnSort());
 		Term[] termParams = term.getParameters();
 		if (symb.isIntern() && symb.getName().equals("select")) {
 			return translateSelect(term);
@@ -335,11 +222,11 @@ public class Smt2Boogie implements Serializable {
 		}
 		if (symb.getParameterCount() == 0) {
 			if (term == m_Script.term("true")) {
-				IType booleanType = getType(m_Script.sort("Bool"));
+				IType booleanType = m_TypeSortTranslator.getType(m_Script.sort("Bool"));
 				return new BooleanLiteral(null, booleanType, true);
 			}
 			if (term == m_Script.term("false")) {
-				IType booleanType = getType(m_Script.sort("Bool"));
+				IType booleanType = m_TypeSortTranslator.getType(m_Script.sort("Bool"));
 				return new BooleanLiteral(null, booleanType, false);
 			}
 			IdentifierExpression ie = getConstDeclaration(term);
@@ -445,7 +332,7 @@ public class Smt2Boogie implements Serializable {
 
 	private Expression translate(ConstantTerm term) {
 		Object value = term.getValue();
-		IType type = getType(term.getSort());
+		IType type = m_TypeSortTranslator.getType(term.getSort());
 		if (value instanceof String) {
 			return new StringLiteral(null, type, value.toString());
 		} else if (value instanceof BigInteger) {
@@ -474,7 +361,7 @@ public class Smt2Boogie implements Serializable {
 		VarList[] parameters = new VarList[term.getVariables().length];
 		int offset = 0;
 		for (TermVariable tv : term.getVariables()) {
-			IType type = getType(tv.getSort());
+			IType type = m_TypeSortTranslator.getType(tv.getSort());
 			String[] identifiers = { tv.getName() };
 			//FIXME: Matthias: How can I get the ASTType of type?
 			VarList varList = new VarList(null, identifiers, null);
@@ -482,7 +369,7 @@ public class Smt2Boogie implements Serializable {
 			m_QuantifiedVariables.put(tv, varList);
 			offset++;
 		}
-		IType type = getType(term.getSort());
+		IType type = m_TypeSortTranslator.getType(term.getSort());
 		assert (term.getQuantifier() == QuantifiedFormula.FORALL || 
 							term.getQuantifier() == QuantifiedFormula.EXISTS);
 		boolean isUniversal = term.getQuantifier() == QuantifiedFormula.FORALL;
@@ -518,7 +405,7 @@ public class Smt2Boogie implements Serializable {
 	
 	private Expression translate(TermVariable term) {
 		Expression result;
-		IType type = getType(term.getSort());
+		IType type = m_TypeSortTranslator.getType(term.getSort());
 		if (m_QuantifiedVariables.containsKey(term)) {
 			VarList varList = m_QuantifiedVariables.get(term);
 			assert varList.getIdentifiers().length == 1;
