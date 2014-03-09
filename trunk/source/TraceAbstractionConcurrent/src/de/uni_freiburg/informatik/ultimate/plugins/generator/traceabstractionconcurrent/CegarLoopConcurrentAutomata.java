@@ -145,7 +145,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 //		howDifferentAreInterpolants(m_InterpolAutomaton.getStates());
 		
 		m_TraceAbstractionBenchmarks.startDifference();
-		boolean explointSigmaStarConcatOfIA = !m_Pref.computeHoareAnnotation();
+		boolean explointSigmaStarConcatOfIA = !m_ComputeHoareAnnotation;
 		
 		PredicateFactory predicateFactory = (PredicateFactory) m_Abstraction.getStateFactory();
 		
@@ -161,7 +161,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 			IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 			
 
-				PostDeterminizer epd = new PostDeterminizer(edgeChecker, m_Pref.computeHoareAnnotation(), 
+				PostDeterminizer epd = new PostDeterminizer(edgeChecker, m_ComputeHoareAnnotation, 
 									m_InterpolAutomaton,true);
 				if (m_Pref.differenceSenwa()) {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
@@ -190,12 +190,12 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 				assert (m_SmtManager.checkInductivity(epd.getRejectionCache(), true, false) | true);
 
 			if (m_RemoveDeadEnds) {
-				if (m_Pref.computeHoareAnnotation()) {
+				if (m_ComputeHoareAnnotation) {
 					Difference<CodeBlock, IPredicate> difference = (Difference<CodeBlock, IPredicate>) diff;
 					m_Haf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
 				}
 				diff.removeDeadEnds();
-				if (m_Pref.computeHoareAnnotation()) {
+				if (m_ComputeHoareAnnotation) {
 					m_Haf.addDeadEndDoubleDeckers(diff);
 				}
 			}
@@ -229,7 +229,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 						newAbstraction, partition, m_StateFactoryForRefinement, true, false, false, 200, false, 0, false, false);
 				assert minimizeOp.checkResult(predicateFactory);
 				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(minimizeOp.getResult())).getResult();
-				if (m_Pref.computeHoareAnnotation()) {
+				if (m_ComputeHoareAnnotation) {
 					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
 					m_Haf.updateOnMinimization(oldState2newState, minimized);
 				}
@@ -237,7 +237,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 				MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(newAbstraction, partition, false, false, m_StateFactoryForRefinement);
 				assert minimizeOp.checkResult(predicateFactory);
 				minimized = minimizeOp.getResult();
-				if (m_Pref.computeHoareAnnotation()) {
+				if (m_ComputeHoareAnnotation) {
 					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
 					m_Haf.updateOnMinimization(oldState2newState, minimized);
 				}
