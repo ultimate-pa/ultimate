@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 
 
 
@@ -56,6 +57,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 			SmtManager smtManager, TraceAbstractionBenchmarks timingStatistics,
 			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs) {
 		super(name, rootNode, smtManager, timingStatistics, taPrefs, errorLocs);
+		m_Interpolation = INTERPOLATION.Craig_TreeInterpolation;
 //		m_ContentFactory = new TaConcurContentFactory(
 //				rootNode.getRootAnnot().getLocNodes(),
 //				this,

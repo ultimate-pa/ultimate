@@ -71,6 +71,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected PredicateFactoryRefinement m_StateFactoryForRefinement;
 	
 	protected final TraceAbstractionBenchmarks m_TraceAbstractionBenchmarks;
+	
+	protected INTERPOLATION m_Interpolation;
 
 
 	
@@ -82,6 +84,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			Collection<ProgramPoint> errorLocs) {
 	
 		super(name, rootNode, smtManager, taPrefs, errorLocs);
+		m_Interpolation = m_Pref.interpolation();
 		m_TraceAbstractionBenchmarks = traceAbstractionBenchmarks;
 		m_Haf = new HoareAnnotationFragments(rootNode.getRootAnnot(),super.m_SmtManager);
 		m_StateFactoryForRefinement = new PredicateFactoryRefinement(
@@ -145,7 +148,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		IPredicate truePredicate = m_SmtManager.newTruePredicate();
 		IPredicate falsePredicate = m_SmtManager.newFalsePredicate();
 		
-		switch (m_Pref.interpolation()) {
+		switch (m_Interpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			m_TraceChecker = new TraceChecker(truePredicate, falsePredicate, 
