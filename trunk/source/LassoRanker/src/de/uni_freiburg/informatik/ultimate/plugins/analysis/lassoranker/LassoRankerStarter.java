@@ -272,15 +272,6 @@ public class LassoRankerStarter {
 	}
 	
 	/**
-	 * @return the current location for building results
-	 */
-	private ILocation getLocation() {
-		// Deprecated method without replacement
-		ILocation location = m_Honda.getBoogieASTNode().getLocation().getOrigin();
-		return location;
-	}
-	
-	/**
 	 * Report a termination argument back to Ultimate's toolchain.
 	 * @param arg the termination argument
 	 */
@@ -305,8 +296,7 @@ public class LassoRankerStarter {
 					rf.asLexExpression(script, smt2boogie),
 					rf.getName(),
 					supporting_invariants,
-					getTranslatorSequence(),
-					getLocation()
+					getTranslatorSequence()
 				);
 		reportResult(result);
 	}
@@ -326,8 +316,7 @@ public class LassoRankerStarter {
 					arg.getStateHonda(),
 					arg.getRay(),
 					arg.getLambda(),
-					getTranslatorSequence(),
-					getLocation()
+					getTranslatorSequence()
 				);
 		reportResult(result);
 	}

@@ -632,8 +632,7 @@ public class BuchiCegarLoop {
 							rf.asLexExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie()),
 							rf.getName(),
 							supporting_invariants,
-							UltimateServices.getInstance().getTranslatorSequence(),
-							honda.getPayload().getLocation()
+							UltimateServices.getInstance().getTranslatorSequence()
 							);
 			return result;
 		}

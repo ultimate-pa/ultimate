@@ -61,8 +61,7 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 			Map<BoogieVar, Rational> state_honda,
 			Map<BoogieVar, Rational> ray,
 			Rational lambda,
-			List<ITranslator<?,?,?,?>> translatorSequence,
-			ILocation location) {
+			List<ITranslator<?,?,?,?>> translatorSequence) {
 		super(position, plugin, translatorSequence);
 		this.m_StateInit = state_init;
 		this.m_StateHonda = state_honda;

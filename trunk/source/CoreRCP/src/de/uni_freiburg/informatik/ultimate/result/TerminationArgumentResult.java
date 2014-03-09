@@ -32,14 +32,12 @@ public class TerminationArgumentResult<P extends IElement> extends AbstractResul
 	 * @param supporting_invariants list of supporting invariants in form of
 	 *                              Boogie expressions
 	 * @param translatorSequence the toolchain's translator sequence
-	 * @param location program location
 	 */
 	public TerminationArgumentResult(P position, String plugin,
 			Expression[] ranking_function,
 			String rankingFunctionDescription,
 			Expression[] supporting_invariants,
-			List<ITranslator<?,?,?,?>> translatorSequence,
-			ILocation location) {
+			List<ITranslator<?,?,?,?>> translatorSequence) {
 		super(position, plugin, translatorSequence);
 		this.m_RankingFunction = ranking_function;
 		this.m_RankingFunctionDescription = rankingFunctionDescription;

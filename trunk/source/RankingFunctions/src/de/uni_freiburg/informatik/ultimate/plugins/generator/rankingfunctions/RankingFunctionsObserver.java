@@ -205,8 +205,7 @@ public class RankingFunctionsObserver implements IUnmanagedObserver {
 										new Expression[] {rfExp},
 										"LinearRankingFunction",
 										siExpressionArray,
-										UltimateServices.getInstance().getTranslatorSequence(),
-										honda.getBoogieASTNode().getLocation().getOrigin());
+										UltimateServices.getInstance().getTranslatorSequence());
 						reportResult(rankRes);
 						s_Logger.info(rankRes.getShortDescription());
 						s_Logger.info(rankRes.getLongDescription());
