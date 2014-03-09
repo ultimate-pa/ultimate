@@ -42,8 +42,12 @@ public class Expression2Term {
 	private final TypeSortTranslator m_TypeSortTranslator;
 	private final SmtIdentifierProvider m_SmtIdentifierProvider;
 	
-	private boolean isOldContext = false;
-
+	/**
+	 * Count the height of current old(.) expressions. As long as this is
+	 * strictly greater than zero we are have to consider all global vars as
+	 * oldvars.   
+	 */
+	private int m_OldContextScopeDepth = 0;
 	
 
 	
@@ -62,6 +66,15 @@ public class Expression2Term {
 		} else {
 			return m_SmtIdentifierProvider.getSmtIdentifier(id, declInfo, isOldContext, boogieASTNode);
 		}
+	}
+	
+	/**
+	 * We are in a context where we have to consider all global vars as oldvars
+	 * if m_OldContextScopeDepth is > 0.
+	 * @return
+	 */
+	private boolean isOldContext() {
+		return m_OldContextScopeDepth > 0;
 	}
 
 
@@ -176,10 +189,9 @@ public class Expression2Term {
 				// FunctionSymbol fun_symb = script.getFunction("-", intSort);
 				return m_Script.term("-", translateTerm(unexp.getExpr()));
 			} else if (op == UnaryExpression.Operator.OLD) {
-				boolean oldOldContext = isOldContext;
-				isOldContext = true;
+				m_OldContextScopeDepth++;
 				Term term = translateTerm(unexp.getExpr());
-				isOldContext = oldOldContext;
+				m_OldContextScopeDepth--;
 				return term;
 			} else
 				throw new AssertionError("Unsupported unary expression " + exp);
@@ -227,7 +239,7 @@ public class Expression2Term {
 		} else if (exp instanceof IdentifierExpression) {
 			IdentifierExpression var = (IdentifierExpression) exp;
 			assert var.getDeclarationInformation() != null : " no declaration information";
-			Term result = getSmtIdentifier(var.getIdentifier(), var.getDeclarationInformation(), isOldContext, exp);
+			Term result = getSmtIdentifier(var.getIdentifier(), var.getDeclarationInformation(), isOldContext(), exp);
 			assert result != null;
 			return result;
 
