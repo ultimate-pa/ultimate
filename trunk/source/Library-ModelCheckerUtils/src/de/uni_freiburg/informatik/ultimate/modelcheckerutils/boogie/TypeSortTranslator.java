@@ -141,7 +141,7 @@ public class TypeSortTranslator {
 				}
 				catch (SMTLIBException e) {
 					if (e.getMessage().equals("Sort Array not declared")) {
-						reportUnsupportedSyntax(BoogieASTNode, "Solver does not support arrays");
+						Boogie2SMT.reportUnsupportedSyntax(BoogieASTNode, "Solver does not support arrays");
 						throw e;
 					}
 					else {
@@ -162,13 +162,4 @@ public class TypeSortTranslator {
 		return result;
 	}
 	
-	
-	void reportUnsupportedSyntax(BoogieASTNode BoogieASTNode, String longDescription) {
-		UnsupportedSyntaxResult<BoogieASTNode> result = new UnsupportedSyntaxResult<BoogieASTNode>(BoogieASTNode,
-				Activator.s_PLUGIN_NAME,
-				UltimateServices.getInstance().getTranslatorSequence(),longDescription);
-		UltimateServices.getInstance().reportResult("Smt2Boogie", result);
-		UltimateServices.getInstance().cancelToolchain();
-	}
-
 }

@@ -552,13 +552,7 @@ public class Smt2Boogie implements Serializable {
 		return result;
 	}
 	
-	void reportUnsupportedSyntax(BoogieASTNode BoogieASTNode, String longDescription) {
-		UnsupportedSyntaxResult<BoogieASTNode> result = new UnsupportedSyntaxResult<BoogieASTNode>(BoogieASTNode,
-				Activator.s_PLUGIN_NAME,
-				UltimateServices.getInstance().getTranslatorSequence(),longDescription);
-		UltimateServices.getInstance().reportResult("Smt2Boogie", result);
-		UltimateServices.getInstance().cancelToolchain();
-	}
+
 
 
 }

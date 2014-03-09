@@ -11,11 +11,9 @@ import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.logic.Annotation;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -24,44 +22,30 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitVectorAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.SmtIdentifierProvider;
+import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
-public class Boogie2SMT {
+public class Boogie2SMT implements SmtIdentifierProvider {
 	private Script m_Script;
 
 	// private ArrayList<FunctionSymbol> selectStores = new
@@ -94,7 +78,7 @@ public class Boogie2SMT {
 	private HashMap<String, BoogieVar> oldGlobals = new HashMap<String, BoogieVar>();
 	private Map<String, Map<String, BoogieVar>> m_Proc2Locals = new HashMap<String, Map<String, BoogieVar>>();
 
-	private ScopedHashMap<String, TermVariable> m_QuantifiedVariables = new ScopedHashMap<String, TermVariable>();
+
 
 	/**
 	 * Maps procedure identifier to procedure specification
@@ -104,7 +88,7 @@ public class Boogie2SMT {
 	// private FunctionSymbol partOrder, leqInt, ltInt, geqInt, gtInt;
 	// private FunctionSymbol leqReal, ltReal, geqReal, gtReal;
 
-	private boolean isOldContext = false;
+
 	// private int generation = 0;
 	private VariableSSAManager m_VariableSSAManager = null;
 
@@ -130,7 +114,6 @@ public class Boogie2SMT {
 	// private Map<IType,Sort> m_BoogieType2SmtSort = new HashMap<IType,Sort>();
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger("Boogie2SMT");
-	private static final boolean debugMessages = false;
 	Smt2Boogie m_Smt2Boogie;
 
 	/**
@@ -149,6 +132,7 @@ public class Boogie2SMT {
 	private InternalState m_InternalState = InternalState.INIT;
 
 	private final TypeSortTranslator m_TypeSortTranslator;
+	private final Expression2Term m_Expression2Term;
 
 	public void incGeneration() {
 		VariableSSAManager.incAllIndices();
@@ -161,6 +145,7 @@ public class Boogie2SMT {
 		m_VariableManager = new VariableManager(m_Script);
 		m_TypeSortTranslator = new TypeSortTranslator(m_Script, m_BlackHoleArrays);
 		m_VariableSSAManager = new VariableSSAManager(m_Script);
+		m_Expression2Term = new Expression2Term(m_Script, m_TypeSortTranslator, this);
 		m_VariableSSAManager.reset();
 		// intSort = script.sort("Int");
 		// realSort = script.sort("Real");
@@ -209,6 +194,11 @@ public class Boogie2SMT {
 
 	public Smt2Boogie getSmt2Boogie() {
 		return m_Smt2Boogie;
+	}
+	
+	static String quoteId(String id) {
+		// return Term.quoteId(id);
+		return id;
 	}
 	
 	
@@ -272,10 +262,7 @@ public class Boogie2SMT {
 	
 	
 
-	private String quoteId(String id) {
-		// return Term.quoteId(id);
-		return id;
-	}
+
 
 	/**
 	 * Construct BoogieVar and store it. Expects that no BoogieVar with the same
@@ -372,10 +359,8 @@ public class Boogie2SMT {
 	 * construct SmtVariable for id. If inVars does not contain such a variable,
 	 * construct it an add it to invars and outvars.
 	 */
-	private Term getSmtIdentifier(String id, DeclarationInformation declInfo, BoogieASTNode BoogieASTNode) {
-		if (m_QuantifiedVariables.containsKey(id)) {
-			return m_QuantifiedVariables.get(id);
-		}
+	public Term getSmtIdentifier(String id, DeclarationInformation declInfo, boolean isOldContext, BoogieASTNode BoogieASTNode) {
+
 
 		if (globals.containsKey(id) && m_CalleesModifiedGlobalsIn != null) {
 			// case where we process specification of a called procedure.
@@ -583,7 +568,7 @@ public class Boogie2SMT {
 	}
 
 	private void declareAxiom(Axiom ax) {
-		m_Script.assertTerm(translateTerm(ax.getFormula()));
+		m_Script.assertTerm(m_Expression2Term.translateTerm(ax.getFormula()));
 	}
 
 	public void declareProcedure(Procedure proc) {
@@ -718,269 +703,7 @@ public class Boogie2SMT {
 	// return script.term(selstore, result);
 	// }
 
-	private Term translateTerm(Expression exp) {
-		if (exp instanceof ArrayAccessExpression) {
-			ArrayAccessExpression arrexp = (ArrayAccessExpression) exp;
-			Expression[] indices = arrexp.getIndices();
-			Term result = translateTerm(arrexp.getArray());
-			for (int i = 0; i < indices.length; i++) {
-				Term indexiTerm = translateTerm(indices[i]);
-				result = m_Script.term("select", result, indexiTerm);
-			}
-			assert (result.toString() instanceof Object);
-			return result;
 
-		} else if (exp instanceof ArrayStoreExpression) {
-			ArrayStoreExpression arrexp = (ArrayStoreExpression) exp;
-			Expression[] indices = arrexp.getIndices();
-			assert indices.length > 0;
-			// arrayBeforeIndex[i] represents the array, where all indices
-			// before the i'th index have already been selected
-			Term[] arrayBeforeIndex = new Term[indices.length];
-			Term[] indexTerm = new Term[indices.length];
-			arrayBeforeIndex[0] = translateTerm(arrexp.getArray());
-			for (int i = 0; i < indices.length - 1; i++) {
-				indexTerm[i] = translateTerm(indices[i]);
-				arrayBeforeIndex[i + 1] = m_Script.term("select", arrayBeforeIndex[i], indexTerm[i]);
-			}
-			indexTerm[indices.length - 1] = translateTerm(indices[indices.length - 1]);
-			Term result = translateTerm(arrexp.getValue());
-			for (int i = indices.length - 1; i >= 0; i--) {
-				result = m_Script.term("store", arrayBeforeIndex[i], indexTerm[i], result);
-			}
-			assert (result != null);
-			assert (result.toString() instanceof Object);
-			return result;
-
-		} else if (exp instanceof BinaryExpression) {
-			BinaryExpression binexp = (BinaryExpression) exp;
-			BinaryExpression.Operator op = binexp.getOperator();
-			// Sort sort = m_Smt2Boogie.getSort(binexp.getLeft().getType());
-
-			if (op == BinaryExpression.Operator.COMPEQ) {
-				// if
-				// (binexp.getLeft().getType().equals(PrimitiveType.boolType))
-				return m_Script.term("=", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
-				// else
-				// return script.equals(translateTerm(binexp.getLeft()),
-				// translateTerm(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.COMPGEQ) {
-				return m_Script.term(">=", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.COMPGT) {
-				return m_Script.term(">", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.COMPLEQ) {
-				return m_Script.term("<=", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.COMPLT) {
-				return m_Script.term("<", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.COMPNEQ) {
-				if (binexp.getLeft().getType().equals(PrimitiveType.boolType)) {
-					return m_Script.term("xor", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
-				} else {
-					return Util.not(m_Script,
-							m_Script.term("=", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight())));
-				}
-				// } else if (op == BinaryExpression.Operator.COMPPO ){
-				// return script.atom(partOrder,
-				// translateTerm(binexp.getLeft()),
-				// translateTerm(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.LOGICAND) {
-				return Util.and(m_Script, translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.LOGICOR) {
-				return Util.or(m_Script, translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.LOGICIMPLIES) {
-				return Util.implies(m_Script, translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.LOGICIFF) {
-				return m_Script.term("=", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.ARITHDIV) {
-				IType lhsType = binexp.getLeft().getType();
-				if (lhsType instanceof PrimitiveType) {
-					PrimitiveType primType = (PrimitiveType) lhsType;
-					if (primType.getTypeCode() == PrimitiveType.INT) {
-						return m_Script.term("div", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
-					} else if (primType.getTypeCode() == PrimitiveType.REAL) {
-						return m_Script.term("/", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
-					} else {
-						throw new AssertionError("ARITHDIV of this type not allowed");
-					}
-				} else {
-					throw new AssertionError("ARITHDIV of this type not allowed");
-				}
-			} else if (op == BinaryExpression.Operator.ARITHMINUS) {
-				return m_Script.term("-", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.ARITHMOD) {
-				return m_Script.term("mod", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.ARITHMUL) {
-				return m_Script.term("*", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.ARITHPLUS) {
-				return m_Script.term("+", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.BITVECCONCAT) {
-				/* TODO */
-				throw new UnsupportedOperationException("BITVECCONCAT not implemented");
-			} else {
-				throw new AssertionError("Unsupported binary expression " + exp);
-			}
-
-		} else if (exp instanceof UnaryExpression) {
-			UnaryExpression unexp = (UnaryExpression) exp;
-			UnaryExpression.Operator op = unexp.getOperator();
-			if (op == UnaryExpression.Operator.LOGICNEG) {
-				return Util.not(m_Script, translateTerm(unexp.getExpr()));
-			} else if (op == UnaryExpression.Operator.ARITHNEGATIVE) {
-				// FunctionSymbol fun_symb = script.getFunction("-", intSort);
-				return m_Script.term("-", translateTerm(unexp.getExpr()));
-			} else if (op == UnaryExpression.Operator.OLD) {
-				boolean oldOldContext = isOldContext;
-				isOldContext = true;
-				Term term = translateTerm(unexp.getExpr());
-				isOldContext = oldOldContext;
-				return term;
-			} else
-				throw new AssertionError("Unsupported unary expression " + exp);
-
-		} else if (exp instanceof RealLiteral) {
-			Term result = m_Script.decimal(((RealLiteral) exp).getValue());
-			assert result != null;
-			return result;
-
-		} else if (exp instanceof BitvecLiteral) {
-			// TODO
-			throw new UnsupportedOperationException("BitvecLiteral not implemented");
-
-		} else if (exp instanceof BitVectorAccessExpression) {
-			// TODO
-			throw new UnsupportedOperationException("BitVectorAccess not implemented");
-
-		} else if (exp instanceof BooleanLiteral) {
-			Term result = ((BooleanLiteral) exp).getValue() ? m_Script.term("true") : m_Script.term("false");
-			assert result != null;
-			return result;
-
-		} else if (exp instanceof FunctionApplication) {
-			FunctionApplication func = ((FunctionApplication) exp);
-			// if (itefunctions.contains(func.getIdentifier())) {
-			// Formula cond = translateFormula(func.getArguments()[0]);
-			// Term t = translateTerm(func.getArguments()[1]);
-			// Term e = translateTerm(func.getArguments()[2]);
-			// /* Special case: If-then-else */
-			// return script.ite(cond, t, e);
-			// }
-			Sort[] params = new Sort[func.getArguments().length];
-			for (int i = 0; i < func.getArguments().length; i++) {
-				params[i] = getSort(func.getArguments()[i].getType(), exp);
-			}
-			String funcSymb = func.getIdentifier();
-			Term[] parameters = new Term[func.getArguments().length];
-			for (int i = 0; i < func.getArguments().length; i++) {
-				parameters[i] = translateTerm(func.getArguments()[i]);
-			}
-			Term result = m_Script.term(funcSymb, parameters);
-			assert (result.toString() instanceof Object);
-			return result;
-
-		} else if (exp instanceof IdentifierExpression) {
-			IdentifierExpression var = (IdentifierExpression) exp;
-			assert var.getDeclarationInformation() != null : " no declaration information";
-			Term result = getSmtIdentifier(var.getIdentifier(), var.getDeclarationInformation(), exp);
-			assert result != null;
-			return result;
-
-		} else if (exp instanceof IntegerLiteral) {
-			Term result = m_Script.numeral(((IntegerLiteral) exp).getValue());
-			assert result != null;
-			return result;
-
-		} else if (exp instanceof IfThenElseExpression) {
-			IfThenElseExpression ite = (IfThenElseExpression) exp;
-			Term cond = translateTerm(ite.getCondition());
-			Term thenPart = translateTerm(ite.getThenPart());
-			Term elsePart = translateTerm(ite.getElsePart());
-			Term result = m_Script.term("ite", cond, thenPart, elsePart);
-			assert result != null;
-			return result;
-
-		} else if (exp instanceof QuantifierExpression) {
-			// throw new
-			// UnsupportedOperationException("QuantifierExpression not implemented yet");
-			QuantifierExpression quant = (QuantifierExpression) exp;
-			String[] typeParams = quant.getTypeParams();
-			VarList[] variables = quant.getParameters();
-			int numvars = typeParams.length;
-			for (int i = 0; i < variables.length; i++)
-				numvars += variables[i].getIdentifiers().length;
-			TermVariable[] vars = new TermVariable[numvars];
-			// TODO is this really unused code
-			// HashMap<String,Term> newVars = new HashMap<String, Term>();
-			int offset = 0;
-			// for (int j = 0; j < typeParams.length; j++) {
-			// vars[offset] = m_Script.createTermVariable("q" +
-			// quoteId(typeParams[j]), intSort);
-			// typeStack.push(vars[offset]);
-			// offset++;
-			// }
-			m_QuantifiedVariables.beginScope();
-			for (int i = 0; i < variables.length; i++) {
-				IType type = variables[i].getType().getBoogieType();
-				Sort sort = getSort(type, exp);
-				for (int j = 0; j < variables[i].getIdentifiers().length; j++) {
-					String identifier = variables[i].getIdentifiers()[j];
-					String smtVarName = "q" + quoteId(variables[i].getIdentifiers()[j]);
-					vars[offset] = m_Script.variable(smtVarName, sort);
-					m_QuantifiedVariables.put(identifier, vars[offset]);
-					offset++;
-				}
-			}
-			Term form = translateTerm(quant.getSubformula());
-
-			Attribute[] attrs = quant.getAttributes();
-			int numTrigs = 0;
-			for (Attribute a : attrs) {
-				if (a instanceof Trigger)
-					numTrigs++;
-			}
-			Term[][] triggers = new Term[numTrigs][];
-			offset = 0;
-			for (Attribute a : attrs) {
-				if (a instanceof Trigger) {
-					Expression[] trigs = ((Trigger) a).getTriggers();
-					Term[] smttrigs = new Term[trigs.length];
-					for (int i = 0; i < trigs.length; i++) {
-						Term trig = translateTerm(trigs[i]);
-						// if (trig instanceof ITETerm
-						// && ((ITETerm)trig).getTrueCase() == ONE
-						// && ((ITETerm)trig).getFalseCase() == ZERO)
-						// smttrigs[i] = ((ITETerm) trig).getCondition();
-						// else
-						smttrigs[i] = trig;
-					}
-					triggers[offset++] = smttrigs;
-				}
-			}
-			// throw new
-			// UnsupportedOperationException("QuantifierExpression not implemented yet");
-			// identStack.pop();
-			// for (int j = 0; j < typeParams.length; j++) {
-			// typeStack.pop();
-			// }
-			m_QuantifiedVariables.endScope();
-
-			Term result = null;
-			try {
-				result = quant.isUniversal() ? m_Script.quantifier(Script.FORALL, vars, form, triggers) : m_Script
-						.quantifier(Script.EXISTS, vars, form, triggers);
-			} catch (SMTLIBException e) {
-				if (e.getMessage().equals("Cannot create quantifier in quantifier-free logic")) {
-					m_Smt2Boogie.reportUnsupportedSyntax(exp, "Setting does not support quantifiers");
-					throw e;
-				} else {
-					throw new AssertionError();
-				}
-			}
-			assert (result.toString() instanceof Object);
-			return result;
-		} else {
-			throw new AssertionError("Unsupported expression " + exp);
-		}
-	}
 
 	// private Formula translateFormula(Expression exp) {
 	// assert exp.getType().equals(PrimitiveType.boolType) :
@@ -1050,7 +773,7 @@ public class Boogie2SMT {
 		}
 		// generation++;
 		for (TermVariable tv : addedEqualities.keySet()) {
-			Term rhsTerm = translateTerm(addedEqualities.get(tv));
+			Term rhsTerm = m_Expression2Term.translateTerm(addedEqualities.get(tv));
 			Term eq = m_Script.term("=", tv, rhsTerm);
 //			if (m_addBoogieInformation) {
 //				Annotation locationAnnotation = new Annotation(":location", assign.getPayload().getLocation());
@@ -1091,7 +814,7 @@ public class Boogie2SMT {
 	}
 
 	public void addAssume(AssumeStatement assume) {
-		Term f = translateTerm(assume.getFormula());
+		Term f = m_Expression2Term.translateTerm(assume.getFormula());
 //		if (m_addBoogieInformation) {
 //			Annotation locationAnnotation = new Annotation(":location", assume.getPayload().getLocation());
 //			Annotation statementAnnotation = new Annotation(":statement", assume);
@@ -1103,7 +826,7 @@ public class Boogie2SMT {
 	}
 
 	public void addAssert(AssertStatement assertstmt) {
-		Term f = translateTerm(assertstmt.getFormula());
+		Term f = m_Expression2Term.translateTerm(assertstmt.getFormula());
 //		if (m_addBoogieInformation) {
 //			Annotation locationAnnotation = new Annotation(":location", assertstmt.getPayload().getLocation());
 //			Annotation statementAnnotation = new Annotation(":statement", assertstmt);
@@ -1135,7 +858,7 @@ public class Boogie2SMT {
 						.get(name);
 				assert (callLhsVar != null);
 
-				substitution.put(id, getSmtIdentifier(name, lhs[offset].getDeclarationInformation(), vl));
+				substitution.put(id, getSmtIdentifier(name, lhs[offset].getDeclarationInformation(), false, vl));
 				havocVars.add(callLhsVar);
 				offset++;
 			}
@@ -1186,7 +909,7 @@ public class Boogie2SMT {
 		offset = 0;
 		for (VarList vl : procedure.getInParams()) {
 			for (String id : vl.getIdentifiers()) {
-				substitution.put(id, translateTerm(arguments[offset++]));
+				substitution.put(id, m_Expression2Term.translateTerm(arguments[offset++]));
 			}
 		}
 
@@ -1198,7 +921,7 @@ public class Boogie2SMT {
 		for (Specification spec : procedure.getSpecification()) {
 			if (spec instanceof EnsuresSpecification) {
 				Expression post = ((EnsuresSpecification) spec).getFormula();
-				Term f = translateTerm(post);
+				Term f = m_Expression2Term.translateTerm(post);
 				assumes = Util.and(m_Script, f, assumes);
 				if (spec.isFree()) {
 					asserts = Util.implies(m_Script, f, asserts);
@@ -1212,7 +935,7 @@ public class Boogie2SMT {
 		for (Specification spec : procedure.getSpecification()) {
 			if (spec instanceof RequiresSpecification) {
 				Expression pre = ((RequiresSpecification) spec).getFormula();
-				Term f = translateTerm(pre);
+				Term f = m_Expression2Term.translateTerm(pre);
 				assumes = Util.and(m_Script, f, assumes);
 				if (spec.isFree()) {
 					asserts = Util.implies(m_Script, f, asserts);
@@ -1293,7 +1016,7 @@ public class Boogie2SMT {
 		startBlock();
 		Term[] terms = new Term[exps.length];
 		for (int i = 0; i < exps.length; i++) {
-			terms[i] = translateTerm(exps[i]);
+			terms[i] = m_Expression2Term.translateTerm(exps[i]);
 		}
 		inVars.putAll(this.inVars);
 		allVars.addAll(this.allVars);
@@ -1307,5 +1030,13 @@ public class Boogie2SMT {
 //		m_Script.declareFun(name, new Sort[0], sort);
 //		return m_Script.term(name);
 //	}
+	
+	public static void reportUnsupportedSyntax(BoogieASTNode BoogieASTNode, String longDescription) {
+		UnsupportedSyntaxResult<BoogieASTNode> result = new UnsupportedSyntaxResult<BoogieASTNode>(BoogieASTNode,
+				Activator.s_PLUGIN_NAME,
+				UltimateServices.getInstance().getTranslatorSequence(),longDescription);
+		UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_NAME, result);
+		UltimateServices.getInstance().cancelToolchain();
+	}
 
 }
