@@ -70,6 +70,9 @@ public class NestedSsaBuilder {
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
+	private final static String s_GotosUnsupportedMessage = 
+			"TraceChecker is only applicable to RCFGs whose auxilliary goto edges have been removed";
+	
 	final Script m_Script;
 	final SmtManager m_SmtManager;
 
@@ -240,7 +243,9 @@ public class NestedSsaBuilder {
 		int numberOfPendingCalls = 0;
 		for (int i=0; i < m_Formulas.getTrace().length(); i++) {
 			CodeBlock symbol = m_Formulas.getTrace().getSymbolAt(i);
-			assert (!(symbol instanceof GotoEdge)) : "TraceChecker does not support GotoEdges";
+			if (symbol instanceof GotoEdge) {
+				throw new IllegalArgumentException(s_GotosUnsupportedMessage);
+			}
 			
 			TransFormula tf;
 			if (m_Formulas.getTrace().isCallPosition(i)) {
