@@ -201,8 +201,6 @@ public class RootAnnot extends AbstractAnnotations {
 			return m_LoopLocations;
 		else if (field == "modifiedVars")
 			return m_ModifiedVars;
-		else if (field == "globalVars")
-			return m_GlobalVars;
 		else if (field == "BoogieVar2SmtVar")
 			return m_BoogieVar2SmtVar;
 		else

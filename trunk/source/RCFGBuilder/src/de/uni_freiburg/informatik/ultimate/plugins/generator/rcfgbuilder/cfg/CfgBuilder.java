@@ -235,29 +235,12 @@ public class CfgBuilder {
 			} else
 				throw new AssertionError("Unknown Declaration" + decl);
 		}
-
-		for (TypeDeclaration decl : typeDecls) {
-			m_Boogie2smt.declareType(decl);
-		}
-		for (ConstDeclaration decl : constDecls) {
-			m_Boogie2smt.declareConstants(decl);
-		}
-		for (VariableDeclaration decl : varDecls) {
-			VariableDeclaration varDecl = (VariableDeclaration) decl;
-			VarList[] varLists = varDecl.getVariables();
-			for (VarList varList : varLists) {
-				for (String identifier : varList.getIdentifiers()) {
-					m_RootAnnot.m_GlobalVars.put(identifier, varList.getType());
-				}
-			}
-			m_Boogie2smt.declareGlobalVariables(decl);
-		}
-		for (FunctionDeclaration decl : funcDecls) {
-			m_Boogie2smt.declareFunction(decl);
-		}
-		for (Axiom ax : axioms) {
-			m_Boogie2smt.declareAxiom(ax);
-		}
+		
+		m_Boogie2smt.declareTypes(typeDecls);
+		m_Boogie2smt.declareConstants(constDecls);
+		m_Boogie2smt.declareFunctions(funcDecls);
+		m_Boogie2smt.declareAxioms(axioms);
+		m_Boogie2smt.declareGlobalVariables(varDecls);
 
 		for (Procedure proc : m_RootAnnot.m_Procedure.values()) {
 			extractContract(proc.getIdentifier());
@@ -353,10 +336,10 @@ public class CfgBuilder {
 				ModifiesSpecification modSpec = (ModifiesSpecification) spec;
 				for (VariableLHS var : modSpec.getIdentifiers()) {
 					String ident = var.getIdentifier();
-					if (!m_RootAnnot.m_GlobalVars.containsKey(ident)) {
-						throw new IllegalArgumentException("Procedure " + procName + " modifies global variable "
-								+ ident + " which has not been decleared before");
-					}
+//					if (!m_RootAnnot.m_GlobalVars.containsKey(ident)) {
+//						throw new IllegalArgumentException("Procedure " + procName + " modifies global variable "
+//								+ ident + " which has not been decleared before");
+//					}
 					modifiedVars.put(ident, m_RootAnnot.m_GlobalVars.get(ident));
 				}
 			} else {

@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.ListIterator;
@@ -68,6 +69,16 @@ public class Boogie2SMT {
 	
 	
 	private final VariableManager m_VariableManager;
+	
+	private enum InternalState {
+		INIT,
+		TYPES_DECLARED,
+		CONSTS_DECLARED,
+		FUNCTIONS_DECLARED,
+		AXIOMS_DECLARED,
+		GLOBALVARS_DECLARED,
+		PROCEDURES_DECLARED
+	}
 
 //	private Stack<TermVariable> typeStack = new Stack<TermVariable>();
 	private Stack<HashMap<String, Term>> identStack = new Stack<HashMap<String, Term>>();
@@ -133,6 +144,8 @@ public class Boogie2SMT {
 	 * before the procedure call (the same instance as old(g)).
 	 */
 	private boolean m_TranslatingRequires = false;
+	
+	private InternalState m_InternalState = InternalState.INIT;
 
 	public void incGeneration() {
 		VariableSSAManager.incAllIndices();
@@ -193,6 +206,59 @@ public class Boogie2SMT {
 	public Smt2Boogie getSmt2Boogie() {
 		return m_Smt2Boogie;
 	}
+	
+	public void declareTypes(Collection<TypeDeclaration> declarations) {
+		assert m_InternalState == InternalState.INIT : "declared in wrong order";
+		for (TypeDeclaration decl : declarations) {
+			this.declareType(decl);
+		}
+		m_InternalState = InternalState.TYPES_DECLARED;
+	}
+	
+	public void declareConstants(Collection<ConstDeclaration> declarations) {
+		assert m_InternalState == InternalState.TYPES_DECLARED : "declared in wrong order";
+		for (ConstDeclaration decl : declarations) {
+			this.declareConstants(decl);
+		}
+		m_InternalState = InternalState.CONSTS_DECLARED;
+	}
+	
+	public void declareFunctions(Collection<FunctionDeclaration> declarations) {
+		assert m_InternalState == InternalState.CONSTS_DECLARED : "declared in wrong order";
+		for (FunctionDeclaration decl : declarations) {
+			this.declareFunction(decl);
+		}
+		m_InternalState = InternalState.FUNCTIONS_DECLARED;
+	}
+	
+	public void declareAxioms(Collection<Axiom> declarations) {
+		assert m_InternalState == InternalState.FUNCTIONS_DECLARED : "declared in wrong order";
+		for (Axiom decl : declarations) {
+			this.declareAxiom(decl);
+		}
+		m_InternalState = InternalState.AXIOMS_DECLARED;
+	}
+	
+	public void declareGlobalVariables(Collection<VariableDeclaration> declarations) {
+		assert m_InternalState == InternalState.AXIOMS_DECLARED : "declared in wrong order";
+		for (VariableDeclaration decl : declarations) {
+			this.declareGlobalVariables(decl);
+		}
+		m_InternalState = InternalState.GLOBALVARS_DECLARED;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	private String quoteId(String id) {
 		// return Term.quoteId(id);
@@ -383,7 +449,7 @@ public class Boogie2SMT {
 	// typeSymbols.put(id, func);
 	// }
 
-	public void declareType(TypeDeclaration typedecl) {
+	private void declareType(TypeDeclaration typedecl) {
 		String id = typedecl.getIdentifier();
 		String[] typeParams = typedecl.getTypeParams();
 		if (typeParams.length != 0) {
@@ -397,7 +463,7 @@ public class Boogie2SMT {
 		}
 	}
 
-	public void declareFunction(FunctionDeclaration funcdecl) {
+	private void declareFunction(FunctionDeclaration funcdecl) {
 		// for (Attribute attr : funcdecl.getAttributes()) {
 		// if (attr instanceof NamedAttribute) {
 		// NamedAttribute nattr = (NamedAttribute) attr;
@@ -457,7 +523,7 @@ public class Boogie2SMT {
 	// }
 	// }
 
-	public void declareConstants(ConstDeclaration constdecl) {
+	private void declareConstants(ConstDeclaration constdecl) {
 		VarList varlist = constdecl.getVarList();
 		Sort[] paramTypes = new Sort[0];
 
@@ -517,7 +583,7 @@ public class Boogie2SMT {
 		}
 	}
 
-	public void declareAxiom(Axiom ax) {
+	private void declareAxiom(Axiom ax) {
 		m_Script.assertTerm(translateTerm(ax.getFormula()));
 	}
 
