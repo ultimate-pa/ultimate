@@ -80,20 +80,6 @@ public class BoogieConcurrentTraceAbstractionTC extends Toolchain {
         mRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_BlockSize, PrefStrings.s_RCFG_LABEL_BlockSize,
         		new String[] { PrefStrings.s_RCFG_VALUE_Single }, false, new String[] {
         		PrefStrings.s_RCFG_VALUE_Single, PrefStrings.s_RCFG_VALUE_Seq, PrefStrings.s_RCFG_VALUE_Block }, true));
-        List<Setting> oTrAbs = new ArrayList<Setting>();
-        List<Setting> mTrAbs = new ArrayList<Setting>();
-        oTrAbs.add(new Setting("/Compute\\ Interpolants\\ along\\ a\\ Counterexample", Setting.SettingType.STRING,
-                "interpolation", "Craig_NestedInterpolation", false));
-        oTrAbs.add(new Setting("/Compute\\ Hoare\\ Annotation\\ of\\ negated\\ interpolant\\ automaton,\\ abstraction\\ and\\ CFG", Setting.SettingType.BOOLEAN,
-                "Compute Hoare Annotation", "false", true));
-        oTrAbs.add(new Setting("/Minimize\\ abstraction", Setting.SettingType.BOOLEAN,
-                "Minimize abstraction", "false", true));
-        oTrAbs.add(new Setting("/Timeout", Setting.SettingType.INTEGER,
-                "Timeout", "20", false));
-        mTrAbs.add(new Setting("/DumpPath", Setting.SettingType.STRING,
-                "Where to dump", "C:\\Code\\log\\dump", false));
-        tools.add(new Tool("TraceAbstraction", oTrAbs, mTrAbs,
-                LoggingLevel.WARN));
 		List<Setting> oTrConcur = new ArrayList<Setting>();
 		List<Setting> mTrConcur = new ArrayList<Setting>();
         tools.add(new Tool("TraceAbstractionConcurrent", oTrConcur, mTrConcur,
