@@ -72,7 +72,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	protected final TraceAbstractionBenchmarks m_TraceAbstractionBenchmarks;
 	
-	protected INTERPOLATION m_Interpolation;
+	protected final INTERPOLATION m_Interpolation;
+	
+	protected final boolean m_ComputeHoareAnnotation;
 
 
 	
@@ -81,17 +83,19 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			SmtManager smtManager,
 			TraceAbstractionBenchmarks traceAbstractionBenchmarks,
 			TAPreferences taPrefs,
-			Collection<ProgramPoint> errorLocs) {
+			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation,
+			boolean computeHoareAnnotation) {
 	
 		super(name, rootNode, smtManager, taPrefs, errorLocs);
-		m_Interpolation = m_Pref.interpolation();
+		m_Interpolation = interpolation;
+		m_ComputeHoareAnnotation = computeHoareAnnotation;
 		m_TraceAbstractionBenchmarks = traceAbstractionBenchmarks;
 		m_Haf = new HoareAnnotationFragments(rootNode.getRootAnnot(),super.m_SmtManager);
 		m_StateFactoryForRefinement = new PredicateFactoryRefinement(
 				m_RootNode.getRootAnnot().getProgramPoints(),
 				super.m_SmtManager,
 				m_Pref,
-				m_RemoveDeadEnds && m_Pref.computeHoareAnnotation(),
+				m_RemoveDeadEnds && m_ComputeHoareAnnotation,
 				m_Haf);
 	}
 	
@@ -190,21 +194,21 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			AllIntegers allInt = new TraceChecker.AllIntegers();
 			PredicateUnifier predicateUnifier = new PredicateUnifier(m_SmtManager,
 					truePredicate, falsePredicate);
-			m_TraceChecker.computeInterpolants(allInt, predicateUnifier, m_Pref.interpolation());
+			m_TraceChecker.computeInterpolants(allInt, predicateUnifier, m_Interpolation);
 		}
 		m_TraceAbstractionBenchmarks.finishTraceCheck();
 		if (feasibility == LBool.UNSAT) {
 			// interpolants are only in case of an infeasible trace computed
-			switch (m_Pref.interpolation()) {
+			switch (m_Interpolation) {
 			case ForwardPredicates:
-				m_TraceAbstractionBenchmarks.addSizeOfPredicatesFP(m_TraceChecker.getSizeOfPredicates(m_Pref.interpolation()));
+				m_TraceAbstractionBenchmarks.addSizeOfPredicatesFP(m_TraceChecker.getSizeOfPredicates(m_Interpolation));
 				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesFP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesFP());
-				m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(m_Pref.interpolation()));
+				m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(m_Interpolation));
 				break;
 			case BackwardPredicates:
 				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesBP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesBP());
-				m_TraceAbstractionBenchmarks.addSizeOfPredicatesBP(m_TraceChecker.getSizeOfPredicates(m_Pref.interpolation()));
-				m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(m_Pref.interpolation()));
+				m_TraceAbstractionBenchmarks.addSizeOfPredicatesBP(m_TraceChecker.getSizeOfPredicates(m_Interpolation));
+				m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(m_Interpolation));
 				break;
 			case FPandBP:
 				m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(INTERPOLATION.ForwardPredicates));
@@ -259,7 +263,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 //		howDifferentAreInterpolants(m_InterpolAutomaton.getStates());
 		
 		m_TraceAbstractionBenchmarks.startDifference();
-		boolean explointSigmaStarConcatOfIA = !m_Pref.computeHoareAnnotation();
+		boolean explointSigmaStarConcatOfIA = !m_ComputeHoareAnnotation;
 		
 		PredicateFactory predicateFactory = (PredicateFactory) m_Abstraction.getStateFactory();
 		
@@ -314,7 +318,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			break;
 			
 			case EAGERPOST:	
-				PostDeterminizer epd = new PostDeterminizer(edgeChecker, m_Pref.computeHoareAnnotation(), 
+				PostDeterminizer epd = new PostDeterminizer(edgeChecker, m_ComputeHoareAnnotation, 
 									m_InterpolAutomaton,true);
 				if (m_Pref.differenceSenwa()) {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
@@ -344,7 +348,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			break;
 			
 			case LAZYPOST:	
-				PostDeterminizer lpd = new PostDeterminizer(edgeChecker,	m_Pref.computeHoareAnnotation(), 
+				PostDeterminizer lpd = new PostDeterminizer(edgeChecker,	m_ComputeHoareAnnotation, 
 									m_InterpolAutomaton,false);
 				if (m_Pref.differenceSenwa()) {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
@@ -452,12 +456,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				throw new UnsupportedOperationException();
 			}
 			if (m_RemoveDeadEnds) {
-				if (m_Pref.computeHoareAnnotation()) {
+				if (m_ComputeHoareAnnotation) {
 					Difference<CodeBlock, IPredicate> difference = (Difference<CodeBlock, IPredicate>) diff;
 					m_Haf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
 				}
 				diff.removeDeadEnds();
-				if (m_Pref.computeHoareAnnotation()) {
+				if (m_ComputeHoareAnnotation) {
 					m_Haf.addDeadEndDoubleDeckers(diff);
 				}
 			}
@@ -489,7 +493,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			IntersectDD<CodeBlock, IPredicate> intersect =
 					new IntersectDD<CodeBlock, IPredicate>(
 							false, oldAbstraction, nia);
-			if (m_RemoveDeadEnds && m_Pref.computeHoareAnnotation()) {
+			if (m_RemoveDeadEnds && m_ComputeHoareAnnotation) {
 				throw new AssertionError("not supported any more");
 				//m_Haf.wipeReplacedContexts();
 				//m_Haf.addDeadEndDoubleDeckers(intersect);
@@ -500,7 +504,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			m_Abstraction = intersect.getResult(); 
 		}
 		
-//		if(m_RemoveDeadEnds && m_Pref.computeHoareAnnotation()) {
+//		if(m_RemoveDeadEnds && m_ComputeHoareAnnotation) {
 //			m_Haf.wipeReplacedContexts();
 //			m_Haf.addDoubleDeckers(removedDoubleDeckers, oldAbstraction.getEmptyStackState());
 //			m_Haf.addContext2Entry(context2entry);
@@ -564,7 +568,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					newAbstraction, partition, abstractionPredFac, true, false, false, 200, false, 0, false, false);
 			assert minimizeOp.checkResult(resultCheckPredFac);
 			minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(minimizeOp.getResult())).getResult();
-			if (m_Pref.computeHoareAnnotation()) {
+			if (m_ComputeHoareAnnotation) {
 				Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
 				m_Haf.updateOnMinimization(oldState2newState, minimized);
 			}
@@ -572,7 +576,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(newAbstraction, partition, false, false, abstractionPredFac);
 			assert minimizeOp.checkResult(resultCheckPredFac);
 			minimized = minimizeOp.getResult();
-			if (m_Pref.computeHoareAnnotation()) {
+			if (m_ComputeHoareAnnotation) {
 				Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
 				m_Haf.updateOnMinimization(oldState2newState, minimized);
 			}
@@ -708,7 +712,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		break;
 		case EAGERPOST:
 			PostDeterminizer epd = 
-				new PostDeterminizer(edgeChecker,	m_Pref.computeHoareAnnotation(), 
+				new PostDeterminizer(edgeChecker,	m_ComputeHoareAnnotation, 
 									m_InterpolAutomaton,true);
 			DeterminizeDD<CodeBlock, IPredicate> dep = 
 				new DeterminizeDD<CodeBlock, IPredicate>(
@@ -717,7 +721,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		break;
 		case LAZYPOST:
 			PostDeterminizer lpd = 
-				new PostDeterminizer(edgeChecker,	m_Pref.computeHoareAnnotation(), 
+				new PostDeterminizer(edgeChecker,	m_ComputeHoareAnnotation, 
 									m_InterpolAutomaton,true);
 			DeterminizeDD<CodeBlock, IPredicate> dlpd = 
 				new DeterminizeDD<CodeBlock, IPredicate>(
@@ -729,7 +733,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			throw new UnsupportedOperationException();
 		}
 		
-		if (m_Pref.computeHoareAnnotation()) {
+		if (m_ComputeHoareAnnotation) {
 			assert (m_SmtManager.checkInductivity(dia, false, true)) : "Not inductive";
 		}
 		if (m_Pref.dumpAutomata()) {

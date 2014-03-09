@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 
 
 public class CegarLoopJulian extends BasicCegarLoop {
@@ -44,7 +45,8 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	public CegarLoopJulian(String name, RootNode rootNode, SmtManager smtManager,
 			TraceAbstractionBenchmarks timingStatistics,
 			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs) {
-		super(name, rootNode, smtManager, timingStatistics, taPrefs, errorLocs);
+		super(name, rootNode, smtManager, timingStatistics, taPrefs, errorLocs,
+				INTERPOLATION.Craig_TreeInterpolation, false);
 
 	}
 

@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
 public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
@@ -20,9 +21,11 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 			SmtManager smtManager,
 			TraceAbstractionBenchmarks timingStatistics,
 			TAPreferences taPrefs,
-			Collection<ProgramPoint> errorLocs) {
+			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation,
+			boolean computeHoareAnnotation) {
 	
-		super(name, rootNode, smtManager, timingStatistics, taPrefs, errorLocs);
+		super(name, rootNode, smtManager, timingStatistics, taPrefs, errorLocs,
+				interpolation, computeHoareAnnotation);
 		m_Haf = new HoareAnnotationFragments(rootNode.getRootAnnot(),super.m_SmtManager);
 	}
 	

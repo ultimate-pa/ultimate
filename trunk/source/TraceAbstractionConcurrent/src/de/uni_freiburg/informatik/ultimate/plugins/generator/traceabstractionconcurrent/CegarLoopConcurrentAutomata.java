@@ -56,8 +56,8 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	public CegarLoopConcurrentAutomata(String name, RootNode rootNode, 
 			SmtManager smtManager, TraceAbstractionBenchmarks timingStatistics,
 			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs) {
-		super(name, rootNode, smtManager, timingStatistics, taPrefs, errorLocs);
-		m_Interpolation = INTERPOLATION.Craig_TreeInterpolation;
+		super(name, rootNode, smtManager, timingStatistics, taPrefs, 
+				errorLocs, INTERPOLATION.Craig_TreeInterpolation, false);
 //		m_ContentFactory = new TaConcurContentFactory(
 //				rootNode.getRootAnnot().getLocNodes(),
 //				this,
