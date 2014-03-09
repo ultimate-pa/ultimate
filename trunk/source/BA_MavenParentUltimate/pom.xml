@@ -219,7 +219,7 @@
 		<module>../CACSL2BoogieTranslator</module>
 		<module>../ASTBuilder</module>
 		<module>../JungVisualization</module>
-		<module>../RankingFunctions</module>
+		
 		<module>../LassoRanker</module>
 		<module>../WebUltimateBridge</module>
 		<module>../Library-ModelCheckerUtils</module>

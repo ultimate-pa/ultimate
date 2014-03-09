@@ -28,7 +28,6 @@
       <plugin id="Library-log4j"/>
       <plugin id="NestedWordAutomata"/>
       <plugin id="RCFGBuilder"/>
-      <plugin id="RankingFunctions"/>
       <plugin id="SMTInterpol"/>
       <plugin id="SMTSolverBridge"/>
       <plugin id="TraceAbstraction"/>
@@ -98,7 +97,6 @@
       <plugin id="Library-log4j" autoStart="true" startLevel="0" />
       <plugin id="NestedWordAutomata" autoStart="true" startLevel="0" />
       <plugin id="RCFGBuilder" autoStart="true" startLevel="0" />
-      <plugin id="RankingFunctions" autoStart="true" startLevel="0" />
       <plugin id="SMTInterpol" autoStart="true" startLevel="0" />
       <plugin id="SMTSolverBridge" autoStart="true" startLevel="0" />
       <plugin id="TraceAbstraction" autoStart="true" startLevel="0" />
