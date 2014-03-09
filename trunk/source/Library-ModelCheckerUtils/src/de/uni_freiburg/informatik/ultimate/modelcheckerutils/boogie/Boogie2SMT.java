@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
@@ -247,7 +248,7 @@ public class Boogie2SMT {
 		m_InternalState = InternalState.GLOBALVARS_DECLARED;
 	}
 	
-	
+
 	
 	
 	
@@ -360,7 +361,7 @@ public class Boogie2SMT {
 	 * construct SmtVariable for id. If inVars does not contain such a variable,
 	 * construct it an add it to invars and outvars.
 	 */
-	private Term getSmtIdentifier(String id, BoogieASTNode BoogieASTNode) {
+	private Term getSmtIdentifier(String id, DeclarationInformation declInfo, BoogieASTNode BoogieASTNode) {
 		if (m_QuantifiedVariables.containsKey(id)) {
 			return m_QuantifiedVariables.get(id);
 		}
@@ -881,7 +882,7 @@ public class Boogie2SMT {
 		} else if (exp instanceof IdentifierExpression) {
 			IdentifierExpression var = (IdentifierExpression) exp;
 			assert var.getDeclarationInformation() != null : " no declaration information";
-			Term result = getSmtIdentifier(var.getIdentifier(), exp);
+			Term result = getSmtIdentifier(var.getIdentifier(), var.getDeclarationInformation(), exp);
 			assert result != null;
 			return result;
 
@@ -1136,7 +1137,7 @@ public class Boogie2SMT {
 						.get(name);
 				assert (callLhsVar != null);
 
-				substitution.put(id, getSmtIdentifier(name, vl));
+				substitution.put(id, getSmtIdentifier(name, lhs[offset].getDeclarationInformation(), vl));
 				havocVars.add(callLhsVar);
 				offset++;
 			}
