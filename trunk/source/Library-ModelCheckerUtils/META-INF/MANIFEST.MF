@@ -4,8 +4,7 @@ Bundle-Name: Library-ModelCheckerUtils
 Bundle-SymbolicName: Library-ModelCheckerUtils
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.annotations,
- de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
+Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.transfomers
 Require-Bundle: UltimateCore,
  Library-log4j,

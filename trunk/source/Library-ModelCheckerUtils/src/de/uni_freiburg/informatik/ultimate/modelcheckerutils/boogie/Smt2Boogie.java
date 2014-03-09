@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -12,8 +11,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -34,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
@@ -47,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 /**
@@ -63,9 +58,6 @@ public class Smt2Boogie implements Serializable {
 
 
 	private final Script m_Script;
-	
-	private final Map<String, BoogieVar> m_Globals;
-	private final Map<String, BoogieVar> m_OldGlobals;
 	
 	final Map<TermVariable,BoogieVar> m_SmtVar2SmtBoogieVar;
 	
@@ -86,13 +78,9 @@ public class Smt2Boogie implements Serializable {
 	private TypeSortTranslator m_TypeSortTranslator;
 	
 	
-	public Smt2Boogie(Script script, Map<String, BoogieVar> globals, 
-									 Map<String, BoogieVar> oldGlobals,
-									 TypeSortTranslator tsTranslation) {
+	public Smt2Boogie(Script script, TypeSortTranslator tsTranslation) {
 		m_Script = script;
 		m_TypeSortTranslator = tsTranslation;
-		m_Globals = globals;
-		m_OldGlobals = oldGlobals;
 		m_SmtVar2SmtBoogieVar = new HashMap<TermVariable,BoogieVar>();
 		m_SmtTerm2Const = new HashMap<Term, IdentifierExpression>();
 
@@ -141,19 +129,7 @@ public class Smt2Boogie implements Serializable {
 		return m_SmtVar2SmtBoogieVar.get(smtVar);
 	}
 	
-	/**
-	 * Return global variables;
-	 */
-	public Map<String, BoogieVar> getGlobals() {
-		return Collections.unmodifiableMap(m_Globals);
-	}
-	
-	/**
-	 * Return global oldvars;
-	 */
-	public Map<String, BoogieVar> getOldGlobals() {
-		return Collections.unmodifiableMap(m_OldGlobals);
-	}
+
 
 
 

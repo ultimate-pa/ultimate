@@ -70,9 +70,9 @@ public class VariableSSAManager {
 		return result;
 	}
 	
-	public static BoogieVar getBoogieVariable(TermVariable termVariable) {
-		return s_Variable2BoogieVarMap.get(termVariable);
-	}
+//	public static BoogieVar getBoogieVariable(TermVariable termVariable) {
+//		return s_Variable2BoogieVarMap.get(termVariable);
+//	}
 	
 	public static void incAllIndices() {
 		for(BoogieVar boogieVar: s_VariableIndexMap.keySet()) {
@@ -91,28 +91,28 @@ public class VariableSSAManager {
 		return result;
 	}
 	
-	public static Term makeConstant(TermVariable tv/*, boolean addConstTag*/){
-		//new name for constant variable
-		String constName = tv.getName() + /*(addConstTag?*/ "_const" /*:"")*/;
-		
-		Term constTerm;
-		constTerm = s_declaredSMTConstants.get(tv);
-		if (constTerm == null) {
-			constTerm = makeConstant(constName, tv.getSort());
-			s_declaredSMTConstants.put(tv, constTerm);
-		}
-		
-		return constTerm;
-	}
+//	public static Term makeConstant(TermVariable tv/*, boolean addConstTag*/){
+//		//new name for constant variable
+//		String constName = tv.getName() + /*(addConstTag?*/ "_const" /*:"")*/;
+//		
+//		Term constTerm;
+//		constTerm = s_declaredSMTConstants.get(tv);
+//		if (constTerm == null) {
+//			constTerm = makeConstant(constName, tv.getSort());
+//			s_declaredSMTConstants.put(tv, constTerm);
+//		}
+//		
+//		return constTerm;
+//	}
 	
-	public static Term makeConstant(String name, Sort sort) {
-		try {
-			s_Script.declareFun(name, new Sort[]{}, sort);
-		} catch (SMTLIBException e) {
-			throw e;
-		}
-		return s_Script.term(name);
-	}
+//	public static Term makeConstant(String name, Sort sort) {
+//		try {
+//			s_Script.declareFun(name, new Sort[]{}, sort);
+//		} catch (SMTLIBException e) {
+//			throw e;
+//		}
+//		return s_Script.term(name);
+//	}
 	
 	public void reset() {
 		s_declaredSMTConstants.clear();

@@ -107,10 +107,10 @@ public class ModifiableGlobalVariableManager {
 		Set<TermVariable> glob2oldAllVars = new HashSet<TermVariable>();
 		Term glob2oldFormula = m_Boogie2smt.getScript().term("true");
 		
-		Map<String, BoogieVar> globals = m_Boogie2smt.getSmt2Boogie().getGlobals();
+		Map<String, BoogieVar> globals = m_Boogie2smt.getGlobals();
 		for (String modVar : vars.keySet()) {
 			BoogieVar boogieVar = globals.get(modVar);
-			BoogieVar boogieOldVar = m_Boogie2smt.getSmt2Boogie().getOldGlobals().get(boogieVar.getIdentifier());
+			BoogieVar boogieOldVar = m_Boogie2smt.getOldGlobals().get(boogieVar.getIdentifier());
 			Sort sort = boogieVar.getDefaultConstant().getSort();
 			{
 				String nameIn = modVar + "_In";
@@ -149,10 +149,10 @@ public class ModifiableGlobalVariableManager {
 		Set<TermVariable> old2globAllVars = new HashSet<TermVariable>();
 		Term old2globFormula = m_Boogie2smt.getScript().term("true");
 		
-		Map<String, BoogieVar> globals = m_Boogie2smt.getSmt2Boogie().getGlobals();
+		Map<String, BoogieVar> globals = m_Boogie2smt.getGlobals();
 		for (String modVar : vars.keySet()) {
 			BoogieVar boogieVar = globals.get(modVar);
-			BoogieVar boogieOldVar = m_Boogie2smt.getSmt2Boogie().getOldGlobals().get(boogieVar.getIdentifier());
+			BoogieVar boogieOldVar = m_Boogie2smt.getOldGlobals().get(boogieVar.getIdentifier());
 			Sort sort = boogieVar.getDefaultConstant().getSort();
 			{
 				String nameIn = "old(" + modVar + ")" + "_In";
@@ -180,14 +180,14 @@ public class ModifiableGlobalVariableManager {
 	 * Return global variables;
 	 */
 	public Map<String, BoogieVar> getGlobals() {
-		return m_Boogie2smt.getSmt2Boogie().getGlobals();
+		return m_Boogie2smt.getGlobals();
 	}
 	
 	/**
 	 * Return global oldvars;
 	 */
 	public Map<String, BoogieVar> getOldGlobals() {
-		return m_Boogie2smt.getSmt2Boogie().getOldGlobals();
+		return m_Boogie2smt.getOldGlobals();
 	}
 
 }

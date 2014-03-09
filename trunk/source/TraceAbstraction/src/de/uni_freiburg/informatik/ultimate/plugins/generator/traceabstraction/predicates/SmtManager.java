@@ -240,7 +240,7 @@ public class SmtManager {
 		if (!bv.isOldvar()) {
 			throw new AssertionError("Not an oldvar" + this);
 		}
-		BoogieVar result = m_Smt2Boogie.getGlobals().get(bv.getIdentifier());
+		BoogieVar result = m_Boogie2Smt.getGlobals().get(bv.getIdentifier());
 		assert result != null;
 		return result;
 	}
@@ -255,7 +255,7 @@ public class SmtManager {
 		if (bv.isOldvar()) {
 			throw new AssertionError("Already an oldvar: " + this);
 		}
-		BoogieVar result = m_Smt2Boogie.getOldGlobals().get(bv.getIdentifier());
+		BoogieVar result = m_Boogie2Smt.getOldGlobals().get(bv.getIdentifier());
 		assert result != null;
 		return result;
 	}

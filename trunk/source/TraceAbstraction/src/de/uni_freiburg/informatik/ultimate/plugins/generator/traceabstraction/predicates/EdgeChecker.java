@@ -583,8 +583,7 @@ public class EdgeChecker {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
 					replacees.add(bv.getTermVariable());
-					String name = bv.getIdentifier();
-					BoogieVar globalBv = m_SmtManager.getSmt2Boogie().getGlobals().get(name);
+					BoogieVar globalBv = m_SmtManager.getNonOldVar(bv);
 					replacers.add(globalBv.getDefaultConstant());
 				} else {
 					replacees.add(bv.getTermVariable());

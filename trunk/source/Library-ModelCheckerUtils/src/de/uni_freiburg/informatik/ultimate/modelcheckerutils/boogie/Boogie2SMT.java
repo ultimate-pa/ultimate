@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.ListIterator;
@@ -150,7 +151,7 @@ public class Boogie2SMT implements SmtIdentifierProvider {
 		// intSort = script.sort("Int");
 		// realSort = script.sort("Real");
 
-		m_Smt2Boogie = new Smt2Boogie(m_Script, globals, oldGlobals, m_TypeSortTranslator);
+		m_Smt2Boogie = new Smt2Boogie(m_Script, m_TypeSortTranslator);
 		//
 
 		// ONE = script.numeral("1");
@@ -199,6 +200,20 @@ public class Boogie2SMT implements SmtIdentifierProvider {
 	static String quoteId(String id) {
 		// return Term.quoteId(id);
 		return id;
+	}
+	
+	/**
+	 * Return global variables;
+	 */
+	public Map<String, BoogieVar> getGlobals() {
+		return Collections.unmodifiableMap(globals);
+	}
+	
+	/**
+	 * Return global oldvars;
+	 */
+	public Map<String, BoogieVar> getOldGlobals() {
+		return Collections.unmodifiableMap(oldGlobals);
 	}
 	
 	

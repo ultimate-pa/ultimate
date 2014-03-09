@@ -307,7 +307,7 @@ public class TransFormulaBuilder {
 					resBoogieVar = m_Boogie2smt.getLocalBoogieVar(caller, resVar);
 					if (resBoogieVar == null) {
 						// case where left hand side of call is global variable
-						resBoogieVar = m_Boogie2smt.getSmt2Boogie().getGlobals().get(resVar);
+						resBoogieVar = m_Boogie2smt.getGlobals().get(resVar);
 						assert resBoogieVar != null;
 					}
 				}
