@@ -20,6 +20,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
@@ -27,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -249,14 +252,15 @@ public class TransFormulaBuilder {
 		Set<TermVariable> allVars = new HashSet<TermVariable>();
 		Term formula = m_Boogie2smt.getScript().term("true");
 		Procedure calleeImpl = m_RootAnnot.getImplementations().get(callee);
-		m_Boogie2smt.declareLocals(callerImpl);
+//		m_Boogie2smt.declareLocals(callerImpl);
 		int offset = 0;
 		Term[] argTerms = m_Boogie2smt.expressions2terms(st.getArguments(), inVars, allVars);
 		for (VarList varList : calleeImpl.getInParams()) {
 			IType type = varList.getType().getBoogieType();
 			Sort sort = m_Boogie2smt.getTypeSortTranslator().getSort(type, varList);
 			for (String var : varList.getIdentifiers()) {
-				BoogieVar boogieVar = m_Boogie2smt.getLocalBoogieVar(callee, var);
+				BoogieVar boogieVar = m_Boogie2smt.getBoogie2SmtSymbolTable().getBoogieVar(var, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, callee), false); 
+						//m_Boogie2smt.getLocalBoogieVar(callee, var);
 				String varname = callee + "_" + var + "_" + "InParam";
 				TermVariable tv = m_Boogie2smt.getScript().variable(varname, sort);
 				outVars.put(boogieVar,tv);
@@ -266,7 +270,7 @@ public class TransFormulaBuilder {
 			}
 		}
 		assert (st.getArguments().length == offset);
-		m_Boogie2smt.removeLocals(calleeImpl);
+//		m_Boogie2smt.removeLocals(calleeImpl);
 		allVars.addAll(outVars.values());
 		HashSet<TermVariable> auxVars = new HashSet<TermVariable>(0);
 		HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
@@ -297,19 +301,23 @@ public class TransFormulaBuilder {
 			IType type = varList.getType().getBoogieType();
 			Sort sort = m_Boogie2smt.getTypeSortTranslator().getSort(type, varList);
 			for (String outVar : varList.getIdentifiers()) {
-				BoogieVar outBoogieVar = m_Boogie2smt.getLocalBoogieVar(callee, outVar); 
+				BoogieVar outBoogieVar = m_Boogie2smt.getBoogie2SmtSymbolTable().getBoogieVar(outVar, new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, callee), false); 
+						//m_Boogie2smt.getLocalBoogieVar(callee, outVar); 
 				String outTvName = callee + "_" + outVar + "_" + "OutParam";
 				TermVariable outTv = m_Boogie2smt.getScript().variable(outTvName, sort);
 				inVars.put(outBoogieVar,outTv);
 				String resVar = st.getLhs()[offset].getIdentifier();
 				BoogieVar resBoogieVar;
 				{
-					resBoogieVar = m_Boogie2smt.getLocalBoogieVar(caller, resVar);
-					if (resBoogieVar == null) {
-						// case where left hand side of call is global variable
-						resBoogieVar = m_Boogie2smt.getGlobals().get(resVar);
-						assert resBoogieVar != null;
-					}
+					resBoogieVar = m_Boogie2smt.getBoogie2SmtSymbolTable().getBoogieVar(resVar, ((VariableLHS)st.getLhs()[offset]).getDeclarationInformation(), false); 
+							//m_Boogie2smt.getLocalBoogieVar(caller, resVar);
+//					if (resBoogieVar == null) {
+//						// case where left hand side of call is global variable
+//						resBoogieVar =  
+//								//m_Boogie2smt.getGlobals().get(resVar);
+//						assert resBoogieVar != null;
+//					}
+					assert resBoogieVar != null;
 				}
 				String resTvName = caller + "_" + resVar + "_" + "lhs";
 				TermVariable resTv = m_Boogie2smt.getScript().variable(resTvName, sort);

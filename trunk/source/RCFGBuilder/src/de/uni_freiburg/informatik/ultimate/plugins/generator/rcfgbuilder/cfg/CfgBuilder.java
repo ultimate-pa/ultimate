@@ -241,6 +241,7 @@ public class CfgBuilder {
 		m_Boogie2smt.declareFunctions(funcDecls);
 		m_Boogie2smt.declareAxioms(axioms);
 		m_Boogie2smt.declareGlobalVariables(varDecls);
+		m_Boogie2smt.declareProcedures(m_RootAnnot.m_Procedure, m_RootAnnot.m_Implementation);
 
 		for (Procedure proc : m_RootAnnot.m_Procedure.values()) {
 			extractContract(proc.getIdentifier());
@@ -537,7 +538,7 @@ public class CfgBuilder {
 			m_Edges = new HashSet<CodeBlock>();
 
 			Procedure proc = m_RootAnnot.m_Implementation.get(m_currentProcedureName);
-			m_Boogie2smt.declareLocals(proc);
+//			m_Boogie2smt.declareLocals(proc);
 
 			Statement[] statements = m_RootAnnot.m_Implementation.get(procName).getBody().getBlock();
 			if (statements.length == 0) {
@@ -673,7 +674,7 @@ public class CfgBuilder {
 			for (CodeBlock transEdge : m_Edges) {
 				tfb.addTransitionFormulas(transEdge);
 			}
-			m_Boogie2smt.removeLocals(proc);
+//			m_Boogie2smt.removeLocals(proc);
 		}
 
 		/**

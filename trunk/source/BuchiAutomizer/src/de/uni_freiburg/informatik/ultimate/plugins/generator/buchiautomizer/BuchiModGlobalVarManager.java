@@ -31,12 +31,12 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 		super(modifiableGlobalVariableManager);
 		m_Boogie2smt = boogie2Smt;
 		m_Unseeded = unseeded;
-		m_UnseededOldVar = boogie2Smt.getOldGlobals().get(unseeded.getIdentifier());
+		m_UnseededOldVar = boogie2Smt.getBoogie2SmtSymbolTable().getOldGlobals().get(unseeded.getIdentifier());
 		assert m_UnseededOldVar != null : "oldVar missing";
 		m_OldRank = oldRank;
 		m_OldRankOldVar = new BoogieVar[oldRank.length];
 		for (int i=0; i<oldRank.length; i++) {
-			m_OldRankOldVar[i] = boogie2Smt.getOldGlobals().get(oldRank[i].getIdentifier());
+			m_OldRankOldVar[i] = boogie2Smt.getBoogie2SmtSymbolTable().getOldGlobals().get(oldRank[i].getIdentifier());
 			assert m_OldRankOldVar[i] != null : "oldVar missing";
 		}
 		m_Script  = boogie2Smt.getScript();

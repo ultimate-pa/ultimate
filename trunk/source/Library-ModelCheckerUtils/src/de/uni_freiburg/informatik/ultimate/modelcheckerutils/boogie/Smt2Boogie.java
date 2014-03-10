@@ -59,7 +59,7 @@ public class Smt2Boogie implements Serializable {
 
 	private final Script m_Script;
 	
-	final Map<TermVariable,BoogieVar> m_SmtVar2SmtBoogieVar;
+
 	
 	final Map<String,String> m_BoogieFunction2SmtFunction
 			= new HashMap<String,String>();
@@ -75,15 +75,17 @@ public class Smt2Boogie implements Serializable {
 	private int m_freshIdentiferCounter = 0;
 
 
-	private TypeSortTranslator m_TypeSortTranslator;
+	private final TypeSortTranslator m_TypeSortTranslator;
+	
+	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
 	
 	
-	public Smt2Boogie(Script script, TypeSortTranslator tsTranslation) {
+	public Smt2Boogie(Script script, TypeSortTranslator tsTranslation, 
+			Boogie2SmtSymbolTable boogie2SmtSymbolTable) {
 		m_Script = script;
 		m_TypeSortTranslator = tsTranslation;
-		m_SmtVar2SmtBoogieVar = new HashMap<TermVariable,BoogieVar>();
+		m_Boogie2SmtSymbolTable = boogie2SmtSymbolTable;
 		m_SmtTerm2Const = new HashMap<Term, IdentifierExpression>();
-
 	}
 
 	
@@ -121,35 +123,24 @@ public class Smt2Boogie implements Serializable {
 		return m_Script;
 	}
 	
-	public IdentifierExpression getConstDeclaration(Term term) {
-		return m_SmtTerm2Const.get(term);
+	public IdentifierExpression getConstDeclaration(ApplicationTerm term) {
+		BoogieConst boogieConst = m_Boogie2SmtSymbolTable.getBoogieConst(term);
+		if (boogieConst == null) {
+			throw new AssertionError("no such BoogieConst");
+		} else {
+			IdentifierExpression result = m_SmtTerm2Const.get(term);
+			if (result == null) {
+				result = new IdentifierExpression(null, 
+						m_TypeSortTranslator.getType(term.getSort()),
+						boogieConst.getIdentifier(),
+						new DeclarationInformation(StorageClass.GLOBAL, null));
+				m_SmtTerm2Const.put(term, result);
+			}
+			return result;
+		}
 	}
 
-	public BoogieVar getBoogieVar(TermVariable smtVar) {
-		return m_SmtVar2SmtBoogieVar.get(smtVar);
-	}
-	
 
-
-
-
-	
-	
-	
-	
-	public void declareConst(String id, Term term) {
-		IdentifierExpression ie;
-		ie = new IdentifierExpression(null, m_TypeSortTranslator.getType(term.getSort()),id,
-				new DeclarationInformation(StorageClass.GLOBAL, null));
-		m_SmtTerm2Const.put(term, ie);
-	}
-	
-	
-	
-	
-	
-	
-	
 	
 	Set<IdentifierExpression> m_freeVariables = new HashSet<IdentifierExpression>();
 	
@@ -388,7 +379,7 @@ public class Smt2Boogie implements Serializable {
 			String id = varList.getIdentifiers()[0];
 			result = new IdentifierExpression(null, type, id,
 					new DeclarationInformation(StorageClass.QUANTIFIED, null));
-		} else if (getBoogieVar(term) == null) {
+		} else if (m_Boogie2SmtSymbolTable.getBoogieVar(term) == null) {
 			//Case where term contains some auxilliary variable that was 
 			//introduced during model checking. 
 			//TODO: Matthias: I think we want closed expressions, we should
@@ -398,7 +389,7 @@ public class Smt2Boogie implements Serializable {
 			m_freeVariables.add((IdentifierExpression) result);
 		}
 		else {
-			BoogieVar var = getBoogieVar(term);
+			BoogieVar var = m_Boogie2SmtSymbolTable.getBoogieVar(term);
 			result = new IdentifierExpression(null, type, var.getIdentifier(), 
 					null /* FIXME: obtain declaration info from bv*/);
 			if (var.isOldvar()) {

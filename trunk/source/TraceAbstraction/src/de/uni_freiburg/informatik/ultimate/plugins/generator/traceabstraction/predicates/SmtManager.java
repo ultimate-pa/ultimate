@@ -28,8 +28,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -240,7 +240,7 @@ public class SmtManager {
 		if (!bv.isOldvar()) {
 			throw new AssertionError("Not an oldvar" + this);
 		}
-		BoogieVar result = m_Boogie2Smt.getGlobals().get(bv.getIdentifier());
+		BoogieVar result = m_Boogie2Smt.getBoogie2SmtSymbolTable().getGlobals().get(bv.getIdentifier());
 		assert result != null;
 		return result;
 	}
@@ -255,7 +255,7 @@ public class SmtManager {
 		if (bv.isOldvar()) {
 			throw new AssertionError("Already an oldvar: " + this);
 		}
-		BoogieVar result = m_Boogie2Smt.getOldGlobals().get(bv.getIdentifier());
+		BoogieVar result = m_Boogie2Smt.getBoogie2SmtSymbolTable().getOldGlobals().get(bv.getIdentifier());
 		assert result != null;
 		return result;
 	}
@@ -2711,7 +2711,7 @@ public class SmtManager {
 		HashSet<BoogieVar> vars = new HashSet<BoogieVar>();
 		Set<String> procs = new HashSet<String>();
 		for (TermVariable tv : term.getFreeVars()) {
-			BoogieVar bv = m_Smt2Boogie.getBoogieVar(tv);
+			BoogieVar bv = m_Boogie2Smt.getBoogie2SmtSymbolTable().getBoogieVar(tv);
 			if (bv == null) {
 				throw new AssertionError("No corresponding BoogieVar for " + tv);
 			}

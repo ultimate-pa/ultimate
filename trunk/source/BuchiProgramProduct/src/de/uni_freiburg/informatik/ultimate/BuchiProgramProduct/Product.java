@@ -96,7 +96,7 @@ public class Product {
 
 		for (String procIdent : rootAnnot.getImplementations().keySet()) {
 			Procedure proc = rootAnnot.getImplementations().get(procIdent);
-			b2smt.declareLocals(proc);
+//			b2smt.declareLocals(proc);
 
 			for (ProgramPoint node : rootAnnot.getProgramPoints().get(procIdent).values()) {
 				if (node.getLocationName().startsWith("h_")) {
@@ -109,7 +109,7 @@ public class Product {
 				}
 			}
 
-			b2smt.removeLocals(proc);
+//			b2smt.removeLocals(proc);
 		}
 
 	}
