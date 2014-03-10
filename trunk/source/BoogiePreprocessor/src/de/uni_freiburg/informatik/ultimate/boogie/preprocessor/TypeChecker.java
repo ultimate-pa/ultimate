@@ -768,6 +768,9 @@ public class TypeChecker implements IUnmanagedObserver {
             } else if (s instanceof ModifiesSpecification) {
                 Set<String> modifiedGlobals = m_Proc2ModfiedGlobals.get(name);
                 for (VariableLHS var : ((ModifiesSpecification) s).getIdentifiers()) {
+                	DeclarationInformation declInfo = 
+                			new DeclarationInformation(StorageClass.GLOBAL, null);
+                	var.setDeclarationInformation(declInfo);
                 	String id = var.getIdentifier();
                     if (!m_Globals.contains(id)) {
                         typeError(s, "Modifies clause contains "
