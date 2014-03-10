@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 /**
  * 
  * @author dietsch
- *
+ * 
  */
 public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnmanagedObserver {
 
@@ -48,7 +48,9 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 		PreprocessorAnnotation pa = new PreprocessorAnnotation();
 		pa.setSymbolTable(mSymbolTable);
 		pa.annotate(mRootNode);
-		mLogger.debug(String.format("SymbolTable\r%s", mSymbolTable.prettyPrintSymbolTable()));
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("SymbolTable\r" + mSymbolTable.prettyPrintSymbolTable());
+		}
 	}
 
 	@Override

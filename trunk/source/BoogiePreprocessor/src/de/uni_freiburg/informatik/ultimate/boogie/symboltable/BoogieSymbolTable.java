@@ -228,16 +228,19 @@ public class BoogieSymbolTable {
 	}
 
 	/**
+	 * Produces a really long string describing the content of the symbol table.
 	 * 
-	 * 
-	 * @return
+	 * @return A string representation of the symbol table.
 	 */
 	public String prettyPrintSymbolTable() {
 
 		StringBuilder globals = new StringBuilder();
+
+		// global variables
 		Map<String, Declaration> globalsMap = getMap(StorageClass.GLOBAL, null);
 		for (String s : globalsMap.keySet()) {
-			globals.append(" * ").append(s).append(" := ").append(globalsMap.get(s)).append("\n");
+			globals.append(" * ").append(s).append(" : ")
+					.append(getTypeForVariableSymbol(s, StorageClass.GLOBAL, null)).append("\n");
 		}
 
 		List<String> functionSymbols = new ArrayList<>();
@@ -248,16 +251,20 @@ public class BoogieSymbolTable {
 		StringBuilder procedures = new StringBuilder();
 		StringBuilder implementations = new StringBuilder();
 
+		// functions and procedures, inlined with local definitions
 		for (String functionSymbol : functionSymbols) {
+			//get the declaration(s) for the function or procedure symbol 
 			List<Declaration> decls = getFunctionOrProcedureDeclaration(functionSymbol);
 
 			for (Declaration decl : decls) {
+				//check what kind of symbol it is
 				if (decl instanceof FunctionDeclaration) {
 					functions.append(" * ").append(functionSymbol).append(" := ").append(decl).append("\n");
+					//add the local variable declarations 
 					appendLocals(functions, functionSymbol);
 				} else {
 					Procedure proc = (Procedure) decl;
-					if (proc.getSpecification() == null) {
+					if (isImplementation(proc)) {
 						implementations.append(" * ").append(functionSymbol).append(" := ").append(decl).append("\n");
 						appendLocals(implementations, functionSymbol);
 					} else {
@@ -281,7 +288,7 @@ public class BoogieSymbolTable {
 			sb.append("\n");
 		}
 
-		if (procedures.length() > 0) {
+		if (implementations.length() > 0) {
 			sb.append("Implementations\n");
 			sb.append(implementations);
 			sb.append("\n");
@@ -296,9 +303,8 @@ public class BoogieSymbolTable {
 		return sb.toString();
 
 	}
-	
-	private void appendLocals(StringBuilder builder, String currentFunctionSymbol) {
 
+	private void appendLocals(StringBuilder builder, String currentFunctionSymbol) {
 		final StorageClass[] locals = new StorageClass[] { StorageClass.LOCAL, StorageClass.PROCEDURE_INPARAM,
 				StorageClass.PROCEDURE_OUTPARAM, StorageClass.IMPLEMENTATION_INPARAM,
 				StorageClass.IMPLEMENTATION_OUTPARAM };
@@ -310,15 +316,11 @@ public class BoogieSymbolTable {
 			}
 			builder.append("  * ").append(sc.toString()).append("\n");
 			for (String symbol : localSymbols) {
-				Declaration decl = getDeclaration(symbol, sc, currentFunctionSymbol);
-				builder.append("   * ").append(symbol).append(" := ").append(decl).append("\n");
+				IType type = getTypeForVariableSymbol(symbol, sc, currentFunctionSymbol);
+				builder.append("   * ").append(symbol).append(" : ").append(type).append("\n");
 			}
 		}
-
 	}
+	
 
-	@Override
-	public String toString() {
-		return prettyPrintSymbolTable();
-	}
 }
