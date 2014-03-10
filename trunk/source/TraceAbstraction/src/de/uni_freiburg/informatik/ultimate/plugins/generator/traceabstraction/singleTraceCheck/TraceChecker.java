@@ -39,8 +39,9 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 
 /**
- * Check if a trace fulfills a specification. If the trace does, provide a Hoare
- * annotation as proof. 
+ * Check if a trace fulfills a specification. 
+ * Provide a Hoare annotation if the check was positive, provide an execution
+ * (that violates the specification) if the check was negative. 
  * <p>
  * Given <ul> 
  * <li> a precondition stated by predicate φ_0 
@@ -111,6 +112,17 @@ public class TraceChecker {
 	protected final NestedWord<CodeBlock> m_Trace;
 	protected final IPredicate m_Precondition;
 	protected final IPredicate m_Postcondition;
+	
+	/**
+	 * If the trace contains "pending returns" (returns without corresponding
+	 * calls) we have to provide a predicate for each pending return that 
+	 * specifies what held in the calling context to which we return.
+	 * (If the trace would contain the corresponding call, this predicate
+	 * would be the predecessor ot the call).
+	 * We call these predicates "pending contexts". These pending contexts are 
+	 * provided via a mapping from the position of the pending return (given
+	 * as Integer) to the predicate.
+	 */
 	protected final SortedMap<Integer,IPredicate> m_PendingContexts;
 
 	protected AnnotateAndAsserter m_AAA;
@@ -401,10 +413,8 @@ public class TraceChecker {
 	 * to be smaller than or equal to m_Trace.size() 
 	 * @param predicateUnifier A PredicateUnifier in which precondition, 
 	 * postcondition and all pending contexts are representatives.
-	 * @param interpolation TODO
+	 * @param interpolation Method that is used to compute the interpolants.
 	 */
-	
-	
 	public void computeInterpolants(Set<Integer> interpolatedPositions,
 										PredicateUnifier predicateUnifier, 
 										INTERPOLATION interpolation) {
@@ -525,7 +535,7 @@ public class TraceChecker {
 	
 	
 	/**
-	 * Use Matthias old naive iterative method to compute nested interpolants.
+	 * Use Matthias' old naive iterative method to compute nested interpolants.
 	 * (Recursive interpolation queries, one for each call-return pair)
 	 */
 	private void computeInterpolants_Recursive(Set<Integer> interpolatedPositions,
