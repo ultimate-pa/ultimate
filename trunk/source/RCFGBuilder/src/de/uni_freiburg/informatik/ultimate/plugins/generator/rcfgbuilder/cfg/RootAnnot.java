@@ -248,7 +248,7 @@ public class RootAnnot extends AbstractAnnotations {
 	}
 
 	public Script getScript() {
-		return m_BoogieVar2SmtVar.getScript();
+		return m_Boogie2SMT.getScript();
 	}
 	
 	public Smt2Boogie getBoogie2Smt() {

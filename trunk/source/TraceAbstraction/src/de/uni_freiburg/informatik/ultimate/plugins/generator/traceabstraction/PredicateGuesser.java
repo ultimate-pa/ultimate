@@ -23,7 +23,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
@@ -38,14 +37,12 @@ public class PredicateGuesser {
 	private static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	static final boolean NON_STRICT_EQUALITIES = true; 
-	private final Smt2Boogie m_BoogieVar2SmtVar;
 	private final SmtManager m_SmtManager;
 	private final ModifiableGlobalVariableManager m_ModGlobVarManager;
 	private PredicateExtractor m_pe;
 	public PredicateGuesser(SmtManager m_SmtManager, ModifiableGlobalVariableManager modGlobVarManager) {
 		super();
 		this.m_SmtManager = m_SmtManager;
-		this.m_BoogieVar2SmtVar = m_SmtManager.getSmt2Boogie();
 		this.m_ModGlobVarManager = modGlobVarManager;
 	}
 	
@@ -79,7 +76,6 @@ public class PredicateGuesser {
 	
 	
 	private class PredicateSet {
-		private final Smt2Boogie m_BoogieVar2SmtVar;
 		private final Script m_Scipt;
 		private BinaryRelations m_Equal = new BinaryRelations("=");
 		private BinaryRelations m_Leq = new BinaryRelations("<=");
@@ -90,9 +86,8 @@ public class PredicateGuesser {
 		/**
 		 * @param boogieVar2SmtVar
 		 */
-		public PredicateSet(Smt2Boogie boogieVar2SmtVar) {
-			m_BoogieVar2SmtVar = boogieVar2SmtVar;
-			m_Scipt = boogieVar2SmtVar.getScript();
+		public PredicateSet(Script script) {
+			m_Scipt = script;
 		}
 
 		void equal(Term t1, Term t2) {
@@ -256,7 +251,7 @@ public class PredicateGuesser {
 		}
 		
 		public PredicateSet substituteFreeVars() {
-			PredicateSet result = new PredicateSet(m_BoogieVar2SmtVar);
+			PredicateSet result = new PredicateSet(m_Scipt);
 			result.m_Equal = substituteFreeVars(m_Equal, m_Equal);
 			result.m_Leq = substituteFreeVars(m_Leq, m_Equal);
 			result.m_L = substituteFreeVars(m_L, m_Equal);
@@ -311,7 +306,7 @@ public class PredicateGuesser {
 	
 	
 	private class PredicateExtractor implements SymbolVisitor {
-		private PredicateSet m_P = new PredicateSet(m_BoogieVar2SmtVar);
+		private PredicateSet m_P = new PredicateSet(m_SmtManager.getScript());
 
 		public void extractPredicates(TransFormula tf) {
 			Term term = tf.getFormula();

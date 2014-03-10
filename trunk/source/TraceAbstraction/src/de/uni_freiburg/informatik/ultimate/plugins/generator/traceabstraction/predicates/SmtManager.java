@@ -124,7 +124,7 @@ public class SmtManager {
 		m_EmptyStackTerm = new AuxilliaryTerm("emptyStack");
 		m_Boogie2Smt = boogie2smt;
 		m_Smt2Boogie = boogie2smt.getSmt2Boogie();
-		m_Script = m_Smt2Boogie.getScript();
+		m_Script = boogie2smt.getScript();
 		m_GlobalVars = globalVars;
 		m_ModifiableGlobals =  modifiableGlobals;
 	}
@@ -134,9 +134,9 @@ public class SmtManager {
 	}
 	
 	
-	public Smt2Boogie getSmt2Boogie() {
-		return m_Smt2Boogie;
-	}
+//	public Smt2Boogie getSmt2Boogie() {
+//		return m_Smt2Boogie;
+//	}
 	
 	public Boogie2SMT getBoogie2Smt() {
 		return m_Boogie2Smt;
