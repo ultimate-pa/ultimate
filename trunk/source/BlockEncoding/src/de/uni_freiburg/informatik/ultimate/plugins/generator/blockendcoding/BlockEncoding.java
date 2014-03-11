@@ -61,7 +61,7 @@ public class BlockEncoding implements IGenerator {
 	 * .lang.Object)
 	 */
 	@Override
-	public int init(Object param) {
+	public int init() {
 		m_ConversionObserver = new MinModelConversionObserver();
 		m_BlockEncodingObserver = new BlockEncodingObserver();
 		return 0;

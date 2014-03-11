@@ -78,7 +78,7 @@ public class IrsDependencies implements IAnalysis {
 	}
 
 	@Override
-	public int init(Object params) {
+	public int init() {
 		return 0;
 	}
 

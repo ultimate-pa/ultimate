@@ -76,7 +76,7 @@ public class CookiefyPlugin implements IGenerator {
 	}
 
 	@Override
-	public int init(Object params) {
+	public int init() {
 		m_CookiefyAlgorithm = new CookiefyAlgorithm();
 		return 0;
 	}

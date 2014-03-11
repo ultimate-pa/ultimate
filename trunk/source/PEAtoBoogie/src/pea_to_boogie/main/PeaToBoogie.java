@@ -22,7 +22,7 @@ public class PeaToBoogie implements ISource {
     List<String> m_FileNames = new ArrayList<String>();
 
 	@Override
-	public int init(Object params) {
+	public int init() {
 		return 0;
 	}
 

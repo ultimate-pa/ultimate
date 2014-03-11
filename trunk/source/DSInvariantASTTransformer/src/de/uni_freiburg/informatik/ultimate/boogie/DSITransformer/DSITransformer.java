@@ -67,7 +67,7 @@ public class DSITransformer implements IGenerator {
 		return QueryKeyword.LAST;
 	}
 
-	public int init(Object param) {
+	public int init() {
     	m_Observer = new DSITransformerObserver();
     	return 0;
     }

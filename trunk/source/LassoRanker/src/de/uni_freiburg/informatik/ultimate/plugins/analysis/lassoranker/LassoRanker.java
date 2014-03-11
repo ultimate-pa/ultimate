@@ -44,7 +44,7 @@ public class LassoRanker implements IAnalysis {
 	 * Method is called by core after the plugin is loaded
 	 */
 	@Override
-	public int init(Object param) {
+	public int init() {
 		m_Observer = new LassoRankerObserver();
 		return 0;
 	}

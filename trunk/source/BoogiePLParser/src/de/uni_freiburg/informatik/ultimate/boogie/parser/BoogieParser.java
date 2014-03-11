@@ -55,12 +55,12 @@ public class BoogieParser implements ISource {
 	/**
 	 * This initializes the plugin. Parsers usually do not get parameters so we
 	 * will just return 0 for anything.
-	 * 
 	 * @param param
 	 *            is ignored
+	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin#init()
 	 */
-	public int init(Object param) {
+	public int init() {
 		mFileNames = new ArrayList<String>();
 		return 0;
 	}

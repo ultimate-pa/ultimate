@@ -12,7 +12,7 @@ import org.apache.log4j.Appender;
  * CO: extended with appender .. seems to be more compfortable
  * and we can then use it with log4j
  */
-public interface ILoggingWindow extends Appender, IUltimatePlugin {
+public interface ILoggingWindow extends Appender, IInitializableUltimatePlugin {
 
 	/**
 	 * Method for writing string on window. 

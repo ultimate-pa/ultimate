@@ -87,7 +87,7 @@ public class GuiLoggingWindow extends WriterAppender implements ILoggingWindow {
 	/**
 	 * creates .. the writer for later usage..   logging window is opened on first log message
 	 */
-	public int init(Object param) {
+	public int init() {
 		final AppendUIJob job = new AppendUIJob();
 		myJob = job;
 		setWriter(new Writer(){

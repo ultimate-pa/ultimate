@@ -30,7 +30,7 @@ public class BoogiePreprocessor implements IAnalysis {
         return s_PLUGIN_ID;
     }
 
-    public int init(Object param) {
+    public int init() {
         return -1;
     }
 

@@ -70,7 +70,7 @@ public class BuchiProgramProduct implements IGenerator {
 	}
 
 	@Override
-	public int init(Object params) {
+	public int init() {
 		mBuchiProductObserver = new BuchiProductObserver();
 		mProcess = false;
 		mFileNames = new ArrayList<String>();

@@ -61,7 +61,7 @@ public class BoogiePrinter implements IOutput {
 	 * .lang.Object)
 	 */
 	@Override
-	public int init(Object param) {
+	public int init() {
 		this.m_Observer = new BoogiePrinterObserver();
 		return 0;
 	}

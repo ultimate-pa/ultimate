@@ -66,12 +66,9 @@ public class ExtExecutionController implements IController {
 	 * .lang.Object)
 	 */
 	@Override
-	public int init(Object param) {
-		ICore core;
-		if (!(param instanceof ICore)) {
+	public int init(ICore core) {
+		if(core == null){
 			return -1;
-		} else {
-			core = (ICore) param;
 		}
 
 		try {

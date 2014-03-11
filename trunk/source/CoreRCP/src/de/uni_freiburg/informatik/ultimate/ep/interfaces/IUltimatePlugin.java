@@ -11,12 +11,6 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
  */
 public interface IUltimatePlugin {
 	/**
-	 * if any kind of initialisation should go here method is called by core
-	 * after the plugin is loaded
-	 */
-	int init(Object params);
-
-	/**
 	 * 
 	 * @return a human readable Name for the plugin.
 	 */

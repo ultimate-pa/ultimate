@@ -322,7 +322,7 @@ public class AutomataScriptParser implements ISource {
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#init(java.lang.Object)
 	 */
 	@Override
-	public int init(Object params) {
+	public int init() {
 		return 0;
 	}
 	

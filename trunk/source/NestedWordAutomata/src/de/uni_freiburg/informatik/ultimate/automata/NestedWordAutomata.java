@@ -51,7 +51,7 @@ public class NestedWordAutomata implements IGenerator {
         return s_PLUGIN_ID;
     }
 
-    public int init(Object param) {
+    public int init() {
     	m_NestedWordAutomataObserver = new NestedWordAutomataObserver();
     	return 0;
     }

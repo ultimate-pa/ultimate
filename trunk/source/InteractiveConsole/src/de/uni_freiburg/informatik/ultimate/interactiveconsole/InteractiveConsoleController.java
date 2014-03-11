@@ -144,12 +144,9 @@ public class InteractiveConsoleController implements IController {
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#init(java.lang.Object)
 	 */
 	@Override
-	public int init(Object controlledCore) {
-		
-		if (!(controlledCore instanceof ICore)) {
+	public int init(ICore core) {
+		if(core == null){
 			return -1;
-		} else {
-			this.m_Core = (ICore) controlledCore;
 		}
 		
 		this.m_Tools = UltimateServices.getInstance().getActiveTools();

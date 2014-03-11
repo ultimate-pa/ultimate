@@ -326,7 +326,12 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		mIdToTool = new HashMap<String, ITool>();
 		mCurrentParser = null;
 		mCurrentFiles = null;
-		mBenchmark = new Benchmark();
+		if (new UltimatePreferenceStore(Activator.s_PLUGIN_ID).getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK)) {
+			mBenchmark = new Benchmark();
+		} else {
+			mBenchmark = null;
+		}
+
 		// initialize walker with common variables
 		mToolchainWalker = new ToolchainWalker(this, mBenchmark, mModelManager, mIdToTool);
 
@@ -703,26 +708,27 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		if (this.mToolchainWalker.getOpenPlugins().size() != 0) {
 			for (String s : this.mToolchainWalker.getOpenPlugins().keySet()) {
 				ITool t = mIdToTool.get(s);
-				if (t != null)
-					t.init(null);
+				if (t != null) {
+					t.init();
+				}
 			}
 		} else {
 			for (IOutput out : mOutputPlugins) {
 				mLogger.info("Initializing " + out.getName() + "...");
-				out.init(null);
+				out.init();
 			}
 			for (IGenerator trans : mGeneratorPlugins) {
 				mLogger.info("Initializing " + trans.getName() + "...");
-				trans.init(null);
+				trans.init();
 			}
 			for (IAnalysis trans : mAnalysisPlugins) {
 				mLogger.info("Initializing " + trans.getName() + "...");
-				trans.init(null);
+				trans.init();
 			}
 		}
 		for (ISource source : mSourcePlugins) {
 			mLogger.info("Initializing " + source.getName() + "...");
-			source.init(null);
+			source.init();
 		}
 
 		mLogger.info("Finished initializing Plugins !");
@@ -753,7 +759,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		for (IConfigurationElement element : configElements_out) {
 			try {
 				ILoggingWindow loggingWindow = (ILoggingWindow) element.createExecutableExtension("class");
-				loggingWindow.init(null);
+				loggingWindow.init();
 				// and add to plugin ArrayList
 				loggingWindow.setLayout(new PatternLayout(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
 						.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)));
@@ -777,8 +783,12 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	public void resetCore() {
 		initializePlugins();
 		resetMemoryManager();
-		this.mBenchmark.reset();
-		this.mToolchainWalker.reset();
+		if (new UltimatePreferenceStore(Activator.s_PLUGIN_ID).getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK)) {
+			mBenchmark = new Benchmark();
+		} else {
+			mBenchmark = null;
+		}
+		mToolchainWalker.reset();
 	}
 
 	/*
@@ -895,9 +905,13 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	 */
 	@Override
 	public IStatus processToolchain(IProgressMonitor monitor) throws Throwable {
-
-		Benchmark b = new Benchmark();
-		b.start("Toolchain (without parser)");
+		boolean useBenchmark = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
+				.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
+		Benchmark bench = null;
+		if (useBenchmark) {
+			bench = new Benchmark();
+			bench.start("Toolchain (without parser)");
+		}
 		try {
 			if (mModelManager.size() < 1) {
 				mLogger.error("no model present, aborting...");
@@ -907,13 +921,15 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 			mToolchainWalker.walk(monitor);
 			mCurrentToolchain.clearStore();
 		} finally {
-			b.stopAll();
+			if (useBenchmark) {
+				bench.stopAll();
+				mLogger.info("--------------------------------------------------------------------------------");
+				bench.report();
+				mBenchmark.report();
+				UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID,
+						new BenchmarkResult(Activator.s_PLUGIN_ID, "Toolchain Benchmarks", mBenchmark));
+			}
 			mLogger.info("--------------------------------------------------------------------------------");
-			b.report();
-			mBenchmark.report();
-			mLogger.info("--------------------------------------------------------------------------------");
-			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID,
-					new BenchmarkResult(Activator.s_PLUGIN_ID, "Toolchain Benchmarks", mBenchmark));
 			new ResultNotifier(mCurrentController).processResults();
 		}
 
@@ -921,14 +937,18 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	}
 
 	private final IElement runParser(final File file, ISource parser) throws Exception {
-
+		boolean useBenchmark = new UltimatePreferenceStore(Activator.s_PLUGIN_ID).getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
 		IElement root = null;
 		// parse the files to Graph
 		try {
 			mLogger.info(String.format("Parsing single file: %s", file.getAbsolutePath()));
-			mBenchmark.start(parser.getName());
+			if (useBenchmark) {
+				mBenchmark.start(parser.getName());
+			}
 			root = parser.parseAST(file);
-			mBenchmark.stop(parser.getName());
+			if (useBenchmark) {
+				mBenchmark.stop(parser.getName());
+			}
 
 			/*
 			 * for testing purposes only for(ISerialization ser :
@@ -1310,11 +1330,6 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		rtr.add(this);
 		rtr.add(mCurrentController);
 		return rtr.toArray(new IUltimatePlugin[rtr.size()]);
-	}
-
-	@Override
-	public int init(Object params) {
-		throw new UnsupportedOperationException("The core does not initialize itself");
 	}
 
 	@Override

@@ -22,7 +22,7 @@ public class LTL2aut implements IGenerator {
 	 private DummyLTL2autObserver mObserver;
 	 
 	@Override
-	public int init(Object params) {
+	public int init() {
 		mObserver = new DummyLTL2autObserver(); 
 		return 0;
 	} 

@@ -58,7 +58,7 @@ public class CDTDummyParser implements ISource {
 	 * .lang.Object)
 	 */
 	@Override
-	public int init(Object params) {
+	public int init() {
 		m_FileNames = new ArrayList<String>();
 		return 0;
 	}

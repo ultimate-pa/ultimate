@@ -67,7 +67,7 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#init(java.lang.Object)
 	 */
 	@Override
-    public int init(Object param) {
+    public int init() {
     	m_Observer = new CACSL2BoogieTranslatorObserver();
     	return 0;
     }

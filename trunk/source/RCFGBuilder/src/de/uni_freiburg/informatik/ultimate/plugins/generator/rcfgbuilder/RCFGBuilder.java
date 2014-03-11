@@ -46,7 +46,7 @@ public class RCFGBuilder implements IGenerator {
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#init(java.lang.Object)
 	 */
 	@Override
-    public int init(Object param) {
+    public int init() {
     	m_Observer = new RCFGBuilderObserver();
     	return 0;
     }

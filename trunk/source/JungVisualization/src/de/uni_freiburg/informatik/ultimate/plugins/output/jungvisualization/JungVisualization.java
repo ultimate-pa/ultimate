@@ -64,7 +64,7 @@ public class JungVisualization implements IOutput {
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#init(java.lang.Object)
 	 */
 	@Override
-	public int init(Object params) {
+	public int init() {
 		mobserver = new JungVisualizationObserver();
 		return 0;
 	}

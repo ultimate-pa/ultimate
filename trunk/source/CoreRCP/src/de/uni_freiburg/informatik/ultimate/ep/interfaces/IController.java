@@ -56,29 +56,43 @@ public interface IController extends IUltimatePlugin {
 	 * @return
 	 */
 	String getSavePrefName();
-	
+
 	/**
-	 * Should be called to notify the user that the toolchain proved the program to be incorrect  
+	 * Should be called to notify the user that the toolchain proved the program
+	 * to be incorrect
 	 */
 	void displayToolchainResultProgramIncorrect();
-	
+
 	/**
-	 * Should be called to notify the user that the toolchain proved the program to be correct
+	 * Should be called to notify the user that the toolchain proved the program
+	 * to be correct
 	 */
 	void displayToolchainResultProgramCorrect();
-	
+
 	/**
-	 * Should be called to notify the user that the toolchain failed to prove the program correct or incorrect    
+	 * Should be called to notify the user that the toolchain failed to prove
+	 * the program correct or incorrect
 	 */
 	void displayToolchainResultProgramUnknown(String description);
-	
+
 	/**
-	 * Is called by the core if the controller should display an exception to the user 
+	 * Is called by the core if the controller should display an exception to
+	 * the user
 	 * 
 	 * @param description
 	 * @param ex
 	 */
 	void displayException(String description, Throwable ex);
-	
+
+	/**
+	 * {@link UltimateCore} initializes a controller during startup with this
+	 * callback.
+	 * 
+	 * @param core
+	 *            The active {@link UltimateCore} instance that can be used by
+	 *            the controller to start various Ultimate functions.
+	 * @return
+	 */
+	int init(ICore core);
 
 }

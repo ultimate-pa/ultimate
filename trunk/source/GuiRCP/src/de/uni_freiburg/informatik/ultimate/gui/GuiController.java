@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.gui.dialogs.ParserChooseDialog;
 /**
  * GUIController is the IController implementation of the UltimateDebug GUI
  * 
- * @author Christian Ortolf, Daniel Dietsch
+ * @author dietsch
  * 
  */
 public class GuiController implements IController {
@@ -56,9 +56,10 @@ public class GuiController implements IController {
 	 * 
 	 * @return the exit code for the application
 	 */
-	public int init(Object controlledCore) {
+	public int init(ICore controlledCore) {
 		mLogger = UltimateServices.getInstance().getControllerLogger();
-		if (!(controlledCore instanceof ICore)) {
+		
+		if(controlledCore == null){
 			mLogger.fatal("Initialization failed because no ICore instance was supplied");
 			return -1;
 		}

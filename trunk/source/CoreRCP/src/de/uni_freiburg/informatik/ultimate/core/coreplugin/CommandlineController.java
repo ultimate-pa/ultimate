@@ -91,12 +91,9 @@ public class CommandlineController implements IController {
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#init(java.lang.Object)
 	 */
-	public int init(Object param) {
-		ICore core;
-		if (!(param instanceof ICore)) {
+	public int init(ICore core) {
+		if(core == null){
 			return -1;
-		} else {
-			core = (ICore) param;
 		}
 		
 		try {
@@ -239,5 +236,4 @@ public class CommandlineController implements IController {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 }
