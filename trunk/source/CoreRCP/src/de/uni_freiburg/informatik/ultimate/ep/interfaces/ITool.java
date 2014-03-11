@@ -5,7 +5,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 
-public interface ITool extends IUltimatePlugin{
+public interface ITool extends IToolchainPlugin{
 	
 	/**
 	 * Provides Keywords for model selection. Depending on a Keyword and the 

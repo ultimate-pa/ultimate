@@ -10,10 +10,10 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
  * should implement. UltimateCore should always use methods in this interface,
  * and if necessary, extend it to request user interaction.
  * 
- * @author all
+ * @author dietsch
  * 
  */
-public interface IController extends IRCPPlugin {
+public interface IController extends IUltimatePlugin {
 
 	/**
 	 * Here the controller tells the caller what parser to use. Usually, the
@@ -45,11 +45,17 @@ public interface IController extends IRCPPlugin {
 	 */
 	List<String> selectModel(List<String> modelNames);
 
+	/**
+	 * 
+	 * @return
+	 */
 	String getLoadPrefName();
 
+	/**
+	 * 
+	 * @return
+	 */
 	String getSavePrefName();
-	
-	
 	
 	/**
 	 * Should be called to notify the user that the toolchain proved the program to be incorrect  

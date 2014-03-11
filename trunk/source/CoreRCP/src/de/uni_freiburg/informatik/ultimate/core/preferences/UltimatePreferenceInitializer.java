@@ -13,7 +13,7 @@ import org.osgi.service.prefs.BackingStoreException;
  * org.eclipse.core.runtime.preferences.initializer (see the plugin.xml of
  * CoreRCP for an example)
  * 
- * @author Dietsch
+ * @author dietsch
  * 
  */
 public abstract class UltimatePreferenceInitializer extends

@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
@@ -62,11 +63,22 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
  * 
  * It does NOT support transforming in those visit functions; if you want to do
  * this, you are better of with the original BoogieTransformer.
- * 
+ * @param <RTR> Used to describe the return type of {@link #process(T)}.
+ * @param <T> Used to describe the parameter type of {@link #process(T)}.
  * @author dietsch
- * 
  */
-public abstract class BoogieVisitor extends BoogieTransformer {
+public abstract class BoogieVisitor<RTR, T extends BoogieASTNode> extends BoogieTransformer {
+
+	/**
+	 * Method useful for implementing anonymous inner types. Override this
+	 * method and use the inner methods of the BoogieVisitor to implement your
+	 * own.
+	 * 
+	 * @param node The starting node of the AST you want to traverse. 
+	 * @return Anything you like.
+	 * @throws Anything you like.
+	 */
+	public abstract RTR process(T node) throws Throwable;
 
 	@Override
 	protected Declaration processDeclaration(Declaration decl) {

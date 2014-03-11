@@ -10,7 +10,7 @@ import java.util.List;
 import javax.xml.bind.JAXBException;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
@@ -136,7 +136,7 @@ public class AnalysisChooseDialog extends Dialog {
 			
 		});
 		
-		for (IUltimatePlugin analysis : tools) {
+		for (IToolchainPlugin analysis : tools) {
 			final TableItem analysisTableItem = new TableItem(table, SWT.BORDER);
 			analysisTableItem.setData(analysis);
 			setCaption(analysisTableItem);
@@ -179,7 +179,7 @@ public class AnalysisChooseDialog extends Dialog {
 		newColumnTableColumn_1.setText("Current Toolchain");
 		newColumnTableColumn_1.setResizable(true);
 		
-		for (IUltimatePlugin analysis : previous) {
+		for (IToolchainPlugin analysis : previous) {
 			final TableItem analysisTableItem = new TableItem(resulttable, SWT.BORDER);
 			analysisTableItem.setData(analysis);
 			setCaption(analysisTableItem);
@@ -346,7 +346,7 @@ public class AnalysisChooseDialog extends Dialog {
 	}
 	
 	private static void setCaption(TableItem item){
-		IUltimatePlugin isp = (IUltimatePlugin)item.getData();
+		IToolchainPlugin isp = (IToolchainPlugin)item.getData();
 		item.setText(isp.getName()+"   id: "+isp.getPluginID());
 	}
 	

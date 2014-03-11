@@ -21,7 +21,7 @@ public abstract class UltimateTestSuite {
 	protected Logger mLogger;
 
 	public UltimateTestSuite() {
-		mLogger = Logger.getLogger(UltimateStarter.class);
+		mLogger = Logger.getLogger(UltimateTestSuite.class);
 		
 	}
 

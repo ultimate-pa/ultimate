@@ -46,7 +46,7 @@ public class BoogieParser implements ISource {
 	/**
 	 * This method is required by IUltimatePlugin
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin#getPluginID()
+	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin#getPluginID()
 	 */
 	public String getPluginID() {
 		return Activator.s_PLUGIN_ID;
@@ -58,7 +58,7 @@ public class BoogieParser implements ISource {
 	 * 
 	 * @param param
 	 *            is ignored
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin#init()
+	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin#init()
 	 */
 	public int init(Object param) {
 		mFileNames = new ArrayList<String>();

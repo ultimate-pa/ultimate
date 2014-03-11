@@ -7,12 +7,12 @@ import org.apache.log4j.Appender;
 
 /**
  * Interface for Plugins defining a LoggingWindow.
- * @author rj
+ * @author dietsch
  *
  * CO: extended with appender .. seems to be more compfortable
  * and we can then use it with log4j
  */
-public interface ILoggingWindow extends Appender, IRCPPlugin {
+public interface ILoggingWindow extends Appender, IUltimatePlugin {
 
 	/**
 	 * Method for writing string on window. 

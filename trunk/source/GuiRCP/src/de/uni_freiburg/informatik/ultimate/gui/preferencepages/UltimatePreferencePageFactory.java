@@ -11,7 +11,7 @@ import org.eclipse.ui.PlatformUI;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 
@@ -24,7 +24,7 @@ public class UltimatePreferencePageFactory {
 	}
 
 	public void createPreferencePages() {
-		for (IRCPPlugin plugin : mCore.getPlugins()) {
+		for (IUltimatePlugin plugin : mCore.getPlugins()) {
 			if (plugin.getPreferences() != null) {
 				UltimatePreferenceItem<?>[] preferenceItems = plugin
 						.getPreferences().getDefaultPreferences();

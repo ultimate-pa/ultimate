@@ -22,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
  * @author dietsch
  * 
  */
-public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnmanagedObserver {
+public class BoogieSymbolTableConstructor extends BoogieVisitor<Boolean, Unit> implements IUnmanagedObserver {
 
 	private Logger mLogger;
 	private BoogieSymbolTable mSymbolTable;
@@ -71,17 +71,22 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		if (root instanceof Unit) {
-			mRootNode = (Unit) root;
-			for (Declaration decl : mRootNode.getDeclarations()) {
-				if (decl instanceof VariableDeclaration) {
-					mCurrentScope = StorageClass.GLOBAL;
-					mCurrentDeclaration = decl;
-				}
-				processDeclaration(decl);
-			}
-			return false;
+			return process((Unit) root);
 		}
 		return true;
+	}
+
+	@Override
+	public Boolean process(Unit node) throws Throwable {
+		mRootNode = node;
+		for (Declaration decl : mRootNode.getDeclarations()) {
+			if (decl instanceof VariableDeclaration) {
+				mCurrentScope = StorageClass.GLOBAL;
+				mCurrentDeclaration = decl;
+			}
+			processDeclaration(decl);
+		}
+		return false;
 	}
 
 	@Override

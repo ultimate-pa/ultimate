@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
  * $LastChangedDate$
  * $LastChangedRevision$
  */
-public interface ISource extends IUltimatePlugin {
+public interface ISource extends IToolchainPlugin {
 
 
 	

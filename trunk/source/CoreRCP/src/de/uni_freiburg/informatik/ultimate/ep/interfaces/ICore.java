@@ -96,6 +96,6 @@ public interface ICore {
 
 	void loadPreferences();
 
-	IRCPPlugin[] getPlugins();
+	IUltimatePlugin[] getPlugins();
 
 }

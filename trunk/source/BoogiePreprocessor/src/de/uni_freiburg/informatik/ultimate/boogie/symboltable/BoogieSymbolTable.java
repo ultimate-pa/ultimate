@@ -2,13 +2,17 @@ package de.uni_freiburg.informatik.ultimate.boogie.symboltable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
@@ -243,7 +247,7 @@ public class BoogieSymbolTable {
 					.append(getTypeForVariableSymbol(s, StorageClass.GLOBAL, null)).append("\n");
 		}
 
-		List<String> functionSymbols = new ArrayList<>();
+		HashSet<String> functionSymbols = new HashSet<>();
 		functionSymbols.addAll(getSymbolNames(StorageClass.IMPLEMENTATION, null));
 		functionSymbols.addAll(getSymbolNames(StorageClass.PROCEDURE, null));
 
@@ -253,23 +257,29 @@ public class BoogieSymbolTable {
 
 		// functions and procedures, inlined with local definitions
 		for (String functionSymbol : functionSymbols) {
-			//get the declaration(s) for the function or procedure symbol 
+			// get the declaration(s) for the function or procedure symbol
 			List<Declaration> decls = getFunctionOrProcedureDeclaration(functionSymbol);
 
 			for (Declaration decl : decls) {
-				//check what kind of symbol it is
+				// check what kind of symbol it is
 				if (decl instanceof FunctionDeclaration) {
 					functions.append(" * ").append(functionSymbol).append(" := ").append(decl).append("\n");
-					//add the local variable declarations 
+					// add the local variable declarations
 					appendLocals(functions, functionSymbol);
 				} else {
 					Procedure proc = (Procedure) decl;
 					if (isImplementation(proc)) {
-						implementations.append(" * ").append(functionSymbol).append(" := ").append(decl).append("\n");
+						// implementations.append(" * ").append(functionSymbol).append(" := ").append(decl).append("\n");
+						implementations.append(" * ").append(prettyPrintProcedureSignature(decl)).append("\n");
 						appendLocals(implementations, functionSymbol);
 					} else {
-						procedures.append(" * ").append(functionSymbol).append(" := ").append(decl).append("\n");
-						appendLocals(procedures, functionSymbol);
+						// procedures.append(" * ").append(functionSymbol).append(" := ").append(decl).append("\n");
+						procedures.append(" * ").append(prettyPrintProcedureSignature(decl)).append("\n");
+						if (decls.size() == 1) {
+							// only print locals if there is no implementation
+							// defined (do not print locals 2 times)
+							appendLocals(procedures, functionSymbol);
+						}
 					}
 				}
 			}
@@ -305,22 +315,81 @@ public class BoogieSymbolTable {
 	}
 
 	private void appendLocals(StringBuilder builder, String currentFunctionSymbol) {
-		final StorageClass[] locals = new StorageClass[] { StorageClass.LOCAL, StorageClass.PROCEDURE_INPARAM,
-				StorageClass.PROCEDURE_OUTPARAM, StorageClass.IMPLEMENTATION_INPARAM,
-				StorageClass.IMPLEMENTATION_OUTPARAM };
-
-		for (StorageClass sc : locals) {
-			Collection<String> localSymbols = getSymbolNames(sc, currentFunctionSymbol);
-			if (localSymbols.size() == 0) {
-				continue;
-			}
-			builder.append("  * ").append(sc.toString()).append("\n");
-			for (String symbol : localSymbols) {
-				IType type = getTypeForVariableSymbol(symbol, sc, currentFunctionSymbol);
-				builder.append("   * ").append(symbol).append(" : ").append(type).append("\n");
-			}
+		Collection<String> localSymbols = getSymbolNames(StorageClass.LOCAL, currentFunctionSymbol);
+		if (localSymbols.size() == 0) {
+			return;
+		}
+		for (String symbol : localSymbols) {
+			IType type = getTypeForVariableSymbol(symbol, StorageClass.LOCAL, currentFunctionSymbol);
+			builder.append("  * ").append(symbol).append(" : ").append(type).append("\n");
 		}
 	}
-	
 
+	private String prettyPrintProcedureSignature(Declaration decl) {
+		BoogieVisitor<StringBuilder, Declaration> signatureBuilder = new BoogieVisitor<StringBuilder, Declaration>() {
+
+			private StringBuilder sb;
+
+			@Override
+			public StringBuilder process(Declaration node) {
+				sb = new StringBuilder();
+				processDeclaration(node);
+				// replace the superfluous " returns " at the end (from
+				// processVarLists)
+				sb.replace(sb.length() - 9, sb.length(), "");
+				return sb;
+			}
+
+			@Override
+			protected void visit(Procedure decl) {
+				sb.append(decl.getIdentifier());
+			}
+
+			@Override
+			protected void visit(FunctionDeclaration decl) {
+				sb.append(decl.getIdentifier());
+			}
+
+			@Override
+			protected VarList[] processVarLists(VarList[] vls) {
+				sb.append("(");
+				VarList[] rtr = super.processVarLists(vls);
+				if (vls.length > 0) {
+					// replace the superfluous ", "
+					sb.replace(sb.length() - 2, sb.length(), "");
+				}
+				sb.append(") returns ");
+				return rtr;
+			}
+
+			@Override
+			protected VarList processVarList(VarList vl) {
+				String[] identifiers = vl.getIdentifiers();
+				if (identifiers.length > 0) {
+					for (String name : identifiers) {
+						sb.append(name).append(" : ").append(vl.getType().getBoogieType()).append(", ");
+					}
+				}
+				return super.processVarList(vl);
+			}
+
+			// prevent traversing the whole ast with the following overrides
+			@Override
+			protected Body processBody(Body body) {
+				return body;
+			}
+
+			@Override
+			protected Expression processExpression(Expression expr) {
+				return expr;
+			}
+		};
+
+		try {
+			return signatureBuilder.process(decl).toString();
+		} catch (Throwable e) {
+			e.printStackTrace();
+			return "";
+		}
+	}
 }

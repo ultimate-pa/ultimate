@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ILoggingWindow;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 import de.uni_freiburg.informatik.ultimate.logging.UltimateLoggerFactory;
@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.util.Benchmark;
  * 
  * @author Jakob, Dietsch, Bjoern Buchhold, Christian Simon
  */
-public class UltimateCore implements IApplication, ICore, IRCPPlugin {
+public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 	/**
 	 * In what mode is Ultimate supposed tu run? With a GUI? With an interactive
@@ -365,20 +365,20 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 			logDefaultPreferences(mCurrentController.getPluginID());
 		}
 
-		for (IRCPPlugin t : mOutputPlugins) {
+		for (IUltimatePlugin t : mOutputPlugins) {
 			attachLogPreferenceChangeListenerToPlugin(t.getPluginID());
 			logDefaultPreferences(t.getPluginID());
 		}
-		for (IRCPPlugin t : mSourcePlugins) {
+		for (IUltimatePlugin t : mSourcePlugins) {
 			attachLogPreferenceChangeListenerToPlugin(t.getPluginID());
 			logDefaultPreferences(t.getPluginID());
 		}
-		for (IRCPPlugin t : mGeneratorPlugins) {
+		for (IUltimatePlugin t : mGeneratorPlugins) {
 			attachLogPreferenceChangeListenerToPlugin(t.getPluginID());
 			logDefaultPreferences(t.getPluginID());
 		}
 
-		for (IRCPPlugin t : mAnalysisPlugins) {
+		for (IUltimatePlugin t : mAnalysisPlugins) {
 			attachLogPreferenceChangeListenerToPlugin(t.getPluginID());
 			logDefaultPreferences(t.getPluginID());
 		}
@@ -1129,7 +1129,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 			try {
 				FileOutputStream fis = new FileOutputStream(filename);
 
-				for (IRCPPlugin plugin : getPlugins()) {
+				for (IUltimatePlugin plugin : getPlugins()) {
 					new UltimatePreferenceStore(plugin.getPluginID()).exportPreferences(fis);
 				}
 
@@ -1303,13 +1303,13 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	}
 
 	@Override
-	public IRCPPlugin[] getPlugins() {
-		ArrayList<IRCPPlugin> rtr = new ArrayList<IRCPPlugin>();
+	public IUltimatePlugin[] getPlugins() {
+		ArrayList<IUltimatePlugin> rtr = new ArrayList<IUltimatePlugin>();
 		rtr.addAll(mTools);
 		rtr.addAll(mSourcePlugins);
 		rtr.add(this);
 		rtr.add(mCurrentController);
-		return rtr.toArray(new IRCPPlugin[rtr.size()]);
+		return rtr.toArray(new IUltimatePlugin[rtr.size()]);
 	}
 
 	@Override

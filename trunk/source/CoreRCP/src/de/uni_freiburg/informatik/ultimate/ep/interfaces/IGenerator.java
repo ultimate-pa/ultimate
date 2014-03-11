@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
  * may transformation be destructive?
  *
  * 
- * @author Christian Ortolf
+ * @author dietsch
  *
  */
 public interface IGenerator extends IModifyingTool {
