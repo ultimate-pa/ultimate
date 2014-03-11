@@ -971,12 +971,6 @@ public class Boogie2SMT implements SmtIdentifierProvider {
 		UltimateServices.getInstance().cancelToolchain();
 	}
 
-	public BoogieVar constructBoogieVar(String name, Object object,
-			PrimitiveType type, boolean b, Object object2) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
 	
 	/**
 	 * Use with caution! Construct auxiliary variables only if you need then in
@@ -986,10 +980,10 @@ public class Boogie2SMT implements SmtIdentifierProvider {
 	 * Auxiliary variables are not supported in any backtranslation.
 	 */
 	public BoogieVar constructAuxiliaryBoogieVar(String identifier, 
-			String procedure, StorageClass storageClass, IType iType, 
+			String procedure, IType iType, 
 			boolean isOldvar, BoogieASTNode BoogieASTNode) {
 		return m_Boogie2SmtSymbolTable.constructBoogieVar(identifier, procedure, 
-				storageClass, iType, isOldvar, BoogieASTNode);
+				StorageClass.GLOBAL, iType, isOldvar, BoogieASTNode);
 	}
 
 }

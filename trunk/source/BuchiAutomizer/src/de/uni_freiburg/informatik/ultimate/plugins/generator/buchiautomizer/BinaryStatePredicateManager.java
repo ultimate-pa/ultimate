@@ -98,9 +98,9 @@ public class BinaryStatePredicateManager {
 	private BoogieVar constructGlobalBoogieVar(String name,
 			Boogie2SMT boogie2Smt, PrimitiveType type) {
 		BoogieVar globalBv;
-		globalBv = boogie2Smt.constructBoogieVar(
+		globalBv = boogie2Smt.constructAuxiliaryBoogieVar(
 				name, null, type, false, null);
-		boogie2Smt.constructBoogieVar(
+		boogie2Smt.constructAuxiliaryBoogieVar(
 				name, null, type, true, null);
 		return globalBv;
 	}
