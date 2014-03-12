@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import org.eclipse.jface.preference.BooleanFieldEditor;
+import org.eclipse.jface.preference.ColorFieldEditor;
 import org.eclipse.jface.preference.ComboFieldEditor;
 import org.eclipse.jface.preference.DirectoryFieldEditor;
 import org.eclipse.jface.preference.FieldEditor;
@@ -22,8 +23,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 
-public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
-		implements IWorkbenchPreferencePage {
+public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
 
 	private String mPluginID;
 	private UltimatePreferenceItem<?>[] mDefaultPreferences;
@@ -31,14 +31,12 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 	private ScopedPreferenceStore mPreferenceStore;
 	private HashMap<FieldEditor, UltimatePreferenceItem<?>> mCheckedFields;
 
-	public UltimateGeneratedPreferencePage(String pluginID, String title,
-			UltimatePreferenceItem<?>[] preferences) {
+	public UltimateGeneratedPreferencePage(String pluginID, String title, UltimatePreferenceItem<?>[] preferences) {
 		super(GRID);
 		mPluginID = pluginID;
 		mDefaultPreferences = preferences;
 		mTitle = title;
-		mPreferenceStore = new ScopedPreferenceStore(
-				new UltimatePreferenceStore(mPluginID).getScopeContext(),
+		mPreferenceStore = new ScopedPreferenceStore(new UltimatePreferenceStore(mPluginID).getScopeContext(),
 				mPluginID);
 		mCheckedFields = new HashMap<FieldEditor, UltimatePreferenceItem<?>>();
 		setPreferenceStore(mPreferenceStore);
@@ -46,8 +44,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 	}
 
 	public UltimateGeneratedPreferencePage copy() {
-		return new UltimateGeneratedPreferencePage(mPluginID, mTitle,
-				mDefaultPreferences);
+		return new UltimateGeneratedPreferencePage(mPluginID, mTitle, mDefaultPreferences);
 	}
 
 	@Override
@@ -86,10 +83,12 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 			case MultilineString:
 				editor = createMultilineFieldEditor(item.getLabel());
 				break;
+			case Color:
+				editor = createColorEditor(item.getLabel());
+				break;
 			default:
-				throw new UnsupportedOperationException(
-						"You need to implement the new enum type \""
-								+ item.getType() + "\" here");
+				throw new UnsupportedOperationException("You need to implement the new enum type \"" + item.getType()
+						+ "\" here");
 			}
 
 			if (item.getPreferenceValidator() != null && editor != null) {
@@ -98,10 +97,6 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 		}
 
 	}
-
-
-
-
 
 	@Override
 	protected void checkState() {
@@ -136,35 +131,36 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 		return super.performOk();
 	}
 
+	@SuppressWarnings("unchecked")
 	private void checkState(FieldEditor editor) {
 		if (editor.isValid()) {
-			UltimatePreferenceItem<?> preferenceDescriptor = mCheckedFields
-					.get(editor);
+			UltimatePreferenceItem<?> preferenceDescriptor = mCheckedFields.get(editor);
 			if (preferenceDescriptor == null) {
 				return;
 			}
-			IUltimatePreferenceItemValidator<?> validator = preferenceDescriptor
-					.getPreferenceValidator();
+			IUltimatePreferenceItemValidator<?> validator = preferenceDescriptor.getPreferenceValidator();
 			switch (preferenceDescriptor.getType()) {
 			case Boolean:
-				validateField(
-						(IUltimatePreferenceItemValidator<Boolean>) validator,
+				validateField((IUltimatePreferenceItemValidator<Boolean>) validator,
 						((BooleanFieldEditor) editor).getBooleanValue());
 				break;
 			case Integer:
-				validateField(
-						(IUltimatePreferenceItemValidator<Integer>) validator,
+				validateField((IUltimatePreferenceItemValidator<Integer>) validator,
 						((IntegerFieldEditor) editor).getIntValue());
 				break;
 			case Directory:
 			case Path:
 			case String:
 			case File:
-				validateField(
-						(IUltimatePreferenceItemValidator<String>) validator,
+			case Color:
+				validateField((IUltimatePreferenceItemValidator<String>) validator,
 						((StringFieldEditor) editor).getStringValue());
 				break;
-			
+			case MultilineString:
+				validateField((IUltimatePreferenceItemValidator<String>) validator,
+						((MultiLineTextFieldEditor) editor).getStringValue());
+				break;
+
 			case Label:
 			case Combo:
 			case Radio:
@@ -173,15 +169,13 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 				// Radio cannot be invalid
 				break;
 			default:
-				throw new UnsupportedOperationException(
-						"You need to implement the new enum type \""
-								+ preferenceDescriptor.getType() + "\" here");
+				throw new UnsupportedOperationException("You need to implement the new enum type \""
+						+ preferenceDescriptor.getType() + "\" here");
 			}
 		}
 	}
 
-	private <T> void validateField(
-			IUltimatePreferenceItemValidator<T> validator, T value) {
+	private <T> void validateField(IUltimatePreferenceItemValidator<T> validator, T value) {
 		if (!validator.isValid(value)) {
 			setErrorMessage(validator.getInvalidValueErrorMessage(value));
 			setValid(false);
@@ -191,29 +185,32 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 		}
 	}
 
+	private FieldEditor createColorEditor(String label) {
+		ColorFieldEditor editor = new ColorFieldEditor(label, label, getFieldEditorParent());
+		addField(editor);
+		return editor;
+	}
+
 	private FileFieldEditor createFileFieldEditor(UltimatePreferenceItem<?> item) {
 		FileFieldEditor editor = new FileFieldEditor(item.getLabel(), item.getLabel(), getFieldEditorParent());
 		addField(editor);
 		return editor;
 	}
-	
+
 	private MultiLineTextFieldEditor createMultilineFieldEditor(String label) {
-		MultiLineTextFieldEditor editor = new MultiLineTextFieldEditor(label,label,getFieldEditorParent());
-		addField(editor);
-		return editor;
-	}
-	
-	private PathEditor createPathFieldEditor(UltimatePreferenceItem<?> item) {
-		PathEditor editor = new PathEditor(item.getLabel(), item.getLabel(),
-				item.getLabel(), getFieldEditorParent());
+		MultiLineTextFieldEditor editor = new MultiLineTextFieldEditor(label, label, getFieldEditorParent());
 		addField(editor);
 		return editor;
 	}
 
-	private RadioGroupFieldEditor createRadioGroupFieldEditor(
-			UltimatePreferenceItem<?> item) {
-		RadioGroupFieldEditor editor = new RadioGroupFieldEditor(
-				item.getLabel(), item.getLabel(), 1,
+	private PathEditor createPathFieldEditor(UltimatePreferenceItem<?> item) {
+		PathEditor editor = new PathEditor(item.getLabel(), item.getLabel(), item.getLabel(), getFieldEditorParent());
+		addField(editor);
+		return editor;
+	}
+
+	private RadioGroupFieldEditor createRadioGroupFieldEditor(UltimatePreferenceItem<?> item) {
+		RadioGroupFieldEditor editor = new RadioGroupFieldEditor(item.getLabel(), item.getLabel(), 1,
 				item.getComboFieldEntries(), getFieldEditorParent());
 		editor.loadDefault();
 		addField(editor);
@@ -221,46 +218,40 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 	}
 
 	private ComboFieldEditor createComboEditor(UltimatePreferenceItem<?> item) {
-		ComboFieldEditor comboEditor = new ComboFieldEditor(item.getLabel(),
-				item.getLabel(), item.getComboFieldEntries(),
-				getFieldEditorParent());
+		ComboFieldEditor comboEditor = new ComboFieldEditor(item.getLabel(), item.getLabel(),
+				item.getComboFieldEntries(), getFieldEditorParent());
 		addField(comboEditor);
 		return comboEditor;
 	}
 
 	private IntegerFieldEditor createIntegerFieldEditor(String label) {
-		IntegerFieldEditor editor = new IntegerFieldEditor(label, label,
-				getFieldEditorParent());
+		IntegerFieldEditor editor = new IntegerFieldEditor(label, label, getFieldEditorParent());
 		editor.setValidRange(Integer.MIN_VALUE, Integer.MAX_VALUE);
 		addField(editor);
 		return editor;
 	}
 
 	private BooleanFieldEditor createBooleanFieldEditor(String label) {
-		BooleanFieldEditor editor = new BooleanFieldEditor(label, label,
-				getFieldEditorParent());
+		BooleanFieldEditor editor = new BooleanFieldEditor(label, label, getFieldEditorParent());
 		addField(editor);
 		return editor;
 	}
 
 	private UltimateLabelFieldEditor createLabel(String label) {
-		UltimateLabelFieldEditor editor = new UltimateLabelFieldEditor(label,
-				getFieldEditorParent());
+		UltimateLabelFieldEditor editor = new UltimateLabelFieldEditor(label, getFieldEditorParent());
 		addField(editor);
 		return editor;
 	}
 
 	private DirectoryFieldEditor createDirectoryEditor(String label) {
-		DirectoryFieldEditor editor = new DirectoryFieldEditor(label, label,
-				getFieldEditorParent());
+		DirectoryFieldEditor editor = new DirectoryFieldEditor(label, label, getFieldEditorParent());
 		addField(editor);
 		return editor;
 	}
 
 	private StringFieldEditor createStringEditor(String label) {
-		StringFieldEditor editor = new StringFieldEditor(label, label,
-				getFieldEditorParent());
-		
+		StringFieldEditor editor = new StringFieldEditor(label, label, getFieldEditorParent());
+
 		addField(editor);
 		return editor;
 	}

@@ -9,21 +9,16 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 
+import org.apache.commons.collections15.Transformer;
+import org.apache.commons.collections15.functors.ConstantTransformer;
+import org.eclipse.jface.resource.StringConverter;
+import org.eclipse.swt.graphics.RGB;
+
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
 import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.PreferenceValues;
-
-import org.apache.commons.collections15.Transformer;
-import org.apache.commons.collections15.functors.ConstantTransformer;
-import org.eclipse.core.runtime.preferences.ConfigurationScope;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.IScopeContext;
-import org.eclipse.core.runtime.preferences.InstanceScope;
-import org.eclipse.jface.preference.PreferenceConverter;
-import org.eclipse.swt.graphics.RGB;
-import org.eclipse.ui.preferences.ScopedPreferenceStore;
-
+import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceValues;
 import edu.uci.ics.jung.algorithms.layout.FRLayout;
 import edu.uci.ics.jung.algorithms.layout.FRLayout2;
 import edu.uci.ics.jung.algorithms.layout.ISOMLayout;
@@ -78,21 +73,17 @@ public class GraphProperties {
 	@SuppressWarnings("unchecked")
 	public void setGraphProperties(VisualizationViewer<VisualizationNode, VisualizationEdge> vv,
 			Graph<VisualizationNode, VisualizationEdge> graph, VisualizationNode rootNode) {
-		IScopeContext scope = InstanceScope.INSTANCE;
-		IEclipsePreferences prefs = scope.getNode(Activator.PLUGIN_ID);
-		ScopedPreferenceStore store = PreferenceValues.Preference;
+		UltimatePreferenceStore store = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final Font font = vv.getFont();
 		final FontRenderContext frc = vv.getFontMetrics(font)
 				.getFontRenderContext();
 		Layout<VisualizationNode, VisualizationEdge> layout = vv.getGraphLayout();
 
 		Transformer<VisualizationNode, Shape> vertexShapeTransformer;
-		String vertexShapePreference = prefs.get(
-				PreferenceValues.NAME_SHAPE_NODE,
-				PreferenceValues.VALUE_SHAPE_NODE_DEFAULT);
+		String vertexShapePreference = store.getString(
+				JungPreferenceValues.LABEL_SHAPE_NODE);
 
-		if (prefs.getBoolean(PreferenceValues.NAME_ANNOTATED_NODES,
-				PreferenceValues.VALUE_ANNOTATED_NODES_DEFAULT)) {
+		if (store.getBoolean(JungPreferenceValues.LABEL_ANNOTATED_NODES)) {
 			vv.getRenderContext().setVertexLabelTransformer(
 					new ToStringLabeller<VisualizationNode>());
 
@@ -139,16 +130,17 @@ public class GraphProperties {
 			vv.getRenderer().getVertexLabelRenderer()
 					.setPosition(Renderer.VertexLabel.Position.CNTR);
 		}
-
-		RGB rgb = PreferenceConverter.getColor(store,
-				PreferenceValues.NAME_COLOR_NODE);
+ ;
+ 
+		RGB rgb = StringConverter.asRGB(store.getString(JungPreferenceValues.LABEL_COLOR_NODE));
 		Color nodeFillColor = new Color(rgb.red, rgb.green, rgb.blue);
-		rgb = PreferenceConverter.getColor(store,
-				PreferenceValues.NAME_COLOR_NODE_PICKED);
+		
+		rgb = StringConverter.asRGB(store.getString(JungPreferenceValues.LABEL_COLOR_NODE_PICKED));
 		Color nodePickedColor = new Color(rgb.red, rgb.green, rgb.blue);
 
-		rgb = PreferenceConverter.getColor(store,
-				PreferenceValues.NAME_COLOR_BACKGROUND);
+		
+		
+		rgb = StringConverter.asRGB(store.getString(JungPreferenceValues.LABEL_COLOR_BACKGROUND));
 		Color backgroundColor = new Color(rgb.red, rgb.green, rgb.blue);
 		vv.setBackground(backgroundColor);
 
@@ -158,8 +150,7 @@ public class GraphProperties {
 								.getPickedVertexState(), nodeFillColor,
 								nodePickedColor));
 
-		if (prefs.getBoolean(PreferenceValues.NAME_ANNOTATED_EDGES,
-				PreferenceValues.VALUE_ANNOTATED_EDGES_DEFAULT)) {
+		if (store.getBoolean(JungPreferenceValues.LABEL_ANNOTATED_EDGES)) {
 			vv.getRenderContext().setEdgeLabelTransformer(
 					new ToStringLabeller<VisualizationEdge>() {
 						public String transform(VisualizationEdge edge) {
@@ -175,8 +166,7 @@ public class GraphProperties {
 		}
 
 		// set preferred Graph Layout, default Layout = KKLayout
-		String prefLayout = prefs.get(PreferenceValues.NAME_LAYOUT,
-				PreferenceValues.VALUE_LAYOUT_DEFAULT);
+		String prefLayout = store.getString(JungPreferenceValues.LABEL_LAYOUT);
 		if (prefLayout.equalsIgnoreCase("FRLayout")) {
 			layout = new FRLayout<VisualizationNode, VisualizationEdge>(graph);
 		} else if (prefLayout.equalsIgnoreCase("FRLayout2")) {

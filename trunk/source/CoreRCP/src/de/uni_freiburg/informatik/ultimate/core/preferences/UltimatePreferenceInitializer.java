@@ -57,6 +57,7 @@ public abstract class UltimatePreferenceInitializer extends
 			case Radio:
 			case Path:
 			case File:
+			case Color:
 				defaults.put(item.getLabel(), item.getDefaultValue().toString());
 				break;
 			case Label:
@@ -90,7 +91,7 @@ public abstract class UltimatePreferenceInitializer extends
 	 * preferences of the implementing plugin. Will be called once during
 	 * construction.
 	 * 
-	 * The index prescribes the position in preference pages.
+	 * The index prescribes the position in the preference pages.
 	 * 
 	 * Note: Clients should only set default preference values for their own
 	 * plugin.

@@ -1,9 +1,90 @@
 package de.uni_freiburg.informatik.ultimate.core.preferences;
 
+/**
+ * An UltimatePReferenceItem describes exactly one setting of a preference.
+ * Based on its {@link PreferenceType}, the active {@link IController} will
+ * present it to users for modification.
+ * 
+ * @author dietsch
+ * 
+ * @param <T>
+ *            The type of the preference. Usually a primitive, an enum, or
+ *            something that can be easily constructed from a String.
+ */
 public class UltimatePreferenceItem<T> {
 
+	/**
+	 * PreferenceType describes, how a preference item should be presented to
+	 * the user by the active {@link IController}.
+	 * 
+	 * @author dietsch
+	 * 
+	 */
 	public enum PreferenceType {
-		Boolean, Directory, String, Label, Combo, Radio, Integer, Path, MultilineString, File
+		/**
+		 * Yes/no choice. Usually a single check-box or a flag.
+		 */
+		Boolean,
+		/**
+		 * A string representing an absolute path to a single directory on the
+		 * local file system.
+		 */
+		Directory,
+		/**
+		 * A single line of text.
+		 */
+		String,
+		/**
+		 * A non-editable label that can be used to describe parts of the
+		 * preferences.
+		 * 
+		 * @see {@link UltimatePreferenceInitializer#initializeDefaultPreferences()}
+		 *      for more information on positioning
+		 *      {@link UltimatePreferenceItem UltimatePreferenceItems}.
+		 */
+		Label,
+		/**
+		 * Presents the user with a single choice from some predefined values.
+		 * Can be used for e.g. Enums.
+		 * 
+		 * Differs from {@link #Radio} because the guideline is that Combo does
+		 * not show all values simultaneously (think Combobox,
+		 * Radiobuttons/Radiolist).
+		 */
+		Combo,
+		/**
+		 * Presents the user with a single choice from some predefined values.
+		 * Can be used for e.g. Enums.
+		 * 
+		 * Differs from {@link #Combo} because the guideline is that Radio shows
+		 * all values simultaneously.
+		 */
+		Radio,
+		/**
+		 * A single number representing an Integer.
+		 */
+		Integer,
+		/**
+		 * A string representing one or multiple paths to a file or directory on
+		 * the system. If multiple paths are specified by the user, they are
+		 * separated by a semicolon.
+		 */
+		Path,
+		/**
+		 * A string spanning multiple lines. The lines are separated by the
+		 * system-default line break character (e.g. \r or \n).
+		 */
+		MultilineString,
+		/**
+		 * A string representing an absolute path on the local file system to a
+		 * single file.
+		 */
+		File,
+		/**
+		 * A string representing a color. The string has to be of the form
+		 * "red,green,blue", where 0 <= red,green,blue <= 255.
+		 */
+		Color
 	}
 
 	private String mLabel;
@@ -13,31 +94,26 @@ public class UltimatePreferenceItem<T> {
 	private boolean mUseCustomPreferencePage;
 	private IUltimatePreferenceItemValidator<T> mPreferenceValidator;
 
-	public UltimatePreferenceItem(String label, T defaultValue,
-			PreferenceType type) {
+	public UltimatePreferenceItem(String label, T defaultValue, PreferenceType type) {
 		this(label, defaultValue, type, false, null, null);
 	}
 
-	public UltimatePreferenceItem(String label, T defaultValue,
-			PreferenceType type, T[] choices,
+	public UltimatePreferenceItem(String label, T defaultValue, PreferenceType type, T[] choices,
 			IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		this(label, defaultValue, type, false, choices, preferenceValidator);
 	}
 
-	public UltimatePreferenceItem(String label, T defaultValue,
-			PreferenceType type, T[] choices) {
+	public UltimatePreferenceItem(String label, T defaultValue, PreferenceType type, T[] choices) {
 		this(label, defaultValue, type, false, choices, null);
 	}
 
-	public UltimatePreferenceItem(String label, T defaultValue,
-			PreferenceType type,
+	public UltimatePreferenceItem(String label, T defaultValue, PreferenceType type,
 			IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		this(label, defaultValue, type, false, null, preferenceValidator);
 	}
 
-	public UltimatePreferenceItem(String label, T defaultValue,
-			PreferenceType type, boolean useCustomPreferencePage, T[] choices,
-			IUltimatePreferenceItemValidator<T> preferenceValidator) {
+	public UltimatePreferenceItem(String label, T defaultValue, PreferenceType type, boolean useCustomPreferencePage,
+			T[] choices, IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		mLabel = label;
 		mDefaultValue = defaultValue;
 		mType = type;
@@ -107,8 +183,7 @@ public class UltimatePreferenceItem<T> {
 		return mPreferenceValidator;
 	}
 
-	public void setPreferenceValidator(
-			IUltimatePreferenceItemValidator<T> preferenceValidator) {
+	public void setPreferenceValidator(IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		mPreferenceValidator = preferenceValidator;
 	}
 
@@ -117,8 +192,7 @@ public class UltimatePreferenceItem<T> {
 
 		public String getInvalidValueErrorMessage(T value);
 
-		public class IntegerValidator implements
-				IUltimatePreferenceItemValidator<Integer> {
+		public class IntegerValidator implements IUltimatePreferenceItemValidator<Integer> {
 
 			private int mMin;
 			private int mMax;

@@ -1,14 +1,17 @@
 // Based on benchmark toylin2.c
 // manually translated by DD
-// [DD] Ultimate LTL Model Checker Property: 
+// [DD] 
+// Ultimate LTL Model Checker Property: 
 // x U (!x && (a -> <>b))
 // a: c > (servers / 2)
 // b: resp > (servers / 2)
 // x: init = 0
-// [/DD]
+// 
+// Property should hold 
 // additional comments: 
 // * c was an unsigned int 
 // * init is new and necessary to state that the property should only be analysed after init 
+// [/DD]
 var c,servers,resp,curr_serv,serversdiv2 : int;
 var init : int;
 

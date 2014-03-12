@@ -1,18 +1,18 @@
 package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences;
 
-import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator;
-
-import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
+import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator;
+
 /**
  * Contains values, labels, default values for the fields of the JungVisualization preference page.
+ *
  * @author lena
  *
  */
-public class PreferenceValues {
+public class JungPreferenceValues {
 	
 	public static ScopedPreferenceStore Preference = new ScopedPreferenceStore(
 			InstanceScope.INSTANCE, Activator.PLUGIN_ID);
@@ -38,10 +38,9 @@ public class PreferenceValues {
 	
 	public static final RGB VALUE_COLOR_NODE_DEFAULT = new RGB(103, 209, 248); //HTML:67d1f8, HSV:196,58,97
 	public static final RGB VALUE_COLOR_NODE_PICKED_DEFAULT = new RGB(246, 239, 47);
-	//public static final RGB VALUE_COLOR_NODE_PICKED_DEFAULT = new RGB(246, 122, 96); //HTML:f67a60 , HSV:10,61,96
 	public static final RGB VALUE_COLOR_BACKGROUND_DEFAULT = new RGB(255, 255, 255); //HTML:ffff, HSV:0,0,100
 	
-	public static final String VALUE_SHAPE_NODE_DEFAULT = "RondRectangle";
+	public static final String VALUE_SHAPE_NODE_DEFAULT = "RoundRectangle";
 	
 	
 	//LABELS
@@ -55,4 +54,5 @@ public class PreferenceValues {
 	public static final String LABEL_COLOR_BACKGROUND = "Background color:";
 	
 	public static final String LABEL_SHAPE_NODE = "Choose node shape:";	
+	
 }

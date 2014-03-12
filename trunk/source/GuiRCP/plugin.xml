@@ -59,7 +59,7 @@
          <page
             class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
             id="GeneratedUltimatePreferences"
-            name="Generated Ultimate Preferences"/>
+            name="Ultimate Preferences"/>
                      <page
             category="GeneratedUltimatePreferences"
             class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
@@ -81,25 +81,6 @@
             id="OutputPlugins"
             name="Output Plugins"/>
         
-
-   
-   
-      <page
-            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
-            id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePage"
-            name="Ultimate Preferences"/>
-      <page
-            category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePage"
-            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
-            id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.OutputPreferencePage"
-            name="Output Plugins"/>
-      <page
-            category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePage"
-            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
-            id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.ToolsPreferencePage"
-            name="Tool Plugins"/>            
-
-      
       <page
             category="Core"
             class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingSpecificPluginsPreferencePage"

@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.LTL2aut;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 
@@ -42,9 +44,19 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 		String property = new UltimatePreferenceStore(Activator.PLUGIN_ID)
 				.getString(PreferenceInitializer.LABEL_PPROPERTY);
 
+		// BufferedReader br;
+		// String line = null;
+		// try {
+		// br = new BufferedReader(new FileReader(inputFile));
+		// line = br.readLine();
+		// br.close();
+		// } catch (IOException e) {
+		// line = null;
+		// }
+
 		BufferedReader br = new BufferedReader(new InputStreamReader(IOUtils.toInputStream(property)));
 		try {
-			// read the LTLT formula from the first line and pass it to the
+			// read the LTL formula from the first line and pass it to the
 			// parser
 			line = br.readLine();
 
@@ -100,7 +112,7 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) throws Throwable {
-return false;
+		return false;
 	}
 
 	public AstNode getRootNode() {

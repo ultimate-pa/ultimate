@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceInitializer;
 
 
 public class JungVisualization implements IOutput {
@@ -71,15 +72,13 @@ public class JungVisualization implements IOutput {
 
 	@Override
 	public boolean isGuiRequired() {
-		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
-		// TODO Auto-generated method stub
-		return null;
+		return new JungPreferenceInitializer();
 	}
 
 }

@@ -110,7 +110,7 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_SHOWUSABLEPARSER = "Show usable parsers";
 	public static final boolean VALUE_SHOWUSABLEPARSER_DEFAULT = false;
 
-	public static final String LABEL_SHOWRESULTNOTIFIERPOPUP = "Show result in pop-pp window after toolchain execution";
+	public static final String LABEL_SHOWRESULTNOTIFIERPOPUP = "Show result in pop-up window after toolchain execution";
 	public static final boolean VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT = false;
 	
 	public static final String LABEL_BENCHMARK = "Generate benchmark results";

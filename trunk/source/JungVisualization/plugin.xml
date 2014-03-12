@@ -58,19 +58,11 @@
          </action>
       </actionSet>
    </extension>
-   <extension
-         point="org.eclipse.ui.preferencePages">
-      <page
-            category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.OutputPreferencePage"
-            class="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.PreferencePage"
-            id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.PreferencePage"
-            name="Jung Visualization">
-      </page>
-   </extension>
+
 	<extension
          point="org.eclipse.core.runtime.preferences">
       <initializer
-            class="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.PreferenceInitializer">
+            class="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceInitializer">
       </initializer>
    </extension>
 

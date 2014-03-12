@@ -914,8 +914,8 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		}
 		try {
 			if (mModelManager.size() < 1) {
-				mLogger.error("no model present, aborting...");
-				throw new Exception("There is no model present");
+				mLogger.error("There is no model present. Did you run a ISource or IGenerator plugin in your toolchain?");
+				throw new IllegalStateException("There is no model present.");
 			}
 			mCurrentToolchainMonitor = monitor;
 			mToolchainWalker.walk(monitor);
@@ -931,13 +931,15 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 			}
 			mLogger.info("--------------------------------------------------------------------------------");
 			new ResultNotifier(mCurrentController).processResults();
+			mModelManager.removeAll();
 		}
 
 		return Status.OK_STATUS;
 	}
 
 	private final IElement runParser(final File file, ISource parser) throws Exception {
-		boolean useBenchmark = new UltimatePreferenceStore(Activator.s_PLUGIN_ID).getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
+		boolean useBenchmark = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
+				.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
 		IElement root = null;
 		// parse the files to Graph
 		try {

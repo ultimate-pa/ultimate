@@ -18,12 +18,13 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
 import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditor;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.graph.GraphHandler;
-import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.PreferenceValues;
+import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceValues;
 
 import org.apache.batik.dom.GenericDOMImplementation;
 import org.apache.batik.dom.svg.SVGDOMImplementation;
@@ -173,11 +174,7 @@ public class MenuActions implements IWorkbenchWindowActionDelegate {
 	 * Exports the graph of the active editor part to a SVG format and saves it.
 	 */
 	public static void exportAsSVG() {
-		IScopeContext scope = InstanceScope.INSTANCE;
-		IEclipsePreferences prefs = scope.getNode(Activator.PLUGIN_ID);
-
-		String svgFilePath = prefs.get(PreferenceValues.NAME_PATH,
-				PreferenceValues.VALUE_PATH_DEFAULT);
+		String svgFilePath = new UltimatePreferenceStore(Activator.PLUGIN_ID).getString(JungPreferenceValues.LABEL_PATH);
 
 		JFileChooser chooser = new JFileChooser();
 		chooser.setSelectedFile(new File(svgFilePath + "/default.svg"));
