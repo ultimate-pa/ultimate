@@ -36,44 +36,44 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2T
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.NaiveDestructiveEqualityResolution;
 
+/**
+ * TODO: cleanup, documentation
+ * @author matthias
+ *
+ */
 public class Statements2TransFormula {
-	private Script m_Script;
+	
+	/**
+	 * Compute Formulas that encode violation of one of the added assert
+	 * statements. This feature was used in Evrens old CFG.
+	 */
+	private final static boolean s_ComputeAsserts = false;
+	private final static String s_ComputeAssertsNotAvailable = 
+			"computation of asserts not available";
+	
+	private final Script m_Script;
+	private final BoogieDeclarations m_BoogieDeclarations;
+	private final Boogie2SMT m_Boogie2SMT;
+	private final TypeSortTranslator m_TypeSortTranslator;
+	private final VariableManager m_VariableManager;
+	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
 	
 	private final String m_CurrentProcedure;
 	
-	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
-	
-	private final VariableManager m_VariableManager;
-	
-	private final HashSet<TermVariable> allVars;
-	private final HashMap<BoogieVar, TermVariable> outVars;
-	private final HashMap<BoogieVar, TermVariable> inVars;
-	
-	private final Boogie2SMT m_Boogie2SMT;
-	private final TypeSortTranslator m_TypeSortTranslator;
-	private final BoogieDeclarations m_BoogieDeclarations;
+	private final HashSet<TermVariable> m_AllVars;
+	private final HashMap<BoogieVar, TermVariable> m_OutVars;
+	private final HashMap<BoogieVar, TermVariable> m_InVars;
 
 	/**
 	 * Auxilliary variables. TermVariables that occur neither as inVar nor as
 	 * outVar. If you use the assumes or asserts to encode a transition the
 	 * auxilliary variables are existentially quantified.
 	 */
-	private HashSet<TermVariable> auxVars;
+	private HashSet<TermVariable> m_AuxVars;
 
+	private Term m_Assumes;
+	private Term m_Asserts;
 
-	
-	/**
-	 * True if we are translation a requires clause of the specification. In
-	 * this case, a global variable g refers to the instance of the variable
-	 * before the procedure call (the same instance as old(g)).
-	 */
-	private boolean m_TranslatingRequires = false;
-	
-	private Term assumes;
-	private Term asserts;
-
-//	private int m_freshConstantCounter = 0;
-	
 	
 	public Statements2TransFormula(String currentProcedure,
 			Boogie2SMT boogie2smt) {
@@ -86,12 +86,14 @@ public class Statements2TransFormula {
 		m_TypeSortTranslator = m_Boogie2SMT.getTypeSortTranslator();
 		m_BoogieDeclarations = m_Boogie2SMT.getBoogieDeclarations();
 		
-		outVars = new HashMap<BoogieVar, TermVariable>();
-		inVars = new HashMap<BoogieVar, TermVariable>();
-		allVars = new HashSet<TermVariable>();
-		auxVars = new HashSet<TermVariable>();
-		assumes = m_Script.term("true");
-		asserts = m_Script.term("true");
+		m_OutVars = new HashMap<BoogieVar, TermVariable>();
+		m_InVars = new HashMap<BoogieVar, TermVariable>();
+		m_AllVars = new HashSet<TermVariable>();
+		m_AuxVars = new HashSet<TermVariable>();
+		m_Assumes = m_Script.term("true");
+		if (s_ComputeAsserts) {
+			m_Asserts = m_Script.term("true");
+		}
 	}
 
 	private BoogieVar getModifiableBoogieVar(String id, DeclarationInformation declInfo) {
@@ -153,8 +155,8 @@ public class Statements2TransFormula {
 //					outVars.put(boogieVar, tv);
 //				}
 //			}
-			if (inVars.containsKey(boogieVar)) {
-				TermVariable tv = inVars.get(boogieVar);
+			if (m_InVars.containsKey(boogieVar)) {
+				TermVariable tv = m_InVars.get(boogieVar);
 				addedEqualities.put(tv, rhs[i]);
 				removeInVar(boogieVar);
 			}
@@ -166,9 +168,10 @@ public class Statements2TransFormula {
 			Term rhsTerm = (new Expression2Term( its, m_Script, m_TypeSortTranslator, addedEqualities.get(tv))).getTerm();
 			Term eq = m_Script.term("=", tv, rhsTerm);
 
-			assumes = Util.and(m_Script, eq, assumes);
-			asserts = Util.implies(m_Script, eq, asserts);
-			assert (assumes.toString() instanceof Object);
+			m_Assumes = Util.and(m_Script, eq, m_Assumes);
+			if (s_ComputeAsserts) {
+				m_Asserts = Util.implies(m_Script, eq, m_Asserts);
+			}
 		}
 	}
 
@@ -186,11 +189,10 @@ public class Statements2TransFormula {
 //					outVars.put(boogieVar, tv);
 //				}
 //			}
-			if (inVars.containsKey(boogieVar)) {
+			if (m_InVars.containsKey(boogieVar)) {
 				removeInVar(boogieVar);
 			}
 		}
-		assert (assumes.toString() instanceof Object);
 	}
 
 	public void addAssume(AssumeStatement assume) {
@@ -198,23 +200,28 @@ public class Statements2TransFormula {
 		
 		Term f = (new Expression2Term( its, m_Script, m_TypeSortTranslator, assume.getFormula())).getTerm(); 
 				
-		assumes = Util.and(m_Script, f, assumes);
-		asserts = Util.implies(m_Script, f, asserts);
-		assert (assumes.toString() instanceof Object);
+		m_Assumes = Util.and(m_Script, f, m_Assumes);
+		if (s_ComputeAsserts) {
+			m_Asserts = Util.implies(m_Script, f, m_Asserts);
+		}
+		assert (m_Assumes.toString() instanceof Object);
 	}
 
 	public void addAssert(AssertStatement assertstmt) {
-		IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
-		
-		Term f = (new Expression2Term( its, m_Script, m_TypeSortTranslator, assertstmt.getFormula())).getTerm(); 
-		
-		assumes = Util.and(m_Script, f, assumes);
-		asserts = Util.and(m_Script, f, asserts);
-		assert (assumes.toString() instanceof Object);
+		if (s_ComputeAsserts) {
+			IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
+			Term f = (new Expression2Term( its, m_Script, m_TypeSortTranslator,
+					assertstmt.getFormula())).getTerm(); 
+			m_Assumes = Util.and(m_Script, f, m_Assumes);
+			m_Asserts = Util.and(m_Script, f, m_Asserts);
+			assert (m_Assumes.toString() instanceof Object);
+		} else {
+			throw new AssertionError(s_ComputeAssertsNotAvailable);
+		}
 	}
 
 	public void addSummary(CallStatement call) {
-		assert (assumes.toString() instanceof Object);
+		assert (m_Assumes.toString() instanceof Object);
 		Procedure procedure = m_BoogieDeclarations.getProcSpecification().get(call.getMethodName());
 
 		HashMap<String, Term> substitution = new HashMap<String, Term>();
@@ -258,7 +265,7 @@ public class Statements2TransFormula {
 					removeInVar(boogieVar);
 					
 					TermVariable tvBefore = m_VariableManager.constructFreshTermVariable(boogieVar);
-					inVars.put(boogieVar, tvBefore);
+					m_InVars.put(boogieVar, tvBefore);
 					ensuresSubstitution.put(boogieVar, tvAfter);
 					ensuresSubstitution.put(boogieOldVar, tvBefore);
 					requiresSubstitution.put(boogieVar, tvBefore);
@@ -268,8 +275,6 @@ public class Statements2TransFormula {
 			}
 		}
 
-		// generation++;
-		
 		Term[] argumentTerms;
 		{
 			IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
@@ -282,16 +287,14 @@ public class Statements2TransFormula {
 				substitution.put(id, argumentTerms[offset++]);
 			}
 		}
-
-		// HashMap<BoogieVar, TermVariable> callerOldGlobals = inVarsOldGlobals;
-//		HashMap<String, BoogieVar> oldLocals = m_CurrentLocals;
-//		m_CurrentLocals = new HashMap<String, BoogieVar>();
+		
+		String calledProcedure = call.getMethodName();
 
 
 		IdentifierTranslator[] ensIts = new IdentifierTranslator[] { 
 				new SubstitutionTranslatorId(substitution),
 				new SubstitutionTranslatorBoogieVar(ensuresSubstitution),
-				new GlobalVarTranslatorWithInOutVarManagement(m_CurrentProcedure, false),
+				new GlobalVarTranslatorWithInOutVarManagement(calledProcedure, false),
 				m_Boogie2SMT.getConstOnlyIdentifierTranslator() 
 				};
 		
@@ -299,11 +302,13 @@ public class Statements2TransFormula {
 			if (spec instanceof EnsuresSpecification) {
 				Expression post = ((EnsuresSpecification) spec).getFormula();
 				Term f = (new Expression2Term( ensIts, m_Script, m_TypeSortTranslator, post)).getTerm();
-				assumes = Util.and(m_Script, f, assumes);
-				if (spec.isFree()) {
-					asserts = Util.implies(m_Script, f, asserts);
-				} else {
-					asserts = Util.and(m_Script, f, asserts);
+				m_Assumes = Util.and(m_Script, f, m_Assumes);
+				if (s_ComputeAsserts) {
+					if (spec.isFree()) {
+						m_Asserts = Util.implies(m_Script, f, m_Asserts);
+					} else {
+						m_Asserts = Util.and(m_Script, f, m_Asserts);
+					}
 				}
 			}
 		}
@@ -311,7 +316,7 @@ public class Statements2TransFormula {
 		IdentifierTranslator[] reqIts = new IdentifierTranslator[] { 
 				new SubstitutionTranslatorId(substitution),
 				new SubstitutionTranslatorBoogieVar(requiresSubstitution),
-				new GlobalVarTranslatorWithInOutVarManagement(m_CurrentProcedure, false),
+				new GlobalVarTranslatorWithInOutVarManagement(calledProcedure, false),
 				m_Boogie2SMT.getConstOnlyIdentifierTranslator() 
 				};
 
@@ -319,15 +324,16 @@ public class Statements2TransFormula {
 			if (spec instanceof RequiresSpecification) {
 				Expression pre = ((RequiresSpecification) spec).getFormula();
 				Term f = (new Expression2Term( reqIts, m_Script, m_TypeSortTranslator, pre)).getTerm();
-				assumes = Util.and(m_Script, f, assumes);
-				if (spec.isFree()) {
-					asserts = Util.implies(m_Script, f, asserts);
-				} else {
-					asserts = Util.and(m_Script, f, asserts);
+				m_Assumes = Util.and(m_Script, f, m_Assumes);
+				if (s_ComputeAsserts) {
+					if (spec.isFree()) {
+						m_Asserts = Util.implies(m_Script, f, m_Asserts);
+					} else {
+						m_Asserts = Util.and(m_Script, f, m_Asserts);
+					}
 				}
 			}
 		}
-		assert (assumes.toString() instanceof Object);
 	}
 	
 	
@@ -339,51 +345,29 @@ public class Statements2TransFormula {
 	 * it to he auxilliary variables auxVar.
 	 */
 	private void removeInVar(BoogieVar boogieVar) {
-		TermVariable tv = inVars.remove(boogieVar);
-		if (outVars.get(boogieVar) != tv) {
-			auxVars.add(tv);
+		TermVariable tv = m_InVars.remove(boogieVar);
+		if (m_OutVars.get(boogieVar) != tv) {
+			m_AuxVars.add(tv);
 		}
 	}
 
-	public HashMap<BoogieVar, TermVariable> getInVars() {
-		return inVars;
-	}
-
-	public HashMap<BoogieVar, TermVariable> getOutVars() {
-		return outVars;
-	}
-
-	public HashSet<TermVariable> getAllVars() {
-		return allVars;
-	}
-
-	public Set<TermVariable> getAuxVars() {
-		return auxVars;
-	}
-
-	public Term getAssumes() {
-		assert (assumes.toString() instanceof Object);
-		return assumes;
-	}
-
-	public Term getAsserts() {
-		return asserts;
-	}
-	
-	
+	/**
+	 * Obtain TermVariable that represents BoogieVar bv at the current
+	 * position. This is the current inVar. If this inVar does not yet exist,
+	 * we create it. In this case we have to add (bv,tv) to the outVars if
+	 * bv is not already an outvar. 
+	 */
 	private TermVariable getOrConstuctCurrentRepresentative(BoogieVar bv) {
-		TermVariable tv = inVars.get(bv);
+		TermVariable tv = m_InVars.get(bv);
 		if (tv == null) {
 			tv = createInVar(bv);
-			if (!outVars.containsKey(bv)) {
-				outVars.put(bv, tv);
+			if (!m_OutVars.containsKey(bv)) {
+				m_OutVars.put(bv, tv);
 			}
 		}
 		return tv;
 	}
 
-
-	
 	/**
 	 * Construct fresh TermVariable for BoogieVar bv and add it to inVars.
 	 * Special case: If BoogieVar bv is an oldVar we do not take a fresh
@@ -396,8 +380,8 @@ public class Statements2TransFormula {
 		} else {
 			tv = m_VariableManager.constructFreshTermVariable(bv);
 		}
-		inVars.put(bv, tv);
-		allVars.add(tv);
+		m_InVars.put(bv, tv);
+		m_AllVars.add(tv);
 		return tv;
 	}
 	
@@ -449,11 +433,18 @@ public class Statements2TransFormula {
 	
 	public class GlobalVarTranslatorWithInOutVarManagement extends IdentifierTranslatorWithInOutVarManagement {
 		private final String m_CurrentProcedure;
-		private final boolean m_AllNonOld; 
+		/**
+		 * Translate all variables to the non old global variable, independent
+		 * of the context.
+		 * This feature is not used at the moment. Maybe we can drop it.
+		 */
+		private final boolean m_AllNonOld;
+		private Set<String> m_ModifiableByCurrentProcedure; 
 		
 		public GlobalVarTranslatorWithInOutVarManagement(String currentProcedure, boolean allNonOld) {
 			m_CurrentProcedure = currentProcedure;
 			m_AllNonOld = allNonOld;
+			m_ModifiableByCurrentProcedure = m_BoogieDeclarations.getModifiedVars().get(m_CurrentProcedure);
 			
 		}
 
@@ -489,7 +480,7 @@ public class Statements2TransFormula {
 			}
 		}
 		private boolean modifiableByCurrentProcedure(String id) {
-			return true;
+			return m_ModifiableByCurrentProcedure.contains(id);
 		}
 		
 	}
@@ -532,9 +523,9 @@ public class Statements2TransFormula {
 	
 	
 	public TransFormula getTransFormula(boolean simplify){
-		Set<TermVariable> auxVars = getAuxVars();
-		Term formula = getAssumes();
-		formula = eliminateAuxVars(getAssumes(),auxVars);
+		Set<TermVariable> auxVars = m_AuxVars;
+		Term formula = m_Assumes;
+		formula = eliminateAuxVars(m_Assumes,auxVars);
 
 		if (simplify) {
 			formula = (new SimplifyDDA(m_Script)).
@@ -547,17 +538,17 @@ public class Statements2TransFormula {
 		}
 
 		Infeasibility infeasibility;
-		if (formula == m_Boogie2SMT.getScript().term("false")) {
+		if (formula == m_Script.term("false")) {
 			infeasibility = Infeasibility.INFEASIBLE;
 		} else {
 			infeasibility = Infeasibility.UNPROVEABLE;
 		}
 
-		TransFormula.removeSuperfluousVars(formula, inVars, outVars, auxVars);
+		TransFormula.removeSuperfluousVars(formula, m_InVars, m_OutVars, auxVars);
 		HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
 		Term closedFormula = TransFormula.computeClosedFormula(
-				formula, inVars, outVars, auxVars, m_Boogie2SMT);
-		TransFormula tf = new TransFormula(formula,	inVars, outVars, auxVars, 
+				formula, m_InVars, m_OutVars, auxVars, m_Boogie2SMT);
+		TransFormula tf = new TransFormula(formula,	m_InVars, m_OutVars, auxVars, 
 				branchEncoders, infeasibility, closedFormula);
 		return tf;
 	}
@@ -577,7 +568,7 @@ public class Statements2TransFormula {
 	 */
 	private Term eliminateAuxVars(Term input, Set<TermVariable> auxVars) {
 		NaiveDestructiveEqualityResolution der = 
-				new NaiveDestructiveEqualityResolution(m_Boogie2SMT.getScript());
+				new NaiveDestructiveEqualityResolution(m_Script);
 		Term result = der.eliminate(auxVars, input);
 		return result;		
 	}
@@ -596,13 +587,13 @@ public class Statements2TransFormula {
 	 */
 	public TransFormula inParamAssignment(CallStatement st) {
 		String callee = st.getMethodName();
-		Term formula = m_Boogie2SMT.getScript().term("true");
+		Term formula = m_Script.term("true");
 		Procedure calleeImpl = m_BoogieDeclarations.getProcImplementation().get(callee); 
 		
 		
 		IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 		Term[] argTerms = (new Expression2Term( its, m_Script, m_TypeSortTranslator, st.getArguments())).getTerms();
-		outVars.clear();
+		m_OutVars.clear();
 
 		int offset = 0;
 		for (VarList varList : calleeImpl.getInParams()) {
@@ -614,21 +605,21 @@ public class Statements2TransFormula {
 				assert boogieVar != null;
 						//m_Boogie2smt.getLocalBoogieVar(callee, var);
 				String varname = callee + "_" + var + "_" + "InParam";
-				TermVariable tv = m_Boogie2SMT.getScript().variable(varname, sort);
-				outVars.put(boogieVar,tv);
-				Term assignment = m_Boogie2SMT.getScript().term("=", tv, argTerms[offset]);
-				formula = Util.and(m_Boogie2SMT.getScript(), formula, assignment);
+				TermVariable tv = m_Script.variable(varname, sort);
+				m_OutVars.put(boogieVar,tv);
+				Term assignment = m_Script.term("=", tv, argTerms[offset]);
+				formula = Util.and(m_Script, formula, assignment);
 				offset++;
 			}
 		}
 		assert (st.getArguments().length == offset);
 //		m_Boogie2smt.removeLocals(calleeImpl);
-		allVars.addAll(outVars.values());
+		m_AllVars.addAll(m_OutVars.values());
 		HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
 		Term closedFormula = TransFormula.computeClosedFormula(
-				formula, inVars, outVars, auxVars, m_Boogie2SMT);
-		return new TransFormula(formula, inVars, outVars, 
-				auxVars, branchEncoders, 
+				formula, m_InVars, m_OutVars, m_AuxVars, m_Boogie2SMT);
+		return new TransFormula(formula, m_InVars, m_OutVars, 
+				m_AuxVars, branchEncoders, 
 				TransFormula.Infeasibility.UNPROVEABLE,closedFormula);
 	}
 

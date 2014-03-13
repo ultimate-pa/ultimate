@@ -151,7 +151,7 @@ public class Boogie2SmtSymbolTable {
 	
 	
 	
-	public void declareConstants(ConstDeclaration constdecl) {
+	private void declareConstants(ConstDeclaration constdecl) {
 		VarList varlist = constdecl.getVarList();
 		Sort[] paramTypes = new Sort[0];
 		IType iType = varlist.getType().getBoogieType();
@@ -174,7 +174,7 @@ public class Boogie2SmtSymbolTable {
 		return m_SmtConst2BoogieConst.get(smtConstant);
 	}
 	
-	void declareFunction(FunctionDeclaration funcdecl) {
+	private void declareFunction(FunctionDeclaration funcdecl) {
 		// for (Attribute attr : funcdecl.getAttributes()) {
 		// if (attr instanceof NamedAttribute) {
 		// NamedAttribute nattr = (NamedAttribute) attr;
@@ -222,7 +222,7 @@ public class Boogie2SmtSymbolTable {
 	}
 	
 	
-	public void declareGlobalVariables(VariableDeclaration vardecl) {
+	private void declareGlobalVariables(VariableDeclaration vardecl) {
 		for (VarList vl : vardecl.getVariables()) {
 			for (String id : vl.getIdentifiers()) {
 				IType type = vl.getType().getBoogieType();
@@ -250,7 +250,7 @@ public class Boogie2SmtSymbolTable {
 		return Collections.unmodifiableMap(m_OldGlobals);
 	}
 	
-	public void declareSpecImpl(Procedure spec, Procedure impl) {
+	private void declareSpecImpl(Procedure spec, Procedure impl) {
 		assert (spec == impl || isSpecAndImpl(spec, impl));
 		String procId = spec.getIdentifier();
 		assert procId.equals(impl.getIdentifier());
@@ -351,16 +351,6 @@ public class Boogie2SmtSymbolTable {
 		}
 	}
 	
-//	public Procedure getProcedureSpecification(String procId) {
-//		assert m_Specifications != null : "Procedure have not yet been declared";
-//		return m_Specifications.get(procId);
-//	}
-//	
-//	public Procedure getProcedureImplementation(String procId) {
-//		assert m_Specifications != null : "Procedure have not yet been declared";
-//		return m_Implementations.get(procId);
-//	}
-
 	
 	/**
 	 * Construct BoogieVar and store it. Expects that no BoogieVar with the same
