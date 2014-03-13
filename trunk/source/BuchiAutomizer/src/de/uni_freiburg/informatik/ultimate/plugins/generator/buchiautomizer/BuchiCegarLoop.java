@@ -622,14 +622,14 @@ public class BuchiCegarLoop {
 			Expression[] supporting_invariants = new Expression[si_list.size()];
 			int i = 0;
 			for (SupportingInvariant si : terminationArgument.getSupportingInvariants()) {
-				supporting_invariants[i] = si.asExpression(m_SmtManager.getScript(), m_RootNode.getRootAnnot().getBoogie2SMT().getSmt2Boogie());
+				supporting_invariants[i] = si.asExpression(m_SmtManager.getScript(), m_RootNode.getRootAnnot().getBoogie2SMT().getTerm2Expression());
 				++i;
 			}
 			TerminationArgumentResult<RcfgElement> result = 
 					new TerminationArgumentResult<RcfgElement>(
 							honda,
 							Activator.s_PLUGIN_NAME,
-							rf.asLexExpression(m_SmtManager.getScript(), m_RootNode.getRootAnnot().getBoogie2SMT().getSmt2Boogie()),
+							rf.asLexExpression(m_SmtManager.getScript(), m_RootNode.getRootAnnot().getBoogie2SMT().getTerm2Expression()),
 							rf.getName(),
 							supporting_invariants,
 							UltimateServices.getInstance().getTranslatorSequence()

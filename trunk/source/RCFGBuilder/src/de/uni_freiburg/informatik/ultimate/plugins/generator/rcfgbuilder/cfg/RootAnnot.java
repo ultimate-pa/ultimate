@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecificatio
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
 
 /**
@@ -152,7 +152,7 @@ public class RootAnnot extends AbstractAnnotations {
 	/**
 	 * TODO
 	 */
-	private Smt2Boogie m_BoogieVar2SmtVar;
+//	private Smt2Boogie m_BoogieVar2SmtVar;
 	private Boogie2SMT m_Boogie2SMT;
 	ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
 
@@ -180,7 +180,6 @@ public class RootAnnot extends AbstractAnnotations {
 	
 	public RootAnnot(
 			Boogie2SMT m_Boogie2smt, Backtranslator backtranslator) {
-		m_BoogieVar2SmtVar = m_Boogie2smt.getSmt2Boogie();
 		m_Boogie2SMT = m_Boogie2smt;
 		m_Backtranslator = backtranslator;
 	}
@@ -202,8 +201,6 @@ public class RootAnnot extends AbstractAnnotations {
 			return m_LoopLocations;
 		else if (field == "modifiedVars")
 			return m_ModifiedVars;
-		else if (field == "BoogieVar2SmtVar")
-			return m_BoogieVar2SmtVar;
 		else
 			throw new UnsupportedOperationException("Unknown field "+field);
 	}
@@ -248,10 +245,7 @@ public class RootAnnot extends AbstractAnnotations {
 		return m_Boogie2SMT.getScript();
 	}
 	
-	public Smt2Boogie getBoogie2Smt() {
-		return m_BoogieVar2SmtVar;
-	}
-	
+
 	public Boogie2SMT getBoogie2SMT() {
 		return m_Boogie2SMT;
 	}

@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 
 
 /**
@@ -80,7 +80,7 @@ public abstract class RankingFunction implements Serializable {
 	 * @param smt2boogie the variable translation
 	 * @return ranking function as boolean term
 	 */
-	public Expression[] asLexExpression(Script script, Smt2Boogie smt2boogie) {
+	public Expression[] asLexExpression(Script script, Term2Expression smt2boogie) {
 		Term[] lex = this.asLexTerm(script);
 		Expression[] lexExpressions = new Expression[lex.length];
 		for (int i = 0; i < lex.length; ++i) {

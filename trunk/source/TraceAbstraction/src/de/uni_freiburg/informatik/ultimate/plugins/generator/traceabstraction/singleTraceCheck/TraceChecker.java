@@ -334,7 +334,7 @@ public class TraceChecker {
 				for (Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
 					Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
 					Term valueT = getValue(indexedVar);
-					Expression valueE = m_SmtManager.getBoogie2Smt().getSmt2Boogie().translate(valueT);
+					Expression valueE = m_SmtManager.getBoogie2Smt().getTerm2Expression().translate(valueT);
 					rpeb.addValueAtVarAssignmentPosition(bv, index, valueE);
 				}
 			}

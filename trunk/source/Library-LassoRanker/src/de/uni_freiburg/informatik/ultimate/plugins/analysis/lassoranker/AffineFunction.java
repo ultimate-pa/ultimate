@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 
 
 /**
@@ -181,7 +181,7 @@ public class AffineFunction implements Serializable {
 	 * @param smt2boogie the variable translation
 	 * @return the generated expression
 	 */
-	public Expression asExpression(Script script, Smt2Boogie smt2boogie) {
+	public Expression asExpression(Script script, Term2Expression smt2boogie) {
 		Term formula = asTerm(script);
 		return smt2boogie.translate(formula);
 	}

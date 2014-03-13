@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
@@ -80,8 +81,9 @@ public class Boogie2SMT {
 	// private Map<Sort,IType> m_SmtSort2BoogieType = new HashMap<Sort,IType>();
 	// private Map<IType,Sort> m_BoogieType2SmtSort = new HashMap<IType,Sort>();
 
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger("Boogie2SMT");
-	Smt2Boogie m_Smt2Boogie;
+	private static Logger s_Logger = 
+			UltimateServices.getInstance().getLogger(ModelCheckerUtils.sPluginID);
+	Term2Expression m_Term2Expression;
 
 	/**
 	 * if set to true array access returns arbitrary values array store returns
@@ -117,7 +119,7 @@ public class Boogie2SMT {
 		// realSort = script.sort("Real");
 
 		m_ConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
-		m_Smt2Boogie = new Smt2Boogie(m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable);
+		m_Term2Expression = new Term2Expression(m_TypeSortTranslator, m_Boogie2SmtSymbolTable);
 		//
 
 		// ONE = script.numeral("1");
@@ -158,8 +160,8 @@ public class Boogie2SMT {
 		return m_Script;
 	}
 
-	public Smt2Boogie getSmt2Boogie() {
-		return m_Smt2Boogie;
+	public Term2Expression getTerm2Expression() {
+		return m_Term2Expression;
 	}
 	
 	static String quoteId(String id) {
@@ -202,7 +204,7 @@ public class Boogie2SMT {
 	public void declareFunctions(Collection<FunctionDeclaration> declarations) {
 		assert m_InternalState == InternalState.CONSTS_DECLARED : "declared in wrong order";
 		for (FunctionDeclaration decl : declarations) {
-			this.declareFunction(decl);
+			m_Boogie2SmtSymbolTable.declareFunction(decl);
 		}
 		m_InternalState = InternalState.FUNCTIONS_DECLARED;
 	}
@@ -358,45 +360,7 @@ public class Boogie2SMT {
 	// }
 
 
-	private void declareFunction(FunctionDeclaration funcdecl) {
-		// for (Attribute attr : funcdecl.getAttributes()) {
-		// if (attr instanceof NamedAttribute) {
-		// NamedAttribute nattr = (NamedAttribute) attr;
-		// if (nattr.getName().equals("bvint")
-		// && nattr.getValues().length == 1
-		// && nattr.getValues()[0] instanceof StringLiteral
-		// && ((StringLiteral)nattr.getValues()[0]).getValue().equals("ITE")) {
-		// /* TODO: make sanity check of parameter types ?? */
-		// itefunctions.add(funcdecl.getIdentifier());
-		// return;
-		// }
-		// }
-		// }
-		String id = funcdecl.getIdentifier();
-		// String smtID = "f_"+quoteId(id);
-		String smtID = quoteId(id);
-		int numParams = 0;
-		for (VarList vl : funcdecl.getInParams()) {
-			int ids = vl.getIdentifiers().length;
-			numParams += ids == 0 ? 1 : ids;
-		}
 
-		Sort[] paramSorts = new Sort[numParams];
-		int paramNr = 0;
-		for (VarList vl : funcdecl.getInParams()) {
-			int ids = vl.getIdentifiers().length;
-			if (ids == 0)
-				ids = 1;
-			Sort sort = getSort(vl.getType().getBoogieType(), funcdecl);
-			for (int i = 0; i < ids; i++) {
-				paramSorts[paramNr++] = sort;
-			}
-		}
-		Sort resultSort = getSort(funcdecl.getOutParam().getType().getBoogieType(), funcdecl);
-		m_Script.declareFun(smtID, paramSorts, resultSort);
-		m_Smt2Boogie.m_BoogieFunction2SmtFunction.put(id, smtID);
-		m_Smt2Boogie.m_SmtFunction2BoogieFunction.put(smtID, id);
-	}
 
 	// public void declareConstants(ConstDeclaration constdecl) {
 	// VarList varlist = constdecl.getVarList();

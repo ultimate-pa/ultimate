@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
@@ -34,6 +35,12 @@ public class Boogie2SmtSymbolTable {
 	
 	private final Map<TermVariable,BoogieVar> m_SmtVar2BoogieVar = new HashMap<TermVariable,BoogieVar>();
 	private final Map<ApplicationTerm, BoogieConst> m_SmtConst2BoogieConst = new HashMap<ApplicationTerm,BoogieConst>();
+	
+	final Map<String,String> m_BoogieFunction2SmtFunction = 
+			new HashMap<String,String>();
+	final Map<String,String> m_SmtFunction2BoogieFunction = 
+			new HashMap<String,String>();
+	
 	private Map<String, Procedure> m_Specifications;
 	private Map<String, Procedure> m_Implementations;
 	
@@ -79,6 +86,10 @@ public class Boogie2SmtSymbolTable {
 		return impl.getBody() != null;
 	}
 	
+	public Script getScript() {
+		return m_Script;
+	}
+
 	public BoogieVar getBoogieVar(String varId, DeclarationInformation declarationInformation, boolean inOldContext) {
 		final BoogieVar result;
 		StorageClass storageClass = declarationInformation.getStorageClass();
@@ -143,6 +154,53 @@ public class Boogie2SmtSymbolTable {
 	
 	public BoogieConst getBoogieConst(ApplicationTerm smtConstant) {
 		return m_SmtConst2BoogieConst.get(smtConstant);
+	}
+	
+	void declareFunction(FunctionDeclaration funcdecl) {
+		// for (Attribute attr : funcdecl.getAttributes()) {
+		// if (attr instanceof NamedAttribute) {
+		// NamedAttribute nattr = (NamedAttribute) attr;
+		// if (nattr.getName().equals("bvint")
+		// && nattr.getValues().length == 1
+		// && nattr.getValues()[0] instanceof StringLiteral
+		// && ((StringLiteral)nattr.getValues()[0]).getValue().equals("ITE")) {
+		// /* TODO: make sanity check of parameter types ?? */
+		// itefunctions.add(funcdecl.getIdentifier());
+		// return;
+		// }
+		// }
+		// }
+		String id = funcdecl.getIdentifier();
+		// String smtID = "f_"+quoteId(id);
+		String smtID = Boogie2SMT.quoteId(id);
+		int numParams = 0;
+		for (VarList vl : funcdecl.getInParams()) {
+			int ids = vl.getIdentifiers().length;
+			numParams += ids == 0 ? 1 : ids;
+		}
+
+		Sort[] paramSorts = new Sort[numParams];
+		int paramNr = 0;
+		for (VarList vl : funcdecl.getInParams()) {
+			int ids = vl.getIdentifiers().length;
+			if (ids == 0) {
+				ids = 1;
+			}
+			IType paramType = vl.getType().getBoogieType();
+			Sort paramSort = m_TypeSortTranslator.getSort(paramType, funcdecl);
+			for (int i = 0; i < ids; i++) {
+				paramSorts[paramNr++] = paramSort;
+			}
+		}
+		IType resultType = funcdecl.getOutParam().getType().getBoogieType();
+		Sort resultSort = m_TypeSortTranslator.getSort(resultType, funcdecl);
+		m_Script.declareFun(smtID, paramSorts, resultSort);
+		m_BoogieFunction2SmtFunction.put(id, smtID);
+		m_SmtFunction2BoogieFunction.put(smtID, id);
+	}
+	
+	public Map<String, String> getSmtFunction2BoogieFunction() {
+		return m_SmtFunction2BoogieFunction;
 	}
 	
 	

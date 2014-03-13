@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
@@ -279,7 +279,7 @@ public class LassoRankerStarter {
 		Collection<SupportingInvariant> si_list = arg.getSupportingInvariants();
 		
 		Script script = m_RootAnnot.getScript();
-		Smt2Boogie smt2boogie = m_RootAnnot.getBoogie2Smt();
+		Term2Expression smt2boogie = m_RootAnnot.getBoogie2SMT().getTerm2Expression();
 		
 		Expression[] supporting_invariants = new Expression[si_list.size()];
 		int i = 0;

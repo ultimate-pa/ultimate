@@ -127,7 +127,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 					Procedure implementation = rootAnnot.getProcedures().get(
 							proc);
 					Term formula = hoare.getFormula();
-					Expression expr = rootAnnot.getBoogie2Smt().translate(
+					Expression expr = rootAnnot.getBoogie2SMT().getTerm2Expression().translate(
 							formula);
 					ProcedureContractResult<RcfgElement, Expression> result = 
 							new ProcedureContractResult<RcfgElement, Expression>(
@@ -146,7 +146,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				HoareAnnotation hoare = getHoareAnnotation(locNode);
 				if (hoare != null) {
 					Term formula = hoare.getFormula();
-					Expression expr = rootAnnot.getBoogie2Smt().translate(
+					Expression expr = rootAnnot.getBoogie2SMT().getTerm2Expression().translate(
 							formula);
 					InvariantResult<RcfgElement, Expression> invResult = 
 							new InvariantResult<RcfgElement, Expression>(

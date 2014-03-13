@@ -4,10 +4,8 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -46,25 +44,16 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 /**
- * Maps Boogie variables to the corresponding SMT variables. The SMT variables 
- * are represented by ApplicationTerms that consist of one 0-ary function symbol
- * (which represents a constant).
+ * Translates SMT Terms to Boogie Expressions. 
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class Smt2Boogie implements Serializable {
+public class Term2Expression implements Serializable {
 
 	private static final long serialVersionUID = -4519646474900935398L;
 
 
 	private final Script m_Script;
-	
-
-	
-	final Map<String,String> m_BoogieFunction2SmtFunction
-			= new HashMap<String,String>();
-	final Map<String,String> m_SmtFunction2BoogieFunction
-			= new HashMap<String,String>();
 	
 	private final ScopedHashMap<TermVariable, VarList> m_QuantifiedVariables =
 			new ScopedHashMap<TermVariable, VarList>();
@@ -78,11 +67,12 @@ public class Smt2Boogie implements Serializable {
 	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
 	
 	
-	public Smt2Boogie(Script script, TypeSortTranslator tsTranslation, 
+	public Term2Expression(TypeSortTranslator tsTranslation, 
 			Boogie2SmtSymbolTable boogie2SmtSymbolTable) {
-		m_Script = script;
+
 		m_TypeSortTranslator = tsTranslation;
 		m_Boogie2SmtSymbolTable = boogie2SmtSymbolTable;
+		m_Script = boogie2SmtSymbolTable.getScript();
 	}
 
 	Set<IdentifierExpression> m_freeVariables = new HashSet<IdentifierExpression>();
@@ -183,8 +173,8 @@ public class Smt2Boogie implements Serializable {
 							" which is neither leftAssoc, rightAssoc, chainable, or pairwise.");
 				}
 			}
-		} else if (m_SmtFunction2BoogieFunction.containsKey(symb.getName())) {
-			String identifier = m_SmtFunction2BoogieFunction.get(symb.getName());
+		} else if (m_Boogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
+			String identifier = m_Boogie2SmtSymbolTable.getSmtFunction2BoogieFunction().get(symb.getName());
 			Expression[] arguments = new Expression[termParams.length];
 			for (int i=0; i<termParams.length; i++) {
 				arguments[i] = translate(termParams[i]);
