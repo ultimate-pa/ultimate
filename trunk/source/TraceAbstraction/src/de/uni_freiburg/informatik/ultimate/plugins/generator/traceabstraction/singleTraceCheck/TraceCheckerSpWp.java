@@ -473,7 +473,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 								getBackwardPredicateAtPosition(i+1, tracePostcondition, false), 
 								callerPred, 
 								rv.getFormulaFromNonCallPos(i+1), callTF, 
-								globalVarsAssignments); 
+								globalVarsAssignments,
+								m_ModifiedGlobals.getModifiedBoogieVars(((Return)trace.getSymbol(i+1)).getCorrespondingCall().getCallStatement().getMethodName())); 
 						m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
 								p.getVars(), p.getProcedures());
 					} else {
@@ -488,7 +489,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 		
 			s_Logger.debug("Checking weakest precondition...");
-			assert checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition,
+//			assert checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition,
+//					tracePostcondition, "WP with unsat core") : "invalid Hoare triple in WP with unsat core";
+			assert checkInterpolantsCorrectBackwards(m_InterpolantsWp, trace, tracePrecondition,
 					tracePostcondition, "WP with unsat core") : "invalid Hoare triple in WP with unsat core";
 			if (m_ComputeInterpolantsBp) {
 				s_Logger.debug("Computing backward relevant predicates...");
@@ -880,6 +883,25 @@ public class TraceCheckerSpWp extends TraceChecker {
 			 }
 			 assert result == LBool.UNSAT || result == LBool.UNKNOWN : 
 				 "invalid Hoare triple in " + computation;
+		}
+		return true;
+	}
+	boolean checkInterpolantsCorrectBackwards(IPredicate[] interpolants,
+			Word<CodeBlock> trace, 
+			IPredicate tracePrecondition, 
+			IPredicate tracePostcondition,
+			String computation) {
+		LBool result;
+		for (int i=interpolants.length - 1; i >= 0; i--) {
+			result = isHoareTriple(i+1, tracePrecondition, tracePostcondition, 
+					interpolants, trace);
+			if (result == LBool.SAT) {
+				s_Logger.debug("Trace length: " + trace.length());
+				s_Logger.debug("Stmt: " + (i+1));
+				return false;
+			}
+			assert result == LBool.UNSAT || result == LBool.UNKNOWN : 
+				"invalid Hoare triple in " + computation;
 		}
 		return true;
 	}

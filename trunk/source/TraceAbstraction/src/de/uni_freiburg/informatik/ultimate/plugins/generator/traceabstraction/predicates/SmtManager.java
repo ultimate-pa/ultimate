@@ -2359,20 +2359,23 @@ public class SmtManager {
 	@Deprecated
 	public IPredicate weakestPrecondition(IPredicate returnerPred, IPredicate callerPred, Return ret) {
 		return weakestPrecondition(returnerPred, callerPred, ret.getTransitionFormula(), ret.getCorrespondingCall().getTransitionFormula(),
-				m_ModifiableGlobals.getGlobalVarsAssignment(ret.getCorrespondingCall().getCallStatement().getMethodName()));
+				m_ModifiableGlobals.getGlobalVarsAssignment(ret.getCorrespondingCall().getCallStatement().getMethodName()),
+				m_ModifiableGlobals.getModifiedBoogieVars(ret.getCorrespondingCall().getCallStatement().getMethodName()));
 		
 	}
 	
 	
 	
 	/**
-	 * Responsible for computing WP of a Return statement.
+	 * Computes weakest precondition of a Return statement.
+	 * TODO: Document how the WP of a Return statement is computed!
 	 * 
 	 */
 	public IPredicate weakestPrecondition(IPredicate returnerPred, IPredicate callerPred, 
 			TransFormula returnTF,
 			TransFormula callTF,
-			TransFormula globalVarsAssignments) {
+			TransFormula globalVarsAssignments,
+			Set<BoogieVar> modifiableGlobals) {
 		
 		Map<TermVariable, Term> varsToRenameInCallerAndReturnPred = new HashMap<TermVariable, Term>();
 		Map<TermVariable, Term> varsToRenameInReturnPred = new HashMap<TermVariable, Term>();
@@ -2403,7 +2406,12 @@ public class SmtManager {
 		substitution.clear();
 		for (BoogieVar bv : returnTF.getInVars().keySet()) {
 			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-			varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+			// TODO: Document this step
+			if (returnTF.getAssignedVars().contains(bv)) {
+				varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
+			} else {
+				varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+			}
 			varsToQuantify.add(freshVar);
 			substitution.put(returnTF.getInVars().get(bv), bv.getTermVariable());
 		}
@@ -2415,7 +2423,7 @@ public class SmtManager {
 				substitution.put(returnTF.getOutVars().get(bv), varsToRenameInCallerAndReturnPred.get(bv.getTermVariable()));
 			} else {
 				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-				varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+				varsToRenameInReturnPred.put(bv.getTermVariable(), freshVar);
 				substitution.put(returnTF.getOutVars().get(bv), freshVar);
 				varsToQuantify.add(freshVar);
 			}
@@ -2427,24 +2435,45 @@ public class SmtManager {
 			if (varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
 				substitution.put(callTF.getInVars().get(bv), varsToRenameInCallerAndReturnPred.get(bv.getTermVariable()));
 			} else {
-				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				TermVariable freshVar = null; 
+				if (varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
+					freshVar = (TermVariable) varsToRenameInCallerPred.get(bv.getTermVariable());
+				} else {
+					freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
+				}
 				substitution.put(callTF.getInVars().get(bv), freshVar);
-				varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+				// If the variable is a modifiable global variable, we don't rename it in the returnerPred.
+				if (!bv.isGlobal() && !globalVarsAssignments.getOutVars().containsKey(bv) &&
+						!returnTF.getAssignedVars().contains(bv)) {
+						varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+						varsToRenameInCallerPred.remove(bv.getTermVariable());
+				}
 				varsToQuantify.add(freshVar);
 			}
 		}
 		Term callTF_InVarsRenamed = new Substitution(substitution, m_Script).transform(callTF.getFormula());
 		substitution.clear();
 		for (BoogieVar bv : callTF.getOutVars().keySet()) {
+			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+			if (!varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
+				if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
+					varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+				}
+			} else {
+				if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
+					varsToRenameInReturnPred.put(bv.getTermVariable(), freshVar);
+				}
+			}
 			substitution.put(callTF.getOutVars().get(bv), bv.getTermVariable());
+			varsToQuantify.add(freshVar);
 		}
 		Term callTFRenamed = new Substitution(substitution, m_Script).transform(callTF_InVarsRenamed);
 		
-		// Quantify all the other local vars.
+		// Quantify all the other local vars (Part I).
 		for (BoogieVar bv : returnerPred.getVars()) {
 			if (bv.isOldvar()) {
 				if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
-//					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
 					if (!varsToRenameInReturnPred.containsKey(bv.getTermVariable())) {
 						TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
 						varsToRenameInReturnPred.put(bv.getTermVariable(), freshVar);
@@ -2453,23 +2482,46 @@ public class SmtManager {
 				}
 			} else if (!bv.isGlobal()){
 				if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
-					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-					varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
-					varsToQuantify.add(freshVar);
+					if (!returnTF.getAssignedVars().contains(bv) && 
+							!varsToRenameInReturnPred.containsKey(bv.getTermVariable())) {
+						TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+						varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+						varsToQuantify.add(freshVar);
+					}
 				}
 				
 			}
 		}
-		
+		// Quantify all the other local vars (Part II).
 		for (BoogieVar bv : callerPred.getVars()) {
-			if (!bv.isGlobal() ) {
+			if (!bv.isGlobal()) {
 				if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
+					if (!returnTF.getAssignedVars().contains(bv) &&
+							!varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
+						TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+						varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+						varsToQuantify.add(freshVar);
+					}
+				}
+			} else if (bv.isOldvar()) {
+				if (varsToRenameInReturnPred.containsKey(bv.getTermVariable()) && 
+						varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
+					varsToRenameInCallerPred.put(bv.getTermVariable(), varsToRenameInReturnPred.get(bv.getTermVariable()));
+					
+				} else {
 					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-					varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+					varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
 					varsToQuantify.add(freshVar);
 				}
 			} else {
-				// TODO: if a global variable isn't modifiable by the returned proc. then do not quantify it 
+				// If a global variable isn't modifiable by the returned proc. and it doesn't occur on the left-hand side
+				// of the Return transformula (is not assigned), then do not quantify it.
+				if (!modifiableGlobals.contains(bv)) {
+					// TODO:
+					if (returnerPred.getVars().contains(bv)) {
+						continue;	
+					}
+				}
 				// TODO: Is the occurrence of the global variable in the return Predicate just a special case, or
 				// is the way  described above generally possible
 				if (!varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
@@ -2485,7 +2537,6 @@ public class SmtManager {
 					}
 				}
 			}
-				
 		}
 		Term retPredRenamed = new Substitution(varsToRenameInCallerAndReturnPred, m_Script).transform(returnerPred.getFormula());
 		retPredRenamed = new Substitution(varsToRenameInReturnPred, m_Script).transform(retPredRenamed);
