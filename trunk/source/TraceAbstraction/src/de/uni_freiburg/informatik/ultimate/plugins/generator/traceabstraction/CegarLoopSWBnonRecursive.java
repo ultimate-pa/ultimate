@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
@@ -124,20 +125,29 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 //	private int m_nofVisitedCalls;
 //	private int m_nofVisitedReturns;
 
+	
 	/**
 	 * Create and initialize Cegar-Loop.
 	 * @param name
 	 * @param rootNode
 	 * @param smtManager
-	 * @param timingStatistics
+	 * @param traceAbstractionBenchmarks
 	 * @param taPrefs
 	 * @param errorLocs
+	 * @param interpolation
+	 * @param computeHoareAnnotation
 	 */
-	public CegarLoopSWBnonRecursive(String name, RootNode rootNode,
-			SmtManager smtManager, TraceAbstractionBenchmarks timingStatistics,
-			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs)
+	public CegarLoopSWBnonRecursive(
+			String name, 
+			RootNode rootNode,
+			SmtManager smtManager, 
+			TraceAbstractionBenchmarks traceAbstractionBenchmarks,
+			TAPreferences taPrefs, 
+			Collection<ProgramPoint> errorLocs,
+			INTERPOLATION interpolation,
+			boolean computeHoareAnnotation)
 	{
-		super(name, rootNode, smtManager, timingStatistics, taPrefs, errorLocs);
+		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs, errorLocs, interpolation, computeHoareAnnotation);
 		m_ErrorPathHistory = new ArrayList<String>(); 	
 	}
 
