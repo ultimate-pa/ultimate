@@ -31,6 +31,7 @@ public abstract class Xnf extends Nnf {
 		
 		@Override
 		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+			// TODO: check timeout here
 			String functionSymbolName = appTerm.getFunction().getName();
 			Term result;
 			if (functionSymbolName.equals(innerConnectiveSymbol())) {
