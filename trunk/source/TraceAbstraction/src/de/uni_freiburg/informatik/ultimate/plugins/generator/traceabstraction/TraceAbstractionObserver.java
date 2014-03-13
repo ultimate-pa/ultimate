@@ -14,7 +14,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
@@ -124,8 +123,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				ProgramPoint finalNode = finalNodes.get(proc);
 				HoareAnnotation hoare = getHoareAnnotation(finalNode);
 				if (hoare != null) {
-					Procedure implementation = rootAnnot.getProcedures().get(
-							proc);
 					Term formula = hoare.getFormula();
 					Expression expr = rootAnnot.getBoogie2SMT().getTerm2Expression().translate(
 							formula);

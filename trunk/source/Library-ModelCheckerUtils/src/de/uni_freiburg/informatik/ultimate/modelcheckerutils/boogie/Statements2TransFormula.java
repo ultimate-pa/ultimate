@@ -51,6 +51,7 @@ public class Statements2TransFormula {
 	
 	private final Boogie2SMT m_Boogie2SMT;
 	private final TypeSortTranslator m_TypeSortTranslator;
+	private final BoogieDeclarations m_BoogieDeclarations;
 
 	/**
 	 * Auxilliary variables. TermVariables that occur neither as inVar nor as
@@ -83,6 +84,7 @@ public class Statements2TransFormula {
 		m_Boogie2SmtSymbolTable = m_Boogie2SMT.getBoogie2SmtSymbolTable();
 		m_VariableManager = m_Boogie2SMT.getVariableManager();
 		m_TypeSortTranslator = m_Boogie2SMT.getTypeSortTranslator();
+		m_BoogieDeclarations = m_Boogie2SMT.getBoogieDeclarations();
 		
 		outVars = new HashMap<BoogieVar, TermVariable>();
 		inVars = new HashMap<BoogieVar, TermVariable>();
@@ -213,7 +215,7 @@ public class Statements2TransFormula {
 
 	public void addSummary(CallStatement call) {
 		assert (assumes.toString() instanceof Object);
-		Procedure procedure = m_Boogie2SmtSymbolTable.getProcedureSpecification(call.getMethodName());
+		Procedure procedure = m_BoogieDeclarations.getProcSpecification().get(call.getMethodName());
 
 		HashMap<String, Term> substitution = new HashMap<String, Term>();
 		Expression[] arguments = call.getArguments();
@@ -595,8 +597,7 @@ public class Statements2TransFormula {
 	public TransFormula inParamAssignment(CallStatement st) {
 		String callee = st.getMethodName();
 		Term formula = m_Boogie2SMT.getScript().term("true");
-		Procedure calleeImpl = m_Boogie2SmtSymbolTable.getProcedureImplementation(callee);
-//		m_Boogie2smt.declareLocals(callerImpl);
+		Procedure calleeImpl = m_BoogieDeclarations.getProcImplementation().get(callee); 
 		
 		
 		IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();

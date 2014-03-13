@@ -66,8 +66,7 @@ public class MinModelConverter {
 	 */
 	public RootNode startConversion(RootNode root) {
 		RootNode newRoot = new RootNode(root.getRootAnnot());
-		boogie2smt = new Boogie2SMT(newRoot.getRootAnnot().getScript(),
-				false);
+		boogie2smt = root.getRootAnnot().getBoogie2SMT();
 		convertVisitor = new ConversionVisitor(boogie2smt, root,
 				getRatingHeuristic());
 		for (RCFGEdge edge : root.getOutgoingEdges()) {

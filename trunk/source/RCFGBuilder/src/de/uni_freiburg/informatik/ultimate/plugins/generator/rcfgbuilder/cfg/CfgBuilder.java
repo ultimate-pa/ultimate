@@ -26,38 +26,28 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ReturnStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.RenameProcedureSpec;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
@@ -106,6 +96,7 @@ public class CfgBuilder {
 
 	private Script m_Script;
 	private Boogie2SMT m_Boogie2smt;
+	private final BoogieDeclarations m_BoogieDeclarations;
 	TransFormulaBuilder tfb;
 
 	Collection<Summary> m_ImplementationSummarys = new ArrayList<Summary>();
@@ -170,9 +161,9 @@ public class CfgBuilder {
 			// m_Script.setOption(":verbosity", 0);
 			blackHolesArrays = false;
 		}
-
-		m_Boogie2smt = new Boogie2SMT(m_Script, blackHolesArrays);
-		m_RootAnnot = new RootAnnot(m_Boogie2smt, m_Backtranslator);
+		m_BoogieDeclarations = new BoogieDeclarations(unit);
+		m_Boogie2smt = new Boogie2SMT(m_Script, m_BoogieDeclarations, blackHolesArrays);
+		m_RootAnnot = new RootAnnot(m_BoogieDeclarations, m_Boogie2smt, m_Backtranslator);
 
 	}
 
@@ -192,64 +183,6 @@ public class CfgBuilder {
 	 */
 	public RootNode getRootNode(Unit unit) {
 
-		List<Axiom> axioms = new ArrayList<Axiom>();
-		List<TypeDeclaration> typeDecls = new ArrayList<TypeDeclaration>();
-		List<ConstDeclaration> constDecls = new ArrayList<ConstDeclaration>();
-		List<FunctionDeclaration> funcDecls = new ArrayList<FunctionDeclaration>();
-		List<VariableDeclaration> varDecls = new ArrayList<VariableDeclaration>();
-
-		for (Declaration decl : unit.getDeclarations()) {
-			if (decl instanceof Axiom)
-				axioms.add((Axiom) decl);
-			else if (decl instanceof TypeDeclaration)
-				typeDecls.add((TypeDeclaration) decl);
-			else if (decl instanceof ConstDeclaration)
-				constDecls.add((ConstDeclaration) decl);
-			else if (decl instanceof FunctionDeclaration)
-				funcDecls.add((FunctionDeclaration) decl);
-			else if (decl instanceof VariableDeclaration)
-				varDecls.add((VariableDeclaration) decl);
-			else if (decl instanceof Procedure) {
-				Procedure proc = (Procedure) decl;
-				if (proc.getSpecification() != null && proc.getBody() != null) {
-					s_Logger.warn(String.format(
-							"Specification and implementation of procedure %s given in one single declaration",
-							proc.getIdentifier()));
-				}
-
-				if (proc.getSpecification() != null) {
-					s_Logger.info("Found specification of procedure " + proc.getIdentifier());
-					if (m_RootAnnot.m_Procedure.containsKey(proc.getIdentifier())) {
-						throw new UnsupportedOperationException("Procedure" + proc.getIdentifier() + "declarated twice");
-					} else {
-						m_Boogie2smt.declareProcedure(proc);
-						m_RootAnnot.m_Procedure.put(proc.getIdentifier(), proc);
-					}
-				}
-				if (proc.getBody() != null) {
-					s_Logger.info("Found implementation of procedure " + proc.getIdentifier());
-					if (m_RootAnnot.m_Implementation.containsKey(proc.getIdentifier())) {
-						throw new UnsupportedOperationException("File " + "contains two implementations of procedure"
-								+ proc.getIdentifier());
-					} else {
-						m_RootAnnot.m_Implementation.put(proc.getIdentifier(), proc);
-					}
-				}
-			} else
-				throw new AssertionError("Unknown Declaration" + decl);
-		}
-		
-		m_Boogie2smt.declareTypes(typeDecls);
-		m_Boogie2smt.declareConstants(constDecls);
-		m_Boogie2smt.declareFunctions(funcDecls);
-		m_Boogie2smt.declareAxioms(axioms);
-		m_Boogie2smt.declareGlobalVariables(varDecls);
-		m_Boogie2smt.declareProcedures(m_RootAnnot.m_Procedure, m_RootAnnot.m_Implementation);
-
-		for (Procedure proc : m_RootAnnot.m_Procedure.values()) {
-			extractContract(proc.getIdentifier());
-		}
-
 		tfb = new TransFormulaBuilder(m_Boogie2smt, m_RootAnnot);
 
 		// Initialize the root node.
@@ -257,8 +190,8 @@ public class CfgBuilder {
 
 		// Build entry, final and exit node for all procedures that have an
 		// implementation
-		for (String procName : m_RootAnnot.m_Implementation.keySet()) {
-			Body body = m_RootAnnot.m_Implementation.get(procName).getBody();
+		for (String procName : m_BoogieDeclarations.getProcImplementation().keySet()) {
+			Body body = m_BoogieDeclarations.getProcImplementation().get(procName).getBody();
 			Statement firstStatement = body.getBlock()[0];
 			ProgramPoint entryNode = new ProgramPoint(procName + "ENTRY", procName, false, firstStatement);
 			m_RootAnnot.m_entryNode.put(procName, entryNode);
@@ -272,8 +205,8 @@ public class CfgBuilder {
 
 		// Build a control flow graph for each procedure
 		ProcedureCfgBuilder procCfgBuilder = new ProcedureCfgBuilder();
-		for (String procName : m_RootAnnot.m_Procedure.keySet()) {
-			if (m_RootAnnot.m_Implementation.containsKey(procName)) {
+		for (String procName : m_BoogieDeclarations.getProcSpecification().keySet()) {
+			if (m_BoogieDeclarations.getProcImplementation().containsKey(procName)) {
 				procCfgBuilder.buildProcedureCfgFromImplementation(procName);
 			} else {
 				// procCfgBuilder.buildProcedureCfgWithoutImplementation(procName);
@@ -284,7 +217,7 @@ public class CfgBuilder {
 		for (Summary se : m_ImplementationSummarys) {
 			addCallTransitionAndReturnTransition(se);
 		}
-		m_RootAnnot.m_ModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(m_RootAnnot.m_ModifiedVars,
+		m_RootAnnot.m_ModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(m_BoogieDeclarations.getModifiedVars(),
 				m_Boogie2smt);
 		m_CodeBlockSize = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID)).getEnum(
 				PreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
@@ -293,68 +226,6 @@ public class CfgBuilder {
 		}
 
 		return m_Graphroot;
-	}
-
-	/**
-	 * Get the contract (requires, ensures, modified variables) of a procedure
-	 * specification. Write it to m_Ensures, m_EnsuresNonFree, m_Requires,
-	 * m_RequiresNonFree and m_ModifiedVars.
-	 * 
-	 * @param Identifier
-	 *            of a procedure.
-	 */
-	private void extractContract(String procName) {
-		Procedure proc = m_RootAnnot.m_Procedure.get(procName);
-		Specification[] specifications;
-		if (m_RootAnnot.m_Implementation.containsKey(procName)) {
-			Procedure impl = m_RootAnnot.m_Implementation.get(procName);
-			RenameProcedureSpec renamer = new RenameProcedureSpec();
-			specifications = renamer.renameSpecs(proc, impl);
-		} else {
-			specifications = proc.getSpecification();
-		}
-
-		List<EnsuresSpecification> ensures = new ArrayList<EnsuresSpecification>();
-		List<EnsuresSpecification> ensuresNonFree = new ArrayList<EnsuresSpecification>();
-		List<RequiresSpecification> requires = new ArrayList<RequiresSpecification>();
-		List<RequiresSpecification> requiresNonFree = new ArrayList<RequiresSpecification>();
-		// FIXME: No Map to ASTType. Map to modifies clause?
-		Map<String, ASTType> modifiedVars = new HashMap<String, ASTType>();
-		for (Specification spec : specifications) {
-			if (spec instanceof EnsuresSpecification) {
-				EnsuresSpecification ensSpec = (EnsuresSpecification) spec;
-				ensures.add(ensSpec);
-				if (!ensSpec.isFree()) {
-					ensuresNonFree.add(ensSpec);
-				}
-			} else if (spec instanceof RequiresSpecification) {
-				RequiresSpecification recSpec = (RequiresSpecification) spec;
-				requires.add(recSpec);
-				if (!recSpec.isFree()) {
-					requiresNonFree.add(recSpec);
-				}
-			} else if (spec instanceof LoopInvariantSpecification) {
-				s_Logger.warn("Found LoopInvariantSpecification" + spec
-						+ "but this plugin does not use loop invariants.");
-			} else if (spec instanceof ModifiesSpecification) {
-				ModifiesSpecification modSpec = (ModifiesSpecification) spec;
-				for (VariableLHS var : modSpec.getIdentifiers()) {
-					String ident = var.getIdentifier();
-//					if (!m_RootAnnot.m_GlobalVars.containsKey(ident)) {
-//						throw new IllegalArgumentException("Procedure " + procName + " modifies global variable "
-//								+ ident + " which has not been decleared before");
-//					}
-					modifiedVars.put(ident, m_RootAnnot.m_GlobalVars.get(ident));
-				}
-			} else {
-				throw new UnsupportedOperationException("Unknown type of specification)");
-			}
-			m_RootAnnot.m_Ensures.put(procName, ensures);
-			m_RootAnnot.m_EnsuresNonFree.put(procName, ensuresNonFree);
-			m_RootAnnot.m_Requires.put(procName, requires);
-			m_RootAnnot.m_RequiresNonFree.put(procName, requiresNonFree);
-			m_RootAnnot.m_ModifiedVars.put(procName, modifiedVars);
-		}
 	}
 
 	/**
@@ -417,7 +288,7 @@ public class CfgBuilder {
 		ProgramPoint calleeEntryLoc = m_RootAnnot.m_entryNode.get(callee);
 
 		String caller = callerNode.getProcedure();
-		Procedure callerImpl = m_RootAnnot.m_Implementation.get(caller);
+		Procedure callerImpl = m_BoogieDeclarations.getProcImplementation().get(caller);
 		
 		Statements2TransFormula stmt2TransFormula = new Statements2TransFormula(caller, m_RootAnnot.getBoogie2SMT());
 		
@@ -543,10 +414,10 @@ public class CfgBuilder {
 			m_currentProcedureName = procName;
 			m_Edges = new HashSet<CodeBlock>();
 
-			Procedure proc = m_RootAnnot.m_Implementation.get(m_currentProcedureName);
+			Procedure proc = m_BoogieDeclarations.getProcImplementation().get(m_currentProcedureName);
 //			m_Boogie2smt.declareLocals(proc);
 
-			Statement[] statements = m_RootAnnot.m_Implementation.get(procName).getBody().getBlock();
+			Statement[] statements = m_BoogieDeclarations.getProcImplementation().get(procName).getBody().getBlock();
 			if (statements.length == 0) {
 				throw new UnsupportedOperationException("Procedure contains no statement");
 			}
@@ -803,7 +674,7 @@ public class CfgBuilder {
 		private void buildProcedureCfgWithoutImplementation(String procName) {
 			m_currentProcedureName = procName;
 
-			Procedure proc = m_RootAnnot.m_Procedure.get(m_currentProcedureName);
+			Procedure proc = m_BoogieDeclarations.getProcSpecification().get(m_currentProcedureName);
 
 			// initialize the Map from labels to LocNodes for this procedure
 			m_procLocNodes = new HashMap<String, ProgramPoint>();
@@ -836,7 +707,7 @@ public class CfgBuilder {
 		 */
 		private void assertAndAssumeEnsures() {
 			// Assume the ensures specification at the end of the procedure.
-			List<EnsuresSpecification> ensures = m_RootAnnot.m_Ensures.get(m_currentProcedureName);
+			List<EnsuresSpecification> ensures = m_BoogieDeclarations.getEnsures().get(m_currentProcedureName);
 			if (ensures == null || ensures.isEmpty()) {
 				ensures = getDummyEnsuresSpecifications();
 			}
@@ -860,7 +731,7 @@ public class CfgBuilder {
 
 			// Violations against the ensures part of the procedure
 			// specification
-			List<EnsuresSpecification> ensuresNonFree = m_RootAnnot.m_EnsuresNonFree.get(m_currentProcedureName);
+			List<EnsuresSpecification> ensuresNonFree = m_BoogieDeclarations.getEnsuresNonFree().get(m_currentProcedureName);
 			if (ensuresNonFree != null && !ensuresNonFree.isEmpty()) {
 				for (EnsuresSpecification spec : ensuresNonFree) {
 					Expression specExpr = spec.getFormula();
@@ -883,7 +754,7 @@ public class CfgBuilder {
 		 */
 		private void assumeRequires(boolean dummyRequiresIfEmpty) {
 			// Assume everything mentioned in the requires specification
-			List<RequiresSpecification> requires = m_RootAnnot.m_Requires.get(m_currentProcedureName);
+			List<RequiresSpecification> requires = m_BoogieDeclarations.getRequires().get(m_currentProcedureName);
 			if ((requires == null || requires.isEmpty()) && dummyRequiresIfEmpty) {
 				requires = getDummyRequiresSpecifications();
 			}
@@ -1150,7 +1021,7 @@ public class CfgBuilder {
 			// add summary edge
 			String callee = st.getMethodName();
 			Summary summaryEdge;
-			if (m_RootAnnot.m_Implementation.containsKey(callee)) {
+			if (m_BoogieDeclarations.getProcImplementation().containsKey(callee)) {
 				summaryEdge = new Summary(locNode, returnNode, st, true);
 				passAllAnnotations(st, summaryEdge);
 				m_ImplementationSummarys.add(summaryEdge);
@@ -1165,7 +1036,7 @@ public class CfgBuilder {
 			// specification. Omit intruduction of these additional auxiliary
 			// assert statements if current procedure is START_PROCEDURE.
 			//
-			List<RequiresSpecification> requiresNonFree = m_RootAnnot.m_RequiresNonFree.get(callee);
+			List<RequiresSpecification> requiresNonFree = m_BoogieDeclarations.getRequiresNonFree().get(callee);
 			if (requiresNonFree != null && !requiresNonFree.isEmpty()
 					&& !m_currentProcedureName.equals(START_PROCEDURE)) {
 				for (RequiresSpecification spec : requiresNonFree) {
@@ -1174,10 +1045,10 @@ public class CfgBuilder {
 					// cases where signature of procedure and implementation are
 					// different.
 					Procedure proc;
-					if (m_RootAnnot.m_Implementation.containsKey(callee)) {
-						proc = m_RootAnnot.m_Implementation.get(callee);
+					if (m_BoogieDeclarations.getProcImplementation().containsKey(callee)) {
+						proc = m_BoogieDeclarations.getProcImplementation().get(callee);
 					} else {
-						proc = m_RootAnnot.m_Procedure.get(callee);
+						proc = m_BoogieDeclarations.getProcSpecification().get(callee);
 					}
 					Expression violatedRequires = getNegation(new WeakestPrecondition(spec.getFormula(), st, proc)
 							.getResult());

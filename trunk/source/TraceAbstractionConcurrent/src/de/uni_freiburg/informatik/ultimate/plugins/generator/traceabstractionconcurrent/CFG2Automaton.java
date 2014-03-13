@@ -69,18 +69,18 @@ public abstract class CFG2Automaton {
 					"atomic block encoding.");
 		}
 
-		if (!m_RootAnnot.getImplementations().containsKey(m_InitProcedure)) {
+		if (!m_RootAnnot.getBoogieDeclarations().getProcImplementation().containsKey(m_InitProcedure)) {
 			throw new IllegalArgumentException("Concurrent program need proceudre " 
 						+ m_InitProcedure + " to initialize shared variables");
 		}
 		
 		int numberOfProcedures;
-		if (m_RootAnnot.getImplementations().containsKey(m_InitProcedure)) {
-			numberOfProcedures = m_RootAnnot.getImplementations().size()-1;
+		if (m_RootAnnot.getBoogieDeclarations().getProcImplementation().containsKey(m_InitProcedure)) {
+			numberOfProcedures = m_RootAnnot.getBoogieDeclarations().getProcImplementation().size()-1;
 			s_Logger.debug("Program has procedure to initialize shared variables");
 		}
 		else {
-			numberOfProcedures = m_RootAnnot.getImplementations().size();
+			numberOfProcedures = m_RootAnnot.getBoogieDeclarations().getProcImplementation().size();
 			s_Logger.debug("No procedure to initialize shared variables");
 		}
 		s_Logger.debug("Found " + numberOfProcedures + "Procedures");
@@ -91,7 +91,7 @@ public abstract class CFG2Automaton {
 
 		m_SharedVarsInit = extractPrecondition();
 		
-		for (String proc : m_RootAnnot.getImplementations().keySet()) {
+		for (String proc : m_RootAnnot.getBoogieDeclarations().getProcImplementation().keySet()) {
 			if (proc.equals(m_InitProcedure)) {
 				continue;
 			}
@@ -105,7 +105,7 @@ public abstract class CFG2Automaton {
 	
 	
 	private CodeBlock extractPrecondition() {
-		assert (m_RootAnnot.getImplementations().containsKey(m_InitProcedure));
+		assert (m_RootAnnot.getBoogieDeclarations().getProcImplementation().containsKey(m_InitProcedure));
 		ProgramPoint entry = m_RootAnnot.getEntryNodes().get(m_InitProcedure);
 		ProgramPoint exit = m_RootAnnot.getExitNodes().get(m_InitProcedure);
 		List<CodeBlock> codeBlocks = new ArrayList<CodeBlock>();

@@ -1,8 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Stack;
 
 import org.apache.log4j.Logger;
@@ -18,12 +16,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
@@ -72,10 +65,6 @@ public class Boogie2SMT {
 	// private FunctionSymbol leqReal, ltReal, geqReal, gtReal;
 
 
-	// private int generation = 0;
-	private VariableSSAManager m_VariableSSAManager = null;
-
-
 
 	// used in backtranslation
 	// private Map<Sort,IType> m_SmtSort2BoogieType = new HashMap<Sort,IType>();
@@ -97,28 +86,34 @@ public class Boogie2SMT {
 
 	private final TypeSortTranslator m_TypeSortTranslator;
 	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
+	
+	private final BoogieDeclarations m_BoogieDeclarations;
 
 	private String m_CurrentProcedure;
 
-	public void incGeneration() {
-		VariableSSAManager.incAllIndices();
-		// generation++;
-	}
-	
 	private ConstOnlyIdentifierTranslator m_ConstOnlyIdentifierTranslator;
 
-	public Boogie2SMT(Script script, boolean blackHoleArrays) {
+	public Boogie2SMT(Script script, BoogieDeclarations boogieDeclarations, boolean blackHoleArrays) {
 		m_BlackHoleArrays = blackHoleArrays;
 		this.m_Script = script;
 		m_VariableManager = new VariableManager(m_Script);
-		m_TypeSortTranslator = new TypeSortTranslator(m_Script, m_BlackHoleArrays);
-		m_VariableSSAManager = new VariableSSAManager(m_Script);
-		m_Boogie2SmtSymbolTable = new Boogie2SmtSymbolTable(m_Script, m_TypeSortTranslator);
-		m_VariableSSAManager.reset();
+		
+		m_TypeSortTranslator = new TypeSortTranslator(
+				boogieDeclarations.getTypeDeclarations(), m_Script, m_BlackHoleArrays);
+		m_Boogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, m_Script, m_TypeSortTranslator);
+		
+
+		
+		m_BoogieDeclarations = boogieDeclarations;
 		// intSort = script.sort("Int");
 		// realSort = script.sort("Real");
 
 		m_ConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
+		
+		for (Axiom decl : boogieDeclarations.getAxioms()) {
+			this.declareAxiom(decl);
+		}
+		
 		m_Term2Expression = new Term2Expression(m_TypeSortTranslator, m_Boogie2SmtSymbolTable);
 		//
 
@@ -175,6 +170,12 @@ public class Boogie2SMT {
 	
 	
 	
+	
+	
+	public BoogieDeclarations getBoogieDeclarations() {
+		return m_BoogieDeclarations;
+	}
+
 	public TypeSortTranslator getTypeSortTranslator() {
 		return m_TypeSortTranslator;
 	}
@@ -185,57 +186,9 @@ public class Boogie2SMT {
 		return m_ConstOnlyIdentifierTranslator;
 	}
 
-	public void declareTypes(Collection<TypeDeclaration> declarations) {
-		assert m_InternalState == InternalState.INIT : "declared in wrong order";
-		for (TypeDeclaration decl : declarations) {
-			m_TypeSortTranslator.declareType(decl);
-		}
-		m_InternalState = InternalState.TYPES_DECLARED;
-	}
-	
-	public void declareConstants(Collection<ConstDeclaration> declarations) {
-		assert m_InternalState == InternalState.TYPES_DECLARED : "declared in wrong order";
-		for (ConstDeclaration decl : declarations) {
-			m_Boogie2SmtSymbolTable.declareConstants(decl);
-		}
-		m_InternalState = InternalState.CONSTS_DECLARED;
-	}
-	
-	public void declareFunctions(Collection<FunctionDeclaration> declarations) {
-		assert m_InternalState == InternalState.CONSTS_DECLARED : "declared in wrong order";
-		for (FunctionDeclaration decl : declarations) {
-			m_Boogie2SmtSymbolTable.declareFunction(decl);
-		}
-		m_InternalState = InternalState.FUNCTIONS_DECLARED;
-	}
-	
-	public void declareAxioms(Collection<Axiom> declarations) {
-		assert m_InternalState == InternalState.FUNCTIONS_DECLARED : "declared in wrong order";
-		for (Axiom decl : declarations) {
-			this.declareAxiom(decl);
-		}
-		m_InternalState = InternalState.AXIOMS_DECLARED;
-	}
-	
-	public void declareGlobalVariables(Collection<VariableDeclaration> declarations) {
-		assert m_InternalState == InternalState.AXIOMS_DECLARED : "declared in wrong order";
-		for (VariableDeclaration decl : declarations) {
-			m_Boogie2SmtSymbolTable.declareGlobalVariables(decl);
-		}
-		m_InternalState = InternalState.GLOBALVARS_DECLARED;
-	}
-	
-	public void declareProcedures(Map<String, Procedure> specs, Map<String, Procedure> impls) {
-		assert m_InternalState == InternalState.GLOBALVARS_DECLARED : "declared in wrong order";
-		m_Boogie2SmtSymbolTable.declareProcedures(specs, impls);
-		m_InternalState = InternalState.PROCEDURES_DECLARED;
-	}
-	
 
 	
-	
-	
-	
+
 	private Sort getSort(IType itype, BoogieASTNode astNode) {
 		return m_TypeSortTranslator.getSort(itype, astNode);
 	}
@@ -387,10 +340,6 @@ public class Boogie2SMT {
 		IdentifierTranslator[] its = new IdentifierTranslator[]{ getConstOnlyIdentifierTranslator()};
 		Term term = (new Expression2Term( its, m_Script, m_TypeSortTranslator, ax.getFormula())).getTerm();
 		m_Script.assertTerm(term);
-	}
-
-	public void declareProcedure(Procedure proc) {
-		m_Id2Specification.put(proc.getIdentifier(), proc);
 	}
 
 //	public Specification[] getProcedureSpecs(Procedure procImpl) {

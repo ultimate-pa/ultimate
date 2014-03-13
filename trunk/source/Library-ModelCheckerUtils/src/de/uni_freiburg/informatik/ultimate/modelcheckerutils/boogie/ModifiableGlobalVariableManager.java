@@ -10,11 +10,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 
 /**
  * Contains information about modifiable global variables and provides 
- * auxilliary TransFormulas useful for verification.
+ * auxiliary TransFormulas useful for verification.
  */
 public class ModifiableGlobalVariableManager {
 	
@@ -25,19 +24,17 @@ public class ModifiableGlobalVariableManager {
 	 * where the identifier of the variable is mapped to the type of the
 	 * variable. 
 	 */
-	private final Map<String,Map<String,ASTType>> m_ModifiedVars;
+	private final Map<String,Set<String>> m_ModifiedVars;
 	private final Boogie2SMT m_Boogie2smt;
 	
 	private final Map<String, TransFormula> m_Proc2OldVarsAssignment;
 	private final Map<String, TransFormula> m_Proc2GlobalVarsAssignment;
-	private final Map<String,Set<BoogieVar>> m_ModifiedBoogieVars = 
-			new HashMap<String,Set<BoogieVar>>();
 	
 	
 	
 	
 	public ModifiableGlobalVariableManager(
-			Map<String, Map<String, ASTType>> modifiedVars,
+			Map<String, Set<String>> modifiedVars,
 			Boogie2SMT boogie2smt) {
 		m_ModifiedVars = modifiedVars;
 		m_Boogie2smt = boogie2smt;
@@ -95,10 +92,10 @@ public class ModifiableGlobalVariableManager {
 	
 
 	private TransFormula constructOldVarsAssignment(String proc) {
-		Map<String, ASTType> vars = m_ModifiedVars.get(proc);
+		Set<String> vars = m_ModifiedVars.get(proc);
 		if (vars == null) {
 			//no global var modified
-			vars = new HashMap<String, ASTType>(0);
+			vars = new HashSet<String>(0);
 		}
 
 		Map<BoogieVar,TermVariable> glob2oldInVars = new HashMap<BoogieVar,TermVariable>();
@@ -107,7 +104,7 @@ public class ModifiableGlobalVariableManager {
 		Term glob2oldFormula = m_Boogie2smt.getScript().term("true");
 		
 		Map<String, BoogieVar> globals = m_Boogie2smt.getBoogie2SmtSymbolTable().getGlobals();
-		for (String modVar : vars.keySet()) {
+		for (String modVar : vars) {
 			BoogieVar boogieVar = globals.get(modVar);
 			BoogieVar boogieOldVar = m_Boogie2smt.getBoogie2SmtSymbolTable().getOldGlobals().get(boogieVar.getIdentifier());
 			Sort sort = boogieVar.getDefaultConstant().getSort();
@@ -137,10 +134,10 @@ public class ModifiableGlobalVariableManager {
 
 	
 	private TransFormula constructGlobalVarsAssignment(String proc) {
-		Map<String, ASTType> vars = m_ModifiedVars.get(proc);
+		Set<String> vars = m_ModifiedVars.get(proc);
 		if (vars == null) {
 			//no global var modified
-			vars = new HashMap<String, ASTType>(0);
+			vars = new HashSet<String>(0);
 		}
 	
 		Map<BoogieVar,TermVariable> old2globInVars = new HashMap<BoogieVar,TermVariable>();
@@ -149,7 +146,7 @@ public class ModifiableGlobalVariableManager {
 		Term old2globFormula = m_Boogie2smt.getScript().term("true");
 		
 		Map<String, BoogieVar> globals = m_Boogie2smt.getBoogie2SmtSymbolTable().getGlobals();
-		for (String modVar : vars.keySet()) {
+		for (String modVar : vars) {
 			BoogieVar boogieVar = globals.get(modVar);
 			BoogieVar boogieOldVar = m_Boogie2smt.getBoogie2SmtSymbolTable().getOldGlobals().get(boogieVar.getIdentifier());
 			Sort sort = boogieVar.getDefaultConstant().getSort();

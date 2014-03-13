@@ -94,8 +94,8 @@ public class Product {
 		RootAnnot rootAnnot = mRootNode.getRootAnnot();
 		TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, rootAnnot);
 
-		for (String procIdent : rootAnnot.getImplementations().keySet()) {
-			Procedure proc = rootAnnot.getImplementations().get(procIdent);
+		for (String procIdent : rootAnnot.getBoogieDeclarations().getProcImplementation().keySet()) {
+			Procedure proc = rootAnnot.getBoogieDeclarations().getProcImplementation().get(procIdent);
 //			b2smt.declareLocals(proc);
 
 			for (ProgramPoint node : rootAnnot.getProgramPoints().get(procIdent).values()) {

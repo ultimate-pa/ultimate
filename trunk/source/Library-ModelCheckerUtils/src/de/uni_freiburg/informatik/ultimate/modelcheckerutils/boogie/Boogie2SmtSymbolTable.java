@@ -2,9 +2,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -22,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 
 public class Boogie2SmtSymbolTable {
+	private final BoogieDeclarations m_BoogieDeclarations;
 	private final Script m_Script; 
 	private final TypeSortTranslator m_TypeSortTranslator;
 	private final Map<String, BoogieVar> m_Globals = new HashMap<String, BoogieVar>();
@@ -41,17 +40,36 @@ public class Boogie2SmtSymbolTable {
 	final Map<String,String> m_SmtFunction2BoogieFunction = 
 			new HashMap<String,String>();
 	
-	private Map<String, Procedure> m_Specifications;
-	private Map<String, Procedure> m_Implementations;
 	
-	
-	
-	
-	public Boogie2SmtSymbolTable(Script script,
+	public Boogie2SmtSymbolTable(BoogieDeclarations boogieDeclarations,
+			Script script,
 			TypeSortTranslator typeSortTranslator) {
 		super();
 		m_Script = script;
 		m_TypeSortTranslator = typeSortTranslator;
+		m_BoogieDeclarations = boogieDeclarations;
+		
+		for (ConstDeclaration decl : m_BoogieDeclarations.getConstDeclarations()) {
+			declareConstants(decl);
+		}
+		
+		for (FunctionDeclaration decl : m_BoogieDeclarations.getFunctionDeclarations()) {
+			declareFunction(decl);
+		}
+		
+		for (VariableDeclaration decl : m_BoogieDeclarations.getGlobalVarDeclarations()) {
+			declareGlobalVariables(decl);
+		}
+		
+		for (String procId : m_BoogieDeclarations.getProcSpecification().keySet()) {
+			Procedure procSpec = m_BoogieDeclarations.getProcSpecification().get(procId);
+			Procedure procImpl = m_BoogieDeclarations.getProcImplementation().get(procId);
+			if (procImpl == null) {
+				declareSpec(procSpec);
+			} else {
+				declareSpecImpl(procSpec, procImpl);
+			}
+		}
 	}
 
 	private void putNew(String procId, String varId, BoogieVar bv, Map<String, Map<String, BoogieVar>> map) {
@@ -232,28 +250,6 @@ public class Boogie2SmtSymbolTable {
 		return Collections.unmodifiableMap(m_OldGlobals);
 	}
 	
-	
-	public void declareProcedures(Map<String, Procedure> specs, Map<String, Procedure> impls) {
-		assert m_Specifications == null && m_Implementations == null : 
-			"procedures have already been declared";
-		m_Specifications = specs;
-		m_Implementations = impls;
-		
-		Set<String> procIds = new HashSet<String>();
-		procIds.addAll(specs.keySet());
-		procIds.addAll(impls.keySet());
-		for (String procId : procIds) {
-			Procedure spec = specs.get(procId);
-			Procedure impl = impls.get(procId);
-			assert spec != null : "impl without spec not allowed";
-			if (impl == null) {
-				declareSpec(spec);
-			} else {
-				declareSpecImpl(spec, impl);
-			}
-		}
-	}
-	
 	public void declareSpecImpl(Procedure spec, Procedure impl) {
 		assert (spec == impl || isSpecAndImpl(spec, impl));
 		String procId = spec.getIdentifier();
@@ -355,15 +351,15 @@ public class Boogie2SmtSymbolTable {
 		}
 	}
 	
-	public Procedure getProcedureSpecification(String procId) {
-		assert m_Specifications != null : "Procedure have not yet been declared";
-		return m_Specifications.get(procId);
-	}
-	
-	public Procedure getProcedureImplementation(String procId) {
-		assert m_Specifications != null : "Procedure have not yet been declared";
-		return m_Implementations.get(procId);
-	}
+//	public Procedure getProcedureSpecification(String procId) {
+//		assert m_Specifications != null : "Procedure have not yet been declared";
+//		return m_Specifications.get(procId);
+//	}
+//	
+//	public Procedure getProcedureImplementation(String procId) {
+//		assert m_Specifications != null : "Procedure have not yet been declared";
+//		return m_Implementations.get(procId);
+//	}
 
 	
 	/**

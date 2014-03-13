@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 
@@ -10,9 +11,9 @@ public class ImpRootAnnot extends RootAnnot {
 	
 //	HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>> callPredToReturnPreds;
 
-	public ImpRootAnnot(Boogie2SMT m_Boogie2smt,
+	public ImpRootAnnot(BoogieDeclarations boogieDeclarations, Boogie2SMT m_Boogie2smt,
 			Backtranslator backtranslator) { //, HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>> callPredToReturnPreds) {
-		super(m_Boogie2smt, backtranslator);
+		super(boogieDeclarations, m_Boogie2smt, backtranslator);
 //		this.callPredToReturnPreds = callPredToReturnPreds;
 	}
 

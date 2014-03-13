@@ -1,19 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
 
 /**
@@ -30,7 +25,7 @@ public class RootAnnot extends AbstractAnnotations {
 	 */
 	private static final long serialVersionUID = -221145005712480077L;
 	
-	
+	private final BoogieDeclarations m_BoogieDeclarations;
 	
 	/**
 	 * Maps a procedure name to the entry node of that procedure.
@@ -57,8 +52,6 @@ public class RootAnnot extends AbstractAnnotations {
 								new HashMap<String,ProgramPoint>();
 
 	
-
-	
 	/**
 	 * Maps a procedure name to the the exit node of that procedure.
 	 * The exit node of a procedure represents an auxiliary location that is
@@ -76,67 +69,6 @@ public class RootAnnot extends AbstractAnnotations {
 	 */
 	final Map<String,Map<String,ProgramPoint>> m_LocNodes =
 								new HashMap<String,Map<String,ProgramPoint>>();
-	
-	/**
-	 * Maps a procedure name to the requires clauses of the procedure
-	 */
-	final Map<String,List<RequiresSpecification>> m_Requires = 
-								new HashMap<String,List<RequiresSpecification>>();
-
-	/**
-	 * Maps a procedure name to the requires clauses of the procedure which are
-	 * not free. (A requires clause is not free if we have to proof that it
-	 * holds.)
-	 */
-	final Map<String,List<RequiresSpecification>> m_RequiresNonFree = 
-								new HashMap<String,List<RequiresSpecification>>();
-
-	/**
-	 * Maps a procedure name to the ensures clauses of the procedure
-	 */
-	final Map<String,List<EnsuresSpecification>> m_Ensures = 
-								new HashMap<String,List<EnsuresSpecification>>();
-	
-	/**
-	 * Maps a procedure name to the ensures clauses of the procedure which are
-	 * not free. (A ensures clause is not free if we have to proof that it 
-	 * holds.)
-	 */
-	final Map<String,List<EnsuresSpecification>> m_EnsuresNonFree = 
-								new HashMap<String,List<EnsuresSpecification>>();
-	
-	/**
-	 * Set of global variables defined in this program. The set of variables is
-	 * represented as a map where the identifier of the variable is mapped to
-	 * the type of the
-	 * variable.  
-	 */
-	final Map<String,ASTType> m_GlobalVars = 
-								new HashMap<String, ASTType>();
-
-	/**
-	 * Maps a procedure name to the set of global variables which may be
-	 * modified by the procedure. The set of variables is represented as a map
-	 * where the identifier of the variable is mapped to the type of the
-	 * variable. 
-	 */
-	final Map<String,Map<String,ASTType>> m_ModifiedVars = 
-								new HashMap<String,Map<String,ASTType>>();
-	
-	
-	/**
-	 * Maps a procedure name to the Procedure object that contains the
-	 * specification of the procedure. 
-	 */
-	final Map<String,Procedure> m_Procedure = 
-								new HashMap<String,Procedure>();
-	
-	/**
-	 * Maps a procedure name to the Procedure object that contains the
-	 * implementation of the procedure. 
-	 */	
-	final Map<String,Procedure> m_Implementation = 
-								new HashMap<String,Procedure>();
 	
 	/**
 	 * Maps a procedure name to error locations generated for this procedure.
@@ -173,13 +105,12 @@ public class RootAnnot extends AbstractAnnotations {
 	 * if you add new attributes.
 	 */
 	private final static String[] s_AttribFields = {
-		"procedures", "implementations", 
-		"locNodes", "modifiedVars", "loopEntry", "globalVars" , 
-		"BoogieVar2SmtVar"
+		"locNodes", "loopEntry"
 	};
 	
-	public RootAnnot(
+	public RootAnnot(BoogieDeclarations boogieDeclarations,
 			Boogie2SMT m_Boogie2smt, Backtranslator backtranslator) {
+		m_BoogieDeclarations = boogieDeclarations;
 		m_Boogie2SMT = m_Boogie2smt;
 		m_Backtranslator = backtranslator;
 	}
@@ -191,26 +122,12 @@ public class RootAnnot extends AbstractAnnotations {
 
 	@Override
 	protected Object getFieldValue(String field) {
-		if (field == "procedures")
-			return m_Procedure;
-		else if (field == "implementations")
-			return m_Implementation;
-		else if (field == "locNodes")
+		if (field == "locNodes")
 			return m_LocNodes;
 		else if (field == "loopEntry")
 			return m_LoopLocations;
-		else if (field == "modifiedVars")
-			return m_ModifiedVars;
 		else
 			throw new UnsupportedOperationException("Unknown field "+field);
-	}
-	
-	public Map<String, Procedure> getProcedures() {
-		return m_Procedure;
-	}
-
-	public Map<String, Procedure> getImplementations() {
-		return m_Implementation;
 	}
 	
 	public Map<String,Map<String,ProgramPoint>> getProgramPoints() {
@@ -254,6 +171,11 @@ public class RootAnnot extends AbstractAnnotations {
 		return m_LoopLocations;
 	}
 
+	public BoogieDeclarations getBoogieDeclarations() {
+		return m_BoogieDeclarations;
+	}
+
+	
 
 	
 	

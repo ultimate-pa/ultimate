@@ -62,7 +62,7 @@ public class CFG2NestedWordAutomaton {
 					new HashMap<ProgramPoint, IPredicate>();
 		
 		Map<String, Procedure> implementations = 
-			rootNode.getRootAnnot().getImplementations();
+			rootNode.getRootAnnot().getBoogieDeclarations().getProcImplementation();
 		
 		if (implementations.containsKey(m_StartProcedure)) {
 			m_MainMode = true;

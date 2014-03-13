@@ -64,4 +64,13 @@ public class DeclarationInformation {
 		}
 		return result;
 	}
+	
+	@Override
+	public String toString() {
+		if (m_Procedure == null) {
+			return m_StorageClass.toString();
+		} else {
+			return "<" + m_StorageClass.toString() + "," + m_Procedure + ">";
+		}
+	}
 }

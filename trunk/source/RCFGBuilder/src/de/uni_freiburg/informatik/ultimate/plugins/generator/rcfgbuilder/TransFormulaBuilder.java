@@ -209,7 +209,7 @@ public class TransFormulaBuilder {
 		Map<BoogieVar,TermVariable> outVars = new HashMap<BoogieVar,TermVariable>();
 		Set<TermVariable> allVars = new HashSet<TermVariable>();
 		Term formula = m_Boogie2smt.getScript().term("true");
-		Procedure impl = m_RootAnnot.getImplementations().get(callee);
+		Procedure impl = m_RootAnnot.getBoogieDeclarations().getProcImplementation().get(callee);
 		int offset = 0;
 		for (VarList varList : impl.getOutParams()) {
 			IType type = varList.getType().getBoogieType();

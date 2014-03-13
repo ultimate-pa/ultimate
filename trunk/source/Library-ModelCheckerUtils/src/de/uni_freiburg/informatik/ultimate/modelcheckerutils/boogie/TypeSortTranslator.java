@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,15 +8,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
-import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
 /**
  * Translates Boogie types into SMT sorts and vice versa.
@@ -32,7 +30,9 @@ public class TypeSortTranslator {
 
 	private final boolean m_BlackHoleArrays;
 
-	public TypeSortTranslator(Script script,
+	public TypeSortTranslator(
+			Collection<TypeDeclaration> declarations,
+			Script script,
 			boolean blackHoleArrays) {
 		m_BlackHoleArrays = blackHoleArrays;
 		m_Script = script;
@@ -45,6 +45,9 @@ public class TypeSortTranslator {
 		IType intType = BoogieType.intType;
 		m_type2sort.put(intType, intSort);
 		m_sort2type.put(intSort, intType);
+		for (TypeDeclaration typeDecl : declarations) {
+			declareType(typeDecl);
+		}
 
 	}
 	
@@ -87,16 +90,16 @@ public class TypeSortTranslator {
 	}
 	
 	
-	void declareType(TypeDeclaration typedecl) {
-		String id = typedecl.getIdentifier();
-		String[] typeParams = typedecl.getTypeParams();
+	private void declareType(TypeDeclaration typeDecl) {
+		String id = typeDecl.getIdentifier();
+		String[] typeParams = typeDecl.getTypeParams();
 		if (typeParams.length != 0) {
 			throw new IllegalArgumentException("Only types without parameters supported");
 		}
-		if (typedecl.getSynonym() == null) {
+		if (typeDecl.getSynonym() == null) {
 			m_Script.declareSort(id, 0);
 		} else {
-			Sort synonymSort = getSort(typedecl.getSynonym().getBoogieType(), typedecl);
+			Sort synonymSort = getSort(typeDecl.getSynonym().getBoogieType(), typeDecl);
 			m_Script.defineSort(id, new Sort[0], synonymSort);
 		}
 	}
