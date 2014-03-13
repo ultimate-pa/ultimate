@@ -1322,6 +1322,20 @@ public class TransFormula implements Serializable {
 				result.removeOutVar(bv);
 			}
 		}
+		// Add all inVars (bv,tv) of the call to outVars of the result except 
+		// if there already an outVar (bv,tv').
+		// (Because in this case the variable bv was reassigned by the summary,
+		// e.g. in the case where bv is a global variable that can be modified
+		// by the procedure or is bv is a variable that is assigned by the
+		// call. 
+		{
+			for (Entry<BoogieVar, TermVariable> entry : callTf.getInVars().entrySet()) {
+				if (!result.getOutVars().containsKey(entry.getKey())) {
+					result.m_OutVars.put(entry.getKey(), entry.getValue());
+				}
+				
+			}
+		}
 		assert(isIntraprocedural(result));
 		return result;
 	}
