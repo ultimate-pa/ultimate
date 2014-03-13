@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
@@ -66,6 +67,8 @@ public class PostProcessor {
 	 */
 	private LinkedHashSet<String> mInitializedGlobals;
 
+	private boolean mSomethingOnHeapIsInitialized = false;
+		
 	/**
 	 * Constructor.
 	 */
@@ -194,6 +197,9 @@ public class PostProcessor {
 			if (en.getKey() instanceof TypeDeclaration)
 				continue;
 			ResultExpression initializer = en.getValue().getInitializer();
+			if (en.getValue().isOnHeap()) 
+				mSomethingOnHeapIsInitialized |= true;
+			
 			if (initializer != null) {
 				assert ((VariableDeclaration)en.getKey()).getVariables().length == 1 
 						&& ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers().length == 1;
@@ -226,10 +232,19 @@ public class PostProcessor {
 		mInitializedGlobals.addAll(functionHandler.getModifiedGlobals().get(SFO.INIT));
 		
 		Specification[] specsInit = new Specification[1];
-		VariableLHS[] modifyList = new VariableLHS[mInitializedGlobals.size()];
+		
+		VariableLHS[] modifyList = new VariableLHS[mSomethingOnHeapIsInitialized ? 
+				mInitializedGlobals.size() + 4 :
+					mInitializedGlobals.size()];
 		int i = 0;
 		for (String var: mInitializedGlobals) {
 			modifyList[i++] = new VariableLHS(loc, var);
+		}
+		if (mSomethingOnHeapIsInitialized) {
+			for (String t : new String[] { SFO.INT, SFO.POINTER,
+						SFO.REAL, SFO.BOOL }) {
+				modifyList[i++] = new VariableLHS(loc, SFO.MEMORY + "_" + t);
+			}		
 		}
 		specsInit[0] = new ModifiesSpecification(loc, false, modifyList);
 		Procedure initProcedureDecl = new Procedure(loc, new Attribute[0], SFO.INIT, new String[0],
@@ -282,7 +297,6 @@ public class PostProcessor {
 			CType cvar, ResultExpression initializerRaw) {
 		CType lCvar = cvar.getUnderlyingType();
 		
-		//TODO: deal with varsOnHeap
 		boolean onHeap = false;
 		if (lhs != null && lhs instanceof VariableLHS) 
 			onHeap = ((CHandler )main.cHandler).isHeapVar(((VariableLHS) lhs).getIdentifier());
@@ -328,8 +342,16 @@ public class PostProcessor {
 				throw new AssertionError("unknown type to init");
 			}
 			if (lhs != null) {
-				stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
-						new Expression[] { rhs } ));
+				if (onHeap) {
+					stmt.addAll(memoryHandler.getWriteCall(
+							new HeapLValue(
+									new IdentifierExpression(loc, ((VariableLHS) lhs).getIdentifier()),
+									null), 
+									new RValue(rhs, cvar)));
+				} else {
+					stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
+							new Expression[] { rhs } ));
+				}
 			} else {
 				lrVal = new RValue(rhs, lCvar);
 			}
@@ -492,6 +514,12 @@ public class PostProcessor {
 			LinkedHashSet<VariableLHS> startModifiesClause = new LinkedHashSet<VariableLHS>();
 			for (String id: mInitializedGlobals)
 				startModifiesClause.add(new VariableLHS(loc, id));
+			if (mSomethingOnHeapIsInitialized) {
+				for (String t : new String[] { SFO.INT, SFO.POINTER,
+						SFO.REAL, SFO.BOOL }) {
+					startModifiesClause.add(new VariableLHS(loc, SFO.MEMORY + "_" + t));
+				}		
+			}
 			for (String id: modifiedGlobals.get(checkMethod))
 				startModifiesClause.add(new VariableLHS(loc, id));
 			specsStart[0] = new ModifiesSpecification(loc, false,

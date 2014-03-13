@@ -79,7 +79,7 @@ public class NameHandler implements INameHandler {
 		if (compCnt > 0) {
 			boogieId = "~" + onHeapStr + cId + "~" + compCnt;
 		} else {
-			boogieId = "~" + cId;
+			boogieId = "~" + onHeapStr + cId;
 		}
 		boogie2C.putVar(boogieId, cId);
 		return boogieId;
