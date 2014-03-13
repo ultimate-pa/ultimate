@@ -1329,9 +1329,9 @@ public class TransFormula implements Serializable {
 		// by the procedure or is bv is a variable that is assigned by the
 		// call. 
 		{
-			for (Entry<BoogieVar, TermVariable> entry : callTf.getInVars().entrySet()) {
-				if (!result.getOutVars().containsKey(entry.getKey())) {
-					result.m_OutVars.put(entry.getKey(), entry.getValue());
+			for (BoogieVar bv : callTf.getInVars().keySet()) {
+				if (!result.getOutVars().containsKey(bv)) {
+					result.m_OutVars.put(bv, result.getInVars().get(bv));
 				}
 				
 			}
