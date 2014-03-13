@@ -852,9 +852,14 @@ public class TransFormula implements Serializable {
 		}
 		
 		for (int i=0; i<transFormulas.length; i++) {
-			auxVars.addAll(transFormulas[i].getAuxVars());
 			branchEncoders.addAll(transFormulas[i].getBranchEncoders());
 			Map<TermVariable,Term> subsitutionMapping = new HashMap<TermVariable, Term>();
+			for (TermVariable oldAuxVar : transFormulas[i].getAuxVars()) {
+				TermVariable newAuxVar = boogie2smt.getVariableManager().
+						constructFreshTermVariable(oldAuxVar.getName(), oldAuxVar.getSort());
+				subsitutionMapping.put(oldAuxVar, newAuxVar);
+				auxVars.add(newAuxVar);
+			}
 			for (BoogieVar bv : transFormulas[i].getInVars().keySet()) {
 				TermVariable inVar = transFormulas[i].getInVars().get(bv);
 				subsitutionMapping.put(inVar, newInVars.get(bv));
