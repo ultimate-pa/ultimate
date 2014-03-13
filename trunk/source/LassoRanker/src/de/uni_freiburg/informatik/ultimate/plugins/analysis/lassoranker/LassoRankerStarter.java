@@ -232,7 +232,6 @@ public class LassoRankerStarter {
 	private boolean isTerminationArgumentCorrect(TerminationArgument arg) {
 		SmtManager smtManager = new SmtManager(
 				m_RootAnnot.getBoogie2SMT(),
-				m_RootAnnot.getGlobalVars(), 
 				m_RootAnnot.getModGlobVarManager());
 		BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(smtManager);
 		bspm.computePredicates(false, arg);

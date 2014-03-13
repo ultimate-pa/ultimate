@@ -31,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
@@ -65,7 +64,7 @@ public class SmtManager {
 	private final Boogie2SMT m_Boogie2Smt;
 	private final Smt2Boogie m_Smt2Boogie;
 	private final Script m_Script;
-	private final Map<String,ASTType> m_GlobalVars;
+//	private final Map<String,ASTType> m_GlobalVars;
 	private final ModifiableGlobalVariableManager m_ModifiableGlobals;
 	private int m_Iteration;
 	private int m_satProbNumber;
@@ -118,14 +117,12 @@ public class SmtManager {
 	protected static String[] m_NoProcedure = new String[0];
 	
 	public SmtManager(Boogie2SMT boogie2smt,
-					Map<String,ASTType> globalVars,
 					ModifiableGlobalVariableManager modifiableGlobals) {
 		m_DontCareTerm = new AuxilliaryTerm("don't care");
 		m_EmptyStackTerm = new AuxilliaryTerm("emptyStack");
 		m_Boogie2Smt = boogie2smt;
 		m_Smt2Boogie = boogie2smt.getSmt2Boogie();
 		m_Script = boogie2smt.getScript();
-		m_GlobalVars = globalVars;
 		m_ModifiableGlobals =  modifiableGlobals;
 	}
 	
@@ -159,10 +156,6 @@ public class SmtManager {
 		return m_DontCareTerm;
 	}
 	
-
-	public Map<String, ASTType> getGlobalVars() {
-		return m_GlobalVars;
-	}
 
 	public int getNontrivialSatQueries() {
 		return m_NontrivialSatQueries;
@@ -2071,7 +2064,7 @@ public class SmtManager {
 				}
 			} else if (!ret_TF.getInVars().containsKey(bv) && 
 					!callTF.getOutVars().containsKey(bv)) {
-				if (!m_GlobalVars.containsKey(bv.getIdentifier())) {
+				if (!m_ModifiableGlobals.getGlobals().containsKey(bv.getIdentifier())) {
 					varsToQuantifyInCalleePred.add(bv.getTermVariable());
 				}
 			}

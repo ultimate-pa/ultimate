@@ -244,10 +244,6 @@ public class RootAnnot extends AbstractAnnotations {
 		return m_ModifiableGlobalVariableManager;
 	}
 	
-	public Map<String, ASTType> getGlobalVars() {
-		return m_GlobalVars;
-	}
-
 	public Script getScript() {
 		return m_Boogie2SMT.getScript();
 	}

@@ -95,7 +95,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		m_originalRoot = (RootNode) root;
 		RootAnnot rootAnnot = m_originalRoot.getRootAnnot();
 		m_smtManager = new SmtManager(rootAnnot.getBoogie2SMT(),
-				rootAnnot.getGlobalVars(),
 				rootAnnot.getModGlobVarManager());
 
 		m_truePredicate = m_smtManager.newTruePredicate();

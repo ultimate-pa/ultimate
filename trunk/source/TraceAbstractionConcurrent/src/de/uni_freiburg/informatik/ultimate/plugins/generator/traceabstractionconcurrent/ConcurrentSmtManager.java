@@ -15,8 +15,8 @@ public class ConcurrentSmtManager extends SmtManager {
 
 	
 	public ConcurrentSmtManager(Boogie2SMT boogie2smt,
-			Map<String, ASTType> globalVars, ModifiableGlobalVariableManager modifiableGlobals) {
-		super(boogie2smt, globalVars, modifiableGlobals);
+			ModifiableGlobalVariableManager modifiableGlobals) {
+		super(boogie2smt, modifiableGlobals);
 		// TODO Auto-generated constructor stub
 	}
 

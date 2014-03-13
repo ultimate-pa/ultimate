@@ -32,8 +32,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
@@ -81,7 +79,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		System.out.println(settings);
 
 		SmtManager smtManager = new SmtManager(rootAnnot.getBoogie2SMT(),
-				rootAnnot.getGlobalVars(),
 				rootAnnot.getModGlobVarManager());
 		TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(smtManager);
 
