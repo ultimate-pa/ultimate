@@ -5,6 +5,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -35,29 +38,24 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author haettigj@informatik.uni-freiburg.de
  * 
  */
-public class CegarLoopSequentialWithBackedges extends BasicCegarLoop
+public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 {
-	/**
-	 * Maps states from the original automaton to corresponding 
-	 * states in the new interpolant automaton.
-	 */
-	protected AutomatonEpimorphism<IPredicate> m_Epimorphism;
-
-	/**
-	 * List of states we already added to the new interpolant
-	 * automaton.
-	 */
-	protected ArrayList<IPredicate> m_AnnotatedStates;
-	
-	/**
-	 * Holds the nodes and edges of the error path
-	 */
-	protected NestedRun<CodeBlock, IPredicate> m_CounterExamplePath;
-
+	// ------ Tools -------
 	/**
 	 * Used for computing the interpolants of additional paths
 	 */
 	protected TraceChecker m_ExtraTraceChecker;
+
+	/**
+	 * This is used to merge states
+	 */
+	protected PredicateUnifier m_PredicateUnifier;
+
+	// ----- Input&Output -----
+	/**
+	 * Holds the nodes and edges of the error path
+	 */
+	protected NestedRun<CodeBlock, IPredicate> m_CounterExamplePath;
 
 	/**
 	 * Version of the abstraction, casted as
@@ -67,43 +65,58 @@ public class CegarLoopSequentialWithBackedges extends BasicCegarLoop
 	private INestedWordAutomaton<CodeBlock, IPredicate> m_NestedAbstraction;
 
 	/**
+	 * Maps states from the original automaton to corresponding 
+	 * states in the new interpolant automaton.
+	 */
+	protected AutomatonEpimorphism<IPredicate> m_Epimorphism;
+
+	// ----- Intermediate data ----
+	
+	/**
+	 * Points to the initial state of the abstraction, i.e. true
+	 */
+	protected IPredicate m_AbstractionInitialState;
+	
+	/**
+	 * Points to the final state of the abstraction, i.e. false
+	 */
+	protected IPredicate m_AbstractionFinalState;
+	
+
+	/**
+	 * List of states we already added to the new interpolant
+	 * automaton.
+	 */
+	protected ArrayList<IPredicate> m_AnnotatedStates;
+	
+	/**
+	 * Holds the TODO
+	 */
+	protected HashMap<CodeBlock, IPredicate> m_CallingContexts;
+	
+	/**
 	 * When adding additional sub paths to the interpolant automaton.
 	 * We always start from a state which is already added.
 	 * This holds that starting point. 
 	 */
 	protected IPredicate m_ActualStartingState;
 
-	/***
+	/**
 	 * Precondition of the actual search, corresponds to the actual
 	 * starting state.
 	 */
 	protected IPredicate m_ActualPrecondition;
-	
+		
 	/**
 	 * When adding additional sub paths to the interpolant automaton
 	 * This will hold the actual path.
 	 */
 	protected ArrayList<IPredicate> m_ActualPath;
-		
-	/**
-	 * Points to the initial state of the abstraction, i.e. true
-	 */
-	protected IPredicate m_AbstractionInitialState;
-
-	/**
-	 * Points to the final state of the abstraction, i.e. false
-	 */
-	protected IPredicate m_AbstractionFinalState;
-
-	/**
-	 * This is used to merge states
-	 */
-	protected PredicateUnifier m_PredicateUnifier;
 
 	
-	/// ------- debugging -------
+	/// ------- debugging ------- TODO: Remove
 	/**
-	 * Holds the error paths, for debbuging.
+	 * Holds the error paths, for debugging.
 	 */
 	private ArrayList<String> m_ErrorPathHistory;
 
@@ -118,13 +131,17 @@ public class CegarLoopSequentialWithBackedges extends BasicCegarLoop
 	 * @param taPrefs
 	 * @param errorLocs
 	 */
-	public CegarLoopSequentialWithBackedges(String name, RootNode rootNode,
-			SmtManager smtManager, TraceAbstractionBenchmarks timingStatistics,
-			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs,
-			INTERPOLATION interpolation, boolean computeHoareAnnotation)
+	public CegarLoopSWBnonRecursive(
+			String name, 
+			RootNode rootNode,
+			SmtManager smtManager, 
+			TraceAbstractionBenchmarks traceAbstractionBenchmarks,
+			TAPreferences taPrefs, 
+			Collection<ProgramPoint> errorLocs,
+			INTERPOLATION interpolation,
+			boolean computeHoareAnnotation)
 	{
-		super(name, rootNode, smtManager, timingStatistics, taPrefs, errorLocs,
-				interpolation, computeHoareAnnotation);
+		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs, errorLocs, interpolation, computeHoareAnnotation);
 		m_ErrorPathHistory = new ArrayList<String>(); 	
 	}
 
@@ -175,23 +192,15 @@ public class CegarLoopSequentialWithBackedges extends BasicCegarLoop
 		NestedWord<CodeBlock> ce_edges = m_CounterExamplePath.getWord();
 		IPredicate[] ce_interp = m_TraceChecker.getInterpolants();
 		
-		// -- initialize interpolant automaton --
+		// ---------------------------------------- construct interpolant automaton -----------------------------------------
 		// add the initial state of the error path
-		m_AnnotatedStates.add(ce_states.get(0));
-		m_InterpolAutomaton.addState(true, m_AbstractionInitialState == m_AbstractionFinalState, m_AbstractionInitialState);
-		m_Epimorphism.insert(ce_states.get(0), m_AbstractionInitialState);
+		addState(ce_states.get(0), m_AbstractionInitialState);
 			
 		// Add internal states of the error path
 		addPath(ce_edges, ce_states, ce_interp, m_AbstractionInitialState, m_AbstractionFinalState);
 
 		// add the final state of the error path
-		if(m_AnnotatedStates.contains(ce_states.get(ce_states.size() - 1))) throw new Error();
-		m_AnnotatedStates.add(ce_states.get(ce_states.size() - 1));
-		if(!m_InterpolAutomaton.getStates().contains(m_AbstractionFinalState))
-		{
-			m_InterpolAutomaton.addState(m_AbstractionInitialState == m_AbstractionFinalState, true, m_AbstractionFinalState);
-		}
-		m_Epimorphism.insert(ce_states.get(ce_states.size() - 1), m_AbstractionFinalState);
+		addState(ce_states.get(ce_states.size() - 1), m_AbstractionFinalState);
 
 		/// debugging
 		{
@@ -202,6 +211,7 @@ public class CegarLoopSequentialWithBackedges extends BasicCegarLoop
 			}
 		}
 		
+		// --------------------------------------- add additional paths ------------------------------------------
 		s_Logger.debug("--- Try to add additional paths ---");
 		// go through each state in the list of states as
 		// starting point and find a path to any other annotated state
@@ -286,7 +296,7 @@ public class CegarLoopSequentialWithBackedges extends BasicCegarLoop
 		}
 	}
 
-		
+	
 	/**
 	 * Explores all edges of a node.
 	 * If it completes a path feed out:
@@ -294,106 +304,144 @@ public class CegarLoopSequentialWithBackedges extends BasicCegarLoop
 	 * 		add the states to the new interpolant automaton
 	 *  - If the path was not accepted
 	 *    just go back and try other paths.
-	 * @param s Actual state of the algorithm, initially: starting state
-	 * @param actualWord Labels of the edges of the actual path
-	 * @return True if path was found, false if there is no path with suitable interpolants found
+	 * @param state Actual state of the algorithm, initially: starting state
+	 * @param word Labels of the edges of the actual path
+	 * @param actualPath List of the states of the actual path
 	 */
-	private boolean exploreState(IPredicate s, NestedWord<CodeBlock> actualWord)
+	@SuppressWarnings("unchecked")
+	private void exploreState(IPredicate state, NestedWord<CodeBlock> word)
 	{	
-		//s_Logger.debug("Explore path: " + s.toString() + " wordLen: " + actualWord.length() + " pathLen: " + m_ActualPath.size());
+		s_Logger.debug("Explore path: " + state.toString() + " wordLen: " + word.length() + " pathLen: " + m_ActualPath.size());
+	
+		ArrayList<IPredicate> stackState;
+		ArrayList<Integer> stackEdgeType;
+		ArrayList<Iterator<Transitionlet<CodeBlock, IPredicate>>> stackIterator;
+		ArrayList<NestedWord<CodeBlock>> stackWord;
 		
-		// Check if we have already been here. 
-		// This prevents the addition of path-internal loops.
-		// Do not check with the actual state, so self-loops are OK.
-		for(int i = 0; i < m_ActualPath.size() - 1; i++)
+		stackState = new ArrayList<IPredicate>();
+		stackIterator = new ArrayList<Iterator<Transitionlet<CodeBlock, IPredicate>>>();
+		stackEdgeType = new ArrayList<Integer>(); 
+		stackWord = new ArrayList<NestedWord<CodeBlock>>();
+		
+		// determins if we found a path, then we back off
+		IPredicate s = state;
+		@SuppressWarnings("rawtypes")
+		Iterator iter = m_NestedAbstraction.internalSuccessors(s).iterator();
+		Integer edgeType = 0;
+		NestedWord<CodeBlock> actualWord = word;
+		
+		while(true)
 		{
-			if(s == m_ActualPath.get(i))
-			{
-				//s_Logger.debug("The state is already in the path.");
-				return false;
-			}
-		}
-
-		/// there are three kinds of transitions: call, return, internal 
-		// return transitions
-		for(OutgoingReturnTransition<CodeBlock, IPredicate> e : m_NestedAbstraction.returnSuccessors(s))
-		{				
-			// add the letter to the path and explore edge
-			if(exploreEdge(e, e.getSucc(), actualWord.concatenate(new NestedWord<CodeBlock>(e.getLetter(), NestedWord.MINUS_INFINITY))))
-			{
-				return true;
-			}
-		}
-
-		// calls transitions
-		for(OutgoingCallTransition<CodeBlock, IPredicate> e : m_NestedAbstraction.callSuccessors(s))
-		{
-			if(exploreEdge(e, e.getSucc(), actualWord.concatenate(new NestedWord<CodeBlock>(e.getLetter(), NestedWord.PLUS_INFINITY))))
-			{
-				return true;
-			}
-		}
-
-		// nested transitions
-		for(OutgoingInternalTransition<CodeBlock, IPredicate> e : m_NestedAbstraction.internalSuccessors(s))
-		{
-			// add the letter to the path and explore edge
-			if(exploreEdge(e, e.getSucc(), actualWord.concatenate(new NestedWord<CodeBlock>(e.getLetter(), NestedWord.INTERNAL_POSITION))))
-			{
-				return true;
-			}
-		}	
-		// if no edge leads to complete an acceptable path
-		// return false to try other edges before on the path
-		return false;
-	}
-
-
-/**
- * Explore an edge in depth first manner, 
- * @param e The last edge and the actual edge to explore
- * @param target The target state of the edge
- * @param newWord The word, which was collected on the edges along the path
- * @return True if a path back to an annotated state was found, which can be annotated with interpolants
- */
-	private boolean exploreEdge(
-			Transitionlet<CodeBlock, IPredicate> e,
-			IPredicate target,
-			NestedWord<CodeBlock> newWord)
-	{		
-		// Try to add the target state of the edge (temporarily).
-		// Do not forget to remove it, when exiting loop and not exiting explorePath(...)!
-		m_ActualPath.add(target);
-
-		//s_Logger.debug("Explore edge: " + e.toString() + " wordLen: " + newWord.length() + " pathLen: " + m_ActualPath.size());					
-
-		// if the target state is already added, we completed a path ...
-		if(m_AnnotatedStates.contains(target))
-		{
-			s_Logger.debug("Found an annotated state");
-			IPredicate pre = m_Epimorphism.getMapping(m_ActualStartingState);
-			IPredicate post = m_Epimorphism.getMapping(target);				
+			s_Logger.debug("iterate: " + s.toString() + " wordLen: " + actualWord.length() + " pathLen: " + m_ActualPath.size());
 			
-			if(checkAndAddPath(newWord, pre, post))
+			// check if there is another undiscovered edge
+			if(!iter.hasNext())
 			{
-				return true; // (instead of removing the last state from the path, 
-										 // it will be reset inconstructInterpolantAutomaton)
+				edgeType++;
+				switch(edgeType)
+				{
+				case 1: 
+					iter = m_NestedAbstraction.returnSuccessors(s).iterator();
+					continue;
+				case 2:
+					iter = m_NestedAbstraction.callSuccessors(s).iterator();
+					continue;
+				case 3:
+					// go back
+					int index = stackState.size() - 1;
+					if(index < 0)
+					{
+						// no state to go back, we explored everything
+						return;
+					}
+					s = stackState.get(index);
+					iter = stackIterator.get(index);
+					edgeType = stackEdgeType.get(index); 
+					actualWord = stackWord.get(index);
+					stackState.remove(index);
+					stackIterator.remove(index);
+					stackEdgeType.remove(index);
+					stackWord.remove(index);
+					// remove the last element, since it did not "work"
+					m_ActualPath.remove(m_ActualPath.size() - 1);	
+					continue;
+				}				
 			}
-		}
-		else
-		{
-			// if not reached a state on the path, go further
-			if(exploreState(target, newWord))
-			{					
-				return true; // (instead of removing the last state from the path, 
-										 // it will be reset inconstructInterpolantAutomaton)
+			
+			// obtain the next edge
+			// and add the letter to the path and explore edge
+			IPredicate target;
+			NestedWord<CodeBlock> newWord;
+			switch(edgeType)
+			{
+			case 0:
+				OutgoingInternalTransition<CodeBlock, IPredicate> e_int = (OutgoingInternalTransition<CodeBlock, IPredicate>) iter.next();
+				target = e_int.getSucc();
+				newWord = actualWord.concatenate(new NestedWord<CodeBlock>(e_int.getLetter(), NestedWord.INTERNAL_POSITION));
+				break;
+			case 1:
+				OutgoingReturnTransition<CodeBlock, IPredicate> e_out = (OutgoingReturnTransition<CodeBlock, IPredicate>) iter.next();
+				target = e_out.getSucc();
+				newWord = actualWord.concatenate(new NestedWord<CodeBlock>(e_out.getLetter(), NestedWord.MINUS_INFINITY));
+				break;
+			case 2:
+				OutgoingCallTransition<CodeBlock, IPredicate> e_ret = (OutgoingCallTransition<CodeBlock, IPredicate>) iter.next();
+				target = e_ret.getSucc();
+				newWord = actualWord.concatenate(new NestedWord<CodeBlock>(e_ret.getLetter(), NestedWord.PLUS_INFINITY));
+				break;	
+			default: throw new Error();
 			}
+			
+				
+			// Check if we have already been here. 
+			// This prevents the addition of path-internal loops.
+			// Do not check with the actual state, so self-loops are OK.
+			boolean ignoreEdge = false;
+			for(int i = 0; i < m_ActualPath.size() - 1; i++)
+			{
+				if(s == m_ActualPath.get(i))
+				{
+					ignoreEdge = true;
+					break;
+				}
+			}
+			if(ignoreEdge) continue; 
+			
+			// Try to add the target state of the edge (temporarily).
+			// Do not forget to remove it, when exiting loop and not exiting explorePath(...)!
+			m_ActualPath.add(target);
+	
+			// if the target state is already added, we completed a path ...
+			if(m_AnnotatedStates.contains(target))
+			{
+				s_Logger.debug("Found an annotated state");
+				IPredicate pre = m_Epimorphism.getMapping(m_ActualStartingState);
+				IPredicate post = m_Epimorphism.getMapping(target);				
+				
+				if(checkAndAddPath(newWord, pre, post))
+				{
+					// If we found a path, we can stop the search here, we will
+					// return soon, bc the actual state was added in m_annotatedStates
+					return;
+				}
+				
+				// remove the last element, since it did not "work"
+				m_ActualPath.remove(m_ActualPath.size() - 1);	
+			}
+			else
+			{
+				// if not reached a state on the path, go further
+				// save actual state on the stack
+				stackState.add(s);
+				stackIterator.add(iter);
+				stackEdgeType.add(edgeType); 
+				stackWord.add(actualWord); 
+				s = target;
+				iter = m_NestedAbstraction.internalSuccessors(target).iterator();
+				edgeType = 0;
+				actualWord = newWord;
+			}	
 		}
-
-		// remove the last element, since it did not "work"
-		m_ActualPath.remove(m_ActualPath.size() - 1);
-		
-		return false;
 	}
 
 
@@ -407,7 +455,7 @@ public class CegarLoopSequentialWithBackedges extends BasicCegarLoop
 	 */
 	private boolean checkAndAddPath(NestedWord<CodeBlock> word, IPredicate pre, IPredicate post)
 	{
-		//s_Logger.debug("Try to add trace: " + pre.toString() + " :: " + word + " :: " + post);
+		s_Logger.debug("Try to add trace: " + pre.toString() + " :: " + word + " :: " + post);
 
 		// test if we found a new path which can be added ...
 		m_TraceChecker = new TraceChecker(
@@ -472,7 +520,8 @@ public class CegarLoopSequentialWithBackedges extends BasicCegarLoop
 		// add all edges 
 		for(int i = 0; i < edges.length(); i++)
 		{
-			CodeBlock e = edges.getSymbolAt(i);
+			CodeBlock label = edges.getSymbolAt(i);
+			IPredicate sourceS = states.get(i);
 			IPredicate targetS = states.get(i + 1); 
 
 			IPredicate sourceI = (i == 0) ? pre : interpolants[i - 1];
@@ -481,38 +530,47 @@ public class CegarLoopSequentialWithBackedges extends BasicCegarLoop
 			// Add all states in the sequence, but the first and last.
 			if(i < edges.length() - 1)
 			{
-				// targetS can(may) not be in m_AddedStates 
-				m_AnnotatedStates.add(targetS);
-				// since the interpolant formula might not be unique
-				if(!m_InterpolAutomaton.getStates().contains(targetI))
-				{
-					m_InterpolAutomaton.addState(targetI == m_AbstractionInitialState, targetI == m_AbstractionFinalState, targetI);
-				}
-				m_Epimorphism.insert(targetS, targetI);
+				// targetS can/may not be in m_AddedStates 
+				addState(targetS, targetI);
 			}
 
 			// add the respective edge into the abstraction automaton
 			if(edges.isInternalPosition(i)) // TODO: check if this is doing what its meant to
 			{
-				boolean exists = false;
-				if(!exists)
-				{
-					m_InterpolAutomaton.addInternalTransition(sourceI, e, targetI);
-				}
+				m_InterpolAutomaton.addInternalTransition(sourceI, label, targetI);			
 			}
 			else
 			{
 				if(edges.isCallPosition(i))
 				{
-					m_InterpolAutomaton.addCallTransition(sourceI, e, targetI);
+					m_InterpolAutomaton.addCallTransition(sourceI, label, targetI);
+					m_CallingContexts.put(label, sourceI);
 				}
 				else // isReturnPosition(i)
 				{
-					IPredicate hier = null; // TODO
-					m_InterpolAutomaton.addReturnTransition(sourceI, hier, e, targetI);
+					IPredicate hier = m_CallingContexts.get(edges.getPendingReturns().lowerEntry(i).getValue());
+					//m_NestedAbstraction.hier
+					m_InterpolAutomaton.addReturnTransition(sourceI, hier, label, targetI);
 				}
 			}
 		}
+	}
+
+	
+/**
+ * Add a state to the automaton and the epimorphism and remember
+ * @param targetS
+ * @param targetI
+ */
+	private void addState(IPredicate targetS, IPredicate targetI)
+	{
+		m_AnnotatedStates.add(targetS);
+		// since the interpolant formula might not be unique
+		if(!m_InterpolAutomaton.getStates().contains(targetI))
+		{
+			m_InterpolAutomaton.addState(targetI == m_AbstractionInitialState, targetI == m_AbstractionFinalState, targetI);
+		}
+		m_Epimorphism.insert(targetS, targetI);
 	}
 
 	

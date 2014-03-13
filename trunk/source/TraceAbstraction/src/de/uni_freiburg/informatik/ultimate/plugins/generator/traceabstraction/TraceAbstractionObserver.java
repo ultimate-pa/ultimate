@@ -225,9 +225,11 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			Collection<ProgramPoint> errorLocs) {
 		AbstractCegarLoop abstractCegarLoop;
 		if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
-			abstractCegarLoop = new CegarLoopSequentialWithBackedges(name, 
+			abstractCegarLoop = new CegarLoopSWBnonRecursive(name, 
 					root, smtManager, timingStatistics,taPrefs, errorLocs, 
 					taPrefs.interpolation(), taPrefs.computeHoareAnnotation());
+//			abstractCegarLoop = new CegarLoopSequentialWithBackedges(name, 
+//					root, smtManager, timingStatistics,taPrefs, errorLocs);
 		} else {
 			abstractCegarLoop = new BasicCegarLoop(name, 
 					root, smtManager, timingStatistics,taPrefs, errorLocs, 

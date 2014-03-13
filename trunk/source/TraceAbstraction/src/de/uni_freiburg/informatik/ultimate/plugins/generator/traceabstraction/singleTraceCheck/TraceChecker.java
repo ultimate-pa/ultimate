@@ -118,7 +118,7 @@ public class TraceChecker {
 	 * calls) we have to provide a predicate for each pending return that 
 	 * specifies what held in the calling context to which we return.
 	 * (If the trace would contain the corresponding call, this predicate
-	 * would be the predecessor ot the call).
+	 * would be the predecessor of the call).
 	 * We call these predicates "pending contexts". These pending contexts are 
 	 * provided via a mapping from the position of the pending return (given
 	 * as Integer) to the predicate.
