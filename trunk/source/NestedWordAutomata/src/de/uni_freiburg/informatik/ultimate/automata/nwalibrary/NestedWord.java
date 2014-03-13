@@ -107,9 +107,9 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	/**
 	 * Constructor for NestedWord. The empty word is constructed by using two
 	 * empty arrays as arguments.
-	 * If the given arguments satisfy the definition of a nested word is checked
+	 * If the given arguments satisfy, the definition of a nested word is checked
 	 * by assert statements.
-	 * To use exception for the case the definitions are violated would have
+	 * To use exception for the case, the definitions are violated would have
 	 * been a nicer way of doing this. But I wanted to offer a fast way of
 	 * constructing a nested word for users that are sure that their delivered
 	 * arguments are valid. 
