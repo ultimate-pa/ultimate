@@ -34,6 +34,8 @@ public class Boogie2SmtSymbolTable {
 	
 	private final Map<TermVariable,BoogieVar> m_SmtVar2BoogieVar = new HashMap<TermVariable,BoogieVar>();
 	private final Map<ApplicationTerm, BoogieConst> m_SmtConst2BoogieConst = new HashMap<ApplicationTerm,BoogieConst>();
+	private Map<String, Procedure> m_Specifications;
+	private Map<String, Procedure> m_Implementations;
 	
 	
 	
@@ -174,6 +176,11 @@ public class Boogie2SmtSymbolTable {
 	
 	
 	public void declareProcedures(Map<String, Procedure> specs, Map<String, Procedure> impls) {
+		assert m_Specifications == null && m_Implementations == null : 
+			"procedures have already been declared";
+		m_Specifications = specs;
+		m_Implementations = impls;
+		
 		Set<String> procIds = new HashSet<String>();
 		procIds.addAll(specs.keySet());
 		procIds.addAll(impls.keySet());
@@ -184,11 +191,7 @@ public class Boogie2SmtSymbolTable {
 			if (impl == null) {
 				declareSpec(spec);
 			} else {
-//				if (spec == impl) {
-//					declareProc(spec);
-//				} else {
-					declareSpecImpl(spec, impl);
-//				}
+				declareSpecImpl(spec, impl);
 			}
 		}
 	}
@@ -293,6 +296,17 @@ public class Boogie2SmtSymbolTable {
 			}
 		}
 	}
+	
+	public Procedure getProcedureSpecification(String procId) {
+		assert m_Specifications != null : "Procedure have not yet been declared";
+		return m_Specifications.get(procId);
+	}
+	
+	public Procedure getProcedureImplementation(String procId) {
+		assert m_Specifications != null : "Procedure have not yet been declared";
+		return m_Implementations.get(procId);
+	}
+
 	
 	/**
 	 * Construct BoogieVar and store it. Expects that no BoogieVar with the same

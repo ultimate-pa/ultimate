@@ -18,7 +18,4 @@ Import-Package: de.uni_freiburg.informatik.ultimate.boogie.type
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences

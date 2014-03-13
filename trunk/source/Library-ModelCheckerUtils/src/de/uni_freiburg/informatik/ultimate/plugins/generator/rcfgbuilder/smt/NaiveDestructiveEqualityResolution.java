@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 
 /**
  * Try to eliminate existentially quantified variables in terms.
@@ -26,7 +26,7 @@ public class NaiveDestructiveEqualityResolution {
 	private final Script m_Script;
 	
 	private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+			UltimateServices.getInstance().getLogger(ModelCheckerUtils.sPluginID);
 	
 	public NaiveDestructiveEqualityResolution(Script script) {
 		m_Script = script;

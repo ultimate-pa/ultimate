@@ -3,11 +3,15 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
 
 
 /**
@@ -88,10 +92,14 @@ public class ParallelComposition extends CodeBlock {
 		}
 		m_PrettyPrinted = prettyPrinted;
 		
+		boolean s_TransformToCNF = (new UltimatePreferenceStore(
+				   RCFGBuilder.s_PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_CNF);
+		
 		m_TransitionFormula = TransFormula.parallelComposition(
-				this.getSerialNumer(), boogie2smt, null, transFormulas);
+				this.getSerialNumer(), boogie2smt, null, s_TransformToCNF, transFormulas);
 		m_TransitionFormulaWithBranchEncoders = TransFormula.parallelComposition(
-				this.getSerialNumer(), boogie2smt, branchIndicator,transFormulasWithBranchEncoders);
+				this.getSerialNumer(), boogie2smt, branchIndicator, s_TransformToCNF, 
+				transFormulasWithBranchEncoders);
 		updatePayloadName();
 	}
 

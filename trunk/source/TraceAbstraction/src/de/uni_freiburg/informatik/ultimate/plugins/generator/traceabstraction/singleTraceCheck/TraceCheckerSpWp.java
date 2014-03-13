@@ -13,16 +13,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.BasicPredicateExplicitQuantifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -70,6 +70,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 	private boolean m_ComputeInterpolantsFp;
 	private boolean m_ComputeInterpolantsBp;
 	private boolean m_ComputeInterpolantsWp;
+	
+	private static final boolean s_TransformToCNF = true;
 	
 
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
@@ -218,7 +220,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				transFormulasToComputeSummaryFor[i] = rv.getFormulaFromNonCallPos(i+offset);
 			}
 		}
-		return TransFormula.sequentialComposition(m_SmtManager.getBoogie2Smt(), true, false, transFormulasToComputeSummaryFor);
+		return TransFormula.sequentialComposition(m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF, transFormulasToComputeSummaryFor);
 	}
 	
 	private TransFormula computeSummaryForTrace(Word<CodeBlock> trace, TransFormula Call, 
@@ -227,7 +229,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			RelevantTransFormulas rv,
 			int call_pos) {
 		TransFormula procedureSummary = computeSummaryForTrace(trace, rv, call_pos);
-		return TransFormula.sequentialCompositionWithCallAndReturn(m_SmtManager.getBoogie2Smt(), true, false, Call, oldVarsAssignment, procedureSummary, Return);
+		return TransFormula.sequentialCompositionWithCallAndReturn(m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF, Call, oldVarsAssignment, procedureSummary, Return);
 	}
 	
 	/**
@@ -259,7 +261,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 						 TransFormulas.
 						 */
 						transformulasToComputeSummaryFor.addLast(TransFormula.sequentialCompositionWithCallAndReturn(
-								m_SmtManager.getBoogie2Smt(), true, false,
+								m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF,
 								trace.getSymbol(i).getTransitionFormula(),
 								m_ModifiedGlobals.getOldVarsAssignment(proc), summaryBetweenCallAndReturn, 
 								trace.getSymbol(returnPosition).getTransitionFormula()));
@@ -272,7 +274,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 								i+1,
 								end);
 						return TransFormula.sequentialCompositionWithPendingCall(m_SmtManager.getBoogie2Smt(), 
-								true, false, transformulasToComputeSummaryFor.toArray(new TransFormula[0]),
+								true, false, s_TransformToCNF, transformulasToComputeSummaryFor.toArray(new TransFormula[0]),
 								rv.getLocalVarAssignment(i), 
 								m_ModifiedGlobals.getOldVarsAssignment(proc), summaryAfterPendingCall);
 					}
@@ -282,7 +284,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 							i+1,
 							end);
 					return TransFormula.sequentialCompositionWithPendingCall(m_SmtManager.getBoogie2Smt(), 
-							true, false, transformulasToComputeSummaryFor.toArray(new TransFormula[0]),
+							true, false, s_TransformToCNF, transformulasToComputeSummaryFor.toArray(new TransFormula[0]),
 							rv.getLocalVarAssignment(i), 
 							m_ModifiedGlobals.getOldVarsAssignment(proc), summaryAfterPendingCall);
 				}
@@ -292,7 +294,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 				transformulasToComputeSummaryFor.addLast(rv.getFormulaFromNonCallPos(i));
 			}
 		}
-		return TransFormula.sequentialComposition(m_SmtManager.getBoogie2Smt(), true, false, 
+		return TransFormula.sequentialComposition(m_SmtManager.getBoogie2Smt(), true, false,
+				s_TransformToCNF,
 				transformulasToComputeSummaryFor.toArray(new TransFormula[0]));
 		
 	}

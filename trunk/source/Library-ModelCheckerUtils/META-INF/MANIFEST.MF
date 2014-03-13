@@ -5,9 +5,13 @@ Bundle-SymbolicName: Library-ModelCheckerUtils
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
- de.uni_freiburg.informatik.ultimate.modelcheckerutils.transfomers
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.transfomers,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms
 Require-Bundle: UltimateCore,
  Library-log4j,
  Library-SMTLIB,
  Library-UltimateUtil,
- BoogiePreprocessor
+ BoogiePreprocessor,
+ SMTInterpol

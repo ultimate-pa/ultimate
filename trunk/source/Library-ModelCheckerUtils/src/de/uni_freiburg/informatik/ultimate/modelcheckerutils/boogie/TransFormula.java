@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -14,7 +14,6 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -25,10 +24,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.NaiveDestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
@@ -72,7 +68,7 @@ public class TransFormula implements Serializable {
 	private static final long serialVersionUID = 7058102586141801399L;
 	
 	static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+			UltimateServices.getInstance().getLogger(ModelCheckerUtils.sPluginID);
 
 //	private static int s_FreshVarNumber = 10000; 
 	
@@ -388,7 +384,8 @@ public class TransFormula implements Serializable {
 	 * transformula2 
 	 */
 	public static TransFormula sequentialComposition(Boogie2SMT boogie2smt, 
-			boolean simplify, boolean extPqe, TransFormula... transFormula) {
+			boolean simplify, boolean extPqe, boolean tranformToCNF,
+			TransFormula... transFormula) {
 		s_Logger.debug("sequential composition with" + (simplify ? "" : "out") +
 				" formula simplification");
 		Script script = boogie2smt.getScript();
@@ -512,10 +509,7 @@ public class TransFormula implements Serializable {
 			infeasibility = Infeasibility.UNPROVEABLE;
 		}
 		
-	   boolean s_TransformToCNF = (new UltimatePreferenceStore(
-		   RCFGBuilder.s_PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_CNF);
-		
-		if (s_TransformToCNF) {
+		if (tranformToCNF) {
 			Term cnf = (new Cnf(script)).transform(formula);
 			formula = cnf;
 		}
@@ -790,7 +784,9 @@ public class TransFormula implements Serializable {
 	 */
 	public static TransFormula parallelComposition(int serialNumber, 
 			Boogie2SMT boogie2smt, 
-			TermVariable[] branchIndicators, TransFormula... transFormulas) {
+			TermVariable[] branchIndicators,
+			boolean tranformToCNF,
+			TransFormula... transFormulas) {
 		s_Logger.debug("parallel composition");
 		Script script = boogie2smt.getScript();
 		boolean useBranchEncoders;
@@ -920,10 +916,7 @@ public class TransFormula implements Serializable {
 		TransFormula.removeSuperfluousVars(resultFormula, 
 				newInVars, newOutVars, auxVars);
 		
-	   boolean s_TransformToCNF = (new UltimatePreferenceStore(
-			   RCFGBuilder.s_PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_CNF);
-
-		if (s_TransformToCNF) {
+		if (tranformToCNF) {
 			resultFormula = (new Cnf(script)).transform(resultFormula);
 		}
 		Term closedFormula = computeClosedFormula(resultFormula, 
@@ -1197,8 +1190,8 @@ public class TransFormula implements Serializable {
 	 * after the call.
 	 */
 	public static TransFormula sequentialCompositionWithPendingCall(
-			Boogie2SMT boogie2smt, boolean simplify, boolean extPqe,
-			TransFormula[] beforeCall,
+			Boogie2SMT boogie2smt, boolean simplify, boolean extPqe, 
+			boolean transformToCNF, TransFormula[] beforeCall,
 			TransFormula callTf, TransFormula oldVarsAssignment,
 			TransFormula bfterCall) {
 		s_Logger.debug("sequential composition (pending call) with" + 
@@ -1209,7 +1202,8 @@ public class TransFormula implements Serializable {
 			callAndBeforeList.add(callTf);
 			TransFormula[] callAndBeforeArray = 
 					callAndBeforeList.toArray(new TransFormula[0]);
-			callAndBeforeTF = sequentialComposition(boogie2smt, simplify, extPqe, callAndBeforeArray);
+			callAndBeforeTF = sequentialComposition(boogie2smt, simplify, 
+					extPqe, transformToCNF, callAndBeforeArray);
 
 			// remove outVars that relate to scope of caller
 			// - local vars that are no inParams of callee
@@ -1240,7 +1234,7 @@ public class TransFormula implements Serializable {
 			TransFormula[] oldAssignAndAfterArray = 
 					oldAssignAndAfterList.toArray(new TransFormula[0]);
 			oldAssignAndAfterTF = sequentialComposition(boogie2smt, simplify, 
-					extPqe, oldAssignAndAfterArray);
+					extPqe, transformToCNF, oldAssignAndAfterArray);
 
 			// remove inVars that relate to scope of callee
 			// - local vars that are no inParams of callee
@@ -1265,6 +1259,7 @@ public class TransFormula implements Serializable {
 		}
 
 		TransFormula result = sequentialComposition(boogie2smt, simplify, extPqe,
+				transformToCNF,
 				callAndBeforeTF, oldAssignAndAfterTF);
 		return result;
 	}
@@ -1280,13 +1275,15 @@ public class TransFormula implements Serializable {
 	 * @param returnTf TransFormula that assigns the result of the procedure call.
 	 */
 	public static TransFormula sequentialCompositionWithCallAndReturn(
-			Boogie2SMT boogie2smt, boolean simplify, boolean extPqe, TransFormula callTf,
+			Boogie2SMT boogie2smt, boolean simplify, boolean extPqe, 
+			boolean transformToCNF,
+			TransFormula callTf,
 			TransFormula oldVarsAssignment, TransFormula procedureTf,
 			TransFormula returnTf) {
 		s_Logger.debug("sequential composition (call/return) with" + 
 			(simplify ? "" : "out") + " formula simplification");
 		TransFormula result = sequentialComposition(boogie2smt, simplify, extPqe,
-				callTf, oldVarsAssignment, procedureTf, returnTf);
+				transformToCNF,	callTf, oldVarsAssignment, procedureTf, returnTf);
 		{
 			List<BoogieVar> inVarsToRemove = new ArrayList<BoogieVar>();
 			for (BoogieVar bv : result.getInVars().keySet()) {

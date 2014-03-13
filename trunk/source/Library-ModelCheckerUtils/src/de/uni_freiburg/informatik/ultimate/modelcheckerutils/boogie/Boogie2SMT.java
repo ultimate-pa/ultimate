@@ -1,52 +1,33 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.ListIterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.SmtIdentifierProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
-public class Boogie2SMT implements SmtIdentifierProvider {
+public class Boogie2SMT {
 	private Script m_Script;
 
 	// private ArrayList<FunctionSymbol> selectStores = new
@@ -93,22 +74,7 @@ public class Boogie2SMT implements SmtIdentifierProvider {
 	// private int generation = 0;
 	private VariableSSAManager m_VariableSSAManager = null;
 
-	private HashSet<TermVariable> allVars;
-	private HashMap<BoogieVar, TermVariable> outVars;
-	private HashMap<BoogieVar, TermVariable> inVars;
 
-	/**
-	 * Auxilliary variables. TermVariables that occur neither as inVar nor as
-	 * outVar. If you use the assumes or asserts to encode a transition the
-	 * auxilliary variables are existentially quantified.
-	 */
-	private HashSet<TermVariable> auxVars;
-
-	// private HashMap<BoogieVar, TermVariable> oldVars = new HashMap<BoogieVar,
-	// TermVariable>();
-
-	private Map<BoogieVar, TermVariable> m_CalleesModifiedGlobalsIn;
-	private Map<BoogieVar, TermVariable> m_CalleesModifiedGlobalsOut;
 
 	// used in backtranslation
 	// private Map<Sort,IType> m_SmtSort2BoogieType = new HashMap<Sort,IType>();
@@ -123,17 +89,11 @@ public class Boogie2SMT implements SmtIdentifierProvider {
 	 */
 	private final boolean m_BlackHoleArrays;
 
-	/**
-	 * True if we are translation a requires clause of the specification. In
-	 * this case, a global variable g refers to the instance of the variable
-	 * before the procedure call (the same instance as old(g)).
-	 */
-	private boolean m_TranslatingRequires = false;
+
 	
 	private InternalState m_InternalState = InternalState.INIT;
 
 	private final TypeSortTranslator m_TypeSortTranslator;
-	private final Expression2Term m_Expression2Term;
 	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
 
 	private String m_CurrentProcedure;
@@ -142,6 +102,8 @@ public class Boogie2SMT implements SmtIdentifierProvider {
 		VariableSSAManager.incAllIndices();
 		// generation++;
 	}
+	
+	private ConstOnlyIdentifierTranslator m_ConstOnlyIdentifierTranslator;
 
 	public Boogie2SMT(Script script, boolean blackHoleArrays) {
 		m_BlackHoleArrays = blackHoleArrays;
@@ -150,11 +112,11 @@ public class Boogie2SMT implements SmtIdentifierProvider {
 		m_TypeSortTranslator = new TypeSortTranslator(m_Script, m_BlackHoleArrays);
 		m_VariableSSAManager = new VariableSSAManager(m_Script);
 		m_Boogie2SmtSymbolTable = new Boogie2SmtSymbolTable(m_Script, m_TypeSortTranslator);
-		m_Expression2Term = new Expression2Term(m_Script, m_TypeSortTranslator, this);
 		m_VariableSSAManager.reset();
 		// intSort = script.sort("Int");
 		// realSort = script.sort("Real");
 
+		m_ConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
 		m_Smt2Boogie = new Smt2Boogie(m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable);
 		//
 
@@ -213,6 +175,12 @@ public class Boogie2SMT implements SmtIdentifierProvider {
 	
 	public TypeSortTranslator getTypeSortTranslator() {
 		return m_TypeSortTranslator;
+	}
+	
+	
+
+	public ConstOnlyIdentifierTranslator getConstOnlyIdentifierTranslator() {
+		return m_ConstOnlyIdentifierTranslator;
 	}
 
 	public void declareTypes(Collection<TypeDeclaration> declarations) {
@@ -283,107 +251,91 @@ public class Boogie2SMT implements SmtIdentifierProvider {
 //		}
 //	}
 
-	/**
-	 * Get SMT variable for boogieVar and add it to inVars.
-	 */
-	private TermVariable createInVar(BoogieVar boogieVar, BoogieASTNode BoogieASTNode) {
-		TermVariable tv;
-		Sort sort = getSort(boogieVar.getIType(), BoogieASTNode);
-		if (boogieVar.isOldvar()) {
-			tv = boogieVar.getTermVariable();
-		} else {
-			// String name =
-			// "v_"+quoteId(boogieVar.getIdentifier())+"_"+generation;
-			tv = VariableSSAManager.getFreshTermVariable(boogieVar, sort);
-		}
-		inVars.put(boogieVar, tv);
-		allVars.add(tv);
-		return tv;
-	}
-
-	/**
-	 * construct SmtVariable for id. If inVars does not contain such a variable,
-	 * construct it an add it to invars and outvars.
-	 */
-	public Term getSmtIdentifier(String id, DeclarationInformation declInfo, boolean isOldContext, BoogieASTNode BoogieASTNode) {
-		if (declInfo.getStorageClass() == StorageClass.GLOBAL) {
-			BoogieConst boogieConst = m_Boogie2SmtSymbolTable.getBoogieConst(id);
-			if (boogieConst != null) {
-				return boogieConst.getSmtConstant();
-			}
-		}
-		
-		if (declInfo.getStorageClass() == StorageClass.PROCEDURE_INPARAM || declInfo.getStorageClass() == StorageClass.PROCEDURE_OUTPARAM) {
-			if (!identStack.isEmpty()) {
-				ListIterator<HashMap<String, Term>> it = identStack.listIterator(identStack.size());
-				while (it.hasPrevious()) {
-					s_Logger.debug("Has previous!!");
-					HashMap<String, Term> map = it.previous();
-					if (map.containsKey(id)) {
-						s_Logger.debug("Returning map entry of " + id + "!");
-						return map.get(id);
-					}
-				}
-			}
-		}
-
-		if (m_Boogie2SmtSymbolTable.getGlobals().containsKey(id) && m_CalleesModifiedGlobalsIn != null) {
-			// case where we process specification of a called procedure.
-			// boogieVar represents the global var of the caller before the call
-			// and the oldvar of the callee. If the boogieVar is in the set of
-			// modified variables we want to use a TermVariable with a different
-			// index
-			// than for the non-old variable.
-			BoogieVar boogieVar = m_Boogie2SmtSymbolTable.getGlobals().get(id);
-			if (m_CalleesModifiedGlobalsIn.containsKey(boogieVar)) {
-				if (isOldContext || m_TranslatingRequires) {
-					return m_CalleesModifiedGlobalsIn.get(boogieVar);
-				} else {
-					return m_CalleesModifiedGlobalsOut.get(boogieVar);
-				}
-			} else {
-				if (!inVars.containsKey(boogieVar)) {
-					s_Logger.debug(id + " is not in inVars!");
-					TermVariable tv = createInVar(boogieVar, BoogieASTNode);
-					if (!outVars.containsKey(boogieVar)) {
-						s_Logger.debug(id + " is not in outVars!");
-						outVars.put(boogieVar, tv);
-					}
-				}
-				return inVars.get(boogieVar);
-			}
-		}
-
-		if ( declInfo.getProcedure() != null|| m_Boogie2SmtSymbolTable.getGlobals().containsKey(id)) {
-			BoogieVar boogieVar;
-			if (declInfo.getProcedure() != null) {
-				boogieVar = m_Boogie2SmtSymbolTable.getBoogieVar(id, declInfo, isOldContext);
-				assert boogieVar != null;
-//				boogieVar = m_Proc2Locals.get(declInfo.getProcedure()).get(id); 
-			} else {
-				if (isOldContext) {
-					boogieVar = m_Boogie2SmtSymbolTable.getOldGlobals().get(id);
-				} else {
-					boogieVar = m_Boogie2SmtSymbolTable.getGlobals().get(id);
-				}
-			}
-			s_Logger.debug(id + " is either local or global variable!");
-
-			if (!inVars.containsKey(boogieVar)) {
-				s_Logger.debug(id + " is not in inVars!");
-				TermVariable tv = createInVar(boogieVar, BoogieASTNode);
-				if (!outVars.containsKey(boogieVar)) {
-					s_Logger.debug(id + " is not in outVars!");
-					outVars.put(boogieVar, tv);
-				}
-			}
-			s_Logger.debug("Returning inVars entry of " + id + " as Term");
-			return inVars.get(boogieVar);
-		}
 
 
-		throw new AssertionError(String.format("Identifier %s was not declared.", id));
-	}
+//	/**
+//	 * construct SmtVariable for id. If inVars does not contain such a variable,
+//	 * construct it an add it to invars and outvars.
+//	 */
+//	public Term getSmtIdentifier(String id, DeclarationInformation declInfo, boolean isOldContext, BoogieASTNode BoogieASTNode) {
+//		if (declInfo.getStorageClass() == StorageClass.GLOBAL) {
+//			BoogieConst boogieConst = m_Boogie2SmtSymbolTable.getBoogieConst(id);
+//			if (boogieConst != null) {
+//				return boogieConst.getSmtConstant();
+//			}
+//		}
+//		
+//		if (declInfo.getStorageClass() == StorageClass.PROCEDURE_INPARAM || declInfo.getStorageClass() == StorageClass.PROCEDURE_OUTPARAM) {
+//			if (!identStack.isEmpty()) {
+//				ListIterator<HashMap<String, Term>> it = identStack.listIterator(identStack.size());
+//				while (it.hasPrevious()) {
+//					s_Logger.debug("Has previous!!");
+//					HashMap<String, Term> map = it.previous();
+//					if (map.containsKey(id)) {
+//						s_Logger.debug("Returning map entry of " + id + "!");
+//						return map.get(id);
+//					}
+//				}
+//			}
+//		}
+//
+//		if (m_Boogie2SmtSymbolTable.getGlobals().containsKey(id) && m_CalleesModifiedGlobalsIn != null) {
+//			// case where we process specification of a called procedure.
+//			// boogieVar represents the global var of the caller before the call
+//			// and the oldvar of the callee. If the boogieVar is in the set of
+//			// modified variables we want to use a TermVariable with a different
+//			// index
+//			// than for the non-old variable.
+//			BoogieVar boogieVar = m_Boogie2SmtSymbolTable.getGlobals().get(id);
+//			if (m_CalleesModifiedGlobalsIn.containsKey(boogieVar)) {
+//				if (isOldContext || m_TranslatingRequires) {
+//					return m_CalleesModifiedGlobalsIn.get(boogieVar);
+//				} else {
+//					return m_CalleesModifiedGlobalsOut.get(boogieVar);
+//				}
+//			} else {
+//				if (!inVars.containsKey(boogieVar)) {
+//					s_Logger.debug(id + " is not in inVars!");
+//					TermVariable tv = createInVar(boogieVar, BoogieASTNode);
+//					if (!outVars.containsKey(boogieVar)) {
+//						s_Logger.debug(id + " is not in outVars!");
+//						outVars.put(boogieVar, tv);
+//					}
+//				}
+//				return inVars.get(boogieVar);
+//			}
+//		}
+//
+//		if ( declInfo.getProcedure() != null|| m_Boogie2SmtSymbolTable.getGlobals().containsKey(id)) {
+//			BoogieVar boogieVar;
+//			if (declInfo.getProcedure() != null) {
+//				boogieVar = m_Boogie2SmtSymbolTable.getBoogieVar(id, declInfo, isOldContext);
+//				assert boogieVar != null;
+////				boogieVar = m_Proc2Locals.get(declInfo.getProcedure()).get(id); 
+//			} else {
+//				if (isOldContext) {
+//					boogieVar = m_Boogie2SmtSymbolTable.getOldGlobals().get(id);
+//				} else {
+//					boogieVar = m_Boogie2SmtSymbolTable.getGlobals().get(id);
+//				}
+//			}
+//			s_Logger.debug(id + " is either local or global variable!");
+//
+//			if (!inVars.containsKey(boogieVar)) {
+//				s_Logger.debug(id + " is not in inVars!");
+//				TermVariable tv = createInVar(boogieVar, BoogieASTNode);
+//				if (!outVars.containsKey(boogieVar)) {
+//					s_Logger.debug(id + " is not in outVars!");
+//					outVars.put(boogieVar, tv);
+//				}
+//			}
+//			s_Logger.debug("Returning inVars entry of " + id + " as Term");
+//			return inVars.get(boogieVar);
+//		}
+//
+//
+//		throw new AssertionError(String.format("Identifier %s was not declared.", id));
+//	}
 
 	// @SuppressWarnings("unused")
 	// private Formula generateLabel(Statement stmt) {
@@ -468,7 +420,9 @@ public class Boogie2SMT implements SmtIdentifierProvider {
 
 
 	private void declareAxiom(Axiom ax) {
-		m_Script.assertTerm(m_Expression2Term.translateTerm(ax.getFormula()));
+		IdentifierTranslator[] its = new IdentifierTranslator[]{ getConstOnlyIdentifierTranslator()};
+		Term term = (new Expression2Term( its, m_Script, m_TypeSortTranslator, ax.getFormula())).getTerm();
+		m_Script.assertTerm(term);
 	}
 
 	public void declareProcedure(Procedure proc) {
@@ -631,303 +585,7 @@ public class Boogie2SMT implements SmtIdentifierProvider {
 	// }
 	// }
 
-	private Term assumes;
-	private Term asserts;
 
-//	private int m_freshConstantCounter = 0;
-
-	public void startBlock() {
-		outVars = new HashMap<BoogieVar, TermVariable>();
-		inVars = new HashMap<BoogieVar, TermVariable>();
-		allVars = new HashSet<TermVariable>();
-		auxVars = new HashSet<TermVariable>();
-		assumes = m_Script.term("true");
-		asserts = m_Script.term("true");
-	}
-	
-	private BoogieVar getModifiableBoogieVar(String id, DeclarationInformation declInfo) {
-		StorageClass storageClass = declInfo.getStorageClass();
-//		assert (declInfo.getProcedure() == null || declInfo.getProcedure().equals(m_CurrentProcedure));
-		BoogieVar result;
-		switch (storageClass) {
-		case GLOBAL:
-			result = m_Boogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
-			break;
-		case LOCAL:
-			result = m_Boogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
-			break;
-		case IMPLEMENTATION_OUTPARAM:
-			result = m_Boogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
-			break;
-		case IMPLEMENTATION_INPARAM:
-		case PROCEDURE_INPARAM:
-		case PROCEDURE_OUTPARAM:
-			throw new AssertionError("not modifiable");
-		case IMPLEMENTATION:
-		case PROCEDURE:
-		case QUANTIFIED:
-		default:
-			throw new AssertionError("no appropriate variable ");
-		}
-		return result;
-	}
-
-	/**
-	 * Let assign be a statement of the form v_i:=expr_i Remove v_i from the
-	 * inVars (if contained). If neccessary v_i is put to outVars (possibly by
-	 * getSmtIdentifier).
-	 */
-	public void addAssignment(AssignmentStatement assign) {
-		LeftHandSide[] lhs = assign.getLhs();
-		Expression[] rhs = assign.getRhs();
-		Map<TermVariable, Expression> addedEqualities = new HashMap<TermVariable, Expression>();
-		for (int i = 0; i < lhs.length; i++) {
-			/* ArrayLHS are removed by preprocessor */
-			VariableLHS vlhs = (VariableLHS) lhs[i];
-			assert vlhs.getDeclarationInformation() != null : " no declaration information";
-			String name = vlhs.getIdentifier();
-			DeclarationInformation declInfo = vlhs.getDeclarationInformation();
-			BoogieVar boogieVar = getModifiableBoogieVar(name, declInfo);
-			assert (boogieVar != null);
-			if (!inVars.containsKey(boogieVar)) {
-				if (!outVars.containsKey(boogieVar)) {
-					TermVariable tv = createInVar(boogieVar, vlhs);
-					outVars.put(boogieVar, tv);
-				}
-			}
-			if (inVars.containsKey(boogieVar)) {
-				TermVariable tv = inVars.get(boogieVar);
-				addedEqualities.put(tv, rhs[i]);
-				removeInVar(boogieVar);
-			}
-		}
-		// generation++;
-		for (TermVariable tv : addedEqualities.keySet()) {
-			Term rhsTerm = m_Expression2Term.translateTerm(addedEqualities.get(tv));
-			Term eq = m_Script.term("=", tv, rhsTerm);
-//			if (m_addBoogieInformation) {
-//				Annotation locationAnnotation = new Annotation(":location", assign.getPayload().getLocation());
-//				Annotation statementAnnotation = new Annotation(":statement", assign);
-//				eq = m_Script.annotate(eq, new Annotation[] { locationAnnotation, statementAnnotation });
-//			}
-			assumes = Util.and(m_Script, eq, assumes);
-			asserts = Util.implies(m_Script, eq, asserts);
-			assert (assumes.toString() instanceof Object);
-		}
-	}
-
-	public void addHavoc(HavocStatement havoc) {
-		// ArrayList<TermVariable> vars = new ArrayList<TermVariable>();
-		for (VariableLHS lhs : havoc.getIdentifiers()) {
-			assert lhs.getDeclarationInformation() != null : " no declaration information";
-			String name = lhs.getIdentifier();
-			DeclarationInformation declInfo = lhs.getDeclarationInformation();
-			BoogieVar boogieVar = getModifiableBoogieVar(name, declInfo);
-			assert (boogieVar != null);
-			if (!inVars.containsKey(boogieVar)) {
-				if (!outVars.containsKey(boogieVar)) {
-					TermVariable tv = createInVar(boogieVar, havoc);
-					outVars.put(boogieVar, tv);
-				}
-			}
-			if (inVars.containsKey(boogieVar)) {
-				// vars.add(inVars.get(id));
-				removeInVar(boogieVar);
-			}
-		}
-		/*
-		 * if (vars.size() > 0) { TermVariable[] tvs = vars.toArray(new
-		 * TermVariable[vars.size()]); assumes = script.exists(tvs, assumes);
-		 * asserts = script.forall(tvs, asserts); }
-		 */
-		// generation++;
-		assert (assumes.toString() instanceof Object);
-	}
-
-	public void addAssume(AssumeStatement assume) {
-		Term f = m_Expression2Term.translateTerm(assume.getFormula());
-//		if (m_addBoogieInformation) {
-//			Annotation locationAnnotation = new Annotation(":location", assume.getPayload().getLocation());
-//			Annotation statementAnnotation = new Annotation(":statement", assume);
-//			f = m_Script.annotate(f, new Annotation[] { locationAnnotation, statementAnnotation });
-//		}
-		assumes = Util.and(m_Script, f, assumes);
-		asserts = Util.implies(m_Script, f, asserts);
-		assert (assumes.toString() instanceof Object);
-	}
-
-	public void addAssert(AssertStatement assertstmt) {
-		Term f = m_Expression2Term.translateTerm(assertstmt.getFormula());
-//		if (m_addBoogieInformation) {
-//			Annotation locationAnnotation = new Annotation(":location", assertstmt.getPayload().getLocation());
-//			Annotation statementAnnotation = new Annotation(":statement", assertstmt);
-//			f = m_Script.annotate(f, new Annotation[] { locationAnnotation, statementAnnotation });
-//		}
-		// Formula label = generateLabel(assertstmt);
-		assumes = Util.and(m_Script, f, assumes);
-		asserts = Util.and(m_Script, f, asserts);
-		// asserts = script.and(script.implies(label, f), asserts);
-		assert (assumes.toString() instanceof Object);
-	}
-
-	public void addProcedureCall(CallStatement call) {
-		assert (assumes.toString() instanceof Object);
-		Procedure procedure = this.m_Id2Specification.get(call.getMethodName());
-
-		HashMap<String, Term> substitution = new HashMap<String, Term>();
-		Expression[] arguments = call.getArguments();
-		int offset;
-		VariableLHS[] lhs = call.getLhs();
-		offset = 0;
-		ArrayList<BoogieVar> havocVars = new ArrayList<BoogieVar>();
-		for (VarList vl : procedure.getOutParams()) {
-			for (String id : vl.getIdentifiers()) {
-				// BoogieVar outParam = locals.get(id);
-				// assert (outParam != null);
-				String name = lhs[offset].getIdentifier();
-				DeclarationInformation declInfo = lhs[offset].getDeclarationInformation();
-				BoogieVar boogieVar = getModifiableBoogieVar(name, declInfo);
-				assert (boogieVar != null);
-
-				substitution.put(id, getSmtIdentifier(name, lhs[offset].getDeclarationInformation(), false, vl));
-				havocVars.add(boogieVar);
-				offset++;
-			}
-		}
-
-		for (BoogieVar boogieVar : havocVars) {
-			removeInVar(boogieVar);
-		}
-
-		m_CalleesModifiedGlobalsIn = new HashMap<BoogieVar, TermVariable>();
-		m_CalleesModifiedGlobalsOut = new HashMap<BoogieVar, TermVariable>();
-
-		for (Specification spec : procedure.getSpecification()) {
-			if (spec instanceof ModifiesSpecification) {
-				for (VariableLHS var : ((ModifiesSpecification) spec).getIdentifiers()) {
-					String id = var.getIdentifier();
-					BoogieVar boogieVar = m_Boogie2SmtSymbolTable.getBoogieVar(id, var.getDeclarationInformation(), false);
-					assert boogieVar != null;
-					Sort sort = getSort(boogieVar.getIType(), spec);
-					// String inName =
-					// "v_"+quoteId(boogieVar.getIdentifier())+"_"+
-					// VariableSSAManager.getNextVariableIndex(boogieVar);
-					if (inVars.containsKey(boogieVar)) {
-						m_CalleesModifiedGlobalsOut.put(boogieVar, inVars.get(boogieVar));
-					} else {
-						// Sort sort =
-						// m_Smt2Boogie.getSort(boogieVar.getIType());
-						// String outName =
-						// "v_"+quoteId(boogieVar.getIdentifier())+"_"+
-						// VariableSSAManager.getFreshTermVariable(boogieVar);
-						// String name =
-						// "v_"+quoteId(boogieVar.getIdentifier())+"_"+generation;
-						TermVariable tv = VariableSSAManager.getFreshTermVariable(boogieVar, sort);
-						m_CalleesModifiedGlobalsOut.put(boogieVar, tv);
-						outVars.put(boogieVar, tv);
-					}
-					// Sort sort = m_Smt2Boogie.getSort(boogieVar.getIType());
-					// String name =
-					// "v_"+quoteId(boogieVar.getIdentifier())+"_"+(generation+1);
-					TermVariable tv = VariableSSAManager.getFutureTermVariable(boogieVar, sort);
-					inVars.put(boogieVar, tv);
-					m_CalleesModifiedGlobalsIn.put(boogieVar, tv);
-				}
-			}
-		}
-
-		// generation++;
-
-		offset = 0;
-		for (VarList vl : procedure.getInParams()) {
-			for (String id : vl.getIdentifiers()) {
-				substitution.put(id, m_Expression2Term.translateTerm(arguments[offset++]));
-			}
-		}
-
-		// HashMap<BoogieVar, TermVariable> callerOldGlobals = inVarsOldGlobals;
-//		HashMap<String, BoogieVar> oldLocals = m_CurrentLocals;
-//		m_CurrentLocals = new HashMap<String, BoogieVar>();
-
-		identStack.push(substitution);
-		for (Specification spec : procedure.getSpecification()) {
-			if (spec instanceof EnsuresSpecification) {
-				Expression post = ((EnsuresSpecification) spec).getFormula();
-				Term f = m_Expression2Term.translateTerm(post);
-				assumes = Util.and(m_Script, f, assumes);
-				if (spec.isFree()) {
-					asserts = Util.implies(m_Script, f, asserts);
-				} else {
-					asserts = Util.and(m_Script, f, asserts);
-				}
-			}
-		}
-
-		m_TranslatingRequires = true;
-		for (Specification spec : procedure.getSpecification()) {
-			if (spec instanceof RequiresSpecification) {
-				Expression pre = ((RequiresSpecification) spec).getFormula();
-				Term f = m_Expression2Term.translateTerm(pre);
-				assumes = Util.and(m_Script, f, assumes);
-				if (spec.isFree()) {
-					asserts = Util.implies(m_Script, f, asserts);
-				} else {
-					asserts = Util.and(m_Script, f, asserts);
-				}
-			}
-		}
-		m_TranslatingRequires = false;
-
-		m_CalleesModifiedGlobalsIn = null;
-		m_CalleesModifiedGlobalsOut = null;
-		identStack.pop();
-		// inVarsOldGlobals = callerOldGlobals;
-//		m_CurrentLocals = oldLocals;
-		assert (assumes.toString() instanceof Object);
-	}
-
-	/**
-	 * Remove boogieVars from inVars mapping, if the inVar is not an outVar, add
-	 * it to he auxilliary variables auxVar.
-	 */
-	private void removeInVar(BoogieVar boogieVar) {
-		TermVariable tv = inVars.remove(boogieVar);
-		if (outVars.get(boogieVar) != tv) {
-			auxVars.add(tv);
-		}
-	}
-
-	public HashMap<BoogieVar, TermVariable> getInVars() {
-		return inVars;
-	}
-
-	public HashMap<BoogieVar, TermVariable> getOutVars() {
-		return outVars;
-	}
-
-	public HashSet<TermVariable> getAllVars() {
-		return allVars;
-	}
-
-	public Set<TermVariable> getAuxVars() {
-		return auxVars;
-	}
-
-	public Term getAssumes() {
-		assert (assumes.toString() instanceof Object);
-		return assumes;
-	}
-
-	public Term getAsserts() {
-		return asserts;
-	}
-
-	public void endBlock() {
-		outVars = null;
-		inVars = null;
-		auxVars = null;
-		allVars = null;
-	}
 
 	// public Map<Sort, IType> getSmtSort2BoogieType() {
 	// return m_SmtSort2BoogieType;
@@ -937,24 +595,24 @@ public class Boogie2SMT implements SmtIdentifierProvider {
 	// return m_BoogieType2SmtSort;
 	// }
 
-	/**
-	 * Translate an array of expressions. Variables occurring in expressions
-	 * will be added to inVars. May not be called while a block is translated.
-	 */
-	public Term[] expressions2terms(Expression[] exps, Map<BoogieVar, TermVariable> inVars, Set<TermVariable> allVars) {
-		if (this.outVars != null || this.inVars != null) {
-			throw new AssertionError("unable to translate single expression" + " while translating block");
-		}
-		startBlock();
-		Term[] terms = new Term[exps.length];
-		for (int i = 0; i < exps.length; i++) {
-			terms[i] = m_Expression2Term.translateTerm(exps[i]);
-		}
-		inVars.putAll(this.inVars);
-		allVars.addAll(this.allVars);
-		endBlock();
-		return terms;
-	}
+//	/**
+//	 * Translate an array of expressions. Variables occurring in expressions
+//	 * will be added to inVars. May not be called while a block is translated.
+//	 */
+//	public Term[] expressions2terms(Expression[] exps, Map<BoogieVar, TermVariable> inVars, Set<TermVariable> allVars) {
+//		if (this.outVars != null || this.inVars != null) {
+//			throw new AssertionError("unable to translate single expression" + " while translating block");
+//		}
+//		startBlock();
+//		Term[] terms = new Term[exps.length];
+//		for (int i = 0; i < exps.length; i++) {
+//			terms[i] = m_Expression2Term.translateTerm(exps[i]);
+//		}
+//		inVars.putAll(this.inVars);
+//		allVars.addAll(this.allVars);
+//		endBlock();
+//		return terms;
+//	}
 
 //	public Term getFreshConstant(TermVariable tv) {
 //		String name = "c_" + tv.getName() + "_" + m_freshConstantCounter++;
@@ -971,6 +629,8 @@ public class Boogie2SMT implements SmtIdentifierProvider {
 		UltimateServices.getInstance().cancelToolchain();
 	}
 
+
+	
 	
 	/**
 	 * Use with caution! Construct auxiliary variables only if you need then in
@@ -983,7 +643,25 @@ public class Boogie2SMT implements SmtIdentifierProvider {
 			String procedure, IType iType, 
 			boolean isOldvar, BoogieASTNode BoogieASTNode) {
 		return m_Boogie2SmtSymbolTable.constructBoogieVar(identifier, procedure, 
-				StorageClass.GLOBAL, iType, isOldvar, BoogieASTNode);
+				StorageClass.GLOBAL , iType, isOldvar, BoogieASTNode);
+	}
+	
+	
+	class ConstOnlyIdentifierTranslator implements IdentifierTranslator {
+
+		@Override
+		public Term getSmtIdentifier(String id,
+				DeclarationInformation declInfo, boolean isOldContext,
+				BoogieASTNode boogieASTNode) {
+			if (declInfo.getStorageClass() != StorageClass.GLOBAL) {
+				throw new AssertionError();
+			}
+			Term result = m_Boogie2SmtSymbolTable.getBoogieConst(id).getSmtConstant();
+			if (result == null) {
+				throw new AssertionError();
+			}
+			return result;
+		}
 	}
 
 }

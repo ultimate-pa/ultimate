@@ -104,7 +104,7 @@ public class Product {
 				}
 				for (RCFGEdge edge : node.getOutgoingEdges()) {
 					if (edge instanceof StatementSequence) {
-						tfb.addTransitionFormulas(edge);
+						tfb.addTransitionFormulas(edge, procIdent);
 					}
 				}
 			}

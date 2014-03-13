@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
@@ -29,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 public class ElimStore2 {
 	
 	private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+			UltimateServices.getInstance().getLogger(ModelCheckerUtils.sPluginID);
 
 	public ElimStore2(Script script) {
 		super();

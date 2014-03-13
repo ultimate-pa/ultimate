@@ -3,8 +3,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
 
 
 /**
@@ -86,10 +91,14 @@ public class SequentialComposition extends CodeBlock {
 			ModelUtils.mergeAnnotations(codeBlocks[i], this);
 		}
 		checkNumberOfCallsAndReturns(numberCalls, numberReturns);
+
+		boolean s_TransformToCNF = (new UltimatePreferenceStore(
+				   RCFGBuilder.s_PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_CNF);
+		   
 		m_TransitionFormula = getInterproceduralTransFormula(boogie2smt, 
-				modGlobVarManager, simplify, extPqe, false, codeBlocks);
+				modGlobVarManager, simplify, extPqe, s_TransformToCNF, false, codeBlocks);
 		m_TransitionFormulaWithBranchEncoders = getInterproceduralTransFormula(
-				boogie2smt, modGlobVarManager, simplify, extPqe, true, codeBlocks);
+				boogie2smt, modGlobVarManager, simplify, extPqe, s_TransformToCNF, true, codeBlocks);
 		
 		m_PrettyPrinted = prettyPrinted.toString();
 		updatePayloadName();
@@ -129,14 +138,14 @@ public class SequentialComposition extends CodeBlock {
 	 */
 	public static TransFormula getInterproceduralTransFormula(
 			Boogie2SMT boogie2smt, ModifiableGlobalVariableManager modGlobVarManager,
-			boolean simplify, boolean extPqe, boolean withBranchEncoders, CodeBlock... codeBlocks) {
+			boolean simplify, boolean extPqe, boolean tranformToCNF, boolean withBranchEncoders, CodeBlock... codeBlocks) {
 		return getInterproceduralTransFormula(
-				boogie2smt, modGlobVarManager, simplify, extPqe, withBranchEncoders, null, null, null, codeBlocks);
+				boogie2smt, modGlobVarManager, simplify, extPqe, tranformToCNF, withBranchEncoders, null, null, null, codeBlocks);
 	}
 	
 	private static TransFormula getInterproceduralTransFormula(
 			Boogie2SMT boogie2smt, ModifiableGlobalVariableManager modGlobVarManager,
-			boolean simplify, boolean extPqe, boolean withBranchEncoders, TransFormula[] beforeCall,
+			boolean simplify, boolean extPqe, boolean tranformToCNF, boolean withBranchEncoders, TransFormula[] beforeCall,
 			Call call, Return ret, CodeBlock... codeBlocks) {
 		List<TransFormula> beforeFirstPendingCall = new ArrayList<TransFormula>();
 		Call lastUnmatchedCall = null;
@@ -162,7 +171,7 @@ public class SequentialComposition extends CodeBlock {
 						CodeBlock[] codeBlocksBetween = 
 								afterLastUnmatchedCall.toArray(new CodeBlock[0]); 
 						TransFormula localTransFormula = getInterproceduralTransFormula(
-								boogie2smt, modGlobVarManager, simplify, extPqe, withBranchEncoders, null, lastUnmatchedCall, 
+								boogie2smt, modGlobVarManager, simplify, extPqe, tranformToCNF, withBranchEncoders, null, lastUnmatchedCall, 
 								correspondingReturn, codeBlocksBetween);
 						beforeFirstPendingCall.add(localTransFormula);
 						lastUnmatchedCall = null;
@@ -188,13 +197,13 @@ public class SequentialComposition extends CodeBlock {
 			assert afterLastUnmatchedCall.isEmpty();
 			// no pending call in codeBlocks
 			tfForCodeBlocks = TransFormula.sequentialComposition(
-					boogie2smt, simplify, extPqe, beforeFirstPendingCall.toArray(new TransFormula[0]));
+					boogie2smt, simplify, extPqe, tranformToCNF, beforeFirstPendingCall.toArray(new TransFormula[0]));
 		} else {
 			// there is a pending call in codeBlocks		
 			assert (ret == null) : "no pending call between call and return possible!";
 			CodeBlock[] codeBlocksBetween = afterLastUnmatchedCall.toArray(new CodeBlock[0]); 
 			tfForCodeBlocks = getInterproceduralTransFormula(boogie2smt, 
-					modGlobVarManager, simplify, extPqe, 
+					modGlobVarManager, simplify, extPqe, tranformToCNF,
 					withBranchEncoders, beforeFirstPendingCall.toArray(new TransFormula[0]), 
 					lastUnmatchedCall, null, codeBlocksBetween);
 		}
@@ -209,14 +218,14 @@ public class SequentialComposition extends CodeBlock {
 				String proc = call.getCallStatement().getMethodName();
 				TransFormula oldVarsAssignment = modGlobVarManager.getOldVarsAssignment(proc);
 				result = TransFormula.sequentialCompositionWithPendingCall(
-						boogie2smt, simplify, extPqe, beforeCall, call.getTransitionFormula(), 
+						boogie2smt, simplify, extPqe, tranformToCNF, beforeCall, call.getTransitionFormula(), 
 						oldVarsAssignment, tfForCodeBlocks);
 			} else {
 				assert (beforeCall == null);
 				String proc = call.getCallStatement().getMethodName();
 				TransFormula oldVarsAssignment = modGlobVarManager.getOldVarsAssignment(proc);
 				result = TransFormula.sequentialCompositionWithCallAndReturn(
-						boogie2smt, simplify, extPqe, call.getTransitionFormula(), 
+						boogie2smt, simplify, extPqe, tranformToCNF, call.getTransitionFormula(), 
 						oldVarsAssignment, tfForCodeBlocks, 
 						ret.getTransitionFormula());
 			}

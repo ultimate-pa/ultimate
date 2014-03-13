@@ -56,7 +56,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.RenameProcedureSpec;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
@@ -415,7 +418,10 @@ public class CfgBuilder {
 
 		String caller = callerNode.getProcedure();
 		Procedure callerImpl = m_RootAnnot.m_Implementation.get(caller);
-		TransFormula arguments2InParams = tfb.inParamAssignment(st, callerImpl);
+		
+		Statements2TransFormula stmt2TransFormula = new Statements2TransFormula(caller, m_RootAnnot.getBoogie2SMT());
+		
+		TransFormula arguments2InParams = stmt2TransFormula.inParamAssignment(st); 
 		TransFormula outParams2CallerVars = tfb.resultAssignment(st, caller);
 
 		Call call = new Call(callerNode, calleeEntryLoc, st);
@@ -672,7 +678,7 @@ public class CfgBuilder {
 			}
 
 			for (CodeBlock transEdge : m_Edges) {
-				tfb.addTransitionFormulas(transEdge);
+				tfb.addTransitionFormulas(transEdge, procName);
 			}
 //			m_Boogie2smt.removeLocals(proc);
 		}

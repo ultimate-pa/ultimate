@@ -29,9 +29,17 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
+
+/**
+ * Translate a Boogie Expression into an SMT Term. 
+ * Use the here defined interface IndentifierResolver to translate identifier
+ * expressions.
+ * @author Matthias Heizmann
+ *
+ */
 public class Expression2Term {
 	
-	public interface SmtIdentifierProvider {
+	public interface IdentifierTranslator {
 		public Term getSmtIdentifier(String id, DeclarationInformation declInfo, boolean isOldContext, BoogieASTNode boogieASTNode);
 	}
 	
@@ -40,7 +48,8 @@ public class Expression2Term {
 	
 	private final Script m_Script;
 	private final TypeSortTranslator m_TypeSortTranslator;
-	private final SmtIdentifierProvider m_SmtIdentifierProvider;
+	private final IdentifierTranslator[] m_SmtIdentifierProviders;
+	private final Term[] m_Result;
 	
 	/**
 	 * Count the height of current old(.) expressions. As long as this is
@@ -51,20 +60,43 @@ public class Expression2Term {
 	
 
 	
-	public Expression2Term(Script script,
-			TypeSortTranslator typeSortTranslator,
-			SmtIdentifierProvider smtIdentifierProvider) {
+	public Expression2Term(IdentifierTranslator[] identifierTranslators, 
+			Script script, 
+			TypeSortTranslator typeSortTranslator, Expression... expressions) {
 		super();
 		m_Script = script;
 		m_TypeSortTranslator = typeSortTranslator;
-		m_SmtIdentifierProvider = smtIdentifierProvider;
+		m_SmtIdentifierProviders = identifierTranslators;
+		m_Result = new Term[expressions.length];
+		for (int i=0; i<expressions.length; i++) {
+			m_Result[i] = translate(expressions[i]);
+		}
 	}
+	
+	
+	public Term getTerm() {
+		if (m_Result.length != 1) {
+			throw new AssertionError("you translated not exactly one expression");
+		}
+		return m_Result[0];
+	}
+	
+	public Term[] getTerms() {
+		return m_Result;
+	}
+
 	
 	Term getSmtIdentifier(String id, DeclarationInformation declInfo, boolean isOldContext, BoogieASTNode boogieASTNode) {
 		if (m_QuantifiedVariables.containsKey(id)) {
 			return m_QuantifiedVariables.get(id);
 		} else {
-			return m_SmtIdentifierProvider.getSmtIdentifier(id, declInfo, isOldContext, boogieASTNode);
+			for (IdentifierTranslator it : m_SmtIdentifierProviders) {
+				Term term = it.getSmtIdentifier(id, declInfo, isOldContext, boogieASTNode);
+				if (term != null) {
+					return term;
+				}
+			}
+			throw new AssertionError("found no translation for id " + id);
 		}
 	}
 	
@@ -78,13 +110,13 @@ public class Expression2Term {
 	}
 
 
-	public Term translateTerm(Expression exp) {
+	private Term translate(Expression exp) {
 		if (exp instanceof ArrayAccessExpression) {
 			ArrayAccessExpression arrexp = (ArrayAccessExpression) exp;
 			Expression[] indices = arrexp.getIndices();
-			Term result = translateTerm(arrexp.getArray());
+			Term result = translate(arrexp.getArray());
 			for (int i = 0; i < indices.length; i++) {
-				Term indexiTerm = translateTerm(indices[i]);
+				Term indexiTerm = translate(indices[i]);
 				result = m_Script.term("select", result, indexiTerm);
 			}
 			assert (result.toString() instanceof Object);
@@ -98,13 +130,13 @@ public class Expression2Term {
 			// before the i'th index have already been selected
 			Term[] arrayBeforeIndex = new Term[indices.length];
 			Term[] indexTerm = new Term[indices.length];
-			arrayBeforeIndex[0] = translateTerm(arrexp.getArray());
+			arrayBeforeIndex[0] = translate(arrexp.getArray());
 			for (int i = 0; i < indices.length - 1; i++) {
-				indexTerm[i] = translateTerm(indices[i]);
+				indexTerm[i] = translate(indices[i]);
 				arrayBeforeIndex[i + 1] = m_Script.term("select", arrayBeforeIndex[i], indexTerm[i]);
 			}
-			indexTerm[indices.length - 1] = translateTerm(indices[indices.length - 1]);
-			Term result = translateTerm(arrexp.getValue());
+			indexTerm[indices.length - 1] = translate(indices[indices.length - 1]);
+			Term result = translate(arrexp.getValue());
 			for (int i = indices.length - 1; i >= 0; i--) {
 				result = m_Script.term("store", arrayBeforeIndex[i], indexTerm[i], result);
 			}
@@ -120,45 +152,45 @@ public class Expression2Term {
 			if (op == BinaryExpression.Operator.COMPEQ) {
 				// if
 				// (binexp.getLeft().getType().equals(PrimitiveType.boolType))
-				return m_Script.term("=", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
+				return m_Script.term("=", translate(binexp.getLeft()), translate(binexp.getRight()));
 				// else
 				// return script.equals(translateTerm(binexp.getLeft()),
 				// translateTerm(binexp.getRight()));
 			} else if (op == BinaryExpression.Operator.COMPGEQ) {
-				return m_Script.term(">=", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
+				return m_Script.term(">=", translate(binexp.getLeft()), translate(binexp.getRight()));
 			} else if (op == BinaryExpression.Operator.COMPGT) {
-				return m_Script.term(">", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
+				return m_Script.term(">", translate(binexp.getLeft()), translate(binexp.getRight()));
 			} else if (op == BinaryExpression.Operator.COMPLEQ) {
-				return m_Script.term("<=", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
+				return m_Script.term("<=", translate(binexp.getLeft()), translate(binexp.getRight()));
 			} else if (op == BinaryExpression.Operator.COMPLT) {
-				return m_Script.term("<", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
+				return m_Script.term("<", translate(binexp.getLeft()), translate(binexp.getRight()));
 			} else if (op == BinaryExpression.Operator.COMPNEQ) {
 				if (binexp.getLeft().getType().equals(PrimitiveType.boolType)) {
-					return m_Script.term("xor", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
+					return m_Script.term("xor", translate(binexp.getLeft()), translate(binexp.getRight()));
 				} else {
 					return Util.not(m_Script,
-							m_Script.term("=", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight())));
+							m_Script.term("=", translate(binexp.getLeft()), translate(binexp.getRight())));
 				}
 				// } else if (op == BinaryExpression.Operator.COMPPO ){
 				// return script.atom(partOrder,
 				// translateTerm(binexp.getLeft()),
 				// translateTerm(binexp.getRight()));
 			} else if (op == BinaryExpression.Operator.LOGICAND) {
-				return Util.and(m_Script, translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
+				return Util.and(m_Script, translate(binexp.getLeft()), translate(binexp.getRight()));
 			} else if (op == BinaryExpression.Operator.LOGICOR) {
-				return Util.or(m_Script, translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
+				return Util.or(m_Script, translate(binexp.getLeft()), translate(binexp.getRight()));
 			} else if (op == BinaryExpression.Operator.LOGICIMPLIES) {
-				return Util.implies(m_Script, translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
+				return Util.implies(m_Script, translate(binexp.getLeft()), translate(binexp.getRight()));
 			} else if (op == BinaryExpression.Operator.LOGICIFF) {
-				return m_Script.term("=", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
+				return m_Script.term("=", translate(binexp.getLeft()), translate(binexp.getRight()));
 			} else if (op == BinaryExpression.Operator.ARITHDIV) {
 				IType lhsType = binexp.getLeft().getType();
 				if (lhsType instanceof PrimitiveType) {
 					PrimitiveType primType = (PrimitiveType) lhsType;
 					if (primType.getTypeCode() == PrimitiveType.INT) {
-						return m_Script.term("div", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
+						return m_Script.term("div", translate(binexp.getLeft()), translate(binexp.getRight()));
 					} else if (primType.getTypeCode() == PrimitiveType.REAL) {
-						return m_Script.term("/", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
+						return m_Script.term("/", translate(binexp.getLeft()), translate(binexp.getRight()));
 					} else {
 						throw new AssertionError("ARITHDIV of this type not allowed");
 					}
@@ -166,13 +198,13 @@ public class Expression2Term {
 					throw new AssertionError("ARITHDIV of this type not allowed");
 				}
 			} else if (op == BinaryExpression.Operator.ARITHMINUS) {
-				return m_Script.term("-", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
+				return m_Script.term("-", translate(binexp.getLeft()), translate(binexp.getRight()));
 			} else if (op == BinaryExpression.Operator.ARITHMOD) {
-				return m_Script.term("mod", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
+				return m_Script.term("mod", translate(binexp.getLeft()), translate(binexp.getRight()));
 			} else if (op == BinaryExpression.Operator.ARITHMUL) {
-				return m_Script.term("*", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
+				return m_Script.term("*", translate(binexp.getLeft()), translate(binexp.getRight()));
 			} else if (op == BinaryExpression.Operator.ARITHPLUS) {
-				return m_Script.term("+", translateTerm(binexp.getLeft()), translateTerm(binexp.getRight()));
+				return m_Script.term("+", translate(binexp.getLeft()), translate(binexp.getRight()));
 			} else if (op == BinaryExpression.Operator.BITVECCONCAT) {
 				/* TODO */
 				throw new UnsupportedOperationException("BITVECCONCAT not implemented");
@@ -184,13 +216,13 @@ public class Expression2Term {
 			UnaryExpression unexp = (UnaryExpression) exp;
 			UnaryExpression.Operator op = unexp.getOperator();
 			if (op == UnaryExpression.Operator.LOGICNEG) {
-				return Util.not(m_Script, translateTerm(unexp.getExpr()));
+				return Util.not(m_Script, translate(unexp.getExpr()));
 			} else if (op == UnaryExpression.Operator.ARITHNEGATIVE) {
 				// FunctionSymbol fun_symb = script.getFunction("-", intSort);
-				return m_Script.term("-", translateTerm(unexp.getExpr()));
+				return m_Script.term("-", translate(unexp.getExpr()));
 			} else if (op == UnaryExpression.Operator.OLD) {
 				m_OldContextScopeDepth++;
-				Term term = translateTerm(unexp.getExpr());
+				Term term = translate(unexp.getExpr());
 				m_OldContextScopeDepth--;
 				return term;
 			} else
@@ -230,7 +262,7 @@ public class Expression2Term {
 			String funcSymb = func.getIdentifier();
 			Term[] parameters = new Term[func.getArguments().length];
 			for (int i = 0; i < func.getArguments().length; i++) {
-				parameters[i] = translateTerm(func.getArguments()[i]);
+				parameters[i] = translate(func.getArguments()[i]);
 			}
 			Term result = m_Script.term(funcSymb, parameters);
 			assert (result.toString() instanceof Object);
@@ -250,9 +282,9 @@ public class Expression2Term {
 
 		} else if (exp instanceof IfThenElseExpression) {
 			IfThenElseExpression ite = (IfThenElseExpression) exp;
-			Term cond = translateTerm(ite.getCondition());
-			Term thenPart = translateTerm(ite.getThenPart());
-			Term elsePart = translateTerm(ite.getElsePart());
+			Term cond = translate(ite.getCondition());
+			Term thenPart = translate(ite.getThenPart());
+			Term elsePart = translate(ite.getElsePart());
 			Term result = m_Script.term("ite", cond, thenPart, elsePart);
 			assert result != null;
 			return result;
@@ -288,7 +320,7 @@ public class Expression2Term {
 					offset++;
 				}
 			}
-			Term form = translateTerm(quant.getSubformula());
+			Term form = translate(quant.getSubformula());
 
 			Attribute[] attrs = quant.getAttributes();
 			int numTrigs = 0;
@@ -303,7 +335,7 @@ public class Expression2Term {
 					Expression[] trigs = ((Trigger) a).getTriggers();
 					Term[] smttrigs = new Term[trigs.length];
 					for (int i = 0; i < trigs.length; i++) {
-						Term trig = translateTerm(trigs[i]);
+						Term trig = translate(trigs[i]);
 						// if (trig instanceof ITETerm
 						// && ((ITETerm)trig).getTrueCase() == ONE
 						// && ((ITETerm)trig).getFalseCase() == ZERO)
