@@ -6,16 +6,19 @@
  * Recursive and imperative implementation of McCartys 91 function.
  */
 
-procedure McCarthyRec(x: int) returns (res: int);
+var g: int;
 
-implementation McCarthyRec(x: int) returns (res: int)
+procedure McCarthyRec(x,y: int) returns (res: int);
+modifies g;
+
+implementation McCarthyRec(x,y: int) returns (res: int)
 {
   if (x>100) {
     res := x-10;
   }
   else {
-    call res :=  McCarthyRec(x + 11);
-    call res := McCarthyRec(res);
+    call res :=  McCarthyRec(x + 11,g);
+    call res := McCarthyRec(res,g);
   }
 }
 
@@ -36,11 +39,12 @@ implementation McCarthyImp(x: int) returns (res: int)
 
 
 procedure Main(a: int);
+modifies g;
 
 implementation Main(a: int)
 {
   var b, c: int;
-  call b := McCarthyRec(a);
+  call b := McCarthyRec(a,g);
   call c := McCarthyImp(a);
   assert(b == c);
 }

@@ -19,6 +19,7 @@ implementation caller(a: int)
 }
 
 procedure callee(x, b: int) returns (res: int);
+modifies g;
 ensures g==old(g)+b;
 ensures res == x+1;
 

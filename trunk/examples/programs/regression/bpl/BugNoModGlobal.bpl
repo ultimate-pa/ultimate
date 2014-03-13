@@ -1,4 +1,4 @@
-//iSafe
+//#Safe
 /* 
  * Bug: old(g) should be translated to g for procedures that do not
  * modify g.
