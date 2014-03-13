@@ -124,13 +124,6 @@
          unpack="false"/>
 
    <plugin
-         id="RankingFunctions"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="TraceAbstractionConcurrent"
          download-size="0"
          install-size="0"
