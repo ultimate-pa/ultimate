@@ -141,7 +141,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 				minuend.getInternalAlphabet(), minuend.getCallAlphabet(),
 				minuend.getReturnAlphabet(), minuend.getStateFactory());
 		m_SinkState = m_StateFactory.createSinkStateContent();
-		s_Logger.debug("Created Sink-State: " + m_SinkState.toString());
+//		s_Logger.debug("Created Sink-State: " + m_SinkState.toString());
 		
 		// initializes the process by adding the initial states. Since there can
 		// be many initial states, it adds all possible initial state pair combinations
@@ -149,7 +149,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 		{
 			for (STATE init_s : m_Subtrahend.getInitialStates())
 			{
-				s_Logger.debug("Add initial state:");
+//				s_Logger.debug("Add initial state:");
 				AddState(init_m, init_s);
 			}
 		}
@@ -179,19 +179,19 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 		STATE existingState = m_ContainedStatesHashMap.get(qLabel);
 		if (existingState != null) 
 		{
-			s_Logger.debug("State for " + qLabel + " already exists: "
-					+ existingState.toString());
+//			s_Logger.debug("State for " + qLabel + " already exists: "
+//					+ existingState.toString());
 			return existingState;
 		}
 
 		// if not: create a new state "q" and add it into the superDifference automaton
-		s_Logger.debug("Add state: " + qLabel);
+//		s_Logger.debug("Add state: " + qLabel);
 		STATE q = m_StateFactory.intersection(r, s);
 		if(q == null) s_Logger.error("State factory returned no state!");
-		s_Logger.debug("intersection: " + q.toString());
+//		s_Logger.debug("intersection: " + q.toString());
 		m_ContainedStatesHashMap.put(qLabel, q);
-		s_Logger.debug("isFinal: " + bl(m_Minuend.isInitial(r)) + "&" + bl(m_Subtrahend.isInitial(s)) + " -> " + bl(m_Minuend.isInitial(r) && m_Subtrahend.isInitial(s)));
-		s_Logger.debug("isIniti: " + bl(m_Minuend.isFinal(r)) + "&" + bl(m_Subtrahend.isFinal(s)) + " -> " + bl(m_Minuend.isFinal(r) && m_Subtrahend.isFinal(s)));
+//		s_Logger.debug("isFinal: " + bl(m_Minuend.isInitial(r)) + "&" + bl(m_Subtrahend.isInitial(s)) + " -> " + bl(m_Minuend.isInitial(r) && m_Subtrahend.isInitial(s)));
+//		s_Logger.debug("isIniti: " + bl(m_Minuend.isFinal(r)) + "&" + bl(m_Subtrahend.isFinal(s)) + " -> " + bl(m_Minuend.isFinal(r) && m_Subtrahend.isFinal(s)));
 		
 		m_Result.addState(
 				m_Minuend.isInitial(r) && m_Subtrahend.isInitial(s),
@@ -204,7 +204,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 		// check if there exists a mapping to r in the epimorphism
 		if (h_r == s) 
 		{
-			s_Logger.debug("epimorph state: " + h_r.toString());
+//			s_Logger.debug("epimorph state: " + h_r.toString());
 			// Traverse all edges = (r, label, r2) \in \delta
 			// TODO: call and return transitions
 			for(OutgoingInternalTransition<LETTER, STATE> e : m_Minuend.internalSuccessors(r))
@@ -212,7 +212,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 				LETTER label = e.getLetter();
 				STATE target = e.getSucc();
 
-				s_Logger.debug("Found edge: from " + r.toString() + " with " + label + " to " + target.toString());
+//				s_Logger.debug("Found edge: from " + r.toString() + " with " + label + " to " + target.toString());
 
 				// find/construct the target state of the edge
 				STATE q2 = null;
@@ -239,13 +239,13 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 					q2 = AddState(target, m_SinkState);
 				}
 
-				s_Logger.debug("Adding the edge from " + q.toString() + " with " + label + " to " + q2.toString());
+//				s_Logger.debug("Adding the edge from " + q.toString() + " with " + label + " to " + q2.toString());
 				m_Result.addInternalTransition(q, label, q2);
 			}
 		} 
 		else 
 		{
-			s_Logger.debug("No epimorph state found");
+//			s_Logger.debug("No epimorph state found");
 			
 			// Traverse all edges = (r, label, r2) \in \delta
 			// TODO: call and return transitions
@@ -253,11 +253,11 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 			{
 				LETTER label = e.getLetter();
 				STATE r2 = e.getSucc();
-				s_Logger.debug("Found edge: from " + r.toString() + " with " + label + " to " + r2.toString());
+//				s_Logger.debug("Found edge: from " + r.toString() + " with " + label + " to " + r2.toString());
 				
 				// we know that we must take the sink state, since there is no epimorph state
 				STATE q2 = AddState(r2, m_SinkState);
-				s_Logger.debug("Adding the edge from " + q.toString() + " with " + label + " to " + q2.toString());
+//				s_Logger.debug("Adding the edge from " + q.toString() + " with " + label + " to " + q2.toString());
 				m_Result.addInternalTransition(q, label, q2);
 			}
 		}
