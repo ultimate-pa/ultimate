@@ -164,18 +164,19 @@ public class ToolchainJob extends Job {
 				sb.append(": ");
 				sb.append(result.getShortDescription());
 				mLogger.info(sb.toString());
-				
-				boolean appendCompleteLongDescription = false;
+
+				boolean appendCompleteLongDescription = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
+						.getBoolean(CorePreferenceInitializer.LABEL_LONG_RESULT);
 				String[] s = result.getLongDescription().split("\n");
 				if (appendCompleteLongDescription) {
 					mLogger.info(String.format("    %s", result.getLongDescription()));
-				}else {
+				} else {
 					mLogger.info(String.format("    %s", s[0].replaceAll("\\n|\\r", "")));
-					if(s.length>1){
-						mLogger.info("    [...]");	
+					if (s.length > 1) {
+						mLogger.info("    [...]");
 					}
 				}
-				
+
 			}
 		}
 	}

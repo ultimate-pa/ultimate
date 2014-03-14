@@ -14,34 +14,37 @@ import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 public class LTL2aut implements IGenerator {
-	
-	 protected static Logger sLogger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 
-	 protected List<String> mFileNames = new ArrayList<String>();
-	 
-	 private DummyLTL2autObserver mObserver;
-	 
+	protected static Logger sLogger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+
+	protected List<String> mFileNames = new ArrayList<String>();
+
+	private DummyLTL2autObserver mObserver;
+
+	private boolean mProcess;
+
 	@Override
 	public int init() {
-		mObserver = new DummyLTL2autObserver(); 
+		mObserver = new DummyLTL2autObserver();
+		mProcess = false;
 		return 0;
-	} 
+	}
 
 	@Override
 	public String getName() {
-		 return Activator.PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
 	public String getPluginID() {
-		 return Activator.PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
 	public GraphType getOutputDefinition() {
 		List<String> filenames = new ArrayList<String>();
 		filenames.add("Hardcoded");
-		
+
 		return new GraphType(Activator.PLUGIN_ID, GraphType.Type.AST, filenames);
 	}
 
@@ -52,7 +55,7 @@ public class LTL2aut implements IGenerator {
 
 	@Override
 	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.LAST;
+		return QueryKeyword.ALL;
 	}
 
 	@Override
@@ -62,13 +65,22 @@ public class LTL2aut implements IGenerator {
 
 	@Override
 	public void setInputDefinition(GraphType graphType) {
-		
+		switch (graphType.getCreator()) {
+		case "BoogiePLCupParser":
+			mProcess = true;
+			break;
+		default:
+			mProcess = false;
+			break;
+		}
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
-		observers.add(this.mObserver);
+		if (mProcess) {
+			observers.add(mObserver);
+		}
 		return observers;
 	}
 
@@ -76,7 +88,6 @@ public class LTL2aut implements IGenerator {
 	public IElement getModel() {
 		return mObserver.getRootNode();
 	}
-	
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {

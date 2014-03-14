@@ -48,9 +48,17 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 	@Override
 	public void finish() throws Throwable {
 		String[] specification = getSpecification();
+		if (specification == null || specification.length == 0 || specification[0].isEmpty()) {
+			throw new UnsupportedOperationException("No specification given");
+		}
 		AstNode node = getProperty(specification[0]);
 		Map<String, AstNode> irs = getIRS(Arrays.copyOfRange(specification, 1, specification.length));
 		new SubstituteAPVisitor(irs, node);
+		mLogger.info("LTL Property is: " + specification[0]);
+		mLogger.info("IRS table is:");
+		for (int i = 1; i < specification.length; ++i) {
+			mLogger.info(specification[i]);
+		}
 		mRootNode = node;
 	}
 

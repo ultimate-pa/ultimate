@@ -34,6 +34,8 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 						VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_BENCHMARK,
 						VALUE_BENCHMARK_DEFAULT, PreferenceType.Boolean),
+						new UltimatePreferenceItem<Boolean>(LABEL_LONG_RESULT,
+								VALUE_LONG_RESULT_DEFAULT, PreferenceType.Boolean),
 
 				// Log files
 				new UltimatePreferenceItem<String>(DESC_LOGFILE, null, PreferenceType.Label),
@@ -115,6 +117,9 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	
 	public static final String LABEL_BENCHMARK = "Generate benchmark results";
 	public static final boolean VALUE_BENCHMARK_DEFAULT = true;
+	
+	public static final String LABEL_LONG_RESULT = "Show long description of results";
+	public static final boolean VALUE_LONG_RESULT_DEFAULT = false;
 
 	// Log4j pattern
 	public static final String LABEL_LOG4J_PATTERN = "Logger pattern: ";
