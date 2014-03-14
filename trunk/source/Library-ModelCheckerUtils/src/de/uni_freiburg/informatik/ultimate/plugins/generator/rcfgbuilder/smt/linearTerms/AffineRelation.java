@@ -14,7 +14,13 @@ import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.BinaryNumericRelation.NotBinaryNumericRelationException;
 
 /**
- * TODO documentation 
+ * Represents an term of the form ψ ▷ φ, where ψ and φ are affine terms and
+ * ▷ is a binary relation symbol.
+ * Allows to return this relation as an SMT term in the following two forms:
+ * - positive normal form
+ * - the form where a specific variable is on the left hand side and all other
+ * summand are moved to the right hand side.
+ * 
  * @author Matthias Heizmann
  */
 public class AffineRelation {
@@ -52,8 +58,8 @@ public class AffineRelation {
 	}
 	
 	/**
-	 * Returns a term representation of this AffineTerm where each summand that
-	 * has a negative coefficient is moved to the right hand side. 
+	 * Returns a term representation of this AffineRelation where each summand 
+	 * that has a negative coefficient is moved to the right hand side. 
 	 */
 	public Term positiveNormalForm(Script script) {
 		List<Term> lhsSummands = new ArrayList<Term>();
@@ -82,16 +88,24 @@ public class AffineRelation {
 		return result;
 	}
 	
-	public ApplicationTerm onLeftHandSideOnly(Script script, Term term) throws NotAffineException {
-		assert m_AffineTerm.getVariable2Coefficient().containsKey(term);
-		Rational termsCoeff = m_AffineTerm.getVariable2Coefficient().get(term);
+	/**
+	 * Returns a term representation of this AffineRelation where the variable
+	 * var (note that in our AffineTerms the variables may be SMT terms like
+	 * e.g., a select term) is on the left hand side with coeffcient one.
+	 * Throw a NotAffineException if no such representation is possible
+	 * (e.g, if the variable does not occur in the term, or the variable is x, 
+	 * its sort is Int and the term is 2x=1.)
+	 */
+	public ApplicationTerm onLeftHandSideOnly(Script script, Term var) throws NotAffineException {
+		assert m_AffineTerm.getVariable2Coefficient().containsKey(var);
+		Rational termsCoeff = m_AffineTerm.getVariable2Coefficient().get(var);
 		if (termsCoeff.equals(Rational.ZERO)) {
 			throw new NotAffineException("No affine representation " +
 					"where desired variable is on left hand side");
 		}
 		List<Term> rhsSummands = new ArrayList<Term>(m_AffineTerm.getVariable2Coefficient().size());
 		for (Entry<Term, Rational> entry : m_AffineTerm.getVariable2Coefficient().entrySet()) {
-			if (term == entry.getKey()) {
+			if (var == entry.getKey()) {
 				// do nothing
 			} else {
 				Rational newCoeff = entry.getValue().div(termsCoeff);
@@ -117,7 +131,7 @@ public class AffineRelation {
 		Term rhsTerm = UtilExperimental.sum(script, m_AffineTerm.getSort(), 
 				rhsSummands.toArray(new Term[0]));
 		ApplicationTerm result = (ApplicationTerm) script.term(
-										m_FunctionSymbolName, term, rhsTerm);
+										m_FunctionSymbolName, var, rhsTerm);
 		assert isEquivalent(script, m_OriginalTerm, result) == LBool.UNSAT;
 		return result;
 	}

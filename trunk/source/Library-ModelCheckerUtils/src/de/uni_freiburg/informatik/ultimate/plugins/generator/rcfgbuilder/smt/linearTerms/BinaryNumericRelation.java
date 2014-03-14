@@ -3,6 +3,15 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.li
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
+/**
+ * Represents a relation of the form ψ ▷ φ, where the terms ψ and φ have 
+ * numeric sort and ▷ is one of the following relation symbols
+ * {=, <=, >=, <, >, !=, distinct }.
+ * This class is only a helper that can be used to detect if a relation has this
+ * form.
+ *
+ * @author Matthias Heizmann
+ */
 public class BinaryNumericRelation {
 	public enum RelationSymbol {
 	    EQ("="),
@@ -111,7 +120,6 @@ public class BinaryNumericRelation {
 			m_RelationSymbol = relSymb;
 			m_Lhs = params[0];
 			m_Rhs = params[1];
-			
 		}
 	}
 	
@@ -123,7 +131,6 @@ public class BinaryNumericRelation {
 		public NotBinaryNumericRelationException(String message) {
 			super(message);
 		}
-		
 	}
 	
 

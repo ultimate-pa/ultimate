@@ -19,21 +19,37 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 
+/**
+ * Stores a mapping from Boogie identifiers to BoogieVars and a mapping from
+ * TermVariables that are representatives of BoogieVars to these BoogieVars.
+ * @author Matthias Heizmann
+ *
+ */
 public class Boogie2SmtSymbolTable {
 	private final BoogieDeclarations m_BoogieDeclarations;
 	private final Script m_Script; 
 	private final TypeSortTranslator m_TypeSortTranslator;
-	private final Map<String, BoogieVar> m_Globals = new HashMap<String, BoogieVar>();
-	private final Map<String, BoogieVar> m_OldGlobals = new HashMap<String, BoogieVar>();
-	private final Map<String, Map<String, BoogieVar>> m_SpecificationInParam = new HashMap<String, Map<String, BoogieVar>>();
-	private final Map<String, Map<String, BoogieVar>> m_SpecificationOutParam = new HashMap<String, Map<String, BoogieVar>>();
-	private final Map<String, Map<String, BoogieVar>> m_ImplementationInParam = new HashMap<String, Map<String, BoogieVar>>();
-	private final Map<String, Map<String, BoogieVar>> m_ImplementationOutParam = new HashMap<String, Map<String, BoogieVar>>();
-	private final Map<String, Map<String, BoogieVar>> m_ImplementationLocals = new HashMap<String, Map<String, BoogieVar>>();
-	private final Map<String, BoogieConst> m_Constants = new HashMap<String, BoogieConst>();
+	private final Map<String, BoogieVar> m_Globals = 
+			new HashMap<String, BoogieVar>();
+	private final Map<String, BoogieVar> m_OldGlobals = 
+			new HashMap<String, BoogieVar>();
+	private final Map<String, Map<String, BoogieVar>> m_SpecificationInParam = 
+			new HashMap<String, Map<String, BoogieVar>>();
+	private final Map<String, Map<String, BoogieVar>> m_SpecificationOutParam = 
+			new HashMap<String, Map<String, BoogieVar>>();
+	private final Map<String, Map<String, BoogieVar>> m_ImplementationInParam = 
+			new HashMap<String, Map<String, BoogieVar>>();
+	private final Map<String, Map<String, BoogieVar>> m_ImplementationOutParam = 
+			new HashMap<String, Map<String, BoogieVar>>();
+	private final Map<String, Map<String, BoogieVar>> m_ImplementationLocals = 
+			new HashMap<String, Map<String, BoogieVar>>();
+	private final Map<String, BoogieConst> m_Constants = 
+			new HashMap<String, BoogieConst>();
 	
-	private final Map<TermVariable,BoogieVar> m_SmtVar2BoogieVar = new HashMap<TermVariable,BoogieVar>();
-	private final Map<ApplicationTerm, BoogieConst> m_SmtConst2BoogieConst = new HashMap<ApplicationTerm,BoogieConst>();
+	private final Map<TermVariable,BoogieVar> m_SmtVar2BoogieVar = 
+			new HashMap<TermVariable,BoogieVar>();
+	private final Map<ApplicationTerm, BoogieConst> m_SmtConst2BoogieConst = 
+			new HashMap<ApplicationTerm,BoogieConst>();
 	
 	final Map<String,String> m_BoogieFunction2SmtFunction = 
 			new HashMap<String,String>();
@@ -399,26 +415,6 @@ public class Boogie2SmtSymbolTable {
 
 		BoogieVar bv = new BoogieVar(identifier, procedure, iType,
 				isOldvar, termVariable, defaultConstant, primedConstant);
-
-		if (storageClass == StorageClass.GLOBAL) {
-			if (isOldvar) {
-//				putNew(identifier, bv, m_OldGlobals);
-			} else {
-//				putNew(identifier, bv, m_Globals);
-			}
-		} else if (storageClass == StorageClass.PROCEDURE_INPARAM) {
-//			putNew(procedure, identifier, bv, m_SpecificationInParam);
-		} else if (storageClass == StorageClass.PROCEDURE_OUTPARAM) {
-//			putNew(procedure, identifier, bv, m_SpecificationOutParam);
-		} else if (storageClass == StorageClass.IMPLEMENTATION_INPARAM) {
-//			putNew(procedure, identifier, bv, m_ImplementationInParam);
-		} else if (storageClass == StorageClass.IMPLEMENTATION_OUTPARAM) {
-//			putNew(procedure, identifier, bv, m_ImplementationOutParam);
-		} else if (storageClass == StorageClass.LOCAL) {
-//			putNew(procedure, identifier, bv, m_ImplementationLocals);
-		} else {
-			throw new AssertionError("unsupported storage classs");
-		}
 		
 		m_SmtVar2BoogieVar.put(termVariable, bv);
 		return bv;

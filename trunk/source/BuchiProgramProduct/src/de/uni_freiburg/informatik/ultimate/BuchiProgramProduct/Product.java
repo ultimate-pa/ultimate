@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -92,7 +93,7 @@ public class Product {
 	private void generateTransFormula() {
 		Boogie2SMT b2smt = mRootNode.getRootAnnot().getBoogie2SMT();
 		RootAnnot rootAnnot = mRootNode.getRootAnnot();
-		TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, rootAnnot);
+		TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt);
 
 		for (String procIdent : rootAnnot.getBoogieDeclarations().getProcImplementation().keySet()) {
 			Procedure proc = rootAnnot.getBoogieDeclarations().getProcImplementation().get(procIdent);
@@ -104,7 +105,7 @@ public class Product {
 				}
 				for (RCFGEdge edge : node.getOutgoingEdges()) {
 					if (edge instanceof StatementSequence) {
-						tfb.addTransitionFormulas(edge, procIdent);
+						tfb.addTransitionFormulas((CodeBlock) edge, procIdent);
 					}
 				}
 			}
@@ -122,8 +123,7 @@ public class Product {
 	private void createEdges() throws Exception {
 		ProgramPoint targetpp, currentpp;
 
-		TransFormulaBuilder transFormulaBuilder = new TransFormulaBuilder(mRootNode.getRootAnnot().getBoogie2SMT(),
-				mRootNode.getRootAnnot());
+		TransFormulaBuilder transFormulaBuilder = new TransFormulaBuilder(mRootNode.getRootAnnot().getBoogie2SMT());
 
 		// for Node x Node
 		for (int mode = 0; mode < 2; mode++)

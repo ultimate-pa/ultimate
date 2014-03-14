@@ -7,7 +7,5 @@ public class NotAffineException extends Exception {
 	public NotAffineException(String message) {
 		super(message);
 	}
-	
-	
 
 }

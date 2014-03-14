@@ -13,6 +13,13 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
+
+/**
+ * Main class for the translation from Boogie to SMT. Constructs other Objects
+ * needed for this translation.
+ * @author Matthias Heizmann
+ *
+ */
 public class Boogie2SMT {
 	
 	/**
@@ -78,9 +85,6 @@ public class Boogie2SMT {
 	}
 	
 	
-	
-	
-	
 	public Statements2TransFormula getStatements2TransFormula() {
 		return m_Statements2TransFormula;
 	}
@@ -92,14 +96,10 @@ public class Boogie2SMT {
 	public TypeSortTranslator getTypeSortTranslator() {
 		return m_TypeSortTranslator;
 	}
-	
-	
 
 	ConstOnlyIdentifierTranslator getConstOnlyIdentifierTranslator() {
 		return m_ConstOnlyIdentifierTranslator;
 	}
-
-
 
 	private void declareAxiom(Axiom ax) {
 		IdentifierTranslator[] its = new IdentifierTranslator[]{ getConstOnlyIdentifierTranslator()};

@@ -1,11 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,8 +38,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.NaiveDestructiveEqualityResolution;
 
 /**
- * TODO: cleanup, documentation
- * @author matthias
+ * Translates statements into TransFormulas. The resulting TransFormula
+ * encodes the transition relation of the statements as SMT formula.
+ * 
+ * Idea of underlying algorithm: Starts at the end of the statement sequence
+ * take current variables as outVars and then computes the inVars by 
+ * traversing the sequence of statements backwards and computing some kind of
+ * weakest precondition.
+ * @author Matthias Heizmann
  *
  */
 public class Statements2TransFormula {
@@ -64,14 +67,13 @@ public class Statements2TransFormula {
 	
 	private String m_CurrentProcedure;
 	
-	private HashSet<TermVariable> m_AllVars;
 	private HashMap<BoogieVar, TermVariable> m_OutVars;
 	private HashMap<BoogieVar, TermVariable> m_InVars;
 
 	/**
-	 * Auxilliary variables. TermVariables that occur neither as inVar nor as
+	 * Auxiliary variables. TermVariables that occur neither as inVar nor as
 	 * outVar. If you use the assumes or asserts to encode a transition the
-	 * auxilliary variables are existentially quantified.
+	 * auxiliary variables are existentially quantified.
 	 */
 	private HashSet<TermVariable> m_AuxVars;
 
@@ -97,14 +99,12 @@ public class Statements2TransFormula {
 		assert m_CurrentProcedure == null;
 		assert m_OutVars == null;
 		assert m_InVars == null;
-		assert m_AllVars == null;
 		assert m_AuxVars == null;
 		assert m_Assumes == null;
 		
 		m_CurrentProcedure = procId;
 		m_OutVars = new HashMap<BoogieVar, TermVariable>();
 		m_InVars = new HashMap<BoogieVar, TermVariable>();
-		m_AllVars = new HashSet<TermVariable>();
 		m_AuxVars = new HashSet<TermVariable>();
 		m_Assumes = m_Script.term("true");
 		if (s_ComputeAsserts) {
@@ -152,7 +152,6 @@ public class Statements2TransFormula {
 		m_CurrentProcedure = null;
 		m_OutVars = null;
 		m_InVars = null;
-		m_AllVars = null;
 		m_AuxVars = null;
 		m_Assumes = null;
 		return tf;
@@ -444,7 +443,6 @@ public class Statements2TransFormula {
 			tv = m_VariableManager.constructFreshTermVariable(bv);
 		}
 		m_InVars.put(bv, tv);
-		m_AllVars.add(tv);
 		return tv;
 	}
 	
@@ -669,8 +667,49 @@ public class Statements2TransFormula {
 		}
 		assert (st.getArguments().length == offset);
 //		m_Boogie2smt.removeLocals(calleeImpl);
-		m_AllVars.addAll(m_OutVars.values());
 		return getTransFormula(false, true);
 	}
+	
+	
+	
+	
+	/**
+	 * Returns a TransFormula that describes the assignment of (local) out 
+	 * parameters to variables that take the result.
+	 * The variables on the left hand side of the call statement are the only 
+	 * outVars. For each outParameter and each left hand side of the call we
+	 * construct a new BoogieVar which is equivalent to the BoogieVars of the
+	 * corresponding procedures. 
+	 */
+	public TransFormula resultAssignment(CallStatement st, String caller) {
+		initialize(caller);
+		String callee = st.getMethodName();
+		Procedure impl = m_BoogieDeclarations.getProcImplementation().get(callee);
+		int offset = 0;
+		DeclarationInformation declInfo = new DeclarationInformation(
+								StorageClass.IMPLEMENTATION_OUTPARAM, callee);
+		Term[] assignments = new Term[st.getLhs().length];
+		for (VarList ourParamVarList : impl.getOutParams()) {
+			for (String outParamId : ourParamVarList.getIdentifiers()) {
+				BoogieVar outParamBv = m_Boogie2SmtSymbolTable.getBoogieVar(
+						outParamId, declInfo, false);
+				String suffix = "OutParam";
+				TermVariable outParamTv = m_VariableManager.
+						constructTermVariableWithSuffix(outParamBv, suffix);
+				m_InVars.put(outParamBv, outParamTv);
+				String callLhsId = st.getLhs()[offset].getIdentifier();
+				DeclarationInformation callLhsDeclInfo = ((VariableLHS)st.getLhs()[offset]).getDeclarationInformation();
+				BoogieVar callLhsBv = m_Boogie2SmtSymbolTable.getBoogieVar(callLhsId, callLhsDeclInfo, false);
+				TermVariable callLhsTv = m_VariableManager.constructFreshTermVariable(callLhsBv);
+				m_OutVars.put(callLhsBv, callLhsTv);
+				assignments[offset] = m_Script.term("=", callLhsTv, outParamTv);
+				offset++;
+			}
+		}
+		assert (st.getLhs().length == offset);
+		m_Assumes = Util.and(m_Script, assignments);
+		return getTransFormula(false, true);
+	}
+	
 
 }

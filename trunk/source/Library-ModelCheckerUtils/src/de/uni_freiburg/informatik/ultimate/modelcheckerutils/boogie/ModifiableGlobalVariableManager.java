@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 /**
  * Contains information about modifiable global variables and provides 
  * auxiliary TransFormulas useful for verification.
+ * @author Matthias Heizmann
  */
 public class ModifiableGlobalVariableManager {
 	

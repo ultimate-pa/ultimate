@@ -5,13 +5,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.BinaryNumericRelation.NotBinaryNumericRelationException;
 
+/**
+ * Transform all subterms that are an affine relation to positive normal form.
+ * @author Matthias Heizmann
+ */
 public class AffineSubtermNormalizer extends TermTransformer {
 	
 	private final Script m_Script;
 
-	/**
-	 * Transform all subterms that are an affine relation to positive normal form.
-	 */
 	public AffineSubtermNormalizer(Script script) {
 		super();
 		m_Script = script;

@@ -16,7 +16,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 
 /**
- * Transform Term into AffineTerm.
+ * Transform a Term into an AffineTerm. 
+ * Result is an auxiliary error term if the input was not affine.
+ * 
  * @author Matthias Heizman
  *
  */

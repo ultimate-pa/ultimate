@@ -181,7 +181,7 @@ public class CfgBuilder {
 	 */
 	public RootNode getRootNode(Unit unit) {
 
-		tfb = new TransFormulaBuilder(m_Boogie2smt, m_RootAnnot);
+		tfb = new TransFormulaBuilder(m_Boogie2smt);
 
 		// Initialize the root node.
 		m_Graphroot = new RootNode(m_RootAnnot);
@@ -278,18 +278,17 @@ public class CfgBuilder {
 	private void addCallTransitionAndReturnTransition(Summary edge) {
 		CallStatement st = edge.getCallStatement();
 		String callee = st.getMethodName();
-		assert (m_RootAnnot.m_entryNode.containsKey(callee)) : "Source code contains" + " call of " + callee
-				+ " but no such procedure.";
+		assert (m_RootAnnot.m_entryNode.containsKey(callee)) : 
+			"Source code contains" + " call of " + callee + " but no such procedure.";
 
 		// Add call transition from callerNode to procedures entry node
 		ProgramPoint callerNode = (ProgramPoint) edge.getSource();
 		ProgramPoint calleeEntryLoc = m_RootAnnot.m_entryNode.get(callee);
 
 		String caller = callerNode.getProcedure();
-		Procedure callerImpl = m_BoogieDeclarations.getProcImplementation().get(caller);
 		
 		TransFormula arguments2InParams = m_RootAnnot.getBoogie2SMT().getStatements2TransFormula().inParamAssignment(st);
-		TransFormula outParams2CallerVars = tfb.resultAssignment(st, caller);
+		TransFormula outParams2CallerVars = m_RootAnnot.getBoogie2SMT().getStatements2TransFormula().resultAssignment(st, caller);
 
 		Call call = new Call(callerNode, calleeEntryLoc, st);
 		call.setTransitionFormula(arguments2InParams);
@@ -300,39 +299,6 @@ public class CfgBuilder {
 		returnAnnot.setTransitionFormula(outParams2CallerVars);
 	}
 
-	// private AssignmentStatement parameterPassing(CallStatement st) {
-	// Procedure proc = m_Procedure.get(st.getMethodName());
-	// VarList[] inParams = proc.getInParams();
-	// VarList[] outParams = proc.getOutParams();
-	// String[] lhs = st.getLhs();
-	// Expression[] arguments = st.getArguments();
-	//
-	// VariableLHS[] globalInParams = new VariableLHS[inParams.length];
-	//
-	//
-	//
-	// // Expression[] arguments = st.getArguments();
-	// List<VariableLHS> parameterList = new LinkedList<VariableLHS>();
-	// VarList[] inParams = proc.getInParams();
-	// for (VarList varList : inParams) {
-	// String[] identifiers = varList.getIdentifiers();
-	// IType type = varList.getType().getBoogieType();
-	// for (String identifier : identifiers) {
-	// parameterList.add(new VariableLHS(type, identifier));
-	// }
-	// }
-	// s_Logger.debug("Call "+st+" has "+arguments.length+" arguments");
-	// s_Logger.debug("Procedure"+st.getMethodName()+" has "
-	// +parameterList.size()+"(in)parameters");
-	// if (arguments.length!=parameterList.size()) {
-	// throw new IllegalArgumentException("CallStatement" + st +
-	// "has wrong number of arguments");
-	// }
-	// VariableLHS[] lhs = parameterList.toArray(new VariableLHS[0]);
-	// new AssignmentStatement(null,0, lhs,arguments);
-	// return null;
-	//
-	// }
 
 	/**
 	 * Build control flow graph of single procedures.

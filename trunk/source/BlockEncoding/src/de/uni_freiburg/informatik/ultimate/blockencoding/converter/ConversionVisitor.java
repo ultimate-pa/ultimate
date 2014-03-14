@@ -98,8 +98,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		this.visitedEdges = new HashSet<IMinimizedEdge>();
 		this.boogie2smt = boogie2smt;
 		this.checkForMultipleFormula = new HashMap<IMinimizedEdge, Integer>();
-		this.transFormBuilder = new TransFormulaBuilder(boogie2smt,
-				root.getRootAnnot());
+		this.transFormBuilder = new TransFormulaBuilder(boogie2smt);
 		this.modGlobalVarManager = root.getRootAnnot().getModGlobVarManager();
 		this.seqComposedBlocks = new Stack<ArrayList<CodeBlock>>();
 		this.hasConjunctionAsParent = new HashSet<IMinimizedEdge>();
