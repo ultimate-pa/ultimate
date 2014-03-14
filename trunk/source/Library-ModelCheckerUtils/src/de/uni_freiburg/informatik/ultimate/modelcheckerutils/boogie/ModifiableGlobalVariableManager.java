@@ -124,7 +124,7 @@ public class ModifiableGlobalVariableManager {
 		HashSet<TermVariable> auxVars = new HashSet<TermVariable>(0);
 		HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
 		Term closedFormula = TransFormula.computeClosedFormula(
-				glob2oldFormula, glob2oldInVars, glob2oldOutVars, auxVars, m_Boogie2smt);
+				glob2oldFormula, glob2oldInVars, glob2oldOutVars, auxVars, false, m_Boogie2smt);
 		TransFormula result = new TransFormula(glob2oldFormula, glob2oldInVars,glob2oldOutVars,
 				auxVars, branchEncoders,
 				TransFormula.Infeasibility.UNPROVEABLE, closedFormula);
@@ -166,7 +166,7 @@ public class ModifiableGlobalVariableManager {
 		HashSet<TermVariable> auxVars = new HashSet<TermVariable>(0);
 		HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
 		Term closedFormula = TransFormula.computeClosedFormula(
-				old2globFormula, old2globInVars, old2globOutVars, auxVars, m_Boogie2smt);
+				old2globFormula, old2globInVars, old2globOutVars, auxVars, false, m_Boogie2smt);
 		TransFormula result = new TransFormula(old2globFormula, old2globInVars, old2globOutVars,
 				auxVars, branchEncoders, TransFormula.Infeasibility.UNPROVEABLE,closedFormula);
 		return result;

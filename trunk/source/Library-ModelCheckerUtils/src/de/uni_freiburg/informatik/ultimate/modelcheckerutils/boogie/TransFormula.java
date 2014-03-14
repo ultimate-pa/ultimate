@@ -143,16 +143,19 @@ public class TransFormula implements Serializable {
 	 * BoogieVar
 	 * <li> and each outVar is replaced by primed constant of corresponding 
 	 * BoogieVar
-	 * <li> each auxVar is replaced by a fresh constant
+	 * <li> each auxVar is replaced by a constant (with the same name as the
+	 * auxVar)
 	 * </ul>
 	 * If formula contained no branch encoders the result is a closed formula 
-	 * (does not contain free variables)  
+	 * (does not contain free variables)
+	 * @param existingAuxVarConsts if true we assume that the constants for the
+	 * auxVars already exist, otherwise we construct them  
 	 * 
 	 */
 	public static Term computeClosedFormula(Term formula,
 			Map<BoogieVar, TermVariable> inVars,
 			Map<BoogieVar, TermVariable> outVars,
-			Set<TermVariable> auxVars,
+			Set<TermVariable> auxVars, boolean existingAuxVarConsts,
 			Boogie2SMT boogie2smt) {
 		Map<TermVariable,Term> substitutionMapping = new HashMap<TermVariable, Term>();
 		for (BoogieVar bv : inVars.keySet()) {
@@ -167,7 +170,13 @@ public class TransFormula implements Serializable {
 			substitutionMapping.put(outVars.get(bv), bv.getPrimedConstant());
 		}
 		for (TermVariable tv : auxVars) {
-			substitutionMapping.put(tv, boogie2smt.getVariableManager().constructConstant(tv));
+			Term auxConst;
+			if (existingAuxVarConsts) {
+				auxConst = boogie2smt.getScript().term(tv.getName());
+			} else {
+				auxConst = boogie2smt.getVariableManager().constructConstant(tv);
+			}
+			substitutionMapping.put(tv, auxConst);
 		}
 		Term closedTerm = (new Substitution(substitutionMapping, boogie2smt.getScript())).transform(formula);
 		return closedTerm;
@@ -515,7 +524,7 @@ public class TransFormula implements Serializable {
 		}
 
 		Term closedFormula = computeClosedFormula(formula, 
-				inVars, outVars, auxVars, boogie2smt);
+				inVars, outVars, auxVars, false, boogie2smt);
 		TransFormula result = new TransFormula(formula, inVars, outVars,
 				auxVars, newBranchEncoders, infeasibility, closedFormula);
 
@@ -853,13 +862,8 @@ public class TransFormula implements Serializable {
 		
 		for (int i=0; i<transFormulas.length; i++) {
 			branchEncoders.addAll(transFormulas[i].getBranchEncoders());
+			auxVars.addAll(transFormulas[i].getAuxVars());
 			Map<TermVariable,Term> subsitutionMapping = new HashMap<TermVariable, Term>();
-			for (TermVariable oldAuxVar : transFormulas[i].getAuxVars()) {
-				TermVariable newAuxVar = boogie2smt.getVariableManager().
-						constructFreshTermVariable(oldAuxVar.getName(), oldAuxVar.getSort());
-				subsitutionMapping.put(oldAuxVar, newAuxVar);
-				auxVars.add(newAuxVar);
-			}
 			for (BoogieVar bv : transFormulas[i].getInVars().keySet()) {
 				TermVariable inVar = transFormulas[i].getInVars().get(bv);
 				subsitutionMapping.put(inVar, newInVars.get(bv));
@@ -925,7 +929,7 @@ public class TransFormula implements Serializable {
 			resultFormula = (new Cnf(script)).transform(resultFormula);
 		}
 		Term closedFormula = computeClosedFormula(resultFormula, 
-				newInVars, newOutVars, auxVars, boogie2smt);
+				newInVars, newOutVars, auxVars, true, boogie2smt);
 		return new TransFormula(resultFormula, newInVars, newOutVars, auxVars, 
 				branchEncoders, inFeasibility, closedFormula);
 	}

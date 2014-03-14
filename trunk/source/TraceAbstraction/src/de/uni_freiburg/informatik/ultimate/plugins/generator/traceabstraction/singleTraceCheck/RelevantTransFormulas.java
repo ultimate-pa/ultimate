@@ -245,7 +245,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 				auxVars.add(tv);
 			}
 		}
-		Term closedFormula = TransFormula.computeClosedFormula(formula, invars, outvars, auxVars, m_SmtManager.getBoogie2Smt());
+		Term closedFormula = TransFormula.computeClosedFormula(formula, invars, outvars, auxVars, true, m_SmtManager.getBoogie2Smt());
 		
 		return new TransFormula(formula,
 				invars,

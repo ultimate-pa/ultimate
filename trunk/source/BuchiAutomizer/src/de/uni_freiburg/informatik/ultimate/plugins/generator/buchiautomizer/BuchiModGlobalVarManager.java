@@ -90,7 +90,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 			outVars.put(m_OldRankOldVar[i], m_OldRankOldVar[i].getTermVariable());
 		}
 		Term closedFormula = TransFormula.computeClosedFormula(
-				formula, inVars, outVars, auxVars, m_Boogie2smt);
+				formula, inVars, outVars, auxVars, false, m_Boogie2smt);
 		TransFormula result = new TransFormula(formula, inVars, outVars, 
 				auxVars, branchEncoders, infeasibility, closedFormula);
 		return result;
@@ -119,7 +119,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 			outVars.put(m_OldRank[i], m_OldRank[i].getTermVariable());
 		}
 		Term closedFormula = TransFormula.computeClosedFormula(
-				formula, inVars, outVars, auxVars, m_Boogie2smt);
+				formula, inVars, outVars, auxVars, false, m_Boogie2smt);
 		TransFormula result = new TransFormula(formula, inVars, outVars, 
 				auxVars, branchEncoders, infeasibility, closedFormula);
 		return result;

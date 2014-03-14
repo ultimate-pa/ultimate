@@ -231,7 +231,7 @@ public class TransFormulaBuilder {
 		HashSet<TermVariable> auxVars = new HashSet<TermVariable>(0);
 		HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
 		Term closedFormula = TransFormula.computeClosedFormula(
-				formula, inVars, outVars, auxVars, m_Boogie2smt);
+				formula, inVars, outVars, auxVars, false, m_Boogie2smt);
 		return new TransFormula(formula, inVars, outVars, 
 				auxVars, branchEncoders,
 				TransFormula.Infeasibility.UNPROVEABLE,closedFormula);

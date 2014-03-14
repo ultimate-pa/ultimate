@@ -146,7 +146,7 @@ public class Statements2TransFormula {
 		TransFormula.removeSuperfluousVars(formula, m_InVars, m_OutVars, auxVars);
 		HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
 		Term closedFormula = TransFormula.computeClosedFormula(
-				formula, m_InVars, m_OutVars, auxVars, m_Boogie2SMT);
+				formula, m_InVars, m_OutVars, auxVars, false, m_Boogie2SMT);
 		TransFormula tf = new TransFormula(formula,	m_InVars, m_OutVars, auxVars, 
 				branchEncoders, infeasibility, closedFormula);
 		m_CurrentProcedure = null;
