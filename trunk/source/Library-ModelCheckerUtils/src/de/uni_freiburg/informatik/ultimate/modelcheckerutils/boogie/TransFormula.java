@@ -75,7 +75,7 @@ public class TransFormula implements Serializable {
 //	private final static boolean s_TransformToCNF = false;
 	
 	private final Term m_Formula;
-	private final Set<TermVariable> m_Vars;
+//	private final Set<TermVariable> m_Vars;
 	private final Map<BoogieVar, TermVariable> m_InVars;
 	private final Map<BoogieVar, TermVariable> m_OutVars;
 	private final Set<BoogieVar> m_AssignedVars;
@@ -106,7 +106,7 @@ public class TransFormula implements Serializable {
 		m_Infeasibility = infeasibility;
 		m_ClosedFormula = closedFormula;
 		assert (branchEncoders.size() > 0 || closedFormula.getFreeVars().length == 0);
-		m_Vars = new HashSet<TermVariable>(Arrays.asList(m_Formula.getFreeVars()));
+//		m_Vars = new HashSet<TermVariable>(Arrays.asList(m_Formula.getFreeVars()));
 		assert allSubsetInOutAuxBranch() : "unexpected vars in TransFormula";
 		assert InAuxSubsetAll(allowSuperflousInVars) : "superfluous vars in TransFormula";
 //		assert m_OutVars.keySet().containsAll(m_InVars.keySet()) : " strange inVar";
@@ -287,7 +287,9 @@ public class TransFormula implements Serializable {
 	 */
 	private boolean allSubsetInOutAuxBranch() {
 		boolean result = true;
-		for (TermVariable tv : m_Vars) {
+		HashSet<TermVariable> allVars = new HashSet<TermVariable>(
+				Arrays.asList(m_Formula.getFreeVars()));
+		for (TermVariable tv : allVars) {
 			result &= (m_InVars.values().contains(tv) || 
 					m_OutVars.values().contains(tv) || 
 					m_auxVars.contains(tv)
@@ -295,7 +297,7 @@ public class TransFormula implements Serializable {
 			assert result : "unexpected variable in formula";
 		}
 		for (TermVariable tv : m_auxVars) {
-			result &= m_Vars.contains(tv);
+			result &= allVars.contains(tv);
 			assert result : "unnecessary many vars in TransFormula";
 		}
 		return result;
@@ -307,14 +309,16 @@ public class TransFormula implements Serializable {
 	 */
 	private boolean InAuxSubsetAll(boolean allowSuperflousInVars) {
 		boolean result = true;
+		HashSet<TermVariable> allVars = new HashSet<TermVariable>(
+				Arrays.asList(m_Formula.getFreeVars()));
 		if (!allowSuperflousInVars) {
 			for (BoogieVar bv : m_InVars.keySet()) {
-				result &= (m_Vars.contains(m_InVars.get(bv)));
+				result &= (allVars.contains(m_InVars.get(bv)));
 				assert result : "superfluous inVar";
 			}
 		}
 		for (TermVariable tv : m_auxVars) {
-			result &= m_Vars.contains(tv);
+			result &= allVars.contains(tv);
 			assert result : "superfluous auxVar";
 		}
 		return result;
@@ -356,9 +360,9 @@ public class TransFormula implements Serializable {
 	@Override
 	public String toString() {
 		return "Formula: "+m_Formula + 
-				"  Vars: " + m_Vars + 
 				"  InVars " + m_InVars + 
 				"  OutVars" + m_OutVars +
+				"  AuxVars" + m_auxVars +
 				"  AssignedVars" + m_AssignedVars;
 	}
 	
