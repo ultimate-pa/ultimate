@@ -136,9 +136,8 @@ public class TransFormulaBuilder {
 	private TransFormula getTransitionFormula(Summary summary, String procId) {
 		TransFormula tf = null;
 		try {
-			Statements2TransFormula stmts2TransFormula = new Statements2TransFormula(procId, m_Boogie2smt);
-			stmts2TransFormula.addSummary(summary.getCallStatement());
-			tf = stmts2TransFormula.getTransFormula(m_SimplifyCodeBlocks);
+			tf = m_Boogie2smt.getStatements2TransFormula().statementSequence(
+					m_SimplifyCodeBlocks, procId, new Statement[] { summary.getCallStatement() });
 		} 	catch (SMTLIBException e) {
 			if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
 				reportUnsupportedSyntax(summary,e.getMessage());
@@ -158,24 +157,9 @@ public class TransFormulaBuilder {
 	private TransFormula getTransitionFormula(StatementSequence stseq, String procId) {
 		TransFormula tf = null;
 		try {
-			Statements2TransFormula stmts2TransFormula = new Statements2TransFormula(procId, m_Boogie2smt);
-			List<Statement> stmts = stseq.getStatements();
-			for (ListIterator<Statement> it = stmts.listIterator(stmts.size());
-					it.hasPrevious();) {
-				Statement st = it.previous();
-				if (st instanceof AssumeStatement) {
-					stmts2TransFormula.addAssume((AssumeStatement) st);
-				} else if (st instanceof AssignmentStatement) {
-					stmts2TransFormula.addAssignment((AssignmentStatement) st);
-				} else if (st instanceof HavocStatement) {
-					stmts2TransFormula.addHavoc((HavocStatement) st);
-				} else {
-					throw new IllegalArgumentException("Intenal Edge only contains"
-							+ " Assume, Assignment or Havoc Statement");
-				}
-			}
-		tf = stmts2TransFormula.getTransFormula(m_SimplifyCodeBlocks);
-		} 	catch (SMTLIBException e) {
+			tf = m_Boogie2smt.getStatements2TransFormula().statementSequence(
+					m_SimplifyCodeBlocks, procId, stseq.getStatements().toArray(new Statement[0]));
+		} catch (SMTLIBException e) {
 			if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
 				reportUnsupportedSyntax(stseq,e.getMessage());
 			}

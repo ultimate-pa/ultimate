@@ -29,6 +29,8 @@ public class Boogie2SMT {
 	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
 	private final VariableManager m_VariableManager;
 	private final Term2Expression m_Term2Expression;
+	
+	private final Statements2TransFormula m_Statements2TransFormula;
 
 
 	private final ConstOnlyIdentifierTranslator m_ConstOnlyIdentifierTranslator;
@@ -49,7 +51,7 @@ public class Boogie2SMT {
 		for (Axiom decl : boogieDeclarations.getAxioms()) {
 			this.declareAxiom(decl);
 		}
-		
+		m_Statements2TransFormula = new Statements2TransFormula(this);
 		m_Term2Expression = new Term2Expression(m_TypeSortTranslator, m_Boogie2SmtSymbolTable);
 
 	}
@@ -79,6 +81,10 @@ public class Boogie2SMT {
 	
 	
 	
+	public Statements2TransFormula getStatements2TransFormula() {
+		return m_Statements2TransFormula;
+	}
+
 	public BoogieDeclarations getBoogieDeclarations() {
 		return m_BoogieDeclarations;
 	}
@@ -119,11 +125,12 @@ public class Boogie2SMT {
 	 * is at the lowest level.
 	 * Auxiliary variables are not supported in any backtranslation.
 	 */
-	public BoogieVar constructAuxiliaryBoogieVar(String identifier, 
+	public BoogieVar constructAuxiliaryGlobalBoogieVar(String identifier, 
 			String procedure, IType iType, 
 			boolean isOldvar, BoogieASTNode BoogieASTNode) {
-		return m_Boogie2SmtSymbolTable.constructBoogieVar(identifier, procedure, 
-				StorageClass.GLOBAL , iType, isOldvar, BoogieASTNode);
+
+		return m_Boogie2SmtSymbolTable.constructAuxiliaryGlobalBoogieVar(
+				identifier, procedure, iType, isOldvar, BoogieASTNode);
 	}
 	
 	

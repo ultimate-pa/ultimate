@@ -290,9 +290,7 @@ public class CfgBuilder {
 		String caller = callerNode.getProcedure();
 		Procedure callerImpl = m_BoogieDeclarations.getProcImplementation().get(caller);
 		
-		Statements2TransFormula stmt2TransFormula = new Statements2TransFormula(caller, m_RootAnnot.getBoogie2SMT());
-		
-		TransFormula arguments2InParams = stmt2TransFormula.inParamAssignment(st); 
+		TransFormula arguments2InParams = m_RootAnnot.getBoogie2SMT().getStatements2TransFormula().inParamAssignment(st);
 		TransFormula outParams2CallerVars = tfb.resultAssignment(st, caller);
 
 		Call call = new Call(callerNode, calleeEntryLoc, st);

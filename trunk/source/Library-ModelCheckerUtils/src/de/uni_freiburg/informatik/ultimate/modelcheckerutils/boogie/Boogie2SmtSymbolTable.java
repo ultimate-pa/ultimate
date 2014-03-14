@@ -364,7 +364,7 @@ public class Boogie2SmtSymbolTable {
 	 *            BoogieASTNode for which errors (e.g., unsupported syntax) are
 	 *            reported
 	 */
-	BoogieVar constructBoogieVar(String identifier, String procedure,
+	private BoogieVar constructBoogieVar(String identifier, String procedure,
 			StorageClass storageClass, 
 			IType iType, boolean isOldvar, BoogieASTNode BoogieASTNode) {
 		Sort sort = m_TypeSortTranslator.getSort(iType, BoogieASTNode);
@@ -424,6 +424,17 @@ public class Boogie2SmtSymbolTable {
 		return bv;
 	}
 	
+	BoogieVar constructAuxiliaryGlobalBoogieVar(String identifier, String procedure,
+			IType iType, boolean isOldvar, BoogieASTNode BoogieASTNode) {
+		BoogieVar bv = constructBoogieVar(identifier, procedure, 
+				StorageClass.GLOBAL, iType, isOldvar, BoogieASTNode);
+		if (isOldvar) {
+			m_OldGlobals.put(identifier, bv);
+		} else {
+			m_Globals.put(identifier, bv);
+		}
+		return bv;
+	}
 	
 
 }
