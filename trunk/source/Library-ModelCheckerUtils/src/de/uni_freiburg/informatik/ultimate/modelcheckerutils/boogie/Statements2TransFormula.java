@@ -126,19 +126,19 @@ public class Statements2TransFormula {
 		} 
 		
 		if (feasibilityKnown) {
-			infeasibility = infeasibility.UNPROVEABLE;
+			infeasibility = Infeasibility.UNPROVEABLE;
 		}
 		
 		if (infeasibility == null) {
 			if (simplify) {
-				infeasibility = infeasibility.UNPROVEABLE;
+				infeasibility = Infeasibility.UNPROVEABLE;
 			} else {
 				LBool isSat = Util.checkSat(m_Script, formula);
 				if (isSat == LBool.UNSAT) {
 					formula = m_Script.term("false");
 					infeasibility = Infeasibility.INFEASIBLE;
 				} else {
-					infeasibility = infeasibility.UNPROVEABLE;
+					infeasibility = Infeasibility.UNPROVEABLE;
 				}
 				
 			}
@@ -211,12 +211,6 @@ public class Statements2TransFormula {
 			BoogieVar boogieVar = getModifiableBoogieVar(name, declInfo);
 			assert (boogieVar != null);
 			getOrConstuctCurrentRepresentative(boogieVar);
-//			if (!inVars.containsKey(boogieVar)) {
-//				if (!outVars.containsKey(boogieVar)) {
-//					TermVariable tv = createInVar(boogieVar);
-//					outVars.put(boogieVar, tv);
-//				}
-//			}
 			if (m_InVars.containsKey(boogieVar)) {
 				TermVariable tv = m_InVars.get(boogieVar);
 				addedEqualities.put(tv, rhs[i]);
@@ -245,12 +239,6 @@ public class Statements2TransFormula {
 			BoogieVar boogieVar = getModifiableBoogieVar(name, declInfo);
 			assert (boogieVar != null);
 			getOrConstuctCurrentRepresentative(boogieVar);
-//			if (!inVars.containsKey(boogieVar)) {
-//				if (!outVars.containsKey(boogieVar)) {
-//					TermVariable tv = createInVar(boogieVar);
-//					outVars.put(boogieVar, tv);
-//				}
-//			}
 			if (m_InVars.containsKey(boogieVar)) {
 				removeInVar(boogieVar);
 			}
@@ -657,8 +645,10 @@ public class Statements2TransFormula {
 //				BoogieVar boogieVar = m_Boogie2SMT.getBoogie2SmtSymbolTable().getBoogieVar(var, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, callee), false);
 				assert boogieVar != null;
 						//m_Boogie2smt.getLocalBoogieVar(callee, var);
-				String varname = callee + "_" + var + "_" + "InParam";
-				TermVariable tv = m_Script.variable(varname, sort);
+//				String varname = callee + "_" + var + "_" + "InParam";
+//				TermVariable tv = m_Script.variable(varname, sort);
+				String suffix = "InParam";
+				TermVariable tv = m_VariableManager.constructTermVariableWithSuffix(boogieVar, suffix);
 				m_OutVars.put(boogieVar,tv);
 				Term assignment = m_Script.term("=", tv, argTerms[offset]);
 				m_Assumes = Util.and(m_Script, m_Assumes, assignment);
