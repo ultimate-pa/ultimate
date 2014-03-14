@@ -1,62 +1,49 @@
-// Based on benchmark toylin2.c
+// Based on benchmark toylin1.c
 // manually translated by DD
 //
 // #LTLProperty: x U (!x && (a -> <>b))
-// #IRS: a: c > (servers / 2)
-// #IRS: b: resp > (servers / 2)
+// #IRS: a: c > 5
+// #IRS: b: resp > 5
 // #IRS: x: init = 0
 // 
 // Property should hold 
-//
+// 
 // Additional comments: 
-// * c was an unsigned int 
 // * init is new and necessary to state that the property should only be analysed after init 
 // * ULTIMATE.start() replaced an empty main() method 
 
-var c,servers,resp,curr_serv,serversdiv2 : int;
+var c,servers,resp,curr_serv : int;
 var init : int;
 
 procedure init() 
-modifies c,servers,resp,curr_serv,serversdiv2;
+modifies c,servers,resp,curr_serv;
 {
-  havoc c; 
+  havoc c;
   assume(c>0);
-  havoc servers; 
-  assume(servers>0);
-  havoc serversdiv2;
-  if(*){
-    assume(serversdiv2+serversdiv2==servers);
-	}
-  else{
-    assume(serversdiv2+serversdiv2+1==servers);
-	}
+  servers := 4;
   resp := 0;
   curr_serv := servers;
 }
 
 procedure body() 
-modifies c,curr_serv,resp;
+modifies c,resp,curr_serv;
 {
-  var ddd : int; 
-  
+  var ddd : int;
   while(curr_serv > 0) {
     if(*) {
       c := c - 1; 
-	  curr_serv := curr_serv - 1 ;
-      resp := resp + 1 ;
-    } else 
-	{
+	  curr_serv := curr_serv - 1;
+      resp := resp + 1;
+    } else {
       assume(c < curr_serv);
       curr_serv := curr_serv - 1;
     }
   }
-  while(true) { 
-	ddd:=ddd; 
-  }
+  while(true) { ddd:=ddd; }
 }
 
 procedure ULTIMATE.start() 
-modifies c,servers,resp,curr_serv,serversdiv2,init;
+modifies c,servers,resp,curr_serv,init;
 {
 	init := 0;
 	call init();

@@ -113,9 +113,7 @@ public class CfgBuilder {
 		m_CodeBlockSize = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID)).getEnum(
 				PreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
 
-		Logger solverLogger = Logger.getLogger("interpolLogger");
-		solverLogger.setLevel(Level.ERROR);
-
+		Logger solverLogger = UltimateServices.getInstance().getLoggerForExternalTool("interpolLogger");
 		if (useExternalSolver) {
 			String command = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 					.getString(PreferenceInitializer.LABEL_ExtSolverCommand);

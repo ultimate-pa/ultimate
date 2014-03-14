@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
@@ -51,7 +52,7 @@ class SMTSolver {
 	static Script newScript(boolean useExternalSolver,
 			String smt_solver_command,
 			boolean produce_unsat_cores) {
-		Logger solverLogger = Logger.getLogger("constraintLogger");
+		Logger solverLogger = UltimateServices.getInstance().getLoggerForExternalTool("constraintLogger");
 		final Script script; 
 		if (useExternalSolver) {
 			script = new Scriptor(smt_solver_command, solverLogger);

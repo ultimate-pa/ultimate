@@ -788,7 +788,8 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		} else {
 			mBenchmark = null;
 		}
-		mToolchainWalker.reset();
+//		mToolchainWalker.reset();
+		mToolchainWalker = new ToolchainWalker(this, mBenchmark, mModelManager, mIdToTool);
 	}
 
 	/*

@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.LTL2aut.preferences;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.Activator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
 
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
@@ -41,5 +42,9 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	@Override
 	public String getPreferencePageTitle() {
 		return "LTL2aut";
+	}
+	
+	public static boolean readPropertyFromFile(){
+		return new UltimatePreferenceStore(Activator.PLUGIN_ID).getBoolean(PreferenceInitializer.LABEL_PROPERTYFROMFILE);
 	}
 }

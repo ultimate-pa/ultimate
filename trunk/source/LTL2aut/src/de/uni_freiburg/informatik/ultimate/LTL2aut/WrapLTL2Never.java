@@ -70,7 +70,7 @@ public class WrapLTL2Never {
 	 * @throws Exception
 	 */
 	public AstNode ltl2Ast(String ltlFormula) throws Exception {
-		String toolOutput = this.execLTLXBA(ltlFormula);
+		String toolOutput = this.execLTLXBA(ltlFormula.trim());
 		mLogger.debug(String.format("LTLXBA said: %s", toolOutput));
 		InputStreamReader file = new InputStreamReader(IOUtils.toInputStream(toolOutput));
 
