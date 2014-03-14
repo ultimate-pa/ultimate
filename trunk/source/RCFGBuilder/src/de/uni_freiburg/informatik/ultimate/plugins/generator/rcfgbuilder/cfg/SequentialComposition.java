@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
 
@@ -90,6 +91,9 @@ public class SequentialComposition extends CodeBlock {
 			prettyPrinted.append(codeBlocks[i].getPrettyPrintedStatements());
 			ModelUtils.mergeAnnotations(codeBlocks[i], this);
 		}
+		// workaround: set annotation with this pluginId again, because it was
+		// overwritten by the mergeAnnotations method
+		getPayload().getAnnotations().put(Activator.PLUGIN_ID, m_Annotation);
 		checkNumberOfCallsAndReturns(numberCalls, numberReturns);
 
 		boolean s_TransformToCNF = (new UltimatePreferenceStore(

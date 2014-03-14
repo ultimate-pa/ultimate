@@ -59,7 +59,7 @@ public abstract class CodeBlock extends RCFGEdge {
 	protected TransFormula m_TransitionFormula;
 	protected TransFormula m_TransitionFormulaWithBranchEncoders;
 	
-	protected RCFGEdgeAnnotation mAnnotation;
+	protected RCFGEdgeAnnotation m_Annotation;
 
 	int m_OccurenceInCounterexamples = 0;
 
@@ -70,7 +70,7 @@ public abstract class CodeBlock extends RCFGEdge {
 
 	public CodeBlock(ProgramPoint source, ProgramPoint target) {
 		super(source, target);
-		mAnnotation = new RCFGEdgeAnnotation(this) {
+		m_Annotation = new RCFGEdgeAnnotation(this) {
 
 			private static final long serialVersionUID = 1L;
 
@@ -84,7 +84,7 @@ public abstract class CodeBlock extends RCFGEdge {
 				return CodeBlock.this.getFieldNames();
 			}
 		};
-		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
+		getPayload().getAnnotations().put(Activator.PLUGIN_ID, m_Annotation);
 		connectSource(source);
 		connectTarget(target);
 	}
