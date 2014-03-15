@@ -155,8 +155,6 @@ public class SafeSubstitution extends TermTransformer {
 			if (!quantifiedVariablesChanged) {
 				// reuse old array
 				newQuantifiedVars = old.getVariables();
-			} else {
-				newQuantifiedVars.toString();
 			}
 			result = m_Script.quantifier(old.getQuantifier(), newQuantifiedVars, newBody);
 		}
