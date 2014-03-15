@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
+package de.uni_freiburg.informatik.ultimatetest;
 
 import java.io.File;
 import java.util.Collection;
@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimatetest.TestSummary;
 
 public class TraceAbstractionTestSummary extends TestSummary {
 

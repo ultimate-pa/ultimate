@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
+package de.uni_freiburg.informatik.ultimatetest;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -25,8 +25,6 @@ import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
-import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.Util;
 
 /**
  * Decide if Ultimate Automizer verified a program correctly.
