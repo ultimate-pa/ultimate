@@ -10,3 +10,7 @@ file_export_version=3.0
 \!/instance/TraceAbstraction=
 /instance/TraceAbstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
 /instance/UltimateCore/Toolchain\ timeout\ in\ seconds=10
+#Sat Mar 15 16:00:32 CET 2014
+file_export_version=3.0
+@UltimateCore=0.0.1
+/instance/UltimateCore/Generate\ benchmark\ results=false

@@ -19,3 +19,7 @@ file_export_version=3.0
 /instance/UltimateGui/LASTTOOLCHAINPATH=C\:\\Ultimate\\examples\\toolchains\\TraceAbstraction.xml
 /instance/UltimateGui/LASTPATH=C\:\\Ultimate\\examples\\programs\\minitests\\recursivePrograms\\BugNestedSsaWithPendingContexts.bpl
 @UltimateGui=0.0.1
+#Sat Mar 15 16:00:32 CET 2014
+file_export_version=3.0
+@UltimateCore=0.0.1
+/instance/UltimateCore/Generate\ benchmark\ results=false
