@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -9,33 +12,44 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 /**
- * EdgeChecker that is aware of the special Honda and RankDecrease predicates
- * used in Buchi termination analysis.
+ * EdgeChecker that is aware of the special rankDecrease predicates (e.g., the
+ * Honda Predicate). If one of these Predicates occurs on the left-hand side of
+ * an Hoare triple check (i.e., is Precondition or HierPred) we have to replace
+ * it by the corresponding rankEqual predicate.
+ * 
+ * E.g., f(x)<oldrk /\ oldrk>=0 is replaced by f(x)<=oldrk.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
 public class BuchiEdgeChecker extends EdgeChecker {
 
-	private final IPredicate m_HondaPredicate;
-	private final IPredicate m_RankEqAndSi;
+	private final Map<IPredicate,IPredicate> m_RankDecrease2RankEquality = 
+			new HashMap<IPredicate,IPredicate>();
 
 	public BuchiEdgeChecker(SmtManager smtManager, 
-			BuchiModGlobalVarManager buchiModGlobalVarManager,
-			IPredicate hondaPredicate,
-			IPredicate rankEqAndSi) {
+			BuchiModGlobalVarManager buchiModGlobalVarManager) {
 		super(smtManager, buchiModGlobalVarManager);
-		m_HondaPredicate = hondaPredicate;
-		m_RankEqAndSi = rankEqAndSi;
+	}
+	
+	public void putDecreaseEqualPair(IPredicate rankDecreaseAndBound, IPredicate rankEquality) {
+		m_RankDecrease2RankEquality.put(rankDecreaseAndBound, rankEquality);
 	}
 
 	
+	private IPredicate replaceIfRankDecreasePredicate(IPredicate p) {
+		IPredicate rankEq = m_RankDecrease2RankEquality.get(p);
+		if (rankEq == null) {
+			return p;
+		} else {
+			return rankEq;
+		}
+	}
 	
 	
 	@Override
 	public LBool assertPrecondition(IPredicate p) {
-		if (p == m_HondaPredicate) {
-			p  = m_RankEqAndSi;
-		}
+		p = replaceIfRankDecreasePredicate(p);
 		return super.assertPrecondition(p);
 	}
 
@@ -44,9 +58,7 @@ public class BuchiEdgeChecker extends EdgeChecker {
 
 	@Override
 	public LBool assertHierPred(IPredicate p) {
-		if (p == m_HondaPredicate) {
-			p  = m_RankEqAndSi;
-		}
+		p = replaceIfRankDecreasePredicate(p);
 		return super.assertHierPred(p);
 	}
 

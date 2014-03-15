@@ -61,10 +61,11 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 
 	
 
-	public BuchiInterpolantAutomatonBouncer(SmtManager smtManager, EdgeChecker edgeChecker,
+	public BuchiInterpolantAutomatonBouncer(SmtManager smtManager,
+			BinaryStatePredicateManager bspm,
+			BuchiEdgeChecker edgeChecker,
 			boolean emtpyStem,
-			IPredicate precondition, Set<IPredicate> stemInterpolants, 
-			IPredicate hondaPredicate, 
+			Set<IPredicate> stemInterpolants, 
 			Set<IPredicate> loopInterpolants, CodeBlock hondaEntererStem, CodeBlock hondaEntererLoop,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			boolean scroogeNondeterminismStem, boolean scroogeNondeterminismLoop,
@@ -74,9 +75,8 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		m_StemPU = stemPU;
 		m_LoopPU = loopPU;
 
-		m_HondaPredicate = hondaPredicate;
-		initializeConstruction(emtpyStem, precondition, stemInterpolants,
-				hondaPredicate, loopInterpolants);
+		m_HondaPredicate = bspm.getHondaPredicate();
+		initializeConstruction(emtpyStem, bspm, stemInterpolants, loopInterpolants);
 		m_HondaEntererStem = hondaEntererStem;
 		m_HondaEntererLoop = hondaEntererLoop;
 		/**
@@ -102,10 +102,12 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 	}
 
 	private void initializeConstruction(boolean emtpyStem,
-			IPredicate precondition, Set<IPredicate> stemInterpolants,
-			IPredicate hondaPredicate, Set<IPredicate> loopInterpolants) {
+			BinaryStatePredicateManager bspm,
+			Set<IPredicate> stemInterpolants,
+			Set<IPredicate> loopInterpolants) {
+		IPredicate precondition = bspm.getStemPrecondition();
 		boolean hondaIsInitial = emtpyStem;
-		m_Result.addState(hondaIsInitial, true, hondaPredicate);
+		m_Result.addState(hondaIsInitial, true, bspm.getHondaPredicate());
 		if (!emtpyStem) {
 			m_InputStemPredicates.add(precondition);
 			m_Result.addState(true, false, precondition);
@@ -221,55 +223,86 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 	
 	
 	private void computeSuccsStem(IPredicate resPred, IPredicate resHier, CodeBlock letter, SuccessorComputationHelper sch) {
-		boolean leadsToHonda = false;
+		IPredicate acceptingSucc;
 		if (mayEnterHondaFromLoop(letter)) {
-			LBool sat = sch.computeSuccWithSolver(resPred, resHier, letter, m_HondaPredicate);
-			if (sat == LBool.UNSAT) {
-				sch.addTransition(resPred, resHier, letter, m_HondaPredicate);
-				leadsToHonda = true;
-			}
+			acceptingSucc = addAcceptingSuccStem(resPred, resHier, letter, sch);
+		} else {
+			acceptingSucc = null;
 		}
-		if (!leadsToHonda || m_ScroogeNondeterminismStem) {
-			final Set<IPredicate> inputSuccs = new HashSet<IPredicate>();
-			for (IPredicate succCand : m_InputStemPredicates) {
-				LBool sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
-				if (sat == LBool.UNSAT) {
-					inputSuccs.add(succCand);
-				}
-			}
-			if (!inputSuccs.isEmpty()) {
-				IPredicate resSucc = getOrConstructPredicate(inputSuccs, 
-						m_StemPU, m_StemInputPreds2ResultPreds, m_StemResPred2InputPreds);
-				sch.addTransition(resPred, resHier, letter, resSucc);
-			}
+		if (acceptingSucc == null || m_ScroogeNondeterminismStem) {
+			addNonAcceptingSuccStem(resPred, resHier, letter, sch);
 		}
 	}
 	
 	
+	
+	private IPredicate addAcceptingSuccStem(IPredicate resPred,
+			IPredicate resHier, CodeBlock letter, SuccessorComputationHelper sch) {
+		LBool sat = sch.computeSuccWithSolver(resPred, resHier, letter, m_HondaPredicate);
+		if (sat == LBool.UNSAT) {
+			sch.addTransition(resPred, resHier, letter, m_HondaPredicate);
+			return m_HondaPredicate;
+		} else {
+			return null;
+		}
+	}
+	
+	private void addNonAcceptingSuccStem(IPredicate resPred,
+			IPredicate resHier, CodeBlock letter, SuccessorComputationHelper sch) {
+		final Set<IPredicate> inputSuccs = new HashSet<IPredicate>();
+		for (IPredicate succCand : m_InputStemPredicates) {
+			LBool sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
+			if (sat == LBool.UNSAT) {
+				inputSuccs.add(succCand);
+			}
+		}
+		if (!inputSuccs.isEmpty()) {
+			IPredicate resSucc = getOrConstructPredicate(inputSuccs, 
+					m_StemPU, m_StemInputPreds2ResultPreds, m_StemResPred2InputPreds);
+			sch.addTransition(resPred, resHier, letter, resSucc);
+		}
+	}
+
 	private void computeSuccsLoop(IPredicate resPred, IPredicate resHier, CodeBlock letter, SuccessorComputationHelper sch) {
-		boolean leadsToHonda = false;
+		IPredicate acceptingSucc;
 		if (mayEnterHondaFromLoop(letter)) {
-			LBool sat = sch.computeSuccWithSolver(resPred, resHier, letter, m_HondaPredicate);
-			if (sat == LBool.UNSAT) {
-				sch.addTransition(resPred, resHier, letter, m_HondaPredicate);
-				leadsToHonda = true;
-			}
+			acceptingSucc = addAcceptingSuccLoop(resPred, resHier, letter, sch);
+		} else {
+			acceptingSucc = null;
 		}
-		if (!leadsToHonda || m_ScroogeNondeterminismLoop) {
-			final Set<IPredicate> inputSuccs = new HashSet<IPredicate>();
-			for (IPredicate succCand : m_InputLoopPredicates) {
-				LBool sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
-				if (sat == LBool.UNSAT) {
-					inputSuccs.add(succCand);
-				}
-			}
-			if (!inputSuccs.isEmpty()) {
-				IPredicate resSucc = getOrConstructPredicate(inputSuccs, 
-						m_LoopPU, m_LoopInputPreds2ResultPreds, m_LoopResPred2InputPreds);
-				sch.addTransition(resPred, resHier, letter, resSucc);
-			}
+		if (acceptingSucc == null || m_ScroogeNondeterminismLoop) {
+			addNonAcceptingSuccLoop(resPred, resHier, letter, sch);
 		}
 	}
+	
+	private IPredicate addAcceptingSuccLoop(IPredicate resPred,
+			IPredicate resHier, CodeBlock letter, SuccessorComputationHelper sch) {
+		LBool sat = sch.computeSuccWithSolver(resPred, resHier, letter, m_HondaPredicate);
+		if (sat == LBool.UNSAT) {
+			sch.addTransition(resPred, resHier, letter, m_HondaPredicate);
+			return m_HondaPredicate;
+		} else {
+			return null;
+		}
+	}
+	
+	private void addNonAcceptingSuccLoop(IPredicate resPred,
+			IPredicate resHier, CodeBlock letter, SuccessorComputationHelper sch) {
+		final Set<IPredicate> inputSuccs = new HashSet<IPredicate>();
+		for (IPredicate succCand : m_InputLoopPredicates) {
+			LBool sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
+			if (sat == LBool.UNSAT) {
+				inputSuccs.add(succCand);
+			}
+		}
+		if (!inputSuccs.isEmpty()) {
+			IPredicate resSucc = getOrConstructPredicate(inputSuccs, 
+					m_LoopPU, m_LoopInputPreds2ResultPreds, m_LoopResPred2InputPreds);
+			sch.addTransition(resPred, resHier, letter, resSucc);
+		}
+	}
+	
+	
 	
 	
 	

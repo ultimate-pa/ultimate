@@ -1,9 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -16,19 +16,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiClosureNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKVNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiDifferenceFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BInterpolantAutomaton;
@@ -200,17 +195,16 @@ public class RefineBuchi {
 			String filename = "InterpolantAutomatonBuchi"+m_Iteration;
 			BuchiCegarLoop.writeAutomatonToFile(m_InterpolAutomaton, m_DumpPath, filename);
 		}
-		EdgeChecker ec = new BuchiEdgeChecker(m_SmtManager, buchiModGlobalVarManager,
-				bspm.getHondaPredicate(), bspm.getRankEqAndSi());
+		BuchiEdgeChecker ec = new BuchiEdgeChecker(m_SmtManager, buchiModGlobalVarManager);
+		ec.putDecreaseEqualPair(bspm.getHondaPredicate(), bspm.getRankEqAndSi());
 		assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true)).getResult();
 		assert (new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton,m_Counterexample.getNestedLassoWord())).getResult();
-		
-
 		switch (setting.getInterpolantAutomaton()) {
 		case LassoAutomaton:
 			m_InterpolAutomatonUsedInRefinement = m_InterpolAutomaton;
 			break;
 		case EagerNondeterminism:
+
 			m_InterpolAutomatonUsedInRefinement = 
 				new EagerInterpolantAutomaton(ec, m_InterpolAutomaton);
 			break;
@@ -242,9 +236,8 @@ public class RefineBuchi {
 			TermVarsProc tvp = m_SmtManager.computeTermVarsProc(m_SmtManager.getScript().term("false"));
 			IPredicate falsePred = pu.getOrConstructPredicate(tvp);
 			m_InterpolAutomatonUsedInRefinement = new BuchiInterpolantAutomatonBouncer(
-					m_SmtManager, ec,  BuchiCegarLoop.emptyStem(m_Counterexample),
-					bspm.getStemPrecondition(), 
-					stemInterpolantsForRefinement, bspm.getHondaPredicate(), 
+					m_SmtManager, bspm, ec, BuchiCegarLoop.emptyStem(m_Counterexample),
+					stemInterpolantsForRefinement, 
 					loopInterpolantsForRefinement, 
 					BuchiCegarLoop.emptyStem(m_Counterexample) ? null : stem.getSymbol(stem.length()-1), 
 					loop.getSymbol(loop.length()-1), m_Abstraction, 
