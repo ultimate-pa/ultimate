@@ -15,15 +15,11 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionObserver;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
@@ -250,28 +246,28 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 		}
 
 		// Add benchmark results to TraceAbstraction summary
-		BenchmarkResult benchmarkResult = getBenchmarkResultOfResultSet(traceAbstractionResults);
-		if (benchmarkResult != null) {
-			m_Summary.addTraceAbstractionBenchmarks(uniqueStringPrefixOfInputFile, benchmarkResult.getLongDescription());
-		} else {
-			m_Summary.addTraceAbstractionBenchmarks(uniqueStringPrefixOfInputFile, "No benchmark results available.");
-		}
+		Collection<BenchmarkResult> bench = filterResults(traceAbstractionResults, BenchmarkResult.class);
+		m_Summary.addTraceAbstractionBenchmarks(uniqueStringPrefixOfInputFile, bench);
 		final boolean fail = (testoutcome == TestOutcome.FAIL);
 		Util.logResults(log, m_InputFile, fail, customMessages);
 		return fail;
 	}
-	
-	private BenchmarkResult getBenchmarkResultOfResultSet(List<IResult> results) {
-		for (IResult res : results) {
-			if (res instanceof BenchmarkResult) {
-				BenchmarkResult benchmarkResult = (BenchmarkResult) res;
-				Object benchmark = benchmarkResult.getBenchmark();
-				if (benchmark instanceof TraceAbstractionBenchmarks) {
-					return benchmarkResult;
-				}
+
+	/**
+	 * Returns new Collections that contains all IResults from resCollection
+	 * that are subclasses of the class resClass.
+	 */
+	private <E extends IResult> Collection<E> filterResults(
+					Collection<IResult> resCollection, Class<E> resClass) {
+		ArrayList<E> filteredList = new ArrayList<E>();
+		for (IResult res : resCollection) {
+			if (res.getClass().isAssignableFrom(resClass)) {
+				@SuppressWarnings("unchecked")
+				E benchmarkResult = (E) res;
+				filteredList.add((E) benchmarkResult);
 			}
 		}
-		return null;
+		return filteredList;
 	}
 	
 	
@@ -343,7 +339,6 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 				AutomizerResultType.EXCEPTION_OR_ERROR.toString(), 
 				m_InputFile, 
 				"Exception of type " + e.getClass().getName() + " thrown.\t"+ "Message: " + e.getMessage());
-		m_Summary.addTraceAbstractionBenchmarks(m_InputFile, "No benchmark results available.");
 		Logger log = Logger.getLogger(TraceAbstractionTestResultDecider.class);
 		Util.logResults(log, m_InputFile, true, new LinkedList<String>());
 		return true;

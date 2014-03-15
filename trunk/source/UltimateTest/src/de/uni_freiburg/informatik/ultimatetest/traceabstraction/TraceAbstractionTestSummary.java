@@ -1,10 +1,12 @@
 package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimatetest.TestSummary;
 
 public class TraceAbstractionTestSummary extends TestSummary {
@@ -15,16 +17,17 @@ public class TraceAbstractionTestSummary extends TestSummary {
 	/**
 	 * A map from file names to benchmark results.
 	 */
-	private Map<String, String> m_TraceAbstractionBenchmarks;
+	private Map<String, Collection<BenchmarkResult>> m_TraceAbstractionBenchmarks;
 	
 	public TraceAbstractionTestSummary(String testSuiteCanonicalName, String logFilePath) {
 		super(testSuiteCanonicalName);
 		mLogFilePath = logFilePath;
 		mCount = 0;
-		m_TraceAbstractionBenchmarks = new HashMap<String, String>();
+		m_TraceAbstractionBenchmarks = new HashMap<String, Collection<BenchmarkResult>>();
 	}
 	
-	public void addTraceAbstractionBenchmarks(String filename, String benchmarkResults) {
+	public void addTraceAbstractionBenchmarks(String filename, Collection<BenchmarkResult> benchmarkResults) {
+		assert !m_TraceAbstractionBenchmarks.containsKey(filename) : "benchmarks already added";
 		m_TraceAbstractionBenchmarks.put(filename, benchmarkResults);
 	}
 	
@@ -71,7 +74,14 @@ public class TraceAbstractionTestSummary extends TestSummary {
 				sb.append("\t\t").append(fileMsgPair.getKey()).append(": ")
 						.append(fileMsgPair.getValue()).append("\n");
 				// Add TraceAbstraction benchmarks
-				sb.append("\t\t").append(m_TraceAbstractionBenchmarks.get(fileMsgPair.getKey())).append("\n");
+				Collection<BenchmarkResult> benchmarks = m_TraceAbstractionBenchmarks.get(fileMsgPair.getKey());
+				if (benchmarks == null) {
+					sb.append("\t\t").append("No benchmark results available.").append("\n");
+				} else {
+					for (BenchmarkResult benchmark : benchmarks) {
+						sb.append("\t\t").append(benchmark.getLongDescription()).append("\n");
+					}
+				}
 			}
 
 			sb.append("\tCount for ").append(entry.getKey()).append(": ")
