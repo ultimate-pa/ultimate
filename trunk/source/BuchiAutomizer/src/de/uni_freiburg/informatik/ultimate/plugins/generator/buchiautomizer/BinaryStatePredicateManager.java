@@ -59,8 +59,8 @@ public class BinaryStatePredicateManager {
 	private IPredicate m_StemPostcondition;
 	private IPredicate m_Honda;
 	private IPredicate m_RankEqualityAndSi;
-
-	private IPredicate m_RankDecrease;
+	private IPredicate m_RankEquality;
+	private IPredicate m_RankDecreaseAndBound;
 
 	private TerminationArgument m_TerminationArgument;
 	
@@ -120,15 +120,27 @@ public class BinaryStatePredicateManager {
 		return m_TerminationArgument;
 	}
 	
-//	public RankingFunction getLinRf() {
-//		assert m_ProvidesPredicates;
-//		return m_LinRf;
-//	}
-//
-//	public Collection<SupportingInvariant> getSiList() {
-//		assert m_ProvidesPredicates;
-//		return m_SiList;
-//	}
+	/**
+	 * Compute IPredicate that states that the current value of the ranking
+	 * function f is smaller than or equal to the value of oldrank. I.e.,
+	 * (f_0,...f_n) <=_lex (oldrk_0,...,oldrk_n)
+	 */
+	public IPredicate getRankEquality() {
+		return m_RankEquality;
+	}
+	
+	/**
+	 * Compute IPredicate that states that the current value of the ranking
+	 * function f is strictly smaller than the value of oldrank and bounded 
+	 * from below. We use a formula similar to
+	 * (f_0,...f_n) <_lex (oldrk_0,...,oldrk_n)
+	 * with the additional constraint that for the decreasing component
+	 * oldrk_i>=0 holds.
+	 */
+	public IPredicate getRankDecreaseAndBound() {
+		return m_RankDecreaseAndBound;
+	}
+
 
 	public IPredicate getStemPrecondition() {
 		assert m_ProvidesPredicates;
@@ -140,11 +152,13 @@ public class BinaryStatePredicateManager {
 		return m_StemPostcondition;
 	}
 
+	@Deprecated
 	public IPredicate getHondaPredicate() {
 		assert m_ProvidesPredicates;
 		return m_Honda;
 	}
 
+	@Deprecated
 	public IPredicate getRankEqAndSi() {
 		assert m_ProvidesPredicates;
 		return m_RankEqualityAndSi;
@@ -170,7 +184,8 @@ public class BinaryStatePredicateManager {
 		m_StemPostcondition = null;
 		m_Honda = null;
 		m_RankEqualityAndSi = null;
-		m_RankDecrease = null;
+		m_RankEquality = null;
+		m_RankDecreaseAndBound = null;
 		m_ProvidesPredicates = false;
 		m_LexDecrease = null;
 		m_LexEquality = null;
@@ -184,7 +199,8 @@ public class BinaryStatePredicateManager {
 		assert m_StemPostcondition == null;
 		assert m_Honda == null;
 		assert m_RankEqualityAndSi == null;
-		assert m_RankDecrease == null;
+		assert m_RankEquality == null;
+		assert m_RankDecreaseAndBound == null;
 		assert m_LexDecrease == null;
 		assert m_LexEquality == null;
 		assert m_LexTerms == null;
@@ -204,21 +220,18 @@ public class BinaryStatePredicateManager {
 		}
 		RankingFunction rf = m_TerminationArgument.getRankingFunction();
 		decodeLex(rf);
-//		Term[] lexTerms = rf.asLexTerm(m_Script);
-//		assert lexTerms.length == 1;
-//		Term rfTerm = lexTerms[0];
-		IPredicate rankEquality = getRankEquality();
+		m_RankEquality = computeRankEquality();
 		if (siConjunctionIsTrue) {
-			m_RankEqualityAndSi = rankEquality;
+			m_RankEqualityAndSi = m_RankEquality;
 		} else {
-			TermVarsProc tvp = m_SmtManager.and(rankEquality, siConjunction);
+			TermVarsProc tvp = m_SmtManager.and(m_RankEquality, siConjunction);
 			m_RankEqualityAndSi = m_SmtManager.newPredicate(tvp.getFormula(), 
 					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula()); 
 		}
-		m_RankDecrease = getRankDecrease();
+		m_RankDecreaseAndBound = computeRankDecreaseAndBound();
 		IPredicate unseededOrRankDecrease; 
 		{
-			TermVarsProc tvp = m_SmtManager.or(unseededPredicate, m_RankDecrease);
+			TermVarsProc tvp = m_SmtManager.or(unseededPredicate, m_RankDecreaseAndBound);
 			unseededOrRankDecrease = m_SmtManager.newPredicate(tvp.getFormula(), 
 					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 		}
@@ -232,52 +245,6 @@ public class BinaryStatePredicateManager {
 		m_ProvidesPredicates = true;
 	}
 
-
-//	private BoogieVar constructOldRankVariable() {
-//		Sort sort = m_Script.sort("Int");
-//		String name = "oldRank";
-//		TermVariable termVariable = m_Script.variable(name, sort);
-//		
-//		ApplicationTerm defaultConstant;
-//		{
-//			String defaultConstantName = "c_" + name;
-//			m_Script.declareFun(defaultConstantName, new Sort[0], sort);
-//			defaultConstant = (ApplicationTerm) m_Script.term(defaultConstantName);
-//		}
-//		ApplicationTerm primedConstant;
-//		{
-//			String primedConstantName = "c_" + name + "_primed";
-//			m_Script.declareFun(primedConstantName, new Sort[0], sort);
-//			primedConstant = (ApplicationTerm) m_Script.term(primedConstantName);
-//		}
-//		BoogieVar oldRank = new BoogieVar(name,
-//				null, BoogieType.intType, false, 
-//				termVariable, defaultConstant, primedConstant);
-//		return oldRank;
-//	}
-//	
-//	private BoogieVar constructUnseededVariable() {
-//		Sort sort = m_Script.sort("Bool");
-//		String name = "unseeded";
-//		TermVariable termVariable = m_Script.variable(name, sort);
-//		
-//		ApplicationTerm defaultConstant;
-//		{
-//			String defaultConstantName = "c_" + name;
-//			m_Script.declareFun(defaultConstantName, new Sort[0], sort);
-//			defaultConstant = (ApplicationTerm) m_Script.term(defaultConstantName);
-//		}
-//		ApplicationTerm primedConstant;
-//		{
-//			String primedConstantName = "c_" + name + "_primed";
-//			m_Script.declareFun(primedConstantName, new Sort[0], sort);
-//			primedConstant = (ApplicationTerm) m_Script.term(primedConstantName);
-//		}
-//		BoogieVar oldRank = new BoogieVar(name,
-//				null, BoogieType.boolType, false, 
-//				termVariable, defaultConstant, primedConstant);
-//		return oldRank;
-//	}
 
 	
 	private IPredicate unseededPredicate() {
@@ -317,21 +284,13 @@ public class BinaryStatePredicateManager {
 		return result;
 	}
 	
-//	private IPredicate getRankEquality(Term rfTerm) {
-//		return getRankInEquality(rfTerm, "=", m_OldRankVariable, false);
-//	}
-//	
-//	private IPredicate getRankDecrease(Term rfTerm) {
-//		return getRankInEquality(rfTerm, ">", m_OldRankVariable, true);
-//	}
-	
-	
+
 	/**
 	 * Given a RankingFunction with lex terms (f_0, ..., f_n), initialize the
 	 * array m_LexEquality with the terms 
-	 *     (oldrank_0 = f_0, ..., oldrank_n = f_n)
+	 *     (oldrank_0 >= f_0, ..., oldrank_n >= f_n)
 	 * and initialize the array m_LexDecrease with the terms
-	 *     (oldrank_0 > f_0 && f_0 >= 0, ..., oldrank_n > f_n && f_n >= n).
+	 *     (oldrank_0 > f_0 &&, ..., oldrank_n > f_n).
 	 */
 	private void decodeLex(RankingFunction rf) {
 		m_LexTerms = rf.asLexTerm(m_Script);
@@ -358,7 +317,9 @@ public class BinaryStatePredicateManager {
 	}
 	
 	
-	private IPredicate getRankEquality() {
+
+	
+	private IPredicate computeRankEquality() {
 		TermVarsProc tvp = m_SmtManager.and(m_LexEquality);
 		IPredicate result = m_SmtManager.newPredicate(tvp.getFormula(), 
 				tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
@@ -366,7 +327,7 @@ public class BinaryStatePredicateManager {
 	}
 	
 	
-	private IPredicate getRankDecrease() {
+	private IPredicate computeRankDecreaseAndBound() {
 		IPredicate[] disjuncts = new IPredicate[m_LexTerms.length];
 		for (int i=0; i<m_LexTerms.length; i++) {
 			IPredicate[] conjuncts = new IPredicate[i+1];
@@ -452,7 +413,7 @@ public class BinaryStatePredicateManager {
 	public boolean checkRankDecrease(NestedWord<CodeBlock> loop, 
 			ModifiableGlobalVariableManager modGlobVarManager) {
 		TraceChecker traceChecker = new TraceChecker(m_RankEqualityAndSi, 
-				m_RankDecrease, null, loop, m_SmtManager, modGlobVarManager);
+				m_RankDecreaseAndBound, null, loop, m_SmtManager, modGlobVarManager);
 		LBool loopCheck = traceChecker.isCorrect();
 		traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 		return (loopCheck == LBool.UNSAT);
@@ -465,6 +426,16 @@ public class BinaryStatePredicateManager {
 		if (term instanceof ApplicationTerm) {
 			ApplicationTerm appTerm = (ApplicationTerm) term;
 			if (appTerm.getFunction().getName().equals("true")) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	
+	public boolean containsOldRankVariable(IPredicate pred) {
+		for (BoogieVar rankVariable : getOldRankVariables()) {
+			if (pred.getVars().contains(rankVariable)) {
 				return true;
 			}
 		}
