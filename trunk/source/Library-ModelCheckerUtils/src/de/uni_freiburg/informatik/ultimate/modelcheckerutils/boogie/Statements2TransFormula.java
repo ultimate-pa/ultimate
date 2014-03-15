@@ -164,11 +164,7 @@ public class Statements2TransFormula {
 		BoogieVar result;
 		switch (storageClass) {
 		case GLOBAL:
-			result = m_Boogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
-			break;
 		case LOCAL:
-			result = m_Boogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
-			break;
 		case IMPLEMENTATION_OUTPARAM:
 			result = m_Boogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
 			break;
@@ -636,27 +632,23 @@ public class Statements2TransFormula {
 		Term[] argTerms = (new Expression2Term( its, m_Script, m_TypeSortTranslator, st.getArguments())).getTerms();
 		m_OutVars.clear();
 
+		DeclarationInformation declInfo = new DeclarationInformation(
+										StorageClass.PROCEDURE_INPARAM, callee);
+		Term[] assignments = new Term[st.getArguments().length];
 		int offset = 0;
 		for (VarList varList : calleeImpl.getInParams()) {
-			IType type = varList.getType().getBoogieType();
-			Sort sort = m_Boogie2SMT.getTypeSortTranslator().getSort(type, varList);
 			for (String var : varList.getIdentifiers()) {
-				BoogieVar boogieVar = m_Boogie2SMT.getBoogie2SmtSymbolTable().getBoogieVar(var, new DeclarationInformation(StorageClass.PROCEDURE_INPARAM, callee), false);
-//				BoogieVar boogieVar = m_Boogie2SMT.getBoogie2SmtSymbolTable().getBoogieVar(var, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, callee), false);
+				BoogieVar boogieVar = m_Boogie2SMT.getBoogie2SmtSymbolTable().getBoogieVar(var, declInfo, false);
 				assert boogieVar != null;
-						//m_Boogie2smt.getLocalBoogieVar(callee, var);
-//				String varname = callee + "_" + var + "_" + "InParam";
-//				TermVariable tv = m_Script.variable(varname, sort);
 				String suffix = "InParam";
 				TermVariable tv = m_VariableManager.constructTermVariableWithSuffix(boogieVar, suffix);
 				m_OutVars.put(boogieVar,tv);
-				Term assignment = m_Script.term("=", tv, argTerms[offset]);
-				m_Assumes = Util.and(m_Script, m_Assumes, assignment);
+				assignments[offset] = m_Script.term("=", tv, argTerms[offset]);
 				offset++;
 			}
 		}
 		assert (st.getArguments().length == offset);
-//		m_Boogie2smt.removeLocals(calleeImpl);
+		m_Assumes = Util.and(m_Script, assignments);
 		return getTransFormula(false, true);
 	}
 	

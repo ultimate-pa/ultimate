@@ -108,7 +108,7 @@ public class TransFormula implements Serializable {
 		assert (branchEncoders.size() > 0 || closedFormula.getFreeVars().length == 0);
 //		m_Vars = new HashSet<TermVariable>(Arrays.asList(m_Formula.getFreeVars()));
 		assert allSubsetInOutAuxBranch() : "unexpected vars in TransFormula";
-		assert InAuxSubsetAll(allowSuperflousInVars) : "superfluous vars in TransFormula";
+		assert inAuxSubsetAll(allowSuperflousInVars) : "superfluous vars in TransFormula";
 //		assert m_OutVars.keySet().containsAll(m_InVars.keySet()) : " strange inVar";
 		
 		// compute the assigned/updated variables. A variable is updated by this
@@ -307,7 +307,7 @@ public class TransFormula implements Serializable {
 	 * Returns true each auxVar is in allVars and 
 	 * each inVar occurs in allVars. 
 	 */
-	private boolean InAuxSubsetAll(boolean allowSuperflousInVars) {
+	private boolean inAuxSubsetAll(boolean allowSuperflousInVars) {
 		boolean result = true;
 		HashSet<TermVariable> allVars = new HashSet<TermVariable>(
 				Arrays.asList(m_Formula.getFreeVars()));
@@ -416,7 +416,6 @@ public class TransFormula implements Serializable {
 				if (inVars.containsKey(var)) {
 					newOutVar = inVars.get(var);
 				} else {
-					Sort sort = outVar.getSort();
 					newOutVar = boogie2smt.getVariableManager().constructFreshTermVariable(var);
 				}
 				subsitutionMapping.put(outVar, newOutVar);
