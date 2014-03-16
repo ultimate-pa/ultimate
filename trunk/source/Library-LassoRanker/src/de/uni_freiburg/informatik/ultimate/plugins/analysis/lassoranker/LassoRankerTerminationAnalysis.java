@@ -480,7 +480,8 @@ public class LassoRankerTerminationAnalysis implements Closeable {
 	 */
 	public void close() {
 		if (m_script != null) {
-			this.close();
+			m_script.exit();
+			m_script = null;
 		}
 	}
 	
