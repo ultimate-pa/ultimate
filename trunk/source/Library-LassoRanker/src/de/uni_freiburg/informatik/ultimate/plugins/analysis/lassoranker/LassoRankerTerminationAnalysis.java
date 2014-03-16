@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -67,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.template
  * 
  * @author Jan Leike
  */
-public class LassoRankerTerminationAnalysis {
+public class LassoRankerTerminationAnalysis implements Closeable {
 	private static Logger s_Logger =
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
@@ -477,15 +478,17 @@ public class LassoRankerTerminationAnalysis {
 	/**
 	 * Perform cleanup actions
 	 */
-	public void cleanUp() {
+	public void close() {
 		m_script.exit();
 		m_script = null;
 	}
 	
-	public void finalize() {
+	protected void finalize() {
+		// Finalize methods are discuraged in Java.
+		// Always call close() as exported by the Closable interface!
+		// This is just a fallback to make sure close() has been called.
 		if (m_script != null) {
-			m_script.exit();
-			m_script = null;
+			this.close();
 		}
 	}
 }
