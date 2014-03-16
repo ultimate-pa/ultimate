@@ -25,6 +25,16 @@ trunk/examples/toolchains/AutomizerTestDir.sh -ea 350 "$2" \
 fi
 
 
+if [ "$1" = "interpolation" ]; then
+echo "testing different interpolation techniques"
+trunk/examples/toolchains/AutomizerTestDir.sh -ea 20 "$2" \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/TreeInterpolants.epf" \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates.epf" \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/BackwardPredicates.epf"
+fi
+
+
+
 if [ "$1" = "terminator2" ]; then
 echo "buchiAutomizer for folder $2"
 trunk/examples/toolchains/AutomizerTestDir.sh -ea 120 "$2" \
@@ -123,6 +133,10 @@ trunk/examples/toolchains/AutomizerTestDir.sh 20 trunk/examples/programs \
  "AutomizerBpl.xml;AutomizerC.xml;TraceAbstraction-LargeStatements-EagerPost-Hoare" \
  "AutomizerBplWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-EagerPost-Hoare"
 fi
+
+
+
+
 
 if [ "$1" = "3" ]; then
 echo "testing TraceCheckerSpWp"
