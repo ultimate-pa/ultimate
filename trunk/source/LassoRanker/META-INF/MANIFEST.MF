@@ -10,9 +10,9 @@ Require-Bundle: Library-log4j,
  Library-LassoRanker,
  UltimateCore,
  RCFGBuilder,
- NestedWordAutomata;bundle-version="0.0.1",
- TraceAbstraction;bundle-version="0.0.1",
- BuchiAutomizer;bundle-version="0.0.1"
+ NestedWordAutomata;resolution:=optional,
+ TraceAbstraction;resolution:=optional,
+ BuchiAutomizer;resolution:=optional
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker

@@ -122,9 +122,17 @@ public class LassoRankerStarter {
 				try {
 					TerminationArgument arg = tanalysis.tryTemplate(template);
 					if (arg != null) {
-						assert isTerminationArgumentCorrect(arg) : 
-							"Incorrect termination argument from" + 
-								template.getClass().getSimpleName();
+						try {
+							assert isTerminationArgumentCorrect(arg) : 
+								"Incorrect termination argument from" + 
+									template.getClass().getSimpleName();
+						} catch (NoClassDefFoundError e) {
+							s_Logger.warn("Could not check validity of " +
+									"termination argument because of " +
+									"missing dependencies.");
+							// Requires: BuchiAutomizer, TraceAbstraction,
+							//           NestedWordAutomata
+						}
 						reportTerminationResult(arg);
 						return;
 					}

@@ -8,9 +8,8 @@ Require-Bundle: UltimateCore,
  Library-log4j,
  Library-SMTLIB,
  Library-ModelCheckerUtils,
- SMTInterpol,
- SMTSolverBridge,
- RCFGBuilder
+ SMTInterpol;resolution:=optional,
+ SMTSolverBridge;bundle-version="0.0.1"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
   uses:="org.eclipse.core.runtime,
