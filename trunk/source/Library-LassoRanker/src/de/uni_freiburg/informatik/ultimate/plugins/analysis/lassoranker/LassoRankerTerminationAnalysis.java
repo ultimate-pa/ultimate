@@ -486,7 +486,7 @@ public class LassoRankerTerminationAnalysis implements Closeable {
 	}
 	
 	protected void finalize() {
-		// Finalize methods are discuraged in Java.
+		// Finalize methods are discouraged in Java.
 		// Always call close() as exported by the Closable interface!
 		// This is just a fallback to make sure close() has been called.
 		this.close();
