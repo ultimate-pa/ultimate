@@ -92,53 +92,56 @@ public class LassoRankerStarter {
 		TransFormula loopTf = tvr.renameVars(m_Loop.getTransitionFormula(), "Loop");
 		
 		// Do the termination analysis
-		LassoRankerTerminationAnalysis tanalysis;
+		RankingFunctionTemplate[] templates = getTemplates();
+		LassoRankerTerminationAnalysis tanalysis = null;
 		try {
 			tanalysis = new LassoRankerTerminationAnalysis(script,
 					m_RootAnnot.getBoogie2SMT(),
 					stemTF, loopTf, preferences);
+			
+			// Try to prove non-termination
+			if (store.getBoolean(PreferencesInitializer.LABEL_check_for_nontermination)) {
+				try {
+					NonTerminationArgument arg = tanalysis.checkNonTermination();
+					if (arg != null) {
+						reportNonTerminationResult(arg);
+						return;
+					}
+				} catch (SMTLIBException e) {
+					s_Logger.error(e);
+				}
+			}
+			
+			// Try all given templates
+			for (RankingFunctionTemplate template : templates) {
+				if (!UltimateServices.getInstance().continueProcessing()) {
+					reportTimeoutResult(templates, template);
+					// Timeout or abort
+					return;
+				}
+				try {
+					TerminationArgument arg = tanalysis.tryTemplate(template);
+					if (arg != null) {
+						assert isTerminationArgumentCorrect(arg) : 
+							"Incorrect termination argument from" + 
+								template.getClass().getSimpleName();
+						reportTerminationResult(arg);
+						return;
+					}
+				} catch (TermException e) {
+					s_Logger.error(e);
+				} catch (SMTLIBException e) {
+					s_Logger.error(e);
+				}
+			}
 		} catch (TermException e) {
 			reportUnuspportedSyntax(m_Honda, e.getMessage());
 			return;
-		}
-		
-		// Try to prove non-termination
-		if (store.getBoolean(PreferencesInitializer.LABEL_check_for_nontermination)) {
-			try {
-				NonTerminationArgument arg = tanalysis.checkNonTermination();
-				if (arg != null) {
-					reportNonTerminationResult(arg);
-					return;
-				}
-			} catch (SMTLIBException e) {
-				s_Logger.error(e);
+		} finally {
+			if (tanalysis != null) {
+				tanalysis.close();
 			}
 		}
-		
-		// Try all given templates
-		RankingFunctionTemplate[] templates = getTemplates();
-		for (RankingFunctionTemplate template : templates) {
-			if (!UltimateServices.getInstance().continueProcessing()) {
-				reportTimeoutResult(templates, template);
-				// Timeout or abort
-				return;
-			}
-			try {
-				TerminationArgument arg = tanalysis.tryTemplate(template);
-				if (arg != null) {
-					assert isTerminationArgumentCorrect(arg) : 
-						"Incorrect termination argument from" + 
-							template.getClass().getSimpleName();
-					reportTerminationResult(arg);
-					return;
-				}
-			} catch (TermException e) {
-				s_Logger.error(e);
-			} catch (SMTLIBException e) {
-				s_Logger.error(e);
-			}
-		}
-		tanalysis.cleanUp();
 		reportNoResult(templates);
 	}
 	
