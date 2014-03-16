@@ -156,8 +156,12 @@ public class RefineBuchi {
 //		}
 		NestedWord<CodeBlock> loop = m_Counterexample.getLoop().getWord();
 		
+		IPredicate falsePredicate = m_SmtManager.newFalsePredicate();
+		assert !bspm.getStemPrecondition().getFormula().toString().equals("false");
+		assert !bspm.getHondaPredicate().getFormula().toString().equals("false");
+		assert !bspm.getRankEqAndSi().getFormula().toString().equals("false");
 		PredicateUnifier pu = new PredicateUnifier(m_SmtManager, 
-				bspm.getStemPrecondition(), bspm.getHondaPredicate(), bspm.getRankEqAndSi(), bspm.getStemPostcondition());
+				bspm.getStemPrecondition(), bspm.getHondaPredicate(), bspm.getRankEqAndSi(), bspm.getStemPostcondition(), falsePredicate);
 		IPredicate[] stemInterpolants;
 		TraceChecker traceChecker;
 		if (BuchiCegarLoop.emptyStem(m_Counterexample)) {
@@ -233,8 +237,7 @@ public class RefineBuchi {
 				loopInterpolantsForRefinement = new HashSet<IPredicate>(Arrays.asList(loopInterpolants));
 				loopInterpolantsForRefinement.add(bspm.getRankEqAndSi());
 			}
-			TermVarsProc tvp = m_SmtManager.computeTermVarsProc(m_SmtManager.getScript().term("false"));
-			IPredicate falsePred = pu.getOrConstructPredicate(tvp);
+
 			m_InterpolAutomatonUsedInRefinement = new BuchiInterpolantAutomatonBouncer(
 					m_SmtManager, bspm, ec, BuchiCegarLoop.emptyStem(m_Counterexample),
 					stemInterpolantsForRefinement, 
@@ -242,7 +245,7 @@ public class RefineBuchi {
 					BuchiCegarLoop.emptyStem(m_Counterexample) ? null : stem.getSymbol(stem.length()-1), 
 					loop.getSymbol(loop.length()-1), m_Abstraction, 
 					setting.isScroogeNondeterminismStem(), setting.isScroogeNondeterminismLoop(), 
-					setting.isBouncerStem(), setting.isBouncerLoop(), m_StateFactory, pu, pu, falsePred);
+					setting.isBouncerStem(), setting.isBouncerLoop(), m_StateFactory, pu, pu, falsePredicate);
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");

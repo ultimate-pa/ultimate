@@ -82,5 +82,9 @@ public class HashRelation<D,R> {
 		return result;
 	}
 	
+	@Override
+	public String toString() {
+		return m_Map.toString();
+	}
 
 }
