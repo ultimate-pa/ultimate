@@ -266,7 +266,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 	private void computeSuccsStem(IPredicate resPred, IPredicate resHier, 
 			CodeBlock letter, SuccessorComputationHelper sch) {
 		IPredicate acceptingSucc;
-		if (mayEnterAcceptingFromLoop(letter)) {
+		if (mayEnterAcceptingFromStem(letter)) {
 			acceptingSucc = addAcceptingSuccStem(resPred, resHier, letter, sch);
 		} else {
 			acceptingSucc = null;
