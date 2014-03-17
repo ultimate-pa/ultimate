@@ -13,14 +13,14 @@ public class DeclarationInformation {
 	 */
 	public static enum StorageClass { 
 		GLOBAL, 
-		PROCEDURE_INPARAM, 
-		PROCEDURE_OUTPARAM,
+		PROC_FUNC_INPARAM, 
+		PROC_FUNC_OUTPARAM,
 		IMPLEMENTATION_INPARAM, 
 		IMPLEMENTATION_OUTPARAM,
 		LOCAL, 
 		QUANTIFIED, 
 		IMPLEMENTATION,
-		PROCEDURE	
+		PROC_FUNC	
 	}
 	
 	private final StorageClass m_StorageClass;
@@ -47,13 +47,13 @@ public class DeclarationInformation {
 		final boolean result;
 		switch (storageClass) {
 		case IMPLEMENTATION:
-		case PROCEDURE:
+		case PROC_FUNC:
 		case GLOBAL:
 		case QUANTIFIED:
 			result = (procedure == null);
 			break;
-		case PROCEDURE_INPARAM: 
-		case PROCEDURE_OUTPARAM:
+		case PROC_FUNC_INPARAM: 
+		case PROC_FUNC_OUTPARAM:
 		case IMPLEMENTATION_INPARAM: 
 		case IMPLEMENTATION_OUTPARAM:
 		case LOCAL:

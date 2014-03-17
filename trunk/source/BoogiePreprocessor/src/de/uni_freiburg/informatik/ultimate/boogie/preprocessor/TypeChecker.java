@@ -663,7 +663,7 @@ public class TypeChecker implements IUnmanagedObserver {
         TypeParameters typeParams = fi.getTypeParameters();
 
         DeclarationInformation declInfo = new DeclarationInformation(
-        		StorageClass.PROCEDURE_INPARAM, name);
+        		StorageClass.PROC_FUNC_INPARAM, name);
         typeManager.pushTypeScope(typeParams);
         FunctionSignature fs = fi.getSignature();
         List<VariableInfo> vinfo = new ArrayList<VariableInfo>();
@@ -701,7 +701,7 @@ public class TypeChecker implements IUnmanagedObserver {
         typeManager.pushTypeScope(typeParams);
 
         DeclarationInformation declInfoInParam = new DeclarationInformation(
-        		StorageClass.PROCEDURE_INPARAM, proc.getIdentifier());
+        		StorageClass.PROC_FUNC_INPARAM, proc.getIdentifier());
         LinkedList<VariableInfo> inParams = new LinkedList<VariableInfo>();
         for (VarList vl : proc.getInParams()) {
             BoogieType type = typeManager.resolveType(vl.getType());
@@ -714,7 +714,7 @@ public class TypeChecker implements IUnmanagedObserver {
             typeError(proc,
                     "Type args not fully used in procedure parameter: " + proc);
         DeclarationInformation declInfoOutParam = new DeclarationInformation(
-        		StorageClass.PROCEDURE_OUTPARAM, proc.getIdentifier());
+        		StorageClass.PROC_FUNC_OUTPARAM, proc.getIdentifier());
         LinkedList<VariableInfo> outParams = new LinkedList<VariableInfo>();
         for (VarList vl : proc.getOutParams()) {
             BoogieType type = typeManager.resolveType(vl.getType());

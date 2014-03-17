@@ -49,31 +49,31 @@ public class BoogieSymbolTable {
 	}
 
 	protected void addProcedureOrFunction(String symbolName, FunctionDeclaration decl) {
-		addSymbol(StorageClass.PROCEDURE, null, symbolName, decl);
+		addSymbol(StorageClass.PROC_FUNC, null, symbolName, decl);
 	}
 
 	protected void addInParams(String procedureOrFunctionName, String paramName, Procedure decl) {
 		if (isImplementation(decl)) {
 			addSymbol(StorageClass.IMPLEMENTATION_INPARAM, procedureOrFunctionName, paramName, decl);
 		} else {
-			addSymbol(StorageClass.PROCEDURE_INPARAM, procedureOrFunctionName, paramName, decl);
+			addSymbol(StorageClass.PROC_FUNC_INPARAM, procedureOrFunctionName, paramName, decl);
 		}
 	}
 
 	protected void addInParams(String procedureOrFunctionName, String paramName, FunctionDeclaration decl) {
-		addSymbol(StorageClass.PROCEDURE_INPARAM, procedureOrFunctionName, paramName, decl);
+		addSymbol(StorageClass.PROC_FUNC_INPARAM, procedureOrFunctionName, paramName, decl);
 	}
 
 	protected void addOutParams(String procedureOrFunctionName, String paramName, Procedure decl) {
 		if (isImplementation(decl)) {
 			addSymbol(StorageClass.IMPLEMENTATION_OUTPARAM, procedureOrFunctionName, paramName, decl);
 		} else {
-			addSymbol(StorageClass.PROCEDURE_OUTPARAM, procedureOrFunctionName, paramName, decl);
+			addSymbol(StorageClass.PROC_FUNC_OUTPARAM, procedureOrFunctionName, paramName, decl);
 		}
 	}
 
 	protected void addOutParams(String procedureOrFunctionName, String paramName, FunctionDeclaration decl) {
-		addSymbol(StorageClass.PROCEDURE_OUTPARAM, procedureOrFunctionName, paramName, decl);
+		addSymbol(StorageClass.PROC_FUNC_OUTPARAM, procedureOrFunctionName, paramName, decl);
 	}
 
 	protected void addLocalVariable(String procedureName, String variableName, Declaration decl) {
@@ -88,7 +88,7 @@ public class BoogieSymbolTable {
 		if (isImplementation(decl)) {
 			return getMap(StorageClass.IMPLEMENTATION, StorageClass.IMPLEMENTATION.toString());
 		} else {
-			return getMap(StorageClass.PROCEDURE, StorageClass.PROCEDURE.toString());
+			return getMap(StorageClass.PROC_FUNC, StorageClass.PROC_FUNC.toString());
 		}
 	}
 
@@ -113,7 +113,7 @@ public class BoogieSymbolTable {
 
 		switch (sc) {
 		case IMPLEMENTATION:
-		case PROCEDURE:
+		case PROC_FUNC:
 		case GLOBAL:
 		case QUANTIFIED:
 			if (!mSymbolTable.containsKey(sc)) {
@@ -123,8 +123,8 @@ public class BoogieSymbolTable {
 				mSymbolTable.put(sc, outer);
 			}
 			return mSymbolTable.get(sc).get(scopeName);
-		case PROCEDURE_INPARAM:
-		case PROCEDURE_OUTPARAM:
+		case PROC_FUNC_INPARAM:
+		case PROC_FUNC_OUTPARAM:
 		case IMPLEMENTATION_INPARAM:
 		case IMPLEMENTATION_OUTPARAM:
 		case LOCAL:
@@ -163,7 +163,7 @@ public class BoogieSymbolTable {
 		switch (scope) {
 		case IMPLEMENTATION:
 		case GLOBAL:
-		case PROCEDURE:
+		case PROC_FUNC:
 			return scope.toString();
 		default:
 			break;
@@ -188,7 +188,7 @@ public class BoogieSymbolTable {
 	 * @return
 	 */
 	public List<Declaration> getFunctionOrProcedureDeclaration(String symbolname) {
-		final StorageClass[] procedures = new StorageClass[] { StorageClass.IMPLEMENTATION, StorageClass.PROCEDURE };
+		final StorageClass[] procedures = new StorageClass[] { StorageClass.IMPLEMENTATION, StorageClass.PROC_FUNC };
 		ArrayList<Declaration> rtr = new ArrayList<>();
 		for (StorageClass sc : procedures) {
 			Declaration decl = getDeclaration(symbolname, sc, null);
@@ -249,7 +249,7 @@ public class BoogieSymbolTable {
 
 		HashSet<String> functionSymbols = new HashSet<>();
 		functionSymbols.addAll(getSymbolNames(StorageClass.IMPLEMENTATION, null));
-		functionSymbols.addAll(getSymbolNames(StorageClass.PROCEDURE, null));
+		functionSymbols.addAll(getSymbolNames(StorageClass.PROC_FUNC, null));
 
 		StringBuilder functions = new StringBuilder();
 		StringBuilder procedures = new StringBuilder();

@@ -136,13 +136,13 @@ public class Boogie2SmtSymbolTable {
 				result = m_Globals.get(varId);
 			}
 			break;
-		case PROCEDURE_INPARAM:
+		case PROC_FUNC_INPARAM:
 //			result = get(varId, procedure, m_SpecificationInParam);
 //			break;
 		case IMPLEMENTATION_INPARAM:
 			result = get(varId, procedure, m_ImplementationInParam);
 			break;
-		case PROCEDURE_OUTPARAM:
+		case PROC_FUNC_OUTPARAM:
 //			result = get(varId, procedure, m_SpecificationOutParam);
 //			break;
 		case IMPLEMENTATION_OUTPARAM:
@@ -152,7 +152,7 @@ public class Boogie2SmtSymbolTable {
 			result = get(varId, procedure, m_ImplementationLocals);
 			break;
 		case IMPLEMENTATION:
-		case PROCEDURE:
+		case PROC_FUNC:
 		case QUANTIFIED:
 		default:
 			throw new AssertionError("inappropriate decl info");
@@ -292,9 +292,9 @@ public class Boogie2SmtSymbolTable {
 		assert !isImplementation(spec) : "is implementation";
 		String procId = spec.getIdentifier();
 		declareParams(procId, spec.getInParams(), m_SpecificationInParam,
-				StorageClass.PROCEDURE_INPARAM);
+				StorageClass.PROC_FUNC_INPARAM);
 		declareParams(procId, spec.getOutParams(), m_SpecificationOutParam,
-				StorageClass.PROCEDURE_OUTPARAM);
+				StorageClass.PROC_FUNC_OUTPARAM);
 	}
 	
 	

@@ -92,7 +92,7 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor<Boolean, Unit> i
 	@Override
 	protected void visit(FunctionDeclaration decl) {
 		mCurrentDeclaration = decl;
-		mCurrentScope = StorageClass.PROCEDURE;
+		mCurrentScope = StorageClass.PROC_FUNC;
 		mCurrentScopeName = decl.getIdentifier();
 		mSymbolTable.addProcedureOrFunction(decl.getIdentifier(), decl);
 
@@ -116,7 +116,7 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor<Boolean, Unit> i
 	@Override
 	protected void visit(Procedure decl) {
 		mCurrentDeclaration = decl;
-		mCurrentScope = StorageClass.PROCEDURE;
+		mCurrentScope = StorageClass.PROC_FUNC;
 		mCurrentScopeName = decl.getIdentifier();
 		mSymbolTable.addProcedureOrFunction(decl.getIdentifier(), decl);
 
@@ -160,7 +160,7 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor<Boolean, Unit> i
 				mSymbolTable.addGlobalVariable(name, mCurrentDeclaration);
 			}
 			break;
-		case PROCEDURE:
+		case PROC_FUNC:
 			break;
 		default:
 			throw new UnsupportedOperationException(String.format("Extend this method for the new scope %s",

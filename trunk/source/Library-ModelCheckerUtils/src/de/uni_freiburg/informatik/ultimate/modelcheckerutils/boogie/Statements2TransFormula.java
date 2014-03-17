@@ -169,11 +169,11 @@ public class Statements2TransFormula {
 			result = m_Boogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
 			break;
 		case IMPLEMENTATION_INPARAM:
-		case PROCEDURE_INPARAM:
-		case PROCEDURE_OUTPARAM:
+		case PROC_FUNC_INPARAM:
+		case PROC_FUNC_OUTPARAM:
 			throw new AssertionError("not modifiable");
 		case IMPLEMENTATION:
-		case PROCEDURE:
+		case PROC_FUNC:
 		case QUANTIFIED:
 		default:
 			throw new AssertionError("no appropriate variable ");
@@ -461,14 +461,14 @@ public class Statements2TransFormula {
 			switch (storageClass) {
 			case IMPLEMENTATION_INPARAM:
 			case IMPLEMENTATION_OUTPARAM:
-			case PROCEDURE_INPARAM:
-			case PROCEDURE_OUTPARAM:
+			case PROC_FUNC_INPARAM:
+			case PROC_FUNC_OUTPARAM:
 			case LOCAL:
 				return m_Boogie2SmtSymbolTable.getBoogieVar(id, declInfo, isOldContext);
 			case GLOBAL:
 				return null;
 			case IMPLEMENTATION:
-			case PROCEDURE:
+			case PROC_FUNC:
 			case QUANTIFIED:
 			default:
 				throw new AssertionError();
@@ -501,8 +501,8 @@ public class Statements2TransFormula {
 			switch (storageClass) {
 			case IMPLEMENTATION_INPARAM:
 			case IMPLEMENTATION_OUTPARAM:
-			case PROCEDURE_INPARAM:
-			case PROCEDURE_OUTPARAM:
+			case PROC_FUNC_INPARAM:
+			case PROC_FUNC_OUTPARAM:
 			case LOCAL:
 				return null;
 			case GLOBAL:
@@ -518,7 +518,7 @@ public class Statements2TransFormula {
 				}
 				return bv;
 			case IMPLEMENTATION:
-			case PROCEDURE:
+			case PROC_FUNC:
 			case QUANTIFIED:
 			default:
 				throw new AssertionError();
@@ -633,7 +633,7 @@ public class Statements2TransFormula {
 		m_OutVars.clear();
 
 		DeclarationInformation declInfo = new DeclarationInformation(
-										StorageClass.PROCEDURE_INPARAM, callee);
+										StorageClass.PROC_FUNC_INPARAM, callee);
 		Term[] assignments = new Term[st.getArguments().length];
 		int offset = 0;
 		for (VarList varList : calleeImpl.getInParams()) {
