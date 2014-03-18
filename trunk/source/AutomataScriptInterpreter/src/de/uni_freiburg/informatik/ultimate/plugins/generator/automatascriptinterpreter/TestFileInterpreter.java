@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -1265,9 +1266,12 @@ public class TestFileInterpreter {
 				Constructor<?>[] operationConstructors = operationClass.getConstructors();
 				// Find the constructor which expects the correct arguments
 				for (Constructor<?> c : operationConstructors) {
-					if (allArgumentsHaveCorrectTypeForThisConstructor(c, arguments)) {
+					// Convention: If the first parameter is a StateFactory, we
+					// prepend a StringFactory to the arguments. 
+					Object[] augmentedArgs = prependStateFactoryIfNecessary(c, arguments);
+					if (allArgumentsHaveCorrectTypeForThisConstructor(c, augmentedArgs)) {
 						try {
-							result = (IOperation<String,String>) c.newInstance(arguments.toArray());
+							result = (IOperation<String,String>) c.newInstance(augmentedArgs);
 							return result;
 						} catch (InstantiationException e) {
 							e.printStackTrace();
@@ -1316,6 +1320,34 @@ public class TestFileInterpreter {
 		}
 	}
 	
+	/**
+	 * Return args.toArray(), but prepend a new StringFactory if the first
+	 * parameter of the Constructor c is a StateFacotry.
+	 */
+	private Object[] prependStateFactoryIfNecessary(Constructor<?> c, 
+			List<Object> args) {
+		boolean firstParameterIsStateFactory;
+		Class<?> fstParam = c.getParameterTypes()[0];
+		if (StateFactory.class.isAssignableFrom(fstParam)) {
+			firstParameterIsStateFactory = true;
+		} else {
+			firstParameterIsStateFactory = false;
+		}
+		Object result[];
+		if (firstParameterIsStateFactory) {
+			result = new Object[args.size()+1];
+			result[0] = new StringFactory();
+			int offset = 1;
+			for (Object arg : args) {
+				result[offset] = arg;
+				offset++;
+			}
+		} else {
+			result = args.toArray();
+		}
+		return result;
+	}
+
 	
 	/**
 	 * Checks if all arguments have the correct type. 
@@ -1323,17 +1355,20 @@ public class TestFileInterpreter {
 	 * @param arguments The arguments to check 
 	 * @return true if and only if all arguments have the correct type. Otherwise false.
 	 */
-	private boolean allArgumentsHaveCorrectTypeForThisConstructor(Constructor<?> c, List<Object> arguments) {
-		if (arguments.size() != c.getParameterTypes().length) return false;
-		int i = 0;
-		int minArgSize = (c.getParameterTypes().length > arguments.size() ? arguments.size() : c.getParameterTypes().length);
-		for (Class<?> type : c.getParameterTypes()) {
-			if ((i >= minArgSize) || !(AssignableTest.isAssignableFrom(type, arguments.get(i).getClass()))) {
-				return false;
+	private boolean allArgumentsHaveCorrectTypeForThisConstructor(Constructor<?> c, Object[] arguments) {
+		if (arguments.length == c.getParameterTypes().length) {
+			int i = 0;
+			for (Class<?> type : c.getParameterTypes()) {
+				if (AssignableTest.isAssignableFrom(type, arguments[i].getClass())) {
+					i++;
+				} else {
+					return false;
+				}
 			}
-			++i;
+			return true;
+		} else {
+			return false;
 		}
-		return true;
 	}
 	
 
