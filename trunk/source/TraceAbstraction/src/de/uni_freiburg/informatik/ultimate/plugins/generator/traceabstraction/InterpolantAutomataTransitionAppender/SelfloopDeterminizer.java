@@ -92,7 +92,7 @@ public class SelfloopDeterminizer
 			return m_ResultFinalState;
 		}
 		if (powersetSucc.isSubsetOf(detState)) {
-			IPredicate detStateContent = detState.getContent(m_StateFactory);
+			IPredicate detStateContent = getState(detState);
 			LBool isInductive = m_SmtManager.isInductive(detStateContent,
 													   symbol, detStateContent);
 			if (isInductive == Script.LBool.UNSAT) {
@@ -120,7 +120,7 @@ public class SelfloopDeterminizer
 			return m_ResultFinalState;
 		}
 		if (powersetSucc.isSubsetOf(detState)) {
-			IPredicate detStateContent = detState.getContent(m_StateFactory);
+			IPredicate detStateContent = getState(detState);
 			LBool isInductive = m_SmtManager.isInductiveCall(detStateContent,
 										   (Call) symbol, detStateContent);
 			if (isInductive == Script.LBool.UNSAT) {
@@ -152,8 +152,8 @@ public class SelfloopDeterminizer
 			return m_ResultFinalState;
 		}
 		if (powersetSucc.isSubsetOf(detState)) {
-			IPredicate detStateContent = detState.getContent(m_StateFactory);
-			IPredicate detHierContent = derHier.getContent(m_StateFactory);
+			IPredicate detStateContent = getState(detState);
+			IPredicate detHierContent = getState(derHier);
 			LBool isInductive = m_SmtManager.isInductiveReturn(detStateContent, 
 						detHierContent, (Return) symbol, detStateContent);
 			if (isInductive == Script.LBool.UNSAT) {
@@ -189,6 +189,12 @@ public class SelfloopDeterminizer
 	@Override
 	public boolean useDoubleDeckers() {
 		return true;
+	}
+	
+	@Override
+	public IPredicate getState(
+			DeterminizedState<CodeBlock, IPredicate> determinizedState) {
+		return determinizedState.getContent(m_StateFactory);
 	}
 
 }

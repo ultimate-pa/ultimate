@@ -105,7 +105,7 @@ public class StrongestPostDeterminizer
 			return m_ResultFinalState;
 		}
 		//Get formula which describes current state
-		IPredicate detStateConjunction = detState.getContent(m_ConFac);
+		IPredicate detStateConjunction = getState(detState);
 		//Check if edge to final is already inductive
 		LBool leadsToFinal = inductiveInternal(detStateConjunction, symbol, m_IaFalseState);
 //		assert leadsToFinal == m_EdgeChecker.getSmtManager().isInductive(detStateConjunction, 
@@ -176,7 +176,7 @@ public class StrongestPostDeterminizer
 			return m_ResultFinalState;
 		}
 		//Get formula which describes current state
-		IPredicate detStateConjunction = detState.getContent(m_ConFac);
+		IPredicate detStateConjunction = getState(detState);
 		//Check if edge to final is already inductive
 		LBool leadsToFinal = inductiveCall(detStateConjunction, 
 					(Call) symbol, m_IaFalseState);
@@ -244,9 +244,9 @@ public class StrongestPostDeterminizer
 			return m_ResultFinalState;
 		}
 		//Get formula which describes current state
-		IPredicate detStateConjunction = detState.getContent(m_ConFac);
+		IPredicate detStateConjunction = getState(detState);
 		//Get formula which describes current hierarchical successor
-		IPredicate detHierConjunction = detHier.getContent(m_ConFac);
+		IPredicate detHierConjunction = getState(detHier);
 		//Check if edge to final is already inductive
 		LBool leadsToFinal = inductiveReturn(detStateConjunction,
 				detHierConjunction,	(Return) symbol, 
@@ -457,6 +457,12 @@ public class StrongestPostDeterminizer
 	@Override
 	public boolean useDoubleDeckers() {
 		return false;
+	}
+	
+	@Override
+	public IPredicate getState(
+			DeterminizedState<CodeBlock, IPredicate> determinizedState) {
+		return determinizedState.getContent(m_ConFac);
 	}
 	
 

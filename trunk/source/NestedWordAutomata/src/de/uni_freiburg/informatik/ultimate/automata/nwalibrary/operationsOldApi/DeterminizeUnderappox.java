@@ -67,7 +67,7 @@ public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, S
 		ArrayList<STATE> resInitials = 
 			new ArrayList<STATE>(m_Operand.getInitialStates().size());
 		DeterminizedState<LETTER,STATE> detState = stateDeterminizer.initialState();
-		STATE resState = detState.getContent(contentFactory);
+		STATE resState = stateDeterminizer.getState(detState);
 		((NestedWordAutomaton<LETTER,STATE>) m_TraversedNwa).addState(true, detState.allFinal(m_Operand), resState);
 		det2res.put(detState,resState);
 		res2det.put(resState, detState);
@@ -90,7 +90,7 @@ public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, S
 			return det2res.get(detState);
 		}
 		else {
-			STATE resState = detState.getContent(contentFactory);
+			STATE resState = stateDeterminizer.getState(detState);
 			((NestedWordAutomaton<LETTER,STATE>) m_TraversedNwa).addState(false, detState.allFinal(m_Operand), resState);
 			det2res.put(detState,resState);
 			res2det.put(resState,detState);

@@ -64,7 +64,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	private void constructInitialState() {
 		DeterminizedState<LETTER, STATE> initialDet = 
 				m_StateDeterminizer.initialState();
-		STATE initialState = initialDet.getContent(m_StateFactory);
+		STATE initialState = m_StateDeterminizer.getState(initialDet);
 		m_det2res.put(initialDet, initialState);
 		m_res2det.put(initialState, initialDet);
 		m_Cache.addState(true, initialDet.containsFinal(), initialState);
@@ -73,7 +73,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	private STATE getOrConstructState(DeterminizedState<LETTER, STATE> detState) {
 		STATE state = m_det2res.get(detState);
 		if (state == null) {
-			state = detState.getContent(m_StateFactory);
+			state = m_StateDeterminizer.getState(detState);
 			m_det2res.put(detState, state);
 			m_res2det.put(state, detState);
 			m_Cache.addState(false, detState.containsFinal(), state);

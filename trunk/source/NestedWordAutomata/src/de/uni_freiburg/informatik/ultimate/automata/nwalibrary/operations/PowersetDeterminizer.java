@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 public class PowersetDeterminizer<LETTER,STATE> 
 			implements IStateDeterminizer<LETTER,STATE> {
 
-	StateFactory<STATE> m_ContentFactory;
+	StateFactory<STATE> m_StateFactory;
 	INestedWordAutomatonSimple<LETTER,STATE> m_Nwa;
 	private final boolean m_UseDoubleDeckers;
 	int maxDegreeOfNondeterminism = 0;
@@ -58,7 +58,7 @@ public class PowersetDeterminizer<LETTER,STATE>
 			boolean useDoubleDeckers) { 
 		m_Nwa = nwa;
 		m_UseDoubleDeckers = useDoubleDeckers;
-		this.m_ContentFactory = nwa.getStateFactory();
+		this.m_StateFactory = nwa.getStateFactory();
 	}
 
 	
@@ -174,6 +174,12 @@ public class PowersetDeterminizer<LETTER,STATE>
 	@Override
 	public boolean useDoubleDeckers() {
 		return m_UseDoubleDeckers;
+	}
+
+
+	@Override
+	public STATE getState(DeterminizedState<LETTER, STATE> determinizedState) {
+		return determinizedState.getContent(m_StateFactory);
 	}
 	
 	

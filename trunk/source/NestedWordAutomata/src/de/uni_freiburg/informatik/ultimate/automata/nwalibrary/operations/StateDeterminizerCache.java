@@ -214,4 +214,9 @@ public class StateDeterminizerCache<LETTER, STATE> implements
 		return m_StateDeterminizer.useDoubleDeckers();
 	}
 
+	@Override
+	public STATE getState(DeterminizedState<LETTER, STATE> determinizedState) {
+		return m_StateDeterminizer.getState(determinizedState);
+	}
+
 }

@@ -68,4 +68,5 @@ public interface IStateDeterminizer<LETTER,STATE> {
 	 */
 	boolean useDoubleDeckers();
 	
+	STATE getState(DeterminizedState<LETTER,STATE> determinizedState);
 }

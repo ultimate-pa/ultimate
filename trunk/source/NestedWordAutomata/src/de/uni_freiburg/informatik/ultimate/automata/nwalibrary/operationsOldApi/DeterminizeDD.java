@@ -140,7 +140,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 		ArrayList<STATE> resInitials = 
 			new ArrayList<STATE>(m_Operand.getInitialStates().size());
 		DeterminizedState<LETTER,STATE> detState = stateDeterminizer.initialState();
-		STATE resState = detState.getContent(contentFactory);
+		STATE resState = stateDeterminizer.getState(detState);
 		((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addState(true, detState.containsFinal(), resState);
 		det2res.put(detState,resState);
 		res2det.put(resState, detState);
@@ -225,7 +225,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 			return det2res.get(detState);
 		}
 		else {
-			STATE resState = detState.getContent(contentFactory);
+			STATE resState = stateDeterminizer.getState(detState);
 			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addState(false, detState.containsFinal(), resState);
 			det2res.put(detState,resState);
 			res2det.put(resState,detState);

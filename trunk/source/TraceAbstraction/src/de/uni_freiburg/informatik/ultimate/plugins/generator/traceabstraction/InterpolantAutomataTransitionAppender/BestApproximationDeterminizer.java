@@ -82,12 +82,12 @@ public class BestApproximationDeterminizer
 			}
 		}
 		if (m_TaPreferences.computeHoareAnnotation()) {
-			assert(m_SmtManager.isInductive(detState.getContent(m_StateFactory), 
+			assert(m_SmtManager.isInductive(getState(detState), 
 						symbol, 
-						succDetState.getContent(m_StateFactory)) == Script.LBool.UNSAT ||
+						getState(succDetState)) == Script.LBool.UNSAT ||
 					m_SmtManager.isInductive(detState.getContent(m_StateFactory), 
 						symbol, 
-						succDetState.getContent(m_StateFactory)) == Script.LBool.UNKNOWN);
+						getState(succDetState)) == Script.LBool.UNKNOWN);
 		}
 		return succDetState;	
 	}
@@ -99,23 +99,21 @@ public class BestApproximationDeterminizer
 		
 		DeterminizedState<CodeBlock, IPredicate>  succDetState = 
 				new DeterminizedState<CodeBlock, IPredicate> (m_Nwa);
-		for (IPredicate  downState : 
-												detState.getDownStates()) {
-			for (IPredicate  upState : 
-										detState.getUpStates(downState)) {
-				for (IPredicate  upSucc : 
-									getCallSuccs(upState,(Call) symbol)) {
+		for (IPredicate  downState : detState.getDownStates()) {
+			for (IPredicate  upState : detState.getUpStates(downState)) {
+				for (IPredicate  upSucc : getCallSuccs(upState,(Call) symbol)) {
 					succDetState.addPair(upState, upSucc, m_Nwa);
 				}
 			}
 		}
 		if (m_TaPreferences.computeHoareAnnotation()) {
-			assert(m_SmtManager.isInductiveCall(detState.getContent(m_StateFactory), 
+			assert(m_SmtManager.isInductiveCall(
+						getState(detState), 
 						(Call) symbol, 
-						succDetState.getContent(m_StateFactory)) == Script.LBool.UNSAT ||
-					m_SmtManager.isInductiveCall(detState.getContent(m_StateFactory), 
+						getState(succDetState)) == Script.LBool.UNSAT ||
+					m_SmtManager.isInductiveCall(getState(detState), 
 						(Call) symbol, 
-						succDetState.getContent(m_StateFactory)) == Script.LBool.UNKNOWN);
+						getState(succDetState)) == Script.LBool.UNKNOWN);
 		}
 		return succDetState;	
 	}
@@ -147,14 +145,15 @@ public class BestApproximationDeterminizer
 		}
 		
 		if (m_TaPreferences.computeHoareAnnotation()) {
-			assert(m_SmtManager.isInductiveReturn(detState.getContent(m_StateFactory),
-					detLinPred.getContent(m_StateFactory),
+			assert(m_SmtManager.isInductiveReturn(
+					getState(detState),
+					getState(detLinPred),
 					(Return) symbol, 
-					succDetState.getContent(m_StateFactory)) == Script.LBool.UNSAT ||
-					m_SmtManager.isInductiveReturn(detState.getContent(m_StateFactory),
-						detLinPred.getContent(m_StateFactory),
+					getState(succDetState)) == Script.LBool.UNSAT ||
+					m_SmtManager.isInductiveReturn(getState(detState),
+						getState(detLinPred),
 						(Return) symbol, 
-						succDetState.getContent(m_StateFactory)) == Script.LBool.UNKNOWN);
+						getState(succDetState)) == Script.LBool.UNKNOWN);
 		}
 
 		return succDetState;	
@@ -472,6 +471,12 @@ public class BestApproximationDeterminizer
 	@Override
 	public boolean useDoubleDeckers() {
 		throw new AssertionError("Matthias has to check which result is correct");
+	}
+
+	@Override
+	public IPredicate getState(
+			DeterminizedState<CodeBlock, IPredicate> determinizedState) {
+		return determinizedState.getContent(m_StateFactory);
 	}
 
 

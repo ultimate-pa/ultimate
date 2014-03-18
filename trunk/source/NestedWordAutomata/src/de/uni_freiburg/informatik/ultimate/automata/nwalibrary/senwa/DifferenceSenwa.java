@@ -183,8 +183,8 @@ public class DifferenceSenwa<LETTER, STATE> implements
 		if (resState == null) {
 			
 			resState = contentFactory.senwa(
-					diffEntry.getState(contentFactory), 
-					diffState.getState(contentFactory));
+					diffEntry.getState(contentFactory, stateDeterminizer), 
+					diffState.getState(contentFactory, stateDeterminizer));
 			op2res.put(diffState, resState);
 			m_Result2Operand.put(resState, diffState);
 			STATE resEntry = op2res.get(diffEntry);

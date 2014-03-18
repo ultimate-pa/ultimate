@@ -269,7 +269,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				new DifferenceState(minuState, detState);
 			STATE diffState = contentFactory.intersection(
 					macrState.minuendState, 
-					macrState.subtrahendDeterminizedState.getContent(contentFactory));
+					stateDeterminizer.getState(macrState.subtrahendDeterminizedState));
 			difference.addState(true, macrState.isFinal(), diffState);
 			diff2res.put(macrState,diffState);
 			res2diff.put(diffState, macrState);
@@ -392,7 +392,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		else {
 			STATE resState = contentFactory.intersection(
 					diffState.minuendState, 
-					diffState.subtrahendDeterminizedState.getContent(contentFactory));
+					stateDeterminizer.getState(diffState.subtrahendDeterminizedState));
 			difference.addState(false, diffState.isFinal(), resState);
 			diff2res.put(diffState,resState);
 			res2diff.put(resState,diffState);

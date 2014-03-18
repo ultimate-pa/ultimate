@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 
 
 
@@ -73,11 +74,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 			return this.isFinal;
 		}
 		
-		public STATE getState(StateFactory<STATE> stateFactory) {
+		public STATE getState(StateFactory<STATE> stateFactory, 
+				IStateDeterminizer<LETTER, STATE> stateDeterminizer) {
 			if (m_State == null) {
 				m_State = stateFactory.intersection(
-						this.getMinuendState(), 
-						this.getSubtrahendDeterminizedState().getContent(stateFactory));
+						this.getMinuendState(),
+						stateDeterminizer.getState(getSubtrahendDeterminizedState()));
 			} 
 			return m_State;
 		}

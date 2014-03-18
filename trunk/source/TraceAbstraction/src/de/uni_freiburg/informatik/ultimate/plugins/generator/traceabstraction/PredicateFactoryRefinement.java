@@ -83,29 +83,8 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 
 	@Override
 	public IPredicate determinize(Map<IPredicate, Set<IPredicate>> down2up) {
-		if (!m_Pref.computeHoareAnnotation() && 
-				m_Pref.determinization() != Determinization.STRONGESTPOST) {
-			return m_SmtManager.newDontCarePredicate(null);
-		}
-
-		assert ((m_Pref.interprocedural() && 
-				m_Pref.determinization() != Determinization.STRONGESTPOST)
-				|| down2up.keySet().size() <= 1) : "more than one down state";
-
-		List<IPredicate> upPredicates = new ArrayList<IPredicate>();
-		for (IPredicate caller : down2up.keySet()) {
-			for (IPredicate current : down2up.get(caller)) {
-				if (SmtManager.isDontCare(current)) {
-					return m_SmtManager.newDontCarePredicate(null);
-				}
-				upPredicates.add(current);
-			}
-		}
-		TermVarsProc tvp = m_SmtManager.and(
-									upPredicates.toArray(new IPredicate[0]));
-		IPredicate result = m_SmtManager.newPredicate(tvp.getFormula(), 
-				tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
-		return result;
+		throw new AssertionError(
+				"determinize is only required for construction of interpolant automaton, not for refinement");
 	}
 
 	@Override

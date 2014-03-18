@@ -194,12 +194,14 @@ public class PostDeterminizer
 
 		clearAssertionStack();
 		if (m_ComputeHoareAnnotation) {
-			assert(m_EdgeChecker.getSmtManager().isInductive(detState.getContent(m_StateFactory), 
-						symbol, 
-						detSucc.getContent(m_StateFactory)) == Script.LBool.UNSAT ||
-					m_EdgeChecker.getSmtManager().isInductive(detState.getContent(m_StateFactory), 
-						symbol, 
-						detSucc.getContent(m_StateFactory)) == Script.LBool.UNKNOWN);
+			assert(m_EdgeChecker.getSmtManager().isInductive(
+					getState(detState), 
+					symbol, 
+					getState(detSucc)) == Script.LBool.UNSAT ||
+					m_EdgeChecker.getSmtManager().isInductive(
+							getState(detState), 
+							symbol, 
+							getState(detSucc)) == Script.LBool.UNKNOWN);
 		}
 		assert detSucc.getDownStates().size() < 2;
 		return detSucc;	
@@ -282,12 +284,14 @@ public class PostDeterminizer
 		}
 		clearAssertionStack();
 		if (m_ComputeHoareAnnotation) {
-			assert(m_EdgeChecker.getSmtManager().isInductiveCall(detState.getContent(m_StateFactory), 
-						(Call) symbol, 
-						detSucc.getContent(m_StateFactory)) == Script.LBool.UNSAT ||
-					m_EdgeChecker.getSmtManager().isInductiveCall(detState.getContent(m_StateFactory), 
-						(Call) symbol, 
-						detSucc.getContent(m_StateFactory)) == Script.LBool.UNKNOWN);
+			assert(m_EdgeChecker.getSmtManager().isInductiveCall(
+					getState(detState), 
+					(Call) symbol, 
+					getState(detSucc)) == Script.LBool.UNSAT ||
+					m_EdgeChecker.getSmtManager().isInductiveCall(
+							getState(detState), 
+							(Call) symbol, 
+							getState(detSucc)) == Script.LBool.UNKNOWN);
 		}
 		assert detSucc.getDownStates().size() < 2;
 		return detSucc;	
@@ -371,14 +375,16 @@ public class PostDeterminizer
 		}
 		clearAssertionStack();
 		if (m_ComputeHoareAnnotation) {
-			assert(m_EdgeChecker.getSmtManager().isInductiveReturn(detState.getContent(m_StateFactory),
-					detHier.getContent(m_StateFactory),
+			assert(m_EdgeChecker.getSmtManager().isInductiveReturn(
+					getState(detState),
+							getState(detHier),
 					(Return) symbol, 
-					detSucc.getContent(m_StateFactory)) == Script.LBool.UNSAT ||
-					m_EdgeChecker.getSmtManager().isInductiveReturn(detState.getContent(m_StateFactory),
-						detHier.getContent(m_StateFactory),
+					getState(detSucc)) == Script.LBool.UNSAT ||
+					m_EdgeChecker.getSmtManager().isInductiveReturn(
+							getState(detState),
+									getState(detHier),
 						(Return) symbol, 
-						detSucc.getContent(m_StateFactory)) == Script.LBool.UNKNOWN);
+						getState(detSucc)) == Script.LBool.UNKNOWN);
 		}
 		assert detSucc.getDownStates().size() < 2;
 		return detSucc;	
@@ -698,7 +704,11 @@ public class PostDeterminizer
 
 
 
-
+	@Override
+	public IPredicate getState(
+			DeterminizedState<CodeBlock, IPredicate> determinizedState) {
+		return determinizedState.getContent(m_StateFactory);
+	}
 
 
 

@@ -364,7 +364,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 				new DifferenceState<LETTER,STATE>(minuState, detState, isFinal);
 			STATE resState = m_StateFactoryConstruction.intersection(
 					diffState.getMinuendState(), 
-					diffState.getSubtrahendDeterminizedState().getContent(minuend.getStateFactory()));
+					stateDeterminizer.getState(diffState.getSubtrahendDeterminizedState()));
 			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addState(true, diffState.isFinal(), resState);
 			diff2res.put(diffState,resState);
 			res2diff.put(resState, diffState);
@@ -567,8 +567,8 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		}
 		else {
 			STATE resState = m_StateFactoryConstruction.intersection(
-					diffState.getMinuendState(), 
-					diffState.getSubtrahendDeterminizedState().getContent(m_StateFactoryConstruction));
+					diffState.getMinuendState(),
+					stateDeterminizer.getState(diffState.getSubtrahendDeterminizedState()));
 			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addState(false, diffState.isFinal(), resState);
 			diff2res.put(diffState,resState);
 			res2diff.put(resState,diffState);

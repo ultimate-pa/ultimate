@@ -165,7 +165,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		assert !isFinal || detState.isEmpty() : "only the sink state is final";
 		STATE resSucc = m_det2res.get(detState);
 		if (resSucc == null) {
-			resSucc = detState.getContent(m_StateFactory);
+			resSucc = m_StateDeterminizer.getState(detState);
 			assert resSucc != null;
 			m_Cache.addState(isInitial, isFinal, resSucc);
 			m_det2res.put(detState, resSucc);
