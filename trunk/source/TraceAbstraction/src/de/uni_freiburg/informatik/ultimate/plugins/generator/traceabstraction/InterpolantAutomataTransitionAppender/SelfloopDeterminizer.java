@@ -47,13 +47,14 @@ public class SelfloopDeterminizer
 	
 	public SelfloopDeterminizer(SmtManager mSmtManager,
 			TAPreferences taPreferences,
-			INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutom) {
+			INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutom,
+			StateFactory<IPredicate> stateFactory) {
 		super();
 		m_SmtManager = mSmtManager;
 		m_InterpolantAutomaton = interpolantAutom;
-		m_StateFactory = interpolantAutom.getStateFactory();
+		m_StateFactory = stateFactory;
 		m_PowersetDeterminizer = 
-			new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolantAutomaton, true);
+			new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolantAutomaton, true, m_StateFactory);
 		for (IPredicate state : m_InterpolantAutomaton.getStates()) {
 			if (m_InterpolantAutomatonFinalState == null) {
 				if (m_InterpolantAutomaton.isFinal(state)) {

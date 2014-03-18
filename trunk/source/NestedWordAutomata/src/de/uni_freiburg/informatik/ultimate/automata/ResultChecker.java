@@ -79,6 +79,7 @@ public class ResultChecker<LETTER,STATE> {
 	
 	public static boolean reduceBuchi(INestedWordAutomatonOldApi operand,
 			INestedWordAutomatonOldApi result) throws AutomataLibraryException {
+		StateFactory stateFactory = operand.getStateFactory();
 		if (resultCheckStackHeight >= maxResultCheckStackHeight)
 			return true;
 		resultCheckStackHeight++;
@@ -87,13 +88,13 @@ public class ResultChecker<LETTER,STATE> {
 		INestedWordAutomatonOldApi minimizedOperand = (new MinimizeDfa(operand)).getResult();
 
 		boolean correct = true;
-		NestedLassoRun inOperandButNotInResultBuchi = nwaBuchiLanguageInclusion(minimizedOperand,result);
+		NestedLassoRun inOperandButNotInResultBuchi = nwaBuchiLanguageInclusion(stateFactory, minimizedOperand,result);
 		if (inOperandButNotInResultBuchi != null) {
 			s_Logger.error("Lasso word accepted by operand, but not by result: " + 
 					inOperandButNotInResultBuchi.getNestedLassoWord());
 			correct = false;
 		}
-		NestedLassoRun inResultButNotInOperatndBuchi = nwaBuchiLanguageInclusion(result,minimizedOperand);
+		NestedLassoRun inResultButNotInOperatndBuchi = nwaBuchiLanguageInclusion(stateFactory, result,minimizedOperand);
 		if (inResultButNotInOperatndBuchi != null) {
 			s_Logger.error("Lasso word accepted by result, but not by operand: " + 
 					inResultButNotInOperatndBuchi.getNestedLassoWord());
@@ -278,7 +279,7 @@ public class ResultChecker<LETTER,STATE> {
 
 
 	public static <LETTER,STATE> NestedRun nwaLanguageInclusion(INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2, StateFactory stateFactory) throws AutomataLibraryException {
-		IStateDeterminizer stateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(nwa2, true);
+		IStateDeterminizer stateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(nwa2, true, stateFactory);
 		INestedWordAutomatonOldApi nwa1MinusNwa2 = (new DifferenceDD(nwa1, nwa2, stateDeterminizer, stateFactory, false, false)).getResult();
 		NestedRun inNwa1ButNotInNwa2 = (new IsEmpty(nwa1MinusNwa2)).getNestedRun();
 		return inNwa1ButNotInNwa2;
@@ -299,8 +300,9 @@ public class ResultChecker<LETTER,STATE> {
 		}
 	}
 	
-	private static NestedLassoRun nwaBuchiLanguageInclusion(INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2) throws AutomataLibraryException {
-		return (new BuchiIsIncluded(nwa1, nwa2)).getCounterexample();
+	private static NestedLassoRun nwaBuchiLanguageInclusion(StateFactory stateFactory, 
+			INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2) throws AutomataLibraryException {
+		return (new BuchiIsIncluded(stateFactory, nwa1, nwa2)).getCounterexample();
 	}
 	
 	

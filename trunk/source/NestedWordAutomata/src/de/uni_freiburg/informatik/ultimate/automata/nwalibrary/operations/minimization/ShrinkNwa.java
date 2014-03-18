@@ -181,9 +181,10 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * preprocessing: dead end and unreachable states/transitions removed
 	 * @throws OperationCanceledException if cancel signal is received
 	 */
-	public ShrinkNwa(final INestedWordAutomaton<LETTER,STATE> operand)
+	public ShrinkNwa(final StateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER,STATE> operand)
 			throws OperationCanceledException {
-		this(operand, false, 0, false, 0, false, false);
+		this(stateFactory, operand, false, 0, false, 0, false, false);
 	}
 	
 	/**
@@ -205,13 +206,14 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 *                          singleton
 	 * @throws OperationCanceledException if cancel signal is received
 	 */
-	public ShrinkNwa(final INestedWordAutomaton<LETTER,STATE> operand,
+	public ShrinkNwa(final StateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER,STATE> operand,
 			final boolean splitOutgoing, final int splitRandomSize,
 			final boolean firstReturnSplit,
 			final int firstReturnSplitAlternative,
 			final boolean splitAllCallPreds, final boolean returnSplitNaive)
 			throws OperationCanceledException {
-		this(operand, null, null, false, false, splitOutgoing,
+		this(stateFactory, operand, null, false, false, splitOutgoing,
 				splitRandomSize, firstReturnSplit,
 				firstReturnSplitAlternative, splitAllCallPreds,
 				returnSplitNaive);
@@ -243,16 +245,16 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 */
 	@SuppressWarnings("unchecked")
 	public ShrinkNwa(
+			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER,STATE> operand,
 			final Collection<Set<STATE>> equivalenceClasses,
-			final StateFactory<STATE> stateFactory,
 			final boolean includeMapping, final boolean isFiniteAutomaton,
 			final boolean splitOutgoing, final int splitRandomSize,
 			final boolean firstReturnSplit,
 			final int firstReturnSplitAlternative,
 			final boolean splitAllCallPreds, final boolean returnSplitNaive)
 					throws OperationCanceledException {
-		super("shrinkNwa", operand);
+		super(stateFactory, "shrinkNwa", operand);
 		if (STAT_RETURN_SIZE) {
 			try {
 				m_writer1 = new BufferedWriter(

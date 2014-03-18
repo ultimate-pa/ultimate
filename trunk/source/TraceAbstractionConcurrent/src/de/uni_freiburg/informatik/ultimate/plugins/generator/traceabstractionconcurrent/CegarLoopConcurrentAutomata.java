@@ -162,7 +162,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 			
 
 				PostDeterminizer epd = new PostDeterminizer(edgeChecker, m_ComputeHoareAnnotation, 
-									m_InterpolAutomaton,true);
+									m_InterpolAutomaton,true, m_PredicateFactoryInterpolantAutomata);
 				if (m_Pref.differenceSenwa()) {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, epd, false);
@@ -226,7 +226,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized;
 			if (false && shrinkNwa) {
 				ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(
-						newAbstraction, partition, m_StateFactoryForRefinement, true, false, false, 200, false, 0, false, false);
+						m_StateFactoryForRefinement, newAbstraction, partition, true, false, false, 200, false, 0, false, false);
 				assert minimizeOp.checkResult(predicateFactory);
 				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(minimizeOp.getResult())).getResult();
 				if (m_ComputeHoareAnnotation) {

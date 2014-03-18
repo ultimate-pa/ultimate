@@ -169,6 +169,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * @throws AutomataLibraryException 
 	 */	
 	public DifferenceSadd(
+			StateFactory<STATE> stateFactory,
 			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
 			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend) throws AutomataLibraryException {
 		contentFactory = minuend.getStateFactory();
@@ -177,7 +178,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		if (!NestedWordAutomaton.sameAlphabet(this.minuend, this.subtrahend)) {
 			throw new AutomataLibraryException("Unable to apply operation to automata with different alphabets.");
 		}
-		this.stateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(subtrahend, true);
+		this.stateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(subtrahend, true, stateFactory);
 		s_Logger.info(startMessage());
 		difference = new NestedWordAutomaton<LETTER,STATE>(
 				minuend.getInternalAlphabet(),
@@ -545,7 +546,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
 			s_Logger.info("Start testing correctness of " + operationName());
 
-			INestedWordAutomatonOldApi<LETTER,STATE> resultDD = (new DifferenceDD<LETTER,STATE>(minuend, subtrahend)).getResult();
+			INestedWordAutomatonOldApi<LETTER,STATE> resultDD = (new DifferenceDD<LETTER,STATE>(stateFactory, minuend, subtrahend)).getResult();
 			correct &= (ResultChecker.nwaLanguageInclusion(resultDD, difference, stateFactory) == null);
 			correct &= (ResultChecker.nwaLanguageInclusion(difference, resultDD, stateFactory) == null);
 			if (!correct) {

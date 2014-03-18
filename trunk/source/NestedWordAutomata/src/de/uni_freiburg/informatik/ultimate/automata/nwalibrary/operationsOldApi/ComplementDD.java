@@ -67,14 +67,15 @@ public class ComplementDD<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return m_Result;
 	}
 
-	public ComplementDD(INestedWordAutomatonOldApi<LETTER, STATE> operand)
+	public ComplementDD(StateFactory<STATE> stateFactory,
+			INestedWordAutomatonOldApi<LETTER, STATE> operand)
 			throws OperationCanceledException {
 		m_Operand = operand;
 
 		s_Logger.info(startMessage());
 		if (!m_Operand.isDeterministic()) {
 			m_DeterminizedOperand = 
-				   (new DeterminizeDD<LETTER, STATE>(m_Operand)).getResult();
+				   (new DeterminizeDD<LETTER, STATE>(stateFactory, m_Operand)).getResult();
 		} else {
 			m_DeterminizedOperand = m_Operand;
 			s_Logger.debug("Operand is already deterministic");

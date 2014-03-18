@@ -56,12 +56,14 @@ public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	private final NestedRun<LETTER, STATE> m_Counterexample;
 	
 	
-	public IsIncluded(INestedWordAutomatonOldApi<LETTER, STATE> nwa1, INestedWordAutomatonOldApi<LETTER, STATE> nwa2) throws AutomataLibraryException {
+	public IsIncluded(StateFactory<STATE> stateFactory,
+			INestedWordAutomatonOldApi<LETTER, STATE> nwa1, 
+			INestedWordAutomatonOldApi<LETTER, STATE> nwa2) throws AutomataLibraryException {
 		m_Operand1 = nwa1;
 		m_Operand2 = nwa2;
 		s_Logger.info(startMessage());
 		IsEmpty<LETTER, STATE> emptinessCheck = new IsEmpty<LETTER, STATE>(
-				(new Difference<LETTER, STATE>(nwa1, nwa2)).getResult());
+				(new Difference<LETTER, STATE>(stateFactory, nwa1, nwa2)).getResult());
 		m_Result = emptinessCheck.getResult();
 		m_Counterexample = emptinessCheck.getNestedRun();
 		s_Logger.info(exitMessage());

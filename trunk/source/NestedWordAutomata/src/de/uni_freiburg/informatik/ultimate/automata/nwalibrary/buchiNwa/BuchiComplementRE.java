@@ -82,7 +82,8 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 	}
 	
 	
-	public BuchiComplementRE(INestedWordAutomatonOldApi<LETTER,STATE> operand) throws AutomataLibraryException {
+	public BuchiComplementRE(StateFactory<STATE> stateFactory,
+			INestedWordAutomatonOldApi<LETTER,STATE> operand) throws AutomataLibraryException {
 		m_Operand = operand;
 		s_Logger.info(startMessage());
 		INestedWordAutomatonOldApi<LETTER,STATE> operandWithoutNonLiveStates = 
@@ -93,7 +94,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 		}
 		else {
 			PowersetDeterminizer<LETTER,STATE> pd = 
-					new PowersetDeterminizer<LETTER,STATE>(operandWithoutNonLiveStates, true);
+					new PowersetDeterminizer<LETTER,STATE>(operandWithoutNonLiveStates, true, stateFactory);
 			INestedWordAutomatonOldApi<LETTER,STATE> determinized = 
 					(new DeterminizeUnderappox<LETTER,STATE>(operandWithoutNonLiveStates,pd)).getResult();
 			INestedWordAutomatonOldApi<LETTER,STATE> determinizedComplement =

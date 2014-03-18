@@ -72,9 +72,9 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	
-	public Determinize(INestedWordAutomatonSimple<LETTER,STATE> input) throws OperationCanceledException {
-		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true);
-		this.m_StateFactory = input.getStateFactory();
+	public Determinize(StateFactory<STATE> stateFactory, INestedWordAutomatonSimple<LETTER,STATE> input) throws OperationCanceledException {
+		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
+		this.m_StateFactory = stateFactory;
 		this.m_Operand = input;
 		s_Logger.info(startMessage());
 		m_Determinized = new DeterminizeNwa<LETTER, STATE>(input, stateDeterminizer, m_StateFactory);
@@ -98,7 +98,7 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(m_Operand);
 
 			// should have same number of states as old determinization
-			INestedWordAutomatonOldApi<LETTER, STATE> resultDD = (new DeterminizeDD<LETTER, STATE>(operandOldApi)).getResult();
+			INestedWordAutomatonOldApi<LETTER, STATE> resultDD = (new DeterminizeDD<LETTER, STATE>(sf, operandOldApi)).getResult();
 			correct &= (resultDD.size() == m_Result.size());
 			// should recognize same language as old computation
 			correct &= (ResultChecker.nwaLanguageInclusion(resultDD, m_Result, sf) == null);

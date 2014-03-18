@@ -115,12 +115,13 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 		s_Logger.debug(exitMessage());
 	}
 	
-	public DeterminizeDD(INestedWordAutomatonOldApi<LETTER,STATE> input) 
+	public DeterminizeDD(StateFactory<STATE> stateFactory, 
+			INestedWordAutomatonOldApi<LETTER,STATE> input) 
 											throws OperationCanceledException {
 		this.contentFactory = input.getStateFactory();
 		this.m_Operand = input;
 		s_Logger.debug(startMessage());
-		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true);
+		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
 		super.m_TraversedNwa = new NestedWordAutomaton<LETTER,STATE>(
 				input.getInternalAlphabet(),
 				input.getCallAlphabet(),

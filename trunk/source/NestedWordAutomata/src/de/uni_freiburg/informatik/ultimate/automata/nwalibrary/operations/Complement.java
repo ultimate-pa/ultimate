@@ -85,10 +85,11 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		s_Logger.info(exitMessage());
 	}
 	
-	public Complement(INestedWordAutomatonSimple<LETTER,STATE> operand) throws OperationCanceledException {
+	public Complement(StateFactory<STATE> stateFactory, 
+			INestedWordAutomatonSimple<LETTER,STATE> operand) throws OperationCanceledException {
 		m_Operand = operand;
-		m_StateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(operand, true);
-		m_StateFactory = operand.getStateFactory();
+		m_StateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(operand, true, stateFactory);
+		m_StateFactory = stateFactory;
 		s_Logger.info(startMessage());
 		computeComplement();
 		s_Logger.info(exitMessage());
@@ -149,7 +150,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			INestedWordAutomatonOldApi<LETTER, STATE> intersectionOperandResult = 
 					(new IntersectDD<LETTER, STATE>(operandOldApi, m_Result)).getResult();
 			correct &= (new IsEmpty<LETTER, STATE>(intersectionOperandResult)).getResult();
-			INestedWordAutomatonOldApi<LETTER, STATE> resultDD = (new ComplementDD<LETTER, STATE>(operandOldApi)).getResult();
+			INestedWordAutomatonOldApi<LETTER, STATE> resultDD = (new ComplementDD<LETTER, STATE>(sf, operandOldApi)).getResult();
 			// should have same number of states as old complementation
 			// does not hold, resultDD sometimes has additional sink state
 			//		correct &= (resultDD.size() == m_Result.size());

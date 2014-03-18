@@ -67,6 +67,11 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 * The input automaton.
 	 */
 	protected final INestedWordAutomaton<LETTER, STATE> m_operand;
+	
+	/**
+	 * StateFactory for the construction of states of the resulting automaton.
+	 */
+	protected final StateFactory<STATE> m_StateFactory;
 
 	/**
 	 * This constructor should be called by all subclasses and only by them.
@@ -74,10 +79,11 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 * @param name operation name
 	 * @param operand input automaton
 	 */
-	protected AMinimizeNwa(final String name,
+	protected AMinimizeNwa(StateFactory<STATE> stateFactory, final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		m_name = name;
 		m_operand = operand;
+		m_StateFactory = stateFactory;
 		s_logger.info(startMessage());
 	}
 	

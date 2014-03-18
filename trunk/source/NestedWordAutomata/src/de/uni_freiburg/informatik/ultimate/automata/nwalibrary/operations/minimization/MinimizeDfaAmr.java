@@ -139,9 +139,10 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * @throws OperationCanceledException thrown when execution is cancelled
 	 * @throws AutomataLibraryException thrown by DFA check
 	 */
-	public MinimizeDfaAmr(final INestedWordAutomaton<LETTER, STATE> operand)
+	public MinimizeDfaAmr(final StateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand)
 			throws OperationCanceledException, AutomataLibraryException {
-		this(operand, null);
+		this(stateFactory, operand, null);
 	}
 	
 	/**
@@ -152,10 +153,11 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * @throws OperationCanceledException thrown when execution is cancelled
 	 * @throws AutomataLibraryException thrown by DFA check
 	 */
-	public MinimizeDfaAmr(final INestedWordAutomaton<LETTER, STATE> operand,
+	public MinimizeDfaAmr(final StateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt)
 			throws OperationCanceledException, AutomataLibraryException {
-		super("MinimizeAMR", operand, interrupt);
+		super(stateFactory, "MinimizeAMR", operand, interrupt);
 		
 		assert super.checkForDfa() : "The input automaton is no DFA.";
 		

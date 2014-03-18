@@ -251,7 +251,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 				INestedWordAutomatonOldApi<LETTER, STATE> intersectionOperandResult = 
 						(new IntersectDD<LETTER, STATE>(m_Input, m_TraversedNwa)).getResult();
 				correct &= (new IsEmpty<LETTER, STATE>(intersectionOperandResult)).getResult();
-				INestedWordAutomatonOldApi<LETTER, STATE> resultSadd = (new ComplementDD<LETTER, STATE>(m_Input)).getResult();
+				INestedWordAutomatonOldApi<LETTER, STATE> resultSadd = (new ComplementDD<LETTER, STATE>(stateFactory, m_Input)).getResult();
 				// should recognize same language as old computation
 				correct &= (ResultChecker.nwaLanguageInclusion(resultSadd, m_TraversedNwa, stateFactory) == null);
 				correct &= (ResultChecker.nwaLanguageInclusion(m_TraversedNwa, resultSadd, stateFactory) == null);

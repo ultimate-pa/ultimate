@@ -36,10 +36,8 @@ public class PredicateFactory extends StateFactory<IPredicate> {
 
 	
 	public IPredicate intersection(IPredicate p1, IPredicate p2) {
-		TermVarsProc tvp = m_SmtManager.and(p1, p2);
-		IPredicate result = m_SmtManager.newPredicate(tvp.getFormula(), 
-				tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
-		return result;
+		throw new AssertionError(
+				"intersect is only required for refinement, not for construction of interpolant automaton");
 	}
 	
 
@@ -113,7 +111,8 @@ public class PredicateFactory extends StateFactory<IPredicate> {
 
 	@Override
 	public IPredicate intersectBuchi(IPredicate s1, IPredicate s2, int track) {
-		return intersection(s1, s2);
+		throw new AssertionError(
+				"intersect is only required for refinement, not for construction of interpolant automaton");
 	}
 	
 	

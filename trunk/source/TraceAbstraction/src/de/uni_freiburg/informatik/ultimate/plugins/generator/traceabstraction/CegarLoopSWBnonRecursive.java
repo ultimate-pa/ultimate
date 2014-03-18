@@ -602,8 +602,6 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 		SuperDifference<CodeBlock, IPredicate> diff = new SuperDifference<CodeBlock, IPredicate>(
 				m_NestedAbstraction, m_InterpolAutomaton, m_Epimorphism, false);
 
-		PredicateFactory predicateFactory = (PredicateFactory) m_Abstraction.getStateFactory();
-
 		m_Abstraction = diff.getResult();
 
 		s_Logger.debug("Actualized abstraction.");
@@ -634,7 +632,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 			RemoveDeadEnds<CodeBlock, IPredicate> removeDeadEnds = new RemoveDeadEnds<CodeBlock, IPredicate>((INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction);
 			m_Abstraction = removeDeadEnds.getResult();
 
-			minimizeAbstraction(m_StateFactoryForRefinement, predicateFactory);
+			minimizeAbstraction(m_StateFactoryForRefinement, m_PredicateFactoryResultChecking);
 		}
 
 		return true;

@@ -292,8 +292,8 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 		INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(m_Result)).getResult();
 		INestedWordAutomatonOldApi nwaResult = (new ConcurrentProduct(op1AsNwa, m_Nwa, true)).getResult();
 		boolean correct = true;
-		correct &= (new IsIncluded(resultAsNwa,nwaResult)).getResult();
-		correct &= (new IsIncluded(nwaResult,resultAsNwa)).getResult();
+		correct &= (new IsIncluded(stateFactory, resultAsNwa,nwaResult)).getResult();
+		correct &= (new IsIncluded(stateFactory, nwaResult,resultAsNwa)).getResult();
 
 		s_Logger.info("Finished testing correctness of prefixProduct");
 		return correct;

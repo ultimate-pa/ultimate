@@ -53,7 +53,7 @@ public class RefineBuchi {
 	
 	private final boolean m_DumpAutomata;
 	private final boolean m_Difference;
-	private final PredicateFactory m_StateFactory;
+	private final PredicateFactory m_StateFactoryInterpolAutom;
 	private final PredicateFactoryRefinement m_StateFactoryForRefinement;
 	private final boolean m_UseDoubleDeckers;
 	private final String m_DumpPath;
@@ -68,7 +68,7 @@ public class RefineBuchi {
 
 	public RefineBuchi(SmtManager smtManager, 
 			boolean dumpAutomata, boolean difference,
-			PredicateFactory stateFactory,
+			PredicateFactory stateFactoryInterpolAutom,
 			PredicateFactoryRefinement stateFactoryForRefinement,
 			boolean useDoubleDeckers, String dumpPath,
 			INTERPOLATION interpolation) {
@@ -76,7 +76,7 @@ public class RefineBuchi {
 		m_SmtManager = smtManager;
 		m_DumpAutomata = dumpAutomata;
 		m_Difference = difference;
-		m_StateFactory = stateFactory;
+		m_StateFactoryInterpolAutom = stateFactoryInterpolAutom;
 		m_StateFactoryForRefinement = stateFactoryForRefinement;
 		m_UseDoubleDeckers = useDoubleDeckers;
 		m_DumpPath = dumpPath;
@@ -245,13 +245,13 @@ public class RefineBuchi {
 					BuchiCegarLoop.emptyStem(m_Counterexample) ? null : stem.getSymbol(stem.length()-1), 
 					loop.getSymbol(loop.length()-1), m_Abstraction, 
 					setting.isScroogeNondeterminismStem(), setting.isScroogeNondeterminismLoop(), 
-					setting.isBouncerStem(), setting.isBouncerLoop(), m_StateFactory, pu, pu, falsePredicate);
+					setting.isBouncerStem(), setting.isBouncerLoop(), m_StateFactoryInterpolAutom, pu, pu, falsePredicate);
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");
 		}
 		IStateDeterminizer<CodeBlock, IPredicate> stateDeterminizer = 
-				new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolAutomatonUsedInRefinement, m_UseDoubleDeckers);
+				new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolAutomatonUsedInRefinement, m_UseDoubleDeckers, m_StateFactoryInterpolAutom);
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction;
 		if (m_Difference) {
 			BuchiDifferenceFKV<CodeBlock, IPredicate> diff = 
@@ -268,19 +268,19 @@ public class RefineBuchi {
 //					new MinimizeSevpa<CodeBlock, IPredicate>(bc,null,false,false,m_StateFactory);
 //			s_Logger.warn("END: minimization test");
 //			
-			assert diff.checkResult(m_StateFactory);
+			assert diff.checkResult(m_StateFactoryInterpolAutom);
 			newAbstraction = diff.getResult();
 		} else {
 			BuchiComplementFKV<CodeBlock, IPredicate> complNwa = 
 					new BuchiComplementFKV<CodeBlock, IPredicate>(m_InterpolAutomatonUsedInRefinement, stateDeterminizer);
 			finishComputation(m_InterpolAutomatonUsedInRefinement,setting);
-			assert(complNwa.checkResult(m_StateFactory));
+			assert(complNwa.checkResult(m_StateFactoryInterpolAutom));
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate>  complement = 
 					complNwa.getResult();
 			assert !(new BuchiAccepts<CodeBlock, IPredicate>(complement,m_Counterexample.getNestedLassoWord())).getResult();
 			BuchiIntersect<CodeBlock, IPredicate> interNwa = 
 					new BuchiIntersect<CodeBlock, IPredicate>(m_Abstraction, complement,m_StateFactoryForRefinement);
-			assert(interNwa.checkResult(m_StateFactory));
+			assert(interNwa.checkResult(m_StateFactoryInterpolAutom));
 			newAbstraction = interNwa.getResult();
 		}
 //		INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldApi = (new RemoveUnreachable<CodeBlock, IPredicate>(m_InterpolAutomatonUsedInRefinement)).getResult();

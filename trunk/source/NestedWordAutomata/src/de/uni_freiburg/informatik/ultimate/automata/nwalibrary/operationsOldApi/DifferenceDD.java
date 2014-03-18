@@ -301,7 +301,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 				"was accepting (use sigma star concat closure?)");
 	}
 	
-	public DifferenceDD(
+	public DifferenceDD(StateFactory<STATE> stateFactory,
 			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
 			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend) throws AutomataLibraryException {
 		this.m_subtrahendSigmaStarClosed = false;
@@ -315,7 +315,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		this.subtrahendAuxilliaryEmptyStackState = 
 			subtrahend.getEmptyStackState();
 		this.stateDeterminizer =
-			new PowersetDeterminizer<LETTER,STATE>(subtrahend, true);
+			new PowersetDeterminizer<LETTER,STATE>(subtrahend, true, stateFactory);
 		super.m_TraversedNwa = new DoubleDeckerAutomaton<LETTER,STATE>(
 				minuend.getInternalAlphabet(),
 				minuend.getCallAlphabet(),
@@ -583,7 +583,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
 			s_Logger.info("Start testing correctness of " + operationName());
 
-			INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = (new DifferenceSadd<LETTER,STATE>(minuend, subtrahend)).getResult();
+			INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = (new DifferenceSadd<LETTER,STATE>(stateFactory, minuend, subtrahend)).getResult();
 			correct &= (ResultChecker.nwaLanguageInclusion(resultSadd, m_TraversedNwa, stateFactory) == null);
 			correct &= (ResultChecker.nwaLanguageInclusion(m_TraversedNwa, resultSadd, stateFactory) == null);
 			if (!correct) {

@@ -83,13 +83,14 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	
 	
 	
-	public Difference(INestedWordAutomatonOldApi<LETTER,STATE> fstOperand,
+	public Difference(StateFactory<STATE> stateFactory, 
+			INestedWordAutomatonOldApi<LETTER,STATE> fstOperand,
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = m_FstOperand.getStateFactory();
-		m_StateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(sndOperand, true);
+		m_StateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(sndOperand, true, stateFactory);
 		s_Logger.info(startMessage());
 		computateDifference(false);
 		s_Logger.info(exitMessage());
@@ -156,7 +157,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 		INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(m_SndOperand);
 		INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
 				(new DifferenceDD<LETTER, STATE>(fstOperandOldApi,sndOperandOldApi, 
-						new PowersetDeterminizer<LETTER, STATE>(sndOperandOldApi,true),sf,false,false)).getResult();
+						new PowersetDeterminizer<LETTER, STATE>(sndOperandOldApi,true, sf),sf,false,false)).getResult();
 		boolean correct = true;
 //		correct &= (resultDD.size() == m_Result.size());
 //		assert correct;

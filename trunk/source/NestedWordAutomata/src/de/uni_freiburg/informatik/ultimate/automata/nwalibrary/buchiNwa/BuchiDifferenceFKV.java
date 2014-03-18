@@ -88,13 +88,14 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	
 	
 	
-	public BuchiDifferenceFKV(INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
+	public BuchiDifferenceFKV(StateFactory<STATE> stateFactory,
+			INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = m_FstOperand.getStateFactory();
-		m_StateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(sndOperand, true);
+		m_StateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(sndOperand, true, stateFactory);
 		s_Logger.info(startMessage());
 		computateDifference();
 		s_Logger.info(exitMessage());

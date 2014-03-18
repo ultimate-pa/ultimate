@@ -568,7 +568,7 @@ public class BuchiCegarLoop {
 			EdgeChecker ec = new EdgeChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
 			boolean computeHoareAnnotation = false;
 			PostDeterminizer spd = new PostDeterminizer(
-					ec, computeHoareAnnotation, m_InterpolAutomaton, true);
+					ec, computeHoareAnnotation, m_InterpolAutomaton, true, m_DefaultStateFactory);
 			DifferenceDD<CodeBlock, IPredicate> diff = null;
 			try {
 				diff = new DifferenceDD<CodeBlock, IPredicate>(

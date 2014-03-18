@@ -48,11 +48,12 @@ public class BestApproximationDeterminizer
 
 	public BestApproximationDeterminizer(SmtManager mSmtManager,
 			TAPreferences taPreferences,
-			NestedWordAutomaton<CodeBlock, IPredicate> mNwa) {
+			NestedWordAutomaton<CodeBlock, IPredicate> mNwa,
+			StateFactory<IPredicate> stateFactory) {
 		super();
 		m_SmtManager = mSmtManager;
 		m_TaPreferences = taPreferences;
-		m_StateFactory = mNwa.getStateFactory();
+		m_StateFactory = stateFactory;
 		m_Nwa = mNwa;
 	}
 	

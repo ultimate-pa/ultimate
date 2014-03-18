@@ -53,11 +53,12 @@ public class PostDeterminizer
 	public PostDeterminizer(EdgeChecker edgeChecker,
 			boolean computeHoareAnnotation,
 			NestedWordAutomaton<CodeBlock, IPredicate> mNwa,
-			boolean eager) {
+			boolean eager,
+			StateFactory<IPredicate> stateFactory) {
 		m_EdgeChecker = edgeChecker;
 		m_ComputeHoareAnnotation = computeHoareAnnotation;
 		m_Ia = mNwa;
-		m_StateFactory = mNwa.getStateFactory();
+		m_StateFactory = stateFactory;
 		m_Eager = eager;
 		
 		

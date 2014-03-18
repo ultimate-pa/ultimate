@@ -68,7 +68,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	protected RunAnalyzer m_RunAnalyzer;
 
-	protected PredicateFactoryRefinement m_StateFactoryForRefinement;
+	protected final PredicateFactoryRefinement m_StateFactoryForRefinement;
+	protected final PredicateFactory m_PredicateFactoryInterpolantAutomata;
+	protected final PredicateFactoryResultChecking m_PredicateFactoryResultChecking;
+	
 	
 	protected final TraceAbstractionBenchmarks m_TraceAbstractionBenchmarks;
 	
@@ -97,6 +100,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				m_Pref,
 				m_RemoveDeadEnds && m_ComputeHoareAnnotation,
 				m_Haf);
+		m_PredicateFactoryInterpolantAutomata = new PredicateFactory(
+				super.m_SmtManager,
+				m_Pref);
+		m_PredicateFactoryResultChecking = new PredicateFactoryResultChecking(smtManager);
 	}
 	
 	
@@ -265,8 +272,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_TraceAbstractionBenchmarks.startDifference();
 		boolean explointSigmaStarConcatOfIA = !m_ComputeHoareAnnotation;
 		
-		PredicateFactory predicateFactory = (PredicateFactory) m_Abstraction.getStateFactory();
-		
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldAbstraction = 
 				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
 		Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
@@ -283,7 +288,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			switch (m_Pref.determinization()) {
 			case POWERSET:
 				PowersetDeterminizer<CodeBlock, IPredicate> psd = 
-					new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolAutomaton, true);
+					new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolAutomaton, true, m_PredicateFactoryInterpolantAutomata);
 				if (m_Pref.differenceSenwa()) {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 								oldAbstraction, m_InterpolAutomaton, psd, false);
@@ -297,7 +302,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			case BESTAPPROXIMATION:	
 				BestApproximationDeterminizer bed = 
 					new BestApproximationDeterminizer(m_SmtManager,	m_Pref, 
-											m_InterpolAutomaton);
+											m_InterpolAutomaton, m_PredicateFactoryInterpolantAutomata);
 				diff = new Difference<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, bed,
 							m_StateFactoryForRefinement,
@@ -319,7 +324,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			
 			case EAGERPOST:	
 				PostDeterminizer epd = new PostDeterminizer(edgeChecker, m_ComputeHoareAnnotation, 
-									m_InterpolAutomaton,true);
+									m_InterpolAutomaton,true, m_PredicateFactoryInterpolantAutomata);
 				if (m_Pref.differenceSenwa()) {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, epd, false);
@@ -349,7 +354,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			
 			case LAZYPOST:	
 				PostDeterminizer lpd = new PostDeterminizer(edgeChecker,	m_ComputeHoareAnnotation, 
-									m_InterpolAutomaton,false);
+									m_InterpolAutomaton,false, m_PredicateFactoryInterpolantAutomata);
 				if (m_Pref.differenceSenwa()) {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, lpd, false);
@@ -380,7 +385,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			
 			case SELFLOOP:
 				SelfloopDeterminizer sed = new SelfloopDeterminizer(
-						m_SmtManager, m_Pref, m_InterpolAutomaton);
+						m_SmtManager, m_Pref, m_InterpolAutomaton, m_PredicateFactoryInterpolantAutomata);
 				if (m_Pref.differenceSenwa()) {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, sed, false);
@@ -399,7 +404,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			break;
 			case STRONGESTPOST:
 				StrongestPostDeterminizer spd = new StrongestPostDeterminizer(
-						edgeChecker, m_Pref, m_InterpolAutomaton);
+						edgeChecker, m_Pref, m_InterpolAutomaton, m_PredicateFactoryInterpolantAutomata);
 				if (m_Pref.differenceSenwa()) {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, spd, false);
@@ -417,7 +422,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					EagerInterpolantAutomaton determinized = 
 							new EagerInterpolantAutomaton(edgeChecker, m_InterpolAutomaton);
 					PowersetDeterminizer<CodeBlock, IPredicate> psd2 = 
-							new PowersetDeterminizer<CodeBlock, IPredicate>(determinized, true);
+							new PowersetDeterminizer<CodeBlock, IPredicate>(determinized, true, m_PredicateFactoryInterpolantAutomata);
 					diff = new Difference<CodeBlock, IPredicate>(
 							oldAbstraction, determinized, psd2, 
 							m_StateFactoryForRefinement,
@@ -434,7 +439,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							new DeterministicInterpolantAutomaton(m_SmtManager, edgeChecker, oldAbstraction, m_InterpolAutomaton, m_TraceChecker);
 //					ComplementDeterministicNwa<CodeBlock, IPredicate> cdnwa = new ComplementDeterministicNwa<>(dia);
 					PowersetDeterminizer<CodeBlock, IPredicate> psd2 = 
-							new PowersetDeterminizer<CodeBlock, IPredicate>(determinized, true);
+							new PowersetDeterminizer<CodeBlock, IPredicate>(determinized, true, m_PredicateFactoryInterpolantAutomata);
 					diff = new Difference<CodeBlock, IPredicate>(
 							oldAbstraction, determinized, psd2, 
 							m_StateFactoryForRefinement,
@@ -481,7 +486,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 			s_Logger.debug("Start complementation");
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> nia = 
-				(new ComplementDD<CodeBlock, IPredicate>(dia)).getResult();
+				(new ComplementDD<CodeBlock, IPredicate>(m_PredicateFactoryInterpolantAutomata, dia)).getResult();
 			assert(!accepts(nia,m_Counterexample.getWord()));
 			s_Logger.info("Complemented interpolant automaton has "+nia.size() +" states");
 			
@@ -514,7 +519,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_TraceAbstractionBenchmarks.finishDifference();
 		
 		if (m_Pref.minimize()) {
-			minimizeAbstraction(m_StateFactoryForRefinement, predicateFactory);
+			minimizeAbstraction(m_StateFactoryForRefinement, m_PredicateFactoryResultChecking);
 		}
 		
 		
@@ -543,13 +548,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	/**
 	 * Automata theoretic minimization of the automaton stored in m_Abstraction.
 	 * Expects that m_Abstraction does not have dead ends.
-	 * @param abstractionPredFac PredicateFactory for the construction of the
+	 * @param predicateFactoryRefinement PredicateFactory for the construction of the
 	 * new (minimized) abstraction. 
 	 * @param resultCheckPredFac PredicateFactory used for auxiliary automata
 	 * used for checking correctness of the result (if assertions are enabled). 
 	 */
-	protected void minimizeAbstraction(PredicateFactory abstractionPredFac,
-			PredicateFactory resultCheckPredFac)
+	protected void minimizeAbstraction(PredicateFactory predicateFactoryRefinement,
+			PredicateFactoryResultChecking resultCheckPredFac)
 			throws OperationCanceledException, AutomataLibraryException,
 			AssertionError {
 		if (m_Pref.dumpAutomata()) {
@@ -565,7 +570,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized;
 		if (false && shrinkNwa) {
 			ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(
-					newAbstraction, partition, abstractionPredFac, true, false, false, 200, false, 0, false, false);
+					predicateFactoryRefinement, newAbstraction, partition, true, false, false, 200, false, 0, false, false);
 			assert minimizeOp.checkResult(resultCheckPredFac);
 			minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(minimizeOp.getResult())).getResult();
 			if (m_ComputeHoareAnnotation) {
@@ -573,7 +578,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				m_Haf.updateOnMinimization(oldState2newState, minimized);
 			}
 		} else {
-			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(newAbstraction, partition, false, false, abstractionPredFac);
+			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(newAbstraction, partition, false, false, predicateFactoryRefinement);
 			assert minimizeOp.checkResult(resultCheckPredFac);
 			minimized = minimizeOp.getResult();
 			if (m_ComputeHoareAnnotation) {
@@ -677,7 +682,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		switch (m_Pref.determinization()) {
 		case POWERSET: 
 			PowersetDeterminizer<CodeBlock, IPredicate> psd = 
-				new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolAutomaton, true);
+				new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolAutomaton, true, m_PredicateFactoryInterpolantAutomata);
 			DeterminizeDD<CodeBlock, IPredicate> dabps = 
 				new DeterminizeDD<CodeBlock, IPredicate>(
 												m_InterpolAutomaton, psd);
@@ -686,7 +691,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case BESTAPPROXIMATION:	
 			BestApproximationDeterminizer bed = 
 				new BestApproximationDeterminizer(m_SmtManager,	m_Pref, 
-									m_InterpolAutomaton);
+									m_InterpolAutomaton, m_PredicateFactoryInterpolantAutomata);
 			DeterminizeDD<CodeBlock, IPredicate> dab = 
 				new DeterminizeDD<CodeBlock, IPredicate>(
 												m_InterpolAutomaton, bed);
@@ -695,7 +700,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case SELFLOOP:
 			SelfloopDeterminizer sed = 
 				new SelfloopDeterminizer(m_SmtManager,	m_Pref, 
-										m_InterpolAutomaton);
+										m_InterpolAutomaton, m_PredicateFactoryInterpolantAutomata);
 			DeterminizeDD<CodeBlock, IPredicate> dabsl = 
 				new DeterminizeDD<CodeBlock, IPredicate>(
 												m_InterpolAutomaton, sed);
@@ -704,7 +709,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case STRONGESTPOST:
 			StrongestPostDeterminizer spd = 
 				new StrongestPostDeterminizer(edgeChecker,	m_Pref, 
-										m_InterpolAutomaton);
+										m_InterpolAutomaton, m_PredicateFactoryInterpolantAutomata);
 			DeterminizeDD<CodeBlock, IPredicate> dabsp = 
 				new DeterminizeDD<CodeBlock, IPredicate>(
 												m_InterpolAutomaton, spd);
@@ -713,7 +718,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case EAGERPOST:
 			PostDeterminizer epd = 
 				new PostDeterminizer(edgeChecker,	m_ComputeHoareAnnotation, 
-									m_InterpolAutomaton,true);
+									m_InterpolAutomaton,true, m_PredicateFactoryInterpolantAutomata);
 			DeterminizeDD<CodeBlock, IPredicate> dep = 
 				new DeterminizeDD<CodeBlock, IPredicate>(
 												m_InterpolAutomaton, epd);
@@ -722,7 +727,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case LAZYPOST:
 			PostDeterminizer lpd = 
 				new PostDeterminizer(edgeChecker,	m_ComputeHoareAnnotation, 
-									m_InterpolAutomaton,true);
+									m_InterpolAutomaton,true, m_PredicateFactoryInterpolantAutomata);
 			DeterminizeDD<CodeBlock, IPredicate> dlpd = 
 				new DeterminizeDD<CodeBlock, IPredicate>(
 												m_InterpolAutomaton, lpd);

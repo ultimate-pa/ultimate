@@ -417,7 +417,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			throws AutomataLibraryException {
 		s_Logger.info("Testing correctness of determinization");
 		boolean correct = true;
-		INestedWordAutomatonOldApi<LETTER,STATE> resultDD = (new DeterminizeDD<LETTER,STATE>(m_Operand)).getResult();
+		INestedWordAutomatonOldApi<LETTER,STATE> resultDD = (new DeterminizeDD<LETTER,STATE>(stateFactory, m_Operand)).getResult();
 		correct &= (ResultChecker.nwaLanguageInclusion(resultDD,result, stateFactory) == null);
 		correct &= (ResultChecker.nwaLanguageInclusion(result,resultDD, stateFactory) == null);
 		s_Logger.info("Finished testing correctness of determinization");

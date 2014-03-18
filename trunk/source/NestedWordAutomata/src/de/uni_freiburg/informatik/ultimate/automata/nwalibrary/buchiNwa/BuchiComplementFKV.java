@@ -96,8 +96,9 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 
 
 
-	public BuchiComplementFKV(INestedWordAutomatonSimple<LETTER,STATE> input) throws OperationCanceledException {
-		this.m_StateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true);
+	public BuchiComplementFKV(StateFactory<STATE> stateFactory, 
+			INestedWordAutomatonSimple<LETTER,STATE> input) throws OperationCanceledException {
+		this.m_StateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
 		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
 		s_Logger.info(startMessage());

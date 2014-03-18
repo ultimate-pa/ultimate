@@ -380,7 +380,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 		s_Logger.info("Testing correctness of differenceBlackAndWhite");
 
 		INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(m_Net)).getResult();
-		INestedWordAutomatonOldApi rcResult = (new DifferenceDD(op1AsNwa, m_Nwa)).getResult();
+		INestedWordAutomatonOldApi rcResult = (new DifferenceDD(stateFactory, op1AsNwa, m_Nwa)).getResult();
 		INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(m_Result)).getResult();
 		boolean correct = true;
 		correct &= (ResultChecker.nwaLanguageInclusion(resultAsNwa,rcResult,stateFactory) == null);

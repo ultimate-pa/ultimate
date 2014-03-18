@@ -56,7 +56,8 @@ public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> 
 
 	private final NestedLassoRun<LETTER, STATE> m_Counterexample;
 
-	public BuchiIsIncluded(INestedWordAutomatonOldApi<LETTER, STATE> nwa1,
+	public BuchiIsIncluded(StateFactory<STATE> stateFactory,
+			INestedWordAutomatonOldApi<LETTER, STATE> nwa1,
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa2)
 			throws AutomataLibraryException {
 		m_Operand1 = nwa1;
@@ -64,7 +65,7 @@ public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> 
 		s_Logger.info(startMessage());
 
 		INestedWordAutomatonOldApi<LETTER, STATE> sndComplement = (new BuchiComplementFKV<LETTER, STATE>(
-				m_Operand2)).getResult();
+				stateFactory, m_Operand2)).getResult();
 		INestedWordAutomatonOldApi<LETTER, STATE> difference = (new BuchiIntersectDD<LETTER, STATE>(
 				m_Operand1, sndComplement, true)).getResult();
 		BuchiIsEmpty<LETTER, STATE> emptinessCheck = new BuchiIsEmpty<LETTER, STATE>(

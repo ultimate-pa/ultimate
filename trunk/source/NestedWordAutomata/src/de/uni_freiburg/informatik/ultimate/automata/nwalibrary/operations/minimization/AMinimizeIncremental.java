@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 /**
  * This is the superclass of all incremental minimization classes.
@@ -54,10 +55,11 @@ public abstract class AMinimizeIncremental<LETTER, STATE>
 	 * @param operand input automaton
 	 * @param interrupt interrupt
 	 */
-	protected AMinimizeIncremental(final String name,
+	protected AMinimizeIncremental(final StateFactory<STATE> stateFactory,
+			final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt) {
-		super(name, operand);
+		super(stateFactory, name, operand);
 		m_interrupt = interrupt;
 		assert ((m_interrupt == null) || (! m_interrupt.getStatus())) :
 			"The interrupt tells to terminate right at the beginning.";

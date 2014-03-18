@@ -50,9 +50,10 @@ public class StrongestPostDeterminizer
 
 	public StrongestPostDeterminizer(EdgeChecker edgeChecker,
 			TAPreferences taPreferences,
-			INestedWordAutomatonOldApi<CodeBlock, IPredicate> mNwa) {
+			INestedWordAutomatonOldApi<CodeBlock, IPredicate> mNwa,
+			StateFactory<IPredicate> stateFactory) {
 		m_EdgeChecker = edgeChecker;
-		m_ConFac = mNwa.getStateFactory();
+		m_ConFac = stateFactory;
 		m_Ia = mNwa;
 		
 		assert m_Ia.getInitialStates().size() == 1 : "Interpolant Automaton" +

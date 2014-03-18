@@ -127,7 +127,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 		
 		
 		this.stateDeterminizer = new StateDeterminizerCache<LETTER, STATE>(
-							new PowersetDeterminizer<LETTER,STATE>(subtrahend, true)); 
+							new PowersetDeterminizer<LETTER,STATE>(subtrahend, true, contentFactory)); 
 		
 		m_Senwa = new Senwa<LETTER, STATE>(minuend.getInternalAlphabet(), minuend.getCallAlphabet(), 
 				minuend.getReturnAlphabet(), minuend.getStateFactory());
@@ -332,7 +332,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
 			s_Logger.info("Start testing correctness of " + operationName());
 
-			INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = (new DifferenceSadd<LETTER,STATE>(minuend, subtrahend)).getResult();
+			INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = (new DifferenceSadd<LETTER,STATE>(stateFactory, minuend, subtrahend)).getResult();
 			correct &= (ResultChecker.nwaLanguageInclusion(resultSadd, m_Senwa, stateFactory) == null);
 			correct &= (ResultChecker.nwaLanguageInclusion(m_Senwa, resultSadd, stateFactory) == null);
 			if (!correct) {

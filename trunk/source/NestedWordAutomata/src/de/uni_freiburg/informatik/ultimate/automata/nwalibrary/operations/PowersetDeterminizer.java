@@ -55,10 +55,10 @@ public class PowersetDeterminizer<LETTER,STATE>
 	int maxDegreeOfNondeterminism = 0;
 	
 	public PowersetDeterminizer(INestedWordAutomatonSimple<LETTER,STATE> nwa, 
-			boolean useDoubleDeckers) { 
+			boolean useDoubleDeckers, StateFactory<STATE> stateFactory) { 
 		m_Nwa = nwa;
 		m_UseDoubleDeckers = useDoubleDeckers;
-		this.m_StateFactory = nwa.getStateFactory();
+		this.m_StateFactory = stateFactory;
 	}
 
 	

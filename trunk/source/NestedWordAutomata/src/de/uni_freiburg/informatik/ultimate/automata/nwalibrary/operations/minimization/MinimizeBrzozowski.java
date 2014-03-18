@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Determinize;
 
 /**
@@ -68,9 +69,10 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 * @param operand input (finite, possibly nondeterministic) automaton
 	 * @throws OperationCanceledException thrown when execution is cancelled
 	 */
-	public MinimizeBrzozowski(INestedWordAutomaton<LETTER, STATE> operand)
+	public MinimizeBrzozowski(StateFactory<STATE> stateFactory, 
+			INestedWordAutomaton<LETTER, STATE> operand)
 			throws OperationCanceledException {
-		super("MinimizeBrzozowski", operand);
+		super(stateFactory, "MinimizeBrzozowski", operand);
 		
 		assert super.checkForFiniteAutomaton() :
 			"The input automaton contains call or return transitions.";
@@ -145,7 +147,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	private INestedWordAutomaton<LETTER, STATE> determinize(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		try {
-			return new Determinize<LETTER, STATE>(automaton).getResult();
+			return new Determinize<LETTER, STATE>(m_StateFactory, automaton).getResult();
 		}
 		// this case cannot occur
 		catch (OperationCanceledException e) {
