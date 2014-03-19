@@ -20,8 +20,8 @@ import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
@@ -319,7 +319,7 @@ public class TraceAbstractionTestResultDecider implements ITestResultDecider {
 			return new AutomizerResult(AutomizerResultType.SYNTAX_ERROR, result);
 		} else if (result instanceof SyntaxErrorResult) {
 			return new AutomizerResult(AutomizerResultType.SYNTAX_ERROR, result);
-		} else if (result instanceof TimeoutResult) {
+		} else if (result instanceof ITimeoutResult) {
 			return new AutomizerResult(AutomizerResultType.TIMEOUT, null);
 		} else if (result instanceof UnsupportedSyntaxResult) {
 			return new AutomizerResult(AutomizerResultType.UNSUPPORTED_SYNTAX, result);

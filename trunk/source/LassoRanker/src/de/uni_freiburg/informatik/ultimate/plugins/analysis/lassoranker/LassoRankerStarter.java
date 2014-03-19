@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
 import de.uni_freiburg.informatik.ultimate.result.NonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
+import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
 /**
@@ -369,7 +369,7 @@ public class LassoRankerStarter {
 			sb.append(" ");
 			sb.append(template.getClass().getSimpleName());
 		}
-		TimeoutResult<RcfgElement> result = new TimeoutResult<RcfgElement>(
+		TimeoutResultAtElement<RcfgElement> result = new TimeoutResultAtElement<RcfgElement>(
 				m_Honda,
 				Activator.s_PLUGIN_NAME,
 				getTranslatorSequence(),

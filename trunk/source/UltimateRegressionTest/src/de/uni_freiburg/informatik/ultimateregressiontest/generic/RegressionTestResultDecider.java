@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.result.NoResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
+import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.Util;
 
@@ -133,7 +133,7 @@ public class RegressionTestResultDecider implements ITestResultDecider {
 			} else {
 				if (result instanceof ExceptionOrErrorResult) {
 					customMessages.add(String.format("Error: %s", result.getLongDescription()));
-				} else if (result instanceof TimeoutResult) {
+				} else if (result instanceof TimeoutResultAtElement) {
 					customMessages.add("Unknown: Timeout");
 
 				} else if (m_ExpectedResult == ExpectedResult.NOANNOTATION) {
@@ -185,7 +185,7 @@ public class RegressionTestResultDecider implements ITestResultDecider {
 				return res;
 			} else if (res instanceof CounterExampleResult) {
 				return res;
-			} else if (res instanceof TimeoutResult) {
+			} else if (res instanceof TimeoutResultAtElement) {
 				return res;
 			} else if (res instanceof SyntaxErrorResult) {
 				return res;

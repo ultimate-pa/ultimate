@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
+import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
@@ -419,7 +419,7 @@ public class UltimateInterface extends HttpServlet {
 						} else if (r instanceof UnsupportedSyntaxResult) {
 							type = "syntaxUnsupported";
 							packagedResult.logLvl = "error";
-						} else if (r instanceof TimeoutResult) {
+						} else if (r instanceof TimeoutResultAtElement) {
 							type = "timeout";
 							packagedResult.logLvl = "error";
 						} else if (r instanceof TypeErrorResult<?>) {

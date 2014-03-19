@@ -8,7 +8,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Common abstract superclass of Cnf and Dnf. 
@@ -91,7 +91,7 @@ public abstract class Xnf extends Nnf {
 				Set<Set<Term>> tidyResOuterSet = new HashSet<Set<Term>>(resOuterSet);
 				for (Set<Term> resInnerSet : resOuterSet) {
 					if (!UltimateServices.getInstance().continueProcessing()) {
-						throw new OperationCanceledException();
+						throw new ToolchainCanceledException();
 					}
 					if (tidyResOuterSet.contains(resInnerSet)) {
 						Iterator<Set<Term>> it = tidyResOuterSet.iterator();

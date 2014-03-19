@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
+import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 
 public class ResultNotifier {
@@ -53,7 +53,7 @@ public class ResultNotifier {
 				} else if (result instanceof PositiveResult) {
 					if (toolchainResult < ResultNotifier.CORRECT)
 						toolchainResult = ResultNotifier.CORRECT;
-				} else if (result instanceof TimeoutResult) {
+				} else if (result instanceof TimeoutResultAtElement) {
 					if (toolchainResult < ResultNotifier.TIMEOUT) {
 						toolchainResult = ResultNotifier.TIMEOUT;
 						description = "Timeout";

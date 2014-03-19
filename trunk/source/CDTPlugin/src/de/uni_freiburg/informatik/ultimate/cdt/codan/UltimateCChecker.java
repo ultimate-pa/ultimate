@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
+import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 
 /**
@@ -285,8 +285,8 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 								this.getFile(), loc.getStartLine(),
 								err.getShortDescription());
 					}
-				} else if (result instanceof TimeoutResult) {
-					TimeoutResult err = (TimeoutResult) result;
+				} else if (result instanceof TimeoutResultAtElement) {
+					TimeoutResultAtElement err = (TimeoutResultAtElement) result;
 					// We found a positive result, this was proved by Ultimate
 					if (loc.getcNode() != null) {
 						reportProblem(CCheckerDescriptor.TIMEOUT_ID,

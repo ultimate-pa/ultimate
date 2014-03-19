@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
+import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 
 /**
@@ -228,7 +228,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			String timeOutMessage = "Timout! Unable to prove that " +
 					origin.checkedSpecification().getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
-			TimeoutResult<RcfgElement> timeOutRes = new TimeoutResult<RcfgElement>(
+			TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(
 					errorLoc,
 					Activator.s_PLUGIN_NAME,
 					UltimateServices.getInstance().getTranslatorSequence(),

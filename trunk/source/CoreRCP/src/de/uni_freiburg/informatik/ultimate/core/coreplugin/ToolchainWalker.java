@@ -21,7 +21,9 @@ import de.uni_freiburg.informatik.ultimate.model.GraphNotFoundException;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IModelManager;
 import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
+import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 public class ToolchainWalker {
 
@@ -129,9 +131,15 @@ public class ToolchainWalker {
 		try {
 			pc.run();
 		} catch (Throwable e) {
-			s_Logger.error("The Plugin " + plugin.getId() + " has thrown an Exception!", e);
-			throw e;
-
+			if (e instanceof ToolchainCanceledException) {
+				TimeoutResult timeoutResult = new TimeoutResult(plugin.getId(), e.getMessage());
+				UltimateServices.getInstance().reportResult(plugin.getId(), timeoutResult);
+				s_Logger.info("Toolchain cancelled while executing plugin" 
+							+ plugin.getId() + ". Reason: " + e.getMessage());
+			} else {
+				s_Logger.error("The Plugin " + plugin.getId() + " has thrown an Exception!", e);
+				throw e;
+			}
 		} finally {
 			if (m_Bench != null) {
 				m_Bench.stop(pc.toString());

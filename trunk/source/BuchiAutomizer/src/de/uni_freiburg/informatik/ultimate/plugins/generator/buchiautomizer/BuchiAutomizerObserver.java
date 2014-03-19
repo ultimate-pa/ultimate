@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.NonterminatingLassoResult;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
+import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -107,7 +107,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		} else if (result == Result.TIMEOUT) {
 			ProgramPoint position = rootAnnot.getEntryNodes().values().iterator().next();
 			String longDescr = "Timeout while trying to prove termination";
-			IResult reportRes= new TimeoutResult<RcfgElement>(position, 
+			IResult reportRes= new TimeoutResultAtElement<RcfgElement>(position, 
 					Activator.s_PLUGIN_ID, 
 					UltimateServices.getInstance().getTranslatorSequence(), 
 					longDescr);

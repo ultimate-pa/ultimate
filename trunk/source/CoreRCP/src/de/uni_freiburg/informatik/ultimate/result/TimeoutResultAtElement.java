@@ -13,13 +13,13 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
  *
  * @param <ELEM>
  */
-public class TimeoutResult<ELEM extends IElement> 
+public class TimeoutResultAtElement<ELEM extends IElement> 
 					extends AbstractResultAtElement<ELEM> implements IResult{
 	
 	private final String m_longDescription;
 
 
-	public TimeoutResult(ELEM element, String plugin, 
+	public TimeoutResultAtElement(ELEM element, String plugin, 
 			List<ITranslator<?,?,?,?>> translatorSequence, String longDescription) {
 		super(element, plugin, translatorSequence);
 		this.m_longDescription = longDescription;

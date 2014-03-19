@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
+import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.ITestSummary;
@@ -92,7 +92,7 @@ public class SVCOMP14TestResultDecider implements ITestResultDecider {
 						toolchainResult = ToolchainResult.CORRECT;
 						finalResult = result;
 					}
-				} else if (result instanceof TimeoutResult) {
+				} else if (result instanceof TimeoutResultAtElement) {
 					if (toolchainResult.ordinal() < ToolchainResult.TIMEOUT
 							.ordinal()) {
 						toolchainResult = ToolchainResult.TIMEOUT;
