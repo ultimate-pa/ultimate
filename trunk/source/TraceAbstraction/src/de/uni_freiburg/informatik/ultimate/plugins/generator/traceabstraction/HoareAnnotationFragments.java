@@ -25,8 +25,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 /**
  * Store and maintain fragments of a Hoare Annotation derived during abstraction
- * refinement. This is only necessary if we minimize the abstraction during
- * refinement by removing states from which can not reach any accepting state.
+ * refinement.
+ * If we would neither remove dead ends nor minimize the abstraction this would
+ * not be necessary and we could extract the complete Hoare annotation direcly
+ * form the final abstraction.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * 
@@ -36,8 +38,15 @@ public class HoareAnnotationFragments {
 	private static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 
+	/**
+	 * States for contexts were the context was already removed (because it was
+	 * a dead end) from the abstraction.
+	 */
 	private final Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> m_DeadContexts2ProgPoint2Preds = 
 			new HashMap<IPredicate, HashRelation<ProgramPoint, IPredicate>>();
+	/**
+	 * States for contexts were the are still in the current abstraction.
+	 */
 	private Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> m_LiveContexts2ProgPoint2Preds = 
 			new HashMap<IPredicate, HashRelation<ProgramPoint, IPredicate>>();
 	private final HashMap<IPredicate, IPredicate> m_Context2Entry = 
@@ -50,20 +59,30 @@ public class HoareAnnotationFragments {
 	 * What is the precondition for a context?
 	 * Strongest postcondition or entry given by automaton?
 	 */
-	private final boolean m_UseEntry;
+	private final static boolean m_UseEntry = true;
 
-	
-	
-	
-	public HoareAnnotationFragments() {
-		this.m_UseEntry = true;
+	Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> getDeadContexts2ProgPoint2Preds() {
+		return m_DeadContexts2ProgPoint2Preds;
 	}
 
+	Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> getLiveContexts2ProgPoint2Preds() {
+		return m_LiveContexts2ProgPoint2Preds;
+	}
+
+	HashRelation<ProgramPoint, IPredicate> getProgPoint2StatesWithEmptyContext() {
+		return m_ProgPoint2StatesWithEmptyContext;
+	}
+
+	HashMap<IPredicate, IPredicate> getContext2Entry() {
+		return m_Context2Entry;
+	}
+	
 
 	
-	
-
-	
+	/**
+	 * Perform an update of these HoareAnnotationFragments that became necessary
+	 * because the current abstraction was updated by an intersection.
+	 */
 	public void updateOnIntersection(
 			Map<IPredicate, Map<IPredicate, IntersectNwa<CodeBlock,IPredicate>.ProductState>> fst2snd2res, 
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
@@ -71,7 +90,10 @@ public class HoareAnnotationFragments {
 			update(update,abstraction);
 	}
 	
-	
+	/**
+	 * Perform an update of these HoareAnnotationFragments that became necessary
+	 * because the current abstraction was updated by a minimization.
+	 */
 	public void updateOnMinimization(
 			Map<IPredicate, IPredicate> old2New, 
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
@@ -81,10 +103,17 @@ public class HoareAnnotationFragments {
 	
 	
 	
-	
+	/**
+	 * Perform an update the HoareAnnotationFragments that became necessary 
+	 * because the abstraction was updated by an automaton operation.
+	 * 
+	 * WARNING: At the moment we update only the contexts and the context2enry 
+	 * mapping, because we expect the our HoareAnnotationFragments stores double
+	 * deckers that have been removed by a dead end removal.
+	 */
 	private void update(
 			Update update, 
-			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
+			INestedWordAutomatonSimple<CodeBlock, IPredicate> newAbstraction) {
 		Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> oldLiveContexts2ProgPoint2Preds = 
 				m_LiveContexts2ProgPoint2Preds;
 		m_LiveContexts2ProgPoint2Preds = 
@@ -108,7 +137,7 @@ public class HoareAnnotationFragments {
 						hr.addAll(contextHrPair.getValue());
 					}
 					m_LiveContexts2ProgPoint2Preds.put(newContexts.get(i), hr);
-					IPredicate entry = getEntry(abstraction, newContexts.get(i));
+					IPredicate entry = getEntry(newAbstraction, newContexts.get(i));
 					if (entry == null) {
 						m_Context2Entry.put(newContexts.get(i), oldEntry);
 					} else {
@@ -118,6 +147,8 @@ public class HoareAnnotationFragments {
 			}
 		}
 	}
+	
+	
 
 	/**
 	 * Get the unique call successor of a state newContext.
@@ -143,6 +174,16 @@ public class HoareAnnotationFragments {
 	}
 	
 	
+	/**
+	 * Encapsulates information for updates of the abstraction by automaton
+	 * operations.
+	 * Returns all predicates of the new abstraction that replace a state of
+	 * the old abstraction.
+	 * 
+	 * WARNING: This does not provide any information about double deckers.
+	 * This information is only sufficient if we store the removed double 
+	 * deckers. 
+	 */
 	interface Update {
 		List<IPredicate> getNewPredicates(IPredicate oldPredicate);
 	}
@@ -194,6 +235,8 @@ public class HoareAnnotationFragments {
 	}
 	
 	
+	
+	
 	void addDoubleDecker(IPredicate down, IPredicate up, IPredicate emtpy) {
 		ProgramPoint pp = ((SPredicate) up).getProgramPoint();
 		if (down == emtpy) {
@@ -210,65 +253,21 @@ public class HoareAnnotationFragments {
 	
 	
 	
-	
-	
-	
-	Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> getDeadContexts2ProgPoint2Preds() {
-		return m_DeadContexts2ProgPoint2Preds;
-	}
-
-
-
-
-
-
-	Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> getLiveContexts2ProgPoint2Preds() {
-		return m_LiveContexts2ProgPoint2Preds;
-	}
-
-
-
-	HashRelation<ProgramPoint, IPredicate> getProgPoint2StatesWithEmptyContext() {
-		return m_ProgPoint2StatesWithEmptyContext;
-	}
-
-
-
-
-
-
-	public HashMap<IPredicate, IPredicate> getContext2Entry() {
-		return m_Context2Entry;
-	}
-
-
-
-
-	
-	
-	
-	
-	
-	
-
-	
 	void addContextEntryPair(IPredicate context, IPredicate entry) {
-//		Predicate oldEntry = m_Context2Entry.get(context);
-//		assert( oldEntry == null || oldEntry == entry);
 		m_Context2Entry.put(context, entry);
 	}
 	
 	
-
-	
-
-
-
-
+	/**
+	 * Add all DoubleDeckers dd for which holds.
+	 * - dd was in the automaton directly after the automaton operation op
+	 * - after dead ends where removed from op dd was no double decker of the
+	 * automaton any more.
+	 */
 	public void addDeadEndDoubleDeckers(
-			IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff) throws OperationCanceledException {
-		IPredicate emtpyStack = diff.getResult().getEmptyStackState();
-		for (UpDownEntry<IPredicate> upDownEntry : diff.getRemovedUpDownEntry()) {
+			IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> op) throws OperationCanceledException {
+		IPredicate emtpyStack = op.getResult().getEmptyStackState();
+		for (UpDownEntry<IPredicate> upDownEntry : op.getRemovedUpDownEntry()) {
 			addDoubleDecker(upDownEntry.getDown(), upDownEntry.getUp(), emtpyStack);
 			if (upDownEntry.getEntry() != null) {
 				addContextEntryPair(upDownEntry.getDown(), upDownEntry.getEntry());
