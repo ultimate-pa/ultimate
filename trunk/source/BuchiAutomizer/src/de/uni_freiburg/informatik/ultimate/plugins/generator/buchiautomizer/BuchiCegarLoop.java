@@ -198,7 +198,7 @@ public class BuchiCegarLoop {
 					m_SmtManager,
 					m_Pref);
 			
-			m_Haf = new HoareAnnotationFragments(rootNode.getRootAnnot(),m_SmtManager);
+			m_Haf = new HoareAnnotationFragments();
 			m_StateFactoryForRefinement = new PredicateFactoryRefinement(
 					m_RootNode.getRootAnnot().getProgramPoints(),
 					m_SmtManager,
