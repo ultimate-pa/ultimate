@@ -93,7 +93,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_Interpolation = interpolation;
 		m_ComputeHoareAnnotation = computeHoareAnnotation;
 		m_TraceAbstractionBenchmarks = traceAbstractionBenchmarks;
-		m_Haf = new HoareAnnotationFragments(rootNode.getRootAnnot(),super.m_SmtManager);
+		m_Haf = new HoareAnnotationFragments();
 		m_StateFactoryForRefinement = new PredicateFactoryRefinement(
 				m_RootNode.getRootAnnot().getProgramPoints(),
 				super.m_SmtManager,
@@ -115,9 +115,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		CFG2NestedWordAutomaton cFG2NestedWordAutomaton = 
 			new CFG2NestedWordAutomaton(m_Pref, super.m_SmtManager);
-		PredicateFactory defaultStateFactory = new PredicateFactory(
-				super.m_SmtManager,
-				m_Pref);
 		
 		m_Abstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(
 						super.m_RootNode, m_StateFactoryForRefinement, super.m_ErrorLocs);
@@ -758,7 +755,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> abstraction = 
 				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
 		new HoareAnnotationExtractor(abstraction, m_Haf);
-		m_Haf.addHoareAnnotationToCFG(m_SmtManager);
+		(new HoareAnnotationWriter(m_RootNode.getRootAnnot(), m_SmtManager, m_Haf)).addHoareAnnotationToCFG();;
 	}
 	
 	@Override
