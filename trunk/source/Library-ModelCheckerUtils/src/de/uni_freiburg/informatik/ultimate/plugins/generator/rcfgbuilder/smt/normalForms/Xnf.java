@@ -4,9 +4,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.OperationCanceledException;
 
 /**
  * Common abstract superclass of Cnf and Dnf. 
@@ -31,7 +33,6 @@ public abstract class Xnf extends Nnf {
 		
 		@Override
 		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-			// TODO: check timeout here
 			String functionSymbolName = appTerm.getFunction().getName();
 			Term result;
 			if (functionSymbolName.equals(innerConnectiveSymbol())) {
@@ -89,6 +90,9 @@ public abstract class Xnf extends Nnf {
 				// (A || B) && A is equivalent to A
 				Set<Set<Term>> tidyResOuterSet = new HashSet<Set<Term>>(resOuterSet);
 				for (Set<Term> resInnerSet : resOuterSet) {
+					if (!UltimateServices.getInstance().continueProcessing()) {
+						throw new OperationCanceledException();
+					}
 					if (tidyResOuterSet.contains(resInnerSet)) {
 						Iterator<Set<Term>> it = tidyResOuterSet.iterator();
 						while (it.hasNext()) {
