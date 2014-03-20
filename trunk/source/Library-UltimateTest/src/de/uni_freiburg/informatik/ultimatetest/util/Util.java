@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimatetest;
+package de.uni_freiburg.informatik.ultimatetest.util;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -233,6 +233,13 @@ public class Util {
 		return rtr;
 	}
 
+	/**
+	 * 
+	 * @param logger
+	 * @param inputFile
+	 * @param fail
+	 * @param customMessages
+	 */
 	public static void logResults(Logger logger, String inputFile, boolean fail, Collection<String> customMessages) {
 
 		logger.info("#################### TEST RESULT ####################");
@@ -241,10 +248,7 @@ public class Util {
 		for (Entry<String, List<IResult>> entry : UltimateServices.getInstance().getResultMap().entrySet()) {
 			int i = 0;
 			for (IResult result : entry.getValue()) {
-				logger.info(String.format("[%s] %s --> [%s] %s", 
-						i, 
-						entry.getKey(), 
-						result.getClass().getSimpleName(),
+				logger.info(String.format("[%s] %s --> [%s] %s", i, entry.getKey(), result.getClass().getSimpleName(),
 						result.getLongDescription()));
 				++i;
 			}
@@ -281,6 +285,66 @@ public class Util {
 				Utils.humanReadableByteCount(heapMaxSize, true)));
 
 		logger.info("#################### END TEST RESULT ####################");
+	}
+
+	/**
+	 * Result that we expect after checking filename and keywords of the input
+	 * file.
+	 */
+	public enum ExpectedResult {
+		SAFE, UNSAFE, SYNTAXERROR, NOANNOTATION
+	}
+
+	/**
+	 * Read the expected result from the current input file.
+	 * 
+	 * Expected results are expected to be specified in an input file's first
+	 * line and start with '//#Unsafe', '//#Safe' or '//#SyntaxError'. If this
+	 * is not case, the expected result may be specified within the file name
+	 * via the suffix "-safe" or "-unsafe".
+	 */
+	public static ExpectedResult getExpectedResult(File inputFile) {
+		BufferedReader br;
+		String line = null;
+		try {
+			br = new BufferedReader(new FileReader(inputFile));
+			line = br.readLine();
+			br.close();
+		} catch (IOException e) {
+			line = null;
+		}
+		if (line != null) {
+			if (line.contains("#Safe")) {
+				return ExpectedResult.SAFE;
+			} else if (line.contains("#Unsafe")) {
+				return ExpectedResult.UNSAFE;
+			} else if (line.contains("#SyntaxError")) {
+				return ExpectedResult.SYNTAXERROR;
+			}
+		}
+		if (inputFile.getName().toLowerCase().contains("-safe") || inputFile.getName().toLowerCase().contains("_safe")) {
+			return ExpectedResult.SAFE;
+		} else if (inputFile.getName().toLowerCase().contains("-unsafe")
+				|| inputFile.getName().toLowerCase().contains("_unsafe")) {
+			return ExpectedResult.UNSAFE;
+		}
+		return ExpectedResult.NOANNOTATION;
+	}
+
+	/**
+	 * Returns new Collections that contains all IResults from resCollection
+	 * that are subclasses of the class resClass.
+	 */
+	public static <E extends IResult> Collection<E> filterResults(Collection<IResult> resCollection, Class<E> resClass) {
+		ArrayList<E> filteredList = new ArrayList<E>();
+		for (IResult res : resCollection) {
+			if (res.getClass().isAssignableFrom(resClass)) {
+				@SuppressWarnings("unchecked")
+				E benchmarkResult = (E) res;
+				filteredList.add((E) benchmarkResult);
+			}
+		}
+		return filteredList;
 	}
 
 	/**

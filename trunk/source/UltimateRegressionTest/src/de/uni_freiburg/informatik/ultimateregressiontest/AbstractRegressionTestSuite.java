@@ -4,11 +4,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.Util;
+import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
@@ -35,13 +35,9 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 			for (File inputFile : inputFiles) {
 				UltimateStarter starter = new UltimateStarter(inputFile, runConfiguration.SettingsFile,
 						runConfiguration.ToolchainFile, mTimeout, null, null);
-				rtr.add(
-						new UltimateTestCase(starter, getTestResultDecider(inputFile), 
-								String.format(
-										"%s+%s: %s", 
-										runConfiguration.ToolchainFile.getName(),
-										runConfiguration.SettingsFile.getName(),
-										inputFile.getAbsolutePath())));
+				rtr.add(new UltimateTestCase(starter, getTestResultDecider(inputFile), null, String.format(
+						"%s+%s: %s", runConfiguration.ToolchainFile.getName(), runConfiguration.SettingsFile.getName(),
+						inputFile.getAbsolutePath()), inputFile.getAbsolutePath()));
 			}
 		}
 
@@ -50,15 +46,15 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	private Collection<Pair> getRunConfiguration() {
 		ArrayList<Pair> rtr = new ArrayList<>();
-		
+
 		File root = getRootFolder(mRootFolder);
-		if(root == null){
+		if (root == null) {
 			return rtr;
 		}
-		
+
 		Collection<File> toolchainFiles = Util.getFiles(root, new String[] { ".xml" });
 		Collection<File> settingsFiles = Util.getFiles(root, new String[] { ".epf" });
-		
+
 		toolchainFiles = Util.filter(toolchainFiles, ".*regression.*");
 		toolchainFiles = Util.filter(toolchainFiles, mFilterRegex);
 		settingsFiles = Util.filter(settingsFiles, ".*regression.*");
@@ -68,7 +64,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 			String toolchainName = toolchain.getName().replaceAll("\\..*", "");
 			for (File settings : settingsFiles) {
 				String settingsName = settings.getName().replaceAll("\\..*", "");
-				
+
 				if (settingsName.startsWith(toolchainName)) {
 					rtr.add(new Pair(toolchain, settings));
 				}
@@ -77,22 +73,23 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 		return rtr;
 	}
-	
+
 	/***
 	 * 
-	 * @return null if the path to the folder is invalid, a File representing the path otherwise
+	 * @return null if the path to the folder is invalid, a File representing
+	 *         the path otherwise
 	 */
-	protected static File getRootFolder(String path){
-		if(path == null){
+	protected static File getRootFolder(String path) {
+		if (path == null) {
 			return null;
 		}
-		
+
 		File root = new File(path);
-		
-		if(!root.exists() || !root.isDirectory()){
+
+		if (!root.exists() || !root.isDirectory()) {
 			return null;
 		}
-		
+
 		return root;
 	}
 

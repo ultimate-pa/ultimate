@@ -6,8 +6,10 @@ import java.util.Collection;
 import org.junit.AfterClass;
 
 import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.Util;
+import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.decider.TranslationTestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
+
 
 public class C2BoogieRegressionTestSuite extends AbstractRegressionTestSuite {
 

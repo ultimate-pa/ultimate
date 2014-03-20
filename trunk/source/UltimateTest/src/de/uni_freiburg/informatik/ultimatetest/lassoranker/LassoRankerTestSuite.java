@@ -10,8 +10,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activato
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.Util;
 import de.uni_freiburg.informatik.ultimatetest.lassoranker.LassoRankerTestResultDecider.ExpectedResult;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 
 /**
@@ -79,7 +79,7 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 			if (decider.getExpectedResult() == ExpectedResult.IGNORE) {
 				continue;
 			}
-			rtr.add(new UltimateTestCase(starter, decider, inputFile.getName()));
+			rtr.add(new UltimateTestCase(starter, decider, null, inputFile.getName(), logPattern));
 		}
 
 		return rtr;

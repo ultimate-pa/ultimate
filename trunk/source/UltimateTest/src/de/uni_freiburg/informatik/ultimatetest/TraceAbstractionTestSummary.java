@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimatetest.summary.TestSummary;
 
 public class TraceAbstractionTestSummary extends TestSummary {
 
@@ -17,19 +19,19 @@ public class TraceAbstractionTestSummary extends TestSummary {
 	 * A map from file names to benchmark results.
 	 */
 	private Map<String, Collection<BenchmarkResult>> m_TraceAbstractionBenchmarks;
-	
+
 	public TraceAbstractionTestSummary(String testSuiteCanonicalName, String logFilePath) {
 		super(testSuiteCanonicalName);
 		mLogFilePath = logFilePath;
 		mCount = 0;
 		m_TraceAbstractionBenchmarks = new HashMap<String, Collection<BenchmarkResult>>();
 	}
-	
+
 	public void addTraceAbstractionBenchmarks(String filename, Collection<BenchmarkResult> benchmarkResults) {
 		assert !m_TraceAbstractionBenchmarks.containsKey(filename) : "benchmarks already added";
 		m_TraceAbstractionBenchmarks.put(filename, benchmarkResults);
 	}
-	
+
 	@Override
 	public String getSummaryLog() {
 
@@ -37,41 +39,38 @@ public class TraceAbstractionTestSummary extends TestSummary {
 		int total = 0;
 		mCount = 0;
 
-		sb.append("################# ").append("Trace Abstraction Test Summary")
-				.append(" #################").append("\n");
+		sb.append("################# ").append("Trace Abstraction Test Summary").append(" #################")
+				.append("\n");
 
-		sb.append(getSummaryLog(mSuccess, "SUCCESSFUL TESTS"));
+		sb.append(getSummaryLog(getSummaryMap(TestResult.SUCCESS), "SUCCESSFUL TESTS"));
 		int success = mCount;
 		total = total + mCount;
 		mCount = 0;
-		sb.append(getSummaryLog(mUnknown, "UNKNOWN TESTS"));
+		sb.append(getSummaryLog(getSummaryMap(TestResult.UNKNOWN), "UNKNOWN TESTS"));
 		int unknown = mCount;
 		total = total + mCount;
 		mCount = 0;
-		sb.append(getSummaryLog(mFailure, "FAILED TESTS"));
+		sb.append(getSummaryLog(getSummaryMap(TestResult.FAIL), "FAILED TESTS"));
 		int fail = mCount;
 		total = total + mCount;
 		sb.append("\n");
-		sb.append("====== SUMMARY for ").append("Trace Abstraction")
-				.append(" ======").append("\n");
+		sb.append("====== SUMMARY for ").append("Trace Abstraction").append(" ======").append("\n");
 		sb.append("Success:\t" + success).append("\n");
 		sb.append("Unknown:\t" + unknown).append("\n");
 		sb.append("Failures:\t" + fail).append("\n");
 		sb.append("Total:\t\t" + total);
 		return sb.toString();
-	
+
 	}
-	
-	private String getSummaryLog(HashMap<String, Summary> map, String title) {
+
+	private String getSummaryLog(Map<String, Summary> map, String title) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("====== ").append(title).append(" =====").append("\n");
 		for (Entry<String, Summary> entry : map.entrySet()) {
 			sb.append("\t").append(entry.getKey()).append("\n");
 
-			for (Entry<String, String> fileMsgPair : entry.getValue().getFileToMessage()
-					.entrySet()) {
-				sb.append("\t\t").append(fileMsgPair.getKey()).append(": ")
-						.append(fileMsgPair.getValue()).append("\n");
+			for (Entry<String, String> fileMsgPair : entry.getValue().getFileToMessage().entrySet()) {
+				sb.append("\t\t").append(fileMsgPair.getKey()).append(": ").append(fileMsgPair.getValue()).append("\n");
 				// Add TraceAbstraction benchmarks
 				Collection<BenchmarkResult> benchmarks = m_TraceAbstractionBenchmarks.get(fileMsgPair.getKey());
 				if (benchmarks == null) {
@@ -83,8 +82,8 @@ public class TraceAbstractionTestSummary extends TestSummary {
 				}
 			}
 
-			sb.append("\tCount for ").append(entry.getKey()).append(": ")
-					.append(entry.getValue().getCount()).append("\n");
+			sb.append("\tCount for ").append(entry.getKey()).append(": ").append(entry.getValue().getCount())
+					.append("\n");
 			sb.append("\t--------").append("\n");
 			mCount = mCount + entry.getValue().getCount();
 		}
@@ -93,10 +92,8 @@ public class TraceAbstractionTestSummary extends TestSummary {
 		return sb.toString();
 	}
 
-
 	@Override
-	public File getSummaryLogFile() {
+	public File getSummaryLogFileName() {
 		return new File(mLogFilePath);
 	}
-
 }

@@ -12,7 +12,14 @@ import org.junit.runner.RunWith;
 
 import de.uni_freiburg.informatik.junit_helper.testfactory.FactoryTestRunner;
 import de.uni_freiburg.informatik.junit_helper.testfactory.TestFactory;
+import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
+/**
+ * 
+ * @author dietsch
+ *
+ */
 @RunWith(FactoryTestRunner.class)
 public abstract class UltimateTestSuite {
 
@@ -56,7 +63,7 @@ public abstract class UltimateTestSuite {
 	}
 
 	private static void writeSummary(ITestSummary summary) {
-		File summaryLogFile = summary.getSummaryLogFile();
+		File summaryLogFile = summary.getSummaryLogFileName();
 
 		File logFile = new File(Util.getPathFromSurefire(summaryLogFile.getName(), summary.getTestSuiteCanonicalName()));
 

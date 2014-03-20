@@ -2,14 +2,16 @@ package de.uni_freiburg.informatik.ultimateregressiontest.generic;
 
 import java.io.File;
 
-import org.junit.Test;
-
 import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.Util;
+import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 
-
+/**
+ * 
+ * @author dietsch
+ *
+ */
 public class RegressionTestSuite extends AbstractRegressionTestSuite {
 
 	public RegressionTestSuite(){
@@ -25,10 +27,4 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 	protected ITestResultDecider getTestResultDecider(File inputFile) {
 		return new RegressionTestResultDecider(inputFile);
 	}
-	
-	@Test
-	public void SomeFakeTest(){
-		
-	}
-
 }

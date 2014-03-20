@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.junit.Ignore;
 
-import de.uni_freiburg.informatik.ultimatetest.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 @Ignore
 public class CodeCheckTestSuite extends AbstractSVCOMP14TestSuite {

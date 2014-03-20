@@ -4,7 +4,7 @@ Bundle-Name: Library-UltimateTest
 Bundle-SymbolicName: Library-UltimateTest
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Require-Bundle: UltimateCore, 
+Require-Bundle: UltimateCore,
  Library-UltimateUtil,
  Library-junit-helper,
  Library-log4j,
@@ -13,4 +13,7 @@ Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,
  org.junit.runners
-Export-Package: de.uni_freiburg.informatik.ultimatetest
+Export-Package: de.uni_freiburg.informatik.ultimatetest,
+ de.uni_freiburg.informatik.ultimatetest.decider,
+ de.uni_freiburg.informatik.ultimatetest.summary,
+ de.uni_freiburg.informatik.ultimatetest.util

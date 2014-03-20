@@ -5,12 +5,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimatetest.TraceAbstractionTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuite {
 	private List<UltimateTestCase> m_testCases;
@@ -47,8 +46,8 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 			UltimateStarter starter = new UltimateStarter(inputFile, settingsFile,
 					toolchainFile, deadline, null, null);
 			m_testCases.add(new UltimateTestCase(starter,
-					new TraceAbstractionTestResultDecider(inputFile, m_Summary, uniqueString), 
-					uniqueString + "_" + inputFile.getAbsolutePath()));
+					new TraceAbstractionTestResultDecider(inputFile), 
+					m_Summary, uniqueString + "_" + inputFile.getAbsolutePath(), inputFile.getAbsolutePath()));
 		}
 	}
 	/**

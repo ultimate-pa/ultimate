@@ -12,54 +12,46 @@ import de.uni_freiburg.informatik.ultimate.result.NoResult;
 import de.uni_freiburg.informatik.ultimate.result.NonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
-import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.Util;
-
+import de.uni_freiburg.informatik.ultimatetest.decider.TestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
- * Read the predefined expected result from the input file and compare
- * it to ULTIMATE's output
+ * Read the predefined expected result from the input file and compare it to
+ * ULTIMATE's output
  * 
  * @author Jan Leike
  */
-public class LassoRankerTestResultDecider implements ITestResultDecider {
-	
+public class LassoRankerTestResultDecider extends TestResultDecider {
+
 	/**
 	 * Types of results that can be specified by test examples
 	 * 
 	 * @author Jan Leike
 	 */
 	public enum ExpectedResult {
-		IGNORE,
-		TERMINATION,
-		TERMINATIONDERIVABLE,
-		NONTERMINATION,
-		NONTERMINATIONDERIVABLE,
-		UNKNOWN,
-		ERROR,
-		UNSPECIFIED
+		IGNORE, TERMINATION, TERMINATIONDERIVABLE, NONTERMINATION, NONTERMINATIONDERIVABLE, UNKNOWN, ERROR, UNSPECIFIED
 	}
-	
+
 	private String m_input_file_name;
 	private ExpectedResult m_expected_result;
-	
+
 	public LassoRankerTestResultDecider(File inputFile) {
 		m_input_file_name = inputFile.getName();
 		m_expected_result = checkExpectedResult(inputFile);
 	}
-	
+
 	/**
 	 * Return the expected result
 	 */
 	public ExpectedResult getExpectedResult() {
 		return m_expected_result;
 	}
-	
+
 	/**
 	 * Read the expected result from an input file
 	 * 
-	 * Expected results are expected to be specified in an input file's
-	 * first line and start with '//#r'.
+	 * Expected results are expected to be specified in an input file's first
+	 * line and start with '//#r'.
 	 */
 	private static ExpectedResult checkExpectedResult(File inputFile) {
 		BufferedReader br;
@@ -96,28 +88,25 @@ public class LassoRankerTestResultDecider implements ITestResultDecider {
 		}
 		return null;
 	}
-	
+
 	@Override
-	public boolean isResultFail() {
+	public TestResult getTestResult() {
 		Logger logger = Logger.getLogger(LassoRankerTestResultDecider.class);
 		Collection<String> customMessages = new LinkedList<String>();
 		boolean fail = false;
-		
+
 		if (m_expected_result == null) {
-			customMessages.add("Could not understand the specification of the "
-					+ "results.");
+			customMessages.add("Could not understand the specification of the " + "results.");
 			fail = true;
 		} else if (m_expected_result == ExpectedResult.UNSPECIFIED) {
 			customMessages.add("No expected results defined in the input file");
 		} else {
-			customMessages.add("Expected Result: " +
-					m_expected_result.toString());
-			Map<String, List<IResult>> resultMap =
-					UltimateServices.getInstance().getResultMap();
+			customMessages.add("Expected Result: " + m_expected_result.toString());
+			Map<String, List<IResult>> resultMap = UltimateServices.getInstance().getResultMap();
 			List<IResult> results = resultMap.get(Activator.s_PLUGIN_ID);
 			IResult lastResult = results.get(results.size() - 1);
 			customMessages.add("Results: " + results.toString());
-			
+
 			switch (m_expected_result) {
 			case TERMINATION:
 				fail = lastResult instanceof NonTerminationArgumentResult;
@@ -142,14 +131,14 @@ public class LassoRankerTestResultDecider implements ITestResultDecider {
 				break;
 			}
 		}
-		
+
 		Util.logResults(logger, m_input_file_name, fail, customMessages);
-		return fail;
+		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
 
 	@Override
-	public boolean isResultFail(Exception e) {
-		//TODO: check if this exception is desired behavior
-		return true;
+	public TestResult getTestResult(Throwable e) {
+		return TestResult.FAIL;
 	}
+
 }

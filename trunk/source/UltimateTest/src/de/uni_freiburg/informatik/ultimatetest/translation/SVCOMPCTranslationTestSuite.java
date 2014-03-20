@@ -5,16 +5,22 @@ import java.util.Collection;
 
 import org.junit.Ignore;
 
-import de.uni_freiburg.informatik.ultimatetest.Util;
+import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 @Ignore
 public class SVCOMPCTranslationTestSuite extends AbstractCTranslationTestSuite {
 
+	private static File sInputDirectory = new File(Util.getFromMavenVariableSVCOMPRoot("../../svcomp/"));
+
 	@Override
 	public Collection<File> getInputFiles() {
-		return Util.getFiles(
-				new File(Util.getFromMavenVariableSVCOMPRoot("../../svcomp/")),
-				new String[] { ".c", ".i" });
+		return Util.getFiles(sInputDirectory, new String[] { ".c", ".i" });
+	}
+
+	@Override
+	public ITestSummary getSummary() {
+		return new TranslationTestSummary("SVCOMPCTranslationTestSuite", sInputDirectory.getAbsolutePath());
 	}
 
 }

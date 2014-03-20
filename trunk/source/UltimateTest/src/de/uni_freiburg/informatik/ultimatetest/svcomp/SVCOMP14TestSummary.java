@@ -1,10 +1,11 @@
 package de.uni_freiburg.informatik.ultimatetest.svcomp;
 
 import java.io.File;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimatetest.TestSummary;
+import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimatetest.summary.TestSummary;
 
 public class SVCOMP14TestSummary extends TestSummary {
 
@@ -28,15 +29,15 @@ public class SVCOMP14TestSummary extends TestSummary {
 		sb.append("################# ").append(mCategoryName)
 				.append(" #################").append("\n");
 
-		sb.append(getSummaryLog(mSuccess, "SUCCESSFUL TESTS"));
+		sb.append(getSummaryLog(getSummaryMap(TestResult.SUCCESS), "SUCCESSFUL TESTS"));
 		int success = mCount;
 		total = total + mCount;
 		mCount = 0;
-		sb.append(getSummaryLog(mUnknown, "UNKNOWN TESTS"));
+		sb.append(getSummaryLog(getSummaryMap(TestResult.UNKNOWN), "UNKNOWN TESTS"));
 		int unknown = mCount;
 		total = total + mCount;
 		mCount = 0;
-		sb.append(getSummaryLog(mFailure, "FAILED TESTS"));
+		sb.append(getSummaryLog(getSummaryMap(TestResult.FAIL), "FAILED TESTS"));
 		int fail = mCount;
 		total = total + mCount;
 		sb.append("\n");
@@ -50,11 +51,11 @@ public class SVCOMP14TestSummary extends TestSummary {
 	}
 
 	@Override
-	public File getSummaryLogFile() {
+	public File getSummaryLogFileName() {
 		return new File(mLogFilePath);
 	}
 
-	private String getSummaryLog(HashMap<String, Summary> map, String title) {
+	private String getSummaryLog(Map<String, Summary> map, String title) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("====== ").append(title).append(" =====").append("\n");
 		for (Entry<String, Summary> entry : map.entrySet()) {

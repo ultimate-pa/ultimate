@@ -15,11 +15,11 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimatetest.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.Util;
+import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 
@@ -82,8 +82,7 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 	public Collection<UltimateTestCase> createTestCases() {
 		Collection<UltimateTestCase> rtr = new ArrayList<UltimateTestCase>();
 
-		String svcompRootDir = Util
-				.getFromMavenVariableSVCOMPRoot(getSVCOMP14RootDirectory());
+		String svcompRootDir = Util.getFromMavenVariableSVCOMPRoot(getSVCOMP14RootDirectory());
 
 		String toolchainPath = getToolchainPath();
 		long deadline = getDeadline();
@@ -107,8 +106,7 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 				continue;
 			}
 			try {
-				rtr.addAll(createTestCasesForSet(inputFiles, setFile,
-						svcompRootDir, entry.getValue(), toolchainPath,
+				rtr.addAll(createTestCasesForSet(inputFiles, setFile, svcompRootDir, entry.getValue(), toolchainPath,
 						deadline, description));
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -129,8 +127,7 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 	private Collection<File> getAllInputFiles(String svcomproot) {
 		File root = new File(svcomproot);
 		ArrayList<File> singleFiles = new ArrayList<File>();
-		singleFiles.addAll(Util.getFilesRegex(root, new String[] { ".*\\.c",
-				".*\\.i" }));
+		singleFiles.addAll(Util.getFilesRegex(root, new String[] { ".*\\.c", ".*\\.i" }));
 		return singleFiles;
 	}
 
@@ -149,16 +146,14 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 		return Arrays.asList(setFiles);
 	}
 
-	private Collection<UltimateTestCase> createTestCasesForSet(
-			Collection<File> allFiles, File setFile, String svcomproot,
-			String settingsPath, String toolchainPath, long deadline,
-			String description) throws Exception {
+	private Collection<UltimateTestCase> createTestCasesForSet(Collection<File> allFiles, File setFile,
+			String svcomproot, String settingsPath, String toolchainPath, long deadline, String description)
+			throws Exception {
 
 		String categoryName = setFile.getName().replace(".set", "");
-		String summaryLogfileName = Util.generateSummaryLogFilename(svcomproot,
-				description + " " + categoryName);
-		ITestSummary summary = new SVCOMP14TestSummary(categoryName,
-				summaryLogfileName, this.getClass().getCanonicalName());
+		String summaryLogfileName = Util.generateSummaryLogFilename(svcomproot, description + " " + categoryName);
+		ITestSummary summary = new SVCOMP14TestSummary(categoryName, summaryLogfileName, this.getClass()
+				.getCanonicalName());
 		Collection<ITestSummary> summaries = getSummaries();
 		summaries.add(summary);
 
@@ -179,42 +174,34 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 			String name = categoryName + ": " + singleFile.getAbsolutePath();
 			UltimateStarter starter;
 			if (!getCreateLogfileForEachTestCase()) {
-				starter = new UltimateStarter(singleFile, settingsFile,
-						toolchainFile, deadline);
+				starter = new UltimateStarter(singleFile, settingsFile, toolchainFile, deadline);
 			} else {
-				String logPattern = new UltimatePreferenceStore(
-						Activator.s_PLUGIN_ID)
+				String logPattern = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
 						.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
-				starter = new UltimateStarter(singleFile, settingsFile,
-						toolchainFile, deadline, new File(
-								Util.generateLogFilename(singleFile,
-										description)), logPattern);
+				starter = new UltimateStarter(singleFile, settingsFile, toolchainFile, deadline, new File(
+						Util.generateLogFilename(singleFile, description)), logPattern);
 			}
 
-			UltimateTestCase testCase = new UltimateTestCase(starter,
-					new SVCOMP14TestResultDecider(summary, shouldbesafe,
-							singleFile), name);
+			UltimateTestCase testCase = new UltimateTestCase(starter, new SVCOMP14TestResultDecider(singleFile),
+					summary, name, name);
 			rtr.add(testCase);
 
 		}
 		return rtr;
 	}
 
-	private Collection<File> getFilesForSetFile(Collection<File> allFiles,
-			File setFile) {
+	private Collection<File> getFilesForSetFile(Collection<File> allFiles, File setFile) {
 		ArrayList<File> currentFiles = new ArrayList<File>();
 
 		try {
-			DataInputStream in = new DataInputStream(new FileInputStream(
-					setFile));
+			DataInputStream in = new DataInputStream(new FileInputStream(setFile));
 			BufferedReader br = new BufferedReader(new InputStreamReader(in));
 			String line;
 			while ((line = br.readLine()) != null) {
 				if (line.isEmpty()) {
 					continue;
 				}
-				String regex = ".*"
-						+ line.replace(".", "\\.").replace("*", ".*");
+				String regex = ".*" + line.replace(".", "\\.").replace("*", ".*");
 				currentFiles.addAll(Util.filter(allFiles, regex));
 			}
 			in.close();
