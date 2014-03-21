@@ -78,7 +78,7 @@ public class MotzkinTransformation extends InstanceCounting {
 	/**
 	 * The SMTLib script
 	 */
-	private Script m_script;
+	private final Script m_script;
 	
 	/**
 	 * List of linear inequalities
@@ -100,6 +100,11 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * Whether the transformed formula should be linear
 	 */
 	private boolean m_linear;
+	
+	/**
+	 * Whether the transform()-method has been called yet
+	 */
+	private boolean m_transformed = false;
 	
 	/**
 	 * An optional description string
@@ -282,6 +287,7 @@ public class MotzkinTransformation extends InstanceCounting {
 	 *         inequalities
 	 */
 	public Term transform() throws SMTLIBException {
+		m_transformed = true;
 		registerMotzkinCoefficients();
 		
 		// Gather all occurring variables
@@ -399,11 +405,13 @@ public class MotzkinTransformation extends InstanceCounting {
 			sb.append("\n    ");
 			sb.append(li);
 		}
-		sb.append("\nConstraints:\n");
-		boolean annotate_terms = m_annotate_terms;
-		m_annotate_terms = false;
-		sb.append(SMTPrettyPrinter.print(this.transform()));
-		m_annotate_terms = annotate_terms;
+		if (m_transformed) {
+			sb.append("\nConstraints:\n");
+			boolean annotate_terms = m_annotate_terms;
+			m_annotate_terms = false;
+			sb.append(SMTPrettyPrinter.print(this.transform()));
+			m_annotate_terms = annotate_terms;
+		}
 		return sb.toString();
 	}
 }
