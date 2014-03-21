@@ -95,7 +95,7 @@ public class RewriteDivision implements PreProcessor {
 	 * that is obtained by existentially quantifying each auxiliary variable in
 	 * the result term.
 	 */
-	private static final boolean s_CheckResultWithQuantifiers = true;
+	private static final boolean s_CheckResultWithQuantifiers = false;
 	
 	public RewriteDivision(RankVarCollector rankVarCollector) {
 		m_rankVarCollector = rankVarCollector;
@@ -108,6 +108,7 @@ public class RewriteDivision implements PreProcessor {
 		return "Replace integer division by equivalent linear constraints";
 	}
 	
+	@SuppressWarnings("unused")
 	@Override
 	public Term process(Script script, Term term) {
 		assert m_Script == null;
@@ -117,11 +118,11 @@ public class RewriteDivision implements PreProcessor {
 			Term auxTerm = Util.and(m_Script, m_auxTerms.toArray(new Term[0]));
 			result = Util.and(script, result, auxTerm);
 			
-/*			assert !s_CheckResult || !isIncorrect(term, result) 
+			assert !s_CheckResult || !isIncorrect(term, result, auxTerm) 
 					: "rewrite division unsound";
 			assert !s_CheckResultWithQuantifiers
-					||	!isIncorrectWithQuantifiers(term, result) 
-					: "rewrite division unsound"; */
+					||	!isIncorrectWithQuantifiers(term, result, auxTerm) 
+					: "rewrite division unsound";
 		}
 		
 		return result;
@@ -132,10 +133,8 @@ public class RewriteDivision implements PreProcessor {
 	 * For this check we add to the input term the definition of the auxiliary
 	 * variables.
 	 */
-	private boolean isIncorrect(Term input, Term result) {
-		Term[] defs = m_auxVars.values().toArray(new Term[0]);
-		Term inputWithDefinitions = 
-				m_Script.term("and", input, Util.and(m_Script, defs));
+	private boolean isIncorrect(Term input, Term result, Term auxTerm) {
+		Term inputWithDefinitions = m_Script.term("and", input, auxTerm);
 		return LBool.SAT == Util.checkSat(m_Script,
 				m_Script.term("distinct",  inputWithDefinitions, result));
 	}
@@ -145,7 +144,8 @@ public class RewriteDivision implements PreProcessor {
 	 * For this check we existentially quantify auxiliary variables in the
 	 * result term.
 	 */
-	private boolean isIncorrectWithQuantifiers(Term input, Term result) {
+	private boolean isIncorrectWithQuantifiers(Term input, Term result,
+			Term auxTerm) {
 		Term quantified;
 		if (m_auxVars.size() > 0) {
 			quantified = m_Script.quantifier(Script.EXISTS,
@@ -153,13 +153,8 @@ public class RewriteDivision implements PreProcessor {
 		} else {
 			quantified = m_Script.term("true");
 		}
-		assert Util.checkSat(m_Script, m_Script.term("distinct", 
-				input, quantified)) != LBool.SAT;
-		
-		Term auxTerm = Util.and(m_Script, m_auxTerms.toArray(new Term[0]));
-		Term inputWithDefinitions = m_Script.term("and", input, auxTerm); 
-		return LBool.SAT == Util.checkSat(m_Script,
-				m_Script.term("distinct",  inputWithDefinitions, result));
+		return Util.checkSat(m_Script, m_Script.term("distinct", 
+				input, quantified)) == LBool.SAT;
 	}
 	
 	/**
