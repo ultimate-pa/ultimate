@@ -131,7 +131,7 @@ public class SMTPrettyPrinter {
 	}
 	
 	/**
-	 * Convert an SMT term into a human readable format
+	 * Convert an SMT term into a more human readable format
 	 * 
 	 * @param term an SMT term
 	 * @return a human-readable representation of the term

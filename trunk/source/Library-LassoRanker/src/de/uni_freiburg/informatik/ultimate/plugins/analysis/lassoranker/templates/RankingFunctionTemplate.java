@@ -49,16 +49,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingf
  *
  */
 public abstract class RankingFunctionTemplate {
-	protected Script m_script;
-	protected Collection<RankVar> m_variables;
+	protected Script m_script = null;
+	protected Collection<RankVar> m_variables = null;
 	protected boolean m_linear = true;
-	
 	private boolean m_initialized = false;
-	
-	RankingFunctionTemplate() {
-		m_script = null;
-		m_variables = null;
-	}
 	
 	/**
 	 * Initialize the template; call this before constaints()

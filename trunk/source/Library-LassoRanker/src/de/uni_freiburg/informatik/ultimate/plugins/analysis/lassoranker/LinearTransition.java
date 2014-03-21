@@ -58,7 +58,7 @@ public class LinearTransition {
 	private final Map<RankVar, TermVariable> m_inVars;
 	private final Map<RankVar, TermVariable> m_outVars;
 	
-	private List<List<LinearInequality>> m_polyhedra;
+	private final List<List<LinearInequality>> m_polyhedra;
 	private final boolean m_contains_integers;
 	
 	/**

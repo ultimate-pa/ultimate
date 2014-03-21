@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 public class LinearRankingFunction extends RankingFunction {
 	private static final long serialVersionUID = 5376322220596462295L;
 	
-	private AffineFunction m_ranking;
+	private final AffineFunction m_ranking;
 	
 	public LinearRankingFunction(AffineFunction ranking) {
 		m_ranking = ranking;

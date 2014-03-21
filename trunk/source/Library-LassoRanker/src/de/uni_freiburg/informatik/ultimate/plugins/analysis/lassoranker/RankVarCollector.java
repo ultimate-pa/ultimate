@@ -49,9 +49,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 public class RankVarCollector implements Serializable {
 	private static final long serialVersionUID = -1005909010259944923L;
 	
-	private Map<RankVar, TermVariable> m_inVars;
-	private Map<RankVar, TermVariable> m_outVars;
-	private Collection<TermVariable> m_auxVars;
+	private final Map<RankVar, TermVariable> m_inVars;
+	private final Map<RankVar, TermVariable> m_outVars;
+	private final Collection<TermVariable> m_auxVars;
 	private final RankVarFactory m_factory;
 	
 	/**

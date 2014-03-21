@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Jan Leike
  */
 public class AffineFunctionGenerator {
-	private Term m_constant;
-	private Map<RankVar, Term> m_coefficients;
+	private final Term m_constant;
+	private final Map<RankVar, Term> m_coefficients;
 	
 	/**
 	 * Name of the variable for the affine function's affine constant

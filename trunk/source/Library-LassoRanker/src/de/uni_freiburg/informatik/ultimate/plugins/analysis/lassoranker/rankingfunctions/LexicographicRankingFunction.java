@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +53,7 @@ public class LexicographicRankingFunction extends RankingFunction {
 	public final int lex;
 	
 	public LexicographicRankingFunction(List<AffineFunction> ranking) {
-		m_ranking = ranking;
+		m_ranking = Collections.unmodifiableList(ranking);
 		lex = ranking.size();
 		assert(lex > 0);
 	}

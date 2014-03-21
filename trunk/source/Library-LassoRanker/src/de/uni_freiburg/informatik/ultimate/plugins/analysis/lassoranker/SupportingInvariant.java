@@ -56,7 +56,7 @@ public class SupportingInvariant extends AffineFunction {
 	 * Construct a supporting invariant from an AffineFunction
 	 */
 	public SupportingInvariant(AffineFunction f) {
-		m_coefficients = f.m_coefficients;
+		m_coefficients.putAll(f.m_coefficients);
 		m_constant = f.m_constant;
 	}
 	

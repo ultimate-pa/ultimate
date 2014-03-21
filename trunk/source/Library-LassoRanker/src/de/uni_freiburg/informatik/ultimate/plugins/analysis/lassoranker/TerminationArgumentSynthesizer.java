@@ -64,14 +64,19 @@ class TerminationArgumentSynthesizer {
 	private final Script m_script;
 	
 	// Stem and loop transitions as linear inequalities in DNF
-	private LinearTransition m_stem;
-	private LinearTransition m_loop;
+	private final LinearTransition m_stem;
+	private final LinearTransition m_loop;
 	
 	/**
 	 * List of supporting invariant generators used by the last synthesize()
 	 * call
 	 */
-	private Collection<SupportingInvariantGenerator> m_si_generators = null;
+	private final Collection<SupportingInvariantGenerator> m_si_generators;
+	
+	/**
+	 * Whether synthesize() has been called yet
+	 */
+	private boolean m_synthesized = false;
 	
 	/**
 	 * Number of Motzkin's Theorem applications used by the last synthesize()
@@ -96,6 +101,7 @@ class TerminationArgumentSynthesizer {
 			LinearTransition loop, Preferences preferences) {
 		m_preferences = preferences;
 		m_script = script;
+		m_si_generators = new ArrayList<SupportingInvariantGenerator>();
 		
 		// Set logic
 		script.reset();
@@ -107,11 +113,11 @@ class TerminationArgumentSynthesizer {
 		
 		m_supporting_invariants = new ArrayList<SupportingInvariant>();
 		
-		m_stem = stem;
-		if (m_stem == null) {
+		if (stem == null) {
 			m_stem = LinearTransition.getTranstionTrue();
+		} else {
+			m_stem = stem;
 		}
-		
 		m_loop = loop;
 	}
 	
@@ -279,6 +285,8 @@ class TerminationArgumentSynthesizer {
 	 */
 	public LBool synthesize(RankingFunctionTemplate template)
 			throws SMTLIBException, TermException {
+		assert !m_synthesized;
+		m_synthesized = true;
 		if (!m_preferences.termination_check_nonlinear
 				&& template.getDegree() > 0) {
 			s_Logger.warn("Using a linear SMT query and a templates of degree "
@@ -303,9 +311,6 @@ class TerminationArgumentSynthesizer {
 			m_preferences.num_strict_invariants = 0;
 			m_preferences.num_non_strict_invariants = 0;
 		}
-		
-		// List of all used supporting invariant generators
-		m_si_generators = new ArrayList<SupportingInvariantGenerator>();
 		
 		// Assert all conjuncts generated from the template
 		Collection<Term> constraints =
@@ -352,7 +357,7 @@ class TerminationArgumentSynthesizer {
 	 * @return the number of supporting invariants used
 	 */
 	public int getNumSIs() {
-		assert m_si_generators != null : "Call synthesize() first";
+		assert !m_synthesized : "Call synthesize() first";
 		return m_si_generators.size();
 	}
 	
@@ -360,7 +365,7 @@ class TerminationArgumentSynthesizer {
 	 * @return the number of Motzkin's Theorem applications
 	 */
 	public int getNumMotzkin() {
-		assert m_si_generators != null : "Call synthesize() first";
+		assert !m_synthesized : "Call synthesize() first";
 		return m_num_motzkin;
 	}
 	

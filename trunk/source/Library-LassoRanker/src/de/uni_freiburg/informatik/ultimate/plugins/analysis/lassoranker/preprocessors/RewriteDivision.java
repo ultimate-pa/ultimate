@@ -72,13 +72,13 @@ public class RewriteDivision implements PreProcessor {
 	 * that they replace.
 	 * These variables are *not* added to in- or outVars.
 	 */
-	private Map<TermVariable, Term> m_auxVars;
+	private final Map<TermVariable, Term> m_auxVars;
 	
 	/**
 	 * The auxiliary terms defining the auxiliary variables for the formula.
 	 * These terms will be set in conjunction with the whole formula.
 	 */
-	private Collection<Term> m_auxTerms;
+	private final Collection<Term> m_auxTerms;
 	
 	/**
 	 * For generating auxiliary variables

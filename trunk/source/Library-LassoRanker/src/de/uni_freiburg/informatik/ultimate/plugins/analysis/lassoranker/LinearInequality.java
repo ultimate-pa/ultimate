@@ -77,7 +77,7 @@ public class LinearInequality {
 	/**
 	 * List of variables including rational coefficients
 	 */
-	private Map<TermVariable, AffineTerm> m_coefficients;
+	private final Map<TermVariable, AffineTerm> m_coefficients;
 	
 	/**
 	 * Affine constant

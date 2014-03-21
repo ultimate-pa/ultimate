@@ -39,7 +39,7 @@ public class TermException extends Exception {
 	
 	private static final long serialVersionUID = 628015504018345983L;
 	
-	protected Term m_term;
+	protected final Term m_term;
 	
 	public TermException(String message) {
 		super(message);

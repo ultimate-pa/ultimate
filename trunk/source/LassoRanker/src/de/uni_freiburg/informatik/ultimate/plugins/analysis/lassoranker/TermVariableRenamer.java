@@ -44,10 +44,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
  * @author Matthias Heizmann
  */
 public class TermVariableRenamer {
-	Script m_Script;
+	private final Script m_Script;
 	
 	public TermVariableRenamer(Script script) {
-		this.m_Script = script;
+		m_Script = script;
 	}
 	
 	/**

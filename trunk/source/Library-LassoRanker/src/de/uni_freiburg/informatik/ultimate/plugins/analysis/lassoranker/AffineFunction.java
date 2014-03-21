@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Express
 public class AffineFunction implements Serializable {
 	private static final long serialVersionUID = -3142354398708751882L;
 	
-	protected Map<RankVar, BigInteger> m_coefficients;
+	protected final Map<RankVar, BigInteger> m_coefficients;
 	protected BigInteger m_constant;
 	
 	public AffineFunction() {

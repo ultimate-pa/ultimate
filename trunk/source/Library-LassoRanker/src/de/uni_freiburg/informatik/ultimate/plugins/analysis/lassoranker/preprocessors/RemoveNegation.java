@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
  * @author Jan Leike
  */
 public class RemoveNegation extends TermTransformer implements PreProcessor {
-private Script m_script;
+	private Script m_script;
 	
 	@Override
 	public String getDescription() {

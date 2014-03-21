@@ -60,6 +60,9 @@ public class RankVarFactory implements Serializable {
 	 */
 	private final Map<BoogieVar, BoogieVarWrapper> m_boogieWrappers;
 	
+	/**
+	 * The map indexing auxVars registered with this object
+	 */
 	private final Map<Object, AuxVar> m_auxVars;
 	
 	/**

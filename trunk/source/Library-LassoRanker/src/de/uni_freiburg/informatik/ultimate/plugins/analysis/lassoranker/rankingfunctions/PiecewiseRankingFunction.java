@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ranking
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -54,8 +55,8 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	public final int pieces;
 	
 	public PiecewiseRankingFunction(List<AffineFunction> ranking, List<AffineFunction> predicates) {
-		m_ranking = ranking;
-		m_predicates = predicates;
+		m_ranking = Collections.unmodifiableList(ranking);
+		m_predicates = Collections.unmodifiableList(predicates);
 		pieces = ranking.size();
 		assert(pieces > 0);
 		assert(pieces == predicates.size());

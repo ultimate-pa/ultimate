@@ -71,13 +71,13 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 	/**
 	 * A collection of the generated AuxVar's
 	 */
-	private Collection<AuxVar> m_auxVars;
+	private final Collection<AuxVar> m_auxVars;
 	
 	/**
 	 * Maps boolean-valued TermVariable's to their translated counterpart,
 	 * which are int- or real-valued variables
 	 */
-	private Map<TermVariable, TermVariable> m_translator;
+	private final Map<TermVariable, TermVariable> m_translator;
 	
 	/**
 	 * Create a new RewriteBooleans preprocessor

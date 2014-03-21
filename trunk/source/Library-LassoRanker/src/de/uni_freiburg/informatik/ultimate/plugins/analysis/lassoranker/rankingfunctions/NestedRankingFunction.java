@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +54,7 @@ public class NestedRankingFunction extends RankingFunction {
 	public final int m_Functions;
 	
 	public NestedRankingFunction(List<AffineFunction> ranking) {
-		m_Ranking = ranking;
+		m_Ranking = Collections.unmodifiableList(ranking);
 		m_Functions = ranking.size();
 		assert(m_Functions > 0);
 	}

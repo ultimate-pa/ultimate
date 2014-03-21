@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
  */
 public class AffineTerm {
 	private Rational m_Constant;
-	private Map<Term, Rational> m_Coefficients;
+	private final Map<Term, Rational> m_Coefficients;
 	
 	/**
 	 * Construct the affine term 0

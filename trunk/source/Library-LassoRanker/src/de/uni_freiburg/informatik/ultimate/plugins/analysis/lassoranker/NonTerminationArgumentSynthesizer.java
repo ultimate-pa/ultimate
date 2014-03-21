@@ -99,8 +99,8 @@ public class NonTerminationArgumentSynthesizer {
 	private Script m_script;
 	
 	// Stem and loop transitions as linear inequalities in DNF
-	private LinearTransition m_stem;
-	private LinearTransition m_loop;
+	private final LinearTransition m_stem;
+	private final LinearTransition m_loop;
 	
 	/**
 	 * Contains the NonTerminationArgument object after successful discovery
@@ -136,7 +136,11 @@ public class NonTerminationArgumentSynthesizer {
 		}
 		m_non_decreasing = non_decreasing || m_integer_mode;
 		
-		m_stem = stem;
+		if (stem == null) {
+			m_stem = LinearTransition.getTranstionTrue();
+		} else {
+			m_stem = stem;
+		}
 		m_loop = loop;
 	}
 	
