@@ -541,10 +541,14 @@ public class LassoChecker {
 		NonTerminationArgument nonTermArgument = null;
 		try {
 			nonTermArgument = lrta.checkNonTermination();
-		} catch (SMTLIBException | TermException e) {
+		} catch (SMTLIBException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			throw new AssertionError(e.getClass().getName() + " " + e);
+			throw new AssertionError("SMTLIBException " + e);
+		} catch (TermException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw new AssertionError("TermException " + e);
 		}
 		if (withStem) {
 			m_NonterminationArgument = nonTermArgument;
