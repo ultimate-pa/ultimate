@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 
 
 /**
@@ -59,7 +58,7 @@ public class SupportingInvariantGenerator extends AffineFunctionGenerator {
 	 * @param strict is this invariant a strict inequality?
 	 */
 	SupportingInvariantGenerator(Script script,
-			Collection<BoogieVar> variables, boolean strict) {
+			Collection<RankVar> variables, boolean strict) {
 		super(script, variables, s_prefix
 				+ (new InstanceCounting()).m_instance);
 		this.strict = strict;
@@ -70,7 +69,7 @@ public class SupportingInvariantGenerator extends AffineFunctionGenerator {
 	 * @param vars a mapping from Boogie variables to TermVariables to be used
 	 * @return Linear inequality corresponding to si(x)
 	 */
-	public LinearInequality generate(Map<BoogieVar, TermVariable> vars) {
+	public LinearInequality generate(Map<RankVar, TermVariable> vars) {
 		LinearInequality li = super.generate(vars);
 		li.needs_motzkin_coefficient = false;
 		li.setStrict(this.strict);

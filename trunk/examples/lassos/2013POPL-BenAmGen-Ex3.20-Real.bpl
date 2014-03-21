@@ -1,6 +1,6 @@
-//#rTermination
+//#rNonTerminationDerivable
 /*
- * Date: 04.01.2013
+ * Date: 2014-03-17
  * Author: heizmann@informatik.uni-freiburg.de
  *
  * From Amir M. Ben-Amram and Samir Genaim,
@@ -13,9 +13,9 @@
  */
 
 procedure main() returns () {
-    var x1, x2: int;
-    while (-x1 + x2 <= 0 && -x1 - x2 <= -1) {
-        x2 := x2 - 2*x1 + 1;
+    var x1, x2: real;
+    while (0.0 - x1 + x2 <= 0.0 && 0.0 - x1 - x2 + 1.0 <= 0.0) {
+        x2 := x2 - 2.0*x1 + 1.0;
     }
 }
 

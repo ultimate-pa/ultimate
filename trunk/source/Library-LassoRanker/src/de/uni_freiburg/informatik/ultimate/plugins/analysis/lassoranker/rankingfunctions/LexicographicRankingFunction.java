@@ -27,14 +27,17 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunction;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 
 
 /**
@@ -64,8 +67,8 @@ public class LexicographicRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Set<BoogieVar> getVariables() {
-		Set<BoogieVar> vars = new HashSet<BoogieVar>();
+	public Set<RankVar> getVariables() {
+		Set<RankVar> vars = new HashSet<RankVar>();
 		for (AffineFunction af : m_ranking) {
 			vars.addAll(af.getVariables());
 		}
@@ -79,11 +82,11 @@ public class LexicographicRankingFunction extends RankingFunction {
 		sb.append("-lexicographic ranking function:\n");
 		sb.append("  f(");
 		boolean first = true;
-		for (BoogieVar var : getVariables()) {
+		for (RankVar var : getVariables()) {
 			if (!first) {
 				sb.append(", ");
 			}
-			sb.append(var.getIdentifier());
+			sb.append(var.getGloballyUniqueId());
 			first = false;
 		}
 		sb.append(") = <");
@@ -107,7 +110,7 @@ public class LexicographicRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Ordinal evaluate(Map<BoogieVar, Rational> assignment) {
+	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
 		Ordinal o = Ordinal.ZERO;
 		Ordinal w_pow = Ordinal.ONE;
 		for (int i = lex - 1; i >= 0; --i) {

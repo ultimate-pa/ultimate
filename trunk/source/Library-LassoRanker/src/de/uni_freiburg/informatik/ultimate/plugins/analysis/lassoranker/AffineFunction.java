@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -62,11 +61,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Express
 public class AffineFunction implements Serializable {
 	private static final long serialVersionUID = -3142354398708751882L;
 	
-	protected Map<BoogieVar, BigInteger> m_coefficients;
+	protected Map<RankVar, BigInteger> m_coefficients;
 	protected BigInteger m_constant;
 	
 	public AffineFunction() {
-		m_coefficients = new HashMap<BoogieVar, BigInteger>();
+		m_coefficients = new HashMap<RankVar, BigInteger>();
 		m_constant = BigInteger.ZERO;
 	}
 	
@@ -92,10 +91,24 @@ public class AffineFunction implements Serializable {
 	}
 	
 	/**
-	 * @return a set of the variables that occur in this function
+	 * @return the set of RankVar's that occur in this function
 	 */
-	public Set<BoogieVar> getVariables() {
+	public Set<RankVar> getVariables() {
 		return m_coefficients.keySet();
+	}
+	
+	/**
+	 * @return the set of (associated) BoogieVar's that occur in this function
+	 */
+	public Set<BoogieVar> getBoogieVariables() {
+		Set<BoogieVar> result = new HashSet<BoogieVar>();
+		for (RankVar rkVar : m_coefficients.keySet()) {
+			BoogieVar boogieVar = rkVar.getAssociatedBoogieVar();
+			if (boogieVar != null) {
+				result.add(boogieVar);
+			}
+		}
+		return result;
 	}
 	
 	/**
@@ -111,7 +124,7 @@ public class AffineFunction implements Serializable {
 	 * @param var a Boogie variable
 	 * @param coeff the coefficient of this variable
 	 */
-	public void put(BoogieVar var, BigInteger coeff) {
+	public void put(RankVar var, BigInteger coeff) {
 		if (coeff.equals(BigInteger.ZERO)) {
 			m_coefficients.remove(var);
 		} else {
@@ -123,7 +136,7 @@ public class AffineFunction implements Serializable {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		for (Map.Entry<BoogieVar, BigInteger> entry : m_coefficients.entrySet()) {
+		for (Map.Entry<RankVar, BigInteger> entry : m_coefficients.entrySet()) {
 			if (!first) {
 				sb.append(entry.getValue().compareTo(BigInteger.ZERO) < 0
 						? " - " : " + ");
@@ -149,12 +162,12 @@ public class AffineFunction implements Serializable {
 		return sb.toString();
 	}
 	
-	private static Term constructSummand(Script script, TermVariable var,
+	private static Term constructSummand(Script script, Term t,
 			BigInteger coefficient) {
 		if (coefficient.equals(BigInteger.ONE)) {
-			return var; 
+			return t; 
 		} else {
-			return script.term("*", script.numeral(coefficient), var);
+			return script.term("*", script.numeral(coefficient), t);
 		}
 	}
 	
@@ -166,9 +179,9 @@ public class AffineFunction implements Serializable {
 	 */
 	public Term asTerm(Script script) throws SMTLIBException {
 		ArrayList<Term> summands = new ArrayList<Term>();
-		for (Map.Entry<BoogieVar, BigInteger> entry	: m_coefficients.entrySet()) {
+		for (Map.Entry<RankVar, BigInteger> entry : m_coefficients.entrySet()) {
 			summands.add(constructSummand(script,
-					entry.getKey().getTermVariable(), entry.getValue()));
+					entry.getKey().getDefinition(), entry.getValue()));
 		}
 		summands.add(script.numeral(m_constant));
 		return UtilExperimental.sum(script, script.sort("Real"),
@@ -191,9 +204,9 @@ public class AffineFunction implements Serializable {
 	 * @param assignment the assignment to the variables
 	 * @return the value of the function
 	 */
-	public Rational evaluate(Map<BoogieVar, Rational> assignment) {
+	public Rational evaluate(Map<RankVar, Rational> assignment) {
 		Rational r = Rational.ZERO;
-		for (Map.Entry<BoogieVar, BigInteger> entry
+		for (Map.Entry<RankVar, BigInteger> entry
 				: m_coefficients.entrySet()) {
 			Rational val = assignment.get(entry.getKey());
 			if (val == null) {

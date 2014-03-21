@@ -43,8 +43,6 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
@@ -64,10 +62,6 @@ class TerminationArgumentSynthesizer {
 	 * SMT script for the template instance
 	 */
 	private final Script m_script;
-	
-	// Stem and loop transitions for the linear lasso program
-	private final TransFormula m_stem_transition;
-	private final TransFormula m_loop_transition;
 	
 	// Stem and loop transitions as linear inequalities in DNF
 	private LinearTransition m_stem;
@@ -94,14 +88,11 @@ class TerminationArgumentSynthesizer {
 	/**
 	 * Constructor for the termination argument function synthesizer.
 	 * @param script SMT Solver
-	 * @param stem_transition transition formula for the program's stem
-	 * @param loop_transition transition formula for the program's loop
-	 * @param stem program stem as a union of polyhedra
-	 * @param loop program stem as a union of polyhedra
+	 * @param stem the stem transition, may be null
+	 * @param loop the loop transition
 	 * @param preferences arguments to the synthesis process
 	 */
-	public TerminationArgumentSynthesizer(Script script, TransFormula stem_transition,
-			TransFormula loop_transition, LinearTransition stem,
+	public TerminationArgumentSynthesizer(Script script, LinearTransition stem,
 			LinearTransition loop, Preferences preferences) {
 		m_preferences = preferences;
 		m_script = script;
@@ -116,39 +107,39 @@ class TerminationArgumentSynthesizer {
 		
 		m_supporting_invariants = new ArrayList<SupportingInvariant>();
 		
-		m_stem_transition = stem_transition;
 		m_stem = stem;
 		if (m_stem == null) {
 			m_stem = LinearTransition.getTranstionTrue();
 		}
 		
-		m_loop_transition = loop_transition;
 		m_loop = loop;
 	}
 	
 	/**
-	 * @return Boogie variables that are relevant for supporting invariants.
-	 * Variables that occur as outVars of the stem but are not read by the loop
-	 * (i.e., do not occur as inVar of the loop) are not relevant for
-	 * supporting invariants.
+	 * @return RankVar's that are relevant for supporting invariants
 	 */
-	private Collection<BoogieVar> getSIVars() {
-		if (m_stem_transition == null) {
+	private Collection<RankVar> getSIVars() {
+		/*
+		 * Variables that occur as outVars of the stem but are not read by the
+		 * loop (i.e., do not occur as inVar of the loop) are not relevant for
+		 * supporting invariants.
+		 */
+		if (m_stem == null) {
 			return Collections.emptyList();
 		}
-		Set<BoogieVar> result = 
-				new HashSet<BoogieVar>(m_stem_transition.getOutVars().keySet());
-		result.retainAll(m_loop_transition.getInVars().keySet());
+		Set<RankVar> result =
+				new HashSet<RankVar>(m_stem.getOutVars().keySet());
+		result.retainAll(m_loop.getInVars().keySet());
 		return result;
 	}
 	
 	/**
-	 * @return Boogie variables that are relevant for ranking functions
+	 * @return RankVar's that are relevant for ranking functions
 	 */
-	private Collection<BoogieVar> getRankVars() {
-		Collection<BoogieVar> vars = 
-				new HashSet<BoogieVar>(m_loop_transition.getOutVars().keySet());
-		vars.retainAll(m_loop_transition.getInVars().keySet());
+	private Collection<RankVar> getRankVars() {
+		Collection<RankVar> vars = 
+				new HashSet<RankVar>(m_loop.getOutVars().keySet());
+		vars.retainAll(m_loop.getInVars().keySet());
 		return vars;
 	}
 	
@@ -163,10 +154,10 @@ class TerminationArgumentSynthesizer {
 			Collection<SupportingInvariantGenerator> si_generators) {
 		List<Term> conj = new ArrayList<Term>(); // List of constraints
 		
-		Collection<BoogieVar> siVars = getSIVars();
+		Collection<RankVar> siVars = getSIVars();
 		List<List<LinearInequality>> templateConstraints =
-				template.constraints(m_loop_transition.getInVars(),
-						m_loop_transition.getOutVars());
+				template.constraints(m_loop.getInVars(),
+						m_loop.getOutVars());
 		List<String> annotations = template.getAnnotations();
 		assert annotations.size() == templateConstraints.size();
 		
@@ -202,8 +193,7 @@ class TerminationArgumentSynthesizer {
 							new SupportingInvariantGenerator(m_script, siVars,
 									true);
 					si_generators.add(sig);
-					motzkin.add_inequality(sig.generate(
-							m_loop_transition.getInVars()));
+					motzkin.add_inequality(sig.generate(m_loop.getInVars()));
 				}
 				assert(m_preferences.num_non_strict_invariants >= 0);
 				for (int i = 0; i < m_preferences.num_non_strict_invariants;
@@ -212,8 +202,7 @@ class TerminationArgumentSynthesizer {
 							new SupportingInvariantGenerator(m_script, siVars,
 									false);
 					si_generators.add(sig);
-					LinearInequality li =
-							sig.generate(m_loop_transition.getInVars());
+					LinearInequality li = sig.generate(m_loop.getInVars());
 					li.motzkin_coefficient_can_be_zero = false;
 					motzkin.add_inequality(li);
 				}
@@ -239,13 +228,11 @@ class TerminationArgumentSynthesizer {
 								m_preferences.annotate_terms);
 				motzkin.annotation = "invariant " + i + " initiation " + j;
 				motzkin.add_inequalities(stemConj);
-				LinearInequality li =
-						sig.generate(m_stem_transition.getOutVars());
+				LinearInequality li = sig.generate(m_stem.getOutVars());
 				li.negate();
 				li.motzkin_coefficient_can_be_zero = false;
 					// otherwise the stem is unsat
 				motzkin.add_inequality(li);
-//				s_Logger.debug(motzkin);
 				conj.add(motzkin.transform());
 			}
 			
@@ -259,15 +246,12 @@ class TerminationArgumentSynthesizer {
 								m_preferences.annotate_terms);
 				motzkin.annotation = "invariant " + i + " consecution " + j;
 				motzkin.add_inequalities(loopConj);
-				motzkin.add_inequality(sig.generate(
-						m_loop_transition.getInVars())); // si(x)
-				LinearInequality li = sig.generate(
-						m_loop_transition.getOutVars()); // ~si(x')
+				motzkin.add_inequality(sig.generate(m_loop.getInVars())); // si(x)
+				LinearInequality li = sig.generate(m_loop.getOutVars()); // ~si(x')
 				li.needs_motzkin_coefficient =
 						!m_preferences.only_nondecreasing_invariants;
 				li.negate();
 				motzkin.add_inequality(li);
-//				s_Logger.debug(motzkin);
 				conj.add(motzkin.transform());
 			}
 		}
@@ -300,8 +284,8 @@ class TerminationArgumentSynthesizer {
 			s_Logger.warn("Using a linear SMT query and a templates of degree "
 					+ "> 0, hence this method is incomplete.");
 		}
-		Collection<BoogieVar> rankVars = getRankVars();
-		Collection<BoogieVar> siVars = getSIVars();
+		Collection<RankVar> rankVars = getRankVars();
+		Collection<RankVar> siVars = getSIVars();
 		template.init(m_script, rankVars,
 				!m_preferences.termination_check_nonlinear);
 		s_Logger.debug("Variables for ranking functions: " + rankVars);
@@ -313,7 +297,7 @@ class TerminationArgumentSynthesizer {
 			m_preferences.num_strict_invariants = 0;
 			m_preferences.num_non_strict_invariants = 0;
 		} */
-		if (m_stem_transition == null) {
+		if (m_stem == null) {
 			s_Logger.info("There is no stem transition; "
 					+ "disabling supporting invariant generation.");
 			m_preferences.num_strict_invariants = 0;

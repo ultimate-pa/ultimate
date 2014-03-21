@@ -96,7 +96,8 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 		boolean fail = false;
 
 		if (m_expected_result == null) {
-			customMessages.add("Could not understand the specification of the " + "results.");
+			customMessages.add("Could not understand the specification of the "
+					+ "results.");
 			fail = true;
 		} else if (m_expected_result == ExpectedResult.UNSPECIFIED) {
 			customMessages.add("No expected results defined in the input file");

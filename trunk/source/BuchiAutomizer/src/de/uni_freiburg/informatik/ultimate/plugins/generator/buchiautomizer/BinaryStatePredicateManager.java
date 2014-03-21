@@ -273,7 +273,7 @@ public class BinaryStatePredicateManager {
 	
 	
 	private IPredicate supportingInvariant2Predicate(SupportingInvariant si) {
-		Collection<BoogieVar> coefficients = si.getVariables();
+		Collection<BoogieVar> coefficients = si.getBoogieVariables();
 		Term formula = si.asTerm(m_SmtManager.getScript());
 		formula = m_SmtManager.simplify(formula);
 		TermVarsProc termVarsProc = m_SmtManager.computeTermVarsProc(formula);

@@ -34,9 +34,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 
 
 /**
@@ -55,14 +55,14 @@ public abstract class RankingFunction implements Serializable {
 	/**
 	 * @return the set of all variables occurring in the ranking function
 	 */
-	public abstract Set<BoogieVar> getVariables();
+	public abstract Set<RankVar> getVariables();
 	
 	/**
 	 * Evaluate the ranking function
 	 * @param assignment the variable assignment
 	 * @return value of the function as an ordinal
 	 */
-	public abstract Ordinal evaluate(Map<BoogieVar, Rational> assignment);
+	public abstract Ordinal evaluate(Map<RankVar, Rational> assignment);
 	
 	/**
 	 * Return the ranking function as a lexicographically ordered list of
@@ -80,11 +80,11 @@ public abstract class RankingFunction implements Serializable {
 	 * @param smt2boogie the variable translation
 	 * @return ranking function as boolean term
 	 */
-	public Expression[] asLexExpression(Script script, Term2Expression smt2boogie) {
+	public Expression[] asLexExpression(Script script, Term2Expression term2expr) {
 		Term[] lex = this.asLexTerm(script);
 		Expression[] lexExpressions = new Expression[lex.length];
 		for (int i = 0; i < lex.length; ++i) {
-			lexExpressions[i] = smt2boogie.translate(lex[i]);
+			lexExpressions[i] = term2expr.translate(lex[i]);
 		}
 		return lexExpressions;
 	}

@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunction;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 
 
 /**
@@ -65,8 +65,8 @@ public class NestedRankingFunction extends RankingFunction {
 
 	
 	@Override
-	public Set<BoogieVar> getVariables() {
-		Set<BoogieVar> vars = new HashSet<BoogieVar>();
+	public Set<RankVar> getVariables() {
+		Set<RankVar> vars = new HashSet<RankVar>();
 		for (AffineFunction af : m_Ranking) {
 			vars.addAll(af.getVariables());
 		}
@@ -113,7 +113,7 @@ public class NestedRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Ordinal evaluate(Map<BoogieVar, Rational> assignment) {
+	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
 		throw new UnsupportedOperationException("not yet implemented");
 	}
 }

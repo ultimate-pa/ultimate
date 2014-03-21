@@ -8,7 +8,7 @@
  * f(x) = x is a ranking function
  */
 
-procedure SyntaxSupportDisjunction2() returns (x: int, y:int)
+procedure SyntaxSupportBooleans1() returns (x: int, y:int)
 {
     var b: bool;
     assume(true);

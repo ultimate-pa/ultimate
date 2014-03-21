@@ -43,13 +43,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 
 
@@ -100,10 +98,6 @@ public class NonTerminationArgumentSynthesizer {
 	 */
 	private Script m_script;
 	
-	// Stem and loop transitions for the linear lasso program
-	private TransFormula m_stem_transition;
-	private TransFormula m_loop_transition;
-	
 	// Stem and loop transitions as linear inequalities in DNF
 	private LinearTransition m_stem;
 	private LinearTransition m_loop;
@@ -117,14 +111,11 @@ public class NonTerminationArgumentSynthesizer {
 	 * Constructor for the termination argument function synthesizer.
 	 * @param non_decreasing produce only linear constraints? (lambda = 1)
 	 * @param script SMT Solver
-	 * @param stem_transition transition formula for the program's stem
-	 * @param loop_transition transition formula for the program's loop
-	 * @param stem program stem as a union of polyhedra
-	 * @param loop program stem as a union of polyhedra
+	 * @param stem the program stem
+	 * @param loop the program loop
 	 */
 	public NonTerminationArgumentSynthesizer(boolean non_decreasing,
-			Script script, LinearTransition stem, LinearTransition loop,
-			TransFormula stem_transition, TransFormula loop_transition) {
+			Script script, LinearTransition stem, LinearTransition loop) {
 		m_script = script;
 		
 		m_integer_mode = (stem != null && stem.containsIntegers())
@@ -147,24 +138,20 @@ public class NonTerminationArgumentSynthesizer {
 		
 		m_stem = stem;
 		m_loop = loop;
-		m_stem_transition = stem_transition;
-		m_loop_transition = loop_transition;
 	}
 	
 	/**
-	 * @return all BoogieVars that occur in the program
+	 * @return all RankVars that occur in the program
 	 */
-	private Collection<BoogieVar> getBoogieVars() {
-		Collection<BoogieVar> boogieVars = new HashSet<BoogieVar>();
-		if (m_stem_transition != null) {
-			boogieVars.addAll(m_stem_transition.getAssignedVars());
-			boogieVars.addAll(m_stem_transition.getInVars().keySet());
-			boogieVars.addAll(m_stem_transition.getOutVars().keySet());
+	private Collection<RankVar> getRankVars() {
+		Collection<RankVar> rankVars = new HashSet<RankVar>();
+		if (m_stem != null) {
+			rankVars.addAll(m_stem.getInVars().keySet());
+			rankVars.addAll(m_stem.getOutVars().keySet());
 		}
-		boogieVars.addAll(m_loop_transition.getAssignedVars());
-		boogieVars.addAll(m_loop_transition.getInVars().keySet());
-		boogieVars.addAll(m_loop_transition.getOutVars().keySet());
-		return boogieVars;
+		rankVars.addAll(m_loop.getInVars().keySet());
+		rankVars.addAll(m_loop.getOutVars().keySet());
+		return rankVars;
 	}
 	
 	/**
@@ -174,10 +161,10 @@ public class NonTerminationArgumentSynthesizer {
 		String sort = m_integer_mode ? "Int" : "Real";
 		
 		// Create new variables
-		Map<BoogieVar, Term> vars_init = new HashMap<BoogieVar, Term>();
-		Map<BoogieVar, Term> vars_honda = new HashMap<BoogieVar, Term>();
-		Map<BoogieVar, Term> vars_ray = new HashMap<BoogieVar, Term>();
-		for (BoogieVar var : getBoogieVars()) {
+		Map<RankVar, Term> vars_init = new HashMap<RankVar, Term>();
+		Map<RankVar, Term> vars_honda = new HashMap<RankVar, Term>();
+		Map<RankVar, Term> vars_ray = new HashMap<RankVar, Term>();
+		for (RankVar var : getRankVars()) {
 			vars_init.put(var, AuxiliaryMethods.newConstant(m_script,
 					s_prefix_init + var.toString(), sort));
 			vars_honda.put(var, AuxiliaryMethods.newConstant(m_script,
@@ -212,10 +199,10 @@ public class NonTerminationArgumentSynthesizer {
 	 * @param lambda
 	 * @return
 	 */
-	public Term generateConstraints(Map<BoogieVar, Term> vars_init,
-			Map<BoogieVar, Term> vars_honda, Map<BoogieVar, Term> vars_ray,
+	public Term generateConstraints(Map<RankVar, Term> vars_init,
+			Map<RankVar, Term> vars_honda, Map<RankVar, Term> vars_ray,
 			Term lambda) {
-		Collection<BoogieVar> boogieVars = getBoogieVars();
+		Collection<RankVar> rankVars = getRankVars();
 		
 		// A_stem * (x0, x0') <= b_stem
 		Term t1 = m_script.term("true");
@@ -223,7 +210,7 @@ public class NonTerminationArgumentSynthesizer {
 			List<Term> disjunction = new ArrayList<Term>(m_stem.getNumPolyhedra());
 			for (List<LinearInequality> polyhedron : m_stem.getPolyhedra()) {
 				disjunction.add(generateConstraint(
-						m_stem_transition,
+						m_stem,
 						polyhedron,
 						vars_init,
 						vars_honda,
@@ -234,32 +221,32 @@ public class NonTerminationArgumentSynthesizer {
 		}
 		
 		// vars_end + vars_ray
-		Map<BoogieVar, Term> vars_end_plus_ray =
-				new HashMap<BoogieVar, Term>();
+		Map<RankVar, Term> vars_end_plus_ray = new HashMap<RankVar, Term>();
 		vars_end_plus_ray.putAll(vars_honda);
-		for (BoogieVar bv : boogieVars) {
-			vars_end_plus_ray.put(bv, m_script.term("+", vars_honda.get(bv),
-					vars_ray.get(bv)));
+		for (RankVar rkVar : rankVars) {
+			vars_end_plus_ray.put(rkVar,
+					m_script.term("+", vars_honda.get(rkVar),
+							vars_ray.get(rkVar)));
 		}
 		// vars_ray * lambda
-		Map<BoogieVar, Term> vars_ray_times_lambda =
-				new HashMap<BoogieVar, Term>();
+		Map<RankVar, Term> vars_ray_times_lambda =
+				new HashMap<RankVar, Term>();
 		if (!m_non_decreasing) {
-			for (BoogieVar bv : boogieVars) {
-				vars_ray_times_lambda.put(bv,
-						m_script.term("*", vars_ray.get(bv), lambda));
+			for (RankVar rkVar : rankVars) {
+				vars_ray_times_lambda.put(rkVar,
+						m_script.term("*", vars_ray.get(rkVar), lambda));
 			}
 		}
 		
 		List<Term> disjunction = new ArrayList<Term>(m_loop.getNumPolyhedra());
 		for (List<LinearInequality> polyhedron : m_loop.getPolyhedra()) {
 			// A_loop * (x0', x0' + y) <= b_loop
-			Term t_honda = this.generateConstraint(m_loop_transition, polyhedron,
+			Term t_honda = this.generateConstraint(m_loop, polyhedron,
 					vars_honda, vars_end_plus_ray, false);
 			
 			// A_loop * (y, lambda * y) <= 0
 			Term t_ray = this.generateConstraint(
-					m_loop_transition,
+					m_loop,
 					polyhedron,
 					vars_ray,
 					m_non_decreasing ? vars_ray : vars_ray_times_lambda,
@@ -281,10 +268,10 @@ public class NonTerminationArgumentSynthesizer {
 		return m_script.term("and", t1, t2, t3);
 	}
 	
-	private Term generateConstraint(TransFormula trans_formula,
+	private Term generateConstraint(LinearTransition transition,
 			List<LinearInequality> polyhedron,
-			Map<BoogieVar, Term> varsIn,
-			Map<BoogieVar, Term> varsOut,
+			Map<RankVar, Term> varsIn,
+			Map<RankVar, Term> varsOut,
 			boolean rays) {
 		Map<TermVariable, Term> auxVars = new HashMap<TermVariable, Term>();
 		List<Term> conjunction = new ArrayList<Term>(polyhedron.size());
@@ -293,8 +280,8 @@ public class NonTerminationArgumentSynthesizer {
 			Collection<TermVariable> added_vars = new HashSet<TermVariable>();
 			
 			// outVars
-			for (Map.Entry<BoogieVar, TermVariable> entry :
-					trans_formula.getOutVars().entrySet()) {
+			for (Map.Entry<RankVar, TermVariable> entry :
+					transition.getOutVars().entrySet()) {
 				if (!varsOut.containsKey(entry.getKey())) {
 					continue;
 				}
@@ -306,8 +293,8 @@ public class NonTerminationArgumentSynthesizer {
 			}
 			
 			// inVars
-			for (Map.Entry<BoogieVar, TermVariable> entry :
-					trans_formula.getInVars().entrySet()) {
+			for (Map.Entry<RankVar, TermVariable> entry :
+					transition.getInVars().entrySet()) {
 				if (added_vars.contains(entry.getValue())) {
 					// the transition implicitly requires that
 					// entry.getKey() is constant
@@ -369,7 +356,7 @@ public class NonTerminationArgumentSynthesizer {
 	 * @return the program state as a map from program variables to rational
 	 *         numbers
 	 */
-	private Map<BoogieVar, Rational> extractState(Map<BoogieVar, Term> vars)
+	private Map<RankVar, Rational> extractState(Map<RankVar, Term> vars)
 			throws SMTLIBException, UnsupportedOperationException,
 			TermException {
 		if (vars.isEmpty()) {
@@ -379,8 +366,8 @@ public class NonTerminationArgumentSynthesizer {
 		Map<Term, Rational> val = AuxiliaryMethods.preprocessValuation(
 				m_script.getValue(vars.values().toArray(new Term[0])));
 		// Concatenate vars and val
-		Map<BoogieVar, Rational> state = new HashMap<BoogieVar, Rational>();
-		for (Map.Entry<BoogieVar, Term> entry : vars.entrySet()) {
+		Map<RankVar, Rational> state = new HashMap<RankVar, Rational>();
+		for (Map.Entry<RankVar, Term> entry : vars.entrySet()) {
 			assert(val.containsKey(entry.getValue()));
 			state.put(entry.getKey(), val.get(entry.getValue()));
 		}
@@ -393,16 +380,16 @@ public class NonTerminationArgumentSynthesizer {
 	 * @throws SMTLIBException
 	 */
 	private NonTerminationArgument extractArgument(
-			Map<BoogieVar, Term> vars_init,
-			Map<BoogieVar, Term> vars_honda,
-			Map<BoogieVar, Term> vars_ray,
+			Map<RankVar, Term> vars_init,
+			Map<RankVar, Term> vars_honda,
+			Map<RankVar, Term> vars_ray,
 			Term var_lambda) {
 		assert m_script.checkSat() == LBool.SAT;
 		
 		try {
-			Map<BoogieVar, Rational> state0 = extractState(vars_init);
-			Map<BoogieVar, Rational> state1 = extractState(vars_honda);
-			Map<BoogieVar, Rational> ray = extractState(vars_ray);
+			Map<RankVar, Rational> state0 = extractState(vars_init);
+			Map<RankVar, Rational> state1 = extractState(vars_honda);
+			Map<RankVar, Rational> ray = extractState(vars_ray);
 			Rational lambda = AuxiliaryMethods.const2Rational(
 					m_script.getValue(new Term[] {var_lambda}).get(var_lambda));
 			return new NonTerminationArgument(m_stem != null ? state0 : state1,

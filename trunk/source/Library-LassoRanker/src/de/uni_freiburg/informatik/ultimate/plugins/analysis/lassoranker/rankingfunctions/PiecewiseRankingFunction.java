@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunction;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 
 
 /**
@@ -68,8 +68,8 @@ public class PiecewiseRankingFunction extends RankingFunction {
 
 	
 	@Override
-	public Set<BoogieVar> getVariables() {
-		Set<BoogieVar> vars = new HashSet<BoogieVar>();
+	public Set<RankVar> getVariables() {
+		Set<RankVar> vars = new HashSet<RankVar>();
 		for (AffineFunction af : m_ranking) {
 			vars.addAll(af.getVariables());
 		}
@@ -90,11 +90,11 @@ public class PiecewiseRankingFunction extends RankingFunction {
 		sb.append("-piece ranking function:\n");
 		sb.append("  f(");
 		boolean first = true;
-		for (BoogieVar var : getVariables()) {
+		for (RankVar var : getVariables()) {
 			if (!first) {
 				sb.append(", ");
 			}
-			sb.append(var.getIdentifier());
+			sb.append(var.getGloballyUniqueId());
 			first = false;
 		}
 		sb.append(") = {\n");
@@ -129,7 +129,7 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Ordinal evaluate(Map<BoogieVar, Rational> assignment) {
+	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
 		Rational r = Rational.ZERO;
 		for (int i = 0; i < pieces; ++i) {
 			if (!m_predicates.get(i).evaluate(assignment).isNegative()) {

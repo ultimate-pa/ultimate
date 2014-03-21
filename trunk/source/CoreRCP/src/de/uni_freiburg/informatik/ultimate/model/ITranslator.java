@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
  *
  * @param <STE> Source Trace Element. Type of trace elements (e.g., Statements,
  *  CodeBlocks, BoogieASTNodes) in the source program model.
- * @param <TTE> Target Trace Elment. Type of trace elements (e.g., Statements,
+ * @param <TTE> Target Trace Element. Type of trace elements (e.g., Statements,
  *  CodeBlocks, BoogieASTNodes) in the target program model.
  * @param <SE> Source Expression. Type of expression in the source program 
  * 	model.

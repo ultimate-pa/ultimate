@@ -65,6 +65,16 @@ public class SMTPrettyPrinter {
 			if (appt.getParameters().length == 0) {
 				return fname;
 			}
+			if (fname == "ite") {
+				sb.append("(");
+				sb.append(print(appt.getParameters()[0], indentation + 1));
+				sb.append(" ? ");
+				sb.append(print(appt.getParameters()[1], indentation + 1));
+				sb.append(" : ");
+				sb.append(print(appt.getParameters()[2], indentation + 1));
+				sb.append(")");
+				return sb.toString();
+			}
 			
 			// Recursively convert parameters
 			sb.append("(");

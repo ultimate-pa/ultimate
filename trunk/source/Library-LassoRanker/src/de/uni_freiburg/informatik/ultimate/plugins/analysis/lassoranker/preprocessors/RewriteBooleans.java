@@ -27,12 +27,22 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxVarManager;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.BoogieVarWrapper;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVarCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVarFactory;
 
 
 /**
@@ -42,27 +52,126 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxVarMa
  * @author Jan Leike, Matthias Heizmann
  */
 public class RewriteBooleans extends TermTransformer implements PreProcessor {
-	private static final String s_auxInfix = "_bool";
+	private static final String s_auxInPostfix  = "_in_bool";
+	private static final String s_auxOutPostfix = "_out_bool";
+	private static final String s_auxVarSortName = "Real";
 	
-	private Script m_Script;
-	private final AuxVarManager m_AuxVarManager;
+	private final Script m_Script;
 	
-	public RewriteBooleans(AuxVarManager auxVarManager) {
-		m_AuxVarManager = auxVarManager;
+	/**
+	 * The sort to be used for new auxiliary TermVariable's
+	 */
+	private final Sort m_auxVarSort;
+	
+	/**
+	 * For generating auxiliary variables
+	 */
+	private final RankVarCollector m_rankVarCollector;
+	
+	/**
+	 * A collection of the generated AuxVar's
+	 */
+	private Collection<AuxVar> m_auxVars;
+	
+	/**
+	 * Maps boolean-valued TermVariable's to their translated counterpart,
+	 * which are int- or real-valued variables
+	 */
+	private Map<TermVariable, TermVariable> m_translator;
+	
+	/**
+	 * Create a new RewriteBooleans preprocessor
+	 * @param rankVarCollector collecting the new in- and outVars
+	 * @param auxVarsSort the Sort that new auxiliary variables should have
+	 */
+	public RewriteBooleans(RankVarCollector rankVarCollector, Script script) {
+		m_rankVarCollector = rankVarCollector;
+		m_translator = new HashMap<TermVariable, TermVariable>();
+		m_auxVars = new ArrayList<AuxVar>();
+		m_Script = script;
+		m_auxVarSort = m_Script.sort(s_auxVarSortName);
+		generateAuxVars();
+	}
+	
+	/**
+	 * Get the AuxVar corresponding to a (boolean) BoogieVar.
+	 * Creates a new AuxVar, if needed.
+	 */
+	private AuxVar getAuxVar(BoogieVar boogieVar) {
+		RankVarFactory rvFactory = m_rankVarCollector.getFactory();
+		AuxVar auxVar = rvFactory.getAuxVar(boogieVar);
+		if (auxVar == null) {
+			String name = boogieVar.getGloballyUniqueId() + "_bool";
+			auxVar = new AuxVar(name, boogieVar,
+					getDefinition(boogieVar.getTermVariable()));
+			rvFactory.registerAuxVar(boogieVar, auxVar);
+			m_auxVars.add(auxVar);
+		}
+		return auxVar;
+	}
+	
+	/**
+	 * Create new integer- or real-valued auxiliary variables for all boolean
+	 * variables.
+	 * @param transFormula the transition formula from which the term originated
+	 */
+	private void generateAuxVars() {
+		RankVarFactory rvFactory = m_rankVarCollector.getFactory();
+		Collection<Map.Entry<RankVar, TermVariable>> entrySet =
+				new ArrayList<Map.Entry<RankVar, TermVariable>>(
+						m_rankVarCollector.getInVars().entrySet());
+		for (Map.Entry<RankVar, TermVariable> entry : entrySet) {
+			if (entry.getKey() instanceof BoogieVarWrapper) {
+				BoogieVar boogieVar = entry.getKey().getAssociatedBoogieVar();
+				if (entry.getValue().getSort().getName().equals("Bool")) {
+					AuxVar auxVar = getAuxVar(boogieVar);
+					TermVariable newVar = m_translator.get(entry.getValue());
+					if (newVar == null) {
+						// Create a new TermVariable
+						newVar = rvFactory.getNewTermVariable(
+							boogieVar.getGloballyUniqueId() + s_auxInPostfix,
+							m_auxVarSort
+						);
+						m_translator.put(entry.getValue(), newVar);
+					}
+					m_rankVarCollector.removeInVar(entry.getKey());
+					m_rankVarCollector.addInVar(auxVar, newVar);
+				}
+			}
+		}
+		entrySet = new ArrayList<Map.Entry<RankVar, TermVariable>>(
+						m_rankVarCollector.getOutVars().entrySet());
+		for (Map.Entry<RankVar, TermVariable> entry : entrySet) {
+			if (entry.getKey() instanceof BoogieVarWrapper) {
+				BoogieVar boogieVar = entry.getKey().getAssociatedBoogieVar();
+				if (entry.getValue().getSort().getName().equals("Bool")) {
+					AuxVar auxVar = getAuxVar(boogieVar);
+					TermVariable newVar = m_translator.get(entry.getValue());
+					if (newVar == null) {
+						// Create a new TermVariable
+						newVar = rvFactory.getNewTermVariable(
+							boogieVar.getGloballyUniqueId() + s_auxOutPostfix,
+							m_auxVarSort
+						);
+						m_translator.put(entry.getValue(), newVar);
+					}
+					m_rankVarCollector.removeOutVar(entry.getKey());
+					m_rankVarCollector.addOutVar(auxVar, newVar);
+				}
+			}
+		}
 	}
 	
 	@Override
 	public String getDescription() {
-		return "Replaces boolean variables b by auxiliary integer variables";
+		return "Replaces boolean variables by auxiliary integer variables";
 	}
-
 	
 	@Override
 	public Term process(Script script, Term term) {
-		m_Script = script;
+		assert m_Script == script;
 		return (new RewriteBooleanHelper()).transform(term);
 	}
-
 	
 	/**
 	 * Given the Term booleanTerm whose Sort is "Bool" return the term
@@ -85,11 +194,11 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 			assert(m_Script != null);
 			if (term instanceof TermVariable &&
 					term.getSort().getName().equals("Bool")) {
-				Term definition = getDefinition(term);
+				TermVariable var = (TermVariable) term;
+				assert m_translator.containsKey(var);
+				TermVariable translatedVar = m_translator.get(var);
 				Term one = m_Script.numeral(BigInteger.ONE);
-				TermVariable auxVar = 
-						m_AuxVarManager.constructAuxVar(s_auxInfix, definition);
-				Term auxTerm = m_Script.term(">=", auxVar, one);
+				Term auxTerm = m_Script.term(">=", translatedVar, one);
 				setResult(auxTerm);
 				return;
 			}

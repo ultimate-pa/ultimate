@@ -35,9 +35,9 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxiliaryMethods;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 
 
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingf
  */
 public abstract class RankingFunctionTemplate {
 	protected Script m_script;
-	protected Collection<BoogieVar> m_variables;
+	protected Collection<RankVar> m_variables;
 	protected boolean m_linear = true;
 	
 	private boolean m_initialized = false;
@@ -63,10 +63,10 @@ public abstract class RankingFunctionTemplate {
 	/**
 	 * Initialize the template; call this before constaints()
 	 * @param script The SMTLib script
-	 * @param vars A collection of all variables that are relevant for ranking
+	 * @param vars the collection of all variables that are relevant for ranking
 	 * @param linear generate a linear SMT query?
 	 */
-	public void init(Script script, Collection<BoogieVar> vars,
+	public void init(Script script, Collection<RankVar> vars,
 			boolean linear) {
 		m_script = script;
 		m_variables = vars;
@@ -103,8 +103,8 @@ public abstract class RankingFunctionTemplate {
 	 *          invariants.
 	 */
 	public abstract List<List<LinearInequality>> constraints(
-			Map<BoogieVar, TermVariable> inVars,
-			Map<BoogieVar, TermVariable> outVars);
+			Map<RankVar, TermVariable> inVars,
+			Map<RankVar, TermVariable> outVars);
 	
 	/**
 	 * Returns a string for every constraint conjunct for annotating

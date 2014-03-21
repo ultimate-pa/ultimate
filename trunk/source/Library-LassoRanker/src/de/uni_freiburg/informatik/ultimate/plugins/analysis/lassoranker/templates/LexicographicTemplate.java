@@ -37,11 +37,11 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunctionGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LexicographicRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 
@@ -81,7 +81,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 	}
 	
 	@Override
-	public void init(Script script, Collection<BoogieVar> vars,
+	public void init(Script script, Collection<RankVar> vars,
 			boolean linear) {
 		super.init(script, vars, linear);
 		for (int i = 0; i < size; ++i) {
@@ -128,8 +128,8 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 	
 	@Override
 	public List<List<LinearInequality>> constraints(
-			Map<BoogieVar, TermVariable> inVars,
-			Map<BoogieVar, TermVariable> outVars) {
+			Map<RankVar, TermVariable> inVars,
+			Map<RankVar, TermVariable> outVars) {
 		checkInitialized();
 		List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();

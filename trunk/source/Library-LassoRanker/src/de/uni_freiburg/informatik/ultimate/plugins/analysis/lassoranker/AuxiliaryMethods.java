@@ -159,7 +159,7 @@ public class AuxiliaryMethods {
 				throw new TermException("Unknown value class", t);
 			}
 		}
-		throw new TermException("Unkown term structure", t);
+		throw new TermException("Unknown term structure", t);
 	}
 	
 	static Map<Term, Rational> preprocessValuation(Map<Term, Term> val)

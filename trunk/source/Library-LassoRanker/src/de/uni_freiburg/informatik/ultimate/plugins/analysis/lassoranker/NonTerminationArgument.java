@@ -27,11 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 
 
 /**
@@ -56,10 +56,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
  */
 public class NonTerminationArgument {
 	
-	private Map<BoogieVar, Rational> m_StateInit;
-	private Map<BoogieVar, Rational> m_StateHonda;
-	private Map<BoogieVar, Rational> m_Ray;
-	private Rational m_Lambda;
+	private final Map<RankVar, Rational> m_StateInit;
+	private final Map<RankVar, Rational> m_StateHonda;
+	private final Map<RankVar, Rational> m_Ray;
+	private final Rational m_Lambda;
 	
 	/**
 	 * Construct a non-termination argument
@@ -75,9 +75,9 @@ public class NonTerminationArgument {
 	 * @param ray ray of the lasso's polyhedron
 	 * @param lambda discount factor
 	 */
-	public NonTerminationArgument(Map<BoogieVar, Rational> state_init,
-			Map<BoogieVar, Rational> state_honda,
-			Map<BoogieVar, Rational> ray,
+	public NonTerminationArgument(Map<RankVar, Rational> state_init,
+			Map<RankVar, Rational> state_honda,
+			Map<RankVar, Rational> ray,
 			Rational lambda) {
 		assert(state_init != null);
 		m_StateInit = state_init;
@@ -92,22 +92,52 @@ public class NonTerminationArgument {
 	/**
 	 * @return the initial state
 	 */
-	public Map<BoogieVar, Rational> getStateInit() {
+	public Map<RankVar, Rational> getStateInit() {
 		return Collections.unmodifiableMap(m_StateInit);
 	}
 	
 	/**
 	 * @return the state at the lasso's honda
 	 */
-	public Map<BoogieVar, Rational> getStateHonda() {
+	public Map<RankVar, Rational> getStateHonda() {
 		return Collections.unmodifiableMap(m_StateHonda);
 	}
 	
 	/**
 	 * @return the ray of the loop's transition polyhedron 
 	 */
-	public Map<BoogieVar, Rational> getRay() {
+	public Map<RankVar, Rational> getRay() {
 		return Collections.unmodifiableMap(m_Ray);
+	}
+	
+	/**
+	 * Translate states with RankVar domains to states with BoogieVar domains.
+	 * Boolean are translated to 1 (true) and 0 (false).
+	 * @param state a state mapping RankVar's to Rational's
+	 * @return a state mapping the corresponding BoogieVar's to Rational's
+	 */
+	public static Map<BoogieVar, Rational> rank2Boogie(
+			Map<RankVar, Rational> state) {
+		Map<BoogieVar, Rational> result = new HashMap<BoogieVar, Rational>();
+		for (Map.Entry<RankVar, Rational> entry : state.entrySet()) {
+			BoogieVar boogieVar = entry.getKey().getAssociatedBoogieVar();
+			if (boogieVar == null) {
+				// No associated BoogieVar, safe to skip
+				continue;
+			}
+			// Replace boolean BoogieVars
+			if (boogieVar.getTermVariable().getSort().getName().equals("Bool")) {
+				// value >= 1 means true, which is translated to 1,
+				// false is translated to 0.
+				Rational value =
+						entry.getValue().compareTo(Rational.ONE) == -1 ?
+								Rational.ONE : Rational.ZERO;
+				result.put(boogieVar, value);
+				continue;
+			}
+			result.put(boogieVar, entry.getValue()); // fallback: do nothing
+		}
+		return result;
 	}
 	
 	/**
@@ -131,8 +161,8 @@ public class NonTerminationArgument {
 		return sb.toString();
 	}
 	
-	public Expression asRecurrentSet() {
-		// TODO: { state1, state1 + ray, state1 + (1 + lambda)*ray, ... }
-		return null;
-	}
+//	public Expression asRecurrentSet() {
+//		// TODO: { state1, state1 + ray, state1 + (1 + lambda)*ray, ... }
+//		return null;
+//	}
 }

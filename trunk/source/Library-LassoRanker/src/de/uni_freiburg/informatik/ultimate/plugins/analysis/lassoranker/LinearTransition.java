@@ -37,36 +37,65 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preproce
 
 
 /**
- * A LinearTransition is a finite union of polyhedra
+ * A LinearTransition is a transition relation given as a finite union of
+ * polyhedra.
  * 
- * Essentially, this class is a wrapper for List<List<Inequality>> with a
- * pretty toString() method.
+ * There are two kinds of distinguished variables:
+ * <li> inVars, (unprimed) input variables, and
+ * <li> outVars, (primed) output variables.
+ * 
+ * Additionally, there might also be 'internal' variables that are neither
+ * inVars, nor outVars.
+ * 
+ * The LinearTransition is LassoRanker's internal representation of
+ * the TransFormula.
  * 
  * @author Jan Leike
+ * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
  */
 public class LinearTransition {
 	
-	private List<List<LinearInequality>> m_polyhedra;
-	private boolean m_contains_integers;
+	private final Map<RankVar, TermVariable> m_inVars;
+	private final Map<RankVar, TermVariable> m_outVars;
 	
-	public LinearTransition(List<List<LinearInequality>> polyhedra) {
+	private List<List<LinearInequality>> m_polyhedra;
+	private final boolean m_contains_integers;
+	
+	/**
+	 * 
+	 * @param polyhedra
+	 * @param inVars
+	 * @param outVars
+	 */
+	public LinearTransition(List<List<LinearInequality>> polyhedra,
+			Map<RankVar, TermVariable> inVars,
+			Map<RankVar, TermVariable> outVars) {
 		assert(polyhedra != null);
+		assert(inVars != null);
+		assert(outVars != null);
 		for (List<LinearInequality> polyhedron : polyhedra) {
 			assert(polyhedron != null);
 		}
 		m_polyhedra = polyhedra;
-		
-		m_contains_integers = false;
-		for (List<LinearInequality> polyhedron : polyhedra) {
+		m_inVars = Collections.unmodifiableMap(inVars);
+		m_outVars = Collections.unmodifiableMap(outVars);
+		m_contains_integers = checkIfContainsIntegers();
+	}
+	
+	/**
+	 * @return true iff there is at least one integer variable in m_polyhedra
+	 */
+	private boolean checkIfContainsIntegers() {
+		for (List<LinearInequality> polyhedron : m_polyhedra) {
 			for (LinearInequality ieq : polyhedron) {
 				for (TermVariable var : ieq.getVariables()) {
 					if (var.getSort().getName().equals("Int")) {
-						m_contains_integers = true;
-						return;
+						return true;
 					}
 				}
 			}
 		}
+		return false;
 	}
 	
 	/**
@@ -75,7 +104,9 @@ public class LinearTransition {
 	public static LinearTransition getTranstionTrue() {
 		LinearInequality eqTrue = new LinearInequality();
 		return new LinearTransition(
-				Collections.singletonList(Collections.singletonList(eqTrue))
+				Collections.singletonList(Collections.singletonList(eqTrue)),
+				Collections.<RankVar, TermVariable> emptyMap(),
+				Collections.<RankVar, TermVariable> emptyMap()
 		);
 	}
 	
@@ -86,7 +117,9 @@ public class LinearTransition {
 		LinearInequality eqFalse = new LinearInequality();
 		eqFalse.setStrict(true);
 		return new LinearTransition(
-				Collections.singletonList(Collections.singletonList(eqFalse))
+				Collections.singletonList(Collections.singletonList(eqFalse)),
+				Collections.<RankVar, TermVariable> emptyMap(),
+				Collections.<RankVar, TermVariable> emptyMap()
 		);
 	}
 	
@@ -122,13 +155,31 @@ public class LinearTransition {
 	 * @param term the input term
 	 * @throws TermException if the supplied term does not have the correct form
 	 */
-	public static LinearTransition fromTerm(Term term) throws TermException {
+	public static LinearTransition fromTerm(Term term,
+			Map<RankVar, TermVariable> inVars,
+			Map<RankVar, TermVariable> outVars) throws TermException {
 		List<List<LinearInequality>> polyhedra =
 				new ArrayList<List<LinearInequality>>();
 		for (Term disjunct : toClauses(term)) {
 			polyhedra.add(InequalityConverter.convert(disjunct));
 		}
-		return new LinearTransition(polyhedra);
+		return new LinearTransition(polyhedra, inVars, outVars);
+	}
+	
+	/**
+	 * @return the mapping between the trasition's input (unprimed) variables
+	 *         and their representation as a TermVariable
+	 */
+	public Map<RankVar, TermVariable> getInVars() {
+		return m_inVars;
+	}
+	
+	/**
+	 * @return the mapping between the trasition's output (primed) variables
+	 *         and their representation as a TermVariable
+	 */
+	public Map<RankVar, TermVariable> getOutVars() {
+		return m_outVars;
 	}
 	
 	/**
@@ -194,7 +245,15 @@ public class LinearTransition {
 	
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("(OR\n");
+		
+		// inVars and outVars
+		sb.append("InVars: ");
+		sb.append(m_inVars.toString());
+		sb.append("\nOutVars: ");
+		sb.append(m_outVars.toString());
+		
+		// Transition polyhedron
+		sb.append("\n(OR\n");
 		for (List<LinearInequality> polyhedron : m_polyhedra) {
 			sb.append("    (AND\n");
 			for (LinearInequality ieq : polyhedron) {

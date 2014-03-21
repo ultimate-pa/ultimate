@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 
 
 /**
@@ -50,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
  */
 public class AffineFunctionGenerator {
 	private Term m_constant;
-	private Map<BoogieVar, Term> m_coefficients;
+	private Map<RankVar, Term> m_coefficients;
 	
 	/**
 	 * Name of the variable for the affine function's affine constant
@@ -62,7 +61,7 @@ public class AffineFunctionGenerator {
 	/**
 	 * Name of the variable for the affine function's coefficients
 	 */
-	private static String coeffName(String prefix, BoogieVar var) {
+	private static String coeffName(String prefix, RankVar var) {
 		return prefix + "_" + var.getGloballyUniqueId();
 	}
 	
@@ -71,13 +70,13 @@ public class AffineFunctionGenerator {
 	 * @param variables the set of variables that need coefficients
 	 * @param prefix new variables' name prefix
 	 */
-	public AffineFunctionGenerator(Script script,
-			Collection<BoogieVar> variables, String prefix) {
+	public AffineFunctionGenerator(Script script, Collection<RankVar> variables,
+			String prefix) {
 		// Create variables
 		m_constant = AuxiliaryMethods.newConstant(script, constName(prefix),
 				"Real");
-		m_coefficients = new HashMap<BoogieVar, Term>();
-		for (BoogieVar var : variables) {
+		m_coefficients = new HashMap<RankVar, Term>();
+		for (RankVar var : variables) {
 			m_coefficients.put(var, AuxiliaryMethods.newConstant(script,
 					coeffName(prefix, var), "Real"));
 		}
@@ -88,10 +87,10 @@ public class AffineFunctionGenerator {
 	 * @param vars a mapping from Boogie variables to TermVariables to be used
 	 * @return Linear inequality corresponding to si(x)
 	 */
-	public LinearInequality generate(Map<BoogieVar, TermVariable> vars) {
+	public LinearInequality generate(Map<RankVar, TermVariable> vars) {
 		LinearInequality li = new LinearInequality();
 		li.add(new AffineTerm(m_constant, Rational.ONE));
-		for (Map.Entry<BoogieVar, TermVariable> entry : vars.entrySet()) {
+		for (Map.Entry<RankVar, TermVariable> entry : vars.entrySet()) {
 			if (m_coefficients.containsKey(entry.getKey())) {
 				li.add(entry.getValue(),
 						new AffineTerm(m_coefficients.get(entry.getKey()),
@@ -121,13 +120,13 @@ public class AffineFunctionGenerator {
 		
 		// Compute the greatest common denominator
 		Rational gcd = Rational.ONE.gcd(val.get(m_constant));
-		for (Map.Entry<BoogieVar, Term> entry : m_coefficients.entrySet()) {
+		for (Map.Entry<RankVar, Term> entry : m_coefficients.entrySet()) {
 			gcd = gcd.gcd(val.get(entry.getValue()));
 		}
 		
 		// Multiply all coefficients with the greatest common denominator
 		f.setConstant(val.get(m_constant).div(gcd).numerator());
-		for (Map.Entry<BoogieVar, Term> entry : m_coefficients.entrySet()) {
+		for (Map.Entry<RankVar, Term> entry : m_coefficients.entrySet()) {
 			Rational c = val.get(entry.getValue()).div(gcd);
 			assert(c.denominator().equals(BigInteger.ONE));
 			f.put(entry.getKey(), c.numerator());

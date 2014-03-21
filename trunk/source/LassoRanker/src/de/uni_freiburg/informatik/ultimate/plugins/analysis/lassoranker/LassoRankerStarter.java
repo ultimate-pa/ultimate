@@ -13,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
@@ -98,58 +97,55 @@ public class LassoRankerStarter {
 			tanalysis = new LassoRankerTerminationAnalysis(script,
 					m_RootAnnot.getBoogie2SMT(),
 					stemTF, loopTf, preferences);
-			
-			// Try to prove non-termination
-			if (store.getBoolean(PreferencesInitializer.LABEL_check_for_nontermination)) {
-				try {
-					NonTerminationArgument arg = tanalysis.checkNonTermination();
-					if (arg != null) {
-						reportNonTerminationResult(arg);
-						return;
-					}
-				} catch (SMTLIBException e) {
-					s_Logger.error(e);
-				}
-			}
-			
-			// Try all given templates
-			for (RankingFunctionTemplate template : templates) {
-				if (!UltimateServices.getInstance().continueProcessing()) {
-					reportTimeoutResult(templates, template);
-					// Timeout or abort
-					return;
-				}
-				try {
-					TerminationArgument arg = tanalysis.tryTemplate(template);
-					if (arg != null) {
-						try {
-							assert isTerminationArgumentCorrect(arg) : 
-								"Incorrect termination argument from" + 
-									template.getClass().getSimpleName();
-						} catch (NoClassDefFoundError e) {
-							s_Logger.warn("Could not check validity of " +
-									"termination argument because of " +
-									"missing dependencies.");
-							// Requires: BuchiAutomizer, TraceAbstraction,
-							//           NestedWordAutomata
-						}
-						reportTerminationResult(arg);
-						return;
-					}
-				} catch (TermException e) {
-					s_Logger.error(e);
-				} catch (SMTLIBException e) {
-					s_Logger.error(e);
-				}
-			}
 		} catch (TermException e) {
 			reportUnuspportedSyntax(m_Honda, e.getMessage());
 			return;
-		} finally {
-			if (tanalysis != null) {
-				tanalysis.close();
+		}
+		
+		// Try to prove non-termination
+		if (store.getBoolean(PreferencesInitializer.LABEL_check_for_nontermination)) {
+			try {
+				NonTerminationArgument arg = tanalysis.checkNonTermination();
+				if (arg != null) {
+					reportNonTerminationResult(arg);
+					return;
+				}
+			} catch (SMTLIBException e) {
+				s_Logger.error(e);
 			}
 		}
+		
+		// Try all given templates
+		for (RankingFunctionTemplate template : templates) {
+			if (!UltimateServices.getInstance().continueProcessing()) {
+				reportTimeoutResult(templates, template);
+				// Timeout or abort
+				return;
+			}
+			try {
+				TerminationArgument arg = tanalysis.tryTemplate(template);
+				if (arg != null) {
+					try {
+						assert isTerminationArgumentCorrect(arg) : 
+							"Incorrect termination argument from" + 
+								template.getClass().getSimpleName();
+					} catch (NoClassDefFoundError e) {
+						s_Logger.warn("Could not check validity of " +
+								"termination argument because of " +
+								"missing dependencies.");
+						// Requires: BuchiAutomizer, TraceAbstraction,
+						//           NestedWordAutomata
+					}
+					reportTerminationResult(arg);
+					return;
+				}
+			} catch (TermException e) {
+				s_Logger.error(e);
+			} catch (SMTLIBException e) {
+				s_Logger.error(e);
+			}
+		}
+		tanalysis.close();
 		reportNoResult(templates);
 	}
 	
@@ -238,8 +234,6 @@ public class LassoRankerStarter {
 		return templates.toArray(new RankingFunctionTemplate[0]);
 	}
 	
-	
-	
 	private boolean isTerminationArgumentCorrect(TerminationArgument arg) {
 		SmtManager smtManager = new SmtManager(
 				m_RootAnnot.getBoogie2SMT(),
@@ -268,7 +262,6 @@ public class LassoRankerStarter {
 		}
 		return siCorrect && rfCorrect;
 	}
-	
 	
 	/**
 	 * @return the current translator sequence for building results
@@ -318,13 +311,14 @@ public class LassoRankerStarter {
 	private void reportNonTerminationResult(NonTerminationArgument arg) {
 		// TODO: translate BoogieVars to Expressions?
 		// m_RootAnnot.getBoogie2Smt().translate(term)
+		
 		NonTerminationArgumentResult<RcfgElement> result = 
 				new NonTerminationArgumentResult<RcfgElement>(
 					m_Honda,
 					Activator.s_PLUGIN_NAME,
-					arg.getStateInit(),
-					arg.getStateHonda(),
-					arg.getRay(),
+					NonTerminationArgument.rank2Boogie(arg.getStateInit()),
+					NonTerminationArgument.rank2Boogie(arg.getStateHonda()),
+					NonTerminationArgument.rank2Boogie(arg.getRay()),
 					arg.getLambda(),
 					getTranslatorSequence()
 				);

@@ -27,14 +27,16 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunction;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 
 
 /**
@@ -57,7 +59,7 @@ public class LinearRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Set<BoogieVar> getVariables() {
+	public Set<RankVar> getVariables() {
 		return Collections.unmodifiableSet(m_ranking.getVariables());
 	}
 	
@@ -72,14 +74,14 @@ public class LinearRankingFunction extends RankingFunction {
 		if (!m_ranking.isConstant()) {
 			sb.append("(");
 			boolean first = true;
-			for (BoogieVar var : m_ranking.getVariables()) {
+			for (RankVar var : m_ranking.getVariables()) {
 				if (!first) {
 					sb.append(", ");
 				}
-				sb.append(var.getIdentifier());
+				sb.append(var.getGloballyUniqueId());
 				first = false;
 			}
-			sb.append(")");			
+			sb.append(")");
 		}
 		sb.append(" = ");
 		sb.append(m_ranking);
@@ -92,7 +94,7 @@ public class LinearRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Ordinal evaluate(Map<BoogieVar, Rational> assignment) {
+	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
 		BigInteger i = m_ranking.evaluate(assignment).ceil().numerator();
 		if (i.compareTo(BigInteger.ZERO) < 0) {
 			i = BigInteger.ZERO;

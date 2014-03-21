@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingf
  * @author Jan Leike
  */
 public class TerminationArgument {
-	private RankingFunction m_ranking_function;
-	private Collection<SupportingInvariant> m_supporting_invariants;
+	private final RankingFunction m_ranking_function;
+	private final Collection<SupportingInvariant> m_supporting_invariants;
 	
 	/**
 	 * Construct a termination argument
