@@ -28,7 +28,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.io.Serializable;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -65,7 +69,7 @@ public class AffineFunction implements Serializable {
 	protected BigInteger m_constant;
 	
 	public AffineFunction() {
-		m_coefficients = new HashMap<RankVar, BigInteger>();
+		m_coefficients = new LinkedHashMap<RankVar, BigInteger>();
 		m_constant = BigInteger.ZERO;
 	}
 	
@@ -101,7 +105,7 @@ public class AffineFunction implements Serializable {
 	 * @return the set of (associated) BoogieVar's that occur in this function
 	 */
 	public Set<BoogieVar> getBoogieVariables() {
-		Set<BoogieVar> result = new HashSet<BoogieVar>();
+		Set<BoogieVar> result = new LinkedHashSet<BoogieVar>();
 		for (RankVar rkVar : m_coefficients.keySet()) {
 			BoogieVar boogieVar = rkVar.getAssociatedBoogieVar();
 			if (boogieVar != null) {

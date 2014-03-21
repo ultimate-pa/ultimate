@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -57,7 +57,7 @@ public class AffineTerm {
 	 * Construct the affine term 0
 	 */
 	public AffineTerm() {
-		m_Coefficients = new HashMap<Term, Rational>();
+		m_Coefficients = new LinkedHashMap<Term, Rational>();
 		m_Constant = Rational.ZERO;
 	}
 	
@@ -65,7 +65,7 @@ public class AffineTerm {
 	 * Construct an affine term from a constant
 	 */
 	public AffineTerm(Rational r) {
-		m_Coefficients = new HashMap<Term, Rational>();
+		this();
 		m_Constant = r;
 	}
 	
@@ -73,8 +73,7 @@ public class AffineTerm {
 	 * Construct an affine term from a variable with coefficient
 	 */
 	public AffineTerm(Term var, Rational r) {
-		m_Coefficients = new HashMap<Term, Rational>();
-		m_Constant = Rational.ZERO;
+		this();
 		m_Coefficients.put(var, r);
 	}
 	

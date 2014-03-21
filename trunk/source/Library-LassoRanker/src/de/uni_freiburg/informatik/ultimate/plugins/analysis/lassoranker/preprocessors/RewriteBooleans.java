@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preproc
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -86,7 +86,7 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 	 */
 	public RewriteBooleans(RankVarCollector rankVarCollector, Script script) {
 		m_rankVarCollector = rankVarCollector;
-		m_translator = new HashMap<TermVariable, TermVariable>();
+		m_translator = new LinkedHashMap<TermVariable, TermVariable>();
 		m_auxVars = new ArrayList<AuxVar>();
 		m_Script = script;
 		m_auxVarSort = m_Script.sort(s_auxVarSortName);

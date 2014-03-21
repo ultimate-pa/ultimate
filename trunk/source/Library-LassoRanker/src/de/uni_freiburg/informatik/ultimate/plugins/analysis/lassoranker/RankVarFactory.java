@@ -30,7 +30,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -77,8 +77,8 @@ public class RankVarFactory implements Serializable {
 	public RankVarFactory(Boogie2SMT boogie2smt) {
 		assert boogie2smt != null;
 		m_varManager = boogie2smt.getVariableManager();
-		m_boogieWrappers = new HashMap<BoogieVar, BoogieVarWrapper>();
-		m_auxVars = new HashMap<Object, AuxVar>();
+		m_boogieWrappers = new LinkedHashMap<BoogieVar, BoogieVarWrapper>();
+		m_auxVars = new LinkedHashMap<Object, AuxVar>();
 		m_termVariables = new ArrayList<TermVariable>();
 	}
 	

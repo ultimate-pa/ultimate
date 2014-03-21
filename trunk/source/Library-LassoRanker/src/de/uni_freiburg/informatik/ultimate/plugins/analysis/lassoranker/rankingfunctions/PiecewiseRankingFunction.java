@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ranking
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -70,7 +70,7 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	
 	@Override
 	public Set<RankVar> getVariables() {
-		Set<RankVar> vars = new HashSet<RankVar>();
+		Set<RankVar> vars = new LinkedHashSet<RankVar>();
 		for (AffineFunction af : m_ranking) {
 			vars.addAll(af.getVariables());
 		}

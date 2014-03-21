@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -164,7 +164,7 @@ public class AuxiliaryMethods {
 	
 	static Map<Term, Rational> preprocessValuation(Map<Term, Term> val)
 			throws TermException {
-		Map<Term, Rational> new_val = new HashMap<Term, Rational>();
+		Map<Term, Rational> new_val = new LinkedHashMap<Term, Rational>();
 		for (Map.Entry<Term, Term> entry : val.entrySet()) {
 			new_val.put(entry.getKey(), const2Rational(entry.getValue()));
 		}

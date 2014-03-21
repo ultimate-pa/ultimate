@@ -99,7 +99,7 @@ public class RewriteDivision implements PreProcessor {
 	
 	public RewriteDivision(RankVarCollector rankVarCollector) {
 		m_rankVarCollector = rankVarCollector;
-		m_auxVars = new HashMap<TermVariable, Term>();
+		m_auxVars = new LinkedHashMap<TermVariable, Term>();
 		m_auxTerms = new ArrayList<Term>();
 	}
 	

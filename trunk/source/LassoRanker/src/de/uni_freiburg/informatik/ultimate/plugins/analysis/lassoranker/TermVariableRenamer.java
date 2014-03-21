@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -67,9 +67,9 @@ public class TermVariableRenamer {
 		Map<BoogieVar, TermVariable> outVars = transFormula.getOutVars();
 		
 		Map<BoogieVar, TermVariable> newInVars = 
-				new HashMap<BoogieVar, TermVariable>();
+				new LinkedHashMap<BoogieVar, TermVariable>();
 		Map<BoogieVar, TermVariable> newOutVars = 
-				new HashMap<BoogieVar, TermVariable>();
+				new LinkedHashMap<BoogieVar, TermVariable>();
 		
 		Collection<BoogieVar> hasInOnlyVar = new ArrayList<BoogieVar>();
 		Collection<BoogieVar> hasOutOnlyVar = new ArrayList<BoogieVar>();

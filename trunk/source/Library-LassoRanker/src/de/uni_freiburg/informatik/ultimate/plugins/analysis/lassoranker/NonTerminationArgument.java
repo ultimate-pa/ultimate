@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -118,7 +118,8 @@ public class NonTerminationArgument {
 	 */
 	public static Map<BoogieVar, Rational> rank2Boogie(
 			Map<RankVar, Rational> state) {
-		Map<BoogieVar, Rational> result = new HashMap<BoogieVar, Rational>();
+		Map<BoogieVar, Rational> result =
+				new LinkedHashMap<BoogieVar, Rational>();
 		for (Map.Entry<RankVar, Rational> entry : state.entrySet()) {
 			BoogieVar boogieVar = entry.getKey().getAssociatedBoogieVar();
 			if (boogieVar == null) {

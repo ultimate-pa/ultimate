@@ -227,7 +227,7 @@ public class LinearTransition {
 	 * @return all variables occuring in any of the inequalities
 	 */
 	public Set<TermVariable> getVariables() {
-		Set<TermVariable> vars = new HashSet<TermVariable>();
+		Set<TermVariable> vars = new LinkedHashSet<TermVariable>();
 		for (List<LinearInequality> polyhedron : m_polyhedra) {
 			for (LinearInequality li : polyhedron) {
 				vars.addAll(li.getVariables());

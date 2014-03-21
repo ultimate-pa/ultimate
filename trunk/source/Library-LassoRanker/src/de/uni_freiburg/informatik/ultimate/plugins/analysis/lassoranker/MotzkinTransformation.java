@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -291,7 +291,7 @@ public class MotzkinTransformation extends InstanceCounting {
 		registerMotzkinCoefficients();
 		
 		// Gather all occurring variables
-		Collection<TermVariable> vars = new HashSet<TermVariable>();
+		Collection<TermVariable> vars = new LinkedHashSet<TermVariable>();
 		for (LinearInequality li : m_inequalities) {
 			vars.addAll(li.getVariables());
 		}

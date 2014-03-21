@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -75,7 +75,7 @@ public class AffineFunctionGenerator {
 		// Create variables
 		m_constant = AuxiliaryMethods.newConstant(script, constName(prefix),
 				"Real");
-		m_coefficients = new HashMap<RankVar, Term>();
+		m_coefficients = new LinkedHashMap<RankVar, Term>();
 		for (RankVar var : variables) {
 			m_coefficients.put(var, AuxiliaryMethods.newConstant(script,
 					coeffName(prefix, var), "Real"));

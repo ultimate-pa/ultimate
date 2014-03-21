@@ -30,7 +30,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -61,8 +61,8 @@ public class RankVarCollector implements Serializable {
 	 */
 	public RankVarCollector(RankVarFactory factory) {
 		assert factory != null;
-		m_inVars = new HashMap<RankVar, TermVariable>();
-		m_outVars = new HashMap<RankVar, TermVariable>();
+		m_inVars = new LinkedHashMap<RankVar, TermVariable>();
+		m_outVars = new LinkedHashMap<RankVar, TermVariable>();
 		m_auxVars = new ArrayList<TermVariable>();
 		m_factory = factory;
 	}

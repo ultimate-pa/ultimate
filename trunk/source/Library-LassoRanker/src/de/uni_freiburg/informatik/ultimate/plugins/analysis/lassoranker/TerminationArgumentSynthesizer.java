@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -134,7 +134,7 @@ class TerminationArgumentSynthesizer {
 			return Collections.emptyList();
 		}
 		Set<RankVar> result =
-				new HashSet<RankVar>(m_stem.getOutVars().keySet());
+				new LinkedHashSet<RankVar>(m_stem.getOutVars().keySet());
 		result.retainAll(m_loop.getInVars().keySet());
 		return result;
 	}
@@ -144,7 +144,7 @@ class TerminationArgumentSynthesizer {
 	 */
 	private Collection<RankVar> getRankVars() {
 		Collection<RankVar> vars = 
-				new HashSet<RankVar>(m_loop.getOutVars().keySet());
+				new LinkedHashSet<RankVar>(m_loop.getOutVars().keySet());
 		vars.retainAll(m_loop.getInVars().keySet());
 		return vars;
 	}

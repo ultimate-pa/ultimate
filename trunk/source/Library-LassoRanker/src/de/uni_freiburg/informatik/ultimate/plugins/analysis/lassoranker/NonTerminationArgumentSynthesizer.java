@@ -30,8 +30,8 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -148,7 +148,7 @@ public class NonTerminationArgumentSynthesizer {
 	 * @return all RankVars that occur in the program
 	 */
 	private Collection<RankVar> getRankVars() {
-		Collection<RankVar> rankVars = new HashSet<RankVar>();
+		Collection<RankVar> rankVars = new LinkedHashSet<RankVar>();
 		if (m_stem != null) {
 			rankVars.addAll(m_stem.getInVars().keySet());
 			rankVars.addAll(m_stem.getOutVars().keySet());
@@ -165,9 +165,9 @@ public class NonTerminationArgumentSynthesizer {
 		String sort = m_integer_mode ? "Int" : "Real";
 		
 		// Create new variables
-		Map<RankVar, Term> vars_init = new HashMap<RankVar, Term>();
-		Map<RankVar, Term> vars_honda = new HashMap<RankVar, Term>();
-		Map<RankVar, Term> vars_ray = new HashMap<RankVar, Term>();
+		Map<RankVar, Term> vars_init = new LinkedHashMap<RankVar, Term>();
+		Map<RankVar, Term> vars_honda = new LinkedHashMap<RankVar, Term>();
+		Map<RankVar, Term> vars_ray = new LinkedHashMap<RankVar, Term>();
 		for (RankVar var : getRankVars()) {
 			vars_init.put(var, AuxiliaryMethods.newConstant(m_script,
 					s_prefix_init + var.toString(), sort));
@@ -225,7 +225,8 @@ public class NonTerminationArgumentSynthesizer {
 		}
 		
 		// vars_end + vars_ray
-		Map<RankVar, Term> vars_end_plus_ray = new HashMap<RankVar, Term>();
+		Map<RankVar, Term> vars_end_plus_ray =
+				new LinkedHashMap<RankVar, Term>();
 		vars_end_plus_ray.putAll(vars_honda);
 		for (RankVar rkVar : rankVars) {
 			vars_end_plus_ray.put(rkVar,
@@ -234,7 +235,7 @@ public class NonTerminationArgumentSynthesizer {
 		}
 		// vars_ray * lambda
 		Map<RankVar, Term> vars_ray_times_lambda =
-				new HashMap<RankVar, Term>();
+				new LinkedHashMap<RankVar, Term>();
 		if (!m_non_decreasing) {
 			for (RankVar rkVar : rankVars) {
 				vars_ray_times_lambda.put(rkVar,
@@ -277,11 +278,13 @@ public class NonTerminationArgumentSynthesizer {
 			Map<RankVar, Term> varsIn,
 			Map<RankVar, Term> varsOut,
 			boolean rays) {
-		Map<TermVariable, Term> auxVars = new HashMap<TermVariable, Term>();
+		Map<TermVariable, Term> auxVars =
+				new LinkedHashMap<TermVariable, Term>();
 		List<Term> conjunction = new ArrayList<Term>(polyhedron.size());
 		for (LinearInequality ieq : polyhedron) {
 			List<Term> summands = new ArrayList<Term>();
-			Collection<TermVariable> added_vars = new HashSet<TermVariable>();
+			Collection<TermVariable> added_vars =
+					new LinkedHashSet<TermVariable>();
 			
 			// outVars
 			for (Map.Entry<RankVar, TermVariable> entry :
@@ -318,7 +321,7 @@ public class NonTerminationArgumentSynthesizer {
 			
 			// tmpVars
 			Set<TermVariable> all_vars =
-					new HashSet<TermVariable>(ieq.getVariables());
+					new LinkedHashSet<TermVariable>(ieq.getVariables());
 			all_vars.removeAll(added_vars);
 			for (TermVariable var : all_vars) {
 				Term v;
@@ -370,7 +373,7 @@ public class NonTerminationArgumentSynthesizer {
 		Map<Term, Rational> val = AuxiliaryMethods.preprocessValuation(
 				m_script.getValue(vars.values().toArray(new Term[0])));
 		// Concatenate vars and val
-		Map<RankVar, Rational> state = new HashMap<RankVar, Rational>();
+		Map<RankVar, Rational> state = new LinkedHashMap<RankVar, Rational>();
 		for (Map.Entry<RankVar, Term> entry : vars.entrySet()) {
 			assert(val.containsKey(entry.getValue()));
 			state.put(entry.getKey(), val.get(entry.getValue()));

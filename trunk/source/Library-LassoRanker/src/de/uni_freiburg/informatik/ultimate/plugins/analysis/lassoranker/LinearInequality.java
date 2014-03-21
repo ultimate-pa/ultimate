@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -88,7 +88,7 @@ public class LinearInequality {
 	 * Construct an empty linear inequality, i.e. 0 ≥ 0.
 	 */
 	public LinearInequality() {
-		m_coefficients = new HashMap<TermVariable, AffineTerm>();
+		m_coefficients = new LinkedHashMap<TermVariable, AffineTerm>();
 		m_constant = new AffineTerm();
 	}
 	
