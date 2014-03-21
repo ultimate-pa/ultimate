@@ -182,7 +182,7 @@ public class MotzkinTransformation extends InstanceCounting {
 		m_coefficients = new Term[num_coefficients];
 		for (int i = 0; i < num_coefficients; ++i) {
 			if (m_inequalities.get(i).needs_motzkin_coefficient || !m_linear) {
-				Term coefficient = AuxiliaryMethods.newConstant(m_script,
+				Term coefficient = ArgumentSynthesizer.newConstant(m_script,
 						s_motzkin_prefix + m_instance + "_" + i, "Real");
 				m_coefficients[i] = coefficient;
 			}

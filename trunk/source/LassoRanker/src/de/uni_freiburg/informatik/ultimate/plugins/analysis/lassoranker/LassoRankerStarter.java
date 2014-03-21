@@ -112,6 +112,8 @@ public class LassoRankerStarter {
 				}
 			} catch (SMTLIBException e) {
 				s_Logger.error(e);
+			} catch (TermException e) {
+				s_Logger.error(e);
 			}
 		}
 		

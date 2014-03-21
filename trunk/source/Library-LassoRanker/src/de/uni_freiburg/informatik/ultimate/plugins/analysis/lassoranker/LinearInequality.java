@@ -104,7 +104,7 @@ public class LinearInequality implements Serializable {
 		LinearInequality li;
 		if (term instanceof ConstantTerm) {
 			li = new LinearInequality();
-			li.add(new AffineTerm(AuxiliaryMethods.convertCT((ConstantTerm)
+			li.add(new AffineTerm(ArgumentSynthesizer.convertCT((ConstantTerm)
 					term)));
 		} else if (term instanceof TermVariable) {
 			li = new LinearInequality();

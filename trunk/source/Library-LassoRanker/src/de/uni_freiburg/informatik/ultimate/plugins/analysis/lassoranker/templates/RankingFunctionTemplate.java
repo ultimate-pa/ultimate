@@ -35,9 +35,9 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxiliaryMethods;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.TerminationArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 
 
@@ -49,31 +49,40 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingf
  *
  */
 public abstract class RankingFunctionTemplate {
+	protected TerminationArgumentSynthesizer m_tas = null;
 	protected Script m_script = null;
 	protected Collection<RankVar> m_variables = null;
 	protected boolean m_linear = true;
 	private boolean m_initialized = false;
 	
 	/**
-	 * Initialize the template; call this before constaints()
-	 * @param script The SMTLib script
-	 * @param vars the collection of all variables that are relevant for ranking
-	 * @param linear generate a linear SMT query?
+	 * Initialize the template and affiliate this template with a particular
+	 * TerminationArgumentSynthesizer.
+	 * 
+	 * Call this before getConstaints()
+	 * 
+	 * @param tas the parent TerminationArgumentSynthesizer
 	 */
-	public void init(Script script, Collection<RankVar> vars,
-			boolean linear) {
-		m_script = script;
-		m_variables = vars;
-		m_linear = linear;
+	public final void init(TerminationArgumentSynthesizer tas) {
+		m_tas = tas;
+		m_script = tas.getScript();
+		m_variables = tas.getRankVars();
+		m_linear = !tas.m_preferences.termination_check_nonlinear;
+		init_template();
 		m_initialized = true;
 	}
+	
+	/**
+	 * Init method to be overwritten by the children
+	 */
+	protected abstract void init_template();
 	
 	/**
 	 * Check if the template was properly initialized using init()
 	 */
 	protected void checkInitialized() {
 		assert(m_initialized);
-		assert(m_script != null);
+		assert(m_tas != null);
 		assert(m_variables != null);
 	}
 	
@@ -96,7 +105,7 @@ public abstract class RankingFunctionTemplate {
 	 *          the loop transition in form of affine terms and the supporting
 	 *          invariants.
 	 */
-	public abstract List<List<LinearInequality>> constraints(
+	public abstract List<List<LinearInequality>> getConstraints(
 			Map<RankVar, TermVariable> inVars,
 			Map<RankVar, TermVariable> outVars);
 	
@@ -139,10 +148,10 @@ public abstract class RankingFunctionTemplate {
 	 * @param name the new variable's name
 	 * @return the new variable as a term
 	 */
-	public static Term newDelta(Script script, String name) {
-		Term delta = AuxiliaryMethods.newConstant(script, name, "Real");
-		Term t = script.term(">", delta, script.decimal("0"));
-		script.assertTerm(t);
+	protected Term newDelta(String name) {
+		Term delta = m_tas.newConstant(name, "Real");
+		Term t = m_script.term(">", delta, m_tas.getScript().decimal("0"));
+		m_script.assertTerm(t);
 		return delta;
 	}
 }

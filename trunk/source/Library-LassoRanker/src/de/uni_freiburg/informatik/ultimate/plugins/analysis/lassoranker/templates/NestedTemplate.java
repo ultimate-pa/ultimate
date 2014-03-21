@@ -34,7 +34,6 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunction;
@@ -82,12 +81,10 @@ public class NestedTemplate extends RankingFunctionTemplate {
 	}
 	
 	@Override
-	public void init(Script script, Collection<RankVar> vars,
-			boolean linear) {
-		super.init(script, vars, linear);
-		m_delta = RankingFunctionTemplate.newDelta(script, s_name_delta);
+	protected void init_template() {
+		m_delta = newDelta(s_name_delta);
 		for (int i = 0; i < m_Size; ++i) {
-			m_fgens[i] = new AffineFunctionGenerator(script, vars,
+			m_fgens[i] = new AffineFunctionGenerator(m_script, m_variables,
 					s_name_function + i);
 		}
 	}
@@ -118,7 +115,7 @@ public class NestedTemplate extends RankingFunctionTemplate {
 	}
 	
 	@Override
-	public List<List<LinearInequality>> constraints(
+	public List<List<LinearInequality>> getConstraints(
 			Map<RankVar, TermVariable> inVars,
 			Map<RankVar, TermVariable> outVars) {
 		checkInitialized();

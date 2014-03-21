@@ -76,11 +76,11 @@ public class AffineFunctionGenerator implements Serializable {
 	public AffineFunctionGenerator(Script script, Collection<RankVar> variables,
 			String prefix) {
 		// Create variables
-		m_constant = AuxiliaryMethods.newConstant(script, constName(prefix),
+		m_constant = ArgumentSynthesizer.newConstant(script, constName(prefix),
 				"Real");
 		m_coefficients = new LinkedHashMap<RankVar, Term>();
 		for (RankVar var : variables) {
-			m_coefficients.put(var, AuxiliaryMethods.newConstant(script,
+			m_coefficients.put(var, ArgumentSynthesizer.newConstant(script,
 					coeffName(prefix, var), "Real"));
 		}
 	}

@@ -36,9 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -68,10 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptio
  * 
  * @author Jan Leike
  */
-public class NonTerminationArgumentSynthesizer {
-	private static Logger s_Logger =
-			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-	
+public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	private static final String s_prefix_init = "init_";   // x0
 	private static final String s_prefix_honda = "honda_"; // x0'
 	private static final String s_prefix_ray = "ray_";     // y
@@ -94,15 +88,6 @@ public class NonTerminationArgumentSynthesizer {
 	private final boolean m_integer_mode;
 	
 	/**
-	 * SMT script for the template instance
-	 */
-	private Script m_script;
-	
-	// Stem and loop transitions as linear inequalities in DNF
-	private final LinearTransition m_stem;
-	private final LinearTransition m_loop;
-	
-	/**
 	 * Contains the NonTerminationArgument object after successful discovery
 	 */
 	private NonTerminationArgument m_argument = null;
@@ -116,7 +101,7 @@ public class NonTerminationArgumentSynthesizer {
 	 */
 	public NonTerminationArgumentSynthesizer(boolean non_decreasing,
 			Script script, LinearTransition stem, LinearTransition loop) {
-		m_script = script;
+		super(script, stem, loop);
 		
 		m_integer_mode = (stem != null && stem.containsIntegers())
 				|| loop.containsIntegers();
@@ -135,49 +120,25 @@ public class NonTerminationArgumentSynthesizer {
 			script.setLogic(Logics.QF_LIA);
 		}
 		m_non_decreasing = non_decreasing || m_integer_mode;
-		
-		if (stem == null) {
-			m_stem = LinearTransition.getTranstionTrue();
-		} else {
-			m_stem = stem;
-		}
-		m_loop = loop;
 	}
 	
-	/**
-	 * @return all RankVars that occur in the program
-	 */
-	private Collection<RankVar> getRankVars() {
-		Collection<RankVar> rankVars = new LinkedHashSet<RankVar>();
-		if (m_stem != null) {
-			rankVars.addAll(m_stem.getInVars().keySet());
-			rankVars.addAll(m_stem.getOutVars().keySet());
-		}
-		rankVars.addAll(m_loop.getInVars().keySet());
-		rankVars.addAll(m_loop.getOutVars().keySet());
-		return rankVars;
-	}
-	
-	/**
-	 * @return whether nontermination has been proven
-	 */
-	public boolean checkForNonTermination() {
+	@Override
+	protected boolean do_synthesis() {
 		String sort = m_integer_mode ? "Int" : "Real";
 		
 		// Create new variables
 		Map<RankVar, Term> vars_init = new LinkedHashMap<RankVar, Term>();
 		Map<RankVar, Term> vars_honda = new LinkedHashMap<RankVar, Term>();
 		Map<RankVar, Term> vars_ray = new LinkedHashMap<RankVar, Term>();
-		for (RankVar var : getRankVars()) {
-			vars_init.put(var, AuxiliaryMethods.newConstant(m_script,
-					s_prefix_init + var.toString(), sort));
-			vars_honda.put(var, AuxiliaryMethods.newConstant(m_script,
-					s_prefix_honda + var.toString(), sort));
-			vars_ray.put(var, AuxiliaryMethods.newConstant(m_script,
-					s_prefix_ray + var.toString(), sort));
+		for (RankVar var : getAllRankVars()) {
+			vars_init.put(var,
+					newConstant(s_prefix_init + var.toString(), sort));
+			vars_honda.put(var,
+					newConstant(s_prefix_honda + var.toString(), sort));
+			vars_ray.put(var,
+					newConstant(s_prefix_ray + var.toString(), sort));
 		}
-		Term lambda = AuxiliaryMethods.newConstant(m_script, s_lambda_name,
-					sort);
+		Term lambda = newConstant(s_lambda_name, sort);
 		
 		Term constraints = generateConstraints(vars_init, vars_honda, vars_ray,
 				lambda);
@@ -206,7 +167,7 @@ public class NonTerminationArgumentSynthesizer {
 	public Term generateConstraints(Map<RankVar, Term> vars_init,
 			Map<RankVar, Term> vars_honda, Map<RankVar, Term> vars_ray,
 			Term lambda) {
-		Collection<RankVar> rankVars = getRankVars();
+		Collection<RankVar> rankVars = getAllRankVars();
 		
 		// A_stem * (x0, x0') <= b_stem
 		Term t1 = m_script.term("true");
@@ -328,8 +289,7 @@ public class NonTerminationArgumentSynthesizer {
 				if (auxVars.containsKey(var)) {
 					v = auxVars.get(var);
 				} else {
-					v = AuxiliaryMethods.newConstant(m_script,
-							s_prefix_aux + m_aux_counter,
+					v = newConstant(s_prefix_aux + m_aux_counter,
 							m_integer_mode ? "Int" : "Real");
 					auxVars.put(var, v);
 				}
@@ -369,9 +329,7 @@ public class NonTerminationArgumentSynthesizer {
 		if (vars.isEmpty()) {
 			return Collections.emptyMap();
 		}
-		assert(m_script.checkSat() == LBool.SAT);
-		Map<Term, Rational> val = AuxiliaryMethods.preprocessValuation(
-				m_script.getValue(vars.values().toArray(new Term[0])));
+		Map<Term, Rational> val = getValuation(vars.values());
 		// Concatenate vars and val
 		Map<RankVar, Rational> state = new LinkedHashMap<RankVar, Rational>();
 		for (Map.Entry<RankVar, Term> entry : vars.entrySet()) {
@@ -397,7 +355,7 @@ public class NonTerminationArgumentSynthesizer {
 			Map<RankVar, Rational> state0 = extractState(vars_init);
 			Map<RankVar, Rational> state1 = extractState(vars_honda);
 			Map<RankVar, Rational> ray = extractState(vars_ray);
-			Rational lambda = AuxiliaryMethods.const2Rational(
+			Rational lambda = const2Rational(
 					m_script.getValue(new Term[] {var_lambda}).get(var_lambda));
 			return new NonTerminationArgument(m_stem != null ? state0 : state1,
 					state1, ray, lambda);
@@ -413,6 +371,7 @@ public class NonTerminationArgumentSynthesizer {
 	 * @return the non-termination argument discovered
 	 */
 	public NonTerminationArgument getArgument() {
+		assert synthesisSuccessful();
 		return m_argument;
 	}
 }

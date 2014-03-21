@@ -34,9 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -53,30 +50,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.template
  * 
  * @author Jan Leike
  */
-class TerminationArgumentSynthesizer {
-	
-	private static Logger s_Logger =
-			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-	
-	/**
-	 * SMT script for the template instance
-	 */
-	private final Script m_script;
-	
-	// Stem and loop transitions as linear inequalities in DNF
-	private final LinearTransition m_stem;
-	private final LinearTransition m_loop;
-	
+public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	/**
 	 * List of supporting invariant generators used by the last synthesize()
 	 * call
 	 */
 	private final Collection<SupportingInvariantGenerator> m_si_generators;
-	
-	/**
-	 * Whether synthesize() has been called yet
-	 */
-	private boolean m_synthesized = false;
 	
 	/**
 	 * Number of Motzkin's Theorem applications used by the last synthesize()
@@ -90,6 +69,8 @@ class TerminationArgumentSynthesizer {
 	
 	public final Preferences m_preferences;
 	
+	private final RankingFunctionTemplate m_template;
+	
 	/**
 	 * Constructor for the termination argument function synthesizer.
 	 * @param script SMT Solver
@@ -98,10 +79,14 @@ class TerminationArgumentSynthesizer {
 	 * @param preferences arguments to the synthesis process
 	 */
 	public TerminationArgumentSynthesizer(Script script, LinearTransition stem,
-			LinearTransition loop, Preferences preferences) {
+			LinearTransition loop, RankingFunctionTemplate template,
+			Preferences preferences) {
+		super(script, stem, loop);
 		m_preferences = preferences;
-		m_script = script;
+		m_template = template;
+		
 		m_si_generators = new ArrayList<SupportingInvariantGenerator>();
+		m_supporting_invariants = new ArrayList<SupportingInvariant>();
 		
 		// Set logic
 		script.reset();
@@ -110,21 +95,12 @@ class TerminationArgumentSynthesizer {
 		} else {
 			script.setLogic(Logics.QF_LRA);
 		}
-		
-		m_supporting_invariants = new ArrayList<SupportingInvariant>();
-		
-		if (stem == null) {
-			m_stem = LinearTransition.getTranstionTrue();
-		} else {
-			m_stem = stem;
-		}
-		m_loop = loop;
 	}
 	
 	/**
 	 * @return RankVar's that are relevant for supporting invariants
 	 */
-	private Collection<RankVar> getSIVars() {
+	public Collection<RankVar> getSIVars() {
 		/*
 		 * Variables that occur as outVars of the stem but are not read by the
 		 * loop (i.e., do not occur as inVar of the loop) are not relevant for
@@ -142,7 +118,7 @@ class TerminationArgumentSynthesizer {
 	/**
 	 * @return RankVar's that are relevant for ranking functions
 	 */
-	private Collection<RankVar> getRankVars() {
+	public Collection<RankVar> getRankVars() {
 		Collection<RankVar> vars = 
 				new LinkedHashSet<RankVar>(m_loop.getOutVars().keySet());
 		vars.retainAll(m_loop.getInVars().keySet());
@@ -162,7 +138,7 @@ class TerminationArgumentSynthesizer {
 		
 		Collection<RankVar> siVars = getSIVars();
 		List<List<LinearInequality>> templateConstraints =
-				template.constraints(m_loop.getInVars(),
+				template.getConstraints(m_loop.getInVars(),
 						m_loop.getOutVars());
 		List<String> annotations = template.getAnnotations();
 		assert annotations.size() == templateConstraints.size();
@@ -283,19 +259,16 @@ class TerminationArgumentSynthesizer {
 	 * @throws TermException if the supplied transitions contain
 	 *          non-affine update statements
 	 */
-	public LBool synthesize(RankingFunctionTemplate template)
-			throws SMTLIBException, TermException {
-		assert !m_synthesized;
-		m_synthesized = true;
+	@Override
+	protected boolean do_synthesis() throws SMTLIBException, TermException {
 		if (!m_preferences.termination_check_nonlinear
-				&& template.getDegree() > 0) {
+				&& m_template.getDegree() > 0) {
 			s_Logger.warn("Using a linear SMT query and a templates of degree "
 					+ "> 0, hence this method is incomplete.");
 		}
 		Collection<RankVar> rankVars = getRankVars();
 		Collection<RankVar> siVars = getSIVars();
-		template.init(m_script, rankVars,
-				!m_preferences.termination_check_nonlinear);
+		m_template.init(this);
 		s_Logger.debug("Variables for ranking functions: " + rankVars);
 		s_Logger.debug("Variables for supporting invariants: " + siVars);
 /*		// The following code makes examples like StemUnsat.bpl fail
@@ -314,7 +287,7 @@ class TerminationArgumentSynthesizer {
 		
 		// Assert all conjuncts generated from the template
 		Collection<Term> constraints =
-				buildConstraints(template, m_si_generators);
+				buildConstraints(m_template, m_si_generators);
 		m_num_motzkin = constraints.size();
 		s_Logger.info("We have " + getNumMotzkin()
 				+ " Motzkin's Theorem applications.");
@@ -332,15 +305,12 @@ class TerminationArgumentSynthesizer {
 			
 			// Extract ranking function
 			Map<Term, Rational> val_rf =
-					AuxiliaryMethods.preprocessValuation(m_script.getValue(
-							template.getVariables().toArray(new Term[0])));
-			m_ranking_function = template.extractRankingFunction(val_rf);
+					getValuation(m_template.getVariables());
+			m_ranking_function = m_template.extractRankingFunction(val_rf);
 			
 			// Extract supporting invariants
 			for (SupportingInvariantGenerator sig : m_si_generators) {
-				Map<Term, Rational> val_si =
-						AuxiliaryMethods.preprocessValuation(m_script.getValue(
-								sig.getVariables().toArray(new Term[0])));
+				Map<Term, Rational> val_si = getValuation(sig.getVariables());
 				m_supporting_invariants.add(sig.extractSupportingInvariant(
 						val_si));
 			}
@@ -350,14 +320,14 @@ class TerminationArgumentSynthesizer {
 			// (:reason-unknown canceled)
 			// Object reason = m_script.getInfo(":reason-unknown");
 		}
-		return sat;
+		return sat == LBool.SAT;
 	}
 	
 	/**
 	 * @return the number of supporting invariants used
 	 */
 	public int getNumSIs() {
-		assert m_synthesized : "Call synthesize() first";
+		assert m_si_generators != null;
 		return m_si_generators.size();
 	}
 	
@@ -365,7 +335,6 @@ class TerminationArgumentSynthesizer {
 	 * @return the number of Motzkin's Theorem applications
 	 */
 	public int getNumMotzkin() {
-		assert m_synthesized : "Call synthesize() first";
 		return m_num_motzkin;
 	}
 	
@@ -373,7 +342,7 @@ class TerminationArgumentSynthesizer {
 	 * @return the synthesized TerminationArgument
 	 */
 	public TerminationArgument getArgument() {
-		assert m_synthesized : "Call synthesize() first";
+		assert synthesisSuccessful();
 		return new TerminationArgument(m_ranking_function,
 				m_supporting_invariants);
 	}

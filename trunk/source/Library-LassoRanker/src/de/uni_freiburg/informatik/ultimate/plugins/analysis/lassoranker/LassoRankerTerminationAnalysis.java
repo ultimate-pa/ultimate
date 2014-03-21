@@ -362,23 +362,24 @@ public class LassoRankerTerminationAnalysis implements Closeable {
 	 * 
 	 * @return the non-termination argument or null of none is found
 	 */
-	public NonTerminationArgument checkNonTermination() {
+	public NonTerminationArgument checkNonTermination()
+			throws SMTLIBException, TermException {
 		s_Logger.info("Checking for non-termination...");
 		
-		NonTerminationArgumentSynthesizer synthesizer =
+		NonTerminationArgumentSynthesizer nas =
 				new NonTerminationArgumentSynthesizer(
 						!m_preferences.nontermination_check_nonlinear,
 						m_script,
 						m_stem,
 						m_loop
 				);
-		boolean nonterminating = synthesizer.checkForNonTermination();
+		boolean nonterminating = nas.synthesize();
 		if (nonterminating) {
 			s_Logger.info("Proved non-termination.");
-			s_Logger.info(synthesizer.getArgument());
+			s_Logger.info(nas.getArgument());
 		}
 		SMTSolver.resetScript(m_script, m_preferences.annotate_terms);
-		return nonterminating ? synthesizer.getArgument() : null;
+		return nonterminating ? nas.getArgument() : null;
 	}
 	
 	/**
@@ -396,17 +397,16 @@ public class LassoRankerTerminationAnalysis implements Closeable {
 		s_Logger.info("Template has degree " + template.getDegree() + ".");
 		s_Logger.debug(template);
 		
-		TerminationArgumentSynthesizer synthesizer =
+		TerminationArgumentSynthesizer tas =
 				new TerminationArgumentSynthesizer(m_script, m_stem, m_loop,
-						m_preferences);
-		final LBool constraintSat = synthesizer.synthesize(template);
-		m_numSIs = synthesizer.getNumSIs();
-		m_numMotzkin = synthesizer.getNumMotzkin();
-		
-		s_Logger.info(benchmarkScriptMessage(constraintSat, template));
-		if (constraintSat == LBool.SAT) {
+						template, m_preferences);
+		final boolean success = tas.synthesize();
+		m_numSIs = tas.getNumSIs();
+		m_numMotzkin = tas.getNumMotzkin();
+		s_Logger.info(benchmarkScriptMessage(m_script.checkSat(), template));
+		if (success) {
 			s_Logger.info("Proved termination.");
-			TerminationArgument arg = synthesizer.getArgument();
+			TerminationArgument arg = tas.getArgument();
 			s_Logger.info(arg);
 			Term[] lexTerm = arg.getRankingFunction().asLexTerm(m_old_script);
 			for (Term t : lexTerm) {
@@ -414,7 +414,7 @@ public class LassoRankerTerminationAnalysis implements Closeable {
 			}
 		}
 		SMTSolver.resetScript(m_script, m_preferences.annotate_terms);
-		return constraintSat == LBool.SAT ? synthesizer.getArgument() : null;
+		return success ? tas.getArgument() : null;
 	}
 	
 	private String benchmarkScriptMessage(LBool constraintSat,

@@ -28,9 +28,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -38,15 +43,110 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 
 
 /**
- * Random collection of various methods that don't fit in anywhere else
+ * Superclass to TerminationArgumentSynthesizer and
+ * NonTerminationArgumentSynthesizer.
+ * 
+ * Contains some shared code.
  * 
  * @author Jan Leike
+ * @see TerminationArgumentSynthesizer
+ * @see NonTerminationArgumentSynthesizer
  */
-public class AuxiliaryMethods {
+public abstract class ArgumentSynthesizer {
+	protected static Logger s_Logger =
+			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
+	
+	/**
+	 * The SMT script for argument synthesis
+	 */
+	protected final Script m_script;
+	
+	/**
+	 * The lasso's stem transition
+	 */
+	protected final LinearTransition m_stem;
+	
+	/**
+	 * The lasso's loop transition
+	 */
+	protected final LinearTransition m_loop;
+	
+	/**
+	 * Whether synthesize() has been called yet
+	 */
+	private boolean m_synthesis_successful = false;
+	
+	/**
+	 * @param script the SMT script to be used for the argument synthesis
+	 * @param stem the lasso's stem transition
+	 * @param loop the lasso's loop transition
+	 */
+	public ArgumentSynthesizer(Script script, LinearTransition stem,
+			LinearTransition loop) {
+		assert script != null;
+		m_script = script;
+		
+		if (stem == null) {
+			m_stem = LinearTransition.getTranstionTrue();
+		} else {
+			m_stem = stem;
+		}
+		assert loop != null;
+		m_loop = loop;
+	}
+	
+	/**
+	 * @return the SMT script to be used for the argument synthesis
+	 */
+	public Script getScript() {
+		return m_script;
+	}
+	
+	/**
+	 * @return whether the last call to synthesize() was successfull
+	 */
+	public boolean synthesisSuccessful() {
+		return m_synthesis_successful;
+	}
+	
+	/**
+	 * Try to synthesize an argument for (non-)termination
+	 * @return whether the synthesis was successful
+	 */
+	public final boolean synthesize() throws SMTLIBException, TermException {
+		boolean success = do_synthesis();
+		m_synthesis_successful = success;
+		return success;
+	}
+	
+	/**
+	 * Try to synthesize an argument for (non-)termination
+	 * This is to be derived in the child classes and is wrapped by
+	 * synthesize().
+	 * @return whether the synthesis was successful
+	 */
+	protected abstract boolean do_synthesis()
+			throws SMTLIBException, TermException;
+	
+	/**
+	 * @return all RankVars that occur in the program
+	 */
+	protected Collection<RankVar> getAllRankVars() {
+		Collection<RankVar> rankVars = new LinkedHashSet<RankVar>();
+		if (m_stem != null) {
+			rankVars.addAll(m_stem.getInVars().keySet());
+			rankVars.addAll(m_stem.getOutVars().keySet());
+		}
+		rankVars.addAll(m_loop.getInVars().keySet());
+		rankVars.addAll(m_loop.getOutVars().keySet());
+		return rankVars;
+	}
+	
 	/**
 	 * Define a new constant
 	 * @param script SMT Solver
@@ -63,11 +163,24 @@ public class AuxiliaryMethods {
 	}
 	
 	/**
+	 * Define a new constant
+	 * @param name name of the new constant
+	 * @param sort the sort of the variable
+	 * @return the new variable as a term
+	 * @throws SMTLIBException if something goes wrong, e.g. the name is
+	 *          already defined
+	 */
+	public Term newConstant(String name, String sortname)
+			throws SMTLIBException {
+		return newConstant(m_script, name, sortname);
+	}
+	
+	/**
 	 * Convert a BigDecimal into a Rational.
 	 * Stolen from Jochen's code
 	 * de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ConvertFormula.
 	 */
-	static Rational decimalToRational(BigDecimal d) {
+	private static Rational decimalToRational(BigDecimal d) {
 		Rational rat;
 		if (d.scale() <= 0) {
 			BigInteger num = d.toBigInteger();
@@ -92,7 +205,7 @@ public class AuxiliaryMethods {
 			return (Rational) ct.getValue();
 		} else if (ct.getSort().getName().equals("Real")) {
 			BigDecimal d = (BigDecimal) ct.getValue();
-			return (Rational) AuxiliaryMethods.decimalToRational(d);
+			return decimalToRational(d);
 		} else if (ct.getSort().getName().equals("Int")) {
 			if (ct.getValue() instanceof Rational) {
 				return (Rational) ct.getValue();
@@ -162,12 +275,21 @@ public class AuxiliaryMethods {
 		throw new TermException("Unknown term structure", t);
 	}
 	
-	static Map<Term, Rational> preprocessValuation(Map<Term, Term> val)
+	/**
+	 * Extract a valuation from a script and convert ConstantTerms into
+	 * Rationals
+	 * @param vars a collection of variables
+	 * @return a valuation that assigns a Rational to every variable
+	 * @throws TermException if valuation generation or conversion fails
+	 */
+	protected Map<Term, Rational> getValuation(Collection<Term> vars)
 			throws TermException {
-		Map<Term, Rational> new_val = new LinkedHashMap<Term, Rational>();
+		assert m_script.checkSat() == LBool.SAT;
+		Map<Term, Term> val = m_script.getValue(vars.toArray(new Term[0]));
+		Map<Term, Rational> result = new LinkedHashMap<Term, Rational>();
 		for (Map.Entry<Term, Term> entry : val.entrySet()) {
-			new_val.put(entry.getKey(), const2Rational(entry.getValue()));
+			result.put(entry.getKey(), const2Rational(entry.getValue()));
 		}
-		return new_val;
+		return result;
 	}
 }

@@ -34,7 +34,6 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunction;
@@ -81,13 +80,10 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 	}
 	
 	@Override
-	public void init(Script script, Collection<RankVar> vars,
-			boolean linear) {
-		super.init(script, vars, linear);
+	protected void init_template() {
 		for (int i = 0; i < size; ++i) {
-			m_deltas[i] = RankingFunctionTemplate.newDelta(script,
-					s_name_delta + i);
-			m_fgens[i] = new AffineFunctionGenerator(script, vars,
+			m_deltas[i] = newDelta(s_name_delta + i);
+			m_fgens[i] = new AffineFunctionGenerator(m_script, m_variables,
 					s_name_function + i);
 		}
 	}
@@ -127,7 +123,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 	}
 	
 	@Override
-	public List<List<LinearInequality>> constraints(
+	public List<List<LinearInequality>> getConstraints(
 			Map<RankVar, TermVariable> inVars,
 			Map<RankVar, TermVariable> outVars) {
 		checkInitialized();

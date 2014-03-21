@@ -538,7 +538,14 @@ public class LassoChecker {
 			e.printStackTrace();
 			throw new AssertionError("TermException " + e);
 		}
-		NonTerminationArgument nonTermArgument = lrta.checkNonTermination();
+		NonTerminationArgument nonTermArgument = null;
+		try {
+			nonTermArgument = lrta.checkNonTermination();
+		} catch (SMTLIBException | TermException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw new AssertionError(e.getClass().getName() + " " + e);
+		}
 		if (withStem) {
 			m_NonterminationArgument = nonTermArgument;
 		}
