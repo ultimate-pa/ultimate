@@ -3,11 +3,22 @@
 file_export_version=3.0
 /instance/JungVisualization/shapeForNodePreference=RoundRectangle
 @JungVisualization=0.0.1
+#Fri Mar 21 20:31:11 EST 2014
+file_export_version=3.0
+/instance/BlockEncoding/Minimize\ Call\ and\ Return\ Edges=true
+@BlockEncoding=0.0.1
+\!/instance/BlockEncoding=
+/instance/BlockEncoding/Enter\ Rating-Boundary\ (empty\ for\ LBE)\:=0
+/instance/BlockEncoding/Choose\ the\ strategy\ for\ the\ edge\ rating\:=DISJUNCTIVE_RATING
 #Fri Dec 20 10:46:28 CET 2013
 file_export_version=3.0
 /instance/RCFGBuilder/Simplify\ code\ blocks=true
 \!/instance/RCFGBuilder=
+/instance/RCFGBuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=false
 @RCFGBuilder=0.0.1
+/instance/RCFGBuilder/Convert\ code\ blocks\ to\ CNF=false
+#Fri Mar 21 20:31:11 EST 2014
+/instance/TraceAbstraction/Interpolant\ automaton=SINGLETRACE
 file_export_version=3.0
 #Fri Dec 20 10:46:28 CET 2013
 #

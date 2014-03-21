@@ -369,8 +369,11 @@ class TerminationArgumentSynthesizer {
 		return m_num_motzkin;
 	}
 	
-	
+	/**
+	 * @return the synthesized TerminationArgument
+	 */
 	public TerminationArgument getArgument() {
+		assert m_synthesized : "Call synthesize() first";
 		return new TerminationArgument(m_ranking_function,
 				m_supporting_invariants);
 	}
