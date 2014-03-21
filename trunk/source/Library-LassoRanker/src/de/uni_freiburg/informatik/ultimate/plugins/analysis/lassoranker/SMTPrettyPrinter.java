@@ -65,7 +65,7 @@ public class SMTPrettyPrinter {
 			if (appt.getParameters().length == 0) {
 				return fname;
 			}
-			if (fname == "ite") {
+			if (fname.equals("ite")) {
 				sb.append("(");
 				sb.append(print(appt.getParameters()[0], indentation + 1));
 				sb.append(" ? ");

@@ -66,13 +66,13 @@ private Script m_script;
 				Term param = appt.getParameters()[0];
 				assert(param instanceof ApplicationTerm);
 				ApplicationTerm appt2 = (ApplicationTerm)param;
-				if (appt2.getFunction().getName() == "<=") {
+				if (appt2.getFunction().getName().equals("<=")) {
 					setResult(m_script.term(">", appt2.getParameters()));
-				} else if (appt2.getFunction().getName() == "<") {
+				} else if (appt2.getFunction().getName().equals("<")) {
 					setResult(m_script.term(">=", appt2.getParameters()));
-				} else if (appt2.getFunction().getName() == ">=") {
+				} else if (appt2.getFunction().getName().equals(">=")) {
 					setResult(m_script.term("<", appt2.getParameters()));
-				} else if (appt2.getFunction().getName() == ">") {
+				} else if (appt2.getFunction().getName().equals(">")) {
 					setResult(m_script.term("<=", appt2.getParameters()));
 				} else {
 					assert(false);

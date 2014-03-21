@@ -115,11 +115,11 @@ public class AuxiliaryMethods {
 	static Rational const2Rational(Term t) throws TermException {
 		if (t instanceof ApplicationTerm) {
 			ApplicationTerm appt = (ApplicationTerm) t;
-			if (appt.getFunction().getName() == "+") {
+			if (appt.getFunction().getName().equals("+")) {
 				return const2Rational(appt.getParameters()[0]).add(
 						const2Rational(appt.getParameters()[1]));
 			}
-			if (appt.getFunction().getName() == "-") {
+			if (appt.getFunction().getName().equals("-")) {
 				if (appt.getParameters().length == 1) {
 					return const2Rational(appt.getParameters()[0]).mul(
 							Rational.MONE);
@@ -128,11 +128,11 @@ public class AuxiliaryMethods {
 							const2Rational(appt.getParameters()[1]));
 				}
 			}
-			if (appt.getFunction().getName() == "*") {
+			if (appt.getFunction().getName().equals("*")) {
 				return const2Rational(appt.getParameters()[0]).mul(
 						const2Rational(appt.getParameters()[1]));
 			}
-			if (appt.getFunction().getName() == "/") {
+			if (appt.getFunction().getName().equals("/")) {
 				return const2Rational(appt.getParameters()[0]).div(
 						const2Rational(appt.getParameters()[1]));
 			}

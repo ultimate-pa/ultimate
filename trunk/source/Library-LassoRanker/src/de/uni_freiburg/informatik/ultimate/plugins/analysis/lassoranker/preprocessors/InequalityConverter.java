@@ -68,22 +68,22 @@ public class InequalityConverter {
 		LinearInequality li2 =
 				LinearInequality.fromTerm(term.getParameters()[1]);
 		LinearInequality res;
-		if (fname == ">=") {
+		if (fname.equals(">=")) {
 			li2.mult(Rational.MONE);
 			res = li1;
 			res.add(li2);
 			res.setStrict(false);
-		} else if (fname == "<=") {
+		} else if (fname.equals("<=")) {
 			li1.mult(Rational.MONE);
 			res = li1;
 			res.add(li2);
 			res.setStrict(false);
-		} else if (fname == ">") {
+		} else if (fname.equals(">")) {
 			li2.mult(Rational.MONE);
 			res = li1;
 			res.add(li2);
 			res.setStrict(true);
-		} else if (fname == "<") {
+		} else if (fname.equals("<")) {
 			res = li1;
 			res.mult(Rational.MONE);
 			res.add(li2);
@@ -106,15 +106,15 @@ public class InequalityConverter {
 		if (term instanceof ApplicationTerm) {
 			ApplicationTerm appt = (ApplicationTerm) term;
 			String fname = appt.getFunction().getName();
-			if (fname == "and") {
+			if (fname.equals("and")) {
 				for (Term t : appt.getParameters()) {
 					terms.addAll(convert(t));
 				}
-			} else if (fname == "true") {
+			} else if (fname.equals("true")) {
 				// Add trivial linear inequality 0 ≤ 0.
 				LinearInequality li = new LinearInequality();
 				terms.add(li);
-			} else if (fname == "=")  {
+			} else if (fname.equals("="))  {
 				Term param0 = appt.getParameters()[0];
 				Sort param0sort = param0.getSort();
 				if (param0sort.isNumericSort()) {
@@ -124,8 +124,8 @@ public class InequalityConverter {
 				} else {
 					throw new TermException("Unknown sort in equality", term);
 				}
-			} else if (fname == "<" || fname == ">"
-					|| fname == "<=" || fname == ">=") {
+			} else if (fname.equals("<") || fname.equals(">")
+					|| fname.equals("<=") || fname.equals(">=")) {
 				terms.add(convertAtom(appt));
 			} else {
 				throw new UnknownFunctionException(appt);

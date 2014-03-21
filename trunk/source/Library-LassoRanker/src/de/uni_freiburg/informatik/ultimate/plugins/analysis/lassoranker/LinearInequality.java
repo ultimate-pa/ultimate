@@ -109,11 +109,11 @@ public class LinearInequality {
 			li.add((TermVariable) term, Rational.ONE);
 		} else if (term instanceof ApplicationTerm) {
 			ApplicationTerm appt = (ApplicationTerm) term;
-			if (appt.getFunction().getName() == "+") {
+			if (appt.getFunction().getName().equals("+")) {
 				li = fromTerm(appt.getParameters()[0]);
 				for (int i = 1; i < appt.getParameters().length; ++i)
 					li.add(fromTerm(appt.getParameters()[i]));
-			} else if (appt.getFunction().getName() == "-") {
+			} else if (appt.getFunction().getName().equals("-")) {
 				if (appt.getFunction().getParameterSorts().length == 1) {
 					// unary minus
 					li = fromTerm(appt.getParameters()[0]);
@@ -125,7 +125,7 @@ public class LinearInequality {
 						li.add(fromTerm(appt.getParameters()[i]));
 					li.mult(Rational.MONE);
 				}
-			} else if (appt.getFunction().getName() == "*") {
+			} else if (appt.getFunction().getName().equals("*")) {
 				li = new LinearInequality();
 				li.m_constant = new AffineTerm(Rational.ONE);
 				for (Term u : appt.getParameters()) {
@@ -141,7 +141,7 @@ public class LinearInequality {
 								"factors found.", appt);
 					}
 				}
-			} else if (appt.getFunction().getName() == "/") {
+			} else if (appt.getFunction().getName().equals("/")) {
 				assert(appt.getParameters().length == 2);
 				LinearInequality divident = fromTerm(appt.getParameters()[0]);
 				LinearInequality divisor  = fromTerm(appt.getParameters()[1]);
