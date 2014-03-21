@@ -357,7 +357,7 @@ class TerminationArgumentSynthesizer {
 	 * @return the number of supporting invariants used
 	 */
 	public int getNumSIs() {
-		assert !m_synthesized : "Call synthesize() first";
+		assert m_synthesized : "Call synthesize() first";
 		return m_si_generators.size();
 	}
 	
@@ -365,7 +365,7 @@ class TerminationArgumentSynthesizer {
 	 * @return the number of Motzkin's Theorem applications
 	 */
 	public int getNumMotzkin() {
-		assert !m_synthesized : "Call synthesize() first";
+		assert m_synthesized : "Call synthesize() first";
 		return m_num_motzkin;
 	}
 	
