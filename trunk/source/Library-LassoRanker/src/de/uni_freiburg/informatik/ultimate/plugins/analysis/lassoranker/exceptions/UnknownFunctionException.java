@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
  * @author Jan Leike
  */
 public class UnknownFunctionException extends TermException {
-	
 	private static final long serialVersionUID = 105590526570839700L;
 	
 	public UnknownFunctionException(ApplicationTerm term) {

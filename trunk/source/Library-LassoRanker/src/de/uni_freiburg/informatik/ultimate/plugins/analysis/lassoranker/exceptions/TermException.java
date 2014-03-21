@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Jan Leike
  */
 public class TermException extends Exception {
-	
 	private static final long serialVersionUID = 628015504018345983L;
 	
 	protected final Term m_term;

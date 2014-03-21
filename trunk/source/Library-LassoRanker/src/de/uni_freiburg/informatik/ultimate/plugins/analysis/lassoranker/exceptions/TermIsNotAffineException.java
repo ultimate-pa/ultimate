@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Jan Leike
  */
 public class TermIsNotAffineException extends TermException {
-	
 	private static final long serialVersionUID = 173432306044797947L;
 	
 	public TermIsNotAffineException(String message) {

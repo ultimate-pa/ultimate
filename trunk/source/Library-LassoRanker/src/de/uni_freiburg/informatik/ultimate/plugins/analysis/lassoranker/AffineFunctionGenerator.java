@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,7 +48,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * 
  * @author Jan Leike
  */
-public class AffineFunctionGenerator {
+public class AffineFunctionGenerator implements Serializable {
+	private static final long serialVersionUID = 4376363192635730213L;
+	
 	private final Term m_constant;
 	private final Map<RankVar, Term> m_coefficients;
 	

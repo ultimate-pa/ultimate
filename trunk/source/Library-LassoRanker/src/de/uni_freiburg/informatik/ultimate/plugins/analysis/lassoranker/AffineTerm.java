@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -49,7 +50,9 @@ import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
  * 
  * @author Jan Leike
  */
-public class AffineTerm {
+public class AffineTerm implements Serializable {
+	private static final long serialVersionUID = -4454719554662175493L;
+	
 	private Rational m_Constant;
 	private final Map<Term, Rational> m_Coefficients;
 	

@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -54,7 +55,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
  * 
  * @author Jan Leike
  */
-public class NonTerminationArgument {
+public class NonTerminationArgument implements Serializable {
+	private static final long serialVersionUID = 4606815082909883553L;
 	
 	private final Map<RankVar, Rational> m_StateInit;
 	private final Map<RankVar, Rational> m_StateHonda;

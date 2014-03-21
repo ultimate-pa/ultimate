@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -45,7 +46,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingf
  * 
  * @author Jan Leike
  */
-public class TerminationArgument {
+public class TerminationArgument implements Serializable {
+	private static final long serialVersionUID = 3480670605705583627L;
+	
 	private final RankingFunction m_ranking_function;
 	private final Collection<SupportingInvariant> m_supporting_invariants;
 	

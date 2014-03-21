@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -56,8 +57,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptio
  * 
  * @author Jan Leike
  */
-public class LinearInequality {
-	
+public class LinearInequality implements Serializable {
+	private static final long serialVersionUID = 5640678756293667730L;
+
 	/**
 	 * Whether the inequality is strict (">") versus non-strict ("≥")
 	 */

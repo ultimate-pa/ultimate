@@ -26,7 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
-import java.util.*;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -53,7 +59,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preproce
  * @author Jan Leike
  * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
  */
-public class LinearTransition {
+public class LinearTransition implements Serializable {
+	private static final long serialVersionUID = 8925538198614759883L;
 	
 	private final Map<RankVar, TermVariable> m_inVars;
 	private final Map<RankVar, TermVariable> m_outVars;

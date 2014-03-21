@@ -44,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Jan Leike
  */
 public class SupportingInvariantGenerator extends AffineFunctionGenerator {
+	private static final long serialVersionUID = -1543993748788638942L;
+	
 	private static final String s_prefix = "si";
 	
 	/**
