@@ -40,8 +40,9 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 		if (m_Summary == null) {
 			m_Summary = new TraceAbstractionTestSummary(this.getClass().getCanonicalName(),
 					m_summaryLogFileName);
+			getSummaries().add(m_Summary);
 		}
-		getSummaries().add(m_Summary);
+		
 		for (File inputFile : inputFiles) {
 			UltimateStarter starter = new UltimateStarter(inputFile, settingsFile,
 					toolchainFile, deadline, null, null);

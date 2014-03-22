@@ -50,6 +50,7 @@ public class UltimateTestCase {
 			boolean success = mDecider.getJUnitTestResult(result);
 			
 			if (mSummary != null) {
+				mSummary.setTestResultDecider(mDecider);
 				mSummary.addResult(result, success, mDecider.getResultCategory(), mFileName, mDecider.getResultMessage());
 			}
 

@@ -7,8 +7,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.TestSummary;
+import de.uni_freiburg.informatik.ultimatetest.traceabstraction.TraceAbstractionTestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public class TraceAbstractionTestSummary extends TestSummary {
 
@@ -25,6 +28,18 @@ public class TraceAbstractionTestSummary extends TestSummary {
 		mLogFilePath = logFilePath;
 		mCount = 0;
 		m_TraceAbstractionBenchmarks = new HashMap<String, Collection<BenchmarkResult>>();
+	}
+
+	@Override
+	public void addResult(TestResult actualResult, boolean junitResult, String category, String filename, String message) {
+		super.addResult(actualResult, junitResult, category, filename, message);
+
+		ITestResultDecider decider = getTestResultDecider();
+		if (decider instanceof TraceAbstractionTestResultDecider) {
+			addTraceAbstractionBenchmarks(filename, Util.filterResults(
+					((TraceAbstractionTestResultDecider) decider).getUltimateResults(), BenchmarkResult.class));
+		}
+
 	}
 
 	public void addTraceAbstractionBenchmarks(String filename, Collection<BenchmarkResult> benchmarkResults) {
