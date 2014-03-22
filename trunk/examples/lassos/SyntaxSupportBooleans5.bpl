@@ -4,7 +4,7 @@
  * Author: heizmann@informatik.uni-freiburg.de
  *
  * Test case for the correct handling of booleans.
- * Needs boolean support in the nontermination analysis.
+ * f(x,b) = (b ? 1 : 0) + x is a ranking function
  *
  */
 
