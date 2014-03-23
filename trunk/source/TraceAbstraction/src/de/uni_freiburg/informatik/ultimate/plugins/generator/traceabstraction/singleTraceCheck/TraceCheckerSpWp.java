@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -120,7 +119,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 		return m_SizeOfPredicatesFP;
 	}
 
-
 	private int[] getSizeOfPredicatesBP() {
 		assert m_SizeOfPredicatesBP != null;
 		return m_SizeOfPredicatesBP;
@@ -136,30 +134,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 		return m_NumberOfQuantifiedPredicates[3];
 	}
 
-	@Deprecated
-	public IPredicate getInterpolanstsSPAtPosition(int i) {
-		assert m_InterpolantsSp != null : "InterpolantsSP hasn't been computed, yet.";
-		assert i >= 0 && i < m_InterpolantsSp.length : ("The given position "+ i
-				+ " is not a correct position. #Interpolants = " 
-				+ m_InterpolantsSp.length);
-		return m_InterpolantsSp[i];
-	}
-	
-	@Deprecated
-	public IPredicate getInterpolanstsWPAtPosition(int i) {
-		assert m_InterpolantsWp != null : "InterpolantsWP hasn't been computed, yet.";
-		assert i >= 0 && i < m_InterpolantsWp.length : "The given position "+ i + " is not a correct position!";
-		return m_InterpolantsWp[i];
-	}
-	
-	@Deprecated
-	public boolean interpolantsSPComputed() {
-		return m_ComputeInterpolantsSp;
-	}
-	@Deprecated
-	public boolean interpolantsWPComputed() {
-		return m_ComputeInterpolantsWp;
-	}
 
 	public boolean forwardsPredicatesComputed() {
 		return m_ComputeInterpolantsFp;
@@ -181,6 +155,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				" is not a correct position! #Interpolants = " + m_InterpolantsBp.length);
 		return m_InterpolantsBp[i];
 	}
+	
 	
 	private IPredicate getBackwardPredicateAtPosition(int i, IPredicate tracePostcondition, boolean backwardPredicate) {
 		if (i >= m_InterpolantsWp.length) {
@@ -208,36 +183,27 @@ public class TraceCheckerSpWp extends TraceChecker {
 	}
 	
 	/**
-	 * Computes the sequential composition of the statements from the given trace, where the trace doesn't contain
-	 * Calls or Returns.
+	 * Computes a summary of the procedure. The procedure consists (or is represented) by the Call statement, the Return statement 
+	 * and the inner statements.
+	 * @param trace - the inner statements of the procedure
+	 * @param Call
+	 * @param Return
+	 * @param oldVarsAssignment
+	 * @param rv
+	 * @param call_pos
+	 * @return
 	 */
-	private TransFormula computeSummaryForTrace(Word<CodeBlock> trace, RelevantTransFormulas rv, int offset) {
-		TransFormula[] transFormulasToComputeSummaryFor = new TransFormula[trace.length()];
-		for (int i = 0; i < trace.length(); i++) {
-			if (trace.getSymbol(i) instanceof Call) {
-				transFormulasToComputeSummaryFor[i] = rv.getLocalVarAssignment(i+offset);
-			} else {
-				transFormulasToComputeSummaryFor[i] = rv.getFormulaFromNonCallPos(i+offset);
-			}
-		}
-		return TransFormula.sequentialComposition(m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF, transFormulasToComputeSummaryFor);
-	}
-	
-	private TransFormula computeSummaryForTrace(Word<CodeBlock> trace, TransFormula Call, 
+	private TransFormula computeProcedureSummary(NestedWord<CodeBlock> trace, TransFormula Call, 
 			TransFormula Return, 
 			TransFormula oldVarsAssignment,
 			RelevantTransFormulas rv,
 			int call_pos) {
-		TransFormula procedureSummary = computeSummaryForTrace(trace, rv, call_pos);
-		return TransFormula.sequentialCompositionWithCallAndReturn(m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF, Call, oldVarsAssignment, procedureSummary, Return);
+		TransFormula summaryOfInnerStatements = computeSummaryForInterproceduralTrace(trace, rv, 0, trace.length());
+		return TransFormula.sequentialCompositionWithCallAndReturn(m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF, Call, oldVarsAssignment, summaryOfInnerStatements, Return);
 	}
 	
 	/**
 	 * Computes a summary for the given trace, but only for the statements from position "start" to position "end".
-	 *TODO: Document parameters!
-	 * @param rv - 
-	 * @param start
-	 * @param end
 	 * @return - a summary for the statements from the given trace from position "start" to position "end"
 	 */
 	private TransFormula computeSummaryForInterproceduralTrace(NestedWord<CodeBlock> trace, RelevantTransFormulas rv, int start, int end) {
@@ -300,6 +266,10 @@ public class TraceCheckerSpWp extends TraceChecker {
 		
 	}
 
+	/***
+ 	 * TODO: Document this!
+ 	 * TODO: Split the code! 
+ 	 */
 	private void computeInterpolantsWithUsageOfUnsatCore(Set<Integer> interpolatedPositions) {
 		m_NumberOfQuantifiedPredicates = new int[4];
 		
@@ -366,7 +336,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			s_Logger.debug("Computing forward relevant predicates...");
 			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rv, trace, tracePrecondition);
 			s_Logger.debug("Checking inductivity of forward relevant predicates...");
-			assert checkInterpolantsCorrect(m_InterpolantsFp, trace, tracePrecondition,
+			assert checkPredicatesCorrect(m_InterpolantsFp, trace, tracePrecondition,
 					tracePostcondition, "FP") : "invalid Hoare triple in FP";
 		}
 		
@@ -418,13 +388,26 @@ public class TraceCheckerSpWp extends TraceChecker {
 					}
 				}
 			}
-
 			s_Logger.debug("Checking strongest postcondition...");
-			assert checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, 
+			assert checkPredicatesCorrect(m_InterpolantsSp, trace, tracePrecondition, 
 					tracePostcondition, "SP with unsat core") : "invalid Hoare triple in SP with unsat core";
 			
 		}
-		if (m_ComputeInterpolantsWp) {
+		if (m_ComputeInterpolantsBp) {
+			s_Logger.debug("Computing backward relevant predicates...");
+			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rv, trace, tracePostcondition);
+			s_Logger.debug("Checking inductivity of backward relevant predicates...");
+			assert checkInterpolantsCorrectBackwards(m_InterpolantsBp, trace, tracePrecondition,
+					tracePostcondition, "BP") : "invalid Hoare triple in BP";
+		}
+		
+		if (m_LogInformation) {
+			s_Logger.debug("Length of trace:" + trace.length());
+			s_Logger.debug("#quantifiedPredicates in WP: " + m_NumberOfQuantifiedPredicates[2]);
+			s_Logger.debug("#quantifiedPredicates in BP: " + m_NumberOfQuantifiedPredicates[3]);
+		}
+		
+		if (m_ComputeInterpolantsWp && !m_ComputeInterpolantsBp) {
 			m_InterpolantsWp = new IPredicate[trace.length()-1];
 			// Contains the predicates, which are computed during a Return with the second method, where the callerPred
 			// is computed as wp(returnerPred, summaryOfCalledProcedure).
@@ -460,7 +443,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 						IPredicate callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
 						// If callerPred contains quantifier, compute it via the 2nd method
 						if (callerPred instanceof BasicPredicateExplicitQuantifier) {
-							summary = computeSummaryForTrace(getSubTrace(call_pos, i, trace), callTF,
+							summary = computeProcedureSummary(trace.getSubWord(call_pos, i), callTF,
 									rv.getFormulaFromNonCallPos(i+1), 
 									globalVarsAssignments,
 									rv, call_pos);
@@ -493,23 +476,12 @@ public class TraceCheckerSpWp extends TraceChecker {
 //					tracePostcondition, "WP with unsat core") : "invalid Hoare triple in WP with unsat core";
 			assert checkInterpolantsCorrectBackwards(m_InterpolantsWp, trace, tracePrecondition,
 					tracePostcondition, "WP with unsat core") : "invalid Hoare triple in WP with unsat core";
-			if (m_ComputeInterpolantsBp) {
-				s_Logger.debug("Computing backward relevant predicates...");
-				computeBackwardRelevantPredicates(relevantVarsToUseForFPBP);
-				s_Logger.debug("Checking inductivity of backward relevant predicates...");
-				assert checkInterpolantsCorrect(m_InterpolantsBp, trace, tracePrecondition,
-						tracePostcondition, "BP") : "invalid Hoare triple in BP";
-				if (m_CollectInformationAboutSizeOfPredicates) {
-					m_SizeOfPredicatesBP = computeSizeOfPredicates(m_InterpolantsBp);
-				}
-			}
-
 		}
 		if (m_ComputeInterpolantsSp && m_ComputeInterpolantsWp) {
 			checkSPImpliesWP(m_InterpolantsSp, m_InterpolantsWp);
 		}
 		if (m_ComputeInterpolantsFp && m_ComputeInterpolantsBp) {
-			selectInterpolantsOfBothType();
+			selectListOFPredicatesFromBothTypes();
 		} else if (m_ComputeInterpolantsFp) {
 			m_Interpolants = m_InterpolantsFp;
 		} else if (m_ComputeInterpolantsSp) {
@@ -522,7 +494,14 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 	
-	private void selectInterpolantsOfBothType() {
+	/***
+	 * Selects a list of predicates from the predicates computed via strongest post-condition and the weakest precondition, such that the number
+	 * of predicates containing quantifiers is minimized and a mix-up of the two types is avoided. (If the predicates are mixed-up, they may get
+	 * non-inductive.)
+	 * Predicates are selected in the following way: (TODO:)
+	 * 
+	 */
+	private void selectListOFPredicatesFromBothTypes() {
 		assert m_InterpolantsFp.length == m_InterpolantsBp.length;
 		m_Interpolants = new IPredicate[m_InterpolantsBp.length];
 		int i = 0; // position of predicate computed by strongest post-condition
@@ -563,6 +542,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 		return result;
 	}
 	
+	
+	/**
+	 * Select the statements from the given trace, which are contained in the unsatisfiable core. These statements contribute to the unsatisfiability
+	 * of the trace, and therefore only these are important for the computations done afterwards.
+	 */
 	private Set<CodeBlock> filterOutIrrelevantStatements(NestedWord<CodeBlock> trace, Set<Term> unsat_coresAsSet,
 			boolean[] localVarAssignmentAtCallInUnsatCore,
 			boolean[] oldVarAssignmentAtCallInUnsatCore ) {
@@ -576,7 +560,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 				// The upper condition checks, whether the globalVarAssignments
 				// is in unsat core, now check whether the local variable assignments
 				// is in unsat core, if it is Call statement
-					// Check whether the local variable assignments are also in unsat core.
 				if (unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getLocalVarAssignment(i))) {
 					localVarAssignmentAtCallInUnsatCore[i] = true;
 				}
@@ -662,17 +645,103 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 	
-	@Deprecated
-	private void computeBackwardRelevantPredicates(Set<BoogieVar>[] relevantVars) {
-		assert m_InterpolantsWp != null : "Interpolants WP_i have not been computed!";
+	/**
+	 * Compute backward relevant predicates for each position directly after the weakest precondition has been
+	 * computed. Formally, we have
+	 * BP[i] = FORALL irrelevantVars[i]. weakest-precondition(BP[i+1], relevantTransformulas[i]) 
+	 */
+	private void computeBackwardRelevantPredicates(Set<BoogieVar>[] relevantVars, RelevantTransFormulas rv,
+			NestedWord<CodeBlock> trace,
+			IPredicate tracePostcondition) {
+		m_InterpolantsWp = new IPredicate[trace.length() - 1];
 		m_InterpolantsBp = new IPredicate[m_InterpolantsWp.length];
-		for (int i = 0; i < m_InterpolantsWp.length; i++) {
-			IPredicate p = m_SmtManager.computeBackwardRelevantPredicate(m_InterpolantsWp[i], relevantVars[i+1]);
-			m_InterpolantsBp[i]  = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
-					p.getVars(), p.getProcedures());
+		
+		if (trace.length() > 1) {
+			// Contains the predicates, which are computed during a Return with the second method, where the callerPred
+			// is computed as wp(returnerPred, summaryOfCalledProcedure).
+			Map<Integer, IPredicate> callerPredicatesComputed = new HashMap<Integer, IPredicate>();
+			for (int i = m_InterpolantsWp.length - 1; i >= 0; i--) {
+				IPredicate wp = null;
+				if (trace.getSymbol(i+1) instanceof Call) {
+					if (callerPredicatesComputed.containsKey(i+1)) {
+						wp = m_SmtManager.renameVarsOfOtherProcsToFreshVars(callerPredicatesComputed.get(i+1),
+								((Call) trace.getSymbol(i+1)).getPreceedingProcedure());
+						m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(wp.getFormula(),
+								wp.getVars(),wp.getProcedures());
+					} else {
+						wp = m_SmtManager.weakestPrecondition(
+								getBackwardPredicateAtPosition(i+1, tracePostcondition, true), 
+								rv.getLocalVarAssignment(i+1),
+								rv.getGlobalVarAssignment(i+1),
+								rv.getOldVarAssignment(i+1),
+								true);
+						m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(wp.getFormula(),
+								wp.getVars(),wp.getProcedures());
+						
+					}
+				} else if (trace.getSymbol(i+1) instanceof Return) {
+					int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i+1);
+					TransFormula callTF = rv.getLocalVarAssignment(call_pos);
+					TransFormula globalVarsAssignments = rv.getGlobalVarAssignment(call_pos);
+					// 1st method of computing the predicate right before of the corresponding Call-statement.
+					// 1.1: Compute a summary of the statements from the beginning of the trace up to the Call-Statement, without including it.
+					// 1.2: Compute the caller predicate as the strongest post-condition of the precondition and the summary.
+					TransFormula summary = computeSummaryForInterproceduralTrace(trace, rv, 0, call_pos);
+					IPredicate callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
+					// If callerPred contains quantifiers, compute it via the 2nd method
+					if (callerPred instanceof BasicPredicateExplicitQuantifier) {
+						// 2nd method of computing the predicate right before of the corresponding Call-statement.
+						// 2.1: Compute a summary of the statements from the beginning of the trace up to the Call-Statement, without including it.
+						// 2.2: Compute the caller predicate as the strongest post-condition of the precondition and the summary.
+						summary = computeProcedureSummary(trace.getSubWord(call_pos, i), callTF,
+								rv.getFormulaFromNonCallPos(i+1), 
+								globalVarsAssignments,
+								rv, call_pos);
+						callerPred = m_SmtManager.weakestPrecondition(
+								getBackwardPredicateAtPosition(i+1, tracePostcondition, true), 
+								summary);
+					}
+					callerPredicatesComputed.put(call_pos, callerPred);
+					wp = m_SmtManager.weakestPrecondition(
+							getBackwardPredicateAtPosition(i+1, tracePostcondition, true), 
+							callerPred, 
+							rv.getFormulaFromNonCallPos(i+1), callTF, 
+							globalVarsAssignments,
+							m_ModifiedGlobals.getModifiedBoogieVars(((Return)trace.getSymbol(i+1)).getCorrespondingCall().getCallStatement().getMethodName())); 
+					m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(wp.getFormula(),
+								wp.getVars(),wp.getProcedures());
+				} else {
+					wp = m_SmtManager.weakestPrecondition(
+							getBackwardPredicateAtPosition(i+1, tracePostcondition, true),
+							rv.getFormulaFromNonCallPos(i+1));
+					m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(wp.getFormula(),
+								wp.getVars(),wp.getProcedures());
+				}
+				IPredicate bp = m_SmtManager.computeBackwardRelevantPredicate(getBackwardPredicateAtPosition(i, tracePostcondition, false),
+						relevantVars[i+1]);
+				m_InterpolantsBp[i]  = m_PredicateUnifier.getOrConstructPredicate(bp.getFormula(),
+						bp.getVars(), bp.getProcedures());
+				if (m_CollectInformationAboutQuantifiedPredicates) {
+					if (wp != null && wp instanceof BasicPredicateExplicitQuantifier) {
+						m_NumberOfQuantifiedPredicates[2]++;
+					}
+					if (bp instanceof BasicPredicateExplicitQuantifier) {
+						m_NumberOfQuantifiedPredicates[3]++;
+					}
+				}
+			}
+		}
+		if (m_CollectInformationAboutSizeOfPredicates) {
+			m_SizeOfPredicatesBP = computeSizeOfPredicates(m_InterpolantsBp);
 		}
 	}
 	
+	
+	/***
+	 *  Check for each predicate computed via the strongest post-condition, whether it implies the predicate computed via weakest precondition.
+	 *  This check is desired, when predicates are computed twice (once via strongest post, and once via weakest pre-condition). 
+	 *  It ensures the correctness of the predicates.
+	 */
 	private void checkSPImpliesWP(IPredicate[] interpolantsSP, IPredicate[] interpolantsWP) {
 		s_Logger.debug("Checking implication of SP and WP...");
 		for (int i = 0; i < interpolantsSP.length; i++) {
@@ -684,16 +753,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 	
-	/**
-	 * Returns a sub-trace of the given trace, from startPos to endPos.
-	 */
- 	private Word<CodeBlock> getSubTrace(int startPos, int endPos, Word<CodeBlock> trace) {
-		CodeBlock[] codeBlocks = new CodeBlock[endPos - startPos];
-		for (int i = startPos; i < endPos; i++) {
-			codeBlocks[i - startPos] = trace.getSymbol(i);
-		}
-		return new Word<CodeBlock>(codeBlocks);
-	}
 	
  	@Deprecated
 	private void computeInterpolantsWithoutUsageOfUnsatCore(Set<Integer> interpolatedPositions) {
@@ -763,7 +822,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				}
 			}
 			s_Logger.debug("Checking strongest postcondition...");
-			assert checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, 
+			assert checkPredicatesCorrect(m_InterpolantsSp, trace, tracePrecondition, 
 					tracePostcondition, "sp without unsat core") : "invalid Hoare triple in sp without unsat core";
 		}
 
@@ -856,7 +915,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 //				}
 //			}
 			s_Logger.debug("Checking weakest precondition...");
-			assert checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, 
+			assert checkPredicatesCorrect(m_InterpolantsWp, trace, tracePrecondition, 
 					tracePostcondition, "wp without unsat core") : "invalid Hoare triple in wp without unsat core";
 		}
 		if (m_ComputeInterpolantsSp) {
@@ -866,16 +925,20 @@ public class TraceCheckerSpWp extends TraceChecker {
 			m_Interpolants = m_InterpolantsWp;
 		}
 	}
-
-	boolean checkInterpolantsCorrect(IPredicate[] interpolants,
+ 	
+ 	/***
+ 	 * Checks whether the given predicates are inductive (correct).
+ 	 * For each statement st_i from the given trace, it checks whether {predicates[i-1]} st_i {predicates[i]} is a Hoare triple.
+ 	 */
+	boolean checkPredicatesCorrect(IPredicate[] predicates,
 								  Word<CodeBlock> trace, 
 								  IPredicate tracePrecondition, 
 								  IPredicate tracePostcondition,
 								  String computation) {
 		LBool result;
-		for (int i=-1; i<interpolants.length; i++) {
+		for (int i=-1; i< predicates.length; i++) {
 			 result = isHoareTriple(i+1, tracePrecondition, tracePostcondition, 
-						interpolants, trace);
+						predicates, trace);
 			 if (result == LBool.SAT) {
 				 s_Logger.debug("Trace length: " + trace.length());
 				 s_Logger.debug("Stmt: " + (i+1));
@@ -886,6 +949,13 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 		return true;
 	}
+	
+	/***
+	 * Checks whether the given predicates are inductive (correct).
+ 	 * For each statement st_i from the given trace, it checks whether {predicates[i-1]} st_i {predicates[i]} is a Hoare triple, but it starts
+ 	 * at the end of the list of predicates and proceeds backwards.
+ 	 * @see checkPredicatesCorrect
+ 	 */
 	boolean checkInterpolantsCorrectBackwards(IPredicate[] interpolants,
 			Word<CodeBlock> trace, 
 			IPredicate tracePrecondition, 
@@ -918,7 +988,10 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 	
-	
+	/***
+ 	 * Checks for a given statement st, a predicate %PHI and a predicate %PSI, whether the Hoare triple
+ 	 * {%PHI} st {%PSI} is correct.
+ 	 */
 	private LBool isHoareTriple(int i, IPredicate tracePrecondition, 
 			IPredicate tracePostcondition, 
 			IPredicate[] interpolants, Word<CodeBlock> trace) {
@@ -969,6 +1042,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 	
+	/***
+ 	 * Returns the size of predicates (either forward predicates or backward predicates depending on the parameter interpolation).
+ 	 */
 	@Override
 	public int[] getSizeOfPredicates(INTERPOLATION interpolation) {
 		switch (interpolation) {
@@ -980,6 +1056,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			return super.getSizeOfPredicates(interpolation);
 		}
 	}
+	
 	@Override
 	public int getTotalNumberOfPredicates(INTERPOLATION interpolation) {
 		switch (interpolation) {
