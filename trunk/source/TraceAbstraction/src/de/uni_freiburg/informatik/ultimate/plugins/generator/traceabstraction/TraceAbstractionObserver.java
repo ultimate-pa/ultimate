@@ -231,6 +231,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		}
 
 		Result result = abstractCegarLoop.iterate();
+		timingStatistics.finishTraceAbstraction();
 
 		m_OverallIterations += abstractCegarLoop.m_Iteration;
 		if (abstractCegarLoop.m_BiggestAbstractionSize > m_OverallBiggestAbstraction) {

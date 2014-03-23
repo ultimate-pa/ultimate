@@ -36,6 +36,8 @@ public class TraceAbstractionBenchmarks {
 	private List<int[]> m_SizeOfPredicatesFP;
 	private List<int[]> m_SizeOfPredicatesBP;
 	private long m_StartingTime;
+	private long m_StopTime;
+	private boolean m_Finished = false;
 	private boolean m_CounterExampleFeasible;
 	
 	private final EdgeCheckerBenchmark m_EdgeCheckerBenchmark;
@@ -52,12 +54,18 @@ public class TraceAbstractionBenchmarks {
 				new InCaReCounter(), new InCaReCounter());
 	}
 	
+	public void finishTraceAbstraction() {
+		assert m_Finished == false;
+		m_Finished = true;
+		m_StopTime = System.nanoTime();
+	}
+	
 	public EdgeCheckerBenchmark getEdgeCheckerBenchmark() {
 		return m_EdgeCheckerBenchmark;
 	}
 	
 	public long getRuntime() {
-		return System.nanoTime() - m_StartingTime;
+		return m_StopTime - m_StartingTime;
 	}
 
 	public void startTraceCheck() {
@@ -110,6 +118,7 @@ public class TraceAbstractionBenchmarks {
 	
 	
 	public String printBenchmarkResults() {
+		assert m_Finished : "finish trace abstraction first";
 		StringBuilder sb  = new StringBuilder();
 		sb.append("Trace Abstraction runtime: ");
 		sb.append(prettyprintNanoseconds(getRuntime()));
