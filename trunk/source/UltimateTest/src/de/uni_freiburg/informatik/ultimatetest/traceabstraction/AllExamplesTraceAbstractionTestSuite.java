@@ -6,6 +6,7 @@ package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
  * @author musab@informatik.uni-freiburg.de
@@ -28,7 +29,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 		if (m_TraceAbstractionWithForwardPredicates) {
 			addTestCases(
 					"AutomizerBpl.xml",
-					"settingsForwardPredicates",
+					"settingsForwardPredicates.epf",
 				    m_Path,
 				    new String[] {".bpl"},
 				    "Trace Abstraction via Forward Predicates (SP)",
@@ -38,7 +39,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 		if (m_TraceAbstractionWithBackwardPredicates) {
 			addTestCases(
 					"AutomizerBpl.xml",
-					"settingsBackwardPredicates",
+					"settingsBackwardPredicates.epf",
 				    m_Path,
 				    new String[] {".bpl"},
 				    "Trace Abstraction via Backward Predicates (WP)",
