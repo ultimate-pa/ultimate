@@ -2,7 +2,7 @@
 <title>CUP User's Manual</title></head><body>
 
 <hr>
-<img src="manual_dateien/cup_logo.gif" alt="[CUP Logo Image]">
+<img src="cup_logo.gif" alt="[CUP Logo Image]">
 <hr>
 <h1>CUP User's Manual</h1>
 <h3><a href="http://www.cc.gatech.edu/gvu/people/Faculty/Scott.E.Hudson.html">
@@ -57,7 +57,7 @@ this software.
   <dt> 1.  </dt><dd> <a href="#intro">Introduction and Example</a></dd>
   <dt> 2.  </dt><dd> <a href="#spec">Specification Syntax</a></dd>
   <dt> 2.1 </dt><dd> <a href="#package_spec">Package Specification</a></dd>
-  <dt> 2.2 </dt><dd> <a href="#code_part">User Code</a></dd>
+  <dt> 2.2 </dt><dd> <a href="#code_part">Options and User Code Components</a></dd>
   <dt> 2.3 </dt><dd> <a href="#symbol_list">symbol (terminal and non-terminal) lists</a></dd>
   <dt> 2.4 </dt><dd> <a href="#precedence">Precedence</a></dd>
   <dt> 2.5 </dt><dd> <a href="#production_list">The grammar</a></dd>
@@ -392,7 +392,7 @@ A specification consists of:
 </p>
 <ul>
 <li> <a href="#package_spec">package and import specifications</a>,
-</li><li> <a href="#code_part">user code components</a>,
+</li><li> <a href="#code_part">options and user code components</a>,
 </li><li> <a href="#symbol_list">symbol (terminal and non-terminal) lists</a>, 
 </li><li> <a href="#precedence">precedence declarations</a>, and
 </li><li> <a href="#production_list">the grammar</a>.
@@ -433,18 +433,137 @@ Any import declarations that appear in the specification will also appear
 in the source file for the <tt>parser</tt> class allowing various names from
 that package to be used directly in user supplied action code.</p>
 
-<h4><a name="code_part">2.2</a> User Code Components</h5>
+<h4><a name="code_part">2.2</a> Options and User Code Components</h5>
 
-<p>Following the optional <tt>package</tt> and <tt>import</tt> declarations
-are a series of optional declarations that allow user code to be included
-as part of the generated parser (see <a href="#parser">Section 4</a> for a 
-full description of how the parser uses this code).  As a part of the parser 
-file, a separate non-public class to contain all embedded user actions is 
-produced.  The first <tt>action code</tt> declaration section allows code to 
-be included in this class.  Routines and variables for use by the code 
-embedded in the grammar would normally be placed in this section (a typical 
-example might be symbol table manipulation routines).  This declaration takes 
-the form:</p>
+<p>Following the optional <tt>package</tt> and <tt>import</tt>
+declarations the user can configure the name of the parser and the 
+symbol class and can give some additional options.  An option is
+set using the keyword <tt>option</tt>. Here is an example.</p>
+
+<pre><tt>    parser ExprParser;</tt>
+<tt>    option symbols=ExprSymbols;</tt>
+<tt>    option interface, expect=2;</tt></pre>
+
+<p>Some options take a parameter.  The parameter should be added after
+an <tt>=</tt> symbol.  In principle you can specify any option that
+you can also put on the command line.  The following options are most
+useful to specify in the grammar file:</p>
+
+<dl>
+  <dt><tt>parser =</tt> <i>name</i>   
+  </dt><dd>Output parser and action code into a file (and class) with the given
+      name instead of the default of "<tt>parser</tt>".  This can also be
+      set without <tt>option</tt> using the parser directive: 
+      <tt>parser name;</tt></dd>
+
+  <dt><tt>typearg =</tt> <i>type</i>
+  </dt><dd>Add template type arguments to the parser class.  This is 
+      deprecated.  Instead use the <tt>parser</tt> directive which allows
+      to add template parameters in Java Syntax, e.g., 
+      <tt>parser ExprParser&lt;Value&gt;</tt>.</dd>
+
+  <dt><tt>symbols =</tt> <i>name</i>  
+  </dt><dd>Output the symbol constant code into a class with the given
+      name instead of the default of "<tt>sym</tt>".</dd>
+
+  <dt><tt>java15</tt>
+  </dt><dd>Produce code that can only be compiled by Java 1.5 and
+      later.  This includes template types and other Java-1.5 specific
+      things.  It is highly recommended that you turn this option on,
+      unless you have to support Java-1.4.</dd>
+
+  <dt><tt>interface</tt>
+  </dt><dd>Outputs the symbol constant code as an <code>interface</code>
+      rather than as a <code>class</code>.</dd>
+
+  <dt><tt>newpositions</tt>          
+  </dt><dd>This option keeps CUP from generating old variables for the left
+      and right hand values of terminals to non-terminals, and then from
+      non-terminals to other terminals. You should turn it on unless for
+      backwards compatibility.</dd>
+
+  <dt><tt>nonterms</tt>
+  </dt><dd>Place constants for non-terminals into the  symbol constant class.
+      The parser does not need these symbol constants, so they are not normally
+      output.  However, it can be very helpful to refer to these constants
+      when debugging a generated parser.</dd>
+
+  <dt><tt>expect =</tt> <i>number</i>      
+  </dt><dd>During parser construction the system may detect that an ambiguous 
+      situation would occur at runtime.  This is called a <i>conflict</i>.  
+      In general, the parser may be unable to decide whether to <i>shift</i> 
+      (read another symbol) or <i>reduce</i> (replace the recognized right 
+      hand side of a production with its left hand side).  This is called a 
+      <i>shift/reduce conflict</i>.  Similarly, the parser may not be able 
+      to decide between reduction with two different productions.  This is 
+      called a <i>reduce/reduce conflict</i>.  Normally, if one or more of 
+      these conflicts occur, parser generation is aborted.  However, in 
+      certain carefully considered cases it may be advantageous to 
+      arbitrarily break such a conflict.  In this case CUP uses YACC 
+      convention and resolves shift/reduce conflicts by shifting, and 
+      reduce/reduce conflicts using the "highest priority" production (the 
+      one declared first in the specification).  In order to enable automatic 
+      breaking of conflicts the <tt>expect</tt> option must be given 
+      indicating exactly how many conflicts are expected.  Conflicts
+      resolved by precedences and associativities are not reported.</dd>
+
+  <dt><tt>compact_red</tt>   
+  </dt><dd>Including this option enables a table compaction optimization involving
+      reductions.  In particular, it allows the most common reduce entry in 
+      each row of the parse action table to be used as the default for that 
+      row.  This typically saves considerable room in the tables, which can 
+      grow to be very large.  This optimization has the effect of replacing 
+      all error entries in a row with the default reduce entry.  While this 
+      may sound dangerous, if not down right incorrect, it turns out that this 
+      does not affect the correctness of the parser.  In particular, some
+      changes of this type are inherent in LALR parsers (when compared to 
+      canonical LR parsers), and the resulting parsers will still never 
+      read past the first token at which the error could be detected.
+      The parser can, however, make extra erroneous reduces before detecting
+      the error, so this can degrade the parser's ability to do 
+      <a href="#errors">error recovery</a>.
+      (Refer to reference [2] pp. 244-247 or reference [3] pp. 190-194 for a 
+      complete explanation of this compaction technique.) <br>
+
+      This option is typically used to work-around the java bytecode
+      limitations on table initialization code sizes.  However, CUP
+      0.10h introduced a string-encoding for the parser tables which
+      is not subject to the standard method-size limitations.
+      Consequently, use of this option should no longer be required
+      for large grammars.</dd>
+
+  <dt><tt>nopositions</tt>
+  </dt><dd>This option keeps CUP from generating code to propagate the left
+      and right hand values of terminals to non-terminals, and then from
+      non-terminals to other terminals.  If the left and right values aren't
+      going to be used by the parser, then it will save some runtime
+      computation to not generate these position propagations.  This option
+      also keeps the left and right label variables from being generated, so
+      any reference to these will cause an error.</dd>
+
+  <dt><tt>noscanner</tt>
+  </dt><dd>CUP 0.10j introduced <a href="#scanner">improved scanner
+  integration</a> and a new interface,
+  <code>java_cup.runtime.Scanner</code>.  By default, the 
+  generated parser refers to this interface, which means you cannot
+  use these parsers with CUP runtimes older than 0.10j.  If your
+  parser does not use the new scanner integration features, then you
+  may specify the <code>noscanner</code> option to suppress the
+  <code>java_cup.runtime.Scanner</code> references and allow
+  compatibility with old runtimes.  Not many people should have reason
+  to do this.</dd>
+</dl>
+
+<p>After the options a series of optional declarations can be added
+that allow user code to be included as part of the generated parser
+(see <a href="#parser">Section 4</a> for a full description of how the
+parser uses this code).  As a part of the parser file, a separate
+non-public class to contain all embedded user actions is produced.
+The first <tt>action code</tt> declaration section allows code to be
+included in this class.  Routines and variables for use by the code
+embedded in the grammar would normally be placed in this section (a
+typical example might be symbol table manipulation routines).  This
+declaration takes the form:</p>
 
 <pre><tt>    action code {: ... :};</tt>
 </pre>
@@ -750,21 +869,25 @@ by passing various options to it.  Legal options are documented in
 </p><dl>
   <dt><tt>-package</tt> <i>name</i>  
   </dt><dd>Specify that the <tt>parser</tt> and <tt>sym</tt> classes are to be 
-       placed in the named package.  By default, no package specification 
-       is put in the generated code (hence the classes default to the special 
-       "unnamed" package).</dd>
+       placed in the named package.  
+       This is deprecated; you should put a package directive in the 
+       grammar file.</dd>
 
   <dt><tt>-parser</tt> <i>name</i>   
   </dt><dd>Output parser and action code into a file (and class) with the given
-      name instead of the default of "<tt>parser</tt>".</dd>
+      name instead of the default of "<tt>parser</tt>".
+      This is deprecated; you should put a parser directive in the 
+      grammar file.</dd>
 
   <dt><tt>-symbols</tt> <i>name</i>  
   </dt><dd>Output the symbol constant code into a class with the given
-      name instead of the default of "<tt>sym</tt>".</dd>
+      name instead of the default of "<tt>sym</tt>".
+      This option should better be set in the grammar file.</dd>
 
   <dt><tt>-interface</tt>
   </dt><dd>Outputs the symbol constant code as an <code>interface</code>
-      rather than as a <code>class</code>.</dd>
+      rather than as a <code>class</code>.
+      This option should better be set in the grammar file.</dd>
 
   <dt><tt>-nonterms</tt>      
   </dt><dd>Place constants for non-terminals into the  symbol constant class.
@@ -773,7 +896,10 @@ by passing various options to it.  Legal options are documented in
       when debugging a generated parser.</dd>
 
   <dt><tt>-expect</tt> <i>number</i>      
-  </dt><dd>During parser construction the system may detect that an ambiguous 
+  </dt><dd>
+      This option should better be set in the grammar file.<br>
+
+      During parser construction the system may detect that an ambiguous 
       situation would occur at runtime.  This is called a <i>conflict</i>.  
       In general, the parser may be unable to decide whether to <i>shift</i> 
       (read another symbol) or <i>reduce</i> (replace the recognized right 
@@ -849,13 +975,17 @@ by passing various options to it.  Legal options are documented in
       of the system itself.</dd>
 
   <dt><tt>-newpositions</tt>          
-  </dt><dd>This option keeps CUP from generating old variables for the left
+  </dt><dd>
+      This option should better be set in the grammar file.<br>
+
+      This option keeps CUP from generating old variables for the left
       and right hand values of terminals to non-terminals, and then from
       non-terminals to other terminals. You should turn it on unless for
       backwards compatibility.</dd>
 
   <dt><tt>-nopositions</tt>          
-  </dt><dd>This option keeps CUP from generating code to propagate the left
+  </dt><dd>
+      This option keeps CUP from generating code to propagate the left
       and right hand values of terminals to non-terminals, and then from
       non-terminals to other terminals.  If the left and right values aren't
       going to be used by the parser, then it will save some runtime

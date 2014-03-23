@@ -192,10 +192,13 @@ parser code {:
 /*----------------------------------------------------------------*/ 
 
 terminal
-  PACKAGE, IMPORT, CODE, ACTION, PARSER, TERMINAL, NON, INIT, SCAN, WITH, 
-  START, SEMI, COMMA, STAR, DOT, COLON, COLON_COLON_EQUALS, BAR, PRECEDENCE,
-  LEFT, RIGHT, NONASSOC, PERCENT_PREC, LBRACK, RBRACK, NONTERMINAL, GT, LT,
-  QUESTION, SUPER, EXTENDS, EQUALS, OPTION, PLUS;
+  SEMI, COMMA, STAR, DOT, COLON, COLON_COLON_EQUALS, BAR, 
+  PERCENT_PREC, LBRACK, RBRACK, GT, LT, QUESTION, EQUALS, PLUS;
+
+terminal String
+  PACKAGE, IMPORT, CODE, ACTION, PARSER, TERMINAL, NON, NONTERMINAL, INIT, 
+  SCAN, WITH, START, PRECEDENCE, LEFT, RIGHT, NONASSOC, SUPER, EXTENDS, 
+  OPTION;
 
 terminal String  ID, CODE_STRING;
 
@@ -576,6 +579,15 @@ symbol_id ::=
 	| OPTION
 	| SUPER
 	| EXTENDS
+	| CODE
+	| ACTION
+	| PARSER
+	| INIT
+	| SCAN
+	| WITH
+	| LEFT
+	| RIGHT
+	| NONASSOC
 	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
@@ -590,6 +602,7 @@ robust_id ::= /* all ids that aren't reserved words in Java */
 	| PARSER
 	| TERMINAL
 	| NON
+	| NONTERMINAL
 	| INIT
 	| SCAN
 	| WITH

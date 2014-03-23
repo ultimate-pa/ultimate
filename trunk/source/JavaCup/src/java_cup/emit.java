@@ -345,9 +345,6 @@ public class emit {
 	  	&& (symbol.the_symbol.name().endsWith("*")
 		    || symbol.the_symbol.name().endsWith("+"));
 
-	  if (is_wildcard && label == null)
-	    label = pre(""+i);
-	  
 	  if (label != null)
 	    {
 	      if (i == 0)
@@ -360,7 +357,7 @@ public class emit {
 		  stackelem(prod.rhs_stackdepth() - i, is_java15) + ";");
 
 	      /* Put in the left/right value labels */
-	      if (symbol.label != null && old_lr_values)
+	      if (old_lr_values)
 		{
 		  out.println("              int "+label+"left = "+
 		      label + "$.left;");
@@ -369,7 +366,7 @@ public class emit {
 		}
 	      if (symtype != null)
 		{
-		  if (is_wildcard && symbol.label != null)
+		  if (is_wildcard)
 		    {
 		      String basetype = symtype.substring(0, symtype.length()-2);
 		      int arraySuffix = basetype.length();
