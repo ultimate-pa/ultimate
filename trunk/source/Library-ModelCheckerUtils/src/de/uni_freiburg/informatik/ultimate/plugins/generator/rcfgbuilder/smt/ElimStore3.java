@@ -635,7 +635,7 @@ public class ElimStore3 {
 	
 	
 	
-	private static class ArrayReadException extends Exception {
+	public static class ArrayReadException extends Exception {
 
 		private static final long serialVersionUID = -628021699371967800L;
 		private final boolean m_DifferentArray;
@@ -656,7 +656,7 @@ public class ElimStore3 {
 	 * the form  (select (select a i1) i2)  
 	 *
 	 */
-	private static class ArrayStoreDef {
+	public static class ArrayStoreDef {
 		private Term m_Array;
 		private final Term[] m_Index;
 		private final Term m_Data;
