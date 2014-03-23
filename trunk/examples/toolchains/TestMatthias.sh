@@ -34,6 +34,14 @@ trunk/examples/toolchains/AutomizerTestDir.sh -ea 20 "$2" \
 fi
 
 
+if [ "$1" = "svcompForwardBackward" ]; then
+echo "testing different interpolation techniques"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 "$2" \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_Svcomp_300.epf" \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/BackwardPredicates_Svcomp_300.epf"
+fi
+
+
 
 if [ "$1" = "terminator2" ]; then
 echo "buchiAutomizer for folder $2"
