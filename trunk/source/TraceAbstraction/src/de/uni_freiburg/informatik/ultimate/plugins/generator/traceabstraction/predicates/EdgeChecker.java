@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -41,6 +42,9 @@ public class EdgeChecker {
 	private final InCaReCounter m_SdEdgeChecks;
 	private final InCaReCounter m_LazySdEdgeChecks;
 	private final InCaReCounter m_SolverEdgeChecks;
+	
+	private static final String s_StartEdgeCheck = "starting to check validity of Hoare triples";
+	private static final String s_EndEdgeCheck = "finished to check validity of Hoare triples";
 	
 	public EdgeChecker(SmtManager smtManager, 
 			ModifiableGlobalVariableManager modGlobVarManager, 
@@ -82,6 +86,7 @@ public class EdgeChecker {
 	public LBool assertPrecondition(IPredicate p) {
 		if (m_SmtManager.getStatus() == SmtManager.Status.IDLE) {
 			m_SmtManager.setStatus(Status.EDGECHECK);
+			m_Script.echo(new QuotedObject(s_StartEdgeCheck));
 		}
 		assert (m_SmtManager.getStatus() == Status.EDGECHECK) : "SmtManager is busy";
 		assert m_PrePred == null : "PrePred already asserted";
@@ -133,6 +138,7 @@ public class EdgeChecker {
 		}
 		if (m_CodeBlock == null) {
 			m_SmtManager.setStatus(Status.IDLE);
+			m_Script.echo(new QuotedObject(s_EndEdgeCheck));
 		}
 	}
 	
@@ -140,6 +146,7 @@ public class EdgeChecker {
 	public LBool assertCodeBlock(CodeBlock cb) {
 		if (m_SmtManager.getStatus() == Status.IDLE) {
 			m_SmtManager.setStatus(Status.EDGECHECK);
+			m_Script.echo(new QuotedObject(s_StartEdgeCheck));
 		}
 		assert (m_SmtManager.getStatus() == Status.EDGECHECK) : "SmtManager is busy";
 		assert m_CodeBlock == null : "CodeBlock already asserted";
@@ -213,6 +220,7 @@ public class EdgeChecker {
 		m_Script.pop(1);
 		if (m_PrePred == null) {
 			m_SmtManager.setStatus(Status.IDLE);
+			m_Script.echo(new QuotedObject(s_EndEdgeCheck));
 		}
 
 	}

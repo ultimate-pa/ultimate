@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.ReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -371,6 +372,7 @@ public class SmtManager {
 			assert m_TraceCheckStartTime == Long.MIN_VALUE;
 			m_TraceCheckStartTime = System.nanoTime();
 			setStatus(Status.TRACECHECK);
+			m_Script.echo(new QuotedObject("starting trace check"));
 			m_IndexedConstants = new ScopedHashMap<String, Term>();
 			m_Script.push(1);
 		}
@@ -382,6 +384,7 @@ public class SmtManager {
 		} else {
 			m_TraceCheckTime += (System.nanoTime() - m_TraceCheckStartTime);
 			m_TraceCheckStartTime = Long.MIN_VALUE;
+			m_Script.echo(new QuotedObject("finished trace check"));
 			setStatus(Status.IDLE);
 			m_IndexedConstants = null;
 			m_Script.pop(1);
