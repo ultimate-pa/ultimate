@@ -308,7 +308,7 @@ public class SimplifyDDA extends NonRecursive {
 			}
 		}
 		public String toString() {
-			return "PrepareSimplifier["+mTerm+"]"; 
+			return "PrepareSimplifier[" + mTerm + "]"; 
 		}
 	}
 	
@@ -326,7 +326,7 @@ public class SimplifyDDA extends NonRecursive {
 			info.mSimplified = simplifier.popResult();
 		}
 		public String toString() {
-			return "StoreSimplified["+mTerm+"]"; 
+			return "StoreSimplified[" + mTerm + "]"; 
 		}
 	}
 
@@ -593,7 +593,6 @@ public class SimplifyDDA extends NonRecursive {
 		if (checktype != null)
 			mScript.setOption(":check-type", checktype);
 		return areTermsEquivalent;
-		
 	}
 	
 	/**
@@ -650,12 +649,12 @@ public class SimplifyDDA extends NonRecursive {
 	 * @param mTerm whose Sort is Boolean
 	 */
 	public Term getSimplifiedTerm(Term inputTerm) throws SMTLIBException {
-		mScript.echo(new QuotedObject("beginning SimplifyDDA"));
 //		m_Logger.debug("Simplifying " + term);
 		/* We can only simplify boolean terms. */
 		if (!inputTerm.getSort().getName().equals("Bool"))
 			return inputTerm;
 		Term term = inputTerm;
+		mScript.echo(new QuotedObject("Begin Simplifier"));
 		mScript.push(1);
 		final TermVariable[] vars = term.getFreeVars();
 		final Term[] values = new Term[vars.length];
@@ -687,7 +686,7 @@ public class SimplifyDDA extends NonRecursive {
 		mScript.pop(1);
 		assert (checkEquivalence(inputTerm, term) == LBool.UNSAT)
 			: "Simplification unsound?";
-		mScript.echo(new QuotedObject("finished SimplifyDDA"));
+		mScript.echo(new QuotedObject("End Simplifier"));
 		return term;
 	}
 	

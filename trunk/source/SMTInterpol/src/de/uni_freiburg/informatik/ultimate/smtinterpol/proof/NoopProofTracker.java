@@ -90,7 +90,7 @@ public class NoopProofTracker implements IProofTracker {
 	public void equality(Term[] args, Object res, int rule) { /* Noop */ }
 
 	@Override
-	public void distinctBinary(Term lhs, Term rhs, boolean firstNegated) {
+	public void distinctBoolEq(Term lhs, Term rhs, boolean firstNegated) {
 		/* Noop */
 	}
 

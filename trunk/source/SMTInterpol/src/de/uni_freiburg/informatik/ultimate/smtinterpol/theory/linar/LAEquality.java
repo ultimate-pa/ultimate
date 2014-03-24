@@ -66,13 +66,14 @@ public class LAEquality extends DPLLAtom {
 		MutableAffinTerm at = new MutableAffinTerm();
 		at.add(Rational.ONE, mVar);
 		at.add(mBound.negate());
-		Sort s = smtTheory.getSort(mVar.mIsInt ? "Int" : "Real");
+		boolean isInt = mVar.mIsInt && mBound.isIntegral();
+		Sort s = smtTheory.getSort(isInt ? "Int" : "Real");
 		Sort[] binfunc = {s,s};
 		FunctionSymbol comp =  
 				smtTheory.getFunction("=", binfunc);
 		Term res = smtTheory.term(comp,
-				at.toSMTLib(smtTheory, mVar.mIsInt, quoted),
-				mVar.mIsInt ? smtTheory.numeral(BigInteger.ZERO)
+				at.toSMTLib(smtTheory, isInt, quoted),
+				isInt ? smtTheory.numeral(BigInteger.ZERO)
 					: smtTheory.rational(BigInteger.ZERO,BigInteger.ONE));
 		return quoted ? smtTheory.annotatedTerm(NamedAtom.QUOTED, res) : res;
 	}

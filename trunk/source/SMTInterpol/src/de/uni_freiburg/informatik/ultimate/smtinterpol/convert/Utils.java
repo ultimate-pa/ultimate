@@ -393,10 +393,10 @@ public class Utils {
 			}
 			// Heuristics: Try to find an already negated term
 			if (isNegation(t0)) {
-				mTracker.distinctBinary(t0, t1, true);
+				mTracker.distinctBoolEq(t0, t1, true);
 				return theory.term("=", createNot(t0), t1);
 			}
-			mTracker.distinctBinary(t0, t1, false);
+			mTracker.distinctBoolEq(t0, t1, false);
 			return theory.term("=", t0, createNot(t1));
 		}
 		LinkedHashSet<Term> tmp = new LinkedHashSet<Term>();

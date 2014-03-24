@@ -67,7 +67,7 @@ public interface IProofTracker {
 	 * @param rhs          The right-hand-side of the distinct.
 	 * @param firstNegated Should the lhs be negated?
 	 */
-	public void distinctBinary(Term lhs, Term rhs, boolean firstNegated);
+	public void distinctBoolEq(Term lhs, Term rhs, boolean firstNegated);
 	/**
 	 * Track the result of a negation rewrite.
 	 * @param pos  What to negate.

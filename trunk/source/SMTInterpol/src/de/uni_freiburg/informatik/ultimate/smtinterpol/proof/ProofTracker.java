@@ -426,13 +426,13 @@ public class ProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public void distinctBinary(Term lhs, Term rhs, boolean firstNegated) {
+	public void distinctBoolEq(Term lhs, Term rhs, boolean firstNegated) {
 		Theory t = lhs.getTheory();
 		Term distinct = t.term("distinct", lhs, rhs);
 		Term res = firstNegated ? t.term("=", t.term(t.mNot, lhs), rhs)
 			: t.term("=", lhs, t.term(t.mNot, rhs));
 		append(new ResultRewrite(
-				distinct, res, ProofConstants.RW_DISTINCT_BINARY));
+				distinct, res, ProofConstants.RW_DISTINCT_BOOL_EQ));
 	}
 
 	@Override
