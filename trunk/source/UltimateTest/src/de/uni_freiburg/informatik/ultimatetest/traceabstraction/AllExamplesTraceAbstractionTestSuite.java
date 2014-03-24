@@ -6,7 +6,6 @@ package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
  * @author musab@informatik.uni-freiburg.de
@@ -19,10 +18,10 @@ public class AllExamplesTraceAbstractionTestSuite extends
 	// Time out for each test case in milliseconds
 	private static int m_Timeout = 20000;
 
-	private static final boolean m_TraceAbstractionWithForwardPredicates = false;
-	private static final boolean m_TraceAbstractionWithBackwardPredicates = !false;
-	private static final boolean m_TraceAbstractionCWithForwardPredicates = false;
-	private static final boolean m_TraceAbstractionCWithBackwardPredicates = !false;
+	private static final boolean m_TraceAbstractionWithForwardPredicates = true;
+	private static final boolean m_TraceAbstractionWithBackwardPredicates = true;
+	private static final boolean m_TraceAbstractionCWithForwardPredicates = true;
+	private static final boolean m_TraceAbstractionCWithBackwardPredicates = true;
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
