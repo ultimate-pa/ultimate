@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
@@ -649,6 +650,7 @@ public class SimplifyDDA extends NonRecursive {
 	 * @param mTerm whose Sort is Boolean
 	 */
 	public Term getSimplifiedTerm(Term inputTerm) throws SMTLIBException {
+		mScript.echo(new QuotedObject("beginning SimplifyDDA"));
 //		m_Logger.debug("Simplifying " + term);
 		/* We can only simplify boolean terms. */
 		if (!inputTerm.getSort().getName().equals("Bool"))
@@ -685,6 +687,7 @@ public class SimplifyDDA extends NonRecursive {
 		mScript.pop(1);
 		assert (checkEquivalence(inputTerm, term) == LBool.UNSAT)
 			: "Simplification unsound?";
+		mScript.echo(new QuotedObject("finished SimplifyDDA"));
 		return term;
 	}
 	
