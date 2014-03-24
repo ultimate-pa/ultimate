@@ -32,6 +32,10 @@ public interface ITestSummary {
 
 	public File getSummaryLogFileName();
 
+	/**
+	 * A string that names this test summary 
+	 * @return
+	 */
 	public String getTestSuiteCanonicalName();
 
 	/**

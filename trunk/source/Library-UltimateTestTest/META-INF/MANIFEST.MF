@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Library-UltimateTestTest
+Bundle-SymbolicName: Library-UltimateTestTest
+Bundle-Version: 0.0.1
+Fragment-Host: Library-UltimateTest
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Require-Bundle: Library-junit-helper,
+ org.junit
+Import-Package: org.junit,
+ org.junit.runner,
+ org.junit.runners,
+ junit.framework,
+ org.junit.runner.notification

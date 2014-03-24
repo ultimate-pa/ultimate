@@ -6,8 +6,11 @@ import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDeci
 
 public class TraceAbstractionTestResultDecider extends SafetyCheckTestResultDecider {
 
-	public TraceAbstractionTestResultDecider(File inputFile) {
+	private File mSettingsFile;
+
+	public TraceAbstractionTestResultDecider(File inputFile,File settingsFile) {
 		super(inputFile);
+		mSettingsFile = settingsFile;
 	}
 
 	@Override
@@ -24,4 +27,7 @@ public class TraceAbstractionTestResultDecider extends SafetyCheckTestResultDeci
 		}
 	}
 
+	public File getSettingsFile() {
+		return mSettingsFile;
+	}
 }

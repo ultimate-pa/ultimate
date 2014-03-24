@@ -9,8 +9,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Random;
 
 import org.apache.log4j.Logger;
 
@@ -41,6 +43,18 @@ public class Util {
 		}
 	}
 
+	/**
+	 * Generates a name based on the current time, the original name of the
+	 * input file and the description string such that it should be unique and
+	 * recognizable.
+	 * 
+	 * @param inputFile
+	 *            An instance representing a file on the local machine
+	 * @param description
+	 *            A description for the log file name.
+	 * @return A string representing the absolute path to a file on the local
+	 *         machine.
+	 */
 	public static String generateLogFilename(File inputFile, String description) {
 
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
@@ -233,6 +247,24 @@ public class Util {
 		return rtr;
 	}
 
+	public static <E> Collection<E> uniformN(Collection<E> collection, int n) {
+		ArrayList<E> rtr = new ArrayList<E>(n);
+		int i = 1;
+		int size = collection.size();
+		int step = 1;
+		if (n != 0) {
+			step = (int) Math.floor(((double) size) / ((double) n));
+		}
+
+		for (E elem : collection) {
+			if (i % step == 0) {
+				rtr.add(elem);
+			}
+			++i;
+		}
+		return rtr;
+	}
+
 	/**
 	 * 
 	 * @param logger
@@ -391,4 +423,52 @@ public class Util {
 		}
 	}
 
+	/**
+	 * Indents a (possibly multiline) String such that the resulting
+	 * StringBuilder object contains the same String, but indented with the
+	 * indentPrefix. It also converts line breaks to the system-specific line
+	 * separator.
+	 * 
+	 * @param original
+	 * @param indentPrefix
+	 * @param forceRemoveLastLinebreak
+	 *            When true, the last linebreak will always be removed, when
+	 *            false, an existing last line break will be preserved (but
+	 *            converted to system-specific line break)
+	 * @return
+	 */
+	public static StringBuilder indentMultilineString(String original, String indentPrefix,
+			boolean forceRemoveLastLinebreak) {
+		StringBuilder sb = new StringBuilder();
+		String lineSeparator = System.getProperty("line.separator");
+		String[] splitted = original.split("\\r?\\n");
+
+		for (String s : splitted) {
+			sb.append(indentPrefix).append(s).append(lineSeparator);
+		}
+
+		char last = original.charAt(original.length() - 1);
+		if (forceRemoveLastLinebreak || (last != '\n' && last != '\r')) {
+			sb.replace(sb.length() - lineSeparator.length(), sb.length(), "");
+		}
+		return sb;
+	}
+
+	/**
+	 * Flattens a string, i.e. removes all line breaks and replaces them with
+	 * separator
+	 * 
+	 * @param original
+	 * @param separator
+	 * @return
+	 */
+	public static StringBuilder flatten(String original, String separator) {
+		StringBuilder sb = new StringBuilder();
+		String[] splitted = original.split("\\r?\\n");
+		for (String s : splitted) {
+			sb.append(s).append(separator);
+		}
+		sb.replace(sb.length() - separator.length(), sb.length(), "");
+		return sb;
+	}
 }
