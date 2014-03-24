@@ -117,7 +117,7 @@ public class TraceAbstractionBenchmarks {
 	}
 	
 	
-	public String printBenchmarkResults() {
+	public String timingResults() {
 		assert m_Finished : "finish trace abstraction first";
 		StringBuilder sb  = new StringBuilder();
 		sb.append("Trace Abstraction runtime: ");
@@ -139,7 +139,14 @@ public class TraceAbstractionBenchmarks {
 			sb.append(prettyprintNanoseconds(differenceSmtSolver));
 			sb.append(") Automata minimization: ");
 			sb.append(prettyprintNanoseconds(automataMinimization));
-			sb.append("\n\t\t");
+		}
+		return sb.toString();
+	}
+	
+	
+	public String printPredicateResults() {
+		assert m_Finished : "finish trace abstraction first";
+		StringBuilder sb  = new StringBuilder();
 			if (m_totalNumberOfPredicates != null && !m_totalNumberOfPredicates.isEmpty()) {
 				sb.append("Total num of predicates: " + getSumOfIntegerList(m_totalNumberOfPredicates));
 			}
@@ -155,8 +162,13 @@ public class TraceAbstractionBenchmarks {
 			if (m_SizeOfPredicatesBP != null && !m_SizeOfPredicatesBP.isEmpty()) {
 				sb.append("\tSize of predicates BP: " + getSumOfIntegerArrays(m_SizeOfPredicatesBP));
 			}
-		}
 		return sb.toString();
+	}
+	
+	
+	
+	public String printBenchmarkResults() {
+		return timingResults() + " " + printPredicateResults();
 	}
 	
 	public void setCounterExampleFeasible() {
@@ -197,7 +209,7 @@ public class TraceAbstractionBenchmarks {
 	
 	@Override
 	public String toString() {
-		return printBenchmarkResults();
+		return timingResults() + "\n\t\t" + printPredicateResults();
 	}
 
 	public void addTotalNumberOfPredicates(Integer totalNumberOfPredicates) {

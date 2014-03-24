@@ -181,13 +181,13 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		stat += m_OverallBiggestAbstraction;
 		stat += " states.";
 		s_Logger.warn(stat);
-		s_Logger.warn("PC#: " + smtManager.getInterpolQueries());
-		s_Logger.warn("TIME#: " + smtManager.getInterpolQuriesTime());
-		s_Logger.warn("ManipulationTIME#: " + smtManager.getTraceCheckTime());
-		s_Logger.warn("EC#: " + timingStatistics.getEdgeCheckerBenchmark().getSolverCounter());
-		s_Logger.warn("TIME#: " + smtManager.getSatCheckTime());
-		s_Logger.warn("ManipulationTIME#: "	+ smtManager.getSatCheckTime());
-		s_Logger.warn(timingStatistics.printBenchmarkResults());
+//		s_Logger.warn("PC#: " + smtManager.getInterpolQueries());
+//		s_Logger.warn("TIME#: " + smtManager.getInterpolQuriesTime());
+//		s_Logger.warn("ManipulationTIME#: " + smtManager.getTraceCheckTime());
+//		s_Logger.warn("EC#: " + timingStatistics.getEdgeCheckerBenchmark().getSolverCounter());
+//		s_Logger.warn("TIME#: " + smtManager.getSatCheckTime());
+//		s_Logger.warn("ManipulationTIME#: "	+ smtManager.getSatCheckTime());
+		s_Logger.warn("BenchmarkResult: " + timingStatistics.printBenchmarkResults());
 		switch (m_OverallResult) {
 		case SAFE:
 //			s_Logger.warn("Program is correct");
