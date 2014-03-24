@@ -32,7 +32,7 @@ public class ExamplesInMinitestsDirectoryTraceAbstractionTestSuite extends
 		if (m_TraceAbstractionWithForwardPredicates) {
 			addTestCases(
 					"AutomizerBpl.xml",
-					"settingsForwardPredicates.epf",
+					"traceAbstractionTestSuite/settingsForwardPredicates.epf",
 				    m_Path,
 				    new String[] {".bpl"},
 				    "Trace Abstraction",
@@ -42,7 +42,7 @@ public class ExamplesInMinitestsDirectoryTraceAbstractionTestSuite extends
 		if (m_TraceAbstractionWithBackwardPredicates) {
 			addTestCases(
 					"AutomizerBpl.xml",
-					"settingsBackwardPredicates.epf",
+					"traceAbstractionTestSuite/settingsBackwardPredicates.epf",
 				    m_Path,
 				    new String[] {".bpl"},
 				    "Trace Abstraction",
@@ -52,7 +52,7 @@ public class ExamplesInMinitestsDirectoryTraceAbstractionTestSuite extends
 		if (m_TraceAbstractionCWithForwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
-					"settingsForwardPredicates.epf",
+					"traceAbstractionTestSuite/settingsForwardPredicates.epf",
 				    m_Path,
 				    new String[] {".c", ".i"},
 				    "Trace Abstraction",
@@ -62,7 +62,7 @@ public class ExamplesInMinitestsDirectoryTraceAbstractionTestSuite extends
 		if (m_TraceAbstractionCWithBackwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
-					"settingsBackwardPredicates.epf",
+					"traceAbstractionTestSuite/settingsBackwardPredicates.epf",
 				    m_Path,
 				    new String[] {".c", ".i"},
 				    "Trace Abstraction",

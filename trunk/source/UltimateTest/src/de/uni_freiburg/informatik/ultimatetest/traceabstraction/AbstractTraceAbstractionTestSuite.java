@@ -16,7 +16,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 	private String m_summaryLogFileName;
 	private ITestSummary m_Summary;
 
-	private static final String m_PathToSettings = "examples/settings/traceAbstractionTestSuite/";
+	private static final String m_PathToSettings = "examples/settings/";
 	private static final String m_PathToToolchains = "examples/toolchains/";
 
 	@Override

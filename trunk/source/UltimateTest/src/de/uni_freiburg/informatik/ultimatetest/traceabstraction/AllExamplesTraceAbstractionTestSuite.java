@@ -28,7 +28,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 		if (m_TraceAbstractionWithForwardPredicates) {
 			addTestCases(
 					"AutomizerBpl.xml",
-					"settingsForwardPredicates.epf",
+					"traceAbstractionTestSuite/settingsForwardPredicates.epf",
 				    m_Path,
 				    new String[] {".bpl"},
 				    "Trace Abstraction via Forward Predicates (SP)",
@@ -38,7 +38,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 		if (m_TraceAbstractionWithBackwardPredicates) {
 			addTestCases(
 					"AutomizerBpl.xml",
-					"settingsBackwardPredicates.epf",
+					"traceAbstractionTestSuite/settingsBackwardPredicates.epf",
 				    m_Path,
 				    new String[] {".bpl"},
 				    "Trace Abstraction via Backward Predicates (WP)",
@@ -48,7 +48,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 		if (m_TraceAbstractionCWithForwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
-					"settingsForwardPredicates.epf",
+					"traceAbstractionTestSuite/settingsForwardPredicates.epf",
 				    m_Path,
 				    new String[] {".c", ".i"},
 				    "Trace Abstraction via Forward Predicates (SP)",
@@ -58,7 +58,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 		if (m_TraceAbstractionCWithBackwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
-					"settingsBackwardPredicates.epf",
+					"traceAbstractionTestSuite/settingsBackwardPredicates.epf",
 				    m_Path,
 				    new String[] {".c", ".i"},
 				    "Trace Abstraction via Backward Predicates (WP)",
