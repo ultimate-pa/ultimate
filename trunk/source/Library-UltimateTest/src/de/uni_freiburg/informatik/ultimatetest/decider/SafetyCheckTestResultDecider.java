@@ -27,7 +27,7 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util.ExpectedResult;
 /**
  * Decide if one of Ultimate's Safety Checkers verified a program correctly.
  * 
- * @author Betim Musa, Matthias Heizmann
+ * @author Betim Musa, Matthias Heizmann, dietsch
  * 
  */
 public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
@@ -83,64 +83,67 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 					+ "Use //#Safe or //#Unsafe to indicate that the program is safe resp. unsafe. Use "
 					+ "//#NoSpec if there is still no decision about the specification.");
 		}
-		SafetyCheckerResult automizerResult = getAutomizerResult(mResults);
-		assert (automizerResult != null) : "if there is no result you should use NO_RESULT";
-		switch (automizerResult.getAutomizerResultType()) {
-		case EXCEPTION_OR_ERROR:
+		SafetyCheckerResult scResult = getSafetyCheckerResult(mResults);
+		if (scResult == null) {
 			testoutcome = TestResult.FAIL;
-			break;
-		case SAFE:
-			if (getExpectedResult() == ExpectedResult.SAFE) {
-				testoutcome = TestResult.SUCCESS;
-			} else if (getExpectedResult() == ExpectedResult.NOANNOTATION) {
-				testoutcome = TestResult.UNKNOWN;
-			} else {
+		} else {
+			switch (scResult.getAutomizerResultType()) {
+			case EXCEPTION_OR_ERROR:
 				testoutcome = TestResult.FAIL;
-			}
-			break;
-		case UNSAFE:
-			if (getExpectedResult() == ExpectedResult.UNSAFE) {
-				testoutcome = TestResult.SUCCESS;
-			} else if (getExpectedResult() == ExpectedResult.NOANNOTATION) {
-				testoutcome = TestResult.UNKNOWN;
-			} else {
+				break;
+			case SAFE:
+				if (getExpectedResult() == ExpectedResult.SAFE) {
+					testoutcome = TestResult.SUCCESS;
+				} else if (getExpectedResult() == ExpectedResult.NOANNOTATION) {
+					testoutcome = TestResult.UNKNOWN;
+				} else {
+					testoutcome = TestResult.FAIL;
+				}
+				break;
+			case UNSAFE:
+				if (getExpectedResult() == ExpectedResult.UNSAFE) {
+					testoutcome = TestResult.SUCCESS;
+				} else if (getExpectedResult() == ExpectedResult.NOANNOTATION) {
+					testoutcome = TestResult.UNKNOWN;
+				} else {
+					testoutcome = TestResult.FAIL;
+				}
+				break;
+			case UNKNOWN:
+				// syntax error should always have been found
+				if (getExpectedResult() == ExpectedResult.SYNTAXERROR) {
+					testoutcome = TestResult.FAIL;
+				} else {
+					testoutcome = TestResult.UNKNOWN;
+				}
+				break;
+			case SYNTAX_ERROR:
+				if (getExpectedResult() == ExpectedResult.SYNTAXERROR) {
+					testoutcome = TestResult.SUCCESS;
+				} else {
+					testoutcome = TestResult.FAIL;
+				}
+				break;
+			case TIMEOUT:
+				// syntax error should always have been found
+				if (getExpectedResult() == ExpectedResult.SYNTAXERROR) {
+					testoutcome = TestResult.FAIL;
+				} else {
+					testoutcome = TestResult.UNKNOWN;
+				}
+				break;
+			case UNSUPPORTED_SYNTAX:
 				testoutcome = TestResult.FAIL;
-			}
-			break;
-		case UNKNOWN:
-			// syntax error should always have been found
-			if (getExpectedResult() == ExpectedResult.SYNTAXERROR) {
+				break;
+			case NO_RESULT:
 				testoutcome = TestResult.FAIL;
-			} else {
-				testoutcome = TestResult.UNKNOWN;
+				break;
+			default:
+				throw new AssertionError("unknown case");
 			}
-			break;
-		case SYNTAX_ERROR:
-			if (getExpectedResult() == ExpectedResult.SYNTAXERROR) {
-				testoutcome = TestResult.SUCCESS;
-			} else {
-				testoutcome = TestResult.FAIL;
-			}
-			break;
-		case TIMEOUT:
-			// syntax error should always have been found
-			if (getExpectedResult() == ExpectedResult.SYNTAXERROR) {
-				testoutcome = TestResult.FAIL;
-			} else {
-				testoutcome = TestResult.UNKNOWN;
-			}
-			break;
-		case UNSUPPORTED_SYNTAX:
-			testoutcome = TestResult.FAIL;
-			break;
-		case NO_RESULT:
-			testoutcome = TestResult.FAIL;
-			break;
-		default:
-			throw new AssertionError("unknown case");
 		}
 
-		generateResultMessageAndCategory(automizerResult);
+		generateResultMessageAndCategory(scResult);
 		Util.logResults(log, mInputFile, !getJUnitTestResult(testoutcome), customMessages);
 		return testoutcome;
 	}
@@ -222,7 +225,7 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 		setResultCategory(safetyCheckerResult.getAutomizerResultType().toString());
 	}
 
-	private SafetyCheckerResult getAutomizerResult(Collection<IResult> results) {
+	private SafetyCheckerResult getSafetyCheckerResult(Collection<IResult> results) {
 		final SafetyCheckerResult returnValue;
 		Map<SafetyCheckerResultType, SafetyCheckerResult> resultSet = new HashMap<SafetyCheckerResultType, SafetyCheckerResult>();
 		for (IResult result : results) {
