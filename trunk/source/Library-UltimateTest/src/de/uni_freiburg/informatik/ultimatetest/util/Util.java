@@ -354,10 +354,15 @@ public class Util {
 				return ExpectedResult.SYNTAXERROR;
 			}
 		}
-		if (inputFile.getName().toLowerCase().contains("-safe") || inputFile.getName().toLowerCase().contains("_safe")) {
+		if (inputFile.getName().toLowerCase().contains("-safe") 
+				|| inputFile.getName().toLowerCase().contains("_safe")
+				// true-unreach-label is the SV-COMP annotation for safe
+				|| inputFile.getName().toLowerCase().contains("true-unreach-label")){
 			return ExpectedResult.SAFE;
 		} else if (inputFile.getName().toLowerCase().contains("-unsafe")
-				|| inputFile.getName().toLowerCase().contains("_unsafe")) {
+				|| inputFile.getName().toLowerCase().contains("_unsafe")
+				// false-unreach-label is the SV-COMP annotation for safe
+				|| inputFile.getName().toLowerCase().contains("false-unreach-label")){
 			return ExpectedResult.UNSAFE;
 		}
 		return ExpectedResult.NOANNOTATION;
