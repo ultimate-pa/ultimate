@@ -352,7 +352,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	}
 	
 	private void reportTimingStatistics(RootNode root, TraceAbstractionBenchmarks timingStatistics) {
-		String shortDescription = "Ultimate Automizer runtime statistics";
+		String shortDescription = "Ultimate Automizer benchmark data";
 		long time = System.currentTimeMillis() - m_StartingTime;
 		if (root.getOutgoingNodes().isEmpty()) {
 			s_Logger.warn("No procedure was checked. I don't know any location."
