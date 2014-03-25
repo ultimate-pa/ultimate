@@ -49,8 +49,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Combo, Determinization.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_DIFFERENCE_SENWA,
 						DEF_DIFFERENCE_SENWA, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_MINIMIZE,
-						DEF_MINIMIZE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Minimization>(LABEL_MINIMIZE,
+						Minimization.MINIMIZE_SEVPA, PreferenceType.Combo, 
+						Minimization.values()),
 				new UltimatePreferenceItem<Concurrency>(LABEL_CONCURRENCY,
 						Concurrency.FINITE_AUTOMATA, PreferenceType.Combo,
 						Concurrency.values()),
@@ -92,7 +93,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_DUMPPATH = "Dump formulas of problems in the following path";
 	public static final String LABEL_DETERMINIZATION = "Determinization algorithm";
 	public static final String LABEL_DIFFERENCE_SENWA = "DifferenceSenwa operation instead classical Difference";
-	public static final String LABEL_MINIMIZE = "Minimize abstraction";
+	public static final String LABEL_MINIMIZE = "Minimization of abstraction";
 	public static final String LABEL_CONCURRENCY = "Automaton type used in concurrency analysis";
 	public static final String LABEL_Order = "Order in Petri net unfolding";
 	public static final String LABEL_cutOff = "cut-off requires same transition";
@@ -142,6 +143,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public enum INTERPOLATION {
 		Craig_NestedInterpolation, Craig_TreeInterpolation, ForwardPredicates, BackwardPredicates, FPandBP
 	}
+	
+	public enum Minimization { NONE, MINIMIZE_SEVPA, SHRINK_NWA }
 	
 
 }

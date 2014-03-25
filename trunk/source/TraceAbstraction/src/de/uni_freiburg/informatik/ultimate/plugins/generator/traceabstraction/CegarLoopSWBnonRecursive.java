@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
@@ -622,17 +623,24 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 		s_Logger.info("Interpolant automaton has "
 				+ m_InterpolAutomaton.sizeInformation());
 
-		if (m_Pref.minimize())
-		{
+		Minimization minimization = m_Pref.minimize();
+		switch (minimization) {
+		case NONE:
+			break;
+		case MINIMIZE_SEVPA:
+		case SHRINK_NWA:
 			s_Logger.debug("Minimizing interpolant automaton.");
 
 			RemoveUnreachable<CodeBlock, IPredicate> removeUnreachable = new RemoveUnreachable<CodeBlock, IPredicate>((INestedWordAutomatonSimple<CodeBlock, IPredicate>) m_Abstraction); 
 			m_Abstraction = removeUnreachable.getResult();
-
+			
 			RemoveDeadEnds<CodeBlock, IPredicate> removeDeadEnds = new RemoveDeadEnds<CodeBlock, IPredicate>((INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction);
 			m_Abstraction = removeDeadEnds.getResult();
-
-			minimizeAbstraction(m_StateFactoryForRefinement, m_PredicateFactoryResultChecking);
+					
+			minimizeAbstraction(m_StateFactoryForRefinement, m_PredicateFactoryResultChecking, minimization);
+			break;
+		default:
+			throw new AssertionError();
 		}
 
 		return true;

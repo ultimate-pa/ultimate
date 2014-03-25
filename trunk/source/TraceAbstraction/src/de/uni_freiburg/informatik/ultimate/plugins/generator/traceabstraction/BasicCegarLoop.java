@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
@@ -515,10 +516,17 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 //		(new RemoveDeadEnds<CodeBlock, IPredicate>((INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction)).getResult();
 		m_TraceAbstractionBenchmarks.finishDifference();
 		
-		if (m_Pref.minimize()) {
-			minimizeAbstraction(m_StateFactoryForRefinement, m_PredicateFactoryResultChecking);
+		Minimization minimization = m_Pref.minimize();
+		switch (minimization) {
+		case NONE:
+			break;
+		case MINIMIZE_SEVPA:
+		case SHRINK_NWA:
+			minimizeAbstraction(m_StateFactoryForRefinement, m_PredicateFactoryResultChecking, minimization);
+			break;
+		default:
+			throw new AssertionError();
 		}
-		
 		
 //		MinimizeSevpa<CodeBlock, Predicate> sev = new MinimizeSevpa<CodeBlock, Predicate>(abstraction);
 //		new MinimizeSevpa<CodeBlock, Predicate>.Partitioning(0);
@@ -551,7 +559,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	 * used for checking correctness of the result (if assertions are enabled). 
 	 */
 	protected void minimizeAbstraction(PredicateFactory predicateFactoryRefinement,
-			PredicateFactoryResultChecking resultCheckPredFac)
+			PredicateFactoryResultChecking resultCheckPredFac, Minimization minimization)
 			throws OperationCanceledException, AutomataLibraryException,
 			AssertionError {
 		if (m_Pref.dumpAutomata()) {
@@ -563,9 +571,21 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		int oldSize = m_Abstraction.size();
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
 		Collection<Set<IPredicate>> partition = computePartition(newAbstraction);
-		boolean shrinkNwa = m_Pref.cutOffRequiresSameTransition();
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized;
-		if (false && shrinkNwa) {
+		switch (minimization) {
+		case MINIMIZE_SEVPA:
+		{
+			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(newAbstraction, partition, false, false, predicateFactoryRefinement);
+			assert minimizeOp.checkResult(resultCheckPredFac);
+			minimized = minimizeOp.getResult();
+			if (m_ComputeHoareAnnotation) {
+				Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
+				m_Haf.updateOnMinimization(oldState2newState, minimized);
+			}
+			break;
+		}
+		case SHRINK_NWA:
+		{
 			ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(
 					predicateFactoryRefinement, newAbstraction, partition, true, false, false, 200, false, 0, false, false);
 			assert minimizeOp.checkResult(resultCheckPredFac);
@@ -574,15 +594,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
 				m_Haf.updateOnMinimization(oldState2newState, minimized);
 			}
-		} else {
-			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(newAbstraction, partition, false, false, predicateFactoryRefinement);
-			assert minimizeOp.checkResult(resultCheckPredFac);
-			minimized = minimizeOp.getResult();
-			if (m_ComputeHoareAnnotation) {
-				Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
-				m_Haf.updateOnMinimization(oldState2newState, minimized);
-			}
-
+			break;
+		}
+		case NONE:
+		default:
+			throw new AssertionError();
 		}
 		int newSize = minimized.size();
 		m_Abstraction = minimized;

@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 
 public class TAPreferences {
 
@@ -16,7 +17,7 @@ public class TAPreferences {
 	private final boolean m_DumpAutomata;
 	private final String m_DumpPath;
 	private final Determinization m_Determiniation;
-	private final boolean m_Minimize;
+	private final Minimization m_Minimize;
 	private final boolean m_Hoare;
 	private final Concurrency m_Concurrency;
 	private final boolean m_SeperateViolationCheck = true;
@@ -33,6 +34,8 @@ public class TAPreferences {
 	public enum Determinization {
 		POWERSET, BESTAPPROXIMATION, SELFLOOP, STRONGESTPOST, EAGERPOST, LAZYPOST, NEWEAGER, CODENAME_PROJECT_BELLWALD
 	}
+	
+
 
 	public enum Concurrency {
 		FINITE_AUTOMATA, PETRI_NET
@@ -76,7 +79,7 @@ public class TAPreferences {
 				TraceAbstractionPreferenceInitializer.LABEL_DETERMINIZATION,
 				Determinization.class);
 
-		m_Minimize = m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE);
+		m_Minimize = m_Prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE,Minimization.class);
 
 		m_Concurrency = m_Prefs.getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_CONCURRENCY, Concurrency.class);
@@ -179,7 +182,7 @@ public class TAPreferences {
 	/**
 	 * @return the minimize
 	 */
-	public boolean minimize() {
+	public Minimization minimize() {
 		return m_Minimize;
 	}
 
