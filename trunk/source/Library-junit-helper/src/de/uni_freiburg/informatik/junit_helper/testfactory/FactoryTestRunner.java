@@ -10,14 +10,17 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.TestClass;
+
 import static org.junit.Assert.*;
 
 public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 
 	private ArrayList<FrameworkMethod> mTests;
+	private String mTestSuiteName;
 
 	public FactoryTestRunner(Class<?> claaas) throws InitializationError {
 		super(claaas);
+		mTestSuiteName = claaas.getSimpleName();
 	}
 
 	protected Collection<? extends FrameworkMethod> generateFactoryTests() {
@@ -117,5 +120,10 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 		public void NoFactoryTestMethod() {
 			fail("TestSuite run with custom runner FactoryTestRunner must return at least one dynamic generated test through their @TestFactory methods");
 		}
+	}
+	
+	@Override
+	protected String getName() {
+		return mTestSuiteName;
 	}
 }

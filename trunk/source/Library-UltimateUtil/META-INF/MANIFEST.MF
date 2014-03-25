@@ -5,4 +5,5 @@ Bundle-SymbolicName: Library-UltimateUtil
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Require-Bundle: Library-log4j
-Export-Package: de.uni_freiburg.informatik.ultimate.util
+Export-Package: de.uni_freiburg.informatik.ultimate.util,
+ de.uni_freiburg.informatik.ultimate.util.csv
