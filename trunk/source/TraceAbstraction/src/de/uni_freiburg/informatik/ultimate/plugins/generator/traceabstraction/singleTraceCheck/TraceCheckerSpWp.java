@@ -1070,5 +1070,15 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 
+	public static class TraceCheckerBenchmarkSpWp extends TraceCheckerBenchmark {
+
+		@Override
+		public TraceCheckerBenchmark copyAndAdd(
+				TraceCheckerBenchmark traceCheckerBenchmark) {
+			// TODO Auto-generated method stub
+			return super.copyAndAdd(traceCheckerBenchmark);
+		}
+		
+	}
 
 }

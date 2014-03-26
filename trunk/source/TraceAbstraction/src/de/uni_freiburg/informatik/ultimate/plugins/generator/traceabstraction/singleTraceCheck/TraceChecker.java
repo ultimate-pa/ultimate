@@ -870,7 +870,7 @@ public class TraceChecker {
 			/*write data to field from both objects*/
 		}
 		
-		public TraceCheckerBenchmark collect(TraceCheckerBenchmark traceCheckerBenchmark) {
+		public TraceCheckerBenchmark copyAndAdd(TraceCheckerBenchmark traceCheckerBenchmark) {
 			return new TraceCheckerBenchmark(this, traceCheckerBenchmark);
 		}
 	}

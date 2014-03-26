@@ -232,7 +232,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		if (m_TraceCheckerBenchmark == null) {
 			m_TraceCheckerBenchmark = m_TraceChecker.getTraceCheckerBenchmark();
 		} else {
-			m_TraceCheckerBenchmark.collect(m_TraceChecker.getTraceCheckerBenchmark());
+			m_TraceCheckerBenchmark.copyAndAdd(m_TraceChecker.getTraceCheckerBenchmark());
 		}
 		
 		return feasibility;
