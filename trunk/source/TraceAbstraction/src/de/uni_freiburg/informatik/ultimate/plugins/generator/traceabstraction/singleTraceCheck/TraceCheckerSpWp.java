@@ -954,6 +954,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	 * Checks whether the given predicates are inductive (correct).
  	 * For each statement st_i from the given trace, it checks whether {predicates[i-1]} st_i {predicates[i]} is a Hoare triple, but it starts
  	 * at the end of the list of predicates and proceeds backwards.
+ 	 * This ensures, that we get the first statement st, such that the corresponding Hoare triple is wrong.
  	 * @see checkPredicatesCorrect
  	 */
 	boolean checkInterpolantsCorrectBackwards(IPredicate[] interpolants,
