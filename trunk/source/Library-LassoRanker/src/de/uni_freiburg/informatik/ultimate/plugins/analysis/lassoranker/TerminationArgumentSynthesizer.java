@@ -37,7 +37,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
@@ -67,33 +66,29 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	private RankingFunction m_ranking_function = null;
 	private Collection<SupportingInvariant> m_supporting_invariants = null;
 	
-	public final Preferences m_preferences;
-	
 	private final RankingFunctionTemplate m_template;
 	
 	/**
 	 * Constructor for the termination argument function synthesizer.
-	 * @param script SMT Solver
 	 * @param stem the stem transition, may be null
 	 * @param loop the loop transition
+	 * @param template the ranking function template to be used in the analysis
 	 * @param preferences arguments to the synthesis process
 	 */
-	public TerminationArgumentSynthesizer(Script script, LinearTransition stem,
+	public TerminationArgumentSynthesizer(LinearTransition stem,
 			LinearTransition loop, RankingFunctionTemplate template,
 			Preferences preferences) {
-		super(script, stem, loop);
-		m_preferences = preferences;
+		super(stem, loop, preferences);
 		m_template = template;
 		
 		m_si_generators = new ArrayList<SupportingInvariantGenerator>();
 		m_supporting_invariants = new ArrayList<SupportingInvariant>();
 		
 		// Set logic
-		script.reset();
 		if (preferences.termination_check_nonlinear) {
-			script.setLogic(Logics.QF_NRA);
+			m_script.setLogic(Logics.QF_NRA);
 		} else {
-			script.setLogic(Logics.QF_LRA);
+			m_script.setLogic(Logics.QF_LRA);
 		}
 	}
 	
@@ -268,7 +263,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		}
 		Collection<RankVar> rankVars = getRankVars();
 		Collection<RankVar> siVars = getSIVars();
-		m_template.init(this);
+		m_template.init(this, !m_preferences.termination_check_nonlinear);
 		s_Logger.debug("Variables for ranking functions: " + rankVars);
 		s_Logger.debug("Variables for supporting invariants: " + siVars);
 /*		// The following code makes examples like StemUnsat.bpl fail

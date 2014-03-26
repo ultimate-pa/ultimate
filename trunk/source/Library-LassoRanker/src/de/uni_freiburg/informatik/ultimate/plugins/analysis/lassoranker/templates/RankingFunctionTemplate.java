@@ -63,11 +63,10 @@ public abstract class RankingFunctionTemplate {
 	 * 
 	 * @param tas the parent TerminationArgumentSynthesizer
 	 */
-	public final void init(TerminationArgumentSynthesizer tas) {
+	public final void init(TerminationArgumentSynthesizer tas, boolean linear) {
 		m_tas = tas;
 		m_script = tas.getScript();
 		m_variables = tas.getRankVars();
-		m_linear = !tas.m_preferences.termination_check_nonlinear;
 		init_template();
 		m_initialized = true;
 	}

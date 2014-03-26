@@ -39,7 +39,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -94,32 +93,33 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	
 	/**
 	 * Constructor for the termination argument function synthesizer.
-	 * @param non_decreasing produce only linear constraints? (lambda = 1)
-	 * @param script SMT Solver
+	 * 
 	 * @param stem the program stem
 	 * @param loop the program loop
+	 * @param preferences the preferences
 	 */
-	public NonTerminationArgumentSynthesizer(boolean non_decreasing,
-			Script script, LinearTransition stem, LinearTransition loop) {
-		super(script, stem, loop);
+	public NonTerminationArgumentSynthesizer(LinearTransition stem,
+			LinearTransition loop, Preferences preferences) {
+		super(stem, loop, preferences);
 		
 		m_integer_mode = (stem != null && stem.containsIntegers())
 				|| loop.containsIntegers();
 		if (!m_integer_mode) {
-			if (non_decreasing) {
-				script.setLogic(Logics.QF_LRA);
+			if (m_preferences.nontermination_check_nonlinear) {
+				m_script.setLogic(Logics.QF_NRA);
 			} else {
-				script.setLogic(Logics.QF_NRA);
+				m_script.setLogic(Logics.QF_LRA);
 			}
 		} else {
 			s_Logger.info("Using integer mode.");
-			if (!non_decreasing) {
+			if (m_preferences.nontermination_check_nonlinear) {
 				s_Logger.warn("Integer program; non-termination SMT query must "
 						+ "be linear!");
 			}
-			script.setLogic(Logics.QF_LIA);
+			m_script.setLogic(Logics.QF_LIA);
 		}
-		m_non_decreasing = non_decreasing || m_integer_mode;
+		m_non_decreasing =
+				!m_preferences.nontermination_check_nonlinear || m_integer_mode;
 	}
 	
 	@Override

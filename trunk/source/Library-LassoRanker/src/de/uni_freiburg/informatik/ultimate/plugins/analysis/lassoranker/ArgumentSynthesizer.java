@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.io.Closeable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
@@ -56,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptio
  * @see TerminationArgumentSynthesizer
  * @see NonTerminationArgumentSynthesizer
  */
-public abstract class ArgumentSynthesizer {
+public abstract class ArgumentSynthesizer implements Closeable {
 	protected static Logger s_Logger =
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
@@ -76,19 +77,32 @@ public abstract class ArgumentSynthesizer {
 	protected final LinearTransition m_loop;
 	
 	/**
-	 * Whether synthesize() has been called yet
+	 * Preferences
+	 */
+	protected final Preferences m_preferences;
+	
+	/**
+	 * Whether synthesize() has been called
 	 */
 	private boolean m_synthesis_successful = false;
 	
 	/**
-	 * @param script the SMT script to be used for the argument synthesis
+	 * Whether close() has been called
+	 */
+	private boolean m_closed = false;
+	
+	
+	/**
+	 * Constructor for the argument synthesizer
+	 * 
 	 * @param stem the lasso's stem transition
 	 * @param loop the lasso's loop transition
+	 * @param preferences the preferences
 	 */
-	public ArgumentSynthesizer(Script script, LinearTransition stem,
-			LinearTransition loop) {
-		assert script != null;
-		m_script = script;
+	public ArgumentSynthesizer(LinearTransition stem, LinearTransition loop,
+			Preferences preferences) {
+		m_preferences = preferences;
+		m_script = SMTSolver.newScript(preferences);
 		
 		if (stem == null) {
 			m_stem = LinearTransition.getTranstionTrue();
@@ -275,5 +289,22 @@ public abstract class ArgumentSynthesizer {
 			result.put(entry.getKey(), const2Rational(entry.getValue()));
 		}
 		return result;
+	}
+	
+	/**
+	 * Perform cleanup actions
+	 */
+	public void close() {
+		if (!m_closed) {
+			m_script.exit();
+			m_closed = true;
+		}
+	}
+	
+	protected void finalize() {
+		// Finalize methods are discouraged in Java.
+		// Always call close() as exported by the Closable interface!
+		// This is just a fallback to make sure close() has been called.
+		this.close();
 	}
 }

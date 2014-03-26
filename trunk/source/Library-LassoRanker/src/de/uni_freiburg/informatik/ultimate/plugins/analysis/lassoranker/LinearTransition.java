@@ -35,8 +35,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
@@ -107,22 +105,22 @@ public class LinearTransition implements Serializable {
 		return false;
 	}
 	
-	/**
-	 * Check if a polyhedron is empty
-	 * @param script the solver used for the check
-	 * @return whether the polyhedron is empty
-	 */
-	private boolean isPolyhedronEmpty(Script script,
-			List<LinearInequality> polyhedron) {
-		script.push(1);
-		for (LinearInequality ieq : polyhedron) {
-			Term ieq_term = ieq.asTerm(script);
-			script.assertTerm(ieq_term);
-		}
-		boolean empty = script.checkSat() == LBool.UNSAT;
-		script.pop(1);
-		return empty;
-	}
+//	/**
+//	 * Check if a polyhedron is empty
+//	 * @param script the solver used for the check
+//	 * @return whether the polyhedron is empty
+//	 */
+//	private boolean isPolyhedronEmpty(Script script,
+//			List<LinearInequality> polyhedron) {
+//		script.push(1);
+//		for (LinearInequality ieq : polyhedron) {
+//			Term ieq_term = ieq.asTerm(script);
+//			script.assertTerm(ieq_term);
+//		}
+//		boolean empty = script.checkSat() == LBool.UNSAT;
+//		script.pop(1);
+//		return empty;
+//	}
 	
 	/**
 	 * @return the maximal transition (0 <= 0)

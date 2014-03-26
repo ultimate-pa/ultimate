@@ -147,7 +147,6 @@ public class LassoRankerStarter {
 				s_Logger.error(e);
 			}
 		}
-		tanalysis.close();
 		reportNoResult(templates);
 	}
 	

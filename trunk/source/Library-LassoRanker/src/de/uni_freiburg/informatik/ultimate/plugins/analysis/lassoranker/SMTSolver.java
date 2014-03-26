@@ -26,9 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.io.FileNotFoundException;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -38,47 +41,70 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 
 
 /**
- * Create a new SMT solver script instance.
- * This solver needs to support non-linear algebraic constraint solving
- * ('QF_NRA').
+ * Static class that manages SMT-Solver related things.
  * 
  * @author Jan Leike
  */
 class SMTSolver {
+	private static Logger s_Logger =
+			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
 	/**
 	 * Create a new SMT solver instance.
 	 * If useExternalSolver is true, we use the Scriptor to start the external 
 	 * SMT solver with the smt_solver_command.
 	 * If useExternalSolver is false, we use SMTInterpol.
+	 * 
+	 * @param useExternalSolver
+	 * @param smt_solver_command
+	 * @param dump_filename name of the file the script should be dumped to,
+	 *        can be null
+	 * @param produce_unsat_cores produce unsat cores?
+	 * @return the new script
 	 */
-	static Script newScript(boolean useExternalSolver,
+	private static Script newScript(boolean useExternalSolver,
 			String smt_solver_command,
+			String dump_filename,
 			boolean produce_unsat_cores) {
-		Logger solverLogger = UltimateServices.getInstance().getLoggerForExternalTool("constraintLogger");
-		final Script script; 
+		Logger solverLogger = UltimateServices.getInstance()
+				.getLoggerForExternalTool("constraintLogger");
+		
+		Script script; 
 		if (useExternalSolver) {
 			script = new Scriptor(smt_solver_command, solverLogger);
 		} else {
 			script = new SMTInterpol(solverLogger);
 		}
-		initScript(script, produce_unsat_cores);
+		
+		// Dump script to file
+		if (dump_filename != null) {
+			try {
+				script = new LoggingScript(script, dump_filename, true);
+			} catch (FileNotFoundException e) {
+				s_Logger.warn("Could not dump SMT script to file '"
+						+ dump_filename + "': " + e);
+			}
+		}
+		
+		// Set options
+		script.setOption(":produce-models", true);
+		if (produce_unsat_cores) {
+			script.setOption(":produce-unsat-cores", true);
+		}
 		return script;
 	}
 	
 	/**
-	 * Reset an SMT script so that it forgets everything that happend
+	 * Create a new solver instance with the preferences given
+	 * @param preferences the preferences for creating the solver
+	 * @return the new solver instance
 	 */
-	static void resetScript(Script script, boolean produce_unsat_cores) {
-		script.reset();
-		initScript(script, produce_unsat_cores);
-	}
-	
-	private static void initScript(Script script, boolean produce_unsat_cores) {
-		if (produce_unsat_cores) {
-			script.setOption(":produce-unsat-cores", true);
-		}
-		script.setOption(":produce-models", true);
+	public static Script newScript(Preferences preferences) {
+		return newScript(preferences.externalSolver,
+				preferences.smt_solver_command,
+				preferences.dumpSmtSolverScript ?
+						preferences.fileNameOfDumpedScript : null,
+				preferences.annotate_terms);
 	}
 	
 	/**

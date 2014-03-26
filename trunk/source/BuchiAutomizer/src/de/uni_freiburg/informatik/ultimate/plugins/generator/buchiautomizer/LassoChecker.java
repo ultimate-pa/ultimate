@@ -554,7 +554,6 @@ public class LassoChecker {
 			m_NonterminationArgument = nonTermArgument;
 		}
 		if (!s_CheckTerminationEvenIfNonterminating && nonTermArgument != null) {
-			lrta.close();
 			return SynthesisResult.NONTERMINATIG;
 		}
 		
@@ -600,7 +599,6 @@ public class LassoChecker {
 		TerminationArgument termArg = tryTemplatesAndComputePredicates(
 				withStem, lrta, rankingFunctionTemplates);
 		assert (nonTermArgument == null || termArg == null) : " terminating and nonterminating";
-		lrta.close();
 		if (termArg != null) {
 			return SynthesisResult.TERMINATING;
 		} else if (nonTermArgument != null) {
