@@ -4,6 +4,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+/**
+ * 
+ * @author dietsch
+ *
+ * @param <T>
+ */
 public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 
 	private String[] mColumnTitles;
@@ -25,7 +31,7 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 	}
 
 	@Override
-	public String[] getColumnTitle() {
+	public String[] getColumnTitles() {
 		return mColumnTitles;
 	}
 
@@ -35,13 +41,13 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 	}
 
 	@Override
-	public String[] getRowTitle() {
+	public String[] getRowTitles() {
 		return mTable.keySet().toArray(new String[getTable().size()]);
 	}
 
 	@Override
 	public void addRow(String rowName, T[] values) {
-		if (values == null || values.length != getColumnTitle().length) {
+		if (values == null || values.length != getColumnTitles().length) {
 			throw new IllegalArgumentException(
 					"values are invalid (either null or not the same length as the number of columns of this CsvProvider");
 		}
@@ -86,6 +92,33 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 		}
 
 		return sb.toString();
+	}
+
+	@Override
+	public StringBuilder toCsv(String rowHeaderTitle) {
+		StringBuilder sb = new StringBuilder();
+		String lineSeparator = System.getProperty("line.separator");
+		String separator = ",";
+		sb.append(rowHeaderTitle).append(separator);
+		for (String s : mColumnTitles) {
+			sb.append(s).append(separator);
+		}
+		sb.replace(sb.length() - separator.length(), sb.length(), "").append(lineSeparator);
+		
+		for (Entry<String, T[]> x : mTable.entrySet()) {
+			sb.append(x.getKey());
+			for (T value : x.getValue()) {
+				sb.append(value.toString()).append(separator);
+			}
+			sb.replace(sb.length() - separator.length(), sb.length(), "").append(lineSeparator);
+		}
+		
+		return sb;
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return mTable.isEmpty();
 	}
 
 }

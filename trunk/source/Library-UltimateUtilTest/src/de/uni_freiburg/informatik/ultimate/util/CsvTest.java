@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.util;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -51,7 +52,100 @@ public class CsvTest {
 		Assert.assertTrue("something is not equal to B", contentAsStringIsEqual(B.getTable(), something.getTable()));
 	}
 
-	public <T> boolean contentAsStringIsEqual(Map<String, T[]> mapA, Map<String, T[]> mapB) {
+	@Test
+	public void testCsvProject() {
+		SimpleCsvProvider<Integer> A = new SimpleCsvProvider<>(new String[] { "A", "B", "C" });
+		A.addRow("Row 1", new Integer[] { 1, 2, 3 });
+		A.addRow("Row 2", new Integer[] { 4, 5, 6 });
+
+		SimpleCsvProvider<Integer> B = new SimpleCsvProvider<>(new String[] { "A" });
+		B.addRow("Row 1", new Integer[] { 1 });
+		B.addRow("Row 2", new Integer[] { 4 });
+
+		ICsvProvider<Integer> something = CsvUtils.projectColumn(A, "A");
+
+		Assert.assertTrue("something is not equal to B", contentAsStringIsEqual(B.getTable(), something.getTable()));
+	}
+
+	@Test
+	public void testCsvProjectEmpty() {
+		SimpleCsvProvider<Integer> A = new SimpleCsvProvider<>(new String[] { "A", "B", "C" });
+
+		SimpleCsvProvider<Integer> B = new SimpleCsvProvider<>(new String[] { "A" });
+
+		ICsvProvider<Integer> something = CsvUtils.projectColumn(A, "A");
+
+		Assert.assertTrue("something is not equal to B", contentAsStringIsEqual(B.getTable(), something.getTable()));
+	}
+
+	@Test
+	public void testCsvProjectCollection() {
+		SimpleCsvProvider<Integer> A = new SimpleCsvProvider<>(new String[] { "A", "B", "C" });
+		A.addRow("Row 1", new Integer[] { 1, 2, 3 });
+		A.addRow("Row 2", new Integer[] { 4, 5, 6 });
+
+		SimpleCsvProvider<Integer> B = new SimpleCsvProvider<>(new String[] { "A", "B" });
+		B.addRow("Row 1", new Integer[] { 1, 2 });
+		B.addRow("Row 2", new Integer[] { 4, 5 });
+
+		ICsvProvider<Integer> something = CsvUtils.projectColumn(A, Arrays.asList(new String[] { "A", "B" }));
+
+		Assert.assertTrue("something is not equal to B", contentAsStringIsEqual(B.getTable(), something.getTable()));
+	}
+
+	@Test
+	public void testCsvConcatenate() {
+		SimpleCsvProvider<Integer> A = new SimpleCsvProvider<>(new String[] { "A", "B", "C" });
+		A.addRow("Row 1", new Integer[] { 1, 2, 3 });
+		A.addRow("Row 2", new Integer[] { 4, 5, 6 });
+
+		SimpleCsvProvider<Integer> B = new SimpleCsvProvider<>(new String[] { "A", "B", "C" });
+		B.addRow("Row 3", new Integer[] { 1, 2, 3 });
+		B.addRow("Row 4", new Integer[] { 4, 5, 6 });
+
+		SimpleCsvProvider<Integer> C = new SimpleCsvProvider<>(new String[] { "A", "B", "C" });
+		C.addRow("Row 1", new Integer[] { 1, 2, 3 });
+		C.addRow("Row 2", new Integer[] { 4, 5, 6 });
+		C.addRow("Row 3", new Integer[] { 1, 2, 3 });
+		C.addRow("Row 4", new Integer[] { 4, 5, 6 });
+
+		ICsvProvider<Integer> something = CsvUtils.concatenateRows(A, B);
+
+		Assert.assertTrue("something is not equal to B", contentAsStringIsEqual(B.getTable(), something.getTable()));
+	}
+
+	@Test
+	public void testCsvAddColumn() {
+		SimpleCsvProvider<Integer> A = new SimpleCsvProvider<>(new String[] { "A", "B", "C" });
+		A.addRow("Row 1", new Integer[] { 1, 2, 3 });
+		A.addRow("Row 2", new Integer[] { 4, 5, 6 });
+
+		SimpleCsvProvider<Integer> B = new SimpleCsvProvider<>(new String[] { "A", "B" });
+		B.addRow("Row 1", new Integer[] { 1, 2 });
+		B.addRow("Row 2", new Integer[] { 4, 5 });
+
+		ICsvProvider<Integer> something = CsvUtils.addColumn(B, "C", 2, new Integer[] { 3, 6 });
+
+		Assert.assertTrue("something is not equal to A", contentAsStringIsEqual(A.getTable(), something.getTable()));
+	}
+	
+	@Test
+	public void testCsvTranspose() {
+		SimpleCsvProvider<Integer> A = new SimpleCsvProvider<>(new String[] { "A", "B", "C" });
+		A.addRow("Row 1", new Integer[] { 1, 2, 3 });
+		A.addRow("Row 2", new Integer[] { 4, 5, 6 });
+
+		SimpleCsvProvider<Integer> B = new SimpleCsvProvider<>(new String[] { "Row 1", "Row 2" });
+		B.addRow("A", new Integer[] { 1, 4 });
+		B.addRow("B", new Integer[] { 2, 5 });
+		B.addRow("C", new Integer[] { 3, 6 });
+
+		ICsvProvider<Integer> something = CsvUtils.transpose(A);
+
+		Assert.assertTrue("something is not equal to A", contentAsStringIsEqual(B.getTable(), something.getTable()));
+	}
+	
+	private <T> boolean contentAsStringIsEqual(Map<String, T[]> mapA, Map<String, T[]> mapB) {
 		for (Entry<String, T[]> entry : mapA.entrySet()) {
 			T[] entryB = mapB.get(entry.getKey());
 

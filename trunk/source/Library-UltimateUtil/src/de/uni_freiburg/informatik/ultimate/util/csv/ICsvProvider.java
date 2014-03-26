@@ -9,14 +9,18 @@ import java.util.Map;
  */
 public interface ICsvProvider<T> {
 	
-	String[] getColumnTitle();
+	String[] getColumnTitles();
 	
 	Map<String,T[]> getTable();
 	
-	String[] getRowTitle();
+	String[] getRowTitles();
 	
 	void addRow(String rowName, T[] values);
 	
 	T[] getRow(String rowName);
+	
+	StringBuilder toCsv(String rowHeaderTitle);
+	
+	boolean isEmpty();
 
 }

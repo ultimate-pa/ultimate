@@ -65,7 +65,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				"  {1} rank without si  {2} rank only with si", 
 				bcl.m_Infeasible, bcl.m_RankWithoutSi, bcl.m_RankWithSi));
 		
-		IResult benchDecomp = new BenchmarkResult(Activator.s_PLUGIN_ID,
+		IResult benchDecomp = new BenchmarkResult<Double>(Activator.s_PLUGIN_ID,
 				"Constructed decomposition of program", bcl.getMDBenchmark());
 		reportResult(benchDecomp);
 		s_Logger.info("BenchmarkResult: " + benchDecomp.getShortDescription() + ": " + benchDecomp.getLongDescription());

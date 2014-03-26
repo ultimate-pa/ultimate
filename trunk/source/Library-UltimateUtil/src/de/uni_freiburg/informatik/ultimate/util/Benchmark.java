@@ -13,13 +13,17 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
+
 /**
  * This class provides functions to measure runtime and memory consumption
  * 
  * @author dietsch
  * 
  */
-public class Benchmark {
+public class Benchmark implements ICsvProviderProvider<Double> {
 
 	// Get maximum size of heap in bytes. The heap cannot grow beyond this
 	// size. Any attempt will result in an OutOfMemoryException.
@@ -146,7 +150,7 @@ public class Benchmark {
 			mLogger.info(s);
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -155,16 +159,15 @@ public class Benchmark {
 		for (Watch s : getSortedWatches()) {
 			sb.append(" * ").append(s).append(lineSeparator);
 		}
-		sb.delete(sb.length()-lineSeparator.length(), sb.length());
+		sb.delete(sb.length() - lineSeparator.length(), sb.length());
 		return sb.toString();
 	}
-	
-	private Collection<Watch> getSortedWatches(){
+
+	private Collection<Watch> getSortedWatches() {
 		ArrayList<Watch> sortedWatches = new ArrayList<Watch>(mWatches.values());
 		Collections.sort(sortedWatches, new Comparator<Watch>() {
 			@Override
 			public int compare(Watch o1, Watch o2) {
-
 				return Integer.compare(o1.mIndex, o2.mIndex);
 			}
 		});
@@ -303,7 +306,7 @@ public class Benchmark {
 		case "Tenured Gen":
 			return true;
 		}
-				throw new IllegalArgumentException("Unknown memory pool name "+memoryPoolName);
+		throw new IllegalArgumentException("Unknown memory pool name " + memoryPoolName);
 	}
 
 	private class Watch {
@@ -390,7 +393,7 @@ public class Benchmark {
 			String freeMemoryDeltaPrefix = freeMemoryDelta < 0 ? "-" : "";
 			freeMemoryDelta = Math.abs(freeMemoryDelta);
 
-			long peakMemoryDelta = mPeakMemorySize - mStartPeakMemorySize;
+			long peakMemoryDelta = getPeakMemoryDelta();
 			String peakMemoryDeltaPrefix = peakMemoryDelta < 0 ? "-" : "";
 			peakMemoryDelta = Math.abs(peakMemoryDelta);
 
@@ -432,6 +435,39 @@ public class Benchmark {
 			return sb.toString();
 
 		}
+		
+		public long getPeakMemoryDelta(){
+			return mPeakMemorySize - mStartPeakMemorySize;
+		}
+		
+		
+	}
 
+	@Override
+	public ICsvProvider<Double> createCvsProvider() {
+		SimpleCsvProvider<Double> rtr = new SimpleCsvProvider<>(new String[] { 
+				"Runtime", 
+				"Peak memory consumption",
+				"Allocated memory (Start)",
+				"Allocated memory (End)",
+				"Free memory (Start)",
+				"Free memory (End)",
+				"Max. memory available"
+		});
+
+		for (Watch w : getSortedWatches()) {
+			rtr.addRow(w.mTitle, new Double[] { 
+					Double.valueOf(w.mElapsedTime),
+					Double.valueOf(w.getPeakMemoryDelta()),
+					Double.valueOf(w.mStartMemorySize),
+					Double.valueOf(w.mStopMemorySize),
+					Double.valueOf(w.mStartMemoryFreeSize),
+					Double.valueOf(w.mStopMemoryFreeSize),
+					Double.valueOf(mMaxMemorySize),
+			});
+
+		}
+
+		return rtr;
 	}
 }

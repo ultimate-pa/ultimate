@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 
 /**
@@ -352,10 +353,10 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		reportResult(uknRes);
 	}
 	
-	private void reportBenchmark(Object benchmark) {
+	private <T> void reportBenchmark(ICsvProviderProvider<T> benchmark) {
 		String shortDescription = "Ultimate Automizer benchmark data";
-		BenchmarkResult res = new 
-				BenchmarkResult(Activator.s_PLUGIN_NAME, 
+		BenchmarkResult<T> res = new 
+				BenchmarkResult<T>(Activator.s_PLUGIN_NAME, 
 				shortDescription, benchmark);
 		s_Logger.warn(res.getLongDescription());
 

@@ -788,7 +788,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		} else {
 			mBenchmark = null;
 		}
-//		mToolchainWalker.reset();
+		// mToolchainWalker.reset();
 		mToolchainWalker = new ToolchainWalker(this, mBenchmark, mModelManager, mIdToTool);
 	}
 
@@ -928,7 +928,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 				bench.report();
 				mBenchmark.report();
 				UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID,
-						new BenchmarkResult(Activator.s_PLUGIN_ID, "Toolchain Benchmarks", mBenchmark));
+						new BenchmarkResult<Double>(Activator.s_PLUGIN_ID, "Toolchain Benchmarks", mBenchmark));
 			}
 			mLogger.info("--------------------------------------------------------------------------------");
 			new ResultNotifier(mCurrentController).processResults();

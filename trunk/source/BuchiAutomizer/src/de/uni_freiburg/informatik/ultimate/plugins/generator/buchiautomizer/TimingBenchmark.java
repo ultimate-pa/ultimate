@@ -4,9 +4,12 @@ import java.text.DecimalFormat;
 import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.util.Benchmark;;
+import de.uni_freiburg.informatik.ultimate.util.Benchmark;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
-public class TimingBenchmark {
+public class TimingBenchmark implements ICsvProviderProvider<Double>{
 	private final Benchmark m_Benchmark = new Benchmark();
 	private final static String s_LassoAnalysis = "LassoAnalysis";
 	private final static String s_BuchiInclusion = "BuchiInclusion";
@@ -80,5 +83,12 @@ public class TimingBenchmark {
 		sb.append(twoDForm.format(m_Benchmark.getElapsedTime(s_Minimization, TimeUnit.SECONDS)));
 		sb.append("s.");
 		return sb.toString();
+	}
+
+	@Override
+	public ICsvProvider<Double> createCvsProvider() {
+		SimpleCsvProvider<Double> rtr = new SimpleCsvProvider<>(new String[] { });
+
+		return rtr;
 	}
 }

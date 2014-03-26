@@ -6,8 +6,11 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
-public class TraceAbstractionBenchmarks {
+public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 	private final SmtManager mSmtManager;
 	private long traceCheck = 0;
 	private long traceCheckStartTime = 0;
@@ -259,6 +262,12 @@ public class TraceAbstractionBenchmarks {
 			this.m_SizeOfPredicatesBP.add(m_SizeOfPredicatesBP);
 		}
 		
+	}
+
+	@Override
+	public ICsvProvider<Double> createCvsProvider() {
+		SimpleCsvProvider<Double> rtr = new SimpleCsvProvider<>(new String[] { });
+		return rtr;
 	}
 	
 }

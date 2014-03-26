@@ -9,8 +9,12 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
+import de.uni_freiburg.informatik.ultimate.util.Benchmark.Watch;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
-public class ModuleDecompositionBenchmark {
+public class ModuleDecompositionBenchmark implements ICsvProviderProvider<Double>{
 	
 	private final TreeMap<Integer,Integer> m_ModuleSizeTrivial = new TreeMap<Integer,Integer>();
 	private final TreeMap<Integer,Integer> m_ModuleSizeDeterministic = new TreeMap<Integer,Integer>();
@@ -131,6 +135,13 @@ public class ModuleDecompositionBenchmark {
 			sb.append(" locations.");
 		} 
 		return sb.toString();
+	}
+
+	@Override
+	public ICsvProvider<Double> createCvsProvider() {
+		SimpleCsvProvider<Double> rtr = new SimpleCsvProvider<>(new String[] { });
+
+		return rtr;
 	}
 
 
