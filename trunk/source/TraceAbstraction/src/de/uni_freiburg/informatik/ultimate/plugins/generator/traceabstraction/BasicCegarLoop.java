@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 
 /**
@@ -79,6 +80,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final INTERPOLATION m_Interpolation;
 	
 	protected final boolean m_ComputeHoareAnnotation;
+	
+	private TraceCheckerBenchmark m_TraceCheckerBenchmark;
 
 
 	
@@ -225,6 +228,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		} else {
 			m_TraceAbstractionBenchmarks.setCounterExampleFeasible();
 		}
+		
+		if (m_TraceCheckerBenchmark == null) {
+			m_TraceCheckerBenchmark = m_TraceChecker.getTraceCheckerBenchmark();
+		} else {
+			m_TraceCheckerBenchmark.collect(m_TraceChecker.getTraceCheckerBenchmark());
+		}
+		
 		return feasibility;
 	}
 	

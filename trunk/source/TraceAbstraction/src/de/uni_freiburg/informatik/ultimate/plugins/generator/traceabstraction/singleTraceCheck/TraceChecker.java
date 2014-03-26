@@ -859,4 +859,24 @@ public class TraceChecker {
 		}
 		
 	}
+	
+	public static class TraceCheckerBenchmark {
+		
+		TraceCheckerBenchmark(/* some data */) {
+			/*write data to field*/
+		}
+		
+		TraceCheckerBenchmark(TraceCheckerBenchmark tcb1, TraceCheckerBenchmark tcb2) {
+			/*write data to field from both objects*/
+		}
+		
+		public TraceCheckerBenchmark collect(TraceCheckerBenchmark traceCheckerBenchmark) {
+			return new TraceCheckerBenchmark(this, traceCheckerBenchmark);
+		}
+	}
+	
+	
+	public TraceCheckerBenchmark getTraceCheckerBenchmark() {
+		return new TraceCheckerBenchmark();
+	}
 }
