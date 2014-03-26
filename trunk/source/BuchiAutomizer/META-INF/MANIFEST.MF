@@ -15,5 +15,5 @@ Require-Bundle: Library-log4j,
  RCFGBuilder,
  TraceAbstraction
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer
