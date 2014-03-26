@@ -41,9 +41,8 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 
 
@@ -149,21 +148,6 @@ public abstract class ArgumentSynthesizer {
 	
 	/**
 	 * Define a new constant
-	 * @param script SMT Solver
-	 * @param name name of the new constant
-	 * @param sort the sort of the variable
-	 * @return the new variable as a term
-	 * @throws SMTLIBException if something goes wrong, e.g. the name is
-	 *          already defined
-	 */
-	public static Term newConstant(Script script, String name, String sortname)
-			throws SMTLIBException {
-		script.declareFun(name, new Sort[0], script.sort(sortname));
-		return script.term(name);
-	}
-	
-	/**
-	 * Define a new constant
 	 * @param name name of the new constant
 	 * @param sort the sort of the variable
 	 * @return the new variable as a term
@@ -172,7 +156,7 @@ public abstract class ArgumentSynthesizer {
 	 */
 	public Term newConstant(String name, String sortname)
 			throws SMTLIBException {
-		return newConstant(m_script, name, sortname);
+		return SMTSolver.newConstant(m_script, name, sortname);
 	}
 	
 	/**

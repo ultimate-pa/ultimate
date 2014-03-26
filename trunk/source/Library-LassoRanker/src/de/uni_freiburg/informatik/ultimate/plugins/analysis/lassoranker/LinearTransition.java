@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
@@ -69,10 +71,10 @@ public class LinearTransition implements Serializable {
 	private final boolean m_contains_integers;
 	
 	/**
-	 * 
-	 * @param polyhedra
-	 * @param inVars
-	 * @param outVars
+	 * Construct a new LinearTransition
+	 * @param polyhedra a list of polyhedra defining this transition
+	 * @param inVars input variables
+	 * @param outVars output variables
 	 */
 	public LinearTransition(List<List<LinearInequality>> polyhedra,
 			Map<RankVar, TermVariable> inVars,
@@ -103,6 +105,23 @@ public class LinearTransition implements Serializable {
 			}
 		}
 		return false;
+	}
+	
+	/**
+	 * Check if a polyhedron is empty
+	 * @param script the solver used for the check
+	 * @return whether the polyhedron is empty
+	 */
+	private boolean isPolyhedronEmpty(Script script,
+			List<LinearInequality> polyhedron) {
+		script.push(1);
+		for (LinearInequality ieq : polyhedron) {
+			Term ieq_term = ieq.asTerm(script);
+			script.assertTerm(ieq_term);
+		}
+		boolean empty = script.checkSat() == LBool.UNSAT;
+		script.pop(1);
+		return empty;
 	}
 	
 	/**
@@ -160,6 +179,8 @@ public class LinearTransition implements Serializable {
 	 * expressions.
 	 * 
 	 * @param term the input term
+	 * @param inVars input variables
+	 * @param outVars output variables
 	 * @throws TermException if the supplied term does not have the correct form
 	 */
 	public static LinearTransition fromTerm(Term term,

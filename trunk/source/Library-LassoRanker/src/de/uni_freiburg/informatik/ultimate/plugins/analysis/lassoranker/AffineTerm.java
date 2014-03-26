@@ -148,7 +148,7 @@ public class AffineTerm implements Serializable {
 	
 	/**
 	 * @param script current SMT script
-	 * @return the affine term as a term of sort "Real"
+	 * @return this as a term of sort "Real"
 	 */
 	public Term asRealTerm(Script script) {
 		Term[] summands = new Term[m_Coefficients.size() + 1];

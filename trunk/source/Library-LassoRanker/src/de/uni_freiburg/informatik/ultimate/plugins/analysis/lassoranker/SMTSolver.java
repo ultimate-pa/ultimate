@@ -29,7 +29,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 
@@ -76,5 +79,20 @@ class SMTSolver {
 			script.setOption(":produce-unsat-cores", true);
 		}
 		script.setOption(":produce-models", true);
+	}
+	
+	/**
+	 * Define a new constant
+	 * @param script SMT Solver
+	 * @param name name of the new constant
+	 * @param sort the sort of the variable
+	 * @return the new variable as a term
+	 * @throws SMTLIBException if something goes wrong, e.g. the name is
+	 *          already defined
+	 */
+	public static Term newConstant(Script script, String name, String sortname)
+			throws SMTLIBException {
+		script.declareFun(name, new Sort[0], script.sort(sortname));
+		return script.term(name);
 	}
 }

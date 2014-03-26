@@ -232,7 +232,7 @@ public class LassoRankerTerminationAnalysis implements Closeable {
 	 * Calling this invokes the preprocessor on the stem transition.
 	 * 
 	 * @param stem a transition formula corresponding to the lasso's stem
-	 * @throws TermException 
+	 * @throws TermException
 	 */
 	public void addStem(TransFormula stem_transition) throws TermException {
 		if (m_stem != null) {
@@ -270,8 +270,8 @@ public class LassoRankerTerminationAnalysis implements Closeable {
 		// Match inVars
 		rvc.matchInVars();
 		
-		LinearTransition linear_trans = LinearTransition.fromTerm(trans_term,
-				rvc.getInVars(), rvc.getOutVars());
+		LinearTransition linear_trans = LinearTransition.fromTerm(
+				trans_term, rvc.getInVars(), rvc.getOutVars());
 		if (!m_preferences.enable_disjunction
 				&& !linear_trans.isConjunctive()) {
 			throw new UnsupportedOperationException(

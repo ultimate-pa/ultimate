@@ -27,15 +27,21 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermIsNotAffineException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.UnknownFunctionException;
@@ -301,6 +307,58 @@ public class LinearInequality implements Serializable {
 	public void negate() {
 		mult(Rational.MONE);
 		m_strict = !m_strict;
+	}
+	
+	/**
+	 * @return the name of the Sort of the summands ("Real" or "Int")
+	 */
+	public String getSortName() {
+		if (m_coefficients.size() == 0) {
+			return "Real"; // default to Real
+		}
+		TermVariable firstVar = m_coefficients.keySet().iterator().next();
+		Sort result = firstVar.getSort();
+		for (TermVariable var : m_coefficients.keySet()) {
+			assert var.getSort() == result;
+		}
+		return result.getName();
+	}
+	
+	/**
+	 * @param script current SMT script
+	 * @return this as a term
+	 */
+	public Term asTerm(Script script) {
+		String sortName = getSortName();
+		boolean real = sortName.equals("Real");
+		Term[] summands = new Term[m_coefficients.size() + 1];
+		Term zero = real ? script.decimal(BigDecimal.ZERO)
+				: script.numeral(BigInteger.ZERO);
+		
+		int i = 0;
+		for (Entry<TermVariable, AffineTerm> entry : m_coefficients.entrySet()) {
+			TermVariable var = entry.getKey();
+			Term coeff;
+			if (real) {
+				assert var.getSort().getName().equals("Real");
+				coeff = entry.getValue().asRealTerm(script);
+			} else {
+				assert var.getSort().getName().equals("Int");
+				coeff = entry.getValue().asIntTerm(script);
+			}
+			summands[i] = script.term("*", coeff, entry.getKey());
+			++i;
+		}
+		
+		if (real) {
+			summands[i] = m_constant.asRealTerm(script);
+		} else {
+			summands[i] = m_constant.asIntTerm(script);
+		}
+		Term sum = UtilExperimental.sum(script, script.sort(sortName),
+				summands);
+		
+		return script.term(getInequalitySymbol(), sum, zero);
 	}
 	
 	@Override
