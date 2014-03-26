@@ -69,6 +69,8 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 			"Piecewise template";
 	public static final String LABEL_piecewise_template_size =
 			"Piecewise template size";
+	public static final String LABEL_dump_smt_script =
+			"Dump SMT script to file";
 	public static final String LABEL_use_external_solver =
 			"Use external SMT solver";
 	public static final String LABEL_smt_solver_command =
@@ -150,6 +152,10 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 						LABEL_piecewise_template_size,
 						s_piecewise_template_size,
 						PreferenceType.Integer),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_dump_smt_script,
+						preferences.dumpSmtSolverScript,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_use_external_solver,
 						true,
