@@ -181,6 +181,8 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		stat += m_OverallBiggestAbstraction;
 		stat += " states.";
 		s_Logger.warn(stat);
+		TemporaryWorkaroudBenchmark twb = new TemporaryWorkaroudBenchmark(stat, timingStatistics);
+		reportBenchmark(twb);
 //		s_Logger.warn("PC#: " + smtManager.getInterpolQueries());
 //		s_Logger.warn("TIME#: " + smtManager.getInterpolQuriesTime());
 //		s_Logger.warn("ManipulationTIME#: " + smtManager.getTraceCheckTime());
@@ -276,7 +278,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			
 		}
 		m_Artifact = abstractCegarLoop.getArtifact();
-		reportTimingStatistics(root, timingStatistics);	
 	}
 	
 	private void reportPositiveResults(Collection<ProgramPoint> errorLocs) {
@@ -321,7 +322,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				pe, bpe.getValuation());
 		ctxRes.setLongDescription(bpe.toString());
 		reportResult(ctxRes);
-		s_Logger.warn(ctxMessage);
+//		s_Logger.warn(ctxMessage);
 	}
 	
 	private void reportTimoutResult(Collection<ProgramPoint> errorLocs) {
@@ -351,22 +352,13 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		reportResult(uknRes);
 	}
 	
-	private void reportTimingStatistics(RootNode root, TraceAbstractionBenchmarks timingStatistics) {
+	private void reportBenchmark(Object benchmark) {
 		String shortDescription = "Ultimate Automizer benchmark data";
-		long time = System.currentTimeMillis() - m_StartingTime;
-		if (root.getOutgoingNodes().isEmpty()) {
-			s_Logger.warn("No procedure was checked. I don't know any location."
-					+ "Will not report any timing statistics.");
-			return;
-		}
-		RCFGNode someNode = root.getOutgoingNodes().iterator().next();
 		BenchmarkResult res = new 
 				BenchmarkResult(Activator.s_PLUGIN_NAME, 
-				shortDescription, timingStatistics);
+				shortDescription, benchmark);
 		s_Logger.warn(res.getLongDescription());
 
-//		String longDescription = "Ultimate Automizer took " + time + "ms";
-//		longDescription += timingStatistics.printTimingStatistics();
 		reportResult(res);
 	}
 	

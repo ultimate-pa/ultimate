@@ -182,7 +182,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			indentation += "  ";
 			for (int j=0; j < counterexample.length(); j++) {
 				String stmts = counterexample.getSymbol(j).getPrettyPrintedStatements();
-				System.out.println(indentation + stmts);
+//				System.out.println(indentation + stmts);
 //				s_Logger.info(indentation + stmts);
 				if (counterexample.isCallPosition(j)) {
 					indentation += "    "; 
@@ -192,8 +192,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				}
 			}
 			m_TraceChecker.computeRcfgProgramExecution();
-			s_Logger.info("Trace with values");
-			s_Logger.info(m_TraceChecker.getRcfgProgramExecution());
+//			s_Logger.info("Trace with values");
+//			s_Logger.info(m_TraceChecker.getRcfgProgramExecution());
 			m_RcfgProgramExecution = m_TraceChecker.getRcfgProgramExecution();
 		} else {
 			AllIntegers allInt = new TraceChecker.AllIntegers();

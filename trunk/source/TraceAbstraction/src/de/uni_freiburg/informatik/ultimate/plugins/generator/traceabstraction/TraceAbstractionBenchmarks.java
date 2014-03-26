@@ -122,7 +122,7 @@ public class TraceAbstractionBenchmarks {
 		StringBuilder sb  = new StringBuilder();
 		sb.append("Trace Abstraction runtime: ");
 		sb.append(prettyprintNanoseconds(getRuntime()));
-		if (!m_CounterExampleFeasible) {
+//		if (!m_CounterExampleFeasible) {
 			sb.append(" Determine feasibility of statement sequence: ");
 			sb.append(prettyprintNanoseconds(traceCheck));
 			sb.append(" (thereof: SMT solver sat check ");
@@ -139,7 +139,7 @@ public class TraceAbstractionBenchmarks {
 			sb.append(prettyprintNanoseconds(differenceSmtSolver));
 			sb.append(") Automata minimization: ");
 			sb.append(prettyprintNanoseconds(automataMinimization));
-		}
+//		}
 		return sb.toString();
 	}
 	
