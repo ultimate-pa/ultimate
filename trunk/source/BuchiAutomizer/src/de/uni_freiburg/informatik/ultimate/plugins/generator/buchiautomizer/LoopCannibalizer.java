@@ -123,7 +123,7 @@ public class LoopCannibalizer {
 		case BackwardPredicates:
 		case FPandBP:
 			traceChecker = new TraceCheckerSpWp(m_Bspm.getRankEqAndSi(), 
-					m_Bspm.getHondaPredicate(), shifted, m_SmtManager,
+					m_Bspm.getHondaPredicate(), null, shifted, m_SmtManager,
 					m_buchiModGlobalVarManager);
 			break;
 		default:

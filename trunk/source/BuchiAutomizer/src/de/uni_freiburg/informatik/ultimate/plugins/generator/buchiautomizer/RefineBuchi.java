@@ -313,7 +313,7 @@ public class RefineBuchi {
 		case BackwardPredicates:
 		case FPandBP:
 			return new TraceCheckerSpWp(precond, postcond, 
-					NestedWord.nestedWord(word),m_SmtManager,
+					null, NestedWord.nestedWord(word),m_SmtManager,
 					buchiModGlobalVarManager);
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

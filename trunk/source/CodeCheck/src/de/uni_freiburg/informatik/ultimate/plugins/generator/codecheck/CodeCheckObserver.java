@@ -309,7 +309,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 													// feasible, i.e. the
 													// formula is satisfiable
 								m_falsePredicate, // return LBool.UNSAT if trace
-													// is infeasible
+													null, // is infeasible
 								errorRun.getWord(), m_smtManager,
 								m_originalRoot.getRootAnnot()
 										.getModGlobVarManager());

@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
 
@@ -34,7 +35,7 @@ public class HoareAnnotationWriter {
 	 * Strongest postcondition or entry given by automaton?
 	 */
 	private final boolean m_UseEntry;
-
+	private final PredicateTransformer m_PredicateTransformer; 
 	
 	
 	
@@ -44,6 +45,7 @@ public class HoareAnnotationWriter {
 		this.m_SmtManager = smtManager;
 		this.m_HoareAnnotationFragments = hoareAnnotationFragments;
 		this.m_UseEntry = true;
+		m_PredicateTransformer = new PredicateTransformer(smtManager, null);
 	}
 
 
@@ -55,7 +57,7 @@ public class HoareAnnotationWriter {
 			if (true || m_UseEntry || containsAnOldVar(context)) {
 				precondForContext = m_HoareAnnotationFragments.getContext2Entry().get(context);
 			} else {
-				precondForContext = m_SmtManager.strongestPostcondition(context, getCall((ISLPredicate) context), true);
+				precondForContext = m_PredicateTransformer.strongestPostcondition(context, getCall((ISLPredicate) context), true);
 			}
 			precondForContext = m_SmtManager.renameGlobalsToOldGlobals(precondForContext);
 			HashRelation<ProgramPoint, IPredicate> pp2preds = m_HoareAnnotationFragments.getDeadContexts2ProgPoint2Preds().get(context);
@@ -67,7 +69,7 @@ public class HoareAnnotationWriter {
 			if (true || m_UseEntry || containsAnOldVar(context)) {
 				precondForContext = m_HoareAnnotationFragments.getContext2Entry().get(context);
 			} else {
-				precondForContext = m_SmtManager.strongestPostcondition(context, getCall((ISLPredicate) context), true);
+				precondForContext = m_PredicateTransformer.strongestPostcondition(context, getCall((ISLPredicate) context), true);
 			}
 			precondForContext = m_SmtManager.renameGlobalsToOldGlobals(precondForContext);
 			HashRelation<ProgramPoint, IPredicate> pp2preds = m_HoareAnnotationFragments.getLiveContexts2ProgPoint2Preds().get(context);

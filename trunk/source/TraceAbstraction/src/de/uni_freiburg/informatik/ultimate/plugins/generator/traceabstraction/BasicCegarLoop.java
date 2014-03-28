@@ -171,7 +171,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case BackwardPredicates:
 		case FPandBP:
 			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, 
-					NestedWord.nestedWord(m_Counterexample.getWord()),m_SmtManager,
+					null, NestedWord.nestedWord(m_Counterexample.getWord()),m_SmtManager,
 					m_RootNode.getRootAnnot().getModGlobVarManager());
 			break;
 		default:
@@ -207,24 +207,24 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_TraceAbstractionBenchmarks.finishTraceCheck();
 		if (feasibility == LBool.UNSAT) {
 			// interpolants are only in case of an infeasible trace computed
-			switch (m_Interpolation) {
-			case ForwardPredicates:
-				m_TraceAbstractionBenchmarks.addSizeOfPredicatesFP(m_TraceChecker.getSizeOfPredicates(m_Interpolation));
-				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesFP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesFP());
-				m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(m_Interpolation));
-				break;
-			case BackwardPredicates:
-				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesBP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesBP());
-				m_TraceAbstractionBenchmarks.addSizeOfPredicatesBP(m_TraceChecker.getSizeOfPredicates(m_Interpolation));
-				m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(m_Interpolation));
-				break;
-			case FPandBP:
-				m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(INTERPOLATION.ForwardPredicates));
-				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesFP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesFP());
-				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesBP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesBP());
-				m_TraceAbstractionBenchmarks.addSizeOfPredicatesFP(m_TraceChecker.getSizeOfPredicates(INTERPOLATION.ForwardPredicates));
-				m_TraceAbstractionBenchmarks.addSizeOfPredicatesBP(m_TraceChecker.getSizeOfPredicates(INTERPOLATION.BackwardPredicates));
-			}
+//			switch (m_Interpolation) {
+//			case ForwardPredicates:
+//				m_TraceAbstractionBenchmarks.addSizeOfPredicatesFP(m_TraceChecker.getSizeOfPredicates(m_Interpolation));
+//				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesFP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesFP());
+//				m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(m_Interpolation));
+//				break;
+//			case BackwardPredicates:
+//				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesBP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesBP());
+//				m_TraceAbstractionBenchmarks.addSizeOfPredicatesBP(m_TraceChecker.getSizeOfPredicates(m_Interpolation));
+//				m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(m_Interpolation));
+//				break;
+//			case FPandBP:
+//				m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(INTERPOLATION.ForwardPredicates));
+//				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesFP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesFP());
+//				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesBP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesBP());
+//				m_TraceAbstractionBenchmarks.addSizeOfPredicatesFP(m_TraceChecker.getSizeOfPredicates(INTERPOLATION.ForwardPredicates));
+//				m_TraceAbstractionBenchmarks.addSizeOfPredicatesBP(m_TraceChecker.getSizeOfPredicates(INTERPOLATION.BackwardPredicates));
+//			}
 		} else {
 			m_TraceAbstractionBenchmarks.setCounterExampleFeasible();
 		}
@@ -232,7 +232,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		if (m_TraceCheckerBenchmark == null) {
 			m_TraceCheckerBenchmark = m_TraceChecker.getTraceCheckerBenchmark();
 		} else {
-			m_TraceCheckerBenchmark.copyAndAdd(m_TraceChecker.getTraceCheckerBenchmark());
+			m_TraceCheckerBenchmark = m_TraceCheckerBenchmark.copyAndAdd(m_TraceChecker.getTraceCheckerBenchmark());
 		}
 		
 		return feasibility;

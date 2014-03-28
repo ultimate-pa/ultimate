@@ -416,7 +416,7 @@ public class LassoChecker {
 		case BackwardPredicates:
 		case FPandBP:
 			result = new TraceCheckerSpWp(m_TruePredicate, m_FalsePredicate, 
-					run.getWord(),m_SmtManager,
+					null, run.getWord(),m_SmtManager,
 					m_ModifiableGlobalVariableManager);
 			break;
 		default:

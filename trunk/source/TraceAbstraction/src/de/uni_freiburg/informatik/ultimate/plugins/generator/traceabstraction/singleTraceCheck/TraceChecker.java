@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
@@ -136,6 +137,8 @@ public class TraceChecker {
 
 	protected NestedSsaBuilder m_Nsb;
 	
+	protected final PredicateTransformer m_PredicateTransformer;
+	
 	
 	/**
 	 * Check if trace fulfills specification given by precondition, 
@@ -153,6 +156,7 @@ public class TraceChecker {
 		m_Trace = trace;
 		m_Precondition = precondition;
 		m_Postcondition = postcondition;
+		m_PredicateTransformer = new PredicateTransformer(m_SmtManager, modifiedGlobals);
 		if (pendingContexts == null) {
 			m_PendingContexts = new TreeMap<Integer, IPredicate>();
 		} else {
@@ -180,6 +184,7 @@ public class TraceChecker {
 		m_Trace = trace;
 		m_Precondition = precondition;
 		m_Postcondition = postcondition;
+		m_PredicateTransformer = new PredicateTransformer(m_SmtManager, modifiedGlobals);
 		m_PendingContexts = pendingContexts;
 		m_DefaultTransFormulas = defaultTransFormulas;
 		m_IsSafe = checkTrace();

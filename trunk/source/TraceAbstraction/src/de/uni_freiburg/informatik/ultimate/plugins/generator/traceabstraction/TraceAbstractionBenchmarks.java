@@ -6,6 +6,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmark;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
@@ -44,6 +45,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 	private boolean m_CounterExampleFeasible;
 	
 	private final EdgeCheckerBenchmark m_EdgeCheckerBenchmark;
+	private TraceCheckerBenchmark m_TraceCheckerBenchmark;
 	
 	
 	
@@ -149,23 +151,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 	
 	public String printPredicateResults() {
 		assert m_Finished : "finish trace abstraction first";
-		StringBuilder sb  = new StringBuilder();
-			if (m_totalNumberOfPredicates != null && !m_totalNumberOfPredicates.isEmpty()) {
-				sb.append("Total num of predicates: " + getSumOfIntegerList(m_totalNumberOfPredicates));
-			}
-			if (m_NumberOfQuantifiedPredicatesFP != null && !m_NumberOfQuantifiedPredicatesFP.isEmpty()) {
-				sb.append("\tNum of quantified predicates FP: " + getSumOfIntegerList(m_NumberOfQuantifiedPredicatesFP));
-			}
-			if (m_NumberOfQuantifiedPredicatesBP != null && !m_NumberOfQuantifiedPredicatesBP.isEmpty()) {
-				sb.append("\tNum of quantified predicates BP: " + getSumOfIntegerList(m_NumberOfQuantifiedPredicatesBP));
-			}
-			if (m_SizeOfPredicatesFP != null && !m_SizeOfPredicatesFP.isEmpty()) {
-				sb.append("\tSize of predicates FP: " + getSumOfIntegerArrays(m_SizeOfPredicatesFP));
-			}
-			if (m_SizeOfPredicatesBP != null && !m_SizeOfPredicatesBP.isEmpty()) {
-				sb.append("\tSize of predicates BP: " + getSumOfIntegerArrays(m_SizeOfPredicatesBP));
-			}
-		return sb.toString();
+		return m_TraceCheckerBenchmark.toString();
 	}
 	
 	
@@ -179,29 +165,6 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 	}
 	
 
-	private int getSumOfIntegerArrays(List<int[]> list) {
-		int sum = 0; 
-		for (int i = 0; i < list.size(); i++) {
-			sum += getSumOfIntArray(list.get(i));
-		}
-		return sum;
-	}
-	
-	private int getSumOfIntegerList(List<Integer> list) {
-		int sum = 0; 
-		for (int i = 0; i < list.size(); i++) {
-			sum += list.get(i);
-		}
-		return sum;
-	}
-	
-	private int getSumOfIntArray(int[] arr) {
-		int sum = 0; 
-		for (int i = 0; i < arr.length; i++) {
-			sum += arr[i];
-		}
-		return sum;
-	}
 
 	public static String prettyprintNanoseconds(long time) {
 		long seconds = time/1000000000;
@@ -224,45 +187,13 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 		}
 	}
 
-	public void addNumberOfQuantifiedPredicatesFP(Integer numberOfQuantifiedPredicatesFP) {
-		if (m_NumberOfQuantifiedPredicatesFP != null) {
-			m_NumberOfQuantifiedPredicatesFP.add(numberOfQuantifiedPredicatesFP);
-		} else {
-			m_NumberOfQuantifiedPredicatesFP = new ArrayList<Integer>();
-			m_NumberOfQuantifiedPredicatesFP.add(numberOfQuantifiedPredicatesFP);
-		}
-	}
 
-	public void addNumberOfQuantifiedPredicatesBP(Integer numberOfQuantifiedPredicatesBP) {
-		if (m_NumberOfQuantifiedPredicatesBP != null) {
-			m_NumberOfQuantifiedPredicatesBP.add(numberOfQuantifiedPredicatesBP);
-		} else {
-			m_NumberOfQuantifiedPredicatesBP = new ArrayList<Integer>();
-			m_NumberOfQuantifiedPredicatesBP.add(numberOfQuantifiedPredicatesBP);
-		}
+
+	public void setTraceCheckerBenchmarks(TraceCheckerBenchmark tcb) {
+		m_TraceCheckerBenchmark = tcb;
 	}
 
 
-
-	public void addSizeOfPredicatesFP(int[] sizeOfPredicatesFP) {
-		if (m_SizeOfPredicatesFP != null) {
-			this.m_SizeOfPredicatesFP.add(sizeOfPredicatesFP);
-		} else {
-			m_SizeOfPredicatesFP = new ArrayList<int[]>();
-			this.m_SizeOfPredicatesFP.add(sizeOfPredicatesFP);
-		}
-	}
-
-
-	public void addSizeOfPredicatesBP(int[] m_SizeOfPredicatesBP) {
-		if (this.m_SizeOfPredicatesBP != null) {
-			this.m_SizeOfPredicatesBP.add(m_SizeOfPredicatesBP);
-		} else {
-			this.m_SizeOfPredicatesBP = new ArrayList<int[]>();
-			this.m_SizeOfPredicatesBP.add(m_SizeOfPredicatesBP);
-		}
-		
-	}
 
 	@Override
 	public ICsvProvider<Double> createCvsProvider() {
