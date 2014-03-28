@@ -143,15 +143,19 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 	}
 	
 	
-	public String printPredicateResults() {
+	public String printTraceCheckerBenchmark() {
 		assert m_Finished : "finish trace abstraction first";
-		return m_TraceCheckerBenchmark.toString();
+		if (m_TraceCheckerBenchmark == null) {
+			return "no TraceCheckerBenchmark available";
+		} else {
+			return m_TraceCheckerBenchmark.toString();
+		}
 	}
 	
 	
 	
 	public String printBenchmarkResults() {
-		return timingResults() + " " + printPredicateResults();
+		return timingResults() + " " + printTraceCheckerBenchmark();
 	}
 	
 	public void setCounterExampleFeasible() {
@@ -169,7 +173,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 	
 	@Override
 	public String toString() {
-		return timingResults() + "\n\t\t" + printPredicateResults();
+		return timingResults() + "\n\t\t" + printTraceCheckerBenchmark();
 	}
 
 	public void addTotalNumberOfPredicates(Integer totalNumberOfPredicates) {

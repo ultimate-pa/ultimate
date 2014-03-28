@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmark;
 
 public class TraceCheckerSpWp extends TraceChecker {
 	/*
@@ -106,6 +107,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 		m_PredicateUnifier = predicateUnifier;
 		computeInterpolantsUsingUnsatCore(interpolatedPositions);
+		m_TraceCheckFinished = true;
 	}
 	
 
@@ -916,12 +918,22 @@ public class TraceCheckerSpWp extends TraceChecker {
 		m_TraceCheckerBenchmarkSpWp = new TraceCheckerBenchmarkSpWp(new int[0], new int[0], new int[0]);
 		super.computeRcfgProgramExecution();
 	}
+	
+	@Override
+	public void finishTraceCheckWithoutInterpolantsOrProgramExecution() {
+		m_TraceCheckerBenchmarkSpWp = new TraceCheckerBenchmarkSpWp(new int[0], new int[0], new int[0]);
+		super.finishTraceCheckWithoutInterpolantsOrProgramExecution();
+	}
 
 
 
 	@Override
 	public TraceCheckerBenchmark getTraceCheckerBenchmark() {
-		return m_TraceCheckerBenchmarkSpWp;
+		if (m_TraceCheckFinished) {
+			return m_TraceCheckerBenchmarkSpWp;
+		} else {
+			throw new AssertionError("Benchmark is only available after the trace check is finished.");
+		}
 	}
 
 

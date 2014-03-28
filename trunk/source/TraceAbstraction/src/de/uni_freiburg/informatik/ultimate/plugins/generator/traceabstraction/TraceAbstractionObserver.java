@@ -235,6 +235,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 		Result result = basicCegarLoop.iterate();
 		timingStatistics.finishTraceAbstraction();
+		assert basicCegarLoop.getTraceCheckerBenchmark() != null || basicCegarLoop.getIteration() == 0 : "no TraceCheckerBenchmark only allowed after the first iteration";
 		timingStatistics.setTraceCheckerBenchmarks(basicCegarLoop.getTraceCheckerBenchmark());
 
 		m_OverallIterations += basicCegarLoop.m_Iteration;

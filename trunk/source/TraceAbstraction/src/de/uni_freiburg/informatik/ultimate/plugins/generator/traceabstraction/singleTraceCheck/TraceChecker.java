@@ -88,6 +88,18 @@ public class TraceChecker {
 	protected static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
+	
+	/**
+	 * After constructing a new TraceChecker satisfiability of the trace was
+	 * checked. However, the trace check is not yet finished, and the SmtManager
+	 * is still locked by this TraceChecker. In order to finish a trace check,
+	 * the user has to either
+	 * <ul>
+	 * <li> compute interpolants,
+	 * <li> compute an RcfgProgramExecution, or
+	 * <li> call the method finishTraceCheckWithoutInterpolantsOrProgramExecution().
+	 */
+	protected boolean m_TraceCheckFinished;
 
 	/**
 	 * Interface for query the SMT solver. 
@@ -290,7 +302,7 @@ public class TraceChecker {
 		} else {
 			throw new AssertionError("unexpected result of correctness check");
 		}
-		
+		m_TraceCheckFinished = true;
 	}
 	
 
@@ -302,6 +314,7 @@ public class TraceChecker {
 			Map<Integer, ProgramState<Expression>> emptyMap = Collections.emptyMap();
 			Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
 			unlockSmtManager();
+			m_TraceCheckFinished = true;
 			return new RcfgProgramExecution(
 					m_DefaultTransFormulas.getTrace().lettersAsList(), 
 					emptyMap, branchEncoders);
@@ -378,7 +391,7 @@ public class TraceChecker {
 
 	
 	
-	public int[] getSizeOfPredicates(INTERPOLATION interpolation) {
+	protected int[] getSizeOfPredicates(INTERPOLATION interpolation) {
 		return computeSizeOfPredicates(m_Interpolants);
 	}
 	
@@ -387,7 +400,7 @@ public class TraceChecker {
 	 * @param interpolation
 	 * @return
 	 */
-	public int getTotalNumberOfPredicates(INTERPOLATION interpolation) {
+	protected int getTotalNumberOfPredicates(INTERPOLATION interpolation) {
 		return m_Interpolants != null ? m_Interpolants.length : 0;
 	}
 
@@ -440,6 +453,7 @@ public class TraceChecker {
 		default:
 			throw new UnsupportedOperationException("unsupportedInterpolation");
 		}
+		m_TraceCheckFinished = true;
 		
 		//TODO: remove this if relevant variables are definitely correct.
 		assert testRelevantVars() : "bug in relevant varialbes";
@@ -500,10 +514,6 @@ public class TraceChecker {
 		return m_PredicateUnifier;
 	}
 	
-	public TraceAbstractionBenchmarks getTraceAbstractionBenchmarks() {
-		return null;
-	}
-
 	/**
 	 * Return the RcfgProgramExecution that has been computed by 
 	 * computeRcfgProgramExecution().
@@ -698,6 +708,7 @@ public class TraceChecker {
 	 */
 	public void finishTraceCheckWithoutInterpolantsOrProgramExecution() {
 		unlockSmtManager();
+		m_TraceCheckFinished = true;
 	}
 	
 	
@@ -902,7 +913,10 @@ public class TraceChecker {
 	
 	
 	public TraceCheckerBenchmark getTraceCheckerBenchmark() {
-		if (m_SmtManager.is)
-		return new TraceCheckerBenchmark();
+		if (m_TraceCheckFinished) {
+			return new TraceCheckerBenchmark();
+		} else {
+			throw new AssertionError("Benchmark is only available after the trace check is finished.");
+		}
 	}
 }
