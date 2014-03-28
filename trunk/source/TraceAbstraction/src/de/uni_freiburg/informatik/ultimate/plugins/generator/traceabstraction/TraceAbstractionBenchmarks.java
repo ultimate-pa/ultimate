@@ -35,10 +35,6 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 	
 	// Contains for each trace, the sum of predicates computed for that trace.
 	private List<Integer> m_totalNumberOfPredicates;
-	private List<Integer> m_NumberOfQuantifiedPredicatesFP;
-	private List<Integer> m_NumberOfQuantifiedPredicatesBP;
-	private List<int[]> m_SizeOfPredicatesFP;
-	private List<int[]> m_SizeOfPredicatesBP;
 	private long m_StartingTime;
 	private long m_StopTime;
 	private boolean m_Finished = false;
@@ -52,8 +48,6 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 	public TraceAbstractionBenchmarks(SmtManager mSmtManager) {
 		this.mSmtManager = mSmtManager;
 		m_StartingTime = System.nanoTime();
-		m_SizeOfPredicatesBP = new ArrayList<int[]>();
-		m_SizeOfPredicatesFP = new ArrayList<int[]>();
 		m_CounterExampleFeasible = false;
 		m_EdgeCheckerBenchmark = new EdgeCheckerBenchmark(new InCaReCounter(), 
 				new InCaReCounter(), new InCaReCounter());

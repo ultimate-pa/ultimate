@@ -235,6 +235,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			m_TraceCheckerBenchmark = m_TraceCheckerBenchmark.copyAndAdd(m_TraceChecker.getTraceCheckerBenchmark());
 		}
 		
+		
 		return feasibility;
 	}
 	
