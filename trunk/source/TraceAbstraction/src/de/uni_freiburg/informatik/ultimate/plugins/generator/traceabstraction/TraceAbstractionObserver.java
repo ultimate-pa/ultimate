@@ -220,29 +220,30 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private void iterate(String name, RootNode root, TAPreferences taPrefs,
 			SmtManager smtManager, TraceAbstractionBenchmarks timingStatistics,
 			Collection<ProgramPoint> errorLocs) {
-		AbstractCegarLoop abstractCegarLoop;
+		BasicCegarLoop basicCegarLoop;
 		if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
-			abstractCegarLoop = new CegarLoopSWBnonRecursive(name, 
+			basicCegarLoop = new CegarLoopSWBnonRecursive(name, 
 					root, smtManager, timingStatistics,taPrefs, errorLocs, 
 					taPrefs.interpolation(), taPrefs.computeHoareAnnotation());
 //			abstractCegarLoop = new CegarLoopSequentialWithBackedges(name, 
 //					root, smtManager, timingStatistics,taPrefs, errorLocs);
 		} else {
-			abstractCegarLoop = new BasicCegarLoop(name, 
+			basicCegarLoop = new BasicCegarLoop(name, 
 					root, smtManager, timingStatistics,taPrefs, errorLocs, 
 					taPrefs.interpolation(), taPrefs.computeHoareAnnotation());
 		}
 
-		Result result = abstractCegarLoop.iterate();
+		Result result = basicCegarLoop.iterate();
 		timingStatistics.finishTraceAbstraction();
+		timingStatistics.setTraceCheckerBenchmarks(basicCegarLoop.getTraceCheckerBenchmark());
 
-		m_OverallIterations += abstractCegarLoop.m_Iteration;
-		if (abstractCegarLoop.m_BiggestAbstractionSize > m_OverallBiggestAbstraction) {
-			m_OverallBiggestAbstraction = abstractCegarLoop.m_BiggestAbstractionSize;
+		m_OverallIterations += basicCegarLoop.m_Iteration;
+		if (basicCegarLoop.m_BiggestAbstractionSize > m_OverallBiggestAbstraction) {
+			m_OverallBiggestAbstraction = basicCegarLoop.m_BiggestAbstractionSize;
 		}
-		m_OverallDeadEndRemovalTime += abstractCegarLoop.m_DeadEndRemovalTime;
-		m_OverallMinimizationTime += abstractCegarLoop.m_MinimizationTime;
-		m_OverallStatesRemovedByMinimization += abstractCegarLoop.m_StatesRemovedByMinimization;
+		m_OverallDeadEndRemovalTime += basicCegarLoop.m_DeadEndRemovalTime;
+		m_OverallMinimizationTime += basicCegarLoop.m_MinimizationTime;
+		m_OverallStatesRemovedByMinimization += basicCegarLoop.m_StatesRemovedByMinimization;
 
 		switch (result) {
 		case SAFE:
@@ -250,7 +251,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			break;
 		case UNSAFE: 
 			{
-				RcfgProgramExecution pe = abstractCegarLoop.getRcfgProgramExecution();
+				RcfgProgramExecution pe = basicCegarLoop.getRcfgProgramExecution();
 				reportCounterexampleResult(pe);
 				m_OverallResult = result;
 				break;
@@ -263,7 +264,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			break;
 		case UNKNOWN: 
 			{
-				RcfgProgramExecution pe = abstractCegarLoop.getRcfgProgramExecution();
+				RcfgProgramExecution pe = basicCegarLoop.getRcfgProgramExecution();
 				reportUnproveableResult(pe);
 				if (m_OverallResult != Result.UNSAFE) {
 					m_OverallResult = result;
@@ -273,12 +274,12 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		}
 		if (taPrefs.computeHoareAnnotation()) {
 			s_Logger.debug("Computing Hoare annotation of CFG");
-			abstractCegarLoop.computeCFGHoareAnnotation();
+			basicCegarLoop.computeCFGHoareAnnotation();
 		} else {
 			s_Logger.debug("Ommiting computation of Hoare annotation");
 			
 		}
-		m_Artifact = abstractCegarLoop.getArtifact();
+		m_Artifact = basicCegarLoop.getArtifact();
 	}
 	
 	private void reportPositiveResults(Collection<ProgramPoint> errorLocs) {

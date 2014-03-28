@@ -907,9 +907,17 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 			return sum;
 		}
-
-		
 	}
+	
+	
+
+	@Override
+	public void computeRcfgProgramExecution() {
+		m_TraceCheckerBenchmarkSpWp = new TraceCheckerBenchmarkSpWp(new int[0], new int[0], new int[0]);
+		super.computeRcfgProgramExecution();
+	}
+
+
 
 	@Override
 	public TraceCheckerBenchmark getTraceCheckerBenchmark() {

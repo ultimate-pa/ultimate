@@ -865,6 +865,12 @@ public class TraceChecker {
 		
 	}
 	
+	/**
+	 * Stores benchmark data about the usage of TraceCheckers. E.g., number and
+	 * size of predicates obtained via interpolation.
+	 * 
+	 * @author Matthias Heizmann
+	 */
 	public static class TraceCheckerBenchmark {
 		
 		TraceCheckerBenchmark(/* some data */) {
@@ -875,13 +881,28 @@ public class TraceChecker {
 			/*write data to field from both objects*/
 		}
 		
+		/**
+		 * Returns a new TraceCheckerBenchmark that contains the accumulated
+		 * benchmark data of this object and the input to this method.
+		 */
 		public TraceCheckerBenchmark copyAndAdd(TraceCheckerBenchmark traceCheckerBenchmark) {
 			return new TraceCheckerBenchmark(this, traceCheckerBenchmark);
 		}
+
+		/**
+		 * Returns the empty String this class does not store any data yet.
+		 */
+		@Override
+		public String toString() {
+			return "";
+		}
+		
+		
 	}
 	
 	
 	public TraceCheckerBenchmark getTraceCheckerBenchmark() {
+		if (m_SmtManager.is)
 		return new TraceCheckerBenchmark();
 	}
 }

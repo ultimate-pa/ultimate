@@ -843,4 +843,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	}
 
 
+
+	public TraceCheckerBenchmark getTraceCheckerBenchmark() {
+		return m_TraceCheckerBenchmark;
+	}
+	
+	
+
+
 }
