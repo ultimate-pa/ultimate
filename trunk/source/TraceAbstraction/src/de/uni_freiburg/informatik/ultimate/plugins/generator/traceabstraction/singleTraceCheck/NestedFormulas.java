@@ -8,8 +8,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 
 /**
  * Class that represents a sequence of formulas (of type F) along a trace (given
- * by a NestedWord<CodeBlock>). At each non-call position there is one formula.
- * At each call positions there are three formulas
+ * by a NestedWord<CodeBlock>). At position that is neither a call position nor 
+ * a pending return position there is one formula.
+ * At each call position and each pending return position there are three formulas
  * <ul>
  * <li> one that represents an assignment of certain local variables namely the
  * (input) parameters of the called procedure,
