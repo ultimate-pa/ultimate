@@ -820,9 +820,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 		// m_NumberOfQuantifierFreePredicates[1] : #quantified predicates of FP
 		// m_NumberOfQuantifierFreePredicates[2] : #quantified predicates of WP
 		// m_NumberOfQuantifierFreePredicates[3] : #quantified predicates of BP
-		private int[] m_NumberOfQuantifiedPredicates;
-		private int[] m_SizeOfPredicatesFP;
-		private int[] m_SizeOfPredicatesBP;
+		private final int[] m_NumberOfQuantifiedPredicates;
+		private final int[] m_SizeOfPredicatesFP;
+		private final int[] m_SizeOfPredicatesBP;
 		
 		
 
@@ -915,13 +915,13 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 	@Override
 	public void computeRcfgProgramExecution() {
-		m_TraceCheckerBenchmarkSpWp = new TraceCheckerBenchmarkSpWp(new int[0], new int[0], new int[0]);
+		m_TraceCheckerBenchmarkSpWp = new TraceCheckerBenchmarkSpWp(new int[4], new int[4], new int[4]);
 		super.computeRcfgProgramExecution();
 	}
 	
 	@Override
 	public void finishTraceCheckWithoutInterpolantsOrProgramExecution() {
-		m_TraceCheckerBenchmarkSpWp = new TraceCheckerBenchmarkSpWp(new int[0], new int[0], new int[0]);
+		m_TraceCheckerBenchmarkSpWp = new TraceCheckerBenchmarkSpWp(new int[4], new int[4], new int[4]);
 		super.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 	}
 
