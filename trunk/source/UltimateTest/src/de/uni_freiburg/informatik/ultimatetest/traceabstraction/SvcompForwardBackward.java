@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
  */
 public class SvcompForwardBackward extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String m_Path = "examples/svcomp/ssh-simplified/";
+	private static final String[] m_Directories = { "examples/svcomp/ssh-simplified/" };
 	
 	// Time out for each test case in milliseconds
 	private static int m_Timeout = 60000;
@@ -29,7 +29,7 @@ public class SvcompForwardBackward extends
 			addTestCases(
 					"AutomizerBpl.xml",
 					"automizer/ForwardPredicates_Svcomp_300.epf",
-				    m_Path,
+				    m_Directories,
 				    new String[] {".bpl"},
 				    "Trace Abstraction via Forward Predicates (SP)",
 				    "BoogieFilesForwardPredicates",
@@ -39,7 +39,7 @@ public class SvcompForwardBackward extends
 			addTestCases(
 					"AutomizerBpl.xml",
 					"automizer/BackwardPredicates_Svcomp_300.epf",
-				    m_Path,
+				    m_Directories,
 				    new String[] {".bpl"},
 				    "Trace Abstraction via Backward Predicates (WP)",
 				    "BoogieFilesBackwardPredicates",
@@ -49,7 +49,7 @@ public class SvcompForwardBackward extends
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicates_Svcomp_300.epf",
-				    m_Path,
+				    m_Directories,
 				    new String[] {".c", ".i"},
 				    "Trace Abstraction via Forward Predicates (SP)",
 				    "CFilesForwardPredicates",
@@ -59,7 +59,7 @@ public class SvcompForwardBackward extends
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/BackwardPredicates_Svcomp_300.epf",
-				    m_Path,
+				    m_Directories,
 				    new String[] {".c", ".i"},
 				    "Trace Abstraction via Backward Predicates (WP)",
 				    "CFilesBackwardPredicates",

@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
  */
 public class AllExamplesTraceAbstractionTestSuite extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String m_Path = "examples/programs/";
+	private static final String[] m_Directories = { "examples/programs/" };
 	
 	// Time out for each test case in milliseconds
 	private static int m_Timeout = 20000;
@@ -29,7 +29,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 			addTestCases(
 					"AutomizerBpl.xml",
 					"traceAbstractionTestSuite/settingsForwardPredicates.epf",
-				    m_Path,
+				    m_Directories,
 				    new String[] {".bpl"},
 				    "Trace Abstraction via Forward Predicates (SP)",
 				    "BoogieFilesForwardPredicates",
@@ -39,7 +39,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 			addTestCases(
 					"AutomizerBpl.xml",
 					"traceAbstractionTestSuite/settingsBackwardPredicates.epf",
-				    m_Path,
+				    m_Directories,
 				    new String[] {".bpl"},
 				    "Trace Abstraction via Backward Predicates (WP)",
 				    "BoogieFilesBackwardPredicates",
@@ -49,7 +49,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 			addTestCases(
 					"AutomizerC.xml",
 					"traceAbstractionTestSuite/settingsForwardPredicates.epf",
-				    m_Path,
+				    m_Directories,
 				    new String[] {".c", ".i"},
 				    "Trace Abstraction via Forward Predicates (SP)",
 				    "CFilesForwardPredicates",
@@ -59,7 +59,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 			addTestCases(
 					"AutomizerC.xml",
 					"traceAbstractionTestSuite/settingsBackwardPredicates.epf",
-				    m_Path,
+				    m_Directories,
 				    new String[] {".c", ".i"},
 				    "Trace Abstraction via Backward Predicates (WP)",
 				    "CFilesBackwardPredicates",

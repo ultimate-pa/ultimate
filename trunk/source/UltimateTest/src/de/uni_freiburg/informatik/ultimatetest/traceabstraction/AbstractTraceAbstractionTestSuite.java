@@ -57,12 +57,15 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 	 * @param uniqueString
 	 * @param deadline
 	 */
-	protected void addTestCases(String toolchain, String settings, String directory, String[] fileEndings,
+	protected void addTestCases(String toolchain, String settings, String[] directories, String[] fileEndings,
 			String description, String uniqueString, long deadline) {
 
 		File toolchainFile = new File(Util.getPathFromTrunk(m_PathToToolchains + toolchain));
 		File settingsFile = new File(Util.getPathFromTrunk(m_PathToSettings + settings));
-		Collection<File> testFiles = getInputFiles(directory, fileEndings);
+		Collection<File> testFiles = new ArrayList<File>();
+		for (String directory : directories) {
+			testFiles.addAll(getInputFiles(directory, fileEndings));
+		}
 		addTestCases(toolchainFile, settingsFile, testFiles, description, uniqueString, deadline);
 	}
 

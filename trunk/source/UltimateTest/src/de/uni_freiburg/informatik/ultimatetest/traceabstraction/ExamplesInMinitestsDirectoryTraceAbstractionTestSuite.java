@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
 public class ExamplesInMinitestsDirectoryTraceAbstractionTestSuite extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String m_Path = "examples/programs/regression//";
+	private static final String[] m_Directories = { "examples/programs/regression//" };
 	// private static final String m_excludeFilesFromDir = "examples/programs/minitests/openbugs/";
 	
 	private static final boolean m_TraceAbstractionWithBackwardPredicates = !false;
@@ -33,7 +33,7 @@ public class ExamplesInMinitestsDirectoryTraceAbstractionTestSuite extends
 			addTestCases(
 					"AutomizerBpl.xml",
 					"traceAbstractionTestSuite/settingsForwardPredicates.epf",
-				    m_Path,
+				    m_Directories,
 				    new String[] {".bpl"},
 				    "Trace Abstraction",
 				    "BoogieFilesForwardPredicates",
@@ -43,7 +43,7 @@ public class ExamplesInMinitestsDirectoryTraceAbstractionTestSuite extends
 			addTestCases(
 					"AutomizerBpl.xml",
 					"traceAbstractionTestSuite/settingsBackwardPredicates.epf",
-				    m_Path,
+				    m_Directories,
 				    new String[] {".bpl"},
 				    "Trace Abstraction",
 				    "BoogieFilesBackwardPredicates",
@@ -53,7 +53,7 @@ public class ExamplesInMinitestsDirectoryTraceAbstractionTestSuite extends
 			addTestCases(
 					"AutomizerC.xml",
 					"traceAbstractionTestSuite/settingsForwardPredicates.epf",
-				    m_Path,
+				    m_Directories,
 				    new String[] {".c", ".i"},
 				    "Trace Abstraction",
 				    "CFilesForwardPredicates",
@@ -63,7 +63,7 @@ public class ExamplesInMinitestsDirectoryTraceAbstractionTestSuite extends
 			addTestCases(
 					"AutomizerC.xml",
 					"traceAbstractionTestSuite/settingsBackwardPredicates.epf",
-				    m_Path,
+				    m_Directories,
 				    new String[] {".c", ".i"},
 				    "Trace Abstraction",
 				    "CFilesBackwardPredicates",

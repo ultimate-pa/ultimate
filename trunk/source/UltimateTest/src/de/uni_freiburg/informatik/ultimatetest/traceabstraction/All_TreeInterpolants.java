@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
  */
 public class All_TreeInterpolants extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String m_Path = "examples/programs/regression";
+	private static final String[] m_Directories = { "examples/programs/regression" };
 	
 	// Time out for each test case in milliseconds
 	private static int m_Timeout = 5000;
@@ -27,7 +27,7 @@ public class All_TreeInterpolants extends
 			addTestCases(
 					"AutomizerBpl.xml",
 					"traceAbstractionTestSuite/TreeInterpolants.epf",
-				    m_Path,
+				    m_Directories,
 				    new String[] {".bpl"},
 				    "TraceAbstraction via tree interpolation",
 				    "Boogie",
@@ -37,7 +37,7 @@ public class All_TreeInterpolants extends
 			addTestCases(
 					"AutomizerC.xml",
 					"traceAbstractionTestSuite/TreeInterpolants.epf",
-				    m_Path,
+				    m_Directories,
 				    new String[] {".c", ".i"},
 				    "TraceAbstraction via tree interpolation",
 				    "C",
