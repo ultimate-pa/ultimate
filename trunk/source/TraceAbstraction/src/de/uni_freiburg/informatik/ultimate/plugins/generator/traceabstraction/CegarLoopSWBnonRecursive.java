@@ -12,6 +12,7 @@ import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -154,16 +155,19 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 
 	/**
 	 * constructs the interpolant automaton.
+	 * @throws OperationCanceledException 
 	 */
 	@Override
-	protected void constructInterpolantAutomaton()
+	protected void constructInterpolantAutomaton() throws OperationCanceledException
 	{
 		s_Logger.debug("Start constructing interpolant automaton.");
 
 		// cast the abstraction automaton as nested word and double decker automaton
 		m_NestedAbstraction = (INestedWordAutomaton<CodeBlock, IPredicate>)m_Abstraction;
 		
-		m_DoubleDeckerAbstraction = (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) m_NestedAbstraction;
+		m_DoubleDeckerAbstraction = (new RemoveUnreachable<CodeBlock, IPredicate>(
+				(INestedWordAutomatonSimple<CodeBlock,IPredicate>) m_Abstraction)).getResult(); 
+		//(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) m_Abstraction.get;
 		
 		// cast the path as nested run
 		m_CounterExamplePath = (NestedRun<CodeBlock, IPredicate>) m_Counterexample;
@@ -342,6 +346,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 		s_Logger.debug("Explore path: " + state.toString() + " wordLen: " + word.length() + " pathLen: " + m_ActualPath.size());
 		m_StackState = new ArrayList<IPredicate>();
 		m_StackIterator = new ArrayList<Iterator<Transitionlet<CodeBlock, IPredicate>>>();
+		m_StackHier = new ArrayList<Iterator<IPredicate>>();
 		m_StackEdgeType = new ArrayList<Integer>(); 
 		m_StackWord = new ArrayList<NestedWord<CodeBlock>>();
 
