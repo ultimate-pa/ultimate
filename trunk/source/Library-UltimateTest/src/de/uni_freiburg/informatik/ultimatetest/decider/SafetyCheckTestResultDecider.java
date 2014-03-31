@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
@@ -259,6 +260,7 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 		} else {
 			returnValue = resultSet.get(SafetyCheckerResultType.NO_RESULT);
 		}
+		assert returnValue != null : "no result!";
 		return returnValue;
 	}
 
@@ -273,7 +275,7 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 			return new SafetyCheckerResult(SafetyCheckerResultType.SYNTAX_ERROR, result);
 		} else if (result instanceof SyntaxErrorResult) {
 			return new SafetyCheckerResult(SafetyCheckerResultType.SYNTAX_ERROR, result);
-		} else if (result instanceof TimeoutResult) {
+		} else if (result instanceof ITimeoutResult) {
 			return new SafetyCheckerResult(SafetyCheckerResultType.TIMEOUT, null);
 		} else if (result instanceof UnsupportedSyntaxResult) {
 			return new SafetyCheckerResult(SafetyCheckerResultType.UNSUPPORTED_SYNTAX, result);

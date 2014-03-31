@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
  * @param <ELEM>
  */
 public class TimeoutResultAtElement<ELEM extends IElement> 
-					extends AbstractResultAtElement<ELEM> implements IResult{
+					extends AbstractResultAtElement<ELEM> implements IResult, ITimeoutResult {
 	
 	private final String m_longDescription;
 

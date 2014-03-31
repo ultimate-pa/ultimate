@@ -9,7 +9,7 @@ package de.uni_freiburg.informatik.ultimate.result;
  *
  * @param <ELEM>
  */
-public class TimeoutResult extends AbstractResult implements IResult{
+public class TimeoutResult extends AbstractResult implements IResult, ITimeoutResult {
 	
 	public TimeoutResult(String plugin, String longDescription) {
 		super(plugin);
