@@ -249,22 +249,18 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 			m_ActualPrecondition = m_Epimorphism.getMapping(m_ActualStartingState);
 
 			// return transitions
-			for (IPredicate hier : m_DoubleDeckerAbstraction
-					.getDownStates(m_ActualStartingState))
+			for (IPredicate hier : m_DoubleDeckerAbstraction.getDownStates(m_ActualStartingState))
 			{
 				// if we did not annotate the hierarchical predecessor we cannot test
 				// the path yet
 				// so we just do not
 				if (m_AnnotatedStates.contains(hier))
 				{
-					for (OutgoingReturnTransition<CodeBlock, IPredicate> e : m_NestedAbstraction
-							.returnSuccessorsGivenHier(m_ActualStartingState, hier))
+					for (OutgoingReturnTransition<CodeBlock, IPredicate> e : m_NestedAbstraction.returnSuccessorsGivenHier(m_ActualStartingState, hier))
 					{
 						// the next state is the target state of the edge
 						IPredicate target = e.getSucc();
-						exploreInitialEdge(e, target,
-								new NestedWord<CodeBlock>(e.getLetter(),
-										NestedWord.MINUS_INFINITY));
+						exploreInitialEdge(e, target, new NestedWord<CodeBlock>(e.getLetter(), NestedWord.MINUS_INFINITY));
 					}
 				}
 			}
@@ -275,9 +271,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 			{
 				// the next state is the target state of the edge
 				IPredicate target = e.getSucc();
-
-				exploreInitialEdge(e, target, new NestedWord<CodeBlock>(e.getLetter(),
-						NestedWord.PLUS_INFINITY));
+				exploreInitialEdge(e, target, new NestedWord<CodeBlock>(e.getLetter(), NestedWord.PLUS_INFINITY));
 			}
 
 			// start the depth first search procedure for every state edge going out
@@ -405,15 +399,20 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 							{
 								s_Logger.debug("iterate through hier" + hier.toString());
 								iter = m_NestedAbstraction.returnSuccessorsGivenHier(s, hier).iterator();
-								edgeType = 0; // there might still be hierPreds left
+								edgeType = 0; // there might still be hierPreds left								
 							}
-						} else
+							else
+							{
+								continue;
+							}
+						}
+						else
 						{
 							// if we gone through all hierPreds we set to null for the next
 							// iteration
 							hierPreds = null;
+							continue;
 						}
-						continue;
 					case 2:
 						iter = m_NestedAbstraction.callSuccessors(s).iterator();
 						continue;
