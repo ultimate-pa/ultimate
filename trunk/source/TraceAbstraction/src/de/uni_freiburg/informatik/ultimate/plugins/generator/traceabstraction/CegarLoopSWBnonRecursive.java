@@ -335,7 +335,8 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 				checkAndAddPath(initialWord, m_ActualPrecondition,
 						m_Epimorphism.getMapping(target));
 			}
-		} else
+		}
+		else
 		{
 			exploreState(target, initialWord);
 		}
@@ -403,10 +404,9 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 							if (m_AnnotatedStates.contains(hier))
 							{
 								s_Logger.debug("iterate through hier" + hier.toString());
-								iter = m_NestedAbstraction.returnSuccessorsGivenHier(s, hier)
-										.iterator();
+								iter = m_NestedAbstraction.returnSuccessorsGivenHier(s, hier).iterator();
+								edgeType = 0; // there might still be hierPreds left
 							}
-							edgeType--; // there might still be hierPreds left
 						} else
 						{
 							// if we gone through all hierPreds we set to null for the next
@@ -448,25 +448,19 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 			switch (edgeType)
 			{
 				case 0:
-					OutgoingInternalTransition<CodeBlock, IPredicate> e_int = (OutgoingInternalTransition<CodeBlock, IPredicate>) iter
-							.next();
+					OutgoingInternalTransition<CodeBlock, IPredicate> e_int = (OutgoingInternalTransition<CodeBlock, IPredicate>) iter.next();
 					target = e_int.getSucc();
-					newWord = actualWord.concatenate(new NestedWord<CodeBlock>(e_int
-							.getLetter(), NestedWord.INTERNAL_POSITION));
+					newWord = actualWord.concatenate(new NestedWord<CodeBlock>(e_int.getLetter(), NestedWord.INTERNAL_POSITION));
 					break;
 				case 1:
-					OutgoingReturnTransition<CodeBlock, IPredicate> e_out = (OutgoingReturnTransition<CodeBlock, IPredicate>) iter
-							.next();
+					OutgoingReturnTransition<CodeBlock, IPredicate> e_out = (OutgoingReturnTransition<CodeBlock, IPredicate>) iter.next();
 					target = e_out.getSucc();
-					newWord = actualWord.concatenate(new NestedWord<CodeBlock>(e_out
-							.getLetter(), NestedWord.MINUS_INFINITY));
+					newWord = actualWord.concatenate(new NestedWord<CodeBlock>(e_out.getLetter(), NestedWord.MINUS_INFINITY));
 					break;
 				case 2:
-					OutgoingCallTransition<CodeBlock, IPredicate> e_ret = (OutgoingCallTransition<CodeBlock, IPredicate>) iter
-							.next();
+					OutgoingCallTransition<CodeBlock, IPredicate> e_ret = (OutgoingCallTransition<CodeBlock, IPredicate>) iter.next();
 					target = e_ret.getSucc();
-					newWord = actualWord.concatenate(new NestedWord<CodeBlock>(e_ret
-							.getLetter(), NestedWord.PLUS_INFINITY));
+					newWord = actualWord.concatenate(new NestedWord<CodeBlock>(e_ret.getLetter(), NestedWord.PLUS_INFINITY));
 					break;
 				default:
 					throw new Error();
