@@ -506,25 +506,32 @@ public class TraceCheckerSpWp extends TraceChecker {
 								sp.getProcedures());
 				} else if (trace.getSymbol(i) instanceof Return) {
 					IPredicate callerPred = tracePrecondition;
+					TransFormula globalVarsAssignment = null;
+					TransFormula oldVarsAssignment = null;
+					TransFormula callTF = null;
 					if (trace.isPendingReturn(i)) {
 						callerPred = m_PendingContexts.get(new Integer(i));
-						// TODO: Define sp for pending-returns
+						callTF = rv.getLocalVarAssignment(i);
+						oldVarsAssignment = rv.getOldVarAssignment(i);
 					} else {
 						int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i);
 						assert call_pos >= 0 && call_pos <= i : "Bad call position!";
 						if (call_pos > 0) {
 							callerPred = m_InterpolantsSp[call_pos - 1]; 
 						}
-						IPredicate p = m_PredicateTransformer.strongestPostcondition(
-								getForwardPredicateAtPosition(i-1, tracePrecondition, false), 
-								callerPred,
-								rv.getFormulaFromNonCallPos(i),
-								rv.getLocalVarAssignment(call_pos),
-								rv.getGlobalVarAssignment(call_pos)
-								);
-						m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
-								p.getProcedures());
+						globalVarsAssignment = rv.getGlobalVarAssignment(call_pos);
+						callTF = rv.getLocalVarAssignment(call_pos);
 					}
+					IPredicate p = m_PredicateTransformer.strongestPostcondition(
+							getForwardPredicateAtPosition(i-1, tracePrecondition, true), 
+							callerPred,
+							rv.getFormulaFromNonCallPos(i),
+							callTF,
+							globalVarsAssignment,
+							oldVarsAssignment
+							);
+					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
+							p.getProcedures());
 
 				} else {
 						sp = m_PredicateTransformer.strongestPostcondition(
@@ -591,19 +598,26 @@ public class TraceCheckerSpWp extends TraceChecker {
 						
 					}
 				} else if (trace.getSymbol(i+1) instanceof Return) {
+					TransFormula globalVarsAssignments = null;
+					TransFormula oldVarAssignments = null;
+					TransFormula callTF = null;
+					IPredicate callerPred = null;
 					if (trace.isPendingReturn(i)) {
-//						IPredicate callerPred = m_PendingContexts.get(new Integer(i));
-						// TODO: Define wp for pending-returns
+						callerPred = m_PendingContexts.get(new Integer(i));
+						// we may get the local variable assignment (pending context)
+						// by requesting it at the position of the pending-return.
+						callTF = rv.getLocalVarAssignment(i);
+						oldVarAssignments = rv.getOldVarAssignment(i);
 					} else {
 						int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i+1);
 						assert call_pos >= 0 && call_pos <= i : "Bad call position!";
-						TransFormula callTF = rv.getLocalVarAssignment(call_pos);
-						TransFormula globalVarsAssignments = rv.getGlobalVarAssignment(call_pos);
+						callTF = rv.getLocalVarAssignment(call_pos);
+						globalVarsAssignments = rv.getGlobalVarAssignment(call_pos);
 						// 1st method of computing the predicate right before of the corresponding Call-statement.
 						// 1.1: Compute a summary of the statements from the beginning of the trace up to the Call-Statement, without including it.
 						// 1.2: Compute the caller predicate as the strongest post-condition of the precondition and the summary.
 						TransFormula summary = computeSummaryForInterproceduralTrace(trace, rv, 0, call_pos);
-						IPredicate callerPred = m_PredicateTransformer.strongestPostcondition(m_Precondition, summary);
+						callerPred = m_PredicateTransformer.strongestPostcondition(m_Precondition, summary);
 						// If callerPred contains quantifiers, compute it via the 2nd method
 						if (callerPred instanceof BasicPredicateExplicitQuantifier) {
 							// 2nd method of computing the predicate right before of the corresponding Call-statement.
@@ -618,15 +632,16 @@ public class TraceCheckerSpWp extends TraceChecker {
 									summary);
 						}
 						callerPredicatesComputed.put(call_pos, callerPred);
-						wp = m_PredicateTransformer.weakestPrecondition(
-								getBackwardPredicateAtPosition(i+1, tracePostcondition, true), 
-								callerPred, 
-								rv.getFormulaFromNonCallPos(i+1), callTF, 
-								globalVarsAssignments,
-								m_ModifiedGlobals.getModifiedBoogieVars(((Return)trace.getSymbol(i+1)).getCorrespondingCall().getCallStatement().getMethodName())); 
-						m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(wp.getFormula(),
-									wp.getVars(),wp.getProcedures());
 					}
+					wp = m_PredicateTransformer.weakestPrecondition(
+							getBackwardPredicateAtPosition(i+1, tracePostcondition, true), 
+							callerPred, 
+							rv.getFormulaFromNonCallPos(i+1), callTF, 
+							globalVarsAssignments,
+							oldVarAssignments,
+							m_ModifiedGlobals.getModifiedBoogieVars(((Return)trace.getSymbol(i+1)).getCorrespondingCall().getCallStatement().getMethodName())); 
+					m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(wp.getFormula(),
+								wp.getVars(),wp.getProcedures());
 					
 				} else {
 					wp = m_PredicateTransformer.weakestPrecondition(

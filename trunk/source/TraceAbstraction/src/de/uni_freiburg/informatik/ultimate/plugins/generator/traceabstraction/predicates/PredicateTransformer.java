@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
 
 /**
  * @author musab@informatik.uni-freiburg.de
@@ -39,6 +38,7 @@ public class PredicateTransformer {
 	/**
 	 * Compute the irrelevant variables of the given predicate p. 
 	 * A variable is irrelevant, if it isn't contained in the given set of relevantVars.
+	 * @see LiveVariables
 	 */
 	private Set<TermVariable> computeIrrelevantVariables(Set<BoogieVar> relevantVars, IPredicate p) {
 		Set<TermVariable> result = new HashSet<TermVariable>();
@@ -50,33 +50,29 @@ public class PredicateTransformer {
 		return result;
 	}
 
-	public IPredicate computeForwardRelevantPredicate(IPredicate sp, Set<BoogieVar> relevantVars) {
-		return computeRelevantPredicateHelper(sp, relevantVars,
-				Script.EXISTS);
-	}
 
 	/**
-	 * Computes a predicate from the given predicate p, such that all irrelevant variables are quantified.
+	 * Computes a predicate from the given predicate p, such that all irrelevant variables are quantified by
+	 * the given quantifier.
 	 */
 	private IPredicate computeRelevantPredicateHelper(IPredicate p,
 			Set<BoogieVar> relevantVars,
 			int quantifier) {
 		Set<TermVariable> irrelevantVars = computeIrrelevantVariables(relevantVars, p);
-		//		if (irrelevantVars.size() > 0) {
-		//			Term formula = PartialQuantifierElimination.quantifier(m_Script, quantifier,
-		//					irrelevantVars.toArray(new TermVariable[0]), p.getFormula(), (Term[][]) null);
-		//			
-		//		} else {
-		//			return p;
-		//		}
 		return m_SmtManager.constructPredicate(p.getFormula(), quantifier, irrelevantVars);
 	}
 
-
+	
 	public IPredicate computeBackwardRelevantPredicate(IPredicate wp, Set<BoogieVar> relevantVars) {
 		return computeRelevantPredicateHelper(wp, relevantVars, Script.FORALL);
 	}
 
+	
+
+	public IPredicate computeForwardRelevantPredicate(IPredicate sp, Set<BoogieVar> relevantVars) {
+		return computeRelevantPredicateHelper(sp, relevantVars,
+				Script.EXISTS);
+	}
 
 	/**
 	 * Computes the strongest postcondition of the given predicate p and
@@ -268,7 +264,7 @@ public class PredicateTransformer {
 		}
 		substitution.clear();
 
-		//		 2.1 Rename the invars of the term of Call-Statement.
+		// 2.1 Rename the invars of the term of Call-Statement.
 		for (BoogieVar bv : localVarAssignments.getInVars().keySet()) {
 
 			if (globalVarAssignments.getOutVars().containsKey(bv)) {
@@ -331,8 +327,10 @@ public class PredicateTransformer {
 	 * TODO: How is it computed? 
 	 */
 	public IPredicate strongestPostcondition(IPredicate calleePred, 
-			IPredicate callerPred, TransFormula ret_TF, TransFormula callTF,
-			TransFormula globalVarsAssignment) {
+			IPredicate callerPred, TransFormula ret_TF, 
+			TransFormula callTF,
+			TransFormula globalVarsAssignment,
+			TransFormula oldVarsAssignment) {
 		// VarsToQuantify contains local vars of called procedure, and it may contain
 		// some invars, if it was a recursive call, i.e. callingProc = calledProc.
 		Set<TermVariable> varsToQuantifyOverAll = new HashSet<TermVariable>();
@@ -494,12 +492,6 @@ public class PredicateTransformer {
 				Util.and(m_Script, callerPredVarsRenamedToFreshVars, callTermRenamed),(Term[][])null);
 		// 3. Result
 		varsToQuantifyOverAll.addAll(allAuxVars);
-		//		Term result = PartialQuantifierElimination.quantifier(m_Script,
-		//				Script.EXISTS,
-		//				varsToQuantifyOverAll.toArray(new TermVariable[varsToQuantifyOverAll.size()]),
-		//				Util.and(m_Script, calleePredRenamedQuantified, retTermRenamed,
-		//						calleRPredANDCallTFRenamedQuantified),
-		//				(Term[][])null);
 
 		return m_SmtManager.constructPredicate(Util.and(m_Script, calleePredRenamedQuantified, retTermRenamed,
 				calleRPredANDCallTFRenamedQuantified), Script.EXISTS, varsToQuantifyOverAll);
@@ -657,16 +649,16 @@ public class PredicateTransformer {
 	 * Computes weakest precondition of a Return statement.
 	 * 	oldvars of modifiable global variables are renamed to their representatives, and they are
 	 * 		substituted in caller predicate and returner predicate to same fresh variables
-	 * 	modifiable globals are renamed to fresh variables and their occurrence in the caller predicate
+	 * 	modifiable global variables are renamed to fresh variables and their occurrence in the caller predicate
 	 * 		is substituted by the same fresh variables.
 	 *  InVars of returnTF are renamed to representatives, their occurrence in ..
-	 * 
 	 * 
 	 */
 	public IPredicate weakestPrecondition(IPredicate returnerPred, IPredicate callerPred, 
 			TransFormula returnTF,
 			TransFormula callTF,
 			TransFormula globalVarsAssignments,
+			TransFormula oldVarAssignments,
 			Set<BoogieVar> modifiableGlobals) {
 
 		Map<TermVariable, Term> varsToRenameInCallerAndReturnPred = new HashMap<TermVariable, Term>();
@@ -674,16 +666,35 @@ public class PredicateTransformer {
 		Map<TermVariable, Term> varsToRenameInCallerPred = new HashMap<TermVariable, Term>();
 		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
 		// Appropriately rename global var assignments
-		// 1.1 Rename the invars in global variable assignments (old_vars) to representative term variables.
-		// Rename old vars in callerPred and returnerPred to same fresh variable.
-		Term globalVarsRenamed = substituteToRepresantativesAndAddToQuantify(
-				globalVarsAssignments.getInVars(),globalVarsAssignments.getFormula(), varsToRenameInCallerAndReturnPred,
-				varsToQuantify);
-		// 1.2 Rename the outvars in global variable assignments to fresh variables.
-		// Rename the global vars in callerPred to same fresh variables.
-		globalVarsRenamed = substituteToFreshVarsAndAddToQuantify(globalVarsAssignments.getOutVars(),
-				globalVarsRenamed,
-				varsToRenameInCallerPred, varsToQuantify);
+		Term globalVarsRenamed = null;
+		if (globalVarsAssignments != null) {
+			// 1.1 Rename the invars in global variable assignments (old_vars) to representative term variables.
+			// Rename old vars in callerPred and returnerPred to same fresh variable.
+			globalVarsRenamed = substituteToRepresantativesAndAddToQuantify(
+					globalVarsAssignments.getInVars(),globalVarsAssignments.getFormula(), varsToRenameInCallerAndReturnPred,
+					varsToQuantify);
+			// 1.2 Rename the outvars in global variable assignments to fresh variables.
+			// Rename the global vars in callerPred to same fresh variables.
+			globalVarsRenamed = substituteToFreshVarsAndAddToQuantify(globalVarsAssignments.getOutVars(),
+					globalVarsRenamed,
+					varsToRenameInCallerPred, varsToQuantify);
+		} else {
+			// 1.1 Rename the outvars in global variable assignments (old_vars) to representative term variables.
+			globalVarsRenamed = substituteToRepresantativesAndAddToQuantify(
+					oldVarAssignments.getOutVars(),
+					oldVarAssignments.getFormula(),
+					varsToRenameInCallerAndReturnPred,
+					varsToQuantify);
+			// 1.2 Rename the outvars in global variable assignments to fresh variables.
+			// Rename the global vars in callerPred to same fresh variables. 
+			globalVarsRenamed = substituteToFreshVarsAndAddToQuantify(
+					oldVarAssignments.getInVars(),
+					globalVarsRenamed,
+					varsToRenameInCallerPred,
+					varsToQuantify);
+		}
+		
+		
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
 		// 2.1 Rename the invars of Return-Statement to representative term variables.
 		// Rename the representative term variables of invars, which don't occur in the outvars in caller predicate
