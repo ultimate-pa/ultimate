@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
@@ -115,8 +116,14 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 	}
 	
 	
+	
 	public Collection<STATE> getStates() {
 		return this.m_TransitionsOut.keySet();
+	}
+	
+	public Map<STATE,Map<LETTER,Set<STATE>>> getTransitionsMap() {
+		return m_TransitionsOut;
+		
 	}
 	
 	
@@ -131,11 +138,24 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
 
-	public Object getInitialStates() {
-		// TODO Auto-generated method stub
-		return null;
+	public Set<STATE> getInitialStates() {
+		return m_InitialStates;
 	}
+	
+	public Set<STATE> getExistentialStates() {
+		return m_ExistentialStates;
+	}
+	
+	public Set<STATE> getUniversalStates() {
+		return m_UniversalStates;
+	}
+	
+	public Set<STATE> getFinalStates() {
+		return m_FinalStates;
+	}
+	
 
 	public void addState(boolean isInitial, boolean isFinal, boolean isExistential, STATE state) {
 		assert (state != null);

@@ -36,9 +36,12 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
@@ -147,6 +150,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 					new NwaTestFileWriter(name, nwa);
 				}
 			}
+			
 			else if (automaton instanceof IPetriNet) {
 				IPetriNet<LETTER,STATE> net = (IPetriNet<LETTER,STATE>) automaton;
 				if (labels == Labeling.TOSTRING) {
@@ -159,7 +163,12 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 				else if (labels == Labeling.NUMERATE) {
 					new NetTestFileWriter(net);
 				}
-			} 
+			}
+			
+			else if(automaton instanceof AlternatingAutomaton){
+				AlternatingAutomaton<LETTER,STATE> aa = (AlternatingAutomaton<LETTER,STATE>) automaton;
+				new AATestFileWriter(aa);
+			}
 			m_printWriter.close();
 		}
 		
@@ -580,6 +589,102 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 				}
 				return placesMapping;
 			}
+		}
+		
+		/**
+		 * Constructor takes a AlternatingAutomaton and writes it to a testfile.
+		 */
+		private class AATestFileWriter {
+			
+			AlternatingAutomaton<LETTER, STATE> m_Aa;
+
+			public AATestFileWriter(AlternatingAutomaton<LETTER,STATE> aa) {
+				
+				m_Aa = aa;
+
+				m_printWriter.println("Alternating Automaton aa = (");
+				printAlphabet(m_Aa.getAlphabet());
+				printExistentialStates(m_Aa.getExistentialStates());
+				printUniversalStates(m_Aa.getUniversalStates());
+				printInitialStates(m_Aa.getInitialStates());
+				printFinalStates(m_Aa.getFinalStates());
+				printInternalTransitions(m_Aa.getTransitionsMap());
+				
+
+				m_printWriter.println(")");
+				m_printWriter.close();
+			}
+			
+			private void printAlphabet(Set<LETTER> set) {
+				m_printWriter.print('\t' + "alphabet = { ");
+				for (LETTER letter : set) {
+					m_printWriter.print(letter + " ");		
+				}
+				m_printWriter.print("},\n");
+			}
+			
+			private void printExistentialStates(Set<STATE> set) {
+				m_printWriter.print('\t' + "existentialStates = { ");
+				for (STATE state : set) {
+					m_printWriter.print(state + " ");		
+				}
+				m_printWriter.print("},\n");
+			}
+			
+			private void printUniversalStates(Set<STATE> set) {
+				m_printWriter.print('\t' + "universalStates = { ");
+				for (STATE state : set) {
+					m_printWriter.print(state + " ");		
+				}
+				m_printWriter.print("},\n");
+			}
+			
+			private void printInitialStates(Set<STATE> set) {
+				m_printWriter.print('\t' + "initialStates = { ");
+				for (STATE state : set) {
+					m_printWriter.print(state + " ");		
+				}
+				m_printWriter.print("},\n");
+			}
+			
+			private void printFinalStates(Set<STATE> set) {
+				m_printWriter.print('\t' + "finalStates = { ");
+				for (STATE state : set) {
+					m_printWriter.print(state + " ");		
+				}
+				m_printWriter.print("},\n");
+			}
+			
+			private void printInternalTransitions(Map<STATE, Map<LETTER, Set<STATE>>> map) {
+				m_printWriter.println('\t' + "internalTransitions = {");
+				for (Entry<STATE, Map<LETTER, Set<STATE>>> entry : map.entrySet()) {
+				    STATE pre = entry.getKey();
+				    Map<LETTER, Set<STATE>> transitionsMap = entry.getValue();
+				    if (transitionsMap != null) {// state has no outgoing transitions, so nothing has to be printed
+				    	for (Entry<LETTER, Set<STATE>> entry1 : transitionsMap.entrySet()) {
+					        LETTER letter = entry1.getKey();
+					        Set<STATE> succStates = entry1.getValue();
+					        for (STATE succ : succStates) {
+					        	printInternalTransition(pre, letter, succ);
+					        }
+					        
+					        
+					    }
+				    }
+				    
+				}
+				m_printWriter.println("\t},");
+			}
+			
+			private void printInternalTransition(STATE pre, LETTER letter,
+					STATE succ) {
+				m_printWriter.println("\t\t (" +
+						pre + " " +
+						letter + " " +
+						succ + ")"
+				);
+			}
+
 		}
 		
 
