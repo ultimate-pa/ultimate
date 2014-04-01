@@ -289,8 +289,10 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 			}
 		}
 
-		s_Logger.debug("Epimorphism:");
-		m_Epimorphism.Print();
+		//s_Logger.debug("Epimorphism:");
+		//m_Epimorphism.Print();
+		
+		assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true)) : "Not inductive";
 	}
 
 	/**
