@@ -13,10 +13,12 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
  */
 public class Totalinterpolation extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String[] m_Directories = { "examples/programs/regression" };
+	private static final String[] m_Directories = { 
+		"examples/programs/" 
+	};
 	
 	// Time out for each test case in milliseconds
-	private static int m_Timeout = 20000;
+	private static int m_Timeout = 60000;
 
 	private static final boolean s_Boogie_TreeInterpolants = true;
 	private static final boolean s_C_TreeInterpolants = true;
