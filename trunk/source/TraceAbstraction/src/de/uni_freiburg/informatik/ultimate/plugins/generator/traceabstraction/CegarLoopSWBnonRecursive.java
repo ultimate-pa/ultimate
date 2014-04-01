@@ -212,7 +212,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 
 		// Add internal states of the error path
 		addPath(ce_edges, ce_states, ce_interp, m_AbstractionInitialState,
-				m_AbstractionFinalState);
+				m_AbstractionFinalState, new TreeMap<Integer, IPredicate>());
 
 		// add the final state of the error path
 		if (m_AnnotatedStates.contains(ce_states.get(ce_states.size() - 1)))
@@ -592,7 +592,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 			s_Logger.debug("Accepted");
 			m_TraceChecker.computeInterpolants(new TraceChecker.AllIntegers(), m_PredicateUnifier, m_Pref.interpolation());
 
-			addPath(word, m_ActualPath, m_TraceChecker.getInterpolants(), pre, post);
+			addPath(word, m_ActualPath, m_TraceChecker.getInterpolants(), pre, post, pendingContexts);
 			return true;
 		}		
 		else
@@ -624,7 +624,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 	 */
 	private void addPath(NestedWord<CodeBlock> edges,
 			ArrayList<IPredicate> states, IPredicate[] interpolants, IPredicate pre,
-			IPredicate post)
+			IPredicate post, SortedMap<Integer, IPredicate> pendingContexts)
 	{
 		s_Logger.debug("Add path: numEdges:" + edges.length() + " numStates:"
 				+ states.size() + " numInterpol:" + interpolants.length);
@@ -666,15 +666,16 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 																				// meant to
 			{
 				m_InterpolAutomaton.addInternalTransition(sourceI, e, targetI);
-			} else
+			} 
+			else
 			{
 				if (edges.isCallPosition(i))
 				{
 					m_InterpolAutomaton.addCallTransition(sourceI, e, targetI);
-				} else
-				// isReturnPosition(i)
+				} 
+				else // isReturnPosition(i)
 				{
-					IPredicate hier = null; // TODO
+					IPredicate hier = pendingContexts.get(i);
 					m_InterpolAutomaton.addReturnTransition(sourceI, hier, e, targetI);
 				}
 			}
