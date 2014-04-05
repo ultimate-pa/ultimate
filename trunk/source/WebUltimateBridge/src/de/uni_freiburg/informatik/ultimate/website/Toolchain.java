@@ -27,6 +27,12 @@ public abstract class Toolchain {
 	 */
 	private static final String s_TimeoutString = 
 			"Toolchain\\ timeout\\ in\\ seconds";
+	
+	/**
+	 * String that identifies the benchmark setting from the core preferences.
+	 */
+	public static final String s_CoreBenchmarkString= 
+			"Generate\\ benchmark\\ results";
 	/**
 	 * The toolchain name to be shown on the website.
 	 */
@@ -197,6 +203,7 @@ public abstract class Toolchain {
 		settings.append("\\!/instance/UltimateCore=").append(EOL);
 		settings.append("@UltimateCore=1.0.0").append(EOL);
 		settings.append(buildCoreSettingString(s_TimeoutString, String.valueOf(s_TimeoutInSeconds)));
+		settings.append(buildCoreSettingString(s_CoreBenchmarkString, "false"));
 		settings.append(buildCoreSettingString("Root\\ Log\\ Level", "INFO"));
 		
 		settings.append(buildCoreSettingString("Log\\ Level\\ for\\ Core\\ Plugin", "WARN"));
