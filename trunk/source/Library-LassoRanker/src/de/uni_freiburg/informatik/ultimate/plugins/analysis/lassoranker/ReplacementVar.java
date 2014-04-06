@@ -31,11 +31,12 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 
 
 /**
- * 
+ * A replacement variable replacing another variable or term that cannot be
+ * used directly.
  * 
  * @author Jan Leike
  */
-public class AuxVar extends RankVar {
+public class ReplacementVar extends RankVar {
 	private static final long serialVersionUID = 5797704734079950805L;
 	
 	private final String m_name;
@@ -45,17 +46,17 @@ public class AuxVar extends RankVar {
 	/**
 	 * @param name a globally unique name
 	 * @param boogieVar the associated boogieVar, if any
-	 * @param definition the definition of this auxiliary variable, i.e.,
+	 * @param definition the definition of this replacement variable, i.e.,
 	 *                   the term it replaces
 	 */
-	public AuxVar(String name, BoogieVar boogieVar, Term definition) {
+	public ReplacementVar(String name, BoogieVar boogieVar, Term definition) {
 		m_name = name;
 		m_boogieVar = boogieVar;
 		m_definition = definition;
 	}
 	
 	/**
-	 * @return the definition of this auxiliary variable, i.e., the term it
+	 * @return the definition of this replacement variable, i.e., the term it
 	 *         replaces
 	 */
 	public Term getDefinition() {

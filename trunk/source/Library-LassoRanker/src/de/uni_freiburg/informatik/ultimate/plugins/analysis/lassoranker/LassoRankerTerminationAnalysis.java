@@ -189,7 +189,7 @@ public class LassoRankerTerminationAnalysis {
 	}
 	
 	/**
-	 * @param avm the auxiliary variable manager to be passed to the
+	 * @param rvc the ranking variable collector to be passed to the
 	 *        preprocessors
 	 * @return an array of all preprocessors that should be called before
 	 *         termination analysis

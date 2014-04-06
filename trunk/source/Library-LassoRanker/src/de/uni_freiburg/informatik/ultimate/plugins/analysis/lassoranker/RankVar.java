@@ -34,19 +34,20 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 
 /**
  * A RankVar is a variable that is relevant to ranking functions or
- * supporting invariants. It is either a BoogieVar or an auxiliary variable
+ * supporting invariants. It is either a BoogieVar or a new replacement variable
  * created in the preprocessing steps.
  * 
  * @author Jan Leike
  * 
  * @see BoogieVarWrapper
- * @see AuxVar
+ * @see ReplacementVar
  */
 public abstract class RankVar implements Serializable {
 	private static final long serialVersionUID = -3215866247258690258L;
 	
 	/**
-	 * @return the term that this auxiliary variable is replacing
+	 * @return the term that defines this variable
+	 * (might just be a TermVariable)
 	 */
 	public abstract Term getDefinition();
 	

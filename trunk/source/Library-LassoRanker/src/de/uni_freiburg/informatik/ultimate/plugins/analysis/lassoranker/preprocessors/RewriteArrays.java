@@ -46,17 +46,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Eli
 
 
 /**
- * Replace term with arrays by term without arrays by introducing auxiliary
+ * Replace term with arrays by term without arrays by introducing replacement
  * variables for all "important" array values and equalities that state the
- * constraints between array indices and array values (resp. the auxiliary
- * variables that replaced them). 
+ * constraints between array indices and array values (resp. their replacement
+ * variables). 
  * 
  * 
  * @author Matthias Heizmann
  */
 public class RewriteArrays implements PreProcessor {
-	private static final String s_AuxInPostfix  = "_in_array";
-	private static final String s_AuxOutPostfix = "_out_array";
+	private static final String s_RepInPostfix  = "_in_array";
+	private static final String s_RepOutPostfix = "_out_array";
 	
 	/**
 	 * The script used to transform the formula
@@ -64,39 +64,39 @@ public class RewriteArrays implements PreProcessor {
 	private Script m_Script;
 	
 	/**
-	 * Collection of all generated auxiliary variables and the terms
+	 * Collection of all generated replacement variables and the terms
 	 * that they replace.
 	 * These variables are *not* added to in- or outVars.
 	 */
-	private final Map<TermVariable, Term> m_auxVars;
+	private final Map<TermVariable, Term> m_repVars;
 	
 	/**
-	 * The auxiliary terms defining the auxiliary variables for the formula.
+	 * The replacement terms for the replacement variables for the formula.
 	 * These terms will be set in conjunction with the whole formula.
 	 */
-	private final Collection<Term> m_auxTerms;
+	private final Collection<Term> m_repTerms;
 	
 	/**
-	 * For generating auxiliary variables
+	 * For generating replacement variables
 	 */
 	private final RankVarCollector m_rankVarCollector;
 	
 	/**
 	 * Use assert statement to check if result is equivalent to the conjunction
-	 * of input term and definition of auxiliary variables. 
+	 * of input term and definition of replacement variables. 
 	 */
 	private static final boolean s_CheckResult = true;
 	/**
 	 * Use assert statement to check if the input is equivalent to the formula
-	 * that is obtained by existentially quantifying each auxiliary variable in
-	 * the result term.
+	 * that is obtained by existentially quantifying each replacement variable
+	 * in the result term.
 	 */
 	private static final boolean s_CheckResultWithQuantifiers = false;
 	
 	public RewriteArrays(RankVarCollector rankVarCollector) {
 		m_rankVarCollector = rankVarCollector;
-		m_auxVars = new LinkedHashMap<TermVariable, Term>();
-		m_auxTerms = new ArrayList<Term>();
+		m_repVars = new LinkedHashMap<TermVariable, Term>();
+		m_repTerms = new ArrayList<Term>();
 	}
 	
 	@Override
@@ -123,36 +123,36 @@ public class RewriteArrays implements PreProcessor {
 			asds.add(asd);
 		}
 		
-//			assert !s_CheckResult || !isIncorrect(term, result, auxTerm) 
+//			assert !s_CheckResult || !isIncorrect(term, result, repTerm) 
 //					: "rewrite division unsound";
 //			assert !s_CheckResultWithQuantifiers
-//					||	!isIncorrectWithQuantifiers(term, result, auxTerm) 
+//					||	!isIncorrectWithQuantifiers(term, result, repTerm) 
 //					: "rewrite division unsound";
 		return term;
 	}
 	
 	/**
 	 * Return true if we were able to prove that the result is incorrect.
-	 * For this check we add to the input term the definition of the auxiliary
+	 * For this check we add to the input term the definition of the replacement
 	 * variables.
 	 */
-	private boolean isIncorrect(Term input, Term result, Term auxTerm) {
-		Term inputWithDefinitions = m_Script.term("and", input, auxTerm);
+	private boolean isIncorrect(Term input, Term result, Term repTerm) {
+		Term inputWithDefinitions = m_Script.term("and", input, repTerm);
 		return LBool.SAT == Util.checkSat(m_Script,
 				m_Script.term("distinct",  inputWithDefinitions, result));
 	}
 	
 	/**
 	 * Return true if we were able to prove that the result is incorrect.
-	 * For this check we existentially quantify auxiliary variables in the
+	 * For this check we existentially quantify replacement variables in the
 	 * result term.
 	 */
 	private boolean isIncorrectWithQuantifiers(Term input, Term result,
-			Term auxTerm) {
+			Term repTerm) {
 		Term quantified;
-		if (m_auxVars.size() > 0) {
+		if (m_repVars.size() > 0) {
 			quantified = m_Script.quantifier(Script.EXISTS,
-					m_auxVars.keySet().toArray(new TermVariable[0]), result);
+					m_repVars.keySet().toArray(new TermVariable[0]), result);
 		} else {
 			quantified = m_Script.term("true");
 		}

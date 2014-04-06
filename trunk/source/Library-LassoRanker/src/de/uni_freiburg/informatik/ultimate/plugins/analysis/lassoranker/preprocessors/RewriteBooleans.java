@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.BoogieVarWrapper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVarCollector;
@@ -46,32 +46,32 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVarF
 
 
 /**
- * Replaces booleans variables b by integer auxiliary variables aux_b whose
- * meaning is aux_b = (ite b 1 0) 
+ * Replaces booleans variables b by integer replacement variables rep_b whose
+ * semantics is rep_b = (ite b 1 0) 
  * 
  * @author Jan Leike, Matthias Heizmann
  */
 public class RewriteBooleans extends TermTransformer implements PreProcessor {
-	private static final String s_auxInPostfix  = "_in_bool";
-	private static final String s_auxOutPostfix = "_out_bool";
-	private static final String s_auxVarSortName = "Real";
+	private static final String s_repInPostfix  = "_in_bool";
+	private static final String s_repOutPostfix = "_out_bool";
+	private static final String s_repVarSortName = "Real";
 	
 	private final Script m_Script;
 	
 	/**
-	 * The sort to be used for new auxiliary TermVariable's
+	 * The sort to be used for new replacement TermVariable's
 	 */
-	private final Sort m_auxVarSort;
+	private final Sort m_repVarSort;
 	
 	/**
-	 * For generating auxiliary variables
+	 * For generating replacement variables
 	 */
 	private final RankVarCollector m_rankVarCollector;
 	
 	/**
-	 * A collection of the generated AuxVar's
+	 * A collection of the generated replacement variables
 	 */
-	private final Collection<AuxVar> m_auxVars;
+	private final Collection<ReplacementVar> m_repVars;
 	
 	/**
 	 * Maps boolean-valued TermVariable's to their translated counterpart,
@@ -82,40 +82,40 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 	/**
 	 * Create a new RewriteBooleans preprocessor
 	 * @param rankVarCollector collecting the new in- and outVars
-	 * @param auxVarsSort the Sort that new auxiliary variables should have
+	 * @param script the Script for creating new variables
 	 */
 	public RewriteBooleans(RankVarCollector rankVarCollector, Script script) {
 		m_rankVarCollector = rankVarCollector;
 		m_translator = new LinkedHashMap<TermVariable, TermVariable>();
-		m_auxVars = new ArrayList<AuxVar>();
+		m_repVars = new ArrayList<ReplacementVar>();
 		m_Script = script;
-		m_auxVarSort = m_Script.sort(s_auxVarSortName);
-		generateAuxVars();
+		m_repVarSort = m_Script.sort(s_repVarSortName);
+		generateRepVars();
 	}
 	
 	/**
-	 * Get the AuxVar corresponding to a (boolean) BoogieVar.
-	 * Creates a new AuxVar, if needed.
+	 * Get the replacement variable corresponding to a (boolean) BoogieVar.
+	 * Creates a new replacement variable, if needed.
 	 */
-	private AuxVar getAuxVar(BoogieVar boogieVar) {
+	private ReplacementVar getReplacementVar(BoogieVar boogieVar) {
 		RankVarFactory rvFactory = m_rankVarCollector.getFactory();
-		AuxVar auxVar = rvFactory.getAuxVar(boogieVar);
-		if (auxVar == null) {
+		ReplacementVar repVar = rvFactory.getRepVar(boogieVar);
+		if (repVar == null) {
 			String name = boogieVar.getGloballyUniqueId() + "_bool";
-			auxVar = new AuxVar(name, boogieVar,
+			repVar = new ReplacementVar(name, boogieVar,
 					getDefinition(boogieVar.getTermVariable()));
-			rvFactory.registerAuxVar(boogieVar, auxVar);
-			m_auxVars.add(auxVar);
+			rvFactory.registerRepVar(boogieVar, repVar);
+			m_repVars.add(repVar);
 		}
-		return auxVar;
+		return repVar;
 	}
 	
 	/**
-	 * Create new integer- or real-valued auxiliary variables for all boolean
+	 * Create new integer- or real-valued replacement variables for all boolean
 	 * variables.
 	 * @param transFormula the transition formula from which the term originated
 	 */
-	private void generateAuxVars() {
+	private void generateRepVars() {
 		RankVarFactory rvFactory = m_rankVarCollector.getFactory();
 		Collection<Map.Entry<RankVar, TermVariable>> entrySet =
 				new ArrayList<Map.Entry<RankVar, TermVariable>>(
@@ -124,18 +124,18 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 			if (entry.getKey() instanceof BoogieVarWrapper) {
 				BoogieVar boogieVar = entry.getKey().getAssociatedBoogieVar();
 				if (entry.getValue().getSort().getName().equals("Bool")) {
-					AuxVar auxVar = getAuxVar(boogieVar);
+					ReplacementVar repVar = getReplacementVar(boogieVar);
 					TermVariable newVar = m_translator.get(entry.getValue());
 					if (newVar == null) {
 						// Create a new TermVariable
 						newVar = rvFactory.getNewTermVariable(
-							boogieVar.getGloballyUniqueId() + s_auxInPostfix,
-							m_auxVarSort
+							boogieVar.getGloballyUniqueId() + s_repInPostfix,
+							m_repVarSort
 						);
 						m_translator.put(entry.getValue(), newVar);
 					}
 					m_rankVarCollector.removeInVar(entry.getKey());
-					m_rankVarCollector.addInVar(auxVar, newVar);
+					m_rankVarCollector.addInVar(repVar, newVar);
 				}
 			}
 		}
@@ -145,18 +145,18 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 			if (entry.getKey() instanceof BoogieVarWrapper) {
 				BoogieVar boogieVar = entry.getKey().getAssociatedBoogieVar();
 				if (entry.getValue().getSort().getName().equals("Bool")) {
-					AuxVar auxVar = getAuxVar(boogieVar);
+					ReplacementVar repVar = getReplacementVar(boogieVar);
 					TermVariable newVar = m_translator.get(entry.getValue());
 					if (newVar == null) {
 						// Create a new TermVariable
 						newVar = rvFactory.getNewTermVariable(
-							boogieVar.getGloballyUniqueId() + s_auxOutPostfix,
-							m_auxVarSort
+							boogieVar.getGloballyUniqueId() + s_repOutPostfix,
+							m_repVarSort
 						);
 						m_translator.put(entry.getValue(), newVar);
 					}
 					m_rankVarCollector.removeOutVar(entry.getKey());
-					m_rankVarCollector.addOutVar(auxVar, newVar);
+					m_rankVarCollector.addOutVar(repVar, newVar);
 				}
 			}
 		}
@@ -164,7 +164,7 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 	
 	@Override
 	public String getDescription() {
-		return "Replaces boolean variables by auxiliary integer variables";
+		return "Replaces boolean variables by replacement integer variables";
 	}
 	
 	@Override
@@ -198,8 +198,8 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 				assert m_translator.containsKey(var);
 				TermVariable translatedVar = m_translator.get(var);
 				Term one = m_Script.numeral(BigInteger.ONE);
-				Term auxTerm = m_Script.term(">=", translatedVar, one);
-				setResult(auxTerm);
+				Term repTerm = m_Script.term(">=", translatedVar, one);
+				setResult(repTerm);
 				return;
 			}
 			super.convert(term);

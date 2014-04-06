@@ -61,12 +61,12 @@ public class RankVarFactory implements Serializable {
 	private final Map<BoogieVar, BoogieVarWrapper> m_boogieWrappers;
 	
 	/**
-	 * The map indexing auxVars registered with this object
+	 * The map indexing replacement variables registered with this object
 	 */
-	private final Map<Object, AuxVar> m_auxVars;
+	private final Map<Object, ReplacementVar> m_repVars;
 	
 	/**
-	 * Collection of all generated auxiliary TermVariables
+	 * Collection of all generated replacement TermVariables
 	 */
 	private final Collection<TermVariable> m_termVariables;
 	
@@ -78,13 +78,12 @@ public class RankVarFactory implements Serializable {
 		assert boogie2smt != null;
 		m_varManager = boogie2smt.getVariableManager();
 		m_boogieWrappers = new LinkedHashMap<BoogieVar, BoogieVarWrapper>();
-		m_auxVars = new LinkedHashMap<Object, AuxVar>();
+		m_repVars = new LinkedHashMap<Object, ReplacementVar>();
 		m_termVariables = new ArrayList<TermVariable>();
 	}
 	
 	/**
-	 * @return a collection of all auxiliary TermVariable's that have been
-	 *         created with this object
+	 * @return a collection of all new TermVariable's created with this object
 	 */
 	public Collection<TermVariable> getGeneratedTermVariables() {
 		return Collections.unmodifiableCollection(m_termVariables);
@@ -104,34 +103,34 @@ public class RankVarFactory implements Serializable {
 	}
 	
 	/**
-	 * Register an AuxVar to be unique for this factory
-	 * @param key a key to store the AuxVar with
-	 * @param auxVar the AuxVar to be stored 
+	 * Register a replacement variable to be unique for this factory
+	 * @param key a key to store repVar with
+	 * @param repVar the replacement variable to be stored 
 	 */
-	public void registerAuxVar(Object key, AuxVar auxVar) {
-		assert !m_auxVars.containsKey(key);
-		m_auxVars.put(key, auxVar);
+	public void registerRepVar(Object key, ReplacementVar repVar) {
+		assert !m_repVars.containsKey(key);
+		m_repVars.put(key, repVar);
 	}
 	
 	/**
-	 * Fetch a previously stored AuxVar
-	 * @param key the key used to store the AuxVar
-	 * @return the AuxVar
+	 * Fetch a previously stored replacement variable
+	 * @param key the key used to store the repVar
+	 * @return the repVar
 	 */
-	public AuxVar getAuxVar(Object key) {
-		return m_auxVars.get(key);
+	public ReplacementVar getRepVar(Object key) {
+		return m_repVars.get(key);
 	}
 	
 	/**
-	 * Construct and return a unique auxiliary variable with the given name.
+	 * Construct and return a unique term variable with the given name.
 	 * The new variable has the same sort as the given Term definition.
 	 * @param name an identifier for the variable
 	 * @param definition a term that new variable is replacing
 	 */
 	public TermVariable getNewTermVariable(String name, Sort sort) {
-		TermVariable auxVar =
+		TermVariable newVar =
 				m_varManager.constructFreshTermVariable(name, sort);
-		m_termVariables.add(auxVar);
-		return auxVar;
+		m_termVariables.add(newVar);
+		return newVar;
 	}
 }
