@@ -3,9 +3,9 @@
  * Date: 2013-12-20
  * Author: leike@informatik.uni-freiburg.de
  *
- * Test case for the correct handling of disjunctions in the loop condition
+ * Was known as SyntaxSupportDisjunction2.
  *
- * FIXME: should be TerminationDerivable
+ * Terminates, but requires a new kind of ranking function.
  */
 
 procedure SyntaxSupportDisjunction2() returns (x: int, y:int)
