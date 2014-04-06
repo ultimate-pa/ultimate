@@ -116,15 +116,13 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	
 	@Override
 	public Term[] asLexTerm(Script script) throws SMTLIBException {
-		Term value = m_ranking.get(m_ranking.size() - 1).asTerm(script);
+		Term value = script.numeral(BigInteger.ZERO);
 		for (int i = m_ranking.size() - 1; i >= 0; --i) {
 			AffineFunction af = m_ranking.get(i);
 			AffineFunction gf = m_predicates.get(i);
 			Term pred = script.term(">=", gf.asTerm(script),
 					script.numeral(BigInteger.ZERO));
-			if (i < m_ranking.size() - 1) {
-				value = script.term("ite", pred, af.asTerm(script), value);
-			}
+			value = script.term("ite", pred, af.asTerm(script), value);
 		}
 		return new Term[] { value };
 	}
