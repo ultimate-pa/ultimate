@@ -27,9 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,21 +47,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 public class LexicographicRankingFunction extends RankingFunction {
 	private static final long serialVersionUID = -7426526617632086331L;
 	
-	private final List<AffineFunction> m_ranking;
+	private final AffineFunction[] m_ranking;
 	public final int lex;
 	
-	public LexicographicRankingFunction(List<AffineFunction> ranking) {
-		m_ranking = Collections.unmodifiableList(ranking);
-		lex = ranking.size();
+	public LexicographicRankingFunction(AffineFunction[] ranking) {
+		m_ranking = ranking;
+		lex = ranking.length;
 		assert(lex > 0);
 	}
 	
 	@Override
 	public String getName() {
-		return m_ranking.size() + "-lex";
+		return m_ranking.length + "-lex";
 	}
 	
-	public List<AffineFunction> getComponents() {
+	public AffineFunction[] getComponents() {
 		return m_ranking;
 	}
 	
@@ -79,7 +77,7 @@ public class LexicographicRankingFunction extends RankingFunction {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(m_ranking.size());
+		sb.append(m_ranking.length);
 		sb.append("-lexicographic ranking function:\n");
 		sb.append("  f(");
 		boolean first = true;
@@ -92,7 +90,7 @@ public class LexicographicRankingFunction extends RankingFunction {
 		}
 		sb.append(") = <");
 		for (int i = 0; i < lex; ++i) {
-			sb.append(m_ranking.get(i));
+			sb.append(m_ranking[i]);
 			if (i < lex - 1) {
 				sb.append(",  ");
 			}
@@ -103,9 +101,9 @@ public class LexicographicRankingFunction extends RankingFunction {
 	
 	@Override
 	public Term[] asLexTerm(Script script) throws SMTLIBException {
-		Term[] lex = new Term[m_ranking.size()];
-		for (int i = 0; i < m_ranking.size(); ++i) {
-			lex[i] = m_ranking.get(i).asTerm(script);
+		Term[] lex = new Term[m_ranking.length];
+		for (int i = 0; i < m_ranking.length; ++i) {
+			lex[i] = m_ranking[i].asTerm(script);
 		}
 		return lex;
 	}
@@ -115,7 +113,7 @@ public class LexicographicRankingFunction extends RankingFunction {
 		Ordinal o = Ordinal.ZERO;
 		Ordinal w_pow = Ordinal.ONE;
 		for (int i = lex - 1; i >= 0; --i) {
-			Rational r = m_ranking.get(i).evaluate(assignment);
+			Rational r = m_ranking[i].evaluate(assignment);
 			if (r.compareTo(Rational.ZERO) > 0) {
 				BigInteger k = r.ceil().numerator();
 				o = o.add(w_pow.mult(Ordinal.fromInteger(k)));

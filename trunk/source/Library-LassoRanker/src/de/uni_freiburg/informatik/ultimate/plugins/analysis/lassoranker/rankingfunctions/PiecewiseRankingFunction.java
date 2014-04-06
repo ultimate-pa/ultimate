@@ -27,10 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,21 +47,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 public class PiecewiseRankingFunction extends RankingFunction {
 	private static final long serialVersionUID = 1605612582853046558L;
 	
-	private final List<AffineFunction> m_ranking;
-	private final List<AffineFunction> m_predicates;
+	private final AffineFunction[] m_ranking;
+	private final AffineFunction[] m_predicates;
 	public final int pieces;
 	
-	public PiecewiseRankingFunction(List<AffineFunction> ranking, List<AffineFunction> predicates) {
-		m_ranking = Collections.unmodifiableList(ranking);
-		m_predicates = Collections.unmodifiableList(predicates);
-		pieces = ranking.size();
+	public PiecewiseRankingFunction(AffineFunction[] ranking, AffineFunction[] predicates) {
+		m_ranking = ranking;
+		m_predicates = predicates;
+		pieces = ranking.length;
 		assert(pieces > 0);
-		assert(pieces == predicates.size());
+		assert(pieces == predicates.length);
 	}
 	
 	@Override
 	public String getName() {
-		return m_ranking.size() + "-piece";
+		return m_ranking.length + "-piece";
 	}
 
 	
@@ -77,17 +74,18 @@ public class PiecewiseRankingFunction extends RankingFunction {
 		return vars;
 	}
 	
-	public List<AffineFunction> getComponents() {
-		List<AffineFunction> l = new ArrayList<AffineFunction>();
-		l.addAll(m_ranking);
-		l.addAll(m_predicates);
-		return l;
+	public AffineFunction[] getRankingComponents() {
+		return m_ranking;
+	}
+	
+	public AffineFunction[] getPredicates() {
+		return m_predicates;
 	}
 	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(m_ranking.size());
+		sb.append(m_ranking.length);
 		sb.append("-piece ranking function:\n");
 		sb.append("  f(");
 		boolean first = true;
@@ -101,9 +99,9 @@ public class PiecewiseRankingFunction extends RankingFunction {
 		sb.append(") = {\n");
 		for (int i = 0; i < pieces; ++i) {
 			sb.append("    ");
-			sb.append(m_ranking.get(i));
+			sb.append(m_ranking[i]);
 			sb.append(",\tif ");
-			sb.append(m_predicates.get(i));
+			sb.append(m_predicates[i]);
 			sb.append(" >= 0");
 			if (i < pieces - 1) {
 				sb.append(",\n");
@@ -117,9 +115,9 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	@Override
 	public Term[] asLexTerm(Script script) throws SMTLIBException {
 		Term value = script.numeral(BigInteger.ZERO);
-		for (int i = m_ranking.size() - 1; i >= 0; --i) {
-			AffineFunction af = m_ranking.get(i);
-			AffineFunction gf = m_predicates.get(i);
+		for (int i = m_ranking.length - 1; i >= 0; --i) {
+			AffineFunction af = m_ranking[i];
+			AffineFunction gf = m_predicates[i];
 			Term pred = script.term(">=", gf.asTerm(script),
 					script.numeral(BigInteger.ZERO));
 			value = script.term("ite", pred, af.asTerm(script), value);
@@ -131,8 +129,8 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
 		Rational r = Rational.ZERO;
 		for (int i = 0; i < pieces; ++i) {
-			if (!m_predicates.get(i).evaluate(assignment).isNegative()) {
-				Rational rnew = m_ranking.get(i).evaluate(assignment);
+			if (!m_predicates[i].evaluate(assignment).isNegative()) {
+				Rational rnew = m_ranking[i].evaluate(assignment);
 				if (rnew.compareTo(r) > 0) {
 					r = rnew;
 				}

@@ -175,10 +175,9 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 	@Override
 	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
 			throws SMTLIBException {
-		List<AffineFunction> fs = new ArrayList<AffineFunction>();
+		AffineFunction[] fs = new AffineFunction[size];
 		for (int i = 0; i < size; ++i) {
-			AffineFunction f = m_fgens[i].extractAffineFunction(val);
-			fs.add(f);
+			fs[i] = m_fgens[i].extractAffineFunction(val);
 		}
 		return new MultiphaseRankingFunction(fs);
 	}

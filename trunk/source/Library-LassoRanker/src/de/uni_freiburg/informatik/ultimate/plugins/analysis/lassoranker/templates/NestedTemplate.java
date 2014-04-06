@@ -178,10 +178,9 @@ public class NestedTemplate extends RankingFunctionTemplate {
 	@Override
 	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
 			throws SMTLIBException {
-		List<AffineFunction> fs = new ArrayList<AffineFunction>();
+		AffineFunction[] fs = new AffineFunction[m_Size];
 		for (int i = 0; i < m_Size; ++i) {
-			AffineFunction f = m_fgens[i].extractAffineFunction(val);
-			fs.add(f);
+			fs[i] = m_fgens[i].extractAffineFunction(val);
 		}
 		return new NestedRankingFunction(fs);
 	}

@@ -27,9 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,18 +48,18 @@ public class NestedRankingFunction extends RankingFunction {
 	
 	private static final long serialVersionUID = 380153194719949843L;
 	
-	private final List<AffineFunction> m_Ranking;
+	private final AffineFunction[] m_Ranking;
 	public final int m_Functions;
 	
-	public NestedRankingFunction(List<AffineFunction> ranking) {
-		m_Ranking = Collections.unmodifiableList(ranking);
-		m_Functions = ranking.size();
+	public NestedRankingFunction(AffineFunction[] ranking) {
+		m_Ranking = ranking;
+		m_Functions = ranking.length;
 		assert(m_Functions > 0);
 	}
 	
 	@Override
 	public String getName() {
-		return m_Ranking.size() + "-nested";
+		return m_Ranking.length + "-nested";
 	}
 
 	
@@ -74,19 +72,19 @@ public class NestedRankingFunction extends RankingFunction {
 		return vars;
 	}
 	
-	public List<AffineFunction> getComponents() {
+	public AffineFunction[] getComponents() {
 		return m_Ranking;
 	}
 	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(m_Ranking.size());
+		sb.append(m_Ranking.length);
 		sb.append("-nested ranking function:\n");
 		for (int i = 0; i < m_Functions; ++i) {
 			sb.append("  f" + i);
 			sb.append(" = ");
-			sb.append(m_Ranking.get(i));
+			sb.append(m_Ranking[i]);
 			if (i < m_Functions - 1) {
 				sb.append("\n");
 			}
@@ -100,10 +98,10 @@ public class NestedRankingFunction extends RankingFunction {
 		// ranking function that proceed through phases.
 		BigInteger n = BigInteger.ZERO;
 		Term phase = script.numeral(n);
-		Term value = m_Ranking.get(0).asTerm(script);
-		for (int i = 1; i < m_Ranking.size(); ++i) {
+		Term value = m_Ranking[0].asTerm(script);
+		for (int i = 1; i < m_Ranking.length; ++i) {
 			n = n.add(BigInteger.ONE);
-			Term fTerm = m_Ranking.get(i).asTerm(script);
+			Term fTerm = m_Ranking[i].asTerm(script);
 			Term cond = script.term(">", fTerm,
 					script.numeral(BigInteger.ZERO));
 			phase = script.term("ite", cond, script.numeral(n), phase);

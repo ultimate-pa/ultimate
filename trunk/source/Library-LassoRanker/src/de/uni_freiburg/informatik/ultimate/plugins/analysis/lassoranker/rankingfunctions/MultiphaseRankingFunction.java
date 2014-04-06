@@ -27,9 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,18 +47,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 public class MultiphaseRankingFunction extends RankingFunction {
 	private static final long serialVersionUID = 5376322220596462295L;
 	
-	private final List<AffineFunction> m_ranking;
+	private final AffineFunction[] m_ranking;
 	public final int phases;
 	
-	public MultiphaseRankingFunction(List<AffineFunction> ranking) {
-		m_ranking = Collections.unmodifiableList(ranking);
-		phases = ranking.size();
+	public MultiphaseRankingFunction(AffineFunction[] ranking) {
+		m_ranking = ranking;
+		phases = ranking.length;
 		assert(phases > 0);
 	}
 	
 	@Override
 	public String getName() {
-		return m_ranking.size() + "-phase";
+		return m_ranking.length + "-phase";
 	}
 
 	
@@ -73,19 +71,19 @@ public class MultiphaseRankingFunction extends RankingFunction {
 		return vars;
 	}
 	
-	public List<AffineFunction> getComponents() {
+	public AffineFunction[] getComponents() {
 		return m_ranking;
 	}
 	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(m_ranking.size());
+		sb.append(m_ranking.length);
 		sb.append("-phase ranking function:\n");
 		for (int i = 0; i < phases; ++i) {
 			sb.append("  f" + i);
 			sb.append(" = ");
-			sb.append(m_ranking.get(i));
+			sb.append(m_ranking[i]);
 			if (i < phases - 1) {
 				sb.append("\n");
 			}
@@ -97,10 +95,10 @@ public class MultiphaseRankingFunction extends RankingFunction {
 	public Term[] asLexTerm(Script script) throws SMTLIBException {
 		BigInteger n = BigInteger.ZERO;
 		Term phase = script.numeral(n);
-		Term value = m_ranking.get(m_ranking.size() - 1).asTerm(script);
-		for (int i = m_ranking.size() - 2; i >= 0; --i) {
+		Term value = m_ranking[m_ranking.length - 1].asTerm(script);
+		for (int i = m_ranking.length - 2; i >= 0; --i) {
 			n = n.add(BigInteger.ONE);
-			Term f_term = m_ranking.get(i).asTerm(script);
+			Term f_term = m_ranking[i].asTerm(script);
 			Term cond = script.term(">", f_term,
 					script.numeral(BigInteger.ZERO));
 			phase = script.term("ite", cond, script.numeral(n), phase);
@@ -113,7 +111,7 @@ public class MultiphaseRankingFunction extends RankingFunction {
 	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
 		Ordinal o = Ordinal.ZERO;
 		for (int i = 0; i < phases; ++i) {
-			Rational r = m_ranking.get(i).evaluate(assignment);
+			Rational r = m_ranking[i].evaluate(assignment);
 			if (r.compareTo(Rational.ZERO) > 0) {
 				return o.add(Ordinal.fromInteger(r.ceil().numerator()));
 			}
