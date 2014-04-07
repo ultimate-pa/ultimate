@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.eclipse.cdt.codan.core.model.CheckerLaunchMode;
 import org.eclipse.cdt.codan.core.model.IProblemWorkingCopy;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
@@ -77,15 +78,16 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	}
 
 	@Override
-	public void processAst(IASTTranslationUnit ast) {		
+	public void processAst(IASTTranslationUnit ast) {
 		UltimateCore app = Activator.app;
 		// First we have to set the AST of the Applicationstem.err.println(e);
 		app.setM_ParsedAST(ast);
 		// Second we need to set the .dummy-File
 		// We cannot use absolute Paths here, because we are in
 		// Plugin-Development
-//		File file = new File("/home/matthias/stalin/trunk/examples/settings/buchiAutomizer/staged300");
-//		app.setSettingsFile(file);
+		// File file = new
+		// File("/home/matthias/stalin/trunk/examples/settings/buchiAutomizer/staged300");
+		// app.setSettingsFile(file);
 
 		File dummyFile = null;
 		Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
@@ -106,8 +108,9 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		File toolChain = null;
 		IEclipsePreferences prefs = InstanceScope.INSTANCE
 				.getNode(Activator.PLUGIN_ID);
-		String selectedToolchain = prefs.get(PreferencePage.TOOLCHAIN_SELECTION_TEXT, "");
-		
+		String selectedToolchain = prefs.get(
+				PreferencePage.TOOLCHAIN_SELECTION_TEXT, "");
+
 		for (Entry<String, File> entry : toolchainFiles.entrySet()) {
 			if (selectedToolchain.equals(entry.getKey())) {
 				toolChain = entry.getValue();
@@ -173,18 +176,22 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		// we obtain the results by UltimateServices
 		Set<String> tools = UltimateServices.getInstance().getResultMap()
 				.keySet();
+		Logger logger = UltimateServices.getInstance().getLogger(
+				Activator.PLUGIN_ID);
 		// we iterate over the key set, each key represents the name
 		// of the tool, which created the results
 		for (String toolID : tools) {
-			CDTResultStore.addResults(fileName, toolID, UltimateServices.getInstance()
-					.getResultMap().get(toolID));
-			List<IResult> resultsOfTool = UltimateServices.getInstance().getResultMap()
-					.get(toolID);
+			CDTResultStore.addResults(fileName, toolID, UltimateServices
+					.getInstance().getResultMap().get(toolID));
+			List<IResult> resultsOfTool = UltimateServices.getInstance()
+					.getResultMap().get(toolID);
 			for (IResult iresult : resultsOfTool) {
 				if (!(iresult instanceof IResultWithLocation)) {
-					//FIXME: implement result without location
-					throw new UnsupportedOperationException(
-							"result without location not implemented yet");
+					// FIXME: implement result without location
+					logger.error("Result not implemented yet: "
+							+ iresult.getShortDescription());
+
+					continue;
 				}
 				IResultWithLocation result = (IResultWithLocation) iresult;
 				if (!(result.getLocation() instanceof CACSLLocation)) {
@@ -231,8 +238,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 						// We have an AST-Node
 						// ACSLNode acslNode = loc.getAcslNode();
 						reportProblem(CCheckerDescriptor.IN_ID, this.getFile(),
-								loc.getStartLine(),
-								invar.getShortDescription());
+								loc.getStartLine(), invar.getShortDescription());
 					}
 				} else if (result instanceof TerminationArgumentResult) {
 					TerminationArgumentResult invar = (TerminationArgumentResult) result;
@@ -243,8 +249,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 						// We have an AST-Node
 						// ACSLNode acslNode = loc.getAcslNode();
 						reportProblem(CCheckerDescriptor.IN_ID, this.getFile(),
-								loc.getStartLine(),
-								invar.getShortDescription());
+								loc.getStartLine(), invar.getShortDescription());
 					}
 				} else if (result instanceof UnprovableResult) {
 					UnprovableResult unprov = (UnprovableResult) result;
@@ -310,20 +315,20 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 					} else {
 						throw new IllegalArgumentException("unknown severity");
 					}
-					// We found an unsoundness warning, this was proved by Ultimate
+					// We found an unsoundness warning, this was proved by
+					// Ultimate
 					if (loc.getcNode() != null) {
-						reportProblem(id,
-								loc.getcNode(), err.getShortDescription());
+						reportProblem(id, loc.getcNode(),
+								err.getShortDescription());
 					} else {
 						// We have an AST-Node
 						// ACSLNode acslNode = loc.getAcslNode();
-						reportProblem(id,
-								this.getFile(), loc.getStartLine(),
+						reportProblem(id, this.getFile(), loc.getStartLine(),
 								err.getShortDescription());
 					}
 				} else {
-					throw new UnsupportedOperationException(
-							"Result Type not specified!");
+					logger.error("Result not supported yet: "
+							+ iresult.getShortDescription());
 				}
 			}
 		}
@@ -355,7 +360,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
-		
+
 		// Iterate over all Files in the Directory
 		// to create the internal map of all possible toolchains!
 		for (File f : toolchainDir.listFiles()) {
@@ -365,8 +370,8 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 					|| !params[1].equals("xml")) {
 				continue;
 			}
-			
-			this.toolchainFiles.put(tName, f);		
+
+			this.toolchainFiles.put(tName, f);
 		}
 	}
 }

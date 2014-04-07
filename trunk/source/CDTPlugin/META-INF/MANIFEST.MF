@@ -5,6 +5,7 @@ Bundle-SymbolicName: CDTPlugin;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.cdt.Activator
 Require-Bundle: UltimateCore,
+ Library-log4j,
  org.eclipse.cdt.core;bundle-version="5.3.1",
  org.eclipse.cdt.codan.checkers;bundle-version="1.0.0",
  org.eclipse.cdt.codan.core;bundle-version="2.0.0",
@@ -19,7 +20,7 @@ Require-Bundle: UltimateCore,
  CACSL2BoogieTranslator;bundle-version="0.0.1",
  BoogiePreprocessor;bundle-version="0.0.1",
  org.eclipse.ui,
- org.eclipse.ui.navigator
+ org.eclipse.ui.navigator 
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: .
