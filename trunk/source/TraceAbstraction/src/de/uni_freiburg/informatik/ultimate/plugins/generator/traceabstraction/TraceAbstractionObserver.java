@@ -322,7 +322,9 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				errorPP,
 				Activator.s_PLUGIN_NAME,
 				translatorSequence,
-				pe, bpe.getValuation());
+				pe,
+				CounterExampleResult.getLocationSequence(bpe), 
+				bpe.getValuation());
 		ctxRes.setLongDescription(bpe.toString());
 		reportResult(ctxRes);
 //		s_Logger.warn(ctxMessage);

@@ -33,12 +33,14 @@ public class CounterExampleResult<ELEM extends IElement, E> extends AbstractResu
 	 *            the valuation
 	 */
 	public CounterExampleResult(ELEM position, String plugin, 
-			List<ITranslator<?,?,?,?>> translatorSequence, IProgramExecution<ELEM, E> pe, 
+			List<ITranslator<?,?,?,?>> translatorSequence, IProgramExecution<ELEM, E> pe,
+			List<ILocation> failurePath,
 			IValuation valuation) {
 		super(position, plugin, translatorSequence);
 		m_CheckedSpecification = ResultUtil.getCheckedSpecification(position);
 		this.longDescription = new String();
-		this.failurePath = getLocationSequence(pe);
+		this.failurePath = failurePath;
+//		this.failurePath = getLocationSequence(pe);
 		this.valuation = valuation;
 	}
 
@@ -102,7 +104,7 @@ public class CounterExampleResult<ELEM extends IElement, E> extends AbstractResu
 	}
 	
 	
-	private static <TE extends IElement, E> List<ILocation> getLocationSequence(IProgramExecution<TE, E> pe) {
+	public static <TE extends IElement, E> List<ILocation> getLocationSequence(IProgramExecution<TE, E> pe) {
 		List<ILocation> result = new ArrayList<ILocation>();
 		for (int i=0; i<pe.getLength(); i++) {
 			TE te = pe.getTraceElement(i);

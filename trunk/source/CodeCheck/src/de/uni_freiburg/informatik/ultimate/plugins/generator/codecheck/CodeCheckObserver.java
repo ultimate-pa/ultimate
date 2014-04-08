@@ -497,6 +497,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				.translateProgramExecution(pe);
 		CounterExampleResult<RcfgElement, Expression> ctxRes = new CounterExampleResult<RcfgElement, Expression>(
 				position, Activator.s_PLUGIN_NAME, translatorSequence, pe,
+				CounterExampleResult.getLocationSequence(bpe),
 				bpe.getValuation());
 		ctxRes.setLongDescription(bpe.toString());
 		
