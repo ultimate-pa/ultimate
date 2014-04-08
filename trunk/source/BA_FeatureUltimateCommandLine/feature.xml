@@ -82,21 +82,7 @@
          unpack="false"/>
 
    <plugin
-         id="CDTDummyParser"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="CDTParser"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="InteractiveConsole"
          download-size="0"
          install-size="0"
          version="0.0.0"

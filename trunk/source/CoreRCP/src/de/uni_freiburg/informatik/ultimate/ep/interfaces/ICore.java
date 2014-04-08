@@ -6,8 +6,11 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 
 import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.CommandLineParser;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.ToolchainWalker;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
+import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 /**
  * This interface provides the core functionality of Ultimate for processing
@@ -58,7 +61,7 @@ public interface ICore {
 	 * 
 	 * @throws Exception
 	 */
-	void letCoreRunParser() throws Exception;
+	void runParser() throws Exception;
 
 	/**
 	 * If everything has been properly initiated, this method will process the
@@ -97,5 +100,9 @@ public interface ICore {
 	void loadPreferences();
 
 	IUltimatePlugin[] getPlugins();
+	
+	void addAST(IElement root, GraphType outputDefinition);
+	
+	CommandLineParser getCommandLineArguments();
 
 }

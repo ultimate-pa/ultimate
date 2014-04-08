@@ -9,8 +9,9 @@ import javax.xml.bind.JAXBException;
 
 import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
@@ -186,9 +187,9 @@ public class ResetAndRedoToolChainOldTCAction extends Action implements
 		}
 
 		if (fp != null) {
-			ToolchainJob tcj = new ToolchainJob("Processing Toolchain", mCore,
-					mController, new File(fp),
-					ToolchainJob.Chain_Mode.RUN_OLDTOOLCHAIN, preludeprovider);
+			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", mCore,
+					mController, BasicToolchainJob.ChainMode.RUN_OLDTOOLCHAIN,
+					new File(fp), preludeprovider);
 			tcj.schedule();
 
 		}

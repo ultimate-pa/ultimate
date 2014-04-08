@@ -10,7 +10,6 @@ import de.uni_freiburg.informatik.ultimate.access.walker.DFSTreeWalker;
 import de.uni_freiburg.informatik.ultimate.access.walker.IWalker;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore.Ultimate_Mode;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
@@ -160,15 +159,10 @@ public class PluginConnector {
 			break;
 		case USER:
 			if (mModelManager.size() > 1) {
-				// In fallback mode, USER == LAST!
-				if (UltimateServices.getInstance().getUltimateMode() == Ultimate_Mode.FALLBACK_CMDLINE) {
-					models.add(mModelManager.getLastAdded());
-				} else {
-					for (String s : mController.selectModel(mModelManager.getItemNames())) {
-						GraphType t = mModelManager.getGraphTypeById(s);
-						if (t != null) {
-							models.add(t);
-						}
+				for (String s : mController.selectModel(mModelManager.getItemNames())) {
+					GraphType t = mModelManager.getGraphTypeById(s);
+					if (t != null) {
+						models.add(t);
 					}
 				}
 			} else {

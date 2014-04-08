@@ -134,8 +134,8 @@ public class ToolchainWalker {
 			if (e instanceof ToolchainCanceledException) {
 				TimeoutResult timeoutResult = new TimeoutResult(plugin.getId(), e.getMessage());
 				UltimateServices.getInstance().reportResult(plugin.getId(), timeoutResult);
-				s_Logger.info("Toolchain cancelled while executing plugin" 
-							+ plugin.getId() + ". Reason: " + e.getMessage());
+				s_Logger.info("Toolchain cancelled while executing plugin" + plugin.getId() + ". Reason: "
+						+ e.getMessage());
 			} else {
 				s_Logger.error("The Plugin " + plugin.getId() + " has thrown an Exception!", e);
 				throw e;

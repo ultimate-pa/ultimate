@@ -7,13 +7,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 
-import javax.xml.bind.JAXBException;
-
 import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionRegistry;
@@ -33,7 +29,6 @@ import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
 import org.osgi.service.prefs.BackingStoreException;
-import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -48,12 +43,11 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ILoggingWindow;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
-import de.uni_freiburg.informatik.ultimate.logging.UltimateLoggerFactory;
+import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IModelManager;
 import de.uni_freiburg.informatik.ultimate.model.PersistenceAwareModelManager;
@@ -70,34 +64,7 @@ import de.uni_freiburg.informatik.ultimate.util.Benchmark;
  */
 public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
-	/**
-	 * In what mode is Ultimate supposed tu run? With a GUI? With an interactive
-	 * console? Or a fall-back command-line?
-	 */
-	public static enum Ultimate_Mode {
-		/**
-		 * This mode starts Ultimate with the GUI.
-		 */
-		USEGUI,
-		/**
-		 * This mode starts Ultimate with the Interactive Console. Which is
-		 * basically a simple console application.
-		 */
-		INTERACTIVE,
-		/**
-		 * This mode starts Ultimate only with the given CmdLineArgs, there is
-		 * no interaction with the user.
-		 */
-		FALLBACK_CMDLINE,
-		/**
-		 * This mode starts Ultimate with special parameters, which can be set
-		 * in every instance. This mode is basically needed to start Ultimate
-		 * from the Web-Server and the CDT-Plugin
-		 */
-		EXTERNAL_EXECUTION
-	}
-
-	private Ultimate_Mode mCoreMode;
+	private boolean mGuiMode;
 
 	private Logger mLogger;
 
@@ -143,22 +110,6 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 	private IProgressMonitor mCurrentToolchainMonitor;
 	private long mDeadline;
-	/**
-	 * Only for EXTERNAL_EXECUTION mode.
-	 */
-	private File mToolchainXML;
-	/**
-	 * Only for EXTERNAL_EXECUTION mode.
-	 */
-	private File mSettingsFile;
-	/**
-	 * Only for EXTERNAL_EXECUTION mode.
-	 */
-	private File mInputFile;
-	/**
-	 * Only for EXTERNAL_EXECUTION mode.
-	 */
-	private Object mParsedAST;
 
 	private HashMap<String, LogPreferenceChangeListener> mActivePreferenceListener;
 
@@ -169,17 +120,10 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 	}
 
-	/**
-	 * This constructor should only be used by the CDTPlugin and the WebServer
-	 * 
-	 * @param mode
-	 *            the execution mode.
-	 */
-	public UltimateCore(UltimateCore.Ultimate_Mode mode) {
-		if (mode != UltimateCore.Ultimate_Mode.EXTERNAL_EXECUTION) {
-			throw new IllegalArgumentException("We expect EXTERNAL_EXECUTION mode here!");
-		}
-		this.mCoreMode = mode;
+	public final Object start(IController controller, boolean isGraphical) throws Exception {
+		mCurrentController = controller;
+		mGuiMode = isGraphical;
+		return start(null);
 	}
 
 	/**
@@ -195,59 +139,20 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	@Override
 	public final Object start(IApplicationContext context) throws Exception {
 
-		if (mCoreMode == Ultimate_Mode.EXTERNAL_EXECUTION) {
-			init();
-
-			// throwing classes exported by plugins into arraylists
-			loadExtension();
-
-			// initialize the tools map
-			initiateToolMaps();
-
-			if (mSettingsFile != null) {
-				loadPreferencesInternal(mSettingsFile.getPath());
-			}
-
-			// run previously chosen command line controller
-			Object returnCode = mCurrentController.init(this);
-			mLogger.info("Exiting Ultimate with returncode " + returnCode);
-
-			// before we quit Ultimate, do we have to clear the model store?
-			boolean store_mm = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
-					.getBoolean(CorePreferenceInitializer.LABEL_MM_DROP_MODELS);
-			if (store_mm) {
-				for (String s : this.mModelManager.getItemNames()) {
-					this.mModelManager.removeItem(s);
-				}
-			}
-
-			cleanup();
-			// this must be returned
-			return IApplication.EXIT_OK;
-		}
-		// parser command line parameters
+		// parse command line parameters and select ultimate mode
 		mCmdLineArgs = new CommandLineParser();
 		mCmdLineArgs.parse(Platform.getCommandLineArgs());
 
 		// determine Ultimate's mode
-		if (mCmdLineArgs.getInteractiveSwitch()) {
-			this.mCoreMode = Ultimate_Mode.INTERACTIVE;
-		} else if (mCmdLineArgs.getExitSwitch()) {
+		if (mCmdLineArgs.getExitSwitch()) {
 			mCmdLineArgs.printUsage();
 			return IApplication.EXIT_OK;
-		} else if (!mCmdLineArgs.getConsoleSwitch()) {
-			this.mCoreMode = Ultimate_Mode.USEGUI;
-		} else if (mCmdLineArgs.getConsoleSwitch()) {
-			this.mCoreMode = Ultimate_Mode.FALLBACK_CMDLINE;
 		}
-
-		// if you need to debug the commandline...
-		// m_CmdLineArgs.printUsage();
 
 		// initializing variables, loggers,...
 		init();
 
-		// throwing classes exported by plugins into arraylists
+		// loading classes exported by plugins
 		loadExtension();
 
 		// initialize the tools map
@@ -258,39 +163,30 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 			loadPreferencesInternal(settingsfile);
 		}
 
-		// at this point a gui or a cmd line controller may already be set.
-		// if no controller is set, the default cmd line controller
-		// without interactive mode is used as a fallback
-		if (this.mCoreMode == Ultimate_Mode.USEGUI && mCurrentController != null) {
-			this.initializeGUI();
-		} else if (mCurrentController != null) {
-			// run previously chosen command line controller
-			Object returnCode = mCurrentController.init(this);
-			mLogger.info("Preparing to exit Ultimate with return code " + returnCode);
-		}
+		// at this point a controller is already selected. We delegate control
+		// to this controller.
+		Object rtrCode = initializeController();
 
-		// before we quit Ultimate, do we have to clear the model store?
-		boolean store_mm = new UltimatePreferenceStore(Activator.s_PLUGIN_ID).getBoolean(
-				CorePreferenceInitializer.LABEL_MM_DROP_MODELS, true);
-		if (store_mm) {
-			for (String s : this.mModelManager.getItemNames()) {
-				this.mModelManager.removeItem(s);
+		// Ultimate is closing; should we clear the model store?
+		if (new UltimatePreferenceStore(Activator.s_PLUGIN_ID).getBoolean(
+				CorePreferenceInitializer.LABEL_MM_DROP_MODELS, true)) {
+			for (String s : mModelManager.getItemNames()) {
+				mModelManager.removeItem(s);
 			}
 		}
-		// this must be returned
 		cleanup();
-		return IApplication.EXIT_OK;
+		return rtrCode;
 	}
 
-	private void initializeGUI() {
-		mLogger.info("Initializing GUI ...");
+	private int initializeController() {
+		mLogger.info("Initializing controller ...");
 		if (mCurrentController == null) {
-			mLogger.fatal("No GUI controller present although initializeGUI() was called !");
-			throw new NullPointerException("No GUI controller present although initializeGUI() was called !");
+			mLogger.fatal("No controller present! Ultimate will exit.");
+			throw new NullPointerException("No controller present!");
 		}
-		loadGuiLoggingWindow(Platform.getExtensionRegistry());
-		Object returnCode = mCurrentController.init(this);
+		int returnCode = mCurrentController.init(this);
 		mLogger.info("Preparing to exit Ultimate with return code " + returnCode);
+		return returnCode;
 	}
 
 	/**
@@ -301,9 +197,6 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	 */
 	private void init() {
 		UltimateServices.createInstance(this);
-
-		// Here we set the parsed AST for the cdt plugin
-		UltimateServices.getInstance().setParsedAST(mParsedAST);
 
 		mLogger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 
@@ -364,7 +257,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		logDefaultPreferences(Activator.s_PLUGIN_ID);
 
 		if (mCurrentController == null) {
-			mLogger.warn("CurrentController is null (CurrentMode: " + mCoreMode + ")");
+			mLogger.warn("There is no Controller plugin");
 		} else {
 			attachLogPreferenceChangeListenerToPlugin(mCurrentController.getPluginID());
 			logDefaultPreferences(mCurrentController.getPluginID());
@@ -440,8 +333,10 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	/**
 	 * Creates instances of plugin classes.
 	 * 
+	 * @throws CoreException
+	 * 
 	 */
-	private void loadExtension() {
+	private void loadExtension() throws CoreException {
 		IExtensionRegistry reg = Platform.getExtensionRegistry();
 		mLogger.info("Loading Plugins...");
 		loadControllerPlugins(reg);
@@ -470,124 +365,24 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	 * @param reg
 	 *            The extension registry (which extensions are valid and how can
 	 *            I find them); is obtained by Platform.getExtensionRegistry()
+	 * @throws CoreException
 	 */
-	private void loadControllerPlugins(IExtensionRegistry reg) {
+	private void loadControllerPlugins(IExtensionRegistry reg) throws CoreException {
 
-		boolean usegui = false;
-		if (this.mCoreMode == Ultimate_Mode.USEGUI) {
-			usegui = true;
-		}
+		IConfigurationElement[] configElements = reg.getConfigurationElementsFor(ExtensionPoints.EP_CONTROLLER);
 
-		IConfigurationElement[] configElements_ctr = reg.getConfigurationElementsFor(ExtensionPoints.EP_CONTROLLER);
-
-		// create list of controllers that fulfill the desired GUI property (gui
-		// / nogui)
-		List<IConfigurationElement> suitableControllers = new LinkedList<IConfigurationElement>();
-		for (int i = 0; i < configElements_ctr.length; i++) {
-			String attr = configElements_ctr[i].getAttribute("isGraphical");
-			if (attr != null && new Boolean(attr).equals(usegui)) {
-				suitableControllers.add(configElements_ctr[i]);
+		if (configElements.length != 1) {
+			mLogger.fatal("Invalid configuration. You should have only 1 IController plugin, but you have "
+					+ configElements.length);
+			for(IConfigurationElement elem : configElements){
+				mLogger.fatal(((IController)elem.createExecutableExtension("class")).getClass());				
 			}
 		}
 
-		if (usegui) {
-			mLogger.info("Getting present graphical controllers (" + suitableControllers.size() + ")");
-		} else {
-			mLogger.info("Getting present non-graphical controllers (" + suitableControllers.size() + ")");
+		if (mCurrentController == null) {
+			mGuiMode = new Boolean(configElements[0].getAttribute("isGraphical")).booleanValue();
+			mCurrentController = (IController) (configElements[0].createExecutableExtension("class"));
 		}
-
-		try {
-
-			this.mCurrentController = chooseController(suitableControllers);
-
-		} catch (FileNotFoundException e) {
-			mLogger.error("The specified file " + e.getMessage() + " was not found or couldn't be read.");
-			this.mCmdLineArgs.printUsage();
-			mLogger.info("Exiting Ultimate.");
-		} catch (JAXBException e) {
-			mLogger.error("There was an error processing the XML file. Please make sure that it validates against toolchain.xsd.");
-			mLogger.info("Exiting Ultimate.");
-		} catch (SAXException e) {
-			mLogger.error("There was an error parsing the XML file. Please make sure that it validates against toolchain.xsd.");
-			mLogger.info("Exiting Ultimate.");
-		}
-
-	}
-
-	/**
-	 * Choose a controller compliant with the user's desire. If the commandline
-	 * controller is desired, an instance will be returned. If the interactive
-	 * controller is desired, an instance of it will be returned. If only one
-	 * gui controller is present, this very one will be returned if Ultimate is
-	 * in GUI mode. If more than one is present, a dialog will appear where the
-	 * user may choose.
-	 * 
-	 * @param suitableControllers
-	 *            All controllers that can be used.
-	 * @return Controller chosen by the user or fallback controller.
-	 * @throws FileNotFoundException
-	 * @throws JAXBException
-	 * @throws SAXException
-	 */
-	private IController chooseController(List<IConfigurationElement> suitableControllers) throws FileNotFoundException,
-			JAXBException, SAXException {
-
-		// for external execution we need a "special" controller
-		if (this.mCoreMode == Ultimate_Mode.EXTERNAL_EXECUTION) {
-			return new ExtExecutionController(this.mToolchainXML.getPath(), this.mInputFile);
-		}
-
-		// command-line controller desired, return it
-		if (this.mCoreMode == Ultimate_Mode.FALLBACK_CMDLINE)
-			return new CommandlineController(this.mCmdLineArgs);
-
-		// if in interactive mode, search for suitable controller
-		if (this.mCoreMode == Ultimate_Mode.INTERACTIVE) {
-			for (IConfigurationElement element : suitableControllers) {
-
-				// in interactive mode return interactive controller
-				if (element.getAttribute("class").equals(
-						"de.uni_freiburg.informatik.ultimate.interactiveconsole.InteractiveConsoleController"))
-					try {
-
-						return (IController) element.createExecutableExtension("class");
-					} catch (CoreException e1) {
-						mLogger.error("The desired controller for the interactive console could not be loaded!");
-					}
-			}
-		}
-
-		if (this.mCoreMode == Ultimate_Mode.USEGUI) {
-			int availableControllersCount = suitableControllers.size();
-			if (availableControllersCount == 1) {
-				try {
-					return (IController) (suitableControllers.get(0).createExecutableExtension("class"));
-				} catch (CoreException e) {
-					mLogger.error("The desired gui controller could not be loaded!");
-				}
-			} else if (availableControllersCount > 1) {
-				// TODO remove the whole code when refactoring is complete
-				// (every controller in its own plugin)
-				// removed ControllerChooseDialog. It seems not necessary to be
-				// able to choose between different controllers at runtime.
-				// ControllerChooseDialog chooser = new ControllerChooseDialog(
-				// suitableControllers);
-				// int return_value = chooser.open();
-				int return_value = 0;
-				if (return_value >= 0) {
-					try {
-						return (IController) (suitableControllers.get(return_value).createExecutableExtension("class"));
-					} catch (CoreException e) {
-						mLogger.error("The desired gui controller could not be loaded!");
-					}
-				}
-			} else {
-				mLogger.error("CoreMode is USEGUI, but no usable GUI controller could be found.");
-			}
-		}
-
-		mLogger.warn("Could not load a suitable controller. Falling back to default command line controller");
-		return new CommandlineController(this.mCmdLineArgs);
 	}
 
 	/**
@@ -607,10 +402,11 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 			try {
 				IOutput output = (IOutput) element.createExecutableExtension("class");
 				// skip gui plug-ins if not running in GUI mode
-				if (!(output.isGuiRequired() && this.mCoreMode != Ultimate_Mode.USEGUI))
+				if (!(output.isGuiRequired() && !mGuiMode)) {
 					mOutputPlugins.add(output);
-				else
+				} else {
 					mLogger.error("Can't load a gui plugin in command-line mode!");
+				}
 			} catch (CoreException e) {
 				mLogger.error("Can't load a Output Plugin !", e);
 			}
@@ -657,7 +453,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 			try {
 				IGenerator generator = (IGenerator) element.createExecutableExtension("class");
 				// skip gui plug-ins if not running in GUI mode
-				if (!(generator.isGuiRequired() && this.mCoreMode != Ultimate_Mode.USEGUI)) {
+				if (!(generator.isGuiRequired() && !mGuiMode)) {
 					mGeneratorPlugins.add(generator);
 				} else {
 					mLogger.error("Can't load a gui plugin in command-line mode!");
@@ -685,7 +481,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 			try {
 				IAnalysis analysis = (IAnalysis) element.createExecutableExtension("class");
 				// skip gui plug-ins if not running in GUI mode
-				if (!(analysis.isGuiRequired() && this.mCoreMode != Ultimate_Mode.USEGUI))
+				if (!(analysis.isGuiRequired() && !mGuiMode))
 					mAnalysisPlugins.add(analysis);
 				else
 					mLogger.error("Can't load a gui plugin in command-line mode!");
@@ -735,45 +531,6 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		mLogger.info("--------------------------------------------------------------------------------");
 	}
 
-	/**
-	 * method for loading the contributed logging window.. there is currently no
-	 * distinction between loggign window.. as there is only one for the gui
-	 * important .. no logging messsages should go to the gui logging window if
-	 * the Gui is not up and running ...
-	 * 
-	 * this code is hard to be removed from the Application class because basic
-	 * Features of the {@link UltimateLoggerFactory} have to be present before
-	 * the GUI is loaded and even if the GUI isn't present at all.
-	 * 
-	 * Therefore the Application takes care of adding the appender to the root
-	 * logger
-	 * 
-	 */
-	private void loadGuiLoggingWindow(IExtensionRegistry reg) {
-		// -- LoggingWindow-Extension Point --
-		// receiving configuration elements (see exsd-files)
-		// which define class name in element "impl"
-		// and attribute "class".
-		IConfigurationElement[] configElements_out = reg.getConfigurationElementsFor(ExtensionPoints.EP_LOGGINGWINDOW);
-		// iterate through every config element
-		for (IConfigurationElement element : configElements_out) {
-			try {
-				ILoggingWindow loggingWindow = (ILoggingWindow) element.createExecutableExtension("class");
-				loggingWindow.init();
-				// and add to plugin ArrayList
-				loggingWindow.setLayout(new PatternLayout(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
-						.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)));
-
-				// use the root logger to have this appender in all child
-				// loggers
-				Logger.getRootLogger().addAppender(loggingWindow);
-				mLogger.info("Activated GUI Logging Window for Log4j Subsystem");
-			} catch (CoreException e) {
-				mLogger.error("Could not load the logging window", e);
-			}
-		}
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -782,7 +539,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	@Override
 	public void resetCore() {
 		initializePlugins();
-		resetMemoryManager();
+		resetModelManager();
 		if (new UltimatePreferenceStore(Activator.s_PLUGIN_ID).getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK)) {
 			mBenchmark = new Benchmark();
 		} else {
@@ -792,41 +549,28 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		mToolchainWalker = new ToolchainWalker(this, mBenchmark, mModelManager, mIdToTool);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore#setInputFiles
-	 * (java.io.File[])
-	 */
 	@Override
 	public void setInputFile(File files) {
-		this.mCurrentFiles = files;
+		mCurrentFiles = files;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore#initiateParser
-	 * (de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider)
-	 */
 	@Override
 	public boolean initiateParser(PreludeProvider preludefile) {
-		this.mCurrentParser = selectParser(this.mCurrentFiles);
+		mCurrentParser = selectParser(mCurrentFiles);
 
 		if (mCurrentParser == null) {
-			mLogger.warn("Parser is NULL, aborting...");
+			mLogger.warn("No parsers available");
 			return false;
 		}
 
 		// set prelude file if present
-		if (preludefile != null)
-			this.mCurrentParser.setPreludeFile(preludefile.getPreludeFile());
-		else
-			this.mCurrentParser.setPreludeFile(null);
+		if (preludefile != null) {
+			mCurrentParser.setPreludeFile(preludefile.getPreludeFile());
+		} else {
+			mCurrentParser.setPreludeFile(null);
+		}
 
-		if (this.mCurrentParser.getOutputDefinition() == null) {
+		if (mCurrentParser.getOutputDefinition() == null) {
 			mLogger.fatal("ISource returned invalid Output Definition, aborting...");
 			return false;
 		}
@@ -836,19 +580,18 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		return true;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore#letCoreRunParser
-	 * ()
-	 */
-	@Override
-	public void letCoreRunParser() throws Exception {
-		boolean rtr_value = mModelManager.addItem(runParser(this.mCurrentFiles, this.mCurrentParser),
-				this.mCurrentParser.getOutputDefinition());
 
-		mLogger.debug("DataSafe ADD Operation successful: " + rtr_value);
+	@Override
+	public void runParser() throws Exception {
+		addAST(runParser(mCurrentFiles, mCurrentParser), mCurrentParser.getOutputDefinition());
+	}
+
+	public void addAST(IElement root, GraphType outputDefinition) {
+		if (mModelManager.addItem(root, outputDefinition)) {
+			mLogger.debug("Successfully added AST to model manager");
+		} else {
+			mLogger.error("Could not add AST to model manager!");
+		}
 	}
 
 	private void initiateToolMaps() {
@@ -961,7 +704,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 			 */
 		} catch (Exception e) {
 			mLogger.fatal("Parsing gives Exception", e);
-			resetMemoryManager();
+			resetModelManager();
 		}
 		return root;
 	}
@@ -999,7 +742,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		return parser;
 	}
 
-	private void resetMemoryManager() {
+	private void resetModelManager() {
 		if (!mModelManager.isEmpty()) {
 			mLogger.info("Clearing model...");
 			try {
@@ -1043,15 +786,6 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	 */
 	public ArrayList<ITool> getAllTools() {
 		return this.mTools;
-	}
-
-	/**
-	 * getter for field m_CoreMode
-	 * 
-	 * @return the m_CoreMode
-	 */
-	public Ultimate_Mode getCoreMode() {
-		return this.mCoreMode;
 	}
 
 	/**
@@ -1166,39 +900,6 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 				mLogger.warn("Saving preferences failed with exception: ", e);
 			}
 		}
-
-		// old variant:
-		// String filename = mCurrentController.getSavePrefName();
-		// if (filename != null && !filename.isEmpty() && !mTools.isEmpty()) {
-		// String toolName = "";
-		// try {
-		// FileOutputStream fis = new FileOutputStream(filename);
-		// IPreferencesService ps = Platform.getPreferencesService();
-		// IScopeContext cs = ConfigurationScope.INSTANCE;
-		// IScopeContext is = InstanceScope.INSTANCE;
-		// ps.exportPreferences(cs.getNode(Activator.s_PLUGIN_ID), fis,
-		// null);
-		// ps.exportPreferences(is.getNode(Activator.s_PLUGIN_ID), fis,
-		// null);
-		//
-		// for (ITool tool : mTools) {
-		// toolName = tool.getName();
-		// mLogger.debug("Saving preferences for tool " + toolName
-		// + " ...");
-		// IEclipsePreferences[] prefs = tool.getPreferences(cs, is);
-		// if (prefs != null) {
-		// for (IEclipsePreferences p : prefs) {
-		// ps.exportPreferences(p, fis, null);
-		// }
-		// }
-		// }
-		// fis.flush();
-		// fis.close();
-		// } catch (Exception e) {
-		// mLogger.warn("Saving preferences failed at " + toolName
-		// + " with exception: ", e);
-		// }
-		// }
 	}
 
 	/**
@@ -1238,66 +939,6 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 		}
 		mDeadline = date;
-	}
-
-	/**
-	 * @return the m_ToolchainXML
-	 */
-	public File getToolchainXML() {
-		return mToolchainXML;
-	}
-
-	/**
-	 * @param m_ToolchainXML
-	 *            the m_ToolchainXML to set
-	 */
-	public void setToolchainXML(File m_ToolchainXML) {
-		this.mToolchainXML = m_ToolchainXML;
-	}
-
-	/**
-	 * @return the m_SettingsFile
-	 */
-	public File getSettingsFile() {
-		return mSettingsFile;
-	}
-
-	/**
-	 * @param m_SettingsFile
-	 *            the m_SettingsFile to set
-	 */
-	public void setSettingsFile(File m_SettingsFile) {
-		this.mSettingsFile = m_SettingsFile;
-	}
-
-	/**
-	 * @return the m_InputFile
-	 */
-	public File getInputFile() {
-		return mInputFile;
-	}
-
-	/**
-	 * @param m_InputFile
-	 *            the m_InputFile to set
-	 */
-	public void setM_InputFile(File m_InputFile) {
-		this.mInputFile = m_InputFile;
-	}
-
-	/**
-	 * @return the m_ParsedAST
-	 */
-	public Object getParsedAST() {
-		return mParsedAST;
-	}
-
-	/**
-	 * @param m_ParsedAST
-	 *            the m_ParsedAST to set
-	 */
-	public void setM_ParsedAST(Object m_ParsedAST) {
-		this.mParsedAST = m_ParsedAST;
 	}
 
 	public void cancelToolchain() {
@@ -1356,6 +997,11 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 		UltimateServices.getInstance().terminateExternalProcesses();
 
+	}
+
+	@Override
+	public CommandLineParser getCommandLineArguments() {
+		return mCmdLineArgs;
 	}
 
 }

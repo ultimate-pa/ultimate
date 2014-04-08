@@ -4,7 +4,6 @@
    <extension-point id="de.uni_freiburg.informatik.ultimate.ep.analysis" name="Analysis Extension Point" schema="schema/de.uni_freiburg.informatik.ultimate.ep.analysis.exsd"/>
    <extension-point id="de.uni_freiburg.informatik.ultimate.ep.generator" name="Generator Extension Point" schema="schema/de.uni_freiburg.informatik.ultimate.ep.generator.exsd"/>
    <extension-point id="de.uni_freiburg.informatik.ultimate.ep.output" name="Output Extension Point" schema="schema/de.uni_freiburg.informatik.ultimate.ep.output.exsd"/>
-   <extension-point id="de.uni_freiburg.informatik.ultimate.ep.LoggingWindow" name="LoggingWindow Extension Point" schema="schema/de.uni_freiburg.informatik.ultimate.ep.LoggingWindow.exsd"/>
    <extension-point id="de.uni_freiburg.informatik.ultimate.ep.controller" name="Controller Extension Point" schema="schema/de.uni_freiburg.informatik.ultimate.ep.controller.exsd"/>
    <extension-point id="de.uni_freiburg.informatik.ultimate.ep.source" name="Source Extension Point" schema="schema/de.uni_freiburg.informatik.ultimate.ep.source.exsd"/>
 

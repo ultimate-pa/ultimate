@@ -1,0 +1,7 @@
+<toolchain>
+	<plugin id="CACSL2BoogieTranslator"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
+	<plugin id="RCFGBuilder"/>
+	<plugin id="BlockEncoding"/>
+	<plugin id="CodeCheck"/>
+</toolchain>

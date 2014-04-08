@@ -16,6 +16,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.codan.core.model.CheckerLaunchMode;
 import org.eclipse.cdt.codan.core.model.IProblemWorkingCopy;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -29,7 +30,6 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.IDE;
-import org.osgi.framework.Bundle;
 
 import de.uni_freiburg.informatik.ultimate.cdt.Activator;
 import de.uni_freiburg.informatik.ultimate.cdt.codan.extension.AbstractFullAstChecker;
@@ -37,12 +37,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.preferences.PreferencePage;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.views.resultlist.ResultList;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
+import de.uni_freiburg.informatik.ultimate.result.GenericResultAtLocation;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithLocation;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithTrace;
 import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
@@ -61,72 +62,44 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	/**
 	 * The identifier.
 	 */
-	public static String ID = "de.uni_freiburg.informatik.ultimate.cdt."
-			+ "codan.UltimateCChecker";
+	public static String ID = "de.uni_freiburg.informatik.ultimate.cdt." + "codan.UltimateCChecker";
 
 	/**
 	 * In this map we store the listed files out of the directory.
 	 */
-	private HashMap<String, File> toolchainFiles;
+	private HashMap<String, File> mToolchainFiles;
+
+	private static CDTController sController;
 
 	/**
 	 * The Constructor of this Checker
+	 * 
+	 * @throws Exception
 	 */
-	public UltimateCChecker() {
+	public UltimateCChecker() throws Exception {
 		super();
-		this.toolchainFiles = new HashMap<String, File>();
+		mToolchainFiles = new HashMap<String, File>();
+
+		sController = new CDTController();
+		sController.startUltimate();
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		super.finalize();
+		sController.close();
 	}
 
 	@Override
 	public void processAst(IASTTranslationUnit ast) {
-		UltimateCore app = Activator.app;
-		// First we have to set the AST of the Applicationstem.err.println(e);
-		app.setM_ParsedAST(ast);
-		// Second we need to set the .dummy-File
-		// We cannot use absolute Paths here, because we are in
-		// Plugin-Development
-		// File file = new
-		// File("/home/matthias/stalin/trunk/examples/settings/buchiAutomizer/staged300");
-		// app.setSettingsFile(file);
-
-		File dummyFile = null;
-		Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
-		URL url = FileLocator.find(bundle, new Path("dummyFile/cdt.dummy"),
-				null);
+		// run ultimate
 		try {
-			URI uri = new URI(FileLocator.toFileURL(url).toString()
-					.replace(" ", "%20"));
-			dummyFile = new File(uri);
-		} catch (IOException e2) {
-			e2.printStackTrace();
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-		}
-
-		app.setM_InputFile(dummyFile);
-		// Third thing is that we have to set the toolchain
-		File toolChain = null;
-		IEclipsePreferences prefs = InstanceScope.INSTANCE
-				.getNode(Activator.PLUGIN_ID);
-		String selectedToolchain = prefs.get(
-				PreferencePage.TOOLCHAIN_SELECTION_TEXT, "");
-
-		for (Entry<String, File> entry : toolchainFiles.entrySet()) {
-			if (selectedToolchain.equals(entry.getKey())) {
-				toolChain = entry.getValue();
-				break;
-			}
-		}
-
-		app.setToolchainXML(toolChain);
-		// Now we start Ultimate
-		// ApplicationContext = null ... maybe this is could be a problem
-		try {
-			app.start(null);
+			sController.runToolchain(getToolchainPath(), ast);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		// So after this run, we can obtain the results
+
+		// After the run, we can obtain the results
 		// -> so we have to prepare them for displaying to the user
 		// reportProblem(...) --> is used for displaying
 		// new CodanProblem("...", "...")
@@ -135,14 +108,33 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		// CodanSeverity.Info;
 		final String completePath = ast.getFilePath();
 		reportProblems(completePath);
+		updateFileView(completePath);
+
+	}
+
+	private String getToolchainPath() {
+		// obtain selected toolchain from preferences
+		File toolChain = null;
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(Activator.PLUGIN_ID);
+		String selectedToolchain = prefs.get(PreferencePage.TOOLCHAIN_SELECTION_TEXT, "");
+
+		for (Entry<String, File> entry : mToolchainFiles.entrySet()) {
+			if (selectedToolchain.equals(entry.getKey())) {
+				toolChain = entry.getValue();
+				break;
+			}
+		}
+		return toolChain.getAbsolutePath();
+	}
+
+	private void updateFileView(final String completePath) {
 		// After finishing the Ultimate run we update the FileView
 		// We have to do this in this asynch manner, because otherwise we would
 		// get a NullPointerException, because we are not in the UI Thread
 		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 			public void run() {
 				// Present results of the actual run!
-				IViewPart vpart = PlatformUI.getWorkbench()
-						.getActiveWorkbenchWindow().getActivePage()
+				IViewPart vpart = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
 						.findView(ResultList.ID);
 				if (vpart instanceof ResultList) {
 					((ResultList) vpart).setViewerInput(completePath);
@@ -150,10 +142,8 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 				// open the file on which the actual run happened!
 				File fileToOpen = new File(completePath);
 				if (fileToOpen.exists() && fileToOpen.isFile()) {
-					IFileStore fileStore = EFS.getLocalFileSystem().getStore(
-							fileToOpen.toURI());
-					IWorkbenchPage page = PlatformUI.getWorkbench()
-							.getActiveWorkbenchWindow().getActivePage();
+					IFileStore fileStore = EFS.getLocalFileSystem().getStore(fileToOpen.toURI());
+					IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 
 					try {
 						IDE.openEditorOnFileStore(page, fileStore);
@@ -163,7 +153,6 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 				}
 			}
 		});
-
 	}
 
 	/**
@@ -173,164 +162,89 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	 *            the FileName
 	 */
 	private void reportProblems(String fileName) {
+		Logger log = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 		// we obtain the results by UltimateServices
-		Set<String> tools = UltimateServices.getInstance().getResultMap()
-				.keySet();
-		Logger logger = UltimateServices.getInstance().getLogger(
-				Activator.PLUGIN_ID);
+		Set<String> tools = UltimateServices.getInstance().getResultMap().keySet();
 		// we iterate over the key set, each key represents the name
 		// of the tool, which created the results
 		for (String toolID : tools) {
-			CDTResultStore.addResults(fileName, toolID, UltimateServices
-					.getInstance().getResultMap().get(toolID));
-			List<IResult> resultsOfTool = UltimateServices.getInstance()
-					.getResultMap().get(toolID);
-			for (IResult iresult : resultsOfTool) {
-				if (!(iresult instanceof IResultWithLocation)) {
-					// FIXME: implement result without location
-					logger.error("Result not implemented yet: "
-							+ iresult.getShortDescription());
-
-					continue;
-				}
-				IResultWithLocation result = (IResultWithLocation) iresult;
-				if (!(result.getLocation() instanceof CACSLLocation)) {
-					continue;
-				}
-				CACSLLocation loc = (CACSLLocation) result.getLocation();
-				if (loc == null) {
-					// so we have a result with no valid location
-					// --> so we jump over this result
-					continue;
-				}
-				if (result instanceof CounterExampleResult) {
-					CounterExampleResult cer = (CounterExampleResult) result;
-					// We found a counterexample so we have an error!
-					if (loc.getcNode() != null) {
-						reportProblem(CCheckerDescriptor.CE_ID, loc.getcNode(),
-								cer.getShortDescription());
-					} else {
-						// We have an AST-Node
-						// ACSLNode acslNode = loc.getAcslNode();
-						reportProblem(CCheckerDescriptor.CE_ID, this.getFile(),
-								loc.getStartLine(), cer.getShortDescription());
-					}
-				} else if (result instanceof ProcedureContractResult) {
-					ProcedureContractResult pContr = (ProcedureContractResult) result;
-					// We found an invariant, this information for the user!
-					if (loc.getcNode() != null) {
-						reportProblem(CCheckerDescriptor.IN_ID, loc.getcNode(),
-								pContr.getShortDescription());
-					} else {
-						// We have an AST-Node
-						// ACSLNode acslNode = loc.getAcslNode();
-						reportProblem(CCheckerDescriptor.IN_ID, this.getFile(),
-								loc.getStartLine(),
-								pContr.getShortDescription());
-					}
-				} else if (result instanceof InvariantResult) {
-					InvariantResult invar = (InvariantResult) result;
-					// We found an invariant, this information for the user!
-					if (loc.getcNode() != null) {
-						reportProblem(CCheckerDescriptor.IN_ID, loc.getcNode(),
-								invar.getShortDescription());
-					} else {
-						// We have an AST-Node
-						// ACSLNode acslNode = loc.getAcslNode();
-						reportProblem(CCheckerDescriptor.IN_ID, this.getFile(),
-								loc.getStartLine(), invar.getShortDescription());
-					}
-				} else if (result instanceof TerminationArgumentResult) {
-					TerminationArgumentResult invar = (TerminationArgumentResult) result;
-					if (loc.getcNode() != null) {
-						reportProblem(CCheckerDescriptor.IN_ID, loc.getcNode(),
-								invar.getShortDescription());
-					} else {
-						// We have an AST-Node
-						// ACSLNode acslNode = loc.getAcslNode();
-						reportProblem(CCheckerDescriptor.IN_ID, this.getFile(),
-								loc.getStartLine(), invar.getShortDescription());
-					}
-				} else if (result instanceof UnprovableResult) {
-					UnprovableResult unprov = (UnprovableResult) result;
-					// We cannot prove this, might be wrong or right...
-					if (loc.getcNode() != null) {
-						reportProblem(CCheckerDescriptor.UN_ID, loc.getcNode(),
-								unprov.getShortDescription());
-					} else {
-						// We have an AST-Node
-						// ACSLNode acslNode = loc.getAcslNode();
-						reportProblem(CCheckerDescriptor.UN_ID, this.getFile(),
-								loc.getStartLine(),
-								unprov.getShortDescription());
-					}
-				} else if (result instanceof PositiveResult) {
-					PositiveResult pos = (PositiveResult) result;
-					// We found a positive result, this was proved by Ultimate
-					if (loc.getcNode() != null) {
-						reportProblem(CCheckerDescriptor.POS_ID,
-								loc.getcNode(), pos.getShortDescription());
-					} else {
-						// We have ann AST-Node
-						// ACSLNode acslNode = loc.getAcslNode();
-						reportProblem(CCheckerDescriptor.POS_ID,
-								this.getFile(), loc.getStartLine(),
-								pos.getShortDescription());
-					}
-				} else if (result instanceof SyntaxErrorResult) {
-					SyntaxErrorResult err = (SyntaxErrorResult) result;
-					// We found a positive result, this was proved by Ultimate
-					if (loc.getcNode() != null) {
-						reportProblem(CCheckerDescriptor.SYNERR_ID,
-								loc.getcNode(), err.getShortDescription());
-					} else {
-						// We have ann AST-Node
-						// ACSLNode acslNode = loc.getAcslNode();
-						reportProblem(CCheckerDescriptor.SYNERR_ID,
-								this.getFile(), loc.getStartLine(),
-								err.getShortDescription());
-					}
-				} else if (result instanceof TimeoutResultAtElement) {
-					TimeoutResultAtElement err = (TimeoutResultAtElement) result;
-					// We found a positive result, this was proved by Ultimate
-					if (loc.getcNode() != null) {
-						reportProblem(CCheckerDescriptor.TIMEOUT_ID,
-								loc.getcNode(), err.getShortDescription());
-					} else {
-						// We have ann AST-Node
-						// ACSLNode acslNode = loc.getAcslNode();
-						reportProblem(CCheckerDescriptor.TIMEOUT_ID,
-								this.getFile(), loc.getStartLine(),
-								err.getShortDescription());
-					}
-				} else if (result instanceof GenericResultAtElement<?>) {
-					GenericResultAtElement<?> err = (GenericResultAtElement<?>) result;
-					String id;
-					if (err.getSeverity().equals(Severity.INFO)) {
-						id = CCheckerDescriptor.GENERIC_INFO_RESULT_ID;
-					} else if (err.getSeverity().equals(Severity.WARNING)) {
-						id = CCheckerDescriptor.GENERIC_WARNING_RESULT_ID;
-					} else if (err.getSeverity().equals(Severity.ERROR)) {
-						id = CCheckerDescriptor.GENERIC_ERROR_RESULT_ID;
-					} else {
-						throw new IllegalArgumentException("unknown severity");
-					}
-					// We found an unsoundness warning, this was proved by
-					// Ultimate
-					if (loc.getcNode() != null) {
-						reportProblem(id, loc.getcNode(),
-								err.getShortDescription());
-					} else {
-						// We have an AST-Node
-						// ACSLNode acslNode = loc.getAcslNode();
-						reportProblem(id, this.getFile(), loc.getStartLine(),
-								err.getShortDescription());
-					}
+			CDTResultStore.addResults(fileName, toolID, UltimateServices.getInstance().getResultMap().get(toolID));
+			List<IResult> resultsOfTool = UltimateServices.getInstance().getResultMap().get(toolID);
+			for (IResult result : resultsOfTool) {
+				if (result instanceof IResultWithLocation) {
+					reportProblemWithLocation((IResultWithLocation) result, log);
 				} else {
-					logger.error("Result not supported yet: "
-							+ iresult.getShortDescription());
+					reportProblemWithoutLocation(result, log);
 				}
 			}
+		}
+	}
+
+	private void reportProblemWithoutLocation(IResult result, Logger log) {
+//		log.warn("Result type not implemented: " + result.getShortDescription() + " (" + result.getClass() + ")");
+		reportProblem(CCheckerDescriptor.GENERIC_INFO_RESULT_ID, getFile(), 0, result.getShortDescription());
+		return;
+	}
+
+	private void reportProblemWithLocation(IResultWithLocation result, Logger log) {
+		if (!(result.getLocation() instanceof CACSLLocation)) {
+			log.warn("Result type should have location, but has none: " + result.getShortDescription() + " ("
+					+ result.getClass() + ")");
+			return;
+		}
+		CACSLLocation loc = (CACSLLocation) result.getLocation();
+		if (loc == null) {
+			// so we have a result with no valid location
+			// --> so we jump over this result
+			log.warn("Result type has location, but no CACSLLocation: " + result.getShortDescription() + " ("
+					+ result.getClass() + ")");
+			return;
+		}
+
+		// seems legit, start the reporting
+
+		if (result instanceof CounterExampleResult) {
+			reportProblem(CCheckerDescriptor.CE_ID, result, loc);
+		} else if (result instanceof UnprovableResult) {
+			reportProblem(CCheckerDescriptor.UN_ID, result, loc);
+		} else if (result instanceof ProcedureContractResult) {
+			reportProblem(CCheckerDescriptor.IN_ID, result, loc);
+		} else if (result instanceof InvariantResult) {
+			reportProblem(CCheckerDescriptor.IN_ID, result, loc);
+		} else if (result instanceof TerminationArgumentResult) {
+			reportProblem(CCheckerDescriptor.IN_ID, result, loc);
+		} else if (result instanceof PositiveResult) {
+			reportProblem(CCheckerDescriptor.POS_ID, result, loc);
+		} else if (result instanceof SyntaxErrorResult) {
+			reportProblem(CCheckerDescriptor.SYNERR_ID, result, loc);
+		} else if (result instanceof TimeoutResultAtElement) {
+			reportProblem(CCheckerDescriptor.TIMEOUT_ID, result, loc);
+		} else if (result instanceof GenericResultAtElement<?>) {
+			reportProblem(severityToCheckerDescriptor(((GenericResultAtElement<?>) result).getSeverity()), result, loc);
+		} else if (result instanceof GenericResultAtLocation) {
+			reportProblem(severityToCheckerDescriptor(((GenericResultAtLocation) result).getSeverity()), result, loc);
+		} else {
+			log.warn("Result type unknown: " + result.getShortDescription() + " (" + result.getClass() + ")");
+		}
+	}
+
+	private void reportProblem(String descriptorId, IResult result, CACSLLocation loc) {
+		if (loc.getcNode() != null) {
+			reportProblem(descriptorId, loc.getcNode(), result.getShortDescription());
+		} else {
+			reportProblem(descriptorId, getFile(), loc.getStartLine(), result.getShortDescription());
+		}
+	}
+
+	private String severityToCheckerDescriptor(Severity severity) {
+		if (severity.equals(Severity.INFO)) {
+			return CCheckerDescriptor.GENERIC_INFO_RESULT_ID;
+		} else if (severity.equals(Severity.WARNING)) {
+			return CCheckerDescriptor.GENERIC_WARNING_RESULT_ID;
+		} else if (severity.equals(Severity.ERROR)) {
+			return CCheckerDescriptor.GENERIC_ERROR_RESULT_ID;
+		} else {
+			throw new IllegalArgumentException("unknown severity");
 		}
 	}
 
@@ -338,22 +252,16 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	public void initPreferences(IProblemWorkingCopy problem) {
 		super.initPreferences(problem);
 		// per default we set the Launch Mode to "on demand"
-		getLaunchModePreference(problem).setRunningMode(
-				CheckerLaunchMode.RUN_AS_YOU_TYPE, false);
-		getLaunchModePreference(problem).setRunningMode(
-				CheckerLaunchMode.RUN_ON_DEMAND, true);
-		getLaunchModePreference(problem).setRunningMode(
-				CheckerLaunchMode.RUN_ON_FULL_BUILD, false);
-		getLaunchModePreference(problem).setRunningMode(
-				CheckerLaunchMode.RUN_ON_INC_BUILD, false);
+		getLaunchModePreference(problem).setRunningMode(CheckerLaunchMode.RUN_AS_YOU_TYPE, false);
+		getLaunchModePreference(problem).setRunningMode(CheckerLaunchMode.RUN_ON_DEMAND, true);
+		getLaunchModePreference(problem).setRunningMode(CheckerLaunchMode.RUN_ON_FULL_BUILD, false);
+		getLaunchModePreference(problem).setRunningMode(CheckerLaunchMode.RUN_ON_INC_BUILD, false);
 		// we want to choose the toolchains which we use!
 		// we read out the Directory "Toolchains", and create prefs
 		File toolchainDir = null;
-		URL url = FileLocator.find(Platform.getBundle(Activator.PLUGIN_ID),
-				new Path("toolchains"), null);
+		URL url = FileLocator.find(Platform.getBundle(Activator.PLUGIN_ID), new Path("toolchains"), null);
 		try {
-			URI uri = new URI(FileLocator.toFileURL(url).toString()
-					.replace(" ", "%20"));
+			URI uri = new URI(FileLocator.toFileURL(url).toString().replace(" ", "%20"));
 			toolchainDir = new File(uri);
 		} catch (IOException e2) {
 			e2.printStackTrace();
@@ -366,12 +274,11 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		for (File f : toolchainDir.listFiles()) {
 			String[] params = f.getName().split("\\.");
 			String tName = params[0];
-			if (tName.equals("") || params.length < 2
-					|| !params[1].equals("xml")) {
+			if (tName.equals("") || params.length < 2 || !params[1].equals("xml")) {
 				continue;
 			}
 
-			this.toolchainFiles.put(tName, f);
+			mToolchainFiles.put(tName, f);
 		}
 	}
 }

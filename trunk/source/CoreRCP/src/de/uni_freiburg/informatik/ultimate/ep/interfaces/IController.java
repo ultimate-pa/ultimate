@@ -86,7 +86,7 @@ public interface IController extends IUltimatePlugin {
 
 	/**
 	 * {@link UltimateCore} initializes a controller during startup with this
-	 * callback.
+	 * callback. This call delegates control to the controller.
 	 * 
 	 * @param core
 	 *            The active {@link UltimateCore} instance that can be used by
@@ -94,5 +94,4 @@ public interface IController extends IUltimatePlugin {
 	 * @return
 	 */
 	int init(ICore core);
-
 }

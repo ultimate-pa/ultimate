@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: GUILoggingWindow
+Bundle-SymbolicName: GUILoggingWindow
+Bundle-Version: 0.0.1
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Require-Bundle: UltimateCore,
+ org.eclipse.ui.workbench,
+ org.eclipse.jface,
+ Library-log4j
+Export-Package: de.uni_freiburg.informatik.ultimate.gui.views

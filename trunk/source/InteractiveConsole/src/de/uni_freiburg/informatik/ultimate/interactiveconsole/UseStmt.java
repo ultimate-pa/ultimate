@@ -3,8 +3,9 @@ package de.uni_freiburg.informatik.ultimate.interactiveconsole;
 import java.io.File;
 import java.io.FileNotFoundException;
 
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
 
 /**
  * Statement responsible for creating/setting a toolchain and running it on a boogie file.
@@ -45,8 +46,8 @@ class UseStmt extends Stmt {
 				return;
 			}
 		
-		ToolchainJob tcj = new ToolchainJob("Processing Toolchain", 
-				this.controller.getCore(), null, boogie, ToolchainJob.Chain_Mode.RUN_TOOLCHAIN, this.controller.getPrelude());
+		BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", 
+				this.controller.getCore(), null, BasicToolchainJob.ChainMode.RUN_TOOLCHAIN, boogie, this.controller.getPrelude());
 		tcj.schedule();
 		try {
 			tcj.join();

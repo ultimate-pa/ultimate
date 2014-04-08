@@ -29,7 +29,7 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 
 /**
  * 
- * @author ortolf
+ * @author dietsch
  * 
  */
 public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {

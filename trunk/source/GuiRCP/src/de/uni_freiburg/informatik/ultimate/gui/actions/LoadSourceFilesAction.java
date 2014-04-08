@@ -6,7 +6,8 @@ import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
@@ -134,9 +135,9 @@ public class LoadSourceFilesAction extends Action implements IWorkbenchAction {
 
 		if (fp != null) {
 			File prelude = PreludeContribution.getPreludeFile();
-			ToolchainJob tcj = new ToolchainJob("Processing Toolchain", m_Core,
-					mController, new File(fp),
-					ToolchainJob.Chain_Mode.RUN_TOOLCHAIN,
+			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", m_Core,
+					mController, BasicToolchainJob.ChainMode.RUN_TOOLCHAIN,
+					new File(fp),
 					prelude == null ? null : new PreludeProvider(prelude
 							.getAbsolutePath()));
 			tcj.schedule();

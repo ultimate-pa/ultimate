@@ -46,10 +46,4 @@ public final class ExtensionPoints {
 	 * Extension Point-Name for Serialization-Plugins.
 	 */
 	public static final String EP_SERIALIZATION = "de.uni_freiburg.informatik.ultimate.ep.serialization";	
-	
-	/**
-	 * Extensionpoint for LoggingWindow
-	 */
-	public static final String EP_LOGGINGWINDOW = "de.uni_freiburg.informatik.ultimate.ep.LoggingWindow";
-	
 }

@@ -240,7 +240,7 @@
  <extension
        point="org.eclipse.ui.preferencePages">
     <page
-          category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePage"
+          category="GeneratedUltimatePreferences"
           class="de.uni_freiburg.informatik.ultimate.cdt.preferences.PreferencePage"
           id="de.uni_freiburg.informatik.ultimate.cdt.Preferences"
           name="Ultimate CDT-Plugin">

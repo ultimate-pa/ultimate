@@ -23,7 +23,7 @@ import org.eclipse.ui.application.ActionBarAdvisor;
 import org.eclipse.ui.application.IActionBarConfigurer;
 
 /**
- * the class that handles the ations and fills the action bars.
+ * the class that handles the actions and fills the action bars.
  * 
  * @author Christian Ortolf
  * 

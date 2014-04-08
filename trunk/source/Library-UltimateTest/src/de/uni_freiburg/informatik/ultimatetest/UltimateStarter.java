@@ -8,7 +8,6 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore.Ultimate_Mode;
 
 /**
  * 

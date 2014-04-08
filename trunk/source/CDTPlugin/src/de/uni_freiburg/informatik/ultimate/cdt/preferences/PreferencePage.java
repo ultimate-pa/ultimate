@@ -21,6 +21,7 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
 import de.uni_freiburg.informatik.ultimate.cdt.Activator;
+import de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePageFactory;
 
 /**
  * This is should be the main category for all Ultimate configurations. Here we
@@ -30,8 +31,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.Activator;
  * @author Stefan Wissert
  * 
  */
-public class PreferencePage extends FieldEditorPreferencePage implements
-		IWorkbenchPreferencePage {
+public class PreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
 
 	public static String TOOLCHAIN_SELECTION_TEXT = "ToolchainSelection";
 
@@ -47,8 +47,7 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 	 */
 	public PreferencePage() {
 		super(GRID);
-		preferences = new ScopedPreferenceStore(InstanceScope.INSTANCE,
-				Activator.PLUGIN_ID);
+		preferences = new ScopedPreferenceStore(InstanceScope.INSTANCE, Activator.PLUGIN_ID);
 		setPreferenceStore(preferences);
 	}
 
@@ -64,11 +63,9 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 		// we want to choose the toolchains which we use!
 		// we read out the Directory "Toolchains", and create prefs
 		File toolchainDir = null;
-		URL url = FileLocator.find(Platform.getBundle(Activator.PLUGIN_ID),
-				new Path("toolchains"), null);
+		URL url = FileLocator.find(Platform.getBundle(Activator.PLUGIN_ID), new Path("toolchains"), null);
 		try {
-			URI uri = new URI(FileLocator.toFileURL(url).toString()
-					.replace(" ", "%20"));
+			URI uri = new URI(FileLocator.toFileURL(url).toString().replace(" ", "%20"));
 			toolchainDir = new File(uri);
 		} catch (IOException e2) {
 			e2.printStackTrace();
@@ -81,24 +78,21 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 		for (File f : toolchainDir.listFiles()) {
 			String[] params = f.getName().split("\\.");
 			String tName = params[0];
-			if (tName.equals("") || params.length < 2
-					|| !params[1].equals("xml")) {
+			if (tName.equals("") || params.length < 2 || !params[1].equals("xml")) {
 				continue;
 			}
 			comboValues.add(new String[] { tName, tName });
 		}
 
-		ComboFieldEditor toolchainSelection = new ComboFieldEditor(
-				TOOLCHAIN_SELECTION_TEXT, TOOLCHAIN_SELECTION_LABEL,
-				comboValues.toArray(new String[comboValues.size()][2]),
-				getFieldEditorParent());
+		ComboFieldEditor toolchainSelection = new ComboFieldEditor(TOOLCHAIN_SELECTION_TEXT, TOOLCHAIN_SELECTION_LABEL,
+				comboValues.toArray(new String[comboValues.size()][2]), getFieldEditorParent());
 
 		addField(toolchainSelection);
 	}
 
 	@Override
 	public void init(IWorkbench workbench) {
-		// unused.
+		
 	}
 
 	@Override

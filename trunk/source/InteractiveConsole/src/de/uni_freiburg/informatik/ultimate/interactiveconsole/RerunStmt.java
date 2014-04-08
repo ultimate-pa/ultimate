@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.interactiveconsole;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
 
 /**
  * Statement that allows to run the most recent toolchain
@@ -13,8 +14,8 @@ public class RerunStmt extends Stmt {
 
 	@Override
 	public void execute() {
-		ToolchainJob tcj = new ToolchainJob("Processing Toolchain", 
-				this.controller.getCore(), null, null, ToolchainJob.Chain_Mode.RERUN_TOOLCHAIN, null);
+		BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", 
+				this.controller.getCore(), null, BasicToolchainJob.ChainMode.RERUN_TOOLCHAIN, null, null);
 		tcj.schedule();
 		try {
 			tcj.join();

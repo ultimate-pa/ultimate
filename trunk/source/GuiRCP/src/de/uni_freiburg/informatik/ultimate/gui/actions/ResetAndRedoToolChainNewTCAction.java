@@ -5,7 +5,8 @@ import java.io.File;
 
 import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
@@ -104,8 +105,8 @@ public class ResetAndRedoToolChainNewTCAction extends Action implements IWorkben
 //		for (IEditorReference editor : workbenchWindow.getActivePage().getEditorReferences()){
 //			workbenchWindow.getActivePage().closeEditor(editor.getEditor(false), false);
 //		}
-		ToolchainJob tcj = new ToolchainJob("Processing Toolchain", mCore, mController, null, 
-				ToolchainJob.Chain_Mode.RUN_NEWTOOLCHAIN, preludeprovider);
+		BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", mCore, mController, BasicToolchainJob.ChainMode.RUN_NEWTOOLCHAIN, 
+				null, preludeprovider);
 		tcj.schedule();
 		
 	}

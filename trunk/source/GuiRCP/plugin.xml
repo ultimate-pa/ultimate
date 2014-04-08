@@ -36,11 +36,6 @@
                ratio="0.8f"/>
           </perspectiveExtension>
 </extension>
-   
-   <extension
-         point="de.uni_freiburg.informatik.ultimate.ep.LoggingWindow">
-      <impl class="de.uni_freiburg.informatik.ultimate.gui.logging.GuiLoggingWindow"/>
-   </extension>
    <extension
          point="org.eclipse.ui.menus">
       <menuContribution
@@ -56,31 +51,6 @@
    </extension>
    
    <extension point="org.eclipse.ui.preferencePages">
-         <page
-            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
-            id="GeneratedUltimatePreferences"
-            name="Ultimate Preferences"/>
-                     <page
-            category="GeneratedUltimatePreferences"
-            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
-            id="Core"
-            name="Core"/>  
-     <page
-            category="GeneratedUltimatePreferences"
-            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
-            id="SourcePlugins"
-            name="Source Plugins"/> 
-      <page
-            category="GeneratedUltimatePreferences"
-            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
-            id="ToolPlugins"
-            name="Tool Plugins"/>    
-                <page
-            category="GeneratedUltimatePreferences"
-            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
-            id="OutputPlugins"
-            name="Output Plugins"/>
-        
       <page
             category="Core"
             class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingSpecificPluginsPreferencePage"
@@ -92,9 +62,6 @@
             class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingExternalToolsPreferencePage"
             id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingToolsPreferencePage"
             name="Log Levels for external tools" />
-      
-
-
    </extension>
    
 </plugin>

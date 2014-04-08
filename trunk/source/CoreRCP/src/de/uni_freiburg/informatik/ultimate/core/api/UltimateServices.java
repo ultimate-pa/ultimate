@@ -14,7 +14,6 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore.Ultimate_Mode;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
@@ -31,7 +30,6 @@ import de.uni_freiburg.informatik.ultimate.model.repository.IRepository;
 import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithLocation;
-
 
 /**
  * UltimateServices
@@ -60,8 +58,7 @@ public class UltimateServices {
 	 * @param application
 	 *            the current instance of {@link UltimateCore}
 	 */
-	private UltimateServices(IModelManager modelManager,
-			UltimateCore application) {
+	private UltimateServices(IModelManager modelManager, UltimateCore application) {
 		this.m_Application = application;
 		this.m_ModelManager = modelManager;
 		this.m_ResultMap = new HashMap<String, List<IResult>>();
@@ -80,11 +77,6 @@ public class UltimateServices {
 	private IModelManager m_ModelManager;
 	private UltimateCore m_Application;
 
-	/**
-	 * Here we store the parsed AST from the CDT-Plugin. It is used by a dummy
-	 * parser which delegates it to the translator plugin.
-	 */
-	private Object m_ParsedAST;
 	/**
 	 * Here we store the found Results as a list. The key is the PluginID of the
 	 * plugin
@@ -234,8 +226,8 @@ public class UltimateServices {
 	 *             {@link IModelManager}
 	 * 
 	 */
-	public void persistExistingGraph(GraphType graph, boolean keepInMemory)
-			throws StoreObjectException, GraphNotFoundException {
+	public void persistExistingGraph(GraphType graph, boolean keepInMemory) throws StoreObjectException,
+			GraphNotFoundException {
 		this.m_ModelManager.persistExistingGraph(graph, keepInMemory);
 	}
 
@@ -253,8 +245,7 @@ public class UltimateServices {
 	 *             if there is no model with the specified model id in the
 	 *             {@link IModelManager}
 	 */
-	public void persistExistingGraph(GraphType graph)
-			throws StoreObjectException, GraphNotFoundException {
+	public void persistExistingGraph(GraphType graph) throws StoreObjectException, GraphNotFoundException {
 		this.m_ModelManager.persistAndDropExistingGraph(graph);
 	}
 
@@ -290,8 +281,7 @@ public class UltimateServices {
 	 * @return the log4j {@link Logger} for the external tool
 	 */
 	public Logger getLoggerForExternalTool(String id) {
-		return UltimateLoggerFactory.getInstance().getLoggerById(
-				CorePreferenceInitializer.EXTERNAL_TOOLS_PREFIX + id);
+		return UltimateLoggerFactory.getInstance().getLoggerById(CorePreferenceInitializer.EXTERNAL_TOOLS_PREFIX + id);
 	}
 
 	/**
@@ -303,8 +293,7 @@ public class UltimateServices {
 	 * @return Logger for the current controller.
 	 */
 	public Logger getControllerLogger() {
-		return UltimateLoggerFactory.getInstance().getLoggerById(
-				UltimateLoggerFactory.LOGGER_NAME_CONTROLLER);
+		return UltimateLoggerFactory.getInstance().getLoggerById(UltimateLoggerFactory.LOGGER_NAME_CONTROLLER);
 	}
 
 	/**
@@ -343,20 +332,13 @@ public class UltimateServices {
 	/**
 	 * Finds out which plug-ins are loaded
 	 * 
+	 * @deprecated Will be removed as soon as all preference pages are
+	 *             auto-generated. There will be no replacement! Tool management
+	 *             is Core-duty
 	 * @return a list of all active tools
 	 */
 	public List<ITool> getActiveTools() {
 		return this.m_Application.getAllTools();
-	}
-
-	/**
-	 * Provides information on the question if ultimate is in GUI or some other
-	 * mode.
-	 * 
-	 * @return the current mode that is set
-	 */
-	public Ultimate_Mode getUltimateMode() {
-		return this.m_Application.getCoreMode();
 	}
 
 	/**
@@ -406,21 +388,6 @@ public class UltimateServices {
 	 */
 	public void cancelToolchain() {
 		m_Application.cancelToolchain();
-	}
-
-	/**
-	 * @return the m_ParsedAST
-	 */
-	public Object getParsedAST() {
-		return m_ParsedAST;
-	}
-
-	/**
-	 * @param m_ParsedAST
-	 *            the m_ParsedAST to set
-	 */
-	public void setParsedAST(Object m_ParsedAST) {
-		this.m_ParsedAST = m_ParsedAST;
 	}
 
 	/**
@@ -509,8 +476,8 @@ public class UltimateServices {
 	public IPayload search(GraphType modelId, String id) {
 		return this.m_ModelManager.search(modelId, id);
 	}
-	
-	public IElement getModel(GraphType modelId) throws GraphNotFoundException{
+
+	public IElement getModel(GraphType modelId) throws GraphNotFoundException {
 		return this.m_ModelManager.getRootNode(modelId);
 	}
 }

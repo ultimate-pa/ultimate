@@ -89,6 +89,7 @@ public class ResultDetails extends ViewPart {
 
 	private void queryProviders(IMarker marker) {
 		// First we need the complete Path for getting all Results
+		
 		String path = marker.getResource().getLocation().toOSString();
 		int lineNumber = MarkerUtilities.getLineNumber(marker);
 		String id = marker.getAttribute(ICodanProblemMarker.ID, "id");
@@ -106,9 +107,7 @@ public class ResultDetails extends ViewPart {
 					}
 				}
 			} else {
-				//FIXME: implement result without location
-				throw new UnsupportedOperationException(
-						"result without location not implemented yet");
+				
 			}
 		}
 		StringBuilder sb = new StringBuilder();

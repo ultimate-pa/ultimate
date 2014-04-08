@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+<extension point="org.eclipse.ui.preferencePages">
+	<page	name="Ultimate Preferences"
+            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
+            id="GeneratedUltimatePreferences"
+	/>
+	
+	<page	name="Core"
+            category="GeneratedUltimatePreferences"
+            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
+            id="Core"
+	/>  
+            
+	<page	name="Source Plugins"
+            category="GeneratedUltimatePreferences"
+            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
+            id="SourcePlugins"
+	/> 
+	
+	<page	name="Tool Plugins"
+            category="GeneratedUltimatePreferences"
+            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
+            id="ToolPlugins"
+	/>
+	    
+	<page 	name="Output Plugins" 
+			category="GeneratedUltimatePreferences"
+			class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
+            id="OutputPlugins"
+	/>
+        
+</extension>
+</plugin>

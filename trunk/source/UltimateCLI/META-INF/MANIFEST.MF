@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: UltimateCLI
+Bundle-SymbolicName: UltimateCLI;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Require-Bundle: UltimateCore,
+ Library-log4j
