@@ -612,7 +612,7 @@ public class CHandler implements ICHandler {
 					
 					if (cDec.getType() instanceof CFunction) {
 						functionHandler.handleFunctionDeclarator(main, contract, 
-								(IASTFunctionDeclarator) d, (CFunction) cDec.getType(), resType);
+								(IASTFunctionDeclarator) d, cDec, resType);
 						continue;
 					}	
 					

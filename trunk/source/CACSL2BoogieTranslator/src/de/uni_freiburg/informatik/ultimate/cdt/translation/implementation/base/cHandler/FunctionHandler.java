@@ -203,17 +203,36 @@ public class FunctionHandler {
 
 	/**
 	 * Has additional index.
+	 * @param cDec 
 	 * 
 	 * @see handleFunctionDeclaration()
 	 * @param index index of the declaration list
 	 */
 	public Result handleFunctionDeclarator(Dispatcher main,
-			List<ACSLNode> contract, IASTFunctionDeclarator cDecl, CFunction funcType, ResultTypes returnType) {
-		CACSLLocation loc = new CACSLLocation(cDecl);
-		String methodName = cDecl.getName().toString();
+			List<ACSLNode> contract, IASTFunctionDeclarator cFuncDeclarator, CDeclaration cDec, ResultTypes returnType) {
+		CACSLLocation loc = new CACSLLocation(cFuncDeclarator);
+		String methodName = cFuncDeclarator.getName().toString();
+		CFunction funcType = (CFunction) cDec.getType();
 		// begin new scope for retranslation of ACSL specification
 		main.cHandler.beginScope();
-
+		
+		//		ArrayList<CType> paramCTypes = new ArrayList<CType>();
+//		ArrayList<VarList> paramVls = new ArrayList<VarList>();
+//		for (CDeclaration  paramCDec : funcType.getParameterTypes()) {
+//			ASTType bType = main.typeHandler.ctype2asttype(loc, paramCDec.getType());
+//			VarList vl = new VarList(loc, new String[] { paramCDec.getName() }, bType);
+//			paramVls.add(vl);
+//			paramCTypes.add(paramCDec.getType());
+//		}
+//		VarList[] in = paramVls.toArray(new VarList[0]);
+//		
+//		procedureToParamCType.put(methodName, paramCTypes);
+		
+		VarList[] in = processInParams(main, loc, cDec, methodName);
+		
+		// OUT VARLIST : only one out param in C
+		VarList[] out = new VarList[1];
+		
 		Attribute[] attr = new Attribute[0];
 		String[] typeParams = new String[0];
 		Specification[] spec;
@@ -247,14 +266,13 @@ public class FunctionHandler {
 			main.cHandler.clearContract(); // take care for behavior and
 												// completeness
 		}
-		// OUT VARLIST : only one out param in C
-		VarList[] out = new VarList[1];
+
 		// we check the type via typeHandler
 //		ResultTypes returnType = (ResultTypes) main.dispatch(node
 //				.getDeclSpecifier());
 		ResultTypes checkedType = main.cHandler.checkForPointer(main,
 //                node.getDeclarators()[0].getPointerOperators(), returnType, false);
-                cDecl.getPointerOperators(), returnType, false);
+                cFuncDeclarator.getPointerOperators(), returnType, false);
         if (returnType.isVoid &&
                 !(checkedType.cType instanceof CPointer)) {
 			if (methodsCalledBeforeDeclared.contains(methodName)) {
@@ -278,16 +296,7 @@ public class FunctionHandler {
 			callGraph.put(methodName, new LinkedHashSet<String>());
 		}
 		
-		ArrayList<CType> paramCTypes = new ArrayList<CType>();
-		ArrayList<VarList> paramVls = new ArrayList<VarList>();
-		for (CDeclaration  paramCDec : funcType.getParameterTypes()) {
-			ASTType bType = main.typeHandler.ctype2asttype(loc, paramCDec.getType());
-			VarList vl = new VarList(loc, new String[] { paramCDec.getName() }, bType);
-			paramVls.add(vl);
-			paramCTypes.add(paramCDec.getType());
-		}
-		VarList[] in = paramVls.toArray(new VarList[0]);
-		procedureToParamCType.put(methodName, paramCTypes);
+
 		
 		Procedure proc = new Procedure(loc, attr, methodName, typeParams, in,
 				out, spec, null);
@@ -574,26 +583,10 @@ public class FunctionHandler {
 				.getDeclSpecifier());
 		procedureToReturnCType.put(methodName, resType.cType);
 		
-		// fill map of parameter types
-        ArrayList<CType> paramTypes = new ArrayList<CType>();
-        CDeclaration[] paramDecs =
-                ((CFunction) decl.getType()).getParameterTypes();
-		VarList[] in  = new VarList[paramDecs.length];
-		VarList[] out = new VarList[0]; // at most one out param in C
-        for (int i = 0; i < paramDecs.length; ++i) {
-        	CDeclaration paramDec = paramDecs[i];
-        	
-        	ASTType type = ((TypeHandler) main.typeHandler).ctype2asttype(loc, paramDec.getType());
-        	String paramId = main.nameHandler.getInParamIdentifier(paramDec.getName());
-        	in[i] = new VarList(loc, new String[] { paramId}, type);
-//            FIXME: boolean isOnHeap = ((MainDispatcher) main).getVariablesForHeap().
-//                    contains(paramDec);
-            paramTypes.add(i, paramDec.getType());
-            main.cHandler.getSymbolTable().put(paramDec.getName(), 
-            		new SymbolTableValue(paramId, null, paramDec, false, null));
-        }
-        procedureToParamCType.put(methodName, paramTypes);
+		VarList[] in = processInParams(main, loc, decl, methodName);
         
+		VarList[] out = new VarList[0]; // at most one out param in C
+		
 		ResultTypes checkedType = main.cHandler.checkForPointer(main, node//FIXME -- is this call still necessary??
 				.getDeclarator().getPointerOperators(), resType, false);
 		ASTType type = main.typeHandler.ctype2asttype(loc, checkedType.cType);
@@ -715,6 +708,38 @@ public class FunctionHandler {
 		currentProcedureIsVoid = false;
 		main.cHandler.endScope();
 		return new Result(impl);
+	}
+
+	/**
+	 * take the parameter information from the CDeclaration. Make a Varlist from it.
+	 * Add the parameters to the symboltable.
+	 * @param main
+	 * @param loc
+	 * @param decl
+	 * @param methodName
+	 * @return
+	 */
+	private VarList[] processInParams(Dispatcher main, ILocation loc,
+			CDeclaration decl, String methodName) {
+		// fill map of parameter types
+        ArrayList<CType> paramTypes = new ArrayList<CType>();
+        CDeclaration[] paramDecs =
+                ((CFunction) decl.getType()).getParameterTypes();
+		VarList[] in  = new VarList[paramDecs.length];
+        for (int i = 0; i < paramDecs.length; ++i) {
+        	CDeclaration paramDec = paramDecs[i];
+        	
+        	ASTType type = ((TypeHandler) main.typeHandler).ctype2asttype(loc, paramDec.getType());
+        	String paramId = main.nameHandler.getInParamIdentifier(paramDec.getName());
+        	in[i] = new VarList(loc, new String[] { paramId}, type);
+//            FIXME: boolean isOnHeap = ((MainDispatcher) main).getVariablesForHeap().
+//                    contains(paramDec);
+            paramTypes.add(i, paramDec.getType());
+            main.cHandler.getSymbolTable().put(paramDec.getName(), 
+            		new SymbolTableValue(paramId, null, paramDec, false, null));
+        }
+        procedureToParamCType.put(methodName, paramTypes);
+		return in;
 	}
 	
 	public ArrayList<Statement> insertMallocs(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, ArrayList<Statement> block) {

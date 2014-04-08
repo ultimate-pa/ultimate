@@ -375,6 +375,7 @@ public class PostProcessor {
 				}
 			}
 			if (lhs != null) {
+				//TODO: we don't need the onHeap-case here, right??
 				stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
 						new Expression[] { rhs } ));
 			} else {
