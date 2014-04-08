@@ -16,7 +16,6 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.codan.core.model.CheckerLaunchMode;
 import org.eclipse.cdt.codan.core.model.IProblemWorkingCopy;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -43,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.result.GenericResultAtLocation;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithLocation;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
-import de.uni_freiburg.informatik.ultimate.result.IResultWithTrace;
 import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
@@ -165,6 +163,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		Logger log = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 		// we obtain the results by UltimateServices
 		Set<String> tools = UltimateServices.getInstance().getResultMap().keySet();
+		CDTResultStore.clearHackyResults();
 		// we iterate over the key set, each key represents the name
 		// of the tool, which created the results
 		for (String toolID : tools) {
@@ -181,9 +180,8 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	}
 
 	private void reportProblemWithoutLocation(IResult result, Logger log) {
-//		log.warn("Result type not implemented: " + result.getShortDescription() + " (" + result.getClass() + ")");
-		reportProblem(CCheckerDescriptor.GENERIC_INFO_RESULT_ID, getFile(), 0, result.getShortDescription());
-		return;
+		reportProblem(CCheckerDescriptor.GENERIC_INFO_RESULT_ID, getFile(), 0, result.getShortDescription(),
+				CDTResultStore.addHackyResult(result));
 	}
 
 	private void reportProblemWithLocation(IResultWithLocation result, Logger log) {
@@ -230,9 +228,11 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 
 	private void reportProblem(String descriptorId, IResult result, CACSLLocation loc) {
 		if (loc.getcNode() != null) {
-			reportProblem(descriptorId, loc.getcNode(), result.getShortDescription());
+			reportProblem(descriptorId, loc.getcNode(), result.getShortDescription(),
+					CDTResultStore.addHackyResult(result));
 		} else {
-			reportProblem(descriptorId, getFile(), loc.getStartLine(), result.getShortDescription());
+			reportProblem(descriptorId, getFile(), loc.getStartLine(), result.getShortDescription(),
+					CDTResultStore.addHackyResult(result));
 		}
 	}
 

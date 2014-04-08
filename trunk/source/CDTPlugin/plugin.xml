@@ -79,7 +79,7 @@
                 defaultSeverity="Info"
                 description="Ultimate Info"
                 id="de.uni_freiburg.informatik.ultimate.cdt.codan.GenericInfoResult"
-                messagePattern="Info, &apos;&apos;{0}&apos;&apos;"
+                messagePattern="{0}"
                 name="Info">
             </problem>
 			<problem
@@ -88,7 +88,7 @@
                 defaultSeverity="Warning"
                 description="Ultimate Warning"
                 id="de.uni_freiburg.informatik.ultimate.cdt.codan.GenericWarningResult"
-                messagePattern="Warning, &apos;&apos;{0}&apos;&apos;"
+                messagePattern="{0}"
                 name="Warning">
          	</problem>
          	<problem
@@ -97,7 +97,7 @@
                 defaultSeverity="Error"
                 description="Ultimate Error"
                 id="de.uni_freiburg.informatik.ultimate.cdt.codan.GenericErrorResult"
-                messagePattern="Error, &apos;&apos;{0}&apos;&apos;"
+                messagePattern="{0}"
                 name="Error">
             </problem>
       	</checker>

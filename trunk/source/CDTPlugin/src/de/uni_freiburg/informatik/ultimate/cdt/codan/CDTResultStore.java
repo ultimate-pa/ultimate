@@ -23,6 +23,8 @@ public class CDTResultStore {
 	 */
 	private static HashMap<String, HashMap<String, List<IResult>>> fileToResults;
 
+	private static List<IResult> hackyResultList;
+
 	/**
 	 * Adds Results to the internal Map.
 	 * 
@@ -41,6 +43,31 @@ public class CDTResultStore {
 			fileToResults.put(file, new HashMap<String, List<IResult>>());
 		}
 		fileToResults.get(file).put(tool, value);
+	}
+
+	public static int addHackyResult(IResult result) {
+		if (hackyResultList == null) {
+			hackyResultList = new ArrayList<>();
+		}
+		hackyResultList.add(result);
+		return hackyResultList.size() - 1;
+	}
+
+	public static IResult getHackyResult(int i) {
+		if (hackyResultList == null) {
+			hackyResultList = new ArrayList<>();
+		}
+		if (hackyResultList.size() - 1 < i) {
+			return null;
+		}
+		return hackyResultList.get(i);
+	}
+	
+	public static void clearHackyResults(){
+		if (hackyResultList == null) {
+			hackyResultList = new ArrayList<>();
+		}
+		hackyResultList.clear();
 	}
 
 	/**

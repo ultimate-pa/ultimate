@@ -51,14 +51,11 @@ public class ResultDetails extends ViewPart {
 	@Override
 	public void createPartControl(Composite parent) {
 		final String problemsViewId = "org.eclipse.ui.views.ProblemView";
-		viewer = new TextViewer(parent, SWT.BORDER | SWT.H_SCROLL
-				| SWT.V_SCROLL | SWT.FULL_SELECTION);
+		viewer = new TextViewer(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		viewer.setEditable(false);
-		ISelectionService ser = (ISelectionService) getSite().getService(
-				ISelectionService.class);
+		ISelectionService ser = (ISelectionService) getSite().getService(ISelectionService.class);
 		ser.addSelectionListener(new ISelectionListener() {
-			public void selectionChanged(IWorkbenchPart part,
-					ISelection selection) {
+			public void selectionChanged(IWorkbenchPart part, ISelection selection) {
 				if (part.getSite().getId().equals(problemsViewId)) {
 					processSelection(selection);
 				}
@@ -72,12 +69,10 @@ public class ResultDetails extends ViewPart {
 		if (selection == null || selection.isEmpty())
 			return;
 		if (selection instanceof IStructuredSelection) {
-			Object firstElement = ((IStructuredSelection) selection)
-					.getFirstElement();
+			Object firstElement = ((IStructuredSelection) selection).getFirstElement();
 			IMarker marker = null;
 			if (firstElement instanceof IAdaptable) {
-				marker = (IMarker) ((IAdaptable) firstElement)
-						.getAdapter(IMarker.class);
+				marker = (IMarker) ((IAdaptable) firstElement).getAdapter(IMarker.class);
 			} else if (firstElement instanceof IMarker) {
 				marker = (IMarker) firstElement;
 			}
@@ -88,11 +83,30 @@ public class ResultDetails extends ViewPart {
 	}
 
 	private void queryProviders(IMarker marker) {
+		IResult result = extractResultFromMarker(marker);
+		if (result != null) {
+			StringBuilder sb = new StringBuilder();
+			if (result != null) {
+				sb.append("Short Description:");
+				sb.append(System.getProperty("line.separator"));
+				sb.append(result.getShortDescription());
+				sb.append(System.getProperty("line.separator"));
+				sb.append(System.getProperty("line.separator"));
+				sb.append("Long Description:");
+				sb.append(System.getProperty("line.separator"));
+				sb.append(result.getLongDescription());
+			}
+			Document doc = new Document(sb.toString());
+			viewer.setDocument(doc);
+			return;
+		}
+		// FIXME: This is the old approach...
 		// First we need the complete Path for getting all Results
-		
 		String path = marker.getResource().getLocation().toOSString();
+
 		int lineNumber = MarkerUtilities.getLineNumber(marker);
 		String id = marker.getAttribute(ICodanProblemMarker.ID, "id");
+
 		String[] parts = id.split(Pattern.quote("."));
 		String resName = parts[parts.length - 1];
 		List<IResult> results = CDTResultStore.getResults(path);
@@ -107,13 +121,13 @@ public class ResultDetails extends ViewPart {
 					}
 				}
 			} else {
-				
+
 			}
 		}
 		StringBuilder sb = new StringBuilder();
 		if (foundRes != null) {
-			sb.append("Result found in " + foundRes.getLocation().getFileName()
-					+ " in Line: " + foundRes.getLocation().getStartLine());
+			sb.append("Result found in " + foundRes.getLocation().getFileName() + " in Line: "
+					+ foundRes.getLocation().getStartLine());
 			sb.append(System.getProperty("line.separator"));
 			sb.append(System.getProperty("line.separator"));
 			sb.append("Short Description:");
@@ -127,6 +141,31 @@ public class ResultDetails extends ViewPart {
 		}
 		Document doc = new Document(sb.toString());
 		viewer.setDocument(doc);
+	}
+
+	private IResult extractResultFromMarker(IMarker marker) {
+
+		// The args attribute has the following form:
+		//
+		// #Tue Apr 08 21:42:00 CEST 2014
+		// len=2
+		// a1=de.uni_freiburg.informatik.ultimate.result.BenchmarkResult@62303b81
+		// a0=Ultimate Automizer benchmark data
+
+		String args = marker.getAttribute("args", null);
+		if (args == null) {
+			return null;
+		}
+
+		String[] components = args.split("\n");
+		if (components.length <= 2) {
+			return null;
+		}
+		// this can be used to find the maximal length of this strange construct
+		// int length = Integer.parseInt(components[1].split("=")[1]);
+
+		int uid = Integer.parseInt(components[2].split("=")[1].trim());
+		return CDTResultStore.getHackyResult(uid);
 	}
 
 	/*
