@@ -517,7 +517,7 @@ public class MemoryHandler {
         
         if (m_CheckFreeValid) {
         	Check check = new Check(Spec.MEMORY_FREE);
-        	boolean free = true;
+        	boolean free = false;
         	RequiresSpecification offsetZero = new RequiresSpecification(
         			tuLoc, free, new BinaryExpression(tuLoc, Operator.COMPEQ, 
         					addrOffset, nr0));
