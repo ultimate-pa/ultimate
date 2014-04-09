@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.views.resultlist.ResultList;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtLocation;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
@@ -90,6 +91,10 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 
 	@Override
 	public void processAst(IASTTranslationUnit ast) {
+		// first, clear all old results
+		CDTResultStore.clearHackyResults();
+		CDTResultStore.clearResults();
+
 		// run ultimate
 		try {
 			sController.runToolchain(getToolchainPath(), ast);
@@ -163,7 +168,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		Logger log = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 		// we obtain the results by UltimateServices
 		Set<String> tools = UltimateServices.getInstance().getResultMap().keySet();
-		CDTResultStore.clearHackyResults();
+
 		// we iterate over the key set, each key represents the name
 		// of the tool, which created the results
 		for (String toolID : tools) {
@@ -180,8 +185,13 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	}
 
 	private void reportProblemWithoutLocation(IResult result, Logger log) {
-		reportProblem(CCheckerDescriptor.GENERIC_INFO_RESULT_ID, getFile(), 0, result.getShortDescription(),
-				CDTResultStore.addHackyResult(result));
+		if (result instanceof ExceptionOrErrorResult) {
+			reportProblem(CCheckerDescriptor.GENERIC_ERROR_RESULT_ID, getFile(), 0, result.getShortDescription(),
+					CDTResultStore.addHackyResult(result));
+		} else {
+			reportProblem(CCheckerDescriptor.GENERIC_INFO_RESULT_ID, getFile(), 0, result.getShortDescription(),
+					CDTResultStore.addHackyResult(result));
+		}
 	}
 
 	private void reportProblemWithLocation(IResultWithLocation result, Logger log) {

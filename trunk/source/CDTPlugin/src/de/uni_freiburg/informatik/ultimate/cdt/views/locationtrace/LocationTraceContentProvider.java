@@ -97,6 +97,7 @@ public class LocationTraceContentProvider implements ITreeContentProvider {
 		int counter = 0;
 		int counterv2 = 0;
 		for (ILocation loc : failurePath) {
+			
 			if (loc instanceof CACSLLocation) {
 				if (!loc.equals(actualLocation)) {
 					TraceNode tn = new TraceNode(loc, counterv2, counter);

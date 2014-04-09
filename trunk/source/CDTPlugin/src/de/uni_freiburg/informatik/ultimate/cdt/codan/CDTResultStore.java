@@ -69,6 +69,12 @@ public class CDTResultStore {
 		}
 		hackyResultList.clear();
 	}
+	
+	public static void clearResults(){
+		if (fileToResults != null) {
+			fileToResults.clear();
+		}
+	}
 
 	/**
 	 * Returns the list with results.

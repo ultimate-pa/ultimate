@@ -10,6 +10,9 @@ import org.eclipse.cdt.codan.core.model.ICodanProblemMarker;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.DocumentCommand;
+import org.eclipse.jface.text.IAutoEditStrategy;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.TextViewer;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -82,20 +85,45 @@ public class ResultDetails extends ViewPart {
 		}
 	}
 
+	private StringBuilder makeResultViewString(IResult result, int maxLength) {
+		StringBuilder sb = new StringBuilder();
+		String lineSeparator = System.getProperty("line.separator");
+		sb.append("Short Description:");
+		sb.append(lineSeparator);
+		sb.append(breakLines(result.getShortDescription(), lineSeparator, maxLength));
+		sb.append(lineSeparator);
+		sb.append(lineSeparator);
+		sb.append("Long Description:");
+		sb.append(breakLines(result.getLongDescription(), lineSeparator, maxLength));
+		sb.append(lineSeparator);
+		return sb;
+	}
+
+	private String breakLines(String s, String breaker, int maxLength) {
+//		String[] parts = s.split(" ");
+//		StringBuilder sb = new StringBuilder();
+//
+//		int actualLength = 0;
+//		for (String part : parts) {
+//			actualLength = actualLength + part.length();
+//			if (actualLength > maxLength) {
+//				sb.append(breaker);
+//				actualLength = part.length();
+//			}
+//			sb.append(part);
+//			sb.append(" ");
+//		}
+//
+//		return sb.toString();
+		return s;
+	}
+
 	private void queryProviders(IMarker marker) {
 		IResult result = extractResultFromMarker(marker);
 		if (result != null) {
-			StringBuilder sb = new StringBuilder();
-			if (result != null) {
-				sb.append("Short Description:");
-				sb.append(System.getProperty("line.separator"));
-				sb.append(result.getShortDescription());
-				sb.append(System.getProperty("line.separator"));
-				sb.append(System.getProperty("line.separator"));
-				sb.append("Long Description:");
-				sb.append(System.getProperty("line.separator"));
-				sb.append(result.getLongDescription());
-			}
+			int length = viewer.getControl().getBounds().width;
+			
+			StringBuilder sb = makeResultViewString(result, length);
 			Document doc = new Document(sb.toString());
 			viewer.setDocument(doc);
 			return;
