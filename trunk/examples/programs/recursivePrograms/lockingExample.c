@@ -11,27 +11,27 @@
  * Date: 13.8.2010
  */
 
-int lock;
+int locked;
 
-/*@ requires lock == 0;
+/*@ requires locked == 0;
   @*/
 void lock();
 
 void lock() {
-  lock = 1;
+  locked = 1;
 }
 
 
-/*@ requires lock == 1;
+/*@ requires locked == 1;
   @*/
 void unlock();
 
 void unlock() {
-  lock = 0;
+  locked = 0;
 }
 
 
-/*@ requires lock == 0;
+/*@ requires locked == 0;
   @*/
 int main();
 

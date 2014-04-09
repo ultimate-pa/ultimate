@@ -25,13 +25,14 @@ int upDownGlobal() {
 }
 
 
-int main(int z);
+int main();
 
-int main(int z)
+int main()
 {
-  g = z;
-  upDownGlobal();
-  //@assert g == z;
+    int z;
+    g = z;
+    upDownGlobal();
+    //@assert g == z;
 }
 
 
