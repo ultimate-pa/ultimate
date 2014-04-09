@@ -216,26 +216,29 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				"graph_%s_originalCopied", _graphWriter._graphCounter));
 
 		ArrayList<AnnotatedProgramPoint> procRootsToCheck = new ArrayList<AnnotatedProgramPoint>();
-		if (GlobalSettings._instance.svcomp2014Mode) {
-			for (AnnotatedProgramPoint procRoot : m_graphRoot
-					.getOutgoingNodes()) {
-				if (procRoot.getProgramPoint().getProcedure()
-						.startsWith("ULTIMATE.start")) {
-					procRootsToCheck.add(procRoot);
-					break;
-				}
+		
+		//check for Ultimate.start -- assuming that if such a procedure exists, it comes from the c translation
+		for (AnnotatedProgramPoint procRoot : m_graphRoot
+				.getOutgoingNodes()) {
+			if (procRoot.getProgramPoint().getProcedure()
+					.startsWith("ULTIMATE.start")) {
+				procRootsToCheck.add(procRoot);
+				break;
 			}
-		} else if (GlobalSettings._instance._checkOnlyMain) {
-			for (AnnotatedProgramPoint procRoot : m_graphRoot
-					.getOutgoingNodes()) {
-				if (procRoot.getProgramPoint().getProcedure()
-						.equalsIgnoreCase("main")) {
-					procRootsToCheck.add(procRoot);
-					break;
+		}
+		if (procRootsToCheck.isEmpty()) { //-> no Ultimate.start present
+			if (GlobalSettings._instance._checkOnlyMain) {
+				for (AnnotatedProgramPoint procRoot : m_graphRoot
+						.getOutgoingNodes()) {
+					if (procRoot.getProgramPoint().getProcedure()
+							.equalsIgnoreCase("main")) {
+						procRootsToCheck.add(procRoot);
+						break;
+					}
 				}
-			}
-		} else
-			procRootsToCheck.addAll(m_graphRoot.getOutgoingNodes());
+			} else
+				procRootsToCheck.addAll(m_graphRoot.getOutgoingNodes());
+		}
 
 		Result overallResult = Result.UNKNOWN;
 		boolean allSafe = true;

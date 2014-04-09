@@ -13,7 +13,8 @@ public class GlobalSettings {
 //	String m_dotGraphPath = "C:/temp/codeCheckGraphs";
 	
 	
-    boolean svcomp2014Mode = true;
+//    boolean svcomp2014Mode = false; //TODO: this is only hardcoded??
+//    boolean svcomp2014Mode = true;
 	String _dotGraphPath = "";
 //	String _dotGraphPath = "C:/temp/codeCheckGraphs";
 	SolverAndInterpolator _solverAndInterpolator = SolverAndInterpolator.SMTINTERPOL;
