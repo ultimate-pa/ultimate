@@ -573,8 +573,8 @@ public class FunctionHandler {
 	 */
 	public Result handleFunctionDefinition(Dispatcher main, MemoryHandler memoryHandler,
 			IASTFunctionDefinition node, ResultDeclaration funcDecl) {
-//		main.cHandler.getSymbolTable().beginScope();
 		main.cHandler.beginScope();
+		
 		ILocation loc = new CACSLLocation(node);
 		CDeclaration decl = funcDecl.getDeclarations().get(0);
         String methodName = decl.getName();
