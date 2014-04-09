@@ -195,20 +195,19 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	}
 
 	private void reportProblemWithLocation(IResultWithLocation result, Logger log) {
-		if (!(result.getLocation() instanceof CACSLLocation)) {
+		if(result.getLocation() == null){
 			log.warn("Result type should have location, but has none: " + result.getShortDescription() + " ("
 					+ result.getClass() + ")");
 			return;
 		}
-		CACSLLocation loc = (CACSLLocation) result.getLocation();
-		if (loc == null) {
-			// so we have a result with no valid location
-			// --> so we jump over this result
+		
+		if (!(result.getLocation() instanceof CACSLLocation)) {
 			log.warn("Result type has location, but no CACSLLocation: " + result.getShortDescription() + " ("
 					+ result.getClass() + ")");
 			return;
 		}
-
+		
+		CACSLLocation loc = (CACSLLocation) result.getLocation();
 		// seems legit, start the reporting
 
 		if (result instanceof CounterExampleResult) {

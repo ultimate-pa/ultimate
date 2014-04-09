@@ -40,7 +40,6 @@ public class InteractiveConsoleController implements IController {
 	private List<String> m_Models;
 	private Toolchain m_Chain = null;
 	private PreludeProvider m_PreludeFile;
-	private String m_Filename;
 	
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IController#selectModel(java.util.List)
@@ -233,21 +232,6 @@ public class InteractiveConsoleController implements IController {
 	
 	public ICore getCore() {
 		return this.m_Core;
-	}
-
-	@Override
-	public String getLoadPrefName() {
-		return m_Filename;
-	}
-
-	@Override
-	public String getSavePrefName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public void setPrefFile(String filename) {
-		m_Filename = filename;
 	}
 
 	@Override

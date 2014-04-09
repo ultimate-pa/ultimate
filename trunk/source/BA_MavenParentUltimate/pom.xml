@@ -212,14 +212,15 @@
 		<module>../SMTSolverBridge</module>
 		<module>../Library-Batik</module>
 		<module>../Library-Jung</module>
-		<module>../CDTDummyParser</module>
 		<module>../CDTParser</module>
 		<module>../CDTPlugin</module>
 		<module>../InteractiveConsole</module>
 		<module>../CACSL2BoogieTranslator</module>
 		<module>../ASTBuilder</module>
 		<module>../JungVisualization</module>
-
+		<module>../UltimateCLI</module>
+		<module>../GUIGeneratedPreferencePages</module>
+		<module>../GUILoggingWindow</module>
 		<module>../LassoRanker</module>
 		<module>../WebUltimateBridge</module>
 		<module>../Library-ModelCheckerUtils</module>
@@ -298,7 +299,7 @@
 				<!-- modules containing test utilities -->
 				<module>../Library-junit-helper</module>
 				<module>../Library-UltimateTest</module>
-				
+
 				<!-- modules containing actual tests utilities -->
 				<module>../UltimateTest</module>
 			</modules>

@@ -95,14 +95,42 @@ public interface ICore {
 
 	void setToolchain(Toolchain toolchain);
 
-	void savePreferences();
+	/**
+	 * ICore will try to save all settings different from the default settings
+	 * to the given path. An existing file will be overwritten.
+	 * 
+	 * @return An absolute path to a (possibly existing) .epf file
+	 */
+	void savePreferences(String absolutePath);
 
-	void loadPreferences();
+	/**
+	 * ICore will try to load new settings from the given path.
+	 * 
+	 * @return An absolute path to a .epf settings file compatible with
+	 *         Ultimate's settings.
+	 */
+	void loadPreferences(String absolutePath);
 
+	/**
+	 * Set a time limit after which the toolchain should be stopped.
+	 * 
+	 * A convenient way of setting this deadline is using
+	 * System.currentTimeMillis() + timelimit (in ms) as value right before
+	 * calling start(...).
+	 * 
+	 * @param date
+	 *            A date in the future (aka, the difference, measured in
+	 *            milliseconds, between the current time and midnight, January
+	 *            1, 1970 UTC) after which a running toolchain should be
+	 *            stopped.
+	 */
+	public void setDeadline(long date);
+	
+	
 	IUltimatePlugin[] getPlugins();
-	
+
 	void addAST(IElement root, GraphType outputDefinition);
-	
+
 	CommandLineParser getCommandLineArguments();
 
 }

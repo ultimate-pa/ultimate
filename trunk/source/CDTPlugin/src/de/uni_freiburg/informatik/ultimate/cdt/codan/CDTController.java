@@ -103,16 +103,6 @@ public class CDTController extends BaseExternalExecutionController {
 	}
 
 	@Override
-	public String getLoadPrefName() {
-		throw new UnsupportedOperationException("This Method should never be called for this controller!");
-	}
-
-	@Override
-	public String getSavePrefName() {
-		throw new UnsupportedOperationException("This Method should never be called for this controller!");
-	}
-
-	@Override
 	public void displayToolchainResultProgramIncorrect() {
 	}
 

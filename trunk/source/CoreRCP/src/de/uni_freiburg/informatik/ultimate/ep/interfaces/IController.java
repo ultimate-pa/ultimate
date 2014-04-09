@@ -16,6 +16,17 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
 public interface IController extends IUltimatePlugin {
 
 	/**
+	 * {@link UltimateCore} initializes a controller during startup with this
+	 * callback. This call delegates control to the controller.
+	 * 
+	 * @param core
+	 *            The active {@link UltimateCore} instance that can be used by
+	 *            the controller to start various Ultimate functions.
+	 * @return
+	 */
+	int init(ICore core);
+
+	/**
 	 * Here the controller tells the caller what parser to use. Usually, the
 	 * core will try to determine that automatically. This should only be called
 	 * if that is not possible and hence the user's opinion is needed.
@@ -46,18 +57,6 @@ public interface IController extends IUltimatePlugin {
 	List<String> selectModel(List<String> modelNames);
 
 	/**
-	 * 
-	 * @return
-	 */
-	String getLoadPrefName();
-
-	/**
-	 * 
-	 * @return
-	 */
-	String getSavePrefName();
-
-	/**
 	 * Should be called to notify the user that the toolchain proved the program
 	 * to be incorrect
 	 */
@@ -84,14 +83,4 @@ public interface IController extends IUltimatePlugin {
 	 */
 	void displayException(String description, Throwable ex);
 
-	/**
-	 * {@link UltimateCore} initializes a controller during startup with this
-	 * callback. This call delegates control to the controller.
-	 * 
-	 * @param core
-	 *            The active {@link UltimateCore} instance that can be used by
-	 *            the controller to start various Ultimate functions.
-	 * @return
-	 */
-	int init(ICore core);
 }

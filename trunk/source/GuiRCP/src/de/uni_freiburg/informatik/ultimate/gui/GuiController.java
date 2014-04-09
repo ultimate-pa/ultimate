@@ -12,7 +12,6 @@ import org.apache.log4j.Logger;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.xml.sax.SAXException;
@@ -151,18 +150,6 @@ public class GuiController implements IController {
 
 	public String getPluginID() {
 		return sPLUGINID;
-	}
-
-	@Override
-	public String getLoadPrefName() {
-		FileDialog fd = new FileDialog(mDisplay.getActiveShell(), SWT.OPEN);
-		return fd.open();
-	}
-
-	@Override
-	public String getSavePrefName() {
-		FileDialog fd = new FileDialog(mDisplay.getActiveShell(), SWT.SAVE);
-		return fd.open();
 	}
 
 	@Override

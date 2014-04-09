@@ -374,8 +374,8 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		if (configElements.length != 1) {
 			mLogger.fatal("Invalid configuration. You should have only 1 IController plugin, but you have "
 					+ configElements.length);
-			for(IConfigurationElement elem : configElements){
-				mLogger.fatal(((IController)elem.createExecutableExtension("class")).getClass());				
+			for (IConfigurationElement elem : configElements) {
+				mLogger.fatal(((IController) elem.createExecutableExtension("class")).getClass());
 			}
 		}
 
@@ -579,7 +579,6 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 		return true;
 	}
-
 
 	@Override
 	public void runParser() throws Exception {
@@ -846,8 +845,8 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	}
 
 	@Override
-	public void loadPreferences() {
-		loadPreferencesInternal(mCurrentController.getLoadPrefName());
+	public void loadPreferences(String absolutePath) {
+		loadPreferencesInternal(absolutePath);
 	}
 
 	private void loadPreferencesInternal(String filename) {
@@ -879,11 +878,14 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	}
 
 	@Override
-	public void savePreferences() {
-		String filename = mCurrentController.getSavePrefName();
+	public void savePreferences(String filename) {
 		if (filename != null && !filename.isEmpty() && !mTools.isEmpty()) {
 			mLogger.info("Saving preferences to file " + filename);
 			try {
+				File f = new File(filename);
+				if (f.isFile() && f.exists()) {
+					f.delete();
+				}
 				FileOutputStream fis = new FileOutputStream(filename);
 
 				for (IUltimatePlugin plugin : getPlugins()) {
@@ -893,11 +895,11 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 				fis.flush();
 				fis.close();
 			} catch (FileNotFoundException e) {
-				mLogger.warn("Saving preferences failed with exception: ", e);
+				mLogger.error("Saving preferences failed with exception: ", e);
 			} catch (IOException e) {
-				mLogger.warn("Saving preferences failed with exception: ", e);
+				mLogger.error("Saving preferences failed with exception: ", e);
 			} catch (CoreException e) {
-				mLogger.warn("Saving preferences failed with exception: ", e);
+				mLogger.error("Saving preferences failed with exception: ", e);
 			}
 		}
 	}

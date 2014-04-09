@@ -188,16 +188,6 @@ public class CommandlineController implements IController {
 	}
 
 	@Override
-	public String getLoadPrefName() {
-		return null;
-	}
-
-	@Override
-	public String getSavePrefName() {
-		return null;
-	}
-
-	@Override
 	public void displayToolchainResultProgramIncorrect() {
 		System.out.println("RESULT: Ultimate proved your program to be incorrect!");
 	}

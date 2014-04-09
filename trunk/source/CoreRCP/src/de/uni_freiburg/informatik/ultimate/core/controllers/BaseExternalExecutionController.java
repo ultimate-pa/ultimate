@@ -12,7 +12,8 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 /**
  * 
  * This class simplifies the construction of controllers for external execution
- * of Ultimate (i.e. if you do not want to control the core thread by yourself).
+ * of Ultimate that allow for running multiple toolchains (i.e. if you do not
+ * want to control the core thread by yourself).
  * 
  * It works like this:
  * <ul>
@@ -35,7 +36,7 @@ public abstract class BaseExternalExecutionController implements IController {
 
 	protected Logger mLogger;
 	protected ICore mCurrentCoreReference;
-	
+
 	private Thread mCoreThread;
 
 	protected UltimateCore mActualCore;
@@ -56,7 +57,7 @@ public abstract class BaseExternalExecutionController implements IController {
 		}
 		mCurrentCoreReference = core;
 		mLogger = UltimateServices.getInstance().getLogger(getPluginID());
-		
+
 		while (!mAbort) {
 			synchronized (mLock) {
 				while (!mStart) {
@@ -102,7 +103,7 @@ public abstract class BaseExternalExecutionController implements IController {
 			}
 		}
 	}
-	
+
 	public void startUltimate() {
 		if (mCoreThread != null) {
 			throw new RuntimeException(

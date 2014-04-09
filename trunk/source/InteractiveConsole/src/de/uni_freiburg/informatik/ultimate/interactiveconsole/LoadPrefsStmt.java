@@ -10,8 +10,7 @@ public class LoadPrefsStmt extends Stmt {
 	
 	@Override
 	public void execute() {
-		controller.setPrefFile(m_Filename);
-		controller.getCore().loadPreferences();
+		controller.getCore().loadPreferences(m_Filename);
 	}
 
 }
