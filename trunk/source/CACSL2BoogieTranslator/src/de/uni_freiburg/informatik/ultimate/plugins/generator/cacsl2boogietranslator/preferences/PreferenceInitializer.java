@@ -33,6 +33,9 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_CHECK_MallocNonNegative, false,
+						PreferenceType.Boolean), 
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_REPORT_UNSOUNDNESS_WARNING, false,
 						PreferenceType.Boolean) 
 		};
 	}
@@ -56,6 +59,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
 	public static final String LABEL_CHECK_MemoryLeakInMain = "Check for the main procedure if all allocated memory was freed";
 	public static final String LABEL_CHECK_MallocNonNegative = "Check if the input of malloc is non-negative";
+	public static final String LABEL_REPORT_UNSOUNDNESS_WARNING = "Report unsoundness warnings";
 
 	
 	

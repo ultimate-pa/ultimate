@@ -246,13 +246,19 @@ public abstract class Dispatcher {
 	 *            description.
 	 */
 	public static void warn(ILocation loc, String longDescription) {
-		String shortDescription = "Unsoundness Warning";
-		s_Logger.warn(shortDescription + " " + longDescription);
-		GenericResultAtLocation result = new GenericResultAtLocation(
-				Activator.s_PLUGIN_NAME, loc, shortDescription, 
-				longDescription, Severity.WARNING);
-		UltimateServices us = UltimateServices.getInstance();
-		us.reportResult(Activator.s_PLUGIN_ID, result);
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(
+				Activator.s_PLUGIN_ID);
+		boolean reportUnsoundnessWarning = prefs.getBoolean(
+				PreferenceInitializer.LABEL_REPORT_UNSOUNDNESS_WARNING);
+		if (reportUnsoundnessWarning) {
+			String shortDescription = "Unsoundness Warning";
+			s_Logger.warn(shortDescription + " " + longDescription);
+			GenericResultAtLocation result = new GenericResultAtLocation(
+					Activator.s_PLUGIN_NAME, loc, shortDescription, 
+					longDescription, Severity.WARNING);
+			UltimateServices us = UltimateServices.getInstance();
+			us.reportResult(Activator.s_PLUGIN_ID, result);
+		}
 	}
 
 	/**
