@@ -40,7 +40,7 @@ public class Tasks {
 	/**
 	 * Active toolchains, listed by their task(s).
 	 */
-	private static final Map<String, ArrayList<Toolchain>> activeToolchains = new HashMap<String, ArrayList<Toolchain>>();
+	private static final Map<String, ArrayList<WebToolchain>> activeToolchains = new HashMap<String, ArrayList<WebToolchain>>();
 
 	/**
 	 * @author Markus Lindenmann
@@ -167,17 +167,17 @@ public class Tasks {
 	 * @return a list of toolchains, that should be displayed on the website.
 	 */
 	@SuppressWarnings("unchecked")
-	public final static Map<String, ArrayList<Toolchain>> getActiveToolchains() {
+	public final static Map<String, ArrayList<WebToolchain>> getActiveToolchains() {
 		if (activeToolchains.isEmpty()) {
-			for (Class<Toolchain> c : actTCs) {
-				Toolchain tc;
+			for (Class<WebToolchain> c : actTCs) {
+				WebToolchain tc;
 				try {
-					tc = (Toolchain) c.getConstructor().newInstance(
+					tc = (WebToolchain) c.getConstructor().newInstance(
 							(Object[]) null);
 					for (TaskNames tn : tc.getTaskName()) {
 						if (!activeToolchains.containsKey(tn.toString())) {
 							activeToolchains.put(tn.toString(),
-									new ArrayList<Toolchain>());
+									new ArrayList<WebToolchain>());
 							System.out.println("Added " + c.getCanonicalName()  + " to " +tn.toString()); 
 						}
 						activeToolchains.get(tn.toString()).add(tc);

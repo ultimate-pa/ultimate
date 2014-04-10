@@ -6,7 +6,7 @@ package de.uni_freiburg.informatik.ultimate.website;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.website.Toolchain.LoggingLevel;
+import de.uni_freiburg.informatik.ultimate.website.WebToolchain.LoggingLevel;
 
 /**
  * @author Markus Lindenmann
@@ -137,7 +137,7 @@ public class Tool {
 	 * 
 	 * @return a logging level.
 	 */
-	public Toolchain.LoggingLevel getLoggingLevel() {
+	public WebToolchain.LoggingLevel getLoggingLevel() {
 		return this.loggingLevel;
 	}
 }

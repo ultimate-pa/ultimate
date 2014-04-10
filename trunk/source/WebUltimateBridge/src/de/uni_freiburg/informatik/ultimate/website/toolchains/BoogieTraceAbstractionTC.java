@@ -9,7 +9,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.website.Setting;
 import de.uni_freiburg.informatik.ultimate.website.Tasks.TaskNames;
 import de.uni_freiburg.informatik.ultimate.website.Tool;
-import de.uni_freiburg.informatik.ultimate.website.Toolchain;
+import de.uni_freiburg.informatik.ultimate.website.WebToolchain;
 
 /**
  * @author Markus Lindenmann
@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.website.Toolchain;
  * @author Stefan Wissert
  * @date 14.02.2012
  */
-public class BoogieTraceAbstractionTC extends Toolchain {
+public class BoogieTraceAbstractionTC extends WebToolchain {
 
 	/*
 	 * (non-Javadoc)

@@ -7,10 +7,10 @@ import de.uni_freiburg.informatik.ultimate.website.Setting;
 import de.uni_freiburg.informatik.ultimate.website.Setting.SettingType;
 import de.uni_freiburg.informatik.ultimate.website.Tasks.TaskNames;
 import de.uni_freiburg.informatik.ultimate.website.Tool;
-import de.uni_freiburg.informatik.ultimate.website.Toolchain;
+import de.uni_freiburg.informatik.ultimate.website.WebToolchain;
 
 
-public class CBuchiAutomizerTC extends Toolchain {
+public class CBuchiAutomizerTC extends WebToolchain {
 
 	/*
 	 * (non-Javadoc)

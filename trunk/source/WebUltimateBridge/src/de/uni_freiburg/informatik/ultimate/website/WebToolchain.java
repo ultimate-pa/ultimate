@@ -16,7 +16,7 @@ import java.util.Set;
  * @author Stefan Wissert
  * @date 14.02.2012
  */
-public abstract class Toolchain {
+public abstract class WebToolchain {
 	/**
 	 * Timeout used for all toolchains.
 	 */
@@ -99,7 +99,7 @@ public abstract class Toolchain {
 	/**
 	 * Constructor.
 	 */
-	public Toolchain() {
+	public WebToolchain() {
 		this.setName(setName());
 		this.setId(setId());
 		this.setTaskName(setTaskName());
@@ -192,7 +192,7 @@ public abstract class Toolchain {
 	 * 
 	 * @return the content of a created settings file for this toolchain.
 	 */
-	public final String getSettingFile() {
+	public final String getSettingFileContent() {
 		DateFormat dateFormat = new SimpleDateFormat(
 				"EEE MMM dd HH:mm:ss z yyyy");
 		StringBuffer settings = new StringBuffer("#");

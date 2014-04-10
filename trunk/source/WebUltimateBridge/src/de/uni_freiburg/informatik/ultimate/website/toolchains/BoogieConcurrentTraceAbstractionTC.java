@@ -6,7 +6,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.website.Setting;
 import de.uni_freiburg.informatik.ultimate.website.Tasks.TaskNames;
 import de.uni_freiburg.informatik.ultimate.website.Tool;
-import de.uni_freiburg.informatik.ultimate.website.Toolchain;
+import de.uni_freiburg.informatik.ultimate.website.WebToolchain;
 
 /**
  * @author Markus Lindenmann
@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.website.Toolchain;
  * @author Stefan Wissert
  * @author Matthias Heizmann
  */
-public class BoogieConcurrentTraceAbstractionTC extends Toolchain {
+public class BoogieConcurrentTraceAbstractionTC extends WebToolchain {
 
 	/*
 	 * (non-Javadoc)

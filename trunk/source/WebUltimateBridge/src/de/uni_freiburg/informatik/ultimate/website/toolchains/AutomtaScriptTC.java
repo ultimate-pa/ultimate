@@ -9,12 +9,12 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.website.Setting;
 import de.uni_freiburg.informatik.ultimate.website.Tasks.TaskNames;
 import de.uni_freiburg.informatik.ultimate.website.Tool;
-import de.uni_freiburg.informatik.ultimate.website.Toolchain;
+import de.uni_freiburg.informatik.ultimate.website.WebToolchain;
 
 /**
  * @date 26.03.2013
  */
-public class AutomtaScriptTC extends Toolchain {
+public class AutomtaScriptTC extends WebToolchain {
 
     /*
      * (non-Javadoc)

@@ -6,10 +6,10 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.website.Setting;
 import de.uni_freiburg.informatik.ultimate.website.Tasks.TaskNames;
 import de.uni_freiburg.informatik.ultimate.website.Tool;
-import de.uni_freiburg.informatik.ultimate.website.Toolchain;
+import de.uni_freiburg.informatik.ultimate.website.WebToolchain;
 
 
-public class BoogieLassoRankerTC extends Toolchain {
+public class BoogieLassoRankerTC extends WebToolchain {
 
 	/*
 	 * (non-Javadoc)
