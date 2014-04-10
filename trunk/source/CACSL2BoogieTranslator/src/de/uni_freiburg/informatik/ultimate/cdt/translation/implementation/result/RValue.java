@@ -14,7 +14,7 @@ public class RValue extends LRValue {
 	 * @param value
 	 */
 	public RValue(Expression value, CType cType) {
-		this(value, cType, false, false);
+		this(value, cType, false);
 //		this(value, cType, false, false, false);
 	}
 	
@@ -24,16 +24,16 @@ public class RValue extends LRValue {
 	 * memory cell may only be read.
 	 * @param value
 	 */
-	public RValue(Expression value, CType cType, boolean boogieBool, boolean isPointer) {
+	public RValue(Expression value, CType cType, boolean boogieBool) {
 //	public RValue(Expression value, CType cType, boolean wrappedBool, boolean isPointer, boolean isOnHeap) {
 		this.value = value;
 		this.cType = cType;
 		this.isBoogieBool = boogieBool;
-		this.isPointer = isPointer;
+		//this.isPointer = isPointer;
 	}
 	
 	public RValue(RValue rval) {
-		this(rval.value, rval.cType, rval.isBoogieBool, rval.isPointer);
+		this(rval.value, rval.cType, rval.isBoogieBool);
 //		this(rval.value, rval.cType, rval.isWrappedBool, rval.isPointer, rval.isOnHeap);
 	}
 

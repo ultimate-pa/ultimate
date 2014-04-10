@@ -1,9 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
 
@@ -27,11 +29,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtra
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -40,10 +44,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 
 /**
@@ -80,6 +88,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _unsatTriples;
 	HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _satQuadruples;
 	HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _unsatQuadruples;
+	Collection<ProgramPoint>  mErrNodesOfAllProc;
 
 	private static final boolean DEBUG = false;
 
@@ -90,7 +99,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	 * @return
 	 */
 	public boolean initialize(IElement root) {
-		readPreferencePage();
+//		readPreferencePage();//FIXME .. then remove commentation, remove next line
+		GlobalSettings.init();
 
 		m_originalRoot = (RootNode) root;
 		RootAnnot rootAnnot = m_originalRoot.getRootAnnot();
@@ -104,6 +114,13 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				m_falsePredicate);
 		m_edgeChecker = new EdgeChecker(m_smtManager,
 				rootAnnot.getModGlobVarManager());
+		
+		
+		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
+		mErrNodesOfAllProc = new ArrayList<ProgramPoint>();
+		for (Collection<ProgramPoint> errNodeOfProc : proc2errNodes.values()) {
+			mErrNodesOfAllProc.addAll(errNodeOfProc);
+		}
 
 		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
 			_satTriples = new HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>();
@@ -410,20 +427,22 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				+ codeChecker.memoizationReturnHitsUnsat);
 
 		if (overallResult == Result.CORRECT) {
-			String shortDescription = "Program is safe!";
-			String longDescription = "Program is safe!";
-			GenericResult result = new GenericResult(
-					Activator.s_PLUGIN_NAME, shortDescription, longDescription,
-					Severity.INFO);
-			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID,
-					result);
+//			String shortDescription = "Program is safe!";
+//			String longDescription = "Program is safe!";
+			reportPositiveResults(mErrNodesOfAllProc);
+//			GenericResult result = new GenericResult(
+//					Activator.s_PLUGIN_NAME, shortDescription, longDescription,
+//					Severity.INFO);
+//			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID,
+//					result);
 			// reportResult(result);
 		} else if (overallResult == Result.INCORRECT) {
-			reportCounterexampleResult(
-					realErrorRun.getWord().getSymbol(
-							realErrorRun.getWord().length() - 1),
-							realErrorFailurePath,
-					realErrorProgramExecution);
+//			reportCounterexampleResult(
+//					realErrorRun.getWord().getSymbol(
+//							realErrorRun.getWord().length() - 1),
+//							realErrorFailurePath,
+//					realErrorProgramExecution);
+			reportCounterexampleResult(realErrorProgramExecution);
 		} else {
 			String shortDescription = "Unable to decide if program is safe!";
 			String longDescription = "Unable to decide if program is safe!";
@@ -483,39 +502,106 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 		return newRoot;
 	}
+		
+	private void reportPositiveResults(Collection<ProgramPoint> errorLocs) {
+		final String longDescription;
+		if (errorLocs.isEmpty()) {
+			longDescription = "We were not able to verify any" +
+					" specifiation because the program does not contain any specification.";
+		} else {
+			longDescription = errorLocs.size() + " specifications checked. All of them hold";
+			for (ProgramPoint errorLoc : errorLocs) {
+				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(
+						Activator.s_PLUGIN_NAME,
+						errorLoc,
+						UltimateServices.getInstance().getTranslatorSequence());
+				reportResult(pResult);
+			}
+		}
+		AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(
+				Activator.s_PLUGIN_NAME, longDescription);
+		reportResult(result);
+		s_Logger.info(result.getShortDescription() + " " + result.getLongDescription());
+	}
+	
+	
+private void reportCounterexampleResult(RcfgProgramExecution pe) {
 
-	private void reportCounterexampleResult(CodeBlock position,
-			List<ILocation> failurePath,
-			IProgramExecution<RcfgElement, Expression> pe) {
-		ILocation errorLoc = failurePath.get(failurePath.size() - 1);
-		ILocation origin = errorLoc.getOrigin();
-
-		List<ITranslator<?, ?, ?, ?>> translatorSequence = UltimateServices
-				.getInstance().getTranslatorSequence();
-		String ctxMessage = origin.checkedSpecification().getNegativeMessage();
+		ProgramPoint errorPP = getErrorPP(pe);
+		List<ILocation> failurePath = pe.getLocationList();
+		ILocation origin = errorPP.getPayload().getLocation().getOrigin();
+		
+		List<ITranslator<?, ?, ?, ?>> translatorSequence = UltimateServices.getInstance().getTranslatorSequence();
+		if (pe.isOverapproximation()) {
+			reportUnproveableResult(pe);
+			return;
+		}
+		String ctxMessage = ResultUtil.getCheckedSpecification(errorPP).getNegativeMessage();
 		ctxMessage += " (line " + origin.getStartLine() + ")";
-		Backtranslator backtrans = (Backtranslator) translatorSequence
-				.get(translatorSequence.size() - 1);
-		BoogieProgramExecution bpe = (BoogieProgramExecution) backtrans
-				.translateProgramExecution(pe);
+		Backtranslator backtrans = (Backtranslator) translatorSequence.get(translatorSequence.size()-1);
+		BoogieProgramExecution bpe = (BoogieProgramExecution) backtrans.translateProgramExecution(pe);
 		CounterExampleResult<RcfgElement, Expression> ctxRes = new CounterExampleResult<RcfgElement, Expression>(
-				position, Activator.s_PLUGIN_NAME, translatorSequence, pe,
-				CounterExampleResult.getLocationSequence(bpe),
+				errorPP,
+				Activator.s_PLUGIN_NAME,
+				translatorSequence,
+				pe,
+				CounterExampleResult.getLocationSequence(bpe), 
 				bpe.getValuation());
 		ctxRes.setLongDescription(bpe.toString());
-		
-		System.out.println("=== Start of program execution");
-		System.out.println("--- Error Path: ---");
-		for (ILocation loc : ctxRes.getFailurePath()) {
-			System.out.println(loc.toString());
-		}
-		System.out.println("--- Valuation: ---");
-		System.out.println(bpe.toString());
-		System.out.println("=== End of program execution");
-
 		reportResult(ctxRes);
-		s_Logger.warn(ctxMessage);
+//		s_Logger.warn(ctxMessage);
 	}
+	private void reportUnproveableResult(RcfgProgramExecution pe) {
+		ProgramPoint errorPP = getErrorPP(pe);
+		UnprovableResult<RcfgElement, RcfgElement, Expression> uknRes = 
+				new UnprovableResult<RcfgElement, RcfgElement, Expression>(
+				Activator.s_PLUGIN_NAME,
+				errorPP,
+				UltimateServices.getInstance().getTranslatorSequence(),
+				pe);
+		reportResult(uknRes);
+	}
+	
+	public ProgramPoint getErrorPP(RcfgProgramExecution rcfgProgramExecution) {
+		int lastPosition = rcfgProgramExecution.getLength() - 1;
+		CodeBlock last = rcfgProgramExecution.getTraceElement(lastPosition);
+		ProgramPoint errorPP = (ProgramPoint) last.getTarget();
+		return errorPP;
+	}
+		
+
+//	private void reportCounterexampleResult(CodeBlock position,
+//			List<ILocation> failurePath,
+//			IProgramExecution<RcfgElement, Expression> pe) {
+//		ILocation errorLoc = failurePath.get(failurePath.size() - 1);
+//		ILocation origin = errorLoc.getOrigin();
+//
+//		List<ITranslator<?, ?, ?, ?>> translatorSequence = UltimateServices
+//				.getInstance().getTranslatorSequence();
+//		String ctxMessage = origin.checkedSpecification().getNegativeMessage();
+//		ctxMessage += " (line " + origin.getStartLine() + ")";
+//		Backtranslator backtrans = (Backtranslator) translatorSequence
+//				.get(translatorSequence.size() - 1);
+//		BoogieProgramExecution bpe = (BoogieProgramExecution) backtrans
+//				.translateProgramExecution(pe);
+//		CounterExampleResult<RcfgElement, Expression> ctxRes = new CounterExampleResult<RcfgElement, Expression>(
+//				position, Activator.s_PLUGIN_NAME, translatorSequence, pe,
+//				CounterExampleResult.getLocationSequence(bpe),
+//				bpe.getValuation());
+//		ctxRes.setLongDescription(bpe.toString());
+//		
+//		System.out.println("=== Start of program execution");
+//		System.out.println("--- Error Path: ---");
+//		for (ILocation loc : ctxRes.getFailurePath()) {
+//			System.out.println(loc.toString());
+//		}
+//		System.out.println("--- Valuation: ---");
+//		System.out.println(bpe.toString());
+//		System.out.println("=== End of program execution");
+//
+//		reportResult(ctxRes);
+//		s_Logger.warn(ctxMessage);
+//	}
 
 	private void reportResult(IResult res) {
 		UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, res);

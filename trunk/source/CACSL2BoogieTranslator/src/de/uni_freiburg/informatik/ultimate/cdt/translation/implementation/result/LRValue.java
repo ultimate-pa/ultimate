@@ -25,7 +25,7 @@ public abstract class LRValue {
 	 */
 	public boolean isBoogieBool;
 	
-	public boolean isPointer;
+//	public boolean isPointer;
 	
 //	public boolean isOnHeap;
 	

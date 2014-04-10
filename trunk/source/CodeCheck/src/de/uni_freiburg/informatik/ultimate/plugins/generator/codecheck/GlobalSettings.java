@@ -17,8 +17,10 @@ public class GlobalSettings {
 //    boolean svcomp2014Mode = true;
 	String _dotGraphPath = "";
 //	String _dotGraphPath = "C:/temp/codeCheckGraphs";
-	SolverAndInterpolator _solverAndInterpolator = SolverAndInterpolator.SMTINTERPOL;
-	INTERPOLATION _interpolationMode = INTERPOLATION.Craig_TreeInterpolation;
+//	SolverAndInterpolator _solverAndInterpolator = SolverAndInterpolator.SMTINTERPOL;
+	SolverAndInterpolator _solverAndInterpolator = SolverAndInterpolator.Z3SPWP;
+//	INTERPOLATION _interpolationMode = INTERPOLATION.Craig_TreeInterpolation;
+	INTERPOLATION _interpolationMode = INTERPOLATION.ForwardPredicates;
 	PredicateUnification _predicateUnification = PredicateUnification.PER_VERIFICATION;
 	EdgeCheckOptimization _edgeCheckOptimization = EdgeCheckOptimization.NONE;
 	Checker checker = Checker.ULTIMATE;

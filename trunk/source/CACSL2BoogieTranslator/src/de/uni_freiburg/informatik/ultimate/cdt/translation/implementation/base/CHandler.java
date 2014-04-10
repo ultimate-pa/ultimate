@@ -487,7 +487,7 @@ public class CHandler implements ICHandler {
 		mCurrentDeclaredTypes.push(resType);
 		ResultDeclaration declResult = (ResultDeclaration) main.dispatch(node.getDeclarator());
 		mCurrentDeclaredTypes.pop();
-		return functionHandler.handleFunctionDefinition(main, memoryHandler, node, declResult);
+		return functionHandler.handleFunctionDefinition(main, memoryHandler, node, declResult, contract);
 	}
 
 	/**
@@ -1071,7 +1071,7 @@ public class CHandler implements ICHandler {
 					ropToBool.lrVal.getValue());
 			ResultExpression re = new ResultExpression(
 					new RValue(negated, 
-							new CPrimitive(PRIMITIVE.INT), true, false),
+							new CPrimitive(PRIMITIVE.INT), true),
 							new LinkedHashMap<VariableDeclaration, ILocation>(),
 							ropToBool.overappr);
 			re.addAll(ropToBool);
@@ -1494,7 +1494,7 @@ public class CHandler implements ICHandler {
 				RValue newRVal = new RValue(
 						new BinaryExpression(loc, 
 								BinaryExpression.Operator.LOGICAND, rlToBool.lrVal.getValue(), rrToBool.lrVal.getValue()),
-						new CPrimitive(CPrimitive.PRIMITIVE.INT), true, false);
+						new CPrimitive(CPrimitive.PRIMITIVE.INT), true);
 								
 				
 				return new ResultExpression(stmt, newRVal, decl, auxVars, overappr);
@@ -1511,7 +1511,7 @@ public class CHandler implements ICHandler {
 			VariableLHS lhs = new VariableLHS(loc, resName);
 			RValue tmpRval = new RValue(
 					new IdentifierExpression(loc, resName),
-					new CPrimitive(PRIMITIVE.INT), true, false);
+					new CPrimitive(PRIMITIVE.INT), true);
 			RValue resRval = tmpRval;
 			// #t~AND~UID = left
 		
@@ -1561,7 +1561,7 @@ public class CHandler implements ICHandler {
 								BinaryExpression.Operator.LOGICOR,
 								rlToBool.lrVal.getValue(), rrToBool.lrVal.getValue()), 
 								new CPrimitive(CPrimitive.PRIMITIVE.INT),
-								true, false),
+								true),
 								decl, auxVars, overappr);
 			}
 			// create and add tmp var #t~OR~UID
@@ -1576,7 +1576,7 @@ public class CHandler implements ICHandler {
 			VariableLHS lhs = new VariableLHS(loc, resName);
 			RValue tmpRval = new RValue(
 					new IdentifierExpression(loc, resName),
-					new CPrimitive(PRIMITIVE.INT), true, false);
+					new CPrimitive(PRIMITIVE.INT), true);
 			RValue resRval = tmpRval;
 			// #t~OR~UID = left
 			AssignmentStatement aStat = new AssignmentStatement(loc,

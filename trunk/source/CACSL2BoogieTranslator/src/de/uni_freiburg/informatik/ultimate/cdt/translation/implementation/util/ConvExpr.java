@@ -95,7 +95,7 @@ public class ConvExpr {
 				throw new AssertionError(msg);
 			}
 		}
-		return new RValue(resultEx, new CPrimitive(PRIMITIVE.INT), true, rVal.isPointer);
+		return new RValue(resultEx, new CPrimitive(PRIMITIVE.INT), true);
 	}
 
 	public static RValue boolToInt(ILocation loc, RValue rVal) {
@@ -104,8 +104,7 @@ public class ConvExpr {
 				new IfThenElseExpression(
 						loc, rVal.getValue(), new IntegerLiteral(loc, "1"), new IntegerLiteral(loc, "0")),
 					rVal.cType,
-					false,
-					rVal.isPointer);
+					false);
 	}
 	
 	

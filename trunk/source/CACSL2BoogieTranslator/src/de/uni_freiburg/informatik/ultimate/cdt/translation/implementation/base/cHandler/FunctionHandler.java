@@ -212,21 +212,9 @@ public class FunctionHandler {
 			List<ACSLNode> contract, IASTFunctionDeclarator cFuncDeclarator, CDeclaration cDec, ResultTypes returnType) {
 		CACSLLocation loc = new CACSLLocation(cFuncDeclarator);
 		String methodName = cFuncDeclarator.getName().toString();
-		CFunction funcType = (CFunction) cDec.getType();
+//		CFunction funcType = (CFunction) cDec.getType();
 		// begin new scope for retranslation of ACSL specification
 		main.cHandler.beginScope();
-		
-		//		ArrayList<CType> paramCTypes = new ArrayList<CType>();
-//		ArrayList<VarList> paramVls = new ArrayList<VarList>();
-//		for (CDeclaration  paramCDec : funcType.getParameterTypes()) {
-//			ASTType bType = main.typeHandler.ctype2asttype(loc, paramCDec.getType());
-//			VarList vl = new VarList(loc, new String[] { paramCDec.getName() }, bType);
-//			paramVls.add(vl);
-//			paramCTypes.add(paramCDec.getType());
-//		}
-//		VarList[] in = paramVls.toArray(new VarList[0]);
-//		
-//		procedureToParamCType.put(methodName, paramCTypes);
 		
 		VarList[] in = processInParams(main, loc, cDec, methodName);
 		
@@ -235,37 +223,8 @@ public class FunctionHandler {
 		
 		Attribute[] attr = new Attribute[0];
 		String[] typeParams = new String[0];
-		Specification[] spec;
-		if (contract == null) {
-			spec = new Specification[0];
-		} else {
-			List<Specification> specList = new ArrayList<Specification>();
-			for (int i = 0; i<contract.size(); i++) {
-					// retranslate ACSL specification needed e.g., in cases
-					// where ids of function parameters differ from is in ACSL
-					// expression
-//					ACSLNode acslNode = ((CACSLLocation) spec[i].getLocation()
-//							.getOrigin()).getAcslNode();
-					Result retranslateRes = main.dispatch(contract.get(i));
-					assert (retranslateRes instanceof ResultContract);
-					ResultContract resContr = (ResultContract) retranslateRes;
-					specList.addAll(Arrays.asList(resContr.specs));
-			}
-			spec = specList.toArray(new Specification[0]);
-			for (int i = 0; i<spec.length; i++) {
-				if (spec[i] instanceof ModifiesSpecification) {
-					modifiedGlobalsIsUserDefined.add(methodName);
-					ModifiesSpecification ms = (ModifiesSpecification) spec[i];
-					LinkedHashSet<String> modifiedSet = new LinkedHashSet<String>();
-					for (VariableLHS var : ms.getIdentifiers()) 
-						modifiedSet.add(var.getIdentifier());
-					modifiedGlobals.put(methodName, modifiedSet);
-				}
-			}
-
-			main.cHandler.clearContract(); // take care for behavior and
-												// completeness
-		}
+		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract,
+				methodName);
 
 		// we check the type via typeHandler
 //		ResultTypes returnType = (ResultTypes) main.dispatch(node
@@ -297,9 +256,18 @@ public class FunctionHandler {
 		}
 		
 
-		
-		Procedure proc = new Procedure(loc, attr, methodName, typeParams, in,
+		Procedure proc = procedures.get(methodName);
+		if (proc != null) {
+			//combine the specification from the definition with the one from the declaration
+			List<Specification> specFromDef = Arrays.asList(proc.getSpecification());
+			ArrayList<Specification> newSpecs = new ArrayList<Specification>(Arrays.asList(spec));
+			newSpecs.addAll(specFromDef);
+			spec = newSpecs.toArray(new Specification[0]);
+			//TODO something else to take over for a declaration after the definition?
+		}
+		proc = new Procedure(loc, attr, methodName, typeParams, in,
 				out, spec, null);
+					
 		procedures.put(methodName, proc);
 		procedureToReturnCType.put(methodName, returnType.cType);
 		
@@ -310,6 +278,51 @@ public class FunctionHandler {
 		// end scope for retranslation of ACSL specification
 		main.cHandler.endScope();
 		return new ResultSkip();
+	}
+
+	/**
+	 * takes the contract (we got from CHandler) and translates it into an array of Boogie
+	 * specifications
+	 * (this needs to be called after the procedure parameters have been added to the symboltable)
+	 * @param main
+	 * @param contract
+	 * @param methodName
+	 * @return
+	 */
+	private Specification[] makeBoogieSpecFromACSLContract(Dispatcher main,
+			List<ACSLNode> contract, String methodName) {
+		Specification[] spec;
+		if (contract == null) {
+			spec = new Specification[0];
+		} else {
+			List<Specification> specList = new ArrayList<Specification>();
+			for (int i = 0; i<contract.size(); i++) {
+					// retranslate ACSL specification needed e.g., in cases
+					// where ids of function parameters differ from is in ACSL
+					// expression
+//					ACSLNode acslNode = ((CACSLLocation) spec[i].getLocation()
+//							.getOrigin()).getAcslNode();
+					Result retranslateRes = main.dispatch(contract.get(i));
+					assert (retranslateRes instanceof ResultContract);
+					ResultContract resContr = (ResultContract) retranslateRes;
+					specList.addAll(Arrays.asList(resContr.specs));
+			}
+			spec = specList.toArray(new Specification[0]);
+			for (int i = 0; i<spec.length; i++) {
+				if (spec[i] instanceof ModifiesSpecification) {
+					modifiedGlobalsIsUserDefined.add(methodName);
+					ModifiesSpecification ms = (ModifiesSpecification) spec[i];
+					LinkedHashSet<String> modifiedSet = new LinkedHashSet<String>();
+					for (VariableLHS var : ms.getIdentifiers()) 
+						modifiedSet.add(var.getIdentifier());
+					modifiedGlobals.put(methodName, modifiedSet);
+				}
+			}
+
+			main.cHandler.clearContract(); // take care for behavior and
+												// completeness
+		}
+		return spec;
 	}
 
 	// private Specification[] retranslateACSL(ACSLNode acslNode,
@@ -569,10 +582,11 @@ public class FunctionHandler {
 	 *            a reference to the main dispatcher.
 	 * @param node
 	 *            the node to translate.
+	 * @param contract 
 	 * @return the translation result.
 	 */
 	public Result handleFunctionDefinition(Dispatcher main, MemoryHandler memoryHandler,
-			IASTFunctionDefinition node, ResultDeclaration funcDecl) {
+			IASTFunctionDefinition node, ResultDeclaration funcDecl, List<ACSLNode> contract) {
 		main.cHandler.beginScope();
 		
 		ILocation loc = new CACSLLocation(node);
@@ -599,11 +613,13 @@ public class FunctionHandler {
 					new PrimitiveType(loc, /*new InferredType(Type.Integer),*/
 							SFO.INT));
 		}
+		
+		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, methodName);
+		
 		Procedure proc = procedures.get(methodName);
 		if (proc == null) {
 			Attribute[] attr = new Attribute[0];
 			String[] typeParams = new String[0];
-			Specification[] spec = new Specification[0];
 			if (isInParamVoid(in)) {
 				in = new VarList[0]; // in parameter is "void"
 			}
@@ -648,9 +664,16 @@ public class FunctionHandler {
 					}
 				}
 			}
+			
+			//combine the specification from the definition with the one from the declaration
+			List<Specification> specFromDec = Arrays.asList(proc.getSpecification());
+			ArrayList<Specification> newSpecs = new ArrayList<Specification>(Arrays.asList(spec));
+			newSpecs.addAll(specFromDec);
+			spec = newSpecs.toArray(new Specification[0]);
+			
 			proc = new Procedure(proc.getLocation(), proc.getAttributes(),
 					proc.getIdentifier(), proc.getTypeParams(), declIn,
-					proc.getOutParams(), proc.getSpecification(), null);
+					proc.getOutParams(), spec, null);
 			procedures.put(methodName, proc);
 		}
 		Procedure declWithCorrectlyNamedInParams = new Procedure(
@@ -712,7 +735,7 @@ public class FunctionHandler {
 
 	/**
 	 * take the parameter information from the CDeclaration. Make a Varlist from it.
-	 * Add the parameters to the symboltable.
+	 * Add the parameters to the symboltable. Also update procedureToParamCType member.
 	 * @param main
 	 * @param loc
 	 * @param decl

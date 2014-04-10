@@ -191,7 +191,7 @@ public class ResultExpression extends Result {
 			return this;
 		else if (lrVal instanceof LocalLValue) {
 			RValue newRVal = new RValue(((LocalLValue) lrVal).getValue(),
-					        lrVal.cType, lrVal.isBoogieBool, lrVal.isPointer);
+					        lrVal.cType, lrVal.isBoogieBool);
 //					        lrVal.cType, lrVal.isWrappedBool, lrVal.isPointer, lrVal.isOnHeap);
 			return new ResultExpression(
 					this.stmt, newRVal, this.decl, this.auxVars,
@@ -220,7 +220,7 @@ public class ResultExpression extends Result {
 
 //					RValue addressRVal = new RValue(hlv.getAddress(), new CPointer(this.lrVal.cType),
 					RValue addressRVal = new RValue(hlv.getAddress(), this.lrVal.cType, //has the type of what lies at that address
-											hlv.isBoogieBool, hlv.isPointer);
+											hlv.isBoogieBool);
 //											hlv.isWrappedBool, hlv.isPointer, hlv.isOnHeap);
 					
 
@@ -296,7 +296,7 @@ public class ResultExpression extends Result {
 						throw new UnsupportedSyntaxException(loc, "..");
 					}
 //					newValue.isOnHeap = lrVal.isOnHeap;
-					newValue.isPointer = lrVal.isPointer;
+//					newValue.isPointer = lrVal.isPointer;
 					newValue.isBoogieBool = lrVal.isBoogieBool;
 					rex = new ResultExpression(newStmt, newValue, newDecl,
 					        newAuxVars, this.overappr, this.unionFieldIdToCType);

@@ -995,8 +995,8 @@ public class MemoryHandler {
     ASTType getHeapTypeOfLRVal(LRValue lrVal) {
     	CType ct = lrVal.cType;
     	
-    	if (/*lrVal.isOnHeap*/ lrVal.isPointer)
-    		return POINTER_TYPE;
+//    	if (/*lrVal.isOnHeap*/ lrVal.isPointer)
+//    		return POINTER_TYPE;
     	
     	if (lrVal.isBoogieBool)
     		return new PrimitiveType(lrVal.getValue().getLocation(), SFO.BOOL);

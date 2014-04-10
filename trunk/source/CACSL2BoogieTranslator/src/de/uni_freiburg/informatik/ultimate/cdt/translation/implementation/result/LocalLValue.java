@@ -2,14 +2,8 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 
 public class LocalLValue extends LRValue {
 
@@ -23,19 +17,19 @@ public class LocalLValue extends LRValue {
 	 * @param expr
 	 */
 	public LocalLValue(LeftHandSide lhs, CType cType) {
-		this(lhs, cType, false, false);
+		this(lhs, cType, false);
 	}
 	
 	
-	public LocalLValue(LeftHandSide lhs, CType cType, boolean wrappedBool, boolean isPtr) {
+	public LocalLValue(LeftHandSide lhs, CType cType, boolean wrappedBool) {
 		this.lhs = lhs;
 		this.cType = cType;
 		this.isBoogieBool = wrappedBool;
-		this.isPointer = isPtr;
+//		this.isPointer = isPtr;
 	}
 
 	public LocalLValue(LocalLValue llVal) {
-		this(llVal.lhs, llVal.cType, llVal.isBoogieBool, llVal.isPointer);
+		this(llVal.lhs, llVal.cType, llVal.isBoogieBool);
 	}
 	
 	public LeftHandSide getLHS() {
