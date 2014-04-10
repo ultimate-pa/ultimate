@@ -68,6 +68,7 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 		configurer.setShowStatusLine(true);
 		configurer.setShowPerspectiveBar(true);
 		configurer.setShowProgressIndicator(true);
+		new UltimatePreferencePageFactory(mCore).createPreferencePages();
 
 	}
 
@@ -77,7 +78,7 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 		if (initTaskItem(window)) {
 			hookMinimized(window);
 		}
-		new UltimatePreferencePageFactory(mCore).createPreferencePages();
+		
 	}
 
 	public void dispose() {

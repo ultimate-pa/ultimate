@@ -374,9 +374,14 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		if (configElements.length != 1) {
 			mLogger.fatal("Invalid configuration. You should have only 1 IController plugin, but you have "
 					+ configElements.length);
+			if (configElements.length == 0) {
+				return;
+			}
+
 			for (IConfigurationElement elem : configElements) {
 				mLogger.fatal(((IController) elem.createExecutableExtension("class")).getClass());
 			}
+
 		}
 
 		if (mCurrentController == null) {
