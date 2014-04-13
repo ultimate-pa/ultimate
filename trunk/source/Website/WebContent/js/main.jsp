@@ -1,13 +1,13 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page trimDirectiveWhitespaces="true" %>
 <%@ page import="java.util.*" %>
-<%@ page import="de.uni_freiburg.informatik.ultimate.website.Toolchain" %>
+<%@ page import="de.uni_freiburg.informatik.ultimate.website.WebToolchain" %>
 <%@ page import="de.uni_freiburg.informatik.ultimate.website.Tasks" %>
 <%@ page import="de.uni_freiburg.informatik.ultimate.website.Example" %>
 <%@ page import="de.uni_freiburg.informatik.ultimate.website.toolchains.*" %>
 <%
     Tasks tasks = new Tasks();
-    Map<String, ArrayList<Toolchain>> toolchains = Tasks.getActiveToolchains();
+    Map<String, ArrayList<WebToolchain>> toolchains = Tasks.getActiveToolchains();
     Map<Tasks.TaskNames, ArrayList<Example>> examples = Example.getExamples();
     pageContext.setAttribute("examples", examples);
     pageContext.setAttribute("toolchains", toolchains);
