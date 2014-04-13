@@ -38,14 +38,19 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 	private final IPredicate m_IaFalseState;
 	private final IPredicate m_IaTrueState;
 	
-	private final NestedWordAutomaton<CodeBlock, IPredicate> m_InterpolantAutomaton;
-	
 	private final Set<IPredicate> m_NonTrivialPredicates;
 
 	private final boolean m_UseLazyEdgeChecks;
 	
 
 	private final PredicateUnifier m_PredicateUnifier;
+	
+	/**
+	 * Split up predicates in their conjuncts. 
+	 * First experiments on few examples showed that this is decreasing the
+	 * performance.
+	 */
+	private boolean m_Cannibalize = false;
 	
 
 	
@@ -56,26 +61,37 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 			TraceChecker traceChecker) {
 		super(smtManager,edgeChecker, abstraction, traceChecker.getPostcondition(), interpolantAutomaton);
 		m_UseLazyEdgeChecks = false;
-		m_InterpolantAutomaton = interpolantAutomaton;
+		m_PredicateUnifier = traceChecker.getPredicateUnifier();
+		Collection<IPredicate> allPredicates;
+		if (m_Cannibalize ) {
+			allPredicates = m_PredicateUnifier.cannibalizeAll(interpolantAutomaton.getStates().toArray(new IPredicate[0]));
+			for (IPredicate pred : allPredicates) {
+				if (!interpolantAutomaton.getStates().contains(pred)) {
+					interpolantAutomaton.addState(false, false, pred);
+				}
+			}
+		} else {
+			allPredicates = interpolantAutomaton.getStates(); 
+		}
 		m_IaTrueState = traceChecker.getPrecondition();
 		assert m_IaTrueState.getFormula().toString().equals("true");
-		assert m_InterpolantAutomaton.getStates().contains(m_IaTrueState);
+		assert allPredicates.contains(m_IaTrueState);
 		m_Result.addState(true, false, m_IaTrueState);
 		m_ResPred2InputPreds.addPair(m_IaTrueState, m_IaTrueState);
 		m_IaFalseState = traceChecker.getPostcondition();
 		assert m_IaFalseState.getFormula().toString().equals("false");
-		assert m_InterpolantAutomaton.getStates().contains(m_IaFalseState);
+		assert allPredicates.contains(m_IaFalseState);
 		m_Result.addState(false, true, m_IaFalseState);
 		m_ResPred2InputPreds.addPair(m_IaFalseState, m_IaFalseState);
 
 		m_NonTrivialPredicates = new HashSet<IPredicate>();
-		for (IPredicate state : m_InterpolantAutomaton.getStates()) {
+		for (IPredicate state : allPredicates) {
 			if (state != m_IaTrueState && state != m_IaFalseState) {
 				m_ResPred2InputPreds.addPair(state, state);
 				m_NonTrivialPredicates.add(state);
 			}
 		}
-		m_PredicateUnifier = traceChecker.getPredicateUnifier();
+
 		s_Logger.info(startMessage());
 		
 	}
