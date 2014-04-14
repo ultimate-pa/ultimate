@@ -3,7 +3,7 @@
  * Date: 2013-12-20
  * Author: leike@informatik.uni-freiburg.de
  *
- * Was known as SyntaxSupportDisjunction2.
+ * Was previously known as SyntaxSupportDisjunction2.
  *
  * Terminates, but requires a new kind of ranking function.
  */
