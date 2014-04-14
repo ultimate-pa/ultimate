@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarFacto
 
 
 /**
- * Replace integer division and modulo by replacement variables and add 
- * linear constraints that define these replacement variables.
+ * Replace integer division and modulo by auxiliary variables and add 
+ * linear constraints that define these auxiliary variables.
  * 
  * We use the semantics of SMTLIB2 where the remainder is always positive.
  * http://smtlib.cs.uiowa.edu/theories/Ints.smt2
@@ -59,8 +59,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarFacto
  * @author Jan Leike, Matthias Heizmann
  */
 public class RewriteDivision implements PreProcessor {
-	private static final String s_DivRepPrefix = "div_rep";
-	private static final String s_ModRepPrefix = "mod_rep";
+	private static final String s_DivAuxPrefix = "div_aux";
+	private static final String s_ModAuxPrefix = "mod_aux";
 	
 	/**
 	 * The script used to transform the formula
@@ -68,39 +68,39 @@ public class RewriteDivision implements PreProcessor {
 	private Script m_Script;
 	
 	/**
-	 * Collection of all generated replacement variables and the terms
+	 * Collection of all generated auxiliary variables and the terms
 	 * that they replace.
 	 * These variables are *not* added to in- or outVars.
 	 */
-	private final Map<TermVariable, Term> m_repVars;
+	private final Map<TermVariable, Term> m_auxVars;
 	
 	/**
-	 * The replacement terms for the replacement variables for the formula.
+	 * Terms for the auxiliary variables for the formula.
 	 * These terms will be set in conjunction with the whole formula.
 	 */
-	private final Collection<Term> m_repTerms;
+	private final Collection<Term> m_auxTerms;
 	
 	/**
-	 * For generating replacement variables
+	 * For generating auxiliary variables
 	 */
-	private final VarCollector m_rankVarCollector;
+	private final VarCollector m_varCollector;
 	
 	/**
 	 * Use assert statement to check if result is equivalent to the conjunction
-	 * of input term and definition of replacement variables. 
+	 * of input term and definition of auxiliary variables. 
 	 */
 	private static final boolean s_CheckResult = true;
 	/**
 	 * Use assert statement to check if the input is equivalent to the formula
-	 * that is obtained by existentially quantifying each replacement variable
+	 * that is obtained by existentially quantifying each auxiliary variable
 	 * in the result term.
 	 */
 	private static final boolean s_CheckResultWithQuantifiers = false;
 	
-	public RewriteDivision(VarCollector rankVarCollector) {
-		m_rankVarCollector = rankVarCollector;
-		m_repVars = new LinkedHashMap<TermVariable, Term>();
-		m_repTerms = new ArrayList<Term>();
+	public RewriteDivision(VarCollector varCollector) {
+		m_varCollector = varCollector;
+		m_auxVars = new LinkedHashMap<TermVariable, Term>();
+		m_auxTerms = new ArrayList<Term>();
 	}
 	
 	@Override
@@ -114,14 +114,14 @@ public class RewriteDivision implements PreProcessor {
 		assert m_Script == null;
 		m_Script = script;
 		Term result = (new RewriteDivisionHelper()).transform(term);
-		if (m_repTerms.size() > 0) {
-			Term repTerms = Util.and(m_Script, m_repTerms.toArray(new Term[0]));
-			result = Util.and(script, result, repTerms);
+		if (m_auxTerms.size() > 0) {
+			Term auxTerms = Util.and(m_Script, m_auxTerms.toArray(new Term[0]));
+			result = Util.and(script, result, auxTerms);
 			
-			assert !s_CheckResult || !isIncorrect(term, result, repTerms) 
+			assert !s_CheckResult || !isIncorrect(term, result, auxTerms) 
 					: "rewrite division unsound";
 			assert !s_CheckResultWithQuantifiers
-					||	!isIncorrectWithQuantifiers(term, result, repTerms) 
+					||	!isIncorrectWithQuantifiers(term, result, auxTerms) 
 					: "rewrite division unsound";
 		}
 		
@@ -130,26 +130,26 @@ public class RewriteDivision implements PreProcessor {
 	
 	/**
 	 * Return true if we were able to prove that the result is incorrect.
-	 * For this check we add to the input term the definition of the replacement
+	 * For this check we add to the input term the definition of the auxiliary
 	 * variables.
 	 */
-	private boolean isIncorrect(Term input, Term result, Term repTerm) {
-		Term inputWithDefinitions = m_Script.term("and", input, repTerm);
+	private boolean isIncorrect(Term input, Term result, Term auxTerm) {
+		Term inputWithDefinitions = m_Script.term("and", input, auxTerm);
 		return LBool.SAT == Util.checkSat(m_Script,
 				m_Script.term("distinct",  inputWithDefinitions, result));
 	}
 	
 	/**
 	 * Return true if we were able to prove that the result is incorrect.
-	 * For this check we existentially quantify replacement variables in the
+	 * For this check we existentially quantify auxiliary variables in the
 	 * result term.
 	 */
 	private boolean isIncorrectWithQuantifiers(Term input, Term result,
-			Term repTerm) {
+			Term auxTerm) {
 		Term quantified;
-		if (m_repVars.size() > 0) {
+		if (m_auxVars.size() > 0) {
 			quantified = m_Script.quantifier(Script.EXISTS,
-					m_repVars.keySet().toArray(new TermVariable[0]), result);
+					m_auxVars.keySet().toArray(new TermVariable[0]), result);
 		} else {
 			quantified = m_Script.term("true");
 		}
@@ -158,43 +158,43 @@ public class RewriteDivision implements PreProcessor {
 	}
 	
 	/**
-	 * Replace integer division and modulo by replacement variables and
-	 * add definitions of these replacement variables.
+	 * Replace integer division and modulo by auxiliary variables and
+	 * add definitions of these auxiliary variables.
 	 */
 	private class RewriteDivisionHelper extends TermTransformer {
 		@Override
 		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-			VarFactory rvFactory = m_rankVarCollector.getFactory();
+			VarFactory rvFactory = m_varCollector.getFactory();
 			String func = appTerm.getFunction().getName();
 			if (func.equals("div")) {
 				assert(appTerm.getParameters().length == 2);
 				Term dividend = newArgs[0];
 				Term divisor = newArgs[1];
-				TermVariable quotientRepVar = rvFactory.getNewTermVariable(
-						s_DivRepPrefix, appTerm.getSort());
-				m_repVars.put(quotientRepVar, appTerm);
-				Term divRepTerm = computeDivReplacementTerms(
-						dividend, divisor, quotientRepVar);
-				m_repTerms.add(divRepTerm);
-				setResult(quotientRepVar);
+				TermVariable quotientAuxVar = rvFactory.getNewTermVariable(
+						s_DivAuxPrefix, appTerm.getSort());
+				m_auxVars.put(quotientAuxVar, appTerm);
+				Term divAuxTerm = computeDivAuxTerms(
+						dividend, divisor, quotientAuxVar);
+				m_auxTerms.add(divAuxTerm);
+				setResult(quotientAuxVar);
 				return;
 			} else if (func.equals("mod")) {
 				assert(appTerm.getParameters().length == 2);
 				Term dividend = newArgs[0];
 				Term divisor = newArgs[1];
-				TermVariable quotientRepVar = rvFactory.getNewTermVariable(
-						s_DivRepPrefix,
+				TermVariable quotientAuxVar = rvFactory.getNewTermVariable(
+						s_DivAuxPrefix,
 						appTerm.getSort()
 				);
-				m_repVars.put(quotientRepVar,
+				m_auxVars.put(quotientAuxVar,
 						m_Script.term("div", dividend, divisor));
-				TermVariable remainderRepVar = rvFactory.getNewTermVariable(
-						s_ModRepPrefix, appTerm.getSort());
-				m_repVars.put(remainderRepVar, appTerm);
-				Term modRepTerms = computeModReplacementTerms(dividend,
-						divisor, quotientRepVar, remainderRepVar);
-				m_repTerms.add(modRepTerms);
-				setResult(remainderRepVar);
+				TermVariable remainderAuxVar = rvFactory.getNewTermVariable(
+						s_ModAuxPrefix, appTerm.getSort());
+				m_auxVars.put(remainderAuxVar, appTerm);
+				Term modAuxTerms = computeModAuxTerms(dividend,
+						divisor, quotientAuxVar, remainderAuxVar);
+				m_auxTerms.add(modAuxTerms);
+				setResult(remainderAuxVar);
 				return;
 			} else {
 				super.convertApplicationTerm(appTerm, newArgs);
@@ -205,31 +205,31 @@ public class RewriteDivision implements PreProcessor {
 		/**
  		 * Return the conjunction of the following two formulas
  		 * <pre>
- 		 * divisor > 0 ==> quotientRepVar * divisor <= dividend < (quotientRepVar+1) * divisor
-		 * divisor < 0 ==> quotientRepVar * divisor <= dividend < (quotientRepVar-1) * divisor
+ 		 * divisor > 0 ==> quotientAuxVar * divisor <= dividend < (quotientAuxVar+1) * divisor
+		 * divisor < 0 ==> quotientAuxVar * divisor <= dividend < (quotientAuxVar-1) * divisor
 		 * </pre>
 		 * This conjunction is equivalent to the formula
-		 * (= quotientRepVar (div dividend divisor)).
+		 * (= quotientAuxVar (div dividend divisor)).
 		 * We return the result
 		 * <li> in DNF and
 		 * <li> in an <i>optimized</i> way where strict inequalities are
 		 * replaced by non-strict inequalities.
 		 */
-		private Term computeDivReplacementTerms(Term dividend, Term divisor,
-				TermVariable quotientRepVar) {
+		private Term computeDivAuxTerms(Term dividend, Term divisor,
+				TermVariable quotientAuxVar) {
 			Term[] disjuncts = new Term[2];
 			Term one = m_Script.numeral(BigInteger.ONE);
 			Term minusOne = m_Script.term("-", one);
 			Term divisorIsNegative = m_Script.term("<=", divisor, minusOne);
 			Term divisorIsPositive = m_Script.term(">=", divisor, one);
-			Term quotientMulDivisor = m_Script.term("*", quotientRepVar, divisor);
+			Term quotientMulDivisor = m_Script.term("*", quotientAuxVar, divisor);
 			Term isLowerBound = m_Script.term("<=", quotientMulDivisor, dividend);
 			Term strictUpperBoundPosDivisor = m_Script.term(
-					"*", m_Script.term("+", quotientRepVar, one), divisor);
+					"*", m_Script.term("+", quotientAuxVar, one), divisor);
 			Term upperBoundPosDivisor = m_Script.term(
 					"-", strictUpperBoundPosDivisor, one);
 			Term strictUpperBoundNegDivisor = m_Script.term(
-					"*", m_Script.term("-", quotientRepVar, one), divisor);
+					"*", m_Script.term("-", quotientAuxVar, one), divisor);
 			Term upperBoundNegDivisor = m_Script.term(
 					"-", strictUpperBoundNegDivisor, one);
 			Term isUpperBoundPosDivisor = m_Script.term(
@@ -246,38 +246,38 @@ public class RewriteDivision implements PreProcessor {
 		/**
 		 * Return the conjunction of the following three formulas
 		 * <pre>
- 		 * dividend = quotientRepVar * divisor + remainderRepVar
-		 * divisor > 0 ==> 0 <= remainderRepVar < divisor
-		 * divisor < 0 ==> 0 <= remainderRepVar < -divisor
+ 		 * dividend = quotientAuxVar * divisor + remainderAuxVar
+		 * divisor > 0 ==> 0 <= remainderAuxVar < divisor
+		 * divisor < 0 ==> 0 <= remainderAuxVar < -divisor
 		 * </pre>
 		 * This conjunction is equivalent to the conjunction of the following 
 		 * two formulas. 
-		 * (= quotientRepVar (div dividend divisor))
-		 * (= remainderRepVar (mod dividend divisor))
+		 * (= quotientAuxVar (div dividend divisor))
+		 * (= remainderAuxVar (mod dividend divisor))
  		 * We return the result
 		 * <li> in DNF and
 		 * <li> in an <i>optimized</i> way where strict inequalities are
 		 * replaced by non-strict inequalities.
 		 */
-		private Term computeModReplacementTerms(Term dividend, Term divisor,
-				TermVariable quotientRepVar, TermVariable remainderRepVar) {
+		private Term computeModAuxTerms(Term dividend, Term divisor,
+				TermVariable quotientAuxVar, TermVariable remainderAuxVar) {
 			Term[] disjuncts = new Term[2];
 			Term one = m_Script.numeral(BigInteger.ONE);
 			Term minusOne = m_Script.term("-", one);
 			Term divisorIsNegative = m_Script.term("<=", divisor, minusOne);
 			Term divisorIsPositive = m_Script.term(">=", divisor, one);
 			Term zero = m_Script.numeral(BigInteger.ZERO);
-			Term isLowerBound = m_Script.term("<=", zero, remainderRepVar);
+			Term isLowerBound = m_Script.term("<=", zero, remainderAuxVar);
 			Term upperBoundPosDivisor = m_Script.term("-", divisor, one);
 			Term isUpperBoundPosDivisor = 
-					m_Script.term("<=", remainderRepVar, upperBoundPosDivisor);
+					m_Script.term("<=", remainderAuxVar, upperBoundPosDivisor);
 			Term upperBoundNegDivisor = 
 					m_Script.term("-", m_Script.term("-", divisor), one);
 			Term isUpperBoundNegDivisor = 
-					m_Script.term("<=", remainderRepVar, upperBoundNegDivisor);
+					m_Script.term("<=", remainderAuxVar, upperBoundNegDivisor);
 			Term equality = m_Script.term("=", dividend, 
 					m_Script.term("+", m_Script.term("*", 
-							quotientRepVar, divisor), remainderRepVar));
+							quotientAuxVar, divisor), remainderAuxVar));
 			disjuncts[0] = Util.and(m_Script, divisorIsPositive, isLowerBound, 
 					isUpperBoundPosDivisor, equality);
 			disjuncts[1] = Util.and(m_Script, divisorIsNegative, isLowerBound, 
