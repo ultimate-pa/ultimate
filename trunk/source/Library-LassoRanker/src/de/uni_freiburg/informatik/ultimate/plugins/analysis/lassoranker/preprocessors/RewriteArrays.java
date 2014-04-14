@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVarCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ElimStore3.ArrayReadException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ElimStore3.ArrayStoreDef;
@@ -79,7 +79,7 @@ public class RewriteArrays implements PreProcessor {
 	/**
 	 * For generating replacement variables
 	 */
-	private final RankVarCollector m_rankVarCollector;
+	private final VarCollector m_rankVarCollector;
 	
 	/**
 	 * Use assert statement to check if result is equivalent to the conjunction
@@ -93,7 +93,7 @@ public class RewriteArrays implements PreProcessor {
 	 */
 	private static final boolean s_CheckResultWithQuantifiers = false;
 	
-	public RewriteArrays(RankVarCollector rankVarCollector) {
+	public RewriteArrays(VarCollector rankVarCollector) {
 		m_rankVarCollector = rankVarCollector;
 		m_repVars = new LinkedHashMap<TermVariable, Term>();
 		m_repTerms = new ArrayList<Term>();

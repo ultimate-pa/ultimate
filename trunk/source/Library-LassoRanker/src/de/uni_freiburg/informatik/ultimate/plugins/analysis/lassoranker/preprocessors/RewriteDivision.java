@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVarCollector;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVarFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarFactory;
 
 
 /**
@@ -83,7 +83,7 @@ public class RewriteDivision implements PreProcessor {
 	/**
 	 * For generating replacement variables
 	 */
-	private final RankVarCollector m_rankVarCollector;
+	private final VarCollector m_rankVarCollector;
 	
 	/**
 	 * Use assert statement to check if result is equivalent to the conjunction
@@ -97,7 +97,7 @@ public class RewriteDivision implements PreProcessor {
 	 */
 	private static final boolean s_CheckResultWithQuantifiers = false;
 	
-	public RewriteDivision(RankVarCollector rankVarCollector) {
+	public RewriteDivision(VarCollector rankVarCollector) {
 		m_rankVarCollector = rankVarCollector;
 		m_repVars = new LinkedHashMap<TermVariable, Term>();
 		m_repTerms = new ArrayList<Term>();
@@ -164,7 +164,7 @@ public class RewriteDivision implements PreProcessor {
 	private class RewriteDivisionHelper extends TermTransformer {
 		@Override
 		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-			RankVarFactory rvFactory = m_rankVarCollector.getFactory();
+			VarFactory rvFactory = m_rankVarCollector.getFactory();
 			String func = appTerm.getFunction().getName();
 			if (func.equals("div")) {
 				assert(appTerm.getParameters().length == 2);

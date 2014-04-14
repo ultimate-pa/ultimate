@@ -40,13 +40,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 
 /**
- * Used to create and manage RankVars.
+ * Used to create and manage RankVars and auxiliary variables.
  * The RankVars created through this class are properly unique.
- * This also facilitates as an auxiliary TermVariable generator.
  * 
  * @author Jan Leike
  */
-public class RankVarFactory implements Serializable {
+public class VarFactory implements Serializable {
 	private static final long serialVersionUID = 7278586799569746241L;
 	
 	/**
@@ -74,7 +73,7 @@ public class RankVarFactory implements Serializable {
 	 * 
 	 * @param boogie2smt
 	 */
-	public RankVarFactory(Boogie2SMT boogie2smt) {
+	public VarFactory(Boogie2SMT boogie2smt) {
 		assert boogie2smt != null;
 		m_varManager = boogie2smt.getVariableManager();
 		m_boogieWrappers = new LinkedHashMap<BoogieVar, BoogieVarWrapper>();

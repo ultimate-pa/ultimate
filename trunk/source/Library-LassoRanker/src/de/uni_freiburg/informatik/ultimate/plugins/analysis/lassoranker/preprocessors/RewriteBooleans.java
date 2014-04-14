@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.BoogieVarWrapper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVarCollector;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVarFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarFactory;
 
 
 /**
@@ -66,7 +66,7 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 	/**
 	 * For generating replacement variables
 	 */
-	private final RankVarCollector m_rankVarCollector;
+	private final VarCollector m_rankVarCollector;
 	
 	/**
 	 * A collection of the generated replacement variables
@@ -84,7 +84,7 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 	 * @param rankVarCollector collecting the new in- and outVars
 	 * @param script the Script for creating new variables
 	 */
-	public RewriteBooleans(RankVarCollector rankVarCollector, Script script) {
+	public RewriteBooleans(VarCollector rankVarCollector, Script script) {
 		m_rankVarCollector = rankVarCollector;
 		m_translator = new LinkedHashMap<TermVariable, TermVariable>();
 		m_repVars = new ArrayList<ReplacementVar>();
@@ -98,7 +98,7 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 	 * Creates a new replacement variable, if needed.
 	 */
 	private ReplacementVar getReplacementVar(BoogieVar boogieVar) {
-		RankVarFactory rvFactory = m_rankVarCollector.getFactory();
+		VarFactory rvFactory = m_rankVarCollector.getFactory();
 		ReplacementVar repVar = rvFactory.getRepVar(boogieVar);
 		if (repVar == null) {
 			String name = boogieVar.getGloballyUniqueId() + "_bool";
@@ -116,7 +116,7 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 	 * @param transFormula the transition formula from which the term originated
 	 */
 	private void generateRepVars() {
-		RankVarFactory rvFactory = m_rankVarCollector.getFactory();
+		VarFactory rvFactory = m_rankVarCollector.getFactory();
 		Collection<Map.Entry<RankVar, TermVariable>> entrySet =
 				new ArrayList<Map.Entry<RankVar, TermVariable>>(
 						m_rankVarCollector.getInVars().entrySet());

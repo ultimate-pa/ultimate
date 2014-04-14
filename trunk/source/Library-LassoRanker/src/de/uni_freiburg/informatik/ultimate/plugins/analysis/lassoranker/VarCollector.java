@@ -41,22 +41,21 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
  * 
  * @author Jan Leike
  * 
- * @see RankVarFactory
+ * @see VarFactory
  * @see RankVar
  */
-public class RankVarCollector implements Serializable {
+public class VarCollector implements Serializable {
 	private static final long serialVersionUID = -1005909010259944923L;
 	
 	private final Map<RankVar, TermVariable> m_inVars;
 	private final Map<RankVar, TermVariable> m_outVars;
-	private final RankVarFactory m_factory;
+	private final VarFactory m_factory;
 	
 	/**
-	 * Create a new RankVarCollector
-	 * @param boogie2smt
-	 * @param factory
+	 * Create a new VarCollector
+	 * @param factory the VarFactory to be used for creating RankVars
 	 */
-	public RankVarCollector(RankVarFactory factory) {
+	public VarCollector(VarFactory factory) {
 		assert factory != null;
 		m_inVars = new LinkedHashMap<RankVar, TermVariable>();
 		m_outVars = new LinkedHashMap<RankVar, TermVariable>();
@@ -64,12 +63,12 @@ public class RankVarCollector implements Serializable {
 	}
 	
 	/**
-	 * Construct a RankVarCollector from a TransFormula, adding and translating
+	 * Construct a VarCollector from a TransFormula, adding and translating
 	 * all existing in- and outVars in the process.
-	 * @param factory the RankVarFactory to be used for creating RankVars
+	 * @param factory the VarFactory to be used for creating RankVars
 	 * @param transition for extracting in- and outVars
 	 */
-	public RankVarCollector(RankVarFactory factory, TransFormula transition) {
+	public VarCollector(VarFactory factory, TransFormula transition) {
 		this(factory);
 		
 		// Add existing in- and outVars
@@ -100,9 +99,9 @@ public class RankVarCollector implements Serializable {
 	}
 	
 	/**
-	 * @return the associated RankVarFactory
+	 * @return the associated VarFactory
 	 */
-	public RankVarFactory getFactory() {
+	public VarFactory getFactory() {
 		return m_factory;
 	}
 	

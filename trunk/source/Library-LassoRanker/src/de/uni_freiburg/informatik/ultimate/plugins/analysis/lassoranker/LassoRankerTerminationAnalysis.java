@@ -87,7 +87,7 @@ public class LassoRankerTerminationAnalysis {
 	/**
 	 * The RankVarFactory used by the preprocessors and the RankVarCollector
 	 */
-	private final RankVarFactory m_rankVarFactory;
+	private final VarFactory m_rankVarFactory;
 	
 	/**
 	 * SMT script that created the transition formulae
@@ -132,7 +132,7 @@ public class LassoRankerTerminationAnalysis {
 					throws TermException {
 		m_preferences = preferences;
 		checkPreferences(preferences);
-		m_rankVarFactory = new RankVarFactory(boogie2smt);
+		m_rankVarFactory = new VarFactory(boogie2smt);
 		m_old_script = script;
 		
 		m_stem_transition = stem;
@@ -194,7 +194,7 @@ public class LassoRankerTerminationAnalysis {
 	 * @return an array of all preprocessors that should be called before
 	 *         termination analysis
 	 */
-	protected PreProcessor[] getPreProcessors(RankVarCollector rvc) {
+	protected PreProcessor[] getPreProcessors(VarCollector rvc) {
 		return new PreProcessor[] {
 				new RewriteDivision(rvc),
 				new RewriteBooleans(rvc, m_old_script),
@@ -237,8 +237,8 @@ public class LassoRankerTerminationAnalysis {
 		s_Logger.info("Starting preprocessing step...");
 		
 		Term trans_term = transition.getFormula();
-		RankVarCollector rvc =
-				new RankVarCollector(m_rankVarFactory, transition);
+		VarCollector rvc =
+				new VarCollector(m_rankVarFactory, transition);
 		
 		// Apply preprocessors
 		for (PreProcessor preprocessor : this.getPreProcessors(rvc)) {
