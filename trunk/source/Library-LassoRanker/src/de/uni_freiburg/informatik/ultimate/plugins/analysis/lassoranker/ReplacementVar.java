@@ -45,13 +45,24 @@ public class ReplacementVar extends RankVar {
 	
 	/**
 	 * @param name a globally unique name
-	 * @param boogieVar the associated boogieVar, if any
+	 * @param boogieVar the associated boogieVar
 	 * @param definition the definition of this replacement variable, i.e.,
 	 *                   the term it replaces
 	 */
 	public ReplacementVar(String name, BoogieVar boogieVar, Term definition) {
 		m_name = name;
 		m_boogieVar = boogieVar;
+		m_definition = definition;
+	}
+	
+	/**
+	 * @param name a globally unique name
+	 * @param definition the definition of this replacement variable, i.e.,
+	 *                   the term it replaces
+	 */
+	public ReplacementVar(String name, Term definition) {
+		m_name = name;
+		m_boogieVar = null;
 		m_definition = definition;
 	}
 	
