@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ho
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -142,16 +143,17 @@ public class BuchiCegarLoop {
 
 
 		
-		private PredicateFactory m_DefaultStateFactory;
+		private final PredicateFactory m_DefaultStateFactory;
+		private final PredicateFactoryResultChecking m_PredicateFactoryResultChecking;
 
-		private HoareAnnotationFragments m_Haf;
+		private final HoareAnnotationFragments m_Haf;
 
-		private PredicateFactoryRefinement m_StateFactoryForRefinement;
+		private final PredicateFactoryRefinement m_StateFactoryForRefinement;
 
-		private ModuleDecompositionBenchmark m_MDBenchmark = 
+		private final ModuleDecompositionBenchmark m_MDBenchmark = 
 				new ModuleDecompositionBenchmark();
 		
-		private TimingBenchmark m_TimingBenchmark;
+		private final TimingBenchmark m_TimingBenchmark;
 
 		
 
@@ -197,6 +199,7 @@ public class BuchiCegarLoop {
 			m_DefaultStateFactory = new PredicateFactory(
 					m_SmtManager,
 					m_Pref);
+			m_PredicateFactoryResultChecking = new PredicateFactoryResultChecking(m_SmtManager);
 			
 			m_Haf = new HoareAnnotationFragments();
 			m_StateFactoryForRefinement = new PredicateFactoryRefinement(
@@ -448,7 +451,7 @@ public class BuchiCegarLoop {
 			Collection<Set<IPredicate>> partition = BuchiCegarLoop.computePartition(m_Abstraction);
 			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = 
 					new MinimizeSevpa<CodeBlock, IPredicate>(m_Abstraction, partition, false, false, m_StateFactoryForRefinement);
-			assert (minimizeOp.checkResult(m_DefaultStateFactory));
+			assert (minimizeOp.checkResult(m_PredicateFactoryResultChecking));
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
 			m_Abstraction = minimized;
 			s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
