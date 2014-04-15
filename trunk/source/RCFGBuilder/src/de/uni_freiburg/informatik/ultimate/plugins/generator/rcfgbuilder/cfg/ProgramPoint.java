@@ -6,6 +6,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
@@ -35,20 +36,22 @@ public class ProgramPoint extends RCFGNode {
 	final private boolean m_IsErrorLocation;
 
 	public ProgramPoint(String position, String procedure, boolean isErrorLoc,
-			BoogieASTNode BoogieASTNode) {
+			BoogieASTNode boogieASTNode) {
 		super();
 		this.m_Procedure = procedure;
 		this.m_Position = position;
 		this.m_IsErrorLocation = isErrorLoc;
-		this.m_BoogieASTNode = BoogieASTNode;
+		this.m_BoogieASTNode = boogieASTNode;
 
 		ILocation loc = null;
-		if (BoogieASTNode instanceof Statement) {
-			Statement st = (Statement) BoogieASTNode;
+		if (boogieASTNode instanceof Statement) {
+			Statement st = (Statement) boogieASTNode;
 			loc = st.getLocation();
-		} else if (BoogieASTNode instanceof Specification) {
-			Specification spec = (Specification) BoogieASTNode;
+		} else if (boogieASTNode instanceof Specification) {
+			Specification spec = (Specification) boogieASTNode;
 			loc = spec.getLocation();
+		} else if (boogieASTNode instanceof Procedure) {
+			loc = boogieASTNode.getLocation();
 		}
 		mPayload = new Payload(loc, position);
 		String name = "Procedure: " + m_Procedure + "Position: " + m_Position;

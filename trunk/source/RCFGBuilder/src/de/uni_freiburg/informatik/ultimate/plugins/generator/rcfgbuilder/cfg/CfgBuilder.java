@@ -192,10 +192,13 @@ public class CfgBuilder {
 			Body body = m_BoogieDeclarations.getProcImplementation().get(procName).getBody();
 			Statement firstStatement = body.getBlock()[0];
 			ProgramPoint entryNode = new ProgramPoint(procName + "ENTRY", procName, false, firstStatement);
+			// We have to use some ASTNode for final and exit node. Let's take
+			// the procedure implementation.
+			Procedure impl = m_BoogieDeclarations.getProcImplementation().get(procName);
 			m_RootAnnot.m_entryNode.put(procName, entryNode);
-			ProgramPoint finalNode = new ProgramPoint(procName + "FINAL", procName, false, null);
+			ProgramPoint finalNode = new ProgramPoint(procName + "FINAL", procName, false, impl);
 			m_RootAnnot.m_finalNode.put(procName, finalNode);
-			ProgramPoint exitNode = new ProgramPoint(procName + "EXIT", procName, false, null);
+			ProgramPoint exitNode = new ProgramPoint(procName + "EXIT", procName, false, impl);
 			m_RootAnnot.m_exitNode.put(procName, exitNode);
 
 			new RootEdge(m_Graphroot, m_RootAnnot.m_entryNode.get(procName));
@@ -952,7 +955,7 @@ public class CfgBuilder {
 			for (String label : targets) {
 				// Add an auxiliary GotoEdge and a LocNode
 				// for each target of the GotoStatement.
-				ProgramPoint targetLocNode = getLocNodeforLabel(label, null);
+				ProgramPoint targetLocNode = getLocNodeforLabel(label, st);
 				m_GotoEdges.add(new GotoEdge(locNode, targetLocNode));
 			}
 			// We have not constructed a new node that should be used in the
