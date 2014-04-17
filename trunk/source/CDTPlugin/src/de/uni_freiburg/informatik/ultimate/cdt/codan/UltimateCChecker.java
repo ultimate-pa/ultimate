@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
 /**
  * @author Markus Lindenmann
@@ -223,6 +224,10 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		} else if (result instanceof PositiveResult) {
 			reportProblem(CCheckerDescriptor.POS_ID, result, loc);
 		} else if (result instanceof SyntaxErrorResult) {
+			reportProblem(CCheckerDescriptor.SYNERR_ID, result, loc);
+		} else if (result instanceof UnsupportedSyntaxResult) {
+			//TODO: Introduce new String in CCheckerDescriptor for 
+			// unsupported Syntax?
 			reportProblem(CCheckerDescriptor.SYNERR_ID, result, loc);
 		} else if (result instanceof TimeoutResultAtElement) {
 			reportProblem(CCheckerDescriptor.TIMEOUT_ID, result, loc);
