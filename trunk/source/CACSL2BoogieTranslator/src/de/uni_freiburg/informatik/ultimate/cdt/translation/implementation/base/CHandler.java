@@ -2539,11 +2539,16 @@ public class CHandler implements ICHandler {
 		//TODO: check validity of cast?
 		
 		ResultTypes resTypes = (ResultTypes) main.dispatch(node.getTypeId().getDeclSpecifier());
-		int noPtrOps = node.getTypeId().getAbstractDeclarator().getPointerOperators().length; //FIXME: ??
 		
-		CType newCType = resTypes.cType;
-		for (int i = 0; i < noPtrOps; i++) 
-			newCType = new CPointer(newCType);
+		mCurrentDeclaredTypes.push(resTypes);
+		ResultDeclaration declResult = (ResultDeclaration) main.dispatch(node.getTypeId().getAbstractDeclarator());
+//		int noPtrOps = node.getTypeId().getAbstractDeclarator().getPointerOperators().length; //FIXME: ??
+//		CType newCType = resTypes.cType;
+//		for (int i = 0; i < noPtrOps; i++) 
+//			newCType = new CPointer(newCType);
+		assert declResult.getDeclarations().size() == 1;
+		CType newCType = declResult.getDeclarations().get(0).getType();
+		mCurrentDeclaredTypes.pop();
 		
 		// cast pointer -> integer/other pointer
 		CType underlyingType = expr.lrVal.cType.getUnderlyingType();
