@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 public class CFunction extends CType {
 	
 	CType mResultType;
+
 	CDeclaration[] mParamTypes;
 
 	public CFunction(CType resultType, CDeclaration[] paramTypes) {
@@ -15,6 +16,10 @@ public class CFunction extends CType {
 		mParamTypes = paramTypes;
 	}
 	
+	public CType getResultType() {
+		return mResultType;
+	}
+
 	public CDeclaration[] getParameterTypes() {
 		return mParamTypes;
 	}

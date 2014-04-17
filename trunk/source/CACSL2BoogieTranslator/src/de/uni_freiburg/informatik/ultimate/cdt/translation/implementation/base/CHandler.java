@@ -610,9 +610,12 @@ public class CHandler implements ICHandler {
 				//update symbol table
 				for (CDeclaration cDec : declResult.getDeclarations()) {
 					
-					if (cDec.getType() instanceof CFunction) {
-						functionHandler.handleFunctionDeclarator(main, contract, 
-								(IASTFunctionDeclarator) d, cDec, resType);
+					//functions keep their cId, and their declaration is not stored in the symbolTable but in
+					// FunctionHandler.procedures.
+					if (cDec.getType() instanceof CFunction && storageClass != StorageClass.TYPEDEF) {
+						//update functionHandler.procedures instead of symbol table
+						functionHandler.handleFunctionDeclarator(main, new CACSLLocation(d), contract, 
+								cDec);
 						continue;
 					}	
 					
@@ -1049,7 +1052,7 @@ public class CHandler implements ICHandler {
 
 		switch (node.getOperator()) {
 		case IASTUnaryExpression.op_minus:
-			ResultExpression ropToInt = ConvExpr.rexToIntIfNecessary(loc, rop);
+			ResultExpression ropToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rop);
 			return new ResultExpression(
 					ropToInt.stmt,
 					new RValue(new UnaryExpression(loc,
@@ -1065,7 +1068,7 @@ public class CHandler implements ICHandler {
 			 * becomes <code>!y ? 1 : 0</code>
 			 */
 			/** int <code>x</code> becomes <code>x == 0 ? 1 : 0</code> */
-			ResultExpression ropToBool = ConvExpr.rexToBoolIfNecessary(loc, rop);
+			ResultExpression ropToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rop);
 			Expression negated = new UnaryExpression(loc,
 					UnaryExpression.Operator.LOGICNEG,
 					ropToBool.lrVal.getValue());
@@ -1077,7 +1080,7 @@ public class CHandler implements ICHandler {
 			re.addAll(ropToBool);
 			return re;
 		case IASTUnaryExpression.op_plus:
-			ropToInt = ConvExpr.rexToIntIfNecessary(loc, rop);
+			ropToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rop);
 			return new ResultExpression(ropToInt.stmt, ropToInt.lrVal, ropToInt.decl,
 			        ropToInt.auxVars, ropToInt.overappr);
 		case IASTUnaryExpression.op_postFixIncr:
@@ -1397,7 +1400,7 @@ public class CHandler implements ICHandler {
 			overappr.addAll(l.overappr);
 			overappr.addAll(rr.overappr);
 			if (l.lrVal.cType instanceof CPrimitive && ((CPrimitive) l.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				ResultExpression rrToInt = ConvExpr.rexToIntIfNecessary(loc,rr);
+				ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc,rr);
 				return makeAssignment(main, loc, stmt, l.lrVal, (RValue) rrToInt.lrVal, 
 						decl, auxVars, overappr, l.unionFieldIdToCType);//, r.lrVal.cType);
 			} else {
@@ -1435,8 +1438,8 @@ public class CHandler implements ICHandler {
 			default:
 				throw new AssertionError("???");
 			}
-			ResultExpression rrToInt = ConvExpr.rexToIntIfNecessary(loc,rr);
-			ResultExpression rlToInt = ConvExpr.rexToIntIfNecessary(loc,rl);
+			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc,rr);
+			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc,rl);
 			stmt.addAll(rlToInt.stmt);
 			stmt.addAll(rrToInt.stmt);
 			decl.addAll(rlToInt.decl);
@@ -1476,8 +1479,8 @@ public class CHandler implements ICHandler {
 					decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_logicalAnd: {
-			ResultExpression rlToBool = ConvExpr.rexToBoolIfNecessary(loc, rl);
-			ResultExpression rrToBool = ConvExpr.rexToBoolIfNecessary(loc, rr);
+			ResultExpression rlToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rl);
+			ResultExpression rrToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rr);
 
 			stmt.addAll(rlToBool.stmt);
 			// NOTE: no rr.stmt
@@ -1541,8 +1544,8 @@ public class CHandler implements ICHandler {
 					decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_logicalOr: {
-			ResultExpression rlToBool = ConvExpr.rexToBoolIfNecessary(loc, rl);
-			ResultExpression rrToBool = ConvExpr.rexToBoolIfNecessary(loc, rr);
+			ResultExpression rlToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rl);
+			ResultExpression rrToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rr);
 
 			stmt.addAll(rlToBool.stmt);
 			// NOTE: no rr.stmt
@@ -1609,8 +1612,8 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_modulo:
 		case IASTBinaryExpression.op_multiply:
 		case IASTBinaryExpression.op_divide: {
-			ResultExpression rlToInt = ConvExpr.rexToIntIfNecessary(loc, rl);
-			ResultExpression rrToInt = ConvExpr.rexToIntIfNecessary(loc, rr);
+			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
+			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
 			stmt.addAll(rlToInt.stmt);
 			stmt.addAll(rrToInt.stmt);
 			decl.addAll(rlToInt.decl);
@@ -1970,7 +1973,7 @@ public class CHandler implements ICHandler {
 		ResultExpression condResult = (ResultExpression) main.dispatch(
 				node.getConditionExpression());
 		condResult = condResult.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-		condResult = ConvExpr.rexToBoolIfNecessary(loc, condResult);
+		condResult = ConvExpr.rexIntToBoolIfNecessary(loc, condResult);
 		RValue cond = (RValue) condResult.lrVal;
 		decl.addAll(condResult.decl);
 		stmt.addAll(condResult.stmt);
@@ -2143,7 +2146,7 @@ public class CHandler implements ICHandler {
 		}
 
 		condResult = condResult.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-		condResult = ConvExpr.rexToBoolIfNecessary(loc, condResult);
+		condResult = ConvExpr.rexIntToBoolIfNecessary(loc, condResult);
 		decl.addAll(condResult.decl);
 //		RValue condRVal = ConvExpr.toBoolean(loc, (RValue) condResult.lrVal);
 		RValue condRVal = (RValue) condResult.lrVal;
@@ -2551,10 +2554,11 @@ public class CHandler implements ICHandler {
 		        Expression e = MemoryHandler.getPointerOffset(expr.lrVal.getValue(), loc);
 		        expr.lrVal = new RValue(e, newCType);
 		    }
-		    // cast from pointer to pointer is ignored
+		    // cast from pointer to pointer is ignored -- alex: now no more -- type is changed
 		    else if (!(newCType.getUnderlyingType() instanceof CPointer)) {
-                throw new UnsupportedSyntaxException(loc,
-                        "Explicit cast from pointer not supported.");
+//                throw new UnsupportedSyntaxException(loc,
+//                        "Explicit cast from pointer not supported.");
+		    	expr.lrVal.cType = newCType;
             }
 		}
 		// cast integer -> pointer
@@ -2569,7 +2573,7 @@ public class CHandler implements ICHandler {
 		}
 		
 		expr.lrVal.cType = newCType;
-		expr.lrVal.getValue().setType(new InferredType(newCType));
+//		expr.lrVal.getValue().setType(new InferredType(newCType));
 		
 //		String msg = "Ignored cast! At line: "
 //				+ node.getFileLocation().getStartingLineNumber();
@@ -2586,7 +2590,7 @@ public class CHandler implements ICHandler {
 		assert resLocCond instanceof ResultExpression;
 		ResultExpression reLocCond = (ResultExpression) resLocCond;
 		reLocCond = reLocCond.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-		reLocCond = ConvExpr.rexToBoolIfNecessary(loc, reLocCond);
+		reLocCond = ConvExpr.rexIntToBoolIfNecessary(loc, reLocCond);
 
 		Result rPositive = main.dispatch(node.getPositiveResultExpression());
 		assert rPositive instanceof ResultExpression;

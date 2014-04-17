@@ -326,7 +326,7 @@ public class PostProcessor {
 				if (initializer == null) {
 					rhs = new IntegerLiteral(loc, SFO.NR0);
 				} else {
-					initializer = ConvExpr.rexToIntIfNecessary(loc, initializer);
+					initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer);
 					rhs = initializer.lrVal.getValue();
 				}
 				break;

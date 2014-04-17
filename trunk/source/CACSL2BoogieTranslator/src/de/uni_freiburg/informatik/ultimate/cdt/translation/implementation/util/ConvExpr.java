@@ -108,7 +108,7 @@ public class ConvExpr {
 	}
 	
 	
-	public static ResultExpression rexToBoolIfNecessary(ILocation loc, ResultExpression rl) {
+	public static ResultExpression rexIntToBoolIfNecessary(ILocation loc, ResultExpression rl) {
 		ResultExpression rlToBool = null;
 		if (rl.lrVal.isBoogieBool) {
 			rlToBool = rl;
@@ -119,7 +119,7 @@ public class ConvExpr {
 		return rlToBool;
 	}
 
-	public static ResultExpression rexToIntIfNecessary(ILocation loc, ResultExpression rl) {
+	public static ResultExpression rexBoolToIntIfNecessary(ILocation loc, ResultExpression rl) {
 		ResultExpression rlToInt = null;
 		if (rl.lrVal.isBoogieBool) {
 			rlToInt = new ResultExpression(ConvExpr.boolToInt(loc, (RValue) rl.lrVal));

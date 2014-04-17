@@ -466,18 +466,13 @@ public class TypeHandler implements ITypeHandler {
     @Override
 	public ASTType ctype2asttype(ILocation loc, CType cType, boolean isBool, boolean isPointer) {
 		if (cType instanceof CPrimitive) {
-			switch (((CPrimitive) cType).getType()) {
+//			switch (((CPrimitive) cType).getType()) {
+			switch (((CPrimitive) cType).getGeneralType()) {
 			case VOID:
 				return null; //(alex:) seems to be lindemm's convention, see FunctionHandler.isInParamVoid(..)
-			case BOOL:
-			case CHAR:
-			case CHAR16:
-			case CHAR32:
-			case WCHAR:
-			case INT:
+			case INTTYPE:
 				return new PrimitiveType(loc, SFO.INT);
-			case FLOAT:
-			case DOUBLE:
+			case FLOATTYPE:
 				return new PrimitiveType(loc, SFO.REAL);
 			default:
 				throw new UnsupportedSyntaxException(loc, "unknown primitive type");
@@ -490,7 +485,6 @@ public class TypeHandler implements ITypeHandler {
 			String[] typeParams = new String[0]; //new String[cart.getDimensions().length];
 			for (int i = 0; i < cart.getDimensions().length; i++) {
 				indexTypes[i] = new PrimitiveType(loc, SFO.INT);//C only allows integer indices
-				
 			}
 			return new ArrayType(loc, typeParams, indexTypes, this.ctype2asttype(loc, cart.getValueType()));
 		} else if (cType instanceof CStruct) {
@@ -509,7 +503,8 @@ public class TypeHandler implements ITypeHandler {
 			//should work as we save the unique typename we computed in CNamed, not the name from the source c file
 			return new NamedType(loc, ((CNamed) cType).getName(), new ASTType[0]);
 		} else if (cType instanceof CFunction) {
-				throw new UnsupportedSyntaxException(loc, "how to translate function type?");
+//				throw new UnsupportedSyntaxException(loc, "how to translate function type?");
+			return null; //FIXME -- is this ok??
 		}
 		throw new UnsupportedSyntaxException(loc, "unknown type");
 	}

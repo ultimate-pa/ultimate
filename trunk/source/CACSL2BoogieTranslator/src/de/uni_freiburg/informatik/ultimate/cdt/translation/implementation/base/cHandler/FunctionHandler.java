@@ -202,17 +202,22 @@ public class FunctionHandler {
 	}
 
 	/**
-	 * Has additional index.
-	 * @param cDec 
+	 * This is called from SimpleDeclaration and handles a C function declaration.
 	 * 
-	 * @see handleFunctionDeclaration()
-	 * @param index index of the declaration list
+	 * The effects are:
+	 *  - the declaration is stored to FunctionHandler.procedures (which stores all Boogie 
+	 *  procedure declarations
+	 *  - procedureTo(Return/Param)CType memebers are updated
+	 *  
+	 * The returned result is empty (ResultSkip).
+	 * @param cDec the CDeclaration of the function that was computed by visit SimpleDeclaration
+	 * @param loc the location of the FunctionDeclarator
 	 */
-	public Result handleFunctionDeclarator(Dispatcher main,
-			List<ACSLNode> contract, IASTFunctionDeclarator cFuncDeclarator, CDeclaration cDec, ResultTypes returnType) {
-		CACSLLocation loc = new CACSLLocation(cFuncDeclarator);
-		String methodName = cFuncDeclarator.getName().toString();
-//		CFunction funcType = (CFunction) cDec.getType();
+	public Result handleFunctionDeclarator(Dispatcher main, ILocation loc,
+			List<ACSLNode> contract, CDeclaration cDec) {
+		String methodName = cDec.getName();
+		CFunction funcType = (CFunction) cDec.getType();
+		
 		// begin new scope for retranslation of ACSL specification
 		main.cHandler.beginScope();
 		
@@ -226,14 +231,14 @@ public class FunctionHandler {
 		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract,
 				methodName);
 
-		// we check the type via typeHandler
-//		ResultTypes returnType = (ResultTypes) main.dispatch(node
-//				.getDeclSpecifier());
-		ResultTypes checkedType = main.cHandler.checkForPointer(main,
-//                node.getDeclarators()[0].getPointerOperators(), returnType, false);
-                cFuncDeclarator.getPointerOperators(), returnType, false);
-        if (returnType.isVoid &&
-                !(checkedType.cType instanceof CPointer)) {
+//		ResultTypes checkedType = main.cHandler.checkForPointer(main,
+//                cFuncDeclarator.getPointerOperators(), returnType, false);
+		
+//        if (returnType.isVoid &&
+        if (funcType.getResultType() instanceof CPrimitive && 
+        		((CPrimitive) funcType.getResultType()).getType() == PRIMITIVE.VOID &&
+//                !(checkedType.cType instanceof CPointer)) {
+                !(funcType.getResultType() instanceof CPointer)) {
 			if (methodsCalledBeforeDeclared.contains(methodName)) {
 				// this method was assumed to return int -> return int
 				out[0] = new VarList(loc, new String[] { SFO.RES },
@@ -245,7 +250,8 @@ public class FunctionHandler {
 			}
 		} else {
 			// we found a type, so node is type ASTType
-			ASTType type = main.typeHandler.ctype2asttype(loc, checkedType.cType);
+//			ASTType type = main.typeHandler.ctype2asttype(loc, checkedType.cType);
+			ASTType type = main.typeHandler.ctype2asttype(loc, funcType.getResultType());
 			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
 		}
 		if (!modifiedGlobals.containsKey(methodName)) {
@@ -269,11 +275,7 @@ public class FunctionHandler {
 				out, spec, null);
 					
 		procedures.put(methodName, proc);
-		procedureToReturnCType.put(methodName, returnType.cType);
-		
-		// fill map of parameter types
-		ArrayList<CType> paramTypes =
-		        new ArrayList<CType>(proc.getInParams().length);
+		procedureToReturnCType.put(methodName, funcType.getResultType());
 		
 		// end scope for retranslation of ACSL specification
 		main.cHandler.endScope();
@@ -325,33 +327,16 @@ public class FunctionHandler {
 		return spec;
 	}
 
-	// private Specification[] retranslateACSL(ACSLNode acslNode,
-	// VarList[] inParams, Dispatcher main) {
-	// main.cHandler.getSymbolTable().beginScope();
-	// for (VarList varList : inParams) {
-	// for (String id : varList.getIdentifiers()) {
-	// new SymbolTableValue(id, null, false, null);
-	//
-	// main.cHandler.getSymbolTable().put(cId, value);
-	// }
-	// }
-	// }
-
 	/**
 	 * Creates local variables for in parameters.
 	 * 
-	 * @param main
-	 *            a reference to the main dispatcher.
-	 * 
-	 * @param loc
-	 *            the location
-	 * @param decl
-	 *            the declaration list to append to.
-	 * @param stmt
-	 *            the statement list to append to.
+	 * @param main a reference to the main dispatcher.
+	 * @param loc the location
+	 * @param decl the declaration list to append to.
+	 * @param stmt the statement list to append to.
 	 * @param parent
 	 */
-	public void handleFunctionsInParams(Dispatcher main, ILocation loc,
+	private void handleFunctionsInParams(Dispatcher main, ILocation loc,
 			ArrayList<Declaration> decl, ArrayList<Statement> stmt,
 			IASTFunctionDefinition parent) {
 	    VarList[] varListArray = currentProcedure.getInParams();
@@ -362,7 +347,7 @@ public class FunctionHandler {
 	         *    func(void) {
 	         *       ...
 	         *    }
-	         * This results in the empty name.
+	         * This results in the empty name. (alex: what is an empty name??)
 	         */
 	        assert ((CASTFunctionDeclarator)parent.getDeclarator()).getParameters().length == 0 ||
 	                (((CASTFunctionDeclarator)parent.getDeclarator()).getParameters().length == 1 &&
@@ -434,7 +419,7 @@ public class FunctionHandler {
 	}
 
 	/**
-	 * Checkes, whether all procedures that are beeing called in C, were
+	 * Checks, whether all procedures that are being called in C, were
 	 * eventually declared within the C program.
 	 * 
 	 * @return true iff all called procedures were declared.
@@ -578,10 +563,15 @@ public class FunctionHandler {
 	/**
 	 * Handles translation of IASTFunctionDefinition.
 	 * 
-	 * @param main
-	 *            a reference to the main dispatcher.
-	 * @param node
-	 *            the node to translate.
+	 * Note that a C function definition may have an ACSL specification while
+	 * a Boogie procedure implementation does not have a specification (right?).
+	 * Therefore we have to add any ACSL specs to the procedures member where
+	 * the (Boogie) function declarations are stored.
+	 * 
+	 * The Result contains the Boogie procedure implementation.
+	 * 
+	 * @param main a reference to the main dispatcher.
+	 * @param node the node to translate.
 	 * @param contract 
 	 * @return the translation result.
 	 */
@@ -712,7 +702,8 @@ public class FunctionHandler {
 		        new ArrayList<Statement>(Arrays.asList(body.getBlock()))));
 		// 4)
 		for (SymbolTableValue stv : main.cHandler.getSymbolTable().currentScopeValues())
-			if (!stv.isGlobalVar() && stv.getBoogieDecl() != null) { //there may be a null declaration in case of foo(void)
+			//there may be a null declaration in case of foo(void)
+			if (!stv.isGlobalVar() && stv.getBoogieDecl() != null) { 
 				decls.add(stv.getBoogieDecl());
 				
 			}
@@ -734,7 +725,7 @@ public class FunctionHandler {
 	}
 
 	/**
-	 * take the parameter information from the CDeclaration. Make a Varlist from it.
+	 * Take the parameter information from the CDeclaration. Make a Varlist from it.
 	 * Add the parameters to the symboltable. Also update procedureToParamCType member.
 	 * @param main
 	 * @param loc
@@ -895,7 +886,8 @@ public class FunctionHandler {
 				String tmpId = main.nameHandler
 						.getTempVarUID(SFO.AUXVAR.RETURNED);
 				expr = new IdentifierExpression(loc, tmpId);
-				VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpId, (PrimitiveType) type[0].getType(), loc); 
+//				VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpId, (PrimitiveType) type[0].getType(), loc); 
+				VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpId, type[0].getType(), loc); 
 				auxVars.put(tmpVar, loc);
 				decl.add(tmpVar);
 				VariableLHS tmpLhs = new VariableLHS(loc, tmpId);
