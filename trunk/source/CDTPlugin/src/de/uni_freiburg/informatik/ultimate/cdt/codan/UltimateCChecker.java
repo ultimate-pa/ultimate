@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
+import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
@@ -228,6 +229,10 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		} else if (result instanceof UnsupportedSyntaxResult) {
 			//TODO: Introduce new String in CCheckerDescriptor for 
 			// unsupported Syntax?
+			reportProblem(CCheckerDescriptor.SYNERR_ID, result, loc);
+		} else if (result instanceof TypeErrorResult) {
+			//TODO: Introduce new String in CCheckerDescriptor for 
+			// type error?
 			reportProblem(CCheckerDescriptor.SYNERR_ID, result, loc);
 		} else if (result instanceof TimeoutResultAtElement) {
 			reportProblem(CCheckerDescriptor.TIMEOUT_ID, result, loc);
