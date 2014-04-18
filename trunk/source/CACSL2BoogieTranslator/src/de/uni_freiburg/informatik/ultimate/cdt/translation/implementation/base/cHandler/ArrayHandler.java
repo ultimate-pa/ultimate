@@ -72,51 +72,6 @@ public class ArrayHandler {
 		return modifiedGlobals;
 	}
 
-//	public ResultExpression handleArrayDeclarationOnHeap(Dispatcher main,
-//			MemoryHandler memoryHandler, StructHandler structHandler,
-//			FunctionHandler functionHandler,
-//			IASTArrayDeclarator d, IASTDeclSpecifier iastDeclSpecifier, ResultTypes resType, String bId, CACSLLocation loc) {
-//
-//		ArrayList<Statement> stmt = new ArrayList<Statement>();
-//		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-//		LinkedHashMap<VariableDeclaration, ILocation> auxVars =
-//				new LinkedHashMap<VariableDeclaration, ILocation>();
-//		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-//
-//		ArrayList<Expression> sizeConstants = new ArrayList<Expression>();
-//		Expression overallSize = new IntegerLiteral(loc, /*new InferredType(Type.Integer),*/ "1");
-//		for (IASTArrayModifier am : d.getArrayModifiers()) {
-//			ResultExpression constEx = (ResultExpression) main.
-//					dispatch(am.getConstantExpression());
-//			constEx = constEx.switchToRValueIfNecessary(main, //just to be safe..
-//					memoryHandler, structHandler, loc);
-////			assert constEx.lrVal instanceof RValue : "we only allow arrays of constant size";
-//			sizeConstants.add(constEx.lrVal.getValue());
-////			Integer constAsInt =  Integer.parseInt(((IntegerLiteral) constEx.lrVal.getValue()).getValue());
-//			overallSize = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
-//					overallSize, constEx.lrVal.getValue(), loc);//
-//		}
-//
-//		Expression sizeOfCell = memoryHandler.calculateSizeOf(resType.cType, loc);
-//		CArray arrayType = new CArray(
-//				sizeConstants.toArray(new Expression[0]), resType.cType);
-//		LocalLValue arrayId = new LocalLValue(new VariableLHS(loc, /*new InferredType(Type.Pointer),*/ bId), arrayType);
-//
-//		//malloc the space on the heap for the array
-//		functionHandler.addMallocedAuxPointer(main, arrayId);
-//
-//		//handle initialization
-//		if (d.getInitializer() != null) {			
-//			
-//			//evaluate the initializer and fill the heapspace of the array
-//			ResultExpressionListRec init = (ResultExpressionListRec) main.dispatch(d.getInitializer());
-//			ArrayList<Statement> arrayWrites = initArrayOnHeap(main, memoryHandler, structHandler, loc, init.list, 
-//					arrayId.getValue(), functionHandler, arrayType);
-//			stmt.addAll(arrayWrites);
-//		}
-//		return new ResultExpression(stmt, arrayId, decl, auxVars, overappr);
-//	}
-
 	public ArrayList<Statement> initArrayOnHeap(Dispatcher main, MemoryHandler memoryHandler, StructHandler structHandler, ILocation loc, 
 			ArrayList<ResultExpressionListRec> list, Expression startAddress, //Expression sizeOfCell, 
 			FunctionHandler functionHandler, CArray arrayType) {
@@ -161,7 +116,6 @@ public class ArrayHandler {
 					if (valueType instanceof CArray) {
 						throw new AssertionError("this should not be the case as we are in the inner/outermost array right??");
 					} else if  (valueType instanceof CStruct) {
-//						ResultExpression sInit = structHandler.makeStructConstructorFromRERL(main, loc, memoryHandler, 
 						ResultExpression sInit = structHandler.initStructOnHeapFromRERL(main, loc, memoryHandler, 
 								this, functionHandler, null, null, (CStruct) valueType);
 						arrayWrites.addAll(sInit.stmt);
@@ -269,7 +223,6 @@ public class ArrayHandler {
 						val = (RValue) sInit.lrVal;
 					} else if (valueType instanceof CPrimitive 
 							|| valueType instanceof CPointer) {
-//						val = new RValue(CHandler.getInitExpr(valueType), valueType);
 						val = (RValue) (PostProcessor.initVar(loc, main, memoryHandler, this, 
 								functionHandler, structHandler, (VariableLHS) null, valueType, null)).lrVal;
 					} else {
