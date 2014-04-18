@@ -301,15 +301,12 @@ public class PostProcessor {
 	public static ResultExpression initVar(ILocation loc, Dispatcher main,
 			MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler, 
 			StructHandler structHandler, 
-//			LRValue var,
 			final LeftHandSide lhs,
 			CType cType, ResultExpression initializerRaw) {
 			
 		boolean onHeap = false;
 		if (lhs != null && lhs instanceof VariableLHS) 
-//		if (var != null && var instanceof LocalLValue && ((LocalLValue) var).getLHS() instanceof VariableLHS) 
 			onHeap = ((CHandler )main.cHandler).isHeapVar(((VariableLHS) lhs).getIdentifier());
-//			onHeap = ((CHandler )main.cHandler).isHeapVar(((VariableLHS) ((LocalLValue) var).getLHS()).getIdentifier());
 		
 		LRValue var = null;
 		if (onHeap)
@@ -330,9 +327,7 @@ public class PostProcessor {
 			MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler, 
 			StructHandler structHandler, 
 			LRValue var,
-//			final LeftHandSide lhs,
 			CType cType, ResultExpression initializerRaw
-//			, boolean onHeap
 			) {
 		assert var instanceof LocalLValue || var instanceof HeapLValue;
 		
@@ -388,9 +383,6 @@ public class PostProcessor {
 			if (var != null) {
 				if (onHeap) {
 					stmt.addAll(memoryHandler.getWriteCall(
-//							new HeapLValue(
-//									new IdentifierExpression(loc, ((VariableLHS) lhs).getIdentifier()),
-//									null), 
 							(HeapLValue) var,
 									new RValue(rhs, cType)));
 				} else {
@@ -463,7 +455,6 @@ public class PostProcessor {
 
 				stmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, structHandler, loc, 
 						initializer == null ? null : ((ResultExpressionListRec) initializer).list,
-//						CHandler.convertLHSToExpression(lhs), 
 								address,
 						functionHandler, (CArray) lCType));
 			} else { //not on Heap
@@ -480,7 +471,6 @@ public class PostProcessor {
 				assert var != null;
 				ResultExpression heapWrites = structHandler.initStructOnHeapFromRERL(main, 
 						loc, memoryHandler, arrayHandler, functionHandler, 
-//						CHandler.convertLHSToExpression(lhs),
 						((HeapLValue) var).getAddress(),
 						(ResultExpressionListRec) initializer,
 						structType);

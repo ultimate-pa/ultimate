@@ -2804,36 +2804,6 @@ public class CHandler implements ICHandler {
 		memoryHandler.calculateSizeOf(cvar, loc);
 	}
 	
-//	public static Expression getInitExpr(CType cType) {
-//		CType ut = cType.getUnderlyingType();
-//		InferredType it = new InferredType(ut);
-//		
-//		if (ut instanceof CPrimitive) {
-//			switch (((CPrimitive) ut).getType()) {
-//			case CHAR:
-//			case CHAR16:
-//			case CHAR32:
-//			case WCHAR:
-//			case INT:
-//				return new IntegerLiteral(null, it, SFO.NR0);
-//			case DOUBLE:
-//			case FLOAT:
-//				return new RealLiteral(null, it, SFO.NR0F);
-//			case VOID:
-//				default:
-//				throw new AssertionError("unknown type to init");
-//			}
-//		} else if (ut instanceof CPointer) {
-//			return new IdentifierExpression(null, it, SFO.NULL, null);
-//		} else if (ut instanceof CArray) {
-//				throw new AssertionError("wrong type to init");
-//		} else if (ut instanceof CStruct) {
-//				throw new AssertionError("wrong type to init");
-//		} else {
-//				throw new AssertionError("wrong type to init");
-//		}
-//	}
-	
 	public static Expression convertLHSToExpression(LeftHandSide lhs) {
 		if (lhs instanceof VariableLHS) {
 			return new IdentifierExpression(lhs.getLocation(), lhs.getType(),

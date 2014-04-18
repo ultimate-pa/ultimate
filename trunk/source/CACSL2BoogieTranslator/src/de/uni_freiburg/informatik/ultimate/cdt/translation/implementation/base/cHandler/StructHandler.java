@@ -276,7 +276,8 @@ public class StructHandler {
 	 * nesting structure from the CStruct and the values from the RERL.
 	 * If the RERL is null, the default initialization (int: 0, Ptr: NULL, ...) is used for each entry.
 	 */
-	public ResultExpression makeStructConstructorFromRERL(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, ArrayHandler arrayHandler,
+	public ResultExpression makeStructConstructorFromRERL(Dispatcher main, ILocation loc, 
+			MemoryHandler memoryHandler, ArrayHandler arrayHandler,
 			FunctionHandler functionHandler, ResultExpressionListRec rerlIn, CStruct structType) {
 		ResultExpressionListRec rerl = null;
 		if (rerlIn == null)
@@ -364,25 +365,17 @@ public class StructHandler {
 
 					Expression fieldEx = new IdentifierExpression(loc, tmpId);
 					RValue lrVal = new RValue(fieldEx, underlyingFieldType);
-					//FIXME: off heap case missing
-//					if (onHeap) {			
-//						VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, MemoryHandler.POINTER_TYPE, loc);
-//						fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
-//						fieldDecl.add(tVarDecl);
-//						fieldStmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, this, loc, 
-//								arrayInitRerl == null ? null : arrayInitRerl.list, 
-//										fieldEx, functionHandler, (CArray) underlyingFieldType));
-//					} else {
-						VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, 
-								main.typeHandler.ctype2asttype(loc, underlyingFieldType),
-								loc);
-						fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
-						fieldDecl.add(tVarDecl);
-						VariableLHS fieldLHS = new VariableLHS(loc, tmpId);
-						fieldStmt.addAll(arrayHandler.initBoogieArray(main, memoryHandler, this, functionHandler, loc, 
-								arrayInitRerl == null ? null : arrayInitRerl.list, 
-										fieldLHS, (CArray) underlyingFieldType));
-//					}
+
+					VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, 
+							main.typeHandler.ctype2asttype(loc, underlyingFieldType),
+							loc);
+					fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
+					fieldDecl.add(tVarDecl);
+					VariableLHS fieldLHS = new VariableLHS(loc, tmpId);
+					fieldStmt.addAll(arrayHandler.initBoogieArray(main, memoryHandler, this, functionHandler, loc, 
+							arrayInitRerl == null ? null : arrayInitRerl.list, 
+									fieldLHS, (CArray) underlyingFieldType));
+
 					fieldContents = new ResultExpression(fieldStmt, lrVal, fieldDecl, fieldAuxVars);
 				} else if (underlyingFieldType instanceof CEnum) {
 					throw new UnsupportedSyntaxException(loc, "..");
@@ -429,8 +422,6 @@ public class StructHandler {
 			rerl = rerlIn;
 		
 		if (rerl.lrVal != null) {//we have an identifier (or sth else too?)
-//			return new ResultExpression(rerl.stmt, rerl.lrVal, rerl.decl,
-//			        rerl.auxVars, rerl.overappr);
 			ResultExpression writes = new ResultExpression((RValue) null);
 			ArrayList<Statement> writeCalls = memoryHandler.getWriteCall(
 					new HeapLValue(startAddress, rerl.lrVal.cType), (RValue) rerl.lrVal);
@@ -457,10 +448,6 @@ public class StructHandler {
 		
 		String[] fieldIds = structType.getFieldIds();
 		CType[] fieldTypes = structType.getFieldTypes();
-
-//		//the new Arrays for the StructConstructor
-//		ArrayList<String> fieldIdentifiers = new ArrayList<String>();
-//		ArrayList<Expression> fieldValues = new ArrayList<Expression>();
 		
 		boolean isUnion = (structType instanceof CUnion);
 		//in a union, only one field of the underlying struct may be initialized
@@ -469,7 +456,6 @@ public class StructHandler {
 		boolean unionAlreadyInitialized = false;
 
 		for (int i = 0; i < fieldIds.length; i++) {
-//			fieldIdentifiers.add(fieldIds[i]);
 			CType underlyingFieldType = fieldTypes[i].getUnderlyingType();
 			
 			Expression fieldAddressBase = newStartAddressBase;
@@ -484,7 +470,6 @@ public class StructHandler {
 			if (isUnion) {
 				assert rerl.list.size() == 0 || rerl.list.size() == 1 : "union initializers must have only one field";
 				//TODO: maybe not use auxiliary variables so lavishly
-//				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
 				if (!unionAlreadyInitialized
 						&& rerl.list.size() == 1 
 						&& (rerl.list.get(0).field == null || rerl.list.get(0).field.equals("")
@@ -494,24 +479,18 @@ public class StructHandler {
 					//use the value from the rerl to initialize the union
 					fieldWrites = PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, 
 							functionHandler, this, 
-//							new LocalLValue(new VariableLHS(loc, tmpId), underlyingFieldType), 
 							fieldHlv,
 							underlyingFieldType, rerl.list.get(0)
-//							, true
 							);
-//					fieldWrites.lrVal = new RValue(new IdentifierExpression(loc, tmpId), underlyingFieldType);
 					unionAlreadyInitialized = true;
 				} else {
 					//fill in the uninitialized aux variable
-					
 					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
 				
 					fieldWrites = new ResultExpression((RValue) null);
 					fieldWrites.stmt.addAll(memoryHandler.getWriteCall(
 							fieldHlv,
 							new RValue(new IdentifierExpression(loc, tmpId), underlyingFieldType)));
-//					fieldWrites = new ResultExpression(
-//							new RValue(new IdentifierExpression(loc, tmpId), underlyingFieldType));
 					VariableDeclaration auxVarDec = new VariableDeclaration(loc, new Attribute[0], 
 							new VarList[] { new VarList(loc, new String[] { tmpId }, 
 									main.typeHandler.ctype2asttype(loc, underlyingFieldType)) } );
@@ -534,27 +513,16 @@ public class StructHandler {
 					Map<VariableDeclaration, ILocation> fieldAuxVars =
 							new LinkedHashMap<VariableDeclaration, ILocation>();
 
-//					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
-
 					ResultExpressionListRec arrayInitRerl = null;
 					if (i < rerl.list.size())
 						arrayInitRerl = rerl.list.get(i);
 
-//					Expression fieldEx = new IdentifierExpression(loc, tmpId);
-//					RValue lrVal = new RValue(fieldEx, underlyingFieldType);
-					
-//					VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, 
-//							MemoryHandler.POINTER_TYPE, loc);
-//					fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
-//					fieldDecl.add(tVarDecl);
 					fieldStmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, this, loc, 
 							arrayInitRerl == null ? null : arrayInitRerl.list, 
-//									fieldEx, 
 									fieldPointer,
 									functionHandler, (CArray) underlyingFieldType));
 
 					fieldWrites = new ResultExpression(fieldStmt, 
-//							lrVal, 
 							null,
 							fieldDecl, fieldAuxVars);
 				} else if (underlyingFieldType instanceof CEnum) {
@@ -575,16 +543,9 @@ public class StructHandler {
 			newDecl.addAll(fieldWrites.decl);
 			newAuxVars.putAll(fieldWrites.auxVars);
 			newOverappr.addAll(fieldWrites.overappr);
-//			assert fieldWrites.lrVal instanceof RValue; //should be guaranteed by readFieldInTheStructAtAddress(..)
-//			fieldValues.add(((RValue) fieldWrites.lrVal).getValue());
 		}
-//		StructConstructor sc = new StructConstructor(loc, new InferredType(Type.Struct),
-//				fieldIdentifiers.toArray(new String[0]), 
-//				fieldValues.toArray(new Expression[0]));
-
 		ResultExpression result = new ResultExpression(newStmt,
 		        null, newDecl, newAuxVars, newOverappr);
-//		        new RValue(sc, structType), newDecl, newAuxVars, newOverappr);
 		return result;
 	} 
 }
