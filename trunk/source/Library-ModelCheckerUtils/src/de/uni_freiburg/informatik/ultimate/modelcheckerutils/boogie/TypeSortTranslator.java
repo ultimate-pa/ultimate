@@ -121,7 +121,7 @@ public class TypeSortTranslator {
 				result = m_Script.sort("Int");
 			} else if (boogieType.equals(PrimitiveType.realType)) {
 				result = m_Script.sort("Real");
-			} else if (((PrimitiveType) boogieType).getTypeCode() == PrimitiveType.ERROR) {
+			} else if (boogieType.equals(PrimitiveType.errorType)) {
 				throw new IllegalArgumentException("BoogieAST contains type " +
 						"errors. This plugin supports only BoogieASTs without type errors");
 			} else {
