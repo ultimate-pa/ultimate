@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
@@ -164,7 +165,9 @@ public class SvComp14CHandler extends CHandler {
                 	cType = new CPrimitive(PRIMITIVE.FLOAT);
                 } else if (t.equals("pointer")) {
 //                    type = new InferredType(Type.Pointer);
-                	type = new PrimitiveType(loc, SFO.POINTER);
+        			NamedType boogiePointerType = 
+        					new NamedType(null, new InferredType(Type.Struct), SFO.POINTER, new ASTType[0]);
+                	type = boogiePointerType;
                     cType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
                 } else {
 //                	type = new InferredType(Type.Integer);
