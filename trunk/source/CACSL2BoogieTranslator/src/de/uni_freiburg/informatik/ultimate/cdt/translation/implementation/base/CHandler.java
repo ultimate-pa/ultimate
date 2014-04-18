@@ -663,8 +663,10 @@ public class CHandler implements ICHandler {
 							// necessary for the initialization are the result
 							assert result instanceof ResultSkip || result instanceof ResultExpression;
 							ResultExpression initRex = 
-									PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler, 
-											new VariableLHS(loc, bId), cDec.getType(), cDec.getInitializer());
+									PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, functionHandler,
+											structHandler, 
+											new VariableLHS(loc, bId), cDec.getType(),
+											cDec.getInitializer());
 							if (result instanceof ResultSkip)
 								result = new ResultExpression((LRValue) null);
 
@@ -2542,10 +2544,6 @@ public class CHandler implements ICHandler {
 		
 		mCurrentDeclaredTypes.push(resTypes);
 		ResultDeclaration declResult = (ResultDeclaration) main.dispatch(node.getTypeId().getAbstractDeclarator());
-//		int noPtrOps = node.getTypeId().getAbstractDeclarator().getPointerOperators().length; //FIXME: ??
-//		CType newCType = resTypes.cType;
-//		for (int i = 0; i < noPtrOps; i++) 
-//			newCType = new CPointer(newCType);
 		assert declResult.getDeclarations().size() == 1;
 		CType newCType = declResult.getDeclarations().get(0).getType();
 		mCurrentDeclaredTypes.pop();
@@ -2806,35 +2804,35 @@ public class CHandler implements ICHandler {
 		memoryHandler.calculateSizeOf(cvar, loc);
 	}
 	
-	public static Expression getInitExpr(CType cType) {
-		CType ut = cType.getUnderlyingType();
-		InferredType it = new InferredType(ut);
-		
-		if (ut instanceof CPrimitive) {
-			switch (((CPrimitive) ut).getType()) {
-			case CHAR:
-			case CHAR16:
-			case CHAR32:
-			case WCHAR:
-			case INT:
-				return new IntegerLiteral(null, it, SFO.NR0);
-			case DOUBLE:
-			case FLOAT:
-				return new RealLiteral(null, it, SFO.NR0F);
-			case VOID:
-				default:
-				throw new AssertionError("unknown type to init");
-			}
-		} else if (ut instanceof CPointer) {
-			return new IdentifierExpression(null, it, SFO.NULL, null);
-		} else if (ut instanceof CArray) {
-				throw new AssertionError("wrong type to init");
-		} else if (ut instanceof CStruct) {
-				throw new AssertionError("wrong type to init");
-		} else {
-				throw new AssertionError("wrong type to init");
-		}
-	}
+//	public static Expression getInitExpr(CType cType) {
+//		CType ut = cType.getUnderlyingType();
+//		InferredType it = new InferredType(ut);
+//		
+//		if (ut instanceof CPrimitive) {
+//			switch (((CPrimitive) ut).getType()) {
+//			case CHAR:
+//			case CHAR16:
+//			case CHAR32:
+//			case WCHAR:
+//			case INT:
+//				return new IntegerLiteral(null, it, SFO.NR0);
+//			case DOUBLE:
+//			case FLOAT:
+//				return new RealLiteral(null, it, SFO.NR0F);
+//			case VOID:
+//				default:
+//				throw new AssertionError("unknown type to init");
+//			}
+//		} else if (ut instanceof CPointer) {
+//			return new IdentifierExpression(null, it, SFO.NULL, null);
+//		} else if (ut instanceof CArray) {
+//				throw new AssertionError("wrong type to init");
+//		} else if (ut instanceof CStruct) {
+//				throw new AssertionError("wrong type to init");
+//		} else {
+//				throw new AssertionError("wrong type to init");
+//		}
+//	}
 	
 	public static Expression convertLHSToExpression(LeftHandSide lhs) {
 		if (lhs instanceof VariableLHS) {

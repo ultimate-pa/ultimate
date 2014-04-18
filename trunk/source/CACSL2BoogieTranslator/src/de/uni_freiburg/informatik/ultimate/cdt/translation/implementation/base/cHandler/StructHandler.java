@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
@@ -159,19 +160,9 @@ public class StructHandler {
 		addressOffsetOfFieldOwner = new StructAccessExpression(loc, 
 				structAddress, SFO.POINTER_OFFSET);
 
-		if (structType == null || !(structType instanceof CStruct)) {
-			String msg = "Incorrect or unexpected field owner!";
-			throw new IncorrectSyntaxException(loc, msg);
-		}
-		IdentifierExpression additionalOffset = getStructOrUnionOffsetConstantExpression(
-				loc, memoryHandler, field, structType);
-		Expression newOffset;
-		if (isZero(addressOffsetOfFieldOwner)) {
-			newOffset = additionalOffset;
-		} else {
-			newOffset = new BinaryExpression(loc, Operator.ARITHPLUS, 
-					addressOffsetOfFieldOwner, additionalOffset);
-		}
+		Expression newOffset = computeStructFieldOffset(memoryHandler, loc,
+				field, addressOffsetOfFieldOwner, structType);
+		
 		StructConstructor newPointer = 
 				MemoryHandler.constructPointerFromBaseAndOffset(addressBaseOfFieldOwner, newOffset, loc);
 
@@ -197,6 +188,26 @@ public class StructHandler {
 		        new RValue(call.lrVal.getValue(), resultType), decl, auxVars,
 		        overappr);
 		return result;
+	}
+
+
+	private Expression computeStructFieldOffset(MemoryHandler memoryHandler,
+			ILocation loc, String field, Expression addressOffsetOfFieldOwner,
+			CStruct structType) {
+		if (structType == null || !(structType instanceof CStruct)) {
+			String msg = "Incorrect or unexpected field owner!";
+			throw new IncorrectSyntaxException(loc, msg);
+		}
+		IdentifierExpression additionalOffset = getStructOrUnionOffsetConstantExpression(
+				loc, memoryHandler, field, structType);
+		Expression newOffset;
+		if (isZero(addressOffsetOfFieldOwner)) {
+			newOffset = additionalOffset;
+		} else {
+			newOffset = new BinaryExpression(loc, Operator.ARITHPLUS, 
+					addressOffsetOfFieldOwner, additionalOffset);
+		}
+		return newOffset;
 	}
 
 	public static IdentifierExpression getStructOrUnionOffsetConstantExpression(
@@ -260,8 +271,13 @@ public class StructHandler {
 		}
 	}
 
+	/**
+	 * Takes a ResultExpressionListRec and a CStruct(type) and generates a StructConstructor with the 
+	 * nesting structure from the CStruct and the values from the RERL.
+	 * If the RERL is null, the default initialization (int: 0, Ptr: NULL, ...) is used for each entry.
+	 */
 	public ResultExpression makeStructConstructorFromRERL(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, ArrayHandler arrayHandler,
-			FunctionHandler functionHandler, ResultExpressionListRec rerlIn, CStruct structType, boolean onHeap) {
+			FunctionHandler functionHandler, ResultExpressionListRec rerlIn, CStruct structType) {
 		ResultExpressionListRec rerl = null;
 		if (rerlIn == null)
 			rerl = new ResultExpressionListRec();
@@ -311,7 +327,8 @@ public class StructHandler {
 							|| rerl.list.get(0).lrVal.cType.equals(underlyingFieldType))) {
 					//use the value from the rerl to initialize the union
 					fieldContents = PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, 
-							functionHandler, this, new VariableLHS(loc, tmpId), underlyingFieldType, rerl.list.get(0));
+							functionHandler, this, new VariableLHS(loc, tmpId),
+							underlyingFieldType, rerl.list.get(0));
 					fieldContents.lrVal = new RValue(new IdentifierExpression(loc, tmpId), underlyingFieldType);
 					unionAlreadyInitialized = true;
 				} else {
@@ -319,7 +336,6 @@ public class StructHandler {
 					fieldContents = new ResultExpression(
 							new RValue(new IdentifierExpression(loc, tmpId), underlyingFieldType));
 				}
-//				fieldContents.stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tmpId) }));
 				VariableDeclaration auxVarDec = new VariableDeclaration(loc, new Attribute[0], 
 						new VarList[] { new VarList(loc, new String[] { tmpId }, 
 								main.typeHandler.ctype2asttype(loc, underlyingFieldType)) } );
@@ -327,24 +343,12 @@ public class StructHandler {
 				fieldContents.auxVars.put(auxVarDec, loc);
 			} else {
 				if(underlyingFieldType instanceof CPrimitive) {
-//					if (i < rerl.list.size())
-//						fieldContents = rerl.list.get(i);
-//					else
-//						fieldContents = new ResultExpression(new RValue(
-//								new IntegerLiteral(loc, "0"), underlyingFieldType));
 					fieldContents = PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, 
-							functionHandler, this, null, underlyingFieldType, 
+							functionHandler, this, (VariableLHS) null, underlyingFieldType, 
 							i < rerl.list.size() ? rerl.list.get(i) : null);
 				} else if (underlyingFieldType instanceof CPointer) {
-//					if (i < rerl.list.size())
-//						fieldContents = rerl.list.get(i);
-//					else
-//						fieldContents = new ResultExpression(
-//								new RValue(
-//										new IdentifierExpression(loc, SFO.NULL), 
-//										underlyingFieldType));
 					fieldContents = PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, 
-							functionHandler, this, null, underlyingFieldType, 
+							functionHandler, this, (VariableLHS) null, underlyingFieldType, 
 							i < rerl.list.size() ? rerl.list.get(i) : null);
 				} else if (underlyingFieldType instanceof CArray) {
 					ArrayList<Statement> fieldStmt = new ArrayList<Statement>();
@@ -361,14 +365,14 @@ public class StructHandler {
 					Expression fieldEx = new IdentifierExpression(loc, tmpId);
 					RValue lrVal = new RValue(fieldEx, underlyingFieldType);
 					//FIXME: off heap case missing
-					if (onHeap) {			
-						VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, MemoryHandler.POINTER_TYPE, loc);
-						fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
-						fieldDecl.add(tVarDecl);
-						fieldStmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, this, loc, 
-								arrayInitRerl == null ? null : arrayInitRerl.list, 
-										fieldEx, functionHandler, (CArray) underlyingFieldType));
-					} else {
+//					if (onHeap) {			
+//						VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, MemoryHandler.POINTER_TYPE, loc);
+//						fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
+//						fieldDecl.add(tVarDecl);
+//						fieldStmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, this, loc, 
+//								arrayInitRerl == null ? null : arrayInitRerl.list, 
+//										fieldEx, functionHandler, (CArray) underlyingFieldType));
+//					} else {
 						VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, 
 								main.typeHandler.ctype2asttype(loc, underlyingFieldType),
 								loc);
@@ -378,19 +382,19 @@ public class StructHandler {
 						fieldStmt.addAll(arrayHandler.initBoogieArray(main, memoryHandler, this, functionHandler, loc, 
 								arrayInitRerl == null ? null : arrayInitRerl.list, 
 										fieldLHS, (CArray) underlyingFieldType));
-					}
+//					}
 					fieldContents = new ResultExpression(fieldStmt, lrVal, fieldDecl, fieldAuxVars);
 				} else if (underlyingFieldType instanceof CEnum) {
 					throw new UnsupportedSyntaxException(loc, "..");
 				} else if (underlyingFieldType instanceof CStruct) {
 					if (i < rerl.list.size())
 						fieldContents = makeStructConstructorFromRERL(main, loc, memoryHandler, arrayHandler, 
-								functionHandler, rerl.list.get(i), (CStruct) underlyingFieldType, onHeap);
+								functionHandler, rerl.list.get(i), (CStruct) underlyingFieldType);
 					else
 						fieldContents = makeStructConstructorFromRERL(main, loc, memoryHandler, arrayHandler,
-								functionHandler, new ResultExpressionListRec(), (CStruct) underlyingFieldType, onHeap);	
+								functionHandler, new ResultExpressionListRec(), (CStruct) underlyingFieldType);	
 				} else if (underlyingFieldType instanceof CNamed) {
-					assert false : "This should not be the case as we took the underlying type.";
+					throw new AssertionError("This should not be the case as we took the underlying type.");
 				} else {
 					throw new UnsupportedSyntaxException(loc, "..");
 				}	
@@ -408,6 +412,179 @@ public class StructHandler {
 
 		ResultExpression result = new ResultExpression(newStmt,
 		        new RValue(sc, structType), newDecl, newAuxVars, newOverappr);
+		return result;
+	} 
+	
+	/**
+	 * Generate the write calls for the initialization of the struct onHeap.
+	 */
+	public ResultExpression initStructOnHeapFromRERL(Dispatcher main, ILocation loc, 
+			MemoryHandler memoryHandler, ArrayHandler arrayHandler, 
+			FunctionHandler functionHandler, Expression startAddress, 
+			ResultExpressionListRec rerlIn, CStruct structType) {
+		ResultExpressionListRec rerl = null;
+		if (rerlIn == null)
+			rerl = new ResultExpressionListRec();
+		else
+			rerl = rerlIn;
+		
+		if (rerl.lrVal != null) {//we have an identifier (or sth else too?)
+//			return new ResultExpression(rerl.stmt, rerl.lrVal, rerl.decl,
+//			        rerl.auxVars, rerl.overappr);
+			ResultExpression writes = new ResultExpression((RValue) null);
+			ArrayList<Statement> writeCalls = memoryHandler.getWriteCall(
+					new HeapLValue(startAddress, rerl.lrVal.cType), (RValue) rerl.lrVal);
+			writes.stmt.addAll(writeCalls);
+			return writes;
+		}
+		
+		Expression newStartAddressBase = null;
+		Expression newStartAddressOffset = null;
+		if (startAddress instanceof StructConstructor) {
+			newStartAddressBase = ((StructConstructor) startAddress).getFieldValues()[0];
+			newStartAddressOffset = ((StructConstructor) startAddress).getFieldValues()[1];
+		} else {
+			newStartAddressBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
+			newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
+		}	
+	
+		//everything for the new Result
+		ArrayList<Statement> newStmt = new ArrayList<Statement>();
+		ArrayList<Declaration> newDecl = new ArrayList<Declaration>();
+		Map<VariableDeclaration, ILocation> newAuxVars =
+		        new LinkedHashMap<VariableDeclaration, ILocation>();
+		List<Overapprox> newOverappr = new ArrayList<Overapprox>();
+		
+		String[] fieldIds = structType.getFieldIds();
+		CType[] fieldTypes = structType.getFieldTypes();
+
+//		//the new Arrays for the StructConstructor
+//		ArrayList<String> fieldIdentifiers = new ArrayList<String>();
+//		ArrayList<Expression> fieldValues = new ArrayList<Expression>();
+		
+		boolean isUnion = (structType instanceof CUnion);
+		//in a union, only one field of the underlying struct may be initialized
+		//we do the first, if no fieldname is given, this variable stores whether
+		//we already initialized a field
+		boolean unionAlreadyInitialized = false;
+
+		for (int i = 0; i < fieldIds.length; i++) {
+//			fieldIdentifiers.add(fieldIds[i]);
+			CType underlyingFieldType = fieldTypes[i].getUnderlyingType();
+			
+			Expression fieldAddressBase = newStartAddressBase;
+			Expression fieldAddressOffset = computeStructFieldOffset(memoryHandler, loc, fieldIds[i], 
+					newStartAddressOffset, structType);
+			StructConstructor fieldPointer = MemoryHandler.constructPointerFromBaseAndOffset(
+					fieldAddressBase, fieldAddressOffset, loc);
+			HeapLValue fieldHlv = new HeapLValue(fieldPointer, underlyingFieldType);
+							
+			ResultExpression fieldWrites = null; 
+			
+			if (isUnion) {
+				assert rerl.list.size() == 0 || rerl.list.size() == 1 : "union initializers must have only one field";
+				//TODO: maybe not use auxiliary variables so lavishly
+//				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
+				if (!unionAlreadyInitialized
+						&& rerl.list.size() == 1 
+						&& (rerl.list.get(0).field == null || rerl.list.get(0).field.equals("")
+								|| fieldIds[i].equals(rerl.list.get(0).field))
+						&& (underlyingFieldType instanceof CStruct
+							|| rerl.list.get(0).lrVal.cType.equals(underlyingFieldType))) {
+					//use the value from the rerl to initialize the union
+					fieldWrites = PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, 
+							functionHandler, this, 
+//							new LocalLValue(new VariableLHS(loc, tmpId), underlyingFieldType), 
+							fieldHlv,
+							underlyingFieldType, rerl.list.get(0)
+//							, true
+							);
+//					fieldWrites.lrVal = new RValue(new IdentifierExpression(loc, tmpId), underlyingFieldType);
+					unionAlreadyInitialized = true;
+				} else {
+					//fill in the uninitialized aux variable
+					
+					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
+				
+					fieldWrites = new ResultExpression((RValue) null);
+					fieldWrites.stmt.addAll(memoryHandler.getWriteCall(
+							fieldHlv,
+							new RValue(new IdentifierExpression(loc, tmpId), underlyingFieldType)));
+//					fieldWrites = new ResultExpression(
+//							new RValue(new IdentifierExpression(loc, tmpId), underlyingFieldType));
+					VariableDeclaration auxVarDec = new VariableDeclaration(loc, new Attribute[0], 
+							new VarList[] { new VarList(loc, new String[] { tmpId }, 
+									main.typeHandler.ctype2asttype(loc, underlyingFieldType)) } );
+					fieldWrites.decl.add(auxVarDec);
+					fieldWrites.auxVars.put(auxVarDec, loc);
+				}
+
+			} else {
+				if(underlyingFieldType instanceof CPrimitive) {
+					fieldWrites = PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, 
+							functionHandler, this, fieldHlv, underlyingFieldType, 
+							i < rerl.list.size() ? rerl.list.get(i) : null);
+				} else if (underlyingFieldType instanceof CPointer) {
+					fieldWrites = PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, 
+							functionHandler, this, fieldHlv, underlyingFieldType, 
+							i < rerl.list.size() ? rerl.list.get(i) : null);
+				} else if (underlyingFieldType instanceof CArray) {
+					ArrayList<Statement> fieldStmt = new ArrayList<Statement>();
+					ArrayList<Declaration> fieldDecl = new ArrayList<Declaration>();
+					Map<VariableDeclaration, ILocation> fieldAuxVars =
+							new LinkedHashMap<VariableDeclaration, ILocation>();
+
+//					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
+
+					ResultExpressionListRec arrayInitRerl = null;
+					if (i < rerl.list.size())
+						arrayInitRerl = rerl.list.get(i);
+
+//					Expression fieldEx = new IdentifierExpression(loc, tmpId);
+//					RValue lrVal = new RValue(fieldEx, underlyingFieldType);
+					
+//					VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, 
+//							MemoryHandler.POINTER_TYPE, loc);
+//					fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
+//					fieldDecl.add(tVarDecl);
+					fieldStmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, this, loc, 
+							arrayInitRerl == null ? null : arrayInitRerl.list, 
+//									fieldEx, 
+									fieldPointer,
+									functionHandler, (CArray) underlyingFieldType));
+
+					fieldWrites = new ResultExpression(fieldStmt, 
+//							lrVal, 
+							null,
+							fieldDecl, fieldAuxVars);
+				} else if (underlyingFieldType instanceof CEnum) {
+					throw new UnsupportedSyntaxException(loc, "..");
+				} else if (underlyingFieldType instanceof CStruct) {
+					ResultExpressionListRec fieldRerl = i < rerl.list.size() ? 
+							rerl.list.get(i) : new ResultExpressionListRec();
+					fieldWrites = initStructOnHeapFromRERL(main, loc, memoryHandler, arrayHandler, 
+							functionHandler, fieldPointer, fieldRerl, (CStruct) underlyingFieldType);
+							
+				} else if (underlyingFieldType instanceof CNamed) {
+					throw new AssertionError("This should not be the case as we took the underlying type.");
+				} else {
+					throw new UnsupportedSyntaxException(loc, "..");
+				}	
+			}
+			newStmt.addAll(fieldWrites.stmt);
+			newDecl.addAll(fieldWrites.decl);
+			newAuxVars.putAll(fieldWrites.auxVars);
+			newOverappr.addAll(fieldWrites.overappr);
+//			assert fieldWrites.lrVal instanceof RValue; //should be guaranteed by readFieldInTheStructAtAddress(..)
+//			fieldValues.add(((RValue) fieldWrites.lrVal).getValue());
+		}
+//		StructConstructor sc = new StructConstructor(loc, new InferredType(Type.Struct),
+//				fieldIdentifiers.toArray(new String[0]), 
+//				fieldValues.toArray(new Expression[0]));
+
+		ResultExpression result = new ResultExpression(newStmt,
+		        null, newDecl, newAuxVars, newOverappr);
+//		        new RValue(sc, structType), newDecl, newAuxVars, newOverappr);
 		return result;
 	} 
 }

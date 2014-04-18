@@ -13,3 +13,4 @@ Require-Bundle: Library-log4j,
  TraceAbstraction
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent
