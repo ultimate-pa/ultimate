@@ -117,15 +117,15 @@ public class TypeSortTranslator {
 		if (boogieType instanceof PrimitiveType) {
 			if (boogieType.equals(PrimitiveType.boolType)) {
 				result = m_Script.sort("Bool");
-			}
-			else if (boogieType.equals(PrimitiveType.intType)) {
+			} else if (boogieType.equals(PrimitiveType.intType)) {
 				result = m_Script.sort("Int");
-			}
-			else if (boogieType.equals(PrimitiveType.realType)) {
+			} else if (boogieType.equals(PrimitiveType.realType)) {
 				result = m_Script.sort("Real");
-			}
-			else {
-				throw new IllegalArgumentException("Unsupported primitive type");
+			} else if (((PrimitiveType) boogieType).getTypeCode() == PrimitiveType.ERROR) {
+				throw new IllegalArgumentException("BoogieAST contains type " +
+						"errors. This plugin supports only BoogieASTs without type errors");
+			} else {
+				throw new IllegalArgumentException("Unsupported PrimitiveType " + boogieType);
 			}
 		}
 		else if (boogieType instanceof ArrayType) {
