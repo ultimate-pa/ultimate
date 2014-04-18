@@ -1079,6 +1079,9 @@ public class TypeChecker implements IUnmanagedObserver {
         for (VariableDeclaration decl : body.getLocalVars()) {
             for (VarList vl : decl.getVariables()) {
                 BoogieType type = typeManager.resolveType(vl.getType());
+                if (type.equals(PrimitiveType.errorType)) {
+                	typeError(vl, "VarList has unresolveable type " + vl.getType());
+                }
                 for (String id : vl.getIdentifiers()) {
                     checkIfAlreadyInOutLocal(vl, id);
                     m_LocalVars.add(id);
