@@ -6,6 +6,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
@@ -287,11 +288,12 @@ public class ConstExpander extends BoogieTransformer
 			}
 		}
 		for (int i = 0; i < identifiers.size(); i++) {
+			DeclarationInformation declInfo = new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null);
 			IdentifierExpression id1 = 
-				new IdentifierExpression(null, type, identifiers.get(i),/*FIXME: ask Jochen about storage class*/ null);
+				new IdentifierExpression(null, type, identifiers.get(i), declInfo);
 			for (int j = i+1; j < identifiers.size(); j++) {
 				IdentifierExpression id2 = 
-					new IdentifierExpression(null, type, identifiers.get(j),/*FIXME: ask Jochen about storage class*/ null);
+					new IdentifierExpression(null, type, identifiers.get(j), declInfo);
 				Expression diseq = new BinaryExpression(null, PrimitiveType.boolType,
 						BinaryExpression.Operator.COMPNEQ, id1, id2);
 				/* Add the axioms one by one.  This prevents the syntax tree from getting
