@@ -2114,6 +2114,9 @@ public class CHandler implements ICHandler {
 				Body body = (Body) (bodyResult.node);
 				bodyBlock.addAll(Arrays.asList(body.getBlock()));
 				decl.addAll(Arrays.asList(body.getLocalVars()));
+			} else if (bodyResult instanceof ResultSkip){
+				// do nothing - this is the special case where the loop does
+				// not have a body.
 			} else {
 				String msg = "Error: unexpected dispatch result"
 						+ bodyResult.getClass();
