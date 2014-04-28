@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithLocation;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
@@ -375,6 +376,9 @@ public class UltimateInterface extends HttpServlet implements IController {
 					type = "invariant";
 					packagedResult.logLvl = "info";
 				} else if (r instanceof NonterminatingLassoResult<?>) {
+					type = "invariant";
+					packagedResult.logLvl = "info";
+				} else if (r instanceof AllSpecificationsHoldResult) {
 					type = "invariant";
 					packagedResult.logLvl = "info";
 				} else if (r instanceof UnprovableResult) {
