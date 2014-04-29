@@ -1,17 +1,18 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.AffineSubtermNormalizer;
@@ -30,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 		
 		private final SmtManager m_SmtManager;
 		private final Map<Term, IPredicate> m_Term2Predicates;
+		private final CoverageRelation m_CoverageRelation = new CoverageRelation();
 		private boolean m_BringTermsToPositiveNormalForm = true;
 		
 		public PredicateUnifier(SmtManager smtManager, IPredicate... initialPredicates) {
@@ -51,20 +53,21 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 		
 		
 		/**
-		 * Add the pair (predicate.getFormula(), predicate) to the 
-		 * term2Predicate mapping if this pair is not already contained.
-		 * Throw an exception if there is already a different predicate assigned
-		 * to the term predicate.getFormula.  
+		 * Add predicate. Store this predicate without further simplification.
+		 * Throw an exception if this PredicateUnifier stores already an
+		 * equivalent predicate. 
 		 */
 		void declarePredicate(IPredicate predicate) {
-			Term term = predicate.getFormula();
-			IPredicate storedPredicate = m_Term2Predicates.get(term);
+			HashMap<IPredicate,LBool> impliedPredicates = new HashMap<IPredicate,LBool>();
+			HashMap<IPredicate,LBool> expliedPredicates = new HashMap<IPredicate,LBool>();
+			IPredicate storedPredicate = compareWithExistingPredicates(predicate.getFormula(), 
+					predicate.getVars(), impliedPredicates, expliedPredicates);
 			if (storedPredicate == null) {
-				m_Term2Predicates.put(term, predicate);
+				addNewPredicate(predicate, impliedPredicates, expliedPredicates);
 			} else {
 				if (storedPredicate != predicate) {
-					throw new AssertionError("There is already a" +
-							" different predicate for this term");
+					throw new AssertionError("There is already an" +
+							" equivalent predicate");
 				}
 			}
 		}
@@ -98,45 +101,48 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 			if (p != null) {
 				return p;
 			}  
-			ArrayList<IPredicate> impliedInterpolants = new ArrayList<IPredicate>();
-			ArrayList<IPredicate> expliedInterpolants = new ArrayList<IPredicate>();
-			p = getEquivalentPredicate(term, vars, 
-									impliedInterpolants, expliedInterpolants);
+			HashMap<IPredicate,LBool> impliedPredicates = new HashMap<IPredicate,LBool>();
+			HashMap<IPredicate,LBool> expliedPredicates = new HashMap<IPredicate,LBool>();
+			p = compareWithExistingPredicates(term, vars, 
+									impliedPredicates, expliedPredicates);
 			if (p != null) {
 				return p;
 			}  
 			Term simplifiedTerm = m_SmtManager.simplify(term);
+			final IPredicate result;
 			if (simplifiedTerm == term) {
 				//no simplification possible
-				return addNewPredicate(term, vars, procs);
+				result = simplifyPredicate(term, vars, procs);
 			} else {
 				if (m_Term2Predicates.containsKey(simplifiedTerm)) {
 					// this case can occur only if theorem prover says UNKNOWN
 					// on equivalence checks
-					return m_Term2Predicates.get(simplifiedTerm);
-				}
-				HashSet<TermVariable> tvs = new HashSet<TermVariable>();
-				for (TermVariable tv : simplifiedTerm.getFreeVars()) {
-					tvs.add(tv);
-				}
-				Set<BoogieVar> newVars = new HashSet<BoogieVar>();
-				Set<String> newProcs = new HashSet<String>();
-				for (BoogieVar bv : vars) {
-					if (tvs.contains(bv.getTermVariable())) {
-						newVars.add(bv);
-						if (bv.getProcedure() != null) {
-							newProcs.add(bv.getProcedure());
+					result = m_Term2Predicates.get(simplifiedTerm);
+				} else {
+					HashSet<TermVariable> tvs = new HashSet<TermVariable>();
+					for (TermVariable tv : simplifiedTerm.getFreeVars()) {
+						tvs.add(tv);
+					}
+					Set<BoogieVar> newVars = new HashSet<BoogieVar>();
+					Set<String> newProcs = new HashSet<String>();
+					for (BoogieVar bv : vars) {
+						if (tvs.contains(bv.getTermVariable())) {
+							newVars.add(bv);
+							if (bv.getProcedure() != null) {
+								newProcs.add(bv.getProcedure());
+							}
 						}
 					}
+					result = simplifyPredicate(simplifiedTerm, newVars, 
+							newProcs.toArray(new String[0]));
 				}
-				return addNewPredicate(simplifiedTerm, newVars, 
-						newProcs.toArray(new String[0]));
 			}
-
+			addNewPredicate(result, impliedPredicates, expliedPredicates);
+			return result;
 		}
 		
-		private IPredicate addNewPredicate(Term term, Set<BoogieVar> vars, 
-															String[] procs) {
+		private IPredicate simplifyPredicate(
+				Term term, Set<BoogieVar> vars,	String[] procs) {
 			assert !m_Term2Predicates.containsKey(term);
 			IPredicate predicate;
 			if (equivalentToTrue(term)) {
@@ -162,29 +168,51 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 				predicate = m_SmtManager.newPredicate(
 										term, procs, vars, closedTerm);
 			}
-			m_Term2Predicates.put(term, predicate);
 			assert predicate != null;
 			return predicate;
 		}
 		
-		private IPredicate getEquivalentPredicate(Term term, Set<BoogieVar> vars,
-				ArrayList<IPredicate> impliedInterpolants, ArrayList<IPredicate> expliedInterpolants) {
+		private void addNewPredicate(IPredicate pred, 
+				Map<IPredicate, LBool> implied, Map<IPredicate, LBool> explied) {
+			m_Term2Predicates.put(pred.getFormula(), pred);
+			m_CoverageRelation.addPredicate(pred, implied, explied);
+		}
+		
+		/**
+		 * Compare Term term whose free variables represent the BoogieVars vars
+		 * with all predicates that this Predicate unifier knows. If there 
+		 * exists a predicate for which we can prove that it is equivalent to 
+		 * term, this predicate is returned.
+		 * Otherwise we return null and HashMaps impliedPredicats and 
+		 * expliedPredicates are filled with information about implications 
+		 * between term and existing Predicates.
+		 * @param term
+		 * @param vars
+		 * @param impliedPredicats Has to be empty, will be filled with all
+		 * IPredicates implied by term.
+		 * @param expliedPredicates Has to be empty, will be filled with all
+		 * IPredicates that imply term.
+		 * @return
+		 */
+		private IPredicate compareWithExistingPredicates(Term term, Set<BoogieVar> vars,
+				HashMap<IPredicate,LBool> impliedPredicats, HashMap<IPredicate,LBool> expliedPredicates) {
 			Term closedTerm = SmtManager.computeClosedFormula(term, vars, m_SmtManager.getScript());
+			assert impliedPredicats.isEmpty();
+			assert expliedPredicates.isEmpty();
+			m_SmtManager.getScript().echo(new QuotedObject("begin unification"));
 			for (Term interpolantTerm : m_Term2Predicates.keySet()) {
 				IPredicate interpolant = m_Term2Predicates.get(interpolantTerm);
 				Term interpolantClosedTerm = interpolant.getClosedFormula();
-				LBool implies = m_SmtManager.isCovered(closedTerm, interpolantClosedTerm); 
-				if (implies == LBool.UNSAT) {
-					impliedInterpolants.add(interpolant);
-				}
+				LBool implies = m_SmtManager.isCovered(closedTerm, interpolantClosedTerm);
+				impliedPredicats.put(interpolant, implies);
 				LBool explies = m_SmtManager.isCovered(interpolantClosedTerm, closedTerm);
-				if (explies == LBool.UNSAT) {
-					expliedInterpolants.add(interpolant);
-				}
+				expliedPredicates.put(interpolant, explies);
 				if (implies == LBool.UNSAT && explies == LBool.UNSAT) {
+					m_SmtManager.getScript().echo(new QuotedObject("end unification"));
 					return interpolant;
 				} 
 			}
+			m_SmtManager.getScript().echo(new QuotedObject("end unification"));
 			return null;
 		}
 		
@@ -248,5 +276,21 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 				result.addAll(cannibalize(pred.getFormula()));
 			}
 			return result;
+		}
+		
+		
+		private class CoverageRelation {
+			Map<IPredicate, Map<IPredicate, LBool>> m_Lhs2Rhs2lbool = 
+					new HashMap<IPredicate, Map<IPredicate, LBool>>();
+			
+			void addPredicate(IPredicate pred, Map<IPredicate, LBool> implied, Map<IPredicate, LBool> explied) {
+				for (Entry<IPredicate, Map<IPredicate, LBool>> entry  : m_Lhs2Rhs2lbool.entrySet()) {
+					LBool lBool = explied.get(entry.getKey());
+					assert lBool != null;
+					entry.getValue().put(pred, lBool);
+				}
+				m_Lhs2Rhs2lbool.put(pred, implied);
+			}
+			
 		}
 	}
