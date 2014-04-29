@@ -272,8 +272,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 		IPredicate tracePrecondition = m_Precondition;
 		IPredicate tracePostcondition = m_Postcondition;
-		m_PredicateUnifier.declarePredicate(tracePrecondition);
-		m_PredicateUnifier.declarePredicate(tracePostcondition);
+//		m_PredicateUnifier.declarePredicate(tracePrecondition);
+//		m_PredicateUnifier.declarePredicate(tracePostcondition);
 		NestedWord<CodeBlock> trace = m_Trace;
 		unlockSmtManager();
 		RelevantTransFormulas rv = null;
