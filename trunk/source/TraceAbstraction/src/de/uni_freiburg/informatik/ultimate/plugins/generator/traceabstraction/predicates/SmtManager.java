@@ -257,7 +257,7 @@ public class SmtManager {
 	 * g that are modifiable by procedure proc according to 
 	 * ModifiableGlobalVariableManager modGlobVarManager.
 	 */
-	public IPredicate getOldVarsEquality(String proc, 
+	public TermVarsProc getOldVarsEquality(String proc, 
 			ModifiableGlobalVariableManager modGlobVarManager) {
 		Set<BoogieVar> vars = new HashSet<BoogieVar>();
 		Term term = getScript().term("true");
@@ -271,7 +271,7 @@ public class SmtManager {
 			term = Util.and(getScript(), term, equality);
 		}
 		String[] procs = new String[0];
-		IPredicate result = newPredicate(term, procs, vars, 
+		TermVarsProc result = new TermVarsProc(term, vars, procs, 
 				computeClosedFormula(term, vars, getScript())); 
 		return result;
 		

@@ -86,7 +86,7 @@ public abstract class CodeChecker {
 	 */
 	protected IPredicate conjugatePredicates(IPredicate a, IPredicate b) {
 		TermVarsProc tvp = m_smtManager.and(a, b);
-		return m_predicateUnifier.getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures());
+		return m_predicateUnifier.getOrConstructPredicate(tvp);
 //		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 	}
 	
@@ -96,7 +96,7 @@ public abstract class CodeChecker {
 	 */
 	protected IPredicate negatePredicate(IPredicate a) {
 		TermVarsProc tvp = m_smtManager.not(a);
-		return m_predicateUnifier.getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures());
+		return m_predicateUnifier.getOrConstructPredicate(tvp);
 //		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 	}
 	

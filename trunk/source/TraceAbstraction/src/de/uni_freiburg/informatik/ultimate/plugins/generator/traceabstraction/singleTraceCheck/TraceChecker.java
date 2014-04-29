@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
@@ -596,12 +597,11 @@ public class TraceChecker {
 
 			Call call = (Call) m_Trace.getSymbol(nonPendingCall);
 			String calledMethod = call.getCallStatement().getMethodName();
-			IPredicate oldVarsEquality = m_SmtManager.getOldVarsEquality(
+			TermVarsProc oldVarsEquality = m_SmtManager.getOldVarsEquality(
 					calledMethod, m_ModifiedGlobals);
 			
-			IPredicate precondition = m_PredicateUnifier.getOrConstructPredicate(
-					oldVarsEquality.getFormula(), oldVarsEquality.getVars(), 
-					oldVarsEquality.getProcedures());
+			IPredicate precondition = 
+					m_PredicateUnifier.getOrConstructPredicate(oldVarsEquality);
 
 			
 			//Use a pendingContext the interpolant at the position before the
