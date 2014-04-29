@@ -10,6 +10,7 @@ import org.eclipse.cdt.core.dom.ast.IASTCaseStatement;
 import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTConditionalExpression;
+import org.eclipse.cdt.core.dom.ast.IASTContinueStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTDefaultStatement;
@@ -303,6 +304,8 @@ public interface ICHandler extends IHandler {
      */
     public Result visit(Dispatcher main, IASTDoStatement node);
 
+	public Result visit(Dispatcher main, IASTContinueStatement cs);
+	
     /**
      * Translates an IASTExpressionList.
      * 
@@ -570,4 +573,5 @@ public interface ICHandler extends IHandler {
 	public void addSizeOfConstants(CType cvar, ILocation loc);
 
 	boolean isHeapVar(String boogieId);
+
 }

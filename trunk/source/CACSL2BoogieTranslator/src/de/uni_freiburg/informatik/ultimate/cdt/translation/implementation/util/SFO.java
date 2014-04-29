@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @date 16.08.2012
  */
 public final class SFO {
+	
     /**
      * String representing the result variable in Boogie.
      */
@@ -134,7 +135,10 @@ public final class SFO {
      * Identifier for function pointers. 
      */
     public static final String FUNCTION_ADDRESS = "#funAddr~";
-
+    /**
+     * Loop (entry/exit) labels are built with this.
+     */
+    public static final String LOOPLABEL = "Loop~";
     	
    /**
     * Specifies purpose of an auxiliary temporary variable.
@@ -243,5 +247,6 @@ public static VariableDeclaration getTempVarVariableDeclaration(
 	VarList tempVar = new VarList(loc, new String[] { tmpName }, astType);
 	return new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
 };
+
     	
 }

@@ -7,11 +7,13 @@ import java.text.ParseException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Stack;
 
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTArrayModifier;
@@ -22,6 +24,7 @@ import org.eclipse.cdt.core.dom.ast.IASTCaseStatement;
 import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTConditionalExpression;
+import org.eclipse.cdt.core.dom.ast.IASTContinueStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
@@ -261,6 +264,12 @@ public class CHandler implements ICHandler {
 	private ArrayDeque<ResultTypes> mCurrentDeclaredTypes;
 	
 	/**
+	 * Stores the labels of the loops we are currently inside. 
+	 * (For translation of a possible continue statement)
+	 */
+	Stack<String> mInnerMostLoopLabel;
+	
+	/**
 	 * Constructor.
 	 * 
 	 * @param main
@@ -283,6 +292,7 @@ public class CHandler implements ICHandler {
 		this.backtranslator = backtranslator;
 		this.contract = new ArrayList<ACSLNode>();
 		this.mErrorLabelWarning = errorLabelWarning;
+		this.mInnerMostLoopLabel = new Stack<String>();
 
 		this.mBoogieIdsOfHeapVars = new LinkedHashSet<String>();
 		this.mCurrentDeclaredTypes = new ArrayDeque<ResultTypes>();
@@ -2063,10 +2073,11 @@ public class CHandler implements ICHandler {
 	 *            the body component of the corresponding loop
 	 * @param condResult
 	 *            the condition of the loop
+	 * @param loopLabel 
 	 * @return a result object holding the translated loop (i.e. a while loop)
 	 */
 	private Result handleLoops(Dispatcher main, IASTStatement node,
-			Result bodyResult, ResultExpression condResult) {
+			Result bodyResult, ResultExpression condResult, String loopLabel) {
 		int scopeDepth = symbolTable.getActiveScopeNum();
 		assert node instanceof IASTWhileStatement
 		|| node instanceof IASTDoStatement
@@ -2113,7 +2124,9 @@ public class CHandler implements ICHandler {
 						new InferredType(Type.Boolean), true)), new CPrimitive(PRIMITIVE.INT)),
 						new LinkedHashMap<VariableDeclaration, ILocation>(0));
 
+			mInnerMostLoopLabel.push(loopLabel);
 			bodyResult = main.dispatch(forStmt.getBody());
+			mInnerMostLoopLabel.pop();
 		}
 		assert (main.isAuxVarMapcomplete(condResult.decl, condResult.auxVars));
 
@@ -2139,6 +2152,7 @@ public class CHandler implements ICHandler {
 		}
 
 		if (node instanceof IASTForStatement && iterator != null) {
+			bodyBlock.add(new Label(loc, loopLabel));
 			// add iterator statements of this for loop
 			if (iterator instanceof ResultExpressionList) {
 				for (ResultExpression el : ((ResultExpressionList) iterator).list) {
@@ -2185,9 +2199,12 @@ public class CHandler implements ICHandler {
 		if (node instanceof IASTWhileStatement
 				|| node instanceof IASTForStatement) {
 			bodyBlock.add(0, ifStmt);
+			if (node instanceof IASTWhileStatement)
+				bodyBlock.add(0, new Label(loc, loopLabel));
 			bodyBlock.addAll(0, condResult.stmt);
 		} else if (node instanceof IASTDoStatement) {
 			bodyBlock.addAll(condResult.stmt);
+			bodyBlock.add(new Label(loc, loopLabel));
 			bodyBlock.add(ifStmt);
 		}
 
@@ -2247,22 +2264,40 @@ public class CHandler implements ICHandler {
 	public Result visit(Dispatcher main, IASTWhileStatement node) {
 		ResultExpression condResult =
 				(ResultExpression) main.dispatch(node.getCondition());
+		String loopLabel = SFO.LOOPLABEL + symbolTable.getCompoundCounter();
+		mInnerMostLoopLabel.push(loopLabel);
 		Result bodyResult = main.dispatch(node.getBody());
-		return handleLoops(main, node, bodyResult, condResult);
+		mInnerMostLoopLabel.pop();
+		return handleLoops(main, node, bodyResult, condResult, loopLabel);
 	}
 
 	@Override
 	public Result visit(Dispatcher main, IASTForStatement node) {
-		return handleLoops(main, node, null, null);
+		String loopLabel = SFO.LOOPLABEL + symbolTable.getCompoundCounter();
+		return handleLoops(main, node, null, null, loopLabel);
 	}
 
 	@Override
 	public Result visit(Dispatcher main, IASTDoStatement node) {
 		ResultExpression condResult =
 				(ResultExpression) main.dispatch(node.getCondition());
+		String loopLabel = SFO.LOOPLABEL + symbolTable.getCompoundCounter();
+		mInnerMostLoopLabel.push(loopLabel);
 		Result bodyResult = main.dispatch(node.getBody());
-		return handleLoops(main, node, bodyResult, condResult);
+		mInnerMostLoopLabel.pop();
+		return handleLoops(main, node, bodyResult, condResult, loopLabel);
 	}
+	
+	@Override
+	public Result visit(Dispatcher main, IASTContinueStatement cs) {
+		ILocation loc = new CACSLLocation(cs);
+		ArrayList<Statement> stmt = new ArrayList<Statement>();
+		stmt.add(new GotoStatement(loc, new String[] { mInnerMostLoopLabel.peek() }));
+		ResultExpression contResult = new ResultExpression(stmt, null, new ArrayList<Declaration>(),
+				Collections.<VariableDeclaration, ILocation>emptyMap());
+		return contResult;
+	}
+	
 
 	@Override
 	public Result visit(Dispatcher main, IASTExpressionList node) {
