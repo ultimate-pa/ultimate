@@ -12,7 +12,7 @@ struct list {
 int main()
 {
 	struct list selfloop = { 0, &(selfloop) };
-	int equal = (selfloop->next = &selfloop);
+	int equal = (selfloop.next == &selfloop);
 	//@ assert equal;
     return 0;
 }
