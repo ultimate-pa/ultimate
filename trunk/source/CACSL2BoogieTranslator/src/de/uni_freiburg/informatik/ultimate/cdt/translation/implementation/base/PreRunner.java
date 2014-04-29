@@ -109,8 +109,11 @@ public class PreRunner extends ASTVisitor {
     			IASTNode operand = ue.getOperand();
     			// add the operand to VariablesOnHeap!
     			String n = null;
+    			if (operand instanceof IASTExpression)
+    				operand = removeBrackets((IASTExpression) operand);
     			if (operand instanceof IASTIdExpression) {
-    				n = ue.getOperand().getRawSignature();
+//    				n = ue.getOperand().getRawSignature();
+    				n = operand.getRawSignature();
     			} // TODO : add other cases! ie. structs, where the &-operator
     			// is applied to one field, etc
     			else if ((operand instanceof IASTUnaryExpression) 
