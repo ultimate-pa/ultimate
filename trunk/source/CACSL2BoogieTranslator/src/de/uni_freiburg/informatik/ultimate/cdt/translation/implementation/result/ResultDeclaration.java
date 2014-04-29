@@ -3,7 +3,10 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.cdt.core.dom.ast.IASTInitializer;
+
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 
 public class ResultDeclaration extends Result {
 
@@ -13,8 +16,9 @@ public class ResultDeclaration extends Result {
 		super(null);
 	}
 	
-	public void addDeclaration(CType type, String name, ResultExpression initializer, boolean onHeap) {
-		mDecls.add(new CDeclaration(type, name, initializer, onHeap));
+//	public void addDeclaration(CType type, String name, ResultExpression initializer, boolean onHeap) {
+	public void addDeclaration(CType type, String name, IASTInitializer cAstInitializer, boolean onHeap) {
+		mDecls.add(new CDeclaration(type, name, cAstInitializer, onHeap));
 	}
 
 	public void addDeclaration(CDeclaration decl) {

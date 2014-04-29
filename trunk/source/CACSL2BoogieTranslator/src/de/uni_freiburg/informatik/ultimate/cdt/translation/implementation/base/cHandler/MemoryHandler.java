@@ -81,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer.POINTER_BASE_VALIDITY;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
 
 /**
  * @author Markus Lindenmann
@@ -127,15 +128,25 @@ public class MemoryHandler {
 	private final boolean m_CheckFreeValid;
 	private final boolean m_CheckMallocNonNegative;
 	
+	//needed for adding modifies clauses
+	private FunctionHandler m_functionHandler;
+
+	/**
+	 * This set contains those pointers that we have to malloc at the beginning
+	 * and free at the end of the current scope;
+	 */
+	LinkedScopedHashMap<LocalLValue, Integer> mallocedAuxPointers;
 
     /**
      * Constructor.
      * @param checkPointerValidity 
      */
-    public MemoryHandler(boolean checkPointerValidity) {
+    public MemoryHandler(FunctionHandler functionHandler, boolean checkPointerValidity) {
+    	m_functionHandler = functionHandler;
         this.sizeofConsts = new LinkedHashSet<String>();
         this.axioms = new LinkedHashSet<Axiom>();
         this.constants = new LinkedHashSet<ConstDeclaration>();
+		this.mallocedAuxPointers = new LinkedScopedHashMap<LocalLValue, Integer>();
     	m_PointerBaseValidity = 
 				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
 				getEnum(PreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, POINTER_BASE_VALIDITY.class);
@@ -711,7 +722,7 @@ public class MemoryHandler {
         String cId = main.cHandler.getSymbolTable().getCID4BoogieID(bId, loc);
         CType cvar = main.cHandler.getSymbolTable().get(cId, loc)
                 .getCVariable();
-        if (!isPointer(cvar)) {
+        if (!isPointer(cvar) && !(main.cHandler.isHeapVar(bId))) {
             String msg = "Cannot free the non pointer variable " + cId;
             throw new IncorrectSyntaxException(loc, msg);
         }
@@ -1007,12 +1018,10 @@ public class MemoryHandler {
     	
     	if (ut instanceof CPrimitive) {
 			CPrimitive cp = (CPrimitive) ut;
-			switch (cp.getType()) {
-			case CHAR:
-			case INT:
+			switch (cp.getGeneralType()) {
+			case INTTYPE:
 				return new PrimitiveType(lrVal.getValue().getLocation(), SFO.INT);
-			case FLOAT:
-			case DOUBLE:
+			case FLOATTYPE:
 				return new PrimitiveType(lrVal.getValue().getLocation(), SFO.REAL);
 			default:
 				throw new UnsupportedSyntaxException(null, "unsupported cType " + ct);
@@ -1040,6 +1049,14 @@ public class MemoryHandler {
      * @return the required Statements to perform the write.
      */
     public ArrayList<Statement> getWriteCall(HeapLValue hlv, RValue rval) {
+    	
+    	for (String t : new String[] { SFO.INT, SFO.POINTER,
+				SFO.REAL, SFO.BOOL }) {
+			m_functionHandler.getModifiedGlobals()
+					.get(m_functionHandler.getCurrentProcedureID())
+					.add(SFO.MEMORY + "_" + t);
+		}
+    	
         ILocation loc = hlv.getAddress().getLocation();
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         
@@ -1181,5 +1198,30 @@ public class MemoryHandler {
 	    return new StructConstructor(loc, new InferredType(Type.Pointer), 
                 new String[]{"base", "offset"}, new Expression[]{new IntegerLiteral(loc, "0"), new IntegerLiteral(loc, "0")}); 
     }
+	/**
+	 * Takes a loop or function body and inserts mallocs and frees for all the identifiers in this.mallocedAuxPointers
+	 */
+	public ArrayList<Statement> insertMallocs(Dispatcher main, ILocation loc, ArrayList<Statement> block) {
+		ArrayList<Statement> mallocs = new ArrayList<Statement>();
+		for (LocalLValue llv : this.mallocedAuxPointers.currentScopeKeys()) 
+			mallocs.addAll(this.getMallocCall(main, m_functionHandler, this.calculateSizeOf(llv.cType, loc), llv, loc).stmt);
+		ArrayList<Statement> frees = new ArrayList<Statement>();
+		for (LocalLValue llv : this.mallocedAuxPointers.currentScopeKeys())  //frees are inserted in handleReturnStm
+			frees.addAll(this.getFreeCall(main, m_functionHandler, llv.getValue(), loc).stmt);
+		ArrayList<Statement> newBlockAL = new ArrayList<Statement>();
+		newBlockAL.addAll(mallocs);
+		newBlockAL.addAll(block);
+		newBlockAL.addAll(frees);
+		return newBlockAL;
+	}
+	
+	public void addMallocedAuxPointer(Dispatcher main, LocalLValue thisLVal) {
+//		if (!main.typeHandler.isStructDeclaration())
+			this.mallocedAuxPointers.put(thisLVal, mallocedAuxPointers.getActiveScopeNum());
+	}
+	
+	public LinkedScopedHashMap<LocalLValue, Integer> getMallocedAuxPointers() {
+		return mallocedAuxPointers;
+	}
 
 }

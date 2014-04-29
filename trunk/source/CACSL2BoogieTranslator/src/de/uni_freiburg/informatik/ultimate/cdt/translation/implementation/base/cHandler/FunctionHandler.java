@@ -120,12 +120,6 @@ public class FunctionHandler {
 	 * need a special treatment, as they are assumed to be returning int!
 	 */
 	private LinkedHashSet<String> methodsCalledBeforeDeclared;
-	
-	/**
-	 * This set contains those pointers that we have to malloc at the beginning
-	 * and free at the end of the current procedure;
-	 */
-	LinkedScopedHashMap<LocalLValue, Integer> mallocedAuxPointers;
 	/**
 	 * map that is used to communicate the returned CType of a procedure from 
 	 * its declaration to its definition.
@@ -147,7 +141,6 @@ public class FunctionHandler {
 		this.procedureToReturnCType = new LinkedHashMap<String, CType>();
 		this.procedureToParamCType = new LinkedHashMap<String, ArrayList<CType>>(); 
 		this.modifiedGlobalsIsUserDefined = new LinkedHashSet<String>();
-		this.mallocedAuxPointers = new LinkedScopedHashMap<LocalLValue, Integer>();
 		m_CheckMemoryLeakAtEndOfMain = 
 				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
 				getBoolean(PreferenceInitializer.LABEL_CHECK_MemoryLeakInMain);
@@ -336,7 +329,7 @@ public class FunctionHandler {
 	 * @param stmt the statement list to append to.
 	 * @param parent
 	 */
-	private void handleFunctionsInParams(Dispatcher main, ILocation loc,
+	private void handleFunctionsInParams(Dispatcher main, ILocation loc, MemoryHandler memoryHandler,
 			ArrayList<Declaration> decl, ArrayList<Statement> stmt,
 			IASTFunctionDefinition parent) {
 	    VarList[] varListArray = currentProcedure.getInParams();
@@ -371,7 +364,7 @@ public class FunctionHandler {
 				String auxInvar = main.nameHandler.getUniqueIdentifier(parent,
 						cId, 0, isOnHeap);
 				ASTType type = varList.getType();
-				if (isOnHeap) {
+				if (isOnHeap) {//FIXME --- this onHeap case for a function parameter (in the declaration!) -- what does it mean??
 				    type = MemoryHandler.POINTER_TYPE;
 	                ((CHandler)main.cHandler).addBoogieIdsOfHeapVars(
 	                        auxInvar);
@@ -391,7 +384,7 @@ public class FunctionHandler {
 				if (isOnHeap) {
 				    LocalLValue llv = new LocalLValue(tempLHS, cvar);
 				    // malloc
-				    addMallocedAuxPointer(main, llv);
+				    memoryHandler.addMallocedAuxPointer(main, llv);
 				    // dereference
                     HeapLValue hlv = new HeapLValue(llv.getValue(), cvar);
                     ArrayList<Declaration> decls = new ArrayList<Declaration>();
@@ -694,11 +687,11 @@ public class FunctionHandler {
 		ArrayList<Statement> stmts = new ArrayList<Statement>();
 		ArrayList<Declaration> decls = new ArrayList<Declaration>();
 		// 1)
-		handleFunctionsInParams(main, loc, decls, stmts, node);
+		handleFunctionsInParams(main, loc, memoryHandler, decls, stmts, node);
 		// 2)
 		Body body = ((Body) main.dispatch(node.getBody()).node);
 		// 3)
-		stmts.addAll(insertMallocs(main, loc, memoryHandler,
+		stmts.addAll(memoryHandler.insertMallocs(main, loc,
 		        new ArrayList<Statement>(Arrays.asList(body.getBlock()))));
 		// 4)
 		for (SymbolTableValue stv : main.cHandler.getSymbolTable().currentScopeValues())
@@ -756,19 +749,6 @@ public class FunctionHandler {
 		return in;
 	}
 	
-	public ArrayList<Statement> insertMallocs(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, ArrayList<Statement> block) {
-		ArrayList<Statement> mallocs = new ArrayList<Statement>();
-		for (LocalLValue llv : this.mallocedAuxPointers.currentScopeKeys()) 
-			mallocs.addAll(memoryHandler.getMallocCall(main, this, memoryHandler.calculateSizeOf(llv.cType, loc), llv, loc).stmt);
-		ArrayList<Statement> frees = new ArrayList<Statement>();
-		for (LocalLValue llv : this.mallocedAuxPointers.currentScopeKeys())  //frees are inserted in handleReturnStm
-			frees.addAll(memoryHandler.getFreeCall(main, this, llv.getValue(), loc).stmt);
-		ArrayList<Statement> newBlockAL = new ArrayList<Statement>();
-		newBlockAL.addAll(mallocs);
-		newBlockAL.addAll(block);
-		newBlockAL.addAll(frees);
-		return newBlockAL;
-	}
 
 	void beginUltimateInit(Dispatcher main, ILocation loc, String startOrInit) {
 		main.cHandler.beginScope();
@@ -975,7 +955,8 @@ public class FunctionHandler {
 		stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
 	
 		// we need to insert a free for each malloc of an auxvar before each return
-		for (Entry<LocalLValue, Integer> entry : this.mallocedAuxPointers.entrySet())  //frees are inserted in handleReturnStm
+		for (Entry<LocalLValue, Integer> entry : memoryHandler.getMallocedAuxPointers().entrySet())  //frees are inserted in handleReturnStm
+//		for (Entry<LocalLValue, Integer> entry : this.mallocedAuxPointers.entrySet())  //frees are inserted in handleReturnStm
 			if (entry.getValue() >= 1)
 				stmt.addAll(memoryHandler.getFreeCall(main, this, entry.getKey().getValue(), loc).stmt);
 		
@@ -1043,12 +1024,4 @@ public class FunctionHandler {
 		return this.callGraph;
 	}
 	
-	public void addMallocedAuxPointer(Dispatcher main, LocalLValue thisLVal) {
-		if (!main.typeHandler.isStructDeclaration())
-			this.mallocedAuxPointers.put(thisLVal, mallocedAuxPointers.getActiveScopeNum());
-	}
-	
-	public LinkedScopedHashMap<LocalLValue, Integer> getMallocedAuxPointers() {
-		return mallocedAuxPointers;
-	}
 }

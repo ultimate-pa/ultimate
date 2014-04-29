@@ -137,8 +137,7 @@ public class PreRunner extends ASTVisitor {
                     IASTFunctionDefinition function = functionTable.get(n);
                     if (function != null) {
                         functionPointers.put(n, function);
-                    }
-                    else {
+                    } else {
                         this.variablesOnHeap.add(get(n, loc));//TODO why put the location of expression, not operand, here?
                     }
                 }

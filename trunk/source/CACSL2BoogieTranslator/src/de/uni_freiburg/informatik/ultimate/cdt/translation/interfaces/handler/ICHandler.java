@@ -568,4 +568,6 @@ public interface ICHandler extends IHandler {
     public void endScope();
 
 	public void addSizeOfConstants(CType cvar, ILocation loc);
+
+	boolean isHeapVar(String boogieId);
 }

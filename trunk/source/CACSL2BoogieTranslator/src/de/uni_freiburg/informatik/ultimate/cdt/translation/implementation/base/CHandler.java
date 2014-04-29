@@ -163,6 +163,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.Check;
+import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
 
 /**
  * Class that handles translation of C nodes to Boogie nodes.
@@ -207,6 +208,7 @@ public class CHandler implements ICHandler {
 	 * The symbol table for the translation.
 	 */
 	protected SymbolTable symbolTable;
+
 	/**
 	 * Names of all bitwise operation that occurred in the program.
 	 */
@@ -273,7 +275,7 @@ public class CHandler implements ICHandler {
 		this.structHandler = new StructHandler();
 		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		boolean checkPointerValidity = prefs.getBoolean(PreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
-		this.memoryHandler = new MemoryHandler(checkPointerValidity);
+		this.memoryHandler = new MemoryHandler(functionHandler, checkPointerValidity);
 		this.symbolTable = new SymbolTable(main);
 		this.mFunctions = new LinkedHashMap<String, FunctionDeclaration>();
 		this.mDeclarationsGlobalInBoogie = new LinkedHashMap<Declaration, CDeclaration>();
@@ -537,7 +539,7 @@ public class CHandler implements ICHandler {
 		}
 		checkForACSL(main, stmt, null, node);
 		if (isNewScopeRequired(parent)){
-			stmt = functionHandler.insertMallocs(main, loc, memoryHandler, stmt);
+			stmt = memoryHandler.insertMallocs(main, loc, stmt);
 			for (SymbolTableValue stv : symbolTable.currentScopeValues()) {
 				if (!stv.isGlobalVar()) {
 					decl.add(stv.getBoogieDecl());
@@ -624,9 +626,16 @@ public class CHandler implements ICHandler {
 							symbolTable.getCompoundCounter(), onHeap);
 					if (onHeap) 
 						mBoogieIdsOfHeapVars.add(bId);
-					
+				
 					Declaration boogieDec = null;
 					boolean globalInBoogie = false;
+					
+					//this .put() is only to have a minimal symbolTableEntry (containing boogieID) for translation of the initializer
+					symbolTable.put(cDec.getName(), new SymbolTableValue(bId,
+							boogieDec, cDec, globalInBoogie,
+							storageClass)); 
+					cDec.translateInitializer(main);
+	
 					ASTType translatedType = null;
 					if (onHeap)
 						translatedType = MemoryHandler.POINTER_TYPE;
@@ -650,7 +659,7 @@ public class CHandler implements ICHandler {
 						globalInBoogie = true;
 						mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
 					} else {
-						if (cDec.getInitializer() == null && !functionHandler.noCurrentProcedure() && !typeHandler.isStructDeclaration()) { 
+						if (!cDec.hasInitializer() && !functionHandler.noCurrentProcedure() && !typeHandler.isStructDeclaration()) { 
 							//in case of a local variable declaration without an initializer, we need to insert a
 							//havoc statement (because otherwise the variable is always the same within a loop which
 							//may lead to unsoundness)
@@ -658,7 +667,7 @@ public class CHandler implements ICHandler {
 							result = new ResultExpression((LRValue) null);
 							((ResultExpression) result).stmt.add(
 									new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, bId) }));
-						} else if (cDec.getInitializer() != null && !functionHandler.noCurrentProcedure() && !typeHandler.isStructDeclaration()) { 
+						} else if (cDec.hasInitializer() && !functionHandler.noCurrentProcedure() && !typeHandler.isStructDeclaration()) { 
 							//in case of a local variable declaration with an initializer, the statements and delcs
 							// necessary for the initialization are the result
 							assert result instanceof ResultSkip || result instanceof ResultExpression;
@@ -691,6 +700,8 @@ public class CHandler implements ICHandler {
 						globalInBoogie = functionHandler.noCurrentProcedure();
 					}
 					
+					if (onHeap)
+						memoryHandler.addMallocedAuxPointer(main, new LocalLValue(new VariableLHS(loc, bId), cDec.getType()));
 					symbolTable.put(cDec.getName(), new SymbolTableValue(bId,
 							boogieDec, cDec, globalInBoogie,
 							storageClass)); 
@@ -777,19 +788,21 @@ public class CHandler implements ICHandler {
 			mCurrentDeclaredTypes.pop();
 			if (node.getInitializer() != null) {
 				assert result.getDeclarations().size() == 1;
-				CDeclaration cdec = result.getDeclarations().remove(0);
+				CDeclaration cdec = result.getDeclarations().remove(0);//have to do this, because CDeclaration is immutable, right?
 				result.addDeclaration(cdec.getType(), cdec.getName(), 
-						(ResultExpression) main.dispatch(node.getInitializer()), 
+//						(ResultExpression) main.dispatch(node.getInitializer()), 
+						node.getInitializer(), 
 						cdec.isOnHeap());
 			}	
 			return result;
 		} else {
 			ResultExpression initializer = null;
-			if (node.getInitializer() != null) {
-				initializer = (ResultExpression) main.dispatch(node.getInitializer());
-			}
+//			if (node.getInitializer() != null) {
+//				initializer = (ResultExpression) main.dispatch(node.getInitializer());
+//			}
 			ResultDeclaration result = new ResultDeclaration();
-			result.addDeclaration(newResType.cType, node.getName().toString(), initializer, newResType.isOnHeap);
+//			result.addDeclaration(newResType.cType, node.getName().toString(), initializer, newResType.isOnHeap);
+			result.addDeclaration(newResType.cType, node.getName().toString(), node.getInitializer(), newResType.isOnHeap);
 			return result;
 		}
 	}
@@ -1033,6 +1046,7 @@ public class CHandler implements ICHandler {
 		return result;
 	}
 
+	@Override
 	public boolean isHeapVar(String boogieId) {
 		return mBoogieIdsOfHeapVars.contains(boogieId);
 	}
@@ -1314,12 +1328,12 @@ public class CHandler implements ICHandler {
 			
 			stmt.addAll(memoryHandler.getWriteCall(hlv, rVal));
 
-			for (String t : new String[] { SFO.INT, SFO.POINTER,
-					SFO.REAL, SFO.BOOL }) {
-				functionHandler.getModifiedGlobals()
-						.get(functionHandler.getCurrentProcedureID())
-						.add(SFO.MEMORY + "_" + t);
-			}
+//			for (String t : new String[] { SFO.INT, SFO.POINTER, //is done in getWriteCall, now
+//					SFO.REAL, SFO.BOOL }) {
+//				functionHandler.getModifiedGlobals()
+//						.get(functionHandler.getCurrentProcedureID())
+//						.add(SFO.MEMORY + "_" + t);
+//			}
 
 			return new ResultExpression(stmt, rightHandSide, decl, auxVars, overappr);
 		} else if (lrVal instanceof LocalLValue){
@@ -2200,7 +2214,7 @@ public class CHandler implements ICHandler {
 					}
 				}
 				if (((IASTForStatement) node).getInitializerStatement() != null) {
-					bodyBlock = functionHandler.insertMallocs(main, loc, memoryHandler, bodyBlock);
+					bodyBlock = memoryHandler.insertMallocs(main, loc, bodyBlock);
 //					main.cHandler.getSymbolTable().endScope();
 					for (SymbolTableValue stv : symbolTable.currentScopeValues()) 
 						if (!stv.isGlobalVar()) {
@@ -2829,13 +2843,13 @@ public class CHandler implements ICHandler {
 	public void beginScope() {
 		this.typeHandler.beginScope();
 		this.symbolTable.beginScope();
-		this.functionHandler.getMallocedAuxPointers().beginScope();
+		this.memoryHandler.getMallocedAuxPointers().beginScope();
 	}
 	
 	public void endScope() {
 		this.typeHandler.endScope();
 		this.symbolTable.endScope();
-		this.functionHandler.getMallocedAuxPointers().endScope();
+		this.memoryHandler.getMallocedAuxPointers().endScope();
 	}
 
 	@Override

@@ -321,7 +321,9 @@ public class PostProcessor {
 
 
 	/**
-	 * same as other initVar except the caller chooses on/off Heap
+	 * same as other initVar but with an LRValue as argument, not a LHS
+	 * if var is a HeapLValue, something on Heap is initialized, 
+	 * if it is a LocalLValue something off the Heap is initialized
 	 */
 	public static ResultExpression initVar(ILocation loc, Dispatcher main,
 			MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler, 

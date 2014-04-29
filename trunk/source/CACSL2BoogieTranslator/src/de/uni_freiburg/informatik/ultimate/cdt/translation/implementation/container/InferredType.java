@@ -118,41 +118,41 @@ public class InferredType implements IType {
         }
     }
     
-    public InferredType(CType cType) {
-    	CType underlyingType = cType;
-    	if (underlyingType instanceof CNamed)
-    		underlyingType = ((CNamed) cType).getUnderlyingType();
-		
-		if (underlyingType instanceof CPrimitive) {
-			CPrimitive cp = (CPrimitive) underlyingType;
-			switch (cp.getType()) {
-			case INT:
-				type = Type.Integer;
-				break;
-			case FLOAT:
-			case DOUBLE:
-				type = Type.Real;
-				break;
-			case CHAR:
-				type = Type.String;
-				break;
-			default:
-				throw new UnsupportedSyntaxException(null , "..");
-			}
-		} else if (underlyingType instanceof CPointer) {
-			type = Type.Pointer;
-		} else if (underlyingType instanceof CArray) {
-			type = Type.Pointer;
-		} else if (underlyingType instanceof CEnum) {
-			type = Type.Integer;
-		} else if (underlyingType instanceof CStruct) {
-			type = Type.Struct;
-		} else if (underlyingType instanceof CNamed) {
-			assert false : "This should not be the case as we took the underlying type.";
-		} else {
-			throw new UnsupportedSyntaxException(null, "..");
-		}	
-    }
+//    public InferredType(CType cType) {
+//    	CType underlyingType = cType;
+//    	if (underlyingType instanceof CNamed)
+//    		underlyingType = ((CNamed) cType).getUnderlyingType();
+//		
+//		if (underlyingType instanceof CPrimitive) {
+//			CPrimitive cp = (CPrimitive) underlyingType;
+//			switch (cp.getType()) {
+//			case INT:
+//				type = Type.Integer;
+//				break;
+//			case FLOAT:
+//			case DOUBLE:
+//				type = Type.Real;
+//				break;
+//			case CHAR:
+//				type = Type.String;
+//				break;
+//			default:
+//				throw new UnsupportedSyntaxException(null , "..");
+//			}
+//		} else if (underlyingType instanceof CPointer) {
+//			type = Type.Pointer;
+//		} else if (underlyingType instanceof CArray) {
+//			type = Type.Pointer;
+//		} else if (underlyingType instanceof CEnum) {
+//			type = Type.Integer;
+//		} else if (underlyingType instanceof CStruct) {
+//			type = Type.Struct;
+//		} else if (underlyingType instanceof CNamed) {
+//			assert false : "This should not be the case as we took the underlying type.";
+//		} else {
+//			throw new UnsupportedSyntaxException(null, "..");
+//		}	
+//    }
 
     /**
      * Returns the type.
