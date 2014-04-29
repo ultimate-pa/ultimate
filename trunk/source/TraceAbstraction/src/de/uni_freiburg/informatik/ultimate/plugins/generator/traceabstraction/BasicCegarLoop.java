@@ -159,7 +159,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_TraceAbstractionBenchmarks.startTraceCheck();
 		IPredicate truePredicate = m_SmtManager.newTruePredicate();
 		IPredicate falsePredicate = m_SmtManager.newFalsePredicate();
-		
+		PredicateUnifier predicateUnifier = new PredicateUnifier(m_SmtManager,
+				truePredicate, falsePredicate);
 		switch (m_Interpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
@@ -200,8 +201,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			m_RcfgProgramExecution = m_TraceChecker.getRcfgProgramExecution();
 		} else {
 			AllIntegers allInt = new TraceChecker.AllIntegers();
-			PredicateUnifier predicateUnifier = new PredicateUnifier(m_SmtManager,
-					truePredicate, falsePredicate);
 			m_TraceChecker.computeInterpolants(allInt, predicateUnifier, m_Interpolation);
 		}
 		m_TraceAbstractionBenchmarks.finishTraceCheck();
