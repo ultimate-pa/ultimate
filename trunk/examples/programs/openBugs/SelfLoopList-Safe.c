@@ -13,6 +13,6 @@ int main()
 {
 	struct list selfloop = { 0, &(selfloop) };
 	int equal = (selfloop.next == &selfloop);
-	//@ assert equal;
+	//@ assert equal != 0;
     return 0;
 }
