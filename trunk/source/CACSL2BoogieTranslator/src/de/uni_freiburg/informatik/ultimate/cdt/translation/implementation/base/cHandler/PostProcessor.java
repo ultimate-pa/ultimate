@@ -331,7 +331,7 @@ public class PostProcessor {
 			LRValue var,
 			CType cType, ResultExpression initializerRaw
 			) {
-		assert var instanceof LocalLValue || var instanceof HeapLValue;
+		assert var == null || var instanceof LocalLValue || var instanceof HeapLValue;
 		
 		boolean onHeap = var instanceof HeapLValue;
 		
