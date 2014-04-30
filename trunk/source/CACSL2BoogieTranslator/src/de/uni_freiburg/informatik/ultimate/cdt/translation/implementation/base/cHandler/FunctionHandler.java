@@ -738,7 +738,7 @@ public class FunctionHandler {
         	
         	ASTType type = ((TypeHandler) main.typeHandler).ctype2asttype(loc, paramDec.getType());
         	String paramId = main.nameHandler.getInParamIdentifier(paramDec.getName());
-        	in[i] = new VarList(loc, new String[] { paramId}, type);
+        	in[i] = new VarList(loc, new String[] { paramId }, type);
 //            FIXME: boolean isOnHeap = ((MainDispatcher) main).getVariablesForHeap().
 //                    contains(paramDec);
             paramTypes.add(i, paramDec.getType());

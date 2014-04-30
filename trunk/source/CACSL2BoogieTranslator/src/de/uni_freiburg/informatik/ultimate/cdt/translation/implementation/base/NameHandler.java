@@ -87,7 +87,10 @@ public class NameHandler implements INameHandler {
 	
 	@Override
 	public String getInParamIdentifier(String cId) {
-		final String boogieId = SFO.IN_PARAM + cId;
+		//(alex:) in case of several unnamed parameters we need uniqueness 
+		//(still a little bit overkill, to make it precise we would need to check whether 
+		// the current method has more than one unnamed parameter)
+		final String boogieId = SFO.IN_PARAM + cId + (cId.isEmpty() ? tmpUID++ : ""); 
 		boogie2C.putInVar(boogieId, cId);
 		return boogieId;
 	}
