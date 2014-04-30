@@ -18,7 +18,7 @@ public class All_TreeInterpolants extends
 	// Time out for each test case in milliseconds
 	private static int m_Timeout = 10000;
 
-	private static final boolean s_Boogie_TreeInterpolants = true;
+	private static final boolean s_Boogie_TreeInterpolants = false;
 	private static final boolean s_C_TreeInterpolants = true;
 	
 	@Override

@@ -297,7 +297,11 @@ public abstract class Dispatcher {
 
 	/**
 	 * Create a havoc statement for each variable in auxVars. (Does not modify
-	 * this auxVars map)
+	 * this auxVars map).
+	 * We insert havocs for auxvars after the translation of a _statement_. This means
+	 * that the Expressions carry the auxVarMap outside (via the ResultExpression they
+	 * return), and that map is used for calling this procedure once we reach a (basic)
+	 * statement.
 	 */
 	public static List<HavocStatement> createHavocsForAuxVars(
 			Map<VariableDeclaration, ILocation> auxVars) {

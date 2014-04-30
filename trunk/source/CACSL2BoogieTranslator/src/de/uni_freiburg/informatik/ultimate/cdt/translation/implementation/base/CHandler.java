@@ -619,8 +619,13 @@ public class CHandler implements ICHandler {
 			for (IASTDeclarator d : node.getDeclarators()) {
 				ResultDeclaration declResult = (ResultDeclaration) main.dispatch(d);
 				
+				//the ResultDeclaration from one Declarator always only contains one CDeclaration, right?
+				//or at most one??
+				assert declResult.getDeclarations().size() == 1;
+				CDeclaration cDec = declResult.getDeclarations().get(0);
+				
 				//update symbol table
-				for (CDeclaration cDec : declResult.getDeclarations()) {
+//				for (CDeclaration cDec : declResult.getDeclarations()) { //-> if the above assert holds, it is clearer without a loop
 					
 					//functions keep their cId, and their declaration is not stored in the symbolTable but in
 					// FunctionHandler.procedures.
@@ -640,7 +645,8 @@ public class CHandler implements ICHandler {
 					Declaration boogieDec = null;
 					boolean globalInBoogie = false;
 					
-					//this .put() is only to have a minimal symbolTableEntry (containing boogieID) for translation of the initializer
+					//this .put() is only to have a minimal symbolTableEntry (containing boogieID) for 
+					//translation of the initializer
 					symbolTable.put(cDec.getName(), new SymbolTableValue(bId,
 							boogieDec, cDec, globalInBoogie,
 							storageClass)); 
@@ -715,7 +721,7 @@ public class CHandler implements ICHandler {
 					symbolTable.put(cDec.getName(), new SymbolTableValue(bId,
 							boogieDec, cDec, globalInBoogie,
 							storageClass)); 
-				}
+//				}
 			}
 			mCurrentDeclaredTypes.pop();
 			return result;
@@ -2662,13 +2668,19 @@ public class CHandler implements ICHandler {
 		Map<VariableDeclaration, ILocation> auxVars = 
 				new LinkedHashMap<VariableDeclaration, ILocation>(0);
 		List<Overapprox> overappr = new ArrayList<Overapprox>();
+		
 		decl.addAll(reLocCond.decl);
+		auxVars.putAll(reLocCond.auxVars);
 		stmt.addAll(reLocCond.stmt);
 		overappr.addAll(reLocCond.overappr);
+		
 		String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.ITE);
 		ASTType tmpType = typeHandler.ctype2asttype(loc, rePositive.lrVal.cType);
 		VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpType, loc);
+		
 		decl.add(tmpVar);
+		auxVars.put(tmpVar,loc);
+		
 		RValue condition = (RValue) reLocCond.lrVal;
 //		condition = ConvExpr.toBoolean(loc, condition); //done for relocCond
 		List<Statement> ifStatements = new ArrayList<Statement>();
@@ -2682,10 +2694,11 @@ public class CHandler implements ICHandler {
                 annots.put(Overapprox.getIdentifier(), overapprItem);
             }
 			ifStatements.add(assignStmt);
-			List<HavocStatement> havocAuxVars = Dispatcher
-					.createHavocsForAuxVars(rePositive.auxVars);
-			ifStatements.addAll(havocAuxVars);
+//			List<HavocStatement> havocAuxVars = Dispatcher //we carry them outside so they are havoced there
+//					.createHavocsForAuxVars(rePositive.auxVars);
+//			ifStatements.addAll(havocAuxVars);
 			decl.addAll(rePositive.decl);
+			auxVars.putAll(rePositive.auxVars);
 			overappr.addAll(rePositive.overappr);
 		}
 
@@ -2696,10 +2709,11 @@ public class CHandler implements ICHandler {
 			AssignmentStatement assign = new AssignmentStatement(loc, lhs, 
 					new Expression[] { reNegative.lrVal.getValue() });
 			elseStatements.add(assign);
-			List<HavocStatement> havocAuxVars = Dispatcher
-					.createHavocsForAuxVars(reNegative.auxVars);
-			elseStatements.addAll(havocAuxVars);
+//			List<HavocStatement> havocAuxVars = Dispatcher//we carry them outside so they are havoced there
+//					.createHavocsForAuxVars(reNegative.auxVars);
+//			elseStatements.addAll(havocAuxVars);
 			decl.addAll(reNegative.decl);
+			auxVars.putAll(reNegative.auxVars);
 			overappr.addAll(reNegative.overappr);
 		}
 		Statement ifStatement = new IfStatement(loc, condition.getValue(), 
@@ -2712,10 +2726,9 @@ public class CHandler implements ICHandler {
 		stmt.add(ifStatement);
 
 		IdentifierExpression tmpExpr = new IdentifierExpression(loc, tmpName);
-		List<HavocStatement> havocAuxVars = Dispatcher
-				.createHavocsForAuxVars(reLocCond.auxVars);
-		stmt.addAll(havocAuxVars);
-		auxVars.put(tmpVar,loc);
+//		List<HavocStatement> havocAuxVars = Dispatcher
+//				.createHavocsForAuxVars(reLocCond.auxVars);
+//		stmt.addAll(havocAuxVars);
 		assert rePositive.lrVal.cType.equals(reNegative.lrVal.cType);
 		return new ResultExpression(stmt, new RValue(tmpExpr,
 		        rePositive.lrVal.cType), decl, auxVars, overappr);

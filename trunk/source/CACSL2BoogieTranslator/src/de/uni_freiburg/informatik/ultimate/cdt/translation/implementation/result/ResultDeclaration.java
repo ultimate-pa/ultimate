@@ -8,6 +8,13 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 
+/**
+ * A Result that contains CDeclarations.
+ * It is used in the visitor pattern for returning one or more of those.
+ * The dispatch of a CASTDeclarator yields a ResultDeclaration with only one CDeclaration inside.
+ * ResultDeclaration has to be able to hold several CDeclarations because it is also used as a Result
+ * of a CASTSimpleDeclaration -- which may contain several Declarators.  
+ */
 public class ResultDeclaration extends Result {
 
 	ArrayList<CDeclaration> mDecls = new ArrayList<CDeclaration>();
