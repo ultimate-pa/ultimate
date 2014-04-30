@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
@@ -47,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultVarList;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -837,18 +839,32 @@ public class FunctionHandler {
 						+ loc.toString();
 				throw new IncorrectSyntaxException(loc, msg);
 			}
-			Expression arg = in.lrVal.getValue();
+//			Expression arg = in.lrVal.getValue();
 			
-			if (in.lrVal.cType instanceof CPrimitive &&
-			        ((CPrimitive)in.lrVal.cType).getType() == PRIMITIVE.INT) {
-			    if (procedureToParamCType.containsKey(methodName) &&
-			            (procedureToParamCType.get(methodName).get(i) instanceof
-			            CPointer)) {
-			        arg = MemoryHandler.constructPointerFromBaseAndOffset(
-			                new IntegerLiteral(loc, "0"), arg, loc);
-			    }
-			} 
-			args.add(arg);
+			//implicit casts and bool/int conversion
+			if (procedureToParamCType.containsKey(methodName)) {
+				CType expectedParamType = procedureToParamCType.get(methodName).get(i);
+				//bool/int conversion
+				if (expectedParamType instanceof CPrimitive &&
+						((CPrimitive) expectedParamType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+					in = ConvExpr.rexBoolToIntIfNecessary(loc, in);
+				} 
+				//implicit casts
+				if (in.lrVal.cType instanceof CPrimitive) {
+					if (((CPrimitive)in.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+						if (expectedParamType instanceof	CPointer) {
+							in.lrVal = new RValue (
+									//								arg = 
+									MemoryHandler.constructPointerFromBaseAndOffset(
+											new IntegerLiteral(loc, "0"), in.lrVal.getValue(), loc), in.lrVal.cType);
+						}
+					} 
+				} 
+			}
+			
+			
+//			args.add(arg);
+			args.add(in.lrVal.getValue());
 			stmt.addAll(in.stmt);
 			decl.addAll(in.decl);
 			auxVars.putAll(in.auxVars);
