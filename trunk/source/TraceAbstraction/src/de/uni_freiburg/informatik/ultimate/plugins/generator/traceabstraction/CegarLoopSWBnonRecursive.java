@@ -582,7 +582,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 		m_TraceChecker = new TraceChecker(
 				pre,
 				post, 
-				pendingContexts, //TODO 
+				pendingContexts, 
 				word,
 				m_SmtManager, 
 				m_RootNode.getRootAnnot().getModGlobVarManager());
@@ -662,8 +662,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 			}
 
 			// add the respective edge into the abstraction automaton
-			if (edges.isInternalPosition(i)) // TODO: check if this is doing what its
-																				// meant to
+			if (edges.isInternalPosition(i)) 																				
 			{
 				m_InterpolAutomaton.addInternalTransition(sourceI, e, targetI);
 			} 
