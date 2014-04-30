@@ -696,12 +696,12 @@ public class FunctionHandler {
 		stmts.addAll(memoryHandler.insertMallocs(main, loc,
 		        new ArrayList<Statement>(Arrays.asList(body.getBlock()))));
 		// 4)
-		for (SymbolTableValue stv : main.cHandler.getSymbolTable().currentScopeValues())
+		for (SymbolTableValue stv : main.cHandler.getSymbolTable().currentScopeValues()) {
 			//there may be a null declaration in case of foo(void)
 			if (!stv.isGlobalVar() && stv.getBoogieDecl() != null) { 
 				decls.add(stv.getBoogieDecl());
-				
 			}
+		}
         for (VariableDeclaration declaration : body.getLocalVars()) {
             decls.add(declaration);
         }

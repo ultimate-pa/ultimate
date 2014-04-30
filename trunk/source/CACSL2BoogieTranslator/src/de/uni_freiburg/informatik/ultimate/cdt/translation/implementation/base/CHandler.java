@@ -2464,8 +2464,9 @@ public class CHandler implements ICHandler {
 		checkForACSL(main, stmt, null, node);
 		stmt.add(new Label(loc, breakLabelName));
 		stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
-		Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(
-				0);
+		Map<VariableDeclaration, ILocation> emptyAuxVars = 
+				new LinkedHashMap<VariableDeclaration, ILocation>(0);
+		this.endScope();
 		return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
 	}
 
