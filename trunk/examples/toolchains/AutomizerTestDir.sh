@@ -111,8 +111,8 @@ do
     # stores if filename contains substring safe (resp. unsafe), is empty otherwise
     FILENAME_SAFE=`echo "$f" | grep -i "safe"`
     FILENAME_UNSAFE=`echo "$f" | grep -i "unsafe"`
-    FILENAME_TRUE=`echo "$f" | grep -i "true"`
-    FILENAME_FALSE=`echo "$f" | grep -i "false"`
+    FILENAME_TRUE=`echo "$f" | grep -i "true-unreach-label"`
+    FILENAME_FALSE=`echo "$f" | grep -i "false-unreach-label"`
     # stores the first line of $f if this line contains one of the following keywords, is empty otherwise
     KEYWORD_SYNTAX=`head -n 1 "$f" | grep "#Syntax"`
     KEYWORD_SAFE=`head -n 1 "$f" | grep "#Safe"`
