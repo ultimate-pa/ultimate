@@ -5,6 +5,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmark;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkAggregate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmark;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
@@ -40,7 +41,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 	private boolean m_Finished = false;
 	private boolean m_CounterExampleFeasible;
 	
-	private final EdgeCheckerBenchmark m_EdgeCheckerBenchmark;
+	private final EdgeCheckerBenchmarkAggregate m_EdgeCheckerBenchmarkAggregate;
 	private TraceCheckerBenchmark m_TraceCheckerBenchmark;
 	
 	
@@ -49,8 +50,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 		this.mSmtManager = mSmtManager;
 		m_StartingTime = System.nanoTime();
 		m_CounterExampleFeasible = false;
-		m_EdgeCheckerBenchmark = new EdgeCheckerBenchmark(new InCaReCounter(), 
-				new InCaReCounter(), new InCaReCounter());
+		m_EdgeCheckerBenchmarkAggregate = new EdgeCheckerBenchmarkAggregate();
 	}
 	
 	public void finishTraceAbstraction() {
@@ -59,8 +59,8 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 		m_StopTime = System.nanoTime();
 	}
 	
-	public EdgeCheckerBenchmark getEdgeCheckerBenchmark() {
-		return m_EdgeCheckerBenchmark;
+	public EdgeCheckerBenchmarkAggregate getEdgeCheckerBenchmarkAggregate() {
+		return m_EdgeCheckerBenchmarkAggregate;
 	}
 	
 	public long getRuntime() {

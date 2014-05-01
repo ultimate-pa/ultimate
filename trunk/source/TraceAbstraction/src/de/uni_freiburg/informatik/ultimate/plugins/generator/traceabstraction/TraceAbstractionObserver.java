@@ -67,6 +67,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) {
+//		assert false;
 		m_StartingTime = System.currentTimeMillis();
 		RootAnnot rootAnnot = ((RootNode) root).getRootAnnot();
 		TAPreferences taPrefs = new TAPreferences();
@@ -169,9 +170,11 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		stat += smtManager.getTrivialCoverQueries() + " trivial, ";
 		stat += smtManager.getNontrivialCoverQueries() + " nontrivial.";	
 		stat += " EdgeCheck queries: ";
-		stat += timingStatistics.getEdgeCheckerBenchmark().getSdCounter() + " trivial, ";
-		stat += timingStatistics.getEdgeCheckerBenchmark().getSdLazyCounter() + " lazy, ";
-		stat += timingStatistics.getEdgeCheckerBenchmark().getSolverCounter() + " nontrivial.";
+		stat += timingStatistics.getEdgeCheckerBenchmarkAggregate().getSdCounter() + " trivial, ";
+		stat += timingStatistics.getEdgeCheckerBenchmarkAggregate().getSdLazyCounter() + " lazy, ";
+		stat += timingStatistics.getEdgeCheckerBenchmarkAggregate().getSolverCounterSat() + " nontrivialSat,";
+		stat += timingStatistics.getEdgeCheckerBenchmarkAggregate().getSolverCounterUnsat() + " nontrivialUnsat,";
+		stat += timingStatistics.getEdgeCheckerBenchmarkAggregate().getSolverCounterUnknown() + " nontrivialUnknown.";
 		stat += " Satisfiability queries: ";
 		stat += smtManager.getTrivialSatQueries() + " trivial, ";
 		stat += smtManager.getNontrivialSatQueries() + " nontrivial.";

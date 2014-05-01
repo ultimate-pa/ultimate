@@ -167,11 +167,11 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 				}
 				if (sat == null) {
 					sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
-					if (sat == LBool.UNSAT) {
-						inputSuccs.add(succCand);
-					}
 				}
 				assert sch.reviewResult(resPred, resHier, letter, succCand, sat);
+				if (sat == LBool.UNSAT) {
+					inputSuccs.add(succCand);
+				}
 			}
 		}
 		IPredicate resSucc = getOrConstructPredicate(inputSuccs);

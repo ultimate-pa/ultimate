@@ -29,7 +29,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmark;
 
 public class TraceCheckerSpWp extends TraceChecker {
 	/*
@@ -761,7 +760,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		IPredicate post = getInterpolantAtPosition(i, tracePrecondition, 
 				tracePostcondition, interpolants);
 		CodeBlock cb = trace.getSymbol(i);
-		EdgeChecker ec = new EdgeChecker(m_SmtManager, m_ModifiedGlobals);
+		EdgeChecker ec = new EdgeChecker(m_SmtManager, m_ModifiedGlobals, m_PredicateUnifier.getCoverageRelation());
 		ec.assertCodeBlock(cb);
 		ec.assertPrecondition(pre);
 		LBool result;
