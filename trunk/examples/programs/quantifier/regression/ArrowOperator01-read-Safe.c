@@ -11,7 +11,7 @@ typedef struct {
 } fraction;
 
 int main() {
-	fraction* p;
+	fraction* p = malloc(sizeof(fraction));
 	int a;
 	a = p->num;
 	int b;
