@@ -16,7 +16,9 @@ typedef struct {
 
 
 int main() {
-	colorWithPointerToFraction* p;
+	colorWithPointerToFraction* p = 
+		malloc(sizeof(colorWithPointerToFraction));
+	p->frac = malloc(sizeof(fraction));
 	p->frac->num = 23;
 	int a = p->frac->num;
 	//@ assert a == 23;
@@ -26,4 +28,6 @@ int main() {
 	//@ assert c == 23;
 	int d = (*p->frac).num;
 	//@ assert d == 23;
+	free(p->frac);
+	free(p);
 }
