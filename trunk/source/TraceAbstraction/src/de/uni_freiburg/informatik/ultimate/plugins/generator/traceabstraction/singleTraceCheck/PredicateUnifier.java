@@ -279,7 +279,11 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 		}
 		
 		
-		private class CoverageRelation {
+		public CoverageRelation getCoverageRelation() {
+			return m_CoverageRelation;
+		}
+
+		private class CoverageRelation implements IPredicateCoverageChecker {
 			Map<IPredicate, Map<IPredicate, LBool>> m_Lhs2Rhs2lbool = 
 					new HashMap<IPredicate, Map<IPredicate, LBool>>();
 			
@@ -290,6 +294,19 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 					entry.getValue().put(pred, lBool);
 				}
 				m_Lhs2Rhs2lbool.put(pred, implied);
+			}
+
+			@Override
+			public LBool isCovered(IPredicate lhs, IPredicate rhs) {
+				Map<IPredicate, LBool> rhs2LBool = m_Lhs2Rhs2lbool.get(lhs);
+				if (rhs2LBool == null) {
+					throw new AssertionError("unknown predicate" + lhs);
+				} 
+				LBool lbool = rhs2LBool.get(rhs);
+				if (lbool == null) {
+					throw new AssertionError("unknown predicate" + rhs);
+				}
+				return lbool;
 			}
 			
 		}
