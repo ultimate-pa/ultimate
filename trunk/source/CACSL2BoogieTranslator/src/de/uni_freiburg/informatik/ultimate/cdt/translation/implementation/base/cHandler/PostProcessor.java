@@ -432,14 +432,16 @@ public class PostProcessor {
 			if (onHeap) { 
 				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
 				VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, MemoryHandler.POINTER_TYPE, loc);
-
-				ResultExpression mallocRex = memoryHandler.getMallocCall(
+				
+				LocalLValue llVal = new LocalLValue(new VariableLHS(loc, tmpId), lCType);
+				ResultExpression mallocRex = new ResultExpression(llVal);
+				mallocRex.stmt.add(memoryHandler.getMallocCall(
 						main, functionHandler, memoryHandler.calculateSizeOf(lCType, loc), 
-						new LocalLValue(new VariableLHS(loc, tmpId), lCType), loc);
-				stmt.addAll(mallocRex.stmt);
-				decl.addAll(mallocRex.decl);
-				auxVars.putAll(mallocRex.auxVars);
-				overappr.addAll(mallocRex.overappr);
+						llVal, loc));
+//				stmt.addAll(mallocRex.stmt);
+//				decl.addAll(mallocRex.decl);
+//				auxVars.putAll(mallocRex.auxVars);
+//				overappr.addAll(mallocRex.overappr);
 
 				
 				assert lhs == null;

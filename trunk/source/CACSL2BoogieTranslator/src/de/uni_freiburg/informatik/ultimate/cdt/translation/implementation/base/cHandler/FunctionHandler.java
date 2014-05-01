@@ -386,7 +386,7 @@ public class FunctionHandler {
 				if (isOnHeap) {
 				    LocalLValue llv = new LocalLValue(tempLHS, cvar);
 				    // malloc
-				    memoryHandler.addMallocedAuxPointer(main, llv);
+				    memoryHandler.addVariableToBeMalloced(main, llv);
 				    // dereference
                     HeapLValue hlv = new HeapLValue(llv.getValue(), cvar);
                     ArrayList<Declaration> decls = new ArrayList<Declaration>();
@@ -798,6 +798,8 @@ public class FunctionHandler {
 			assert sizeRes instanceof ResultExpression;
 			ResultExpression sizeRex = ((ResultExpression) sizeRes)
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			assert(sizeRex.stmt.isEmpty() && sizeRex.decl.isEmpty() && sizeRex.auxVars.isEmpty()) :
+				"if this happens, the ResultExpression in the next line has to contain those nonempty stmt/decl/auxvars, too";
 			return memoryHandler.getMallocCall(main, this, sizeRex.lrVal.getValue(), loc);
 		}
 		if (methodName.equals("free")) {
@@ -806,7 +808,9 @@ public class FunctionHandler {
 			assert pRes instanceof ResultExpression;
 			ResultExpression pRex = ((ResultExpression) pRes)
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			return memoryHandler.getFreeCall(main, this, pRex.lrVal.getValue(), loc);
+			pRex.stmt.add(memoryHandler.getFreeCall(main, this, pRex.lrVal, loc));
+			return pRex;
+//			return memoryHandler.getFreeCall(main, this, pRex.lrVal, loc);
 		}
 
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -971,10 +975,11 @@ public class FunctionHandler {
 		stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
 	
 		// we need to insert a free for each malloc of an auxvar before each return
-		for (Entry<LocalLValue, Integer> entry : memoryHandler.getMallocedAuxPointers().entrySet())  //frees are inserted in handleReturnStm
+		for (Entry<LocalLValue, Integer> entry : memoryHandler.getVariablesToBeMalloced().entrySet())  //frees are inserted in handleReturnStm
 //		for (Entry<LocalLValue, Integer> entry : this.mallocedAuxPointers.entrySet())  //frees are inserted in handleReturnStm
 			if (entry.getValue() >= 1)
-				stmt.addAll(memoryHandler.getFreeCall(main, this, entry.getKey().getValue(), loc).stmt);
+				stmt.add(memoryHandler.getFreeCall(main, this, entry.getKey(), loc));
+//				stmt.addAll(memoryHandler.getFreeCall(main, this, entry.getKey(), loc).stmt);
 		
 		stmt.add(new ReturnStatement(loc));
 		Map<VariableDeclaration, ILocation> emptyAuxVars =

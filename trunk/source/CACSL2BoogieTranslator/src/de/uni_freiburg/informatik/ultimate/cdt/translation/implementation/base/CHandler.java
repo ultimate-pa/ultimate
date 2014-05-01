@@ -679,9 +679,17 @@ public class CHandler implements ICHandler {
 							//in case of a local variable declaration without an initializer, we need to insert a
 							//havoc statement (because otherwise the variable is always the same within a loop which
 							//may lead to unsoundness)
+							//..except if OnHeap. Then it is malloced instead.
 							assert result instanceof ResultSkip || result instanceof ResultExpression;
 							result = new ResultExpression((LRValue) null);
-							((ResultExpression) result).stmt.add(
+//							if (onHeap)
+//								((ResultExpression) result).stmt.add(
+//										memoryHandler.getMallocCall(main, functionHandler, 
+//												memoryHandler.calculateSizeOf(cDec.getType(), loc),
+//												new LocalLValue(new VariableLHS(loc, bId), cDec.getType()), 
+//												loc));
+							if (!onHeap)
+								((ResultExpression) result).stmt.add(
 									new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, bId) }));
 						} else if (cDec.hasInitializer() && !functionHandler.noCurrentProcedure() && !typeHandler.isStructDeclaration()) { 
 							//in case of a local variable declaration with an initializer, the statements and delcs
@@ -717,7 +725,7 @@ public class CHandler implements ICHandler {
 					}
 					
 					if (onHeap)
-						memoryHandler.addMallocedAuxPointer(main, new LocalLValue(new VariableLHS(loc, bId), cDec.getType()));
+						memoryHandler.addVariableToBeMalloced(main, new LocalLValue(new VariableLHS(loc, bId), cDec.getType()));
 					symbolTable.put(cDec.getName(), new SymbolTableValue(bId,
 							boogieDec, cDec, globalInBoogie,
 							storageClass)); 
@@ -2892,13 +2900,13 @@ public class CHandler implements ICHandler {
 	public void beginScope() {
 		this.typeHandler.beginScope();
 		this.symbolTable.beginScope();
-		this.memoryHandler.getMallocedAuxPointers().beginScope();
+		this.memoryHandler.getVariablesToBeMalloced().beginScope();
 	}
 	
 	public void endScope() {
 		this.typeHandler.endScope();
 		this.symbolTable.endScope();
-		this.memoryHandler.getMallocedAuxPointers().endScope();
+		this.memoryHandler.getVariablesToBeMalloced().endScope();
 	}
 
 	@Override

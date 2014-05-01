@@ -135,7 +135,7 @@ public class MemoryHandler {
 	 * This set contains those pointers that we have to malloc at the beginning
 	 * and free at the end of the current scope;
 	 */
-	LinkedScopedHashMap<LocalLValue, Integer> mallocedAuxPointers;
+	LinkedScopedHashMap<LocalLValue, Integer> variablesToBeMalloced;
 
     /**
      * Constructor.
@@ -146,7 +146,7 @@ public class MemoryHandler {
         this.sizeofConsts = new LinkedHashSet<String>();
         this.axioms = new LinkedHashSet<Axiom>();
         this.constants = new LinkedHashSet<ConstDeclaration>();
-		this.mallocedAuxPointers = new LinkedScopedHashMap<LocalLValue, Integer>();
+		this.variablesToBeMalloced = new LinkedScopedHashMap<LocalLValue, Integer>();
     	m_PointerBaseValidity = 
 				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
 				getEnum(PreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, POINTER_BASE_VALIDITY.class);
@@ -711,27 +711,36 @@ public class MemoryHandler {
      *            Location for errors and new nodes in the AST.
      * @return a function call expression for ~free(e).
      */
-    public ResultExpression getFreeCall(Dispatcher main, FunctionHandler fh,
-            Expression e, ILocation loc) {
-        String bId = BoogieASTUtil.getLeftMostId(e);
-        if (!main.cHandler.getSymbolTable().containsBoogieSymbol(bId)) {
-            String msg = "Cannot free variable " + bId
-                    + " as it is not in the current scope!";
-            throw new IncorrectSyntaxException(loc, msg);
-        }
-        String cId = main.cHandler.getSymbolTable().getCID4BoogieID(bId, loc);
-        CType cvar = main.cHandler.getSymbolTable().get(cId, loc)
-                .getCVariable();
-        if (!isPointer(cvar) && !(main.cHandler.isHeapVar(bId))) {
-            String msg = "Cannot free the non pointer variable " + cId;
-            throw new IncorrectSyntaxException(loc, msg);
-        }
+//    public ResultExpression getFreeCall(Dispatcher main, FunctionHandler fh,
+    public CallStatement getFreeCall(Dispatcher main, FunctionHandler fh,
+            LRValue lrVal, ILocation loc) {
+    	//(alex:) it does not work this way when we have an auxiliary variable that is to be freed, 
+    	//for instance when the address itself was on the heap --> use RValue instead
+//            Expression e, ILocation loc) {
+//        String bId = BoogieASTUtil.getLeftMostId(e);
+//        if (!main.cHandler.getSymbolTable().containsBoogieSymbol(bId)) {
+//            String msg = "Cannot free variable " + bId
+//                    + " as it is not in the current scope!";
+//            throw new IncorrectSyntaxException(loc, msg);
+//        }
+//        String cId = main.cHandler.getSymbolTable().getCID4BoogieID(bId, loc);
+//        CType cvar = main.cHandler.getSymbolTable().get(cId, loc)
+//                .getCVariable();
+//        if (!isPointer(cvar) && !(main.cHandler.isHeapVar(bId))) {
+//            String msg = "Cannot free the non pointer variable " + cId;
+//            throw new IncorrectSyntaxException(loc, msg);
+//        }
+    	assert lrVal instanceof RValue || lrVal instanceof LocalLValue;
+    	assert lrVal.cType instanceof CPointer;
+    	
         // Further checks are done in the precondition of ~free()!
         // ~free(E);
-        ArrayList<Statement> stmt = new ArrayList<Statement>();
-        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-        stmt.add(new CallStatement(loc, false, new VariableLHS[0], SFO.FREE,
-                new Expression[] { e }));
+//        ArrayList<Statement> stmt = new ArrayList<Statement>();
+//        ArrayList<Declaration> decl = new ArrayList<Declaration>();
+//        stmt.add(new CallStatement(loc, false, new VariableLHS[0], SFO.FREE,
+        CallStatement freeCall = new CallStatement(loc, false, new VariableLHS[0], SFO.FREE,
+                new Expression[] { lrVal.getValue() });
+//                new Expression[] { e }));
         // add required information to function handler.
         if (fh.getCurrentProcedureID() != null) {
             LinkedHashSet<String> mgM = new LinkedHashSet<String>();
@@ -742,10 +751,11 @@ public class MemoryHandler {
             }
             fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.FREE);
         }
-		Map<VariableDeclaration, ILocation> emptyAuxVars = 
-				new LinkedHashMap<VariableDeclaration, ILocation>(0);
-		assert (main.isAuxVarMapcomplete(decl, emptyAuxVars));
-        return new ResultExpression(stmt, null, decl, emptyAuxVars);
+//		Map<VariableDeclaration, ILocation> emptyAuxVars = 
+//				new LinkedHashMap<VariableDeclaration, ILocation>(0);
+//		assert (main.isAuxVarMapcomplete(decl, emptyAuxVars));
+//        return new ResultExpression(stmt, null, decl, emptyAuxVars);
+        return freeCall;
     }
     
     /**
@@ -780,19 +790,19 @@ public class MemoryHandler {
     	String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
         VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, MemoryHandler.POINTER_TYPE, loc);
         
-        ResultExpression mallocRex = getMallocCall(main, fh, size, 
-        		new LocalLValue(new VariableLHS(loc, tmpId), 
-        				new CPointer(new CPrimitive(PRIMITIVE.VOID))), loc);
+        LocalLValue llVal = new LocalLValue(new VariableLHS(loc, tmpId), new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+//        ResultExpression mallocRex = getMallocCall(main, fh, size, llVal, loc);
+        ResultExpression mallocRex = new ResultExpression(llVal);
         
+        mallocRex.stmt.add(getMallocCall(main, fh, size, llVal, loc));
         mallocRex.auxVars.put(tVarDecl, loc);
         mallocRex.decl.add(tVarDecl);
-        
         
 		assert (main.isAuxVarMapcomplete(mallocRex.decl, mallocRex.auxVars));
 		return mallocRex;
     }
 
-    public ResultExpression getMallocCall(Dispatcher main,
+    public CallStatement getMallocCall(Dispatcher main,
 			FunctionHandler fh, Expression size,
 			LocalLValue resultPointer, ILocation loc) {
         ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -806,8 +816,9 @@ public class MemoryHandler {
 //        auxVars.put(tVarDecl, loc);
 //        decl.add(tVarDecl);
         
-        stmt.add(new CallStatement(loc, false, new VariableLHS[] { (VariableLHS) resultPointer.getLHS() },
-                SFO.MALLOC, args));
+//        stmt.add(new CallStatement(loc, false, new VariableLHS[] { (VariableLHS) resultPointer.getLHS() },
+        CallStatement mallocCall = new CallStatement(loc, false, new VariableLHS[] { (VariableLHS) resultPointer.getLHS() },
+                SFO.MALLOC, args);
         
         //TODO: extract this block and the one above to make the other getMallocCall nicer
 //        Expression e = new IdentifierExpression(loc, it, tmpId);
@@ -826,7 +837,8 @@ public class MemoryHandler {
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = 
 				new LinkedHashMap<VariableDeclaration, ILocation>();
-        return new ResultExpression(stmt, resultPointer, decl, auxVars);//FIXME pointsToType??
+//        return new ResultExpression(stmt, resultPointer, decl, auxVars);//FIXME pointsToType??
+		return mallocCall;
 	}
 
 	/**
@@ -1203,11 +1215,14 @@ public class MemoryHandler {
 	 */
 	public ArrayList<Statement> insertMallocs(Dispatcher main, ILocation loc, ArrayList<Statement> block) {
 		ArrayList<Statement> mallocs = new ArrayList<Statement>();
-		for (LocalLValue llv : this.mallocedAuxPointers.currentScopeKeys()) 
-			mallocs.addAll(this.getMallocCall(main, m_functionHandler, this.calculateSizeOf(llv.cType, loc), llv, loc).stmt);
+		for (LocalLValue llv : this.variablesToBeMalloced.currentScopeKeys()) 
+			mallocs.add(this.getMallocCall(main, m_functionHandler, this.calculateSizeOf(llv.cType, loc), llv, loc));
+//			mallocs.addAll(this.getMallocCall(main, m_functionHandler, this.calculateSizeOf(llv.cType, loc), llv, loc).stmt);
 		ArrayList<Statement> frees = new ArrayList<Statement>();
-		for (LocalLValue llv : this.mallocedAuxPointers.currentScopeKeys())  //frees are inserted in handleReturnStm
-			frees.addAll(this.getFreeCall(main, m_functionHandler, llv.getValue(), loc).stmt);
+		for (LocalLValue llv : this.variablesToBeMalloced.currentScopeKeys()) {  //frees are inserted in handleReturnStm
+			frees.add(this.getFreeCall(main, m_functionHandler, llv, loc));
+//			frees.addAll(this.getFreeCall(main, m_functionHandler, llv, loc).stmt);
+		}
 		ArrayList<Statement> newBlockAL = new ArrayList<Statement>();
 		newBlockAL.addAll(mallocs);
 		newBlockAL.addAll(block);
@@ -1215,13 +1230,13 @@ public class MemoryHandler {
 		return newBlockAL;
 	}
 	
-	public void addMallocedAuxPointer(Dispatcher main, LocalLValue thisLVal) {
+	public void addVariableToBeMalloced(Dispatcher main, LocalLValue thisLVal) {
 //		if (!main.typeHandler.isStructDeclaration())
-			this.mallocedAuxPointers.put(thisLVal, mallocedAuxPointers.getActiveScopeNum());
+			this.variablesToBeMalloced.put(thisLVal, variablesToBeMalloced.getActiveScopeNum());
 	}
 	
-	public LinkedScopedHashMap<LocalLValue, Integer> getMallocedAuxPointers() {
-		return mallocedAuxPointers;
+	public LinkedScopedHashMap<LocalLValue, Integer> getVariablesToBeMalloced() {
+		return variablesToBeMalloced;
 	}
 
 }
