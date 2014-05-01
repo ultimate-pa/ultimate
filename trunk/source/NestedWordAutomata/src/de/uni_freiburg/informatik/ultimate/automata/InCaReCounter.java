@@ -67,5 +67,15 @@ public class InCaReCounter {
 	public String toString() {
 		return m_Internal + "In " + m_Call + "Ca " + m_Return + "Re"; 
 	}
+	
+	
+	/**
+	 * Add all values of another counter to the values of this counter.
+	 */
+	public void add(InCaReCounter inCaReCounter) {
+		m_Internal += inCaReCounter.getInternal();
+		m_Call += inCaReCounter.getCall();
+		m_Return =+ inCaReCounter.getReturn();
+	}
 
 }
