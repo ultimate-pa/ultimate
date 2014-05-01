@@ -17,4 +17,5 @@ int main() {
 	int b;
 	b = (*p).num;
 	//@ assert a == b;
+	free(p);
 }
