@@ -521,6 +521,7 @@ public class LassoChecker {
 			s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars);
 		}
 		
+		
 		Preferences pref = new Preferences();
 		pref.num_non_strict_invariants = 1;
 		pref.num_strict_invariants = 0;
@@ -529,6 +530,9 @@ public class LassoChecker {
 		pref.smt_solver_command = m_ExternalSolverCommand_RankSynthesis;
 		pref.nontermination_check_nonlinear = m_AllowNonLinearConstraints;
 		pref.termination_check_nonlinear = m_AllowNonLinearConstraints;
+		UltimatePreferenceStore baPref = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		pref.dumpSmtSolverScript = baPref.getBoolean(PreferenceInitializer.LABEL_DumpToFile);
+		pref.fileNameOfDumpedScript = baPref.getString(PreferenceInitializer.LABEL_DumpPath) + "/test.smt2";
 
 		LassoRankerTerminationAnalysis lrta = null;
 		try {

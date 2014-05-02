@@ -48,6 +48,10 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_TemplateBenchmarkMode,
 						false, PreferenceType.Boolean),	
+				new UltimatePreferenceItem<Boolean>(LABEL_DumpToFile,
+						false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<String>(LABEL_DumpPath,
+						DEF_DumpPath, PreferenceType.Directory),
 		};
 	}
 
@@ -75,6 +79,9 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String DEF_ExtSolverCommandRank = "z3 SMTLIB2_COMPLIANT=true -memory:256 -smt2 -in -t:5000";
 	public static final String LABEL_NonLinearConstraints = "Allow nonlinear constraints";
 	public static final String LABEL_TemplateBenchmarkMode = "Template benchmark mode";
+	public static final String LABEL_DumpToFile = "Dump SMT script to file";
+	public static final String LABEL_DumpPath = "To the following directory";
+	public static final String DEF_DumpPath = "";
 	
 	public enum BInterpolantAutomaton { LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged };
 	
