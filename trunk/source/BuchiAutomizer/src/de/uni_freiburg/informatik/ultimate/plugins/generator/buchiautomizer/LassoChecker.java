@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -103,6 +104,12 @@ public class LassoChecker {
 	 */
 	private final NestedLassoRun<CodeBlock, IPredicate> m_Counterexample;
 	
+	/**
+	 * Identifier for this LassoChecker. Can be used to get unique filenames
+	 * when dumping files.
+	 */
+	private final String m_LassoCheckerIdentifier;
+	
 	
 	//////////////////////////////// auxilliary variables //////////////////////
 	
@@ -180,7 +187,8 @@ public class LassoChecker {
 	public LassoChecker(INTERPOLATION interpolation, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiableGlobalVariableManager,
 			BinaryStatePredicateManager bspm,
-			NestedLassoRun<CodeBlock, IPredicate> counterexample) {
+			NestedLassoRun<CodeBlock, IPredicate> counterexample,
+			String lassoCheckerIdentifier) {
 		super();
 		UltimatePreferenceStore baPref = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		m_ExternalSolver_RankSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_ExtSolverRank);
@@ -192,6 +200,7 @@ public class LassoChecker {
 		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
 		m_Bspm = bspm;
 		m_Counterexample = counterexample;
+		m_LassoCheckerIdentifier = lassoCheckerIdentifier;
 		m_TruePredicate = m_SmtManager.newTruePredicate();
 		m_FalsePredicate = m_SmtManager.newFalsePredicate();
 		m_PredicateUnifier = new PredicateUnifier(m_SmtManager, m_TruePredicate, m_FalsePredicate);
@@ -509,6 +518,11 @@ public class LassoChecker {
 		return rfCorrect;
 	}
 	
+	
+	private String generateFilenamePrefix(String path, boolean withStem) {
+		return path + File.separatorChar + m_LassoCheckerIdentifier + "_" + (withStem ? "Lasso" : "Loop");
+	}
+	
 	private SynthesisResult synthesize(final boolean withStem, TransFormula stemTF, final TransFormula loopTF) {
 		if (!withStem) {
 			stemTF = getDummyTF();
@@ -532,7 +546,7 @@ public class LassoChecker {
 		pref.termination_check_nonlinear = m_AllowNonLinearConstraints;
 		UltimatePreferenceStore baPref = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		pref.dumpSmtSolverScript = baPref.getBoolean(PreferenceInitializer.LABEL_DumpToFile);
-		pref.fileNameOfDumpedScript = baPref.getString(PreferenceInitializer.LABEL_DumpPath) + "/test.smt2";
+		pref.fileNameOfDumpedScript = generateFilenamePrefix(baPref.getString(PreferenceInitializer.LABEL_DumpPath), withStem) + ".smt2";
 
 		LassoRankerTerminationAnalysis lrta = null;
 		try {

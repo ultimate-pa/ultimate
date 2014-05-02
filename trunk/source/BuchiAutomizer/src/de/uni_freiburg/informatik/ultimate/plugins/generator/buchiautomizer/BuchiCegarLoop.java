@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -341,7 +342,8 @@ public class BuchiCegarLoop {
 						m_Interpolation, m_SmtManager, 
 						m_RootNode.getRootAnnot().getModGlobVarManager(),
 						m_BinaryStatePredicateManager,
-						m_Counterexample);
+						m_Counterexample,
+						generateLassoCheckerIdentifier());
 				m_TimingBenchmark.stopLassoAnalysis();
 				
 				try {
@@ -719,6 +721,18 @@ public class BuchiCegarLoop {
 
 		public TimingBenchmark getTimingBenchmark() {
 			return m_TimingBenchmark;
+		}
+		
+		/**
+		 * Returns an Identifier that describes a lasso analysis.
+		 * Right now, this is the Filename (without path prefix) of analyzed
+		 * file together with the number of the current iteration.
+		 * 
+		 */
+		public String generateLassoCheckerIdentifier() {
+			String pathAndFilename = m_RootNode.getPayload().getLocation().getFileName();
+			String pureFilename = (new File(pathAndFilename)).getName();
+			return pureFilename + "_Iteration" + m_Iteration;
 		}
 	
 		
