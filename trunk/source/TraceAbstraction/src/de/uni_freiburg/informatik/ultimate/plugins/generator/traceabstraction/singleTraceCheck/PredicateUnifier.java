@@ -298,6 +298,9 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 			@Override
 			public LBool isCovered(IPredicate lhs, IPredicate rhs) {
+				if (lhs == rhs) {
+					return LBool.UNSAT;
+				}
 				Map<IPredicate, LBool> rhs2LBool = m_Lhs2Rhs2lbool.get(lhs);
 				if (rhs2LBool == null) {
 					throw new AssertionError("unknown predicate" + lhs);

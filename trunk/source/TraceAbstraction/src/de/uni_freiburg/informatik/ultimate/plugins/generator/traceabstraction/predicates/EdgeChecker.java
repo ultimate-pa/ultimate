@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
+import java.beans.FeatureDescriptor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
@@ -725,6 +726,14 @@ public class EdgeChecker {
 	 * infeasibility flag of TransFormula.
 	 */
 	public LBool sdecInteral(IPredicate pre, CodeBlock cb, IPredicate post) {
+		if (m_PredicateCoverageChecker != null) {
+			LBool sat = m_PredicateCoverageChecker.isCovered(pre, post);
+			if (sat == LBool.UNSAT) {
+				if (Collections.disjoint(pre.getVars(), cb.getTransitionFormula().getAssignedVars())) {
+					return LBool.UNSAT;
+				}
+			}
+		}
 		for (BoogieVar bv : pre.getVars()) {
 			if (cb.getTransitionFormula().getInVars().containsKey(bv)) {
 				return null;
