@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import de.uni_freiburg.informatik.ultimate.model.Payload;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
 /**
@@ -8,6 +9,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
  * program represented by this Ultimate Model which can not be expressed by the
  * recursive control flow graph are stored in a RootAnnot object stored in the
  * Payload of this RootNode.
+ * The ILocation of the RootNode should be the ILocation of the unit of a
+ * Boogie Program.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * 
@@ -21,8 +24,8 @@ public class RootNode extends RCFGNode {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public RootNode(RootAnnot rootAnnot) {
-		super(new Payload(null, "RootNode"));
+	public RootNode(ILocation location, RootAnnot rootAnnot) {
+		super(new Payload(location, "RootNode"));
 		getPayload().getAnnotations().put(Activator.PLUGIN_ID, rootAnnot);
 	}
 

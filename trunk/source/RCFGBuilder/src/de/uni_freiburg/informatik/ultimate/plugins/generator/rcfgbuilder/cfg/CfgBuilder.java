@@ -184,7 +184,7 @@ public class CfgBuilder {
 		tfb = new TransFormulaBuilder(m_Boogie2smt);
 
 		// Initialize the root node.
-		m_Graphroot = new RootNode(m_RootAnnot);
+		m_Graphroot = new RootNode(unit.getLocation(), m_RootAnnot);
 
 		// Build entry, final and exit node for all procedures that have an
 		// implementation

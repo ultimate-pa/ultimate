@@ -74,7 +74,7 @@ public class Product {
 		 * the maps.
 		 */
 		// TODO: make deep copy of rootannot
-		mRootNode = new RootNode(mRCFG.getRootAnnot());
+		mRootNode = new RootNode(mRCFG.getPayload().getLocation(), mRCFG.getRootAnnot());
 		// will be refilled when generating product nodes
 		mRootNode.getRootAnnot().getProgramPoints().clear();
 		// note: used only for iterating procedures in automaizer, so

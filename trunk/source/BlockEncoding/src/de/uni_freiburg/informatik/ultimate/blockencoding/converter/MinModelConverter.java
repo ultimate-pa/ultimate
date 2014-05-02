@@ -65,7 +65,7 @@ public class MinModelConverter {
 	 * @return the converted rootNode
 	 */
 	public RootNode startConversion(RootNode root) {
-		RootNode newRoot = new RootNode(root.getRootAnnot());
+		RootNode newRoot = new RootNode(root.getPayload().getLocation(), root.getRootAnnot());
 		boogie2smt = root.getRootAnnot().getBoogie2SMT();
 		convertVisitor = new ConversionVisitor(boogie2smt, root,
 				getRatingHeuristic());
