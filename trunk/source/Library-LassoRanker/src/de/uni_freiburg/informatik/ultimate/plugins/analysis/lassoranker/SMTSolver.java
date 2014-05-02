@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 
 import org.apache.log4j.Logger;
@@ -103,8 +104,19 @@ class SMTSolver {
 		return newScript(preferences.externalSolver,
 				preferences.smt_solver_command,
 				preferences.dumpSmtSolverScript ?
-						preferences.fileNameOfDumpedScript : null,
+						composeFullFilename(preferences.pathOfDumpedScript, 
+								preferences.baseNameOfDumpedScript) : null,
 				preferences.annotate_terms);
+	}
+	
+	/**
+	 * Compose the name of a path, together with a baseName of a file, to a
+	 * full filename.
+	 * (e.g., path "/etc" and basename "fstab" will be composed to
+	 * "/etc/fstab")
+	 */
+	public static String composeFullFilename(String path, String baseName) {
+		return path + File.separator + baseName;
 	}
 	
 	/**

@@ -121,9 +121,15 @@ public class Preferences implements Serializable {
 	public boolean dumpSmtSolverScript = false;
 	
 	/**
-	 * File to which the SMT solver script is written.
+	 * Path to which the SMT solver script is written.
 	 */
-	public String fileNameOfDumpedScript = "LassoRankerScript.smt2";
+	public String pathOfDumpedScript = ".";
+	
+	/**
+	 * Base name (without path) of the file to which the SMT solver script is 
+	 * written.
+	 */
+	public String baseNameOfDumpedScript = "LassoRankerScript.smt2";
 	
 	/**
 	 * Build a string descriptions of the current preferences
@@ -152,8 +158,10 @@ public class Preferences implements Serializable {
 		sb.append(this.smt_solver_command);
 		sb.append("\nDump SMT script to file: ");
 		sb.append(this.dumpSmtSolverScript);
+		sb.append("\nPath of dumped script: ");
+		sb.append(this.pathOfDumpedScript);
 		sb.append("\nFilename of dumped script: ");
-		sb.append(this.fileNameOfDumpedScript);
+		sb.append(this.baseNameOfDumpedScript);
 		return sb.toString();
 	}
 }

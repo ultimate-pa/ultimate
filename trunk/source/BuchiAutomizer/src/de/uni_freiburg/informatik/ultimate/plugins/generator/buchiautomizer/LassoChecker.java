@@ -519,8 +519,8 @@ public class LassoChecker {
 	}
 	
 	
-	private String generateFilenamePrefix(String path, boolean withStem) {
-		return path + File.separatorChar + m_LassoCheckerIdentifier + "_" + (withStem ? "Lasso" : "Loop");
+	private String generateFileBasenamePrefix(boolean withStem) {
+		return m_LassoCheckerIdentifier + "_" + (withStem ? "Lasso" : "Loop");
 	}
 	
 	private SynthesisResult synthesize(final boolean withStem, TransFormula stemTF, final TransFormula loopTF) {
@@ -546,7 +546,8 @@ public class LassoChecker {
 		pref.termination_check_nonlinear = m_AllowNonLinearConstraints;
 		UltimatePreferenceStore baPref = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		pref.dumpSmtSolverScript = baPref.getBoolean(PreferenceInitializer.LABEL_DumpToFile);
-		pref.fileNameOfDumpedScript = generateFilenamePrefix(baPref.getString(PreferenceInitializer.LABEL_DumpPath), withStem) + ".smt2";
+		pref.pathOfDumpedScript = baPref.getString(PreferenceInitializer.LABEL_DumpPath);
+		pref.baseNameOfDumpedScript = generateFileBasenamePrefix(withStem) + ".smt2";
 
 		LassoRankerTerminationAnalysis lrta = null;
 		try {
