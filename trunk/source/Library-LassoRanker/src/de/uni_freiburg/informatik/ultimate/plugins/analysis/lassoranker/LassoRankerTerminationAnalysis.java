@@ -196,6 +196,7 @@ public class LassoRankerTerminationAnalysis {
 	 */
 	protected PreProcessor[] getPreProcessors(VarCollector rvc) {
 		return new PreProcessor[] {
+//				new RewriteArrays(rvc),
 				new RewriteDivision(rvc),
 				new RewriteBooleans(rvc, m_old_script),
 				new RewriteIte(),
@@ -366,13 +367,13 @@ public class LassoRankerTerminationAnalysis {
 						m_loop,
 						m_preferences
 				);
-		boolean nonterminating = nas.synthesize();
-		if (nonterminating) {
+		final LBool constraintSat = nas.synthesize();
+		if (constraintSat == LBool.SAT) {
 			s_Logger.info("Proved non-termination.");
 			s_Logger.info(nas.getArgument());
 		}
 		nas.close();
-		return nonterminating ? nas.getArgument() : null;
+		return (constraintSat == LBool.SAT) ? nas.getArgument() : null;
 	}
 	
 	/**
@@ -393,12 +394,11 @@ public class LassoRankerTerminationAnalysis {
 		TerminationArgumentSynthesizer tas =
 				new TerminationArgumentSynthesizer(m_stem, m_loop,
 						template, m_preferences);
-		final boolean success = tas.synthesize();
+		final LBool constraintSat = tas.synthesize();
 		m_numSIs = tas.getNumSIs();
 		m_numMotzkin = tas.getNumMotzkin();
-		s_Logger.info(benchmarkScriptMessage(tas.getScript().checkSat(),
-				template));
-		if (success) {
+		s_Logger.info(benchmarkScriptMessage(constraintSat,	template));
+		if (constraintSat == LBool.SAT) {
 			s_Logger.info("Proved termination.");
 			TerminationArgument arg = tas.getArgument();
 			s_Logger.info(arg);
@@ -408,6 +408,6 @@ public class LassoRankerTerminationAnalysis {
 			}
 		}
 		tas.close();
-		return success ? tas.getArgument() : null;
+		return (constraintSat == LBool.SAT) ? tas.getArgument() : null;
 	}
 }

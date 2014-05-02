@@ -255,7 +255,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 *          non-affine update statements
 	 */
 	@Override
-	protected boolean do_synthesis() throws SMTLIBException, TermException {
+	protected LBool do_synthesis() throws SMTLIBException, TermException {
 		if (!m_preferences.termination_check_nonlinear
 				&& m_template.getDegree() > 0) {
 			s_Logger.warn("Using a linear SMT query and a templates of degree "
@@ -315,7 +315,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			// (:reason-unknown canceled)
 			// Object reason = m_script.getInfo(":reason-unknown");
 		}
-		return sat == LBool.SAT;
+		return sat;
 	}
 	
 	/**

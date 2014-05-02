@@ -129,21 +129,21 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	
 	/**
 	 * Try to synthesize an argument for (non-)termination
-	 * @return whether the synthesis was successful
+	 * @return result of the solver while checking the constraints
 	 */
-	public final boolean synthesize() throws SMTLIBException, TermException {
-		boolean success = do_synthesis();
-		m_synthesis_successful = success;
-		return success;
+	public final LBool synthesize() throws SMTLIBException, TermException {
+		LBool lBool = do_synthesis();
+		m_synthesis_successful = (lBool == LBool.SAT);
+		return lBool;
 	}
 	
 	/**
 	 * Try to synthesize an argument for (non-)termination
 	 * This is to be derived in the child classes and is wrapped by
 	 * synthesize().
-	 * @return whether the synthesis was successful
+	 * @return result of the solver while checking the constraints
 	 */
-	protected abstract boolean do_synthesis()
+	protected abstract LBool do_synthesis()
 			throws SMTLIBException, TermException;
 	
 	/**

@@ -123,7 +123,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	}
 	
 	@Override
-	protected boolean do_synthesis() {
+	protected LBool do_synthesis() {
 		String sort = m_integer_mode ? "Int" : "Real";
 		
 		// Create new variables
@@ -146,14 +146,12 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		m_script.assertTerm(constraints);
 		
 		// Check for satisfiability
-		boolean success = false;
-		if (m_script.checkSat() == LBool.SAT) {
-			success = true;
+		LBool isSat = m_script.checkSat();
+		if (isSat == LBool.SAT) {
 			m_argument = extractArgument(vars_init, vars_honda, vars_ray,
 					lambda);
 		}
-		
-		return success;
+		return isSat;
 	}
 	
 	/**
