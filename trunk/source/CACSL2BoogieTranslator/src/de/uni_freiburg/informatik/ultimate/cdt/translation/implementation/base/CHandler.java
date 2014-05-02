@@ -750,7 +750,7 @@ public class CHandler implements ICHandler {
 		
 	@Override
 	public Result visit(Dispatcher main, IASTDeclarator node) {
-		CACSLLocation loc = new CACSLLocation(node);
+		CACSLLocation loc = new CACSLLocation(node); 
 		ResultTypes resType = mCurrentDeclaredTypes.peek();
 		ResultTypes newResType = new ResultTypes(resType);
 		
@@ -766,8 +766,27 @@ public class CHandler implements ICHandler {
 			ArrayList<Expression> sizeConstants = new ArrayList<Expression>();
 			Expression overallSize = new IntegerLiteral(loc, new InferredType(Type.Integer), "1");
 			for (IASTArrayModifier am : arrDecl.getArrayModifiers()) {
-				ResultExpression constEx = (ResultExpression) main.
-						dispatch(am.getConstantExpression());
+				ResultExpression constEx = null;
+				if (am.getConstantExpression() != null) {
+					constEx = (ResultExpression) main.
+							dispatch(am.getConstantExpression());
+				//he innermost array modifier may be empty, if there is an initializer; like int a[1][2][] = {...}
+				} else if (am.getConstantExpression() == null && 
+						arrDecl.getInitializer() != null &&
+						arrDecl.getArrayModifiers()[arrDecl.getArrayModifiers().length - 1] == am) {
+					assert arrDecl.getInitializer() instanceof IASTEqualsInitializer;
+					IASTEqualsInitializer eqInit = ((IASTEqualsInitializer) arrDecl.getInitializer());
+					assert eqInit.getInitializerClause() instanceof IASTInitializerList;
+					IASTInitializerList initList = (IASTInitializerList) eqInit.getInitializerClause();
+					constEx = new ResultExpression(
+							new RValue(
+									new IntegerLiteral(
+											loc, 
+											new Integer(initList.getSize()).toString()), 
+											new CPrimitive(PRIMITIVE.INT)));
+				} else {
+					throw new IncorrectSyntaxException(loc, "incomplete array type in declaration without an initializer");
+				}
 				constEx = constEx.switchToRValueIfNecessary(main, //just to be safe..
 						memoryHandler, structHandler, loc);
 				sizeConstants.add(constEx.lrVal.getValue());

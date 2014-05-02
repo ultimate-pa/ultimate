@@ -731,7 +731,7 @@ public class MemoryHandler {
 //            throw new IncorrectSyntaxException(loc, msg);
 //        }
     	assert lrVal instanceof RValue || lrVal instanceof LocalLValue;
-    	assert lrVal.cType instanceof CPointer;
+//    	assert lrVal.cType instanceof CPointer;//TODO -> must be a pointer or onHeap -- add a complicated assertion or let it be??
     	
         // Further checks are done in the precondition of ~free()!
         // ~free(E);

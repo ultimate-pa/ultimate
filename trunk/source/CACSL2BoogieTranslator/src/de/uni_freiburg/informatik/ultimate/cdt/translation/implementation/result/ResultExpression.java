@@ -363,17 +363,17 @@ public class ResultExpression extends Result {
 
 			ResultExpression fieldRead = null; 
 			if(underlyingType instanceof CPrimitive) {
-				InferredType typeOnHeap = null;
-				CPrimitive cp = (CPrimitive) underlyingType;
-				switch (cp.getType()) {
-				case CHAR:
-				case INT:
-					typeOnHeap = new InferredType(Type.Integer);
-					break;
-//				case BOOL:
-				default:
-					throw new UnsupportedSyntaxException(loc, "..");
-				}
+//				InferredType typeOnHeap = null;
+//				CPrimitive cp = (CPrimitive) underlyingType;
+//				switch (cp.getType()) {
+//				case CHAR:
+//				case INT:
+//					typeOnHeap = new InferredType(Type.Integer);
+//					break;
+////				case BOOL:
+//				default:
+//					throw new UnsupportedSyntaxException(loc, "..");
+//				}
 				fieldRead = (ResultExpression) structHandler.readFieldInTheStructAtAddress(
 						main, memoryHandler, loc, fieldIds[i], 
 //						typeOnHeap,
