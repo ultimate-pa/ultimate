@@ -252,7 +252,7 @@ public class PostProcessor {
 		specsInit[0] = new ModifiesSpecification(loc, false, modifyList);
 		Procedure initProcedureDecl = new Procedure(loc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], specsInit, null);
-		Body initBody = new Body(loc,//TODO: do we need auxVars here, too??
+		Body initBody = new Body(loc,
 				initDecl.toArray(new VariableDeclaration[0]),
 				initStatements.toArray(new Statement[0]));
 		decl.add(new Procedure(loc, new Attribute[0], SFO.INIT, new String[0],
@@ -416,7 +416,6 @@ public class PostProcessor {
 				}
 			}
 			if (var != null) {
-				//TODO: we don't need the onHeap-case here, right?? -- in fact it seems we do..
 				if (onHeap) {
 					stmt.addAll(memoryHandler.getWriteCall((HeapLValue) var, new RValue(rhs, lCType)));
 				} else {
@@ -438,12 +437,7 @@ public class PostProcessor {
 				mallocRex.stmt.add(memoryHandler.getMallocCall(
 						main, functionHandler, memoryHandler.calculateSizeOf(lCType, loc), 
 						llVal, loc));
-//				stmt.addAll(mallocRex.stmt);
-//				decl.addAll(mallocRex.decl);
-//				auxVars.putAll(mallocRex.auxVars);
-//				overappr.addAll(mallocRex.overappr);
 
-				
 				assert lhs == null;
 				IdentifierExpression address = (IdentifierExpression)((HeapLValue) var).getAddress();
 				lhs = new VariableLHS(address.getLocation(),
@@ -483,13 +477,6 @@ public class PostProcessor {
 				decl.addAll(heapWrites.decl);
 				overappr.addAll(heapWrites.overappr);
 				auxVars.putAll(heapWrites.auxVars);
-
-//				if (lhs != null) {
-				   // commented out because all assignments (i.e. write-calls) should already be in the ResultExpression
-//					stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { scRex.lrVal.getValue() }));
-//				} else {
-//					lrVal = new RValue(rhs, lCvar);
-//				}
 			} else {
 				ResultExpression scRex = structHandler.makeStructConstructorFromRERL(main, 
 						loc, memoryHandler, arrayHandler, functionHandler, 
@@ -578,8 +565,6 @@ public class PostProcessor {
 						.getTempVarUID(SFO.AUXVAR.RETURNED);
 				main.cHandler.getSymbolTable().addToReverseMap(checkMethodRet,
 						SFO.NO_REAL_C_VAR + checkMethodRet, loc);
-				// CHandler.getTempVarVariableDeclaration(checkMethodRet,
-				// out[0].getType()., loc);
 				VarList tempVar = new VarList(loc,
 						new String[] { checkMethodRet }, out[0].getType());
 				VariableDeclaration tmpVar = new VariableDeclaration(loc,
@@ -606,7 +591,6 @@ public class PostProcessor {
 			specsStart[0] = new ModifiesSpecification(loc, false,
 					startModifiesClause.toArray(new VariableLHS[0]));
 
-//			decl.add(startDecl);
 			Body startBody = new Body(loc,
 					startDecl.toArray(new VariableDeclaration[0]),
 					startStmt.toArray(new Statement[0]));

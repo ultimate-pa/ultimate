@@ -42,10 +42,6 @@ public class ResultExpression extends Result {
 	 * Statement list.
 	 */
 	public final ArrayList<Statement> stmt;
-	//	/**
-	//	 * The expression.
-	//	 */
-	//	public Expression expr;
 	/**
 	 * the LRValue may contain the contents of a memory cell or its address or both
 	 */
@@ -55,14 +51,6 @@ public class ResultExpression extends Result {
 	 * variables, which we do here.
 	 */
 	public final ArrayList<Declaration> decl;
-	/**
-	 * A description of the C variable.
-	 */
-//	public final ArrayList<CType> declCTypes;
-//	/**
-//	 * The description of the C type of this expression.
-//	 */
-//	public CType cType; //--> moved to LRValue
 
 	/**
 	 * A list of overapproximation flags.
@@ -113,7 +101,7 @@ public class ResultExpression extends Result {
      * @param overapproxList
      *            list of overapproximation flags
      */
-    public ResultExpression(ArrayList<Statement> stmt, //Expression expr,
+    public ResultExpression(ArrayList<Statement> stmt,
             LRValue lrVal,
             ArrayList<Declaration> decl,
             Map<VariableDeclaration, ILocation> auxVars,
@@ -121,17 +109,15 @@ public class ResultExpression extends Result {
             Map<StructLHS, CType> uField2CType) {
         super(null);
         this.stmt = stmt;
-        //      this.expr = expr;
         this.lrVal = lrVal;
         this.decl = decl;
-//        this.declCTypes = new ArrayList<CType>();
         this.auxVars = auxVars;
         this.overappr = overapproxList;
         this.unionFieldIdToCType = uField2CType;
     }
     
     
-    public ResultExpression(ArrayList<Statement> stmt, //Expression expr,
+    public ResultExpression(ArrayList<Statement> stmt,
             LRValue lrVal,
             ArrayList<Declaration> decl,
             Map<VariableDeclaration, ILocation> auxVars,
@@ -139,7 +125,7 @@ public class ResultExpression extends Result {
     	this(stmt, lrVal, decl, auxVars, overapproxList, null);
     }
     
-    public ResultExpression(ArrayList<Statement> stmt, //Expression expr,
+    public ResultExpression(ArrayList<Statement> stmt,
             LRValue lrVal,
             ArrayList<Declaration> decl,
             Map<VariableDeclaration, ILocation> auxVars) {
@@ -147,21 +133,19 @@ public class ResultExpression extends Result {
                 auxVars, new ArrayList<Overapprox>(), null);
     }
 
-	public ResultExpression(//Expression expr,
+	public ResultExpression(
 			LRValue lrVal,
 			Map<VariableDeclaration, ILocation> auxVars,
 			List<Overapprox> overapproxList) {
 	    this(new ArrayList<Statement>(), lrVal, new ArrayList<Declaration>(),
 	            auxVars, overapproxList, null);
-		//		this.expr = expr;
 	}
 	
-	public ResultExpression(//Expression expr,
+	public ResultExpression(
             LRValue lrVal,
             Map<VariableDeclaration, ILocation> auxVars) {
         this(new ArrayList<Statement>(), lrVal, new ArrayList<Declaration>(),
                 auxVars);
-        //      this.expr = expr;
     }
 
     public ResultExpression(
@@ -184,27 +168,23 @@ public class ResultExpression extends Result {
 
 	public ResultExpression switchToRValueIfNecessary(Dispatcher main, MemoryHandler memoryHandler, 
 			StructHandler structHandler, ILocation loc) {
-
-		if (lrVal == null)
+		if (lrVal == null) {
 			return this;
-		else if (lrVal instanceof RValue)
+		} else if (lrVal instanceof RValue) {
 			return this;
-		else if (lrVal instanceof LocalLValue) {
+		} else if (lrVal instanceof LocalLValue) {
 			RValue newRVal = new RValue(((LocalLValue) lrVal).getValue(),
 					        lrVal.cType, lrVal.isBoogieBool);
-//					        lrVal.cType, lrVal.isWrappedBool, lrVal.isPointer, lrVal.isOnHeap);
 			return new ResultExpression(
 					this.stmt, newRVal, this.decl, this.auxVars,
 					        this.overappr, this.unionFieldIdToCType);
-		} else {
+		} else if (lrVal instanceof HeapLValue) {
 			if (m_Locked) {
 				throw new AssertionError("this ResultExpression is already locked");
 			}
 			ResultExpression rex = null;
 			HeapLValue hlv = (HeapLValue) lrVal;
-			//			SymbolTable sT = ((MainDispatcher) main).cHandler.getSymbolTable();
-			//			Expression value = hlv.getAddress();
-
+			
 			//retain already created stmt, decl, auxVars
 			ArrayList<Statement> newStmt = new ArrayList<Statement>(this.stmt);
 			ArrayList<Declaration> newDecl = new ArrayList<Declaration>(this.decl);
@@ -212,27 +192,22 @@ public class ResultExpression extends Result {
 					new LinkedHashMap<VariableDeclaration, ILocation>(this.auxVars); 
 			RValue newValue = null;
 
-//			InferredType heapReadType = null;
 
 			CType underlyingType = this.lrVal.cType instanceof CNamed ? 
 					((CNamed) this.lrVal.cType).getUnderlyingType() :
 						this.lrVal.cType;
 
-//					RValue addressRVal = new RValue(hlv.getAddress(), new CPointer(this.lrVal.cType),
-					RValue addressRVal = new RValue(hlv.getAddress(), this.lrVal.cType, //has the type of what lies at that address
+					//has the type of what lies at that address
+					RValue addressRVal = new RValue(hlv.getAddress(), this.lrVal.cType, 
 											hlv.isBoogieBool);
-//											hlv.isWrappedBool, hlv.isPointer, hlv.isOnHeap);
 					
 
 					if (underlyingType instanceof CPrimitive) {
 						CPrimitive cp = (CPrimitive) this.lrVal.cType;
-//						ResultExpression readResult;
 						switch (cp.getType()) {
 						case CHAR:
 						case INT:
-//							heapReadType = new InferredType(Type.Integer);
 							rex = memoryHandler.getReadCall(
-//									main, heapReadType, hlv.getAddress(), new CPointer(this.lrVal.cType));
 									main, addressRVal);
 							newStmt.addAll(rex.stmt);
 							newDecl.addAll(rex.decl);
@@ -241,9 +216,7 @@ public class ResultExpression extends Result {
 							break;
 						case FLOAT:
 						case DOUBLE:
-//							heapReadType = new InferredType(Type.Real);
 							rex = memoryHandler.getReadCall(
-//									main, heapReadType, hlv.getAddress(), new CPointer(this.lrVal.cType));
 									main, addressRVal);
 							newStmt.addAll(rex.stmt);
 							newDecl.addAll(rex.decl);
@@ -259,48 +232,34 @@ public class ResultExpression extends Result {
 							throw new UnsupportedSyntaxException(loc, "..");
 						}
 					} else if (underlyingType instanceof CPointer) {
-//						heapReadType = new InferredType(Type.Pointer);
 						rex = memoryHandler.getReadCall(
-//								main, heapReadType, hlv.getAddress(), new CPointer(this.lrVal.cType));
 									main, addressRVal);
 						newStmt.addAll(rex.stmt);
 						newDecl.addAll(rex.decl);
 						newAuxVars.putAll(rex.auxVars);	
 						newValue = (RValue) rex.lrVal;
 					} else if (underlyingType instanceof CArray) {
-//						CArray caType = (CArray) underlyingType;
-//						assert caType.getDimensions().length > 0 : "the outermost subscript should have removed the arrayType";
-////						heapReadType = new InferredType(caType.getValueType());
-////						heapReadType = new InferredType(Type.Pointer);
-//						rex = memoryHandler.getReadCall(
-////								main, heapReadType, hlv.getAddress(), new CPointer(this.lrVal.cType));
-//									main, addressRVal);
-//						newStmt.addAll(rex.stmt);
-//						newDecl.addAll(rex.decl);
-//						newAuxVars.putAll(rex.auxVars);	
-//						newValue = (RValue) rex.lrVal;
-						return null; //"you can't assign arrays in C"
+//						return null; //"you can't assign arrays in C"
+						throw new AssertionError("you can't assign arrays in C");
 					} else if (underlyingType instanceof CEnum) {
 					} else if (underlyingType instanceof CStruct) {
-//						CStruct structType = (CStruct) underlyingType;
 						rex = readStructFromHeap(main, structHandler, memoryHandler, loc, 
-//								hlv.getAddress(), structType);
 									addressRVal);
 						newStmt.addAll(rex.stmt);
 						newDecl.addAll(rex.decl);
 						newAuxVars.putAll(rex.auxVars);	
 						newValue = (RValue) rex.lrVal;	
 					} else if (underlyingType instanceof CNamed) {
-						assert false : "This should not be the case as we took the underlying type.";
+						throw new AssertionError("This should not be the case as we took the underlying type.");
 					} else {
 						throw new UnsupportedSyntaxException(loc, "..");
 					}
-//					newValue.isOnHeap = lrVal.isOnHeap;
-//					newValue.isPointer = lrVal.isPointer;
 					newValue.isBoogieBool = lrVal.isBoogieBool;
 					rex = new ResultExpression(newStmt, newValue, newDecl,
 					        newAuxVars, this.overappr, this.unionFieldIdToCType);
 					return rex;
+		} else {
+			throw new AssertionError("an LRValue that is not null, and no LocalLValue, RValue or HeapLValue???");
 		}
 	}
 
@@ -319,10 +278,8 @@ public class ResultExpression extends Result {
 	ResultExpression readStructFromHeap(Dispatcher main, 
 			StructHandler structHandler, MemoryHandler memoryHandler, ILocation loc,
 			RValue address) {
-//			Expression structOnHeapAddress, CStruct structType) {
 		
 		Expression structOnHeapAddress = address.getValue();
-//		CStruct structType = (CStruct) ((CPointer) address.cType).pointsToType;
 		CStruct structType = (CStruct) address.cType.getUnderlyingType();
 		
 		ResultExpression result = null;
@@ -337,8 +294,6 @@ public class ResultExpression extends Result {
 			currentStructBaseAddress = MemoryHandler.getPointerBaseAddress(startAddress, loc);
 			currentStructOffset = MemoryHandler.getPointerOffset(startAddress, loc);
 		}
-//		Expression currentStructBaseAddress = MemoryHandler.getPointerBaseAddress(structOnHeapAddress, loc);
-//		Expression currentStructOffset = MemoryHandler.getPointerOffset(structOnHeapAddress, loc);
 
 		//everything for the new Result
 		ArrayList<Statement> newStmt = new ArrayList<Statement>();
@@ -363,22 +318,8 @@ public class ResultExpression extends Result {
 
 			ResultExpression fieldRead = null; 
 			if(underlyingType instanceof CPrimitive) {
-//				InferredType typeOnHeap = null;
-//				CPrimitive cp = (CPrimitive) underlyingType;
-//				switch (cp.getType()) {
-//				case CHAR:
-//				case INT:
-//					typeOnHeap = new InferredType(Type.Integer);
-//					break;
-////				case BOOL:
-//				default:
-//					throw new UnsupportedSyntaxException(loc, "..");
-//				}
 				fieldRead = (ResultExpression) structHandler.readFieldInTheStructAtAddress(
 						main, memoryHandler, loc, fieldIds[i], 
-//						typeOnHeap,
-//						structOnHeapAddress, //fieldTypes[i]);//TODO: or take the underlying type??
-//						structType);
 						address);
 				newStmt.addAll(fieldRead.stmt);
 				newDecl.addAll(fieldRead.decl);
@@ -387,9 +328,6 @@ public class ResultExpression extends Result {
 				InferredType typeOnHeap = new InferredType(Type.Integer);
 				fieldRead = (ResultExpression) structHandler.readFieldInTheStructAtAddress(
 						main, memoryHandler, loc, fieldIds[i], 
-//						typeOnHeap,
-//						structOnHeapAddress, //fieldTypes[i]);//TODO: or take the underlying type??
-//						structType);
 						address);
 				newStmt.addAll(fieldRead.stmt);
 				newDecl.addAll(fieldRead.decl);
@@ -399,10 +337,8 @@ public class ResultExpression extends Result {
 			} else if (underlyingType instanceof CEnum) {
 				throw new UnsupportedSyntaxException(loc, "..");
 			} else if (underlyingType instanceof CStruct) {
-				//sae = {base: currentStructBaseAddress, offset: currentStructOffset + thisFieldOffset }
 				Expression innerStructOffset = 
 						StructHandler.getStructOrUnionOffsetConstantExpression(loc, memoryHandler, fieldIds[i], structType);
-//						StructHandler.getStructOffsetConstantExpression(loc, fieldIds[i], underlyingType);
 				Expression innerStructAddress = MemoryHandler.constructPointerFromBaseAndOffset(currentStructBaseAddress, 
 						new BinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, 
 								currentStructOffset, 
@@ -411,11 +347,9 @@ public class ResultExpression extends Result {
 				
 				RValue newAddress = new RValue(address);
 				newAddress.value = innerStructAddress;
-//				newAddress.cType= new CPointer(underlyingType);
 				newAddress.cType= underlyingType;
 
 				fieldRead = readStructFromHeap(main, structHandler, memoryHandler, 
-//						loc, innerStructAddress, (CStruct) underlyingType);
 						loc, newAddress);
 
 				newStmt.addAll(fieldRead.stmt);
@@ -442,7 +376,6 @@ public class ResultExpression extends Result {
 		return result;
 	}
 	
-	
 	/**
 	 * Add all declaration, statements, auxvars, etc. from another 
 	 * ResultExpression. Lock the other ResultExpression afterwards to indicate
@@ -456,52 +389,3 @@ public class ResultExpression extends Result {
 		re.lock();
 	}
 }
-
-
-
-//	InferredType getHeapTypeFromCType(CType ct) {
-//		InferredType it = null;
-//		
-//		CType underlyingType = ((CNamed) this.cType).getUnderlyingType();
-//		
-//		if (underlyingType instanceof CPrimitive) {
-//			CPrimitive cp = (CPrimitive) this.cType;
-//			ResultExpression readResult;
-//			switch (cp.getType()) {
-//			case INT:
-//				return new InferredType(Type.Integer);
-//				break;
-//			case POINTER:						
-//	
-//				break;
-//			case BOOL:
-//				break;
-//			case CHAR:
-//				break;
-//			default:
-//				throw new UnsupportedSyntaxException("..");
-//			}
-//		} else if (underlyingType instanceof CPointer) {
-//		} else if (underlyingType instanceof CArray) {
-//		} else if (underlyingType instanceof CEnum) {
-//		} else if (underlyingType instanceof CStruct) {
-//				return new InferredType(Type.Pointer);
-//		} else if (underlyingType instanceof CNamed) {
-//			assert false : "This should not be the case as we took the underlying type.";
-//		} else {
-//			throw new UnsupportedSyntaxException("..");
-//		}	
-//	}
-//	public ResultExpression switchToLHS(Dispatcher main, MemoryHandler memoryHandler) {
-//		assert !(lrVal instanceof RValue);
-//		
-//		if (lrVal instanceof LocalLValue) {
-//			return this;
-//		} else {
-//			HeapLValue hlv = (HeapLValue) lrVal;
-//			assert !hlv.addressIsValue : "we cannot write into an address (right? without casts..?)";
-//			
-//			write = memoryHandler.getWriteCall(hlv.address, val)
-//		}
-//		return null;
-//	}

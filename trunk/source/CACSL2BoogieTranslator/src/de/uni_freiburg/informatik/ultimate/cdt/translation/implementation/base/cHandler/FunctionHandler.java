@@ -360,13 +360,16 @@ public class FunctionHandler {
 			for (final String bId : varList.getIdentifiers()) {
 				final String cId = main.cHandler.getSymbolTable()
 						.getCID4BoogieID(bId, loc);
+				
+				//onHeap case for a function parameter means the parameter is addressoffed in the function body
 				final boolean isOnHeap = ((MainDispatcher) main).
 				        getVariablesForHeap().contains(paramDec);
+				
 				// Copy of inparam that is writeable
 				String auxInvar = main.nameHandler.getUniqueIdentifier(parent,
 						cId, 0, isOnHeap);
 				ASTType type = varList.getType();
-				if (isOnHeap) {//FIXME --- this onHeap case for a function parameter (in the declaration!) -- what does it mean??
+				if (isOnHeap) {
 				    type = MemoryHandler.POINTER_TYPE;
 	                ((CHandler)main.cHandler).addBoogieIdsOfHeapVars(
 	                        auxInvar);

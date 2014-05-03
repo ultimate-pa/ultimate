@@ -80,14 +80,6 @@ public interface ICHandler extends IHandler {
     public void clearContract();
 
     /**
-     * Calculates and adds sizeof constants to the translation unit.
-     * 
-     * @param cvar
-     *            the cvar to use, to calculate the constants.
-     */
-    public void addSizeOfConstants(CType cvar);
-
-    /**
      * Checks resType, whether it needs some special treatment for pointers,
      * according the value in pointerOps.
      * Also in case the flag putOnHeap is set -- which is the case for our special
@@ -569,8 +561,6 @@ public interface ICHandler extends IHandler {
      * (f.i. symbolTable,..)
      */
     public void endScope();
-
-	public void addSizeOfConstants(CType cvar, ILocation loc);
 
 	boolean isHeapVar(String boogieId);
 

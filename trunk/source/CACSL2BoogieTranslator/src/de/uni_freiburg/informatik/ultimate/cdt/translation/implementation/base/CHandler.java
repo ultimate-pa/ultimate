@@ -704,9 +704,8 @@ public class CHandler implements ICHandler {
 								result = new ResultExpression((LRValue) null);
 
 							((ResultExpression) result).stmt.addAll(initRex.stmt);
-							((ResultExpression) result).stmt.addAll(Dispatcher.createHavocsForAuxVars(initRex.auxVars));//FIXME: is this the right place??
+							((ResultExpression) result).stmt.addAll(Dispatcher.createHavocsForAuxVars(initRex.auxVars));
 							((ResultExpression) result).decl.addAll(initRex.decl);
-//							((ResultExpression) result).auxVars.putAll(initRex.auxVars); //once havoced we don't need them, right??
 							((ResultExpression) result).overappr.addAll(initRex.overappr);
 						} else {
 							//in case of global variables, the result is the declaration, initialization is
@@ -1371,13 +1370,6 @@ public class CHandler implements ICHandler {
 			
 			stmt.addAll(memoryHandler.getWriteCall(hlv, rVal));
 
-//			for (String t : new String[] { SFO.INT, SFO.POINTER, //is done in getWriteCall, now
-//					SFO.REAL, SFO.BOOL }) {
-//				functionHandler.getModifiedGlobals()
-//						.get(functionHandler.getCurrentProcedureID())
-//						.add(SFO.MEMORY + "_" + t);
-//			}
-
 			return new ResultExpression(stmt, rightHandSide, decl, auxVars, overappr);
 		} else if (lrVal instanceof LocalLValue){
 			LocalLValue lValue = (LocalLValue) lrVal;
@@ -1408,7 +1400,6 @@ public class CHandler implements ICHandler {
 			if (!functionHandler.noCurrentProcedure())
 				functionHandler.checkIfModifiedGlobal(main,
 						BoogieASTUtil.getLHSId(lValue.getLHS()), loc);
-//			return new ResultExpression(stmt, new RValue(lValue.getValue(), cType), decl, auxVars);
 			return new ResultExpression(stmt, lValue, decl, auxVars, overappr);
 		} else
 			throw new AssertionError("Type error: trying to assign to an RValue in Statement" + loc.toString());
@@ -1425,8 +1416,6 @@ public class CHandler implements ICHandler {
 		ResultExpression l = (ResultExpression) main.dispatch(node.getOperand1());
 		ResultExpression r = (ResultExpression) main.dispatch(node.getOperand2());
 
-		//        assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
-
 		ResultExpression rl = l.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 		ResultExpression rr = r.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 		
@@ -1440,16 +1429,6 @@ public class CHandler implements ICHandler {
 
 		switch (node.getOperator()) {
 		case IASTBinaryExpression.op_assign: {
-
-//			if (lType instanceof CPointer  //TODO move casts to makeAssingment and function calls (maybe)
-//					&& rType instanceof CPrimitive
-//					&& ((CPrimitive) rType).getType() == PRIMITIVE.INT) 
-//				rightSide = rrRValAsPointer;
-//			else if (lType instanceof CPrimitive 
-//					&& ((CPrimitive) lType).getType() == PRIMITIVE.BOOL)
-//				rightSide = new RValue(main.typeHandler.convertArith2Boolean(loc, 
-//						new PrimitiveType(loc, SFO.BOOL), rightSide.getValue()), lType);
-
 			stmt.addAll(l.stmt);
 			stmt.addAll(rr.stmt);
 			decl.addAll(l.decl);
@@ -2079,8 +2058,6 @@ public class CHandler implements ICHandler {
 		}
 		assert thenStmt != null;
 		assert elseStmt != null;
-//		if (!cond.isBoogieBool) //done for condREsult already
-//			cond = ConvExpr.toBoolean(loc, cond);
 		// TODO : handle if(pointer), if(pointer==NULL) and if(pointer==0)
 		IfStatement ifStmt = new IfStatement(loc, cond.getValue(), thenStmt.toArray(new Statement[0]),
 				elseStmt.toArray(new Statement[0]));
@@ -2214,7 +2191,6 @@ public class CHandler implements ICHandler {
 		condResult = condResult.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 		condResult = ConvExpr.rexIntToBoolIfNecessary(loc, condResult);
 		decl.addAll(condResult.decl);
-//		RValue condRVal = ConvExpr.toBoolean(loc, (RValue) condResult.lrVal);
 		RValue condRVal = (RValue) condResult.lrVal;
 		IfStatement ifStmt;
 		{
@@ -2268,7 +2244,6 @@ public class CHandler implements ICHandler {
 //					main.cHandler.getSymbolTable().endScope();
 					for (SymbolTableValue stv : symbolTable.currentScopeValues()) 
 						if (!stv.isGlobalVar()) {
-//							addInitStmtsAndDecls(main, loc, decl, stmt, stv);	
 							decl.add(stv.getBoogieDecl());
 						}
 					this.endScope();
@@ -2645,8 +2620,6 @@ public class CHandler implements ICHandler {
 		    }
 		    // cast from pointer to pointer is ignored -- alex: now no more -- type is changed
 		    else if (!(newCType.getUnderlyingType() instanceof CPointer)) {
-//                throw new UnsupportedSyntaxException(loc,
-//                        "Explicit cast from pointer not supported.");
 		    	expr.lrVal.cType = newCType;
             }
 		}
@@ -2662,7 +2635,6 @@ public class CHandler implements ICHandler {
 		}
 		
 		expr.lrVal.cType = newCType;
-//		expr.lrVal.getValue().setType(new InferredType(newCType));
 		
 //		String msg = "Ignored cast! At line: "
 //				+ node.getFileLocation().getStartingLineNumber();
@@ -2710,7 +2682,6 @@ public class CHandler implements ICHandler {
 		auxVars.put(tmpVar,loc);
 		
 		RValue condition = (RValue) reLocCond.lrVal;
-//		condition = ConvExpr.toBoolean(loc, condition); //done for relocCond
 		List<Statement> ifStatements = new ArrayList<Statement>();
 		{
 			ifStatements.addAll(rePositive.stmt);
@@ -2722,9 +2693,6 @@ public class CHandler implements ICHandler {
                 annots.put(Overapprox.getIdentifier(), overapprItem);
             }
 			ifStatements.add(assignStmt);
-//			List<HavocStatement> havocAuxVars = Dispatcher //we carry them outside so they are havoced there
-//					.createHavocsForAuxVars(rePositive.auxVars);
-//			ifStatements.addAll(havocAuxVars);
 			decl.addAll(rePositive.decl);
 			auxVars.putAll(rePositive.auxVars);
 			overappr.addAll(rePositive.overappr);
@@ -2737,9 +2705,6 @@ public class CHandler implements ICHandler {
 			AssignmentStatement assign = new AssignmentStatement(loc, lhs, 
 					new Expression[] { reNegative.lrVal.getValue() });
 			elseStatements.add(assign);
-//			List<HavocStatement> havocAuxVars = Dispatcher//we carry them outside so they are havoced there
-//					.createHavocsForAuxVars(reNegative.auxVars);
-//			elseStatements.addAll(havocAuxVars);
 			decl.addAll(reNegative.decl);
 			auxVars.putAll(reNegative.auxVars);
 			overappr.addAll(reNegative.overappr);
@@ -2754,9 +2719,6 @@ public class CHandler implements ICHandler {
 		stmt.add(ifStatement);
 
 		IdentifierExpression tmpExpr = new IdentifierExpression(loc, tmpName);
-//		List<HavocStatement> havocAuxVars = Dispatcher
-//				.createHavocsForAuxVars(reLocCond.auxVars);
-//		stmt.addAll(havocAuxVars);
 		assert rePositive.lrVal.cType.equals(reNegative.lrVal.cType);
 		return new ResultExpression(stmt, new RValue(tmpExpr,
 		        rePositive.lrVal.cType), decl, auxVars, overappr);
@@ -2890,13 +2852,6 @@ public class CHandler implements ICHandler {
 		this.contract.clear();
 	}
 
-	//commented out the uses of this in CompositeTypeSpecifier, EnumerationSpecifier, SimpleDeclSpecifier
-	//because calculatesizeOf is executed when it's needed and that's all we want, right?
-	@Override
-	public void addSizeOfConstants(CType cvar, ILocation loc) {
-		memoryHandler.calculateSizeOf(cvar, loc);
-	}
-	
 	public static Expression convertLHSToExpression(LeftHandSide lhs) {
 		if (lhs instanceof VariableLHS) {
 			return new IdentifierExpression(lhs.getLocation(), lhs.getType(),
@@ -2926,11 +2881,5 @@ public class CHandler implements ICHandler {
 		this.typeHandler.endScope();
 		this.symbolTable.endScope();
 		this.memoryHandler.getVariablesToBeMalloced().endScope();
-	}
-
-	@Override
-	public void addSizeOfConstants(CType cvar) {
-		// this is here only because eclipse really wants this method and I don't know why..
-		throw new AssertionError();
 	}
 }

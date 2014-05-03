@@ -711,36 +711,15 @@ public class MemoryHandler {
      *            Location for errors and new nodes in the AST.
      * @return a function call expression for ~free(e).
      */
-//    public ResultExpression getFreeCall(Dispatcher main, FunctionHandler fh,
     public CallStatement getFreeCall(Dispatcher main, FunctionHandler fh,
             LRValue lrVal, ILocation loc) {
-    	//(alex:) it does not work this way when we have an auxiliary variable that is to be freed, 
-    	//for instance when the address itself was on the heap --> use RValue instead
-//            Expression e, ILocation loc) {
-//        String bId = BoogieASTUtil.getLeftMostId(e);
-//        if (!main.cHandler.getSymbolTable().containsBoogieSymbol(bId)) {
-//            String msg = "Cannot free variable " + bId
-//                    + " as it is not in the current scope!";
-//            throw new IncorrectSyntaxException(loc, msg);
-//        }
-//        String cId = main.cHandler.getSymbolTable().getCID4BoogieID(bId, loc);
-//        CType cvar = main.cHandler.getSymbolTable().get(cId, loc)
-//                .getCVariable();
-//        if (!isPointer(cvar) && !(main.cHandler.isHeapVar(bId))) {
-//            String msg = "Cannot free the non pointer variable " + cId;
-//            throw new IncorrectSyntaxException(loc, msg);
-//        }
     	assert lrVal instanceof RValue || lrVal instanceof LocalLValue;
 //    	assert lrVal.cType instanceof CPointer;//TODO -> must be a pointer or onHeap -- add a complicated assertion or let it be??
     	
         // Further checks are done in the precondition of ~free()!
         // ~free(E);
-//        ArrayList<Statement> stmt = new ArrayList<Statement>();
-//        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-//        stmt.add(new CallStatement(loc, false, new VariableLHS[0], SFO.FREE,
         CallStatement freeCall = new CallStatement(loc, false, new VariableLHS[0], SFO.FREE,
                 new Expression[] { lrVal.getValue() });
-//                new Expression[] { e }));
         // add required information to function handler.
         if (fh.getCurrentProcedureID() != null) {
             LinkedHashSet<String> mgM = new LinkedHashSet<String>();
@@ -751,10 +730,6 @@ public class MemoryHandler {
             }
             fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.FREE);
         }
-//		Map<VariableDeclaration, ILocation> emptyAuxVars = 
-//				new LinkedHashMap<VariableDeclaration, ILocation>(0);
-//		assert (main.isAuxVarMapcomplete(decl, emptyAuxVars));
-//        return new ResultExpression(stmt, null, decl, emptyAuxVars);
         return freeCall;
     }
     
@@ -791,7 +766,6 @@ public class MemoryHandler {
         VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, MemoryHandler.POINTER_TYPE, loc);
         
         LocalLValue llVal = new LocalLValue(new VariableLHS(loc, tmpId), new CPointer(new CPrimitive(PRIMITIVE.VOID)));
-//        ResultExpression mallocRex = getMallocCall(main, fh, size, llVal, loc);
         ResultExpression mallocRex = new ResultExpression(llVal);
         
         mallocRex.stmt.add(getMallocCall(main, fh, size, llVal, loc));
@@ -809,19 +783,8 @@ public class MemoryHandler {
 
         Expression[] args = new Expression[] { size };
         
-        //TODO: extract this block and the one below to make the other getMallocCall nicer
-//        String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
-//        InferredType tmpIType = new InferredType(Type.Pointer);
-//        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc);
-//        auxVars.put(tVarDecl, loc);
-//        decl.add(tVarDecl);
-        
-//        stmt.add(new CallStatement(loc, false, new VariableLHS[] { (VariableLHS) resultPointer.getLHS() },
         CallStatement mallocCall = new CallStatement(loc, false, new VariableLHS[] { (VariableLHS) resultPointer.getLHS() },
                 SFO.MALLOC, args);
-        
-        //TODO: extract this block and the one above to make the other getMallocCall nicer
-//        Expression e = new IdentifierExpression(loc, it, tmpId);
         
         // add required information to function handler.
         if (fh.getCurrentProcedureID() != null) {
@@ -837,7 +800,6 @@ public class MemoryHandler {
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = 
 				new LinkedHashMap<VariableDeclaration, ILocation>();
-//        return new ResultExpression(stmt, resultPointer, decl, auxVars);//FIXME pointsToType??
 		return mallocCall;
 	}
 
@@ -850,7 +812,6 @@ public class MemoryHandler {
      */
     public IdentifierExpression calculateSizeOf(CType cvar, ILocation loc) {
         assert cvar != null;
-//        ILocation loc = cvar.getCASTLocation();
         ASTType intT = new PrimitiveType(loc, SFO.INT);
         String id = SFO.SIZEOF + cvar.toString();
         IdentifierExpression idex = new IdentifierExpression(loc, id);
