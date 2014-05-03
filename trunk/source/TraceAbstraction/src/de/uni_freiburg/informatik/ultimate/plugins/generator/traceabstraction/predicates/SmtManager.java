@@ -1686,8 +1686,15 @@ public class SmtManager {
 			TermVarsProc tvp = computeTermVarsProc(result);
 			// Compute a closed formula version of term.
 			Term closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
-			return new BasicPredicateExplicitQuantifier(m_SerialNumber++, tvp.getProcedures(), 
-					result, tvp.getVars(), closed_formula, quantifier, quantifiedVariables);
+			// Check whether the result has still quantifiers
+			if (result instanceof QuantifiedFormula) {
+				quantifiedVariables = new HashSet<TermVariable>(Arrays.asList(((QuantifiedFormula)result).getVariables()));
+				return new BasicPredicateExplicitQuantifier(m_SerialNumber++, tvp.getProcedures(), 
+						result, tvp.getVars(), closed_formula, quantifier, quantifiedVariables);
+			} else {
+				return newPredicate(term, tvp.getProcedures(), tvp.getVars(), closed_formula);
+			}
+			
 		}
 	}
 
