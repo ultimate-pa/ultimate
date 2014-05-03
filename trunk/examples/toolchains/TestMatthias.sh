@@ -24,6 +24,12 @@ trunk/examples/toolchains/AutomizerTestDir.sh -ea 350 "$2" \
  "BuchiAutomizerBplWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/templateBenchmarkLBE.epf"
 fi
 
+if [ "$1" = "dumpLinearLassoRankerScripts" ]; then
+echo "dumpLinearLassoRankerScripts for folder $2"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 300 "$2" \
+ "BuchiAutomizerBplWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/dumpLinearLassoRankerScripts.epf"
+fi
+
 
 if [ "$1" = "interpolation" ]; then
 echo "testing different interpolation techniques"
