@@ -1663,6 +1663,28 @@ public class SmtManager {
 		return result;
 	}
 	
+	
+	/**
+	 * Returns true iff each free variables corresponds to a BoogieVar or will 
+	 * be quantified. Throws an Exception otherwise.
+	 */
+	private boolean checkIfValidPredicate(Term term, Set<TermVariable> quantifiedVariables) {
+		for (TermVariable tv : term.getFreeVars()) {
+			BoogieVar bv = getBoogie2Smt().getBoogie2SmtSymbolTable().getBoogieVar(tv);
+			if (bv == null) {
+				if (!quantifiedVariables.contains(tv)) {
+					throw new AssertionError("Variable " + tv + 
+							" does not corresponds to a BoogieVar, and is" +
+							" not quantified, hence this formula cannot" +
+							" define a predicate: " + term);
+				}
+			}
+		}
+		return true;
+	}
+	
+	
+	
 	/**
 	 * Constructs a predicate from the given term. If the given term is quantifier-free, a BasicPredicate will be constructed, otherwise
 	 * it constructs a BasicPredicateExplicitQuantifier.
@@ -1672,6 +1694,7 @@ public class SmtManager {
 	 * the result is a BasicPredicate, otherwise it constructs a BasicPredicateExplicitQuantifier.
 	 */
 	public IPredicate constructPredicate(Term term, int quantifier, Set<TermVariable> quantifiedVariables) {
+		assert checkIfValidPredicate(term, quantifiedVariables);
 		if (quantifiedVariables == null || quantifiedVariables.isEmpty()) {
 			// Compute the set of BoogieVars, the procedures and the term
 			TermVarsProc tvp = computeTermVarsProc(term);
@@ -1692,7 +1715,7 @@ public class SmtManager {
 				return new BasicPredicateExplicitQuantifier(m_SerialNumber++, tvp.getProcedures(), 
 						result, tvp.getVars(), closed_formula, quantifier, quantifiedVariables);
 			} else {
-				return newPredicate(term, tvp.getProcedures(), tvp.getVars(), closed_formula);
+				return newPredicate(result, tvp.getProcedures(), tvp.getVars(), closed_formula);
 			}
 			
 		}

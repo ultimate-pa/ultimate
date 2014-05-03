@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -77,12 +78,35 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 		}
 		
 		/**
+		 * Returns true iff each free variables corresponds to a BoogieVar in
+		 * vars. Throws an Exception otherwise.
+		 */
+		private boolean varsIsSupersetOfFreeTermVariables(Term term, Set<BoogieVar> vars) {
+			for (TermVariable tv : term.getFreeVars()) {
+				BoogieVar bv = m_SmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable().getBoogieVar(tv);
+				if (bv == null) {
+					throw new AssertionError("Variable " + tv + 
+							" has no corresponding BoogieVar, hence seems " +
+							"to be some auxiliary variable and may not " +
+							"occur unquantified in the formula of a predicate");
+				} else {
+					if (!vars.contains(bv)) {
+						throw new AssertionError("Variable " + tv + 
+								" does not occur in vars");
+					}
+				}
+			}
+			return true;
+		}
+		
+		/**
 		 * Get the predicate for term. If there is not yet a predicate for term,
 		 * construct the predicate using vars.
 		 * @param vars The BoogieVars of the TermVariables contained in term.
 		 * @param proc All procedures of which vars contains local variables.
 		 */
 		public IPredicate getOrConstructPredicate(Term term, Set<BoogieVar> vars, String[] procs) {
+			assert varsIsSupersetOfFreeTermVariables(term, vars);
 			if (term instanceof AnnotatedTerm) {
 				AnnotatedTerm annotatedTerm = (AnnotatedTerm) term;
 				Annotation[] annotations = annotatedTerm.getAnnotations();
