@@ -51,6 +51,14 @@ class SMTSolver {
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
 	/**
+	 * Auxiliary String that we put into the smt script via an echo.
+	 * This String should help to identify the difficult constraints in a bunch
+	 * of dumped smt2 files.
+	 */
+	public static String s_SolverUnknownMessage = 
+			"Warning solver responded UNKNOWN to the check-sat above";
+	
+	/**
 	 * Create a new SMT solver instance.
 	 * If useExternalSolver is true, we use the Scriptor to start the external 
 	 * SMT solver with the smt_solver_command.

@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -310,10 +311,12 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 						val_si));
 			}
 		} else if (sat == LBool.UNKNOWN) {
+			m_script.echo(new QuotedObject(SMTSolver.s_SolverUnknownMessage));
 			// Problem: If we use the following line we can receive the 
 			// following response which is not SMTLIB2 compliant.
 			// (:reason-unknown canceled)
 			// Object reason = m_script.getInfo(":reason-unknown");
+			// TODO: discuss the above claim with Jürgen
 		}
 		return sat;
 	}

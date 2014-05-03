@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -150,6 +151,8 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		if (isSat == LBool.SAT) {
 			m_argument = extractArgument(vars_init, vars_honda, vars_ray,
 					lambda);
+		} else if (isSat == LBool.UNKNOWN) {
+			m_script.echo(new QuotedObject(SMTSolver.s_SolverUnknownMessage));
 		}
 		return isSat;
 	}
