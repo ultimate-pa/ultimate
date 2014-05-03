@@ -129,7 +129,7 @@ public class Preferences implements Serializable {
 	 * Base name (without path) of the file to which the SMT solver script is 
 	 * written.
 	 */
-	public String baseNameOfDumpedScript = "LassoRankerScript.smt2";
+	public String baseNameOfDumpedScript = "LassoRankerScript";
 	
 	/**
 	 * Build a string descriptions of the current preferences

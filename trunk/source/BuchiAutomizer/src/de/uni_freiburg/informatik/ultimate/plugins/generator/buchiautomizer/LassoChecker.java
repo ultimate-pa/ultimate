@@ -547,7 +547,7 @@ public class LassoChecker {
 		UltimatePreferenceStore baPref = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		pref.dumpSmtSolverScript = baPref.getBoolean(PreferenceInitializer.LABEL_DumpToFile);
 		pref.pathOfDumpedScript = baPref.getString(PreferenceInitializer.LABEL_DumpPath);
-		pref.baseNameOfDumpedScript = generateFileBasenamePrefix(withStem) + ".smt2";
+		pref.baseNameOfDumpedScript = generateFileBasenamePrefix(withStem);
 
 		LassoRankerTerminationAnalysis lrta = null;
 		try {

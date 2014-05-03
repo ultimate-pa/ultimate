@@ -98,25 +98,29 @@ class SMTSolver {
 	/**
 	 * Create a new solver instance with the preferences given
 	 * @param preferences the preferences for creating the solver
+	 * @param constraintsName name of the constraints whose satisfiability is
+	 * checked
 	 * @return the new solver instance
 	 */
-	public static Script newScript(Preferences preferences) {
+	public static Script newScript(Preferences preferences, String constraintsName) {
 		return newScript(preferences.externalSolver,
 				preferences.smt_solver_command,
 				preferences.dumpSmtSolverScript ?
 						composeFullFilename(preferences.pathOfDumpedScript, 
-								preferences.baseNameOfDumpedScript) : null,
+								preferences.baseNameOfDumpedScript, 
+								constraintsName) : null,
 				preferences.annotate_terms);
 	}
 	
 	/**
-	 * Compose the name of a path, together with a baseName of a file, to a
-	 * full filename.
-	 * (e.g., path "/etc" and basename "fstab" will be composed to
-	 * "/etc/fstab")
+	 * Compose the full filename (of the dumped script) from 
+	 * name of a path, baseNamePrefix of the file, name of the constraints,
+	 * and the file ending ".smt2".
 	 */
-	public static String composeFullFilename(String path, String baseName) {
-		return path + File.separator + baseName;
+	public static String composeFullFilename(String path, String baseNamePrefix, 
+			String constraintsName) {
+		return path + File.separator + baseNamePrefix + "_" 
+			+ constraintsName + ".smt2";
 	}
 	
 	/**

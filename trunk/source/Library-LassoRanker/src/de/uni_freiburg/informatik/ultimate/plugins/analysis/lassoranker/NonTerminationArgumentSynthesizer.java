@@ -100,7 +100,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 */
 	public NonTerminationArgumentSynthesizer(LinearTransition stem,
 			LinearTransition loop, Preferences preferences) {
-		super(stem, loop, preferences);
+		super(stem, loop, preferences, "nonterminationTemplate");
 		
 		m_integer_mode = (stem != null && stem.containsIntegers())
 				|| loop.containsIntegers();

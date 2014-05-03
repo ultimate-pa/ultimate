@@ -78,7 +78,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	public TerminationArgumentSynthesizer(LinearTransition stem,
 			LinearTransition loop, RankingFunctionTemplate template,
 			Preferences preferences) {
-		super(stem, loop, preferences);
+		super(stem, loop, preferences, template.getName() + "Template");
 		m_template = template;
 		
 		m_si_generators = new ArrayList<SupportingInvariantGenerator>();
