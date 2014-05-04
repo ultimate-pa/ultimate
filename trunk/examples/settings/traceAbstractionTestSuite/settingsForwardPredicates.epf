@@ -1,22 +1,20 @@
-#Thu Jan 30 13:20:28 CET 2014
+#Thu Mar 06 20:23:14 CET 2014
 \!/instance/CACSL2BoogieTranslator=
 file_export_version=3.0
 @CACSL2BoogieTranslator=0.0.1
-/instance/CACSL2BoogieTranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=IGNORE
-/instance/CACSL2BoogieTranslator/Pointer\ to\ allocated\ memory\ at\ dereference=IGNORE
-/instance/CACSL2BoogieTranslator/Translation\ Mode\:=SV_COMP14
+/instance/CACSL2BoogieTranslator/Check\ for\ the\ main\ procedure\ if\ all\ allocated\ memory\ was\ freed=true
 /instance/CACSL2BoogieTranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
+#Thu Dec 19 17:31:04 CET 2013
+file_export_version=3.0
+@TraceAbstraction=0.0.1
+\!/instance/TraceAbstraction=
+/instance/TraceAbstraction/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
+/instance/TraceAbstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
 #Wed Jan 15 21:36:24 CET 2014
 file_export_version=3.0
 \!/instance/RCFGBuilder=
 @RCFGBuilder=0.0.1
 /instance/RCFGBuilder/Convert\ code\ blocks\ to\ CNF=false
-#Wed Jan 15 21:36:24 CET 2014
-file_export_version=3.0
-@TraceAbstraction=0.0.1
-\!/instance/TraceAbstraction=
-/instance/TraceAbstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
-@UltimateGui=0.0.1
 #Sat Mar 15 16:00:32 CET 2014
 file_export_version=3.0
 @UltimateCore=0.0.1

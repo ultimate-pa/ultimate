@@ -1,24 +1,20 @@
+#Thu Mar 06 20:23:14 CET 2014
+\!/instance/CACSL2BoogieTranslator=
+file_export_version=3.0
+@CACSL2BoogieTranslator=0.0.1
+/instance/CACSL2BoogieTranslator/Check\ for\ the\ main\ procedure\ if\ all\ allocated\ memory\ was\ freed=true
+/instance/CACSL2BoogieTranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 #Thu Dec 19 17:31:04 CET 2013
 file_export_version=3.0
 @TraceAbstraction=0.0.1
 \!/instance/TraceAbstraction=
 /instance/TraceAbstraction/Compute\ Interpolants\ along\ a\ Counterexample=BackwardPredicates
+/instance/TraceAbstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
 #Thu Dec 19 17:31:04 CET 2013
 file_export_version=3.0
 \!/instance/RCFGBuilder=
 @RCFGBuilder=0.0.1
 /instance/RCFGBuilder/Convert\ code\ blocks\ to\ CNF=false
-#Thu Dec 19 17:31:04 CET 2013
-file_export_version=3.0
-\!/instance/UltimateCore=
-/instance/UltimateCore/Show\ Result\ in\ Pop-Up\ Window\ after\ Toolchain\ Execution=true
-@UltimateCore=0.0.1
-#Thu Dec 19 17:31:04 CET 2013
-file_export_version=3.0
-\!/instance/UltimateGui=
-/instance/UltimateGui/LASTTOOLCHAINPATH=C\:\\Ultimate\\examples\\toolchains\\TraceAbstraction.xml
-/instance/UltimateGui/LASTPATH=C\:\\Ultimate\\examples\\programs\\minitests\\recursivePrograms\\BugNestedSsaWithPendingContexts.bpl
-@UltimateGui=0.0.1
 #Sat Mar 15 16:00:32 CET 2014
 file_export_version=3.0
 @UltimateCore=0.0.1
