@@ -137,6 +137,40 @@ public class PartialQuantifierElimination {
 		}
 		
 		
+		// apply Infinity Restrictor Drop
+		Term termAfterIRD;
+		{
+			Set<TermVariable> remainingAfterIRD = new HashSet<TermVariable>();
+			Term[] oldParams;
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				oldParams = getDisjuncts(result);
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				oldParams = getConjuncts(result);
+			} else {
+				throw new AssertionError("unknown quantifier");
+			}
+			Term[] newParams = new Term[oldParams.length];
+			for (int i=0; i<oldParams.length; i++) {
+				Set<TermVariable> eliminateesIRD = new HashSet<TermVariable>(eliminatees);
+				newParams[i] = irdSimple(script, quantifier, oldParams[i], eliminateesIRD);
+				remainingAfterIRD.addAll(eliminateesIRD);
+			}
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				termAfterIRD = Util.or(script, newParams);
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				termAfterIRD = Util.and(script, newParams);
+			} else {
+				throw new AssertionError("unknown quantifier");
+			}
+			result = termAfterIRD;
+			eliminatees.retainAll(remainingAfterIRD);
+		}
+		
+		if (eliminatees.isEmpty()) {
+			return result;
+		}
+		
+		
 		// apply Unconnected Parameter Deletion
 		Term termAfterUPD = null;
 		if (USE_UPD) {
@@ -174,6 +208,7 @@ public class PartialQuantifierElimination {
 			"superficial variables";
 		
 		Set<TermVariable> eliminateesBeforeSOS = new HashSet<TermVariable>(eliminatees);
+		final boolean sosChangedTerm;
 		// apply Store Over Select
 		if (USE_SOS) {
 			Set<TermVariable> remainingAndNewAfterSOS = new HashSet<TermVariable>();
@@ -199,9 +234,12 @@ public class PartialQuantifierElimination {
 			} else {
 				throw new AssertionError("unknown quantifier");
 			}
+			sosChangedTerm = (result != termAfterSOS);
 			result = termAfterSOS;
 			eliminatees.retainAll(remainingAndNewAfterSOS);
 			eliminatees.addAll(remainingAndNewAfterSOS);
+		} else {
+			sosChangedTerm = false;
 		}
 		
 		if (eliminatees.isEmpty()) {
@@ -215,8 +253,12 @@ public class PartialQuantifierElimination {
 		assert Arrays.asList(result.getFreeVars()).containsAll(eliminatees) : 
 			"superficial variables";
 		
-		if (!eliminateesBeforeSOS.containsAll(eliminatees)) {
+//		if (!eliminateesBeforeSOS.containsAll(eliminatees)) {
 			//SOS introduced new variables that should be eliminated
+		if (sosChangedTerm) {
+			// if term was changed by SOS new elimination might be possible
+			// Before the implementation of IRD we only retried elimination
+			// if SOS introduced more quantified variables.
 			result = elim(script, quantifier, eliminatees, result);
 		} 
 		assert Arrays.asList(result.getFreeVars()).containsAll(eliminatees) : 
@@ -239,6 +281,7 @@ public class PartialQuantifierElimination {
 				}
 				Set<TermVariable> thisIterationAuxVars = new HashSet<TermVariable>();
 				Term elim = (new ElimStore3(script)).elim(tv, result, thisIterationAuxVars);
+				s_Logger.debug(new DebugMessage("eliminated quantifier via SOS for {0}, additionally introduced {1}", tv, thisIterationAuxVars));
 				overallAuxVars.addAll(thisIterationAuxVars);
 //				if (Arrays.asList(elim.getFreeVars()).contains(tv)) {
 //					elim = (new ElimStore3(script)).elim(tv, result, thisIterationAuxVars);
@@ -511,6 +554,131 @@ public class PartialQuantifierElimination {
 			return m_TermWithoutTvs;
 		}
 		
+	}
+	
+	public static Term irdSimple(Script script, int quantifier, Term term, 
+			Collection<TermVariable> vars) {
+		Iterator<TermVariable> it = vars.iterator();
+		Term result = term;
+		while(it.hasNext()) {
+			TermVariable tv = it.next();
+			if (!Arrays.asList(result.getFreeVars()).contains(tv)) {
+				//case where var does not occur
+				it.remove();
+				continue;
+			} else {
+				if (tv.getSort().isNumericSort()) {
+					Term withoutTv = irdSimple(script, quantifier, result, tv);
+					if (withoutTv != null) {
+						s_Logger.debug(new DebugMessage("eliminated quantifier via IRD for {0}", tv));
+						result = withoutTv;
+						it.remove();
+					} else {
+						s_Logger.debug(new DebugMessage("not eliminated quantifier via IRD for {0}", tv));
+					}
+				} else {
+					// ird is only applicable to variables of numeric sort
+					s_Logger.debug(new DebugMessage("not eliminated quantifier via IRD for {0}", tv));
+				}
+			}
+		}
+		return result;
+	}
+	
+	/**
+	 * If the application term contains only parameters param such that for each
+	 * param one of the following holds and the third case applies at most once,
+	 * we return all params that do not contain tv. 
+	 * 1. param does not contain tv
+	 * 2. param is an AffineRelation such that tv is a variable of the 
+	 * AffineRelation and the function symbol is "distinct" and quantifier is ∃
+	 * or the function symbol is "=" and the quantifier is ∀
+	 * 3. param is an inequality
+	 */
+	public static Term irdSimple(Script script, int quantifier, Term term, 
+			TermVariable tv) {
+		assert tv.getSort().isNumericSort() : "only applicable for numeric sorts";
+		Term[] oldParams;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			oldParams = getConjuncts(term);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			oldParams = getDisjuncts(term);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		ArrayList<Term> paramsWithoutTv = new ArrayList<Term>();
+		short inequalitiesWithTv = 0;
+		for (Term oldParam : oldParams) {
+			if (!Arrays.asList(oldParam.getFreeVars()).contains(tv)) {
+				paramsWithoutTv.add(oldParam);
+			} else {
+				AffineRelation affineRelation;
+				try {
+					affineRelation = new AffineRelation(oldParam);
+				} catch (NotAffineException e) {
+					// unable to eliminate quantifier
+					return null;
+				}
+				if (!affineRelation.isVariable(tv)) {
+					// unable to eliminate quantifier
+					// tv occurs in affine relation but not as affine variable
+					// it might occur inside a function or array.
+					return null;
+				}
+				try {
+					affineRelation.onLeftHandSideOnly(script, tv);
+				} catch (NotAffineException e) {
+					// unable to eliminate quantifier
+					return null;
+				}
+				String functionSymbol = affineRelation.getFunctionSymbolName();
+				switch (functionSymbol) {
+				case "=":
+					if (quantifier == QuantifiedFormula.EXISTS) {
+						throw new AssertionError("term should have been removed with DER");
+					} else if (quantifier == QuantifiedFormula.FORALL) {
+						// we may drop this parameter
+					} else {
+						throw new AssertionError("unknown quantifier");
+					}
+					break;
+				case "distinct" :
+					if (quantifier == QuantifiedFormula.EXISTS) {
+						// we may drop this parameter
+					} else if (quantifier == QuantifiedFormula.FORALL) {
+						throw new AssertionError("term should have been removed with DER");
+					} else {
+						throw new AssertionError("unknown quantifier");
+					}
+					break;
+				case ">" :
+				case ">=" :
+				case "<" :
+				case "<=" :
+					if (inequalitiesWithTv > 0) {
+						// unable to eliminate quantifier, we may drop at most
+						// one inequality
+						return null;
+					} else {
+						inequalitiesWithTv++;
+						// we may drop this parameter (but it has to be the 
+						// only dropped inequality
+					}
+					break;
+				default:
+					throw new AssertionError("unknown functionSymbol");
+				}
+			}
+		}
+		Term result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			result = Util.and(script, paramsWithoutTv.toArray(new Term[0]));
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = Util.or(script, paramsWithoutTv.toArray(new Term[0]));
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return result;
 	}
 	
 	

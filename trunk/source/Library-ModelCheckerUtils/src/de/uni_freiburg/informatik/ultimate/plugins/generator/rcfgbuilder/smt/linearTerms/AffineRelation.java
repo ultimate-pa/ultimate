@@ -50,6 +50,15 @@ public class AffineRelation {
 	}
 	
 	/**
+	 * Returns the name of the function symbol which is one of the following
+	 * {=, <=, >=, <, >, distinct }.
+	 * @return
+	 */
+	public String getFunctionSymbolName() {
+		return m_FunctionSymbolName;
+	}
+
+	/**
 	 * Return if term is variable (possibly with coefficient 0) in this affine 
 	 * relation.
 	 */
