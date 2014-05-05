@@ -14,7 +14,13 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class Totalinterpolation extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Directories = { 
-		"examples/programs/" 
+		"examples/programs/regression",
+//		"examples/programs/toy",
+//		"examples/programs/recursivePrograms",
+//		"examples/programs/random",
+//		"examples/programs/scaleable",
+//		"examples/programs/real-life",
+//		"examples/programs/reals"
 	};
 	
 	// Time out for each test case in milliseconds
@@ -30,7 +36,7 @@ public class Totalinterpolation extends
 		if (s_Boogie_TreeInterpolants) {
 			addTestCases(
 					"AutomizerBpl.xml",
-					"automizer/TreeInterpolants.epf",
+					"traceAbstractionTestSuite/TreeInterpolants.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
 				    "Treeinterpolants",
@@ -40,7 +46,7 @@ public class Totalinterpolation extends
 		if (s_C_TreeInterpolants) {
 			addTestCases(
 					"AutomizerC.xml",
-					"automizer/TreeInterpolants.epf",
+					"traceAbstractionTestSuite/TreeInterpolants.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
 				    "Treeinterpolants",
@@ -51,7 +57,7 @@ public class Totalinterpolation extends
 		if (s_Boogie_TreeInterpolantsWithTotalinterpolation) {
 			addTestCases(
 					"AutomizerBpl.xml",
-					"automizer/TreeInterpolants_TotalInterpolation.epf",
+					"traceAbstractionTestSuite/TreeInterpolants_TotalInterpolation.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
 				    "Treeinterpolants with totalinterpolation",
@@ -61,7 +67,7 @@ public class Totalinterpolation extends
 		if (s_C_TreeInterpolantsWithTotalinterpolation) {
 			addTestCases(
 					"AutomizerC.xml",
-					"automizer/TreeInterpolants_TotalInterpolation.epf",
+					"traceAbstractionTestSuite/TreeInterpolants_TotalInterpolation.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
 				    "Treeinterpolants with totalinterpolation",
