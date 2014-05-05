@@ -872,7 +872,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				}
 				if (m_SizeOfPredicatesBP != null && tcbswpwp.getSizeOfPredicatesBP() != null && 
 						m_SizeOfPredicatesBP.length == tcbswpwp.getSizeOfPredicatesBP().length) {
-					sizeOfPredicatesBP = new int[tcbswpwp.getSizeOfPredicatesFP().length];
+					sizeOfPredicatesBP = new int[tcbswpwp.getSizeOfPredicatesBP().length];
 					for (int i = 0; i < m_SizeOfPredicatesBP.length; i++) {
 						sizeOfPredicatesBP[i] = m_SizeOfPredicatesBP[i] + tcbswpwp.getSizeOfPredicatesBP()[i];
 					}
