@@ -25,6 +25,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.AffineRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.BinaryEqualityRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Dnf;
@@ -759,50 +761,29 @@ public class PartialQuantifierElimination {
 	 */
 	public static EqualityInformation getEqinfo(Script script, Term givenTerm,
 			Term[] context, Term forbiddenTerm, int quantifier) {
+		BinaryEqualityRelation[] binaryRelations = new BinaryEqualityRelation[context.length];
+		
+		// stage 1: check if there is an "=" or "distinct" term where the
+		// givenTerm is on one hand sie of the relation.
 		for (int i=0; i<context.length; i++) {
-			if (!(context[i] instanceof ApplicationTerm)) {
+			if (!isSubterm(givenTerm, context[i])) {
 				continue;
 			}
-			ApplicationTerm appTerm = (ApplicationTerm) context[i];
-			Term lhs;
-			Term rhs;
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				if (appTerm.getFunction().getName().equals("=")) {
-					if (appTerm.getParameters().length != 2) {
-						throw new UnsupportedOperationException();
-					}
-					lhs = appTerm.getParameters()[0];
-					rhs = appTerm.getParameters()[1];
-				} else {
-					continue;
-				}
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				if (appTerm.getFunction().getName().equals("not")) {
-					Term[] negParams = appTerm.getParameters();
-					assert negParams.length == 1;
-					Term negTerm = negParams[0];
-					if (negTerm instanceof ApplicationTerm) {
-						ApplicationTerm negAppTerm = (ApplicationTerm) negTerm;
-						if (negAppTerm.getFunction().getName().equals("=")) {
-							if (negAppTerm.getParameters().length != 2) {
-								throw new UnsupportedOperationException(
-										"only equality with two parameters implemented yet");
-							}
-							lhs = negAppTerm.getParameters()[0];
-							rhs = negAppTerm.getParameters()[1];
-						} else {
-							continue;
-						}
-					} else {
-						continue;
-					}
-					
-				} else {
-					continue;
-				}
-			} else {
-				throw new AssertionError("unknown quantifier");
+			try {
+				binaryRelations[i] = new BinaryEqualityRelation(context[i]);
+			} catch (NoRelationOfThisKindException e2) {
+				continue;
 			}
+			
+			if (binaryRelations[i].getRelationSymbol().equals("=") && quantifier == QuantifiedFormula.FORALL) {
+				continue;
+			} else if (binaryRelations[i].getRelationSymbol().equals("distinct") && quantifier == QuantifiedFormula.EXISTS) {
+				continue;
+			}
+			
+			Term lhs = binaryRelations[i].getLhs();
+			Term rhs = binaryRelations[i].getRhs();
+
 			if (lhs.equals(givenTerm) && !isSubterm(givenTerm, rhs)) {
 				if (forbiddenTerm == null || !isSubterm(forbiddenTerm, rhs)) {
 					return new EqualityInformation(i, givenTerm, rhs);
@@ -812,30 +793,34 @@ public class PartialQuantifierElimination {
 				if (forbiddenTerm == null || !isSubterm(forbiddenTerm, lhs)) {
 					return new EqualityInformation(i, givenTerm, lhs);
 				}
-			}			
-			boolean allowRewrite = true;
-			if (allowRewrite) {
-				if (isSubterm(givenTerm, appTerm) && rhs.getSort().isNumericSort()) {
-					AffineRelation affRel;
+			}
+		}
+		// stage 2: also rewrite linear terms if necessary to get givenTerm
+		// to one hand side of the binary relation.
+		for (int i=0; i<context.length; i++) {
+			if (binaryRelations[i] == null) {
+				// not even binary equality relation that contains givenTerm
+				continue;
+			} else {
+				AffineRelation affRel;
+				try {
+					affRel = new AffineRelation(context[i]);
+				} catch (NotAffineException e1) {
+					continue;
+				}
+				if (affRel.isVariable(givenTerm)) {
+					Term equalTerm;
 					try {
-						affRel = new AffineRelation(appTerm);
-					} catch (NotAffineException e1) {
+						ApplicationTerm equality = affRel.onLeftHandSideOnly(script, givenTerm);
+						equalTerm = equality.getParameters()[1];
+					} catch (NotAffineException e) {
+						// no representation where var is on lhs
 						continue;
 					}
-					if (affRel.isVariable(givenTerm)) {
-						Term equalTerm;
-						try {
-							ApplicationTerm equality = affRel.onLeftHandSideOnly(script, givenTerm);
-							equalTerm = equality.getParameters()[1];
-						} catch (NotAffineException e) {
-							// no representation where var is on lhs
-							continue;
-						}
-						if (forbiddenTerm != null && isSubterm(forbiddenTerm, equalTerm)) {
-							continue;
-						} else {
-							return new EqualityInformation(i, givenTerm, equalTerm);
-						}
+					if (forbiddenTerm != null && isSubterm(forbiddenTerm, equalTerm)) {
+						continue;
+					} else {
+						return new EqualityInformation(i, givenTerm, equalTerm);
 					}
 				}
 			}

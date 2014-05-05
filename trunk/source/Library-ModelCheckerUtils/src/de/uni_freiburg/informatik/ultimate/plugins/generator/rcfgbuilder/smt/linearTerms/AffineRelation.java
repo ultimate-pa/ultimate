@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.BinaryNumericRelation.NotBinaryNumericRelationException;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
 
 /**
  * Represents an term of the form ψ ▷ φ, where ψ and φ are affine terms and
@@ -34,7 +34,7 @@ public class AffineRelation {
 		BinaryNumericRelation bnr = null;
 		try {
 			bnr = new BinaryNumericRelation(term);
-		} catch (NotBinaryNumericRelationException e) {
+		} catch (NoRelationOfThisKindException e) {
 			throw new NotAffineException("Relation is not affine"); 
 		}
 		m_FunctionSymbolName = bnr.getRelationSymbol();

@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.li
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.BinaryNumericRelation.NotBinaryNumericRelationException;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
 
 /**
  * Transform all subterms that are an affine relation to positive normal form.
@@ -22,7 +22,7 @@ public class AffineSubtermNormalizer extends TermTransformer {
 		boolean result = true;
 		try {
 			new BinaryNumericRelation(term);
-		} catch (NotBinaryNumericRelationException e) {
+		} catch (NoRelationOfThisKindException e) {
 			result = false;
 		}
 		return result;
