@@ -27,7 +27,7 @@ public class BinaryEqualityRelation extends BinaryRelation {
 			throw new NoRelationOfThisKindException(
 					"no equality relation symbol");
 		}
-		symb = isNegated ? getNegation(symb) : symb;
+		symb = isNegated ? negateRelation(symb) : symb;
 		return symb;
 	}
 

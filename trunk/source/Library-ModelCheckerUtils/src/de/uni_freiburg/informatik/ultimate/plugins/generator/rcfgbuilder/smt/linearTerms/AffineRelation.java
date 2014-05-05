@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.li
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Formatter.BigDecimalLayoutForm;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -12,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.BinaryRelation.RelationSymbol;
 
 /**
  * Represents an term of the form ψ ▷ φ, where ψ and φ are affine terms and
@@ -25,7 +27,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.lin
  */
 public class AffineRelation {
 	private final Term m_OriginalTerm;
-	private final String m_FunctionSymbolName;
+	private final RelationSymbol m_RelationSymbol;
+	/**
+	 * Affine term ψ such that the relation ψ ▷ 0 is equivalent to the 
+	 * m_OriginalTerm.
+	 * 
+	 */
 	private final AffineTerm m_AffineTerm;
 
 	
@@ -37,7 +44,7 @@ public class AffineRelation {
 		} catch (NoRelationOfThisKindException e) {
 			throw new NotAffineException("Relation is not affine"); 
 		}
-		m_FunctionSymbolName = bnr.getRelationSymbol();
+		m_RelationSymbol = bnr.getRelationSymbol();
 		Term lhs = bnr.getLhs();
 		Term rhs = bnr.getRhs();
 		AffineTerm affineLhs = (AffineTerm) (new AffineTermTransformer()).transform(lhs);
@@ -55,7 +62,7 @@ public class AffineRelation {
 	 * @return
 	 */
 	public String getFunctionSymbolName() {
-		return m_FunctionSymbolName;
+		return m_RelationSymbol.toString();
 	}
 
 	/**
@@ -91,7 +98,7 @@ public class AffineRelation {
 				lhsSummands.toArray(new Term[0]));
 		Term rhsTerm = UtilExperimental.sum(script, m_AffineTerm.getSort(), 
 				rhsSummands.toArray(new Term[0]));
-		Term result = script.term(m_FunctionSymbolName, lhsTerm, rhsTerm);
+		Term result = script.term(m_RelationSymbol.toString(), lhsTerm, rhsTerm);
 		assert isEquivalent(script, m_OriginalTerm, result) == LBool.UNSAT : 
 			"transformation to positive normal form unsound";
 		return result;
@@ -107,7 +114,7 @@ public class AffineRelation {
 	 */
 	public ApplicationTerm onLeftHandSideOnly(Script script, Term var) throws NotAffineException {
 		assert m_AffineTerm.getVariable2Coefficient().containsKey(var);
-		Rational termsCoeff = m_AffineTerm.getVariable2Coefficient().get(var);
+		final Rational termsCoeff = m_AffineTerm.getVariable2Coefficient().get(var);
 		if (termsCoeff.equals(Rational.ZERO)) {
 			throw new NotAffineException("No affine representation " +
 					"where desired variable is on left hand side");
@@ -139,9 +146,15 @@ public class AffineRelation {
 		}
 		Term rhsTerm = UtilExperimental.sum(script, m_AffineTerm.getSort(), 
 				rhsSummands.toArray(new Term[0]));
+		
+		// if coefficient is negative we have to use the "swapped" RelationSymbol
+		boolean useRelationSymbolForSwappedTerms = termsCoeff.isNegative();
+		RelationSymbol relSymb = useRelationSymbolForSwappedTerms ? 
+				BinaryRelation.swapParameters(m_RelationSymbol) : m_RelationSymbol;
 		ApplicationTerm result = (ApplicationTerm) script.term(
-										m_FunctionSymbolName, var, rhsTerm);
-		assert isEquivalent(script, m_OriginalTerm, result) == LBool.UNSAT;
+										relSymb.toString(), var, rhsTerm);
+		assert isEquivalent(script, m_OriginalTerm, result) == LBool.UNSAT 
+				: "transformation to AffineRelation unsound";
 		return result;
 	}
 	

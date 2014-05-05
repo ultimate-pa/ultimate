@@ -33,7 +33,7 @@ public class BinaryNumericRelation extends BinaryRelation {
 		RelationSymbol relSymb = null;
 		for (RelationSymbol symb : RelationSymbol.values()) {
 			if (symb.toString().equals(functionSymbolName)) {
-				relSymb = isNegated ? getNegation(symb) : symb;
+				relSymb = isNegated ? negateRelation(symb) : symb;
 				break;
 			}
 		}

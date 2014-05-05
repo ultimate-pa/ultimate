@@ -30,7 +30,12 @@ public abstract class BinaryRelation {
 	    }
 	}
 	
-	protected static RelationSymbol getNegation(RelationSymbol symb) {
+	/**
+	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the
+	 * relation ψ ◾ φ is equivalent to the relation ¬(ψ ▷ φ), which is the 
+	 * negated relation.
+	 */
+	protected static RelationSymbol negateRelation(RelationSymbol symb) {
 		final RelationSymbol result;
 		switch (symb) {
 		case EQ:
@@ -56,6 +61,40 @@ public abstract class BinaryRelation {
 		}
 		return result;
 	}
+	
+	/**
+	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the
+	 * relation ψ ◾ φ is equivalent to the relation φ ▷ ψ, which is the relation
+	 * where we swaped the parameters.
+	 */
+	protected static RelationSymbol swapParameters(RelationSymbol symb) {
+		final RelationSymbol result;
+		switch (symb) {
+		case EQ:
+			result = RelationSymbol.EQ;
+			break;
+		case DISTINCT:
+			result = RelationSymbol.DISTINCT;
+			break;
+		case LEQ:
+			result = RelationSymbol.GEQ;
+			break;
+		case GEQ:
+			result = RelationSymbol.LEQ;
+			break;
+		case LESS:
+			result = RelationSymbol.GREATER;
+			break;
+		case GREATER:
+			result = RelationSymbol.LESS;
+			break;
+		default:
+			throw new UnsupportedOperationException("unknown numeric relation");
+		}
+		return result;
+	}
+	
+	
 
 	protected final RelationSymbol m_RelationSymbol;
 	protected final Term m_Lhs;
@@ -91,7 +130,7 @@ public abstract class BinaryRelation {
 		RelationSymbol relSymb = getRelationSymbol(functionSymbolName, isNegated);
 		for (RelationSymbol symb : RelationSymbol.values()) {
 			if (symb.toString().equals(functionSymbolName)) {
-				relSymb = isNegated ? getNegation(symb) : symb;
+				relSymb = isNegated ? negateRelation(symb) : symb;
 				break;
 			}
 		}
@@ -122,8 +161,8 @@ public abstract class BinaryRelation {
 			String functionSymbolName, boolean isNegated) 
 					throws NoRelationOfThisKindException;
 
-	public String getRelationSymbol() {
-		return m_RelationSymbol.toString();
+	public RelationSymbol getRelationSymbol() {
+		return m_RelationSymbol;
 	}
 
 	public Term getLhs() {
