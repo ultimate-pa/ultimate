@@ -5,31 +5,34 @@ package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 
 import java.util.Collection;
 
-import org.junit.Ignore;
-import org.junit.rules.Timeout;
-
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
 /**
- * @author musab@informatik.uni-freiburg.de
+ * Test for the two interpolation techniques "ForwardPredicates" and 
+ * "BackwardPredicates".
+ * @author musab@informatik.uni-freiburg.de, heizmanninformatik.uni-freiburg.de
  *
  */
 
-public class ExamplesInMinitestsDirectoryTraceAbstractionTestSuite extends
+public class ForwardBackwardTest extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String[] m_Directories = { "examples/programs/regression//" };
-	// private static final String m_excludeFilesFromDir = "examples/programs/minitests/openbugs/";
+	private static final String[] m_Directories = {
+		"examples/programs/regression",
+		"examples/programs/quantifier",
+		"examples/programs/recursivePrograms",
+		"examples/programs/toy"
+	};
 	
-	private static final boolean m_TraceAbstractionWithBackwardPredicates = !false;
-	private static final boolean m_TraceAbstractionWithForwardPredicates = !false;
-	private static final boolean m_TraceAbstractionCWithBackwardPredicates = true;
-	private static final boolean m_TraceAbstractionCWithForwardPredicates = true;		
+	private static final boolean m_TraceAbstractionBoogieWithBackwardPredicates = true;
+	private static final boolean m_TraceAbstractionBoogieWithForwardPredicates = true;
+	private static final boolean m_TraceAbstractionCWithBackwardPredicates = !true;
+	private static final boolean m_TraceAbstractionCWithForwardPredicates = !true;		
 	// Time out for each test case in milliseconds
 	private final static int m_Timeout = 10000;
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		if (m_TraceAbstractionWithForwardPredicates) {
+		if (m_TraceAbstractionBoogieWithForwardPredicates) {
 			addTestCases(
 					"AutomizerBpl.xml",
 					"traceAbstractionTestSuite/settingsForwardPredicates.epf",
@@ -39,7 +42,7 @@ public class ExamplesInMinitestsDirectoryTraceAbstractionTestSuite extends
 				    "BoogieFilesForwardPredicates",
 				    m_Timeout);
 		} 
-		if (m_TraceAbstractionWithBackwardPredicates) {
+		if (m_TraceAbstractionBoogieWithBackwardPredicates) {
 			addTestCases(
 					"AutomizerBpl.xml",
 					"traceAbstractionTestSuite/settingsBackwardPredicates.epf",
