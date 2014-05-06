@@ -120,7 +120,7 @@ public class Term2Expression implements Serializable {
 		for (int i=0; i<termParams.length; i++) {
 			params[i] = translate(termParams[i]);
 		}
-		if (symb.getParameterCount() == 0) {
+		if (symb.getParameterSorts().length == 0) {
 			if (term == m_Script.term("true")) {
 				IType booleanType = m_TypeSortTranslator.getType(m_Script.sort("Bool"));
 				return new BooleanLiteral(null, booleanType, true);
@@ -142,7 +142,7 @@ public class Term2Expression implements Serializable {
 		} else if (symb.getName().equals("ite")) {
 				return new IfThenElseExpression(null, type, params[0], params[1], params[2]); 
 		} else if (symb.isIntern()) {
-			if (symb.getParameterCount() == 1) {
+			if (symb.getParameterSorts().length == 1) {
 				if (symb.getName().equals("not")) {
 					Expression param = translate(term.getParameters()[0]);
 					return new UnaryExpression(null, type, de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator.LOGICNEG,
@@ -158,6 +158,8 @@ public class Term2Expression implements Serializable {
 			else {
 				if (symb.getName().equals("xor")) {
 					return xor(params);
+				} else if (symb.getName().equals("mod")) {
+					return mod(params);
 				}
 				Operator op = getBinaryOperator(symb);
 				if (symb.isLeftAssoc()) {
@@ -186,6 +188,13 @@ public class Term2Expression implements Serializable {
 		}
 	}
 	
+	private Expression mod(Expression[] params) {
+		if (params.length != 2) {
+			throw new AssertionError("mod has two parameters");
+		}
+		return new BinaryExpression(null, BoogieType.intType, Operator.ARITHMOD, params[0], params[1]);
+	}
+
 	private ArrayStoreExpression translateStore(ApplicationTerm term) {
 		Expression array = translate(term.getParameters()[0]);
 		Expression index = translate(term.getParameters()[1]);
