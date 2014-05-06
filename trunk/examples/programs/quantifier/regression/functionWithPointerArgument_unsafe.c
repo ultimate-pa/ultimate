@@ -11,7 +11,6 @@ int main() {
 
 	if (! (w == 3 * v)) {//bug
 		//@assert \false;
-		goto ERROR;
 	}
 	return 0;
 }

@@ -11,7 +11,6 @@ int main() {
 
 	if (! (w == 2 * v)) {
 		//@assert \false;
-		goto ERROR;
 	}
 	return 0;
 }

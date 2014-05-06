@@ -4,6 +4,13 @@
  * Author: heizmann@informtik.uni-freiburg.de
  * 
  */
+int main() {
+	int *arg1 = malloc(sizeof(int)), 
+		*arg2 = malloc(sizeof(int));
+	nonMain(arg1, arg2);
+	free(arg1);
+	free(arg2);
+}
 
 int nonMain(int *p, int *q) {
 	*p = 23;
