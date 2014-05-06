@@ -63,7 +63,7 @@ public class Nnf {
 		
 		@Override
 		protected void convert(Term term) {
-			assert term.getSort().getName().equals("Bool");
+			assert term.getSort().getName().equals("Bool") : "Input is not Bool";
 			if (term instanceof ApplicationTerm) {
 				ApplicationTerm appTerm = (ApplicationTerm) term; 
 				String functionName = appTerm.getFunction().getName();
@@ -153,7 +153,7 @@ public class Nnf {
 		}
 		
 		private void convertNot(Term notParam, Term notTerm) {
-			assert notParam.getSort().getName().equals("Bool");
+			assert notParam.getSort().getName().equals("Bool") : "Input is not Bool";
 			if (notParam instanceof ApplicationTerm) {
 				ApplicationTerm appTerm = (ApplicationTerm) notParam; 
 				String functionName = appTerm.getFunction().getName();
@@ -167,11 +167,37 @@ public class Nnf {
 				} else if (functionName.equals("not")) {
 					assert appTerm.getParameters().length == 1;
 					Term notnotParam = appTerm.getParameters()[0];
-					super.convert(notnotParam);
+					// do not descend to children (super.convert(...), but 
+					// recursively call this procedure
+					convert(notnotParam);
 					return;
 				} else if (functionName.equals("=>")) {
 					super.convert(Util.and(m_Script, negateLast(params)));
 					return;
+				} else if (functionName.equals("=") && 
+						SmtUtils.hasBooleanParams(appTerm)) {
+					Term[] notParams = appTerm.getParameters();
+					if (notParams.length > 2) {
+						Term binarized = SmtUtils.binarize(m_Script, appTerm);
+						// do not descend to children (super.convert(...), but 
+						// recursively call this procedure
+						convert(Util.not(m_Script, binarized));
+					} else {
+						assert notParams.length == 2;
+						super.convert(m_Script.term("distinct", notParams));
+					}
+				} else if (functionName.equals("distinct") && 
+						SmtUtils.hasBooleanParams(appTerm)) {
+					Term[] notParams = appTerm.getParameters();
+					if (notParams.length > 2) {
+						Term binarized = SmtUtils.binarize(m_Script, appTerm);
+						// do not descend to children (super.convert(...), but 
+						// recursively call this procedure
+						convert(Util.not(m_Script, binarized));
+						super.convert(binarized);
+					} else {
+						super.convert(m_Script.term("=", notParams));
+					}
 				} else {
 					//consider original term as atom
 					setResult(notTerm);
