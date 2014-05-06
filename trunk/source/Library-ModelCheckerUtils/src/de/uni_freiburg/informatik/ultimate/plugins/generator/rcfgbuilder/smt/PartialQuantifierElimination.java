@@ -108,7 +108,7 @@ public class PartialQuantifierElimination {
 		// apply Destructive Equality Resolution
 		Term termAfterDER;
 		{
-			Set<TermVariable> remainingAfterDER = new HashSet<TermVariable>();
+			
 			Term[] oldParams;
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				oldParams = getDisjuncts(result);
@@ -121,7 +121,6 @@ public class PartialQuantifierElimination {
 			for (int i=0; i<oldParams.length; i++) {
 				Set<TermVariable> eliminateesDER = new HashSet<TermVariable>(eliminatees);
 				newParams[i] = derSimple(script, quantifier, oldParams[i], eliminateesDER);
-				remainingAfterDER.addAll(eliminateesDER);
 			}
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				termAfterDER = Util.or(script, newParams);
@@ -131,6 +130,8 @@ public class PartialQuantifierElimination {
 				throw new AssertionError("unknown quantifier");
 			}
 			result = termAfterDER;
+			Set<TermVariable> remainingAfterDER = new HashSet<TermVariable>(eliminatees);
+			remainingAfterDER.retainAll(Arrays.asList(result.getFreeVars()));
 			eliminatees.retainAll(remainingAfterDER);
 		}
 		
@@ -142,7 +143,6 @@ public class PartialQuantifierElimination {
 		// apply Infinity Restrictor Drop
 		Term termAfterIRD;
 		{
-			Set<TermVariable> remainingAfterIRD = new HashSet<TermVariable>();
 			Term[] oldParams;
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				oldParams = getDisjuncts(result);
@@ -155,7 +155,6 @@ public class PartialQuantifierElimination {
 			for (int i=0; i<oldParams.length; i++) {
 				Set<TermVariable> eliminateesIRD = new HashSet<TermVariable>(eliminatees);
 				newParams[i] = irdSimple(script, quantifier, oldParams[i], eliminateesIRD);
-				remainingAfterIRD.addAll(eliminateesIRD);
 			}
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				termAfterIRD = Util.or(script, newParams);
@@ -165,6 +164,8 @@ public class PartialQuantifierElimination {
 				throw new AssertionError("unknown quantifier");
 			}
 			result = termAfterIRD;
+			Set<TermVariable> remainingAfterIRD = new HashSet<TermVariable>(eliminatees);
+			remainingAfterIRD.retainAll(Arrays.asList(result.getFreeVars()));
 			eliminatees.retainAll(remainingAfterIRD);
 		}
 		
@@ -176,7 +177,6 @@ public class PartialQuantifierElimination {
 		// apply Unconnected Parameter Deletion
 		Term termAfterUPD = null;
 		if (USE_UPD) {
-			Set<TermVariable> remainingAfterUPD = new HashSet<TermVariable>();
 			Term[] oldParams;
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				oldParams = getDisjuncts(result);
@@ -189,7 +189,6 @@ public class PartialQuantifierElimination {
 			for (int i=0; i<oldParams.length; i++) {
 				Set<TermVariable> eliminateesUPD = new HashSet<TermVariable>(eliminatees);
 				newParams[i] = updSimple(script, quantifier, oldParams[i], eliminateesUPD);
-				remainingAfterUPD.addAll(eliminateesUPD);
 			}
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				termAfterUPD = Util.or(script, newParams);
@@ -199,6 +198,8 @@ public class PartialQuantifierElimination {
 				throw new AssertionError("unknown quantifier");
 			}
 			result = termAfterUPD;
+			Set<TermVariable> remainingAfterUPD = new HashSet<TermVariable>(eliminatees);
+			remainingAfterUPD.retainAll(Arrays.asList(result.getFreeVars()));
 			eliminatees.retainAll(remainingAfterUPD);
 		}
 		
@@ -206,9 +207,7 @@ public class PartialQuantifierElimination {
 			return result;
 		}
 		
-		assert Arrays.asList(result.getFreeVars()).containsAll(eliminatees) : 
-			"superficial variables";
-		
+
 		Set<TermVariable> eliminateesBeforeSOS = new HashSet<TermVariable>(eliminatees);
 		final boolean sosChangedTerm;
 		// apply Store Over Select
@@ -251,9 +250,6 @@ public class PartialQuantifierElimination {
 		// simplification
 		result = (new SimplifyDDA(script)).getSimplifiedTerm(result);
 		eliminatees.retainAll(Arrays.asList(result.getFreeVars()));
-		
-		assert Arrays.asList(result.getFreeVars()).containsAll(eliminatees) : 
-			"superficial variables";
 		
 //		if (!eliminateesBeforeSOS.containsAll(eliminatees)) {
 			//SOS introduced new variables that should be eliminated
