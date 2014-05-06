@@ -776,8 +776,10 @@ public class PartialQuantifierElimination {
 			}
 			
 			if (binaryRelations[i].getRelationSymbol().toString().equals("=") && quantifier == QuantifiedFormula.FORALL) {
+				binaryRelations[i] = null;
 				continue;
 			} else if (binaryRelations[i].getRelationSymbol().toString().equals("distinct") && quantifier == QuantifiedFormula.EXISTS) {
+				binaryRelations[i] = null;
 				continue;
 			}
 			
