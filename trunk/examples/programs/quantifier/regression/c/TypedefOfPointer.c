@@ -12,7 +12,8 @@ typedef int* intPointer;
 
 int main() {
     int *p = malloc(sizeof(int));
-	int *q;
+	intPointer q;
 	q = p;
+	free(p);
     return 0;
 }

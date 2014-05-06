@@ -12,8 +12,9 @@ typedef struct fraction {
 
 
 int main() {
-    int* a; // some auxiliary statement to obtain memory model
+    int* a = malloc(sizeof(int)); // some auxiliary statement to obtain memory model
     int b = *a; // some auxiliary statement to obtain memory model
+    free(a);
 	
     // Case 1: assigned at declaration
     int *p = 0;

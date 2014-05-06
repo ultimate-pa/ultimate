@@ -16,10 +16,12 @@ typedef struct {
 
 
 int main() {
-	colorWithFieldFraction* p;
+	colorWithFieldFraction* p = 
+		malloc(sizeof(colorWithFieldFraction));
 	p->frac.num = 23;
 	int a = p->frac.num;
 	//@ assert a == 23;
 	int b = (*p).frac.num;
 	//@ assert b == 23;
+	free(p);
 }
