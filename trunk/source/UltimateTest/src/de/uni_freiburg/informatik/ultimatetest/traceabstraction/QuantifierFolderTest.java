@@ -13,7 +13,9 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
  */
 public class QuantifierFolderTest extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String[] m_Directories = { "examples/programs/quantifier/regression" };
+	private static final String[] m_Directories = { 
+		"examples/programs/quantifier/regression" 
+		};
 	
 	// Time out for each test case in milliseconds
 	private static int m_Timeout = 5000;
@@ -26,7 +28,7 @@ public class QuantifierFolderTest extends
 		if (s_Boogie) {
 			addTestCases(
 					"AutomizerBpl.xml",
-					"traceAbstractionTestSuite/memSafety.epf",
+					"traceAbstractionTestSuite/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
 				    "Automizer via ForwardPredicates",
@@ -36,7 +38,7 @@ public class QuantifierFolderTest extends
 		if (s_C) {
 			addTestCases(
 					"AutomizerC.xml",
-					"traceAbstractionTestSuite/memSafety.epf",
+					"traceAbstractionTestSuite/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
 				    "Automizer via ForwardPredicates",
