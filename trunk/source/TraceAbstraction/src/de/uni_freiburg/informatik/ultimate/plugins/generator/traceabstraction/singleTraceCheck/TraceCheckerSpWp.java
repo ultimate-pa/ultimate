@@ -845,9 +845,14 @@ public class TraceCheckerSpWp extends TraceChecker {
 				int[] sizeOfPredicatesFP, int[] sizeOfPredicatesBP) {
 			m_NumberOfQuantifiedPredicates = numberOfQuantifiedPredicates;
 			m_SizeOfPredicates = new int[2];
-			m_SizeOfPredicates[0] = getSumOfIntArray(sizeOfPredicatesFP);
-			m_SizeOfPredicates[1] = getSumOfIntArray(sizeOfPredicatesBP);
+			if (sizeOfPredicatesFP != null) {
+				m_SizeOfPredicates[0] = getSumOfIntArray(sizeOfPredicatesFP);
+			}
+			if (sizeOfPredicatesBP != null) { 
+				m_SizeOfPredicates[1] = getSumOfIntArray(sizeOfPredicatesBP);
+			}
 		}
+		
 		public TraceCheckerBenchmarkSpWp(int[] numberOfQuantifiedPredicates,
 				int[] sizeOfPredicates) {
 			m_NumberOfQuantifiedPredicates = numberOfQuantifiedPredicates;
@@ -905,6 +910,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 			return sb.toString();
 		}
+
 		
 		private int getSumOfIntArray(int[] arr) {
 			int sum = 0; 
