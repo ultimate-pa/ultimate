@@ -9,6 +9,9 @@
 
 int nonMain() {
     int *p = malloc(sizeof(int));
-    // @assert *p == 0;
+    //// @assert *p == 0; //we cannot handle pointer dereferences in acsl yet
+    if (*p != 0) {
+	//@assert \false;
+    }
     return 0;
 }
