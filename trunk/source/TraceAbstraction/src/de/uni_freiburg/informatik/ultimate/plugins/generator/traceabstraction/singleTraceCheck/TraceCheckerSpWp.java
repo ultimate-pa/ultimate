@@ -722,12 +722,12 @@ public class TraceCheckerSpWp extends TraceChecker {
 			IPredicate tracePostcondition,
 			String computation) {
 		LBool result;
-		for (int i=interpolants.length - 1; i >= 0; i--) {
-			result = isHoareTriple(i+1, tracePrecondition, tracePostcondition, 
+		for (int i=interpolants.length; i >= 0; i--) {
+			result = isHoareTriple(i, tracePrecondition, tracePostcondition, 
 					interpolants, trace);
 			if (result == LBool.SAT) {
 				s_Logger.debug("Trace length: " + trace.length());
-				s_Logger.debug("Stmt: " + (i+1));
+				s_Logger.debug("Stmt: " + i);
 				return false;
 			}
 			assert result == LBool.UNSAT || result == LBool.UNKNOWN : 
