@@ -431,6 +431,9 @@ public class CHandler implements ICHandler {
 		}
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		
+//		//inserting a NamedType for "void" -- TODO: is this a good place??
+//		decl.add(new TypeDeclaration(loc, new Attribute[0], true, SFO.VOID, new String[0]));
+		
 		for (IASTNode child : node.getChildren()) {
 			checkForACSL(main, null, child, null);
 			Result childRes = main.dispatch(child);
@@ -499,7 +502,8 @@ public class CHandler implements ICHandler {
 		mCurrentDeclaredTypes.push(resType);
 		ResultDeclaration declResult = (ResultDeclaration) main.dispatch(node.getDeclarator());
 		mCurrentDeclaredTypes.pop();
-		return functionHandler.handleFunctionDefinition(main, memoryHandler, node, declResult, contract);
+		return functionHandler.handleFunctionDefinition(main, memoryHandler, node, 
+				declResult.getDeclarations().get(0), contract);
 	}
 
 	/**
@@ -2686,13 +2690,16 @@ public class CHandler implements ICHandler {
 		{
 			ifStatements.addAll(rePositive.stmt);
 			LeftHandSide[] lhs = { new VariableLHS(loc, tmpName) };
-			AssignmentStatement assignStmt = new AssignmentStatement(loc, lhs, 
-					new Expression[] { rePositive.lrVal.getValue() });
-			Map<String, IAnnotations> annots = assignStmt.getPayload().getAnnotations();
-            for (Overapprox overapprItem : overappr) {
-                annots.put(Overapprox.getIdentifier(), overapprItem);
-            }
-			ifStatements.add(assignStmt);
+			Expression assignedVal = rePositive.lrVal.getValue();
+			if (assignedVal != null) { 
+				AssignmentStatement assignStmt = new AssignmentStatement(loc, lhs, 
+						new Expression[] { rePositive.lrVal.getValue() });
+				Map<String, IAnnotations> annots = assignStmt.getPayload().getAnnotations();
+				for (Overapprox overapprItem : overappr) {
+					annots.put(Overapprox.getIdentifier(), overapprItem);
+				}
+				ifStatements.add(assignStmt);
+			}
 			decl.addAll(rePositive.decl);
 			auxVars.putAll(rePositive.auxVars);
 			overappr.addAll(rePositive.overappr);
@@ -2702,9 +2709,16 @@ public class CHandler implements ICHandler {
 		{
 			elseStatements.addAll(reNegative.stmt);
 			LeftHandSide[] lhs = { new VariableLHS(loc, tmpName) };
-			AssignmentStatement assign = new AssignmentStatement(loc, lhs, 
-					new Expression[] { reNegative.lrVal.getValue() });
-			elseStatements.add(assign);
+			Expression assignedVal = reNegative.lrVal.getValue();
+			if (assignedVal != null) { //if we call a void function, we have to skip this assignment
+				AssignmentStatement assignStmt = new AssignmentStatement(loc, lhs, 
+						new Expression[] { assignedVal });
+				Map<String, IAnnotations> annots = assignStmt.getPayload().getAnnotations();
+				for (Overapprox overapprItem : overappr) {
+					annots.put(Overapprox.getIdentifier(), overapprItem);
+				}
+				elseStatements.add(assignStmt);
+			}
 			decl.addAll(reNegative.decl);
 			auxVars.putAll(reNegative.auxVars);
 			overappr.addAll(reNegative.overappr);

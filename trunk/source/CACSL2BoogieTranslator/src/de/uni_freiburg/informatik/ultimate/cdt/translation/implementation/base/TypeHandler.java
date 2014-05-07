@@ -470,6 +470,7 @@ public class TypeHandler implements ITypeHandler {
 			switch (((CPrimitive) cType).getGeneralType()) {
 			case VOID:
 				return null; //(alex:) seems to be lindemm's convention, see FunctionHandler.isInParamVoid(..)
+//				return new NamedType(loc, SFO.VOID, new ASTType[0]); //(alex:) see FunctionHandler.isInParamVoid(..)
 			case INTTYPE:
 				return new PrimitiveType(loc, SFO.INT);
 			case FLOATTYPE:

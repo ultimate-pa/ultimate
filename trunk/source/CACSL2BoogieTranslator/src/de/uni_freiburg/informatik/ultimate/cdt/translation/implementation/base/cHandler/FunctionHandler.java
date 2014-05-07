@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ReturnStatement;
@@ -574,32 +575,45 @@ public class FunctionHandler {
 	 * @return the translation result.
 	 */
 	public Result handleFunctionDefinition(Dispatcher main, MemoryHandler memoryHandler,
-			IASTFunctionDefinition node, ResultDeclaration funcDecl, List<ACSLNode> contract) {
+			IASTFunctionDefinition node, 
+//			ResultDeclaration funcDecl, 
+			CDeclaration cDec,
+			List<ACSLNode> contract) {
 		main.cHandler.beginScope();
 		
 		ILocation loc = new CACSLLocation(node);
-		CDeclaration decl = funcDecl.getDeclarations().get(0);
-        String methodName = decl.getName();
-		// we check the type via typeHandler
-		ResultTypes resType = (ResultTypes) main.dispatch(node
-				.getDeclSpecifier());
-		procedureToReturnCType.put(methodName, resType.cType);
+//		CDeclaration decl = funcDecl.getDeclarations().get(0);
+        String methodName = cDec.getName();
+        CType returnCType = ((CFunction) cDec.getType()).getResultType();
+        boolean returnTypeIsVoid = returnCType instanceof CPrimitive && 
+				((CPrimitive) returnCType).getType() == PRIMITIVE.VOID;
+//		// we check the type via typeHandler
+//		ResultTypes resType = (ResultTypes) main.dispatch(node
+//				.getDeclSpecifier());
+//		procedureToReturnCType.put(methodName, resType.cType);
+		procedureToReturnCType.put(methodName, returnCType);
 		
-		VarList[] in = processInParams(main, loc, decl, methodName);
+		VarList[] in = processInParams(main, loc, cDec, methodName);
         
-		VarList[] out = new VarList[0]; // at most one out param in C
+		VarList[] out = new VarList[1];
+//		ResultTypes checkedType = main.cHandler.checkForPointer(main, node//FIXME -- is this call still necessary??
+//				.getDeclarator().getPointerOperators(), resType, false);
+//		ASTType type = main.typeHandler.ctype2asttype(loc, checkedType.cType);
+		ASTType type = main.typeHandler.ctype2asttype(loc, returnCType);
 		
-		ResultTypes checkedType = main.cHandler.checkForPointer(main, node//FIXME -- is this call still necessary??
-				.getDeclarator().getPointerOperators(), resType, false);
-		ASTType type = main.typeHandler.ctype2asttype(loc, checkedType.cType);
-		if (!checkedType.isVoid) { // void, so there are no out vars
-			out = new VarList[1];
-			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
-		} else if (methodsCalledBeforeDeclared.contains(methodName)) {
-			out = new VarList[1];
+//		if (!checkedType.isVoid) { // void, so there are no out vars
+		if (returnTypeIsVoid) { // void, so there are no out vars
+			out = new VarList[0];
+//			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
+		} else if (methodsCalledBeforeDeclared.contains(methodName)) { //TODO: defaulting to int -- but does this work on all examples?
+//			out = new VarList[1];
 			out[0] = new VarList(loc, new String[] { SFO.RES },
 					new PrimitiveType(loc, /*new InferredType(Type.Integer),*/
 							SFO.INT));
+		} else { //"normal case"
+			assert type != null;
+			out[0] = new VarList(loc, new String[] { methodName }, type); // at most one out param in C
+//			out[0] = new VarList[] { new VarList(loc, new String[] { methodName }, type) }; // at most one out param in C
 		}
 		
 		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, methodName);
@@ -669,7 +683,8 @@ public class FunctionHandler {
 				proc.getTypeParams(), in, proc.getOutParams(),
 				proc.getSpecification(), null);
 		currentProcedure = declWithCorrectlyNamedInParams;
-		currentProcedureIsVoid = resType.isVoid;
+//		currentProcedureIsVoid = resType.isVoid;
+		currentProcedureIsVoid = returnTypeIsVoid;
 		if (!modifiedGlobals.containsKey(currentProcedure.getIdentifier())) {
 			modifiedGlobals.put(currentProcedure.getIdentifier(),
 					new LinkedHashSet<String>());
@@ -1003,7 +1018,16 @@ public class FunctionHandler {
 		// convention (necessary probably only because of here):
 		// typeHandler.ctype2boogietype yields "null" for CPrimitive(PRIMITIVE.VOID)
 		return (in.length == 1 && in[0].getType() == null);
+//		return (in.length == 1 && isVoidType(in[0].getType()));
 	}
+	
+//	/**
+//	 * Checks if the given type is void in boogie
+//	 * convention: the void type is represented in boogie as a NamedType with name SFO.VOID="~void"
+//	 */
+//	private static boolean isVoidType(ASTType type) {
+//		return type instanceof NamedType && ((NamedType) type).getName().equals(SFO.VOID);
+//	}
 
 	/**
 	 * Getter for modified globals.

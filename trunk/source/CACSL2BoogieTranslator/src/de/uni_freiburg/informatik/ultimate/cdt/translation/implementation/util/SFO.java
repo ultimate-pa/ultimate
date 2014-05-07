@@ -43,6 +43,10 @@ public final class SFO {
      * String holding "real".
      */
     public static final String REAL = "real";
+//    /**
+//     * String holding "~void"
+//     */
+//    public static final String VOID = "~void";
     /**
      * Temp variable name.
      */

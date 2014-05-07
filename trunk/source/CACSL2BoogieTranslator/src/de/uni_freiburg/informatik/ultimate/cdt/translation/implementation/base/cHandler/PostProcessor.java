@@ -400,7 +400,8 @@ public class PostProcessor {
 			if (initializer == null) {
 				rhs = new IdentifierExpression(loc, SFO.NULL);
 			} else {
-				if (initializer.lrVal.cType instanceof CPointer) {
+				if (initializer.lrVal.cType instanceof CPointer
+						|| initializer.lrVal.cType instanceof CArray) {
 					rhs = initializer.lrVal.getValue();
 				} else if (initializer.lrVal.cType instanceof CPrimitive 
 						&& ((CPrimitive) initializer.lrVal.cType).getType() == PRIMITIVE.INT){
