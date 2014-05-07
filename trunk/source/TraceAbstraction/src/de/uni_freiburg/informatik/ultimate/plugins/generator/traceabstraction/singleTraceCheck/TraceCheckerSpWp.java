@@ -835,16 +835,23 @@ public class TraceCheckerSpWp extends TraceChecker {
 		// m_NumberOfQuantifierFreePredicates[2] : #quantified predicates of WP
 		// m_NumberOfQuantifierFreePredicates[3] : #quantified predicates of BP
 		private final int[] m_NumberOfQuantifiedPredicates;
-		private final int[] m_SizeOfPredicatesFP;
-		private final int[] m_SizeOfPredicatesBP;
+		// m_NumberOfQuantifierFreePredicates[0] : Sum of the DAG-Size of  predicates computed via FP
+		// m_NumberOfQuantifierFreePredicates[1] : Sum of the DAG-Size of  predicates computed via BP
+		private final int[] m_SizeOfPredicates; 
 		
 		
 
 		public TraceCheckerBenchmarkSpWp(int[] numberOfQuantifiedPredicates,
 				int[] sizeOfPredicatesFP, int[] sizeOfPredicatesBP) {
 			m_NumberOfQuantifiedPredicates = numberOfQuantifiedPredicates;
-			m_SizeOfPredicatesFP = sizeOfPredicatesFP;
-			m_SizeOfPredicatesBP = sizeOfPredicatesBP;
+			m_SizeOfPredicates = new int[2];
+			m_SizeOfPredicates[0] = getSumOfIntArray(sizeOfPredicatesFP);
+			m_SizeOfPredicates[1] = getSumOfIntArray(sizeOfPredicatesBP);
+		}
+		public TraceCheckerBenchmarkSpWp(int[] numberOfQuantifiedPredicates,
+				int[] sizeOfPredicates) {
+			m_NumberOfQuantifiedPredicates = numberOfQuantifiedPredicates;
+			m_SizeOfPredicates = sizeOfPredicates;
 		}
 
 
@@ -853,8 +860,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		public TraceCheckerBenchmarkSpWp copyAndAdd(TraceCheckerBenchmark traceCheckerBenchmark) {
 			if (traceCheckerBenchmark instanceof TraceCheckerBenchmarkSpWp) {
 				int[] numberOfQuantifiedPredicates = null;
-				int[] sizeOfPredicatesFP = null;
-				int[] sizeOfPredicatesBP = null;
+				int[] sizeOfPredicates = null;
 				TraceCheckerBenchmarkSpWp tcbswpwp = (TraceCheckerBenchmarkSpWp) traceCheckerBenchmark;
 				if (m_NumberOfQuantifiedPredicates != null && tcbswpwp.getNumberOfQuantifiedPredicates() != null && 
 						m_NumberOfQuantifiedPredicates.length == tcbswpwp.getNumberOfQuantifiedPredicates().length) {
@@ -863,31 +869,20 @@ public class TraceCheckerSpWp extends TraceChecker {
 						numberOfQuantifiedPredicates[i] = m_NumberOfQuantifiedPredicates[i] + tcbswpwp.getNumberOfQuantifiedPredicates()[i];
 					}
 				}
-				if (m_SizeOfPredicatesFP != null && tcbswpwp.getSizeOfPredicatesFP() != null && 
-						m_SizeOfPredicatesFP.length == tcbswpwp.getSizeOfPredicatesFP().length) {
-					sizeOfPredicatesFP = new int[tcbswpwp.getSizeOfPredicatesFP().length];
-					for (int i = 0; i < m_SizeOfPredicatesFP.length; i++) {
-						sizeOfPredicatesFP[i] = m_SizeOfPredicatesFP[i] + tcbswpwp.getSizeOfPredicatesFP()[i];
-					}
-				}
-				if (m_SizeOfPredicatesBP != null && tcbswpwp.getSizeOfPredicatesBP() != null && 
-						m_SizeOfPredicatesBP.length == tcbswpwp.getSizeOfPredicatesBP().length) {
-					sizeOfPredicatesBP = new int[tcbswpwp.getSizeOfPredicatesBP().length];
-					for (int i = 0; i < m_SizeOfPredicatesBP.length; i++) {
-						sizeOfPredicatesBP[i] = m_SizeOfPredicatesBP[i] + tcbswpwp.getSizeOfPredicatesBP()[i];
-					}
-				}
-				return new TraceCheckerBenchmarkSpWp(numberOfQuantifiedPredicates, sizeOfPredicatesFP, sizeOfPredicatesBP);
+				assert(m_SizeOfPredicates != null);
+				assert(tcbswpwp.getSizeOfPredicates() != null);
+				assert(m_SizeOfPredicates.length == tcbswpwp.getSizeOfPredicates().length);
+				sizeOfPredicates = new int[m_SizeOfPredicates.length];
+				sizeOfPredicates[0] = m_SizeOfPredicates[0] + tcbswpwp.getSizeOfPredicates()[0];
+				sizeOfPredicates[1] = m_SizeOfPredicates[1] + tcbswpwp.getSizeOfPredicates()[1];
+				return new TraceCheckerBenchmarkSpWp(numberOfQuantifiedPredicates, sizeOfPredicates);
 			} else {
 				throw new UnsupportedOperationException("Can't add data from a non-TraceCheckerBenchmarkSpWp object to this object.");
 			}
 		}
 		
-		public int[] getSizeOfPredicatesFP() {
-			return m_SizeOfPredicatesFP;
-		}
-		public int[] getSizeOfPredicatesBP() {
-			return m_SizeOfPredicatesBP;
+		public int[] getSizeOfPredicates() {
+			return m_SizeOfPredicates;
 		}
 		
 		public int[] getNumberOfQuantifiedPredicates() {
@@ -896,9 +891,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 		
 		public String toString() {
 			StringBuilder sb  = new StringBuilder();
-//			if (m_totalNumberOfPredicates != null && !m_totalNumberOfPredicates.isEmpty()) {
-//				sb.append("Total num of predicates: " + getSumOfIntegerList(m_totalNumberOfPredicates));
-//			}
 			if (m_NumberOfQuantifiedPredicates != null) {
 				if (m_NumberOfQuantifiedPredicates[1] > 0) {
 					sb.append("\tNum of quantified predicates FP: " + m_NumberOfQuantifiedPredicates[1]);
@@ -907,11 +899,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 					sb.append("\tNum of quantified predicates BP: " + m_NumberOfQuantifiedPredicates[3]);
 				}
 			}
-			if (m_SizeOfPredicatesFP != null) {
-				sb.append("\tSize of predicates FP: " + getSumOfIntArray(m_SizeOfPredicatesFP));
-			}
-			if (m_SizeOfPredicatesBP != null) {
-				sb.append("\tSize of predicates BP: " + getSumOfIntArray(m_SizeOfPredicatesBP));
+			if (m_SizeOfPredicates != null) {
+				sb.append("\tSize of predicates FP: " + m_SizeOfPredicates[0]);
+				sb.append("\tSize of predicates BP: " + m_SizeOfPredicates[1]);
 			}
 			return sb.toString();
 		}
