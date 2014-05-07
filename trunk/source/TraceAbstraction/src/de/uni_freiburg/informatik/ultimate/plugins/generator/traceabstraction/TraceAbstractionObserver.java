@@ -169,12 +169,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		stat += " Cover queries: ";
 		stat += smtManager.getTrivialCoverQueries() + " trivial, ";
 		stat += smtManager.getNontrivialCoverQueries() + " nontrivial.";	
-		stat += " EdgeCheck queries: ";
-		stat += timingStatistics.getEdgeCheckerBenchmarkAggregate().getSdCounter() + " trivial, ";
-		stat += timingStatistics.getEdgeCheckerBenchmarkAggregate().getSdLazyCounter() + " lazy, ";
-		stat += timingStatistics.getEdgeCheckerBenchmarkAggregate().getSolverCounterSat() + " nontrivialSat,";
-		stat += timingStatistics.getEdgeCheckerBenchmarkAggregate().getSolverCounterUnsat() + " nontrivialUnsat,";
-		stat += timingStatistics.getEdgeCheckerBenchmarkAggregate().getSolverCounterUnknown() + " nontrivialUnknown.";
+		stat += timingStatistics.getEdgeCheckerBenchmarkAggregate().toString();
 		stat += " Satisfiability queries: ";
 		stat += smtManager.getTrivialSatQueries() + " trivial, ";
 		stat += smtManager.getNontrivialSatQueries() + " nontrivial.";

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
@@ -38,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
+import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 
 
 /**
@@ -153,6 +155,8 @@ public class TraceChecker {
 	protected final PredicateTransformer m_PredicateTransformer;
 	
 	
+	
+	
 	/**
 	 * Check if trace fulfills specification given by precondition, 
 	 * postcondition and pending contexts. The pendingContext maps the positions
@@ -239,7 +243,6 @@ public class TraceChecker {
 		m_SmtManager.startTraceCheck();
 		m_Nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, 
 				m_DefaultTransFormulas);
-//		m_Nsb = new LiveVariables(m_Trace, m_SmtManager, m_DefaultTransFormulas);
 		NestedFormulas<Term, Term> ssa = m_Nsb.getSsa();
 		try {
 			m_AAA = getAnnotateAndAsserter(ssa);
@@ -252,6 +255,8 @@ public class TraceChecker {
 			else {
 				throw e;
 			}
+		} finally {
+			
 		}
 		return isSafe;
 	}
@@ -884,14 +889,68 @@ public class TraceChecker {
 	 */
 	public static class TraceCheckerBenchmark {
 		
-		TraceCheckerBenchmark(/* some data */) {
-			/*write data to field*/
+		protected final Benchmark m_Benchmark;
+		protected final static String m_SsaConstruction = "SSA construction time";
+		protected double m_SsaConstructionTime;
+		protected final static String m_SatisfiabilityAnalysis = "Satisfiability analysis time";
+		protected double m_SatisfiabilityAnalysisTime;
+		protected final static String m_InterpolantComputation = "Interpolant computation time";
+		protected double m_InterpolantComputationTime;
+		
+		TraceCheckerBenchmark() {
+			m_Benchmark = new Benchmark();
+			m_Benchmark.register(m_SsaConstruction);
+			m_Benchmark.register(m_SatisfiabilityAnalysis);
+			m_Benchmark.register(m_InterpolantComputation);
 		}
 		
 		TraceCheckerBenchmark(TraceCheckerBenchmark tcb1, TraceCheckerBenchmark tcb2) {
+			m_Benchmark = new Benchmark();
 			/*write data to field from both objects*/
 		}
 		
+		public void startSsaConstruction() {
+			m_Benchmark.start(m_SsaConstruction);
+		}
+		
+		public void finishSsaConstruction() {
+			m_Benchmark.stop(m_SsaConstruction);
+			m_SsaConstructionTime = m_Benchmark.getElapsedTime(
+					m_SsaConstruction, TimeUnit.NANOSECONDS);
+		}
+		
+		public void startSatisfiabilityAnalysis() {
+			m_Benchmark.start(m_SatisfiabilityAnalysis);
+		}
+		
+		public void finishSatisfiabilityAnalysis() {
+			m_Benchmark.stop(m_SatisfiabilityAnalysis);
+			m_SatisfiabilityAnalysisTime = m_Benchmark.getElapsedTime(
+					m_SatisfiabilityAnalysis, TimeUnit.NANOSECONDS);
+		}
+		
+		public void startInterpolantComputation() {
+			m_Benchmark.start(m_SatisfiabilityAnalysis);
+		}
+		
+		public void finishInterpolantComputation() {
+			m_Benchmark.stop(m_InterpolantComputation);
+			m_InterpolantComputationTime = m_Benchmark.getElapsedTime(
+					m_InterpolantComputation, TimeUnit.NANOSECONDS);
+		}
+		
+		public double getSsaConstructionTime() {
+			return m_SsaConstructionTime;
+		}
+
+		public double getSatisfiabilityAnalysisTime() {
+			return m_SatisfiabilityAnalysisTime;
+		}
+
+		public double getInterpolantComputationTime() {
+			return m_InterpolantComputationTime;
+		}
+
 		/**
 		 * Returns a new TraceCheckerBenchmark that contains the accumulated
 		 * benchmark data of this object and the input to this method.
@@ -900,12 +959,25 @@ public class TraceChecker {
 			return new TraceCheckerBenchmark(this, traceCheckerBenchmark);
 		}
 
-		/**
-		 * Returns the empty String this class does not store any data yet.
-		 */
 		@Override
 		public String toString() {
-			return "";
+			StringBuilder sb = new StringBuilder();
+			sb.append(m_SsaConstruction);
+			sb.append(": ");
+			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(
+					(long) getSsaConstructionTime()));
+			sb.append(m_SatisfiabilityAnalysisTime);
+			sb.append(" ");
+			sb.append(": ");
+			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(
+					(long) getSatisfiabilityAnalysisTime()));
+			sb.append(m_InterpolantComputationTime);
+			sb.append(" ");
+			sb.append(": ");
+			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(
+					(long) getInterpolantComputationTime()));
+			sb.append(" ");
+			return sb.toString();
 		}
 		
 		

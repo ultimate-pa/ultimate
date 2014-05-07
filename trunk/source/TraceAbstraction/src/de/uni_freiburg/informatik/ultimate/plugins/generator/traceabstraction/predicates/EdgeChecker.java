@@ -1,10 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
-import java.beans.FeatureDescriptor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -24,8 +24,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.Status;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IPredicateCoverageChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmark;
+import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 public class EdgeChecker {
@@ -79,7 +82,7 @@ public class EdgeChecker {
 		assert m_PrePred == null : "PrePred already asserted";
 		assert m_CodeBlock != null : "Assert CodeBlock first!";
 		m_PrePred = p;
-		long startTime = System.nanoTime();
+		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_Script.push(1);
 		if (m_CodeBlock instanceof Return) {
 			m_HierConstants.beginScope();
@@ -111,7 +114,7 @@ public class EdgeChecker {
 				}
 			}
 		}
-		m_SmtManager.m_SatCheckTime += (System.nanoTime() - startTime);
+		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return quickCheck;
 	}
 	
@@ -138,7 +141,7 @@ public class EdgeChecker {
 		assert (m_SmtManager.getStatus() == Status.EDGECHECK) : "SmtManager is busy";
 		assert m_CodeBlock == null : "CodeBlock already asserted";
 		m_CodeBlock = cb;
-		long startTime = System.nanoTime();
+		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_Script.push(1);
 		m_TransFormula = cb.getTransitionFormula();
 		Term cbFormula = m_TransFormula.getClosedFormula();
@@ -195,7 +198,7 @@ public class EdgeChecker {
 			}
 			quickCheck = m_SmtManager.assertTerm(locVarAssign);
 		}
-		m_SmtManager.m_SatCheckTime += (System.nanoTime() - startTime);
+		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return quickCheck;
 	}
 
@@ -219,7 +222,7 @@ public class EdgeChecker {
 		assert m_CodeBlock instanceof Return : "assert Return first";
 		assert m_HierPred == null : "HierPred already asserted";
 		m_HierPred = p;
-		long startTime = System.nanoTime();
+		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_Script.push(1);
 		m_HierConstants.beginScope();
 		Term hierFormula = p.getFormula();
@@ -249,7 +252,7 @@ public class EdgeChecker {
 			hierFormula = m_Script.annotate(hierFormula, annot);
 		}
 		LBool quickCheck = m_SmtManager.assertTerm(hierFormula);
-		m_SmtManager.m_SatCheckTime += (System.nanoTime() - startTime);
+		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return quickCheck;
 	}
 	
@@ -268,7 +271,7 @@ public class EdgeChecker {
 	public LBool postInternalImplies(IPredicate p) {
 		assert m_PrePred != null;
 		assert m_CodeBlock != null;
-		long startTime = System.nanoTime();
+		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_Script.push(1);
 		
 		//OldVars not renamed
@@ -292,7 +295,6 @@ public class EdgeChecker {
 		
 		if (isSat == LBool.UNKNOWN) {
 			// quickcheck failed
-			startTime = System.nanoTime();
 			isSat = m_Script.checkSat();
 		}
 		switch (isSat) {
@@ -309,7 +311,7 @@ public class EdgeChecker {
 			throw new AssertionError("unknown case");
 		}
 		m_Script.pop(1);
-		m_SmtManager.m_SatCheckTime += (System.nanoTime() - startTime);
+		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return isSat;
 	}
 	
@@ -318,7 +320,7 @@ public class EdgeChecker {
 	public LBool postCallImplies(IPredicate p) {
 		assert m_PrePred != null;
 		assert (m_CodeBlock instanceof Call);
-		long startTime = System.nanoTime();
+		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_Script.push(1);
 		
 		Set<BoogieVar> boogieVars = p.getVars();
@@ -342,7 +344,6 @@ public class EdgeChecker {
 		
 		if (isSat == LBool.UNKNOWN) {
 			// quickcheck failed
-			startTime = System.nanoTime();
 			isSat = m_Script.checkSat();
 		}
 		switch (isSat) {
@@ -359,7 +360,7 @@ public class EdgeChecker {
 			throw new AssertionError("unknown case");
 		}
 		m_Script.pop(1);
-		m_SmtManager.m_SatCheckTime += (System.nanoTime() - startTime);
+		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return isSat;
 	}
 
@@ -369,7 +370,7 @@ public class EdgeChecker {
 		assert m_PrePred != null;
 		assert (m_CodeBlock instanceof Return);
 		assert m_HierPred != null;
-		long startTime = System.nanoTime();
+		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_Script.push(1);
 		m_HierConstants.beginScope();
 		
@@ -408,7 +409,6 @@ public class EdgeChecker {
 		
 		if (isSat == LBool.UNKNOWN) {
 			// quickcheck failed
-			startTime = System.nanoTime();
 			isSat = m_Script.checkSat();
 		}
 		switch (isSat) {
@@ -426,7 +426,7 @@ public class EdgeChecker {
 		}
 		m_Script.pop(1);
 		m_HierConstants.endScope();
-		m_SmtManager.m_SatCheckTime += (System.nanoTime() - startTime);
+		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return isSat;
 	}
 	
@@ -1148,6 +1148,9 @@ public class EdgeChecker {
 		protected final InCaReCounter m_SolverCounterSat;
 		protected final InCaReCounter m_SolverCounterUnsat;
 		protected final InCaReCounter m_SolverCounterUnknown;
+		protected final Benchmark m_Benchmark;
+		protected final static String m_EdgeCheckerTime = "EdgeCheckerTime";
+		protected boolean m_Running = false;
 
 		public EdgeCheckerBenchmark() {
 			m_SdCounter = new InCaReCounter();
@@ -1155,6 +1158,8 @@ public class EdgeChecker {
 			m_SolverCounterSat = new InCaReCounter();
 			m_SolverCounterUnsat = new InCaReCounter();
 			m_SolverCounterUnknown = new InCaReCounter();
+			m_Benchmark = new Benchmark();
+			m_Benchmark.register(m_EdgeCheckerTime);
 		}
 		public InCaReCounter getSdCounter() {
 			return m_SdCounter;
@@ -1171,6 +1176,19 @@ public class EdgeChecker {
 		public InCaReCounter getSolverCounterUnknown() {
 			return m_SolverCounterUnknown;
 		}
+		public double getEdgeCheckerTime() {
+			return m_Benchmark.getElapsedTime(m_EdgeCheckerTime, TimeUnit.NANOSECONDS);
+		}
+		public void continueEdgeCheckerTime() {
+			assert m_Running == false : "Timing already running";
+			m_Running = true;
+			m_Benchmark.unpause(m_EdgeCheckerTime);
+		}
+		public void stopEdgeCheckerTime() {
+			assert m_Running == true : "Timing not running";
+			m_Running = false;
+			m_Benchmark.pause(m_EdgeCheckerTime);
+		}
 	}
 	
 	/**
@@ -1178,6 +1196,7 @@ public class EdgeChecker {
 	 * by adding their numbers to its own.
 	 */
 	public static class EdgeCheckerBenchmarkAggregate extends EdgeCheckerBenchmark {
+		private double m_AggregatedTime = 0;
 		
 		public void add(EdgeCheckerBenchmark edgeCheckerBenchmark) {
 			m_SdCounter.add(edgeCheckerBenchmark.getSdCounter());
@@ -1185,7 +1204,40 @@ public class EdgeChecker {
 			m_SolverCounterSat.add(edgeCheckerBenchmark.getSolverCounterSat());
 			m_SolverCounterUnsat.add(edgeCheckerBenchmark.getSolverCounterUnsat());
 			m_SolverCounterUnknown.add(edgeCheckerBenchmark.getSolverCounterUnknown());
+			m_AggregatedTime += edgeCheckerBenchmark.getEdgeCheckerTime();
 		}
+
+		@Override
+		public double getEdgeCheckerTime() {
+			return m_AggregatedTime;
+		}
+
+		@Override
+		public void continueEdgeCheckerTime() {
+			throw new UnsupportedOperationException("can only aggregate time");
+		}
+
+		@Override
+		public void stopEdgeCheckerTime() {
+			throw new UnsupportedOperationException("can only aggregate time");
+		}
+		
+		@Override
+		public String toString() {
+			StringBuilder sb = new StringBuilder();
+			sb.append("EdgeCheck queries: ");
+			sb.append(getSdCounter() + " trivial, ");
+			sb.append(getSdLazyCounter() + " lazy, ");
+			sb.append(getSolverCounterSat() + " nontrivialSat,");
+			sb.append(getSolverCounterUnsat() + " nontrivialUnsat,");
+			sb.append(getSolverCounterUnknown() + " nontrivialUnknown.");
+			sb.append(" EdgeChecker time: ");
+			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(
+					(long) getEdgeCheckerTime()));
+			return sb.toString();
+		}
+		
+		
 	}
 	
 	
