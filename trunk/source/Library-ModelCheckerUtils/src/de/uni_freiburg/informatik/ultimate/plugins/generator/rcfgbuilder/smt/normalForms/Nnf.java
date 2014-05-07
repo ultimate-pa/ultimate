@@ -80,10 +80,9 @@ public class Nnf {
 					return;
 				} else if (functionName.equals("=>")) {
 					Term[] params = appTerm.getParameters();
-					// do not descend to children (super.convert(...), but 
-					// recursively call this procedure. Necessary because
-					// the result of Util.or may have been simplified to
-					// a formula that is not an or-term.
+					// we deliberately call convert() instead of super.convert()
+					// the argument of this call might have been simplified
+					// to a term whose function symbol is neither "and" nor "or"
 					convert(Util.or(m_Script, negateAllButLast(params)));
 					return;
 				} else if (functionName.equals("=") && 
@@ -91,28 +90,34 @@ public class Nnf {
 					Term[] params = appTerm.getParameters();
 					if (params.length > 2) {
 						Term binarized = SmtUtils.binarize(m_Script, appTerm);
-						super.convert(binarized);
+						// we deliberately call convert() instead of super.convert()
+						// the argument of this call might have been simplified
+						// to a term whose function symbol is neither "and" nor "or"
+						convert(binarized);
 					} else {
 						assert params.length == 2;
-						Term bothTrue = Util.and(m_Script, params[0], params[1]);
-						Term bothFalse = Util.and(m_Script, 
-								Util.not(m_Script, params[0]), 
-								Util.not(m_Script, params[1]));
-						convert(Util.or(m_Script, bothTrue, bothFalse));
+						// we deliberately call convert() instead of super.convert()
+						// the argument of this call might have been simplified
+						// to a term whose function symbol is neither "and" nor "or"
+						convert(SmtUtils.binaryBooleanEquality(
+								m_Script, params[0], params[1]));
 					}
 				} else if (functionName.equals("distinct") && 
 						SmtUtils.hasBooleanParams(appTerm)) {
 					Term[] params = appTerm.getParameters();
 					if (params.length > 2) {
 						Term binarized = SmtUtils.binarize(m_Script, appTerm);
-						super.convert(binarized);
+						// we deliberately call convert() instead of super.convert()
+						// the argument of this call might have been simplified
+						// to a term whose function symbol is neither "and" nor "or"
+						convert(binarized);
 					} else {
 						assert params.length == 2;
-						Term firstTrue = Util.and(m_Script, 
-								Util.not(m_Script, params[0]), params[1]);
-						Term secondTrue = Util.and(m_Script, params[0], 
-								Util.not(m_Script, params[1]));
-						convert(Util.or(m_Script, firstTrue, secondTrue));
+						// we deliberately call convert() instead of super.convert()
+						// the argument of this call might have been simplified
+						// to a term whose function symbol is neither "and" nor "or"
+						convert(SmtUtils.binaryBooleanInequality(
+								m_Script, params[0], params[1]));
 					}
 				} else {
 					//consider term as atom
@@ -143,9 +148,10 @@ public class Nnf {
 					variables.add(freshTv);
 				}
 				Term newBody = (new SafeSubstitution(m_Script, substitutionMapping)).transform(qf.getSubformula());
-				// we have to call this.convert again, super.convert(newBody)
-				// would ignore one convertion. Alternative: enqueue newBody
-				this.convert(newBody);
+				// we deliberately call convert() instead of super.convert()
+				// the argument of this call might have been simplified
+				// to a term whose function symbol is neither "and" nor "or"
+				convert(newBody);
 				return;
 			} else {
 				throw new UnsupportedOperationException("Unsupported " + term.getClass());
@@ -159,44 +165,64 @@ public class Nnf {
 				String functionName = appTerm.getFunction().getName();
 				Term[] params = appTerm.getParameters();
 				if (functionName.equals("and")) {
-					super.convert(Util.or(m_Script, negateTerms(params)));
+					// we deliberately call convert() instead of super.convert()
+					// the argument of this call might have been simplified
+					// to a term whose function symbol is neither "and" nor "or"
+					convert(Util.or(m_Script, negateTerms(params)));
 					return;
 				} else if (functionName.equals("or")) {
-					super.convert(Util.and(m_Script, negateTerms(params)));
+					// we deliberately call convert() instead of super.convert()
+					// the argument of this call might have been simplified
+					// to a term whose function symbol is neither "and" nor "or"
+					convert(Util.and(m_Script, negateTerms(params)));
 					return;
 				} else if (functionName.equals("not")) {
 					assert appTerm.getParameters().length == 1;
 					Term notnotParam = appTerm.getParameters()[0];
-					// do not descend to children (super.convert(...), but 
-					// recursively call this procedure
+					// we deliberately call convert() instead of super.convert()
+					// the argument of this call might have been simplified
+					// to a term whose function symbol is neither "and" nor "or"
 					convert(notnotParam);
 					return;
 				} else if (functionName.equals("=>")) {
-					super.convert(Util.and(m_Script, negateLast(params)));
+					// we deliberately call convert() instead of super.convert()
+					// the argument of this call might have been simplified
+					// to a term whose function symbol is neither "and" nor "or"
+					convert(Util.and(m_Script, negateLast(params)));
 					return;
 				} else if (functionName.equals("=") && 
 						SmtUtils.hasBooleanParams(appTerm)) {
 					Term[] notParams = appTerm.getParameters();
 					if (notParams.length > 2) {
 						Term binarized = SmtUtils.binarize(m_Script, appTerm);
-						// do not descend to children (super.convert(...), but 
-						// recursively call this procedure
+						// we deliberately call convert() instead of super.convert()
+						// the argument of this call might have been simplified
+						// to a term whose function symbol is neither "and" nor "or"
 						convert(Util.not(m_Script, binarized));
 					} else {
 						assert notParams.length == 2;
-						super.convert(m_Script.term("distinct", notParams));
+						// we deliberately call convert() instead of super.convert()
+						// the argument of this call might have been simplified
+						// to a term whose function symbol is neither "and" nor "or"
+						convert(SmtUtils.binaryBooleanInequality(
+								m_Script, notParams[0], notParams[1]));
 					}
 				} else if (functionName.equals("distinct") && 
 						SmtUtils.hasBooleanParams(appTerm)) {
 					Term[] notParams = appTerm.getParameters();
 					if (notParams.length > 2) {
 						Term binarized = SmtUtils.binarize(m_Script, appTerm);
-						// do not descend to children (super.convert(...), but 
-						// recursively call this procedure
+						// we deliberately call convert() instead of super.convert()
+						// the argument of this call might have been simplified
+						// to a term whose function symbol is neither "and" nor "or"
 						convert(Util.not(m_Script, binarized));
-						super.convert(binarized);
 					} else {
-						super.convert(m_Script.term("=", notParams));
+						assert notParams.length == 2;
+						// we deliberately call convert() instead of super.convert()
+						// the argument of this call might have been simplified
+						// to a term whose function symbol is neither "and" nor "or"
+						convert(SmtUtils.binaryBooleanEquality(
+								m_Script, notParams[0], notParams[1]));
 					}
 				} else {
 					//consider original term as atom

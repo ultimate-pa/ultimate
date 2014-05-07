@@ -14,8 +14,8 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class Minimization extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Directories = { 
-		"examples/programs/regression", 
-		"examples/programs/recursivePrograms"};
+//		"examples/programs/regression", 
+		"examples/programs/recursivePrograms/SV-COMP_Candidates"};
 	
 	// Time out for each test case in milliseconds
 	private static int m_Timeout = 20000;

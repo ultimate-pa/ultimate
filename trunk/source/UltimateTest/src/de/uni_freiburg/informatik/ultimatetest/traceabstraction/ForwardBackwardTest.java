@@ -23,10 +23,10 @@ public class ForwardBackwardTest extends
 		"examples/programs/toy"
 	};
 	
-	private static final boolean m_TraceAbstractionBoogieWithBackwardPredicates = true;
-	private static final boolean m_TraceAbstractionBoogieWithForwardPredicates = true;
-	private static final boolean m_TraceAbstractionCWithBackwardPredicates = !true;
-	private static final boolean m_TraceAbstractionCWithForwardPredicates = !true;		
+	private static final boolean m_TraceAbstractionBoogieWithBackwardPredicates = !true;
+	private static final boolean m_TraceAbstractionBoogieWithForwardPredicates = !true;
+	private static final boolean m_TraceAbstractionCWithBackwardPredicates = true;
+	private static final boolean m_TraceAbstractionCWithForwardPredicates = true;		
 	// Time out for each test case in milliseconds
 	private final static int m_Timeout = 10000;
 	

@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -57,5 +58,36 @@ public class SmtUtils {
 		Term[] params = term.getParameters();
 		boolean result = params[0].getSort().getName().equals("Bool");
 		return result;
+	}
+	
+	
+	/**
+	 * Given Term lhs and Term rhs of Sort "Bool". Returns a Term that is 
+	 * equivalent to (= lhs rhs) but uses only the boolean connectives "and" and
+	 * "or".
+	 */
+	public static Term binaryBooleanEquality(Script script, Term lhs, Term rhs) {
+		assert lhs.getSort().getName().equals("Bool");
+		assert rhs.getSort().getName().equals("Bool");
+		Term bothTrue = Util.and(script, lhs, rhs);
+		Term bothFalse = Util.and(script, 
+				Util.not(script, lhs), 
+				Util.not(script, rhs));
+		return Util.or(script, bothTrue, bothFalse);
+	}
+	
+	/**
+	 * Given Term lhs and Term rhs of Sort "Bool". Returns a Term that is 
+	 * equivalent to (not (= lhs rhs)) but uses only the boolean connectives 
+	 * "and" and "or".
+	 */
+	public static Term binaryBooleanInequality(Script script, Term lhs, Term rhs) {
+		assert lhs.getSort().getName().equals("Bool");
+		assert rhs.getSort().getName().equals("Bool");
+		Term oneIsTrue = Util.or(script, lhs, rhs);
+		Term oneIsFalse = Util.or(script, 
+				Util.not(script, lhs), 
+				Util.not(script, rhs));
+		return Util.and(script, oneIsTrue, oneIsFalse);
 	}
 }
