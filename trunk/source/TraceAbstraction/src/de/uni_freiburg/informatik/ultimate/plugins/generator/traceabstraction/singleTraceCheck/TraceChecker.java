@@ -154,7 +154,7 @@ public class TraceChecker {
 	
 	protected final PredicateTransformer m_PredicateTransformer;
 	
-	
+	protected final TraceCheckerBenchmark m_TraceCheckerBenchmark;
 	
 	
 	/**
@@ -182,6 +182,7 @@ public class TraceChecker {
 		m_DefaultTransFormulas = new DefaultTransFormulas(m_Trace, 
 				m_Precondition, m_Postcondition, m_PendingContexts, 
 				m_ModifiedGlobals, false);
+		m_TraceCheckerBenchmark = new TraceCheckerBenchmark();
 		m_IsSafe = checkTrace();
 	}
 	
@@ -204,6 +205,7 @@ public class TraceChecker {
 		m_PredicateTransformer = new PredicateTransformer(m_SmtManager, modifiedGlobals);
 		m_PendingContexts = pendingContexts;
 		m_DefaultTransFormulas = defaultTransFormulas;
+		m_TraceCheckerBenchmark = new TraceCheckerBenchmark();
 		m_IsSafe = checkTrace();
 	}
 	
@@ -241,9 +243,14 @@ public class TraceChecker {
 	private LBool checkTrace() {
 		LBool isSafe;
 		m_SmtManager.startTraceCheck();
+		
+		m_TraceCheckerBenchmark.startSsaConstruction();
 		m_Nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, 
 				m_DefaultTransFormulas);
 		NestedFormulas<Term, Term> ssa = m_Nsb.getSsa();
+		m_TraceCheckerBenchmark.finishSsaConstruction();
+		
+		m_TraceCheckerBenchmark.startSatisfiabilityAnalysis();
 		try {
 			m_AAA = getAnnotateAndAsserter(ssa);
 			m_AAA.buildAnnotatedSsaAndAssertTerms();
@@ -256,7 +263,7 @@ public class TraceChecker {
 				throw e;
 			}
 		} finally {
-			
+			m_TraceCheckerBenchmark.finishSatisfiabilityAnalysis();
 		}
 		return isSafe;
 	}
@@ -442,6 +449,7 @@ public class TraceChecker {
 	public void computeInterpolants(Set<Integer> interpolatedPositions,
 										PredicateUnifier predicateUnifier, 
 										INTERPOLATION interpolation) {
+		m_TraceCheckerBenchmark.startInterpolantComputation();
 		assert m_PredicateUnifier == null;
 		m_PredicateUnifier = predicateUnifier;
 		assert predicateUnifier.isRepresentative(m_Precondition);
@@ -460,7 +468,8 @@ public class TraceChecker {
 			throw new UnsupportedOperationException("unsupportedInterpolation");
 		}
 		m_TraceCheckFinished = true;
-		
+
+		m_TraceCheckerBenchmark.finishInterpolantComputation();
 		//TODO: remove this if relevant variables are definitely correct.
 		assert testRelevantVars() : "bug in relevant varialbes";
 	}
@@ -930,7 +939,7 @@ public class TraceChecker {
 		}
 		
 		public void startInterpolantComputation() {
-			m_Benchmark.start(m_SatisfiabilityAnalysis);
+			m_Benchmark.start(m_InterpolantComputation);
 		}
 		
 		public void finishInterpolantComputation() {
