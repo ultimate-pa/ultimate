@@ -1864,7 +1864,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 		int internalSuccessors = 0;
 		for (STATE pred : m_InternalOut.keySet()) {
 			Map<LETTER, Set<STATE>> letter2succs = m_InternalOut.get(pred);
-			if (letter2succs == null) {
+			if (letter2succs == null) {	
 				// may be null because the keySet is used to store the set of
 				// all states, but some state my not have an outgoing internal
 				// transition
