@@ -356,12 +356,12 @@ public class Util {
 		}
 		if (inputFile.getName().toLowerCase().contains("-safe") 
 				|| inputFile.getName().toLowerCase().contains("_safe")
-				// true-unreach-label is the SV-COMP annotation for safe
+				// true-unreach-call is the SV-COMP annotation for safe
 				|| inputFile.getName().toLowerCase().contains("true-unreach-call")){
 			return ExpectedResult.SAFE;
 		} else if (inputFile.getName().toLowerCase().contains("-unsafe")
 				|| inputFile.getName().toLowerCase().contains("_unsafe")
-				// false-unreach-label is the SV-COMP annotation for safe
+				// false-unreach-call is the SV-COMP annotation for safe
 				|| inputFile.getName().toLowerCase().contains("false-unreach-call")){
 			return ExpectedResult.UNSAFE;
 		}
