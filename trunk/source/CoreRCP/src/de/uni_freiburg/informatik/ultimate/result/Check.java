@@ -63,9 +63,9 @@ public class Check extends AbstractAnnotations {
 	     */
 	    MALLOC_NONNEGATIVE,
 	    /**
-	     * Error label reachable. 
+	     * Error function reachable. 
 	     */
-	    ERROR_LABEL,
+	    ERROR_Function,
 	    /**
 	     * Not further specified or unknown.
 	     */
@@ -112,8 +112,8 @@ public class Check extends AbstractAnnotations {
 			return "free always succeeds";
 		case MALLOC_NONNEGATIVE:
 			return "input of malloc is always non-negative";
-		case ERROR_LABEL:
-			return "ERROR label is not reachable";
+		case ERROR_Function:
+			return "call of __VERIFIER_error() unreachable";
 		case UNKNOWN:
 			return "unknown kind of specification holds";
 		default:
@@ -144,9 +144,9 @@ public class Check extends AbstractAnnotations {
 		case MEMORY_FREE:
 			return "free of unallocated memory possible";
 		case MALLOC_NONNEGATIVE:
-			return "input of malloc could be negative";
-		case ERROR_LABEL:
-			return "ERROR label is reachable";
+			return "input of malloc can be negative";
+		case ERROR_Function:
+			return "a call of __VERIFIER_error() is reachable";
 		case UNKNOWN:
 			return "unknown kind of specification may be violated";
 		default:

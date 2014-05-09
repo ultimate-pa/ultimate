@@ -62,9 +62,9 @@ import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
  */
 public class SvComp14CHandler extends CHandler {
     /**
-     * The string representing SV-Comp's error label.
+     * The string representing SV-Comp's error method.
      */
-    private static final String ERROR_STRING = "ERROR";
+    private static final String ERROR_STRING = "__VERIFIER_error";
     /**
      * The string representing SV-Comp's havoc method.
      */
@@ -79,6 +79,8 @@ public class SvComp14CHandler extends CHandler {
      */
     private static final String ASSUME_STRING = "__VERIFIER_assume";
 
+    
+
     /**
      * Constructor.
      * 
@@ -91,28 +93,28 @@ public class SvComp14CHandler extends CHandler {
 //        super.functionHandler = new SVCompFunctionHandler();
     }
 
-    @Override
-    public Result visit(Dispatcher main, IASTLabelStatement node) {
-        ResultExpression r = (ResultExpression) super.visit(main, node);
-        String label = node.getName().toString();
-        if (label.equals(ERROR_STRING)) {
-            Check check = new Check(Spec.ERROR_LABEL);
-            CACSLLocation loc = new CACSLLocation(node, check);
-            AssertStatement assertStmt = new AssertStatement(loc,
-                    new BooleanLiteral(loc, new InferredType(Type.Boolean),
-                            false));
-            check.addToNodeAnnot(assertStmt);
-            // We do not add the assert(false) directly, but add an 
-            // nondeterministic if that contains this assert.
-            // Adding the assert(false) directly would leads to an unsound
-            // nontermination analysis.
-            IfStatement ifStatement = new IfStatement(loc, 
-            		new WildcardExpression(loc), 
-            		new Statement[] { assertStmt }, new Statement[0]);
-            r.stmt.add(1, ifStatement);
-        }
-        return r;
-    }
+//    @Override
+//    public Result visit(Dispatcher main, IASTLabelStatement node) {
+//        ResultExpression r = (ResultExpression) super.visit(main, node);
+//        String label = node.getName().toString();
+//        if (label.equals(ERROR_STRING)) {
+//            Check check = new Check(Spec.ERROR_Function);
+//            CACSLLocation loc = new CACSLLocation(node, check);
+//            AssertStatement assertStmt = new AssertStatement(loc,
+//                    new BooleanLiteral(loc, new InferredType(Type.Boolean),
+//                            false));
+//            check.addToNodeAnnot(assertStmt);
+//            // We do not add the assert(false) directly, but add an 
+//            // nondeterministic if that contains this assert.
+//            // Adding the assert(false) directly would leads to an unsound
+//            // nontermination analysis.
+//            IfStatement ifStatement = new IfStatement(loc, 
+//            		new WildcardExpression(loc), 
+//            		new Statement[] { assertStmt }, new Statement[0]);
+//            r.stmt.add(1, ifStatement);
+//        }
+//        return r;
+//    }
 
     //
     // __VERIFIER_assume(EXPR) && skip VERIFIER_nondet_X()
@@ -129,7 +131,24 @@ public class SvComp14CHandler extends CHandler {
 				new HashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
         LRValue returnValue = null;
-
+        
+        if (methodName.equals(ERROR_STRING)) {
+            Check check = new Check(Spec.ERROR_Function);
+            AssertStatement assertStmt = new AssertStatement(loc,
+                    new BooleanLiteral(loc, new InferredType(Type.Boolean),
+                            false));
+            check.addToNodeAnnot(assertStmt);
+            // We do not add the assert(false) directly, but add an 
+            // nondeterministic if that contains this assert.
+            // Adding the assert(false) directly would leads to an unsound
+            // nontermination analysis.
+            IfStatement ifStatement = new IfStatement(loc, 
+            		new WildcardExpression(loc), 
+            		new Statement[] { assertStmt }, new Statement[0]);
+            stmt.add(ifStatement);
+            return new ResultExpression(stmt, returnValue, decl, auxVars,
+                    overappr);
+        }
         if (methodName.equals(ASSUME_STRING)) {
             ArrayList<Expression> args = new ArrayList<Expression>();
             for (IASTInitializerClause inParam : node.getArguments()) {
