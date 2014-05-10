@@ -51,6 +51,7 @@ public class CDTController extends BaseExternalExecutionController {
 						new ArrayList<String>()));
 		tcj.setUser(true);
 		tcj.schedule();
+		tcj.join();
 	}
 
 	public void runToolchain(String toolchain, IASTTranslationUnit ast) {

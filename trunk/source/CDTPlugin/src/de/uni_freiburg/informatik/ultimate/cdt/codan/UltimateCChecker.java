@@ -176,6 +176,10 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		for (String toolID : tools) {
 			CDTResultStore.addResults(fileName, toolID, UltimateServices.getInstance().getResultMap().get(toolID));
 			List<IResult> resultsOfTool = UltimateServices.getInstance().getResultMap().get(toolID);
+			if(resultsOfTool == null){
+				log.debug("No results for " + toolID);
+				continue;
+			}
 			for (IResult result : resultsOfTool) {
 				if (result instanceof IResultWithLocation) {
 					reportProblemWithLocation((IResultWithLocation) result, log);
