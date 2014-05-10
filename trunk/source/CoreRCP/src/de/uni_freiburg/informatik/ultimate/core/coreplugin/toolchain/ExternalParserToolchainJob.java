@@ -28,18 +28,19 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 	protected IStatus run(IProgressMonitor monitor) {
 
 		IStatus returnstatus = Status.OK_STATUS;
-
+		monitor.beginTask(getName(), IProgressMonitor.UNKNOWN);
+		
 		try {
 			setTimeout();
 			UltimateServices.getInstance().initializeResultMap();
 			UltimateServices.getInstance().initializeTranslatorSequence();
-
+			monitor.worked(1);
 			if ((mJobMode == ChainMode.RERUN_TOOLCHAIN || mJobMode == ChainMode.RUN_OLDTOOLCHAIN) && !mCore.canRerun()) {
 				throw new Exception("Rerun called without previous run! Aborting...");
 			}
 			// all modes requires this
 			mCore.resetCore();
-
+			monitor.worked(1);
 			// only RUN_TOOLCHAIN and RUN_NEWTOOLCHAIN require this
 			if (mJobMode == ChainMode.RUN_TOOLCHAIN || mJobMode == ChainMode.RUN_NEWTOOLCHAIN) {
 				mChain = mCore.makeToolSelection();
@@ -48,9 +49,9 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 					return new Status(Status.CANCEL, Activator.s_PLUGIN_ID, "Toolchain selection canceled");
 				}
 			}
-
+			monitor.worked(1);
 			mCore.addAST(mAST, mOutputDefinition);
-
+			monitor.worked(1);
 			returnstatus = mCore.processToolchain(monitor);
 
 		} catch (final Throwable e) {
@@ -61,8 +62,10 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 			String idOfCore = Activator.s_PLUGIN_ID;
 			UltimateServices.getInstance().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));
 		} finally {
-			monitor.done();
+			monitor.worked(1);
 			logResults();
+			UltimateServices.getInstance().terminateExternalProcesses();
+			monitor.done();
 		}
 
 		return returnstatus;

@@ -49,7 +49,7 @@
          </toolbar>
       </menuContribution>
    </extension>
-   
+   <!--
    <extension point="org.eclipse.ui.preferencePages">
       <page
             category="Core"
@@ -63,5 +63,5 @@
             id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingToolsPreferencePage"
             name="Log Levels for external tools" />
    </extension>
-   
+   -->
 </plugin>

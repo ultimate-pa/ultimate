@@ -49,8 +49,8 @@ public class CDTController extends BaseExternalExecutionController {
 		BasicToolchainJob tcj = new ExternalParserToolchainJob("Processing Toolchain", mCurrentCoreReference, this,
 				BasicToolchainJob.ChainMode.RUN_TOOLCHAIN, mAST, new GraphType(getPluginID(), GraphType.Type.AST,
 						new ArrayList<String>()));
+		tcj.setUser(true);
 		tcj.schedule();
-		tcj.join();
 	}
 
 	public void runToolchain(String toolchain, IASTTranslationUnit ast) {
