@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -48,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
@@ -125,13 +123,14 @@ public class CfgBuilder {
 		boolean dumpToFile = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(PreferenceInitializer.LABEL_DumpToFile);
 		if (dumpToFile) {
-			String dumpFileName = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+			String directory = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 					.getString(PreferenceInitializer.LABEL_Path);
-			dumpFileName += (dumpFileName.endsWith(System.getProperty("file.separator")) ? "" : System
+			directory += (directory.endsWith(System.getProperty("file.separator")) ? "" : System
 					.getProperty("file.separator"));
-			dumpFileName = dumpFileName + "script" + filenameWithoutPathAndExtension(unit) + ".smt2";
+			String filename = m_Graphroot.getFilename();
+			String fullFilename = directory + filename + ".smt2";
 			try {
-				m_Script = new LoggingScript(m_Script, dumpFileName, true);
+				m_Script = new LoggingScript(m_Script, fullFilename, true);
 			} catch (FileNotFoundException e) {
 				throw new AssertionError(e);
 			}
@@ -165,12 +164,6 @@ public class CfgBuilder {
 
 	}
 
-	public static String filenameWithoutPathAndExtension(Unit unit) {
-		String fullFilename = unit.getLocation().getFileName();
-		int dir = fullFilename.lastIndexOf(System.getProperty("file.separator"));
-		int dot = fullFilename.lastIndexOf('.');
-		return fullFilename.substring(dir + 1, dot);
-	}
 
 	/**
 	 * Build a recursive control flow graph for an unstructured boogie program.

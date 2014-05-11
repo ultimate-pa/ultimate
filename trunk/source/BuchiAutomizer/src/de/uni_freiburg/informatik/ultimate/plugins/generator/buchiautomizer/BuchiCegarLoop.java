@@ -730,8 +730,7 @@ public class BuchiCegarLoop {
 		 * 
 		 */
 		public String generateLassoCheckerIdentifier() {
-			String pathAndFilename = m_RootNode.getPayload().getLocation().getFileName();
-			String pureFilename = (new File(pathAndFilename)).getName();
+			String pureFilename = m_RootNode.getFilename();
 			return pureFilename + "_Iteration" + m_Iteration;
 		}
 	

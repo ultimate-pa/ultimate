@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
+import java.io.File;
+
 import de.uni_freiburg.informatik.ultimate.model.Payload;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
@@ -43,5 +45,17 @@ public class RootNode extends RCFGNode {
 	@Override
 	public String toString() {
 		return getPayload().getName();
+	}
+	
+	
+	/**
+	 * Returns the name of the file that is analyzed.
+	 * The result is the name without the full path.
+	 * 
+	 */
+	public String getFilename() {
+		String pathAndFilename = getPayload().getLocation().getFileName();
+		String pureFilename = (new File(pathAndFilename)).getName();
+		return pureFilename;
 	}
 }
