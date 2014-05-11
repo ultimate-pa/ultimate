@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -25,9 +26,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.Status;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IPredicateCoverageChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmark;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
@@ -45,7 +48,7 @@ public class EdgeChecker {
 	public final static boolean m_AddDebugInformation = false;
 	public final static boolean m_UnletTerms = true;
 	
-	private final EdgeCheckerBenchmark m_EdgeCheckerBenchmark;
+	private final EdgeCheckerBenchmarkGenerator m_EdgeCheckerBenchmark;
 	private final IPredicateCoverageChecker m_PredicateCoverageChecker;
 	
 	private static final String s_StartEdgeCheck = "starting to check validity of Hoare triples";
@@ -57,7 +60,7 @@ public class EdgeChecker {
 		m_SmtManager = smtManager;
 		m_ModifiableGlobalVariableManager = modGlobVarManager;
 		m_Script = smtManager.getScript();
-		m_EdgeCheckerBenchmark = new EdgeCheckerBenchmark();
+		m_EdgeCheckerBenchmark = new EdgeCheckerBenchmarkGenerator();
 		m_PredicateCoverageChecker = predicateCoverageChecker;
 	}
 	
@@ -69,7 +72,7 @@ public class EdgeChecker {
 		return m_SmtManager;
 	}
 	
-	public EdgeCheckerBenchmark getEdgeCheckerBenchmark() {
+	public EdgeCheckerBenchmarkGenerator getEdgeCheckerBenchmark() {
 		return m_EdgeCheckerBenchmark;
 	}
 
@@ -1142,24 +1145,88 @@ public class EdgeChecker {
 		}
 	}
 	
-	public static class EdgeCheckerBenchmark {
+	public static class EdgeCheckerBenchmarkType implements IBenchmarkType {
+		
+		private static EdgeCheckerBenchmarkType s_Instance = new EdgeCheckerBenchmarkType();
+		protected final static String s_SdCounter = "trivial";
+		protected final static String s_SdLazyCounter = "lazy";
+		protected final static String s_SolverCounterSat = "nontrivialSat";
+		protected final static String s_SolverCounterUnsat = "nontrivialUnsat";
+		protected final static String s_SolverCounterUnknown = "nontrivialUnknown";
+		protected final static String s_EdgeCheckerTime = "EdgeCheckerTime";
+		
+		public static EdgeCheckerBenchmarkType getInstance() {
+			return s_Instance;
+		}
+		
+		@Override
+		public Iterable<String> getKeys() {
+			return Arrays.asList(new String[] { s_SdCounter, s_SdLazyCounter, 
+					s_SolverCounterSat, s_SolverCounterUnsat, 
+					s_SolverCounterUnknown, s_EdgeCheckerTime });
+		}
+		
+		@Override
+		public Object aggregate(String key, Object value1, Object value2) {
+			switch (key) {
+			case s_SdCounter:
+			case s_SdLazyCounter:
+			case s_SolverCounterSat: 
+			case s_SolverCounterUnsat:
+			case s_SolverCounterUnknown:
+				InCaReCounter resultInCaReCounter = (InCaReCounter) value1;
+				InCaReCounter inCaReCounter2 = (InCaReCounter) value2;
+				resultInCaReCounter.add(inCaReCounter2);
+				return resultInCaReCounter;
+			case s_EdgeCheckerTime:
+				Long time1 = (Long) value1;
+				Long time2 = (Long) value2;
+				return time1 + time2;
+			default:
+				throw new AssertionError("unknown key");
+			}
+		}
+
+		@Override
+		public String prettyprintBenchmarkData(BenchmarkData benchmarkData) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("EdgeCheckerBenchmark: EdgeChecker queries: ");
+			sb.append(benchmarkData.getValue(s_SdCounter) + " trivial, ");
+			sb.append(benchmarkData.getValue(s_SdLazyCounter) + " lazy, ");
+			sb.append(benchmarkData.getValue(s_SolverCounterSat) + " nontrivialSat,");
+			sb.append(benchmarkData.getValue(s_SolverCounterUnsat) + " nontrivialUnsat,");
+			sb.append(benchmarkData.getValue(s_SolverCounterUnknown) + " nontrivialUnknown.");
+			sb.append(" EdgeChecker time: ");
+			long time = (long) benchmarkData.getValue(s_EdgeCheckerTime);
+			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(time));
+			return sb.toString();
+		}
+
+	}
+	
+	
+	
+	
+	
+	public static class EdgeCheckerBenchmarkGenerator implements IBenchmarkDataProvider {
+		
 		protected final InCaReCounter m_SdCounter;
 		protected final InCaReCounter m_SdLazyCounter;
 		protected final InCaReCounter m_SolverCounterSat;
 		protected final InCaReCounter m_SolverCounterUnsat;
 		protected final InCaReCounter m_SolverCounterUnknown;
 		protected final Benchmark m_Benchmark;
-		protected final static String m_EdgeCheckerTime = "EdgeCheckerTime";
+
 		protected boolean m_Running = false;
 
-		public EdgeCheckerBenchmark() {
+		public EdgeCheckerBenchmarkGenerator() {
 			m_SdCounter = new InCaReCounter();
 			m_SdLazyCounter = new InCaReCounter();
 			m_SolverCounterSat = new InCaReCounter();
 			m_SolverCounterUnsat = new InCaReCounter();
 			m_SolverCounterUnknown = new InCaReCounter();
 			m_Benchmark = new Benchmark();
-			m_Benchmark.register(m_EdgeCheckerTime);
+			m_Benchmark.register(EdgeCheckerBenchmarkType.s_EdgeCheckerTime);
 		}
 		public InCaReCounter getSdCounter() {
 			return m_SdCounter;
@@ -1176,69 +1243,47 @@ public class EdgeChecker {
 		public InCaReCounter getSolverCounterUnknown() {
 			return m_SolverCounterUnknown;
 		}
-		public double getEdgeCheckerTime() {
-			return m_Benchmark.getElapsedTime(m_EdgeCheckerTime, TimeUnit.NANOSECONDS);
+		public long getEdgeCheckerTime() {
+			return (long) m_Benchmark.getElapsedTime(EdgeCheckerBenchmarkType.s_EdgeCheckerTime, TimeUnit.NANOSECONDS);
 		}
 		public void continueEdgeCheckerTime() {
 			assert m_Running == false : "Timing already running";
 			m_Running = true;
-			m_Benchmark.unpause(m_EdgeCheckerTime);
+			m_Benchmark.unpause(EdgeCheckerBenchmarkType.s_EdgeCheckerTime);
 		}
 		public void stopEdgeCheckerTime() {
 			assert m_Running == true : "Timing not running";
 			m_Running = false;
-			m_Benchmark.pause(m_EdgeCheckerTime);
+			m_Benchmark.pause(EdgeCheckerBenchmarkType.s_EdgeCheckerTime);
 		}
+		@Override
+		public Iterable<String> getKeys() {
+			return EdgeCheckerBenchmarkType.getInstance().getKeys();
+		}
+		public Object getValue(String name) {
+			switch (name) {
+			case EdgeCheckerBenchmarkType.s_SdCounter:
+				return m_SdCounter;
+			case EdgeCheckerBenchmarkType.s_SdLazyCounter:
+				return m_SdLazyCounter;
+			case EdgeCheckerBenchmarkType.s_SolverCounterSat: 
+				return m_SolverCounterSat;
+			case EdgeCheckerBenchmarkType.s_SolverCounterUnsat:
+				return m_SolverCounterUnsat;
+			case EdgeCheckerBenchmarkType.s_SolverCounterUnknown:
+				return m_SolverCounterUnknown;
+			case EdgeCheckerBenchmarkType.s_EdgeCheckerTime:
+				return getEdgeCheckerTime();
+			default:
+				throw new AssertionError("unknown counter");
+			}
+		}
+
+		@Override
+		public IBenchmarkType getBenchmarkType() {
+			return EdgeCheckerBenchmarkType.getInstance();
+		}
+
 	}
-	
-	/**
-	 * Edge Checker Benchmark, that can aggregate other EdgeCheckerBenchmarks
-	 * by adding their numbers to its own.
-	 */
-	public static class EdgeCheckerBenchmarkAggregate extends EdgeCheckerBenchmark {
-		private double m_AggregatedTime = 0;
-		
-		public void add(EdgeCheckerBenchmark edgeCheckerBenchmark) {
-			m_SdCounter.add(edgeCheckerBenchmark.getSdCounter());
-			m_SdLazyCounter.add(edgeCheckerBenchmark.getSdLazyCounter());
-			m_SolverCounterSat.add(edgeCheckerBenchmark.getSolverCounterSat());
-			m_SolverCounterUnsat.add(edgeCheckerBenchmark.getSolverCounterUnsat());
-			m_SolverCounterUnknown.add(edgeCheckerBenchmark.getSolverCounterUnknown());
-			m_AggregatedTime += edgeCheckerBenchmark.getEdgeCheckerTime();
-		}
-
-		@Override
-		public double getEdgeCheckerTime() {
-			return m_AggregatedTime;
-		}
-
-		@Override
-		public void continueEdgeCheckerTime() {
-			throw new UnsupportedOperationException("can only aggregate time");
-		}
-
-		@Override
-		public void stopEdgeCheckerTime() {
-			throw new UnsupportedOperationException("can only aggregate time");
-		}
-		
-		@Override
-		public String toString() {
-			StringBuilder sb = new StringBuilder();
-			sb.append("EdgeCheck queries: ");
-			sb.append(getSdCounter() + " trivial, ");
-			sb.append(getSdLazyCounter() + " lazy, ");
-			sb.append(getSolverCounterSat() + " nontrivialSat,");
-			sb.append(getSolverCounterUnsat() + " nontrivialUnsat,");
-			sb.append(getSolverCounterUnknown() + " nontrivialUnknown.");
-			sb.append(" EdgeChecker time: ");
-			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(
-					(long) getEdgeCheckerTime()));
-			return sb.toString();
-		}
-		
-		
-	}
-	
 	
 }

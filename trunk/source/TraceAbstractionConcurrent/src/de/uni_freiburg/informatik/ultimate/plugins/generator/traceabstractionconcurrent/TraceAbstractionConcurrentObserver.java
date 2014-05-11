@@ -118,10 +118,10 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 				smtManager.getNontrivialSatQueries());
 		s_Logger.info("Statistics - iterations: " +
 				abstractCegarLoop.getIteration());
-		s_Logger.info("Statistics - biggest abstraction: " +
-				abstractCegarLoop.m_BiggestAbstractionSize + " states");
-		s_Logger.info("Statistics - biggest abstraction in iteration: " +
-				abstractCegarLoop.m_BiggestAbstractionIteration);
+//		s_Logger.info("Statistics - biggest abstraction: " +
+//				abstractCegarLoop.m_BiggestAbstractionSize + " states");
+//		s_Logger.info("Statistics - biggest abstraction in iteration: " +
+//				abstractCegarLoop.m_BiggestAbstractionIteration);
 		
 		
 		String stat = "";
@@ -135,8 +135,8 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		stat += " Satisfiability queries: ";
 		stat += smtManager.getTrivialSatQueries() + " tivial, ";
 		stat += smtManager.getNontrivialSatQueries() + " nontrivial.";
-		stat += " Biggest abstraction occured in iteration " + abstractCegarLoop.m_BiggestAbstractionIteration + " had ";
-		stat += abstractCegarLoop.m_BiggestAbstractionSize;
+//		stat += " Biggest abstraction occured in iteration " + abstractCegarLoop.m_BiggestAbstractionIteration + " had ";
+//		stat += abstractCegarLoop.m_BiggestAbstractionSize;
 		
 		if (abstractCegarLoop instanceof CegarLoopJulian) {
 			stat += " conditions ";

@@ -55,11 +55,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	 * the initial nodes of procedures.
 	 */
 	private IElement m_graphroot = null;
-	private int m_OverallIterations;
-	private int m_OverallBiggestAbstraction;
-	private long m_OverallDeadEndRemovalTime;
-	private long m_OverallMinimizationTime;
-	private int m_OverallStatesRemovedByMinimization;
 	private Result m_OverallResult;
 	private IElement m_Artifact;
 	private long m_StartingTime;
@@ -89,8 +84,8 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		m_OverallIterations = 0;
-		m_OverallBiggestAbstraction = 0;
+//		m_OverallIterations = 0;
+//		m_OverallBiggestAbstraction = 0;
 		m_OverallResult = Result.SAFE;
 		m_Artifact = null;
 
@@ -160,7 +155,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 		String stat = "";
 		stat += "Statistics:  ";
-		stat += " Iterations " + m_OverallIterations + ".";
+//		stat += " Iterations " + m_OverallIterations + ".";
 		stat += " CFG has ";
 		stat += rootAnnot.getNumberOfProgramPoints();
 		stat += " locations,";
@@ -169,16 +164,15 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		stat += " Cover queries: ";
 		stat += smtManager.getTrivialCoverQueries() + " trivial, ";
 		stat += smtManager.getNontrivialCoverQueries() + " nontrivial.";	
-		stat += timingStatistics.getEdgeCheckerBenchmarkAggregate().toString();
 		stat += " Satisfiability queries: ";
 		stat += smtManager.getTrivialSatQueries() + " trivial, ";
 		stat += smtManager.getNontrivialSatQueries() + " nontrivial.";
-		stat += " DeadEndRemovalTime: " + m_OverallDeadEndRemovalTime;
-		stat += " Minimization removed " + m_OverallStatesRemovedByMinimization;
-		stat += " in time " + m_OverallMinimizationTime;
-		stat += " Biggest abstraction had ";
-		stat += m_OverallBiggestAbstraction;
-		stat += " states.";
+//		stat += " DeadEndRemovalTime: " + m_OverallDeadEndRemovalTime;
+//		stat += " Minimization removed " + m_OverallStatesRemovedByMinimization;
+//		stat += " in time " + m_OverallMinimizationTime;
+//		stat += " Biggest abstraction had ";
+//		stat += m_OverallBiggestAbstraction;
+//		stat += " states.";
 		s_Logger.warn(stat);
 		TemporaryWorkaroudBenchmark twb = new TemporaryWorkaroudBenchmark(stat, timingStatistics);
 		reportBenchmark(twb);
@@ -232,17 +226,14 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		}
 
 		Result result = basicCegarLoop.iterate();
-		timingStatistics.finishTraceAbstraction();
+//		timingStatistics.finishTraceAbstraction();
 		assert basicCegarLoop.getTraceCheckerBenchmark() != null || basicCegarLoop.getIteration() == 0 : "no TraceCheckerBenchmark only allowed after the first iteration";
+		CegarLoopBenchmarkGenerator cegarLoopBenchmarkGenerator = 
+				basicCegarLoop.getCegarLoopBenchmark();
+		cegarLoopBenchmarkGenerator.stop(CegarLoopBenchmarkType.s_OverallTime);
+		s_Logger.warn(cegarLoopBenchmarkGenerator.toString());
+		timingStatistics.setCegarLoopBenchmarkGenerator(cegarLoopBenchmarkGenerator);
 		timingStatistics.setTraceCheckerBenchmarks(basicCegarLoop.getTraceCheckerBenchmark());
-
-		m_OverallIterations += basicCegarLoop.m_Iteration;
-		if (basicCegarLoop.m_BiggestAbstractionSize > m_OverallBiggestAbstraction) {
-			m_OverallBiggestAbstraction = basicCegarLoop.m_BiggestAbstractionSize;
-		}
-		m_OverallDeadEndRemovalTime += basicCegarLoop.m_DeadEndRemovalTime;
-		m_OverallMinimizationTime += basicCegarLoop.m_MinimizationTime;
-		m_OverallStatesRemovedByMinimization += basicCegarLoop.m_StatesRemovedByMinimization;
 
 		switch (result) {
 		case SAFE:

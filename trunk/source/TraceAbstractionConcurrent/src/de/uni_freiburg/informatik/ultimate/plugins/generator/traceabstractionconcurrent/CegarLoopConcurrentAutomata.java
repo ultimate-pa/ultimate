@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
@@ -69,7 +70,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	
 	@Override
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
-		m_TraceAbstractionBenchmarks.startBasicInterpolantAutomaton();
+		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 
 			InterpolantAutomataBuilder iab = new InterpolantAutomataBuilder(
 						m_Counterexample,
@@ -81,7 +82,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 				m_Abstraction, m_Abstraction.getStateFactory());
 			s_Logger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 			
-		m_TraceAbstractionBenchmarks.finishBasicInterpolantAutomaton();		
+			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 		assert(accepts(m_InterpolAutomaton, m_Counterexample.getWord())) :
 			"Interpolant automaton broken!";
 		assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
@@ -145,7 +146,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		m_StateFactoryForRefinement.setIteration(super.m_Iteration);
 //		howDifferentAreInterpolants(m_InterpolAutomaton.getStates());
 		
-		m_TraceAbstractionBenchmarks.startDifference();
+		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AutomataDifference);
 		boolean explointSigmaStarConcatOfIA = !m_ComputeHoareAnnotation;
 		
 		PredicateFactory predicateFactory = (PredicateFactory) m_Abstraction.getStateFactory();
@@ -203,7 +204,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 				
 				
 			m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) diff.getResult();
-			m_DeadEndRemovalTime = diff.getDeadEndRemovalTime();
+//			m_DeadEndRemovalTime = diff.getDeadEndRemovalTime();
 			if (m_Pref.dumpAutomata()) {
 				String filename = "InterpolantAutomaton_Iteration" + m_Iteration; 
 				super.writeAutomatonToFile(m_InterpolAutomaton, filename);
@@ -211,7 +212,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 
 			
 			
-		m_TraceAbstractionBenchmarks.finishDifference();
+			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AutomataDifference);
 		
 		Minimization minimization = m_Pref.minimize();
 		switch (minimization) {

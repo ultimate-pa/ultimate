@@ -711,11 +711,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 			s_Logger.debug("[" + i + "]: " + m_ErrorPathHistory.get(i));
 		}
 
-		if (m_BiggestAbstractionSize < m_NestedAbstraction.size())
-		{
-			m_BiggestAbstractionSize = m_NestedAbstraction.size();
-			m_BiggestAbstractionIteration = m_Iteration;
-		}
+		m_CegarLoopBenchmark.reportAbstractionSize(m_Abstraction.size(), m_Iteration);
 
 		s_Logger.info("Abstraction has " + m_NestedAbstraction.sizeInformation());
 		s_Logger.info("Interpolant automaton has "

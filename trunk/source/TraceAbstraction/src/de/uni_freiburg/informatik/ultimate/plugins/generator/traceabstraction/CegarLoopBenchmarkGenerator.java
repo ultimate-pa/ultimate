@@ -1,0 +1,79 @@
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
+
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType.SizeIterationPair;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkGeneratorWithStopwatches;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
+
+public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatches implements IBenchmarkDataProvider {
+	
+	private final BenchmarkData m_EcData = new BenchmarkData();
+	private int m_StatesRemovedByMinimization = 0;
+	private int m_Iterations = 0;
+	private SizeIterationPair m_BiggestAbstraction = CegarLoopBenchmarkType.getInstance().new SizeIterationPair(-1, -1);
+
+	@Override
+	public Iterable<String> getKeys() {
+		return CegarLoopBenchmarkType.getInstance().getKeys();
+	}
+	
+	public void addEdgeCheckerData(IBenchmarkDataProvider ecbg) {
+		m_EcData.aggregateBenchmarkData(ecbg);
+	}
+	
+	public void announceStatesRemovedByMinimization(int statesRemoved) {
+		m_StatesRemovedByMinimization += statesRemoved;
+	}
+	
+	public void reportAbstractionSize(int size, int iteration) {
+		if(size > m_BiggestAbstraction.getSize()) {
+			m_BiggestAbstraction = CegarLoopBenchmarkType.getInstance().new SizeIterationPair(size, iteration);
+		}
+	}
+
+	@Override
+	public Object getValue(String name) {
+		switch (name) {
+		case CegarLoopBenchmarkType.s_OverallTime:
+		case CegarLoopBenchmarkType.s_AutomataDifference:
+		case CegarLoopBenchmarkType.s_DeadEndRemovalTime:
+		case CegarLoopBenchmarkType.s_AutomataMinimizationTime:
+		case CegarLoopBenchmarkType.s_HoareAnnotationTime:
+		case CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime:
+			try {
+				return getElapsedTime(name);
+			} catch (StopwatchStillRunningException e) {
+				throw new AssertionError("clock still running: " + name);
+			}
+		case CegarLoopBenchmarkType.s_EdgeCheckerData:
+			return m_EcData;
+		case CegarLoopBenchmarkType.s_StatesRemovedByMinimization:
+			return m_StatesRemovedByMinimization;
+		case CegarLoopBenchmarkType.s_OverallIterations:
+			return m_Iterations;
+		case CegarLoopBenchmarkType.s_BiggestAbstraction:
+			return m_BiggestAbstraction;
+		default:
+			throw new AssertionError("unknown data");
+		}
+	}
+
+	@Override
+	public IBenchmarkType getBenchmarkType() {
+		return CegarLoopBenchmarkType.getInstance();
+	}
+
+	@Override
+	public String[] getStopwatches() {
+		return new String[] { CegarLoopBenchmarkType.s_OverallTime, 
+				CegarLoopBenchmarkType.s_AutomataDifference, 
+				CegarLoopBenchmarkType.s_DeadEndRemovalTime, 
+				CegarLoopBenchmarkType.s_AutomataMinimizationTime, 
+				CegarLoopBenchmarkType.s_HoareAnnotationTime,
+				CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime};
+	}
+	
+	
+
+}

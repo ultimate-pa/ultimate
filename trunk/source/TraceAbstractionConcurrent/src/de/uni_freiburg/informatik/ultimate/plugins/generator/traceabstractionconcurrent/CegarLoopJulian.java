@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.RunAnalyzer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
@@ -77,7 +78,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	
 	@Override
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
-		m_TraceAbstractionBenchmarks.startBasicInterpolantAutomaton();
+		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 
 			InterpolantAutomataBuilder iab = new InterpolantAutomataBuilder(
 						m_Counterexample,
@@ -89,7 +90,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 				m_Abstraction, m_Abstraction.getStateFactory());
 			s_Logger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 			
-		m_TraceAbstractionBenchmarks.finishBasicInterpolantAutomaton();		
+			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);	
 		assert(accepts(m_InterpolAutomaton, m_Counterexample.getWord())) :
 			"Interpolant automaton broken!";
 		assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
@@ -165,11 +166,12 @@ public class CegarLoopJulian extends BasicCegarLoop {
 						abstraction, 
 						(NestedWordAutomaton<CodeBlock, IPredicate>) dia)).getResult(); 
 
-		if (m_BiggestAbstractionSize < m_Abstraction.size()){
-			m_BiggestAbstractionSize = m_Abstraction.size();
-			m_BiggestAbstractionTransitions = abstraction.getTransitions().size();
-			m_BiggestAbstractionIteration = m_Iteration;
-		}
+		m_CegarLoopBenchmark.reportAbstractionSize(m_Abstraction.size(), m_Iteration);
+//		if (m_BiggestAbstractionSize < m_Abstraction.size()){
+//			m_BiggestAbstractionSize = m_Abstraction.size();
+//			m_BiggestAbstractionTransitions = abstraction.getTransitions().size();
+//			m_BiggestAbstractionIteration = m_Iteration;
+//		}
 
 
 		assert(!acceptsPetriViaFA(m_Abstraction, m_Counterexample.getWord())) : "Intersection broken!";

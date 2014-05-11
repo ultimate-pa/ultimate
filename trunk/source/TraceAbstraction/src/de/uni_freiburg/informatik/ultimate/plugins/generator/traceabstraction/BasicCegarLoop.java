@@ -82,9 +82,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final boolean m_ComputeHoareAnnotation;
 	
 	private TraceCheckerBenchmark m_TraceCheckerBenchmark;
-
-
-	
 	
 	public BasicCegarLoop(String name, RootNode rootNode,
 			SmtManager smtManager,
@@ -108,6 +105,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				super.m_SmtManager,
 				m_Pref);
 		m_PredicateFactoryResultChecking = new PredicateFactoryResultChecking(smtManager);
+		m_CegarLoopBenchmark = new CegarLoopBenchmarkGenerator();
+		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_OverallTime);
 	}
 	
 	
@@ -204,29 +203,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			m_TraceChecker.computeInterpolants(allInt, predicateUnifier, m_Interpolation);
 		}
 		m_TraceAbstractionBenchmarks.finishTraceCheck();
-		if (feasibility == LBool.UNSAT) {
-			// interpolants are only in case of an infeasible trace computed
-//			switch (m_Interpolation) {
-//			case ForwardPredicates:
-//				m_TraceAbstractionBenchmarks.addSizeOfPredicatesFP(m_TraceChecker.getSizeOfPredicates(m_Interpolation));
-//				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesFP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesFP());
-//				m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(m_Interpolation));
-//				break;
-//			case BackwardPredicates:
-//				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesBP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesBP());
-//				m_TraceAbstractionBenchmarks.addSizeOfPredicatesBP(m_TraceChecker.getSizeOfPredicates(m_Interpolation));
-//				m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(m_Interpolation));
-//				break;
-//			case FPandBP:
-//				m_TraceAbstractionBenchmarks.addTotalNumberOfPredicates(m_TraceChecker.getTotalNumberOfPredicates(INTERPOLATION.ForwardPredicates));
-//				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesFP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesFP());
-//				m_TraceAbstractionBenchmarks.addNumberOfQuantifiedPredicatesBP(((TraceCheckerSpWp)m_TraceChecker).getNumberOfQuantifiedPredicatesBP());
-//				m_TraceAbstractionBenchmarks.addSizeOfPredicatesFP(m_TraceChecker.getSizeOfPredicates(INTERPOLATION.ForwardPredicates));
-//				m_TraceAbstractionBenchmarks.addSizeOfPredicatesBP(m_TraceChecker.getSizeOfPredicates(INTERPOLATION.BackwardPredicates));
-//			}
-		} else {
-			m_TraceAbstractionBenchmarks.setCounterExampleFeasible();
-		}
 		
 		if (m_TraceCheckerBenchmark == null) {
 			m_TraceCheckerBenchmark = m_TraceChecker.getTraceCheckerBenchmark();
@@ -244,7 +220,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	@Override
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
-		m_TraceAbstractionBenchmarks.startBasicInterpolantAutomaton();
+		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 		if (m_Pref.interpolantAutomaton() == InterpolantAutomaton.TWOTRACK) {
 			TwoTrackInterpolantAutomatonBuilder ttiab = 
 					new TwoTrackInterpolantAutomatonBuilder(m_Counterexample,m_SmtManager, m_TraceChecker,
@@ -261,7 +237,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				m_Abstraction, m_Abstraction.getStateFactory());
 			s_Logger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 		}
-		m_TraceAbstractionBenchmarks.finishBasicInterpolantAutomaton();		
+		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 		assert(accepts(m_InterpolAutomaton, m_Counterexample.getWord())) :
 			"Interpolant automaton broken!";
 		assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
@@ -277,7 +253,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_StateFactoryForRefinement.setIteration(super.m_Iteration);
 //		howDifferentAreInterpolants(m_InterpolAutomaton.getStates());
 		
-		m_TraceAbstractionBenchmarks.startDifference();
+		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AutomataDifference);
 		boolean explointSigmaStarConcatOfIA = !m_ComputeHoareAnnotation;
 		
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldAbstraction = 
@@ -287,236 +263,244 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		EdgeChecker edgeChecker = new EdgeChecker(m_SmtManager, 
 				m_RootNode.getRootAnnot().getModGlobVarManager(),
 				m_TraceChecker.getPredicateUnifier().getCoverageRelation());
-		if (differenceInsteadOfIntersection) {
-			s_Logger.debug("Start constructing difference");
-			assert(oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());
-			
-			IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
-			
-			switch (m_Pref.determinization()) {
-			case POWERSET:
-				PowersetDeterminizer<CodeBlock, IPredicate> psd = 
-					new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolAutomaton, true, m_PredicateFactoryInterpolantAutomata);
-				if (m_Pref.differenceSenwa()) {
-					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
-								oldAbstraction, m_InterpolAutomaton, psd, false);
-				} else {
-					diff = new Difference<CodeBlock, IPredicate>(
-							oldAbstraction, m_InterpolAutomaton, psd, 
-							m_StateFactoryForRefinement,
-							explointSigmaStarConcatOfIA);
-				}
-			break;
-			case BESTAPPROXIMATION:	
-				BestApproximationDeterminizer bed = 
-					new BestApproximationDeterminizer(m_SmtManager,	m_Pref, 
-											m_InterpolAutomaton, m_PredicateFactoryInterpolantAutomata);
-				diff = new Difference<CodeBlock, IPredicate>(
-							oldAbstraction, m_InterpolAutomaton, bed,
-							m_StateFactoryForRefinement,
-							explointSigmaStarConcatOfIA);
+		try {
+			if (differenceInsteadOfIntersection) {
+				s_Logger.debug("Start constructing difference");
+				assert(oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());
 				
-				s_Logger.info("Internal Transitions: " 
-						+ bed.m_AnswerInternalAutomaton + " answers given by automaton "
-						+ bed.m_AnswerInternalCache	+ " answers given by cache "
-						+ bed.m_AnswerInternalSolver + " answers given by solver");
-				s_Logger.info("Call Transitions: " 
-						+ bed.m_AnswerCallAutomaton	+ " answers given by automaton "
-						+ bed.m_AnswerCallCache + " answers given by cache "
-						+ bed.m_AnswerCallSolver + " answers given by solver");
-				s_Logger.info("Return Transitions: "
-						+ bed.m_AnswerReturnAutomaton + " answers given by automaton "
-						+ bed.m_AnswerReturnCache + " answers given by cache "
-						+ bed.m_AnswerReturnSolver + " answers given by solver");
-			break;
-			
-			case EAGERPOST:	
-				PostDeterminizer epd = new PostDeterminizer(edgeChecker, m_ComputeHoareAnnotation, 
-									m_InterpolAutomaton,true, m_PredicateFactoryInterpolantAutomata);
-				if (m_Pref.differenceSenwa()) {
-					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
-							oldAbstraction, m_InterpolAutomaton, epd, false);
-				} else {
-					diff = new Difference<CodeBlock, IPredicate>(
-							oldAbstraction, m_InterpolAutomaton, epd, 
-							m_StateFactoryForRefinement,
-							explointSigmaStarConcatOfIA);
-				}
-					s_Logger.info("Internal Transitions: " 
-							+ epd.m_AnswerInternalAutomaton + " answers given by automaton " 
-							+ epd.m_AnswerInternalCache + " answers given by cache " 
-							+ epd.m_AnswerInternalSolver + " answers given by solver");
-					s_Logger.info("Call Transitions: " 
-							+ epd.m_AnswerCallAutomaton + " answers given by automaton " 
-							+ epd.m_AnswerCallCache + " answers given by cache " 
-							+ epd.m_AnswerCallSolver + " answers given by solver");
-					s_Logger.info("Return Transitions: " 
-							+ epd.m_AnswerReturnAutomaton + " answers given by automaton " 
-							+ epd.m_AnswerReturnCache + " answers given by cache " 
-							+ epd.m_AnswerReturnSolver + " answers given by solver");
-				assert m_SmtManager.isIdle();
-				assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
-				// do the following check only to obtain logger messages of checkInductivity
-				assert (m_SmtManager.checkInductivity(epd.getRejectionCache(), true, false) | true);
-			break;
-			
-			case LAZYPOST:	
-				PostDeterminizer lpd = new PostDeterminizer(edgeChecker,	m_ComputeHoareAnnotation, 
-									m_InterpolAutomaton,false, m_PredicateFactoryInterpolantAutomata);
-				if (m_Pref.differenceSenwa()) {
-					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
-							oldAbstraction, m_InterpolAutomaton, lpd, false);
-				} else {
-					diff = new Difference<CodeBlock, IPredicate>(
-							oldAbstraction, m_InterpolAutomaton, lpd, 
-							m_StateFactoryForRefinement,
-							explointSigmaStarConcatOfIA);
-				}
+				IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 				
-					s_Logger.info("Internal Transitions: " 
-							+ lpd.m_AnswerInternalAutomaton + " answers given by automaton " 
-							+ lpd.m_AnswerInternalCache + " answers given by cache " 
-							+ lpd.m_AnswerInternalSolver + " answers given by solver");
-					s_Logger.info("Call Transitions: " 
-							+ lpd.m_AnswerCallAutomaton+ " answers given by automaton " 
-							+ lpd.m_AnswerCallCache+ " answers given by cache " 
-							+ lpd.m_AnswerCallSolver+ " answers given by solver");
-					s_Logger.info("Return Transitions: " 
-							+ lpd.m_AnswerReturnAutomaton + " answers given by automaton " 
-							+ lpd.m_AnswerReturnCache+ " answers given by cache " 
-							+ lpd.m_AnswerReturnSolver+ " answers given by solver");
-				assert m_SmtManager.isIdle();
-				assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
-				// do the following check only to obtain logger messages of checkInductivity
-				assert (m_SmtManager.checkInductivity(lpd.getRejectionCache(), true, false) | true);
-			break;
-			
-			case SELFLOOP:
-				SelfloopDeterminizer sed = new SelfloopDeterminizer(
-						m_SmtManager, m_Pref, m_InterpolAutomaton, m_PredicateFactoryInterpolantAutomata);
-				if (m_Pref.differenceSenwa()) {
-					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
-							oldAbstraction, m_InterpolAutomaton, sed, false);
-				} else {
-					diff = new Difference<CodeBlock, IPredicate>(
-							oldAbstraction, m_InterpolAutomaton, sed, 
-							m_StateFactoryForRefinement,
-							explointSigmaStarConcatOfIA);
-				}
-				s_Logger.info("Internal Selfloops: "+ sed.m_InternalSelfloop 
-						+ " Internal NonSelfloops " + sed.m_InternalNonSelfloop);
-				s_Logger.info("Call Selfloops: " + sed.m_CallSelfloop 
-						+ " Call NonSelfloops "+ sed.m_CallNonSelfloop);
-				s_Logger.info("Return Selfloops: " + sed.m_ReturnSelfloop 
-						+ " Return NonSelfloops "+ sed.m_ReturnNonSelfloop);
-			break;
-			case STRONGESTPOST:
-				StrongestPostDeterminizer spd = new StrongestPostDeterminizer(
-						edgeChecker, m_Pref, m_InterpolAutomaton, m_PredicateFactoryInterpolantAutomata);
-				if (m_Pref.differenceSenwa()) {
-					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
-							oldAbstraction, m_InterpolAutomaton, spd, false);
-				} else {
-					diff = new Difference<CodeBlock, IPredicate>(
-							oldAbstraction, m_InterpolAutomaton, spd, 
-							m_StateFactoryForRefinement,
-							explointSigmaStarConcatOfIA);
-				}
-			break;
-			case NEWEAGER:
-				if (m_Pref.differenceSenwa()) {
-					throw new UnsupportedOperationException();
-				} else {
-					EagerInterpolantAutomaton determinized = 
-							new EagerInterpolantAutomaton(edgeChecker, m_InterpolAutomaton);
-					PowersetDeterminizer<CodeBlock, IPredicate> psd2 = 
-							new PowersetDeterminizer<CodeBlock, IPredicate>(determinized, true, m_PredicateFactoryInterpolantAutomata);
-					diff = new Difference<CodeBlock, IPredicate>(
-							oldAbstraction, determinized, psd2, 
-							m_StateFactoryForRefinement,
-							explointSigmaStarConcatOfIA);
-					determinized.finishConstruction();
-					assert(edgeChecker.isAssertionStackEmpty());
-				}
+				switch (m_Pref.determinization()) {
+				case POWERSET:
+					PowersetDeterminizer<CodeBlock, IPredicate> psd = 
+						new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolAutomaton, true, m_PredicateFactoryInterpolantAutomata);
+					if (m_Pref.differenceSenwa()) {
+						diff = new DifferenceSenwa<CodeBlock, IPredicate>(
+									oldAbstraction, m_InterpolAutomaton, psd, false);
+					} else {
+						diff = new Difference<CodeBlock, IPredicate>(
+								oldAbstraction, m_InterpolAutomaton, psd, 
+								m_StateFactoryForRefinement,
+								explointSigmaStarConcatOfIA);
+					}
 				break;
-			case CODENAME_PROJECT_BELLWALD:
-				if (m_Pref.differenceSenwa()) {
-					throw new UnsupportedOperationException();
-				} else {
-					DeterministicInterpolantAutomaton determinized = 
-							new DeterministicInterpolantAutomaton(m_SmtManager, edgeChecker, oldAbstraction, m_InterpolAutomaton, m_TraceChecker);
-//					ComplementDeterministicNwa<CodeBlock, IPredicate> cdnwa = new ComplementDeterministicNwa<>(dia);
-					PowersetDeterminizer<CodeBlock, IPredicate> psd2 = 
-							new PowersetDeterminizer<CodeBlock, IPredicate>(determinized, true, m_PredicateFactoryInterpolantAutomata);
+				case BESTAPPROXIMATION:	
+					BestApproximationDeterminizer bed = 
+						new BestApproximationDeterminizer(m_SmtManager,	m_Pref, 
+												m_InterpolAutomaton, m_PredicateFactoryInterpolantAutomata);
 					diff = new Difference<CodeBlock, IPredicate>(
-							oldAbstraction, determinized, psd2, 
-							m_StateFactoryForRefinement,
-							explointSigmaStarConcatOfIA);
-					determinized.finishConstruction();
-					assert(edgeChecker.isAssertionStackEmpty());
-					INestedWordAutomaton<CodeBlock, IPredicate> test = 
-							(new RemoveUnreachable<CodeBlock, IPredicate>(determinized)).getResult();
+								oldAbstraction, m_InterpolAutomaton, bed,
+								m_StateFactoryForRefinement,
+								explointSigmaStarConcatOfIA);
+					
+					s_Logger.info("Internal Transitions: " 
+							+ bed.m_AnswerInternalAutomaton + " answers given by automaton "
+							+ bed.m_AnswerInternalCache	+ " answers given by cache "
+							+ bed.m_AnswerInternalSolver + " answers given by solver");
+					s_Logger.info("Call Transitions: " 
+							+ bed.m_AnswerCallAutomaton	+ " answers given by automaton "
+							+ bed.m_AnswerCallCache + " answers given by cache "
+							+ bed.m_AnswerCallSolver + " answers given by solver");
+					s_Logger.info("Return Transitions: "
+							+ bed.m_AnswerReturnAutomaton + " answers given by automaton "
+							+ bed.m_AnswerReturnCache + " answers given by cache "
+							+ bed.m_AnswerReturnSolver + " answers given by solver");
+				break;
+				
+				case EAGERPOST:	
+					PostDeterminizer epd = new PostDeterminizer(edgeChecker, m_ComputeHoareAnnotation, 
+										m_InterpolAutomaton,true, m_PredicateFactoryInterpolantAutomata);
+					if (m_Pref.differenceSenwa()) {
+						diff = new DifferenceSenwa<CodeBlock, IPredicate>(
+								oldAbstraction, m_InterpolAutomaton, epd, false);
+					} else {
+						diff = new Difference<CodeBlock, IPredicate>(
+								oldAbstraction, m_InterpolAutomaton, epd, 
+								m_StateFactoryForRefinement,
+								explointSigmaStarConcatOfIA);
+					}
+						s_Logger.info("Internal Transitions: " 
+								+ epd.m_AnswerInternalAutomaton + " answers given by automaton " 
+								+ epd.m_AnswerInternalCache + " answers given by cache " 
+								+ epd.m_AnswerInternalSolver + " answers given by solver");
+						s_Logger.info("Call Transitions: " 
+								+ epd.m_AnswerCallAutomaton + " answers given by automaton " 
+								+ epd.m_AnswerCallCache + " answers given by cache " 
+								+ epd.m_AnswerCallSolver + " answers given by solver");
+						s_Logger.info("Return Transitions: " 
+								+ epd.m_AnswerReturnAutomaton + " answers given by automaton " 
+								+ epd.m_AnswerReturnCache + " answers given by cache " 
+								+ epd.m_AnswerReturnSolver + " answers given by solver");
+					assert m_SmtManager.isIdle();
+					assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
+					// do the following check only to obtain logger messages of checkInductivity
+					assert (m_SmtManager.checkInductivity(epd.getRejectionCache(), true, false) | true);
+				break;
+				
+				case LAZYPOST:	
+					PostDeterminizer lpd = new PostDeterminizer(edgeChecker,	m_ComputeHoareAnnotation, 
+										m_InterpolAutomaton,false, m_PredicateFactoryInterpolantAutomata);
+					if (m_Pref.differenceSenwa()) {
+						diff = new DifferenceSenwa<CodeBlock, IPredicate>(
+								oldAbstraction, m_InterpolAutomaton, lpd, false);
+					} else {
+						diff = new Difference<CodeBlock, IPredicate>(
+								oldAbstraction, m_InterpolAutomaton, lpd, 
+								m_StateFactoryForRefinement,
+								explointSigmaStarConcatOfIA);
+					}
+					
+						s_Logger.info("Internal Transitions: " 
+								+ lpd.m_AnswerInternalAutomaton + " answers given by automaton " 
+								+ lpd.m_AnswerInternalCache + " answers given by cache " 
+								+ lpd.m_AnswerInternalSolver + " answers given by solver");
+						s_Logger.info("Call Transitions: " 
+								+ lpd.m_AnswerCallAutomaton+ " answers given by automaton " 
+								+ lpd.m_AnswerCallCache+ " answers given by cache " 
+								+ lpd.m_AnswerCallSolver+ " answers given by solver");
+						s_Logger.info("Return Transitions: " 
+								+ lpd.m_AnswerReturnAutomaton + " answers given by automaton " 
+								+ lpd.m_AnswerReturnCache+ " answers given by cache " 
+								+ lpd.m_AnswerReturnSolver+ " answers given by solver");
+					assert m_SmtManager.isIdle();
+					assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
+					// do the following check only to obtain logger messages of checkInductivity
+					assert (m_SmtManager.checkInductivity(lpd.getRejectionCache(), true, false) | true);
+				break;
+				
+				case SELFLOOP:
+					SelfloopDeterminizer sed = new SelfloopDeterminizer(
+							m_SmtManager, m_Pref, m_InterpolAutomaton, m_PredicateFactoryInterpolantAutomata);
+					if (m_Pref.differenceSenwa()) {
+						diff = new DifferenceSenwa<CodeBlock, IPredicate>(
+								oldAbstraction, m_InterpolAutomaton, sed, false);
+					} else {
+						diff = new Difference<CodeBlock, IPredicate>(
+								oldAbstraction, m_InterpolAutomaton, sed, 
+								m_StateFactoryForRefinement,
+								explointSigmaStarConcatOfIA);
+					}
+					s_Logger.info("Internal Selfloops: "+ sed.m_InternalSelfloop 
+							+ " Internal NonSelfloops " + sed.m_InternalNonSelfloop);
+					s_Logger.info("Call Selfloops: " + sed.m_CallSelfloop 
+							+ " Call NonSelfloops "+ sed.m_CallNonSelfloop);
+					s_Logger.info("Return Selfloops: " + sed.m_ReturnSelfloop 
+							+ " Return NonSelfloops "+ sed.m_ReturnNonSelfloop);
+				break;
+				case STRONGESTPOST:
+					StrongestPostDeterminizer spd = new StrongestPostDeterminizer(
+							edgeChecker, m_Pref, m_InterpolAutomaton, m_PredicateFactoryInterpolantAutomata);
+					if (m_Pref.differenceSenwa()) {
+						diff = new DifferenceSenwa<CodeBlock, IPredicate>(
+								oldAbstraction, m_InterpolAutomaton, spd, false);
+					} else {
+						diff = new Difference<CodeBlock, IPredicate>(
+								oldAbstraction, m_InterpolAutomaton, spd, 
+								m_StateFactoryForRefinement,
+								explointSigmaStarConcatOfIA);
+					}
+				break;
+				case NEWEAGER:
+					if (m_Pref.differenceSenwa()) {
+						throw new UnsupportedOperationException();
+					} else {
+						EagerInterpolantAutomaton determinized = 
+								new EagerInterpolantAutomaton(edgeChecker, m_InterpolAutomaton);
+						PowersetDeterminizer<CodeBlock, IPredicate> psd2 = 
+								new PowersetDeterminizer<CodeBlock, IPredicate>(determinized, true, m_PredicateFactoryInterpolantAutomata);
+						diff = new Difference<CodeBlock, IPredicate>(
+								oldAbstraction, determinized, psd2, 
+								m_StateFactoryForRefinement,
+								explointSigmaStarConcatOfIA);
+						determinized.finishConstruction();
+						assert(edgeChecker.isAssertionStackEmpty());
+					}
+					break;
+				case CODENAME_PROJECT_BELLWALD:
+					if (m_Pref.differenceSenwa()) {
+						throw new UnsupportedOperationException();
+					} else {
+						DeterministicInterpolantAutomaton determinized = 
+								new DeterministicInterpolantAutomaton(m_SmtManager, edgeChecker, oldAbstraction, m_InterpolAutomaton, m_TraceChecker);
+//					ComplementDeterministicNwa<CodeBlock, IPredicate> cdnwa = new ComplementDeterministicNwa<>(dia);
+						PowersetDeterminizer<CodeBlock, IPredicate> psd2 = 
+								new PowersetDeterminizer<CodeBlock, IPredicate>(determinized, true, m_PredicateFactoryInterpolantAutomata);
+						diff = new Difference<CodeBlock, IPredicate>(
+								oldAbstraction, determinized, psd2, 
+								m_StateFactoryForRefinement,
+								explointSigmaStarConcatOfIA);
+						determinized.finishConstruction();
+						assert(edgeChecker.isAssertionStackEmpty());
+						INestedWordAutomaton<CodeBlock, IPredicate> test = 
+								(new RemoveUnreachable<CodeBlock, IPredicate>(determinized)).getResult();
 //					boolean ctxAccepted = (new Accepts<CodeBlock, IPredicate>(
 //							(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) test, 
 //							(NestedWord<CodeBlock>) m_Counterexample.getWord())).getResult();
 //					if (!ctxAccepted) {
 //						throw new AssertionError("counterexample not accepted by interpolant automaton");
 //					}
-					assert (m_SmtManager.checkInductivity(test, false, true));
+						assert (m_SmtManager.checkInductivity(test, false, true));
+					}
+					break;
+				default:
+					throw new UnsupportedOperationException();
 				}
-				break;
-			default:
-				throw new UnsupportedOperationException();
-			}
-			if (m_RemoveDeadEnds) {
-				if (m_ComputeHoareAnnotation) {
-					Difference<CodeBlock, IPredicate> difference = (Difference<CodeBlock, IPredicate>) diff;
-					m_Haf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
+				if (m_RemoveDeadEnds) {
+					if (m_ComputeHoareAnnotation) {
+						Difference<CodeBlock, IPredicate> difference = (Difference<CodeBlock, IPredicate>) diff;
+						m_Haf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
+					}
+					diff.removeDeadEnds();
+					if (m_ComputeHoareAnnotation) {
+						m_Haf.addDeadEndDoubleDeckers(diff);
+					}
 				}
-				diff.removeDeadEnds();
-				if (m_ComputeHoareAnnotation) {
-					m_Haf.addDeadEndDoubleDeckers(diff);
+					
+					
+				m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) diff.getResult();
+//				m_DeadEndRemovalTime = diff.getDeadEndRemovalTime();
+				if (m_Pref.dumpAutomata()) {
+					String filename = "InterpolantAutomaton_Iteration" + m_Iteration; 
+					super.writeAutomatonToFile(m_InterpolAutomaton, filename);
 				}
 			}
-				
-				
-			m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) diff.getResult();
-			m_DeadEndRemovalTime = diff.getDeadEndRemovalTime();
-			if (m_Pref.dumpAutomata()) {
-				String filename = "InterpolantAutomaton_Iteration" + m_Iteration; 
-				super.writeAutomatonToFile(m_InterpolAutomaton, filename);
-			}
-		}
-		else {//complement and intersection instead of difference
+			else {//complement and intersection instead of difference
 
-			INestedWordAutomatonOldApi<CodeBlock, IPredicate> dia = 
-											determinizeInterpolantAutomaton();			
+				INestedWordAutomatonOldApi<CodeBlock, IPredicate> dia = 
+												determinizeInterpolantAutomaton();			
 
-			s_Logger.debug("Start complementation");
-			INestedWordAutomatonOldApi<CodeBlock, IPredicate> nia = 
-				(new ComplementDD<CodeBlock, IPredicate>(m_PredicateFactoryInterpolantAutomata, dia)).getResult();
-			assert(!accepts(nia,m_Counterexample.getWord()));
-			s_Logger.info("Complemented interpolant automaton has "+nia.size() +" states");
-			
-			if (m_Iteration <= m_Pref.watchIteration() && m_Pref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
-				m_ArtifactAutomaton = nia;
+				s_Logger.debug("Start complementation");
+				INestedWordAutomatonOldApi<CodeBlock, IPredicate> nia = 
+					(new ComplementDD<CodeBlock, IPredicate>(m_PredicateFactoryInterpolantAutomata, dia)).getResult();
+				assert(!accepts(nia,m_Counterexample.getWord()));
+				s_Logger.info("Complemented interpolant automaton has "+nia.size() +" states");
+				
+				if (m_Iteration <= m_Pref.watchIteration() && m_Pref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
+					m_ArtifactAutomaton = nia;
+				}
+				assert(oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());
+				s_Logger.debug("Start intersection");
+				IntersectDD<CodeBlock, IPredicate> intersect =
+						new IntersectDD<CodeBlock, IPredicate>(
+								false, oldAbstraction, nia);
+				if (m_RemoveDeadEnds && m_ComputeHoareAnnotation) {
+					throw new AssertionError("not supported any more");
+					//m_Haf.wipeReplacedContexts();
+					//m_Haf.addDeadEndDoubleDeckers(intersect);
+				}
+				if (m_RemoveDeadEnds) {
+					intersect.removeDeadEnds();
+				}
+				m_Abstraction = intersect.getResult(); 
 			}
-			assert(oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());
-			s_Logger.debug("Start intersection");
-			IntersectDD<CodeBlock, IPredicate> intersect =
-					new IntersectDD<CodeBlock, IPredicate>(
-							false, oldAbstraction, nia);
-			if (m_RemoveDeadEnds && m_ComputeHoareAnnotation) {
-				throw new AssertionError("not supported any more");
-				//m_Haf.wipeReplacedContexts();
-				//m_Haf.addDeadEndDoubleDeckers(intersect);
-			}
-			if (m_RemoveDeadEnds) {
-				intersect.removeDeadEnds();
-			}
-			m_Abstraction = intersect.getResult(); 
+		} finally {
+			m_CegarLoopBenchmark.addEdgeCheckerData(edgeChecker.getEdgeCheckerBenchmark());
+			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AutomataDifference);
 		}
-		m_TraceAbstractionBenchmarks.getEdgeCheckerBenchmarkAggregate().add(edgeChecker.getEdgeCheckerBenchmark());
+		
+		
+		
+		
 		
 //		if(m_RemoveDeadEnds && m_ComputeHoareAnnotation) {
 //			m_Haf.wipeReplacedContexts();
@@ -525,7 +509,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 //		}
 
 //		(new RemoveDeadEnds<CodeBlock, IPredicate>((INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction)).getResult();
-		m_TraceAbstractionBenchmarks.finishDifference();
+		
 		
 		Minimization minimization = m_Pref.minimize();
 		switch (minimization) {
@@ -577,7 +561,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			String filename = "AbstractionBeforeMinimization_Iteration" + m_Iteration; 
 			super.writeAutomatonToFile(m_Abstraction, filename);
 		}
-		m_TraceAbstractionBenchmarks.startAutomataMinimization();
+		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AutomataMinimizationTime);
 		long startTime = System.currentTimeMillis();
 		int oldSize = m_Abstraction.size();
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
@@ -613,12 +597,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		int newSize = minimized.size();
 		m_Abstraction = minimized;
-		m_MinimizationTime += (System.currentTimeMillis() - startTime);
 		if (oldSize != 0 && oldSize < newSize) {
 			throw new AssertionError("Minimization increased state space");
 		}
-		m_StatesRemovedByMinimization += (oldSize - newSize);
-		m_TraceAbstractionBenchmarks.finishAutomataMinimization();
+		m_CegarLoopBenchmark.announceStatesRemovedByMinimization(oldSize - newSize);
+		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AutomataMinimizationTime);
 	}
 	
 	
@@ -847,6 +830,17 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	public TraceCheckerBenchmark getTraceCheckerBenchmark() {
 		return m_TraceCheckerBenchmark;
 	}
+
+
+
+
+
+
+	public CegarLoopBenchmarkGenerator getCegarLoopBenchmark() {
+		return m_CegarLoopBenchmark;
+	}
+	
+	
 	
 	
 

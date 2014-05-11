@@ -139,8 +139,6 @@ public abstract class AbstractCegarLoop {
 	
 	
 	// used for the collection of statistics
-	public int m_BiggestAbstractionIteration = 0;
-	public int m_BiggestAbstractionSize = 0;
 	public int m_InitialAbstractionSize = 0;
 	public int m_NumberOfErrorLocations = 0;
 	
@@ -150,9 +148,8 @@ public abstract class AbstractCegarLoop {
 	protected PrintWriter m_IterationPW;
 	protected final Labeling m_PrintAutomataLabeling = Labeling.TOSTRING;
 
-	public long m_DeadEndRemovalTime;
-	public long m_MinimizationTime;
-	public int m_StatesRemovedByMinimization;
+
+	protected CegarLoopBenchmarkGenerator m_CegarLoopBenchmark;
 
 	
 	
@@ -299,7 +296,7 @@ public abstract class AbstractCegarLoop {
 			writeAutomatonToFile(m_Abstraction, filename);
 		}
 		m_InitialAbstractionSize = m_Abstraction.size();
-		m_BiggestAbstractionSize = m_Abstraction.size();
+		m_CegarLoopBenchmark.reportAbstractionSize(m_Abstraction.size(), m_Iteration);
 		m_NumberOfErrorLocations = m_ErrorLocs.size();
 		
 		
@@ -386,12 +383,7 @@ public abstract class AbstractCegarLoop {
 				writeAutomatonToFile(m_Abstraction, filename);
 			}
 			
-			if (m_BiggestAbstractionSize < m_Abstraction.size()){
-				m_BiggestAbstractionSize = m_Abstraction.size();
-				m_BiggestAbstractionIteration = m_Iteration;
-			}
-			
-			
+			m_CegarLoopBenchmark.reportAbstractionSize(m_Abstraction.size(), m_Iteration);
 			
 			
 			
