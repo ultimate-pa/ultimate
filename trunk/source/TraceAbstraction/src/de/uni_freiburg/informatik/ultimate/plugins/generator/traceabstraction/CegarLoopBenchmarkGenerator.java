@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.be
 public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatches implements IBenchmarkDataProvider {
 	
 	private final BenchmarkData m_EcData = new BenchmarkData();
+	private final BenchmarkData m_TcData = new BenchmarkData();
 	private int m_StatesRemovedByMinimization = 0;
 	private int m_Iterations = 0;
 	private SizeIterationPair m_BiggestAbstraction = CegarLoopBenchmarkType.getInstance().new SizeIterationPair(-1, -1);
@@ -18,8 +19,12 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 		return CegarLoopBenchmarkType.getInstance().getKeys();
 	}
 	
-	public void addEdgeCheckerData(IBenchmarkDataProvider ecbg) {
-		m_EcData.aggregateBenchmarkData(ecbg);
+	public void addEdgeCheckerData(IBenchmarkDataProvider ecbd) {
+		m_EcData.aggregateBenchmarkData(ecbd);
+	}
+	
+	public void addTraceCheckerData(IBenchmarkDataProvider tcbd) {
+		m_TcData.aggregateBenchmarkData(tcbd);
 	}
 	
 	public void announceStatesRemovedByMinimization(int statesRemoved) {
@@ -48,6 +53,8 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 			}
 		case CegarLoopBenchmarkType.s_EdgeCheckerData:
 			return m_EcData;
+		case CegarLoopBenchmarkType.s_TraceCheckerBenchmark:
+			return m_TcData;
 		case CegarLoopBenchmarkType.s_StatesRemovedByMinimization:
 			return m_StatesRemovedByMinimization;
 		case CegarLoopBenchmarkType.s_OverallIterations:

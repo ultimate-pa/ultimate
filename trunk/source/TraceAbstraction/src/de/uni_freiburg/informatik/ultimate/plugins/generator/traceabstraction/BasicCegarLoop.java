@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.In
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.SelfloopDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.StrongestPostDeterminizer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -50,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 
 /**
@@ -80,8 +80,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final INTERPOLATION m_Interpolation;
 	
 	protected final boolean m_ComputeHoareAnnotation;
-	
-	private TraceCheckerBenchmark m_TraceCheckerBenchmark;
 	
 	public BasicCegarLoop(String name, RootNode rootNode,
 			SmtManager smtManager,
@@ -204,12 +202,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		m_TraceAbstractionBenchmarks.finishTraceCheck();
 		
-		if (m_TraceCheckerBenchmark == null) {
-			m_TraceCheckerBenchmark = m_TraceChecker.getTraceCheckerBenchmark();
-		} else {
-			m_TraceCheckerBenchmark = m_TraceCheckerBenchmark.copyAndAdd(m_TraceChecker.getTraceCheckerBenchmark());
-		}
-		
+		m_CegarLoopBenchmark.addTraceCheckerData(m_TraceChecker.getTraceCheckerBenchmark());
+//		m_TraceCheckerBenchmark.aggregateBenchmarkData(m_TraceChecker.getTraceCheckerBenchmark());
 		
 		return feasibility;
 	}
@@ -824,16 +818,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			Word<CodeBlock> word) throws OperationCanceledException {
 		return (new Accepts<CodeBlock, IPredicate>(nia, NestedWord.nestedWord(word), false, false)).getResult();
 	}
-
-
-
-	public TraceCheckerBenchmark getTraceCheckerBenchmark() {
-		return m_TraceCheckerBenchmark;
-	}
-
-
-
-
 
 
 	public CegarLoopBenchmarkGenerator getCegarLoopBenchmark() {

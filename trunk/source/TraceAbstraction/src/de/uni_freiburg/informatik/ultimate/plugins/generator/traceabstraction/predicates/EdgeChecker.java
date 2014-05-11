@@ -1190,7 +1190,7 @@ public class EdgeChecker {
 		@Override
 		public String prettyprintBenchmarkData(BenchmarkData benchmarkData) {
 			StringBuilder sb = new StringBuilder();
-			sb.append("EdgeCheckerBenchmark: EdgeChecker queries: ");
+			sb.append("EdgeChecker queries: ");
 			sb.append(benchmarkData.getValue(s_SdCounter) + " trivial, ");
 			sb.append(benchmarkData.getValue(s_SdLazyCounter) + " lazy, ");
 			sb.append(benchmarkData.getValue(s_SolverCounterSat) + " nontrivialSat,");
@@ -1260,8 +1260,8 @@ public class EdgeChecker {
 		public Iterable<String> getKeys() {
 			return EdgeCheckerBenchmarkType.getInstance().getKeys();
 		}
-		public Object getValue(String name) {
-			switch (name) {
+		public Object getValue(String key) {
+			switch (key) {
 			case EdgeCheckerBenchmarkType.s_SdCounter:
 				return m_SdCounter;
 			case EdgeCheckerBenchmarkType.s_SdLazyCounter:
@@ -1275,7 +1275,7 @@ public class EdgeChecker {
 			case EdgeCheckerBenchmarkType.s_EdgeCheckerTime:
 				return getEdgeCheckerTime();
 			default:
-				throw new AssertionError("unknown counter");
+				throw new AssertionError("unknown key");
 			}
 		}
 

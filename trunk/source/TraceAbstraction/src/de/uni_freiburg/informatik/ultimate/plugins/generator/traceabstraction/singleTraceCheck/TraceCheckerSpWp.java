@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +24,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.BasicPredicateExplicitQuantifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -66,8 +70,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 	private boolean m_ComputeInterpolantsBp;
 	private boolean m_ComputeInterpolantsWp;
 	
-	private TraceCheckerBenchmarkSpWp m_TraceCheckerBenchmarkSpWp;
-	
 	private static final boolean s_TransformToCNF = true;
 	
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
@@ -78,10 +80,16 @@ public class TraceCheckerSpWp extends TraceChecker {
 	}
 	
 	
+	@Override
+	protected TraceCheckerBenchmarkGenerator getBenchmarkGenerator() {
+		return new TraceCheckerBenchmarkSpWpGenerator();
+	}
+
 
 	@Override
 	public void computeInterpolants(Set<Integer> interpolatedPositions, 
 			PredicateUnifier predicateUnifier, INTERPOLATION interpolation) {
+		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_InterpolantComputation);
 		switch (interpolation) {
 			case ForwardPredicates:
 				m_ComputeInterpolantsSp = true;
@@ -106,6 +114,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 		m_PredicateUnifier = predicateUnifier;
 		computeInterpolantsUsingUnsatCore(interpolatedPositions);
+		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_InterpolantComputation);
 		m_TraceCheckFinished = true;
 	}
 	
@@ -364,8 +373,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 			assert checkInterpolantsCorrectBackwards(m_InterpolantsBp, trace, tracePrecondition,
 					tracePostcondition, "BP") : "invalid Hoare triple in BP";
 		}
-		
-		m_TraceCheckerBenchmarkSpWp = new TraceCheckerBenchmarkSpWp(numberOfQuantifiedPredicates, sizeOfPredicatesFP, sizeOfPredicatesBP);
+
+		((TraceCheckerBenchmarkSpWpGenerator) super.m_TraceCheckerBenchmarkGenerator).setPredicateData(numberOfQuantifiedPredicates, sizeOfPredicatesFP, sizeOfPredicatesBP);
 		
 		if (m_LogInformation) {
 			s_Logger.debug("Length of trace:" + trace.length());
@@ -829,88 +838,235 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 
-	public static class TraceCheckerBenchmarkSpWp extends TraceCheckerBenchmark {
+//	public class TraceCheckerBenchmarkSpWp extends TraceCheckerBenchmark {
+//		// m_NumberOfQuantifierFreePredicates[0] : #quantified predicates of SP
+//		// m_NumberOfQuantifierFreePredicates[1] : #quantified predicates of FP
+//		// m_NumberOfQuantifierFreePredicates[2] : #quantified predicates of WP
+//		// m_NumberOfQuantifierFreePredicates[3] : #quantified predicates of BP
+//		private final int[] m_NumberOfQuantifiedPredicates;
+//		// m_NumberOfQuantifierFreePredicates[0] : Sum of the DAG-Size of  predicates computed via FP
+//		// m_NumberOfQuantifierFreePredicates[1] : Sum of the DAG-Size of  predicates computed via BP
+//		private final int[] m_SizeOfPredicates; 
+//		
+//		
+//
+//		public TraceCheckerBenchmarkSpWp(int[] numberOfQuantifiedPredicates,
+//				int[] sizeOfPredicatesFP, int[] sizeOfPredicatesBP) {
+//			m_NumberOfQuantifiedPredicates = numberOfQuantifiedPredicates;
+//			m_SizeOfPredicates = new int[2];
+//			if (sizeOfPredicatesFP != null) {
+//				m_SizeOfPredicates[0] = getSumOfIntArray(sizeOfPredicatesFP);
+//			}
+//			if (sizeOfPredicatesBP != null) { 
+//				m_SizeOfPredicates[1] = getSumOfIntArray(sizeOfPredicatesBP);
+//			}
+//		}
+//		
+//		public TraceCheckerBenchmarkSpWp(int[] numberOfQuantifiedPredicates,
+//				int[] sizeOfPredicates) {
+//			m_NumberOfQuantifiedPredicates = numberOfQuantifiedPredicates;
+//			m_SizeOfPredicates = sizeOfPredicates;
+//		}
+//
+//
+//
+//		@Override
+//		public TraceCheckerBenchmarkSpWp copyAndAdd(TraceCheckerBenchmark traceCheckerBenchmark) {
+//			if (traceCheckerBenchmark instanceof TraceCheckerBenchmarkSpWp) {
+//				int[] numberOfQuantifiedPredicates = null;
+//				int[] sizeOfPredicates = null;
+//				TraceCheckerBenchmarkSpWp tcbswpwp = (TraceCheckerBenchmarkSpWp) traceCheckerBenchmark;
+//				if (m_NumberOfQuantifiedPredicates != null && tcbswpwp.getNumberOfQuantifiedPredicates() != null && 
+//						m_NumberOfQuantifiedPredicates.length == tcbswpwp.getNumberOfQuantifiedPredicates().length) {
+//					numberOfQuantifiedPredicates = new int[m_NumberOfQuantifiedPredicates.length];
+//					for (int i = 0; i < m_NumberOfQuantifiedPredicates.length; i++) {
+//						numberOfQuantifiedPredicates[i] = m_NumberOfQuantifiedPredicates[i] + tcbswpwp.getNumberOfQuantifiedPredicates()[i];
+//					}
+//				}
+//				assert(m_SizeOfPredicates != null);
+//				assert(tcbswpwp.getSizeOfPredicates() != null);
+//				assert(m_SizeOfPredicates.length == tcbswpwp.getSizeOfPredicates().length);
+//				sizeOfPredicates = new int[m_SizeOfPredicates.length];
+//				sizeOfPredicates[0] = m_SizeOfPredicates[0] + tcbswpwp.getSizeOfPredicates()[0];
+//				sizeOfPredicates[1] = m_SizeOfPredicates[1] + tcbswpwp.getSizeOfPredicates()[1];
+//				return new TraceCheckerBenchmarkSpWp(numberOfQuantifiedPredicates, sizeOfPredicates);
+//			} else {
+//				throw new UnsupportedOperationException("Can't add data from a non-TraceCheckerBenchmarkSpWp object to this object.");
+//			}
+//		}
+//		
+//		public int[] getSizeOfPredicates() {
+//			return m_SizeOfPredicates;
+//		}
+//		
+//		public int[] getNumberOfQuantifiedPredicates() {
+//			return m_NumberOfQuantifiedPredicates;
+//		}
+//		
+//		public String toString() {
+//			StringBuilder sb  = new StringBuilder();
+//			if (m_NumberOfQuantifiedPredicates != null) {
+//				if (m_NumberOfQuantifiedPredicates[1] > 0) {
+//					sb.append("\tNum of quantified predicates FP: " + m_NumberOfQuantifiedPredicates[1]);
+//				}
+//				if (m_NumberOfQuantifiedPredicates[3] > 0) {
+//					sb.append("\tNum of quantified predicates BP: " + m_NumberOfQuantifiedPredicates[3]);
+//				}
+//			}
+//			if (m_SizeOfPredicates != null) {
+//				sb.append("\tSize of predicates FP: " + m_SizeOfPredicates[0]);
+//				sb.append("\tSize of predicates BP: " + m_SizeOfPredicates[1]);
+//			}
+//			return sb.toString();
+//		}
+//
+//		
+//		private int getSumOfIntArray(int[] arr) {
+//			int sum = 0; 
+//			for (int i = 0; i < arr.length; i++) {
+//				sum += arr[i];
+//			}
+//			return sum;
+//		}
+//	}
+	
+	
+
+//	@Override
+//	public void computeRcfgProgramExecution() {
+//		m_TraceCheckerBenchmarkSpWp = new TraceCheckerBenchmarkSpWp(new int[4], new int[4], new int[4]);
+//		super.computeRcfgProgramExecution();
+//	}
+//	
+//	@Override
+//	public void finishTraceCheckWithoutInterpolantsOrProgramExecution() {
+//		m_TraceCheckerBenchmarkSpWp = new TraceCheckerBenchmarkSpWp(new int[4], new int[4], new int[4]);
+//		super.finishTraceCheckWithoutInterpolantsOrProgramExecution();
+//	}
+//
+//
+//
+//	@Override
+//	public TraceCheckerBenchmark getTraceCheckerBenchmark() {
+//		if (m_TraceCheckFinished) {
+//			return m_TraceCheckerBenchmarkSpWp;
+//		} else {
+//			throw new AssertionError("Benchmark is only available after the trace check is finished.");
+//		}
+//	}
+	
+	public static class TraceCheckerSpWpBenchmarkType extends TraceCheckerBenchmarkType implements IBenchmarkType {
+
+		private static TraceCheckerSpWpBenchmarkType s_Instance = new TraceCheckerSpWpBenchmarkType();
+
+		protected final static String s_SizeOfPredicates = "SizeOfPredicates";
+		protected final static String s_NumberOfQuantifiedPredicates = "NumberOfQuantifiedPredicates";
+		
+		public static TraceCheckerSpWpBenchmarkType getInstance() {
+			return s_Instance;
+		}
+		@Override
+		public Iterable<String> getKeys() {
+			ArrayList<String> result = new ArrayList<String>();
+			for (String key : super.getKeys()) {
+				result.add(key);
+			}
+			result.add(s_SizeOfPredicates);
+			result.add(s_NumberOfQuantifiedPredicates);
+			return result;
+		}
+
+		@Override
+		public Object aggregate(String key, Object value1, Object value2) {
+			switch (key) {
+			case s_NumberOfQuantifiedPredicates:
+			{
+				int[] array1 = (int[]) value1;
+				int[] array2 = (int[]) value2;
+				assert array1.length == 4;
+				assert array2.length == 4;
+				int[] result = new int[4];
+				for (int i=0; i<4; i++) {
+					result[i] = array1[i] + array1[i];
+				}
+				return result;
+			}
+			case s_SizeOfPredicates:
+				int[] array1 = (int[]) value1;
+				int[] array2 = (int[]) value2;
+				assert array1.length == 2;
+				assert array2.length == 2;
+				int[] result = new int[2];
+				for (int i=0; i<2; i++) {
+					result[i] = array1[i] + array1[i];
+				}
+				return result;
+			default:
+				return super.aggregate(key, value1, value2);
+			}
+		}
+		
+		@Override
+		public String prettyprintBenchmarkData(BenchmarkData benchmarkData) {
+			StringBuilder sb  = new StringBuilder();
+			sb.append(super.prettyprintBenchmarkData(benchmarkData));
+			sb.append("\t");
+			int[] numberOfQuantifiedPredicates = (int[]) benchmarkData.getValue(s_NumberOfQuantifiedPredicates);
+			assert numberOfQuantifiedPredicates.length == 4;
+			if (numberOfQuantifiedPredicates[1] > 0) {
+				sb.append("Num of quantified predicates FP: " + numberOfQuantifiedPredicates[1]);
+				sb.append(" ");
+				}
+			if (numberOfQuantifiedPredicates[3] > 0) {
+				sb.append("Num of quantified predicates BP: " + numberOfQuantifiedPredicates[3]);
+				sb.append(" ");
+			}
+			int[] sizeOfPredicates = (int[]) benchmarkData.getValue(s_SizeOfPredicates);
+			assert sizeOfPredicates.length == 2;
+			sb.append("Size of predicates FP: " + sizeOfPredicates[0] + " ");
+			sb.append("Size of predicates BP: " + sizeOfPredicates[1] + " ");
+			return sb.toString();
+		}
+	}
+	
+	
+	/**
+	 * Stores benchmark data about the usage of TraceCheckers. E.g., number and
+	 * size of predicates obtained via interpolation.
+	 * 
+	 * @author Matthias Heizmann
+	 */
+	public class TraceCheckerBenchmarkSpWpGenerator extends TraceCheckerBenchmarkGenerator implements IBenchmarkDataProvider {
 		// m_NumberOfQuantifierFreePredicates[0] : #quantified predicates of SP
 		// m_NumberOfQuantifierFreePredicates[1] : #quantified predicates of FP
 		// m_NumberOfQuantifierFreePredicates[2] : #quantified predicates of WP
 		// m_NumberOfQuantifierFreePredicates[3] : #quantified predicates of BP
-		private final int[] m_NumberOfQuantifiedPredicates;
+		private int[] m_NumberOfQuantifiedPredicates;
 		// m_NumberOfQuantifierFreePredicates[0] : Sum of the DAG-Size of  predicates computed via FP
 		// m_NumberOfQuantifierFreePredicates[1] : Sum of the DAG-Size of  predicates computed via BP
-		private final int[] m_SizeOfPredicates; 
+		private int[] m_SizeOfPredicates; 
 		
-		
+		@Override
+		public String[] getStopwatches() {
+			return super.getStopwatches();
+		}
 
-		public TraceCheckerBenchmarkSpWp(int[] numberOfQuantifiedPredicates,
+		public void setPredicateData(int[] numberOfQuantifiedPredicates,
 				int[] sizeOfPredicatesFP, int[] sizeOfPredicatesBP) {
+			assert numberOfQuantifiedPredicates != null;
 			m_NumberOfQuantifiedPredicates = numberOfQuantifiedPredicates;
 			m_SizeOfPredicates = new int[2];
 			if (sizeOfPredicatesFP != null) {
 				m_SizeOfPredicates[0] = getSumOfIntArray(sizeOfPredicatesFP);
+			} else {
+				m_SizeOfPredicates[0] = 0;
 			}
 			if (sizeOfPredicatesBP != null) { 
 				m_SizeOfPredicates[1] = getSumOfIntArray(sizeOfPredicatesBP);
-			}
-		}
-		
-		public TraceCheckerBenchmarkSpWp(int[] numberOfQuantifiedPredicates,
-				int[] sizeOfPredicates) {
-			m_NumberOfQuantifiedPredicates = numberOfQuantifiedPredicates;
-			m_SizeOfPredicates = sizeOfPredicates;
-		}
-
-
-
-		@Override
-		public TraceCheckerBenchmarkSpWp copyAndAdd(TraceCheckerBenchmark traceCheckerBenchmark) {
-			if (traceCheckerBenchmark instanceof TraceCheckerBenchmarkSpWp) {
-				int[] numberOfQuantifiedPredicates = null;
-				int[] sizeOfPredicates = null;
-				TraceCheckerBenchmarkSpWp tcbswpwp = (TraceCheckerBenchmarkSpWp) traceCheckerBenchmark;
-				if (m_NumberOfQuantifiedPredicates != null && tcbswpwp.getNumberOfQuantifiedPredicates() != null && 
-						m_NumberOfQuantifiedPredicates.length == tcbswpwp.getNumberOfQuantifiedPredicates().length) {
-					numberOfQuantifiedPredicates = new int[m_NumberOfQuantifiedPredicates.length];
-					for (int i = 0; i < m_NumberOfQuantifiedPredicates.length; i++) {
-						numberOfQuantifiedPredicates[i] = m_NumberOfQuantifiedPredicates[i] + tcbswpwp.getNumberOfQuantifiedPredicates()[i];
-					}
-				}
-				assert(m_SizeOfPredicates != null);
-				assert(tcbswpwp.getSizeOfPredicates() != null);
-				assert(m_SizeOfPredicates.length == tcbswpwp.getSizeOfPredicates().length);
-				sizeOfPredicates = new int[m_SizeOfPredicates.length];
-				sizeOfPredicates[0] = m_SizeOfPredicates[0] + tcbswpwp.getSizeOfPredicates()[0];
-				sizeOfPredicates[1] = m_SizeOfPredicates[1] + tcbswpwp.getSizeOfPredicates()[1];
-				return new TraceCheckerBenchmarkSpWp(numberOfQuantifiedPredicates, sizeOfPredicates);
 			} else {
-				throw new UnsupportedOperationException("Can't add data from a non-TraceCheckerBenchmarkSpWp object to this object.");
+				m_SizeOfPredicates[1] = 0;
 			}
 		}
-		
-		public int[] getSizeOfPredicates() {
-			return m_SizeOfPredicates;
-		}
-		
-		public int[] getNumberOfQuantifiedPredicates() {
-			return m_NumberOfQuantifiedPredicates;
-		}
-		
-		public String toString() {
-			StringBuilder sb  = new StringBuilder();
-			if (m_NumberOfQuantifiedPredicates != null) {
-				if (m_NumberOfQuantifiedPredicates[1] > 0) {
-					sb.append("\tNum of quantified predicates FP: " + m_NumberOfQuantifiedPredicates[1]);
-				}
-				if (m_NumberOfQuantifiedPredicates[3] > 0) {
-					sb.append("\tNum of quantified predicates BP: " + m_NumberOfQuantifiedPredicates[3]);
-				}
-			}
-			if (m_SizeOfPredicates != null) {
-				sb.append("\tSize of predicates FP: " + m_SizeOfPredicates[0]);
-				sb.append("\tSize of predicates BP: " + m_SizeOfPredicates[1]);
-			}
-			return sb.toString();
-		}
-
 		
 		private int getSumOfIntArray(int[] arr) {
 			int sum = 0; 
@@ -919,30 +1075,27 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 			return sum;
 		}
-	}
-	
-	
 
-	@Override
-	public void computeRcfgProgramExecution() {
-		m_TraceCheckerBenchmarkSpWp = new TraceCheckerBenchmarkSpWp(new int[4], new int[4], new int[4]);
-		super.computeRcfgProgramExecution();
-	}
-	
-	@Override
-	public void finishTraceCheckWithoutInterpolantsOrProgramExecution() {
-		m_TraceCheckerBenchmarkSpWp = new TraceCheckerBenchmarkSpWp(new int[4], new int[4], new int[4]);
-		super.finishTraceCheckWithoutInterpolantsOrProgramExecution();
-	}
+		@Override
+		public Iterable<String> getKeys() {
+			return TraceCheckerSpWpBenchmarkType.getInstance().getKeys();
+		}
 
+		@Override
+		public Object getValue(String key) {
+			switch (key) {
+			case TraceCheckerSpWpBenchmarkType.s_NumberOfQuantifiedPredicates:
+				return m_NumberOfQuantifiedPredicates;
+			case TraceCheckerSpWpBenchmarkType.s_SizeOfPredicates:
+				return m_SizeOfPredicates;
+			default:
+				return super.getValue(key);
+			}
+		}
 
-
-	@Override
-	public TraceCheckerBenchmark getTraceCheckerBenchmark() {
-		if (m_TraceCheckFinished) {
-			return m_TraceCheckerBenchmarkSpWp;
-		} else {
-			throw new AssertionError("Benchmark is only available after the trace check is finished.");
+		@Override
+		public TraceCheckerSpWpBenchmarkType getBenchmarkType() {
+			return TraceCheckerSpWpBenchmarkType.getInstance();
 		}
 	}
 

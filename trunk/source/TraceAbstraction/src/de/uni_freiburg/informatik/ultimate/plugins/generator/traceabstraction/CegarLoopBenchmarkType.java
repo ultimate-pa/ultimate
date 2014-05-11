@@ -18,6 +18,7 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 	public static final String s_StatesRemovedByMinimization = "States removed by minization";
 	public static final String s_BasicInterpolantAutomatonTime = "BasicInterpolantAutomatonTime";
 	public static final String s_BiggestAbstraction = "BiggestAbstraction";
+	public static final String s_TraceCheckerBenchmark = "TraceCheckerBenchmark";
 	
 	private static final CegarLoopBenchmarkType s_Instance = new CegarLoopBenchmarkType();
 
@@ -31,6 +32,7 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 				s_BasicInterpolantAutomatonTime, s_BiggestAbstraction }));
 		nameList.add(s_EdgeCheckerData);
 		nameList.add(s_StatesRemovedByMinimization);
+		nameList.add(s_TraceCheckerBenchmark);
 		return nameList;
 	}
 	
@@ -47,10 +49,11 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 			Long time2 = (Long) data2;
 			return time1 + time2;
 		case s_EdgeCheckerData:
-			BenchmarkData ecData1 = (BenchmarkData) data1;
-			BenchmarkData ecData2 = (BenchmarkData) data2;
-			ecData1.aggregateBenchmarkData(ecData2);
-			return ecData1;
+		case s_TraceCheckerBenchmark:
+			BenchmarkData bmData1 = (BenchmarkData) data1;
+			BenchmarkData bmData2 = (BenchmarkData) data2;
+			bmData1.aggregateBenchmarkData(bmData2);
+			return bmData1;
 		case s_StatesRemovedByMinimization:
 		case s_OverallIterations:
 			Integer number1 = (Integer) data1;
@@ -93,12 +96,20 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 		sb.append(sip.getSize());
 		sb.append(" states and ocurred in iteration ");
 		sb.append(sip.getIteration());
-		sb.append(". ");
+		sb.append(".\t");
 		
 		sb.append(s_EdgeCheckerData);
+		sb.append(": ");
 		BenchmarkData ecData = 
 				(BenchmarkData) benchmarkData.getValue(s_EdgeCheckerData);
 		sb.append(ecData);
+		sb.append("\t");
+		
+		sb.append(s_TraceCheckerBenchmark);
+		sb.append(": ");
+		BenchmarkData tcData = 
+				(BenchmarkData) benchmarkData.getValue(s_TraceCheckerBenchmark);
+		sb.append(tcData);
 		return sb.toString();
 	}
 	

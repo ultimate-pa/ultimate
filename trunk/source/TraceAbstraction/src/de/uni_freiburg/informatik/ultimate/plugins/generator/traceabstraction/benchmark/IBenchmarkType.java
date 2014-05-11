@@ -15,7 +15,7 @@ public interface IBenchmarkType {
 	
 	Iterable<String> getKeys();
 	
-	Object aggregate(String name, Object data1, Object data2);
+	Object aggregate(String key, Object value1, Object value2);
 
 	String prettyprintBenchmarkData(BenchmarkData benchmarkData);
 

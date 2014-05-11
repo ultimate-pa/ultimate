@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,7 +12,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
@@ -32,6 +32,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkGeneratorWithStopwatches;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -39,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
-import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 
 
 /**
@@ -154,7 +157,7 @@ public class TraceChecker {
 	
 	protected final PredicateTransformer m_PredicateTransformer;
 	
-	protected final TraceCheckerBenchmark m_TraceCheckerBenchmark;
+	protected final TraceCheckerBenchmarkGenerator m_TraceCheckerBenchmarkGenerator;
 	
 	
 	/**
@@ -182,8 +185,12 @@ public class TraceChecker {
 		m_DefaultTransFormulas = new DefaultTransFormulas(m_Trace, 
 				m_Precondition, m_Postcondition, m_PendingContexts, 
 				m_ModifiedGlobals, false);
-		m_TraceCheckerBenchmark = new TraceCheckerBenchmark();
+		m_TraceCheckerBenchmarkGenerator = getBenchmarkGenerator();
 		m_IsSafe = checkTrace();
+	}
+
+	protected TraceCheckerBenchmarkGenerator getBenchmarkGenerator() {
+		return new TraceCheckerBenchmarkGenerator();
 	}
 	
 	/**
@@ -205,7 +212,7 @@ public class TraceChecker {
 		m_PredicateTransformer = new PredicateTransformer(m_SmtManager, modifiedGlobals);
 		m_PendingContexts = pendingContexts;
 		m_DefaultTransFormulas = defaultTransFormulas;
-		m_TraceCheckerBenchmark = new TraceCheckerBenchmark();
+		m_TraceCheckerBenchmarkGenerator = getBenchmarkGenerator();
 		m_IsSafe = checkTrace();
 	}
 	
@@ -244,13 +251,13 @@ public class TraceChecker {
 		LBool isSafe;
 		m_SmtManager.startTraceCheck();
 		
-		m_TraceCheckerBenchmark.startSsaConstruction();
+		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SsaConstruction);
 		m_Nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, 
 				m_DefaultTransFormulas);
 		NestedFormulas<Term, Term> ssa = m_Nsb.getSsa();
-		m_TraceCheckerBenchmark.finishSsaConstruction();
+		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SsaConstruction);
 		
-		m_TraceCheckerBenchmark.startSatisfiabilityAnalysis();
+		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis);
 		try {
 			m_AAA = getAnnotateAndAsserter(ssa);
 			m_AAA.buildAnnotatedSsaAndAssertTerms();
@@ -263,7 +270,7 @@ public class TraceChecker {
 				throw e;
 			}
 		} finally {
-			m_TraceCheckerBenchmark.finishSatisfiabilityAnalysis();
+			m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis);
 		}
 		return isSafe;
 	}
@@ -449,7 +456,7 @@ public class TraceChecker {
 	public void computeInterpolants(Set<Integer> interpolatedPositions,
 										PredicateUnifier predicateUnifier, 
 										INTERPOLATION interpolation) {
-		m_TraceCheckerBenchmark.startInterpolantComputation();
+		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_InterpolantComputation);
 		assert m_PredicateUnifier == null;
 		m_PredicateUnifier = predicateUnifier;
 		assert predicateUnifier.isRepresentative(m_Precondition);
@@ -469,7 +476,7 @@ public class TraceChecker {
 		}
 		m_TraceCheckFinished = true;
 
-		m_TraceCheckerBenchmark.finishInterpolantComputation();
+		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_InterpolantComputation);
 		//TODO: remove this if relevant variables are definitely correct.
 		assert testRelevantVars() : "bug in relevant varialbes";
 	}
@@ -891,111 +898,114 @@ public class TraceChecker {
 	}
 	
 	/**
+	 * Defines benchmark for measuring data about the usage of TraceCheckers. 
+	 * E.g., number and size of predicates obtained via interpolation.
+	 * @author Matthias Heizmann
+	 *
+	 */
+	public static class TraceCheckerBenchmarkType implements IBenchmarkType {
+
+		private static TraceCheckerBenchmarkType s_Instance = new TraceCheckerBenchmarkType();
+
+		protected final static String s_SsaConstruction = "SsaConstructionTime";
+		protected final static String s_SatisfiabilityAnalysis = "SatisfiabilityAnalysisTime";
+		protected final static String s_InterpolantComputation = "InterpolantComputationTime";
+		
+		public static TraceCheckerBenchmarkType getInstance() {
+			return s_Instance;
+		}
+		@Override
+		public Iterable<String> getKeys() {
+			return Arrays.asList(new String[] { 
+					s_SsaConstruction, s_SatisfiabilityAnalysis, 
+					s_InterpolantComputation });
+		}
+
+		@Override
+		public Object aggregate(String key, Object value1, Object value2) {
+			switch (key) {
+			case s_SsaConstruction:
+			case s_SatisfiabilityAnalysis:
+			case s_InterpolantComputation: 
+				Long time1 = (Long) value1;
+				Long time2 = (Long) value2;
+				return time1 + time2;
+			default:
+				throw new AssertionError("unknown key");
+			}
+		}
+
+		@Override
+		public String prettyprintBenchmarkData(BenchmarkData benchmarkData) {
+			StringBuilder sb = new StringBuilder();
+			sb.append(s_SsaConstruction);
+			sb.append(": ");
+			Long ssaConstructionTime = (Long) benchmarkData.getValue(s_SsaConstruction);
+			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(
+					ssaConstructionTime));
+			sb.append(" ");
+			sb.append(s_SatisfiabilityAnalysis);
+			sb.append(": ");
+			Long satisfiabilityAnalysisTime = (Long) benchmarkData.getValue(s_SatisfiabilityAnalysis);
+			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(
+					satisfiabilityAnalysisTime));
+			sb.append(" ");
+			sb.append(s_InterpolantComputation);
+			sb.append(": ");
+			Long interpolantComputationTime = (Long) benchmarkData.getValue(s_InterpolantComputation);
+			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(
+					interpolantComputationTime));
+			return sb.toString();
+		}
+	}
+	
+	/**
 	 * Stores benchmark data about the usage of TraceCheckers. E.g., number and
 	 * size of predicates obtained via interpolation.
 	 * 
 	 * @author Matthias Heizmann
 	 */
-	public static class TraceCheckerBenchmark {
+	public class TraceCheckerBenchmarkGenerator extends 
+			BenchmarkGeneratorWithStopwatches implements IBenchmarkDataProvider {
 		
-		protected final Benchmark m_Benchmark;
-		protected final static String m_SsaConstruction = "SSA construction time";
-		protected double m_SsaConstructionTime;
-		protected final static String m_SatisfiabilityAnalysis = "Satisfiability analysis time";
-		protected double m_SatisfiabilityAnalysisTime;
-		protected final static String m_InterpolantComputation = "Interpolant computation time";
-		protected double m_InterpolantComputationTime;
-		
-		TraceCheckerBenchmark() {
-			m_Benchmark = new Benchmark();
-			m_Benchmark.register(m_SsaConstruction);
-			m_Benchmark.register(m_SatisfiabilityAnalysis);
-			m_Benchmark.register(m_InterpolantComputation);
-		}
-		
-		TraceCheckerBenchmark(TraceCheckerBenchmark tcb1, TraceCheckerBenchmark tcb2) {
-			m_Benchmark = new Benchmark();
-			/*write data to field from both objects*/
-		}
-		
-		public void startSsaConstruction() {
-			m_Benchmark.start(m_SsaConstruction);
-		}
-		
-		public void finishSsaConstruction() {
-			m_Benchmark.stop(m_SsaConstruction);
-			m_SsaConstructionTime = m_Benchmark.getElapsedTime(
-					m_SsaConstruction, TimeUnit.NANOSECONDS);
-		}
-		
-		public void startSatisfiabilityAnalysis() {
-			m_Benchmark.start(m_SatisfiabilityAnalysis);
-		}
-		
-		public void finishSatisfiabilityAnalysis() {
-			m_Benchmark.stop(m_SatisfiabilityAnalysis);
-			m_SatisfiabilityAnalysisTime = m_Benchmark.getElapsedTime(
-					m_SatisfiabilityAnalysis, TimeUnit.NANOSECONDS);
-		}
-		
-		public void startInterpolantComputation() {
-			m_Benchmark.start(m_InterpolantComputation);
-		}
-		
-		public void finishInterpolantComputation() {
-			m_Benchmark.stop(m_InterpolantComputation);
-			m_InterpolantComputationTime = m_Benchmark.getElapsedTime(
-					m_InterpolantComputation, TimeUnit.NANOSECONDS);
-		}
-		
-		public double getSsaConstructionTime() {
-			return m_SsaConstructionTime;
-		}
-
-		public double getSatisfiabilityAnalysisTime() {
-			return m_SatisfiabilityAnalysisTime;
-		}
-
-		public double getInterpolantComputationTime() {
-			return m_InterpolantComputationTime;
-		}
-
-		/**
-		 * Returns a new TraceCheckerBenchmark that contains the accumulated
-		 * benchmark data of this object and the input to this method.
-		 */
-		public TraceCheckerBenchmark copyAndAdd(TraceCheckerBenchmark traceCheckerBenchmark) {
-			return new TraceCheckerBenchmark(this, traceCheckerBenchmark);
+		@Override
+		public String[] getStopwatches() {
+			return new String[] { TraceCheckerBenchmarkType.s_SsaConstruction, 
+					TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis, 
+					TraceCheckerBenchmarkType.s_InterpolantComputation };
 		}
 
 		@Override
-		public String toString() {
-			StringBuilder sb = new StringBuilder();
-			sb.append(m_SsaConstruction);
-			sb.append(": ");
-			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(
-					(long) getSsaConstructionTime()));
-			sb.append(m_SatisfiabilityAnalysisTime);
-			sb.append(" ");
-			sb.append(": ");
-			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(
-					(long) getSatisfiabilityAnalysisTime()));
-			sb.append(m_InterpolantComputationTime);
-			sb.append(" ");
-			sb.append(": ");
-			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(
-					(long) getInterpolantComputationTime()));
-			sb.append(" ");
-			return sb.toString();
+		public Iterable<String> getKeys() {
+			return TraceCheckerBenchmarkType.getInstance().getKeys();
 		}
-		
-		
+
+		@Override
+		public Object getValue(String key) {
+			switch (key) {
+			case TraceCheckerBenchmarkType.s_SsaConstruction:
+			case TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis:
+			case TraceCheckerBenchmarkType.s_InterpolantComputation:
+				try {
+					return getElapsedTime(key);
+				} catch (StopwatchStillRunningException e) {
+					throw new AssertionError("clock still running: " + key);
+				}
+			default:
+				throw new AssertionError("unknown data");
+			}
+		}
+
+		@Override
+		public IBenchmarkType getBenchmarkType() {
+			return TraceCheckerBenchmarkType.getInstance();
+		}
 	}
 	
 	
-	public TraceCheckerBenchmark getTraceCheckerBenchmark() {
+	public TraceCheckerBenchmarkGenerator getTraceCheckerBenchmark() {
 		if (m_TraceCheckFinished) {
-			return new TraceCheckerBenchmark();
+			return m_TraceCheckerBenchmarkGenerator;
 		} else {
 			throw new AssertionError("Benchmark is only available after the trace check is finished.");
 		}

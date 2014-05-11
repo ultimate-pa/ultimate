@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmark;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
@@ -17,7 +16,6 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 	private long traceCheckInterpolationStartTime = 0;
 	
 	
-	private TraceCheckerBenchmark m_TraceCheckerBenchmark;
 	private BenchmarkData m_CegarLoopBenchmarkData;
 	
 	
@@ -74,19 +72,8 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 	}
 	
 	
-	public String printTraceCheckerBenchmark() {
-//		assert m_Finished : "finish trace abstraction first";
-		if (m_TraceCheckerBenchmark == null) {
-			return "no TraceCheckerBenchmark available";
-		} else {
-			return m_TraceCheckerBenchmark.toString();
-		}
-	}
-	
-	
-	
 	public String printBenchmarkResults() {
-		return timingResults() + " " + printTraceCheckerBenchmark() + " " + m_CegarLoopBenchmarkData.toString();
+		return timingResults() + " " + " " + m_CegarLoopBenchmarkData.toString();
 	}
 	
 //	public void setCounterExampleFeasible() {
@@ -104,7 +91,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 	
 	@Override
 	public String toString() {
-		return timingResults() + "\n\t\t" + printTraceCheckerBenchmark() + "\n\t\t" + m_CegarLoopBenchmarkData.toString();
+		return timingResults() + "\n\t\t" + "\n\t\t" + m_CegarLoopBenchmarkData.toString();
 	}
 
 //	public void addTotalNumberOfPredicates(Integer totalNumberOfPredicates) {
@@ -115,12 +102,6 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 //			m_totalNumberOfPredicates.add(totalNumberOfPredicates);
 //		}
 //	}
-
-
-
-	public void setTraceCheckerBenchmarks(TraceCheckerBenchmark tcb) {
-		m_TraceCheckerBenchmark = tcb;
-	}
 
 
 
