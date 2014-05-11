@@ -838,122 +838,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 
-//	public class TraceCheckerBenchmarkSpWp extends TraceCheckerBenchmark {
-//		// m_NumberOfQuantifierFreePredicates[0] : #quantified predicates of SP
-//		// m_NumberOfQuantifierFreePredicates[1] : #quantified predicates of FP
-//		// m_NumberOfQuantifierFreePredicates[2] : #quantified predicates of WP
-//		// m_NumberOfQuantifierFreePredicates[3] : #quantified predicates of BP
-//		private final int[] m_NumberOfQuantifiedPredicates;
-//		// m_NumberOfQuantifierFreePredicates[0] : Sum of the DAG-Size of  predicates computed via FP
-//		// m_NumberOfQuantifierFreePredicates[1] : Sum of the DAG-Size of  predicates computed via BP
-//		private final int[] m_SizeOfPredicates; 
-//		
-//		
-//
-//		public TraceCheckerBenchmarkSpWp(int[] numberOfQuantifiedPredicates,
-//				int[] sizeOfPredicatesFP, int[] sizeOfPredicatesBP) {
-//			m_NumberOfQuantifiedPredicates = numberOfQuantifiedPredicates;
-//			m_SizeOfPredicates = new int[2];
-//			if (sizeOfPredicatesFP != null) {
-//				m_SizeOfPredicates[0] = getSumOfIntArray(sizeOfPredicatesFP);
-//			}
-//			if (sizeOfPredicatesBP != null) { 
-//				m_SizeOfPredicates[1] = getSumOfIntArray(sizeOfPredicatesBP);
-//			}
-//		}
-//		
-//		public TraceCheckerBenchmarkSpWp(int[] numberOfQuantifiedPredicates,
-//				int[] sizeOfPredicates) {
-//			m_NumberOfQuantifiedPredicates = numberOfQuantifiedPredicates;
-//			m_SizeOfPredicates = sizeOfPredicates;
-//		}
-//
-//
-//
-//		@Override
-//		public TraceCheckerBenchmarkSpWp copyAndAdd(TraceCheckerBenchmark traceCheckerBenchmark) {
-//			if (traceCheckerBenchmark instanceof TraceCheckerBenchmarkSpWp) {
-//				int[] numberOfQuantifiedPredicates = null;
-//				int[] sizeOfPredicates = null;
-//				TraceCheckerBenchmarkSpWp tcbswpwp = (TraceCheckerBenchmarkSpWp) traceCheckerBenchmark;
-//				if (m_NumberOfQuantifiedPredicates != null && tcbswpwp.getNumberOfQuantifiedPredicates() != null && 
-//						m_NumberOfQuantifiedPredicates.length == tcbswpwp.getNumberOfQuantifiedPredicates().length) {
-//					numberOfQuantifiedPredicates = new int[m_NumberOfQuantifiedPredicates.length];
-//					for (int i = 0; i < m_NumberOfQuantifiedPredicates.length; i++) {
-//						numberOfQuantifiedPredicates[i] = m_NumberOfQuantifiedPredicates[i] + tcbswpwp.getNumberOfQuantifiedPredicates()[i];
-//					}
-//				}
-//				assert(m_SizeOfPredicates != null);
-//				assert(tcbswpwp.getSizeOfPredicates() != null);
-//				assert(m_SizeOfPredicates.length == tcbswpwp.getSizeOfPredicates().length);
-//				sizeOfPredicates = new int[m_SizeOfPredicates.length];
-//				sizeOfPredicates[0] = m_SizeOfPredicates[0] + tcbswpwp.getSizeOfPredicates()[0];
-//				sizeOfPredicates[1] = m_SizeOfPredicates[1] + tcbswpwp.getSizeOfPredicates()[1];
-//				return new TraceCheckerBenchmarkSpWp(numberOfQuantifiedPredicates, sizeOfPredicates);
-//			} else {
-//				throw new UnsupportedOperationException("Can't add data from a non-TraceCheckerBenchmarkSpWp object to this object.");
-//			}
-//		}
-//		
-//		public int[] getSizeOfPredicates() {
-//			return m_SizeOfPredicates;
-//		}
-//		
-//		public int[] getNumberOfQuantifiedPredicates() {
-//			return m_NumberOfQuantifiedPredicates;
-//		}
-//		
-//		public String toString() {
-//			StringBuilder sb  = new StringBuilder();
-//			if (m_NumberOfQuantifiedPredicates != null) {
-//				if (m_NumberOfQuantifiedPredicates[1] > 0) {
-//					sb.append("\tNum of quantified predicates FP: " + m_NumberOfQuantifiedPredicates[1]);
-//				}
-//				if (m_NumberOfQuantifiedPredicates[3] > 0) {
-//					sb.append("\tNum of quantified predicates BP: " + m_NumberOfQuantifiedPredicates[3]);
-//				}
-//			}
-//			if (m_SizeOfPredicates != null) {
-//				sb.append("\tSize of predicates FP: " + m_SizeOfPredicates[0]);
-//				sb.append("\tSize of predicates BP: " + m_SizeOfPredicates[1]);
-//			}
-//			return sb.toString();
-//		}
-//
-//		
-//		private int getSumOfIntArray(int[] arr) {
-//			int sum = 0; 
-//			for (int i = 0; i < arr.length; i++) {
-//				sum += arr[i];
-//			}
-//			return sum;
-//		}
-//	}
-	
-	
-
-//	@Override
-//	public void computeRcfgProgramExecution() {
-//		m_TraceCheckerBenchmarkSpWp = new TraceCheckerBenchmarkSpWp(new int[4], new int[4], new int[4]);
-//		super.computeRcfgProgramExecution();
-//	}
-//	
-//	@Override
-//	public void finishTraceCheckWithoutInterpolantsOrProgramExecution() {
-//		m_TraceCheckerBenchmarkSpWp = new TraceCheckerBenchmarkSpWp(new int[4], new int[4], new int[4]);
-//		super.finishTraceCheckWithoutInterpolantsOrProgramExecution();
-//	}
-//
-//
-//
-//	@Override
-//	public TraceCheckerBenchmark getTraceCheckerBenchmark() {
-//		if (m_TraceCheckFinished) {
-//			return m_TraceCheckerBenchmarkSpWp;
-//		} else {
-//			throw new AssertionError("Benchmark is only available after the trace check is finished.");
-//		}
-//	}
 	
 	public static class TraceCheckerSpWpBenchmarkType extends TraceCheckerBenchmarkType implements IBenchmarkType {
 
@@ -1033,18 +917,16 @@ public class TraceCheckerSpWp extends TraceChecker {
 	/**
 	 * Stores benchmark data about the usage of TraceCheckers. E.g., number and
 	 * size of predicates obtained via interpolation.
-	 * 
-	 * @author Matthias Heizmann
 	 */
 	public class TraceCheckerBenchmarkSpWpGenerator extends TraceCheckerBenchmarkGenerator implements IBenchmarkDataProvider {
 		// m_NumberOfQuantifierFreePredicates[0] : #quantified predicates of SP
 		// m_NumberOfQuantifierFreePredicates[1] : #quantified predicates of FP
 		// m_NumberOfQuantifierFreePredicates[2] : #quantified predicates of WP
 		// m_NumberOfQuantifierFreePredicates[3] : #quantified predicates of BP
-		private int[] m_NumberOfQuantifiedPredicates;
+		private int[] m_NumberOfQuantifiedPredicates = new int[4];
 		// m_NumberOfQuantifierFreePredicates[0] : Sum of the DAG-Size of  predicates computed via FP
 		// m_NumberOfQuantifierFreePredicates[1] : Sum of the DAG-Size of  predicates computed via BP
-		private int[] m_SizeOfPredicates; 
+		private int[] m_SizeOfPredicates = new int[2]; 
 		
 		@Override
 		public String[] getStopwatches() {
