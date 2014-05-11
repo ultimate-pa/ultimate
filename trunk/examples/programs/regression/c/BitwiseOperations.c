@@ -9,21 +9,20 @@
  */
 
 int main(void) {
-  int x, y, z;
-  y = 1;
-  z = 2;
-  x = x & y;
-  x = x | y;
-  x = x ^ y;
-  x = x << y;
-  x = x >> y;
-  x &= y;
-  x |= y;
-  x ^= y;
-  x <<= y;
-  x >>= y;
-  if (x == 1) {
-    ERROR:
-    goto ERROR;
-  }
+	int x, y, z;
+	y = 1;
+	z = 2;
+	x = x & y;
+	x = x | y;
+	x = x ^ y;
+	x = x << y;
+	x = x >> y;
+	x &= y;
+	x |= y;
+	x ^= y;
+	x <<= y;
+	x >>= y;
+	if (x == 1) {
+		//@ assert \false;
+	}
 }
