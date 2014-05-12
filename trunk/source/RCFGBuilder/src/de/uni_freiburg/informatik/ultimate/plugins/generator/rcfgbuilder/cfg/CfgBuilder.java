@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -127,7 +128,11 @@ public class CfgBuilder {
 					.getString(PreferenceInitializer.LABEL_Path);
 			directory += (directory.endsWith(System.getProperty("file.separator")) ? "" : System
 					.getProperty("file.separator"));
-			String filename = m_Graphroot.getFilename();
+			String filename;
+			{
+				String pathAndFilename = unit.getPayload().getLocation().getFileName();
+				filename = (new File(pathAndFilename)).getName();
+			}
 			String fullFilename = directory + filename + ".smt2";
 			try {
 				m_Script = new LoggingScript(m_Script, fullFilename, true);
