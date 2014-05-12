@@ -877,11 +877,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 				return result;
 			}
 			case s_SizeOfPredicates:
-				int[] array1 = (int[]) value1;
-				int[] array2 = (int[]) value2;
+				long[] array1 = (long[]) value1;
+				long[] array2 = (long[]) value2;
 				assert array1.length == 2;
 				assert array2.length == 2;
-				int[] result = new int[2];
+				long[] result = new long[2];
 				for (int i=0; i<2; i++) {
 					result[i] = array1[i] + array1[i];
 				}
@@ -927,7 +927,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		private int[] m_NumberOfQuantifiedPredicates = new int[4];
 		// m_NumberOfQuantifierFreePredicates[0] : Sum of the DAG-Size of  predicates computed via FP
 		// m_NumberOfQuantifierFreePredicates[1] : Sum of the DAG-Size of  predicates computed via BP
-		private int[] m_SizeOfPredicates = new int[2]; 
+		private long[] m_SizeOfPredicates = new long[2]; 
 		
 		@Override
 		public String[] getStopwatches() {
@@ -938,7 +938,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				int[] sizeOfPredicatesFP, int[] sizeOfPredicatesBP) {
 			assert numberOfQuantifiedPredicates != null;
 			m_NumberOfQuantifiedPredicates = numberOfQuantifiedPredicates;
-			m_SizeOfPredicates = new int[2];
+			m_SizeOfPredicates = new long[2];
 			if (sizeOfPredicatesFP != null) {
 				m_SizeOfPredicates[0] = getSumOfIntArray(sizeOfPredicatesFP);
 			} else {
@@ -951,8 +951,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 		}
 		
-		private int getSumOfIntArray(int[] arr) {
-			int sum = 0; 
+		private long getSumOfIntArray(int[] arr) {
+			long sum = 0; 
 			for (int i = 0; i < arr.length; i++) {
 				sum += arr[i];
 			}
