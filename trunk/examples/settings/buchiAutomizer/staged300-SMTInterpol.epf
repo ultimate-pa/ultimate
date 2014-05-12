@@ -29,9 +29,7 @@ file_export_version=3.0
 /instance/RCFGBuilder/Convert\ code\ blocks\ to\ CNF=false
 #Wed Mar 19 04:15:41 CET 2014
 file_export_version=3.0
-/instance/UltimateCore/Root\ log\ level=DEBUG
-/instance/UltimateCore/Log\ level\ for\ external\ tools=WARN
-/instance/UltimateCore/Log\ Level\ for\ Plugins=WARN
+/instance/UltimateCore/Log\ level\ for\ plugins=warn
 /instance/UltimateCore/Toolchain\ timeout\ in\ seconds=300
 \!/instance/UltimateCore=
 @UltimateCore=0.0.1
