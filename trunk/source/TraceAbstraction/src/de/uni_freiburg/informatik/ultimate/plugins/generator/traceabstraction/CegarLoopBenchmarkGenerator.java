@@ -31,6 +31,10 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 		m_StatesRemovedByMinimization += statesRemoved;
 	}
 	
+	public void announceNextIteration() {
+		m_Iterations++;
+	}
+	
 	public void reportAbstractionSize(int size, int iteration) {
 		if(size > m_BiggestAbstraction.getSize()) {
 			m_BiggestAbstraction = CegarLoopBenchmarkType.getInstance().new SizeIterationPair(size, iteration);

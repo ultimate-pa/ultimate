@@ -84,7 +84,10 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 		sb.append("Automizer needed ");
 		Long overallTime = (Long) benchmarkData.getValue(s_OverallTime);
 		sb.append(prettyprintNanoseconds(overallTime));
-		sb.append(". ");
+		sb.append(" and ");
+		Integer overallIterations = (Integer) benchmarkData.getValue(s_OverallIterations);
+		sb.append(overallIterations);
+		sb.append("iterations. ");
 		
 		sb.append("Automata difference (including EdgeChecker) took ");
 		Long differenceTime = (Long) benchmarkData.getValue(s_AutomataDifference);

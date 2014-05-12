@@ -317,6 +317,7 @@ public abstract class AbstractCegarLoop {
 		for (m_Iteration=1; m_Iteration<=m_Pref.maxIterations(); m_Iteration++){
 			s_Logger.info("====== " + errorLocs() + "== Iteration " + m_Iteration + "============");
 			m_SmtManager.setIteration(m_Iteration);
+			m_CegarLoopBenchmark.announceNextIteration();
 			if (m_Pref.dumpAutomata()) {
 				dumpInitinalize();
 			}
