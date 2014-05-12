@@ -135,10 +135,6 @@ public class BuchiCegarLoop {
 		private static final String LTL_MODE_IDENTIFIER = "BuchiProgramProduct";
 		
 		// used for the collection of statistics
-		public int m_BiggestAbstractionIteration = 0;
-		public int m_BiggestAbstractionSize = 0;
-		public int m_InitialAbstractionSize = 0;
-		
 		int m_Infeasible = 0;
 		int m_RankWithoutSi = 0;
 		int m_RankWithSi = 0;
@@ -155,7 +151,6 @@ public class BuchiCegarLoop {
 		private final ModuleDecompositionBenchmark m_MDBenchmark = 
 				new ModuleDecompositionBenchmark();
 		
-		private final TimingBenchmark m_TimingBenchmark;
 		private final BuchiCegarLoopBenchmarkGenerator m_BenchmarkGenerator;
 
 		
@@ -192,8 +187,8 @@ public class BuchiCegarLoop {
 			this.m_RootNode = rootNode;
 			this.m_SmtManager = smtManager;
 			this.m_BinaryStatePredicateManager = new BinaryStatePredicateManager(m_SmtManager);
-			m_TimingBenchmark =	new TimingBenchmark(m_SmtManager);
 			m_BenchmarkGenerator = new BuchiCegarLoopBenchmarkGenerator();
+			m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_OverallTime);
 //			this.buchiModGlobalVarManager = new BuchiModGlobalVarManager(
 //					m_Bspm.getUnseededVariable(), m_Bspm.getOldRankVariable(), 
 //					m_RootNode.getRootAnnot().getModGlobVarManager(),
@@ -303,10 +298,6 @@ public class BuchiCegarLoop {
 				String filename = m_Name+"Abstraction"+m_Iteration;
 				writeAutomatonToFile(m_Abstraction, m_Pref.dumpPath(), filename);
 			}
-			m_InitialAbstractionSize = m_Abstraction.size();
-			m_BiggestAbstractionSize = m_Abstraction.size();
-			
-			
 			
 			boolean initalAbstractionCorrect;
 			try {
@@ -326,6 +317,7 @@ public class BuchiCegarLoop {
 			for (m_Iteration=1; m_Iteration<=m_Pref.maxIterations(); m_Iteration++){
 				s_Logger.info("======== Iteration " + m_Iteration + "============");
 				m_SmtManager.setIteration(m_Iteration);
+				m_BenchmarkGenerator.announceNextIteration();
 
 				boolean abstractionCorrect;
 				try {
@@ -340,17 +332,19 @@ public class BuchiCegarLoop {
 					return Result.TERMINATING;
 				}
 				
-				m_TimingBenchmark.startLassoAnalysis();
+				m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
 				LassoChecker lassoChecker = new LassoChecker(
 						m_Interpolation, m_SmtManager, 
 						m_RootNode.getRootAnnot().getModGlobVarManager(),
 						m_BinaryStatePredicateManager,
 						m_Counterexample,
 						generateLassoCheckerIdentifier());
-				m_TimingBenchmark.stopLassoAnalysis();
+				m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
 				
+
+				ContinueDirective cd = lassoChecker.getContinueDirective();
+				m_BenchmarkGenerator.reportLassoAnalysis(lassoChecker);
 				try {
-					ContinueDirective cd = lassoChecker.getContinueDirective();
 					switch (cd) {
 					case REFINE_BOTH:
 					{
@@ -426,17 +420,12 @@ public class BuchiCegarLoop {
 						String filename = "Abstraction"+m_Iteration;
 						writeAutomatonToFile(m_Abstraction, m_Pref.dumpPath(), filename);
 					}
+					m_BenchmarkGenerator.reportAbstractionSize(m_Abstraction.size(), m_Iteration);
 
-					if (m_BiggestAbstractionSize < m_Abstraction.size()){
-						m_BiggestAbstractionSize = m_Abstraction.size();
-						m_BiggestAbstractionIteration = m_Iteration;
-					}
-				
 				} catch (AutomataLibraryException e) {
 					return Result.TIMEOUT;
 				}
 				m_InterpolAutomaton = null;
-				
 			}
 			return Result.TIMEOUT;
 		}
@@ -449,7 +438,6 @@ public class BuchiCegarLoop {
 		private void reduceAbstractionSize() throws OperationCanceledException,
 				AutomataLibraryException, AssertionError {
 			m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
-			m_TimingBenchmark.startMinimization();
 			m_Abstraction = (new RemoveNonLiveStates<CodeBlock, IPredicate>(m_Abstraction)).getResult();
 			m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
 			m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_BuchiClosure);
@@ -469,12 +457,10 @@ public class BuchiCegarLoop {
 			m_BenchmarkGenerator.announceStatesRemovedByMinimization(statesBeforeMinimization - statesAfterMinimization);
 			s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
 			m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataMinimizationTime);
-			m_TimingBenchmark.stopMinimization();
 		}
 		
 		private INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi(LassoChecker lassoChecker) throws AutomataLibraryException {
 			m_BenchmarkGenerator.start(CegarLoopBenchmarkType.s_AutomataDifference);
-			m_TimingBenchmark.startBuchiInclusion();
 			int stage = 0;
 			BuchiModGlobalVarManager bmgvm = new BuchiModGlobalVarManager(
 					lassoChecker.getBinaryStatePredicateManager().getUnseededVariable(), 
@@ -482,15 +468,20 @@ public class BuchiCegarLoop {
 					m_RootNode.getRootAnnot().getModGlobVarManager(),
 					m_RootNode.getRootAnnot().getBoogie2SMT());
 			for (RefinementSetting rs : m_BuchiRefinementSettingSequence) {
-				if (stage > 0) {
-					s_Logger.info("Statistics: We needed stage " + stage);
+//				if (stage > 0) {
+//					s_Logger.info("Statistics: We needed stage " + stage);
+//				}
+				INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = null;
+				try {
+					newAbstraction = m_RefineBuchi.refineBuchi(m_Abstraction, m_Counterexample, 
+								m_Iteration, rs, lassoChecker.getBinaryStatePredicateManager(), 
+								bmgvm, m_Interpolation, m_BenchmarkGenerator);
+				} catch (OperationCanceledException e) {
+					m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
+					throw e;
 				}
-
-				
-				INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = 
-						m_RefineBuchi.refineBuchi(m_Abstraction, 
-								m_Counterexample, m_Iteration, rs, lassoChecker.getBinaryStatePredicateManager(), bmgvm, m_Interpolation);
 				if (newAbstraction != null) {
+					m_BenchmarkGenerator.announceSuccessfullRefinementStage(stage);
 					switch (rs.getInterpolantAutomaton()) {
 					case Deterministic:
 					case LassoAutomaton:
@@ -504,7 +495,6 @@ public class BuchiCegarLoop {
 						throw new AssertionError("unsupported");
 					}
 					m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
-					m_TimingBenchmark.stopBuchiInclusion();
 					return newAbstraction;
 				}
 				stage++;
@@ -560,7 +550,7 @@ public class BuchiCegarLoop {
 
 		
 		private void refineFinite(LassoChecker lassoChecker) throws OperationCanceledException {
-			m_TimingBenchmark.startBuchiInclusion();
+			m_BenchmarkGenerator.start(CegarLoopBenchmarkType.s_AutomataDifference);
 			final TraceChecker traceChecker;
 			final NestedRun<CodeBlock, IPredicate> run;
 			if (lassoChecker.isStemInfeasible()) {
@@ -596,6 +586,7 @@ public class BuchiCegarLoop {
 						false, true);
 			} catch (AutomataLibraryException e) {
 				if (e instanceof OperationCanceledException) {
+					m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
 					throw (OperationCanceledException) e;
 				} else {
 					throw new AssertionError();
@@ -608,7 +599,8 @@ public class BuchiCegarLoop {
 			m_MDBenchmark.reportTrivialModule(m_Iteration,m_InterpolAutomaton.size());
 			assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true)).getResult();
 			m_Abstraction = diff.getResult();
-			m_TimingBenchmark.stopBuchiInclusion();
+			m_BenchmarkGenerator.addEdgeCheckerData(ec.getEdgeCheckerBenchmark());
+			m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
 		}
 		
 		protected void constructInterpolantAutomaton(TraceChecker traceChecker, NestedRun<CodeBlock, IPredicate> run) throws OperationCanceledException {
@@ -733,10 +725,6 @@ public class BuchiCegarLoop {
 			return m_MDBenchmark;
 		}
 
-		public TimingBenchmark getTimingBenchmark() {
-			return m_TimingBenchmark;
-		}
-		
 		/**
 		 * Returns an Identifier that describes a lasso analysis.
 		 * Right now, this is the Filename (without path prefix) of analyzed
@@ -746,6 +734,10 @@ public class BuchiCegarLoop {
 		public String generateLassoCheckerIdentifier() {
 			String pureFilename = m_RootNode.getFilename();
 			return pureFilename + "_Iteration" + m_Iteration;
+		}
+
+		public BuchiCegarLoopBenchmarkGenerator getBenchmarkGenerator() {
+			return m_BenchmarkGenerator;
 		}
 	
 		

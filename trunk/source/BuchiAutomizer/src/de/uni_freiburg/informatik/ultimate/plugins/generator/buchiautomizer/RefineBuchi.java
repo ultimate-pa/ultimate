@@ -141,13 +141,15 @@ public class RefineBuchi {
 		return m_InterpolAutomatonUsedInRefinement;
 	}
 
-	INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi(INestedWordAutomaton<CodeBlock, IPredicate> m_Abstraction, 
+	INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi(
+			INestedWordAutomaton<CodeBlock, IPredicate> m_Abstraction, 
 			NestedLassoRun<CodeBlock, IPredicate> m_Counterexample, 
 			int m_Iteration,
 			RefinementSetting setting,
 			BinaryStatePredicateManager bspm,
 			BuchiModGlobalVarManager buchiModGlobalVarManager, 
-			INTERPOLATION interpolation) throws AutomataLibraryException {
+			INTERPOLATION interpolation, 
+			BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) throws AutomataLibraryException {
 		NestedWord<CodeBlock> stem = m_Counterexample.getStem().getWord();
 //		if (emptyStem(m_Counterexample)) {
 //			stem = m_Counterexample.getLoop().getWord();
@@ -284,6 +286,7 @@ public class RefineBuchi {
 			newAbstraction = interNwa.getResult();
 		}
 //		INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldApi = (new RemoveUnreachable<CodeBlock, IPredicate>(m_InterpolAutomatonUsedInRefinement)).getResult();
+		benchmarkGenerator.addEdgeCheckerData(ec.getEdgeCheckerBenchmark());
 		m_InterpolAutomaton = null;
 		boolean isUseful = isUsefulInterpolantAutomaton(m_InterpolAutomatonUsedInRefinement, m_Counterexample);
 		if (!isUseful) {

@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -164,6 +163,14 @@ public class LassoChecker {
 
 	public boolean isConcatInfeasible() {
 		return m_ConcatInfeasible;
+	}
+	
+	public SynthesisResult getLoopTermination() {
+		return m_LoopTermination;
+	}
+
+	public SynthesisResult getLassoTermination() {
+		return m_LassoTermination;
 	}
 
 	public TraceChecker getConcatCheck() {
@@ -527,13 +534,14 @@ public class LassoChecker {
 		if (!withStem) {
 			stemTF = getDummyTF();
 		}
-		int loopVars = loopTF.getFormula().getFreeVars().length;
-		if (stemTF == null) {
-			s_Logger.info("Statistics: no stem, loopVars: " + loopVars);
-		} else {
-			int stemVars = stemTF.getFormula().getFreeVars().length;
-			s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars);
-		}
+//		TODO: present this somewhere else
+//		int loopVars = loopTF.getFormula().getFreeVars().length;
+//		if (stemTF == null) {
+//			s_Logger.info("Statistics: no stem, loopVars: " + loopVars);
+//		} else {
+//			int stemVars = stemTF.getFormula().getFreeVars().length;
+//			s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars);
+//		}
 		
 		
 		Preferences pref = new Preferences();

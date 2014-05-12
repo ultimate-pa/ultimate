@@ -1,5 +1,4 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
-import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.Map;
 
@@ -60,18 +59,21 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		
 		BuchiCegarLoop bcl = new BuchiCegarLoop((RootNode) root, smtManager, m_Pref);
 		Result result = bcl.iterate();
-		
-		s_Logger.info(MessageFormat.format("Statistics: Counterexamples: {0} infeasible" +
-				"  {1} rank without si  {2} rank only with si", 
-				bcl.m_Infeasible, bcl.m_RankWithoutSi, bcl.m_RankWithSi));
+		BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
+		benchGen.stop(BuchiCegarLoopBenchmark.s_OverallTime);
+
+//		s_Logger.info(MessageFormat.format("Statistics: Counterexamples: {0} infeasible" +
+//				"  {1} rank without si  {2} rank only with si", 
+//				bcl.m_Infeasible, bcl.m_RankWithoutSi, bcl.m_RankWithSi));
 		
 		IResult benchDecomp = new BenchmarkResult<Double>(Activator.s_PLUGIN_ID,
 				"Constructed decomposition of program", bcl.getMDBenchmark());
 		reportResult(benchDecomp);
 //		s_Logger.info("BenchmarkResult: " + benchDecomp.getShortDescription() + ": " + benchDecomp.getLongDescription());
 		
+		TimingBenchmark timingBenchmark = new TimingBenchmark(benchGen);
 		IResult benchTiming = new BenchmarkResult(Activator.s_PLUGIN_ID,
-				"Timing statistics", bcl.getTimingBenchmark());
+				"Timing statistics", timingBenchmark);
 		reportResult(benchTiming);
 //		s_Logger.info("BenchmarkResult: " + benchTiming.getShortDescription() + ": " + benchTiming.getLongDescription());
 		
@@ -83,7 +85,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 						shortDescr, 
 						longDescr, Severity.INFO);
 				reportResult(reportRes);
-			s_Logger.info(shortDescr + ": " + longDescr);
+//			s_Logger.info(shortDescr + ": " + longDescr);
 		} else if (result == Result.UNKNOWN) {
 			NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
 			IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
@@ -103,7 +105,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					shortDescr, 
 					longDescr.toString(), Severity.ERROR);
 			reportResult(reportRes);
-			s_Logger.info(shortDescr + ": " + longDescr);
+//			s_Logger.info(shortDescr + ": " + longDescr);
 		} else if (result == Result.TIMEOUT) {
 			ProgramPoint position = rootAnnot.getEntryNodes().values().iterator().next();
 			String longDescr = "Timeout while trying to prove termination";
@@ -120,7 +122,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					shortDescr, 
 					longDescr, Severity.ERROR);
 			reportResult(reportRes);
-		s_Logger.info(shortDescr + ": " + longDescr);
+//		s_Logger.info(shortDescr + ": " + longDescr);
 			NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
 			IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
 			ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
@@ -140,8 +142,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					UltimateServices.getInstance().getTranslatorSequence(), 
 					stemPE, loopPE, honda.getPayload().getLocation());
 			reportResult(ntreportRes);
-			s_Logger.info(ntreportRes.getShortDescription());
-			s_Logger.info(ntreportRes.getLongDescription());
+//			s_Logger.info(ntreportRes.getShortDescription());
+//			s_Logger.info(ntreportRes.getLongDescription());
 		} else {
 			throw new AssertionError();
 		}
