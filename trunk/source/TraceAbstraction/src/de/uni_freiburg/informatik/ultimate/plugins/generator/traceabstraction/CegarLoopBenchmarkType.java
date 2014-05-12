@@ -42,31 +42,31 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 	}
 	
 	@Override
-	public Object aggregate(String name, Object data1, Object data2) {
-		switch (name) {
+	public Object aggregate(String key, Object value1, Object value2) {
+		switch (key) {
 		case s_OverallTime:
 		case s_AutomataDifference:
 		case s_DeadEndRemovalTime:
 		case s_AutomataMinimizationTime:
 		case s_HoareAnnotationTime:
 		case s_BasicInterpolantAutomatonTime:
-			Long time1 = (Long) data1;
-			Long time2 = (Long) data2;
+			Long time1 = (Long) value1;
+			Long time2 = (Long) value2;
 			return time1 + time2;
 		case s_EdgeCheckerData:
 		case s_TraceCheckerBenchmark:
-			BenchmarkData bmData1 = (BenchmarkData) data1;
-			BenchmarkData bmData2 = (BenchmarkData) data2;
+			BenchmarkData bmData1 = (BenchmarkData) value1;
+			BenchmarkData bmData2 = (BenchmarkData) value2;
 			bmData1.aggregateBenchmarkData(bmData2);
 			return bmData1;
 		case s_StatesRemovedByMinimization:
 		case s_OverallIterations:
-			Integer number1 = (Integer) data1;
-			Integer number2 = (Integer) data2;
+			Integer number1 = (Integer) value1;
+			Integer number2 = (Integer) value2;
 			return number1 + number2;
 		case s_BiggestAbstraction:
-			SizeIterationPair sip1 = (SizeIterationPair) data1;
-			SizeIterationPair sip2 = (SizeIterationPair) data2;
+			SizeIterationPair sip1 = (SizeIterationPair) value1;
+			SizeIterationPair sip2 = (SizeIterationPair) value2;
 			if (sip1.getSize() >= sip2.getSize()) {
 				return sip1;
 			} else {
@@ -87,7 +87,7 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 		sb.append(" and ");
 		Integer overallIterations = (Integer) benchmarkData.getValue(s_OverallIterations);
 		sb.append(overallIterations);
-		sb.append("iterations. ");
+		sb.append(" iterations. ");
 		
 		sb.append("Automata difference (including EdgeChecker) took ");
 		Long differenceTime = (Long) benchmarkData.getValue(s_AutomataDifference);

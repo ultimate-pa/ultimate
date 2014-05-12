@@ -42,8 +42,8 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 	}
 
 	@Override
-	public Object getValue(String name) {
-		switch (name) {
+	public Object getValue(String key) {
+		switch (key) {
 		case CegarLoopBenchmarkType.s_OverallTime:
 		case CegarLoopBenchmarkType.s_AutomataDifference:
 		case CegarLoopBenchmarkType.s_DeadEndRemovalTime:
@@ -51,9 +51,9 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 		case CegarLoopBenchmarkType.s_HoareAnnotationTime:
 		case CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime:
 			try {
-				return getElapsedTime(name);
+				return getElapsedTime(key);
 			} catch (StopwatchStillRunningException e) {
-				throw new AssertionError("clock still running: " + name);
+				throw new AssertionError("clock still running: " + key);
 			}
 		case CegarLoopBenchmarkType.s_EdgeCheckerData:
 			return m_EcData;

@@ -1149,12 +1149,12 @@ public class EdgeChecker {
 	public static class EdgeCheckerBenchmarkType implements IBenchmarkType {
 		
 		private static EdgeCheckerBenchmarkType s_Instance = new EdgeCheckerBenchmarkType();
-		protected final static String s_SdCounter = "trivial";
-		protected final static String s_SdLazyCounter = "lazy";
-		protected final static String s_SolverCounterSat = "nontrivialSat";
-		protected final static String s_SolverCounterUnsat = "nontrivialUnsat";
-		protected final static String s_SolverCounterUnknown = "nontrivialUnknown";
-		protected final static String s_EdgeCheckerTime = "EdgeCheckerTime";
+		public final static String s_SdCounter = "trivial";
+		public final static String s_SdLazyCounter = "lazy";
+		public final static String s_SolverCounterSat = "nontrivialSat";
+		public final static String s_SolverCounterUnsat = "nontrivialUnsat";
+		public final static String s_SolverCounterUnknown = "nontrivialUnknown";
+		public final static String s_EdgeCheckerTime = "EdgeCheckerTime";
 		
 		public static EdgeCheckerBenchmarkType getInstance() {
 			return s_Instance;
