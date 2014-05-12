@@ -30,6 +30,13 @@ trunk/examples/toolchains/AutomizerTestDir.sh -da 300 "$2" \
  "BuchiAutomizerBplWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/dumpLinearLassoRankerScripts.epf"
 fi
 
+
+if [ "$1" = "dumpNonlinearLassoRankerScripts" ]; then
+echo "dumpNonlinearLassoRankerScripts for folder $2"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 300 "$2" \
+ "BuchiAutomizerBplWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/dumpNonlinearLassoRankerScripts.epf"
+fi
+
 if [ "$1" = "dumpAutomizerAUFLIRAScripts" ]; then
 echo "$1 for folder $2"
 trunk/examples/toolchains/AutomizerTestDir.sh -da 350 "$2" \
