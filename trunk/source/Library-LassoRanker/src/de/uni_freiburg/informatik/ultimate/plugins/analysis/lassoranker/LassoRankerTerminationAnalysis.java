@@ -397,7 +397,7 @@ public class LassoRankerTerminationAnalysis {
 		final LBool constraintSat = tas.synthesize();
 		m_numSIs = tas.getNumSIs();
 		m_numMotzkin = tas.getNumMotzkin();
-		s_Logger.info(benchmarkScriptMessage(constraintSat,	template));
+		s_Logger.debug(benchmarkScriptMessage(constraintSat,	template));
 		if (constraintSat == LBool.SAT) {
 			s_Logger.info("Proved termination.");
 			TerminationArgument arg = tas.getArgument();
