@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -850,7 +851,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			return s_Instance;
 		}
 		@Override
-		public Iterable<String> getKeys() {
+		public Collection<String> getKeys() {
 			ArrayList<String> result = new ArrayList<String>();
 			for (String key : super.getKeys()) {
 				result.add(key);

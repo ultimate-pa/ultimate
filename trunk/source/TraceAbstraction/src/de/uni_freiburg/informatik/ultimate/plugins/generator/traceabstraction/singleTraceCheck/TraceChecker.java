@@ -915,7 +915,7 @@ public class TraceChecker {
 			return s_Instance;
 		}
 		@Override
-		public Iterable<String> getKeys() {
+		public Collection<String> getKeys() {
 			return Arrays.asList(new String[] { 
 					s_SsaConstruction, s_SatisfiabilityAnalysis, 
 					s_InterpolantComputation });

@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
@@ -21,19 +22,23 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 	public static final String s_TraceCheckerBenchmark = "TraceCheckerBenchmark";
 	
 	private static final CegarLoopBenchmarkType s_Instance = new CegarLoopBenchmarkType();
+	
+	public static CegarLoopBenchmarkType getInstance() {
+		return s_Instance;
+	}
 
 	@Override
-	public Iterable<String> getKeys() {
-		ArrayList<String> nameList = new ArrayList<String>();
-		nameList.addAll(Arrays.asList(new String[] { 
+	public Collection<String> getKeys() {
+		ArrayList<String> keyList = new ArrayList<String>();
+		keyList.addAll(Arrays.asList(new String[] { 
 				s_OverallTime, s_OverallIterations, s_AutomataDifference, 
 				s_DeadEndRemovalTime, 
 				s_AutomataMinimizationTime, s_HoareAnnotationTime, 
 				s_BasicInterpolantAutomatonTime, s_BiggestAbstraction }));
-		nameList.add(s_EdgeCheckerData);
-		nameList.add(s_StatesRemovedByMinimization);
-		nameList.add(s_TraceCheckerBenchmark);
-		return nameList;
+		keyList.add(s_EdgeCheckerData);
+		keyList.add(s_StatesRemovedByMinimization);
+		keyList.add(s_TraceCheckerBenchmark);
+		return keyList;
 	}
 	
 	@Override
@@ -126,10 +131,6 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 		return seconds + "." + tenthDigit + "s";
 	}
 
-	public static CegarLoopBenchmarkType getInstance() {
-		return s_Instance;
-	}
-	
 	public class SizeIterationPair {
 		final int m_Size;
 		final int m_Iteration;

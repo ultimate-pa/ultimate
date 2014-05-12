@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -1160,7 +1161,7 @@ public class EdgeChecker {
 		}
 		
 		@Override
-		public Iterable<String> getKeys() {
+		public Collection<String> getKeys() {
 			return Arrays.asList(new String[] { s_SdCounter, s_SdLazyCounter, 
 					s_SolverCounterSat, s_SolverCounterUnsat, 
 					s_SolverCounterUnknown, s_EdgeCheckerTime });

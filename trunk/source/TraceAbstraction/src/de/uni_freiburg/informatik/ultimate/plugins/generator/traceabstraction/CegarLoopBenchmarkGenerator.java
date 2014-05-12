@@ -16,7 +16,7 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 
 	@Override
 	public Iterable<String> getKeys() {
-		return CegarLoopBenchmarkType.getInstance().getKeys();
+		return getBenchmarkType().getKeys();
 	}
 	
 	public void addEdgeCheckerData(IBenchmarkDataProvider ecbd) {

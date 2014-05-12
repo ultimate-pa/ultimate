@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark;
 
+import java.util.Collection;
+
 
 /**
  * Classes that implement this interface define a type of benchmark that is a
@@ -13,7 +15,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.b
  */
 public interface IBenchmarkType {
 	
-	Iterable<String> getKeys();
+	Collection<String> getKeys();
 	
 	Object aggregate(String key, Object value1, Object value2);
 
