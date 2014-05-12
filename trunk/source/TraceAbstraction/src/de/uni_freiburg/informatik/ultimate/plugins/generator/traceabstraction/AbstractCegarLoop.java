@@ -73,7 +73,7 @@ public abstract class AbstractCegarLoop {
 	
 	/**
 	 * Node of a recursive control flow graph which stores additional 
-	 * information about the  												<< TODO: add missing word
+	 * information about the program.
 	 */
 	protected final RootNode m_RootNode;
 	
@@ -523,11 +523,6 @@ public abstract class AbstractCegarLoop {
 	
 
 	
-	
-	
-
-
-
 	public static String addIndentation(int indentation, String s) {
 		StringBuilder sb = new StringBuilder("");
 		for (int i=0; i<indentation; i++) {

@@ -75,24 +75,31 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 	@Override
 	public String prettyprintBenchmarkData(BenchmarkData benchmarkData) {
 		StringBuilder sb = new StringBuilder();
-		sb.append("CegarLoopBenchmark: ");
-		for (String name : Arrays.asList(new String[] { s_OverallTime, s_AutomataDifference, s_DeadEndRemovalTime, s_AutomataMinimizationTime, s_HoareAnnotationTime })) {
-			sb.append(name);
-			sb.append(": ");
-			Long time = (Long) benchmarkData.getValue(name);
-			sb.append(prettyprintNanoseconds(time));
-			sb.append(" ");
-		}
+		
+		sb.append("Automizer needed ");
+		Long overallTime = (Long) benchmarkData.getValue(s_OverallTime);
+		sb.append(prettyprintNanoseconds(overallTime));
+		sb.append(". ");
+		
+		sb.append("Automata difference (including EdgeChecker) took ");
+		Long differenceTime = (Long) benchmarkData.getValue(s_AutomataDifference);
+		sb.append(prettyprintNanoseconds(differenceTime));
+		sb.append(". ");
+		
+		sb.append("Computation of Hoare annotation took ");
+		Long hoareTime = (Long) benchmarkData.getValue(s_HoareAnnotationTime);
+		sb.append(prettyprintNanoseconds(hoareTime));
+		sb.append(". ");
 		
 		sb.append("Minimization removed ");
 		sb.append(benchmarkData.getValue(s_StatesRemovedByMinimization));
-		sb.append(" states in time ");
+		sb.append(" states and took ");
 		Long time = (Long) benchmarkData.getValue(s_AutomataMinimizationTime);
 		sb.append(prettyprintNanoseconds(time));
 		sb.append(". ");
 		
 		SizeIterationPair sip = (SizeIterationPair) benchmarkData.getValue(s_BiggestAbstraction);
-		sb.append("BiggestAbstraction had ");
+		sb.append("Biggest automaton had ");
 		sb.append(sip.getSize());
 		sb.append(" states and ocurred in iteration ");
 		sb.append(sip.getIteration());

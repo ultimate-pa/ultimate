@@ -24,8 +24,8 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation,
 			boolean computeHoareAnnotation) {
 	
-		super(name, rootNode, smtManager, timingStatistics, taPrefs, errorLocs,
-				interpolation, computeHoareAnnotation);
+		super(name, rootNode, smtManager, taPrefs, errorLocs, interpolation,
+				computeHoareAnnotation);
 		m_Haf = new HoareAnnotationFragments();
 	}
 	

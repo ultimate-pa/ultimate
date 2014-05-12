@@ -1,86 +1,27 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
-	private final SmtManager mSmtManager;
-	private long traceCheck = 0;
-	private long traceCheckStartTime = 0;
-	private long traceCheckSat = 0;
-	private long traceCheckSatStartTime = 0;
-	private long traceCheckInterpolation = 0;
-	private long traceCheckInterpolationStartTime = 0;
 	
+	private final BenchmarkData m_CegarLoopBenchmarkData;
+	private final int m_Locations;
+	private final int m_ErrorLocations;
 	
-	private BenchmarkData m_CegarLoopBenchmarkData;
-	
-	
-	
-	public TraceAbstractionBenchmarks(SmtManager mSmtManager) {
-		this.mSmtManager = mSmtManager;
+	public TraceAbstractionBenchmarks(RootAnnot rootAnnot) {
+		m_Locations = rootAnnot.getNumberOfProgramPoints();
+		m_ErrorLocations = rootAnnot.getNumberOfErrorNodes();
+		m_CegarLoopBenchmarkData = new BenchmarkData();
 	}
 	
-	public void setCegarLoopBenchmarkGenerator(
+	public void aggregateBenchmarkData(
 			CegarLoopBenchmarkGenerator cegarLoopBenchmarkGenerator) {
-		m_CegarLoopBenchmarkData = new BenchmarkData();
 		m_CegarLoopBenchmarkData.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 	}
-
-	public void startTraceCheck() {
-		traceCheckStartTime = System.nanoTime();
-		traceCheckSatStartTime = mSmtManager.getSatCheckSolverTime();
-		traceCheckInterpolationStartTime = mSmtManager.getInterpolQuriesTime();
-	}
-	
-	public void finishTraceCheck() {
-		traceCheck += (System.nanoTime() - traceCheckStartTime);
-		traceCheckStartTime = 0;
-		traceCheckSat += (mSmtManager.getSatCheckSolverTime() - traceCheckSatStartTime);
-		traceCheckSatStartTime = 0;
-		traceCheckInterpolation += (mSmtManager.getInterpolQuriesTime() - traceCheckInterpolationStartTime);
-		traceCheckInterpolationStartTime = 0;
-	}
-	
-	
-	public String timingResults() {
-//		assert m_Finished : "finish trace abstraction first";
-		StringBuilder sb  = new StringBuilder();
-//		sb.append("Trace Abstraction runtime: ");
-//		sb.append(prettyprintNanoseconds(getRuntime()));
-//		if (!m_CounterExampleFeasible) {
-			sb.append(" Determine feasibility of statement sequence: ");
-			sb.append(prettyprintNanoseconds(traceCheck));
-			sb.append(" (thereof: SMT solver sat check ");
-			sb.append(prettyprintNanoseconds(traceCheckSat));
-			sb.append(", SMT solver interpolation ");
-			sb.append(prettyprintNanoseconds(traceCheckInterpolation));
-//			sb.append(") Construction basic interpolant automaton: ");
-//			sb.append(prettyprintNanoseconds(basicInterpolantAutomaton));
-//			sb.append(" Automata difference operation: ");
-//			sb.append(prettyprintNanoseconds(differenceTotal - differenceSmtManager));
-//			sb.append(" Checking validity of Hoare triples: ");
-//			sb.append(prettyprintNanoseconds(differenceSmtManager));
-//			sb.append(" (thereof SMT solver ");
-//			sb.append(prettyprintNanoseconds(differenceSmtSolver));
-			sb.append(") ");
-//		}
-		return sb.toString();
-	}
-	
-	
-	public String printBenchmarkResults() {
-		return timingResults() + " " + " " + m_CegarLoopBenchmarkData.toString();
-	}
-	
-//	public void setCounterExampleFeasible() {
-//		m_CounterExampleFeasible = true;
-//	}
-	
-
 
 	public static String prettyprintNanoseconds(long time) {
 		long seconds = time/1000000000;
@@ -91,19 +32,15 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 	
 	@Override
 	public String toString() {
-		return timingResults() + "\n\t\t" + "\n\t\t" + m_CegarLoopBenchmarkData.toString();
+		StringBuilder sb = new StringBuilder();
+		sb.append("CFG has ");
+		sb.append(m_Locations);
+		sb.append(" locations, ");
+		sb.append(m_ErrorLocations);
+		sb.append(" error locations. ");
+		sb.append(m_CegarLoopBenchmarkData.toString());
+		return sb.toString();
 	}
-
-//	public void addTotalNumberOfPredicates(Integer totalNumberOfPredicates) {
-//		if (m_totalNumberOfPredicates != null) {
-//			m_totalNumberOfPredicates.add(totalNumberOfPredicates);
-//		} else {
-//			m_totalNumberOfPredicates = new ArrayList<Integer>();
-//			m_totalNumberOfPredicates.add(totalNumberOfPredicates);
-//		}
-//	}
-
-
 
 	@Override
 	public ICsvProvider<Double> createCvsProvider() {

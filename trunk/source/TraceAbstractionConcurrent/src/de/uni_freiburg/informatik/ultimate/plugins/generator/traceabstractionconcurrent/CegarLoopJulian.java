@@ -46,8 +46,8 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	public CegarLoopJulian(String name, RootNode rootNode, SmtManager smtManager,
 			TraceAbstractionBenchmarks timingStatistics,
 			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs) {
-		super(name, rootNode, smtManager, timingStatistics, taPrefs, errorLocs,
-				INTERPOLATION.Craig_TreeInterpolation, false);
+		super(name, rootNode, smtManager, taPrefs, errorLocs, INTERPOLATION.Craig_TreeInterpolation,
+				false);
 
 	}
 

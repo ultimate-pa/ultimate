@@ -156,30 +156,37 @@ public class SmtManager {
 	}
 	
 
+	@Deprecated
 	public int getNontrivialSatQueries() {
 		return m_NontrivialSatQueries;
 	}
 	
+	@Deprecated
 	public int getTrivialSatQueries() {
 		return m_TrivialSatQueries;
 	}
 	
+	@Deprecated
 	public long getSatCheckSolverTime() {
 		return m_SatCheckSolverTime;
 	}
 	
+	@Deprecated
 	public long getInterpolQuriesTime() {
 		return m_InterpolQuriesTime;
 	}
 
+	@Deprecated
 	public int getInterpolQueries() {
 		return m_InterpolQueries;
 	}
 	
+	@Deprecated
 	public long getTraceCheckTime() {
 		return m_TraceCheckTime;
 	}
 	
+	@Deprecated
 	public long getSatCheckTime() {
 		return m_SatCheckTime;
 	}
@@ -196,19 +203,22 @@ public class SmtManager {
 //		return m_NontrivialEdgeCheckQueries;
 //	}
 	
+	@Deprecated
 	public int getTrivialCoverQueries() {
 		return m_TrivialCoverQueries;
 	}
 
+	@Deprecated
 	public int getNontrivialCoverQueries() {
 		return m_NontrivialCoverQueries;
 	}
 
-	
+	@Deprecated
 	public int getVarSetMinimalSolverQueries() {
 		return m_VarSetMinimalSolverQueries;
 	}
 
+	@Deprecated
 	public long getVarSetMinimalComputationTime() {
 		return m_VarSetMinimalComputationTime;
 	}

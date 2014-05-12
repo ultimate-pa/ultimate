@@ -150,8 +150,8 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop
 			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs,
 			INTERPOLATION interpolation, boolean computeHoareAnnotation)
 	{
-		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs,
-				errorLocs, interpolation, computeHoareAnnotation);
+		super(name, rootNode, smtManager, taPrefs, errorLocs,
+				interpolation, computeHoareAnnotation);
 		m_ErrorPathHistory = new ArrayList<String>();
 	}
 

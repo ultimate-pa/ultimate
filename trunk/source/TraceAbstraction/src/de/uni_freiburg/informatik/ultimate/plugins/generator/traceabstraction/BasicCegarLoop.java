@@ -75,7 +75,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final PredicateFactoryResultChecking m_PredicateFactoryResultChecking;
 	
 	
-	protected final TraceAbstractionBenchmarks m_TraceAbstractionBenchmarks;
 	
 	protected final INTERPOLATION m_Interpolation;
 	
@@ -83,15 +82,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	public BasicCegarLoop(String name, RootNode rootNode,
 			SmtManager smtManager,
-			TraceAbstractionBenchmarks traceAbstractionBenchmarks,
 			TAPreferences taPrefs,
-			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation,
-			boolean computeHoareAnnotation) {
+			Collection<ProgramPoint> errorLocs,
+			INTERPOLATION interpolation, boolean computeHoareAnnotation) {
 	
 		super(name, rootNode, smtManager, taPrefs, errorLocs);
 		m_Interpolation = interpolation;
 		m_ComputeHoareAnnotation = computeHoareAnnotation;
-		m_TraceAbstractionBenchmarks = traceAbstractionBenchmarks;
 		m_Haf = new HoareAnnotationFragments();
 		m_StateFactoryForRefinement = new PredicateFactoryRefinement(
 				m_RootNode.getRootAnnot().getProgramPoints(),
@@ -153,7 +150,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	@Override
 	protected LBool isCounterexampleFeasible() {
-		m_TraceAbstractionBenchmarks.startTraceCheck();
 		IPredicate truePredicate = m_SmtManager.newTruePredicate();
 		IPredicate falsePredicate = m_SmtManager.newFalsePredicate();
 		PredicateUnifier predicateUnifier = new PredicateUnifier(m_SmtManager,
@@ -200,7 +196,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			AllIntegers allInt = new TraceChecker.AllIntegers();
 			m_TraceChecker.computeInterpolants(allInt, predicateUnifier, m_Interpolation);
 		}
-		m_TraceAbstractionBenchmarks.finishTraceCheck();
 		
 		m_CegarLoopBenchmark.addTraceCheckerData(m_TraceChecker.getTraceCheckerBenchmark());
 //		m_TraceCheckerBenchmark.aggregateBenchmarkData(m_TraceChecker.getTraceCheckerBenchmark());

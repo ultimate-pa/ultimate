@@ -20,7 +20,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgPro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -57,13 +56,10 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private IElement m_graphroot = null;
 	private Result m_OverallResult;
 	private IElement m_Artifact;
-	private long m_StartingTime;
 	
 
 	@Override
 	public boolean process(IElement root) {
-//		assert false;
-		m_StartingTime = System.currentTimeMillis();
 		RootAnnot rootAnnot = ((RootNode) root).getRootAnnot();
 		TAPreferences taPrefs = new TAPreferences();
 		
@@ -76,7 +72,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 		SmtManager smtManager = new SmtManager(rootAnnot.getBoogie2SMT(),
 				rootAnnot.getModGlobVarManager());
-		TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(smtManager);
+		TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
 
 		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
 		Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();
@@ -84,21 +80,19 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-//		m_OverallIterations = 0;
-//		m_OverallBiggestAbstraction = 0;
 		m_OverallResult = Result.SAFE;
 		m_Artifact = null;
 
 		if (taPrefs.allErrorLocsAtOnce()) {
 			String name = "AllErrorsAtOnce";
-			iterate(name, (RootNode) root, taPrefs, smtManager, timingStatistics, errNodesOfAllProc);
+			iterate(name, (RootNode) root, taPrefs, smtManager, traceAbstractionBenchmark, errNodesOfAllProc);
 		} else {
 			for (ProgramPoint errorLoc : errNodesOfAllProc) {
 				String name = errorLoc.getLocationName();
 				ArrayList<ProgramPoint> errorLocs = new ArrayList<ProgramPoint>(1);
 				errorLocs.add(errorLoc);
 				UltimateServices.getInstance().setSubtask(errorLoc.toString());
-				iterate(name, (RootNode) root, taPrefs, smtManager, timingStatistics, errorLocs);
+				iterate(name, (RootNode) root, taPrefs, smtManager, traceAbstractionBenchmark, errorLocs);
 			}
 		}
 
@@ -129,7 +123,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 							finalNode,
 							translator_sequence,
 							proc, expr);
-					s_Logger.warn(result.getShortDescription()                                                );
+//					s_Logger.warn(result.getShortDescription());
 					reportResult(result);
 				}
 			}
@@ -147,42 +141,12 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 							Activator.s_PLUGIN_NAME,
 							locNode,
 							translator_sequence, expr);
-					s_Logger.warn(invResult.getLongDescription());
+//					s_Logger.warn(invResult.getLongDescription());
 					reportResult(invResult);
 				}
 			}
 		}
-
-		String stat = "";
-		stat += "Statistics:  ";
-//		stat += " Iterations " + m_OverallIterations + ".";
-		stat += " CFG has ";
-		stat += rootAnnot.getNumberOfProgramPoints();
-		stat += " locations,";
-		stat += errNodesOfAllProc.size();
-		stat += " error locations.";
-		stat += " Cover queries: ";
-		stat += smtManager.getTrivialCoverQueries() + " trivial, ";
-		stat += smtManager.getNontrivialCoverQueries() + " nontrivial.";	
-		stat += " Satisfiability queries: ";
-		stat += smtManager.getTrivialSatQueries() + " trivial, ";
-		stat += smtManager.getNontrivialSatQueries() + " nontrivial.";
-//		stat += " DeadEndRemovalTime: " + m_OverallDeadEndRemovalTime;
-//		stat += " Minimization removed " + m_OverallStatesRemovedByMinimization;
-//		stat += " in time " + m_OverallMinimizationTime;
-//		stat += " Biggest abstraction had ";
-//		stat += m_OverallBiggestAbstraction;
-//		stat += " states.";
-		s_Logger.warn(stat);
-		TemporaryWorkaroudBenchmark twb = new TemporaryWorkaroudBenchmark(stat, timingStatistics);
-		reportBenchmark(twb);
-//		s_Logger.warn("PC#: " + smtManager.getInterpolQueries());
-//		s_Logger.warn("TIME#: " + smtManager.getInterpolQuriesTime());
-//		s_Logger.warn("ManipulationTIME#: " + smtManager.getTraceCheckTime());
-//		s_Logger.warn("EC#: " + timingStatistics.getEdgeCheckerBenchmark().getSolverCounter());
-//		s_Logger.warn("TIME#: " + smtManager.getSatCheckTime());
-//		s_Logger.warn("ManipulationTIME#: "	+ smtManager.getSatCheckTime());
-		s_Logger.warn("BenchmarkResult: " + timingStatistics.printBenchmarkResults());
+		reportBenchmark(traceAbstractionBenchmark);
 		switch (m_OverallResult) {
 		case SAFE:
 //			s_Logger.warn("Program is correct");
@@ -210,28 +174,26 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	}
 
 	private void iterate(String name, RootNode root, TAPreferences taPrefs,
-			SmtManager smtManager, TraceAbstractionBenchmarks timingStatistics,
+			SmtManager smtManager, TraceAbstractionBenchmarks taBenchmark,
 			Collection<ProgramPoint> errorLocs) {
 		BasicCegarLoop basicCegarLoop;
 		if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
 			basicCegarLoop = new CegarLoopSWBnonRecursive(name, 
-					root, smtManager, timingStatistics,taPrefs, errorLocs, 
+					root, smtManager, taBenchmark,taPrefs, errorLocs, 
 					taPrefs.interpolation(), taPrefs.computeHoareAnnotation());
 //			abstractCegarLoop = new CegarLoopSequentialWithBackedges(name, 
 //					root, smtManager, timingStatistics,taPrefs, errorLocs);
 		} else {
 			basicCegarLoop = new BasicCegarLoop(name, 
-					root, smtManager, timingStatistics,taPrefs, errorLocs, 
-					taPrefs.interpolation(), taPrefs.computeHoareAnnotation());
+					root, smtManager, taPrefs,errorLocs, taPrefs.interpolation(), 
+					taPrefs.computeHoareAnnotation());
 		}
 
 		Result result = basicCegarLoop.iterate();
-//		timingStatistics.finishTraceAbstraction();
 		CegarLoopBenchmarkGenerator cegarLoopBenchmarkGenerator = 
 				basicCegarLoop.getCegarLoopBenchmark();
 		cegarLoopBenchmarkGenerator.stop(CegarLoopBenchmarkType.s_OverallTime);
-		s_Logger.warn(cegarLoopBenchmarkGenerator.toString());
-		timingStatistics.setCegarLoopBenchmarkGenerator(cegarLoopBenchmarkGenerator);
+		taBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 
 		switch (result) {
 		case SAFE:
@@ -288,7 +250,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(
 				Activator.s_PLUGIN_NAME, longDescription);
 		reportResult(result);
-		s_Logger.info(result.getShortDescription() + " " + result.getLongDescription());
+//		s_Logger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}
 	
 	private void reportCounterexampleResult(RcfgProgramExecution pe) {
@@ -329,7 +291,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 					UltimateServices.getInstance().getTranslatorSequence(),
 					timeOutMessage);
 			reportResult(timeOutRes);
-			s_Logger.warn(timeOutMessage);
+//			s_Logger.warn(timeOutMessage);
 		}
 	}
 		
@@ -349,7 +311,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		BenchmarkResult<T> res = new 
 				BenchmarkResult<T>(Activator.s_PLUGIN_NAME, 
 				shortDescription, benchmark);
-		s_Logger.warn(res.getLongDescription());
+//		s_Logger.warn(res.getLongDescription());
 
 		reportResult(res);
 	}

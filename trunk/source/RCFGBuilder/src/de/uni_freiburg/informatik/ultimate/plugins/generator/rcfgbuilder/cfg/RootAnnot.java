@@ -154,6 +154,14 @@ public class RootAnnot extends AbstractAnnotations {
 		return m_ErrorNodes;
 	}
 	
+	public int getNumberOfErrorNodes() {
+		int result = 0;
+		for (String proc : getErrorNodes().keySet()) {
+			result += getErrorNodes().get(proc).size();
+		}
+		return result;
+	}
+	
 	public ModifiableGlobalVariableManager getModGlobVarManager() {
 		return m_ModifiableGlobalVariableManager;
 	}
