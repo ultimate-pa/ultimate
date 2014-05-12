@@ -9,7 +9,7 @@ fi
 if [ "$1" = "terminator-da" ]; then
 echo "buchiAutomizer for folder $2"
 trunk/examples/toolchains/AutomizerTestDir.sh -da 350 "$2" \
- "BuchiAutomizerBplWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/staged300-Z3.epf"
+ "BuchiAutomizerBplWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/staged300-SMTInterpol.epf"
 fi
 
 if [ "$1" = "templateBenchmark" ]; then
