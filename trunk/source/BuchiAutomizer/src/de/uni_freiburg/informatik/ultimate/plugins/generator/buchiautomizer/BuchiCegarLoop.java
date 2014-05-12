@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotationFragments;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
@@ -155,6 +156,7 @@ public class BuchiCegarLoop {
 				new ModuleDecompositionBenchmark();
 		
 		private final TimingBenchmark m_TimingBenchmark;
+		private final BuchiCegarLoopBenchmarkGenerator m_BenchmarkGenerator;
 
 		
 
@@ -191,6 +193,7 @@ public class BuchiCegarLoop {
 			this.m_SmtManager = smtManager;
 			this.m_BinaryStatePredicateManager = new BinaryStatePredicateManager(m_SmtManager);
 			m_TimingBenchmark =	new TimingBenchmark(m_SmtManager);
+			m_BenchmarkGenerator = new BuchiCegarLoopBenchmarkGenerator();
 //			this.buchiModGlobalVarManager = new BuchiModGlobalVarManager(
 //					m_Bspm.getUnseededVariable(), m_Bspm.getOldRankVariable(), 
 //					m_RootNode.getRootAnnot().getModGlobVarManager(),
@@ -445,10 +448,16 @@ public class BuchiCegarLoop {
 		 */
 		private void reduceAbstractionSize() throws OperationCanceledException,
 				AutomataLibraryException, AssertionError {
+			m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
 			m_TimingBenchmark.startMinimization();
 			m_Abstraction = (new RemoveNonLiveStates<CodeBlock, IPredicate>(m_Abstraction)).getResult();
+			m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
+			m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_BuchiClosure);
 			m_Abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) (new BuchiClosureNwa(m_Abstraction));
 			m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Abstraction)).getResult();
+			m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_BuchiClosure);
+			m_BenchmarkGenerator.start(CegarLoopBenchmarkType.s_AutomataMinimizationTime);
+			int statesBeforeMinimization = m_Abstraction.size();
 			s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
 			Collection<Set<IPredicate>> partition = BuchiCegarLoop.computePartition(m_Abstraction);
 			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = 
@@ -456,11 +465,15 @@ public class BuchiCegarLoop {
 			assert (minimizeOp.checkResult(m_PredicateFactoryResultChecking));
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
 			m_Abstraction = minimized;
+			int statesAfterMinimization = m_Abstraction.size();
+			m_BenchmarkGenerator.announceStatesRemovedByMinimization(statesBeforeMinimization - statesAfterMinimization);
 			s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
+			m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataMinimizationTime);
 			m_TimingBenchmark.stopMinimization();
 		}
 		
 		private INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi(LassoChecker lassoChecker) throws AutomataLibraryException {
+			m_BenchmarkGenerator.start(CegarLoopBenchmarkType.s_AutomataDifference);
 			m_TimingBenchmark.startBuchiInclusion();
 			int stage = 0;
 			BuchiModGlobalVarManager bmgvm = new BuchiModGlobalVarManager(
@@ -490,6 +503,7 @@ public class BuchiCegarLoop {
 					default:
 						throw new AssertionError("unsupported");
 					}
+					m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
 					m_TimingBenchmark.stopBuchiInclusion();
 					return newAbstraction;
 				}

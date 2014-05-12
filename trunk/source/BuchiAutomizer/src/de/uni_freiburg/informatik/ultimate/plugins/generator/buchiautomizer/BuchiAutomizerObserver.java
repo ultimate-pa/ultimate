@@ -68,12 +68,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		IResult benchDecomp = new BenchmarkResult<Double>(Activator.s_PLUGIN_ID,
 				"Constructed decomposition of program", bcl.getMDBenchmark());
 		reportResult(benchDecomp);
-		s_Logger.info("BenchmarkResult: " + benchDecomp.getShortDescription() + ": " + benchDecomp.getLongDescription());
+//		s_Logger.info("BenchmarkResult: " + benchDecomp.getShortDescription() + ": " + benchDecomp.getLongDescription());
 		
 		IResult benchTiming = new BenchmarkResult(Activator.s_PLUGIN_ID,
 				"Timing statistics", bcl.getTimingBenchmark());
 		reportResult(benchTiming);
-		s_Logger.info("BenchmarkResult: " + benchTiming.getShortDescription() + ": " + benchTiming.getLongDescription());
+//		s_Logger.info("BenchmarkResult: " + benchTiming.getShortDescription() + ": " + benchTiming.getLongDescription());
 		
 		if (result == Result.TERMINATING) {
 				String shortDescr = "Termination proven";
