@@ -58,31 +58,31 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  */
 public class ArrayHandler {
 	
-	boolean modifyingTheHeapGlobally = false;
-	LinkedHashSet<String> modifiedGlobals = new LinkedHashSet<String>();
+//	boolean modifyingTheHeapGlobally = false;//TODO: does not seem nice..
+//	LinkedHashSet<String> modifiedGlobals = new LinkedHashSet<String>();
 	
-	public LinkedHashSet<String> getModifiedGlobals() {
-		if (modifyingTheHeapGlobally) {
-			for (String t : new String[] { SFO.INT, SFO.POINTER,
-					SFO.REAL/*, SFO.BOOL */}) {
-				modifiedGlobals.add(SFO.MEMORY + "_" + t);
-			}
-			modifiedGlobals.add(SFO.LENGTH);
-		}
-		return modifiedGlobals;
-	}
+//	public LinkedHashSet<String> getModifiedGlobals() {
+//		if (modifyingTheHeapGlobally) {
+//			for (String t : new String[] { SFO.INT, SFO.POINTER,
+//					SFO.REAL/*, SFO.BOOL */}) {
+//				modifiedGlobals.add(SFO.MEMORY + "_" + t);
+//			}
+//			modifiedGlobals.add(SFO.LENGTH);
+//		}
+//		return modifiedGlobals;
+//	}
 
 	public ArrayList<Statement> initArrayOnHeap(Dispatcher main, MemoryHandler memoryHandler, StructHandler structHandler, ILocation loc, 
 			ArrayList<ResultExpressionListRec> list, Expression startAddress, //Expression sizeOfCell, 
 			FunctionHandler functionHandler, CArray arrayType) {
 		ArrayList<Statement> arrayWrites = new ArrayList<Statement>();
 		
-		for (String t : new String[] { SFO.INT, SFO.POINTER,
-				SFO.REAL, SFO.BOOL }) {
-			functionHandler.getModifiedGlobals()
-			.get(functionHandler.getCurrentProcedureID())
-			.add(SFO.MEMORY + "_" + t);
-		}
+//		for (String t : new String[] { SFO.INT, SFO.POINTER,
+//				SFO.REAL/*, SFO.BOOL*/ }) {
+//			functionHandler.getModifiedGlobals()
+//			.get(functionHandler.getCurrentProcedureID())
+//			.add(SFO.MEMORY + "_" + t);
+//		}
 		
 		Expression sizeOfCell = memoryHandler.calculateSizeOf(arrayType.getValueType(), loc); 
 		Expression[] dimensions = arrayType.getDimensions();

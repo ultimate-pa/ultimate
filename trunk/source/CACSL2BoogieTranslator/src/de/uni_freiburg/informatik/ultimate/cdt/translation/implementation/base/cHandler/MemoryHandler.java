@@ -129,6 +129,10 @@ public class MemoryHandler {
 	private final boolean m_CheckFreeValid;
 	private final boolean m_CheckMallocNonNegative;
 	
+	boolean isIntArrayRequiredInMM;
+	boolean isFloatArrayRequiredInMM;
+	boolean isPointerArrayRequiredInMM;
+	
 	//needed for adding modifies clauses
 	private FunctionHandler m_functionHandler;
 
@@ -161,6 +165,9 @@ public class MemoryHandler {
 		m_CheckMallocNonNegative = 
 				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
 				getBoolean(PreferenceInitializer.LABEL_CHECK_MallocNonNegative);
+		isIntArrayRequiredInMM = false;
+	    isFloatArrayRequiredInMM = false;
+	    isPointerArrayRequiredInMM = false;
     }
 
     /**
@@ -209,15 +216,16 @@ public class MemoryHandler {
         // add memory arrays and access procedures
         ArrayList<String> allMMArrayNames = new ArrayList<>();
         ArrayList<ASTType> allMMArrayTypes = new ArrayList<>();
-        if (mainDispatcher.isIntArrayRequiredInMM()) {
+//        if (mainDispatcher.isIntArrayRequiredInMM()) {
+        if (isIntArrayRequiredInMM) {
         	allMMArrayNames.add(SFO.INT);
         	allMMArrayTypes.add(intType);
         }
-        if (mainDispatcher.isFloatArrayRequiredInMM()) {
+        if (isFloatArrayRequiredInMM) {
         	allMMArrayNames.add(SFO.REAL);
         	allMMArrayTypes.add(realType);
         }
-        if (mainDispatcher.isPointerArrayRequiredInMM()) {
+        if (isPointerArrayRequiredInMM) {
         	allMMArrayNames.add(SFO.POINTER);
         	allMMArrayTypes.add(POINTER_TYPE);
         }
@@ -834,7 +842,7 @@ public class MemoryHandler {
     public CallStatement getMallocCall(Dispatcher main,
 			FunctionHandler fh, Expression size,
 			LocalLValue resultPointer, ILocation loc) {
-        ArrayList<Statement> stmt = new ArrayList<Statement>();
+//        ArrayList<Statement> stmt = new ArrayList<Statement>();
 
         Expression[] args = new Expression[] { size };
         
@@ -852,9 +860,9 @@ public class MemoryHandler {
             }
             fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.MALLOC);
         }
-        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		Map<VariableDeclaration, ILocation> auxVars = 
-				new LinkedHashMap<VariableDeclaration, ILocation>();
+//        ArrayList<Declaration> decl = new ArrayList<Declaration>();
+//		Map<VariableDeclaration, ILocation> auxVars = 
+//				new LinkedHashMap<VariableDeclaration, ILocation>();
 		return mallocCall;
 	}
 
@@ -1048,13 +1056,16 @@ public class MemoryHandler {
 			CPrimitive cp = (CPrimitive) ut;
 			switch (cp.getGeneralType()) {
 			case INTTYPE:
+				isIntArrayRequiredInMM = true;
 				return new PrimitiveType(lrVal.getValue().getLocation(), SFO.INT);
 			case FLOATTYPE:
+				isFloatArrayRequiredInMM = true;
 				return new PrimitiveType(lrVal.getValue().getLocation(), SFO.REAL);
 			default:
 				throw new UnsupportedSyntaxException(null, "unsupported cType " + ct);
 			}
 		} else if (ut instanceof CPointer) {
+			isPointerArrayRequiredInMM = true;
 			return MemoryHandler.POINTER_TYPE;
 		} else if (ut instanceof CNamed) {
 			assert false : "This should not be the case as we took the underlying type.";
@@ -1078,12 +1089,12 @@ public class MemoryHandler {
      */
     public ArrayList<Statement> getWriteCall(HeapLValue hlv, RValue rval) {
     	
-    	for (String t : new String[] { SFO.INT, SFO.POINTER,
-				SFO.REAL, /*SFO.BOOL */}) {
-			m_functionHandler.getModifiedGlobals()
-					.get(m_functionHandler.getCurrentProcedureID())
-					.add(SFO.MEMORY + "_" + t);
-		}
+//    	for (String t : new String[] { SFO.INT, SFO.POINTER,
+//				SFO.REAL, /*SFO.BOOL */}) {
+//			m_functionHandler.getModifiedGlobals()
+//					.get(m_functionHandler.getCurrentProcedureID())
+//					.add(SFO.MEMORY + "_" + t);
+//		}
     	
         ILocation loc = hlv.getAddress().getLocation();
         ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -1092,26 +1103,31 @@ public class MemoryHandler {
         if (rType instanceof CNamed)
         	rType = ((CNamed) rType).getUnderlyingType();
         
-        String t = SFO.EMPTY;
         if (rType instanceof CPrimitive) {
         	switch (((CPrimitive) rType).getGeneralType()) {
         	case INTTYPE:
-        		t = SFO.INT;	        
-        		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + t,
+        		isIntArrayRequiredInMM = true;
+        		m_functionHandler.getModifiedGlobals().
+        			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY + "_" + SFO.INT);
+        		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.INT,
         				new Expression[] { rval.getValue(), hlv.getAddress() }));
         		break;
         	case FLOATTYPE:
-        		t = SFO.REAL;	        
-        		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + t,
+        		isFloatArrayRequiredInMM = true;
+        		m_functionHandler.getModifiedGlobals().
+        			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY + "_" + SFO.REAL);
+        		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.REAL,
         				new Expression[] { rval.getValue(), hlv.getAddress() }));
         		break;	
         	default:
         		throw new UnsupportedSyntaxException(loc, "we don't recognize this type");
         	}
         } else if (rType instanceof CPointer) {
-        	t = SFO.POINTER;	        
-        		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + t,
-        				new Expression[] { rval.getValue(), hlv.getAddress() }));
+        	isPointerArrayRequiredInMM = true;
+        	m_functionHandler.getModifiedGlobals().
+        			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY + "_" + SFO.POINTER);
+        	stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.POINTER,
+        			new Expression[] { rval.getValue(), hlv.getAddress() }));
         } else if (rType instanceof CStruct) {
         	CStruct rStructType = (CStruct) rType;
         	for (String fieldId : rStructType.getFieldIds()) {

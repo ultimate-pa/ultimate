@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -436,12 +437,17 @@ public class FunctionHandler {
 	 * Calculates transitive modifies clauses for all procedure declarations
 	 * linear in time to (|procedures| + |procedure calls|).
 	 * 
+	 * addition (alex, may 2014): for every modifies clause: if one memory-array is included, all
+	 *  active memory arrays have to be included (f.i. we have 
+	 *  procedure modifies memory_int, 
+	 *  and memoryHandler.isFloatMMArray == true, and memoryHandler.isIntMMArray == true, memoryHandler.isPointerMMArray == false,
+	 *  then we have to add memory_real to the modifies clause of procedure
 	 * @param main
 	 *            a reference to the main dispatcher.
 	 * @return procedure declarations
 	 */
 	public ArrayList<Declaration> calculateTransitiveModifiesClause(
-			Dispatcher main) {
+			Dispatcher main, MemoryHandler memoryHandler) {
 		assert isEveryCalledProcedureDeclared();
 		// calculate SCCs and a mapping for each methodId to its SCC
 		// O(|edges| + |calls|)
@@ -528,18 +534,36 @@ public class FunctionHandler {
 				modifiedGlobals.put(mId, currModClause);
 				int nrSpec = spec.length;
 				spec = Arrays.copyOf(spec, nrSpec + 1);
-				VariableLHS[] modifyList = new VariableLHS[currModClause.size()];
-				int i = 0;
+//				VariableLHS[] modifyList = new VariableLHS[currModClause.size()];
+				HashSet<VariableLHS> modifySet = new HashSet<>();
+//				int i = 0;
 				for (String var: currModClause) {
-					modifyList[i++] = new VariableLHS(loc, var);
+//					modifyList[i++] = new VariableLHS(loc, var);
+					modifySet.add(new VariableLHS(loc, var));
 				}
+				
+				//add missing heap arrays
+				if (memoryHandler.isIntArrayRequiredInMM) {
+					modifySet.add(new VariableLHS(loc, SFO.MEMORY + "_" + SFO.INT));
+				}
+				if (memoryHandler.isFloatArrayRequiredInMM) {
+					modifySet.add(new VariableLHS(loc, SFO.MEMORY + "_" + SFO.REAL));
+				}
+				if (memoryHandler.isPointerArrayRequiredInMM) {
+					modifySet.add(new VariableLHS(loc, SFO.MEMORY + "_" + SFO.POINTER));
+				}
+					
+				VariableLHS[] modifyList = modifySet.toArray(new VariableLHS[0]);
 				spec[nrSpec] = new ModifiesSpecification(loc, false, modifyList);
 			}
 			if (main.isMMRequired()
 					&&
-					(((MainDispatcher) main).isIntArrayRequiredInMM() ||
-						((MainDispatcher) main).isFloatArrayRequiredInMM() ||	
-						((MainDispatcher) main).isPointerArrayRequiredInMM())
+//					(((MainDispatcher) main).isIntArrayRequiredInMM() ||
+//						((MainDispatcher) main).isFloatArrayRequiredInMM() ||	
+//						((MainDispatcher) main).isPointerArrayRequiredInMM())
+					(memoryHandler.isIntArrayRequiredInMM ||
+							memoryHandler.isFloatArrayRequiredInMM ||	
+							memoryHandler.isPointerArrayRequiredInMM)
 					&& (main.getCheckedMethod() == SFO.EMPTY || main
 							.getCheckedMethod().equals(mId))) {
 				if(m_CheckMemoryLeakAtEndOfMain) {

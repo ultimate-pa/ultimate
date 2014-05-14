@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 /**
- * @author Markus Lindenmann
- * @date 12.12.2012
+ * @author nutz
+ * @date May 2014
  */
 public class DetermineNecessaryDeclarations extends ASTVisitor {
    /**
@@ -52,38 +52,22 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
      */
     private LinkedHashMap<String, IASTFunctionDefinition> functionTable;
     
-    
-    
     Stack<IASTDeclaration> currentFunOrStructDef;
     
     LinkedHashMap<IASTDeclaration, LinkedHashSet<IASTDeclaration>> dependencyGraph;
     
     LinkedHashMap<String, IASTDeclaration> dependencyGraphPreliminaryInverse;
     
-    LinkedHashSet<IASTNode> reachableDeclarations;
+    LinkedHashSet<IASTDeclaration> reachableDeclarations;
     
-    public boolean isIntArrayRequiredInMM() {
-		return isIntArrayRequiredInMM;
-	}
-
-	public boolean isFloatArrayRequiredInMM() {
-		return isFloatArrayRequiredInMM;
-	}
-
-	public boolean isPointerArrayRequiredInMM() {
-		return isPointerArrayRequiredInMM;
-	}
-
-	boolean isIntArrayRequiredInMM;
-    boolean isFloatArrayRequiredInMM;
-    boolean isPointerArrayRequiredInMM;
+ 
     
-    MainDispatcher mainDispatcher;
+//    MainDispatcher mainDispatcher;
     
     /**
      * Constructor.
      */
-    public DetermineNecessaryDeclarations(MainDispatcher main) {
+    public DetermineNecessaryDeclarations() {
     	this.shouldVisitParameterDeclarations = true;
     	this.shouldVisitTranslationUnit = true;
         this.shouldVisitDeclarations = true;
@@ -94,9 +78,9 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
         this.dependencyGraph = new LinkedHashMap<>();
         this.dependencyGraphPreliminaryInverse = new LinkedHashMap<>();
         this.reachableDeclarations = new LinkedHashSet<>();
-        this.isIntArrayRequiredInMM = false;
-        this.isFloatArrayRequiredInMM = false;
-        this.mainDispatcher = main;
+//        this.isIntArrayRequiredInMM = false;
+//        this.isFloatArrayRequiredInMM = false;
+//        this.mainDispatcher = main;
         this.currentFunOrStructDef = new Stack<>();
     }
     
@@ -110,7 +94,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     			IASTDeclaration decOfName = (IASTDeclaration) sT.get(name);
     			if (decOfName != null) {//if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
     				addDependency(currentFunOrStructDef.peek(), decOfName);
-//    				addDeclSpecifierDependencyAlongWithDeclaration(currentFunOrStructDef.peek(),decOfName);
     			}
     		} else if (declSpec instanceof IASTNamedTypeSpecifier) {
     			IASTNamedTypeSpecifier nts = (IASTNamedTypeSpecifier) declSpec;
@@ -118,7 +101,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     			IASTDeclaration decOfName = (IASTDeclaration) sT.get(name);
     			if (decOfName != null) { //if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
     				addDependency(currentFunOrStructDef.peek(), decOfName);
-//    				addDeclSpecifierDependencyAlongWithDeclaration(currentFunOrStructDef.peek(),decOfName);
 
     			}
     		}
@@ -141,7 +123,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     	String symbolName = expression.getName().toString();
     	IASTDeclaration symbolDec = sT.get(symbolName);
     	if (symbolDec != null)
-//    		dependencyGraph.put(currentFunDef, symbolDec);
     		addDependency(currentFunOrStructDef.peek(), symbolDec);
     	else
     		dependencyGraphPreliminaryInverse.put(symbolName, currentFunOrStructDef.peek());
@@ -178,7 +159,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 
 
 			if (decIsGlobal) { //global declaration
-				
+
 				//if we have a global declaration of a structType with a name
 				// for example: struct s { int x; };
 				// we have to remember that struct name
@@ -186,18 +167,17 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					IASTCompositeTypeSpecifier cts = (IASTCompositeTypeSpecifier) declSpec;
 					String declSpecName = cts.getName().toString();
 					if (!declSpecName.isEmpty()) {
-//						sT.put(declSpecName, declSpec);//two times put with the same key..
+						//						sT.put(declSpecName, declSpec);//two times put with the same key..
 						sT.put(declSpecName, declaration);
 					}
-					
+
 					for (String id : dependencyGraphPreliminaryInverse.keySet()) {
 						if (declSpecName.equals(id)) {
 							addDependency(dependencyGraphPreliminaryInverse.get(id), declaration);
-//							addDependency(dependencyGraphPreliminaryInverse.get(id), declSpec);//TODO understand this
 						}
 					}
 				}
-				
+
 				// each declarator of a global declaration has to be stored in the symbolTable
 				// --> we check all uses in IdExpression and add a dependecy to the declarator accordingly
 				// the symbolTable connects identifer and declarator
@@ -219,7 +199,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					IASTDeclaration decOfName = sT.get(name);
 					if (decOfName != null) { //if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
 						addDependency(currentFunOrStructDef.peek(), decOfName);
-//						addDeclSpecifierDependencyAlongWithDeclaration(currentFunOrStructDef.peek(),decOfName);
 					}
 
 				} else if (declSpec instanceof IASTNamedTypeSpecifier) {
@@ -228,8 +207,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					IASTDeclaration decOfName = sT.get(name);
 					if (decOfName != null) { //if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
 						addDependency(currentFunOrStructDef.peek(), decOfName);
-						//add DEclspecifiers for good measure..
-//						addDeclSpecifierDependencyAlongWithDeclaration(currentFunOrStructDef.peek(),decOfName);
 					}
 
 				} 
@@ -243,15 +220,14 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 				//case: the declSpecifier references a declaration we have to add to the dependencyGraph
 				String declSpecName = "";
 				if (declSpec instanceof IASTSimpleDeclSpecifier) {
-//					addDependency(declaration, declSpec); //not needed for what delcarations are made but for computing the memory model requirements
-//					addDependency(d, declaration); //not needed for what delcarations are made but for computing the memory model requirements
+					//					addDependency(declaration, declSpec); //not needed for what delcarations are made but for computing the memory model requirements
+					//					addDependency(d, declaration); //not needed for what delcarations are made but for computing the memory model requirements
 				} else if (declSpec instanceof IASTElaboratedTypeSpecifier) {//i.e. sth like struct/union/enum typename varname
 					IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) declSpec;
 					declSpecName = elts.getName().toString();
 					IASTDeclaration decOfName = sT.get(declSpecName);
 					if (decOfName != null) {//if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway (most cases..)
 						addDependency(declaration, sT.get(declSpecName));
-//						addDeclSpecifierDependencyAlongWithDeclaration(declaration, decOfName);
 					}
 					else if (decOfName == null && 
 							decIsGlobal)
@@ -262,30 +238,18 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					IASTDeclaration decOfName = sT.get(declSpecName);
 					if (decOfName != null) {//if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway (most cases..)
 						addDependency(declaration, decOfName);
-//						addDeclSpecifierDependencyAlongWithDeclaration(declaration, decOfName);
 					}
 					else if (decOfName == null && 
 							decIsGlobal)
 						dependencyGraphPreliminaryInverse.put(declSpecName, declaration);
 				} else if (declSpec instanceof IASTCompositeTypeSpecifier) {
-					//						IASTCompositeTypeSpecifier cts = (IASTCompositeTypeSpecifier) declSpec;
-					//						declSpecName = cts.getName().toString();
-					//						addDependency(d, cts);
-//					addDependency(declaration, declSpec);
+					//					addDependency(declaration, declSpec);
 				}
-				//				}
-				//case: the declarator references a declaration we have to add to the dependency graph
-//				if (d instanceof IASTFunctionDeclarator) { --> is handled in a separate visitor
-//					IASTFunctionDeclarator funDec = (IASTFunctionDeclarator) d;
-//					
-//				}
-
-
 			}
 			if (declSpec instanceof IASTCompositeTypeSpecifier) {
-//				currentFunOrStructDef.push(declSpec);
 				currentFunOrStructDef.push(declaration);
 			}
+			return super.visit(declaration);
 		} else if (declaration instanceof IASTFunctionDefinition) {
 			IASTFunctionDefinition funDef = (IASTFunctionDefinition)declaration;
 			functionTable.put(funDef.getDeclarator().getName().toString(), funDef);
@@ -293,9 +257,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 			if (declaration.getParent() instanceof IASTTranslationUnit) {
 				for (String id : dependencyGraphPreliminaryInverse.keySet()) {
 					if (funDef.getDeclarator().getName().toString().equals(id)) {
-						//            		dependencyGraph.put(dependencyGraphPreliminaryInverse.get(id), declaration);
 						addDependency(dependencyGraphPreliminaryInverse.get(id), declaration);
-						//            		dependencyGraphPreliminaryInverse.remove(id);
 					}
 				}
 			}
@@ -306,35 +268,22 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 						(CASTFunctionDeclarator)funDef.getDeclarator();
 				for (IASTParameterDeclaration param : dec.getParameters()) {
 					String key = param.getDeclarator().getName().toString();
-//					sT.put(key, param);
 					sT.put(key, declaration);
 				}
 			}
 			currentFunOrStructDef.push(funDef);
 			int nr = super.visit(declaration);
-			sT.endScope();
 			return nr;
+		} else {
+			return super.visit(declaration);
 		}
-		return super.visit(declaration);
 	}
-
-//	private void addDeclSpecifierDependencyAlongWithDeclaration(IASTNode source,
-//			IASTNode target ) {
-//		if (source instanceof IASTSimpleDeclaration) {
-//			addDependency(
-//				((IASTSimpleDeclaration) source).getDeclSpecifier(),
-//				target);
-//		} else if (source instanceof IASTFunctionDefinition) {
-//			addDependency(
-//				((IASTFunctionDefinition) source).getDeclSpecifier(),
-//				target);	
-//		}
-//	}
 
 	@Override
     public int leave(IASTDeclaration declaration) {
         if (declaration instanceof IASTFunctionDefinition) {
         	currentFunOrStructDef.pop();
+        	sT.endScope();
         } else if (declaration instanceof IASTSimpleDeclaration) {
         	if (((IASTSimpleDeclaration) declaration).getDeclSpecifier() 
         			instanceof IASTCompositeTypeSpecifier) {
@@ -349,29 +298,40 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
         if (statement instanceof IASTCompoundStatement
                 && !(statement.getParent() instanceof IASTFunctionDefinition || statement
                         .getParent() instanceof IASTForStatement)) {
-            // the scope for IASTFunctionDefinition and IASTForStatement was
+            // the scope for IASTFunctionDefinition and IASTForStatement was //FIXME what about while, do, ..?
             // opened in parent before!
             sT.beginScope();
-            int nr = super.visit(statement);
-            sT.endScope();
-            return nr;
         }
         if (statement instanceof IASTSwitchStatement) {
             sT.beginScope();
-            int nr = super.visit(statement);
-            sT.endScope();
-            return nr;
         }
         if (statement instanceof IASTForStatement) {
             sT.beginScope();
-            int nr = super.visit(statement);
-            sT.endScope();
-            return nr;
         }
         return super.visit(statement);
     }
     
+    
+    
     @Override
+	public int leave(IASTStatement statement) {
+    	if (statement instanceof IASTCompoundStatement
+                && !(statement.getParent() instanceof IASTFunctionDefinition || statement
+                        .getParent() instanceof IASTForStatement)) {
+            // the scope for IASTFunctionDefinition and IASTForStatement was //FIXME what about while, do, ..?
+            // opened in parent before!
+            sT.endScope();
+        }
+        if (statement instanceof IASTSwitchStatement) {
+            sT.endScope();
+        }
+        if (statement instanceof IASTForStatement) {
+            sT.endScope();
+        }
+		return super.leave(statement);
+	}
+
+	@Override
     public int leave(IASTTranslationUnit tu) {
     	int result = super.leave(tu);
     	//compute set from graph
@@ -382,7 +342,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     private void addDependency(IASTDeclaration declaration, IASTDeclaration symbolDec) {
     	assert declaration != null;
     	assert symbolDec != null;
-//    	assert declaration != symbolDec; //structs may actually depend on themselves --> does not hurt..
     			
     	LinkedHashSet<IASTDeclaration> set = dependencyGraph.get(declaration);
     	if (set == null) {
@@ -398,7 +357,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     		for (IASTNode n : entry.getValue()) {
     			sb.append(entry.getKey() == null ? "null" : entry.getKey().getRawSignature());
     			sb.append("\n -> \n");
-//    			s += entry.getValue().getRawSignature();
     			sb.append(n == null ? "null" : n.getRawSignature());
     			sb.append("\n\n--------\n");
     		}
@@ -418,7 +376,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     			if (source.contains(filter) || target.contains(filter)) {
     				sb.append(source);
     				sb.append("\n -> \n");
-    				//    			s += entry.getValue().getRawSignature();
     				sb.append(target);
     				sb.append("\n\n--------\n");
     			}
@@ -460,84 +417,27 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     	LinkedHashSet<String> entryPoints = new LinkedHashSet<>();//TODO: replace with input from settings
     	entryPoints.add("main");
     	
-    	ArrayDeque<IASTNode> openNodes = new ArrayDeque<>();
+    	ArrayDeque<IASTDeclaration> openNodes = new ArrayDeque<>();
     	
     	for (String ep : entryPoints) {
     		openNodes.add(functionTable.get(ep));
     	}
     	
     	while(!openNodes.isEmpty()) {
-    		IASTNode currentNode = openNodes.pollFirst();
+    		IASTDeclaration currentNode = openNodes.pollFirst();
     		reachableDeclarations.add(currentNode);
     		LinkedHashSet<IASTDeclaration> targets = dependencyGraph.get(currentNode);
     		if (targets != null) {
-    			for (IASTNode targetNode : targets) {
+    			for (IASTDeclaration targetNode : targets) {
     				if (!reachableDeclarations.contains(targetNode)) {
     					openNodes.add(targetNode);
-    					updateMMRequirements(targetNode);
     				}
     			}
     		}
     	}
     }
-    
-    private void updateMMRequirements(IASTNode reachableNode) {
-    	IASTDeclaration decl = null;
-    	
-    	//determine DeclarationSpecifier (either of parent declaration or declaration itself)
-    	IASTDeclSpecifier declSpec = null;
-    	ArrayList<IASTDeclarator> declarators = new ArrayList<>();
-    	if (reachableNode instanceof IASTDeclarator) {
-    		decl = (IASTDeclaration) reachableNode.getParent();//take the Declaration instead
-    		declarators.add((IASTDeclarator) reachableNode);
-    	} else if (reachableNode instanceof IASTDeclaration){
-    		decl = (IASTDeclaration) reachableNode;
-    	}
-    	if (decl instanceof IASTSimpleDeclaration) {
-    		IASTSimpleDeclaration sDec = (IASTSimpleDeclaration) decl;
-    		if (sDec.getDeclarators().length == 0)
-    			return;
-    		declarators.addAll(Arrays.asList(sDec.getDeclarators()));
-    		declSpec = sDec.getDeclSpecifier();
-    	} else if (decl instanceof IASTFunctionDefinition) {
-    		IASTFunctionDefinition fDef = (IASTFunctionDefinition) decl;    			
-    		declarators.add(fDef.getDeclarator());
-    		declSpec = fDef.getDeclSpecifier();
-    	}
 
-    	for (IASTDeclarator declarator : declarators) {
-    		if (declSpec instanceof IASTSimpleDeclSpecifier) {
-    			ResultTypes rt = (ResultTypes) mainDispatcher.dispatch(declSpec);
-    			switch (declarator.getPointerOperators().length) {
-    			case 0:
-    				//not a pointer -> no consequences for memory model
-    				break;
-    			case 1:
-    				//simple pointer -> check declSpec's type
-    				if (rt.cType instanceof CPrimitive) {
-    					switch (((CPrimitive) rt.cType).getGeneralType()) {
-    					case FLOATTYPE:
-    						isFloatArrayRequiredInMM = true;
-    						break;
-    					case INTTYPE:
-    						isIntArrayRequiredInMM = true;
-    						break;
-    					default:
-    						//do nothing
-    						break;
-    					}
-    				}
-    				break;
-    			default:
-    				//pointer to pointer -> pointer array necessary in memory model
-    				isPointerArrayRequiredInMM = true;
-    				break;
-    			}
-    		}
-    	}
-	}
-
-	LinkedHashSet<IASTNode> getReachableDeclarationsOrDeclarators() {
+	LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
     	return reachableDeclarations;
     }
 }

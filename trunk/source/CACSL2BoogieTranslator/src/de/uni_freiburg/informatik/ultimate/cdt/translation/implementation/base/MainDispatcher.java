@@ -198,10 +198,10 @@ public class MainDispatcher extends Dispatcher {
      */
     private boolean isMMRequired;
     
-	boolean isIntArrayRequiredInMM;
-    boolean isFloatArrayRequiredInMM;
-    boolean isPointerArrayRequiredInMM;
-    LinkedHashSet<IASTNode> reachableDeclarations;
+//	boolean isIntArrayRequiredInMM;
+//    boolean isFloatArrayRequiredInMM;
+//    boolean isPointerArrayRequiredInMM;
+    LinkedHashSet<IASTDeclaration> reachableDeclarations;
     /**
      * Variables that need some special memory handling.
      */
@@ -246,18 +246,18 @@ public class MainDispatcher extends Dispatcher {
     public boolean isMMRequired() {
         return isMMRequired;
     }
-    public boolean isIntArrayRequiredInMM() {
-		return isIntArrayRequiredInMM;
-	}
-
-	public boolean isFloatArrayRequiredInMM() {
-		return isFloatArrayRequiredInMM;
-	}
-
-	public boolean isPointerArrayRequiredInMM() {
-		return isPointerArrayRequiredInMM;
-	}
-	LinkedHashSet<IASTNode> getReachableDeclarationsOrDeclarators() {
+//    public boolean isIntArrayRequiredInMM() {
+//		return isIntArrayRequiredInMM;
+//	}
+//
+//	public boolean isFloatArrayRequiredInMM() {
+//		return isFloatArrayRequiredInMM;
+//	}
+//
+//	public boolean isPointerArrayRequiredInMM() {
+//		return isPointerArrayRequiredInMM;
+//	}
+	LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
     	return reachableDeclarations;
     }
     /**
@@ -287,21 +287,25 @@ public class MainDispatcher extends Dispatcher {
             isMMRequired = pr.isMMRequired();
         }
         
-        boolean useDetNecessaryDeclarations = false;
+        boolean useDetNecessaryDeclarations = true;
         if (useDetNecessaryDeclarations) {
-        	typeHandler = new TypeHandler();
-        	DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(this);
+        	DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations();
         	tu.accept(dnd);
-
+        	
         	reachableDeclarations = dnd.getReachableDeclarationsOrDeclarators();
-        	isIntArrayRequiredInMM = dnd.isIntArrayRequiredInMM();
-        	isFloatArrayRequiredInMM = dnd.isFloatArrayRequiredInMM();
-        	isPointerArrayRequiredInMM = dnd.isPointerArrayRequiredInMM();
+        	
+//        	typeHandler = new TypeHandler();
+//        	DetermineMemoryModel dmm = new DetermineMemoryModel(this, reachableDeclarations);
+//        	tu.accept(dmm);
+//
+//        	isIntArrayRequiredInMM = dmm.isIntArrayRequiredInMM();
+//        	isFloatArrayRequiredInMM = dmm.isFloatArrayRequiredInMM();
+//        	isPointerArrayRequiredInMM = dmm.isPointerArrayRequiredInMM();
         } else {
         	reachableDeclarations = null;
-        	isIntArrayRequiredInMM = true;
-        	isFloatArrayRequiredInMM = true;
-        	isPointerArrayRequiredInMM = true;
+//        	isIntArrayRequiredInMM = true;
+//        	isFloatArrayRequiredInMM = true;
+//        	isPointerArrayRequiredInMM = true;
         }
     }
 

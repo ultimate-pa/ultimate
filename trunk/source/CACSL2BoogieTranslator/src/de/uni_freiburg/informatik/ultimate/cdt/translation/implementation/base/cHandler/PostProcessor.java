@@ -70,7 +70,7 @@ public class PostProcessor {
 	 */
 	private LinkedHashSet<String> mInitializedGlobals;
 
-	private boolean mSomethingOnHeapIsInitialized = false;
+//	private boolean mSomethingOnHeapIsInitialized = false;
 		
 	/**
 	 * Constructor.
@@ -107,8 +107,8 @@ public class PostProcessor {
 	 */
 	public ArrayList<Declaration> postProcess(Dispatcher main, ILocation loc,
 			MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler, StructHandler structHandler,
-			LinkedHashMap<String, Procedure> procedures,
-			LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals,
+//			LinkedHashMap<String, Procedure> procedures,
+//			LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals,
 			Set<String> undefinedTypes,
 			Collection<? extends FunctionDeclaration> functions, 
 			LinkedHashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie
@@ -117,8 +117,11 @@ public class PostProcessor {
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 		decl.addAll(createUltimateInitProcedure(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler,
 				mDeclarationsGlobalInBoogie));
-		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler, procedures,
-				modifiedGlobals));
+		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler
+//				,
+//				procedures,
+//				modifiedGlobals
+				));
 		decl.addAll(functions);
 		return decl;
 	}
@@ -171,10 +174,10 @@ public class PostProcessor {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		ArrayList<VariableDeclaration> initDecl = new ArrayList<VariableDeclaration>();
 		if (main.isMMRequired()) {
-			MainDispatcher md = (MainDispatcher) main;
-			if (md.isFloatArrayRequiredInMM() ||
-					md.isIntArrayRequiredInMM() ||
-					md.isPointerArrayRequiredInMM()) {
+//			MainDispatcher md = (MainDispatcher) main;
+			if (memoryHandler.isFloatArrayRequiredInMM ||
+					memoryHandler.isIntArrayRequiredInMM ||
+					memoryHandler.isPointerArrayRequiredInMM) {
 				LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(loc,
 						new VariableLHS(loc, SFO.VALID),
 						new Expression[] { new IntegerLiteral(loc, SFO.NR0) }) };
@@ -205,8 +208,8 @@ public class PostProcessor {
 			if (en.getKey() instanceof TypeDeclaration)
 				continue;
 			ResultExpression initializer = en.getValue().getInitializer();
-			if (en.getValue().isOnHeap()) 
-				mSomethingOnHeapIsInitialized |= true;
+//			if (en.getValue().isOnHeap()) 
+//				mSomethingOnHeapIsInitialized |= true; //should be obsolete..
 			
 			if (initializer != null) {
 				assert ((VariableDeclaration)en.getKey()).getVariables().length == 1 
@@ -242,20 +245,21 @@ public class PostProcessor {
 		
 		Specification[] specsInit = new Specification[1];
 		
-		VariableLHS[] modifyList = new VariableLHS[mSomethingOnHeapIsInitialized ? 
+		VariableLHS[] modifyList = new VariableLHS[
+//		                                           mSomethingOnHeapIsInitialized ? 
 //				mInitializedGlobals.size() + 4 :
-				mInitializedGlobals.size() + 3: //FIXME: changed from 4 to 3 when removing boolean memory model array --> still very dirty.. 
+				//mInitializedGlobals.size() + 3: //FIXME: changed from 4 to 3 when removing boolean memory model array --> still very dirty.. 
 					mInitializedGlobals.size()];
 		int i = 0;
 		for (String var: mInitializedGlobals) {
 			modifyList[i++] = new VariableLHS(loc, var);
 		}
-		if (mSomethingOnHeapIsInitialized) {
-			for (String t : new String[] { SFO.INT, SFO.POINTER,
-						SFO.REAL/*, SFO.BOOL*/ }) {
-				modifyList[i++] = new VariableLHS(loc, SFO.MEMORY + "_" + t);
-			}		
-		}
+//		if (mSomethingOnHeapIsInitialized) {
+//			for (String t : new String[] { SFO.INT, SFO.POINTER,
+//						SFO.REAL/*, SFO.BOOL*/ }) {
+//				modifyList[i++] = new VariableLHS(loc, SFO.MEMORY + "_" + t);
+//			}		
+//		}
 		specsInit[0] = new ModifiesSpecification(loc, false, modifyList);
 		Procedure initProcedureDecl = new Procedure(loc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], specsInit, null);
@@ -529,9 +533,14 @@ public class PostProcessor {
 	 * @return declarations and implementation of the start procedure.
 	 */
 	private ArrayList<Declaration> createUltimateStartProcedure(
-			Dispatcher main, ILocation loc, FunctionHandler functionHandler,
-			LinkedHashMap<String, Procedure> procedures,
-			LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals) {
+			Dispatcher main, ILocation loc, FunctionHandler functionHandler
+//			,
+//			LinkedHashMap<String, Procedure> procedures,
+//			LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals
+			) {
+		LinkedHashMap<String, Procedure> procedures = functionHandler.getProcedures();
+		LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals = functionHandler.getModifiedGlobals();
+
 		functionHandler.beginUltimateInit(main, loc, SFO.START);
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		String checkMethod = main.getCheckedMethod();
@@ -588,12 +597,12 @@ public class PostProcessor {
 			LinkedHashSet<VariableLHS> startModifiesClause = new LinkedHashSet<VariableLHS>();
 			for (String id: mInitializedGlobals)
 				startModifiesClause.add(new VariableLHS(loc, id));
-			if (mSomethingOnHeapIsInitialized) {
-				for (String t : new String[] { SFO.INT, SFO.POINTER,
-						SFO.REAL/*, SFO.BOOL */}) {
-					startModifiesClause.add(new VariableLHS(loc, SFO.MEMORY + "_" + t));
-				}		
-			}
+//			if (mSomethingOnHeapIsInitialized) {
+//				for (String t : new String[] { SFO.INT, SFO.POINTER,
+//						SFO.REAL/*, SFO.BOOL */}) {
+//					startModifiesClause.add(new VariableLHS(loc, SFO.MEMORY + "_" + t));
+//				}		
+//			}
 			for (String id: modifiedGlobals.get(checkMethod))
 				startModifiesClause.add(new VariableLHS(loc, id));
 			specsStart[0] = new ModifiesSpecification(loc, false,

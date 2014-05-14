@@ -26,6 +26,7 @@ import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTConditionalExpression;
 import org.eclipse.cdt.core.dom.ast.IASTContinueStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
+import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTDefaultStatement;
@@ -481,8 +482,8 @@ public class CHandler implements ICHandler {
 		}
 
 		decl.addAll(postProcessor.postProcess(main, loc, memoryHandler, arrayHandler, functionHandler, structHandler,
-				functionHandler.getProcedures(),
-				functionHandler.getModifiedGlobals(),
+//				functionHandler.getProcedures(),
+//				functionHandler.getModifiedGlobals(),
 				main.typeHandler.getUndefinedTypes(), this.mFunctions.values(),
 				mDeclarationsGlobalInBoogie
 				));
@@ -491,13 +492,13 @@ public class CHandler implements ICHandler {
 		decl.addAll(memoryHandler.declareMemoryModelInfrastructure(main, loc));
 		
 		// handle proc. declaration & resolve their transitive modified globals
-		decl.addAll(functionHandler.calculateTransitiveModifiesClause(main));
+		decl.addAll(functionHandler.calculateTransitiveModifiesClause(main, memoryHandler));
 		return new Result(new Unit(loc, decl.toArray(new Declaration[0])));
 	}
 
 	@Override
 	public Result visit(Dispatcher main, IASTFunctionDefinition node) {
-		LinkedHashSet<IASTNode> reachableDecs = ((MainDispatcher) main).getReachableDeclarationsOrDeclarators();
+		LinkedHashSet<IASTDeclaration> reachableDecs = ((MainDispatcher) main).getReachableDeclarationsOrDeclarators();
 		if (reachableDecs != null) {
 			if (!reachableDecs.contains(node))
 				return new ResultSkip();
@@ -592,7 +593,7 @@ public class CHandler implements ICHandler {
 	 */
 	@Override
 	public Result visit(Dispatcher main, IASTSimpleDeclaration node) {
-		LinkedHashSet<IASTNode> reachableDecs = ((MainDispatcher) main).getReachableDeclarationsOrDeclarators();
+		LinkedHashSet<IASTDeclaration> reachableDecs = ((MainDispatcher) main).getReachableDeclarationsOrDeclarators();
 		if (reachableDecs != null) {
 			if (node.getParent() instanceof IASTTranslationUnit) {
 				if (!reachableDecs.contains(node)) {
