@@ -906,7 +906,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				sb.append("Num of quantified predicates BP: " + numberOfQuantifiedPredicates[3]);
 				sb.append(" ");
 			}
-			int[] sizeOfPredicates = (int[]) benchmarkData.getValue(s_SizeOfPredicates);
+			long[] sizeOfPredicates = (long[]) benchmarkData.getValue(s_SizeOfPredicates);
 			assert sizeOfPredicates.length == 2;
 			sb.append("Size of predicates FP: " + sizeOfPredicates[0] + " ");
 			sb.append("Size of predicates BP: " + sizeOfPredicates[1] + " ");
