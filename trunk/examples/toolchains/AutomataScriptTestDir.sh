@@ -45,30 +45,30 @@ if [ ! -e "$UltimateEXE" ]; then
 fi
 
 function setAssertions {
-	#------------------------------------------------------------------------------
-	# set enable assertions
-	#------------------------------------------------------------------------------
-	UltimateINI="trunk/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/$arch/Ultimate.ini";
-	if [ ! -e "$UltimateINI" ]; then
-		echo "unable to find Ultimate.ini $UltimateINI"
-		exit
-	fi
+    #------------------------------------------------------------------------------
+    # set enable assertions
+    #------------------------------------------------------------------------------
+    UltimateINI="trunk/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/$arch/Ultimate.ini";
+    if [ ! -e "$UltimateINI" ]; then
+        echo "unable to find Ultimate.ini $UltimateINI"
+        exit
+    fi
 
 oldAssertionString=
-	# detect if -da is already set
-	oldDA=`grep "\-da$" "$UltimateINI"`
-	oldEA=`grep "\-ea$" "$UltimateINI"`
-	if [ "$oldDA" ]; then
-		echo "status of assertions before: -da"
-		sed -i "s/-da/$assertionString/g" "$UltimateINI"
-	elif [ "$oldEA" ]; then
-		echo "status of assertions before: -ea"
-		sed -i "s/-ea/$assertionString/g" "$UltimateINI"
-	else 
-		echo "assertions were not set before"
-		echo "$assertionString" >> "$UltimateINI"
-	fi
-	echo "status of assertions now $assertionString"
+    # detect if -da is already set
+    oldDA=`grep "\-da$" "$UltimateINI"`
+    oldEA=`grep "\-ea$" "$UltimateINI"`
+    if [ "$oldDA" ]; then
+        echo "status of assertions before: -da"
+        sed -i "s/-da$/$assertionString/g" "$UltimateINI"
+    elif [ "$oldEA" ]; then
+        echo "status of assertions before: -ea"
+        sed -i "s/-ea$/$assertionString/g" "$UltimateINI"
+    else 
+        echo "assertions were not set before"
+        echo "$assertionString" >> "$UltimateINI"
+    fi
+    echo "status of assertions now $assertionString"
 }
 
 setAssertions
