@@ -536,6 +536,10 @@ public class FunctionHandler {
 				spec[nrSpec] = new ModifiesSpecification(loc, false, modifyList);
 			}
 			if (main.isMMRequired()
+					&&
+					(((MainDispatcher) main).isIntArrayRequiredInMM() ||
+						((MainDispatcher) main).isFloatArrayRequiredInMM() ||	
+						((MainDispatcher) main).isPointerArrayRequiredInMM())
 					&& (main.getCheckedMethod() == SFO.EMPTY || main
 							.getCheckedMethod().equals(mId))) {
 				if(m_CheckMemoryLeakAtEndOfMain) {
@@ -576,44 +580,30 @@ public class FunctionHandler {
 	 */
 	public Result handleFunctionDefinition(Dispatcher main, MemoryHandler memoryHandler,
 			IASTFunctionDefinition node, 
-//			ResultDeclaration funcDecl, 
 			CDeclaration cDec,
 			List<ACSLNode> contract) {
 		main.cHandler.beginScope();
 		
 		ILocation loc = new CACSLLocation(node);
-//		CDeclaration decl = funcDecl.getDeclarations().get(0);
         String methodName = cDec.getName();
         CType returnCType = ((CFunction) cDec.getType()).getResultType();
         boolean returnTypeIsVoid = returnCType instanceof CPrimitive && 
 				((CPrimitive) returnCType).getType() == PRIMITIVE.VOID;
-//		// we check the type via typeHandler
-//		ResultTypes resType = (ResultTypes) main.dispatch(node
-//				.getDeclSpecifier());
-//		procedureToReturnCType.put(methodName, resType.cType);
 		procedureToReturnCType.put(methodName, returnCType);
 		
 		VarList[] in = processInParams(main, loc, cDec, methodName);
         
 		VarList[] out = new VarList[1];
-//		ResultTypes checkedType = main.cHandler.checkForPointer(main, node//FIXME -- is this call still necessary??
-//				.getDeclarator().getPointerOperators(), resType, false);
-//		ASTType type = main.typeHandler.ctype2asttype(loc, checkedType.cType);
 		ASTType type = main.typeHandler.ctype2asttype(loc, returnCType);
 		
-//		if (!checkedType.isVoid) { // void, so there are no out vars
 		if (returnTypeIsVoid) { // void, so there are no out vars
 			out = new VarList[0];
-//			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
 		} else if (methodsCalledBeforeDeclared.contains(methodName)) { //TODO: defaulting to int -- but does this work on all examples?
-//			out = new VarList[1];
 			out[0] = new VarList(loc, new String[] { SFO.RES },
-					new PrimitiveType(loc, /*new InferredType(Type.Integer),*/
-							SFO.INT));
+					new PrimitiveType(loc, SFO.INT));
 		} else { //"normal case"
 			assert type != null;
 			out[0] = new VarList(loc, new String[] { methodName }, type); // at most one out param in C
-//			out[0] = new VarList[] { new VarList(loc, new String[] { methodName }, type) }; // at most one out param in C
 		}
 		
 		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, methodName);
@@ -647,7 +637,6 @@ public class FunctionHandler {
 					declIn = in;
 				} else if (isInParamVoid(proc.getInParams())
 						&& (in.length == 0 || isInParamVoid(in))) {
-					// decl(void) && [impl() || impl(void)]
 					declIn = new VarList[0];
 					in = new VarList[0];
 					checkInParams = false;
@@ -683,7 +672,6 @@ public class FunctionHandler {
 				proc.getTypeParams(), in, proc.getOutParams(),
 				proc.getSpecification(), null);
 		currentProcedure = declWithCorrectlyNamedInParams;
-//		currentProcedureIsVoid = resType.isVoid;
 		currentProcedureIsVoid = returnTypeIsVoid;
 		if (!modifiedGlobals.containsKey(currentProcedure.getIdentifier())) {
 			modifiedGlobals.put(currentProcedure.getIdentifier(),
@@ -828,7 +816,6 @@ public class FunctionHandler {
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			pRex.stmt.add(memoryHandler.getFreeCall(main, this, pRex.lrVal, loc));
 			return pRex;
-//			return memoryHandler.getFreeCall(main, this, pRex.lrVal, loc);
 		}
 
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -861,7 +848,6 @@ public class FunctionHandler {
 						+ loc.toString();
 				throw new IncorrectSyntaxException(loc, msg);
 			}
-//			Expression arg = in.lrVal.getValue();
 			
 			//implicit casts and bool/int conversion
 			if (procedureToParamCType.containsKey(methodName)) {
@@ -876,7 +862,6 @@ public class FunctionHandler {
 					if (((CPrimitive)in.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 						if (expectedParamType instanceof	CPointer) {
 							in.lrVal = new RValue (
-									//								arg = 
 									MemoryHandler.constructPointerFromBaseAndOffset(
 											new IntegerLiteral(loc, "0"), in.lrVal.getValue(), loc), in.lrVal.cType);
 						}
@@ -884,8 +869,6 @@ public class FunctionHandler {
 				} 
 			}
 			
-			
-//			args.add(arg);
 			args.add(in.lrVal.getValue());
 			stmt.addAll(in.stmt);
 			decl.addAll(in.decl);
@@ -904,7 +887,6 @@ public class FunctionHandler {
 				String tmpId = main.nameHandler
 						.getTempVarUID(SFO.AUXVAR.RETURNED);
 				expr = new IdentifierExpression(loc, tmpId);
-//				VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpId, (PrimitiveType) type[0].getType(), loc); 
 				VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpId, type[0].getType(), loc); 
 				auxVars.put(tmpVar, loc);
 				decl.add(tmpVar);
@@ -971,6 +953,7 @@ public class FunctionHandler {
 		} else if (node.getReturnValue() != null) {
 			ResultExpression exprResult = ((ResultExpression) main.dispatch(node
 					.getReturnValue())).switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			exprResult = ConvExpr.rexBoolToIntIfNecessary(loc, exprResult);
 			Expression rhs = (Expression) exprResult.lrVal.getValue();
 			stmt.addAll(exprResult.stmt);
 			decl.addAll(exprResult.decl);
@@ -994,10 +977,8 @@ public class FunctionHandler {
 	
 		// we need to insert a free for each malloc of an auxvar before each return
 		for (Entry<LocalLValue, Integer> entry : memoryHandler.getVariablesToBeMalloced().entrySet())  //frees are inserted in handleReturnStm
-//		for (Entry<LocalLValue, Integer> entry : this.mallocedAuxPointers.entrySet())  //frees are inserted in handleReturnStm
 			if (entry.getValue() >= 1)
 				stmt.add(memoryHandler.getFreeCall(main, this, entry.getKey(), loc));
-//				stmt.addAll(memoryHandler.getFreeCall(main, this, entry.getKey(), loc).stmt);
 		
 		stmt.add(new ReturnStatement(loc));
 		Map<VariableDeclaration, ILocation> emptyAuxVars =
@@ -1018,16 +999,7 @@ public class FunctionHandler {
 		// convention (necessary probably only because of here):
 		// typeHandler.ctype2boogietype yields "null" for CPrimitive(PRIMITIVE.VOID)
 		return (in.length == 1 && in[0].getType() == null);
-//		return (in.length == 1 && isVoidType(in[0].getType()));
 	}
-	
-//	/**
-//	 * Checks if the given type is void in boogie
-//	 * convention: the void type is represented in boogie as a NamedType with name SFO.VOID="~void"
-//	 */
-//	private static boolean isVoidType(ASTType type) {
-//		return type instanceof NamedType && ((NamedType) type).getName().equals(SFO.VOID);
-//	}
 
 	/**
 	 * Getter for modified globals.

@@ -497,6 +497,12 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTFunctionDefinition node) {
+		LinkedHashSet<IASTNode> reachableDecs = ((MainDispatcher) main).getReachableDeclarationsOrDeclarators();
+		if (reachableDecs != null) {
+			if (!reachableDecs.contains(node))
+				return new ResultSkip();
+		}
+		
 		ResultTypes resType = (ResultTypes) main.dispatch(node.getDeclSpecifier());
 		
 		mCurrentDeclaredTypes.push(resType);
@@ -586,6 +592,22 @@ public class CHandler implements ICHandler {
 	 */
 	@Override
 	public Result visit(Dispatcher main, IASTSimpleDeclaration node) {
+		LinkedHashSet<IASTNode> reachableDecs = ((MainDispatcher) main).getReachableDeclarationsOrDeclarators();
+		if (reachableDecs != null) {
+			if (node.getParent() instanceof IASTTranslationUnit) {
+				if (!reachableDecs.contains(node)) {
+					boolean skip = true;
+					for (IASTDeclarator d : node.getDeclarators())
+						if (reachableDecs.contains(d))
+							skip = false;
+					if (reachableDecs.contains(node.getDeclSpecifier()))
+						skip = false;
+					if (skip)
+						return new ResultSkip();
+				}
+			}
+		}
+		
 		CACSLLocation loc = new CACSLLocation(node);
 		if (node.getDeclSpecifier() == null) {
 			String msg = "This statement can be removed!";

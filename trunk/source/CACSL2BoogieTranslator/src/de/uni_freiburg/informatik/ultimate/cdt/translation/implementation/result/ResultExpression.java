@@ -192,7 +192,6 @@ public class ResultExpression extends Result {
 					new LinkedHashMap<VariableDeclaration, ILocation>(this.auxVars); 
 			RValue newValue = null;
 
-
 			CType underlyingType = this.lrVal.cType instanceof CNamed ? 
 					((CNamed) this.lrVal.cType).getUnderlyingType() :
 						this.lrVal.cType;
@@ -200,13 +199,11 @@ public class ResultExpression extends Result {
 					//has the type of what lies at that address
 					RValue addressRVal = new RValue(hlv.getAddress(), this.lrVal.cType, 
 											hlv.isBoogieBool);
-					
 
 					if (underlyingType instanceof CPrimitive) {
 						CPrimitive cp = (CPrimitive) this.lrVal.cType;
-						switch (cp.getType()) {
-						case CHAR:
-						case INT:
+						switch (cp.getGeneralType()) {
+						case INTTYPE:
 							rex = memoryHandler.getReadCall(
 									main, addressRVal);
 							newStmt.addAll(rex.stmt);
@@ -214,8 +211,7 @@ public class ResultExpression extends Result {
 							newAuxVars.putAll(rex.auxVars);	
 							newValue = (RValue) rex.lrVal;
 							break;
-						case FLOAT:
-						case DOUBLE:
+						case FLOATTYPE:
 							rex = memoryHandler.getReadCall(
 									main, addressRVal);
 							newStmt.addAll(rex.stmt);
@@ -227,7 +223,6 @@ public class ResultExpression extends Result {
 							//(in this case we return nothing, because this should not be read anyway..)
 //							throw new UnsupportedSyntaxException("void should have been cast before dereferencing");
 							break;
-//						case BOOL:
 						default:
 							throw new UnsupportedSyntaxException(loc, "..");
 						}
@@ -325,7 +320,6 @@ public class ResultExpression extends Result {
 				newDecl.addAll(fieldRead.decl);
 				newAuxVars.putAll(fieldRead.auxVars);
 			} else if (underlyingType instanceof CPointer) {
-				InferredType typeOnHeap = new InferredType(Type.Integer);
 				fieldRead = (ResultExpression) structHandler.readFieldInTheStructAtAddress(
 						main, memoryHandler, loc, fieldIds[i], 
 						address);

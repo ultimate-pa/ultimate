@@ -105,9 +105,9 @@ public class PreprocessorHandler implements IPreprocessorHandler {
 
     @Override
     public Result visit(Dispatcher main, IASTPreprocessorIncludeStatement node) {
-        String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
-        ILocation loc = new CACSLLocation(node);
-        Dispatcher.unsupportedSyntax(loc, msg);
+//        String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
+//        ILocation loc = new CACSLLocation(node);
+//        Dispatcher.unsupportedSyntax(loc, msg);
         return new ResultSkip();
     }
 

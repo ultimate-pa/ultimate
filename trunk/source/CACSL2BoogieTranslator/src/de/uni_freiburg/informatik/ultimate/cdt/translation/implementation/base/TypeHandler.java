@@ -466,11 +466,9 @@ public class TypeHandler implements ITypeHandler {
     @Override
 	public ASTType ctype2asttype(ILocation loc, CType cType, boolean isBool, boolean isPointer) {
 		if (cType instanceof CPrimitive) {
-//			switch (((CPrimitive) cType).getType()) {
 			switch (((CPrimitive) cType).getGeneralType()) {
 			case VOID:
 				return null; //(alex:) seems to be lindemm's convention, see FunctionHandler.isInParamVoid(..)
-//				return new NamedType(loc, SFO.VOID, new ASTType[0]); //(alex:) see FunctionHandler.isInParamVoid(..)
 			case INTTYPE:
 				return new PrimitiveType(loc, SFO.INT);
 			case FLOATTYPE:
@@ -500,7 +498,6 @@ public class TypeHandler implements ITypeHandler {
 			}
 			return new StructType(loc, fields);
 		} else if (cType instanceof CNamed) {
-//			throw new AssertionError();
 			//should work as we save the unique typename we computed in CNamed, not the name from the source c file
 			return new NamedType(loc, ((CNamed) cType).getName(), new ASTType[0]);
 		} else if (cType instanceof CFunction) {

@@ -12,6 +12,7 @@ import java.util.Set;
 import javax.swing.text.StyledEditorKit.UnderlineAction;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -170,12 +171,17 @@ public class PostProcessor {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		ArrayList<VariableDeclaration> initDecl = new ArrayList<VariableDeclaration>();
 		if (main.isMMRequired()) {
-			LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(loc,
-					new VariableLHS(loc, SFO.VALID),
-					new Expression[] { new IntegerLiteral(loc, SFO.NR0) }) };
-			Expression[] rhs = new Expression[] { new BooleanLiteral(loc, false) };
-			initStatements.add(0, new AssignmentStatement(loc, lhs, rhs));
-			mInitializedGlobals.add(SFO.VALID);
+			MainDispatcher md = (MainDispatcher) main;
+			if (md.isFloatArrayRequiredInMM() ||
+					md.isIntArrayRequiredInMM() ||
+					md.isPointerArrayRequiredInMM()) {
+				LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(loc,
+						new VariableLHS(loc, SFO.VALID),
+						new Expression[] { new IntegerLiteral(loc, SFO.NR0) }) };
+				Expression[] rhs = new Expression[] { new BooleanLiteral(loc, false) };
+				initStatements.add(0, new AssignmentStatement(loc, lhs, rhs));
+				mInitializedGlobals.add(SFO.VALID);
+			}
 
 			VariableLHS slhs = new VariableLHS(loc, SFO.NULL);
 			initStatements.add(0, new AssignmentStatement(loc, 
@@ -237,7 +243,8 @@ public class PostProcessor {
 		Specification[] specsInit = new Specification[1];
 		
 		VariableLHS[] modifyList = new VariableLHS[mSomethingOnHeapIsInitialized ? 
-				mInitializedGlobals.size() + 4 :
+//				mInitializedGlobals.size() + 4 :
+				mInitializedGlobals.size() + 3: //FIXME: changed from 4 to 3 when removing boolean memory model array --> still very dirty.. 
 					mInitializedGlobals.size()];
 		int i = 0;
 		for (String var: mInitializedGlobals) {
@@ -245,7 +252,7 @@ public class PostProcessor {
 		}
 		if (mSomethingOnHeapIsInitialized) {
 			for (String t : new String[] { SFO.INT, SFO.POINTER,
-						SFO.REAL, SFO.BOOL }) {
+						SFO.REAL/*, SFO.BOOL*/ }) {
 				modifyList[i++] = new VariableLHS(loc, SFO.MEMORY + "_" + t);
 			}		
 		}
@@ -583,7 +590,7 @@ public class PostProcessor {
 				startModifiesClause.add(new VariableLHS(loc, id));
 			if (mSomethingOnHeapIsInitialized) {
 				for (String t : new String[] { SFO.INT, SFO.POINTER,
-						SFO.REAL, SFO.BOOL }) {
+						SFO.REAL/*, SFO.BOOL */}) {
 					startModifiesClause.add(new VariableLHS(loc, SFO.MEMORY + "_" + t));
 				}		
 			}

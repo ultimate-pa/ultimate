@@ -214,6 +214,8 @@ public class PreRunner extends ASTVisitor {
         if (declaration instanceof IASTFunctionDefinition) {
             IASTFunctionDefinition funDef = (IASTFunctionDefinition)declaration;
             functionTable.put(funDef.getDeclarator().getName().toString(), funDef);
+            
+            sT.beginScope();
             if (funDef.getDeclarator() instanceof CASTFunctionDeclarator) {
                 CASTFunctionDeclarator dec =
                         (CASTFunctionDeclarator)funDef.getDeclarator();
@@ -231,7 +233,6 @@ public class PreRunner extends ASTVisitor {
                         isMMRequired = true;//FIXME: right all arrays are on the heap -- change this in case of a change of mind
                 }
             }
-            sT.beginScope();
             int nr = super.visit(declaration);
             sT.endScope();
             return nr;

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
@@ -196,6 +197,11 @@ public class MainDispatcher extends Dispatcher {
      * Whether the memory model is required.
      */
     private boolean isMMRequired;
+    
+	boolean isIntArrayRequiredInMM;
+    boolean isFloatArrayRequiredInMM;
+    boolean isPointerArrayRequiredInMM;
+    LinkedHashSet<IASTNode> reachableDeclarations;
     /**
      * Variables that need some special memory handling.
      */
@@ -204,6 +210,8 @@ public class MainDispatcher extends Dispatcher {
      * Functions used as pointer.
      */
     private HashMap<String, IASTFunctionDefinition> functionsOnHeap;
+    
+//    LinkedHashSet<IASTNode> reachableDecs;
     
     /**
      * @return a map of functions used as pointers.
@@ -238,7 +246,20 @@ public class MainDispatcher extends Dispatcher {
     public boolean isMMRequired() {
         return isMMRequired;
     }
+    public boolean isIntArrayRequiredInMM() {
+		return isIntArrayRequiredInMM;
+	}
 
+	public boolean isFloatArrayRequiredInMM() {
+		return isFloatArrayRequiredInMM;
+	}
+
+	public boolean isPointerArrayRequiredInMM() {
+		return isPointerArrayRequiredInMM;
+	}
+	LinkedHashSet<IASTNode> getReachableDeclarationsOrDeclarators() {
+    	return reachableDeclarations;
+    }
     /**
      * Returns a set of variables, that have to be handled using the memory
      * model.
@@ -265,13 +286,30 @@ public class MainDispatcher extends Dispatcher {
         else {
             isMMRequired = pr.isMMRequired();
         }
+        
+        boolean useDetNecessaryDeclarations = false;
+        if (useDetNecessaryDeclarations) {
+        	typeHandler = new TypeHandler();
+        	DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(this);
+        	tu.accept(dnd);
+
+        	reachableDeclarations = dnd.getReachableDeclarationsOrDeclarators();
+        	isIntArrayRequiredInMM = dnd.isIntArrayRequiredInMM();
+        	isFloatArrayRequiredInMM = dnd.isFloatArrayRequiredInMM();
+        	isPointerArrayRequiredInMM = dnd.isPointerArrayRequiredInMM();
+        } else {
+        	reachableDeclarations = null;
+        	isIntArrayRequiredInMM = true;
+        	isFloatArrayRequiredInMM = true;
+        	isPointerArrayRequiredInMM = true;
+        }
     }
 
     @Override
     protected void init() {
         sideEffectHandler = new SideEffectHandler();
         cHandler = new CHandler(this, backtranslator, true);
-        typeHandler = new TypeHandler();
+        typeHandler = new TypeHandler();//already done in preRun(), but make it fresh..
         acslHandler = new ACSLHandler();
         nameHandler = new NameHandler();
         backtranslator.setBoogie2C(nameHandler.getBoogie2C());

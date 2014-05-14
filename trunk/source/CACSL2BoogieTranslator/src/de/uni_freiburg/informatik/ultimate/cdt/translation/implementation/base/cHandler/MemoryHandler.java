@@ -13,6 +13,7 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -136,6 +137,7 @@ public class MemoryHandler {
 	 * and free at the end of the current scope;
 	 */
 	LinkedScopedHashMap<LocalLValue, Integer> variablesToBeMalloced;
+	boolean noMemArrays;
 
     /**
      * Constructor.
@@ -176,10 +178,13 @@ public class MemoryHandler {
         if (!main.isMMRequired()) {
             return decl;
         }
-        InferredType intIT = new InferredType(Type.Integer);
-        InferredType boolIT = new InferredType(Type.Boolean);
-        ASTType intType = new PrimitiveType(tuLoc, intIT, SFO.INT);
-        ASTType boolType = new PrimitiveType(tuLoc, boolIT, SFO.BOOL);
+//        InferredType intIT = new InferredType(Type.Integer);
+//        InferredType boolIT = new InferredType(Type.Boolean);
+//        ASTType intType = new PrimitiveType(tuLoc, intIT, SFO.INT);
+        ASTType intType = new PrimitiveType(tuLoc, SFO.INT);
+        ASTType boolType = new PrimitiveType(tuLoc, SFO.BOOL);
+        ASTType realType = new PrimitiveType(tuLoc, SFO.REAL);
+       
         VarList fBase = new VarList(tuLoc, new String[] { SFO.POINTER_BASE },
                 intType);
         VarList fOffset = new VarList(tuLoc,
@@ -197,7 +202,35 @@ public class MemoryHandler {
         // to add a type declaration for "real"
         // decl.add(new TypeDeclaration(tuLoc, new Attribute[0], false,
         // SFO.REAL, new String[0]));
-        decl.addAll(declareMemoryArrays(tuLoc, main));
+        
+        //declare the arrays that will model the heap
+        
+        MainDispatcher mainDispatcher = (MainDispatcher) main;
+        // add memory arrays and access procedures
+        ArrayList<String> allMMArrayNames = new ArrayList<>();
+        ArrayList<ASTType> allMMArrayTypes = new ArrayList<>();
+        if (mainDispatcher.isIntArrayRequiredInMM()) {
+        	allMMArrayNames.add(SFO.INT);
+        	allMMArrayTypes.add(intType);
+        }
+        if (mainDispatcher.isFloatArrayRequiredInMM()) {
+        	allMMArrayNames.add(SFO.REAL);
+        	allMMArrayTypes.add(realType);
+        }
+        if (mainDispatcher.isPointerArrayRequiredInMM()) {
+        	allMMArrayNames.add(SFO.POINTER);
+        	allMMArrayTypes.add(POINTER_TYPE);
+        }
+        String[] namesOfAllMemoryArrayTypes = allMMArrayNames.toArray(new String[0]);
+        ASTType[] astTypesOfAllMemoryArrayTypes = allMMArrayTypes.toArray(new ASTType[0]);
+        
+        if (namesOfAllMemoryArrayTypes.length == 0) { 
+        	noMemArrays = true;
+        	return decl;
+        }
+        
+        decl.addAll(declareSomeMemoryArrays(tuLoc, main, namesOfAllMemoryArrayTypes, astTypesOfAllMemoryArrayTypes));
+       
         // var #valid : [int]bool;
         ASTType validType = new ArrayType(tuLoc, new String[0],
                 new ASTType[] { intType }, boolType);
@@ -242,52 +275,66 @@ public class MemoryHandler {
                 Operator.COMPGT, idex, new IntegerLiteral(l, SFO.NR0))));
         sizeofConsts.add(id);
     }
+  
+//    /**
+//     * Declares the memory arrays <code>#memory_int</code>,
+//     * <code>#memory_bool</code>, <code>#memory_real</code> and
+//     * <code>#memory_$Pointer$</code>, as well as read and write procedures for
+//     * these arrays.
+//     * 
+//     * @param l
+//     *            the location of the translation unit.
+//     * @param main 
+//     * @return the declarations for the memory arrays <code>#memory_int</code>,
+//     *         <code>#memory_bool</code>, <code>#memory_real</code> and
+//     *         <code>#memory_$Pointer$</code>, as well as read and write
+//     *         procedures for these arrays.
+//     */
+//    private ArrayList<Declaration> declareMemoryArrays(final ILocation l, Dispatcher main) {
+////        ArrayList<Declaration> decl = new ArrayList<Declaration>();
+////        InferredType intIT = new InferredType(Type.Integer);
+////        InferredType boolIT = new InferredType(Type.Boolean);
+////        InferredType realIT = new InferredType(Type.Real);
+////        ASTType intType = new PrimitiveType(l, intIT, SFO.INT);
+//        ASTType intType = new PrimitiveType(l, SFO.INT);
+////        ASTType boolType = new PrimitiveType(l, boolIT, SFO.BOOL);
+////        ASTType boolType = new PrimitiveType(l, boolIT, SFO.BOOL);
+////        ASTType realType = new PrimitiveType(l, realIT, SFO.REAL);
+//        ASTType realType = new PrimitiveType(l, SFO.REAL);
+//        // add memory arrays and access procedures
+//        String[] namesOfAllMemoryArrayTypes = new String[] { SFO.POINTER, SFO.INT,// SFO.BOOL,
+//                SFO.REAL };
+//        ASTType[] astTypesOfAllMemoryArrayTypes = new ASTType[] { POINTER_TYPE, intType, //boolType,
+//                realType };
+//        assert namesOfAllMemoryArrayTypes.length == astTypesOfAllMemoryArrayTypes.length;
+//        return declareSomeMemoryArrays(l, main, namesOfAllMemoryArrayTypes,
+//				astTypesOfAllMemoryArrayTypes);
+////        return decl;
+//    }
 
-    /**
-     * Declares the memory arrays <code>#memory_int</code>,
-     * <code>#memory_bool</code>, <code>#memory_real</code> and
-     * <code>#memory_$Pointer$</code>, as well as read and write procedures for
-     * these arrays.
-     * 
-     * @param l
-     *            the location of the translation unit.
-     * @param main 
-     * @return the declarations for the memory arrays <code>#memory_int</code>,
-     *         <code>#memory_bool</code>, <code>#memory_real</code> and
-     *         <code>#memory_$Pointer$</code>, as well as read and write
-     *         procedures for these arrays.
-     */
-    private ArrayList<Declaration> declareMemoryArrays(final ILocation l, Dispatcher main) {
-        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-        InferredType intIT = new InferredType(Type.Integer);
-        InferredType boolIT = new InferredType(Type.Boolean);
-        InferredType realIT = new InferredType(Type.Real);
-        ASTType intType = new PrimitiveType(l, intIT, SFO.INT);
-        ASTType boolType = new PrimitiveType(l, boolIT, SFO.BOOL);
-        ASTType realType = new PrimitiveType(l, realIT, SFO.REAL);
-        // add memory arrays and access procedures
-        String[] tName = new String[] { SFO.POINTER, SFO.INT, SFO.BOOL,
-                SFO.REAL };
-        ASTType[] ts = new ASTType[] { POINTER_TYPE, intType, boolType,
-                realType };
-        assert tName.length == ts.length;
-        for (int i = 0; i < tName.length; i++) {
+	private ArrayList<Declaration> declareSomeMemoryArrays(final ILocation l, Dispatcher main,
+			 String[] namesOfAllMemoryArrayTypes,
+			ASTType[] astTypesOfAllMemoryArrayTypes) {
+		ArrayList<Declaration> decl = new ArrayList<>();
+		for (int i = 0; i < namesOfAllMemoryArrayTypes.length; i++) {
+        	String typeName = namesOfAllMemoryArrayTypes[i];
+        	ASTType astType = astTypesOfAllMemoryArrayTypes[i];
         	//The name of the sizeof constants is determined by the name of the
         	//Ctype. Names of primitive CTypes are written in uppercase.
         	//Names of our boogie types are written in lowercase.
         	//Our convention is to use uppercase.
         	String CtypeCompatibleId;
-        	if (tName[i].equals(SFO.POINTER)) {
+        	if (typeName.equals(SFO.POINTER)) {
         		CtypeCompatibleId = SFO.POINTER;
         	} else {
-        		CtypeCompatibleId = tName[i].toUpperCase();
+        		CtypeCompatibleId = typeName.toUpperCase();
         	}
             declareSizeOf(l, CtypeCompatibleId);
-            // var #memory_tName[i] : [$Pointer$]ts[i];
+            // var #memory_typeName : [$Pointer$]astType;
             ASTType memoryType = new ArrayType(l, new String[0],
-                    new ASTType[] { POINTER_TYPE }, ts[i]);
+                    new ASTType[] { POINTER_TYPE }, astType);
             VarList vlM = new VarList(l, new String[] { SFO.MEMORY + "_"
-                    + tName[i] }, memoryType);
+                    + typeName }, memoryType);
             decl.add(new VariableDeclaration(l, new Attribute[0],
                     new VarList[] { vlM }));
             // create and add read and write procedure
@@ -296,19 +343,19 @@ public class MemoryHandler {
             Expression idVal = new IdentifierExpression(l, value);
             Expression idPtr = new IdentifierExpression(l, inPtr);
             Expression[] idc = new Expression[] { idPtr };
-            String nwrite = "write~" + tName[i];
-            String nread = "read~" + tName[i];
+            String nwrite = "write~" + typeName;
+            String nread = "read~" + typeName;
             VarList[] inWrite = new VarList[] {
-                    new VarList(l, new String[] { value }, ts[i]),
+                    new VarList(l, new String[] { value }, astType),
                     new VarList(l, new String[] { inPtr }, POINTER_TYPE) };
             Expression valid = new IdentifierExpression(l, SFO.VALID);
             Expression addr = new IdentifierExpression(l, inPtr);
-            Expression addrBase = new StructAccessExpression(l, intIT, addr,
+            Expression addrBase = new StructAccessExpression(l, addr,
                     SFO.POINTER_BASE);
             Expression[] idcWrite = new Expression[] { addrBase };
-            VariableLHS[] modified = new VariableLHS[tName.length];
+            VariableLHS[] modified = new VariableLHS[namesOfAllMemoryArrayTypes.length];
             for (int j = 0; j < modified.length; j++) {
-                modified[j] = new VariableLHS(l, SFO.MEMORY + "_" + tName[j]);
+                modified[j] = new VariableLHS(l, SFO.MEMORY + "_" + namesOfAllMemoryArrayTypes[j]);
             }
             
             
@@ -320,21 +367,21 @@ public class MemoryHandler {
             	RequiresSpecification specValid;
             	if (m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSERTandASSUME) {
             		specValid = new RequiresSpecification(l, false,
-                			new ArrayAccessExpression(l, boolIT, valid,
+                			new ArrayAccessExpression(l, valid,
                 					idcWrite));
             	} else {
             		assert m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSUME;
             		specValid = new RequiresSpecification(l, true,
-                			new ArrayAccessExpression(l, boolIT, valid,
+                			new ArrayAccessExpression(l, valid,
                 					idcWrite));
             	}
             	Check check = new Check(Spec.MEMORY_DEREFERENCE);
             	check.addToNodeAnnot(specValid);
             	swrite.add(specValid);
             }
-            Expression ptrOff = new StructAccessExpression(l, intIT, idPtr,
+            Expression ptrOff = new StructAccessExpression(l, idPtr,
                     SFO.POINTER_OFFSET);
-            Expression ptrBase = new StructAccessExpression(l, intIT, idPtr,
+            Expression ptrBase = new StructAccessExpression(l, idPtr,
                     SFO.POINTER_BASE);
             Expression length = new ArrayAccessExpression(l,
                     new IdentifierExpression(l, SFO.LENGTH),
@@ -364,11 +411,14 @@ public class MemoryHandler {
             	swrite.add(specValid);
             }
             swrite.add(new ModifiesSpecification(l, false, modified));
-            for (int j = 0; j < modified.length; j++) {
+//            for (int j = 0; j < modified.length; j++) {
+            for (String s : namesOfAllMemoryArrayTypes) {
                 // ensures #memory_int == old(#valid)[~addr!base := false];
                 Expression memA = new IdentifierExpression(l, SFO.MEMORY + "_"
-                        + tName[j]);
-                if (i == j) {
+//                        + tName[j]);
+                        + s);
+//                if (i == j) {
+                if (s.equals(typeName)) {
                     swrite.add(new EnsuresSpecification(
                             l,
                             false,
@@ -403,18 +453,19 @@ public class MemoryHandler {
             decl.add(new Procedure(l, new Attribute[0], nwrite, new String[0],
                     inWrite, new VarList[0], swrite.toArray(new Specification[0]), null));
             if (m_AddImplementation) {
-            	VariableDeclaration[] writeDecl = new VariableDeclaration[ts.length];
-            	Statement[] writeBlock = new Statement[2 * ts.length - 1];
-            	for (int j = 0, k = 0; j < ts.length; j++, k++) {
+            	VariableDeclaration[] writeDecl = new VariableDeclaration[astTypesOfAllMemoryArrayTypes.length];
+            	Statement[] writeBlock = new Statement[2 * astTypesOfAllMemoryArrayTypes.length - 1];
+            	for (int j = 0, k = 0; j < astTypesOfAllMemoryArrayTypes.length; j++, k++) {
             		String tmpVar = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);	
             		writeDecl[j] = new VariableDeclaration(l, new Attribute[0],
             				new VarList[] { new VarList(l, new String[] { tmpVar },
-            						ts[j]) });
+            						astTypesOfAllMemoryArrayTypes[j]) });
             		VariableLHS arr = new VariableLHS(l, SFO.MEMORY + "_"
-            				+ tName[j]);
+            				+ namesOfAllMemoryArrayTypes[j]);
             		LeftHandSide[] arrL = new LeftHandSide[] { new ArrayLHS(l, arr,
             				idc) };
-            		if (i == j) {
+//            		if (i == j) {
+            		if (namesOfAllMemoryArrayTypes[j].equals(typeName)) {
             			writeBlock[k] = new AssignmentStatement(l, arrL,
             					new Expression[] { idVal });
             		} else {
@@ -432,7 +483,7 @@ public class MemoryHandler {
             VarList[] inRead = new VarList[] { new VarList(l,
                     new String[] { inPtr }, POINTER_TYPE) };
             VarList[] outRead = new VarList[] { new VarList(l,
-                    new String[] { value }, ts[i]) };
+                    new String[] { value }, astType) };
             ArrayList<Specification> sread = new ArrayList<Specification>();
             
             if (m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSERTandASSUME 
@@ -441,12 +492,12 @@ public class MemoryHandler {
             	RequiresSpecification specValid;
             	if (m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSERTandASSUME) {
             		specValid = new RequiresSpecification(l, false,
-                			new ArrayAccessExpression(l, boolIT, valid,
+                			new ArrayAccessExpression(l, valid,
                 					idcWrite));
             	} else {
             		assert m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSUME;
             		specValid = new RequiresSpecification(l, true,
-                			new ArrayAccessExpression(l, boolIT, valid,
+                			new ArrayAccessExpression(l, valid,
                 					idcWrite));
             	}
             	Check check = new Check(Spec.MEMORY_DEREFERENCE);
@@ -478,7 +529,7 @@ public class MemoryHandler {
             	sread.add(specValid);
             }
             
-           	Expression arr = new IdentifierExpression(l, SFO.MEMORY + "_" + tName[i]);
+           	Expression arr = new IdentifierExpression(l, SFO.MEMORY + "_" + typeName);
            	Expression arrE = new ArrayAccessExpression(l, arr, idc);
            	Expression valueE = new IdentifierExpression(l, value);
            	Expression equality = new BinaryExpression(l, Operator.COMPEQ, valueE, arrE);
@@ -495,8 +546,8 @@ public class MemoryHandler {
             			inRead, outRead, null, bread));
             }
         }
-        return decl;
-    }
+		return decl;
+	}
 
     /**
      * Generate <code>procedure ~free(~addr:$Pointer$) returns()</code>'s
@@ -507,20 +558,23 @@ public class MemoryHandler {
      * @return declaration and implementation of procedure <code>~free</code>
      */
     private ArrayList<Declaration> declareFree(final ILocation tuLoc) {
-        InferredType intIT = new InferredType(Type.Integer);
-        InferredType boolIT = new InferredType(Type.Boolean);
+//        InferredType intIT = new InferredType(Type.Integer);
+//        InferredType boolIT = new InferredType(Type.Boolean);
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
         // procedure ~free(~addr:$Pointer$) returns();
         // requires #valid[~addr!base];
         // ensures #valid = old(valid)[~addr!base := false];
         // modifies #valid;
         Expression nr0 = new IntegerLiteral(tuLoc, SFO.NR0);
-        Expression bLFalse = new BooleanLiteral(tuLoc, boolIT, false);
+//        Expression bLFalse = new BooleanLiteral(tuLoc, boolIT, false);
+        Expression bLFalse = new BooleanLiteral(tuLoc, false);
         Expression addr = new IdentifierExpression(tuLoc, ADDR);
         Expression valid = new IdentifierExpression(tuLoc, SFO.VALID);
-        Expression addrOffset = new StructAccessExpression(tuLoc, intIT, addr,
+//        Expression addrOffset = new StructAccessExpression(tuLoc, intIT, addr,
+        Expression addrOffset = new StructAccessExpression(tuLoc, addr,
                 SFO.POINTER_OFFSET);
-        Expression addrBase = new StructAccessExpression(tuLoc, intIT, addr,
+//        Expression addrBase = new StructAccessExpression(tuLoc, intIT, addr,
+        Expression addrBase = new StructAccessExpression(tuLoc, addr,
                 SFO.POINTER_BASE);
         Expression[] idcFree = new Expression[] { addrBase };
         
@@ -537,7 +591,8 @@ public class MemoryHandler {
             RequiresSpecification baseValid = new RequiresSpecification(
                     tuLoc,
                     free,
-                    new ArrayAccessExpression(tuLoc, boolIT, valid, idcFree));
+//                    new ArrayAccessExpression(tuLoc, boolIT, valid, idcFree));
+                    new ArrayAccessExpression(tuLoc, valid, idcFree));
             check.addToNodeAnnot(baseValid);
             specFree.add(baseValid);
             specFree.add(new EnsuresSpecification(tuLoc, false, new BinaryExpression(
@@ -1024,7 +1079,7 @@ public class MemoryHandler {
     public ArrayList<Statement> getWriteCall(HeapLValue hlv, RValue rval) {
     	
     	for (String t : new String[] { SFO.INT, SFO.POINTER,
-				SFO.REAL, SFO.BOOL }) {
+				SFO.REAL, /*SFO.BOOL */}) {
 			m_functionHandler.getModifiedGlobals()
 					.get(m_functionHandler.getCurrentProcedureID())
 					.add(SFO.MEMORY + "_" + t);

@@ -64,7 +64,7 @@ public class ArrayHandler {
 	public LinkedHashSet<String> getModifiedGlobals() {
 		if (modifyingTheHeapGlobally) {
 			for (String t : new String[] { SFO.INT, SFO.POINTER,
-					SFO.REAL, SFO.BOOL }) {
+					SFO.REAL/*, SFO.BOOL */}) {
 				modifiedGlobals.add(SFO.MEMORY + "_" + t);
 			}
 			modifiedGlobals.add(SFO.LENGTH);
