@@ -8,38 +8,38 @@ fi
 
 if [ "$1" = "terminator-da" ]; then
 echo "buchiAutomizer for folder $2"
-trunk/examples/toolchains/AutomizerTestDir.sh -da 350 "$2" \
+trunk/examples/toolchains/AutomizerTestDir.sh -da 900 "$2" \
  "BuchiAutomizerBplWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/staged300-SMTInterpol.epf"
 fi
 
 if [ "$1" = "templateBenchmark" ]; then
 echo "buchiAutomizer for folder $2"
-trunk/examples/toolchains/AutomizerTestDir.sh -ea 350 "$2" \
+trunk/examples/toolchains/AutomizerTestDir.sh -ea 900 "$2" \
  "BuchiAutomizerBpl.xml;BuchiAutomizerC.xml;buchiAutomizer/templateBenchmark.epf"
 fi
 
 if [ "$1" = "templateBenchmarkLBE" ]; then
 echo "buchiAutomizer for folder $2"
-trunk/examples/toolchains/AutomizerTestDir.sh -ea 350 "$2" \
+trunk/examples/toolchains/AutomizerTestDir.sh -ea 900 "$2" \
  "BuchiAutomizerBplWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/templateBenchmarkLBE.epf"
 fi
 
 if [ "$1" = "dumpLinearLassoRankerScripts" ]; then
 echo "dumpLinearLassoRankerScripts for folder $2"
-trunk/examples/toolchains/AutomizerTestDir.sh -da 300 "$2" \
+trunk/examples/toolchains/AutomizerTestDir.sh -da 900 "$2" \
  "BuchiAutomizerBplWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/dumpLinearLassoRankerScripts.epf"
 fi
 
 
 if [ "$1" = "dumpNonlinearLassoRankerScripts" ]; then
 echo "dumpNonlinearLassoRankerScripts for folder $2"
-trunk/examples/toolchains/AutomizerTestDir.sh -da 300 "$2" \
+trunk/examples/toolchains/AutomizerTestDir.sh -da 900 "$2" \
  "BuchiAutomizerBplWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/dumpNonlinearLassoRankerScripts.epf"
 fi
 
 if [ "$1" = "dumpAutomizerAUFLIRAScripts" ]; then
 echo "$1 for folder $2"
-trunk/examples/toolchains/AutomizerTestDir.sh -da 350 "$2" \
+trunk/examples/toolchains/AutomizerTestDir.sh -da 900 "$2" \
  "AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_Svcomp_300_dumpAUFLIRA.epf"
 fi
 

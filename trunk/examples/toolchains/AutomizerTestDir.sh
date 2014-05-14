@@ -196,12 +196,14 @@ do
 	
 	#Ultimate_OUTPUT=`$Ultimate_PATH/console/eclipse/Ultimate --console $Ultimate_PATH/examples/toolchains/TraceAbstraction.xml $f --prelude $Ultimate_PATH/examples/VCC/VccPrelude.bpl --settings $Ultimate_PATH/examples/toolchains/TraceAbstractionLowTheoremProverUsage.settings 2>&1`
 
+	start=`date +%s`
 	if [ "$VCCPRELUDE" ]; then 
 	    Ultimate_OUTPUT=`bash -c "ulimit -t $timeout; $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$f" --prelude "$Ultimate_PATH/trunk/examples/programs/translated-vcc/Vcc2Prelude.bpl" --settings "$SETTINGS" 2>&1"`    
 	else
 	    # echo $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$examplesFolder/$f" --settings "$SETTINGS"
 	    Ultimate_OUTPUT=`bash -c "ulimit -t $timeout; $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$f" --settings "$SETTINGS" 2>&1"`
 	fi
+	end=`date +%s`
 
 	USED_SETTINGS=`echo "$Ultimate_OUTPUT" | grep "ettings: "`
 	EXCEPTION=`echo "$Ultimate_OUTPUT" | grep "has thrown an Exception!"`
@@ -352,8 +354,8 @@ do
 
 	echo "$Ultimate_OUTPUT" | grep "Statistics:" | cut -c67-
 	echo "$Ultimate_OUTPUT" | grep -A 1 "BenchmarkResult:" | cut -c60-
-	RUNTIME=`echo "$Ultimate_OUTPUT" | grep "TraceAbstraction took" | cut -c74-85`
-    TOTALRUNTIME=`echo "$Ultimate_OUTPUT" | grep "Finished toolchain execution after " | cut -c91-`
+    TOTALRUNTIME=$(($end - $start))
+    #`echo "$Ultimate_OUTPUT" | tail -n 3 | grep "real" | cut -c6-`
 
 	if [ "$RESULT_SYNTAX" ]; then
 	    if [ "$KEYWORD_SYNTAX" ]; then
@@ -391,18 +393,18 @@ do
 	if [ "$RESULT_SAFE" ]; then
 	    if [ "$PROGRAM_SAFE" ]; then
 		printf "Success. "
-		printf "TraceAbstraction terminated after $RUNTIME and says: Program is safe. "
+		printf "TraceAbstraction terminated after $TOTALRUNTIME and says: Program is safe. "
 		printf "$WHO_DEFINED_SOLUTION Program is safe.\n"
 		continue;
 	    fi
 	    if [ "$PROGRAM_UNSAFE" ]; then
 		printf "!!!FAIL!!! "
-		printf "TraceAbstraction terminated after $RUNTIME and says: Program is safe. "
+		printf "TraceAbstraction terminated after $TOTALRUNTIME and says: Program is safe. "
 		printf "$WHO_DEFINED_SOLUTION Program is unsafe.\n"
 		continue;
 	    fi
 	    printf "!Warning! "
-	    printf "TraceAbstraction terminated after $RUNTIME and says: Program is safe. "
+	    printf "TraceAbstraction terminated after $TOTALRUNTIME and says: Program is safe. "
 	    printf "$WHO_DEFINED_SOLUTION \n"
 	    continue;
 	fi
@@ -410,18 +412,18 @@ do
 	if [ "$RESULT_UNSAFE" ]; then
 	    if [ "$PROGRAM_UNSAFE" ]; then
 		printf "Success. "
-		printf "TraceAbstraction terminated after $RUNTIME and says: Program is unsafe. "
+		printf "TraceAbstraction terminated after $TOTALRUNTIME and says: Program is unsafe. "
 		printf "$WHO_DEFINED_SOLUTION Program is unsafe.\n"
 		continue;
 	    fi
 	    if [ "$PROGRAM_SAFE" ]; then
 		printf "!!!FAIL!!! "
-		printf "TraceAbstraction terminated after $RUNTIME and says: Program is unsafe. "
+		printf "TraceAbstraction terminated after $TOTALRUNTIME and says: Program is unsafe. "
 		printf "$WHO_DEFINED_SOLUTION Program is safe.\n"
 		continue;
 	    fi
 	    printf "!Warning! "
-	    printf "TraceAbstraction terminated after $RUNTIME and says: Program is unsafe. "
+	    printf "TraceAbstraction terminated after $TOTALRUNTIME and says: Program is unsafe. "
 	    printf "$WHO_DEFINED_SOLUTION \n"
 	    continue;
 	fi
@@ -429,25 +431,25 @@ do
 	if [ "$RESULT_UNKNOWN" ]; then
 	    if [ "$PROGRAM_UNSAFE" ]; then
 		printf "!Warning!"
-		printf "TraceAbstraction terminated after $RUNTIME and says: Can not determine feasibility of counterexample."
+		printf "TraceAbstraction terminated after $TOTALRUNTIME and says: Can not determine feasibility of counterexample."
 		printf "$WHO_DEFINED_SOLUTION Program is unsafe.\n"
 		continue;
 	    fi
 	    if [ "$PROGRAM_SAFE" ]; then
 		printf "!Warning! "
-		printf "TraceAbstraction terminated after $RUNTIME and says: Can not determine feasibility of counterexample."
+		printf "TraceAbstraction terminated after $TOTALRUNTIME and says: Can not determine feasibility of counterexample."
 		printf "$WHO_DEFINED_SOLUTION Program is safe.\n"
 		continue;
 	    fi
 	    printf "!Warning! "
-	    printf "TraceAbstraction terminated after $RUNTIME and says: Can not determine feasibility of counterexample."
+	    printf "TraceAbstraction terminated after $TOTALRUNTIME and says: Can not determine feasibility of counterexample."
 	    printf "$WHO_DEFINED_SOLUTION \n"
 	    continue;
 	fi
 
 	if [ "$RESULT_UNKNOWN" ]; then
 	    printf "!Warning! "
-	    printf "TraceAbstraction terminated after $RUNTIME and says: Insufficient iterations. \n"
+	    printf "TraceAbstraction terminated after $TOTALRUNTIME and says: Insufficient iterations. \n"
 	    continue;
 	fi
 	
@@ -471,7 +473,7 @@ do
 
 	if [ "$RESULT_NORESULT" ]; then
 	    printf "!Warning! "
-	    printf "Ultimate Automizer terminated after $RUNTIME and says: No Result. \n"
+	    printf "Ultimate Automizer terminated after $TOTALRUNTIME and says: No Result. \n"
 	    
 	    continue;
 	fi
