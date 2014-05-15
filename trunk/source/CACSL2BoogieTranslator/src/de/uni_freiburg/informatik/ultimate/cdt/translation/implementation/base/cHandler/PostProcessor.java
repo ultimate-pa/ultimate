@@ -533,11 +533,7 @@ public class PostProcessor {
 	 * @return declarations and implementation of the start procedure.
 	 */
 	private ArrayList<Declaration> createUltimateStartProcedure(
-			Dispatcher main, ILocation loc, FunctionHandler functionHandler
-//			,
-//			LinkedHashMap<String, Procedure> procedures,
-//			LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals
-			) {
+			Dispatcher main, ILocation loc, FunctionHandler functionHandler) {
 		LinkedHashMap<String, Procedure> procedures = functionHandler.getProcedures();
 		LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals = functionHandler.getModifiedGlobals();
 

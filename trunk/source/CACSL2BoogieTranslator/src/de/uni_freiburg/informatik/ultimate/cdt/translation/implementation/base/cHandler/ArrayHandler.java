@@ -2,38 +2,24 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Stack;
 
-import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
-import org.eclipse.cdt.core.dom.ast.IASTArrayModifier;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
-import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
-import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
@@ -57,32 +43,11 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @date 12.10.2012
  */
 public class ArrayHandler {
-	
-//	boolean modifyingTheHeapGlobally = false;//TODO: does not seem nice..
-//	LinkedHashSet<String> modifiedGlobals = new LinkedHashSet<String>();
-	
-//	public LinkedHashSet<String> getModifiedGlobals() {
-//		if (modifyingTheHeapGlobally) {
-//			for (String t : new String[] { SFO.INT, SFO.POINTER,
-//					SFO.REAL/*, SFO.BOOL */}) {
-//				modifiedGlobals.add(SFO.MEMORY + "_" + t);
-//			}
-//			modifiedGlobals.add(SFO.LENGTH);
-//		}
-//		return modifiedGlobals;
-//	}
 
 	public ArrayList<Statement> initArrayOnHeap(Dispatcher main, MemoryHandler memoryHandler, StructHandler structHandler, ILocation loc, 
-			ArrayList<ResultExpressionListRec> list, Expression startAddress, //Expression sizeOfCell, 
+			ArrayList<ResultExpressionListRec> list, Expression startAddress,
 			FunctionHandler functionHandler, CArray arrayType) {
 		ArrayList<Statement> arrayWrites = new ArrayList<Statement>();
-		
-//		for (String t : new String[] { SFO.INT, SFO.POINTER,
-//				SFO.REAL/*, SFO.BOOL*/ }) {
-//			functionHandler.getModifiedGlobals()
-//			.get(functionHandler.getCurrentProcedureID())
-//			.add(SFO.MEMORY + "_" + t);
-//		}
 		
 		Expression sizeOfCell = memoryHandler.calculateSizeOf(arrayType.getValueType(), loc); 
 		Expression[] dimensions = arrayType.getDimensions();
@@ -133,7 +98,7 @@ public class ArrayHandler {
 
 
 				Expression writeOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
-						new IntegerLiteral(null, new InferredType(Type.Integer), new Integer(i).toString()), 
+						new IntegerLiteral(null, new Integer(i).toString()), 
 						sizeOfCell,
 						null);	
 				writeOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus,
@@ -162,8 +127,7 @@ public class ArrayHandler {
 				}
 				blockOffset = 
 						CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply,
-								new IntegerLiteral(loc, new InferredType(Type.Integer), new Integer(i).toString()),
-								blockOffset,
+								new IntegerLiteral(loc, new Integer(i).toString()),					blockOffset,
 								loc);	
 				newStartAddressOffsetInner = 
 						CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus,

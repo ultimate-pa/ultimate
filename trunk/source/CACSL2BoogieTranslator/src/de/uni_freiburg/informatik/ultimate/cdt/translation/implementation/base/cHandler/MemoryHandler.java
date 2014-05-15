@@ -14,8 +14,6 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
@@ -104,8 +102,7 @@ public class MemoryHandler {
     /**
      * The type describing a pointer.
      */
-    public static final ASTType POINTER_TYPE = new NamedType(null,
-            new InferredType(Type.Struct), SFO.POINTER, new ASTType[0]);
+    public static final ASTType POINTER_TYPE = new NamedType(null, SFO.POINTER, new ASTType[0]);
     /**
      * A set of constants, required for the memory model. E.g. sizeof and offset
      * constants.
@@ -197,8 +194,7 @@ public class MemoryHandler {
         VarList fOffset = new VarList(tuLoc,
                 new String[] { SFO.POINTER_OFFSET }, intType);
         VarList[] fields = new VarList[] { fBase, fOffset };
-        ASTType pointerType = new StructType(tuLoc, new InferredType(
-                Type.Struct), fields);
+        ASTType pointerType = new StructType(tuLoc, fields);
         // Pointer is non-finite, right? (ZxZ)..
         decl.add(new TypeDeclaration(tuLoc, new Attribute[0], false, 
                 SFO.POINTER, new String[0], pointerType));
@@ -272,8 +268,7 @@ public class MemoryHandler {
         if (sizeofConsts.contains(id)) {
             return;
         }
-        InferredType intIT = new InferredType(Type.Integer);
-        ASTType intType = new PrimitiveType(l, intIT, SFO.INT);
+        ASTType intType = new PrimitiveType(l, SFO.INT);
         // const #sizeof~t : int;
         constants.add(new ConstDeclaration(l, new Attribute[0], false,
                 new VarList(l, new String[] { id }, intType), null, false));
@@ -566,22 +561,17 @@ public class MemoryHandler {
      * @return declaration and implementation of procedure <code>~free</code>
      */
     private ArrayList<Declaration> declareFree(final ILocation tuLoc) {
-//        InferredType intIT = new InferredType(Type.Integer);
-//        InferredType boolIT = new InferredType(Type.Boolean);
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
         // procedure ~free(~addr:$Pointer$) returns();
         // requires #valid[~addr!base];
         // ensures #valid = old(valid)[~addr!base := false];
         // modifies #valid;
         Expression nr0 = new IntegerLiteral(tuLoc, SFO.NR0);
-//        Expression bLFalse = new BooleanLiteral(tuLoc, boolIT, false);
         Expression bLFalse = new BooleanLiteral(tuLoc, false);
         Expression addr = new IdentifierExpression(tuLoc, ADDR);
         Expression valid = new IdentifierExpression(tuLoc, SFO.VALID);
-//        Expression addrOffset = new StructAccessExpression(tuLoc, intIT, addr,
         Expression addrOffset = new StructAccessExpression(tuLoc, addr,
                 SFO.POINTER_OFFSET);
-//        Expression addrBase = new StructAccessExpression(tuLoc, intIT, addr,
         Expression addrBase = new StructAccessExpression(tuLoc, addr,
                 SFO.POINTER_BASE);
         Expression[] idcFree = new Expression[] { addrBase };
@@ -599,7 +589,6 @@ public class MemoryHandler {
             RequiresSpecification baseValid = new RequiresSpecification(
                     tuLoc,
                     free,
-//                    new ArrayAccessExpression(tuLoc, boolIT, valid, idcFree));
                     new ArrayAccessExpression(tuLoc, valid, idcFree));
             check.addToNodeAnnot(baseValid);
             specFree.add(baseValid);
@@ -646,17 +635,14 @@ public class MemoryHandler {
      * @return declaration and implementation of procedure <code>~malloc</code>
      */
     private ArrayList<Declaration> declareMalloc(final ILocation tuLoc) {
-        InferredType pointerIT = new InferredType(Type.Pointer);
-        InferredType intIT = new InferredType(Type.Integer);
-        InferredType boolIT = new InferredType(Type.Boolean);
-        ASTType intType = new PrimitiveType(tuLoc, intIT, SFO.INT);
+        ASTType intType = new PrimitiveType(tuLoc, SFO.INT);
         Expression nr0 = new IntegerLiteral(tuLoc, SFO.NR0);
-        Expression bLFalse = new BooleanLiteral(tuLoc, boolIT, false);
+        Expression bLFalse = new BooleanLiteral(tuLoc, false);
         Expression addr = new IdentifierExpression(tuLoc, ADDR);
         Expression valid = new IdentifierExpression(tuLoc, SFO.VALID);
-        Expression addrOffset = new StructAccessExpression(tuLoc, intIT, addr,
+        Expression addrOffset = new StructAccessExpression(tuLoc, addr,
                 SFO.POINTER_OFFSET);
-        Expression addrBase = new StructAccessExpression(tuLoc, intIT, addr,
+        Expression addrBase = new StructAccessExpression(tuLoc, addr,
                 SFO.POINTER_BASE);
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
         // procedure ~malloc(~size:int) returns (#res:$Pointer$);
@@ -667,12 +653,12 @@ public class MemoryHandler {
         // ensures #res!base != 0;
         // ensures #length = old(#length)[#res!base := ~size];
         // modifies #length, #valid;
-        Expression res = new IdentifierExpression(tuLoc, pointerIT, SFO.RES, null);
+        Expression res = new IdentifierExpression(tuLoc, SFO.RES);
         Expression length = new IdentifierExpression(tuLoc, SFO.LENGTH);
         Expression[] idcMalloc = new Expression[] { new StructAccessExpression(
-                tuLoc, intIT, res, SFO.POINTER_BASE) };
-        Expression bLTrue = new BooleanLiteral(tuLoc, boolIT, true);
-        IdentifierExpression size = new IdentifierExpression(tuLoc, intIT, SIZE, null);
+                tuLoc, res, SFO.POINTER_BASE) };
+        Expression bLTrue = new BooleanLiteral(tuLoc, true);
+        IdentifierExpression size = new IdentifierExpression(tuLoc, SIZE);
         List<Specification> specMalloc = new ArrayList<Specification>();
         if (m_CheckMallocNonNegative) {
         	RequiresSpecification nonNegative = new RequiresSpecification(tuLoc,
@@ -693,11 +679,11 @@ public class MemoryHandler {
                                 idcMalloc, bLTrue))));
         specMalloc.add(new EnsuresSpecification(tuLoc, false,
                 new BinaryExpression(tuLoc, Operator.COMPEQ,
-                        new StructAccessExpression(tuLoc, intIT, res,
+                        new StructAccessExpression(tuLoc, res,
                                 SFO.POINTER_OFFSET), nr0)));
         specMalloc.add(new EnsuresSpecification(tuLoc, false,
                 new BinaryExpression(tuLoc, Operator.COMPNEQ,
-                        new StructAccessExpression(tuLoc, intIT, res,
+                        new StructAccessExpression(tuLoc, res,
                                 SFO.POINTER_BASE), nr0)));
         specMalloc.add(new EnsuresSpecification(tuLoc, false,
                 new BinaryExpression(tuLoc, Operator.COMPEQ, length,
@@ -747,7 +733,7 @@ public class MemoryHandler {
         					idcAddrBase, size) });
         	block[5] = new AssignmentStatement(
         			tuLoc,
-        			new LeftHandSide[] { new VariableLHS(tuLoc, pointerIT, SFO.RES, null) },
+        			new LeftHandSide[] { new VariableLHS(tuLoc, SFO.RES) },
         			new Expression[] { addr });
         	Body bodyMalloc = new Body(tuLoc, localVars, block);
         	decl.add(new Procedure(tuLoc, new Attribute[0], SFO.MALLOC,
@@ -1108,14 +1094,14 @@ public class MemoryHandler {
         	case INTTYPE:
         		isIntArrayRequiredInMM = true;
         		m_functionHandler.getModifiedGlobals().
-        			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY + "_" + SFO.INT);
+        			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_INT);
         		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.INT,
         				new Expression[] { rval.getValue(), hlv.getAddress() }));
         		break;
         	case FLOATTYPE:
         		isFloatArrayRequiredInMM = true;
         		m_functionHandler.getModifiedGlobals().
-        			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY + "_" + SFO.REAL);
+        			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_REAL);
         		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.REAL,
         				new Expression[] { rval.getValue(), hlv.getAddress() }));
         		break;	
@@ -1125,7 +1111,7 @@ public class MemoryHandler {
         } else if (rType instanceof CPointer) {
         	isPointerArrayRequiredInMM = true;
         	m_functionHandler.getModifiedGlobals().
-        			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY + "_" + SFO.POINTER);
+        			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_POINTER);
         	stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.POINTER,
         			new Expression[] { rval.getValue(), hlv.getAddress() }));
         } else if (rType instanceof CStruct) {
@@ -1189,7 +1175,7 @@ public class MemoryHandler {
                 new LeftHandSide[] { BoogieASTUtil
                         .getLHSforExpression(ptrOffset) },
                 new Expression[] { new BinaryExpression(ptr.getLocation(),
-                        new InferredType(Type.Integer), op, ptrOffset, val) }));
+                        op, ptrOffset, val) }));
         // NOTE: the following checks are too strict! The variable can be
         // out of bounds, iff there is no memory access with this pointer!
         // Expression ptrBase = new StructAccessExpression(loc, ptr,
@@ -1216,7 +1202,7 @@ public class MemoryHandler {
 	    if (pointer instanceof StructConstructor) {
             return ((StructConstructor) pointer).getFieldValues()[0];
         }
-		return new StructAccessExpression(loc, new InferredType(Type.Integer), pointer, "base");
+		return new StructAccessExpression(loc, pointer, "base");
 	}
 	
 	/**
@@ -1229,18 +1215,17 @@ public class MemoryHandler {
 	    if (pointer instanceof StructConstructor) {
             return ((StructConstructor) pointer).getFieldValues()[1];
         }
-		return new StructAccessExpression(loc, new InferredType(Type.Integer), pointer, "offset");
+		return new StructAccessExpression(loc, pointer, "offset");
 	}
 	
 	public static StructConstructor constructPointerFromBaseAndOffset(Expression base, Expression offset, ILocation loc) {
-		return new StructConstructor(loc, new InferredType(Type.Pointer), 
-				new String[]{"base", "offset"}, new Expression[]{base, offset}); 
+		return new StructConstructor(loc, new String[]{"base", "offset"}, new Expression[]{base, offset}); 
 	}
 	
 	@Deprecated //use NULL instead
 	public static StructConstructor constructNullPointer(ILocation loc) {
-	    return new StructConstructor(loc, new InferredType(Type.Pointer), 
-                new String[]{"base", "offset"}, new Expression[]{new IntegerLiteral(loc, "0"), new IntegerLiteral(loc, "0")}); 
+	    return new StructConstructor(loc, new String[]{"base", "offset"}, 
+	    		new Expression[]{new IntegerLiteral(loc, "0"), new IntegerLiteral(loc, "0")}); 
     }
 	/**
 	 * Takes a loop or function body and inserts mallocs and frees for all the identifiers in this.mallocedAuxPointers

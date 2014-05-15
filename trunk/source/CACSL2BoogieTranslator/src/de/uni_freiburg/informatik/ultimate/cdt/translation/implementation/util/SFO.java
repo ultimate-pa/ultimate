@@ -139,6 +139,13 @@ public final class SFO {
      * Loop (entry/exit) labels are built with this.
      */
     public static final String LOOPLABEL = "Loop~";
+    
+    /**
+     * combined SFOs for memory arrays:
+     */
+    public static final String MEMORY_INT = MEMORY + "_" + INT;
+    public static final String MEMORY_REAL = MEMORY + "_" + REAL;
+    public static final String MEMORY_POINTER = MEMORY + "_" + POINTER;
     	
    /**
     * Specifies purpose of an auxiliary temporary variable.

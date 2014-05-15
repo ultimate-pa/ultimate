@@ -535,25 +535,35 @@ public class FunctionHandler {
 				int nrSpec = spec.length;
 				spec = Arrays.copyOf(spec, nrSpec + 1);
 //				VariableLHS[] modifyList = new VariableLHS[currModClause.size()];
-				HashSet<VariableLHS> modifySet = new HashSet<>();
+				LinkedHashSet<String> modifySet = new LinkedHashSet<>();
 //				int i = 0;
 				for (String var: currModClause) {
 //					modifyList[i++] = new VariableLHS(loc, var);
-					modifySet.add(new VariableLHS(loc, var));
+//					modifySet.add(new VariableLHS(loc, var));
+					modifySet.add(var);
 				}
 				
 				//add missing heap arrays
-				if (memoryHandler.isIntArrayRequiredInMM) {
-					modifySet.add(new VariableLHS(loc, SFO.MEMORY + "_" + SFO.INT));
-				}
-				if (memoryHandler.isFloatArrayRequiredInMM) {
-					modifySet.add(new VariableLHS(loc, SFO.MEMORY + "_" + SFO.REAL));
-				}
-				if (memoryHandler.isPointerArrayRequiredInMM) {
-					modifySet.add(new VariableLHS(loc, SFO.MEMORY + "_" + SFO.POINTER));
+				if (modifySet.contains(SFO.MEMORY_INT) || 
+						modifySet.contains(SFO.MEMORY_REAL) ||
+						modifySet.contains(SFO.MEMORY_POINTER)) {
+					if (memoryHandler.isIntArrayRequiredInMM) {
+						modifySet.add(SFO.MEMORY_INT);
+					}
+					if (memoryHandler.isFloatArrayRequiredInMM) {
+						modifySet.add(SFO.MEMORY_REAL);
+					}
+					if (memoryHandler.isPointerArrayRequiredInMM) {
+						modifySet.add(SFO.MEMORY_POINTER);
+					}
 				}
 					
-				VariableLHS[] modifyList = modifySet.toArray(new VariableLHS[0]);
+				VariableLHS[] modifyList = new VariableLHS[modifySet.size()];
+				{
+					int i = 0;
+					for (String modifyEntry : modifySet)
+						modifyList[i++] = new VariableLHS(loc, modifyEntry);
+				}
 				spec[nrSpec] = new ModifiesSpecification(loc, false, modifyList);
 			}
 			if (main.isMMRequired()
