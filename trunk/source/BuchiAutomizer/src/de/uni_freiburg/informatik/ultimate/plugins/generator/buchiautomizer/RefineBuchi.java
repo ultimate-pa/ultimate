@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -16,14 +15,18 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiClosureNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKVNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiDifferenceFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BInterpolantAutomaton;
@@ -31,11 +34,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.EagerInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
@@ -261,16 +262,25 @@ public class RefineBuchi {
 							m_Abstraction, m_InterpolAutomatonUsedInRefinement, 
 							stateDeterminizer, m_StateFactoryForRefinement);
 			finishComputation(m_InterpolAutomatonUsedInRefinement,setting);
-//			
+			
+			assert diff.checkResult(m_StateFactoryInterpolAutom);
+			
 //			s_Logger.warn("START: minimization test");
 //			BuchiComplementFKVNwa<CodeBlock, IPredicate> compl1 = diff.getSndComplemented();
 //			INestedWordAutomatonOldApi<CodeBlock, IPredicate> compl = (new RemoveNonLiveStates<CodeBlock, IPredicate>(compl1)).getResult();
 //			BuchiClosureNwa<CodeBlock, IPredicate> bc = (new BuchiClosureNwa<CodeBlock, IPredicate>(compl));
 //			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = 
-//					new MinimizeSevpa<CodeBlock, IPredicate>(bc,null,false,false,m_StateFactory);
+//					new MinimizeSevpa<CodeBlock, IPredicate>(bc,null,false,false,m_StateFactoryInterpolAutom);
 //			s_Logger.warn("END: minimization test");
+//			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimizedOp = minimizeOp.getResult();
 //			
-			assert diff.checkResult(m_StateFactoryInterpolAutom);
+//			BuchiIntersect<CodeBlock, IPredicate> newDiff = 
+//					new BuchiIntersect<CodeBlock, IPredicate>(
+//							m_Abstraction, minimizedOp, m_StateFactoryForRefinement);
+//			s_Logger.warn("oldDiff size" + diff.getResult().sizeInformation());
+//			s_Logger.warn("newDiff size" + (newDiff.getResult()).sizeInformation());
+			
+			
 			newAbstraction = diff.getResult();
 		} else {
 			BuchiComplementFKV<CodeBlock, IPredicate> complNwa = 
