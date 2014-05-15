@@ -209,13 +209,13 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		if (isPredHierLetterFalse(resPred, resHier, letter, sch)) {
 			if (!m_Result.contains(m_IaFalseState)) {
 				m_Result.addState(false, true, m_IaFalseState);
-				s_Logger.warn("BenchmarkResult: Transition to False Predicate");
+				s_Logger.debug("BenchmarkResult: Transition to False Predicate");
 			}
 			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
 		} else if (isFalseSucc(resPred, resHier, letter, sch)) {
 			if (!m_Result.contains(m_IaFalseState)) {
 				m_Result.addState(false, true, m_IaFalseState);
-				s_Logger.warn("BenchmarkResult: Transition to False Predicate");
+				s_Logger.debug("BenchmarkResult: Transition to False Predicate");
 			}
 			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
 		} else if (m_StemResPred2InputPreds.getDomain().contains(resPred)) {
