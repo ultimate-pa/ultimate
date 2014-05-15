@@ -1835,32 +1835,69 @@ public class CHandler implements ICHandler {
 	public static Expression createArithmeticExpression(int op,
 			Expression left, Expression right, ILocation loc) {
 		BinaryExpression.Operator operator;
+		boolean bothAreIntegerLiterals = 
+				left instanceof IntegerLiteral && right instanceof IntegerLiteral;
+		String constantResult = "";
 		switch (op) {
 		case IASTBinaryExpression.op_minusAssign:
 		case IASTBinaryExpression.op_minus:
 			operator = Operator.ARITHMINUS;
+			if (bothAreIntegerLiterals) {
+				constantResult = new Integer(
+						(Integer.parseInt(((IntegerLiteral) left).getValue()) -
+						Integer.parseInt(((IntegerLiteral) right).getValue()))
+						).toString();
+			}
 			break;
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_multiply:
 			operator = Operator.ARITHMUL;
+			if (bothAreIntegerLiterals) {
+				constantResult = new Integer(
+						(Integer.parseInt(((IntegerLiteral) left).getValue()) *
+								Integer.parseInt(((IntegerLiteral) right).getValue()))
+						).toString();
+			}
 			break;
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_divide:
 			operator = Operator.ARITHDIV;
+			if (bothAreIntegerLiterals) {
+				constantResult = new Integer(
+						(Integer.parseInt(((IntegerLiteral) left).getValue()) /
+						Integer.parseInt(((IntegerLiteral) right).getValue()))
+						).toString();
+			}
 			break;
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_modulo:
 			operator = Operator.ARITHMOD;
+			if (bothAreIntegerLiterals) {
+				constantResult = new Integer(
+						(Integer.parseInt(((IntegerLiteral) left).getValue()) %
+								Integer.parseInt(((IntegerLiteral) right).getValue()))
+						).toString();
+			}
 			break;
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_plus:
 			operator = Operator.ARITHPLUS;
+			if (bothAreIntegerLiterals) {
+				constantResult = new Integer(
+						(Integer.parseInt(((IntegerLiteral) left).getValue()) +
+						Integer.parseInt(((IntegerLiteral) right).getValue()))
+						).toString();
+			}
 			break;
 		default:
 			String msg = "Unknown or unsupported arithmetic expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		return new BinaryExpression(loc, operator, left, right);
+		if (bothAreIntegerLiterals) {
+			return new IntegerLiteral(loc, constantResult);
+		} else {
+			return new BinaryExpression(loc, operator, left, right);
+		}
 	}
 
 	/**
