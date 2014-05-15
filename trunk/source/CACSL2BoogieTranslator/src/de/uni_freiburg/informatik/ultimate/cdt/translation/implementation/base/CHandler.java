@@ -1843,9 +1843,9 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_minus:
 			operator = Operator.ARITHMINUS;
 			if (bothAreIntegerLiterals) {
-				constantResult = new Integer(
-						(Integer.parseInt(((IntegerLiteral) left).getValue()) -
-						Integer.parseInt(((IntegerLiteral) right).getValue()))
+				constantResult = new Long(
+						(Long.parseLong(((IntegerLiteral) left).getValue()) -
+						Long.parseLong(((IntegerLiteral) right).getValue()))
 						).toString();
 			}
 			break;
@@ -1853,9 +1853,9 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_multiply:
 			operator = Operator.ARITHMUL;
 			if (bothAreIntegerLiterals) {
-				constantResult = new Integer(
-						(Integer.parseInt(((IntegerLiteral) left).getValue()) *
-								Integer.parseInt(((IntegerLiteral) right).getValue()))
+				constantResult = new Long(
+						(Long.parseLong(((IntegerLiteral) left).getValue()) *
+								Long.parseLong(((IntegerLiteral) right).getValue()))
 						).toString();
 			}
 			break;
@@ -1863,9 +1863,9 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_divide:
 			operator = Operator.ARITHDIV;
 			if (bothAreIntegerLiterals) {
-				constantResult = new Integer(
-						(Integer.parseInt(((IntegerLiteral) left).getValue()) /
-						Integer.parseInt(((IntegerLiteral) right).getValue()))
+				constantResult = new Long(
+						(Long.parseLong(((IntegerLiteral) left).getValue()) /
+						Long.parseLong(((IntegerLiteral) right).getValue()))
 						).toString();
 			}
 			break;

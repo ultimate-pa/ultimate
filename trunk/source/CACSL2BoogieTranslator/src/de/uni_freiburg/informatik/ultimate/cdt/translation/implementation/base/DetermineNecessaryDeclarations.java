@@ -142,7 +142,8 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     		if (sTEntry != null)
     			//    			dependencyGraph.put(currentFunDef, (IASTDeclaration) sTEntry);
     			addDependency(currentFunOrStructDef.peek(), sTEntry);
-    		if (sTEntry == null && funcTableEntry == null) //we have to delay making the entry in the dependency graph
+//    		if (sTEntry == null && funcTableEntry == null) //we have to delay making the entry in the dependency graph
+    		if (sTEntry == null || funcTableEntry == null) //we have to delay making the entry in the dependency graph
     			dependencyGraphPreliminaryInverse.put(idEx.getName().toString(), currentFunOrStructDef.peek());
     	} else {
     		assert false; //TODO: handle calls via function pointers
@@ -199,7 +200,10 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					IASTDeclaration decOfName = sT.get(name);
 					if (decOfName != null) { //if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
 						addDependency(currentFunOrStructDef.peek(), decOfName);
+					} else { //.. or it may reference a global declaration that we haven't seen yet (this may overapproximate, as we declare shadowed decls reachable, right?? //TODO: not entirely clear..
+						dependencyGraphPreliminaryInverse.put(name, currentFunOrStructDef.peek());
 					}
+
 
 				} else if (declSpec instanceof IASTNamedTypeSpecifier) {
 					IASTNamedTypeSpecifier nts = (IASTNamedTypeSpecifier) declSpec;
@@ -207,8 +211,9 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					IASTDeclaration decOfName = sT.get(name);
 					if (decOfName != null) { //if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
 						addDependency(currentFunOrStructDef.peek(), decOfName);
+					} else { //.. or it may reference a global declaration that we haven't seen yet (this may overapproximate, as we declare shadowed decls reachable, right?? //TODO: not entirely clear..
+						dependencyGraphPreliminaryInverse.put(name, currentFunOrStructDef.peek());
 					}
-
 				} 
 			}
 			//global or local
@@ -228,20 +233,18 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					IASTDeclaration decOfName = sT.get(declSpecName);
 					if (decOfName != null) {//if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway (most cases..)
 						addDependency(declaration, sT.get(declSpecName));
-					}
-					else if (decOfName == null && 
-							decIsGlobal)
+					} else if (decOfName == null && decIsGlobal) {
 						dependencyGraphPreliminaryInverse.put(declSpecName, declaration);
+					}
 				} else if (declSpec instanceof IASTNamedTypeSpecifier) {
 					IASTNamedTypeSpecifier nts = (IASTNamedTypeSpecifier) declSpec;
 					declSpecName = nts.getName().toString();
 					IASTDeclaration decOfName = sT.get(declSpecName);
 					if (decOfName != null) {//if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway (most cases..)
 						addDependency(declaration, decOfName);
-					}
-					else if (decOfName == null && 
-							decIsGlobal)
+					} else if (decOfName == null && decIsGlobal) {
 						dependencyGraphPreliminaryInverse.put(declSpecName, declaration);
+					}
 				} else if (declSpec instanceof IASTCompositeTypeSpecifier) {
 					//					addDependency(declaration, declSpec);
 				}
