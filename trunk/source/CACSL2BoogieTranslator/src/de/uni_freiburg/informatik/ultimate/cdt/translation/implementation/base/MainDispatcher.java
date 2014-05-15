@@ -198,9 +198,6 @@ public class MainDispatcher extends Dispatcher {
      */
     private boolean isMMRequired;
     
-//	boolean isIntArrayRequiredInMM;
-//    boolean isFloatArrayRequiredInMM;
-//    boolean isPointerArrayRequiredInMM;
     LinkedHashSet<IASTDeclaration> reachableDeclarations;
     /**
      * Variables that need some special memory handling.
@@ -210,8 +207,6 @@ public class MainDispatcher extends Dispatcher {
      * Functions used as pointer.
      */
     private HashMap<String, IASTFunctionDefinition> functionsOnHeap;
-    
-//    LinkedHashSet<IASTNode> reachableDecs;
     
     /**
      * @return a map of functions used as pointers.
@@ -246,17 +241,7 @@ public class MainDispatcher extends Dispatcher {
     public boolean isMMRequired() {
         return isMMRequired;
     }
-//    public boolean isIntArrayRequiredInMM() {
-//		return isIntArrayRequiredInMM;
-//	}
-//
-//	public boolean isFloatArrayRequiredInMM() {
-//		return isFloatArrayRequiredInMM;
-//	}
-//
-//	public boolean isPointerArrayRequiredInMM() {
-//		return isPointerArrayRequiredInMM;
-//	}
+	
 	LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
     	return reachableDeclarations;
     }
@@ -293,19 +278,8 @@ public class MainDispatcher extends Dispatcher {
         	tu.accept(dnd);
         	
         	reachableDeclarations = dnd.getReachableDeclarationsOrDeclarators();
-        	
-//        	typeHandler = new TypeHandler();
-//        	DetermineMemoryModel dmm = new DetermineMemoryModel(this, reachableDeclarations);
-//        	tu.accept(dmm);
-//
-//        	isIntArrayRequiredInMM = dmm.isIntArrayRequiredInMM();
-//        	isFloatArrayRequiredInMM = dmm.isFloatArrayRequiredInMM();
-//        	isPointerArrayRequiredInMM = dmm.isPointerArrayRequiredInMM();
         } else {
         	reachableDeclarations = null;
-//        	isIntArrayRequiredInMM = true;
-//        	isFloatArrayRequiredInMM = true;
-//        	isPointerArrayRequiredInMM = true;
         }
     }
 

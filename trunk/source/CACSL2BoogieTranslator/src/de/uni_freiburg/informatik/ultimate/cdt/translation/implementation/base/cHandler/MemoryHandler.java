@@ -258,10 +258,8 @@ public class MemoryHandler {
     /**
      * Declare sizeof constants and add to the sizeOfConst set.
      * 
-     * @param l
-     *            the location.
-     * @param t
-     *            the type string.
+     * @param l the location.
+     * @param t the type string.
      */
     private void declareSizeOf(ILocation l, String t) {
         String id = SFO.SIZEOF + t;
@@ -279,42 +277,17 @@ public class MemoryHandler {
         sizeofConsts.add(id);
     }
   
-//    /**
-//     * Declares the memory arrays <code>#memory_int</code>,
-//     * <code>#memory_bool</code>, <code>#memory_real</code> and
-//     * <code>#memory_$Pointer$</code>, as well as read and write procedures for
-//     * these arrays.
-//     * 
-//     * @param l
-//     *            the location of the translation unit.
-//     * @param main 
-//     * @return the declarations for the memory arrays <code>#memory_int</code>,
-//     *         <code>#memory_bool</code>, <code>#memory_real</code> and
-//     *         <code>#memory_$Pointer$</code>, as well as read and write
-//     *         procedures for these arrays.
-//     */
-//    private ArrayList<Declaration> declareMemoryArrays(final ILocation l, Dispatcher main) {
-////        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-////        InferredType intIT = new InferredType(Type.Integer);
-////        InferredType boolIT = new InferredType(Type.Boolean);
-////        InferredType realIT = new InferredType(Type.Real);
-////        ASTType intType = new PrimitiveType(l, intIT, SFO.INT);
-//        ASTType intType = new PrimitiveType(l, SFO.INT);
-////        ASTType boolType = new PrimitiveType(l, boolIT, SFO.BOOL);
-////        ASTType boolType = new PrimitiveType(l, boolIT, SFO.BOOL);
-////        ASTType realType = new PrimitiveType(l, realIT, SFO.REAL);
-//        ASTType realType = new PrimitiveType(l, SFO.REAL);
-//        // add memory arrays and access procedures
-//        String[] namesOfAllMemoryArrayTypes = new String[] { SFO.POINTER, SFO.INT,// SFO.BOOL,
-//                SFO.REAL };
-//        ASTType[] astTypesOfAllMemoryArrayTypes = new ASTType[] { POINTER_TYPE, intType, //boolType,
-//                realType };
-//        assert namesOfAllMemoryArrayTypes.length == astTypesOfAllMemoryArrayTypes.length;
-//        return declareSomeMemoryArrays(l, main, namesOfAllMemoryArrayTypes,
-//				astTypesOfAllMemoryArrayTypes);
-////        return decl;
-//    }
-
+    /**
+     * Declares those of the memory arrays <code>#memory_int</code>,
+     * <code>#memory_bool</code> (deprecated), <code>#memory_real</code> and
+     * <code>#memory_$Pointer$</code>, that are listed in the arguments,
+     * as well as read and write procedures for these arrays.
+     * 
+     * @param l the location of the translation unit.
+     * @param main 
+     * @return the declarations for the memory arrays as well as read and write
+     *         procedures for these arrays.
+     */
 	private ArrayList<Declaration> declareSomeMemoryArrays(final ILocation l, Dispatcher main,
 			 String[] namesOfAllMemoryArrayTypes,
 			ASTType[] astTypesOfAllMemoryArrayTypes) {

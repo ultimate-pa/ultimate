@@ -59,11 +59,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     LinkedHashMap<String, IASTDeclaration> dependencyGraphPreliminaryInverse;
     
     LinkedHashSet<IASTDeclaration> reachableDeclarations;
-    
- 
-    
-//    MainDispatcher mainDispatcher;
-    
+
     /**
      * Constructor.
      */
@@ -78,9 +74,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
         this.dependencyGraph = new LinkedHashMap<>();
         this.dependencyGraphPreliminaryInverse = new LinkedHashMap<>();
         this.reachableDeclarations = new LinkedHashSet<>();
-//        this.isIntArrayRequiredInMM = false;
-//        this.isFloatArrayRequiredInMM = false;
-//        this.mainDispatcher = main;
         this.currentFunOrStructDef = new Stack<>();
     }
     
@@ -101,7 +94,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     			IASTDeclaration decOfName = (IASTDeclaration) sT.get(name);
     			if (decOfName != null) { //if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
     				addDependency(currentFunOrStructDef.peek(), decOfName);
-
     			}
     		}
     	}
@@ -136,13 +128,10 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     		IASTIdExpression idEx = (IASTIdExpression) funNameEx;
     		IASTFunctionDefinition funcTableEntry = functionTable.get(idEx.getName().toString());
     		if (funcTableEntry != null)
-    			//    			dependencyGraph.put(currentFunDef, funcTableEntry);
     			addDependency(currentFunOrStructDef.peek(), funcTableEntry);
     		IASTDeclaration sTEntry = sT.get(idEx.getName().toString());
     		if (sTEntry != null)
-    			//    			dependencyGraph.put(currentFunDef, (IASTDeclaration) sTEntry);
     			addDependency(currentFunOrStructDef.peek(), sTEntry);
-//    		if (sTEntry == null && funcTableEntry == null) //we have to delay making the entry in the dependency graph
     		if (sTEntry == null || funcTableEntry == null) //we have to delay making the entry in the dependency graph
     			dependencyGraphPreliminaryInverse.put(idEx.getName().toString(), currentFunOrStructDef.peek());
     	} else {
