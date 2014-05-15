@@ -187,17 +187,17 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 
 	@Override
 	public Set<LETTER> lettersInternal(STATE state) {
-		return m_Operand.getInternalAlphabet();
+		return m_Operand.lettersInternal(state);
 	}
 
 	@Override
 	public Set<LETTER> lettersCall(STATE state) {
-		return m_Operand.getCallAlphabet();
+		return m_Operand.lettersCall(state);
 	}
 
 	@Override
 	public Set<LETTER> lettersReturn(STATE state) {
-		return m_Operand.getReturnAlphabet();
+		return m_Operand.lettersReturn(state);
 	}
 
 
