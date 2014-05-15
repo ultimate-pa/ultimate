@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiClo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
@@ -51,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.In
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -581,13 +583,14 @@ public class BuchiCegarLoop {
 			}
 			constructInterpolantAutomaton(traceChecker, run);
 			EdgeChecker ec = new EdgeChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
-			boolean computeHoareAnnotation = false;
-			PostDeterminizer spd = new PostDeterminizer(
-					ec, computeHoareAnnotation, m_InterpolAutomaton, true, m_DefaultStateFactory);
+			DeterministicInterpolantAutomaton determinized = 
+					new DeterministicInterpolantAutomaton(m_SmtManager, ec, m_Abstraction, m_InterpolAutomaton, traceChecker);
+			PowersetDeterminizer<CodeBlock, IPredicate> psd = 
+					new PowersetDeterminizer<CodeBlock, IPredicate>(determinized, true, m_DefaultStateFactory);
 			DifferenceDD<CodeBlock, IPredicate> diff = null;
 			try {
 				diff = new DifferenceDD<CodeBlock, IPredicate>(
-						m_Abstraction, m_InterpolAutomaton, spd, 
+						m_Abstraction, m_InterpolAutomaton, psd, 
 						m_StateFactoryForRefinement,
 						false, true);
 			} catch (AutomataLibraryException e) {
