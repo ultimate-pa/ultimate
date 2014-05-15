@@ -1,0 +1,19 @@
+
+buchiComplementFKV(infeasibleN);
+
+NestedWordAutomaton infeasibleN = (
+  callAlphabet = { },
+  internalAlphabet = { "a" },
+  returnAlphabet = { },
+  states = {q r s},
+  initialStates = {q},
+  finalStates = {s},
+  callTransitions = { },
+  internalTransitions = { 
+    (q "a" q) 
+    (q "a" r) 
+    (r "a" s)
+    (s "a" r)
+  }, 
+  returnTransitions = { }
+);
