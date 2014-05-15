@@ -438,12 +438,18 @@ public class BuchiCegarLoop {
 		private void reduceAbstractionSize() throws OperationCanceledException,
 				AutomataLibraryException, AssertionError {
 			m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
-			m_Abstraction = (new RemoveNonLiveStates<CodeBlock, IPredicate>(m_Abstraction)).getResult();
-			m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
+			try {
+				m_Abstraction = (new RemoveNonLiveStates<CodeBlock, IPredicate>(m_Abstraction)).getResult();
+			} finally {
+				m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
+			}
 			m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_BuchiClosure);
-			m_Abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) (new BuchiClosureNwa(m_Abstraction));
-			m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Abstraction)).getResult();
-			m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_BuchiClosure);
+			try {
+				m_Abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) (new BuchiClosureNwa(m_Abstraction));
+				m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Abstraction)).getResult();
+			} finally {
+				m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_BuchiClosure);
+			}
 			m_BenchmarkGenerator.start(CegarLoopBenchmarkType.s_AutomataMinimizationTime);
 			int statesBeforeMinimization = m_Abstraction.size();
 			s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
