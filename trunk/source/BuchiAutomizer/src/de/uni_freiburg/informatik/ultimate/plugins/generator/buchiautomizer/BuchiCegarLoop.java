@@ -456,15 +456,18 @@ public class BuchiCegarLoop {
 			int statesBeforeMinimization = m_Abstraction.size();
 			s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
 			Collection<Set<IPredicate>> partition = BuchiCegarLoop.computePartition(m_Abstraction);
+			try {
 			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = 
 					new MinimizeSevpa<CodeBlock, IPredicate>(m_Abstraction, partition, false, false, m_StateFactoryForRefinement);
 			assert (minimizeOp.checkResult(m_PredicateFactoryResultChecking));
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
 			m_Abstraction = minimized;
+			} finally {
+				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataMinimizationTime);
+			}
 			int statesAfterMinimization = m_Abstraction.size();
 			m_BenchmarkGenerator.announceStatesRemovedByMinimization(statesBeforeMinimization - statesAfterMinimization);
 			s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
-			m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataMinimizationTime);
 		}
 		
 		private INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi(LassoChecker lassoChecker) throws AutomataLibraryException {
