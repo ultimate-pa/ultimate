@@ -601,6 +601,7 @@ public class BuchiCegarLoop {
 					throw new AssertionError();
 				}
 			}
+			determinized.finishConstruction();
 			if (m_Pref.dumpAutomata()) {
 				String filename = "interpolAutomatonUsedInRefinement"+m_Iteration+"after";
 				writeAutomatonToFile(m_InterpolAutomaton, m_Pref.dumpPath(), filename);
