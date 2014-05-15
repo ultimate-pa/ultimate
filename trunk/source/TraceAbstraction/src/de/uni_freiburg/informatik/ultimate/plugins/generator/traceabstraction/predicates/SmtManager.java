@@ -34,12 +34,10 @@ import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
@@ -66,7 +64,6 @@ public class SmtManager {
 	private final Script m_Script;
 //	private final Map<String,ASTType> m_GlobalVars;
 	private final ModifiableGlobalVariableManager m_ModifiableGlobals;
-	private int m_Iteration;
 	private int m_satProbNumber;
 	
 	private ScopedHashMap<String, Term> m_IndexedConstants;
@@ -224,7 +221,6 @@ public class SmtManager {
 	}
 
 	public void setIteration(int iteration) {
-		m_Iteration = iteration;
 		m_satProbNumber = 0;
 	}
 	
@@ -2159,25 +2155,25 @@ public class SmtManager {
 		@Override
 		public Sort getSort() {
 			throw new UnsupportedOperationException(
-					"Auxilliary term has no sort");
+					"Auxiliary term has no sort");
 		}
 
 		@Override
 		public void toStringHelper(ArrayDeque<Object> m_Todo) {
 			throw new UnsupportedOperationException(
-					"Auxilliary term must not be subterm of other terms");
+					"Auxiliary term must not be subterm of other terms");
 		}
 
 		@Override
 		public TermVariable[] getFreeVars() {
 			throw new UnsupportedOperationException(
-					"Auxilliary term has no vars");
+					"Auxiliary term has no vars");
 		}
 
 		@Override
 		public Theory getTheory() {
 			throw new UnsupportedOperationException(
-					"Auxilliary term has no theory");
+					"Auxiliary term has no theory");
 		}
 
 		@Override
@@ -2187,14 +2183,13 @@ public class SmtManager {
 
 		@Override
 		public String toStringDirect() {
-			throw new UnsupportedOperationException(
-					"Auxilliary term must not be subterm of other terms");
+			return m_Name;
 		}
 
 		@Override
 		public int hashCode() {
 			throw new UnsupportedOperationException(
-					"Auxilliary term must not be contained in any collection");
+					"Auxiliary term must not be contained in any collection");
 		}
 	}
 
