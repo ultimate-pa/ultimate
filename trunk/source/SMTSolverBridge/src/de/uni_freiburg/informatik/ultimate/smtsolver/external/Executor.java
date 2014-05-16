@@ -35,6 +35,7 @@ class Executor {
 	private BufferedWriter m_Writer;
 	private Logger m_Logger;
 	private Script m_Script;
+	private InputStream m_stdErr;
 	
 	Executor(String solverCommand, Script script, Logger logger)
 	{
@@ -55,6 +56,9 @@ class Executor {
 
 		OutputStream stdin = m_Process.getOutputStream();
 		InputStream stdout = m_Process.getInputStream();
+		
+		m_stdErr = m_Process.getErrorStream();
+		
 		
 		MySymbolFactory symfactory = new MySymbolFactory();
 		m_Lexer = new Lexer(new InputStreamReader(stdout));
@@ -126,6 +130,16 @@ class Executor {
 	
 	public Symbol parse(int what) {
 		List<Symbol> answer = readAnswer();
+		
+		//clear the std error buffer as it blocks when it runs full
+		try {
+			while (m_stdErr.available() > 0) {
+				m_stdErr.read();
+			}
+		} catch (IOException e) {
+			//we don't care what happens on stdErr
+		}
+		
 		Parser m_Parser = new Parser();
 		m_Parser.setScript(m_Script);
 		answer.add(0, new Symbol(what));
