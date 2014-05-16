@@ -119,6 +119,10 @@ public final class MonitoredProcess {
 	public OutputStream getOutputStream() {
 		return mProcess.getOutputStream();
 	}
+	
+	public InputStream getErrorStream() {
+		return mProcess.getErrorStream();
+	}
 
 	public InputStream getInputStream() {
 		return mProcess.getInputStream();
