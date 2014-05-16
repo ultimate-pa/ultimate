@@ -182,9 +182,6 @@ public class MemoryHandler {
         if (!main.isMMRequired()) {
             return decl;
         }
-//        InferredType intIT = new InferredType(Type.Integer);
-//        InferredType boolIT = new InferredType(Type.Boolean);
-//        ASTType intType = new PrimitiveType(tuLoc, intIT, SFO.INT);
         ASTType intType = new PrimitiveType(tuLoc, SFO.INT);
         ASTType boolType = new PrimitiveType(tuLoc, SFO.BOOL);
         ASTType realType = new PrimitiveType(tuLoc, SFO.REAL);
@@ -208,11 +205,9 @@ public class MemoryHandler {
         
         //declare the arrays that will model the heap
         
-        MainDispatcher mainDispatcher = (MainDispatcher) main;
         // add memory arrays and access procedures
         ArrayList<String> allMMArrayNames = new ArrayList<>();
         ArrayList<ASTType> allMMArrayTypes = new ArrayList<>();
-//        if (mainDispatcher.isIntArrayRequiredInMM()) {
         if (isIntArrayRequiredInMM) {
         	allMMArrayNames.add(SFO.INT);
         	allMMArrayTypes.add(intType);
@@ -306,7 +301,6 @@ public class MemoryHandler {
         		CtypeCompatibleId = typeName.toUpperCase();
         	}
             declareSizeOf(l, CtypeCompatibleId);
-            // var #memory_typeName : [$Pointer$]astType;
             ASTType memoryType = new ArrayType(l, new String[0],
                     new ASTType[] { POINTER_TYPE }, astType);
             VarList vlM = new VarList(l, new String[] { SFO.MEMORY + "_"
@@ -387,13 +381,10 @@ public class MemoryHandler {
             	swrite.add(specValid);
             }
             swrite.add(new ModifiesSpecification(l, false, modified));
-//            for (int j = 0; j < modified.length; j++) {
             for (String s : namesOfAllMemoryArrayTypes) {
                 // ensures #memory_int == old(#valid)[~addr!base := false];
                 Expression memA = new IdentifierExpression(l, SFO.MEMORY + "_"
-//                        + tName[j]);
                         + s);
-//                if (i == j) {
                 if (s.equals(typeName)) {
                     swrite.add(new EnsuresSpecification(
                             l,
@@ -440,7 +431,6 @@ public class MemoryHandler {
             				+ namesOfAllMemoryArrayTypes[j]);
             		LeftHandSide[] arrL = new LeftHandSide[] { new ArrayLHS(l, arr,
             				idc) };
-//            		if (i == j) {
             		if (namesOfAllMemoryArrayTypes[j].equals(typeName)) {
             			writeBlock[k] = new AssignmentStatement(l, arrL,
             					new Expression[] { idVal });
@@ -798,11 +788,8 @@ public class MemoryHandler {
 		return mallocRex;
     }
 
-    public CallStatement getMallocCall(Dispatcher main,
-			FunctionHandler fh, Expression size,
+    public CallStatement getMallocCall(Dispatcher main,	FunctionHandler fh, Expression size,
 			LocalLValue resultPointer, ILocation loc) {
-//        ArrayList<Statement> stmt = new ArrayList<Statement>();
-
         Expression[] args = new Expression[] { size };
         
         CallStatement mallocCall = new CallStatement(loc, false, new VariableLHS[] { (VariableLHS) resultPointer.getLHS() },
@@ -819,9 +806,6 @@ public class MemoryHandler {
             }
             fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.MALLOC);
         }
-//        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-//		Map<VariableDeclaration, ILocation> auxVars = 
-//				new LinkedHashMap<VariableDeclaration, ILocation>();
 		return mallocCall;
 	}
 
@@ -1001,9 +985,6 @@ public class MemoryHandler {
     ASTType getHeapTypeOfLRVal(LRValue lrVal) {
     	CType ct = lrVal.cType;
     	
-//    	if (/*lrVal.isOnHeap*/ lrVal.isPointer)
-//    		return POINTER_TYPE;
-    	
     	if (lrVal.isBoogieBool)
     		return new PrimitiveType(lrVal.getValue().getLocation(), SFO.BOOL);
     	
@@ -1047,14 +1028,6 @@ public class MemoryHandler {
      * @return the required Statements to perform the write.
      */
     public ArrayList<Statement> getWriteCall(HeapLValue hlv, RValue rval) {
-    	
-//    	for (String t : new String[] { SFO.INT, SFO.POINTER,
-//				SFO.REAL, /*SFO.BOOL */}) {
-//			m_functionHandler.getModifiedGlobals()
-//					.get(m_functionHandler.getCurrentProcedureID())
-//					.add(SFO.MEMORY + "_" + t);
-//		}
-    	
         ILocation loc = hlv.getAddress().getLocation();
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         
@@ -1123,47 +1096,45 @@ public class MemoryHandler {
         return stmt;
     }
 
-    /**
-     * Handles manipulations of pointer variables.
-     * 
-     * @param ptr
-     *            the pointer to work on.
-     * @param op
-     *            the operator to be used.
-     * @param val
-     *            the value to be used.
-     * @return an assignment of form
-     *         <code>ptr.offset := ptr.offset op val;</code>.
-     */
-    public ResultExpression manipulatePointer(Expression ptr,
-            BinaryExpression.Operator op, Expression val) {
-//        assert ptr.getType() instanceof InferredType;
-//        assert ((InferredType) ptr.getType()).getType() == Type.Pointer;
-        ArrayList<Statement> stmt = new ArrayList<Statement>();
-        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-        ILocation loc = ptr.getLocation();
-        Expression ptrOffset = new StructAccessExpression(loc, ptr,
-                SFO.POINTER_OFFSET);
-        stmt.add(new AssignmentStatement(loc,
-                new LeftHandSide[] { BoogieASTUtil
-                        .getLHSforExpression(ptrOffset) },
-                new Expression[] { new BinaryExpression(ptr.getLocation(),
-                        op, ptrOffset, val) }));
-        // NOTE: the following checks are too strict! The variable can be
-        // out of bounds, iff there is no memory access with this pointer!
-        // Expression ptrBase = new StructAccessExpression(loc, ptr,
-        // SFO.POINTER_BASE);
-        // Expression length = new ArrayAccessExpression(loc,
-        // new IdentifierExpression(loc, SFO.LENGTH),
-        // new Expression[] { ptrBase });
-        // stmt.add(new AssertStatement(loc, new BinaryExpression(loc,
-        // BinaryExpression.Operator.COMPLEQ, ptrOffset, length)));
-        // stmt.add(new AssertStatement(loc, new BinaryExpression(loc,
-        // Operator.COMPGEQ, ptrOffset, new IntegerLiteral(loc, SFO.NR0))));
-		Map<VariableDeclaration, ILocation> emptyAuxVars = 
-				new LinkedHashMap<VariableDeclaration, ILocation>(0);
-        return new ResultExpression(stmt, null, decl, emptyAuxVars);
-    }
+//    /**
+//     * Handles manipulations of pointer variables.
+//     * 
+//     * @param ptr
+//     *            the pointer to work on.
+//     * @param op
+//     *            the operator to be used.
+//     * @param val
+//     *            the value to be used.
+//     * @return an assignment of form
+//     *         <code>ptr.offset := ptr.offset op val;</code>.
+//     */
+//    public ResultExpression manipulatePointer(Expression ptr,
+//            BinaryExpression.Operator op, Expression val) {
+//        ArrayList<Statement> stmt = new ArrayList<Statement>();
+//        ArrayList<Declaration> decl = new ArrayList<Declaration>();
+//        ILocation loc = ptr.getLocation();
+//        Expression ptrOffset = new StructAccessExpression(loc, ptr,
+//                SFO.POINTER_OFFSET);
+//        stmt.add(new AssignmentStatement(loc,
+//                new LeftHandSide[] { BoogieASTUtil
+//                        .getLHSforExpression(ptrOffset) },
+//                new Expression[] { new BinaryExpression(ptr.getLocation(),
+//                        op, ptrOffset, val) }));
+//        // NOTE: the following checks are too strict! The variable can be
+//        // out of bounds, iff there is no memory access with this pointer!
+//        // Expression ptrBase = new StructAccessExpression(loc, ptr,
+//        // SFO.POINTER_BASE);
+//        // Expression length = new ArrayAccessExpression(loc,
+//        // new IdentifierExpression(loc, SFO.LENGTH),
+//        // new Expression[] { ptrBase });
+//        // stmt.add(new AssertStatement(loc, new BinaryExpression(loc,
+//        // BinaryExpression.Operator.COMPLEQ, ptrOffset, length)));
+//        // stmt.add(new AssertStatement(loc, new BinaryExpression(loc,
+//        // Operator.COMPGEQ, ptrOffset, new IntegerLiteral(loc, SFO.NR0))));
+//		Map<VariableDeclaration, ILocation> emptyAuxVars = 
+//				new LinkedHashMap<VariableDeclaration, ILocation>(0);
+//        return new ResultExpression(stmt, null, decl, emptyAuxVars);
+//    }
     
     /**
      * Takes a pointer Expression and returns the pointers base address.
@@ -1207,11 +1178,9 @@ public class MemoryHandler {
 		ArrayList<Statement> mallocs = new ArrayList<Statement>();
 		for (LocalLValue llv : this.variablesToBeMalloced.currentScopeKeys()) 
 			mallocs.add(this.getMallocCall(main, m_functionHandler, this.calculateSizeOf(llv.cType, loc), llv, loc));
-//			mallocs.addAll(this.getMallocCall(main, m_functionHandler, this.calculateSizeOf(llv.cType, loc), llv, loc).stmt);
 		ArrayList<Statement> frees = new ArrayList<Statement>();
 		for (LocalLValue llv : this.variablesToBeMalloced.currentScopeKeys()) {  //frees are inserted in handleReturnStm
 			frees.add(this.getFreeCall(main, m_functionHandler, llv, loc));
-//			frees.addAll(this.getFreeCall(main, m_functionHandler, llv, loc).stmt);
 		}
 		ArrayList<Statement> newBlockAL = new ArrayList<Statement>();
 		newBlockAL.addAll(mallocs);
@@ -1221,8 +1190,7 @@ public class MemoryHandler {
 	}
 	
 	public void addVariableToBeMalloced(Dispatcher main, LocalLValue thisLVal) {
-//		if (!main.typeHandler.isStructDeclaration())
-			this.variablesToBeMalloced.put(thisLVal, variablesToBeMalloced.getActiveScopeNum());
+		this.variablesToBeMalloced.put(thisLVal, variablesToBeMalloced.getActiveScopeNum());
 	}
 	
 	public LinkedScopedHashMap<LocalLValue, Integer> getVariablesToBeMalloced() {

@@ -228,13 +228,8 @@ public class FunctionHandler {
 		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract,
 				methodName);
 
-//		ResultTypes checkedType = main.cHandler.checkForPointer(main,
-//                cFuncDeclarator.getPointerOperators(), returnType, false);
-		
-//        if (returnType.isVoid &&
         if (funcType.getResultType() instanceof CPrimitive && 
         		((CPrimitive) funcType.getResultType()).getType() == PRIMITIVE.VOID &&
-//                !(checkedType.cType instanceof CPointer)) {
                 !(funcType.getResultType() instanceof CPointer)) {
 			if (methodsCalledBeforeDeclared.contains(methodName)) {
 				// this method was assumed to return int -> return int
@@ -247,7 +242,6 @@ public class FunctionHandler {
 			}
 		} else {
 			// we found a type, so node is type ASTType
-//			ASTType type = main.typeHandler.ctype2asttype(loc, checkedType.cType);
 			ASTType type = main.typeHandler.ctype2asttype(loc, funcType.getResultType());
 			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
 		}
@@ -299,8 +293,6 @@ public class FunctionHandler {
 					// retranslate ACSL specification needed e.g., in cases
 					// where ids of function parameters differ from is in ACSL
 					// expression
-//					ACSLNode acslNode = ((CACSLLocation) spec[i].getLocation()
-//							.getOrigin()).getAcslNode();
 					Result retranslateRes = main.dispatch(contract.get(i));
 					assert (retranslateRes instanceof ResultContract);
 					ResultContract resContr = (ResultContract) retranslateRes;
@@ -534,12 +526,8 @@ public class FunctionHandler {
 				modifiedGlobals.put(mId, currModClause);
 				int nrSpec = spec.length;
 				spec = Arrays.copyOf(spec, nrSpec + 1);
-//				VariableLHS[] modifyList = new VariableLHS[currModClause.size()];
 				LinkedHashSet<String> modifySet = new LinkedHashSet<>();
-//				int i = 0;
 				for (String var: currModClause) {
-//					modifyList[i++] = new VariableLHS(loc, var);
-//					modifySet.add(new VariableLHS(loc, var));
 					modifySet.add(var);
 				}
 				
@@ -566,11 +554,7 @@ public class FunctionHandler {
 				}
 				spec[nrSpec] = new ModifiesSpecification(loc, false, modifyList);
 			}
-			if (main.isMMRequired()
-					&&
-//					(((MainDispatcher) main).isIntArrayRequiredInMM() ||
-//						((MainDispatcher) main).isFloatArrayRequiredInMM() ||	
-//						((MainDispatcher) main).isPointerArrayRequiredInMM())
+			if (main.isMMRequired() &&
 					(memoryHandler.isIntArrayRequiredInMM ||
 							memoryHandler.isFloatArrayRequiredInMM ||	
 							memoryHandler.isPointerArrayRequiredInMM)

@@ -327,20 +327,4 @@ public class ArrayHandler {
 		
 		return result;
 	}
-
-	private Expression computeSubscriptMultiplier(Dispatcher main,
-			MemoryHandler memoryHandler, ILocation loc, CArray arrayCType,
-			Expression offset) {
-		for (int i = 1; i < arrayCType.getDimensions().length; i++) {
-			offset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply,
-					offset, 
-					arrayCType.getDimensions()[i], 
-					loc);
-		}
-		offset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply,
-				offset, 
-				memoryHandler.calculateSizeOf(arrayCType.getValueType(), loc), 
-				loc);
-		return offset;
-	}
 }

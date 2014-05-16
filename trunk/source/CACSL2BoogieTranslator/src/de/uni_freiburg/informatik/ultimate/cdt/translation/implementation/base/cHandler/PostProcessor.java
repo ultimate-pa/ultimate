@@ -105,23 +105,15 @@ public class PostProcessor {
 	 *            a set of uninitialized global variables.
 	 * @return a declaration list holding the init() and start() procedure.
 	 */
-	public ArrayList<Declaration> postProcess(Dispatcher main, ILocation loc,
-			MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler, StructHandler structHandler,
-//			LinkedHashMap<String, Procedure> procedures,
-//			LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals,
-			Set<String> undefinedTypes,
-			Collection<? extends FunctionDeclaration> functions, 
-			LinkedHashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie
-			) {
+	public ArrayList<Declaration> postProcess(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, 
+			ArrayHandler arrayHandler, FunctionHandler functionHandler, StructHandler structHandler,
+			Set<String> undefinedTypes,	Collection<? extends FunctionDeclaration> functions, 
+			LinkedHashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie) {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 		decl.addAll(createUltimateInitProcedure(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler,
 				mDeclarationsGlobalInBoogie));
-		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler
-//				,
-//				procedures,
-//				modifiedGlobals
-				));
+		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler));
 		decl.addAll(functions);
 		return decl;
 	}
@@ -165,16 +157,13 @@ public class PostProcessor {
 	 */
 	private ArrayList<Declaration> createUltimateInitProcedure(ILocation loc,
 			Dispatcher main, MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler,   
-			StructHandler structHandler, LinkedHashMap<Declaration, CDeclaration> mDeclarationsGlobalInBoogie
-//			ArrayList<Statement> initStatements, Collection<String> uninitGlobalVars
-			) {
+			StructHandler structHandler, LinkedHashMap<Declaration, CDeclaration> mDeclarationsGlobalInBoogie) {
 		functionHandler.beginUltimateInit(main, loc, SFO.INIT);
 		ArrayList<Statement> initStatements = new ArrayList<Statement>();
 		
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		ArrayList<VariableDeclaration> initDecl = new ArrayList<VariableDeclaration>();
 		if (main.isMMRequired()) {
-//			MainDispatcher md = (MainDispatcher) main;
 			if (memoryHandler.isFloatArrayRequiredInMM ||
 					memoryHandler.isIntArrayRequiredInMM ||
 					memoryHandler.isPointerArrayRequiredInMM) {
