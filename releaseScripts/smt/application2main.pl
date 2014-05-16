@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -i
 # Perl script that Jochen wrote for me.
 # This script removes all commands enclosed by push-pop with one exception:
 # The commands between that last push-pop at level 1 are not removed.
