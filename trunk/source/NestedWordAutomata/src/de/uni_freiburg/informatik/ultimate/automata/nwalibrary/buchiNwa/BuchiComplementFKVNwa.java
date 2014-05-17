@@ -269,6 +269,9 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 				TightLevelRankingStateGenerator gen = 
 					new HeiMatTightLevelRankingStateGenerator(constraints);
 				Collection<LevelRankingState> result = gen.computeResult();
+				if (result.size() > 2) {
+					s_Logger.warn("big" + result.size());
+				}
 				for (LevelRankingState complSucc : result) {
 					STATE resSucc = getOrAdd(complSucc);
 					m_Cache.addInternalTransition(state, letter, resSucc);
@@ -282,6 +285,9 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 				TightLevelRankingStateGenerator gen = 
 					new HeiMatTightLevelRankingStateGenerator(constraints);
 				Collection<LevelRankingState> result = gen.computeResult();
+				if (result.size() > 4) {
+					s_Logger.warn("big" + result.size());
+				}
 				for (LevelRankingState complSucc : result) {
 					STATE resSucc = getOrAdd(complSucc);
 					m_Cache.addInternalTransition(state, letter, resSucc);
@@ -500,6 +506,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		private void addRank(STATE down, STATE up, 
 												Integer rank, boolean addToO) {
 			assert rank != null;
+			assert isEven(rank) || !m_Operand.isFinal(up) : "final states must have even ranks";
 			HashMap<STATE, Integer> up2rank = m_LevelRanking.get(down);
 			if (up2rank == null) {
 				up2rank = new HashMap<STATE,Integer>();
@@ -508,6 +515,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 			assert !up2rank.containsKey(up);
 			up2rank.put(up,rank);
 			if (addToO) {
+				assert isEven(getRank(down, up)) : "has to be even";
 				addToO(down,up);
 			}
 			if (m_HighestRank < rank) {
@@ -599,6 +607,27 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		}
 		private BuchiComplementFKVNwa<LETTER,STATE> getOuterType() {
 			return BuchiComplementFKVNwa.this;
+		}
+		
+		boolean isTight() {
+			assert m_HighestRank >= 0;
+			assert m_HighestRank < Integer.MAX_VALUE : "not applicable";
+			if (isEven(m_HighestRank)) {
+				return false;
+			} else {
+				int[] ranks = new int[m_HighestRank+1];
+				for (STATE down  : getDownStates()) {
+					for (STATE up : getUpStates(down)) {
+						ranks[getRank(down, up)]++;
+					}
+				}
+				for (int i=1; i<=m_HighestRank; i+=2) {
+					if (ranks[i] == 0) {
+						return false;
+					}
+				}
+				return true;
+			}
 		}
 	}
 	
@@ -739,6 +768,10 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		 */
 		private void addConstaint(STATE down, STATE up, 
 											Integer rank, boolean oCandidate) {
+			// This method is very similar to addRank(), but it does not 
+			// override a rank that was already set (insted takes the minimum) 
+			// and one assert is missing.
+			assert rank != null;
 			HashMap<STATE, Integer> up2rank = m_LevelRanking.get(down);
 			if (up2rank == null) {
 				up2rank = new HashMap<STATE,Integer>();
@@ -750,6 +783,9 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 			}
 			if (oCandidate) {
 				addToO(down,up);
+			}
+			if (m_HighestRank < rank) {
+				m_HighestRank = rank;
 			}
 		}		
 	}
@@ -778,7 +814,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		
 		protected final List<LevelRankingState> m_Result =
 			new ArrayList<LevelRankingState>();
-		private final LevelRankingConstraint m_Constraint;
+		protected final LevelRankingConstraint m_Constraint;
 		
 		public TightLevelRankingStateGenerator(LevelRankingConstraint constraint) {
 			m_Constraint = constraint;
@@ -1139,8 +1175,8 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		Collection<LevelRankingState> computeResult() {
 			int unassignedUnrestricted = m_UnrestrictedRank2DoubleDecker.size();
 			if (unassignedUnrestricted == 0) {
-				// a possible states are accepting or have rank 0
-				// no state with odd rank possible - no successors
+				// all possible states are accepting or have rank 0
+				// no state with odd rank possible, hence not tight - no successors
 				return Collections.emptyList();
 			}
 			LevelRankingWithSacrificeInformation lrwsi = new LevelRankingWithSacrificeInformation();
@@ -1546,6 +1582,119 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		
 		
 	}
+	
+	
+	public class MaxTightLevelRankingStateGeneratorInitial extends
+											TightLevelRankingStateGenerator {
+		final List<DoubleDecker<STATE>> m_FinalDoubleDeckers = new ArrayList<DoubleDecker<STATE>>();
+		final List<DoubleDecker<STATE>> m_NonFinalDoubleDeckers = new ArrayList<DoubleDecker<STATE>>();
+
+		public MaxTightLevelRankingStateGeneratorInitial(
+				LevelRankingConstraint constraint) {
+			super(constraint);
+			for (STATE down  : constraint.getDownStates()) {
+				for (STATE up : constraint.getUpStates(down)) {
+					assert constraint.getRank(down, up) == Integer.MAX_VALUE;
+					DoubleDecker<STATE> dd = new DoubleDecker<STATE>(down, up);
+					if (m_Operand.isFinal(up)) {
+						m_FinalDoubleDeckers.add(dd);
+					} else {
+						m_NonFinalDoubleDeckers.add(dd);
+					}
+				}
+			}
+
+		}
+		
+		public void rec(int rank, Map<DoubleDecker<STATE>, Integer> assigned) {
+			if (assigned.size() == m_NonFinalDoubleDeckers.size()) {
+				int maxrank = rank - 2;
+				int highestEvenRank = maxrank - 1;
+				LevelRankingState lrs = new LevelRankingState();
+				for (DoubleDecker<STATE> dd : assigned.keySet()) {
+					lrs.addRank(dd.getDown(), dd.getUp(), assigned.get(dd), false);
+				}
+				for (DoubleDecker<STATE> dd : m_FinalDoubleDeckers) {
+					lrs.addRank(dd.getDown(), dd.getUp(), highestEvenRank, true);
+				}
+				m_Result.add(lrs);
+			} else {
+				for (DoubleDecker<STATE> dd  : m_NonFinalDoubleDeckers) {
+					if (!assigned.containsKey(dd)) {
+						Map<DoubleDecker<STATE>, Integer> assignedCopy = 
+								new HashMap<DoubleDecker<STATE>, Integer>(assigned);
+						assignedCopy.put(dd, rank);
+						rec(rank + 2, assignedCopy);
+					}
+				}
+			}
+		}
+
+		@Override
+		Collection<LevelRankingState> computeResult() {
+			if (m_NonFinalDoubleDeckers.size() != 0) {
+				Map<DoubleDecker<STATE>, Integer> empty = Collections.emptyMap();
+				rec(1, empty);
+			}
+			return m_Result;
+		}
+		
+	}
+	
+	
+	public class MaxTightLevelRankingStateGeneratorNonInitial extends TightLevelRankingStateGenerator {
+
+		public MaxTightLevelRankingStateGeneratorNonInitial(
+				LevelRankingConstraint constraint) {
+			super(constraint);
+		}
+
+		@Override
+		Collection<LevelRankingState> computeResult() {
+			if (m_Constraint.getDownStates().isEmpty()) {
+				return Collections.emptySet();
+			}
+			if (m_Constraint.isTight()) {
+				LevelRankingState pointwiseMax = new LevelRankingState();
+				for (STATE down  : m_Constraint.getDownStates()) {
+					for (STATE up : m_Constraint.getUpStates(down)) {
+						int rank = m_Constraint.getRank(down, up);
+						if (m_Operand.isFinal(up) && isOdd(rank)) {
+							rank--;
+						}
+						if (m_Constraint.inO(down, up) && isEven(rank)) {
+							pointwiseMax.addRank(down, up, rank, true);
+						} else {
+							pointwiseMax.addRank(down, up, rank, false);
+						}
+					}
+				}
+				m_Result.add(pointwiseMax);
+				if (!pointwiseMax.isOempty()) {
+					LevelRankingState lrs = new LevelRankingState();
+					for (STATE down  : pointwiseMax.getDownStates()) {
+						for (STATE up : pointwiseMax.getUpStates(down)) {
+							int rank = pointwiseMax.getRank(down, up);
+							if (pointwiseMax.inO(down, up)) {
+								if (rank == 0 || m_Operand.isFinal(up)) {
+									lrs.addRank(down, up, rank, true);
+								} else {
+									lrs.addRank(down, up, rank-1, false);
+								}
+							} else {
+								lrs.addRank(down, up, rank, false);
+							}
+						}
+					}
+					if (!lrs.equals(pointwiseMax)) {
+						m_Result.add(lrs);
+					}
+				}
+			}
+			return m_Result;
+		}
+	}
+	
 
 
 
