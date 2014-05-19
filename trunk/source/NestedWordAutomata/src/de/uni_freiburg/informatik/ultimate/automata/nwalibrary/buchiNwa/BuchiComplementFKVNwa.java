@@ -1627,6 +1627,18 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	}
 	
 	
+	/**
+	 * Use this together with MaxTightLevelRankingStateGeneratorNonInitial.
+	 * The MaxTightLevelRankingStateGeneratorInitial should generate the 
+	 * LevelRankings for successors of determinized states (from powerset
+	 * construction) the MaxTightLevelRankingStateGeneratorNonInitial should
+	 * generate other LevelRankings.
+	 * I tried to implement the optimization suggested in Section 4 of
+	 * 2009STACS - Schewe - Büchi Complementation Made Tight
+	 * This is still buggy and meanwhile I think that my optimization is more 
+	 * efficient.
+	 *
+	 */
 	public class MaxTightLevelRankingStateGeneratorInitial extends
 											TightLevelRankingStateGenerator {
 		final List<DoubleDecker<STATE>> m_FinalDoubleDeckers = new ArrayList<DoubleDecker<STATE>>();
@@ -1685,6 +1697,9 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	}
 	
 	
+	/**
+	 * Use this together with MaxTightLevelRankingStateGeneratorInitial.
+	 */
 	public class MaxTightLevelRankingStateGeneratorNonInitial extends TightLevelRankingStateGenerator {
 
 		public MaxTightLevelRankingStateGeneratorNonInitial(
