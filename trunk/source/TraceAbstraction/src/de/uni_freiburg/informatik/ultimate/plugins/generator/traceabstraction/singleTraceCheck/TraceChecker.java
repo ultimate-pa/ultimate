@@ -478,7 +478,7 @@ public class TraceChecker {
 
 		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_InterpolantComputation);
 		//TODO: remove this if relevant variables are definitely correct.
-		assert testRelevantVars() : "bug in relevant varialbes";
+		//assert testRelevantVars() : "bug in relevant varialbes";
 	}
 
 	private boolean testRelevantVars() {
