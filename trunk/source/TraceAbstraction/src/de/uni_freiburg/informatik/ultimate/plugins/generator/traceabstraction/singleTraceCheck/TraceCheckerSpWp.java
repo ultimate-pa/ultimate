@@ -292,6 +292,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 				int totalNumberOfConjunctsInTrace = ((AnnotateAndAsserterConjuncts)m_AAA).getAnnotated2Original().keySet().size();
 				s_Logger.debug("Total number of conjuncts in trace: " +  totalNumberOfConjunctsInTrace);
 				s_Logger.debug("Number of conjuncts in unsatisfiable core: " + unsat_coresAsSet.size());
+				((TraceCheckerBenchmarkSpWpGenerator) m_TraceCheckerBenchmarkGenerator)
+					.setConjunctsInSSA(totalNumberOfConjunctsInTrace, unsat_coresAsSet.size());
 			}
 		}
 		
@@ -846,6 +848,10 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 		protected final static String s_SizeOfPredicates = "SizeOfPredicates";
 		protected final static String s_NumberOfQuantifiedPredicates = "NumberOfQuantifiedPredicates";
+		protected final static String s_ConjunctsInSSA = "Conjuncts in SSA";
+		protected final static String s_ConjunctsInUnsatCore = "Conjuncts in UnsatCore";
+		
+		
 		
 		public static TraceCheckerSpWpBenchmarkType getInstance() {
 			return s_Instance;
@@ -858,6 +864,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 			result.add(s_SizeOfPredicates);
 			result.add(s_NumberOfQuantifiedPredicates);
+			result.add(s_ConjunctsInSSA);
+			result.add(s_ConjunctsInUnsatCore);
 			return result;
 		}
 
@@ -886,6 +894,18 @@ public class TraceCheckerSpWp extends TraceChecker {
 					result[i] = array1[i] + array1[i];
 				}
 				return result;
+			case s_ConjunctsInSSA:
+			{
+				int numberConjuncts1 = (int) value1;
+				int numberConjuncts2 = (int) value2;
+				return numberConjuncts1 + numberConjuncts2;
+			}
+			case s_ConjunctsInUnsatCore:
+			{
+				int numberConjuncts1 = (int) value1;
+				int numberConjuncts2 = (int) value2;
+				return numberConjuncts1 + numberConjuncts2;
+			}
 			default:
 				return super.aggregate(key, value1, value2);
 			}
@@ -895,6 +915,14 @@ public class TraceCheckerSpWp extends TraceChecker {
 		public String prettyprintBenchmarkData(BenchmarkData benchmarkData) {
 			StringBuilder sb  = new StringBuilder();
 			sb.append(super.prettyprintBenchmarkData(benchmarkData));
+			sb.append("\t");
+			sb.append(s_ConjunctsInSSA).append(": ");
+			int conjunctsSSA = (int) benchmarkData.getValue(s_ConjunctsInSSA);
+			sb.append(conjunctsSSA);
+			sb.append(" ");
+			sb.append(s_ConjunctsInUnsatCore).append(": ");
+			int conjunctsUC = (int) benchmarkData.getValue(s_ConjunctsInUnsatCore);
+			sb.append(conjunctsUC);
 			sb.append("\t");
 			int[] numberOfQuantifiedPredicates = (int[]) benchmarkData.getValue(s_NumberOfQuantifiedPredicates);
 			assert numberOfQuantifiedPredicates.length == 4;
@@ -927,7 +955,10 @@ public class TraceCheckerSpWp extends TraceChecker {
 		private int[] m_NumberOfQuantifiedPredicates = new int[4];
 		// m_NumberOfQuantifierFreePredicates[0] : Sum of the DAG-Size of  predicates computed via FP
 		// m_NumberOfQuantifierFreePredicates[1] : Sum of the DAG-Size of  predicates computed via BP
-		private long[] m_SizeOfPredicates = new long[2]; 
+		private long[] m_SizeOfPredicates = new long[2];
+		
+		private int m_ConjunctsInSSA;
+		private int m_ConjunctsInUC;
 		
 		@Override
 		public String[] getStopwatches() {
@@ -951,6 +982,14 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 		}
 		
+		public void setConjunctsInSSA(int conjunctsInSSA, int conjunctsInUC) {
+			assert m_ConjunctsInSSA == 0 : "have already been set";
+			assert m_ConjunctsInUC == 0 : "have already been set";
+			m_ConjunctsInSSA = conjunctsInSSA;
+			m_ConjunctsInUC = conjunctsInUC;
+		}
+		
+		
 		private long getSumOfIntArray(int[] arr) {
 			long sum = 0; 
 			for (int i = 0; i < arr.length; i++) {
@@ -971,6 +1010,10 @@ public class TraceCheckerSpWp extends TraceChecker {
 				return m_NumberOfQuantifiedPredicates;
 			case TraceCheckerSpWpBenchmarkType.s_SizeOfPredicates:
 				return m_SizeOfPredicates;
+			case TraceCheckerSpWpBenchmarkType.s_ConjunctsInSSA:
+				return m_ConjunctsInSSA;
+			case TraceCheckerSpWpBenchmarkType.s_ConjunctsInUnsatCore:
+				return m_ConjunctsInUC;
 			default:
 				return super.getValue(key);
 			}
