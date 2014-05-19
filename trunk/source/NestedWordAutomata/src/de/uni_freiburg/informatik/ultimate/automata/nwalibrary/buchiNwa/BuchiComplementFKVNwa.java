@@ -1302,7 +1302,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 						// odd rank is assigned once.
 						continue;
 					}
-					if ((bitcount_i + bitcount_j > numberOfOddRankTheWeCouldAssignAdditionally) && (j != 0)) {
+					if ((bitcount_i + bitcount_j > numberOfOddRankTheWeCouldAssignAdditionally)) {
 						// we give up this branch, sacrificing that many even
 						// ranks wont' bring us a higher maximal rank
 						continue;
