@@ -11,7 +11,7 @@ fi
 
 solvers=("z3" "SMTInterpol")
 echo "Solvers: ${solvers[*]}"
-solverCommands=("z3 SMTLIB2_COMPLIANT=true -t:5000" "java -jar /opt/SMTInterpol/smtinterpol.jar -q -no-success")
+solverCommands=("z3 SMTLIB2_COMPLIANT=true" "java -jar /opt/SMTInterpol/smtinterpol.jar -q -no-success")
 
 
 for((i=0;i<${#solvers[@]};i++))
