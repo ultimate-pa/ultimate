@@ -307,7 +307,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 			return m_CoverageRelation;
 		}
 
-		private class CoverageRelation implements IPredicateCoverageChecker {
+		public class CoverageRelation implements IPredicateCoverageChecker {
 			Map<IPredicate, Map<IPredicate, LBool>> m_Lhs2Rhs2lbool = 
 					new HashMap<IPredicate, Map<IPredicate, LBool>>();
 			

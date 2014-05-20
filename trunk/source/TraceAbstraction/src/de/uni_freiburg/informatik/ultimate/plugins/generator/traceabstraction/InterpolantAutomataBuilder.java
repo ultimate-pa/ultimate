@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
 /**
@@ -46,6 +47,7 @@ public class InterpolantAutomataBuilder {
 	private ArrayList<IPredicate> m_StateSequence;
 	private final IPredicate[] m_Interpolants;
 	NestedWordAutomaton<CodeBlock, IPredicate> m_IA;
+	private final PredicateUnifier m_PredicateUnifier;
 	
 	private final InterpolantAutomaton m_AdditionalEdges;
 	private final boolean m_SelfloopAtInitial;
@@ -86,6 +88,7 @@ public class InterpolantAutomataBuilder {
 						" allowed only for automata runs");
 			}
 		}
+		m_PredicateUnifier = traceChecker.getPredicateUnifier();
 		m_AdditionalEdges = additionalEdges;
 		m_SmtManager = smtManager;
 		m_SelfloopAtInitial = selfloopAtInitial;
@@ -119,12 +122,8 @@ public class InterpolantAutomataBuilder {
 			interpolantAutomatonType = 
 				"Constructing canonical interpolant automaton";
 			break;
-		case TOTALINTERPOLATION:
-			interpolantAutomatonType = 
-				"Constructing eager interpolant automaton"; 
-			break;
 		default:
-			throw new IllegalArgumentException();
+			throw new AssertionError("Unsupported kind of interpolant automaton");
 			
 		}
 		if (m_SelfloopAtInitial) {
@@ -160,17 +159,45 @@ public class InterpolantAutomataBuilder {
 			
 			if(m_AdditionalEdges == InterpolantAutomaton.CANONICAL) {
 				ProgramPoint pp = getProgramPointAtPosition(i-1);
-				List<Integer> occurrence = m_ProgramPoint2Occurence.get(pp);
-				if (occurrence == null) {
-					occurrence = new ArrayList<Integer>();
-					m_ProgramPoint2Occurence.put(pp, occurrence);
+				List<Integer> previousOccurrences = m_ProgramPoint2Occurence.get(pp);
+				if (previousOccurrences == null) {
+					previousOccurrences = new ArrayList<Integer>();
+					m_ProgramPoint2Occurence.put(pp, previousOccurrences);
 				}
 				else {
-					for (int occur : occurrence) {
-						surveyBackedge(i-1, occur);
+					for (int previousOccurrence : previousOccurrences) {
+						int currentPosition = i-1;
+						assert currentPosition > previousOccurrence;
+						IPredicate currentPredicate = getInterpolant(currentPosition);
+						IPredicate previousPredicate = getInterpolant(previousOccurrence);
+						if (currentPredicate == previousPredicate) {
+							// trivially covered and backedges already contained
+							m_Trivial++;
+						} else {
+							LBool lbool = m_PredicateUnifier.getCoverageRelation().isCovered(
+														currentPredicate, previousPredicate);
+							LBool isSat = m_SmtManager.isCovered(m_Interpolants[currentPosition],
+																	m_Interpolants[previousOccurrence]);
+							assert lbool == isSat;
+							switch (isSat) {
+							case UNSAT:
+								m_Unsat++;
+								addTransition(currentPosition-1, currentPosition, previousOccurrence);
+								addTransition(currentPosition, previousOccurrence+1, previousOccurrence+1);
+								break;
+							case SAT:
+								m_Sat++;
+								break;
+							case UNKNOWN:
+								m_Unknown++;
+								break;
+							default:
+								throw new AssertionError();
+							}
+						}
 					}
 				}
-				occurrence.add(i-1);
+				previousOccurrences.add(i-1);
 			}
 		}
 		
@@ -232,7 +259,8 @@ public class InterpolantAutomataBuilder {
 		return m_IA;
 	}
 	
-	
+
+
 	private IPredicate getInterpolant(int i) {
 		if (i == -1) {
 			return m_TruePredicate;
@@ -276,11 +304,6 @@ public class InterpolantAutomataBuilder {
 	
 	
 	private void surveyBackedge(int newOccurrence, int oldOccurrence) {
-		if (m_Interpolants[newOccurrence] == m_Interpolants[oldOccurrence]) {
-			// trivially covered and backedges already contained
-			return;
-		}
-		
 		LBool isSat = m_SmtManager.isCovered(m_Interpolants[newOccurrence],
 												m_Interpolants[oldOccurrence]);
 		switch (isSat) {
@@ -295,14 +318,6 @@ public class InterpolantAutomataBuilder {
 		case UNKNOWN:
 			m_Unknown++;
 			break;
-//		case 1729:
-//			m_Trivial++;
-//			addTransition(newOccurrence-1, newOccurrence-1, oldOccurrence);
-//			addTransition(newOccurrence, oldOccurrence, oldOccurrence+1);
-//			if (m_Pref.dumpFormulas()) {
-//				dumpBackedgeInfo(oldOccurrence, newOccurrence, isSat);
-//			}
-//			break;
 		default:
 			throw new AssertionError();
 		}	
@@ -358,6 +373,32 @@ public class InterpolantAutomataBuilder {
 				s_Logger.debug("Added return from alternative call Pred");
 			}
 		}
+	}
+	
+	
+	class BackwardCoveringInformation {
+		private int m_PotentialBackwardCoverings;
+		private int m_SuccessfullBackwardCoverings;
+		public BackwardCoveringInformation() {
+			super();
+			m_PotentialBackwardCoverings = 0;
+			m_SuccessfullBackwardCoverings = 0;
+		}
+		public int getPotentialBackwardCoverings() {
+			return m_PotentialBackwardCoverings;
+		}
+		public int getSuccessfullBackwardCoverings() {
+			return m_SuccessfullBackwardCoverings;
+		}
+		
+		public void incrementPotentialBackwardCoverings() {
+			m_PotentialBackwardCoverings++;
+		}
+		
+		public void incrementSuccessfullBackwardCoverings() {
+			m_SuccessfullBackwardCoverings++;
+		}
+		
 	}
 
 
