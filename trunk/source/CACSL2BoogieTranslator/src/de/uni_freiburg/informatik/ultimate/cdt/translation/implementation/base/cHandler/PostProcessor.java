@@ -400,11 +400,12 @@ public class PostProcessor {
 			if (initializer == null) {
 				rhs = new IdentifierExpression(loc, SFO.NULL);
 			} else {
-				if (initializer.lrVal.cType instanceof CPointer
-						|| initializer.lrVal.cType instanceof CArray) {
+				CType initializerUnderlyingType = initializer.lrVal.cType.getUnderlyingType();
+				if (initializerUnderlyingType instanceof CPointer
+						|| initializerUnderlyingType instanceof CArray) {
 					rhs = initializer.lrVal.getValue();
-				} else if (initializer.lrVal.cType instanceof CPrimitive 
-						&& ((CPrimitive) initializer.lrVal.cType).getType() == PRIMITIVE.INT){
+				} else if (initializerUnderlyingType instanceof CPrimitive 
+						&& ((CPrimitive) initializerUnderlyingType).getType() == PRIMITIVE.INT){
 					String offset = ((IntegerLiteral) initializer.lrVal.getValue()).getValue();
 					if (offset.equals("0")) {
 						rhs = new IdentifierExpression(loc, SFO.NULL);
