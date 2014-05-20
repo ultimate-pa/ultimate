@@ -79,22 +79,31 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     
     @Override
 	public int visit(IASTParameterDeclaration declaration) {
+    	IASTDeclSpecifier declSpec = declaration.getDeclSpecifier();
+    	IASTDeclaration funcDec = null;
     	if (!currentFunOrStructDef.isEmpty()) {
-    		IASTDeclSpecifier declSpec = declaration.getDeclSpecifier();
-    		if (declSpec instanceof IASTElaboratedTypeSpecifier) {//i.e. sth like struct/union/enum typename varname
-    			IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) declSpec;
-    			String name = elts.getName().toString();
-    			IASTDeclaration decOfName = (IASTDeclaration) sT.get(name);
-    			if (decOfName != null) {//if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
-    				addDependency(currentFunOrStructDef.peek(), decOfName);
-    			}
-    		} else if (declSpec instanceof IASTNamedTypeSpecifier) {
-    			IASTNamedTypeSpecifier nts = (IASTNamedTypeSpecifier) declSpec;
-    			String name = nts.getName().toString();
-    			IASTDeclaration decOfName = (IASTDeclaration) sT.get(name);
-    			if (decOfName != null) { //if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
-    				addDependency(currentFunOrStructDef.peek(), decOfName);
-    			}
+    		funcDec = currentFunOrStructDef.peek();
+    	} else { //we are not inside a function definition, but may still be inside a function declaration
+    		//one getParent to reach the declarator, the other one to get to the declaration
+    		IASTNode node = declaration;
+    		while (!(node instanceof IASTSimpleDeclaration))
+    			node = node.getParent();
+    		funcDec = (IASTDeclaration) node;
+    	}
+    	if (declSpec instanceof IASTElaboratedTypeSpecifier) {//i.e. sth like struct/union/enum typename varname
+    		IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) declSpec;
+    		String name = elts.getName().toString();
+    		IASTDeclaration decOfName = (IASTDeclaration) sT.get(name);
+    		if (decOfName != null) {//if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
+    			//    				addDependency(currentFunOrStructDef.peek(), decOfName);
+    			addDependency(funcDec, decOfName);
+    		}
+    	} else if (declSpec instanceof IASTNamedTypeSpecifier) {
+    		IASTNamedTypeSpecifier nts = (IASTNamedTypeSpecifier) declSpec;
+    		String name = nts.getName().toString();
+    		IASTDeclaration decOfName = (IASTDeclaration) sT.get(name);
+    		if (decOfName != null) { //if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
+    			addDependency(funcDec, decOfName);
     		}
     	}
     	return super.visit(declaration);
