@@ -76,8 +76,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 						m_Counterexample,
 						m_TraceChecker,
 						InterpolantAutomaton.SINGLETRACE, m_Pref.edges2True(),
-						m_SmtManager,
-						m_Iteration, m_IterationPW);
+						m_SmtManager);
 			m_InterpolAutomaton = iab.buildInterpolantAutomaton(
 				m_Abstraction, m_Abstraction.getStateFactory());
 			s_Logger.info("Interpolatants " + m_InterpolAutomaton.getStates());

@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,9 +53,6 @@ public class InterpolantAutomataBuilder {
 
 	private final SmtManager m_SmtManager;
 	
-	private final int m_Iteration;
-	private final PrintWriter iterationPW;
-
 	private final Map<ProgramPoint, List<Integer>> m_ProgramPoint2Occurence = 
 		new HashMap<ProgramPoint, List<Integer>>();
 	
@@ -78,9 +74,7 @@ public class InterpolantAutomataBuilder {
 			TraceChecker traceChecker,
 			InterpolantAutomaton additionalEdges,
 			boolean selfloopAtInitial,
-			SmtManager smtManager,
-			int iterationNumber,
-			PrintWriter iterationPW) {
+			SmtManager smtManager) {
 		this.m_Interpolants = traceChecker.getInterpolants();
 		m_NestedWord = NestedWord.nestedWord(nestedRun.getWord());
 		if (nestedRun instanceof NestedRun) {
@@ -94,8 +88,6 @@ public class InterpolantAutomataBuilder {
 		}
 		m_AdditionalEdges = additionalEdges;
 		m_SmtManager = smtManager;
-		m_Iteration = iterationNumber;
-		this.iterationPW = iterationPW;
 		m_SelfloopAtInitial = selfloopAtInitial;
 		m_TruePredicate = traceChecker.getPrecondition();
 		m_FalsePredicate = traceChecker.getPostcondition();
@@ -369,79 +361,4 @@ public class InterpolantAutomataBuilder {
 	}
 
 
-	void dumpBackedgeInfo(int coverer, int coveree, LBool satisfiablity) {
-		try {
-			ProgramPoint pp = ((SPredicate) m_StateSequence.get(coverer)).getProgramPoint();
-			iterationPW.println("");
-			iterationPW.println(pp + " occurs at position " + coverer 
-									+ " and at position " + coveree);
-			iterationPW.println("Iteration" + m_Iteration+"_SatProblem" 
-									+ m_SmtManager.getSatProbNumber()+" says:");
-			iterationPW.println("  " + m_Interpolants[coveree]);
-			iterationPW.println("implies");
-			iterationPW.println("  " + m_Interpolants[coverer]);
-			IPredicate from;
-			CodeBlock trans;
-			IPredicate to;
-			IPredicate hierPred;
-			
-			from = m_Interpolants[coveree-1];
-			trans = m_NestedWord.getSymbol(coveree-1);
-			to = m_Interpolants[coverer];
-			if (m_NestedWord.isReturnPosition(coveree-1)) {
-				int hierSuccPos = 
-					m_NestedWord.getCallPosition(coveree-1);
-				hierPred = m_Interpolants[hierSuccPos];
-			}
-			else {
-				hierPred = null;
-			}
- 			iterationPW.println("Added backedge");
-			iterationPW.println("from:   " + from);
-			iterationPW.println("labeled with:   " + 
-											trans.getPrettyPrintedStatements());
-			iterationPW.println("to:   " + to);
-			if (hierPred != null) {
-				iterationPW.println("hierarchical predecessor: " + hierPred);
-			}
-			
-			from = m_Interpolants[coveree];
-			trans = m_NestedWord.getSymbol(coveree);
-			to = m_Interpolants[coverer+1];
-			if (m_NestedWord.isReturnPosition(coveree)) {
-				int hierSuccPos = 
-					m_NestedWord.getCallPosition(coveree);
-				hierPred = m_Interpolants[hierSuccPos];
-			}
-			else {
-				hierPred = null;
-			}
- 			iterationPW.println("Added backedge");
-			iterationPW.println("from:   " + from);
-			iterationPW.println("labeled with:   " + 
-											trans.getPrettyPrintedStatements());
-			iterationPW.println("to:   " + to);
-			if (hierPred != null) {
-				iterationPW.println("hierarchical predecessor: " + hierPred);
-			}
-		} finally {
-			iterationPW.flush();
-		}
-	}
-	
-	void dumpAlternativeReturnBackedgeInfo(int callPos, IPredicate pred,
-			IPredicate hier, CodeBlock symbol, IPredicate succ) {
-		iterationPW.println("");
-		iterationPW.println("The call symbol at position " + callPos + 
-				" has several call successors. Adding the following inductive" +
-				"return backedge.");
-			iterationPW.println("Added backedge");
-			iterationPW.println("from:   " + pred);
-			iterationPW.println("labeled with:   " + 
-					symbol.getPrettyPrintedStatements());
-			iterationPW.println("to:   " + succ);
-			iterationPW.println("hierarchical predecessor: " + hier);
-		
-	}
-	
 }
