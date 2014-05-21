@@ -9,9 +9,13 @@ if [ ! -e "$examplesFolder" ]; then
     echo "Folder $examplesFolder does not exist"
 fi
 
-solvers=("z3" "SMTInterpol")
+solvers[0]="z3"
+solvers[1]="SMTInterpol"
+solvers[2]="Mathsat"
 echo "Solvers: ${solvers[*]}"
-solverCommands=("z3 SMTLIB2_COMPLIANT=true" "java -jar /opt/SMTInterpol/smtinterpol.jar -q -no-success")
+solverCommands[1]="z3 SMTLIB2_COMPLIANT=true -t:5000"
+solverCommands[2]="java -jar /opt/SMTInterpol/smtinterpol.jar -q -no-success"
+solverCommands[3]="mathsat < "
 
 
 for((i=0;i<${#solvers[@]};i++))
@@ -26,7 +30,7 @@ do
 		echo "result file $resultFile already exists"
 	else
 		echo "$solverCommand $f"
-		$solverCommand "$f" |grep -v success > "$resultFile"
+		eval $solverCommand "$f" |grep -v success > "$resultFile"
 	fi
 	done;
 done;
