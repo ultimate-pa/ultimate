@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 
@@ -20,6 +21,7 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 	public static final String s_BasicInterpolantAutomatonTime = "BasicInterpolantAutomatonTime";
 	public static final String s_BiggestAbstraction = "BiggestAbstraction";
 	public static final String s_TraceCheckerBenchmark = "TraceCheckerBenchmark";
+	public static final String s_InterpolantCoveringCapability = "InterpolantCoveringCapability";
 	
 	private static final CegarLoopBenchmarkType s_Instance = new CegarLoopBenchmarkType();
 	
@@ -38,6 +40,7 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 		keyList.add(s_EdgeCheckerData);
 		keyList.add(s_StatesRemovedByMinimization);
 		keyList.add(s_TraceCheckerBenchmark);
+		keyList.add(s_InterpolantCoveringCapability);
 		return keyList;
 	}
 	
@@ -72,6 +75,10 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 			} else {
 				return sip2;
 			}
+		case s_InterpolantCoveringCapability:
+			BackwardCoveringInformation bci1 = (BackwardCoveringInformation) value1;
+			BackwardCoveringInformation bci2 = (BackwardCoveringInformation) value2;
+			return new BackwardCoveringInformation(bci1, bci2);
 		default:
 			throw new AssertionError();
 		}
@@ -112,6 +119,12 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 		sb.append(" states and ocurred in iteration ");
 		sb.append(sip.getIteration());
 		sb.append(".\t");
+		
+		BackwardCoveringInformation bci = (BackwardCoveringInformation) benchmarkData.getValue(s_InterpolantCoveringCapability);
+		sb.append(s_InterpolantCoveringCapability);
+		sb.append(": ");
+		sb.append(bci.toString());
+		sb.append("\t");
 		
 		sb.append(s_EdgeCheckerData);
 		sb.append(": ");

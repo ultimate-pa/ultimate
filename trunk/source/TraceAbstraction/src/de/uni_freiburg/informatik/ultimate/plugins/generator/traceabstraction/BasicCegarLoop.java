@@ -224,6 +224,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			m_InterpolAutomaton = iab.buildInterpolantAutomaton(
 				m_Abstraction, m_Abstraction.getStateFactory());
 			s_Logger.info("Interpolatants " + m_InterpolAutomaton.getStates());
+			m_CegarLoopBenchmark.addBackwardCoveringInformation(iab.getBackwardCoveringInformation());
 		}
 		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 		assert(accepts(m_InterpolAutomaton, m_Counterexample.getWord())) :

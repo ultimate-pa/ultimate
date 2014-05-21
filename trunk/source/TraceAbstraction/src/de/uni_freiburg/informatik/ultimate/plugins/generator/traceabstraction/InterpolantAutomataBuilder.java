@@ -375,14 +375,27 @@ public class InterpolantAutomataBuilder {
 		}
 	}
 	
+	public BackwardCoveringInformation getBackwardCoveringInformation() {
+		int potentialBackwardCoverings = (m_Unsat+m_Sat+m_Unknown+m_Trivial);
+		int successfullBackwardCoverings = m_Unsat+m_Trivial;
+		return new BackwardCoveringInformation(potentialBackwardCoverings, successfullBackwardCoverings);
+	}
 	
-	class BackwardCoveringInformation {
+	
+	static class BackwardCoveringInformation {
 		private int m_PotentialBackwardCoverings;
 		private int m_SuccessfullBackwardCoverings;
-		public BackwardCoveringInformation() {
+		
+		public BackwardCoveringInformation(int potentialBackwardCoverings,
+				int successfullBackwardCoverings) {
 			super();
-			m_PotentialBackwardCoverings = 0;
-			m_SuccessfullBackwardCoverings = 0;
+			m_PotentialBackwardCoverings = potentialBackwardCoverings;
+			m_SuccessfullBackwardCoverings = successfullBackwardCoverings;
+		}
+		
+		public BackwardCoveringInformation(BackwardCoveringInformation bci1, BackwardCoveringInformation bci2) {
+			m_PotentialBackwardCoverings = bci1.getPotentialBackwardCoverings() + bci2.getPotentialBackwardCoverings();
+			m_SuccessfullBackwardCoverings = bci1.getSuccessfullBackwardCoverings() + bci2.getSuccessfullBackwardCoverings();
 		}
 		public int getPotentialBackwardCoverings() {
 			return m_PotentialBackwardCoverings;
@@ -390,14 +403,26 @@ public class InterpolantAutomataBuilder {
 		public int getSuccessfullBackwardCoverings() {
 			return m_SuccessfullBackwardCoverings;
 		}
-		
-		public void incrementPotentialBackwardCoverings() {
-			m_PotentialBackwardCoverings++;
+
+		@Override
+		public String toString() {
+			if (m_PotentialBackwardCoverings == 0) {
+				return "not available";
+			} else {
+				long result = Math.round((((double) m_SuccessfullBackwardCoverings) / m_PotentialBackwardCoverings) * 100);
+				return result + "%";
+			}
 		}
 		
-		public void incrementSuccessfullBackwardCoverings() {
-			m_SuccessfullBackwardCoverings++;
-		}
+		
+		
+//		public void incrementPotentialBackwardCoverings() {
+//			m_PotentialBackwardCoverings++;
+//		}
+//		
+//		public void incrementSuccessfullBackwardCoverings() {
+//			m_SuccessfullBackwardCoverings++;
+//		}
 		
 	}
 

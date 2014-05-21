@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType.SizeIterationPair;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkGeneratorWithStopwatches;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
@@ -13,6 +14,7 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 	private int m_StatesRemovedByMinimization = 0;
 	private int m_Iterations = 0;
 	private SizeIterationPair m_BiggestAbstraction = CegarLoopBenchmarkType.getInstance().new SizeIterationPair(-1, -1);
+	private BackwardCoveringInformation m_BCI = new BackwardCoveringInformation(0, 0);
 
 	@Override
 	public Iterable<String> getKeys() {
@@ -25,6 +27,10 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 	
 	public void addTraceCheckerData(IBenchmarkDataProvider tcbd) {
 		m_TcData.aggregateBenchmarkData(tcbd);
+	}
+	
+	public void addBackwardCoveringInformation(BackwardCoveringInformation bci) {
+		m_BCI = new BackwardCoveringInformation(m_BCI, bci);
 	}
 	
 	public void announceStatesRemovedByMinimization(int statesRemoved) {
@@ -65,6 +71,8 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 			return m_Iterations;
 		case CegarLoopBenchmarkType.s_BiggestAbstraction:
 			return m_BiggestAbstraction;
+		case CegarLoopBenchmarkType.s_InterpolantCoveringCapability:
+			return m_BCI;
 		default:
 			throw new AssertionError("unknown data");
 		}
