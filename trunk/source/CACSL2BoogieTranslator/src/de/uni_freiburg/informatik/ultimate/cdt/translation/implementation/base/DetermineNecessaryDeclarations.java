@@ -105,6 +105,8 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     		if (decOfName != null) { //if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
     			addDependency(funcDec, decOfName);
     		}
+    	} else if (declSpec instanceof IASTCompositeTypeSpecifier) {
+    		assert false : "a parameter type with composite type specifier: this seems to be an exotic case..";
     	}
     	return super.visit(declaration);
 	}
