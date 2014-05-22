@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.HashRelation;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
@@ -15,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 /**
  * Write a Hoare annotation provided by HoareAnnotationFragments to the CFG.   

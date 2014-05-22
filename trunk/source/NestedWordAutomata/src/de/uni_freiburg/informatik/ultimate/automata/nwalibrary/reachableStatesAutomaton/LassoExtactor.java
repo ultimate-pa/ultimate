@@ -36,7 +36,6 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
-import de.uni_freiburg.informatik.ultimate.automata.HashRelation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
@@ -50,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.StronglyConnectedComponents.SCC;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer.DownStateProp;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 
 /**
