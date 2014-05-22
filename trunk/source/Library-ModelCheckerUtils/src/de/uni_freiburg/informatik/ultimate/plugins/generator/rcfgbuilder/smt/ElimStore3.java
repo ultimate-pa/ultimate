@@ -443,13 +443,13 @@ public class ElimStore3 {
 	 * Represents Term of the form a = ("store", a', k, data), where a and
 	 * a' are both TermVariables.
 	 */
-	private static class ArrayUpdate {
+	public static class ArrayUpdate {
 		private final TermVariable m_OldArray;
 		private final TermVariable m_NewArray;
 		private final Term[] m_Index;
 		private final Term m_Data;
 		
-		private ArrayUpdate(Term term) throws ArrayUpdateException {
+		public ArrayUpdate(Term term) throws ArrayUpdateException {
 
 			if (!(term instanceof ApplicationTerm)) {
 				throw new ArrayUpdateException("no ApplicationTerm");
@@ -541,10 +541,10 @@ public class ElimStore3 {
 			}
 		}
 		
-		public Term getOldArray() {
+		public TermVariable getOldArray() {
 			return m_OldArray;
 		}
-		public Term getNewArray() {
+		public TermVariable getNewArray() {
 			return m_NewArray;
 		}
 		public Term[] getIndex() {
@@ -556,7 +556,7 @@ public class ElimStore3 {
 	}
 	
 	
-	private static class ArrayUpdateException extends Exception {
+	public static class ArrayUpdateException extends Exception {
 
 		private static final long serialVersionUID = -5344050289008681972L;
 
@@ -582,10 +582,12 @@ public class ElimStore3 {
 	 * the form  (select (select a i1) i2)  
 	 *
 	 */
-	private static class ArrayRead {
+	public static class ArrayRead {
 		private final Term m_Array;
 		private final Term[] m_Index;
 		private final ApplicationTerm m_SelectTerm;
+		
+		
 		
 		public ArrayRead(Term term, Term array) throws ArrayReadException {
 			if (!(term instanceof ApplicationTerm)) {
@@ -613,6 +615,49 @@ public class ElimStore3 {
 			} else  {
 				m_Array = array;
 			}
+		}
+		
+		public ArrayRead(Term term) throws ArrayReadException {
+			if (!(term instanceof ApplicationTerm)) {
+				throw new ArrayReadException(false, "no ApplicationTerm");
+			}
+			m_SelectTerm = (ApplicationTerm) term;
+			ArrayList<Term> index = new ArrayList<Term>();
+			boolean finished = false;
+			while (!isArray(term)) {
+				if (!(term instanceof ApplicationTerm)) {
+					throw new ArrayReadException(false, "no ApplicationTerm");
+				}
+				ApplicationTerm appTerm = (ApplicationTerm) term;
+				if (!appTerm.getFunction().getName().equals("select")) {
+					throw new ArrayReadException(false, "no select");
+				}
+				assert appTerm.getParameters().length == 2;
+				index.add(appTerm.getParameters()[1]);
+				term = appTerm.getParameters()[0];
+			}
+			m_Index = index.toArray(new Term[0]);
+			m_Array = term;
+			int dimensionArray = getDimension(term.getSort());
+			int numberOfIndices = m_Index.length;
+			int dimensionResult = getDimension(m_SelectTerm.getSort());
+			assert (numberOfIndices == dimensionArray - dimensionResult);
+		}
+		
+		private boolean isArray(Term term) {
+			if (!term.getSort().isArraySort()) {
+				return false;
+			}
+			if (term instanceof TermVariable) {
+				return true;
+			}
+			if (term instanceof ApplicationTerm) {
+				ApplicationTerm appTerm = (ApplicationTerm) term;
+				if (appTerm.getParameters().length == 0) {
+					// is a constant that represents array
+				}
+			}
+			return false;
 		}
 
 		public Term getArray() {
