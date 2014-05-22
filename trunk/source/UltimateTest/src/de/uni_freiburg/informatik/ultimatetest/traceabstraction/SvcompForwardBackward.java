@@ -13,7 +13,10 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
  */
 public class SvcompForwardBackward extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String[] m_Directories = { "examples/programs/" };
+	private static final String[] m_Directories = { 
+		"examples/svcomp/ssh-simplified",
+		"examples/svcomp/ntdrivers-simplified"
+		};
 	
 	// Time out for each test case in milliseconds
 	private static int m_Timeout = 10000;
