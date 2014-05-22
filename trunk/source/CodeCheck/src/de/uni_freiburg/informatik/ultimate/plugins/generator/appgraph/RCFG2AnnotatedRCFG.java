@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 
 import java.util.ArrayDeque;
 import java.util.HashMap;
@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -26,12 +27,13 @@ public class RCFG2AnnotatedRCFG {
 	public ImpRootNode convert(RootNode oldRoot, IPredicate truePredicate) {
 //		m_callPredToReturnPreds =
 //				new HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>>();
-		ImpRootAnnot ira = new ImpRootAnnot(oldRoot.getRootAnnot().getBoogieDeclarations(),
-				oldRoot.getRootAnnot().getBoogie2SMT(), null); //, m_callPredToReturnPreds);
+//		ImpRootAnnot ira = new ImpRootAnnot(oldRoot.getRootAnnot().getBoogieDeclarations(),
+//				oldRoot.getRootAnnot().getBoogie2SMT(), null); //, m_callPredToReturnPreds);
+		RootAnnot ra = new RootAnnot(oldRoot.getRootAnnot().getBoogieDeclarations(), //FIXME: do we need a new rootannot??
+				oldRoot.getRootAnnot().getBoogie2SMT(), null);
 		
-		ImpRootNode newRoot = new ImpRootNode(ira);
+		ImpRootNode newRoot = new ImpRootNode(ra);
 
-		
 		ArrayDeque<ProgramPoint> openNodes = new ArrayDeque<ProgramPoint>();
 		m_oldPpTonew = 
 				new HashMap<ProgramPoint, AnnotatedProgramPoint>();

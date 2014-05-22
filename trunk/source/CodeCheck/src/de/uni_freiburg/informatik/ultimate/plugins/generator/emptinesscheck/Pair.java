@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck;
 
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 

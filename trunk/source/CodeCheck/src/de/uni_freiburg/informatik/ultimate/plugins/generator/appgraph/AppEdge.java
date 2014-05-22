@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 
 import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;

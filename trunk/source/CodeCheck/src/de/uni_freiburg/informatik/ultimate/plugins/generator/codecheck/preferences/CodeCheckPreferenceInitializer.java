@@ -7,13 +7,13 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 
-public class PreferenceInitializer extends UltimatePreferenceInitializer {
+public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<Boolean>(LABEL_ONLYMAINPROCEDURE,
-						DEF_ONLYMAINPROCEDURE, PreferenceType.Boolean),
+//				new UltimatePreferenceItem<Boolean>(LABEL_ONLYMAINPROCEDURE,
+//						DEF_ONLYMAINPROCEDURE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_MEMOIZENORMALEDGECHECKS,
 						DEF_MEMOIZENORMALEDGECHECKS, PreferenceType.Boolean),

@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -18,6 +18,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTra
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;

@@ -21,10 +21,19 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceInitializer.EdgeCheckOptimization;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceInitializer.PredicateUnification;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceInitializer.SolverAndInterpolator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.RCFG2AnnotatedRCFG;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.EdgeCheckOptimization;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.PredicateUnification;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.SolverAndInterpolator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.IEmptinessCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.NWAEmptinessCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.impulse.ImpulseChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.kojak.UltimateChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie.BoogieProgramExecution;
@@ -35,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -99,8 +107,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	 * @return
 	 */
 	public boolean initialize(IElement root) {
-//		readPreferencePage();//FIXME .. then remove commentation, remove next line
-		GlobalSettings.init();
+		readPreferencePage();//FIXME .. then remove commentation, remove next line
+//		GlobalSettings.init();
 
 		m_originalRoot = (RootNode) root;
 		RootAnnot rootAnnot = m_originalRoot.getRootAnnot();
@@ -168,29 +176,29 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		GlobalSettings.init();
 
 		GlobalSettings._instance._memoizeNormalEdgeChecks = prefs.getBoolean(
-				PreferenceInitializer.LABEL_MEMOIZENORMALEDGECHECKS,
-				PreferenceInitializer.DEF_MEMOIZENORMALEDGECHECKS);
+				CodeCheckPreferenceInitializer.LABEL_MEMOIZENORMALEDGECHECKS,
+				CodeCheckPreferenceInitializer.DEF_MEMOIZENORMALEDGECHECKS);
 		GlobalSettings._instance._memoizeReturnEdgeChecks = prefs.getBoolean(
-				PreferenceInitializer.LABEL_MEMOIZERETURNEDGECHECKS,
-				PreferenceInitializer.DEF_MEMOIZERETURNEDGECHECKS);
-		GlobalSettings._instance._checkOnlyMain = prefs.getBoolean(
-				PreferenceInitializer.LABEL_ONLYMAINPROCEDURE,
-				PreferenceInitializer.DEF_ONLYMAINPROCEDURE);
+				CodeCheckPreferenceInitializer.LABEL_MEMOIZERETURNEDGECHECKS,
+				CodeCheckPreferenceInitializer.DEF_MEMOIZERETURNEDGECHECKS);
+//		GlobalSettings._instance._checkOnlyMain = prefs.getBoolean(
+//				PreferenceInitializer.LABEL_ONLYMAINPROCEDURE,
+//				PreferenceInitializer.DEF_ONLYMAINPROCEDURE);
 
 		GlobalSettings._instance._solverAndInterpolator = prefs.getEnum(
-				PreferenceInitializer.LABEL_SOLVERANDINTERPOLATOR,
+				CodeCheckPreferenceInitializer.LABEL_SOLVERANDINTERPOLATOR,
 				SolverAndInterpolator.class);
 
 		GlobalSettings._instance._interpolationMode = prefs.getEnum(
-				PreferenceInitializer.LABEL_INTERPOLATIONMODE,
+				CodeCheckPreferenceInitializer.LABEL_INTERPOLATIONMODE,
 				INTERPOLATION.class);
 
 		GlobalSettings._instance._predicateUnification = prefs.getEnum(
-				PreferenceInitializer.LABEL_PREDICATEUNIFICATION,
+				CodeCheckPreferenceInitializer.LABEL_PREDICATEUNIFICATION,
 				PredicateUnification.class);
 
 		GlobalSettings._instance._edgeCheckOptimization = prefs.getEnum(
-				PreferenceInitializer.LABEL_EDGECHECKOPTIMIZATION,
+				CodeCheckPreferenceInitializer.LABEL_EDGECHECKOPTIMIZATION,
 				EdgeCheckOptimization.class);
 	}
 
@@ -244,16 +252,16 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			}
 		}
 		if (procRootsToCheck.isEmpty()) { //-> no Ultimate.start present
-			if (GlobalSettings._instance._checkOnlyMain) {
-				for (AnnotatedProgramPoint procRoot : m_graphRoot
-						.getOutgoingNodes()) {
-					if (procRoot.getProgramPoint().getProcedure()
-							.equalsIgnoreCase("main")) {
-						procRootsToCheck.add(procRoot);
-						break;
-					}
-				}
-			} else
+//			if (GlobalSettings._instance._checkOnlyMain) {
+//				for (AnnotatedProgramPoint procRoot : m_graphRoot
+//						.getOutgoingNodes()) {
+//					if (procRoot.getProgramPoint().getProcedure()
+//							.equalsIgnoreCase("main")) {
+//						procRootsToCheck.add(procRoot);
+//						break;
+//					}
+//				}
+//			} else
 				procRootsToCheck.addAll(m_graphRoot.getOutgoingNodes());
 		}
 

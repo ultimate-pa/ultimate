@@ -1,8 +1,11 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.impulse;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**

@@ -6,6 +6,9 @@ import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.DummyCodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -21,27 +24,27 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public abstract class CodeChecker {
 
 
-	RootNode m_originalRoot;
-	TAPreferences m_taPrefs;
-	SmtManager m_smtManager;
-	ImpRootNode m_graphRoot;
+	protected RootNode m_originalRoot;
+	protected TAPreferences m_taPrefs;
+	protected SmtManager m_smtManager;
+	protected ImpRootNode m_graphRoot;
 
-	IPredicate m_truePredicate;
-	IPredicate m_falsePredicate;
+	protected IPredicate m_truePredicate;
+	protected IPredicate m_falsePredicate;
 	
-	EdgeChecker _edgeChecker;
-	PredicateUnifier m_predicateUnifier;
+	protected EdgeChecker _edgeChecker;
+	protected PredicateUnifier m_predicateUnifier;
 	
-	HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>> _satTriples;
-	HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>> _unsatTriples;
-	HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _satQuadruples;
-	HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _unsatQuadruples;
+	protected HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>> _satTriples;
+	protected HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>> _unsatTriples;
+	protected HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _satQuadruples;
+	protected HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _unsatQuadruples;
 	
 	//stats
-	int memoizationHitsSat = 0;
-	int memoizationHitsUnsat = 0;
-	int memoizationReturnHitsSat = 0;
-	int memoizationReturnHitsUnsat = 0;
+	protected int memoizationHitsSat = 0;
+	protected int memoizationHitsUnsat = 0;
+	protected int memoizationReturnHitsSat = 0;
+	protected int memoizationReturnHitsUnsat = 0;
 	
 	protected GraphWriter _graphWriter;
 	
@@ -109,7 +112,8 @@ public abstract class CodeChecker {
 //		return m_predicateUnifier.getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures());
 		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 	}
-	protected boolean isValidEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
+	
+	public boolean isValidEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
 			AnnotatedProgramPoint destinationNode) {
 		if (edgeLabel instanceof DummyCodeBlock)
 			return false;
@@ -121,12 +125,12 @@ public abstract class CodeChecker {
 		return m_smtManager.isInductive(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate()) == LBool.UNSAT;
 	}
 
-	protected boolean isValidReturnEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
+	public boolean isValidReturnEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
 			AnnotatedProgramPoint destinationNode, AnnotatedProgramPoint callNode) {
 		return m_smtManager.isInductiveReturn(sourceNode.getPredicate(), callNode.getPredicate(), (Return) edgeLabel, destinationNode.getPredicate()) == LBool.UNSAT;
 	}
 
-	protected boolean isStrongerPredicate(AnnotatedProgramPoint strongerNode, AnnotatedProgramPoint weakerNode) {
+	public boolean isStrongerPredicate(AnnotatedProgramPoint strongerNode, AnnotatedProgramPoint weakerNode) {
 		return m_smtManager.isCovered(strongerNode.getPredicate(), weakerNode.getPredicate()) == LBool.UNSAT;
 	}
 	
