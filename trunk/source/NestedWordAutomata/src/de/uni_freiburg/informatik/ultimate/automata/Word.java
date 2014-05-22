@@ -26,10 +26,11 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 
-	public class Word<Symbol> {
+	public class Word<Symbol> implements Iterable<Symbol> {
 
 		protected Symbol[] m_Word;
 		
@@ -89,6 +90,7 @@ import java.util.List;
 		public List<Symbol> lettersAsList() {
 			return Arrays.asList(m_Word);
 		}
+		
 
 		@Override
 		public String toString() {
@@ -99,5 +101,11 @@ import java.util.List;
 			}
 			s += "]";
 			return s;
+		}
+
+
+		@Override
+		public Iterator<Symbol> iterator() {
+			return Arrays.asList(m_Word).iterator();
 		}
 	}
