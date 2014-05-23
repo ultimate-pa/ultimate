@@ -35,8 +35,11 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Transitionlet;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
@@ -147,13 +150,17 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 		// be many initial states, it adds all possible initial state pair combinations
 		for (STATE init_m : m_Minuend.getInitialStates()) 
 		{
-			for (STATE init_s : m_Subtrahend.getInitialStates())
+			STATE init_s = m_Epimorphism.getMapping(init_m);
+			if(init_s == null || !m_Subtrahend.getInitialStates().contains(init_s))
 			{
-				s_Logger.debug("Add initial state:");
-				assert(m_Minuend.getStates().contains(init_m));		
-				assert(m_Subtrahend.getStates().contains(init_s));
-				AddState(init_m, init_s);
+				init_s = m_SinkState;
 			}
+			else
+			{
+				assert(m_Subtrahend.getStates().contains(init_s));
+			}
+			s_Logger.debug("Add initial state:" + init_m + "---" + init_s);			
+			addState(init_m, init_s);
 		}
 		s_Logger.info(exitMessage());
 	}
@@ -174,7 +181,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 	 * @return
 	 * 			  the state in the new automaton            
 	 */
-	private STATE AddState(STATE r, STATE s) 
+	private STATE addState(STATE r, STATE s) 
 	{
 		assert(m_Minuend.getStates().contains(r));		
 		assert(s == m_SinkState ||  m_Subtrahend.getStates().contains(s));
@@ -190,18 +197,19 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 		}
 
 		// if not: create a new state "q" and add it into the superDifference automaton
-		s_Logger.debug("Add state: " + qLabel);
-		STATE q = m_StateFactory.intersection(r, s);
-		if(q == null) s_Logger.error("State factory returned no state!");
-		s_Logger.debug("intersection: " + q.toString());
-		m_ContainedStatesHashMap.put(qLabel, q);
-//		s_Logger.debug("isFinal: " + bl(m_Minuend.isInitial(r)) + "&" + bl(m_Subtrahend.isInitial(s)) + " -> " + bl(m_Minuend.isInitial(r) && m_Subtrahend.isInitial(s)));
-//		s_Logger.debug("isIniti: " + bl(m_Minuend.isFinal(r)) + "&" + bl(m_Subtrahend.isFinal(s)) + " -> " + bl(m_Minuend.isFinal(r) && m_Subtrahend.isFinal(s)));
-		
-		boolean isInitial = m_Minuend.isInitial(r) && s != m_SinkState && m_Subtrahend.isInitial(s);
+		s_Logger.debug("Add state: " + qLabel + " created from: " + r.toString() + " and " + s.toString());
+		STATE intersection = m_StateFactory.intersection(r, s);
+		if(intersection == null) s_Logger.error("State factory returned no state!");
+		s_Logger.debug("intersection: " + intersection.toString());
+		m_ContainedStatesHashMap.put(qLabel, intersection);
+	
+		boolean isInitial = m_Minuend.isInitial(r) && (s == m_SinkState || m_Subtrahend.isInitial(s));
 		boolean isFinal = m_Minuend.isFinal(r) && (s == m_SinkState || !m_Subtrahend.isFinal(s));
 		
-		m_Result.addState(isInitial, isFinal, q);
+		s_Logger.debug("isFinal: " + isFinal);
+		s_Logger.debug("isIniti: " + isInitial);
+		
+		m_Result.addState(isInitial, isFinal, intersection);
 
 		// get the epimorph state
 		STATE h_r = m_Epimorphism.getMapping(r);
@@ -209,23 +217,120 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 		// check if there exists a mapping to r in the epimorphism
 		if (h_r == s) 
 		{
-//			s_Logger.debug("epimorph state: " + h_r.toString());
+			s_Logger.debug("epimorph state: " + h_r.toString());
 			// Traverse all edges = (r, label, r2) \in \delta
-			// TODO: call and return transitions
+
 			for(OutgoingInternalTransition<LETTER, STATE> e : m_Minuend.internalSuccessors(r))
 			{
-				LETTER label = e.getLetter();
-				STATE target = e.getSucc();
+				traverseEdge(e, r, s, intersection, e.getSucc(), 0, null);
+			}
+			
+			for(OutgoingCallTransition<LETTER, STATE> e : m_Minuend.callSuccessors(r))
+			{
+				traverseEdge(e, r, s, intersection, e.getSucc(), 1, null);
+			}
 
-				s_Logger.debug("Found edge: from " + r.toString() + " with " + label + " to " + target.toString());
+			for(OutgoingReturnTransition<LETTER, STATE> e : m_Minuend.returnSuccessors(r))
+			{
+				// get the hier pred (if not exists this could be created)
+				STATE mapping = m_Epimorphism.getMapping(e.getHierPred());
+				if(mapping == null) 
+				{
+					mapping = m_SinkState;
+					s_Logger.debug("found sink no hier pred mapping, took sink state");
+				}
+				else
+				{
+					s_Logger.debug("found hier pred state mapping:" + mapping.toString());
+				}
+				STATE hierPred = addState(e.getHierPred(), mapping);
+				s_Logger.debug("hier pred is: " + hierPred);
+				traverseEdge(e, r, s, intersection, e.getSucc(), 2, hierPred);
+			}
+			
+		} 
+		else
+		{
+			// we are in the sink state in the subtrahend automaton
+			
+			s_Logger.debug("No epimorph state found: hr:" + h_r + " r:" + r + " s: " + s);
+			
+			// Traverse all edges = (r, label, r2) \in \delta
+			for(OutgoingInternalTransition<LETTER, STATE> e : m_Minuend.internalSuccessors(r))
+			{
+				// we know that we must take the sink state, since there is no epimorph state
+				s_Logger.debug("follow label " + e.getLetter() + " and ...");
+				s_Logger.debug("add target (sinked) state q2: " + e.getSucc());
+				STATE q2 = addState(e.getSucc(), m_SinkState);
+				s_Logger.debug("Traverse in sink state " + intersection + " with " + e.getLetter() + " to " + q2.toString());
+				m_Result.addInternalTransition(intersection, e.getLetter(), q2);
+			}
 
-				// find/construct the target state of the edge
-				STATE q2 = null;
-				// get the target state in the subtrahend automaton
-				STATE h_r2 = m_Epimorphism.getMapping(target);
+			for(OutgoingCallTransition<LETTER, STATE> e : m_Minuend.callSuccessors(r))
+			{
+				s_Logger.debug("follow label " + e.getLetter() + " and ...");
+				s_Logger.debug("add target (sinked) state q2: " + e.getSucc());
+				STATE q2 = addState(e.getSucc(), m_SinkState);
+				s_Logger.debug("Traverse in sink state " + intersection + " with " + e.getLetter() + " to " + q2.toString());
+				m_Result.addCallTransition(intersection, e.getLetter(), q2);
+			}
+			
+			for(OutgoingReturnTransition<LETTER, STATE> e : m_Minuend.returnSuccessors(r))
+			{
+				s_Logger.debug("follow label " + e.getLetter() + " and ...");
+				s_Logger.debug("add target (sinked) state q2: " + e.getSucc());
+//				STATE mapping 
+//				= m_Epimorphism.getMapping(e.getHierPred());
+//				if(mapping == null) mapping 
+//					= m_SinkState;
+				STATE hierPred = addState(e.getHierPred(), m_SinkState);
 				
-				boolean target_exists = false;
-				for(OutgoingInternalTransition<LETTER,STATE> e2 : m_Subtrahend.internalSuccessors(h_r, label))
+				STATE q2 = addState(e.getSucc(), m_SinkState);
+				s_Logger.debug("Traverse in sink state " + intersection + " with " + e.getLetter() + " to " + q2.toString());
+				m_Result.addReturnTransition(intersection, hierPred, e.getLetter(), q2);
+			}			
+		}
+
+		return intersection;
+	}
+
+	/**
+	 * Traverse an edge and add it to the new automatons.
+	 * @param e the outgoing transition
+	 * @param r the state of the subtrahend
+	 * @param s the state of the minuend
+	 * @param q the merged stated
+	 * @param target the successor of the outgoing transition
+	 * @param edgeType 0:internal, 1:call, 2:return
+	 * @param hierPred hierarchical predecessor
+	 */
+	private void traverseEdge(
+			Transitionlet<LETTER,STATE> e,
+			STATE r, 
+			STATE s, 
+			STATE q,
+			STATE target,
+			int edgeType,
+			STATE hierPred) 
+	{
+		LETTER label = e.getLetter();
+
+		s_Logger.debug("Traverse edge: from " + r.toString() + " with " + label + " to " + target.toString());
+
+		// find/construct the target state of the edge
+		STATE q2 = null;
+		// get the target state in the subtrahend automaton
+		STATE h_r2 = m_Epimorphism.getMapping(target);
+		s_Logger.debug("mapping of the target is: " + h_r2);
+		
+		// now we want to check if the subtrahend automaton has an epimorph state as well
+		boolean target_exists = false;
+		if(h_r2 != null)
+		{
+			switch(edgeType)
+			{
+			case 0:
+				for(OutgoingInternalTransition<LETTER,STATE> e2 : m_Subtrahend.internalSuccessors(s, label))
 				{
 					if(e2.getSucc() == h_r2)
 					{
@@ -233,41 +338,62 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 						break;
 					}
 				}
-				if (target_exists) 
+				break;
+			case 1:
+				for(OutgoingCallTransition<LETTER,STATE> e2 : m_Subtrahend.callSuccessors(s, label))
 				{
-					// if that state and the corresponding edge with the same label exists
-					q2 = AddState(target, h_r2);
-				} 
-				else 
-				{
-					// otherwise we fall in to the sink state
-					q2 = AddState(target, m_SinkState);
+					if(e2.getSucc() == h_r2)
+					{
+						target_exists = true;
+						break;
+					}
 				}
-
-//				s_Logger.debug("Adding the edge from " + q.toString() + " with " + label + " to " + q2.toString());
-				m_Result.addInternalTransition(q, label, q2);
+				break;
+			case 2:
+				s_Logger.debug("hierPred for " + hierPred);
+				for(OutgoingReturnTransition<LETTER,STATE> e2 : m_Subtrahend.returnSucccessors(s, hierPred, label))
+				{
+					if(e2.getSucc() == h_r2)
+					{
+						target_exists = true;
+						break;
+					}
+				}
+				break;
 			}
+		}
+		
+		
+		
+		// make sure that the target state q2 exists
+		if (target_exists) 
+		{
+			s_Logger.debug("target state exists");
+			// if that state and the corresponding edge with the same label exists
+			q2 = addState(target, h_r2);
 		} 
 		else 
 		{
-//			s_Logger.debug("No epimorph state found");
-			
-			// Traverse all edges = (r, label, r2) \in \delta
-			// TODO: call and return transitions
-			for(OutgoingInternalTransition<LETTER, STATE> e : m_Minuend.internalSuccessors(r))
-			{
-				LETTER label = e.getLetter();
-				STATE r2 = e.getSucc();
-//				s_Logger.debug("Found edge: from " + r.toString() + " with " + label + " to " + r2.toString());
-				
-				// we know that we must take the sink state, since there is no epimorph state
-				STATE q2 = AddState(r2, m_SinkState);
-//				s_Logger.debug("Adding the edge from " + q.toString() + " with " + label + " to " + q2.toString());
-				m_Result.addInternalTransition(q, label, q2);
-			}
+			s_Logger.debug("target state exists not");
+			// otherwise we fall in to the sink state
+			q2 = addState(target, m_SinkState);
 		}
 
-		return q;
+//				s_Logger.debug("Adding the edge from " + q.toString() + " with " + label + " to " + q2.toString());
+		
+		switch(edgeType)
+		{
+		case 0:
+			m_Result.addInternalTransition(q, label, q2);
+			break;
+		case 1:
+			m_Result.addCallTransition(q, label, q2);
+			break;
+		case 2:
+			m_Result.addReturnTransition(q, hierPred, label, q2);
+			break;
+		}
+		
 	}
 
 	@Override
