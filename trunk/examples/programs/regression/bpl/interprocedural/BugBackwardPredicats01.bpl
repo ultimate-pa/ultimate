@@ -6,48 +6,46 @@
  *
  */
 
-implementation callee(#in~b : int) returns (callee : int)
+implementation callee(in_b : int) returns (callee : int)
 {
-    var ~nondet~1 : int;
-    var #t~post0 : int;
-    var #t~post1 : int;
-
-    ~g := #in~b;
-    #t~post1 := ~g;
-   ~g := #t~post1 + 1;
-    havoc #t~post1;
-    callee := ~g + 1;
+    var nondet_1 : int;
+    var t_post0 : int;
+    var t_post : int;
+    g := in_b;
+    t_post := g;
+    g := t_post + 1;
+    havoc t_post;
+    callee := g + 1;
     return;
 }
 
 implementation main() returns (main : int)
 {
-    var ~x~4 : int;
-    var #t~ret2 : int;
+    var x : int;
+    var t_ret2 : int;
 
-    ~x~4 := ~g;
-    call #t~ret2 := callee(~g + 1);
-    ~g := #t~ret2;
-    assert ~x~4 == ~g - 3;
+    x := g;
+    call t_ret2 := callee(g + 1);
+    g := t_ret2;
+    assert x == g - 3;
 }
 
-var ~g : int;
+var g : int;
 
 implementation ULTIMATE.start() returns ()
 {
-    var #t~ret3 : int;
+    var t_ret3 : int;
 
-    ~g := 0;
-    call #t~ret3 := main();
+    g := 0;
+    call t_ret3 := main();
 }
 
-procedure callee(#in~b : int) returns (callee : int);
-    modifies ~g;
+procedure callee(in_b : int) returns (callee : int);
+    modifies g;
 
 procedure main() returns (main : int);
-    modifies ~g;
-
+    modifies g;
 
 procedure ULTIMATE.start() returns ();
-    modifies ~g;
+    modifies g;
 
