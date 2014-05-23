@@ -234,16 +234,18 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 			{
 				// get the hier pred (if not exists this could be created)
 				STATE mapping = m_Epimorphism.getMapping(e.getHierPred());
-				if(mapping == null) 
+				if(mapping != null) 
 				{
-					mapping = m_SinkState;
-					s_Logger.debug("found sink no hier pred mapping, took sink state");
+					s_Logger.debug("found hier pred state mapping:" + mapping.toString());
+					STATE hierPred = addState(e.getHierPred(), mapping);
+					traverseEdge(e, r, s, intersection, e.getSucc(), 2, hierPred);
 				}
 				else
 				{
-					s_Logger.debug("found hier pred state mapping:" + mapping.toString());
+					s_Logger.debug("found sink no hier pred mapping, took sink state");
 				}
-				STATE hierPred = addState(e.getHierPred(), mapping);
+				STATE hierPred = addState(e.getHierPred(), m_SinkState);
+				
 				s_Logger.debug("hier pred is: " + hierPred);
 				traverseEdge(e, r, s, intersection, e.getSucc(), 2, hierPred);
 			}
@@ -279,15 +281,26 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 			{
 				s_Logger.debug("follow label " + e.getLetter() + " and ...");
 				s_Logger.debug("add target (sinked) state q2: " + e.getSucc());
-//				STATE mapping 
-//				= m_Epimorphism.getMapping(e.getHierPred());
-//				if(mapping == null) mapping 
-//					= m_SinkState;
-				STATE hierPred = addState(e.getHierPred(), m_SinkState);
 				
-				STATE q2 = addState(e.getSucc(), m_SinkState);
-				s_Logger.debug("Traverse in sink state " + intersection + " with " + e.getLetter() + " to " + q2.toString());
+				STATE mapping = m_Epimorphism.getMapping(e.getHierPred());
+				if(mapping != null) 
+				{
+					// Add the transition's hierarchical predecessor
+					STATE hierPred = addState(e.getHierPred(), mapping);				
+					// Add the transition's successor
+					STATE q2 = addState(e.getSucc(), m_SinkState);	
+					// Add the transition 				
+					m_Result.addReturnTransition(intersection, hierPred, e.getLetter(), q2);
+				}
+				
+				// Add the transition's hierarchical predecessor
+				STATE hierPred = addState(e.getHierPred(), m_SinkState);								
+				// Add the transition's successor
+				STATE q2 = addState(e.getSucc(), m_SinkState);				
+				// Add the transition 
 				m_Result.addReturnTransition(intersection, hierPred, e.getLetter(), q2);
+				
+				s_Logger.debug("Traverse in sink state " + intersection + " with " + e.getLetter() + " to " + q2.toString());
 			}			
 		}
 
@@ -324,7 +337,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 		s_Logger.debug("mapping of the target is: " + h_r2);
 		
 		// now we want to check if the subtrahend automaton has an epimorph state as well
-		boolean target_exists = false;
+		boolean targetExistsInMinuend = false;
 		if(h_r2 != null)
 		{
 			switch(edgeType)
@@ -334,7 +347,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 				{
 					if(e2.getSucc() == h_r2)
 					{
-						target_exists = true;
+						targetExistsInMinuend = true;
 						break;
 					}
 				}
@@ -344,7 +357,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 				{
 					if(e2.getSucc() == h_r2)
 					{
-						target_exists = true;
+						targetExistsInMinuend = true;
 						break;
 					}
 				}
@@ -355,7 +368,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 				{
 					if(e2.getSucc() == h_r2)
 					{
-						target_exists = true;
+						targetExistsInMinuend = true;
 						break;
 					}
 				}
@@ -366,7 +379,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 		
 		
 		// make sure that the target state q2 exists
-		if (target_exists) 
+		if (targetExistsInMinuend) 
 		{
 			s_Logger.debug("target state exists");
 			// if that state and the corresponding edge with the same label exists

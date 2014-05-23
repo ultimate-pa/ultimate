@@ -575,16 +575,22 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		{
 			int pos = e.getKey();
 			IPredicate target = m_ActualPath.get(pos + 1);
-			for (IncomingReturnTransition<CodeBlock, IPredicate> irt : m_NestedAbstraction
-					.returnPredecessors(word.getSymbolAt(pos), target)) {
-				if (irt.getLinPred() == m_ActualPath.get(pos)) {
-					IPredicate interp = m_Epimorphism.getMapping(irt
-							.getHierPred());
+			IPredicate source = m_ActualPath.get(pos);
+			for (IncomingReturnTransition<CodeBlock, IPredicate> irt : m_NestedAbstraction.returnPredecessors(word.getSymbolAt(pos), target))
+			{
+				if (irt.getLinPred() == source) 
+				{
+					IPredicate interp = m_Epimorphism.getMapping(irt.getHierPred());
+					//assert (interp != null);
+					if(interp == null)
+					{
+						return false;
+					}
+					//interp = irt.getHierPred();
 					pendingContexts.put(pos, interp);
 				}
 			}
 		}
-		
 		// test if we found a new path which can be added
 		m_TraceChecker = new TraceChecker(pre, post, pendingContexts, word,
 				m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
