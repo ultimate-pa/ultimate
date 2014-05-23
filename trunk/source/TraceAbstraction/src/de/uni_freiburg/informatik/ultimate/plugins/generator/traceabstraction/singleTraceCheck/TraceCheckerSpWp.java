@@ -215,7 +215,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 						transformulasToComputeSummaryFor.addLast(TransFormula.sequentialCompositionWithCallAndReturn(
 								m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF,
 								trace.getSymbol(i).getTransitionFormula(),
-								m_ModifiedGlobals.getOldVarsAssignment(proc), summaryBetweenCallAndReturn, 
+								rv.getOldVarAssignment(i), summaryBetweenCallAndReturn, 
 								trace.getSymbol(returnPosition).getTransitionFormula()));
 						i = returnPosition;
 					} else {
@@ -228,7 +228,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 						return TransFormula.sequentialCompositionWithPendingCall(m_SmtManager.getBoogie2Smt(), 
 								true, false, s_TransformToCNF, transformulasToComputeSummaryFor.toArray(new TransFormula[0]),
 								rv.getLocalVarAssignment(i), 
-								m_ModifiedGlobals.getOldVarsAssignment(proc), summaryAfterPendingCall);
+								rv.getOldVarAssignment(i), summaryAfterPendingCall);
 					}
 				} else {
 					TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(
@@ -238,7 +238,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					return TransFormula.sequentialCompositionWithPendingCall(m_SmtManager.getBoogie2Smt(), 
 							true, false, s_TransformToCNF, transformulasToComputeSummaryFor.toArray(new TransFormula[0]),
 							rv.getLocalVarAssignment(i), 
-							m_ModifiedGlobals.getOldVarsAssignment(proc), summaryAfterPendingCall);
+							rv.getOldVarAssignment(i), summaryAfterPendingCall);
 				}
 			} else if (trace.getSymbol(i) instanceof Return) {
 				// Nothing to do
