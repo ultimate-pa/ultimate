@@ -6,27 +6,21 @@
  *
  */
 
-implementation callee(in_b : int) returns (callee : int)
+implementation callee(b : int) returns (callee : int)
 {
-    var nondet_1 : int;
-    var t_post0 : int;
-    var t_post : int;
-    g := in_b;
-    t_post := g;
-    g := t_post + 1;
-    havoc t_post;
-    callee := g + 1;
+    g := b + 2;
+    callee := g;
     return;
 }
 
-implementation main() returns (main : int)
+implementation main() returns ()
 {
     var x : int;
-    var t_ret2 : int;
+    var tmp : int;
 
     x := g;
-    call t_ret2 := callee(g + 1);
-    g := t_ret2;
+    call tmp := callee(g + 1);
+    g := tmp;
     assert x == g - 3;
 }
 
@@ -34,16 +28,14 @@ var g : int;
 
 implementation ULTIMATE.start() returns ()
 {
-    var t_ret3 : int;
-
-    g := 0;
-    call t_ret3 := main();
+    assume true;
+    call main();
 }
 
-procedure callee(in_b : int) returns (callee : int);
+procedure callee(b : int) returns (callee : int);
     modifies g;
 
-procedure main() returns (main : int);
+procedure main() returns ();
     modifies g;
 
 procedure ULTIMATE.start() returns ();
