@@ -556,41 +556,44 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
 		Collection<Set<IPredicate>> partition = computePartition(newAbstraction);
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized;
-		switch (minimization) {
-		case MINIMIZE_SEVPA:
-		{
-			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(newAbstraction, partition, false, false, predicateFactoryRefinement);
-			assert minimizeOp.checkResult(resultCheckPredFac);
-			minimized = minimizeOp.getResult();
-			if (m_ComputeHoareAnnotation) {
-				Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
-				m_Haf.updateOnMinimization(oldState2newState, minimized);
+		try {
+			switch (minimization) {
+			case MINIMIZE_SEVPA:
+			{
+				MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(newAbstraction, partition, false, false, predicateFactoryRefinement);
+				assert minimizeOp.checkResult(resultCheckPredFac);
+				minimized = minimizeOp.getResult();
+				if (m_ComputeHoareAnnotation) {
+					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
+					m_Haf.updateOnMinimization(oldState2newState, minimized);
+				}
+				break;
 			}
-			break;
-		}
-		case SHRINK_NWA:
-		{
-			ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(
-					predicateFactoryRefinement, newAbstraction, partition, true, false, false, 200, false, 0, false, false);
-			assert minimizeOp.checkResult(resultCheckPredFac);
-			minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(minimizeOp.getResult())).getResult();
-			if (m_ComputeHoareAnnotation) {
-				Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
-				m_Haf.updateOnMinimization(oldState2newState, minimized);
+			case SHRINK_NWA:
+			{
+				ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(
+						predicateFactoryRefinement, newAbstraction, partition, true, false, false, 200, false, 0, false, false);
+				assert minimizeOp.checkResult(resultCheckPredFac);
+				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(minimizeOp.getResult())).getResult();
+				if (m_ComputeHoareAnnotation) {
+					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
+					m_Haf.updateOnMinimization(oldState2newState, minimized);
+				}
+				break;
 			}
-			break;
+			case NONE:
+			default:
+				throw new AssertionError();
+			}
+			int newSize = minimized.size();
+			m_Abstraction = minimized;
+			if (oldSize != 0 && oldSize < newSize) {
+				throw new AssertionError("Minimization increased state space");
+			}
+			m_CegarLoopBenchmark.announceStatesRemovedByMinimization(oldSize - newSize);
+		} finally {
+			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AutomataMinimizationTime);
 		}
-		case NONE:
-		default:
-			throw new AssertionError();
-		}
-		int newSize = minimized.size();
-		m_Abstraction = minimized;
-		if (oldSize != 0 && oldSize < newSize) {
-			throw new AssertionError("Minimization increased state space");
-		}
-		m_CegarLoopBenchmark.announceStatesRemovedByMinimization(oldSize - newSize);
-		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AutomataMinimizationTime);
 	}
 	
 	
