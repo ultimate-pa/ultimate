@@ -14,23 +14,20 @@ implementation doNothing() returns ()
 
 implementation main() returns ()
 {
-  var c : int;
-  var y : int;
-  var x : int;
-  var b : bool;
+  var a,b,c : bool;
 
-  c := 0;
-  if (b) {
-    c := 1;
-    x := y;
-  } 
+  a := true;
+  b := true;
+  if (c) {
+    a := false;
+  } else {
+    b := false;
+  }
   if (false) {
   } else {
     call doNothing();
   }
-  assume (y > 0);
-  assume (c == 1);
-  assert (0 <= x);
+  assert (a || b);
 
 }
 
