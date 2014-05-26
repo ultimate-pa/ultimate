@@ -87,6 +87,13 @@ trunk/examples/toolchains/AutomizerTestDir.sh -ea 20 $2 \
 "AutomizerBpl.xml;AutomizerC.xml;hoare10.epf"
 fi
 
+if [ "$1" = "totalinterpolation" ]; then
+echo "$1"
+trunk/examples/toolchains/AutomizerTestDir.sh -ea 20 $2 \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/TreeInterpolants.epf" \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/TreeInterpolants_TotalInterpolation.epf"
+fi
+
 if [ "$1" = "bellwald" ]; then
 echo "test trace abstraction with new determinization"
 trunk/examples/toolchains/AutomizerTestDir.sh -da 120 $2 \
