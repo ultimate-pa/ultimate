@@ -23,6 +23,7 @@ shift
 examplesFolder=$1;
 if [ ! -e "$examplesFolder" ]; then
     echo "Folder $examplesFolder does not exist"
+    exit
 fi
 
 shift
