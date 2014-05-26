@@ -146,7 +146,7 @@ public class ElimStore3 {
 		if (write) {
 			ArrayList<Term> additionalConjuncsFromStore = new ArrayList<Term>();
 			for (int i=0; i<iav.getIndices().length; i++) {
-				Term newSelect = buildMultiDimensionalSelect(writeInto.getNewArray(), iav.getIndices()[i]);
+				Term newSelect = SmtUtils.multiDimensionalSelect(m_Script, writeInto.getNewArray(), iav.getIndices()[i]);
 				IndexValueConnection ivc = new IndexValueConnection(iav.getIndices()
 						[i], writeInto.getIndex(), iav.getValues()[i], newSelect, false);
 				Term conjunct = ivc.getTerm();
@@ -162,7 +162,7 @@ public class ElimStore3 {
 			Term newConjunctsFromStore = subst.transform(Util.and(script, additionalConjuncsFromStore.toArray(new Term[0])));
 			Term newData = subst.transform(writeInto.getData());
 			Term newWriteIndex[] = substitutionElementwise(writeInto.getIndex(), subst);
-			Term writeSubstituent = m_Script.term("=", buildMultiDimensionalSelect(writeInto.getNewArray(), newWriteIndex), newData); 
+			Term writeSubstituent = m_Script.term("=", SmtUtils.multiDimensionalSelect(m_Script, writeInto.getNewArray(), newWriteIndex), newData); 
 			intermediateResult = Util.and(m_Script, intermediateResult, writeSubstituent, newConjunctsFromStore);
 		}
 		
@@ -361,15 +361,7 @@ public class ElimStore3 {
 	}
 	
 	
-	private Term buildMultiDimensionalSelect(Term arr, Term[] index) {
-		assert index.length > 0;
-		assert arr.getSort().isArraySort();
-		Term result = arr;
-		for (int i=0; i<index.length; i++) {
-			result = m_Script.term("select", result, index[i]);
-		}
-		return result;
-	}
+
 
 
 	/**

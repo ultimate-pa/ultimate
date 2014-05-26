@@ -90,4 +90,21 @@ public class SmtUtils {
 				Util.not(script, rhs));
 		return Util.and(script, oneIsTrue, oneIsFalse);
 	}
+	
+	
+	/**
+	 * Returns the term that selects the element at index from (possibly) multi
+	 * dimensional array a.
+	 * E.g. If the array has Sort (Int -> Int -> Int) and index is [23, 42],
+	 * this method returns the term ("select" ("select" a 23) 42).  
+	 */
+	public static Term multiDimensionalSelect(Script script, Term a, Term[] index) {
+		assert index.length > 0;
+		assert a.getSort().isArraySort();
+		Term result = a;
+		for (int i=0; i<index.length; i++) {
+			result = script.term("select", result, index[i]);
+		}
+		return result;
+	}
 }
