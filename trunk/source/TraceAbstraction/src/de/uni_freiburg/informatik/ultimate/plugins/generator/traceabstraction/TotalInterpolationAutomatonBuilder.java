@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
 
 public class TotalInterpolationAutomatonBuilder {
 	
@@ -44,7 +45,7 @@ public class TotalInterpolationAutomatonBuilder {
 	public TotalInterpolationAutomatonBuilder(
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			ArrayList<IPredicate> stateSequence, TraceChecker traceChecker,
-			SmtManager smtManager) throws OperationCanceledException {
+			SmtManager smtManager, PredicateFactory predicateFactory) throws OperationCanceledException {
 		super();
 		m_StateSequence = stateSequence;
 		m_TraceChecker = traceChecker;
@@ -52,7 +53,7 @@ public class TotalInterpolationAutomatonBuilder {
 		m_Interpolants = traceChecker.getInterpolants();
 		m_PredicateUnifier = traceChecker.getPredicateUnifier();
 		m_Abstraction = abstraction;
-		m_IA = constructStraightLineInterpolantAutomaton(abstraction, traceChecker);
+		m_IA = (new StraightLineInterpolantAutomatonBuilder(abstraction, traceChecker, predicateFactory)).getResult();
 		m_Epimorphism = constructInitialEpimorphism(stateSequence, traceChecker);
 		for (IPredicate state : stateSequence) {
 			for (OutgoingInternalTransition<CodeBlock, IPredicate> transition : m_Abstraction.internalSuccessors(state)) {
@@ -208,56 +209,11 @@ public class TotalInterpolationAutomatonBuilder {
 		AutomatonEpimorphism<IPredicate> result = new AutomatonEpimorphism<>();
 		for (int i=0; i<stateSequence.size(); i++) {
 			IPredicate state = stateSequence.get(i);
-			IPredicate interpolant = getInterpolant(i-1, traceChecker.getPrecondition(), traceChecker.getInterpolants(), traceChecker.getPostcondition());
+			IPredicate interpolant = TraceCheckerUtils.getInterpolant(i-1, traceChecker.getPrecondition(), traceChecker.getInterpolants(), traceChecker.getPostcondition());
 			result.insert(state, interpolant);
 		}
 		return result;
 	}
-	
-	private NestedWordAutomaton<CodeBlock, IPredicate> constructStraightLineInterpolantAutomaton(
-			INestedWordAutomaton<CodeBlock, IPredicate> alphabetProvider,
-			TraceChecker traceChecker) throws OperationCanceledException {
-		PredicateFactory pf = new PredicateFactory(m_SmtManager, null); 
-		NestedWordAutomaton<CodeBlock, IPredicate> result = 
-				new NestedWordAutomaton<>(alphabetProvider.getInternalAlphabet(), alphabetProvider.getCallAlphabet(), alphabetProvider.getReturnAlphabet(), pf);
-		result.addState(true, false, traceChecker.getPrecondition());
-		result.addState(false, true, traceChecker.getPostcondition());
-		NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) traceChecker.getTrace();
-		for (int i=0; i<trace.length(); i++) {
-			IPredicate pred = getInterpolant(-1, traceChecker.getPrecondition(), traceChecker.getInterpolants(), traceChecker.getPostcondition());
-			IPredicate succ = getInterpolant(0, traceChecker.getPrecondition(), traceChecker.getInterpolants(), traceChecker.getPostcondition());
-			assert result.getStates().contains(pred);
-			if (!result.getStates().contains(succ)) {
-				result.addState(false, false, succ);
-			}
-			if (trace.isCallPosition(i)) {
-				result.addCallTransition(pred, trace.getSymbol(i), succ);
-			} else if (trace.isReturnPosition(i)) {
-				assert !trace.isPendingReturn(i);
-				int callPos = trace.getReturnPosition(i);
-				IPredicate hierPred = getInterpolant(callPos-1, traceChecker.getPrecondition(), traceChecker.getInterpolants(), traceChecker.getPostcondition());
-				result.addReturnTransition(pred, hierPred, trace.getSymbol(i), succ);
-			} else {
-				assert trace.isInternalPosition(i);
-				result.addInternalTransition(pred, trace.getSymbol(i), succ);
-			}
-		}
-		assert (new Accepts<CodeBlock, IPredicate>(result, trace).getResult());
-		return result;		
-	}
-	
-	private static IPredicate getInterpolant(int i, IPredicate precondition, IPredicate[] interpolants, IPredicate postcondition) {
-		assert -1 <= i && i <= interpolants.length;
-		if (i == -1) {
-			return precondition;
-		} else if (i == interpolants.length) {
-			return postcondition;
-		} else {
-			return interpolants[i];
-		}
-	}
-
-	
 	
 
 }

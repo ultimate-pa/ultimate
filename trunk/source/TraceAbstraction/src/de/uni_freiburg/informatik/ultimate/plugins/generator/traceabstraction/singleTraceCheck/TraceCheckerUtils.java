@@ -6,6 +6,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 
 /**
  * Class that contains static methods that are related to the TraceChecker 
@@ -34,6 +35,31 @@ public class TraceCheckerUtils {
 		ProgramPoint pp = (ProgramPoint) cb.getTarget();
 		result.add(pp);
 		return result;
+	}
+	
+	/**
+	 * The sequence of interpolants returned by a TraceChecker contains neither
+	 * the precondition nor the postcondition of the trace check.
+	 * This auxiliary method allows one to access the precondition via the
+	 * index -1 and to access the postcondition via the index 
+	 * interpolants.lenth (first index after the interpolants array).
+	 * 
+	 * In the future we might also use negative indices to access pending
+	 * contexts (therefore you should catch the Error throw by this method).
+	 */
+	public static IPredicate getInterpolant(int i, IPredicate precondition, 
+			IPredicate[] interpolants, IPredicate postcondition) {
+		if (i < -1) {
+			throw new AssertionError("index beyond precondition");
+		} else if (i == -1) {
+			return precondition;
+		} else if (i < interpolants.length) {
+			return interpolants[i];
+		} else if (i == interpolants.length) {
+			return postcondition;
+		} else {
+			throw new AssertionError("index beyond postcondition");
+		}
 	}
 	
 }
