@@ -53,7 +53,9 @@ public class TotalInterpolationAutomatonBuilder {
 		m_Interpolants = traceChecker.getInterpolants();
 		m_PredicateUnifier = traceChecker.getPredicateUnifier();
 		m_Abstraction = abstraction;
-		m_IA = (new StraightLineInterpolantAutomatonBuilder(abstraction, traceChecker, predicateFactory)).getResult();
+		m_IA = (new StraightLineInterpolantAutomatonBuilder(
+				abstraction.getInternalAlphabet(), abstraction.getCallAlphabet(), 
+				abstraction.getReturnAlphabet() , traceChecker, predicateFactory)).getResult();
 		m_Epimorphism = constructInitialEpimorphism(stateSequence, traceChecker);
 		for (IPredicate state : stateSequence) {
 			for (OutgoingInternalTransition<CodeBlock, IPredicate> transition : m_Abstraction.internalSuccessors(state)) {

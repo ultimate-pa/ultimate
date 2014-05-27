@@ -1,10 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -32,10 +31,11 @@ public class StraightLineInterpolantAutomatonBuilder {
 	private final NestedWordAutomaton<CodeBlock, IPredicate> m_Result;
 	
 	public StraightLineInterpolantAutomatonBuilder(
-			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
+			Set<CodeBlock> internalAlphabet,
+			Set<CodeBlock> callAlphabet,
+			Set<CodeBlock> returnAlphabet,
 			TraceChecker traceChecker,
-			PredicateFactory predicateFactory) throws OperationCanceledException {
-		super();
+			PredicateFactory predicateFactory) {
 		if (traceChecker.isCorrect() != LBool.UNSAT) {
 			throw new AssertionError("We can only build an interpolant "
 					+ "automaton for correct/infeasible traces");
@@ -44,27 +44,28 @@ public class StraightLineInterpolantAutomatonBuilder {
 			throw new AssertionError("We can only build an interpolant "
 					+ "automaton for which interpolants were computed");
 		}
-		m_Result = build(abstraction, traceChecker, predicateFactory);
+		m_Result = build(internalAlphabet, callAlphabet, returnAlphabet, traceChecker, predicateFactory);
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> build(
-			INestedWordAutomaton<CodeBlock, IPredicate> alphabetProvider,
+			Set<CodeBlock> internalAlphabet,
+			Set<CodeBlock> callAlphabet,
+			Set<CodeBlock> returnAlphabet,
 			TraceChecker traceChecker,
-			PredicateFactory predicateFactory) throws OperationCanceledException { 
+			PredicateFactory predicateFactory) { 
 		NestedWordAutomaton<CodeBlock, IPredicate> result = 
 				new NestedWordAutomaton<CodeBlock, IPredicate>(
-				alphabetProvider.getInternalAlphabet(), 
-				alphabetProvider.getCallAlphabet(), 
-				alphabetProvider.getReturnAlphabet(), predicateFactory);
+						internalAlphabet, callAlphabet,
+						returnAlphabet, predicateFactory);
 		result.addState(true, false, traceChecker.getPrecondition());
 		result.addState(false, true, traceChecker.getPostcondition());
 		NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) traceChecker.getTrace();
 		for (int i=0; i<trace.length(); i++) {
-			IPredicate pred = TraceCheckerUtils.getInterpolant(-1, 
+			IPredicate pred = TraceCheckerUtils.getInterpolant(i-1, 
 					traceChecker.getPrecondition(), 
 					traceChecker.getInterpolants(), 
 					traceChecker.getPostcondition());
-			IPredicate succ = TraceCheckerUtils.getInterpolant(0, 
+			IPredicate succ = TraceCheckerUtils.getInterpolant(i, 
 					traceChecker.getPrecondition(), 
 					traceChecker.getInterpolants(), 
 					traceChecker.getPostcondition());
@@ -87,7 +88,6 @@ public class StraightLineInterpolantAutomatonBuilder {
 				result.addInternalTransition(pred, trace.getSymbol(i), succ);
 			}
 		}
-		assert (new Accepts<CodeBlock, IPredicate>(result, trace).getResult());
 		return result;		
 	}
 
@@ -95,6 +95,5 @@ public class StraightLineInterpolantAutomatonBuilder {
 	public NestedWordAutomaton<CodeBlock, IPredicate> getResult() {
 		return m_Result;
 	}
-	
 	
 }
