@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -210,21 +211,52 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
 		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
-		if (m_Pref.interpolantAutomaton() == InterpolantAutomaton.TWOTRACK) {
-			TwoTrackInterpolantAutomatonBuilder ttiab = 
-					new TwoTrackInterpolantAutomatonBuilder(m_Counterexample,m_SmtManager, m_TraceChecker,
-							m_Abstraction);
-			m_InterpolAutomaton = ttiab.getResult();
-		} else {
+		switch (m_Pref.interpolantAutomaton()) {
+		case CANONICAL:
+		{
 			InterpolantAutomataBuilder iab = new InterpolantAutomataBuilder(
-						m_Counterexample,
-						m_TraceChecker,
-						m_Pref.interpolantAutomaton(), m_Pref.edges2True(),
-						m_SmtManager);
+					m_Counterexample,
+					m_TraceChecker,
+					m_Pref.interpolantAutomaton(), m_Pref.edges2True(),
+					m_SmtManager);
 			m_InterpolAutomaton = iab.buildInterpolantAutomaton(
-				m_Abstraction, m_Abstraction.getStateFactory());
+					m_Abstraction, m_Abstraction.getStateFactory());
 			s_Logger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 			m_CegarLoopBenchmark.addBackwardCoveringInformation(iab.getBackwardCoveringInformation());
+		}
+		break;
+		case SINGLETRACE:{
+			final Set<CodeBlock> internalAlphabet;
+			final Set<CodeBlock> callAlphabet;
+			final Set<CodeBlock> returnAlphabet;
+			if (m_Abstraction instanceof INestedWordAutomaton) {
+				INestedWordAutomaton<CodeBlock, IPredicate> nwa = 
+						(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;
+				internalAlphabet = nwa.getInternalAlphabet();
+				callAlphabet = nwa.getCallAlphabet();
+				returnAlphabet = nwa.getReturnAlphabet();
+			} else {
+				internalAlphabet = m_Abstraction.getAlphabet();
+				callAlphabet = Collections.emptySet();
+				returnAlphabet = Collections.emptySet();
+			}
+			StraightLineInterpolantAutomatonBuilder iab = 
+					new StraightLineInterpolantAutomatonBuilder(
+							internalAlphabet, callAlphabet, returnAlphabet, 
+							m_TraceChecker, m_PredicateFactoryInterpolantAutomata);
+			m_InterpolAutomaton = iab.getResult();
+		}
+		break;
+		case TOTALINTERPOLATION:
+			throw new AssertionError("not supported by this CegarLoop");
+		case TWOTRACK:
+		{
+			TwoTrackInterpolantAutomatonBuilder ttiab = 
+					new TwoTrackInterpolantAutomatonBuilder(m_Counterexample,
+							m_SmtManager, m_TraceChecker, m_Abstraction);
+			m_InterpolAutomaton = ttiab.getResult();
+		}
+		break;
 		}
 		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 		assert(accepts(m_InterpolAutomaton, m_Counterexample.getWord())) :
@@ -255,7 +287,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		try {
 			if (differenceInsteadOfIntersection) {
 				s_Logger.debug("Start constructing difference");
-				assert(oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());
+//				assert(oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());
 				
 				IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 				
