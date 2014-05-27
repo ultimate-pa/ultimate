@@ -225,7 +225,7 @@ public class MemoryHandler {
         
         if (namesOfAllMemoryArrayTypes.length == 0) { 
         	noMemArrays = true;
-//        	return decl;
+//        	return decl;//if we reach here, mmRequired == true --> we need valid + length (one usecase: we malloc but don't use something..)
         }
         
         decl.addAll(declareSomeMemoryArrays(tuLoc, main, namesOfAllMemoryArrayTypes, astTypesOfAllMemoryArrayTypes));

@@ -555,10 +555,10 @@ public class FunctionHandler {
 				spec[nrSpec] = new ModifiesSpecification(loc, false, modifyList);
 			}
 			if (main.isMMRequired() &&
-					(memoryHandler.isIntArrayRequiredInMM ||
-							memoryHandler.isFloatArrayRequiredInMM ||	
-							memoryHandler.isPointerArrayRequiredInMM)
-					&& (main.getCheckedMethod() == SFO.EMPTY || main
+//					(memoryHandler.isIntArrayRequiredInMM ||
+//							memoryHandler.isFloatArrayRequiredInMM ||	
+//							memoryHandler.isPointerArrayRequiredInMM) &&
+					(main.getCheckedMethod() == SFO.EMPTY || main
 							.getCheckedMethod().equals(mId))) {
 				if(m_CheckMemoryLeakAtEndOfMain) {
 					// add a specification to check for memory leaks
