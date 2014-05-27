@@ -225,7 +225,7 @@ public class MemoryHandler {
         
         if (namesOfAllMemoryArrayTypes.length == 0) { 
         	noMemArrays = true;
-        	return decl;
+//        	return decl;
         }
         
         decl.addAll(declareSomeMemoryArrays(tuLoc, main, namesOfAllMemoryArrayTypes, astTypesOfAllMemoryArrayTypes));

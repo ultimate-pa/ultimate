@@ -203,6 +203,7 @@
 		<module>../SMTInterpol</module>
 		<module>../TraceAbstraction</module>
 		<module>../TraceAbstractionConcurrent</module>
+		<module>../TraceAbstractionWithAFAs</module>
 		<module>../JavaCup</module>
 		<module>../RCFGBuilder</module>
 		<module>../NestedWordAutomata</module>

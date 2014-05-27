@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEd
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.RCFG2AnnotatedRCFG;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.Checker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.EdgeCheckOptimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.PredicateUnification;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.SolverAndInterpolator;
@@ -55,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
@@ -66,9 +66,6 @@ import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
  * Auto-Generated Stub for the plug-in's Observer
  */
 
-enum Checker {
-	ULTIMATE, IMPULSE
-}
 
 enum Result {
 	CORRECT, TIMEOUT, MAXEDITERATIONS, UNKNOWN, INCORRECT
@@ -107,8 +104,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	 * @return
 	 */
 	public boolean initialize(IElement root) {
-		readPreferencePage();//FIXME .. then remove commentation, remove next line
-//		GlobalSettings.init();
+		readPreferencePage();
 
 		m_originalRoot = (RootNode) root;
 		RootAnnot rootAnnot = m_originalRoot.getRootAnnot();
@@ -174,6 +170,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				Activator.s_PLUGIN_ID);
 
 		GlobalSettings.init();
+		
+		GlobalSettings._instance.checker = prefs.getEnum(
+				CodeCheckPreferenceInitializer.LABEL_CHECKER, Checker.class);
 
 		GlobalSettings._instance._memoizeNormalEdgeChecks = prefs.getBoolean(
 				CodeCheckPreferenceInitializer.LABEL_MEMOIZENORMALEDGECHECKS,

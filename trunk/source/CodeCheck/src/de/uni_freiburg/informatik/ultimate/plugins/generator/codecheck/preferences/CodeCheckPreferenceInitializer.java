@@ -14,6 +14,9 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 		return new UltimatePreferenceItem<?>[] {
 //				new UltimatePreferenceItem<Boolean>(LABEL_ONLYMAINPROCEDURE,
 //						DEF_ONLYMAINPROCEDURE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Checker>(
+						LABEL_CHECKER, DEF_CHECKER, 
+						PreferenceType.Combo, Checker.values()),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_MEMOIZENORMALEDGECHECKS,
 						DEF_MEMOIZENORMALEDGECHECKS, PreferenceType.Boolean),
@@ -67,11 +70,19 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	public enum Solver {
 		Z3, SMTInterpol
 	}
+	
+	public enum Checker {
+		ULTIMATE, IMPULSE
+	}
+
 
 	/*
 	 * labels for the different preferencess
 	 */
-	public static final String LABEL_ONLYMAINPROCEDURE = "only verify starting from main procedure";
+//	public static final String LABEL_ONLYMAINPROCEDURE = "only verify starting from main procedure";
+	
+	public static final String LABEL_CHECKER = "the checking algorithm to use";
+	
 	public static final String LABEL_MEMOIZENORMALEDGECHECKS = "memoize already made edge checks for non-return edges";
 	public static final String LABEL_MEMOIZERETURNEDGECHECKS = "memoize already made edge checks for return edges";
 
@@ -87,6 +98,8 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	// /*
 	// * default values for the different preferences
 	// */
+	public static final Checker DEF_CHECKER = Checker.ULTIMATE;
+	
 	public static final boolean DEF_ONLYMAINPROCEDURE = false;
 	public static final boolean DEF_MEMOIZENORMALEDGECHECKS = true;
 	public static final boolean DEF_MEMOIZERETURNEDGECHECKS = true;
