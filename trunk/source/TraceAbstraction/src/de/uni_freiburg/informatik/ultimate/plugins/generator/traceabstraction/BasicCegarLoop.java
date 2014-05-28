@@ -225,9 +225,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		switch (m_Pref.interpolantAutomaton()) {
 		case CANONICAL:
 		{
+			List<ProgramPoint> programPoints = extractProgramPoints();
 			CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(
 					m_TraceChecker, 
-					extractProgramPoints(), 
+					programPoints, 
 					new InCaReAlphabet<CodeBlock>(m_Abstraction), 
 					m_SmtManager, 
 					m_PredicateFactoryInterpolantAutomata);
@@ -236,7 +237,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			s_Logger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 			
 //			m_CegarLoopBenchmark.addBackwardCoveringInformation(iab.getBackwardCoveringInformation());
-			BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(m_TraceChecker);
+			BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(m_TraceChecker, programPoints);
 			m_CegarLoopBenchmark.addBackwardCoveringInformation(bci);
 		}
 		break;

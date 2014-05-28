@@ -8,6 +8,8 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -139,6 +141,17 @@ public class CoverageAnalysis {
 
 	protected void preprocess() {
 		// do nothing
+	}
+	
+	
+	public static List<ProgramPoint> extractProgramPoints(IRun<CodeBlock, IPredicate> irun) {
+		ArrayList<IPredicate> predicateSequence = 
+				((NestedRun<CodeBlock, IPredicate>) irun).getStateSequence();
+		ArrayList<ProgramPoint> result = new ArrayList<>();
+		for (IPredicate p : predicateSequence) {
+			result.add(((ISLPredicate) p).getProgramPoint());
+		}
+		return result;
 	}
 	
 	
