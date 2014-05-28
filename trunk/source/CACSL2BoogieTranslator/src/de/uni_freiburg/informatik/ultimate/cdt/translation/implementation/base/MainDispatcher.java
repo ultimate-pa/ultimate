@@ -274,7 +274,7 @@ public class MainDispatcher extends Dispatcher {
         
         boolean useDetNecessaryDeclarations = true;
         if (useDetNecessaryDeclarations) {
-        	DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations();
+        	DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(this.getCheckedMethod());
         	tu.accept(dnd);
         	
         	reachableDeclarations = dnd.getReachableDeclarationsOrDeclarators();

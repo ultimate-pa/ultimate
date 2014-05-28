@@ -30,12 +30,19 @@ import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
+import org.eclipse.cdt.core.dom.ast.IASTTypeId;
+import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 /**
@@ -59,15 +66,19 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     LinkedHashMap<String, IASTDeclaration> dependencyGraphPreliminaryInverse;
     
     LinkedHashSet<IASTDeclaration> reachableDeclarations;
+    
+    String checkedMethod;
+	private IASTTranslationUnit translationUnit;
 
     /**
      * Constructor.
      */
-    public DetermineNecessaryDeclarations() {
+    public DetermineNecessaryDeclarations(String checkedMethod) {
     	this.shouldVisitParameterDeclarations = true;
     	this.shouldVisitTranslationUnit = true;
         this.shouldVisitDeclarations = true;
         this.shouldVisitExpressions = true;
+        this.shouldVisitTypeIds = true;
         this.shouldVisitStatements = true;
         this.sT = new ScopedHashMap<String, IASTDeclaration>();
         this.functionTable = new LinkedHashMap<>();
@@ -75,7 +86,10 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
         this.dependencyGraphPreliminaryInverse = new LinkedHashMap<>();
         this.reachableDeclarations = new LinkedHashSet<>();
         this.currentFunOrStructDef = new Stack<>();
+        this.checkedMethod = checkedMethod;
     }
+    
+    
     
     @Override
 	public int visit(IASTParameterDeclaration declaration) {
@@ -110,10 +124,31 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     	}
     	return super.visit(declaration);
 	}
+    
+    
+
+	@Override
+	public int visit(IASTTypeId typeId) {
+		String symbolName = "";
+		if (typeId.getDeclSpecifier() instanceof IASTNamedTypeSpecifier) {
+			symbolName = ((IASTNamedTypeSpecifier) typeId.getDeclSpecifier()).getName().toString();
+		} else if (typeId.getDeclSpecifier() instanceof IASTElaboratedTypeSpecifier) {
+			symbolName = ((IASTElaboratedTypeSpecifier) typeId.getDeclSpecifier()).getName().toString();
+//		} else if (typeId.getDeclSpecifier() instanceof IASTCompositeTypeSpecifier) {
+		}
+    	IASTDeclaration symbolDec = sT.get(symbolName);
+    	if (symbolDec != null)
+    		addDependency(currentFunOrStructDef.peek(), symbolDec);
+    	else
+    		dependencyGraphPreliminaryInverse.put(symbolName, currentFunOrStructDef.peek());
+		return super.visit(typeId);
+	}
+
+
 
 	@Override
     public int visit(IASTExpression expression) {
-    	if (expression instanceof IASTIdExpression) {
+		if (expression instanceof IASTIdExpression) {
     		return this.visit((IASTIdExpression) expression);
     	} else if (expression instanceof IASTFunctionCallExpression) {
     		return this.visit((IASTFunctionCallExpression) expression);
@@ -336,6 +371,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 
 	@Override
     public int leave(IASTTranslationUnit tu) {
+		this.translationUnit = tu;
     	int result = super.leave(tu);
     	//compute set from graph
     	computeReachableSetAndUpdateMMRequirements();
@@ -418,10 +454,25 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     
     void computeReachableSetAndUpdateMMRequirements() {
     	LinkedHashSet<String> entryPoints = new LinkedHashSet<>();//TODO: replace with input from settings
-    	entryPoints.add("main");
+    	if (!checkedMethod.equals(SFO.EMPTY) && functionTable.containsKey(checkedMethod)) {
+    			entryPoints.add(checkedMethod);
+//    		} else {
+//    			throw new IncorrectSyntaxException(new CACSLLocation(translationUnit), "Settings say to check starting from method " 
+//    					+ checkedMethod + " but no such method is present in the program");
+//    		}
+    	} else {
+    		if (!checkedMethod.equals(SFO.EMPTY) && !functionTable.containsKey(checkedMethod)) {
+    			String msg = "You specified the starting procedure: "
+					+ checkedMethod
+					+ "\n The program does not have this method. ULTIMATE will continue in "
+					+ "library mode (i.e., each procedure can be starting procedure and global "
+					+ "variables are not initialized).";
+    			Dispatcher.warn(new CACSLLocation(translationUnit), msg);
+    		}
+    		entryPoints.addAll(functionTable.keySet());
+    	}
     	
     	ArrayDeque<IASTDeclaration> openNodes = new ArrayDeque<>();
-    	
     	for (String ep : entryPoints) {
     		openNodes.add(functionTable.get(ep));
     	}

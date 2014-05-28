@@ -601,12 +601,12 @@ public class PostProcessor {
 					new String[0], new VarList[0], new VarList[0], null,
 					startBody));
 
-		} else if (!checkMethod.equals(SFO.EMPTY)
-				&& !procedures.containsKey(checkMethod)) {
-			String msg = "You specified the starting procedure: "
-					+ checkMethod
-					+ "\n The program does not have this method. ULTIMATE will continue in library mode (i.e., each procedure can be starting procedure and global variables are not initialized).";
-			Dispatcher.warn(loc, msg);
+//		} else if (!checkMethod.equals(SFO.EMPTY) //alex, 28.5.2014: this should be obsolete as in this case, DetermineNecessaryDeclarations should have made the warning
+//				&& !procedures.containsKey(checkMethod)) {
+//			String msg = "You specified the starting procedure: "
+//					+ checkMethod
+//					+ "\n The program does not have this method. ULTIMATE will continue in library mode (i.e., each procedure can be starting procedure and global variables are not initialized).";
+//			Dispatcher.warn(loc, msg);
 		} else {
 			IHandler.s_Logger.info("Settings: Library mode!");
 			if (procedures.containsKey("main")) {
