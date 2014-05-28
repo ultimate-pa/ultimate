@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 public class TotalInterpolationAutomatonBuilder {
 	
@@ -209,10 +210,11 @@ public class TotalInterpolationAutomatonBuilder {
 	}
 
 	private AutomatonEpimorphism<IPredicate> constructInitialEpimorphism(List<IPredicate> stateSequence, TraceChecker traceChecker) {
-		AutomatonEpimorphism<IPredicate> result = new AutomatonEpimorphism<>();
+		AutomatonEpimorphism<IPredicate> result = new AutomatonEpimorphism<IPredicate>();
+		InterpolantsPreconditionPostcondition ipp = new InterpolantsPreconditionPostcondition(traceChecker);
 		for (int i=0; i<stateSequence.size(); i++) {
 			IPredicate state = stateSequence.get(i);
-			IPredicate interpolant = TraceCheckerUtils.getInterpolant(i-1, traceChecker.getPrecondition(), traceChecker.getInterpolants(), traceChecker.getPostcondition());
+			IPredicate interpolant = ipp.getInterpolant(i-1);
 			result.insert(state, interpolant);
 		}
 		return result;

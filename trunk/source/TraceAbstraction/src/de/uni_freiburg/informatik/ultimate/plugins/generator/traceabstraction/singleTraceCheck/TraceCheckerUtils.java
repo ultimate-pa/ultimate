@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -37,28 +38,49 @@ public class TraceCheckerUtils {
 		return result;
 	}
 	
+	
 	/**
 	 * The sequence of interpolants returned by a TraceChecker contains neither
 	 * the precondition nor the postcondition of the trace check.
-	 * This auxiliary method allows one to access the precondition via the
+	 * This auxiliary class allows one to access the precondition via the
 	 * index -1 and to access the postcondition via the index 
 	 * interpolants.lenth (first index after the interpolants array).
 	 * 
 	 * In the future we might also use negative indices to access pending
-	 * contexts (therefore you should catch the Error throw by this method).
+	 * contexts (therefore you should not catch the Error throw by the 
+	 * getInterpolant method).
 	 */
-	public static IPredicate getInterpolant(int i, IPredicate precondition, 
-			IPredicate[] interpolants, IPredicate postcondition) {
-		if (i < -1) {
-			throw new AssertionError("index beyond precondition");
-		} else if (i == -1) {
-			return precondition;
-		} else if (i < interpolants.length) {
-			return interpolants[i];
-		} else if (i == interpolants.length) {
-			return postcondition;
-		} else {
-			throw new AssertionError("index beyond postcondition");
+	public static class InterpolantsPreconditionPostcondition {
+		private final IPredicate m_Precondition;
+		private final IPredicate m_Postcondition;
+		private final IPredicate[] m_Interpolants;
+		
+		public InterpolantsPreconditionPostcondition(TraceChecker traceChecker) {
+			if (traceChecker.isCorrect() != LBool.UNSAT) {
+				throw new AssertionError("We can only build an interpolant "
+						+ "automaton for correct/infeasible traces");
+			}
+			if (traceChecker.getInterpolants() == null) {
+				throw new AssertionError("We can only build an interpolant "
+						+ "automaton for which interpolants were computed");
+			}
+			m_Precondition = traceChecker.getPrecondition();
+			m_Postcondition = traceChecker.getPostcondition();
+			m_Interpolants = traceChecker.getInterpolants();
+		}
+		
+		public IPredicate getInterpolant(int i) {
+			if (i < -1) {
+				throw new AssertionError("index beyond precondition");
+			} else if (i == -1) {
+				return m_Precondition;
+			} else if (i < m_Interpolants.length) {
+				return m_Interpolants[i];
+			} else if (i == m_Interpolants.length) {
+				return m_Postcondition;
+			} else {
+				throw new AssertionError("index beyond postcondition");
+			}
 		}
 	}
 	
