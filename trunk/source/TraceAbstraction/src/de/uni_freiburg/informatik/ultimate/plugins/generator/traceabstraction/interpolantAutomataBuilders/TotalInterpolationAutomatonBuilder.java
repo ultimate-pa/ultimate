@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
@@ -21,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Transitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
@@ -92,12 +94,26 @@ public class TotalInterpolationAutomatonBuilder {
 				if (m_IA.succInternal(p, transition.getLetter()).contains(transition.getSucc())) {
 					// do nothing, transition is already contained
 				} else {
-					
+					m_EdgeChecker.assertCodeBlock(transition.getLetter());
+					m_EdgeChecker.assertPrecondition(p);
+					LBool lbool = m_EdgeChecker.postInternalImplies(transition.getSucc());
+					if (lbool == LBool.UNSAT) {
+						m_IA.addInternalTransition(p, transition.getLetter(), transition.getSucc());
+					}
 				}
-				
+			} else {
+				NestedRun<CodeBlock, IPredicate> run = findRun(transition.getSucc(), m_Annotated);
+				NestedRun<CodeBlock, IPredicate> firstStep = new NestedRun<CodeBlock, IPredicate>(p, transition.getLetter(), NestedWord.INTERNAL_POSITION, transition.getSucc());
 			}
 
 		}
+	}
+
+
+	private NestedRun<CodeBlock, IPredicate> findRun(IPredicate p,
+			Set<IPredicate> annotated) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 
