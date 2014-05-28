@@ -49,8 +49,8 @@ public class StraightLineInterpolantAutomatonBuilder {
 		m_Result.addState(false, true, traceChecker.getPostcondition());
 		NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) traceChecker.getTrace();
 		for (int i=0; i<trace.length(); i++) {
-			IPredicate pred = ipp.getInterpolant(i-1);
-			IPredicate succ = ipp.getInterpolant(i);
+			IPredicate pred = ipp.getInterpolant(i);
+			IPredicate succ = ipp.getInterpolant(i+1);
 			assert m_Result.getStates().contains(pred);
 			if (!m_Result.getStates().contains(succ)) {
 				m_Result.addState(false, false, succ);
@@ -60,7 +60,7 @@ public class StraightLineInterpolantAutomatonBuilder {
 			} else if (trace.isReturnPosition(i)) {
 				assert !trace.isPendingReturn(i);
 				int callPos = trace.getCallPosition(i);
-				IPredicate hierPred = ipp.getInterpolant(callPos-1);
+				IPredicate hierPred = ipp.getInterpolant(callPos);
 				m_Result.addReturnTransition(pred, hierPred, trace.getSymbol(i), succ);
 			} else {
 				assert trace.isInternalPosition(i);

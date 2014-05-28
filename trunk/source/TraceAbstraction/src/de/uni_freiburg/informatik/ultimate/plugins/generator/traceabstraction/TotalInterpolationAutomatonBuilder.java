@@ -214,7 +214,7 @@ public class TotalInterpolationAutomatonBuilder {
 		InterpolantsPreconditionPostcondition ipp = new InterpolantsPreconditionPostcondition(traceChecker);
 		for (int i=0; i<stateSequence.size(); i++) {
 			IPredicate state = stateSequence.get(i);
-			IPredicate interpolant = ipp.getInterpolant(i-1);
+			IPredicate interpolant = ipp.getInterpolant(i);
 			result.insert(state, interpolant);
 		}
 		return result;

@@ -43,8 +43,9 @@ public class TraceCheckerUtils {
 	 * The sequence of interpolants returned by a TraceChecker contains neither
 	 * the precondition nor the postcondition of the trace check.
 	 * This auxiliary class allows one to access the precondition via the
-	 * index -1 and to access the postcondition via the index 
-	 * interpolants.lenth (first index after the interpolants array).
+	 * index 0 and to access the postcondition via the index 
+	 * interpolants.lenth+1 (first index after the interpolants array).
+	 * All other indices are shifted by one.
 	 * 
 	 * In the future we might also use negative indices to access pending
 	 * contexts (therefore you should not catch the Error throw by the 
@@ -70,13 +71,13 @@ public class TraceCheckerUtils {
 		}
 		
 		public IPredicate getInterpolant(int i) {
-			if (i < -1) {
+			if (i < 0) {
 				throw new AssertionError("index beyond precondition");
-			} else if (i == -1) {
+			} else if (i == 0) {
 				return m_Precondition;
-			} else if (i < m_Interpolants.length) {
-				return m_Interpolants[i];
-			} else if (i == m_Interpolants.length) {
+			} else if (i <= m_Interpolants.length) {
+				return m_Interpolants[i-1];
+			} else if (i == m_Interpolants.length+1) {
 				return m_Postcondition;
 			} else {
 				throw new AssertionError("index beyond postcondition");

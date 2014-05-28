@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -95,24 +96,25 @@ public class InterpolantAutomataBuilder {
 		preprocess();
 		
 		for (int i=0; i<m_NestedWord.length(); i++) {
-			if (!m_IA.getStates().contains(m_IPP.getInterpolant(i))) {
-				assert (m_IPP.getInterpolant(i) != m_TraceChecker.getPostcondition());
-				m_IA.addState(false, false, m_IPP.getInterpolant(i));
+			// interpolant after the CodeBlock
+			IPredicate successorInterpolant = m_IPP.getInterpolant(i+1); 
+			if (!m_IA.getStates().contains(successorInterpolant)) {
+				assert (successorInterpolant != m_TraceChecker.getPostcondition());
+				m_IA.addState(false, false, successorInterpolant);
 			}
 
 			processCodeBlock(i);
 
 
-			ProgramPoint pp = getProgramPointAtPosition(i-1);
+			ProgramPoint pp = getProgramPointAtPosition(i);
 			List<Integer> previousOccurrences = m_ProgramPoint2Occurence.get(pp);
 			if (previousOccurrences == null) {
 				previousOccurrences = new ArrayList<Integer>();
 				m_ProgramPoint2Occurence.put(pp, previousOccurrences);
 			} else {
 				for (int previousOccurrence : previousOccurrences) {
-					int currentPosition = i-1;
-					assert currentPosition > previousOccurrence;
-					IPredicate currentPredicate = m_IPP.getInterpolant(currentPosition);
+					assert i > previousOccurrence;
+					IPredicate currentPredicate = m_IPP.getInterpolant(i);
 					IPredicate previousPredicate = m_IPP.getInterpolant(previousOccurrence);
 					if (currentPredicate == previousPredicate) {
 						// trivially covered and backedges already contained
@@ -120,7 +122,7 @@ public class InterpolantAutomataBuilder {
 					} else {
 						LBool lbool = m_PredicateUnifier.getCoverageRelation().isCovered(
 								currentPredicate, previousPredicate);
-						processCoveringResult(currentPosition, previousOccurrence, lbool);
+						processCoveringResult(i, previousOccurrence, lbool);
 						switch (lbool) {
 						case UNSAT:
 							m_Unsat++;
@@ -137,9 +139,9 @@ public class InterpolantAutomataBuilder {
 					}
 				}
 			}
-			previousOccurrences.add(i-1);
+			previousOccurrences.add(i);
 		}
-
+		assert sumCountedOccurrences() == m_StateSequence.size() - 1;
 
 		postprocess();
 		
@@ -152,15 +154,25 @@ public class InterpolantAutomataBuilder {
 
 	}
 
+	private int sumCountedOccurrences() {
+		int occurrenceSum = 0;
+		for (Entry<ProgramPoint, List<Integer>> entry : m_ProgramPoint2Occurence.entrySet()) {
+			occurrenceSum += entry.getValue().size();
+		}
+		return occurrenceSum;
+	}
+
+
+
 	private void processCodeBlock(int i) {
-		addTransition(i-1, i, i);
+		addTransition(i, i, i+1);
 	}
 
 	private void processCoveringResult(int currentPosition,
 			int previousOccurrence, LBool lbool) {
 		if (lbool == LBool.UNSAT) {
-			addTransition(currentPosition-1, currentPosition, previousOccurrence);
-			addTransition(currentPosition, previousOccurrence+1, previousOccurrence+1);
+			addTransition(currentPosition-1, currentPosition-1, previousOccurrence);
+			addTransition(currentPosition, previousOccurrence, previousOccurrence+1);
 		}
 	}
 
@@ -168,27 +180,21 @@ public class InterpolantAutomataBuilder {
 
 	private void postprocess() {
 		if (m_SelfloopAtInitial) {
+			IPredicate precond = m_TraceChecker.getPrecondition();
 			for (CodeBlock symbol : m_IA.getInternalAlphabet()) {
-				m_IA.addInternalTransition(
-								m_IPP.getInterpolant(-1), symbol, m_IPP.getInterpolant(-1));
+				m_IA.addInternalTransition(precond, symbol, precond);
 			}
 			for (CodeBlock symbol : m_IA.getCallAlphabet()) {
-				m_IA.addCallTransition(
-								m_IPP.getInterpolant(-1), symbol, m_IPP.getInterpolant(-1));
+				m_IA.addCallTransition(precond, symbol, precond);
 			}
 			for (CodeBlock symbol : m_IA.getReturnAlphabet()) {
-				m_IA.addReturnTransition(
-				  m_IPP.getInterpolant(-1),m_IPP.getInterpolant(-1),symbol,m_IPP.getInterpolant(-1));
+				m_IA.addReturnTransition(precond, precond, symbol, precond);
 				for (Integer pos : m_AlternativeCallPredecessors.keySet()) {
-					for (IPredicate hier : 
-									m_AlternativeCallPredecessors.get(pos)) {
-						m_IA.addReturnTransition(
-							m_IPP.getInterpolant(-1), hier, symbol, m_IPP.getInterpolant(-1));
+					for (IPredicate hier : m_AlternativeCallPredecessors.get(pos)) {
+						m_IA.addReturnTransition( precond, hier, symbol, precond);
 					}
 				}
-
 			}
-			
 		}
 		
 		if (m_SelfloopAtFinal) {
@@ -200,13 +206,10 @@ public class InterpolantAutomataBuilder {
 				m_IA.addCallTransition(postcond, symbol, postcond);
 			}
 			for (CodeBlock symbol : m_IA.getReturnAlphabet()) {
-				m_IA.addReturnTransition(
-						postcond, postcond, symbol, postcond);
+				m_IA.addReturnTransition(postcond, postcond, symbol, postcond);
 				for (Integer pos : m_AlternativeCallPredecessors.keySet()) {
-					for (IPredicate hier : 
-									m_AlternativeCallPredecessors.get(pos)) {
-						m_IA.addReturnTransition(
-								postcond, hier, symbol, postcond);
+					for (IPredicate hier : m_AlternativeCallPredecessors.get(pos)) {
+						m_IA.addReturnTransition(postcond, hier, symbol, postcond);
 					}
 				}
 			}
@@ -240,21 +243,22 @@ public class InterpolantAutomataBuilder {
 
 	
 	private ProgramPoint getProgramPointAtPosition(int i) {
-		if (i==-1) {
-			return null;
-		} else if (i == m_Interpolants.length) {
-			return null;
-		} else {
-			// workaround for the concurrent model checker, where emptiness check
-			// does not yet return places
-			if (m_StateSequence == null) {
-				return new ProgramPoint("dummy", "dummy", false, null);
-			}
-			if (m_StateSequence.get(i) == null) {
-				return new ProgramPoint("dummy", "dummy", false, null);
-			}
-			return ((ISLPredicate) m_StateSequence.get(i)).getProgramPoint();
-		}
+		return ((ISLPredicate) m_StateSequence.get(i)).getProgramPoint();
+//		if (i==-1) {
+//			return null;
+//		} else if (i == m_Interpolants.length) {
+//			return null;
+//		} else {
+//			// workaround for the concurrent model checker, where emptiness check
+//			// does not yet return places
+//			if (m_StateSequence == null) {
+//				return new ProgramPoint("dummy", "dummy", false, null);
+//			}
+//			if (m_StateSequence.get(i) == null) {
+//				return new ProgramPoint("dummy", "dummy", false, null);
+//			}
+//			return ((ISLPredicate) m_StateSequence.get(i)).getProgramPoint();
+//		}
 	}
 	
 	
@@ -270,7 +274,7 @@ public class InterpolantAutomataBuilder {
 		}
 		else if (m_NestedWord.isReturnPosition(symbolPos)) {
 			int callPos= m_NestedWord.getCallPosition(symbolPos);
-			IPredicate hier = m_IPP.getInterpolant(callPos-1);
+			IPredicate hier = m_IPP.getInterpolant(callPos);
 			m_IA.addReturnTransition(pred, hier, symbol, succ);
 			addAlternativeReturnTransitions(pred, callPos, symbol, succ);
 		}
