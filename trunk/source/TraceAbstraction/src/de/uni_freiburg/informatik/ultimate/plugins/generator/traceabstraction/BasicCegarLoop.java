@@ -11,6 +11,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -208,14 +209,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	}
 	
 	
-	private List<ProgramPoint> extractProgramPoints() {
-		ArrayList<IPredicate> predicateSequence = ((NestedRun<CodeBlock, IPredicate>) m_Counterexample).getStateSequence();
-		ArrayList<ProgramPoint> result = new ArrayList<>();
-		for (IPredicate p : predicateSequence) {
-			result.add(((ISLPredicate) p).getProgramPoint());
-		}
-		return result;
-	}
+
 	
 
 	
@@ -225,7 +219,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		switch (m_Pref.interpolantAutomaton()) {
 		case CANONICAL:
 		{
-			List<ProgramPoint> programPoints = extractProgramPoints();
+			List<ProgramPoint> programPoints = CoverageAnalysis.extractProgramPoints(m_Counterexample);
 			CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(
 					m_TraceChecker, 
 					programPoints, 
