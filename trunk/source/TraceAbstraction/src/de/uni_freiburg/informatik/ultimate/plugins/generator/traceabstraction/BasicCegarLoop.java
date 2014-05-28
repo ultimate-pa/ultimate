@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -15,6 +14,8 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
@@ -39,14 +40,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.In
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.SelfloopDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.StrongestPostDeterminizer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -207,7 +206,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 
 	
-	
 	@Override
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
 		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
@@ -215,34 +213,20 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case CANONICAL:
 		{
 			InterpolantAutomataBuilder iab = new InterpolantAutomataBuilder(
-					m_Counterexample,
-					m_TraceChecker,
-					m_Pref.interpolantAutomaton(), m_Pref.edges2True(),
-					m_SmtManager);
-			m_InterpolAutomaton = iab.buildInterpolantAutomaton(
-					m_Abstraction, m_Abstraction.getStateFactory());
+					m_TraceChecker, 
+					((NestedRun<CodeBlock, IPredicate>) m_Counterexample).getStateSequence(), 
+					new InCaReAlphabet<CodeBlock>(m_Abstraction), 
+					m_SmtManager, 
+					m_PredicateFactoryInterpolantAutomata);
+			m_InterpolAutomaton = iab.getInterpolantAutomaton();
 			s_Logger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 			m_CegarLoopBenchmark.addBackwardCoveringInformation(iab.getBackwardCoveringInformation());
 		}
 		break;
 		case SINGLETRACE:{
-			final Set<CodeBlock> internalAlphabet;
-			final Set<CodeBlock> callAlphabet;
-			final Set<CodeBlock> returnAlphabet;
-			if (m_Abstraction instanceof INestedWordAutomaton) {
-				INestedWordAutomaton<CodeBlock, IPredicate> nwa = 
-						(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;
-				internalAlphabet = nwa.getInternalAlphabet();
-				callAlphabet = nwa.getCallAlphabet();
-				returnAlphabet = nwa.getReturnAlphabet();
-			} else {
-				internalAlphabet = m_Abstraction.getAlphabet();
-				callAlphabet = Collections.emptySet();
-				returnAlphabet = Collections.emptySet();
-			}
 			StraightLineInterpolantAutomatonBuilder iab = 
 					new StraightLineInterpolantAutomatonBuilder(
-							internalAlphabet, callAlphabet, returnAlphabet, 
+							new InCaReAlphabet<CodeBlock>(m_Abstraction),
 							m_TraceChecker, m_PredicateFactoryInterpolantAutomata);
 			m_InterpolAutomaton = iab.getResult();
 		}

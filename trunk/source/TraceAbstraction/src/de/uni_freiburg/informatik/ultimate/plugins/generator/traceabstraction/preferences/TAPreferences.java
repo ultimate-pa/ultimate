@@ -12,7 +12,6 @@ public class TAPreferences {
 	private final int m_watchIteration;
 	private final Artifact m_Artifact;
 	private final INTERPOLATION m_Interpolation;
-	private final boolean m_Edges2True;
 	private final InterpolantAutomaton m_InterpolantAutomaton;
 	private final boolean m_DumpAutomata;
 	private final String m_DumpPath;
@@ -62,9 +61,6 @@ public class TAPreferences {
 		m_Interpolation = m_Prefs.getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
 				INTERPOLATION.class);
-
-		m_Edges2True = m_Prefs
-				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_EDGES2TRUE);
 
 		m_InterpolantAutomaton = m_Prefs.getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_InterpolantAutomaton,
@@ -135,13 +131,6 @@ public class TAPreferences {
 	 */
 	public INTERPOLATION interpolation() {
 		return m_Interpolation;
-	}
-
-	/**
-	 * @return the edges2True
-	 */
-	public boolean edges2True() {
-		return m_Edges2True;
 	}
 
 	/**

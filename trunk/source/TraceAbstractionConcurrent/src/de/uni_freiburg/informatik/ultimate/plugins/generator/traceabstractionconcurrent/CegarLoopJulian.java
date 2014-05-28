@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementDD;
@@ -25,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ba
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.RunAnalyzer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TwoTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -79,14 +81,11 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	@Override
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
 		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
-
-			InterpolantAutomataBuilder iab = new InterpolantAutomataBuilder(
-						m_Counterexample,
-						m_TraceChecker,
-						InterpolantAutomaton.SINGLETRACE, m_Pref.edges2True(),
-						m_SmtManager);
-			m_InterpolAutomaton = iab.buildInterpolantAutomaton(
-				m_Abstraction, m_Abstraction.getStateFactory());
+		StraightLineInterpolantAutomatonBuilder iab = 
+				new StraightLineInterpolantAutomatonBuilder(
+						new InCaReAlphabet<CodeBlock>(m_Abstraction),
+						m_TraceChecker, m_PredicateFactoryInterpolantAutomata);
+		m_InterpolAutomaton = iab.getResult();
 			s_Logger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 			
 			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);	

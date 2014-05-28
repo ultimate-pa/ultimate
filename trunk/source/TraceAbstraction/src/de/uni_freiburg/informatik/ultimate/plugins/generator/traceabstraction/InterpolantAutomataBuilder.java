@@ -9,10 +9,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -24,9 +21,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
@@ -44,13 +39,12 @@ public class InterpolantAutomataBuilder {
 		UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
 	private final NestedWord<CodeBlock> m_NestedWord;
-	private ArrayList<IPredicate> m_StateSequence;
+	private List<IPredicate> m_StateSequence;
 	private final IPredicate[] m_Interpolants;
 	NestedWordAutomaton<CodeBlock, IPredicate> m_IA;
 	private final PredicateUnifier m_PredicateUnifier;
 	
-	private final InterpolantAutomaton m_AdditionalEdges;
-	private final boolean m_SelfloopAtInitial;
+	private final boolean m_SelfloopAtInitial = false;
 	private final boolean m_SelfloopAtFinal = true;
 
 	private final SmtManager m_SmtManager;
@@ -72,60 +66,32 @@ public class InterpolantAutomataBuilder {
 	
 
 	public InterpolantAutomataBuilder(
-			IRun<CodeBlock,IPredicate> nestedRun,
 			TraceChecker traceChecker,
-			InterpolantAutomaton additionalEdges,
-			boolean selfloopAtInitial,
-			SmtManager smtManager) {
+			List<IPredicate> stateSequence,
+			InCaReAlphabet<CodeBlock> alphabet,
+			SmtManager smtManager,
+			StateFactory<IPredicate> predicateFactory) {
 		this.m_Interpolants = traceChecker.getInterpolants();
-		m_NestedWord = NestedWord.nestedWord(nestedRun.getWord());
-		if (nestedRun instanceof NestedRun) {
-			m_StateSequence = ((NestedRun<CodeBlock,IPredicate>) nestedRun).getStateSequence();
-		}
-		else {
-			if (additionalEdges != InterpolantAutomaton.SINGLETRACE) {
-				throw new UnsupportedOperationException("Additional edges" +
-						" allowed only for automata runs");
-			}
-		}
+		m_NestedWord = NestedWord.nestedWord(traceChecker.getTrace());
+		m_IA = new NestedWordAutomaton<CodeBlock, IPredicate>(
+				alphabet.getInternalAlphabet(),
+				alphabet.getCallAlphabet(),
+				alphabet.getReturnAlphabet(),
+				predicateFactory);
+		m_StateSequence = stateSequence;
 		m_PredicateUnifier = traceChecker.getPredicateUnifier();
-		m_AdditionalEdges = additionalEdges;
 		m_SmtManager = smtManager;
-		m_SelfloopAtInitial = selfloopAtInitial;
 		m_TruePredicate = traceChecker.getPrecondition();
 		m_FalsePredicate = traceChecker.getPostcondition();
 	}
 	
 	
-	public NestedWordAutomaton<CodeBlock, IPredicate> 
-	buildInterpolantAutomaton(IAutomaton<CodeBlock, IPredicate> abstraction,
-			StateFactory<IPredicate> tAContentFactory) {
+	
+	public void buildInterpolantAutomaton() {
 
-		Set<CodeBlock> internalAlphabet = abstraction.getAlphabet();
-		Set<CodeBlock> callAlphabet = new HashSet<CodeBlock>(0);
-		Set<CodeBlock> returnAlphabet = new HashSet<CodeBlock>(0);
-
-		if (abstraction instanceof INestedWordAutomatonSimple) {
-			INestedWordAutomatonSimple<CodeBlock, IPredicate> nwa = (INestedWordAutomatonSimple<CodeBlock, IPredicate>) abstraction;
-			callAlphabet = nwa.getCallAlphabet();
-			returnAlphabet = nwa.getReturnAlphabet();
-		}
-		
 		assert(m_NestedWord.length()-1==m_Interpolants.length);
-		String interpolantAutomatonType;
-		switch (m_AdditionalEdges) {
-		case SINGLETRACE:
-			interpolantAutomatonType = 
-				"Constructing interpolant automaton without backedges";
-			break;
-		case CANONICAL:
-			interpolantAutomatonType = 
+		String interpolantAutomatonType = 
 				"Constructing canonical interpolant automaton";
-			break;
-		default:
-			throw new AssertionError("Unsupported kind of interpolant automaton");
-			
-		}
 		if (m_SelfloopAtInitial) {
 			interpolantAutomatonType += ", with selfloop in true state";
 		}
@@ -134,11 +100,7 @@ public class InterpolantAutomataBuilder {
 		}
 		s_Logger.info(interpolantAutomatonType);
 
-		m_IA = new NestedWordAutomaton<CodeBlock, IPredicate>(
-				internalAlphabet,
-				callAlphabet,
-				returnAlphabet,
-				tAContentFactory);
+
 		{
 			m_IA.addState(true, false, m_TruePredicate);
 //			List<Integer> occurrence = new ArrayList<Integer>();
@@ -157,7 +119,6 @@ public class InterpolantAutomataBuilder {
 			addTransition(i-1, i, i);
 			
 			
-			if(m_AdditionalEdges == InterpolantAutomaton.CANONICAL) {
 				ProgramPoint pp = getProgramPointAtPosition(i-1);
 				List<Integer> previousOccurrences = m_ProgramPoint2Occurence.get(pp);
 				if (previousOccurrences == null) {
@@ -198,20 +159,19 @@ public class InterpolantAutomataBuilder {
 					}
 				}
 				previousOccurrences.add(i-1);
-			}
 		}
 		
 		
 		if (m_SelfloopAtInitial) {
-			for (CodeBlock symbol : internalAlphabet) {
+			for (CodeBlock symbol : m_IA.getInternalAlphabet()) {
 				m_IA.addInternalTransition(
 								getInterpolant(-1), symbol, getInterpolant(-1));
 			}
-			for (CodeBlock symbol : callAlphabet) {
+			for (CodeBlock symbol : m_IA.getCallAlphabet()) {
 				m_IA.addCallTransition(
 								getInterpolant(-1), symbol, getInterpolant(-1));
 			}
-			for (CodeBlock symbol : returnAlphabet) {
+			for (CodeBlock symbol : m_IA.getReturnAlphabet()) {
 				m_IA.addReturnTransition(
 				  getInterpolant(-1),getInterpolant(-1),symbol,getInterpolant(-1));
 				for (Integer pos : m_AlternativeCallPredecessors.keySet()) {
@@ -227,13 +187,13 @@ public class InterpolantAutomataBuilder {
 		}
 		
 		if (m_SelfloopAtFinal) {
-			for (CodeBlock symbol : internalAlphabet) {
+			for (CodeBlock symbol : m_IA.getInternalAlphabet()) {
 				m_IA.addInternalTransition(m_FalsePredicate, symbol, m_FalsePredicate);
 			}
-			for (CodeBlock symbol : callAlphabet) {
+			for (CodeBlock symbol : m_IA.getCallAlphabet()) {
 				m_IA.addCallTransition(m_FalsePredicate, symbol, m_FalsePredicate);
 			}
-			for (CodeBlock symbol : returnAlphabet) {
+			for (CodeBlock symbol : m_IA.getReturnAlphabet()) {
 				m_IA.addReturnTransition(
 						m_FalsePredicate, m_FalsePredicate, symbol, m_FalsePredicate);
 				for (Integer pos : m_AlternativeCallPredecessors.keySet()) {
@@ -252,13 +212,17 @@ public class InterpolantAutomataBuilder {
 				m_Sat + " refuted. " + 
 				m_Unknown + " times theorem prover too weak." +
 				m_Trivial + " trivial.");
-		
-		if (m_AdditionalEdges == InterpolantAutomaton.TOTALINTERPOLATION) {
-			throw new UnsupportedOperationException();
-		}
-		return m_IA;
+
 	}
 	
+	
+	
+
+
+	public NestedWordAutomaton<CodeBlock, IPredicate> getInterpolantAutomaton() {
+		return m_IA;
+	}
+
 
 
 	private IPredicate getInterpolant(int i) {
@@ -339,9 +303,7 @@ public class InterpolantAutomataBuilder {
 			int callPos= m_NestedWord.getCallPosition(symbolPos);
 			IPredicate hier = getInterpolant(callPos-1);
 			m_IA.addReturnTransition(pred, hier, symbol, succ);
-			if(m_AdditionalEdges == InterpolantAutomaton.CANONICAL) {
-				addAlternativeReturnTransitions(pred, callPos, symbol, succ);
-			}
+			addAlternativeReturnTransitions(pred, callPos, symbol, succ);
 		}
 		else {
 			m_IA.addInternalTransition(pred, symbol,  succ);

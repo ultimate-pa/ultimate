@@ -34,8 +34,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<INTERPOLATION>(
 						LABEL_INTERPOLATED_LOCS, DEF_INTERPOLANTS,
 						PreferenceType.Combo, INTERPOLATION.values()),
-				new UltimatePreferenceItem<Boolean>(LABEL_EDGES2TRUE,
-						DEF_EDGES2TRUE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<InterpolantAutomaton>(
 						LABEL_InterpolantAutomaton,
 						InterpolantAutomaton.CANONICAL, PreferenceType.Combo,
@@ -87,7 +85,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_WATCHITERATION = "Number of iteration whose artifact is visualized";
 	public static final String LABEL_HOARE = "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG";
 	public static final String LABEL_INTERPOLATED_LOCS = "Compute Interpolants along a Counterexample";
-	public static final String LABEL_EDGES2TRUE = "Add backedges from every state to initial state";
 	public static final String LABEL_InterpolantAutomaton = "Interpolant automaton";
 	public static final String LABEL_DUMPAUTOMATA = "Dump automata to files";
 	public static final String LABEL_DUMPPATH = "Dump formulas of problems in the following path";
@@ -125,7 +122,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final int DEF_WATCHITERATION = 1000000;
 	public static final boolean DEF_HOARE = false;
 	public static final INTERPOLATION DEF_INTERPOLANTS = INTERPOLATION.ForwardPredicates;
-	public static final boolean DEF_EDGES2TRUE = false;
 	public static final String DEF_ADDITIONAL_EDGES = VALUE_InterpolantAutomaton_Canonical;
 	public static final boolean DEF_DUMPAUTOMATA = false;
 	public static final String DEF_DUMPPATH = ".";

@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -274,7 +275,6 @@ public class BuchiCegarLoop {
 			s_Logger.info("Interprodecural is " + m_Pref.interprocedural());		
 			s_Logger.info("Hoare is " + m_Pref.computeHoareAnnotation());
 			s_Logger.info("Compute interpolants for " + m_Interpolation);
-			s_Logger.info("Backedges2True is " + m_Pref.edges2True());
 			s_Logger.info("Backedges is " + m_Pref.interpolantAutomaton());
 			s_Logger.info("Determinization is " + m_Pref.determinization());
 			s_Logger.info("Difference is " + m_Pref.differenceSenwa());
@@ -618,12 +618,12 @@ public class BuchiCegarLoop {
 		
 		protected void constructInterpolantAutomaton(TraceChecker traceChecker, NestedRun<CodeBlock, IPredicate> run) throws OperationCanceledException {
 			InterpolantAutomataBuilder iab = new InterpolantAutomataBuilder(
-							run,
-							traceChecker,
-							m_Pref.interpolantAutomaton(), m_Pref.edges2True(),
-							m_SmtManager);
-			m_InterpolAutomaton = iab.buildInterpolantAutomaton(
-					m_Abstraction, m_Abstraction.getStateFactory());
+					traceChecker, 
+					run.getStateSequence(), 
+					new InCaReAlphabet<CodeBlock>(m_Abstraction), 
+					m_SmtManager, 
+					m_Abstraction.getStateFactory());
+			m_InterpolAutomaton = iab.getInterpolantAutomaton();
 			
 			assert((new Accepts<CodeBlock, IPredicate>(m_InterpolAutomaton, run.getWord())).getResult()) :
 				"Interpolant automaton broken!";

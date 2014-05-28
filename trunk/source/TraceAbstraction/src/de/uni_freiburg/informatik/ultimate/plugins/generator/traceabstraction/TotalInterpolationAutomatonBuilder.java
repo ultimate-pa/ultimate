@@ -12,6 +12,7 @@ import java.util.Stack;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
@@ -53,9 +54,9 @@ public class TotalInterpolationAutomatonBuilder {
 		m_Interpolants = traceChecker.getInterpolants();
 		m_PredicateUnifier = traceChecker.getPredicateUnifier();
 		m_Abstraction = abstraction;
+		InCaReAlphabet<CodeBlock> alphabet = new InCaReAlphabet<CodeBlock>(abstraction);
 		m_IA = (new StraightLineInterpolantAutomatonBuilder(
-				abstraction.getInternalAlphabet(), abstraction.getCallAlphabet(), 
-				abstraction.getReturnAlphabet() , traceChecker, predicateFactory)).getResult();
+				alphabet , traceChecker, predicateFactory)).getResult();
 		m_Epimorphism = constructInitialEpimorphism(stateSequence, traceChecker);
 		for (IPredicate state : stateSequence) {
 			for (OutgoingInternalTransition<CodeBlock, IPredicate> transition : m_Abstraction.internalSuccessors(state)) {

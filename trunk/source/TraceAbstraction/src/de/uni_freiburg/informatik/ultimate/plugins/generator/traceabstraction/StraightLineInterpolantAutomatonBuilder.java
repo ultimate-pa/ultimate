@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.Set;
-
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -31,9 +30,7 @@ public class StraightLineInterpolantAutomatonBuilder {
 	private final NestedWordAutomaton<CodeBlock, IPredicate> m_Result;
 	
 	public StraightLineInterpolantAutomatonBuilder(
-			Set<CodeBlock> internalAlphabet,
-			Set<CodeBlock> callAlphabet,
-			Set<CodeBlock> returnAlphabet,
+			InCaReAlphabet<CodeBlock> alphabet,
 			TraceChecker traceChecker,
 			PredicateFactory predicateFactory) {
 		if (traceChecker.isCorrect() != LBool.UNSAT) {
@@ -44,21 +41,18 @@ public class StraightLineInterpolantAutomatonBuilder {
 			throw new AssertionError("We can only build an interpolant "
 					+ "automaton for which interpolants were computed");
 		}
-		m_Result = build(internalAlphabet, callAlphabet, returnAlphabet, traceChecker, predicateFactory);
+		m_Result =	new NestedWordAutomaton<CodeBlock, IPredicate>(
+						alphabet.getInternalAlphabet(),
+						alphabet.getCallAlphabet(),
+						alphabet.getReturnAlphabet(),
+						predicateFactory);
+		addStatesAndTransitions(traceChecker, predicateFactory);
 	}
 
-	private NestedWordAutomaton<CodeBlock, IPredicate> build(
-			Set<CodeBlock> internalAlphabet,
-			Set<CodeBlock> callAlphabet,
-			Set<CodeBlock> returnAlphabet,
-			TraceChecker traceChecker,
-			PredicateFactory predicateFactory) { 
-		NestedWordAutomaton<CodeBlock, IPredicate> result = 
-				new NestedWordAutomaton<CodeBlock, IPredicate>(
-						internalAlphabet, callAlphabet,
-						returnAlphabet, predicateFactory);
-		result.addState(true, false, traceChecker.getPrecondition());
-		result.addState(false, true, traceChecker.getPostcondition());
+	private void addStatesAndTransitions(TraceChecker traceChecker, PredicateFactory predicateFactory) { 
+
+		m_Result.addState(true, false, traceChecker.getPrecondition());
+		m_Result.addState(false, true, traceChecker.getPostcondition());
 		NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) traceChecker.getTrace();
 		for (int i=0; i<trace.length(); i++) {
 			IPredicate pred = TraceCheckerUtils.getInterpolant(i-1, 
@@ -69,26 +63,25 @@ public class StraightLineInterpolantAutomatonBuilder {
 					traceChecker.getPrecondition(), 
 					traceChecker.getInterpolants(), 
 					traceChecker.getPostcondition());
-			assert result.getStates().contains(pred);
-			if (!result.getStates().contains(succ)) {
-				result.addState(false, false, succ);
+			assert m_Result.getStates().contains(pred);
+			if (!m_Result.getStates().contains(succ)) {
+				m_Result.addState(false, false, succ);
 			}
 			if (trace.isCallPosition(i)) {
-				result.addCallTransition(pred, trace.getSymbol(i), succ);
+				m_Result.addCallTransition(pred, trace.getSymbol(i), succ);
 			} else if (trace.isReturnPosition(i)) {
 				assert !trace.isPendingReturn(i);
-				int callPos = trace.getReturnPosition(i);
+				int callPos = trace.getCallPosition(i);
 				IPredicate hierPred = TraceCheckerUtils.getInterpolant(callPos-1, 
 						traceChecker.getPrecondition(), 
 						traceChecker.getInterpolants(), 
 						traceChecker.getPostcondition());
-				result.addReturnTransition(pred, hierPred, trace.getSymbol(i), succ);
+				m_Result.addReturnTransition(pred, hierPred, trace.getSymbol(i), succ);
 			} else {
 				assert trace.isInternalPosition(i);
-				result.addInternalTransition(pred, trace.getSymbol(i), succ);
+				m_Result.addInternalTransition(pred, trace.getSymbol(i), succ);
 			}
 		}
-		return result;		
 	}
 
 
