@@ -83,6 +83,7 @@ public class InterpolantAutomataBuilder {
 		m_SmtManager = smtManager;
 		m_TruePredicate = traceChecker.getPrecondition();
 		m_FalsePredicate = traceChecker.getPostcondition();
+		buildInterpolantAutomaton();
 	}
 	
 	
@@ -90,25 +91,7 @@ public class InterpolantAutomataBuilder {
 	public void buildInterpolantAutomaton() {
 
 		assert(m_NestedWord.length()-1==m_Interpolants.length);
-		String interpolantAutomatonType = 
-				"Constructing canonical interpolant automaton";
-		if (m_SelfloopAtInitial) {
-			interpolantAutomatonType += ", with selfloop in true state";
-		}
-		if (m_SelfloopAtFinal) {
-			interpolantAutomatonType += ", with selfloop in false state";
-		}
-		s_Logger.info(interpolantAutomatonType);
-
-
-		{
-			m_IA.addState(true, false, m_TruePredicate);
-//			List<Integer> occurrence = new ArrayList<Integer>();
-//			occurrence.add(0);
-//			ProgramPoint pp = getProgramPointAtPosition(0);
-//			m_ProgramPoint2Occurence.put(pp,occurrence);
-		}
-		m_IA.addState(false, true, m_FalsePredicate);
+		preprocess();
 		
 		for (int i=0; i<m_NestedWord.length(); i++) {
 			boolean isFinal = isFalsePredicate(getInterpolant(i));
@@ -116,52 +99,73 @@ public class InterpolantAutomataBuilder {
 				m_IA.addState(false, isFinal, getInterpolant(i));
 			}
 
-			addTransition(i-1, i, i);
-			
-			
-				ProgramPoint pp = getProgramPointAtPosition(i-1);
-				List<Integer> previousOccurrences = m_ProgramPoint2Occurence.get(pp);
-				if (previousOccurrences == null) {
-					previousOccurrences = new ArrayList<Integer>();
-					m_ProgramPoint2Occurence.put(pp, previousOccurrences);
-				}
-				else {
-					for (int previousOccurrence : previousOccurrences) {
-						int currentPosition = i-1;
-						assert currentPosition > previousOccurrence;
-						IPredicate currentPredicate = getInterpolant(currentPosition);
-						IPredicate previousPredicate = getInterpolant(previousOccurrence);
-						if (currentPredicate == previousPredicate) {
-							// trivially covered and backedges already contained
-							m_Trivial++;
-						} else {
-							LBool lbool = m_PredicateUnifier.getCoverageRelation().isCovered(
-														currentPredicate, previousPredicate);
-							LBool isSat = m_SmtManager.isCovered(m_Interpolants[currentPosition],
-																	m_Interpolants[previousOccurrence]);
-							assert lbool == isSat;
-							switch (isSat) {
-							case UNSAT:
-								m_Unsat++;
-								addTransition(currentPosition-1, currentPosition, previousOccurrence);
-								addTransition(currentPosition, previousOccurrence+1, previousOccurrence+1);
-								break;
-							case SAT:
-								m_Sat++;
-								break;
-							case UNKNOWN:
-								m_Unknown++;
-								break;
-							default:
-								throw new AssertionError();
-							}
+			processTrivialCovering(i);
+
+
+			ProgramPoint pp = getProgramPointAtPosition(i-1);
+			List<Integer> previousOccurrences = m_ProgramPoint2Occurence.get(pp);
+			if (previousOccurrences == null) {
+				previousOccurrences = new ArrayList<Integer>();
+				m_ProgramPoint2Occurence.put(pp, previousOccurrences);
+			} else {
+				for (int previousOccurrence : previousOccurrences) {
+					int currentPosition = i-1;
+					assert currentPosition > previousOccurrence;
+					IPredicate currentPredicate = getInterpolant(currentPosition);
+					IPredicate previousPredicate = getInterpolant(previousOccurrence);
+					if (currentPredicate == previousPredicate) {
+						// trivially covered and backedges already contained
+						m_Trivial++;
+					} else {
+						LBool lbool = m_PredicateUnifier.getCoverageRelation().isCovered(
+								currentPredicate, previousPredicate);
+						processCoveringResult(currentPosition, previousOccurrence, lbool);
+						switch (lbool) {
+						case UNSAT:
+							m_Unsat++;
+							break;
+						case SAT:
+							m_Sat++;
+							break;
+						case UNKNOWN:
+							m_Unknown++;
+							break;
+						default:
+							throw new AssertionError();
 						}
 					}
 				}
-				previousOccurrences.add(i-1);
+			}
+			previousOccurrences.add(i-1);
 		}
+
+
+		postprocess();
 		
-		
+		s_Logger.info("Checked inductivity of " +
+				(m_Unsat+m_Sat+m_Unknown+m_Trivial) +	" backedges. " + 
+				m_Unsat + " proven. " + 
+				m_Sat + " refuted. " + 
+				m_Unknown + " times theorem prover too weak." +
+				m_Trivial + " trivial.");
+
+	}
+
+	private void processTrivialCovering(int i) {
+		addTransition(i-1, i, i);
+	}
+
+	private void processCoveringResult(int currentPosition,
+			int previousOccurrence, LBool lbool) {
+		if (lbool == LBool.UNSAT) {
+			addTransition(currentPosition-1, currentPosition, previousOccurrence);
+			addTransition(currentPosition, previousOccurrence+1, previousOccurrence+1);
+		}
+	}
+
+
+
+	private void postprocess() {
 		if (m_SelfloopAtInitial) {
 			for (CodeBlock symbol : m_IA.getInternalAlphabet()) {
 				m_IA.addInternalTransition(
@@ -205,14 +209,23 @@ public class InterpolantAutomataBuilder {
 				}
 			}
 		}
-		
-		s_Logger.info("Checked inductivity of " +
-				(m_Unsat+m_Sat+m_Unknown+m_Trivial) +	" backedges. " + 
-				m_Unsat + " proven. " + 
-				m_Sat + " refuted. " + 
-				m_Unknown + " times theorem prover too weak." +
-				m_Trivial + " trivial.");
+	}
 
+
+
+	private void preprocess() {
+		String interpolantAutomatonType = 
+				"Constructing canonical interpolant automaton";
+		if (m_SelfloopAtInitial) {
+			interpolantAutomatonType += ", with selfloop in true state";
+		}
+		if (m_SelfloopAtFinal) {
+			interpolantAutomatonType += ", with selfloop in false state";
+		}
+		s_Logger.info(interpolantAutomatonType);
+
+		m_IA.addState(true, false, m_TruePredicate);
+		m_IA.addState(false, true, m_FalsePredicate);
 	}
 	
 	
@@ -263,30 +276,6 @@ public class InterpolantAutomataBuilder {
 			return ((ISLPredicate) m_StateSequence.get(i)).getProgramPoint();
 		}
 	}
-	
-	
-	
-	
-	private void surveyBackedge(int newOccurrence, int oldOccurrence) {
-		LBool isSat = m_SmtManager.isCovered(m_Interpolants[newOccurrence],
-												m_Interpolants[oldOccurrence]);
-		switch (isSat) {
-		case UNSAT:
-			m_Unsat++;
-			addTransition(newOccurrence-1, newOccurrence, oldOccurrence);
-			addTransition(newOccurrence, oldOccurrence+1, oldOccurrence+1);
-			break;
-		case SAT:
-			m_Sat++;
-			break;
-		case UNKNOWN:
-			m_Unknown++;
-			break;
-		default:
-			throw new AssertionError();
-		}	
-	}
-	
 	
 	
 	private void addTransition(int prePos, int symbolPos, int succPos) {
@@ -375,16 +364,6 @@ public class InterpolantAutomataBuilder {
 				return result + "%";
 			}
 		}
-		
-		
-		
-//		public void incrementPotentialBackwardCoverings() {
-//			m_PotentialBackwardCoverings++;
-//		}
-//		
-//		public void incrementSuccessfullBackwardCoverings() {
-//			m_SuccessfullBackwardCoverings++;
-//		}
 		
 	}
 
