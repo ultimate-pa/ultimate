@@ -21,4 +21,5 @@ int main() {
 	p->rightChild = p;
 	int a = p->data;
 	//@ assert a == 3;
+	free(p);
 }
