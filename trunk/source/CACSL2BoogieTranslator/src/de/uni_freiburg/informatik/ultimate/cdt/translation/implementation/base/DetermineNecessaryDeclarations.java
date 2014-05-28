@@ -321,15 +321,23 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 
 	@Override
 	public int visit(IASTInitializer initializer) {
-		if (initializer instanceof IASTEqualsInitializer)
-			currentFunOrStructDefOrInitializer.push((IASTDeclaration) initializer.getParent().getParent());
+		if (initializer instanceof IASTEqualsInitializer) {
+			IASTDeclaration correspondingDeclaration = (IASTDeclaration) initializer.getParent().getParent();
+			if (correspondingDeclaration.getParent() instanceof IASTTranslationUnit) {
+				currentFunOrStructDefOrInitializer.push(correspondingDeclaration);
+			}
+		}
 		return super.visit(initializer);
 	}
 
 	@Override
 	public int leave(IASTInitializer initializer) {
-		if (initializer instanceof IASTEqualsInitializer)
-			currentFunOrStructDefOrInitializer.pop();
+		if (initializer instanceof IASTEqualsInitializer) {
+			IASTDeclaration correspondingDeclaration = (IASTDeclaration) initializer.getParent().getParent();
+			if (correspondingDeclaration.getParent() instanceof IASTTranslationUnit) {
+				currentFunOrStructDefOrInitializer.pop();
+			}
+		}
 		return super.leave(initializer);
 	}
 
