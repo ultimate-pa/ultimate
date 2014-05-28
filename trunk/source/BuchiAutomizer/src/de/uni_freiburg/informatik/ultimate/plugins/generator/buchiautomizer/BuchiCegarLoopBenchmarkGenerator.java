@@ -7,12 +7,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Buch
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.ContinueDirective;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.SynthesisResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 
 public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerator {
 	
 	int[] m_NontrivialModuleStages = new int[4];
 	LassoAnalysisResults m_LassoAnalysisResults = new LassoAnalysisResults();
+	private BackwardCoveringInformation m_BciFinite = new BackwardCoveringInformation(0, 0);
+	private BackwardCoveringInformation m_BciBuchi = new BackwardCoveringInformation(0, 0);
 	
 	@Override
 	public IBenchmarkType getBenchmarkType() {
@@ -33,6 +36,14 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 	public void announceSuccessfullRefinementStage(int stage) {
 		m_NontrivialModuleStages[stage]++;
 	}
+	
+	public void addBackwardCoveringInformationFinite(BackwardCoveringInformation bci) {
+		m_BciFinite = new BackwardCoveringInformation(m_BciFinite, bci);
+	}
+	
+	public void addBackwardCoveringInformationBuchi(BackwardCoveringInformation bci) {
+		m_BciBuchi = new BackwardCoveringInformation(m_BciBuchi, bci);
+	}
 
 	@Override
 	public Object getValue(String key) {
@@ -49,6 +60,10 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 			return m_NontrivialModuleStages;
 		case BuchiCegarLoopBenchmark.s_LassoAnalysisResults:
 			return m_LassoAnalysisResults;
+		case BuchiCegarLoopBenchmark.s_InterpolantCoveringCapabilityFinite:
+			return m_BciFinite;
+		case BuchiCegarLoopBenchmark.s_InterpolantCoveringCapabilityBuchi:
+			return m_BciBuchi;
 		default:
 			return super.getValue(key);
 		}

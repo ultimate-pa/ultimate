@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.pref
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.EagerInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
 
 public class RefineBuchi {
 	
@@ -59,6 +61,7 @@ public class RefineBuchi {
 	private final boolean m_UseDoubleDeckers;
 	private final String m_DumpPath;
 	private final INTERPOLATION m_Interpolation;
+	private BackwardCoveringInformation m_Bci;
 	/**
 	 * Interpolant automaton of this iteration.
 	 */
@@ -141,6 +144,11 @@ public class RefineBuchi {
 	public INestedWordAutomatonSimple<CodeBlock, IPredicate> getInterpolAutomatonUsedInRefinement() {
 		return m_InterpolAutomatonUsedInRefinement;
 	}
+	
+
+	public BackwardCoveringInformation getBci() {
+		return m_Bci;
+	}
 
 	INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi(
 			INestedWordAutomaton<CodeBlock, IPredicate> m_Abstraction, 
@@ -194,6 +202,7 @@ public class RefineBuchi {
 		} else {
 			throw new AssertionError();
 		}
+		m_Bci = TraceCheckerUtils.computeCoverageCapability(traceChecker);
 		
 		NestedWordAutomaton<CodeBlock, IPredicate> m_InterpolAutomaton = constructBuchiInterpolantAutomaton(
 				bspm.getStemPrecondition(), stem, stemInterpolants, bspm.getHondaPredicate(), 

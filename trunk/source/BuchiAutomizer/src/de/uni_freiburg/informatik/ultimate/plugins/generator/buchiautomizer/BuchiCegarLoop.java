@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotationFragments;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
@@ -66,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 
 public class BuchiCegarLoop {
@@ -507,6 +509,7 @@ public class BuchiCegarLoop {
 						throw new AssertionError("unsupported");
 					}
 					m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
+					m_BenchmarkGenerator.addBackwardCoveringInformationBuchi(m_RefineBuchi.getBci());
 					return newAbstraction;
 				}
 				stage++;
@@ -585,6 +588,8 @@ public class BuchiCegarLoop {
 				traceChecker = lassoChecker.getConcatCheck();
 				run = lassoChecker.getConcatenatedCounterexample();
 			}
+			BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(traceChecker);
+			m_BenchmarkGenerator.addBackwardCoveringInformationFinite(bci);
 			constructInterpolantAutomaton(traceChecker, run);
 			EdgeChecker ec = new EdgeChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
 			DeterministicInterpolantAutomaton determinized = 

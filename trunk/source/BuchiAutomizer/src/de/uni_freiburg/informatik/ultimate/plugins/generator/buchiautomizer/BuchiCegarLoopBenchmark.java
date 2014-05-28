@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkType;
@@ -18,6 +19,8 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 	public static final String s_NontrivialModuleStages = "NontrivialModuleStages";
 	public static final String s_LassoAnalysisTime = "LassoAnalysisTime";
 	public static final String s_LassoAnalysisResults = "LassoAnalysisResults";
+	public static final String s_InterpolantCoveringCapabilityFinite = "InterpolantCoveringCapabilityFinite";
+	public static final String s_InterpolantCoveringCapabilityBuchi = "InterpolantCoveringCapabilityBuchi";
 	
 	public static BuchiCegarLoopBenchmark getInstance() {
 		return s_Instance;
@@ -31,6 +34,8 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		keyList.add(s_NontrivialModuleStages);
 		keyList.add(s_LassoAnalysisTime);
 		keyList.add(s_LassoAnalysisResults);
+		keyList.add(s_InterpolantCoveringCapabilityFinite);
+		keyList.add(s_InterpolantCoveringCapabilityBuchi);
 		return keyList;
 	}
 	
@@ -49,10 +54,14 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 			}
 			return result;
 		}
+		case s_InterpolantCoveringCapabilityFinite:
+		case s_InterpolantCoveringCapabilityBuchi:
+			BackwardCoveringInformation bci1 = (BackwardCoveringInformation) value1;
+			BackwardCoveringInformation bci2 = (BackwardCoveringInformation) value2;
+			return new BackwardCoveringInformation(bci1, bci2);
 		default:
-			break;
+			return super.aggregate(key, value1, value2);
 		}
-		return super.aggregate(key, value1, value2);
 	}
 
 	@Override
@@ -115,6 +124,18 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		sb.append("Nontrivial modules had stage ");
 		sb.append(Arrays.toString(stages));
 		sb.append(".\t");
+		
+		BackwardCoveringInformation bcif = (BackwardCoveringInformation) benchmarkData.getValue(s_InterpolantCoveringCapabilityFinite);
+		sb.append(s_InterpolantCoveringCapabilityFinite);
+		sb.append(": ");
+		sb.append(bcif.toString());
+		sb.append("\t");
+		
+		BackwardCoveringInformation bcib = (BackwardCoveringInformation) benchmarkData.getValue(s_InterpolantCoveringCapabilityBuchi);
+		sb.append(s_InterpolantCoveringCapabilityBuchi);
+		sb.append(": ");
+		sb.append(bcib.toString());
+		sb.append("\t");
 		
 		sb.append(s_EdgeCheckerData);
 		sb.append(": ");
