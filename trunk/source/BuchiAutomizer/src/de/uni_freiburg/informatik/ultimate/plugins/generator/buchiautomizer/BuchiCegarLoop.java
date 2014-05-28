@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotationFragments;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CanonicalInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
@@ -617,12 +617,13 @@ public class BuchiCegarLoop {
 		}
 		
 		protected void constructInterpolantAutomaton(TraceChecker traceChecker, NestedRun<CodeBlock, IPredicate> run) throws OperationCanceledException {
-			InterpolantAutomataBuilder iab = new InterpolantAutomataBuilder(
+			CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(
 					traceChecker, 
 					run.getStateSequence(), 
 					new InCaReAlphabet<CodeBlock>(m_Abstraction), 
 					m_SmtManager, 
 					m_Abstraction.getStateFactory());
+			iab.analyze();
 			m_InterpolAutomaton = iab.getInterpolantAutomaton();
 			
 			assert((new Accepts<CodeBlock, IPredicate>(m_InterpolAutomaton, run.getWord())).getResult()) :

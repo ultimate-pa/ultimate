@@ -212,12 +212,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		switch (m_Pref.interpolantAutomaton()) {
 		case CANONICAL:
 		{
-			InterpolantAutomataBuilder iab = new InterpolantAutomataBuilder(
+			CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(
 					m_TraceChecker, 
 					((NestedRun<CodeBlock, IPredicate>) m_Counterexample).getStateSequence(), 
 					new InCaReAlphabet<CodeBlock>(m_Abstraction), 
 					m_SmtManager, 
 					m_PredicateFactoryInterpolantAutomata);
+			iab.analyze();
 			m_InterpolAutomaton = iab.getInterpolantAutomaton();
 			s_Logger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 			m_CegarLoopBenchmark.addBackwardCoveringInformation(iab.getBackwardCoveringInformation());
