@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accept
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
@@ -42,13 +44,17 @@ public class TotalInterpolationAutomatonBuilder {
 	
 	private final SmtManager m_SmtManager;
 	
+	private final ArrayDeque<IPredicate> m_Worklist = new ArrayDeque<IPredicate>();
+	private final Set<IPredicate> m_Annotated = new HashSet<IPredicate>();
+	
 //	private final IPredicate m_TruePredicate;
 //	private final IPredicate m_FalsePredicate;
 	private AutomatonEpimorphism<IPredicate> m_Epimorphism;
+	private final EdgeChecker m_EdgeChecker;
 	public TotalInterpolationAutomatonBuilder(
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			ArrayList<IPredicate> stateSequence, TraceChecker traceChecker,
-			SmtManager smtManager, PredicateFactory predicateFactory) throws OperationCanceledException {
+			SmtManager smtManager, PredicateFactory predicateFactory, EdgeChecker edgeChecker) throws OperationCanceledException {
 		super();
 		m_StateSequence = stateSequence;
 		m_TraceChecker = traceChecker;
@@ -60,14 +66,41 @@ public class TotalInterpolationAutomatonBuilder {
 		m_IA = (new StraightLineInterpolantAutomatonBuilder(
 				alphabet , traceChecker, predicateFactory)).getResult();
 		m_Epimorphism = constructInitialEpimorphism(stateSequence, traceChecker);
+		m_EdgeChecker = edgeChecker;
 		for (IPredicate state : stateSequence) {
-			for (OutgoingInternalTransition<CodeBlock, IPredicate> transition : m_Abstraction.internalSuccessors(state)) {
-				startDfs(state, transition);
-			}
+			m_Worklist.add(state);
+			m_Annotated.add(state);
 		}
+		while (!m_Worklist.isEmpty()) {
+			IPredicate p = m_Worklist.removeFirst();
+			doThings(p);
+		}
+
+//		for (IPredicate state : stateSequence) {
+//			for (OutgoingInternalTransition<CodeBlock, IPredicate> transition : m_Abstraction.internalSuccessors(state)) {
+//				startDfs(state, transition);
+//			}
+//		}
 	}
 	
 	
+	private void doThings(IPredicate p) {
+		for (OutgoingInternalTransition<CodeBlock, IPredicate> transition : 
+			m_Abstraction.internalSuccessors(p)) {
+			if (m_Annotated.contains(transition.getSucc())) {
+				// this is a one-step path, no need to call TraceChecker
+				if (m_IA.succInternal(p, transition.getLetter()).contains(transition.getSucc())) {
+					// do nothing, transition is already contained
+				} else {
+					
+				}
+				
+			}
+
+		}
+	}
+
+
 	private void startDfs(IPredicate state,
 			OutgoingInternalTransition<CodeBlock, IPredicate> transition) {
 		new GraphDfs(null, state, transition);
