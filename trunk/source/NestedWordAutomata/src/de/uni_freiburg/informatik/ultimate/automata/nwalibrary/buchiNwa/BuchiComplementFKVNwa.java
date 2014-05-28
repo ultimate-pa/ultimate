@@ -1370,7 +1370,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		 * 
 		 */
 		private int surplus(int i) {
-			int unbounded = m_UnrestrictedMaxRank2DoubleDecker.getImage(Integer.MAX_VALUE).size();
+			int unbounded = m_UnrestrictedMaxRank2DoubleDecker.numberofPairsWithGivenDomainElement(Integer.MAX_VALUE);
 			final int highestBound;
 			{
 				Iterator<Integer> it = m_UnrestrictedMaxRank2DoubleDecker.descendingDomain().iterator();
@@ -1398,7 +1398,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 				if (unbounded > 0) {
 					surplus = 0;
 				} else {
-					surplus = m_UnrestrictedMaxRank2DoubleDecker.getImage(highestBound).size();
+					surplus = m_UnrestrictedMaxRank2DoubleDecker.numberofPairsWithGivenDomainElement(highestBound);
 				}
 				rank = highestBound - 1;
 			} else {
@@ -1407,9 +1407,8 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 			}
 			while (rank >= i) {
 				assert isOdd(rank);
-				Set<DoubleDecker<STATE>> ddWithRank = 
-						m_UnrestrictedMaxRank2DoubleDecker.getImage(rank);
-				surplus += (ddWithRank.size() - 1);
+				int ddWithRank = m_UnrestrictedMaxRank2DoubleDecker.numberofPairsWithGivenDomainElement(rank);
+				surplus += (ddWithRank - 1);
 				if (surplus < 0) {
 					assert surplus == -1;
 					surplus = 0;
@@ -1417,8 +1416,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 				rank -= 2;
 			}
 			return surplus;
-		}
-		
+		}		
 		
 		
 		private class LevelRankingWithSacrificeInformation {
