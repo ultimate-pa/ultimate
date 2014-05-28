@@ -34,7 +34,7 @@ public class CoverageAnalysis {
 		UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
 	protected final NestedWord<CodeBlock> m_NestedWord;
-	private List<IPredicate> m_StateSequence;
+	private List<ProgramPoint> m_ProgramPointSequence;
 	private final IPredicate[] m_Interpolants;
 	private final PredicateUnifier m_PredicateUnifier;
 	
@@ -51,10 +51,10 @@ public class CoverageAnalysis {
 
 	public CoverageAnalysis(
 			TraceChecker traceChecker,
-			List<IPredicate> stateSequence) {
+			List<ProgramPoint> programPointSequence) {
 		this.m_Interpolants = traceChecker.getInterpolants();
 		m_NestedWord = NestedWord.nestedWord(traceChecker.getTrace());
-		m_StateSequence = stateSequence;
+		m_ProgramPointSequence = programPointSequence;
 		m_PredicateUnifier = traceChecker.getPredicateUnifier();
 		m_TraceChecker = traceChecker;
 		m_IPP = new InterpolantsPreconditionPostcondition(traceChecker);
@@ -68,7 +68,7 @@ public class CoverageAnalysis {
 
 			processCodeBlock(i);
 
-			ProgramPoint pp = ((ISLPredicate) m_StateSequence.get(i)).getProgramPoint();
+			ProgramPoint pp = m_ProgramPointSequence.get(i);
 			List<Integer> previousOccurrences = m_ProgramPoint2Occurence.get(pp);
 			if (previousOccurrences == null) {
 				previousOccurrences = new ArrayList<Integer>();
@@ -103,7 +103,7 @@ public class CoverageAnalysis {
 			}
 			previousOccurrences.add(i);
 		}
-		assert sumCountedOccurrences() == m_StateSequence.size() - 1;
+		assert sumCountedOccurrences() == m_ProgramPointSequence.size() - 1;
 
 		postprocess();
 		
@@ -149,7 +149,7 @@ public class CoverageAnalysis {
 	}
 	
 	
-	static class BackwardCoveringInformation {
+	public static class BackwardCoveringInformation {
 		private int m_PotentialBackwardCoverings;
 		private int m_SuccessfullBackwardCoverings;
 		

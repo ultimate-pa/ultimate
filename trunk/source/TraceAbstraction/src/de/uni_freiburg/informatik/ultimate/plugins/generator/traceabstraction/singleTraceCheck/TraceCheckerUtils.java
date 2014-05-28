@@ -7,6 +7,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 
 /**
@@ -36,6 +38,32 @@ public class TraceCheckerUtils {
 		ProgramPoint pp = (ProgramPoint) cb.getTarget();
 		result.add(pp);
 		return result;
+	}
+	
+	/**
+	 * Variant of computeCoverageCapability where the sequence of ProgramPoints
+	 * is not a parameter but computed from the trace.
+	 */
+	public static BackwardCoveringInformation computeCoverageCapability(
+			TraceChecker traceChecker) {
+		NestedWord<CodeBlock> trace = NestedWord.nestedWord(traceChecker.getTrace());
+		List<ProgramPoint> programPoints = getSequenceOfProgramPoints(trace);
+		return computeCoverageCapability(traceChecker, programPoints);
+	}
+	
+	public static BackwardCoveringInformation computeCoverageCapability(
+			TraceChecker traceChecker, List<ProgramPoint> programPoints) {
+		if (traceChecker.isCorrect() != LBool.UNSAT) {
+			throw new AssertionError("We can only build an interpolant "
+					+ "automaton for correct/infeasible traces");
+		}
+		if (traceChecker.getInterpolants() == null) {
+			throw new AssertionError("We can only build an interpolant "
+					+ "automaton for which interpolants were computed");
+		}
+		CoverageAnalysis ca = new CoverageAnalysis(traceChecker, programPoints);
+		ca.analyze();
+		return ca.getBackwardCoveringInformation();
 	}
 	
 	

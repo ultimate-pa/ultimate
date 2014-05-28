@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -42,11 +43,11 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 
 	public CanonicalInterpolantAutomatonBuilder(
 			TraceChecker traceChecker,
-			List<IPredicate> stateSequence,
+			List<ProgramPoint> programPointSequence,
 			InCaReAlphabet<CodeBlock> alphabet,
 			SmtManager smtManager,
 			StateFactory<IPredicate> predicateFactory) {
-		super(traceChecker, stateSequence);
+		super(traceChecker, programPointSequence);
 		m_IA = new NestedWordAutomaton<CodeBlock, IPredicate>(
 				alphabet.getInternalAlphabet(),
 				alphabet.getCallAlphabet(),

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.BestApproximationDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.EagerInterpolantAutomaton;
@@ -53,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 
@@ -205,6 +208,15 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	}
 	
 	
+	private List<ProgramPoint> extractProgramPoints() {
+		ArrayList<IPredicate> predicateSequence = ((NestedRun<CodeBlock, IPredicate>) m_Counterexample).getStateSequence();
+		ArrayList<ProgramPoint> result = new ArrayList<>();
+		for (IPredicate p : predicateSequence) {
+			result.add(((ISLPredicate) p).getProgramPoint());
+		}
+		return result;
+	}
+	
 
 	
 	@Override
@@ -215,14 +227,17 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		{
 			CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(
 					m_TraceChecker, 
-					((NestedRun<CodeBlock, IPredicate>) m_Counterexample).getStateSequence(), 
+					extractProgramPoints(), 
 					new InCaReAlphabet<CodeBlock>(m_Abstraction), 
 					m_SmtManager, 
 					m_PredicateFactoryInterpolantAutomata);
 			iab.analyze();
 			m_InterpolAutomaton = iab.getInterpolantAutomaton();
 			s_Logger.info("Interpolatants " + m_InterpolAutomaton.getStates());
-			m_CegarLoopBenchmark.addBackwardCoveringInformation(iab.getBackwardCoveringInformation());
+			
+//			m_CegarLoopBenchmark.addBackwardCoveringInformation(iab.getBackwardCoveringInformation());
+			BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(m_TraceChecker);
+			m_CegarLoopBenchmark.addBackwardCoveringInformation(bci);
 		}
 		break;
 		case SINGLETRACE:{
