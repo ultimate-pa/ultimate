@@ -25,9 +25,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
-import java.util.Collection;
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 
 
@@ -37,58 +34,6 @@ public interface INestedWordAutomatonOldApi<LETTER,STATE>
 
 
 	
-	/**
-	 * Returns the set of states of this automaton. <b>Use with caution!</b>
-	 * Some implementations (e.g., automaton which represents result of
-	 * a complementation) construct their set of states on the fly.
-	 */
-	public Collection<STATE> getStates();
-	
-	/**
-	 * Returns the set of initial states. 
-	 */
-	public Collection<STATE> getInitialStates();
-	
-	
-	/**
-	 * Returns the set of states of this automaton. <b>Use with caution!</b>
-	 * Some implementations (e.g., automaton which represents result of
-	 * a complementation) construct their set of states on the fly. Use the
-	 * {@link isFinal} method to check if a specific state is final. 	
-	 */
-	public Collection<STATE> getFinalStates();
-
-
-	
-	
-
-
-	/**
-	 * @return All letters a such that state has an incoming internal 
-	 * transition labeled with letter a.
-	 */
-	public Set<LETTER> lettersInternalIncoming(STATE state);
-	
-	/**
-	 * @return All letters a such that state has an incoming call 
-	 * transition labeled with letter a.
-	 */	
-	public Set<LETTER> lettersCallIncoming(STATE state);
-	
-	/**
-	 * @return All letters a such that state has an incoming return 
-	 * transition labeled with letter a.
-	 */		
-	public Set<LETTER> lettersReturnIncoming(STATE state);
-	
-	/**
-	 * @return All letters a such that state occurs as hierarchical predecessor
-	 * in a return transition labeled with letter a.
-	 */
-	public Set<LETTER> lettersReturnSummary(STATE state);
-
-	
-
 	/**
 	 * @return All states succ such that state has an outgoing 
 	 * internal transition (state, letter, succ)

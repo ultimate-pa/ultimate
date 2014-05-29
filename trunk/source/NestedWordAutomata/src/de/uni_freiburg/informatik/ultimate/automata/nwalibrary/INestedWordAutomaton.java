@@ -30,17 +30,49 @@ import java.util.Set;
 
 public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomatonSimple<LETTER, STATE> {
 
-	public abstract Collection<STATE> getStates();
+	/**
+	 * Returns the set of states of this automaton. <b>Use with caution!</b>
+	 * Some implementations (e.g., automaton which represents result of
+	 * a complementation) construct their set of states on the fly.
+	 */
+	public Collection<STATE> getStates();
 
-	public abstract Collection<STATE> getInitialStates();
+	/**
+	 * Returns the set of initial states. 
+	 */
+	public Collection<STATE> getInitialStates();
+	
+	/**
+	 * Returns the set of states of this automaton. <b>Use with caution!</b>
+	 * Some implementations (e.g., automaton which represents result of
+	 * a complementation) construct their set of states on the fly. Use the
+	 * {@link isFinal} method to check if a specific state is final. 	
+	 */
+	public Collection<STATE> getFinalStates();
 
-	public abstract Set<LETTER> lettersInternalIncoming(STATE state);
-
-	public abstract Set<LETTER> lettersCallIncoming(STATE state);
-
-	public abstract Set<LETTER> lettersReturnIncoming(STATE state);
-
-	public abstract Set<LETTER> lettersReturnSummary(STATE state);
+	/**
+	 * @return All letters a such that state has an incoming internal 
+	 * transition labeled with letter a.
+	 */
+	public Set<LETTER> lettersInternalIncoming(STATE state);
+	
+	/**
+	 * @return All letters a such that state has an incoming call 
+	 * transition labeled with letter a.
+	 */	
+	public Set<LETTER> lettersCallIncoming(STATE state);
+	
+	/**
+	 * @return All letters a such that state has an incoming return 
+	 * transition labeled with letter a.
+	 */		
+	public Set<LETTER> lettersReturnIncoming(STATE state);
+	
+	/**
+	 * @return All letters a such that state occurs as hierarchical predecessor
+	 * in a return transition labeled with letter a.
+	 */
+	public Set<LETTER> lettersReturnSummary(STATE state);
 	
 	/**
 	 * @return All states hier such that state has an outgoing 
