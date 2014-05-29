@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -88,6 +89,16 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				". Found accepting run of length " + m_acceptingRun.getLength();
 		}
 	}
+	
+	/**
+	 * Set of states in which the run we are searching has to begin.
+	 */
+	private final Collection<STATE> m_StartStates;
+
+	/**
+	 * Set of states in which the run we are searching has to end.
+	 */
+	private final Collection<STATE> m_GoalStates;
 	
 	/**
 	 * INestedWordAutomaton for which we check emptiness.
@@ -213,11 +224,35 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private NestedRun<LETTER,STATE> m_ReconstructionOneStepRun;
 
 	private STATE m_ReconstructionPredK;
+
+
 	
-	
+	/**
+	 * Default constructor. Here we search a run from the initial states
+	 * of the automaton to the final states of the automaton.
+	 */
 	public IsEmpty(INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
 		m_nwa = nwa;
 		dummyEmptyStackState = m_nwa.getEmptyStackState();
+		m_StartStates = m_nwa.getInitialStates();
+		m_GoalStates = m_nwa.getFinalStates();
+		s_Logger.info(startMessage());
+		m_acceptingRun = getAcceptingRun();
+		s_Logger.info(exitMessage());
+	}
+	
+
+	/**
+	 * Constructor that is not restricted to emptiness checks. The set of
+	 * startStates defines where the run that we search has to start. The set
+	 * of goalStates defines where the run that we search has to end.
+	 */
+	public IsEmpty(INestedWordAutomatonOldApi<LETTER,STATE> nwa, 
+			Set<STATE> startStates, Set<STATE> goalStates) {
+		m_nwa = nwa;
+		dummyEmptyStackState = m_nwa.getEmptyStackState();
+		m_StartStates = m_nwa.getInitialStates();
+		m_GoalStates = m_nwa.getFinalStates();
 		s_Logger.info(startMessage());
 		m_acceptingRun = getAcceptingRun();
 		s_Logger.info(exitMessage());
@@ -323,7 +358,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * null if the automaton does not accept any nested word.
 	 */
 	private NestedRun<LETTER,STATE> getAcceptingRun() {
-		for (STATE state : m_nwa.getInitialStates()) {
+		for (STATE state : m_StartStates) {
 			enqueueAndMarkVisited(state, dummyEmptyStackState);
 		}
 	
@@ -332,7 +367,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			STATE state = pair.getUp();
 			STATE stateK = pair.getDown();
 			
-			if (m_nwa.isFinal(state)) {
+			if (m_GoalStates.contains(state)) {
 				return constructRun(state, stateK);
 			}
 			
@@ -574,7 +609,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private NestedRun<LETTER,STATE> constructRun(STATE state, STATE stateK) {
 //		s_Logger.debug("Reconstruction from " + state + " " + stateK);
 		NestedRun<LETTER,STATE> run = new NestedRun<LETTER,STATE>(state);
-		while (!m_nwa.getInitialStates().contains(state) ||
+		while (!m_StartStates.contains(state) ||
 				!m_reconstructionStack.isEmpty()) {
 			if (computeInternalSubRun(state, stateK)) {
 			}
