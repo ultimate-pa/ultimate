@@ -2,7 +2,7 @@
 
 if [ "$1" = "terminator-ea" ]; then
 echo "buchiAutomizer for folder $2"
-trunk/examples/toolchains/AutomizerTestDir.sh -ea 120 "$2" \
+trunk/examples/toolchains/AutomizerTestDir.sh -ea 900 "$2" \
  "BuchiAutomizerBplWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/staged300-Z3.epf"
 fi
 
