@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 
 public class TAPreferences {
@@ -26,9 +27,7 @@ public class TAPreferences {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
 	}
 
-	public enum InterpolantAutomaton {
-		CANONICAL, TOTALINTERPOLATION, SINGLETRACE, TWOTRACK
-	}
+
 
 	public enum Determinization {
 		POWERSET, BESTAPPROXIMATION, SELFLOOP, STRONGESTPOST, EAGERPOST, LAZYPOST, NEWEAGER, CODENAME_PROJECT_BELLWALD

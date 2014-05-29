@@ -8,7 +8,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Determinization;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
 
 public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceInitializer {
 
@@ -136,6 +135,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_simplifyCodeBlocks = false;
 	public static final boolean DEF_PreserveGotoEdges = false;
 
+	public enum InterpolantAutomaton {
+		CANONICAL, TOTALINTERPOLATION, SINGLETRACE, TWOTRACK
+	}
+	
 	public enum INTERPOLATION {
 		Craig_NestedInterpolation, Craig_TreeInterpolation, ForwardPredicates, BackwardPredicates, FPandBP
 	}
