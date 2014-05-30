@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.In
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.StrongestPostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.CanonicalInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.StraightLineInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.TotalInterpolationAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.TwoTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -251,6 +252,16 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					new TwoTrackInterpolantAutomatonBuilder(m_Counterexample,
 							m_SmtManager, m_TraceChecker, m_Abstraction);
 			m_InterpolAutomaton = ttiab.getResult();
+		}
+		case TOTALINTERPOLATION2:
+		{
+			INestedWordAutomaton<CodeBlock, IPredicate> abstraction = (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;
+			NestedRun<CodeBlock, IPredicate> counterexample = (NestedRun<CodeBlock, IPredicate>) m_Counterexample;
+			TotalInterpolationAutomatonBuilder iab = new TotalInterpolationAutomatonBuilder(
+					abstraction, counterexample.getStateSequence(), m_TraceChecker, 
+					m_SmtManager, m_PredicateFactoryInterpolantAutomata, 
+					m_RootNode.getRootAnnot().getModGlobVarManager(), m_Interpolation);
+			m_InterpolAutomaton = iab.getResult();
 		}
 		break;
 		}

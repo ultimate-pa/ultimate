@@ -129,11 +129,13 @@ public class TotalInterpolationAutomatonBuilder {
 			Transitionlet<CodeBlock, IPredicate> transition,
 			IPredicate succ) throws OperationCanceledException {
 		if (m_Annotated.contains(succ)) {
+			IPredicate predItp = m_Epimorphism.getMapping(p);
+			IPredicate succItp = m_Epimorphism.getMapping(succ);
 			// this is a one-step path, no need to call TraceChecker
-			if (interpolantAutomatonContainsTransition(p, transition)) {
+			if (interpolantAutomatonContainsTransition(predItp, transition, succItp)) {
 				// do nothing, transition is already contained
 			} else {
-				checkRunOfLenthOne(p, transition, succ);
+				checkRunOfLenthOne(predItp, transition, succItp);
 			}
 		} else {
 			NestedRun<CodeBlock, IPredicate> runStartingInSucc = findRun(succ, m_Annotated);
@@ -146,24 +148,26 @@ public class TotalInterpolationAutomatonBuilder {
 		
 	}
 	
-	private boolean interpolantAutomatonContainsTransition(IPredicate p,
-			Transitionlet<CodeBlock, IPredicate> transition) {
+	private boolean interpolantAutomatonContainsTransition(IPredicate predItp,
+			Transitionlet<CodeBlock, IPredicate> transition, IPredicate succItp) {
 		if (transition instanceof OutgoingInternalTransition) {
 			OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans = 
 					(OutgoingInternalTransition<CodeBlock, IPredicate>) transition;
-			return m_IA.succInternal(p, internalTrans.getLetter()).contains(internalTrans.getSucc());
+			return m_IA.succInternal(predItp, internalTrans.getLetter()).contains(succItp);
 		} else if (transition instanceof OutgoingCallTransition) {
 			OutgoingCallTransition<CodeBlock, IPredicate> callTrans = 
 					(OutgoingCallTransition<CodeBlock, IPredicate>) transition;
-			return m_IA.succCall(p, callTrans.getLetter()).contains(callTrans.getSucc());
+			return m_IA.succCall(predItp, callTrans.getLetter()).contains(succItp);
 		} else if (transition instanceof OutgoingReturnTransition) {
 			OutgoingReturnTransition<CodeBlock, IPredicate> returnTrans = 
 					(OutgoingReturnTransition<CodeBlock, IPredicate>) transition;
-			return m_IA.succReturn(p, returnTrans.getHierPred(), returnTrans.getLetter()).contains(returnTrans.getSucc());
+			IPredicate hierPredItp = m_Epimorphism.getMapping(returnTrans.getHierPred());
+			return m_IA.succReturn(predItp, hierPredItp, returnTrans.getLetter()).contains(succItp);
 		} else if (transition instanceof SummaryReturnTransition) {
 			SummaryReturnTransition<CodeBlock, IPredicate> summaryTrans = 
 					(SummaryReturnTransition<CodeBlock, IPredicate>) transition;
-			return m_IA.succReturn(summaryTrans.getLinPred(), p, summaryTrans.getLetter()).contains(summaryTrans.getSucc());
+			IPredicate linPredItp = m_Epimorphism.getMapping(summaryTrans.getLinPred());
+			return m_IA.succReturn(linPredItp, predItp, summaryTrans.getLetter()).contains(succItp);
 		} else {
 			throw new AssertionError("unsupported" + transition.getClass());
 		}
@@ -180,13 +184,15 @@ public class TotalInterpolationAutomatonBuilder {
 					(OutgoingCallTransition<CodeBlock, IPredicate>) transition;
 			return new NestedRun<>(p, callTrans.getLetter(), NestedWord.PLUS_INFINITY, callTrans.getSucc());
 		} else if (transition instanceof OutgoingReturnTransition) {
-			OutgoingReturnTransition<CodeBlock, IPredicate> returnTrans = 
-					(OutgoingReturnTransition<CodeBlock, IPredicate>) transition;
-			return new NestedRun<>(p, returnTrans.getLetter(), NestedWord.MINUS_INFINITY, returnTrans.getSucc());
+			throw new UnsupportedOperationException("not yet implemented");
+//			OutgoingReturnTransition<CodeBlock, IPredicate> returnTrans = 
+//					(OutgoingReturnTransition<CodeBlock, IPredicate>) transition;
+//			return new NestedRun<>(p, returnTrans.getLetter(), NestedWord.MINUS_INFINITY, returnTrans.getSucc());
 		} else if (transition instanceof SummaryReturnTransition) {
-			SummaryReturnTransition<CodeBlock, IPredicate> summaryTrans = 
-					(SummaryReturnTransition<CodeBlock, IPredicate>) transition;
-			return new NestedRun<>(summaryTrans.getLinPred(), summaryTrans.getLetter(), NestedWord.MINUS_INFINITY, summaryTrans.getSucc());
+			throw new UnsupportedOperationException("not yet implemented");
+//			SummaryReturnTransition<CodeBlock, IPredicate> summaryTrans = 
+//					(SummaryReturnTransition<CodeBlock, IPredicate>) transition;
+//			return new NestedRun<>(summaryTrans.getLinPred(), summaryTrans.getLetter(), NestedWord.MINUS_INFINITY, summaryTrans.getSucc());
 		} else {
 			throw new AssertionError("unsupported" + transition.getClass());
 		}
@@ -194,44 +200,46 @@ public class TotalInterpolationAutomatonBuilder {
 	}
 
 
-	private void checkRunOfLenthOne(IPredicate p,
-			Transitionlet<CodeBlock, IPredicate> transition, IPredicate succ) {
+	private void checkRunOfLenthOne(IPredicate predItp,
+			Transitionlet<CodeBlock, IPredicate> transition, IPredicate succItp) {
 		assert m_EdgeChecker.isAssertionStackEmpty();
 		m_EdgeChecker.assertCodeBlock(transition.getLetter());
 		if (transition instanceof OutgoingInternalTransition) {
 			OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans = 
 					(OutgoingInternalTransition<CodeBlock, IPredicate>) transition;
-			m_EdgeChecker.assertPrecondition(p);
-			LBool lbool = m_EdgeChecker.postInternalImplies(internalTrans.getSucc());
+			m_EdgeChecker.assertPrecondition(predItp);
+			LBool lbool = m_EdgeChecker.postInternalImplies(succItp);
 			if (lbool == LBool.UNSAT) {
-				m_IA.addInternalTransition(p, internalTrans.getLetter(), internalTrans.getSucc());
+				m_IA.addInternalTransition(predItp, internalTrans.getLetter(), succItp);
 			}
 		} else if (transition instanceof OutgoingCallTransition) {
 			OutgoingCallTransition<CodeBlock, IPredicate> callTrans = 
 					(OutgoingCallTransition<CodeBlock, IPredicate>) transition;
-			m_EdgeChecker.assertPrecondition(p);
-			LBool lbool = m_EdgeChecker.postCallImplies(callTrans.getSucc());
+			m_EdgeChecker.assertPrecondition(predItp);
+			LBool lbool = m_EdgeChecker.postCallImplies(succItp);
 			if (lbool == LBool.UNSAT) {
-				m_IA.addCallTransition(p, callTrans.getLetter(), callTrans.getSucc());
+				m_IA.addCallTransition(predItp, callTrans.getLetter(), succItp);
 			}
 		} else if (transition instanceof OutgoingReturnTransition) {
 			OutgoingReturnTransition<CodeBlock, IPredicate> returnTrans = 
 					(OutgoingReturnTransition<CodeBlock, IPredicate>) transition;
-			m_EdgeChecker.assertPrecondition(p);
-			m_EdgeChecker.assertHierPred(returnTrans.getHierPred());
-			LBool lbool = m_EdgeChecker.postReturnImplies(returnTrans.getSucc());
+			IPredicate hierPredItp = m_Epimorphism.getMapping(returnTrans.getHierPred());
+			m_EdgeChecker.assertPrecondition(predItp);
+			m_EdgeChecker.assertHierPred(hierPredItp);
+			LBool lbool = m_EdgeChecker.postReturnImplies(succItp);
 			if (lbool == LBool.UNSAT) {
-				m_IA.addReturnTransition(p, returnTrans.getHierPred(), returnTrans.getLetter(), returnTrans.getSucc());
+				m_IA.addReturnTransition(predItp, hierPredItp, returnTrans.getLetter(), succItp);
 			}
 			m_EdgeChecker.unAssertHierPred();
 		} else if (transition instanceof SummaryReturnTransition) {
 			SummaryReturnTransition<CodeBlock, IPredicate> summaryTrans = 
 					(SummaryReturnTransition<CodeBlock, IPredicate>) transition;
-			m_EdgeChecker.assertPrecondition(summaryTrans.getLinPred());
-			m_EdgeChecker.assertHierPred(p);
-			LBool lbool = m_EdgeChecker.postReturnImplies(summaryTrans.getSucc());
+			IPredicate linPredItp = m_Epimorphism.getMapping(summaryTrans.getLinPred());
+			m_EdgeChecker.assertPrecondition(linPredItp);
+			m_EdgeChecker.assertHierPred(predItp);
+			LBool lbool = m_EdgeChecker.postReturnImplies(succItp);
 			if (lbool == LBool.UNSAT) {
-				m_IA.addReturnTransition(summaryTrans.getLinPred(), p, summaryTrans.getLetter(), summaryTrans.getSucc());
+				m_IA.addReturnTransition(linPredItp, predItp, summaryTrans.getLetter(), succItp);
 			}
 			m_EdgeChecker.unAssertHierPred();
 		} else {
@@ -264,7 +272,7 @@ public class TotalInterpolationAutomatonBuilder {
 
 	private void checkRun(NestedRun<CodeBlock, IPredicate> run) {
 		IPredicate first = run.getStateAtPosition(0);
-		IPredicate last = run.getStateAtPosition(run.getLength());
+		IPredicate last = run.getStateAtPosition(run.getLength()-1);
 		IPredicate precondition = m_Epimorphism.getMapping(first);
 		IPredicate postcondition = m_Epimorphism.getMapping(last);
 		SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
@@ -273,6 +281,28 @@ public class TotalInterpolationAutomatonBuilder {
 		if (tc.isCorrect() == LBool.UNSAT) {
 			tc.computeInterpolants(new TraceChecker.AllIntegers(), m_PredicateUnifier, m_Interpolation);
 			addInterpolants(run.getStateSequence(), tc.getInterpolants());
+			addTransitions(run.getStateSequence(), tc);
+		} else {
+			tc.finishTraceCheckWithoutInterpolantsOrProgramExecution();
+		}
+	}
+
+
+	private void addTransitions(ArrayList<IPredicate> stateSequence,
+			TraceChecker tc) {
+		InterpolantsPreconditionPostcondition ipp = new InterpolantsPreconditionPostcondition(tc);
+		NestedWord<CodeBlock> nw = NestedWord.nestedWord(tc.getTrace());
+		for (int i=0; i<nw.length(); i++) {
+			if (nw.isInternalPosition(i)) {
+				m_IA.addInternalTransition(ipp.getInterpolant(i), nw.getSymbol(i), ipp.getInterpolant(i+1));
+			} else if (nw.isCallPosition(i)) {
+				m_IA.addCallTransition(ipp.getInterpolant(i), nw.getSymbol(i), ipp.getInterpolant(i+1));
+			} else if (nw.isPendingReturn(i)) {
+				int callPredPos = nw.getCallPosition(i);
+				m_IA.addReturnTransition(ipp.getInterpolant(i), ipp.getInterpolant(callPredPos), nw.getSymbol(i), ipp.getInterpolant(i+1));
+			} else {
+				throw new AssertionError();
+			}
 		}
 	}
 
@@ -282,6 +312,9 @@ public class TotalInterpolationAutomatonBuilder {
 		for (int i=0; i<interpolants.length; i++) {
 			IPredicate state = stateSequence.get(i + 1);
 			IPredicate interpolant = interpolants[i];
+			if (!m_IA.getStates().contains(interpolant)) {
+				m_IA.addState(false, false, interpolant);
+			}
 			m_Annotated.add(state);
 			m_Epimorphism.insert(state, interpolant);
 			m_Worklist.add(state);
@@ -291,8 +324,15 @@ public class TotalInterpolationAutomatonBuilder {
 
 	private NestedRun<CodeBlock, IPredicate> findRun(IPredicate p,
 			Set<IPredicate> annotated) throws OperationCanceledException {
-		return (new IsEmpty<>(m_IA, Collections.singleton(p), m_Annotated)).getNestedRun();
+		return (new IsEmpty<CodeBlock, IPredicate>(m_Abstraction, Collections.singleton(p), m_Annotated)).getNestedRun();
 	}
+
+
+	public NestedWordAutomaton<CodeBlock, IPredicate> getResult() {
+		return m_IA;
+	}
+	
+	
 
 
 //	private void startDfs(IPredicate state,

@@ -136,7 +136,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_PreserveGotoEdges = false;
 
 	public enum InterpolantAutomaton {
-		CANONICAL, TOTALINTERPOLATION, SINGLETRACE, TWOTRACK
+		CANONICAL, TOTALINTERPOLATION, SINGLETRACE, TWOTRACK, TOTALINTERPOLATION2
 	}
 	
 	public enum INTERPOLATION {
