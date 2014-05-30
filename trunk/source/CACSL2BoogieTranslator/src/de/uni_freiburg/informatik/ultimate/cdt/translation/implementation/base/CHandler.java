@@ -474,8 +474,9 @@ public class CHandler implements ICHandler {
 			decl.add(d);
 		}
 		decl.addAll(mAxioms);
-		if (!functionHandler.isEveryCalledProcedureDeclared()) {
-			String msg = "A method was called but never declared!";
+		String undeclaredFunction = functionHandler.isEveryCalledProcedureDeclared();
+		if (undeclaredFunction != null) {
+			String msg = "Following method was called but never declared! " + undeclaredFunction;
 			throw new IncorrectSyntaxException(loc, msg);
 		}
 

@@ -414,15 +414,16 @@ public class FunctionHandler {
 	 * Checks, whether all procedures that are being called in C, were
 	 * eventually declared within the C program.
 	 * 
-	 * @return true iff all called procedures were declared.
+	 * @return null if all called procedures were declared, otherwise the 
+	 * identifier of one procedure that was called but not declared.
 	 */
-	public boolean isEveryCalledProcedureDeclared() {
+	public String isEveryCalledProcedureDeclared() {
 		for (String s : methodsCalledBeforeDeclared) {
 			if (!procedures.containsKey(s)) {
-				return false;
+				return s;
 			}
 		}
-		return true;
+		return null;
 	}
 
 	/**
@@ -440,7 +441,7 @@ public class FunctionHandler {
 	 */
 	public ArrayList<Declaration> calculateTransitiveModifiesClause(
 			Dispatcher main, MemoryHandler memoryHandler) {
-		assert isEveryCalledProcedureDeclared();
+		assert isEveryCalledProcedureDeclared() == null;
 		// calculate SCCs and a mapping for each methodId to its SCC
 		// O(|edges| + |calls|)
 		LinkedHashSet<LinkedHashSet<String>> sccs = new TarjanSCC().getSCCs(callGraph);
