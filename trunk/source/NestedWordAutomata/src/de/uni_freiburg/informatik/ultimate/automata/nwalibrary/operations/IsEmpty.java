@@ -39,9 +39,12 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -103,7 +106,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	/**
 	 * INestedWordAutomaton for which we check emptiness.
 	 */
-	INestedWordAutomatonOldApi<LETTER,STATE> m_nwa;
+	INestedWordAutomaton<LETTER,STATE> m_nwa;
 	
 	NestedRun<LETTER,STATE> m_acceptingRun;
 	
@@ -231,7 +234,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * Default constructor. Here we search a run from the initial states
 	 * of the automaton to the final states of the automaton.
 	 */
-	public IsEmpty(INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
+	public IsEmpty(INestedWordAutomaton<LETTER,STATE> nwa) {
 		m_nwa = nwa;
 		dummyEmptyStackState = m_nwa.getEmptyStackState();
 		m_StartStates = m_nwa.getInitialStates();
@@ -247,12 +250,14 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * startStates defines where the run that we search has to start. The set
 	 * of goalStates defines where the run that we search has to end.
 	 */
-	public IsEmpty(INestedWordAutomatonOldApi<LETTER,STATE> nwa, 
+	public IsEmpty(INestedWordAutomaton<LETTER,STATE> nwa, 
 			Set<STATE> startStates, Set<STATE> goalStates) {
 		m_nwa = nwa;
+		assert m_nwa.getStates().containsAll(startStates) : "unknown states";
+		assert m_nwa.getStates().containsAll(goalStates) : "unknown states";
 		dummyEmptyStackState = m_nwa.getEmptyStackState();
-		m_StartStates = m_nwa.getInitialStates();
-		m_GoalStates = m_nwa.getFinalStates();
+		m_StartStates = startStates;
+		m_GoalStates = goalStates;
 		s_Logger.info(startMessage());
 		m_acceptingRun = getAcceptingRun();
 		s_Logger.info(exitMessage());
@@ -373,42 +378,45 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			
 			processSummaries(state,stateK);
 			
-			for (LETTER symbol : m_nwa.lettersInternal(state)) {
-				for (STATE succ : m_nwa.succInternal(state,symbol)) {
-					if(!wasVisited(succ, stateK)) {
-						addRunInformationInternal(
-											succ,stateK,symbol,state,stateK);
-						enqueueAndMarkVisited(succ, stateK);
-					}
-					
+			for (OutgoingInternalTransition<LETTER, STATE> internalTransition : 
+											m_nwa.internalSuccessors(state)) {
+				LETTER symbol = internalTransition.getLetter();
+				STATE succ = internalTransition.getSucc();
+				if(!wasVisited(succ, stateK)) {
+					addRunInformationInternal(
+										succ,stateK,symbol,state,stateK);
+					enqueueAndMarkVisited(succ, stateK);
 				}
 			}
-			for (LETTER symbol : m_nwa.lettersCall(state)) {
-				for (STATE succ : m_nwa.succCall(state,symbol)) {
-					//add these information even in already visited
+
+			for (OutgoingCallTransition<LETTER, STATE> callTransition : 
+												m_nwa.callSuccessors(state)) {
+				LETTER symbol = callTransition.getLetter();
+				STATE succ = callTransition.getSucc();
+				//add these information even in already visited
 //remove this line					addCallStatesOfCallState(state, stateK);
-					addRunInformationCall(succ, state, symbol, state, stateK);
-					if(!wasVisited(succ, state)) {
-						enqueueAndMarkVisitedCall(succ, state);
-					}
-				}
+				addRunInformationCall(succ, state, symbol, state, stateK);
+				if(!wasVisited(succ, state)) {
+					enqueueAndMarkVisitedCall(succ, state);
+				}				
 			}
+			
 			if (stateK == m_nwa.getEmptyStackState()) {
 				//there is no return transition
 				continue;
 			}
-			for (LETTER symbol : m_nwa.lettersReturn(state)) {
-				for (STATE succ : m_nwa.succReturn(state,stateK,symbol)) {
-					for (STATE stateKK : 
-											getCallStatesOfCallState(stateK) ) {
-						addSummary(stateK, succ, state, symbol);
-						if(!wasVisited(succ, stateKK)) {
-							enqueueAndMarkVisited(succ, stateKK);
-							addRunInformationReturn(
-										succ, stateKK, symbol, state, stateK);
-						}
-						
+			
+			for (OutgoingReturnTransition<LETTER, STATE> returnTransition : 
+							m_nwa.returnSuccessorsGivenHier(state, stateK)) {
+				LETTER symbol = returnTransition.getLetter();
+				STATE succ = returnTransition.getSucc();
+				for (STATE stateKK : getCallStatesOfCallState(stateK) ) {
+					addSummary(stateK, succ, state, symbol);
+					if(!wasVisited(succ, stateKK)) {
+						enqueueAndMarkVisited(succ, stateKK);
+						addRunInformationReturn(succ, stateKK, symbol, state, stateK);
 					}
+
 				}
 			}
 		}
