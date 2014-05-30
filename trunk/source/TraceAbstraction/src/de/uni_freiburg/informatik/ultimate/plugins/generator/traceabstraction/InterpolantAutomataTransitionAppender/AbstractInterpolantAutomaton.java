@@ -108,8 +108,11 @@ public abstract class AbstractInterpolantAutomaton implements
 				m_EdgeChecker.assertCodeBlock(symbol);
 				m_AssertedCodeBlock = symbol;
 			}
-			m_EdgeChecker.assertPrecondition(state);
+			LBool quickCheck = m_EdgeChecker.assertPrecondition(state);
 			m_AssertedState = state;
+			if (quickCheck == LBool.UNSAT) {
+				return quickCheck;
+			}
 		}
 		assert m_AssertedState == state && m_AssertedCodeBlock == symbol;
 		LBool result = m_EdgeChecker.postInternalImplies(succCand);
@@ -133,8 +136,11 @@ public abstract class AbstractInterpolantAutomaton implements
 				m_EdgeChecker.assertCodeBlock(symbol);
 				m_AssertedCodeBlock = symbol;
 			}
-			m_EdgeChecker.assertPrecondition(state);
+			LBool quickCheck = m_EdgeChecker.assertPrecondition(state);
 			m_AssertedState = state;
+			if (quickCheck == LBool.UNSAT) {
+				return quickCheck;
+			}
 		}
 		assert m_AssertedState == state && m_AssertedCodeBlock == symbol;
 		LBool result = m_EdgeChecker.postCallImplies(succCand);
@@ -158,11 +164,17 @@ public abstract class AbstractInterpolantAutomaton implements
 					m_EdgeChecker.assertCodeBlock(symbol);
 					m_AssertedCodeBlock = symbol;
 				}
-				m_EdgeChecker.assertPrecondition(state);
+				LBool quickCheck = m_EdgeChecker.assertPrecondition(state);
 				m_AssertedState = state;
+				if (quickCheck == LBool.UNSAT) {
+					return quickCheck;
+				}
 			}
-			m_EdgeChecker.assertHierPred(hier);
+			LBool quickCheck = m_EdgeChecker.assertHierPred(hier);
 			m_AssertedHier = hier;
+			if (quickCheck == LBool.UNSAT) {
+				return quickCheck;
+			}
 		}
 		assert m_AssertedState == state && m_AssertedHier == hier && m_AssertedCodeBlock == symbol;
 		LBool result = m_EdgeChecker.postReturnImplies(succCand);
