@@ -323,7 +323,7 @@ public class TotalInterpolationAutomatonBuilder {
 				m_IA.addInternalTransition(ipp.getInterpolant(i), nw.getSymbol(i), ipp.getInterpolant(i+1));
 			} else if (nw.isCallPosition(i)) {
 				m_IA.addCallTransition(ipp.getInterpolant(i), nw.getSymbol(i), ipp.getInterpolant(i+1));
-			} else if (nw.isPendingReturn(i)) {
+			} else if (nw.isReturnPosition(i)) {
 				IPredicate hierPred;
 				if (nw.isPendingReturn(i)) {
 					hierPred = tc.getPendingContexts().get(i);
