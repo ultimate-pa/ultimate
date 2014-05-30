@@ -87,6 +87,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 		for (int i=0; i<m_OldRank.length; i++) {
 			formula = Util.and(m_Script, formula, oldVarEquality(m_OldRank[i], m_OldRankOldVar[i]));
 			inVars.put(m_OldRank[i], m_OldRank[i].getTermVariable());
+			outVars.put(m_OldRank[i], m_OldRank[i].getTermVariable());
 			outVars.put(m_OldRankOldVar[i], m_OldRankOldVar[i].getTermVariable());
 		}
 		Term closedFormula = TransFormula.computeClosedFormula(
@@ -116,6 +117,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 		for (int i=0; i<m_OldRank.length; i++) {
 			formula = Util.and(m_Script, formula, oldVarEquality(m_OldRank[i], m_OldRankOldVar[i]));
 			inVars.put(m_OldRankOldVar[i], m_OldRankOldVar[i].getTermVariable());
+			outVars.put(m_OldRankOldVar[i], m_OldRankOldVar[i].getTermVariable());
 			outVars.put(m_OldRank[i], m_OldRank[i].getTermVariable());
 		}
 		Term closedFormula = TransFormula.computeClosedFormula(

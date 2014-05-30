@@ -115,6 +115,7 @@ public class ModifiableGlobalVariableManager {
 				String nameOut = "old(" + modVar + ")" + "_Out";
 				TermVariable tvOut = m_Boogie2smt.getScript().variable(nameOut, sort);
 				glob2oldInVars.put(boogieVar, tvIn);
+				glob2oldOutVars.put(boogieVar, tvIn);
 				glob2oldOutVars.put(boogieOldVar, tvOut);
 				glob2oldAllVars.add(tvIn);
 				glob2oldAllVars.add(tvOut);
@@ -157,6 +158,7 @@ public class ModifiableGlobalVariableManager {
 				String nameOut = modVar + "_Out";
 				TermVariable tvOut = m_Boogie2smt.getScript().variable(nameOut, sort);
 				old2globInVars.put(boogieOldVar, tvIn);
+				old2globOutVars.put(boogieOldVar, tvIn);
 				old2globOutVars.put(boogieVar, tvOut);
 				old2globAllVars.add(tvIn);
 				old2globAllVars.add(tvOut);
