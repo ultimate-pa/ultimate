@@ -12,5 +12,7 @@
 int g;
 
 int main() {
-    //@ assert g == 0;
+	if (g != 0) {
+		//@ assert \false;
+	}
 }
