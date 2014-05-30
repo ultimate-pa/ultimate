@@ -183,8 +183,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 			TransFormula Return, 
 			TransFormula oldVarsAssignment,
 			RelevantTransFormulas rv,
-			int call_pos) {
-		TransFormula summaryOfInnerStatements = computeSummaryForInterproceduralTrace(trace, rv, 0, trace.length());
+			int call_pos,
+			int return_pos) {
+		TransFormula summaryOfInnerStatements = computeSummaryForInterproceduralTrace(trace, rv, call_pos+1, return_pos);
 		return TransFormula.sequentialCompositionWithCallAndReturn(m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF, Call, oldVarsAssignment, summaryOfInnerStatements, Return);
 	}
 	
@@ -196,7 +197,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		LinkedList<TransFormula> transformulasToComputeSummaryFor = new LinkedList<TransFormula>();
 		for (int i = start; i < end; i++) {
 			if (trace.getSymbol(i) instanceof Call) {
-				String proc = ((Call)trace.getSymbol(i)).getCallStatement().getMethodName();
+//				String proc = ((Call)trace.getSymbol(i)).getCallStatement().getMethodName();
 				if (!trace.isPendingCall(i)) {
 					// Case: non-pending call
 					// Compute a summary for Call and corresponding Return, but only if the position of the corresponding
@@ -624,25 +625,17 @@ public class TraceCheckerSpWp extends TraceChecker {
 						assert call_pos >= 0 && call_pos <= i : "Bad call position!";
 						callTF = rv.getLocalVarAssignment(call_pos);
 						globalVarsAssignments = rv.getGlobalVarAssignment(call_pos);
-						// 1st method of computing the predicate right before of the corresponding Call-statement.
-						// 1.1: Compute a summary of the statements from the beginning of the trace up to the Call-Statement, without including it.
-						// 1.2: Compute the caller predicate as the strongest post-condition of the precondition and the summary.
-						TransFormula summary = computeSummaryForInterproceduralTrace(trace, rv, 0, call_pos);
-						callerPred = m_PredicateTransformer.strongestPostcondition(m_Precondition, summary);
-						// If callerPred contains quantifiers, compute it via the 2nd method
-						if (callerPred instanceof BasicPredicateExplicitQuantifier) {
-							// 2nd method of computing the predicate right before of the corresponding Call-statement.
-							// 2.1: Compute a summary of the statements from the beginning of the trace up to the Call-Statement, without including it.
-							// 2.2: Compute the caller predicate as the strongest post-condition of the precondition and the summary.
-							summary = computeProcedureSummary(trace.getSubWord(call_pos, i), callTF,
-									rv.getFormulaFromNonCallPos(i+1), 
-									globalVarsAssignments,
-									rv, call_pos);
-							callerPred = m_PredicateTransformer.weakestPrecondition(
-									getBackwardPredicateAtPosition(i+1, tracePostcondition, true), 
-									summary);
-						}
-						callerPredicatesComputed.put(call_pos, callerPred);
+						oldVarAssignments = rv.getOldVarAssignment(call_pos);
+						// TODO: Documentation!
+						TransFormula summary = computeProcedureSummary(trace, callTF,
+								rv.getFormulaFromNonCallPos(i+1), 
+								oldVarAssignments,
+								rv, call_pos, i+1);
+						callerPred = m_PredicateTransformer.weakestPrecondition(
+								getBackwardPredicateAtPosition(i+1, tracePostcondition, true), 
+								summary);
+						callerPredicatesComputed.put(call_pos, m_PredicateUnifier.getOrConstructPredicate(callerPred.getFormula(),
+								callerPred.getVars(), callerPred.getProcedures()));
 					}
 					wp = m_PredicateTransformer.weakestPrecondition(
 							getBackwardPredicateAtPosition(i+1, tracePostcondition, true), 
