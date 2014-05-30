@@ -184,15 +184,13 @@ public class TotalInterpolationAutomatonBuilder {
 					(OutgoingCallTransition<CodeBlock, IPredicate>) transition;
 			return new NestedRun<>(p, callTrans.getLetter(), NestedWord.PLUS_INFINITY, callTrans.getSucc());
 		} else if (transition instanceof OutgoingReturnTransition) {
-			throw new UnsupportedOperationException("not yet implemented");
-//			OutgoingReturnTransition<CodeBlock, IPredicate> returnTrans = 
-//					(OutgoingReturnTransition<CodeBlock, IPredicate>) transition;
-//			return new NestedRun<>(p, returnTrans.getLetter(), NestedWord.MINUS_INFINITY, returnTrans.getSucc());
+			OutgoingReturnTransition<CodeBlock, IPredicate> returnTrans = 
+					(OutgoingReturnTransition<CodeBlock, IPredicate>) transition;
+			return new NestedRun<>(p, returnTrans.getLetter(), NestedWord.MINUS_INFINITY, returnTrans.getSucc());
 		} else if (transition instanceof SummaryReturnTransition) {
-			throw new UnsupportedOperationException("not yet implemented");
-//			SummaryReturnTransition<CodeBlock, IPredicate> summaryTrans = 
-//					(SummaryReturnTransition<CodeBlock, IPredicate>) transition;
-//			return new NestedRun<>(summaryTrans.getLinPred(), summaryTrans.getLetter(), NestedWord.MINUS_INFINITY, summaryTrans.getSucc());
+			SummaryReturnTransition<CodeBlock, IPredicate> summaryTrans = 
+					(SummaryReturnTransition<CodeBlock, IPredicate>) transition;
+			return new NestedRun<>(summaryTrans.getLinPred(), summaryTrans.getLetter(), NestedWord.MINUS_INFINITY, summaryTrans.getSucc());
 		} else {
 			throw new AssertionError("unsupported" + transition.getClass());
 		}
@@ -275,7 +273,8 @@ public class TotalInterpolationAutomatonBuilder {
 		IPredicate last = run.getStateAtPosition(run.getLength()-1);
 		IPredicate precondition = m_Epimorphism.getMapping(first);
 		IPredicate postcondition = m_Epimorphism.getMapping(last);
-		SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
+		SortedMap<Integer, IPredicate> pendingContexts = computePendingContexts(run);
+//		SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
 		TraceChecker tc = new TraceChecker(precondition, postcondition, 
 				pendingContexts , run.getWord(), m_SmtManager, m_ModifiedGlobals);
 		if (tc.isCorrect() == LBool.UNSAT) {
@@ -285,6 +284,33 @@ public class TotalInterpolationAutomatonBuilder {
 		} else {
 			tc.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 		}
+	}
+
+
+	private SortedMap<Integer, IPredicate> computePendingContexts(
+			NestedRun<CodeBlock, IPredicate> run) {
+		SortedMap<Integer, IPredicate> result = new TreeMap<>();
+		for (int pendingReturnPos : run.getWord().getPendingReturns().keySet()) {
+			IPredicate linPred = run.getStateAtPosition(pendingReturnPos);
+			Iterable<IPredicate> hierPreds = m_Abstraction.hierPred(linPred, run.getSymbol(pendingReturnPos));
+			IPredicate hierPred = getSomeAnnotatedState(hierPreds);
+			if (hierPred == null) {
+				throw new AssertionError("found nothing");
+			} else {
+				result.put(pendingReturnPos, m_Epimorphism.getMapping(hierPred));
+			}
+		}
+		return result;
+	}
+
+
+	private IPredicate getSomeAnnotatedState(Iterable<IPredicate> states) {
+		for (IPredicate state : states) {
+			if (m_Annotated.contains(state)) {
+				return state;
+			}
+		}
+		return null;
 	}
 
 
@@ -298,8 +324,14 @@ public class TotalInterpolationAutomatonBuilder {
 			} else if (nw.isCallPosition(i)) {
 				m_IA.addCallTransition(ipp.getInterpolant(i), nw.getSymbol(i), ipp.getInterpolant(i+1));
 			} else if (nw.isPendingReturn(i)) {
-				int callPredPos = nw.getCallPosition(i);
-				m_IA.addReturnTransition(ipp.getInterpolant(i), ipp.getInterpolant(callPredPos), nw.getSymbol(i), ipp.getInterpolant(i+1));
+				IPredicate hierPred;
+				if (nw.isPendingReturn(i)) {
+					hierPred = tc.getPendingContexts().get(i);
+				} else {
+					int callPredPos = nw.getCallPosition(i);
+					hierPred = ipp.getInterpolant(callPredPos);
+				}
+				m_IA.addReturnTransition(ipp.getInterpolant(i), hierPred, nw.getSymbol(i), ipp.getInterpolant(i+1));
 			} else {
 				throw new AssertionError();
 			}
