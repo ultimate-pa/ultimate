@@ -75,7 +75,7 @@ action code {:
 		Sort bool = parser.solver.sort("Bool");
 		Sort[] empty = new Sort[0];
 		for (long i = 1; i <= m_NumVars; ++i)
-			parser.solver.declareFun("" + i, empty, bool);
+			parser.solver.declareFun(String.valueOf(i), empty, bool);
 	}
 	
 	public void setNumCls(String ncls) {
@@ -100,7 +100,7 @@ action code {:
 					System.out.print("\nv ");
 				else
 					System.out.print(" ");
-				Term var = parser.solver.term(""+i);
+				Term var = parser.solver.term(String.valueOf(i));
 				Term val = m.evaluate(var);
 				System.out.print(val == trueTerm ? i : -i);
 			}

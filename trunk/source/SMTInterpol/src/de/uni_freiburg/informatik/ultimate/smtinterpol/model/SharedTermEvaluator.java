@@ -19,7 +19,6 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
@@ -30,17 +29,17 @@ public class SharedTermEvaluator {
 	public SharedTermEvaluator(LinArSolve la) {
 		mLa = la;
 	}
-	public Term evaluate(SharedTerm st, Theory t) {
+	public Rational evaluate(SharedTerm st, Theory t) {
 		if (st.validShared()) {
 			if (st.getLinVar() == null) {
 				SMTAffineTerm sat = SMTAffineTerm.create(st.getTerm());
 				assert sat.isConstant();
-				return sat.getConstant().toTerm(st.getSort());
+				return sat.getConstant();
 			}
 			Rational val = st.getFactor().mul(mLa.realValue(st.getLinVar())).
 				add(st.getOffset());
-			return val.toTerm(st.getSort());
+			return val;
 		}
-		return st.getTerm();
+		throw new InternalError("Not a valid shared term: " + st.getTerm());
 	}
 }

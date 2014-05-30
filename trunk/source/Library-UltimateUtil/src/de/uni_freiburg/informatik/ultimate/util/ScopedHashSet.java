@@ -26,23 +26,23 @@ import java.util.Set;
 
 public class ScopedHashSet<E> implements Set<E> {
 
-	private ScopedHashMap<E, Object> m_Backing;
+	private final ScopedHashMap<E, Object> mBacking;
 	
 	public ScopedHashSet() {
-		m_Backing = new ScopedHashMap<E, Object>();
+		mBacking = new ScopedHashMap<E, Object>();
 	}
 	
 	public void beginScope() {
-		m_Backing.beginScope();
+		mBacking.beginScope();
 	}
 	
 	public void endScope() {
-		m_Backing.endScope();
+		mBacking.endScope();
 	}
 	
 	@Override
 	public boolean add(E e) {
-		return m_Backing.put(e, this) == null;
+		return mBacking.put(e, this) == null;
 	}
 
 	@Override
@@ -56,12 +56,12 @@ public class ScopedHashSet<E> implements Set<E> {
 
 	@Override
 	public void clear() {
-		m_Backing.clear();
+		mBacking.clear();
 	}
 
 	@Override
 	public boolean contains(Object o) {
-		return m_Backing.get(o) == this;
+		return mBacking.get(o) == this;
 	}
 
 	@Override
@@ -75,25 +75,25 @@ public class ScopedHashSet<E> implements Set<E> {
 
 	@Override
 	public boolean isEmpty() {
-		return m_Backing.isEmpty();
+		return mBacking.isEmpty();
 	}
 	
 	public boolean isEmptyScope() {
-		return m_Backing.isEmptyScope();
+		return mBacking.isEmptyScope();
 	}
 
 	@Override
 	public Iterator<E> iterator() {
-		return m_Backing.keySet().iterator();
+		return mBacking.keySet().iterator();
 	}
 	
 	public Iterable<E> currentScope() {
-		return m_Backing.currentScopeKeys();
+		return mBacking.currentScopeKeys();
 	}
 
 	@Override
 	public boolean remove(Object o) {
-		return m_Backing.remove(o) != null;
+		return mBacking.remove(o) != null;
 	}
 
 	@Override
@@ -111,7 +111,7 @@ public class ScopedHashSet<E> implements Set<E> {
 
 	@Override
 	public int size() {
-		return m_Backing.size();
+		return mBacking.size();
 	}
 
 	@Override
@@ -137,6 +137,6 @@ public class ScopedHashSet<E> implements Set<E> {
 	}
 
 	public String toString() {
-		return m_Backing.keySet().toString();
+		return mBacking.keySet().toString();
 	}
 }

@@ -155,7 +155,7 @@ public interface IProofTracker {
 	 * @param res  The result of the rule.
 	 * @param rule The simplification rule applied.
 	 */
-	public void mod(SMTAffineTerm x, SMTAffineTerm y, SMTAffineTerm res, int rule);
+	public void mod(Term x, Term y, Term res, int rule);
 	/**
 	 * Track a divison simplification, i.e., a rewrite that evaluates
 	 * applications (div x y) where either y is 1 or -1, or x is constant.
@@ -164,7 +164,7 @@ public interface IProofTracker {
 	 * @param res  The result of the rule.
 	 * @param rule The simplification rule applied.
 	 */
-	public void div(SMTAffineTerm x, SMTAffineTerm y, SMTAffineTerm res, int rule);
+	public void div(Term x, Term y, Term res, int rule);
 	/**
 	 * Track a divisible-rewrite.  ((_ divisible n) x) ==> (= x (* n (div x n))).
 	 * @param divn The divisible-by-n symbol.
@@ -177,13 +177,13 @@ public interface IProofTracker {
 	 * @param arg The argument.
 	 * @param res The result.
 	 */
-	public void toInt(SMTAffineTerm arg, SMTAffineTerm res);
+	public void toInt(Term arg, Term res);
 	/**
 	 * Track a to_real simplification where the argument is constant.
 	 * @param arg The argument.
 	 * @param res The result.
 	 */
-	public void toReal(SMTAffineTerm arg, SMTAffineTerm res);
+	public void toReal(Term arg, Term res);
 	/**
 	 * Track an array rewrite.
 	 * @param args   The arguments of the original array.

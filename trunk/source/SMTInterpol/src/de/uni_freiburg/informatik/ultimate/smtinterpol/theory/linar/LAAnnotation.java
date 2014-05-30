@@ -19,6 +19,7 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -223,5 +224,19 @@ public class LAAnnotation implements IAnnotation {
 	
 	public boolean isUpper() {
 		return mIsUpper;
+	}
+	
+	private void collect(HashSet<Literal> lits, HashSet<LAAnnotation> visited) {
+		if (visited.add(this)) {
+			lits.addAll(mCoefficients.keySet());
+			for (LAAnnotation annot : mAuxAnnotations.keySet())
+				annot.collect(lits, visited);
+		}
+	}
+
+	public Literal[] collectLiterals() {
+		HashSet<Literal> lits = new HashSet<Literal>();
+		collect(lits, new HashSet<LAAnnotation>());
+		return lits.toArray(new Literal[lits.size()]);
 	}
 }

@@ -52,8 +52,15 @@ public class LoggingScript implements Script {
 	private final PrintTerm mTermPrinter = new PrintTerm();
 	
 	/**
+	 * Common subexpression elimination support if requeste by user. Will be
+	 * <code>null</code> if cse should not be performed.
+	 */
+	private final FormulaLet mLetter;
+
+	/**
 	 * Create a new script logging the commands by the user.  Most commands
-	 * are not supported, e.g., checkSat always returns unknown.
+	 * are not supported, e.g., checkSat always returns unknown.  Furthermore,
+	 * common subexpression elimination is not used in the output.
 	 * @param file      The name of the logging file (should end in .smt2).
 	 * @param autoFlush Automatically flush the output stream after every 
 	 *                  command.
@@ -63,10 +70,11 @@ public class LoggingScript implements Script {
 		throws FileNotFoundException {
 		this (new NoopScript(), file, autoFlush);
 	}
-	
+
 	/**
 	 * Create a new script logging the interaction between the user and the
-	 * wrapped script into a file.
+	 * wrapped script into a file.  This constructor sets up logging to not use
+	 * common subexpression elimination.
 	 * @param script    The wrapped script.
 	 * @param file      The name of the logging file (should end in .smt2).
 	 * @param autoFlush Automatically flush the output stream after every
@@ -74,6 +82,24 @@ public class LoggingScript implements Script {
 	 * @throws FileNotFoundException If the file cannot be opened.
 	 */
 	public LoggingScript(Script script, String file, boolean autoFlush)
+		throws FileNotFoundException {
+		this(script, file, autoFlush, false);
+	}
+
+	/**
+	 * Create a new script logging the interaction between the user and the
+	 * wrapped script into a file.  This constructor can be used to set up
+	 * logging using common subexpression elimination.
+	 * @param script    The wrapped script.
+	 * @param file      The name of the logging file (should end in .smt2).
+	 * @param autoFlush Automatically flush the output stream after every
+	 *                  command.
+	 * @param useCSE    Use common subexpression elimination in output
+	 *                  (introduces let terms)
+	 * @throws FileNotFoundException If the file cannot be opened.
+	 */
+	public LoggingScript(Script script, String file, boolean autoFlush,
+			boolean useCSE)
 		throws FileNotFoundException {
 		mScript = script;
 		OutputStream out;
@@ -85,8 +111,13 @@ public class LoggingScript implements Script {
 			out = new FileOutputStream(file);
 		mPw = new PrintWriter(
 				new BufferedWriter(new OutputStreamWriter(out)), autoFlush);
+		mLetter = useCSE ? new FormulaLet() : null;
 	}
-	
+
+	private final Term formatTerm(Term input) {
+		return mLetter == null ? input : new FormulaLet().let(input);
+	}
+
 	@Override
 	public void setLogic(String logic)
 		throws UnsupportedOperationException, SMTLIBException {
@@ -186,7 +217,7 @@ public class LoggingScript implements Script {
 		mPw.print(") ");
 		mTermPrinter.append(mPw, resultSort);
 		mPw.print(' ');
-		mTermPrinter.append(mPw, definition);
+		mTermPrinter.append(mPw, formatTerm(definition));
 		mPw.println(")");
 		mScript.defineFun(fun, params, resultSort, definition);
 	}
@@ -206,7 +237,7 @@ public class LoggingScript implements Script {
 	@Override
 	public LBool assertTerm(Term term) throws SMTLIBException {
 		mPw.print("(assert ");
-		mTermPrinter.append(mPw, term);
+		mTermPrinter.append(mPw, formatTerm(term));
 		mPw.println(")");
 		return mScript.assertTerm(term);
 	}
@@ -244,7 +275,7 @@ public class LoggingScript implements Script {
 		String sep = "";
 		for (Term t : terms) {
 			mPw.print(sep);
-			mTermPrinter.append(mPw, t);
+			mTermPrinter.append(mPw, formatTerm(t));
 			sep = " ";
 		}
 		mPw.println("))");

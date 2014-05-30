@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2012 University of Freiburg
+ * Copyright (C) 2014 University of Freiburg
  *
  * This file is part of SMTInterpol.
  *
@@ -18,57 +18,70 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
-/**
- * A finite sort interpretation.  This can be used for every uninterpreted sort
- * that does not occur under a quantifier.  Quantified formulas may axiomatize
- * homomorphisms between an uninterpreted sort and an infinite sort:
- * (forall ((i Int)(j Int)) (=> (distinct i j) (distinct (f i) (f j))))
- * @author Juergen Christ
- */
-public class FiniteSortInterpretation implements SortInterpretation {
+public class NumericSortInterpretation implements SortInterpretation {
 	
-	private int mSize = 0;
-	
-	@Override
-	public Term toSMTLIB(Theory t, Sort sort) {
-		TermVariable var = t.createTermVariable("@v", sort);
-		Term[] disj = new Term[mSize];
-		for (int i = 0; i < mSize; ++i)
-			disj[i] = t.equals(var, genModelTerm(i, t, sort));
-		return t.forall(new TermVariable[] {var}, t.or(disj));
+	private final BidiMap<Rational> mValues = new BidiMap<Rational>();
+	private Rational mBiggest = Rational.TWO;
+
+	public NumericSortInterpretation() {
+		mValues.add(0, Rational.ZERO);
+		mValues.add(1, Rational.ONE);
 	}
 	
 	@Override
+	public Term toSMTLIB(Theory t, Sort sort) {
+		throw new InternalError("Should never be called!");
+	}
+
+	public int extend(Rational rat) {
+		if (mValues.containsVal(rat))
+			return mValues.get(rat);
+		int idx = mValues.size();
+		mValues.add(idx, rat);
+		if (rat.compareTo(mBiggest) > 0)
+			mBiggest = rat.ceil().add(Rational.ONE);
+		return idx;
+	}
+	
+	@Override
+	public int extendFresh() {
+		int idx = mValues.size();
+		mValues.add(idx, mBiggest);
+		mBiggest = mBiggest.add(Rational.ONE);
+		return idx;
+	}
+
+	public String toString() {
+		return mValues.toString();
+	}
+
+	@Override
 	public int ensureCapacity(int numValues) {
-		if (mSize < numValues)
-			mSize = numValues;
-		return mSize;
+		while (mValues.size() < numValues)
+			extendFresh();
+		return mValues.size();
 	}
 
 	@Override
 	public int size() {
-		return mSize;
+		return mValues.size();
 	}
 
 	@Override
 	public Term get(int idx, Sort s, Theory t) throws IndexOutOfBoundsException {
-		if (idx < 0 || idx >= mSize)
+		if (idx < 0 || idx >= mValues.size())
 			throw new IndexOutOfBoundsException();
-		return genModelTerm(idx, t, s);
+		Rational rat = mValues.get(idx);
+		return rat.toTerm(s);
 	}
-
-	private Term genModelTerm(int idx, Theory t, Sort s) {
-		return t.term(t.getFunctionWithResult("@" + idx, null, s));
-	}
-
-	@Override
-	public int extendFresh() {
-		return mSize++;
+	
+	public Rational get(int idx) {
+		return mValues.get(idx);
 	}
 
 }

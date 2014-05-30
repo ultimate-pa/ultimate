@@ -112,7 +112,7 @@ non terminal bench_attribute;
 non terminal String status;
 non terminal benchmark;
 
-benchmark ::= LPAR BENCHMARK ID:name bench_attribute* RPAR;
+benchmark ::= LPAR BENCHMARK ID bench_attribute* RPAR;
 
 bench_attribute ::= 
 	ATTR_LOGIC ID:logic {: parser.benchmark.setLogic(logic); :}
@@ -123,18 +123,18 @@ bench_attribute ::=
 	| ATTR_EXTRAFUNS LPAR extraFun+ RPAR
 	| ATTR_EXTRAPREDS LPAR extraPred+ RPAR
 	| ATTR_NOTES ATTR_STRING:s {: parser.benchmark.note(s); :}
-	| ATTRIBUTE:a USERVAL:v {: parser.benchmark.setInfo(":" + a, (new QuotedObject(v)).toString()); :}
+	| ATTRIBUTE:a USERVAL:v {: parser.benchmark.setInfo(":" + a, new QuotedObject(v).toString()); :}
 	| ATTRIBUTE
 	;
 status ::= SAT {: RESULT = "sat"; :}
 	| UNSAT {: RESULT = "unsat"; :}
 	| UNKNOWN {: RESULT = "unknown"; :};
 extraSort ::= ID:sort {: parser.benchmark.declareSort(sort); :};
-extraFun ::= LPAR fun_symb:f sort_symb:rsort annotation*:a RPAR
+extraFun ::= LPAR fun_symb:f sort_symb:rsort annotation* RPAR
 	{: parser.benchmark.declareFun(f, new Sort[0], rsort); :};
-extraFun ::= LPAR fun_symb:f sort_symb+:psorts sort_symb:rsort annotation*:a RPAR
+extraFun ::= LPAR fun_symb:f sort_symb+:psorts sort_symb:rsort annotation* RPAR
 	{: parser.benchmark.declareFun(f, psorts, rsort); :};
-extraPred ::= LPAR fun_symb:f sort_symb*:psorts annotation*:a RPAR
+extraPred ::= LPAR fun_symb:f sort_symb*:psorts annotation* RPAR
 	{: parser.benchmark.declareFun(f, psorts, parser.benchmark.getBooleanSort()); :};
 
 formula ::= atom:a {: RESULT = a; :}

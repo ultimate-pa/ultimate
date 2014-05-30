@@ -58,6 +58,10 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofTracker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode.Antecedent;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayDiffAnnotation;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayStoreAnnotation;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayTheory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CClosure;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinArSolve;
@@ -70,6 +74,83 @@ import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
  * @author Juergen Christ
  */
 public class Clausifier {
+	
+	/**
+	 * Helper class to add the index-axiom for (store a i v), i.e.,
+	 * (select (store a i v) i) = v.  Additionally, this class creates an array
+	 * read (select a i).
+	 * @author Juergen Christ
+	 */
+	private final class AddStoreAxioms implements Operation {
+		
+		private final ApplicationTerm mStore;
+		
+		public AddStoreAxioms(ApplicationTerm store) {
+			mStore = store;
+		}
+
+		@Override
+		public void perform() {
+			Term i = mStore.getParameters()[1];
+			Term v = mStore.getParameters()[2];
+			Term selstore = mTheory.term("select", mStore, i);
+			EqualityProxy ep = createEqualityProxy(
+					getSharedTerm(selstore), getSharedTerm(v));
+			Literal lit = ep.getLiteral();
+			addClause(new Literal[] {lit}, null, new LeafNode(LeafNode.THEORY_ARRAY,
+					new ArrayStoreAnnotation(mStore, getAnnotation())));
+			if (Config.ARRAY_ALWAYS_ADD_READ
+					// HACK: We meen "finite sorts"
+					|| v.getSort() == mTheory.getBooleanSort()) {
+				Term a = mStore.getParameters()[0];
+				Term sel = mTheory.term("select", a, i);
+				// Simply create the CCTerm
+				getSharedTerm(sel);
+			}
+		}
+		
+	}
+	/**
+	 * Helper class to insert instantiations of the array diff extensionality
+	 * axiom into the clause set.
+	 * @author Juergen Christ
+	 */
+	private final class AddDiffAxiom implements Operation {
+		
+		private final ApplicationTerm mDiff;
+		
+		public AddDiffAxiom(ApplicationTerm diff) {
+			mDiff = diff;
+		}
+
+		@Override
+		public void perform() {
+			// Create a = b \/ select(a, diff(a,b)) != select(b, diff(a,b))
+			Term a = mDiff.getParameters()[0];
+			Term b = mDiff.getParameters()[1];
+			SharedTerm sharedA = getSharedTerm(a);
+			SharedTerm sharedB = getSharedTerm(b);
+			EqualityProxy eparray = createEqualityProxy(sharedA, sharedB);
+			if (eparray == EqualityProxy.getTrueProxy())
+				// Someone wrote (@diff a a)...
+				return;
+			Theory t = mDiff.getTheory();
+			Term selecta = t.term("select", a, mDiff);
+			Term selectb = t.term("select", b, mDiff);
+			SharedTerm sharedSelectA = getSharedTerm(selecta);
+			SharedTerm sharedSelectB = getSharedTerm(selectb);
+			EqualityProxy epselect = createEqualityProxy(
+					sharedSelectA, sharedSelectB);
+			Literal[] lits = {
+				eparray.getLiteral(),
+				epselect.getLiteral().negate()
+			};
+			ProofNode diffProof = new LeafNode(LeafNode.THEORY_ARRAY_DIFF_AXIOM,
+				new ArrayDiffAnnotation(mDiff, getAnnotation()));
+			addClause(lits, null, diffProof);
+		}
+		
+	}
 
 	public class CCTermBuilder {
 		private class BuildCCTerm implements Operation {
@@ -86,6 +167,8 @@ public class Clausifier {
 						CCTerm res = mCClosure.createAnonTerm(shared);
 						shared.setCCTerm(res);
 						mConverted.push(res);
+						if (mTerm.getSort().isArraySort())
+							mArrayTheory.notifyArray(res, false);
 					} else {
 						mOps.push(new SaveCCTerm(shared));
 						ApplicationTerm at = (ApplicationTerm) mTerm;
@@ -108,7 +191,7 @@ public class Clausifier {
 					// Don't descend into interpreted function symbols unless
 					// it is a select or store
 					if (!fs.isInterpreted() || fs.getName() == "select"
-							|| fs.getName() == "store")
+							|| fs.getName() == "store" || fs.getName() == "@diff")
 						return fs;
 				}
 				return null;
@@ -122,6 +205,16 @@ public class Clausifier {
 			public void perform() {
 				mShared.setCCTerm(mConverted.peek());
 				mCClosure.addTerm(mShared.mCCterm, mShared);
+				Term t = mShared.getTerm();
+				if (t.getSort().isArraySort()) {
+					ApplicationTerm at = (ApplicationTerm) t;
+					mArrayTheory.notifyArray(mShared.mCCterm,
+							at.getFunction().getName().equals("store"));
+				}
+				if (t instanceof ApplicationTerm
+						&& ((ApplicationTerm) t).getFunction().getName().equals(
+								"@diff"))
+					mArrayTheory.notifyDiff((CCAppTerm) mShared.mCCterm);
 			}
 		}
 		/**
@@ -494,7 +587,8 @@ public class Clausifier {
 									mTracker.split(p, mProofTerm,
 											ProofConstants.SPLIT_NEG_OR)));
 					}
-				} else if (!at.getFunction().isIntern()
+				} else if ((!at.getFunction().isIntern()
+						|| at.getFunction().getName().equals("select"))
 						&& at.getFunction().getReturnSort()
 							== t.getBooleanSort()) {
 					Literal lit = createBooleanLit(at);
@@ -502,7 +596,7 @@ public class Clausifier {
 					sub.intern(at, lit);
 					addClause(new Literal[] {positive ? lit : lit.negate()},
 							null, getProofNewSource(sub.clause(mProofTerm)));
-			    } else if (at.getFunction().getName().equals("=")) {
+				} else if (at.getFunction().getName().equals("=")) {
 					Term lhs = at.getParameters()[0];
 					Term rhs = at.getParameters()[1];
 					if (lhs.getSort() == t.getBooleanSort()) {
@@ -514,7 +608,7 @@ public class Clausifier {
 										ProofConstants.SPLIT_POS_EQ_1));
 							pushOperation(new CollectLiterals(lhs, bc1));
 							pushOperation(new CollectLiterals(
-									t2 = new Utils(bc1.getTracker(), mCompiler).
+									t2 = new Utils(bc1.getTracker()).
 										createNot(rhs),
 									bc1));
 							bc1.setOrigArgs(lhs, t2);
@@ -528,7 +622,7 @@ public class Clausifier {
 						bc1.getTracker().markPosition();
 						BuildClause bc2 = new BuildClause(LeafNode.NO_THEORY);
 						pushOperation(bc2);
-						Utils tmp = new Utils(bc2.getTracker(), mCompiler);
+						Utils tmp = new Utils(bc2.getTracker());
 						if (positive) {
 							bc2.setProofTerm(mTracker.split(at, mProofTerm,
 									ProofConstants.SPLIT_POS_EQ_2));
@@ -596,7 +690,7 @@ public class Clausifier {
 					}
 					bc1 = new BuildClause(LeafNode.NO_THEORY);
 					bc1.setProofTerm(mTracker.split(at, mProofTerm, kind1));
-					Utils tmp1 = new Utils(bc1.getTracker(), mCompiler);
+					Utils tmp1 = new Utils(bc1.getTracker());
 					pushOperation(bc1);
 					pushOperation(new CollectLiterals(
 							t1 = tmp1.createNot(cond), bc1));
@@ -608,7 +702,7 @@ public class Clausifier {
 					bc1.getTracker().markPosition();
 					bc2 = new BuildClause(LeafNode.NO_THEORY);
 					bc2.setProofTerm(mTracker.split(at, mProofTerm, kind2));
-					Utils tmp2 = new Utils(bc2.getTracker(), mCompiler);
+					Utils tmp2 = new Utils(bc2.getTracker());
 					pushOperation(bc2);
 					pushOperation(new CollectLiterals(cond, bc2));
 					if (!positive)
@@ -753,7 +847,7 @@ public class Clausifier {
 						pushOperation(bc1);
 						pushOperation(new CollectLiterals(thenTerm, bc1));
 						pushOperation(new CollectLiterals(
-								t1 = new Utils(bc1.getTracker(), mCompiler).
+								t1 = new Utils(bc1.getTracker()).
 								createNot(cond),
 								bc1));
 						bc1.setOrigArgs(mTracker.produceAuxAxiom(
@@ -785,7 +879,7 @@ public class Clausifier {
 						Term t1, t2;
 						BuildClause bc1 = new BuildClause(
 								ProofConstants.AUX_ITE_NEG_1);
-						Utils tmp1 = new Utils(bc1.getTracker(), mCompiler);
+						Utils tmp1 = new Utils(bc1.getTracker());
 						bc1.auxAxiom(mAuxLit, at, null, null);
 						bc1.addLiteral(mAuxLit);
 						pushOperation(bc1);
@@ -804,7 +898,7 @@ public class Clausifier {
 						pushOperation(bc2);
 						pushOperation(new CollectLiterals(
 								t1 = new Utils(
-										bc2.getTracker(), mCompiler).
+										bc2.getTracker()).
 										createNot(elseTerm),
 								bc2));
 						pushOperation(new CollectLiterals(cond, bc2));
@@ -814,7 +908,7 @@ public class Clausifier {
 						if (Config.REDUNDANT_ITE_CLAUSES) {
 							BuildClause bc3 = new BuildClause(
 									ProofConstants.AUX_ITE_NEG_RED);
-							Utils tmp3 = new Utils(bc3.getTracker(), mCompiler);
+							Utils tmp3 = new Utils(bc3.getTracker());
 							bc3.auxAxiom(mAuxLit, at, null, null);
 							bc3.addLiteral(mAuxLit);
 							pushOperation(bc3);
@@ -837,7 +931,7 @@ public class Clausifier {
 					if (mPositive) {
 						BuildClause bc1 = new BuildClause(
 								ProofConstants.AUX_EQ_POS_1);
-						Utils tmp1 = new Utils(bc1.getTracker(), mCompiler);
+						Utils tmp1 = new Utils(bc1.getTracker());
 						bc1.auxAxiom(mAuxLit, at, null, null);
 						bc1.addLiteral(mAuxLit.negate());
 						pushOperation(bc1);
@@ -850,7 +944,7 @@ public class Clausifier {
 						tmp1 = null;
 						BuildClause bc2 = new BuildClause(
 								ProofConstants.AUX_EQ_POS_2);
-						Utils tmp2 = new Utils(bc2.getTracker(), mCompiler);
+						Utils tmp2 = new Utils(bc2.getTracker());
 						bc2.auxAxiom(mAuxLit, at, null, null);
 						bc2.addLiteral(mAuxLit.negate());
 						pushOperation(bc2);
@@ -873,7 +967,7 @@ public class Clausifier {
 						bc1.getTracker().markPosition();
 						BuildClause bc2 = new BuildClause(
 								ProofConstants.AUX_EQ_NEG_2);
-						Utils tmp = new Utils(bc2.getTracker(), mCompiler);
+						Utils tmp = new Utils(bc2.getTracker());
 						bc2.auxAxiom(mAuxLit, at, null, null);
 						bc2.addLiteral(mAuxLit);
 						pushOperation(bc2);
@@ -946,7 +1040,7 @@ public class Clausifier {
 				bc.addLiteral(mAuxLit);
 				pushOperation(bc);
 				pushOperation(new CollectLiterals(
-						t = new Utils(bc.getTracker(), mCompiler).
+						t = new Utils(bc.getTracker()).
 						createNot(disj), bc));
 				bc.getTracker().markPosition();
 				bc.setOrigArgs(mTracker.produceAuxAxiom(
@@ -1019,11 +1113,12 @@ public class Clausifier {
 						mCollector.addLiteral(lit, mTerm);
 						mCollector.getTracker().cleanSave();
 					} else {
-						mCollector.setFlatten();
+						mCollector.setFlatten(at.getParameters());
 						for (Term p : at.getParameters())
 							pushOperation(new CollectLiterals(p, mCollector));
 					}
-				} else if (!at.getFunction().isIntern()
+				} else if ((!at.getFunction().isIntern()
+						|| at.getFunction().getName().equals("select"))
 						&& at.getFunction().getReturnSort() == t.getBooleanSort()) {
 					mCollector.getTracker().save();
 					Literal lit = createBooleanLit(at);
@@ -1040,9 +1135,9 @@ public class Clausifier {
 //					/*
 //					 * (= A B) === (or (and A B) (and (not A) (not B)))
 //					 */
-			    } else if (at.getFunction().getName().equals("=")
-			    		&& at.getParameters()[0].getSort()
-			    			!= mTheory.getBooleanSort()) {
+				} else if (at.getFunction().getName().equals("=")
+						&& at.getParameters()[0].getSort()
+							!= mTheory.getBooleanSort()) {
 					Term lhs = at.getParameters()[0];
 					Term rhs = at.getParameters()[1];
 					SharedTerm slhs = getSharedTerm(lhs);
@@ -1066,13 +1161,12 @@ public class Clausifier {
 						return;
 					}
 					if (eq == EqualityProxy.getFalseProxy()) {
-						if (!positive)
-							mCollector.setTrue();
-						else {
+						if (positive) {
 							mCollector.getTracker().eq(lhs, rhs, mTheory.mFalse);
 							mCollector.getTracker().notifyFalseLiteral(at);
 							mCollector.setSimpOr();
-						}
+						} else
+							mCollector.setTrue();
 						return;
 					}
 					mCollector.getTracker().save();
@@ -1190,8 +1284,17 @@ public class Clausifier {
 		public IProofTracker getTracker() {
 			return mSubTracker;
 		}
-		public void setFlatten() {
-			mFlatten = true;
+		public void setFlatten(Term[] origArgs) {
+			for (Term t : origArgs) {
+				if (t instanceof ApplicationTerm) {
+					ApplicationTerm at = (ApplicationTerm) t;
+					if (shouldFlatten(at)) {
+						mOrigArgs = origArgs;
+						mFlatten = true;
+						return;
+					}
+				}
+			}
 		}
 		public void setSimpOr() {
 			mSimpOr = true;
@@ -1213,7 +1316,7 @@ public class Clausifier {
 		@Override
 		public void perform() {
 			IProofTracker sub = mTracker.getDescendent();
-			Utils tmp = new Utils(sub, mCompiler);
+			Utils tmp = new Utils(sub);
 			SMTAffineTerm arg = SMTAffineTerm.create(mDivider);
 			SMTAffineTerm div = SMTAffineTerm.create(mDivTerm);
 			// (<= (- (* d (div x d)) x) 0)
@@ -1228,7 +1331,7 @@ public class Clausifier {
 							ProofConstants.AUX_DIV_LOW, sub.clause(prf)));
 			// (not (<= (+ |d| (- x) (* d (div x d))) 0))
 			sub = mTracker.getDescendent();
-			tmp = new Utils(sub, mCompiler);
+			tmp = new Utils(sub);
 			SMTAffineTerm diffhigh = arg.negate().add(div.mul(mDivident)).add(
 					mDivident.abs());
 			prf = sub.auxAxiom(
@@ -1261,7 +1364,7 @@ public class Clausifier {
 		@Override
 		public void perform() {
 			IProofTracker sub = mTracker.getDescendent();
-			Utils tmp = new Utils(sub, mCompiler);
+			Utils tmp = new Utils(sub);
 			SMTAffineTerm realTerm = SMTAffineTerm.create(
 					mToIntTerm.getParameters()[0]);
 			SMTAffineTerm toInt = SMTAffineTerm.create(mToIntTerm).toReal(
@@ -1278,7 +1381,7 @@ public class Clausifier {
 							ProofConstants.AUX_TO_INT_LOW, sub.clause(prf)));
 			// (not (<= (+ d (- x) (* d (div x d))) 0))
 			sub = mTracker.getDescendent();
-			tmp = new Utils(sub, mCompiler);
+			tmp = new Utils(sub);
 			SMTAffineTerm diffhigh =
 					toInt.add(Rational.ONE).add(realTerm.negate());
 			prf = sub.auxAxiom(
@@ -1327,7 +1430,7 @@ public class Clausifier {
 			bc1.addLiteral(lit1);
 			pushOperation(bc1);
 			pushOperation(new CollectLiterals(
-					new Utils(bc1.getTracker(), mCompiler).createNot(
+					new Utils(bc1.getTracker()).createNot(
 							mSharedTerm.getTerm()), bc1));
 			// (not m_Term) => elseForm is m_Term \/ elseForm
 			BuildClause bc2 = new BuildClause(
@@ -1407,7 +1510,7 @@ public class Clausifier {
 				bc.addLiteral(eq);
 				bc.getTracker().eq(mIte.getTerm(), mTerm, eq);
 				ConditionChain walk = mConds;
-				Utils tmp = new Utils(bc.getTracker(), mCompiler);
+				Utils tmp = new Utils(bc.getTracker());
 				while (walk != null) {
 					pushOperation(new CollectLiterals(
 						walk.mNegated ? walk.mCond : tmp.createNot(walk.mCond),
@@ -1502,9 +1605,14 @@ public class Clausifier {
 						else if (fs.getName().equals("to_int"))
 							pushOperation(new AddToIntAxioms(at));
 						else if (fs.getName().equals("ite") 
-								&& fs.getReturnSort() != mTheory.getBooleanSort())
-							pushOperation(new AddTermITEAxiom(res));
-					} else if (!inCCTermBuilder
+								&& (fs.getReturnSort() != mTheory.getBooleanSort()))
+								pushOperation(new AddTermITEAxiom(res));
+						else if (fs.getName().equals("store"))
+							pushOperation(new AddStoreAxioms(at));
+						else if (fs.getName().equals("@diff"))
+							pushOperation(new AddDiffAxiom(at));
+					}
+					if (needCCTerm(fs) && !inCCTermBuilder
 							&& at.getParameters().length > 0) {
 						CCTermBuilder cc = new CCTermBuilder();
 						res.mCCterm = cc.convert(t);
@@ -1515,6 +1623,11 @@ public class Clausifier {
 				res.shareWithLinAr();
 		}
 		return res;
+	}
+	
+	private boolean needCCTerm(FunctionSymbol fs) {
+		return !fs.isInterpreted() || fs.getName() == "select"
+				|| fs.getName() == "store" || fs.getName() == "@diff";
 	}
 	
 	/// Internalization stuff
@@ -1529,6 +1642,7 @@ public class Clausifier {
 	private final DPLLEngine mEngine;
 	private CClosure mCClosure;
 	private LinArSolve mLASolver;
+	private ArrayTheory mArrayTheory;
 	
 	private boolean mInstantiationMode;
 	/**
@@ -1690,6 +1804,10 @@ public class Clausifier {
 				return EqualityProxy.getFalseProxy();
 			}
 		}
+		if (mTheory.getLogic().isIRA()
+				&& diff.isAllIntSummands() && !diff.getConstant().isIntegral())
+			// IRA-unsatisfiable.
+			return EqualityProxy.getFalseProxy();
 		diff = diff.div(diff.getGcd());
 		// check for unsatisfiable integer formula, e.g. 2x + 2y = 1.
 		if (diff.isIntegral() && !diff.getConstant().isIntegral()) {
@@ -1861,6 +1979,12 @@ public class Clausifier {
 		}
 	}
 	
+	private void setupArrayTheory() {
+		if (mArrayTheory == null) {
+			mArrayTheory = new ArrayTheory(this, mCClosure);
+			mEngine.addTheory(mArrayTheory);
+		}
+	}
 //	private void setupQuantifiers() {
 		// TODO Implement 
 //		setupCClosure();
@@ -1900,6 +2024,16 @@ public class Clausifier {
 			break;
 		case QF_UF:
 			setupCClosure();
+			break;
+		case QF_AUFLIA:
+		case QF_AUFLIRA:
+			setupCClosure();
+			setupLinArithmetic();
+ 			setupArrayTheory();
+ 			break;
+		case QF_AX:
+			setupCClosure();
+			setupArrayTheory();
 			break;
 		default:
 			throw new UnsupportedOperationException(
@@ -1955,6 +2089,11 @@ public class Clausifier {
 	
 	private final void run() {
 		while (!mTodoStack.isEmpty()) {
+			if (mEngine.isTerminationRequested()) {
+				/* Note: Engine remembers incompleteness */
+				mTodoStack.clear();
+				return;
+			}
 			Operation op = mTodoStack.pop();
 			op.perform();
 		}
@@ -2169,7 +2308,7 @@ public class Clausifier {
 					lit = new DPLLAtom.TrueAtom().negate();
 				else
 					lit = ep.getLiteral();
-			} else if (!fs.isIntern()
+			} else if ((!fs.isIntern() || fs.getName().equals("select"))
 					&& fs.getReturnSort() == mTheory.getBooleanSort()) {
 				lit = createBooleanLit(at);
 			} else if (at == mTheory.mTrue) {
@@ -2249,7 +2388,7 @@ public class Clausifier {
 		}
 
 		Literal res;
-		if (!fs.isIntern())// NOPMD
+		if (!fs.isIntern() || fs.getName().equals("select"))// NOPMD
 			res = createBooleanLit(at);
 		else if (at == mTheory.mTrue)
 			res = new TrueAtom();
@@ -2281,4 +2420,9 @@ public class Clausifier {
 		return negated ? res.negate() : res;
 	}
 	
+	public static boolean shouldFlatten(ApplicationTerm term) {
+		return term.getFunction() == term.getTheory().mOr
+				&& term.mTmpCtr <= Config.OCC_INLINE_THRESHOLD;
+	}
+
 }

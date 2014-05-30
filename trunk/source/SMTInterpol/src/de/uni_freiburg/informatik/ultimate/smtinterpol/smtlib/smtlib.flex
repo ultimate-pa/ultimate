@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
 %column
 
 %{
-  private StringBuffer string = new StringBuffer();
+  private StringBuilder string; // NOPMD
   private MySymbolFactory symFactory;
   
   public void setSymbolFactory(MySymbolFactory factory) {
@@ -124,7 +124,7 @@ Numeral = 0 | [1-9][0-9]*
   {Numeral}\.[0-9]*              { return symbol(LexerSymbols.RATIONAL, yytext()); }
   \{([^\\\}\{]|\\\{|\\\}|\\\\)*\} { return symbol(LexerSymbols.USERVAL, yytext()); }
  
-  \"                             { string.setLength(0); yybegin(STRING); }
+  \"                             { string = new StringBuilder(); yybegin(STRING); }
 
  
   /* comments */
@@ -135,9 +135,11 @@ Numeral = 0 | [1-9][0-9]*
 }
 
 <STRING> {
-  \"                             { yybegin(YYINITIAL); 
+  \"                             { String value = string.toString();
+                                   string = null;
+                                   yybegin(YYINITIAL);
                                    return symbol(LexerSymbols.ATTR_STRING, 
-                                   string.toString()); }
+                                                 value); }
   [^\n\r\"\\]+                   { string.append( yytext() ); }
   \\t                            { string.append('\t'); }
   \\n                            { string.append('\n'); }

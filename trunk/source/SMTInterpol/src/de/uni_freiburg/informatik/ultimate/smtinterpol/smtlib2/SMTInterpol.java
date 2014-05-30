@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.Main;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
@@ -91,19 +92,19 @@ public class SMTInterpol extends NoopScript {
 	private static enum CheckType {
 		FULL {
 			boolean check(DPLLEngine engine) {
-				engine.setCompleteness(DPLLEngine.COMPLETE);
+				engine.provideCompleteness(DPLLEngine.COMPLETE);
 				return engine.solve();
 			}
 		},
 		PROPAGATION {
 			boolean check(DPLLEngine engine) {
-				engine.setCompleteness(DPLLEngine.INCOMPLETE_CHECK);
+				engine.provideCompleteness(DPLLEngine.INCOMPLETE_CHECK);
 				return engine.propagate();
 			}
 		},
 		QUICK {
 			boolean check(DPLLEngine engine) {
-				engine.setCompleteness(DPLLEngine.INCOMPLETE_CHECK);
+				engine.provideCompleteness(DPLLEngine.INCOMPLETE_CHECK);
 				return engine.quickCheck();
 			}
 		};
@@ -468,7 +469,6 @@ public class SMTInterpol extends NoopScript {
 	private boolean mPartialModels = false;
 	
 	private final static Object NAME = new QuotedObject("SMTInterpol");
-	private final static Object VERSION = new QuotedObject(Version.VERSION);
 	private final static Object AUTHORS = new QuotedObject(
 					"Jochen Hoenicke, Juergen Christ, and Alexander Nutz");
 	private final static Object INTERPOLATION_METHOD = new QuotedObject("tree");
@@ -767,7 +767,7 @@ public class SMTInterpol extends NoopScript {
 					result = LBool.SAT;
 					if (mModelCheckMode/* && m_ProduceModels*/) {
 						mModel = new de.uni_freiburg.informatik.ultimate.
-						                smtinterpol.model.Model(
+								smtinterpol.model.Model(
 								mClausifier, getTheory(), mPartialModels);
 						for (Term asserted : mAssertions) {
 							Term checkedResult = mModel.evaluate(asserted);
@@ -836,6 +836,8 @@ public class SMTInterpol extends NoopScript {
 					&& !mStatus.toString().equals(mStatusSet)) {
 			mLogger.warn("Status differs: User said " + mStatusSet
 					+ " but we got " + mStatus);
+			if (mDDFriendly)
+				System.exit(13);
 		}
 		mStatusSet = null;
 		if (timer != null)
@@ -916,6 +918,14 @@ public class SMTInterpol extends NoopScript {
 			}
 		} catch (UnsupportedOperationException ex) {
 			throw new SMTLIBException(ex.getMessage());
+		} catch (RuntimeException exc) {
+			if (mDDFriendly)
+				System.exit(7);// NOCHECKSTYLE
+			throw exc;
+		} catch (AssertionError exc) {
+			if (mDDFriendly)
+				System.exit(7);// NOCHECKSTYLE
+			throw exc;
 		}
 		return LBool.UNKNOWN;
 	}
@@ -948,7 +958,7 @@ public class SMTInterpol extends NoopScript {
 		if (":name".equals(info))
 			return NAME;
 		if (":version".equals(info))
-			return VERSION;
+			return new QuotedObject(Main.getVersion());
 		if (":authors".equals(info))
 			return AUTHORS;
 		if (":all-statistics".equals(info)) {
@@ -1093,6 +1103,9 @@ public class SMTInterpol extends NoopScript {
 	public Term[] getInterpolants(Term[] partition, int[] startOfSubtree) {
 		if (mEngine == null)
 			throw new SMTLIBException("No logic set!");
+		if (getTheory().getLogic().isArray())
+			throw new UnsupportedOperationException(
+					"Array interpolation not implemented yet");
 		if (!mProduceProofs && !mProduceInterpolants)
 			throw new SMTLIBException(
 					"Interpolant production not enabled.  Set either :produce-interpolants or :produce-proofs to true");
@@ -1820,4 +1833,14 @@ public class SMTInterpol extends NoopScript {
 		return new Term[] {at, bt, ct};
 	}
 
+	@Override
+	public void declareFun(String fun, Sort[] paramSorts, Sort resultSort)
+		throws SMTLIBException {
+		Sort realSort = resultSort.getRealSort();
+		if (realSort.isArraySort()
+				&& realSort.getArguments()[0] == getTheory().getBooleanSort())
+			throw new UnsupportedOperationException(
+					"SMTInterpol does not support Arrays with Boolean indices");
+		super.declareFun(fun, paramSorts, resultSort);
+	}
 }

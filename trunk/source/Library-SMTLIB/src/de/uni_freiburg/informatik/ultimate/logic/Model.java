@@ -48,10 +48,4 @@ public interface Model {
 	 * @return Values of the terms.
 	 */
 	public Map<Term, Term> evaluate(Term[] input);
-	/**
-	 * Return a term that constrains the possible values of a given term.
-	 * @param input The given term.
-	 * @return The constraining term.
-	 */
-	public Term constrainBySort(Term input);
 }

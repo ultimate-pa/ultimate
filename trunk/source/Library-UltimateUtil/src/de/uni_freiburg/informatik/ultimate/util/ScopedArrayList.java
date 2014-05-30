@@ -28,36 +28,36 @@ import java.util.Iterator;
  */
 @SuppressWarnings("serial")
 public class ScopedArrayList<E> extends ArrayList<E> {
-	int[] levels = new int[ScopeUtils.NUM_INITIAL_SCOPES];
-	int curscope = -1;
+	int[] mLevels = new int[ScopeUtils.NUM_INITIAL_SCOPES];
+	int mCurscope = -1;
 	
 	public void clear() {
-		levels = new int[ScopeUtils.NUM_INITIAL_SCOPES];
-		curscope = -1;
+		mLevels = new int[ScopeUtils.NUM_INITIAL_SCOPES];
+		mCurscope = -1;
 		super.clear();
 	}
 	public void beginScope() {
-		if (++curscope == levels.length)
-			levels = ScopeUtils.grow(levels);
-		levels[curscope] = size();		
+		if (++mCurscope == mLevels.length)
+			mLevels = ScopeUtils.grow(mLevels);
+		mLevels[mCurscope] = size();		
 	}
 	public void endScope() {
-		int oldsize = levels[curscope];
+		int oldsize = mLevels[mCurscope];
 		super.removeRange(oldsize, size());
-		if (ScopeUtils.shouldShrink(--curscope, levels.length))
-			levels = ScopeUtils.shrink(levels);
+		if (ScopeUtils.shouldShrink(--mCurscope, mLevels.length))
+			mLevels = ScopeUtils.shrink(mLevels);
 	}
 	public int getLastScopeSize() {
-		return levels[curscope];
+		return mLevels[mCurscope];
 	}
 	public void addToLevel(E obj, int level) {
-		if (level > curscope)
+		if (level > mCurscope)
 			add(obj);
 		else {
-			int pos = levels[level];
+			int pos = mLevels[level];
 			add(pos, obj);
-			for (int i = level; i <= curscope; ++i)
-				levels[level] += 1;
+			for (int i = level; i <= mCurscope; ++i)
+				mLevels[level] += 1;
 		}
 	}
 	public Iterable<E> currentScope() {
@@ -65,7 +65,7 @@ public class ScopedArrayList<E> extends ArrayList<E> {
 
 			@Override
 			public Iterator<E> iterator() {
-				return listIterator(levels[curscope]);
+				return listIterator(mLevels[mCurscope]);
 			}
 			
 		};

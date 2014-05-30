@@ -28,11 +28,30 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
-
+/**
+ * This class generates congruence lemmata and their explanation.
+ * It takes the CClosure and extracts from it a path of equalities that
+ * connect two equivalent CCTerm.  It also computes the required 
+ * congruences.  All literals are collected and if proof production
+ * is enabled, also the paths are collected and remembered.
+ * 
+ * 
+ * @author hoenicke
+ *
+ */
 public class CongruencePath {
 
 	final CClosure mClosure;
 	
+	/**
+	 * This is the data structure that remembers an equality path if 
+	 * proof production is enabled.  It just is a list of ccterms that
+	 * are connected by equality edges or congruences.
+	 * 
+	 * This data structure is only in use if proof production is enabled.
+	 * 
+	 * @author hoenicke
+	 */
 	public static class SubPath {
 		ArrayList<CCTerm> mTermsOnPath;
 		ArrayList<CCEquality> mLitsOnPath;
@@ -46,7 +65,7 @@ public class CongruencePath {
 		public void storeInto(CCTerm[][] paths, CCEquality[][] lits, int i) {
 			assert mTermsOnPath.size() == mLitsOnPath.size() + 1;
 			paths[i] = mTermsOnPath.toArray(new CCTerm[mTermsOnPath.size()]);
-			lits[i] = mLitsOnPath.toArray(new CCEquality[mLitsOnPath.size()]);			
+			lits[i] = mLitsOnPath.toArray(new CCEquality[mLitsOnPath.size()]);
 		}
 
 		public void addEntry(CCTerm term, CCEquality reason) {
@@ -62,6 +81,32 @@ public class CongruencePath {
 				mTermsOnPath.add(second.mTermsOnPath.get(i));
 				mLitsOnPath.add(second.mLitsOnPath.get(i));
 			}
+		}
+
+		public void addForward(SubPath second) {
+			if (second == null)
+				return;
+			if (mTermsOnPath != null) {
+				if (second.mTermsOnPath.get(0) ==
+						mTermsOnPath.get(mTermsOnPath.size() - 1)) {
+					for (int i = 0; i < second.mLitsOnPath.size(); i++) {
+						mTermsOnPath.add(second.mTermsOnPath.get(i + 1));
+						mLitsOnPath.add(second.mLitsOnPath.get(i));
+					}
+				} else {
+					/* sub path is reversed */
+					assert (second.mTermsOnPath.get(second.mTermsOnPath.size() - 1) 
+							== mTermsOnPath.get(mTermsOnPath.size() - 1));
+					for (int i = second.mLitsOnPath.size() - 1; i >= 0; i--) {
+						mTermsOnPath.add(second.mTermsOnPath.get(i));
+						mLitsOnPath.add(second.mLitsOnPath.get(i));
+					}
+				}
+			}
+		}
+
+		public String toString() {
+			return mTermsOnPath.toString();
 		}
 	}
 
@@ -150,9 +195,12 @@ public class CongruencePath {
 	 * the equality chains. 
 	 * @param t the first term in the path.
 	 * @param end the last term in the path.
+	 * @return the sub path from t to end, if proof production is enabled.  
+	 *   Without proof production, this returns null.
 	 */
 	private SubPath computePathTo(CCTerm t, CCTerm end) {
-		SubPath path = new SubPath(t);
+		SubPath path = mClosure.mEngine.isProofGenerationEnabled() 
+				? new SubPath(t) : null;
 		CCTerm startCongruence = t;
 		while (t != end) {
 			if (t.mOldRep.mReasonLiteral != null) {
@@ -162,10 +210,12 @@ public class CongruencePath {
 					 * interpolation info.
 					 */
 					computeCCPath((CCAppTerm) startCongruence, (CCAppTerm) t);
-					path.addEntry(t, null);
+					if (path != null)
+						path.addEntry(t, null);
 				}
 				/* Add the equality literal to conflict set */
-				path.addEntry(t.mEqualEdge, t.mOldRep.mReasonLiteral);
+				if (path != null)
+					path.addEntry(t.mEqualEdge, t.mOldRep.mReasonLiteral);
 				mAllLiterals.add(t.mOldRep.mReasonLiteral);
 				startCongruence = t.mEqualEdge;
 			}
@@ -230,9 +280,12 @@ public class CongruencePath {
 		SubPath path = computePathTo(left, llWithReason);
 		if (llWithReason != rrWithReason) {
 			computeCCPath((CCAppTerm)llWithReason, (CCAppTerm)rrWithReason);
-			path.addEntry(rrWithReason, null);
+			if (path != null)
+				path.addEntry(rrWithReason, null);
 		}
-		path.addReverse(computePathTo(right, rrWithReason));
+		SubPath pathBack = computePathTo(right, rrWithReason);
+		if (path != null)
+			path.addReverse(pathBack);
 		mVisited.put(key, path);
 		return path;
 	}
@@ -271,5 +324,4 @@ public class CongruencePath {
 		sb.append(']');
 		return sb.toString();
 	}
-
 }

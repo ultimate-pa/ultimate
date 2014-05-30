@@ -41,48 +41,29 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTermPairHash.Info.Entry;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ArrayQueue;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 public class CClosure implements ITheory {
-	private final class CCAppTermPair {
-		final CCAppTerm mFirst, mSecond;
-		public CCAppTermPair(CCAppTerm first,CCAppTerm second) {
-			this.mFirst = first;
-			this.mSecond = second;
-		}
-		public int hashCode() {
-			// Needs to be symmetric
-			return mFirst.hashCode() + mSecond.hashCode();
-		}
-		public boolean equals(Object o) {
-			if (o instanceof CCAppTermPair) {
-				CCAppTermPair p = (CCAppTermPair)o;
-				return (mFirst == p.mFirst && mSecond == p.mSecond) 
-					|| (mFirst == p.mSecond && mSecond == p.mFirst);
-			}
-			return false;
-		}
-		public String toString() {
-			return mFirst + " " + mSecond;
-		}
-	}
 	final DPLLEngine mEngine;
 	final ArrayList<CCTerm> mAllTerms = new ArrayList<CCTerm>();
 	final CCTermPairHash mPairHash = new CCTermPairHash();
 	final ArrayQueue<Literal> mPendingLits = new ArrayQueue<Literal>();
-	final ScopedHashMap<Object, CCTerm> mSymbolicTerms =
-			new ScopedHashMap<Object, CCTerm>();
+	final ScopedHashMap<Object, CCBaseTerm> mSymbolicTerms =
+			new ScopedHashMap<Object, CCBaseTerm>();
 	int mNumFunctionPositions;
 	int mMergeDepth;
 	final ArrayDeque<CCTerm> mMerges = new ArrayDeque<CCTerm>();
-	final ArrayDeque<CCAppTermPair> mPendingCongruences =
-		new ArrayDeque<CCAppTermPair>();
+	final ArrayDeque<SymmetricPair<CCAppTerm>> mPendingCongruences =
+		new ArrayDeque<SymmetricPair<CCAppTerm>>();
 	
 	final Clausifier mClausifier;
 	
 	private long mInvertEdgeTime, mEqTime, mCcTime, mSetRepTime;
 	private long mCcCount, mMergeCount;
+	
+	private int mStoreNum, mSelectNum, mDiffNum;
 
 	public CClosure(DPLLEngine engine, Clausifier clausifier) {
 		this.mEngine = engine;
@@ -120,9 +101,10 @@ public class CClosure implements ITheory {
 		return term;
 	}
 	
+	// Only works for non-polymorphic function symbols
 	private CCTerm convertFuncTerm(FunctionSymbol sym, CCTerm[] args, int numArgs) {
 		if (numArgs == 0) {
-			CCTerm term = mSymbolicTerms.get(sym);
+			CCBaseTerm term = mSymbolicTerms.get(sym);
 			if (term == null) {
 				term = new CCBaseTerm(
 				        args.length > 0, mNumFunctionPositions, sym, null);
@@ -142,12 +124,19 @@ public class CClosure implements ITheory {
 	 * @return CCTerm representing this function symbol in the egraph.
 	 */
 	public CCTerm getFuncTerm(FunctionSymbol sym) {
-		CCTerm term = mSymbolicTerms.get(sym);
+		CCBaseTerm term = mSymbolicTerms.get(sym);
 		if (term == null) {
-			term = new CCBaseTerm(sym.getParameterSorts().length > 0,
-					mNumFunctionPositions,sym,null);
-			mNumFunctionPositions += sym.getParameterSorts().length;
-			mSymbolicTerms.put(sym,term);
+			term = mSymbolicTerms.get(sym.getName());
+			if (term == null) {
+				term = new CCBaseTerm(sym.getParameterSorts().length > 0,
+						mNumFunctionPositions, sym, null);
+				mNumFunctionPositions += sym.getParameterSorts().length;
+			} else {
+				// This is a polymorphic function symbol
+				term = new CCBaseTerm(
+						term.mIsFunc, term.mParentPosition, sym, null);
+			}
+			mSymbolicTerms.put(sym, term);
 		}
 		return term;
 	}
@@ -221,6 +210,8 @@ public class CClosure implements ITheory {
 		}
 		return eq;
 	}
+	
+	/// Only works for non-polymorphic function symbols.
 	public boolean knowsConstant(FunctionSymbol sym) {
 		return mSymbolicTerms.containsKey(sym);
 	}
@@ -238,7 +229,7 @@ public class CClosure implements ITheory {
 		term.mFlatTerm = shared;
 		mAllTerms.add(term);
 	}
-			
+	
 	@Override
 	public void backtrackLiteral(Literal literal) {
 		if (!(literal.getAtom() instanceof CCEquality))
@@ -324,12 +315,6 @@ public class CClosure implements ITheory {
 				if (conflict != null)
 					return conflict;
 			}
-			/* TODO get array extensionality working! */
-			/*if (eq.isArray()) {
-				// This is ext-diseq
-				Info info = pairHash.getInfo(left, right);
-				info.addExtensionalityDiseq(converter);
-			}*/
 			separate(left, right, eq);
 			eq.mStackDepth = mMerges.size();
 		}
@@ -561,25 +546,34 @@ public class CClosure implements ITheory {
 	void addPendingCongruence(CCAppTerm first,CCAppTerm second) {
 		assert(first.mLeftParInfo.inList() && second.mLeftParInfo.inList());
 		assert(first.mRightParInfo.inList() && second.mRightParInfo.inList());
-		mPendingCongruences.add(new CCAppTermPair(first,second));
+		mPendingCongruences.add(new SymmetricPair<CCAppTerm>(first,second));
 	}
 	
 	void prependPendingCongruence(CCAppTerm first,CCAppTerm second) {
 		assert(first.mLeftParInfo.inList() && second.mLeftParInfo.inList());
 		assert(first.mRightParInfo.inList() && second.mRightParInfo.inList());
-		mPendingCongruences.addFirst(new CCAppTermPair(first,second));
+		mPendingCongruences.addFirst(new SymmetricPair<CCAppTerm>(first,second));
 	}
 	
+	/**
+	 * Add all pending congruences to the CC graph.  We do not merge congruences
+	 * immediately but wait for checkpoint.  Then this method is called to merge
+	 * congruent function applications.
+	 * @param checked if true, congruences are only applied if they still hold.
+	 * @return A conflict clause if a conflict was found, null otherwise.
+	 */
 	private Clause buildCongruence(boolean checked) {
-		CCAppTermPair cong;
+		SymmetricPair<CCAppTerm> cong;
 		while ((cong = mPendingCongruences.poll()) != null) {
 			mEngine.getLogger().debug(new DebugMessage("PC {0}", cong));
 			Clause res = null;
+			CCAppTerm lhs = cong.getFirst();
+			CCAppTerm rhs = cong.getSecond();
 			// TODO Uncomment checked here
 			if (/*!checked ||*/ 
-					(cong.mFirst.mArg.mRepStar == cong.mSecond.mArg.mRepStar
-						&& cong.mFirst.mFunc.mRepStar == cong.mSecond.mFunc.mRepStar)) {
-				res = cong.mFirst.merge(this,cong.mSecond,null);
+					(lhs.mArg.mRepStar == rhs.mArg.mRepStar
+						&& lhs.mFunc.mRepStar == rhs.mFunc.mRepStar)) {
+				res = lhs.merge(this, rhs, null);
 			} else
 				assert checked : "Unchecked buildCongruence with non-holding congruence!";
 			if (res != null) {
@@ -587,7 +581,7 @@ public class CClosure implements ITheory {
 			}
 		}
 		return null;
-	}	
+	}
 
 	private void backtrackStack(int todepth) {
 		while (mMerges.size() > todepth) {
@@ -663,6 +657,10 @@ public class CClosure implements ITheory {
 			mPairHash.removePairInfo(e.getInfo());
 		if (t.mSharedTerm != null)
 			t.mSharedTerm = null;
+		if (t instanceof CCAppTerm) {
+			CCAppTerm at = (CCAppTerm) t;
+			at.unlinkParentInfos();
+		}
 	}
 	
 	@Override
@@ -712,7 +710,9 @@ public class CClosure implements ITheory {
 				trueNode = mAllTerms.get(1);
 			}
 		}
-		new ModelBuilder(mAllTerms, model, t, ste, trueNode, falseNode);
+		trueNode.mModelVal = model.getBoolSortInterpretation().getTrueIdx();
+		falseNode.mModelVal = model.getBoolSortInterpretation().getFalseIdx();
+		new ModelBuilder(this, mAllTerms, model, t, ste, trueNode, falseNode);
 	}
 	
 	void addInvertEdgeTime(long time) {
@@ -737,6 +737,41 @@ public class CClosure implements ITheory {
 	
 	void incMergeCount() {
 		++mMergeCount;
+	}
+	
+	void initArrays() {
+		assert mNumFunctionPositions == 0 : "Solver already in use before initArrays";
+		CCBaseTerm store = new CCBaseTerm(
+				true, mNumFunctionPositions, "store", null);
+		mStoreNum = mNumFunctionPositions;
+		mNumFunctionPositions += 3;
+		mSymbolicTerms.put("store", store);
+		CCBaseTerm select = new CCBaseTerm(
+				true, mNumFunctionPositions, "select", null);
+		mSelectNum = mNumFunctionPositions;
+		mNumFunctionPositions += 2;
+		mSymbolicTerms.put("select", select);
+		CCBaseTerm diff = new CCBaseTerm(
+				true, mNumFunctionPositions, "@diff", null);
+		mDiffNum = mNumFunctionPositions;
+		mNumFunctionPositions += 2;
+		mSymbolicTerms.put("@diff", diff);
+	}
+	
+	boolean isArrayTheory() {
+		return mStoreNum != mSelectNum;
+	}
+	
+	int getStoreNum() {
+		return mStoreNum;
+	}
+	
+	int getSelectNum() {
+		return mSelectNum;
+	}
+	
+	int getDiffNum() {
+		return mDiffNum;
 	}
 	
 }

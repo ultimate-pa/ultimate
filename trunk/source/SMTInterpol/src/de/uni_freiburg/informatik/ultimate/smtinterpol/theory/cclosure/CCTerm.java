@@ -106,6 +106,8 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 	
 	int mHashCode;
 	
+	int mModelVal;
+	
 	static class TermPairMergeInfo {
 		CCTermPairHash.Info.Entry mInfo;
 		TermPairMergeInfo mNext;
@@ -203,6 +205,10 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 		return mRepStar;
 	}
 
+	public final boolean isRepresentative() {
+		return mRep == this;
+	}
+
 	public void share(CClosure engine, SharedTerm sterm) {
 		if (this.mSharedTerm != null) {
 			if (this.mSharedTerm == sterm)
@@ -225,7 +231,7 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 	
 	public void unshare(SharedTerm sterm) {
 		assert this.mSharedTerm == sterm;
-		assert this.mRep == this;
+		assert this.isRepresentative();
 		this.mSharedTerm = null;
 	}
 	
@@ -395,7 +401,7 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 				if (destInfo.mDiseq == null && info.mDiseq != null) {
 					destInfo.mDiseq = info.mDiseq;
 					for (CCEquality.Entry eq : destInfo.mEqlits) {
-						assert (eq.getCCEquality().getDecideStatus() != eq.getCCEquality());
+						assert eq.getCCEquality().getDecideStatus() != eq.getCCEquality();
 						if (eq.getCCEquality().getDecideStatus() == null) {
 							eq.getCCEquality().mDiseqReason = info.mDiseq;
 							engine.addPending(eq.getCCEquality().negate());
@@ -403,7 +409,7 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 					}
 				} else if (destInfo.mDiseq != null && info.mDiseq == null) {
 					for (CCEquality.Entry eq : info.mEqlits) {
-						assert (eq.getCCEquality().getDecideStatus() != eq.getCCEquality());
+						assert eq.getCCEquality().getDecideStatus() != eq.getCCEquality();
 						if (eq.getCCEquality().getDecideStatus() == null) {
 							eq.getCCEquality().mDiseqReason = destInfo.mDiseq;
 							engine.addPending(eq.getCCEquality().negate());
@@ -429,8 +435,8 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 //			assert (destParentInfo == null || destParentInfo.m_Next == null);
 			if (srcParentInfo != null) {
 				assert(srcParentInfo.mFuncSymbNr == destParentInfo.mFuncSymbNr);
-			tloop: 
-			    for (CCAppTerm.Parent t1 : srcParentInfo.mCCParents) {
+			tloop:
+				for (CCAppTerm.Parent t1 : srcParentInfo.mCCParents) {
 					if (t1.isMarked()) continue;
 					CCAppTerm t = t1.getData();
 					for (CCAppTerm.Parent u1 : destParentInfo.mCCParents) {

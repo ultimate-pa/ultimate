@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2012 University of Freiburg
+ * Copyright (C) 2014 University of Freiburg
  *
  * This file is part of SMTInterpol.
  *
@@ -18,35 +18,50 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
-public class Undefined implements ExecTerm {
-
-	private final Sort mSort;
+public class BoolSortInterpretation implements SortInterpretation {
 	
-	public Undefined(Sort sort) {
-		mSort = sort;
+	private final static int TRUE_INDEX = 1;
+	private final static int FALSE_INDEX = 0;
+
+	@Override
+	public Term toSMTLIB(Theory t, Sort sort) {
+		throw new InternalError("Should never be called");
+	}
+
+	public int getFalseIdx() {
+		return FALSE_INDEX;
 	}
 	
-	@Override
-	public ExecTerm evaluate(ExecTerm... args) {
-		return this;
+	public int getTrueIdx() {
+		return TRUE_INDEX;
 	}
 
 	@Override
-	public Term toSMTLIB(Theory t, TermVariable[] vars) {
-		FunctionSymbol fsym = t.getFunctionWithResult(
-				"@undefined", null, mSort);
-		return t.term(fsym);
+	public int ensureCapacity(int maxValue) {
+		if (maxValue > 2)
+			throw new InternalError("Three-valued Bool?");
+		return 2;
 	}
 
 	@Override
-	public boolean isUndefined() {
-		return true;
+	public int size() {
+		return 2;
+	}
+
+	@Override
+	public Term get(int idx, Sort s, Theory t) throws IndexOutOfBoundsException {
+		if (idx != TRUE_INDEX && idx != FALSE_INDEX)
+			throw new IndexOutOfBoundsException();
+		return idx == TRUE_INDEX ? t.mTrue : t.mFalse;
+	}
+
+	@Override
+	public int extendFresh() {
+		throw new InternalError("Three-valued Bool?");
 	}
 
 }

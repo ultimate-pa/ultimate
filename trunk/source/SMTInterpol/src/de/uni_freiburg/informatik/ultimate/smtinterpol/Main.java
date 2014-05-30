@@ -18,7 +18,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
+import java.util.Properties;
 
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -35,24 +38,51 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTLIB2Parser;
  */
 public final class Main {
 	
+	public static Properties sVersionInfo; //NOCHECKSTYLE
+	static {
+		sVersionInfo = new Properties();
+		try {
+			InputStream is = 
+					Main.class.getResourceAsStream("Version.properties");
+			if (is != null)
+				sVersionInfo.load(is);
+		} catch (IOException ex) {
+			/* ignore */
+		}
+	}
+	
 	private Main() {
 		// Hide constructor
 	}
 
+	public static final String getVersion() {
+		String version = sVersionInfo.getProperty("version", "unknown version");
+		if (Config.COMPETITION)
+			version += "-comp"; // NOPMD
+		return version;
+	}
+	
 	private static void usage() {
-		System.err.println("USAGE:");
-		System.err.println(
-"smtinterpol [-transform <output>] [-script <class>] [-no-success] [-q] [-v] [-t <num>] [-r <num>] [-smt2] [-smt] [-d] [inputfile]");// NOCHECKSTYLE
-		System.err.println("\t-transform <output>\t\tTransform to smtlib2 file.");// NOCHECKSTYLE
-		System.err.println("\t-script <class>\t\tUse different script.");
-		System.err.println("\t-no-success\t\tDon't print success messages.");
-		System.err.println("\t-q\t\tRun in quiet mode");
-		System.err.println("\t-v\t\tRun in verbose mode");
-		System.err.println("\t-t <num>\tSet timeout to <num> seconds");
-		System.err.println("\t-r <num>\tSet random seed to <num>");
-		System.err.println("\t-smt2\t\tParse input as SMTLIB 2 script");
-		System.err.println("\t-smt\t\tParse input as SMTLIB benchmark");
-		System.err.println("\t-d\t\tParse input as DIMACS benchmark");
+		System.err.println("USAGE: smtinterpol [OPTION]... [INPUTFILE]");
+		System.err.println("If no INPUTFILE is given, stdin is used.");
+		System.err.println("  -transform <output>  Transform the input to SMTLIB 2 and write into output.");// NOCHECKSTYLE
+		System.err.println("  -script <class>      Send the input to another Java class implementing Script.");// NOCHECKSTYLE
+		System.err.println("  -no-success          Don't print success messages.");// NOCHECKSTYLE
+		System.err.println("  -q                   Don't print statistics and models.");// NOCHECKSTYLE
+		System.err.println("  -v                   Print debugging messages.");
+		System.err.println("  -t <num>             Set the timeout per check-sat call to <num> milliseconds.");// NOCHECKSTYLE
+		System.err.println("  -r <num>             Use a different random seed.");// NOCHECKSTYLE
+		System.err.println("  -smt2                Parse input as SMTLIB 2 script.");// NOCHECKSTYLE
+		System.err.println("  -smt                 Parse input as SMTLIB 1 benchmark.");// NOCHECKSTYLE
+		System.err.println("  -d                   Parse input as DIMACS benchmark.");// NOCHECKSTYLE
+		System.err.println("  -version             Print version and exit.");
+	}
+	
+	private static void version() {
+		String date = sVersionInfo.getProperty("build.date");
+		System.err.println("SMTInterpol " + getVersion());
+		if (date != null)
+			System.err.println("  built on " + date);
 	}
 	
 	/**
@@ -119,6 +149,9 @@ public final class Main {
         		parser = new AIGERFrontEnd();
         	} else if (param[paramctr].equals("-trace")) {
         		verbosity = BigInteger.ONE.negate();
+        	} else if (param[paramctr].equals("-version")) {
+        		version();
+        		return;
         	} else {
         		usage();
         		return;

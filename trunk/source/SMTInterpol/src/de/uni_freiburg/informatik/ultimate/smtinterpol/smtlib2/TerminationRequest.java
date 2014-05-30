@@ -24,6 +24,9 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2;
  * current search.  If cancellation is requested, SMTInterpol will set the 
  * reason to return unknown to 
  * {@link de.uni_freiburg.informatik.ultimate.logic.ReasonUnknown#CANCELLED}.
+ * Once termination is requested, the solver keeps this state until the next
+ * {@link de.uni_freiburg.informatik.ultimate.logic.Script#pop(int) pop}
+ * command.
  * @author Juergen Christ
  */
 public interface TerminationRequest {

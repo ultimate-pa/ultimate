@@ -139,15 +139,15 @@ public class NoopProofTracker implements IProofTracker {
 	public void modulo(ApplicationTerm appTerm, Term res) { /* Noop */ }
 
 	@Override
-	public void mod(SMTAffineTerm x, SMTAffineTerm y, SMTAffineTerm res,
+	public void mod(Term x, Term y, Term res,
 			int rule) { /* Noop */ }
 
 	@Override
-	public void div(SMTAffineTerm x, SMTAffineTerm y, SMTAffineTerm res,
+	public void div(Term x, Term y, Term res,
 			int rule) { /* Noop */ }
 
 	@Override
-	public void toInt(SMTAffineTerm arg, SMTAffineTerm res) { /* Noop */ }
+	public void toInt(Term arg, Term res) { /* Noop */ }
 
 	@Override
 	public void negateLit(Literal lit, Theory theory) { /* Noop */ }
@@ -202,6 +202,6 @@ public class NoopProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public void toReal(SMTAffineTerm arg, SMTAffineTerm res) { /* Noop */ }
+	public void toReal(Term arg, Term res) { /* Noop */ }
 
 }

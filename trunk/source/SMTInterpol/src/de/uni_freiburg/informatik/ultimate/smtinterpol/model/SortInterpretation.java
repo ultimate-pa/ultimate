@@ -23,23 +23,38 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 /**
- * An interpretation for a sort.  This can either be finite or infinite.  If it
- * is finite, it should be able to produce an enumeration of all elements in the
- * interpretation.  Otherwise, it should return a homomorphism to either the
- * integers or the reals.
+ * An interpretation for a sort.  We represent a sort as an enumeration of its
+ * elements.  The elements are represented by model values
+ * (<code>(as {@literal @}n T)</code> for a numeral n and a type T in SMTLIB).
  * @author Juergen Christ
  */
 public interface SortInterpretation {
 	/**
-	 * Is the interpretation for this sort finite.
-	 * @return Is the interpretation for this sort finite.
+	 * Ensure the sort interpretation contains at least a specified number of
+	 * distinct elements.
+	 * @param numValues The minimum number of elements required for this sort.
+	 * @return Total number of elements stored in this interpretation.
 	 */
-	public boolean isFinite();
+	public int ensureCapacity(int numValues);
 	/**
-	 * Add a term to the interpretation of this sort.
-	 * @param termOfSort Term to add.
+	 * Add a fresh distinct term to the sort interpretation.
+	 * @return Index of the fresh element.
 	 */
-	public void extend(Term termOfSort);
+	public int extendFresh();
+	/**
+	 * Returns the number of distinct elements of this sort.
+	 * @return The number of distinct elements of this sort.
+	 */
+	public int size();
+	/**
+	 * Get a term corresponding to the index.
+	 * @param idx Non-negative index of the element.
+	 * @param s   Sort of the result term.
+	 * @param t   Theory used to generate the result term.
+	 * @return A term corresponding to the index.
+	 * @throws IndexOutOfBoundsException If the index is not valid.
+	 */
+	public Term get(int idx, Sort s, Theory t) throws IndexOutOfBoundsException;
 	/**
 	 * Convert this sort interpretation to SMTLIB.
 	 * @param t    Theory to use during conversion.
@@ -47,16 +62,4 @@ public interface SortInterpretation {
 	 * @return Formula describing the representation of the interpretation.
 	 */
 	public Term toSMTLIB(Theory t, Sort sort);
-	/**
-	 * Return an element of this sort.  This might return <code>null</code> only
-	 * if there is no element of this sort known until now.
-	 * @return An element of this sort or <code>null</code>.
-	 */
-	public Term peek();
-	/**
-	 * Build a constraint for a given term to satisfy this sort interpretation.
-	 * @param input Term to constrain.
-	 * @return The constraint.
-	 */
-	public Term constrain(Theory t, Term input);
 }

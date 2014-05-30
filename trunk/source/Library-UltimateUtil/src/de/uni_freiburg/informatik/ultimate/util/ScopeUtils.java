@@ -25,7 +25,10 @@ import java.util.Arrays;
  * container implementations.
  * @author Juergen Christ
  */
-public class ScopeUtils {
+public final class ScopeUtils {
+	private ScopeUtils() {
+		// Hide constructor
+	}
 	/**
 	 * Number of scopes initially reserved.
 	 */
@@ -50,7 +53,8 @@ public class ScopeUtils {
 	}
 	/**
 	 * The growth function for internal integer scope arrays.  The arrays grow 
-	 * by a constant amount {@link #NUM_ADDITIONAL_SCOPES NUM_ADDITIONAL_SCOPES}.
+	 * by a constant amount
+	 * {@link #NUM_ADDITIONAL_SCOPES NUM_ADDITIONAL_SCOPES}.
 	 * @param curarray Current internal scope array.
 	 * @return New internal scope array
 	 */
@@ -64,8 +68,10 @@ public class ScopeUtils {
 	 * @return <code>true</code> if and only if the array should be shrunk.
 	 */
 	public static final <E> boolean shouldShrink(E[] array) {
-		return array.length > NUM_INITIAL_SCOPES + NUM_ADDITIONAL_SCOPES + NUM_FREE_SCOPES &&
-			array[array.length - NUM_ADDITIONAL_SCOPES - NUM_FREE_SCOPES] == null;
+		return array.length > NUM_INITIAL_SCOPES + NUM_ADDITIONAL_SCOPES 
+				+ NUM_FREE_SCOPES
+				&& array[array.length - NUM_ADDITIONAL_SCOPES - NUM_FREE_SCOPES]
+						== null;
 	}
 	/**
 	 * Should the internal integer scope array be shrunk?
@@ -74,8 +80,8 @@ public class ScopeUtils {
 	 * @return <code>true</code> if and only if the array should be shrunk.
 	 */
 	public static final boolean shouldShrink(int used, int size) {
-		return size >= NUM_INITIAL_SCOPES + NUM_ADDITIONAL_SCOPES && 
-			used < size - NUM_ADDITIONAL_SCOPES - NUM_FREE_SCOPES;
+		return size >= NUM_INITIAL_SCOPES + NUM_ADDITIONAL_SCOPES 
+			&& used < size - NUM_ADDITIONAL_SCOPES - NUM_FREE_SCOPES;
 	}
 	/**
 	 * Shrink the internal scope array.

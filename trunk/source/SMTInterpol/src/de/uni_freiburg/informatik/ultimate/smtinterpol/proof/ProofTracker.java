@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier.ConditionChain;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Utils;
@@ -713,7 +713,7 @@ public class ProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public void mod(SMTAffineTerm x, SMTAffineTerm y, SMTAffineTerm res,
+	public void mod(Term x, Term y, Term res,
 			int rule) {
 		Theory t = x.getTheory();
 		Term mod = t.term(
@@ -722,7 +722,7 @@ public class ProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public void div(SMTAffineTerm x, SMTAffineTerm y, SMTAffineTerm res,
+	public void div(Term x, Term y, Term res,
 			int rule) {
 		Theory t = x.getTheory();
 		Term mod = t.term(
@@ -731,7 +731,7 @@ public class ProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public void toInt(SMTAffineTerm arg, SMTAffineTerm res) {
+	public void toInt(Term arg, Term res) {
 		Theory t = arg.getTheory();
 		Term toint = t.term("to_int", SMTAffineTerm.cleanup(arg));
 		append(new ResultRewrite(toint, SMTAffineTerm.cleanup(res),
@@ -773,8 +773,7 @@ public class ProofTracker implements IProofTracker {
 			for (int i = mOffset; i < mArgs.length; ++i) {
 				if (mArgs[i] instanceof ApplicationTerm) {
 					ApplicationTerm tst = (ApplicationTerm) mArgs[i];
-					if (tst.getFunction() == tst.getTheory().mOr
-					        && tst.mTmpCtr <= Config.OCC_INLINE_THRESHOLD) {
+					if (Clausifier.shouldFlatten(tst)) {
 						mOffset = i + 1;
 						if (mOffset < mArgs.length)
 							todo.addFirst(this);
@@ -903,13 +902,10 @@ public class ProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public void toReal(SMTAffineTerm arg, SMTAffineTerm res) {
-		if (res.isConstant()) {
-			Term orig = arg.getTheory().term(
-					"to_real", SMTAffineTerm.cleanup(arg));
-			append(new ResultRewrite(orig, SMTAffineTerm.cleanup(res),
-					ProofConstants.RW_TO_REAL));
-		}
+	public void toReal(Term arg, Term res) {
+		Term orig = arg.getTheory().term(
+				"to_real", SMTAffineTerm.cleanup(arg));
+		append(new ResultRewrite(orig, SMTAffineTerm.cleanup(res),
+				ProofConstants.RW_TO_REAL));
 	}
-	
 }

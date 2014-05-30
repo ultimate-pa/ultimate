@@ -163,11 +163,6 @@ public class PrepareScript extends LoggingScript {
 			public Map<Term, Term> evaluate(Term[] input) {
 				return Collections.emptyMap();
 			}
-
-			@Override
-			public Term constrainBySort(Term input) {
-				return input;
-			}
 			
 		};
 	}

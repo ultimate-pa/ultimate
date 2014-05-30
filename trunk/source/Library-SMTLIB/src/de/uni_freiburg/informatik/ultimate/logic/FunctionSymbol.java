@@ -37,8 +37,9 @@ public class FunctionSymbol {
 	public static final int CHAINABLE  = (3) << 1;// NOCHECKSTYLE
 	public static final int PAIRWISE   = (4) << 1;// NOCHECKSTYLE
 	public static final int ASSOCMASK  = (7) << 1;// NOCHECKSTYLE
-
+	
 	public static final int RETURNOVERLOAD = 16;
+	public static final int MODELVALUE = 32;
 
 	final String mName;
 	final BigInteger[] mIndices;
@@ -99,6 +100,10 @@ public class FunctionSymbol {
 	 */
 	public boolean isIntern() {
 		return (mFlags & INTERNAL) != 0;
+	}
+	
+	public boolean isModelValue() {
+		return (mFlags & MODELVALUE) != 0;
 	}
 	
 	public Theory getTheory() {
@@ -346,6 +351,7 @@ public class FunctionSymbol {
 	 *         semantic.
 	 */
 	public boolean isInterpreted() {
-		return isIntern() && (mName.charAt(0) != '@' || !mName.endsWith("0"));
+		return isModelValue()
+				|| (isIntern() && (mName.charAt(0) != '@' || !mName.endsWith("0")));
 	}
 }

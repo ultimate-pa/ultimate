@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
 %column
 
 %{
-  private StringBuffer string = new StringBuffer();
   private MySymbolFactory symFactory;
   
   public void setSymbolFactory(MySymbolFactory factory) {

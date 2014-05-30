@@ -38,11 +38,9 @@ public class Utils {
 	
 	private final IProofTracker mTracker;
 	
-	private final TermCompiler mCompiler;
 	
-	public Utils(IProofTracker tracker, TermCompiler compiler) {
+	public Utils(IProofTracker tracker) {
 		mTracker = tracker;
-		mCompiler = compiler;
 	}
 	/**
 	 * Optimize nots.  Transforms (not true) to false, (not false) to true, and
@@ -122,18 +120,21 @@ public class Utils {
 		mTracker.or(args, res, ProofConstants.RW_OR_SIMP);
 		return res;
 	}
-	public Term createLeq0(SMTAffineTerm arg) {
-		if (arg.isConstant()) {
-			Theory t = arg.getTheory();
-			if (arg.getConstant().compareTo(Rational.ZERO) > 0) {
-				mTracker.leqSimp(arg, t.mFalse, ProofConstants.RW_LEQ_FALSE);
-				return t.mFalse;
-			} else {
-				mTracker.leqSimp(arg, t.mTrue, ProofConstants.RW_LEQ_TRUE);
-				return t.mTrue;
+	public Term createLeq0(Term arg) {
+		if (arg instanceof SMTAffineTerm) {
+			SMTAffineTerm at = (SMTAffineTerm) arg;
+			if (at.isConstant()) {
+				Theory t = arg.getTheory();
+				if (at.getConstant().compareTo(Rational.ZERO) > 0) {
+					mTracker.leqSimp(at, t.mFalse, ProofConstants.RW_LEQ_FALSE);
+					return t.mFalse;
+				} else {
+					mTracker.leqSimp(at, t.mTrue, ProofConstants.RW_LEQ_TRUE);
+					return t.mTrue;
+				}
 			}
 		}
-		return arg.getTheory().term("<=", arg.normalize(mCompiler),
+		return arg.getTheory().term("<=", arg,
 				SMTAffineTerm.create(Rational.ZERO, arg.getSort()));
 	}
 	/**

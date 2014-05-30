@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2012 University of Freiburg
+ * Copyright (C) 2009-2014 University of Freiburg
  *
  * This file is part of SMTInterpol.
  *
@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.UnifyHash;
 
@@ -97,6 +98,8 @@ public class Theory {
 	private SortSymbol mBitVecSort;
 	private final HashMap<String, FunctionSymbolFactory> mFunFactory = 
 		new HashMap<String, FunctionSymbolFactory>();
+	private final UnifyHash<FunctionSymbol> mModelValueCache =
+			new UnifyHash<FunctionSymbol>();
 
 	private final ScopedHashMap<String, SortSymbol> mDeclaredSorts = 
 		new ScopedHashMap<String, SortSymbol>();
@@ -115,6 +118,11 @@ public class Theory {
 	public final PolymorphicFunctionSymbol mEquals, mDistinct, mIte;
 	
 	private final static Sort[] EMPTY_SORT_ARRAY = {};
+	/**
+	 * Pattern for model value variables '{@literal @}digits'.
+	 */
+	private final static String MODEL_VALUE_PATTERN = "^@\\d+$";
+	
 	
 	private int mTvarCtr = 0;
 	
@@ -868,6 +876,7 @@ public class Theory {
 			break;
 		case AUFLIRA:
 		case AUFNIRA:
+		case QF_AUFLIRA:
 			createArrayOperators();// fallthrough
 		case QF_UFLIRA:
 			mIsUFLogic = true;
@@ -1012,6 +1021,9 @@ public class Theory {
 				throw new IllegalArgumentException(
 						"Not allowed in this logic!");
 		}
+		if (name.charAt(0) == '@' && name.matches(MODEL_VALUE_PATTERN))
+			throw new IllegalArgumentException(
+					"Function " + name + " is reserved for internal purposes.");
 		if (mFunFactory.get(name) != null || mDeclaredFuns.get(name) != null)
 			throw new IllegalArgumentException(
 					"Function " + name + " is already defined.");
@@ -1058,10 +1070,28 @@ public class Theory {
 	public FunctionSymbol getFunction(String name, Sort... paramTypes) {
 		return getFunctionWithResult(name, null, null, paramTypes);
 	}
+	
+	private FunctionSymbol getModelValueSymbol(String name, Sort sort) {
+		int hash = HashUtils.hashJenkins(name.hashCode(), sort);
+		for (FunctionSymbol symb : mModelValueCache.iterateHashCode(hash)) {
+			if (symb.getName().equals(name) && symb.getReturnSort() == sort)
+				return symb;
+		}
+		FunctionSymbol symb = new FunctionSymbol(
+				name, null, EMPTY_SORT_ARRAY, sort, null, null, 
+				FunctionSymbol.RETURNOVERLOAD | FunctionSymbol.INTERNAL
+				| FunctionSymbol.MODELVALUE);
+		mModelValueCache.put(hash,symb);
+		return symb;
+	}
 
 	public FunctionSymbol getFunctionWithResult(
 			String name, BigInteger[] indices, Sort resultType,
 			Sort... paramTypes) {
+		if (resultType != null && indices == null && paramTypes.length == 0
+			&& name.matches(MODEL_VALUE_PATTERN)) {
+			return getModelValueSymbol(name, resultType);
+		}
 		FunctionSymbolFactory factory = mFunFactory.get(name);
 		if (factory != null) {
 			FunctionSymbol fsym = factory.getFunctionWithResult(

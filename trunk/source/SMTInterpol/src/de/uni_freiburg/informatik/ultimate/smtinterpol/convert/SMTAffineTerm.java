@@ -333,13 +333,17 @@ public final class SMTAffineTerm extends Term {
 		return res.normalize(compiler);
 	}
 	
-	private boolean isAllInt() {
+	public boolean isAllIntSummands() {
 		for (Map.Entry<Term, Rational> me : mSummands.entrySet()) {
 			if (!me.getKey().getSort().getName().equals("Int"))
 				return false;
 			if (!me.getValue().isIntegral())
 				return false;
 		}
-		return mConstant.isIntegral();
+		return true;
+	}
+	
+	private boolean isAllInt() {
+		return isAllIntSummands() && mConstant.isIntegral();
 	}
 }

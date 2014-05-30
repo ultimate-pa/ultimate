@@ -16,16 +16,16 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<project name="proj1" default="generate_parser" basedir=".">
-    <property name="cupDir" location="${workspacedir}/JavaCup/bin"/>
-    <property name="flexJar" location="${workspacedir}/JavaCup/JFlex.jar"/>
+<project name="dimacs" default="generate_parser" basedir=".">
+    <property name="cupJar" location="${workspacedir}/SMTInterpol/lib/java-cup-12joho.jar"/>
+    <property name="flexJar" location="${workspacedir}/SMTInterpol/lib/JFlex.jar"/>
     <description>
-        Build File for Compiler Project
+        Build File for DIMACS CNF parser
     </description>
 
 
     <target name="generate_parser">
-        <java classname="java_cup.Main" classpath="${cupDir}" fork="true">
+        <java jar="${cupJar}" fork="true">
 			<arg value="dimacs.cup" />
         </java>
         <java jar="${flexJar}" fork="true">

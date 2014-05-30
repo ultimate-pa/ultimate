@@ -19,7 +19,7 @@
 package de.uni_freiburg.informatik.ultimate.logic;
 
 /**
- * All logics configured in SMTLIB.
+ * All logics configured in SMTLIB and some extensions supported by SMTInterpol.
  * @author Juergen Christ
  */
 public enum Logics {
@@ -49,21 +49,24 @@ public enum Logics {
 	QF_UFLIRA,
 	QF_UFNRA,
 	UFLRA,
-	UFNIA;
+	UFNIA,
+	// This logic is SMTInterpol specific and captures the cominbation arrays
+	// with UF, LIA, and LRA.
+	QF_AUFLIRA;
 	/**
 	 * Is this logic mixed integer and real?
 	 * @return <code>true</code> if and only if mixed arithmetic can be used in
 	 *         this logic.
 	 */
 	public boolean isIRA() {
-		return this == AUFLIRA || this == AUFNIRA || this == QF_UFLIRA;
+		return this == AUFLIRA || this == AUFNIRA || this == QF_UFLIRA
+				|| this == QF_AUFLIRA;
 	}
 	/**
 	 * Does this logic support uninterpreted functions and sorts?
 	 * @return <code>true</code> if and only if the logic supports uninterpreted
 	 *         functions and sorts.
 	 */
-	@SuppressWarnings("incomplete-switch")
 	public boolean isUF() {
 		switch (this) { // NOCHECKSTYLE
 		case AUFLIA:
@@ -80,15 +83,16 @@ public enum Logics {
 		case QF_UFNRA:
 		case UFLRA:
 		case UFNIA:
+		case QF_AUFLIRA:
 			return true;
+		default:
+			return false;
 		}
-		return false;
 	}
 	/**
 	 * Does this logic support arrays?
 	 * @return <code>true</code> if and only if this logic supports arrays.
 	 */
-	@SuppressWarnings("incomplete-switch")
 	public boolean isArray() {
 		switch (this) { // NOCHECKSTYLE
 		case AUFLIA:
@@ -98,16 +102,17 @@ public enum Logics {
 		case QF_ABV:
 		case QF_AUFBV:
 		case QF_AUFLIA:
+		case QF_AUFLIRA:
 			return true;
+		default:
+			return false;
 		}
-		return false;
 	}
 	/**
 	 * Does this logic support quantifiers?
 	 * @return <code>true</code> if and only if quantified formulas can be build
 	 *         in this logic.
 	 */
-	@SuppressWarnings("incomplete-switch")
 	public boolean isQuantified() {
 		switch (this) { // NOCHECKSTYLE
 		case AUFLIA:
@@ -117,7 +122,8 @@ public enum Logics {
 		case UFLRA:
 		case UFNIA:
 			return true;
+		default:
+			return false;
 		}
-		return false;
 	}
 }

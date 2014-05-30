@@ -35,10 +35,14 @@ public class CCBaseTerm extends CCTerm {
 		assert !mIsFunc;
 		if (mSymbol instanceof SharedTerm)
 			return ((SharedTerm) mSymbol).getRealTerm();// TODO auxvar stuff
-		assert mSymbol instanceof FunctionSymbol;
-		FunctionSymbol func = (FunctionSymbol) mSymbol;
-		assert func.getParameterSorts().length == 0;
-		return t.term(func);
+		if (mSymbol instanceof FunctionSymbol) {
+			FunctionSymbol func = (FunctionSymbol) mSymbol;
+			assert func.getParameterSorts().length == 0;
+			return t.term(func);
+		} else if (mSymbol instanceof String)
+			return t.term((String) mSymbol);
+		else
+			throw new InternalError("Unknown symbol in CCBaseTerm: " + mSymbol);
 	}
 
 	public String toString() {

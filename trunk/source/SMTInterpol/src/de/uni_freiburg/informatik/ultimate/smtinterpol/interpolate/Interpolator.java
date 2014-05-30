@@ -1153,7 +1153,7 @@ public class Interpolator {
 				} else {
 					InterpolatorAffineTerm s3 =
 							new InterpolatorAffineTerm(c1s2c2s1);
-					s3.add(InfinitNumber.EPSILON.negate());
+					s3.add(InfinitNumber.EPSILON);
 					newF = mTheory.or(s3.toLeq0(mTheory), newF);
 				}
 				newK = InfinitNumber.ZERO;

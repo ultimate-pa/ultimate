@@ -22,8 +22,6 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
-
 /**
  * Class representing a linear term c1*x1+...+cn*xn
  * 

@@ -116,17 +116,11 @@ public class EqualityDestructor extends NonRecursive {
 	private final Map<TermVariable, Term> mEqs =
 		new HashMap<TermVariable, Term>();
 	
-	private final TermCompiler mCompiler;
-	
-	public EqualityDestructor(TermCompiler compiler) {
-		mCompiler = compiler;
-	}
-
 	public Term destruct(Term qbody) {
 		run(new SearchEqualities(qbody));
 		return new InternTermTransformer() {
 			
-			Utils mUtils = new Utils(new NoopProofTracker(), mCompiler);
+			Utils mUtils = new Utils(new NoopProofTracker());
 
 			@Override
 			protected void convert(Term term) {

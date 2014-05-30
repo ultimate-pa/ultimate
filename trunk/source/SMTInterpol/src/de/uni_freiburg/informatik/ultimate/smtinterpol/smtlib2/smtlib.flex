@@ -38,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
 %column
 
 %{
-  private StringBuffer string = new StringBuffer();
+  private StringBuilder string; // NOPMD
   private MySymbolFactory symFactory;
-  private UnifyHash<BigInteger> bignumbers = new UnifyHash<BigInteger>();
+  private final UnifyHash<BigInteger> bignumbers = new UnifyHash<BigInteger>();
   
   public void setSymbolFactory(MySymbolFactory factory) {
     symFactory = factory;
@@ -186,7 +186,7 @@ Keyword = ":" {SMTLetterDigit}+
   {Decimal}              { return symbol(LexerSymbols.DECIMAL, new BigDecimal(yytext())); }
   {HexaDecimal}          { return symbol(LexerSymbols.HEXADECIMAL, yytext()); }
   {Binary}               { return symbol(LexerSymbols.BINARY, yytext()); }
-  \"                     { string.setLength(0); yybegin(STRING); }
+  \"                     { string = new StringBuilder(); yybegin(STRING); }
 
  
   /* comments */
@@ -197,9 +197,10 @@ Keyword = ":" {SMTLetterDigit}+
 }
 
 <STRING> {
-  \"                             { yybegin(YYINITIAL); 
-                                   return symbol(LexerSymbols.STRING, 
-                                   string.toString()); }
+  \"                             { String value = string.toString();
+                                   string = null;
+                                   yybegin(YYINITIAL);
+                                   return symbol(LexerSymbols.STRING, value); }
   [^\"\\]+                       { string.append( yytext() ); }
   \\\"                           { string.append('\"'); }
   \\\\                           { string.append('\\'); }

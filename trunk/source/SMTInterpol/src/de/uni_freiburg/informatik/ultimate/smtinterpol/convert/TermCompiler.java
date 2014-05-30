@@ -62,7 +62,7 @@ public class TermCompiler extends TermTransformer {
 	
 	public void setProofTracker(IProofTracker tracker) {
 		mTracker = tracker;
-		mUtils = new Utils(tracker, this);
+		mUtils = new Utils(tracker);
 	}
 	
 	public void setAssignmentProduction(boolean on) {
@@ -75,11 +75,13 @@ public class TermCompiler extends TermTransformer {
 	public Map<Term, Set<String>> getNames() {
 		return mNames;
 	}
-
+	
 	public void convert(Term term) {
 		if (term instanceof ApplicationTerm) {
 			ApplicationTerm appTerm = (ApplicationTerm) term;
 			FunctionSymbol fsym = appTerm.getFunction();
+			if (fsym.isModelValue())
+				throw new SMTLIBException("Model values not allowed in input");
 			Term[] params = appTerm.getParameters();
 			if (fsym.isLeftAssoc() && params.length > 2) {
 				Theory theory = appTerm.getTheory();
@@ -209,11 +211,11 @@ public class TermCompiler extends TermTransformer {
 			}
 		}
 		
-		for (int i = 0; i < args.length; ++i) {
-			if (args[i] instanceof SMTAffineTerm) {
-				args[i] = ((SMTAffineTerm) args[i]).normalize(this);
-			}
-		}
+//		for (int i = 0; i < args.length; ++i) {
+//			if (args[i] instanceof SMTAffineTerm) {
+//				args[i] = ((SMTAffineTerm) args[i]).normalize(this);
+//			}
+//		}
 		if (origArgs != null)
 			mTracker.desugar(appTerm, origArgs, args);
 		
@@ -260,46 +262,52 @@ public class TermCompiler extends TermTransformer {
 				return;
 			}
 			if (fsym.getName().equals("<=")) {
-				SMTAffineTerm res = SMTAffineTerm.create(args[0])
-						.add(SMTAffineTerm.create(Rational.MONE, args[1]));
+				Term res = SMTAffineTerm.create(args[0])
+						.add(SMTAffineTerm.create(Rational.MONE, args[1]))
+						.normalize(this);
 				mTracker.removeConnective(
 						args, res, ProofConstants.RW_LEQ_TO_LEQ0);
 				setResult(mUtils.createLeq0(res));
 				return;
 			}
 			if (fsym.getName().equals(">=")) {
-				SMTAffineTerm res = SMTAffineTerm.create(args[1])
-						.add(SMTAffineTerm.create(Rational.MONE, args[0]));
+				Term res = SMTAffineTerm.create(args[1])
+						.add(SMTAffineTerm.create(Rational.MONE, args[0]))
+						.normalize(this);
 				mTracker.removeConnective(
 						args, res, ProofConstants.RW_GEQ_TO_LEQ0);
 				setResult(mUtils.createLeq0(res));
 				return;
 			}
 			if (fsym.getName().equals(">")) {
-				SMTAffineTerm res = SMTAffineTerm.create(args[0])
-						.add(SMTAffineTerm.create(Rational.MONE, args[1]));
+				Term res = SMTAffineTerm.create(args[0])
+						.add(SMTAffineTerm.create(Rational.MONE, args[1]))
+						.normalize(this);
 				mTracker.removeConnective(
 						args, res, ProofConstants.RW_GT_TO_LEQ0);
 				setResult(mUtils.createNot(mUtils.createLeq0(res)));
 				return;
 			}
 			if (fsym.getName().equals("<")) {
-				SMTAffineTerm res = SMTAffineTerm.create(args[1])
-						.add(SMTAffineTerm.create(Rational.MONE, args[0]));
+				Term res = SMTAffineTerm.create(args[1])
+						.add(SMTAffineTerm.create(Rational.MONE, args[0]))
+						.normalize(this);
 				mTracker.removeConnective(
 						args, res, ProofConstants.RW_LT_TO_LEQ0);
 				setResult(mUtils.createNot(mUtils.createLeq0(res)));
 				return;
 			}
 			if (fsym.getName().equals("+")) {
-				SMTAffineTerm res = SMTAffineTerm.create(args[0])
-						.add(SMTAffineTerm.create(args[1]));
+				Term res = SMTAffineTerm.create(args[0])
+						.add(SMTAffineTerm.create(args[1]))
+						.normalize(this);
 				mTracker.sum(fsym, args, res);
 				setResult(res);
 				return;
 			} else if (fsym.getName().equals("-") && paramSorts.length == 2) {
-				SMTAffineTerm res = SMTAffineTerm.create(args[0])
-						.add(SMTAffineTerm.create(Rational.MONE, args[1]));
+				Term res = SMTAffineTerm.create(args[0])
+						.add(SMTAffineTerm.create(Rational.MONE, args[1]))
+						.normalize(this);
 				mTracker.sum(fsym, args, res);
 				setResult(res);
 				return;
@@ -313,8 +321,9 @@ public class TermCompiler extends TermTransformer {
 					res = arg0.mul(arg1.getConstant());
 				else
 					throw new UnsupportedOperationException("Unsupported non-linear arithmetic");
-				mTracker.sum(fsym, args, res);
-				setResult(res);
+				Term result = res.normalize(this);
+				mTracker.sum(fsym, args, result);
+				setResult(result);
 				return;
 			} else if (fsym.getName().equals("/")) {
 				SMTAffineTerm arg0 = SMTAffineTerm.create(args[0]);
@@ -324,7 +333,8 @@ public class TermCompiler extends TermTransformer {
 						mBy0Seen = true;
 						setResult(theory.term("@/0", arg0));
 					} else {
-						SMTAffineTerm res = arg0.mul(arg1.getConstant().inverse());
+						Term res = arg0.mul(arg1.getConstant().inverse())
+								.normalize(this);
 						mTracker.sum(fsym, args, res);
 						setResult(res);
 					}
@@ -335,32 +345,34 @@ public class TermCompiler extends TermTransformer {
 			} else if (fsym.getName().equals("div")) {
 				SMTAffineTerm arg0 = SMTAffineTerm.create(args[0]);
 				SMTAffineTerm arg1 = SMTAffineTerm.create(args[1]);
+				Term narg0 = arg0.normalize(this);
+				Term narg1 = arg1.normalize(this);
 				Rational divisor = arg1.getConstant();
 				if (arg1.isConstant() && divisor.isIntegral()) {
-				    if (divisor.equals(Rational.ZERO)) {
-				    	mBy0Seen = true;
-				    	setResult(theory.term("@div0", arg0));
-				    } else if (divisor.equals(Rational.ONE)) {
-				    	mTracker.div(arg0, arg1, arg0,
-				    			ProofConstants.RW_DIV_ONE);
-				    	setResult(arg0);
-				    } else if (divisor.equals(Rational.MONE)) {
-				    	SMTAffineTerm res = arg0.negate();
-				    	mTracker.div(arg0, arg1, res,
-				    			ProofConstants.RW_DIV_MONE);
-				    	setResult(res);
-				    } else if (arg0.isConstant()) {
-				    	// We have (div c0 c1) ==> constDiv(c0, c1)
-				    	Rational div = constDiv(arg0.getConstant(),
-				    			arg1.getConstant());
-				    	SMTAffineTerm res = SMTAffineTerm.create(
-				    			theory.constant(div, arg0.getSort()));
-				    	mTracker.div(arg0, arg1, res,
-				    			ProofConstants.RW_DIV_CONST);
-				    	setResult(res);
-				    } else {
-				    	setResult(arg0.getTheory().term(fsym, arg0, arg1));
-				    }
+					if (divisor.equals(Rational.ZERO)) {
+						mBy0Seen = true;
+						setResult(theory.term("@div0", narg0));
+					} else if (divisor.equals(Rational.ONE)) {
+						mTracker.div(narg0, narg1, narg0,
+								ProofConstants.RW_DIV_ONE);
+						setResult(narg0);
+					} else if (divisor.equals(Rational.MONE)) {
+						Term res = arg0.negate().normalize(this);
+						mTracker.div(narg0, narg1, res,
+								ProofConstants.RW_DIV_MONE);
+						setResult(res);
+					} else if (arg0.isConstant()) {
+						// We have (div c0 c1) ==> constDiv(c0, c1)
+						Rational div = constDiv(arg0.getConstant(),
+								arg1.getConstant());
+						Term res = SMTAffineTerm.create(
+								div.toTerm(arg0.getSort())).normalize(this);
+						mTracker.div(narg0, narg1, res,
+								ProofConstants.RW_DIV_CONST);
+						setResult(res);
+					} else {
+						setResult(theory.term(fsym, narg0, narg1));
+					}
 					return;
 				} else {
 					throw new UnsupportedOperationException("Unsupported non-linear arithmetic");
@@ -368,67 +380,73 @@ public class TermCompiler extends TermTransformer {
 			} else if (fsym.getName().equals("mod")) {
 				SMTAffineTerm arg0 = SMTAffineTerm.create(args[0]);
 				SMTAffineTerm arg1 = SMTAffineTerm.create(args[1]);
+				Term narg0 = arg0.normalize(this);
+				Term narg1 = arg1.normalize(this);
 				Rational divisor = arg1.getConstant();
 				if (arg1.isConstant() && divisor.isIntegral()) {
-				    if (divisor.equals(Rational.ZERO)) {
-				    	mBy0Seen = true;
-				    	setResult(theory.term("@mod0", arg0));
-				    } else if (divisor.equals(Rational.ONE)) {
-				    	// (mod x 1) == 0
-				    	SMTAffineTerm res = SMTAffineTerm.create(
-				    			theory.constant(Rational.ZERO, arg0.getSort()));
-				    	mTracker.mod(arg0, arg1, res,
-				    			ProofConstants.RW_MODULO_ONE);
-				    	setResult(res);
-				    } else if (divisor.equals(Rational.MONE)) {
-				    	// (mod x -1) == 0
-				    	SMTAffineTerm res = SMTAffineTerm.create(
-				    			theory.constant(Rational.ZERO, arg0.getSort()));
-				    	mTracker.mod(arg0, arg1, res,
-				    			ProofConstants.RW_MODULO_MONE);
-				    	setResult(res);
-				    } else if (arg0.isConstant()) {
-				    	// We have (mod c0 c1) ==> c0 - c1 * constDiv(c0, c1)
-				    	Rational c0 = arg0.getConstant();
-				    	Rational c1 = arg1.getConstant();
-				    	Rational mod = c0.sub(constDiv(c0, c1).mul(c1));
-				    	SMTAffineTerm res = SMTAffineTerm.create(
-				    			theory.constant(mod, arg0.getSort()));
-				    	mTracker.mod(arg0, arg1, res,
-				    			ProofConstants.RW_MODULO_CONST);
-				    	setResult(res);
-				    } else {
-				    	Theory t = arg0.getTheory();
-				    	SMTAffineTerm ydiv =
-				    			SMTAffineTerm.create(t.term("div", arg0, arg1)).
-				    			mul(arg1.getConstant());
-				    	Term res = arg0.add(ydiv.negate());
-				    	setResult(res);
-				    	mTracker.modulo(appTerm, res);
-				    }
+					if (divisor.equals(Rational.ZERO)) {
+						mBy0Seen = true;
+						setResult(theory.term("@mod0", narg0));
+					} else if (divisor.equals(Rational.ONE)) {
+						// (mod x 1) == 0
+						Term res = SMTAffineTerm.create(
+								Rational.ZERO.toTerm(arg0.getSort()))
+								.normalize(this);
+						mTracker.mod(narg0, narg1, res,
+								ProofConstants.RW_MODULO_ONE);
+						setResult(res);
+					} else if (divisor.equals(Rational.MONE)) {
+						// (mod x -1) == 0
+						Term res = SMTAffineTerm.create(
+								Rational.ZERO.toTerm(arg0.getSort()))
+								.normalize(this);
+						mTracker.mod(arg0, arg1, res,
+								ProofConstants.RW_MODULO_MONE);
+						setResult(res);
+					} else if (arg0.isConstant()) {
+						// We have (mod c0 c1) ==> c0 - c1 * constDiv(c0, c1)
+						Rational c0 = arg0.getConstant();
+						Rational c1 = arg1.getConstant();
+						Rational mod = c0.sub(constDiv(c0, c1).mul(c1));
+						Term res = SMTAffineTerm.create(
+								mod.toTerm(arg0.getSort())).normalize(this);
+						mTracker.mod(arg0, arg1, res,
+								ProofConstants.RW_MODULO_CONST);
+						setResult(res);
+					} else {
+						SMTAffineTerm ydiv =
+								SMTAffineTerm.create(theory.term(
+										"div", arg0, arg1)).
+										mul(arg1.getConstant());
+						Term res = arg0.add(ydiv.negate()).normalize(this);
+						setResult(res);
+						mTracker.modulo(appTerm, res);
+					}
 					return;
 				} else {
 					throw new UnsupportedOperationException("Unsupported non-linear arithmetic");
 				}
 			} else if (fsym.getName().equals("-") && paramSorts.length == 1) {
-				SMTAffineTerm res = SMTAffineTerm.create(args[0]).negate();
+				Term res = SMTAffineTerm.create(args[0]).negate()
+						.normalize(this);
 				mTracker.sum(fsym, args, res);
 				setResult(res);
 				return;
 			} else if (fsym.getName().equals("to_real")) {
 				SMTAffineTerm arg = SMTAffineTerm.create(args[0]);
-				SMTAffineTerm res = arg.toReal(fsym.getReturnSort());
+				Term res = arg.toReal(fsym.getReturnSort()).normalize(this);
 				setResult(res);
-				mTracker.toReal(arg, res);
+				if (arg.isConstant())
+					mTracker.toReal(arg, res);
 				return;
 			} else if (fsym.getName().equals("to_int")) {
 				// We don't convert to_int here but defer it to the clausifier
 				// But we simplify it here...
 				SMTAffineTerm arg0 = SMTAffineTerm.create(args[0]);
 				if (arg0.isConstant()) {
-					SMTAffineTerm res = SMTAffineTerm.create(
+					Term res = SMTAffineTerm.create(
 							arg0.getConstant().floor().toTerm(
-									fsym.getReturnSort()));
+									fsym.getReturnSort())).normalize(this);
 					mTracker.toInt(arg0, res);
 					setResult(res);
 					return;
@@ -448,7 +466,8 @@ public class TermCompiler extends TermTransformer {
 					res = mod.equals(Rational.ZERO) ? theory.mTrue : theory.mFalse;
 				} else
 					res = theory.term("=", arg0, SMTAffineTerm.create(
-						theory.term("div", arg0, arg1)).mul(arg1.getConstant()));
+						theory.term("div", arg0, arg1)).mul(arg1.getConstant())
+						.normalize(this));
 				setResult(res);
 				mTracker.divisible(appTerm.getFunction(), arg0, res);
 				return;

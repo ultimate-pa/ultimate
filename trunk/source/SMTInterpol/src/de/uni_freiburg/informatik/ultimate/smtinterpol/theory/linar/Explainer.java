@@ -20,9 +20,7 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar;
 
 import java.util.ArrayDeque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
@@ -52,10 +50,6 @@ public class Explainer {
 	 */
 	private final Map<LAReason, LAAnnotation> mSubReasons;
 	/**
-	 * All literals in the conflict clause.
-	 */
-	private final Set<Literal> mAllLiterals;
-	/**
 	 * The unit literal that should be explained.  It is used to avoid using
 	 * literals in the conflict that were only propagated after the literal
 	 * to be explained was propagated.
@@ -65,19 +59,16 @@ public class Explainer {
 	/**
 	 * The stack of reasons/annotations we are currently explaining. 
 	 */
-	private ArrayDeque<LAAnnotation> mAnnotationStack;
+	private final ArrayDeque<LAAnnotation> mAnnotationStack;
 	
 	
 	public Explainer(LinArSolve solver, boolean generateProofTree, 
 			Literal explainedLiteral) {
 		mSolver = solver;
-		mAllLiterals = new HashSet<Literal>();
 		mExplainedLiteral = explainedLiteral;
 		mSubReasons = new HashMap<LAReason, LAAnnotation>();
-		if (generateProofTree) {
-			mAnnotationStack = new ArrayDeque<LAAnnotation>();
-			mAnnotationStack.add(new LAAnnotation());
-		}
+		mAnnotationStack = new ArrayDeque<LAAnnotation>();
+		mAnnotationStack.add(new LAAnnotation());
 	}
 
 	/**
@@ -130,27 +121,21 @@ public class Explainer {
 		if (annot == null) {
 			annot = new LAAnnotation(reason);
 			mSubReasons.put(reason, annot);
-			if (mAnnotationStack != null)
-				mAnnotationStack.addLast(annot);
+			mAnnotationStack.addLast(annot);
 			if (reason.getOldReason() instanceof LiteralReason) 
 				reason.getOldReason().explain(this, reason.getVar().getEpsilon(), sign);
 			else
 				addAnnotation(reason.getOldReason(), sign);
 			addLiteral(reason.getLiteral().negate(), sign);
-			if (mAnnotationStack != null)
-				mAnnotationStack.removeLast();
+			mAnnotationStack.removeLast();
 		}
-		if (mAnnotationStack != null)
-			mAnnotationStack.getLast().addFarkas(annot, coeff);
+		mAnnotationStack.getLast().addFarkas(annot, coeff);
 	}
 
 	public void addLiteral(Literal lit, Rational coeff) {
 		if (mAnnotationStack != null) {
 			mAnnotationStack.getLast().addFarkas(lit, coeff);
 		}
-		// sanity check: a literal should never appear in both polarities
-		assert(!mAllLiterals.contains(lit.negate()));
-		mAllLiterals.add(lit);
 	}
 	
 	private boolean validClause() {
@@ -173,12 +158,13 @@ public class Explainer {
 	}
 	
 	public Clause createClause(DPLLEngine engine) {
-		Literal[] lits = mAllLiterals.toArray(new Literal[mAllLiterals.size()]);
+		assert (mAnnotationStack.size() == 1);
+		LAAnnotation baseAnnotation = mAnnotationStack.getLast();
+		Literal[] lits = baseAnnotation.collectLiterals();
 		Clause clause = new Clause(lits);
 		if (engine.isProofGenerationEnabled()) {
-			assert (mAnnotationStack.size() == 1);
 			clause.setProof(new LeafNode(
-					LeafNode.THEORY_LA, mAnnotationStack.getFirst()));
+					LeafNode.THEORY_LA, baseAnnotation));
 		}
 		assert validClause();
 		return clause;

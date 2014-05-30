@@ -68,7 +68,7 @@ public class FormulaUnLet extends TermTransformer {
 	 * term variable defined in that scope to the corresponding term.
 	 */
 	private final ScopedHashMap<TermVariable,Term> mLetMap =
-			new ScopedHashMap<TermVariable, Term>();
+			new ScopedHashMap<TermVariable, Term>(false);
 
 	/**
 	 * The type of this unletter.

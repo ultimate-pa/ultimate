@@ -159,8 +159,6 @@ public class Rational implements Comparable<Rational> {
 		 * @return Quotient of <code>this</code> and <code>other</code>.
 		 */
 		public Rational div(Rational other) {
-			if (other == Rational.ZERO)
-				throw new ArithmeticException("Division by ZERO");
 			if (other == Rational.ONE)
 				return this;
 			if (other == Rational.MONE)
@@ -570,8 +568,6 @@ public class Rational implements Comparable<Rational> {
 	 * @return Quotient of <code>this</code> and <code>other</code>.
 	 */
 	public Rational div(Rational other) {
-		if (other == Rational.ZERO)
-			throw new ArithmeticException("Division by ZERO");
 		if (other == Rational.ONE)
 			return this;
 		if (other == Rational.MONE)

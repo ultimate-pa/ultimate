@@ -18,14 +18,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
-import java.math.BigInteger;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -35,17 +32,31 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.BooleanVarAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ITheory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CClosure;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinArSolve;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Coercion;
 
+/**
+ * A model represented as injection between integers and domain values.  The
+ * integers should be positive.  Furthermore, the model reserves <code>-1</code>
+ * for undefined values, <code>0</code> for the default value, and
+ * <code>1</code> for the second value.
+ * @author Juergen Christ
+ */
 public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 	
 	private final HashMap<Sort, SortInterpretation> mSorts =
 		new HashMap<Sort, SortInterpretation>();
 	
-	private final HashMap<FunctionSymbol, ExecTerm> mFuncVals =
-		new HashMap<FunctionSymbol, ExecTerm>();
+	private final HashMap<Sort, ArraySortInterpretation> mArraySorts =
+			new HashMap<Sort, ArraySortInterpretation>();
+	
+	private final BoolSortInterpretation mBoolSort;
+	
+	private final NumericSortInterpretation mNumSorts;
+	
+	private final HashMap<FunctionSymbol, FunctionValue> mFuncVals =
+		new HashMap<FunctionSymbol, FunctionValue>();
 	
 	private final Theory mTheory;
 	
@@ -54,17 +65,19 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 	private final FormulaUnLet mUnlet = new FormulaUnLet(
 			FormulaUnLet.UnletType.EXPAND_DEFINITIONS);
 	
-	private final boolean mPartialModels;
+	private final boolean mPartialModel;
 	
 	public Model(Clausifier clausifier, Theory t, boolean partial) {
 		mTheory = t;
-		mPartialModels = partial;
+		mPartialModel = partial;
+		mBoolSort = new BoolSortInterpretation();
+		mNumSorts = new NumericSortInterpretation();
 		// Extract Boolean model
-		Value trueValue = new Value(t.mTrue);
-		Value falseValue = new Value(t.mFalse);
+		FunctionValue trueValue = new FunctionValue(mBoolSort.getTrueIdx());
+		FunctionValue falseValue = new FunctionValue(mBoolSort.getFalseIdx());
 		for (BooleanVarAtom atom : clausifier.getBooleanVars()) {
 			ApplicationTerm at = (ApplicationTerm) atom.getSMTFormula(t);
-			Value value;
+			FunctionValue value;
 			if (atom.getDecideStatus() == null)
 				value = atom.getPreferredStatus() == atom 
 						? trueValue : falseValue;
@@ -75,9 +88,12 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		// Extract different theories
 		CClosure cc = clausifier.getCClosure();
 		LinArSolve la = null;
+		ArrayTheory array = null;
 		for (ITheory theory : clausifier.getEngine().getAttachedTheories()) {
 			if (theory instanceof LinArSolve)
 				la = (LinArSolve) theory;
+			else if (theory instanceof ArrayTheory)
+				array = (ArrayTheory) theory;
 			else if (theory != cc)
 				throw new InternalError(
 					"Modelproduction for theory not implemented: " + theory);
@@ -87,14 +103,76 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 			la.fillInModel(this, t, ste);
 		if (cc != null)
 			cc.fillInModel(this, t, ste);
+		if (array != null)
+			array.fillInModel(this, t, ste);
 		mEval = new ModelEvaluator(this);
 	}
 	
-	ExecTerm getDefault(ExecTerm term) {
-		if (mPartialModels)
-			return new Undefined(term.toSMTLIB(mTheory, null).getSort());
-		return term;
+	public int getFalseIdx() {
+		return mBoolSort.getFalseIdx();
 	}
+	
+	public int getTrueIdx() {
+		return mBoolSort.getTrueIdx();
+	}
+	
+	public int extendNumeric(FunctionSymbol fsym, Rational rat) {
+		assert fsym.getReturnSort().isNumericSort();
+		int idx = mNumSorts.extend(rat);
+		mFuncVals.put(fsym, new FunctionValue(idx));
+		return idx;
+	}
+	
+	public int putNumeric(Rational rat) {
+		return mNumSorts.extend(rat);
+	}
+	
+	public int extendFresh(Sort s) {
+		if (s.isArraySort()) {
+			ArraySortInterpretation si = mArraySorts.get(s);
+			if (si == null) {
+				si = new ArraySortInterpretation(
+						provideSortInterpretation(s.getArguments()[0]),
+						provideSortInterpretation(s.getArguments()[1]));
+				mArraySorts.put(s, si);
+			}
+			return si.extendFresh();
+		}
+		SortInterpretation si = mSorts.get(s);
+		if (si == null) {
+			si = new FiniteSortInterpretation();
+			mSorts.put(s, si);
+		}
+		return si.extendFresh();
+	}
+	
+	public FunctionValue map(FunctionSymbol fs, int value) {
+		FunctionValue res = mFuncVals.get(fs);
+		if (res == null) {
+			res = new FunctionValue(value);
+			mFuncVals.put(fs, res);
+		}
+		assert res.getDefault() == value;
+		return res;
+	}
+	
+	public FunctionValue map(FunctionSymbol fs, int[] args, int value) {
+		assert fs.getParameterSorts().length == args.length;
+		FunctionValue val = mFuncVals.get(fs);
+		if (val == null) {
+			val = new FunctionValue();
+			mFuncVals.put(fs, val);
+		}
+		val.put(value, args);
+		return val;
+	}
+	
+	Term getUndefined(Sort s) {
+		FunctionSymbol fsym = mTheory.getFunctionWithResult(
+				"@undefined", null, s);
+		return mTheory.term(fsym);
+	}
+
 	
 	@Override
 	public Term evaluate(Term input) {
@@ -110,84 +188,17 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		return values;
 	}
 	
-	public void extend(FunctionSymbol symb, ExecTerm value) {
-		assert(symb.getParameterSorts().length == 0);
-		extendSortInterpretation(symb.getReturnSort(), value);
-		if (!mFuncVals.containsKey(symb)) {
-			Term tmp = value.toSMTLIB(symb.getTheory(), null);
-			// LIRA hack needed here, too.
-			if (tmp.getSort() != symb.getReturnSort()) {
-				assert tmp instanceof ConstantTerm;
-				ConstantTerm ct = (ConstantTerm) tmp;
-				assert ct.getValue() instanceof Rational;
-				value = new Value(
-						((Rational) ct.getValue()).toTerm(symb.getReturnSort()));
-			}
-			mFuncVals.put(symb, value);
-		}
-//		else
-		// This assertion does not hold in LIRA logics since we might have to
-		// apply to LIRA-hack to value before comparing...
-//			assert (((Value) et).toSMTLIB(null, null) == value);
-	}
-	
-	public void extend(FunctionSymbol symb, ExecTerm[] args, ExecTerm value) {
-		if (symb.getParameterSorts().length == 0)
-			extend(symb, value);
-		else {
-			value = coerce(value, symb.getReturnSort());
-			extendSortInterpretation(symb.getReturnSort(), value);
-			HashExecTerm het = (HashExecTerm) mFuncVals.get(symb);
-			if (het == null) {
-				het = new HashExecTerm(getDefault(value));
-				mFuncVals.put(symb, het);
-			}
-			het.extend(coerce(symb, args), value);
-		}
-	}
-	
-	private ExecTerm coerce(ExecTerm et, Sort expectedSort) {
-		Term t = et.toSMTLIB(mTheory, null);
-		if (t.getSort() != expectedSort) {
-			assert mTheory.getLogic().isIRA();
-			return new Value(Coercion.coerce(t, expectedSort));
-		}
-		return et;
-	}
-	
-	private ExecTerm[] coerce(FunctionSymbol fs, ExecTerm[] args) {
-		Sort[] paramSorts = fs.getParameterSorts();
-		for (int i = 0; i < args.length; ++i)
-			args[i] = coerce(args[i], paramSorts[i]);
-		return args;
-	}
-
-	private void extendSortInterpretation(Sort sort, ExecTerm et) {
-		// Don't build an interpretation internal sorts! We know what they are!
-		if (sort.isInternal())
-			return;
-		Term value = et.toSMTLIB(sort.getTheory(), null);
-		// Might be violated for internal sorts in LIRA logics 
-		assert (value.getSort() == sort);
-		SortInterpretation si = mSorts.get(sort);
-		if (si == null) {
-			si = new FiniteSortInterpretation();
-			mSorts.put(sort, si);
-		}
-		si.extend(value);
-	}
-	
 	public String toString() {
-		ModelFormatter mf = new ModelFormatter();
+		ModelFormatter mf = new ModelFormatter(mTheory, this);
 		if (!mSorts.isEmpty())
 			mf.appendComment("Sort interpretations");
 		for (Map.Entry<Sort, SortInterpretation> me : mSorts.entrySet())
-			mf.appendSortInterpretation(me.getValue(), me.getKey(), mTheory);
+			mf.appendSortInterpretation(me.getValue(), me.getKey());
 		// Only if we printed ";; Sort interpretations" we should print the
 		// delimiting comment ";; Function interpretations"
 		if (!mSorts.isEmpty())
 			mf.appendComment("Function interpretations");
-		for (Map.Entry<FunctionSymbol, ExecTerm> me : mFuncVals.entrySet())
+		for (Map.Entry<FunctionSymbol, FunctionValue> me : mFuncVals.entrySet())
 			if (!me.getKey().isIntern())
 				mf.appendValue(me.getKey(), me.getValue(), mTheory);
 		return mf.finish();
@@ -197,285 +208,80 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		return mTheory;
 	}
 
-	public ExecTerm getValue(FunctionSymbol fun, ExecTerm[] args) {
-		if (fun.isIntern())
-			return evalInternalFunction(fun, args);
-		return evalExecTerm(fun, args);
-	}
-		
-	private ExecTerm evalExecTerm(FunctionSymbol fun, ExecTerm... args) {
-		ExecTerm et = mFuncVals.get(fun);
-		if (et == null) {
-			if (mPartialModels)
-				return new Undefined(fun.getReturnSort());
-			// We have to dynamically adjust the model here...
-			Term value = null;
-			Sort returnSort = fun.getReturnSort();
-			// Internal sorts get a special value
-			if (returnSort.isInternal()) {
-				if (returnSort == mTheory.getBooleanSort())
-					value = mTheory.mFalse;
-				else if (returnSort.isNumericSort())
-					value = Rational.ZERO.toTerm(returnSort);
-				else
-					throw new InternalError();
-			} else {
-				SortInterpretation si = mSorts.get(returnSort);
-				/*
-				 * If we already have an interpretation for this sort, there is
-				 * no need to create a new value for this sort.  The function
-				 * did not appear in the formula and, hence, is unconstrained.
-				 * We can simply peek an element of this sort and use it as the
-				 * root element for this function application.
-				 * If the sort is not interpreted until now, we have to create
-				 * the new sort and the value for this function application.
-				 */
-				if (si != null)
-					value = si.peek();
-				if (value == null) {
-					Term[] targs = new Term[args.length];
-					for (int i = 0; i < args.length; ++i)
-						targs[i] = args[i].toSMTLIB(mTheory, null);
-					value = mTheory.term(fun, targs);
-				}
-			}
-			et = new Value(value);
-			extend(fun, args, et);
-			return et;
-		}
-		return et.evaluate(args);
-	}
-	
-	private final Rational rationalValue(ExecTerm t) {
-		assert (t instanceof Value);
-		return (Rational)((ConstantTerm) t.toSMTLIB(mTheory, null)).getValue();
-	}
-	
-	private ExecTerm evalInternalFunction(FunctionSymbol fun, ExecTerm[] args) {
-		if (fun == mTheory.mTrue.getFunction())
-			return new Value(mTheory.mTrue);
-		if (fun == mTheory.mFalse.getFunction())
-			return new Value(mTheory.mFalse);
-		if (fun == mTheory.mAnd) {
-			ExecTerm res = args[0];
-			for (ExecTerm arg : args) {
-				if (arg.isUndefined())
-					res = arg;
-				else if (arg.toSMTLIB(mTheory, null) == mTheory.mFalse)
-					return arg;
-				assert (arg.isUndefined() 
-						|| arg.toSMTLIB(mTheory, null) == mTheory.mTrue);
-			}
-			return res;
-		}
-		if (fun == mTheory.mOr) {
-			ExecTerm res = args[0];
-			for (ExecTerm arg : args) {
-				if (arg.isUndefined())
-					res = arg;
-				else if (arg.toSMTLIB(mTheory, null) == mTheory.mTrue)
-					return arg;
-				assert (arg.isUndefined()
-						|| arg.toSMTLIB(mTheory, null) == mTheory.mFalse);
-			}
-			return res;
-		}
-		// Propagate undefined
-		for (ExecTerm arg : args)
-			if (arg.isUndefined())
-				return new Undefined(fun.getReturnSort());
-		if (fun == mTheory.mImplies) {
-			Term val = args[0].toSMTLIB(mTheory, null);
-			assert (val == mTheory.mTrue || val == mTheory.mFalse);
-			for (int i = 1; i < args.length; ++i) {
-				Term argi = args[i].toSMTLIB(mTheory, null);
-				assert(argi == mTheory.mTrue || argi == mTheory.mFalse);
-				val = val == mTheory.mFalse ? mTheory.mTrue
-					: argi == mTheory.mTrue ? mTheory.mTrue : mTheory.mFalse;
-			}
-			return new Value(val);
-		}
-		if (fun == mTheory.mNot) {
-			Term arg0 = args[0].toSMTLIB(mTheory, null);
-			assert (args.length == 1
-					&& (arg0 == mTheory.mTrue || arg0 == mTheory.mFalse));
-			return new Value(
-					arg0 == mTheory.mTrue ? mTheory.mFalse : mTheory.mTrue);
-		}
-		if (fun == mTheory.mXor) {
-			Term val = args[0].toSMTLIB(mTheory, null);
-			assert(val == mTheory.mTrue || val == mTheory.mFalse);
-			for (int i = 1; i < args.length; ++i) {
-				Term argi = args[i].toSMTLIB(mTheory, null);
-				assert(argi == mTheory.mTrue || argi == mTheory.mFalse);
-				val = argi == val ? mTheory.mFalse : mTheory.mTrue;
-			}
-			return new Value(val);
-		}
-		String name = fun.getName();
-		if (name.equals("=")) {
-			for (int i = 1; i < args.length; ++i)
-				if (!args[i].equals(args[0]))
-					return new Value(mTheory.mFalse);
-			return new Value(mTheory.mTrue);
-		}
-		if (name.equals("distinct")) {
-			HashSet<ExecTerm> vals = new HashSet<ExecTerm>();
-			for (ExecTerm arg : args)
-				if (!vals.add(arg))
-					return new Value(mTheory.mFalse);
-			return new Value(mTheory.mTrue);
-		}
-		if (name.equals("ite")) {
-			assert(args.length == 3);// NOCHECKSTYLE since ite has 3 parameters
-			Term selector = args[0].toSMTLIB(mTheory, null);
-			assert(selector == mTheory.mTrue || selector == mTheory.mFalse);
-			return selector == mTheory.mTrue ? args[1] : args[2];
-		}
-		if (name.equals("+")) {
-			Rational val = rationalValue(args[0]);
-			for (int i = 1; i < args.length; ++i)
-				val = val.add(rationalValue(args[i]));
-			return new Value(val.toTerm(fun.getReturnSort()));
-		}
-		if (name.equals("-")) {
-			Rational val = rationalValue(args[0]);
-			if (args.length == 1)
-				return new Value(val.negate().toTerm(fun.getReturnSort()));
-			else {
-				for (int i = 1; i < args.length; ++i)
-					val = val.sub(rationalValue(args[i]));
-				return new Value(val.toTerm(fun.getReturnSort()));
-			}
-		}
-		if (name.equals("*")) {
-			Rational val = rationalValue(args[0]);
-			for (int i = 1; i < args.length; ++i)
-				val = val.mul(rationalValue(args[i]));
-			return new Value(val.toTerm(fun.getReturnSort()));
-		}
-		if (name.equals("/")) {
-			Rational val = rationalValue(args[0]);
-			for (int i = 1; i < args.length; ++i) {
-				Rational divisor = rationalValue(args[i]);
-				if (divisor.equals(Rational.ZERO))
-					val = rationalValue(evalExecTerm(
-							fun.getTheory().getFunction(
-									"@/0", fun.getReturnSort()),
-									new Value(val.toTerm(fun.getReturnSort()))));
-				else
-					val = val.div(divisor);
-			}
-			return new Value(val.toTerm(fun.getReturnSort()));
-		}
-		if (name.equals("<=")) {
-			for (int i = 1; i < args.length; ++i) {
-				Rational arg1 = rationalValue(args[i - 1]);
-				Rational arg2 = rationalValue(args[i]);
-				if (arg1.compareTo(arg2) > 0)
-					return new Value(mTheory.mFalse);
-			}
-			return new Value(mTheory.mTrue);
-		}
-		if (name.equals("<")) {
-			for (int i = 1; i < args.length; ++i) {
-				Rational arg1 = rationalValue(args[i - 1]);
-				Rational arg2 = rationalValue(args[i]);
-				if (arg1.compareTo(arg2) >= 0)
-					return new Value(mTheory.mFalse);
-			}
-			return new Value(mTheory.mTrue);
-		}
-		if (name.equals(">=")) {
-			for (int i = 1; i < args.length; ++i) {
-				Rational arg1 = rationalValue(args[i - 1]);
-				Rational arg2 = rationalValue(args[i]);
-				if (arg1.compareTo(arg2) < 0)
-					return new Value(mTheory.mFalse);
-			}
-			return new Value(mTheory.mTrue);
-		}
-		if (name.equals(">")) {
-			for (int i = 1; i < args.length; ++i) {
-				Rational arg1 = rationalValue(args[i - 1]);
-				Rational arg2 = rationalValue(args[i]);
-				if (arg1.compareTo(arg2) <= 0)
-					return new Value(mTheory.mFalse);
-			}
-			return new Value(mTheory.mTrue);
-		}
-		if (name.equals("div")) {
-			// From the standard...
-			Rational val = rationalValue(args[0]);
-			for (int i = 1; i < args.length; ++i) {
-				Rational n = rationalValue(args[i]);
-				if (n.equals(Rational.ZERO))
-					val = rationalValue(evalExecTerm(
-							fun.getTheory().getFunction(
-									"@div0", fun.getReturnSort()),
-									new Value(val.toTerm(fun.getReturnSort()))));
-				else {
-					Rational div = val.div(n);
-					val = n.isNegative() ? div.ceil() : div.floor();
-				}
-			}
-			return new Value(val.toTerm(fun.getReturnSort()));
-		}
-		if (name.equals("mod")) {
-			assert(args.length == 2);
-			Rational n = rationalValue(args[1]);
-			if (n.equals(Rational.ZERO))
-				return evalExecTerm(
-						fun.getTheory().getFunction(
-								"@mod0", fun.getReturnSort()),
-								args[0]);
-			Rational m = rationalValue(args[0]);
-			Rational div = m.div(n);
-			div = n.isNegative() ? div.ceil() : div.floor();
-			return new Value(m.sub(div.mul(n)).toTerm(fun.getReturnSort()));
-		}
-		if (name.equals("abs")) {
-			assert args.length == 1;
-			Rational arg = rationalValue(args[0]);
-			return new Value(arg.abs().toTerm(fun.getReturnSort()));
-		}
-		if (name.equals("divisible")) {
-			assert(args.length == 1);
-			Rational arg = rationalValue(args[0]);
-			BigInteger[] indices = fun.getIndices();
-			assert(indices.length == 1);
-			Rational rdiv = Rational.valueOf(indices[0], BigInteger.ONE);
-			return arg.div(rdiv).isIntegral()
-					? new Value(mTheory.mTrue) : new Value(mTheory.mFalse);
-		}
-		if (name.equals("to_int")) {
-			assert (args.length == 1);
-			Rational arg = rationalValue(args[0]);
-			return new Value(arg.floor().toTerm(fun.getReturnSort()));
-		}
-		if (name.equals("to_real")) {
-			assert (args.length == 1);
-			Rational arg = rationalValue(args[0]);
-			return new Value(arg.toTerm(fun.getReturnSort()));
-		}
-		if (name.equals("is_int")) {
-			assert (args.length == 1);
-			Rational arg = rationalValue(args[0]);
-			return arg.isIntegral()
-					? new Value(mTheory.mTrue) : new Value(mTheory.mFalse);
-		}
-		if (name.equals("@/0") || name.equals("@div0") || name.equals("@mod0"))
-			return evalExecTerm(fun, args);
-		throw new AssertionError("Unknown internal function!");
+	public boolean isPartialModel() {
+		return mPartialModel;
 	}
 
-	@Override
-	public Term constrainBySort(Term input) {
-		SortInterpretation si = mSorts.get(input.getSort());
-		if (si != null)
-			return si.constrain(mTheory, input);
-		// No constraint on this sort.
-		return mTheory.mTrue;
+	public BoolSortInterpretation getBoolSortInterpretation() {
+		return mBoolSort;
+	}
+	
+	public NumericSortInterpretation getNumericSortInterpretation() {
+		return mNumSorts;
+	}
+
+	public SortInterpretation provideSortInterpretation(Sort sort) {
+		if (sort.isNumericSort())
+			return mNumSorts;
+		if (sort == mTheory.getBooleanSort())
+			return mBoolSort;
+		
+		if (sort.isArraySort()) {
+			ArraySortInterpretation array = mArraySorts.get(sort);
+			if (array == null) {
+				array = new ArraySortInterpretation(
+						provideSortInterpretation(sort.getArguments()[0]),
+						provideSortInterpretation(sort.getArguments()[1]));
+				mArraySorts.put(sort, array);
+			}
+			return array;
+		}
+		SortInterpretation res = mSorts.get(sort);
+		if (res == null) {
+			res = new FiniteSortInterpretation();
+			mSorts.put(sort, res);
+		}
+		return res;
+	}
+
+	public FunctionValue getFunctionValue(FunctionSymbol fs) {
+		return mFuncVals.get(fs);
+	}
+	
+	public Term toModelTerm(int idx, Sort resultSort) {
+		if (idx == -1)
+			return getUndefined(resultSort);
+		if (resultSort == mTheory.getBooleanSort())
+			return mBoolSort.get(idx, resultSort, mTheory);
+		if (resultSort.isNumericSort()) {
+			Rational val = mNumSorts.get(idx);
+			return val.toTerm(resultSort);
+		}
+		if (resultSort.isArraySort()) {
+			ArraySortInterpretation array = mArraySorts.get(resultSort);
+			if (array == null) {
+				if (mPartialModel)
+					return getUndefined(resultSort);
+				array = new ArraySortInterpretation(
+						provideSortInterpretation(resultSort.getArguments()[0]),
+						provideSortInterpretation(resultSort.getArguments()[1]));
+				mArraySorts.put(resultSort, array);
+			}
+			return array.get(idx, resultSort, mTheory);
+		}
+		SortInterpretation si = mSorts.get(resultSort);
+		if (si == null) {
+			if (mPartialModel)
+				return getUndefined(resultSort);
+			si = new FiniteSortInterpretation();
+			si.ensureCapacity(idx + 1);
+		}
+		return si.get(idx, resultSort, mTheory);
+	}
+
+	public ArraySortInterpretation getArrayInterpretation(Sort arraySort) {
+		// FIXME might not exist
+		return mArraySorts.get(arraySort);
 	}
 
 }

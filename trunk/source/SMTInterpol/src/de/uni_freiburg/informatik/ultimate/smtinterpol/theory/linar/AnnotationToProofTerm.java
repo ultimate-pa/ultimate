@@ -135,9 +135,9 @@ public class AnnotationToProofTerm {
 				infos.put(annot, info);
 				if (annot.getLinVar() != null)
 					computeLiterals(annot, theory, info);
+				todo.addAll(annot.getAuxAnnotations().keySet());
 			}
 			info.mCount++;
-			todo.addAll(annot.getAuxAnnotations().keySet());
 		}
 
 		ArrayDeque<Term> antes = new ArrayDeque<Term>();
@@ -182,15 +182,15 @@ public class AnnotationToProofTerm {
 			for (Map.Entry<LAAnnotation, Rational> me
 				: annot.getAuxAnnotations().entrySet()) {
 				AnnotationInfo auxInfo = infos.get(me.getKey());
-				// If the generated clause would just be of the form
-				// ell \/ not ell, we omit the sub-annotation from the
-				// proof.
-				if (disjs.length == 2 && auxInfo.mLiteral == disjs[0])
-					continue todo_loop;
 				disjs[i] = auxInfo.mNegLiteral;
 				coeffs[i] = me.getValue().div(gcd).toTerm(getSort(theory));
 				++i;
 			}
+			// If the generated clause would just be of the form
+			// ell \/ not ell, we omit the clause from the
+			// proof.
+			if (disjs.length == 2 && disjs[1] == info.mNegLiteral)
+				continue todo_loop;
 			Term proofAnnot = theory.term(theory.mOr, disjs);
 			Annotation[] annots = new Annotation[] {
 				trichotomy ? TRICHOTOMY : new Annotation(":LA", coeffs)
