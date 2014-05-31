@@ -440,9 +440,9 @@ public class ElimStore3 {
 		private final TermVariable m_NewArray;
 		private final Term[] m_Index;
 		private final Term m_Data;
+		private final Term m_ArrayUpdateTerm;
 		
 		public ArrayUpdate(Term term) throws ArrayUpdateException {
-
 			if (!(term instanceof ApplicationTerm)) {
 				throw new ArrayUpdateException("no ApplicationTerm");
 			}
@@ -453,6 +453,7 @@ public class ElimStore3 {
 			if (!(eqAppTerm.getParameters().length == 2)) {
 				throw new ArrayUpdateException("no binary equality");
 			}
+			m_ArrayUpdateTerm = term;
 			Term lhs = eqAppTerm.getParameters()[0];
 			Term rhs = eqAppTerm.getParameters()[1];
 			ApplicationTerm allegedStoreTerm;
@@ -544,6 +545,9 @@ public class ElimStore3 {
 		}
 		public Term getData() {
 			return m_Data;
+		}
+		public Term getArrayUpdateTerm() {
+			return m_ArrayUpdateTerm;
 		}
 	}
 	
