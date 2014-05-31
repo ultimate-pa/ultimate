@@ -78,6 +78,8 @@ Keyword = ":" {SMTLetterDigit}+
   "!"                    { return symbol(LexerSymbols.BANG, yytext()); }
   "as"                   { return symbol(LexerSymbols.AS, yytext()); }
   "assert"               { return symbol(LexerSymbols.ASSERT, yytext()); }
+  /* Matthias: "canceled" is a non-standard extension required by Z3. */
+  "canceled"             { return symbol(LexerSymbols.CANCELED, yytext()); }
   "check-sat"            { return symbol(LexerSymbols.CHECKSAT, yytext()); }
   "continued-execution"  { return symbol(LexerSymbols.CONTINUEDEXECUTION, yytext()); }
   "DECIMAL"              { return symbol(LexerSymbols.DECIMALSYM, yytext()); }

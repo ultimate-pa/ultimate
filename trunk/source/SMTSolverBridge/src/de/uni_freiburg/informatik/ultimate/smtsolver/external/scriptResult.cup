@@ -225,7 +225,8 @@ terminal String UNDERSCORE, BANG,
          DECIMALSYM, SAT, SUCCESS, SETLOGIC, SETINFO, SETOPTION, STRINGSYM,
          THEORY, TRUE, UNKNOWN, UNSUPPORTED, UNSAT,
          INCLUDE, RESET, SIMPLIFY, TIMED, TERM,
-         /* Oday (not in standard) */ TIMEOUT, ASSERTED, STDOUT, STDERR, GETTERM;
+         /* Oday (not in standard) */ TIMEOUT, ASSERTED, STDOUT, STDERR, GETTERM,
+         CANCELED;
 
 /* Predefined Keywords */
 terminal String /* attribute */
@@ -480,7 +481,12 @@ reasonUnknown ::= TIMEOUT {: RESULT = ReasonUnknown.TIMEOUT; :} |
 				   * standard. The reason-Unknown "(incomplete <sexpr>)" is used 
 				   * by Z3 and not documented. We received this information 
 				   * from Leo via email on 2012-05-21 */ 
-				  LPAR INCOMPLETE sExpr RPAR {: RESULT = ReasonUnknown.INCOMPLETE; :} ; 
+				  LPAR INCOMPLETE sExpr RPAR {: RESULT = ReasonUnknown.INCOMPLETE; :} |
+				    /* Matthias: "canceled" is a non-standard extension 
+				     * required by Z3. "canceled" is returned if the timeout
+				     * specified by the user via the -t parameter is overdue.
+                     */
+				  CANCELED {: RESULT = ReasonUnknown.TIMEOUT; :};
 
 
 infoResponse ::= CERRORBEHAVIOR:c errorBehavior:e {: RESULT = e; :} |
