@@ -102,7 +102,6 @@ oldAssertionString=
 
 setAssertions
 
-tmpfile=`mktemp /tmp/AutomizerTest.XXXXXX`
 
 cd "$examplesFolder"
 #for f in `ls *.bpl`;
@@ -200,48 +199,49 @@ do
 
 	start=`date +%s`
 	if [ "$VCCPRELUDE" ]; then 
-	    bash -c "ulimit -t $timeout; $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$f" --prelude "$Ultimate_PATH/trunk/examples/programs/translated-vcc/Vcc2Prelude.bpl" --settings "$SETTINGS" > $tmpfile 2>&1"
+	    Ultimate_OUTPUT=`bash -c "ulimit -t $timeout; $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$f" --prelude "$Ultimate_PATH/trunk/examples/programs/translated-vcc/Vcc2Prelude.bpl" --settings "$SETTINGS" 2>&1"`    
 	else
 	    # echo $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$examplesFolder/$f" --settings "$SETTINGS"
-	    bash -c "ulimit -t $timeout; $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$f" --settings "$SETTINGS" >$tmpfile 2>&1"
+	    Ultimate_OUTPUT=`bash -c "ulimit -t $timeout; $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$f" --settings "$SETTINGS" 2>&1"`
 	fi
 	end=`date +%s`
 
-	USED_SETTINGS=`cat $tmpfile | grep "ettings: "`
-	EXCEPTION=`cat $tmpfile | grep "has thrown an Exception!"`
-	EXCEPT=`cat $tmpfile | grep "Exception"`
-	Z3CRASH1=`cat $tmpfile | grep "libz3-gmp.so"`
-	Z3CRASH2=`cat $tmpfile | grep "double free or corruption"`
-	RESULT_SAFE=`cat $tmpfile | grep "RESULT: Ultimate proved your program to be correct!"`
-	RESULT_UNSAFE=`cat $tmpfile | grep "RESULT: Ultimate proved your program to be incorrect!"`
-	RESULT_SYNTAX=`cat $tmpfile | egrep "RESULT:\ Ultimate\ could\ not\ prove\ your\ program:\ Incorrect\ Syntax|RESULT:\ Ultimate\ could\ not\ prove\ your\ program:\ Type\ Error"`
-	UNSUPPORTED_SYNTAX=`cat $tmpfile | grep "RESULT: Ultimate could not prove your program: Unsupported Syntax"`
-	RESULT_TIMEOUT=`cat $tmpfile | grep "RESULT: Ultimate could not prove your program: Timeout"`
-	RESULT_UNKNOWN=`cat $tmpfile | grep "Unable to decide correctness. Please check the following counterexample manually."`
-	RESULT_INSUFFICIENT_ITERATIONS=`cat $tmpfile | grep -c "RESULT: Ultimate could not prove your program: Insufficient iterations to proof correctness"`
-	RESULT_NORESULT=`cat $tmpfile | grep -c "RESULT: Ultimate could not prove your program: Toolchain returned no Result."`
-	RESULT_PROVEN_TERMINATION=`cat $tmpfile | grep "Buchi Automizer proved that your program is terminating"`
-	RESULT_UNKNOWN_TERMINATION=`cat $tmpfile | grep "Buchi Automizer was unable to decide termination"`
-	RESULT_FALSE_TERMINATION=`cat $tmpfile | grep "Nonterminating execution"`
-	BUG_24=`cat $tmpfile | grep "at de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ConvertFormula.addClause(ConvertFormula.java:349)"`
-	BUG_14=`cat $tmpfile | grep "at de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ConvertFormula.convertFormula(ConvertFormula.java:"`
-	BUG_22=`cat $tmpfile | grep "java.lang.AssertionError: Z3 says unsat, SmtInterpol says sat!"`
-	PARSE_ERROR=`cat $tmpfile | grep "ERROR \[Parser.java"`
-	ARRAY_ERROR=`cat $tmpfile | grep "java.lang.IllegalArgumentException: Solver does not support arrays"`
-	PRELUDE_ERROR=`cat $tmpfile | grep " which has not been decleared before"`
-	TYPE_ERROR=`cat $tmpfile | grep "ERROR \[TypeManager.java"`
-	OOM_HEAP=`cat $tmpfile | grep "java.lang.OutOfMemoryError: Java heap space"`
-	OOM_GC=`cat $tmpfile | grep "java.lang.OutOfMemoryError: GC overhead limit exceeded"`
-	Z3ERROR7=`cat $tmpfile | grep "Z3 error 7: unknown"`
-	Z3ERROR=`cat $tmpfile | grep "terminate called after throwing an instance of 'z3error'"`
-	ASSERTION_ERROR=`cat $tmpfile | grep "java.lang.AssertionError"`
-	KILLED=`cat $tmpfile | grep "KILLED"`
-	JVMCRASH=`cat $tmpfile | grep "A fatal error has been detected by the Java Runtime Environment"`
-	Z3NativeCodeException=`cat $tmpfile | grep "de.uni_freiburg.informatik.ultimate.nativez3.NativeCodeException: Did not find object in hashmap"`
+	USED_SETTINGS=`echo "$Ultimate_OUTPUT" | grep "ettings: "`
+	EXCEPTION=`echo "$Ultimate_OUTPUT" | grep "has thrown an Exception!"`
+	EXCEPT=`echo "$Ultimate_OUTPUT" | grep "Exception"`
+	Z3CRASH1=`echo "$Ultimate_OUTPUT" | grep "libz3-gmp.so"`
+	Z3CRASH2=`echo "$Ultimate_OUTPUT" | grep "double free or corruption"`
+	#echo "$Ultimate_OUTPUT"
+	RESULT_SAFE=`echo "$Ultimate_OUTPUT" | grep "RESULT: Ultimate proved your program to be correct!"`
+	RESULT_UNSAFE=`echo "$Ultimate_OUTPUT" | grep "RESULT: Ultimate proved your program to be incorrect!"`
+	RESULT_SYNTAX=`echo "$Ultimate_OUTPUT" | egrep "RESULT:\ Ultimate\ could\ not\ prove\ your\ program:\ Incorrect\ Syntax|RESULT:\ Ultimate\ could\ not\ prove\ your\ program:\ Type\ Error"`
+	UNSUPPORTED_SYNTAX=`echo "$Ultimate_OUTPUT" | grep "RESULT: Ultimate could not prove your program: Unsupported Syntax"`
+	RESULT_TIMEOUT=`echo "$Ultimate_OUTPUT" | grep "RESULT: Ultimate could not prove your program: Timeout"`
+	RESULT_UNKNOWN=`echo "$Ultimate_OUTPUT" | grep "Unable to decide correctness. Please check the following counterexample manually."`
+	RESULT_INSUFFICIENT_ITERATIONS=`echo "$Ultimate_OUTPUT" | grep -c "RESULT: Ultimate could not prove your program: Insufficient iterations to proof correctness"`
+	RESULT_NORESULT=`echo "$Ultimate_OUTPUT" | grep -c "RESULT: Ultimate could not prove your program: Toolchain returned no Result."`
+	RESULT_PROVEN_TERMINATION=`echo "$Ultimate_OUTPUT" | grep "Buchi Automizer proved that your program is terminating"`
+	RESULT_UNKNOWN_TERMINATION=`echo "$Ultimate_OUTPUT" | grep "Buchi Automizer was unable to decide termination"`
+	RESULT_FALSE_TERMINATION=`echo "$Ultimate_OUTPUT" | grep "Nonterminating execution"`
+	BUG_24=`echo "$Ultimate_OUTPUT" | grep "at de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ConvertFormula.addClause(ConvertFormula.java:349)"`
+	BUG_14=`echo "$Ultimate_OUTPUT" | grep "at de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ConvertFormula.convertFormula(ConvertFormula.java:"`
+	BUG_22=`echo "$Ultimate_OUTPUT" | grep "java.lang.AssertionError: Z3 says unsat, SmtInterpol says sat!"`
+	PARSE_ERROR=`echo "$Ultimate_OUTPUT" | grep "ERROR \[Parser.java"`
+	ARRAY_ERROR=`echo "$Ultimate_OUTPUT" | grep "java.lang.IllegalArgumentException: Solver does not support arrays"`
+	PRELUDE_ERROR=`echo "$Ultimate_OUTPUT" | grep " which has not been decleared before"`
+	TYPE_ERROR=`echo "$Ultimate_OUTPUT" | grep "ERROR \[TypeManager.java"`
+	OOM_HEAP=`echo "$Ultimate_OUTPUT" | grep "java.lang.OutOfMemoryError: Java heap space"`
+	OOM_GC=`echo "$Ultimate_OUTPUT" | grep "java.lang.OutOfMemoryError: GC overhead limit exceeded"`
+	Z3ERROR7=`echo "$Ultimate_OUTPUT" | grep "Z3 error 7: unknown"`
+	Z3ERROR=`echo "$Ultimate_OUTPUT" | grep "terminate called after throwing an instance of 'z3error'"`
+	ASSERTION_ERROR=`echo "$Ultimate_OUTPUT" | grep "java.lang.AssertionError"`
+	KILLED=`echo "$Ultimate_OUTPUT" | grep "KILLED"`
+	JVMCRASH=`echo "$Ultimate_OUTPUT" | grep "A fatal error has been detected by the Java Runtime Environment"`
+	Z3NativeCodeException=`echo "$Ultimate_OUTPUT" | grep "de.uni_freiburg.informatik.ultimate.nativez3.NativeCodeException: Did not find object in hashmap"`
 
 
 
-	INITIALIZED=`cat $tmpfile | grep "Initializing TraceAbstraction..."`
+	INITIALIZED=`echo "$Ultimate_OUTPUT" | grep "Initializing TraceAbstraction..."`
 	#echo "$RESULT_CORRECT"
 
 	printf "Program: " 
@@ -353,8 +353,8 @@ do
 	fi
 
 
-	cat $tmpfile | grep "Statistics:" | cut -c67-
-	cat $tmpfile | grep -A 1 "BenchmarkResult:" | cut -c60-
+	echo "$Ultimate_OUTPUT" | grep "Statistics:" | cut -c67-
+	echo "$Ultimate_OUTPUT" | grep -A 1 "BenchmarkResult:" | cut -c60-
     TOTALRUNTIME=$(($end - $start))
     #`echo "$Ultimate_OUTPUT" | tail -n 3 | grep "real" | cut -c6-`
 
