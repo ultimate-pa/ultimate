@@ -151,7 +151,7 @@ public class CfgBuilder {
 			// m_Script.setOption(":proof-transformation", "RPI");
 			// m_Script.setOption(":proof-transformation", "LURPI");
 			// m_Script.setOption(":proof-transformation", "RPILU");
-			m_Script.setLogic("QF_AUFLIRA");
+			m_Script.setLogic("QF_UFLIRA");
 			// m_Script.setOption(":verbosity", 0);
 			blackHolesArrays = false;
 		} else {
