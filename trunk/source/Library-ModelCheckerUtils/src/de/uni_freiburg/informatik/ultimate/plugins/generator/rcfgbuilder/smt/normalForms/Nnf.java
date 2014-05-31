@@ -236,7 +236,8 @@ public class Nnf {
 				//consider term as atom
 				setResult(notTerm);
 			} else if (notParam instanceof QuantifiedFormula) {
-				throw new UnsupportedOperationException("quantifer not supported");
+				throw new UnsupportedOperationException(
+						"NNF transformation does not support QuantifiedFormula");
 			} else {
 				throw new UnsupportedOperationException("Unsupported " + notParam.getClass());
 			}
