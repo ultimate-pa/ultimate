@@ -277,7 +277,7 @@ public class BinaryStatePredicateManager {
 		Term formula = si.asTerm(m_SmtManager.getScript());
 		formula = m_SmtManager.simplify(formula);
 		TermVarsProc termVarsProc = m_SmtManager.computeTermVarsProc(formula);
-		assert termVarsProc.getVars().equals(coefficients);
+		assert coefficients.containsAll(termVarsProc.getVars()) : "introduced new variables";
 		IPredicate result = m_SmtManager.newPredicate(termVarsProc.getFormula(),
 				termVarsProc.getProcedures(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return result;
