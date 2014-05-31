@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -73,7 +74,7 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 	public Set<STATE> computeSetOfAcceptingStates() {
 		Set<STATE> newFinalStates = new HashSet<STATE>();
 		s_Logger.info("Accepting states before buchiClosure: " + m_Operand.getFinalStates().size());
-		Set<STATE> worklist = new HashSet<STATE>();
+		LinkedHashSet<STATE> worklist = new LinkedHashSet<STATE>();
 		newFinalStates.addAll(m_Operand.getFinalStates());
 		for (STATE fin : m_Operand.getFinalStates()) {
 			addAllNonFinalPredecessors(fin, worklist, newFinalStates);
