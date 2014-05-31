@@ -27,21 +27,8 @@ public class Substitution {
 
 	public Substitution(Map<TermVariable, Term> mapping, Script script) {
 		m_Mapping = mapping;
-		assert neitherKeyNorValueNull(mapping);
+		assert SmtUtils.neitherKeyNorValueIsNull(mapping) : "null in substitution";
 		m_Script = script;
-	}
-	
-	private boolean neitherKeyNorValueNull(Map<TermVariable, Term> map) {
-		boolean result = true;
-		for (Entry<TermVariable, Term> entry  : map.entrySet()) {
-			if (entry.getKey() == null) {
-				result = false;
-			}
-			if (entry.getValue() == null) {
-				result = false;
-			}
-		}
-		return result;
 	}
 	
 	public Term transform(Term term) {

@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.NaiveDestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -105,6 +106,8 @@ public class TransFormula implements Serializable {
 		m_BranchEncoders = branchEncoders;
 		m_Infeasibility = infeasibility;
 		m_ClosedFormula = closedFormula;
+		assert SmtUtils.neitherKeyNorValueIsNull(inVars) : "null in inVars";
+		assert SmtUtils.neitherKeyNorValueIsNull(outVars) : "null in outVars";
 		assert (branchEncoders.size() > 0 || closedFormula.getFreeVars().length == 0);
 //		m_Vars = new HashSet<TermVariable>(Arrays.asList(m_Formula.getFreeVars()));
 		assert allSubsetInOutAuxBranch() : "unexpected vars in TransFormula";
@@ -369,6 +372,8 @@ public class TransFormula implements Serializable {
 	public Infeasibility isInfeasible() {
 		return m_Infeasibility;
 	}
+	
+
 	
 	
 //	public static TermVariable getFreshAuxVariable(Boogie2SMT boogie2smt, String id, Sort sort) {
@@ -1334,20 +1339,28 @@ public class TransFormula implements Serializable {
 				result.removeOutVar(bv);
 			}
 		}
-		// Add all inVars (bv,tv) of the call to outVars of the result except 
-		// if there already an outVar (bv,tv').
-		// (Because in this case the variable bv was reassigned by the summary,
-		// e.g. in the case where bv is a global variable that can be modified
-		// by the procedure or is bv is a variable that is assigned by the
-		// call. 
-		{
-			for (BoogieVar bv : callTf.getInVars().keySet()) {
-				if (!result.getOutVars().containsKey(bv)) {
-					result.m_OutVars.put(bv, result.getInVars().get(bv));
-				}
-				
-			}
-		}
+//		// Add all inVars (bv,tv) of the call to outVars of the result except 
+//		// if there already an outVar (bv,tv').
+//		// (Because in this case the variable bv was reassigned by the summary,
+//		// e.g. in the case where bv is a global variable that can be modified
+//		// by the procedure or is bv is a variable that is assigned by the
+//		// call. 
+//		{
+//			for (BoogieVar bv : callTf.getInVars().keySet()) {
+//				if (!result.getOutVars().containsKey(bv)) {
+//					TermVariable inVar = result.getInVars().get(bv);
+//					if (inVar == null) {
+//						// do nothing, 
+//						// this inVar was removed by a simplification
+//					} else {
+//						result.m_OutVars.put(bv, inVar);
+//					}
+//				}
+//				
+//			}
+//		}
+		assert SmtUtils.neitherKeyNorValueIsNull(result.m_OutVars) : 
+			"sequentialCompositionWithCallAndReturn introduced null entries";
 		assert(isIntraprocedural(result));
 		return result;
 	}

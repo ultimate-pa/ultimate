@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
@@ -11,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -106,5 +109,34 @@ public class SmtUtils {
 			result = script.term("select", result, index[i]);
 		}
 		return result;
+	}
+	
+	/**
+	 * Returns true iff each key and each value is non-null.
+	 */
+	public static <K,V> boolean neitherKeyNorValueIsNull(Map<K,V> map) {
+		for (Entry<K, V> entry  : map.entrySet()) {
+			if (entry.getKey() == null || entry.getValue() == null) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * Given the array of terms [lhs_1, ..., lhs_n] and the array of terms 
+	 * [rhs_1, ..., rhs_n], return the conjunction of the following equalities
+	 * lhs_1 = rhs_1, ... , lhs_n = rhs_n.  
+	 */
+	public static Term pairwiseEquality(Script script, Term[] lhs, Term[] rhs) {
+		if (lhs.length != rhs.length) {
+			throw new IllegalArgumentException("must have same length");
+		}
+		Term[] equalities = new Term[lhs.length];
+		for (int i=0; i<lhs.length; i++) {
+
+			equalities[i] = UtilExperimental.binaryEquality(script, lhs[i], rhs[i]); 
+		}
+		return Util.and(script, equalities);
 	}
 }
