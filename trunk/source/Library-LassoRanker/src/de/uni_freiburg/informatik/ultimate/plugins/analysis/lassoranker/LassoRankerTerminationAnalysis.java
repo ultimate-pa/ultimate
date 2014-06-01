@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptio
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.DNF;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.PreProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RemoveNegation;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteArrays;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteBooleans;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteDivision;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteEquality;
@@ -240,11 +241,16 @@ public class LassoRankerTerminationAnalysis {
 		Term trans_term = transition.getFormula();
 		VarCollector rvc =
 				new VarCollector(m_rankVarFactory, transition);
+		assert rvc.auxVarsDisjointFormInOutVars();
+		assert rvc.allAreInOutAux(trans_term.getFreeVars()) == null;
 		
 		// Apply preprocessors
 		for (PreProcessor preprocessor : this.getPreProcessors(rvc)) {
 			trans_term = preprocessor.process(m_old_script, trans_term);
 		}
+		
+		assert rvc.auxVarsDisjointFormInOutVars();
+		assert rvc.allAreInOutAux(trans_term.getFreeVars()) == null;
 		
 		s_Logger.debug(SMTPrettyPrinter.print(trans_term));
 		

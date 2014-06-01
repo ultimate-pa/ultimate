@@ -117,6 +117,7 @@ public class RewriteDivision implements PreProcessor {
 		if (m_auxTerms.size() > 0) {
 			Term auxTerms = Util.and(m_Script, m_auxTerms.toArray(new Term[0]));
 			result = Util.and(script, result, auxTerms);
+			m_varCollector.addAuxVars(m_auxVars.keySet());
 			
 			assert !s_CheckResult || !isIncorrect(term, result, auxTerms) 
 					: "rewrite division unsound";

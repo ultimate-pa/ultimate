@@ -27,9 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
@@ -37,9 +40,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 
 
 /**
- * This collects the RankVar's that are used as inVars or outVars.
+ * Object that stores
+ * <ul> 
+ * <li> a mapping between inVars and RankVars,
+ * <li> a mapping between outVars and RankVars, and
+ * <li> a set of auxiliary variables.
+ * Together with a term whose free variables are the inVars, ourVars and 
+ * auxVars, this object defines a transition relation.
  * 
- * @author Jan Leike
+ * @author Jan Leike, Matthias Heizmann
  * 
  * @see VarFactory
  * @see RankVar
@@ -48,7 +57,10 @@ public class VarCollector implements Serializable {
 	private static final long serialVersionUID = -1005909010259944923L;
 	
 	private final Map<RankVar, TermVariable> m_inVars;
+	private final Map<TermVariable, RankVar> m_inVarsReverseMapping;
 	private final Map<RankVar, TermVariable> m_outVars;
+	private final Map<TermVariable, RankVar> m_outVarsReverseMapping;
+	private final Set<TermVariable> m_AuxVars;
 	private final VarFactory m_factory;
 	
 	/**
@@ -58,7 +70,10 @@ public class VarCollector implements Serializable {
 	public VarCollector(VarFactory factory) {
 		assert factory != null;
 		m_inVars = new LinkedHashMap<RankVar, TermVariable>();
+		m_inVarsReverseMapping = new LinkedHashMap<TermVariable, RankVar>();
 		m_outVars = new LinkedHashMap<RankVar, TermVariable>();
+		m_outVarsReverseMapping = new LinkedHashMap<TermVariable, RankVar>();
+		m_AuxVars = new HashSet<TermVariable>();
 		m_factory = factory;
 	}
 	
@@ -82,6 +97,9 @@ public class VarCollector implements Serializable {
 			addOutVar(m_factory.fromBoogieVar(entry.getKey()),
 					entry.getValue());
 		}
+		for (TermVariable auxVar : transition.getAuxVars()) {
+			m_AuxVars.add(auxVar);
+		}
 	}
 	
 	/**
@@ -96,6 +114,10 @@ public class VarCollector implements Serializable {
 	 */
 	public Map<RankVar, TermVariable> getOutVars() {
 		return Collections.unmodifiableMap(m_outVars);
+	}
+	
+	public Set<TermVariable> getAuxVars() {
+		return Collections.unmodifiableSet(m_AuxVars);
 	}
 	
 	/**
@@ -113,13 +135,20 @@ public class VarCollector implements Serializable {
 	 */
 	public void addInVar(RankVar rkVar, TermVariable var) {
 		m_inVars.put(rkVar, var);
+		m_inVarsReverseMapping.put(var, rkVar);
 	}
 	
 	/**
 	 * Remove an inVar from the collection
 	 */
 	public void removeInVar(RankVar rkVar) {
-		m_inVars.remove(rkVar);
+		TermVariable tv = m_inVars.remove(rkVar);
+		if (tv == null) {
+			throw new AssertionError(
+					"cannot remove variable that is not contained");
+		} else {
+			m_inVarsReverseMapping.remove(tv);
+		}
 	}
 	
 	/**
@@ -130,13 +159,30 @@ public class VarCollector implements Serializable {
 	 */
 	public void addOutVar(RankVar rkVar, TermVariable var) {
 		m_outVars.put(rkVar, var);
+		m_outVarsReverseMapping.put(var, rkVar);
 	}
 	
 	/**
 	 * Remove an outVar from the collection
 	 */
 	public void removeOutVar(RankVar rkVar) {
-		m_outVars.remove(rkVar);
+		TermVariable tv = m_outVars.remove(rkVar);
+		if (tv == null) {
+			throw new AssertionError(
+					"cannot remove variable that is not contained");
+		} else {
+			m_outVarsReverseMapping.remove(tv);
+		}
+	}
+	
+	
+	/**
+	 * Add a TermVariables that each neither occur as inVar or outVar to the set
+	 * of auxiliary variables. (Note that auxiliary variables are different from
+	 * replacement variables).
+	 */
+	public void addAuxVars(Collection<TermVariable> auxVars) {
+		m_AuxVars.addAll(auxVars);
 	}
 	
 	/**
@@ -154,10 +200,59 @@ public class VarCollector implements Serializable {
 						entry.getKey().getGloballyUniqueId(),
 						entry.getValue().getSort()
 				);
-				m_inVars.put(entry.getKey(), inVar);
+				addInVar(entry.getKey(), inVar);
 			}
 		}
 	}
+	
+	/**
+	 * Returns true if each auxVar occurs neither as inVar nor as outVar.
+	 * This property should always hold.
+	 */
+	public boolean auxVarsDisjointFormInOutVars() {
+		for (TermVariable auxVar : m_AuxVars) {
+			if (m_inVarsReverseMapping.containsKey(auxVar)) {
+				return false;
+			}
+			if (m_outVarsReverseMapping.containsKey(auxVar)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * Returns some TermVariable from tvs that occurs neither as inVar nor
+	 * as outVar nor as auxVar. Returns null if no such TermVariable in tvs
+	 * exists.
+	 * For the variables that occur in the transition that uses this 
+	 * VarCollector the result should always be null.
+	 */
+	public TermVariable allAreInOutAux(TermVariable[] tvs) {
+		for (TermVariable tv : tvs) {
+			if (!isInOurAux(tv)) {
+				return tv;
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * Return true iff the TermVariable tv occurs as inVar as outVar or as
+	 * auxVar.
+	 */
+	private boolean isInOurAux(TermVariable tv) {
+		if (m_inVarsReverseMapping.containsKey(tv)) {
+			return true;
+		} else if (m_outVarsReverseMapping.containsKey(tv)) {
+			return true;
+		} else if (m_AuxVars.contains(tv)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
 	
 	@Override
 	public String toString() {
