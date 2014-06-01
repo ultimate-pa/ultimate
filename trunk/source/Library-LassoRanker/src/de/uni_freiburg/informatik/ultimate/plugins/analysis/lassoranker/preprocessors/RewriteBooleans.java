@@ -37,10 +37,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ReplacementVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.BoogieVarWrapper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarFactory;
 
@@ -97,7 +95,7 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 	 * Get the replacement variable corresponding to a (boolean) BoogieVar.
 	 * Creates a new replacement variable, if needed.
 	 */
-	private ReplacementVar getReplacementVar(RankVar rankVar) {
+	private ReplacementVar getOrConstructReplacementVar(RankVar rankVar) {
 		String rankVarId = rankVar.getGloballyUniqueId();
 		VarFactory rvFactory = m_rankVarCollector.getFactory();
 		ReplacementVar repVar = rvFactory.getRepVar(rankVarId);
@@ -123,8 +121,10 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 						m_rankVarCollector.getInVars().entrySet());
 		for (Map.Entry<RankVar, TermVariable> entry : entrySet) {
 			if (entry.getValue().getSort().getName().equals("Bool")) {
-				ReplacementVar repVar = getReplacementVar(entry.getKey());
-				TermVariable newInVar = m_SubstitutionMapping.get(entry.getValue());
+				ReplacementVar repVar = 
+						getOrConstructReplacementVar(entry.getKey());
+				TermVariable newInVar = 
+						m_SubstitutionMapping.get(entry.getValue());
 				if (newInVar == null) {
 					// Create a new TermVariable
 					newInVar = rvFactory.getNewTermVariable(
@@ -141,8 +141,10 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 						m_rankVarCollector.getOutVars().entrySet());
 		for (Map.Entry<RankVar, TermVariable> entry : entrySet) {
 			if (entry.getValue().getSort().getName().equals("Bool")) {
-				ReplacementVar repVar = getReplacementVar(entry.getKey());
-				TermVariable newOutVar = m_SubstitutionMapping.get(entry.getValue());
+				ReplacementVar repVar = 
+						getOrConstructReplacementVar(entry.getKey());
+				TermVariable newOutVar = 
+						m_SubstitutionMapping.get(entry.getValue());
 				if (newOutVar == null) {
 					// Create a new TermVariable
 					newOutVar = rvFactory.getNewTermVariable(
