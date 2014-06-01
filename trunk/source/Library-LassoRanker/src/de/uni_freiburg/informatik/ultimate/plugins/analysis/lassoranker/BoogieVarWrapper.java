@@ -45,11 +45,6 @@ public class BoogieVarWrapper extends RankVar {
 	}
 	
 	@Override
-	public BoogieVar getAssociatedBoogieVar() {
-		return mBoogieVar;
-	}
-	
-	@Override
 	public Term getDefinition() {
 		return mBoogieVar.getTermVariable();
 	}

@@ -28,11 +28,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 
 
 /**
@@ -113,35 +116,59 @@ public class NonTerminationArgument implements Serializable {
 	}
 	
 	/**
-	 * Translate states with RankVar domains to states with BoogieVar domains.
-	 * Boolean are translated to 1 (true) and 0 (false).
-	 * @param state a state mapping RankVar's to Rational's
-	 * @return a state mapping the corresponding BoogieVar's to Rational's
+	 * Translate a sequence of mappings from RankVars to Rationals into a 
+	 * sequence of mappings from Expressions to Rationals.
+	 * The RanksVars are translated into an Expressions that represents the
+	 * defining term of the RankVar. The Rationals are are translated to 1 
+	 * (true) and 0 (false) if the corresponding RankVar represented a Term
+	 * of sort Bool.
+	 * Ensures that RankVars that are defined by equivalent terms translated 
+	 * to the same Expression object. 
 	 */
-	public static Map<BoogieVar, Rational> rank2Boogie(
-			Map<RankVar, Rational> state) {
-		Map<BoogieVar, Rational> result =
-				new LinkedHashMap<BoogieVar, Rational>();
-		for (Map.Entry<RankVar, Rational> entry : state.entrySet()) {
-			BoogieVar boogieVar = entry.getKey().getAssociatedBoogieVar();
-			if (boogieVar == null) {
-				// No associated BoogieVar, safe to skip
-				continue;
+	public static Map<Expression, Rational>[] rank2Boogie(
+			Term2Expression term2expression,
+			Map<RankVar, Rational>... states) {
+		Map<Expression, Rational>[] result = new Map[states.length];
+		Map<Term, Expression> rankVar2Expression = 
+				new HashMap<Term, Expression>();
+		for (int i=0; i<states.length; i++) {
+			Map<Expression, Rational> expression2rational =
+					new LinkedHashMap<Expression, Rational>();
+			for (Map.Entry<RankVar, Rational> entry : states[i].entrySet()) {
+				RankVar rv = entry.getKey();
+				Expression e;
+				if (rankVar2Expression.containsKey(rv.getDefinition())) {
+					e = rankVar2Expression.get(rv.getDefinition());
+				} else {
+					e = rankVar2Expression(rv, term2expression);
+					rankVar2Expression.put(rv.getDefinition(), e);
+				}
+				Rational r = entry.getValue();
+				// Replace Rational for boolean RankVars
+				if (rv.getDefinition().getSort().getName().equals("Bool")) {
+					// value >= 1 means true, which is translated to 1,
+					// false is translated to 0.
+					r = entry.getValue().compareTo(Rational.ONE) == -1 ?
+							Rational.ONE : Rational.ZERO;
+				}
+				assert e != null && r != null;
+				expression2rational.put(e, r);
 			}
-			// Replace boolean BoogieVars
-			if (boogieVar.getTermVariable().getSort().getName().equals("Bool")) {
-				// value >= 1 means true, which is translated to 1,
-				// false is translated to 0.
-				Rational value =
-						entry.getValue().compareTo(Rational.ONE) == -1 ?
-								Rational.ONE : Rational.ZERO;
-				result.put(boogieVar, value);
-				continue;
-			}
-			result.put(boogieVar, entry.getValue()); // fallback: do nothing
+			result[i] = expression2rational;
 		}
 		return result;
 	}
+	
+	/**
+	 * Translate a RankVar into a (Boogie) Expression. The Expression is the
+	 * (unique) Expression that represents the definition of the RankVar.
+	 */
+	public static Expression rankVar2Expression(RankVar rv, 
+			Term2Expression term2expression) {
+		return term2expression.translate(rv.getDefinition());
+	}
+	
+	
 	
 	/**
 	 * @return the discount factor

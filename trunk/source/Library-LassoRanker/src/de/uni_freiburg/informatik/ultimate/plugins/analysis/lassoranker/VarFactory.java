@@ -106,17 +106,17 @@ public class VarFactory implements Serializable {
 	 * @param key a key to store repVar with
 	 * @param repVar the replacement variable to be stored 
 	 */
-	public void registerRepVar(Object key, ReplacementVar repVar) {
+	public void registerRepVar(String key, ReplacementVar repVar) {
 		assert !m_repVars.containsKey(key);
 		m_repVars.put(key, repVar);
 	}
 	
 	/**
-	 * Fetch a previously stored replacement variable
+	 * Get a previously stored replacement variable
 	 * @param key the key used to store the repVar
 	 * @return the repVar
 	 */
-	public ReplacementVar getRepVar(Object key) {
+	public ReplacementVar getRepVar(String key) {
 		return m_repVars.get(key);
 	}
 	

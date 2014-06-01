@@ -77,7 +77,7 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 	 * Maps boolean-valued TermVariable's to their translated counterpart,
 	 * which are int- or real-valued variables
 	 */
-	private final Map<TermVariable, TermVariable> m_translator;
+	private final Map<TermVariable, TermVariable> m_SubstitutionMapping;
 	
 	/**
 	 * Create a new RewriteBooleans preprocessor
@@ -86,7 +86,7 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 	 */
 	public RewriteBooleans(VarCollector rankVarCollector, Script script) {
 		m_rankVarCollector = rankVarCollector;
-		m_translator = new LinkedHashMap<TermVariable, TermVariable>();
+		m_SubstitutionMapping = new LinkedHashMap<TermVariable, TermVariable>();
 		m_repVars = new ArrayList<ReplacementVar>();
 		m_Script = script;
 		m_repVarSort = m_Script.sort(s_repVarSortName);
@@ -97,14 +97,15 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 	 * Get the replacement variable corresponding to a (boolean) BoogieVar.
 	 * Creates a new replacement variable, if needed.
 	 */
-	private ReplacementVar getReplacementVar(BoogieVar boogieVar) {
+	private ReplacementVar getReplacementVar(RankVar rankVar) {
+		String rankVarId = rankVar.getGloballyUniqueId();
 		VarFactory rvFactory = m_rankVarCollector.getFactory();
-		ReplacementVar repVar = rvFactory.getRepVar(boogieVar);
+		ReplacementVar repVar = rvFactory.getRepVar(rankVarId);
 		if (repVar == null) {
-			String name = boogieVar.getGloballyUniqueId() + "_bool";
-			repVar = new ReplacementVar(name, boogieVar,
-					getDefinition(boogieVar.getTermVariable()));
-			rvFactory.registerRepVar(boogieVar, repVar);
+			String name = rankVarId + "_bool";
+			repVar = new ReplacementVar(name,
+					getDefinition(rankVar.getDefinition()));
+			rvFactory.registerRepVar(rankVar.getGloballyUniqueId(), repVar);
 			m_repVars.add(repVar);
 		}
 		return repVar;
@@ -121,43 +122,37 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 				new ArrayList<Map.Entry<RankVar, TermVariable>>(
 						m_rankVarCollector.getInVars().entrySet());
 		for (Map.Entry<RankVar, TermVariable> entry : entrySet) {
-			if (entry.getKey() instanceof BoogieVarWrapper) {
-				BoogieVar boogieVar = entry.getKey().getAssociatedBoogieVar();
-				if (entry.getValue().getSort().getName().equals("Bool")) {
-					ReplacementVar repVar = getReplacementVar(boogieVar);
-					TermVariable newVar = m_translator.get(entry.getValue());
-					if (newVar == null) {
-						// Create a new TermVariable
-						newVar = rvFactory.getNewTermVariable(
-							boogieVar.getGloballyUniqueId() + s_repInPostfix,
-							m_repVarSort
-						);
-						m_translator.put(entry.getValue(), newVar);
-					}
-					m_rankVarCollector.removeInVar(entry.getKey());
-					m_rankVarCollector.addInVar(repVar, newVar);
+			if (entry.getValue().getSort().getName().equals("Bool")) {
+				ReplacementVar repVar = getReplacementVar(entry.getKey());
+				TermVariable newInVar = m_SubstitutionMapping.get(entry.getValue());
+				if (newInVar == null) {
+					// Create a new TermVariable
+					newInVar = rvFactory.getNewTermVariable(
+							repVar.getGloballyUniqueId() + s_repInPostfix,
+						m_repVarSort
+					);
+					m_SubstitutionMapping.put(entry.getValue(), newInVar);
 				}
+				m_rankVarCollector.removeInVar(entry.getKey());
+				m_rankVarCollector.addInVar(repVar, newInVar);
 			}
 		}
 		entrySet = new ArrayList<Map.Entry<RankVar, TermVariable>>(
 						m_rankVarCollector.getOutVars().entrySet());
 		for (Map.Entry<RankVar, TermVariable> entry : entrySet) {
-			if (entry.getKey() instanceof BoogieVarWrapper) {
-				BoogieVar boogieVar = entry.getKey().getAssociatedBoogieVar();
-				if (entry.getValue().getSort().getName().equals("Bool")) {
-					ReplacementVar repVar = getReplacementVar(boogieVar);
-					TermVariable newVar = m_translator.get(entry.getValue());
-					if (newVar == null) {
-						// Create a new TermVariable
-						newVar = rvFactory.getNewTermVariable(
-							boogieVar.getGloballyUniqueId() + s_repOutPostfix,
-							m_repVarSort
-						);
-						m_translator.put(entry.getValue(), newVar);
-					}
-					m_rankVarCollector.removeOutVar(entry.getKey());
-					m_rankVarCollector.addOutVar(repVar, newVar);
+			if (entry.getValue().getSort().getName().equals("Bool")) {
+				ReplacementVar repVar = getReplacementVar(entry.getKey());
+				TermVariable newOutVar = m_SubstitutionMapping.get(entry.getValue());
+				if (newOutVar == null) {
+					// Create a new TermVariable
+					newOutVar = rvFactory.getNewTermVariable(
+							repVar.getGloballyUniqueId() + s_repOutPostfix,
+						m_repVarSort
+					);
+					m_SubstitutionMapping.put(entry.getValue(), newOutVar);
 				}
+				m_rankVarCollector.removeOutVar(entry.getKey());
+				m_rankVarCollector.addOutVar(repVar, newOutVar);
 			}
 		}
 	}
@@ -195,8 +190,8 @@ public class RewriteBooleans extends TermTransformer implements PreProcessor {
 			if (term instanceof TermVariable &&
 					term.getSort().getName().equals("Bool")) {
 				TermVariable var = (TermVariable) term;
-				assert m_translator.containsKey(var);
-				TermVariable translatedVar = m_translator.get(var);
+				assert m_SubstitutionMapping.containsKey(var);
+				TermVariable translatedVar = m_SubstitutionMapping.get(var);
 				Term one = m_Script.numeral(BigInteger.ONE);
 				Term repTerm = m_Script.term(">=", translatedVar, one);
 				setResult(repTerm);

@@ -8,7 +8,8 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 
 
 /**
@@ -37,9 +38,9 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 	 */
 	private final static int s_schematic_execution_length = 3;
 	
-	private final Map<BoogieVar, Rational> m_StateInit;
-	private final Map<BoogieVar, Rational> m_StateHonda;
-	private final Map<BoogieVar, Rational> m_Ray;
+	private final Map<Expression, Rational> m_StateInit;
+	private final Map<Expression, Rational> m_StateHonda;
+	private final Map<Expression, Rational> m_Ray;
 	private final Rational m_Lambda;
 	
 	/**
@@ -56,9 +57,9 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 	 * @param location program location
 	 */
 	public NonTerminationArgumentResult(P position, String plugin,
-			Map<BoogieVar, Rational> state_init,
-			Map<BoogieVar, Rational> state_honda,
-			Map<BoogieVar, Rational> ray,
+			Map<Expression, Rational> state_init,
+			Map<Expression, Rational> state_honda,
+			Map<Expression, Rational> ray,
 			Rational lambda,
 			List<ITranslator<?,?,?,?>> translatorSequence) {
 		super(position, plugin, translatorSequence);
@@ -74,17 +75,17 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 				"program execution.";
 	}
 	
-	private String printState(Map<BoogieVar, Rational> state) {
+	private String printState(Map<Expression, Rational> state) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("{");
 		boolean first = true;
-		for (Entry<BoogieVar, Rational> entry : state.entrySet()) {
+		for (Entry<Expression, Rational> entry : state.entrySet()) {
 			if (!first) {
 				sb.append(", ");
 			} else {
 				first = false;
 			}
-			sb.append(entry.getKey());
+			sb.append(BoogieStatementPrettyPrinter.print(entry.getKey()));
 //			sb.append(BackTranslationWorkaround.backtranslate(
 //					m_TranslatorSequence, entry.getKey()));
 			// TODO: apply backtranslation?
@@ -103,10 +104,10 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 		assert(s_schematic_execution_length > 0);
 		Rational geometric_sum = Rational.ZERO; // 1 + lambda + lambda^2 + ...
 		for (int i = 0; i < s_schematic_execution_length; ++i) {
-			Map<BoogieVar, Rational> state =
-					new HashMap<BoogieVar, Rational>();
-			for (Entry<BoogieVar, Rational> entry : m_StateHonda.entrySet()) {
-				BoogieVar var = entry.getKey();
+			Map<Expression, Rational> state =
+					new HashMap<Expression, Rational>();
+			for (Entry<Expression, Rational> entry : m_StateHonda.entrySet()) {
+				Expression var = entry.getKey();
 				Rational x = m_StateHonda.get(var);
 				Rational y = m_Ray.get(var);
 				state.put(var, x.add(y.mul(geometric_sum)));

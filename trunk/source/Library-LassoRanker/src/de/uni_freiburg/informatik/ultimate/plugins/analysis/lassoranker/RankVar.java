@@ -56,8 +56,4 @@ public abstract class RankVar implements Serializable {
 	 */
 	public abstract String getGloballyUniqueId();
 	
-	/**
-	 * @return the associated BoogieVar and null if there is no such association
-	 */
-	public abstract BoogieVar getAssociatedBoogieVar();
 }

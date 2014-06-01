@@ -3,12 +3,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
@@ -284,12 +286,12 @@ public class LassoRankerStarter {
 		Collection<SupportingInvariant> si_list = arg.getSupportingInvariants();
 		
 		Script script = m_RootAnnot.getScript();
-		Term2Expression smt2boogie = m_RootAnnot.getBoogie2SMT().getTerm2Expression();
+		Term2Expression term2expression = m_RootAnnot.getBoogie2SMT().getTerm2Expression();
 		
 		Expression[] supporting_invariants = new Expression[si_list.size()];
 		int i = 0;
 		for (SupportingInvariant si : si_list) {
-			supporting_invariants[i] = si.asExpression(script, smt2boogie);
+			supporting_invariants[i] = si.asExpression(script, term2expression);
 			++i;
 		}
 		
@@ -297,7 +299,7 @@ public class LassoRankerStarter {
 				new TerminationArgumentResult<RcfgElement>(
 					m_Honda,
 					Activator.s_PLUGIN_NAME,
-					rf.asLexExpression(script, smt2boogie),
+					rf.asLexExpression(script, term2expression),
 					rf.getName(),
 					supporting_invariants,
 					getTranslatorSequence()
@@ -310,16 +312,25 @@ public class LassoRankerStarter {
 	 * @param arg
 	 */
 	private void reportNonTerminationResult(NonTerminationArgument arg) {
-		// TODO: translate BoogieVars to Expressions?
+		// TODO: translate also the rational coefficients to Expressions?
 		// m_RootAnnot.getBoogie2Smt().translate(term)
+		Term2Expression term2expression = 
+				m_RootAnnot.getBoogie2SMT().getTerm2Expression();
+		
+		Map<Expression, Rational>[] initHondaRay = 
+				NonTerminationArgument.rank2Boogie(
+						term2expression, 
+						arg.getStateInit(), 
+						arg.getStateHonda(), 
+						arg.getRay());
 		
 		NonTerminationArgumentResult<RcfgElement> result = 
 				new NonTerminationArgumentResult<RcfgElement>(
 					m_Honda,
 					Activator.s_PLUGIN_NAME,
-					NonTerminationArgument.rank2Boogie(arg.getStateInit()),
-					NonTerminationArgument.rank2Boogie(arg.getStateHonda()),
-					NonTerminationArgument.rank2Boogie(arg.getRay()),
+					initHondaRay[0],
+					initHondaRay[1],
+					initHondaRay[2],
 					arg.getLambda(),
 					getTranslatorSequence()
 				);

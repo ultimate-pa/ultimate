@@ -101,19 +101,19 @@ public class AffineFunction implements Serializable {
 		return m_coefficients.keySet();
 	}
 	
-	/**
-	 * @return the set of (associated) BoogieVar's that occur in this function
-	 */
-	public Set<BoogieVar> getBoogieVariables() {
-		Set<BoogieVar> result = new LinkedHashSet<BoogieVar>();
-		for (RankVar rkVar : m_coefficients.keySet()) {
-			BoogieVar boogieVar = rkVar.getAssociatedBoogieVar();
-			if (boogieVar != null) {
-				result.add(boogieVar);
-			}
-		}
-		return result;
-	}
+//	/**
+//	 * @return the set of (associated) BoogieVar's that occur in this function
+//	 */
+//	public Set<BoogieVar> getBoogieVariables() {
+//		Set<BoogieVar> result = new LinkedHashSet<BoogieVar>();
+//		for (RankVar rkVar : m_coefficients.keySet()) {
+//			BoogieVar boogieVar = rkVar.getAssociatedBoogieVar();
+//			if (boogieVar != null) {
+//				result.add(boogieVar);
+//			}
+//		}
+//		return result;
+//	}
 	
 	/**
 	 * @param var a Boogie variable

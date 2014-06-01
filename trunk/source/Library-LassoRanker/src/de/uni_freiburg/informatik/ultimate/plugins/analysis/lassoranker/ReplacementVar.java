@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 
 
 /**
@@ -40,20 +39,7 @@ public class ReplacementVar extends RankVar {
 	private static final long serialVersionUID = 5797704734079950805L;
 	
 	private final String m_name;
-	private final BoogieVar m_boogieVar;
 	private final Term m_definition;
-	
-	/**
-	 * @param name a globally unique name
-	 * @param boogieVar the associated boogieVar
-	 * @param definition the definition of this replacement variable, i.e.,
-	 *                   the term it replaces
-	 */
-	public ReplacementVar(String name, BoogieVar boogieVar, Term definition) {
-		m_name = name;
-		m_boogieVar = boogieVar;
-		m_definition = definition;
-	}
 	
 	/**
 	 * @param name a globally unique name
@@ -62,7 +48,6 @@ public class ReplacementVar extends RankVar {
 	 */
 	public ReplacementVar(String name, Term definition) {
 		m_name = name;
-		m_boogieVar = null;
 		m_definition = definition;
 	}
 	
@@ -72,11 +57,6 @@ public class ReplacementVar extends RankVar {
 	 */
 	public Term getDefinition() {
 		return m_definition;
-	}
-	
-	@Override
-	public BoogieVar getAssociatedBoogieVar() {
-		return m_boogieVar;
 	}
 	
 	@Override
