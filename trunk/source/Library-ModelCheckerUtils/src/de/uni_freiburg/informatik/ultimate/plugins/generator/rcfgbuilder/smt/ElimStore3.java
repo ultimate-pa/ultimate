@@ -549,6 +549,11 @@ public class ElimStore3 {
 		public Term getArrayUpdateTerm() {
 			return m_ArrayUpdateTerm;
 		}
+		
+		@Override
+		public String toString() {
+			return m_ArrayUpdateTerm.toString();
+		}
 	}
 	
 	
