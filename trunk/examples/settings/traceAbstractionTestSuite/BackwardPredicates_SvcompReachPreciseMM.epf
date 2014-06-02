@@ -10,7 +10,7 @@ file_export_version=3.0
 file_export_version=3.0
 @TraceAbstraction=0.0.1
 \!/instance/TraceAbstraction=
-/instance/TraceAbstraction/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
+/instance/TraceAbstraction/Compute\ Interpolants\ along\ a\ Counterexample=BackwardPredicates
 /instance/TraceAbstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=false
 #Wed Jan 15 21:36:24 CET 2014
 file_export_version=3.0
