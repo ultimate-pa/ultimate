@@ -78,5 +78,7 @@ public class BenchmarkData implements IBenchmarkDataProvider {
 		return m_BenchmarkType;
 	}
 	
-	
+	public boolean isEmpty() {
+		return m_Key2Value.isEmpty();
+	}
 }
