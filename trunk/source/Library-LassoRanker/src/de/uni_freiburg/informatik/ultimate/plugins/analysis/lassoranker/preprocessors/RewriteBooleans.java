@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarFacto
  * 
  * @author Jan Leike, Matthias Heizmann
  */
-public class RewriteBooleans extends TermTransformer implements PreProcessor {
+public class RewriteBooleans implements PreProcessor {
 	private static final String s_repInPostfix  = "_in_bool";
 	private static final String s_repOutPostfix = "_out_bool";
 	private static final String s_repVarSortName = "Real";

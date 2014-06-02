@@ -110,10 +110,26 @@ public class VarCollector implements Serializable {
 	}
 	
 	/**
+	 * @return mapping from inVars to the RankVar that is represented by the
+	 * inVar
+	 */
+	public Map<TermVariable, RankVar> getInVarsReverseMapping() {
+		return Collections.unmodifiableMap(m_inVarsReverseMapping);
+	}
+
+	/**
 	 * @return the collected outVars
 	 */
 	public Map<RankVar, TermVariable> getOutVars() {
 		return Collections.unmodifiableMap(m_outVars);
+	}
+	
+	/**
+	 * @return mapping from outVars to the RankVar that is represented by the
+	 * outVar
+	 */
+	public Map<TermVariable, RankVar> getOutVarsReverseMapping() {
+		return Collections.unmodifiableMap(m_outVarsReverseMapping);
 	}
 	
 	public Set<TermVariable> getAuxVars() {

@@ -197,7 +197,7 @@ public class LassoRankerTerminationAnalysis {
 	 */
 	protected PreProcessor[] getPreProcessors(VarCollector rvc) {
 		return new PreProcessor[] {
-//				new RewriteArrays(rvc),
+				new RewriteArrays(rvc),
 				new RewriteDivision(rvc),
 				new RewriteBooleans(rvc, m_old_script),
 				new RewriteIte(),
