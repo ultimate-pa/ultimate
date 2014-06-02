@@ -1,14 +1,14 @@
 //#rTerminationDerivable
 /*
- * Date: 18.02.2012
+ * Date: 2012-05-31
  * Author: heizmann@informatik.uni-freiburg.de
  *
- * Ranking function: f(x) = x
+ * Ranking function: f(a[0]) = a[0]
  *
  */
 var a : [int] int;
 
-procedure Waldkirch() returns ()
+procedure main() returns ()
 modifies a;
 {
   assume true;
