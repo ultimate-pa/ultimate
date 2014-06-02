@@ -262,6 +262,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					m_SmtManager, m_PredicateFactoryInterpolantAutomata, 
 					m_RootNode.getRootAnnot().getModGlobVarManager(), m_Interpolation);
 			m_InterpolAutomaton = iab.getResult();
+			m_CegarLoopBenchmark.addTotalInterpolationData(iab.getTotalInterpolationBenchmark());
 		}
 		break;
 		}

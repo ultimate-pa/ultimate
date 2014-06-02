@@ -2,15 +2,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.i
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.Stack;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
@@ -25,20 +22,21 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Transitionlet;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 public class TotalInterpolationAutomatonBuilder {
@@ -61,6 +59,10 @@ public class TotalInterpolationAutomatonBuilder {
 	private final EdgeChecker m_EdgeChecker;
 	private final ModifiableGlobalVariableManager m_ModifiedGlobals;
 	private final INTERPOLATION m_Interpolation;
+	
+	private final TotalInterpolationBenchmarkGenerator m_BenchmarkGenerator = 
+			new TotalInterpolationBenchmarkGenerator();
+	
 	public TotalInterpolationAutomatonBuilder(
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			ArrayList<IPredicate> stateSequence, TraceChecker traceChecker,
@@ -102,6 +104,7 @@ public class TotalInterpolationAutomatonBuilder {
 			IPredicate p = m_Worklist.removeFirst();
 			doThings(p);
 		}
+		m_BenchmarkGenerator.addEdgeCheckerData(m_EdgeChecker.getEdgeCheckerBenchmark());
 	}
 	
 	
@@ -135,9 +138,11 @@ public class TotalInterpolationAutomatonBuilder {
 			if (interpolantAutomatonContainsTransition(predItp, transition, succItp)) {
 				// do nothing, transition is already contained
 			} else {
+				m_BenchmarkGenerator.incrementPathLenght1();
 				checkRunOfLenthOne(predItp, transition, succItp);
 			}
 		} else {
+			m_BenchmarkGenerator.incrementRunSearches();
 			NestedRun<CodeBlock, IPredicate> runStartingInSucc = findRun(succ, m_Annotated);
 			if (runStartingInSucc != null) {
 				NestedRun<CodeBlock, IPredicate> firstStep = constructRunOfLengthOne(p, transition);
@@ -278,12 +283,16 @@ public class TotalInterpolationAutomatonBuilder {
 		TraceChecker tc = new TraceChecker(precondition, postcondition, 
 				pendingContexts , run.getWord(), m_SmtManager, m_ModifiedGlobals);
 		if (tc.isCorrect() == LBool.UNSAT) {
+			m_BenchmarkGenerator.incrementUsefullRunGeq2();
 			tc.computeInterpolants(new TraceChecker.AllIntegers(), m_PredicateUnifier, m_Interpolation);
-			addInterpolants(run.getStateSequence(), tc.getInterpolants());
+			int additionalInterpolants = addInterpolants(run.getStateSequence(), tc.getInterpolants());
+			m_BenchmarkGenerator.reportAdditionalInterpolants(additionalInterpolants);
 			addTransitions(run.getStateSequence(), tc);
 		} else {
+			m_BenchmarkGenerator.incrementUselessRunGeq2();
 			tc.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 		}
+		m_BenchmarkGenerator.addTraceCheckerData(tc.getTraceCheckerBenchmark());
 	}
 
 
@@ -339,18 +348,31 @@ public class TotalInterpolationAutomatonBuilder {
 	}
 
 
-	private void addInterpolants(ArrayList<IPredicate> stateSequence,
+	/**
+	 * Add a sequence of interpolants itp_1,...,itp_{n-1} for a sequence of
+	 * states s_0,...,s_n. For each i
+	 * add itp_i to the interpolant automaton if not already contained
+	 * add s_i to the worklist
+	 * add s_i to the annotated states
+	 * add (s_i, itp_i) to the epimorphism
+	 * Return the number of (different) interpolants that have been in the
+	 * automaton before. 
+	 */
+	private int addInterpolants(ArrayList<IPredicate> stateSequence,
 			IPredicate[] interpolants) {
+		int numberOfNewPredicates = 0;
 		for (int i=0; i<interpolants.length; i++) {
 			IPredicate state = stateSequence.get(i + 1);
 			IPredicate interpolant = interpolants[i];
 			if (!m_IA.getStates().contains(interpolant)) {
 				m_IA.addState(false, false, interpolant);
+				numberOfNewPredicates++;
 			}
 			m_Annotated.add(state);
 			m_Epimorphism.insert(state, interpolant);
 			m_Worklist.add(state);
 		}
+		return numberOfNewPredicates;
 	}
 
 
@@ -509,5 +531,160 @@ public class TotalInterpolationAutomatonBuilder {
 //		}
 //	}
 //	
+	
+	
+	public TotalInterpolationBenchmarkGenerator getTotalInterpolationBenchmark() {
+		return m_BenchmarkGenerator;
+	}
+
+
+
+
+	public static class TotalInterpolationBenchmarkType implements IBenchmarkType {
+		
+		private static TotalInterpolationBenchmarkType s_Instance = new TotalInterpolationBenchmarkType();
+		public final static String s_AdditionalInterpolants = "AdditionalInterpolants";
+		public final static String s_PathLenght1 = "RunLenght1";
+		public final static String s_RunSearches = "RunSearches";
+		public final static String s_UsefullRunGeq2 = "UsefullRunGeq2";
+		public final static String s_UselessRunGeq2 = "UselessRunGeq2";
+		public final static String s_TraceCheckerBenchmarks = "TraceCheckerBenchmarks";
+		public final static String s_EdgeCheckerBenchmarks = "EdgeCheckerBenchmarks";
+		
+		public static TotalInterpolationBenchmarkType getInstance() {
+			return s_Instance;
+		}
+		
+		@Override
+		public Collection<String> getKeys() {
+			return Arrays.asList(new String[] { s_AdditionalInterpolants,
+					s_PathLenght1, s_RunSearches, s_UsefullRunGeq2,
+					s_UselessRunGeq2, s_TraceCheckerBenchmarks,
+					s_EdgeCheckerBenchmarks });
+		}
+		
+		@Override
+		public Object aggregate(String key, Object value1, Object value2) {
+			switch (key) {
+			case s_AdditionalInterpolants:
+			case s_PathLenght1:
+			case s_RunSearches: 
+			case s_UsefullRunGeq2:
+			case s_UselessRunGeq2:
+				return (int) value1 + (int) value2;
+			case s_TraceCheckerBenchmarks:
+			case s_EdgeCheckerBenchmarks:
+				BenchmarkData bmData1 = (BenchmarkData) value1;
+				BenchmarkData bmData2 = (BenchmarkData) value2;
+				bmData1.aggregateBenchmarkData(bmData2);
+				return bmData1;
+			default:
+				throw new AssertionError("unknown key");
+			}
+		}
+
+		@Override
+		public String prettyprintBenchmarkData(BenchmarkData benchmarkData) {
+			StringBuilder sb = new StringBuilder();
+			
+			for (String id : new String[] { s_AdditionalInterpolants, s_PathLenght1, s_RunSearches, s_UsefullRunGeq2, s_UselessRunGeq2 }) {
+				int value = (int) benchmarkData.getValue(id);
+				sb.append(id);
+				sb.append(": ");
+				sb.append(value);
+				sb.append("  ");
+			}
+			
+			sb.append(s_TraceCheckerBenchmarks);
+			sb.append(": ");
+			BenchmarkData ecData = 
+					(BenchmarkData) benchmarkData.getValue(s_TraceCheckerBenchmarks);
+			sb.append(ecData);
+			sb.append("  ");
+			
+			sb.append(s_EdgeCheckerBenchmarks);
+			sb.append(": ");
+			BenchmarkData tcData = 
+					(BenchmarkData) benchmarkData.getValue(s_EdgeCheckerBenchmarks);
+			sb.append(tcData);
+			return sb.toString();
+		}
+
+	}
+	
+	
+	public static class TotalInterpolationBenchmarkGenerator implements IBenchmarkDataProvider {
+		
+		private int m_AdditionalInterpolants = 0;
+		private int m_PathLenght1 = 0;
+		private int m_RunSearches = 0;
+		private int m_UsefullRunGeq2 = 0;
+		private int m_UselessRunGeq2 = 0;
+		private final BenchmarkData m_EcData = new BenchmarkData();
+		private final BenchmarkData m_TcData = new BenchmarkData();
+		
+		public TotalInterpolationBenchmarkGenerator() {
+		}
+
+		@Override
+		public Iterable<String> getKeys() {
+			return TotalInterpolationBenchmarkType.getInstance().getKeys();
+		}
+		
+		public void reportAdditionalInterpolants(int additionalInterpolants) {
+			m_AdditionalInterpolants += additionalInterpolants;
+		}
+		
+		public void incrementPathLenght1() {
+			m_PathLenght1++;
+		}
+		
+		public void incrementRunSearches() {
+			m_RunSearches++;
+		}
+		
+		public void incrementUsefullRunGeq2() {
+			m_UsefullRunGeq2++;
+		}
+		
+		public void incrementUselessRunGeq2() {
+			m_UselessRunGeq2++;
+		}
+		
+		public void addEdgeCheckerData(IBenchmarkDataProvider ecbd) {
+			m_EcData.aggregateBenchmarkData(ecbd);
+		}
+		
+		public void addTraceCheckerData(IBenchmarkDataProvider tcbd) {
+			m_TcData.aggregateBenchmarkData(tcbd);
+		}
+		
+		public Object getValue(String key) {
+			switch (key) {
+			case TotalInterpolationBenchmarkType.s_AdditionalInterpolants:
+				return m_AdditionalInterpolants;
+			case TotalInterpolationBenchmarkType.s_PathLenght1:
+				return m_PathLenght1;
+			case TotalInterpolationBenchmarkType.s_RunSearches: 
+				return m_RunSearches;
+			case TotalInterpolationBenchmarkType.s_UsefullRunGeq2:
+				return m_UsefullRunGeq2;
+			case TotalInterpolationBenchmarkType.s_UselessRunGeq2:
+				return m_UselessRunGeq2;
+			case TotalInterpolationBenchmarkType.s_TraceCheckerBenchmarks:
+				return m_TcData;
+			case TotalInterpolationBenchmarkType.s_EdgeCheckerBenchmarks:
+				return m_EcData;
+			default:
+				throw new AssertionError("unknown key");
+			}
+		}
+
+		@Override
+		public IBenchmarkType getBenchmarkType() {
+			return TotalInterpolationBenchmarkType.getInstance();
+		}
+
+	}
 
 }

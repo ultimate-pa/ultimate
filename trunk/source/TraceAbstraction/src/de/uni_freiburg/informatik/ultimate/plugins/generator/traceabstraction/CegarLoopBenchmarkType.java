@@ -22,6 +22,7 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 	public static final String s_BiggestAbstraction = "BiggestAbstraction";
 	public static final String s_TraceCheckerBenchmark = "TraceCheckerBenchmark";
 	public static final String s_InterpolantCoveringCapability = "InterpolantCoveringCapability";
+	public static final String s_TotalInterpolationBenchmark = "TotalInterpolationBenchmark";
 	
 	private static final CegarLoopBenchmarkType s_Instance = new CegarLoopBenchmarkType();
 	
@@ -41,6 +42,7 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 		keyList.add(s_StatesRemovedByMinimization);
 		keyList.add(s_TraceCheckerBenchmark);
 		keyList.add(s_InterpolantCoveringCapability);
+		keyList.add(s_TotalInterpolationBenchmark);
 		return keyList;
 	}
 	
@@ -58,6 +60,7 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 			return time1 + time2;
 		case s_EdgeCheckerData:
 		case s_TraceCheckerBenchmark:
+		case s_TotalInterpolationBenchmark:
 			BenchmarkData bmData1 = (BenchmarkData) value1;
 			BenchmarkData bmData2 = (BenchmarkData) value2;
 			bmData1.aggregateBenchmarkData(bmData2);
@@ -138,6 +141,17 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 		BenchmarkData tcData = 
 				(BenchmarkData) benchmarkData.getValue(s_TraceCheckerBenchmark);
 		sb.append(tcData);
+		sb.append("\t");
+		
+		BenchmarkData tiData = 
+				(BenchmarkData) benchmarkData.getValue(s_TotalInterpolationBenchmark);
+		if (!tiData.isEmpty()) {
+			sb.append(s_TotalInterpolationBenchmark);
+			sb.append(": ");
+			sb.append(tiData);
+		}
+		
+		
 		return sb.toString();
 	}
 	
