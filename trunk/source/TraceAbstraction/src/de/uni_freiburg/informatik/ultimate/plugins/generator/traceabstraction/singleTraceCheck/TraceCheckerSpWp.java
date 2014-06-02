@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 public class TraceCheckerSpWp extends TraceChecker {
 	/*
@@ -114,7 +115,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 				throw new UnsupportedOperationException("unsupportedInterpolation");
 			}
 		m_PredicateUnifier = predicateUnifier;
-		computeInterpolantsUsingUnsatCore(interpolatedPositions);
+		try {
+			computeInterpolantsUsingUnsatCore(interpolatedPositions);
+		} catch (ToolchainCanceledException e) {
+			throw new AssertionError("Timeout while computing interpolants");
+		}
 		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_InterpolantComputation);
 		m_TraceCheckFinished = true;
 	}

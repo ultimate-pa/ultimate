@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination.EqualityInformation;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * 
@@ -77,6 +78,9 @@ public class ElimStore3 {
 		
 		while (true) {
 			assert oldArr.getSort().isArraySort();
+			if (!UltimateServices.getInstance().continueProcessing()) {
+				throw new ToolchainCanceledException();
+			}			
 			conjuncts = PartialQuantifierElimination.getConjuncts(term);
 
 			ArrayStoreDef store = getArrayStore(oldArr, term);

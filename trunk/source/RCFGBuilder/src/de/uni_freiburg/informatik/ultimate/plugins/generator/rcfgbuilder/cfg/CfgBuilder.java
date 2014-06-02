@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.CodeBlockSize;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * This class generates a recursive control flow graph (in the style of POPL'10
@@ -405,6 +406,11 @@ public class CfgBuilder {
 			assumeRequires(false);
 
 			for (Statement st : statements) {
+				
+				if (!UltimateServices.getInstance().continueProcessing()) {
+					s_Logger.warn("Timeout while constructing control flow graph");
+					throw new ToolchainCanceledException();
+				}
 
 				ILocation loc = st.getLocation();
 				if (loc.isLoop()) {
