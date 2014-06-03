@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors;
 
-public class DummyVisitor extends RCFGVisitor {
+public class DummyVisitor extends SimpleRCFGVisitor {
 
 	@Override
 	public boolean performedChanges() {

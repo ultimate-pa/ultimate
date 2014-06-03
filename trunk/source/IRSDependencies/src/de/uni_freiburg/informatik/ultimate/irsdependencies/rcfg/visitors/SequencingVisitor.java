@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
-public class SequencingVisitor extends RCFGVisitor {
+public class SequencingVisitor extends SimpleRCFGVisitor {
 
 	private RCFGWalkerUnroller mWalker;
 

@@ -297,6 +297,8 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		case "PS Perm Gen":
 		case "Perm Gen [shared-ro]":
 		case "Perm Gen [shared-rw]":
+		case "Metaspace":
+		case "Compressed Class Space":
 			return false;
 		case "Eden Space":
 		case "PS Eden Space":

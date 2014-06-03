@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.observers.DependencyFinder;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.observers.SymbolTableCreator;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.preferences.IRSDependenciesPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.irsdependencies.reachdef.ReachingDefinitionsRCFGAnnotator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 
 public class IrsDependencies implements IAnalysis {
@@ -54,7 +55,32 @@ public class IrsDependencies implements IAnalysis {
 	public void setInputDefinition(GraphType graphType) {
 		sLogger.info("Receiving input definition " + graphType.toString());
 		mObservers.clear();
-
+	
+		IRSDependenciesPreferenceInitializer.Mode mode = IRSDependenciesPreferenceInitializer.getMode();
+		
+		switch(mode){
+		case Default:
+			setInputDefinitionModeDefault(graphType);
+			break;
+		case ReachDef:
+			setInputDefinitionModeReachingDef(graphType);
+			break;
+		default:
+			String errorMsg = "Unknown mode: "+mode; 
+			sLogger.fatal(errorMsg);
+			throw new IllegalArgumentException(errorMsg);
+		}
+	}
+	
+	
+	private void setInputDefinitionModeReachingDef(GraphType graphType){
+		if(!graphType.getCreator().equals("RCFGBuilder")){
+			return;
+		}
+		mObservers.add(new ReachingDefinitionsRCFGAnnotator());
+	}
+	
+	private void setInputDefinitionModeDefault(GraphType graphType){
 		switch (graphType.getCreator()) {
 		case "RCFGBuilder":
 			sLogger.info("Preparing to process RCFG...");

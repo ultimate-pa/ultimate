@@ -2,14 +2,14 @@ package de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.walker;
 
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors.RCFGVisitor;
+import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 public class ObserverDispatcherParallel extends ObserverDispatcher
 {
-	private HashMap<RCFGVisitor, Boolean> mVisitorStateAbortCurrent;
-	private HashMap<RCFGVisitor, Boolean> mVisitorStateAbortAll;
+	private HashMap<SimpleRCFGVisitor, Boolean> mVisitorStateAbortCurrent;
+	private HashMap<SimpleRCFGVisitor, Boolean> mVisitorStateAbortAll;
 
 	public ObserverDispatcherParallel()
 	{
@@ -25,21 +25,21 @@ public class ObserverDispatcherParallel extends ObserverDispatcher
 			return;
 		}
 
-		for (RCFGVisitor visitor : mObservers) {
+		for (SimpleRCFGVisitor visitor : mObservers) {
 			mVisitorStateAbortCurrent.put(visitor, true);
 			visitor.init();
 		}
 
 		mWalker.processProgram((RootNode) node);
 		
-		for (RCFGVisitor visitor : mObservers) {
+		for (SimpleRCFGVisitor visitor : mObservers) {
 			visitor.finish();
 		}
 	}
 
 	protected void callObservers(IRCFGVisitorDispatcher dispatcher)
 	{
-		for (RCFGVisitor visitor : mObservers) {
+		for (SimpleRCFGVisitor visitor : mObservers) {
 			if (mVisitorStateAbortCurrent.get(visitor)) {
 				dispatcher.dispatch(visitor);
 				if (visitor.abortCurrentBranch()) {

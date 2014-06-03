@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
  * @author dietsch
  * 
  */
-public abstract class RCFGVisitor implements IObserver {
+public abstract class SimpleRCFGVisitor implements IObserver {
 
 	protected static Logger sLogger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);

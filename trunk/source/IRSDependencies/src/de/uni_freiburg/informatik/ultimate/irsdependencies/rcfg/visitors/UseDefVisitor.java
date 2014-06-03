@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
-public class UseDefVisitor extends RCFGVisitor {
+public class UseDefVisitor extends SimpleRCFGVisitor {
 
 
 

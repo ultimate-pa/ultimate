@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 
-public class DebugRCFGVisitor extends RCFGVisitor {
+public class DebugRCFGVisitor extends SimpleRCFGVisitor {
 
 	private static Logger sLogger = UltimateServices.getInstance()
 			.getLogger(Activator.PLUGIN_ID);

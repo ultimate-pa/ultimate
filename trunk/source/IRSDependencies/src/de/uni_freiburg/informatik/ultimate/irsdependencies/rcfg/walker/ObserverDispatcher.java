@@ -8,7 +8,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.Activator;
-import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors.RCFGVisitor;
+import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
 /**
@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
  * 
  */
 public abstract class ObserverDispatcher {
-	protected List<RCFGVisitor> mObservers;
+	protected List<SimpleRCFGVisitor> mObservers;
 	protected static Logger sLogger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
 	protected IRCFGWalker mWalker;
@@ -38,11 +38,11 @@ public abstract class ObserverDispatcher {
 	}
 
 	public boolean addObserver(IObserver observer) {
-		if (!(observer instanceof RCFGVisitor)) {
+		if (!(observer instanceof SimpleRCFGVisitor)) {
 			sLogger.error("RCFGWalker only accepts RCFGVisitors");
 			return false;
 		}
-		return mObservers.add((RCFGVisitor) observer);
+		return mObservers.add((SimpleRCFGVisitor) observer);
 	}
 
 	public boolean removeObserver(IObserver observer) {

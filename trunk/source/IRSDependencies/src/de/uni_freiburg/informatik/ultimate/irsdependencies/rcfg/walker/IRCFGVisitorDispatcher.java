@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.walker;
 
-import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors.RCFGVisitor;
+import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 
 public interface IRCFGVisitorDispatcher {
-	void dispatch(RCFGVisitor visitor);
+	void dispatch(SimpleRCFGVisitor visitor);
 }

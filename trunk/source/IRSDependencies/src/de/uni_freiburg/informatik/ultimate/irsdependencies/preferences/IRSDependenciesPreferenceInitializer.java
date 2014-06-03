@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.irsdependencies.preferences;
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.Activator;
 
@@ -14,8 +15,8 @@ public class IRSDependenciesPreferenceInitializer extends UltimatePreferenceInit
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem[] {
-				new UltimatePreferenceItem<Boolean>(Mode,
-						false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Mode>(sMode,
+						Mode.Default, PreferenceType.Combo,Mode.values()),
 		};
 	}
 
@@ -30,7 +31,16 @@ public class IRSDependenciesPreferenceInitializer extends UltimatePreferenceInit
 	}
 
 	
-	public static final String Mode = "Mode";
+	private static final String sMode = "Mode";
 	
+	public enum Mode{
+		ReachDef,
+		Default
+	}
+	
+	
+	public static Mode getMode(){
+		return new UltimatePreferenceStore(Activator.PLUGIN_ID).getEnum(sMode, Mode.class);
+	}
 
 }
