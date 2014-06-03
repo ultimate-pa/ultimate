@@ -62,6 +62,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 //	private final static boolean m_useUnsatCore = true;
 	private final static boolean m_useUnsatCoreOfFineGranularity = true;
+	private final static boolean m_useAnnotateAndAsserterWithPriorizedOrder = false;
 	private final static boolean m_useLiveVariables = true;
 	private final static boolean m_LogInformation = true;
 	private final static boolean m_CollectInformationAboutQuantifiedPredicates = true;
@@ -202,7 +203,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 		LinkedList<TransFormula> transformulasToComputeSummaryFor = new LinkedList<TransFormula>();
 		for (int i = start; i < end; i++) {
 			if (trace.getSymbol(i) instanceof Call) {
-//				String proc = ((Call)trace.getSymbol(i)).getCallStatement().getMethodName();
 				if (!trace.isPendingCall(i)) {
 					// Case: non-pending call
 					// Compute a summary for Call and corresponding Return, but only if the position of the corresponding
@@ -287,8 +287,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 		IPredicate tracePrecondition = m_Precondition;
 		IPredicate tracePostcondition = m_Postcondition;
-//		m_PredicateUnifier.declarePredicate(tracePrecondition);
-//		m_PredicateUnifier.declarePredicate(tracePostcondition);
 		NestedWord<CodeBlock> trace = m_Trace;
 		unlockSmtManager();
 		RelevantTransFormulas rv = null;
@@ -805,27 +803,15 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	@Override
 	protected AnnotateAndAsserter getAnnotateAndAsserter(NestedFormulas<Term, Term> ssa) {
-		if (m_useUnsatCoreOfFineGranularity) {
+		if (m_useAnnotateAndAsserterWithPriorizedOrder) {
+			return new AnnotateAndAsserterWithStmtOrderPrioritization(m_SmtManager, ssa, m_DefaultTransFormulas);
+		} else if (m_useUnsatCoreOfFineGranularity) {
 			return new AnnotateAndAsserterConjuncts(m_SmtManager, ssa, m_DefaultTransFormulas); 
 		} else {
 			return new AnnotateAndAsserter(m_SmtManager, ssa);
 		}
 	}
 	
-//	/***
-// 	 * Returns the size of predicates (either forward predicates or backward predicates depending on the parameter interpolation).
-// 	 */
-//	@Override
-//	public int[] getSizeOfPredicates(INTERPOLATION interpolation) {
-//		switch (interpolation) {
-//		case ForwardPredicates:
-//			return getSizeOfPredicatesFP();
-//		case BackwardPredicates:
-//			return getSizeOfPredicatesBP();
-//		default:
-//			return super.getSizeOfPredicates(interpolation);
-//		}
-//	}
 	
 	@Override
 	public int getTotalNumberOfPredicates(INTERPOLATION interpolation) {

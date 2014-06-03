@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class AnnotateAndAsserter {
 	
-	private static Logger s_Logger = 
+	protected static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 		
 		protected final Script m_Script;
@@ -119,7 +119,6 @@ public class AnnotateAndAsserter {
 							positionOfPendingReturn, pendingContextCode);
 					m_AnnotSSA.setOldVarAssignmentAtPos(positionOfPendingReturn, annotated);
 				}
-
 				pendingContextCode++;
 			}
 			
