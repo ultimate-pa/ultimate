@@ -14,6 +14,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Find all subterms that are application terms with FunctionSymbol m_Name.
+ * The boolean flag m_ResultContainsSubtermsOfResult defines if the result
+ * contains also terms that are subterms of another result.
  * @author Matthias Heizmann
  *
  */
@@ -33,6 +35,9 @@ public class ApplicationTermFinder extends NonRecursive {
 		public void walk(NonRecursive walker, ApplicationTerm term) {
 			if (term.getFunction().getName().equals(m_FunctionSymbolName)) {
 				m_Result.add(term);
+				if (!m_ResultContainsSubtermsOfResult) {
+					return;
+				}
 			}
 			for (Term t : term.getParameters()) {
 				walker.enqueueWalker(new FindWalker(t));
@@ -54,13 +59,15 @@ public class ApplicationTermFinder extends NonRecursive {
 	
 	
 	
-	public ApplicationTermFinder(String functionSymbolName) {
+	public ApplicationTermFinder(String functionSymbolName, boolean onlyOutermost) {
 		super();
 		m_FunctionSymbolName = functionSymbolName;
+		m_ResultContainsSubtermsOfResult = onlyOutermost;
 	}
 
 	private final String m_FunctionSymbolName;
 	private Set<ApplicationTerm> m_Result;
+	private final boolean m_ResultContainsSubtermsOfResult;
 	
 	public Set<ApplicationTerm> findMatchingSubterms(Term term) {
 		m_Result = new HashSet<ApplicationTerm>();

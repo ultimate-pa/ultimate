@@ -50,7 +50,7 @@ public class ElimStore3 {
 	
 	private ArrayStoreDef getArrayStore(Term array, Term term) {
 		Set<ApplicationTerm> storeTerms = 
-				(new ApplicationTermFinder("store")).findMatchingSubterms(term);
+				(new ApplicationTermFinder("store", true)).findMatchingSubterms(term);
 		ArrayStoreDef result = null;
 		for (Term storeTerm : storeTerms) {
 			ArrayStoreDef asd;
@@ -231,7 +231,7 @@ public class ElimStore3 {
 			{
 				Term term = Util.and(m_Script, conjunction);
 				Set<ApplicationTerm> selectTerms = 
-						(new ApplicationTermFinder("select")).findMatchingSubterms(term);
+						(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
 				Map<Term[], ArrayRead> map = getArrayReads(array, selectTerms);
 				arrayReads = map.values().toArray(new ArrayRead[0]);
 			}
@@ -356,7 +356,7 @@ public class ElimStore3 {
 			subterm = subtermApp.getParameters()[0];
 			Term index = subtermApp.getParameters()[1];
 			Set<ApplicationTerm> selectTermsInIndex = 
-					(new ApplicationTermFinder("select")).findMatchingSubterms(index);
+					(new ApplicationTermFinder("select", true)).findMatchingSubterms(index);
 			if (!selectTermsInIndex.isEmpty()) {
 				throw new UnsupportedOperationException("select in index not supported");
 			}

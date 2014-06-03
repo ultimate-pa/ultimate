@@ -191,7 +191,7 @@ public class RewriteArrays implements PreProcessor {
 	private List<ArrayStoreDef> extractArrayStores(Term term) {
 		List<ArrayStoreDef> asds = new ArrayList<ArrayStoreDef>();
 		Set<ApplicationTerm> storeTerms = 
-				(new ApplicationTermFinder("store")).findMatchingSubterms(term);
+				(new ApplicationTermFinder("store", false)).findMatchingSubterms(term);
 		for (Term storeTerm : storeTerms) {
 			ArrayStoreDef asd;
 			try {
@@ -284,7 +284,7 @@ public class RewriteArrays implements PreProcessor {
 
 		private ArrayUpdate findCorrespondingArrayUpdate(Term term, ArrayStoreDef asd) {
 			Set<ApplicationTerm> equalities = 
-					(new ApplicationTermFinder("=")).findMatchingSubterms(term);
+					(new ApplicationTermFinder("=", true)).findMatchingSubterms(term);
 			for (ApplicationTerm equality : equalities) {
 				Term[] params = equality.getParameters();
 				if (params.length > 2) {
@@ -317,7 +317,7 @@ public class RewriteArrays implements PreProcessor {
 
 	private static List<ArrayRead> extractArrayReads(Term term) {
 		Set<ApplicationTerm> selectTerms = 
-				(new ApplicationTermFinder("select")).findMatchingSubterms(term);
+				(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
 		List<ArrayRead> arrayReads = new ArrayList<ArrayRead>();
 		for (ApplicationTerm selectTerm : selectTerms) {
 			try {

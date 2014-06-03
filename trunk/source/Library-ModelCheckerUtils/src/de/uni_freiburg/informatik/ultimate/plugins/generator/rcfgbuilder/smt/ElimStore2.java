@@ -60,7 +60,7 @@ public class ElimStore2 {
 		}
 		Term othersT = Util.and(m_Script, others.toArray(new Term[0]));
 		Set<ApplicationTerm> selectTermsInData = 
-				(new ApplicationTermFinder("select")).findMatchingSubterms(m_Data);
+				(new ApplicationTermFinder("select", true)).findMatchingSubterms(m_Data);
 		if (m_WriteIndex == null) {
 			return selectElim(oldArr, term, m_Script);
 //			s_Logger.warn(new DebugMessage("not yet implemented case in "
@@ -69,7 +69,7 @@ public class ElimStore2 {
 		}
 		for (Term index : m_WriteIndex) {
 			Set<ApplicationTerm> selectTermsInIndex = 
-				(new ApplicationTermFinder("select")).findMatchingSubterms(index);
+				(new ApplicationTermFinder("select", true)).findMatchingSubterms(index);
 			if (!selectTermsInIndex.isEmpty()) {
 				s_Logger.warn(new DebugMessage("not yet implemented case in "
 						+ "array quantifier elimination. Formula {0}" , term));
@@ -78,7 +78,7 @@ public class ElimStore2 {
 
 		}
 		Set<ApplicationTerm> selectTerms = 
-				(new ApplicationTermFinder("select")).findMatchingSubterms(term);
+				(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
 		Map<Term[], ArrayRead> arrayReads =
 				getArrayReads(oldArr, selectTerms);
 		
@@ -168,7 +168,7 @@ public class ElimStore2 {
 
 	private static Term selectElim(TermVariable oldArr, Term term, Script script) {
 		Set<ApplicationTerm> selectTerms = 
-				(new ApplicationTermFinder("select")).findMatchingSubterms(term);
+				(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
 		Term[] conjunction = PartialQuantifierElimination.getConjuncts(term);
 		Map<Term[], ArrayRead> arrayReads =	getArrayReads(oldArr, selectTerms);
 		ArrayRead[] all = arrayReads.values().toArray(new ArrayRead[0]);
@@ -290,7 +290,7 @@ public class ElimStore2 {
 			subterm = subtermApp.getParameters()[0];
 			Term index = subtermApp.getParameters()[1];
 			Set<ApplicationTerm> selectTermsInIndex = 
-					(new ApplicationTermFinder("select")).findMatchingSubterms(index);
+					(new ApplicationTermFinder("select", true)).findMatchingSubterms(index);
 			if (!selectTermsInIndex.isEmpty()) {
 				throw new UnsupportedOperationException("select in index not supported");
 			}
