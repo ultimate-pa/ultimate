@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 
 
 /**
@@ -259,7 +259,7 @@ public class AffineTerm extends Term {
 		}
 		assert m_Constant.isIntegral() || m_Sort.getName().equals("Real");
 		summands[i] = m_Constant.toTerm(m_Sort);
-		Term result = UtilExperimental.sum(script, m_Sort, summands);
+		Term result = SmtUtils.sum(script, m_Sort, summands);
 		return result;
 	}
 	

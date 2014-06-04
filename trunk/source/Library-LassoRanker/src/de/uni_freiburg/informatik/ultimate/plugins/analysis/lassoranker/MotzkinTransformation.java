@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 
 
 /**
@@ -224,7 +224,7 @@ public class MotzkinTransformation extends InstanceCounting {
 					summands.add(s);
 				}
 			}
-			Term sum = UtilExperimental.sum(m_script, m_script.sort("Real"),
+			Term sum = SmtUtils.sum(m_script, m_script.sort("Real"),
 					summands.toArray(new Term[0]));
 			conjunction.add(m_script.term("=", sum, m_script.decimal("0")));
 		}
@@ -239,7 +239,7 @@ public class MotzkinTransformation extends InstanceCounting {
 					summands.add(s);
 				}
 			}
-			Term sum = UtilExperimental.sum(m_script, m_script.sort("Real"),
+			Term sum = SmtUtils.sum(m_script, m_script.sort("Real"),
 					summands.toArray(new Term[0]));
 			conjunction.add(m_script.term("<=", sum, m_script.decimal("0")));
 		}
@@ -255,7 +255,7 @@ public class MotzkinTransformation extends InstanceCounting {
 					summands.add(s);
 				}
 			}
-			Term sum = UtilExperimental.sum(m_script, m_script.sort("Real"),
+			Term sum = SmtUtils.sum(m_script, m_script.sort("Real"),
 					summands.toArray(new Term[0]));
 			Term classical = m_script.term("<", sum, m_script.decimal("0"));
 			
@@ -270,7 +270,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				}
 			}
 			Term non_classical = m_script.term(">",
-					UtilExperimental.sum(m_script, m_script.sort("Real"),
+					SmtUtils.sum(m_script, m_script.sort("Real"),
 							summands.toArray(new Term[0])),
 					m_script.decimal("0"));
 			

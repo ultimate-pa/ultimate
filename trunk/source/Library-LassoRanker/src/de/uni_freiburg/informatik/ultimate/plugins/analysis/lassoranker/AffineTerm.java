@@ -33,7 +33,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 
 
 /**
@@ -159,7 +159,7 @@ public class AffineTerm implements Serializable {
 			++i;
 		}
 		summands[i] = m_Constant.toTerm(script.sort("Real"));
-		return UtilExperimental.sum(script, script.sort("Real"), summands);
+		return SmtUtils.sum(script, script.sort("Real"), summands);
 	}
 	
 	/**
@@ -177,7 +177,7 @@ public class AffineTerm implements Serializable {
 		}
 		assert m_Constant.isIntegral();
 		summands[i] = script.numeral(m_Constant.numerator());
-		return UtilExperimental.sum(script, script.sort("Int"), summands);
+		return SmtUtils.sum(script, script.sort("Int"), summands);
 	}
 	
 	@Override

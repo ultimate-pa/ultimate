@@ -18,7 +18,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination.EqualityInformation;
@@ -186,7 +185,7 @@ public class ElimStore2 {
 		for (int i=0; i<all.length; i++) {
 			for (int j=i+1; j<all.length; j++) {
 				Term indexEquality = buildPairwiseEquality(all[i].getIndex(), all[j].getIndex(), script);
-				Term valueEquality = UtilExperimental.binaryEquality(script, eqInfos[i].getTerm(), eqInfos[j].getTerm());
+				Term valueEquality = SmtUtils.binaryEquality(script, eqInfos[i].getTerm(), eqInfos[j].getTerm());
 				Term conjunct = Util.or(script, Util.not(script, indexEquality),valueEquality);
 				additionalConjuncs.add(conjunct);
 			}

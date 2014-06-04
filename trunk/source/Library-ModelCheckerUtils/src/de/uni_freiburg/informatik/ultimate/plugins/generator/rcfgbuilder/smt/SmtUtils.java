@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -9,12 +11,12 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -136,7 +138,7 @@ public class SmtUtils {
 		Term[] equalities = new Term[lhs.length];
 		for (int i=0; i<lhs.length; i++) {
 
-			equalities[i] = UtilExperimental.binaryEquality(script, lhs[i], rhs[i]); 
+			equalities[i] = binaryEquality(script, lhs[i], rhs[i]); 
 		}
 		return Util.and(script, equalities);
 	}
@@ -167,6 +169,74 @@ public class SmtUtils {
 		public int getDimension() {
 			return m_IndexSorts.size();
 		}
+		
+	}
+	
+	
+	/**
+	 * Return term that represents the sum of all summands. Return the neutral
+	 * element for sort sort if summands is empty.
+	 */
+	public static Term sum(Script script, Sort sort, Term... summands) {
+		assert sort.isNumericSort();
+		if (summands.length == 0) {
+			if (sort.toString().equals("Int")) {
+				return script.numeral(BigInteger.ZERO);
+			} else if (sort.toString().equals("Real")) {
+				return script.decimal(BigDecimal.ZERO);
+			} else {
+				throw new UnsupportedOperationException("unkown sort " + sort);
+			}
+		} else if (summands.length == 1) {
+			return summands[0];
+		} else {
+			return script.term("+", summands);
+		}
+	}
+	
+	/**
+	 * Returns the equality ("=" lhs rhs), or true resp. false if some simple
+	 * checks detect validity or unsatisfiablity of the equality.
+	 */
+	public static Term binaryEquality(Script script, Term lhs, Term rhs) {
+		if (lhs == rhs) {
+			return script.term("true");
+		} else if (twoConstantTermsWithDifferentValue(lhs, rhs)) {
+			return script.term("false");
+		} else {
+			return script.term("=", lhs, rhs);
+		}
+	}
+	
+	
+	
+	/**
+	 * Returns true iff. fst and snd are different literals of the same numeric
+	 * sort ("Int" or "Real").
+	 * @exception Throws UnsupportedOperationException if both arguments do not
+	 * have the same Sort.
+	 */
+	private static boolean twoConstantTermsWithDifferentValue(Term fst, Term snd) {
+		if (!fst.getSort().equals(snd.getSort())) {
+			throw new UnsupportedOperationException("arguments sort different");
+		}
+		if (!(fst instanceof ConstantTerm)) {
+			return false;
+		}
+		if (!(snd instanceof ConstantTerm)) {
+			return false;
+		}
+		if (!fst.getSort().isNumericSort()) {
+			return false;
+		}
+		ConstantTerm fstConst = (ConstantTerm) fst;
+		ConstantTerm sndConst = (ConstantTerm) snd;
+		Object fstValue = fstConst.getValue();
+		Object sndValue = sndConst.getValue();
+		if (fstValue.getClass() != sndValue.getClass()) {
+			return false;
+		}
+		return !fstConst.getValue().equals(sndConst.getValue());
 		
 	}
 }

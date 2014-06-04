@@ -37,15 +37,15 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 
 
 /**
@@ -306,7 +306,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 						: a.asRealTerm(m_script));
 			}
 			conjunction.add(m_script.term(ieq.getInequalitySymbol(),
-					UtilExperimental.sum(m_script,
+					SmtUtils.sum(m_script,
 							m_integer_mode ? m_script.sort("Int")
 									: m_script.sort("Real"),
 							summands.toArray(new Term[0])),

@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.li
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Formatter.BigDecimalLayoutForm;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -11,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.BinaryRelation.RelationSymbol;
 
@@ -94,9 +93,9 @@ public class AffineRelation {
 				lhsSummands.add(m_AffineTerm.getConstant().toTerm(m_AffineTerm.getSort()));
 			}
 		}
-		Term lhsTerm = UtilExperimental.sum(script, m_AffineTerm.getSort(), 
+		Term lhsTerm = SmtUtils.sum(script, m_AffineTerm.getSort(), 
 				lhsSummands.toArray(new Term[0]));
-		Term rhsTerm = UtilExperimental.sum(script, m_AffineTerm.getSort(), 
+		Term rhsTerm = SmtUtils.sum(script, m_AffineTerm.getSort(), 
 				rhsSummands.toArray(new Term[0]));
 		Term result = script.term(m_RelationSymbol.toString(), lhsTerm, rhsTerm);
 		assert isEquivalent(script, m_OriginalTerm, result) == LBool.UNSAT : 
@@ -144,7 +143,7 @@ public class AffineRelation {
 						"where desired variable is on left hand side");
 			}
 		}
-		Term rhsTerm = UtilExperimental.sum(script, m_AffineTerm.getSort(), 
+		Term rhsTerm = SmtUtils.sum(script, m_AffineTerm.getSort(), 
 				rhsSummands.toArray(new Term[0]));
 		
 		// if coefficient is negative we have to use the "swapped" RelationSymbol

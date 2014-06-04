@@ -41,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermIsNotAffineException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.UnknownFunctionException;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 
 
 /**
@@ -355,7 +355,7 @@ public class LinearInequality implements Serializable {
 		} else {
 			summands[i] = m_constant.asIntTerm(script);
 		}
-		Term sum = UtilExperimental.sum(script, script.sort(sortName),
+		Term sum = SmtUtils.sum(script, script.sort(sortName),
 				summands);
 		
 		return script.term(getInequalitySymbol(), sum, zero);

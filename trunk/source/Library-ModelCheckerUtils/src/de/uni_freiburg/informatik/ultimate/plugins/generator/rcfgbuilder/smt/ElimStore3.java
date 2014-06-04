@@ -17,7 +17,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination.EqualityInformation;
@@ -211,7 +210,7 @@ public class ElimStore3 {
 			Term[] othersIndex = othersIndices[i];
 			assert ourIndex.length == othersIndex.length;
 			Term indexEquality = Util.and(script, buildPairwiseEquality(ourIndex, othersIndices[i], null, script));
-			Term valueEquality = UtilExperimental.binaryEquality(script, ourValue, othersValues[i]);
+			Term valueEquality = SmtUtils.binaryEquality(script, ourValue, othersValues[i]);
 			Term conjunct = Util.or(script, Util.not(script, indexEquality),valueEquality);
 			additionalConjuncs.add(conjunct);
 		}
@@ -294,7 +293,7 @@ public class ElimStore3 {
 			m_sndValue = sndValue;
 			m_SelectConnection = selectConnection;
 			m_IndexEquality = Util.and(m_Script, buildPairwiseEquality(fstIndex, sndIndex, null, m_Script));
-			m_ValueEquality = UtilExperimental.binaryEquality(m_Script, fstValue, sndValue);
+			m_ValueEquality = SmtUtils.binaryEquality(m_Script, fstValue, sndValue);
 		}
 		
 		/**
@@ -412,7 +411,7 @@ public class ElimStore3 {
 				firstTerm = subst.transform(first[i]);
 				secondTerm = subst.transform(second[i]);
 			}
-			equivalent[i] = UtilExperimental.binaryEquality(script, firstTerm, secondTerm); 
+			equivalent[i] = SmtUtils.binaryEquality(script, firstTerm, secondTerm); 
 		}
 		return equivalent;
 	}

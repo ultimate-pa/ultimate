@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarCollector;
@@ -57,10 +56,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Eli
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ElimStore3.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ElimStore3.ArrayUpdateException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils.MultiDimensionalArraySort;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils.MultiDimensionalArraySort;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 
@@ -639,8 +638,8 @@ public class RewriteArrays implements PreProcessor {
 			Term newCellVariable = newInstance2Index2CellVariable.get(index);
 			Term oldCellVariable = oldInstance2Index2CellVariable.get(index);
 			Term indexIsUpdateIndex = SmtUtils.pairwiseEquality(m_Script, index.toArray(new Term[0]), updateIndex);
-			Term newDataIsUpdateData = UtilExperimental.binaryEquality(m_Script, newCellVariable, data);
-			Term newDateIsOldData = UtilExperimental.binaryEquality(m_Script, newCellVariable, oldCellVariable);
+			Term newDataIsUpdateData = SmtUtils.binaryEquality(m_Script, newCellVariable, data);
+			Term newDateIsOldData = SmtUtils.binaryEquality(m_Script, newCellVariable, oldCellVariable);
 			Term indexIsNotUpdateIndex = Util.not(m_Script, indexIsUpdateIndex);
 			Term indexIsUpdateIndexImpliesUpdateData = Util.or(m_Script, indexIsNotUpdateIndex, newDataIsUpdateData);
 			Term indexIsNotUpdateIndexImpliesOldData = Util.or(m_Script, indexIsUpdateIndex, newDateIsOldData);
@@ -690,7 +689,7 @@ public class RewriteArrays implements PreProcessor {
 	private Term indexEqualityImpliesValueEquality(Term[] index1,
 			Term[] index2, Term value1, Term value2) {
 		Term indexEquality = SmtUtils.pairwiseEquality(m_Script, index1, index2);
-		Term valueEquality = UtilExperimental.binaryEquality(m_Script, value1, value2);
+		Term valueEquality = SmtUtils.binaryEquality(m_Script, value1, value2);
 		return Util.or(m_Script, Util.not(m_Script, indexEquality), valueEquality);
 	}
 	
