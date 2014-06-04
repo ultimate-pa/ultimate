@@ -50,11 +50,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ApplicationTermFinder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ElimStore3.ArrayRead;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ElimStore3.ArrayReadException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ElimStore3.ArrayStoreDef;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ElimStore3.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ElimStore3.ArrayUpdateException;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.MultiDimensionalSelect.ArrayReadException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
@@ -115,7 +115,7 @@ public class RewriteArrays implements PreProcessor {
 	
 	private HashRelation<TermVariable, List<Term>> m_Array2Indices;
 	List<ArrayUpdate>[] m_ArrayUpdates;
-	List<ArrayRead>[] m_ArrayReads;
+	List<MultiDimensionalSelect>[] m_ArrayReads;
 	ArrayGenealogy[] m_ArrayGenealogy;
 	private Map<TermVariable, Map<List<Term>, TermVariable>> m_ArrayInstance2Index2CellVariable;
 	private Term[] sunnf;
@@ -223,7 +223,7 @@ public class RewriteArrays implements PreProcessor {
 			ArrayStoreDef asd;
 			try {
 				asd = new ArrayStoreDef(storeTerm);
-			} catch (ArrayReadException e) {
+			} catch (MultiDimensionalSelect.ArrayReadException e) {
 				throw new UnsupportedOperationException("unexpected store term");
 			}
 			foundInThisIteration.add(asd);
@@ -240,7 +240,7 @@ public class RewriteArrays implements PreProcessor {
 					ArrayStoreDef newAsd;
 					try {
 						newAsd = new ArrayStoreDef(storeTerm);
-					} catch (ArrayReadException e) {
+					} catch (MultiDimensionalSelect.ArrayReadException e) {
 						throw new UnsupportedOperationException("unexpected store term");
 					}
 					foundInThisIteration.add(newAsd);
@@ -260,7 +260,7 @@ public class RewriteArrays implements PreProcessor {
 		 */
 		Map<TermVariable, TermVariable> m_ParentGeneration = new HashMap<TermVariable, TermVariable>();
 		
-		ArrayGenealogy(List<ArrayUpdate> arrayUpdates, List<ArrayRead> arrayReads) {
+		ArrayGenealogy(List<ArrayUpdate> arrayUpdates, List<MultiDimensionalSelect> arrayReads) {
 			for (ArrayUpdate au : arrayUpdates) {
 				m_ParentGeneration.put(au.getNewArray(), au.getOldArray());
 			}
@@ -271,7 +271,7 @@ public class RewriteArrays implements PreProcessor {
 				// less expensive than checking if already inserted
 				m_Instance2OriginalGeneration.put(fg, fg);
 			}
-			for (ArrayRead ar : arrayReads) {
+			for (MultiDimensionalSelect ar : arrayReads) {
 				if (m_Instance2OriginalGeneration.get(ar.getArray()) == null) {
 					m_Instance2OriginalGeneration.put((TermVariable)ar.getArray(), (TermVariable)ar.getArray());
 				}
@@ -387,10 +387,10 @@ public class RewriteArrays implements PreProcessor {
 	}
 	
 
-	private static List<ArrayRead> extractArrayReads(Term term) {
+	private static List<MultiDimensionalSelect> extractArrayReads(Term term) {
 		Set<ApplicationTerm> selectTerms = 
 				(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
-		List<ArrayRead> arrayReads = new ArrayList<ArrayRead>();
+		List<MultiDimensionalSelect> arrayReads = new ArrayList<MultiDimensionalSelect>();
 		for (ApplicationTerm selectTerm : selectTerms) {
 			if (selectTerm.getSort().isArraySort()) {
 				// do nothing
@@ -398,9 +398,9 @@ public class RewriteArrays implements PreProcessor {
 				// expression in another "select" or "store" expression.
 			} else {
 				try {
-					ArrayRead ar = new ArrayRead(selectTerm);
+					MultiDimensionalSelect ar = new MultiDimensionalSelect(selectTerm);
 					arrayReads.add(ar);
-				} catch (ArrayReadException e) {
+				} catch (MultiDimensionalSelect.ArrayReadException e) {
 					// TODO Auto-generated catch block
 					throw new AssertionError();
 				}
@@ -435,7 +435,7 @@ public class RewriteArrays implements PreProcessor {
 					Term[] index = au.getIndex();
 					m_Array2Indices.addPair(firstGeneration, Arrays.asList(index));
 				}
-				for (ArrayRead ar : m_ArrayReads[i]) {
+				for (MultiDimensionalSelect ar : m_ArrayReads[i]) {
 					TermVariable firstGeneration = m_ArrayGenealogy[i].getProgenitor((TermVariable) ar.getArray());
 					Term[] index = ar.getIndex();
 					m_Array2Indices.addPair(firstGeneration, Arrays.asList(index));
@@ -700,7 +700,7 @@ public class RewriteArrays implements PreProcessor {
 	private Term removeArrayUpdateAndArrayReads(Term term) {
 		Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (int i=0; i<sunnf.length; i++) {
-			for (ArrayRead ar : m_ArrayReads[i]) {
+			for (MultiDimensionalSelect ar : m_ArrayReads[i]) {
 				Term cellVariable = m_ArrayInstance2Index2CellVariable.get(ar.getArray()).get(Arrays.asList(ar.getIndex()));
 				substitutionMapping.put(ar.getSelectTerm(), cellVariable);
 			}

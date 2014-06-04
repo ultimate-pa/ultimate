@@ -55,7 +55,7 @@ public class ElimStore3 {
 			ArrayStoreDef asd;
 			try {
 				asd = new ArrayStoreDef(storeTerm);
-			} catch (ArrayReadException e) {
+			} catch (MultiDimensionalSelect.ArrayReadException e) {
 				throw new UnsupportedOperationException("unexpected store term");
 			}
 			if (asd.getArray().equals(array)) {
@@ -226,13 +226,13 @@ public class ElimStore3 {
 		private final Map<Term, Term> m_SelectTerm2Value = new HashMap<Term, Term>();
 		
 		public IndicesAndValues(TermVariable array, Term[] conjunction) {
-			ArrayRead[] arrayReads;
+			MultiDimensionalSelect[] arrayReads;
 			{
 				Term term = Util.and(m_Script, conjunction);
 				Set<ApplicationTerm> selectTerms = 
 						(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
-				Map<Term[], ArrayRead> map = getArrayReads(array, selectTerms);
-				arrayReads = map.values().toArray(new ArrayRead[0]);
+				Map<Term[], MultiDimensionalSelect> map = getArrayReads(array, selectTerms);
+				arrayReads = map.values().toArray(new MultiDimensionalSelect[0]);
 			}
 			m_SelectTerm = new Term[arrayReads.length];
 			m_Indices = new Term[arrayReads.length][];
@@ -372,23 +372,25 @@ public class ElimStore3 {
 	 * @param selectTerms a[i], 
 	 * @return
 	 */
-	private static Map<Term[], ArrayRead> getArrayReads(TermVariable arrayTv,
+	private static Map<Term[], MultiDimensionalSelect> getArrayReads(
+			TermVariable arrayTv,
 			Set<ApplicationTerm> selectTerms) {
-		Map<Term[],ArrayRead> arrayReads = new HashMap<Term[],ArrayRead>();
+		Map<Term[],MultiDimensionalSelect> index2mdSelect = 
+				new HashMap<Term[],MultiDimensionalSelect>();
 		for (ApplicationTerm selectTerm : selectTerms) {
 			if (selectTerm.getFunction().getReturnSort().isArraySort()) {
 				// this is only a select nested in some other select or store
 				continue;
 			}
 			try {
-				ArrayRead ar = new ArrayRead(selectTerm, arrayTv);
-				arrayReads.put(ar.getIndex(), ar);
-			} catch (ArrayReadException e) {
+				MultiDimensionalSelect ar = new MultiDimensionalSelect(selectTerm, arrayTv);
+				index2mdSelect.put(ar.getIndex(), ar);
+			} catch (MultiDimensionalSelect.ArrayReadException e) {
 				// select on different array
 				continue;
 			}
 		}
-		return arrayReads;
+		return index2mdSelect;
 	}
 	
 	
@@ -484,7 +486,7 @@ public class ElimStore3 {
 			ArrayStoreDef asd;
 			try {
 				asd = new ArrayStoreDef(allegedStoreTerm);
-			} catch (ArrayReadException e) {
+			} catch (MultiDimensionalSelect.ArrayReadException e) {
 				throw new ArrayUpdateException(e.getMessage());
 			}
 			m_OldArray = isArrayWithSort(asd.getArray(), m_NewArray.getSort());
@@ -586,148 +588,29 @@ public class ElimStore3 {
 	 * the form  (select (select a i1) i2)  
 	 *
 	 */
-	public static class ArrayRead {
-		private final Term m_Array;
-		private final Term[] m_Index;
-		private final ApplicationTerm m_SelectTerm;
-		
-		
-		
-		public ArrayRead(Term term, Term array) throws ArrayReadException {
-			if (!(term instanceof ApplicationTerm)) {
-				throw new ArrayReadException(false, "no ApplicationTerm");
-			}
-			m_SelectTerm = (ApplicationTerm) term;
-			int dimensionArray = getDimension(array.getSort());
-			int dimensionResult = getDimension(m_SelectTerm.getSort());
-			int numberOfIndices = dimensionArray - dimensionResult;
-			m_Index = new Term[numberOfIndices];			
-			for (int i = numberOfIndices-1; i>=0; i--) {
-				if (!(term instanceof ApplicationTerm)) {
-					throw new ArrayReadException(false, "no ApplicationTerm");
-				}
-				ApplicationTerm appTerm = (ApplicationTerm) term;
-				if (!appTerm.getFunction().getName().equals("select")) {
-					throw new ArrayReadException(false, "no select");
-				}
-				assert appTerm.getParameters().length == 2;
-				m_Index[i] = appTerm.getParameters()[1];
-				term = appTerm.getParameters()[0];
-			}
-			if (!array.equals(term)) {
-				throw new ArrayReadException(true, "different array");
-			} else  {
-				m_Array = array;
-			}
-		}
-		
-		public ArrayRead(Term term) throws ArrayReadException {
-			if (!(term instanceof ApplicationTerm)) {
-				throw new ArrayReadException(false, "no ApplicationTerm");
-			}
-			m_SelectTerm = (ApplicationTerm) term;
-			ArrayList<Term> index = new ArrayList<Term>();
-			boolean finished = false;
-			while (!isArray(term)) {
-				if (!(term instanceof ApplicationTerm)) {
-					throw new ArrayReadException(false, "no ApplicationTerm");
-				}
-				ApplicationTerm appTerm = (ApplicationTerm) term;
-				if (!appTerm.getFunction().getName().equals("select")) {
-					throw new ArrayReadException(false, "no select");
-				}
-				assert appTerm.getParameters().length == 2;
-				index.add(appTerm.getParameters()[1]);
-				term = appTerm.getParameters()[0];
-			}
-			m_Index = index.toArray(new Term[0]);
-			m_Array = term;
-			int dimensionArray = getDimension(term.getSort());
-			int numberOfIndices = m_Index.length;
-			int dimensionResult = getDimension(m_SelectTerm.getSort());
-			assert (numberOfIndices == dimensionArray - dimensionResult);
-		}
-		
-		private boolean isArray(Term term) {
-			if (!term.getSort().isArraySort()) {
-				return false;
-			}
-			if (term instanceof TermVariable) {
-				return true;
-			}
-			if (term instanceof ApplicationTerm) {
-				ApplicationTerm appTerm = (ApplicationTerm) term;
-				if (appTerm.getParameters().length == 0) {
-					// is a constant that represents array
-				}
-			}
-			return false;
-		}
-
-		public Term getArray() {
-			return m_Array;
-		}
-
-		public Term[] getIndex() {
-			return m_Index;
-		}
-
-		public ApplicationTerm getSelectTerm() {
-			return m_SelectTerm;
-		}
-		
-		@Override
-		public String toString() {
-			return m_SelectTerm.toString();
-		}
-	}
-	
-	
-	
-	public static class ArrayReadException extends Exception {
-
-		private static final long serialVersionUID = -628021699371967800L;
-		private final boolean m_DifferentArray;
-
-		public ArrayReadException(boolean differentArray, String message) {
-			super(message);
-			m_DifferentArray = differentArray;
-		}
-		
-		public boolean reasonIsDifferentArray() {
-			return m_DifferentArray;
-		}
-	}
-	
-	
-	/**
-	 * Given a (possibly nested) array a, this is a data structure for terms of
-	 * the form  (select (select a i1) i2)  
-	 *
-	 */
 	public static class ArrayStoreDef {
 		private Term m_Array;
 		private final Term[] m_Index;
 		private final Term m_Data;
 		private final ApplicationTerm m_StoreTerm;
 		
-		public ArrayStoreDef(Term term) throws ArrayReadException {
+		public ArrayStoreDef(Term term) throws MultiDimensionalSelect.ArrayReadException {
 			if (!term.getSort().isArraySort()) {
-				throw new ArrayReadException(false, "no Array");
+				throw new MultiDimensionalSelect.ArrayReadException(false, "no Array");
 			}
 			if (!(term instanceof ApplicationTerm)) {
-				throw new ArrayReadException(false, "no ApplicationTerm");
+				throw new MultiDimensionalSelect.ArrayReadException(false, "no ApplicationTerm");
 			}
 			m_StoreTerm = (ApplicationTerm) term;
 			int dimension = getDimension(term.getSort());
 			m_Index = new Term[dimension];			
 			for (int i=0; i<dimension; i++) {
 				if (!(term instanceof ApplicationTerm)) {
-					throw new ArrayReadException(false, "no ApplicationTerm");
+					throw new MultiDimensionalSelect.ArrayReadException(false, "no ApplicationTerm");
 				}
 				ApplicationTerm appTerm = (ApplicationTerm) term;
 				if (!appTerm.getFunction().getName().equals("store")) {
-					throw new ArrayReadException(false, "no store");
+					throw new MultiDimensionalSelect.ArrayReadException(false, "no store");
 				}
 				assert appTerm.getParameters().length == 3;
 				if (i == 0) {
@@ -744,10 +627,10 @@ public class ElimStore3 {
 		
 		private boolean checkSelect(int i, Term select) {
 			boolean result = true;
-			ArrayRead ar;
+			MultiDimensionalSelect ar;
 			try {
-				ar = new ArrayRead(select, m_Array);
-			} catch (ArrayReadException e) {
+				ar = new MultiDimensionalSelect(select, m_Array);
+			} catch (MultiDimensionalSelect.ArrayReadException e) {
 				return false;
 			}
 			result &= ar.getArray().equals(m_Array);
