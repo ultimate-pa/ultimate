@@ -1,8 +1,10 @@
+//#Safe
 /* Author: musab@informatik.uni-freiburg.de
 */
 var a : [int] int;
 
 procedure main() returns();
+//#Safe
 modifies a;
 
 implementation main() returns()

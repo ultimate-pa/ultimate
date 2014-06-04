@@ -1,8 +1,10 @@
+//#Unsafe
 /* Author: musab@informatik.uni-freiburg.de
 */
 var a : [int] int;
 
 procedure main() returns();
+//#Safe
 modifies a;
 
 implementation main() returns()
@@ -17,13 +19,16 @@ implementation main() returns()
   a[7] := 8;
   a[8] := 8;
   a[9] := 10;
-  if (a[0] == 1) {
+  if (*) {
     a[1] := 42;
-  } else {
-    a[2] := 42;
-  }
-  assert(a[0] == 1);
-  assert(a[1] == 42);
+    a[0] := -1;
+    a[1] := -1;
+  } 
+    
+  assert(a[0] == -1);
+  assert(a[1] == -1);
   assert(a[2] == 3);
+  assert(a[3] == 4);
+  assert(a[4] == 5);
 }
 

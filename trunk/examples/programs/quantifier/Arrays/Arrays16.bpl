@@ -1,3 +1,4 @@
+//#Safe
 /* Author: musab@informatik.uni-freiburg.de
 */
 var a : [int] int;

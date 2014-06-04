@@ -21,13 +21,11 @@ implementation main() returns()
   i := i + 1;
   a[i] := 5;
   j := 0;
+  a[0] := -100;
   while (j < 5) {
      assert(a[j] < 10);
      j := j + 1;
   }
-  while (j < 10) {
-    assert(a[j] < 0 || a[j] >= 0);
-    j := j + 1;
-  }
+  assert(a[0] == -100);
 }
 

@@ -1,3 +1,4 @@
+//#Safe
 /* Author: musab@informatik.uni-freiburg.de
 */
 var a : [int] int;
@@ -8,7 +9,6 @@ modifies a;
 implementation main() returns()
 {
   var i : int;
-  var j : int;
   i := 0;
   a[i] := 1;
   i := i + 1;
@@ -19,10 +19,8 @@ implementation main() returns()
   a[i] := 4;
   i := i + 1;
   a[i] := 5;
-  j := 0;
-  while (j < 5) {
-     assert(a[j] < 10);
-     j := j + 1;
+  if (i < 10) {
+     assert(a[i] < 10);
   }
   if (a[i] == 1) {
     assert(a[i] == 1);
