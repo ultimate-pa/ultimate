@@ -70,6 +70,9 @@ public class ApplicationTermFinder extends NonRecursive {
 	private final boolean m_ResultContainsSubtermsOfResult;
 	
 	public Set<ApplicationTerm> findMatchingSubterms(Term term) {
+		if (term == null) {
+			throw new NullPointerException();
+		}
 		m_Result = new HashSet<ApplicationTerm>();
 		run(new FindWalker(term));
 		return m_Result;

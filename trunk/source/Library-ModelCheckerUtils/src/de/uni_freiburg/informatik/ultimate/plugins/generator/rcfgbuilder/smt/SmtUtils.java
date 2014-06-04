@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
@@ -138,5 +139,34 @@ public class SmtUtils {
 			equalities[i] = UtilExperimental.binaryEquality(script, lhs[i], rhs[i]); 
 		}
 		return Util.and(script, equalities);
+	}
+	
+	
+	public static class MultiDimensionalArraySort {
+		private final ArrayList<Sort> m_IndexSorts = new ArrayList<Sort>();
+		private final Sort m_ArrayCellSort;
+		
+		public MultiDimensionalArraySort(Sort sort) {
+			while (sort.isArraySort()) {
+				Sort[] arg = sort.getArguments();
+				assert arg.length == 2;
+				m_IndexSorts.add(arg[0]);
+				sort = arg[1];
+			}
+			m_ArrayCellSort = sort;
+		}
+
+		public ArrayList<Sort> getIndexSorts() {
+			return m_IndexSorts;
+		}
+
+		public Sort getArrayCellSort() {
+			return m_ArrayCellSort;
+		}
+		
+		public int getDimension() {
+			return m_IndexSorts.size();
+		}
+		
 	}
 }
