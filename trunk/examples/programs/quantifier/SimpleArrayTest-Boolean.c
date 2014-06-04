@@ -5,6 +5,6 @@
 void procWithArray();
 
 void procWithArray() {
-	_Bool a[0];
-	a[0] = 0;
+    _Bool a[3];
+    a[5] = 0;
 }
