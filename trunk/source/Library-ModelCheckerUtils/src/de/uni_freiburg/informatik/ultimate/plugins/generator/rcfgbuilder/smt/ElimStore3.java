@@ -59,6 +59,11 @@ public class ElimStore3 {
 			foundInThisIteration = new ArrayList<ArrayStoreDef>();
 			for (ArrayStoreDef asd : foundInLastIteration) {
 				foundInThisIteration.addAll(extractArrayStoresShallow(asd.getArray()));
+				foundInThisIteration.addAll(extractArrayStoresShallow(asd.getData()));
+				Term[] index = asd.getIndex();
+				for (Term entry : index) {
+					foundInThisIteration.addAll(extractArrayStoresShallow(entry));
+				}
 			}
 		}
 		return result;
@@ -91,7 +96,7 @@ public class ElimStore3 {
 	ArrayStoreDef result = null;
 	for (ArrayStoreDef asd : all) {
 		if (asd.getArray().equals(array)) {
-			if (result != null) {
+			if (result != null && !result.equals(asd)) {
 				throw new UnsupportedOperationException("unsupported: several stores");
 			} else {
 				result = asd;
@@ -714,6 +719,20 @@ public class ElimStore3 {
 		public String toString() {
 			return m_StoreTerm.toString();
 		}
+
+		public boolean equals(Object obj) {
+			if (obj instanceof ArrayStoreDef) {
+				return m_StoreTerm.equals(((ArrayStoreDef) obj).getStoreTerm());
+			} else {
+				return false;
+			}
+		}
+
+		public int hashCode() {
+			return m_StoreTerm.hashCode();
+		}
+		
+		
 	}
 	
 	
