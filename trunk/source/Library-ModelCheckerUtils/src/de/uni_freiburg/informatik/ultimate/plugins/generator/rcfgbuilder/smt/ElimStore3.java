@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ElimStore3.ArrayStoreDef;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
@@ -47,10 +50,28 @@ public class ElimStore3 {
 	private final Script m_Script;
 	
 	
-	private ArrayStoreDef getArrayStore(Term array, Term term) {
+	private List<ArrayStoreDef> extractArrayStoresDeep(Term term) {
+		List<ArrayStoreDef> result = new LinkedList<ArrayStoreDef>();
+		List<ArrayStoreDef> foundInThisIteration = extractArrayStoresShallow(term);
+		while (!foundInThisIteration.isEmpty()) {
+			result.addAll(0, foundInThisIteration);
+			List<ArrayStoreDef> foundInLastIteration = foundInThisIteration;
+			foundInThisIteration = new ArrayList<ArrayStoreDef>();
+			for (ArrayStoreDef asd : foundInLastIteration) {
+				foundInThisIteration.addAll(extractArrayStoresShallow(asd.getArray()));
+			}
+		}
+		return result;
+	}
+
+
+
+
+
+	private List<ArrayStoreDef> extractArrayStoresShallow(Term term) {
+		List<ArrayStoreDef> arrayStoreDefs = new ArrayList<ArrayStoreDef>();
 		Set<ApplicationTerm> storeTerms = 
-				(new ApplicationTermFinder("store", true)).findMatchingSubterms(term);
-		ArrayStoreDef result = null;
+				(new ApplicationTermFinder("store", false)).findMatchingSubterms(term);
 		for (Term storeTerm : storeTerms) {
 			ArrayStoreDef asd;
 			try {
@@ -58,16 +79,52 @@ public class ElimStore3 {
 			} catch (MultiDimensionalSelect.ArrayReadException e) {
 				throw new UnsupportedOperationException("unexpected store term");
 			}
-			if (asd.getArray().equals(array)) {
-				if (result != null) {
-					throw new UnsupportedOperationException("unsupported: several stores");
-				} else {
-					result = asd;
-				}
+			arrayStoreDefs.add(asd);
+		}
+		return arrayStoreDefs;
+	}
+	
+	
+	
+	private ArrayStoreDef getArrayStore(Term array, Term term) {
+	List<ArrayStoreDef> all = extractArrayStoresDeep(term);
+	ArrayStoreDef result = null;
+	for (ArrayStoreDef asd : all) {
+		if (asd.getArray().equals(array)) {
+			if (result != null) {
+				throw new UnsupportedOperationException("unsupported: several stores");
+			} else {
+				result = asd;
 			}
 		}
-		return result;
 	}
+	return result;
+}
+	
+	
+	
+	
+//	private ArrayStoreDef getArrayStore(Term array, Term term) {
+//		Set<ApplicationTerm> storeTerms = 
+//				(new ApplicationTermFinder("store", true)).findMatchingSubterms(term);
+//		ArrayStoreDef result = null;
+//		for (Term storeTerm : storeTerms) {
+//			ArrayStoreDef asd;
+//			try {
+//				asd = new ArrayStoreDef(storeTerm);
+//			} catch (MultiDimensionalSelect.ArrayReadException e) {
+//				throw new UnsupportedOperationException("unexpected store term");
+//			}
+//			if (asd.getArray().equals(array)) {
+//				if (result != null) {
+//					throw new UnsupportedOperationException("unsupported: several stores");
+//				} else {
+//					result = asd;
+//				}
+//			}
+//		}
+//		return result;
+//	}
 	
 	public Term elim(TermVariable oldArr, Term term, final Set<TermVariable> newAuxVars) {
 		ArrayUpdate writeInto = null;
@@ -382,13 +439,13 @@ public class ElimStore3 {
 				// this is only a select nested in some other select or store
 				continue;
 			}
-			try {
-				MultiDimensionalSelect ar = new MultiDimensionalSelect(selectTerm, arrayTv);
-				index2mdSelect.put(ar.getIndex(), ar);
-			} catch (MultiDimensionalSelect.ArrayReadException e) {
-				// select on different array
-				continue;
-			}
+				MultiDimensionalSelect ar = new MultiDimensionalSelect(selectTerm);
+				if (ar.getArray() == arrayTv) {
+					index2mdSelect.put(ar.getIndex(), ar);
+				} else {
+					// select on different array
+					continue;
+				}
 		}
 		return index2mdSelect;
 	}
@@ -627,12 +684,7 @@ public class ElimStore3 {
 		
 		private boolean checkSelect(int i, Term select) {
 			boolean result = true;
-			MultiDimensionalSelect ar;
-			try {
-				ar = new MultiDimensionalSelect(select, m_Array);
-			} catch (MultiDimensionalSelect.ArrayReadException e) {
-				return false;
-			}
+			MultiDimensionalSelect ar = new MultiDimensionalSelect(select);
 			result &= ar.getArray().equals(m_Array);
 			for (int j=0; j<i; j++) {
 				result &= ar.getIndex()[j] == m_Index[j];

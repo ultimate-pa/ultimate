@@ -48,27 +48,26 @@ public class MultiDimensionalSelect {
 		}
 	}
 	
-	public MultiDimensionalSelect(Term term) throws MultiDimensionalSelect.ArrayReadException {
-		if (!(term instanceof ApplicationTerm)) {
-			throw new MultiDimensionalSelect.ArrayReadException(false, "no ApplicationTerm");
-		}
+	public MultiDimensionalSelect(Term term) {
 		m_SelectTerm = (ApplicationTerm) term;
 		ArrayList<Term> index = new ArrayList<Term>();
-		boolean finished = false;
-		while (!isArray(term)) {
+		while (true) {
 			if (!(term instanceof ApplicationTerm)) {
-				throw new MultiDimensionalSelect.ArrayReadException(false, "no ApplicationTerm");
+				break;
 			}
 			ApplicationTerm appTerm = (ApplicationTerm) term;
 			if (!appTerm.getFunction().getName().equals("select")) {
-				throw new MultiDimensionalSelect.ArrayReadException(false, "no select");
+				break;
 			}
 			assert appTerm.getParameters().length == 2;
-			index.add(appTerm.getParameters()[1]);
+			index.add(0,appTerm.getParameters()[1]);
 			term = appTerm.getParameters()[0];
 		}
 		m_Index = index.toArray(new Term[0]);
 		m_Array = term;
+		if (index.isEmpty()) {
+			throw new AssertionError("krasserer fehler");
+		}
 		int dimensionArray = ElimStore3.getDimension(term.getSort());
 		int numberOfIndices = m_Index.length;
 		int dimensionResult = ElimStore3.getDimension(m_SelectTerm.getSort());
