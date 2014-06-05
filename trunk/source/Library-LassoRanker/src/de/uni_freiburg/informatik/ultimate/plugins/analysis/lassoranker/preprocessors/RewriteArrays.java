@@ -397,13 +397,13 @@ public class RewriteArrays implements PreProcessor {
 				// we ignore this term because it is probably the array 
 				// expression in another "select" or "store" expression.
 			} else {
-				try {
+//				try {
 					MultiDimensionalSelect ar = new MultiDimensionalSelect(selectTerm);
 					arrayReads.add(ar);
-				} catch (MultiDimensionalSelect.ArrayReadException e) {
-					// TODO Auto-generated catch block
-					throw new AssertionError();
-				}
+//				} catch (MultiDimensionalSelect.ArrayReadException e) {
+//					// TODO Auto-generated catch block
+//					throw new AssertionError();
+//				}
 			}
 		}
 		return arrayReads;
