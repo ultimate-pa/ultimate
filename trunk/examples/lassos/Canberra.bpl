@@ -8,7 +8,7 @@
  * Terminates, but requires a new kind of ranking function.
  */
 
-procedure SyntaxSupportDisjunction2() returns (x: int, y:int)
+procedure Canberra() returns (x: int, y:int)
 {
     assume(true);
     while (x >= 0 || y >= 0) {

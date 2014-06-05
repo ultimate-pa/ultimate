@@ -17,6 +17,7 @@
 procedure proc() returns ()
 {
   var a,b:int;
+  assume(true);
   while (a >= 7) {
     a := b;
     b := a + 1;
