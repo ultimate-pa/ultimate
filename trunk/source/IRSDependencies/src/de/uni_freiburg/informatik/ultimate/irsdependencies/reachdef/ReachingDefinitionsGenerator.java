@@ -7,51 +7,61 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 public class ReachingDefinitionsGenerator {
 
 	private ReachingDefinitionsVisitor mVisitor;
-	
-	private List<ReachingDefinitionsStatementAnnotation> mPredecessors;
+
+	private List<ReachingDefinitionsStatementAnnotation> mLoopPredecessors;
+	private ReachingDefinitionsStatementAnnotation mStraightlinePredecessors;
 	private ReachingDefinitionsStatementAnnotation mCurrent;
-	
-	public ReachingDefinitionsGenerator(List<ReachingDefinitionsStatementAnnotation> predecessors, ReachingDefinitionsStatementAnnotation current){
-		assert predecessors != null;
+
+	public ReachingDefinitionsGenerator(List<ReachingDefinitionsStatementAnnotation> loopPredecessors,
+			ReachingDefinitionsStatementAnnotation straightlinePredecessor,
+			ReachingDefinitionsStatementAnnotation current) {
 		assert current != null;
-		mPredecessors = predecessors;
+		mLoopPredecessors = loopPredecessors;
+		mStraightlinePredecessors = straightlinePredecessor;
 		mCurrent = current;
 		mVisitor = new ReachingDefinitionsVisitor(current);
 	}
-	
-	
+
 	/**
 	 * 
-	 * @return true iff annotations were changed. 
-	 * @throws Throwable 
+	 * @return true iff annotations were changed.
+	 * @throws Throwable
 	 */
-	public boolean generate(Statement stmt) throws Throwable{
-		boolean rtr = prepareCurrentRDDef(mPredecessors, mCurrent);
-		rtr = mVisitor.process(stmt) || rtr;
-		return rtr;
+	public boolean generate(Statement stmt) throws Throwable {
+//		ReachingDefinitionsStatementAnnotation copy;
+
+		if (mStraightlinePredecessors == null) {
+			// we have only loop predecessors, and therefore need to consider
+			// them for fixpoint calculation
+//			copy = mCurrent.clone();
+			considerLoops(mLoopPredecessors, mCurrent);
+		} else {
+			// we have straightline predecessors, and therefore ignore loop
+			// predecessors for fixpoint calculation
+			considerLoops(mLoopPredecessors, mCurrent);
+//			copy = mCurrent.clone();
+			mCurrent.unionDef(mStraightlinePredecessors);
+		}
+//		copy = mCurrent.clone();
+		mVisitor.process(stmt);
+
+		//TODO: Fix this 
+//		boolean rtr = !copy.equals(mCurrent);
+		return false;
 	}
-	
-	
-	/**
-	 * 
-	 * @param previousRDs
-	 * @param current
-	 * @return true iff current's Def set changed
-	 */
-	private boolean prepareCurrentRDDef(List<ReachingDefinitionsStatementAnnotation> previousRDs,
+
+	private void considerLoops(List<ReachingDefinitionsStatementAnnotation> previousRDs,
 			ReachingDefinitionsStatementAnnotation current) {
+		if (previousRDs == null) {
+			return;
+		}
+
 		assert previousRDs != null;
 		assert current != null;
 
-		boolean rtr = false;
-
 		for (ReachingDefinitionsStatementAnnotation pre : previousRDs) {
-			rtr = current.unionDef(pre) || rtr;
+			current.unionDef(pre);
 		}
-//		return rtr;
-		//TODO: Do this right
-		return false;
-
 	}
-	
+
 }

@@ -22,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
  * @author dietsch
  * 
  */
-public class BoogieSymbolTableConstructor extends BoogieVisitor<Boolean, Unit> implements IUnmanagedObserver {
+public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnmanagedObserver {
 
 	private Logger mLogger;
 	private BoogieSymbolTable mSymbolTable;
@@ -76,7 +76,6 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor<Boolean, Unit> i
 		return true;
 	}
 
-	@Override
 	public Boolean process(Unit node) throws Throwable {
 		mRootNode = node;
 		for (Declaration decl : mRootNode.getDeclarations()) {

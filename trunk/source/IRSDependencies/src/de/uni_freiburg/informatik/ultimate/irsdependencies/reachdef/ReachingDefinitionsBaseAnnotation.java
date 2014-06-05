@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPr
 public abstract class ReachingDefinitionsBaseAnnotation extends AbstractAnnotations {
 
 	private static final long serialVersionUID = 1L;
-	
+
 	public static final String AnnotationName = "ReachingDefinition";
 
 	@SuppressWarnings("unchecked")
@@ -41,8 +41,9 @@ public abstract class ReachingDefinitionsBaseAnnotation extends AbstractAnnotati
 			return null;
 		}
 	}
-	
+
 	protected abstract HashMap<String, HashSet<Statement>> getDefs();
+
 	protected abstract HashMap<String, HashSet<Statement>> getUse();
 
 	public void annotate(IElement node) {
@@ -57,9 +58,9 @@ public abstract class ReachingDefinitionsBaseAnnotation extends AbstractAnnotati
 		if (map.isEmpty()) {
 			return "Empty";
 		}
-	
+
 		StringBuilder sb = new StringBuilder();
-	
+
 		for (String s : map.keySet()) {
 			sb.append(s).append(": {");
 			HashSet<Statement> set = map.get(s);
@@ -72,9 +73,51 @@ public abstract class ReachingDefinitionsBaseAnnotation extends AbstractAnnotati
 			sb.delete(sb.length() - 2, sb.length());
 			sb.append("}, ");
 		}
-	
+
 		sb.delete(sb.length() - 2, sb.length());
 		return sb.toString();
+	}
+
+	@Override
+	public int hashCode() {
+		//TODO: Does this what I think (conform to hashCode / equals contract) 
+		return getDefs().hashCode() + 131 * getUse().hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object arg) {
+		if (arg == null) {
+			return false;
+		}
+
+		if (!(arg instanceof ReachingDefinitionsBaseAnnotation)) {
+			return false;
+		}
+
+		ReachingDefinitionsBaseAnnotation arg0 = (ReachingDefinitionsBaseAnnotation) arg;
+		return compareMap(getDefs(), arg0.getDefs()) && compareMap(getUse(), arg0.getUse());
+	}
+
+	private boolean compareMap(HashMap<String, HashSet<Statement>> mine, HashMap<String, HashSet<Statement>> theirs) {
+		if (mine != null && theirs != null) {
+			for (String key : mine.keySet()) {
+				HashSet<Statement> myStmts = mine.get(key);
+				HashSet<Statement> theirStmts = theirs.get(key);
+
+				if (myStmts != null && theirStmts != null && myStmts.size() == theirStmts.size()) {
+					for (Statement myStmt : myStmts) {
+						if (!theirStmts.contains(myStmt)) {
+							return false;
+						}
+					}
+				} else {
+					return false;
+				}
+			}
+		} else {
+			return false;
+		}
+		return true;
 	}
 
 }

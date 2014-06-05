@@ -326,70 +326,69 @@ public class BoogieSymbolTable {
 	}
 
 	private String prettyPrintProcedureSignature(Declaration decl) {
-		BoogieVisitor<StringBuilder, Declaration> signatureBuilder = new BoogieVisitor<StringBuilder, Declaration>() {
-
-			private StringBuilder sb;
-
-			@Override
-			public StringBuilder process(Declaration node) {
-				sb = new StringBuilder();
-				processDeclaration(node);
-				// replace the superfluous " returns " at the end (from
-				// processVarLists)
-				sb.replace(sb.length() - 9, sb.length(), "");
-				return sb;
-			}
-
-			@Override
-			protected void visit(Procedure decl) {
-				sb.append(decl.getIdentifier());
-			}
-
-			@Override
-			protected void visit(FunctionDeclaration decl) {
-				sb.append(decl.getIdentifier());
-			}
-
-			@Override
-			protected VarList[] processVarLists(VarList[] vls) {
-				sb.append("(");
-				VarList[] rtr = super.processVarLists(vls);
-				if (vls.length > 0) {
-					// replace the superfluous ", "
-					sb.replace(sb.length() - 2, sb.length(), "");
-				}
-				sb.append(") returns ");
-				return rtr;
-			}
-
-			@Override
-			protected VarList processVarList(VarList vl) {
-				String[] identifiers = vl.getIdentifiers();
-				if (identifiers.length > 0) {
-					for (String name : identifiers) {
-						sb.append(name).append(" : ").append(vl.getType().getBoogieType()).append(", ");
-					}
-				}
-				return super.processVarList(vl);
-			}
-
-			// prevent traversing the whole ast with the following overrides
-			@Override
-			protected Body processBody(Body body) {
-				return body;
-			}
-
-			@Override
-			protected Expression processExpression(Expression expr) {
-				return expr;
-			}
-		};
-
+		PrettyPrinter signatureBuilder = new PrettyPrinter();
 		try {
 			return signatureBuilder.process(decl).toString();
 		} catch (Throwable e) {
 			e.printStackTrace();
 			return "";
+		}
+	}
+
+	private class PrettyPrinter extends BoogieVisitor {
+		private StringBuilder sb;
+
+		public StringBuilder process(Declaration node) {
+			sb = new StringBuilder();
+			processDeclaration(node);
+			// replace the superfluous " returns " at the end (from
+			// processVarLists)
+			sb.replace(sb.length() - 9, sb.length(), "");
+			return sb;
+		}
+
+		@Override
+		protected void visit(Procedure decl) {
+			sb.append(decl.getIdentifier());
+		}
+
+		@Override
+		protected void visit(FunctionDeclaration decl) {
+			sb.append(decl.getIdentifier());
+		}
+
+		@Override
+		protected VarList[] processVarLists(VarList[] vls) {
+			sb.append("(");
+			VarList[] rtr = super.processVarLists(vls);
+			if (vls.length > 0) {
+				// replace the superfluous ", "
+				sb.replace(sb.length() - 2, sb.length(), "");
+			}
+			sb.append(") returns ");
+			return rtr;
+		}
+
+		@Override
+		protected VarList processVarList(VarList vl) {
+			String[] identifiers = vl.getIdentifiers();
+			if (identifiers.length > 0) {
+				for (String name : identifiers) {
+					sb.append(name).append(" : ").append(vl.getType().getBoogieType()).append(", ");
+				}
+			}
+			return super.processVarList(vl);
+		}
+
+		// prevent traversing the whole ast with the following overrides
+		@Override
+		protected Body processBody(Body body) {
+			return body;
+		}
+
+		@Override
+		protected Expression processExpression(Expression expr) {
+			return expr;
 		}
 	}
 }

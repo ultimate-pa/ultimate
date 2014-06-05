@@ -60,7 +60,8 @@ public class ReachingDefinitionsStatementAnnotation extends ReachingDefinitionsB
 		return rtr;
 	}
 
-	public ReachingDefinitionsStatementAnnotation copy() {
+	@Override
+	public ReachingDefinitionsStatementAnnotation clone() {
 		ReachingDefinitionsStatementAnnotation rtr = new ReachingDefinitionsStatementAnnotation();
 		if (mDefs != null) {
 			rtr.mDefs = new HashMap<>(mDefs);

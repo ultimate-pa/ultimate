@@ -95,11 +95,8 @@ public class ReachingDefinitionsRCFGAnnotator extends BaseObserver {
 		protected void visit(StatementSequence edge) {
 			boolean somethingChanged = false;
 
-			ReachingDefinitionsStatementAnnotation annot = null;
-			ReachingDefinitionsGenerator generator = null;
-
 			for (Statement s : edge.getStatements()) {
-				annot = ReachingDefinitionsStatementAnnotation.getAnnotation(s);
+				ReachingDefinitionsStatementAnnotation annot = ReachingDefinitionsStatementAnnotation.getAnnotation(s);
 				if (annot == null) {
 					annot = new ReachingDefinitionsStatementAnnotation();
 					annot.annotate(s);
@@ -107,7 +104,7 @@ public class ReachingDefinitionsRCFGAnnotator extends BaseObserver {
 					// fixpoint
 					somethingChanged = true;
 				}
-				generator = new ReachingDefinitionsGenerator(getPreviousRDs(edge, s), annot);
+				ReachingDefinitionsGenerator generator = createGenerator(edge, s, annot);
 				try {
 					somethingChanged = generator.generate(s) || somethingChanged;
 				} catch (Throwable e) {
@@ -122,40 +119,57 @@ public class ReachingDefinitionsRCFGAnnotator extends BaseObserver {
 
 			super.visit(edge);
 		}
-		
-		private List<ReachingDefinitionsStatementAnnotation> getPreviousRDs(StatementSequence currentSeq,
-				Statement currentStmt) {
-			List<ReachingDefinitionsStatementAnnotation> rtr = new ArrayList<ReachingDefinitionsStatementAnnotation>();
 
+		/**
+		 * 
+		 * @param currentSeq
+		 *            The statement sequence we currently process
+		 * @param currentStmt
+		 *            The statement of the sequence we currently process
+		 * @param stmtAnnotation
+		 *            The {@link ReachingDefinitionsStatementAnnotation}
+		 *            annotation of currentStmt
+		 * @return A generator that considers (a) where we are in the statement
+		 *         sequence and (b) loops and stuff.
+		 */
+		private ReachingDefinitionsGenerator createGenerator(StatementSequence currentSeq, Statement currentStmt,
+				ReachingDefinitionsStatementAnnotation stmtAnnotation) {
+			List<ReachingDefinitionsStatementAnnotation> loopPredecessors = getPreceedingEdges(currentSeq);
 			int currentIndex = currentSeq.getStatements().indexOf(currentStmt);
-
 			if (currentIndex != 0) {
-				// its not the first statement, so we can stay inside the sequence
-				rtr.add(((ReachingDefinitionsStatementAnnotation) ReachingDefinitionsStatementAnnotation
-						.getAnnotation(currentSeq.getStatements().get(currentIndex - 1))).copy());
-				return rtr;
+				// its not the first statement, so we can stay inside the
+				// sequence
+				return new ReachingDefinitionsGenerator(loopPredecessors,
+						(ReachingDefinitionsStatementAnnotation) ReachingDefinitionsStatementAnnotation
+								.getAnnotation(currentSeq.getStatements().get(currentIndex - 1)), stmtAnnotation);
+			} else {
+				// it is the first statement; the predecessors are the last
+				// statements from before.
+				return new ReachingDefinitionsGenerator(loopPredecessors, null, stmtAnnotation);
 			}
+		}
 
-			// it is the first statement, we have to collect all predecessors
-
+		private List<ReachingDefinitionsStatementAnnotation> getPreceedingEdges(StatementSequence currentSeq) {
+			List<ReachingDefinitionsStatementAnnotation> rtr = new ArrayList<ReachingDefinitionsStatementAnnotation>();
 			RCFGNode currentNode = currentSeq.getSource();
 
 			if (currentNode == null) {
+				sLogger.debug("Source is null: "+currentSeq);
 				return rtr;
 			}
 			for (RCFGEdge pre : currentNode.getIncomingEdges()) {
+				sLogger.debug(currentSeq + " preceeded by " + pre);
+
 				if (pre instanceof StatementSequence) {
 					StatementSequence stmtSeq = (StatementSequence) pre;
 					ReachingDefinitionsStatementAnnotation annot = ReachingDefinitionsStatementAnnotation
 							.getAnnotation(stmtSeq.getStatements().get(stmtSeq.getStatements().size() - 1));
 					if (annot != null) {
-						rtr.add(annot.copy());
+						rtr.add(annot);
 					}
 				}
 			}
 			return rtr;
 		}
-
 	}
-
 }

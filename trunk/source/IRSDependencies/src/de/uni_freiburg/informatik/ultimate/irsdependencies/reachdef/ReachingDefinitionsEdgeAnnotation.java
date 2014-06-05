@@ -3,9 +3,6 @@ package de.uni_freiburg.informatik.ultimate.irsdependencies.reachdef;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.irsdependencies.Activator;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors.RCFGEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -40,36 +37,34 @@ public class ReachingDefinitionsEdgeAnnotation extends ReachingDefinitionsBaseAn
 		c.collect();
 		return c.mUse;
 	}
-	
-	private class Collector extends RCFGEdgeVisitor{
-		
+
+	private class Collector extends RCFGEdgeVisitor {
+
 		private HashMap<String, HashSet<Statement>> mDefs;
 		private HashMap<String, HashSet<Statement>> mUse;
-		
-		
-		private void collect(){
+
+		private void collect() {
 			mDefs = new HashMap<>();
 			mUse = new HashMap<>();
 			visit(mEdge);
 		}
-		
-	@Override
-	protected void visit(StatementSequence c) {
-		super.visit(c);
-		Logger l = Logger.getLogger(Activator.PLUGIN_ID);
-		int i = 0;
-		for(Statement stmt : c.getStatements()){
-			ReachingDefinitionsStatementAnnotation annot = ReachingDefinitionsStatementAnnotation.getAnnotation(stmt);
+
+		@Override
+		protected void visit(StatementSequence c) {
+			super.visit(c);
 			
-			if(annot != null){
-				l.debug(i + "  "+annot.getFieldValue("Def"));
-				mDefs = annot.getDefs();
-				mUse = annot.getUse();
-				++i;
+			//TODO: Do it faster, it is always the last (afaik) 
+			
+			for (Statement stmt : c.getStatements()) {
+				ReachingDefinitionsStatementAnnotation annot = ReachingDefinitionsStatementAnnotation
+						.getAnnotation(stmt);
+				if (annot != null) {
+					mDefs = annot.getDefs();
+					mUse = annot.getUse();
+				}
 			}
 		}
-	}
-		
+
 	}
 
 }
