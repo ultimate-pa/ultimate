@@ -6,7 +6,7 @@
  * The vector (a, b) is rotated by an irrational angle of
  * arccos(0.6) ~ 53.13 degrees in each loop execution.
  *
- * Has the following 3-phase ranking function:
+ * Has the following 3-nested ranking function:
  * f0 = 5*q + 8
  * f1 = 5*a + 4*q + 4
  * f2 = 2*q - 2*b + 1*a + 2
