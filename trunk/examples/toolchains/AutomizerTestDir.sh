@@ -208,7 +208,7 @@ do
 
 	USED_SETTINGS=`echo "$Ultimate_OUTPUT" | grep "ettings: "`
 	EXCEPTION=`echo "$Ultimate_OUTPUT" | grep "has thrown an Exception!"`
-	EXCEPT=`echo "$Ultimate_OUTPUT" | grep "Exception"`
+	EXCEPT=`echo "$Ultimate_OUTPUT" | grep "Exception\|AssertionError"`
 	Z3CRASH1=`echo "$Ultimate_OUTPUT" | grep "libz3-gmp.so"`
 	Z3CRASH2=`echo "$Ultimate_OUTPUT" | grep "double free or corruption"`
 	#echo "$Ultimate_OUTPUT"
