@@ -186,12 +186,13 @@ public class CoverageAnalysis {
 
 		@Override
 		public String toString() {
-			if (m_PotentialBackwardCoverings == 0) {
-				return "not available";
-			} else {
-				long result = Math.round((((double) m_SuccessfullBackwardCoverings) / m_PotentialBackwardCoverings) * 100);
-				return result + "%";
-			}
+			return m_SuccessfullBackwardCoverings + "/" + m_PotentialBackwardCoverings;
+//			if (m_PotentialBackwardCoverings == 0) {
+//				return "not available";
+//			} else {
+//				long result = Math.round((((double) m_SuccessfullBackwardCoverings) / m_PotentialBackwardCoverings) * 100);
+//				return result + "%";
+//			}
 		}
 		
 	}
