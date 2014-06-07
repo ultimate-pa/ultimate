@@ -1,3 +1,4 @@
+//#Safe
 // testing the functionality that a variable whose address is read in the
 // program has to be stored on the heap by the translation
 // (the translation result should be the same as for the statements in the 
