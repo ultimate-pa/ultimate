@@ -4,26 +4,24 @@
  * simple example where structs occur in loop invariant
  */
 
+extern int __VERIFIER_nondet_int(void);
+
 typedef struct {
 	int fst;
 	int snd;
 } pair;
 
 int main(void) {
-    pair a = { .fst = 23, .snd = 42 };
-    int cond;
-    while (cond) {
-        int nondet1;
-        cond = nondet1;
-	int nondet2;
-	if (nondet2) {
-	    a.fst++;
-	    a.snd--;
-	} else {
-	    a.fst--;
-	    a.snd++;
+	pair a = { .fst = 23, .snd = 42 };
+	while (__VERIFIER_nondet_int()) {
+		if (__VERIFIER_nondet_int()) {
+			a.fst++;
+			a.snd--;
+		} else {
+			a.fst--;
+			a.snd++;
+		}
 	}
-    }
-    //@ assert a.fst+a.snd >= 0;
-    return 0;
+	//@ assert a.fst+a.snd >= 0;
+	return 0;
 }

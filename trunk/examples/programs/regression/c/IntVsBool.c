@@ -1,3 +1,4 @@
+//#Safe
 /* conversion between integer and Boolean types */
 int main()
 {

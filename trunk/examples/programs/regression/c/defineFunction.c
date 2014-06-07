@@ -1,3 +1,4 @@
+//#Unsafe
 /*
  * Date: October 2013
  * Author: Christian Schilling
@@ -8,8 +9,7 @@
  * NOTE: I am not sure what causes the error, some
  */
 void fail() {
-    ERROR:
-        goto ERROR;
+	//@ assert \false;
 }
 
 #define ___MY_ASSERT(cond) do {     \
