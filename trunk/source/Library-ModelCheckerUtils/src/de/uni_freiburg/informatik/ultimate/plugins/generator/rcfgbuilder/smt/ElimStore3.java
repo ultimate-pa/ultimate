@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ElimStore3.ArrayStoreDef;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.MultiDimensionalStore.ArrayStoreException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
@@ -50,14 +50,14 @@ public class ElimStore3 {
 	private final Script m_Script;
 	
 	
-	private List<ArrayStoreDef> extractArrayStoresDeep(Term term) {
-		List<ArrayStoreDef> result = new LinkedList<ArrayStoreDef>();
-		List<ArrayStoreDef> foundInThisIteration = extractArrayStoresShallow(term);
+	private List<MultiDimensionalStore> extractArrayStoresDeep(Term term) {
+		List<MultiDimensionalStore> result = new LinkedList<MultiDimensionalStore>();
+		List<MultiDimensionalStore> foundInThisIteration = extractArrayStoresShallow(term);
 		while (!foundInThisIteration.isEmpty()) {
 			result.addAll(0, foundInThisIteration);
-			List<ArrayStoreDef> foundInLastIteration = foundInThisIteration;
-			foundInThisIteration = new ArrayList<ArrayStoreDef>();
-			for (ArrayStoreDef asd : foundInLastIteration) {
+			List<MultiDimensionalStore> foundInLastIteration = foundInThisIteration;
+			foundInThisIteration = new ArrayList<MultiDimensionalStore>();
+			for (MultiDimensionalStore asd : foundInLastIteration) {
 				foundInThisIteration.addAll(extractArrayStoresShallow(asd.getArray()));
 				foundInThisIteration.addAll(extractArrayStoresShallow(asd.getData()));
 				Term[] index = asd.getIndex();
@@ -73,15 +73,15 @@ public class ElimStore3 {
 
 
 
-	private List<ArrayStoreDef> extractArrayStoresShallow(Term term) {
-		List<ArrayStoreDef> arrayStoreDefs = new ArrayList<ArrayStoreDef>();
+	private List<MultiDimensionalStore> extractArrayStoresShallow(Term term) {
+		List<MultiDimensionalStore> arrayStoreDefs = new ArrayList<MultiDimensionalStore>();
 		Set<ApplicationTerm> storeTerms = 
 				(new ApplicationTermFinder("store", false)).findMatchingSubterms(term);
 		for (Term storeTerm : storeTerms) {
-			ArrayStoreDef asd;
+			MultiDimensionalStore asd;
 			try {
-				asd = new ArrayStoreDef(storeTerm);
-			} catch (MultiDimensionalSelect.ArrayReadException e) {
+				asd = new MultiDimensionalStore(storeTerm);
+			} catch (ArrayStoreException e) {
 				throw new UnsupportedOperationException("unexpected store term");
 			}
 			arrayStoreDefs.add(asd);
@@ -91,10 +91,10 @@ public class ElimStore3 {
 	
 	
 	
-	private ArrayStoreDef getArrayStore(Term array, Term term) {
-	List<ArrayStoreDef> all = extractArrayStoresDeep(term);
-	ArrayStoreDef result = null;
-	for (ArrayStoreDef asd : all) {
+	private MultiDimensionalStore getArrayStore(Term array, Term term) {
+	List<MultiDimensionalStore> all = extractArrayStoresDeep(term);
+	MultiDimensionalStore result = null;
+	for (MultiDimensionalStore asd : all) {
 		if (asd.getArray().equals(array)) {
 			if (result != null && !result.equals(asd)) {
 				throw new UnsupportedOperationException("unsupported: several stores");
@@ -144,7 +144,7 @@ public class ElimStore3 {
 			}			
 			conjuncts = PartialQuantifierElimination.getConjuncts(term);
 
-			ArrayStoreDef store = getArrayStore(oldArr, term);
+			MultiDimensionalStore store = getArrayStore(oldArr, term);
 
 
 			HashSet<Term> others = new HashSet<Term>();
@@ -287,15 +287,17 @@ public class ElimStore3 {
 		private final Set<TermVariable> m_NewAuxVars;
 		private final Map<Term, Term> m_SelectTerm2Value = new HashMap<Term, Term>();
 		
-		public IndicesAndValues(TermVariable array, Term[] conjunction) {
-			MultiDimensionalSelect[] arrayReads;
-			{
-				Term term = Util.and(m_Script, conjunction);
-				Set<ApplicationTerm> selectTerms = 
-						(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
-				Map<Term[], MultiDimensionalSelect> map = getArrayReads(array, selectTerms);
-				arrayReads = map.values().toArray(new MultiDimensionalSelect[0]);
+		public IndicesAndValues(TermVariable array, Term[] conjuncts) {
+			Term term = Util.and(m_Script, conjuncts);
+			//FIXME: once I introduced Objects for the Index (or we use Lists)
+			// this set can be removed.
+			Set<MultiDimensionalSelect> set = new HashSet<MultiDimensionalSelect>();
+			for (MultiDimensionalSelect mdSelect : MultiDimensionalSelect.extractSelectDeep(term, false)) {
+				if (mdSelect.getArray().equals(array)) {
+					set.add(mdSelect);
+				}
 			}
+			MultiDimensionalSelect[] arrayReads = set.toArray(new MultiDimensionalSelect[0]);
 			m_SelectTerm = new Term[arrayReads.length];
 			m_Indices = new Term[arrayReads.length][];
 			m_Values = new Term[arrayReads.length];
@@ -304,7 +306,7 @@ public class ElimStore3 {
 				m_SelectTerm[i] = arrayReads[i].getSelectTerm();
 				m_Indices[i] = arrayReads[i].getIndex();
 				EqualityInformation eqInfo = PartialQuantifierElimination.getEqinfo(
-						m_Script, arrayReads[i].getSelectTerm(), conjunction, array, quantifier); 
+						m_Script, arrayReads[i].getSelectTerm(), conjuncts, array, quantifier); 
 				if (eqInfo == null) {
 					Term select = arrayReads[i].getSelectTerm();
 					TermVariable auxVar = array.getTheory().createFreshTermVariable("arrayElim", select.getSort());
@@ -429,31 +431,31 @@ public class ElimStore3 {
 
 
 
-	/**
-	 * Return all selectTerms that read from the array given by arrayTv.
-	 * @param selectTerms a[i], 
-	 * @return
-	 */
-	private static Map<Term[], MultiDimensionalSelect> getArrayReads(
-			TermVariable arrayTv,
-			Set<ApplicationTerm> selectTerms) {
-		Map<Term[],MultiDimensionalSelect> index2mdSelect = 
-				new HashMap<Term[],MultiDimensionalSelect>();
-		for (ApplicationTerm selectTerm : selectTerms) {
-			if (selectTerm.getFunction().getReturnSort().isArraySort()) {
-				// this is only a select nested in some other select or store
-				continue;
-			}
-				MultiDimensionalSelect ar = new MultiDimensionalSelect(selectTerm);
-				if (ar.getArray() == arrayTv) {
-					index2mdSelect.put(ar.getIndex(), ar);
-				} else {
-					// select on different array
-					continue;
-				}
-		}
-		return index2mdSelect;
-	}
+//	/**
+//	 * Return all selectTerms that read from the array given by arrayTv.
+//	 * @param selectTerms a[i], 
+//	 * @return
+//	 */
+//	private static Map<Term[], MultiDimensionalSelect> getArrayReads(
+//			TermVariable arrayTv,
+//			Set<ApplicationTerm> selectTerms) {
+//		Map<Term[],MultiDimensionalSelect> index2mdSelect = 
+//				new HashMap<Term[],MultiDimensionalSelect>();
+//		for (ApplicationTerm selectTerm : selectTerms) {
+//			if (selectTerm.getFunction().getReturnSort().isArraySort()) {
+//				// this is only a select nested in some other select or store
+//				continue;
+//			}
+//				MultiDimensionalSelect ar = new MultiDimensionalSelect(selectTerm);
+//				if (ar.getArray() == arrayTv) {
+//					index2mdSelect.put(ar.getIndex(), ar);
+//				} else {
+//					// select on different array
+//					continue;
+//				}
+//		}
+//		return index2mdSelect;
+//	}
 	
 	
 	/**
@@ -545,10 +547,10 @@ public class ElimStore3 {
 			assert allegedStoreTerm.getParameters().length == 3;
 			assert m_NewArray.getSort() == allegedStoreTerm.getSort();
 			
-			ArrayStoreDef asd;
+			MultiDimensionalStore asd;
 			try {
-				asd = new ArrayStoreDef(allegedStoreTerm);
-			} catch (MultiDimensionalSelect.ArrayReadException e) {
+				asd = new MultiDimensionalStore(allegedStoreTerm);
+			} catch (ArrayStoreException e) {
 				throw new ArrayUpdateException(e.getMessage());
 			}
 			m_OldArray = isArrayWithSort(asd.getArray(), m_NewArray.getSort());
@@ -642,97 +644,6 @@ public class ElimStore3 {
 		} else {
 			return 0;
 		}
-	}
-	
-	
-	/**
-	 * Given a (possibly nested) array a, this is a data structure for terms of
-	 * the form  (select (select a i1) i2)  
-	 *
-	 */
-	public static class ArrayStoreDef {
-		private Term m_Array;
-		private final Term[] m_Index;
-		private final Term m_Data;
-		private final ApplicationTerm m_StoreTerm;
-		
-		public ArrayStoreDef(Term term) throws MultiDimensionalSelect.ArrayReadException {
-			if (!term.getSort().isArraySort()) {
-				throw new MultiDimensionalSelect.ArrayReadException(false, "no Array");
-			}
-			if (!(term instanceof ApplicationTerm)) {
-				throw new MultiDimensionalSelect.ArrayReadException(false, "no ApplicationTerm");
-			}
-			m_StoreTerm = (ApplicationTerm) term;
-			int dimension = getDimension(term.getSort());
-			m_Index = new Term[dimension];			
-			for (int i=0; i<dimension; i++) {
-				if (!(term instanceof ApplicationTerm)) {
-					throw new MultiDimensionalSelect.ArrayReadException(false, "no ApplicationTerm");
-				}
-				ApplicationTerm appTerm = (ApplicationTerm) term;
-				if (!appTerm.getFunction().getName().equals("store")) {
-					throw new MultiDimensionalSelect.ArrayReadException(false, "no store");
-				}
-				assert appTerm.getParameters().length == 3;
-				if (i == 0) {
-					m_Array = appTerm.getParameters()[0];
-					assert m_Array.getSort() == m_StoreTerm.getSort();
-				} else {
-					assert checkSelect(i, appTerm.getParameters()[0]);
-				}
-				m_Index[i] = appTerm.getParameters()[1];
-				term = appTerm.getParameters()[2];
-			}
-			m_Data = term;
-		}
-		
-		private boolean checkSelect(int i, Term select) {
-			boolean result = true;
-			MultiDimensionalSelect ar = new MultiDimensionalSelect(select);
-			result &= ar.getArray().equals(m_Array);
-			for (int j=0; j<i; j++) {
-				result &= ar.getIndex()[j] == m_Index[j];
-			}
-			return result;
-		}
-		
-		
-		
-		public Term getArray() {
-			return m_Array;
-		}
-
-		public Term[] getIndex() {
-			return m_Index;
-		}
-
-		public Term getData() {
-			return m_Data;
-		}
-
-		public ApplicationTerm getStoreTerm() {
-			return m_StoreTerm;
-		}
-
-		@Override
-		public String toString() {
-			return m_StoreTerm.toString();
-		}
-
-		public boolean equals(Object obj) {
-			if (obj instanceof ArrayStoreDef) {
-				return m_StoreTerm.equals(((ArrayStoreDef) obj).getStoreTerm());
-			} else {
-				return false;
-			}
-		}
-
-		public int hashCode() {
-			return m_StoreTerm.hashCode();
-		}
-		
-		
 	}
 	
 	

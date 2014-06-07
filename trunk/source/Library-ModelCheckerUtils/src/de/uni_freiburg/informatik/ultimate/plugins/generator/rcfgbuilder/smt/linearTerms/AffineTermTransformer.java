@@ -152,7 +152,7 @@ public class AffineTermTransformer extends TermTransformer {
 					return;
 				}
 				AffineTerm affineArg = (AffineTerm) termArg;
-				assert affineArg.getSort() == sort;
+//				assert affineArg.getSort() == sort;
 				if (affineArg.isConstant()) {
 					multiplier = multiplier.mul(affineArg.getConstant());
 				} else {

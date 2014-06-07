@@ -50,11 +50,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ApplicationTermFinder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ElimStore3.ArrayStoreDef;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ElimStore3.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ElimStore3.ArrayUpdateException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.MultiDimensionalSelect;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.MultiDimensionalSelect.ArrayReadException;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.MultiDimensionalStore.ArrayStoreException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
@@ -147,7 +147,7 @@ public class RewriteArrays implements PreProcessor {
 			SingleUpdateNormalFormTransformer sunnft = new SingleUpdateNormalFormTransformer(disjuncts[i]);
 			m_ArrayUpdates[i] = sunnft.getArrayUpdates();
 			sunnf[i] = sunnft.getTerm();
-			m_ArrayReads[i] = extractArrayReads(sunnf[i]);
+			m_ArrayReads[i] = MultiDimensionalSelect.extractSelectDeep(sunnf[i], true); 
 			m_ArrayEqualities[i] = extractArrayEqualities(sunnf[i]);
 			m_ArrayGenealogy[i] = new ArrayGenealogy(m_ArrayUpdates[i], m_ArrayReads[i]);
 		}
@@ -215,32 +215,32 @@ public class RewriteArrays implements PreProcessor {
 	
 
 	
-	private List<ArrayStoreDef> extractArrayStores(Term term) {
-		List<ArrayStoreDef> foundInThisIteration = new ArrayList<ArrayStoreDef>();
+	private List<MultiDimensionalStore> extractArrayStores(Term term) {
+		List<MultiDimensionalStore> foundInThisIteration = new ArrayList<MultiDimensionalStore>();
 		Set<ApplicationTerm> storeTerms = 
 				(new ApplicationTermFinder("store", false)).findMatchingSubterms(term);
 		for (Term storeTerm : storeTerms) {
-			ArrayStoreDef asd;
+			MultiDimensionalStore asd;
 			try {
-				asd = new ArrayStoreDef(storeTerm);
-			} catch (MultiDimensionalSelect.ArrayReadException e) {
+				asd = new MultiDimensionalStore(storeTerm);
+			} catch (ArrayStoreException e) {
 				throw new UnsupportedOperationException("unexpected store term");
 			}
 			foundInThisIteration.add(asd);
 		}
-		List<ArrayStoreDef> result = new LinkedList<ArrayStoreDef>();
+		List<MultiDimensionalStore> result = new LinkedList<MultiDimensionalStore>();
 		while (!foundInThisIteration.isEmpty()) {
 			result.addAll(0, foundInThisIteration);
-			List<ArrayStoreDef> foundInLastIteration = foundInThisIteration;
-			foundInThisIteration = new ArrayList<ArrayStoreDef>();
-			for (ArrayStoreDef asd : foundInLastIteration) {
+			List<MultiDimensionalStore> foundInLastIteration = foundInThisIteration;
+			foundInThisIteration = new ArrayList<MultiDimensionalStore>();
+			for (MultiDimensionalStore asd : foundInLastIteration) {
 				storeTerms = 
 						(new ApplicationTermFinder("store", false)).findMatchingSubterms(asd.getArray());
 				for (Term storeTerm : storeTerms) {
-					ArrayStoreDef newAsd;
+					MultiDimensionalStore newAsd;
 					try {
-						newAsd = new ArrayStoreDef(storeTerm);
-					} catch (MultiDimensionalSelect.ArrayReadException e) {
+						newAsd = new MultiDimensionalStore(storeTerm);
+					} catch (ArrayStoreException e) {
 						throw new UnsupportedOperationException("unexpected store term");
 					}
 					foundInThisIteration.add(newAsd);
@@ -312,8 +312,8 @@ public class RewriteArrays implements PreProcessor {
 			boolean m_EachArrayHasSingleUpdate = false;
 			while(!m_EachArrayHasSingleUpdate) {
 				Object result = eachArrayHasSingleUpdate();
-				if (result instanceof ArrayStoreDef) {
-					update((ArrayStoreDef) result);
+				if (result instanceof MultiDimensionalStore) {
+					update((MultiDimensionalStore) result);
 				} else {
 					m_EachArrayHasSingleUpdate = true;
 					m_ArrayUpdates = (List<ArrayUpdate>) result;
@@ -323,8 +323,8 @@ public class RewriteArrays implements PreProcessor {
 		
 		private Object eachArrayHasSingleUpdate() {
 			List<ArrayUpdate> arrayUpdates = new ArrayList<ArrayUpdate>();
-			List<ArrayStoreDef> arrayStores = extractArrayStores(m_Term);
-			for (ArrayStoreDef arrayStore : arrayStores) {
+			List<MultiDimensionalStore> arrayStores = extractArrayStores(m_Term);
+			for (MultiDimensionalStore arrayStore : arrayStores) {
 				ArrayUpdate au;
 				try {
 					au = findCorrespondingArrayUpdate(m_Term, arrayStore);
@@ -340,7 +340,7 @@ public class RewriteArrays implements PreProcessor {
 			return arrayUpdates;
 		}
 		
-		private void update(ArrayStoreDef arraryStore) {
+		private void update(MultiDimensionalStore arraryStore) {
 			Term oldArray = arraryStore.getArray();
 			String name = oldArray.toString() + s_AuxArray; 
 			TermVariable auxArray = 
@@ -352,7 +352,7 @@ public class RewriteArrays implements PreProcessor {
 			m_Term = newTerm;
 		}
 
-		private ArrayUpdate findCorrespondingArrayUpdate(Term term, ArrayStoreDef asd) throws ArrayUpdateException {
+		private ArrayUpdate findCorrespondingArrayUpdate(Term term, MultiDimensionalStore asd) throws ArrayUpdateException {
 			Set<ApplicationTerm> equalities = 
 					(new ApplicationTermFinder("=", true)).findMatchingSubterms(term);
 			for (ApplicationTerm equality : equalities) {
@@ -384,29 +384,6 @@ public class RewriteArrays implements PreProcessor {
 		public Term getTerm() {
 			return m_Term;
 		}
-	}
-	
-
-	private static List<MultiDimensionalSelect> extractArrayReads(Term term) {
-		Set<ApplicationTerm> selectTerms = 
-				(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
-		List<MultiDimensionalSelect> arrayReads = new ArrayList<MultiDimensionalSelect>();
-		for (ApplicationTerm selectTerm : selectTerms) {
-			if (selectTerm.getSort().isArraySort()) {
-				// do nothing
-				// we ignore this term because it is probably the array 
-				// expression in another "select" or "store" expression.
-			} else {
-//				try {
-					MultiDimensionalSelect ar = new MultiDimensionalSelect(selectTerm);
-					arrayReads.add(ar);
-//				} catch (MultiDimensionalSelect.ArrayReadException e) {
-//					// TODO Auto-generated catch block
-//					throw new AssertionError();
-//				}
-			}
-		}
-		return arrayReads;
 	}
 	
 	private List<ArrayEquality> extractArrayEqualities(Term term) {
