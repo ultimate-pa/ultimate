@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
  * @author Matthias Heizmann
  */
 public class NestedRankingFunction extends RankingFunction {
-	
 	private static final long serialVersionUID = 380153194719949843L;
 	
 	private final AffineFunction[] m_Ranking;
@@ -98,15 +97,14 @@ public class NestedRankingFunction extends RankingFunction {
 		// ranking function that proceed through phases.
 		BigInteger n = BigInteger.ZERO;
 		Term phase = script.numeral(n);
-		Term value = m_Ranking[0].asTerm(script);
-		for (int i = 1; i < m_Ranking.length; ++i) {
+		Term value = m_Ranking[m_Ranking.length - 1].asTerm(script);
+		for (int i = m_Ranking.length - 2; i >= 0; --i) {
 			n = n.add(BigInteger.ONE);
-			Term fTerm = m_Ranking[i].asTerm(script);
-			Term cond = script.term(">", fTerm,
+			Term f_term = m_Ranking[i].asTerm(script);
+			Term cond = script.term(">", f_term,
 					script.numeral(BigInteger.ZERO));
 			phase = script.term("ite", cond, script.numeral(n), phase);
-			value = script.term("ite", cond, fTerm, value);
-			assert BigInteger.valueOf(i).equals(n);
+			value = script.term("ite", cond, f_term, value);
 		}
 		return new Term[] { phase, value };
 	}

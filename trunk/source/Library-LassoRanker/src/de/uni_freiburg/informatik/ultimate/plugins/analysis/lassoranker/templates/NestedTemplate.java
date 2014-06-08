@@ -54,9 +54,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingf
  * 
  * <pre>
  *    δ > 0
- * /\ ( f_0(x) > 0 )
- * /\ ( /\_i f_i(x') < f_i(x) + f_{i+1}(x) )
- * /\ ( f_n(x') < f_n(x) - δ)
+ * /\ ( f_0(x') < f_0(x) - δ)
+ * /\ ( /\_{i > 0} f_i(x') < f_i(x) + f_{i-1}(x) )
+ * /\ ( f_n(x) > 0 )
  * </pre>
  * 
  * @author Matthias Heizmann
@@ -103,14 +103,14 @@ public class NestedTemplate extends RankingFunctionTemplate {
 		sb.append("   ");
 		sb.append("delta > 0");
 		sb.append("\n");
-		sb.append("/\\ f_0(x) > 0");
+		sb.append("/\\ f_0(x') < f_0(x) - delta");
 		sb.append("\n");
-		for (int i = 0; i < m_Size-1; ++i) {
-			sb.append("/\\ f_" + i + "(x') < f_" + i + "(x) + f_" + (i+1) + "(x)");
+		for (int i = 1; i < m_Size; ++i) {
+			sb.append("/\\ f_" + i + "(x') < f_" + i + "(x) + f_" + (i-1) + "(x)");
 			sb.append("\n");
 		}
 		int n = m_Size-1;
-		sb.append("/\\ f_" + n + "(x') < f_" + n + "(x) - delta");
+		sb.append("/\\ f_" + n + "(x) > 0");
 		return sb.toString();
 	}
 	
@@ -122,46 +122,41 @@ public class NestedTemplate extends RankingFunctionTemplate {
 		List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		
-		// f_0(x) > 0
-		List<LinearInequality> disjunction;
+		// f_0(x') < f_0(x) - δ
 		{
 			LinearInequality li = m_fgens[0].generate(inVars);
-			li.setStrict(true);
-			li.needs_motzkin_coefficient = false;
-			disjunction = Collections.singletonList(li);
-		}
-		conjunction.add(disjunction);
-		
-		// /\_i f_i(x') < f_i(x) - δ_i + f_{i+1}(x)
-		for (int i = 0; i < m_Size-1; ++i) {
-			disjunction = new ArrayList<LinearInequality>();
-			LinearInequality li = m_fgens[i].generate(inVars);
-			LinearInequality li2 = m_fgens[i].generate(outVars);
-			li2.negate();
-			li.add(li2);
-			LinearInequality li3 = m_fgens[i+1].generate(inVars);
-			li.add(li3);
-			li.setStrict(true);
-			li.needs_motzkin_coefficient = false;
-			disjunction = Collections.singletonList(li);
-			conjunction.add(disjunction);
-		}
-		// f_n(x') < f_n(x) - δ_n
-		{
-			disjunction = new ArrayList<LinearInequality>();
-			LinearInequality li = m_fgens[m_Size-1].generate(inVars);
-			LinearInequality li2 = m_fgens[m_Size-1].generate(outVars);
+			LinearInequality li2 = m_fgens[0].generate(outVars);
 			li2.negate();
 			li.add(li2);
 			AffineTerm a = new AffineTerm(m_delta, Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
 			li.needs_motzkin_coefficient = false;
-			disjunction = Collections.singletonList(li);
-			conjunction.add(disjunction);
+			conjunction.add(Collections.singletonList(li));
 		}
 		
-		// delta_i > 0 is assured by RankingFunctionTemplate.newDelta
+		// /\_i f_i(x') < f_i(x) - δ_i + f_{i-1}(x)
+		for (int i = 1; i < m_Size; ++i) {
+			LinearInequality li = m_fgens[i].generate(inVars);
+			LinearInequality li2 = m_fgens[i].generate(outVars);
+			li2.negate();
+			li.add(li2);
+			LinearInequality li3 = m_fgens[i-1].generate(inVars);
+			li.add(li3);
+			li.setStrict(true);
+			li.needs_motzkin_coefficient = false;
+			conjunction.add(Collections.singletonList(li));
+		}
+		
+		// f_n(x) > 0
+		{
+			LinearInequality li = m_fgens[m_Size-1].generate(inVars);
+			li.setStrict(true);
+			li.needs_motzkin_coefficient = false;
+			conjunction.add(Collections.singletonList(li));
+		}
+		
+		// delta > 0 is assured by RankingFunctionTemplate.newDelta
 		return conjunction;
 	}
 
@@ -188,17 +183,16 @@ public class NestedTemplate extends RankingFunctionTemplate {
 	@Override
 	public List<String> getAnnotations() {
 		List<String> annotations = new ArrayList<String>();
-		annotations.add("rank f_0 is bounded");
+		annotations.add("rank f_0 is decreasing");
 		for (int i = 0; i < m_Size-1; ++i) {
-			annotations.add("rank f_" + i + " is decreasing by at least -f_" + i+1);
+			annotations.add("rank f_" + i + " is decreasing by at least -f_" + (i-1));
 		}
-		annotations.add("rank f_" + (m_Size-1) + " is decreasing");
+		annotations.add("rank f_" + (m_Size - 1) + " is bounded");
 		return annotations;
 	}
 	
 	@Override
 	public int getDegree() {
-		assert(m_Size > 0);
 		return 0;
 	}
 }
