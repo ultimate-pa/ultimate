@@ -337,30 +337,16 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * 
 	 * The procedure works according to this principle:
 	 * <pre>
-	 * simplify(variables):
-	 *     for v in variables:
-	 *         if sat with v = 0:
-	 *             set v = 0
-	 *             simplify(variables \ {v})
-	 *             return
+	 * random.shuffle(variables)
+	 * for v in variables:
+	 *     if sat with v = 0:
+	 *         set v to 0
 	 * </pre>
 	 * 
 	 * @return the number of pops required on m_script
 	 */
 	private int simplifyAssignment() {
-		List<Term> variables = new LinkedList<Term>();
-		// The collection variables above is chosen to be a LinkedList,
-		// which has poor random access complexity.
-		//
-		// We hope that this is not a problem, because
-		// (a) the index i is likely to be small, because simplifyAssignmentRec
-		//     finds the local optimum whose variables indices are smallest, and
-		// (b) the list is not too long.
-		// Linked list was chosen because it allows fast removal of objects
-		// in the middle of the list.
-		//
-		// The reader of this source code comment is encouraged to replace the
-		// LinkedList with an ArrayList and benchmark the difference.
+		ArrayList<Term> variables = new ArrayList<Term>();
 		
 		// Add all variables form the ranking function and supporting invariants
 		variables.addAll(m_template.getVariables());
@@ -372,40 +358,18 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		Random rnd =  new Random(System.nanoTime());
 		Collections.shuffle(variables, rnd);
 		
-		// Call the recursive algorithm
-		return Math.max(0, simplifyAssignmentRec(variables));
-	}
-	
-	/**
-	 * Recursively tries to find an assignment with a maximal number of
-	 * zeros assigned to variables.
-	 * 
-	 * @param variables a linked list of variables that may be reassigned
-	 * @return the number of pops required on m_script if successful,
-	 *         and -1 otherwise
-	 */
-	private int simplifyAssignmentRec(List<Term> variables) {
-		if (variables.isEmpty()) {
-			return 0;
-		}
+		int pops = 0;
 		for (int i = 0; i < variables.size(); ++i) {
 			Term var = variables.get(i);
 			m_script.push(1);
 			m_script.assertTerm(m_script.term("=", var, m_script.numeral(BigInteger.ZERO)));
-			if (m_script.checkSat() == LBool.SAT) {
-				// Recurse
-				variables.remove(i);
-				int l = simplifyAssignmentRec(variables);
-				if (l >= 0) {
-					return l + 1;
-				} else {
-					return 1;
-				}
-				// variables.add(i, var);
+			if (m_script.checkSat() != LBool.SAT) {
+				m_script.pop(1);
+			} else {
+				pops += 1;
 			}
-			m_script.pop(1);
 		}
-		return -1; // unsuccessful
+		return pops;
 	}
 	
 	/**
