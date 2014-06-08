@@ -111,9 +111,9 @@ public class PartialQuantifierElimination {
 			
 			Term[] oldParams;
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				oldParams = getDisjuncts(result);
+				oldParams = SmtUtils.getDisjuncts(result);
 			} else if (quantifier == QuantifiedFormula.FORALL) {
-				oldParams = getConjuncts(result);
+				oldParams = SmtUtils.getConjuncts(result);
 			} else {
 				throw new AssertionError("unknown quantifier");
 			}
@@ -145,9 +145,9 @@ public class PartialQuantifierElimination {
 		{
 			Term[] oldParams;
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				oldParams = getDisjuncts(result);
+				oldParams = SmtUtils.getDisjuncts(result);
 			} else if (quantifier == QuantifiedFormula.FORALL) {
-				oldParams = getConjuncts(result);
+				oldParams = SmtUtils.getConjuncts(result);
 			} else {
 				throw new AssertionError("unknown quantifier");
 			}
@@ -179,9 +179,9 @@ public class PartialQuantifierElimination {
 		if (USE_UPD) {
 			Term[] oldParams;
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				oldParams = getDisjuncts(result);
+				oldParams = SmtUtils.getDisjuncts(result);
 			} else if (quantifier == QuantifiedFormula.FORALL) {
-				oldParams = getConjuncts(result);
+				oldParams = SmtUtils.getConjuncts(result);
 			} else {
 				throw new AssertionError("unknown quantifier");
 			}
@@ -216,9 +216,9 @@ public class PartialQuantifierElimination {
 			Term termAfterSOS;
 			Term[] oldParams;
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				oldParams = getDisjuncts(result);
+				oldParams = SmtUtils.getDisjuncts(result);
 			} else if (quantifier == QuantifiedFormula.FORALL) {
-				oldParams = getConjuncts(result);
+				oldParams = SmtUtils.getConjuncts(result);
 			} else {
 				throw new AssertionError("unknown quantifier");
 			}
@@ -322,9 +322,9 @@ public class PartialQuantifierElimination {
 		vars.retainAll(occuringVars);
 		Set<Term> parameters;
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			parameters = new HashSet<Term>(Arrays.asList(getConjuncts(term)));
+			parameters = new HashSet<Term>(Arrays.asList(SmtUtils.getConjuncts(term)));
 		} else if (quantifier == QuantifiedFormula.FORALL) {
-			parameters = new HashSet<Term>(Arrays.asList(getDisjuncts(term)));
+			parameters = new HashSet<Term>(Arrays.asList(SmtUtils.getDisjuncts(term)));
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
@@ -430,38 +430,6 @@ public class PartialQuantifierElimination {
 		return false;
 	}
 
-	
-	
-	
-	/**
-	 * If term is a conjunction return all conjuncts, otherwise return term.
-	 */
-	public static Term[] getConjuncts(Term term) {
-		if (term instanceof ApplicationTerm) {
-			ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (appTerm.getFunction().getName().equals("and")) {
-				return appTerm.getParameters();
-			}
-		}
-		Term[] result = new Term[1];
-		result[0] = term;
-		return result;
-	}
-	
-	/**
-	 * If term is a disjunction return all disjuncts, otherwise return term.
-	 */
-	public static Term[] getDisjuncts(Term term) {
-		if (term instanceof ApplicationTerm) {
-			ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (appTerm.getFunction().getName().equals("or")) {
-				return appTerm.getParameters();
-			}
-		}
-		Term[] result = new Term[1];
-		result[0] = term;
-		return result;
-	}
 	
 	/**
 	 * Partition set of terms into equivalence classes. 
@@ -598,9 +566,9 @@ public class PartialQuantifierElimination {
 		assert tv.getSort().isNumericSort() : "only applicable for numeric sorts";
 		Term[] oldParams;
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			oldParams = getConjuncts(term);
+			oldParams = SmtUtils.getConjuncts(term);
 		} else if (quantifier == QuantifiedFormula.FORALL) {
-			oldParams = getDisjuncts(term);
+			oldParams = SmtUtils.getDisjuncts(term);
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
@@ -714,9 +682,9 @@ public class PartialQuantifierElimination {
 			TermVariable tv) {
 		Term[] oldParams;
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			oldParams = getConjuncts(term);
+			oldParams = SmtUtils.getConjuncts(term);
 		} else if (quantifier == QuantifiedFormula.FORALL) {
-			oldParams = getDisjuncts(term);
+			oldParams = SmtUtils.getDisjuncts(term);
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}

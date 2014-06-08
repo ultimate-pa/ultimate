@@ -136,7 +136,7 @@ public class RewriteArrays implements PreProcessor {
 	public Term process(Script script, Term term) {
 		m_Script = script;
 		Term dnf = (new Dnf(script)).transform(term);
-		Term[] disjuncts = PartialQuantifierElimination.getDisjuncts(dnf);
+		Term[] disjuncts = SmtUtils.getDisjuncts(dnf);
 		sunnf = new Term[disjuncts.length];
 		m_ArrayUpdates = new List[disjuncts.length];
 		m_ArrayReads = new List[disjuncts.length];

@@ -38,6 +38,36 @@ public class SmtUtils {
 	}
 	
 	/**
+	 * If term is a conjunction return all conjuncts, otherwise return term.
+	 */
+	public static Term[] getConjuncts(Term term) {
+		if (term instanceof ApplicationTerm) {
+			ApplicationTerm appTerm = (ApplicationTerm) term;
+			if (appTerm.getFunction().getName().equals("and")) {
+				return appTerm.getParameters();
+			}
+		}
+		Term[] result = new Term[1];
+		result[0] = term;
+		return result;
+	}
+	
+	/**
+	 * If term is a disjunction return all disjuncts, otherwise return term.
+	 */
+	public static Term[] getDisjuncts(Term term) {
+		if (term instanceof ApplicationTerm) {
+			ApplicationTerm appTerm = (ApplicationTerm) term;
+			if (appTerm.getFunction().getName().equals("or")) {
+				return appTerm.getParameters();
+			}
+		}
+		Term[] result = new Term[1];
+		result[0] = term;
+		return result;
+	}
+	
+	/**
 	 * Takes an ApplicationTerm with pairwise function symbol and return 
 	 * a conjunction of pairwise applications of the function symbol.
 	 * E.g. the ternary equality (= a b c) becomes

@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -15,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -285,7 +284,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 		public Set<IPredicate> cannibalize(Term term) {
 			Set<IPredicate> result = new HashSet<IPredicate>();
 			Term cnf = (new Cnf(m_SmtManager.getScript())).transform(term);
-			Term[] conjuncts = PartialQuantifierElimination.getConjuncts(cnf);
+			Term[] conjuncts = SmtUtils.getConjuncts(cnf);
 			for (Term conjunct : conjuncts) {
 				TermVarsProc tvp = m_SmtManager.computeTermVarsProc(conjunct);
 				IPredicate predicate = getOrConstructPredicate(tvp);

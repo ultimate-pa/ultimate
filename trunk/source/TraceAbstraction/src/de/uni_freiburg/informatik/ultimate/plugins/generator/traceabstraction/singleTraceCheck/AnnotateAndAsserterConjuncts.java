@@ -5,7 +5,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 
@@ -44,8 +44,8 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 	 * @return conjunction of annotated terms
 	 */
 	private Term annotateAndAssertConjuncts(String name, Term original,	Term indexed) {
-		Term[] originalConjuncts = PartialQuantifierElimination.getConjuncts(original);
-		Term[] indexedConjuncts = PartialQuantifierElimination.getConjuncts(indexed);
+		Term[] originalConjuncts = SmtUtils.getConjuncts(original);
+		Term[] indexedConjuncts = SmtUtils.getConjuncts(indexed);
 		assert originalConjuncts.length == indexedConjuncts.length : 
 			"number of original and indexed conjuncts differ";
 		Term[] annotatedConjuncts = new Term[originalConjuncts.length];
