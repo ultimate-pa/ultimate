@@ -7,9 +7,9 @@
  * arccos(0.6) ~ 53.13 degrees in each loop execution.
  *
  * This has the following 3-nested ranking function:
- * f0 = q + 2
- * f1 = 5*a + 4*q + 5
- * f2 = 4*q - 4*b + 2*a + 10
+ * f0 = 2*q + a - 2*b
+ * f1 = 4*q + 5*a
+ * f2 = 5*q
  *
  * This is a nondeterministic version of MultiphaseRotation53.bpl.
  */
