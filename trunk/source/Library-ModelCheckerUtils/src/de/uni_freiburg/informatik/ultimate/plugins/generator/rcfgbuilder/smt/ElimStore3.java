@@ -21,8 +21,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination.EqualityInformation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays.ArrayUpdate.ArrayUpdateException;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -188,7 +190,7 @@ public class ElimStore3 {
 				}
 			}
 			Term newConjunctsFromStore = subst.transform(Util.and(script, additionalConjuncsFromStore.toArray(new Term[0])));
-			Term newData = subst.transform(writeInto.getData());
+			Term newData = subst.transform(writeInto.getValue());
 			Term newWriteIndex[] = substitutionElementwise(writeInto.getIndex(), subst);
 			Term writeSubstituent = m_Script.term("=", SmtUtils.multiDimensionalSelect(m_Script, writeInto.getNewArray(), newWriteIndex), newData); 
 			intermediateResult = Util.and(m_Script, intermediateResult, writeSubstituent, newConjunctsFromStore);
@@ -463,138 +465,7 @@ public class ElimStore3 {
 		m_Script.assertTerm(renamed);
 	}
 	
-	/**
-	 * Represents Term of the form a = ("store", a', k, data), where a and
-	 * a' are both TermVariables.
-	 */
-	public static class ArrayUpdate {
-		private final TermVariable m_OldArray;
-		private final TermVariable m_NewArray;
-		private final Term[] m_Index;
-		private final Term m_Data;
-		private final Term m_ArrayUpdateTerm;
-		
-		public ArrayUpdate(Term term) throws ArrayUpdateException {
-			if (!(term instanceof ApplicationTerm)) {
-				throw new ArrayUpdateException("no ApplicationTerm");
-			}
-			ApplicationTerm eqAppTerm = (ApplicationTerm) term;
-			if (!eqAppTerm.getFunction().getName().equals("=")) {
-				throw new ArrayUpdateException("no equality");
-			}
-			if (!(eqAppTerm.getParameters().length == 2)) {
-				throw new ArrayUpdateException("no binary equality");
-			}
-			m_ArrayUpdateTerm = term;
-			Term lhs = eqAppTerm.getParameters()[0];
-			Term rhs = eqAppTerm.getParameters()[1];
-			ApplicationTerm allegedStoreTerm;
-			if (isArrayTermVariable(lhs)) {
-				if (isStoreTerm(rhs)) {
-					m_NewArray = (TermVariable) lhs;
-					allegedStoreTerm = (ApplicationTerm) rhs;
-				} else {
-					throw new ArrayUpdateException("no array update");
-				}
-			} else if (isArrayTermVariable(rhs)) {
-				if (isStoreTerm(lhs)) {
-					m_NewArray = (TermVariable) rhs;
-					allegedStoreTerm = (ApplicationTerm) lhs;
-				} else {
-					throw new ArrayUpdateException("no array update");
-				}
-			} else {
-				throw new ArrayUpdateException("no array update");
-			}
-			assert allegedStoreTerm.getFunction().getName().equals("store");
-			assert allegedStoreTerm.getParameters().length == 3;
-			assert m_NewArray.getSort() == allegedStoreTerm.getSort();
-			
-			MultiDimensionalStore asd = new MultiDimensionalStore(allegedStoreTerm);
-			if (asd.getIndex().length == 0) {
-				throw new ArrayUpdateException("no multidimensional array");
-			}
-			m_OldArray = isArrayWithSort(asd.getArray(), m_NewArray.getSort());
-			if (m_OldArray == null) {
-				throw new ArrayUpdateException("no term variable");
-			}
-			m_Index = asd.getIndex();
-			m_Data = asd.getValue();
-		}
-		
-		/**
-		 * Returns true iff term is TermVariable and has array sort
-		 */
-		private boolean isArrayTermVariable(Term term) {
-			if (term instanceof TermVariable) {
-				if (term.getSort().isArraySort()) {
-					return true;
-				}
-			}
-			return false;
-		}
-		
-		/**
-		 * Returns true iff term is ApplicationTerm whose function symbol is
-		 * "store".
-		 */
-		private boolean isStoreTerm(Term term) {
-			if (term instanceof ApplicationTerm) {
-				ApplicationTerm appTerm = (ApplicationTerm) term;
-				if (appTerm.getFunction().getName().equals("store")) {
-					return true;
-				}
-			}
-			return false;
-		}
 
-		/**
-		 * If term is a term variable of Sort sort, return term as TermVariable,
-		 * return null otherwise.
-		 */
-		TermVariable isArrayWithSort(Term term, Sort sort) {
-			if (term instanceof TermVariable) {
-				if (term.getSort().equals(sort)) {
-					return (TermVariable) term;
-				} else {
-					return null;
-				}
-			} else {
-				return null;
-			}
-		}
-		
-		public TermVariable getOldArray() {
-			return m_OldArray;
-		}
-		public TermVariable getNewArray() {
-			return m_NewArray;
-		}
-		public Term[] getIndex() {
-			return m_Index;
-		}
-		public Term getData() {
-			return m_Data;
-		}
-		public Term getArrayUpdateTerm() {
-			return m_ArrayUpdateTerm;
-		}
-		
-		@Override
-		public String toString() {
-			return m_ArrayUpdateTerm.toString();
-		}
-	}
-	
-	
-	public static class ArrayUpdateException extends Exception {
-
-		private static final long serialVersionUID = -5344050289008681972L;
-
-		public ArrayUpdateException(String message) {
-			super(message);
-		}
-	}
 	
 	
 //	public static int getDimension(Sort sort) {
