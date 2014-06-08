@@ -144,35 +144,6 @@ public class SmtUtils {
 	}
 	
 	
-	public static class MultiDimensionalArraySort {
-		private final ArrayList<Sort> m_IndexSorts = new ArrayList<Sort>();
-		private final Sort m_ArrayCellSort;
-		
-		public MultiDimensionalArraySort(Sort sort) {
-			while (sort.isArraySort()) {
-				Sort[] arg = sort.getArguments();
-				assert arg.length == 2;
-				m_IndexSorts.add(arg[0]);
-				sort = arg[1];
-			}
-			m_ArrayCellSort = sort;
-		}
-
-		public ArrayList<Sort> getIndexSorts() {
-			return m_IndexSorts;
-		}
-
-		public Sort getArrayCellSort() {
-			return m_ArrayCellSort;
-		}
-		
-		public int getDimension() {
-			return m_IndexSorts.size();
-		}
-		
-	}
-	
-	
 	/**
 	 * Return term that represents the sum of all summands. Return the neutral
 	 * element for sort sort if summands is empty.

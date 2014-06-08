@@ -52,13 +52,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarColle
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ElimStore3.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ElimStore3.ArrayUpdateException;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.MultiDimensionalSelect;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.MultiDimensionalStore;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.MultiDimensionalStore.ArrayStoreException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils.MultiDimensionalArraySort;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays.MultiDimensionalSort;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
@@ -523,9 +522,9 @@ public class RewriteArrays implements PreProcessor {
 		private TermVariable constructTermVariable(TermVariable instance, List<Term> index) {
 			Sort arraySort = instance.getSort();
 			assert arraySort.isArraySort();
-			MultiDimensionalArraySort mdias = new MultiDimensionalArraySort(arraySort);
+			MultiDimensionalSort mdias = new MultiDimensionalSort(arraySort);
 			assert mdias.getDimension() == index.size();
-			Sort valueSort = mdias.getArrayCellSort();
+			Sort valueSort = mdias.getArrayValueSort();
 			String name = getArrayCellName(instance, index);
 			TermVariable tv = m_VarCollector.getFactory().getNewTermVariable(name, valueSort);
 			return tv;

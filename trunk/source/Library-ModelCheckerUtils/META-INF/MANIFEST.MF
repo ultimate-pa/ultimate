@@ -7,6 +7,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.transfomers,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms
 Require-Bundle: UltimateCore,

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,8 +20,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.MultiDimensionalStore.ArrayStoreException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination.EqualityInformation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -50,49 +50,12 @@ public class ElimStore3 {
 	private final Script m_Script;
 	
 	
-	private List<MultiDimensionalStore> extractArrayStoresDeep(Term term) {
-		List<MultiDimensionalStore> result = new LinkedList<MultiDimensionalStore>();
-		List<MultiDimensionalStore> foundInThisIteration = extractArrayStoresShallow(term);
-		while (!foundInThisIteration.isEmpty()) {
-			result.addAll(0, foundInThisIteration);
-			List<MultiDimensionalStore> foundInLastIteration = foundInThisIteration;
-			foundInThisIteration = new ArrayList<MultiDimensionalStore>();
-			for (MultiDimensionalStore asd : foundInLastIteration) {
-				foundInThisIteration.addAll(extractArrayStoresShallow(asd.getArray()));
-				foundInThisIteration.addAll(extractArrayStoresShallow(asd.getData()));
-				Term[] index = asd.getIndex();
-				for (Term entry : index) {
-					foundInThisIteration.addAll(extractArrayStoresShallow(entry));
-				}
-			}
-		}
-		return result;
-	}
 
-
-
-
-
-	private List<MultiDimensionalStore> extractArrayStoresShallow(Term term) {
-		List<MultiDimensionalStore> arrayStoreDefs = new ArrayList<MultiDimensionalStore>();
-		Set<ApplicationTerm> storeTerms = 
-				(new ApplicationTermFinder("store", false)).findMatchingSubterms(term);
-		for (Term storeTerm : storeTerms) {
-			MultiDimensionalStore asd;
-			try {
-				asd = new MultiDimensionalStore(storeTerm);
-			} catch (ArrayStoreException e) {
-				throw new UnsupportedOperationException("unexpected store term");
-			}
-			arrayStoreDefs.add(asd);
-		}
-		return arrayStoreDefs;
-	}
 	
 	
 	
 	private MultiDimensionalStore getArrayStore(Term array, Term term) {
-	List<MultiDimensionalStore> all = extractArrayStoresDeep(term);
+	List<MultiDimensionalStore> all = MultiDimensionalStore.extractArrayStoresDeep(term);
 	MultiDimensionalStore result = null;
 	for (MultiDimensionalStore asd : all) {
 		if (asd.getArray().equals(array)) {
@@ -547,18 +510,16 @@ public class ElimStore3 {
 			assert allegedStoreTerm.getParameters().length == 3;
 			assert m_NewArray.getSort() == allegedStoreTerm.getSort();
 			
-			MultiDimensionalStore asd;
-			try {
-				asd = new MultiDimensionalStore(allegedStoreTerm);
-			} catch (ArrayStoreException e) {
-				throw new ArrayUpdateException(e.getMessage());
+			MultiDimensionalStore asd = new MultiDimensionalStore(allegedStoreTerm);
+			if (asd.getIndex().length == 0) {
+				throw new ArrayUpdateException("no multidimensional array");
 			}
 			m_OldArray = isArrayWithSort(asd.getArray(), m_NewArray.getSort());
 			if (m_OldArray == null) {
 				throw new ArrayUpdateException("no term variable");
 			}
 			m_Index = asd.getIndex();
-			m_Data = asd.getData();
+			m_Data = asd.getValue();
 		}
 		
 		/**
@@ -636,15 +597,15 @@ public class ElimStore3 {
 	}
 	
 	
-	public static int getDimension(Sort sort) {
-		if (sort.isArraySort()) {
-			Sort[] arg = sort.getArguments();
-			assert arg.length == 2;
-			return 1 + getDimension(arg[1]);
-		} else {
-			return 0;
-		}
-	}
+//	public static int getDimension(Sort sort) {
+//		if (sort.isArraySort()) {
+//			Sort[] arg = sort.getArguments();
+//			assert arg.length == 2;
+//			return 1 + getDimension(arg[1]);
+//		} else {
+//			return 0;
+//		}
+//	}
 	
 	
 	
