@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingf
  * 
  * <pre>
  *    δ > 0
- * /\ ( f_0(x') < f_0(x) - δ)
+ * /\ ( f_0(x') < f_0(x) - δ )
  * /\ ( /\_{i > 0} f_i(x') < f_i(x) + f_{i-1}(x) )
  * /\ ( f_n(x) > 0 )
  * </pre>
