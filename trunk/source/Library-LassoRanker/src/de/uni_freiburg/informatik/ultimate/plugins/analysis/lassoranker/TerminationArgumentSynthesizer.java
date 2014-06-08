@@ -359,8 +359,8 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		// Linked list was chosen because it allows fast removal of objects
 		// in the middle of the list.
 		//
-		// The reader of this source code comment is encuraged to replace the
-		// LinkedList with an array list and benchmark the difference.
+		// The reader of this source code comment is encouraged to replace the
+		// LinkedList with an ArrayList and benchmark the difference.
 		
 		// Add all variables form the ranking function and supporting invariants
 		variables.addAll(m_template.getVariables());
