@@ -95,6 +95,17 @@ public class Preferences implements Serializable {
 	public boolean annotate_terms = true; // Default: true
 	
 	/**
+	 * Should we try to simplify the discovered ranking function and
+	 * supporting invariants?
+	 * 
+	 * Note: this is quite expensive, it requires many calls to the solver:
+	 * O((number of variables)*(numer of supporting invariants))
+	 * If the solver efficiently supports push() and pop(),
+	 * this might be reasonably fast.
+	 */
+	public boolean simplify_result = false; // Default: false
+	
+	/**
 	 * Use a nonlinear SMT query for checking nontermination?
 	 */
 	public boolean nontermination_check_nonlinear = true; // Default: true
@@ -148,6 +159,8 @@ public class Preferences implements Serializable {
 		sb.append(this.enable_disjunction);
 		sb.append("\nTerm annotations enabled: ");
 		sb.append(this.annotate_terms);
+		sb.append("\nResult simplification enabled: ");
+		sb.append(this.simplify_result);
 		sb.append("\nNonlinear nontermination check: ");
 		sb.append(this.nontermination_check_nonlinear);
 		sb.append("\nNonlinear termination check: ");

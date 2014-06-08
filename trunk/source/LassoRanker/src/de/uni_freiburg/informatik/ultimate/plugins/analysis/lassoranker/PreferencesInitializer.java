@@ -17,6 +17,7 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	/*
 	 * Default values for GUI-only preferences
 	 */
+	public static final boolean s_simplify_result = true;
 	public static final boolean s_check_for_nontermination = true;
 	public static final boolean s_enable_affine_template = true;
 	public static final boolean s_enable_nested_template = true;
@@ -45,6 +46,8 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 			"Division implementation";
 	public static final String LABEL_annotate_terms =
 			"Add annotations to SMT terms";
+	public static final String LABEL_simplify_result =
+			"Simplify discovered termination arguments";
 	public static final String LABEL_check_for_nontermination =
 			"Check for nontermination";
 	public static final String LABEL_nontermination_check_nonlinear =
@@ -103,6 +106,10 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_annotate_terms,
 						preferences.annotate_terms,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_simplify_result,
+						s_simplify_result,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_check_for_nontermination,
@@ -193,6 +200,9 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 		);
 		preferences.annotate_terms = store.getBoolean(
 				LABEL_annotate_terms
+		);
+		preferences.simplify_result = store.getBoolean(
+				LABEL_simplify_result
 		);
 		preferences.nontermination_check_nonlinear = store.getBoolean(
 				LABEL_nontermination_check_nonlinear

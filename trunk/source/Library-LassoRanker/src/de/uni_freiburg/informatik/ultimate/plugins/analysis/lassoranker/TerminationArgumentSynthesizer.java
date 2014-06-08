@@ -26,12 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -296,8 +299,13 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		// Check for a model
 		LBool sat = m_script.checkSat();
 		if (sat == LBool.SAT) {
-			s_Logger.debug("Found a model, " +
-					"proceeding to extract ranking function.");
+			int pops = 0;
+			if (m_preferences.simplify_result) {
+				s_Logger.debug("Found a termination argument, trying to simplify.");
+				pops = simplifyAssignment();
+				s_Logger.debug("Setting " + pops + " variables to zero.");
+			}
+			s_Logger.debug("Extracting termination argument from model.");
 			
 			// Extract ranking function
 			Map<Term, Rational> val_rf =
@@ -310,6 +318,8 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				m_supporting_invariants.add(sig.extractSupportingInvariant(
 						val_si));
 			}
+			
+			m_script.pop(pops);
 		} else if (sat == LBool.UNKNOWN) {
 			m_script.echo(new QuotedObject(SMTSolver.s_SolverUnknownMessage));
 			// Problem: If we use the following line we can receive the 
@@ -319,6 +329,83 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			// TODO: discuss the above claim with Jürgen
 		}
 		return sat;
+	}
+	
+	/**
+	 * Tries to simplify a satisfying assignment by assigning zeros to
+	 * variables. Gets stuck in local optima.
+	 * 
+	 * The procedure works according to this principle:
+	 * <pre>
+	 * simplify(variables):
+	 *     for v in variables:
+	 *         if sat with v = 0:
+	 *             set v = 0
+	 *             simplify(variables \ {v})
+	 *             return
+	 * </pre>
+	 * 
+	 * @return the number of pops required on m_script
+	 */
+	private int simplifyAssignment() {
+		List<Term> variables = new LinkedList<Term>();
+		// The collection variables above is chosen to be a LinkedList,
+		// which has poor random access complexity.
+		//
+		// We hope that this is not a problem, because
+		// (a) the index i is likely to be small, because simplifyAssignmentRec
+		//     finds the local optimum whose variables indices are smallest, and
+		// (b) the list is not too long.
+		// Linked list was chosen because it allows fast removal of objects
+		// in the middle of the list.
+		//
+		// The reader of this source code comment is encuraged to replace the
+		// LinkedList with an array list and benchmark the difference.
+		
+		// Add all variables form the ranking function and supporting invariants
+		variables.addAll(m_template.getVariables());
+		for (SupportingInvariantGenerator sig : m_si_generators) {
+			variables.addAll(sig.getVariables());
+		}
+		
+		// Shuffle the variable list for better effect
+		Random rnd =  new Random(System.nanoTime());
+		Collections.shuffle(variables, rnd);
+		
+		// Call the recursive algorithm
+		return Math.max(0, simplifyAssignmentRec(variables));
+	}
+	
+	/**
+	 * Recursively tries to find an assignment with a maximal number of
+	 * zeros assigned to variables.
+	 * 
+	 * @param variables a linked list of variables that may be reassigned
+	 * @return the number of pops required on m_script if successful,
+	 *         and -1 otherwise
+	 */
+	private int simplifyAssignmentRec(List<Term> variables) {
+		if (variables.isEmpty()) {
+			return 0;
+		}
+		for (int i = 0; i < variables.size(); ++i) {
+			Term var = variables.get(i);
+			m_script.push(1);
+			m_script.assertTerm(m_script.term("=", var, m_script.numeral(BigInteger.ZERO)));
+			if (m_script.checkSat() == LBool.SAT) {
+				// Recurse
+				variables.remove(i);
+				int l = simplifyAssignmentRec(variables);
+				if (l >= 0) {
+					return l + 1;
+				} else {
+					return 1;
+				}
+				// variables.add(i, var);
+			}
+			m_script.pop(1);
+		}
+		return -1; // unsuccessful
 	}
 	
 	/**
