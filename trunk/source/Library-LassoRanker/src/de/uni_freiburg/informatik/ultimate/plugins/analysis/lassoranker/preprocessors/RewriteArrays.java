@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Par
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays.ArrayUpdate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays.ArrayUpdate.ArrayUpdateExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays.MultiDimensionalStore;
@@ -119,6 +120,7 @@ public class RewriteArrays implements PreProcessor {
 	private Map<TermVariable, Map<List<Term>, TermVariable>> m_ArrayInstance2Index2CellVariable;
 	private Term[] sunnf;
 	private List<ArrayEquality>[] m_ArrayEqualities;
+	private SafeSubstitution m_Select2CellVariable;
 	
 	public RewriteArrays(VarCollector rankVarCollector) {
 		m_VarCollector = rankVarCollector;
@@ -135,6 +137,7 @@ public class RewriteArrays implements PreProcessor {
 	@Override
 	public Term process(Script script, Term term) {
 		m_Script = script;
+		term = SmtUtils.simplify(m_Script, term);
 		Term dnf = (new Dnf(script)).transform(term);
 		Term[] disjuncts = SmtUtils.getDisjuncts(dnf);
 		sunnf = new Term[disjuncts.length];
@@ -143,18 +146,28 @@ public class RewriteArrays implements PreProcessor {
 		m_ArrayEqualities = new List[disjuncts.length];
 		m_ArrayGenealogy = new ArrayGenealogy[disjuncts.length];
 		for (int i=0; i<disjuncts.length; i++) {
-			SingleUpdateNormalFormTransformer sunnft = new SingleUpdateNormalFormTransformer(disjuncts[i]);
+			Term[] conjuncts = SmtUtils.getConjuncts(disjuncts[i]);
+			ArrayEqualityExtractor aee = new ArrayEqualityExtractor(conjuncts);
+			m_ArrayEqualities[i] = aee.getArrayEqualities();
+			SingleUpdateNormalFormTransformer sunnft = 
+					new SingleUpdateNormalFormTransformer(Util.and(m_Script,
+							aee.getRemainingTerms().toArray(new Term[0])));
 			m_ArrayUpdates[i] = sunnft.getArrayUpdates();
-			sunnf[i] = sunnft.getTerm();
-			m_ArrayReads[i] = MultiDimensionalSelect.extractSelectDeep(sunnf[i], true); 
-			m_ArrayEqualities[i] = extractArrayEqualities(sunnf[i]);
-			m_ArrayGenealogy[i] = new ArrayGenealogy(m_ArrayUpdates[i], m_ArrayReads[i]);
+			sunnf[i] = sunnft.getRemainderTerm();
+			m_ArrayReads[i] = extractArrayReads(sunnft.getArrayUpdates(), sunnft.getRemainderTerm());
+			m_ArrayGenealogy[i] = new ArrayGenealogy(m_ArrayEqualities[i], m_ArrayUpdates[i], m_ArrayReads[i]);
 		}
 		
 		new IndexCollector();
 		CellVariableBuilder cvb = new CellVariableBuilder();
 		m_ArrayInstance2Index2CellVariable = cvb.getArrayInstance2Index2CellVariable();
+		m_Select2CellVariable = constructIndex2CellVariableSubstitution();
 		Term indexValueConstraints = buildIndexValueConstraints();
+		
+		Term[] arrayEqualityConstraints = new Term[sunnf.length]; 
+		for (int i=0; i<disjuncts.length; i++) {
+			arrayEqualityConstraints[i] = buildArrayEqualityConstraints(m_ArrayEqualities[i]); 
+		}
 		
 		Term[] arrayUpdateConstraints = new Term[sunnf.length]; 
 		for (int i=0; i<disjuncts.length; i++) {
@@ -162,12 +175,12 @@ public class RewriteArrays implements PreProcessor {
 		}
 		Term[] disjunctsWithUpdateConstraints = new Term[sunnf.length];
 		for (int i=0; i<disjunctsWithUpdateConstraints.length; i++) {
-			disjunctsWithUpdateConstraints[i] = Util.and(m_Script, sunnf[i], arrayUpdateConstraints[i]);
+			Term removedSelect = m_Select2CellVariable.transform(sunnf[i]);
+			disjunctsWithUpdateConstraints[i] = Util.and(m_Script, removedSelect, arrayUpdateConstraints[i], arrayEqualityConstraints[i]);
 		}
 		Term resultDisjuntion = Util.or(m_Script, disjunctsWithUpdateConstraints);
 		Term result = Util.and(m_Script, resultDisjuntion, indexValueConstraints);
 		
-		Term removed = removeArrayUpdateAndArrayReads(result);
 		m_VarCollector.addAuxVars(cvb.getAuxVars());
 
 		
@@ -176,13 +189,24 @@ public class RewriteArrays implements PreProcessor {
 //			assert !s_CheckResultWithQuantifiers
 //					||	!isIncorrectWithQuantifiers(term, result, repTerm) 
 //					: "rewrite division unsound";
-		isArrayFree(removed);
-		return removed;
+		isArrayFree(result);
+		result = SmtUtils.simplify(m_Script, result);
+		return result;
 	}
 	
-	
-	
-	
+	private List<MultiDimensionalSelect> extractArrayReads(
+			List<ArrayUpdate> arrayUpdates, Term remainderTerm) {
+		ArrayList<MultiDimensionalSelect> result = new ArrayList<>();
+		for (ArrayUpdate au : arrayUpdates) {
+			for (Term indexEntry : au.getIndex()) {
+				result.addAll(MultiDimensionalSelect.extractSelectDeep(indexEntry, true));
+			}
+			result.addAll(MultiDimensionalSelect.extractSelectDeep(au.getValue(), true));
+		}
+		result.addAll(MultiDimensionalSelect.extractSelectDeep(remainderTerm, true));
+		return result;
+	}
+
 	/**
 	 * Return true if we were able to prove that the result is incorrect.
 	 * For this check we add to the input term the definition of the replacement
@@ -214,40 +238,40 @@ public class RewriteArrays implements PreProcessor {
 	
 
 	
-	private List<MultiDimensionalStore> extractArrayStores(Term term) {
-		List<MultiDimensionalStore> foundInThisIteration = new ArrayList<MultiDimensionalStore>();
-		Set<ApplicationTerm> storeTerms = 
-				(new ApplicationTermFinder("store", false)).findMatchingSubterms(term);
-		for (Term storeTerm : storeTerms) {
-			MultiDimensionalStore asd;
-			try {
-				asd = new MultiDimensionalStore(storeTerm);
-			} catch (ArrayStoreException e) {
-				throw new UnsupportedOperationException("unexpected store term");
-			}
-			foundInThisIteration.add(asd);
-		}
-		List<MultiDimensionalStore> result = new LinkedList<MultiDimensionalStore>();
-		while (!foundInThisIteration.isEmpty()) {
-			result.addAll(0, foundInThisIteration);
-			List<MultiDimensionalStore> foundInLastIteration = foundInThisIteration;
-			foundInThisIteration = new ArrayList<MultiDimensionalStore>();
-			for (MultiDimensionalStore asd : foundInLastIteration) {
-				storeTerms = 
-						(new ApplicationTermFinder("store", false)).findMatchingSubterms(asd.getArray());
-				for (Term storeTerm : storeTerms) {
-					MultiDimensionalStore newAsd;
-					try {
-						newAsd = new MultiDimensionalStore(storeTerm);
-					} catch (ArrayStoreException e) {
-						throw new UnsupportedOperationException("unexpected store term");
-					}
-					foundInThisIteration.add(newAsd);
-				}
-			}
-		}
-		return result;
-	}
+//	private List<MultiDimensionalStore> extractArrayStores(Term term) {
+//		List<MultiDimensionalStore> foundInThisIteration = new ArrayList<MultiDimensionalStore>();
+//		Set<ApplicationTerm> storeTerms = 
+//				(new ApplicationTermFinder("store", false)).findMatchingSubterms(term);
+//		for (Term storeTerm : storeTerms) {
+//			MultiDimensionalStore asd;
+//			try {
+//				asd = new MultiDimensionalStore(storeTerm);
+//			} catch (ArrayStoreException e) {
+//				throw new UnsupportedOperationException("unexpected store term");
+//			}
+//			foundInThisIteration.add(asd);
+//		}
+//		List<MultiDimensionalStore> result = new LinkedList<MultiDimensionalStore>();
+//		while (!foundInThisIteration.isEmpty()) {
+//			result.addAll(0, foundInThisIteration);
+//			List<MultiDimensionalStore> foundInLastIteration = foundInThisIteration;
+//			foundInThisIteration = new ArrayList<MultiDimensionalStore>();
+//			for (MultiDimensionalStore asd : foundInLastIteration) {
+//				storeTerms = 
+//						(new ApplicationTermFinder("store", false)).findMatchingSubterms(asd.getArray());
+//				for (Term storeTerm : storeTerms) {
+//					MultiDimensionalStore newAsd;
+//					try {
+//						newAsd = new MultiDimensionalStore(storeTerm);
+//					} catch (ArrayStoreException e) {
+//						throw new UnsupportedOperationException("unexpected store term");
+//					}
+//					foundInThisIteration.add(newAsd);
+//				}
+//			}
+//		}
+//		return result;
+//	}
 	
 	
 	private class ArrayGenealogy {
@@ -259,22 +283,40 @@ public class RewriteArrays implements PreProcessor {
 		 */
 		Map<TermVariable, TermVariable> m_ParentGeneration = new HashMap<TermVariable, TermVariable>();
 		
-		ArrayGenealogy(List<ArrayUpdate> arrayUpdates, List<MultiDimensionalSelect> arrayReads) {
+		ArrayGenealogy(List<ArrayEquality> arrayEqualities, List<ArrayUpdate> arrayUpdates, List<MultiDimensionalSelect> arrayReads) {
+			for (ArrayEquality ae : arrayEqualities) {
+				putInstance2FirstGeneration(ae.getOutVar(), ae.getInVar());
+				putInstance2FirstGeneration(ae.getInVar(), ae.getInVar());
+				
+			}
 			for (ArrayUpdate au : arrayUpdates) {
-				m_ParentGeneration.put(au.getNewArray(), au.getOldArray());
+				putParentGeneration(au.getNewArray(), au.getOldArray());
 			}
 			for (TermVariable tv : m_ParentGeneration.keySet()) {
 				TermVariable fg = getFirstGeneration(tv);
-				m_Instance2OriginalGeneration.put(tv, fg);
+				putInstance2FirstGeneration(tv, fg);
 				// we add first generation several times, probably
 				// less expensive than checking if already inserted
-				m_Instance2OriginalGeneration.put(fg, fg);
+				putInstance2FirstGeneration(fg, fg);
 			}
 			for (MultiDimensionalSelect ar : arrayReads) {
 				if (m_Instance2OriginalGeneration.get(ar.getArray()) == null) {
-					m_Instance2OriginalGeneration.put((TermVariable)ar.getArray(), (TermVariable)ar.getArray());
+					putInstance2FirstGeneration((TermVariable)ar.getArray(), (TermVariable)ar.getArray());
 				}
 			}
+		}
+		
+		private void putParentGeneration(TermVariable child, TermVariable parent) {
+			assert child != null;
+			assert parent != null;
+			assert child != parent;
+			m_ParentGeneration.put(child, parent);
+		}
+		
+		private void putInstance2FirstGeneration(TermVariable child, TermVariable progenitor) {
+			assert child != null;
+			assert progenitor != null;
+			m_Instance2OriginalGeneration.put(child, progenitor);
 		}
 		
 		private TermVariable getFirstGeneration(TermVariable tv) {
@@ -295,110 +337,173 @@ public class RewriteArrays implements PreProcessor {
 		}
 	}
 	
+//	private class SingleUpdateNormalFormTransformer {
+//
+//		List<ArrayUpdate> m_ArrayUpdates;
+//		
+//		Term m_Term;
+//
+//		public SingleUpdateNormalFormTransformer(Term term) {
+//			super();
+//			m_Term = term;
+//			doTransform();
+//		}
+//		
+//		private void doTransform() {
+//			boolean m_EachArrayHasSingleUpdate = false;
+//			while(!m_EachArrayHasSingleUpdate) {
+//				Object result = eachArrayHasSingleUpdate();
+//				if (result instanceof MultiDimensionalStore) {
+//					update((MultiDimensionalStore) result);
+//				} else {
+//					m_EachArrayHasSingleUpdate = true;
+//					m_ArrayUpdates = (List<ArrayUpdate>) result;
+//				}
+//			}
+//		}
+//		
+//		private Object eachArrayHasSingleUpdate() {
+//			List<ArrayUpdate> arrayUpdates = new ArrayList<ArrayUpdate>();
+//			List<MultiDimensionalStore> arrayStores = extractArrayStores(m_Term);
+//			for (MultiDimensionalStore arrayStore : arrayStores) {
+//				ArrayUpdate au;
+//				try {
+//					au = findCorrespondingArrayUpdate(m_Term, arrayStore);
+//				} catch (ArrayUpdateException e) {
+//					continue;
+//				}
+//				arrayUpdates.add(au);
+//				if (au == null) {
+//					return arrayStore;
+//				}
+//			}
+//			assert (arrayStores.size() == arrayUpdates.size());
+//			return arrayUpdates;
+//		}
+//		
+//		private void update(MultiDimensionalStore arraryStore) {
+//			Term oldArray = arraryStore.getArray();
+//			String name = oldArray.toString() + s_AuxArray; 
+//			TermVariable auxArray = 
+//					m_VarCollector.getFactory().getNewTermVariable(name, oldArray.getSort());
+//			Map<Term, Term> substitutionMapping = 
+//					Collections.singletonMap((Term) arraryStore.getStoreTerm(), (Term) auxArray);
+//			Term newTerm = (new SafeSubstitution(m_Script, substitutionMapping)).transform(m_Term);
+//			newTerm = m_Script.term("and", newTerm, m_Script.term("=", auxArray, arraryStore.getStoreTerm()));
+//			m_Term = newTerm;
+//		}
+//
+//		private ArrayUpdate findCorrespondingArrayUpdate(Term term, MultiDimensionalStore asd) throws ArrayUpdateException {
+//			Set<ApplicationTerm> equalities = 
+//					(new ApplicationTermFinder("=", true)).findMatchingSubterms(term);
+//			for (ApplicationTerm equality : equalities) {
+//				Term[] params = equality.getParameters();
+//				if (params.length > 2) {
+//					throw new UnsupportedOperationException("only binary equalities at the moment");
+//				}
+//				if (params[1] == asd.getStoreTerm() || params[1] == asd.getStoreTerm()) {
+//					try {
+//						return new ArrayUpdate(equality);
+//					} catch (ArrayUpdateException e) {
+//						if (e.getMessage().equals("no term variable")) {
+//							throw e;
+//						} else {
+//							throw new AssertionError();
+//						}
+//					}
+//				}
+//			}
+//			return null;
+//		}
+//
+//		public List<ArrayUpdate> getArrayUpdates() {
+//			return Collections.unmodifiableList(m_ArrayUpdates);
+//		}
+//
+//
+//
+//		public Term getTerm() {
+//			return m_Term;
+//		}
+//	}
+	
+	
+	
 	private class SingleUpdateNormalFormTransformer {
 
-		List<ArrayUpdate> m_ArrayUpdates;
-		
-		Term m_Term;
+		private final List<ArrayUpdate> m_ArrayUpdates;
+		private final Term m_RemainderTerm;
 
-		public SingleUpdateNormalFormTransformer(Term term) {
-			super();
-			m_Term = term;
-			doTransform();
-		}
-		
-		private void doTransform() {
-			boolean m_EachArrayHasSingleUpdate = false;
-			while(!m_EachArrayHasSingleUpdate) {
-				Object result = eachArrayHasSingleUpdate();
-				if (result instanceof MultiDimensionalStore) {
-					update((MultiDimensionalStore) result);
+		public SingleUpdateNormalFormTransformer(final Term input) {
+			Term m_Term = input;
+			while(true) {
+				MultiDimensionalStore mdStore = getNonUpdateStore(m_Term);
+				if (mdStore == null) {
+					break;
 				} else {
-					m_EachArrayHasSingleUpdate = true;
-					m_ArrayUpdates = (List<ArrayUpdate>) result;
+					m_Term = addUpdate(mdStore, m_Term);
 				}
+			}
+			// do another extraction because the old ones might not be useful
+			// due to substitution
+			Term[] conjuncts = SmtUtils.getConjuncts(m_Term);
+			ArrayUpdateExtractor aue = new ArrayUpdateExtractor(conjuncts);
+			m_ArrayUpdates = aue.getArrayUpdates();
+			m_RemainderTerm = Util.and(m_Script, aue.getRemainingTerms().toArray(new Term[0]));
+			assert (new ApplicationTermFinder("store", false)).findMatchingSubterms(m_RemainderTerm).isEmpty() : "contains still store terms";
+		}
+		
+		private MultiDimensionalStore getNonUpdateStore(Term term) {
+			Term[] conjuncts = SmtUtils.getConjuncts(term);
+			ArrayUpdateExtractor aue = new ArrayUpdateExtractor(conjuncts);
+			Term remainder = Util.and(m_Script, aue.getRemainingTerms().toArray(new Term[0]));
+			remainder = (new SafeSubstitution(m_Script, aue.getStore2TermVariable())).transform(remainder);
+			List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresDeep(remainder);
+			if (mdStores.isEmpty()) {
+				return null;
+			} else {
+				return mdStores.get(0);
 			}
 		}
 		
-		private Object eachArrayHasSingleUpdate() {
-			List<ArrayUpdate> arrayUpdates = new ArrayList<ArrayUpdate>();
-			List<MultiDimensionalStore> arrayStores = extractArrayStores(m_Term);
-			for (MultiDimensionalStore arrayStore : arrayStores) {
-				ArrayUpdate au;
-				try {
-					au = findCorrespondingArrayUpdate(m_Term, arrayStore);
-				} catch (ArrayUpdateException e) {
-					continue;
-				}
-				arrayUpdates.add(au);
-				if (au == null) {
-					return arrayStore;
-				}
-			}
-			assert (arrayStores.size() == arrayUpdates.size());
-			return arrayUpdates;
-		}
-		
-		private void update(MultiDimensionalStore arraryStore) {
+		private Term addUpdate(MultiDimensionalStore arraryStore, Term term) {
 			Term oldArray = arraryStore.getArray();
+			TermVariable auxArray;
+			auxArray = constructAuxiliaryVariable(oldArray);
+			Map<Term, Term> substitutionMapping = 
+					Collections.singletonMap((Term) arraryStore.getStoreTerm(), (Term) auxArray);
+			Term newTerm = (new SafeSubstitution(m_Script, substitutionMapping)).transform(term);
+			return Util.and(m_Script, newTerm, m_Script.term("=", auxArray, arraryStore.getStoreTerm()));
+		}
+
+		private TermVariable constructAuxiliaryVariable(Term oldArray) {
 			String name = oldArray.toString() + s_AuxArray; 
 			TermVariable auxArray = 
 					m_VarCollector.getFactory().getNewTermVariable(name, oldArray.getSort());
-			Map<Term, Term> substitutionMapping = 
-					Collections.singletonMap((Term) arraryStore.getStoreTerm(), (Term) auxArray);
-			Term newTerm = (new SafeSubstitution(m_Script, substitutionMapping)).transform(m_Term);
-			newTerm = m_Script.term("and", newTerm, m_Script.term("=", auxArray, arraryStore.getStoreTerm()));
-			m_Term = newTerm;
-		}
-
-		private ArrayUpdate findCorrespondingArrayUpdate(Term term, MultiDimensionalStore asd) throws ArrayUpdateException {
-			Set<ApplicationTerm> equalities = 
-					(new ApplicationTermFinder("=", true)).findMatchingSubterms(term);
-			for (ApplicationTerm equality : equalities) {
-				Term[] params = equality.getParameters();
-				if (params.length > 2) {
-					throw new UnsupportedOperationException("only binary equalities at the moment");
-				}
-				if (params[1] == asd.getStoreTerm() || params[1] == asd.getStoreTerm()) {
-					try {
-						return new ArrayUpdate(equality);
-					} catch (ArrayUpdateException e) {
-						if (e.getMessage().equals("no term variable")) {
-							throw e;
-						} else {
-							throw new AssertionError();
-						}
-					}
-				}
-			}
-			return null;
+			return auxArray;
 		}
 
 		public List<ArrayUpdate> getArrayUpdates() {
 			return Collections.unmodifiableList(m_ArrayUpdates);
 		}
 
-
-
-		public Term getTerm() {
-			return m_Term;
+		public Term getRemainderTerm() {
+			return m_RemainderTerm;
 		}
 	}
 	
-	private List<ArrayEquality> extractArrayEqualities(Term term) {
-		Set<ApplicationTerm> equalityTerms = 
-				(new ApplicationTermFinder("=", true)).findMatchingSubterms(term);
-		List<ArrayEquality> arrayEqualities = new ArrayList<ArrayEquality>();
-		for (ApplicationTerm equalityTerm : equalityTerms) {
-				try {
-					ArrayEquality ae = new ArrayEquality(equalityTerm);
-					arrayEqualities.add(ae);
-				} catch (ArrayEqualityException e) {
-					// do not add
-				}
-			}
-		return arrayEqualities;
-	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
 	
 	
 	private class IndexCollector {
@@ -589,10 +694,33 @@ public class RewriteArrays implements PreProcessor {
 			return m_AuxVars;
 		}
 		
-		
-		
 	}
 	
+	private Term buildArrayEqualityConstraints(List<ArrayEquality> arrayEqualities) {
+		Term[] conjuncts = new Term[arrayEqualities.size()];
+		int offset = 0;
+		for (ArrayEquality ae : arrayEqualities) {
+			conjuncts[offset] = buildArrayEqualityConstraints(ae.getInVar(), ae.getOutVar());
+			offset++;
+		}
+		return Util.and(m_Script, conjuncts);
+	}
+	
+	private Term buildArrayEqualityConstraints(TermVariable oldArray,
+			TermVariable newArray) {
+		Map<List<Term>, TermVariable> newInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(newArray);
+		Map<List<Term>, TermVariable> oldInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(oldArray);
+		Term[] conjuncts = new Term[newInstance2Index2CellVariable.keySet().size()];
+		int offset = 0;
+		for (List<Term> index : newInstance2Index2CellVariable.keySet()) {
+			Term newCellVariable = newInstance2Index2CellVariable.get(index);
+			Term oldCellVariable = oldInstance2Index2CellVariable.get(index);
+			conjuncts[offset] = SmtUtils.binaryEquality(m_Script, oldCellVariable, newCellVariable);
+			offset++;
+		}
+		return Util.and(m_Script, conjuncts);
+	}
+
 	private Term buildArrayUpdateConstraints(List<ArrayUpdate> arrayUpdates) {
 		Term[] conjuncts = new Term[arrayUpdates.size()];
 		int offset = 0;
@@ -600,12 +728,15 @@ public class RewriteArrays implements PreProcessor {
 			conjuncts[offset] = buildArrayUpdateConstraints(au.getNewArray(), au.getOldArray(), au.getIndex(), au.getValue());
 			offset++;
 		}
-		return Util.and(m_Script, conjuncts);
+		Term result = Util.and(m_Script, conjuncts);
+		assert (new ApplicationTermFinder("select", false)).findMatchingSubterms(result).isEmpty() : "contains select terms";
+		return result;
 	}
 	
 	
 	private Term buildArrayUpdateConstraints(TermVariable newArray,
 			TermVariable oldArray, Term[] updateIndex, Term data) {
+		data = m_Select2CellVariable.transform(data);
 		Map<List<Term>, TermVariable> newInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(newArray);
 		Map<List<Term>, TermVariable> oldInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(oldArray);
 		Term[] conjuncts = new Term[newInstance2Index2CellVariable.keySet().size()];
@@ -668,24 +799,20 @@ public class RewriteArrays implements PreProcessor {
 		Term valueEquality = SmtUtils.binaryEquality(m_Script, value1, value2);
 		return Util.or(m_Script, Util.not(m_Script, indexEquality), valueEquality);
 	}
+
 	
 	/**
 	 * Replace all select terms by the corresponding cell variables.
-	 * Replace all array updates by true. 
 	 */
-	private Term removeArrayUpdateAndArrayReads(Term term) {
+	private SafeSubstitution constructIndex2CellVariableSubstitution() {
 		Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (int i=0; i<sunnf.length; i++) {
 			for (MultiDimensionalSelect ar : m_ArrayReads[i]) {
 				Term cellVariable = m_ArrayInstance2Index2CellVariable.get(ar.getArray()).get(Arrays.asList(ar.getIndex()));
 				substitutionMapping.put(ar.getSelectTerm(), cellVariable);
 			}
-			for (ArrayUpdate au : m_ArrayUpdates[i]) {
-				substitutionMapping.put(au.getArrayUpdateTerm(), m_Script.term("true"));
-			}
 		}
-		Term result = (new SafeSubstitution(m_Script, substitutionMapping)).transform(term);
-		return result;
+		return new SafeSubstitution(m_Script, substitutionMapping);
 	}
 	
 	
@@ -720,6 +847,9 @@ public class RewriteArrays implements PreProcessor {
 			m_OriginalTerm = term;
 			Term lhsTerm = eqAppTerm.getParameters()[0];
 			Term rhsTerm = eqAppTerm.getParameters()[1];
+			if (!(lhsTerm.getSort().isArraySort())) {
+				throw new ArrayEqualityException("no array");
+			}
 			TermVariable lhs;
 			if (lhsTerm instanceof TermVariable) {
 				lhs = (TermVariable) lhsTerm;
@@ -747,15 +877,62 @@ public class RewriteArrays implements PreProcessor {
 				throw new ArrayEqualityException("rhs neither in nor out");
 			}
 		}
+
+		public Term getOriginalTerm() {
+			return m_OriginalTerm;
+		}
+
+		public TermVariable getInVar() {
+			return m_InVar;
+		}
+
+		public TermVariable getOutVar() {
+			return m_OutVar;
+		}
 	}
 	
 	
-	public static class ArrayEqualityException extends Exception {
+	private static class ArrayEqualityException extends Exception {
 
 		private static final long serialVersionUID = -5344050289008681972L;
 
 		public ArrayEqualityException(String message) {
 			super(message);
+		}
+	}
+	
+	/**
+	 * Given an array of terms, partition them into terms that are array
+	 * equalities and terms that are not array equalities.
+	 */
+	private class ArrayEqualityExtractor {
+		private final List<ArrayEquality> m_ArrayEqualities = 
+				new ArrayList<ArrayEquality>();
+		private final List<Term> remainingTerms = 
+				new ArrayList<Term>();
+		
+		public ArrayEqualityExtractor(Term[] terms) {
+			for (Term term : terms) {
+				ArrayEquality au;
+				try {
+					au = new ArrayEquality(term);
+				} catch (ArrayEqualityException e) {
+					au = null;
+				}
+				if (au == null) {
+					remainingTerms.add(term);
+				} else {
+					m_ArrayEqualities.add(au);
+				}
+			}
+		}
+		
+		public List<ArrayEquality> getArrayEqualities() {
+			return m_ArrayEqualities;
+		}
+
+		public List<Term> getRemainingTerms() {
+			return remainingTerms;
 		}
 	}
 }

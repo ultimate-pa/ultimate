@@ -1,5 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -127,6 +132,9 @@ public class ArrayUpdate {
 	public Term getArrayUpdateTerm() {
 		return m_ArrayUpdateTerm;
 	}
+	public MultiDimensionalStore getMultiDimensionalStore() {
+		return m_MultiDimensionalStore;
+	}
 	
 	@Override
 	public String toString() {
@@ -140,6 +148,50 @@ public class ArrayUpdate {
 
 		public ArrayUpdateException(String message) {
 			super(message);
+		}
+	}
+	
+	/**
+	 * Given an array of terms, partition them into terms that are array updates
+	 * and terms that are not array updates.
+	 */
+	public static class ArrayUpdateExtractor {
+		private final Map<Term, Term> m_Store2TermVariable = 
+				new HashMap<Term, Term>();
+		private final List<ArrayUpdate> m_ArrayUpdates = 
+				new ArrayList<ArrayUpdate>();
+		private final List<Term> remainingTerms = 
+				new ArrayList<Term>();
+		
+		public ArrayUpdateExtractor(Term[] terms) {
+			for (Term term : terms) {
+				ArrayUpdate au;
+				try {
+					au = new ArrayUpdate(term);
+				} catch (ArrayUpdateException e) {
+					au = null;
+				}
+				if (au == null) {
+					remainingTerms.add(term);
+				} else {
+					m_ArrayUpdates.add(au);
+					m_Store2TermVariable.put(
+							au.getMultiDimensionalStore().getStoreTerm(), 
+							au.getNewArray());
+				}
+			}
+		}
+
+		public Map<Term, Term> getStore2TermVariable() {
+			return m_Store2TermVariable;
+		}
+
+		public List<ArrayUpdate> getArrayUpdates() {
+			return m_ArrayUpdates;
+		}
+
+		public List<Term> getRemainingTerms() {
+			return remainingTerms;
 		}
 	}
 }
