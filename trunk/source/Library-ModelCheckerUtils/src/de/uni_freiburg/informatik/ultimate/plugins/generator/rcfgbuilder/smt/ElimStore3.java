@@ -191,7 +191,7 @@ public class ElimStore3 {
 			}
 			Term newConjunctsFromStore = subst.transform(Util.and(script, additionalConjuncsFromStore.toArray(new Term[0])));
 			Term newData = subst.transform(writeInto.getValue());
-			Term newWriteIndex[] = substitutionElementwise(writeInto.getIndex(), subst);
+			Term newWriteIndex[] = SmtUtils.substitutionElementwise(writeInto.getIndex(), subst);
 			Term writeSubstituent = m_Script.term("=", SmtUtils.multiDimensionalSelect(m_Script, writeInto.getNewArray(), newWriteIndex), newData); 
 			intermediateResult = Util.and(m_Script, intermediateResult, writeSubstituent, newConjunctsFromStore);
 		}
@@ -202,7 +202,7 @@ public class ElimStore3 {
 			Term[][] indices = new Term[iav.getIndices().length][];
 			Term[] values = new Term[iav.getIndices().length];
 			for (int i=0; i<iav.getIndices().length; i++) {
-				indices[i] = substitutionElementwise(iav.getIndices()[i], subst);
+				indices[i] = SmtUtils.substitutionElementwise(iav.getIndices()[i], subst);
 				values[i] = subst.transform(iav.getValues()[i]);
 			}
 			
@@ -221,14 +221,6 @@ public class ElimStore3 {
 		return result;
 	}
 	
-	private static Term[] substitutionElementwise(Term[] subtituents, SafeSubstitution subst) {
-		Term[] result = new Term[subtituents.length];
-		for (int i=0; i<subtituents.length; i++) {
-			result[i] = subst.transform(subtituents[i]);
-		}
-		return result;
-	}
-
 	public static Term indexValueConnections(Term[] ourIndex, Term ourValue, 
 			Term[][] othersIndices, Term[] othersValues, int othersPosition, Script script) {
 		assert othersIndices.length == othersValues.length;

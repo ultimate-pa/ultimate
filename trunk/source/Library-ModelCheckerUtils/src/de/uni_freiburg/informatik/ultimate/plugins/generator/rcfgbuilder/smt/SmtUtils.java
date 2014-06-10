@@ -238,6 +238,14 @@ public class SmtUtils {
 			return false;
 		}
 		return !fstConst.getValue().equals(sndConst.getValue());
-		
+	}
+	
+	
+	public static Term[] substitutionElementwise(Term[] subtituents, SafeSubstitution subst) {
+		Term[] result = new Term[subtituents.length];
+		for (int i=0; i<subtituents.length; i++) {
+			result[i] = subst.transform(subtituents[i]);
+		}
+		return result;
 	}
 }
