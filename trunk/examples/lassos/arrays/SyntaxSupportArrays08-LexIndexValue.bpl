@@ -3,7 +3,7 @@
  * Date: 2012-06-03
  * Author: heizmann@informatik.uni-freiburg.de
  *
- * Ranking function: f(a[0]) = a[0]
+ * 2-lex ranking function: f(k, a[k]) = (k, a[k])
  *
  */
 var a : [int] int;
@@ -14,7 +14,7 @@ procedure main() returns ()
 modifies a, k;
 {
   assume true;
-  while (a[k] >= 0 && k >= 0) {
+  while (a[k] >= 23 && k >= 5) {
     if (*) {
       k := k - 1;
     } else {
