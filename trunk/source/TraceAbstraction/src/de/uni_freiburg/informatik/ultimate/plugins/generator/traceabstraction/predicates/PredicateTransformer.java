@@ -143,10 +143,6 @@ public class PredicateTransformer {
 		// Add aux vars to varsToQuantify
 		varsToQuantify.addAll(tf.getAuxVars());
 
-		//		if (varsToQuantify.size() > 0) {
-		//			result = PartialQuantifierElimination.quantifier(m_Script, Script.EXISTS,
-		//					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]), result, (Term[][]) null);
-		//		}
 		return m_SmtManager.constructPredicate(result, Script.EXISTS, varsToQuantify);
 	}
 
@@ -156,7 +152,6 @@ public class PredicateTransformer {
 	 */
 	@Deprecated
 	public IPredicate strongestPostcondition(IPredicate p, Call call, boolean isPendingCall) {
-
 		return strongestPostcondition(p, call.getTransitionFormula(),
 				m_ModifiableGlobalVariableManager.getGlobalVarsAssignment(call.getCallStatement().getMethodName()), 
 				m_ModifiableGlobalVariableManager.getOldVarsAssignment(call.getCallStatement().getMethodName()),
@@ -191,30 +186,11 @@ public class PredicateTransformer {
 		Map<TermVariable, Term> varsToRenameInPredNonPendingCall = new HashMap<TermVariable, Term>();
 		// 1.1 Rename the invars in global variable assignments.Invars are {old(g) --> old(g)_23}
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
-		//		for (BoogieVar bv : globalVarAssignments.getInVars().keySet()) {
-		//			TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-		//			substitution.put(globalVarAssignments.getInVars().get(bv), bv.getTermVariable());
-		//			varsToRenameInPredPendingCall.put(bv.getTermVariable(), freshVar);
-		//			varsToRenameInPredNonPendingCall.put(bv.getTermVariable(), freshVar);
-		//			varsToQuantifyNonPendingCall.add(freshVar);
-		//			varsToQuantifyPendingCall.add(freshVar);
-		//		}
-		//		Term globalVarsInvarsRenamed = new Substitution(substitution, m_Script).transform(globalVarAssignments.getFormula());
 		Term globalVarsInvarsRenamed = substituteToRepresantativesAndAddToQuantify(globalVarAssignments.getInVars(),
 				globalVarAssignments.getFormula(), varsToRenameInPredNonPendingCall, varsToQuantifyNonPendingCall);
 		varsToQuantifyPendingCall.addAll(varsToQuantifyNonPendingCall);
 		varsToRenameInPredPendingCall.putAll(varsToRenameInPredNonPendingCall);
 
-		// 1.2 Rename the outvars in global variable assignments.
-		//		substitution.clear();
-		//		for (BoogieVar bv : globalVarAssignments.getOutVars().keySet()) {
-		//			substitution.put(globalVarAssignments.getOutVars().get(bv), bv.getTermVariable());
-		//			TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-		//			varsToQuantifyNonPendingCall.add(freshVar);
-		//			varsToRenameInPredNonPendingCall.put(bv.getTermVariable(), freshVar);
-		//		}
-		//		
-		//		Term globalVarsInVarsRenamedOutVarsRenamed = new Substitution(substitution, m_Script).transform(globalVarsInvarsRenamed);
 		Term globalVarsInVarsRenamedOutVarsRenamed = substituteToRepresantativesAndAddToQuantify(restrictMap(globalVarAssignments.getOutVars(), GlobalType.NONOLDVAR),
 				globalVarsInvarsRenamed, varsToRenameInPredNonPendingCall, varsToQuantifyNonPendingCall);
 		substitution.clear();
@@ -300,21 +276,12 @@ public class PredicateTransformer {
 					globalVarsInVarsRenamedOutVarsRenamed);
 			varsToQuantifyPendingCall.addAll(varsToQuantifyNonModOldVars);
 			varsToQuantifyPendingCall.addAll(allAuxVars);
-			//			Term result = PartialQuantifierElimination.quantifier(m_Script,
-			//					Script.EXISTS,
-			//					varsToQuantifyPendingCall.toArray(new TermVariable[varsToQuantifyPendingCall.size()]),
-			//					predANDCallANDGlobalVars, (Term[][])null);
 
 			return m_SmtManager.constructPredicate(predANDCallANDGlobalVars, Script.EXISTS, varsToQuantifyPendingCall);
 		} else {
 			Term predRenamed = new Substitution(varsToRenameInPredNonPendingCall, m_Script).transform(predNonModOldVarsRenamed);
 			varsToQuantifyNonPendingCall.addAll(varsToQuantifyNonModOldVars);
 			varsToQuantifyNonPendingCall.addAll(allAuxVars);
-			//			Term result = PartialQuantifierElimination.quantifier(m_Script, 
-			//					Script.EXISTS,
-			//					varsToQuantifyNonPendingCall.toArray(new TermVariable[varsToQuantifyNonPendingCall.size()]),
-			//					Util.and(m_Script, predRenamed, globalVarsInVarsRenamedOutVarsRenamed),
-			//					(Term[][])null);
 			return m_SmtManager.constructPredicate(Util.and(m_Script, predRenamed, globalVarsInVarsRenamedOutVarsRenamed), Script.EXISTS, varsToQuantifyNonPendingCall);
 		}
 	}
@@ -511,11 +478,6 @@ public class PredicateTransformer {
 		Map<TermVariable, Term> varsToRenameInPred = new HashMap<TermVariable, Term>();
 		Term tf_term = tf.getFormula();
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
-		// 1 Rename the invars of the TransFormula of the given CodeBlock cb into TermVariables
-		//		for (BoogieVar bv : tf.getInVars().keySet()) {
-		//			substitution.put(tf.getInVars().get(bv), bv.getTermVariable());
-		//		}
-		//		Term TFInVarsRenamed = new Substitution(substitution, m_Script).transform(tf_term);
 
 		Term TFInVarsRenamed = substituteToRepresantativesAndAddToQuantify(tf.getInVars(), tf_term, null, null);
 
@@ -551,11 +513,6 @@ public class PredicateTransformer {
 		Term result = Util.or(m_Script, Util.not(m_Script, TFInVarsOutVarsRenamed), predicateRenamed);
 		// Add aux-vars to quantified vars
 		varsToQuantify.addAll(tf.getAuxVars());
-		//		if (varsToQuantify.size() > 0) {
-		//			result = PartialQuantifierElimination.quantifier(m_Script, Script.FORALL,
-		//					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
-		//					result, (Term[][]) null);
-		//		} 
 		return m_SmtManager.constructPredicate(result, Script.FORALL, varsToQuantify);
 	}
 
@@ -590,19 +547,12 @@ public class PredicateTransformer {
 				if (!bv.isOldvar()) {
 					substitution.put(globalVarsAssignments.getOutVars().get(bv), bv.getTermVariable());
 				}
-				//				TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-				
-				//				varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
-				//				varsToQuantify.add(freshVar);
 			}
 			Term globalVarsInVarsOutVarsRenamed  = new Substitution(substitution, m_Script).transform(globalVarsInVarsRenamed);
 			substitution.clear();
 			if (globalVarsAssignments.getFormula() == m_SmtManager.newTruePredicate().getFormula()) {
 				for (BoogieVar bv : oldVarsAssignments.getInVars().keySet()) {
-					//					TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
 					substitution.put(oldVarsAssignments.getInVars().get(bv), bv.getTermVariable());
-					//					varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
-					//					varsToQuantify.add(freshVar);
 				}
 				globalVarsInVarsRenamed = new Substitution(substitution, m_Script).transform(oldVarsAssignments.getFormula());
 				substitution.clear();
@@ -641,11 +591,6 @@ public class PredicateTransformer {
 									globalVarsInVarsOutVarsRenamed)),
 									calleePredRenamed);
 			varsToQuantify.addAll(call_TF.getAuxVars());
-			//			if (varsToQuantify.size() > 0) {
-			//				result = PartialQuantifierElimination.quantifier(m_Script, Script.FORALL,
-			//						varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
-			//						result, (Term[][])null);
-			//			}
 			return m_SmtManager.constructPredicate(result, Script.FORALL, varsToQuantify);
 		} else {
 			throw new UnsupportedOperationException("WP for non-pending Call is not implemented yet!");
@@ -722,17 +667,7 @@ public class PredicateTransformer {
 			}
 		}
 		Term returnTermRenamed = new Substitution(substitution, m_Script).transform(returnTF.getFormula());
-		//		Term returnTermRenamed = substituteToRepresantativesAndAddToQuantify(returnTF.getInVars(), returnTF.getFormula(), 
-		//				varsToRenameInCallerPred, varsToQuantify);
 		substitution.clear();
-		// 2.2 We rename the outvars to freshvars and quantify them
-		//		for (BoogieVar bv : returnTF.getOutVars().keySet()) {
-		//			TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-		//			varsToRenameInReturnPred.put(bv.getTermVariable(), freshVar);
-		//			substitution.put(returnTF.getOutVars().get(bv), freshVar);
-		//			varsToQuantify.add(freshVar);
-		//		}
-		//		returnTermRenamed = new Substitution(substitution, m_Script).transform(returnTermRenamed);
 		// 2.2 We rename the outvars to fresh variables and quantify them.
 		// The representative of the outvars in the returnerPred are renamed to same fresh variables.
 		// The representative of the invars in the returnerPred are renamed to same fresh variables as in the callerPred.
@@ -788,21 +723,6 @@ public class PredicateTransformer {
 		// local variables (non global variables) are substituted by fresh variables and marked to be
 		// substituted in the caller predicate by the same fresh variables.
 		for (BoogieVar bv : returnerPred.getVars()) {
-			//			if (bv.isOldvar()) {
-			//				if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable()) &&
-			//						!varsToRenameInReturnPred.containsKey(bv.getTermVariable())) {
-			//					TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-			//					varsToRenameInReturnPred.put(bv.getTermVariable(), freshVar);
-			//					varsToQuantify.add(freshVar);
-			//				}
-			//			} else if (!bv.isGlobal()){
-			//				if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())		
-			//						&& !varsToRenameInReturnPred.containsKey(bv.getTermVariable())) {
-			//					TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-			//					varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
-			//					varsToQuantify.add(freshVar);
-			//				}
-			//			}
 			if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable()) &&
 					!varsToRenameInReturnPred.containsKey(bv.getTermVariable())) {
 				TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
@@ -837,34 +757,11 @@ public class PredicateTransformer {
 				}
 			} else {
 				// 3.case: bv is a global var
-				// If a global variable isn't modifiable by the returned proc. and it doesn't occur in the returner
-				// predicate, then skip this variable (it isn't renamed or quantified).
-				//				if (!modifiableGlobals.contains(bv) && returnerPred.getVars().contains(bv)) {
-				//					continue;	
-				//				} else if (!varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
-				//					TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-				//					varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
-				//					varsToQuantify.add(freshVar);
-				//					if (returnerPred.getVars().contains(bv) && 
-				//							!globalVarsAssignments.getOutVars().containsKey(bv)) {
-				//						if (!varsToRenameInReturnPred.containsKey(bv.getTermVariable())) {
-				//							varsToRenameInReturnPred.put(bv.getTermVariable(), freshVar);
-				//						}
-				//					}
-				//				}
-				// 3.case: bv is a global var
 				if (modifiableGlobals.contains(bv) || !returnerPred.getVars().contains(bv)) {
 					if (!varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
 						TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
 						varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
 						varsToQuantify.add(freshVar);
-						// This is not necessary!
-						//						if (returnerPred.getVars().contains(bv) && 
-						//								!globalVarsAssignments.getOutVars().containsKey(bv)) {
-						//							if (!varsToRenameInReturnPred.containsKey(bv.getTermVariable())) {
-						//								varsToRenameInReturnPred.put(bv.getTermVariable(), freshVar);
-						//							}
-						//						}
 					}
 				}
 			}
@@ -885,12 +782,6 @@ public class PredicateTransformer {
 				globalVarsRenamed);
 
 		Term result = Util.or(m_Script, Util.not(m_Script, callerPredANDCallANDReturnAndGlobalVars), returnPredRenamed);
-
-		//		if (varsToQuantify.size() > 0) {
-		//			result = PartialQuantifierElimination.quantifier(m_Script, Script.FORALL,
-		//					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
-		//					result, (Term[][])null);
-		//		}
 		return m_SmtManager.constructPredicate(result, Script.FORALL, varsToQuantify);
 	}
 
