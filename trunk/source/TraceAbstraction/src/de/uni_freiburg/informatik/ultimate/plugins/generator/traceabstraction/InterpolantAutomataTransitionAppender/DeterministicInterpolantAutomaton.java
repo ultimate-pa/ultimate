@@ -282,7 +282,7 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 			return true;
 		} else {
 			throw new AssertionError("Result: " + result 
-					+ "Review result: " + reviewResult);
+					+ "  Review result: " + reviewResult);
 		}
 	}
 	
@@ -294,7 +294,7 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 			return true;
 		} else {
 			throw new AssertionError("Result: " + result 
-					+ "Review result: " + reviewResult);
+					+ "  Review result: " + reviewResult);
 		}
 
 	}
@@ -307,7 +307,7 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 			return true;
 		} else {
 			throw new AssertionError("Result: " + result 
-					+ "Review result: " + reviewResult);
+					+ "  Review result: " + reviewResult);
 		}
 	}
 	
