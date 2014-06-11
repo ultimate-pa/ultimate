@@ -535,8 +535,8 @@ public class BuchiCegarLoop {
 					new CFG2NestedWordAutomaton(m_Pref.interprocedural(),m_SmtManager);
 			Collection<ProgramPoint> acceptingNodes;
 			Collection<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
-			for (Map<String, ProgramPoint> test : m_RootNode.getRootAnnot().getProgramPoints().values()) {
-				allNodes.addAll(test.values());
+			for (Map<String, ProgramPoint> prog2pp : m_RootNode.getRootAnnot().getProgramPoints().values()) {
+				allNodes.addAll(prog2pp.values());
 			}
 			if (hasLtlAnnotation(m_RootNode)) {
 				acceptingNodes = new HashSet<ProgramPoint>();
