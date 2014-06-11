@@ -118,7 +118,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		CFG2NestedWordAutomaton cFG2NestedWordAutomaton = 
-			new CFG2NestedWordAutomaton(m_Pref, super.m_SmtManager);
+			new CFG2NestedWordAutomaton(m_Pref.interprocedural(), super.m_SmtManager);
 		
 		m_Abstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(
 						super.m_RootNode, m_StateFactoryForRefinement, super.m_ErrorLocs);

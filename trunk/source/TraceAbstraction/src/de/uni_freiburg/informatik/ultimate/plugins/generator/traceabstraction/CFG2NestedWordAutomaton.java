@@ -23,29 +23,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
 public class CFG2NestedWordAutomaton {
 	
 	private final SmtManager m_SmtManager;
-	private boolean m_StoreHistory = false;
-	private TAPreferences m_Pref;
+	private static final boolean m_StoreHistory = false;
+	private final boolean m_Interprocedural;
 	private boolean m_MainMode;
-	private final String m_StartProcedure = "ULTIMATE.start";
+	private static final String m_StartProcedure = "ULTIMATE.start";
 	
 	private static Logger s_Logger = 
 					UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
-	public CFG2NestedWordAutomaton(TAPreferences pref, SmtManager predicateFactory) {
+	public CFG2NestedWordAutomaton(boolean interprocedural, SmtManager predicateFactory) {
 		m_SmtManager = predicateFactory;
-		m_Pref = pref;
+		m_Interprocedural = interprocedural;
 	}
 	
 	
 	/**
 	 * Construct the control automata (see Trace Abstraction) for the program
 	 * of rootNode.
-	 * If m_Pref.interprocedural()==false we construct an automaton for each procedure
+	 * If m_Interprocedural==false we construct an automaton for each procedure
 	 * otherwise we construct one nested word automaton for the whole program.
 	 * @param errorLoc error location of the program. If null, each state that
 	 * corresponds to an error location will be accepting. Otherwise only the
@@ -114,11 +113,11 @@ public class CFG2NestedWordAutomaton {
 			if (locNode.getOutgoingNodes() != null)
 			for (RCFGEdge edge : locNode.getOutgoingEdges()) {
 				if (edge instanceof Call) {
-					if (m_Pref.interprocedural()) {
+					if (m_Interprocedural) {
 						callAlphabet.add( ((Call) edge));
 					}
 				} else if (edge instanceof Return) {
-					if (m_Pref.interprocedural()) {
+					if (m_Interprocedural) {
 						returnAlphabet.add( 
 								((Return) edge));
 					}
@@ -128,7 +127,7 @@ public class CFG2NestedWordAutomaton {
 					if (annot.calledProcedureHasImplementation()) {
 						//do nothing if analysis is interprocedural
 						//add summary otherwise
-						if (!m_Pref.interprocedural()) {
+						if (!m_Interprocedural) {
 							internalAlphabet.add(annot);
 						}
 					}
@@ -195,13 +194,13 @@ public class CFG2NestedWordAutomaton {
 				IPredicate succState = 
 					nodes2States.get(succLoc); 
 				if (edge instanceof Call) {
-					if (m_Pref.interprocedural()) {
+					if (m_Interprocedural) {
 						CodeBlock symbol = 
 								((Call) edge);
 							nwa.addCallTransition(state,symbol, succState);
 					}
 				} else if (edge instanceof Return) {
-					if (m_Pref.interprocedural()) {
+					if (m_Interprocedural) {
 						Return returnEdge = (Return) edge;
 						CodeBlock symbol = returnEdge;
 						ProgramPoint callerLocNode = returnEdge.getCallerProgramPoint();
@@ -216,7 +215,7 @@ public class CFG2NestedWordAutomaton {
 				} else if (edge instanceof Summary) {
 					Summary summaryEdge = (Summary) edge;
 					if (summaryEdge.calledProcedureHasImplementation()) {
-						if (!m_Pref.interprocedural()) {
+						if (!m_Interprocedural) {
 							nwa.addInternalTransition(state,summaryEdge, succState);
 						}
 					}

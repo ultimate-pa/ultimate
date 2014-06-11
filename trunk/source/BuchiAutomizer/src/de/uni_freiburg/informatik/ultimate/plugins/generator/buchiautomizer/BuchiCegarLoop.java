@@ -532,7 +532,7 @@ public class BuchiCegarLoop {
 
 		private void getInitialAbstraction() {
 			CFG2NestedWordAutomaton cFG2NestedWordAutomaton = 
-					new CFG2NestedWordAutomaton(m_Pref,m_SmtManager);
+					new CFG2NestedWordAutomaton(m_Pref.interprocedural(),m_SmtManager);
 			Collection<ProgramPoint> acceptingNodes;
 			Collection<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
 			for (Map<String, ProgramPoint> test : m_RootNode.getRootAnnot().getProgramPoints().values()) {
