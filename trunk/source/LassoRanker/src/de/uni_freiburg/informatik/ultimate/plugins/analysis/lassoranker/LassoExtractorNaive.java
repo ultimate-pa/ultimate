@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -14,13 +15,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  * provided as RCFG with rootNode.
  * @author Matthias Heizmann
  */
-public class LassoExtractorNaive {
-	private final CodeBlock m_Stem;
-	private final CodeBlock m_Loop;
-	private final ProgramPoint m_Honda;
-	private final boolean m_LassoFound;
-	private final RCFGNode m_SomeNoneForErrorReport;
-	
+@Deprecated
+public class LassoExtractorNaive extends AbstractLassoExtractor {
 
 	public LassoExtractorNaive(RootNode rootNode) {
 		List<RCFGNode> rootSucc = rootNode.getOutgoingNodes();
@@ -61,8 +57,9 @@ public class LassoExtractorNaive {
 		List<RCFGEdge> firstSucc = firstNode.getOutgoingEdges();
 		if (firstSucc.size() == 1) {
 			// this edge be the stem, the next node must be the honda
-			m_Stem = (CodeBlock) firstSucc.get(0);
-			m_Honda = (ProgramPoint) m_Stem.getTarget();
+			CodeBlock stemCodeBlock = (CodeBlock) firstSucc.get(0);
+			m_Honda = (ProgramPoint) stemCodeBlock.getTarget();
+			m_Stem = constructNestedWordOfLenthOne(stemCodeBlock);
 		} else if (firstSucc.size() == 2) {
 			// there is no stem, this must already be the honda
 			m_Stem = null;
@@ -97,11 +94,11 @@ public class LassoExtractorNaive {
 		} else if (loopCand0 != null) {
 			m_LassoFound = true;
 			m_SomeNoneForErrorReport = null;
-			m_Loop = loopCand0;
+			m_Loop = constructNestedWordOfLenthOne(loopCand0);
 		} else if (loopCand1 != null) {
 			m_LassoFound = true;
 			m_SomeNoneForErrorReport = null;
-			m_Loop = loopCand1;
+			m_Loop = constructNestedWordOfLenthOne(loopCand1);
 		} else {
 			// now, check for two step loop
 			loopCand0 = checkForTwoStepLoop(m_Honda, hondaSucc0);
@@ -114,12 +111,12 @@ public class LassoExtractorNaive {
 			} else if (loopCand0 != null) {
 				m_LassoFound = true;
 				m_SomeNoneForErrorReport = null;
-				m_Loop = loopCand0;
+				m_Loop = constructNestedWordOfLenthOne(loopCand0);
 				assert programStemsFromCacslTranslation;
 			} else if (loopCand1 != null) {
 				m_LassoFound = true;
 				m_SomeNoneForErrorReport = null;
-				m_Loop = loopCand1;
+				m_Loop = constructNestedWordOfLenthOne(loopCand1);
 				assert programStemsFromCacslTranslation;
 			} else {
 				m_LassoFound = false;
@@ -195,44 +192,8 @@ public class LassoExtractorNaive {
 									"unexpected loop representation");
 		}
 	}
-
 	
-
-	public CodeBlock getStem() {
-		if (!m_LassoFound) {
-			throw new UnsupportedOperationException("no lasso was found");
-		}
-		return m_Stem;
+	NestedWord<CodeBlock> constructNestedWordOfLenthOne(CodeBlock cb) {
+		return new NestedWord<CodeBlock>(cb, NestedWord.INTERNAL_POSITION);
 	}
-
-	public CodeBlock getLoop() {
-		if (!m_LassoFound) {
-			throw new UnsupportedOperationException("no lasso was found");
-		}
-
-		return m_Loop;
-	}
-
-	public ProgramPoint getHonda() {
-		if (!m_LassoFound) {
-			throw new UnsupportedOperationException("no lasso was found");
-		}
-
-		return m_Honda;
-	}
-
-	public boolean wasLassoFound() {
-		return m_LassoFound;
-	}
-
-	public RCFGNode getSomeNoneForErrorReport() {
-		if (m_LassoFound) {
-			throw new UnsupportedOperationException(
-					"lasso was found, there was no error");
-		}
-		return m_SomeNoneForErrorReport;
-	}
-	
-	
-	
 }

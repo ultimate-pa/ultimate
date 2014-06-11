@@ -7,6 +7,8 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -15,6 +17,8 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
@@ -31,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.CodeBlockSize;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
@@ -55,8 +60,9 @@ public class LassoRankerStarter {
 
 	private final RootAnnot m_RootAnnot;
 	private final ProgramPoint m_Honda;
-	private final CodeBlock m_Stem;
-	private final CodeBlock m_Loop;
+	private final NestedWord<CodeBlock> m_Stem;
+	private final NestedWord<CodeBlock> m_Loop;
+	private SmtManager m_SmtManager;
 
 	
 	
@@ -67,8 +73,20 @@ public class LassoRankerStarter {
 				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		Preferences preferences = PreferencesInitializer.getGuiPreferences();
 		s_Logger.info("Preferences:\n" + preferences.toString());
-		
-		LassoExtractorNaive lassoExtractor = new LassoExtractorNaive(rootNode);
+		m_SmtManager = new SmtManager(m_RootAnnot.getBoogie2SMT(),
+				m_RootAnnot.getModGlobVarManager());
+
+		AbstractLassoExtractor lassoExtractor;
+		boolean useNewExtraction = true;
+		if (useNewExtraction) {
+			try {
+				lassoExtractor = new LassoExtractorBuchi(rootNode, m_SmtManager);
+			} catch (AutomataLibraryException e) {
+				throw new AssertionError(e.toString());
+			}
+		} else {
+			lassoExtractor = new LassoExtractorNaive(rootNode);
+		}
 		if (!lassoExtractor.wasLassoFound()) {
 			reportUnuspportedSyntax(
 					lassoExtractor.getSomeNoneForErrorReport(), s_LassoError);
@@ -88,9 +106,11 @@ public class LassoRankerStarter {
 		if (m_Stem == null) {
 			stemTF = null;
 		} else {
-			stemTF = tvr.renameVars(m_Stem.getTransitionFormula(), "Stem");
+			stemTF = constructTransformula(m_Stem);
+			stemTF = tvr.renameVars(stemTF, "Stem");
 		}
-		TransFormula loopTf = tvr.renameVars(m_Loop.getTransitionFormula(), "Loop");
+		TransFormula loopTf = constructTransformula(m_Loop); 
+		loopTf = tvr.renameVars(loopTf, "Loop");
 		
 		// Do the termination analysis
 		RankingFunctionTemplate[] templates = getTemplates();
@@ -153,7 +173,18 @@ public class LassoRankerStarter {
 	}
 	
 	
-	
+	public TransFormula constructTransformula(NestedWord<CodeBlock> nw) {
+		Boogie2SMT boogie2smt = m_RootAnnot.getBoogie2SMT();
+		ModifiableGlobalVariableManager modGlobVarManager = m_RootAnnot.getModGlobVarManager();
+		boolean simplify = true;
+		boolean extPqe = true;
+		boolean tranformToCNF = false;
+		boolean withBranchEncoders = false;
+		CodeBlock[] codeBlocks = nw.asList().toArray(new CodeBlock[0]);
+		return SequentialComposition.getInterproceduralTransFormula(boogie2smt, 
+				modGlobVarManager, simplify, extPqe, tranformToCNF, 
+				withBranchEncoders, codeBlocks);
+	}
 	
 	
 	
@@ -238,27 +269,20 @@ public class LassoRankerStarter {
 	}
 	
 	private boolean isTerminationArgumentCorrect(TerminationArgument arg) {
-		SmtManager smtManager = new SmtManager(
-				m_RootAnnot.getBoogie2SMT(),
-				m_RootAnnot.getModGlobVarManager());
-		BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(smtManager);
+
+		BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(m_SmtManager);
 		bspm.computePredicates(false, arg);
 
-		NestedWord<CodeBlock> stemNw = 
-				new NestedWord<CodeBlock>(m_Stem, NestedWord.INTERNAL_POSITION);
-		NestedWord<CodeBlock> loopNw = new 
-				NestedWord<CodeBlock>(m_Loop, NestedWord.INTERNAL_POSITION);
-		
 		// check supporting invariants
 		boolean siCorrect = true;
 			for (SupportingInvariant si : 
 					bspm.getTerminationArgument().getSupportingInvariants()) {
-				siCorrect &= bspm.checkSupportingInvariant(si, stemNw, loopNw, 
+				siCorrect &= bspm.checkSupportingInvariant(si, m_Stem, m_Loop, 
 						m_RootAnnot.getModGlobVarManager());
 			}
 		
 		// check ranking function
-		boolean rfCorrect = bspm.checkRankDecrease(loopNw, 
+		boolean rfCorrect = bspm.checkRankDecrease(m_Loop, 
 				m_RootAnnot.getModGlobVarManager());
 		if (siCorrect && rfCorrect) {
 			s_Logger.info("Termination argument has been successfully verified.");
