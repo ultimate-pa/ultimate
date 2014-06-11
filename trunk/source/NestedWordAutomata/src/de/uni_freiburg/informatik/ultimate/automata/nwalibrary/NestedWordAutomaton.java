@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -2701,6 +2702,37 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 
 
 
+	/**
+	 * Given a nested word (without pending returns) a_0,...,a_n and a
+	 * sequence of states q_0,...,q_{n+1}, add for each i
+	 * <ul>
+	 * <li> the internal transition (q_i, a_i, a_{i+1}) if i is an internal 
+	 * position,
+	 * <li> the call transition (q_i, a_i, a_{i+1}) if i is a call position, and
+	 * <li> the return transition (q_i, q_k, a_i, a_{i+1}) where k is the
+	 * corresponding call position.
+	 * Expects that all symbols are contained in the alphabets and the all 
+	 * states are contained in the automaton.
+	 */
+	public void addTransitions(NestedWord<LETTER> nw, List<STATE> stateList) {
+		assert nw.length() + 1 == stateList.size();
+		for (int i=0; i<nw.length(); i++) {
+			LETTER symbol = nw.getSymbol(i);
+			STATE pred = stateList.get(i);
+			STATE succ = stateList.get(i+1);
 
+			if (nw.isCallPosition(i)) {
+				addCallTransition(pred, symbol, succ);
+			} else if (nw.isReturnPosition(i)) {
+				assert !nw.isPendingReturn(i);
+				int callPos = nw.getCallPosition(i);
+				STATE hierPred = stateList.get(callPos);
+				addReturnTransition(pred, hierPred, symbol, succ);
+			} else {
+				assert nw.isInternalPosition(i);
+				addInternalTransition(pred, symbol, succ);
+			}
+		}
+	}
 	
 }
