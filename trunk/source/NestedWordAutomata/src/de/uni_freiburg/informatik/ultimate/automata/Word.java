@@ -51,8 +51,8 @@ import java.util.List;
 			return m_Word.length;
 		}
 		
-		public Symbol[] asArray() {
-			return m_Word.clone();
+		public List<Symbol> asList() {
+			return Arrays.asList(m_Word);
 		}
 		
 		

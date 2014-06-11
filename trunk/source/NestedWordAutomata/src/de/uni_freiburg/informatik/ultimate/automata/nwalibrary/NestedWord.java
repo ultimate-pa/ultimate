@@ -162,7 +162,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * @param word
 	 */
 	private NestedWord(Word<LETTER> word) {
-		this.m_Word = word.asArray().clone();
+		this.m_Word = (LETTER[]) new ArrayList<LETTER>(word.asList()).toArray();
 		int length = word.length();
 		this.m_NestingRelation = new int[length];
 		for (int i=0; i<length; i++) {
