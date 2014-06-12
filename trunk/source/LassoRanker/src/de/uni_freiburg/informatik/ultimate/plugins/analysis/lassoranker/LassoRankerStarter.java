@@ -165,8 +165,10 @@ public class LassoRankerStarter {
 				}
 			} catch (TermException e) {
 				s_Logger.error(e);
+				throw new AssertionError(e);
 			} catch (SMTLIBException e) {
 				s_Logger.error(e);
+				throw new AssertionError(e);
 			}
 		}
 		reportNoResult(templates);
