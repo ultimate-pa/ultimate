@@ -133,6 +133,9 @@ public class RewriteArrays implements PreProcessor {
 	
 	@Override
 	public Term process(Script script, Term term) {
+		if (!containsArrayVariables(term)) {
+			return term;
+		}
 		m_Script = script;
 		term = SmtUtils.simplify(m_Script, term);
 		Term dnf = (new Dnf(script)).transform(term);
@@ -871,11 +874,18 @@ public class RewriteArrays implements PreProcessor {
 		return new SafeSubstitution(m_Script, substitutionMapping);
 	}
 	
+	private static boolean containsArrayVariables(Term term) {
+		for (TermVariable tv : term.getFreeVars()) {
+			if (tv.getSort().isArraySort()) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	
 	private static void isArrayFree(Term term) {
-		for (TermVariable tv : term.getFreeVars()) {
-			assert !tv.getSort().isArraySort();
-		}
+		assert !containsArrayVariables(term);
 		Set<ApplicationTerm> selectTerms = 
 				(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
 		assert selectTerms.isEmpty();
