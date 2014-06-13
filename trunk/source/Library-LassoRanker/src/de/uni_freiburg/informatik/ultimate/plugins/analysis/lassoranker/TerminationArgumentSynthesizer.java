@@ -26,14 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -301,7 +299,12 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			int pops = 0;
 			if (m_preferences.simplify_result) {
 				s_Logger.debug("Found a termination argument, trying to simplify.");
-				pops = simplifyAssignment();
+				ArrayList<Term> variables = new ArrayList<Term>();
+				variables.addAll(m_template.getVariables());
+				for (SupportingInvariantGenerator sig : m_si_generators) {
+					variables.addAll(sig.getVariables());
+				}
+				pops = simplifyAssignment(variables);
 				s_Logger.debug("Setting " + pops + " variables to zero.");
 			}
 			s_Logger.debug("Extracting termination argument from model.");
@@ -328,47 +331,6 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			// TODO: discuss the above claim with Jürgen
 		}
 		return sat;
-	}
-	
-	/**
-	 * Tries to simplify a satisfying assignment by assigning zeros to
-	 * variables. Gets stuck in local optima.
-	 * 
-	 * The procedure works according to this principle:
-	 * <pre>
-	 * random.shuffle(variables)
-	 * for v in variables:
-	 *     if sat with v = 0:
-	 *         set v to 0
-	 * </pre>
-	 * 
-	 * @return the number of pops required on m_script
-	 */
-	private int simplifyAssignment() {
-		ArrayList<Term> variables = new ArrayList<Term>();
-		
-		// Add all variables form the ranking function and supporting invariants
-		variables.addAll(m_template.getVariables());
-		for (SupportingInvariantGenerator sig : m_si_generators) {
-			variables.addAll(sig.getVariables());
-		}
-		
-		// Shuffle the variable list for better effect
-		Random rnd =  new Random(System.nanoTime());
-		Collections.shuffle(variables, rnd);
-		
-		int pops = 0;
-		for (int i = 0; i < variables.size(); ++i) {
-			Term var = variables.get(i);
-			m_script.push(1);
-			m_script.assertTerm(m_script.term("=", var, m_script.numeral(BigInteger.ZERO)));
-			if (m_script.checkSat() != LBool.SAT) {
-				m_script.pop(1);
-			} else {
-				pops += 1;
-			}
-		}
-		return pops;
 	}
 	
 	/**

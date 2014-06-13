@@ -29,10 +29,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 import java.io.Closeable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Random;
 
 import org.apache.log4j.Logger;
 
@@ -147,6 +150,45 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 */
 	protected abstract LBool do_synthesis()
 			throws SMTLIBException, TermException;
+	
+	/**
+	 * Tries to simplify a satisfying assignment by assigning zeros to
+	 * variables. Gets stuck in local optima.
+	 * 
+	 * The procedure works according to this principle:
+	 * <pre>
+	 * random.shuffle(variables)
+	 * for v in variables:
+	 *     if sat with v = 0:
+	 *         set v to 0
+	 * </pre>
+	 * 
+	 * @param variables the list of variables that can be set to 0
+	 * @return the number of pops required on m_script
+	 */
+	protected int simplifyAssignment(ArrayList<Term> variables) {
+		// Shuffle the variable list for better effect
+		Random rnd =  new Random(System.nanoTime());
+		Collections.shuffle(variables, rnd);
+		
+		int pops = 0;
+		for (int i = 0; i < variables.size(); ++i) {
+			Term var = variables.get(i);
+			m_script.push(1);
+			m_script.assertTerm(m_script.term("=", var, m_script.numeral(BigInteger.ZERO)));
+			if (m_script.checkSat() != LBool.SAT) {
+				m_script.pop(1);
+				// Make sure we call checkSat() after the last pop()
+				if (i == variables.size() - 1) {
+					LBool sat = m_script.checkSat();
+					assert sat == LBool.SAT;
+				}
+			} else {
+				pops += 1;
+			}
+		}
+		return pops;
+	}
 	
 	/**
 	 * @return all RankVars that occur in the program
