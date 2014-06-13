@@ -185,26 +185,6 @@ public class LAAnnotation implements IAnnotation {
 	}
 
 	@Override
-	public String toSExpr(Theory smtTheory) {
-		StringBuilder sb = new StringBuilder(32);
-		sb.append("(:farkas (");
-		for (Map.Entry<Literal, Rational> me : mCoefficients.entrySet()) {
-			sb.append("(* ").append(me.getValue().toString()).append(' ');
-			sb.append(me.getKey().negate().getSMTFormula(smtTheory)).append(')');
-		}
-		sb.append(')');
-		if (mAuxAnnotations != null && !mAuxAnnotations.isEmpty()) {
-			for (Map.Entry<LAAnnotation, Rational> me : mAuxAnnotations.entrySet()) {
-				sb.append(" (:subproof (* ").append(me.getValue().toString());
-				sb.append(' ').append(me.getKey().toSExpr(smtTheory));
-				sb.append("))");
-			}
-		}
-		sb.append(')');
-		return sb.toString();
-	}
-	
-	@Override
 	public Term toTerm(Clause ignored, Theory theory) {
 		assert(mCoefficients != null);
 		return new AnnotationToProofTerm().convert(this, theory);

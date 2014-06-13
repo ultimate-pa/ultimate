@@ -80,7 +80,7 @@ public interface Config {
 	
 	////// Proofs
 	/// Check proofs for propositional validity
-	public final static boolean CHECK_PROP_PROOF = !COMPETITION;
+	public final static boolean CHECK_PROP_PROOF = false;
 	
 	////// Printing of results
 	/// Include line breaks in output of lists

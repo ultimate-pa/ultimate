@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 public class CCAppTerm extends CCTerm {
 	final CCTerm mFunc, mArg;
 	final Parent mLeftParInfo, mRightParInfo;
+	Term mSmtTerm;
 	
 	class Parent extends SimpleListable<Parent> {
 		private boolean mMark = false;
@@ -181,6 +182,9 @@ public class CCAppTerm extends CCTerm {
 	}
 
 	public Term toSMTTerm(Theory theory, boolean useAuxVars) {
+		if (mSmtTerm != null)
+			return mSmtTerm;
+		
 		assert !mIsFunc;
 		CCTerm t = this;
 		int dest = 0;
@@ -206,6 +210,7 @@ public class CCAppTerm extends CCTerm {
 		} else
 			throw new InternalError("Unknown symbol in CCBaseTerm: "
 				+ basefunc.mSymbol);
-		return Coercion.buildApp(sym, args);
+		mSmtTerm = Coercion.buildApp(sym, args);
+		return mSmtTerm;
 	}
 }

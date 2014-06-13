@@ -93,7 +93,6 @@ public class Theory {
 	
 	private SolverSetup mSolverSetup;
 	private Logics mLogic;
-	private boolean mIsUFLogic;
 	private Sort mNumericSort, mRealSort, mStringSort, mBooleanSort;
 	private SortSymbol mBitVecSort;
 	private final HashMap<String, FunctionSymbolFactory> mFunFactory = 
@@ -129,7 +128,6 @@ public class Theory {
 	private int mSkolemCounter = 0;
 	
 	public Theory() {
-		mIsUFLogic = false;
 		mTrue = mFalse = null;
 		mAnd = mOr = mNot = mImplies = mXor = null;
 		mEquals = mDistinct = mIte = null;
@@ -838,79 +836,44 @@ public class Theory {
 	
 	private void setLogic(Logics logic) {
 		this.mLogic = logic;
-		switch (logic) {
-		case CORE:
-			break;
-		case QF_AX:
+
+		if (logic.isArray())
 			createArrayOperators();
-			break;
-		case AUFLIA:
-		case QF_AUFLIA:
-			createArrayOperators();// fallthrough
-		case UFNIA:
-		case QF_UFLIA:
-		case QF_UFIDL:
-			mIsUFLogic = true;// fallthrough
-		case QF_NIA:
-		case QF_IDL:
-		case QF_LIA:
-			mNumericSort = declareInternalSort(
-					"Int", 0, SortSymbol.NUMERIC).getSort(null, new Sort[0]);
-			createNumericOperators(mNumericSort, false);
-			break;
-		case UFLRA:
-		case QF_UFLRA:
-		case QF_UFNRA:
-			mIsUFLogic = true;// fallthrough
-		case LRA:
-		case QF_NRA:
-		case QF_LRA:
-		case QF_RDL:
-			mRealSort = mNumericSort = 
-					declareInternalSort("Real", 0, SortSymbol.NUMERIC).getSort(
-						null, new Sort[0]);
-			createNumericOperators(mRealSort, true);
-			break;
-		case QF_UF:
-			mIsUFLogic = true;
-			break;
-		case AUFLIRA:
-		case AUFNIRA:
-		case QF_AUFLIRA:
-			createArrayOperators();// fallthrough
-		case QF_UFLIRA:
-			mIsUFLogic = true;
-			mRealSort = declareInternalSort(
-					"Real", 0, SortSymbol.NUMERIC).getSort(null, new Sort[0]);
-			mNumericSort = declareInternalSort(
-					"Int", 0, SortSymbol.NUMERIC).getSort(null, new Sort[0]);
-			createIRAOperators();
-			break;
-		case QF_AUFBV:
-			createArrayOperators();// fallthrough
-		case QF_UFBV:
-			mIsUFLogic = true;// fallthrough
-		case QF_BV:
-			createBitVecOperators();
-			break;
-		case QF_ABV:
-			createArrayOperators();
-			createBitVecOperators();
-			break;
-		default:
-			throw new InternalError("Don't know how to setup logic " + logic);
+
+		if (logic.isArithmetic()) {
+
+			if (logic.hasReals())
+				mRealSort = declareInternalSort("Real", 0,
+						SortSymbol.NUMERIC).getSort(null, new Sort[0]);
+
+			if (logic.hasIntegers())
+				mNumericSort = declareInternalSort("Int", 0,
+						SortSymbol.NUMERIC).getSort(null, new Sort[0]);
+			else
+				mNumericSort = mRealSort;
+
+			if (logic.isIRA()) {
+				createIRAOperators();
+			} else {
+				createNumericOperators(mNumericSort, logic.hasReals());
+			}
 		}
+
+		if (logic.isBitVector())
+			createBitVecOperators();
+
 		if (mSolverSetup != null)
 			mSolverSetup.setLogic(this, logic);
 	}
 	
 	/******************** SORTS ********************************************/
 	
-	private SortSymbol defineSort(String name, int paramCount, Sort definition, 
-				  int flags) {
-		if (!mIsUFLogic && mLogic != Logics.QF_AX 
-				&& (flags & FunctionSymbol.INTERNAL) == 0)
-			throw new IllegalArgumentException("Not allowed in this logic");
+	private SortSymbol defineSort(String name, int paramCount, Sort definition,
+				int flags) {
+		if ((flags & FunctionSymbol.INTERNAL) == 0
+				&& definition == null
+				&& !mLogic.isUF() && !mLogic.isArray())
+			throw new IllegalArgumentException("Free sorts are not allowed in this logic");
 		SortSymbol sortsym = mDeclaredSorts.get(name);
 		if (sortsym != null)
 			throw new IllegalArgumentException(
@@ -1017,9 +980,9 @@ public class Theory {
 		if ((flags & FunctionSymbol.INTERNAL) == 0) {
 			if (mLogic == null)
 				throw new IllegalArgumentException("Call set-logic first!");
-			if (!mIsUFLogic && paramTypes.length > 0 && definition == null)
+			if (!mLogic.isUF() && paramTypes.length > 0 && definition == null)
 				throw new IllegalArgumentException(
-						"Not allowed in this logic!");
+						"Free functions are not allowed in this logic!");
 		}
 		if (name.charAt(0) == '@' && name.matches(MODEL_VALUE_PATTERN))
 			throw new IllegalArgumentException(

@@ -16,19 +16,38 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.uni_freiburg.informatik.ultimate.smtinterpol.dpll;
+package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar;
 
+import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
 
-public interface IAnnotation {
+/**
+ * Annotations for Nelson-Oppen equality translating lemmas.
+ * 
+ * These annotations have no data, so we can share them.
+ * 
+ * @author Jochen Hoenicke
+ *
+ */
+public class EQAnnotation implements IAnnotation {
 	/**
-	 * Convert this annotation into a term suitable to add to the proof tree.
-	 * The resulting term might either correspond to the clause, or replace the
-	 * clause in the resulting proof term.
-	 * @param cls    The clause containing this annotation.
-	 * @param theory The term unifier.
-	 * @return Term to insert into the proof tree.
+	 * The singleton EQAnnotation instance.
 	 */
-	Term toTerm(Clause cls, Theory theory);
+	public static final EQAnnotation EQ = new EQAnnotation();
+
+	private Annotation[] mAnnots = new Annotation[] {
+		new Annotation(":EQ", null)
+	};
+	
+	private EQAnnotation() {
+	}
+
+	@Override
+	public Term toTerm(Clause cls, Theory theory) {
+		Term base = cls.toTerm(theory);
+		return theory.term("@lemma", theory.annotatedTerm(mAnnots, base));
+	}
 }

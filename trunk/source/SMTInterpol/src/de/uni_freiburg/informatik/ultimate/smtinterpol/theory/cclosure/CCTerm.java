@@ -333,9 +333,9 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 					sharedTermConflict = true;
 				else
 					form.createCCEquality(src.mSharedTerm, dest.mSharedTerm);
-				// no need to remember the created equality. Is was inserted
+				// no need to remember the created equality. It was inserted
 				// and will be found later automatically.
-			}	
+			}
 		}
 		
 		/* Invert equivalence edges */
@@ -461,7 +461,7 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 				else {
 					assert(srcParentInfo.mFuncSymbNr == destParentInfo.mFuncSymbNr);
 				tloop:
-				    for (CCAppTerm.Parent t1 : srcParentInfo.mCCParents) {
+					for (CCAppTerm.Parent t1 : srcParentInfo.mCCParents) {
 						if (t1.isMarked()) continue;
 						CCAppTerm t = t1.getData();
 						for (CCAppTerm.Parent u1 : destParentInfo.mCCParents) {

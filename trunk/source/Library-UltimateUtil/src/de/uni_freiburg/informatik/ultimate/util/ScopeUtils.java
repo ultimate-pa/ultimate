@@ -34,22 +34,13 @@ public final class ScopeUtils {
 	 */
 	public static final int NUM_INITIAL_SCOPES = 5;
 	/**
-	 * Number of scopes added in growth function.
-	 */
-	public static final int NUM_ADDITIONAL_SCOPES = 5;
-	/**
-	 * Shrink the array if {@link #NUM_ADDITIONAL_SCOPES NUM_ADDITIONAL_SCOPES}
-	 * + {@link #NUM_FREE_SCOPES NUM_FREE_SCOPES} scopes are free in the array. 
-	 */
-	public static final int NUM_FREE_SCOPES = 3;
-	/**
 	 * The growth function for internal scope arrays.  The arrays grow by a
 	 * constant amount {@link #NUM_ADDITIONAL_SCOPES NUM_ADDITIONAL_SCOPES}.
 	 * @param curarray Current internal scope array.
 	 * @return New internal scope array
 	 */
 	public static final <E> E[] grow(E[] curarray) {
-		return Arrays.copyOf(curarray, curarray.length + NUM_ADDITIONAL_SCOPES);
+		return Arrays.copyOf(curarray, curarray.length * 2);
 	}
 	/**
 	 * The growth function for internal integer scope arrays.  The arrays grow 
@@ -59,7 +50,7 @@ public final class ScopeUtils {
 	 * @return New internal scope array
 	 */
 	public static final int[] grow(int[] curarray) {
-		return Arrays.copyOf(curarray, curarray.length + NUM_ADDITIONAL_SCOPES);
+		return Arrays.copyOf(curarray, curarray.length * 2);
 	}
 	/**
 	 * Should the internal scope array be shrunk?
@@ -68,10 +59,8 @@ public final class ScopeUtils {
 	 * @return <code>true</code> if and only if the array should be shrunk.
 	 */
 	public static final <E> boolean shouldShrink(E[] array) {
-		return array.length > NUM_INITIAL_SCOPES + NUM_ADDITIONAL_SCOPES 
-				+ NUM_FREE_SCOPES
-				&& array[array.length - NUM_ADDITIONAL_SCOPES - NUM_FREE_SCOPES]
-						== null;
+		return array.length > NUM_INITIAL_SCOPES
+				&& array[array.length >> 2] == null;
 	}
 	/**
 	 * Should the internal integer scope array be shrunk?
@@ -80,8 +69,7 @@ public final class ScopeUtils {
 	 * @return <code>true</code> if and only if the array should be shrunk.
 	 */
 	public static final boolean shouldShrink(int used, int size) {
-		return size >= NUM_INITIAL_SCOPES + NUM_ADDITIONAL_SCOPES 
-			&& used < size - NUM_ADDITIONAL_SCOPES - NUM_FREE_SCOPES;
+		return size > NUM_INITIAL_SCOPES && used < (size >> 2);
 	}
 	/**
 	 * Shrink the internal scope array.
@@ -90,16 +78,15 @@ public final class ScopeUtils {
 	 * @return Smaller array that should be used as internal scope array.
 	 */
 	public static final <E> E[] shrink(E[] curarray) {
-		return Arrays.copyOf(curarray, curarray.length - NUM_ADDITIONAL_SCOPES);
+		return Arrays.copyOf(curarray, curarray.length >> 1);
 	}
 	/**
 	 * Shrink the internal integer scope array.
-	 * @param <E>		Type stored in the internal scope array.
 	 * @param curarray	Internal scope array.
 	 * @return Smaller array that should be used as internal scope array.
 	 */
 	public static final int[] shrink(int[] curarray) {
-		return Arrays.copyOf(curarray, curarray.length - NUM_ADDITIONAL_SCOPES);
+		return Arrays.copyOf(curarray, curarray.length >> 1);
 	}
 
 }

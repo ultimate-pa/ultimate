@@ -68,7 +68,8 @@ public final class Main {
 		System.err.println("  -transform <output>  Transform the input to SMTLIB 2 and write into output.");// NOCHECKSTYLE
 		System.err.println("  -script <class>      Send the input to another Java class implementing Script.");// NOCHECKSTYLE
 		System.err.println("  -no-success          Don't print success messages.");// NOCHECKSTYLE
-		System.err.println("  -q                   Don't print statistics and models.");// NOCHECKSTYLE
+		System.err.println("  -q                   Only print error messages.");// NOCHECKSTYLE
+		System.err.println("  -w                   Don't print statistics and models.");// NOCHECKSTYLE
 		System.err.println("  -v                   Print debugging messages.");
 		System.err.println("  -t <num>             Set the timeout per check-sat call to <num> milliseconds.");// NOCHECKSTYLE
 		System.err.println("  -r <num>             Use a different random seed.");// NOCHECKSTYLE
@@ -96,69 +97,71 @@ public final class Main {
 		Script solver = null;
 		boolean printSuccess = true;
 		int paramctr = 0;
-        while (paramctr < param.length
-        		&& param[paramctr].startsWith("-")) {
-        	if (param[paramctr].equals("--")) {
-        		paramctr++;
-        		break;
-        	} else if (param[paramctr].equals("-transform")
-     			   && paramctr + 1 < param.length) {
-    			paramctr++;
-        		solver = new LoggingScript(param[paramctr], true);
-        	} else if (param[paramctr].equals("-script")
-     			   && paramctr + 1 < param.length) {
-     			paramctr++;
-     			Class<?> scriptClass = Class.forName(param[paramctr]);
-     			solver = (Script) scriptClass.newInstance();
-        	} else if (param[paramctr].equals("-no-success")) {
-        		printSuccess = false;
-        	} else if (param[paramctr].equals("-v")) {
-        		verbosity = BigInteger.valueOf(5);// NOCHECKSTYLE
-        	} else if (param[paramctr].equals("-q")) {
-        		verbosity = BigInteger.valueOf(2);// NOCHECKSTYLE
-        	} else if (param[paramctr].equals("-t")
-        			&& ++paramctr < param.length) {
-        		try {
-        			timeout = new BigInteger(param[paramctr]);
-        			if (timeout.signum() <= 0) {
-        				timeout = null;
-        				System.err.println(
-        						"Cannot parse timeout argument: Non-positive number");// NOCHECKSTYLE
-        			}
-        		} catch (NumberFormatException enfe) {
-        			System.err.println("Cannot parse timeout argument: Not a number");// NOCHECKSTYLE
-        		}
-        	} else if (param[paramctr].equals("-r")
-        			&& ++paramctr < param.length) {
-        		try {
-        			seed = new BigInteger(param[paramctr]);
-        			if (seed.signum() < 0) {
-        				System.err.println("Cannot parse random seed argument: Negative number");// NOCHECKSTYLE
-        				seed = null;
-        			}
-        		} catch (NumberFormatException enfe) {
-    				System.err.println("Cannot parse random seed argument: Not a number");// NOCHECKSTYLE
-        		}
-        	} else if (param[paramctr].equals("-smt2")) {
-        		parser = new SMTLIB2Parser();
-        	} else if (param[paramctr].equals("-smt")) {
-        		parser = new SMTLIBParser();
-        	} else if (param[paramctr].equals("-d")) {
-        		parser = new DIMACSParser();
-        	} else if (param[paramctr].equals("-a")) {
-        		parser = new AIGERFrontEnd();
-        	} else if (param[paramctr].equals("-trace")) {
-        		verbosity = BigInteger.ONE.negate();
-        	} else if (param[paramctr].equals("-version")) {
-        		version();
-        		return;
-        	} else {
-        		usage();
-        		return;
-        	}
-        	++paramctr;
-        }
-        String filename = null;
+		while (paramctr < param.length
+				&& param[paramctr].startsWith("-")) {
+			if (param[paramctr].equals("--")) {
+				paramctr++;
+				break;
+			} else if (param[paramctr].equals("-transform")
+					&& paramctr + 1 < param.length) {
+				paramctr++;
+				solver = new LoggingScript(param[paramctr], true);
+			} else if (param[paramctr].equals("-script")
+					&& paramctr + 1 < param.length) {
+				paramctr++;
+				Class<?> scriptClass = Class.forName(param[paramctr]);
+				solver = (Script) scriptClass.newInstance();
+			} else if (param[paramctr].equals("-no-success")) {
+				printSuccess = false;
+			} else if (param[paramctr].equals("-v")) {
+				verbosity = BigInteger.valueOf(5);// NOCHECKSTYLE
+			} else if (param[paramctr].equals("-w")) {
+				verbosity = BigInteger.valueOf(3);// NOCHECKSTYLE
+			} else if (param[paramctr].equals("-q")) {
+				verbosity = BigInteger.valueOf(2);// NOCHECKSTYLE
+			} else if (param[paramctr].equals("-t")
+					&& ++paramctr < param.length) {
+				try {
+					timeout = new BigInteger(param[paramctr]);
+					if (timeout.signum() <= 0) {
+						timeout = null;
+						System.err.println(
+								"Cannot parse timeout argument: Non-positive number");// NOCHECKSTYLE
+					}
+				} catch (NumberFormatException enfe) {
+					System.err.println("Cannot parse timeout argument: Not a number");// NOCHECKSTYLE
+				}
+			} else if (param[paramctr].equals("-r")
+					&& ++paramctr < param.length) {
+				try {
+					seed = new BigInteger(param[paramctr]);
+					if (seed.signum() < 0) {
+						System.err.println("Cannot parse random seed argument: Negative number");// NOCHECKSTYLE
+						seed = null;
+					}
+				} catch (NumberFormatException enfe) {
+					System.err.println("Cannot parse random seed argument: Not a number");// NOCHECKSTYLE
+				}
+			} else if (param[paramctr].equals("-smt2")) {
+				parser = new SMTLIB2Parser();
+			} else if (param[paramctr].equals("-smt")) {
+				parser = new SMTLIBParser();
+			} else if (param[paramctr].equals("-d")) {
+				parser = new DIMACSParser();
+			} else if (param[paramctr].equals("-a")) {
+				parser = new AIGERFrontEnd();
+			} else if (param[paramctr].equals("-trace")) {
+				verbosity = BigInteger.ONE.negate();
+			} else if (param[paramctr].equals("-version")) {
+				version();
+				return;
+			} else {
+				usage();
+				return;
+			}
+			++paramctr;
+		}
+		String filename = null;
 		if (paramctr < param.length)
 			filename = param[paramctr++];
 		if (paramctr != param.length) {

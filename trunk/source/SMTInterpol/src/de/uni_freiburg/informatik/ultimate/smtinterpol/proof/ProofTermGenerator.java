@@ -85,15 +85,8 @@ public class ProofTermGenerator {
 				LeafNode ln = (LeafNode) pn;
 				Term res;
 				Theory t = engine.getTheory();
-				if (ln.getLeafKind() == LeafNode.EQ) {
-					res = t.term("@tautology", t.annotatedTerm(
-					        new Annotation[] {
-					            ProofConstants.AUXANNOTS[ProofConstants.AUX_EQ]
-					        }, mCls.toTerm(t)));
-				} else {
-					IAnnotation annot = ln.getTheoryAnnotation();
-					res = annot.toTerm(mCls, t);
-				}
+				IAnnotation annot = ln.getTheoryAnnotation();
+				res = annot.toTerm(mCls, t);
 				engine.setResult(mCls, res);
 				engine.pushConverted(res);
 			} else {

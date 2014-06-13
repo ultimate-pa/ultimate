@@ -206,7 +206,7 @@ public class TermCompiler extends TermTransformer {
 					if (origArgs == null)
 						origArgs = mTracker.prepareIRAHack(args);
 					args[i] = SMTAffineTerm.create(args[i])
-						.toReal(paramSorts[0]);
+						.typecast(paramSorts[0]);
 				}
 			}
 		}
@@ -434,7 +434,7 @@ public class TermCompiler extends TermTransformer {
 				return;
 			} else if (fsym.getName().equals("to_real")) {
 				SMTAffineTerm arg = SMTAffineTerm.create(args[0]);
-				Term res = arg.toReal(fsym.getReturnSort()).normalize(this);
+				Term res = arg.typecast(fsym.getReturnSort()).normalize(this);
 				setResult(res);
 				if (arg.isConstant())
 					mTracker.toReal(arg, res);

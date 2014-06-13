@@ -159,7 +159,7 @@ public final class SMTAffineTerm extends Term {
 	 * @param other  the affine term to convert.
 	 * @param sort   the new sort.
 	 */
-	public SMTAffineTerm toReal(Sort realSort) {
+	public SMTAffineTerm typecast(Sort realSort) {
 		return create(mSummands, mConstant, realSort);
 	}
 	
@@ -327,8 +327,7 @@ public final class SMTAffineTerm extends Term {
 	
 	public Term internalize(TermCompiler compiler) {
 		SMTAffineTerm res = this;
-		if (getTheory().getLogic().isIRA() && mSort.getName().equals("Real")
-				&& isAllInt())
+		if (getTheory().getLogic().isIRA() && !isIntegral() && isAllInt())
 			res = create(mSummands, mConstant, getTheory().getSort("Int"));
 		return res.normalize(compiler);
 	}

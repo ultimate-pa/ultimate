@@ -58,8 +58,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofTracker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode.Antecedent;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayDiffAnnotation;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayStoreAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
@@ -91,14 +89,18 @@ public class Clausifier {
 
 		@Override
 		public void perform() {
+			IProofTracker sub = mTracker.getDescendent();
 			Term i = mStore.getParameters()[1];
 			Term v = mStore.getParameters()[2];
 			Term selstore = mTheory.term("select", mStore, i);
 			EqualityProxy ep = createEqualityProxy(
 					getSharedTerm(selstore), getSharedTerm(v));
 			Literal lit = ep.getLiteral();
-			addClause(new Literal[] {lit}, null, new LeafNode(LeafNode.THEORY_ARRAY,
-					new ArrayStoreAnnotation(mStore, getAnnotation())));
+			Term prf = sub.auxAxiom(
+					ProofConstants.AUX_ARRAY_STORE, null, mStore, null, null);
+			addClause(new Literal[] {lit}, null, 
+					getProofNewSource(
+							ProofConstants.AUX_ARRAY_STORE, sub.clause(prf)));
 			if (Config.ARRAY_ALWAYS_ADD_READ
 					// HACK: We meen "finite sorts"
 					|| v.getSort() == mTheory.getBooleanSort()) {
@@ -125,6 +127,7 @@ public class Clausifier {
 
 		@Override
 		public void perform() {
+			IProofTracker sub = mTracker.getDescendent();
 			// Create a = b \/ select(a, diff(a,b)) != select(b, diff(a,b))
 			Term a = mDiff.getParameters()[0];
 			Term b = mDiff.getParameters()[1];
@@ -145,9 +148,11 @@ public class Clausifier {
 				eparray.getLiteral(),
 				epselect.getLiteral().negate()
 			};
-			ProofNode diffProof = new LeafNode(LeafNode.THEORY_ARRAY_DIFF_AXIOM,
-				new ArrayDiffAnnotation(mDiff, getAnnotation()));
-			addClause(lits, null, diffProof);
+			Term prf = sub.auxAxiom(
+					ProofConstants.AUX_ARRAY_DIFF, null, mDiff, null, null);
+			addClause(lits, null, 
+					getProofNewSource(
+							ProofConstants.AUX_ARRAY_DIFF, sub.clause(prf)));
 		}
 		
 	}
@@ -1367,7 +1372,7 @@ public class Clausifier {
 			Utils tmp = new Utils(sub);
 			SMTAffineTerm realTerm = SMTAffineTerm.create(
 					mToIntTerm.getParameters()[0]);
-			SMTAffineTerm toInt = SMTAffineTerm.create(mToIntTerm).toReal(
+			SMTAffineTerm toInt = SMTAffineTerm.create(mToIntTerm).typecast(
 					realTerm.getSort());
 			// (<= (- (to_real (to_int x)) x) 0)
 			SMTAffineTerm difflow = toInt.add(realTerm.negate());
@@ -1804,11 +1809,11 @@ public class Clausifier {
 				return EqualityProxy.getFalseProxy();
 			}
 		}
-		if (mTheory.getLogic().isIRA()
-				&& diff.isAllIntSummands() && !diff.getConstant().isIntegral())
-			// IRA-unsatisfiable.
-			return EqualityProxy.getFalseProxy();
 		diff = diff.div(diff.getGcd());
+		// normalize equality to integer logic if all variables are integer.
+		if (mTheory.getLogic().isIRA() && !diff.isIntegral()
+				&& diff.isAllIntSummands())
+			diff = diff.typecast(getTheory().getSort("Int"));
 		// check for unsatisfiable integer formula, e.g. 2x + 2y = 1.
 		if (diff.isIntegral() && !diff.getConstant().isIntegral()) {
 			return EqualityProxy.getFalseProxy();
@@ -1933,7 +1938,7 @@ public class Clausifier {
 	
 	SharedTerm toReal(SharedTerm t) {
 		SMTAffineTerm tst = SMTAffineTerm.create(t.getTerm());
-		return getSharedTerm(tst.toReal(mTheory.getSort("Real")));
+		return getSharedTerm(tst.typecast(mTheory.getSort("Real")));
 	}
 	
 	void addUnshareCC(SharedTerm shared) {
@@ -2006,39 +2011,18 @@ public class Clausifier {
 		if (mEngine.isProofGenerationEnabled())
 			setSourceAnnotation(LeafNode.NO_THEORY,
 					SourceAnnotation.EMPTY_SOURCE_ANNOT);
-		switch (logic) {
-		case CORE:
-			break;
-		case QF_UFLRA:
-		case QF_UFLIRA:
-		case QF_UFLIA:
-		case QF_UFIDL:
-			setupCClosure();
-			setupLinArithmetic();
-			break;
-		case QF_IDL:
-		case QF_LIA:
-		case QF_LRA:
-		case QF_RDL:
-			setupLinArithmetic();
-			break;
-		case QF_UF:
-			setupCClosure();
-			break;
-		case QF_AUFLIA:
-		case QF_AUFLIRA:
-			setupCClosure();
-			setupLinArithmetic();
- 			setupArrayTheory();
- 			break;
-		case QF_AX:
-			setupCClosure();
-			setupArrayTheory();
-			break;
-		default:
+		
+		if (logic.isBitVector() || logic.isQuantified()
+				|| logic.isNonLinearArithmetic())
 			throw new UnsupportedOperationException(
 					"Logic " + logic.toString() + " unsupported");
-		}
+		
+		if (logic.isUF() || logic.isArray())
+			setupCClosure();
+		if (logic.isArithmetic())
+			setupLinArithmetic();
+		if (logic.isArray())
+ 			setupArrayTheory();
 	}
 	
 	public Iterable<BooleanVarAtom> getBooleanVars() {

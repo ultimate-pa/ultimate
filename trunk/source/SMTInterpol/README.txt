@@ -12,11 +12,11 @@ necessary steps.
    cd ultimate/source
    cat SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.properties
 
-3. Create a patch for the changes from SMTInterpol/src and LibrarySMTLIB/src.
+3. Create a patch for the changes from SMTInterpol/src and Library-SMTLIB/src.
    cd .../sminterpol.git
-   git diff <version-number> SMTInterpol/src LibrarySMTLIB/src >smtinterpol.diff
+   git diff <version-number> SMTInterpol/src Library-SMTLIB/src >smtinterpol.diff
    cd ultimate/source
-   patch -p0 < .../smtinterpol.diff
+   patch -p1 < .../smtinterpol.diff
 
 4. Update Version.properties.  The easiest way to do this is:
    cd .../smtinterpol.git
@@ -27,7 +27,7 @@ necessary steps.
 5. Make sure you added all new files and deleted all old files.  Run
 
    diff -x.svn -r SMTInterpol/src smtinterpol.git/SMTInterpol/src
-   diff -x.svn -r LibrarySMTLIB/src smtinterpol.git/LibrarySMTLIB/src
+   diff -x.svn -r Library-SMTLIB/src smtinterpol.git/Library-SMTLIB/src
 
    it should list some files from ultimate/util, Versions.properties, 
    and the automatically build parser/lexer files and the parser build

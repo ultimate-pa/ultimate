@@ -174,7 +174,7 @@ public class EqualityProxy {
 			/* create CC equality */
 			return mClausifier.getCClosure().createCCEquality(
 			        mClausifier.getStackLevel(), mLhs.mCCterm, mRhs.mCCterm);
-		}		
+		}
 	}
 	
 	public DPLLAtom getLiteral() {

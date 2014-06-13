@@ -259,8 +259,7 @@ public class MutableAffinTerm {
 	
 	/**
 	 * Create the SMTLib formula for the term <code>this <= 0</code>.
-	 * @param useAuxVars use auxiliary variables for non-variable terms (unimplemented).
-	 * @param t   Theory used in conversion.
+	 * @param smtTheory   Theory used in conversion.
 	 * @return The SMTLib term representing the formula <code>this <= 0</code>.
 	 */
 	public Term toSMTLibLeq0(Theory smtTheory, boolean quoted) {

@@ -27,6 +27,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.LitInfo;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.Occurrence;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAnnotation;
@@ -42,6 +44,7 @@ public class CCInterpolator {
 	
 	Interpolator mInterpolator;
 	
+	HashMap<SymmetricPair<CCTerm>, CCEquality> mEqualities;
 	HashMap<SymmetricPair<CCTerm>, PathInfo> mPaths;
 	
 	Theory mTheory;
@@ -78,7 +81,6 @@ public class CCInterpolator {
 
 	class PathInfo {
 		CCTerm[] mPath;
-		CCEquality[] mLits;
 		
 		/**
 		 * The set of partitions for which there is an AB-shared path
@@ -237,9 +239,9 @@ public class CCInterpolator {
 				int arg = numArgs;
 				while (true) {
 					arg--;
-					argPaths[arg] =  
+					argPaths[arg] =
 						start.getArg() == end.getArg() ? new PathInfo(start.getArg())
-					    : mPaths.get(new SymmetricPair<CCTerm>(start.getArg(), end.getArg()));
+						: mPaths.get(new SymmetricPair<CCTerm>(start.getArg(), end.getArg()));
 					argPaths[arg].interpolatePathInfo();
 					isReverse[arg] = (start.getArg() != argPaths[arg].mPath[0]);
 					head[arg] = isReverse[arg] ? argPaths[arg].mTail : argPaths[arg].mHead;
@@ -342,16 +344,15 @@ public class CCInterpolator {
 		 *       TailPre ==> Lits[0] == lits[n]
 		 */
 		
-		public PathInfo(CCTerm[] path, CCEquality[] litsOnPath) {
+		public PathInfo(CCTerm[] path) {
 			mPath = path;
-			mLits = litsOnPath;
 			mHasABPath = new BitSet(mNumInterpolants);
 			mHasABPath.set(0, mNumInterpolants);
 			mMaxColor = mNumInterpolants;
 		}
 		
 		public PathInfo(CCTerm arg) {
-			this(new CCTerm[] { arg }, new CCEquality[0]);
+			this(new CCTerm[] { arg });
 		}
 
 		public void interpolatePathInfo() {
@@ -364,13 +365,15 @@ public class CCInterpolator {
 			mTail.closeAPath(mHead, null, headOccur);
 			mTail.openAPath(mHead, null, headOccur);
 			
-			for (int i = 0; i < mLits.length; i++) {
-				if (mLits[i] == null) {
-					CCAppTerm left = (CCAppTerm) mPath[i];
-					CCAppTerm right = (CCAppTerm) mPath[i + 1];
-					mTail.mergeCongPath(mHead, left, right);
+			for (int i = 0; i < mPath.length - 1; i++) {
+				CCTerm left = mPath[i];
+				CCTerm right = mPath[i + 1];
+				CCEquality lit = 
+						mEqualities.get(new SymmetricPair<CCTerm>(left, right));
+				if (lit == null) {
+					mTail.mergeCongPath(mHead, (CCAppTerm) left, (CCAppTerm) right);
 				} else {
-					LitInfo info = mInterpolator.getLiteralInfo(mLits[i]);
+					LitInfo info = mInterpolator.getLiteralInfo(lit);
 					Term boundaryTerm;
 					boundaryTerm = mPath[i].toSMTTerm(mTheory);
 					if (info.getMixedVar() == null) {
@@ -434,19 +437,13 @@ public class CCInterpolator {
 			}
 		}
 
-		private void reversePath() {
-			PathEnd temp = mHead;
-			mHead = mTail;
-			mTail = temp;
-		}
-
 		public void close() {
 			while (mHead.mColor < mNumInterpolants
 					|| mTail.mColor < mNumInterpolants) {
 				if (mHead.mColor < mTail.mColor) {
 					mHead.addPre(mHead.mColor, Coercion.buildEq(
-					        mHead.getBoundTerm(mHead.mColor),
-					        mTail.getBoundTerm(mMaxColor)));
+							mHead.getBoundTerm(mHead.mColor),
+							mTail.getBoundTerm(mMaxColor)));
 					addInterpolantClause(mHead.mColor, mHead.mPre[mHead.mColor]);
 					int parent = mHead.mColor + 1;
 					while (mInterpolator.mStartOfSubtrees[parent] > mHead.mColor)
@@ -491,14 +488,23 @@ public class CCInterpolator {
 			mInterpolants[i] = new HashSet<Term>();
 	}
 	
-	public Term[] computeInterpolants(CCAnnotation annot) {
-		PathInfo mainPath = null; 
+	public Term[] computeInterpolants(Clause cl, CCAnnotation annot) {
+		mEqualities = new HashMap<SymmetricPair<CCTerm>,  CCEquality>();
+		for (int i = 0; i < cl.getSize(); i++) {
+			Literal lit = cl.getLiteral(i);
+			if (lit.negate() instanceof CCEquality) {
+				CCEquality eq = (CCEquality) lit.negate();
+				mEqualities.put(
+					new SymmetricPair<CCTerm>(eq.getLhs(), eq.getRhs()), eq);
+			}
+		}
+
+		PathInfo mainPath = null;
 		CCTerm[][] paths = annot.getPaths();
-		CCEquality[][] lits = annot.getLitsOnPaths();
 		for (int i = 0; i < paths.length; i++) {
 			CCTerm first = paths[i][0];
 			CCTerm last = paths[i][paths[i].length - 1];
-			PathInfo pathInfo = new PathInfo(paths[i], lits[i]);
+			PathInfo pathInfo = new PathInfo(paths[i]);
 			mPaths.put(new SymmetricPair<CCTerm>(first, last), 
 					pathInfo);
 			if (i == 0)
@@ -512,7 +518,7 @@ public class CCInterpolator {
 		Term[] interpolants = new Term[mNumInterpolants];
 		for (int i = 0; i < mNumInterpolants; i++) {
 			interpolants[i] = mTheory.and(mInterpolants[i].toArray(
-			        new Term[mInterpolants[i].size()]));
+					new Term[mInterpolants[i].size()]));
 		}
 		return interpolants;
 	}

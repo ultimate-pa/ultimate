@@ -23,44 +23,81 @@ package de.uni_freiburg.informatik.ultimate.logic;
  * @author Juergen Christ
  */
 public enum Logics {
-	CORE,// Pure Boolean logic
-	AUFLIA,
-	AUFLIRA,
-	AUFNIRA,
-	LRA,
-	QF_ABV,
-	QF_AUFBV,
-	QF_AUFLIA,
-	QF_AX,
-	QF_BV,
-	QF_IDL,
-	QF_LIA,
-	QF_LRA,
-	QF_NIA,
-	QF_NRA,
-	QF_RDL,
-	QF_UF,
-	QF_UFBV,
-	QF_UFIDL,
-	QF_UFLIA,
-	QF_UFLRA,
-	// This logic is SMTInterpol specific and captures the cominbation UF, LIA,
-	// and LRA
-	QF_UFLIRA,
-	QF_UFNRA,
-	UFLRA,
-	UFNIA,
-	// This logic is SMTInterpol specific and captures the cominbation arrays
-	// with UF, LIA, and LRA.
-	QF_AUFLIRA;
+	CORE(0),// Pure Boolean logic
+	QF_BV     (Features.BV),
+	QF_IDL    (Features.DL + Features.IA),
+	QF_RDL    (Features.DL + Features.RA),
+	QF_LIA    (Features.LA + Features.IA),
+	QF_LRA    (Features.LA + Features.RA),
+	QF_NIA    (Features.NA + Features.IA),
+	QF_NRA    (Features.NA + Features.RA),
+	QF_UF     (Features.UF),
+	QF_UFBV   (Features.UF + Features.BV),
+	QF_UFIDL  (Features.UF + Features.DL + Features.IA),
+	QF_UFLIA  (Features.UF + Features.LA + Features.IA),
+	QF_UFLRA  (Features.UF + Features.LA + Features.RA),
+	QF_UFLIRA (Features.UF + Features.LA + Features.IA + Features.RA),
+	QF_UFNIA  (Features.UF + Features.NA + Features.IA),
+	QF_UFNRA  (Features.UF + Features.NA + Features.RA),
+	QF_AX     (Features.AX),
+	QF_ABV    (Features.AX + Features.BV),
+	QF_AUFBV  (Features.AX + Features.UF + Features.BV),
+	QF_ALIA   (Features.AX + Features.LA + Features.IA),
+	QF_AUFLIA (Features.AX + Features.UF + Features.LA + Features.IA),
+	QF_AUFLIRA(Features.AX + Features.UF + Features.LA + Features.IA + Features.RA), //NOCHECKSTYLE
+
+	BV        (Features.QU + Features.BV),
+	LIA       (Features.QU + Features.LA + Features.IA),
+	LRA       (Features.QU + Features.LA + Features.RA),
+	NIA       (Features.QU + Features.NA + Features.IA),
+	NRA       (Features.QU + Features.NA + Features.RA),
+	UF        (Features.QU + Features.UF),
+	UFBV      (Features.QU + Features.UF + Features.BV),
+	UFIDL     (Features.QU + Features.UF + Features.DL + Features.IA),
+	UFLIA     (Features.QU + Features.UF + Features.LA + Features.IA),
+	UFLRA     (Features.QU + Features.LA + Features.RA),
+	UFNIA     (Features.QU + Features.NA + Features.IA),
+	ALIA      (Features.QU + Features.AX + Features.LA + Features.IA),
+	AUFLIA    (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA), //NOCHECKSTYLE
+	AUFLIRA   (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA + Features.RA), //NOCHECKSTYLE
+	AUFNIRA   (Features.QU + Features.AX + Features.UF + Features.NA + Features.IA + Features.RA), //NOCHECKSTYLE
+	; //NOCHECKSTYLE
+	
+	static class Features {
+		/** flag for quantified logic. */
+		static final int QU = (1 << 0);
+		/** flag for uninterpreted functions. */
+		static final int UF = (1 << 1);
+		/** flag for array theory. */
+		static final int AX = (1 << 2);
+		/** flag for bit vector theory. */
+		static final int BV = (1 << 3);
+		/** flag for difference logic. */
+		static final int DL = (1 << 4);
+		/** flag for linear arithmetic. */
+		static final int LA = (1 << 5);
+		/** flag for non-linear arithmetic. */
+		static final int NA = (1 << 6);
+		/** flag for integer arithmetic. */
+		static final int IA = (1 << 7);
+		/** flag for real arithmetic. */
+		static final int RA = (1 << 8);
+	}
+	
+	private final int mFeatures;
+	
+	private Logics(int features) {
+		this.mFeatures = features;
+	}
+
 	/**
 	 * Is this logic mixed integer and real?
 	 * @return <code>true</code> if and only if mixed arithmetic can be used in
 	 *         this logic.
 	 */
 	public boolean isIRA() {
-		return this == AUFLIRA || this == AUFNIRA || this == QF_UFLIRA
-				|| this == QF_AUFLIRA;
+		return (mFeatures & (Features.IA + Features.RA))
+				== (Features.IA + Features.RA);
 	}
 	/**
 	 * Does this logic support uninterpreted functions and sorts?
@@ -68,45 +105,21 @@ public enum Logics {
 	 *         functions and sorts.
 	 */
 	public boolean isUF() {
-		switch (this) { // NOCHECKSTYLE
-		case AUFLIA:
-		case AUFLIRA:
-		case AUFNIRA:
-		case QF_AUFBV:
-		case QF_AUFLIA:
-		case QF_UF:
-		case QF_UFBV:
-		case QF_UFIDL:
-		case QF_UFLIA:
-		case QF_UFLRA:
-		case QF_UFLIRA:
-		case QF_UFNRA:
-		case UFLRA:
-		case UFNIA:
-		case QF_AUFLIRA:
-			return true;
-		default:
-			return false;
-		}
+		return (mFeatures & Features.UF) != 0;
 	}
 	/**
 	 * Does this logic support arrays?
 	 * @return <code>true</code> if and only if this logic supports arrays.
 	 */
 	public boolean isArray() {
-		switch (this) { // NOCHECKSTYLE
-		case AUFLIA:
-		case AUFLIRA:
-		case AUFNIRA:
-		case QF_AX:
-		case QF_ABV:
-		case QF_AUFBV:
-		case QF_AUFLIA:
-		case QF_AUFLIRA:
-			return true;
-		default:
-			return false;
-		}
+		return (mFeatures & Features.AX) != 0;
+	}
+	/**
+	 * Does this logic support bit vectors?
+	 * @return <code>true</code> if and only if this logic supports bit vectors.
+	 */
+	public boolean isBitVector() {
+		return (mFeatures & Features.BV) != 0;
 	}
 	/**
 	 * Does this logic support quantifiers?
@@ -114,16 +127,54 @@ public enum Logics {
 	 *         in this logic.
 	 */
 	public boolean isQuantified() {
-		switch (this) { // NOCHECKSTYLE
-		case AUFLIA:
-		case AUFLIRA:
-		case AUFNIRA:
-		case LRA:
-		case UFLRA:
-		case UFNIA:
-			return true;
-		default:
-			return false;
-		}
+		return (mFeatures & Features.QU) != 0;
+	}
+	
+	/**
+	 * Does this logic support arithmetic operators?
+	 * @return <code>true</code> if and only if this logic supports arithmetic
+	 */
+	public boolean isArithmetic() {
+		return (mFeatures & (Features.NA + Features.LA + Features.DL)) != 0;
+	}
+
+	/**
+	 * Does this logic support difference logic?
+	 * @return <code>true</code> if and only if this logic support difference
+	 * logic;
+	 * it returns false for linear arithmetic and non-linear arithmetic logics.
+	 */
+	public boolean isDifferenceLogic() {
+		return (mFeatures & Features.DL) != 0;
+	}
+	/**
+	 * Does this logic support linear arithmetic?
+	 * @return <code>true</code> if and only if this logic support difference
+	 * logic; it returns false for nonlinear arithmetic logics.
+	 */
+	public boolean isLinearArithmetic() {
+		return (mFeatures & Features.LA) != 0;
+	}
+	/**
+	 * Does this logic support non-linear arithmetic?
+	 * @return <code>true</code> if and only if this logic support non-linear
+	 * logic.
+	 */
+	public boolean isNonLinearArithmetic() {
+		return (mFeatures & Features.NA) != 0;
+	}
+	/**
+	 * Does this logic have integers?
+	 * @return <code>true</code> if and only if this logic has integers.
+	 */
+	public boolean hasIntegers() {
+		return (mFeatures & Features.IA) != 0;
+	}
+	/**
+	 * Does this logic have real numbers?
+	 * @return <code>true</code> if and only if this logic has reals.
+	 */
+	public boolean hasReals() {
+		return (mFeatures & Features.RA) != 0;
 	}
 }

@@ -34,12 +34,10 @@ public class LeafNode extends ProofNode {
 	public final static int THEORY_CC = -3;
 	/// LA(R/Z)-lemma
 	public final static int THEORY_LA = -4;
-	/// NO equality propagation
-	public final static int EQ = ProofConstants.AUX_EQ;
 	/// Array lemma
 	public final static int THEORY_ARRAY = -5;
-	/// Diff axiom
-	public final static int THEORY_ARRAY_DIFF_AXIOM = -6;
+	/// NO equality propagation
+	public final static int EQ = -6;
 
 	private final int mLeafKind;
 	private IAnnotation mAnnotation;
@@ -68,13 +66,13 @@ public class LeafNode extends ProofNode {
 		return mLeafKind >= 0;
 	}
 	/**
-	 * Can this leaf node be colored for interpolation?
-	 * @return <code>true</code> if and only if this node can be colored.
+	 * Check if the leaf has a source annotation. This means it
+	 * was created from a single input formula.
+	 * @return <code>true</code> iff this leaf node has a source annotation.
 	 */
-	public boolean isColorable() {
-		// Only leaves and non-eq tautologies
-		return mLeafKind == NO_THEORY
-				|| (isTautology() && mLeafKind != ProofConstants.AUX_EQ); 
+	public boolean hasSourceAnnotation() {
+		// Only source nodes and tautologies
+		return mLeafKind >= NO_THEORY;
 	}
 	/**
 	 * Get theory specific annotations.

@@ -28,8 +28,8 @@ public class NamedAtom extends DPLLAtom {
 	public final static Annotation[] QUOTED = new Annotation[] {
 		new Annotation(":quoted", null)
 	};
-	private Term mSmtAtom;
-	private boolean mClean = false;
+	private final Term mSmtAtom;
+//	private boolean mClean = false;
 	
 	public NamedAtom(Term smtAtom, int assertionstacklevel) {
 		super(smtAtom.hashCode(), assertionstacklevel);
@@ -37,15 +37,16 @@ public class NamedAtom extends DPLLAtom {
 	}
 	
 	public String toString() {
-		if (!mClean)
-			cleanup();
-		return mSmtAtom.toString();
+//		if (!mClean)
+//			cleanup();
+		return SMTAffineTerm.cleanup(mSmtAtom).toString();
 	}
 
 	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
-		if (!mClean)
-			cleanup();
-		return quoted ? smtTheory.annotatedTerm(QUOTED, mSmtAtom) : mSmtAtom; 
+//		if (!mClean)
+//			cleanup();
+		Term form = SMTAffineTerm.cleanup(mSmtAtom);
+		return quoted ? smtTheory.annotatedTerm(QUOTED, form) : form;
 	}
 	
 	public int containsTerm(TermVariable tv) {
@@ -53,14 +54,14 @@ public class NamedAtom extends DPLLAtom {
 	}
 	
 	public boolean equals(Object other) { // NOCHECKSTYLE see Literal.hashCode()
-		if (!mClean)
-			cleanup();
+//		if (!mClean)
+//			cleanup();
 		return other instanceof NamedAtom
 			&& ((NamedAtom) other).mSmtAtom == mSmtAtom;
 	}
 	
-	private void cleanup() {
-		mSmtAtom = SMTAffineTerm.cleanup(mSmtAtom);
-		mClean = true;
-	}
+//	private void cleanup() {
+//		mSmtAtom = SMTAffineTerm.cleanup(mSmtAtom);
+//		mClean = true;
+//	}
 }

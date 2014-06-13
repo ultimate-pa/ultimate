@@ -19,7 +19,6 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.proof;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
-import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
@@ -51,10 +50,6 @@ public class SourceAnnotation implements IAnnotation {
 	}
 	public String toString() {
 		return mAnnot;
-	}
-	@Override
-	public String toSExpr(Theory smtTheory) {
-		return mAnnot.isEmpty() ? ":input" : ":input " + new QuotedObject(mAnnot);
 	}
 	@Override
 	public Term toTerm(Clause cls, Theory theory) {

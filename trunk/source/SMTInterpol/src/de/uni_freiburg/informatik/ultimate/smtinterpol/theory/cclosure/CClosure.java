@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTermPairHash.Info.Entry;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.EQAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ArrayQueue;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
@@ -268,7 +269,7 @@ public class CClosure implements ITheory {
 					&& eq.getDecideStatus().getSign() == lit.getSign()) {
 					return new Clause(new Literal[] { 
 					     eq.getDecideStatus().negate(), lit },
-							new LeafNode(LeafNode.EQ, null));
+							new LeafNode(LeafNode.EQ, EQAnnotation.EQ));
 				}
 			}
 			throw new AssertionError("Cannot find explanation for " + laeq);
@@ -294,7 +295,7 @@ public class CClosure implements ITheory {
 				&& laeq.getDecideStatus().getSign() != literal.getSign()) {
 				return new Clause(new Literal[] { 
 					laeq.getDecideStatus().negate(), literal.negate() },
-						new LeafNode(LeafNode.EQ, null));
+						new LeafNode(LeafNode.EQ, EQAnnotation.EQ));
 			}
 			mPendingLits.add(literal == eq ? laeq : laeq.negate());
 		}

@@ -23,7 +23,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -143,7 +142,10 @@ public class LinArSolve implements ITheory {
 	private long mPropBoundTime;
 	private long mPropBoundSetTime;
 	private long mBacktrackPropTime;
-	private ArrayDeque<LinVar> mPropBounds;
+	/**
+	 * The variables for which we need to recompute the composite bounds.
+	 */
+	private TreeSet<LinVar> mPropBounds;
 	private LinVar mConflictVar;
 	private Rational mEps;
 	
@@ -161,7 +163,7 @@ public class LinArSolve implements ITheory {
 		mEngine = engine;
 		mLinvars = new ArrayList<LinVar>();
 		mIntVars = new ArrayList<LinVar>();
-		mPropBounds = new ArrayDeque<LinVar>();
+		mPropBounds = new TreeSet<LinVar>();
 		mProplist = new ArrayDeque<Literal>();
 		mSuggestions = new ArrayDeque<Literal>();
 		mTerms = new ScopedHashMap<Map<LinVar,Rational>,LinVar>();
@@ -398,7 +400,7 @@ public class LinArSolve implements ITheory {
 					if (conflict == null)
 						conflict = propagateBound(var, false);
 					else
-						mPropBounds.addLast(var);
+						mPropBounds.add(var);
 				}
 				
 			} else {
@@ -409,7 +411,7 @@ public class LinArSolve implements ITheory {
 					if (conflict == null)
 						conflict = propagateBound(var, true);
 					else
-						mPropBounds.addLast(var);
+						mPropBounds.add(var);
 				}
 			}
 			assert(!var.mBasic || var.checkBrpCounters());
@@ -545,32 +547,39 @@ public class LinArSolve implements ITheory {
 		Clause conflict = checkPendingConflict();
 		if (conflict != null)
 			return conflict;
+		conflict = checkPendingBoundPropagations();
+		if (conflict != null)
+			return conflict;
 		
+		assert checkClean();
+		return fixOobs();
+	}
+
+	private Clause checkPendingBoundPropagations() {
 		/* check if there are unprocessed bounds */
 		while (!mPropBounds.isEmpty()) {
-			LinVar b = mPropBounds.removeFirst();
+			LinVar b = mPropBounds.pollFirst();
 			if (b.mDead || !b.mBasic)
 				continue;
 			assert b.checkBrpCounters();
 			long time;
 			if (Config.PROFILE_TIME)
 				time = System.nanoTime();
+			Clause conflict = null;
 			if (b.mNumUpperInf == 0)
 				conflict = propagateBound(b, true);
 			if (b.mNumLowerInf == 0) {
 				if (conflict == null)
 					conflict = propagateBound(b, false);
 				else
-					mPropBounds.addLast(b);
+					mPropBounds.add(b);
 			}
 			if (Config.PROFILE_TIME)
 				mBacktrackPropTime += System.nanoTime() - time;
 			if (conflict != null)
 				return conflict;
 		}
-		
-		assert checkClean();
-		return fixOobs();
+		return null;
 	}
 
 	@Override
@@ -725,7 +734,7 @@ public class LinArSolve implements ITheory {
 		if (cceq == cclit)
 			ea = ea.negate();
 		return new Clause(new Literal[] { cclit, ea }, 
-				new LeafNode(LeafNode.EQ, null));
+				new LeafNode(LeafNode.EQ, EQAnnotation.EQ));
 	}
 
 	/**
@@ -795,7 +804,7 @@ public class LinArSolve implements ITheory {
 			// Propagate Disequalities
 			LAEquality ea;
 			while (bound.mEps == 0 && (ea = var.getDiseq(bound.mA)) != null) {
-				bound = bound.sub(epsilon);				
+				bound = bound.sub(epsilon);
 				if (ea.getStackPosition() > lastLiteral.getStackPosition()) {
 					lastLiteral = new LiteralReason(var, bound, 
 							true, ea.negate());
@@ -864,7 +873,7 @@ public class LinArSolve implements ITheory {
 					: var.mConstraints.subMap(oldBound, bound).values()) {
 				assert bc.getInverseBound().lesseq(var.getLowerBound());
 				mProplist.add(bc.negate());
-			}			
+			}
 			for (LAEquality laeq
 					: var.mEqualities.subMap(oldBound, bound).values()) {
 				mProplist.add(laeq.negate());
@@ -887,11 +896,13 @@ public class LinArSolve implements ITheory {
 	
 	@Override
 	public Clause setLiteral(Literal literal) {
+		Clause conflict = checkPendingBoundPropagations();
+		if (conflict != null)
+			return conflict;
 		assert checkClean();
 		if (mProplist.contains(literal.negate()))
 			return getUnitClause(literal.negate());
 		DPLLAtom atom = literal.getAtom();
-		Clause conflict = null;
 		if (atom instanceof LAEquality) {
 			LAEquality lasd = (LAEquality) atom;
 			/* Propagate dependent atoms */
@@ -961,6 +972,9 @@ public class LinArSolve implements ITheory {
 
 	@Override
 	public Clause checkpoint() {
+		Clause conflict = checkPendingBoundPropagations();
+		if (conflict != null)
+			return conflict;
 		// Prevent pivoting before tableau simplification
 		if (!mInCheck)
 			return null;
@@ -1137,13 +1151,13 @@ public class LinArSolve implements ITheory {
 				if (conflict == null)
 					conflict = propagateBound(row, true);
 				else
-					mPropBounds.addLast(row);
+					mPropBounds.add(row);
 			}
 			if (row.mNumLowerInf == 0) {
 				if (conflict == null)
 					conflict = propagateBound(row, false);
 				else
-					mPropBounds.addLast(row);
+					mPropBounds.add(row);
 			}
 		}
 		
@@ -1153,13 +1167,13 @@ public class LinArSolve implements ITheory {
 			if (conflict == null)
 				conflict = propagateBound(nonbasic, true);
 			else
-				mPropBounds.addLast(nonbasic);
+				mPropBounds.add(nonbasic);
 		}
 		if (nonbasic.mNumLowerInf == 0) {
 			if (conflict == null)
 				conflict = propagateBound(nonbasic, false);
 			else
-				mPropBounds.addLast(nonbasic);
+				mPropBounds.add(nonbasic);
 		}
 		if (Config.PROFILE_TIME)
 			mPivotTime += System.nanoTime() - starttime;
@@ -1510,14 +1524,8 @@ public class LinArSolve implements ITheory {
 		val = val.mul(gcd);
 		v.mCurval = val.toInfinitNumber();
 		assert v.checkBrpCounters();
-		if (v.mNumUpperInf == 0) {
-			propagateBound(v, true);
-			/* ignore conflicts */
-		}
-		if (v.mNumLowerInf == 0) {
-			propagateBound(v, false);
-			/* ignore conflicts */
-		}
+		if (v.mNumUpperInf == 0 || v.mNumLowerInf == 0)
+			mPropBounds.add(v);
 		assert !v.mCurval.mA.denominator().equals(BigInteger.ZERO);
 	}
 	
@@ -1614,16 +1622,14 @@ public class LinArSolve implements ITheory {
 		 */
 		HashMap<LinVar,TreeMap<LinVar,Rational>> newsimps = 
 			new HashMap<LinVar, TreeMap<LinVar,Rational>>();
-		LinkedHashSet<LinVar> props = new LinkedHashSet<LinVar>(mPropBounds);
 		for (LinVar v : removeVars) {
 			assert v.mBasic;
 			mEngine.getLogger().debug(new DebugMessage("Simplifying {0}",v));
 			TreeMap<LinVar,Rational> coeffs = removeVar(v);
 			updateSimps(v,coeffs);
 			newsimps.put(v,coeffs);
-			props.remove(v);
+			mPropBounds.remove(v);
 		}
-		mPropBounds = new ArrayDeque<LinVar>(props);
 		mSimps.putAll(newsimps);
 		assert checkPostSimplify();
 		return null;
@@ -2286,6 +2292,7 @@ public class LinArSolve implements ITheory {
 		}
 		for (LinVar v : removeVars) {
 			mOob.remove(v);
+			mPropBounds.remove(v);
 			if (v.mDead)
 				mSimps.remove(v);
 			else
@@ -2303,8 +2310,6 @@ public class LinArSolve implements ITheory {
 		// TODO This is a bit too much but should work
 		mSuggestions.clear();
 		mProplist.clear();
-		// TODO What is this for?
-		mPropBounds.clear();
 		assert popPost();
 	}
 

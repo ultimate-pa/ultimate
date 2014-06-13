@@ -160,7 +160,8 @@ public interface ProofConstants {
 	public final static int AUX_DIV_HIGH          = 17;
 	public final static int AUX_TO_INT_LOW        = 18;
 	public final static int AUX_TO_INT_HIGH       = 19;
-	public final static int AUX_EQ                = 20;
+	public final static int AUX_ARRAY_STORE       = 20;
+	public final static int AUX_ARRAY_DIFF        = 21;
 	
 	public final static Annotation[] AUXANNOTS = {
 		new Annotation(":trueNotFalse", null),
@@ -183,7 +184,8 @@ public interface ProofConstants {
 		new Annotation(":divHigh", null),
 		new Annotation(":toIntLow", null),
 		new Annotation(":toIntHigh", null),
-		new Annotation(":eq", null)
+		new Annotation(":store", null),
+		new Annotation(":diff", null)
 	};
 	
 	//// ==== Structural splitting constants ====

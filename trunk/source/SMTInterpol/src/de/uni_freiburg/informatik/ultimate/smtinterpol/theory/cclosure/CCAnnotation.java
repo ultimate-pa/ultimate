@@ -18,11 +18,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
+import java.util.Collection;
+
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CongruencePath.SubPath;
 
 /**
  * Annotations for congruence-closure theory lemmata.
@@ -51,26 +54,21 @@ public class CCAnnotation implements IAnnotation {
 	CCEquality     mDiseq;
 
 	/**
-	 * A sequence of paths in (almost) arbitrary order.  The main path
-	 * with index 0 must always exist and explain the diseq.  The other paths
-	 * may explain congruences in different paths.
+	 * A sequence of paths.  The main path with index 0 must always exist 
+	 * and explain the diseq.  The other paths must be in such an order
+	 * that later paths explain congruences on earlier.
 	 */
 	CCTerm[][]     mPaths;
 
-	/**
-	 * For each path this is the sequence of literals explaining the steps in
-	 * the path.  If an entry is null, this is a congruence explained by a
-	 * different path.
-	 */
-	CCEquality[][] mLitsOnPaths;
-	
-    public CCAnnotation(CCEquality diseq, CCTerm[][] paths,
-            CCEquality[][] litsOnPaths) {
-        super();
-        this.mDiseq = diseq;
-        this.mPaths = paths;
-        this.mLitsOnPaths = litsOnPaths;
-    }
+	public CCAnnotation(CCEquality diseq, Collection<SubPath> paths) {
+		super();
+		this.mDiseq = diseq;
+		this.mPaths = new CCTerm[paths.size()][];
+		int i = 0;
+		for (SubPath p : paths) {
+			mPaths[i++] = p.getTerms();
+		}
+	}
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -78,11 +76,11 @@ public class CCAnnotation implements IAnnotation {
 		sb.append(mDiseq);
 		for (int p = 0; p < mPaths.length; p++) {
 			sb.append("::(");
-			for (int i = 0; i < mLitsOnPaths[p].length; i++) {
-				sb.append('[').append(mPaths[p][i]).append(']');
-				sb.append(mLitsOnPaths[p][i]);
+			String comma = "";
+			for (CCTerm term : mPaths[p]) {
+				sb.append(comma).append(term);
+				comma = " ";
 			}
-			sb.append('[').append(mPaths[p][mPaths[p].length - 1]).append("])");// NOPMD
 		}
 		sb.append(')');
 		return sb.toString();
@@ -94,29 +92,6 @@ public class CCAnnotation implements IAnnotation {
 
 	public CCTerm[][] getPaths() {
 		return mPaths;
-	}
-
-	public CCEquality[][] getLitsOnPaths() {
-		return mLitsOnPaths;
-	}
-
-	@Override
-	public String toSExpr(Theory smtTheory) {
-		StringBuilder sb = new StringBuilder();
-		sb.append('(');
-		if (mDiseq != null)
-			sb.append(mDiseq.negate().getSMTFormula(smtTheory));
-		for (int p = 0; p < mPaths.length; p++) {
-			sb.append(" :subpath (");
-			String spacer = "";
-			for (CCTerm t : mPaths[p]) {
-				sb.append(spacer).append(t.toSMTTerm(smtTheory));
-				spacer = " ";
-			}
-			sb.append(')');
-		}
-		sb.append(')');
-		return sb.toString();
 	}
 
 	@Override
