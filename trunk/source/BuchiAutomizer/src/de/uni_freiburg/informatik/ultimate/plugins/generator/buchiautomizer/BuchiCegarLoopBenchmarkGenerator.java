@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.be
 
 public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerator {
 	
-	int[] m_NontrivialModuleStages = new int[4];
+	int[] m_NontrivialModuleStages = new int[5];
 	LassoAnalysisResults m_LassoAnalysisResults = new LassoAnalysisResults();
 	private BackwardCoveringInformation m_BciFinite = new BackwardCoveringInformation(0, 0);
 	private BackwardCoveringInformation m_BciBuchi = new BackwardCoveringInformation(0, 0);
