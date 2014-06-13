@@ -199,7 +199,7 @@ public class LassoRankerTerminationAnalysis {
 		return new PreProcessor[] {
 				new RewriteArrays(rvc),
 				new RewriteDivision(rvc),
-				new RewriteBooleans(rvc, m_old_script),
+				new RewriteBooleans(rvc),
 				new RewriteIte(),
 				new RewriteTrueFalse(),
 				new RewriteEquality(),

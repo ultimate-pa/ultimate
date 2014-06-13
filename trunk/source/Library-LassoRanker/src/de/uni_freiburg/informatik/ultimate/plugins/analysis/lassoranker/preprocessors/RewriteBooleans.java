@@ -54,12 +54,12 @@ public class RewriteBooleans implements PreProcessor {
 	private static final String s_repOutPostfix = "_out_bool";
 	private static final String s_repVarSortName = "Real";
 	
-	private final Script m_Script;
+	private Script m_Script;
 	
 	/**
 	 * The sort to be used for new replacement TermVariable's
 	 */
-	private final Sort m_repVarSort;
+	private Sort m_repVarSort;
 	
 	/**
 	 * For generating replacement variables
@@ -67,7 +67,8 @@ public class RewriteBooleans implements PreProcessor {
 	private final VarCollector m_rankVarCollector;
 	
 	/**
-	 * A collection of the generated replacement variables
+	 * A collection of the generated replacement variables.
+	 * Used only for debugging.
 	 */
 	private final Collection<ReplacementVar> m_repVars;
 	
@@ -82,13 +83,12 @@ public class RewriteBooleans implements PreProcessor {
 	 * @param rankVarCollector collecting the new in- and outVars
 	 * @param script the Script for creating new variables
 	 */
-	public RewriteBooleans(VarCollector rankVarCollector, Script script) {
+	public RewriteBooleans(VarCollector rankVarCollector) {
 		m_rankVarCollector = rankVarCollector;
 		m_SubstitutionMapping = new LinkedHashMap<TermVariable, TermVariable>();
 		m_repVars = new ArrayList<ReplacementVar>();
-		m_Script = script;
-		m_repVarSort = m_Script.sort(s_repVarSortName);
-		generateRepVars();
+
+		
 	}
 	
 	/**
@@ -166,7 +166,9 @@ public class RewriteBooleans implements PreProcessor {
 	
 	@Override
 	public Term process(Script script, Term term) {
-		assert m_Script == script;
+		m_Script = script;
+		m_repVarSort = m_Script.sort(s_repVarSortName);
+		generateRepVars();
 		return (new RewriteBooleanHelper()).transform(term);
 	}
 	
