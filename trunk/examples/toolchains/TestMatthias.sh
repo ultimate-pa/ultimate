@@ -15,7 +15,7 @@ fi
 if [ "$1" = "buchiForward-da" ]; then
 echo "$1"
 trunk/examples/toolchains/AutomizerTestDir.sh -da 1900 "$2" \
- "BuchiAutomizerBplWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/staged300Forward-SMTInterpol.epf"
+ "BuchiAutomizerBplWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/staged300Forward-Z3.epf"
 fi
 
 
