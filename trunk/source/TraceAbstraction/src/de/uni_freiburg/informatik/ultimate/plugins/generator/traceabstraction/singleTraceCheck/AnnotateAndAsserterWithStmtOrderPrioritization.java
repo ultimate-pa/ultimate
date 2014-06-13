@@ -117,6 +117,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		// the rest of the statements
 		if (m_Satisfiable != LBool.UNSAT && stmtsWithoutLoop.size() != m_Trace.length()) {
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(m_Trace, callPositions, pendingReturnPositions, stmtsWithinLoop);
+			assert callPositions.containsAll(m_Trace.getCallPositions());
+			assert m_Trace.getCallPositions().containsAll(callPositions);
 			m_Satisfiable = m_SmtManager.getScript().checkSat();
 		}
 		s_Logger.info("Conjunction of SSA is " + m_Satisfiable);
@@ -143,7 +145,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 				m_AnnotSSA.setFormulaAtNonCallPos(i, annotateAndAssertNonCall(i));
 			}
 		}
-		assert callPositions.containsAll(trace.getCallPositions());
+		
 
 		// number that the pending context. The first pending context has
 		// number -1, the second -2, ...
