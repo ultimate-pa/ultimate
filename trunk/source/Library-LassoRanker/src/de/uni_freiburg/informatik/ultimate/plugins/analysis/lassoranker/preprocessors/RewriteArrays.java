@@ -621,7 +621,18 @@ public class RewriteArrays implements PreProcessor {
 		 * Returns a String that we use to refer to the array cell array[index].
 		 */
 		private String getArrayCellName(TermVariable array, List<Term> index) {
-			return "arrayCell_" + array.toString() + index.toString();
+			return "arrayCell_" + removeSmtQuoteCharacters(array.toString()) + 
+					removeSmtQuoteCharacters(index.toString());
+		}
+		
+		/**
+		 * Removes vertical bars from a String.
+		 * In SMT-LIB identifiers can be quoted using | (vertical bar) and  
+		 * vertical bars must not be nested.
+		 */
+		private String removeSmtQuoteCharacters(String string) {
+			String result = string.replaceAll("\\|", ""); 
+			return result;
 		}
 		
 		public void dotSomething() {
