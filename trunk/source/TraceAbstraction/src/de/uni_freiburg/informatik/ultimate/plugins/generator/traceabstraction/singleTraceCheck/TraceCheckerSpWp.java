@@ -61,7 +61,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	
 	private final static boolean m_useUnsatCoreOfFineGranularity = true;
-	private final boolean m_useAnnotateAndAsserterWithPriorizedOrder = !false;
+	private final boolean m_useAnnotateAndAsserterWithPriorizedOrder = false;
 	private final static boolean m_useLiveVariables = true;
 	private final static boolean m_LogInformation = true;
 	private final static boolean m_CollectInformationAboutQuantifiedPredicates = true;
