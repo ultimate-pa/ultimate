@@ -8,9 +8,16 @@ fi
 
 if [ "$1" = "terminator-da" ]; then
 echo "buchiAutomizer for folder $2"
-trunk/examples/toolchains/AutomizerTestDir.sh -da 900 "$2" \
+trunk/examples/toolchains/AutomizerTestDir.sh -da 1900 "$2" \
  "BuchiAutomizerBplWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/staged300-SMTInterpol.epf"
 fi
+
+if [ "$1" = "buchiForward-da" ]; then
+echo "$1"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 1900 "$2" \
+ "BuchiAutomizerBplWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/staged300Forward-SMTInterpol.epf"
+fi
+
 
 if [ "$1" = "templateBenchmark" ]; then
 echo "buchiAutomizer for folder $2"
