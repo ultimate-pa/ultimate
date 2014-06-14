@@ -64,6 +64,8 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	protected static Logger s_Logger =
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
+	public static final long s_randomSeed = 80085;
+	
 	/**
 	 * The SMT script for argument synthesis
 	 */
@@ -168,7 +170,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 */
 	protected int simplifyAssignment(ArrayList<Term> variables) {
 		// Shuffle the variable list for better effect
-		Random rnd =  new Random(System.nanoTime());
+		Random rnd =  new Random(s_randomSeed);
 		Collections.shuffle(variables, rnd);
 		
 		int pops = 0;
