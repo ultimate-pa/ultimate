@@ -248,4 +248,14 @@ public class SmtUtils {
 		}
 		return result;
 	}
+	
+	/**
+	 * Removes vertical bars from a String.
+	 * In SMT-LIB identifiers can be quoted using | (vertical bar) and  
+	 * vertical bars must not be nested.
+	 */
+	public static String removeSmtQuoteCharacters(String string) {
+		String result = string.replaceAll("\\|", ""); 
+		return result;
+	}
 }

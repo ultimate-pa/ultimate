@@ -311,12 +311,16 @@ public class RewriteArrays implements PreProcessor {
 			assert child != null;
 			assert parent != null;
 			assert child != parent;
+			assert child.toString() != null;
+			assert parent.toString() != null;
 			m_ParentGeneration.put(child, parent);
 		}
 		
 		private void putInstance2FirstGeneration(TermVariable child, TermVariable progenitor) {
 			assert child != null;
 			assert progenitor != null;
+			assert child.toString() != null;
+			assert progenitor.toString() != null;
 			m_Instance2OriginalGeneration.put(child, progenitor);
 		}
 		
@@ -478,7 +482,7 @@ public class RewriteArrays implements PreProcessor {
 		}
 
 		private TermVariable constructAuxiliaryVariable(Term oldArray) {
-			String name = oldArray.toString() + s_AuxArray; 
+			String name = SmtUtils.removeSmtQuoteCharacters(oldArray.toString() + s_AuxArray); 
 			TermVariable auxArray = 
 					m_VarCollector.getFactory().getNewTermVariable(name, oldArray.getSort());
 			return auxArray;
@@ -621,18 +625,8 @@ public class RewriteArrays implements PreProcessor {
 		 * Returns a String that we use to refer to the array cell array[index].
 		 */
 		private String getArrayCellName(TermVariable array, List<Term> index) {
-			return "arrayCell_" + removeSmtQuoteCharacters(array.toString()) + 
-					removeSmtQuoteCharacters(index.toString());
-		}
-		
-		/**
-		 * Removes vertical bars from a String.
-		 * In SMT-LIB identifiers can be quoted using | (vertical bar) and  
-		 * vertical bars must not be nested.
-		 */
-		private String removeSmtQuoteCharacters(String string) {
-			String result = string.replaceAll("\\|", ""); 
-			return result;
+			return "arrayCell_" + SmtUtils.removeSmtQuoteCharacters(array.toString()) + 
+					SmtUtils.removeSmtQuoteCharacters(index.toString());
 		}
 		
 		public void dotSomething() {
