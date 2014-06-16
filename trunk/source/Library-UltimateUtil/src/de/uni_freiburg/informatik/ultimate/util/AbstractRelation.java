@@ -138,7 +138,12 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	 * domainElem, the pair (domainElem, r) is in the relation.
 	 */
 	public Set<R> getImage(D domainElem) {
-		return Collections.unmodifiableSet(m_Map.get(domainElem));
+		Set<R> set = m_Map.get(domainElem);
+		if (set == null) {
+			return null;
+		} else {
+			return Collections.unmodifiableSet(m_Map.get(domainElem));
+		}
 	}
 	
 	/**
