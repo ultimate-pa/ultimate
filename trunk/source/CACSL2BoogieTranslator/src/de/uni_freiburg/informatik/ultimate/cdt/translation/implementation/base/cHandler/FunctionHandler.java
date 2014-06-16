@@ -817,7 +817,10 @@ public class FunctionHandler {
 		// f.i. we get a wrong methodname here in defineFunction.c, because of a #define in the original code
 		String methodName = ((IASTIdExpression) functionName).getName().toString();
 		
-		if (methodName.equals("malloc")) {
+		// handle alloca the same way as malloc. This is an unsound workaround 
+		// introduced by Matthias for testing capabilities of termination 
+		// analysis ASAP
+		if (methodName.equals("malloc") || methodName.equals("alloca")) {
 			assert node.getArguments().length == 1;
 			Result sizeRes = main.dispatch(node.getArguments()[0]);
 			assert sizeRes instanceof ResultExpression;
