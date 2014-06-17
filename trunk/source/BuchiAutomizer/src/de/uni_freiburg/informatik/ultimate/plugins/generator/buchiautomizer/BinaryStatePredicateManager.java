@@ -56,6 +56,7 @@ public class BinaryStatePredicateManager {
 	
 	private IPredicate m_StemPrecondition;
 	private IPredicate m_StemPostcondition;
+	private IPredicate m_SiConjunction;
 	private IPredicate m_Honda;
 	private IPredicate m_RankEqualityAndSi;
 	private IPredicate m_RankEquality;
@@ -151,6 +152,11 @@ public class BinaryStatePredicateManager {
 		return m_StemPostcondition;
 	}
 
+	public IPredicate getSiConjunction() {
+		assert m_ProvidesPredicates;
+		return m_SiConjunction;
+	}
+
 	@Deprecated
 	public IPredicate getHondaPredicate() {
 		assert m_ProvidesPredicates;
@@ -181,6 +187,7 @@ public class BinaryStatePredicateManager {
 		m_TerminationArgument = null;
 		m_StemPrecondition = null;
 		m_StemPostcondition = null;
+		m_SiConjunction = null;
 		m_Honda = null;
 		m_RankEqualityAndSi = null;
 		m_RankEquality = null;
@@ -207,13 +214,13 @@ public class BinaryStatePredicateManager {
 		m_TerminationArgument = termArg;
 		IPredicate unseededPredicate = unseededPredicate();
 		m_StemPrecondition = unseededPredicate;
-		IPredicate siConjunction = computeSiConjunction(
+		m_SiConjunction = computeSiConjunction(
 				m_TerminationArgument.getSupportingInvariants());
-		boolean siConjunctionIsTrue = isTrue(siConjunction);
+		boolean siConjunctionIsTrue = isTrue(m_SiConjunction);
 		if (siConjunctionIsTrue) {
 			m_StemPostcondition = unseededPredicate;
 		} else {
-			TermVarsProc tvp = m_SmtManager.and(unseededPredicate, siConjunction);
+			TermVarsProc tvp = m_SmtManager.and(unseededPredicate, m_SiConjunction);
 			m_StemPostcondition = m_SmtManager.newPredicate(tvp.getFormula(), 
 					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula()); 
 		}
@@ -223,7 +230,7 @@ public class BinaryStatePredicateManager {
 		if (siConjunctionIsTrue) {
 			m_RankEqualityAndSi = m_RankEquality;
 		} else {
-			TermVarsProc tvp = m_SmtManager.and(m_RankEquality, siConjunction);
+			TermVarsProc tvp = m_SmtManager.and(m_RankEquality, m_SiConjunction);
 			m_RankEqualityAndSi = m_SmtManager.newPredicate(tvp.getFormula(), 
 					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula()); 
 		}
@@ -237,7 +244,7 @@ public class BinaryStatePredicateManager {
 		if (siConjunctionIsTrue) {
 			m_Honda = unseededOrRankDecrease;
 		} else {
-			TermVarsProc tvp = m_SmtManager.and(siConjunction, unseededOrRankDecrease);
+			TermVarsProc tvp = m_SmtManager.and(m_SiConjunction, unseededOrRankDecrease);
 			m_Honda = m_SmtManager.newPredicate(tvp.getFormula(), 
 					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 		}

@@ -155,6 +155,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 				}
 			}
 		}
+		m_InputAuxFreePredicates.add(m_Bspm.getSiConjunction());
 		for (IPredicate loopPredicate : loopInterpolants) {
 			if (!m_InputLoopPredicates.contains(loopPredicate)) {
 				m_InputLoopPredicates.add(loopPredicate);
