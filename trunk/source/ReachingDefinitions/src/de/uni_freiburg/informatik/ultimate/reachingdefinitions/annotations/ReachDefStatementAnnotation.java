@@ -1,18 +1,18 @@
-package de.uni_freiburg.informatik.ultimate.irsdependencies.reachdef;
+package de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations;
 
 import java.util.HashMap;
 import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 
-public class ReachingDefinitionsStatementAnnotation extends ReachingDefinitionsBaseAnnotation {
+public class ReachDefStatementAnnotation extends ReachDefBaseAnnotation {
 
 	private static final long serialVersionUID = 1L;
 
-	HashMap<String, HashSet<Statement>> mDefs;
-	HashMap<String, HashSet<Statement>> mUse;
+	private HashMap<String, HashSet<Statement>> mDefs;
+	private HashMap<String, HashSet<Statement>> mUse;
 
-	public ReachingDefinitionsStatementAnnotation() {
+	public ReachDefStatementAnnotation() {
 		mDefs = new HashMap<>();
 		mUse = new HashMap<>();
 	}
@@ -46,8 +46,12 @@ public class ReachingDefinitionsStatementAnnotation extends ReachingDefinitionsB
 	 * @param other
 	 * @return true iff this Def set was changed.
 	 */
-	public boolean unionDef(ReachingDefinitionsStatementAnnotation other) {
+	public boolean unionDef(ReachDefStatementAnnotation other) {
 		if (other.mDefs == null) {
+			return false;
+		}
+
+		if (other == this) {
 			return false;
 		}
 
@@ -61,17 +65,31 @@ public class ReachingDefinitionsStatementAnnotation extends ReachingDefinitionsB
 	}
 
 	@Override
-	public ReachingDefinitionsStatementAnnotation clone() {
-		ReachingDefinitionsStatementAnnotation rtr = new ReachingDefinitionsStatementAnnotation();
-		if (mDefs != null) {
-			rtr.mDefs = new HashMap<>(mDefs);
-		}
-		
-		if(mUse != null){
-			rtr.mUse = new HashMap<>(mUse);
-		}
-		
+	public ReachDefStatementAnnotation clone() {
+		ReachDefStatementAnnotation rtr = new ReachDefStatementAnnotation();
+		rtr.mDefs = copy(mDefs);
+		rtr.mUse = copy(mUse);
+
 		return rtr;
+	}
+
+	private HashMap<String, HashSet<Statement>> copy(HashMap<String, HashSet<Statement>> other) {
+		if (other == null) {
+			return null;
+		}
+		HashMap<String, HashSet<Statement>> newmap = new HashMap<>();
+		for (String key : other.keySet()) {
+			HashSet<Statement> otherset = other.get(key);
+			if (otherset == null) {
+				continue;
+			}
+			HashSet<Statement> newset = new HashSet<>();
+			for (Statement stmt : otherset) {
+				newset.add(stmt);
+			}
+			newmap.put(key, newset);
+		}
+		return newmap;
 	}
 
 	@Override

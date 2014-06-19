@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.irsdependencies.observers;
 
+import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors.DebugRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors.DummyVisitor;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.walker.ObserverDispatcher;

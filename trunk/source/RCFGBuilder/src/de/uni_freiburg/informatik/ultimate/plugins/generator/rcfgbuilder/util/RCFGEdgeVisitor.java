@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;

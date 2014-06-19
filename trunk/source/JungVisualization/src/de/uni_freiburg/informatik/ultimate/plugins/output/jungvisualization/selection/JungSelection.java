@@ -1,37 +1,37 @@
 package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.selection;
 
-import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPayloadSelection;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
+import de.uni_freiburg.informatik.ultimate.gui.interfaces.IElementSelection;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 /**
- * Privides access to the payload of nodes.
- * @see {@link IPayloadSelection}
+ * Provides access to nodes.
+ * @see {@link IElementSelection}
  * @author lena
  *
  */
-public class JungSelection implements IPayloadSelection {
+public class JungSelection implements IElementSelection {
 	
-	private IPayload selectedNodePayload;
+	private IElement mSelectedNodePayload;
 	
 	
 	public JungSelection() {
-		this.selectedNodePayload = null;
+		mSelectedNodePayload = null;
 	}
 
 	@Override
-	public IPayload getPayload() {
-		return this.selectedNodePayload;
+	public IElement getElement() {
+		return mSelectedNodePayload;
 		
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return (this.selectedNodePayload == null);
+		return (mSelectedNodePayload == null);
 	}
 
 	@Override
-	public void setPayload(IPayload payload) {
-		this.selectedNodePayload = payload;
+	public void setElement(IElement payload) {
+		mSelectedNodePayload = payload;
 	}
 
 }

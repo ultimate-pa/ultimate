@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.gui.views;
 
-import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPayloadSelection;
+import de.uni_freiburg.informatik.ultimate.gui.interfaces.IElementSelection;
 import de.uni_freiburg.informatik.ultimate.gui.provider.AnnotationTreeProvider;
 import de.uni_freiburg.informatik.ultimate.gui.provider.AnnotationsLabelProvider;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -53,11 +53,11 @@ public class NodeView extends ViewPart implements ISelectionListener {
 	}
 
 	public void selectionChanged(IWorkbenchPart part, final ISelection selection) {
-		if (selection instanceof IPayloadSelection) {
+		if (selection instanceof IElementSelection) {
 			UIJob job = new UIJob("Selection changed...") {
 				public IStatus runInUIThread(IProgressMonitor mon) {
 					treeViewer.setSelection(null);
-					treeViewer.setInput(((IPayloadSelection) selection).getPayload());
+					treeViewer.setInput(((IElementSelection) selection).getElement());
 					treeViewer.expandAll();
 					treeViewer.refresh();
 					return Status.OK_STATUS;

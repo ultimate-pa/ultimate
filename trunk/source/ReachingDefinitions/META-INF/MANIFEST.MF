@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ReachingDefinitions
+Bundle-SymbolicName: ReachingDefinitions;singleton:=true
+Bundle-Version: 0.0.1
+Require-Bundle: UltimateCore,
+ Library-log4j,
+ RCFGBuilder
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Export-Package: de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.reachingdefinitions.plugin.Activator

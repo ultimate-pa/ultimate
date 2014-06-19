@@ -34,7 +34,6 @@ public class IRSDependenciesPreferenceInitializer extends UltimatePreferenceInit
 	private static final String sMode = "Mode";
 	
 	public enum Mode{
-		ReachDef,
 		Default
 	}
 	

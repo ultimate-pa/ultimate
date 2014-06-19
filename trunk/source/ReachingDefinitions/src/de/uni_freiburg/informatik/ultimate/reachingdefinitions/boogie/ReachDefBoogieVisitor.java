@@ -1,14 +1,15 @@
-package de.uni_freiburg.informatik.ultimate.irsdependencies.reachdef;
+package de.uni_freiburg.informatik.ultimate.reachingdefinitions.boogie;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 
-public class ReachingDefinitionsVisitor extends BoogieVisitor {
+public class ReachDefBoogieVisitor extends BoogieVisitor {
 
-	private ReachingDefinitionsStatementAnnotation mCurrentRD;
+	private ReachDefStatementAnnotation mCurrentRD;
 	private Statement mCurrentStatement;
 
 	private enum Mode {
@@ -17,7 +18,7 @@ public class ReachingDefinitionsVisitor extends BoogieVisitor {
 
 	private Mode mMode;
 
-	public ReachingDefinitionsVisitor(ReachingDefinitionsStatementAnnotation current) {
+	public ReachDefBoogieVisitor(ReachDefStatementAnnotation current) {
 		assert current != null;
 		mCurrentRD = current;
 	}

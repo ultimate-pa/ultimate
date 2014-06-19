@@ -240,6 +240,7 @@
 		<module>../Library-LassoRanker</module>
 		<module>../BuchiProgramProduct</module>
 		<module>../LTL2aut</module>
+		<module>../ReachingDefinitions</module>
 	</modules>
 
 	<profiles>

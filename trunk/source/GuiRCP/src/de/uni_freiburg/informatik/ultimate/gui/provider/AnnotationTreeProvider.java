@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.structure.ITree;
@@ -32,8 +33,8 @@ import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
 public class AnnotationTreeProvider implements ITreeContentProvider {
 
 	public Object[] getChildren(Object parentElement) {
-		if (parentElement instanceof IPayload) {
-			return generateChildren((IPayload) parentElement);
+		if (parentElement instanceof IElement) {
+			return generateChildren((IElement) parentElement);
 		}
 		if (parentElement instanceof GroupEntry) {
 			return ((GroupEntry) parentElement).getEntries();
@@ -58,8 +59,8 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 	}
 
 	public boolean hasChildren(Object element) {
-		if (element instanceof IPayload) {
-			return generateChildren((IPayload) element).length != 0;
+		if (element instanceof IElement) {
+			return generateChildren((IElement) element).length != 0;
 		}
 		if (element instanceof GroupEntry) {
 			return ((GroupEntry) element).getEntries().length != 0;
@@ -82,50 +83,60 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 
 	}
 
-	private Map<IPayload,Object[]> mBuffer;
+	private Map<IPayload, Object[]> mBuffer;
 
-	private Object[] generateChildren(IPayload node) {
-		if(mBuffer == null){
-			mBuffer = new HashMap<IPayload,Object[]>();
+	private Object[] generateChildren(IElement elem) {
+		if (mBuffer == null) {
+			mBuffer = new HashMap<IPayload, Object[]>();
 		}
-		
+
+		if (!elem.hasPayload()) {
+			return new Object[] {};
+		}
+		IPayload node = (IPayload) elem.getPayload();
+
 		Object[] currentBuffer = mBuffer.get(node);
-		
-		if (currentBuffer == null) {
-			ArrayList<Object> returnObj = new ArrayList<Object>();
-			GroupEntry general = new GroupEntry("General", null);
-			// general.addEntry(new
-			// Entry("Depth",Integer.toString(node.getDepth()),general));
-			general.addEntry(new Entry("Name", node.getName(), general));
-			general.addEntry(new Entry("UID", node.getID().toString(), general));
-			GroupEntry location = new GroupEntry("Location", general);
-			general.addEntry(location);
-			location.addEntry(new Entry("Source Info", node.getLocation().toString(), location));
-			location.addEntry(new Entry("Filename", node.getLocation().getFileName(), location));
-			location.addEntry(new Entry("Start Line Number", Integer.toString(node.getLocation().getStartLine()),
-					location));
-			location.addEntry(new Entry("Start Column Number", Integer.toString(node.getLocation().getStartColumn()),
-					location));
-			location.addEntry(new Entry("End Line Number", Integer.toString(node.getLocation().getEndLine()), location));
-			location.addEntry(new Entry("End Column Number", Integer.toString(node.getLocation().getEndColumn()),
-					location));
-			GroupEntry annotation = new GroupEntry("Annotations", null);
 
-			for (String outer : node.getAnnotations().keySet()) {
-				GroupEntry group = new GroupEntry(outer, annotation);
-				IAnnotations subhash = node.getAnnotations().get(outer);
-
-				for (String inner : subhash.getAnnotationsAsMap().keySet()) {
-					group.addEntry(convertEntry(inner, subhash.getAnnotationsAsMap().get(inner), group));
-				}
-				annotation.addEntry(group);
-
-			}
-			returnObj.add(general);
-			returnObj.add(annotation);
-			currentBuffer = returnObj.toArray();
-			mBuffer.put(node, currentBuffer);
+		if (currentBuffer != null) {
+			return currentBuffer;
 		}
+		
+		ArrayList<Object> returnObj = new ArrayList<Object>();
+		GroupEntry general = new GroupEntry("IElement", null);
+		returnObj.add(general);
+		general.addEntry(new Entry("HashCode", String.valueOf(elem.hashCode()), general));
+		
+		GroupEntry payload = new GroupEntry("IPayload", null);
+		returnObj.add(payload);
+		payload.addEntry(new Entry("Name", node.getName(), general));
+		payload.addEntry(new Entry("UID", node.getID().toString(), general));
+		
+		GroupEntry location = new GroupEntry("IPayload.Location", general);
+		returnObj.add(location);
+		location.addEntry(new Entry("Source Info", node.getLocation().toString(), location));
+		location.addEntry(new Entry("Filename", node.getLocation().getFileName(), location));
+		location.addEntry(new Entry("Start Line Number", Integer.toString(node.getLocation().getStartLine()), location));
+		location.addEntry(new Entry("Start Column Number", Integer.toString(node.getLocation().getStartColumn()),
+				location));
+		location.addEntry(new Entry("End Line Number", Integer.toString(node.getLocation().getEndLine()), location));
+		location.addEntry(new Entry("End Column Number", Integer.toString(node.getLocation().getEndColumn()), location));
+		
+		GroupEntry annotation = new GroupEntry("IPayload.Annotation", null);
+		returnObj.add(annotation);
+		for (String outer : node.getAnnotations().keySet()) {
+			GroupEntry group = new GroupEntry(outer, annotation);
+			IAnnotations subhash = node.getAnnotations().get(outer);
+
+			for (String inner : subhash.getAnnotationsAsMap().keySet()) {
+				group.addEntry(convertEntry(inner, subhash.getAnnotationsAsMap().get(inner), group));
+			}
+			annotation.addEntry(group);
+
+		}
+
+		currentBuffer = returnObj.toArray();
+		mBuffer.put(node, currentBuffer);
+
 		return currentBuffer;
 	}
 
@@ -209,7 +220,7 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			GroupEntry group = new GroupEntry(name, parent);
 			for (IWalkable child : children) {
 				if (child instanceof ITree) {
-					group.addEntry(convertITreeEntry(child.toString(), (ITree)child, group));
+					group.addEntry(convertITreeEntry(child.toString(), (ITree) child, group));
 				}
 			}
 			return group;

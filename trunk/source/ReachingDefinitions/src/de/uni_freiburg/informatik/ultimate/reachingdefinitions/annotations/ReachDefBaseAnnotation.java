@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.irsdependencies.reachdef;
+package de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,14 +8,14 @@ import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 
-public abstract class ReachingDefinitionsBaseAnnotation extends AbstractAnnotations {
+public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 
 	private static final long serialVersionUID = 1L;
 
 	public static final String AnnotationName = "ReachingDefinition";
 
 	@SuppressWarnings("unchecked")
-	public static <T extends ReachingDefinitionsBaseAnnotation> T getAnnotation(IElement element) {
+	public static <T extends ReachDefBaseAnnotation> T getAnnotation(IElement element) {
 		if (!element.hasPayload()) {
 			return null;
 		}
@@ -50,7 +50,7 @@ public abstract class ReachingDefinitionsBaseAnnotation extends AbstractAnnotati
 		node.getPayload().getAnnotations().put(AnnotationName, this);
 	}
 
-	public ReachingDefinitionsBaseAnnotation() {
+	public ReachDefBaseAnnotation() {
 		super();
 	}
 
@@ -90,11 +90,11 @@ public abstract class ReachingDefinitionsBaseAnnotation extends AbstractAnnotati
 			return false;
 		}
 
-		if (!(arg instanceof ReachingDefinitionsBaseAnnotation)) {
+		if (!(arg instanceof ReachDefBaseAnnotation)) {
 			return false;
 		}
 
-		ReachingDefinitionsBaseAnnotation arg0 = (ReachingDefinitionsBaseAnnotation) arg;
+		ReachDefBaseAnnotation arg0 = (ReachDefBaseAnnotation) arg;
 		return compareMap(getDefs(), arg0.getDefs()) && compareMap(getUse(), arg0.getUse());
 	}
 
@@ -118,6 +118,11 @@ public abstract class ReachingDefinitionsBaseAnnotation extends AbstractAnnotati
 			return false;
 		}
 		return true;
+	}
+	
+	@Override
+	public String toString() {
+		return prettyPrintDefUse(getDefs());
 	}
 
 }

@@ -3,6 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.gui.provider;
 
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.gui.misc.Entry;
 import de.uni_freiburg.informatik.ultimate.gui.misc.GroupEntry;
@@ -15,6 +16,12 @@ import org.eclipse.jface.viewers.LabelProvider;
  */
 public class AnnotationsLabelProvider extends LabelProvider {
 	public String getText(Object element) {
+		if(element instanceof IElement){
+			IElement elem = (IElement)element;
+			if(elem.hasPayload()){
+				return getText(elem.getPayload());
+			}
+		}
 		if (element instanceof IPayload) {
 			return ((IPayload) element).getName();
 		}

@@ -133,13 +133,13 @@ public class GraphListener implements MouseListener, GraphMousePlugin {
 			//clears the Node View, if more than one node selected
 
 			if (selectedNodes.size() > 1){
-				sel.setPayload(null);
+				sel.setElement(null);
 			}
 			else //shows Payload, if one node is selected
 			{
 				Iterator<VisualizationNode> nodeIt = selectedNodes.iterator();
 				final VisualizationNode currentNode = (VisualizationNode) nodeIt.next();
-				sel.setPayload(currentNode.getPayload());
+				sel.setElement(currentNode);
 			}
 			
 			this.jsp.setSelection((ISelection) sel);
@@ -149,7 +149,7 @@ public class GraphListener implements MouseListener, GraphMousePlugin {
 			
 			if (selectedEdges.size() == 1){
 		    VisualizationEdge currentEdge = selectedEdges.iterator().next();
-			sel.setPayload(currentEdge.getPayload());
+			sel.setElement(currentEdge);
 			
 			}
 			this.jsp.setSelection((ISelection) sel);

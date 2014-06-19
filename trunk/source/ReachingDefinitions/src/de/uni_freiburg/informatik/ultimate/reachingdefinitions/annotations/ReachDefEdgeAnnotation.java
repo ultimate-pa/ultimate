@@ -1,20 +1,20 @@
-package de.uni_freiburg.informatik.ultimate.irsdependencies.reachdef;
+package de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations;
 
 import java.util.HashMap;
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors.RCFGEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
-public class ReachingDefinitionsEdgeAnnotation extends ReachingDefinitionsBaseAnnotation {
+public class ReachDefEdgeAnnotation extends ReachDefBaseAnnotation {
 
 	private static final long serialVersionUID = 1L;
 
 	private RCFGEdge mEdge;
 
-	public ReachingDefinitionsEdgeAnnotation(RCFGEdge e) {
+	public ReachDefEdgeAnnotation(RCFGEdge e) {
 		mEdge = e;
 	}
 
@@ -37,7 +37,7 @@ public class ReachingDefinitionsEdgeAnnotation extends ReachingDefinitionsBaseAn
 		c.collect();
 		return c.mUse;
 	}
-
+	
 	private class Collector extends RCFGEdgeVisitor {
 
 		private HashMap<String, HashSet<Statement>> mDefs;
@@ -56,11 +56,11 @@ public class ReachingDefinitionsEdgeAnnotation extends ReachingDefinitionsBaseAn
 			//TODO: Do it faster, it is always the last (afaik) 
 			
 			for (Statement stmt : c.getStatements()) {
-				ReachingDefinitionsStatementAnnotation annot = ReachingDefinitionsStatementAnnotation
+				ReachDefStatementAnnotation annot = ReachDefStatementAnnotation
 						.getAnnotation(stmt);
 				if (annot != null) {
-					mDefs = annot.getDefs();
-					mUse = annot.getUse();
+					mDefs = new HashMap<>(annot.getDefs());
+					mUse = new HashMap<>(annot.getUse());
 				}
 			}
 		}
