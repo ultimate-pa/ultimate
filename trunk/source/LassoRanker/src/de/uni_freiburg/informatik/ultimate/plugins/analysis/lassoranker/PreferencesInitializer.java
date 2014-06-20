@@ -28,6 +28,8 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	public static final int     s_lex_template_size = 2;
 	public static final boolean s_enable_piecewise_template = true;
 	public static final int     s_piecewise_template_size = 2;
+	public static final boolean s_enable_parallel_template = true;
+	public static final int     s_parallel_template_size = 2;
 	
 	/*
 	 * Preferences Labels
@@ -72,6 +74,10 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 			"Piecewise template";
 	public static final String LABEL_piecewise_template_size =
 			"Piecewise template size";
+	public static final String LABEL_enable_parallel_template =
+			"Parallel template";
+	public static final String LABEL_parallel_template_size =
+			"Parallel template size";
 	public static final String LABEL_dump_smt_script =
 			"Dump SMT script to file";
 	public static final String LABEL_use_external_solver =
@@ -158,6 +164,14 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Integer>(
 						LABEL_piecewise_template_size,
 						s_piecewise_template_size,
+						PreferenceType.Integer),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_enable_parallel_template,
+						s_enable_parallel_template,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Integer>(
+						LABEL_parallel_template_size,
+						s_parallel_template_size,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_dump_smt_script,

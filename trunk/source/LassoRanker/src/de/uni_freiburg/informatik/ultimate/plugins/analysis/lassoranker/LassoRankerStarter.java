@@ -8,7 +8,6 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -27,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.template
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.LexicographicTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.MultiphaseTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.NestedTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.ParallelTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.PiecewiseTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager;
@@ -218,16 +218,22 @@ public class LassoRankerStarter {
 				templates.add(new MultiphaseTemplate(i));
 			}
 		}
+		if (store.getBoolean(PreferencesInitializer.LABEL_enable_lex_template)) {
+			int maxSize = store.getInt(PreferencesInitializer.LABEL_lex_template_size);
+			for (int i = 2; i <= maxSize; i++) {
+				templates.add(new LexicographicTemplate(i));
+			}
+		}
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_piecewise_template)) {
 			int maxSize = store.getInt(PreferencesInitializer.LABEL_piecewise_template_size);
 			for (int i = 2; i <= maxSize; i++) {
 				templates.add(new PiecewiseTemplate(i));
 			}
 		}
-		if (store.getBoolean(PreferencesInitializer.LABEL_enable_lex_template)) {
-			int maxSize = store.getInt(PreferencesInitializer.LABEL_lex_template_size);
+		if (store.getBoolean(PreferencesInitializer.LABEL_enable_parallel_template)) {
+			int maxSize = store.getInt(PreferencesInitializer.LABEL_parallel_template_size);
 			for (int i = 2; i <= maxSize; i++) {
-				templates.add(new LexicographicTemplate(i));
+				templates.add(new ParallelTemplate(i));
 			}
 		}
 		return templates.toArray(new RankingFunctionTemplate[0]);
@@ -259,13 +265,17 @@ public class LassoRankerStarter {
 			templates.add(new MultiphaseTemplate(store.getInt(
 					PreferencesInitializer.LABEL_multiphase_template_size)));
 		}
+		if (store.getBoolean(PreferencesInitializer.LABEL_enable_lex_template)) {
+			templates.add(new LexicographicTemplate(store.getInt(
+					PreferencesInitializer.LABEL_lex_template_size)));
+		}
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_piecewise_template)) {
 			templates.add(new PiecewiseTemplate(store.getInt(
 					PreferencesInitializer.LABEL_piecewise_template_size)));
 		}
-		if (store.getBoolean(PreferencesInitializer.LABEL_enable_lex_template)) {
-			templates.add(new LexicographicTemplate(store.getInt(
-					PreferencesInitializer.LABEL_lex_template_size)));
+		if (store.getBoolean(PreferencesInitializer.LABEL_enable_parallel_template)) {
+			templates.add(new ParallelTemplate(store.getInt(
+					PreferencesInitializer.LABEL_parallel_template_size)));
 		}
 		return templates.toArray(new RankingFunctionTemplate[0]);
 	}
