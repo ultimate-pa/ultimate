@@ -1,0 +1,44 @@
+Title:
+Ultimate Buchi Automizer
+
+
+Authors:
+Matthias Heizmann, Jan Leike, Jürgen Christ, Daniel Dietsch, Jochen Hoenicke,
+Markus Lindenmann, Betim Musa, Alexander Nutz, Christian Schilling, Stefan Wissert,
+and Andreas Podelski
+
+
+Abstract:
+Ultimate Buchi Automizer implements a novel approach to termination analysis 
+that mimics human case-by-case reasoning.
+The tool decomposes a program semantically into modules such that each module 
+represents a case for which a "simple" termination arguments exists.
+This decomposition is constructed on demand, guided by termination arguments
+that we infer from lasso shaped code fragments. These termination arguments are
+obtained via synthesis from the build in tool LassoRanker.
+
+
+Download instructions:
+Our competition candidate is a modification of the software analysis framework 
+Ultimate and can be downloaded at the following URL.
+https://ultimate.informatik.uni-freiburg.de/BuchiAutomizer/
+
+
+Installation instructions:
+Our competition candidate requires Java (1.6 or higher), Python and the SMT
+solver Z3. (https://z3.codeplex.com/)
+We expect each release of version 4.3.2 is suffcient, but we recommend to
+install the nightly Ubuntu x64 build of the unstable branch 
+z3-4.3.2.ff265c6c6ccf-x64-ubuntu-12.04.zip which is available at the following
+URL. https://z3.codeplex.com/downloads/get/751842
+We require that the Z3 executable is available in your path.
+
+
+Instruction for running the tool:
+The zip archive in which Ultimate Automizer is shipped contains the python 
+script automizerSV-COMP.py which wraps input and output for the SV-COMP.
+If you want to verify the C program fnord.c with property file prop.prp
+and write an error path to file errorPath.txt then you have to use the directory
+where you extracted the zip archive as your working directory and execute the
+following command:
+python AutomizerSvcomp.py prop.prp fnord.c errorPath.txt
