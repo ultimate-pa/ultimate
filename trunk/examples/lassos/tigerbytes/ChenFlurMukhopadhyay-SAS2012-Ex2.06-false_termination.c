@@ -9,6 +9,9 @@
  * Termination Proofs for Linear Simple Loops.
  * Hong Yi Chen, Shaked Flur, and Supratik Mukhopadhyay.
  * SAS 2012.
+ * 
+ * The authors of the paper claim that this program is terminating, however
+ * the program is nonterminating (e.g., initial state x=1 and y=1).
  *
  * The test suite is available at the following URL.
  * https://tigerbytes2.lsu.edu/users/hchen11/lsl/LSL_benchmark.txt
