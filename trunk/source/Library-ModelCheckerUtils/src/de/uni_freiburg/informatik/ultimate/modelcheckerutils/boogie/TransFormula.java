@@ -14,6 +14,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -25,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.NaiveDestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
@@ -84,6 +86,7 @@ public class TransFormula implements Serializable {
 	private final Set<TermVariable> m_BranchEncoders;
 	private final Infeasibility m_Infeasibility;
 	private final Term m_ClosedFormula;
+	private final Set<ApplicationTerm> m_Constants;
 	
 	/**
 	 * Was the solver able to prove infeasiblity of a TransFormula. UNPROVEABLE
@@ -125,6 +128,11 @@ public class TransFormula implements Serializable {
 				m_AssignedVars.add(var);
 			}
 		}
+		//TODO: The following line is a workaround, in the future the set of
+		// constants will be part of the input and we use findConstants only
+		// in the assertion
+		m_Constants = (new ConstantFinder()).findConstants(m_Formula);
+		//assert isSupersetOfOccurringConstants(m_Constants, m_Formula) : "forgotten constant";
 	}
 	
 	public TransFormula(Term formula,
@@ -257,6 +265,17 @@ public class TransFormula implements Serializable {
 		return result;
 	}
 	
+	/**
+	 * Returns true iff all constants (ApplicationTerm with zero parameters)
+	 * that occur in term are contained in the set setOfConstants.
+	 */
+	private static boolean isSupersetOfOccurringConstants(
+			Set<ApplicationTerm> setOfConstants, Term term) {
+		Set<ApplicationTerm> constantsInTerm = 
+				(new ConstantFinder()).findConstants(term);
+		return setOfConstants.containsAll(constantsInTerm);
+	}
+	
 	private static boolean freeVarsSubsetInOutAuxBranch(Term term, 
 			Map<BoogieVar, TermVariable> inVars, 
 			Map<BoogieVar, TermVariable> outVars, 
@@ -351,6 +370,10 @@ public class TransFormula implements Serializable {
 
 	public Term getClosedFormula() {
 		return m_ClosedFormula;
+	}
+	
+	public Set<ApplicationTerm> getConstants() {
+		return Collections.unmodifiableSet(m_Constants);
 	}
 
 	/**
