@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -41,6 +44,8 @@ public class Boogie2SMT {
 
 
 	private final ConstOnlyIdentifierTranslator m_ConstOnlyIdentifierTranslator;
+	
+	private final Collection<Term> m_Axioms;
 
 
 	public Boogie2SMT(Script script, BoogieDeclarations boogieDeclarations, boolean blackHoleArrays) {
@@ -55,8 +60,10 @@ public class Boogie2SMT {
 				
 		m_ConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
 		
+		m_Axioms = new ArrayList<Term>(boogieDeclarations.getAxioms().size());
 		for (Axiom decl : boogieDeclarations.getAxioms()) {
-			this.declareAxiom(decl);
+			Term term = this.declareAxiom(decl);
+			m_Axioms.add(term);
 		}
 		m_Statements2TransFormula = new Statements2TransFormula(this);
 		m_Term2Expression = new Term2Expression(m_TypeSortTranslator, m_Boogie2SmtSymbolTable);
@@ -100,11 +107,16 @@ public class Boogie2SMT {
 	ConstOnlyIdentifierTranslator getConstOnlyIdentifierTranslator() {
 		return m_ConstOnlyIdentifierTranslator;
 	}
+	
+	public Collection<Term> getAxioms() {
+		return m_Axioms;
+	}
 
-	private void declareAxiom(Axiom ax) {
+	private Term declareAxiom(Axiom ax) {
 		IdentifierTranslator[] its = new IdentifierTranslator[]{ getConstOnlyIdentifierTranslator()};
 		Term term = (new Expression2Term( its, m_Script, m_TypeSortTranslator, ax.getFormula())).getTerm();
 		m_Script.assertTerm(term);
+		return term;
 	}
 	
 	public static void reportUnsupportedSyntax(BoogieASTNode BoogieASTNode, String longDescription) {

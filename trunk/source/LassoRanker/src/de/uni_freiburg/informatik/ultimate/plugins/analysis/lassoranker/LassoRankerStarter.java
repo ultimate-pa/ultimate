@@ -112,6 +112,8 @@ public class LassoRankerStarter {
 		TransFormula loopTf = constructTransformula(m_Loop); 
 		loopTf = tvr.renameVars(loopTf, "Loop");
 		
+		Collection axioms = m_RootAnnot.getBoogie2SMT().getAxioms();
+		
 		// Do the termination analysis
 		RankingFunctionTemplate[] templates = getTemplates();
 		LassoRankerTerminationAnalysis tanalysis = null;
