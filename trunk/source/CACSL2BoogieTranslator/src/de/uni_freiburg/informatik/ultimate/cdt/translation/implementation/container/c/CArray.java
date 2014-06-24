@@ -32,6 +32,8 @@ public class CArray extends CType {
      */
     private final CType valueType;
 
+    private final boolean incomplete;
+    
     /**
      * Constructor.
      * 
@@ -47,6 +49,16 @@ public class CArray extends CType {
         super(false, false, false, false); //FIXME: integrate those flags
         this.dimensions = dimensions;
         this.valueType = valueType;
+        this.incomplete = false;
+    }
+    
+    public CArray(Expression[] dimensions,
+            CType valueType, boolean incomplete) {
+        super(false, false, false, false); //FIXME: integrate those flags
+        assert incomplete : "use other constructor otherwise";
+        this.valueType = valueType;
+        this.dimensions = dimensions;
+        this.incomplete = true;
     }
 
     /**
@@ -132,12 +144,20 @@ public class CArray extends CType {
                 break;
             }
         }
+        
+        if (incomplete) {
+        	id.append("_INCOMPLETE");
+        }
 //        id.append(getDimensions().length);
         id.append(dimString.toString());
         id.append("~");
         id.append(valueType.toString());
         id.append("#");
         return id.toString();
+    }
+    
+    public boolean isIncomplete() {
+    	return this.incomplete;
     }
     
     /**

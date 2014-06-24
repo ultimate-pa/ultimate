@@ -785,6 +785,7 @@ public class CHandler implements ICHandler {
 		if (node instanceof IASTArrayDeclarator) {
 			IASTArrayDeclarator arrDecl = (IASTArrayDeclarator) node;
 
+			boolean incomplete = false;
 			ArrayList<Expression> sizeConstants = new ArrayList<Expression>();
 			Expression overallSize = new IntegerLiteral(loc, "1");
 			for (IASTArrayModifier am : arrDecl.getArrayModifiers()) {
@@ -794,30 +795,43 @@ public class CHandler implements ICHandler {
 							dispatch(am.getConstantExpression());
 				//he innermost array modifier may be empty, if there is an initializer; like int a[1][2][] = {...}
 				} else if (am.getConstantExpression() == null && 
-						arrDecl.getInitializer() != null &&
 						arrDecl.getArrayModifiers()[arrDecl.getArrayModifiers().length - 1] == am) {
-					assert arrDecl.getInitializer() instanceof IASTEqualsInitializer;
-					IASTEqualsInitializer eqInit = ((IASTEqualsInitializer) arrDecl.getInitializer());
-					assert eqInit.getInitializerClause() instanceof IASTInitializerList;
-					IASTInitializerList initList = (IASTInitializerList) eqInit.getInitializerClause();
-					constEx = new ResultExpression(
-							new RValue(
-									new IntegerLiteral(
-											loc, 
-											new Integer(initList.getSize()).toString()), 
-											new CPrimitive(PRIMITIVE.INT)));
+					if (arrDecl.getInitializer() != null) {
+						assert arrDecl.getInitializer() instanceof IASTEqualsInitializer;
+						IASTEqualsInitializer eqInit = ((IASTEqualsInitializer) arrDecl.getInitializer());
+						assert eqInit.getInitializerClause() instanceof IASTInitializerList;
+						IASTInitializerList initList = (IASTInitializerList) eqInit.getInitializerClause();
+						constEx = new ResultExpression(
+								new RValue(
+										new IntegerLiteral(
+												loc, 
+												new Integer(initList.getSize()).toString()), 
+												new CPrimitive(PRIMITIVE.INT)));
+					} else { //we have an incomplete array type without an initializer -- this may happen in a function parameter..
+						incomplete = true;
+						constEx = new ResultExpression(
+								new RValue(
+										new IntegerLiteral(loc, "-1"),
+												new CPrimitive(PRIMITIVE.INT)));
+					}
 				} else {
-					throw new IncorrectSyntaxException(loc, "incomplete array type in declaration without an initializer");
+					throw new IncorrectSyntaxException(loc, "wrong array type in declaration");
 				}
+				
 				constEx = constEx.switchToRValueIfNecessary(main, //just to be safe..
 						memoryHandler, structHandler, loc);
 				sizeConstants.add(constEx.lrVal.getValue());
 				overallSize = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
 						overallSize, constEx.lrVal.getValue(), loc);//
 			}
-
-			CArray arrayType = new CArray(
-					sizeConstants.toArray(new Expression[0]), newResType.cType);
+			CArray arrayType = null;
+			if (incomplete) {
+				arrayType = new CArray(
+					sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType, true);
+			} else {
+				arrayType = new CArray(
+					sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType);
+			}
 			newResType.cType = arrayType;
 
 		} else if (node instanceof CASTFunctionDeclarator) {
@@ -2718,6 +2732,21 @@ public class CHandler implements ICHandler {
 		assert rNegative instanceof ResultExpression;
 		ResultExpression reNegative = (ResultExpression) rNegative;
 		reNegative = reNegative.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		
+		//implicit casting -- not very general
+		if (!rePositive.lrVal.cType.equals(reNegative.lrVal.cType)) {
+			if (rePositive.lrVal.getValue() instanceof IntegerLiteral 
+					&& ((IntegerLiteral) rePositive.lrVal.getValue()).getValue().equals("0")
+					&& reNegative.lrVal.cType instanceof CPointer) {
+				rePositive.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), reNegative.lrVal.cType);
+			} else if (reNegative.lrVal.getValue() instanceof IntegerLiteral 
+					&& ((IntegerLiteral) reNegative.lrVal.getValue()).getValue().equals("0")
+					&& rePositive.lrVal.cType instanceof CPointer) {
+				reNegative.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), rePositive.lrVal.cType);
+			} else {
+				assert false : "types do not match";
+			}
+		}
 
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
@@ -2785,7 +2814,6 @@ public class CHandler implements ICHandler {
 		stmt.add(ifStatement);
 
 		IdentifierExpression tmpExpr = new IdentifierExpression(loc, tmpName);
-		assert rePositive.lrVal.cType.equals(reNegative.lrVal.cType);
 		return new ResultExpression(stmt, new RValue(tmpExpr,
 		        rePositive.lrVal.cType), decl, auxVars, overappr);
 	}
