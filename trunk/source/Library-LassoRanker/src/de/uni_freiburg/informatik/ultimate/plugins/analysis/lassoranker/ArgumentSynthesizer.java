@@ -329,7 +329,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 */
 	protected Map<Term, Rational> getValuation(Collection<Term> vars)
 			throws TermException {
-		assert m_script.checkSat() == LBool.SAT;
+//		assert m_script.checkSat() == LBool.SAT;
 		Map<Term, Term> val = m_script.getValue(vars.toArray(new Term[0]));
 		Map<Term, Rational> result = new LinkedHashMap<Term, Rational>();
 		for (Map.Entry<Term, Term> entry : val.entrySet()) {

@@ -346,7 +346,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			Map<RankVar, Term> vars_honda,
 			Map<RankVar, Term> vars_ray,
 			Term var_lambda) {
-		assert m_script.checkSat() == LBool.SAT;
+//		assert m_script.checkSat() == LBool.SAT;
 		
 		try {
 			Map<RankVar, Rational> state0 = extractState(vars_init);
