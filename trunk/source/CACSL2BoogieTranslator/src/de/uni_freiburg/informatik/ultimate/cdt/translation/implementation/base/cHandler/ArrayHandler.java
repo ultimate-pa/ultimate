@@ -279,11 +279,14 @@ public class ArrayHandler {
 		if (result.lrVal.cType instanceof CPointer) {
 			//we have a pointer that is accessed like an array
 			result = result.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			result.lrVal = ((CHandler) main.cHandler).doPointerArith(
+			CType pointedType = ((CPointer) result.lrVal.cType).pointsToType;
+			RValue address = ((CHandler) main.cHandler).doPointerArith(
 					main, IASTBinaryExpression.op_plus, loc, 
 					(RValue) result.lrVal, 
 					(RValue) currentSubscriptRex.lrVal,
-					((CPointer) result.lrVal.cType).pointsToType);
+					pointedType);
+			result.lrVal  = new HeapLValue(address.getValue(), pointedType);
+//			result.lrVal.cType = pointedType;
 		} else {
 			assert result.lrVal.cType instanceof CArray;
 			ArrayList<Expression> newDimensions = 

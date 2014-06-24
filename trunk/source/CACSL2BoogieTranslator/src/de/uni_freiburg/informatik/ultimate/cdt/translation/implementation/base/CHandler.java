@@ -1112,7 +1112,7 @@ public class CHandler implements ICHandler {
 		Expression nr1 = new IntegerLiteral(loc, SFO.NR1);
 
 		//for the cases we know that it's an RValue..
-		ResultExpression rop = o.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+//		ResultExpression rop = o.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 
 		CType oType = o.lrVal.cType;
 		if (oType instanceof CNamed)
@@ -1120,6 +1120,8 @@ public class CHandler implements ICHandler {
 
 		switch (node.getOperator()) {
 		case IASTUnaryExpression.op_minus:
+		{
+			ResultExpression rop = o.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			ResultExpression ropToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rop);
 			return new ResultExpression(
 					ropToInt.stmt,
@@ -1129,6 +1131,7 @@ public class CHandler implements ICHandler {
 							ropToInt.decl,
 							ropToInt.auxVars,
 							ropToInt.overappr);
+		}
 		case IASTUnaryExpression.op_not:
 			/** boolean <code>p</code> becomes <code>!p ? 1 : 0</code> */
 			/**
@@ -1136,6 +1139,9 @@ public class CHandler implements ICHandler {
 			 * becomes <code>!y ? 1 : 0</code>
 			 */
 			/** int <code>x</code> becomes <code>x == 0 ? 1 : 0</code> */
+		{
+			ResultExpression rop = o.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			ResultExpression ropToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rop);
 			ResultExpression ropToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rop);
 			Expression negated = new UnaryExpression(loc,
 					UnaryExpression.Operator.LOGICNEG,
@@ -1147,17 +1153,24 @@ public class CHandler implements ICHandler {
 							ropToBool.overappr);
 			re.addAll(ropToBool);
 			return re;
+		}
 		case IASTUnaryExpression.op_plus:
+		{
+			ResultExpression rop = o.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			ResultExpression ropToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rop);
 			ropToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rop);
 			return new ResultExpression(ropToInt.stmt, ropToInt.lrVal, ropToInt.decl,
 			        ropToInt.auxVars, ropToInt.overappr);
+		}
 		case IASTUnaryExpression.op_postFixIncr:
-		case IASTUnaryExpression.op_postFixDecr: {
+		case IASTUnaryExpression.op_postFixDecr: 
+		{
 			//FIXME: would it make sense here, to work with o, not rop??
 			// --> we have to have an LValue, here, anyway.. (same thing for prefixInc/Dec)
 			// --> there even is an assert below to ensure this
 			assert !o.lrVal.isBoogieBool;
 			// E++ -> t = E; E = t + 1; t
+			ResultExpression rop = o.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			ArrayList<Declaration> decl = new ArrayList<Declaration>();
 			ArrayList<Statement> stmt = new ArrayList<Statement>();
 			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
@@ -1207,9 +1220,11 @@ public class CHandler implements ICHandler {
 					assign.decl, assign.auxVars, assign.overappr);
 		}
 		case IASTUnaryExpression.op_prefixDecr:
-		case IASTUnaryExpression.op_prefixIncr: {
+		case IASTUnaryExpression.op_prefixIncr: 
+		{
 			assert !o.lrVal.isBoogieBool;
 			// ++E -> t = E+1; E = t; t
+			ResultExpression rop = o.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			ArrayList<Declaration> decl = new ArrayList<Declaration>();
 			ArrayList<Statement> stmt = new ArrayList<Statement>();
 			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
@@ -1266,6 +1281,7 @@ public class CHandler implements ICHandler {
 					new CPrimitive(PRIMITIVE.INT)), emptyAuxVars);
 		case IASTUnaryExpression.op_star:
 		{
+			ResultExpression rop = o.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			Expression addr = rop.lrVal.getValue();
 			if (rop.lrVal.cType instanceof CArray) {
 				CArray arrayCType = (CArray) rop.lrVal.cType;
@@ -2848,8 +2864,22 @@ public class CHandler implements ICHandler {
 					node.getTypeId().getDeclSpecifier());
 			ResultTypes checked = checkForPointer(main, node.getTypeId().
 					getAbstractDeclarator().getPointerOperators(), rt, false);
-			return new ResultExpression(new RValue(memoryHandler.
-					calculateSizeOf(checked.cType, loc), new CPrimitive(PRIMITIVE.INT)));
+			//Quick hack for getting rid of sizeof int --> big solution: (optionally) compute as much as possible, also offsets, ..
+//			String intSize = "64";
+//			String ptrSize = "64";
+//			String fltSize = "64";
+//			if (checked.cType instanceof CPrimitive) {
+//				if (((CPrimitive) checked.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+//					return new ResultExpression(new RValue(new IntegerLiteral(loc, intSize), new CPrimitive(PRIMITIVE.INT)));
+//				} else if (((CPrimitive) checked.cType).getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+//					return new ResultExpression(new RValue(new IntegerLiteral(loc, fltSize), new CPrimitive(PRIMITIVE.INT)));
+//				}
+//			} else if (checked.cType instanceof CPointer) {
+//				return new ResultExpression(new RValue(new IntegerLiteral(loc, ptrSize), new CPrimitive(PRIMITIVE.INT)));
+//			} else {
+				return new ResultExpression(new RValue(memoryHandler.
+						calculateSizeOf(checked.cType, loc), new CPrimitive(PRIMITIVE.INT)));
+//			}
 		default:
 			break;
 		}
