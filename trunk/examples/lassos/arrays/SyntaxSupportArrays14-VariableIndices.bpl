@@ -10,7 +10,7 @@ var a : [int] int;
 var i,j,k : int;
 
 procedure main() returns ()
-modifies a, b;
+modifies a;
 {
   while (true) {
     a[j] := a[j] + 1;
