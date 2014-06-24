@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/bin/sh
 if [ ! "$1" ]; then
     echo "First argument has to be the file that we analyze"
     exit
 fi
-Ultimate_OUTPUT=`./Ultimate --console BuchiAutomizerCWithBlockEncoding.xml "$1" --settings settings.epf`
+Ultimate_OUTPUT=`./../Ultimate/Ultimate --console ./../BuchiAutomizerCWithBlockEncoding.xml "$1" --settings ./../settings.epf`
 
 RESULT_PROVEN_TERMINATION=`echo "$Ultimate_OUTPUT" | grep "Buchi Automizer proved that your program is terminating"`
 RESULT_UNKNOWN_TERMINATION=`echo "$Ultimate_OUTPUT" | grep "Buchi Automizer was unable to decide termination"`
