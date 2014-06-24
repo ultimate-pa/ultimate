@@ -299,7 +299,8 @@ public class LassoRankerTerminationAnalysis {
 		// Add variables existing in the loop to the stem
 		Map<RankVar, Term> addVars = new HashMap<RankVar, Term>();
 		for (Map.Entry<RankVar, Term> entry : m_loop.getInVars().entrySet()) {
-			if (!m_stem.getOutVars().containsKey(entry.getKey())) {
+			if (!m_stem.getInVars().containsKey(entry.getKey()) &&
+					!m_stem.getOutVars().containsKey(entry.getKey())) {
 				addVars.put(entry.getKey(), entry.getValue());
 			}
 		}
@@ -319,7 +320,8 @@ public class LassoRankerTerminationAnalysis {
 		// Add variables existing in the stem to the loop
 		addVars = new HashMap<RankVar, Term>();
 		for (Map.Entry<RankVar, Term> entry : m_stem.getOutVars().entrySet()) {
-			if (!m_loop.getInVars().containsKey(entry.getKey())) {
+			if (!m_loop.getInVars().containsKey(entry.getKey()) &&
+					!m_loop.getOutVars().containsKey(entry.getKey())) {
 				addVars.put(entry.getKey(), entry.getValue());
 			}
 		}

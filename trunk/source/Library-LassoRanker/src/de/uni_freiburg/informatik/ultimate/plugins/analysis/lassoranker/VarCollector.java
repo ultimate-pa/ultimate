@@ -166,6 +166,7 @@ public class VarCollector implements Serializable {
 	 *            (unprimed version)
 	 */
 	public void addInVar(RankVar rkVar, Term var) {
+		assert !m_inVars.containsKey(rkVar);
 		m_inVars.put(rkVar, var);
 		m_inVarsReverseMapping.put(var, rkVar);
 	}
@@ -190,6 +191,7 @@ public class VarCollector implements Serializable {
 	 *            (primed version)
 	 */
 	public void addOutVar(RankVar rkVar, Term var) {
+		assert !m_outVars.containsKey(rkVar);
 		m_outVars.put(rkVar, var);
 		m_outVarsReverseMapping.put(var, rkVar);
 	}
