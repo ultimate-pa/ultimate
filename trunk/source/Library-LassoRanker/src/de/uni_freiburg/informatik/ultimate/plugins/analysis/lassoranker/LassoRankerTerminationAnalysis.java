@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.io.FileNotFoundException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -84,7 +86,7 @@ public class LassoRankerTerminationAnalysis {
 	/**
 	 * Loop formula of the linear lasso program as linear inequalities in DNF
 	 */
-	private final LinearTransition m_loop;
+	private LinearTransition m_loop;
 	
 	/**
 	 * The RankVarFactory used by the preprocessors and the RankVarCollector
@@ -158,6 +160,7 @@ public class LassoRankerTerminationAnalysis {
 		m_loop_transition = loop;
 		s_Logger.debug("Loop transition:\n" + m_loop_transition);
 		m_loop = preprocess(m_loop_transition);
+		checkVariables();
 		s_Logger.debug("Preprocessed loop:\n" + m_loop);
 	}
 	
@@ -232,6 +235,7 @@ public class LassoRankerTerminationAnalysis {
 		}
 		s_Logger.debug("Adding stem transition:\n" + stem_transition);
 		m_stem = preprocess(stem_transition);
+		checkVariables();
 		s_Logger.debug("Preprocessed stem:\n" + m_stem);
 	}
 	
@@ -278,6 +282,59 @@ public class LassoRankerTerminationAnalysis {
 		}
 		
 		return linear_trans;
+	}
+	
+	/**
+	 * Add all inVars of the loop as in- and outVars of the stem,
+	 * and add all outVars of the stem as in- and outVars of the loop.
+	 * 
+	 * This ensures that (global) valuations for variables (e.g. those
+	 * generated in the nontermination analysis) stay constant in transitions
+	 * where these variables are not explicitly scoped.
+	 */
+	private void checkVariables() {
+		if (m_stem == null) {
+			return; // nothing to do
+		}
+		// Add variables existing in the loop to the stem
+		Map<RankVar, Term> addVars = new HashMap<RankVar, Term>();
+		for (Map.Entry<RankVar, Term> entry : m_loop.getInVars().entrySet()) {
+			if (!m_stem.getOutVars().containsKey(entry.getKey())) {
+				addVars.put(entry.getKey(), entry.getValue());
+			}
+		}
+		if (!addVars.isEmpty()) {
+			// Because the variable maps in LinearTransition are immutable,
+			// make a new transition and replace the old one
+			Map<RankVar, Term> inVars =
+					new HashMap<RankVar, Term>(m_stem.getInVars());
+			Map<RankVar, Term> outVars =
+					new HashMap<RankVar, Term>(m_stem.getOutVars());
+			inVars.putAll(addVars);
+			outVars.putAll(addVars);
+			m_stem = new LinearTransition(m_stem.getPolyhedra(), inVars,
+					outVars);
+		}
+		
+		// Add variables existing in the stem to the loop
+		addVars = new HashMap<RankVar, Term>();
+		for (Map.Entry<RankVar, Term> entry : m_stem.getOutVars().entrySet()) {
+			if (!m_loop.getInVars().containsKey(entry.getKey())) {
+				addVars.put(entry.getKey(), entry.getValue());
+			}
+		}
+		if (!addVars.isEmpty()) {
+			// Because the variable maps in LinearTransition are immutable,
+			// make a new transition and replace the old one
+			Map<RankVar, Term> inVars =
+					new HashMap<RankVar, Term>(m_loop.getInVars());
+			Map<RankVar, Term> outVars =
+					new HashMap<RankVar, Term>(m_loop.getOutVars());
+			inVars.putAll(addVars);
+			outVars.putAll(addVars);
+			m_loop = new LinearTransition(m_loop.getPolyhedra(), inVars,
+					outVars);
+		}
 	}
 	
 	/**

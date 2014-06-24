@@ -62,7 +62,6 @@ public class VarCollector implements Serializable {
 	private final Map<Term, RankVar> m_inVarsReverseMapping;
 	private final Map<RankVar, Term> m_outVars;
 	private final Map<Term, RankVar> m_outVarsReverseMapping;
-//	private final Set<ApplicationTerm> m_ConstVars;
 	private final Set<TermVariable> m_AuxVars;
 	private final VarFactory m_factory;
 	
@@ -77,7 +76,6 @@ public class VarCollector implements Serializable {
 		m_outVars = new LinkedHashMap<RankVar, Term>();
 		m_outVarsReverseMapping = new LinkedHashMap<Term, RankVar>();
 		m_AuxVars = new HashSet<TermVariable>();
-//		m_ConstVars = new HashSet<ApplicationTerm>();
 		m_factory = factory;
 	}
 	
@@ -153,13 +151,6 @@ public class VarCollector implements Serializable {
 	public Set<TermVariable> getAuxVars() {
 		return Collections.unmodifiableSet(m_AuxVars);
 	}
-	
-//	/**
-//	 * @return the collected constVars
-//	 */
-//	public Set<ApplicationTerm> getConstVars() {
-//		return Collections.unmodifiableSet(m_ConstVars);
-//	}
 	
 	/**
 	 * @return the associated VarFactory
