@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -112,7 +113,7 @@ public class LassoRankerStarter {
 		TransFormula loopTf = constructTransformula(m_Loop); 
 		loopTf = tvr.renameVars(loopTf, "Loop");
 		
-		Collection axioms = m_RootAnnot.getBoogie2SMT().getAxioms();
+		Term[] axioms = m_RootAnnot.getBoogie2SMT().getAxioms().toArray(new Term[0]);
 		
 		// Do the termination analysis
 		RankingFunctionTemplate[] templates = getTemplates();
@@ -120,7 +121,7 @@ public class LassoRankerStarter {
 		try {
 			tanalysis = new LassoRankerTerminationAnalysis(script,
 					m_RootAnnot.getBoogie2SMT(),
-					stemTF, loopTf, preferences);
+					stemTF, loopTf, axioms, preferences);
 		} catch (TermException e) {
 			reportUnuspportedSyntax(m_Honda, e.getMessage());
 			return;
@@ -240,10 +241,6 @@ public class LassoRankerStarter {
 		}
 		return templates.toArray(new RankingFunctionTemplate[0]);
 	}
-	
-	
-
-	
 	
 	/**
 	 * Build a list of templates. Add all templates with exactly the given size.

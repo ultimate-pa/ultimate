@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.TerminationArgumentSynthesizer;
@@ -105,8 +104,7 @@ public abstract class RankingFunctionTemplate {
 	 *          invariants.
 	 */
 	public abstract List<List<LinearInequality>> getConstraints(
-			Map<RankVar, TermVariable> inVars,
-			Map<RankVar, TermVariable> outVars);
+			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars);
 	
 	/**
 	 * Returns a string for every constraint conjunct for annotating

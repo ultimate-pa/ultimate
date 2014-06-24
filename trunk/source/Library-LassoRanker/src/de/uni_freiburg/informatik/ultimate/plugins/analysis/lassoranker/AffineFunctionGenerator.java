@@ -36,7 +36,6 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 
 /**
@@ -90,10 +89,10 @@ public class AffineFunctionGenerator implements Serializable {
 	 * @param vars a mapping from Boogie variables to TermVariables to be used
 	 * @return Linear inequality corresponding to si(x)
 	 */
-	public LinearInequality generate(Map<RankVar, TermVariable> vars) {
+	public LinearInequality generate(Map<RankVar, Term> vars) {
 		LinearInequality li = new LinearInequality();
 		li.add(new AffineTerm(m_constant, Rational.ONE));
-		for (Map.Entry<RankVar, TermVariable> entry : vars.entrySet()) {
+		for (Map.Entry<RankVar, Term> entry : vars.entrySet()) {
 			if (m_coefficients.containsKey(entry.getKey())) {
 				li.add(entry.getValue(),
 						new AffineTerm(m_coefficients.get(entry.getKey()),

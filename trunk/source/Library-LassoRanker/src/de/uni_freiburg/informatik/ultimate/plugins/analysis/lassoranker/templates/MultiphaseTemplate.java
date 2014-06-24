@@ -34,7 +34,6 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunctionGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineTerm;
@@ -120,8 +119,7 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 	
 	@Override
 	public List<List<LinearInequality>> getConstraints(
-			Map<RankVar, TermVariable> inVars,
-			Map<RankVar, TermVariable> outVars) {
+			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
 		checkInitialized();
 		List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();

@@ -34,6 +34,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
@@ -56,10 +58,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 public class VarCollector implements Serializable {
 	private static final long serialVersionUID = -1005909010259944923L;
 	
-	private final Map<RankVar, TermVariable> m_inVars;
-	private final Map<TermVariable, RankVar> m_inVarsReverseMapping;
-	private final Map<RankVar, TermVariable> m_outVars;
-	private final Map<TermVariable, RankVar> m_outVarsReverseMapping;
+	private final Map<RankVar, Term> m_inVars;
+	private final Map<Term, RankVar> m_inVarsReverseMapping;
+	private final Map<RankVar, Term> m_outVars;
+	private final Map<Term, RankVar> m_outVarsReverseMapping;
+//	private final Set<ApplicationTerm> m_ConstVars;
 	private final Set<TermVariable> m_AuxVars;
 	private final VarFactory m_factory;
 	
@@ -69,11 +72,12 @@ public class VarCollector implements Serializable {
 	 */
 	public VarCollector(VarFactory factory) {
 		assert factory != null;
-		m_inVars = new LinkedHashMap<RankVar, TermVariable>();
-		m_inVarsReverseMapping = new LinkedHashMap<TermVariable, RankVar>();
-		m_outVars = new LinkedHashMap<RankVar, TermVariable>();
-		m_outVarsReverseMapping = new LinkedHashMap<TermVariable, RankVar>();
+		m_inVars = new LinkedHashMap<RankVar, Term>();
+		m_inVarsReverseMapping = new LinkedHashMap<Term, RankVar>();
+		m_outVars = new LinkedHashMap<RankVar, Term>();
+		m_outVarsReverseMapping = new LinkedHashMap<Term, RankVar>();
 		m_AuxVars = new HashSet<TermVariable>();
+//		m_ConstVars = new HashSet<ApplicationTerm>();
 		m_factory = factory;
 	}
 	
@@ -100,12 +104,23 @@ public class VarCollector implements Serializable {
 		for (TermVariable auxVar : transition.getAuxVars()) {
 			m_AuxVars.add(auxVar);
 		}
+		
+		// Add constant variables as in- and outVars
+		for (ApplicationTerm constVar : transition.getConstants()) {
+			ReplacementVar repVar = m_factory.getRepVar(constVar.toString());
+			if (repVar == null) {
+				repVar = new ReplacementVar(constVar.toString(), constVar);
+				m_factory.registerRepVar(repVar.toString(), repVar);
+			}
+			addInVar(repVar, constVar);
+			addOutVar(repVar, constVar);
+		}
 	}
 	
 	/**
 	 * @return the collected inVars
 	 */
-	public Map<RankVar, TermVariable> getInVars() {
+	public Map<RankVar, Term> getInVars() {
 		return Collections.unmodifiableMap(m_inVars);
 	}
 	
@@ -113,14 +128,14 @@ public class VarCollector implements Serializable {
 	 * @return mapping from inVars to the RankVar that is represented by the
 	 * inVar
 	 */
-	public Map<TermVariable, RankVar> getInVarsReverseMapping() {
+	public Map<Term, RankVar> getInVarsReverseMapping() {
 		return Collections.unmodifiableMap(m_inVarsReverseMapping);
 	}
 
 	/**
 	 * @return the collected outVars
 	 */
-	public Map<RankVar, TermVariable> getOutVars() {
+	public Map<RankVar, Term> getOutVars() {
 		return Collections.unmodifiableMap(m_outVars);
 	}
 	
@@ -128,13 +143,23 @@ public class VarCollector implements Serializable {
 	 * @return mapping from outVars to the RankVar that is represented by the
 	 * outVar
 	 */
-	public Map<TermVariable, RankVar> getOutVarsReverseMapping() {
+	public Map<Term, RankVar> getOutVarsReverseMapping() {
 		return Collections.unmodifiableMap(m_outVarsReverseMapping);
 	}
 	
+	/**
+	 * @return the collected auxVars
+	 */
 	public Set<TermVariable> getAuxVars() {
 		return Collections.unmodifiableSet(m_AuxVars);
 	}
+	
+//	/**
+//	 * @return the collected constVars
+//	 */
+//	public Set<ApplicationTerm> getConstVars() {
+//		return Collections.unmodifiableSet(m_ConstVars);
+//	}
 	
 	/**
 	 * @return the associated VarFactory
@@ -149,7 +174,7 @@ public class VarCollector implements Serializable {
 	 * @param var the TermVariable corresponding to the RankVar's input state
 	 *            (unprimed version)
 	 */
-	public void addInVar(RankVar rkVar, TermVariable var) {
+	public void addInVar(RankVar rkVar, Term var) {
 		m_inVars.put(rkVar, var);
 		m_inVarsReverseMapping.put(var, rkVar);
 	}
@@ -158,7 +183,7 @@ public class VarCollector implements Serializable {
 	 * Remove an inVar from the collection
 	 */
 	public void removeInVar(RankVar rkVar) {
-		TermVariable tv = m_inVars.remove(rkVar);
+		Term tv = m_inVars.remove(rkVar);
 		if (tv == null) {
 			throw new AssertionError(
 					"cannot remove variable that is not contained");
@@ -173,7 +198,7 @@ public class VarCollector implements Serializable {
 	 * @param var the TermVariable corresponding to the RankVar's output state
 	 *            (primed version)
 	 */
-	public void addOutVar(RankVar rkVar, TermVariable var) {
+	public void addOutVar(RankVar rkVar, Term var) {
 		m_outVars.put(rkVar, var);
 		m_outVarsReverseMapping.put(var, rkVar);
 	}
@@ -182,7 +207,7 @@ public class VarCollector implements Serializable {
 	 * Remove an outVar from the collection
 	 */
 	public void removeOutVar(RankVar rkVar) {
-		TermVariable tv = m_outVars.remove(rkVar);
+		Term tv = m_outVars.remove(rkVar);
 		if (tv == null) {
 			throw new AssertionError(
 					"cannot remove variable that is not contained");
@@ -210,7 +235,7 @@ public class VarCollector implements Serializable {
 	 * unsound for the inductiveness property.
 	 */
 	public void matchInVars() {
-		for (Map.Entry<RankVar, TermVariable> entry : m_outVars.entrySet()) {
+		for (Map.Entry<RankVar, Term> entry : m_outVars.entrySet()) {
 			if (!m_inVars.containsKey(entry.getKey())) {
 				TermVariable inVar = m_factory.getNewTermVariable(
 						entry.getKey().getGloballyUniqueId(),
@@ -225,8 +250,8 @@ public class VarCollector implements Serializable {
 	 * Returns true if each auxVar occurs neither as inVar nor as outVar.
 	 * This property should always hold.
 	 */
-	public boolean auxVarsDisjointFormInOutVars() {
-		for (TermVariable auxVar : m_AuxVars) {
+	public boolean auxVarsDisjointFromInOutVars() {
+		for (Term auxVar : m_AuxVars) {
 			if (m_inVarsReverseMapping.containsKey(auxVar)) {
 				return false;
 			}

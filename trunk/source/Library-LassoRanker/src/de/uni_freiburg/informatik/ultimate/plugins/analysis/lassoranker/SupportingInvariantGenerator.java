@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 
 /**
@@ -71,7 +70,7 @@ public class SupportingInvariantGenerator extends AffineFunctionGenerator {
 	 * @param vars a mapping from Boogie variables to TermVariables to be used
 	 * @return Linear inequality corresponding to si(x)
 	 */
-	public LinearInequality generate(Map<RankVar, TermVariable> vars) {
+	public LinearInequality generate(Map<RankVar, Term> vars) {
 		LinearInequality li = super.generate(vars);
 		li.needs_motzkin_coefficient = false;
 		li.setStrict(this.strict);

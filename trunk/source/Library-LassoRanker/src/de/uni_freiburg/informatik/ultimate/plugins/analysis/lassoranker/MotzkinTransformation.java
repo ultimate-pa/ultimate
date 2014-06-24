@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 
@@ -206,7 +205,7 @@ public class MotzkinTransformation extends InstanceCounting {
 		return null;
 	}
 	
-	private Term doTransform(Term[] coefficients, Collection<TermVariable> vars)
+	private Term doTransform(Term[] coefficients, Collection<Term> vars)
 			throws SMTLIBException {
 		int num_coefficients = coefficients.length;
 		assert(num_coefficients == m_inequalities.size());
@@ -215,7 +214,7 @@ public class MotzkinTransformation extends InstanceCounting {
 			// resulting formula
 		
 		// λ*A + μ*B = 0
-		for (TermVariable var : vars) {
+		for (Term var : vars) {
 			List<Term> summands = new ArrayList<Term>();
 			for (int i = 0; i < num_coefficients; ++i) {
 				Term s = product(m_inequalities.get(i).getCoefficient(var),
@@ -291,7 +290,7 @@ public class MotzkinTransformation extends InstanceCounting {
 		registerMotzkinCoefficients();
 		
 		// Gather all occurring variables
-		Collection<TermVariable> vars = new LinkedHashSet<TermVariable>();
+		Collection<Term> vars = new LinkedHashSet<Term>();
 		for (LinearInequality li : m_inequalities) {
 			vars.addAll(li.getVariables());
 		}

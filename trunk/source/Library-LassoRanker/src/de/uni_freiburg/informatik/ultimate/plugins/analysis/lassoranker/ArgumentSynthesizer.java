@@ -104,9 +104,10 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * @param loop the lasso's loop transition
 	 * @param preferences the preferences
 	 * @param constaintsName name of the constraints whose satisfiability is 
-	 * checked
+	 *                       checked
 	 */
 	public ArgumentSynthesizer(LinearTransition stem, LinearTransition loop,
+//			Collection<ApplicationTerm> constants, Collection<Term> axioms,
 			Preferences preferences, String constaintsName) {
 		m_preferences = preferences;
 		m_script = SMTSolver.newScript(preferences, constaintsName);

@@ -76,7 +76,7 @@ public class RewriteBooleans implements PreProcessor {
 	 * Maps boolean-valued TermVariable's to their translated counterpart,
 	 * which are int- or real-valued variables
 	 */
-	private final Map<TermVariable, TermVariable> m_SubstitutionMapping;
+	private final Map<Term, Term> m_SubstitutionMapping;
 	
 	/**
 	 * Create a new RewriteBooleans preprocessor
@@ -85,7 +85,7 @@ public class RewriteBooleans implements PreProcessor {
 	 */
 	public RewriteBooleans(VarCollector rankVarCollector) {
 		m_rankVarCollector = rankVarCollector;
-		m_SubstitutionMapping = new LinkedHashMap<TermVariable, TermVariable>();
+		m_SubstitutionMapping = new LinkedHashMap<Term, Term>();
 		m_repVars = new ArrayList<ReplacementVar>();
 
 		
@@ -116,14 +116,14 @@ public class RewriteBooleans implements PreProcessor {
 	 */
 	private void generateRepVars() {
 		VarFactory rvFactory = m_rankVarCollector.getFactory();
-		Collection<Map.Entry<RankVar, TermVariable>> entrySet =
-				new ArrayList<Map.Entry<RankVar, TermVariable>>(
+		Collection<Map.Entry<RankVar, Term>> entrySet =
+				new ArrayList<Map.Entry<RankVar, Term>>(
 						m_rankVarCollector.getInVars().entrySet());
-		for (Map.Entry<RankVar, TermVariable> entry : entrySet) {
+		for (Map.Entry<RankVar, Term> entry : entrySet) {
 			if (entry.getValue().getSort().getName().equals("Bool")) {
 				ReplacementVar repVar = 
 						getOrConstructReplacementVar(entry.getKey());
-				TermVariable newInVar = 
+				Term newInVar = 
 						m_SubstitutionMapping.get(entry.getValue());
 				if (newInVar == null) {
 					// Create a new TermVariable
@@ -137,13 +137,13 @@ public class RewriteBooleans implements PreProcessor {
 				m_rankVarCollector.addInVar(repVar, newInVar);
 			}
 		}
-		entrySet = new ArrayList<Map.Entry<RankVar, TermVariable>>(
+		entrySet = new ArrayList<Map.Entry<RankVar, Term>>(
 						m_rankVarCollector.getOutVars().entrySet());
-		for (Map.Entry<RankVar, TermVariable> entry : entrySet) {
+		for (Map.Entry<RankVar, Term> entry : entrySet) {
 			if (entry.getValue().getSort().getName().equals("Bool")) {
 				ReplacementVar repVar = 
 						getOrConstructReplacementVar(entry.getKey());
-				TermVariable newOutVar = 
+				Term newOutVar = 
 						m_SubstitutionMapping.get(entry.getValue());
 				if (newOutVar == null) {
 					// Create a new TermVariable
@@ -195,7 +195,7 @@ public class RewriteBooleans implements PreProcessor {
 					term.getSort().getName().equals("Bool")) {
 				TermVariable var = (TermVariable) term;
 				assert m_SubstitutionMapping.containsKey(var);
-				TermVariable translatedVar = m_SubstitutionMapping.get(var);
+				Term translatedVar = m_SubstitutionMapping.get(var);
 				Term one = m_Script.numeral(BigInteger.ONE);
 				Term repTerm = m_Script.term(">=", translatedVar, one);
 				setResult(repTerm);

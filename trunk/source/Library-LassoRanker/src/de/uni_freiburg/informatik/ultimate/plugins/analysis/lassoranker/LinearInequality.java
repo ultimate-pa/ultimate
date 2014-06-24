@@ -85,7 +85,7 @@ public class LinearInequality implements Serializable {
 	/**
 	 * List of variables including rational coefficients
 	 */
-	private final Map<TermVariable, AffineTerm> m_coefficients;
+	private final Map<Term, AffineTerm> m_coefficients;
 	
 	/**
 	 * Affine constant
@@ -96,7 +96,7 @@ public class LinearInequality implements Serializable {
 	 * Construct an empty linear inequality, i.e. 0 ≥ 0.
 	 */
 	public LinearInequality() {
-		m_coefficients = new LinkedHashMap<TermVariable, AffineTerm>();
+		m_coefficients = new LinkedHashMap<Term, AffineTerm>();
 		m_constant = new AffineTerm();
 	}
 	
@@ -163,6 +163,9 @@ public class LinearInequality implements Serializable {
 					li = divident;
 					li.mult(divisor.m_constant.getConstant().inverse());
 				}
+			} else if (appt.getParameters().length == 0){
+				li = new LinearInequality();
+				li.add(appt, Rational.ONE);
 			} else {
 				throw new UnknownFunctionException(appt);
 			}
@@ -220,7 +223,7 @@ public class LinearInequality implements Serializable {
 	 * @param var a variable
 	 * @return zero if the variable does not occur
 	 */
-	public AffineTerm getCoefficient(TermVariable var) {
+	public AffineTerm getCoefficient(Term var) {
 		AffineTerm p = m_coefficients.get(var);
 		if (p == null) {
 			return new AffineTerm();
@@ -231,7 +234,7 @@ public class LinearInequality implements Serializable {
 	/**
 	 * @return a collection of all occuring variables
 	 */
-	public Collection<TermVariable> getVariables() {
+	public Collection<Term> getVariables() {
 		return m_coefficients.keySet();
 	}
 	
@@ -241,7 +244,7 @@ public class LinearInequality implements Serializable {
 	 */
 	public void add(LinearInequality li) {
 		this.add(li.m_constant);
-		for (Map.Entry<TermVariable, AffineTerm> entry
+		for (Map.Entry<Term, AffineTerm> entry
 				: li.m_coefficients.entrySet()) {
 			this.add(entry.getKey(), entry.getValue());
 		}
@@ -252,7 +255,7 @@ public class LinearInequality implements Serializable {
 	 * @param var variable
 	 * @param t   the variable's coefficient to be added
 	 */
-	public void add(TermVariable var, AffineTerm a) {
+	public void add(Term var, AffineTerm a) {
 		AffineTerm a2 = m_coefficients.get(var);
 		if (a2 != null) {
 			a2.add(a);
@@ -273,7 +276,7 @@ public class LinearInequality implements Serializable {
 	 * @param var variable
 	 * @param t   the variable's coefficient to be added
 	 */
-	public void add(TermVariable var, Rational r) {
+	public void add(Term var, Rational r) {
 		this.add(var, new AffineTerm(r));
 	}
 	
@@ -291,7 +294,7 @@ public class LinearInequality implements Serializable {
 	 */
 	public void mult(Rational r) {
 		m_constant.mult(r);
-		for (Map.Entry<TermVariable, AffineTerm> entry
+		for (Map.Entry<Term, AffineTerm> entry
 				: m_coefficients.entrySet()) {
 			entry.getValue().mult(r);
 		}
@@ -316,9 +319,9 @@ public class LinearInequality implements Serializable {
 		if (m_coefficients.size() == 0) {
 			return "Real"; // default to Real
 		}
-		TermVariable firstVar = m_coefficients.keySet().iterator().next();
+		Term firstVar = m_coefficients.keySet().iterator().next();
 		Sort result = firstVar.getSort();
-		for (TermVariable var : m_coefficients.keySet()) {
+		for (Term var : m_coefficients.keySet()) {
 			assert var.getSort() == result;
 		}
 		return result.getName();
@@ -336,8 +339,8 @@ public class LinearInequality implements Serializable {
 				: script.numeral(BigInteger.ZERO);
 		
 		int i = 0;
-		for (Entry<TermVariable, AffineTerm> entry : m_coefficients.entrySet()) {
-			TermVariable var = entry.getKey();
+		for (Entry<Term, AffineTerm> entry : m_coefficients.entrySet()) {
+			Term var = entry.getKey();
 			Term coeff;
 			if (real) {
 				assert var.getSort().getName().equals("Real");
@@ -368,7 +371,7 @@ public class LinearInequality implements Serializable {
 		sb.append(getInequalitySymbolReverse());
 		sb.append(" ");
 		boolean first = true;
-		for (Map.Entry<TermVariable, AffineTerm> entry
+		for (Map.Entry<Term, AffineTerm> entry
 				: m_coefficients.entrySet()) {
 			if (entry.getValue().isZero()) {
 				continue;

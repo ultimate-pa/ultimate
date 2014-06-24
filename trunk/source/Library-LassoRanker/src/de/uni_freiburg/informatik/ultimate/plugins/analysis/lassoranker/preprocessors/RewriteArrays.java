@@ -551,9 +551,9 @@ public class RewriteArrays implements PreProcessor {
 			Map<Term,Term> in2outMapping = new HashMap<Term,Term>();
 			Map<Term,Term> out2inMapping = new HashMap<Term,Term>();
 			for (RankVar rv  : m_VarCollector.getInVars().keySet()) {
-				TermVariable inVar = m_VarCollector.getInVars().get(rv);
+				Term inVar = m_VarCollector.getInVars().get(rv);
 				assert inVar != null;
-				TermVariable outVar = m_VarCollector.getOutVars().get(rv);
+				Term outVar = m_VarCollector.getOutVars().get(rv);
 				assert outVar != null;
 				in2outMapping.put(inVar, outVar);
 				out2inMapping.put(outVar, inVar);

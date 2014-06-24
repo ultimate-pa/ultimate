@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
@@ -240,16 +239,14 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			Map<RankVar, Term> varsIn,
 			Map<RankVar, Term> varsOut,
 			boolean rays) {
-		Map<TermVariable, Term> auxVars =
-				new LinkedHashMap<TermVariable, Term>();
+		Map<Term, Term> auxVars = new LinkedHashMap<Term, Term>();
 		List<Term> conjunction = new ArrayList<Term>(polyhedron.size());
 		for (LinearInequality ieq : polyhedron) {
 			List<Term> summands = new ArrayList<Term>();
-			Collection<TermVariable> added_vars =
-					new LinkedHashSet<TermVariable>();
+			Collection<Term> added_vars = new LinkedHashSet<Term>();
 			
 			// outVars
-			for (Map.Entry<RankVar, TermVariable> entry :
+			for (Map.Entry<RankVar, Term> entry :
 					transition.getOutVars().entrySet()) {
 				if (!varsOut.containsKey(entry.getKey())) {
 					continue;
@@ -262,7 +259,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			}
 			
 			// inVars
-			for (Map.Entry<RankVar, TermVariable> entry :
+			for (Map.Entry<RankVar, Term> entry :
 					transition.getInVars().entrySet()) {
 				if (added_vars.contains(entry.getValue())) {
 					// the transition implicitly requires that
@@ -282,10 +279,9 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			}
 			
 			// tmpVars
-			Set<TermVariable> all_vars =
-					new LinkedHashSet<TermVariable>(ieq.getVariables());
+			Set<Term> all_vars = new LinkedHashSet<Term>(ieq.getVariables());
 			all_vars.removeAll(added_vars);
-			for (TermVariable var : all_vars) {
+			for (Term var : all_vars) {
 				Term v;
 				if (auxVars.containsKey(var)) {
 					v = auxVars.get(var);

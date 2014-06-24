@@ -36,7 +36,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.InequalityConverter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.IntegralHull;
@@ -62,8 +61,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preproce
 public class LinearTransition implements Serializable {
 	private static final long serialVersionUID = 8925538198614759883L;
 	
-	private final Map<RankVar, TermVariable> m_inVars;
-	private final Map<RankVar, TermVariable> m_outVars;
+	private final Map<RankVar, Term> m_inVars;
+	private final Map<RankVar, Term> m_outVars;
 	
 	private final List<List<LinearInequality>> m_polyhedra;
 	private final boolean m_contains_integers;
@@ -75,8 +74,7 @@ public class LinearTransition implements Serializable {
 	 * @param outVars output variables
 	 */
 	public LinearTransition(List<List<LinearInequality>> polyhedra,
-			Map<RankVar, TermVariable> inVars,
-			Map<RankVar, TermVariable> outVars) {
+			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
 		assert(polyhedra != null);
 		assert(inVars != null);
 		assert(outVars != null);
@@ -95,7 +93,7 @@ public class LinearTransition implements Serializable {
 	private boolean checkIfContainsIntegers() {
 		for (List<LinearInequality> polyhedron : m_polyhedra) {
 			for (LinearInequality ieq : polyhedron) {
-				for (TermVariable var : ieq.getVariables()) {
+				for (Term var : ieq.getVariables()) {
 					if (var.getSort().getName().equals("Int")) {
 						return true;
 					}
@@ -129,8 +127,8 @@ public class LinearTransition implements Serializable {
 		LinearInequality eqTrue = new LinearInequality();
 		return new LinearTransition(
 				Collections.singletonList(Collections.singletonList(eqTrue)),
-				Collections.<RankVar, TermVariable> emptyMap(),
-				Collections.<RankVar, TermVariable> emptyMap()
+				Collections.<RankVar, Term> emptyMap(),
+				Collections.<RankVar, Term> emptyMap()
 		);
 	}
 	
@@ -142,8 +140,8 @@ public class LinearTransition implements Serializable {
 		eqFalse.setStrict(true);
 		return new LinearTransition(
 				Collections.singletonList(Collections.singletonList(eqFalse)),
-				Collections.<RankVar, TermVariable> emptyMap(),
-				Collections.<RankVar, TermVariable> emptyMap()
+				Collections.<RankVar, Term> emptyMap(),
+				Collections.<RankVar, Term> emptyMap()
 		);
 	}
 	
@@ -182,8 +180,8 @@ public class LinearTransition implements Serializable {
 	 * @throws TermException if the supplied term does not have the correct form
 	 */
 	public static LinearTransition fromTerm(Term term,
-			Map<RankVar, TermVariable> inVars,
-			Map<RankVar, TermVariable> outVars) throws TermException {
+			Map<RankVar, Term> inVars,
+			Map<RankVar, Term> outVars) throws TermException {
 		List<List<LinearInequality>> polyhedra =
 				new ArrayList<List<LinearInequality>>();
 		for (Term disjunct : toClauses(term)) {
@@ -196,7 +194,7 @@ public class LinearTransition implements Serializable {
 	 * @return the mapping between the trasition's input (unprimed) variables
 	 *         and their representation as a TermVariable
 	 */
-	public Map<RankVar, TermVariable> getInVars() {
+	public Map<RankVar, Term> getInVars() {
 		return m_inVars;
 	}
 	
@@ -204,7 +202,7 @@ public class LinearTransition implements Serializable {
 	 * @return the mapping between the trasition's output (primed) variables
 	 *         and their representation as a TermVariable
 	 */
-	public Map<RankVar, TermVariable> getOutVars() {
+	public Map<RankVar, Term> getOutVars() {
 		return m_outVars;
 	}
 	
@@ -252,8 +250,8 @@ public class LinearTransition implements Serializable {
 	/**
 	 * @return all variables occuring in any of the inequalities
 	 */
-	public Set<TermVariable> getVariables() {
-		Set<TermVariable> vars = new LinkedHashSet<TermVariable>();
+	public Set<Term> getVariables() {
+		Set<Term> vars = new LinkedHashSet<Term>();
 		for (List<LinearInequality> polyhedron : m_polyhedra) {
 			for (LinearInequality li : polyhedron) {
 				vars.addAll(li.getVariables());
