@@ -290,7 +290,12 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 			return super.visit(declaration);
 		} else if (declaration instanceof IASTFunctionDefinition) {
 			IASTFunctionDefinition funDef = (IASTFunctionDefinition)declaration;
-			functionTable.put(funDef.getDeclarator().getName().toString(), funDef);
+			IASTDeclarator possiblyNestedDeclarator = funDef.getDeclarator();
+			while (possiblyNestedDeclarator.getNestedDeclarator() != null) {
+				possiblyNestedDeclarator = possiblyNestedDeclarator.getNestedDeclarator();
+			}
+			String nameOfInnermostDeclarator = possiblyNestedDeclarator.getName().toString();
+			functionTable.put(nameOfInnermostDeclarator, funDef);
 
 			if (declaration.getParent() instanceof IASTTranslationUnit) {
 				for (String id : dependencyGraphPreliminaryInverse.keySet()) {
