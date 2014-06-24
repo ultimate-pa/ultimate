@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -139,6 +140,7 @@ public class LassoChecker {
 	
 	private NonTerminationArgument m_NonterminationArgument;
 
+	Collection<Term> m_Axioms;
 	
 	public ContinueDirective getContinueDirective() {
 		assert m_ContinueDirective != null;
@@ -193,7 +195,7 @@ public class LassoChecker {
 
 	public LassoChecker(INTERPOLATION interpolation, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiableGlobalVariableManager,
-			BinaryStatePredicateManager bspm,
+			Collection<Term> axioms, BinaryStatePredicateManager bspm,
 			NestedLassoRun<CodeBlock, IPredicate> counterexample,
 			String lassoCheckerIdentifier) {
 		super();
@@ -211,6 +213,7 @@ public class LassoChecker {
 		m_TruePredicate = m_SmtManager.newTruePredicate();
 		m_FalsePredicate = m_SmtManager.newFalsePredicate();
 		m_PredicateUnifier = new PredicateUnifier(m_SmtManager, m_TruePredicate, m_FalsePredicate);
+		m_Axioms = axioms;
 		checkFeasibility();
 		assert m_ContinueDirective != null;
 		assert m_StemInfeasible != null;
@@ -559,7 +562,9 @@ public class LassoChecker {
 
 		LassoRankerTerminationAnalysis lrta = null;
 		try {
-			 lrta =	new LassoRankerTerminationAnalysis(m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), stemTF, loopTF, new Term[0], pref);
+			 lrta =	new LassoRankerTerminationAnalysis(m_SmtManager.getScript(), 
+					 m_SmtManager.getBoogie2Smt(), stemTF, loopTF, 
+					 m_Axioms.toArray(new Term[m_Axioms.size()]), pref);
 		} catch (TermException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

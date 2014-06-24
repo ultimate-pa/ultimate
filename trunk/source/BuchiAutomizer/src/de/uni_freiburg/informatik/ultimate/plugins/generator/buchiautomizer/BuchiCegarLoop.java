@@ -341,6 +341,7 @@ public class BuchiCegarLoop {
 				LassoChecker lassoChecker = new LassoChecker(
 						m_Interpolation, m_SmtManager, 
 						m_RootNode.getRootAnnot().getModGlobVarManager(),
+						m_RootNode.getRootAnnot().getBoogie2SMT().getAxioms(),
 						m_BinaryStatePredicateManager,
 						m_Counterexample,
 						generateLassoCheckerIdentifier());
