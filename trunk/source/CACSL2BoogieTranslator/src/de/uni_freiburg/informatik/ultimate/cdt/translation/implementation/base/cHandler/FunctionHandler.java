@@ -976,6 +976,19 @@ public class FunctionHandler {
 			ResultExpression exprResult = ((ResultExpression) main.dispatch(node
 					.getReturnValue())).switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			exprResult = ConvExpr.rexBoolToIntIfNecessary(loc, exprResult);
+			
+			//do some implicit casts
+			CType functionResultType = this.procedureToReturnCType.get(currentProcedure.getIdentifier());
+			if (!exprResult.lrVal.cType.equals(functionResultType)) {
+				if (functionResultType instanceof CPointer 
+						&& exprResult.lrVal.cType instanceof CPrimitive
+						&& exprResult.lrVal.getValue() instanceof IntegerLiteral
+						&& ((IntegerLiteral) exprResult.lrVal.getValue()).getValue().equals("0")) {
+					exprResult.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), functionResultType);
+				}
+			}
+			
+			
 			Expression rhs = (Expression) exprResult.lrVal.getValue();
 			stmt.addAll(exprResult.stmt);
 			decl.addAll(exprResult.decl);

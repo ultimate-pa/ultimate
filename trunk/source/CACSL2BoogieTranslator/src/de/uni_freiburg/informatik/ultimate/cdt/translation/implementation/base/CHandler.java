@@ -1689,7 +1689,8 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_plus:
 		case IASTBinaryExpression.op_modulo:
 		case IASTBinaryExpression.op_multiply:
-		case IASTBinaryExpression.op_divide: {
+		case IASTBinaryExpression.op_divide: 
+		{
 			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
 			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
 			stmt.addAll(rlToInt.stmt);
