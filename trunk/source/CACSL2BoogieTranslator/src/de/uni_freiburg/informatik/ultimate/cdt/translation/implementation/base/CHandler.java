@@ -2727,11 +2727,13 @@ public class CHandler implements ICHandler {
 		assert rPositive instanceof ResultExpression;
 		ResultExpression rePositive = (ResultExpression) rPositive;
 		rePositive = rePositive.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		rePositive = ConvExpr.rexBoolToIntIfNecessary(loc, rePositive);
 
 		Result rNegative = main.dispatch(node.getNegativeResultExpression());
 		assert rNegative instanceof ResultExpression;
 		ResultExpression reNegative = (ResultExpression) rNegative;
 		reNegative = reNegative.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		reNegative = ConvExpr.rexBoolToIntIfNecessary(loc, reNegative);
 		
 		//implicit casting -- not very general
 		if (!rePositive.lrVal.cType.equals(reNegative.lrVal.cType)) {
