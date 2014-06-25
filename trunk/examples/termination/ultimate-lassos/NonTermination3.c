@@ -8,9 +8,11 @@
 extern int __VERIFIER_nondet_int();
 
 int main() {
-	int x = __VERIFIER_nondet_int();
-	while (x > 1) {
-		x = 2*x;
+	int i = __VERIFIER_nondet_int();
+	int a[10];
+	while (0 <= i && i < 10 && a[i] >= 0) {
+		i = __VERIFIER_nondet_int();
+//		a[i] = 0;
 	}
 	return 0;
 }

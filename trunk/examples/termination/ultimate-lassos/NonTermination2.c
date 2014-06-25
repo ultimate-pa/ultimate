@@ -10,7 +10,11 @@ extern int __VERIFIER_nondet_int();
 int main() {
 	int x = __VERIFIER_nondet_int();
 	while (x > 1) {
-		x = 2*x;
+		int old_x = x;
+		x = __VERIFIER_nondet_int();
+		if (x < 2*old_x) {
+			break;
+		}
 	}
 	return 0;
 }
