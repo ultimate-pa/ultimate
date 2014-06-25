@@ -33,6 +33,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -410,6 +411,23 @@ public class LassoRankerTerminationAnalysis {
 	}
 	
 	/**
+	 * @return a pretty version of the guesses for Motzkin coefficients
+	 */
+	private String motzkinGuesses(ArgumentSynthesizer as) {
+		StringBuilder sb = new StringBuilder();
+		Rational[] mcs = as.guessMotzkinCoefficients();
+		sb.append("[");
+		for (int i = 0; i < mcs.length; ++i) {
+			if (i > 0) {
+				sb.append(", ");
+			}
+			sb.append(mcs[i].toString());
+		}
+		sb.append("]");
+		return sb.toString();
+	}
+	
+	/**
 	 * @return various statistics as a neatly formatted string
 	 */
 	public String getStatistics() {
@@ -471,10 +489,12 @@ public class LassoRankerTerminationAnalysis {
 		TerminationArgumentSynthesizer tas =
 				new TerminationArgumentSynthesizer(m_stem, m_loop,
 						template, m_preferences);
+		s_Logger.debug("Guesses for Motzkin coefficients: "
+				+ motzkinGuesses(tas));
 		final LBool constraintSat = tas.synthesize();
 		m_numSIs = tas.getNumSIs();
 		m_numMotzkin = tas.getNumMotzkin();
-		s_Logger.debug(benchmarkScriptMessage(constraintSat,	template));
+		s_Logger.debug(benchmarkScriptMessage(constraintSat, template));
 		if (constraintSat == LBool.SAT) {
 			s_Logger.info("Proved termination.");
 			TerminationArgument arg = tas.getArgument();

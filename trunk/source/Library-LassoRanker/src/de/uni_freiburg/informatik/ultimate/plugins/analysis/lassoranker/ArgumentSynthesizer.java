@@ -32,10 +32,13 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -107,7 +110,6 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 *                       checked
 	 */
 	public ArgumentSynthesizer(LinearTransition stem, LinearTransition loop,
-//			Collection<ApplicationTerm> constants, Collection<Term> axioms,
 			Preferences preferences, String constaintsName) {
 		m_preferences = preferences;
 		m_script = SMTSolver.newScript(preferences, constaintsName);
@@ -205,6 +207,44 @@ public abstract class ArgumentSynthesizer implements Closeable {
 		rankVars.addAll(m_loop.getInVars().keySet());
 		rankVars.addAll(m_loop.getOutVars().keySet());
 		return rankVars;
+	}
+	
+	/**
+	 * Provide a guess for Motzkin coefficients. E.g., if there is
+	 * a statement x' = 2*x + 5, we guess the Motzkin coefficient 2,
+	 * since 2 is an eigenvalue of the homogeneous loop.
+	 * 
+	 * The returned values always contain 0 and 1.
+	 * 
+	 * @return an array of guesses for Motzkin coefficients.
+	 */
+	protected Rational[] guessMotzkinCoefficients() {
+		Set<Rational> motzkin_coeffs = new HashSet<Rational>();
+		motzkin_coeffs.add(Rational.ZERO);
+		motzkin_coeffs.add(Rational.ONE);
+		for (List<LinearInequality> polyhedron : m_loop.getPolyhedra()) {
+			for (Map.Entry<RankVar, Term> entry : m_loop.getInVars().entrySet()) {
+				RankVar rkVar = entry.getKey();
+				if (!m_loop.getOutVars().containsKey(rkVar)) {
+					continue;
+				}
+				Term inVar = entry.getValue();
+				Term outVar = m_loop.getOutVars().get(rkVar);
+				for (LinearInequality li : polyhedron) {
+					AffineTerm c_in = li.getCoefficient(inVar);
+					AffineTerm c_out = li.getCoefficient(outVar);
+					if (!c_in.isZero() && !c_out.isZero()) {
+						// inVar and outVar occur in this linear inequality
+						assert c_in.isConstant();
+						assert c_out.isConstant();
+						Rational eigenv =
+								c_in.getConstant().div(c_out.getConstant()).negate();
+						motzkin_coeffs.add(eigenv);
+					}
+				}
+			}
+		}
+		return motzkin_coeffs.toArray(new Rational[0]);
 	}
 	
 	/**
