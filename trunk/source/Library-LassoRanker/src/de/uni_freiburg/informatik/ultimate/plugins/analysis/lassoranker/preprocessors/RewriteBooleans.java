@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarFacto
 public class RewriteBooleans implements PreProcessor {
 	private static final String s_repInPostfix  = "_in_bool";
 	private static final String s_repOutPostfix = "_out_bool";
-	private static final String s_repVarSortName = "Int";
+	private static final String s_repVarSortName = "Int"; // FIXME: this should depend on the logic
 	
 	private Script m_Script;
 	
