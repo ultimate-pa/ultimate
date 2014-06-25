@@ -179,7 +179,7 @@ public class TypeHandler implements ITypeHandler {
             // maybe be more elegant (make an entry to symboltable, make a typedef in boogie file??)
             if (cId.equals("size_t")) {
                 return (new ResultTypes(new PrimitiveType(loc, SFO.REAL), node.isConst(),
-                		false, new CPrimitive(PRIMITIVE.INT)));
+                		false, new CPrimitive(PRIMITIVE.UINT)));
             }
             
             String bId = main.cHandler.getSymbolTable().get(cId, loc).getBoogieName();
