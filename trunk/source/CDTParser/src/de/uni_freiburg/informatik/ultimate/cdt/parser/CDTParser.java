@@ -203,7 +203,7 @@ public class CDTParser implements ISource {
 		GNUCSourceParser parser = new GNUCSourceParser(cprep,
 				ParserMode.COMPLETE_PARSE, log, p_config);
 
-//		parser.setSkipTrivialExpressionsInAggregateInitializers(false);
+		parser.setSkipTrivialExpressionsInAggregateInitializers(false);
 		
 		IASTTranslationUnit translationUnit = parser.parse();
 		return new WrapperNode(null, translationUnit);
