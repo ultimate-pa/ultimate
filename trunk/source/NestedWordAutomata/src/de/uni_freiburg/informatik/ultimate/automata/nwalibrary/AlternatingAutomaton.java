@@ -25,7 +25,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -182,8 +184,7 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 
 	@Override
 	public StateFactory<STATE> getStateFactory() {
-		// TODO Auto-generated method stub
-		return null;
+		return m_StateFactory;
 	}
 
 }
