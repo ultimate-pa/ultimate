@@ -747,7 +747,7 @@ public class CHandler implements ICHandler {
 				}
 
 				if (onHeap)
-					memoryHandler.addVariableToBeMalloced(main, new LocalLValue(new VariableLHS(loc, bId), cDec.getType()));
+					memoryHandler.addVariableToBeMallocedAndFreed(main, new LocalLValue(new VariableLHS(loc, bId), cDec.getType()));
 				
 				symbolTable.put(cDec.getName(), new SymbolTableValue(bId,
 						boogieDec, cDec, globalInBoogie,
@@ -2986,11 +2986,13 @@ public class CHandler implements ICHandler {
 		this.typeHandler.beginScope();
 		this.symbolTable.beginScope();
 		this.memoryHandler.getVariablesToBeMalloced().beginScope();
+		this.memoryHandler.getVariablesToBeFreed().beginScope();
 	}
 	
 	public void endScope() {
 		this.typeHandler.endScope();
 		this.symbolTable.endScope();
 		this.memoryHandler.getVariablesToBeMalloced().endScope();
+		this.memoryHandler.getVariablesToBeFreed().endScope();
 	}
 }

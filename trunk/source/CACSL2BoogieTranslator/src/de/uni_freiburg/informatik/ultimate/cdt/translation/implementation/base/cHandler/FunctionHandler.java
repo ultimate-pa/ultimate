@@ -27,6 +27,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
@@ -52,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -383,7 +385,7 @@ public class FunctionHandler {
 				if (isOnHeap) {
 				    LocalLValue llv = new LocalLValue(tempLHS, cvar);
 				    // malloc
-				    memoryHandler.addVariableToBeMalloced(main, llv);
+				    memoryHandler.addVariableToBeMallocedAndFreed(main, llv);
 				    // dereference
                     HeapLValue hlv = new HeapLValue(llv.getValue(), cvar);
                     ArrayList<Declaration> decls = new ArrayList<Declaration>();
@@ -817,9 +819,6 @@ public class FunctionHandler {
 		// f.i. we get a wrong methodname here in defineFunction.c, because of a #define in the original code
 		String methodName = ((IASTIdExpression) functionName).getName().toString();
 		
-		// handle alloca the same way as malloc. This is an unsound workaround 
-		// introduced by Matthias for testing capabilities of termination 
-		// analysis ASAP
 		if (methodName.equals("malloc") || methodName.equals("alloca")) {
 			assert node.getArguments().length == 1;
 			Result sizeRes = main.dispatch(node.getArguments()[0]);
@@ -828,8 +827,16 @@ public class FunctionHandler {
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			assert(sizeRex.stmt.isEmpty() && sizeRex.decl.isEmpty() && sizeRex.auxVars.isEmpty()) :
 				"if this happens, the ResultExpression in the next line has to contain those nonempty stmt/decl/auxvars, too";
-			return memoryHandler.getMallocCall(main, this, sizeRex.lrVal.getValue(), loc);
-		}
+
+			ResultExpression mallocRex = memoryHandler.getMallocCall(main, this, sizeRex.lrVal.getValue(), loc);		
+
+			// for alloc a we have to free the variable ourselves when the stackframe is closed, i.e. at a return
+			if (methodName.equals("alloca")) {
+				memoryHandler.addVariableToBeFreed(main, (LocalLValue) mallocRex.lrVal);
+			}
+			return mallocRex;
+		} 
+	
 		if (methodName.equals("free")) {
 			assert node.getArguments().length == 1;
 			Result pRes = main.dispatch(node.getArguments()[0]);
@@ -1011,7 +1018,8 @@ public class FunctionHandler {
 		stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
 	
 		// we need to insert a free for each malloc of an auxvar before each return
-		for (Entry<LocalLValue, Integer> entry : memoryHandler.getVariablesToBeMalloced().entrySet())  //frees are inserted in handleReturnStm
+//		for (Entry<LocalLValue, Integer> entry : memoryHandler.getVariablesToBeMalloced().entrySet())  //frees are inserted in handleReturnStm
+		for (Entry<LocalLValue, Integer> entry : memoryHandler.getVariablesToBeFreed().entrySet())  //frees are inserted in handleReturnStm
 			if (entry.getValue() >= 1)
 				stmt.add(memoryHandler.getFreeCall(main, this, entry.getKey(), loc));
 		

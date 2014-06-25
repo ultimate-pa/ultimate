@@ -135,9 +135,15 @@ public class MemoryHandler {
 
 	/**
 	 * This set contains those pointers that we have to malloc at the beginning
-	 * and free at the end of the current scope;
+	 *  of the current scope;
 	 */
 	LinkedScopedHashMap<LocalLValue, Integer> variablesToBeMalloced;
+	/**
+	 * This set contains those pointers that we have to 
+	 * free at the end of the current scope;
+	 */
+	LinkedScopedHashMap<LocalLValue, Integer> variablesToBeFreed;
+
 	boolean noMemArrays;
 
     /**
@@ -150,6 +156,7 @@ public class MemoryHandler {
         this.axioms = new LinkedHashSet<Axiom>();
         this.constants = new LinkedHashSet<ConstDeclaration>();
 		this.variablesToBeMalloced = new LinkedScopedHashMap<LocalLValue, Integer>();
+		this.variablesToBeFreed = new LinkedScopedHashMap<LocalLValue, Integer>();
     	m_PointerBaseValidity = 
 				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
 				getEnum(PreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, POINTER_BASE_VALIDITY.class);
@@ -1179,7 +1186,7 @@ public class MemoryHandler {
 		for (LocalLValue llv : this.variablesToBeMalloced.currentScopeKeys()) 
 			mallocs.add(this.getMallocCall(main, m_functionHandler, this.calculateSizeOf(llv.cType, loc), llv, loc));
 		ArrayList<Statement> frees = new ArrayList<Statement>();
-		for (LocalLValue llv : this.variablesToBeMalloced.currentScopeKeys()) {  //frees are inserted in handleReturnStm
+		for (LocalLValue llv : this.variablesToBeFreed.currentScopeKeys()) {  //frees are inserted in handleReturnStm
 			frees.add(this.getFreeCall(main, m_functionHandler, llv, loc));
 		}
 		ArrayList<Statement> newBlockAL = new ArrayList<Statement>();
@@ -1189,12 +1196,20 @@ public class MemoryHandler {
 		return newBlockAL;
 	}
 	
-	public void addVariableToBeMalloced(Dispatcher main, LocalLValue thisLVal) {
+	public void addVariableToBeMallocedAndFreed(Dispatcher main, LocalLValue thisLVal) {
 		this.variablesToBeMalloced.put(thisLVal, variablesToBeMalloced.getActiveScopeNum());
+		this.variablesToBeFreed.put(thisLVal, variablesToBeFreed.getActiveScopeNum());
+	}
+	
+	public void addVariableToBeFreed(Dispatcher main, LocalLValue thisLVal) {
+		this.variablesToBeFreed.put(thisLVal, variablesToBeFreed.getActiveScopeNum());
 	}
 	
 	public LinkedScopedHashMap<LocalLValue, Integer> getVariablesToBeMalloced() {
 		return variablesToBeMalloced;
+	}
+	public LinkedScopedHashMap<LocalLValue, Integer> getVariablesToBeFreed() {
+		return variablesToBeFreed;
 	}
 
 }
