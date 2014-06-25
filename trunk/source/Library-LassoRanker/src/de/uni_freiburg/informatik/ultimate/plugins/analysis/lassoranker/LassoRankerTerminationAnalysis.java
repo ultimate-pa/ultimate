@@ -454,7 +454,7 @@ public class LassoRankerTerminationAnalysis {
 	 */
 	public NonTerminationArgument checkNonTermination()
 			throws SMTLIBException, TermException {
-		s_Logger.info("Checking for non-termination...");
+		s_Logger.info("Checking for nontermination...");
 		
 		NonTerminationArgumentSynthesizer nas =
 				new NonTerminationArgumentSynthesizer(
@@ -464,7 +464,7 @@ public class LassoRankerTerminationAnalysis {
 				);
 		final LBool constraintSat = nas.synthesize();
 		if (constraintSat == LBool.SAT) {
-			s_Logger.info("Proved non-termination.");
+			s_Logger.info("Proved nontermination.");
 			s_Logger.info(nas.getArgument());
 		}
 		nas.close();

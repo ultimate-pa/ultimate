@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -77,14 +78,19 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	public static long m_aux_counter = 0;
 	
 	/**
-	 * Is the ray non-decreasing? (lambda = 1)
+	 * Nonlinear nontermination check?
 	 */
-	private final boolean m_non_decreasing;
+	private final boolean m_nonlinear;
 	
 	/**
 	 * Do we have to handle integers (QF_LIA logic)?
 	 */
 	private final boolean m_integer_mode;
+	
+	/**
+	 * The corresponding prefered sort ("Int" or "Real")
+	 */
+	private final Sort m_sort;
 	
 	/**
 	 * Contains the NonTerminationArgument object after successful discovery
@@ -104,12 +110,15 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		
 		m_integer_mode = (stem != null && stem.containsIntegers())
 				|| loop.containsIntegers();
+		m_nonlinear = m_preferences.nontermination_check_nonlinear
+				&& !m_integer_mode;
 		if (!m_integer_mode) {
-			if (m_preferences.nontermination_check_nonlinear) {
+			if (m_nonlinear) {
 				m_script.setLogic(Logics.QF_NRA);
 			} else {
 				m_script.setLogic(Logics.QF_LRA);
 			}
+			m_sort = m_script.sort("Real");
 		} else {
 			s_Logger.info("Using integer mode.");
 			if (m_preferences.nontermination_check_nonlinear) {
@@ -117,9 +126,8 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 						+ "be linear!");
 			}
 			m_script.setLogic(Logics.QF_LIA);
+			m_sort = m_script.sort("Int");
 		}
-		m_non_decreasing =
-				!m_preferences.nontermination_check_nonlinear || m_integer_mode;
 	}
 	
 	@Override
@@ -160,12 +168,25 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @param vars_honda
 	 * @param vars_ray
 	 * @param lambda
-	 * @return
+	 * @return the constraints
 	 */
 	public Term generateConstraints(Map<RankVar, Term> vars_init,
 			Map<RankVar, Term> vars_honda, Map<RankVar, Term> vars_ray,
 			Term lambda) {
 		Collection<RankVar> rankVars = getAllRankVars();
+		
+		Term[] lambdas;
+		if (m_nonlinear) {
+			// Use a variable for lambda
+			lambdas = new Term[] { lambda };
+		} else {
+			// Use a list of guesses for lambda
+			Rational[] lambda_guesses = guessMotzkinCoefficients();
+			lambdas = new Term[lambda_guesses.length];
+			for (int i = 0; i < lambda_guesses.length; ++i) {
+				lambdas[i] = lambda_guesses[i].toTerm(m_sort);
+			}
+		}
 		
 		// A_stem * (x0, x0') <= b_stem
 		Term t1 = m_script.term("true");
@@ -193,12 +214,15 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 							vars_ray.get(rkVar)));
 		}
 		// vars_ray * lambda
-		Map<RankVar, Term> vars_ray_times_lambda =
-				new LinkedHashMap<RankVar, Term>();
-		if (!m_non_decreasing) {
+		List<Map<RankVar, Term>> vars_ray_times_lambdas =
+				new ArrayList<Map<RankVar, Term>>(lambdas.length);
+		for (int i = 0; i < lambdas.length; ++i) {
+			Term lambda_t = lambdas[i];
+			Map<RankVar, Term> ray_times_lambda = new LinkedHashMap<RankVar, Term>();
+			vars_ray_times_lambdas.add(ray_times_lambda);
 			for (RankVar rkVar : rankVars) {
-				vars_ray_times_lambda.put(rkVar,
-						m_script.term("*", vars_ray.get(rkVar), lambda));
+				ray_times_lambda.put(rkVar,
+						m_script.term("*", vars_ray.get(rkVar), lambda_t));
 			}
 		}
 		
@@ -209,26 +233,32 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 					vars_honda, vars_end_plus_ray, false);
 			
 			// A_loop * (y, lambda * y) <= 0
-			Term t_ray = this.generateConstraint(
-					m_loop,
-					polyhedron,
-					vars_ray,
-					m_non_decreasing ? vars_ray : vars_ray_times_lambda,
-					true
-			);
-			disjunction.add(Util.and(m_script, t_honda, t_ray));
+			for (int i = 0; i < lambdas.length; ++i) {
+				Map<RankVar, Term> ray_times_lambda =
+						vars_ray_times_lambdas.get(i);
+				Term t_ray = this.generateConstraint(
+						m_loop,
+						polyhedron,
+						vars_ray,
+						ray_times_lambda,
+						true
+				);
+				Term fix_lambda = m_script.term("=", lambda, lambdas[i]);
+				disjunction.add(Util.and(m_script, t_honda, t_ray, fix_lambda));
+			}
 		}
 		Term t2 = Util.or(m_script, disjunction.toArray(new Term[0]));
 		
 		Term t3;
-		if (!m_non_decreasing) {
+		if (!m_integer_mode) {
 			// lambda >= 0
 			t3 = m_script.term(">=", lambda, m_script.decimal("0"));
 		} else {
-			t3 = m_script.term("=", lambda,
-				m_integer_mode ? m_script.numeral(BigInteger.ONE)
-							: m_script.decimal("1"));
+			t3 = m_script.term("true");
 		}
+		s_Logger.debug(SMTPrettyPrinter.print(t1));
+		s_Logger.debug(SMTPrettyPrinter.print(t2));
+		s_Logger.debug(SMTPrettyPrinter.print(t3));
 		return m_script.term("and", t1, t2, t3);
 	}
 	
@@ -300,9 +330,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 						: a.asRealTerm(m_script));
 			}
 			conjunction.add(m_script.term(ieq.getInequalitySymbol(),
-					SmtUtils.sum(m_script,
-							m_integer_mode ? m_script.sort("Int")
-									: m_script.sort("Real"),
+					SmtUtils.sum(m_script, m_sort,
 							summands.toArray(new Term[0])),
 					m_integer_mode ? m_script.numeral(BigInteger.ZERO)
 							: m_script.decimal("0")));
