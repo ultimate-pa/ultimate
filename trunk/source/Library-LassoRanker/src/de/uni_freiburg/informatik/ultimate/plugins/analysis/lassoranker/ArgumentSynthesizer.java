@@ -32,6 +32,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -224,24 +225,69 @@ public abstract class ArgumentSynthesizer implements Closeable {
 		motzkin_coeffs.add(Rational.ZERO);
 		motzkin_coeffs.add(Rational.ONE);
 		for (List<LinearInequality> polyhedron : m_loop.getPolyhedra()) {
-			for (Map.Entry<RankVar, Term> entry : m_loop.getInVars().entrySet()) {
+			// Find aliases
+			Map<Term, Set<Term>> aliases = new HashMap<Term, Set<Term>>();
+			for (LinearInequality li : polyhedron) {
+				// If li is 0 <= a*x + b*y with a == -b and a != 0 != b
+				// then put x -> y into aliases
+				if (!li.isStrict() && li.getConstant().isZero()
+						&& li.getVariables().size() == 2) {
+					Term[] vars = li.getVariables().toArray(new Term[2]);
+					AffineTerm at0 = li.getCoefficient(vars[0]);
+					AffineTerm at1 = li.getCoefficient(vars[1]);
+					assert !at0.isZero();
+					assert !at1.isZero();
+					if (at0.isConstant() && at1.isConstant()
+							&& at0.getConstant().equals(at1.getConstant().negate())) {
+						Term var0 = vars[0];
+						Term var1 = vars[1];
+						if (at0.getConstant().isNegative()) {
+							// Swap var0 and var1
+							Term var2 = var0;
+							var0 = var1;
+							var1 = var2;
+						}
+						if (!aliases.containsKey(var0)) {
+							aliases.put(var0, new HashSet<Term>());
+						}
+						aliases.get(var0).add(var1);
+					}
+				}
+			}
+			
+			for (Map.Entry<RankVar, Term> entry : m_loop.getOutVars().entrySet()) {
 				RankVar rkVar = entry.getKey();
-				if (!m_loop.getOutVars().containsKey(rkVar)) {
+				Term outVar = entry.getValue();
+				
+				// Find possible aliases
+				if (!m_loop.getInVars().containsKey(rkVar)) {
 					continue;
 				}
-				Term inVar = entry.getValue();
-				Term outVar = m_loop.getOutVars().get(rkVar);
+				List<Term> possible_inVars = new ArrayList<Term>();
+				Term inVar = m_loop.getInVars().get(rkVar);
+				possible_inVars.add(inVar);
+				if (aliases.containsKey(inVar)) {
+					for (Term aliasVar : aliases.get(inVar)) {
+						if (aliases.containsKey(aliasVar)
+								&& aliases.get(aliasVar).contains(inVar)) {
+							possible_inVars.add(aliasVar);
+						}
+					}
+				}
+				
 				for (LinearInequality li : polyhedron) {
-					AffineTerm c_in = li.getCoefficient(inVar);
-					AffineTerm c_out = li.getCoefficient(outVar);
-					if (!c_in.isZero() && !c_out.isZero()) {
-						// inVar and outVar occur in this linear inequality
-						assert c_in.isConstant();
-						assert c_out.isConstant();
-						Rational eigenv =
-								c_in.getConstant().div(c_out.getConstant()).negate();
-						if (!eigenv.isNegative() || include_negative) {
-							motzkin_coeffs.add(eigenv);
+					for (Term aliasVar : possible_inVars) {
+						AffineTerm c_in = li.getCoefficient(aliasVar);
+						AffineTerm c_out = li.getCoefficient(outVar);
+						if (!c_in.isZero() && !c_out.isZero()) {
+							// inVar and outVar occur in this linear inequality
+							assert c_in.isConstant();
+							assert c_out.isConstant();
+							Rational eigenv =
+									c_in.getConstant().div(c_out.getConstant()).negate();
+							if (!eigenv.isNegative() || include_negative) {
+								motzkin_coeffs.add(eigenv);
+							}
 						}
 					}
 				}

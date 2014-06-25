@@ -194,9 +194,9 @@ public class LassoRankerTerminationAnalysis {
 	protected void checkPreferences(Preferences preferences) {
 		assert preferences.num_strict_invariants >= 0;
 		assert preferences.num_non_strict_invariants >= 0;
-		assert preferences.termination_check_nonlinear
-				|| preferences.only_nondecreasing_invariants
-				: "Use nondecreasing invariants with a linear SMT query.";
+//		assert preferences.termination_check_nonlinear
+//				|| preferences.only_nondecreasing_invariants
+//				: "Use nondecreasing invariants with a linear SMT query.";
 		if (preferences.num_strict_invariants == 0 &&
 				preferences.num_non_strict_invariants == 0) {
 			s_Logger.warn("Generation of supporting invariants is disabled.");
@@ -462,6 +462,8 @@ public class LassoRankerTerminationAnalysis {
 						m_loop,
 						m_preferences
 				);
+		s_Logger.debug("Guesses for Motzkin coefficients: "
+				+ motzkinGuesses(nas));
 		final LBool constraintSat = nas.synthesize();
 		if (constraintSat == LBool.SAT) {
 			s_Logger.info("Proved nontermination.");
