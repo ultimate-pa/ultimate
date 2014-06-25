@@ -175,16 +175,18 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			Term lambda) {
 		Collection<RankVar> rankVars = getAllRankVars();
 		
-		Term[] lambdas;
+		List<Term> lambdas;
 		if (m_nonlinear) {
 			// Use a variable for lambda
-			lambdas = new Term[] { lambda };
+			lambdas = Collections.singletonList(lambda);
 		} else {
 			// Use a list of guesses for lambda
 			Rational[] lambda_guesses = guessMotzkinCoefficients();
-			lambdas = new Term[lambda_guesses.length];
+			lambdas = new ArrayList<Term>(lambda_guesses.length);
 			for (int i = 0; i < lambda_guesses.length; ++i) {
-				lambdas[i] = lambda_guesses[i].toTerm(m_sort);
+				if (!lambda_guesses[i].isNegative()) {
+					lambdas.add(lambda_guesses[i].toTerm(m_sort));
+				}
 			}
 		}
 		
@@ -215,9 +217,9 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		}
 		// vars_ray * lambda
 		List<Map<RankVar, Term>> vars_ray_times_lambdas =
-				new ArrayList<Map<RankVar, Term>>(lambdas.length);
-		for (int i = 0; i < lambdas.length; ++i) {
-			Term lambda_t = lambdas[i];
+				new ArrayList<Map<RankVar, Term>>(lambdas.size());
+		for (int i = 0; i < lambdas.size(); ++i) {
+			Term lambda_t = lambdas.get(i);
 			Map<RankVar, Term> ray_times_lambda = new LinkedHashMap<RankVar, Term>();
 			vars_ray_times_lambdas.add(ray_times_lambda);
 			for (RankVar rkVar : rankVars) {
@@ -233,7 +235,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 					vars_honda, vars_end_plus_ray, false);
 			
 			// A_loop * (y, lambda * y) <= 0
-			for (int i = 0; i < lambdas.length; ++i) {
+			for (int i = 0; i < lambdas.size(); ++i) {
 				Map<RankVar, Term> ray_times_lambda =
 						vars_ray_times_lambdas.get(i);
 				Term t_ray = this.generateConstraint(
@@ -243,7 +245,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 						ray_times_lambda,
 						true
 				);
-				Term fix_lambda = m_script.term("=", lambda, lambdas[i]);
+				Term fix_lambda = m_script.term("=", lambda, lambdas.get(i));
 				disjunction.add(Util.and(m_script, t_honda, t_ray, fix_lambda));
 			}
 		}
