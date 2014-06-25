@@ -11,7 +11,7 @@
 var x: int;
 var y: real;
 
-procedure SyntaxSupportMixedIntReal() returns ()
+procedure main() returns ()
 modifies x,y;
 {
   while (x >= 0 || y >= 0.0) {
