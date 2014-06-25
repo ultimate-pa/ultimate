@@ -181,12 +181,11 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			lambdas = Collections.singletonList(lambda);
 		} else {
 			// Use a list of guesses for lambda
-			Rational[] lambda_guesses = guessMotzkinCoefficients();
+			Rational[] lambda_guesses = guessMotzkinCoefficients(false);
 			lambdas = new ArrayList<Term>(lambda_guesses.length);
 			for (int i = 0; i < lambda_guesses.length; ++i) {
-				if (!lambda_guesses[i].isNegative()) {
-					lambdas.add(lambda_guesses[i].toTerm(m_sort));
-				}
+				assert !lambda_guesses[i].isNegative();
+				lambdas.add(lambda_guesses[i].toTerm(m_sort));
 			}
 		}
 		

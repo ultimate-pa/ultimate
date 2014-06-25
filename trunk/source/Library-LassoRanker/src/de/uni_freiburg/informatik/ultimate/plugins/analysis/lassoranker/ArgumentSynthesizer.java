@@ -216,9 +216,10 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * 
 	 * The returned values always contain 0 and 1.
 	 * 
+	 * @param include_negative whether to include negative guesses
 	 * @return an array of guesses for Motzkin coefficients.
 	 */
-	protected Rational[] guessMotzkinCoefficients() {
+	protected Rational[] guessMotzkinCoefficients(boolean include_negative) {
 		Set<Rational> motzkin_coeffs = new HashSet<Rational>();
 		motzkin_coeffs.add(Rational.ZERO);
 		motzkin_coeffs.add(Rational.ONE);
@@ -239,7 +240,9 @@ public abstract class ArgumentSynthesizer implements Closeable {
 						assert c_out.isConstant();
 						Rational eigenv =
 								c_in.getConstant().div(c_out.getConstant()).negate();
-						motzkin_coeffs.add(eigenv);
+						if (!eigenv.isNegative() || include_negative) {
+							motzkin_coeffs.add(eigenv);
+						}
 					}
 				}
 			}
