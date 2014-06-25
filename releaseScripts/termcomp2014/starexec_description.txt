@@ -21,10 +21,3 @@ Jürgen Christ (University of Freiburg, Germany)
 Jochen Hoenicke (University of Freiburg, Germany)
 Andreas Podelski (University of Freiburg, Germany)
 Christian Schilling (University of Freiburg, Germany)
-
-
-
-If you want to analyze termination of the program fnord.c you have to execute
-the following command.
-BuchiAutomizer.sh fnord.c
-
