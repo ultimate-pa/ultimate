@@ -1264,7 +1264,8 @@ public class CHandler implements ICHandler {
 			RValue rhs = null;
 			if (oType instanceof CPointer)
 				rhs = doPointerArith(main, op,  
-						loc, (RValue) o.lrVal,
+//						loc, (RValue) o.lrVal,
+						loc, (RValue) rop.lrVal,
 						new RValue(nr1, new CPrimitive(PRIMITIVE.INT)),
 						((CPointer) o.lrVal.cType).pointsToType);
 			//							.lrVal.getValue();
