@@ -36,6 +36,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 
 
 /**
@@ -64,7 +65,8 @@ public class AffineFunctionGenerator implements Serializable {
 	 * Name of the variable for the affine function's coefficients
 	 */
 	private static String coeffName(String prefix, RankVar var) {
-		return prefix + "_" + var.getGloballyUniqueId();
+		return prefix + "_" + SmtUtils.removeSmtQuoteCharacters(
+													var.getGloballyUniqueId());
 	}
 	
 	/**

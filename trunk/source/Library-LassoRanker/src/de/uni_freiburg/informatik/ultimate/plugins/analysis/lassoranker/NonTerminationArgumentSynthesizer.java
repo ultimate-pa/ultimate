@@ -131,12 +131,10 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		Map<RankVar, Term> vars_honda = new LinkedHashMap<RankVar, Term>();
 		Map<RankVar, Term> vars_ray = new LinkedHashMap<RankVar, Term>();
 		for (RankVar var : getAllRankVars()) {
-			vars_init.put(var,
-					newConstant(s_prefix_init + var.toString(), sort));
-			vars_honda.put(var,
-					newConstant(s_prefix_honda + var.toString(), sort));
-			vars_ray.put(var,
-					newConstant(s_prefix_ray + var.toString(), sort));
+			String name = SmtUtils.removeSmtQuoteCharacters(var.toString());
+			vars_init.put(var, newConstant(s_prefix_init + name, sort));
+			vars_honda.put(var,	newConstant(s_prefix_honda + name, sort));
+			vars_ray.put(var, newConstant(s_prefix_ray + name, sort));
 		}
 		Term lambda = newConstant(s_lambda_name, sort);
 		
