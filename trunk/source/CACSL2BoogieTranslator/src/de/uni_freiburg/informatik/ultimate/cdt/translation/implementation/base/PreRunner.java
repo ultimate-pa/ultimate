@@ -6,15 +6,19 @@ import java.util.HashSet;
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
+import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
+import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
+import org.eclipse.cdt.core.dom.ast.IASTElaboratedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
+import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTPointerOperator;
@@ -63,6 +67,7 @@ public class PreRunner extends ASTVisitor {
      */
     public PreRunner() {
         this.shouldVisitDeclarations = true;
+    	this.shouldVisitParameterDeclarations = true;
         this.shouldVisitExpressions = true;
         this.shouldVisitStatements = true;
         this.isMMRequired = false;
@@ -100,6 +105,16 @@ public class PreRunner extends ASTVisitor {
     	return this.isMMRequired;
     }
 
+    
+    @Override
+ 	public int visit(IASTParameterDeclaration declaration) {
+     	
+     	sT.put(declaration.getDeclarator().getName().toString(), declaration); 
+
+    	return super.visit(declaration);
+ 	}
+    
+    
     @Override
     public int visit(IASTExpression expression) {
     	if (expression instanceof IASTUnaryExpression) {
@@ -214,58 +229,104 @@ public class PreRunner extends ASTVisitor {
         if (declaration instanceof IASTFunctionDefinition) {
             IASTFunctionDefinition funDef = (IASTFunctionDefinition)declaration;
             functionTable.put(funDef.getDeclarator().getName().toString(), funDef);
-            
             sT.beginScope();
-            if (funDef.getDeclarator() instanceof CASTFunctionDeclarator) {
-                CASTFunctionDeclarator dec =
-                        (CASTFunctionDeclarator)funDef.getDeclarator();
-                for (IASTParameterDeclaration param : dec.getParameters()) {
-                    String key = param.getDeclarator().getName().toString();
-                    sT.put(key, param);
-                    IASTPointerOperator[] pointerOps =
-                            param.getDeclarator().getPointerOperators();
-                    //--> that's the simple solution, if there are pointers declared,
-                    // we introduce the (full) memory model
-                    // might be done better in the future..
-                    if (pointerOps != null && pointerOps.length != 0) 
-                        isMMRequired = true;
-                    if (param instanceof IASTArrayDeclarator)
-                        isMMRequired = true;//FIXME: right all arrays are on the heap -- change this in case of a change of mind
-                }
-            }
-            int nr = super.visit(declaration);
-            sT.endScope();
-            return nr;
+            //this is bullshit (especially the sT-part) --> do it in the visitor for ParamDecl
+//            sT.beginScope();
+//            if (funDef.getDeclarator() instanceof CASTFunctionDeclarator) {
+//                CASTFunctionDeclarator dec =
+//                        (CASTFunctionDeclarator)funDef.getDeclarator();
+//                for (IASTParameterDeclaration param : dec.getParameters()) {
+//                    String key = param.getDeclarator().getName().toString();
+//                    sT.put(key, param);
+//                    IASTPointerOperator[] pointerOps =
+//                            param.getDeclarator().getPointerOperators();
+//                    //--> that's the simple solution, if there are pointers declared,
+//                    // we introduce the (full) memory model
+//                    // might be done better in the future..
+//                    if (pointerOps != null && pointerOps.length != 0) 
+//                        isMMRequired = true;
+//                    if (param instanceof IASTArrayDeclarator)
+//                        isMMRequired = true;//FIXME: right all arrays are on the heap -- change this in case of a change of mind
+//                }
+//            }
+//            int nr = super.visit(declaration);
+//            sT.endScope();
+//            return nr;
         }
         return super.visit(declaration);
     }
 
     @Override
+    public int leave(IASTDeclaration declaration) {
+        if (declaration instanceof IASTFunctionDefinition) {
+        	sT.endScope();
+        }
+        return super.visit(declaration);
+    }
+  
+    @Override
     public int visit(IASTStatement statement) {
         if (statement instanceof IASTCompoundStatement
                 && !(statement.getParent() instanceof IASTFunctionDefinition || statement
                         .getParent() instanceof IASTForStatement)) {
-            // the scope for IASTFunctionDefinition and IASTForStatement was
+            // the scope for IASTFunctionDefinition and IASTForStatement was //FIXME what about while, do, ..?
             // opened in parent before!
             sT.beginScope();
-            int nr = super.visit(statement);
-            sT.endScope();
-            return nr;
         }
         if (statement instanceof IASTSwitchStatement) {
             sT.beginScope();
-            int nr = super.visit(statement);
-            sT.endScope();
-            return nr;
         }
         if (statement instanceof IASTForStatement) {
             sT.beginScope();
-            int nr = super.visit(statement);
-            sT.endScope();
-            return nr;
         }
         return super.visit(statement);
     }
+    
+    @Override
+ 	public int leave(IASTStatement statement) {
+     	if (statement instanceof IASTCompoundStatement
+                 && !(statement.getParent() instanceof IASTFunctionDefinition || statement
+                         .getParent() instanceof IASTForStatement)) {
+             // the scope for IASTFunctionDefinition and IASTForStatement was //FIXME what about while, do, ..?
+             // opened in parent before!
+             sT.endScope();
+         }
+         if (statement instanceof IASTSwitchStatement) {
+             sT.endScope();
+         }
+         if (statement instanceof IASTForStatement) {
+             sT.endScope();
+         }
+ 		return super.leave(statement);
+ 	}
+
+    // --> the scoping of sT here is totally meaningless (wrong understanding of the used visitor pattern)
+//    @Override
+//    public int visit(IASTStatement statement) {
+//        if (statement instanceof IASTCompoundStatement
+//                && !(statement.getParent() instanceof IASTFunctionDefinition || statement
+//                        .getParent() instanceof IASTForStatement)) {
+//            // the scope for IASTFunctionDefinition and IASTForStatement was
+//            // opened in parent before!
+//            sT.beginScope();
+//            int nr = super.visit(statement);
+//            sT.endScope();
+//            return nr;
+//        }
+//        if (statement instanceof IASTSwitchStatement) {
+//            sT.beginScope();
+//            int nr = super.visit(statement);
+//            sT.endScope();
+//            return nr;
+//        }
+//        if (statement instanceof IASTForStatement) {
+//            sT.beginScope();
+//            int nr = super.visit(statement);
+//            sT.endScope();
+//            return nr;
+//        }
+//        return super.visit(statement);
+//    }
 
     IASTExpression removeBrackets(IASTExpression exp) {
     	IASTExpression result = exp;
