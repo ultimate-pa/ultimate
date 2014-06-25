@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
@@ -173,6 +174,14 @@ public class TypeHandler implements ITypeHandler {
         if (node instanceof CASTTypedefNameSpecifier) {
             node = (CASTTypedefNameSpecifier) node;
             String cId = node.getName().toString();
+            
+            // quick solution --> TODO: maybe make this dependent on includes, 
+            // maybe be more elegant (make an entry to symboltable, make a typedef in boogie file??)
+            if (cId.equals("size_t")) {
+                return (new ResultTypes(new PrimitiveType(loc, SFO.REAL), node.isConst(),
+                		false, new CPrimitive(PRIMITIVE.INT)));
+            }
+            
             String bId = main.cHandler.getSymbolTable().get(cId, loc).getBoogieName();
             return new ResultTypes(new NamedType(loc, bId, null), false, false, //TODO: replace constants
             		new CNamed(bId, m_DefinedTypes.get(bId).cType));
