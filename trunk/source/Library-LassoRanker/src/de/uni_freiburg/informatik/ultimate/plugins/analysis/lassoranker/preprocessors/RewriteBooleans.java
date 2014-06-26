@@ -101,9 +101,8 @@ public class RewriteBooleans implements PreProcessor {
 		ReplacementVar repVar = rvFactory.getRepVar(rankVarId);
 		if (repVar == null) {
 			String name = rankVarId + "_bool";
-			repVar = new ReplacementVar(name,
+			rvFactory.registerRepVar(rankVar.getGloballyUniqueId(), 
 					getDefinition(rankVar.getDefinition()));
-			rvFactory.registerRepVar(rankVar.getGloballyUniqueId(), repVar);
 			m_repVars.add(repVar);
 		}
 		return repVar;

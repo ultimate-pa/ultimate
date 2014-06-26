@@ -34,6 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -104,11 +105,17 @@ public class VarFactory implements Serializable {
 	/**
 	 * Register a replacement variable to be unique for this factory
 	 * @param key a key to store repVar with
-	 * @param repVar the replacement variable to be stored 
+	 * @param repVar the replacement variable to be stored
+	 * @param definition Term that defines the semantics of this repVar 
 	 */
-	public void registerRepVar(String key, ReplacementVar repVar) {
-		assert !m_repVars.containsKey(key);
+	public ReplacementVar registerRepVar(String key, Term definition) {
+		if (m_repVars.containsKey(key)) {
+			throw new IllegalArgumentException(
+					"we have already a repVar for that key");
+		}
+		ReplacementVar repVar = new ReplacementVar(key, definition);
 		m_repVars.put(key, repVar);
+		return repVar;
 	}
 	
 	/**

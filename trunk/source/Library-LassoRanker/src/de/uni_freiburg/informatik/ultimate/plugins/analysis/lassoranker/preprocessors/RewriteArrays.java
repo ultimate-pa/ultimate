@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SafeSubstitution;
@@ -596,7 +597,13 @@ public class RewriteArrays implements PreProcessor {
 			}
 			ReplacementVar repVar = index2repVar.get(translatedIndex);
 			if (repVar == null) {
-				repVar = constructReplacementVar(array, translatedIndex);
+				VarFactory fac = m_VarCollector.getFactory();
+				String name = getArrayCellName(array, translatedIndex);
+				repVar = fac.getRepVar(name);
+				if (repVar == null) {
+					Term definition = SmtUtils.multiDimensionalSelect(m_Script, array, translatedIndex.toArray(new Term[0]));
+					repVar = fac.registerRepVar(name, definition);
+				}
 				index2repVar.put(translatedIndex, repVar);
 			}
 			return repVar;
@@ -677,12 +684,6 @@ public class RewriteArrays implements PreProcessor {
 			String name = getArrayCellName(instance, index);
 			TermVariable tv = m_VarCollector.getFactory().getNewTermVariable(name, valueSort);
 			return tv;
-		}
-
-		private ReplacementVar constructReplacementVar(TermVariable array, List<Term> index) {
-			String name = getArrayCellName(array, index);
-			Term definition = SmtUtils.multiDimensionalSelect(m_Script, array, index.toArray(new Term[0]));
-			return new ReplacementVar(name, definition); 
 		}
 
 		

@@ -107,8 +107,7 @@ public class VarCollector implements Serializable {
 		for (ApplicationTerm constVar : transition.getConstants()) {
 			ReplacementVar repVar = m_factory.getRepVar(constVar.toString());
 			if (repVar == null) {
-				repVar = new ReplacementVar(constVar.toString(), constVar);
-				m_factory.registerRepVar(repVar.toString(), repVar);
+				repVar = m_factory.registerRepVar(constVar.toString(), constVar);
 			}
 			addInVar(repVar, constVar);
 			addOutVar(repVar, constVar);

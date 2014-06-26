@@ -46,7 +46,7 @@ public class ReplacementVar extends RankVar {
 	 * @param definition the definition of this replacement variable, i.e.,
 	 *                   the term it replaces
 	 */
-	public ReplacementVar(String name, Term definition) {
+	ReplacementVar(String name, Term definition) {
 		m_name = name;
 		m_definition = definition;
 	}
