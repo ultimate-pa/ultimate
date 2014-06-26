@@ -221,14 +221,21 @@ public class PredicateTransformer {
 			// Procedure is null, if it is a global variable
 			if (bv.getProcedure() != null) {
 				varsToQuantifyNonPendingCall.add(bv.getTermVariable());
+				/*
+				 * On 2014-06-25 Matthias commented the following two lines of
+				 * code: This lead to a problem with recursive programs where
+				 * a variable occurred in p and also in the call. I do not know
+				 * if commenting these lines is a proper solution (or is the
+				 * reason for other bugs).
+				 */
 				// Ensure that variable doesn't occur in call
-				if (!localVarAssignments.getInVars().containsKey(bv)
-						&& !localVarAssignments.getOutVars().containsKey(bv)) {
+//				if (!localVarAssignments.getInVars().containsKey(bv)
+//						&& !localVarAssignments.getOutVars().containsKey(bv)) {
 					TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
 					varsToRenameInPredPendingCall.put(bv.getTermVariable(), freshVar);
 					varsToQuantifyPendingCall.add(freshVar);
 					varsToQuantifyNonPendingCall.add(bv.getTermVariable());
-				}
+//				}
 			}
 
 			if (bv.isGlobal() &&
