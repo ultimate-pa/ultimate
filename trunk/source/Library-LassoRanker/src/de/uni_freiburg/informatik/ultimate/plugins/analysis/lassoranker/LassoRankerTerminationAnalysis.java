@@ -415,13 +415,13 @@ public class LassoRankerTerminationAnalysis {
 	 */
 	private String motzkinGuesses(ArgumentSynthesizer as) {
 		StringBuilder sb = new StringBuilder();
-		Rational[] mcs = as.guessMotzkinCoefficients(true);
+		Rational[] eigenvalues = as.guessEigenvalues(true);
 		sb.append("[");
-		for (int i = 0; i < mcs.length; ++i) {
+		for (int i = 0; i < eigenvalues.length; ++i) {
 			if (i > 0) {
 				sb.append(", ");
 			}
-			sb.append(mcs[i].toString());
+			sb.append(eigenvalues[i].toString());
 		}
 		sb.append("]");
 		return sb.toString();

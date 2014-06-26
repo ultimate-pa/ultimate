@@ -329,7 +329,7 @@ public class MotzkinTransformation extends InstanceCounting {
 			assert num_fixed_coeffs < 31 : "Too many fixed coefficients!";
 			
 			if (false) {
-				// TODO: This will be the new code for guessing Motzkin coefficients
+				// TODO: This will be the new code for using guesses for the loop's eigenvalues
 				// It is not thouroughly tested, probably slower than the old code
 				// and it's not clear whether it's really that useful.
 				

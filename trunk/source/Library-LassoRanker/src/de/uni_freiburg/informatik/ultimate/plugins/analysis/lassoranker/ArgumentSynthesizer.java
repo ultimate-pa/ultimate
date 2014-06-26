@@ -211,21 +211,32 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	}
 	
 	/**
-	 * Provide a guess for Motzkin coefficients. E.g., if there is
-	 * a statement x' = 2*x + 5, we guess the Motzkin coefficient 2,
-	 * since 2 is an eigenvalue of the homogeneous loop.
+	 * Provide guesses for eigenvalues of the loop.
+	 * 
+	 * This procedure is neither sound nor complete:
+	 * there might be eigenvalues that are not found by this procedure and
+	 * this procedure might return values that are not eigenvalues of the loop.
+	 * 
+	 * The result of this is used as guesses for Motzkin coefficients in the
+	 * termination analysis and for lambda in the nontermination analysis.
+	 * This allows us to handle some more complicated examples while relying
+	 * only on linear constraint solving.
+	 * 
+	 * This method works as follows. If there is a statement
+	 * <pre>x = 2*y + 5</pre> we guess the eigenvalue 2 if we can prove
+	 * that the loop disjunct implies x = y.
 	 * 
 	 * The returned values always contain 0 and 1.
 	 * 
 	 * @param include_negative whether to include negative guesses
-	 * @return an array of guesses for Motzkin coefficients.
+	 * @return an array of guesses for the loop's eigenvalues
 	 */
-	protected Rational[] guessMotzkinCoefficients(boolean include_negative) {
+	protected Rational[] guessEigenvalues(boolean include_negative) {
 		Set<Rational> motzkin_coeffs = new HashSet<Rational>();
 		motzkin_coeffs.add(Rational.ZERO);
 		motzkin_coeffs.add(Rational.ONE);
 		for (List<LinearInequality> polyhedron : m_loop.getPolyhedra()) {
-			// Find aliases
+			// Find aliases for variables
 			Map<Term, Set<Term>> aliases = new HashMap<Term, Set<Term>>();
 			for (LinearInequality li : polyhedron) {
 				// If li is 0 <= a*x + b*y with a == -b and a != 0 != b
