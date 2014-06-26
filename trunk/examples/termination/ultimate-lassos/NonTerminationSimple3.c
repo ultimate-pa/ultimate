@@ -8,10 +8,9 @@
 
 extern int __VERIFIER_nondet_int();
 
-int c = __VERIFIER_nondet_int();
-
 int main()
 {
+	int c = __VERIFIER_nondet_int();
 	int x = __VERIFIER_nondet_int();
 	while (x >= 0) {
 		x += c;
