@@ -13,7 +13,7 @@ file_export_version=3.0
 @BuchiAutomizer=0.0.1
 /instance/BuchiAutomizer/Use\ external\ solver\ (rank\ synthesis)=false
 /instance/BuchiAutomizer/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
-/instance/BuchiAutomizer/Command\ for\ external\ solver\ (rank\ synthesis)=./../z3-4.3.2.3209cd2ded8b-x64-ubuntu-13.10/bin/z3 SMTLIB2_COMPLIANT\=true -memory\:256 -smt2 -in -t\:5000
+/instance/BuchiAutomizer/Command\ for\ external\ solver\ (rank\ synthesis)=./../z3-4.3.2.d548c51a984e-x64-debian-6.0.6/bin/z3 SMTLIB2_COMPLIANT\=true -memory\:256 -smt2 -in -t\:5000
 #Wed Mar 19 04:15:41 CET 2014
 file_export_version=3.0
 /instance/BlockEncoding/Minimize\ Call\ and\ Return\ Edges=true
@@ -27,7 +27,7 @@ file_export_version=3.0
 \!/instance/RCFGBuilder=
 /instance/RCFGBuilder/Size\ of\ a\ code\ block=SequenceOfStatements
 /instance/RCFGBuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=true
-/instance/RCFGBuilder/Command\ for\ external\ solver=./../z3-4.3.2.3209cd2ded8b-x64-ubuntu-13.10/bin/z3 SMTLIB2_COMPLIANT\=true -memory\:256 -smt2 -in -t\:5000
+/instance/RCFGBuilder/Command\ for\ external\ solver=./../z3-4.3.2.d548c51a984e-x64-debian-6.0.6/bin/z3 SMTLIB2_COMPLIANT\=true -memory\:256 -smt2 -in -t\:5000
 @RCFGBuilder=0.0.1
 /instance/RCFGBuilder/Convert\ code\ blocks\ to\ CNF=true
 #Wed Mar 19 04:15:41 CET 2014

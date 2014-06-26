@@ -9,7 +9,7 @@ cp ../../trunk/examples/toolchains/BuchiAutomizerCWithBlockEncoding.xml StarExec
 cp starexec_run_default StarExecArchive/bin
 cp Ultimate.ini StarExecArchive/Ultimate/
 cp settings.epf StarExecArchive/
-cp -R /opt/z3-4.3.2.3209cd2ded8b-x64-ubuntu-13.10 StarExecArchive/
+cp -R /opt/z3-4.3.2.d548c51a984e-x64-debian-6.0.6 StarExecArchive/
 cd StarExecArchive
 zip ../UltimateCommandline.zip -r *
 
