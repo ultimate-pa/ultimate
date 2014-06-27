@@ -39,6 +39,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -47,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarCollector;
@@ -74,6 +78,10 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
  * @author Matthias Heizmann
  */
 public class RewriteArrays implements PreProcessor {
+	
+	private static Logger s_Logger =
+			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
+	
 	private static final String s_RepInPostfix  = "_in_array";
 	private static final String s_RepOutPostfix = "_out_array";
 	private static final String s_AuxArray = "auxArray";
@@ -737,7 +745,12 @@ public class RewriteArrays implements PreProcessor {
 				for (TermVariable instance : m_ArrayGenealogy[i].getInstances()) {
 					TermVariable originalGeneration = m_ArrayGenealogy[i].getProgenitor(instance);
 					Map<List<Term>, TermVariable> index2ArrayCellTv = new HashMap<List<Term>, TermVariable>();
-					for (List<Term> index : m_Array2Indices.getImage(originalGeneration)) {
+					Set<List<Term>> indicesOfOriginalGeneration = m_Array2Indices.getImage(originalGeneration);
+					if (indicesOfOriginalGeneration == null) {
+						s_Logger.info("Array " + originalGeneration + " is never accessed");
+						continue;
+					}
+					for (List<Term> index : indicesOfOriginalGeneration) {
 						TermVariable tv = constructTermVariable(instance, index);
 						index2ArrayCellTv.put(index, tv);
 						boolean isInVarCell = isInVarCell(instance, index);
@@ -871,6 +884,9 @@ public class RewriteArrays implements PreProcessor {
 			TermVariable newArray) {
 		Map<List<Term>, TermVariable> newInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(newArray);
 		Map<List<Term>, TermVariable> oldInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(oldArray);
+		if (newInstance2Index2CellVariable == null && oldInstance2Index2CellVariable == null) {
+			return m_Script.term("true");
+		}
 		Term[] conjuncts = new Term[newInstance2Index2CellVariable.keySet().size()];
 		int offset = 0;
 		for (List<Term> index : newInstance2Index2CellVariable.keySet()) {
