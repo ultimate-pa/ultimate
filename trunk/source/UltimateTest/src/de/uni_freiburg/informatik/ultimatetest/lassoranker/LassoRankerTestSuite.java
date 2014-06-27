@@ -47,8 +47,11 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
  * @author Jan Leike
  */
 public class LassoRankerTestSuite extends UltimateTestSuite {
-	public static final String s_test_files_dir = "examples/lassos";
+	public static final String s_test_files_dir = "examples/lassos/";
 	public static final String s_toolchain = "examples/toolchains/LassoRanker.xml";
+//  Workaround by Matthias: Use following line for linear constraints
+//	public static final String s_settings_file = "examples/settings/LassoRankerTestLinearSMTInterpol.epf";
+//  Workaround by Matthias: Use following line for non-linear constraints
 	public static final String s_settings_file = "examples/settings/LassoRankerTest";
 	public static final boolean s_produceLogFiles = false;
 
