@@ -63,6 +63,14 @@ public class Check extends AbstractAnnotations {
 	     */
 	    MALLOC_NONNEGATIVE,
 	    /**
+	     * Pointer arithmetic that is not allowed by C.
+	     * E.g. 
+	     * - computing the difference of two pointers that point to
+	     * completely different arrays
+	     * - comparing pointers that point to completely different arrays
+	     */
+	    ILLEGAL_POINTER_ARITHMETIC,
+	    /**
 	     * Error function reachable. 
 	     */
 	    ERROR_Function,
@@ -112,6 +120,8 @@ public class Check extends AbstractAnnotations {
 			return "free always succeeds";
 		case MALLOC_NONNEGATIVE:
 			return "input of malloc is always non-negative";
+		case ILLEGAL_POINTER_ARITHMETIC:
+			return "pointer arithmetic is always legal";
 		case ERROR_Function:
 			return "call of __VERIFIER_error() unreachable";
 		case UNKNOWN:
@@ -145,6 +155,8 @@ public class Check extends AbstractAnnotations {
 			return "free of unallocated memory possible";
 		case MALLOC_NONNEGATIVE:
 			return "input of malloc can be negative";
+		case ILLEGAL_POINTER_ARITHMETIC:
+			return "comparison of incompatible pointers";
 		case ERROR_Function:
 			return "a call of __VERIFIER_error() is reachable";
 		case UNKNOWN:
