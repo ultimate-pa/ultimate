@@ -121,10 +121,10 @@ public class MemoryHandler {
 	private static final boolean m_AddImplementation = false;
 	
 	
-	private final POINTER_BASE_VALIDITY m_PointerBaseValidity;
-	private final POINTER_ALLOCATED m_PointerAllocated;
-	private final boolean m_CheckFreeValid;
-	private final boolean m_CheckMallocNonNegative;
+	public final POINTER_BASE_VALIDITY m_PointerBaseValidity; //FIXME public is a hack, here
+	final POINTER_ALLOCATED m_PointerAllocated;
+	final boolean m_CheckFreeValid;
+	final boolean m_CheckMallocNonNegative;
 	
 	boolean isIntArrayRequiredInMM;
 	boolean isFloatArrayRequiredInMM;

@@ -125,6 +125,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpressio
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
@@ -164,7 +165,9 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer.POINTER_BASE_VALIDITY;
 import de.uni_freiburg.informatik.ultimate.result.Check;
+import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
 
 /**
@@ -1204,6 +1207,30 @@ public class CHandler implements ICHandler {
 				rval = new RValue(
 						new BinaryExpression(loc, op, rlRValAsPointer.getValue(), rrToInt.lrVal.getValue()),
 						new CPrimitive(PRIMITIVE.INT));
+			} else if (lType instanceof CPointer && rType instanceof CPointer) {
+				assert ((CPointer) rlToInt.lrVal.cType).pointsToType.equals(((CPointer) rrToInt.lrVal.cType).pointsToType);
+				//assert (in Boogie) that the base value of the pointers matches
+				if (this.memoryHandler.m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSERTandASSUME) {
+					Statement assertStm = new AssertStatement(loc, new BinaryExpression(loc, 
+							BinaryExpression.Operator.COMPEQ, 
+							new StructAccessExpression(loc, rlToInt.lrVal.getValue(), SFO.POINTER_BASE), 
+							new StructAccessExpression(loc, rrToInt.lrVal.getValue(), SFO.POINTER_BASE)));
+					stmt.add(assertStm);
+					Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
+					chk.addToNodeAnnot(assertStm);
+				} else if (this.memoryHandler.m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSUME){
+					Statement assumeStm = new AssumeStatement(loc, new BinaryExpression(loc, 
+							BinaryExpression.Operator.COMPEQ, 
+							new StructAccessExpression(loc, rlToInt.lrVal.getValue(), SFO.POINTER_BASE), 
+							new StructAccessExpression(loc, rrToInt.lrVal.getValue(), SFO.POINTER_BASE)));
+					stmt.add(assumeStm);
+				}
+				
+				rval = new RValue(
+						new BinaryExpression(loc, op, 
+								new StructAccessExpression(loc, rlToInt.lrVal.getValue(), SFO.POINTER_OFFSET), 
+								new StructAccessExpression(loc, rrToInt.lrVal.getValue(), SFO.POINTER_OFFSET)),
+						new CPrimitive(PRIMITIVE.INT));
 			} else {
 				rval = new RValue(
 						new BinaryExpression(loc, op, rlToInt.lrVal.getValue(), rrToInt.lrVal.getValue()),
@@ -1393,11 +1420,22 @@ public class CHandler implements ICHandler {
 				assert node.getOperator() == IASTBinaryExpression.op_minus : "only subtraction of two pointers is allowed";
 				assert ((CPointer) rlToInt.lrVal.cType).pointsToType.equals(((CPointer) rrToInt.lrVal.cType).pointsToType);
 				//assert (in Boogie) that the base value of the pointers matches
-				stmt.add(new AssertStatement(loc, new BinaryExpression(loc, 
-						BinaryExpression.Operator.COMPEQ, 
-						new StructAccessExpression(loc, rlToInt.lrVal.getValue(), SFO.POINTER_BASE), 
-						new StructAccessExpression(loc, rrToInt.lrVal.getValue(), SFO.POINTER_BASE))));
-				
+				if (this.memoryHandler.m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSERTandASSUME) {
+					Statement assertStm = new AssertStatement(loc, new BinaryExpression(loc, 
+							BinaryExpression.Operator.COMPEQ, 
+							new StructAccessExpression(loc, rlToInt.lrVal.getValue(), SFO.POINTER_BASE), 
+							new StructAccessExpression(loc, rrToInt.lrVal.getValue(), SFO.POINTER_BASE)));
+					stmt.add(assertStm);
+					Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
+					chk.addToNodeAnnot(assertStm);
+				} else if (this.memoryHandler.m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSUME){
+					Statement assumeStm = new AssumeStatement(loc, new BinaryExpression(loc, 
+							BinaryExpression.Operator.COMPEQ, 
+							new StructAccessExpression(loc, rlToInt.lrVal.getValue(), SFO.POINTER_BASE), 
+							new StructAccessExpression(loc, rrToInt.lrVal.getValue(), SFO.POINTER_BASE)));
+					stmt.add(assumeStm);
+				}
+
 				rval = doPointerArithPointerAndPointer(main, node.getOperator(), loc, (RValue) rlToInt.lrVal, (RValue) rrToInt.lrVal);
 			} else {
 				rval = new RValue(createArithmeticExpression(
