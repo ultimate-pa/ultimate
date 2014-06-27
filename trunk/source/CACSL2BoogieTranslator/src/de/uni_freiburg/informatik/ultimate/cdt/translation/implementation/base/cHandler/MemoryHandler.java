@@ -962,7 +962,7 @@ public class MemoryHandler {
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
         ILocation loc = (ILocation) address.getValue().getLocation();
         
-        ASTType heapType = getHeapTypeOfLRVal(address);
+        ASTType heapType = getHeapTypeOfLRVal(main, address);
         
         String heapTypeName = "";
         if (heapType.equals(MemoryHandler.POINTER_TYPE)) {
@@ -989,7 +989,7 @@ public class MemoryHandler {
         		decl, auxVars, overappr);
     }
     
-    ASTType getHeapTypeOfLRVal(LRValue lrVal) {
+    ASTType getHeapTypeOfLRVal(Dispatcher main, LRValue lrVal) {
     	CType ct = lrVal.cType;
     	
     	if (lrVal.isBoogieBool)
@@ -1017,6 +1017,11 @@ public class MemoryHandler {
 		} else if (ut instanceof CNamed) {
 			assert false : "This should not be the case as we took the underlying type.";
 			throw new UnsupportedSyntaxException(null, "non-heap type?: " + ct);
+		} else if (ut instanceof CArray) {
+			// we assume it is an Array on Heap
+			assert main.cHandler.isHeapVar(((IdentifierExpression) lrVal.getValue()).getIdentifier());
+			isPointerArrayRequiredInMM = true;
+			return MemoryHandler.POINTER_TYPE;
 		} else {
 			throw new UnsupportedSyntaxException(null, "non-heap type?: " + ct);
 		}

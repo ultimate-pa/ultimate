@@ -235,7 +235,14 @@ public class ResultExpression extends Result {
 						newValue = (RValue) rex.lrVal;
 					} else if (underlyingType instanceof CArray) {
 //						return null; //"you can't assign arrays in C"
-						throw new AssertionError("you can't assign arrays in C");
+//						throw new AssertionError("you can't assign arrays in C");
+						// if it is a HeapLValue, it must be on heap -> treat it as a pointer
+						rex = memoryHandler.getReadCall(
+									main, addressRVal);
+						newStmt.addAll(rex.stmt);
+						newDecl.addAll(rex.decl);
+						newAuxVars.putAll(rex.auxVars);	
+						newValue = (RValue) rex.lrVal;
 					} else if (underlyingType instanceof CEnum) {
 					} else if (underlyingType instanceof CStruct) {
 						rex = readStructFromHeap(main, structHandler, memoryHandler, loc, 

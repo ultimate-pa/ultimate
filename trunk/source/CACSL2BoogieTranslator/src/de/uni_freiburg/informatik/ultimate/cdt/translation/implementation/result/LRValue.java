@@ -20,7 +20,7 @@ public abstract class LRValue {
 	/** 
 	 * This flag is supposed to be true iff the value-expression of this
 	 * LRValue is of boolean type in boogie.  
-	 * For instance if it is the translation of an comparator expression
+	 * For instance if it is the translation of a comparator expression
 	 * like x == 0.
 	 */
 	public boolean isBoogieBool;

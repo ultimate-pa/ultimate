@@ -280,7 +280,7 @@ public class ArrayHandler {
 			//we have a pointer that is accessed like an array
 			result = result.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			CType pointedType = ((CPointer) result.lrVal.cType).pointsToType;
-			RValue address = ((CHandler) main.cHandler).doPointerArith(
+			RValue address = ((CHandler) main.cHandler).doPointerArithPointerAndInteger(
 					main, IASTBinaryExpression.op_plus, loc, 
 					(RValue) result.lrVal, 
 					(RValue) currentSubscriptRex.lrVal,
