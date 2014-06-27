@@ -163,7 +163,7 @@ public class ArrayUpdate {
 		private final List<Term> remainingTerms = 
 				new ArrayList<Term>();
 		
-		public ArrayUpdateExtractor(Term[] terms) {
+		public ArrayUpdateExtractor(Term... terms) {
 			for (Term term : terms) {
 				ArrayUpdate au;
 				try {
