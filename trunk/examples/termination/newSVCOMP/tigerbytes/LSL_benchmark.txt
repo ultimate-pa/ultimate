@@ -1,0 +1,200 @@
+================== 1 var =====================
+
+1.1 terminating, non-linear
+while (x > 0)
+    x = -2x + 10
+
+1.2 terminating, linear
+while (x>0 and x<100)
+    x \ge 2x + 10
+
+1.3 terminating, linear
+while (x > 1)
+    -2x = x
+
+1.4 terminating, linear
+while (x > 1)
+    2x \le x
+
+1.5 terminating, linear
+while (x>0)
+    2x \le x
+
+================== 2 var =====================
+
+2.1 terminating, non-linear
+while (x > 0)
+    x = x + y
+    y--
+
+2.2 nonterminating
+while (x < 0)
+    x = x + y
+    y--
+
+2.3 non-terminating (for x=1,y=0)
+while (x > 0)
+    x = x + y
+    y=-2y
+
+2.4 non-terminating, (for x=-1,y=0)
+while (x < y)
+    x = x + y
+    y=-2y
+
+2.5 non-terminating (for x=-1,y=0)
+while (x < y)
+    x = x + y
+    2y=y
+
+2.6 terminating, non-linear
+while (4x + y > 0)
+    x = -2x + 4y
+    y = 4x
+
+
+2.7 terminating, non-linear
+while (x > 0 and x < y)
+    x = 2x
+    y++
+
+2.8 terminating, non-linear
+while (x > 0)
+    x = x - 2y
+    y++
+
+2.9 terminating, non-linear
+while (x > 0 and x < n)
+    x = -x + y - 5
+    y = 2y
+
+2.10 terminating, linear
+while (x > 0 and y < 0)
+    x = x + y
+    y--
+
+2.11 non-terminating (for x=9,y=7)
+while (4x - 5y > 0)
+    x = 2x + 4y
+    y = 4x
+
+2.12 non-terminating (for x=0,y=0)
+while (x < 5)
+    x = x - y
+    y = x + y
+
+2.13 terminating, non-linear
+while (x - y > 0)
+    x = -x + y
+    y++
+
+2.14 non-terminating (for x=10k,y=3k, any k>0)
+while (x > 0 and y>0)
+    x = -2x + 10y
+
+2.15 non-terminating (for x>0,y>=0)
+while (x > 0)
+    x = x + y
+
+2.16 terminating, non-linear
+while (x > 0)
+    x = y
+    y--
+
+2.17 non-terminating (for x=0, y=11)
+while (x < 10)
+    x = -y
+    y++
+
+2.18 terminating, non-linear
+while (x > 0)
+    x = x + y - 5
+    y = -2y
+
+2.19 terminating, non-linear
+while (x+y > 0)
+    x = x - 1 
+    y = -2y
+
+2.20 terminating, linear
+while (x > y)
+    x = x - y 
+    y \le 2
+    y \ge 1
+
+2.21 terminating, non-linear
+while (x > 0)
+   x=x+y
+   y=-y-1
+
+2.22 terminating, linear
+while (x > 0)
+   x=y
+   y \le -y
+
+
+================== 3 var =====================
+
+3.1 terminating, non-linear
+while (x < y)
+   x++
+   y = z
+
+3.2 non-terminating (for x>0,y>=0,z>=0)
+while (x > 0)
+    x = x + y
+    y = y + z
+
+3.3 terminating, non-linear
+while (x > 0)
+    x = x + y
+    y = y + z
+    z--
+    
+3.4 terminating, non-linear
+while (x + y >= 0 and x <= z)
+    x = 2x + y
+    y++
+    
+3.5 terminating, non-linear
+while (x>0 and x <= z)
+    x = 2x + y
+    y++
+
+3.6 non-terminating (for x=-1, y=1, z=-1)
+while (x < 0)
+    x = x+z
+    y=y+1
+    z=-2y
+    
+3.7 terminating, non-linear
+while (x >= 0)
+	x'=x+y
+	y'=z
+	z'=-z-1
+
+3.8 terminating, non-linear
+while (x - y > 0)
+    x = -x + y
+    y = z
+    z = z++
+
+3.9 terminating, non-linear
+while (x>0 and x < y)
+   x>2x
+   y = z
+
+3.10 terminating, linear
+while (x >= 0 and x+y >= 0)
+	x'=x+y+z
+	y'=-z-1
+	z'=z
+    
+================== 4 var =====================
+
+4.1 terminating, non-linear
+while (x + y >= 0 and x <= n)
+    x = 2x + y
+    y = z
+    z = z++
+    
