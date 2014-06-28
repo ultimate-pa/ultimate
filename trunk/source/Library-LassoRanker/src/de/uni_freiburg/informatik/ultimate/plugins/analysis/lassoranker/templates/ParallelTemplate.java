@@ -161,7 +161,7 @@ public class ParallelTemplate extends RankingFunctionTemplate {
 					// f_i(x) > 0
 					LinearInequality li = m_fgens[i].generate(inVars);
 					li.setStrict(true);
-					li.needs_motzkin_coefficient = i > 0;
+					li.needs_motzkin_coefficient = !m_linear && i > 0;
 					disjunction.add(li);
 				} else {
 					// f_i(x') < f_i(x) - δ_i
@@ -172,7 +172,7 @@ public class ParallelTemplate extends RankingFunctionTemplate {
 					AffineTerm a = new AffineTerm(m_deltas[i], Rational.MONE);
 					li.add(a);
 					li.setStrict(true);
-					li.needs_motzkin_coefficient = i > 0;
+					li.needs_motzkin_coefficient = !m_linear && i > 0;
 					disjunction.add(li);
 				}
 			}
