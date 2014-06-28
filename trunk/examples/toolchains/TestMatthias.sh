@@ -24,6 +24,15 @@ trunk/examples/toolchains/AutomizerTestDir.sh -ea 1900 "$2" \
  "BuchiAutomizerBplWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/staged300Forward-Z3.epf"
 fi
 
+if [ "$1" = "MemsafeDerefOnly-ea" ]; then
+echo "$1"
+trunk/examples/toolchains/AutomizerTestDir.sh -ea 1900 "$2" \
+ "AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_MemsafeDerefOnly_60.epf"
+fi
+
+
+
+
 
 if [ "$1" = "templateBenchmark" ]; then
 echo "buchiAutomizer for folder $2"
