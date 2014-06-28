@@ -744,31 +744,46 @@ public class RewriteArrays implements PreProcessor {
 			for (int i=0; i<sunnf.length; i++) {
 				for (TermVariable instance : m_ArrayGenealogy[i].getInstances()) {
 					TermVariable originalGeneration = m_ArrayGenealogy[i].getProgenitor(instance);
-					Map<List<Term>, TermVariable> index2ArrayCellTv = new HashMap<List<Term>, TermVariable>();
+					Map<List<Term>, TermVariable> index2ArrayCellTv = m_ArrayInstance2Index2CellVariable.get(instance);
+					if (index2ArrayCellTv == null) {
+						index2ArrayCellTv = new HashMap<List<Term>, TermVariable>();
+						m_ArrayInstance2Index2CellVariable.put(instance, index2ArrayCellTv);
+					}
 					Set<List<Term>> indicesOfOriginalGeneration = m_Array2Indices.getImage(originalGeneration);
 					if (indicesOfOriginalGeneration == null) {
 						s_Logger.info("Array " + originalGeneration + " is never accessed");
 						continue;
 					}
 					for (List<Term> index : indicesOfOriginalGeneration) {
-						TermVariable tv = constructTermVariable(instance, index);
-						index2ArrayCellTv.put(index, tv);
+						TermVariable tv = index2ArrayCellTv.get(index);
+						if (tv == null) {
+							tv = constructTermVariable(instance, index);
+							index2ArrayCellTv.put(index, tv);
+						}
 						boolean isInVarCell = isInVarCell(instance, index);
 						boolean isOutVarCell = isOutVarCell(instance, index);
 						if (isInVarCell || isOutVarCell) {
 							TermVariable arrayRepresentative = (TermVariable) getDefinition(instance);
 							ReplacementVar rv = getOrConstructReplacementVar(arrayRepresentative, index);
 							if (isInVarCell) {
-								m_VarCollector.addInVar(rv, tv);
+								if (!m_VarCollector.getInVars().containsKey(rv)) {
+									m_VarCollector.addInVar(rv, tv);
+								} else {
+									assert m_VarCollector.getInVars().get(rv) == tv;
+								}
 							}
 							if (isOutVarCell) {
-								m_VarCollector.addOutVar(rv, tv);
+								if (!m_VarCollector.getOutVars().containsKey(rv)) {
+									m_VarCollector.addOutVar(rv, tv);
+								} else {
+									assert m_VarCollector.getOutVars().get(rv) == tv;
+								}
 							}
 						} else {
 							addToAuxVars(tv);
 						}
 					}
-					m_ArrayInstance2Index2CellVariable.put(instance, index2ArrayCellTv);
+					
 				}
 			}
 		}
