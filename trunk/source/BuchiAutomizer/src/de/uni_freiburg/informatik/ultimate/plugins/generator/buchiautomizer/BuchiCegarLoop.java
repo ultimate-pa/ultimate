@@ -637,7 +637,7 @@ public class BuchiCegarLoop {
 				"Interpolant automaton broken!";
 //			assert((new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton, m_Counterexample.getNestedLassoWord())).getResult()) :
 //				"Interpolant automaton broken!";
-			assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
+			assert (new InductivityCheck(m_InterpolAutomaton, new EdgeChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager()), false, true)).getResult();
 		}
 		
 		

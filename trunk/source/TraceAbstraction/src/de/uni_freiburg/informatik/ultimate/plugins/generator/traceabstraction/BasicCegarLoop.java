@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -50,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
@@ -85,6 +87,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final INTERPOLATION m_Interpolation;
 	
 	protected final boolean m_ComputeHoareAnnotation;
+
+
 	
 	public BasicCegarLoop(String name, RootNode rootNode,
 			SmtManager smtManager,
@@ -269,7 +273,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 		assert(accepts(m_InterpolAutomaton, m_Counterexample.getWord())) :
 			"Interpolant automaton broken!";
-		assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
+		assert (new InductivityCheck(m_InterpolAutomaton, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false, true)).getResult();
 	}
 	
 	
@@ -361,9 +365,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 								+ epd.m_AnswerReturnCache + " answers given by cache " 
 								+ epd.m_AnswerReturnSolver + " answers given by solver");
 					assert m_SmtManager.isIdle();
-					assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
+					assert (new InductivityCheck(m_InterpolAutomaton, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false, true)).getResult();
 					// do the following check only to obtain logger messages of checkInductivity
-					assert (m_SmtManager.checkInductivity(epd.getRejectionCache(), true, false) | true);
+					assert (new InductivityCheck(epd.getRejectionCache(), new EdgeChecker(m_SmtManager, m_ModGlobVarManager), true, false).getResult() | true);
 				break;
 				
 				case LAZYPOST:	
@@ -392,9 +396,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 								+ lpd.m_AnswerReturnCache+ " answers given by cache " 
 								+ lpd.m_AnswerReturnSolver+ " answers given by solver");
 					assert m_SmtManager.isIdle();
-					assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
+					assert (new InductivityCheck(m_InterpolAutomaton, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false, true)).getResult();
 					// do the following check only to obtain logger messages of checkInductivity
-					assert (m_SmtManager.checkInductivity(lpd.getRejectionCache(), true, false) | true);
+					assert (new InductivityCheck(lpd.getRejectionCache(), new EdgeChecker(m_SmtManager, m_ModGlobVarManager), true, false)).getResult() | true;
 				break;
 				
 				case SELFLOOP:
@@ -468,7 +472,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 //					if (!ctxAccepted) {
 //						throw new AssertionError("counterexample not accepted by interpolant automaton");
 //					}
-						assert (m_SmtManager.checkInductivity(test, false, true));
+						assert (new InductivityCheck(test, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false, true)).getResult();
 					}
 					break;
 				default:
@@ -778,7 +782,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		
 		if (m_ComputeHoareAnnotation) {
-			assert (m_SmtManager.checkInductivity(dia, false, true)) : "Not inductive";
+			assert (new InductivityCheck(dia, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false, true)).getResult() : "Not inductive";
 		}
 		if (m_Pref.dumpAutomata()) {
 			String filename = "InterpolantAutomatonDeterminized_Iteration" + m_Iteration; 

@@ -13,9 +13,6 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -1323,183 +1320,6 @@ public class SmtManager {
 //	}
 
 	
-	/**
-	 * Check if each edge of automaton is inductive (resp. if inductivity can be
-	 * refuted if <i>antiInductivity</i> is set).
-	 * @param antiInductivity if false, we check if each edge is inductive, if
-	 * true we check if inductivity of each edge can be refuted.
-	 * @param assertInductivity if true, assert statements require inductivity
-	 * (resp. anti-inductivity)
-	 */
-	public boolean checkInductivity(IAutomaton<CodeBlock, IPredicate> automaton, 
-							boolean antiInductivity, boolean assertInductivity) {
-		if (!(automaton instanceof INestedWordAutomatonOldApi)) {
-			s_Logger.warn("unable to verify inductivity for this kind of automaton");
-			return true;
-		}
-		INestedWordAutomatonOldApi<CodeBlock, IPredicate> nwa = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) automaton;
-		if (antiInductivity) {
-			s_Logger.debug("Start checking anti-inductivity of automaton");
-		} else {
-			s_Logger.debug("Start checking inductivity of automaton");
-		}
-		
-		boolean result = true;
-		// yield[0] is the number of edges whose inductiveness could be
-		// proven
-		// yield[1] is the number of edges whose inductiveness could be
-		// refuted
-		// yield[2] is the number of edges whose inductiveness could be
-		// neither proven nor refuted because theorem prover too weak
-		// yield[3] is the number of edges whose inductiveness could be
-		// neither proven nor refuted because there were no interpolants
-		
-		int[] yield = new int[4]; 
-		for(IPredicate state : nwa.getStates()) {
-//			assert (state.getContent().getStateFormulas().size()==1);
-			IPredicate sf1 = state;
-			for (CodeBlock transAnnot : nwa.lettersInternal(state)) {
-				for (IPredicate succState : nwa.succInternal(state, transAnnot)) {
-//					assert (succState.getContent().getStateFormulas().size()==1);
-					IPredicate sf2 = succState;
-
-					if (sf1 == null || sf2 == null) {
-						yield[3]++;
-					}
-					else {
-						LBool inductivity = null;
-						inductivity = isInductive(sf1, transAnnot, sf2);
-						switch (inductivity) {
-						case UNSAT: {
-							yield[0]++;
-							if (antiInductivity) {
-								result = false;
-								assert !assertInductivity || result : "anti inductivity failed";
-							}
-							break;
-						}
-						case SAT: {
-							yield[1]++;
-							if (!antiInductivity) {
-								s_Logger.warn("Transition "+ transAnnot + " from " +
-										sf1 + " to " + sf2 + " not inductive");
-								result = false;
-								assert !assertInductivity || result : "inductivity failed";
-							}
-							break;
-						}
-						case UNKNOWN: {
-							yield[2]++;
-							break;
-						}
-						default:
-							throw new IllegalArgumentException();
-						}
-					}
-				}
-			}
-			
-			for (CodeBlock transAnnot : nwa.lettersCall(state)) {
-				
-				for (IPredicate succState : nwa.succCall(state, transAnnot)) {
-//					assert (succState.getContent().getStateFormulas().size()==1);
-					IPredicate sf2 = succState;
-
-					if (sf1 == null || sf2 == null) {
-						yield[3]++;
-					}
-					else {
-						LBool inductivity = null;
-						inductivity = isInductiveCall(sf1, (Call) transAnnot, sf2);
-						switch (inductivity) {
-						case UNSAT: {
-							yield[0]++;
-							if (antiInductivity) {
-								result = false;
-								assert !assertInductivity || result : "anti inductivity failed";
-							}
-							break;
-						}
-						case SAT: {
-							yield[1]++;
-							if (!antiInductivity) {
-								s_Logger.warn("Transition "+ transAnnot + " from " +
-										sf1 + " to " + sf2 + " not inductive");
-								result = false;
-								assert !assertInductivity || result : "inductivity failed";
-							}
-							break;
-						}
-						case UNKNOWN: {
-							yield[2]++;
-							break;
-						}
-						default:
-							throw new IllegalArgumentException();
-						}
-					}
-				}
-				
-				
-			}
-			
-			for (CodeBlock transAnnot : nwa.lettersReturn(state)) {
-				for (IPredicate hier : nwa.hierPred(state, transAnnot)) {
-
-					for (IPredicate succState : nwa.succReturn(state, hier, transAnnot)) {
-						//					assert (succState.getContent().getStateFormulas().size()==1);
-						IPredicate sf2 = succState;
-						IPredicate sfk = hier;
-
-						if (sf1 == null || sf2 == null || sfk == null) {
-							yield[3]++;
-						}
-						else {
-							LBool inductivity = null;
-							inductivity = isInductiveReturn(sf1, sfk, (Return) transAnnot, sf2);
-							switch (inductivity) {
-							case UNSAT: {
-								yield[0]++;
-								if (antiInductivity) {
-									result = false;
-									assert !assertInductivity || result : "anti inductivity failed";
-								}
-								break;
-							}
-							case SAT: {
-								yield[1]++;
-								if (!antiInductivity) {
-									s_Logger.warn("Transition "+ transAnnot + " from " +
-											sf1 + " to " + sf2 + " not inductive");
-									result = false;
-									assert !assertInductivity || result : "inductivity failed";
-								}
-								break;
-							}
-							case UNKNOWN: {
-								yield[2]++;
-								break;
-							}
-							default:
-								throw new IllegalArgumentException();
-							}
-						}
-					}
-				}
-				
-				
-			}
-			
-			
-		}
-		s_Logger.info("Interpolant automaton has " + (yield[0]+yield[1]+yield[2]+yield[3]) + 
-				" edges. " + yield[0] + " inductive. " + yield[1] +
-				" not inductive. " +	yield[2]+ " times theorem prover too" +
-				" weak to decide inductivity. " + yield[3]+ " times interpolants"
-				+ " missing.");
-		return result;
-	}
-	
 	
 	
 	private Integer quantifiersContainedInFormula(Term formula, Set<TermVariable> quantifiedVariables) {
@@ -1807,13 +1627,6 @@ public class SmtManager {
 	}
 	
 	
-	public IPredicate[] computeInterpolants(IPredicate precondition, 
-										   IPredicate postcondition, 
-										   IRun<CodeBlock,IPredicate> run) {
-		return null;
-	}
-	
-
 	
 
 	

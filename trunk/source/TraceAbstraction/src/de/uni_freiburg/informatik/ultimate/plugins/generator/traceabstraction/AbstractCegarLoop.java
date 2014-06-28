@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -24,12 +25,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
@@ -84,6 +88,7 @@ public abstract class AbstractCegarLoop {
 	protected final SmtManager m_SmtManager;
 	
 	
+	protected final ModifiableGlobalVariableManager m_ModGlobVarManager;
 	
 	/**
 	 * Intermediate layer to encapsulate preferences.
@@ -158,6 +163,7 @@ public abstract class AbstractCegarLoop {
 			SmtManager smtManager,
 			TAPreferences taPrefs,
 			Collection<ProgramPoint> errorLocs) {
+		m_ModGlobVarManager = rootNode.getRootAnnot().getModGlobVarManager();
 		this.m_Name = name;
 		this.m_RootNode = rootNode;
 		this.m_SmtManager = smtManager;
@@ -371,7 +377,7 @@ public abstract class AbstractCegarLoop {
 			
 
 			if (m_Pref.computeHoareAnnotation()) {
-				assert (m_SmtManager.checkInductivity(m_Abstraction, false, true));
+				assert (new InductivityCheck((INestedWordAutomaton) m_Abstraction, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false, true)).getResult() : "Not inductive";
 			}
 
 			if (m_Iteration <= m_Pref.watchIteration() && m_Pref.artifact() == Artifact.ABSTRACTION) {

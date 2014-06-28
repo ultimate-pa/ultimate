@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
@@ -82,7 +83,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 		assert(accepts(m_InterpolAutomaton, m_Counterexample.getWord())) :
 			"Interpolant automaton broken!";
-		assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
+		assert (new InductivityCheck(m_InterpolAutomaton, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false, true)).getResult() : "Not inductive";
 	}
 	
 	@Override
@@ -184,9 +185,9 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 							+ epd.m_AnswerReturnCache + " answers given by cache " 
 							+ epd.m_AnswerReturnSolver + " answers given by solver");
 				assert m_SmtManager.isIdle();
-				assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
+				assert (new InductivityCheck(m_InterpolAutomaton, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false, true)).getResult();
 				// do the following check only to obtain logger messages of checkInductivity
-				assert (m_SmtManager.checkInductivity(epd.getRejectionCache(), true, false) | true);
+				assert (new InductivityCheck(epd.getRejectionCache(), new EdgeChecker(m_SmtManager, m_ModGlobVarManager), true, false).getResult() | true);
 
 			if (m_RemoveDeadEnds) {
 				if (m_ComputeHoareAnnotation) {
