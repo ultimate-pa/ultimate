@@ -185,6 +185,9 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			lambdas = new ArrayList<Term>(eigenvalues.length);
 			for (int i = 0; i < eigenvalues.length; ++i) {
 				assert !eigenvalues[i].isNegative();
+				if (m_integer_mode && !eigenvalues[i].isIntegral()) {
+					continue; // ignore non-integral guesses
+				}
 				lambdas.add(eigenvalues[i].toTerm(m_sort));
 			}
 		}
