@@ -8,13 +8,15 @@
 
 extern int __VERIFIER_nondet_int(void);
 
-extern int a[];
-extern int a_length;
-
 int main() {
+	int a_length = __VERIFIER_nondet_int();
+	if (a_length <  1) {
+		return 0;
+	}
+	int a[a_length];
 	int offset = 1;
 	int i = 0;
-	while (i <= a_length) {
+	while (i < a_length) {
 		if (a[i] < 0) {
 			break;
 		}
