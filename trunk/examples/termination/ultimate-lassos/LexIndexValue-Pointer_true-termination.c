@@ -11,14 +11,14 @@
 extern int __VERIFIER_nondet_int(void);
 
 int main() {
-    int *p = malloc(1048 * sizeof(int));
+	int *p = malloc(1048 * sizeof(int));
 	int *q = p;
-    while (*q >= 0 && q < p + 1048) {
+	while (*q >= 0 && q < p + 1048) {
 		if (__VERIFIER_nondet_int()) {
 			q++;
 		} else {
 			(*q)--;
 		}
 	}
-    return 0;
+	return 0;
 }

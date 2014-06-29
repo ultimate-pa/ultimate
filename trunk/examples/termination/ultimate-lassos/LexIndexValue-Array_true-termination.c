@@ -13,12 +13,12 @@ extern int __VERIFIER_nondet_int(void);
 int main() {
 	int a[1048];
 	int k = 0;
-    while (a[k] >= 0 && k < 1048) {
+	while (a[k] >= 0 && k < 1048) {
 		if (__VERIFIER_nondet_int()) {
 			k++;
 		} else {
 			a[k]--;
 		}
 	}
-    return 0;
+	return 0;
 }

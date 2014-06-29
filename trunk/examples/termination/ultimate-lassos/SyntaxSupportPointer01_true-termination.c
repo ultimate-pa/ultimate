@@ -13,5 +13,5 @@ int main() {
 	while (*p >= 0) {
 		(*p)--;
 	}
-    return 0;
+	return 0;
 }
