@@ -771,7 +771,7 @@ public class FunctionHandler {
         	CDeclaration paramDec = paramDecs[i];
         	
         	ASTType type = null;
-        	if (paramDec.getType() instanceof CArray) {
+        	if (paramDec.getType() instanceof CArray) {//arrays are passed as pointers in C -- so we pass a Pointer in Boogie
         		type = MemoryHandler.POINTER_TYPE;
         	} else {
         		type = ((TypeHandler) main.typeHandler).ctype2asttype(loc, paramDec.getType());
@@ -779,8 +779,6 @@ public class FunctionHandler {
         	
         	String paramId = main.nameHandler.getInParamIdentifier(paramDec.getName());
         	in[i] = new VarList(loc, new String[] { paramId }, type);
-//            FIXME: boolean isOnHeap = ((MainDispatcher) main).getVariablesForHeap().
-//                    contains(paramDec);
             paramTypes.add(i, paramDec.getType());
             main.cHandler.getSymbolTable().put(paramDec.getName(), 
             		new SymbolTableValue(paramId, null, paramDec, false, null));

@@ -108,14 +108,7 @@ public class PreRunner extends ASTVisitor {
     
     @Override
  	public int visit(IASTParameterDeclaration declaration) {
-     	
      	sT.put(declaration.getDeclarator().getName().toString(), declaration);
-     	
-//     	//arrays are passes as pointers in C --> every array that is declaraed as a parameter is onHeap
-//     	if (declaration.getDeclarator() instanceof IASTArrayDeclarator) {
-//     		variablesOnHeap.add(declaration);
-//     	}
-
     	return super.visit(declaration);
  	}
     
@@ -133,8 +126,6 @@ public class PreRunner extends ASTVisitor {
     				operand = removeBrackets((IASTExpression) operand);
     			
     			if (operand instanceof IASTIdExpression) {
-//    				n = ue.getOperand().getRawSignature();
-//    				n = operand.getRawSignature();
     				id = ((IASTIdExpression) operand).getName().toString();
     			 // TODO : add other cases! ie. structs, where the &-operator
     			// is applied to one field, etc
@@ -179,33 +170,6 @@ public class PreRunner extends ASTVisitor {
             	variablesOnHeap.add(d);
             	
             }
-            
-            // the following seems to be bullshit..
-//            if (d instanceof IASTSimpleDeclaration) {
-//            	IASTSimpleDeclaration sd = (IASTSimpleDeclaration) d;
-//            	for (IASTDeclarator dec : sd.getDeclarators()) {
-//            		if (dec instanceof IASTArrayDeclarator) {
-//            			String decName = dec.getName().toString();
-//            			if (decName.equals(identifier)) {
-//            				if (!(expression.getParent() instanceof IASTArraySubscriptExpression)) {
-//            					// if idex is an array and there is no array sub expr!
-//            					this.variablesOnHeap.add(dec); //FIXME: if we want arrays that are not on the heap uncoment/rewrite this
-////            					this.isMMRequired = true;
-//            					//                    }
-//            				}
-//            			}
-//            		}
-//            		//                if (.getDeclarators()[0] instanceof IASTArrayDeclarator) {
-//            		//                    if (!(expression.getParent() instanceof IASTArraySubscriptExpression)) {
-//            		//                        // if idex is an array and there is no array sub expr!
-//            		//                        this.variablesOnHeap.add(d);
-//            		//                        this.isMMRequired = true;
-//            		//                    }
-//            		//                }
-//
-//            		
-//            	}
-//            }
         } else if (expression instanceof IASTFieldReference) {
             // TODO
             // if field is an array and there is no array sub expr!
@@ -244,28 +208,6 @@ public class PreRunner extends ASTVisitor {
             IASTFunctionDefinition funDef = (IASTFunctionDefinition)declaration;
             functionTable.put(funDef.getDeclarator().getName().toString(), funDef);
             sT.beginScope();
-            //this is bullshit (especially the sT-part) --> do it in the visitor for ParamDecl
-//            sT.beginScope();
-//            if (funDef.getDeclarator() instanceof CASTFunctionDeclarator) {
-//                CASTFunctionDeclarator dec =
-//                        (CASTFunctionDeclarator)funDef.getDeclarator();
-//                for (IASTParameterDeclaration param : dec.getParameters()) {
-//                    String key = param.getDeclarator().getName().toString();
-//                    sT.put(key, param);
-//                    IASTPointerOperator[] pointerOps =
-//                            param.getDeclarator().getPointerOperators();
-//                    //--> that's the simple solution, if there are pointers declared,
-//                    // we introduce the (full) memory model
-//                    // might be done better in the future..
-//                    if (pointerOps != null && pointerOps.length != 0) 
-//                        isMMRequired = true;
-//                    if (param instanceof IASTArrayDeclarator)
-//                        isMMRequired = true;//FIXME: right all arrays are on the heap -- change this in case of a change of mind
-//                }
-//            }
-//            int nr = super.visit(declaration);
-//            sT.endScope();
-//            return nr;
         }
         return super.visit(declaration);
     }
@@ -313,34 +255,6 @@ public class PreRunner extends ASTVisitor {
          }
  		return super.leave(statement);
  	}
-
-    // --> the scoping of sT here is totally meaningless (wrong understanding of the used visitor pattern)
-//    @Override
-//    public int visit(IASTStatement statement) {
-//        if (statement instanceof IASTCompoundStatement
-//                && !(statement.getParent() instanceof IASTFunctionDefinition || statement
-//                        .getParent() instanceof IASTForStatement)) {
-//            // the scope for IASTFunctionDefinition and IASTForStatement was
-//            // opened in parent before!
-//            sT.beginScope();
-//            int nr = super.visit(statement);
-//            sT.endScope();
-//            return nr;
-//        }
-//        if (statement instanceof IASTSwitchStatement) {
-//            sT.beginScope();
-//            int nr = super.visit(statement);
-//            sT.endScope();
-//            return nr;
-//        }
-//        if (statement instanceof IASTForStatement) {
-//            sT.beginScope();
-//            int nr = super.visit(statement);
-//            sT.endScope();
-//            return nr;
-//        }
-//        return super.visit(statement);
-//    }
 
     IASTExpression removeBrackets(IASTExpression exp) {
     	IASTExpression result = exp;
