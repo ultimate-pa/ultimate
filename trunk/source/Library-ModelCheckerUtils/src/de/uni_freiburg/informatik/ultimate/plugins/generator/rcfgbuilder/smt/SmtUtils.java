@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -16,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
@@ -25,6 +27,10 @@ public class SmtUtils {
 	
 	private static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(ModelCheckerUtils.sPluginID);
+
+	private SmtUtils() {
+		// Prevent instantiation of this utility class
+	}
 	
 	public static Term simplify(Script script, Term formula) {
 		s_Logger.debug(new DebugMessage(
@@ -257,5 +263,22 @@ public class SmtUtils {
 	public static String removeSmtQuoteCharacters(String string) {
 		String result = string.replaceAll("\\|", ""); 
 		return result;
+	}
+	
+	public static Map<Term, Term> termVariables2Constants(
+								Script script, TermVariable[] termVariables) {
+		Map<Term, Term> mapping = new HashMap<Term, Term>();
+		for (TermVariable tv : termVariables) {
+			Term constant = termVariable2constant(script, tv);
+			mapping.put(tv, constant);
+		}
+		return mapping;
+	}
+	
+	private static Term termVariable2constant(Script script, TermVariable tv) {
+		String name = removeSmtQuoteCharacters(tv.getName());
+		Sort resultSort = tv.getSort();
+		script.declareFun(name, new Sort[0], resultSort);
+		return script.term(name);
 	}
 }
