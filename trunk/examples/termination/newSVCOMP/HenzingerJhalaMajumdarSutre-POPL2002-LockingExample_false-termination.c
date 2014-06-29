@@ -52,6 +52,6 @@ int main() {
 		}
 	} while (new != old);
 	unlock();
-	return;
+	return 0;
 }
 
