@@ -1,4 +1,3 @@
-//#rTerminationDerivable
 /*
  * Ranking function f(x) = x 
  * with supporting invariant x >= 0

@@ -1,4 +1,3 @@
-//#rTermination
 /*
  * Date: 2012-03-05
  * Author: leike@informatik.uni-freiburg.de, heizmann@informatik.uni-freiburg.de
