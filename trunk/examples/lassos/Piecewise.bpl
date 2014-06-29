@@ -3,7 +3,7 @@
  * Date: 08.10.2013
  * Author: leike@informatik.uni-freiburg.de
  *
- * An example taylored to the piecewise ranking template
+ * An example tailored to the piecewise ranking template
  */
 
 procedure main() returns (p: int, q: int, y: int, z: int) {

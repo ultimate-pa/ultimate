@@ -8,7 +8,7 @@
  * f_1(x, y) = x
  */
 
-procedure TwoPhase() returns (x: int, y: int)
+procedure main() returns (x: int, y: int)
 {
   assume true;
   while (x >= 0) {
