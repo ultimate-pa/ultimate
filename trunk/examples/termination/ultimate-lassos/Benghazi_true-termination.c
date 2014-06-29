@@ -22,4 +22,5 @@ int main()
 		d1 = d2 + 1;
 		d2 = d1_old + 1;
 	}
+	return 0;
 }

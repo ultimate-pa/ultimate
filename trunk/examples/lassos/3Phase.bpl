@@ -9,7 +9,6 @@
  * f_2(x, y, z) = x
  *
  * The program does not have a nested ranking function.
- * (Every 2-phase ranking function is also a 2-nested ranking function.)
  */
 
 procedure main() returns (x: int, y: int, z:int)
