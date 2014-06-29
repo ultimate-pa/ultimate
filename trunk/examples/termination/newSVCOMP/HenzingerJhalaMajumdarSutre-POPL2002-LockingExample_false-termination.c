@@ -16,7 +16,7 @@ void lock(void) {
 	if (LOCK == 0) {
 		LOCK = 1;
 	} else {
-		//@ assert \false;
+		// assert \false;
 	}
 }
 
@@ -24,7 +24,7 @@ void unlock(void) {
 	if (LOCK == 1) {
 		LOCK = 0;
 	} else {
-		//@ assert \false;
+		// assert \false;
 	}
 }
 
