@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.N
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -364,8 +365,13 @@ public class FunctionHandler {
 				// Copy of inparam that is writeable
 				String auxInvar = main.nameHandler.getUniqueIdentifier(parent,
 						cId, 0, isOnHeap);
+
 				ASTType type = varList.getType();
-				if (isOnHeap) {
+				CType cvar = main.cHandler.getSymbolTable().get(cId, loc)
+                        .getCVariable();
+				
+				
+				if (isOnHeap || cvar instanceof CArray) {
 				    type = MemoryHandler.POINTER_TYPE;
 	                ((CHandler)main.cHandler).addBoogieIdsOfHeapVars(
 	                        auxInvar);
@@ -374,8 +380,7 @@ public class FunctionHandler {
 				VariableDeclaration inVarDecl = new VariableDeclaration(loc,
 						new Attribute[0], new VarList[] { var });
 				
-                CType cvar = main.cHandler.getSymbolTable().get(cId, loc)
-                        .getCVariable();
+
                 if (isOnHeap) {
                     cvar = new CPointer(cvar);
                 }
@@ -765,7 +770,13 @@ public class FunctionHandler {
         for (int i = 0; i < paramDecs.length; ++i) {
         	CDeclaration paramDec = paramDecs[i];
         	
-        	ASTType type = ((TypeHandler) main.typeHandler).ctype2asttype(loc, paramDec.getType());
+        	ASTType type = null;
+        	if (paramDec.getType() instanceof CArray) {
+        		type = MemoryHandler.POINTER_TYPE;
+        	} else {
+        		type = ((TypeHandler) main.typeHandler).ctype2asttype(loc, paramDec.getType());
+        	}
+        	
         	String paramId = main.nameHandler.getInParamIdentifier(paramDec.getName());
         	in[i] = new VarList(loc, new String[] { paramId }, type);
 //            FIXME: boolean isOnHeap = ((MainDispatcher) main).getVariablesForHeap().

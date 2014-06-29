@@ -445,13 +445,13 @@ public class PostProcessor {
 				lhs = new VariableLHS(address.getLocation(),
 						address.getIdentifier());
 				
-				assert lhs != null;
-				Statement assign = new AssignmentStatement(loc, new LeftHandSide[] {lhs}, 
-						new Expression[] { mallocRex.lrVal.getValue()});
-
-				stmt.add(assign);
-				decl.add(tVarDecl);
-				auxVars.put(tVarDecl, loc);
+//				assert lhs != null;
+//				Statement assign = new AssignmentStatement(loc, new LeftHandSide[] {lhs}, 
+//						new Expression[] { mallocRex.lrVal.getValue()});
+//
+//				stmt.add(assign);
+//				decl.add(tVarDecl);
+//				auxVars.put(tVarDecl, loc);
 
 				stmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, structHandler, loc, 
 						initializer == null ? null : ((ResultExpressionListRec) initializer).list,

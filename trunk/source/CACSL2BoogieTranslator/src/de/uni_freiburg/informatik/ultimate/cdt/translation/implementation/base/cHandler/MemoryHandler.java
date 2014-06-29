@@ -1101,7 +1101,10 @@ public class MemoryHandler {
         	}
         	
         } else if (rType instanceof CArray) {
-        	throw new UnsupportedSyntaxException(loc, "todo: write to arrays on the heap");
+//        	throw new UnsupportedSyntaxException(loc, "todo: write to arrays on the heap");
+        	stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { 
+        			new VariableLHS(loc, ((IdentifierExpression )hlv.getAddress()).getIdentifier()) }, 
+        			new Expression[] { rval.getValue()}) );
         } else
         	throw new UnsupportedSyntaxException(loc, "we don't recognize this type");
 		

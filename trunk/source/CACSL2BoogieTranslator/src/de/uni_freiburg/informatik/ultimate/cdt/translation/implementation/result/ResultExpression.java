@@ -182,7 +182,7 @@ public class ResultExpression extends Result {
 			if (m_Locked) {
 				throw new AssertionError("this ResultExpression is already locked");
 			}
-			ResultExpression rex = null;
+			//ResultExpression rex = null;
 			HeapLValue hlv = (HeapLValue) lrVal;
 			
 			//retain already created stmt, decl, auxVars
@@ -203,22 +203,24 @@ public class ResultExpression extends Result {
 					if (underlyingType instanceof CPrimitive) {
 						CPrimitive cp = (CPrimitive) this.lrVal.cType;
 						switch (cp.getGeneralType()) {
-						case INTTYPE:
-							rex = memoryHandler.getReadCall(
+						case INTTYPE: {
+							ResultExpression rex = memoryHandler.getReadCall(
 									main, addressRVal);
 							newStmt.addAll(rex.stmt);
 							newDecl.addAll(rex.decl);
 							newAuxVars.putAll(rex.auxVars);	
 							newValue = (RValue) rex.lrVal;
 							break;
-						case FLOATTYPE:
-							rex = memoryHandler.getReadCall(
+						}
+						case FLOATTYPE: {
+							ResultExpression rex = memoryHandler.getReadCall(
 									main, addressRVal);
 							newStmt.addAll(rex.stmt);
 							newDecl.addAll(rex.decl);
 							newAuxVars.putAll(rex.auxVars);	
 							newValue = (RValue) rex.lrVal;	
 							break;
+						}
 						case VOID:
 							//(in this case we return nothing, because this should not be read anyway..)
 //							throw new UnsupportedSyntaxException("void should have been cast before dereferencing");
@@ -227,7 +229,7 @@ public class ResultExpression extends Result {
 							throw new UnsupportedSyntaxException(loc, "..");
 						}
 					} else if (underlyingType instanceof CPointer) {
-						rex = memoryHandler.getReadCall(
+						ResultExpression rex = memoryHandler.getReadCall(
 									main, addressRVal);
 						newStmt.addAll(rex.stmt);
 						newDecl.addAll(rex.decl);
@@ -237,15 +239,19 @@ public class ResultExpression extends Result {
 //						return null; //"you can't assign arrays in C"
 //						throw new AssertionError("you can't assign arrays in C");
 						// if it is a HeapLValue, it must be on heap -> treat it as a pointer
-						rex = memoryHandler.getReadCall(
-									main, addressRVal);
-						newStmt.addAll(rex.stmt);
-						newDecl.addAll(rex.decl);
-						newAuxVars.putAll(rex.auxVars);	
-						newValue = (RValue) rex.lrVal;
+//						rex = memoryHandler.getReadCall(
+//									main, addressRVal);
+//						newStmt.addAll(rex.stmt);
+//						newDecl.addAll(rex.decl);
+//						newAuxVars.putAll(rex.auxVars);	
+//						newValue = (RValue) rex.lrVal;
+						newStmt.addAll(this.stmt);
+						newDecl.addAll(this.decl);
+						newAuxVars.putAll(this.auxVars);	
+						newValue = new RValue(hlv.getAddress(), this.lrVal.cType);
 					} else if (underlyingType instanceof CEnum) {
 					} else if (underlyingType instanceof CStruct) {
-						rex = readStructFromHeap(main, structHandler, memoryHandler, loc, 
+						ResultExpression rex = readStructFromHeap(main, structHandler, memoryHandler, loc, 
 									addressRVal);
 						newStmt.addAll(rex.stmt);
 						newDecl.addAll(rex.decl);
@@ -257,9 +263,8 @@ public class ResultExpression extends Result {
 						throw new UnsupportedSyntaxException(loc, "..");
 					}
 					newValue.isBoogieBool = lrVal.isBoogieBool;
-					rex = new ResultExpression(newStmt, newValue, newDecl,
+					return new ResultExpression(newStmt, newValue, newDecl,
 					        newAuxVars, this.overappr, this.unionFieldIdToCType);
-					return rex;
 		} else {
 			throw new AssertionError("an LRValue that is not null, and no LocalLValue, RValue or HeapLValue???");
 		}

@@ -109,7 +109,12 @@ public class PreRunner extends ASTVisitor {
     @Override
  	public int visit(IASTParameterDeclaration declaration) {
      	
-     	sT.put(declaration.getDeclarator().getName().toString(), declaration); 
+     	sT.put(declaration.getDeclarator().getName().toString(), declaration);
+     	
+//     	//arrays are passes as pointers in C --> every array that is declaraed as a parameter is onHeap
+//     	if (declaration.getDeclarator() instanceof IASTArrayDeclarator) {
+//     		variablesOnHeap.add(declaration);
+//     	}
 
     	return super.visit(declaration);
  	}
@@ -123,27 +128,29 @@ public class PreRunner extends ASTVisitor {
     		if (ue.getOperator() == IASTUnaryExpression.op_amper) {// every variable that is addressoffed has to be on the heap
     			IASTNode operand = ue.getOperand();
     			// add the operand to VariablesOnHeap!
-    			String n = null;
+    			String id = null;
     			if (operand instanceof IASTExpression)
     				operand = removeBrackets((IASTExpression) operand);
+    			
     			if (operand instanceof IASTIdExpression) {
 //    				n = ue.getOperand().getRawSignature();
-    				n = operand.getRawSignature();
-    			} // TODO : add other cases! ie. structs, where the &-operator
+//    				n = operand.getRawSignature();
+    				id = ((IASTIdExpression) operand).getName().toString();
+    			 // TODO : add other cases! ie. structs, where the &-operator
     			// is applied to one field, etc
-    			else if ((operand instanceof IASTUnaryExpression) 
+    			} else if ((operand instanceof IASTUnaryExpression) 
     					&& ((IASTUnaryExpression) operand).getOperand() instanceof IASTFieldReference
     					) {
     				if (((IASTFieldReference) ((IASTUnaryExpression) operand).getOperand()).isPointerDereference()) {
-    					n = null; //already on the heap (a pointer), do nothing
+    					id = null; //already on the heap (a pointer), do nothing
     				} else {
     					IASTExpression owner = ((IASTFieldReference) ((IASTUnaryExpression) operand).getOperand()).getFieldOwner();
     					owner = removeBrackets(owner);
     					if (owner instanceof IASTIdExpression) {
-    						n = owner.getRawSignature();
+    						id = owner.getRawSignature();
     					} else if (owner instanceof IASTUnaryExpression 
     							&& ((IASTUnaryExpression) owner).getOperator() == IASTUnaryExpression.op_star) { 
-    						n = null; // already on the heap
+    						id = null; // already on the heap
     					} else {
     						String msg = "PR: Unsupported operand in UnaryExpression!";
     						throw new UnsupportedSyntaxException(loc, msg);
@@ -151,51 +158,58 @@ public class PreRunner extends ASTVisitor {
     				}
                 }
                 this.isMMRequired = true;
-                if (n != null) {
-                    IASTFunctionDefinition function = functionTable.get(n);
+                if (id != null) {
+                    IASTFunctionDefinition function = functionTable.get(id);
                     if (function != null) {
-                        functionPointers.put(n, function);
+                        functionPointers.put(id, function);
                     } else {
-                        this.variablesOnHeap.add(get(n, loc));//TODO why put the location of expression, not operand, here?
+                        this.variablesOnHeap.add(get(id, loc));//TODO why put the location of expression, not operand, here?
                     }
                 }
             } else if (!this.isMMRequired
                     && ue.getOperator() == IASTUnaryExpression.op_star) {
                 this.isMMRequired = true;
             }
-        }
-    	else if (expression instanceof IASTIdExpression) {
+    	} else if (expression instanceof IASTIdExpression) {
             String identifier = ((IASTIdExpression) expression).getName().toString();
             IASTNode d = sT.get(identifier); // don't check contains here!
-            if (d instanceof IASTSimpleDeclaration) {
-            	IASTSimpleDeclaration sd = (IASTSimpleDeclaration) d;
-            	for (IASTDeclarator dec : sd.getDeclarators()) {
-            		if (dec instanceof IASTArrayDeclarator) {
-            			String decName = dec.getName().toString();
-            			if (decName.equals(identifier)) {
-            				if (!(expression.getParent() instanceof IASTArraySubscriptExpression)) {
-            					// if idex is an array and there is no array sub expr!
-            					this.variablesOnHeap.add(dec); //FIXME: if we want arrays that are not on the heap uncoment/rewrite this
-//            					this.isMMRequired = true;
-            					//                    }
-            				}
-            			}
-            		}
-            		//                if (.getDeclarators()[0] instanceof IASTArrayDeclarator) {
-            		//                    if (!(expression.getParent() instanceof IASTArraySubscriptExpression)) {
-            		//                        // if idex is an array and there is no array sub expr!
-            		//                        this.variablesOnHeap.add(d);
-            		//                        this.isMMRequired = true;
-            		//                    }
-            		//                }
-            	}
+            		//if the identifier refers to an array and is used in a functioncall, the Array has to go on the heap
+            if (d instanceof IASTArrayDeclarator
+            		&& expression.getParent() instanceof IASTFunctionCallExpression) {
+            	variablesOnHeap.add(d);
+            	
             }
-        }
-    	else if (expression instanceof IASTFieldReference) {
+            
+            // the following seems to be bullshit..
+//            if (d instanceof IASTSimpleDeclaration) {
+//            	IASTSimpleDeclaration sd = (IASTSimpleDeclaration) d;
+//            	for (IASTDeclarator dec : sd.getDeclarators()) {
+//            		if (dec instanceof IASTArrayDeclarator) {
+//            			String decName = dec.getName().toString();
+//            			if (decName.equals(identifier)) {
+//            				if (!(expression.getParent() instanceof IASTArraySubscriptExpression)) {
+//            					// if idex is an array and there is no array sub expr!
+//            					this.variablesOnHeap.add(dec); //FIXME: if we want arrays that are not on the heap uncoment/rewrite this
+////            					this.isMMRequired = true;
+//            					//                    }
+//            				}
+//            			}
+//            		}
+//            		//                if (.getDeclarators()[0] instanceof IASTArrayDeclarator) {
+//            		//                    if (!(expression.getParent() instanceof IASTArraySubscriptExpression)) {
+//            		//                        // if idex is an array and there is no array sub expr!
+//            		//                        this.variablesOnHeap.add(d);
+//            		//                        this.isMMRequired = true;
+//            		//                    }
+//            		//                }
+//
+//            		
+//            	}
+//            }
+        } else if (expression instanceof IASTFieldReference) {
             // TODO
             // if field is an array and there is no array sub expr!
-        }
-    	else if (expression instanceof IASTFunctionCallExpression) {
+        } else if (expression instanceof IASTFunctionCallExpression) {
             IASTFunctionCallExpression fce = (IASTFunctionCallExpression) expression;
             if (fce.getFunctionNameExpression().getRawSignature()
                     .equals("malloc")) {
