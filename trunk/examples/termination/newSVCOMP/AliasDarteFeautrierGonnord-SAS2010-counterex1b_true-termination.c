@@ -13,10 +13,10 @@ int main() {
 	int x = __VERIFIER_nondet_int();
 	int y = __VERIFIER_nondet_int();
 	while (x >= 0) {
-		while (y >= 0)
+		while (y >= 0 && __VERIFIER_nondet_int())
 			y--;
 		x--;
-		while (y <= n)
+		while (y <= n && __VERIFIER_nondet_int())
 			y++;
 	}
 	return 0;
