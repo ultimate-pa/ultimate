@@ -125,4 +125,23 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 		return prettyPrintDefUse(getDefs());
 	}
 
+	protected HashMap<String, HashSet<Statement>> copy(HashMap<String, HashSet<Statement>> other) {
+		if (other == null) {
+			return null;
+		}
+		HashMap<String, HashSet<Statement>> newmap = new HashMap<>();
+		for (String key : other.keySet()) {
+			HashSet<Statement> otherset = other.get(key);
+			if (otherset == null) {
+				continue;
+			}
+			HashSet<Statement> newset = new HashSet<>();
+			for (Statement stmt : otherset) {
+				newset.add(stmt);
+			}
+			newmap.put(key, newset);
+		}
+		return newmap;
+	}
+
 }

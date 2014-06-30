@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+
 import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -17,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.boogie.ReachDefBoogieAnnotator;
+import de.uni_freiburg.informatik.ultimate.reachingdefinitions.plugin.Activator;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.util.Util;
 
 /**
@@ -35,7 +38,8 @@ class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 	private final Logger mLogger;
 
 	public ReachDefRCFGVisitor() {
-		mLogger = Logger.getLogger(getClass());
+		
+		mLogger = Activator.getLogger();
 	}
 
 	/**
@@ -89,7 +93,9 @@ class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 				boolean gen = generator.annotate(s);
 				String pre = " 		      " + edge.hashCode() + " " + BoogieStatementPrettyPrinter.print(s);
 
-				mLogger.debug(pre + Util.repeat((40 - pre.length()), " ") + " New: "+annot);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(pre + Util.repeat((40 - pre.length()), " ") + " New: " + annot);
+				}
 
 				somethingChanged = gen || somethingChanged;
 			} catch (Throwable e) {
@@ -144,13 +150,13 @@ class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 				if (mPreMap == null) {
 					mPreMap = new HashMap<>();
 				}
-				
+
 				HashSet<ReachDefStatementAnnotation> pres = mPreMap.get(currentSeq);
-				if(pres == null){
+				if (pres == null) {
 					pres = new HashSet<>();
 					mPreMap.put(currentSeq, pres);
 				}
-				
+
 				pres.addAll(new ReachDefRCFGPredecessorGenerator().process(mCurrentSourceNode));
 				predecessors = pres;
 			} else {

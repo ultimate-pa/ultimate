@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -40,6 +42,10 @@ public class ReachDefStatementAnnotation extends ReachDefBaseAnnotation {
 
 		return rtr.add(stmt);
 	}
+	
+	public Collection<Statement> getDef(String variableName){
+		return getDefs().get(variableName);
+	}
 
 	/**
 	 * 
@@ -65,31 +71,12 @@ public class ReachDefStatementAnnotation extends ReachDefBaseAnnotation {
 	}
 
 	@Override
-	public ReachDefStatementAnnotation clone() {
+	public ReachDefBaseAnnotation clone() {
 		ReachDefStatementAnnotation rtr = new ReachDefStatementAnnotation();
 		rtr.mDefs = copy(mDefs);
 		rtr.mUse = copy(mUse);
 
 		return rtr;
-	}
-
-	private HashMap<String, HashSet<Statement>> copy(HashMap<String, HashSet<Statement>> other) {
-		if (other == null) {
-			return null;
-		}
-		HashMap<String, HashSet<Statement>> newmap = new HashMap<>();
-		for (String key : other.keySet()) {
-			HashSet<Statement> otherset = other.get(key);
-			if (otherset == null) {
-				continue;
-			}
-			HashSet<Statement> newset = new HashSet<>();
-			for (Statement stmt : otherset) {
-				newset.add(stmt);
-			}
-			newmap.put(key, newset);
-		}
-		return newmap;
 	}
 
 	@Override

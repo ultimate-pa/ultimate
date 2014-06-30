@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.reachingdefinitions.boogie;
 
+import java.util.Collection;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
@@ -53,7 +55,14 @@ public class ReachDefBoogieVisitor extends BoogieVisitor {
 			UpdateDef(expr.getIdentifier(), mCurrentStatement);
 			break;
 		case RHS:
-			mCurrentRD.addUse(expr.getIdentifier(), mCurrentStatement);
+			String id = expr.getIdentifier();
+			Collection<Statement> stmts = mCurrentRD.getDef(id);
+			if (stmts != null) {
+				for (Statement stmt : mCurrentRD.getDef(id)) {
+					mCurrentRD.addUse(id, stmt);
+				}
+			}
+
 			break;
 		}
 	}

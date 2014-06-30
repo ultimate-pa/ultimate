@@ -1,9 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.access;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 
 /***
  * 
@@ -15,8 +11,6 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
  * 
  */
 public abstract class BaseObserver implements IUnmanagedObserver {
-
-	protected static Logger sLogger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 
 	@Override
 	public void init() {

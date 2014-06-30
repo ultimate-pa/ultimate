@@ -12,9 +12,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations.ReachDefStatementAnnotation;
+import de.uni_freiburg.informatik.ultimate.reachingdefinitions.plugin.Activator;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.util.Util;
 
 public class ReachDefRCFGPredecessorGenerator extends RCFGEdgeVisitor {
+
+	private Logger mLogger;
+
+	public ReachDefRCFGPredecessorGenerator() {
+		mLogger = Activator.getLogger();
+	}
 
 	private List<ReachDefStatementAnnotation> rtr;
 
@@ -34,9 +41,10 @@ public class ReachDefRCFGPredecessorGenerator extends RCFGEdgeVisitor {
 			visit(pre);
 		}
 
-		Logger.getLogger(getClass()).debug(
-				"Predecessors: "
-						+ Util.prettyPrintIterable(currentNode.getIncomingEdges(),Util.<RCFGEdge>createHashCodePrinter()));
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Predecessors: "
+					+ Util.prettyPrintIterable(currentNode.getIncomingEdges(), Util.<RCFGEdge> createHashCodePrinter()));
+		}
 
 		return rtr;
 	}
