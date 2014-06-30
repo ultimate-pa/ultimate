@@ -65,6 +65,13 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<String>(LABEL_TOOLS_PREF, DEFAULT_VALUE_TOOLS_PREF, PreferenceType.String,
 						null, new LogLevelValidator()),
 				new UltimatePreferenceItem<String>(PREFID_DETAILS, "", PreferenceType.String, true, null, null),
+				
+				// Log colours
+				new UltimatePreferenceItem<String>(LABEL_COLOR_DEBUG, DEFAULT_VALUE_COLOR_DEBUG, PreferenceType.Color),
+				new UltimatePreferenceItem<String>(LABEL_COLOR_INFO, DEFAULT_VALUE_COLOR_INFO, PreferenceType.Color),
+				new UltimatePreferenceItem<String>(LABEL_COLOR_WARNING, DEFAULT_VALUE_COLOR_WARNING, PreferenceType.Color),
+				new UltimatePreferenceItem<String>(LABEL_COLOR_ERROR, DEFAULT_VALUE_COLOR_ERROR, PreferenceType.Color),
+				new UltimatePreferenceItem<String>(LABEL_COLOR_FATAL, DEFAULT_VALUE_COLOR_FATAL, PreferenceType.Color),
 
 				// Toolchain
 				new UltimatePreferenceItem<Integer>(LABEL_TIMEOUT, VALUE_TIMEOUT, PreferenceType.Integer,
@@ -138,6 +145,23 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_LOGFILE_DIR = "Directory (default: instance location)";
 	public static final String VALUE_LOGFILE_DIR = Platform.getInstanceLocation().getURL().getPath();
+	
+	
+	// Log colours
+	public static final String LABEL_COLOR_DEBUG = "Debug log message color";
+	public static final String DEFAULT_VALUE_COLOR_DEBUG = "223,223,223";
+
+	public static final String LABEL_COLOR_INFO = "Info log message color";
+	public static final String DEFAULT_VALUE_COLOR_INFO = "255,255,255";
+
+	public static final String LABEL_COLOR_WARNING = "Warning log message color";
+	public static final String DEFAULT_VALUE_COLOR_WARNING = "223,223,95";
+
+	public static final String LABEL_COLOR_ERROR = "Error log message color";
+	public static final String DEFAULT_VALUE_COLOR_ERROR = "255,85,85";
+
+	public static final String LABEL_COLOR_FATAL = "Fatal log message color";
+	public static final String DEFAULT_VALUE_COLOR_FATAL = "255,85,85";
 
 	// Model manager
 	public static final String LABEL_MM_DROP_MODELS = "Drop models when Ultimate exits";

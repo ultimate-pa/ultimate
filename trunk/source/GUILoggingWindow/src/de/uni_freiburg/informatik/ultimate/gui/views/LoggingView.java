@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.gui.views;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.ModifyEvent;
@@ -58,22 +60,39 @@ public class LoggingView extends ViewPart {
 				styledText.setSelection(styledText.getCharCount());
 			}
 		});
+		
+		UltimatePreferenceStore preferenceStore = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 
 		mAppender = new GuiLoggingWindowAppender();
 		mAppender.init();
-		mAppender.setLayout(new PatternLayout(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
+		mAppender.setLayout(new PatternLayout(preferenceStore
 				.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)));
 
 		// use the root logger to have this appender in all child
 		// loggers
 		Logger.getRootLogger().addAppender(mAppender);
 		Logger.getRootLogger().info("Activated GUI Logging Window for Log4j Subsystem");
+
+		// Listen to preference changes affecting the GUI log output: Pattern and colors
+		preferenceStore.addPreferenceChangeListener(new IPreferenceChangeListener() {
+			@Override
+			public void preferenceChange(PreferenceChangeEvent event) {
+				//do things if it concerns the loggers 
+				String ek = event.getKey();
+				if (ek.equals(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)
+						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_DEBUG)
+						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_INFO)
+						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_WARNING)
+						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_ERROR)
+						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_FATAL)
+						)
+				{
+					refreshPreferenceProperties();
+				}
+			}
+		});
 		
-		mColorDebug = new Color(Display.getDefault(), 223, 223, 223);
-		mColorInfo = new Color(Display.getDefault(), 255, 255, 255);
-		mColorWarning = new Color(Display.getDefault(), 223, 223, 95);
-		mColorError = new Color(Display.getDefault(), 255, 85, 85);
-		mColorFatal = new Color(Display.getDefault(), 255, 85, 85);
+		refreshPreferenceProperties();
 	}
 
 	/**
@@ -126,5 +145,38 @@ public class LoggingView extends ViewPart {
 	public void dispose() {
 		super.dispose();
 	}
+	
+	private void refreshPreferenceProperties() {
+		UltimatePreferenceStore preferenceStore = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 
+		mAppender.setLayout(new PatternLayout(preferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)));
+		
+		mColorDebug = colorFromString(preferenceStore.getString(CorePreferenceInitializer.LABEL_COLOR_DEBUG));
+		mColorInfo = colorFromString(preferenceStore.getString(CorePreferenceInitializer.LABEL_COLOR_INFO));
+		mColorWarning = colorFromString(preferenceStore.getString(CorePreferenceInitializer.LABEL_COLOR_WARNING));
+		mColorError = colorFromString(preferenceStore.getString(CorePreferenceInitializer.LABEL_COLOR_ERROR));
+		mColorFatal = colorFromString(preferenceStore.getString(CorePreferenceInitializer.LABEL_COLOR_FATAL));
+	}
+
+	/**
+	 * Create a Color object with the colour given by a string as in PreferenceType.Color
+	 * @param colorString Color as "red,green,blue" where 0 <= red, green, blue <= 255
+	 * @return a Color object with the given colour
+	 */
+	private Color colorFromString(String colorString) {
+		String[] channels = colorString.split(",");
+		if (channels.length >= 3) {
+			Color color;
+			try {
+				color = new Color(Display.getDefault(), Integer.parseInt(channels[0]), Integer.parseInt(channels[1]),
+						Integer.parseInt(channels[2]));
+			} catch (NumberFormatException e) {
+				color = new Color(Display.getDefault(), 255, 255, 255);
+			}
+			return color;
+		}
+
+		// default colour: white
+		return new Color(Display.getDefault(), 255, 255, 255);
+	}
 }

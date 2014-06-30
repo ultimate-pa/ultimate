@@ -90,7 +90,11 @@ public class UltimateLoggerFactory {
 								|| ek.equals(CorePreferenceInitializer.LABEL_CONTROLLER_PREF)
 								|| ek.equals(CorePreferenceInitializer.LABEL_PLUGINS_PREF)
 								|| ek.equals(CorePreferenceInitializer.LABEL_PLUGIN_DETAIL_PREF)
-								
+								|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_DEBUG)
+								|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_INFO)
+								|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_WARNING)
+								|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_ERROR)
+								|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_FATAL)
 								) 
 						{
 							//its relevant 
