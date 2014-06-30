@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.IndexAnalyzer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.SetOfTwoeltons;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.SingleUpdateNormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.Twoelton;
@@ -176,7 +177,7 @@ public class RewriteArrays implements PreProcessor {
 		}
 		
 		new IndexCollector();
-		IndexAnalyzer ia = new IndexAnalyzer(term);
+		IndexAnalyzer ia = new IndexAnalyzer(term, m_Array2Indices, m_Script, m_VarCollector);
 		m_EqualTwoeltons = ia.getEqualTwoeltons();
 		m_DistinctTwoeltons = ia.getDistinctTwoeltons();
 		m_UnknownTwoeltons = ia.getUnknownTwoeltons();
@@ -365,91 +366,7 @@ public class RewriteArrays implements PreProcessor {
 		}
 	}
 	
-	private class IndexAnalyzer {
-		private final SetOfTwoeltons<Term> allTwoeltons = new SetOfTwoeltons<>();
-		private final SetOfTwoeltons<Term> inVarTwoeltons = new SetOfTwoeltons<>();
-		private final Term m_Term;
-		
-		private final SetOfTwoeltons<Term> distinctTwoeltons = new SetOfTwoeltons<>();
-		private final SetOfTwoeltons<Term> equalTwoeltons = new SetOfTwoeltons<>();
-		private final SetOfTwoeltons<Term> unknownTwoeltons = new SetOfTwoeltons<>();
-		
-		
-		public IndexAnalyzer(Term term) {
-			super();
-			m_Term = term;
-			foo();
-		}
 
-		void foo() { 
-			for (TermVariable tv : m_Array2Indices.getDomain()) {
-				Set<List<Term>> test = m_Array2Indices.getImage(tv);
-				List<Term>[] testArr = test.toArray(new List[test.size()]);
-				for (int i=0; i<testArr.length; i++) {
-					for (int j=i+1; j<testArr.length; j++) {
-						List<Term> fstIndex = testArr[i];
-						List<Term> sndIndex = testArr[j];
-						assert fstIndex.size() == sndIndex.size();
-						for (int k=0; k<fstIndex.size(); k++) {
-							markForComparison(fstIndex.get(k), sndIndex.get(k));
-						}
-					}
-				}
-			}
-			
-
-			m_Script.push(1);
-			Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(m_Script, m_Term.getFreeVars());
-			SafeSubstitution subst = new SafeSubstitution(m_Script, substitutionMapping);
-			m_Script.assertTerm(subst.transform(m_Term));
-			for (Twoelton<Term> twoelton : allTwoeltons.elements()) {
-				Term equal = subst.transform(
-						SmtUtils.binaryEquality(m_Script, 
-								twoelton.getOneElement(), twoelton.getOtherElement()));
-				m_Script.push(1);
-				m_Script.assertTerm(equal);
-				LBool lbool = m_Script.checkSat();
-				m_Script.pop(1);
-				if (lbool == LBool.UNSAT) {
-					distinctTwoeltons.addTowelton(twoelton);
-				} else {
-					Term notEqual = Util.not(m_Script, equal);
-					m_Script.push(1);
-					m_Script.assertTerm(notEqual);
-					lbool = m_Script.checkSat();
-					m_Script.pop(1);
-					if (lbool == LBool.UNSAT) {
-						equalTwoeltons.addTowelton(twoelton);
-					} else {
-						unknownTwoeltons.addTowelton(twoelton);
-					}
-				}
-			}
-			m_Script.pop(1);
-		}
-
-		private void markForComparison(Term term1, Term term2) {
-			Twoelton<Term> twoElton = new Twoelton<Term>(term1, term2);
-			allTwoeltons.addTowelton(twoElton);
-			if (allVariablesAreInVars(term1) && allVariablesAreInVars(term2)) {
-				inVarTwoeltons.addTowelton(twoElton);
-			}
-		}
-
-		public SetOfTwoeltons<Term> getDistinctTwoeltons() {
-			return distinctTwoeltons;
-		}
-
-		public SetOfTwoeltons<Term> getEqualTwoeltons() {
-			return equalTwoeltons;
-		}
-
-		public SetOfTwoeltons<Term> getUnknownTwoeltons() {
-			return unknownTwoeltons;
-		}
-		
-		
-	}
 	
 	private class IndexCollector {
 		
@@ -477,11 +394,11 @@ public class RewriteArrays implements PreProcessor {
 			m_Array2Indices.addPair(firstGeneration, Arrays.asList(index));
 			//TODO: optimization the following is only necessary if the first
 			// generation is no auxiliary variable.
-			if (allVariablesAreInVars(Arrays.asList(index))) {
+			if (allVariablesAreInVars(Arrays.asList(index), m_VarCollector)) {
 				Term[] inReplacedByOut = SmtUtils.substitutionElementwise(index, m_InVars2OutVars);
 				m_Array2Indices.addPair(firstGeneration, Arrays.asList(inReplacedByOut));
 			}
-			if (allVariablesAreOutVars(Arrays.asList(index))) {
+			if (allVariablesAreOutVars(Arrays.asList(index), m_VarCollector)) {
 				Term[] outReplacedByIn = SmtUtils.substitutionElementwise(index, m_OutVars2InVars);
 				m_Array2Indices.addPair(firstGeneration, Arrays.asList(outReplacedByIn));
 			}
@@ -647,16 +564,16 @@ public class RewriteArrays implements PreProcessor {
 		 * of index is an inVar.
 		 */
 		private boolean isInVarCell(TermVariable arrayInstance, List<Term> index) {
-			if (isInvar(arrayInstance)) {
-				return allVariablesAreInVars(index);
+			if (isInvar(arrayInstance, m_VarCollector)) {
+				return allVariablesAreInVars(index, m_VarCollector);
 			} else {
 				return false;
 			}
 		}
 		
 		private boolean isOutVarCell(TermVariable arrayInstance, List<Term> index) {
-			if (isOutvar(arrayInstance)) {
-				return allVariablesAreOutVars(index);
+			if (isOutvar(arrayInstance, m_VarCollector)) {
+				return allVariablesAreOutVars(index, m_VarCollector);
 			} else {
 				return false;
 			}
@@ -675,36 +592,36 @@ public class RewriteArrays implements PreProcessor {
 		
 	}
 	
-	private boolean allVariablesAreInVars(List<Term> terms) {
+	private static boolean allVariablesAreInVars(List<Term> terms, VarCollector vc) {
 		for (Term term : terms) {
-			if (!allVariablesAreInVars(term)) {
+			if (!allVariablesAreInVars(term, vc)) {
 				return false;
 			}
 		}
 		return true;
 	}
 	
-	private boolean allVariablesAreOutVars(List<Term> terms) {
+	private static boolean allVariablesAreOutVars(List<Term> terms, VarCollector vc) {
 		for (Term term : terms) {
-			if (!allVariablesAreOutVars(term)) {
+			if (!allVariablesAreOutVars(term, vc)) {
 				return false;
 			}
 		}
 		return true;
 	}
 	
-	private boolean allVariablesAreInVars(Term term) {
+	public static boolean allVariablesAreInVars(Term term, VarCollector vc) {
 		for (TermVariable tv : term.getFreeVars()) {
-			if(!isInvar(tv)) {
+			if(!isInvar(tv, vc)) {
 				return false;
 			}
 		}
 		return true;
 	}
 	
-	private boolean allVariablesAreOutVars(Term term) {
+	private static boolean allVariablesAreOutVars(Term term, VarCollector vc) {
 		for (TermVariable tv : term.getFreeVars()) {
-			if(!isOutvar(tv)) {
+			if(!isOutvar(tv, vc)) {
 				return false;
 			}
 		}
@@ -712,12 +629,12 @@ public class RewriteArrays implements PreProcessor {
 	}
 
 	
-	private boolean isInvar(TermVariable tv) {
-		return m_VarCollector.getInVarsReverseMapping().keySet().contains(tv);
+	private static boolean isInvar(TermVariable tv, VarCollector vc) {
+		return vc.getInVarsReverseMapping().keySet().contains(tv);
 	}
 	
-	private boolean isOutvar(TermVariable tv) {
-		return m_VarCollector.getOutVarsReverseMapping().keySet().contains(tv);
+	private static boolean isOutvar(TermVariable tv, VarCollector vc) {
+		return vc.getOutVarsReverseMapping().keySet().contains(tv);
 	}
 	
 	private Term buildArrayEqualityConstraints(List<ArrayEquality> arrayEqualities) {
