@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,6 +23,8 @@ public class IndexAnalyzer {
 	private final Term m_Term;
 	private final Script m_Script;
 	private final VarCollector m_VarCollector;
+	private final Collection<Term> m_SupportingInvariants;
+	private final Collection<Term> m_AdditionalConjunctsInvariants;
 	
 	private final SetOfTwoeltons<Term> distinctTwoeltons = new SetOfTwoeltons<>();
 	private final SetOfTwoeltons<Term> equalTwoeltons = new SetOfTwoeltons<>();
@@ -32,6 +36,8 @@ public class IndexAnalyzer {
 		m_Term = term;
 		m_Script = script;
 		m_VarCollector = varCollector;
+		m_SupportingInvariants = new ArrayList<>();
+		m_AdditionalConjunctsInvariants = new ArrayList<>();
 		foo(array2Indices);
 	}
 
@@ -51,9 +57,24 @@ public class IndexAnalyzer {
 			}
 		}
 		
-		for (Twoelton<Term> twoelton : inVarTwoeltons.elements()) {
-			if (containsTermVariable(twoelton)) {
-				
+		for (Twoelton<Term> inVarTwoelton : inVarTwoeltons.elements()) {
+			if (containsTermVariable(inVarTwoelton)) {
+				Twoelton<Term> definingTwoelton = constructDefiningTwoelton(inVarTwoelton);
+				boolean equalityIsInvariant = isInVariant(definingTwoelton, true);
+				if (equalityIsInvariant) {
+					m_SupportingInvariants.add(equalTerm(definingTwoelton));
+					m_AdditionalConjunctsInvariants.add(equalTerm(inVarTwoelton));
+					equalTwoeltons.addTowelton(inVarTwoelton);
+				} else {
+					boolean notEqualIsInvariant = isInVariant(definingTwoelton, false);
+					if (notEqualIsInvariant) {
+						m_SupportingInvariants.add(notEqualTerm(definingTwoelton));
+						m_AdditionalConjunctsInvariants.add(notEqualTerm(inVarTwoelton));
+						distinctTwoeltons.addTowelton(inVarTwoelton);
+					} else {
+						unknownTwoeltons.addTowelton(inVarTwoelton);
+					}
+				} 
 			}
 			
 		}
@@ -64,6 +85,7 @@ public class IndexAnalyzer {
 		SafeSubstitution subst = new SafeSubstitution(m_Script, substitutionMapping);
 		m_Script.assertTerm(subst.transform(m_Term));
 		for (Twoelton<Term> twoelton : allTwoeltons.elements()) {
+			//todo ignore toweltons that are already there
 			Term equal = subst.transform(
 					SmtUtils.binaryEquality(m_Script, 
 							twoelton.getOneElement(), twoelton.getOtherElement()));
@@ -87,6 +109,34 @@ public class IndexAnalyzer {
 			}
 		}
 		m_Script.pop(1);
+	}
+	
+	private Term equalTerm(Twoelton<Term> twoelton) {
+		return SmtUtils.binaryEquality(m_Script, twoelton.getOneElement(), twoelton.getOtherElement());
+	}
+
+	private Term notEqualTerm(Twoelton<Term> twoelton) {
+		return Util.not(m_Script, equalTerm(twoelton));
+	}
+
+	
+
+	private boolean isInVariant(Twoelton<Term> definingTwoelton, boolean checkEquals) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	private Twoelton<Term> constructDefiningTwoelton(Twoelton<Term> inVarTwoelton) {
+		Term oneElement = inVarTwoelton.getOneElement();
+		Term otherElement = inVarTwoelton.getOtherElement();
+		Term[] translatedOne = RewriteArrays.translateTermVariablesToDefinitions(
+				m_Script, m_VarCollector, oneElement);
+		assert translatedOne.length == 1;
+		Term[] translatedOther = RewriteArrays.translateTermVariablesToDefinitions(
+				m_Script, m_VarCollector, otherElement);
+		assert translatedOther.length == 1;
+		return new Twoelton<Term>(translatedOne[0], translatedOther[0]);
+		
 	}
 
 	private boolean containsTermVariable(Twoelton<Term> twoelton) {

@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarFacto
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.IndexAnalyzer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.SetOfTwoeltons;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.SingleUpdateNormalFormTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.Twoelton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SafeSubstitution;
@@ -440,7 +439,7 @@ public class RewriteArrays implements PreProcessor {
 		 * cell array[index].
 		 */
 		private ReplacementVar getOrConstructReplacementVar(TermVariable array, List<Term> index) {
-			List<Term> translatedIndex = Arrays.asList(translateTermVariablesToDefinitions(index.toArray(new Term[0])));
+			List<Term> translatedIndex = Arrays.asList(translateTermVariablesToDefinitions(m_Script, m_VarCollector, index.toArray(new Term[0])));
 			Map<List<Term>, ReplacementVar> index2repVar = m_Array2Index2RepVar.get(array);
 			if (index2repVar == null) {
 				index2repVar = new HashMap<List<Term>, ReplacementVar>();
@@ -460,30 +459,7 @@ public class RewriteArrays implements PreProcessor {
 			return repVar;
 		}
 		
-		private Term getDefinition(TermVariable tv) {
-			RankVar rv = m_VarCollector.getInVarsReverseMapping().get(tv);
-			if (rv == null) {
-				rv = m_VarCollector.getOutVarsReverseMapping().get(tv);
-			}
-			if (rv == null) {
-				throw new AssertionError();
-			}
-			return rv.getDefinition();
-		}
-		
-		private Term[] translateTermVariablesToDefinitions(Term... terms) {
-			Term[] result = new Term[terms.length];
-			for (int i=0; i<terms.length; i++) {
-				Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-				for (TermVariable tv : terms[i].getFreeVars()) {
-					Term definition = getDefinition(tv);
-					substitutionMapping.put(tv, definition);
-				}
-				result[i] = (new SafeSubstitution(m_Script, substitutionMapping)).transform(terms[i]);
-			}
-			return result;
-		}
-		
+	
 		/**
 		 * Returns a String that we use to refer to the array cell array[index].
 		 */
@@ -515,7 +491,7 @@ public class RewriteArrays implements PreProcessor {
 						boolean isInVarCell = isInVarCell(instance, index);
 						boolean isOutVarCell = isOutVarCell(instance, index);
 						if (isInVarCell || isOutVarCell) {
-							TermVariable arrayRepresentative = (TermVariable) getDefinition(instance);
+							TermVariable arrayRepresentative = (TermVariable) getDefinition(m_VarCollector, instance);
 							ReplacementVar rv = getOrConstructReplacementVar(arrayRepresentative, index);
 							if (isInVarCell) {
 								if (!m_VarCollector.getInVars().containsKey(rv)) {
@@ -626,6 +602,30 @@ public class RewriteArrays implements PreProcessor {
 			}
 		}
 		return true;
+	}
+	
+	public static Term getDefinition(VarCollector vc, TermVariable tv) {
+		RankVar rv = vc.getInVarsReverseMapping().get(tv);
+		if (rv == null) {
+			rv = vc.getOutVarsReverseMapping().get(tv);
+		}
+		if (rv == null) {
+			throw new AssertionError();
+		}
+		return rv.getDefinition();
+	}
+	
+	public static Term[] translateTermVariablesToDefinitions(Script script, VarCollector vc, Term... terms) {
+		Term[] result = new Term[terms.length];
+		for (int i=0; i<terms.length; i++) {
+			Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+			for (TermVariable tv : terms[i].getFreeVars()) {
+				Term definition = getDefinition(vc, tv);
+				substitutionMapping.put(tv, definition);
+			}
+			result[i] = (new SafeSubstitution(script, substitutionMapping)).transform(terms[i]);
+		}
+		return result;
 	}
 
 	
