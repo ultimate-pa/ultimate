@@ -130,10 +130,24 @@ public class AffineTermTransformer extends TermTransformer {
 
 	@Override
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-		if (!appTerm.getSort().isNumericSort()) {
-			resultIsNotAffine();
-			return;
+		AffineTerm[] affineArgs = new AffineTerm[newArgs.length];
+		for (int i = 0; i<affineArgs.length; i++) {
+			if (newArgs[i] instanceof AffineTerm) {
+				affineArgs[i] = (AffineTerm) newArgs[i];
+				if (affineArgs[i].isErrorTerm()) {
+					resultIsNotAffine();
+					return;
+				}
+			} else {
+				resultIsNotAffine();
+				return;
+			}
 		}
+		
+//		if (!appTerm.getSort().isNumericSort()) {
+//			resultIsNotAffine();
+//			return;
+//		}
 		if (appTerm.getParameters().length == 0) {
 			AffineTerm result = new AffineTerm(appTerm);
 			setResult(result);
@@ -146,11 +160,7 @@ public class AffineTermTransformer extends TermTransformer {
 			AffineTerm affineTerm = null;
 			Rational multiplier = Rational.ONE;
 			Sort sort = appTerm.getSort();
-			for (Term termArg : newArgs) {
-				if (!(termArg instanceof AffineTerm)) {
-					resultIsNotAffine();
-					return;
-				}
+			for (Term termArg : affineArgs) {
 				AffineTerm affineArg = (AffineTerm) termArg;
 //				assert affineArg.getSort() == sort;
 				if (affineArg.isConstant()) {
@@ -173,26 +183,22 @@ public class AffineTermTransformer extends TermTransformer {
 			setResult(result);
 			return;
 		} else if (funName.equals("+")) {
-			AffineTerm[] affineArgs = new AffineTerm[newArgs.length];
-			for (int i = 0; i<affineArgs.length; i++) {
-				affineArgs[i] = (AffineTerm) newArgs[i];
-			}
 			AffineTerm result = new AffineTerm(affineArgs);
 			setResult(result);
 			return;
 		} else if (funName.equals("-")) {
 			AffineTerm result;
-			if (newArgs.length == 1) {
+			if (affineArgs.length == 1) {
 				//unary minus
-				AffineTerm param = (AffineTerm) newArgs[0];
+				AffineTerm param = affineArgs[0];
 				result = new AffineTerm(param, Rational.MONE);
 			} else {
-				AffineTerm[] affineArgs = new AffineTerm[newArgs.length];
-				affineArgs[0] = (AffineTerm) newArgs[0];
-				for (int i = 1; i<affineArgs.length; i++) {
-					affineArgs[i] = new AffineTerm((AffineTerm) newArgs[i], Rational.MONE);
+				AffineTerm[] resAffineArgs = new AffineTerm[affineArgs.length];
+				resAffineArgs[0] = affineArgs[0];
+				for (int i = 1; i<resAffineArgs.length; i++) {
+					resAffineArgs[i] = new AffineTerm(affineArgs[i], Rational.MONE);
 				}
-				result = new AffineTerm(affineArgs);
+				result = new AffineTerm(resAffineArgs);
 			}
 			setResult(result);
 			return;
@@ -201,32 +207,20 @@ public class AffineTermTransformer extends TermTransformer {
 			// multiplier (that may be obtained from a division of constants)
 			final AffineTerm affineTerm;
 			Rational multiplier;
-			if (!(newArgs[0] instanceof AffineTerm)) {
-				resultIsNotAffine();
-				return;
+			if (affineArgs[0].isConstant()) {
+				affineTerm = null;
+				multiplier = affineArgs[0].getConstant();
 			} else {
-				AffineTerm affineArg0 = (AffineTerm) newArgs[0];
-				if (affineArg0.isConstant()) {
-					affineTerm = null;
-					multiplier = affineArg0.getConstant();
-				} else {
-					affineTerm = affineArg0;
-					multiplier = Rational.ONE;
-				}
+				affineTerm = affineArgs[0];
+				multiplier = Rational.ONE;
 			}
-			for (int i=1; i<newArgs.length; i++) {
-				if (!(newArgs[i] instanceof AffineTerm)) {
+			for (int i=1; i<affineArgs.length; i++) {
+				if (affineArgs[i].isConstant()) {
+					multiplier = multiplier.mul(affineArgs[i].getConstant().inverse());
+				} else {
+					// unsupported terms in divisor
 					resultIsNotAffine();
 					return;
-				} else {
-					AffineTerm affineArgi = (AffineTerm) newArgs[i];
-					if (affineArgi.isConstant()) {
-						multiplier = multiplier.mul(affineArgi.getConstant().inverse());
-					} else {
-						// unsupported terms in divisor
-						resultIsNotAffine();
-						return;
-					}
 				}
 			}
 			Sort sort = appTerm.getSort();
