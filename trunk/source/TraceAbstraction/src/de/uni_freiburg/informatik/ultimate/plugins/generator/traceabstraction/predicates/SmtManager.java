@@ -585,7 +585,7 @@ public class SmtManager {
 				int i=0;
 				for (BoogieVar var : ps1.getVars()) {
 					vars[i] = var.getTermVariable();
-					values[i] = getConstant(var);
+					values[i] = var.getDefaultConstant();
 					i++;
 				}
 				negImpl = m_Script.let(vars, values, negImpl);
@@ -597,7 +597,7 @@ public class SmtManager {
 				int i=0;
 				for (BoogieVar var : ps2.getVars()) {
 					vars[i] = var.getTermVariable();
-					values[i] = getConstant(var);
+					values[i] = var.getDefaultConstant();
 					i++;
 				}
 				negImpl = m_Script.let(vars, values, negImpl);
@@ -1037,7 +1037,7 @@ public class SmtManager {
 				 cIndex = getIndexedConstant(var,specialIdx);
 			} else if (var.isOldvar()) {
 				if (oldVarIdx == Integer.MIN_VALUE) {
-					cIndex = getConstant(var);
+					cIndex = var.getDefaultConstant();
 				}
 				else {
 					cIndex = getIndexedConstant(this.getNonOldVar(var), oldVarIdx);
@@ -1096,7 +1096,7 @@ public class SmtManager {
 			TermVariable tv = tf.getInVars().get(inVar);
 			Term cIndex;
 			if (inVar.isOldvar()) {
-				cIndex = getConstant(inVar);
+				cIndex = inVar.getDefaultConstant();
 			}
 			else {
 				cIndex = getIndexedConstant(inVar, idxInVar);
@@ -1114,7 +1114,7 @@ public class SmtManager {
 				assignedVars.add(outVar);
 				Term cIndex;
 				if (outVar.isOldvar()) {
-					cIndex = getConstant(outVar);
+					cIndex = outVar.getDefaultConstant();
 				}
 				else {
 					cIndex = getIndexedConstant(outVar, idxOutVar);
@@ -1213,26 +1213,26 @@ public class SmtManager {
 	
 	
 
-	public Term getConstant(BoogieVar var) {
-		String procString = var.getProcedure() == null ? "" : var.getProcedure();
-		String varString;
-		if (var.isOldvar()) {
-			varString = "old("+var.getIdentifier()+")";
-		} else {
-			varString = var.getIdentifier();
-		}
-		String name = procString+ "_" + varString;
-		Term constant = m_IndexedConstants.get(name);
-		if (constant == null) {
-			Sort resultSort = m_Boogie2Smt.getTypeSortTranslator().getSort(var.getIType(), null);
-			Sort[] emptySorts = {};
-			m_Script.declareFun(name, emptySorts, resultSort);
-			Term[] emptyTerms = {};
-			constant = m_Script.term(name, emptyTerms);
-			m_IndexedConstants.put(name, constant);
-		}
-		return constant;
-	}
+//	public Term getConstant(BoogieVar var) {
+//		String procString = var.getProcedure() == null ? "" : var.getProcedure();
+//		String varString;
+//		if (var.isOldvar()) {
+//			varString = "old("+var.getIdentifier()+")";
+//		} else {
+//			varString = var.getIdentifier();
+//		}
+//		String name = procString+ "_" + varString;
+//		Term constant = m_IndexedConstants.get(name);
+//		if (constant == null) {
+//			Sort resultSort = m_Boogie2Smt.getTypeSortTranslator().getSort(var.getIType(), null);
+//			Sort[] emptySorts = {};
+//			m_Script.declareFun(name, emptySorts, resultSort);
+//			Term[] emptyTerms = {};
+//			constant = m_Script.term(name, emptyTerms);
+//			m_IndexedConstants.put(name, constant);
+//		}
+//		return constant;
+//	}
 
 
 	public Term getIndexedConstant(BoogieVar var, int index) {
