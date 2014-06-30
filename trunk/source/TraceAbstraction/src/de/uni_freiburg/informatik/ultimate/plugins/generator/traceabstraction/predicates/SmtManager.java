@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -224,6 +225,13 @@ public class SmtManager {
 		
 	public int getSatProbNumber() {
 		return m_satProbNumber;
+	}
+	
+
+
+
+	public VariableManager getVariableManager() {
+		return m_Boogie2Smt.getVariableManager();
 	}
 	
 	
@@ -1236,19 +1244,12 @@ public class SmtManager {
 
 
 	public Term getIndexedConstant(BoogieVar var, int index) {
-		String procString = var.getProcedure() == null ? "" : var.getProcedure();
-		String varString;
-		if (var.isOldvar()) {
-			varString = "old(" + var.getIdentifier() + ")";
-		} else {
-			varString = var.getIdentifier();
-		}
 //		String indexString = quoteMinusOne(index);
 		String indexString = String.valueOf(index);
-		String name = procString+ "_" + varString + "_" + indexString;
+		String name = var.getGloballyUniqueId() + "_" + indexString;
 		Term constant = m_IndexedConstants.get(name);
 		if (constant == null) {
-			Sort resultSort = m_Boogie2Smt.getTypeSortTranslator().getSort(var.getIType(), null);
+			Sort resultSort = var.getTermVariable().getSort();
 			Sort[] emptySorts = {};
 			m_Script.declareFun(name, emptySorts, resultSort);
 			Term[] emptyTerms = {};
@@ -1267,11 +1268,11 @@ public class SmtManager {
 		return m_Script.term(name, emptyTerms); 
 	}
 	
-	public TermVariable getFreshTermVariable(String identifier, Sort sort) {
-		String name = "fresh_" + identifier + m_FreshVariableCouter++;
-		TermVariable result = m_Script.variable(name, sort);
-		return result;
-	}
+//	public TermVariable getFreshTermVariable(String identifier, Sort sort) {
+//		String name = "fresh_" + identifier + m_FreshVariableCouter++;
+//		TermVariable result = m_Script.variable(name, sort);
+//		return result;
+//	}
 	
 	/**
 	 * @param int >=-1
@@ -1559,7 +1560,7 @@ public class SmtManager {
 			// if the current var bv is not a global and if it does belong to another
 			// procedure, than replace it by a a fresh var
 			if (bv.getProcedure() != null && !bv.getProcedure().equals(thisProc)) {
-				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				TermVariable freshVar = m_Boogie2Smt.getVariableManager().constructFreshTermVariable(bv);
 				substitution.put(bv.getTermVariable(), freshVar);
 				varsToQuantify.add(freshVar);
 			}
@@ -2005,6 +2006,7 @@ public class SmtManager {
 					"Auxiliary term must not be contained in any collection");
 		}
 	}
+
 
 
 

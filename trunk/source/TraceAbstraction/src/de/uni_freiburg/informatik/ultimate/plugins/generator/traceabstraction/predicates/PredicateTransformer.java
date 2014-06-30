@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Substitution;
@@ -26,12 +27,14 @@ public class PredicateTransformer {
 	private final SmtManager m_SmtManager;
 	private final Script m_Script;
 	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
+	private final VariableManager m_VariableManager;
 
 
 	public PredicateTransformer(SmtManager smtManager, ModifiableGlobalVariableManager modifiableGlobalVariableManager) {
 		m_SmtManager = smtManager;
 		m_Script = smtManager.getScript();
 		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
+		m_VariableManager = smtManager.getVariableManager();
 	}
 
 
@@ -99,7 +102,7 @@ public class PredicateTransformer {
 		for (BoogieVar bv : tf.getInVars().keySet()) {
 			if (!tf.getOutVars().containsKey(bv) || 
 					tf.getOutVars().get(bv) != tf.getInVars().get(bv)) {
-				TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 				varsToRenameInPred.put(bv.getTermVariable(), freshVar);
 				substitution.put(tf.getInVars().get(bv), freshVar);
 				varsToQuantify.add(freshVar);
@@ -114,7 +117,7 @@ public class PredicateTransformer {
 			if (tf.getInVars().isEmpty() && tf.getFormula() == m_SmtManager.newTruePredicate()) {
 				varsToQuantify.add(bv.getTermVariable());
 			} else if (!tf.getInVars().containsKey(bv)) {
-				TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 				varsToRenameInPred.put(bv.getTermVariable(), freshVar);
 				varsToQuantify.add(freshVar);
 			}
@@ -197,7 +200,7 @@ public class PredicateTransformer {
 		if (globalVarAssignments.getFormula() == m_SmtManager.newTruePredicate().getFormula()) {
 			for (BoogieVar bv : oldVarAssignments.getInVars().keySet()) {
 				substitution.put(oldVarAssignments.getInVars().get(bv), bv.getTermVariable());
-				TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 				varsToQuantifyNonPendingCall.add(freshVar);
 				varsToRenameInPredNonPendingCall.put(bv.getTermVariable(), freshVar);
 			}
@@ -206,7 +209,7 @@ public class PredicateTransformer {
 
 			for (BoogieVar bv : oldVarAssignments.getOutVars().keySet()) {
 				if (bv.isOldvar()) {
-					TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 					substitution.put(oldVarAssignments.getOutVars().get(bv), bv.getTermVariable());
 					varsToQuantifyPendingCall.add(freshVar);
 					varsToRenameInPredPendingCall.put(bv.getTermVariable(), freshVar);
@@ -231,7 +234,7 @@ public class PredicateTransformer {
 				// Ensure that variable doesn't occur in call
 //				if (!localVarAssignments.getInVars().containsKey(bv)
 //						&& !localVarAssignments.getOutVars().containsKey(bv)) {
-					TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 					varsToRenameInPredPendingCall.put(bv.getTermVariable(), freshVar);
 					varsToQuantifyPendingCall.add(freshVar);
 					varsToQuantifyNonPendingCall.add(bv.getTermVariable());
@@ -242,7 +245,7 @@ public class PredicateTransformer {
 					!globalVarAssignments.getInVars().containsKey(bv) && 
 					!globalVarAssignments.getOutVars().containsKey(bv)) {
 				if (bv.isOldvar()) {
-					TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 					varsToRenameInPredInBoth.put(bv.getTermVariable(), freshVar);
 					varsToQuantifyNonModOldVars.add(freshVar);
 				}
@@ -257,8 +260,7 @@ public class PredicateTransformer {
 				// If it is a global var, then we substitute it through its oldvar
 				substitution.put(localVarAssignments.getInVars().get(bv), m_SmtManager.getOldVar(bv).getTermVariable());
 			} else {
-				TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(),
-						bv.getTermVariable().getSort());
+				TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 				substitution.put(localVarAssignments.getInVars().get(bv), freshVar);
 				varsToRenameInPredPendingCall.put(bv.getTermVariable(), freshVar);
 				varsToQuantifyPendingCall.add(freshVar);
@@ -326,7 +328,7 @@ public class PredicateTransformer {
 		// Substitute oldvars of modifiable global vars by fresh vars in calleePred
 		// and substitue their non-oldvar by the same fresh var in callerPred.
 		for (BoogieVar bv : globalVarsAssignment.getInVars().keySet()) {
-			TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+			TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 			varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
 			varsToRenameInCallerPred.put(m_SmtManager.getNonOldVar(bv).getTermVariable(), freshVar);
 			varsToQuantifyOverAll.add(freshVar);
@@ -337,7 +339,7 @@ public class PredicateTransformer {
 			// We have only to check the vars, that are not contained in the map varsToRenameInCallerPred,
 			// because otherwise it is already treated in the case above.
 			if (!bv.isOldvar() && !varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
-				TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 				varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
 				varsToQuantifyOverAll.add(freshVar);
 			}
@@ -351,7 +353,7 @@ public class PredicateTransformer {
 				continue;
 			}
 			if (ret_TF.getOutVars().containsKey(bv)) {
-				TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 				varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
 				varsToQuantifyOverAll.add(freshVar);
 				if (ret_TF.getInVars().containsKey(bv)) {
@@ -361,7 +363,7 @@ public class PredicateTransformer {
 					outVarsToRenameInCallTF.put(callTF.getOutVars().get(bv), freshVar);
 				}
 			} else if (callTF.getInVars().containsKey(bv)) {
-				TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 				varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
 				varsToQuantifyOverAll.add(freshVar);
 				if (ret_TF.getInVars().containsKey(bv)) {
@@ -371,7 +373,7 @@ public class PredicateTransformer {
 					outVarsToRenameInCallTF.put(callTF.getOutVars().get(bv), freshVar);
 				}
 			} else if (callerPred.getVars().contains(bv)) {
-				TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 				varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
 				varsToQuantifyOverAll.add(freshVar);
 				if (ret_TF.getInVars().containsKey(bv)) {
@@ -404,7 +406,7 @@ public class PredicateTransformer {
 		for (BoogieVar bv : ret_TF.getOutVars().keySet()) {
 			if (calleePred.getVars().contains(bv)) {
 				if (!varsToRenameInCalleePred.containsKey(bv.getTermVariable())) {
-					TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 					varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
 					varsToQuantifyOverAll.add(freshVar);
 				} 
@@ -418,7 +420,7 @@ public class PredicateTransformer {
 		substitution.clear();
 		for (BoogieVar bv : callTF.getInVars().keySet()) {
 			if (ret_TF.getOutVars().containsKey(bv)) {
-				TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 				substitution.put(callTF.getInVars().get(bv), freshVar);
 				varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
 				varsToQuantifyInCallerPredAndCallTF.add(freshVar);
@@ -492,7 +494,7 @@ public class PredicateTransformer {
 		// 2 Rename the outvars of the TransFormula of the given CodeBlock cb into TermVariables
 		for (BoogieVar bv : tf.getOutVars().keySet()) {
 			if (tf.getAssignedVars().contains(bv)) {
-				TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 				varsToRenameInPred.put(bv.getTermVariable(), freshVar);
 				substitution.put(tf.getOutVars().get(bv), freshVar);
 				varsToQuantify.add(freshVar);
@@ -541,7 +543,7 @@ public class PredicateTransformer {
 
 			// 1. Rename oldvars of global vars to fresh vars
 			for (BoogieVar bv : globalVarsAssignments.getInVars().keySet()) {
-				TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 				substitution.put(globalVarsAssignments.getInVars().get(bv), freshVar);
 				varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
 				varsToQuantify.add(freshVar);
@@ -565,7 +567,7 @@ public class PredicateTransformer {
 				substitution.clear();
 				for (BoogieVar bv : oldVarsAssignments.getOutVars().keySet()) {
 					if (bv.isOldvar()) {
-						TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+						TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 						substitution.put(oldVarsAssignments.getOutVars().get(bv), freshVar);
 						varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
 						varsToQuantify.add(freshVar);
@@ -583,7 +585,7 @@ public class PredicateTransformer {
 			// 4. Rename outvars of Call to fresh vars
 			substitution.clear();
 			for (BoogieVar bv : call_TF.getOutVars().keySet()) {
-				TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 				substitution.put(call_TF.getOutVars().get(bv), freshVar);
 				varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
 				varsToQuantify.add(freshVar);
@@ -662,7 +664,7 @@ public class PredicateTransformer {
 		// and in returner predicate to same fresh variables.
 		// Representatives of invars, which occur also in
 		for (BoogieVar bv : returnTF.getInVars().keySet()) {
-			TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+			TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 			varsToQuantify.add(freshVar);
 			substitution.put(returnTF.getInVars().get(bv), bv.getTermVariable());
 			// Note: Variables which occur in the invars as well as in the outvars of the return transformula are
@@ -692,7 +694,7 @@ public class PredicateTransformer {
 				if (varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
 					freshVar = (TermVariable) varsToRenameInCallerPred.get(bv.getTermVariable());
 				} else {
-					freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					freshVar = m_VariableManager.constructFreshTermVariable(bv);
 					varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
 				}
 				substitution.put(callTF.getInVars().get(bv), freshVar);
@@ -711,7 +713,7 @@ public class PredicateTransformer {
 		// If an outvar isn't marked to be substituted by a fresh variable in the caller and returner predicate,
 		// then mark such an outvar to be substituted by a new fresh variable.
 		for (BoogieVar bv : callTF.getOutVars().keySet()) {
-			TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+			TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 			if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
 				if (!varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
 					varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
@@ -732,7 +734,7 @@ public class PredicateTransformer {
 		for (BoogieVar bv : returnerPred.getVars()) {
 			if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable()) &&
 					!varsToRenameInReturnPred.containsKey(bv.getTermVariable())) {
-				TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 				varsToQuantify.add(freshVar);
 				if (!bv.isGlobal() || bv.isOldvar()) {
 					varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
@@ -749,7 +751,7 @@ public class PredicateTransformer {
 				// 1.case: bv is a local var
 				if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())&&
 						!varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
-					TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 					varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
 					varsToQuantify.add(freshVar);
 				}
@@ -758,7 +760,7 @@ public class PredicateTransformer {
 				// TODO(Betim) Fix this bad condition!
 				if (!varsToRenameInReturnPred.containsKey(bv.getTermVariable()) || 
 						!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
-					TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 					varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
 					varsToQuantify.add(freshVar);
 				}
@@ -766,7 +768,7 @@ public class PredicateTransformer {
 				// 3.case: bv is a global var
 				if (modifiableGlobals.contains(bv) || !returnerPred.getVars().contains(bv)) {
 					if (!varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
-						TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+						TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 						varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
 						varsToQuantify.add(freshVar);
 					}
@@ -825,7 +827,7 @@ public class PredicateTransformer {
 			Set<TermVariable> varsToQuantify) {
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
 		for (BoogieVar bv : varsToBeSubstituted.keySet()) {
-			TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+			TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 			substitution.put(varsToBeSubstituted.get(bv), freshVar);
 			if (varsToBeSubstitutedByFreshVars != null) {
 				varsToBeSubstitutedByFreshVars.put(bv.getTermVariable(), freshVar);
@@ -854,7 +856,7 @@ public class PredicateTransformer {
 			Set<TermVariable> varsToQuantify) {
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
 		for (BoogieVar bv : varsToBeSubstituted.keySet()) {
-			TermVariable freshVar = m_SmtManager.getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+			TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 			substitution.put(varsToBeSubstituted.get(bv), bv.getTermVariable());
 			if (varsToBeSubstitutedByFreshVars != null) {
 				varsToBeSubstitutedByFreshVars.put(bv.getTermVariable(), freshVar);
