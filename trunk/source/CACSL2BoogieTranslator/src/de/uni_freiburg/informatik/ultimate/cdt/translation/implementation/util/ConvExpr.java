@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
@@ -84,11 +85,12 @@ public class ConvExpr {
 					default:
 				}
 			} else if (rVal.cType instanceof CPointer) {
-				resultEx = new BinaryExpression(loc, 
-//						new InferredType(
-//						InferredType.Type.Boolean),
-						BinaryExpression.Operator.COMPNEQ, e,
-						MemoryHandler.constructNullPointer(loc));
+//				resultEx = new BinaryExpression(loc, 
+////						new InferredType(
+////						InferredType.Type.Boolean),
+//						BinaryExpression.Operator.COMPNEQ, e,
+//						MemoryHandler.constructNullPointer(loc));
+				resultEx = new IdentifierExpression(loc, SFO.NULL);
 			} else {
 				String msg = "Don't know the type of this expression. Line: "
 						+ e.getLocation().getStartLine();

@@ -145,6 +145,19 @@ public class MemoryHandler {
 	LinkedScopedHashMap<LocalLValue, Integer> variablesToBeFreed;
 
 	boolean noMemArrays;
+	
+	
+	//constants for the sizes of the base types
+	public boolean useConstantTypeSizes = true;
+	//base types
+	public int sizeOfIntType = 8;
+	public int sizeOfPointerType = 8;
+	public int sizeOfFloatType = 8;
+	//other types
+	public int sizeOfCharType = 8;
+	public int sizeOfLongType = 8;
+	public int sizeOfDoubleType = 8;
+	public int defaultTypeSize = 8;
 
     /**
      * Constructor.
@@ -273,9 +286,32 @@ public class MemoryHandler {
         constants.add(new ConstDeclaration(l, new Attribute[0], false,
                 new VarList(l, new String[] { id }, intType), null, false));
         Expression idex = new IdentifierExpression(l, id);
+        if (this.useConstantTypeSizes) {
+        //axiom #sizeof~t = 8	 (or another constant, dependent on the settings)
+        	int value = 0;
+        	switch (t) {
+        	case "INT":
+        		value = sizeOfIntType;
+        		break;
+        	case "CHAR":
+        		value = sizeOfCharType;
+        		break;
+        	case "FLOAT":
+        		value = sizeOfFloatType;
+        		break;
+        	case "DOUBLE":
+        		value = sizeOfDoubleType;
+        		break;
+        	default:
+        		value = defaultTypeSize;
+        	}
+        	axioms.add(new Axiom(l, new Attribute[0], new BinaryExpression(l,
+        			Operator.COMPEQ, idex, new IntegerLiteral(l, new Integer(value).toString()))));
+        } else {
         // axiom #sizeof~t > 0;
-        axioms.add(new Axiom(l, new Attribute[0], new BinaryExpression(l,
-                Operator.COMPGT, idex, new IntegerLiteral(l, SFO.NR0))));
+        	axioms.add(new Axiom(l, new Attribute[0], new BinaryExpression(l,
+        			Operator.COMPGT, idex, new IntegerLiteral(l, SFO.NR0))));
+        }
         sizeofConsts.add(id);
     }
   
@@ -373,8 +409,8 @@ public class MemoryHandler {
             		specValid = new RequiresSpecification(l, false,
                 			new BinaryExpression(l, Operator.COMPLEQ,
                 					new BinaryExpression(l, Operator.ARITHPLUS,
-                							new IdentifierExpression(l, SFO.SIZEOF
-                							+ CtypeCompatibleId), ptrOff), length));
+                							new IdentifierExpression(l, SFO.SIZEOF + CtypeCompatibleId)
+                					, ptrOff), length));
             	} else {
             		assert m_PointerAllocated == POINTER_ALLOCATED.ASSUME;
             		specValid = new RequiresSpecification(l, true,
@@ -808,108 +844,167 @@ public class MemoryHandler {
             mgM.add(SFO.VALID);
             mgM.add(SFO.LENGTH);
             if (!fh.getModifiedGlobals().containsKey(SFO.MALLOC)) {
-                fh.getModifiedGlobals().put(SFO.MALLOC, mgM);
-                fh.getCallGraph().put(SFO.MALLOC, new LinkedHashSet<String>());
+            	fh.getModifiedGlobals().put(SFO.MALLOC, mgM);
+            	fh.getCallGraph().put(SFO.MALLOC, new LinkedHashSet<String>());
             }
             fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.MALLOC);
         }
-		return mallocCall;
-	}
+        return mallocCall;
+    }
+    
+    public Expression calculateSizeOf(CType cType, ILocation loc) {
+    	if (useConstantTypeSizes) {
+    		return new IntegerLiteral(loc, new Integer(calculateSizeOfWithGivenTypeSizes(loc, cType)).toString());
+    	} else {
+    		return calculateSizeOfWithVariableTypeSizes(cType, loc);
+    	}
+    }
+    
+    public int calculateSizeOfWithGivenTypeSizes(ILocation loc, CType cType) {
+		int size = 0;
+		if (cType instanceof CPrimitive) {
+			switch (((CPrimitive) cType).getType()) {
+			case INT:
+				size = sizeOfIntType;
+				break;
+			case FLOAT:
+				size = sizeOfFloatType;
+				break;
+			case CHAR:
+				size = sizeOfCharType;
+				break;
+			default:
+				size = sizeOfIntType;
+				break;
+			}
+		} else if (cType instanceof CPointer) {
+			size = sizeOfPointerType;
+ 		} else if (cType instanceof CArray) {
+ 			size = calculateSizeOfWithGivenTypeSizes(loc, ((CArray) cType).getValueType());
+ 			for (Expression dim : ((CArray) cType).getDimensions()) {
+ 				size *= Integer.parseInt(((IntegerLiteral) dim).getValue());
+ 			}
+ 		} else if (cType instanceof CStruct) {
+ 			for (CType fieldType : ((CStruct) cType).getFieldTypes()) {
+ 				if (cType instanceof CUnion) {
+ 					int fieldSize = calculateSizeOfWithGivenTypeSizes(loc, fieldType);
+ 					size = size >= fieldSize ? size : fieldSize;
+ 				} else {
+ 					size += calculateSizeOfWithGivenTypeSizes(loc, fieldType);
+ 				}
+ 			}
+ 		} else if (cType instanceof CNamed) {
+ 			return calculateSizeOfWithGivenTypeSizes(loc, ((CNamed) cType).getUnderlyingType());
+ 		} else {
+ 			throw new UnsupportedSyntaxException(loc, "failed trying to calculate size of " + cType + " (with constant sizes)");
+ 		}
 
-	/**
+//		return new IntegerLiteral(loc, new Integer(size).toString());
+		return size;
+    }
+
+    /**
      * Calculate the sizeof constants for the given CType.
      * 
      * @param cvar
      *            the CVariable to work on.
      * @return a reference to the constant, holding sizeof cvar.
      */
-    public IdentifierExpression calculateSizeOf(CType cvar, ILocation loc) {
-        assert cvar != null;
-        ASTType intT = new PrimitiveType(loc, SFO.INT);
-        String id = SFO.SIZEOF + cvar.toString();
-        IdentifierExpression idex = new IdentifierExpression(loc, id);
-        Attribute[] attr = new Attribute[0];
-        if (!sizeofConsts.contains(id)) {
-            this.constants.add(new ConstDeclaration(loc, attr, false,
-                    new VarList(loc, new String[] { id }, intT), null, false));
-            this.axioms.add(new Axiom(loc, attr, new BinaryExpression(loc,
-                    Operator.COMPGT, idex, new IntegerLiteral(loc, SFO.NR0))));
-            sizeofConsts.add(id);
-            if (cvar instanceof CArray) {
-                CArray ca = (CArray) cvar;
-                Expression valSize = calculateSizeOf(ca.getValueType(), loc);
-                Expression nrElem = new IntegerLiteral(loc, "1");
-                for (Expression dim : ca.getDimensions()) 
-                	nrElem = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, nrElem, dim, loc);
-                Expression size = new BinaryExpression(loc, Operator.ARITHMUL,
-                        nrElem, valSize);
-                Expression f = new BinaryExpression(loc, Operator.COMPEQ, idex,
-                        size);
-                this.axioms.add(new Axiom(loc, attr, f));
-            } else if (cvar instanceof CStruct) {
-                CStruct cs = (CStruct) cvar;
-                if (cs.isIncomplete()) {
-                	// do nothing
-                } else {
-                	Expression nextOffset = new IntegerLiteral(loc, SFO.NR0);
-                	for (int i = 0; i < cs.getFieldCount(); i++) {
-                		CType csf = cs.getFieldTypes()[i];
-                		String csfId = cs.getFieldIds()[i];
-                		String oId = SFO.OFFSET + cvar.toString() + "~" + csfId;
-                		this.constants.add(new ConstDeclaration(loc, attr, false,
-                				new VarList(loc, new String[] { oId }, intT), null,
-                				false));
-                		Expression offIdEx = new IdentifierExpression(loc, oId);
-                		Expression offsetOfField = null;
-//                		if (cvar instanceof CUnion) {//in a union every field begins at 0
-//                			//(optimization: don't use so many constants where all are 0, but this way it is more 
-//                			//consisten with struct treatment, thus easier, for now)
-//                			offsetOfField = new BinaryExpression(loc, Operator.COMPEQ,
-//                					offIdEx, new IntegerLiteral(loc, SFO.NR0));
-//                		} else {
-                		offsetOfField = new BinaryExpression(loc, Operator.COMPEQ,
-                					offIdEx, nextOffset);
-//                		}
-                		this.axioms.add(new Axiom(loc, attr, offsetOfField));
-                		Expression fieldSize = calculateSizeOf(csf, loc);
-                		
-                		if (cvar instanceof CUnion) {
-                			this.axioms.add(new Axiom(loc, attr, 
-                					new BinaryExpression(loc, Operator.COMPGEQ, idex, fieldSize)));
-                		} else {//only in the struct case, the offsets grow, in the union case they stay at 0
-                			nextOffset = new BinaryExpression(loc, Operator.ARITHPLUS,
-                					nextOffset, fieldSize);
-                		}
-                	}
-                	if (!(cvar instanceof CUnion)) { //we have a normal struct
-                		// add an axiom : sizeof cvar (>)= nextOffset
-                		Expression f = new BinaryExpression(loc, Operator.COMPGEQ,
-                				idex, nextOffset);
-                		this.axioms.add(new Axiom(loc, attr, f));
-                	}
-                }
-            } else if (cvar instanceof CNamed) {
-                // add an axiom, binding the sizeof of the named type to
-                // the sizeof of the underlying type
-                CNamed cn = ((CNamed) cvar);
-                Expression e = calculateSizeOf(cn.getUnderlyingType(), loc);
-                Expression f = new BinaryExpression(loc, Operator.COMPEQ, idex,
-                        e);
-                this.axioms.add(new Axiom(loc, attr, f));
-                // NB: I'm not sure, if this is really required! I think we
-                // resolve all named types during translation anyway ... and the
-                // constants accordingly ...
-            } else if (cvar instanceof CEnum) {
-                // Here we return a new constant, which might (!) be
-                // different from all others (i.e. not the same as int!)
-                // the size of these variables is not bound to any value, except
-                // it is specified, that it must be capable of holding the max.
-                // value of the corresponding possible enums value domain!
-                // TODO : no idea how to do that, w/o log_2 function in boogie!
-                // so it is just ignored and assumed to be >0!
-            }
-        }
-        return idex;
+    public IdentifierExpression calculateSizeOfWithVariableTypeSizes(CType cvar, ILocation loc) {
+    	//    public Expression calculateSizeOf(CType cvar, ILocation loc) {
+
+    	assert cvar != null;
+    	ASTType intT = new PrimitiveType(loc, SFO.INT);
+    	String id = SFO.SIZEOF + cvar.toString();
+    	IdentifierExpression idex = new IdentifierExpression(loc, id);
+    	Attribute[] attr = new Attribute[0];
+    	if (!sizeofConsts.contains(id)) {
+    		this.constants.add(new ConstDeclaration(loc, attr, false,
+    				new VarList(loc, new String[] { id }, intT), null, false));
+    		this.axioms.add(new Axiom(loc, attr, new BinaryExpression(loc,
+    				Operator.COMPGT, idex, new IntegerLiteral(loc, SFO.NR0))));
+    		sizeofConsts.add(id);
+    		//small hack: set sizeof char equal to sizeof int
+    		if (cvar instanceof CPrimitive && ((CPrimitive) cvar).getType() == PRIMITIVE.CHAR) {
+    			this.axioms.add(new Axiom(loc, attr, new BinaryExpression(loc,
+    					Operator.COMPEQ, idex, new IdentifierExpression(loc, SFO.SIZEOF + SFO.INT.toUpperCase()))));
+    		}
+
+    		if (cvar instanceof CArray) {
+    			CArray ca = (CArray) cvar;
+    			Expression valSize = calculateSizeOfWithVariableTypeSizes(ca.getValueType(), loc);
+    			Expression nrElem = new IntegerLiteral(loc, "1");
+    			for (Expression dim : ca.getDimensions()) 
+    				nrElem = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, nrElem, dim, loc);
+    			Expression size = new BinaryExpression(loc, Operator.ARITHMUL,
+    					nrElem, valSize);
+    			Expression f = new BinaryExpression(loc, Operator.COMPEQ, idex,
+    					size);
+    			this.axioms.add(new Axiom(loc, attr, f));
+    		} else if (cvar instanceof CStruct) {
+    			CStruct cs = (CStruct) cvar;
+    			if (cs.isIncomplete()) {
+    				// do nothing
+    			} else {
+    				Expression nextOffset = new IntegerLiteral(loc, SFO.NR0);
+    				for (int i = 0; i < cs.getFieldCount(); i++) {
+    					CType csf = cs.getFieldTypes()[i];
+    					String csfId = cs.getFieldIds()[i];
+    					String oId = SFO.OFFSET + cvar.toString() + "~" + csfId;
+    					this.constants.add(new ConstDeclaration(loc, attr, false,
+    							new VarList(loc, new String[] { oId }, intT), null,
+    							false));
+    					Expression offIdEx = new IdentifierExpression(loc, oId);
+    					Expression offsetOfField = null;
+    					//                		if (cvar instanceof CUnion) {//in a union every field begins at 0
+    					//                			//(optimization: don't use so many constants where all are 0, but this way it is more 
+    					//                			//consisten with struct treatment, thus easier, for now)
+    					//                			offsetOfField = new BinaryExpression(loc, Operator.COMPEQ,
+    					//                					offIdEx, new IntegerLiteral(loc, SFO.NR0));
+    					//                		} else {
+    					offsetOfField = new BinaryExpression(loc, Operator.COMPEQ,
+    							offIdEx, nextOffset);
+    					//                		}
+    					this.axioms.add(new Axiom(loc, attr, offsetOfField));
+    					Expression fieldSize = calculateSizeOfWithVariableTypeSizes(csf, loc);
+
+    					if (cvar instanceof CUnion) {
+    						this.axioms.add(new Axiom(loc, attr, 
+    								new BinaryExpression(loc, Operator.COMPGEQ, idex, fieldSize)));
+    					} else {//only in the struct case, the offsets grow, in the union case they stay at 0
+    						nextOffset = new BinaryExpression(loc, Operator.ARITHPLUS,
+    								nextOffset, fieldSize);
+    					}
+    				}
+    				if (!(cvar instanceof CUnion)) { //we have a normal struct
+    					// add an axiom : sizeof cvar (>)= nextOffset
+    					Expression f = new BinaryExpression(loc, Operator.COMPGEQ,
+    							idex, nextOffset);
+    					this.axioms.add(new Axiom(loc, attr, f));
+    				}
+    			}
+    		} else if (cvar instanceof CNamed) {
+    			// add an axiom, binding the sizeof of the named type to
+    			// the sizeof of the underlying type
+    			CNamed cn = ((CNamed) cvar);
+    			Expression e = calculateSizeOfWithVariableTypeSizes(cn.getUnderlyingType(), loc);
+    			Expression f = new BinaryExpression(loc, Operator.COMPEQ, idex,
+    					e);
+    			this.axioms.add(new Axiom(loc, attr, f));
+    			// NB: I'm not sure, if this is really required! I think we
+    			// resolve all named types during translation anyway ... and the
+    			// constants accordingly ...
+    		} else if (cvar instanceof CEnum) {
+    			// Here we return a new constant, which might (!) be
+    			// different from all others (i.e. not the same as int!)
+    			// the size of these variables is not bound to any value, except
+    			// it is specified, that it must be capable of holding the max.
+    			// value of the corresponding possible enums value domain!
+    			// TODO : no idea how to do that, w/o log_2 function in boogie!
+    			// so it is just ignored and assumed to be >0!
+    		}
+    	}
+    	return idex;
     }
     
 //    /**
@@ -1181,11 +1276,11 @@ public class MemoryHandler {
 		return new StructConstructor(loc, new String[]{"base", "offset"}, new Expression[]{base, offset}); 
 	}
 	
-	@Deprecated //use NULL instead
-	public static StructConstructor constructNullPointer(ILocation loc) {
-	    return new StructConstructor(loc, new String[]{"base", "offset"}, 
-	    		new Expression[]{new IntegerLiteral(loc, "0"), new IntegerLiteral(loc, "0")}); 
-    }
+//	@Deprecated //use NULL instead
+//	public static StructConstructor constructNullPointer(ILocation loc) {
+//	    return new StructConstructor(loc, new String[]{"base", "offset"}, 
+//	    		new Expression[]{new IntegerLiteral(loc, "0"), new IntegerLiteral(loc, "0")}); 
+//    }
 	/**
 	 * Takes a loop or function body and inserts mallocs and frees for all the identifiers in this.mallocedAuxPointers
 	 */

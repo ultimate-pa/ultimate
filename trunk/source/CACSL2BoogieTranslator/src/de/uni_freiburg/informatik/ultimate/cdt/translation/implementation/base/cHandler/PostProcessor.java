@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
@@ -178,7 +179,8 @@ public class PostProcessor {
 			VariableLHS slhs = new VariableLHS(loc, SFO.NULL);
 			initStatements.add(0, new AssignmentStatement(loc, 
 					new LeftHandSide[] { slhs }, 
-					new Expression[] { MemoryHandler.constructNullPointer(loc)}));
+					new Expression[] { new StructConstructor(loc, new String[]{"base", "offset"}, 
+				    		new Expression[]{new IntegerLiteral(loc, "0"), new IntegerLiteral(loc, "0")})}));
 			mInitializedGlobals.add(SFO.NULL);
 		}
 		for (Statement stmt : initStatements) {
