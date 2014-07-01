@@ -9,7 +9,8 @@ Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.predicates
 Require-Bundle: UltimateCore,
  Library-log4j,
  Library-SMTLIB,
