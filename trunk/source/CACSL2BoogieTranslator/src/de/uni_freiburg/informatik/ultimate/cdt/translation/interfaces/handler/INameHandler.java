@@ -48,4 +48,6 @@ public interface INameHandler extends IHandler {
 	Boogie2C getBoogie2C();
 
 	boolean isTempVar(String boogieId);
+
+	public String getGloballyUniqueIdentifier(String looplabel);
 }

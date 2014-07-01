@@ -1691,7 +1691,8 @@ public class CHandler implements ICHandler {
 	public Result visit(Dispatcher main, IASTWhileStatement node) {
 		ResultExpression condResult =
 				(ResultExpression) main.dispatch(node.getCondition());
-		String loopLabel = SFO.LOOPLABEL + symbolTable.getCompoundCounter();
+//		String loopLabel = SFO.LOOPLABEL + symbolTable.getCompoundCounter();
+		String loopLabel = main.nameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
 		mInnerMostLoopLabel.push(loopLabel);
 		Result bodyResult = main.dispatch(node.getBody());
 		mInnerMostLoopLabel.pop();
@@ -1700,7 +1701,8 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTForStatement node) {
-		String loopLabel = SFO.LOOPLABEL + symbolTable.getCompoundCounter();
+//		String loopLabel = SFO.LOOPLABEL + symbolTable.getCompoundCounter();
+		String loopLabel = main.nameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
 		return handleLoops(main, node, null, null, loopLabel);
 	}
 
@@ -1708,7 +1710,8 @@ public class CHandler implements ICHandler {
 	public Result visit(Dispatcher main, IASTDoStatement node) {
 		ResultExpression condResult =
 				(ResultExpression) main.dispatch(node.getCondition());
-		String loopLabel = SFO.LOOPLABEL + symbolTable.getCompoundCounter();
+//		String loopLabel = SFO.LOOPLABEL + symbolTable.getCompoundCounter();
+		String loopLabel = main.nameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
 		mInnerMostLoopLabel.push(loopLabel);
 		Result bodyResult = main.dispatch(node.getBody());
 		mInnerMostLoopLabel.pop();

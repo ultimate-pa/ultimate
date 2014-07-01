@@ -28,6 +28,8 @@ public class NameHandler implements INameHandler {
 	 * Counter for temporary variables.
 	 */
 	private int tmpUID;
+	
+	private int globalCounter;
 
 	/**
 	 * @deprecated is not supported in this handler! Do not use!
@@ -172,5 +174,10 @@ public class NameHandler implements INameHandler {
 		public void putTempVar(String boogieId, Object obj) {
 			tempvar2obj.put(boogieId, obj);
 		}
+	}
+
+	@Override
+	public String getGloballyUniqueIdentifier(String looplabel) {
+		return looplabel + globalCounter++;
 	}
 }
