@@ -185,7 +185,7 @@ public class TransFormula implements Serializable {
 			if (existingAuxVarConsts) {
 				auxConst = boogie2smt.getScript().term(tv.getName());
 			} else {
-				auxConst = boogie2smt.getVariableManager().constructConstant(tv);
+				auxConst = SmtUtils.termVariable2constant(boogie2smt.getScript(),tv);
 			}
 			substitutionMapping.put(tv, auxConst);
 		}

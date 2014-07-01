@@ -36,15 +36,15 @@ public class VariableManager {
 		return result;
 	}
 	
-	/**
-	 * Declare new constant that has same name and same sort as tv.
-	 */
-	public Term constructConstant(TermVariable tv) {
-		String name = tv.getName();
-		Sort sort = tv.getSort();
-		m_Script.declareFun(name, new Sort[0], sort);
-		return m_Script.term(name);
-	}
+//	/**
+//	 * Declare new constant that has same name and same sort as tv.
+//	 */
+//	public Term constructConstant(TermVariable tv) {
+//		String name = tv.getName();
+//		Sort sort = tv.getSort();
+//		m_Script.declareFun(name, new Sort[0], sort);
+//		return m_Script.term(name);
+//	}
 
 	/**
 	 * Construct a TermVariable whose name is given by the BoogieVar bv and

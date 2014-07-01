@@ -122,6 +122,8 @@ public class NestedSsaBuilder {
 	
 	private final ModifiableGlobalVariableManager m_ModGlobVarManager;
 	
+	private final Map<String, Term> m_IndexedConstants = new HashMap<String, Term>();
+	
 	public NestedFormulas<Term, Term> getSsa() {
 		return m_Ssa;
 	}
@@ -515,7 +517,7 @@ public class NestedSsaBuilder {
 				m_IndexedVarRepresentative.put(bv,index2constant);
 			}
 			assert !index2constant.containsKey(index) : "version was already constructed";
-			Term constant = m_SmtManager.getIndexedConstant(bv, index);
+			Term constant = m_SmtManager.getIndexedConstant(bv, index, m_IndexedConstants, m_Script);
 			index2constant.put(index, constant);
 			return constant;
 		}

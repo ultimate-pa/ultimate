@@ -275,7 +275,7 @@ public class SmtUtils {
 		return mapping;
 	}
 	
-	private static Term termVariable2constant(Script script, TermVariable tv) {
+	public static Term termVariable2constant(Script script, TermVariable tv) {
 		String name = removeSmtQuoteCharacters(tv.getName());
 		Sort resultSort = tv.getSort();
 		script.declareFun(name, new Sort[0], resultSort);

@@ -686,7 +686,7 @@ public class SmtManager {
 		//OldVars not renamed
 		//All variables get index 0 
 		Term ps1renamed = formulaWithIndexedVars(ps1,new HashSet<BoogieVar>(0),
-				4, 0, Integer.MIN_VALUE,null,-5,0);
+				4, 0, Integer.MIN_VALUE,null,-5,0, m_IndexedConstants, m_Script);
 		
 		TransFormula tf = ta.getTransitionFormula();
 		Set<BoogieVar> assignedVars = new HashSet<BoogieVar>();
@@ -697,7 +697,7 @@ public class SmtManager {
 		//assigned vars (locals and globals) get index 1
 		//other vars get index 0
 		Term ps2renamed = formulaWithIndexedVars(ps2, assignedVars,
-				1, 0, Integer.MIN_VALUE,assignedVars,1,0);
+				1, 0, Integer.MIN_VALUE,assignedVars,1,0, m_IndexedConstants, m_Script);
 		
 		
 		//We want to return true if (fState1 && fTrans)-> fState2 is valid
@@ -879,7 +879,7 @@ public class SmtManager {
 		// OldVars not renamed.
 		// All variables get index 0.
 		Term ps1renamed = formulaWithIndexedVars(ps1,new HashSet<BoogieVar>(0),
-				4, 0, Integer.MIN_VALUE,null,-5, 0);
+				4, 0, Integer.MIN_VALUE,null,-5, 0, m_IndexedConstants, m_Script);
 		
 		TransFormula tf = ta.getTransitionFormula();
 		Set<BoogieVar> assignedVars = new HashSet<BoogieVar>();
@@ -889,7 +889,7 @@ public class SmtManager {
 		// GlobalVars renamed to index 0
 		// Other vars get index 1
 		Term ps2renamed = formulaWithIndexedVars(ps2, new HashSet<BoogieVar>(0),
-				4, 1, 0, null,23,0);
+				4, 1, 0, null,23,0, m_IndexedConstants, m_Script);
 		
 		
 		//We want to return true if (fState1 && fTrans)-> fState2 is valid
@@ -960,7 +960,7 @@ public class SmtManager {
 		// oldVars not renamed
 		// other variables get index 0
 		Term pskrenamed = formulaWithIndexedVars(psk, new HashSet<BoogieVar>(0),
-				23, 0, Integer.MIN_VALUE, null, 23, 0);
+				23, 0, Integer.MIN_VALUE, null, 23, 0, m_IndexedConstants, m_Script);
 
 		
 		// oldVars get index 0
@@ -968,14 +968,14 @@ public class SmtManager {
 		// not modifiable globals get index 0
 		// other variables get index 1
 		Term ps1renamed = formulaWithIndexedVars(ps1, new HashSet<BoogieVar>(0),
-				23, 1, 0, modifiableGlobals, 2, 0);
+				23, 1, 0, modifiableGlobals, 2, 0, m_IndexedConstants, m_Script);
 		
 		// oldVars not renamed
 		// modifiable globals get index 2
 		// variables assigned on return get index 2
 		// other variables get index 0
 		Term ps2renamed = formulaWithIndexedVars(ps2, assignedVarsOnReturn,
-				2, 0, Integer.MIN_VALUE, modifiableGlobals, 2, 0);
+				2, 0, Integer.MIN_VALUE, modifiableGlobals, 2, 0, m_IndexedConstants, m_Script);
 		
 		
 		//We want to return true if (fState1 && fTrans)-> fState2 is valid
@@ -1031,7 +1031,7 @@ public class SmtManager {
 						int defaultIdx,
 						int oldVarIdx,
 						Set<BoogieVar> globalsWithSpecialIdx, int globSpecialIdx,
-						int globDefaultIdx) {
+						int globDefaultIdx, Map<String, Term> indexedConstants, Script script) {
 		Term psTerm = ps.getFormula();
 		if (ps.getVars() == null) {
 			return psTerm;
@@ -1042,25 +1042,25 @@ public class SmtManager {
 		for (BoogieVar var : ps.getVars()) {
 			Term cIndex;
 			if (varsWithSpecialIdx.contains(var)) {
-				 cIndex = getIndexedConstant(var,specialIdx);
+				 cIndex = getIndexedConstant(var,specialIdx, indexedConstants, script);
 			} else if (var.isOldvar()) {
 				if (oldVarIdx == Integer.MIN_VALUE) {
 					cIndex = var.getDefaultConstant();
 				}
 				else {
-					cIndex = getIndexedConstant(this.getNonOldVar(var), oldVarIdx);
+					cIndex = getIndexedConstant(this.getNonOldVar(var), oldVarIdx, indexedConstants, script);
 				}
 			} else if (var.isGlobal()) {
 				if	(globalsWithSpecialIdx != null && 
 						globalsWithSpecialIdx.contains(var)) {
-					cIndex = getIndexedConstant(var, globSpecialIdx);
+					cIndex = getIndexedConstant(var, globSpecialIdx, indexedConstants, script);
 				}
 				else {
-					cIndex = getIndexedConstant(var, globDefaultIdx);
+					cIndex = getIndexedConstant(var, globDefaultIdx, indexedConstants, script);
 				}
 			} else {
 				// var is local and not contained in specialIdx
-				cIndex = getIndexedConstant(var, defaultIdx);
+				cIndex = getIndexedConstant(var, defaultIdx, indexedConstants, script);
 			}
 			TermVariable c = var.getTermVariable();
 			substitution.put(c, cIndex);
@@ -1074,7 +1074,7 @@ public class SmtManager {
 			values[i] = substitution.get(var);
 			i++;
 		}
-		Term result = m_Script.let(vars, values, psTerm);
+		Term result = script.let(vars, values, psTerm);
 		return result;
 	}
 	
@@ -1107,7 +1107,7 @@ public class SmtManager {
 				cIndex = inVar.getDefaultConstant();
 			}
 			else {
-				cIndex = getIndexedConstant(inVar, idxInVar);
+				cIndex = getIndexedConstant(inVar, idxInVar, m_IndexedConstants, m_Script);
 			}
 			TermVariable[] vars = { tv }; 
 			Term[] values = { cIndex };
@@ -1125,7 +1125,7 @@ public class SmtManager {
 					cIndex = outVar.getDefaultConstant();
 				}
 				else {
-					cIndex = getIndexedConstant(outVar, idxOutVar);
+					cIndex = getIndexedConstant(outVar, idxOutVar, m_IndexedConstants, m_Script);
 				}
 				TermVariable[] vars = { tv }; 
 				Term[] values = { cIndex };
@@ -1243,18 +1243,17 @@ public class SmtManager {
 //	}
 
 
-	public Term getIndexedConstant(BoogieVar var, int index) {
-//		String indexString = quoteMinusOne(index);
+	public static Term getIndexedConstant(BoogieVar var, int index, Map<String, Term> indexedConstants, Script script) {
 		String indexString = String.valueOf(index);
 		String name = var.getGloballyUniqueId() + "_" + indexString;
-		Term constant = m_IndexedConstants.get(name);
+		Term constant = indexedConstants.get(name);
 		if (constant == null) {
 			Sort resultSort = var.getTermVariable().getSort();
 			Sort[] emptySorts = {};
-			m_Script.declareFun(name, emptySorts, resultSort);
+			script.declareFun(name, emptySorts, resultSort);
 			Term[] emptyTerms = {};
-			constant = m_Script.term(name, emptyTerms);
-			m_IndexedConstants.put(name, constant);
+			constant = script.term(name, emptyTerms);
+			indexedConstants.put(name, constant);
 		}
 		return constant;
 	}
