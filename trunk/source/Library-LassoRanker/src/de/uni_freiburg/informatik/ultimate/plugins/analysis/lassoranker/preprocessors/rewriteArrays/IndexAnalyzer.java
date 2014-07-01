@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preproc
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,9 +12,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteArrays;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
@@ -23,6 +30,7 @@ public class IndexAnalyzer {
 	private final SetOfTwoeltons<Term> inVarTwoeltons = new SetOfTwoeltons<>();
 	private final Term m_Term;
 	private final Script m_Script;
+	private final Boogie2SMT m_boogie2smt;
 	private final VarCollector m_VarCollector;
 	private final Collection<Term> m_SupportingInvariants;
 	private final Collection<Term> m_AdditionalConjunctsInvariants;
@@ -35,11 +43,12 @@ public class IndexAnalyzer {
 	
 	
 	public IndexAnalyzer(Term term, HashRelation<TermVariable, 
-			List<Term>> array2Indices, Script script, VarCollector varCollector, 
+			List<Term>> array2Indices, Boogie2SMT boogie2smt, VarCollector varCollector, 
 			TransFormula originalStem, TransFormula originalLoop) {
 		super();
 		m_Term = term;
-		m_Script = script;
+		m_boogie2smt = boogie2smt;
+		m_Script = boogie2smt.getScript();
 		m_VarCollector = varCollector;
 		m_SupportingInvariants = new ArrayList<>();
 		m_AdditionalConjunctsInvariants = new ArrayList<>();
@@ -85,12 +94,12 @@ public class IndexAnalyzer {
 			}
 			
 		}
-		
+		Term termWithAdditionalInvariants = Util.and(m_Script, m_Term, getAdditionalConjunctsInvariants());
 
 		m_Script.push(1);
-		Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(m_Script, m_Term.getFreeVars());
+		Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(m_Script, termWithAdditionalInvariants.getFreeVars());
 		SafeSubstitution subst = new SafeSubstitution(m_Script, substitutionMapping);
-		m_Script.assertTerm(subst.transform(m_Term));
+		m_Script.assertTerm(subst.transform(termWithAdditionalInvariants));
 		for (Twoelton<Term> twoelton : allTwoeltons.elements()) {
 			//todo ignore toweltons that are already there
 			Term equal = subst.transform(
@@ -129,8 +138,27 @@ public class IndexAnalyzer {
 	
 
 	private boolean isInVariant(Twoelton<Term> definingTwoelton, boolean checkEquals) {
-		// TODO Auto-generated method stub
-		return false;
+		Term invariantCandidateTerm;
+		if (checkEquals) {
+			invariantCandidateTerm = equalTerm(definingTwoelton);
+		} else {
+			invariantCandidateTerm = notEqualTerm(definingTwoelton);
+		}
+		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(invariantCandidateTerm, m_boogie2smt);
+		IPredicate invariantCandidate = new BasicPredicate(0, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(), tvp.getClosedFormula());
+		Set<BoogieVar> emptyVarSet = Collections.emptySet();
+		IPredicate truePredicate = new BasicPredicate(0, new String[0], m_Script.term("true"), emptyVarSet, m_Script.term("true"));
+		LBool impliedByStem = PredicateUtils.isInductiveHelper(m_boogie2smt, truePredicate, invariantCandidate, m_OriginalStem);
+		if (impliedByStem == LBool.UNSAT) {
+			LBool invariantOfLoop = PredicateUtils.isInductiveHelper(m_boogie2smt, invariantCandidate, invariantCandidate, m_OriginalLoop);
+			if (invariantOfLoop == LBool.UNSAT) {
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
 	}
 
 	private Twoelton<Term> constructDefiningTwoelton(Twoelton<Term> inVarTwoelton) {
@@ -175,6 +203,16 @@ public class IndexAnalyzer {
 	public SetOfTwoeltons<Term> getUnknownTwoeltons() {
 		return unknownTwoeltons;
 	}
+
+	public Collection<Term> getSupportingInvariants() {
+		return m_SupportingInvariants;
+	}
+
+	public Term getAdditionalConjunctsInvariants() {
+		return Util.and(m_Script, m_AdditionalConjunctsInvariants.toArray(new Term[m_AdditionalConjunctsInvariants.size()]));
+	}
+	
+	
 	
 	
 }

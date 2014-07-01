@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
@@ -90,6 +91,7 @@ public class RewriteArrays implements PreProcessor {
 	 * The script used to transform the formula
 	 */
 	private Script m_Script;
+	private Boogie2SMT m_boogie2SMT;
 	
 	/**
 	 * Collection of all generated replacement variables and the terms
@@ -138,14 +140,20 @@ public class RewriteArrays implements PreProcessor {
 	private final TransFormula m_OriginalStem;
 	private final TransFormula m_OriginalLoop;
 
+	private final Set<Term> m_SupportingInvariantsDiscoveredByPreprocessors;
+
 	
 	public RewriteArrays(VarCollector rankVarCollector, 
-			TransFormula originalStem, TransFormula originalLoop) {
+			TransFormula originalStem, TransFormula originalLoop, Boogie2SMT 
+			boogie2smt, 
+			Set<Term> supportingInvariantsDiscoveredByPreprocessors) {
 		m_VarCollector = rankVarCollector;
 		m_repVars = new LinkedHashMap<TermVariable, Term>();
 		m_repTerms = new ArrayList<Term>();
 		m_OriginalStem = originalStem;
 		m_OriginalLoop = originalLoop;
+		m_boogie2SMT = boogie2smt;
+		m_SupportingInvariantsDiscoveredByPreprocessors = supportingInvariantsDiscoveredByPreprocessors;
 	}
 	
 	@Override
@@ -183,7 +191,8 @@ public class RewriteArrays implements PreProcessor {
 		}
 		
 		new IndexCollector();
-		IndexAnalyzer ia = new IndexAnalyzer(term, m_Array2Indices, m_Script, m_VarCollector, m_OriginalStem, m_OriginalLoop);
+		IndexAnalyzer ia = new IndexAnalyzer(term, m_Array2Indices, m_boogie2SMT, m_VarCollector, m_OriginalStem, m_OriginalLoop);
+		m_SupportingInvariantsDiscoveredByPreprocessors.addAll(ia.getSupportingInvariants());
 		m_EqualTwoeltons = ia.getEqualTwoeltons();
 		m_DistinctTwoeltons = ia.getDistinctTwoeltons();
 		m_UnknownTwoeltons = ia.getUnknownTwoeltons();
@@ -207,7 +216,7 @@ public class RewriteArrays implements PreProcessor {
 			disjunctsWithUpdateConstraints[i] = Util.and(m_Script, removedSelect, arrayUpdateConstraints[i], arrayEqualityConstraints[i]);
 		}
 		Term resultDisjuntion = Util.or(m_Script, disjunctsWithUpdateConstraints);
-		Term result = Util.and(m_Script, resultDisjuntion, indexValueConstraints);
+		Term result = Util.and(m_Script, resultDisjuntion, indexValueConstraints, ia.getAdditionalConjunctsInvariants());
 		
 		
 		result = PartialQuantifierElimination.elim(m_Script, QuantifiedFormula.EXISTS, cvb.getAuxVars(), result);

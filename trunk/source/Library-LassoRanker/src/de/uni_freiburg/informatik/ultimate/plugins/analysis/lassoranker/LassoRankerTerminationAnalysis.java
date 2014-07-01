@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.io.FileNotFoundException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -122,6 +124,14 @@ public class LassoRankerTerminationAnalysis {
 	protected final Preferences m_preferences;
 	
 	/**
+	 * Set of terms in that preprocessors (e.g. RewriteArrays) put 
+	 * supporting invariants that they discovered. 
+	 */
+	protected final Set<Term> m_SupportingInvariantsDiscoveredByPreprocessors;
+
+	private final Boogie2SMT m_Boogie2SMT;
+	
+	/**
 	 * Constructor for the LassoRanker interface. Calling this invokes the
 	 * preprocessor on the stem and loop formula.
 	 * 
@@ -147,6 +157,8 @@ public class LassoRankerTerminationAnalysis {
 		m_rankVarFactory = new VarFactory(boogie2smt);
 		m_old_script = script;
 		m_axioms = axioms;
+		m_SupportingInvariantsDiscoveredByPreprocessors = new HashSet<Term>();
+		m_Boogie2SMT = boogie2smt;
 		
 		m_stem_transition = stem;
 		if (stem != null) {
@@ -212,7 +224,7 @@ public class LassoRankerTerminationAnalysis {
 	protected PreProcessor[] getPreProcessors(VarCollector rvc,
 			TransFormula stem, TransFormula loop) {
 		return new PreProcessor[] {
-				new RewriteArrays(rvc, stem, loop),
+				new RewriteArrays(rvc, stem, loop, m_Boogie2SMT, m_SupportingInvariantsDiscoveredByPreprocessors),
 				new RewriteDivision(rvc),
 				new RewriteBooleans(rvc),
 				new RewriteIte(),
