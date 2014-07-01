@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
@@ -23,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
@@ -48,6 +51,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		if(!(root instanceof RootNode)){
 			return false;
 		}
+
 		rootAnnot = ((RootNode) root).getRootAnnot();
 		TAPreferences taPrefs = new TAPreferences();
 		m_graphroot = root;
@@ -153,6 +157,11 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	
 
 	
+
+
+
+
+
 	static void reportResult(IResult res) {
 		UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, res);
 	}

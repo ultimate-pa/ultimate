@@ -2,13 +2,19 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map.Entry;
+
+import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.result.IResult;
 
 /**
  * Main class of Plug-In BuchiAutomizer
@@ -21,6 +27,8 @@ public class BuchiAutomizer implements IGenerator {
 
 	private static final String s_PLUGIN_NAME = Activator.s_PLUGIN_NAME;
 	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
+	
+	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
 	private BuchiAutomizerObserver m_Observer;
 	private GraphType m_InputDefinition;
@@ -78,7 +86,15 @@ public class BuchiAutomizer implements IGenerator {
 
 	//@Override
 	public List<IObserver> getObservers() {
-		return Collections.singletonList((IObserver) m_Observer);
+		if (programContainsErrors()) {
+			s_Logger.info("Another Plugin discovered errors, I will "
+					+ "not analyze termination");
+			return Collections.emptyList();
+		} else {
+			s_Logger.info("Safety of program was proven or not checked, "
+					+ "starting termination analysis");
+			return Collections.singletonList((IObserver) m_Observer);
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -113,5 +129,17 @@ public class BuchiAutomizer implements IGenerator {
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
+	}
+	
+	
+	private boolean programContainsErrors() {
+		for (Entry<String, List<IResult>> entry : UltimateServices.getInstance().getResultMap().entrySet()) {
+			for (IResult resul : entry.getValue()) {
+				if (resul instanceof CounterExampleResult) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }
