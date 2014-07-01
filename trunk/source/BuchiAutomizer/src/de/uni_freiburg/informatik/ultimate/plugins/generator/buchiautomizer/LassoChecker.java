@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LassoRankerTerminationAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.NonTerminationArgument;
@@ -454,7 +455,13 @@ public class LassoChecker {
 	
 	private void checkLoopTermination(TransFormula loopTF) {
 		assert !m_Bspm.providesPredicates() : "termination already checked";
-		m_LoopTermination = synthesize(false, null, loopTF);
+		if (SmtUtils.containsArrayVariables(loopTF.getFormula())) {
+			// if there are array variables we will probably run in a huge
+			// DNF, so as a precaution we do not check and say unknown
+			m_LoopTermination = SynthesisResult.UNKNOWN;
+		} else {
+			m_LoopTermination = synthesize(false, null, loopTF);
+		}
 	}
 
 

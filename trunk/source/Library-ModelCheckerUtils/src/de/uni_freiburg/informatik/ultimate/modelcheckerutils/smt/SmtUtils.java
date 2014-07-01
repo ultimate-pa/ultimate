@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
@@ -280,5 +281,25 @@ public class SmtUtils {
 		Sort resultSort = tv.getSort();
 		script.declareFun(name, new Sort[0], resultSort);
 		return script.term(name);
+	}
+	
+	public static boolean containsArrayVariables(Term term) {
+		for (TermVariable tv : term.getFreeVars()) {
+			if (tv.getSort().isArraySort()) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	
+	public static void isArrayFree(Term term) {
+		assert !containsArrayVariables(term);
+		Set<ApplicationTerm> selectTerms = 
+				(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
+		assert selectTerms.isEmpty();
+		Set<ApplicationTerm> storeTerms = 
+				(new ApplicationTermFinder("store", true)).findMatchingSubterms(term);
+		assert storeTerms.isEmpty();
 	}
 }
