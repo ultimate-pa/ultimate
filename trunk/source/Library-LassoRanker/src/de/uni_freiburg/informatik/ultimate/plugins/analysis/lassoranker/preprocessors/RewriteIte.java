@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preproc
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.IteRemover;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IteRemover;
 
 
 /**

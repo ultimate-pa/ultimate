@@ -5,12 +5,12 @@ Bundle-SymbolicName: Library-ModelCheckerUtils
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
- de.uni_freiburg.informatik.ultimate.modelcheckerutils.transfomers,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.arrays,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.predicates
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt,
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays,
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms,
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms,
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates,
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.transfomers
 Require-Bundle: UltimateCore,
  Library-log4j,
  Library-SMTLIB,
