@@ -321,6 +321,12 @@ public class CfgBuilder {
 		 * the CFG.
 		 */
 		private HashMap<String, ProgramPoint> m_label2LocNodes;
+		
+		/**
+		 * Set of all labels that occurred in the procedure. If an element is
+		 * inserted twice this is an error.
+		 */
+		private Set<String> m_Labels;
 
 		/**
 		 * Name of that last Label for which we constructed a LocNode
@@ -378,6 +384,7 @@ public class CfgBuilder {
 		private void buildProcedureCfgFromImplementation(String procName) {
 			m_currentProcedureName = procName;
 			m_Edges = new HashSet<CodeBlock>();
+			m_Labels = new HashSet<String>();
 
 			Procedure proc = m_BoogieDeclarations.getProcImplementation().get(m_currentProcedureName);
 //			m_Boogie2smt.declareLocals(proc);
@@ -845,6 +852,10 @@ public class CfgBuilder {
 
 		private void processLabel(Label st) {
 			String labelName = ((Label) st).getName();
+			boolean existsAlready = !m_Labels.add(labelName);
+			if (existsAlready) {
+				throw new AssertionError("Label " + labelName + " occurred twice");
+			}
 			if (m_current instanceof ProgramPoint) {
 				// from now on this label is represented by m_current
 				ProgramPoint oldNodeForLabel = m_label2LocNodes.get(labelName);
