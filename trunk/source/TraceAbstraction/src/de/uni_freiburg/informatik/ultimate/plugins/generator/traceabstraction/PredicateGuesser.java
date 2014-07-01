@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 
@@ -174,7 +175,7 @@ public class PredicateGuesser {
 			IPredicate[] result = new IPredicate[asTerms.size()];
 			int i=0;
 			for (Term term : asTerms) {
-				SmtManager.TermVarsProc tvp = m_SmtManager.computeTermVarsProc(term);
+				TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, m_SmtManager.getBoogie2Smt());
 				result[i] = m_SmtManager.newPredicate(term, tvp.getProcedures(),
 						tvp.getVars(), tvp.getClosedFormula());
 				i++;

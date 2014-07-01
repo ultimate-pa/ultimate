@@ -1291,7 +1291,7 @@ public class SmtManager {
 		}
 		Term renamedFormula = (new Substitution(substitutionMapping, m_Script)).transform(ps.getFormula());
 		renamedFormula = simplify(renamedFormula);
-		SmtManager.TermVarsProc tvp = this.computeTermVarsProc(renamedFormula);
+		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(renamedFormula, m_Boogie2Smt);
 		IPredicate result = this.newPredicate( renamedFormula,
 				tvp.getProcedures(), 
 				tvp.getVars(), tvp.getClosedFormula());
@@ -1332,7 +1332,7 @@ public class SmtManager {
 		assert checkIfValidPredicate(term, quantifiedVariables);
 		if (quantifiedVariables == null || quantifiedVariables.isEmpty()) {
 			// Compute the set of BoogieVars, the procedures and the term
-			TermVarsProc tvp = computeTermVarsProc(term);
+			TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, m_Boogie2Smt);
 			// Compute a closed formula version of term.
 			Term closed_formula = PredicateUtils.computeClosedFormula(term, tvp.getVars(), m_Script);
 			return newPredicate(term, tvp.getProcedures(), tvp.getVars(), closed_formula);
@@ -1341,7 +1341,7 @@ public class SmtManager {
 					quantifiedVariables.toArray(new TermVariable[quantifiedVariables.size()]),
 					term, (Term[][]) null);
 			// Compute the set of BoogieVars, the procedures and the term
-			TermVarsProc tvp = computeTermVarsProc(result);
+			TermVarsProc tvp = TermVarsProc.computeTermVarsProc(result, m_Boogie2Smt);
 			// Compute a closed formula version of term.
 			Term closed_formula = PredicateUtils.computeClosedFormula(result, tvp.getVars(), m_Script);
 			// Check whether the result has still quantifiers
@@ -1538,27 +1538,7 @@ public class SmtManager {
 	}
 
 	
-	/**
-	 * Given a term in which every free variable is the TermVariable of a 
-	 * BoogieVar. Compute the BoogieVars of the free variables and the 
-	 * procedures of these BoogieVariables.
-	 */
-	public TermVarsProc computeTermVarsProc(Term term) {
-		HashSet<BoogieVar> vars = new HashSet<BoogieVar>();
-		Set<String> procs = new HashSet<String>();
-		for (TermVariable tv : term.getFreeVars()) {
-			BoogieVar bv = m_Boogie2Smt.getBoogie2SmtSymbolTable().getBoogieVar(tv);
-			if (bv == null) {
-				throw new AssertionError("No corresponding BoogieVar for " + tv);
-			}
-			vars.add(bv);
-			if (bv.getProcedure() != null) {
-				procs.add(bv.getProcedure());
-			}
-		}
-		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, getScript());
-		return new TermVarsProc(term, vars, procs.toArray(new String[0]), closedTerm);
-	}
+
 	
 //	public static Set<String> computeProcedures(Set<BoogieVar> vars) {
 //		Set<String> result = new HashSet<String>();
@@ -1722,40 +1702,6 @@ public class SmtManager {
 		m_Status = status;
 	}
 
-	public class TermVarsProc {
-		private final Term m_Term;
-		private final Set<BoogieVar> m_Vars;
-		private final String[] m_Procedures;
-		private final Term m_ClosedTerm;
-		
-		public TermVarsProc(Term term, Set<BoogieVar> vars,
-				String[] procedures, Term closedTerm) {
-			m_Term = term;
-			m_Vars = vars;
-			m_Procedures = procedures;
-			m_ClosedTerm = closedTerm;
-		}
-
-		public String[] getProcedures() {
-			return m_Procedures;
-		}
-
-		public Term getFormula() {
-			return m_Term;
-		}
-
-		public Term getClosedFormula() {
-			return m_ClosedTerm;
-		}
-
-		public Set<BoogieVar> getVars() {
-			return m_Vars;
-		}
-
-	}
-	
-	
-	
 	private class AuxilliaryTerm extends Term {
 		
 		String m_Name;

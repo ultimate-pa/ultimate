@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 	/**
@@ -287,7 +287,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 			Term cnf = (new Cnf(m_SmtManager.getScript())).transform(term);
 			Term[] conjuncts = SmtUtils.getConjuncts(cnf);
 			for (Term conjunct : conjuncts) {
-				TermVarsProc tvp = m_SmtManager.computeTermVarsProc(conjunct);
+				TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunct, m_SmtManager.getBoogie2Smt());
 				IPredicate predicate = getOrConstructPredicate(tvp);
 				result.add(predicate);
 			}

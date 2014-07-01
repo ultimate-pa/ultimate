@@ -28,7 +28,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Terminat
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
 public class BinaryStatePredicateManager {
@@ -275,7 +275,7 @@ public class BinaryStatePredicateManager {
 		Term conjunction = Util.and(m_Script, siTerms);
 		Term simplified = m_SmtManager.simplify(conjunction);
 		Term normalized = (new AffineSubtermNormalizer(m_SmtManager.getScript())).transform(simplified);
-		TermVarsProc tvp = m_SmtManager.computeTermVarsProc(normalized);
+		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(normalized, m_SmtManager.getBoogie2Smt());
 		return m_SmtManager.newPredicate(tvp);
 	}
 	
@@ -283,7 +283,7 @@ public class BinaryStatePredicateManager {
 	private IPredicate supportingInvariant2Predicate(SupportingInvariant si) {
 		Term formula = si.asTerm(m_SmtManager.getScript());
 		formula = m_SmtManager.simplify(formula);
-		TermVarsProc termVarsProc = m_SmtManager.computeTermVarsProc(formula);
+		TermVarsProc termVarsProc = TermVarsProc.computeTermVarsProc(formula, m_SmtManager.getBoogie2Smt());
 		IPredicate result = m_SmtManager.newPredicate(termVarsProc.getFormula(),
 				termVarsProc.getProcedures(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return result;
@@ -354,7 +354,7 @@ public class BinaryStatePredicateManager {
 	private IPredicate getRankInEquality(Term rfTerm, String symbol, 
 			BoogieVar oldRankVariable,boolean addGeq0) {
 		assert symbol.equals(">=") || symbol.equals(">");
-		TermVarsProc termVarsProc = m_SmtManager.computeTermVarsProc(rfTerm);
+		TermVarsProc termVarsProc = TermVarsProc.computeTermVarsProc(rfTerm, m_SmtManager.getBoogie2Smt());
 
 		Term equality = m_Script.term(symbol, oldRankVariable.getTermVariable(), rfTerm);
 		if (addGeq0) {
