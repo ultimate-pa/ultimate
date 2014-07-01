@@ -162,6 +162,11 @@ public class SafeSubstitution extends TermTransformer {
 		setResult(result);
 	}
 
+	@Override
+	public String toString() {
+		return "Substitution " + m_ScopedSubstitutionMapping.toString();
+	}
+
 
 
 }
