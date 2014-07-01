@@ -1291,6 +1291,7 @@ public class MemoryHandler {
 		ArrayList<Statement> frees = new ArrayList<Statement>();
 		for (LocalLValue llv : this.variablesToBeFreed.currentScopeKeys()) {  //frees are inserted in handleReturnStm
 			frees.add(this.getFreeCall(main, m_functionHandler, llv, loc));
+			frees.add(new HavocStatement(loc, new VariableLHS[] { (VariableLHS) llv.getLHS() }));
 		}
 		ArrayList<Statement> newBlockAL = new ArrayList<Statement>();
 		newBlockAL.addAll(mallocs);

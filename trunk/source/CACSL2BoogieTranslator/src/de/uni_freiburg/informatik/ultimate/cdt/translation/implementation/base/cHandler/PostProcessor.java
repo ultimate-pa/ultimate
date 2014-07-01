@@ -210,7 +210,7 @@ public class PostProcessor {
 						PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler, 
 								new VariableLHS(loc, bId), en.getValue().getType(), initializer);
 				initStatements.addAll(initRex.stmt);
-				initStatements.addAll(Dispatcher.createHavocsForAuxVars(initRex.auxVars));
+				initStatements.addAll(CHandler.createHavocsForNonMallocAuxVars(initRex.auxVars));
 				for (Declaration d : initRex.decl)
 					initDecl.add((VariableDeclaration) d);
 			} else { //no initializer --> default initialization
@@ -222,7 +222,7 @@ public class PostProcessor {
 										en.getValue().getType(), null) ;
 						
 						initStatements.addAll(nullInitializer.stmt);
-						initStatements.addAll(Dispatcher.createHavocsForAuxVars(nullInitializer.auxVars));
+						initStatements.addAll(CHandler.createHavocsForNonMallocAuxVars(nullInitializer.auxVars));
 						for (Declaration d : nullInitializer.decl)
 							initDecl.add((VariableDeclaration) d);
 					}

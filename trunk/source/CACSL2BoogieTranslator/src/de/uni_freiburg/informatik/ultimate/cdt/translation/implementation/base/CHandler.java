@@ -109,6 +109,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.B
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ICHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -623,7 +624,8 @@ public class CHandler implements ICHandler {
 							result = new ResultExpression((LRValue) null);
 
 						((ResultExpression) result).stmt.addAll(initRex.stmt);
-						((ResultExpression) result).stmt.addAll(Dispatcher.createHavocsForAuxVars(initRex.auxVars));
+						((ResultExpression) result).stmt.addAll(createHavocsForNonMallocAuxVars(initRex.auxVars));
+//						((ResultExpression) result).auxVars.putAll(getOnlyMallocAuxVars(initRex.auxVars));
 						((ResultExpression) result).decl.addAll(initRex.decl);
 						((ResultExpression) result).overappr.addAll(initRex.overappr);
 					} else {
@@ -811,7 +813,7 @@ public class CHandler implements ICHandler {
             ArrayList<Declaration> decls = new ArrayList<Declaration>();
             decls.add(tVarDecl);
     		Map<VariableDeclaration, ILocation> auxVars = 
-    				new LinkedHashMap<VariableDeclaration, ILocation>(0);
+    				new LinkedHashMap<VariableDeclaration, ILocation>();
     		auxVars.put(tVarDecl, loc);
 			return new ResultExpression(new ArrayList<Statement>(), rvalue, decls, auxVars );
 		case IASTLiteralExpression.lk_false:
@@ -1563,7 +1565,8 @@ public class CHandler implements ICHandler {
 						rExp.decl);
 				List<Overapprox> overappr = new ArrayList<Overapprox>();
 				assert (main.isAuxVarMapcomplete(decl, rExp.auxVars));
-				stmt.addAll(Dispatcher.createHavocsForAuxVars(res.auxVars)); //alex: inserted this .. why wasn't it here before???
+				stmt.addAll(createHavocsForNonMallocAuxVars(res.auxVars)); //alex: inserted this .. why wasn't it here before???
+//				mallocAuxVars.putAll(getOnlyMallocAuxVars(rExp.auxVars));
 				overappr.addAll(res.overappr);
 				Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(
 						0);
@@ -1578,17 +1581,18 @@ public class CHandler implements ICHandler {
 			ArrayList<Statement> stmt = new ArrayList<Statement>();
 			ArrayList<Declaration> decl = new ArrayList<Declaration>();
 			List<Overapprox> overappr = new ArrayList<Overapprox>();
+			Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
 			for (ResultExpression res : ((ResultExpressionList) r).list) {
 				if (!res.stmt.isEmpty()) {
 					stmt.addAll(res.stmt);
 					decl.addAll(res.decl);
 					assert (main.isAuxVarMapcomplete(res.decl, res.auxVars));
-					stmt.addAll(Dispatcher.createHavocsForAuxVars(res.auxVars));
+					stmt.addAll(createHavocsForNonMallocAuxVars(res.auxVars));
+//					mallocAuxVars.putAll(getOnlyMallocAuxVars(res.auxVars));
 					overappr.addAll(res.overappr);
 				}
 			}
-			Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(
-					0);
+
 			return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
 		} else if (r instanceof ResultSkip) {
 			return r;
@@ -1604,6 +1608,7 @@ public class CHandler implements ICHandler {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		List<Overapprox> overappr = new ArrayList<Overapprox>();
+		Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 
 		ResultExpression condResult = (ResultExpression) main.dispatch(
 				node.getConditionExpression());
@@ -1613,8 +1618,10 @@ public class CHandler implements ICHandler {
 		decl.addAll(condResult.decl);
 		stmt.addAll(condResult.stmt);
 		overappr.addAll(condResult.overappr);
-		List<HavocStatement> havocs = Dispatcher
-				.createHavocsForAuxVars(condResult.auxVars);
+//		List<HavocStatement> havocs = Dispatcher
+//				.createHavocsForAuxVars(condResult.auxVars);
+		List<HavocStatement> havocs = createHavocsForNonMallocAuxVars(condResult.auxVars);
+//		mallocAuxVars.putAll(getOnlyMallocAuxVars(condResult.auxVars));
 
 		Result thenResult = main.dispatch(node.getThenClause());
 		List<Statement> thenStmt = new ArrayList<Statement>();
@@ -1663,9 +1670,27 @@ public class CHandler implements ICHandler {
             annots.put(Overapprox.getIdentifier(), overapprItem);
         }
         stmt.add(ifStmt);
-		Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(
-				0);
 		return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
+	}
+
+	/**
+	 * Takes all auxvars, partitions them into ones of malloc-type and the rest. Returns
+	 * havoc statements for the rest.
+	 * @param auxVars
+	 * @return
+	 */
+	public static List<HavocStatement> createHavocsForNonMallocAuxVars(
+			Map<VariableDeclaration, ILocation> auxVars) {
+		LinkedHashMap<VariableDeclaration, ILocation> nonMallocAuxVars = new LinkedHashMap<>();
+		for (Entry<VariableDeclaration, ILocation> e : auxVars.entrySet()) {
+			assert e.getKey().getVariables().length == 1 : 
+				"we always define only one auxvar at once, right?";
+			assert e.getKey().getVariables()[0].getIdentifiers().length == 1 :
+				"we always define only one auxvar at once, right?";
+			if (!e.getKey().getVariables()[0].getIdentifiers()[0].contains(AUXVAR.MALLOC.getId())) 
+				nonMallocAuxVars.put(e.getKey(), e.getValue());
+		}
+		return Dispatcher.createHavocsForAuxVars(nonMallocAuxVars);
 	}
 
 	@Override
@@ -1782,6 +1807,8 @@ public class CHandler implements ICHandler {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 		List<Overapprox> overappr = new ArrayList<Overapprox>();
+		Map<VariableDeclaration, ILocation> emptyAuxVars = 
+				new LinkedHashMap<VariableDeclaration, ILocation>();
 		Result switchParam = main.dispatch(node.getControllerExpression());
 		assert switchParam instanceof ResultExpression;
 		ResultExpression l = ((ResultExpression) switchParam).switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
@@ -1865,9 +1892,9 @@ public class CHandler implements ICHandler {
 		}
 		checkForACSL(main, stmt, null, node);
 		stmt.add(new Label(loc, breakLabelName));
-		stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
-		Map<VariableDeclaration, ILocation> emptyAuxVars = 
-				new LinkedHashMap<VariableDeclaration, ILocation>(0);
+		stmt.addAll(createHavocsForNonMallocAuxVars(auxVars));
+//		mallocAuxVars.putAll(getOnlyMallocAuxVars(auxVars));
+
 		this.endScope();
 		return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
 	}
@@ -2654,11 +2681,14 @@ public class CHandler implements ICHandler {
 			|| node instanceof IASTDoStatement
 			|| node instanceof IASTForStatement;
 	
+			CACSLLocation loc = new CACSLLocation(node);
+
 			ArrayList<Statement> stmt = new ArrayList<Statement>();
 			ArrayList<Declaration> decl = new ArrayList<Declaration>();
 			List<Overapprox> overappr = new ArrayList<Overapprox>();
-			CACSLLocation loc = new CACSLLocation(node);
-	
+			Map<VariableDeclaration, ILocation> emptyAuxVars =
+					new LinkedHashMap<VariableDeclaration, ILocation>(0);
+
 			Result iterator = null;
 			if (node instanceof IASTForStatement) {
 				IASTForStatement forStmt = (IASTForStatement) node;
@@ -2730,8 +2760,8 @@ public class CHandler implements ICHandler {
 						bodyBlock.addAll(el.stmt);
 						decl.addAll(el.decl);
 						assert (main.isAuxVarMapcomplete(el.decl, el.auxVars));
-						bodyBlock.addAll(Dispatcher
-								.createHavocsForAuxVars(el.auxVars));
+						bodyBlock.addAll(createHavocsForNonMallocAuxVars(el.auxVars));
+//						mallocAuxVars.putAll(getOnlyMallocAuxVars(el.auxVars));
 					}
 				} else if (iterator instanceof ResultExpression) {
 					ResultExpression iteratorRE = (ResultExpression) iterator;
@@ -2740,8 +2770,8 @@ public class CHandler implements ICHandler {
 					overappr.addAll(iteratorRE.overappr);
 					assert (main.isAuxVarMapcomplete(iteratorRE.decl,
 							iteratorRE.auxVars));
-					bodyBlock.addAll(Dispatcher
-							.createHavocsForAuxVars(iteratorRE.auxVars));
+					bodyBlock.addAll(createHavocsForNonMallocAuxVars(iteratorRE.auxVars));
+//					mallocAuxVars.putAll(getOnlyMallocAuxVars(iteratorRE.auxVars));
 				} else {
 					String msg = "Uninplemented type of loop iterator: "
 							+ iterator.getClass();
@@ -2758,12 +2788,13 @@ public class CHandler implements ICHandler {
 				Expression cond = new UnaryExpression(loc,
 						UnaryExpression.Operator.LOGICNEG, condRVal.getValue());
 				ArrayList<Statement> thenStmt = new ArrayList<Statement>(
-						Dispatcher.createHavocsForAuxVars(condResult.auxVars));
+						createHavocsForNonMallocAuxVars(condResult.auxVars));
 				thenStmt.add(new BreakStatement(loc));
-				Statement[] elseStmt = Dispatcher.createHavocsForAuxVars(
+				Statement[] elseStmt = createHavocsForNonMallocAuxVars(
 						condResult.auxVars).toArray(new Statement[0]);
 				ifStmt = new IfStatement(loc, cond,
 						thenStmt.toArray(new Statement[0]), elseStmt);
+//				mallocAuxVars.putAll(getOnlyMallocAuxVars(condResult.auxVars));
 			}
 	
 			if (node instanceof IASTWhileStatement
@@ -2823,11 +2854,24 @@ public class CHandler implements ICHandler {
 			    annots.put(Overapprox.getIdentifier(), overapprItem);
 			}
 			stmt.add(whileStmt);
-			Map<VariableDeclaration, ILocation> emptyAuxVars =
-			        new LinkedHashMap<VariableDeclaration, ILocation>(0);
+
 			assert (symbolTable.getActiveScopeNum() == scopeDepth);
 			return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
 		}
+
+	private static Map<VariableDeclaration, ILocation> getOnlyMallocAuxVars(
+			Map<VariableDeclaration, ILocation> auxVars) {
+		LinkedHashMap<VariableDeclaration, ILocation> mallocAuxVars = new LinkedHashMap<>();
+		for (Entry<VariableDeclaration, ILocation> e : auxVars.entrySet()) {
+			assert e.getKey().getVariables().length == 1 : 
+				"we always define only one auxvar at once, right?";
+			assert e.getKey().getVariables()[0].getIdentifiers().length == 1 :
+				"we always define only one auxvar at once, right?";
+			if (e.getKey().getVariables()[0].getIdentifiers()[0].contains(AUXVAR.MALLOC.getId())) 
+				mallocAuxVars.put(e.getKey(), e.getValue());
+		}
+		return mallocAuxVars;
+	}
 
 	@Override
 	public boolean isHeapVar(String boogieId) {

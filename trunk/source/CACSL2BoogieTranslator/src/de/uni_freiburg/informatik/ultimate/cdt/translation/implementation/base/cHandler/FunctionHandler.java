@@ -1024,13 +1024,17 @@ public class FunctionHandler {
 						new Expression[] { rhs }));
 			}
 		}
-		stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
+		stmt.addAll(CHandler.createHavocsForNonMallocAuxVars(auxVars));
 	
 		// we need to insert a free for each malloc of an auxvar before each return
 //		for (Entry<LocalLValue, Integer> entry : memoryHandler.getVariablesToBeMalloced().entrySet())  //frees are inserted in handleReturnStm
-		for (Entry<LocalLValue, Integer> entry : memoryHandler.getVariablesToBeFreed().entrySet())  //frees are inserted in handleReturnStm
-			if (entry.getValue() >= 1)
+		for (Entry<LocalLValue, Integer> entry : memoryHandler.getVariablesToBeFreed().entrySet()) {  //frees are inserted in handleReturnStm
+			if (entry.getValue() >= 1) {
 				stmt.add(memoryHandler.getFreeCall(main, this, entry.getKey(), loc));
+//				stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
+				stmt.add(new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().getLHS() }));
+			}
+		}
 		
 		stmt.add(new ReturnStatement(loc));
 		Map<VariableDeclaration, ILocation> emptyAuxVars =
