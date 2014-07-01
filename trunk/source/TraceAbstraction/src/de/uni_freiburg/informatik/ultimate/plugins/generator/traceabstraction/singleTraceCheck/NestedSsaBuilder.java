@@ -413,7 +413,7 @@ public class NestedSsaBuilder {
 		
 		public void replaceAuxVars() {
 			for (TermVariable tv : m_TF.getAuxVars()) {
-				Term freshConst = m_SmtManager.getFreshConstant(tv);
+				Term freshConst = m_SmtManager.getVariableManager().getCorrespondingConstant(tv);
 				m_SubstitutionMapping.put(tv, freshConst);
 			}
 		}

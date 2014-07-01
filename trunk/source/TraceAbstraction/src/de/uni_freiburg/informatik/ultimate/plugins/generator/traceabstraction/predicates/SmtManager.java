@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
@@ -235,33 +236,6 @@ public class SmtManager {
 	}
 	
 	
-	/**
-	 * Return a similar BoogieVar that is not an oldvar. Requires that this is
-	 * an oldvar.
-	 */
-	public BoogieVar getNonOldVar(BoogieVar bv) {
-		if (!bv.isOldvar()) {
-			throw new AssertionError("Not an oldvar" + this);
-		}
-		BoogieVar result = m_Boogie2Smt.getBoogie2SmtSymbolTable().getGlobals().get(bv.getIdentifier());
-		assert result != null;
-		return result;
-	}
-
-	
-	/**
-	 * Return a similar BoogieVar that is an oldvar. Requires that this not
-	 * an oldvar.
-	 */
-	public BoogieVar getOldVar(BoogieVar bv) {
-		assert bv.isGlobal();
-		if (bv.isOldvar()) {
-			throw new AssertionError("Already an oldvar: " + this);
-		}
-		BoogieVar result = m_Boogie2Smt.getBoogie2SmtSymbolTable().getOldGlobals().get(bv.getIdentifier());
-		assert result != null;
-		return result;
-	}
 	
 	/**
 	 * Returns a predicate which states that old(g)=g for all global variables
@@ -274,7 +248,7 @@ public class SmtManager {
 		Term term = getScript().term("true");
 		for (BoogieVar bv : modGlobVarManager.getGlobalVarsAssignment(proc).getAssignedVars()) {
 			vars.add(bv);
-			BoogieVar bvOld = getOldVar(bv);
+			BoogieVar bvOld = getBoogie2Smt().getOldVar(bv);
 			vars.add(bvOld);
 			TermVariable tv = bv.getTermVariable();
 			TermVariable tvOld = bvOld.getTermVariable();
@@ -306,7 +280,7 @@ public class SmtManager {
 			if (bv.isOldvar()) {
 				if (!oldVarsOfmodifiableGlobals.contains(bv)) {
 					replacees.add(bv.getTermVariable());
-					replacers.add(getNonOldVar(bv).getTermVariable());
+					replacers.add(getBoogie2Smt().getNonOldVar(bv).getTermVariable());
 					replacedOldVars.add(bv);
 				}
 			}
@@ -319,7 +293,7 @@ public class SmtManager {
 		
 		for (BoogieVar bv  : replacedOldVars) {
 			vars.remove(bv);
-			vars.add(getNonOldVar(bv));
+			vars.add(getBoogie2Smt().getNonOldVar(bv));
 		}
 		return result;
 	}
@@ -682,22 +656,22 @@ public class SmtManager {
 //		}
 		
 		m_Script.push(1);
-		m_IndexedConstants = new ScopedHashMap<String, Term>();
+		Map<String, Term> indexedConstants = new HashMap<String, Term>();
 		//OldVars not renamed
 		//All variables get index 0 
 		Term ps1renamed = formulaWithIndexedVars(ps1,new HashSet<BoogieVar>(0),
-				4, 0, Integer.MIN_VALUE,null,-5,0, m_IndexedConstants, m_Script);
+				4, 0, Integer.MIN_VALUE,null,-5,0, indexedConstants, m_Script, m_Boogie2Smt);
 		
 		TransFormula tf = ta.getTransitionFormula();
 		Set<BoogieVar> assignedVars = new HashSet<BoogieVar>();
-		Term fTrans = formulaWithIndexedVars(tf, 0, 1, assignedVars);
+		Term fTrans = formulaWithIndexedVars(tf, 0, 1, assignedVars, indexedConstants, m_Script, m_Boogie2Smt.getVariableManager());
 
 		//OldVars not renamed
 		//All variables get index 0 
 		//assigned vars (locals and globals) get index 1
 		//other vars get index 0
 		Term ps2renamed = formulaWithIndexedVars(ps2, assignedVars,
-				1, 0, Integer.MIN_VALUE,assignedVars,1,0, m_IndexedConstants, m_Script);
+				1, 0, Integer.MIN_VALUE,assignedVars,1,0, indexedConstants, m_Script, m_Boogie2Smt);
 		
 		
 		//We want to return true if (fState1 && fTrans)-> fState2 is valid
@@ -708,6 +682,9 @@ public class SmtManager {
 		
 //		f = new FormulaUnLet().unlet(f);
 		LBool result = this.checkSatisfiable(f);
+
+		m_Script.pop(1);
+		
 		if (expectUnsat) {
 			if (result == LBool.SAT) {
 				s_Logger.error("From " + ps1.getFormula().toStringDirect());
@@ -719,8 +696,6 @@ public class SmtManager {
 			assert (result == Script.LBool.UNSAT || result == Script.LBool.UNKNOWN)
 				: "internal statement not inductive";
 		}
-		m_IndexedConstants = null;
-		m_Script.pop(1);
 		m_SatCheckTime += (System.nanoTime() - startTime);
 		if (m_TestDataflow) {
 			testMyInternalDataflowCheck(ps1, ta, ps2, result);
@@ -879,17 +854,17 @@ public class SmtManager {
 		// OldVars not renamed.
 		// All variables get index 0.
 		Term ps1renamed = formulaWithIndexedVars(ps1,new HashSet<BoogieVar>(0),
-				4, 0, Integer.MIN_VALUE,null,-5, 0, m_IndexedConstants, m_Script);
+				4, 0, Integer.MIN_VALUE,null,-5, 0, m_IndexedConstants, m_Script, m_Boogie2Smt);
 		
 		TransFormula tf = ta.getTransitionFormula();
 		Set<BoogieVar> assignedVars = new HashSet<BoogieVar>();
-		Term fTrans = formulaWithIndexedVars(tf, 0, 1, assignedVars);
+		Term fTrans = formulaWithIndexedVars(tf, 0, 1, assignedVars, m_IndexedConstants, m_Script, m_Boogie2Smt.getVariableManager());
 
 		// OldVars renamed to index 0
 		// GlobalVars renamed to index 0
 		// Other vars get index 1
 		Term ps2renamed = formulaWithIndexedVars(ps2, new HashSet<BoogieVar>(0),
-				4, 1, 0, null,23,0, m_IndexedConstants, m_Script);
+				4, 1, 0, null,23,0, m_IndexedConstants, m_Script, m_Boogie2Smt);
 		
 		
 		//We want to return true if (fState1 && fTrans)-> fState2 is valid
@@ -949,18 +924,18 @@ public class SmtManager {
 		
 		TransFormula tfReturn = ta.getTransitionFormula();
 		Set<BoogieVar> assignedVarsOnReturn = new HashSet<BoogieVar>();
-		Term fReturn = formulaWithIndexedVars(tfReturn, 1, 2, assignedVarsOnReturn);
+		Term fReturn = formulaWithIndexedVars(tfReturn, 1, 2, assignedVarsOnReturn, m_IndexedConstants, m_Script, m_Boogie2Smt.getVariableManager());
 //		fReturn = (new FormulaUnLet()).unlet(fReturn);
 		
 		TransFormula tfCall = ca.getTransitionFormula();
 		Set<BoogieVar> assignedVarsOnCall = new HashSet<BoogieVar>();
-		Term fCall = formulaWithIndexedVars(tfCall, 0, 1, assignedVarsOnCall);
+		Term fCall = formulaWithIndexedVars(tfCall, 0, 1, assignedVarsOnCall, m_IndexedConstants, m_Script, m_Boogie2Smt.getVariableManager());
 //		fCall = (new FormulaUnLet()).unlet(fCall);
 
 		// oldVars not renamed
 		// other variables get index 0
 		Term pskrenamed = formulaWithIndexedVars(psk, new HashSet<BoogieVar>(0),
-				23, 0, Integer.MIN_VALUE, null, 23, 0, m_IndexedConstants, m_Script);
+				23, 0, Integer.MIN_VALUE, null, 23, 0, m_IndexedConstants, m_Script, m_Boogie2Smt);
 
 		
 		// oldVars get index 0
@@ -968,14 +943,14 @@ public class SmtManager {
 		// not modifiable globals get index 0
 		// other variables get index 1
 		Term ps1renamed = formulaWithIndexedVars(ps1, new HashSet<BoogieVar>(0),
-				23, 1, 0, modifiableGlobals, 2, 0, m_IndexedConstants, m_Script);
+				23, 1, 0, modifiableGlobals, 2, 0, m_IndexedConstants, m_Script, m_Boogie2Smt);
 		
 		// oldVars not renamed
 		// modifiable globals get index 2
 		// variables assigned on return get index 2
 		// other variables get index 0
 		Term ps2renamed = formulaWithIndexedVars(ps2, assignedVarsOnReturn,
-				2, 0, Integer.MIN_VALUE, modifiableGlobals, 2, 0, m_IndexedConstants, m_Script);
+				2, 0, Integer.MIN_VALUE, modifiableGlobals, 2, 0, m_IndexedConstants, m_Script, m_Boogie2Smt);
 		
 		
 		//We want to return true if (fState1 && fTrans)-> fState2 is valid
@@ -1026,12 +1001,13 @@ public class SmtManager {
 	 * </ul> 
 
 	 */
-	private Term formulaWithIndexedVars(IPredicate ps, 
+	private static Term formulaWithIndexedVars(IPredicate ps, 
 						Set<BoogieVar> varsWithSpecialIdx, int specialIdx,
 						int defaultIdx,
 						int oldVarIdx,
 						Set<BoogieVar> globalsWithSpecialIdx, int globSpecialIdx,
-						int globDefaultIdx, Map<String, Term> indexedConstants, Script script) {
+						int globDefaultIdx, Map<String, Term> indexedConstants, 
+						Script script, Boogie2SMT boogie2Smt) {
 		Term psTerm = ps.getFormula();
 		if (ps.getVars() == null) {
 			return psTerm;
@@ -1048,7 +1024,7 @@ public class SmtManager {
 					cIndex = var.getDefaultConstant();
 				}
 				else {
-					cIndex = getIndexedConstant(this.getNonOldVar(var), oldVarIdx, indexedConstants, script);
+					cIndex = getIndexedConstant(boogie2Smt.getNonOldVar(var), oldVarIdx, indexedConstants, script);
 				}
 			} else if (var.isGlobal()) {
 				if	(globalsWithSpecialIdx != null && 
@@ -1093,8 +1069,10 @@ public class SmtManager {
 	 * </ul> 
 
 	 */
-	private Term formulaWithIndexedVars(TransFormula tf,
-			int idxInVar, int idxOutVar, Set<BoogieVar> assignedVars) {
+	private static Term formulaWithIndexedVars(TransFormula tf,
+			int idxInVar, int idxOutVar, Set<BoogieVar> assignedVars, 
+			Map<String, Term> indexedConstants, Script script, 
+			VariableManager variableManager) {
 		assert (assignedVars != null && assignedVars.isEmpty());
 		Set<TermVariable> notYetSubst = new HashSet<TermVariable>();
 		notYetSubst.addAll(Arrays.asList(tf.getFormula().getFreeVars()));
@@ -1107,12 +1085,12 @@ public class SmtManager {
 				cIndex = inVar.getDefaultConstant();
 			}
 			else {
-				cIndex = getIndexedConstant(inVar, idxInVar, m_IndexedConstants, m_Script);
+				cIndex = getIndexedConstant(inVar, idxInVar, indexedConstants, script);
 			}
 			TermVariable[] vars = { tv }; 
 			Term[] values = { cIndex };
 			Term undamagedFTrans = fTrans;
-			fTrans = m_Script.let(vars, values, fTrans);
+			fTrans = script.let(vars, values, fTrans);
 			t = fTrans.toString();
 			notYetSubst.remove(tv);
 		}
@@ -1125,20 +1103,20 @@ public class SmtManager {
 					cIndex = outVar.getDefaultConstant();
 				}
 				else {
-					cIndex = getIndexedConstant(outVar, idxOutVar, m_IndexedConstants, m_Script);
+					cIndex = getIndexedConstant(outVar, idxOutVar, indexedConstants, script);
 				}
 				TermVariable[] vars = { tv }; 
 				Term[] values = { cIndex };
-				fTrans = m_Script.let(vars, values, fTrans);
+				fTrans = script.let(vars, values, fTrans);
 				t = fTrans.toString();
 				notYetSubst.remove(tv);
 			}
 		}
 		for (TermVariable tv : notYetSubst) {
-			Term cIndex = getFreshConstant(tv);
+			Term cIndex = variableManager.getCorrespondingConstant(tv);
 			TermVariable[] vars = { tv }; 
 			Term[] values = { cIndex };
-			fTrans = m_Script.let(vars, values, fTrans);
+			fTrans = script.let(vars, values, fTrans);
 			t = fTrans.toString();
 		}
 		return fTrans;		
@@ -1258,14 +1236,14 @@ public class SmtManager {
 		return constant;
 	}
 	
-	public Term getFreshConstant(TermVariable tv) {
-		String name = "fresh_" + tv.getName() + m_FreshVariableCouter++;
-		Sort resultSort = tv.getSort();
-		Sort[] emptySorts = {};
-		m_Script.declareFun(name, emptySorts, resultSort);
-		Term[] emptyTerms = {};
-		return m_Script.term(name, emptyTerms); 
-	}
+//	public Term getFreshConstant(TermVariable tv) {
+//		String name = "fresh_" + tv.getName() + m_FreshVariableCouter++;
+//		Sort resultSort = tv.getSort();
+//		Sort[] emptySorts = {};
+//		m_Script.declareFun(name, emptySorts, resultSort);
+//		Term[] emptyTerms = {};
+//		return m_Script.term(name, emptyTerms); 
+//	}
 	
 //	public TermVariable getFreshTermVariable(String identifier, Sort sort) {
 //		String name = "fresh_" + identifier + m_FreshVariableCouter++;
@@ -1475,7 +1453,7 @@ public class SmtManager {
 		Map<TermVariable, Term> substitutionMapping = new HashMap<TermVariable, Term>();
 		for (BoogieVar globalBoogieVar : globalVars) {
 			if (!globalBoogieVar.isOldvar()) {
-				BoogieVar oldBoogieVar = this.getOldVar(globalBoogieVar);
+				BoogieVar oldBoogieVar = getBoogie2Smt().getOldVar(globalBoogieVar);
 				varsOfRenamed.add(oldBoogieVar);
 				substitutionMapping.put(globalBoogieVar.getTermVariable(), oldBoogieVar.getTermVariable());
 			}

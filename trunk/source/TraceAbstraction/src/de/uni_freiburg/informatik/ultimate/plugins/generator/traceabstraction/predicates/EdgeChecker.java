@@ -436,7 +436,7 @@ public class EdgeChecker {
 	
 	private Term oldVarsEquality(BoogieVar oldVar) {
 		assert oldVar.isOldvar();
-		BoogieVar nonOldVar = m_SmtManager.getNonOldVar(oldVar);
+		BoogieVar nonOldVar = m_SmtManager.getBoogie2Smt().getNonOldVar(oldVar);
 		Term equality = m_Script.term("=", oldVar.getDefaultConstant(), 
 										   nonOldVar.getDefaultConstant());
 		return equality;
@@ -618,7 +618,7 @@ public class EdgeChecker {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
 					replacees.add(bv.getTermVariable());
-					BoogieVar globalBv = m_SmtManager.getNonOldVar(bv);
+					BoogieVar globalBv = m_SmtManager.getBoogie2Smt().getNonOldVar(bv);
 					replacers.add(globalBv.getDefaultConstant());
 				} else {
 					replacees.add(bv.getTermVariable());
@@ -980,7 +980,7 @@ public class EdgeChecker {
 		for (BoogieVar bv : pre.getVars()) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
-					if (hier.getVars().contains(m_SmtManager.getNonOldVar(bv))) {
+					if (hier.getVars().contains(m_SmtManager.getBoogie2Smt().getNonOldVar(bv))) {
 						return false;
 					}
 				} else {

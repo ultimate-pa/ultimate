@@ -156,9 +156,9 @@ public class LiveVariables {
 				if (bv.isGlobal()) {
 					m_LiveVariables[0].add(bv);
 					if (bv.isOldvar()) {
-						m_LiveVariables[0].add(m_SmtManager.getNonOldVar(bv));
+						m_LiveVariables[0].add(m_SmtManager.getBoogie2Smt().getNonOldVar(bv));
 					} else {
-						m_LiveVariables[0].add(m_SmtManager.getOldVar(bv));
+						m_LiveVariables[0].add(m_SmtManager.getBoogie2Smt().getOldVar(bv));
 					}
 				} else {
 					m_LiveVariables[0].add(bv);
@@ -172,9 +172,9 @@ public class LiveVariables {
 				if (bv.isGlobal()) {
 					liveVars.add(bv);
 					if (bv.isOldvar()) {
-						liveVars.add(m_SmtManager.getNonOldVar(bv));
+						liveVars.add(m_SmtManager.getBoogie2Smt().getNonOldVar(bv));
 					} else {
-						liveVars.add(m_SmtManager.getOldVar(bv));
+						liveVars.add(m_SmtManager.getBoogie2Smt().getOldVar(bv));
 					}
 				} else {
 					if (i <= m_TraceWithConstants.getTrace().length()) {

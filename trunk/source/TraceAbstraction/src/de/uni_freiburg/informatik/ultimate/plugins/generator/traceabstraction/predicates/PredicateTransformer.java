@@ -258,7 +258,7 @@ public class PredicateTransformer {
 
 			if (globalVarAssignments.getOutVars().containsKey(bv)) {
 				// If it is a global var, then we substitute it through its oldvar
-				substitution.put(localVarAssignments.getInVars().get(bv), m_SmtManager.getOldVar(bv).getTermVariable());
+				substitution.put(localVarAssignments.getInVars().get(bv), m_SmtManager.getBoogie2Smt().getOldVar(bv).getTermVariable());
 			} else {
 				TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 				substitution.put(localVarAssignments.getInVars().get(bv), freshVar);
@@ -330,7 +330,7 @@ public class PredicateTransformer {
 		for (BoogieVar bv : globalVarsAssignment.getInVars().keySet()) {
 			TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 			varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
-			varsToRenameInCallerPred.put(m_SmtManager.getNonOldVar(bv).getTermVariable(), freshVar);
+			varsToRenameInCallerPred.put(m_SmtManager.getBoogie2Smt().getNonOldVar(bv).getTermVariable(), freshVar);
 			varsToQuantifyOverAll.add(freshVar);
 		}
 		// Note: We have to take also the outvars into account, because sometimes it may be the case,

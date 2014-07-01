@@ -1,10 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 /**
  * Constructs fresh TermVariables (i.e., TermVariables that have not been used
  * before).
@@ -14,6 +18,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 public class VariableManager {
 	private final MultiElementCounter<String> m_TvForBoogieVarCounter = 
 			new MultiElementCounter<String>();
+	private final Map<TermVariable, Term> m_TermVariable2Constant = 
+			new HashMap<TermVariable, Term>();
 	private final Script m_Script;
 	
 	VariableManager(Script script) {
@@ -34,6 +40,15 @@ public class VariableManager {
 		TermVariable result = m_Script.variable(
 				"v_" + name + "_" + newIndex, sort);
 		return result;
+	}
+	
+	public Term getCorrespondingConstant(TermVariable tv) {
+		Term constant = m_TermVariable2Constant.get(tv);
+		if (constant == null) {
+			constant = SmtUtils.termVariable2constant(m_Script, tv);
+			m_TermVariable2Constant.put(tv, constant);
+		}
+		return constant;
 	}
 	
 //	/**

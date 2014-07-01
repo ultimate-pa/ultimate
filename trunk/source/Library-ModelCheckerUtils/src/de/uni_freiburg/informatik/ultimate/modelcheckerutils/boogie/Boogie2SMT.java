@@ -162,5 +162,34 @@ public class Boogie2SMT {
 			return result;
 		}
 	}
+	
+	
+	/**
+	 * Return a similar BoogieVar that is not an oldvar. Requires that this is
+	 * an oldvar.
+	 */
+	public BoogieVar getNonOldVar(BoogieVar bv) {
+		if (!bv.isOldvar()) {
+			throw new AssertionError("Not an oldvar" + this);
+		}
+		BoogieVar result = getBoogie2SmtSymbolTable().getGlobals().get(bv.getIdentifier());
+		assert result != null;
+		return result;
+	}
+
+	
+	/**
+	 * Return a similar BoogieVar that is an oldvar. Requires that this not
+	 * an oldvar.
+	 */
+	public BoogieVar getOldVar(BoogieVar bv) {
+		assert bv.isGlobal();
+		if (bv.isOldvar()) {
+			throw new AssertionError("Already an oldvar: " + this);
+		}
+		BoogieVar result = getBoogie2SmtSymbolTable().getOldGlobals().get(bv.getIdentifier());
+		assert result != null;
+		return result;
+	}
 
 }
