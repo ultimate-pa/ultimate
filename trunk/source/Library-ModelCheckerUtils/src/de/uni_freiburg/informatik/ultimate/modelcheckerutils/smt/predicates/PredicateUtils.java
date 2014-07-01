@@ -16,9 +16,22 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 
 public class PredicateUtils {
 
+	
+	
+	public static Term computeClosedFormula(Term formula,
+			Set<BoogieVar> boogieVars, Script script) {
+		Map<TermVariable,Term> substitutionMapping = new HashMap<TermVariable, Term>();
+		for (BoogieVar bv : boogieVars) {
+			substitutionMapping.put(bv.getTermVariable(), bv.getDefaultConstant());
+		}
+		Term closedTerm = (new Substitution(substitutionMapping, script)).transform(formula);
+		assert closedTerm.getFreeVars().length == 0;
+		return closedTerm;
+	}
 	
 	public static LBool isInductiveHelper(Boogie2SMT boogie2smt, IPredicate ps1, IPredicate ps2,
 			TransFormula tf) {

@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -186,7 +187,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 				if (m_BringTermsToPositiveNormalForm ) {
 					term = (new AffineSubtermNormalizer(m_SmtManager.getScript())).transform(term);
 				}
-				Term closedTerm = SmtManager.computeClosedFormula(
+				Term closedTerm = PredicateUtils.computeClosedFormula(
 										term, vars, m_SmtManager.getScript());
 				predicate = m_SmtManager.newPredicate(
 										term, procs, vars, closedTerm);
@@ -219,7 +220,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 		 */
 		private IPredicate compareWithExistingPredicates(Term term, Set<BoogieVar> vars,
 				HashMap<IPredicate,LBool> impliedPredicats, HashMap<IPredicate,LBool> expliedPredicates) {
-			Term closedTerm = SmtManager.computeClosedFormula(term, vars, m_SmtManager.getScript());
+			Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_SmtManager.getScript());
 			assert impliedPredicats.isEmpty();
 			assert expliedPredicates.isEmpty();
 			m_SmtManager.getScript().echo(new QuotedObject("begin unification"));

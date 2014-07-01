@@ -1,11 +1,10 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -21,7 +20,7 @@ public class BasicPredicate extends AbstractAnnotations implements IPredicate {
 	
 	
 	
-	protected BasicPredicate(int serialNumber, String[] procedures, Term term, Set<BoogieVar> vars,
+	public BasicPredicate(int serialNumber, String[] procedures, Term term, Set<BoogieVar> vars,
 			Term closedFormula) {
 		m_Formula = term;
 		m_ClosedFormula = closedFormula;

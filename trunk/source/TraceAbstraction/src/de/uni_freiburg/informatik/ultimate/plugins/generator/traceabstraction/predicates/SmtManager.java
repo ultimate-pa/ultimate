@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableMana
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -259,7 +260,7 @@ public class SmtManager {
 		}
 		String[] procs = new String[0];
 		TermVarsProc result = new TermVarsProc(term, vars, procs, 
-				computeClosedFormula(term, vars, getScript())); 
+				PredicateUtils.computeClosedFormula(term, vars, getScript())); 
 		return result;
 		
 	}
@@ -487,7 +488,7 @@ public class SmtManager {
 //		}
 //		resultFormula = Util.and(m_Script,sf1.getFormula(), sf2.getFormula());
 //		formula = new SimplifyDDA(m_Script, s_Logger).getSimplifiedTerm(formula);
-		Term closedTerm = SmtManager.computeClosedFormula(term, vars, m_Script);
+		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_Script);
 		return new TermVarsProc(term, vars, procs.toArray(new String[0]), closedTerm);
 	}
 	
@@ -505,7 +506,7 @@ public class SmtManager {
 			procs.addAll(Arrays.asList(p.getProcedures()));
 			term = Util.or(m_Script, term, p.getFormula());
 		}
-		Term closedTerm = SmtManager.computeClosedFormula(term, vars, m_Script);
+		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_Script);
 		return new TermVarsProc(term, vars, procs.toArray(new String[0]), closedTerm);
 	}
 
@@ -1333,7 +1334,7 @@ public class SmtManager {
 			// Compute the set of BoogieVars, the procedures and the term
 			TermVarsProc tvp = computeTermVarsProc(term);
 			// Compute a closed formula version of term.
-			Term closed_formula = SmtManager.computeClosedFormula(term, tvp.getVars(), m_Script);
+			Term closed_formula = PredicateUtils.computeClosedFormula(term, tvp.getVars(), m_Script);
 			return newPredicate(term, tvp.getProcedures(), tvp.getVars(), closed_formula);
 		} else {
 			Term result = PartialQuantifierElimination.quantifier(m_Script, quantifier,
@@ -1342,7 +1343,7 @@ public class SmtManager {
 			// Compute the set of BoogieVars, the procedures and the term
 			TermVarsProc tvp = computeTermVarsProc(result);
 			// Compute a closed formula version of term.
-			Term closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
+			Term closed_formula = PredicateUtils.computeClosedFormula(result, tvp.getVars(), m_Script);
 			// Check whether the result has still quantifiers
 			if (result instanceof QuantifiedFormula) {
 				quantifiedVariables = new HashSet<TermVariable>(Arrays.asList(((QuantifiedFormula)result).getVariables()));
@@ -1555,7 +1556,7 @@ public class SmtManager {
 				procs.add(bv.getProcedure());
 			}
 		}
-		Term closedTerm = computeClosedFormula(term, vars, getScript());
+		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, getScript());
 		return new TermVarsProc(term, vars, procs.toArray(new String[0]), closedTerm);
 	}
 	
@@ -1569,16 +1570,7 @@ public class SmtManager {
 //		return result;
 //	}
 
-	public static Term computeClosedFormula(Term formula,
-			Set<BoogieVar> boogieVars, Script script) {
-		Map<TermVariable,Term> substitutionMapping = new HashMap<TermVariable, Term>();
-		for (BoogieVar bv : boogieVars) {
-			substitutionMapping.put(bv.getTermVariable(), bv.getDefaultConstant());
-		}
-		Term closedTerm = (new Substitution(substitutionMapping, script)).transform(formula);
-		assert closedTerm.getFreeVars().length == 0;
-		return closedTerm;
-	}
+
 
 //	public Predicate newPredicate(ProgramPoint pp, Term term,
 //			Set<BoogieVar> vars) {

@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
@@ -364,7 +365,7 @@ public class BinaryStatePredicateManager {
 		vars.add(oldRankVariable);
 		vars.addAll(termVarsProc.getVars());
 		
-		Term closedFormula = SmtManager.computeClosedFormula(equality, vars, m_Script);
+		Term closedFormula = PredicateUtils.computeClosedFormula(equality, vars, m_Script);
 		
 		IPredicate result = m_SmtManager.newPredicate(equality,
 				termVarsProc.getProcedures(), vars, closedFormula);
