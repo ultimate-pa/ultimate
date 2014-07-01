@@ -103,7 +103,7 @@ public class Preferences implements Serializable {
 	 * If the solver efficiently supports push() and pop(),
 	 * this might be reasonably fast.
 	 */
-	public boolean simplify_result = !false; // Default: false
+	public boolean simplify_result = false; // Default: false
 	
 	/**
 	 * Use a nonlinear SMT query for checking nontermination?
