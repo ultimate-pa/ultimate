@@ -1005,7 +1005,7 @@ public class FunctionHandler {
 			}
 			
 			
-			Expression rhs = (Expression) exprResult.lrVal.getValue();
+//			Expression rhs = (Expression) exprResult.lrVal.getValue();
 			stmt.addAll(exprResult.stmt);
 			decl.addAll(exprResult.decl);
 			auxVars.putAll(exprResult.auxVars);
@@ -1020,18 +1020,23 @@ public class FunctionHandler {
 			} else {
 				String id = outParams[0].getIdentifiers()[0];
 				VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
+				RValue castExprResultRVal = CHandler.castToType(loc, (RValue) exprResult.lrVal, functionResultType);
 				stmt.add(new AssignmentStatement(loc, lhs,
-						new Expression[] { rhs }));
+						new Expression[] { castExprResultRVal.getValue() }));
+//				//assuming that we need no auxvars or overappr, here
+//				ResultExpression assignmentRex = ((CHandler) main.cHandler).makeAssignment(main, loc, new ArrayList<Statement>(), 
+//						new LocalLValue(new VariableLHS(loc, id), functionResultType), (RValue) exprResult.lrVal, new ArrayList<Declaration>(),
+//						new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>());
+//				stmt.addAll(assignmentRex.stmt);
+//				decl.addAll(assignmentRex.decl);
 			}
 		}
 		stmt.addAll(CHandler.createHavocsForNonMallocAuxVars(auxVars));
 	
 		// we need to insert a free for each malloc of an auxvar before each return
-//		for (Entry<LocalLValue, Integer> entry : memoryHandler.getVariablesToBeMalloced().entrySet())  //frees are inserted in handleReturnStm
 		for (Entry<LocalLValue, Integer> entry : memoryHandler.getVariablesToBeFreed().entrySet()) {  //frees are inserted in handleReturnStm
 			if (entry.getValue() >= 1) {
 				stmt.add(memoryHandler.getFreeCall(main, this, entry.getKey(), loc));
-//				stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
 				stmt.add(new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().getLHS() }));
 			}
 		}

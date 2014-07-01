@@ -913,7 +913,13 @@ public class CHandler implements ICHandler {
 			/** int <code>x</code> becomes <code>x == 0 ? 1 : 0</code> */
 		{
 			ResultExpression rop = o.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			ResultExpression ropToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rop);
+			//implicit cast TODO: all the casting is not so nice; does the topic of pointer to int conversion apply here?
+			if (!rop.lrVal.isBoogieBool 
+					&& (!(rop.lrVal.cType instanceof CPrimitive)  || ((CPrimitive )rop.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE)) {
+				if (rop.lrVal.cType instanceof CPointer) {
+					rop.lrVal = new RValue(new StructAccessExpression(loc, rop.lrVal.getValue(), SFO.POINTER_OFFSET), new CPrimitive(PRIMITIVE.INT));
+				}
+			}
 			ResultExpression ropToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rop);
 			Expression negated = new UnaryExpression(loc,
 					UnaryExpression.Operator.LOGICNEG,
@@ -1691,7 +1697,6 @@ public class CHandler implements ICHandler {
 	public Result visit(Dispatcher main, IASTWhileStatement node) {
 		ResultExpression condResult =
 				(ResultExpression) main.dispatch(node.getCondition());
-//		String loopLabel = SFO.LOOPLABEL + symbolTable.getCompoundCounter();
 		String loopLabel = main.nameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
 		mInnerMostLoopLabel.push(loopLabel);
 		Result bodyResult = main.dispatch(node.getBody());
@@ -1701,7 +1706,6 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTForStatement node) {
-//		String loopLabel = SFO.LOOPLABEL + symbolTable.getCompoundCounter();
 		String loopLabel = main.nameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
 		return handleLoops(main, node, null, null, loopLabel);
 	}
@@ -1710,7 +1714,6 @@ public class CHandler implements ICHandler {
 	public Result visit(Dispatcher main, IASTDoStatement node) {
 		ResultExpression condResult =
 				(ResultExpression) main.dispatch(node.getCondition());
-//		String loopLabel = SFO.LOOPLABEL + symbolTable.getCompoundCounter();
 		String loopLabel = main.nameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
 		mInnerMostLoopLabel.push(loopLabel);
 		Result bodyResult = main.dispatch(node.getBody());
@@ -3110,5 +3113,15 @@ public class CHandler implements ICHandler {
 		this.symbolTable.endScope();
 		this.memoryHandler.getVariablesToBeMalloced().endScope();
 		this.memoryHandler.getVariablesToBeFreed().endScope();
+	}
+
+	public static RValue castToType(ILocation loc, RValue rVal, CType expectedType) {
+		if (!rVal.cType.equals(expectedType)) {
+			if (rVal.cType instanceof CPointer && expectedType instanceof CPrimitive && ((CPrimitive) expectedType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+				return new RValue(new StructAccessExpression(loc, rVal.getValue(), SFO.POINTER_OFFSET), expectedType);
+			}
+		} 
+		
+		return rVal;
 	}
 }
