@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -517,7 +518,7 @@ public class NestedSsaBuilder {
 				m_IndexedVarRepresentative.put(bv,index2constant);
 			}
 			assert !index2constant.containsKey(index) : "version was already constructed";
-			Term constant = m_SmtManager.getIndexedConstant(bv, index, m_IndexedConstants, m_Script);
+			Term constant = PredicateUtils.getIndexedConstant(bv, index, m_IndexedConstants, m_Script);
 			index2constant.put(index, constant);
 			return constant;
 		}
