@@ -514,8 +514,16 @@ public class LassoChecker {
 			// TODO: check that si is equivalent to true
 		} else {
 			for (SupportingInvariant si : m_Bspm.getTerminationArgument().getSupportingInvariants()) {
+				IPredicate siPred = m_Bspm.supportingInvariant2Predicate(si);
 				siCorrect &= m_Bspm.checkSupportingInvariant(
-						si, stem, loop, m_ModifiableGlobalVariableManager);
+						siPred, stem, loop, m_ModifiableGlobalVariableManager);
+			}
+			// check array index supporting invariants
+			for (Term aisi : 
+				m_Bspm.getTerminationArgument().getArrayIndexSupportingInvariants()) {
+				IPredicate siPred = m_Bspm.term2Predicate(aisi);
+				siCorrect &= m_Bspm.checkSupportingInvariant(siPred, 
+						stem, loop, m_ModifiableGlobalVariableManager);
 			}
 		}
 		return siCorrect;

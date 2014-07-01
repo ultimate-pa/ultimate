@@ -216,7 +216,8 @@ public class BinaryStatePredicateManager {
 		IPredicate unseededPredicate = unseededPredicate();
 		m_StemPrecondition = unseededPredicate;
 		m_SiConjunction = computeSiConjunction(
-				m_TerminationArgument.getSupportingInvariants());
+				m_TerminationArgument.getSupportingInvariants(),
+				m_TerminationArgument.getArrayIndexSupportingInvariants());
 		boolean siConjunctionIsTrue = isTrue(m_SiConjunction);
 		if (siConjunctionIsTrue) {
 			m_StemPostcondition = unseededPredicate;
@@ -263,8 +264,8 @@ public class BinaryStatePredicateManager {
 		return result;
 	}
 	
-	private IPredicate computeSiConjunction(Collection<SupportingInvariant> siList) {
-		Term[] siTerms = new Term[siList.size()];
+	private IPredicate computeSiConjunction(Collection<SupportingInvariant> siList, Collection<Term> aisi) {
+		Term[] siTerms = new Term[siList.size() + aisi.size()];
 		int i=0;
 		for (SupportingInvariant si : siList) {
 			Term formula = si.asTerm(m_SmtManager.getScript());
@@ -272,6 +273,11 @@ public class BinaryStatePredicateManager {
 			i++;
 		}
 		assert i == siList.size();
+		int j=0;
+		for (Term term : aisi) {
+			siTerms[i+j] = term;
+			j++;
+		}
 		Term conjunction = Util.and(m_Script, siTerms);
 		Term simplified = m_SmtManager.simplify(conjunction);
 		Term normalized = (new AffineSubtermNormalizer(m_SmtManager.getScript())).transform(simplified);
@@ -280,12 +286,15 @@ public class BinaryStatePredicateManager {
 	}
 	
 	
-	private IPredicate supportingInvariant2Predicate(SupportingInvariant si) {
+	public IPredicate supportingInvariant2Predicate(SupportingInvariant si) {
 		Term formula = si.asTerm(m_SmtManager.getScript());
 		formula = m_SmtManager.simplify(formula);
-		TermVarsProc termVarsProc = TermVarsProc.computeTermVarsProc(formula, m_SmtManager.getBoogie2Smt());
-		IPredicate result = m_SmtManager.newPredicate(termVarsProc.getFormula(),
-				termVarsProc.getProcedures(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
+		return term2Predicate(formula);
+	}
+	
+	public IPredicate term2Predicate(Term term) {
+		TermVarsProc termVarsProc = TermVarsProc.computeTermVarsProc(term, m_SmtManager.getBoogie2Smt());
+		IPredicate result = m_SmtManager.newPredicate(termVarsProc);
 		return result;
 	}
 	
@@ -380,17 +389,16 @@ public class BinaryStatePredicateManager {
 	
 	
 	
-	public boolean checkSupportingInvariant(SupportingInvariant si, 
+	public boolean checkSupportingInvariant(IPredicate siPredicate, 
 			NestedWord<CodeBlock> stem, NestedWord<CodeBlock> loop, 
 			ModifiableGlobalVariableManager modGlobVarManager) {
 		boolean result = true;
 		TraceChecker traceChecker;
 		IPredicate truePredicate = m_SmtManager.newTruePredicate();
-		IPredicate siPred = supportingInvariant2Predicate(si);
-		if (isTrue(siPred)) {
-			siPred = truePredicate;
+		if (isTrue(siPredicate)) {
+			siPredicate = truePredicate;
 		}
-		traceChecker = new TraceChecker(truePredicate, siPred, null, stem, m_SmtManager,
+		traceChecker = new TraceChecker(truePredicate, siPredicate, null, stem, m_SmtManager,
 				modGlobVarManager);
 		LBool stemCheck = traceChecker.isCorrect();
 		if (stemCheck == LBool.UNSAT) {
@@ -401,7 +409,7 @@ public class BinaryStatePredicateManager {
 			traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 			result = false;			
 		}
-		traceChecker = new TraceChecker(siPred, siPred, null, stem, m_SmtManager,
+		traceChecker = new TraceChecker(siPredicate, siPredicate, null, stem, m_SmtManager,
 				modGlobVarManager);
 		LBool loopCheck = traceChecker.isCorrect();
 		if (loopCheck == LBool.UNSAT) {

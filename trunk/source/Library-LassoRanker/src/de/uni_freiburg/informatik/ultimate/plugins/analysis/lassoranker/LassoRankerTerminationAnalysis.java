@@ -124,10 +124,9 @@ public class LassoRankerTerminationAnalysis {
 	protected final Preferences m_preferences;
 	
 	/**
-	 * Set of terms in that preprocessors (e.g. RewriteArrays) put 
-	 * supporting invariants that they discovered. 
+	 * Set of terms in which RewriteArrays puts additional supporting invariants
 	 */
-	protected final Set<Term> m_SupportingInvariantsDiscoveredByPreprocessors;
+	protected final Set<Term> m_ArrayIndexSupportingInvariants;
 
 	private final Boogie2SMT m_Boogie2SMT;
 	
@@ -157,7 +156,7 @@ public class LassoRankerTerminationAnalysis {
 		m_rankVarFactory = new VarFactory(boogie2smt);
 		m_old_script = script;
 		m_axioms = axioms;
-		m_SupportingInvariantsDiscoveredByPreprocessors = new HashSet<Term>();
+		m_ArrayIndexSupportingInvariants = new HashSet<Term>();
 		m_Boogie2SMT = boogie2smt;
 		
 		m_stem_transition = stem;
@@ -224,7 +223,7 @@ public class LassoRankerTerminationAnalysis {
 	protected PreProcessor[] getPreProcessors(VarCollector rvc,
 			TransFormula stem, TransFormula loop) {
 		return new PreProcessor[] {
-				new RewriteArrays(rvc, stem, loop, m_Boogie2SMT, m_SupportingInvariantsDiscoveredByPreprocessors),
+				new RewriteArrays(rvc, stem, loop, m_Boogie2SMT, m_ArrayIndexSupportingInvariants),
 				new RewriteDivision(rvc),
 				new RewriteBooleans(rvc),
 				new RewriteIte(),
@@ -506,7 +505,7 @@ public class LassoRankerTerminationAnalysis {
 		
 		TerminationArgumentSynthesizer tas =
 				new TerminationArgumentSynthesizer(m_stem, m_loop,
-						template, m_preferences);
+						template, m_preferences, m_ArrayIndexSupportingInvariants);
 		s_Logger.debug("Guesses for Motzkin coefficients: "
 				+ motzkinGuesses(tas));
 		final LBool constraintSat = tas.synthesize();

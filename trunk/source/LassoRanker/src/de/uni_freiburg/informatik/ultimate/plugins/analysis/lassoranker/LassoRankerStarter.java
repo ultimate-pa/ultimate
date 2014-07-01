@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.AffineTemplate;
@@ -286,11 +287,21 @@ public class LassoRankerStarter {
 
 		// check supporting invariants
 		boolean siCorrect = true;
-			for (SupportingInvariant si : 
-					bspm.getTerminationArgument().getSupportingInvariants()) {
-				siCorrect &= bspm.checkSupportingInvariant(si, m_Stem, m_Loop, 
-						m_RootAnnot.getModGlobVarManager());
-			}
+		for (SupportingInvariant si : 
+			bspm.getTerminationArgument().getSupportingInvariants()) {
+			IPredicate siPred = bspm.supportingInvariant2Predicate(si);
+			siCorrect &= bspm.checkSupportingInvariant(siPred, m_Stem, m_Loop, 
+					m_RootAnnot.getModGlobVarManager());
+		}
+		
+		// check array index supporting invariants
+		for (Term aisi : 
+			bspm.getTerminationArgument().getArrayIndexSupportingInvariants()) {
+			IPredicate siPred = bspm.term2Predicate(aisi);
+			siCorrect &= bspm.checkSupportingInvariant(siPred, m_Stem, m_Loop, 
+					m_RootAnnot.getModGlobVarManager());
+		}
+			
 		
 		// check ranking function
 		boolean rfCorrect = bspm.checkRankDecrease(m_Loop, 

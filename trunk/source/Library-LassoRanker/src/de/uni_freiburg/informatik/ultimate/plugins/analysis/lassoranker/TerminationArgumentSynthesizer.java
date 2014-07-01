@@ -67,6 +67,12 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	private RankingFunction m_ranking_function = null;
 	private Collection<SupportingInvariant> m_supporting_invariants = null;
 	
+	/**
+	 * Set of terms in which RewriteArrays has put additional 
+	 * supporting invariants
+	 */
+	private final Set<Term> m_ArrayIndexSupportingInvariants;
+	
 	private final RankingFunctionTemplate m_template;
 	
 	/**
@@ -75,15 +81,18 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @param loop the loop transition
 	 * @param template the ranking function template to be used in the analysis
 	 * @param preferences arguments to the synthesis process
+	 * @param arrayIndexSupportingInvariants supporting invariants that were
+	 * 	discovered during preprocessing
 	 */
 	public TerminationArgumentSynthesizer(LinearTransition stem,
 			LinearTransition loop, RankingFunctionTemplate template,
-			Preferences preferences) {
+			Preferences preferences, Set<Term> arrayIndexSupportingInvariants) {
 		super(stem, loop, preferences, template.getName() + "Template");
 		m_template = template;
 		
 		m_si_generators = new ArrayList<SupportingInvariantGenerator>();
 		m_supporting_invariants = new ArrayList<SupportingInvariant>();
+		m_ArrayIndexSupportingInvariants = arrayIndexSupportingInvariants;
 		
 		// Set logic
 		if (preferences.termination_check_nonlinear) {
@@ -354,6 +363,6 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	public TerminationArgument getArgument() {
 		assert synthesisSuccessful();
 		return new TerminationArgument(m_ranking_function,
-				m_supporting_invariants);
+				m_supporting_invariants, m_ArrayIndexSupportingInvariants);
 	}
 }

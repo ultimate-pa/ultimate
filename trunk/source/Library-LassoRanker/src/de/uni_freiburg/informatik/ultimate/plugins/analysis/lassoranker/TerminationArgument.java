@@ -30,7 +30,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 
 
@@ -53,13 +55,20 @@ public class TerminationArgument implements Serializable {
 	private final Collection<SupportingInvariant> m_supporting_invariants;
 	
 	/**
+	 * Set of supporting invariants that were discovered during preprocessing.
+	 */
+	private final Set<Term> m_ArrayIndexSupportingInvariants;
+	
+	/**
 	 * Construct a termination argument
 	 * @param ranking_function a ranking function
 	 * @param supporting_invariants a collection of required supporting
 	 *                              invariants
+	 * @param arrayIndexSupportingInvariants 
 	 */
 	public TerminationArgument(RankingFunction ranking_function,
-			Collection<SupportingInvariant> supporting_invariants) {
+			Collection<SupportingInvariant> supporting_invariants, 
+			Set<Term> arrayIndexSupportingInvariants) {
 		assert(ranking_function != null);
 		m_ranking_function = ranking_function;
 		assert(supporting_invariants != null);
@@ -71,7 +80,7 @@ public class TerminationArgument implements Serializable {
 				m_supporting_invariants.add(si);
 			}
 		}
-		
+		m_ArrayIndexSupportingInvariants = arrayIndexSupportingInvariants;
 	}
 	
 	/**
@@ -86,6 +95,11 @@ public class TerminationArgument implements Serializable {
 	 */
 	public Collection<SupportingInvariant> getSupportingInvariants() {
 		return Collections.unmodifiableCollection(m_supporting_invariants);
+	}
+	
+	public Collection<Term> getArrayIndexSupportingInvariants() {
+		return Collections.unmodifiableCollection(
+											m_ArrayIndexSupportingInvariants);
 	}
 	
 	public String toString() {

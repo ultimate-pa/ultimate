@@ -140,20 +140,20 @@ public class RewriteArrays implements PreProcessor {
 	private final TransFormula m_OriginalStem;
 	private final TransFormula m_OriginalLoop;
 
-	private final Set<Term> m_SupportingInvariantsDiscoveredByPreprocessors;
+	private final Set<Term> m_ArrayIndexSupportingInvariants;
 
 	
 	public RewriteArrays(VarCollector rankVarCollector, 
 			TransFormula originalStem, TransFormula originalLoop, Boogie2SMT 
 			boogie2smt, 
-			Set<Term> supportingInvariantsDiscoveredByPreprocessors) {
+			Set<Term> arrayIndexsupportingInvariants) {
 		m_VarCollector = rankVarCollector;
 		m_repVars = new LinkedHashMap<TermVariable, Term>();
 		m_repTerms = new ArrayList<Term>();
 		m_OriginalStem = originalStem;
 		m_OriginalLoop = originalLoop;
 		m_boogie2SMT = boogie2smt;
-		m_SupportingInvariantsDiscoveredByPreprocessors = supportingInvariantsDiscoveredByPreprocessors;
+		m_ArrayIndexSupportingInvariants = arrayIndexsupportingInvariants;
 	}
 	
 	@Override
@@ -192,7 +192,7 @@ public class RewriteArrays implements PreProcessor {
 		
 		new IndexCollector();
 		IndexAnalyzer ia = new IndexAnalyzer(term, m_Array2Indices, m_boogie2SMT, m_VarCollector, m_OriginalStem, m_OriginalLoop);
-		m_SupportingInvariantsDiscoveredByPreprocessors.addAll(ia.getSupportingInvariants());
+		m_ArrayIndexSupportingInvariants.addAll(ia.getSupportingInvariants());
 		m_EqualTwoeltons = ia.getEqualTwoeltons();
 		m_DistinctTwoeltons = ia.getDistinctTwoeltons();
 		m_UnknownTwoeltons = ia.getUnknownTwoeltons();
