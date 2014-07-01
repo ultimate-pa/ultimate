@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
@@ -133,12 +134,18 @@ public class RewriteArrays implements PreProcessor {
 	private SetOfTwoeltons<Term> m_EqualTwoeltons;
 	private SetOfTwoeltons<Term> m_DistinctTwoeltons;
 	private SetOfTwoeltons<Term> m_UnknownTwoeltons;
+	
+	private final TransFormula m_OriginalStem;
+	private final TransFormula m_OriginalLoop;
 
 	
-	public RewriteArrays(VarCollector rankVarCollector) {
+	public RewriteArrays(VarCollector rankVarCollector, 
+			TransFormula originalStem, TransFormula originalLoop) {
 		m_VarCollector = rankVarCollector;
 		m_repVars = new LinkedHashMap<TermVariable, Term>();
 		m_repTerms = new ArrayList<Term>();
+		m_OriginalStem = originalStem;
+		m_OriginalLoop = originalLoop;
 	}
 	
 	@Override
@@ -176,7 +183,7 @@ public class RewriteArrays implements PreProcessor {
 		}
 		
 		new IndexCollector();
-		IndexAnalyzer ia = new IndexAnalyzer(term, m_Array2Indices, m_Script, m_VarCollector);
+		IndexAnalyzer ia = new IndexAnalyzer(term, m_Array2Indices, m_Script, m_VarCollector, m_OriginalStem, m_OriginalLoop);
 		m_EqualTwoeltons = ia.getEqualTwoeltons();
 		m_DistinctTwoeltons = ia.getDistinctTwoeltons();
 		m_UnknownTwoeltons = ia.getUnknownTwoeltons();

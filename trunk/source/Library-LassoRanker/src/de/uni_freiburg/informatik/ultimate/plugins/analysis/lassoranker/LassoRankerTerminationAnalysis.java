@@ -151,7 +151,7 @@ public class LassoRankerTerminationAnalysis {
 		m_stem_transition = stem;
 		if (stem != null) {
 			s_Logger.debug("Stem transition:\n" + m_stem_transition);
-			m_stem = preprocess(m_stem_transition);
+			m_stem = preprocess(m_stem_transition, stem, loop);
 			s_Logger.debug("Preprocessed stem:\n" + m_stem);
 		} else {
 			m_stem = null;
@@ -160,7 +160,7 @@ public class LassoRankerTerminationAnalysis {
 		assert(loop != null);
 		m_loop_transition = loop;
 		s_Logger.debug("Loop transition:\n" + m_loop_transition);
-		m_loop = preprocess(m_loop_transition);
+		m_loop = preprocess(m_loop_transition, stem, loop);
 		checkVariables();
 		s_Logger.debug("Preprocessed loop:\n" + m_loop);
 	}
@@ -209,9 +209,10 @@ public class LassoRankerTerminationAnalysis {
 	 * @return an array of all preprocessors that should be called before
 	 *         termination analysis
 	 */
-	protected PreProcessor[] getPreProcessors(VarCollector rvc) {
+	protected PreProcessor[] getPreProcessors(VarCollector rvc,
+			TransFormula stem, TransFormula loop) {
 		return new PreProcessor[] {
-				new RewriteArrays(rvc),
+				new RewriteArrays(rvc, stem, loop),
 				new RewriteDivision(rvc),
 				new RewriteBooleans(rvc),
 				new RewriteIte(),
@@ -230,12 +231,13 @@ public class LassoRankerTerminationAnalysis {
 	 * @param stem a transition formula corresponding to the lasso's stem
 	 * @throws TermException
 	 */
-	public void addStem(TransFormula stem_transition) throws TermException {
+	public void addStem(TransFormula stem_transition, 
+			TransFormula originalStem, TransFormula originalLoop) throws TermException {
 		if (m_stem != null) {
 			s_Logger.warn("Adding a stem to a lasso that already had one.");
 		}
 		s_Logger.debug("Adding stem transition:\n" + stem_transition);
-		m_stem = preprocess(stem_transition);
+		m_stem = preprocess(stem_transition, originalStem, originalLoop);
 		checkVariables();
 		s_Logger.debug("Preprocessed stem:\n" + m_stem);
 	}
@@ -249,7 +251,8 @@ public class LassoRankerTerminationAnalysis {
 	 * @see PreProcessor
 	 * @throws TermException
 	 */
-	protected LinearTransition preprocess(TransFormula transition)
+	protected LinearTransition preprocess(TransFormula transition, 
+			TransFormula originalStem, TransFormula originalLoop)
 			throws TermException {
 		s_Logger.info("Starting preprocessing step...");
 		
@@ -262,7 +265,8 @@ public class LassoRankerTerminationAnalysis {
 		assert rvc.allAreInOutAux(trans_term.getFreeVars()) == null;
 		
 		// Apply preprocessors
-		for (PreProcessor preprocessor : this.getPreProcessors(rvc)) {
+		for (PreProcessor preprocessor : 
+					this.getPreProcessors(rvc, originalStem, originalLoop)) {
 			trans_term = preprocessor.process(m_old_script, trans_term);
 		}
 		

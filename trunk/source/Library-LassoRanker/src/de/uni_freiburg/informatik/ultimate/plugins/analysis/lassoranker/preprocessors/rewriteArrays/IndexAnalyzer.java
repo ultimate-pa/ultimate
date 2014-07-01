@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarCollector;
@@ -29,15 +30,21 @@ public class IndexAnalyzer {
 	private final SetOfTwoeltons<Term> distinctTwoeltons = new SetOfTwoeltons<>();
 	private final SetOfTwoeltons<Term> equalTwoeltons = new SetOfTwoeltons<>();
 	private final SetOfTwoeltons<Term> unknownTwoeltons = new SetOfTwoeltons<>();
+	private final TransFormula m_OriginalStem;
+	private final TransFormula m_OriginalLoop;
 	
 	
-	public IndexAnalyzer(Term term, HashRelation<TermVariable, List<Term>> array2Indices, Script script, VarCollector varCollector) {
+	public IndexAnalyzer(Term term, HashRelation<TermVariable, 
+			List<Term>> array2Indices, Script script, VarCollector varCollector, 
+			TransFormula originalStem, TransFormula originalLoop) {
 		super();
 		m_Term = term;
 		m_Script = script;
 		m_VarCollector = varCollector;
 		m_SupportingInvariants = new ArrayList<>();
 		m_AdditionalConjunctsInvariants = new ArrayList<>();
+		m_OriginalStem = originalStem;
+		m_OriginalLoop = originalLoop;
 		foo(array2Indices);
 	}
 
