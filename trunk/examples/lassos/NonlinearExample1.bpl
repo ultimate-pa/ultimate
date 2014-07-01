@@ -10,7 +10,7 @@
  * Ranking function: f(x, y) = x
  */
 
-procedure Bangalore() returns ()
+procedure main() returns ()
 {
   var x, y: int;
   assume(y >= 1);
