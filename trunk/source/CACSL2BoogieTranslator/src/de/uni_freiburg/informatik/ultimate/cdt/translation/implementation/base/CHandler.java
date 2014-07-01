@@ -625,7 +625,6 @@ public class CHandler implements ICHandler {
 
 						((ResultExpression) result).stmt.addAll(initRex.stmt);
 						((ResultExpression) result).stmt.addAll(createHavocsForNonMallocAuxVars(initRex.auxVars));
-//						((ResultExpression) result).auxVars.putAll(getOnlyMallocAuxVars(initRex.auxVars));
 						((ResultExpression) result).decl.addAll(initRex.decl);
 						((ResultExpression) result).overappr.addAll(initRex.overappr);
 					} else {
@@ -1566,7 +1565,6 @@ public class CHandler implements ICHandler {
 				List<Overapprox> overappr = new ArrayList<Overapprox>();
 				assert (main.isAuxVarMapcomplete(decl, rExp.auxVars));
 				stmt.addAll(createHavocsForNonMallocAuxVars(res.auxVars)); //alex: inserted this .. why wasn't it here before???
-//				mallocAuxVars.putAll(getOnlyMallocAuxVars(rExp.auxVars));
 				overappr.addAll(res.overappr);
 				Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(
 						0);
@@ -1588,7 +1586,6 @@ public class CHandler implements ICHandler {
 					decl.addAll(res.decl);
 					assert (main.isAuxVarMapcomplete(res.decl, res.auxVars));
 					stmt.addAll(createHavocsForNonMallocAuxVars(res.auxVars));
-//					mallocAuxVars.putAll(getOnlyMallocAuxVars(res.auxVars));
 					overappr.addAll(res.overappr);
 				}
 			}
@@ -1618,10 +1615,7 @@ public class CHandler implements ICHandler {
 		decl.addAll(condResult.decl);
 		stmt.addAll(condResult.stmt);
 		overappr.addAll(condResult.overappr);
-//		List<HavocStatement> havocs = Dispatcher
-//				.createHavocsForAuxVars(condResult.auxVars);
 		List<HavocStatement> havocs = createHavocsForNonMallocAuxVars(condResult.auxVars);
-//		mallocAuxVars.putAll(getOnlyMallocAuxVars(condResult.auxVars));
 
 		Result thenResult = main.dispatch(node.getThenClause());
 		List<Statement> thenStmt = new ArrayList<Statement>();
@@ -2761,7 +2755,6 @@ public class CHandler implements ICHandler {
 						decl.addAll(el.decl);
 						assert (main.isAuxVarMapcomplete(el.decl, el.auxVars));
 						bodyBlock.addAll(createHavocsForNonMallocAuxVars(el.auxVars));
-//						mallocAuxVars.putAll(getOnlyMallocAuxVars(el.auxVars));
 					}
 				} else if (iterator instanceof ResultExpression) {
 					ResultExpression iteratorRE = (ResultExpression) iterator;
@@ -2771,7 +2764,6 @@ public class CHandler implements ICHandler {
 					assert (main.isAuxVarMapcomplete(iteratorRE.decl,
 							iteratorRE.auxVars));
 					bodyBlock.addAll(createHavocsForNonMallocAuxVars(iteratorRE.auxVars));
-//					mallocAuxVars.putAll(getOnlyMallocAuxVars(iteratorRE.auxVars));
 				} else {
 					String msg = "Uninplemented type of loop iterator: "
 							+ iterator.getClass();
@@ -2794,7 +2786,6 @@ public class CHandler implements ICHandler {
 						condResult.auxVars).toArray(new Statement[0]);
 				ifStmt = new IfStatement(loc, cond,
 						thenStmt.toArray(new Statement[0]), elseStmt);
-//				mallocAuxVars.putAll(getOnlyMallocAuxVars(condResult.auxVars));
 			}
 	
 			if (node instanceof IASTWhileStatement

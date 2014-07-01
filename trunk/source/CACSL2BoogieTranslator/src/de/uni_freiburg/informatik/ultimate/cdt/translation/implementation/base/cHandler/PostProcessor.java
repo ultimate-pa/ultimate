@@ -433,27 +433,20 @@ public class PostProcessor {
 		} else if (lCType instanceof CArray) {
 
 			if (onHeap) { 
-				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
-				VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, MemoryHandler.POINTER_TYPE, loc);
-				
-				LocalLValue llVal = new LocalLValue(new VariableLHS(loc, tmpId), lCType);
-				ResultExpression mallocRex = new ResultExpression(llVal);
-				mallocRex.stmt.add(memoryHandler.getMallocCall(
-						main, functionHandler, memoryHandler.calculateSizeOf(lCType, loc), 
-						llVal, loc));
+				IdentifierExpression arrayAddress = (IdentifierExpression)((HeapLValue) var).getAddress();
+				lhs = new VariableLHS(arrayAddress.getLocation(),
+						arrayAddress.getIdentifier());			
 
-				assert lhs == null;
-				IdentifierExpression address = (IdentifierExpression)((HeapLValue) var).getAddress();
-				lhs = new VariableLHS(address.getLocation(),
-						address.getIdentifier());
-				
-//				assert lhs != null;
-//				Statement assign = new AssignmentStatement(loc, new LeftHandSide[] {lhs}, 
-//						new Expression[] { mallocRex.lrVal.getValue()});
-//
-//				stmt.add(assign);
-//				decl.add(tVarDecl);
-//				auxVars.put(tVarDecl, loc);
+				ResultExpression mallocRex = memoryHandler.getMallocCall(main, functionHandler,
+						memoryHandler.calculateSizeOf(lCType, loc), loc);
+				stmt.addAll(mallocRex.stmt);
+				decl.addAll(mallocRex.decl);
+				auxVars.putAll(mallocRex.auxVars);
+				Expression address = mallocRex.lrVal.getValue();
+
+				Statement assign = new AssignmentStatement(loc, new LeftHandSide[] {lhs}, 
+						new Expression[] { mallocRex.lrVal.getValue()});
+				stmt.add(assign);
 
 				stmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, structHandler, loc, 
 						initializer == null ? null : ((ResultExpressionListRec) initializer).list,

@@ -816,7 +816,7 @@ public class MemoryHandler {
      * @return a function call expression for ~malloc(size).
      */
     public ResultExpression getMallocCall(Dispatcher main, FunctionHandler fh,
-            Expression size, CACSLLocation loc) {
+            Expression size, ILocation loc) {
     	String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
         VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, MemoryHandler.POINTER_TYPE, loc);
         
