@@ -655,35 +655,9 @@ public class SmtManager {
 //			return Script.LBool.UNSAT;
 //		}
 		
-		m_Script.push(1);
-		Map<String, Term> indexedConstants = new HashMap<String, Term>();
-		//OldVars not renamed
-		//All variables get index 0 
-		Term ps1renamed = formulaWithIndexedVars(ps1,new HashSet<BoogieVar>(0),
-				4, 0, Integer.MIN_VALUE,null,-5,0, indexedConstants, m_Script, m_Boogie2Smt);
-		
 		TransFormula tf = ta.getTransitionFormula();
-		Set<BoogieVar> assignedVars = new HashSet<BoogieVar>();
-		Term fTrans = formulaWithIndexedVars(tf, 0, 1, assignedVars, indexedConstants, m_Script, m_Boogie2Smt.getVariableManager());
-
-		//OldVars not renamed
-		//All variables get index 0 
-		//assigned vars (locals and globals) get index 1
-		//other vars get index 0
-		Term ps2renamed = formulaWithIndexedVars(ps2, assignedVars,
-				1, 0, Integer.MIN_VALUE,assignedVars,1,0, indexedConstants, m_Script, m_Boogie2Smt);
 		
-		
-		//We want to return true if (fState1 && fTrans)-> fState2 is valid
-		//This is the case if (fState1 && fTrans && !fState2) is unsatisfiable
-		Term f = Util.not(m_Script,ps2renamed);
-		f = Util.and(m_Script,fTrans,f);
-		f = Util.and(m_Script,ps1renamed, f);
-		
-//		f = new FormulaUnLet().unlet(f);
-		LBool result = this.checkSatisfiable(f);
-
-		m_Script.pop(1);
+		LBool result = isInductiveHelper(m_Boogie2Smt, ps1, ps2, tf);
 		
 		if (expectUnsat) {
 			if (result == LBool.SAT) {
@@ -700,6 +674,42 @@ public class SmtManager {
 		if (m_TestDataflow) {
 			testMyInternalDataflowCheck(ps1, ta, ps2, result);
 		}
+		return result;
+	}
+
+	public static LBool isInductiveHelper(Boogie2SMT boogie2smt, IPredicate ps1, IPredicate ps2,
+			TransFormula tf) {
+		boogie2smt.getScript().push(1);
+		Map<String, Term> indexedConstants = new HashMap<String, Term>();
+		//OldVars not renamed
+		//All variables get index 0 
+		Term ps1renamed = formulaWithIndexedVars(ps1,new HashSet<BoogieVar>(0),
+				4, 0, Integer.MIN_VALUE,null,-5,0, indexedConstants, boogie2smt.getScript(), boogie2smt);
+		
+		Set<BoogieVar> assignedVars = new HashSet<BoogieVar>();
+		Term fTrans = formulaWithIndexedVars(tf, 0, 1, assignedVars, indexedConstants, boogie2smt.getScript(), boogie2smt.getVariableManager());
+
+		//OldVars not renamed
+		//All variables get index 0 
+		//assigned vars (locals and globals) get index 1
+		//other vars get index 0
+		Term ps2renamed = formulaWithIndexedVars(ps2, assignedVars,
+				1, 0, Integer.MIN_VALUE,assignedVars,1,0, indexedConstants, boogie2smt.getScript(), boogie2smt);
+		
+		
+		//We want to return true if (fState1 && fTrans)-> fState2 is valid
+		//This is the case if (fState1 && fTrans && !fState2) is unsatisfiable
+		Term f = Util.not(boogie2smt.getScript(),ps2renamed);
+		f = Util.and(boogie2smt.getScript(),fTrans,f);
+		f = Util.and(boogie2smt.getScript(),ps1renamed, f);
+		
+		// f = new FormulaUnLet().unlet(f);
+		boogie2smt.getScript().assertTerm(f);
+		
+		LBool result = boogie2smt.getScript().checkSat();
+//		LBool result = boogie2smt.getScript().checkSatisfiable(f);
+
+		boogie2smt.getScript().pop(1);
 		return result;
 	}
 	
