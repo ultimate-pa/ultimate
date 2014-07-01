@@ -45,7 +45,7 @@ public class ReachingDefinitions implements IAnalysis {
 		case "RCFGBuilder":
 			return Collections.singletonList((IObserver) new ReachDefRCFG());
 		default:
-			return null;
+			return Collections.emptyList();
 		}
 	}
 
