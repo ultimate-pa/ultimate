@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Weakest
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.CodeBlockSize;
+import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
@@ -161,7 +162,7 @@ public class CfgBuilder {
 			m_Script.setOption(":produce-unsat-cores", true);
 			// m_Script.setOption(":interpolant-check-mode", true);
 			// m_Script.setLogic("AUFNIRA");
-			m_Script.setLogic("AUFNIRA");
+			m_Script.setLogic("AUFLIRA");
 			// m_Script.setOption(":verbosity", 0);
 			blackHolesArrays = false;
 		}
@@ -555,6 +556,11 @@ public class CfgBuilder {
 				throw new IllegalArgumentException();
 			}
 			ProgramPoint errorLocNode = new ProgramPoint(errorLocLabel, procName, true, BoogieASTNode);
+			Object checkCand = BoogieASTNode.getPayload().getAnnotations().get(Check.getIdentifier());
+			if (checkCand != null) {
+				Check check = (Check) checkCand;
+				errorLocNode.getPayload().getAnnotations().put(Check.getIdentifier(), check);
+			}
 			m_procLocNodes.put(errorLocLabel, errorLocNode);
 			errorNodes.add(errorLocNode);
 			return errorLocNode;
