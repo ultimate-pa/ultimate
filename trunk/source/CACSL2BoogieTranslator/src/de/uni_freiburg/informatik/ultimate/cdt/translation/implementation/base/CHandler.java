@@ -601,7 +601,10 @@ public class CHandler implements ICHandler {
 						//may lead to unsoundness)
 						//..except if OnHeap. Then it is malloced instead.
 						assert result instanceof ResultSkip || result instanceof ResultExpression;
-						result = new ResultExpression((LRValue) null);
+
+						if (result instanceof ResultSkip)// --> this line missing was a bug that eliminated the initialization of statements before the initialized
+							result = new ResultExpression((LRValue) null);
+
 						//							if (onHeap)
 						//								((ResultExpression) result).stmt.add(
 						//										memoryHandler.getMallocCall(main, functionHandler, 
