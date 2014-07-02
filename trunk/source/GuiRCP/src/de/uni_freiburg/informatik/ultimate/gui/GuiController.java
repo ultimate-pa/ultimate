@@ -180,8 +180,8 @@ public class GuiController implements IController {
 		mDisplay.asyncExec(new Runnable() {
 			public void run() {
 				Shell shell = new Shell(mDisplay);
-//				MessageDialog.openError(shell, "An error occured", description
-//						+ " " + ex.getMessage());
+				MessageDialog.openError(shell, "An error occured", description
+						+ " " + ex.getMessage());
 			}
 		});
 

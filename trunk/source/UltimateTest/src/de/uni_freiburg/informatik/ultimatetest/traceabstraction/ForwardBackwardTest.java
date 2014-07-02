@@ -18,13 +18,13 @@ public class ForwardBackwardTest extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Directories = {
 		"examples/programs/regression",
-//		"examples/programs/quantifier",
-//		"examples/programs/recursivePrograms",
-//		"examples/programs/toy"
+		"examples/programs/quantifier",
+		"examples/programs/recursivePrograms",
+		"examples/programs/toy"
 	};
 	
-	private static final boolean m_TraceAbstractionBoogieWithBackwardPredicates = true;
-	private static final boolean m_TraceAbstractionBoogieWithForwardPredicates = true;
+	private static final boolean m_TraceAbstractionBoogieWithBackwardPredicates = !true;
+	private static final boolean m_TraceAbstractionBoogieWithForwardPredicates = !true;
 	private static final boolean m_TraceAbstractionCWithBackwardPredicates = true;
 	private static final boolean m_TraceAbstractionCWithForwardPredicates = true;		
 	// Time out for each test case in milliseconds
