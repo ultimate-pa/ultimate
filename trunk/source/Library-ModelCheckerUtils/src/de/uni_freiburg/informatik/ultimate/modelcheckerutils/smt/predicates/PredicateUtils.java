@@ -200,7 +200,7 @@ public class PredicateUtils {
 			}
 		}
 		for (TermVariable tv : notYetSubst) {
-			Term cIndex = variableManager.getCorrespondingConstant(tv);
+			Term cIndex = variableManager.getOrConstructCorrespondingConstant(tv);
 			TermVariable[] vars = { tv }; 
 			Term[] values = { cIndex };
 			fTrans = script.let(vars, values, fTrans);

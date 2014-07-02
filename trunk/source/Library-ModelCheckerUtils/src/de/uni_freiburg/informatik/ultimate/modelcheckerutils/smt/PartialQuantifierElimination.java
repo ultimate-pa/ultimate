@@ -248,7 +248,9 @@ public class PartialQuantifierElimination {
 		}
 		
 		// simplification
-		result = (new SimplifyDDA(script)).getSimplifiedTerm(result);
+		result = SmtUtils.simplify(script, result);
+				
+//				(new SimplifyDDA(script)).getSimplifiedTerm(result);
 		eliminatees.retainAll(Arrays.asList(result.getFreeVars()));
 		
 //		if (!eliminateesBeforeSOS.containsAll(eliminatees)) {

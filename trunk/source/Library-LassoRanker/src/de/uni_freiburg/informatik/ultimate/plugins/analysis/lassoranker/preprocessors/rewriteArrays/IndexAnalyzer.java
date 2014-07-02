@@ -97,7 +97,7 @@ public class IndexAnalyzer {
 		Term termWithAdditionalInvariants = Util.and(m_Script, m_Term, getAdditionalConjunctsInvariants());
 
 		m_Script.push(1);
-		Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(m_Script, termWithAdditionalInvariants.getFreeVars());
+		Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(m_Script, m_boogie2smt.getVariableManager(), termWithAdditionalInvariants.getFreeVars());
 		SafeSubstitution subst = new SafeSubstitution(m_Script, substitutionMapping);
 		m_Script.assertTerm(subst.transform(termWithAdditionalInvariants));
 		for (Twoelton<Term> twoelton : allTwoeltons.elements()) {

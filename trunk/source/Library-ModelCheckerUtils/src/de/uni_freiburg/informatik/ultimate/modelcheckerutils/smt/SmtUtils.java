@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class SmtUtils {
@@ -266,11 +267,14 @@ public class SmtUtils {
 		return result;
 	}
 	
-	public static Map<Term, Term> termVariables2Constants(
-								Script script, TermVariable[] termVariables) {
+	public static Map<Term, Term> termVariables2Constants(Script script, 
+			VariableManager variableManager, TermVariable[] termVariables) {
 		Map<Term, Term> mapping = new HashMap<Term, Term>();
 		for (TermVariable tv : termVariables) {
-			Term constant = termVariable2constant(script, tv);
+			Term constant = variableManager.getCorrespondingConstant(tv);
+			if (constant == null) {
+				constant = termVariable2constant(script, tv);
+			}
 			mapping.put(tv, constant);
 		}
 		return mapping;

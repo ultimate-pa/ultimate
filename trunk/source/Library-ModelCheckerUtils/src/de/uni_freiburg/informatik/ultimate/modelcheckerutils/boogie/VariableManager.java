@@ -42,13 +42,17 @@ public class VariableManager {
 		return result;
 	}
 	
-	public Term getCorrespondingConstant(TermVariable tv) {
+	public Term getOrConstructCorrespondingConstant(TermVariable tv) {
 		Term constant = m_TermVariable2Constant.get(tv);
 		if (constant == null) {
 			constant = SmtUtils.termVariable2constant(m_Script, tv);
 			m_TermVariable2Constant.put(tv, constant);
 		}
 		return constant;
+	}
+	
+	public Term getCorrespondingConstant(TermVariable tv) {
+		return m_TermVariable2Constant.get(tv);
 	}
 	
 //	/**
