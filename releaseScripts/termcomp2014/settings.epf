@@ -36,7 +36,7 @@ file_export_version=3.0
 #Wed Mar 19 04:15:41 CET 2014
 file_export_version=3.0
 /instance/UltimateCore/Log\ level\ for\ plugins=warn
-/instance/UltimateCore/Toolchain\ timeout\ in\ seconds=300
+/instance/UltimateCore/Toolchain\ timeout\ in\ seconds=3000
 \!/instance/UltimateCore=
 @UltimateCore=0.0.1
 /instance/UltimateCore/Generate\ benchmark\ results=false
