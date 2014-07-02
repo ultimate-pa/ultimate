@@ -174,8 +174,8 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		// we iterate over the key set, each key represents the name
 		// of the tool, which created the results
 		for (String toolID : tools) {
-			CDTResultStore.addResults(fileName, toolID, UltimateServices.getInstance().getResultMap().get(toolID));
 			List<IResult> resultsOfTool = UltimateServices.getInstance().getResultMap().get(toolID);
+			CDTResultStore.addResults(fileName, toolID, resultsOfTool);
 			if(resultsOfTool == null){
 				log.debug("No results for " + toolID);
 				continue;

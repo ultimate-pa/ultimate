@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclar
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.WeakestPrecondition;
@@ -102,11 +102,11 @@ public class CfgBuilder {
 
 	Collection<Summary> m_ImplementationSummarys = new ArrayList<Summary>();
 
-	private Backtranslator m_Backtranslator;
+	private RCFGBacktranslator m_Backtranslator;
 
 	private CodeBlockSize m_CodeBlockSize;
 
-	public CfgBuilder(Unit unit, Backtranslator backtranslator) {
+	public CfgBuilder(Unit unit, RCFGBacktranslator backtranslator) {
 		m_Backtranslator = backtranslator;
 		boolean useExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(PreferenceInitializer.LABEL_ExtSolverFlag);

@@ -304,7 +304,7 @@ public class UltimateLoggerFactory {
 
 		// create children for plug-ins
 		LoggerRepository piRepos = pluginsLogger.getLoggerRepository();
-		String[] plugins = getAllKeys();
+		String[] plugins = getDefinedLogLevels();
 
 		for (String plugin : plugins) {
 			Logger logger = piRepos.getLogger(LOGGER_NAME_PLUGINS + "."
@@ -315,7 +315,7 @@ public class UltimateLoggerFactory {
 
 		// create child loggers for external tools
 		LoggerRepository toolRepos = toolslog.getLoggerRepository();
-		String[] tools = getAllKeys();
+		String[] tools = getDefinedLogLevels();
 		for (String tool : tools) {
 			Logger logger = toolRepos.getLogger(LOGGER_NAME_TOOLS + "." + tool);
 			logger.setLevel(Level.toLevel(getLogLevel(tool)));
@@ -345,7 +345,7 @@ public class UltimateLoggerFactory {
 				.getString(CorePreferenceInitializer.PREFID_DETAILS));
 	}
 
-	private String[] getAllKeys() {
+	private String[] getDefinedLogLevels() {
 		String[] pref = convert(mPreferenceStore
 				.getString(CorePreferenceInitializer.PREFID_DETAILS));
 		String[] retVal = new String[pref.length];

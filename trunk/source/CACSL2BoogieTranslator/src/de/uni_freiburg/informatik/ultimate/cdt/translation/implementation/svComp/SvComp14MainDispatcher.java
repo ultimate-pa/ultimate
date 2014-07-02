@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.N
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PreprocessorHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.SideEffectHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Backtranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 
 /**
  * TODO Currently only the old SV-COMP 2013 options are imitated.
@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  */
 public class SvComp14MainDispatcher extends MainDispatcher {
 	
-    public SvComp14MainDispatcher(Backtranslator backtranslator) {
+    public SvComp14MainDispatcher(CACSL2BoogieBacktranslator backtranslator) {
 		super(backtranslator);
 	}
     

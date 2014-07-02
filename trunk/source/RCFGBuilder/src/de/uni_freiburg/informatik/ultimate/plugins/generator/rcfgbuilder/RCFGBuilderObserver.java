@@ -53,7 +53,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 		}
 		else {
 			Unit unit = (Unit) root;
-			Backtranslator translator =	new Backtranslator();
+			RCFGBacktranslator translator =	new RCFGBacktranslator();
 			CfgBuilder recCFGBuilder = new CfgBuilder(unit, translator);
 			try {
 				m_graphroot = recCFGBuilder.getRootNode(unit);

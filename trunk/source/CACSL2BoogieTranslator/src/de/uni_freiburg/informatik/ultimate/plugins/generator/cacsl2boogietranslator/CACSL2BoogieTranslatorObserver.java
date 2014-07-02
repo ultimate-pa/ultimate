@@ -89,7 +89,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			throw new IllegalArgumentException(
 					"Unable to determine preferred mode.");
 		}
-		Backtranslator backtranslator = new Backtranslator();
+		CACSL2BoogieBacktranslator backtranslator = new CACSL2BoogieBacktranslator();
 		s_Logger.info("Settings: " + mode);
 		switch (mode) {
 		case BASE:

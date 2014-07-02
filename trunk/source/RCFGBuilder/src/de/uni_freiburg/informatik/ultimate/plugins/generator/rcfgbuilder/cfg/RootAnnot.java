@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 
 /**
  * Stores information about about a program that is not represented by the
@@ -92,7 +92,7 @@ public class RootAnnot extends AbstractAnnotations {
 
 
 
-	private Backtranslator m_Backtranslator;
+	private RCFGBacktranslator m_Backtranslator;
 
 
 
@@ -109,7 +109,7 @@ public class RootAnnot extends AbstractAnnotations {
 	};
 	
 	public RootAnnot(BoogieDeclarations boogieDeclarations,
-			Boogie2SMT m_Boogie2smt, Backtranslator backtranslator) {
+			Boogie2SMT m_Boogie2smt, RCFGBacktranslator backtranslator) {
 		m_BoogieDeclarations = boogieDeclarations;
 		m_Boogie2SMT = m_Boogie2smt;
 		m_Backtranslator = backtranslator;

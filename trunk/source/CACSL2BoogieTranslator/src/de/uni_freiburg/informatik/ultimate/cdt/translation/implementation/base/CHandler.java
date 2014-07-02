@@ -164,7 +164,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Backtranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer.POINTER_BASE_VALIDITY;
 import de.uni_freiburg.informatik.ultimate.result.Check;
@@ -244,7 +244,7 @@ public class CHandler implements ICHandler {
 	/**
 	 * Translation from Boogie to C for traces and expressions.
 	 */
-	protected final Backtranslator backtranslator;
+	protected final CACSL2BoogieBacktranslator backtranslator;
 
 	/**
 	 * If set to true and the program contains an error label ULTIMATE shows
@@ -280,7 +280,7 @@ public class CHandler implements ICHandler {
 	 * @param backtranslator
 	 *            a reference to the Backtranslator object.
 	 */
-	public CHandler(Dispatcher main, Backtranslator backtranslator, boolean errorLabelWarning) {
+	public CHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, boolean errorLabelWarning) {
 		this.arrayHandler = new ArrayHandler();
 		this.functionHandler = new FunctionHandler();
 		this.postProcessor = new PostProcessor();

@@ -35,22 +35,17 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
  */
 public class Toolchain {
 
-	    private ObjectFactory of;
-	    private ToolchainListType chain;
-	    
-	    /**
-	     * This references the storage every toolchain can provide its plugins and which
-	     * will be cleared after every toolchain run.
-	     */
-	    private Map<String, IStorable> m_Storage;
+	    private ObjectFactory mObjectFactory;
+	    private ToolchainListType mToolchain;
+	    private Map<String, IStorable> mToolchainStorage;
 
 	    /**
 	     * This constructor creates an empty toolchain.
 	     */
 	    public Toolchain(){
-	        this.of = new ObjectFactory();
-	        this.chain = of.createToolchainListType();
-	        this.m_Storage = new HashMap<String, IStorable>();
+	        this.mObjectFactory = new ObjectFactory();
+	        this.mToolchain = mObjectFactory.createToolchainListType();
+	        this.mToolchainStorage = new HashMap<String, IStorable>();
 	    }
 	    
 	    private boolean isReady(Bundle bundle){
@@ -68,7 +63,7 @@ public class Toolchain {
 	     */
 	    @SuppressWarnings({ "unchecked" })
 		public Toolchain(String xmlfile) throws JAXBException, FileNotFoundException, SAXException {
-	    	this.of = new ObjectFactory(); 
+	    	this.mObjectFactory = new ObjectFactory(); 
 	    	JAXBContext jc = JAXBContext.newInstance("de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain" );
 
 	    	// all this effort just for validating the input XML file...
@@ -93,8 +88,8 @@ public class Toolchain {
 			JAXBElement<ToolchainListType> doc = 
 				(JAXBElement<ToolchainListType>) u.unmarshal(new FileInputStream(xmlfile));
 			
-			this.chain = doc.getValue();
-			this.m_Storage = new HashMap<String, IStorable>();
+			this.mToolchain = doc.getValue();
+			this.mToolchainStorage = new HashMap<String, IStorable>();
 	    }
 
 	    
@@ -109,7 +104,7 @@ public class Toolchain {
 	    public void writeToFile(String xmlfile) throws JAXBException, FileNotFoundException {
 	    	 JAXBContext jc = JAXBContext.newInstance("de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain" );
 	    	 JAXBElement<ToolchainListType> newdoc =
-	             of.createToolchain(this.chain);
+	             mObjectFactory.createToolchain(this.mToolchain);
 	         Marshaller m = jc.createMarshaller();
 	         m.marshal(newdoc, new FileOutputStream(xmlfile) );
 	    }
@@ -122,7 +117,7 @@ public class Toolchain {
 	     * @param plugin object of type PluginType
 	     */
 	    public void addPlugin(PluginType plugin) {
-	    	this.chain.getPluginOrSubchain().add(plugin);
+	    	this.mToolchain.getPluginOrSubchain().add(plugin);
 	    }
 	    
 
@@ -135,7 +130,7 @@ public class Toolchain {
 	    public void addPlugin(String name) {
 	    	PluginType foo = new PluginType();
 	    	foo.setId(name);
-	    	this.chain.getPluginOrSubchain().add(foo);
+	    	this.mToolchain.getPluginOrSubchain().add(foo);
 	    }
 	    
 	    /**
@@ -146,7 +141,7 @@ public class Toolchain {
 	     * @param subchain object of type SubchainType
 	     */
 	    public void addSubchain(SubchainType subchain) {
-	    	this.chain.getPluginOrSubchain().add(subchain);
+	    	this.mToolchain.getPluginOrSubchain().add(subchain);
 	    }
 	    
 	    /**
@@ -156,19 +151,19 @@ public class Toolchain {
 	     * @param tc the Toolchain object to be appended to this Toolchain object
 	     */
 	    public void addToolchain(Toolchain tc) {
-	    	this.chain.getPluginOrSubchain().addAll(tc.getToolchain().getPluginOrSubchain());
+	    	this.mToolchain.getPluginOrSubchain().addAll(tc.getToolchain().getPluginOrSubchain());
 	    }
 	    
 	    public ToolchainListType getToolchain() {
-	    	return this.chain;
+	    	return this.mToolchain;
 	    }
 
 		public IStorable getStoredObject(String key){
-			return this.m_Storage.get(key);
+			return this.mToolchainStorage.get(key);
 		}
 		
 		public void putIntoStorage(String key, IStorable value){
-			this.m_Storage.put(key, value);
+			this.mToolchainStorage.put(key, value);
 		}
 		
 		/**
@@ -178,7 +173,7 @@ public class Toolchain {
 		 * will be caught and ignored.
 		 */
 		public void clearStore(){
-			for (IStorable storable : this.m_Storage.values()) {
+			for (IStorable storable : this.mToolchainStorage.values()) {
 				// all exceptions shall be caught and ignored
 				try {
 					storable.destroy();
@@ -186,7 +181,7 @@ public class Toolchain {
 					UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID).error("An error occurred while trying to free Storable "+storable.toString());
 				}
 			}
-			this.m_Storage.clear();
+			this.mToolchainStorage.clear();
 		}
 	    
 	}

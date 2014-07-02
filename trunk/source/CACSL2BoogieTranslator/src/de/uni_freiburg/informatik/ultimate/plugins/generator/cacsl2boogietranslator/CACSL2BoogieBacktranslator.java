@@ -27,13 +27,13 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 /**
  * Translation from Boogie to C for traces and expressions.
  */
-public class Backtranslator extends DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, String> {
+public class CACSL2BoogieBacktranslator extends DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, String> {
 
 	Map<BoogieASTNode, CACSLLocation> m_Position = 
 			new HashMap<BoogieASTNode, CACSLLocation>();
 	Boogie2C m_boogie2C;
 
-	public Backtranslator() {
+	public CACSL2BoogieBacktranslator() {
 	}
 	
 	@Override

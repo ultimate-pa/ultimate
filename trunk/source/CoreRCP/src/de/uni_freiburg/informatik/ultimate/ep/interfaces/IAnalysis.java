@@ -1,17 +1,19 @@
 package de.uni_freiburg.informatik.ultimate.ep.interfaces;
 
-
 /**
  * An interface all analysis plugins should implement.
  * 
+ * An analysis tool is a tool that does not generate a new model, but instead
+ * annotates or transforms an existing one.
  * 
- * @author Christian Ortolf
- * @version 0.1.1 
- * $LastChangedDate: 2008-03-07 14:46:30 +0100 (Fr, 07 Mrz 2008) $
- * $LastChangedBy: dietsch 
- * $LastChangedRevision: 497 $
+ * As it is costly to enforce the structure of a model against a plugins' will,
+ * Ultimate does not check whether an analysis plugin transforms the given mdoel
+ * or not, it just assumes it does. Therefore, IAnalysis has to implement
+ * {@link IModifyingTool}, although it may in fact not modify the model beyond
+ * annotations, or not at all.
+ * 
+ * @author dietsch
  */
-public interface IAnalysis extends IModifyingTool{
+public interface IAnalysis extends IModifyingTool {
 
-	
 }

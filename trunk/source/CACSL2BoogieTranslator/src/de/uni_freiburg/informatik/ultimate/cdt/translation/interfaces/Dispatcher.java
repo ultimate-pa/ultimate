@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Backtranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtLocation;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
@@ -87,9 +87,9 @@ public abstract class Dispatcher {
 	/**
 	 * Translation from Boogie to C for traces and expressions.
 	 */
-	protected final Backtranslator backtranslator;
+	protected final CACSL2BoogieBacktranslator backtranslator;
 
-	public Dispatcher(Backtranslator backtranslator) {
+	public Dispatcher(CACSL2BoogieBacktranslator backtranslator) {
 		this.backtranslator = backtranslator;
 	}
 

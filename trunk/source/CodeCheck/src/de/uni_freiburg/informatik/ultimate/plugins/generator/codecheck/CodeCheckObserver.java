@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.IEmp
 import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.NWAEmptinessCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.impulse.ImpulseChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.kojak.UltimateChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -545,7 +545,7 @@ private void reportCounterexampleResult(RcfgProgramExecution pe) {
 		}
 		String ctxMessage = ResultUtil.getCheckedSpecification(errorPP).getNegativeMessage();
 		ctxMessage += " (line " + origin.getStartLine() + ")";
-		Backtranslator backtrans = (Backtranslator) translatorSequence.get(translatorSequence.size()-1);
+		RCFGBacktranslator backtrans = (RCFGBacktranslator) translatorSequence.get(translatorSequence.size()-1);
 		BoogieProgramExecution bpe = (BoogieProgramExecution) backtrans.translateProgramExecution(pe);
 		CounterExampleResult<RcfgElement, Expression> ctxRes = new CounterExampleResult<RcfgElement, Expression>(
 				errorPP,

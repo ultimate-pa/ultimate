@@ -126,7 +126,7 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 				.getActiveTools();
 		String[] return_list = new String[plugins.size()];
 		for (int i = 0; i < plugins.size(); i++) {
-			return_list[i] = plugins.get(i).getPluginID() + "=<DEBUG LEVEL>";
+			return_list[i] = plugins.get(i).getPluginID() + "=<LOG LEVEL>";
 		}
 		return return_list;
 	}

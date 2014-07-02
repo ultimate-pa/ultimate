@@ -61,7 +61,7 @@ public class ReachingDefinitions implements IAnalysis {
 
 	@Override
 	public String getPluginID() {
-		return Activator.PluginName;
+		return Activator.PluginID;
 	}
 
 	@Override

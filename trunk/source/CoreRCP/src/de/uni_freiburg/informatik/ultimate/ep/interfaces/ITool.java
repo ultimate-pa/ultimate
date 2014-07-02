@@ -88,9 +88,12 @@ public interface ITool extends IToolchainPlugin{
 	
 	/**
 	 * 
-	 * This method asks all tools for their implementations of IObserver. 
+	 * This method asks all tools for their implementations of IObserver. If you
+	 * do not want to execute anything for the current model (as seen by
+	 * {@link #setInputDefinition(GraphType)}, just return an empty list.
 	 * 
-	 * @return All observers which should be run for this tool.
+	 * @return All observers which should be run for this tool. You may not
+	 *         return null.
 	 */
 	List<IObserver> getObservers();	
 }

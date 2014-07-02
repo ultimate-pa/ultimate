@@ -172,7 +172,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Backtranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 
 /**
  * @author Markus Lindenmann
@@ -233,7 +233,7 @@ public class MainDispatcher extends Dispatcher {
     
     //end alex
 
-    public MainDispatcher(Backtranslator backtranslator) {
+    public MainDispatcher(CACSL2BoogieBacktranslator backtranslator) {
 		super(backtranslator);
 	}
 

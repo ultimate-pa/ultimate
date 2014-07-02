@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Backtranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 
@@ -88,7 +88,7 @@ public class SvComp14CHandler extends CHandler {
      * @param main
      *            a reference to the main dispatcher.
      */
-    public SvComp14CHandler(Dispatcher main, Backtranslator backtranslator) {
+    public SvComp14CHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator) {
         super(main, backtranslator, false);
         super.arrayHandler = new SVCompArrayHandler();
     }

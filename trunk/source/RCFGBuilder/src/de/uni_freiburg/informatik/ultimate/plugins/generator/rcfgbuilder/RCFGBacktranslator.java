@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 
-public class Backtranslator extends DefaultTranslator<
+public class RCFGBacktranslator extends DefaultTranslator<
 					RcfgElement, BoogieASTNode, Expression, Expression> {
 	
 	private Map<Statement, BoogieASTNode> m_CodeBlock2Statement = 
