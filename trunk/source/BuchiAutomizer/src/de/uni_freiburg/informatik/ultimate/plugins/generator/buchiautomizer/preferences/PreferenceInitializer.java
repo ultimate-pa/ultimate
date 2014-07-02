@@ -52,6 +52,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(LABEL_DumpPath,
 						DEF_DumpPath, PreferenceType.Directory),
+				new UltimatePreferenceItem<Boolean>(LABEL_TermcompProof,
+						false, PreferenceType.Boolean),
 		};
 	}
 
@@ -82,6 +84,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_DumpToFile = "Dump SMT script to file";
 	public static final String LABEL_DumpPath = "To the following directory";
 	public static final String DEF_DumpPath = "";
+	public static final String LABEL_TermcompProof = "Construct termination proof for TermComp";
 	
 	public enum BInterpolantAutomaton { LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged };
 	

@@ -10,11 +10,13 @@ import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -74,6 +76,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				"Constructed decomposition of program", bcl.getMDBenchmark());
 		reportResult(benchDecomp);
 //		s_Logger.info("BenchmarkResult: " + benchDecomp.getShortDescription() + ": " + benchDecomp.getLongDescription());
+		boolean constructTermcompProof = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_TermcompProof);
+		if (constructTermcompProof) {
+			IResult termcompProof = new BenchmarkResult<Double>(Activator.s_PLUGIN_ID,
+					"Constructed termination proof in form of nested word automata", bcl.getTermcompProofBenchmark());
+			reportResult(termcompProof);
+		}
 		
 		TimingBenchmark timingBenchmark = new TimingBenchmark(benchGen);
 		IResult benchTiming = new BenchmarkResult(Activator.s_PLUGIN_ID,

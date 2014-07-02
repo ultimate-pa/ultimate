@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -56,15 +55,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.CanonicalInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
@@ -174,6 +172,8 @@ public class BuchiCegarLoop {
 		private final boolean m_ScroogeNondeterminismLoop;
 		private final boolean m_CannibalizeLoop;
 		private final int m_MaxNumberOfLoopUnwindings;
+		private final boolean m_ConstructTermcompProof;
+		private final TermcompProofBenchmark m_TermcompProofBenchmark;
 		
 		private final INTERPOLATION m_Interpolation;
 		
@@ -181,6 +181,7 @@ public class BuchiCegarLoop {
 		private final List<RefineBuchi.RefinementSetting> m_BuchiRefinementSettingSequence;
 
 		private NonTerminationArgument m_NonterminationArgument;
+		
 		
 		public NonTerminationArgument getNonTerminationArgument() {
 			return m_NonterminationArgument;
@@ -233,6 +234,12 @@ public class BuchiCegarLoop {
 			m_CannibalizeLoop = baPref.getBoolean(PreferenceInitializer.LABEL_CannibalizeLoop);
 			m_MaxNumberOfLoopUnwindings = baPref.getInt(PreferenceInitializer.LABEL_LoopUnwindings);
 			m_Interpolation = baPref.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS, INTERPOLATION.class);
+			m_ConstructTermcompProof = baPref.getBoolean(PreferenceInitializer.LABEL_TermcompProof);
+			if (m_ConstructTermcompProof) {
+				m_TermcompProofBenchmark = new TermcompProofBenchmark();
+			} else {
+				m_TermcompProofBenchmark = null;
+			}
 			
 			m_RefineBuchi = new RefineBuchi(m_SmtManager, m_Pref.dumpAutomata(), 
 					m_Difference, m_DefaultStateFactory, m_StateFactoryForRefinement, m_UseDoubleDeckers, 
@@ -330,10 +337,16 @@ public class BuchiCegarLoop {
 				} catch (OperationCanceledException e1) {
 					s_Logger.warn("Verification cancelled");
 					m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), false);
+					if (m_ConstructTermcompProof) {
+						m_TermcompProofBenchmark.reportRemainderModule(false);
+					}
 					return Result.TIMEOUT;
 				}
 				if (abstractionCorrect) {
 					m_MDBenchmark.reportNoRemainderModule();
+					if (m_ConstructTermcompProof) {
+						m_TermcompProofBenchmark.reportNoRemainderModule();
+					}
 					return Result.TERMINATING;
 				}
 				
@@ -402,10 +415,16 @@ public class BuchiCegarLoop {
 						break;
 					case REPORT_UNKNOWN:
 						m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), false);
+						if (m_ConstructTermcompProof) {
+							m_TermcompProofBenchmark.reportRemainderModule(false);
+						}
 						return Result.UNKNOWN;
 					case REPORT_NONTERMINATION:
 						m_NonterminationArgument = lassoChecker.getNonTerminationArgument();
 						m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), true);
+						if (m_ConstructTermcompProof) {
+							m_TermcompProofBenchmark.reportRemainderModule(true);
+						}
 						return Result.NONTERMINATING;
 					default:
 						throw new AssertionError("impossible case");
@@ -496,6 +515,9 @@ public class BuchiCegarLoop {
 					throw e;
 				}
 				if (newAbstraction != null) {
+					if (m_ConstructTermcompProof) {
+						m_TermcompProofBenchmark.reportBuchiModule(m_Iteration, m_RefineBuchi.getInterpolAutomatonUsedInRefinement());
+					}
 					m_BenchmarkGenerator.announceSuccessfullRefinementStage(stage);
 					switch (rs.getInterpolantAutomaton()) {
 					case Deterministic:
@@ -615,6 +637,9 @@ public class BuchiCegarLoop {
 			if (m_Pref.dumpAutomata()) {
 				String filename = "interpolAutomatonUsedInRefinement"+m_Iteration+"after";
 				writeAutomatonToFile(m_InterpolAutomaton, m_Pref.dumpPath(), filename);
+			}
+			if (m_ConstructTermcompProof) {
+				m_TermcompProofBenchmark.reportFiniteModule(m_Iteration, m_RefineBuchi.getInterpolAutomatonUsedInRefinement());
 			}
 			m_MDBenchmark.reportTrivialModule(m_Iteration,m_InterpolAutomaton.size());
 			assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true)).getResult();
@@ -743,6 +768,10 @@ public class BuchiCegarLoop {
 
 		public ModuleDecompositionBenchmark getMDBenchmark() {
 			return m_MDBenchmark;
+		}
+		
+		public TermcompProofBenchmark getTermcompProofBenchmark() {
+			return m_TermcompProofBenchmark;
 		}
 
 		/**
