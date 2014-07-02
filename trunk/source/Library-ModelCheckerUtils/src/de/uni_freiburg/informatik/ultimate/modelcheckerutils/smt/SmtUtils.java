@@ -287,10 +287,12 @@ public class SmtUtils {
 		return script.term(name);
 	}
 	
-	public static boolean containsArrayVariables(Term term) {
-		for (TermVariable tv : term.getFreeVars()) {
-			if (tv.getSort().isArraySort()) {
-				return true;
+	public static boolean containsArrayVariables(Term... terms) {
+		for (Term term : terms) {
+			for (TermVariable tv : term.getFreeVars()) {
+				if (tv.getSort().isArraySort()) {
+					return true;
+				}
 			}
 		}
 		return false;

@@ -15,7 +15,7 @@ public class Minimization extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Directories = { 
 //		"examples/programs/regression", 
-		"examples/programs/recursivePrograms/SV-COMP_Candidates"};
+		"examples/svcomp/recursive"};
 	
 	// Time out for each test case in milliseconds
 	private static int m_Timeout = 20000;
