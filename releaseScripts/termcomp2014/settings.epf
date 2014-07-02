@@ -14,6 +14,7 @@ file_export_version=3.0
 /instance/BuchiAutomizer/Use\ external\ solver\ (rank\ synthesis)=false
 /instance/BuchiAutomizer/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
 /instance/BuchiAutomizer/Command\ for\ external\ solver\ (rank\ synthesis)=./../z3-4.3.2.d548c51a984e-x64-debian-6.0.6/bin/z3 SMTLIB2_COMPLIANT\=true -memory\:256 -smt2 -in -t\:5000
+/instance/BuchiAutomizer/Construct\ termination\ proof\ for\ TermComp=true
 #Wed Mar 19 04:15:41 CET 2014
 file_export_version=3.0
 /instance/BlockEncoding/Minimize\ Call\ and\ Return\ Edges=true
@@ -41,3 +42,8 @@ file_export_version=3.0
 @UltimateCore=0.0.1
 /instance/UltimateCore/Generate\ benchmark\ results=false
 /instance/UltimateCore/Show\ long\ description\ of\ results=true
+#Wed Jul 02 12:43:17 CEST 2014
+file_export_version=3.0
+@TraceAbstraction=0.0.1
+\!/instance/TraceAbstraction=
+/instance/TraceAbstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
