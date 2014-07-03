@@ -166,7 +166,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer.POINTER_BASE_VALIDITY;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer.POINTER_CHECKMODE;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
@@ -1214,7 +1214,7 @@ public class CHandler implements ICHandler {
 			} else if (lType instanceof CPointer && rType instanceof CPointer) {
 				assert ((CPointer) rlToInt.lrVal.cType).pointsToType.equals(((CPointer) rrToInt.lrVal.cType).pointsToType);
 				//assert (in Boogie) that the base value of the pointers matches
-				if (this.memoryHandler.m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSERTandASSUME) {
+				if (this.memoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSERTandASSUME) {
 					Statement assertStm = new AssertStatement(loc, new BinaryExpression(loc, 
 							BinaryExpression.Operator.COMPEQ, 
 							new StructAccessExpression(loc, rlToInt.lrVal.getValue(), SFO.POINTER_BASE), 
@@ -1222,7 +1222,7 @@ public class CHandler implements ICHandler {
 					stmt.add(assertStm);
 					Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
 					chk.addToNodeAnnot(assertStm);
-				} else if (this.memoryHandler.m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSUME){
+				} else if (this.memoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSUME){
 					Statement assumeStm = new AssumeStatement(loc, new BinaryExpression(loc, 
 							BinaryExpression.Operator.COMPEQ, 
 							new StructAccessExpression(loc, rlToInt.lrVal.getValue(), SFO.POINTER_BASE), 
@@ -1424,7 +1424,7 @@ public class CHandler implements ICHandler {
 				assert node.getOperator() == IASTBinaryExpression.op_minus : "only subtraction of two pointers is allowed";
 				assert ((CPointer) rlToInt.lrVal.cType).pointsToType.equals(((CPointer) rrToInt.lrVal.cType).pointsToType);
 				//assert (in Boogie) that the base value of the pointers matches
-				if (this.memoryHandler.m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSERTandASSUME) {
+				if (this.memoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSERTandASSUME) {
 					Statement assertStm = new AssertStatement(loc, new BinaryExpression(loc, 
 							BinaryExpression.Operator.COMPEQ, 
 							new StructAccessExpression(loc, rlToInt.lrVal.getValue(), SFO.POINTER_BASE), 
@@ -1432,7 +1432,7 @@ public class CHandler implements ICHandler {
 					stmt.add(assertStm);
 					Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
 					chk.addToNodeAnnot(assertStm);
-				} else if (this.memoryHandler.m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSUME){
+				} else if (this.memoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSUME){
 					Statement assumeStm = new AssumeStatement(loc, new BinaryExpression(loc, 
 							BinaryExpression.Operator.COMPEQ, 
 							new StructAccessExpression(loc, rlToInt.lrVal.getValue(), SFO.POINTER_BASE), 

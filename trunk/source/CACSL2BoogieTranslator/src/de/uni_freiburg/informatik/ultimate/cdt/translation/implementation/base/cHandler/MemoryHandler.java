@@ -76,8 +76,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer.POINTER_ALLOCATED;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer.POINTER_BASE_VALIDITY;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer.POINTER_CHECKMODE;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
@@ -121,14 +120,15 @@ public class MemoryHandler {
 	private static final boolean m_AddImplementation = false;
 	
 	
-	public final POINTER_BASE_VALIDITY m_PointerBaseValidity; //FIXME public is a hack, here
-	final POINTER_ALLOCATED m_PointerAllocated;
-	final boolean m_CheckFreeValid;
-	final boolean m_CheckMallocNonNegative;
+	private final POINTER_CHECKMODE m_PointerBaseValidity;
+	private final POINTER_CHECKMODE m_PointerSubtractionAndComparisonValidity;
+	private final POINTER_CHECKMODE m_PointerAllocated;
+	private final boolean m_CheckFreeValid;
+	private final boolean m_CheckMallocNonNegative;
 	
-	boolean isIntArrayRequiredInMM;
-	boolean isFloatArrayRequiredInMM;
-	boolean isPointerArrayRequiredInMM;
+	public boolean isIntArrayRequiredInMM;
+	public boolean isFloatArrayRequiredInMM;
+	public boolean isPointerArrayRequiredInMM;
 	
 	//needed for adding modifies clauses
 	private FunctionHandler m_functionHandler;
@@ -137,29 +137,29 @@ public class MemoryHandler {
 	 * This set contains those pointers that we have to malloc at the beginning
 	 *  of the current scope;
 	 */
-	LinkedScopedHashMap<LocalLValue, Integer> variablesToBeMalloced;
+	private LinkedScopedHashMap<LocalLValue, Integer> variablesToBeMalloced;
 	/**
 	 * This set contains those pointers that we have to 
 	 * free at the end of the current scope;
 	 */
 	LinkedScopedHashMap<LocalLValue, Integer> variablesToBeFreed;
 
-	boolean noMemArrays;
+	private boolean noMemArrays;
 	
 	
 	//constants for the sizes of the base types
-	public boolean useConstantTypeSizes = true;
+private boolean useConstantTypeSizes = true;
 	//base types
-	public int sizeOfIntType = 4;
-	public int sizeOfPointerType = 8;
-	public int sizeOfFloatType = 4;
+	private int sizeOfIntType = 4;
+	private int sizeOfPointerType = 8;
+	private int sizeOfFloatType = 4;
 	//other types
-	public int sizeOfCharType = 1;
-	public int sizeOfBoolType = 1;
-	public int sizeOfShortType = 1;
-	public int sizeOfLongType = 8;
-	public int sizeOfDoubleType = 8;
-	public int defaultTypeSize = 8;
+	private int sizeOfCharType = 1;
+	private int sizeOfBoolType = 1;
+	private int sizeOfShortType = 1;
+	private int sizeOfLongType = 8;
+	private int sizeOfDoubleType = 8;
+	private int defaultTypeSize = 8;
 
     /**
      * Constructor.
@@ -172,18 +172,41 @@ public class MemoryHandler {
         this.constants = new LinkedHashSet<ConstDeclaration>();
 		this.variablesToBeMalloced = new LinkedScopedHashMap<LocalLValue, Integer>();
 		this.variablesToBeFreed = new LinkedScopedHashMap<LocalLValue, Integer>();
+		//read preferences from settings
+		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
     	m_PointerBaseValidity = 
-				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
-				getEnum(PreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, POINTER_BASE_VALIDITY.class);
+				ups.getEnum(PreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, POINTER_CHECKMODE.class);
     	m_PointerAllocated = 
-				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
-				getEnum(PreferenceInitializer.LABEL_CHECK_POINTER_ALLOC, POINTER_ALLOCATED.class);
+				ups.getEnum(PreferenceInitializer.LABEL_CHECK_POINTER_ALLOC, POINTER_CHECKMODE.class);
     	m_CheckFreeValid = 
-				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
-				getBoolean(PreferenceInitializer.LABEL_CHECK_FREE_VALID);
+				ups.getBoolean(PreferenceInitializer.LABEL_CHECK_FREE_VALID);
 		m_CheckMallocNonNegative = 
-				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
-				getBoolean(PreferenceInitializer.LABEL_CHECK_MallocNonNegative);
+				ups.getBoolean(PreferenceInitializer.LABEL_CHECK_MallocNonNegative);
+    	m_PointerSubtractionAndComparisonValidity = 
+				ups.getEnum(PreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY, POINTER_CHECKMODE.class);
+		useConstantTypeSizes =
+				ups.getBoolean(PreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
+		sizeOfBoolType = 
+				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
+		sizeOfCharType = 
+				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR);
+		sizeOfShortType = 
+				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_SHORT);
+		sizeOfIntType = 
+				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_INT);
+		sizeOfLongType = 
+				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONG);
+		sizeOfFloatType = 
+				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_FLOAT);
+		sizeOfDoubleType = 
+				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_DOUBLE);
+		sizeOfPointerType = 
+				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_POINTER);
+		sizeOfBoolType = 
+				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
+		sizeOfBoolType = 
+				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
+				
 		isIntArrayRequiredInMM = false;
 	    isFloatArrayRequiredInMM = false;
 	    isPointerArrayRequiredInMM = false;
@@ -380,16 +403,16 @@ public class MemoryHandler {
             
             ArrayList<Specification> swrite = new ArrayList<Specification>();
             
-            if (m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSERTandASSUME 
-            		|| m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSUME) {
+            if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME 
+            		|| m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME) {
             	// requires #valid[#ptr!base];
             	RequiresSpecification specValid;
-            	if (m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSERTandASSUME) {
+            	if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME) {
             		specValid = new RequiresSpecification(loc, false,
                 			new ArrayAccessExpression(loc, valid,
                 					idcWrite));
             	} else {
-            		assert m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSUME;
+            		assert m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME;
             		specValid = new RequiresSpecification(loc, true,
                 			new ArrayAccessExpression(loc, valid,
                 					idcWrite));
@@ -406,12 +429,12 @@ public class MemoryHandler {
                     new IdentifierExpression(loc, SFO.LENGTH),
                     new Expression[] { ptrBase });
             
-            if (m_PointerAllocated == POINTER_ALLOCATED.ASSERTandASSUME 
-            		|| m_PointerAllocated == POINTER_ALLOCATED.ASSUME) {
+            if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
+            		|| m_PointerAllocated == POINTER_CHECKMODE.ASSUME) {
             	// requires #sizeof~$Pointer$ + #ptr!offset <=
             	// #length[#ptr!base];
             	RequiresSpecification specValid;
-            	if (m_PointerAllocated == POINTER_ALLOCATED.ASSERTandASSUME) {
+            	if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
             		specValid = new RequiresSpecification(loc, false,
                 			new BinaryExpression(loc, Operator.COMPLEQ,
                 					new BinaryExpression(loc, Operator.ARITHPLUS,
@@ -419,7 +442,7 @@ public class MemoryHandler {
 //                							new IdentifierExpression(loc, SFO.SIZEOF + CtypeCompatibleId),
                 					  ptrOff), length));
             	} else {
-            		assert m_PointerAllocated == POINTER_ALLOCATED.ASSUME;
+            		assert m_PointerAllocated == POINTER_CHECKMODE.ASSUME;
             		specValid = new RequiresSpecification(loc, true,
                 			new BinaryExpression(loc, Operator.COMPLEQ,
                 					new BinaryExpression(loc, Operator.ARITHPLUS,
@@ -504,16 +527,16 @@ public class MemoryHandler {
                     new String[] { value }, astType) };
             ArrayList<Specification> sread = new ArrayList<Specification>();
             
-            if (m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSERTandASSUME 
-            		|| m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSUME) {
+            if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME 
+            		|| m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME) {
             	// requires #valid[#ptr!base];
             	RequiresSpecification specValid;
-            	if (m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSERTandASSUME) {
+            	if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME) {
             		specValid = new RequiresSpecification(loc, false,
                 			new ArrayAccessExpression(loc, valid,
                 					idcWrite));
             	} else {
-            		assert m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSUME;
+            		assert m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME;
             		specValid = new RequiresSpecification(loc, true,
                 			new ArrayAccessExpression(loc, valid,
                 					idcWrite));
@@ -523,12 +546,12 @@ public class MemoryHandler {
             	sread.add(specValid);
             }
             
-            if (m_PointerAllocated == POINTER_ALLOCATED.ASSERTandASSUME || 
-            		m_PointerAllocated == POINTER_ALLOCATED.ASSUME) {
+            if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME || 
+            		m_PointerAllocated == POINTER_CHECKMODE.ASSUME) {
             	// requires #sizeof~$Pointer$ + #ptr!offset <=
             	// #length[#ptr!base];
             	RequiresSpecification specValid;
-            	if (m_PointerAllocated == POINTER_ALLOCATED.ASSERTandASSUME) {
+            	if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
             		specValid = new RequiresSpecification(loc, false, new BinaryExpression(loc,
                 			Operator.COMPLEQ, new BinaryExpression(loc,
                 					Operator.ARITHPLUS,
@@ -536,7 +559,7 @@ public class MemoryHandler {
 //                					new IdentifierExpression(loc, SFO.SIZEOF + CtypeCompatibleId),
                 					ptrOff), length));
             	} else {
-            		assert m_PointerAllocated == POINTER_ALLOCATED.ASSUME;
+            		assert m_PointerAllocated == POINTER_CHECKMODE.ASSUME;
             		specValid = new RequiresSpecification(loc, true, new BinaryExpression(loc,
             				Operator.COMPLEQ, new BinaryExpression(loc,
             						Operator.ARITHPLUS,
@@ -947,11 +970,11 @@ public class MemoryHandler {
     		this.axioms.add(new Axiom(loc, attr, new BinaryExpression(loc,
     				Operator.COMPGT, idex, new IntegerLiteral(loc, SFO.NR0))));
     		sizeofConsts.add(id);
-    		//small hack: set sizeof char equal to sizeof int
-    		if (cvar instanceof CPrimitive && ((CPrimitive) cvar).getType() == PRIMITIVE.CHAR) {
-    			this.axioms.add(new Axiom(loc, attr, new BinaryExpression(loc,
-    					Operator.COMPEQ, idex, new IdentifierExpression(loc, SFO.SIZEOF + SFO.INT.toUpperCase()))));
-    		}
+//    		//small hack: set sizeof char equal to sizeof int
+//    		if (cvar instanceof CPrimitive && ((CPrimitive) cvar).getType() == PRIMITIVE.CHAR) {
+//    			this.axioms.add(new Axiom(loc, attr, new BinaryExpression(loc,
+//    					Operator.COMPEQ, idex, new IdentifierExpression(loc, SFO.SIZEOF + SFO.INT.toUpperCase()))));
+//    		}
 
     		if (cvar instanceof CArray) {
     			CArray ca = (CArray) cvar;
@@ -1339,4 +1362,7 @@ public class MemoryHandler {
 		return variablesToBeFreed;
 	}
 
+	public POINTER_CHECKMODE getPointerSubtractionAndComparisonValidityCheckMode() {
+		return m_PointerSubtractionAndComparisonValidity;
+	}
 }
