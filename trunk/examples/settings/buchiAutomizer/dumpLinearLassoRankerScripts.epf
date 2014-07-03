@@ -27,7 +27,7 @@ file_export_version=3.0
 file_export_version=3.0
 /instance/BuchiAutomizer/Template\ benchmark\ mode=true
 @BuchiAutomizer=0.0.1
-/instance/BuchiAutomizer/To\ the\ following\ directory=/mnt/storage/ultimate/dump
+/instance/BuchiAutomizer/To\ the\ following\ directory=smtDumpFolder/
 /instance/BuchiAutomizer/Command\ for\ external\ solver\ (rank\ synthesis)=z3 SMTLIB2_COMPLIANT\=true -memory\:2560 -smt2 -in -t\:10000
 #Sat May 03 03:33:13 CEST 2014
 file_export_version=3.0
