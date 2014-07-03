@@ -197,7 +197,7 @@ public class ResultExpression extends Result {
 						this.lrVal.cType;
 
 					//has the type of what lies at that address
-					RValue addressRVal = new RValue(hlv.getAddress(), this.lrVal.cType, 
+					RValue addressRVal = new RValue(hlv.getAddress(), hlv.cType,
 											hlv.isBoogieBool);
 
 					if (underlyingType instanceof CPrimitive) {
