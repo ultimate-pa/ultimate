@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preproce
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.SetOfTwoeltons;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.SingleUpdateNormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 
 
 /**
@@ -319,38 +320,105 @@ public class RewriteArrays implements PreProcessor {
 	
 	
 	private class ArrayGenealogy {
-		Map<TermVariable, TermVariable> m_Instance2OriginalGeneration = new HashMap<TermVariable, TermVariable>();
+		Map<ArrayGeneration, ArrayGeneration> m_Generation2OriginalGeneration = new HashMap<ArrayGeneration, ArrayGeneration>();
+		
+		Map<TermVariable, TermVariable> m_Instance2Representative = new HashMap<TermVariable, TermVariable>();
 		
 		/**
 		 * If array a2 is defined as a2 = ("store", a1, index, value) we call
 		 * a1 the parent generation of a2.  
 		 */
-		Map<TermVariable, TermVariable> m_ParentGeneration = new HashMap<TermVariable, TermVariable>();
+		Map<ArrayGeneration, ArrayGeneration> m_ParentGeneration = new HashMap<ArrayGeneration, ArrayGeneration>();
+		
+		Map<TermVariable, ArrayGeneration> m_Array2Generation = new HashMap<TermVariable, ArrayGeneration>();
+		
+		List<ArrayGeneration> m_ArrayGenerations = new ArrayList<>();
+		
+		private ArrayGeneration getOrConstructArrayGeneration(TermVariable array) {
+			ArrayGeneration ag = m_Array2Generation.get(array);
+			if (ag == null) {
+				ag = new ArrayGeneration(array);
+				m_ArrayGenerations.add(ag);
+			}
+			return ag;
+		}
 		
 		ArrayGenealogy(List<ArrayEquality> arrayEqualities, List<ArrayUpdate> arrayUpdates, List<MultiDimensionalSelect> arrayReads) {
+			UnionFind<TermVariable> uf = new UnionFind<>();
 			for (ArrayEquality ae : arrayEqualities) {
-				putInstance2FirstGeneration(ae.getOutVar(), ae.getInVar());
-				putInstance2FirstGeneration(ae.getInVar(), ae.getInVar());
-				
+				TermVariable lhs = ae.getInVar();
+				TermVariable rhs = ae.getOutVar();
+				TermVariable lhsRepresentative = uf.find(lhs);
+				if (lhsRepresentative == null) {
+					uf.makeEquivalenceClass(lhs);
+					lhsRepresentative = lhs;
+				}
+				TermVariable rhsRepresentative = uf.find(rhs);
+				if (rhsRepresentative == null) {
+					uf.makeEquivalenceClass(rhs);
+					rhsRepresentative = rhs;
+				}
+				uf.union(lhsRepresentative, rhsRepresentative);
+//				putInstance2FirstGeneration(ae.getOutVar(), ae.getInVar());
+//				putInstance2FirstGeneration(ae.getInVar(), ae.getInVar());
 			}
+			for (TermVariable representative : uf.getAllRepresentatives()) {
+				ArrayGeneration ag = getOrConstructArrayGeneration(representative);
+				for (TermVariable array : uf.getEquivalenceClassMembers(representative)) {
+					if (array != representative) {
+						ag.add(array);
+					}
+				}
+			}
+			
 			for (ArrayUpdate au : arrayUpdates) {
-				putParentGeneration(au.getNewArray(), au.getOldArray());
+				ArrayGeneration oldGeneration = getOrConstructArrayGeneration(au.getOldArray());
+				ArrayGeneration newGeneration = getOrConstructArrayGeneration(au.getNewArray());
+				putParentGeneration(newGeneration, oldGeneration);
 			}
-			for (TermVariable tv : m_ParentGeneration.keySet()) {
-				TermVariable fg = getFirstGeneration(tv);
-				putInstance2FirstGeneration(tv, fg);
-				// we add first generation several times, probably
-				// less expensive than checking if already inserted
-				putInstance2FirstGeneration(fg, fg);
+			for (ArrayGeneration ag : m_ArrayGenerations) {
+				ArrayGeneration fg = getFirstGeneration(ag);
+				putInstance2FirstGeneration(ag, fg);
 			}
 			for (MultiDimensionalSelect ar : arrayReads) {
-				if (m_Instance2OriginalGeneration.get(ar.getArray()) == null) {
-					putInstance2FirstGeneration((TermVariable)ar.getArray(), (TermVariable)ar.getArray());
-				}
+				determineRepresentative((TermVariable) ar.getArray());
+			}
+			for (ArrayEquality ae : arrayEqualities) {
+				determineRepresentative(ae.getInVar());
+				determineRepresentative(ae.getOutVar());
+			}
+			for (ArrayUpdate au : arrayUpdates) {
+				determineRepresentative(au.getNewArray());
+				determineRepresentative(au.getOldArray());
 			}
 		}
 		
-		private void putParentGeneration(TermVariable child, TermVariable parent) {
+		private void determineRepresentative(TermVariable array) {
+			if (m_Instance2Representative.containsKey(array)) {
+				// already has a representative
+				return;
+			}
+			ArrayGeneration ag = m_Array2Generation.get(array);
+			if (ag == null) {
+				if (isInvar(array, m_VarCollector)) {
+					// occurs only in select, is its own representative
+					m_Instance2Representative.put(array, array);
+				} else {
+					throw new AssertionError("no generation and not invar");
+				}
+			} else {
+				ArrayGeneration fg = m_Generation2OriginalGeneration.get(ag);
+				assert fg != null : "no original generation!";
+				TermVariable representative = fg.getRepresentative();
+				if (isInvar(representative, m_VarCollector)) {
+					m_Instance2Representative.put(array, representative);
+				} else {
+					throw new AssertionError("no invar");
+				}
+			}
+		}
+
+		private void putParentGeneration(ArrayGeneration child, ArrayGeneration parent) {
 			assert child != null;
 			assert parent != null;
 			assert child != parent;
@@ -359,29 +427,76 @@ public class RewriteArrays implements PreProcessor {
 			m_ParentGeneration.put(child, parent);
 		}
 		
-		private void putInstance2FirstGeneration(TermVariable child, TermVariable progenitor) {
+		private void putInstance2FirstGeneration(ArrayGeneration child, ArrayGeneration progenitor) {
 			assert child != null;
 			assert progenitor != null;
 			assert child.toString() != null;
 			assert progenitor.toString() != null;
-			m_Instance2OriginalGeneration.put(child, progenitor);
+			m_Generation2OriginalGeneration.put(child, progenitor);
 		}
 		
-		private TermVariable getFirstGeneration(TermVariable tv) {
-			TermVariable parent = m_ParentGeneration.get(tv);
+		private ArrayGeneration getFirstGeneration(ArrayGeneration ag) {
+			ArrayGeneration parent = m_ParentGeneration.get(ag);
 			if (parent == null) {
-				return tv;
+				return ag;
 			} else {
 				return getFirstGeneration(parent);
 			}
 		}
 		
 		public TermVariable getProgenitor(TermVariable tv) {
-			return m_Instance2OriginalGeneration.get(tv);
+			return m_Instance2Representative.get(tv);
 		}
 		
 		public Set<TermVariable> getInstances() {
-			return m_Instance2OriginalGeneration.keySet();
+			return m_Instance2Representative.keySet();
+		}
+		
+		/**
+		 * An array generation is a set of arrays whose equality is implied by
+		 * the disjunct.
+		 *
+		 */
+		public class ArrayGeneration {
+			private final Set<TermVariable> m_Arrays = new HashSet<>();
+			private TermVariable m_Representative;
+			
+			public ArrayGeneration(TermVariable array) {
+				add(array);
+			}
+
+			public TermVariable getRepresentative() {
+				if (m_Representative == null) {
+					determineRepresentative();
+				}
+				return m_Representative;
+			}
+
+			private void determineRepresentative() {
+				for (TermVariable array : m_Arrays) {
+					if (isInvar(array, m_VarCollector)) {
+						m_Representative = array;
+						return;
+					}
+				}
+				// no inVar, take some element
+				m_Representative = m_Arrays.iterator().next();
+			}
+
+			public void add(TermVariable array) {
+				m_Array2Generation.put(array, this);
+				if (m_Representative != null) {
+					throw new AssertionError("has already representative, cannot modify");
+				}
+				m_Arrays.add(array);
+			}
+
+			@Override
+			public String toString() {
+				return "ArrayGeneration [Arrays=" + m_Arrays
+						+ ", Representative=" + m_Representative + "]";
+			}
+			
 		}
 	}
 	
@@ -853,6 +968,7 @@ public class RewriteArrays implements PreProcessor {
 				m_InVar = lhs;
 			} else if (m_VarCollector.getOutVarsReverseMapping().containsKey(lhs)) {
 				m_OutVar = lhs;
+				
 			} else {
 				throw new ArrayEqualityException("lhs neither in nor out");
 			}
@@ -863,6 +979,8 @@ public class RewriteArrays implements PreProcessor {
 			} else {
 				throw new ArrayEqualityException("rhs neither in nor out");
 			}
+			assert m_InVar != null;
+			assert m_OutVar != null;
 		}
 
 		public Term getOriginalTerm() {
@@ -876,6 +994,13 @@ public class RewriteArrays implements PreProcessor {
 		public TermVariable getOutVar() {
 			return m_OutVar;
 		}
+
+		@Override
+		public String toString() {
+			return m_OriginalTerm.toString();
+		}
+		
+		
 	}
 	
 	
