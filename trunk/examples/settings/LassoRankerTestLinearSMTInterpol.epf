@@ -27,7 +27,7 @@ file_export_version=3.0
 /instance/LassoRanker/Non-decreasing\ invariants\ only=true
 /instance/LassoRanker/Nonlinear\ SMT\ query\ for\ nontermination\ check=false
 /instance/LassoRanker/Nonlinear\ SMT\ query\ for\ termination\ check=false
-
+/instance/LassoRanker/Simplify\ discovered\ termination\ arguments=true
 
 /instance/LassoRanker/SMT\ solver\ command=z3 -smt2 -in SMTLIB2_COMPLIANT\=true -t\:10000
 /instance/LassoRanker/Use\ external\ SMT\ solver=false
