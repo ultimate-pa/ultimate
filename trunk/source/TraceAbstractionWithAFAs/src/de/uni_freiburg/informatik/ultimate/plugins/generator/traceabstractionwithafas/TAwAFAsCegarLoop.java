@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -12,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.CegarLoopConcurrentAutomata;
+import de.uni_freiburg.informatik.ultimate.reachingdefinitions.plugin.ReachingDefinitions;
 
 /*
  * plan:
@@ -39,7 +43,15 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	protected void constructInterpolantAutomaton()
 			throws OperationCanceledException {
 
-		Word<CodeBlock> trace = m_TraceChecker.getTrace();
+		
+		//Daniel:
+		Word<CodeBlock> trace = m_TraceChecker.getTrace(); //-> der TraceChecker hat aber auch noch ein paar andere Sachen drin..
+		CodeBlock[] traceAsArray = new CodeBlock[trace.length()];
+		for (int i = 0; i < trace.length(); i++) {
+			traceAsArray[i] = trace.getSymbol(i);
+		}
+		CodeBlock[] rdAnnotatedTraceArray = ReachingDefinitions.computeRDForTrace(traceAsArray);
+
 		for (int i = 0; i < trace.length(); i++) {
 			CodeBlock cb = trace.getSymbol(i);
 			RDCodeBlockWrapper rdcbw = new RDCodeBlockWrapper(cb);
