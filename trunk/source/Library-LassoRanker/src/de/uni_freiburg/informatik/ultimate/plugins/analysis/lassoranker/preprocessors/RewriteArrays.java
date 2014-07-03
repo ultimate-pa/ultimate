@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -65,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Replacem
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.IndexAnalyzer;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.Multimap3;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.SetOfTwoeltons;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.SingleUpdateNormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
@@ -129,8 +127,12 @@ public class RewriteArrays implements PreProcessor {
 	private HashRelation<TermVariable, List<Term>> m_Array2Indices;
 	List<ArrayUpdate>[] m_ArrayUpdates;
 	List<MultiDimensionalSelect>[] m_ArrayReads;
+	/**
+	 * Array reads that are added while constructing additional in/out vars.
+	 */
+	List<MultiDimensionalSelect> m_AdditionalArrayReads = new ArrayList<>();
 	ArrayGenealogy[] m_ArrayGenealogy;
-	private Map<TermVariable, Map<List<Term>, ArrayCell>> m_ArrayInstance2Index2CellVariable;
+	private Map<TermVariable, Map<List<Term>, TermVariable>> m_ArrayInstance2Index2CellVariable;
 	private Term[] sunnf;
 	private List<ArrayEquality>[] m_ArrayEqualities;
 	private SafeSubstitution m_Select2CellVariable;
@@ -248,7 +250,6 @@ public class RewriteArrays implements PreProcessor {
 		result.addAll(MultiDimensionalSelect.extractSelectDeep(remainderTerm, true));
 		return result;
 	}
-	
 
 	/**
 	 * Return true if we were able to prove that the result is incorrect.
@@ -415,11 +416,21 @@ public class RewriteArrays implements PreProcessor {
 			if (allVariablesAreInVars(Arrays.asList(index), m_VarCollector)) {
 				Term[] inReplacedByOut = SmtUtils.substitutionElementwise(index, m_InVars2OutVars);
 				m_Array2Indices.addPair(firstGeneration, Arrays.asList(inReplacedByOut));
+				m_AdditionalArrayReads.addAll(extractArrayReads(inReplacedByOut));
 			}
 			if (allVariablesAreOutVars(Arrays.asList(index), m_VarCollector)) {
 				Term[] outReplacedByIn = SmtUtils.substitutionElementwise(index, m_OutVars2InVars);
 				m_Array2Indices.addPair(firstGeneration, Arrays.asList(outReplacedByIn));
+				m_AdditionalArrayReads.addAll(extractArrayReads(outReplacedByIn));
 			}
+		}
+		
+		private List<MultiDimensionalSelect> extractArrayReads(Term[] terms) {
+			ArrayList<MultiDimensionalSelect> result = new ArrayList<>();
+			for (Term term : terms) {
+				result.addAll(MultiDimensionalSelect.extractSelectDeep(term, true));
+			}
+			return result;
 		}
 		
 		private void constructSubstitutions() {
@@ -440,19 +451,15 @@ public class RewriteArrays implements PreProcessor {
 	
 
 	
-
-	
-	
-	
 	private class CellVariableBuilder {
-		private Map<TermVariable, Map<List<Term>, ArrayCell>> m_ArrayInstance2Index2CellVariable;
+		private Map<TermVariable, Map<List<Term>, TermVariable>> m_ArrayInstance2Index2CellVariable;
 		private Map<TermVariable, Map<List<Term>, ReplacementVar>> m_Array2Index2RepVar;
 		private Set<TermVariable> m_AuxVars = new HashSet<TermVariable>();
 		
 		
 		
 		public CellVariableBuilder() {
-			m_ArrayInstance2Index2CellVariable = new HashMap<TermVariable, Map<List<Term>,ArrayCell>>();
+			m_ArrayInstance2Index2CellVariable = new HashMap<TermVariable, Map<List<Term>,TermVariable>>();
 			m_Array2Index2RepVar = new HashMap<TermVariable, Map<List<Term>,ReplacementVar>>();
 			dotSomething();
 		}
@@ -471,7 +478,7 @@ public class RewriteArrays implements PreProcessor {
 			ReplacementVar repVar = index2repVar.get(translatedIndex);
 			if (repVar == null) {
 				VarFactory fac = m_VarCollector.getFactory();
-				String name = ArrayCell.getArrayCellName(array, translatedIndex);
+				String name = getArrayCellName(array, translatedIndex);
 				repVar = fac.getRepVar(name);
 				if (repVar == null) {
 					Term definition = SmtUtils.multiDimensionalSelect(m_Script, array, translatedIndex.toArray(new Term[0]));
@@ -483,17 +490,21 @@ public class RewriteArrays implements PreProcessor {
 		}
 		
 	
-
+		/**
+		 * Returns a String that we use to refer to the array cell array[index].
+		 */
+		private String getArrayCellName(TermVariable array, List<Term> index) {
+			return "arrayCell_" + SmtUtils.removeSmtQuoteCharacters(array.toString()) + 
+					SmtUtils.removeSmtQuoteCharacters(index.toString());
+		}
 		
 		public void dotSomething() {
-			// all arrayCells for which we have not yet constructed a TermVariable.
-			ArrayDeque<ArrayCell> worklist = new ArrayDeque<>();
 			for (int i=0; i<sunnf.length; i++) {
 				for (TermVariable instance : m_ArrayGenealogy[i].getInstances()) {
 					TermVariable originalGeneration = m_ArrayGenealogy[i].getProgenitor(instance);
-					Map<List<Term>, ArrayCell> index2ArrayCellTv = m_ArrayInstance2Index2CellVariable.get(instance);
+					Map<List<Term>, TermVariable> index2ArrayCellTv = m_ArrayInstance2Index2CellVariable.get(instance);
 					if (index2ArrayCellTv == null) {
-						index2ArrayCellTv = new HashMap<List<Term>, ArrayCell>();
+						index2ArrayCellTv = new HashMap<List<Term>, TermVariable>();
 						m_ArrayInstance2Index2CellVariable.put(instance, index2ArrayCellTv);
 					}
 					Set<List<Term>> indicesOfOriginalGeneration = m_Array2Indices.getImage(originalGeneration);
@@ -502,61 +513,35 @@ public class RewriteArrays implements PreProcessor {
 						continue;
 					}
 					for (List<Term> index : indicesOfOriginalGeneration) {
-						if (index2ArrayCellTv.containsKey(index)) {
-							// we already have an arrayCell (from a different
-							// disjunct)
-							continue;
+						TermVariable tv = index2ArrayCellTv.get(index);
+						if (tv == null) {
+							tv = constructTermVariable(instance, index);
+							index2ArrayCellTv.put(index, tv);
 						}
-						ArrayCell tv = index2ArrayCellTv.get(index);
 						boolean isInVarCell = isInVarCell(instance, index);
 						boolean isOutVarCell = isOutVarCell(instance, index);
-						ArrayCell ac = new ArrayCell(instance, index, isInVarCell, isOutVarCell);
-						index2ArrayCellTv.put(index, ac);
+						if (isInVarCell || isOutVarCell) {
+							TermVariable arrayRepresentative = (TermVariable) getDefinition(m_VarCollector, instance);
+							ReplacementVar rv = getOrConstructReplacementVar(arrayRepresentative, index);
+							if (isInVarCell) {
+								if (!m_VarCollector.getInVars().containsKey(rv)) {
+									m_VarCollector.addInVar(rv, tv);
+								} else {
+									assert m_VarCollector.getInVars().get(rv) == tv;
+								}
+							}
+							if (isOutVarCell) {
+								if (!m_VarCollector.getOutVars().containsKey(rv)) {
+									m_VarCollector.addOutVar(rv, tv);
+								} else {
+									assert m_VarCollector.getOutVars().get(rv) == tv;
+								}
+							}
+						} else {
+							addToAuxVars(tv);
+						}
 					}
 					
-				}
-			}
-			
-			Multimap3<TermVariable, List<Term>, MultiDimensionalSelect> arrayReadMapping = new Multimap3<>();
-			for (List<MultiDimensionalSelect> mdSelects : m_ArrayReads) {
-				for (MultiDimensionalSelect mdSelect : mdSelects) {
-					arrayReadMapping.put((TermVariable) mdSelect.getArray(), Arrays.asList(mdSelect.getIndex()), mdSelect);					
-				}
-			}
-			
-			final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-			SafeSubstitution subst = new SafeSubstitution(m_Script, substitutionMapping);
-			while (!worklist.isEmpty()) {
-				ArrayCell ac = worklist.removeFirst();
-				boolean termVariableConstructed = ac.updateIndexAndConstructCellVariable(subst, m_VarCollector.getFactory());
-				if (termVariableConstructed) {
-					MultiDimensionalSelect mdSelect = arrayReadMapping.get(ac.getArrayInstance(), ac.getOriginalIndex());
-					if (mdSelect != null) {
-						substitutionMapping.put(mdSelect.getSelectTerm(), ac.getCellVariable());
-						subst = new SafeSubstitution(m_Script, substitutionMapping);
-					}
-					if (ac.isInVarCell() || ac.isOutVarCell()) {
-						TermVariable arrayRepresentative = (TermVariable) getDefinition(m_VarCollector, ac.getArrayInstance());
-						ReplacementVar rv = getOrConstructReplacementVar(arrayRepresentative, ac.getOriginalIndex());
-						if (ac.isInVarCell()) {
-							if (!m_VarCollector.getInVars().containsKey(rv)) {
-								m_VarCollector.addInVar(rv, ac.getCellVariable());
-							} else {
-								assert m_VarCollector.getInVars().get(rv) == ac.getCellVariable();
-							}
-						}
-						if (ac.isOutVarCell()) {
-							if (!m_VarCollector.getOutVars().containsKey(rv)) {
-								m_VarCollector.addOutVar(rv, ac.getCellVariable());
-							} else {
-								assert m_VarCollector.getOutVars().get(rv) == ac.getCellVariable();
-							}
-						}
-					} else {
-						addToAuxVars(ac.getCellVariable());
-					}
-				} else {
-					worklist.addLast(ac);
 				}
 			}
 		}
@@ -567,7 +552,16 @@ public class RewriteArrays implements PreProcessor {
 			//assert false : "not yet implemented";
 		}
 
-
+		private TermVariable constructTermVariable(TermVariable instance, List<Term> index) {
+			Sort arraySort = instance.getSort();
+			assert arraySort.isArraySort();
+			MultiDimensionalSort mdias = new MultiDimensionalSort(arraySort);
+			assert mdias.getDimension() == index.size();
+			Sort valueSort = mdias.getArrayValueSort();
+			String name = getArrayCellName(instance, index);
+			TermVariable tv = m_VarCollector.getFactory().getNewTermVariable(name, valueSort);
+			return tv;
+		}
 
 		
 		/**
@@ -594,88 +588,13 @@ public class RewriteArrays implements PreProcessor {
 		
 
 
-		public Map<TermVariable, Map<List<Term>, ArrayCell>> getArrayInstance2Index2CellVariable() {
+		public Map<TermVariable, Map<List<Term>, TermVariable>> getArrayInstance2Index2CellVariable() {
 			return m_ArrayInstance2Index2CellVariable;
 		}
 
 		public Set<TermVariable> getAuxVars() {
 			return m_AuxVars;
 		}
-		
-	}
-	
-	
-	private static class ArrayCell {
-		private final TermVariable m_ArrayInstance;
-		private final List<Term> m_OriginalIndex;
-		private final boolean isInVarCell;
-		private final boolean isOutVarCell;
-		private List<Term> m_UpdatedIndex;
-		private TermVariable m_CellVariable;
-		public ArrayCell(TermVariable arrayInstance, List<Term> originalIndex, 
-				boolean isInVarCell, boolean isOutVarCell) {
-			super();
-			m_ArrayInstance = arrayInstance;
-			m_OriginalIndex = originalIndex;
-			this.isInVarCell = isInVarCell;
-			this.isOutVarCell = isOutVarCell;
-			m_UpdatedIndex = originalIndex;
-		}
-		
-		public boolean updateIndexAndConstructCellVariable(SafeSubstitution subst, 
-				VarFactory varFactory) {
-			Term[] oldIndex = m_UpdatedIndex.toArray(new Term[m_UpdatedIndex.size()]);
-			Term[] substIndex = SmtUtils.substitutionElementwise(oldIndex, subst);
-			m_UpdatedIndex = Arrays.asList(substIndex);
-			if (SmtUtils.containsArrayVariables(substIndex)) {
-				// do nothing
-				return false;
-			} else {
-				m_CellVariable = constructTermVariable(varFactory, m_ArrayInstance, m_UpdatedIndex);
-				return true;
-			}
-		}
-		
-		private TermVariable constructTermVariable(VarFactory varFactory, 
-				TermVariable instance, List<Term> index) {
-			Sort arraySort = instance.getSort();
-			assert arraySort.isArraySort();
-			MultiDimensionalSort mdias = new MultiDimensionalSort(arraySort);
-			assert mdias.getDimension() == index.size();
-			Sort valueSort = mdias.getArrayValueSort();
-			String name = getArrayCellName(instance, index);
-			TermVariable tv = varFactory.getNewTermVariable(name, valueSort);
-			return tv;
-		}
-		
-		public TermVariable getCellVariable() {
-			return m_CellVariable;
-		}
-		
-		public TermVariable getArrayInstance() {
-			return m_ArrayInstance;
-		}
-
-		public List<Term> getOriginalIndex() {
-			return m_OriginalIndex;
-		}
-
-		public boolean isInVarCell() {
-			return isInVarCell;
-		}
-
-		public boolean isOutVarCell() {
-			return isOutVarCell;
-		}
-
-		/**
-		 * Returns a String that we use to refer to the array cell array[index].
-		 */
-		private static String getArrayCellName(TermVariable array, List<Term> index) {
-			return "arrayCell_" + SmtUtils.removeSmtQuoteCharacters(array.toString()) + 
-					SmtUtils.removeSmtQuoteCharacters(index.toString());
-		}
-	
 		
 	}
 	
@@ -760,16 +679,16 @@ public class RewriteArrays implements PreProcessor {
 	
 	private Term buildArrayEqualityConstraints(TermVariable oldArray,
 			TermVariable newArray) {
-		Map<List<Term>, ArrayCell> newInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(newArray);
-		Map<List<Term>, ArrayCell> oldInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(oldArray);
+		Map<List<Term>, TermVariable> newInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(newArray);
+		Map<List<Term>, TermVariable> oldInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(oldArray);
 		if (newInstance2Index2CellVariable == null && oldInstance2Index2CellVariable == null) {
 			return m_Script.term("true");
 		}
 		Term[] conjuncts = new Term[newInstance2Index2CellVariable.keySet().size()];
 		int offset = 0;
 		for (List<Term> index : newInstance2Index2CellVariable.keySet()) {
-			Term newCellVariable = newInstance2Index2CellVariable.get(index).getCellVariable();
-			Term oldCellVariable = oldInstance2Index2CellVariable.get(index).getCellVariable();
+			Term newCellVariable = newInstance2Index2CellVariable.get(index);
+			Term oldCellVariable = oldInstance2Index2CellVariable.get(index);
 			conjuncts[offset] = SmtUtils.binaryEquality(m_Script, oldCellVariable, newCellVariable);
 			offset++;
 		}
@@ -792,14 +711,14 @@ public class RewriteArrays implements PreProcessor {
 	private Term buildArrayUpdateConstraints(TermVariable newArray,
 			TermVariable oldArray, Term[] updateIndex, Term data) {
 		data = m_Select2CellVariable.transform(data);
-		Map<List<Term>, ArrayCell> newInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(newArray);
-		Map<List<Term>, ArrayCell> oldInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(oldArray);
+		Map<List<Term>, TermVariable> newInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(newArray);
+		Map<List<Term>, TermVariable> oldInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(oldArray);
 		Term[] conjuncts = new Term[newInstance2Index2CellVariable.keySet().size()];
 		int offset = 0;
 		for (List<Term> index : newInstance2Index2CellVariable.keySet()) {
-			Term newCellVariable = newInstance2Index2CellVariable.get(index).getCellVariable();
-			Term oldCellVariable = oldInstance2Index2CellVariable.get(index).getCellVariable();
-			Term indexIsUpdateIndex = pairwiseEqualityExploitTwoeltons(index.toArray(new Term[index.size()]), updateIndex);
+			Term newCellVariable = newInstance2Index2CellVariable.get(index);
+			Term oldCellVariable = oldInstance2Index2CellVariable.get(index);
+			Term indexIsUpdateIndex = pairwiseEqualityExploitTwoeltons(index.toArray(new Term[index.size()]), updateIndex, m_Select2CellVariable);
 			Term newDataIsUpdateData = SmtUtils.binaryEquality(m_Script, newCellVariable, data);
 			Term newDateIsOldData = SmtUtils.binaryEquality(m_Script, newCellVariable, oldCellVariable);
 			Term indexIsNotUpdateIndex = Util.not(m_Script, indexIsUpdateIndex);
@@ -814,21 +733,21 @@ public class RewriteArrays implements PreProcessor {
 	private Term buildIndexValueConstraints() {
 		Term[] conjuncts = new Term[m_ArrayInstance2Index2CellVariable.size()];
 		int offset = 0;
-		for (Entry<TermVariable, Map<List<Term>, ArrayCell>> entry : m_ArrayInstance2Index2CellVariable.entrySet()) {
-			Map<List<Term>, ArrayCell> indices2values = entry.getValue();
-			conjuncts[offset] = buildIndexValueConstraints(indices2values);
+		for (Entry<TermVariable, Map<List<Term>, TermVariable>> entry : m_ArrayInstance2Index2CellVariable.entrySet()) {
+			Map<List<Term>, TermVariable> indices2values = entry.getValue();
+			conjuncts[offset] = buildIndexValueConstraints(indices2values, m_Select2CellVariable);
 			offset++;
 		}
 		return Util.and(m_Script, conjuncts);
 	}
 
-	private Term buildIndexValueConstraints(Map<List<Term>, ArrayCell> indices2values) {
+	private Term buildIndexValueConstraints(Map<List<Term>, TermVariable> indices2values, SafeSubstitution select2CellVariable) {
 		List<Term>[] indices = new List[indices2values.size()];
 		Term[] values = new Term[indices2values.size()];
 		int offset = 0;
-		for (Entry<List<Term>, ArrayCell> index2value : indices2values.entrySet()) {
+		for (Entry<List<Term>, TermVariable> index2value : indices2values.entrySet()) {
 			indices[offset] = index2value.getKey();
-			values[offset] = index2value.getValue().getCellVariable();
+			values[offset] = index2value.getValue();
 			offset++;
 		}
 		int numberOfPairs = indices2values.size()*(indices2values.size()-1)/2;
@@ -840,7 +759,7 @@ public class RewriteArrays implements PreProcessor {
 				List<Term> index2 = indices[j];
 				Term value1 = values[i];
 				Term value2 = values[j];
-				conjuncts[k] = indexEqualityImpliesValueEquality(index1.toArray(new Term[0]), index2.toArray(new Term[0]), value1, value2);
+				conjuncts[k] = indexEqualityImpliesValueEquality(index1.toArray(new Term[0]), index2.toArray(new Term[0]), value1, value2, select2CellVariable);
 				k++;
 			}
 		}
@@ -849,13 +768,13 @@ public class RewriteArrays implements PreProcessor {
 	}
 
 	private Term indexEqualityImpliesValueEquality(Term[] index1,
-			Term[] index2, Term value1, Term value2) {
-		Term indexEquality = pairwiseEqualityExploitTwoeltons(index1, index2);
+			Term[] index2, Term value1, Term value2, SafeSubstitution select2CellVariable) {
+		Term indexEquality = pairwiseEqualityExploitTwoeltons(index1, index2, select2CellVariable);
 		Term valueEquality = SmtUtils.binaryEquality(m_Script, value1, value2);
 		return Util.or(m_Script, Util.not(m_Script, indexEquality), valueEquality);
 	}
 	
-	Term pairwiseEqualityExploitTwoeltons(Term[] index1, Term[] index2) {
+	Term pairwiseEqualityExploitTwoeltons(Term[] index1, Term[] index2, SafeSubstitution select2CellVariable) {
 		assert index1.length == index2.length;
 		Term[] conjuncts = new Term[index1.length];
 		for (int i=0; i<index1.length; i++) {
@@ -866,7 +785,9 @@ public class RewriteArrays implements PreProcessor {
 			} else if (m_DistinctTwoeltons.containsTwoelton(fst, snd)) {
 				conjuncts[i] = m_Script.term("false");
 			} else if (m_UnknownTwoeltons.containsTwoelton(fst, snd)) {
-				conjuncts[i] = SmtUtils.binaryEquality(m_Script, fst, snd);
+				Term fstSubst = select2CellVariable.transform(fst);
+				Term sndSubst = select2CellVariable.transform(snd);
+				conjuncts[i] = SmtUtils.binaryEquality(m_Script, fstSubst, sndSubst);
 			} else {
 				throw new AssertionError("unknown twoelton");
 			}
@@ -882,9 +803,13 @@ public class RewriteArrays implements PreProcessor {
 		Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (int i=0; i<sunnf.length; i++) {
 			for (MultiDimensionalSelect ar : m_ArrayReads[i]) {
-				Term cellVariable = m_ArrayInstance2Index2CellVariable.get(ar.getArray()).get(Arrays.asList(ar.getIndex())).getCellVariable();
+				Term cellVariable = m_ArrayInstance2Index2CellVariable.get(ar.getArray()).get(Arrays.asList(ar.getIndex()));
 				substitutionMapping.put(ar.getSelectTerm(), cellVariable);
 			}
+		}
+		for (MultiDimensionalSelect ar : m_AdditionalArrayReads) {
+			Term cellVariable = m_ArrayInstance2Index2CellVariable.get(ar.getArray()).get(Arrays.asList(ar.getIndex()));
+			substitutionMapping.put(ar.getSelectTerm(), cellVariable);
 		}
 		return new SafeSubstitution(m_Script, substitutionMapping);
 	}
