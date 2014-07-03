@@ -30,6 +30,12 @@ trunk/examples/toolchains/AutomizerTestDir.sh -ea 1900 "$2" \
  "AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_MemsafeDerefOnly_60.epf"
 fi
 
+if [ "$1" = "MemsafeDerefOnly-da" ]; then
+echo "$1"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 1900 "$2" \
+ "AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_MemsafeDerefOnly_60.epf"
+fi
+
 if [ "$1" = "buchiForwardSimplifyComp-da" ]; then
 echo "$1"
 trunk/examples/toolchains/AutomizerTestDir.sh -da 1900 "$2" \
