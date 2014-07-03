@@ -54,6 +54,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						DEF_DumpPath, PreferenceType.Directory),
 				new UltimatePreferenceItem<Boolean>(LABEL_TermcompProof,
 						false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_Simplify,
+						false, PreferenceType.Boolean),
 		};
 	}
 
@@ -85,6 +87,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_DumpPath = "To the following directory";
 	public static final String DEF_DumpPath = "";
 	public static final String LABEL_TermcompProof = "Construct termination proof for TermComp";
+	public static final String LABEL_Simplify = "Try to simplify termination arguments";
 	
 	public enum BInterpolantAutomaton { LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged };
 	

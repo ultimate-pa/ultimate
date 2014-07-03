@@ -83,6 +83,7 @@ public class LassoChecker {
 	 */
 	private final String m_ExternalSolverCommand_RankSynthesis;
 	private final boolean m_AllowNonLinearConstraints;
+	private final boolean m_TrySimplificationTerminationArgument;
 	
 	/**
 	 * Try all templates but use the one that was found first. This is only
@@ -205,6 +206,7 @@ public class LassoChecker {
 		m_ExternalSolverCommand_RankSynthesis = baPref.getString(PreferenceInitializer.LABEL_ExtSolverCommandRank);
 		m_AllowNonLinearConstraints = baPref.getBoolean(PreferenceInitializer.LABEL_NonLinearConstraints);
 		m_TemplateBenchmarkMode = baPref.getBoolean(PreferenceInitializer.LABEL_TemplateBenchmarkMode);
+		m_TrySimplificationTerminationArgument = baPref.getBoolean(PreferenceInitializer.LABEL_Simplify);
 		m_Interpolation = interpolation;
 		m_SmtManager = smtManager;
 		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
@@ -574,6 +576,7 @@ public class LassoChecker {
 		pref.dumpSmtSolverScript = baPref.getBoolean(PreferenceInitializer.LABEL_DumpToFile);
 		pref.pathOfDumpedScript = baPref.getString(PreferenceInitializer.LABEL_DumpPath);
 		pref.baseNameOfDumpedScript = generateFileBasenamePrefix(withStem);
+		pref.simplify_result = m_TrySimplificationTerminationArgument;
 
 		LassoRankerTerminationAnalysis lrta = null;
 		try {

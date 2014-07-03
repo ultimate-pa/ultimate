@@ -21,7 +21,6 @@ public class TermcompProofBenchmark implements ICsvProviderProvider<Double>{
 	 * Null if yet unknown.
 	 */
 	private Boolean m_HasRemainderModule;
-	private int m_RemainderModuleLocations;
 	private boolean m_RemainderModuleNonterminationKnown;
 	
 	
