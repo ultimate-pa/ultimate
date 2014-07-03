@@ -58,8 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.template
 
 
 /**
- * This is the class that controls LassoRanker's (non-)termination argument
- * synthesis.
+ * This is the class that controls LassoRanker's (non-)termination analysis
  * 
  * Tools that use LassoRanker as a library probably want to use this class
  * as an interface for invoking LassoRanker. This class can also be derived

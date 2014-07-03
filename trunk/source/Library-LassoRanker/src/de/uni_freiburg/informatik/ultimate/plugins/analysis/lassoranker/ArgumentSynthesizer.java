@@ -178,21 +178,27 @@ public abstract class ArgumentSynthesizer implements Closeable {
 		Collections.shuffle(variables, rnd);
 		
 		int pops = 0;
+		int checkSat_calls = 0;
 		for (int i = 0; i < variables.size(); ++i) {
 			Term var = variables.get(i);
 			m_script.push(1);
 			m_script.assertTerm(m_script.term("=", var, m_script.numeral(BigInteger.ZERO)));
-			if (m_script.checkSat() != LBool.SAT) {
+			LBool sat = m_script.checkSat();
+			++checkSat_calls;
+			if (sat != LBool.SAT) {
 				m_script.pop(1);
 				// Make sure we call checkSat() after the last pop()
 				if (i == variables.size() - 1) {
-					LBool sat = m_script.checkSat();
+					sat = m_script.checkSat();
+					++checkSat_calls;
 					assert sat == LBool.SAT;
 				}
 			} else {
 				pops += 1;
 			}
 		}
+		s_Logger.info("Simplification made " + checkSat_calls
+				+ " calls to the SMT solver.");
 		return pops;
 	}
 	
