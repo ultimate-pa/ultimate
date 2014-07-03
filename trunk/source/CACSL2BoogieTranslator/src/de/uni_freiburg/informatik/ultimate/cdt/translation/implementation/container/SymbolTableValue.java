@@ -108,11 +108,12 @@ public class SymbolTableValue {
         return boogieDecl;
     }
     /**
-     * Return whether the variable is global in the C program or not.
+     * Return whether the variable is global in the boogie program or not.
+     * (for instance static C variables are global boogie variables for us)
      * 
      * @return the isGlobalVar
      */
-    public boolean isGlobalVar() {
+    public boolean isBoogieGlobalVar() {
         return isGlobalVar;
     }
 

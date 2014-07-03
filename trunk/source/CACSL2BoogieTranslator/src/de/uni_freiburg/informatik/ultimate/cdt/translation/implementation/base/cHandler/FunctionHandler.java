@@ -189,7 +189,7 @@ public class FunctionHandler {
 			isLocal = true;
 		} else {
 			isLocal = !main.cHandler.getSymbolTable().get(cName, errLoc)
-					.isGlobalVar();
+					.isBoogieGlobalVar();
 		}
 		if (!isLocal) {
 			// the variable is not local but could be a formal parameter
@@ -730,7 +730,7 @@ public class FunctionHandler {
 		// 4)
 		for (SymbolTableValue stv : main.cHandler.getSymbolTable().currentScopeValues()) {
 			//there may be a null declaration in case of foo(void)
-			if (!stv.isGlobalVar() && stv.getBoogieDecl() != null) { 
+			if (!stv.isBoogieGlobalVar() && stv.getBoogieDecl() != null) { 
 				decls.add(stv.getBoogieDecl());
 			}
 		}

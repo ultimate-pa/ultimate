@@ -456,7 +456,7 @@ public class CHandler implements ICHandler {
 		if (isNewScopeRequired(parent)){
 			stmt = memoryHandler.insertMallocs(main, loc, stmt);
 			for (SymbolTableValue stv : symbolTable.currentScopeValues()) {
-				if (!stv.isGlobalVar()) {
+				if (!stv.isBoogieGlobalVar()) {
 					decl.add(stv.getBoogieDecl());
 				}
 			}
@@ -581,7 +581,6 @@ public class CHandler implements ICHandler {
 				if (storageClass == StorageClass.TYPEDEF) {
 					boogieDec = new TypeDeclaration(loc, new Attribute[0], false, 
 							bId, new String[0] , translatedType);
-					//						main.typeHandler.addDefinedType(bId, mCurrentDeclaredTypes.peek());
 					main.typeHandler.addDefinedType(bId, 
 							new ResultTypes(new NamedType(loc, cDec.getName(), null), false, false, cDec.getType()));
 					//TODO: add a sizeof-constant for the type??
@@ -600,17 +599,12 @@ public class CHandler implements ICHandler {
 						//havoc statement (because otherwise the variable is always the same within a loop which
 						//may lead to unsoundness)
 						//..except if OnHeap. Then it is malloced instead.
+						//(--> this is done below this ite-branching by memoryHandler.addVariableToBeMallocedAndFreed(...))
 						assert result instanceof ResultSkip || result instanceof ResultExpression;
 
 						if (result instanceof ResultSkip)// --> this line missing was a bug that eliminated the initialization of statements before the initialized
 							result = new ResultExpression((LRValue) null);
 
-						//							if (onHeap)
-						//								((ResultExpression) result).stmt.add(
-						//										memoryHandler.getMallocCall(main, functionHandler, 
-						//												memoryHandler.calculateSizeOf(cDec.getType(), loc),
-						//												new LocalLValue(new VariableLHS(loc, bId), cDec.getType()), 
-						//												loc));
 						if (!onHeap)
 							((ResultExpression) result).stmt.add(
 									new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, bId) }));
@@ -643,7 +637,7 @@ public class CHandler implements ICHandler {
 					boogieDec = new VariableDeclaration(loc, new Attribute[0],
 							new VarList[] { new VarList(loc, new String[] {bId}, 
 									translatedType) });
-					globalInBoogie = functionHandler.noCurrentProcedure();
+					globalInBoogie |= functionHandler.noCurrentProcedure();
 				}
 
 				if (onHeap)
@@ -2835,7 +2829,7 @@ public class CHandler implements ICHandler {
 						bodyBlock = memoryHandler.insertMallocs(main, loc, bodyBlock);
 	//					main.cHandler.getSymbolTable().endScope();
 						for (SymbolTableValue stv : symbolTable.currentScopeValues()) 
-							if (!stv.isGlobalVar()) {
+							if (!stv.isBoogieGlobalVar()) {
 								decl.add(stv.getBoogieDecl());
 							}
 						this.endScope();

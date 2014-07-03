@@ -299,7 +299,7 @@ public class ACSLHandler implements IACSLHandler {
                 id = node.getIdentifier();
                 SymbolTableValue stv = main.cHandler.getSymbolTable().get(id,
                         loc);
-                if (stv.isGlobalVar()) {
+                if (stv.isBoogieGlobalVar()) {
                     id = stv.getBoogieName();
                 } else {
                     String msg = "It is not allowed to assign to in parameters! Should be global variables! ["
