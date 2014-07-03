@@ -1,9 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -23,6 +25,15 @@ import de.uni_freiburg.informatik.ultimate.util.RelationWithTreeSet;
  *
  */
 public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndAsserterConjuncts {
+	/**
+	 * 1. Heuristic:
+	 */
+	boolean m_SkipFirstLoopAndThenConventionallyContinue = !true;
+	
+	/**
+	 * 2. Heuristic: 
+	 */
+	boolean m_IterativelySkipLoopsUntilUnsatReached = true;
 
 	public AnnotateAndAsserterWithStmtOrderPrioritization(
 			SmtManager smtManager, NestedFormulas<Term, Term> nestedSSA,
@@ -87,20 +98,73 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		}
 	}
 
-
+	
+	private Map.Entry<Integer, Integer> getIndicesOfStmThatOccursTwice(NestedWord<CodeBlock> trace, int lowerIndex, int upperIndex) {
+		assert lowerIndex >= 0 : "Lower index is negative";
+		assert upperIndex <= trace.length() : "Upper index is out of range";
+		
+		if (upperIndex < lowerIndex) {
+			return new AbstractMap.SimpleEntry<Integer, Integer>(upperIndex, upperIndex);
+		}
+		List<ProgramPoint> pps = TraceCheckerUtils.getSequenceOfProgramPoints(trace);
+		RelationWithTreeSet<ProgramPoint, Integer> rwt = new RelationWithTreeSet<ProgramPoint, Integer>();
+		for (int i = lowerIndex; i <= upperIndex; i++) {
+			rwt.addPair(pps.get(i), i);
+		}
+		
+		int lowestIndexOfPPThatOccursTwice = lowerIndex;
+		int greatestIndexOfPPThatOccursTwice = upperIndex;
+		for (int i = lowerIndex; i <= upperIndex; i++) {
+			if (rwt.getImage(pps.get(i)).size() > 1) {
+				// Get the first occurrence in the trace of that program-point, that occurs more than one time
+				lowestIndexOfPPThatOccursTwice = ((TreeSet<Integer>) rwt.getImage(pps.get(i))).first();
+				// Get the last occurrence of that program-point
+				greatestIndexOfPPThatOccursTwice = ((TreeSet<Integer>) rwt.getImage(pps.get(i))).last();
+				break;
+			}
+		}
+		return new AbstractMap.SimpleEntry<Integer, Integer>(lowestIndexOfPPThatOccursTwice, greatestIndexOfPPThatOccursTwice);
+	}
+	
+	private Set<Integer> getSetOfIntegerForGivenInterval(int lowerBound, int upperBound) {
+		Set<Integer> result = new HashSet<Integer>();
+		for (int i = lowerBound; i < upperBound; i++) {
+			result.add(i);
+		}
+		return result;
+	}
+	
+	
+	private Set<Integer> integerSetDifference(Set<Integer> firstSet, Set<Integer> secondSet) {
+		Set<Integer> result = new HashSet<Integer>();
+		for (Integer i : firstSet) {
+			if (!secondSet.contains(i)) {
+				result.add(i);
+			}
+		}
+		return result;
+	}
 	
 	@Override
 	public void buildAnnotatedSsaAndAssertTerms() {
-		Set<Integer> stmtsWithoutLoop = getSubTrace(m_Trace, 0, m_Trace.length());
-		Set<Integer> stmtsWithinLoop = new HashSet<Integer>();
-		// Slice the part of integers, that doesn't occur in the set stmtsWithoutLoop
-		if (stmtsWithoutLoop.size() != m_Trace.length()) {
-			for (int i = 0; i < m_Trace.length(); i++) {
-				if (!stmtsWithoutLoop.contains(i)) {
-					stmtsWithinLoop.add(i);
-				}
-			}
-		}
+//		Set<Integer> stmtsOutsideOfLoop = getSubTrace(m_Trace, 0, m_Trace.length());
+//		Set<Integer> stmtsWithinLoop = new HashSet<Integer>();
+//		// Slice the part of integers, that doesn't occur in the set stmtsWithoutLoop
+//		if (stmtsOutsideOfLoop.size() != m_Trace.length()) {
+//			for (int i = 0; i < m_Trace.length(); i++) {
+//				if (!stmtsOutsideOfLoop.contains(i)) {
+//					stmtsWithinLoop.add(i);
+//				}
+//			}
+//		}
+		
+		Map.Entry<Integer, Integer> indicesOfStmtThatOccursTwice = getIndicesOfStmThatOccursTwice(m_Trace, 0, m_Trace.length());
+		int lowerIndexOfStmtThatOccursTwice = indicesOfStmtThatOccursTwice.getKey();
+		int upperIndexOfStmtThatOccursTwice =  indicesOfStmtThatOccursTwice.getValue();
+		
+		Set<Integer> stmtsWithinLoop = getSetOfIntegerForGivenInterval(lowerIndexOfStmtThatOccursTwice, upperIndexOfStmtThatOccursTwice);
+		Set<Integer> integersFromTrace = getSetOfIntegerForGivenInterval(0, m_Trace.length());
+		Set<Integer> stmtsOutsideOfLoop = integerSetDifference(integersFromTrace, stmtsWithinLoop);
 		
 		m_AnnotSSA = new ModifiableNestedFormulas<Term, Term>(m_Trace, new TreeMap<Integer, Term>());
 		
@@ -108,18 +172,44 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		m_AnnotSSA.setPostcondition(annotateAndAssertPostcondition());
 		Collection<Integer> callPositions = new ArrayList<Integer>();
 		Collection<Integer> pendingReturnPositions = new ArrayList<Integer>();
-		// First, annotate and assert the statements, which doesn't occur with a loop
-		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(m_Trace, callPositions, pendingReturnPositions, stmtsWithoutLoop);
-		
-		
-		m_Satisfiable = m_SmtManager.getScript().checkSat();
-		// If the statements outside of a loop are not unsatisfiable, then annotate and assert also
-		// the rest of the statements
-		if (m_Satisfiable != LBool.UNSAT && stmtsWithoutLoop.size() != m_Trace.length()) {
-			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(m_Trace, callPositions, pendingReturnPositions, stmtsWithinLoop);
-			assert callPositions.containsAll(m_Trace.getCallPositions());
-			assert m_Trace.getCallPositions().containsAll(callPositions);
+		// Apply 1. heuristic
+		if (m_SkipFirstLoopAndThenConventionallyContinue) {
+			// First, annotate and assert the statements, which doesn't occur within a loop
+			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(m_Trace, callPositions, pendingReturnPositions, stmtsOutsideOfLoop);
+
+
 			m_Satisfiable = m_SmtManager.getScript().checkSat();
+			// If the statements outside of a loop are not unsatisfiable, then annotate and assert also
+			// the rest of the statements
+			if (m_Satisfiable != LBool.UNSAT && stmtsOutsideOfLoop.size() != m_Trace.length()) {
+				buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(m_Trace, callPositions, pendingReturnPositions, stmtsWithinLoop);
+				assert callPositions.containsAll(m_Trace.getCallPositions());
+				assert m_Trace.getCallPositions().containsAll(callPositions);
+				m_Satisfiable = m_SmtManager.getScript().checkSat();
+			}
+		} 
+		// Apply 2. heuristic
+		else if (m_IterativelySkipLoopsUntilUnsatReached) {
+			m_Satisfiable = LBool.UNKNOWN;
+			Set<Integer> stmtsAlreadyAsserted = stmtsOutsideOfLoop;
+			while (m_Satisfiable != LBool.UNSAT) {
+				// First, annotate and assert the statements, which doesn't occur within a loop
+				buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(m_Trace, callPositions, pendingReturnPositions, stmtsOutsideOfLoop);
+				m_Satisfiable = m_SmtManager.getScript().checkSat();
+				if (stmtsAlreadyAsserted.size() == m_Trace.length()) break;
+				if (m_Satisfiable != LBool.UNSAT) {
+					// TODO: if lowerIndexOfStat.. + 1 > upperIndex - 1 --> then break, and add all the remaining statements
+					indicesOfStmtThatOccursTwice = getIndicesOfStmThatOccursTwice(m_Trace, lowerIndexOfStmtThatOccursTwice + 1, 
+							upperIndexOfStmtThatOccursTwice-1);
+					lowerIndexOfStmtThatOccursTwice = indicesOfStmtThatOccursTwice.getKey();
+					upperIndexOfStmtThatOccursTwice =  indicesOfStmtThatOccursTwice.getValue();
+					// update the set of statements which are already asserted
+					Set<Integer> stmtsWithinLoopOld = stmtsWithinLoop; 
+					stmtsWithinLoop = getSetOfIntegerForGivenInterval(lowerIndexOfStmtThatOccursTwice, upperIndexOfStmtThatOccursTwice);
+					stmtsOutsideOfLoop = integerSetDifference(stmtsWithinLoopOld, stmtsWithinLoop);
+					stmtsAlreadyAsserted.addAll(stmtsOutsideOfLoop);
+				}
+			}
 		}
 		s_Logger.info("Conjunction of SSA is " + m_Satisfiable);
 	}
