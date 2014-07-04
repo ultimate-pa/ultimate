@@ -1193,27 +1193,6 @@ public class CHandler implements ICHandler {
 			overappr.addAll(rrToInt.overappr);
 
 			RValue rval = null;
-//			if (lType instanceof CPointer
-//					&& rType instanceof CPrimitive
-////					&& ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
-//					&& ((CPrimitive) rType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-//				RValue rrRValAsPointer = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
-//						new IntegerLiteral(loc, "0"), 
-//						rrToInt.lrVal.getValue(), loc), new CPointer(new CPrimitive(PRIMITIVE.VOID)));
-//				rval = new RValue(
-//						new BinaryExpression(loc, op, rlToInt.lrVal.getValue(), rrRValAsPointer.getValue()),
-//						new CPrimitive(PRIMITIVE.INT));
-//			} else if (rType instanceof CPointer
-//					&& lType instanceof CPrimitive
-////					&& ((CPrimitive) lType).getType() == PRIMITIVE.INT) {
-//					&& ((CPrimitive) lType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-//				RValue rlRValAsPointer = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
-//						new IntegerLiteral(loc, "0"), 
-//						rlToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
-//				rval = new RValue(
-//						new BinaryExpression(loc, op, rlRValAsPointer.getValue(), rrToInt.lrVal.getValue()),
-//						new CPrimitive(PRIMITIVE.INT));
-//			} else if (lType instanceof CPointer && rType instanceof CPointer) {
 			//we have a pointer comparison
 			if (lType instanceof CPointer || rType instanceof CPointer) {
 				//both of the two following ifs will lead to an assertion violation if the pointer compared to

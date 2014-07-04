@@ -1127,31 +1127,6 @@ private boolean useConstantTypeSizes = true;
     	return idex;
     }
     
-//    /**
-//     * Checks, if an accessed pointer points to a valid location in memory.
-//     * 
-//     * @param idx
-//     *            the pointer to check.
-//     * @return an assert statement that checks, whether the accessed memory
-//     *         location is valid.
-//     */
-//    public Statement checkValidityOfAccess(Expression idx) {
-//        assert idx.getType() instanceof InferredType
-//                && ((InferredType) idx.getType()).getType() == Type.Pointer;
-//        // assert #valid[idx!base];
-//        ILocation loc = idx.getLocation();
-//        Expression array = new IdentifierExpression(loc, SFO.VALID);
-//        Expression idxBase = new StructAccessExpression(loc, idx,
-//                SFO.POINTER_BASE);
-//        Expression formula = new ArrayAccessExpression(loc, array,
-//                new Expression[] { idxBase });
-//        assert loc instanceof CACSLLocation;
-//        CACSLLocation assertLoc = new CACSLLocation((CACSLLocation) loc,
-//                new Check(Check.Spec.INVALID_MEMORY_ACCESS));
-//        return new AssertStatement(assertLoc, formula);
-//    }
-    
-
     /**
      * Generates a call of the read procedure and writes the returned value to a
      * temp variable, returned in the expression of the returned
@@ -1316,7 +1291,6 @@ private boolean useConstantTypeSizes = true;
         	}
         	
         } else if (rType instanceof CArray) {
-//        	throw new UnsupportedSyntaxException(loc, "todo: write to arrays on the heap");
         	stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { 
         			new VariableLHS(loc, ((IdentifierExpression )hlv.getAddress()).getIdentifier()) }, 
         			new Expression[] { rval.getValue()}) );
@@ -1325,47 +1299,7 @@ private boolean useConstantTypeSizes = true;
 		
         return stmt;
     }
-
-//    /**
-//     * Handles manipulations of pointer variables.
-//     * 
-//     * @param ptr
-//     *            the pointer to work on.
-//     * @param op
-//     *            the operator to be used.
-//     * @param val
-//     *            the value to be used.
-//     * @return an assignment of form
-//     *         <code>ptr.offset := ptr.offset op val;</code>.
-//     */
-//    public ResultExpression manipulatePointer(Expression ptr,
-//            BinaryExpression.Operator op, Expression val) {
-//        ArrayList<Statement> stmt = new ArrayList<Statement>();
-//        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-//        ILocation loc = ptr.getLocation();
-//        Expression ptrOffset = new StructAccessExpression(loc, ptr,
-//                SFO.POINTER_OFFSET);
-//        stmt.add(new AssignmentStatement(loc,
-//                new LeftHandSide[] { BoogieASTUtil
-//                        .getLHSforExpression(ptrOffset) },
-//                new Expression[] { new BinaryExpression(ptr.getLocation(),
-//                        op, ptrOffset, val) }));
-//        // NOTE: the following checks are too strict! The variable can be
-//        // out of bounds, iff there is no memory access with this pointer!
-//        // Expression ptrBase = new StructAccessExpression(loc, ptr,
-//        // SFO.POINTER_BASE);
-//        // Expression length = new ArrayAccessExpression(loc,
-//        // new IdentifierExpression(loc, SFO.LENGTH),
-//        // new Expression[] { ptrBase });
-//        // stmt.add(new AssertStatement(loc, new BinaryExpression(loc,
-//        // BinaryExpression.Operator.COMPLEQ, ptrOffset, length)));
-//        // stmt.add(new AssertStatement(loc, new BinaryExpression(loc,
-//        // Operator.COMPGEQ, ptrOffset, new IntegerLiteral(loc, SFO.NR0))));
-//		Map<VariableDeclaration, ILocation> emptyAuxVars = 
-//				new LinkedHashMap<VariableDeclaration, ILocation>(0);
-//        return new ResultExpression(stmt, null, decl, emptyAuxVars);
-//    }
-    
+   
     /**
      * Takes a pointer Expression and returns the pointers base address.
      * If it is already given as a struct, then the first field is returned,
@@ -1396,11 +1330,6 @@ private boolean useConstantTypeSizes = true;
 		return new StructConstructor(loc, new String[]{"base", "offset"}, new Expression[]{base, offset}); 
 	}
 	
-//	@Deprecated //use NULL instead
-//	public static StructConstructor constructNullPointer(ILocation loc) {
-//	    return new StructConstructor(loc, new String[]{"base", "offset"}, 
-//	    		new Expression[]{new IntegerLiteral(loc, "0"), new IntegerLiteral(loc, "0")}); 
-//    }
 	/**
 	 * Takes a loop or function body and inserts mallocs and frees for all the identifiers in this.mallocedAuxPointers
 	 */
