@@ -6,6 +6,6 @@
       </impl>
    </extension>
    <extension point="org.eclipse.core.runtime.preferences">
-      <initializer class="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer"/>
+      <initializer class="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer"/>
    </extension>
 </plugin>

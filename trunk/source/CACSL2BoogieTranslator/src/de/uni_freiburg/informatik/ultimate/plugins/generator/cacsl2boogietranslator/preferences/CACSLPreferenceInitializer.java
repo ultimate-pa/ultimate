@@ -6,7 +6,8 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.TranslationMode;
 
-public class PreferenceInitializer extends UltimatePreferenceInitializer {
+public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
+
 
 
 	@Override
@@ -67,8 +68,51 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.Integer) ,
 				new UltimatePreferenceItem<Integer>(
 						LABEL_EXPLICIT_TYPESIZE_POINTER, 8,
+						PreferenceType.Integer),
+						//more exotic types
+				new UltimatePreferenceItem<Integer>(
+						LABEL_EXPLICIT_TYPESIZE_SCHAR, 1,
+						PreferenceType.Integer) ,
+				new UltimatePreferenceItem<Integer>(
+						LABEL_EXPLICIT_TYPESIZE_UCHAR, 1,
+						PreferenceType.Integer) ,
+				new UltimatePreferenceItem<Integer>(
+						LABEL_EXPLICIT_TYPESIZE_WCHAR, 1,
+						PreferenceType.Integer) ,
+				new UltimatePreferenceItem<Integer>(
+						LABEL_EXPLICIT_TYPESIZE_CHAR16, 2,
+						PreferenceType.Integer) ,
+				new UltimatePreferenceItem<Integer>(
+						LABEL_EXPLICIT_TYPESIZE_CHAR32, 4,
+						PreferenceType.Integer) ,
+				new UltimatePreferenceItem<Integer>(
+						LABEL_EXPLICIT_TYPESIZE_USHORT, 2,
+						PreferenceType.Integer) ,
+ 				new UltimatePreferenceItem<Integer>(
+						LABEL_EXPLICIT_TYPESIZE_UINT, 4,
+						PreferenceType.Integer) ,
+ 				new UltimatePreferenceItem<Integer>(
+						LABEL_EXPLICIT_TYPESIZE_ULONG, 8,
+						PreferenceType.Integer) ,
+  				new UltimatePreferenceItem<Integer>(
+						LABEL_EXPLICIT_TYPESIZE_LONGLONG, 8,
+						PreferenceType.Integer) ,
+   				new UltimatePreferenceItem<Integer>(
+						LABEL_EXPLICIT_TYPESIZE_ULONGLONG, 8,
+						PreferenceType.Integer) ,
+   				new UltimatePreferenceItem<Integer>(
+						LABEL_EXPLICIT_TYPESIZE_COMPLEXFLOAT, 8,
+						PreferenceType.Integer) ,
+    			new UltimatePreferenceItem<Integer>(
+						LABEL_EXPLICIT_TYPESIZE_COMPLEXDOUBLE, 8,
+						PreferenceType.Integer) ,  				
+				new UltimatePreferenceItem<Integer>(
+						LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE, 8,
+						PreferenceType.Integer) ,
+   				new UltimatePreferenceItem<Integer>(
+						LABEL_EXPLICIT_TYPESIZE_COMPLEXLONGDOUBLE, 8,
 						PreferenceType.Integer)
-		};
+    };
 	}
 
 	@Override
@@ -102,5 +146,18 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_EXPLICIT_TYPESIZE_FLOAT = "Size of float (in bytes)";
 	public static final String LABEL_EXPLICIT_TYPESIZE_DOUBLE = "Size of double (in bytes)";
 	public static final String LABEL_EXPLICIT_TYPESIZE_POINTER = "Size of pointer (in bytes)";
-
+	public static final String LABEL_EXPLICIT_TYPESIZE_SCHAR = "Size of signed char (in bytes)";
+	public static final String LABEL_EXPLICIT_TYPESIZE_UCHAR = "Size of unsigned char (in bytes)";
+	public static final String LABEL_EXPLICIT_TYPESIZE_WCHAR = "Size of wchar (?) (in bytes)";
+	public static final String LABEL_EXPLICIT_TYPESIZE_CHAR16 = "Size of char16 (in bytes)";
+	public static final String LABEL_EXPLICIT_TYPESIZE_CHAR32 = "Size of char32 (in bytes)";
+	public static final String LABEL_EXPLICIT_TYPESIZE_USHORT = "Size of unsigned short (in bytes)";
+	public static final String LABEL_EXPLICIT_TYPESIZE_UINT = "Size of unsigned int (in bytes)";
+	public static final String LABEL_EXPLICIT_TYPESIZE_ULONG = "Size of unsigned long (in bytes)";
+	public static final String LABEL_EXPLICIT_TYPESIZE_LONGLONG = "Size of long long (in bytes)";
+	public static final String LABEL_EXPLICIT_TYPESIZE_ULONGLONG = "Size of unsigned long long (in bytes)";
+	public static final String LABEL_EXPLICIT_TYPESIZE_COMPLEXFLOAT = "Size of complex float (in bytes)";
+	public static final String LABEL_EXPLICIT_TYPESIZE_COMPLEXDOUBLE = "Size of complex double (in bytes)";
+	public static final String LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE = "Size of long double (in bytes)";
+	public static final String LABEL_EXPLICIT_TYPESIZE_COMPLEXLONGDOUBLE = "Size of complex long double (in bytes)";
 }

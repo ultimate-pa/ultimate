@@ -75,8 +75,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer.POINTER_CHECKMODE;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_CHECKMODE;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
@@ -159,6 +159,20 @@ private boolean useConstantTypeSizes = true;
 	private int sizeOfShortType = 1;
 	private int sizeOfLongType = 8;
 	private int sizeOfDoubleType = 8;
+	private int sizeOfSCharType = 1;
+	private int sizeOfUCharType = 1;
+	private int sizeOfWCharType = 1;
+	private int sizeOfChar16Type = 2;
+	private int sizeOfChar32Type = 4;
+	private int sizeOfUShortType = 2;
+	private int sizeOfUIntType = 4;
+	private int sizeOfULongType = 8;
+	private int sizeOfLongLongType = 8;
+	private int sizeOfULongLongType = 8;
+	private int sizeOfComplexFloatType = 8;
+	private int sizeOfComplexDoubleType = 8;
+	private int sizeOfLongDoubleType = 8;
+	private int sizeOfComplexLongDoubleType = 8;
 	private int defaultTypeSize = 8;
 
     /**
@@ -175,41 +189,65 @@ private boolean useConstantTypeSizes = true;
 		//read preferences from settings
 		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
     	m_PointerBaseValidity = 
-				ups.getEnum(PreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, POINTER_CHECKMODE.class);
+				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, POINTER_CHECKMODE.class);
     	m_PointerAllocated = 
-				ups.getEnum(PreferenceInitializer.LABEL_CHECK_POINTER_ALLOC, POINTER_CHECKMODE.class);
+				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_ALLOC, POINTER_CHECKMODE.class);
     	m_CheckFreeValid = 
-				ups.getBoolean(PreferenceInitializer.LABEL_CHECK_FREE_VALID);
+				ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID);
 		m_CheckMallocNonNegative = 
-				ups.getBoolean(PreferenceInitializer.LABEL_CHECK_MallocNonNegative);
+				ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MallocNonNegative);
     	m_PointerSubtractionAndComparisonValidity = 
-				ups.getEnum(PreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY, POINTER_CHECKMODE.class);
+				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY, POINTER_CHECKMODE.class);
 		useConstantTypeSizes =
-				ups.getBoolean(PreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
+				ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
 		sizeOfBoolType = 
-				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
 		sizeOfCharType = 
-				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR);
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR);
 		sizeOfShortType = 
-				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_SHORT);
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_SHORT);
 		sizeOfIntType = 
-				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_INT);
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_INT);
 		sizeOfLongType = 
-				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONG);
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONG);
 		sizeOfFloatType = 
-				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_FLOAT);
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_FLOAT);
 		sizeOfDoubleType = 
-				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_DOUBLE);
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_DOUBLE);
 		sizeOfPointerType = 
-				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_POINTER);
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_POINTER);
 		sizeOfBoolType = 
-				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
-		sizeOfBoolType = 
-				ups.getInt(PreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
-				
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
+		sizeOfUCharType = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_UCHAR);
+		sizeOfWCharType = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_WCHAR);
+		sizeOfChar16Type = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR16);
+		sizeOfChar32Type = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR32);
+		sizeOfUShortType = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_USHORT);
+		sizeOfUIntType = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_UINT);
+		sizeOfULongType = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_ULONG);
+		sizeOfLongLongType = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGLONG);
+		sizeOfULongLongType = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_ULONGLONG);
+		sizeOfComplexFloatType = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_COMPLEXFLOAT);
+		sizeOfComplexDoubleType = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_COMPLEXDOUBLE);
+		sizeOfLongDoubleType = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE);
+		sizeOfComplexLongDoubleType = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_COMPLEXLONGDOUBLE);
+
 		isIntArrayRequiredInMM = false;
-	    isFloatArrayRequiredInMM = false;
-	    isPointerArrayRequiredInMM = false;
+		isFloatArrayRequiredInMM = false;
+		isPointerArrayRequiredInMM = false;
     }
 
     /**
@@ -918,6 +956,48 @@ private boolean useConstantTypeSizes = true;
 				break;
 			case LONG:
 				size = sizeOfLongType;
+				break;
+			case SCHAR:
+				size = sizeOfSCharType;
+				break;
+			case UCHAR:
+				size = sizeOfUCharType;
+				break;
+			case WCHAR:
+				size = sizeOfWCharType;
+				break;
+			case CHAR16:
+				size = sizeOfChar16Type;
+				break;
+			case CHAR32:
+				size = sizeOfChar32Type;
+				break;
+			case USHORT:
+				size = sizeOfUShortType;
+				break;
+			case UINT:
+				size = sizeOfUIntType;
+				break;
+			case ULONG:
+				size = sizeOfULongType;
+				break;
+			case LONGLONG:
+				size = sizeOfLongLongType;
+				break;
+			case ULONGLONG:
+				size = sizeOfULongLongType;
+				break;
+			case COMPLEX_FLOAT:
+				size = sizeOfComplexFloatType;
+				break;
+			case COMPLEX_DOUBLE:
+				size = sizeOfComplexDoubleType;
+				break;
+			case LONGDOUBLE:
+				size = sizeOfLongDoubleType;
+				break;
+			case COMPLEX_LONGDOUBLE:
+				size = sizeOfComplexLongDoubleType;
 				break;
 			default:
 				size = defaultTypeSize;

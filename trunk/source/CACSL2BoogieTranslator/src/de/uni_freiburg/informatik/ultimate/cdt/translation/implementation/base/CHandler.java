@@ -165,8 +165,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer.POINTER_CHECKMODE;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_CHECKMODE;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
@@ -286,7 +286,7 @@ public class CHandler implements ICHandler {
 		this.postProcessor = new PostProcessor();
 		this.structHandler = new StructHandler();
 		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		boolean checkPointerValidity = prefs.getBoolean(PreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
+		boolean checkPointerValidity = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
 		this.memoryHandler = new MemoryHandler(functionHandler, checkPointerValidity);
 		this.symbolTable = new SymbolTable(main);
 		this.mFunctions = new LinkedHashMap<String, FunctionDeclaration>();
@@ -910,11 +910,10 @@ public class CHandler implements ICHandler {
 			/** int <code>x</code> becomes <code>x == 0 ? 1 : 0</code> */
 		{
 			ResultExpression rop = o.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			//implicit cast TODO: all the casting is not so nice; does the topic of pointer to int conversion apply here?
+			//implicit cast
 			if (!rop.lrVal.isBoogieBool 
 					&& (!(rop.lrVal.cType instanceof CPrimitive)  || ((CPrimitive )rop.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE)) {
-				if (rop.lrVal.cType instanceof CPointer) {
-//					rop.lrVal = new RValue(new StructAccessExpression(loc, rop.lrVal.getValue(), SFO.POINTER_OFFSET), new CPrimitive(PRIMITIVE.INT));
+				if (rop.lrVal.cType instanceof CPointer) {//TODO: how general is this solution??
 					rop.lrVal = new RValue(new StructAccessExpression(loc, rop.lrVal.getValue(), SFO.POINTER_BASE), new CPrimitive(PRIMITIVE.INT));
 				}
 			}

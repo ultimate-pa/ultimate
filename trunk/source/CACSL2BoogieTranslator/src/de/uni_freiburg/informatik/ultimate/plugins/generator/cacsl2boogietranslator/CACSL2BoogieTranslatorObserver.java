@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
@@ -83,7 +83,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 				Activator.s_PLUGIN_ID);
 		TranslationMode mode = TranslationMode.BASE;
 		try {
-			mode = prefs.getEnum(PreferenceInitializer.LABEL_MODE,
+			mode = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MODE,
 					TranslationMode.class);
 		} catch (Exception e) {
 			throw new IllegalArgumentException(

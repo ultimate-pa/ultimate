@@ -86,7 +86,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
 
@@ -150,7 +150,7 @@ public class FunctionHandler {
 		this.modifiedGlobalsIsUserDefined = new LinkedHashSet<String>();
 		m_CheckMemoryLeakAtEndOfMain = 
 				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
-				getBoolean(PreferenceInitializer.LABEL_CHECK_MemoryLeakInMain);
+				getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MemoryLeakInMain);
 	}
 
 	/**

@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtLocation;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
@@ -249,7 +249,7 @@ public abstract class Dispatcher {
 		UltimatePreferenceStore prefs = new UltimatePreferenceStore(
 				Activator.s_PLUGIN_ID);
 		boolean reportUnsoundnessWarning = prefs.getBoolean(
-				PreferenceInitializer.LABEL_REPORT_UNSOUNDNESS_WARNING);
+				CACSLPreferenceInitializer.LABEL_REPORT_UNSOUNDNESS_WARNING);
 		if (reportUnsoundnessWarning) {
 			String shortDescription = "Unsoundness Warning";
 			s_Logger.warn(shortDescription + " " + longDescription);
@@ -271,7 +271,7 @@ public abstract class Dispatcher {
 				Activator.s_PLUGIN_ID);
 		String checkMethod = SFO.EMPTY;
 		try {
-			checkMethod = prefs.getString(PreferenceInitializer.LABEL_MAINPROC);
+			checkMethod = prefs.getString(CACSLPreferenceInitializer.LABEL_MAINPROC);
 		} catch (Exception e) {
 			throw new IllegalArgumentException(
 					"Unable to determine specified checked method.");
