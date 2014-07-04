@@ -13,7 +13,7 @@ modifies b;
   while (true) {
     assume a == b;
     assume b == c;
-    b[3] := c[3] - 1;
+    b[3] := c[3] + 1;
     assume d[3] >= 0;
     assume d == b;
   }
