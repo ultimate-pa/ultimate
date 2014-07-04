@@ -346,8 +346,8 @@ public class RewriteArrays implements PreProcessor {
 		ArrayGenealogy(List<ArrayEquality> arrayEqualities, List<ArrayUpdate> arrayUpdates, List<MultiDimensionalSelect> arrayReads) {
 			UnionFind<TermVariable> uf = new UnionFind<>();
 			for (ArrayEquality ae : arrayEqualities) {
-				TermVariable lhs = ae.getInVar();
-				TermVariable rhs = ae.getOutVar();
+				TermVariable lhs = ae.getLhs();
+				TermVariable rhs = ae.getRhs();
 				TermVariable lhsRepresentative = uf.find(lhs);
 				if (lhsRepresentative == null) {
 					uf.makeEquivalenceClass(lhs);
@@ -384,8 +384,8 @@ public class RewriteArrays implements PreProcessor {
 				determineRepresentative((TermVariable) ar.getArray());
 			}
 			for (ArrayEquality ae : arrayEqualities) {
-				determineRepresentative(ae.getInVar());
-				determineRepresentative(ae.getOutVar());
+				determineRepresentative(ae.getLhs());
+				determineRepresentative(ae.getRhs());
 			}
 			for (ArrayUpdate au : arrayUpdates) {
 				determineRepresentative(au.getNewArray());
@@ -786,7 +786,7 @@ public class RewriteArrays implements PreProcessor {
 		Term[] conjuncts = new Term[arrayEqualities.size()];
 		int offset = 0;
 		for (ArrayEquality ae : arrayEqualities) {
-			conjuncts[offset] = buildArrayEqualityConstraints(ae.getInVar(), ae.getOutVar());
+			conjuncts[offset] = buildArrayEqualityConstraints(ae.getLhs(), ae.getRhs());
 			offset++;
 		}
 		return Util.and(m_Script, conjuncts);
@@ -932,9 +932,8 @@ public class RewriteArrays implements PreProcessor {
 
 	private class ArrayEquality {
 		private final Term m_OriginalTerm;
-		private TermVariable m_InVar;
-		private TermVariable m_OutVar;
-		
+		private final TermVariable lhs;
+		private final TermVariable rhs;
 		public ArrayEquality(Term term) throws ArrayEqualityException {
 			if (!(term instanceof ApplicationTerm)) {
 				throw new ArrayEqualityException("no ApplicationTerm");
@@ -952,47 +951,47 @@ public class RewriteArrays implements PreProcessor {
 			if (!(lhsTerm.getSort().isArraySort())) {
 				throw new ArrayEqualityException("no array");
 			}
-			TermVariable lhs;
+			
 			if (lhsTerm instanceof TermVariable) {
 				lhs = (TermVariable) lhsTerm;
 			} else {
 				throw new ArrayEqualityException("no tv");
 			}
-			TermVariable rhs;
+			
 			if (rhsTerm instanceof TermVariable) {
 				rhs = (TermVariable) rhsTerm;
 			} else {
 				throw new ArrayEqualityException("no tv");
 			}
-			if (m_VarCollector.getInVarsReverseMapping().containsKey(lhs)) {
-				m_InVar = lhs;
-			} else if (m_VarCollector.getOutVarsReverseMapping().containsKey(lhs)) {
-				m_OutVar = lhs;
-				
-			} else {
-				throw new ArrayEqualityException("lhs neither in nor out");
-			}
-			if (m_VarCollector.getInVarsReverseMapping().containsKey(rhs)) {
-				m_InVar = rhs;
-			} else if (m_VarCollector.getOutVarsReverseMapping().containsKey(rhs)) {
-				m_OutVar = rhs;
-			} else {
-				throw new ArrayEqualityException("rhs neither in nor out");
-			}
-			assert m_InVar != null;
-			assert m_OutVar != null;
+//			if (m_VarCollector.getInVarsReverseMapping().containsKey(lhs)) {
+//				m_InVar = lhs;
+//			} else if (m_VarCollector.getOutVarsReverseMapping().containsKey(lhs)) {
+//				m_OutVar = lhs;
+//				
+//			} else {
+//				throw new ArrayEqualityException("lhs neither in nor out");
+//			}
+//			if (m_VarCollector.getInVarsReverseMapping().containsKey(rhs)) {
+//				m_InVar = rhs;
+//			} else if (m_VarCollector.getOutVarsReverseMapping().containsKey(rhs)) {
+//				m_OutVar = rhs;
+//			} else {
+//				throw new ArrayEqualityException("rhs neither in nor out");
+//			}
+//			assert m_InVar != null;
+//			assert m_OutVar != null;
 		}
 
 		public Term getOriginalTerm() {
 			return m_OriginalTerm;
 		}
 
-		public TermVariable getInVar() {
-			return m_InVar;
+		public TermVariable getLhs() {
+			return lhs;
 		}
 
-		public TermVariable getOutVar() {
-			return m_OutVar;
+		public TermVariable getRhs() {
+			return rhs;
 		}
 
 		@Override
