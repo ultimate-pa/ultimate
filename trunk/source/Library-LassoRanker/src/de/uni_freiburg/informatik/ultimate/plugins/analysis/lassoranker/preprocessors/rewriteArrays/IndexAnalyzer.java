@@ -33,13 +33,15 @@ public class IndexAnalyzer {
 	private final Boogie2SMT m_boogie2smt;
 	private final VarCollector m_VarCollector;
 	private final Collection<Term> m_SupportingInvariants;
-	private final Collection<Term> m_AdditionalConjunctsInvariants;
+	private final ArrayList<Object> m_AdditionalEqualities;
+	private final ArrayList<Object> m_AdditionalNotequals;
 	
 	private final SetOfTwoeltons<Term> distinctTwoeltons = new SetOfTwoeltons<>();
 	private final SetOfTwoeltons<Term> equalTwoeltons = new SetOfTwoeltons<>();
 	private final SetOfTwoeltons<Term> unknownTwoeltons = new SetOfTwoeltons<>();
 	private final TransFormula m_OriginalStem;
 	private final TransFormula m_OriginalLoop;
+
 	
 	
 	public IndexAnalyzer(Term term, HashRelation<TermVariable, 
@@ -51,7 +53,8 @@ public class IndexAnalyzer {
 		m_Script = boogie2smt.getScript();
 		m_VarCollector = varCollector;
 		m_SupportingInvariants = new ArrayList<>();
-		m_AdditionalConjunctsInvariants = new ArrayList<>();
+		m_AdditionalEqualities = new ArrayList<>();
+		m_AdditionalNotequals = new ArrayList<>();
 		m_OriginalStem = originalStem;
 		m_OriginalLoop = originalLoop;
 		foo(array2Indices);
@@ -79,13 +82,13 @@ public class IndexAnalyzer {
 				boolean equalityIsInvariant = isInVariant(definingTwoelton, true);
 				if (equalityIsInvariant) {
 					m_SupportingInvariants.add(equalTerm(definingTwoelton));
-					m_AdditionalConjunctsInvariants.add(equalTerm(inVarTwoelton));
+					m_AdditionalEqualities.add(equalTerm(inVarTwoelton));
 					equalTwoeltons.addTowelton(inVarTwoelton);
 				} else {
 					boolean notEqualIsInvariant = isInVariant(definingTwoelton, false);
 					if (notEqualIsInvariant) {
 						m_SupportingInvariants.add(notEqualTerm(definingTwoelton));
-						m_AdditionalConjunctsInvariants.add(notEqualTerm(inVarTwoelton));
+						m_AdditionalNotequals.add(notEqualTerm(inVarTwoelton));
 						distinctTwoeltons.addTowelton(inVarTwoelton);
 					} else {
 						unknownTwoeltons.addTowelton(inVarTwoelton);
@@ -94,7 +97,7 @@ public class IndexAnalyzer {
 			}
 			
 		}
-		Term termWithAdditionalInvariants = Util.and(m_Script, m_Term, getAdditionalConjunctsInvariants());
+		Term termWithAdditionalInvariants = Util.and(m_Script, m_Term, getAdditionalConjunctsEqualities());
 
 		m_Script.push(1);
 		Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(m_Script, m_boogie2smt.getVariableManager(), termWithAdditionalInvariants.getFreeVars());
@@ -208,8 +211,8 @@ public class IndexAnalyzer {
 		return m_SupportingInvariants;
 	}
 
-	public Term getAdditionalConjunctsInvariants() {
-		return Util.and(m_Script, m_AdditionalConjunctsInvariants.toArray(new Term[m_AdditionalConjunctsInvariants.size()]));
+	public Term getAdditionalConjunctsEqualities() {
+		return Util.and(m_Script, m_AdditionalEqualities.toArray(new Term[m_AdditionalEqualities.size()]));
 	}
 	
 	
