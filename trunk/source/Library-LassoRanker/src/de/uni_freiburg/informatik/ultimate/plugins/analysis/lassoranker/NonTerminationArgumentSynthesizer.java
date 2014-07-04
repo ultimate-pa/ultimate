@@ -260,9 +260,9 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		} else {
 			t3 = m_script.term("true");
 		}
-		s_Logger.debug(SMTPrettyPrinter.print(t1));
-		s_Logger.debug(SMTPrettyPrinter.print(t2));
-		s_Logger.debug(SMTPrettyPrinter.print(t3));
+//		s_Logger.debug(SMTPrettyPrinter.print(t1));
+//		s_Logger.debug(SMTPrettyPrinter.print(t2));
+//		s_Logger.debug(SMTPrettyPrinter.print(t3));
 		return m_script.term("and", t1, t2, t3);
 	}
 	
