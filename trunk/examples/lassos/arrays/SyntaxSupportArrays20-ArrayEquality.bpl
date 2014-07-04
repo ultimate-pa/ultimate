@@ -11,11 +11,11 @@ procedure main() returns ()
 modifies b;
 {
   while (true) {
-    assume a == b;
-    assume b == c;
-    b[3] := c[3] - 1;
+    assume a == c;
+    b[3] := b[3] - a[2];
     assume d[3] >= 0;
     assume d == b;
+    assume c[2] > 1;
   }
 }
 

@@ -1,6 +1,6 @@
 //#rNonTermination
 /*
- * Date: 2014-07-04
+ * Date: 2014-07-01
  * Author: heizmann@informatik.uni-freiburg.de
  *
  */
@@ -12,7 +12,6 @@ modifies b;
 {
   while (true) {
     assume a == b;
-    assume b == c;
     b[3] := c[3] + 1;
     assume d[3] >= 0;
     assume d == b;
