@@ -1193,28 +1193,44 @@ public class CHandler implements ICHandler {
 			overappr.addAll(rrToInt.overappr);
 
 			RValue rval = null;
-			if (lType instanceof CPointer
-					&& rType instanceof CPrimitive
-//					&& ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
-					&& ((CPrimitive) rType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				RValue rrRValAsPointer = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
-						new IntegerLiteral(loc, "0"), 
-						rrToInt.lrVal.getValue(), loc), new CPointer(new CPrimitive(PRIMITIVE.VOID)));
-				rval = new RValue(
-						new BinaryExpression(loc, op, rlToInt.lrVal.getValue(), rrRValAsPointer.getValue()),
-						new CPrimitive(PRIMITIVE.INT));
-			} else if (rType instanceof CPointer
-					&& lType instanceof CPrimitive
-//					&& ((CPrimitive) lType).getType() == PRIMITIVE.INT) {
-					&& ((CPrimitive) lType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				RValue rlRValAsPointer = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
+//			if (lType instanceof CPointer
+//					&& rType instanceof CPrimitive
+////					&& ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
+//					&& ((CPrimitive) rType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+//				RValue rrRValAsPointer = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
+//						new IntegerLiteral(loc, "0"), 
+//						rrToInt.lrVal.getValue(), loc), new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+//				rval = new RValue(
+//						new BinaryExpression(loc, op, rlToInt.lrVal.getValue(), rrRValAsPointer.getValue()),
+//						new CPrimitive(PRIMITIVE.INT));
+//			} else if (rType instanceof CPointer
+//					&& lType instanceof CPrimitive
+////					&& ((CPrimitive) lType).getType() == PRIMITIVE.INT) {
+//					&& ((CPrimitive) lType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+//				RValue rlRValAsPointer = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
+//						new IntegerLiteral(loc, "0"), 
+//						rlToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
+//				rval = new RValue(
+//						new BinaryExpression(loc, op, rlRValAsPointer.getValue(), rrToInt.lrVal.getValue()),
+//						new CPrimitive(PRIMITIVE.INT));
+//			} else if (lType instanceof CPointer && rType instanceof CPointer) {
+			//we have a pointer comparison
+			if (lType instanceof CPointer || rType instanceof CPointer) {
+				//both of the two following ifs will lead to an assertion violation if the pointer compared to
+				// is something different from NULL (as we construct Pointers with base 0) --> but this is ok, as
+				// it would be undefined behaviour
+				// except if we converted a pointer into an allocated region to int, this is not supported yet (TODO)
+				if (!(lType instanceof CPointer)) {
+					rlToInt.lrVal = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
 						new IntegerLiteral(loc, "0"), 
 						rlToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
-				rval = new RValue(
-						new BinaryExpression(loc, op, rlRValAsPointer.getValue(), rrToInt.lrVal.getValue()),
-						new CPrimitive(PRIMITIVE.INT));
-			} else if (lType instanceof CPointer && rType instanceof CPointer) {
-				assert ((CPointer) rlToInt.lrVal.cType).pointsToType.equals(((CPointer) rrToInt.lrVal.cType).pointsToType);
+				}
+				if (!(rType instanceof CPointer)) {
+					rrToInt.lrVal = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
+						new IntegerLiteral(loc, "0"), 
+						rrToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
+				}
+//				assert ((CPointer) rlToInt.lrVal.cType).pointsToType.equals(((CPointer) rrToInt.lrVal.cType).pointsToType); //FIXME macht dieses assert Sinn?
 				//assert (in Boogie) that the base value of the pointers matches
 				if (this.memoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSERTandASSUME) {
 					Statement assertStm = new AssertStatement(loc, new BinaryExpression(loc, 
