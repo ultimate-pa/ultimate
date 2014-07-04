@@ -5,7 +5,7 @@ file_export_version=3.0
 /instance/CACSL2BoogieTranslator/Check\ for\ the\ main\ procedure\ if\ all\ allocated\ memory\ was\ freed=false
 /instance/CACSL2BoogieTranslator/Check\ if\ freed\ pointer\ was\ valid=false
 /instance/CACSL2BoogieTranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
-/instance/CACSL2BoogieTranslator/Translation\ Mode\:=SV_COMP14
+/instance/CACSL2BoogieTranslator/Translation\ Mode\:=BASE
 #Wed Jan 15 21:36:24 CET 2014
 file_export_version=3.0
 \!/instance/RCFGBuilder=
