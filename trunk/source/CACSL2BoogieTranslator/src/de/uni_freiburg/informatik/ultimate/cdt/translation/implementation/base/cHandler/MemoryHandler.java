@@ -957,7 +957,6 @@ private boolean useConstantTypeSizes = true;
      * @return a reference to the constant, holding sizeof cvar.
      */
     public IdentifierExpression calculateSizeOfWithVariableTypeSizes(CType cvar, ILocation loc) {
-    	//    public Expression calculateSizeOf(CType cvar, ILocation loc) {
 
     	assert cvar != null;
     	ASTType intT = new PrimitiveType(loc, SFO.INT);
@@ -970,11 +969,6 @@ private boolean useConstantTypeSizes = true;
     		this.axioms.add(new Axiom(loc, attr, new BinaryExpression(loc,
     				Operator.COMPGT, idex, new IntegerLiteral(loc, SFO.NR0))));
     		sizeofConsts.add(id);
-//    		//small hack: set sizeof char equal to sizeof int
-//    		if (cvar instanceof CPrimitive && ((CPrimitive) cvar).getType() == PRIMITIVE.CHAR) {
-//    			this.axioms.add(new Axiom(loc, attr, new BinaryExpression(loc,
-//    					Operator.COMPEQ, idex, new IdentifierExpression(loc, SFO.SIZEOF + SFO.INT.toUpperCase()))));
-//    		}
 
     		if (cvar instanceof CArray) {
     			CArray ca = (CArray) cvar;
