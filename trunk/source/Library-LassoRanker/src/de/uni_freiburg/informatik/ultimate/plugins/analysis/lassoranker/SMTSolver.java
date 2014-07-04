@@ -82,7 +82,7 @@ class SMTSolver {
 		if (useExternalSolver) {
 			script = new Scriptor(smt_solver_command, solverLogger);
 		} else {
-			int timeoutMilliseconds = 10 * 1000; 
+			int timeoutMilliseconds = 1099 * 1000; 
 			script = new SMTInterpol(solverLogger);
 			script.setOption(":timeout", String.valueOf(timeoutMilliseconds));
 		}
