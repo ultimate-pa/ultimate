@@ -1195,7 +1195,8 @@ public class CHandler implements ICHandler {
 			RValue rval = null;
 			if (lType instanceof CPointer
 					&& rType instanceof CPrimitive
-					&& ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
+//					&& ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
+					&& ((CPrimitive) rType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 				RValue rrRValAsPointer = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
 						new IntegerLiteral(loc, "0"), 
 						rrToInt.lrVal.getValue(), loc), new CPointer(new CPrimitive(PRIMITIVE.VOID)));
@@ -1204,7 +1205,8 @@ public class CHandler implements ICHandler {
 						new CPrimitive(PRIMITIVE.INT));
 			} else if (rType instanceof CPointer
 					&& lType instanceof CPrimitive
-					&& ((CPrimitive) lType).getType() == PRIMITIVE.INT) {
+//					&& ((CPrimitive) lType).getType() == PRIMITIVE.INT) {
+					&& ((CPrimitive) lType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 				RValue rlRValAsPointer = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
 						new IntegerLiteral(loc, "0"), 
 						rlToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
@@ -1409,15 +1411,18 @@ public class CHandler implements ICHandler {
 			}
 
 			RValue rval = null;
+			//implicit casts
 			if (lType instanceof CPointer
 					&& rType instanceof CPrimitive
-					&& ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
+//					&& ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
+					&& ((CPrimitive) rType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 				rval = doPointerArithPointerAndInteger(main, node.getOperator(), 
 						loc, ((RValue) rlToInt.lrVal), ((RValue) rrToInt.lrVal),
 						((CPointer) rlToInt.lrVal.cType).pointsToType);
 			} else if (rType instanceof CPointer
 					&& lType instanceof CPrimitive
-					&& ((CPrimitive) lType).getType() == PRIMITIVE.INT) {
+//					&& ((CPrimitive) lType).getType() == PRIMITIVE.INT) {
+					&& ((CPrimitive) lType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 				rval = doPointerArithPointerAndInteger(main, node.getOperator(), loc, (RValue) rrToInt.lrVal,
 						(RValue) rlToInt.lrVal, ((CPointer) rrToInt.lrVal.cType).pointsToType);
 			} else if (lType instanceof CPointer && rType instanceof CPointer) {
@@ -1994,7 +1999,8 @@ public class CHandler implements ICHandler {
 		if (underlyingType instanceof CPointer) {
 		    // cast from pointer to integer
 		    if (newCType instanceof CPrimitive &&
-		            ((CPrimitive)newCType).getType() == PRIMITIVE.INT) {
+//		            ((CPrimitive)newCType).getType() == PRIMITIVE.INT) {
+		            ((CPrimitive)newCType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 		        Expression e = MemoryHandler.getPointerOffset(expr.lrVal.getValue(), loc);
 		        expr.lrVal = new RValue(e, newCType);
 		    }
@@ -2006,7 +2012,8 @@ public class CHandler implements ICHandler {
 		// cast integer -> pointer
 		else if (underlyingType instanceof CPrimitive) {
 		    CPrimitive cprim = (CPrimitive)underlyingType;
-		    if (cprim.getType() == PRIMITIVE.INT &&
+//		    if (cprim.getType() == PRIMITIVE.INT &&
+		    if (cprim.getGeneralType() == GENERALPRIMITIVE.INTTYPE &&
 		            newCType instanceof CPointer) {
 		        Expression e = MemoryHandler.constructPointerFromBaseAndOffset(
 		                new IntegerLiteral(loc, "0"), expr.lrVal.getValue(), loc);
@@ -2259,7 +2266,8 @@ public class CHandler implements ICHandler {
 						String cId = symbolTable.getCID4BoogieID(varId, loc);
 						CType cType = symbolTable.get(cId, loc).getCVariable();
 						if (cType instanceof CPrimitive &&
-								((CPrimitive)cType).getType() == PRIMITIVE.INT) {
+//								((CPrimitive)cType).getType() == PRIMITIVE.INT) {
+								((CPrimitive)cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 							convertToPointer = true;
 						}
 					}
