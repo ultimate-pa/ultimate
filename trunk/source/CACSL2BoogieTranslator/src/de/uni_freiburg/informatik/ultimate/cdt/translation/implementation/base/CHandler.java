@@ -914,7 +914,8 @@ public class CHandler implements ICHandler {
 			if (!rop.lrVal.isBoogieBool 
 					&& (!(rop.lrVal.cType instanceof CPrimitive)  || ((CPrimitive )rop.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE)) {
 				if (rop.lrVal.cType instanceof CPointer) {
-					rop.lrVal = new RValue(new StructAccessExpression(loc, rop.lrVal.getValue(), SFO.POINTER_OFFSET), new CPrimitive(PRIMITIVE.INT));
+//					rop.lrVal = new RValue(new StructAccessExpression(loc, rop.lrVal.getValue(), SFO.POINTER_OFFSET), new CPrimitive(PRIMITIVE.INT));
+					rop.lrVal = new RValue(new StructAccessExpression(loc, rop.lrVal.getValue(), SFO.POINTER_BASE), new CPrimitive(PRIMITIVE.INT));
 				}
 			}
 			ResultExpression ropToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rop);
