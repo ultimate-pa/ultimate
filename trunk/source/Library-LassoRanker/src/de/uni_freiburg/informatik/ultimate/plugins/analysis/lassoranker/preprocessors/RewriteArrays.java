@@ -148,6 +148,8 @@ public class RewriteArrays implements PreProcessor {
 	private final Set<Term> m_ArrayIndexSupportingInvariants;
 	private EquivalentCells[] m_EquivalentCells;
 
+	private boolean m_OverapproximateByOmmitingIndexNotEquals;
+
 	
 	public RewriteArrays(VarCollector rankVarCollector, 
 			TransFormula originalStem, TransFormula originalLoop, Boogie2SMT 
@@ -231,9 +233,19 @@ public class RewriteArrays implements PreProcessor {
 		Term[] disjunctsWithUpdateConstraints = new Term[sunnf.length];
 		for (int i=0; i<disjunctsWithUpdateConstraints.length; i++) {
 			Term removedSelect = m_Select2CellVariable[i].transform(sunnf[i]);
-			disjunctsWithUpdateConstraints[i] = Util.and(m_Script, removedSelect, 
-					indexValueConstraints[i], arrayUpdateConstraints[i], 
-					arrayEqualityConstraints[i], ia.getAdditionalConjunctsEqualities());
+			Term[] conjuncts;
+			if (m_OverapproximateByOmmitingIndexNotEquals) {
+				conjuncts = new Term[5];
+			} else {
+				conjuncts = new Term[6];
+				conjuncts[5] = ia.getAdditionalConjunctsNotEquals();
+			}
+			conjuncts[0] = removedSelect;
+			conjuncts[1] = indexValueConstraints[i];
+			conjuncts[2] = arrayUpdateConstraints[i]; 
+			conjuncts[3] = arrayEqualityConstraints[i];
+			conjuncts[4] = ia.getAdditionalConjunctsEqualities();
+			disjunctsWithUpdateConstraints[i] = Util.and(m_Script, conjuncts);
 		}
 		Term resultDisjuntion = Util.or(m_Script, disjunctsWithUpdateConstraints);
 		
@@ -521,12 +533,8 @@ public class RewriteArrays implements PreProcessor {
 			}
 			ArrayGeneration ag = m_Array2Generation.get(array);
 			if (ag == null) {
-				if (isInvar(array, m_VarCollector)) {
-					// occurs only in select, is its own representative
-					m_Instance2Representative.put(array, array);
-				} else {
-					throw new AssertionError("no generation and not invar");
-				}
+				// occurs only in select, is its own representative
+				m_Instance2Representative.put(array, array);
 			} else {
 				ArrayGeneration fg = m_Generation2OriginalGeneration.get(ag);
 				assert fg != null : "no original generation!";

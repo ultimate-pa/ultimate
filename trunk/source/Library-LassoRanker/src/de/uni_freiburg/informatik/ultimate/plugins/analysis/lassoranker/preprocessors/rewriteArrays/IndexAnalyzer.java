@@ -57,10 +57,26 @@ public class IndexAnalyzer {
 		m_AdditionalNotequals = new ArrayList<>();
 		m_OriginalStem = originalStem;
 		m_OriginalLoop = originalLoop;
-		foo(array2Indices);
+		analyze(array2Indices);
 	}
+	
+	
+	private void addDistinctDoubleton(Twoelton<Term> doubleton) {
+		distinctTwoeltons.addTowelton(doubleton);
+		m_AdditionalNotequals.add(notEqualTerm(doubleton));
+	}
+	
+	private void addEqualDoubleton(Twoelton<Term> doubleton) {
+		equalTwoeltons.addTowelton(doubleton);
+		m_AdditionalEqualities.add(equalTerm(doubleton));
+	}
+	
+	private void addUnknownDoubleton(Twoelton<Term> doubleton) {
+		unknownTwoeltons.addTowelton(doubleton);
+	}
+	
 
-	void foo(HashRelation<TermVariable, List<Term>> array2Indices) { 
+	void analyze(HashRelation<TermVariable, List<Term>> array2Indices) { 
 		for (TermVariable tv : array2Indices.getDomain()) {
 			Set<List<Term>> test = array2Indices.getImage(tv);
 			List<Term>[] testArr = test.toArray(new List[test.size()]);
@@ -82,16 +98,14 @@ public class IndexAnalyzer {
 				boolean equalityIsInvariant = isInVariant(definingTwoelton, true);
 				if (equalityIsInvariant) {
 					m_SupportingInvariants.add(equalTerm(definingTwoelton));
-					m_AdditionalEqualities.add(equalTerm(inVarTwoelton));
-					equalTwoeltons.addTowelton(inVarTwoelton);
+					addEqualDoubleton(inVarTwoelton);
 				} else {
 					boolean notEqualIsInvariant = isInVariant(definingTwoelton, false);
 					if (notEqualIsInvariant) {
 						m_SupportingInvariants.add(notEqualTerm(definingTwoelton));
-						m_AdditionalNotequals.add(notEqualTerm(inVarTwoelton));
-						distinctTwoeltons.addTowelton(inVarTwoelton);
+						addDistinctDoubleton(inVarTwoelton);
 					} else {
-						unknownTwoeltons.addTowelton(inVarTwoelton);
+						addUnknownDoubleton(inVarTwoelton);
 					}
 				} 
 			}
@@ -113,7 +127,7 @@ public class IndexAnalyzer {
 			LBool lbool = m_Script.checkSat();
 			m_Script.pop(1);
 			if (lbool == LBool.UNSAT) {
-				distinctTwoeltons.addTowelton(twoelton);
+				addDistinctDoubleton(twoelton);
 			} else {
 				Term notEqual = Util.not(m_Script, equal);
 				m_Script.push(1);
@@ -121,9 +135,9 @@ public class IndexAnalyzer {
 				lbool = m_Script.checkSat();
 				m_Script.pop(1);
 				if (lbool == LBool.UNSAT) {
-					equalTwoeltons.addTowelton(twoelton);
+					addEqualDoubleton(twoelton);
 				} else {
-					unknownTwoeltons.addTowelton(twoelton);
+					addUnknownDoubleton(twoelton);
 				}
 			}
 		}
@@ -213,6 +227,10 @@ public class IndexAnalyzer {
 
 	public Term getAdditionalConjunctsEqualities() {
 		return Util.and(m_Script, m_AdditionalEqualities.toArray(new Term[m_AdditionalEqualities.size()]));
+	}
+	
+	public Term getAdditionalConjunctsNotEquals() {
+		return Util.and(m_Script, m_AdditionalNotequals.toArray(new Term[m_AdditionalNotequals.size()]));
 	}
 	
 	
