@@ -64,7 +64,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Replacem
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.IndexAnalyzer;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.SetOfTwoeltons;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.IndexAnalyzer.Equality;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.SetOfDoubletons;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.SingleUpdateNormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
@@ -138,30 +139,36 @@ public class RewriteArrays implements PreProcessor {
 	private List<ArrayEquality>[] m_ArrayEqualities;
 	private SafeSubstitution m_Select2CellVariable[];
 
-	private SetOfTwoeltons<Term> m_EqualTwoeltons;
-	private SetOfTwoeltons<Term> m_DistinctTwoeltons;
-	private SetOfTwoeltons<Term> m_UnknownTwoeltons;
+//	private SetOfDoubletons<Term> m_EqualDoubletons;
+//	private SetOfDoubletons<Term> m_DistinctDoubletons;
+//	private SetOfDoubletons<Term> m_UnknownDoubletons;
+	private IndexAnalyzer m_IndexAnalyzer;
 	
+	private final boolean m_SearchAdditionalSupportingInvariants;
 	private final TransFormula m_OriginalStem;
 	private final TransFormula m_OriginalLoop;
 
 	private final Set<Term> m_ArrayIndexSupportingInvariants;
 	private EquivalentCells[] m_EquivalentCells;
 
-	private boolean m_OverapproximateByOmmitingIndexNotEquals;
+	private final boolean m_OverapproximateByOmmitingDisjointIndices;
 
 	
-	public RewriteArrays(VarCollector rankVarCollector, 
+	public RewriteArrays(VarCollector rankVarCollector,
+			boolean searchAdditionalSupportingInvariants,
 			TransFormula originalStem, TransFormula originalLoop, Boogie2SMT 
 			boogie2smt, 
-			Set<Term> arrayIndexsupportingInvariants) {
+			Set<Term> arrayIndexsupportingInvariants,
+			boolean overapproximateByOmmitingDisjointIndices) {
 		m_VarCollector = rankVarCollector;
 		m_repVars = new LinkedHashMap<TermVariable, Term>();
 		m_repTerms = new ArrayList<Term>();
+		m_SearchAdditionalSupportingInvariants = searchAdditionalSupportingInvariants;
 		m_OriginalStem = originalStem;
 		m_OriginalLoop = originalLoop;
 		m_boogie2SMT = boogie2smt;
 		m_ArrayIndexSupportingInvariants = arrayIndexsupportingInvariants;
+		m_OverapproximateByOmmitingDisjointIndices = overapproximateByOmmitingDisjointIndices;
 	}
 	
 	@Override
@@ -199,11 +206,8 @@ public class RewriteArrays implements PreProcessor {
 		}
 		
 		new IndexCollector();
-		IndexAnalyzer ia = new IndexAnalyzer(term, m_Array2Indices, m_boogie2SMT, m_VarCollector, m_OriginalStem, m_OriginalLoop);
-		m_ArrayIndexSupportingInvariants.addAll(ia.getSupportingInvariants());
-		m_EqualTwoeltons = ia.getEqualTwoeltons();
-		m_DistinctTwoeltons = ia.getDistinctTwoeltons();
-		m_UnknownTwoeltons = ia.getUnknownTwoeltons();
+		m_IndexAnalyzer = new IndexAnalyzer(term, m_Array2Indices, m_SearchAdditionalSupportingInvariants, m_boogie2SMT, m_VarCollector, m_OriginalStem, m_OriginalLoop);
+		m_ArrayIndexSupportingInvariants.addAll(m_IndexAnalyzer.getSupportingInvariants());
 		CellVariableBuilder cvb = new CellVariableBuilder();
 		m_ArrayInstance2Index2CellVariable = cvb.getArrayInstance2Index2CellVariable();
 		m_EquivalentCells = new EquivalentCells[disjuncts.length];
@@ -234,17 +238,17 @@ public class RewriteArrays implements PreProcessor {
 		for (int i=0; i<disjunctsWithUpdateConstraints.length; i++) {
 			Term removedSelect = m_Select2CellVariable[i].transform(sunnf[i]);
 			Term[] conjuncts;
-			if (m_OverapproximateByOmmitingIndexNotEquals) {
+			if (m_OverapproximateByOmmitingDisjointIndices) {
 				conjuncts = new Term[5];
 			} else {
 				conjuncts = new Term[6];
-				conjuncts[5] = ia.getAdditionalConjunctsNotEquals();
+				conjuncts[5] = m_IndexAnalyzer.getAdditionalConjunctsNotEquals();
 			}
 			conjuncts[0] = removedSelect;
 			conjuncts[1] = indexValueConstraints[i];
 			conjuncts[2] = arrayUpdateConstraints[i]; 
 			conjuncts[3] = arrayEqualityConstraints[i];
-			conjuncts[4] = ia.getAdditionalConjunctsEqualities();
+			conjuncts[4] = m_IndexAnalyzer.getAdditionalConjunctsEqualities();
 			disjunctsWithUpdateConstraints[i] = Util.and(m_Script, conjuncts);
 		}
 		Term resultDisjuntion = Util.or(m_Script, disjunctsWithUpdateConstraints);
@@ -284,7 +288,7 @@ public class RewriteArrays implements PreProcessor {
 			for (List<Term> index : newInstance2Index2CellVariable.keySet()) {
 				TermVariable newCellVariable = newInstance2Index2CellVariable.get(index);
 				TermVariable oldCellVariable = oldInstance2Index2CellVariable.get(index);
-				Equality indexEquality = isEqual(index, updateIndex);
+				Equality indexEquality = m_IndexAnalyzer.isEqual(index, updateIndex);
 				switch (indexEquality) {
 				case EQUAL:
 					// do nothing
@@ -320,7 +324,7 @@ public class RewriteArrays implements PreProcessor {
 				for (int j=0; j<i; j++) {
 					List<Term> index1 = indices[i];
 					List<Term> index2 = indices[j];
-					if (isEqual(index1, index2) == Equality.EQUAL) {
+					if (m_IndexAnalyzer.isEqual(index1, index2) == Equality.EQUAL) {
 						TermVariable value1 = values[i];
 						TermVariable value2 = values[j];
 						uf.union(value1, value2);
@@ -331,30 +335,7 @@ public class RewriteArrays implements PreProcessor {
 		
 	}
 	
-	public enum Equality { EQUAL, NOT_EQUAL, UNKNOWN };
-	
-	public Equality isEqual(List<Term> index1, List<Term> index2) {
-		assert index1.size() == index2.size();
-		boolean oneEntryWasUnknown = false;
-		for (int i=0; i<index1.size(); i++) {
-			if (index1.get(i) == index2.get(i)) {
-				continue;
-			}
-			if (m_DistinctTwoeltons.containsTwoelton(index1.get(i), index2.get(i))) {
-				return Equality.NOT_EQUAL;
-			}
-			if (m_UnknownTwoeltons.containsTwoelton(index1.get(i), index2.get(i))) {
-				oneEntryWasUnknown = true;
-			} else {
-				assert (m_EqualTwoeltons.containsTwoelton(index1.get(i), index2.get(i)));
-			}
-		}
-		if (oneEntryWasUnknown) {
-			return Equality.UNKNOWN;
-		} else {
-			return Equality.EQUAL;
-		}
-	}
+
 	
 
 	private void addArrayEqualityConstraints(UnionFind<TermVariable> uf, List<ArrayEquality> arrayEqualities) {
@@ -1024,7 +1005,7 @@ public class RewriteArrays implements PreProcessor {
 			newCellVariable = equivalentCells.getInOutRepresentative(newCellVariable);
 			TermVariable oldCellVariable = oldInstance2Index2CellVariable.get(index);
 			oldCellVariable = equivalentCells.getInOutRepresentative(oldCellVariable);
-			Term indexIsUpdateIndex = pairwiseEqualityExploitTwoeltons(index.toArray(new Term[index.size()]), updateIndex, select2CellVariable);
+			Term indexIsUpdateIndex = pairwiseEqualityExploitDoubletons(index, Arrays.asList(updateIndex), select2CellVariable);
 			Term newDataIsUpdateData = SmtUtils.binaryEquality(m_Script, newCellVariable, data);
 			Term newDateIsOldData = SmtUtils.binaryEquality(m_Script, newCellVariable, oldCellVariable);
 			Term indexIsNotUpdateIndex = Util.not(m_Script, indexIsUpdateIndex);
@@ -1067,7 +1048,7 @@ public class RewriteArrays implements PreProcessor {
 				TermVariable value2 = values[j];
 				TermVariable value1Representative = equivalentCells.getInOutRepresentative(value1);
 				TermVariable value2Representative = equivalentCells.getInOutRepresentative(value2);
-				conjuncts[k] = indexEqualityImpliesValueEquality(index1.toArray(new Term[0]), index2.toArray(new Term[0]), 
+				conjuncts[k] = indexEqualityImpliesValueEquality(index1, index2, 
 						value1Representative, value2Representative, select2CellVariable);
 				k++;
 			}
@@ -1076,29 +1057,29 @@ public class RewriteArrays implements PreProcessor {
 		return result;
 	}
 
-	private Term indexEqualityImpliesValueEquality(Term[] index1,
-			Term[] index2, Term value1, Term value2, SafeSubstitution select2CellVariable) {
-		Term indexEquality = pairwiseEqualityExploitTwoeltons(index1, index2, select2CellVariable);
+	private Term indexEqualityImpliesValueEquality(List<Term> index1,
+			List<Term> index2, Term value1, Term value2, SafeSubstitution select2CellVariable) {
+		Term indexEquality = pairwiseEqualityExploitDoubletons(index1, index2, select2CellVariable);
 		Term valueEquality = SmtUtils.binaryEquality(m_Script, value1, value2);
 		return Util.or(m_Script, Util.not(m_Script, indexEquality), valueEquality);
 	}
 	
-	Term pairwiseEqualityExploitTwoeltons(Term[] index1, Term[] index2, SafeSubstitution select2CellVariable) {
-		assert index1.length == index2.length;
-		Term[] conjuncts = new Term[index1.length];
-		for (int i=0; i<index1.length; i++) {
-			Term fst = index1[i];
-			Term snd = index2[i];
-			if (fst == snd || m_EqualTwoeltons.containsTwoelton(fst, snd)) {
+	Term pairwiseEqualityExploitDoubletons(List<Term> index1, List<Term> index2, SafeSubstitution select2CellVariable) {
+		assert index1.size() == index2.size();
+		Term[] conjuncts = new Term[index1.size()];
+		for (int i=0; i<index1.size(); i++) {
+			Term fst = index1.get(i);
+			Term snd = index2.get(i);
+			if (fst == snd || m_IndexAnalyzer.isEqualDoubleton(fst, snd)) {
 				conjuncts[i] = m_Script.term("true");
-			} else if (m_DistinctTwoeltons.containsTwoelton(fst, snd)) {
+			} else if (m_IndexAnalyzer.isDistinctDoubleton(fst, snd)) {
 				conjuncts[i] = m_Script.term("false");
-			} else if (m_UnknownTwoeltons.containsTwoelton(fst, snd)) {
+			} else if (m_IndexAnalyzer.isUnknownDoubleton(fst, snd)) {
 				Term fstSubst = select2CellVariable.transform(fst);
 				Term sndSubst = select2CellVariable.transform(snd);
 				conjuncts[i] = SmtUtils.binaryEquality(m_Script, fstSubst, sndSubst);
 			} else {
-				throw new AssertionError("unknown twoelton");
+				throw new AssertionError("unknown doubleton");
 			}
 		}
 		return Util.and(m_Script, conjuncts);

@@ -141,6 +141,14 @@ public class Preferences implements Serializable {
 	 * written.
 	 */
 	public String baseNameOfDumpedScript = "LassoRankerScript";
+
+	/**
+	 * Overapproximate the result of RewriteArrays by dropping all conjuncts
+	 * that are not-equals relations of indices.
+	 * If the lasso does not contain arrays, this option has no effect.
+	 * Otherwise setting this to true is unsound for nontermination analysis.
+	 */
+	public boolean overapproximateArrayIndexConnection = !false;
 	
 	/**
 	 * Build a string descriptions of the current preferences

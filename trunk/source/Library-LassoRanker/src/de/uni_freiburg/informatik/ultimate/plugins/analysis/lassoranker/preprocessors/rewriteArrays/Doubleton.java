@@ -1,17 +1,17 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays;
 
 /**
- * We call a multiset of two elements a twoelton.
+ * We call a multiset of two elements a doubleton.
  * @author Matthias Heizmann
  *
  * @param <E>
  */
-public class Twoelton<E> {
+public class Doubleton<E> {
 	
 	
 	private final E m_OneElement;
 	private final E m_OtherElement;
-	public Twoelton(E oneElement, E otherElement) {
+	public Doubleton(E oneElement, E otherElement) {
 		super();
 		if (oneElement == null || otherElement == null) {
 			throw new NullPointerException();
@@ -42,7 +42,7 @@ public class Twoelton<E> {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Twoelton<E> other = (Twoelton) obj;
+		Doubleton<E> other = (Doubleton) obj;
 		boolean equalSameOrder = this.getOneElement().equals(other.getOneElement()) 
 				&& this.getOtherElement().equals(other.getOtherElement());
 		if (equalSameOrder) {
