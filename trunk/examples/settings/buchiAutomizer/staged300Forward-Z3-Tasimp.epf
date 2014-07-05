@@ -27,6 +27,7 @@ file_export_version=3.0
 \!/instance/RCFGBuilder=
 /instance/RCFGBuilder/Size\ of\ a\ code\ block=SequenceOfStatements
 /instance/RCFGBuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=true
+/instance/RCFGBuilder/Remove\ goto\ edges\ from\ RCFG=false
 @RCFGBuilder=0.0.1
 /instance/RCFGBuilder/Convert\ code\ blocks\ to\ CNF=true
 #Wed Mar 19 04:15:41 CET 2014
