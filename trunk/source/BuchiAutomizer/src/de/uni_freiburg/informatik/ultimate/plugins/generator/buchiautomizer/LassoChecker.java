@@ -457,12 +457,13 @@ public class LassoChecker {
 	
 	private void checkLoopTermination(TransFormula loopTF) {
 		assert !m_Bspm.providesPredicates() : "termination already checked";
-		if (SmtUtils.containsArrayVariables(loopTF.getFormula())) {
+		boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula());
+		if (containsArrays) {
 			// if there are array variables we will probably run in a huge
 			// DNF, so as a precaution we do not check and say unknown
 			m_LoopTermination = SynthesisResult.UNKNOWN;
 		} else {
-			m_LoopTermination = synthesize(false, null, loopTF);
+			m_LoopTermination = synthesize(false, null, loopTF, containsArrays);
 		}
 	}
 
@@ -471,7 +472,9 @@ public class LassoChecker {
 	private void checkLassoTermination(TransFormula stemTF, TransFormula loopTF) {
 		assert !m_Bspm.providesPredicates() : "termination already checked";
 		assert loopTF != null;
-		m_LassoTermination = synthesize(true, stemTF, loopTF);
+		boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula())
+				|| SmtUtils.containsArrayVariables(loopTF.getFormula());
+		m_LassoTermination = synthesize(true, stemTF, loopTF, containsArrays);
 	}
 
 	/**
@@ -550,20 +553,8 @@ public class LassoChecker {
 		return m_LassoCheckerIdentifier + "_" + (withStem ? "Lasso" : "Loop");
 	}
 	
-	private SynthesisResult synthesize(final boolean withStem, TransFormula stemTF, final TransFormula loopTF) {
-		if (!withStem) {
-			stemTF = getDummyTF();
-		}
-//		TODO: present this somewhere else
-//		int loopVars = loopTF.getFormula().getFreeVars().length;
-//		if (stemTF == null) {
-//			s_Logger.info("Statistics: no stem, loopVars: " + loopVars);
-//		} else {
-//			int stemVars = stemTF.getFormula().getFreeVars().length;
-//			s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars);
-//		}
-		
-		
+	private Preferences constructLassoRankerPreferences(boolean withStem, 
+			boolean overapproximateArrayIndexConnection) {
 		Preferences pref = new Preferences();
 		pref.num_non_strict_invariants = 1;
 		pref.num_strict_invariants = 0;
@@ -577,12 +568,30 @@ public class LassoChecker {
 		pref.pathOfDumpedScript = baPref.getString(PreferenceInitializer.LABEL_DumpPath);
 		pref.baseNameOfDumpedScript = generateFileBasenamePrefix(withStem);
 		pref.simplify_result = m_TrySimplificationTerminationArgument;
-
+		pref.overapproximateArrayIndexConnection = overapproximateArrayIndexConnection;
+		return pref;
+	}
+	
+	private SynthesisResult synthesize(final boolean withStem, 
+			TransFormula stemTF, final TransFormula loopTF, boolean containsArrays) {
+		if (!withStem) {
+			stemTF = getDummyTF();
+		}
+//		TODO: present this somewhere else
+//		int loopVars = loopTF.getFormula().getFreeVars().length;
+//		if (stemTF == null) {
+//			s_Logger.info("Statistics: no stem, loopVars: " + loopVars);
+//		} else {
+//			int stemVars = stemTF.getFormula().getFreeVars().length;
+//			s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars);
+//		}
+		
 		LassoRankerTerminationAnalysis lrta = null;
 		try {
 			 lrta =	new LassoRankerTerminationAnalysis(m_SmtManager.getScript(), 
 					 m_SmtManager.getBoogie2Smt(), stemTF, loopTF, 
-					 m_Axioms.toArray(new Term[m_Axioms.size()]), pref);
+					 m_Axioms.toArray(new Term[m_Axioms.size()]), 
+					 constructLassoRankerPreferences(withStem, false));
 		} catch (TermException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -645,6 +654,21 @@ public class LassoChecker {
 			rankingFunctionTemplates.add(new PiecewiseTemplate(4));
 		}
 //		}
+		
+		if (containsArrays) {
+			// if stem or loop contain arrays, overapproximate the
+			// index connection of RewriteArrays
+			try {
+				 lrta =	new LassoRankerTerminationAnalysis(m_SmtManager.getScript(), 
+						 m_SmtManager.getBoogie2Smt(), stemTF, loopTF, 
+						 m_Axioms.toArray(new Term[m_Axioms.size()]), 
+						 constructLassoRankerPreferences(withStem, true));
+			} catch (TermException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw new AssertionError("TermException " + e);
+			}
+		}
 
 		TerminationArgument termArg = tryTemplatesAndComputePredicates(
 				withStem, lrta, rankingFunctionTemplates);
