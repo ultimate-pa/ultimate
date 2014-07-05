@@ -1,4 +1,4 @@
-//#rTermination
+//#rUnknownTermination
 /*
  * Date: 2014-07-01
  * Author: heizmann@informatik.uni-freiburg.de
