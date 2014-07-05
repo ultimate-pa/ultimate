@@ -148,7 +148,7 @@ public class Preferences implements Serializable {
 	 * If the lasso does not contain arrays, this option has no effect.
 	 * Otherwise setting this to true is unsound for nontermination analysis.
 	 */
-	public boolean overapproximateArrayIndexConnection = !false;
+	public boolean overapproximateArrayIndexConnection = false;
 	
 	/**
 	 * Build a string descriptions of the current preferences
