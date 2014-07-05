@@ -307,14 +307,14 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		if (sat == LBool.SAT) {
 			int pops = 0;
 			if (m_preferences.simplify_result) {
-				s_Logger.debug("Found a termination argument, trying to simplify.");
+				s_Logger.info("Found a termination argument, trying to simplify.");
 				ArrayList<Term> variables = new ArrayList<Term>();
 				variables.addAll(m_template.getVariables());
 				for (SupportingInvariantGenerator sig : m_si_generators) {
 					variables.addAll(sig.getVariables());
 				}
 				pops = simplifyAssignment(variables);
-				s_Logger.debug("Setting " + pops + " variables to zero.");
+				s_Logger.info("Setting " + pops + " variables to zero.");
 			}
 			s_Logger.debug("Extracting termination argument from model.");
 			

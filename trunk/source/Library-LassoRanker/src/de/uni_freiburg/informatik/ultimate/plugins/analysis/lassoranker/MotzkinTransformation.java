@@ -452,7 +452,7 @@ public class MotzkinTransformation extends InstanceCounting {
 			sb.append("\nConstraints:\n");
 			boolean annotate_terms = m_annotate_terms;
 			m_annotate_terms = false;
-			sb.append(SMTPrettyPrinter.print(this.transform()));
+			sb.append(new SMTPrettyPrinter(this.transform()));
 			m_annotate_terms = annotate_terms;
 		}
 		return sb.toString();

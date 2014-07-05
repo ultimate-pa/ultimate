@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 
 /**
@@ -148,7 +149,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		
 		Term constraints = generateConstraints(vars_init, vars_honda, vars_ray,
 				lambda);
-		s_Logger.debug(SMTPrettyPrinter.print(constraints));
+		s_Logger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(constraints)));
 		m_script.assertTerm(constraints);
 		
 		// Check for satisfiability
@@ -260,9 +261,10 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		} else {
 			t3 = m_script.term("true");
 		}
-//		s_Logger.debug(SMTPrettyPrinter.print(t1));
-//		s_Logger.debug(SMTPrettyPrinter.print(t2));
-//		s_Logger.debug(SMTPrettyPrinter.print(t3));
+
+		s_Logger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t1)));
+		s_Logger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t2)));
+		s_Logger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t3)));
 		return m_script.term("and", t1, t2, t3);
 	}
 	

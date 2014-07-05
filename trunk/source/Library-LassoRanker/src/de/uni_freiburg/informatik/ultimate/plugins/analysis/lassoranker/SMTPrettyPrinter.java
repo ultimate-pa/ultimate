@@ -37,12 +37,18 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 /**
  * Static class for pretty-printing SMT formulae
  * 
- * @author Jan Leike
+ * @author Jan Leike, Matthias Heizmann
  */
 public class SMTPrettyPrinter {
 	private static final String s_indentation = "    ";
 	private static final String[] s_infix_functions =
 		{"+", "-", "*", "/", "=", ">=", "<=", ">", "<"};
+	
+	private final Term m_Term;
+	
+	public SMTPrettyPrinter(Term term) {
+		m_Term = term;
+	}
 	
 	private static void indent(StringBuilder sb, int indentation) {
 		for (int i = 0; i < indentation; ++i) {
@@ -50,6 +56,12 @@ public class SMTPrettyPrinter {
 		}
 	}
 	
+	/**
+	 * Convert an SMT term into a more human readable format
+	 * 
+	 * @param term an SMT term
+	 * @return a human-readable representation of the term
+	 */
 	private static String print(Term term, int indentation) {
 		assert(indentation >= 0);
 		
@@ -87,7 +99,7 @@ public class SMTPrettyPrinter {
 			if (appt.getParameters().length == 1) {
 				sb.append(fname);
 				sb.append(" ");
-				sb.append(print(appt.getParameters()[0]));
+				sb.append(print(appt.getParameters()[0],0));
 				sb.append(")");
 				return sb.toString();
 			} else if (!infix) {
@@ -130,13 +142,9 @@ public class SMTPrettyPrinter {
 		return sb.toString();
 	}
 	
-	/**
-	 * Convert an SMT term into a more human readable format
-	 * 
-	 * @param term an SMT term
-	 * @return a human-readable representation of the term
-	 */
-	public static String print(Term term) {
-		return print(term, 0);
+
+	@Override
+	public String toString() {
+		return print(m_Term, 0);
 	}
 }

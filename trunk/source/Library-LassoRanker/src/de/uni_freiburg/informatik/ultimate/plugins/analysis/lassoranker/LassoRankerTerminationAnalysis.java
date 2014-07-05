@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preproce
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteStrictInequalities;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteTrueFalse;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
+import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 
 /**
@@ -283,7 +284,7 @@ public class LassoRankerTerminationAnalysis {
 		assert rvc.auxVarsDisjointFromInOutVars();
 		assert rvc.allAreInOutAux(trans_term.getFreeVars()) == null;
 		
-		s_Logger.debug(SMTPrettyPrinter.print(trans_term));
+		s_Logger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(trans_term)));
 		
 		// Match inVars
 		rvc.matchInVars();
@@ -517,7 +518,7 @@ public class LassoRankerTerminationAnalysis {
 			s_Logger.info(arg);
 			Term[] lexTerm = arg.getRankingFunction().asLexTerm(m_old_script);
 			for (Term t : lexTerm) {
-				s_Logger.debug(SMTPrettyPrinter.print(t));
+				s_Logger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t)));
 			}
 		}
 		tas.close();
