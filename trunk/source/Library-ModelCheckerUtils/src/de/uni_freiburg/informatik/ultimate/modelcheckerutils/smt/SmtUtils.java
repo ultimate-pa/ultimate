@@ -76,14 +76,15 @@ public class SmtUtils {
 	}
 	
 	/**
-	 * Takes an ApplicationTerm with pairwise function symbol and return 
+	 * Takes an ApplicationTerm with pairwise function symbol (e.g. distinct) or
+	 * chainable function symbol (e.g. equality) and return 
 	 * a conjunction of pairwise applications of the function symbol.
 	 * E.g. the ternary equality (= a b c) becomes
 	 * (and (= a b) (= a c) (= b c)).
 	 */
 	public static Term binarize(Script script, ApplicationTerm term) {
 		FunctionSymbol functionSymbol = term.getFunction();
-		if (!functionSymbol.isPairwise()) {
+		if (!functionSymbol.isPairwise() && !functionSymbol.isChainable()) {
 			throw new IllegalArgumentException("can only binarize pairwise terms");
 		}
 		String functionName = functionSymbol.getApplicationString();
@@ -95,7 +96,7 @@ public class SmtUtils {
 				conjuncts.add(script.term(functionName, params[i], params[j]));
 			}
 		}
-		return script.term("and", conjuncts.toArray(new Term[0]));
+		return Util.and(script, conjuncts.toArray(new Term[0]));
 	}
 	
 	public static boolean hasBooleanParams(ApplicationTerm term) {
