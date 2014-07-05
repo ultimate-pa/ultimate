@@ -587,33 +587,35 @@ public class LassoChecker {
 //		}
 		
 		LassoRankerTerminationAnalysis lrta = null;
-		try {
-			 lrta =	new LassoRankerTerminationAnalysis(m_SmtManager.getScript(), 
-					 m_SmtManager.getBoogie2Smt(), stemTF, loopTF, 
-					 m_Axioms.toArray(new Term[m_Axioms.size()]), 
-					 constructLassoRankerPreferences(withStem, false));
-		} catch (TermException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw new AssertionError("TermException " + e);
-		}
 		NonTerminationArgument nonTermArgument = null;
-		try {
-			nonTermArgument = lrta.checkNonTermination();
-		} catch (SMTLIBException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw new AssertionError("SMTLIBException " + e);
-		} catch (TermException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw new AssertionError("TermException " + e);
-		}
-		if (withStem) {
-			m_NonterminationArgument = nonTermArgument;
-		}
-		if (!s_CheckTerminationEvenIfNonterminating && nonTermArgument != null) {
-			return SynthesisResult.NONTERMINATIG;
+		if (!containsArrays) {
+			try {
+				lrta =	new LassoRankerTerminationAnalysis(m_SmtManager.getScript(), 
+						m_SmtManager.getBoogie2Smt(), stemTF, loopTF, 
+						m_Axioms.toArray(new Term[m_Axioms.size()]), 
+						constructLassoRankerPreferences(withStem, false));
+			} catch (TermException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw new AssertionError("TermException " + e);
+			}
+			try {
+				nonTermArgument = lrta.checkNonTermination();
+			} catch (SMTLIBException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw new AssertionError("SMTLIBException " + e);
+			} catch (TermException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw new AssertionError("TermException " + e);
+			}
+			if (withStem) {
+				m_NonterminationArgument = nonTermArgument;
+			}
+			if (!s_CheckTerminationEvenIfNonterminating && nonTermArgument != null) {
+				return SynthesisResult.NONTERMINATIG;
+			}
 		}
 		
 		List<RankingFunctionTemplate> rankingFunctionTemplates = 
