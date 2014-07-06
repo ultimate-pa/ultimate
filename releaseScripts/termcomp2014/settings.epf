@@ -15,6 +15,7 @@ file_export_version=3.0
 /instance/BuchiAutomizer/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
 /instance/BuchiAutomizer/Command\ for\ external\ solver\ (rank\ synthesis)=./../z3-4.3.2.d548c51a984e-x64-debian-6.0.6/bin/z3 SMTLIB2_COMPLIANT\=true -memory\:256 -smt2 -in -t\:5000
 /instance/BuchiAutomizer/Construct\ termination\ proof\ for\ TermComp=true
+/instance/BuchiAutomizer/Try\ to\ simplify\ termination\ arguments=true
 #Wed Mar 19 04:15:41 CET 2014
 file_export_version=3.0
 /instance/BlockEncoding/Minimize\ Call\ and\ Return\ Edges=true
