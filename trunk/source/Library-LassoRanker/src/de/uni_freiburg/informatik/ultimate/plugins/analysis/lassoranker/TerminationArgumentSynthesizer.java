@@ -305,32 +305,27 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		// Check for a model
 		LBool sat = m_script.checkSat();
 		if (sat == LBool.SAT) {
-			int pops = 0;
+			// Get all relevant variables
+			ArrayList<Term> variables = new ArrayList<Term>();
+			variables.addAll(m_template.getVariables());
+			for (SupportingInvariantGenerator sig : m_si_generators) {
+				variables.addAll(sig.getVariables());
+			}
+			
+			// Get valuation for the variables
+			Map<Term, Rational> val;
 			if (m_preferences.simplify_result) {
 				s_Logger.info("Found a termination argument, trying to simplify.");
-				ArrayList<Term> variables = new ArrayList<Term>();
-				variables.addAll(m_template.getVariables());
-				for (SupportingInvariantGenerator sig : m_si_generators) {
-					variables.addAll(sig.getVariables());
-				}
-				pops = simplifyAssignment(variables);
-				s_Logger.info("Setting " + pops + " variables to zero.");
+				val = getSimplifiedAssignment(variables);
+			} else {
+				val = getValuation(variables);
 			}
-			s_Logger.debug("Extracting termination argument from model.");
 			
-			// Extract ranking function
-			Map<Term, Rational> val_rf =
-					getValuation(m_template.getVariables());
-			m_ranking_function = m_template.extractRankingFunction(val_rf);
-			
-			// Extract supporting invariants
+			// Extract ranking function and supporting invariants
+			m_ranking_function = m_template.extractRankingFunction(val);
 			for (SupportingInvariantGenerator sig : m_si_generators) {
-				Map<Term, Rational> val_si = getValuation(sig.getVariables());
-				m_supporting_invariants.add(sig.extractSupportingInvariant(
-						val_si));
+				m_supporting_invariants.add(sig.extractSupportingInvariant(val));
 			}
-			
-			m_script.pop(pops);
 		} else if (sat == LBool.UNKNOWN) {
 			m_script.echo(new QuotedObject(SMTSolver.s_SolverUnknownMessage));
 			// Problem: If we use the following line we can receive the 

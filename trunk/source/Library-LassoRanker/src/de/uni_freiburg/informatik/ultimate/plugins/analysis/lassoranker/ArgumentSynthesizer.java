@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
@@ -69,6 +70,8 @@ public abstract class ArgumentSynthesizer implements Closeable {
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
 	public static final long s_randomSeed = 80085;
+	
+	protected static final int s_num_of_simultaneous_simplification_tests = 4;
 	
 	/**
 	 * The SMT script for argument synthesis
@@ -172,6 +175,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * @param variables the list of variables that can be set to 0
 	 * @return the number of pops required on m_script
 	 */
+	@Deprecated
 	protected int simplifyAssignment(ArrayList<Term> variables) {
 		// Shuffle the variable list for better effect
 		Random rnd =  new Random(s_randomSeed);
@@ -200,6 +204,86 @@ public abstract class ArgumentSynthesizer implements Closeable {
 		s_Logger.info("Simplification made " + checkSat_calls
 				+ " calls to the SMT solver.");
 		return pops;
+	}
+	
+	/**
+	 * Tries to simplify a satisfying assignment by assigning zeros to
+	 * variables. Gets stuck in local optima.
+	 * 
+	 * This is a more efficient version
+	 * 
+	 * @param variables the list of variables that can be set to 0
+	 * @return an assignment with (hopefully) many zeros
+	 * @throws TermException if model extraction fails
+	 */
+	protected Map<Term, Rational> getSimplifiedAssignment(
+			ArrayList<Term> variables) throws TermException {
+		Random rnd =  new Random(s_randomSeed);
+		Term zero = m_script.numeral("0");
+		Map<Term, Rational> val = getValuation(variables);
+		
+		Set<Term> zero_vars = new HashSet<Term>(); // set of variables fixed to 0
+		Set<Term> not_zero_vars = new HashSet<Term>(variables); // other variables
+		
+		int checkSat_calls = 0;
+		boolean unsat = false;
+		while (true) {
+			for (Map.Entry<Term, Rational> entry : val.entrySet()) {
+				if (entry.getValue().equals(Rational.ZERO)) {
+					zero_vars.add(entry.getKey());
+					not_zero_vars.remove(entry.getKey());
+				}
+			}
+			if (not_zero_vars.size() <= s_num_of_simultaneous_simplification_tests) {
+				break;
+			}
+			m_script.push(1);
+			for (Term var : zero_vars) {
+				m_script.assertTerm(m_script.term("=", var, zero));
+			}
+			for (int i = 0; i < 10; ++i) { // 10 is a good number
+				List<Term> vars = new ArrayList<Term>(not_zero_vars);
+				// Shuffle the variable list for better effect
+				Collections.shuffle(vars, rnd);
+				
+				Term[] disj = new Term[s_num_of_simultaneous_simplification_tests];
+				for (int j = 0; j < s_num_of_simultaneous_simplification_tests; ++j) {
+					disj[j] = m_script.term("=", vars.get(j), zero);
+				}
+				m_script.assertTerm(Util.or(m_script, disj));
+			}
+			++checkSat_calls;
+			LBool sat = m_script.checkSat();
+			if (sat == LBool.SAT) {
+				val = getValuation(not_zero_vars);
+			} else {
+				if (unsat) {
+					// unsat last time as well, so give up
+					m_script.pop(1);
+					break;
+				}
+				unsat = true;
+			}
+			m_script.pop(1);
+		}
+		
+		// Add zero variables to the valuation
+		for (Term var : zero_vars) {
+			val.put(var, Rational.ZERO);
+		}
+		
+		// Send stats to the logger
+		s_Logger.info("Simplification made " + checkSat_calls
+				+ " calls to the SMT solver.");
+		int num_zero_vars = 0;
+		for (Map.Entry<Term, Rational> entry : val.entrySet()) {
+			if (entry.getValue().equals(Rational.ZERO)) {
+				++num_zero_vars;
+			}
+		}
+		s_Logger.info("Setting " + num_zero_vars + " variables to zero.");
+		
+		return val;
 	}
 	
 	/**
