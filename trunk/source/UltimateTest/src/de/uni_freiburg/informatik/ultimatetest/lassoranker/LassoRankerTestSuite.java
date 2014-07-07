@@ -52,10 +52,10 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 //  Workaround by Matthias: Use following line for linear constraints
 //	public static final String s_settings_file = "examples/settings/LassoRankerTestLinearSMTInterpol.epf";
 //  Workaround by Matthias: Use following line for non-linear constraints
-	public static final String s_settings_file = "examples/settings/LassoRankerTest";
+	public static final String s_settings_file = "examples/settings/LassoRankerTest.epf";
 	public static final boolean s_produceLogFiles = false;
 
-	public static final long s_deadline = 60 * 1000; // in ms
+	public static final long s_deadline = 5 * 1000; // in ms
 
 	@Override
 	@TestFactory
