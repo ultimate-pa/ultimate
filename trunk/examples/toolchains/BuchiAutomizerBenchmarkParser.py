@@ -62,7 +62,7 @@ for verdict in verdicts:
 
 # Dump a csv file
 if csv_filename != '':
-	print 'Dumping a csv to %s.' % csv_filename
+	print 'Dumping a csv file to %s' % csv_filename
 	with open(csv_filename, 'w') as f:
 		f.write(','.join(all_names))
 		for result in results:
