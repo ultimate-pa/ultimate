@@ -31,15 +31,16 @@ import de.uni_freiburg.informatik.ultimate.reachingdefinitions.util.Util;
  * @author dietsch
  * 
  */
-class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
+public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 
 	private boolean mFixpointReached;
 	private RCFGNode mCurrentSourceNode;
 	private final Logger mLogger;
+	private final String mAnnotationSuffix;
 
-	public ReachDefRCFGVisitor() {
-		
+	public ReachDefRCFGVisitor(String annotationSuffix) {
 		mLogger = Activator.getLogger();
+		mAnnotationSuffix = annotationSuffix;
 	}
 
 	/**
@@ -63,10 +64,10 @@ class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(CodeBlock c) {
-		ReachDefEdgeAnnotation annot = ReachDefEdgeAnnotation.getAnnotation(c);
+		ReachDefEdgeAnnotation annot = ReachDefEdgeAnnotation.getAnnotation(c, mAnnotationSuffix);
 		if (annot == null) {
-			annot = new ReachDefEdgeAnnotation(c);
-			annot.annotate(c);
+			annot = new ReachDefEdgeAnnotation(c, mAnnotationSuffix);
+			annot.annotate(c, mAnnotationSuffix);
 		}
 		super.visit(c);
 	}
@@ -80,10 +81,10 @@ class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 		}
 
 		for (Statement s : edge.getStatements()) {
-			ReachDefStatementAnnotation annot = ReachDefStatementAnnotation.getAnnotation(s);
+			ReachDefStatementAnnotation annot = ReachDefStatementAnnotation.getAnnotation(s, mAnnotationSuffix);
 			if (annot == null) {
 				annot = new ReachDefStatementAnnotation();
-				annot.annotate(s);
+				annot.annotate(s, mAnnotationSuffix);
 				// if we need a new annotation it is definitely not a
 				// fixpoint
 				somethingChanged = true;
@@ -140,7 +141,7 @@ class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 			// predecessor
 			predecessors = new ArrayList<>();
 			predecessors.add((ReachDefStatementAnnotation) ReachDefStatementAnnotation.getAnnotation(currentSeq
-					.getStatements().get(currentIndex - 1)));
+					.getStatements().get(currentIndex - 1), mAnnotationSuffix));
 		} else {
 			// it is the first statement, we only need loop predecessors
 			// as statements may be duplicated, we build a map from rcfgedge to
@@ -157,7 +158,7 @@ class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 					mPreMap.put(currentSeq, pres);
 				}
 
-				pres.addAll(new ReachDefRCFGPredecessorGenerator().process(mCurrentSourceNode));
+				pres.addAll(new ReachDefRCFGPredecessorGenerator(mAnnotationSuffix).process(mCurrentSourceNode));
 				predecessors = pres;
 			} else {
 				predecessors = new ArrayList<>();
@@ -165,7 +166,7 @@ class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 
 		}
 
-		return new ReachDefBoogieAnnotator(predecessors, stmtAnnotation);
+		return new ReachDefBoogieAnnotator(predecessors, stmtAnnotation, mAnnotationSuffix);
 	}
 
 	private HashMap<RCFGEdge, HashSet<ReachDefStatementAnnotation>> mPreMap;

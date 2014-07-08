@@ -15,14 +15,22 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 	public static final String AnnotationName = "ReachingDefinition";
 
 	@SuppressWarnings("unchecked")
-	public static <T extends ReachDefBaseAnnotation> T getAnnotation(IElement element) {
+	public static <T extends ReachDefBaseAnnotation> T getAnnotation(IElement element, String suffix) {
 		if (!element.hasPayload()) {
 			return null;
 		}
 		if (!element.getPayload().hasAnnotation()) {
 			return null;
 		}
-		return (T) element.getPayload().getAnnotations().get(AnnotationName);
+		if (suffix == null) {
+			return (T) element.getPayload().getAnnotations().get(AnnotationName);
+		} else {
+			return (T) element.getPayload().getAnnotations().get(AnnotationName + " " + suffix);
+		}
+	}
+
+	public static <T extends ReachDefBaseAnnotation> T getAnnotation(IElement element) {
+		return getAnnotation(element, null);
 	}
 
 	@Override
@@ -47,7 +55,15 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 	protected abstract HashMap<String, HashSet<Statement>> getUse();
 
 	public void annotate(IElement node) {
-		node.getPayload().getAnnotations().put(AnnotationName, this);
+		annotate(node, null);
+	}
+
+	public void annotate(IElement node, String suffix) {
+		if (suffix == null) {
+			node.getPayload().getAnnotations().put(AnnotationName, this);
+		} else {
+			node.getPayload().getAnnotations().put(AnnotationName + " " + suffix, this);
+		}
 	}
 
 	public ReachDefBaseAnnotation() {
@@ -80,10 +96,10 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 
 	@Override
 	public int hashCode() {
-		//TODO: Does this what I think (conform to hashCode / equals contract) 
+		// TODO: Does this what I think (conform to hashCode / equals contract)
 		return getDefs().hashCode() + 131 * getUse().hashCode();
 	}
-	
+
 	@Override
 	public boolean equals(Object arg) {
 		if (arg == null) {
@@ -119,7 +135,7 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 		}
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		return prettyPrintDefUse(getDefs());

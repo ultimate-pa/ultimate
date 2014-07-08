@@ -18,9 +18,11 @@ public class ReachDefEdgeAnnotation extends ReachDefBaseAnnotation {
 	private RCFGEdge mEdge;
 	private DefCollector mDefCollector;
 	private UseCollector mUseCollector;
+	private final String mAnnotationSuffix;
 
-	public ReachDefEdgeAnnotation(RCFGEdge e) {
+	public ReachDefEdgeAnnotation(RCFGEdge e,String annotationSuffix) {
 		mEdge = e;
+		mAnnotationSuffix = annotationSuffix;
 	}
 
 	@Override
@@ -78,7 +80,8 @@ public class ReachDefEdgeAnnotation extends ReachDefBaseAnnotation {
 				return;
 			}
 
-			ReachDefBaseAnnotation annot = ReachDefStatementAnnotation.getAnnotation(stmts.get(stmts.size() - 1));
+			ReachDefBaseAnnotation annot = ReachDefStatementAnnotation.getAnnotation(stmts.get(stmts.size() - 1),
+					mAnnotationSuffix);
 			if (annot != null) {
 				mDefs = annot.getDefs();
 			}
@@ -105,7 +108,8 @@ public class ReachDefEdgeAnnotation extends ReachDefBaseAnnotation {
 				return;
 			}
 
-			ReachDefBaseAnnotation annot = ReachDefStatementAnnotation.getAnnotation(stmts.get(stmts.size() - 1));
+			ReachDefBaseAnnotation annot = ReachDefStatementAnnotation.getAnnotation(stmts.get(stmts.size() - 1),
+					mAnnotationSuffix);
 			if (annot != null) {
 				unionUse(annot);
 			}

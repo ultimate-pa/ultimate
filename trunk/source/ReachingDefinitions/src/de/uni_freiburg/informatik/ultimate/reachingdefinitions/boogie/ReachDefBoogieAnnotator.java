@@ -16,14 +16,16 @@ public class ReachDefBoogieAnnotator {
 	private Collection<ReachDefStatementAnnotation> mPredecessors;
 	private ReachDefStatementAnnotation mCurrent;
 	private Logger mLogger;
+	private final String mAnnotationSuffix;
 
 	public ReachDefBoogieAnnotator(Collection<ReachDefStatementAnnotation> predecessors,
-			ReachDefStatementAnnotation current) {
+			ReachDefStatementAnnotation current,String annotationSuffix) {
 		assert current != null;
 		mPredecessors = predecessors;
 		mCurrent = current;
 		mVisitor = new ReachDefBoogieVisitor(current);
 		mLogger = Activator.getLogger();
+		mAnnotationSuffix = annotationSuffix;
 	}
 
 	/**
@@ -33,7 +35,7 @@ public class ReachDefBoogieAnnotator {
 	 */
 	public boolean annotate(Statement stmt) throws Throwable {
 		ReachDefBaseAnnotation old = mCurrent.clone();
-		assert old.equals(ReachDefStatementAnnotation.getAnnotation(stmt)) && old.equals(mCurrent);
+		assert old.equals(ReachDefStatementAnnotation.getAnnotation(stmt, mAnnotationSuffix)) && old.equals(mCurrent);
 		union(mCurrent, mPredecessors);
 		mVisitor.process(stmt);
 		if (mLogger.isDebugEnabled()) {

@@ -60,7 +60,7 @@ public class ReachDefRCFG extends BaseObserver {
 			}
 			RCFGEdge current = remaining.iterator().next();
 			remaining.remove(current);
-			ReachDefRCFGVisitor v = new ReachDefRCFGVisitor();
+			ReachDefRCFGVisitor v = new ReachDefRCFGVisitor(null);
 
 			boolean fxpReached = v.process(current);
 			if (mLogger.isDebugEnabled()) {

@@ -5,15 +5,17 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.rcfg.ReachDefRCFG;
+import de.uni_freiburg.informatik.ultimate.reachingdefinitions.trace.ReachDefTrace;
 
 public class ReachingDefinitions implements IAnalysis {
 
 	private GraphType mCurrentGraphType;
-
 
 	@Override
 	public GraphType getOutputDefinition() {
@@ -70,9 +72,16 @@ public class ReachingDefinitions implements IAnalysis {
 		return null;
 	}
 
-	public static CodeBlock[] computeRDForTrace(CodeBlock[] trace) {
-		// TODO the returned codeblocks should be annotated with RD information that is relative to the given trace.
-		return null;
+	public static CodeBlock[] computeRDForTrace(CodeBlock[] trace) throws Throwable {
+		ReachDefTrace rdt = new ReachDefTrace();
+		rdt.process(trace);
+		return trace;
+	}
+
+	@Override
+	public void setToolchainStorage(IToolchainStorage services) {
+		// TODO Auto-generated method stub
+
 	}
 
 }

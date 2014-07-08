@@ -1,53 +1,34 @@
-package de.uni_freiburg.informatik.ultimate.reachingdefinitions.rcfg;
+package de.uni_freiburg.informatik.ultimate.reachingdefinitions.trace;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations.ReachDefStatementAnnotation;
-import de.uni_freiburg.informatik.ultimate.reachingdefinitions.plugin.Activator;
-import de.uni_freiburg.informatik.ultimate.reachingdefinitions.util.Util;
 
-public class ReachDefRCFGPredecessorGenerator extends RCFGEdgeVisitor {
+public class ReachDefTracePredecessorGenerator extends RCFGEdgeVisitor {
 
-	private final Logger mLogger;
 	private final String mAnnotationSuffix;
 
-	public ReachDefRCFGPredecessorGenerator(String annotationSuffix) {
-		mLogger = Activator.getLogger();
+	public ReachDefTracePredecessorGenerator(String annotationSuffix) {
 		mAnnotationSuffix = annotationSuffix;
 	}
 
 	private List<ReachDefStatementAnnotation> rtr;
 
 	/**
-	 * Returns all preceeding {@link ReachDefStatementAnnotation}s
+	 * Returns all {@link ReachDefStatementAnnotation}s from the predecessor
 	 * 
 	 * @param e
 	 * @return
 	 */
-	public List<ReachDefStatementAnnotation> process(RCFGNode currentNode) {
+	public List<ReachDefStatementAnnotation> process(CodeBlock predecessor) {
 		rtr = new ArrayList<ReachDefStatementAnnotation>();
-		if (currentNode == null) {
-			return rtr;
-		}
-
-		for (RCFGEdge pre : currentNode.getIncomingEdges()) {
-			visit(pre);
-		}
-
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Predecessors: "
-					+ Util.prettyPrintIterable(currentNode.getIncomingEdges(), Util.<RCFGEdge> createHashCodePrinter()));
-		}
-
+		visit(predecessor);
 		return rtr;
 	}
 
@@ -67,7 +48,6 @@ public class ReachDefRCFGPredecessorGenerator extends RCFGEdgeVisitor {
 		if (annot != null) {
 			rtr.add(annot);
 		}
-
 		super.visit(stmtSeq);
 	}
 }
