@@ -50,7 +50,12 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		for (int i = 0; i < trace.length(); i++) {
 			traceAsArray[i] = trace.getSymbol(i);
 		}
-		CodeBlock[] rdAnnotatedTraceArray = ReachingDefinitions.computeRDForTrace(traceAsArray);
+		try {
+			CodeBlock[] rdAnnotatedTraceArray = ReachingDefinitions.computeRDForTrace(traceAsArray);
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		for (int i = 0; i < trace.length(); i++) {
 			CodeBlock cb = trace.getSymbol(i);
