@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author Matthias Heizmann
  *
  */
-public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
+public class AnnotateAndAsserterConjuncts extends AnnotateAndAssertCodeBlocks {
 	
 	Map<Term,Term> m_Annotated2Original = new HashMap<Term,Term>();
 	protected final DefaultTransFormulas m_DefaultTransFormulas;

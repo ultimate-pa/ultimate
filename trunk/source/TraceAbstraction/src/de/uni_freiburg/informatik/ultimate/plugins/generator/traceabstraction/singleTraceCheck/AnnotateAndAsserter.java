@@ -12,7 +12,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -47,6 +46,9 @@ public class AnnotateAndAsserter {
 		protected final NestedFormulas<Term, Term> m_SSA;
 		protected ModifiableNestedFormulas<Term, Term> m_AnnotSSA;
 
+		protected final AnnotateAndAssertCodeBlocks m_AnnotateAndAssertCodeBlocks;
+		
+
 		protected static final String SSA = "ssa_";
 		protected static final String PRECOND = "precond";
 		protected static final String POSTCOND = "postcond";
@@ -60,11 +62,12 @@ public class AnnotateAndAsserter {
 		
 
 		public AnnotateAndAsserter(SmtManager smtManager,
-				NestedFormulas<Term, Term> nestedSSA) {
+				NestedFormulas<Term, Term> nestedSSA, AnnotateAndAssertCodeBlocks aaacb) {
 			m_SmtManager = smtManager;
 			m_Script = smtManager.getScript();
 			m_Trace = nestedSSA.getTrace();
 			m_SSA = nestedSSA;
+			m_AnnotateAndAssertCodeBlocks = aaacb;
 		}
 			
 
@@ -76,22 +79,22 @@ public class AnnotateAndAsserter {
 			
 			m_AnnotSSA = new ModifiableNestedFormulas<Term, Term>(m_Trace, new TreeMap<Integer, Term>());
 			
-			m_AnnotSSA.setPrecondition(annotateAndAssertPrecondition());
-			m_AnnotSSA.setPostcondition(annotateAndAssertPostcondition());
+			m_AnnotSSA.setPrecondition(m_AnnotateAndAssertCodeBlocks.annotateAndAssertPrecondition());
+			m_AnnotSSA.setPostcondition(m_AnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());
 			
 			Collection<Integer> callPositions = new ArrayList<Integer>();
 			Collection<Integer> pendingReturnPositions = new ArrayList<Integer>();
 			for (int i=0; i<m_Trace.length(); i++) {
 				if (m_Trace.isCallPosition(i)) {
 					callPositions.add(i);
-					m_AnnotSSA.setGlobalVarAssignmentAtPos(i, annotateAndAssertGlobalVarAssignemntCall(i));
-					m_AnnotSSA.setLocalVarAssignmentAtPos(i, annotateAndAssertLocalVarAssignemntCall(i));
-					m_AnnotSSA.setOldVarAssignmentAtPos(i, annotateAndAssertOldVarAssignemntCall(i));
+					m_AnnotSSA.setGlobalVarAssignmentAtPos(i, m_AnnotateAndAssertCodeBlocks.annotateAndAssertGlobalVarAssignemntCall(i));
+					m_AnnotSSA.setLocalVarAssignmentAtPos(i, m_AnnotateAndAssertCodeBlocks.annotateAndAssertLocalVarAssignemntCall(i));
+					m_AnnotSSA.setOldVarAssignmentAtPos(i, m_AnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntCall(i));
 				} else  {
 					if (m_Trace.isReturnPosition(i) && m_Trace.isPendingReturn(i)) {
 						pendingReturnPositions.add(i);
 					}
-					m_AnnotSSA.setFormulaAtNonCallPos(i, annotateAndAssertNonCall(i));
+					m_AnnotSSA.setFormulaAtNonCallPos(i, m_AnnotateAndAssertCodeBlocks.annotateAndAssertNonCall(i));
 				}
 			}
 			
@@ -105,17 +108,17 @@ public class AnnotateAndAsserter {
 			for (Integer positionOfPendingReturn : m_SSA.getTrace().getPendingReturns().keySet()) {
 				assert m_Trace.isPendingReturn(positionOfPendingReturn);
 				{
-					Term annotated = annotateAndAssertPendingContext(
+					Term annotated = m_AnnotateAndAssertCodeBlocks.annotateAndAssertPendingContext(
 							positionOfPendingReturn, pendingContextCode);
 					m_AnnotSSA.setPendingContext(positionOfPendingReturn, annotated);
 				}
 				{
-					Term annotated = annotateAndAssertLocalVarAssignemntPendingContext(
+					Term annotated = m_AnnotateAndAssertCodeBlocks.annotateAndAssertLocalVarAssignemntPendingContext(
 							positionOfPendingReturn, pendingContextCode);
 					m_AnnotSSA.setLocalVarAssignmentAtPos(positionOfPendingReturn, annotated);
 				}
 				{
-					Term annotated = annotateAndAssertOldVarAssignemntPendingContext(
+					Term annotated = m_AnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntPendingContext(
 							positionOfPendingReturn, pendingContextCode);
 					m_AnnotSSA.setOldVarAssignmentAtPos(positionOfPendingReturn, annotated);
 				}
@@ -124,127 +127,6 @@ public class AnnotateAndAsserter {
 			
 			m_Satisfiable = m_SmtManager.getScript().checkSat();
 			s_Logger.info("Conjunction of SSA is " + m_Satisfiable);
-		}
-		
-		protected Term annotateAndAssertPrecondition() {
-			String name = precondAnnotation();
-			Term annotated = annotateAndAssertTerm(m_SSA.getPrecondition(),name);
-			return annotated;
-		}
-		
-		protected String precondAnnotation() {
-			return SSA + PRECOND;
-		}
-		
-		protected Term annotateAndAssertPostcondition() {
-			String name = postcondAnnotation();
-			Term negatedPostcondition = m_Script.term("not", m_SSA.getPostcondition());
-			Term annotated = annotateAndAssertTerm(negatedPostcondition,name);
-			return annotated;
-		}
-		
-		protected String postcondAnnotation() {
-			return SSA + POSTCOND;
-		}
-		
-		protected Term annotateAndAssertNonCall(int position) {
-			String name;
-			if (m_Trace.isReturnPosition(position)) {
-				name = returnAnnotation(position);
-			} else {
-				 name = internalAnnotation(position);
-			}
-			Term original = m_SSA.getFormulaFromNonCallPos(position);
-			Term annotated = annotateAndAssertTerm(original, name);
-			return annotated;
-		}
-		
-		protected String internalAnnotation(int position) {
-			return SSA + position;
-		}
-		
-		protected String returnAnnotation(int position) {
-			return SSA + position + RETURN;
-		}
-		
-		protected Term annotateAndAssertLocalVarAssignemntCall(int position) {
-			String name = localVarAssignemntCallAnnotation(position);
-			Term original = m_SSA.getLocalVarAssignment(position);
-			Term annotated = annotateAndAssertTerm(original, name);
-			return annotated;
-		}
-		
-		protected String localVarAssignemntCallAnnotation(int position) {
-			return SSA + position + LOCVARASSIGN_CALL;
-		}
-		
-		protected Term annotateAndAssertGlobalVarAssignemntCall(int position) {
-			String name = globalVarAssignemntAnnotation(position);
-			Term original = m_SSA.getGlobalVarAssignment(position);
-			Term annotated = annotateAndAssertTerm(original, name);
-			return annotated;
-		}
-		
-		protected String globalVarAssignemntAnnotation(int position) {
-			return SSA + position + GLOBVARASSIGN_CALL;
-		}
-		
-		protected Term annotateAndAssertOldVarAssignemntCall(int position) {
-			String name = oldVarAssignemntCallAnnotation(position);
-			Term original = m_SSA.getOldVarAssignment(position);
-			Term annotated = annotateAndAssertTerm(original, name);
-			return annotated;
-		}
-		
-		protected String oldVarAssignemntCallAnnotation(int position) {
-			return SSA + position + OLDVARASSIGN_CALL;
-		}
-		
-		protected Term annotateAndAssertPendingContext(
-				int positionOfPendingContext, int pendingContextCode) {
-			String name = pendingContextAnnotation(pendingContextCode);
-			Term original = m_SSA.getPendingContext(positionOfPendingContext);
-			Term annotated = annotateAndAssertTerm(original, name);
-			return annotated;
-		}
-		
-		protected String pendingContextAnnotation(int pendingContextCode) {
-			return SSA + pendingContextCode + PENDINGCONTEXT;
-		}
-		
-		protected Term annotateAndAssertLocalVarAssignemntPendingContext(
-				int positionOfPendingReturn, int pendingContextCode) {
-			String name = localVarAssignemntPendingReturnAnnotation(pendingContextCode);
-			Term original = m_SSA.getLocalVarAssignment(positionOfPendingReturn);
-			Term annotated = annotateAndAssertTerm(original, name);
-			return annotated;
-		}
-		
-		protected String localVarAssignemntPendingReturnAnnotation(int pendingContextCode) {
-			return SSA + pendingContextCode + LOCVARASSIGN_PENDINGCONTEXT;
-		}
-		
-		protected Term annotateAndAssertOldVarAssignemntPendingContext(
-				int positionOfPendingReturn, int pendingContextCode) {
-			String name = oldVarAssignemntPendingReturnAnnotation(pendingContextCode);
-			Term original = m_SSA.getOldVarAssignment(positionOfPendingReturn);
-			Term annotated = annotateAndAssertTerm(original, name);
-			return annotated;
-		}
-		
-		protected String oldVarAssignemntPendingReturnAnnotation(int pendingContextCode) {
-			return SSA + pendingContextCode + OLDVARASSIGN_PENDINGCONTEXT;
-		}
-		
-		
-		
-		protected Term annotateAndAssertTerm(Term term, String name) {
-			assert term.getFreeVars().length == 0 : "Term has free vars";
-			Annotation annot = new Annotation(":named", name);
-			Term annotTerm = m_Script.annotate(term, annot);
-			m_SmtManager.assertTerm(annotTerm);
-			Term constantRepresentingAnnotatedTerm = m_Script.term(name);
-			return constantRepresentingAnnotatedTerm;
 		}
 		
 		

@@ -89,6 +89,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 			Set<Term> unsat_core,
 			ModifiableGlobalVariableManager modGlobalVarManager,
 			SmtManager smtManager,
+			AnnotateAndAsserter aaa,
 			AnnotateAndAsserterConjuncts aac) {
 		super(nestedTrace, pendingContexts);
 		super.setPrecondition(precondition);
@@ -97,7 +98,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 		m_GlobalAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
 		m_OldVarsAssignmentTransFormulasAtCall = new HashMap<Integer, TransFormula>();
 		m_SmtManager = smtManager;
-		generateRelevantTransFormulas(unsat_core, modGlobalVarManager, aac);
+		generateRelevantTransFormulas(unsat_core, modGlobalVarManager, aaa, aac);
 	}
 	
 	private void generateRelevantTransFormulas(Set<CodeBlock> unsat_core, 
@@ -146,31 +147,32 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	
 	private void generateRelevantTransFormulas(Set<Term> unsat_core, 
 			ModifiableGlobalVariableManager modGlobalVarManager,
+			AnnotateAndAsserter aaa,
 			AnnotateAndAsserterConjuncts aac) {
 		Map<Term, Term> annot2Original = aac.getAnnotated2Original();
 		for (int i = 0; i < super.getTrace().length(); i++) {
 			if (super.getTrace().getSymbol(i) instanceof Call) {
 				// 1. Local var assignment
-				Term[] conjuncts_annot = SmtUtils.getConjuncts(aac.getAnnotatedSsa().getLocalVarAssignment(i));
+				Term[] conjuncts_annot = SmtUtils.getConjuncts(aaa.getAnnotatedSsa().getLocalVarAssignment(i));
 				Set<Term> conjunctsInUnsatCore = filterRelevantConjuncts(
 						unsat_core, annot2Original, conjuncts_annot);
 				m_TransFormulas[i]  = buildTransFormulaWithRelevantConjuncts(super.getTrace().getSymbol(i).getTransitionFormula(),
 						conjunctsInUnsatCore.toArray(new Term[0]));
 				// 2. Global Var assignment
-				conjuncts_annot = SmtUtils.getConjuncts(aac.getAnnotatedSsa().getGlobalVarAssignment(i));
+				conjuncts_annot = SmtUtils.getConjuncts(aaa.getAnnotatedSsa().getGlobalVarAssignment(i));
 				conjunctsInUnsatCore = filterRelevantConjuncts(unsat_core, annot2Original, conjuncts_annot);
 				m_GlobalAssignmentTransFormulaAtCall.put(i, buildTransFormulaWithRelevantConjuncts(
 						modGlobalVarManager.getGlobalVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName()),
 						conjunctsInUnsatCore.toArray(new Term[0])));
 				// 3. Old Var Assignment
-				conjuncts_annot = SmtUtils.getConjuncts(aac.getAnnotatedSsa().getOldVarAssignment(i));
+				conjuncts_annot = SmtUtils.getConjuncts(aaa.getAnnotatedSsa().getOldVarAssignment(i));
 				conjunctsInUnsatCore = filterRelevantConjuncts(unsat_core, annot2Original, conjuncts_annot);
 				m_OldVarsAssignmentTransFormulasAtCall.put(i, buildTransFormulaWithRelevantConjuncts(
 						modGlobalVarManager.getOldVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName()),
 						conjunctsInUnsatCore.toArray(new Term[0])));
 				
 			} else {
-				Term[] conjuncts_annot = SmtUtils.getConjuncts(aac.getAnnotatedSsa().getFormulaFromNonCallPos(i));
+				Term[] conjuncts_annot = SmtUtils.getConjuncts(aaa.getAnnotatedSsa().getFormulaFromNonCallPos(i));
 				Set<Term> conjunctsInUnsatCore = filterRelevantConjuncts(
 						unsat_core, annot2Original, conjuncts_annot);
 				m_TransFormulas[i]  = buildTransFormulaWithRelevantConjuncts(super.getTrace().getSymbol(i).getTransitionFormula(),

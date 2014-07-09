@@ -159,6 +159,8 @@ public class TraceChecker {
 	
 	protected final TraceCheckerBenchmarkGenerator m_TraceCheckerBenchmarkGenerator;
 	
+	private final boolean m_useAnnotateAndAsserterWithPriorizedOrder = false;
+	
 	
 	/**
 	 * Check if trace fulfills specification given by precondition, 
@@ -258,8 +260,12 @@ public class TraceChecker {
 		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SsaConstruction);
 		
 		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis);
+		if (m_useAnnotateAndAsserterWithPriorizedOrder) {
+			m_AAA = new AnnotateAndAsserterWithStmtOrderPrioritization(m_SmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa));
+		} else {
+			m_AAA = new AnnotateAndAsserter(m_SmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa));
+		}
 		try {
-			m_AAA = getAnnotateAndAsserter(ssa);
 			m_AAA.buildAnnotatedSsaAndAssertTerms();
 			isSafe = m_AAA.isInputSatisfiable();
 		} catch (SMTLIBException e) {
@@ -381,8 +387,11 @@ public class TraceChecker {
 		return rpeb.getRcfgProgramExecution();
 	}
 	
-	protected AnnotateAndAsserter getAnnotateAndAsserter(NestedFormulas<Term, Term> ssa) {
-		return new AnnotateAndAsserter(m_SmtManager, ssa);
+	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(NestedFormulas<Term, Term> ssa) {
+		return new AnnotateAndAssertCodeBlocks(m_SmtManager, ssa);
+
+//		AnnotateAndAssertCodeBlocks aaacb = 
+//		return new AnnotateAndAsserter(m_SmtManager, ssa, aaacb);
 	}
 	
 	
@@ -1010,4 +1019,6 @@ public class TraceChecker {
 			throw new AssertionError("Benchmark is only available after the trace check is finished.");
 		}
 	}
+
+
 }

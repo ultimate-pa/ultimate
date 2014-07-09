@@ -61,7 +61,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	
 	private final static boolean m_useUnsatCoreOfFineGranularity = true;
-	private final boolean m_useAnnotateAndAsserterWithPriorizedOrder = false;
 	private final static boolean m_useLiveVariables = true;
 	private final static boolean m_LogInformation = true;
 	private final static boolean m_CollectInformationAboutQuantifiedPredicates = true;
@@ -73,6 +72,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 	private boolean m_ComputeInterpolantsWp;
 	
 	private static final boolean s_TransformToCNF = true;
+	
+	private AnnotateAndAsserterConjuncts m_AnnotateAndAsserterConjuncts;
 	
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts, 
@@ -291,13 +292,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 		RelevantTransFormulas rv = null;
 		
 		if (m_LogInformation) {
-			if (m_AAA instanceof AnnotateAndAsserterConjuncts) {
-				int totalNumberOfConjunctsInTrace = ((AnnotateAndAsserterConjuncts)m_AAA).getAnnotated2Original().keySet().size();
-				s_Logger.debug("Total number of conjuncts in trace: " +  totalNumberOfConjunctsInTrace);
-				s_Logger.debug("Number of conjuncts in unsatisfiable core: " + unsat_coresAsSet.size());
-				((TraceCheckerBenchmarkSpWpGenerator) m_TraceCheckerBenchmarkGenerator)
-					.setConjunctsInSSA(totalNumberOfConjunctsInTrace, unsat_coresAsSet.size());
-			}
+			int totalNumberOfConjunctsInTrace = m_AnnotateAndAsserterConjuncts.getAnnotated2Original().keySet().size();
+			s_Logger.debug("Total number of conjuncts in trace: " +  totalNumberOfConjunctsInTrace);
+			s_Logger.debug("Number of conjuncts in unsatisfiable core: " + unsat_coresAsSet.size());
+			((TraceCheckerBenchmarkSpWpGenerator) m_TraceCheckerBenchmarkGenerator)
+			.setConjunctsInSSA(totalNumberOfConjunctsInTrace, unsat_coresAsSet.size());
 		}
 		
 		if (!m_useUnsatCoreOfFineGranularity) {
@@ -320,7 +319,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 					unsat_coresAsSet,
 					m_ModifiedGlobals,
 					m_SmtManager,
-					(AnnotateAndAsserterConjuncts)m_AAA);
+					m_AAA, 
+					m_AnnotateAndAsserterConjuncts);
 			assert stillInfeasible(rv);
 		}
 		Set<BoogieVar>[] relevantVarsToUseForFPBP = null;
@@ -801,14 +801,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	
 	@Override
-	protected AnnotateAndAsserter getAnnotateAndAsserter(NestedFormulas<Term, Term> ssa) {
-		if (m_useAnnotateAndAsserterWithPriorizedOrder) {
-			return new AnnotateAndAsserterWithStmtOrderPrioritization(m_SmtManager, ssa, m_DefaultTransFormulas);
-		} else if (m_useUnsatCoreOfFineGranularity) {
-			return new AnnotateAndAsserterConjuncts(m_SmtManager, ssa, m_DefaultTransFormulas); 
-		} else {
-			return new AnnotateAndAsserter(m_SmtManager, ssa);
+	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(NestedFormulas<Term, Term> ssa) {
+		if (m_AnnotateAndAsserterConjuncts == null) {
+			m_AnnotateAndAsserterConjuncts = new AnnotateAndAsserterConjuncts(m_SmtManager, ssa, m_DefaultTransFormulas);
 		}
+		return m_AnnotateAndAsserterConjuncts;
 	}
 	
 	

@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.util.RelationWithTreeSet;
  * @author musab@informatik.uni-freiburg.de
  *
  */
-public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndAsserterConjuncts {
+public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndAsserter {
 	/**
 	 * 1. Heuristic:
 	 */
@@ -37,8 +37,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 	public AnnotateAndAsserterWithStmtOrderPrioritization(
 			SmtManager smtManager, NestedFormulas<Term, Term> nestedSSA,
-			DefaultTransFormulas defaultTransformula) {
-		super(smtManager, nestedSSA, defaultTransformula);
+			AnnotateAndAssertCodeBlocks aaacb) {
+		super(smtManager, nestedSSA, aaacb);
 	}
 
 	/**
@@ -168,8 +168,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		
 		m_AnnotSSA = new ModifiableNestedFormulas<Term, Term>(m_Trace, new TreeMap<Integer, Term>());
 		
-		m_AnnotSSA.setPrecondition(annotateAndAssertPrecondition());
-		m_AnnotSSA.setPostcondition(annotateAndAssertPostcondition());
+		m_AnnotSSA.setPrecondition(m_AnnotateAndAssertCodeBlocks.annotateAndAssertPrecondition());
+		m_AnnotSSA.setPostcondition(m_AnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());
 		Collection<Integer> callPositions = new ArrayList<Integer>();
 		Collection<Integer> pendingReturnPositions = new ArrayList<Integer>();
 		// Apply 1. heuristic
@@ -225,14 +225,14 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		for (Integer i : stmtsToAssert) {
 			if (trace.isCallPosition(i)) {
 				callPositions.add(i);
-				m_AnnotSSA.setGlobalVarAssignmentAtPos(i, annotateAndAssertGlobalVarAssignemntCall(i));
-				m_AnnotSSA.setLocalVarAssignmentAtPos(i, annotateAndAssertLocalVarAssignemntCall(i));
-				m_AnnotSSA.setOldVarAssignmentAtPos(i, annotateAndAssertOldVarAssignemntCall(i));
+				m_AnnotSSA.setGlobalVarAssignmentAtPos(i, m_AnnotateAndAssertCodeBlocks.annotateAndAssertGlobalVarAssignemntCall(i));
+				m_AnnotSSA.setLocalVarAssignmentAtPos(i, m_AnnotateAndAssertCodeBlocks.annotateAndAssertLocalVarAssignemntCall(i));
+				m_AnnotSSA.setOldVarAssignmentAtPos(i, m_AnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntCall(i));
 			} else {
 				if (trace.isReturnPosition(i) && trace.isPendingReturn(i)) {
 					pendingReturnPositions.add(i);
 				}
-				m_AnnotSSA.setFormulaAtNonCallPos(i, annotateAndAssertNonCall(i));
+				m_AnnotSSA.setFormulaAtNonCallPos(i, m_AnnotateAndAssertCodeBlocks.annotateAndAssertNonCall(i));
 			}
 		}
 		
@@ -243,17 +243,17 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		for (Integer positionOfPendingReturn : m_SSA.getTrace().getPendingReturns().keySet()) {
 			assert trace.isPendingReturn(positionOfPendingReturn);
 			{
-				Term annotated = annotateAndAssertPendingContext(
+				Term annotated = m_AnnotateAndAssertCodeBlocks.annotateAndAssertPendingContext(
 						positionOfPendingReturn, pendingContextCode);
 				m_AnnotSSA.setPendingContext(positionOfPendingReturn, annotated);
 			}
 			{
-				Term annotated = annotateAndAssertLocalVarAssignemntPendingContext(
+				Term annotated = m_AnnotateAndAssertCodeBlocks.annotateAndAssertLocalVarAssignemntPendingContext(
 						positionOfPendingReturn, pendingContextCode);
 				m_AnnotSSA.setLocalVarAssignmentAtPos(positionOfPendingReturn, annotated);
 			}
 			{
-				Term annotated = annotateAndAssertOldVarAssignemntPendingContext(
+				Term annotated = m_AnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntPendingContext(
 						positionOfPendingReturn, pendingContextCode);
 				m_AnnotSSA.setOldVarAssignmentAtPos(positionOfPendingReturn, annotated);
 			}
