@@ -159,7 +159,7 @@ public class TraceChecker {
 	
 	protected final TraceCheckerBenchmarkGenerator m_TraceCheckerBenchmarkGenerator;
 	
-	private final boolean m_useAnnotateAndAsserterWithPriorizedOrder = false;
+	private final boolean m_useAnnotateAndAsserterWithPriorizedOrder = !false;
 	
 	
 	/**
@@ -261,9 +261,11 @@ public class TraceChecker {
 		
 		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis);
 		if (m_useAnnotateAndAsserterWithPriorizedOrder) {
-			m_AAA = new AnnotateAndAsserterWithStmtOrderPrioritization(m_SmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa));
+			m_AAA = new AnnotateAndAsserterWithStmtOrderPrioritization(m_SmtManager, 
+					ssa, getAnnotateAndAsserterCodeBlocks(ssa), m_TraceCheckerBenchmarkGenerator);
 		} else {
-			m_AAA = new AnnotateAndAsserter(m_SmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa));
+			m_AAA = new AnnotateAndAsserter(m_SmtManager, ssa, 
+					getAnnotateAndAsserterCodeBlocks(ssa), m_TraceCheckerBenchmarkGenerator);
 		}
 		try {
 			m_AAA.buildAnnotatedSsaAndAssertTerms();
@@ -920,6 +922,12 @@ public class TraceChecker {
 		protected final static String s_SatisfiabilityAnalysis = "SatisfiabilityAnalysisTime";
 		protected final static String s_InterpolantComputation = "InterpolantComputationTime";
 		
+		protected final static String s_NumberOfCodeBlocks = "NumberOfCodeBlocks";
+		protected final static String s_NumberOfCodeBlocksAsserted = "NumberOfCodeBlocksAsserted";
+		protected final static String s_NumberOfCheckSat = "NumberOfCheckSat";
+
+		
+		
 		public static TraceCheckerBenchmarkType getInstance() {
 			return s_Instance;
 		}
@@ -927,7 +935,10 @@ public class TraceChecker {
 		public Collection<String> getKeys() {
 			return Arrays.asList(new String[] { 
 					s_SsaConstruction, s_SatisfiabilityAnalysis, 
-					s_InterpolantComputation });
+					s_InterpolantComputation,
+					s_NumberOfCodeBlocks,
+					s_NumberOfCodeBlocksAsserted,
+					s_NumberOfCheckSat});
 		}
 
 		@Override
@@ -935,10 +946,16 @@ public class TraceChecker {
 			switch (key) {
 			case s_SsaConstruction:
 			case s_SatisfiabilityAnalysis:
-			case s_InterpolantComputation: 
+			case s_InterpolantComputation:
 				Long time1 = (Long) value1;
 				Long time2 = (Long) value2;
 				return time1 + time2;
+			case s_NumberOfCodeBlocks:
+			case s_NumberOfCodeBlocksAsserted:
+			case s_NumberOfCheckSat:
+				Integer number1 = (Integer) value1;
+				Integer number2 = (Integer) value2;
+				return number1 + number2;
 			default:
 				throw new AssertionError("unknown key");
 			}
@@ -964,6 +981,18 @@ public class TraceChecker {
 			Long interpolantComputationTime = (Long) benchmarkData.getValue(s_InterpolantComputation);
 			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(
 					interpolantComputationTime));
+			sb.append(" ");
+			sb.append(s_NumberOfCodeBlocks);
+			sb.append(": ");
+			sb.append(benchmarkData.getValue(s_NumberOfCodeBlocks));
+			sb.append(" ");
+			sb.append(s_NumberOfCodeBlocksAsserted);
+			sb.append(": ");
+			sb.append(benchmarkData.getValue(s_NumberOfCodeBlocksAsserted));			
+			sb.append(" ");
+			sb.append(s_NumberOfCheckSat);
+			sb.append(": ");
+			sb.append(benchmarkData.getValue(s_NumberOfCheckSat));			
 			return sb.toString();
 		}
 	}
@@ -977,11 +1006,15 @@ public class TraceChecker {
 	public class TraceCheckerBenchmarkGenerator extends 
 			BenchmarkGeneratorWithStopwatches implements IBenchmarkDataProvider {
 		
+		int m_NumberOfCodeBlocks = 0;
+		int m_NumberOfCodeBlocksAsserted = 0;
+		int m_NumberOfCheckSat = 0;
+		
 		@Override
 		public String[] getStopwatches() {
 			return new String[] { TraceCheckerBenchmarkType.s_SsaConstruction, 
 					TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis, 
-					TraceCheckerBenchmarkType.s_InterpolantComputation };
+					TraceCheckerBenchmarkType.s_InterpolantComputation};
 		}
 
 		@Override
@@ -1000,6 +1033,12 @@ public class TraceChecker {
 				} catch (StopwatchStillRunningException e) {
 					throw new AssertionError("clock still running: " + key);
 				}
+			case TraceCheckerBenchmarkType.s_NumberOfCodeBlocks:
+				return m_NumberOfCodeBlocks;
+			case TraceCheckerBenchmarkType.s_NumberOfCodeBlocksAsserted:
+				return m_NumberOfCodeBlocksAsserted;
+			case TraceCheckerBenchmarkType.s_NumberOfCheckSat:
+				return m_NumberOfCheckSat;
 			default:
 				throw new AssertionError("unknown data");
 			}
@@ -1009,6 +1048,28 @@ public class TraceChecker {
 		public IBenchmarkType getBenchmarkType() {
 			return TraceCheckerBenchmarkType.getInstance();
 		}
+		
+		/**
+		 * Tell the Benchmark that the checked trace has n CodeBlocks
+		 */
+		public void reportnewCodeBlocks(int n) {
+			m_NumberOfCodeBlocks = m_NumberOfCodeBlocks + n;
+		}
+		
+		/**
+		 * Tell the Benchmark that n CodeBlocks have been asserted additionally
+		 */
+		public void reportnewAssertedCodeBlocks(int n) {
+			m_NumberOfCodeBlocksAsserted = m_NumberOfCodeBlocksAsserted + n;
+		}
+		
+		/**
+		 * Tell the Benchmark we did another check sat
+		 */
+		public void reportnewCheckSat() {
+			m_NumberOfCheckSat++;
+		}
+
 	}
 	
 	

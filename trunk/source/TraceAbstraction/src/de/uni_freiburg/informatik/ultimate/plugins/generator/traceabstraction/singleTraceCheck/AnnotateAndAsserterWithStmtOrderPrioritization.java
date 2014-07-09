@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.util.RelationWithTreeSet;
 
 /**
@@ -37,8 +38,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 	public AnnotateAndAsserterWithStmtOrderPrioritization(
 			SmtManager smtManager, NestedFormulas<Term, Term> nestedSSA,
-			AnnotateAndAssertCodeBlocks aaacb) {
-		super(smtManager, nestedSSA, aaacb);
+			AnnotateAndAssertCodeBlocks aaacb, 
+			TraceCheckerBenchmarkGenerator tcbg) {
+		super(smtManager, nestedSSA, aaacb, tcbg);
 	}
 
 	/**
@@ -192,10 +194,14 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		else if (m_IterativelySkipLoopsUntilUnsatReached) {
 			m_Satisfiable = LBool.UNKNOWN;
 			Set<Integer> stmtsAlreadyAsserted = stmtsOutsideOfLoop;
+			m_Tcbg.reportnewCodeBlocks(m_Trace.length());
 			while (m_Satisfiable != LBool.UNSAT) {
 				// First, annotate and assert the statements, which doesn't occur within a loop
 				buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(m_Trace, callPositions, pendingReturnPositions, stmtsOutsideOfLoop);
 				m_Satisfiable = m_SmtManager.getScript().checkSat();
+				m_Tcbg.reportnewCheckSat();
+				m_Tcbg.reportnewAssertedCodeBlocks(stmtsOutsideOfLoop.size());
+				
 				if (stmtsAlreadyAsserted.size() == m_Trace.length()) break;
 				if (m_Satisfiable != LBool.UNSAT) {
 					// TODO: if lowerIndexOfStat.. + 1 > upperIndex - 1 --> then break, and add all the remaining statements

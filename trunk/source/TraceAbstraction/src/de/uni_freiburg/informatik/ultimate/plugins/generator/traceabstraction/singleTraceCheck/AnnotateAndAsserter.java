@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmarkGenerator;
 
 
 /**
@@ -48,26 +49,18 @@ public class AnnotateAndAsserter {
 
 		protected final AnnotateAndAssertCodeBlocks m_AnnotateAndAssertCodeBlocks;
 		
-
-		protected static final String SSA = "ssa_";
-		protected static final String PRECOND = "precond";
-		protected static final String POSTCOND = "postcond";
-		protected static final String RETURN = "_return";
-		protected static final String LOCVARASSIGN_CALL = "_LocVarAssigCall";
-		protected static final String GLOBVARASSIGN_CALL = "_GlobVarAssigCall";
-		protected static final String OLDVARASSIGN_CALL = "_OldVarAssigCall";
-		protected static final String PENDINGCONTEXT = "_PendingContext";
-		protected static final String LOCVARASSIGN_PENDINGCONTEXT = "_LocVarAssignPendingContext";
-		protected static final String OLDVARASSIGN_PENDINGCONTEXT = "_OldVarAssignPendingContext";
+		protected final TraceCheckerBenchmarkGenerator m_Tcbg;
 		
-
 		public AnnotateAndAsserter(SmtManager smtManager,
-				NestedFormulas<Term, Term> nestedSSA, AnnotateAndAssertCodeBlocks aaacb) {
+				NestedFormulas<Term, Term> nestedSSA, 
+				AnnotateAndAssertCodeBlocks aaacb, 
+				TraceCheckerBenchmarkGenerator tcbg) {
 			m_SmtManager = smtManager;
 			m_Script = smtManager.getScript();
 			m_Trace = nestedSSA.getTrace();
 			m_SSA = nestedSSA;
 			m_AnnotateAndAssertCodeBlocks = aaacb;
+			m_Tcbg = tcbg;
 		}
 			
 
