@@ -90,7 +90,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 			ModifiableGlobalVariableManager modGlobalVarManager,
 			SmtManager smtManager,
 			AnnotateAndAsserter aaa,
-			AnnotateAndAsserterConjuncts aac) {
+			AnnotateAndAssertConjunctsOfCodeBlocks aac) {
 		super(nestedTrace, pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
@@ -148,7 +148,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	private void generateRelevantTransFormulas(Set<Term> unsat_core, 
 			ModifiableGlobalVariableManager modGlobalVarManager,
 			AnnotateAndAsserter aaa,
-			AnnotateAndAsserterConjuncts aac) {
+			AnnotateAndAssertConjunctsOfCodeBlocks aac) {
 		Map<Term, Term> annot2Original = aac.getAnnotated2Original();
 		for (int i = 0; i < super.getTrace().length(); i++) {
 			if (super.getTrace().getSymbol(i) instanceof Call) {

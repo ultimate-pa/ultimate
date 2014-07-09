@@ -73,7 +73,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	private static final boolean s_TransformToCNF = true;
 	
-	private AnnotateAndAsserterConjuncts m_AnnotateAndAsserterConjuncts;
+	private AnnotateAndAssertConjunctsOfCodeBlocks m_AnnotateAndAsserterConjuncts;
 	
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts, 
@@ -803,7 +803,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	@Override
 	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(NestedFormulas<Term, Term> ssa) {
 		if (m_AnnotateAndAsserterConjuncts == null) {
-			m_AnnotateAndAsserterConjuncts = new AnnotateAndAsserterConjuncts(m_SmtManager, ssa, m_DefaultTransFormulas);
+			m_AnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks(m_SmtManager, ssa, m_DefaultTransFormulas);
 		}
 		return m_AnnotateAndAsserterConjuncts;
 	}

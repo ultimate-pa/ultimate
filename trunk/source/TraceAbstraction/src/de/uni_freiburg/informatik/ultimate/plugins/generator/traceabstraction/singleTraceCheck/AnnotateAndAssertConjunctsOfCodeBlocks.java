@@ -16,12 +16,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author Matthias Heizmann
  *
  */
-public class AnnotateAndAsserterConjuncts extends AnnotateAndAssertCodeBlocks {
+public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCodeBlocks {
 	
 	Map<Term,Term> m_Annotated2Original = new HashMap<Term,Term>();
 	protected final DefaultTransFormulas m_DefaultTransFormulas;
 
-	public AnnotateAndAsserterConjuncts(SmtManager smtManager, 
+	public AnnotateAndAssertConjunctsOfCodeBlocks(SmtManager smtManager, 
 			NestedFormulas<Term, Term> nestedSSA, DefaultTransFormulas defaultTransformulas) {
 		super(smtManager, nestedSSA);
 		m_DefaultTransFormulas = defaultTransformulas;
