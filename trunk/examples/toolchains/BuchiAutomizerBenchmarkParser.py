@@ -31,7 +31,7 @@ re_program = re.compile(r'Program:\s+([\S]+)')
 re_toolchain = re.compile(r'Toolchain:\s+([\S]+)')
 re_settings = re.compile(r'Settings\sFile:\s+([\S]+)')
 re_time = re.compile(r'Automizer terminated after (\d+) and says')
-re_verdict = re.compile(r'(?:Automizer terminated after \d+ and says:\s+|!!!FAIL!!!\s*|!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11[\w\W]*)(Termination|No\sResult|Nontermination|Exception|OutOfMemoryError)')
+re_verdict = re.compile(r'(?: terminated after \d+ and says:\s+|!!!FAIL!!!\s*|!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11[\w\W]*)(Termination|No\sResult|Nontermination|Exception|OutOfMemoryError|Timeout)')
 all_res = (re_program, re_toolchain, re_settings, re_time, re_verdict)
 all_names = ('program', 'toolchain', 'settings', 'time', 'verdict')
 assert len(all_res) == len(all_names)
@@ -49,7 +49,7 @@ for output in outputs:
 	# Make sure there is a verdict
 	if not result.has_key('verdict'):
 		result['verdict'] = 'Failed to parse ULTIMATE Output'
-		print output
+#		print output
 	if len(result) > 0:
 		results.append(result)
 
