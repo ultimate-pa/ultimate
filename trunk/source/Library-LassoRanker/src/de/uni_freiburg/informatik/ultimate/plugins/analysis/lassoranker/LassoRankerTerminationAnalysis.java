@@ -80,7 +80,7 @@ public class LassoRankerTerminationAnalysis {
 	 * Loop formula of the linear lasso program
 	 */
 	private final TransFormula m_loop_transition;
-		
+	
 	/**
 	 * Stem formula of the linear lasso program as linear inequalities in DNF
 	 */
@@ -238,23 +238,6 @@ public class LassoRankerTerminationAnalysis {
 				new RemoveNegation(),
 				new RewriteStrictInequalities()
 		};
-	}
-	
-	/**
-	 * Add a stem transition to the lasso program.
-	 * Calling this invokes the preprocessor on the stem transition.
-	 * 
-	 * @param stem a transition formula corresponding to the lasso's stem
-	 * @throws TermException
-	 */
-	public void addStem(TransFormula stem_transition) throws TermException {
-		if (m_stem != null) {
-			s_Logger.warn("Adding a stem to a lasso that already had one.");
-		}
-		s_Logger.debug("Adding stem transition:\n" + stem_transition);
-		m_stem = preprocess(stem_transition, false, null, null);
-		checkVariables();
-		s_Logger.debug("Preprocessed stem:\n" + m_stem);
 	}
 	
 	/**
