@@ -86,7 +86,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	/**
 	 * Preferences
 	 */
-	protected final Preferences m_preferences;
+	protected final LassoRankerPreferences m_preferences;
 	
 	/**
 	 * Whether synthesize() has been called
@@ -107,7 +107,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * @param constaintsName name of the constraints whose satisfiability is 
 	 *                       checked
 	 */
-	public ArgumentSynthesizer(Lasso lasso, Preferences preferences,
+	public ArgumentSynthesizer(Lasso lasso, LassoRankerPreferences preferences,
 			String constaintsName) {
 		m_preferences = preferences;
 		m_script = SMTSolver.newScript(preferences, constaintsName);

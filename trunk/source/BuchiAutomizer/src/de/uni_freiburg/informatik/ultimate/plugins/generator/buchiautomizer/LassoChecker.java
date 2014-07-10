@@ -27,10 +27,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LassoAnalysis;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.SupportingInvariant;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.TerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.templates.AffineTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.templates.LexicographicTemplate;
@@ -555,23 +557,37 @@ public class LassoChecker {
 		return m_LassoCheckerIdentifier + "_" + (withStem ? "Lasso" : "Loop");
 	}
 	
-	private Preferences constructLassoRankerPreferences(boolean withStem, 
+	private LassoRankerPreferences constructLassoRankerPreferences(boolean withStem, 
 			boolean overapproximateArrayIndexConnection) {
-		Preferences pref = new Preferences();
-		pref.num_non_strict_invariants = 1;
-		pref.num_strict_invariants = 0;
-		pref.nondecreasing_invariants = true;
+		LassoRankerPreferences pref = new LassoRankerPreferences();
+		
 		pref.externalSolver = m_ExternalSolver_RankSynthesis;
 		pref.smt_solver_command = m_ExternalSolverCommand_RankSynthesis;
-		pref.nontermination_analysis = m_LassoRankerAnalysisType;
-		pref.termination_analysis = m_LassoRankerAnalysisType;
 		UltimatePreferenceStore baPref = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		pref.dumpSmtSolverScript = baPref.getBoolean(PreferenceInitializer.LABEL_DumpToFile);
 		pref.path_of_dumped_script = baPref.getString(PreferenceInitializer.LABEL_DumpPath);
 		pref.baseNameOfDumpedScript = generateFileBasenamePrefix(withStem);
-		pref.simplify_result = m_TrySimplificationTerminationArgument;
 		pref.overapproximateArrayIndexConnection = overapproximateArrayIndexConnection;
 		return pref;
+	}
+	
+	private TerminationAnalysisSettings constructTASettings() {
+		TerminationAnalysisSettings settings =
+				new TerminationAnalysisSettings();
+		settings.analysis = m_LassoRankerAnalysisType;
+		settings.num_non_strict_invariants = 1;
+		settings.num_strict_invariants = 0;
+		settings.nondecreasing_invariants = true;
+		settings.simplify_termination_argument =
+				m_TrySimplificationTerminationArgument;
+		return settings;
+	}
+	
+	private NonTerminationAnalysisSettings constructNTASettings() {
+		NonTerminationAnalysisSettings settings =
+				new NonTerminationAnalysisSettings();
+		settings.analysis = m_LassoRankerAnalysisType;
+		return settings;
 	}
 	
 	private SynthesisResult synthesize(final boolean withStem, 
@@ -602,7 +618,9 @@ public class LassoChecker {
 				throw new AssertionError("TermException " + e);
 			}
 			try {
-				nonTermArgument = la.checkNonTermination();
+				NonTerminationAnalysisSettings settings =
+						constructNTASettings();
+				nonTermArgument = la.checkNonTermination(settings);
 			} catch (SMTLIBException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -702,7 +720,8 @@ public class LassoChecker {
 		for (RankingFunctionTemplate rft : rankingFunctionTemplates) {
 			TerminationArgument termArg;
 			try {
-				termArg = la.tryTemplate(rft);
+				TerminationAnalysisSettings settings = constructTASettings();
+				termArg = la.tryTemplate(rft, settings);
 			} catch (SMTLIBException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

@@ -26,57 +26,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.io.File;
 import java.io.Serializable;
 
 
 /**
- * Accumulation of preferences for LassoRanker.
- * 
- * These are the preferences that you might want to change when using
- * LassoRanker as a library through the class LassoAnalysis.
- * 
- * The prefences in the Ultimate GUI have some additional preferences that
- * are relevent when using LassoRanker as a standalone plugin in the toolchain.
+ * Global preferences for LassoRanker.
+ * These values are constant for the lifetime of the LassoAnalysis object
  * 
  * This class functions much like a struct and is implemented like one.
  * 
- * @see PreferencesInitializer
  * @author Jan Leike
  */
-public class Preferences implements Serializable {
+public class LassoRankerPreferences implements Serializable {
 	private static final long serialVersionUID = 3253589986886574198L;
-	
-	/**
-	 * Number of strict supporting invariants for each Motzkin transformation.
-	 * Strict supporting invariants are invariants of the form
-	 * <pre>Σ c_i x_i + c > 0.</pre>
-	 * 
-	 * The value must be non-negative; set to 0 to disable the use of strict
-	 * supporting invariants.  Note that increasing this number will
-	 * dramatically increase runtime!
-	 * 
-	 * @see num_non_strict_invariants
-	 */
-	public int num_strict_invariants = 1; // Default: 1
-	
-	/**
-	 * Number of non-strict supporting invariants for each Motzkin
-	 * transformation.  Strict supporting invariants are invariants of the form
-	 * <pre>Σ c_i x_i + c ≥ 0.</pre>
-	 * 
-	 * The value must be non-negative; set to 0 to disable the use of strict
-	 * supporting invariants.  Note that increasing this number will
-	 * dramatically increase runtime!
-	 * 
-	 * @see num_strict_invariants
-	 */
-	public int num_non_strict_invariants = 0; // Default: 0
-	
-	/**
-	 * Consider only non-decreasing invariants?
-	 */
-	public boolean nondecreasing_invariants = false; // Default: false
-	
+
 	/**
 	 * Should the polyhedra for stem and loop be made integral for integer
 	 * programs?
@@ -88,33 +52,6 @@ public class Preferences implements Serializable {
 	 * Add annotations to terms for debugging purposes
 	 */
 	public boolean annotate_terms = false; // Default: false
-	
-	/**
-	 * Should we try to simplify the discovered ranking function and
-	 * supporting invariants?
-	 * 
-	 * Note: this is quite expensive, it requires many calls to the solver:
-	 * O((number of variables)*(number of supporting invariants))
-	 * If the solver efficiently supports push() and pop(),
-	 * this might be reasonably fast.
-	 */
-	public boolean simplify_result = false; // Default: false
-	
-	/**
-	 * What analysis type should be used for the termination analysis?
-	 * Use a linear SMT query, use a linear SMT query but guess some eigenvalues
-	 * of the loop, or use a nonlinear SMT query?
-	 */
-	public AnalysisType termination_analysis = AnalysisType.Linear_with_guesses;
-		// Default: AnalysisType.LINEAR_PLUS_GUESSES
-	
-	/**
-	 * What analysis type should be used for the nontermination analysis?
-	 * Use a linear SMT query, use a linear SMT query but guess some eigenvalues
-	 * of the loop, or use a nonlinear SMT query?
-	 */
-	public AnalysisType nontermination_analysis = AnalysisType.Linear_with_guesses;
-		// Default: AnalysisType.LINEAR_PLUS_GUESSES
 	
 	/**
 	 * If true, we use an external tool to solve the constraints. If false,
@@ -152,26 +89,48 @@ public class Preferences implements Serializable {
 	public boolean overapproximateArrayIndexConnection = false;
 	
 	/**
-	 * Build a string descriptions of the current preferences
+	 * Default construction intializes default values
+	 */
+	public LassoRankerPreferences() {
+	}
+	
+	/**
+	 * Copy constructor copies everything
+	 */
+	public LassoRankerPreferences(LassoRankerPreferences other) {
+		this.compute_integral_hull = other.compute_integral_hull;
+		this.annotate_terms = other.annotate_terms;
+		this.externalSolver = other.externalSolver;
+		this.smt_solver_command = other.smt_solver_command;
+		this.dumpSmtSolverScript = other.dumpSmtSolverScript;
+		this.path_of_dumped_script = other.path_of_dumped_script;
+		this.baseNameOfDumpedScript = other.baseNameOfDumpedScript;
+		this.overapproximateArrayIndexConnection =
+				other.overapproximateArrayIndexConnection;
+	}
+	
+	/**
+	 * Verify that the settings are self-consistent and sane.
+	 * Only makes assertion calls.
+	 */
+	public void checkSanity() {
+		assert smt_solver_command != null;
+		assert path_of_dumped_script != null;
+		File f = new File(path_of_dumped_script);
+		assert f.exists();
+		assert f.isDirectory();
+		assert baseNameOfDumpedScript != null;
+	}
+	
+	/**
+	 * Build a string description of the current preferences
 	 */
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Number of strict supporting invariants: ");
-		sb.append(this.num_strict_invariants);
-		sb.append("\nNumber of non-strict supporting invariants: ");
-		sb.append(this.num_non_strict_invariants);
-		sb.append("\nConsider only non-deceasing supporting invariants: ");
-		sb.append(this.nondecreasing_invariants);
-		sb.append("\nCompute integeral hull: ");
+		sb.append("Compute integeral hull: ");
 		sb.append(this.compute_integral_hull);
 		sb.append("\nTerm annotations enabled: ");
 		sb.append(this.annotate_terms);
-		sb.append("\nResult simplification enabled: ");
-		sb.append(this.simplify_result);
-		sb.append("\nTermination analysis: ");
-		sb.append(this.termination_analysis);
-		sb.append("\nNontermination analysis: ");
-		sb.append(this.nontermination_analysis);
 		sb.append("\nUse exernal solver: ");
 		sb.append(this.externalSolver);
 		sb.append("\nSMT solver command: ");

@@ -42,10 +42,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Lasso;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality.PossibleMotzkinCoefficients;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearTransition;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SMTSolver;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.rankingfunctions.RankingFunction;
@@ -60,11 +60,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variable
  */
 public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	/**
-	 * What analysis type should be used for the termination analysis?
-	 * Use a linear SMT query, use a linear SMT query but guess some eigenvalues
-	 * of the loop, or use a nonlinear SMT query?
+	 * The (local) settings for termination analysis
 	 */
-	private final AnalysisType m_analysis_type;
+	private final TerminationAnalysisSettings m_settings;
 	
 	/**
 	 * The template to be used
@@ -98,33 +96,44 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @param lasso the lasso program
 	 * @param template the ranking function template to be used in the analysis
 	 * @param preferences arguments to the synthesis process
+	 * @param settings (local) settings for termination analysis
 	 * @param arrayIndexSupportingInvariants supporting invariants that were
 	 * 	discovered during preprocessing
 	 */
 	public TerminationArgumentSynthesizer(Lasso lasso,
-			RankingFunctionTemplate template, Preferences preferences,
+			RankingFunctionTemplate template,
+			LassoRankerPreferences preferences,
+			TerminationAnalysisSettings settings,
 			Set<Term> arrayIndexSupportingInvariants) {
 		super(lasso, preferences, template.getName() + "Template");
-		m_analysis_type = preferences.termination_analysis;
-		assert !m_analysis_type.isDisabled();
-		m_template = template;
 		
-		m_si_generators = new ArrayList<SupportingInvariantGenerator>();
-		m_supporting_invariants = new ArrayList<SupportingInvariant>();
-		m_ArrayIndexSupportingInvariants = arrayIndexSupportingInvariants;
+		// Check the settings
+		m_settings = new TerminationAnalysisSettings(settings); // defensive copy
+		m_settings.checkSanity();
+		s_Logger.info("Termination Analysis Settings:\n" + settings.toString());
+		assert !m_settings.analysis.isDisabled();
+		if (m_settings.num_strict_invariants == 0 &&
+				m_settings.num_non_strict_invariants == 0) {
+			s_Logger.info("Generation of supporting invariants is disabled.");
+		}
 		
 		// Set logic
-		if (m_analysis_type.isLinear()) {
+		if (m_settings.analysis.isLinear()) {
 			m_script.setLogic(Logics.QF_LRA);
 		} else {
 			m_script.setLogic(Logics.QF_NRA);
 		}
-		
-		if (m_analysis_type == AnalysisType.Linear
-				&& !preferences.nondecreasing_invariants) {
+		if (m_settings.analysis == AnalysisType.Linear
+				&& !settings.nondecreasing_invariants) {
 			s_Logger.warn("Termination analysis type is 'Linear', " +
 					"hence invariants must be non-decreasing!");
 		}
+		
+		// Set other fields
+		m_template = template;
+		m_si_generators = new ArrayList<SupportingInvariantGenerator>();
+		m_supporting_invariants = new ArrayList<SupportingInvariant>();
+		m_ArrayIndexSupportingInvariants = arrayIndexSupportingInvariants;
 	}
 	
 	/**
@@ -185,7 +194,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		
 		// Get guesses for loop eigenvalues as possible Motzkin coefficients
 		Rational[] eigenvalue_guesses;
-		if (m_analysis_type.wantsGuesses()) {
+		if (m_settings.analysis.wantsGuesses()) {
 			eigenvalue_guesses = m_lasso.guessEigenvalues(false);
 			assert eigenvalue_guesses.length >= 2;
 		} else {
@@ -199,23 +208,23 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			++j;
 			for (int m = 0; m < templateConstraints.size(); ++m) {
 				MotzkinTransformation motzkin =
-						new MotzkinTransformation(m_script, m_analysis_type,
+						new MotzkinTransformation(m_script, m_settings.analysis,
 								m_preferences.annotate_terms);
 				motzkin.annotation = annotations.get(m) + " " + j;
 				motzkin.add_inequalities(loopConj);
 				motzkin.add_inequalities(templateConstraints.get(m));
 				
 				// Add supporting invariants
-				assert(m_preferences.num_strict_invariants >= 0);
-				for (int i = 0; i < m_preferences.num_strict_invariants; ++i) {
+				assert(m_settings.num_strict_invariants >= 0);
+				for (int i = 0; i < m_settings.num_strict_invariants; ++i) {
 					SupportingInvariantGenerator sig =
 							new SupportingInvariantGenerator(m_script, siVars,
 									true);
 					si_generators.add(sig);
 					motzkin.add_inequality(sig.generate(loop.getInVars()));
 				}
-				assert(m_preferences.num_non_strict_invariants >= 0);
-				for (int i = 0; i < m_preferences.num_non_strict_invariants;
+				assert(m_settings.num_non_strict_invariants >= 0);
+				for (int i = 0; i < m_settings.num_non_strict_invariants;
 						++i) {
 					SupportingInvariantGenerator sig =
 							new SupportingInvariantGenerator(m_script, siVars,
@@ -242,7 +251,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			for (List<LinearInequality> stemConj : stem.getPolyhedra()) {
 				++j;
 				MotzkinTransformation motzkin =
-						new MotzkinTransformation(m_script, m_analysis_type,
+						new MotzkinTransformation(m_script, m_settings.analysis,
 								m_preferences.annotate_terms);
 				motzkin.annotation = "invariant " + i + " initiation " + j;
 				motzkin.add_inequalities(stemConj);
@@ -258,14 +267,14 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			for (List<LinearInequality> loopConj : loop.getPolyhedra()) {
 				++j;
 				MotzkinTransformation motzkin =
-						new MotzkinTransformation(m_script, m_analysis_type,
+						new MotzkinTransformation(m_script, m_settings.analysis,
 								m_preferences.annotate_terms);
 				motzkin.annotation = "invariant " + i + " consecution " + j;
 				motzkin.add_inequalities(loopConj);
 				motzkin.add_inequality(sig.generate(loop.getInVars())); // si(x)
 				LinearInequality li = sig.generate(loop.getOutVars()); // ~si(x')
-				li.motzkin_coefficient = m_preferences.nondecreasing_invariants
-						|| m_analysis_type == AnalysisType.Linear ?
+				li.motzkin_coefficient = m_settings.nondecreasing_invariants
+						|| m_settings.analysis == AnalysisType.Linear ?
 								PossibleMotzkinCoefficients.ZERO_AND_ONE
 								: PossibleMotzkinCoefficients.ANYTHING;
 				li.negate();
@@ -297,13 +306,13 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 */
 	@Override
 	protected LBool do_synthesis() throws SMTLIBException, TermException {
-		if (m_analysis_type.isLinear() && m_template.getDegree() > 0) {
+		if (m_settings.analysis.isLinear() && m_template.getDegree() > 0) {
 			s_Logger.warn("Using a linear SMT query and a templates of degree "
 					+ "> 0, hence this method is incomplete.");
 		}
 		Collection<RankVar> rankVars = getRankVars();
 		Collection<RankVar> siVars = getSIVars();
-		m_template.init(this, m_analysis_type.isLinear());
+		m_template.init(this, m_settings.analysis.isLinear());
 		s_Logger.debug("Variables for ranking functions: " + rankVars);
 		s_Logger.debug("Variables for supporting invariants: " + siVars);
 /*		// The following code makes examples like StemUnsat.bpl fail
@@ -316,8 +325,8 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		if (m_lasso.getStem().isTrue()) {
 			s_Logger.info("There is no stem transition; "
 					+ "disabling supporting invariant generation.");
-			m_preferences.num_strict_invariants = 0;
-			m_preferences.num_non_strict_invariants = 0;
+			m_settings.num_strict_invariants = 0;
+			m_settings.num_non_strict_invariants = 0;
 		}
 		
 		// Assert all conjuncts generated from the template
@@ -344,7 +353,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			
 			// Get valuation for the variables
 			Map<Term, Rational> val;
-			if (m_preferences.simplify_result) {
+			if (m_settings.simplify_termination_argument) {
 				s_Logger.info("Found a termination argument, trying to simplify.");
 				val = getSimplifiedAssignment(variables);
 			} else {

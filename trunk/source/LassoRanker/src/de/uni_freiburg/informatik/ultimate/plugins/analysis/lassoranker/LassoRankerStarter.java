@@ -23,8 +23,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Express
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.SupportingInvariant;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.TerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.templates.AffineTemplate;
@@ -72,8 +74,8 @@ public class LassoRankerStarter {
 	public LassoRankerStarter(RootNode rootNode) {
 		m_RootAnnot = rootNode.getRootAnnot();
 		checkRCFGBuilderSettings();
-		Preferences preferences = PreferencesInitializer.getGuiPreferences();
-		s_Logger.info("Preferences:\n" + preferences.toString());
+		LassoRankerPreferences preferences =
+				PreferencesInitializer.getLassoRankerPreferences();
 		m_SmtManager = new SmtManager(m_RootAnnot.getBoogie2SMT(),
 				m_RootAnnot.getModGlobVarManager());
 
@@ -127,10 +129,12 @@ public class LassoRankerStarter {
 		}
 		
 		// Try to prove non-termination
-		if (preferences.nontermination_analysis
-				!= AnalysisType.Disabled) {
+		NonTerminationAnalysisSettings nontermination_settings =
+				PreferencesInitializer.getNonTerminationAnalysisSettings();
+		if (nontermination_settings.analysis != AnalysisType.Disabled) {
 			try {
-				NonTerminationArgument arg = la.checkNonTermination();
+				NonTerminationArgument arg =
+						la.checkNonTermination(nontermination_settings);
 				if (arg != null) {
 					reportNonTerminationResult(arg);
 					return;
@@ -142,10 +146,12 @@ public class LassoRankerStarter {
 			}
 		}
 		
+		TerminationAnalysisSettings termination_settings =
+				PreferencesInitializer.getTerminationAnalysisSettings();
+		
 		// Get all templates
 		RankingFunctionTemplate[] templates;
-		if (preferences.termination_analysis
-				== AnalysisType.Disabled) {
+		if (termination_settings.analysis == AnalysisType.Disabled) {
 			templates = new RankingFunctionTemplate[0];
 		} else {
 			templates = getTemplates();
@@ -158,7 +164,8 @@ public class LassoRankerStarter {
 				return;
 			}
 			try {
-				TerminationArgument arg = la.tryTemplate(template);
+				TerminationArgument arg =
+						la.tryTemplate(template, termination_settings);
 				if (arg != null) {
 //					try {
 						assert isTerminationArgumentCorrect(arg) : 

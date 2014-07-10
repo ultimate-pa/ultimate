@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination.NonTerminationArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.DNF;
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preproce
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteIte;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteStrictInequalities;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteTrueFalse;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.TerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.TerminationArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.templates.RankingFunctionTemplate;
@@ -120,7 +122,7 @@ public class LassoAnalysis {
 	/**
 	 * The current preferences
 	 */
-	protected final Preferences m_preferences;
+	protected final LassoRankerPreferences m_preferences;
 	
 	/**
 	 * Set of terms in which RewriteArrays puts additional supporting invariants
@@ -141,16 +143,19 @@ public class LassoAnalysis {
 	 * @param stem a transition formula corresponding to the lasso's stem
 	 * @param loop a transition formula corresponding to the lasso's loop
 	 * @param axioms a collection of axioms regarding the transitions' constants
-	 * @param preferences configuration options for this plugin
+	 * @param preferences configuration options for this plugin; these are
+	 *                    constant for the life time of this object
 	 * @throws TermException if preprocessing fails
 	 * @throws FileNotFoundException if the file for dumping the script
 	 *                               cannot be opened
 	 */
 	public LassoAnalysis(Script script, Boogie2SMT boogie2smt,
 			TransFormula stem_transition, TransFormula loop_transition,
-			Term[] axioms, Preferences preferences) throws TermException {
-		m_preferences = preferences;
-		checkPreferences(preferences);
+			Term[] axioms, LassoRankerPreferences preferences) throws TermException {
+		m_preferences = new LassoRankerPreferences(preferences); // defensive copy
+		m_preferences.checkSanity();
+		s_Logger.info("Preferences:\n" + m_preferences.toString());
+		
 		m_rankVarFactory = new VarFactory(boogie2smt);
 		m_old_script = script;
 		m_axioms = axioms;
@@ -176,13 +181,14 @@ public class LassoAnalysis {
 	 * @param boogie2smt the boogie2smt object that created the TransFormulas
 	 * @param loop a transition formula corresponding to the lasso's loop
 	 * @param axioms a collection of axioms regarding the transitions' constants
-	 * @param preferences configuration options for this plugin
+	 * @param preferences configuration options for this plugin; these are
+	 *                    constant for the life time of this object
 	 * @throws TermException if preprocessing fails
 	 * @throws FileNotFoundException if the file for dumping the script
 	 *                               cannot be opened
 	 */
 	public LassoAnalysis(Script script, Boogie2SMT boogie2smt,
-			TransFormula loop, Term[] axioms, Preferences preferences)
+			TransFormula loop, Term[] axioms, LassoRankerPreferences preferences)
 					throws TermException, FileNotFoundException {
 		this(script, boogie2smt, null, loop, axioms, preferences);
 	}
@@ -206,22 +212,6 @@ public class LassoAnalysis {
 		s_Logger.debug("Preprocessed loop:\n" + loop);
 		m_lasso = new Lasso(stem, loop);
 		s_Logger.debug("Guesses for Motzkin coefficients: " + motzkinGuesses());
-	}
-	
-	/**
-	 * Verify that the preferences are set self-consistent and sensible
-	 * Issues a bunch of logger infos and warnings.
-	 */
-	protected void checkPreferences(Preferences preferences) {
-		assert preferences.num_strict_invariants >= 0;
-		assert preferences.num_non_strict_invariants >= 0;
-//		assert preferences.termination_check_nonlinear
-//				|| preferences.only_nondecreasing_invariants
-//				: "Use nondecreasing invariants with a linear SMT query.";
-		if (preferences.num_strict_invariants == 0 &&
-				preferences.num_non_strict_invariants == 0) {
-			s_Logger.warn("Generation of supporting invariants is disabled.");
-		}
 	}
 	
 	/**
@@ -403,14 +393,17 @@ public class LassoAnalysis {
 	/**
 	 * Try to find a non-termination argument for the lasso program.
 	 * 
+	 * @param settings (local) settings for nontermination analysis
 	 * @return the non-termination argument or null of none is found
 	 */
-	public NonTerminationArgument checkNonTermination()
-			throws SMTLIBException, TermException {
+	public NonTerminationArgument checkNonTermination(
+			NonTerminationAnalysisSettings settings)
+					throws SMTLIBException, TermException {
 		s_Logger.info("Checking for nontermination...");
 		
 		NonTerminationArgumentSynthesizer nas =
-				new NonTerminationArgumentSynthesizer(m_lasso, m_preferences);
+				new NonTerminationArgumentSynthesizer(m_lasso, m_preferences,
+						settings);
 		final LBool constraintSat = nas.synthesize();
 		if (constraintSat == LBool.SAT) {
 			s_Logger.info("Proved nontermination.");
@@ -425,10 +418,12 @@ public class LassoAnalysis {
 	 * the given ranking function template.
 	 * 
 	 * @param template the ranking function template
+	 * @param settings (local) settings for termination analysis
 	 * @return the termination argument or null of none is found
 	 */
-	public TerminationArgument tryTemplate(RankingFunctionTemplate template)
-			throws SMTLIBException, TermException {
+	public TerminationArgument tryTemplate(RankingFunctionTemplate template,
+			TerminationAnalysisSettings settings)
+					throws SMTLIBException, TermException {
 		// ignore stem
 		s_Logger.info("Using template '" + template.getName()
 				+ "'.");
@@ -437,7 +432,8 @@ public class LassoAnalysis {
 		
 		TerminationArgumentSynthesizer tas =
 				new TerminationArgumentSynthesizer(m_lasso, template,
-						m_preferences, m_ArrayIndexSupportingInvariants);
+						m_preferences, settings,
+						m_ArrayIndexSupportingInvariants);
 		final LBool constraintSat = tas.synthesize();
 		m_numSIs = tas.getNumSIs();
 		m_numMotzkin = tas.getNumMotzkin();

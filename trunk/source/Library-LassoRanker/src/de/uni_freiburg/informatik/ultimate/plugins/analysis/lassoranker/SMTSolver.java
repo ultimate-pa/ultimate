@@ -112,7 +112,7 @@ public class SMTSolver {
 	 * checked
 	 * @return the new solver instance
 	 */
-	public static Script newScript(Preferences preferences, String constraintsName) {
+	public static Script newScript(LassoRankerPreferences preferences, String constraintsName) {
 		return newScript(preferences.externalSolver,
 				preferences.smt_solver_command,
 				preferences.dumpSmtSolverScript ?

@@ -49,9 +49,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineTe
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Lasso;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearTransition;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SMTSolver;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
@@ -101,6 +101,11 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	private final AnalysisType m_analysis_type;
 	
 	/**
+	 * The settings for termination analysis
+	 */
+	private final NonTerminationAnalysisSettings m_settings;
+	
+	/**
 	 * The corresponding preferred sort ("Int" or "Real")
 	 */
 	private final Sort m_sort;
@@ -114,16 +119,22 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * Constructor for the termination argument function synthesizer.
 	 * 
 	 * @param lasso the lasso program
-	 * @param preferences the preferences
+	 * @param preferences lasso ranker preferences
+	 * @param settings (local) settings for termination analysis
 	 */
 	public NonTerminationArgumentSynthesizer(Lasso lasso,
-			Preferences preferences) {
+			LassoRankerPreferences preferences,
+			NonTerminationAnalysisSettings settings) {
 		super(lasso, preferences, "nonterminationTemplate");
+		
+		m_settings = new NonTerminationAnalysisSettings(settings); // defensive copy
+		s_Logger.info("Nontermination Analysis Settings:\n"
+				+ settings.toString());
 		
 		m_integer_mode = (lasso.getStem().containsIntegers())
 				|| lasso.getLoop().containsIntegers();
 		if (!m_integer_mode) {
-			m_analysis_type = preferences.nontermination_analysis;
+			m_analysis_type = m_settings.analysis;
 			if (m_analysis_type.isLinear()) {
 				m_script.setLogic(Logics.QF_LRA);
 			} else {
@@ -132,8 +143,8 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			m_sort = m_script.sort("Real");
 		} else {
 			s_Logger.info("Using integer mode.");
-			if (preferences.nontermination_analysis.isLinear()) {
-				m_analysis_type = preferences.nontermination_analysis;
+			if (m_settings.analysis.isLinear()) {
+				m_analysis_type = m_settings.analysis;
 			} else {
 				s_Logger.info("Nontermination analysis is set to NONLINEAR, " +
 						"but we have an integer program. " +

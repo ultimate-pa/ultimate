@@ -2,15 +2,16 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination.NonTerminationAnalysisSettings;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.TerminationAnalysisSettings;
 
 
 /**
  * Initializer class for LassoRanker's preferences in Ultimate's GUI
  * 
- * @see Preferences
+ * @see LassoRankerPreferences
  * @author Jan Leike
  */
 public class PreferencesInitializer extends UltimatePreferenceInitializer {
@@ -82,29 +83,34 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		Preferences preferences = new Preferences(); // Get default preferences
+		// Get default preferences and settings
+		LassoRankerPreferences preferences = new LassoRankerPreferences();
+		TerminationAnalysisSettings termination_settings =
+				new TerminationAnalysisSettings();
+		NonTerminationAnalysisSettings nontermination_settings =
+				new NonTerminationAnalysisSettings();
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<AnalysisType>(
 						LABEL_termination_analysis,
-						preferences.termination_analysis,
+						termination_settings.analysis,
 						PreferenceType.Combo,
 						AnalysisType.allChoices()),
 				new UltimatePreferenceItem<AnalysisType>(
 						LABEL_nontermination_analysis,
-						preferences.nontermination_analysis,
+						nontermination_settings.analysis,
 						PreferenceType.Combo,
 						AnalysisType.allChoices()),
 				new UltimatePreferenceItem<Integer>(
 						LABEL_num_strict_invariants,
-						preferences.num_strict_invariants,
+						termination_settings.num_strict_invariants,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
 						LABEL_num_non_strict_invariants,
-						preferences.num_non_strict_invariants,
+						termination_settings.num_non_strict_invariants,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_nondecreasing_invariants,
-						preferences.nondecreasing_invariants,
+						termination_settings.nondecreasing_invariants,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_compute_integral_hull,
@@ -182,37 +188,19 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	}
 	
 	/**
-	 * @return the preferences currently set in the GUI
+	 * @return the (global) LassoRanker preferences from the GUI
 	 */
-	public static Preferences getGuiPreferences() {
+	public static LassoRankerPreferences getLassoRankerPreferences() {
 		// Get default preferences
-		Preferences preferences = new Preferences();
+		LassoRankerPreferences preferences = new LassoRankerPreferences();
 		
 		UltimatePreferenceStore store =
 				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		preferences.termination_analysis =
-				store.getEnum(LABEL_termination_analysis,
-						AnalysisType.class);
-		preferences.nontermination_analysis =
-				store.getEnum(LABEL_nontermination_analysis,
-						AnalysisType.class);
-		preferences.num_strict_invariants = store.getInt(
-				LABEL_num_strict_invariants
-		);
-		preferences.num_non_strict_invariants = store.getInt(
-				LABEL_num_non_strict_invariants
-		);
-		preferences.nondecreasing_invariants = store.getBoolean(
-				LABEL_nondecreasing_invariants
-		);
 		preferences.compute_integral_hull = store.getBoolean(
 				LABEL_compute_integral_hull
 		);
 		preferences.annotate_terms = store.getBoolean(
 				LABEL_annotate_terms
-		);
-		preferences.simplify_result = store.getBoolean(
-				LABEL_simplify_result
 		);
 		preferences.dumpSmtSolverScript = store.getBoolean(
 				LABEL_dump_smt_script
@@ -227,6 +215,50 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 				LABEL_path_of_dumped_script
 		);
 		return preferences;
+	}
+	
+	/**
+	 * @return the (local) termination analysis settings from the GUI
+	 */
+	public static TerminationAnalysisSettings getTerminationAnalysisSettings() {
+		// Get default preferences
+		TerminationAnalysisSettings settings = new TerminationAnalysisSettings();
+		
+		UltimatePreferenceStore store =
+				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		settings.analysis =
+				store.getEnum(LABEL_termination_analysis,
+						AnalysisType.class);
+		settings.num_strict_invariants = store.getInt(
+				LABEL_num_strict_invariants
+		);
+		settings.num_non_strict_invariants = store.getInt(
+				LABEL_num_non_strict_invariants
+		);
+		settings.nondecreasing_invariants = store.getBoolean(
+				LABEL_nondecreasing_invariants
+		);
+		settings.simplify_termination_argument = store.getBoolean(
+				LABEL_simplify_result
+		);
+		return settings;
+	}
+	
+	/**
+	 * @return the (local) nontermination analysis settings from the GUI
+	 */
+	public static NonTerminationAnalysisSettings
+			getNonTerminationAnalysisSettings() {
+		// Get default preferences
+		NonTerminationAnalysisSettings settings =
+				new NonTerminationAnalysisSettings();
+		
+		UltimatePreferenceStore store =
+				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		settings.analysis =
+				store.getEnum(LABEL_nontermination_analysis,
+						AnalysisType.class);
+		return settings;
 	}
 	
 	@Override
