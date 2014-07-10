@@ -39,10 +39,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.InstanceCounting;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality.PossibleMotzkinCoefficients;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SMTSolver;
 

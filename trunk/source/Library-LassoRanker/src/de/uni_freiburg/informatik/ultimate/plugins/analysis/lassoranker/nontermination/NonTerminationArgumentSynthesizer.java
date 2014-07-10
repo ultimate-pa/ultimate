@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Lasso;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
@@ -53,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearTr
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SMTSolver;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
