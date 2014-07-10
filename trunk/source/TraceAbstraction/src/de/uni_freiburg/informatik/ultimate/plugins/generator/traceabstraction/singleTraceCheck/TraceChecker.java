@@ -159,7 +159,7 @@ public class TraceChecker {
 	
 	protected final TraceCheckerBenchmarkGenerator m_TraceCheckerBenchmarkGenerator;
 	
-	private final boolean m_useAnnotateAndAsserterWithPriorizedOrder = !false;
+	private final boolean m_useAnnotateAndAsserterWithPriorizedOrder = false;
 	
 	
 	/**
