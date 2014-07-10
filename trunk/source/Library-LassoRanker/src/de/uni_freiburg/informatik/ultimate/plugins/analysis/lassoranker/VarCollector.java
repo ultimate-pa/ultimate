@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
  * <li> a mapping between inVars and RankVars,
  * <li> a mapping between outVars and RankVars, and
  * <li> a set of auxiliary variables.
+ * </ul>
  * Together with a term whose free variables are the inVars, ourVars and 
  * auxVars, this object defines a transition relation.
  * 

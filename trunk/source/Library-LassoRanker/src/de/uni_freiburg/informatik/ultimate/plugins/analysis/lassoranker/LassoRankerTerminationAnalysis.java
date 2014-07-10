@@ -127,7 +127,7 @@ public class LassoRankerTerminationAnalysis {
 	 * Set of terms in which RewriteArrays puts additional supporting invariants
 	 */
 	protected final Set<Term> m_ArrayIndexSupportingInvariants;
-
+	
 	private final Boogie2SMT m_Boogie2SMT;
 	
 	/**
@@ -477,7 +477,7 @@ public class LassoRankerTerminationAnalysis {
 	 * the given ranking function template.
 	 * 
 	 * @param template the ranking function template
-	 * @return the non-termination argument or null of none is found
+	 * @return the termination argument or null of none is found
 	 */
 	public TerminationArgument tryTemplate(RankingFunctionTemplate template)
 			throws SMTLIBException, TermException {
