@@ -23,14 +23,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Express
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.AffineTemplate;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.LexicographicTemplate;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.MultiphaseTemplate;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.NestedTemplate;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.ParallelTemplate;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.PiecewiseTemplate;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination.NonTerminationArgument;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.SupportingInvariant;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.TerminationArgument;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.rankingfunctions.RankingFunction;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.templates.AffineTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.templates.LexicographicTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.templates.MultiphaseTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.templates.NestedTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.templates.ParallelTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.templates.PiecewiseTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -125,7 +128,7 @@ public class LassoRankerStarter {
 		
 		// Try to prove non-termination
 		if (preferences.nontermination_analysis
-				!= Preferences.AnalysisType.Disabled) {
+				!= AnalysisType.Disabled) {
 			try {
 				NonTerminationArgument arg = la.checkNonTermination();
 				if (arg != null) {
@@ -142,7 +145,7 @@ public class LassoRankerStarter {
 		// Get all templates
 		RankingFunctionTemplate[] templates;
 		if (preferences.termination_analysis
-				== Preferences.AnalysisType.Disabled) {
+				== AnalysisType.Disabled) {
 			templates = new RankingFunctionTemplate[0];
 		} else {
 			templates = getTemplates();

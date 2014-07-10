@@ -5,7 +5,6 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences.AnalysisType;
 
 
 /**
@@ -85,12 +84,12 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		Preferences preferences = new Preferences(); // Get default preferences
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<Preferences.AnalysisType>(
+				new UltimatePreferenceItem<AnalysisType>(
 						LABEL_termination_analysis,
 						preferences.termination_analysis,
 						PreferenceType.Combo,
 						AnalysisType.allChoices()),
-				new UltimatePreferenceItem<Preferences.AnalysisType>(
+				new UltimatePreferenceItem<AnalysisType>(
 						LABEL_nontermination_analysis,
 						preferences.nontermination_analysis,
 						PreferenceType.Combo,
@@ -193,10 +192,10 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		preferences.termination_analysis =
 				store.getEnum(LABEL_termination_analysis,
-						Preferences.AnalysisType.class);
+						AnalysisType.class);
 		preferences.nontermination_analysis =
 				store.getEnum(LABEL_nontermination_analysis,
-						Preferences.AnalysisType.class);
+						AnalysisType.class);
 		preferences.num_strict_invariants = store.getInt(
 				LABEL_num_strict_invariants
 		);
