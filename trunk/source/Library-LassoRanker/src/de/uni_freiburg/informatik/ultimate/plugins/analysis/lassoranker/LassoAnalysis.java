@@ -27,9 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.io.FileNotFoundException;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -82,14 +80,9 @@ public class LassoAnalysis {
 	private final TransFormula m_loop_transition;
 	
 	/**
-	 * Stem formula of the linear lasso program as linear inequalities in DNF
+	 * The lasso program that we are analyzing
 	 */
-	private LinearTransition m_stem;
-	
-	/**
-	 * Loop formula of the linear lasso program as linear inequalities in DNF
-	 */
-	private LinearTransition m_loop;
+	private Lasso m_lasso;
 	
 	/**
 	 * The RankVarFactory used by the preprocessors and the RankVarCollector
@@ -148,9 +141,8 @@ public class LassoAnalysis {
 	 *                               cannot be opened
 	 */
 	public LassoAnalysis(Script script, Boogie2SMT boogie2smt,
-			TransFormula stem, TransFormula loop, Term[] axioms,
-			Preferences preferences)
-					throws TermException {
+			TransFormula stem_transition, TransFormula loop_transition,
+			Term[] axioms, Preferences preferences) throws TermException {
 		m_preferences = preferences;
 		checkPreferences(preferences);
 		m_rankVarFactory = new VarFactory(boogie2smt);
@@ -159,21 +151,12 @@ public class LassoAnalysis {
 		m_ArrayIndexSupportingInvariants = new HashSet<Term>();
 		m_Boogie2SMT = boogie2smt;
 		
-		m_stem_transition = stem;
-		if (stem != null) {
-			s_Logger.debug("Stem transition:\n" + m_stem_transition);
-			m_stem = preprocess(m_stem_transition, false, null, null);
-			s_Logger.debug("Preprocessed stem:\n" + m_stem);
-		} else {
-			m_stem = null;
-		}
+		m_stem_transition = stem_transition;
+		m_loop_transition = loop_transition;
+		assert(m_loop_transition != null);
 		
-		assert(loop != null);
-		m_loop_transition = loop;
-		s_Logger.debug("Loop transition:\n" + m_loop_transition);
-		m_loop = preprocess(m_loop_transition, true, stem, loop);
-		checkVariables();
-		s_Logger.debug("Preprocessed loop:\n" + m_loop);
+		// Preprocessing creates the Lasso object
+		this.do_preprocessing();
 	}
 	
 	/**
@@ -196,6 +179,27 @@ public class LassoAnalysis {
 			TransFormula loop, Term[] axioms, Preferences preferences)
 					throws TermException, FileNotFoundException {
 		this(script, boogie2smt, null, loop, axioms, preferences);
+	}
+	
+	/**
+	 * Preprocess the stem and loop transition into a lasso object
+	 */
+	private void do_preprocessing() throws TermException {
+		LinearTransition stem;
+		if (m_stem_transition != null) {
+			s_Logger.debug("Stem transition:\n" + m_stem_transition);
+			stem = this.preprocess(m_stem_transition, false, null, null);
+			s_Logger.debug("Preprocessed stem:\n" + stem);
+		} else {
+			stem = null;
+		}
+		
+		s_Logger.debug("Loop transition:\n" + m_loop_transition);
+		LinearTransition loop = this.preprocess(m_loop_transition, true,
+				m_stem_transition, m_loop_transition);
+		s_Logger.debug("Preprocessed loop:\n" + loop);
+		m_lasso = new Lasso(stem, loop);
+		s_Logger.debug("Guesses for Motzkin coefficients: " + motzkinGuesses());
 	}
 	
 	/**
@@ -285,58 +289,10 @@ public class LassoAnalysis {
 	}
 	
 	/**
-	 * Add all inVars of the loop as in- and outVars of the stem,
-	 * and add all outVars of the stem as in- and outVars of the loop.
-	 * 
-	 * This ensures that (global) valuations for variables (e.g. those
-	 * generated in the nontermination analysis) stay constant in transitions
-	 * where these variables are not explicitly scoped.
+	 * @return the preprocesses lasso
 	 */
-	private void checkVariables() {
-		if (m_stem == null) {
-			return; // nothing to do
-		}
-		// Add variables existing in the loop to the stem
-		Map<RankVar, Term> addVars = new HashMap<RankVar, Term>();
-		for (Map.Entry<RankVar, Term> entry : m_loop.getInVars().entrySet()) {
-			if (!m_stem.getInVars().containsKey(entry.getKey()) &&
-					!m_stem.getOutVars().containsKey(entry.getKey())) {
-				addVars.put(entry.getKey(), entry.getValue());
-			}
-		}
-		if (!addVars.isEmpty()) {
-			// Because the variable maps in LinearTransition are immutable,
-			// make a new transition and replace the old one
-			Map<RankVar, Term> inVars =
-					new HashMap<RankVar, Term>(m_stem.getInVars());
-			Map<RankVar, Term> outVars =
-					new HashMap<RankVar, Term>(m_stem.getOutVars());
-			inVars.putAll(addVars);
-			outVars.putAll(addVars);
-			m_stem = new LinearTransition(m_stem.getPolyhedra(), inVars,
-					outVars);
-		}
-		
-		// Add variables existing in the stem to the loop
-		addVars = new HashMap<RankVar, Term>();
-		for (Map.Entry<RankVar, Term> entry : m_stem.getOutVars().entrySet()) {
-			if (!m_loop.getInVars().containsKey(entry.getKey()) &&
-					!m_loop.getOutVars().containsKey(entry.getKey())) {
-				addVars.put(entry.getKey(), entry.getValue());
-			}
-		}
-		if (!addVars.isEmpty()) {
-			// Because the variable maps in LinearTransition are immutable,
-			// make a new transition and replace the old one
-			Map<RankVar, Term> inVars =
-					new HashMap<RankVar, Term>(m_loop.getInVars());
-			Map<RankVar, Term> outVars =
-					new HashMap<RankVar, Term>(m_loop.getOutVars());
-			inVars.putAll(addVars);
-			outVars.putAll(addVars);
-			m_loop = new LinearTransition(m_loop.getPolyhedra(), inVars,
-					outVars);
-		}
+	public Lasso getLasso() {
+		return m_lasso;
 	}
 	
 	/**
@@ -344,7 +300,7 @@ public class LassoAnalysis {
 	 *         transition
 	 */
 	public int getLoopVarNum() {
-		return m_loop.getVariables().size();
+		return m_lasso.getLoop().getVariables().size();
 	}
 	
 	/**
@@ -352,11 +308,7 @@ public class LassoAnalysis {
 	 *         transition
 	 */
 	public int getStemVarNum() {
-		if (m_stem != null) {
-			return m_stem.getVariables().size();
-		} else {
-			return 0;
-		}
+		return m_lasso.getStem().getVariables().size();
 	}
 	
 	/**
@@ -364,7 +316,7 @@ public class LassoAnalysis {
 	 *         preprocessing
 	 */
 	public int getLoopDisjuncts() {
-		return m_loop.getNumPolyhedra();
+		return m_lasso.getLoop().getNumPolyhedra();
 	}
 	
 	/**
@@ -372,11 +324,7 @@ public class LassoAnalysis {
 	 *         preprocessing
 	 */
 	public int getStemDisjuncts() {
-		if (m_stem != null) {
-			return m_stem.getNumPolyhedra();
-		} else {
-			return 1;
-		}
+		return m_lasso.getStem().getNumPolyhedra();
 	}
 	
 	/**
@@ -412,9 +360,9 @@ public class LassoAnalysis {
 	/**
 	 * @return a pretty version of the guesses for Motzkin coefficients
 	 */
-	private String motzkinGuesses(ArgumentSynthesizer as) {
+	private String motzkinGuesses() {
 		StringBuilder sb = new StringBuilder();
-		Rational[] eigenvalues = as.guessEigenvalues(true);
+		Rational[] eigenvalues = m_lasso.guessEigenvalues(true);
 		sb.append("[");
 		for (int i = 0; i < eigenvalues.length; ++i) {
 			if (i > 0) {
@@ -456,13 +404,7 @@ public class LassoAnalysis {
 		s_Logger.info("Checking for nontermination...");
 		
 		NonTerminationArgumentSynthesizer nas =
-				new NonTerminationArgumentSynthesizer(
-						m_stem,
-						m_loop,
-						m_preferences
-				);
-		s_Logger.debug("Guesses for Motzkin coefficients: "
-				+ motzkinGuesses(nas));
+				new NonTerminationArgumentSynthesizer(m_lasso, m_preferences);
 		final LBool constraintSat = nas.synthesize();
 		if (constraintSat == LBool.SAT) {
 			s_Logger.info("Proved nontermination.");
@@ -488,10 +430,8 @@ public class LassoAnalysis {
 		s_Logger.debug(template);
 		
 		TerminationArgumentSynthesizer tas =
-				new TerminationArgumentSynthesizer(m_stem, m_loop,
-						template, m_preferences, m_ArrayIndexSupportingInvariants);
-		s_Logger.debug("Guesses for Motzkin coefficients: "
-				+ motzkinGuesses(tas));
+				new TerminationArgumentSynthesizer(m_lasso, template,
+						m_preferences, m_ArrayIndexSupportingInvariants);
 		final LBool constraintSat = tas.synthesize();
 		m_numSIs = tas.getNumSIs();
 		m_numMotzkin = tas.getNumMotzkin();

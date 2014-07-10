@@ -104,16 +104,15 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	/**
 	 * Constructor for the termination argument function synthesizer.
 	 * 
-	 * @param stem the program stem
-	 * @param loop the program loop
+	 * @param lasso the lasso program
 	 * @param preferences the preferences
 	 */
-	public NonTerminationArgumentSynthesizer(LinearTransition stem,
-			LinearTransition loop, Preferences preferences) {
-		super(stem, loop, preferences, "nonterminationTemplate");
+	public NonTerminationArgumentSynthesizer(Lasso lasso,
+			Preferences preferences) {
+		super(lasso, preferences, "nonterminationTemplate");
 		
-		m_integer_mode = (stem != null && stem.containsIntegers())
-				|| loop.containsIntegers();
+		m_integer_mode = (lasso.getStem().containsIntegers())
+				|| lasso.getLoop().containsIntegers();
 		if (!m_integer_mode) {
 			m_analysis_type = preferences.nontermination_analysis;
 			if (m_analysis_type.isLinear()) {
@@ -146,7 +145,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		Map<RankVar, Term> vars_init = new LinkedHashMap<RankVar, Term>();
 		Map<RankVar, Term> vars_honda = new LinkedHashMap<RankVar, Term>();
 		Map<RankVar, Term> vars_ray = new LinkedHashMap<RankVar, Term>();
-		for (RankVar var : getAllRankVars()) {
+		for (RankVar var : m_lasso.getAllRankVars()) {
 			String name = SmtUtils.removeSmtQuoteCharacters(var.toString());
 			vars_init.put(var, newConstant(s_prefix_init + name, sort));
 			vars_honda.put(var,	newConstant(s_prefix_honda + name, sort));
@@ -181,7 +180,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	public Term generateConstraints(Map<RankVar, Term> vars_init,
 			Map<RankVar, Term> vars_honda, Map<RankVar, Term> vars_ray,
 			Term lambda) {
-		Collection<RankVar> rankVars = getAllRankVars();
+		Collection<RankVar> rankVars = m_lasso.getAllRankVars();
 		
 		List<Term> lambdas;
 		if (m_analysis_type == AnalysisType.Linear) {
@@ -190,7 +189,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			lambdas = Collections.singletonList(one);
 		} else if (m_analysis_type == AnalysisType.Linear_with_guesses) {
 			// Use a list of guesses for lambda
-			Rational[] eigenvalues = guessEigenvalues(false);
+			Rational[] eigenvalues = m_lasso.guessEigenvalues(false);
 			lambdas = new ArrayList<Term>(eigenvalues.length);
 			for (int i = 0; i < eigenvalues.length; ++i) {
 				assert !eigenvalues[i].isNegative();
@@ -207,11 +206,12 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		
 		// A_stem * (x0, x0') <= b_stem
 		Term t1 = m_script.term("true");
-		if (m_stem != null) {
-			List<Term> disjunction = new ArrayList<Term>(m_stem.getNumPolyhedra());
-			for (List<LinearInequality> polyhedron : m_stem.getPolyhedra()) {
+		if (!m_lasso.getStem().isTrue()) {
+			LinearTransition stem = m_lasso.getStem();
+			List<Term> disjunction = new ArrayList<Term>(stem.getNumPolyhedra());
+			for (List<LinearInequality> polyhedron : stem.getPolyhedra()) {
 				disjunction.add(generateConstraint(
-						m_stem,
+						stem,
 						polyhedron,
 						vars_init,
 						vars_honda,
@@ -243,10 +243,11 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			}
 		}
 		
-		List<Term> disjunction = new ArrayList<Term>(m_loop.getNumPolyhedra());
-		for (List<LinearInequality> polyhedron : m_loop.getPolyhedra()) {
+		LinearTransition loop = m_lasso.getLoop();
+		List<Term> disjunction = new ArrayList<Term>(loop.getNumPolyhedra());
+		for (List<LinearInequality> polyhedron : loop.getPolyhedra()) {
 			// A_loop * (x0', x0' + y) <= b_loop
-			Term t_honda = this.generateConstraint(m_loop, polyhedron,
+			Term t_honda = this.generateConstraint(loop, polyhedron,
 					vars_honda, vars_end_plus_ray, false);
 			
 			// A_loop * (y, lambda * y) <= 0
@@ -254,7 +255,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				Map<RankVar, Term> ray_times_lambda =
 						vars_ray_times_lambdas.get(i);
 				Term t_ray = this.generateConstraint(
-						m_loop,
+						loop,
 						polyhedron,
 						vars_ray,
 						ray_times_lambda,
@@ -398,7 +399,8 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			Map<RankVar, Rational> ray = extractState(vars_ray);
 			Rational lambda = const2Rational(
 					m_script.getValue(new Term[] {var_lambda}).get(var_lambda));
-			return new NonTerminationArgument(m_stem != null ? state0 : state1,
+			boolean has_stem = !m_lasso.getStem().isTrue();
+			return new NonTerminationArgument(has_stem ? state0 : state1,
 					state1, ray, lambda);
 		} catch (UnsupportedOperationException e) {
 			// do nothing

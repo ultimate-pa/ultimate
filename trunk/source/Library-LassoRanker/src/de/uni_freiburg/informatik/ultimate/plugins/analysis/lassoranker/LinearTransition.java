@@ -230,6 +230,43 @@ public class LinearTransition implements Serializable {
 	}
 	
 	/**
+	 * @return whether this transition is trivially true
+	 */
+	public boolean isTrue() {
+		for (List<LinearInequality> polyhedron : m_polyhedra) {
+			boolean istrue = true;
+			for (LinearInequality li : polyhedron) {
+				istrue = istrue && li.isConstant()
+				                && li.getConstant().isZero()
+				                && !li.isStrict();
+			}
+			if (istrue) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * @return whether this transition is trivially false
+	 */
+	public boolean isFalse() {
+		for (List<LinearInequality> polyhedron : m_polyhedra) {
+			boolean isfalse = false;
+			for (LinearInequality li : polyhedron) {
+				if (li.isConstant() && li.getConstant().isZero() && li.isStrict()) {
+					isfalse = true;
+					break;
+				}
+			}
+			if (!isfalse) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	/**
 	 * @return the number of polyhedra (number of disjuncts)
 	 */
 	public int getNumPolyhedra() {

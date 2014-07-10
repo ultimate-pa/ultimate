@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -89,17 +88,16 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	
 	/**
 	 * Constructor for the termination argument function synthesizer.
-	 * @param stem the stem transition, may be null
-	 * @param loop the loop transition
+	 * @param lasso the lasso program
 	 * @param template the ranking function template to be used in the analysis
 	 * @param preferences arguments to the synthesis process
 	 * @param arrayIndexSupportingInvariants supporting invariants that were
 	 * 	discovered during preprocessing
 	 */
-	public TerminationArgumentSynthesizer(LinearTransition stem,
-			LinearTransition loop, RankingFunctionTemplate template,
-			Preferences preferences, Set<Term> arrayIndexSupportingInvariants) {
-		super(stem, loop, preferences, template.getName() + "Template");
+	public TerminationArgumentSynthesizer(Lasso lasso,
+			RankingFunctionTemplate template, Preferences preferences,
+			Set<Term> arrayIndexSupportingInvariants) {
+		super(lasso, preferences, template.getName() + "Template");
 		m_analysis_type = preferences.termination_analysis;
 		assert !m_analysis_type.isDisabled();
 		m_template = template;
@@ -131,12 +129,9 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		 * loop (i.e., do not occur as inVar of the loop) are not relevant for
 		 * supporting invariants.
 		 */
-		if (m_stem == null) {
-			return Collections.emptyList();
-		}
-		Set<RankVar> result =
-				new LinkedHashSet<RankVar>(m_stem.getOutVars().keySet());
-		result.retainAll(m_loop.getInVars().keySet());
+		Collection<RankVar> result = new LinkedHashSet<RankVar>(
+				m_lasso.getStem().getOutVars().keySet());
+		result.retainAll(m_lasso.getLoop().getInVars().keySet());
 		return result;
 	}
 	
@@ -144,10 +139,10 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @return RankVar's that are relevant for ranking functions
 	 */
 	public Collection<RankVar> getRankVars() {
-		Collection<RankVar> vars = 
-				new LinkedHashSet<RankVar>(m_loop.getOutVars().keySet());
-		vars.retainAll(m_loop.getInVars().keySet());
-		return vars;
+		Collection<RankVar> result =  new LinkedHashSet<RankVar>(
+				m_lasso.getLoop().getOutVars().keySet());
+		result.retainAll(m_lasso.getLoop().getInVars().keySet());
+		return result;
 	}
 	
 	/**
@@ -159,16 +154,18 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 */
 	private Collection<Term> buildConstraints(RankingFunctionTemplate template,
 			Collection<SupportingInvariantGenerator> si_generators) {
+		LinearTransition stem = m_lasso.getStem();
+		LinearTransition loop = m_lasso.getLoop();
+		
 		List<Term> conj = new ArrayList<Term>(); // List of constraints
 		
 		Collection<RankVar> siVars = getSIVars();
 		List<List<LinearInequality>> templateConstraints =
-				template.getConstraints(m_loop.getInVars(),
-						m_loop.getOutVars());
+				template.getConstraints(loop.getInVars(), loop.getOutVars());
 		List<String> annotations = template.getAnnotations();
 		assert annotations.size() == templateConstraints.size();
 		
-		s_Logger.info("We have " + m_loop.getNumPolyhedra()
+		s_Logger.info("We have " + loop.getNumPolyhedra()
 				+ " loop disjuncts and " + templateConstraints.size()
 				+ " template conjuncts.");
 		
@@ -182,7 +179,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		// Get guesses for loop eigenvalues as possible Motzkin coefficients
 		Rational[] eigenvalue_guesses;
 		if (m_analysis_type.wantsGuesses()) {
-			eigenvalue_guesses = this.guessEigenvalues(false);
+			eigenvalue_guesses = m_lasso.guessEigenvalues(false);
 			assert eigenvalue_guesses.length >= 2;
 		} else {
 			eigenvalue_guesses = new Rational[0];
@@ -191,7 +188,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		// loop(x, x') /\ si(x) -> template(x, x')
 		// Iterate over the loop conjunctions and template disjunctions
 		int j = 0;
-		for (List<LinearInequality> loopConj : m_loop.getPolyhedra()) {
+		for (List<LinearInequality> loopConj : loop.getPolyhedra()) {
 			++j;
 			for (int m = 0; m < templateConstraints.size(); ++m) {
 				MotzkinTransformation motzkin =
@@ -208,7 +205,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 							new SupportingInvariantGenerator(m_script, siVars,
 									true);
 					si_generators.add(sig);
-					motzkin.add_inequality(sig.generate(m_loop.getInVars()));
+					motzkin.add_inequality(sig.generate(loop.getInVars()));
 				}
 				assert(m_preferences.num_non_strict_invariants >= 0);
 				for (int i = 0; i < m_preferences.num_non_strict_invariants;
@@ -217,7 +214,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 							new SupportingInvariantGenerator(m_script, siVars,
 									false);
 					si_generators.add(sig);
-					LinearInequality li = sig.generate(m_loop.getInVars());
+					LinearInequality li = sig.generate(loop.getInVars());
 					li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
 					motzkin.add_inequality(li);
 				}
@@ -235,14 +232,14 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			
 			// stem(x0) -> si(x0)
 			j = 0;
-			for (List<LinearInequality> stemConj : m_stem.getPolyhedra()) {
+			for (List<LinearInequality> stemConj : stem.getPolyhedra()) {
 				++j;
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script, m_analysis_type,
 								m_preferences.annotate_terms);
 				motzkin.annotation = "invariant " + i + " initiation " + j;
 				motzkin.add_inequalities(stemConj);
-				LinearInequality li = sig.generate(m_stem.getOutVars());
+				LinearInequality li = sig.generate(stem.getOutVars());
 				li.negate();
 				li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
 				motzkin.add_inequality(li);
@@ -251,15 +248,15 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			
 			// si(x) /\ loop(x, x') -> si(x')
 			j = 0;
-			for (List<LinearInequality> loopConj : m_loop.getPolyhedra()) {
+			for (List<LinearInequality> loopConj : loop.getPolyhedra()) {
 				++j;
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script, m_analysis_type,
 								m_preferences.annotate_terms);
 				motzkin.annotation = "invariant " + i + " consecution " + j;
 				motzkin.add_inequalities(loopConj);
-				motzkin.add_inequality(sig.generate(m_loop.getInVars())); // si(x)
-				LinearInequality li = sig.generate(m_loop.getOutVars()); // ~si(x')
+				motzkin.add_inequality(sig.generate(loop.getInVars())); // si(x)
+				LinearInequality li = sig.generate(loop.getOutVars()); // ~si(x')
 				li.motzkin_coefficient = m_preferences.nondecreasing_invariants
 						|| m_analysis_type == AnalysisType.Linear ?
 								PossibleMotzkinCoefficients.ZERO_AND_ONE
@@ -309,7 +306,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			m_preferences.num_strict_invariants = 0;
 			m_preferences.num_non_strict_invariants = 0;
 		} */
-		if (m_stem == null) {
+		if (m_lasso.getStem().isTrue()) {
 			s_Logger.info("There is no stem transition; "
 					+ "disabling supporting invariant generation.");
 			m_preferences.num_strict_invariants = 0;
