@@ -297,11 +297,6 @@ public class LassoRankerTerminationAnalysis {
 		
 		LinearTransition linear_trans = LinearTransition.fromTerm(
 				trans_term, rvc.getInVars(), rvc.getOutVars());
-		if (!m_preferences.enable_disjunction
-				&& !linear_trans.isConjunctive()) {
-			throw new UnsupportedOperationException(
-					"Support for non-conjunctive lasso programs is disabled.");
-		}
 		
 		return linear_trans;
 	}

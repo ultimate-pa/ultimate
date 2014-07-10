@@ -59,20 +59,16 @@ public class LassoRankerStarter {
 	private static final String s_LassoError =
 			"This is not a lasso program (a lasso program is a program " +
 			"consisting of a stem and a loop transition)";
-
+	
 	private final RootAnnot m_RootAnnot;
 	private final ProgramPoint m_Honda;
 	private final NestedWord<CodeBlock> m_Stem;
 	private final NestedWord<CodeBlock> m_Loop;
 	private SmtManager m_SmtManager;
-
-	
 	
 	public LassoRankerStarter(RootNode rootNode) {
 		m_RootAnnot = rootNode.getRootAnnot();
 		checkRCFGBuilderSettings();
-		UltimatePreferenceStore store =
-				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		Preferences preferences = PreferencesInitializer.getGuiPreferences();
 		s_Logger.info("Preferences:\n" + preferences.toString());
 		m_SmtManager = new SmtManager(m_RootAnnot.getBoogie2SMT(),
@@ -117,7 +113,6 @@ public class LassoRankerStarter {
 		Term[] axioms = m_RootAnnot.getBoogie2SMT().getAxioms().toArray(new Term[0]);
 		
 		// Do the termination analysis
-		RankingFunctionTemplate[] templates = getTemplates();
 		LassoRankerTerminationAnalysis tanalysis = null;
 		try {
 			tanalysis = new LassoRankerTerminationAnalysis(script,
@@ -129,7 +124,8 @@ public class LassoRankerStarter {
 		}
 		
 		// Try to prove non-termination
-		if (store.getBoolean(PreferencesInitializer.LABEL_check_for_nontermination)) {
+		if (preferences.nontermination_analysis
+				!= Preferences.AnalysisType.Disabled) {
 			try {
 				NonTerminationArgument arg = tanalysis.checkNonTermination();
 				if (arg != null) {
@@ -143,7 +139,15 @@ public class LassoRankerStarter {
 			}
 		}
 		
-		// Try all given templates
+		// Get all templates
+		RankingFunctionTemplate[] templates;
+		if (preferences.termination_analysis
+				== Preferences.AnalysisType.Disabled) {
+			templates = new RankingFunctionTemplate[0];
+		} else {
+			templates = getTemplates();
+		}
+		// Do the termination analysis
 		for (RankingFunctionTemplate template : templates) {
 			if (!UltimateServices.getInstance().continueProcessing()) {
 				reportTimeoutResult(templates, template);
@@ -178,7 +182,6 @@ public class LassoRankerStarter {
 		reportNoResult(templates);
 	}
 	
-	
 	public TransFormula constructTransformula(NestedWord<CodeBlock> nw) {
 		Boogie2SMT boogie2smt = m_RootAnnot.getBoogie2SMT();
 		ModifiableGlobalVariableManager modGlobVarManager = m_RootAnnot.getModGlobVarManager();
@@ -191,9 +194,6 @@ public class LassoRankerStarter {
 				modGlobVarManager, simplify, extPqe, tranformToCNF, 
 				withBranchEncoders, codeBlocks);
 	}
-	
-	
-	
 	
 	/**
 	 * Build a list of templates. Add all templates from size 2 up to the given
@@ -474,9 +474,6 @@ public class LassoRankerStarter {
 		if (!removeGoto) {
 			throw new UnsupportedOperationException("Unsupported input: Let RCFGBuilder remove goto edges");
 		}
-		
-				
-				
 	}
 
 }

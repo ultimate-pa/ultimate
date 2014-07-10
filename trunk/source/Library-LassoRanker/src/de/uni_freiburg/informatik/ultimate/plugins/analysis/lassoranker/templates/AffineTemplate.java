@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFu
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunctionGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality.PossibleMotzkinCoefficients;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
@@ -89,7 +90,7 @@ public class AffineTemplate extends RankingFunctionTemplate {
 		{
 			LinearInequality li = m_fgen.generate(inVars);
 			li.setStrict(true);
-			li.needs_motzkin_coefficient = false;
+			li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
 			conjunction.add(Collections.singletonList(li));
 		}
 		
@@ -102,7 +103,7 @@ public class AffineTemplate extends RankingFunctionTemplate {
 			AffineTerm a = new AffineTerm(m_delta, Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
-			li.needs_motzkin_coefficient = false;
+			li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
 			conjunction.add(Collections.singletonList(li));
 		}
 		

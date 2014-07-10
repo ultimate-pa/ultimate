@@ -51,7 +51,7 @@ public abstract class RankingFunctionTemplate {
 	protected TerminationArgumentSynthesizer m_tas = null;
 	protected Script m_script = null;
 	protected Collection<RankVar> m_variables = null;
-	protected boolean m_linear = true;
+	protected boolean m_linear;
 	private boolean m_initialized = false;
 	
 	/**
@@ -63,6 +63,7 @@ public abstract class RankingFunctionTemplate {
 	 * @param tas the parent TerminationArgumentSynthesizer
 	 */
 	public final void init(TerminationArgumentSynthesizer tas, boolean linear) {
+		m_linear = linear;
 		m_tas = tas;
 		m_script = tas.getScript();
 		m_variables = tas.getRankVars();

@@ -5,6 +5,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences.AnalysisType;
 
 
 /**
@@ -18,10 +19,9 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	 * Default values for GUI-only preferences
 	 */
 	public static final boolean s_simplify_result = true;
-	public static final boolean s_check_for_nontermination = true;
 	public static final boolean s_enable_affine_template = true;
 	public static final boolean s_enable_nested_template = true;
-	public static final int     s_nested_template_size = 2;
+	public static final int     s_nested_template_size = 4;
 	public static final boolean s_enable_multiphase_template = true;
 	public static final int     s_multiphase_template_size = 2;
 	public static final boolean s_enable_lex_template = true;
@@ -34,28 +34,22 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	/*
 	 * Preferences Labels
 	 */
+	public static final String LABEL_termination_analysis =
+			"Termination analysis";
+	public static final String LABEL_nontermination_analysis =
+			"Nontermination analysis";
 	public static final String LABEL_num_strict_invariants =
 			"Number of strict supporting invariants";
 	public static final String LABEL_num_non_strict_invariants =
 			"Number of non-strict supporting invariants";
-	public static final String LABEL_only_nondecreasing_invariants =
-			"Non-decreasing invariants only";
+	public static final String LABEL_nondecreasing_invariants =
+			"Only non-decreasing invariants";
 	public static final String LABEL_compute_integral_hull =
 			"Compute integral hull";
-	public static final String LABEL_enable_disjunction =
-			"Allow disjunctions";
-	public static final String LABEL_division_implementation =
-			"Division implementation";
 	public static final String LABEL_annotate_terms =
 			"Add annotations to SMT terms";
 	public static final String LABEL_simplify_result =
 			"Simplify discovered termination arguments";
-	public static final String LABEL_check_for_nontermination =
-			"Check for nontermination";
-	public static final String LABEL_nontermination_check_nonlinear =
-			"Nonlinear SMT query for nontermination check";
-	public static final String LABEL_termination_check_nonlinear =
-			"Nonlinear SMT query for termination check";
 	public static final String LABEL_enable_affine_template =
 			"Affine template";
 	public static final String LABEL_enable_nested_template =
@@ -78,17 +72,29 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 			"Parallel template";
 	public static final String LABEL_parallel_template_size =
 			"Parallel template size";
-	public static final String LABEL_dump_smt_script =
-			"Dump SMT script to file";
 	public static final String LABEL_use_external_solver =
 			"Use external SMT solver";
 	public static final String LABEL_smt_solver_command =
 			"SMT solver command";
+	public static final String LABEL_dump_smt_script =
+			"Dump SMT script to file";
+	public static final String LABEL_path_of_dumped_script =
+			"Path of dumped script";
 	
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		Preferences preferences = new Preferences(); // Get default preferences
 		return new UltimatePreferenceItem<?>[] {
+				new UltimatePreferenceItem<Preferences.AnalysisType>(
+						LABEL_termination_analysis,
+						preferences.termination_analysis,
+						PreferenceType.Combo,
+						AnalysisType.allChoices()),
+				new UltimatePreferenceItem<Preferences.AnalysisType>(
+						LABEL_nontermination_analysis,
+						preferences.nontermination_analysis,
+						PreferenceType.Combo,
+						AnalysisType.allChoices()),
 				new UltimatePreferenceItem<Integer>(
 						LABEL_num_strict_invariants,
 						preferences.num_strict_invariants,
@@ -98,16 +104,12 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 						preferences.num_non_strict_invariants,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<Boolean>(
-						LABEL_only_nondecreasing_invariants,
-						preferences.only_nondecreasing_invariants,
+						LABEL_nondecreasing_invariants,
+						preferences.nondecreasing_invariants,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_compute_integral_hull,
 						preferences.compute_integral_hull,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(
-						LABEL_enable_disjunction,
-						preferences.enable_disjunction,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_annotate_terms,
@@ -116,18 +118,6 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_simplify_result,
 						s_simplify_result,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(
-						LABEL_check_for_nontermination,
-						s_check_for_nontermination,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(
-						LABEL_nontermination_check_nonlinear,
-						preferences.nontermination_check_nonlinear,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(
-						LABEL_termination_check_nonlinear,
-						preferences.termination_check_nonlinear,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_enable_affine_template,
@@ -174,10 +164,6 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 						s_parallel_template_size,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<Boolean>(
-						LABEL_dump_smt_script,
-						preferences.dumpSmtSolverScript,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(
 						LABEL_use_external_solver,
 						true,
 						PreferenceType.Boolean),
@@ -185,6 +171,14 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 						LABEL_smt_solver_command,
 						preferences.smt_solver_command,
 						PreferenceType.String),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_dump_smt_script,
+						preferences.dumpSmtSolverScript,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<String>(
+						LABEL_path_of_dumped_script,
+						preferences.path_of_dumped_script,
+						PreferenceType.String)
 		};
 	}
 	
@@ -197,32 +191,29 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 		
 		UltimatePreferenceStore store =
 				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		preferences.termination_analysis =
+				store.getEnum(LABEL_termination_analysis,
+						Preferences.AnalysisType.class);
+		preferences.nontermination_analysis =
+				store.getEnum(LABEL_nontermination_analysis,
+						Preferences.AnalysisType.class);
 		preferences.num_strict_invariants = store.getInt(
 				LABEL_num_strict_invariants
 		);
 		preferences.num_non_strict_invariants = store.getInt(
 				LABEL_num_non_strict_invariants
 		);
-		preferences.only_nondecreasing_invariants = store.getBoolean(
-				LABEL_only_nondecreasing_invariants
+		preferences.nondecreasing_invariants = store.getBoolean(
+				LABEL_nondecreasing_invariants
 		);
 		preferences.compute_integral_hull = store.getBoolean(
 				LABEL_compute_integral_hull
-		);
-		preferences.enable_disjunction = store.getBoolean(
-				LABEL_enable_disjunction
 		);
 		preferences.annotate_terms = store.getBoolean(
 				LABEL_annotate_terms
 		);
 		preferences.simplify_result = store.getBoolean(
 				LABEL_simplify_result
-		);
-		preferences.nontermination_check_nonlinear = store.getBoolean(
-				LABEL_nontermination_check_nonlinear
-		);
-		preferences.termination_check_nonlinear = store.getBoolean(
-				LABEL_nontermination_check_nonlinear
 		);
 		preferences.dumpSmtSolverScript = store.getBoolean(
 				LABEL_dump_smt_script
@@ -232,6 +223,9 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 		);
 		preferences.smt_solver_command = store.getString(
 				LABEL_smt_solver_command
+		);
+		preferences.path_of_dumped_script = store.getString(
+				LABEL_path_of_dumped_script
 		);
 		return preferences;
 	}
@@ -243,6 +237,6 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	
 	@Override
 	public String getPreferencePageTitle() {
-		return "LassoRanker";
+		return Activator.s_PLUGIN_NAME;
 	}
 }

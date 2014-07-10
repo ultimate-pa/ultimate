@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFu
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality.PossibleMotzkinCoefficients;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.ParallelRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 
@@ -147,7 +148,7 @@ public class ParallelTemplate extends RankingFunctionTemplate {
 			LinearInequality li2 = m_fgens[i].generate(outVars);
 			li2.negate();
 			li.add(li2);
-			li.needs_motzkin_coefficient = false;
+			li.motzkin_coefficient = PossibleMotzkinCoefficients.ZERO_AND_ONE;
 			conjunction.add(Collections.singletonList(li));
 		}
 		
@@ -161,7 +162,9 @@ public class ParallelTemplate extends RankingFunctionTemplate {
 					// f_i(x) > 0
 					LinearInequality li = m_fgens[i].generate(inVars);
 					li.setStrict(true);
-					li.needs_motzkin_coefficient = !m_linear && i > 0;
+					li.motzkin_coefficient = i > 0 ?
+							PossibleMotzkinCoefficients.ANYTHING
+							: PossibleMotzkinCoefficients.ZERO_AND_ONE;
 					disjunction.add(li);
 				} else {
 					// f_i(x') < f_i(x) - δ_i
@@ -172,7 +175,9 @@ public class ParallelTemplate extends RankingFunctionTemplate {
 					AffineTerm a = new AffineTerm(m_deltas[i], Rational.MONE);
 					li.add(a);
 					li.setStrict(true);
-					li.needs_motzkin_coefficient = !m_linear && i > 0;
+					li.motzkin_coefficient = i > 0 ?
+							PossibleMotzkinCoefficients.ANYTHING
+							: PossibleMotzkinCoefficients.ZERO_AND_ONE;
 					disjunction.add(li);
 				}
 			}

@@ -45,7 +45,64 @@ import java.io.Serializable;
  */
 public class Preferences implements Serializable {
 	private static final long serialVersionUID = 3253589986886574198L;
-
+	
+	/**
+	 * Enum for different types of termination and nontermination analysis
+	 */
+	public enum AnalysisType {
+		/**
+		 * Do not do any analysis (this is the fastest ^^).
+		 */
+		Disabled,
+		
+		/**
+		 * Use only linear SMT solving. Fast but incomplete.
+		 */
+		Linear,
+		
+		/**
+		 * Use linear SMT solving, but use a number of guesses for eigenvalues
+		 * of the loop to retain more solution compared to plain linear SMT
+		 * solving.
+		 */
+		Linear_with_guesses,
+		
+		/**
+		 * Use nonlinear constraint solving.
+		 * This is relatively complete but generally the slowest.
+		 */
+		Nonlinear;
+		
+		/**
+		 * @return whether this requires a linear logic
+		 */
+		public boolean isLinear() {
+			return this == Linear || this == Linear_with_guesses;
+		}
+		
+		/**
+		 * @return whether analysis is disabled
+		 */
+		public boolean isDisabled() {
+			return this == Disabled;
+		}
+		
+		/**
+		 * @return whether eigenvalue guesses are required
+		 */
+		public boolean wantsGuesses() {
+			return this == Linear_with_guesses;
+		}
+		
+		/**
+		 * @return a list of all possible choices
+		 */
+		public static AnalysisType[] allChoices() {
+			return new AnalysisType[]
+					{ Disabled, Linear, Linear_with_guesses, Nonlinear };
+		}
+	}
+	
 	/**
 	 * Number of strict supporting invariants for each Motzkin transformation.
 	 * Strict supporting invariants are invariants of the form
@@ -70,56 +127,57 @@ public class Preferences implements Serializable {
 	 * 
 	 * @see num_strict_invariants
 	 */
-	public int num_non_strict_invariants = 1; // Default: 1
+	public int num_non_strict_invariants = 0; // Default: 0
 	
 	/**
-	 * Only consider non-decreasing invariants.
+	 * Consider only non-decreasing invariants?
 	 */
-	public boolean only_nondecreasing_invariants = false; // Default: false
+	public boolean nondecreasing_invariants = false; // Default: false
 	
 	/**
 	 * Should the polyhedra for stem and loop be made integral for integer
 	 * programs?
+	 * (Not yet implemented.)
 	 */
-	public boolean compute_integral_hull = false; // not yet implemented
+	public boolean compute_integral_hull = false; // Default: false
 	
 	/**
-	 * Are disjunctions allowed in the stem and loop transition?
+	 * Add annotations to terms for debugging purposes
 	 */
-	public boolean enable_disjunction = true; // Default: true
-	
-	/**
-	 * Add annotations to terms for debugging purposes and/or to make use
-	 * of unsatisfiable cores
-	 */
-	public boolean annotate_terms = true; // Default: true
+	public boolean annotate_terms = false; // Default: false
 	
 	/**
 	 * Should we try to simplify the discovered ranking function and
 	 * supporting invariants?
 	 * 
 	 * Note: this is quite expensive, it requires many calls to the solver:
-	 * O((number of variables)*(numer of supporting invariants))
+	 * O((number of variables)*(number of supporting invariants))
 	 * If the solver efficiently supports push() and pop(),
 	 * this might be reasonably fast.
 	 */
 	public boolean simplify_result = false; // Default: false
 	
 	/**
-	 * Use a nonlinear SMT query for checking nontermination?
+	 * What analysis type should be used for the termination analysis?
+	 * Use a linear SMT query, use a linear SMT query but guess some eigenvalues
+	 * of the loop, or use a nonlinear SMT query?
 	 */
-	public boolean nontermination_check_nonlinear = true; // Default: true
+	public AnalysisType termination_analysis = AnalysisType.Linear_with_guesses;
+		// Default: AnalysisType.LINEAR_PLUS_GUESSES
 	
 	/**
-	 * Use a nonlinear SMT query for checking termination?
+	 * What analysis type should be used for the nontermination analysis?
+	 * Use a linear SMT query, use a linear SMT query but guess some eigenvalues
+	 * of the loop, or use a nonlinear SMT query?
 	 */
-	public boolean termination_check_nonlinear = true; // Default: true
+	public AnalysisType nontermination_analysis = AnalysisType.Linear_with_guesses;
+		// Default: AnalysisType.LINEAR_PLUS_GUESSES
 	
 	/**
 	 * If true, we use an external tool to solve the constraints. If false,
 	 * we use SMTInterpol to solve the constraints. 
 	 */
-	public boolean externalSolver = true;
+	public boolean externalSolver = true; // Default: true
 	
 	/**
 	 * What shell command should be used to call the external smt solver?
@@ -129,12 +187,12 @@ public class Preferences implements Serializable {
 	/**
 	 * Write SMT solver script to file.
 	 */
-	public boolean dumpSmtSolverScript = false;
+	public boolean dumpSmtSolverScript = false; // Default: false
 	
 	/**
 	 * Path to which the SMT solver script is written.
 	 */
-	public String pathOfDumpedScript = ".";
+	public String path_of_dumped_script = "."; // Default: "."
 	
 	/**
 	 * Base name (without path) of the file to which the SMT solver script is 
@@ -159,20 +217,18 @@ public class Preferences implements Serializable {
 		sb.append(this.num_strict_invariants);
 		sb.append("\nNumber of non-strict supporting invariants: ");
 		sb.append(this.num_non_strict_invariants);
-		sb.append("\nConsider non-deceasing supporting invariants: ");
-		sb.append(this.only_nondecreasing_invariants);
+		sb.append("\nConsider only non-deceasing supporting invariants: ");
+		sb.append(this.nondecreasing_invariants);
 		sb.append("\nCompute integeral hull: ");
 		sb.append(this.compute_integral_hull);
-		sb.append("\nEnable disjunction: ");
-		sb.append(this.enable_disjunction);
 		sb.append("\nTerm annotations enabled: ");
 		sb.append(this.annotate_terms);
 		sb.append("\nResult simplification enabled: ");
 		sb.append(this.simplify_result);
-		sb.append("\nNonlinear nontermination check: ");
-		sb.append(this.nontermination_check_nonlinear);
-		sb.append("\nNonlinear termination check: ");
-		sb.append(this.termination_check_nonlinear);
+		sb.append("\nTermination analysis: ");
+		sb.append(this.termination_analysis);
+		sb.append("\nNontermination analysis: ");
+		sb.append(this.nontermination_analysis);
 		sb.append("\nUse exernal solver: ");
 		sb.append(this.externalSolver);
 		sb.append("\nSMT solver command: ");
@@ -180,7 +236,7 @@ public class Preferences implements Serializable {
 		sb.append("\nDump SMT script to file: ");
 		sb.append(this.dumpSmtSolverScript);
 		sb.append("\nPath of dumped script: ");
-		sb.append(this.pathOfDumpedScript);
+		sb.append(this.path_of_dumped_script);
 		sb.append("\nFilename of dumped script: ");
 		sb.append(this.baseNameOfDumpedScript);
 		return sb.toString();

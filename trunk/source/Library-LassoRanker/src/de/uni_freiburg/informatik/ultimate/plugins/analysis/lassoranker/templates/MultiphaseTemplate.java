@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFu
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality.PossibleMotzkinCoefficients;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.MultiphaseRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 
@@ -130,7 +131,9 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 		for (int i = 0; i < size; ++i) {
 			LinearInequality li = m_fgens[i].generate(inVars);
 			li.setStrict(true);
-			li.needs_motzkin_coefficient = !m_linear && i > 0;
+			li.motzkin_coefficient = i > 0 ?
+					PossibleMotzkinCoefficients.ANYTHING
+					: PossibleMotzkinCoefficients.ZERO_AND_ONE;
 			disjunction.add(li);
 		}
 		conjunction.add(disjunction);
@@ -145,12 +148,14 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 			AffineTerm a = new AffineTerm(m_deltas[i], Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
-			li.needs_motzkin_coefficient = false;
+			li.motzkin_coefficient = PossibleMotzkinCoefficients.ZERO_AND_ONE;
 			disjunction.add(li);
 			for (int j = i - 1; j >= 0; --j) {
 				LinearInequality li3 = m_fgens[j].generate(inVars);
 				li3.setStrict(true);
-				li3.needs_motzkin_coefficient = !m_linear && j > 0;
+				li3.motzkin_coefficient = j > 0 ?
+						PossibleMotzkinCoefficients.ANYTHING
+						: PossibleMotzkinCoefficients.ZERO_AND_ONE;
 				disjunction.add(li3);
 			}
 			conjunction.add(disjunction);

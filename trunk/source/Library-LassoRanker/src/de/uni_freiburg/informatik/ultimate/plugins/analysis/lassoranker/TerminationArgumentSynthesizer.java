@@ -40,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality.PossibleMotzkinCoefficients;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
@@ -51,6 +53,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.template
  * @author Jan Leike
  */
 public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
+	/**
+	 * What analysis type should be used for the termination analysis?
+	 * Use a linear SMT query, use a linear SMT query but guess some eigenvalues
+	 * of the loop, or use a nonlinear SMT query?
+	 */
+	private final AnalysisType m_analysis_type;
+	
+	/**
+	 * The template to be used
+	 */
+	private final RankingFunctionTemplate m_template;
+	
 	/**
 	 * List of supporting invariant generators used by the last synthesize()
 	 * call
@@ -73,8 +87,6 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 */
 	private final Set<Term> m_ArrayIndexSupportingInvariants;
 	
-	private final RankingFunctionTemplate m_template;
-	
 	/**
 	 * Constructor for the termination argument function synthesizer.
 	 * @param stem the stem transition, may be null
@@ -88,6 +100,8 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			LinearTransition loop, RankingFunctionTemplate template,
 			Preferences preferences, Set<Term> arrayIndexSupportingInvariants) {
 		super(stem, loop, preferences, template.getName() + "Template");
+		m_analysis_type = preferences.termination_analysis;
+		assert !m_analysis_type.isDisabled();
 		m_template = template;
 		
 		m_si_generators = new ArrayList<SupportingInvariantGenerator>();
@@ -95,10 +109,16 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		m_ArrayIndexSupportingInvariants = arrayIndexSupportingInvariants;
 		
 		// Set logic
-		if (preferences.termination_check_nonlinear) {
-			m_script.setLogic(Logics.QF_NRA);
-		} else {
+		if (m_analysis_type.isLinear()) {
 			m_script.setLogic(Logics.QF_LRA);
+		} else {
+			m_script.setLogic(Logics.QF_NRA);
+		}
+		
+		if (m_analysis_type == AnalysisType.Linear
+				&& !preferences.nondecreasing_invariants) {
+			s_Logger.warn("Termination analysis type is 'Linear', " +
+					"hence invariants must be non-decreasing!");
 		}
 	}
 	
@@ -159,6 +179,15 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			}
 		}
 		
+		// Get guesses for loop eigenvalues as possible Motzkin coefficients
+		Rational[] eigenvalue_guesses;
+		if (m_analysis_type.wantsGuesses()) {
+			eigenvalue_guesses = this.guessEigenvalues(false);
+			assert eigenvalue_guesses.length >= 2;
+		} else {
+			eigenvalue_guesses = new Rational[0];
+		}
+		
 		// loop(x, x') /\ si(x) -> template(x, x')
 		// Iterate over the loop conjunctions and template disjunctions
 		int j = 0;
@@ -166,8 +195,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			++j;
 			for (int m = 0; m < templateConstraints.size(); ++m) {
 				MotzkinTransformation motzkin =
-						new MotzkinTransformation(m_script,
-								!m_preferences.termination_check_nonlinear,
+						new MotzkinTransformation(m_script, m_analysis_type,
 								m_preferences.annotate_terms);
 				motzkin.annotation = annotations.get(m) + " " + j;
 				motzkin.add_inequalities(loopConj);
@@ -190,11 +218,11 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 									false);
 					si_generators.add(sig);
 					LinearInequality li = sig.generate(m_loop.getInVars());
-					li.motzkin_coefficient_can_be_zero = false;
+					li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
 					motzkin.add_inequality(li);
 				}
 				s_Logger.debug(motzkin);
-				conj.add(motzkin.transform());
+				conj.add(motzkin.transform(eigenvalue_guesses));
 			}
 		}
 		
@@ -210,17 +238,15 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			for (List<LinearInequality> stemConj : m_stem.getPolyhedra()) {
 				++j;
 				MotzkinTransformation motzkin =
-						new MotzkinTransformation(m_script,
-								!m_preferences.termination_check_nonlinear,
+						new MotzkinTransformation(m_script, m_analysis_type,
 								m_preferences.annotate_terms);
 				motzkin.annotation = "invariant " + i + " initiation " + j;
 				motzkin.add_inequalities(stemConj);
 				LinearInequality li = sig.generate(m_stem.getOutVars());
 				li.negate();
-				li.motzkin_coefficient_can_be_zero = false;
-					// otherwise the stem is unsat
+				li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
 				motzkin.add_inequality(li);
-				conj.add(motzkin.transform());
+				conj.add(motzkin.transform(eigenvalue_guesses));
 			}
 			
 			// si(x) /\ loop(x, x') -> si(x')
@@ -228,18 +254,19 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			for (List<LinearInequality> loopConj : m_loop.getPolyhedra()) {
 				++j;
 				MotzkinTransformation motzkin =
-						new MotzkinTransformation(m_script,
-								!m_preferences.termination_check_nonlinear,
+						new MotzkinTransformation(m_script, m_analysis_type,
 								m_preferences.annotate_terms);
 				motzkin.annotation = "invariant " + i + " consecution " + j;
 				motzkin.add_inequalities(loopConj);
 				motzkin.add_inequality(sig.generate(m_loop.getInVars())); // si(x)
 				LinearInequality li = sig.generate(m_loop.getOutVars()); // ~si(x')
-				li.needs_motzkin_coefficient =
-						!m_preferences.only_nondecreasing_invariants;
+				li.motzkin_coefficient = m_preferences.nondecreasing_invariants
+						|| m_analysis_type == AnalysisType.Linear ?
+								PossibleMotzkinCoefficients.ZERO_AND_ONE
+								: PossibleMotzkinCoefficients.ANYTHING;
 				li.negate();
 				motzkin.add_inequality(li);
-				conj.add(motzkin.transform());
+				conj.add(motzkin.transform(eigenvalue_guesses));
 			}
 		}
 		return conj;
@@ -266,14 +293,13 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 */
 	@Override
 	protected LBool do_synthesis() throws SMTLIBException, TermException {
-		if (!m_preferences.termination_check_nonlinear
-				&& m_template.getDegree() > 0) {
+		if (m_analysis_type.isLinear() && m_template.getDegree() > 0) {
 			s_Logger.warn("Using a linear SMT query and a templates of degree "
 					+ "> 0, hence this method is incomplete.");
 		}
 		Collection<RankVar> rankVars = getRankVars();
 		Collection<RankVar> siVars = getSIVars();
-		m_template.init(this, !m_preferences.termination_check_nonlinear);
+		m_template.init(this, m_analysis_type.isLinear());
 		s_Logger.debug("Variables for ranking functions: " + rankVars);
 		s_Logger.debug("Variables for supporting invariants: " + siVars);
 /*		// The following code makes examples like StemUnsat.bpl fail

@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFu
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality.PossibleMotzkinCoefficients;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LexicographicRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 
@@ -132,7 +133,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 		for (int i = 0; i < size; ++i) {
 			LinearInequality li = m_fgens[i].generate(inVars);
 			li.setStrict(true);
-			li.needs_motzkin_coefficient = false;
+			li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;;
 			conjunction.add(Collections.singletonList(li));
 		}
 		
@@ -145,7 +146,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 			li2.negate();
 			li.add(li2);
 			li.setStrict(false);
-			li.needs_motzkin_coefficient = false;
+			li.motzkin_coefficient = PossibleMotzkinCoefficients.ZERO_AND_ONE;
 			disjunction.add(li);
 			
 			for (int j = i - 1; j >= 0; --j) {
@@ -156,7 +157,9 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 				AffineTerm a = new AffineTerm(m_deltas[j], Rational.MONE);
 				li.add(a);
 				li.setStrict(true);
-				li.needs_motzkin_coefficient = !m_linear && j > 0;
+				li.motzkin_coefficient = j > 0 ?
+						PossibleMotzkinCoefficients.ANYTHING
+						: PossibleMotzkinCoefficients.ZERO_AND_ONE;
 				disjunction.add(li);
 			}
 			conjunction.add(disjunction);
@@ -172,7 +175,9 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 			AffineTerm a = new AffineTerm(m_deltas[i], Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
-			li.needs_motzkin_coefficient = !m_linear && i > 0 && i < size - 1;
+			li.motzkin_coefficient = i > 0 && i < size - 1 ?
+					PossibleMotzkinCoefficients.ANYTHING
+					: PossibleMotzkinCoefficients.ZERO_AND_ONE;
 			disjunction.add(li);
 		}
 		conjunction.add(disjunction);

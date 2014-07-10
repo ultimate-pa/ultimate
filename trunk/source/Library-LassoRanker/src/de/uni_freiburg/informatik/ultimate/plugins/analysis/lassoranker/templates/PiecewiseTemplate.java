@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFu
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality.PossibleMotzkinCoefficients;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.PiecewiseRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 
@@ -143,13 +144,15 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 				LinearInequality li1 = m_pgens[i].generate(inVars);
 				li1.negate();
 				li1.setStrict(true);
-				li1.needs_motzkin_coefficient = !m_linear && i != j;
+				li1.motzkin_coefficient = i != j ?
+						PossibleMotzkinCoefficients.ANYTHING
+						: PossibleMotzkinCoefficients.ZERO_AND_ONE;;
 				disjunction.add(li1);
 				
 				LinearInequality li2 = m_pgens[j].generate(outVars);
 				li2.negate();
 				li2.setStrict(true);
-				li2.needs_motzkin_coefficient = !m_linear;
+				li2.motzkin_coefficient = PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li2);
 				
 				LinearInequality li3 = m_fgens[i].generate(inVars);
@@ -159,7 +162,8 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 				AffineTerm a = new AffineTerm(m_delta, Rational.MONE);
 				li3.add(a);
 				li3.setStrict(true);
-				li3.needs_motzkin_coefficient = false;
+				li3.motzkin_coefficient =
+						PossibleMotzkinCoefficients.ZERO_AND_ONE;
 				disjunction.add(li3);
 				conjunction.add(disjunction);
 			}
@@ -169,7 +173,7 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 		for (int i = 0; i < size; ++i) {
 			LinearInequality li = m_fgens[i].generate(inVars);
 			li.setStrict(true);
-			li.needs_motzkin_coefficient = false;
+			li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
 			conjunction.add(Collections.singletonList(li));
 		}
 		
@@ -178,7 +182,9 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 		for (int i = 0; i < size; ++i) {
 			LinearInequality li = m_pgens[i].generate(inVars);
 			li.setStrict(false);
-			li.needs_motzkin_coefficient = !m_linear && i > 0;
+			li.motzkin_coefficient = i > 0 ?
+					PossibleMotzkinCoefficients.ANYTHING
+					: PossibleMotzkinCoefficients.ZERO_AND_ONE;
 			disjunction.add(li);
 		}
 		conjunction.add(disjunction);

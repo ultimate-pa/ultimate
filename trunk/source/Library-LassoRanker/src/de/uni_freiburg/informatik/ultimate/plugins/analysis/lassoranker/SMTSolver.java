@@ -116,7 +116,7 @@ class SMTSolver {
 		return newScript(preferences.externalSolver,
 				preferences.smt_solver_command,
 				preferences.dumpSmtSolverScript ?
-						composeFullFilename(preferences.pathOfDumpedScript, 
+						composeFullFilename(preferences.path_of_dumped_script, 
 								preferences.baseNameOfDumpedScript, 
 								constraintsName) : null,
 				preferences.annotate_terms);

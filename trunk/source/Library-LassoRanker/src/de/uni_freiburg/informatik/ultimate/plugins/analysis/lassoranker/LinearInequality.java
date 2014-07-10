@@ -65,25 +65,44 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptio
  */
 public class LinearInequality implements Serializable {
 	private static final long serialVersionUID = 5640678756293667730L;
-
+	
+	/**
+	 * Possible values the Motzkin coefficient of this linear inequality can
+	 * attain.
+	 */
+	public enum PossibleMotzkinCoefficients {
+		ONE,
+		ZERO_AND_ONE,
+		ANYTHING;
+		
+		/**
+		 * @return whether this attains more than one value
+		 */
+		public boolean multipleValues() {
+			return this == ZERO_AND_ONE || this == ANYTHING;
+		}
+		
+		/**
+		 * @return whether this is fixed to a finite number of values
+		 */
+		public boolean isFixed() {
+			return this == ONE || this == ZERO_AND_ONE;
+		}
+	}
+	
 	/**
 	 * Whether the inequality is strict (">") versus non-strict ("≥")
 	 */
 	private boolean m_strict = false;
 	
 	/**
-	 * Whether this inequality needs its own Motzkin coefficient
+	 * What kind of Motzkin coefficients this inequality needs 
 	 */
-	public boolean needs_motzkin_coefficient = true;
+	public PossibleMotzkinCoefficients motzkin_coefficient
+		= PossibleMotzkinCoefficients.ANYTHING;
 	
 	/**
-	 * Whether the Motzkin coefficient corresponding to this inequality
-	 * needs to be able to be zero
-	 */
-	public boolean motzkin_coefficient_can_be_zero = true;
-	
-	/**
-	 * List of variables including rational coefficients
+	 * List of variables and their coefficients
 	 */
 	private final Map<Term, AffineTerm> m_coefficients;
 	
@@ -181,6 +200,18 @@ public class LinearInequality implements Serializable {
 	 */
 	public boolean isConstant() {
 		return m_coefficients.isEmpty() && m_constant.isConstant();
+	}
+	
+	/**
+	 * @return whether all coefficients are constants
+	 */
+	public boolean allAffineTermsAreConstant() {
+		boolean result = true;
+		result &= m_constant.isConstant();
+		for (AffineTerm coeff : m_coefficients.values()) {
+			result &= coeff.isConstant();
+		}
+		return result;
 	}
 	
 	/**

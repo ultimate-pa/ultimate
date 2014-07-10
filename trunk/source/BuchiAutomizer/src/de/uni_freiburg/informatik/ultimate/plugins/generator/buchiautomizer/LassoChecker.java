@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LassoRankerTerminationAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
@@ -82,7 +83,7 @@ public class LassoChecker {
 	 * Command of external solver.
 	 */
 	private final String m_ExternalSolverCommand_RankSynthesis;
-	private final boolean m_AllowNonLinearConstraints;
+	private final AnalysisType m_LassoRankerAnalysisType;
 	private final boolean m_TrySimplificationTerminationArgument;
 	
 	/**
@@ -204,7 +205,8 @@ public class LassoChecker {
 		UltimatePreferenceStore baPref = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		m_ExternalSolver_RankSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_ExtSolverRank);
 		m_ExternalSolverCommand_RankSynthesis = baPref.getString(PreferenceInitializer.LABEL_ExtSolverCommandRank);
-		m_AllowNonLinearConstraints = baPref.getBoolean(PreferenceInitializer.LABEL_NonLinearConstraints);
+		m_LassoRankerAnalysisType = baPref.getBoolean(PreferenceInitializer.LABEL_NonLinearConstraints) ?
+				AnalysisType.Nonlinear : AnalysisType.Linear_with_guesses;
 		m_TemplateBenchmarkMode = baPref.getBoolean(PreferenceInitializer.LABEL_TemplateBenchmarkMode);
 		m_TrySimplificationTerminationArgument = baPref.getBoolean(PreferenceInitializer.LABEL_Simplify);
 		m_Interpolation = interpolation;
@@ -558,14 +560,14 @@ public class LassoChecker {
 		Preferences pref = new Preferences();
 		pref.num_non_strict_invariants = 1;
 		pref.num_strict_invariants = 0;
-		pref.only_nondecreasing_invariants = true;
+		pref.nondecreasing_invariants = true;
 		pref.externalSolver = m_ExternalSolver_RankSynthesis;
 		pref.smt_solver_command = m_ExternalSolverCommand_RankSynthesis;
-		pref.nontermination_check_nonlinear = m_AllowNonLinearConstraints;
-		pref.termination_check_nonlinear = m_AllowNonLinearConstraints;
+		pref.nontermination_analysis = m_LassoRankerAnalysisType;
+		pref.termination_analysis = m_LassoRankerAnalysisType;
 		UltimatePreferenceStore baPref = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		pref.dumpSmtSolverScript = baPref.getBoolean(PreferenceInitializer.LABEL_DumpToFile);
-		pref.pathOfDumpedScript = baPref.getString(PreferenceInitializer.LABEL_DumpPath);
+		pref.path_of_dumped_script = baPref.getString(PreferenceInitializer.LABEL_DumpPath);
 		pref.baseNameOfDumpedScript = generateFileBasenamePrefix(withStem);
 		pref.simplify_result = m_TrySimplificationTerminationArgument;
 		pref.overapproximateArrayIndexConnection = overapproximateArrayIndexConnection;

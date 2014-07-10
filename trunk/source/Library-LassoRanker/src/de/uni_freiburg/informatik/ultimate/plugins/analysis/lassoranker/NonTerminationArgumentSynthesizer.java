@@ -40,11 +40,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
@@ -79,17 +80,19 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	public static long m_aux_counter = 0;
 	
 	/**
-	 * Nonlinear nontermination check?
-	 */
-	private final boolean m_nonlinear;
-	
-	/**
 	 * Do we have to handle integers (QF_LIA logic)?
 	 */
 	private final boolean m_integer_mode;
 	
 	/**
-	 * The corresponding prefered sort ("Int" or "Real")
+	 * What analysis type should be used for the nontermination analysis?
+	 * Use a linear SMT query, use a linear SMT query but guess some eigenvalues
+	 * of the loop, or use a nonlinear SMT query?
+	 */
+	private final AnalysisType m_analysis_type;
+	
+	/**
+	 * The corresponding preferred sort ("Int" or "Real")
 	 */
 	private final Sort m_sort;
 	
@@ -111,24 +114,28 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		
 		m_integer_mode = (stem != null && stem.containsIntegers())
 				|| loop.containsIntegers();
-		m_nonlinear = m_preferences.nontermination_check_nonlinear
-				&& !m_integer_mode;
 		if (!m_integer_mode) {
-			if (m_nonlinear) {
-				m_script.setLogic(Logics.QF_NRA);
-			} else {
+			m_analysis_type = preferences.nontermination_analysis;
+			if (m_analysis_type.isLinear()) {
 				m_script.setLogic(Logics.QF_LRA);
+			} else {
+				m_script.setLogic(Logics.QF_NRA);
 			}
 			m_sort = m_script.sort("Real");
 		} else {
 			s_Logger.info("Using integer mode.");
-			if (m_preferences.nontermination_check_nonlinear) {
-				s_Logger.warn("Integer program; non-termination SMT query must "
-						+ "be linear!");
+			if (preferences.nontermination_analysis.isLinear()) {
+				m_analysis_type = preferences.nontermination_analysis;
+			} else {
+				s_Logger.info("Nontermination analysis is set to NONLINEAR, " +
+						"but we have an integer program. " +
+						"Falling back to linear analysis with guessing.");
+				m_analysis_type = AnalysisType.Linear_with_guesses;
 			}
 			m_script.setLogic(Logics.QF_LIA);
 			m_sort = m_script.sort("Int");
 		}
+		assert !m_analysis_type.isDisabled();
 	}
 	
 	@Override
@@ -177,10 +184,11 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		Collection<RankVar> rankVars = getAllRankVars();
 		
 		List<Term> lambdas;
-		if (m_nonlinear) {
-			// Use a variable for lambda
-			lambdas = Collections.singletonList(lambda);
-		} else {
+		if (m_analysis_type == AnalysisType.Linear) {
+			// Just use lambda = 1
+			Term one = m_script.numeral("1");
+			lambdas = Collections.singletonList(one);
+		} else if (m_analysis_type == AnalysisType.Linear_with_guesses) {
 			// Use a list of guesses for lambda
 			Rational[] eigenvalues = guessEigenvalues(false);
 			lambdas = new ArrayList<Term>(eigenvalues.length);
@@ -191,6 +199,10 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				}
 				lambdas.add(eigenvalues[i].toTerm(m_sort));
 			}
+		} else {
+			assert m_analysis_type == AnalysisType.Nonlinear;
+			// Use a variable for lambda
+			lambdas = Collections.singletonList(lambda);
 		}
 		
 		// A_stem * (x0, x0') <= b_stem
