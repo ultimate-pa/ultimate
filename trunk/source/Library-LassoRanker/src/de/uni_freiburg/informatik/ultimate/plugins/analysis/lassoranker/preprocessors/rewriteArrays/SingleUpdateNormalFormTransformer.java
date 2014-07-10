@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate.ArrayUpdateExtractor;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables.VarFactory;
 
 
 /**

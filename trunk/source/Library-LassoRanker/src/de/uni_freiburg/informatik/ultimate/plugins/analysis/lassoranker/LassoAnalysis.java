@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination.NonTerminationArgument;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination.NonTerminationArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.DNF;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.PreProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RemoveNegation;
@@ -52,7 +54,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preproce
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteIte;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteStrictInequalities;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteTrueFalse;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.TerminationArgument;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.TerminationArgumentSynthesizer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.templates.RankingFunctionTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables.VarCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables.VarFactory;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 

@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -11,6 +12,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables.RankVar;
 
 
 /**
@@ -31,8 +33,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * 
  * @author Jan Leike
  */
-public class Lasso {
-	
+public class Lasso implements Serializable {
+	private static final long serialVersionUID = 8922273828007750770L;
+
 	/**
 	 * The stem transition
 	 */

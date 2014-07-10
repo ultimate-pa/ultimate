@@ -24,45 +24,35 @@
  * License, the licensors of the ULTIMATE LassoRanker Library grant you
  * additional permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables;
+
+import java.io.Serializable;
+
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 
 /**
- * A superclass for all classes that need to keep track of their instance number
- * 
- * Various routines of the LassoRanker package generate SMTLib variables.
- * In order to make sure that the same variables are generated only once, each
- * generated variable will be annotated with the respective instance number.
+ * A RankVar is a variable that is relevant to ranking functions or
+ * supporting invariants. It is either a BoogieVar or a new replacement variable
+ * created in the preprocessing steps.
  * 
  * @author Jan Leike
+ * 
+ * @see BoogieVarWrapper
+ * @see ReplacementVar
  */
-public class InstanceCounting {
+public abstract class RankVar implements Serializable {
+	private static final long serialVersionUID = -3215866247258690258L;
 	
 	/**
-	 *  Global instance counter
+	 * @return the term that defines this variable
+	 * (might just be a TermVariable)
 	 */
-	private static long s_instance_counter = 0;
+	public abstract Term getDefinition();
 	
 	/**
-	 *  Number of the current instance
+	 * @return a globally unique identifier for this variable
 	 */
-	private final long m_instance;
+	public abstract String getGloballyUniqueId();
 	
-	public InstanceCounting() {
-		/*
-		 * This assertion is violated if ultimate runs for so long that the
-		 * counter overflows.
-		 */
-		assert(s_instance_counter >= 0);
-		
-		m_instance = s_instance_counter;
-		s_instance_counter++;
-	}
-	
-	/**
-	 * @return the instance number
-	 */
-	public long getInstanceNumber() {
-		return m_instance;
-	}
 }

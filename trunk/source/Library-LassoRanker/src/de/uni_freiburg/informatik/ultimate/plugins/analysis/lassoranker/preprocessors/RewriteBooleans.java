@@ -37,10 +37,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ReplacementVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarCollector;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables.RankVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables.ReplacementVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables.VarCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables.VarFactory;
 
 
 /**

@@ -24,45 +24,48 @@
  * License, the licensors of the ULTIMATE LassoRanker Library grant you
  * additional permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables;
+
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 
 /**
- * A superclass for all classes that need to keep track of their instance number
- * 
- * Various routines of the LassoRanker package generate SMTLib variables.
- * In order to make sure that the same variables are generated only once, each
- * generated variable will be annotated with the respective instance number.
+ * A replacement variable replacing another variable or term that cannot be
+ * used directly.
  * 
  * @author Jan Leike
  */
-public class InstanceCounting {
+public class ReplacementVar extends RankVar {
+	private static final long serialVersionUID = 5797704734079950805L;
+	
+	private final String m_name;
+	private final Term m_definition;
 	
 	/**
-	 *  Global instance counter
+	 * @param name a globally unique name
+	 * @param definition the definition of this replacement variable, i.e.,
+	 *                   the term it replaces
 	 */
-	private static long s_instance_counter = 0;
-	
-	/**
-	 *  Number of the current instance
-	 */
-	private final long m_instance;
-	
-	public InstanceCounting() {
-		/*
-		 * This assertion is violated if ultimate runs for so long that the
-		 * counter overflows.
-		 */
-		assert(s_instance_counter >= 0);
-		
-		m_instance = s_instance_counter;
-		s_instance_counter++;
+	ReplacementVar(String name, Term definition) {
+		m_name = name;
+		m_definition = definition;
 	}
 	
 	/**
-	 * @return the instance number
+	 * @return the definition of this replacement variable, i.e., the term it
+	 *         replaces
 	 */
-	public long getInstanceNumber() {
-		return m_instance;
+	public Term getDefinition() {
+		return m_definition;
+	}
+	
+	@Override
+	public String getGloballyUniqueId() {
+		return m_name;
+	}
+	
+	@Override
+	public String toString() {
+		return m_name;
 	}
 }

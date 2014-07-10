@@ -59,14 +59,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.RankVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ReplacementVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarCollector;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.IndexAnalyzer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.IndexAnalyzer.Equality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.SetOfDoubletons;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.rewriteArrays.SingleUpdateNormalFormTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables.RankVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables.ReplacementVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables.VarCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables.VarFactory;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 

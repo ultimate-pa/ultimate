@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
  * 
  * @author Jan Leike
  */
-class SMTSolver {
+public class SMTSolver {
 	private static Logger s_Logger =
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	

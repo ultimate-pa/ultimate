@@ -51,6 +51,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination.NonTerminationArgumentSynthesizer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.TerminationArgumentSynthesizer;
 
 
 /**
@@ -336,7 +338,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * @return the rational represented by the term
 	 * @throws TermException if an error occurred while parsing the term
 	 */
-	static Rational const2Rational(Term t) throws TermException {
+	protected static Rational const2Rational(Term t) throws TermException {
 		if (t instanceof ApplicationTerm) {
 			ApplicationTerm appt = (ApplicationTerm) t;
 			if (appt.getFunction().getName().equals("+")) {

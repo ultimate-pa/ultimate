@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarCollector;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.VarFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables.VarCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables.VarFactory;
 
 
 /**

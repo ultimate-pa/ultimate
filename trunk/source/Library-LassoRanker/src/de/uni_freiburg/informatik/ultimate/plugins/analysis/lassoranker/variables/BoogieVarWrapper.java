@@ -24,45 +24,42 @@
  * License, the licensors of the ULTIMATE LassoRanker Library grant you
  * additional permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variables;
+
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 
 
 /**
- * A superclass for all classes that need to keep track of their instance number
- * 
- * Various routines of the LassoRanker package generate SMTLib variables.
- * In order to make sure that the same variables are generated only once, each
- * generated variable will be annotated with the respective instance number.
+ * This is a wrapper for BoogieVar that extends RankVar.
  * 
  * @author Jan Leike
  */
-public class InstanceCounting {
+public class BoogieVarWrapper extends RankVar {
+	private static final long serialVersionUID = -452101904147428474L;
 	
-	/**
-	 *  Global instance counter
-	 */
-	private static long s_instance_counter = 0;
+	private final BoogieVar mBoogieVar;
 	
-	/**
-	 *  Number of the current instance
-	 */
-	private final long m_instance;
-	
-	public InstanceCounting() {
-		/*
-		 * This assertion is violated if ultimate runs for so long that the
-		 * counter overflows.
-		 */
-		assert(s_instance_counter >= 0);
-		
-		m_instance = s_instance_counter;
-		s_instance_counter++;
+	public BoogieVarWrapper(BoogieVar boogieVar) {
+		mBoogieVar = boogieVar;
 	}
 	
-	/**
-	 * @return the instance number
-	 */
-	public long getInstanceNumber() {
-		return m_instance;
+	@Override
+	public Term getDefinition() {
+		return mBoogieVar.getTermVariable();
+	}
+	
+	@Override
+	public String getGloballyUniqueId() {
+		return mBoogieVar.getGloballyUniqueId();
+	}
+	
+	public String toString() {
+		return mBoogieVar.toString();
+	}
+	
+	@Override
+	public int hashCode() {
+		return mBoogieVar.hashCode();
 	}
 }
