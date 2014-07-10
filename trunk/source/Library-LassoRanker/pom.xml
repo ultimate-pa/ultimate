@@ -11,6 +11,6 @@
 
 	<groupId>Library-LassoRanker</groupId>
 	<artifactId>Library-LassoRanker</artifactId>
-	<version>0.9.0</version>
+	<version>0.9.5</version>
 	<packaging>eclipse-plugin</packaging>
 </project>
