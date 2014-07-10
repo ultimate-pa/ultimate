@@ -25,7 +25,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LassoRankerTerminationAnalysis;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LassoAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences.AnalysisType;
@@ -588,11 +588,11 @@ public class LassoChecker {
 //			s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars);
 //		}
 		
-		LassoRankerTerminationAnalysis lrta = null;
+		LassoAnalysis la = null;
 		NonTerminationArgument nonTermArgument = null;
 		if (!containsArrays) {
 			try {
-				lrta =	new LassoRankerTerminationAnalysis(m_SmtManager.getScript(), 
+				la =	new LassoAnalysis(m_SmtManager.getScript(), 
 						m_SmtManager.getBoogie2Smt(), stemTF, loopTF, 
 						m_Axioms.toArray(new Term[m_Axioms.size()]), 
 						constructLassoRankerPreferences(withStem, false));
@@ -602,7 +602,7 @@ public class LassoChecker {
 				throw new AssertionError("TermException " + e);
 			}
 			try {
-				nonTermArgument = lrta.checkNonTermination();
+				nonTermArgument = la.checkNonTermination();
 			} catch (SMTLIBException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -663,7 +663,7 @@ public class LassoChecker {
 			// if stem or loop contain arrays, overapproximate the
 			// index connection of RewriteArrays
 			try {
-				 lrta =	new LassoRankerTerminationAnalysis(m_SmtManager.getScript(), 
+				 la =	new LassoAnalysis(m_SmtManager.getScript(), 
 						 m_SmtManager.getBoogie2Smt(), stemTF, loopTF, 
 						 m_Axioms.toArray(new Term[m_Axioms.size()]), 
 						 constructLassoRankerPreferences(withStem, true));
@@ -675,7 +675,7 @@ public class LassoChecker {
 		}
 
 		TerminationArgument termArg = tryTemplatesAndComputePredicates(
-				withStem, lrta, rankingFunctionTemplates);
+				withStem, la, rankingFunctionTemplates);
 		assert (nonTermArgument == null || termArg == null) : " terminating and nonterminating";
 		if (termArg != null) {
 			return SynthesisResult.TERMINATING;
@@ -695,7 +695,7 @@ public class LassoChecker {
 	 * @throws AssertionError
 	 */
 	private TerminationArgument tryTemplatesAndComputePredicates(
-			final boolean withStem, LassoRankerTerminationAnalysis lrta,
+			final boolean withStem, LassoAnalysis lrta,
 			List<RankingFunctionTemplate> rankingFunctionTemplates)
 			throws AssertionError {
 		TerminationArgument firstTerminationArgument = null;

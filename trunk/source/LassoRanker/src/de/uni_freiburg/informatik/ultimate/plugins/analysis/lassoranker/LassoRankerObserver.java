@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  * Observer for LassoRanker
  * 
  * Extracts the lasso program's stem and loop transition from the RCFG builder's
- * transition graph. This is then passed to the LassoRankerTerminationAnalysis
+ * transition graph. This is then passed to the LassoAnalysis
  * class, which serves as an interface to LassoRanker's termination and
  * non-termination analysis methods.
  * 
@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  * solving. The generated constraints are non-linear algebraic constraints.
  * We use an external SMT solver to solve these constraints.
  * 
- * @see LassoRankerTerminationAnalysis
+ * @see LassoAnalysis
  * @author Matthias Heizmann, Jan Leike
  */
 public class LassoRankerObserver implements IUnmanagedObserver {

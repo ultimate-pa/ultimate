@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  * 
  * @author Jan Leike
  */
-public class LassoRankerTerminationAnalysis {
+public class LassoAnalysis {
 	private static Logger s_Logger =
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
@@ -147,7 +147,7 @@ public class LassoRankerTerminationAnalysis {
 	 * @throws FileNotFoundException if the file for dumping the script
 	 *                               cannot be opened
 	 */
-	public LassoRankerTerminationAnalysis(Script script, Boogie2SMT boogie2smt,
+	public LassoAnalysis(Script script, Boogie2SMT boogie2smt,
 			TransFormula stem, TransFormula loop, Term[] axioms,
 			Preferences preferences)
 					throws TermException {
@@ -192,7 +192,7 @@ public class LassoRankerTerminationAnalysis {
 	 * @throws FileNotFoundException if the file for dumping the script
 	 *                               cannot be opened
 	 */
-	public LassoRankerTerminationAnalysis(Script script, Boogie2SMT boogie2smt,
+	public LassoAnalysis(Script script, Boogie2SMT boogie2smt,
 			TransFormula loop, Term[] axioms, Preferences preferences)
 					throws TermException, FileNotFoundException {
 		this(script, boogie2smt, null, loop, axioms, preferences);

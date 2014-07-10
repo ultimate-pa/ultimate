@@ -33,7 +33,7 @@ import java.io.Serializable;
  * Accumulation of preferences for LassoRanker.
  * 
  * These are the preferences that you might want to change when using
- * LassoRanker as a library through the class LassoRankerTerminationAnalysis.
+ * LassoRanker as a library through the class LassoAnalysis.
  * 
  * The prefences in the Ultimate GUI have some additional preferences that
  * are relevent when using LassoRanker as a standalone plugin in the toolchain.

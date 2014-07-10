@@ -113,9 +113,9 @@ public class LassoRankerStarter {
 		Term[] axioms = m_RootAnnot.getBoogie2SMT().getAxioms().toArray(new Term[0]);
 		
 		// Do the termination analysis
-		LassoRankerTerminationAnalysis tanalysis = null;
+		LassoAnalysis la = null;
 		try {
-			tanalysis = new LassoRankerTerminationAnalysis(script,
+			la = new LassoAnalysis(script,
 					m_RootAnnot.getBoogie2SMT(),
 					stemTF, loopTf, axioms, preferences);
 		} catch (TermException e) {
@@ -127,7 +127,7 @@ public class LassoRankerStarter {
 		if (preferences.nontermination_analysis
 				!= Preferences.AnalysisType.Disabled) {
 			try {
-				NonTerminationArgument arg = tanalysis.checkNonTermination();
+				NonTerminationArgument arg = la.checkNonTermination();
 				if (arg != null) {
 					reportNonTerminationResult(arg);
 					return;
@@ -155,7 +155,7 @@ public class LassoRankerStarter {
 				return;
 			}
 			try {
-				TerminationArgument arg = tanalysis.tryTemplate(template);
+				TerminationArgument arg = la.tryTemplate(template);
 				if (arg != null) {
 //					try {
 						assert isTerminationArgumentCorrect(arg) : 
