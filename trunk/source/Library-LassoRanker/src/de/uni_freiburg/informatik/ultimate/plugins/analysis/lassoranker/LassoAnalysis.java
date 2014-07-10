@@ -184,7 +184,7 @@ public class LassoAnalysis {
 	/**
 	 * Preprocess the stem and loop transition into a lasso object
 	 */
-	private void do_preprocessing() throws TermException {
+	protected void do_preprocessing() throws TermException {
 		LinearTransition stem;
 		if (m_stem_transition != null) {
 			s_Logger.debug("Stem transition:\n" + m_stem_transition);
@@ -343,7 +343,7 @@ public class LassoAnalysis {
 		return m_numMotzkin;
 	}
 	
-	private String benchmarkScriptMessage(LBool constraintSat,
+	protected String benchmarkScriptMessage(LBool constraintSat,
 			RankingFunctionTemplate template) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("BenchmarkResult: ");
@@ -360,7 +360,7 @@ public class LassoAnalysis {
 	/**
 	 * @return a pretty version of the guesses for Motzkin coefficients
 	 */
-	private String motzkinGuesses() {
+	protected String motzkinGuesses() {
 		StringBuilder sb = new StringBuilder();
 		Rational[] eigenvalues = m_lasso.guessEigenvalues(true);
 		sb.append("[");
