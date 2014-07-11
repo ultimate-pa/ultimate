@@ -33,6 +33,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<INTERPOLATION>(
 						LABEL_INTERPOLATED_LOCS, DEF_INTERPOLANTS,
 						PreferenceType.Combo, INTERPOLATION.values()),
+				new UltimatePreferenceItem<Boolean>(LABEL_AssertCodeBlocksIncrementally, 
+							false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<InterpolantAutomaton>(
 						LABEL_InterpolantAutomaton,
 						InterpolantAutomaton.CANONICAL, PreferenceType.Combo,
@@ -94,6 +96,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_Order = "Order in Petri net unfolding";
 	public static final String LABEL_cutOff = "cut-off requires same transition";
 	public static final String LABEL_unfolding2Net = "use unfolding as abstraction";
+	public static final String LABEL_AssertCodeBlocksIncrementally = "Assert CodeBlocks incrementally";
 
 	public static final String VALUE_ABSTRACTION = "Abstraction";
 	public static final String VALUE_RCFG = "RecursiveControlFlowGraph";

@@ -7,11 +7,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -31,9 +31,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.DifferenceSenwa;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -55,13 +55,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
 
 /**
  * Subclass of AbstractCegarLoop which provides all algorithms for checking
@@ -87,6 +88,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final INTERPOLATION m_Interpolation;
 	
 	protected final boolean m_ComputeHoareAnnotation;
+	
+	protected final boolean m_AssertCodeBlocksIncrementally;
 
 
 	
@@ -109,6 +112,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_PredicateFactoryInterpolantAutomata = new PredicateFactory(
 				super.m_SmtManager,
 				m_Pref);
+		
+		m_AssertCodeBlocksIncrementally = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
+				getBoolean(TraceAbstractionPreferenceInitializer.LABEL_AssertCodeBlocksIncrementally);
+		
 		m_PredicateFactoryResultChecking = new PredicateFactoryResultChecking(smtManager);
 		m_CegarLoopBenchmark = new CegarLoopBenchmarkGenerator();
 		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_OverallTime);
@@ -168,15 +175,15 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			m_TraceChecker = new TraceChecker(truePredicate, falsePredicate, 
-					null, NestedWord.nestedWord(m_Counterexample.getWord()),m_SmtManager,
-					m_RootNode.getRootAnnot().getModGlobVarManager());
+					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(m_Counterexample.getWord()),m_SmtManager,
+					m_RootNode.getRootAnnot().getModGlobVarManager(), m_AssertCodeBlocksIncrementally);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, 
-					null, NestedWord.nestedWord(m_Counterexample.getWord()),m_SmtManager,
-					m_RootNode.getRootAnnot().getModGlobVarManager());
+					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(m_Counterexample.getWord()),m_SmtManager,
+					m_RootNode.getRootAnnot().getModGlobVarManager(), m_AssertCodeBlocksIncrementally);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

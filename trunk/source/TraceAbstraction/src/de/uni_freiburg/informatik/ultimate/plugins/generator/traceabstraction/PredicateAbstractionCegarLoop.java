@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.Collection;
+import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -40,8 +41,8 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 		IPredicate precondition = super.m_SmtManager.newTruePredicate();
 		IPredicate postcondition = super.m_SmtManager.newFalsePredicate();
 		m_TraceChecker = new TraceChecker(precondition, 
-				postcondition, null, NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager,
-				m_RootNode.getRootAnnot().getModGlobVarManager());
+				postcondition, new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager,
+				m_RootNode.getRootAnnot().getModGlobVarManager(), /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
 
 		LBool feasibility = m_TraceChecker.isCorrect();
 		if (feasibility != LBool.UNSAT) {

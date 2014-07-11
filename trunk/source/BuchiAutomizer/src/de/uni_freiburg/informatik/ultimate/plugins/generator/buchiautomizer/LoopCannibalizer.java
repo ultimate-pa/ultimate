@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -116,15 +117,15 @@ public class LoopCannibalizer {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			traceChecker = new TraceChecker(m_Bspm.getRankEqAndSi(), 
-					m_Bspm.getHondaPredicate(), null, shifted, m_SmtManager,
-					m_buchiModGlobalVarManager);
+					m_Bspm.getHondaPredicate(), new TreeMap<Integer, IPredicate>(), shifted, m_SmtManager,
+					m_buchiModGlobalVarManager, /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 			traceChecker = new TraceCheckerSpWp(m_Bspm.getRankEqAndSi(), 
-					m_Bspm.getHondaPredicate(), null, shifted, m_SmtManager,
-					m_buchiModGlobalVarManager);
+					m_Bspm.getHondaPredicate(), new TreeMap<Integer, IPredicate>(), shifted, m_SmtManager,
+					m_buchiModGlobalVarManager, /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

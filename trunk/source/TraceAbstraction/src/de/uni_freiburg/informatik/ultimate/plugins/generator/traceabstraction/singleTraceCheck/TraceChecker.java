@@ -159,7 +159,7 @@ public class TraceChecker {
 	
 	protected final TraceCheckerBenchmarkGenerator m_TraceCheckerBenchmarkGenerator;
 	
-	private final boolean m_useAnnotateAndAsserterWithPriorizedOrder = false;
+	private final boolean m_assertCodeBlocksIncrementally;
 	
 	
 	/**
@@ -167,28 +167,19 @@ public class TraceChecker {
 	 * postcondition and pending contexts. The pendingContext maps the positions
 	 * of pending returns to predicates which define possible variable 
 	 * valuations in the context to which the return leads the trace.
+	 * @param assertCodeBlocksIncrementally If set to false, check-sat is called
+	 * after all CodeBlocks are asserted. If set to true we use Betims heuristic
+	 * an incrementally assert CodeBlocks and do check-sat until all CodeBlocks
+	 * are asserted or the result to a check-sat is UNSAT.
 	 */
 	public TraceChecker(IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts, 
 			NestedWord<CodeBlock> trace, SmtManager smtManager,
-			ModifiableGlobalVariableManager modifiedGlobals) {
-		m_SmtManager = smtManager;
-		m_PredicateUnifier = null;
-		m_ModifiedGlobals = modifiedGlobals;
-		m_Trace = trace;
-		m_Precondition = precondition;
-		m_Postcondition = postcondition;
-		m_PredicateTransformer = new PredicateTransformer(m_SmtManager, modifiedGlobals);
-		if (pendingContexts == null) {
-			m_PendingContexts = new TreeMap<Integer, IPredicate>();
-		} else {
-			m_PendingContexts = pendingContexts;
-		}
-		m_DefaultTransFormulas = new DefaultTransFormulas(m_Trace, 
-				m_Precondition, m_Postcondition, m_PendingContexts, 
-				m_ModifiedGlobals, false);
-		m_TraceCheckerBenchmarkGenerator = getBenchmarkGenerator();
-		m_IsSafe = checkTrace();
+			ModifiableGlobalVariableManager modifiedGlobals, boolean assertCodeBlocksIncrementally) {
+		this(precondition, postcondition, pendingContexts, trace, smtManager, 
+				modifiedGlobals, new DefaultTransFormulas(trace, 
+				precondition, postcondition, pendingContexts, 
+				modifiedGlobals, false), assertCodeBlocksIncrementally);
 	}
 
 	protected TraceCheckerBenchmarkGenerator getBenchmarkGenerator() {
@@ -204,7 +195,7 @@ public class TraceChecker {
 			NestedWord<CodeBlock> trace,
 			SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals,
-			DefaultTransFormulas defaultTransFormulas) {
+			DefaultTransFormulas defaultTransFormulas, boolean assertCodeBlocksIncrementally) {
 		m_SmtManager = smtManager;
 		m_PredicateUnifier = null;
 		m_ModifiedGlobals = modifiedGlobals;
@@ -212,9 +203,14 @@ public class TraceChecker {
 		m_Precondition = precondition;
 		m_Postcondition = postcondition;
 		m_PredicateTransformer = new PredicateTransformer(m_SmtManager, modifiedGlobals);
+		if (pendingContexts == null) {
+			throw new NullPointerException("pendingContexts must not be " +
+					"null, if there are no pending contexts, use an empty map");
+		}
 		m_PendingContexts = pendingContexts;
 		m_DefaultTransFormulas = defaultTransFormulas;
 		m_TraceCheckerBenchmarkGenerator = getBenchmarkGenerator();
+		m_assertCodeBlocksIncrementally = assertCodeBlocksIncrementally;
 		m_IsSafe = checkTrace();
 	}
 	
@@ -260,7 +256,7 @@ public class TraceChecker {
 		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SsaConstruction);
 		
 		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis);
-		if (m_useAnnotateAndAsserterWithPriorizedOrder) {
+		if (m_assertCodeBlocksIncrementally) {
 			m_AAA = new AnnotateAndAsserterWithStmtOrderPrioritization(m_SmtManager, 
 					ssa, getAnnotateAndAsserterCodeBlocks(ssa), m_TraceCheckerBenchmarkGenerator);
 		} else {
@@ -315,7 +311,7 @@ public class TraceChecker {
 						m_DefaultTransFormulas.getPostcondition(), 
 						m_PendingContexts, 
 						m_DefaultTransFormulas.getTrace(), m_SmtManager, 
-						m_ModifiedGlobals, withBE);
+						m_ModifiedGlobals, withBE, false);
 				assert tc.isCorrect() == LBool.SAT;
 				tc.computeRcfgProgramExecution();
 				m_RcfgProgramExecution = tc.getRcfgProgramExecution();
@@ -668,7 +664,7 @@ public class TraceChecker {
 
 			TraceChecker tc = new TraceChecker(precondition, 
 					interpolantAtReturnPosition, pendingContexts, subtrace, 
-					m_SmtManager, m_ModifiedGlobals);
+					m_SmtManager, m_ModifiedGlobals, m_assertCodeBlocksIncrementally);
 			LBool isSafe = tc.isCorrect();
 			assert isSafe == LBool.UNSAT;
 			

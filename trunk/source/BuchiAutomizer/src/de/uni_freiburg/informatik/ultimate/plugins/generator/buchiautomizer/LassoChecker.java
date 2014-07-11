@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -435,15 +436,15 @@ public class LassoChecker {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			result = new TraceChecker(m_TruePredicate, m_FalsePredicate, 
-					null, run.getWord(),m_SmtManager,
-					m_ModifiableGlobalVariableManager);
+					new TreeMap<Integer, IPredicate>(), run.getWord(),m_SmtManager,
+					m_ModifiableGlobalVariableManager, /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 			result = new TraceCheckerSpWp(m_TruePredicate, m_FalsePredicate, 
 					null, run.getWord(),m_SmtManager,
-					m_ModifiableGlobalVariableManager);
+					m_ModifiableGlobalVariableManager, /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

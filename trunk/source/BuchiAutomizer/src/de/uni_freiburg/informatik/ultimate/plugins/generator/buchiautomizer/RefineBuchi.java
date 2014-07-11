@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -329,14 +330,14 @@ public class RefineBuchi {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			return new TraceChecker(precond, postcond, 
-					null, NestedWord.nestedWord(word),m_SmtManager,
-					buchiModGlobalVarManager);
+					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(word),m_SmtManager,
+					buchiModGlobalVarManager, /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 			return new TraceCheckerSpWp(precond, postcond, 
 					null, NestedWord.nestedWord(word),m_SmtManager,
-					buchiModGlobalVarManager);
+					buchiModGlobalVarManager, /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}

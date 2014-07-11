@@ -281,7 +281,7 @@ public class TotalInterpolationAutomatonBuilder {
 		SortedMap<Integer, IPredicate> pendingContexts = computePendingContexts(run);
 //		SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
 		TraceChecker tc = new TraceChecker(precondition, postcondition, 
-				pendingContexts , run.getWord(), m_SmtManager, m_ModifiedGlobals);
+				pendingContexts , run.getWord(), m_SmtManager, m_ModifiedGlobals, /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
 		if (tc.isCorrect() == LBool.UNSAT) {
 			m_BenchmarkGenerator.incrementUsefullRunGeq2();
 			tc.computeInterpolants(new TraceChecker.AllIntegers(), m_PredicateUnifier, m_Interpolation);

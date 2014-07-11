@@ -593,7 +593,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		}
 		// test if we found a new path which can be added
 		m_TraceChecker = new TraceChecker(pre, post, pendingContexts, word,
-				m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
+				m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(), /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
 
 		if (m_TraceChecker.isCorrect() == LBool.UNSAT)
 		{

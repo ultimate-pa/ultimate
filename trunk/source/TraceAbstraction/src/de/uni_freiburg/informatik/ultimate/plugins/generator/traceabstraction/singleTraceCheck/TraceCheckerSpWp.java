@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -78,8 +79,10 @@ public class TraceCheckerSpWp extends TraceChecker {
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts, 
 			NestedWord<CodeBlock> trace, SmtManager smtManager,
-			ModifiableGlobalVariableManager modifiedGlobals) {
-		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals);
+			ModifiableGlobalVariableManager modifiedGlobals, 
+			boolean assertCodeBlocksIncrementally) {
+		super(precondition, postcondition, pendingContexts, trace, smtManager, 
+				modifiedGlobals, assertCodeBlocksIncrementally);
 	}
 	
 	
@@ -447,7 +450,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	 */
 	private boolean stillInfeasible(RelevantTransFormulas rv) {
 		TraceChecker tc = new TraceChecker(rv.getPrecondition(), 
-				rv.getPostcondition(), null, rv.getTrace(), m_SmtManager, m_ModifiedGlobals);
+				rv.getPostcondition(), new TreeMap<Integer, IPredicate>(), rv.getTrace(), m_SmtManager, m_ModifiedGlobals, /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
 		tc.unlockSmtManager();
 		boolean result = (tc.isCorrect() == LBool.UNSAT);
 		return result;

@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -398,8 +399,8 @@ public class BinaryStatePredicateManager {
 		if (isTrue(siPredicate)) {
 			siPredicate = truePredicate;
 		}
-		traceChecker = new TraceChecker(truePredicate, siPredicate, null, stem, m_SmtManager,
-				modGlobVarManager);
+		traceChecker = new TraceChecker(truePredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem, m_SmtManager,
+				modGlobVarManager, /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
 		LBool stemCheck = traceChecker.isCorrect();
 		if (stemCheck == LBool.UNSAT) {
 			traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
@@ -410,7 +411,7 @@ public class BinaryStatePredicateManager {
 			result = false;			
 		}
 		traceChecker = new TraceChecker(siPredicate, siPredicate, null, stem, m_SmtManager,
-				modGlobVarManager);
+				modGlobVarManager, /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
 		LBool loopCheck = traceChecker.isCorrect();
 		if (loopCheck == LBool.UNSAT) {
 			traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
@@ -426,7 +427,7 @@ public class BinaryStatePredicateManager {
 	public boolean checkRankDecrease(NestedWord<CodeBlock> loop, 
 			ModifiableGlobalVariableManager modGlobVarManager) {
 		TraceChecker traceChecker = new TraceChecker(m_RankEqualityAndSi, 
-				m_RankDecreaseAndBound, null, loop, m_SmtManager, modGlobVarManager);
+				m_RankDecreaseAndBound, new TreeMap<Integer, IPredicate>(), loop, m_SmtManager, modGlobVarManager, /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
 		LBool loopCheck = traceChecker.isCorrect();
 		traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 		return (loopCheck == LBool.UNSAT);

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -326,9 +327,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 													// formula is satisfiable
 								m_falsePredicate, // return LBool.UNSAT if trace
 													// is infeasible
-								null, errorRun.getWord(), m_smtManager,
+								new TreeMap<Integer, IPredicate>(), errorRun.getWord(), m_smtManager,
 								m_originalRoot.getRootAnnot()
-										.getModGlobVarManager());
+										.getModGlobVarManager(), /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
 						break;
 					case Z3SPWP:
 						traceChecker = new TraceCheckerSpWp(
@@ -336,10 +337,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 													// feasible, i.e. the
 													// formula is satisfiable
 								m_falsePredicate, // return LBool.UNSAT if trace
-													null, // is infeasible
+								new TreeMap<Integer, IPredicate>(), // is infeasible
 								errorRun.getWord(), m_smtManager,
 								m_originalRoot.getRootAnnot()
-										.getModGlobVarManager());
+										.getModGlobVarManager(), /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
 						break;
 					}
 
