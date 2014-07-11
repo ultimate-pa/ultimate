@@ -43,8 +43,6 @@ public class IndexAnalyzer {
 	private final boolean m_SearchAdditionalSupportingInvariants;
 	private final TransFormula m_OriginalStem;
 	private final TransFormula m_OriginalLoop;
-
-	
 	
 	public IndexAnalyzer(Term term, HashRelation<TermVariable, 
 			List<Term>> array2Indices, 
@@ -83,7 +81,6 @@ public class IndexAnalyzer {
 		unknownDoubletons.addDoubleton(doubleton);
 	}
 	
-
 	void analyze(HashRelation<TermVariable, List<Term>> array2Indices) { 
 		for (TermVariable tv : array2Indices.getDomain()) {
 			Set<List<Term>> test = array2Indices.getImage(tv);
@@ -165,9 +162,7 @@ public class IndexAnalyzer {
 	private Term notEqualTerm(Doubleton<Term> Doubleton) {
 		return Util.not(m_Script, equalTerm(Doubleton));
 	}
-
 	
-
 	private boolean isInVariant(Doubleton<Term> definingDoubleton, boolean checkEquals) {
 		Term invariantCandidateTerm;
 		if (checkEquals) {
@@ -191,7 +186,7 @@ public class IndexAnalyzer {
 			return false;
 		}
 	}
-
+	
 	private Doubleton<Term> constructDefiningDoubleton(Doubleton<Term> inVarDoubleton) {
 		Term oneElement = inVarDoubleton.getOneElement();
 		Term otherElement = inVarDoubleton.getOtherElement();
@@ -204,7 +199,7 @@ public class IndexAnalyzer {
 		return new Doubleton<Term>(translatedOne[0], translatedOther[0]);
 		
 	}
-
+	
 	private boolean containsTermVariable(Doubleton<Term> Doubleton) {
 		if (Doubleton.getOneElement().getFreeVars().length > 0) {
 			return true;
@@ -214,7 +209,7 @@ public class IndexAnalyzer {
 			return false;
 		}
 	}
-
+	
 	private void markForComparison(Term term1, Term term2) {
 		Doubleton<Term> Doubleton = new Doubleton<Term>(term1, term2);
 		allDoubletons.addDoubleton(Doubleton);
@@ -222,7 +217,6 @@ public class IndexAnalyzer {
 			inVarDoubletons.addDoubleton(Doubleton);
 		}
 	}
-	
 	
 	public enum Equality { EQUAL, NOT_EQUAL, UNKNOWN };
 	
@@ -260,9 +254,7 @@ public class IndexAnalyzer {
 	public boolean isUnknownDoubleton(Term t1, Term t2) {
 		return unknownDoubletons.containsDoubleton(t1, t2);
 	}
-
-
-
+	
 	public Collection<Term> getSupportingInvariants() {
 		return m_SupportingInvariants;
 	}
@@ -274,8 +266,4 @@ public class IndexAnalyzer {
 	public Term getAdditionalConjunctsNotEquals() {
 		return Util.and(m_Script, m_AdditionalNotequals.toArray(new Term[m_AdditionalNotequals.size()]));
 	}
-	
-	
-	
-	
 }

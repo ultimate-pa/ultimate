@@ -35,14 +35,15 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 /**
  * Objects of this class represent a set of Doubletons. (We call a multiset
- * of two elements a Doubleton)
+ * of two elements a Doubleton.)
+ * 
  * @author Matthias Heizmann
  *
  */
 public class SetOfDoubletons<E> {
-	
 	private final HashRelation<E, E> m_SomeElem2OtherElem;
 	private final List<Doubleton<E>> m_Elements;
+	
 	public SetOfDoubletons() {
 		super();
 		m_SomeElem2OtherElem = new HashRelation<>();
@@ -61,7 +62,6 @@ public class SetOfDoubletons<E> {
 			return image.contains(otherElem);
 		}
 	}
-	
 	
 	public void addDoubleton(Doubleton<E> doubleton) {
 		if (!containsDoubleton(doubleton)) {
@@ -83,6 +83,4 @@ public class SetOfDoubletons<E> {
 	public String toString() {
 		return m_Elements.toString();
 	}
-	
-
 }

@@ -54,13 +54,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variable
 public class SingleUpdateNormalFormTransformer {
 	
 	static final String s_AuxArray = "auxArray";
-
+	
 	private final List<ArrayUpdate> m_ArrayUpdates;
 	private List<Term> m_RemainderTerms;
 	private Map<Term, Term> m_Store2TermVariable;
 	private final Script m_Script;
 	private final VarFactory m_VarFactory;
-
+	
 	public SingleUpdateNormalFormTransformer(final Term input, Script script,
 			VarFactory varFactory) {
 		m_Script = script;
@@ -109,7 +109,7 @@ public class SingleUpdateNormalFormTransformer {
 			m_ArrayUpdates.add(aue.getArrayUpdates().get(0));
 		}
 	}
-
+	
 	/**
 	 * Return some store term that is either in 
 	 * <li> the index of one of the arrayUpdates
@@ -139,7 +139,7 @@ public class SingleUpdateNormalFormTransformer {
 		}
 		return null;
 	}
-
+	
 	private void processNewArrayUpdates() {
 		SafeSubstitution subst = new SafeSubstitution(m_Script, m_Store2TermVariable);
 		for (ArrayUpdate au : m_ArrayUpdates) {
@@ -171,7 +171,7 @@ public class SingleUpdateNormalFormTransformer {
 		m_Store2TermVariable = newStore2TermVariable;
 		
 	}
-
+	
 	private MultiDimensionalStore getNonUpdateStore(Term term) {
 		Term[] conjuncts = SmtUtils.getConjuncts(term);
 		ArrayUpdateExtractor aue = new ArrayUpdateExtractor(conjuncts);

@@ -51,6 +51,4 @@ public class Multimap3<K1, K2, V> {
 			return k2toV.get(key2);
 		}
 	}
-	
-
 }
