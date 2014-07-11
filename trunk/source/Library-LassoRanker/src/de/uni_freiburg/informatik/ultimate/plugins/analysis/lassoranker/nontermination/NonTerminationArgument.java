@@ -27,9 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -126,10 +128,12 @@ public class NonTerminationArgument implements Serializable {
 	 * Ensures that RankVars that are defined by equivalent terms translated 
 	 * to the same Expression object. 
 	 */
-	public static Map<Expression, Rational>[] rank2Boogie(
+	@SafeVarargs
+	public static List<Map<Expression, Rational>> rank2Boogie(
 			Term2Expression term2expression,
 			Map<RankVar, Rational>... states) {
-		Map<Expression, Rational>[] result = new Map[states.length];
+		List<Map<Expression, Rational>> result =
+				new ArrayList<Map<Expression, Rational>>(states.length);
 		Map<Term, Expression> rankVar2Expression = 
 				new HashMap<Term, Expression>();
 		for (int i=0; i<states.length; i++) {
@@ -155,7 +159,7 @@ public class NonTerminationArgument implements Serializable {
 				assert e != null && r != null;
 				expression2rational.put(e, r);
 			}
-			result[i] = expression2rational;
+			result.add(expression2rational);
 		}
 		return result;
 	}
@@ -169,10 +173,8 @@ public class NonTerminationArgument implements Serializable {
 		return term2expression.translate(rv.getDefinition());
 	}
 	
-	
-	
 	/**
-	 * @return the discount factor
+	 * @return the multiplicative factor lambda
 	 */
 	public Rational getLambda() {
 		return m_Lambda;

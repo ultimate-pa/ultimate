@@ -68,7 +68,7 @@ public class Doubleton<E> {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Doubleton<E> other = (Doubleton) obj;
+		Doubleton<E> other = (Doubleton<E>) obj;
 		boolean equalSameOrder = this.getOneElement().equals(other.getOneElement()) 
 				&& this.getOtherElement().equals(other.getOtherElement());
 		if (equalSameOrder) {

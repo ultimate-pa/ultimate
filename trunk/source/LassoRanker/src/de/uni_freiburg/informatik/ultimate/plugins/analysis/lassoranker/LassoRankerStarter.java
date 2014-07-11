@@ -373,7 +373,7 @@ public class LassoRankerStarter {
 		Term2Expression term2expression = 
 				m_RootAnnot.getBoogie2SMT().getTerm2Expression();
 		
-		Map<Expression, Rational>[] initHondaRay = 
+		List<Map<Expression, Rational>> initHondaRay = 
 				NonTerminationArgument.rank2Boogie(
 						term2expression, 
 						arg.getStateInit(), 
@@ -384,9 +384,9 @@ public class LassoRankerStarter {
 				new NonTerminationArgumentResult<RcfgElement>(
 					m_Honda,
 					Activator.s_PLUGIN_NAME,
-					initHondaRay[0],
-					initHondaRay[1],
-					initHondaRay[2],
+					initHondaRay.get(0),
+					initHondaRay.get(1),
+					initHondaRay.get(2),
 					arg.getLambda(),
 					getTranslatorSequence()
 				);
