@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termina
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -52,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.variable
  * Template:
  * <pre>
  *    /\_i δ_i > 0
- * /\ ( \/_i f_i(x) > 0 )
+ * /\ f_k(x) > 0
  * /\ ( /\_i (f_i(x') < f_i(x) - δ_i \/ \/_(j<i) f_j(x) > 0 )
  * </pre>
  * 
@@ -100,14 +101,7 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 		for (int i = 0; i < size; ++i) {
 			sb.append("delta_" + i + " > 0\n/\\ ");
 		}
-		sb.append("( ");
-		for (int i = 0; i < size; ++i) {
-			sb.append("f_" + i + "(x) > 0");
-			if (i < size - 1) {
-				sb.append(" \\/ ");
-			}
-		}
-		sb.append(" )\n");
+		sb.append("f_" + (size - 1) + "(x) > 0\n");
 		for (int i = 0; i < size; ++i) {
 			sb.append("/\\ ( f_" + i + "(x') < f_" + i + "(x) - delta_" + i);
 			for (int j = i - 1; j >= 0; --j) {
@@ -125,20 +119,16 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 		List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		
-		// \/_i f_i(x) > 0
-		List<LinearInequality> disjunction =
-				new ArrayList<LinearInequality>();
-		for (int i = 0; i < size; ++i) {
-			LinearInequality li = m_fgens[i].generate(inVars);
+		// f_k(x) > 0
+		{
+			LinearInequality li = m_fgens[size - 1].generate(inVars);
 			li.setStrict(true);
-			li.motzkin_coefficient = i > 0 ?
-					PossibleMotzkinCoefficients.ANYTHING
-					: PossibleMotzkinCoefficients.ZERO_AND_ONE;
-			disjunction.add(li);
+			li.motzkin_coefficient = PossibleMotzkinCoefficients.ZERO_AND_ONE;
+			conjunction.add(Collections.singletonList(li));
 		}
-		conjunction.add(disjunction);
 		
 		// /\_i ( f_i(x') < f_i(x) - δ_i \/ \/_(j<i) f_j(x) > 0 )
+		List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
 		for (int i = 0; i < size; ++i) {
 			disjunction = new ArrayList<LinearInequality>();
 			LinearInequality li = m_fgens[i].generate(inVars);
@@ -188,7 +178,7 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 	@Override
 	public List<String> getAnnotations() {
 		List<String> annotations = new ArrayList<String>();
-		annotations.add("at least one rank f_i is bounded");
+		annotations.add("f_" + (size - 1) + " is bounded");
 		for (int i = 0; i < size; ++i) {
 			annotations.add("rank f" + i + " is decreasing in phase " + i);
 		}
@@ -197,7 +187,11 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 	
 	@Override
 	public int getDegree() {
+		// FIXME: check this!
 		assert(size > 0);
-		return size*(size - 1) / 2;
+		if (size < 3) {
+			return 0;
+		}
+		return (size - 2)*(size - 1) / 2;
 	}
 }
