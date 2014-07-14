@@ -410,7 +410,7 @@ public class BinaryStatePredicateManager {
 			traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 			result = false;			
 		}
-		traceChecker = new TraceChecker(siPredicate, siPredicate, null, stem, m_SmtManager,
+		traceChecker = new TraceChecker(siPredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem, m_SmtManager,
 				modGlobVarManager, /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
 		LBool loopCheck = traceChecker.isCorrect();
 		if (loopCheck == LBool.UNSAT) {
