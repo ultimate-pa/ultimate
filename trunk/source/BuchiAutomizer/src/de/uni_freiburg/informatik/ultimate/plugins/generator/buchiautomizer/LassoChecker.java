@@ -443,7 +443,7 @@ public class LassoChecker {
 		case BackwardPredicates:
 		case FPandBP:
 			result = new TraceCheckerSpWp(m_TruePredicate, m_FalsePredicate, 
-					null, run.getWord(),m_SmtManager,
+					new TreeMap<Integer, IPredicate>(), run.getWord(),m_SmtManager,
 					m_ModifiableGlobalVariableManager, /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
 			break;
 		default:
