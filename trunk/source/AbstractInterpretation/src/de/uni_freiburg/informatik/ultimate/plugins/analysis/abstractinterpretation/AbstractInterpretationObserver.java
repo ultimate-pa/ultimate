@@ -2,7 +2,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.result.NoResult;
 
 public class AbstractInterpretationObserver implements IUnmanagedObserver {
 
@@ -32,8 +35,22 @@ public class AbstractInterpretationObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) throws Throwable {
-		// TODO Auto-generated method stub
-		return false;
+		if (root instanceof RootNode) {
+			processRootNode((RootNode) root);
+			return false;
+		}
+		return true;
 	}
 
+	private void processRootNode(RootNode root) {
+		// TODO: Actual stuff ;)
+		AbstractInterpreter.s_logger.info("Processing a root node...");
+		
+		AbstractInterpreter abstractInterpreter = new AbstractInterpreter();
+		abstractInterpreter.processRcfg(root);
+
+		UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID,
+				new NoResult<IElement>(root, Activator.s_PLUGIN_ID,
+						UltimateServices.getInstance().getTranslatorSequence()));
+	}
 }
