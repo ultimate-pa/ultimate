@@ -5,6 +5,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.website.Setting;
 import de.uni_freiburg.informatik.ultimate.website.Tasks.TaskNames;
+import de.uni_freiburg.informatik.ultimate.website.WebToolchain.LoggingLevel;
 import de.uni_freiburg.informatik.ultimate.website.Tool;
 import de.uni_freiburg.informatik.ultimate.website.WebToolchain;
 
@@ -77,14 +78,25 @@ public class BoogieLassoRankerTC extends WebToolchain {
 		
 		List<Setting> oRCFGB = new ArrayList<Setting>();
 		List<Setting> mRCFGB = new ArrayList<Setting>();
+		tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
         oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_ExternalSolver, Setting.SettingType.BOOLEAN,
         		PrefStrings.s_RCFG_LABEL_ExternalSolver, "false", false));
+        oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_BlockSize, PrefStrings.s_RCFG_LABEL_BlockSize,
+        		new String[] { PrefStrings.s_RCFG_VALUE_Seq }, false, new String[] {
+        		PrefStrings.s_RCFG_VALUE_Single, PrefStrings.s_RCFG_VALUE_Seq, PrefStrings.s_RCFG_VALUE_Block }, false));
 		mRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_Simplify, Setting.SettingType.BOOLEAN,
 				PrefStrings.s_RCFG_LABEL_Simplify, "true", false));
-        oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_BlockSize, PrefStrings.s_RCFG_LABEL_BlockSize,
-        		new String[] { PrefStrings.s_RCFG_VALUE_Block }, false, new String[] {
-        		PrefStrings.s_RCFG_VALUE_Single, PrefStrings.s_RCFG_VALUE_Seq, PrefStrings.s_RCFG_VALUE_Block }, false));
-		tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
+        
+		List<Setting> oBE = new ArrayList<Setting>();
+		List<Setting> mBE = new ArrayList<Setting>();
+		tools.add(new Tool("BlockEncoding", oBE, mBE, LoggingLevel.WARN));
+		oBE.add(new Setting(PrefStrings.s_BE_LABEL_CALLMINIMIZE, Setting.SettingType.BOOLEAN,
+				PrefStrings.s_BE_LABEL_CALLMINIMIZE, "true", false));
+		oBE.add(new Setting(PrefStrings.s_BE_LABEL_STRATEGY, PrefStrings.s_BE_LABEL_STRATEGY,
+        		new String[] { PrefStrings.s_BE_VALUE_DisjunctiveRating }, false, new String[] {
+				PrefStrings.s_BE_VALUE_DisjunctiveRating, PrefStrings.s_BE_VALUE_LargeBlock }, true));
+		oBE.add(new Setting(PrefStrings.s_BE_LABEL_RATINGBOUND, Setting.SettingType.STRING,
+				PrefStrings.s_BE_LABEL_RATINGBOUND, "90", false));
 		
 		List<Setting> oRank = new ArrayList<Setting>();
 		List<Setting> mRank = new ArrayList<Setting>();
@@ -100,7 +112,7 @@ public class BoogieLassoRankerTC extends WebToolchain {
 		mRank.add(new Setting(PrefStrings.s_LR_LABEL_nested_template_size, Setting.SettingType.INTEGER,
 				PrefStrings.s_LR_LABEL_nested_template_size, "5", false));
 		mRank.add(new Setting(PrefStrings.s_LR_LABEL_multiphase_template_size, Setting.SettingType.INTEGER,
-				PrefStrings.s_LR_LABEL_multiphase_template_size, "5", false));
+				PrefStrings.s_LR_LABEL_multiphase_template_size, "3", false));
 		mRank.add(new Setting(PrefStrings.s_LR_LABEL_lex_template_size, Setting.SettingType.INTEGER,
 				PrefStrings.s_LR_LABEL_lex_template_size, "5", false));
 		mRank.add(new Setting(PrefStrings.s_LR_LABEL_piecewise_template_size, Setting.SettingType.INTEGER,

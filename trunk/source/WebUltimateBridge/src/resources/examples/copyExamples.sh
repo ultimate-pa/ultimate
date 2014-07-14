@@ -15,37 +15,40 @@
 
 
 RANK_BOOGIE=(
-	"../../../../../examples/lassos/website/ATVA2013-yPositive-int.bpl" 
+# 	"../../../../../examples/lassos/website/ATVA2013-yPositive-int.bpl"
+	"../../../../../examples/lassos/*"
+	"../../../../../examples/lassos/website/*"
 	"../../../../../examples/lassos/arrays/SyntaxSupportArrays08-LexIndexValue.bpl"
 	)
 
 for i in "${RANK_BOOGIE[@]}"
 do
-	if [ ! -e "$i" ]; then
-		echo "cannot find $i"
-		exit 1
-	fi
+# 	if [ ! -e "$i" ]; then
+# 		echo "cannot find $i"
+# 		exit 1
+# 	fi
 	cp $i rankBoogie/
 done
 
 
 RANK_C=(
-	"../../../../../examples/lassos/tigerbytes/ChenFlurMukhopadhyay-SAS2012-Ex1.01_true-termination.c"
-	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-TACAS2014-Ex1_true-termination.c"
-	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-TACAS2014-Ex7_true-termination.c"
-	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-TACAS2014-Ex8_true-termination.c"
-	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-TACAS2014-Ex9_true-termination.c"
-	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-TACAS2014-Fig1_true-termination.c"
-	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-WST2014-Ex5_false-termination.c"
-	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-WST2014-Ex6_false-termination.c"
-	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-WST2014-Ex9_true-termination.c"
+# 	"../../../../../examples/lassos/tigerbytes/ChenFlurMukhopadhyay-SAS2012-Ex1.01_true-termination.c"
+# 	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-TACAS2014-Ex1_true-termination.c"
+# 	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-TACAS2014-Ex7_true-termination.c"
+# 	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-TACAS2014-Ex8_true-termination.c"
+# 	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-TACAS2014-Ex9_true-termination.c"
+# 	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-TACAS2014-Fig1_true-termination.c"
+# 	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-WST2014-Ex5_false-termination.c"
+# 	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-WST2014-Ex6_false-termination.c"
+# 	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-WST2014-Ex9_true-termination.c"
+	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/*"
 	)
 
 for i in "${RANK_C[@]}"
 do
-	if [ ! -e "$i" ]; then
-		echo "cannot find $i"
-		exit 1
-	fi
+# 	if [ ! -e "$i" ]; then
+# 		echo "cannot find $i"
+# 		exit 1
+# 	fi
 	cp $i rankC/
 done

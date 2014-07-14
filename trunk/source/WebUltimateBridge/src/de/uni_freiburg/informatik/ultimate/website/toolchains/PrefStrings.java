@@ -23,6 +23,7 @@ public class PrefStrings {
 	
 	public static final String s_TA_LABEL_Interpol = "Compute\\ Interpolants\\ along\\ a\\ Counterexample";
 	public static final String s_TA_VALUE_CraigTree = "Craig_TreeInterpolation";
+	public static final String s_TA_VALUE_Forward = "ForwardPredicates";
 	
 	public static final String s_BA_LABEL_ExtSolverRank = "Use\\ external\\ solver\\ (rank\\ synthesis)";
 	public static final String s_BA_LABEL_Nonlinear = "Allow\\ nonlinear\\ constraints";

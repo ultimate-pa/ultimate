@@ -96,7 +96,7 @@ public class BoogieBuchiAutomizerTC extends WebToolchain {
 		List<Setting> oBA = new ArrayList<Setting>();
 		List<Setting> mBA = new ArrayList<Setting>();
 		oBA.add(new Setting(PrefStrings.s_TA_LABEL_Interpol, Setting.SettingType.STRING,
-                "interpolation", PrefStrings.s_TA_VALUE_CraigTree, false));
+                "interpolation", PrefStrings.s_TA_VALUE_Forward, false));
 		oBA.add(new Setting(PrefStrings.s_BA_LABEL_ExtSolverRank, Setting.SettingType.BOOLEAN,
 				PrefStrings.s_BA_LABEL_ExtSolverRank, "false", false));
 		oBA.add(new Setting(PrefStrings.s_BA_LABEL_Nonlinear, Setting.SettingType.BOOLEAN,

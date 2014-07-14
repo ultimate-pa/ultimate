@@ -83,12 +83,14 @@ public class Example {
 //				new Tasks.TaskNames[] { Tasks.TaskNames.VerifyBoogie }));
 //		list.add(new Example("addition incorrect", "additionIncorrect", "additionIncorrect.bpl",
 //				new Tasks.TaskNames[] { Tasks.TaskNames.VerifyBoogie }));
-		list.add(new Example("Moscow.bpl", "Moscow", "Moscow.bpl",
-				new Tasks.TaskNames[] { Tasks.TaskNames.RANK_SYNTHESIS_BOOGIE }));
-		list.add(new Example("Bangalore.c", "BangaloreC", "Bangalore.c",
-				new Tasks.TaskNames[] { Tasks.TaskNames.RANK_SYNTHESIS_C }));
+//		list.add(new Example("Moscow.bpl", "Moscow", "Moscow.bpl",
+//				new Tasks.TaskNames[] { Tasks.TaskNames.RANK_SYNTHESIS_BOOGIE }));
+//		list.add(new Example("Bangalore.c", "BangaloreC", "Bangalore.c",
+//				new Tasks.TaskNames[] { Tasks.TaskNames.RANK_SYNTHESIS_C }));
 		Tasks.TaskNames[] rankBoogie =  { Tasks.TaskNames.RANK_SYNTHESIS_BOOGIE };
 		addAllFilesInExamplesSubfolder(list, "rankBoogie/", rankBoogie);
+		Tasks.TaskNames[] rankC =  { Tasks.TaskNames.RANK_SYNTHESIS_C };
+		addAllFilesInExamplesSubfolder(list, "rankC/", rankC);
 		Tasks.TaskNames[] terminatonC =  { Tasks.TaskNames.TERMINATION_C };
 		addAllFilesInExamplesSubfolder(list, "terminationC/", terminatonC);
 		Tasks.TaskNames[] terminationBoogie =  { Tasks.TaskNames.TERMINATION_BOOGIE };
