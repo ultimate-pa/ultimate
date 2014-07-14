@@ -73,7 +73,8 @@ public class LassoRankerStarter {
 	
 	public LassoRankerStarter(RootNode rootNode) {
 		m_RootAnnot = rootNode.getRootAnnot();
-		checkRCFGBuilderSettings();
+//		Omit check to enable Stefans BlockEncoding
+//		checkRCFGBuilderSettings();
 		LassoRankerPreferences preferences =
 				PreferencesInitializer.getLassoRankerPreferences();
 		m_SmtManager = new SmtManager(m_RootAnnot.getBoogie2SMT(),
@@ -469,6 +470,7 @@ public class LassoRankerStarter {
 	}
 	
 	
+	//FIXME: allow also Stefans BlockEncoding
 	private void checkRCFGBuilderSettings() {
 		String rcfgBuilderPluginId = de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator.PLUGIN_ID;
 		UltimatePreferenceStore store =
