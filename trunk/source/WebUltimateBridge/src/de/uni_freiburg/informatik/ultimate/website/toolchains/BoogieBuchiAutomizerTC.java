@@ -101,6 +101,8 @@ public class BoogieBuchiAutomizerTC extends WebToolchain {
 				PrefStrings.s_BA_LABEL_ExtSolverRank, "false", false));
 		oBA.add(new Setting(PrefStrings.s_BA_LABEL_Nonlinear, Setting.SettingType.BOOLEAN,
 				"AllowNonlinearConstraints", "false", false));
+		oBA.add(new Setting(PrefStrings.s_BA_LABEL_SimplifyTA, Setting.SettingType.BOOLEAN,
+				PrefStrings.s_BA_LABEL_SimplifyTA, "true", false));
 		tools.add(new Tool("BuchiAutomizer", oBA, mBA, LoggingLevel.WARN));
 		return tools;
 	}

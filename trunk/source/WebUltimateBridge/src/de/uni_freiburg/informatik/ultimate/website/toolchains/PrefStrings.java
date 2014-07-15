@@ -27,6 +27,7 @@ public class PrefStrings {
 	
 	public static final String s_BA_LABEL_ExtSolverRank = "Use\\ external\\ solver\\ (rank\\ synthesis)";
 	public static final String s_BA_LABEL_Nonlinear = "Allow\\ nonlinear\\ constraints";
+	public static final String s_BA_LABEL_SimplifyTA = "Try\\ to\\ simplify\\ termination\\ arguments";
 	
 	public static final String s_LR_LABEL_only_nondecreasing_invariants = "Non-decreasing\\ invariants\\ only";
 	public static final String s_LR_LABEL_nontermination_check_nonlinear = "Nonlinear\\ SMT\\ query\\ for\\ nontermination\\ check";
