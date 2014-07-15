@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -189,11 +190,14 @@ class MotzkinTransformation extends InstanceCounting {
 		int num_coefficients = m_inequalities.size();
 		m_coefficients = new Term[num_coefficients];
 		for (int i = 0; i < num_coefficients; ++i) {
-			if (m_inequalities.get(i).motzkin_coefficient.multipleValues()) {
+			PossibleMotzkinCoefficients mcs = m_inequalities.get(i).motzkin_coefficient;
+			if (mcs.multipleValues()) {
 				Term coefficient = SMTSolver.newConstant(m_script,
 						s_motzkin_prefix + this.getInstanceNumber() + "_" + i,
 						"Real");
 				m_coefficients[i] = coefficient;
+			} else if (mcs == PossibleMotzkinCoefficients.ONE) {
+				m_coefficients[i] = m_script.numeral(BigInteger.ONE);
 			}
 		}
 	}
@@ -417,7 +421,7 @@ class MotzkinTransformation extends InstanceCounting {
 			// Fixed Motzkin coefficients
 			for (int i = 0; i < m_inequalities.size(); ++i) {
 				LinearInequality li = m_inequalities.get(i);
-				if (!li.motzkin_coefficient.isFixed()) {
+				if (li.motzkin_coefficient.isFixed()) {
 					Term coefficient = m_coefficients[i];
 					if (li.motzkin_coefficient
 							== PossibleMotzkinCoefficients.ZERO_AND_ONE) {
