@@ -40,13 +40,11 @@ NestedWordAutomaton finitelyManyA = (
 
 // We support several operations for complementing Buchi automata.
 
-// The following operation (developed by Xiaolin Wu in his masters thesis
+// The following operation (presented by Xiaolin Wu in his masters thesis
 // http://omnibus.uni-freiburg.de/%7Emh740/swt/Xiaolin_Wu-thesis-2011-10-21-fix.pdf )
-// extendeds the rank-based complementation of Friedgut, Kupferman, and Vardi 
-// to Büchi Nested Word automata.
-// Matthias has started an implementation of Xiaolins algorithm. If Matthias 
-// would finally finish this implementation, this would be the first implemented
-// complementation of Büchi nested word automata.
+// extended the rank-based complementation of Friedgut, Kupferman, and Vardi 
+// to Büchi Nested Word automata. To the best of our knowledge this is the first
+// implementation of a complementation for Büchi nested word automata.
 NestedWordAutomaton complementFKV = buchiComplementFKV(finitelyManyA);
 assert(!buchiAccepts(complementFKV, lasso1));
 print(numberOfStates(complementFKV));
