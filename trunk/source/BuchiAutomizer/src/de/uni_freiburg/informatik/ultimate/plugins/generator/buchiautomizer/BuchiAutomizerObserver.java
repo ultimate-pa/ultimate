@@ -11,9 +11,14 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
@@ -30,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
+import de.uni_freiburg.informatik.ultimate.result.NonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
@@ -139,6 +145,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
 			ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
 			NonTerminationArgument nta = bcl.getNonTerminationArgument();
+			reportNonTerminationResult(nta, rootAnnot.getBoogie2SMT(), honda);
+			
+			
 			Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
 			
 			RcfgProgramExecution stemPE = new RcfgProgramExecution(
@@ -163,8 +172,46 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 	
 	
-
+	/**
+	 * Report a nontermination argument back to Ultimate's toolchain
+	 * @param arg
+	 */
+	private void reportNonTerminationResult(NonTerminationArgument arg, Boogie2SMT boogie2smt, RcfgElement honda) {
+		// TODO: translate also the rational coefficients to Expressions?
+		// m_RootAnnot.getBoogie2Smt().translate(term)
+		Term2Expression term2expression = 
+				boogie2smt.getTerm2Expression();
+		
+		List<Map<Expression, Rational>> initHondaRay = 
+				NonTerminationArgument.rank2Boogie(
+						term2expression, 
+						arg.getStateInit(), 
+						arg.getStateHonda(), 
+						arg.getRay());
+		
+		NonTerminationArgumentResult<RcfgElement> result = 
+				new NonTerminationArgumentResult<RcfgElement>(
+					honda,
+					Activator.s_PLUGIN_NAME,
+					initHondaRay.get(0),
+					initHondaRay.get(1),
+					initHondaRay.get(2),
+					arg.getLambda(),
+					getTranslatorSequence()
+				);
+		reportResult(result);
+	}
 	
+	/**
+	 * @return the current translator sequence for building results
+	 */
+	private List<ITranslator<?, ?, ?, ?>> getTranslatorSequence() {
+		// getTranslatorSequence() is marked deprecated, but an alternative
+		// has yet to arise
+		List<ITranslator<?, ?, ?, ?>> translator_sequence =
+			UltimateServices.getInstance().getTranslatorSequence();
+		return translator_sequence;
+	}
 
 
 

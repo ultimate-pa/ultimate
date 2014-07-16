@@ -42,6 +42,8 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 	private final Map<Expression, Rational> m_StateHonda;
 	private final Map<Expression, Rational> m_Ray;
 	private final Rational m_Lambda;
+
+	private final boolean m_AlternativeLongDescription = !false;
 	
 	/**
 	 * Construct a termination argument result
@@ -75,17 +77,23 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 				"program execution.";
 	}
 	
-	private String printState(Map<Expression, Rational> state) {
+	private String printState(Map<Expression, String> state) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("{");
 		boolean first = true;
-		for (Entry<Expression, Rational> entry : state.entrySet()) {
+		for (Entry<Expression, String> entry : state.entrySet()) {
+			String var = ResultUtil.backtranslationWorkaround(
+										m_TranslatorSequence, entry.getKey());
+			if (var.contains("UnsupportedOperation")) {
+				continue;
+			}
 			if (!first) {
 				sb.append(", ");
 			} else {
 				first = false;
 			}
-			sb.append(BoogieStatementPrettyPrinter.print(entry.getKey()));
+//			sb.append(BoogieStatementPrettyPrinter.print(entry.getKey()));
+			sb.append(var);
 //			sb.append(BackTranslationWorkaround.backtranslate(
 //					m_TranslatorSequence, entry.getKey()));
 			// TODO: apply backtranslation?
@@ -98,24 +106,84 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 	
 	@Override
 	public String getLongDescription() {
+		if (m_AlternativeLongDescription ) {
+			return alternativeLongDesciption();
+		} else {
+			return defaultLongDescription();
+		}
+	}
+	
+	public String defaultLongDescription() {
 		StringBuilder sb =  new StringBuilder();
 		sb.append("Nontermination argument in form of an infinite execution\n");
 		sb.append(m_StateInit);
 		assert(s_schematic_execution_length > 0);
 		Rational geometric_sum = Rational.ZERO; // 1 + lambda + lambda^2 + ...
 		for (int i = 0; i < s_schematic_execution_length; ++i) {
-			Map<Expression, Rational> state =
-					new HashMap<Expression, Rational>();
+			Map<Expression, String> state =
+					new HashMap<Expression, String>();
 			for (Entry<Expression, Rational> entry : m_StateHonda.entrySet()) {
 				Expression var = entry.getKey();
 				Rational x = m_StateHonda.get(var);
 				Rational y = m_Ray.get(var);
-				state.put(var, x.add(y.mul(geometric_sum)));
+				state.put(var, (x.add(y.mul(geometric_sum))).toString());
 			}
 			sb.append("\n");
 			sb.append(printState(state));
 			geometric_sum = geometric_sum.mul(m_Lambda).add(Rational.ONE);
 		}
+		return sb.toString();
+	}
+	
+	
+	private String alternativeLongDesciption() {
+		StringBuilder sb =  new StringBuilder();
+		sb.append("Nontermination argument in form of an infinite execution\n");
+		sb.append("State at position 0 is\n");
+		Map<Expression, String> statePos0 = new HashMap<Expression, String>();
+		for (Entry<Expression, Rational> entry : m_StateHonda.entrySet()) {
+			Expression var = entry.getKey();
+			Rational x0 = m_StateInit.get(var);
+			statePos0.put(var, x0.toString());
+		}
+		sb.append(printState(statePos0));
+		sb.append("\nState at position 1 is\n");
+		Map<Expression, String> statePos1 = new HashMap<Expression, String>();
+		for (Entry<Expression, Rational> entry : m_StateHonda.entrySet()) {
+			Expression var = entry.getKey();
+			Rational x = m_StateHonda.get(var);
+			statePos1.put(var, x.toString());
+		}
+		sb.append(printState(statePos1));
+		sb.append("\nFor i>1, the state at position i is\n");
+		Map<Expression, String> statePosI = new HashMap<Expression, String>();
+		for (Entry<Expression, Rational> entry : m_StateHonda.entrySet()) {
+			Expression var = entry.getKey();
+			Rational x = m_StateHonda.get(var);
+			Rational y = m_Ray.get(var);
+			String value;
+			if (y.equals(Rational.ZERO)) {
+				value = x.toString();
+			} else {
+				if (m_Lambda.equals(Rational.ONE)) {
+					value = x + " + " + "i * " + y;
+				} else {
+					value = x + " + " + geometric() + " * " + y;
+				}
+			}
+			statePosI.put(var, value);
+		}
+		sb.append(printState(statePosI));
+		return sb.toString();
+	}
+	
+	private String geometric() {
+		StringBuilder sb =  new StringBuilder();
+		sb.append("(");
+		sb.append(m_Lambda);
+		sb.append("^(i+1)-1)/(");
+		sb.append(m_Lambda);
+		sb.append("-1)");
 		return sb.toString();
 	}
 
