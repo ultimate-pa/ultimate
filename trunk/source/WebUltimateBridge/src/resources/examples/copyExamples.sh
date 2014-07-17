@@ -16,8 +16,8 @@
 
 RANK_BOOGIE=(
 # 	"../../../../../examples/lassos/website/ATVA2013-yPositive-int.bpl"
-	"../../../../../examples/lassos/*"
-	"../../../../../examples/lassos/website/*"
+	"../../../../../examples/lassos/*.bpl"
+	"../../../../../examples/lassos/website/*.bpl"
 	"../../../../../examples/lassos/arrays/SyntaxSupportArrays08-LexIndexValue.bpl"
 	)
 
@@ -41,7 +41,7 @@ RANK_C=(
 # 	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-WST2014-Ex5_false-termination.c"
 # 	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-WST2014-Ex6_false-termination.c"
 # 	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-WST2014-Ex9_true-termination.c"
-	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/*"
+	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/*.c"
 	)
 
 for i in "${RANK_C[@]}"
@@ -51,4 +51,38 @@ do
 # 		exit 1
 # 	fi
 	cp $i rankC/
+done
+
+
+TERMINATION_BOOGIE=(
+	"../../../../../examples/programs/termination/BugMicrosoftZune_false-termination.bpl"
+	"../../../../../examples/lassos/*.bpl"
+	"../../../../../examples/lassos/website/*.bpl"
+	"../../../../../examples/lassos/arrays/SyntaxSupportArrays08-LexIndexValue.bpl"
+	)
+
+for i in "${TERMINATION_BOOGIE[@]}"
+do
+# 	if [ ! -e "$i" ]; then
+# 		echo "cannot find $i"
+# 		exit 1
+# 	fi
+	cp $i terminationBoogie/
+done
+
+
+
+
+TERMINATION_C=(
+	"../../../../../examples/programs/termination/BugMicrosoftZune_false-termination.c"
+	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/*.c"
+	)
+
+for i in "${TERMINATION_C[@]}"
+do
+# 	if [ ! -e "$i" ]; then
+# 		echo "cannot find $i"
+# 		exit 1
+# 	fi
+	cp $i terminationC/
 done
