@@ -55,7 +55,7 @@ done
 
 
 TERMINATION_BOOGIE=(
-	"../../../../../examples/programs/termination/BugMicrosoftZune_false-termination.bpl"
+	"../../../../../examples/programs/termination/MicrosoftZuneBug_false-termination.bpl"
 	"../../../../../examples/lassos/*.bpl"
 	"../../../../../examples/lassos/website/*.bpl"
 	"../../../../../examples/lassos/arrays/SyntaxSupportArrays08-LexIndexValue.bpl"
@@ -74,7 +74,7 @@ done
 
 
 TERMINATION_C=(
-	"../../../../../examples/programs/termination/BugMicrosoftZune_false-termination.c"
+	"../../../../../examples/programs/termination/MicrosoftZuneBug_false-termination.c"
 	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/*.c"
 	)
 
