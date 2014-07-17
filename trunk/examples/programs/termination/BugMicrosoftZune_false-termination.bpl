@@ -8,7 +8,7 @@
 var year, days : int;
 
 
-procedure isLeapYear(year : int) returns (bool : int)
+procedure isLeapYear(year : int) returns (res : bool)
 {
     if (year % 4 == 0) {
         if (year % 100 == 0)  {
