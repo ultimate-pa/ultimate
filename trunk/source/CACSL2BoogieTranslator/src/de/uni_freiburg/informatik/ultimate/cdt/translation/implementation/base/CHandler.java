@@ -586,8 +586,9 @@ public class CHandler implements ICHandler {
 					//TODO: add a sizeof-constant for the type??
 					globalInBoogie = true;
 					mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
-					/* global static variables are treated like normal global variables.. */
 				} else if (storageClass == StorageClass.STATIC && !functionHandler.noCurrentProcedure()) {
+					// we have a local static variable -> special treatment
+					// global static variables are treated like normal global variables..
 					boogieDec = new VariableDeclaration(loc, new Attribute[0],
 							new VarList[] { new VarList(loc, new String[] {bId}, 
 									translatedType) });
@@ -605,20 +606,36 @@ public class CHandler implements ICHandler {
 						if (result instanceof ResultSkip)// --> this line missing was a bug that eliminated the initialization of statements before the initialized
 							result = new ResultExpression((LRValue) null);
 
-						if (!onHeap)
+						VariableLHS lhs = new VariableLHS(loc, bId);
+						if (!onHeap) {
 							((ResultExpression) result).stmt.add(
-									new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, bId) }));
+									new HavocStatement(loc, new VariableLHS[] { lhs }));
+						} else {
+							LocalLValue llVal = new LocalLValue(lhs, cDec.getType());
+							((ResultExpression) result).stmt.add(memoryHandler.getMallocCall(main, functionHandler, 
+									memoryHandler.calculateSizeOf(cDec.getType(), loc), llVal , loc));
+							memoryHandler.addVariableToBeFreed(main, llVal);
+						}
 					} else if (cDec.hasInitializer() && !functionHandler.noCurrentProcedure() && !typeHandler.isStructDeclaration()) { 
 						//in case of a local variable declaration with an initializer, the statements and delcs
 						// necessary for the initialization are the result
 						assert result instanceof ResultSkip || result instanceof ResultExpression;
+						VariableLHS lhs = new VariableLHS(loc, bId);
 						ResultExpression initRex = 
 								PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, functionHandler,
 										structHandler, 
-										new VariableLHS(loc, bId), cDec.getType(),
+										lhs, cDec.getType(),
 										cDec.getInitializer());
 						if (result instanceof ResultSkip)
 							result = new ResultExpression((LRValue) null);
+						
+						if (onHeap) {
+							LocalLValue llVal = new LocalLValue(lhs, cDec.getType());
+							((ResultExpression) result).stmt.add(
+									memoryHandler.getMallocCall(main, functionHandler, 
+											memoryHandler.calculateSizeOf(cDec.getType(), loc), llVal, loc));
+							memoryHandler.addVariableToBeFreed(main, llVal);
+						}
 
 						((ResultExpression) result).stmt.addAll(initRex.stmt);
 						((ResultExpression) result).stmt.addAll(createHavocsForNonMallocAuxVars(initRex.auxVars));
@@ -640,8 +657,10 @@ public class CHandler implements ICHandler {
 					globalInBoogie |= functionHandler.noCurrentProcedure();
 				}
 
-				if (onHeap)
-					memoryHandler.addVariableToBeMallocedAndFreed(main, new LocalLValue(new VariableLHS(loc, bId), cDec.getType()));
+				//this is done via the resultExpression now -> malloc is inserted at the place of the (C-)declaration (may depend on variable values for variable
+				// length arrays), and then the variables is added as toBeFreed only (see above..)
+//				if (onHeap)
+//					memoryHandler.addVariableToBeMallocedAndFreed(main, new LocalLValue(new VariableLHS(loc, bId), cDec.getType()));
 				
 				symbolTable.put(cDec.getName(), new SymbolTableValue(bId,
 						boogieDec, cDec, globalInBoogie,
@@ -679,7 +698,7 @@ public class CHandler implements ICHandler {
 		if (node instanceof IASTArrayDeclarator) {
 			IASTArrayDeclarator arrDecl = (IASTArrayDeclarator) node;
 
-			boolean incomplete = false;
+			boolean variableLength = false;
 			ArrayList<Expression> sizeConstants = new ArrayList<Expression>();
 			Expression overallSize = new IntegerLiteral(loc, "1");
 			for (IASTArrayModifier am : arrDecl.getArrayModifiers()) {
@@ -687,7 +706,7 @@ public class CHandler implements ICHandler {
 				if (am.getConstantExpression() != null) {
 					constEx = (ResultExpression) main.
 							dispatch(am.getConstantExpression());
-				//he innermost array modifier may be empty, if there is an initializer; like int a[1][2][] = {...}
+				//the innermost array modifier may be empty, if there is an initializer; like int a[1][2][] = {...}
 				} else if (am.getConstantExpression() == null && 
 						arrDecl.getArrayModifiers()[arrDecl.getArrayModifiers().length - 1] == am) {
 					if (arrDecl.getInitializer() != null) {
@@ -702,7 +721,7 @@ public class CHandler implements ICHandler {
 												new Integer(initList.getSize()).toString()), 
 												new CPrimitive(PRIMITIVE.INT)));
 					} else { //we have an incomplete array type without an initializer -- this may happen in a function parameter..
-						incomplete = true;
+						variableLength = true;
 						constEx = new ResultExpression(
 								new RValue(
 										new IntegerLiteral(loc, "-1"),
@@ -716,10 +735,14 @@ public class CHandler implements ICHandler {
 						memoryHandler, structHandler, loc);
 				sizeConstants.add(constEx.lrVal.getValue());
 				overallSize = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
-						overallSize, constEx.lrVal.getValue(), loc);//
+						overallSize, constEx.lrVal.getValue(), loc);
+				//if all dimensions are given as integer literals, createArithmeticExpression(..) should return an integer literal
+				// otherwise we have a variable length array
+				if (!(overallSize instanceof IntegerLiteral))
+					variableLength = true;
 			}
 			CArray arrayType = null;
-			if (incomplete) {
+			if (variableLength) {
 				arrayType = new CArray(
 					sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType, true);
 			} else {

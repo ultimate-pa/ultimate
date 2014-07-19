@@ -98,6 +98,10 @@ public class MemoryHandler {
      * The set holding the Ids of all sizeof constants.
      */
     private LinkedHashSet<String> sizeofConsts;
+    
+    
+    
+    private LinkedHashSet<String> neededSizeofConsts;
     /**
      * The type describing a pointer.
      */
@@ -182,6 +186,7 @@ private boolean useConstantTypeSizes = true;
     public MemoryHandler(FunctionHandler functionHandler, boolean checkPointerValidity) {
     	m_functionHandler = functionHandler;
         this.sizeofConsts = new LinkedHashSet<String>();
+        this.neededSizeofConsts = new LinkedHashSet<String>();
         this.axioms = new LinkedHashSet<Axiom>();
         this.constants = new LinkedHashSet<ConstDeclaration>();
 		this.variablesToBeMalloced = new LinkedScopedHashMap<LocalLValue, Integer>();
@@ -926,13 +931,27 @@ private boolean useConstantTypeSizes = true;
     
     public Expression calculateSizeOf(CType cType, ILocation loc) {
     	if (useConstantTypeSizes) {
-    		return new IntegerLiteral(loc, new Integer(calculateSizeOfWithGivenTypeSizes(loc, cType)).toString());
+    		if((cType instanceof CArray) && ((CArray) cType).isVariableLength()) {
+    			return calculateSizeOfVarLengthArrayTypeWithGivenTypeSizes(loc, ((CArray) cType));
+    		} else {
+    			return new IntegerLiteral(loc, new Integer(calculateSizeOfWithGivenTypeSizes(loc, cType)).toString());
+    		}
     	} else {
     		return calculateSizeOfWithVariableTypeSizes(cType, loc);
     	}
     }
     
-    public int calculateSizeOfWithGivenTypeSizes(ILocation loc, CType cType) {
+    private Expression calculateSizeOfVarLengthArrayTypeWithGivenTypeSizes(
+			ILocation loc, CArray cArray) {
+    	Expression size = new IntegerLiteral(loc, 
+    			new Integer(calculateSizeOfWithGivenTypeSizes(loc, ((CArray) cArray).getValueType())).toString());
+    	for (Expression dim : ((CArray) cArray).getDimensions()) {
+    		size = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, size, dim, loc);
+    	}
+		return size;
+	}
+
+	public int calculateSizeOfWithGivenTypeSizes(ILocation loc, CType cType) {
 		int size = 0;
 		if (cType instanceof CPrimitive) {
 			switch (((CPrimitive) cType).getType()) {
@@ -1032,15 +1051,15 @@ private boolean useConstantTypeSizes = true;
     /**
      * Calculate the sizeof constants for the given CType.
      * 
-     * @param cvar
+     * @param cType
      *            the CVariable to work on.
      * @return a reference to the constant, holding sizeof cvar.
      */
-    public IdentifierExpression calculateSizeOfWithVariableTypeSizes(CType cvar, ILocation loc) {
+    public IdentifierExpression calculateSizeOfWithVariableTypeSizes(CType cType, ILocation loc) {
 
-    	assert cvar != null;
+    	assert cType != null;
     	ASTType intT = new PrimitiveType(loc, SFO.INT);
-    	String id = SFO.SIZEOF + cvar.toString();
+    	String id = SFO.SIZEOF + cType.toString();
     	IdentifierExpression idex = new IdentifierExpression(loc, id);
     	Attribute[] attr = new Attribute[0];
     	if (!sizeofConsts.contains(id)) {
@@ -1050,8 +1069,8 @@ private boolean useConstantTypeSizes = true;
     				Operator.COMPGT, idex, new IntegerLiteral(loc, SFO.NR0))));
     		sizeofConsts.add(id);
 
-    		if (cvar instanceof CArray) {
-    			CArray ca = (CArray) cvar;
+    		if (cType instanceof CArray) {
+    			CArray ca = (CArray) cType;
     			Expression valSize = calculateSizeOfWithVariableTypeSizes(ca.getValueType(), loc);
     			Expression nrElem = new IntegerLiteral(loc, "1");
     			for (Expression dim : ca.getDimensions()) 
@@ -1061,8 +1080,8 @@ private boolean useConstantTypeSizes = true;
     			Expression f = new BinaryExpression(loc, Operator.COMPEQ, idex,
     					size);
     			this.axioms.add(new Axiom(loc, attr, f));
-    		} else if (cvar instanceof CStruct) {
-    			CStruct cs = (CStruct) cvar;
+    		} else if (cType instanceof CStruct) {
+    			CStruct cs = (CStruct) cType;
     			if (cs.isIncomplete()) {
     				// do nothing
     			} else {
@@ -1070,7 +1089,7 @@ private boolean useConstantTypeSizes = true;
     				for (int i = 0; i < cs.getFieldCount(); i++) {
     					CType csf = cs.getFieldTypes()[i];
     					String csfId = cs.getFieldIds()[i];
-    					String oId = SFO.OFFSET + cvar.toString() + "~" + csfId;
+    					String oId = SFO.OFFSET + cType.toString() + "~" + csfId;
     					this.constants.add(new ConstDeclaration(loc, attr, false,
     							new VarList(loc, new String[] { oId }, intT), null,
     							false));
@@ -1088,7 +1107,7 @@ private boolean useConstantTypeSizes = true;
     					this.axioms.add(new Axiom(loc, attr, offsetOfField));
     					Expression fieldSize = calculateSizeOfWithVariableTypeSizes(csf, loc);
 
-    					if (cvar instanceof CUnion) {
+    					if (cType instanceof CUnion) {
     						this.axioms.add(new Axiom(loc, attr, 
     								new BinaryExpression(loc, Operator.COMPGEQ, idex, fieldSize)));
     					} else {//only in the struct case, the offsets grow, in the union case they stay at 0
@@ -1096,17 +1115,17 @@ private boolean useConstantTypeSizes = true;
     								nextOffset, fieldSize);
     					}
     				}
-    				if (!(cvar instanceof CUnion)) { //we have a normal struct
+    				if (!(cType instanceof CUnion)) { //we have a normal struct
     					// add an axiom : sizeof cvar (>)= nextOffset
     					Expression f = new BinaryExpression(loc, Operator.COMPGEQ,
     							idex, nextOffset);
     					this.axioms.add(new Axiom(loc, attr, f));
     				}
     			}
-    		} else if (cvar instanceof CNamed) {
+    		} else if (cType instanceof CNamed) {
     			// add an axiom, binding the sizeof of the named type to
     			// the sizeof of the underlying type
-    			CNamed cn = ((CNamed) cvar);
+    			CNamed cn = ((CNamed) cType);
     			Expression e = calculateSizeOfWithVariableTypeSizes(cn.getUnderlyingType(), loc);
     			Expression f = new BinaryExpression(loc, Operator.COMPEQ, idex,
     					e);
@@ -1114,7 +1133,7 @@ private boolean useConstantTypeSizes = true;
     			// NB: I'm not sure, if this is really required! I think we
     			// resolve all named types during translation anyway ... and the
     			// constants accordingly ...
-    		} else if (cvar instanceof CEnum) {
+    		} else if (cType instanceof CEnum) {
     			// Here we return a new constant, which might (!) be
     			// different from all others (i.e. not the same as int!)
     			// the size of these variables is not bound to any value, except

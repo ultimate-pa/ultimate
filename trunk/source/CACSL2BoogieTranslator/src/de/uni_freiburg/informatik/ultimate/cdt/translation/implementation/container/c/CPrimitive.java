@@ -184,7 +184,20 @@ public class CPrimitive extends CType {
                 			this.type = PRIMITIVE.INT;
                     break;
                 case IASTSimpleDeclSpecifier.t_unspecified:
-                    this.type = PRIMITIVE.INT;
+                	if (sds.isUnsigned())
+                		if (sds.isLong())
+                			this.type = PRIMITIVE.ULONG;
+                		else if (sds.isLongLong())
+                			this.type = PRIMITIVE.ULONGLONG;
+                		else
+                			this.type = PRIMITIVE.UINT;
+                	else                 		
+                		if (sds.isLong())
+                			this.type = PRIMITIVE.LONG;
+                		else if (sds.isLongLong())
+                			this.type = PRIMITIVE.LONGLONG;
+                		else
+                			this.type = PRIMITIVE.INT;
                     break;
                 case IASTSimpleDeclSpecifier.t_void:
                     this.type = PRIMITIVE.VOID;

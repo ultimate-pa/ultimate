@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.result.Check;
@@ -32,7 +33,14 @@ public class CArray extends CType {
      */
     private final CType valueType;
 
-    private final boolean incomplete;
+    /**
+     * supposed to be true iff the array is of variable length.
+     * I.e. at least one of the dimensions is not an IntegerLiteral, or there
+     * are no dimensions given (only the case with a function parameter, right? - the other
+     * case where one dimension is only given via the initializer should be resolved right at 
+     * initialization..)
+     */
+    private final boolean variableLength;
     
     /**
      * Constructor.
@@ -49,16 +57,16 @@ public class CArray extends CType {
         super(false, false, false, false); //FIXME: integrate those flags
         this.dimensions = dimensions;
         this.valueType = valueType;
-        this.incomplete = false;
+        this.variableLength = false;
     }
     
     public CArray(Expression[] dimensions,
-            CType valueType, boolean incomplete) {
+            CType valueType, boolean varLength) {
         super(false, false, false, false); //FIXME: integrate those flags
-        assert incomplete : "use other constructor otherwise";
+        assert varLength : "use other constructor otherwise";
         this.valueType = valueType;
         this.dimensions = dimensions;
-        this.incomplete = true;
+        this.variableLength = true;
     }
 
     /**
@@ -138,15 +146,19 @@ public class CArray extends CType {
             if (dim instanceof IntegerLiteral) {
                 dimString.append(((IntegerLiteral) dim).getValue());
                 dimString.append("_");
-            }
-            else {
-                dimString = new StringBuilder("incomplete");
+            } else if (dim instanceof IdentifierExpression) {
+            	dimString.append(((IdentifierExpression) dim).getIdentifier());
+                dimString.append("_");
+            } else {
+//                dimString = new StringBuilder("variableLength");
+                dimString.append("variableLength");
+                dimString.append("_");
                 break;
             }
         }
         
-        if (incomplete) {
-        	id.append("_INCOMPLETE");
+        if (variableLength) {
+        	id.append("_VARLENGTH");
         }
 //        id.append(getDimensions().length);
         id.append(dimString.toString());
@@ -156,8 +168,8 @@ public class CArray extends CType {
         return id.toString();
     }
     
-    public boolean isIncomplete() {
-    	return this.incomplete;
+    public boolean isVariableLength() {
+    	return this.variableLength;
     }
     
     /**
@@ -208,14 +220,14 @@ public class CArray extends CType {
             }
             else {
                 throw new UnsupportedSyntaxException(e.getLocation(),
-                        "arithmetic expression with oeprator " + operator);
+                        "arithmetic expression with operator " + operator);
             }
         } else {
             UnaryExpression ue = (UnaryExpression)e;
             UnaryExpression.Operator operator = ue.getOperator();
             if (! operator.equals(UnaryExpression.Operator.ARITHNEGATIVE)) {
                 throw new UnsupportedSyntaxException(e.getLocation(),
-                        "arithmetic expression with oeprator " + operator);
+                        "arithmetic expression with operator " + operator);
             }
             return 0 - getArithmeticResultAsInteger(ue.getExpr());
         }

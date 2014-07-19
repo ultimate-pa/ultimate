@@ -72,8 +72,8 @@ public class PostProcessor {
 	 */
 	private LinkedHashSet<String> mInitializedGlobals;
 
-//	private boolean mSomethingOnHeapIsInitialized = false;
-		
+	//	private boolean mSomethingOnHeapIsInitialized = false;
+
 	/**
 	 * Constructor.
 	 */
@@ -162,7 +162,7 @@ public class PostProcessor {
 			StructHandler structHandler, LinkedHashMap<Declaration, CDeclaration> mDeclarationsGlobalInBoogie) {
 		functionHandler.beginUltimateInit(main, loc, SFO.INIT);
 		ArrayList<Statement> initStatements = new ArrayList<Statement>();
-		
+
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		ArrayList<VariableDeclaration> initDecl = new ArrayList<VariableDeclaration>();
 		if (main.isMMRequired()) {
@@ -181,7 +181,7 @@ public class PostProcessor {
 			initStatements.add(0, new AssignmentStatement(loc, 
 					new LeftHandSide[] { slhs }, 
 					new Expression[] { new StructConstructor(loc, new String[]{"base", "offset"}, 
-				    		new Expression[]{new IntegerLiteral(loc, "0"), new IntegerLiteral(loc, "0")})}));
+							new Expression[]{new IntegerLiteral(loc, "0"), new IntegerLiteral(loc, "0")})}));
 			mInitializedGlobals.add(SFO.NULL);
 		}
 		for (Statement stmt : initStatements) {
@@ -193,35 +193,40 @@ public class PostProcessor {
 				mInitializedGlobals.add(id);
 			}
 		}
-		
-	
+
+
 		//initialization for statics and other globals
 		for (Entry<Declaration, CDeclaration> en : mDeclarationsGlobalInBoogie.entrySet()) {
 			if (en.getKey() instanceof TypeDeclaration)
 				continue;
 			ResultExpression initializer = en.getValue().getInitializer();
-//			if (en.getValue().isOnHeap()) 
-//				mSomethingOnHeapIsInitialized |= true; //should be obsolete..
-			
-			if (initializer != null) {
-				assert ((VariableDeclaration)en.getKey()).getVariables().length == 1 
-						&& ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers().length == 1;
-				String bId = ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers()[0].toString();
-				ResultExpression initRex = 
-						PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler, 
-								new VariableLHS(loc, bId), en.getValue().getType(), initializer);
-				initStatements.addAll(initRex.stmt);
-				initStatements.addAll(CHandler.createHavocsForNonMallocAuxVars(initRex.auxVars));
-				for (Declaration d : initRex.decl)
-					initDecl.add((VariableDeclaration) d);
-			} else { //no initializer --> default initialization
-				for (VarList vl  : ((VariableDeclaration) en.getKey()).getVariables()) {
-					for (String id : vl.getIdentifiers()) {
+
+			for (VarList vl  : ((VariableDeclaration) en.getKey()).getVariables()) {
+				for (String id : vl.getIdentifiers()) {
+					if (main.cHandler.isHeapVar(id)) {
+						initStatements.add(memoryHandler.getMallocCall(main, functionHandler, 
+								memoryHandler.calculateSizeOf(en.getValue().getType(), loc), 
+								new LocalLValue(new VariableLHS(loc, id), en.getValue().getType()), loc));
+					}
+
+					if (initializer != null) {
+						assert ((VariableDeclaration)en.getKey()).getVariables().length == 1 
+								&& ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers().length == 1;
+//						String bId = ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers()[0].toString();
+						ResultExpression initRex = 
+								PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler, 
+//										new VariableLHS(loc, bId), en.getValue().getType(), initializer);
+										new VariableLHS(loc, id), en.getValue().getType(), initializer);
+						initStatements.addAll(initRex.stmt);
+						initStatements.addAll(CHandler.createHavocsForNonMallocAuxVars(initRex.auxVars));
+						for (Declaration d : initRex.decl)
+							initDecl.add((VariableDeclaration) d);
+					} else { //no initializer --> default initialization
 						ResultExpression nullInitializer = initVar(loc, main, 
 								memoryHandler, arrayHandler, functionHandler, structHandler, 
-										new VariableLHS(loc, id),
-										en.getValue().getType(), null) ;
-						
+								new VariableLHS(loc, id),
+								en.getValue().getType(), null) ;
+
 						initStatements.addAll(nullInitializer.stmt);
 						initStatements.addAll(CHandler.createHavocsForNonMallocAuxVars(nullInitializer.auxVars));
 						for (Declaration d : nullInitializer.decl)
@@ -232,26 +237,26 @@ public class PostProcessor {
 			for (VarList vl  : ((VariableDeclaration) en.getKey()).getVariables())
 				mInitializedGlobals.addAll(Arrays.asList(vl.getIdentifiers()));
 		}
-		
+
 		mInitializedGlobals.addAll(functionHandler.getModifiedGlobals().get(SFO.INIT));
-		
+
 		Specification[] specsInit = new Specification[1];
-		
+
 		VariableLHS[] modifyList = new VariableLHS[
 //		                                           mSomethingOnHeapIsInitialized ? 
 //				mInitializedGlobals.size() + 4 :
-				//mInitializedGlobals.size() + 3: //FIXME: changed from 4 to 3 when removing boolean memory model array --> still very dirty.. 
-					mInitializedGlobals.size()];
+//mInitializedGlobals.size() + 3: //FIXME: changed from 4 to 3 when removing boolean memory model array --> still very dirty.. 
+mInitializedGlobals.size()];
 		int i = 0;
 		for (String var: mInitializedGlobals) {
 			modifyList[i++] = new VariableLHS(loc, var);
 		}
-//		if (mSomethingOnHeapIsInitialized) {
-//			for (String t : new String[] { SFO.INT, SFO.POINTER,
-//						SFO.REAL/*, SFO.BOOL*/ }) {
-//				modifyList[i++] = new VariableLHS(loc, SFO.MEMORY + "_" + t);
-//			}		
-//		}
+		//		if (mSomethingOnHeapIsInitialized) {
+		//			for (String t : new String[] { SFO.INT, SFO.POINTER,
+		//						SFO.REAL/*, SFO.BOOL*/ }) {
+		//				modifyList[i++] = new VariableLHS(loc, SFO.MEMORY + "_" + t);
+		//			}		
+		//		}
 		specsInit[0] = new ModifiesSpecification(loc, false, modifyList);
 		Procedure initProcedureDecl = new Procedure(loc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], specsInit, null);
@@ -260,11 +265,11 @@ public class PostProcessor {
 				initStatements.toArray(new Statement[0]));
 		decl.add(new Procedure(loc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], null, initBody));
-		
+
 		functionHandler.endUltimateInit(main, initProcedureDecl, SFO.INIT);
 		return decl;
 	}
-	
+
 	/**
 	 * Initializes global variables recursively, according to ISO/IEC 9899:TC3,
 	 * 6.7.8 §10:<br>
@@ -306,17 +311,17 @@ public class PostProcessor {
 			StructHandler structHandler, 
 			final LeftHandSide lhs,
 			CType cType, ResultExpression initializerRaw) {
-			
+
 		boolean onHeap = false;
 		if (lhs != null && lhs instanceof VariableLHS) 
 			onHeap = ((CHandler )main.cHandler).isHeapVar(((VariableLHS) lhs).getIdentifier());
-		
+
 		LRValue var = null;
 		if (onHeap)
 			var = new HeapLValue(new IdentifierExpression(loc, ((VariableLHS)lhs).getIdentifier()), cType);
 		else
 			var = lhs == null ? null : new LocalLValue(lhs, cType);
-			
+
 
 		return initVar(loc, main, memoryHandler, arrayHandler, functionHandler, 
 				structHandler, var, cType, initializerRaw);
@@ -335,19 +340,19 @@ public class PostProcessor {
 			CType cType, ResultExpression initializerRaw
 			) {
 		assert var == null || var instanceof LocalLValue || var instanceof HeapLValue;
-		
+
 		boolean onHeap = var instanceof HeapLValue;
-		
+
 		CType lCType = cType.getUnderlyingType();
-		
+
 		assert !onHeap || var != null : "Cannot store something on heap without an identifier to begin with.";
-	
+
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
 		LRValue lrVal = null;
-		
+
 		//if (f.i.) the initializer comes from a function call, it has statements and declarations that we need to
 		//carry over
 		ResultExpression initializer = null;
@@ -359,7 +364,7 @@ public class PostProcessor {
 			overappr.addAll(initializer.overappr);
 			auxVars.putAll(initializer.auxVars);
 		}
-		
+
 		VariableLHS lhs = null;
 		if (var instanceof LocalLValue)
 			lhs = (VariableLHS) ((LocalLValue) var).getLHS();
@@ -389,7 +394,7 @@ public class PostProcessor {
 				if (onHeap) {
 					stmt.addAll(memoryHandler.getWriteCall(
 							(HeapLValue) var,
-									new RValue(rhs, cType)));
+							new RValue(rhs, cType)));
 				} else {
 					assert lhs != null;
 					stmt.add(new AssignmentStatement(loc, 
@@ -408,7 +413,7 @@ public class PostProcessor {
 						|| initializerUnderlyingType instanceof CArray) {
 					rhs = initializer.lrVal.getValue();
 				} else if (initializerUnderlyingType instanceof CPrimitive 
-//						&& ((CPrimitive) initializerUnderlyingType).getType() == PRIMITIVE.INT){
+						//						&& ((CPrimitive) initializerUnderlyingType).getType() == PRIMITIVE.INT){
 						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == GENERALPRIMITIVE.INTTYPE){
 					String offset = ((IntegerLiteral) initializer.lrVal.getValue()).getValue();
 					if (offset.equals("0")) {
@@ -453,17 +458,17 @@ public class PostProcessor {
 				stmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, structHandler, loc, 
 						initializer == null ? null : ((ResultExpressionListRec) initializer).list,
 								address,
-						functionHandler, (CArray) lCType));
+								functionHandler, (CArray) lCType));
 			} else { //not on Heap
 				stmt.addAll(arrayHandler.initBoogieArray(main, memoryHandler, structHandler, functionHandler, loc,
 						initializer == null ? null : ((ResultExpressionListRec) initializer).list,
-						lhs, (CArray) lCType));
+								lhs, (CArray) lCType));
 			}
 			assert lhs != null;
 		} else if (lCType instanceof CStruct) {
-			
+
 			CStruct structType = (CStruct) lCType;
-			
+
 			if (onHeap) {
 				assert var != null;
 				ResultExpression heapWrites = structHandler.initStructOnHeapFromRERL(main, 
@@ -527,20 +532,20 @@ public class PostProcessor {
 		functionHandler.beginUltimateInit(main, loc, SFO.START);
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		String checkMethod = main.getCheckedMethod();
-		
+
 		Procedure startDeclaration = null;
 		Specification[] specsStart = new Specification[0];
-		
+
 		if (functionHandler.getCallGraph().containsKey(SFO.START))
-				functionHandler.getCallGraph().put(SFO.START, new LinkedHashSet<String>());
+			functionHandler.getCallGraph().put(SFO.START, new LinkedHashSet<String>());
 		functionHandler.getCallGraph().get(SFO.START).add(SFO.INIT);
-		
+
 		if (!checkMethod.equals(SFO.EMPTY)
 				&& procedures.containsKey(checkMethod)) {
 			IHandler.s_Logger.info("Settings: Checked method=" + checkMethod);
 
 			functionHandler.getCallGraph().get(SFO.START).add(checkMethod);
-			
+
 			ArrayList<Statement> startStmt = new ArrayList<Statement>();
 			ArrayList<VariableDeclaration> startDecl = new ArrayList<VariableDeclaration>();
 			specsStart = new Specification[1];
@@ -551,7 +556,7 @@ public class PostProcessor {
 			ArrayList<Expression> args = new ArrayList<Expression>();
 			if (in.length > 0) {
 				startDecl
-						.add(new VariableDeclaration(loc, new Attribute[0], in));
+				.add(new VariableDeclaration(loc, new Attribute[0], in));
 				for (VarList arg : in) {
 					assert arg.getIdentifiers().length == 1; // by construction
 					String id = arg.getIdentifiers()[0];
@@ -580,12 +585,12 @@ public class PostProcessor {
 			LinkedHashSet<VariableLHS> startModifiesClause = new LinkedHashSet<VariableLHS>();
 			for (String id: mInitializedGlobals)
 				startModifiesClause.add(new VariableLHS(loc, id));
-//			if (mSomethingOnHeapIsInitialized) {
-//				for (String t : new String[] { SFO.INT, SFO.POINTER,
-//						SFO.REAL/*, SFO.BOOL */}) {
-//					startModifiesClause.add(new VariableLHS(loc, SFO.MEMORY + "_" + t));
-//				}		
-//			}
+			//			if (mSomethingOnHeapIsInitialized) {
+			//				for (String t : new String[] { SFO.INT, SFO.POINTER,
+			//						SFO.REAL/*, SFO.BOOL */}) {
+			//					startModifiesClause.add(new VariableLHS(loc, SFO.MEMORY + "_" + t));
+			//				}		
+			//			}
 			for (String id: modifiedGlobals.get(checkMethod))
 				startModifiesClause.add(new VariableLHS(loc, id));
 			specsStart[0] = new ModifiesSpecification(loc, false,
@@ -598,12 +603,12 @@ public class PostProcessor {
 					new String[0], new VarList[0], new VarList[0], null,
 					startBody));
 
-//		} else if (!checkMethod.equals(SFO.EMPTY) //alex, 28.5.2014: this should be obsolete as in this case, DetermineNecessaryDeclarations should have made the warning
-//				&& !procedures.containsKey(checkMethod)) {
-//			String msg = "You specified the starting procedure: "
-//					+ checkMethod
-//					+ "\n The program does not have this method. ULTIMATE will continue in library mode (i.e., each procedure can be starting procedure and global variables are not initialized).";
-//			Dispatcher.warn(loc, msg);
+			//		} else if (!checkMethod.equals(SFO.EMPTY) //alex, 28.5.2014: this should be obsolete as in this case, DetermineNecessaryDeclarations should have made the warning
+			//				&& !procedures.containsKey(checkMethod)) {
+			//			String msg = "You specified the starting procedure: "
+			//					+ checkMethod
+			//					+ "\n The program does not have this method. ULTIMATE will continue in library mode (i.e., each procedure can be starting procedure and global variables are not initialized).";
+			//			Dispatcher.warn(loc, msg);
 		} else {
 			IHandler.s_Logger.info("Settings: Library mode!");
 			if (procedures.containsKey("main")) {
