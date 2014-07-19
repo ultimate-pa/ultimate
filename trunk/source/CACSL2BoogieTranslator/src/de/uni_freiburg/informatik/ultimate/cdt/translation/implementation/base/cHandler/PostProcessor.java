@@ -212,10 +212,8 @@ public class PostProcessor {
 					if (initializer != null) {
 						assert ((VariableDeclaration)en.getKey()).getVariables().length == 1 
 								&& ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers().length == 1;
-//						String bId = ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers()[0].toString();
 						ResultExpression initRex = 
 								PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler, 
-//										new VariableLHS(loc, bId), en.getValue().getType(), initializer);
 										new VariableLHS(loc, id), en.getValue().getType(), initializer);
 						initStatements.addAll(initRex.stmt);
 						initStatements.addAll(CHandler.createHavocsForNonMallocAuxVars(initRex.auxVars));

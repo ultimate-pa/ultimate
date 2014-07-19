@@ -657,11 +657,6 @@ public class CHandler implements ICHandler {
 					globalInBoogie |= functionHandler.noCurrentProcedure();
 				}
 
-				//this is done via the resultExpression now -> malloc is inserted at the place of the (C-)declaration (may depend on variable values for variable
-				// length arrays), and then the variables is added as toBeFreed only (see above..)
-//				if (onHeap)
-//					memoryHandler.addVariableToBeMallocedAndFreed(main, new LocalLValue(new VariableLHS(loc, bId), cDec.getType()));
-				
 				symbolTable.put(cDec.getName(), new SymbolTableValue(bId,
 						boogieDec, cDec, globalInBoogie,
 						storageClass)); 

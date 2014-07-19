@@ -98,10 +98,6 @@ public class MemoryHandler {
      * The set holding the Ids of all sizeof constants.
      */
     private LinkedHashSet<String> sizeofConsts;
-    
-    
-    
-    private LinkedHashSet<String> neededSizeofConsts;
     /**
      * The type describing a pointer.
      */
@@ -186,7 +182,6 @@ private boolean useConstantTypeSizes = true;
     public MemoryHandler(FunctionHandler functionHandler, boolean checkPointerValidity) {
     	m_functionHandler = functionHandler;
         this.sizeofConsts = new LinkedHashSet<String>();
-        this.neededSizeofConsts = new LinkedHashSet<String>();
         this.axioms = new LinkedHashSet<Axiom>();
         this.constants = new LinkedHashSet<ConstDeclaration>();
 		this.variablesToBeMalloced = new LinkedScopedHashMap<LocalLValue, Integer>();
@@ -356,6 +351,7 @@ private boolean useConstantTypeSizes = true;
         Expression idex = new IdentifierExpression(l, id);
         if (this.useConstantTypeSizes) {
         //axiom #sizeof~t = 8	 (or another constant, dependent on the settings)
+        	//TODO: add the missing cases to the switch
         	int value = 0;
         	switch (t) {
         	case "INT":
