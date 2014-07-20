@@ -6,14 +6,19 @@
 
 extern int __VERIFIER_nondet_int(void);
 
+
+void swap(int a[], int i, int j) {
+    int tmp = a[i];
+    a[i] = a[j];
+    a[j] = tmp;
+}
+
 void bubblesort(int a[], int i) {
     while (i>=0) {
         int j = 0;
         while (j < i) {
             if (a[j] > a[i]) {
-                int tmp = a[i];
-                a[i] = a[j];
-                a[j] = tmp;
+                swap(a,i,j);
             }
             j++;
         }
