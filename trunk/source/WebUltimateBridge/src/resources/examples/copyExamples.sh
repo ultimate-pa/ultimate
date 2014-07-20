@@ -74,6 +74,7 @@ done
 
 
 TERMINATION_C=(
+	"../../../../../examples/programs/termination/Bubblesort_true-termination.c"
 	"../../../../../examples/programs/termination/MicrosoftZuneBug_false-termination.c"
 	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/*.c"
 	)
