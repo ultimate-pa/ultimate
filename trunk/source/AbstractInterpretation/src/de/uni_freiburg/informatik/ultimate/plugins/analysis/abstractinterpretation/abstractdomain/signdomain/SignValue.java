@@ -3,6 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 
 /**
@@ -13,8 +14,11 @@ public class SignValue implements IAbstractValue {
 	
 	/**
 	 * Possible values for the sign domain.
-	 * EMPTY < ZERO < PLUS, MINUS < PLUSMINUS
-	 * PLUS, MINUS : no relation
+	 * EMPTY < ZERO, PLUS, MINUS < PLUSMINUS
+	 * ZERO, PLUS, MINUS : no relation
+	 * ZERO : 0
+	 * PLUS : > 0
+	 * MINUS : < 0
 	 */
 	public enum Sign {
 		EMPTY, ZERO, PLUS, MINUS, PLUSMINUS
@@ -59,6 +63,20 @@ public class SignValue implements IAbstractValue {
 	}
 
 	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#isEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public boolean isEqual(IAbstractValue value) {
+		SignValue sval = (SignValue) value;
+		
+		// incompatible domain system
+		if (sval == null)
+			return false;
+		
+		return (m_value == sval.getValue());
+	}
+
+	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#isGreater(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
@@ -75,7 +93,7 @@ public class SignValue implements IAbstractValue {
 		if (m_value == sval.getValue())
 			return true;
 		
-		if (sval.getValue() == Sign.ZERO)
+		if (sval.getValue() == Sign.EMPTY)
 			return true;
 		
 		return false;
@@ -92,7 +110,7 @@ public class SignValue implements IAbstractValue {
 		if (sval == null)
 			return false;
 		
-		if (m_value == Sign.ZERO)
+		if (m_value == Sign.EMPTY)
 			return true;
 		
 		if (m_value == sval.getValue())
@@ -119,8 +137,7 @@ public class SignValue implements IAbstractValue {
 	public SignValue add(IAbstractValue value) {
 		SignValue sval = (SignValue) value;
 		
-		if (sval == null)
-			return null;
+		if (sval == null) return new SignValue(Sign.EMPTY);
 		
 		Sign otherSign = sval.getValue();
 		
@@ -162,9 +179,8 @@ public class SignValue implements IAbstractValue {
 	@Override
 	public SignValue subtract(IAbstractValue value) {
 		SignValue sval = (SignValue) value;
-		
-		if (sval == null)
-			return null;
+				
+		if (sval == null) return new SignValue(Sign.EMPTY);
 		
 		Sign otherSign = sval.getValue();
 		
@@ -217,8 +233,7 @@ public class SignValue implements IAbstractValue {
 	public SignValue multiply(IAbstractValue value) {
 		SignValue sval = (SignValue) value;
 		
-		if (sval == null)
-			return null;
+		if (sval == null) return new SignValue(Sign.EMPTY);
 		
 		Sign otherSign = sval.getValue();
 		
@@ -264,12 +279,13 @@ public class SignValue implements IAbstractValue {
 	@Override
 	public SignValue divide(IAbstractValue value) {
 		SignValue sval = (SignValue) value;
+
+		if (sval == null) return new SignValue(Sign.EMPTY);
 		
-		if (sval == null)
-			return null;
-		
-		if (sval.getValue() == Sign.ZERO)
-			return null; // TODO: throw exception???
+		if ((sval.getValue() == Sign.ZERO) || (sval.getValue() == Sign.PLUSMINUS)) {
+			AbstractInterpreter.getLogger().warn(String.format("Potential division by zero: %s / %s", this, sval));
+			return new SignValue(Sign.EMPTY);
+		}
 		
 		return this.multiply(value);
 	}
@@ -280,12 +296,13 @@ public class SignValue implements IAbstractValue {
 	@Override
 	public SignValue modulo(IAbstractValue value) {
 		SignValue sval = (SignValue) value;
-		
-		if (sval == null)
-			return null;
-		
-		if (sval.getValue() == Sign.ZERO)
-			return null; // TODO: throw exception???
+
+		if (sval == null) return new SignValue(Sign.EMPTY);
+
+		if ((sval.getValue() == Sign.ZERO) || (sval.getValue() == Sign.PLUSMINUS)) {
+			AbstractInterpreter.getLogger().warn(String.format("Potential modulo division by zero: %s %% %s", this, sval));
+			return new SignValue(Sign.EMPTY);
+		}
 		
 		return new SignValue(Sign.PLUS); // remainder is always >= 0
 	}
@@ -311,9 +328,8 @@ public class SignValue implements IAbstractValue {
 	@Override
 	public SignValue compareIsEqual(IAbstractValue value) {
 		SignValue sval = (SignValue) value;
-		
-		if (sval == null)
-			return null;
+
+		if (sval == null) return new SignValue(Sign.EMPTY);
 		
 		Sign otherSign = sval.getValue();
 		
@@ -322,26 +338,32 @@ public class SignValue implements IAbstractValue {
 		
 		switch (m_value) {
 		case ZERO :
-			return new SignValue(Sign.ZERO);
-		case PLUS :
 			switch (otherSign) {
 			case ZERO :
-			case MINUS :
+			case PLUSMINUS :
 				return new SignValue(Sign.ZERO);
+			case MINUS :
+			case PLUS :
+			default :
+				return new SignValue(Sign.EMPTY);
+			}
+		case PLUS :
+			switch (otherSign) {
 			case PLUS :
 			case PLUSMINUS :
 				return new SignValue(Sign.PLUS);
+			case ZERO :
+			case MINUS :
 			default :
 				return new SignValue(Sign.EMPTY);
 			}
 		case MINUS :
 			switch (otherSign) {
-			case ZERO :
-			case PLUS :
-				return new SignValue(Sign.ZERO);
 			case MINUS :
 			case PLUSMINUS :
 				return new SignValue(Sign.MINUS);
+			case ZERO :
+			case PLUS :
 			default :
 				return new SignValue(Sign.EMPTY);
 			}
@@ -358,9 +380,8 @@ public class SignValue implements IAbstractValue {
 	@Override
 	public SignValue compareIsNotEqual(IAbstractValue value) {
 		SignValue sval = (SignValue) value;
-		
-		if (sval == null)
-			return null;
+
+		if (sval == null) return new SignValue(Sign.EMPTY);
 		
 		Sign otherSign = sval.getValue();
 		
@@ -368,16 +389,15 @@ public class SignValue implements IAbstractValue {
 		case ZERO :
 			switch (otherSign) {
 			case ZERO :
-			case EMPTY :
 				return new SignValue(Sign.EMPTY);
 			default :
 				return new SignValue(otherSign);
 			}
 		case PLUS :
 			switch (otherSign) {
-			case ZERO :
 			case PLUS :
 				return new SignValue(Sign.PLUS);
+			case ZERO :
 			case MINUS :
 			case PLUSMINUS :
 				return new SignValue(Sign.PLUSMINUS);
@@ -386,10 +406,10 @@ public class SignValue implements IAbstractValue {
 			}
 		case MINUS :
 			switch (otherSign) {
-			case ZERO :
 			case MINUS :
 				return new SignValue(Sign.MINUS);
 			case PLUS :
+			case ZERO :
 			case PLUSMINUS :
 				return new SignValue(Sign.PLUSMINUS);
 			default :
@@ -408,9 +428,8 @@ public class SignValue implements IAbstractValue {
 	@Override
 	public SignValue compareIsLess(IAbstractValue value) {
 		SignValue sval = (SignValue) value;
-		
-		if (sval == null)
-			return null;
+
+		if (sval == null) return new SignValue(Sign.EMPTY);
 		
 		Sign otherSign = sval.getValue();
 		
@@ -436,7 +455,7 @@ public class SignValue implements IAbstractValue {
 				return new SignValue(Sign.EMPTY);
 			}
 		case MINUS :
-			return new SignValue(Sign.MINUS);
+			return new SignValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.MINUS);
 		case PLUSMINUS :
 			switch (otherSign) {
 			case ZERO :
@@ -459,9 +478,8 @@ public class SignValue implements IAbstractValue {
 	@Override
 	public SignValue compareIsGreater(IAbstractValue value) {
 		SignValue sval = (SignValue) value;
-		
-		if (sval == null)
-			return null;
+
+		if (sval == null) return new SignValue(Sign.EMPTY);
 		
 		Sign otherSign = sval.getValue();
 		
@@ -477,7 +495,7 @@ public class SignValue implements IAbstractValue {
 				return new SignValue(Sign.EMPTY);
 			}
 		case PLUS :
-			return new SignValue(Sign.PLUS);
+			return new SignValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.PLUS);
 		case MINUS :
 			switch (otherSign) {
 			case MINUS :
@@ -510,28 +528,34 @@ public class SignValue implements IAbstractValue {
 	@Override
 	public SignValue compareIsLessEqual(IAbstractValue value) {
 		SignValue sval = (SignValue) value;
-		
-		if (sval == null)
-			return null;
+
+		if (sval == null) return new SignValue(Sign.EMPTY);
 		
 		Sign otherSign = sval.getValue();
 		
 		switch (m_value) {
 		case ZERO :
-			return new SignValue(Sign.ZERO);
-		case PLUS :
 			switch (otherSign) {
 			case ZERO :
-			case MINUS :
+			case PLUS :
+			case PLUSMINUS :
 				return new SignValue(Sign.ZERO);
+			case MINUS :
+			default :
+				return new SignValue(Sign.EMPTY);
+			}
+		case PLUS :
+			switch (otherSign) {
 			case PLUS :
 			case PLUSMINUS :
 				return new SignValue(Sign.PLUS);
+			case ZERO :
+			case MINUS :
 			default :
 				return new SignValue(Sign.EMPTY);
 			}
 		case MINUS :
-			return new SignValue(Sign.MINUS);
+			return new SignValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.MINUS);
 		case PLUSMINUS :
 			switch (otherSign) {
 			case ZERO :
@@ -554,25 +578,31 @@ public class SignValue implements IAbstractValue {
 	@Override
 	public SignValue compareIsGreaterEqual(IAbstractValue value) {
 		SignValue sval = (SignValue) value;
-		
-		if (sval == null)
-			return null;
+
+		if (sval == null) return new SignValue(Sign.EMPTY);
 		
 		Sign otherSign = sval.getValue();
 		
 		switch (m_value) {
 		case ZERO :
-			return new SignValue(Sign.ZERO);
-		case PLUS :
-			return new SignValue(Sign.PLUS);
-		case MINUS :
 			switch (otherSign) {
 			case ZERO :
-			case PLUS :
+			case MINUS :
+			case PLUSMINUS :
 				return new SignValue(Sign.ZERO);
+			case PLUS :
+			default :
+				return new SignValue(Sign.EMPTY);
+			}
+		case PLUS :
+			return new SignValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.PLUS);
+		case MINUS :
+			switch (otherSign) {
 			case MINUS :
 			case PLUSMINUS :
 				return new SignValue(Sign.MINUS);
+			case ZERO :
+			case PLUS :
 			default :
 				return new SignValue(Sign.EMPTY);
 			}
@@ -596,15 +626,15 @@ public class SignValue implements IAbstractValue {
 	public String toString() {
 		switch (m_value) {
 		case ZERO :
-			return "0";
+			return "Sign: 0";
 		case PLUS :
-			return "+";
+			return "Sign: +";
 		case MINUS :
-			return "-";
+			return "Sign: -";
 		case PLUSMINUS :
-			return "+-";
+			return "Sign: +-";
 		default :
-			return "empty";
+			return "Sign: empty";
 		}
 	}
 }

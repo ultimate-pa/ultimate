@@ -3,6 +3,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.AbstractInterpreter;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractDomainRegistry;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IMergeOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IWideningOperator;
@@ -77,8 +79,15 @@ public class SignDomainFactory implements IAbstractDomainFactory {
 	 */
 	@Override
 	public IWideningOperator makeWideningOperator() {
-		// TODO: Check preferences for the chosen one
-		return new SignMergeWidenOperator();
+		IWideningOperator chosenOp;
+		try {
+			chosenOp = AbstractDomainRegistry.getWideningOperator(getDomainID(), AbstractInterpreter.getNumberWideningOperatorName()).newInstance();
+		} catch (InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+		return chosenOp;
 	}
 
 	/* (non-Javadoc)
@@ -86,8 +95,15 @@ public class SignDomainFactory implements IAbstractDomainFactory {
 	 */
 	@Override
 	public IMergeOperator makeMergeOperator() {
-		// TODO: Check preferences for the chosen one
-		return new SignMergeWidenOperator();
+		IMergeOperator chosenOp;
+		try {
+			chosenOp = AbstractDomainRegistry.getMergeOperator(getDomainID(), AbstractInterpreter.getNumberMergeOperatorName()).newInstance();
+		} catch (InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+		return chosenOp;
 	}
 
 }

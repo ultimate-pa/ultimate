@@ -6,12 +6,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.AbstractInterpreter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
 /**
  * An AbstractState represents an abstract program state, mapping variable
@@ -21,11 +22,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Christopher Dillo
  */
 public class AbstractState {
+
+	/**
+	 * Set of nodes which are loop entries and thus apply for widening with a visit-counter for each node
+	 */
+	private final Map<RCFGNode, Integer> m_loopEntryNodes = new HashMap<RCFGNode, Integer>();
 	
 	/**
-	 * The statement whose evaluation resulted in this state
+	 * Sequence of nodes passed leading to this state -> "execution trace" 
 	 */
-	private Statement m_sourceStatement = null;
+	private final List<RCFGNode> m_passedNodes = new LinkedList<RCFGNode>();
+	
+	/**
+	 * True if the state at a node has been processed already (prevent processing the same state twice)
+	 */
+	private boolean m_isProcessed = false;
 	
 	/**
 	 * Stack of maps from variable identifiers to values. Stack levels represent scope levels,
@@ -35,20 +46,6 @@ public class AbstractState {
 	
 	public AbstractState() {
 		pushStackLayer(); // global scope
-	}
-	
-	/**
-	 * @return The statement whose evaluation resulted in this state
-	 */
-	public Statement getSourceStatement() {
-		return m_sourceStatement;
-	}
-
-	/**
-	 * @param sourceStatement The statement whose evaluation resulted in this state
-	 */
-	public void setSourceStatement(Statement sourceStatement) {
-		m_sourceStatement = sourceStatement;
 	}
 	
 	/**
@@ -111,6 +108,12 @@ public class AbstractState {
 				result.declareIdentifier(identifier, layer.get(identifier).copy());
 		}
 		
+		for (RCFGNode node : m_loopEntryNodes.keySet())
+			result.addLoopEntryNode(node, m_loopEntryNodes.get(node));
+		
+		for (RCFGNode node : m_passedNodes)
+			result.addPassedNode(node);
+		
 		return result;
 	}
 	
@@ -123,7 +126,7 @@ public class AbstractState {
 		if (state == null)
 			return null;
 		
-		IMergeOperator mergeOp = AbstractInterpreter.s_domainFactory.makeMergeOperator();
+		IMergeOperator mergeOp = AbstractInterpreter.getNumberDomainFactory().makeMergeOperator();
 		
 		List<Map<String, IAbstractValue>> otherValues = state.getValues();
 
@@ -177,7 +180,7 @@ public class AbstractState {
 		if (state == null)
 			return null;
 		
-		IWideningOperator wideningOp = AbstractInterpreter.s_domainFactory.makeWideningOperator();
+		IWideningOperator wideningOp = AbstractInterpreter.getNumberDomainFactory().makeWideningOperator();
 		
 		List<Map<String, IAbstractValue>> otherValues = state.getValues();
 
@@ -208,9 +211,9 @@ public class AbstractState {
 				IAbstractValue resultingValue = null;
 				if (thisValue == null) {
 					resultingValue = otherValue.copy();
-					AbstractInterpreter.s_logger.warn(String.format("Widening encountered a missing value for %s in the old state.", identifier));
+					AbstractInterpreter.getLogger().warn(String.format("Widening encountered a missing value for %s in the old state.", identifier));
 				} else if (otherValue == null) {
-					AbstractInterpreter.s_logger.error(String.format("Widening failed with a missing value for %s in the new state.", identifier));
+					AbstractInterpreter.getLogger().error(String.format("Widening failed with a missing value for %s in the new state.", identifier));
 				} else {
 					resultingValue = wideningOp.apply(thisValue, otherValue);
 				}
@@ -280,7 +283,7 @@ public class AbstractState {
 		
 		if (layer == null) {
 			// TODO: only do this if it atually is a new declaration on a new scope level, not an undeclared variable?
-			AbstractInterpreter.s_logger.debug(String.format("New variable %s at scope level %d", identifier, getStackSize()));
+			AbstractInterpreter.getLogger().debug(String.format("New variable %s at scope level %d", identifier, getStackSize()));
 			return declareIdentifier(identifier, value);
 		}
 		
@@ -325,9 +328,76 @@ public class AbstractState {
 	}
 	
 	/**
+	 * @param node A loop entry node to note for detecting applicability of widening
+	 */
+	public void addLoopEntryNode(RCFGNode node) {
+		if (m_loopEntryNodes.containsKey(node)) {
+			// visited before -> increase counter
+			addLoopEntryNode(node, m_loopEntryNodes.get(node) + 1);
+		} else {
+			// add with count of 1 for the first visit
+			addLoopEntryNode(node, 1);
+		}
+	}
+	
+	/**
+	 * @param node A loop entry node to note for detecting applicability of widening
+	 * @param visitCount The number of times this node was visited during creating this state
+	 */
+	public void addLoopEntryNode(RCFGNode node, Integer visitCount) {
+		m_loopEntryNodes.put(node, visitCount);
+	}
+
+	/**
+	 * @param node A loop entry node to note ignore for detecting applicability of widening
+	 */
+	public void removeLoopEntryNode(RCFGNode node) {
+		m_loopEntryNodes.remove(node);
+	}
+	
+	/**
+	 * @param node A loop entry node to check
+	 * @return The number of times the given node was passed during calculating this state
+	 */
+	public int getLoopEntryVisitCount(RCFGNode node) {
+		Integer count = m_loopEntryNodes.get(node);
+		return count == null ? 0 : count.intValue();
+	}
+	
+	/**
+	 * Add a node to the list of passed nodes for trace reconstruction
+	 * @param node A node to add
+	 * @return True if the node was successfully added
+	 */
+	public boolean addPassedNode(RCFGNode node) {
+		return m_passedNodes.add(node);
+	}
+	
+	/**
+	 * @return A list of nodes passed during creating this state
+	 */
+	public List<RCFGNode> getPassedNodes() {
+		return m_passedNodes;
+	}
+	
+	/**
 	 * @return The stack as a list, bottom layer at index 0.
 	 */
 	public List<Map<String, IAbstractValue>> getValues() {
 		return m_values;
+	}
+	
+	/**
+	 * @return True if the state is set as having been processed already
+	 */
+	public boolean isProcessed() {
+		return m_isProcessed;
+	}
+	
+	/**
+	 * @param processed Set that the state has been processed already
+	 */
+	public void setProcessed(boolean processed) {
+		m_isProcessed = processed;
 	}
 }

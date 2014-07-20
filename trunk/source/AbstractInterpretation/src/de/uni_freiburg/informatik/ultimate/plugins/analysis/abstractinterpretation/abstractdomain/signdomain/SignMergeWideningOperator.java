@@ -3,7 +3,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IMergeOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IWideningOperator;
@@ -13,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Christopher Dillo
  *
  */
-public class SignMergeWidenOperator implements IWideningOperator, IMergeOperator {
+public class SignMergeWideningOperator implements IWideningOperator, IMergeOperator {
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IWideningOperator#getDomainID()
@@ -28,7 +27,7 @@ public class SignMergeWidenOperator implements IWideningOperator, IMergeOperator
 	 */
 	@Override
 	public String getName() {
-		return "SIGN Merge & Widen";
+		return "SIGN Merge & Widening";
 	}
 
 	/* (non-Javadoc)

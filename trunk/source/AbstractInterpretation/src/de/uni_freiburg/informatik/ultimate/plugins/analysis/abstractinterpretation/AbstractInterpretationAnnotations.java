@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,13 +23,20 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 
 	public static final String s_annotationName = "AbstractInterpretation";
 	
-	private List<AbstractState> m_states = null;
+	private Map<String, AbstractState> m_states = null;
 	
-	public List<AbstractState> getStates() { return m_states; }
-	public void setStates(List<AbstractState> states) { m_states = states; }
+	public Map<String, AbstractState> getStates() { return m_states; }
+	public void setStates(Map<String, AbstractState> states) { m_states = states; }
 	
 	public AbstractInterpretationAnnotations(List<AbstractState> states) {
-		setStates(states);
+		if ((states == null) || (states.size() <= 0)) return;
+		
+		Map<String, AbstractState> statesMap = new HashMap<String, AbstractState>();
+		
+		for (int i = 0; i < states.size(); i++)
+			statesMap.put(String.format("Abstract state %d", i), states.get(i));
+		
+		setStates(statesMap);
 	}
 
 	/* (non-Javadoc)
@@ -48,9 +56,19 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 		case "Abstract States":
 			return m_states;
 		case "Abstract Values":
-			List<List<Map<String, IAbstractValue>>> values = new ArrayList<List<Map<String, IAbstractValue>>>(m_states.size());
-			for (int i = 0; i < m_states.size(); i++)
-				values.add(m_states.get(i).getValues());
+			if (m_states == null) return null;
+			Map<String, Map<String, Map<String, IAbstractValue>>> values =
+				new HashMap<String, Map<String, Map<String, IAbstractValue>>>(m_states.size());
+			for (String stateKey : m_states.keySet()) {
+				AbstractState state = m_states.get(stateKey);
+				if (state != null) {
+					List<Map<String, IAbstractValue>> layer = state.getValues();
+					Map<String, Map<String, IAbstractValue>> layerMap = new HashMap<String, Map<String, IAbstractValue>>(layer.size());
+					for (int j = 0; j < layer.size(); j++)
+						layerMap.put(String.format("Scope level %d", j), layer.get(j));
+					values.put(stateKey, layerMap);
+				}
+			}
 			return values;
 		default:
 			return null;

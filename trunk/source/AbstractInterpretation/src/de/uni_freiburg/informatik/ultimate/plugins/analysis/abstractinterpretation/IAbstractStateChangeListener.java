@@ -16,5 +16,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Christopher Dillo
  */
 public interface IAbstractStateChangeListener {
+	/**
+	 * @param location The location where the state change happens.
+	 * @param oldStates A list of old states. May be null if no old states exist.
+	 * @param newState The new state which arrived at the location.
+	 * @param mergedState The merged state. Same as the new state if no merging happened.
+	 */
 	public void onStateChange(IElement location, List<AbstractState> oldStates, AbstractState newState, AbstractState mergedState);
 }

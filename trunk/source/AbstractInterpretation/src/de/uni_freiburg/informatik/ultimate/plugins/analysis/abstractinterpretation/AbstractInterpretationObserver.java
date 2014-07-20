@@ -44,7 +44,7 @@ public class AbstractInterpretationObserver implements IUnmanagedObserver {
 
 	private void processRootNode(RootNode root) {
 		// TODO: Actual stuff ;)
-		AbstractInterpreter.s_logger.info("Processing a root node...");
+		AbstractInterpreter.getLogger().info("Processing a root node...");
 		
 		AbstractInterpreter abstractInterpreter = new AbstractInterpreter();
 		abstractInterpreter.processRcfg(root);
