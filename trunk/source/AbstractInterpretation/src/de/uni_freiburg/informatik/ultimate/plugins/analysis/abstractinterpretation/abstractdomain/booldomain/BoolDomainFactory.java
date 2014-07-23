@@ -3,6 +3,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IMergeOperator;
@@ -13,16 +15,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Christopher Dillo
  *
  */
-public class BoolDomainFactory implements IAbstractDomainFactory {
+public class BoolDomainFactory implements IAbstractDomainFactory<BoolValue.Bool> {
 
-	public static final String s_DomainID = "BOOL";
+	private static final String s_DomainID = "BOOL";
+	
+	private Logger m_logger;
+	
+	public BoolDomainFactory(Logger logger) {
+		m_logger = logger;
+	}
+
+	public static String getDomainID() {
+		return s_DomainID;
+	}
 
 	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#getDomainID()
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#makeValue()
 	 */
 	@Override
-	public String getDomainID() {
-		return s_DomainID;
+	public BoolValue makeValue(Bool value) {
+		return new BoolValue(value, this, m_logger);
 	}
 
 	/* (non-Javadoc)
@@ -30,7 +42,7 @@ public class BoolDomainFactory implements IAbstractDomainFactory {
 	 */
 	@Override
 	public BoolValue makeTopValue() {
-		return new BoolValue(Bool.UNKNOWN);
+		return new BoolValue(Bool.UNKNOWN, this, m_logger);
 	}
 
 	/* (non-Javadoc)
@@ -38,7 +50,7 @@ public class BoolDomainFactory implements IAbstractDomainFactory {
 	 */
 	@Override
 	public BoolValue makeBottomValue() {
-		return new BoolValue(Bool.EMPTY);
+		return new BoolValue(Bool.EMPTY, this, m_logger);
 	}
 
 	/* (non-Javadoc)
@@ -46,8 +58,8 @@ public class BoolDomainFactory implements IAbstractDomainFactory {
 	 */
 	@Override
 	public BoolValue makeIntegerValue(String integer) {
-		if (integer == "0") return new BoolValue(Bool.FALSE); // TODO: proper int string handling
-		return new BoolValue(Bool.TRUE);
+		if (integer == "0") return new BoolValue(Bool.FALSE, this, m_logger); // TODO: proper int string handling
+		return new BoolValue(Bool.TRUE, this, m_logger);
 	}
 
 	/* (non-Javadoc)
@@ -55,8 +67,8 @@ public class BoolDomainFactory implements IAbstractDomainFactory {
 	 */
 	@Override
 	public BoolValue makeRealValue(String real) {
-		if (real == "0") return new BoolValue(Bool.FALSE); // TODO: proper real string handling
-		return new BoolValue(Bool.TRUE);
+		if (real == "0") return new BoolValue(Bool.FALSE, this, m_logger); // TODO: proper real string handling
+		return new BoolValue(Bool.TRUE, this, m_logger);
 	}
 	
 	/**
@@ -64,7 +76,7 @@ public class BoolDomainFactory implements IAbstractDomainFactory {
 	 * @return A BoolValue based on a given boolean value (true or false)
 	 */
 	public BoolValue makeBooleanValue(boolean bool) {
-		return new BoolValue(bool ? Bool.TRUE : Bool.FALSE);
+		return new BoolValue(bool ? Bool.TRUE : Bool.FALSE, this, m_logger);
 	}
 	
 	/**
@@ -72,26 +84,26 @@ public class BoolDomainFactory implements IAbstractDomainFactory {
 	 * @param value An abstract value to get a boolean value for
 	 * @return A copy of the value if it is a BoolValue, otherwise FALSE, if the given value is bottom; else true
 	 */
-	public BoolValue makeFromAbstractValue(IAbstractValue value) {
+	public BoolValue makeFromAbstractValue(IAbstractValue<?> value) {
 		if (value instanceof BoolValue) return (BoolValue) value.copy();
 		
-		return new BoolValue(value.isBottom() ? Bool.FALSE : Bool.TRUE);
+		return new BoolValue(value.isBottom() ? Bool.FALSE : Bool.TRUE, this, m_logger);
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#makeWideningOperator()
 	 */
 	@Override
-	public IWideningOperator makeWideningOperator() {
-		return new BoolMergeWideningOperator();
+	public IWideningOperator<BoolValue.Bool> getWideningOperator() {
+		return new BoolMergeWideningOperator(this, m_logger);
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#makeMergeOperator()
 	 */
 	@Override
-	public IMergeOperator makeMergeOperator() {
-		return new BoolMergeWideningOperator();
+	public IMergeOperator<BoolValue.Bool> getMergeOperator() {
+		return new BoolMergeWideningOperator(this, m_logger);
 	}
 
 }

@@ -10,17 +10,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  * @author Christopher Dillo
  *
  */
-public interface IWideningOperator {
-
-	/**
-	 * @return The unique ID of the abstract domain system the implementing class belongs to
-	 */
-	public String getDomainID();
-	
-	/**
-	 * @return A string to identify this widening operator, used for preferences etc
-	 */
-	public String getName();
+public interface IWideningOperator<T> {
 	
 	/**
 	 * Merges two given values while applying widening. The old and new value may not be
@@ -29,6 +19,6 @@ public interface IWideningOperator {
 	 * @param newValue The new abstract value
 	 * @return A merged value which is greater than both given value wrt the complete lattice of abstract values
 	 */
-	public IAbstractValue apply(IAbstractValue oldValue, IAbstractValue newValue);
+	public IAbstractValue<T> apply(IAbstractValue<?> oldValue, IAbstractValue<?> newValue);
 	
 }

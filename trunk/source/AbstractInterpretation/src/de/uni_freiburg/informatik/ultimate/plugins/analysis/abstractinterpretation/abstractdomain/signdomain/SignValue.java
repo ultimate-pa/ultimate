@@ -3,14 +3,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.AbstractInterpreter;
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 
 /**
  * @author Christopher Dillo
  *
  */
-public class SignValue implements IAbstractValue {
+public class SignValue implements IAbstractValue<SignValue.Sign> {
 	
 	/**
 	 * Possible values for the sign domain.
@@ -26,24 +27,26 @@ public class SignValue implements IAbstractValue {
 	
 	private Sign m_value;
 	
+	private SignDomainFactory m_factory;
+	
+	private Logger m_logger;
+	
 	/**
 	 * Generate a new SignValue with the given value
 	 * @param value ZERO? PLUSMINUS?
 	 */
-	public SignValue(Sign value) {
+	protected SignValue(Sign value, SignDomainFactory factory, Logger logger) {
 		m_value = value;
-	}
-	
-	public Sign getValue() {
-		return m_value;
+		m_factory = factory;
+		m_logger = logger;
 	}
 
 	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#getDomainID()
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#getValue()
 	 */
 	@Override
-	public String getDomainID() {
-		return SignDomainFactory.s_DomainID;
+	public Sign getValue() {
+		return m_value;
 	}
 
 	/* (non-Javadoc)
@@ -66,34 +69,28 @@ public class SignValue implements IAbstractValue {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#isEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public boolean isEqual(IAbstractValue value) {
-		SignValue sval = (SignValue) value;
-		
-		// incompatible domain system
-		if (sval == null)
+	public boolean isEqual(IAbstractValue<?> value) {
+		if (value == null)
 			return false;
 		
-		return (m_value == sval.getValue());
+		return (m_value == value.getValue());
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#isGreater(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public boolean isSuper(IAbstractValue value) {
-		SignValue sval = (SignValue) value;
-		
-		// incompatible domain system
-		if (sval == null)
+	public boolean isSuper(IAbstractValue<?> value) {
+		if (value == null)
 			return false;
 		
 		if (m_value == Sign.PLUSMINUS)
 			return true;
 		
-		if (m_value == sval.getValue())
+		if (m_value == value.getValue())
 			return true;
 		
-		if (sval.getValue() == Sign.EMPTY)
+		if (value.getValue() == Sign.EMPTY)
 			return true;
 		
 		return false;
@@ -103,20 +100,17 @@ public class SignValue implements IAbstractValue {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#isLesser(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public boolean isSub(IAbstractValue value) {
-		SignValue sval = (SignValue) value;
-		
-		// incompatible domain system
-		if (sval == null)
+	public boolean isSub(IAbstractValue<?> value) {
+		if (value == null)
 			return false;
 		
 		if (m_value == Sign.EMPTY)
 			return true;
 		
-		if (m_value == sval.getValue())
+		if (m_value == value.getValue())
 			return true;
 		
-		if (sval.getValue() == Sign.PLUSMINUS)
+		if (value.getValue() == Sign.PLUSMINUS)
 			return true;
 		
 		return false;
@@ -127,49 +121,46 @@ public class SignValue implements IAbstractValue {
 	 */
 	@Override
 	public SignValue copy() {
-		return new SignValue(m_value);
+		return m_factory.makeValue(m_value);
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#add(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public SignValue add(IAbstractValue value) {
-		SignValue sval = (SignValue) value;
-		
-		if (sval == null) return new SignValue(Sign.EMPTY);
-		
-		Sign otherSign = sval.getValue();
+	public SignValue add(IAbstractValue<?> value) {
+		Sign otherSign = (Sign) value.getValue();
+		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
 		
 		switch (m_value) {
 		case ZERO :
-			return new SignValue(otherSign);
+			return m_factory.makeValue(otherSign);
 		case PLUS :
 			switch (otherSign) {
 			case ZERO :
 			case PLUS :
-				return new SignValue(Sign.PLUS);
+				return m_factory.makeValue(Sign.PLUS);
 			case MINUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.PLUSMINUS);
+				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case MINUS :
 			switch (otherSign) {
 			case ZERO :
 			case MINUS :
-				return new SignValue(Sign.MINUS);
+				return m_factory.makeValue(Sign.MINUS);
 			case PLUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.PLUSMINUS);
+				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case PLUSMINUS :
-			return new SignValue(Sign.PLUSMINUS);
+			return m_factory.makeValue(Sign.PLUSMINUS);
 		default :
-			return new SignValue(Sign.EMPTY);
+			return m_factory.makeValue(Sign.EMPTY);
 		}
 	}
 
@@ -177,52 +168,49 @@ public class SignValue implements IAbstractValue {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#subtract(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public SignValue subtract(IAbstractValue value) {
-		SignValue sval = (SignValue) value;
-				
-		if (sval == null) return new SignValue(Sign.EMPTY);
-		
-		Sign otherSign = sval.getValue();
+	public SignValue subtract(IAbstractValue<?> value) {
+		Sign otherSign = (Sign) value.getValue();
+		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
 		
 		switch (m_value) {
 		case ZERO :
 			switch (otherSign) {
 			case ZERO :
 			case PLUSMINUS :
-				return new SignValue(otherSign);
+				return m_factory.makeValue(otherSign);
 			case PLUS :
-				return new SignValue(Sign.MINUS);
+				return m_factory.makeValue(Sign.MINUS);
 			case MINUS :
-				return new SignValue(Sign.PLUS);
+				return m_factory.makeValue(Sign.PLUS);
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case PLUS :
 			switch (otherSign) {
 			case ZERO :
 			case MINUS :
-				return new SignValue(Sign.PLUS);
+				return m_factory.makeValue(Sign.PLUS);
 			case PLUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.PLUSMINUS);
+				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case MINUS :
 			switch (otherSign) {
 			case ZERO :
 			case PLUS :
-				return new SignValue(Sign.MINUS);
+				return m_factory.makeValue(Sign.MINUS);
 			case MINUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.PLUSMINUS);
+				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case PLUSMINUS :
-			return new SignValue(Sign.PLUSMINUS);
+			return m_factory.makeValue(Sign.PLUSMINUS);
 		default :
-			return new SignValue(Sign.EMPTY);
+			return m_factory.makeValue(Sign.EMPTY);
 		}
 	}
 
@@ -230,46 +218,43 @@ public class SignValue implements IAbstractValue {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#multiply(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public SignValue multiply(IAbstractValue value) {
-		SignValue sval = (SignValue) value;
-		
-		if (sval == null) return new SignValue(Sign.EMPTY);
-		
-		Sign otherSign = sval.getValue();
+	public SignValue multiply(IAbstractValue<?> value) {
+		Sign otherSign = (Sign) value.getValue();
+		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
 		
 		switch (m_value) {
 		case ZERO :
-			return new SignValue(Sign.ZERO);
+			return m_factory.makeValue(Sign.ZERO);
 		case PLUS :
 			switch (otherSign) {
 			case ZERO :
-				return new SignValue(Sign.ZERO);
+				return m_factory.makeValue(Sign.ZERO);
 			case PLUS :
-				return new SignValue(Sign.PLUS);
+				return m_factory.makeValue(Sign.PLUS);
 			case MINUS :
-				return new SignValue(Sign.MINUS);
+				return m_factory.makeValue(Sign.MINUS);
 			case PLUSMINUS :
-				return new SignValue(Sign.PLUSMINUS);
+				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case MINUS :
 			switch (otherSign) {
 			case ZERO :
-				return new SignValue(Sign.ZERO);
+				return m_factory.makeValue(Sign.ZERO);
 			case PLUS :
-				return new SignValue(Sign.MINUS);
+				return m_factory.makeValue(Sign.MINUS);
 			case MINUS :
-				return new SignValue(Sign.PLUS);
+				return m_factory.makeValue(Sign.PLUS);
 			case PLUSMINUS :
-				return new SignValue(Sign.PLUSMINUS);
+				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case PLUSMINUS :
-			return new SignValue(Sign.PLUSMINUS);
+			return m_factory.makeValue(Sign.PLUSMINUS);
 		default :
-			return new SignValue(Sign.EMPTY);
+			return m_factory.makeValue(Sign.EMPTY);
 		}
 	}
 
@@ -277,14 +262,12 @@ public class SignValue implements IAbstractValue {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#divide(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public SignValue divide(IAbstractValue value) {
-		SignValue sval = (SignValue) value;
-
-		if (sval == null) return new SignValue(Sign.EMPTY);
+	public SignValue divide(IAbstractValue<?> value) {
+		if (value == null) return m_factory.makeValue(Sign.EMPTY);
 		
-		if ((sval.getValue() == Sign.ZERO) || (sval.getValue() == Sign.PLUSMINUS)) {
-			AbstractInterpreter.getLogger().warn(String.format("Potential division by zero: %s / %s", this, sval));
-			return new SignValue(Sign.EMPTY);
+		if ((value.getValue() == Sign.ZERO) || (value.getValue() == Sign.PLUSMINUS)) {
+			m_logger.warn(String.format("Potential division by zero: %s / %s", this, value));
+			return m_factory.makeValue(Sign.EMPTY);
 		}
 		
 		return this.multiply(value);
@@ -294,17 +277,15 @@ public class SignValue implements IAbstractValue {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#modulo(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public SignValue modulo(IAbstractValue value) {
-		SignValue sval = (SignValue) value;
+	public SignValue modulo(IAbstractValue<?> value) {
+		if (value == null) return m_factory.makeValue(Sign.EMPTY);
 
-		if (sval == null) return new SignValue(Sign.EMPTY);
-
-		if ((sval.getValue() == Sign.ZERO) || (sval.getValue() == Sign.PLUSMINUS)) {
-			AbstractInterpreter.getLogger().warn(String.format("Potential modulo division by zero: %s %% %s", this, sval));
-			return new SignValue(Sign.EMPTY);
+		if ((value.getValue() == Sign.ZERO) || (value.getValue() == Sign.PLUSMINUS)) {
+			m_logger.warn(String.format("Potential modulo division by zero: %s %% %s", this, value));
+			return m_factory.makeValue(Sign.EMPTY);
 		}
 		
-		return new SignValue(Sign.PLUS); // remainder is always >= 0
+		return m_factory.makeValue(Sign.PLUS); // remainder is always >= 0
 	}
 
 	/* (non-Javadoc)
@@ -314,11 +295,11 @@ public class SignValue implements IAbstractValue {
 	public SignValue negative() {
 		switch (m_value) {
 		case PLUS :
-			return new SignValue(Sign.MINUS);
+			return m_factory.makeValue(Sign.MINUS);
 		case MINUS :
-			return new SignValue(Sign.PLUS);
+			return m_factory.makeValue(Sign.PLUS);
 		default :
-			return new SignValue(m_value);
+			return m_factory.makeValue(m_value);
 		}
 	}
 
@@ -326,51 +307,48 @@ public class SignValue implements IAbstractValue {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public SignValue compareIsEqual(IAbstractValue value) {
-		SignValue sval = (SignValue) value;
-
-		if (sval == null) return new SignValue(Sign.EMPTY);
-		
-		Sign otherSign = sval.getValue();
+	public SignValue compareIsEqual(IAbstractValue<?> value) {
+		Sign otherSign = (Sign) value.getValue();
+		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
 		
 		if (m_value == otherSign)
-			return new SignValue(m_value);
+			return m_factory.makeValue(m_value);
 		
 		switch (m_value) {
 		case ZERO :
 			switch (otherSign) {
 			case ZERO :
 			case PLUSMINUS :
-				return new SignValue(Sign.ZERO);
+				return m_factory.makeValue(Sign.ZERO);
 			case MINUS :
 			case PLUS :
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case PLUS :
 			switch (otherSign) {
 			case PLUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.PLUS);
+				return m_factory.makeValue(Sign.PLUS);
 			case ZERO :
 			case MINUS :
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case MINUS :
 			switch (otherSign) {
 			case MINUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.MINUS);
+				return m_factory.makeValue(Sign.MINUS);
 			case ZERO :
 			case PLUS :
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case PLUSMINUS :
-			return new SignValue(otherSign);
+			return m_factory.makeValue(otherSign);
 		default :
-			return new SignValue(Sign.EMPTY);
+			return m_factory.makeValue(Sign.EMPTY);
 		}
 	}
 
@@ -378,47 +356,44 @@ public class SignValue implements IAbstractValue {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsNotEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public SignValue compareIsNotEqual(IAbstractValue value) {
-		SignValue sval = (SignValue) value;
-
-		if (sval == null) return new SignValue(Sign.EMPTY);
-		
-		Sign otherSign = sval.getValue();
+	public SignValue compareIsNotEqual(IAbstractValue<?> value) {
+		Sign otherSign = (Sign) value.getValue();
+		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
 		
 		switch (m_value) {
 		case ZERO :
 			switch (otherSign) {
 			case ZERO :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			default :
-				return new SignValue(otherSign);
+				return m_factory.makeValue(otherSign);
 			}
 		case PLUS :
 			switch (otherSign) {
 			case PLUS :
-				return new SignValue(Sign.PLUS);
+				return m_factory.makeValue(Sign.PLUS);
 			case ZERO :
 			case MINUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.PLUSMINUS);
+				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case MINUS :
 			switch (otherSign) {
 			case MINUS :
-				return new SignValue(Sign.MINUS);
+				return m_factory.makeValue(Sign.MINUS);
 			case PLUS :
 			case ZERO :
 			case PLUSMINUS :
-				return new SignValue(Sign.PLUSMINUS);
+				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case PLUSMINUS :
-			return new SignValue(Sign.PLUSMINUS);
+			return m_factory.makeValue(Sign.PLUSMINUS);
 		default :
-			return new SignValue(Sign.EMPTY);
+			return m_factory.makeValue(Sign.EMPTY);
 		}
 	}
 
@@ -426,49 +401,46 @@ public class SignValue implements IAbstractValue {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsLess(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public SignValue compareIsLess(IAbstractValue value) {
-		SignValue sval = (SignValue) value;
-
-		if (sval == null) return new SignValue(Sign.EMPTY);
-		
-		Sign otherSign = sval.getValue();
+	public SignValue compareIsLess(IAbstractValue<?> value) {
+		Sign otherSign = (Sign) value.getValue();
+		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
 		
 		switch (m_value) {
 		case ZERO :
 			switch (otherSign) {
 			case PLUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.ZERO);
+				return m_factory.makeValue(Sign.ZERO);
 			case ZERO :
 			case MINUS :
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case PLUS :
 			switch (otherSign) {
 			case PLUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.PLUS);
+				return m_factory.makeValue(Sign.PLUS);
 			case ZERO :
 			case MINUS :
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case MINUS :
-			return new SignValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.MINUS);
+			return m_factory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.MINUS);
 		case PLUSMINUS :
 			switch (otherSign) {
 			case ZERO :
 			case MINUS :
-				return new SignValue(Sign.MINUS);
+				return m_factory.makeValue(Sign.MINUS);
 			case PLUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.PLUSMINUS);
+				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		default :
-			return new SignValue(Sign.EMPTY);
+			return m_factory.makeValue(Sign.EMPTY);
 		}
 	}
 
@@ -476,49 +448,46 @@ public class SignValue implements IAbstractValue {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsGreater(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public SignValue compareIsGreater(IAbstractValue value) {
-		SignValue sval = (SignValue) value;
-
-		if (sval == null) return new SignValue(Sign.EMPTY);
-		
-		Sign otherSign = sval.getValue();
+	public SignValue compareIsGreater(IAbstractValue<?> value) {
+		Sign otherSign = (Sign) value.getValue();
+		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
 		
 		switch (m_value) {
 		case ZERO :
 			switch (otherSign) {
 			case MINUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.ZERO);
+				return m_factory.makeValue(Sign.ZERO);
 			case ZERO :
 			case PLUS :
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case PLUS :
-			return new SignValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.PLUS);
+			return m_factory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.PLUS);
 		case MINUS :
 			switch (otherSign) {
 			case MINUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.MINUS);
+				return m_factory.makeValue(Sign.MINUS);
 			case ZERO :
 			case PLUS :
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case PLUSMINUS :
 			switch (otherSign) {
 			case ZERO :
 			case PLUS :
-				return new SignValue(Sign.PLUS);
+				return m_factory.makeValue(Sign.PLUS);
 			case MINUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.PLUSMINUS);
+				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		default :
-			return new SignValue(Sign.EMPTY);
+			return m_factory.makeValue(Sign.EMPTY);
 		}
 	}
 
@@ -526,12 +495,9 @@ public class SignValue implements IAbstractValue {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsLessEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public SignValue compareIsLessEqual(IAbstractValue value) {
-		SignValue sval = (SignValue) value;
-
-		if (sval == null) return new SignValue(Sign.EMPTY);
-		
-		Sign otherSign = sval.getValue();
+	public SignValue compareIsLessEqual(IAbstractValue<?> value) {
+		Sign otherSign = (Sign) value.getValue();
+		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
 		
 		switch (m_value) {
 		case ZERO :
@@ -539,36 +505,36 @@ public class SignValue implements IAbstractValue {
 			case ZERO :
 			case PLUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.ZERO);
+				return m_factory.makeValue(Sign.ZERO);
 			case MINUS :
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case PLUS :
 			switch (otherSign) {
 			case PLUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.PLUS);
+				return m_factory.makeValue(Sign.PLUS);
 			case ZERO :
 			case MINUS :
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case MINUS :
-			return new SignValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.MINUS);
+			return m_factory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.MINUS);
 		case PLUSMINUS :
 			switch (otherSign) {
 			case ZERO :
 			case MINUS :
-				return new SignValue(Sign.MINUS);
+				return m_factory.makeValue(Sign.MINUS);
 			case PLUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.PLUSMINUS);
+				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		default :
-			return new SignValue(Sign.EMPTY);
+			return m_factory.makeValue(Sign.EMPTY);
 		}
 	}
 
@@ -576,12 +542,9 @@ public class SignValue implements IAbstractValue {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsGreaterEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public SignValue compareIsGreaterEqual(IAbstractValue value) {
-		SignValue sval = (SignValue) value;
-
-		if (sval == null) return new SignValue(Sign.EMPTY);
-		
-		Sign otherSign = sval.getValue();
+	public SignValue compareIsGreaterEqual(IAbstractValue<?> value) {
+		Sign otherSign = (Sign) value.getValue();
+		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
 		
 		switch (m_value) {
 		case ZERO :
@@ -589,36 +552,36 @@ public class SignValue implements IAbstractValue {
 			case ZERO :
 			case MINUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.ZERO);
+				return m_factory.makeValue(Sign.ZERO);
 			case PLUS :
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case PLUS :
-			return new SignValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.PLUS);
+			return m_factory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.PLUS);
 		case MINUS :
 			switch (otherSign) {
 			case MINUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.MINUS);
+				return m_factory.makeValue(Sign.MINUS);
 			case ZERO :
 			case PLUS :
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		case PLUSMINUS :
 			switch (otherSign) {
 			case ZERO :
 			case PLUS :
-				return new SignValue(Sign.PLUS);
+				return m_factory.makeValue(Sign.PLUS);
 			case MINUS :
 			case PLUSMINUS :
-				return new SignValue(Sign.PLUSMINUS);
+				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return new SignValue(Sign.EMPTY);
+				return m_factory.makeValue(Sign.EMPTY);
 			}
 		default :
-			return new SignValue(Sign.EMPTY);
+			return m_factory.makeValue(Sign.EMPTY);
 		}
 	}
 

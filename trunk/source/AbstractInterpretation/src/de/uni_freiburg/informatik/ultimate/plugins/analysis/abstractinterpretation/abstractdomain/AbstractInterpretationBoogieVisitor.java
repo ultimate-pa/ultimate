@@ -3,6 +3,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
@@ -27,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.AbstractInterpreter;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolValue;
 
 /**
@@ -45,7 +47,13 @@ public class AbstractInterpretationBoogieVisitor {
 	/**
 	 * Result value of evaluating an expression
 	 */
-	private IAbstractValue m_resultValue;
+	private IAbstractValue<?> m_resultValue;
+	
+	private Logger m_logger;
+	
+	private IAbstractDomainFactory<?> m_numberFactory;
+	
+	private BoolDomainFactory m_boolFactory;
 	
 	/**
 	 * The identifier for an LHS expression
@@ -67,6 +75,12 @@ public class AbstractInterpretationBoogieVisitor {
 		}
 		return false;
 		}
+	
+	public AbstractInterpretationBoogieVisitor(Logger logger, IAbstractDomainFactory<?> numberFactory, BoolDomainFactory boolFactory) {
+		m_logger = logger;
+		m_numberFactory = numberFactory;
+		m_boolFactory = boolFactory;
+	}
 	
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	 * STATEMENTS
@@ -102,21 +116,21 @@ public class AbstractInterpretationBoogieVisitor {
 
 	protected void visit(ReturnStatement statement) {
 		// TODO: support! (pop stack?)
-		AbstractInterpreter.getLogger().warn(String.format("Unsupported statement type: %s", statement.getClass()));
+		m_logger.warn(String.format("Unsupported statement type: %s", statement.getClass()));
 	}
 
 	protected void visit(HavocStatement statement) {
 		LeftHandSide[] lhs = statement.getIdentifiers();
 		for (int i = 0; i < lhs.length; i++) {
 			evaluateLeftHandSide(lhs[i]); // get identifier to m_lhsIdentifier
-			m_resultingState.writeValue(m_lhsIdentifier, AbstractInterpreter.getNumberDomainFactory().makeTopValue());
+			m_resultingState.writeValue(m_lhsIdentifier, m_numberFactory.makeTopValue());
 			// TODO: Check type, generate abstract value of proper domain (int, bool...)
 		}
 	}
 
 	protected void visit(CallStatement statement) {
 		// TODO: support! (push stack?)
-		AbstractInterpreter.getLogger().warn(String.format("Unsupported statement type: %s", statement.getClass()));
+		m_logger.warn(String.format("Unsupported statement type: %s", statement.getClass()));
 	}
 
 	protected void visit(AssignmentStatement statement) {
@@ -124,7 +138,7 @@ public class AbstractInterpretationBoogieVisitor {
 		Expression[] rhs = statement.getRhs();
 		
 		if (lhs.length != rhs.length) {
-			AbstractInterpreter.getLogger().warn(String.format("%s lhs and rhs size mismatch!", statement.getClass()));
+			m_logger.warn(String.format("%s lhs and rhs size mismatch!", statement.getClass()));
 			return;
 		}
 
@@ -135,14 +149,14 @@ public class AbstractInterpretationBoogieVisitor {
 	}
 
 	protected void visit(AssumeStatement statement) {
-		IAbstractValue formulaResult = evaluateExpression(statement.getFormula());
+		IAbstractValue<?> formulaResult = evaluateExpression(statement.getFormula());
 
 		if (formulaResult == null) {
-			AbstractInterpreter.getLogger().warn(String.format("Evaluating statement failed, returned null: %s", statement));
+			m_logger.warn(String.format("Evaluating statement failed, returned null: %s", statement));
 			return;
 		}
 		
-		if (AbstractInterpreter.getBoolDomainFactory().makeFromAbstractValue(formulaResult).isFalse()) {
+		if (m_boolFactory.makeFromAbstractValue(formulaResult).isFalse()) {
 			// expression evaluates to false for all values, so there is no resulting state.
 			m_resultingState = null;
 			return;
@@ -173,12 +187,12 @@ public class AbstractInterpretationBoogieVisitor {
 
 	protected void visit(StructLHS lhs) {
 		// TODO: support!
-		AbstractInterpreter.getLogger().warn(String.format("Unsupported LeftHandSide type: %s", lhs.getClass()));
+		m_logger.warn(String.format("Unsupported LeftHandSide type: %s", lhs.getClass()));
 	}
 
 	protected void visit(ArrayLHS lhs) {
 		// TODO: support!
-		AbstractInterpreter.getLogger().warn(String.format("Unsupported LeftHandSide type: %s", lhs.getClass()));
+		m_logger.warn(String.format("Unsupported LeftHandSide type: %s", lhs.getClass()));
 	}
 	
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -190,8 +204,8 @@ public class AbstractInterpretationBoogieVisitor {
 	 * @param expr The expression to evaluate
 	 * @return The resulting abstract value
 	 */
-	protected IAbstractValue evaluateExpression(Expression expr) {
-		IAbstractValue backup = m_resultValue; // do not overwrite, but keep (m_resultValue is used by recursive calls of this function)
+	protected IAbstractValue<?> evaluateExpression(Expression expr) {
+		IAbstractValue<?> backup = m_resultValue; // do not overwrite, but keep (m_resultValue is used by recursive calls of this function)
 		m_resultValue = null;
 
 		// evaluate and store result in m_resultValue:
@@ -225,7 +239,7 @@ public class AbstractInterpretationBoogieVisitor {
 			throw new UnsupportedOperationException(String.format("Extend this with new type %s", expr.getClass()));
 		}
 		
-		IAbstractValue returnValue = m_resultValue;
+		IAbstractValue<?> returnValue = m_resultValue;
 		m_resultValue = backup; // restore result value
 		return returnValue;
 	}
@@ -245,31 +259,31 @@ public class AbstractInterpretationBoogieVisitor {
 			// TODO: trace back? keep reference in abstract state?
 		default:
 			// TODO: support!
-			AbstractInterpreter.getLogger().warn(String.format("Unsupported %s operator: %s", expr.getClass(), expr.getOperator()));
+			m_logger.warn(String.format("Unsupported %s operator: %s", expr.getClass(), expr.getOperator()));
 		}
 	}
 
 	protected void visit(StructConstructor expr) {
 		// TODO: support!
-		AbstractInterpreter.getLogger().warn(String.format("Unsupported expression type: %s", expr.getClass()));
+		m_logger.warn(String.format("Unsupported expression type: %s", expr.getClass()));
 	}
 
 	protected void visit(StructAccessExpression expr) {
 		// TODO: support!
-		AbstractInterpreter.getLogger().warn(String.format("Unsupported expression type: %s", expr.getClass()));
+		m_logger.warn(String.format("Unsupported expression type: %s", expr.getClass()));
 	}
 
 	protected void visit(StringLiteral expr) {
 		// TODO: support!
-		AbstractInterpreter.getLogger().warn(String.format("Unsupported expression type: %s", expr.getClass()));
+		m_logger.warn(String.format("Unsupported expression type: %s", expr.getClass()));
 	}
 
 	protected void visit(RealLiteral expr) {
-		m_resultValue = AbstractInterpreter.getNumberDomainFactory().makeRealValue(expr.getValue());
+		m_resultValue = m_numberFactory.makeRealValue(expr.getValue());
 	}
 
 	protected void visit(IntegerLiteral expr) {
-		m_resultValue = AbstractInterpreter.getNumberDomainFactory().makeIntegerValue(expr.getValue());
+		m_resultValue = m_numberFactory.makeIntegerValue(expr.getValue());
 	}
 
 	protected void visit(IdentifierExpression expr) {
@@ -279,26 +293,26 @@ public class AbstractInterpretationBoogieVisitor {
 	protected void visit(BooleanLiteral expr) {
 		// TODO: support!
 		boolean val = expr.getValue();
-		m_resultValue = AbstractInterpreter.getBoolDomainFactory().makeBooleanValue(doNegate() ? !val : val);
+		m_resultValue = m_boolFactory.makeBooleanValue(doNegate() ? !val : val);
 	}
 
 	protected void visit(BitVectorAccessExpression expr) {
 		// TODO: support!
-		AbstractInterpreter.getLogger().warn(String.format("Unsupported expression type: %s", expr.getClass()));
+		m_logger.warn(String.format("Unsupported expression type: %s", expr.getClass()));
 	}
 
 	protected void visit(BitvecLiteral expr) {
 		// TODO: support!
-		AbstractInterpreter.getLogger().warn(String.format("Unsupported expression type: %s", expr.getClass()));
+		m_logger.warn(String.format("Unsupported expression type: %s", expr.getClass()));
 	}
 
 	protected void visit(BinaryExpression expr) {
 		boolean neg = doNegate();
-		IAbstractValue left, right;
+		IAbstractValue<?> left, right;
 		left = evaluateExpression(expr.getLeft());
 		right = evaluateExpression(expr.getRight());
 		if ((left == null) || (right == null)) {
-			AbstractInterpreter.getLogger().warn(String.format("Encountered null values in an %s", expr.getClass()));
+			m_logger.warn(String.format("Encountered null values in an %s", expr.getClass()));
 			m_resultValue = null;
 			return;
 		}
@@ -340,8 +354,8 @@ public class AbstractInterpretationBoogieVisitor {
 		case LOGICIMPLIES :
 		case LOGICAND :
 		case LOGICOR :
-			BoolValue leftBool = AbstractInterpreter.getBoolDomainFactory().makeFromAbstractValue(left);
-			BoolValue rightBool = AbstractInterpreter.getBoolDomainFactory().makeFromAbstractValue(right);
+			BoolValue leftBool = m_boolFactory.makeFromAbstractValue(left);
+			BoolValue rightBool = m_boolFactory.makeFromAbstractValue(right);
 			BoolValue result;
 			switch (expr.getOperator()) {
 			case LOGICIFF :
@@ -357,7 +371,7 @@ public class AbstractInterpretationBoogieVisitor {
 				result = leftBool.logicOr(rightBool);
 				break;
 			default :
-				result = AbstractInterpreter.getBoolDomainFactory().makeBottomValue();
+				result = m_boolFactory.makeBottomValue();
 			}
 			m_resultValue = neg ? result.logicNot() : result;
 			break;
@@ -365,18 +379,18 @@ public class AbstractInterpretationBoogieVisitor {
 		case BITVECCONCAT :
 		default :
 			// TODO: support!
-			AbstractInterpreter.getLogger().warn(String.format("Unsupported %s operator: %s", expr.getClass(), expr.getOperator()));
+			m_logger.warn(String.format("Unsupported %s operator: %s", expr.getClass(), expr.getOperator()));
 		}
-		AbstractInterpreter.getLogger().debug(String.format("BinOp [%s] %s%s [%s] = [%s]", left, neg ? "NOT " : "", expr.getOperator(), right, m_resultValue));
+		m_logger.debug(String.format("BinOp [%s] %s%s [%s] = [%s]", left, neg ? "NOT " : "", expr.getOperator(), right, m_resultValue));
 	}
 
 	protected void visit(ArrayStoreExpression expr) {
 		// TODO: support!
-		AbstractInterpreter.getLogger().warn(String.format("Unsupported expression type: %s", expr.getClass()));
+		m_logger.warn(String.format("Unsupported expression type: %s", expr.getClass()));
 	}
 
 	protected void visit(ArrayAccessExpression expr) {
 		// TODO: support!
-		AbstractInterpreter.getLogger().warn(String.format("Unsupported expression type: %s", expr.getClass()));
+		m_logger.warn(String.format("Unsupported expression type: %s", expr.getClass()));
 	}
 }

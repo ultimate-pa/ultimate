@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolDomainFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain.SignDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.preferences.AbstractInterpretationPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -48,11 +49,11 @@ import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
  */
 public class AbstractInterpreter extends RCFGEdgeVisitor {
 
-	private final static Logger s_logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
+	private Logger m_logger;
 	
-	private static IAbstractDomainFactory s_domainFactory;
+	private IAbstractDomainFactory<?> m_numberDomainFactory;
 
-	private static BoolDomainFactory s_boolDomainFactory;
+	private BoolDomainFactory m_boolDomainFactory;
 	
 	private final LinkedList<RCFGNode> m_nodesToVisit = new LinkedList<RCFGNode>();
 	
@@ -60,7 +61,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	
 	private AbstractState m_currentState, m_resultingState;
 	
-	private final AbstractInterpretationBoogieVisitor m_boogieVisitor = new AbstractInterpretationBoogieVisitor();
+	private AbstractInterpretationBoogieVisitor m_boogieVisitor;
 	
 	private final Set<IAbstractStateChangeListener> m_stateChangeListeners = new HashSet<IAbstractStateChangeListener>();
 	
@@ -68,48 +69,38 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	
 	private final Set<ProgramPoint> m_loopEntryNodes = new HashSet<ProgramPoint>();
 	
-	// for preferences
-	private static int s_iterationsUntilWidening;
-	private static int s_parallelStatesUntilMerge;
-	private static boolean s_StateAnnotations;
-	private static String s_numberDomainID;
-	private static String s_numberWideningOpName;
-	private static String s_numberMergeOpName;
+	private AbstractDomainRegistry m_domainRegistry;
 	
-	public AbstractInterpreter() {
+	// for preferences
+	private int m_iterationsUntilWidening;
+	private int m_parallelStatesUntilMerge;
+	private boolean m_generateStateAnnotations;
+	private String m_numberDomainID;
+	private String m_numberWideningOpName;
+	private String m_numberMergeOpName;
+	
+	public AbstractInterpreter(Logger logger, AbstractDomainRegistry domainRegistry) {
+		m_logger = logger;
+		
+		m_domainRegistry = domainRegistry;
+		
 		fetchPreferences();
 		
 		// number domain factory chosen in preferences
 		try {
-			s_domainFactory = AbstractDomainRegistry.getDomainFactory(s_numberDomainID).newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
-			e.printStackTrace();
+			m_numberDomainFactory = m_domainRegistry.getDomainFactory(m_numberDomainID).
+					getConstructor(Logger.class, AbstractDomainRegistry.class, String.class, String.class).
+					newInstance(m_logger, m_domainRegistry, m_numberWideningOpName, m_numberMergeOpName);
+		} catch (Exception e) {
+			m_logger.warn(String.format("Invalid domain factory %s chosen, using default domain %s",
+					m_numberDomainID, SignDomainFactory.getDomainID()));
+			m_numberDomainFactory = new SignDomainFactory(m_logger, m_domainRegistry, m_numberWideningOpName, m_numberMergeOpName); // fallback
 		}
 		
 		// factories which are present independent from preferences
-		s_boolDomainFactory = new BoolDomainFactory();
-	}
-	
-	/**
-	 * @return The logger for the AbstractInterpretation plugin
-	 */
-	public static Logger getLogger() {
-		return s_logger;
-	}
-
-	/**
-	 * @return The domain factory which is to be used to generate objects specific to the chosen abstract domain for numbers
-	 */
-	public static IAbstractDomainFactory getNumberDomainFactory() {
-		return s_domainFactory;
-	}
-
-	/**
-	 * @return The domain factory which is to be used to generate objects for the boolean abstract domain
-	 * which is used side-by-side with the domain chosen for numbers.
-	 */
-	public static BoolDomainFactory getBoolDomainFactory() {
-		return s_boolDomainFactory;
+		m_boolDomainFactory = new BoolDomainFactory(m_logger);
+		
+		m_boogieVisitor = new AbstractInterpretationBoogieVisitor(logger, m_numberDomainFactory, m_boolDomainFactory);
 	}
 
 	/**
@@ -140,7 +131,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				newState.addLoopEntryNode(node);
 				int visits = newState.getLoopEntryVisitCount(node);
 				
-				if (visits > getIterationsUntilWidening()) {
+				if (visits > m_iterationsUntilWidening) {
 					// fetch old state, apply widening, discard old state
 					AbstractState oldState = null;
 					for (AbstractState s : statesAtNode) {
@@ -166,7 +157,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 						unprocessedStates.add(s); // collect unprocessed states
 				}
 			}
-			if (unprocessedStates.size() >= getParallelStatesUntilMerge()) {
+			if (unprocessedStates.size() >= m_parallelStatesUntilMerge) {
 				// merge states
 				for (AbstractState s : unprocessedStates) {
 					statesAtNode.remove(s);
@@ -183,7 +174,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 			notifyStateChangeListeners(node, null, state, state);
 		}
 
-		if (getGenerateStateAnnotations())
+		if (m_generateStateAnnotations)
 			annotateElement(node, statesAtNode);
 		return true;
 	}
@@ -200,7 +191,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 			// TODO: get the one root edge to the main function
 			if (e instanceof RootEdge) {
 				RCFGNode target = e.getTarget();
-				putStateToNode(new AbstractState(), target);
+				putStateToNode(new AbstractState(m_logger, m_numberDomainFactory), target);
 				m_nodesToVisit.add(target);
 			}
 		}
@@ -237,7 +228,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 					m_currentState.setProcessed(true);
 					
 					if (m_currentState == null) {
-						s_logger.warn("No state found at node " + node.toString());
+						m_logger.warn("No state found at node " + node.toString());
 					} else {
 						for (RCFGEdge e : node.getOutgoingEdges()) {
 							m_resultingState = null;
@@ -257,7 +248,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(RCFGEdge e) {
-		s_logger.debug("Visiting: " + e.getSource() + " -> " + e.getTarget());
+		m_logger.debug("Visiting: " + e.getSource() + " -> " + e.getTarget());
 		
 		super.visit(e);
 		
@@ -283,7 +274,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(RootEdge e) {
-		s_logger.debug("> RootEdge");
+		m_logger.debug("> RootEdge");
 		
 		super.visit(e);
 
@@ -292,16 +283,16 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	
 	@Override
 	protected void visit(CodeBlock c) {
-		s_logger.debug("> CodeBlock begin");
+		m_logger.debug("> CodeBlock begin");
 			
 		super.visit(c);
 
-		s_logger.debug("> CodeBlock end");
+		m_logger.debug("> CodeBlock end");
 	}
 
 	@Override
 	protected void visit(Call c) {
-		s_logger.debug("> Call");
+		m_logger.debug("> Call");
 		
 		super.visit(c);
 
@@ -311,7 +302,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(GotoEdge c) {
-		s_logger.debug("> GotoEdge");
+		m_logger.debug("> GotoEdge");
 		
 		super.visit(c);
 
@@ -320,7 +311,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(ParallelComposition c) {
-		s_logger.debug("> ParallelComposition");
+		m_logger.debug("> ParallelComposition");
 		
 		super.visit(c);
 
@@ -343,7 +334,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(Return c) {
-		s_logger.debug("> Return");
+		m_logger.debug("> Return");
 		
 		super.visit(c);
 
@@ -353,7 +344,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(SequentialComposition c) {
-		s_logger.debug("> SequentialComposition");
+		m_logger.debug("> SequentialComposition");
 		
 		super.visit(c);
 		
@@ -372,7 +363,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(Summary c) {
-		s_logger.debug("> Summary");
+		m_logger.debug("> Summary");
 		
 		super.visit(c);
 
@@ -381,7 +372,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(StatementSequence c) {
-		s_logger.debug("> StatementSequence");
+		m_logger.debug("> StatementSequence");
 		
 		super.visit(c);
 		
@@ -457,53 +448,11 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	private void fetchPreferences() {
 		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 
-		s_iterationsUntilWidening = prefs.getInt(AbstractInterpretationPreferenceInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
-		s_parallelStatesUntilMerge = prefs.getInt(AbstractInterpretationPreferenceInitializer.LABEL_STATES_UNTIL_MERGE);
-		s_StateAnnotations = prefs.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_STATE_ANNOTATIONS);
-		s_numberDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACTDOMAIN);
-		s_numberWideningOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, s_numberDomainID));
-		s_numberMergeOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP, s_numberDomainID));
-	}
-
-	/**
-	 * @return The minimum number of iterations to perform before applying widening
-	 */
-	public static int getIterationsUntilWidening() {
-		return s_iterationsUntilWidening;
-	}
-	
-	/**
-	 * @return The maximum number of states at a node which may be processed without merging 
-	 */
-	public static int getParallelStatesUntilMerge() {
-		return s_parallelStatesUntilMerge;
-	}
-	
-	/**
-	 * @return Whether to generate node annotations with the present abstract states
-	 */
-	public static boolean getGenerateStateAnnotations() {
-		return s_StateAnnotations;
-	}
-	
-	/**
-	 * @return The ID of the domain chosen for numbers
-	 */
-	public static String getNumberDomainID() {
-		return s_numberDomainID;
-	}
-	
-	/**
-	 * @return The name of the chosen widening operator
-	 */
-	public static String getNumberWideningOperatorName() {
-		return s_numberWideningOpName;
-	}
-	
-	/**
-	 * @return The name of the chosen merge operator
-	 */
-	public static String getNumberMergeOperatorName() {
-		return s_numberMergeOpName;
+		m_iterationsUntilWidening = prefs.getInt(AbstractInterpretationPreferenceInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
+		m_parallelStatesUntilMerge = prefs.getInt(AbstractInterpretationPreferenceInitializer.LABEL_STATES_UNTIL_MERGE);
+		m_generateStateAnnotations = prefs.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_STATE_ANNOTATIONS);
+		m_numberDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACTDOMAIN);
+		m_numberWideningOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_numberDomainID));
+		m_numberMergeOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP, m_numberDomainID));
 	}
 }

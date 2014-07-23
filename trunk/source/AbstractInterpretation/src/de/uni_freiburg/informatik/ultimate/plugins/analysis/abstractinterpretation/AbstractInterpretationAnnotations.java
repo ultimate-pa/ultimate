@@ -3,7 +3,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,13 +56,14 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 			return m_states;
 		case "Abstract Values":
 			if (m_states == null) return null;
-			Map<String, Map<String, Map<String, IAbstractValue>>> values =
-				new HashMap<String, Map<String, Map<String, IAbstractValue>>>(m_states.size());
+			Map<String, Map<String, Map<String, IAbstractValue<?>>>> values =
+				new HashMap<String, Map<String, Map<String, IAbstractValue<?>>>>(m_states.size());
 			for (String stateKey : m_states.keySet()) {
 				AbstractState state = m_states.get(stateKey);
 				if (state != null) {
-					List<Map<String, IAbstractValue>> layer = state.getValues();
-					Map<String, Map<String, IAbstractValue>> layerMap = new HashMap<String, Map<String, IAbstractValue>>(layer.size());
+					List<Map<String, IAbstractValue<?>>> layer = state.getValues();
+					Map<String, Map<String, IAbstractValue<?>>> layerMap =
+							new HashMap<String, Map<String, IAbstractValue<?>>>(layer.size());
 					for (int j = 0; j < layer.size(); j++)
 						layerMap.put(String.format("Scope level %d", j), layer.get(j));
 					values.put(stateKey, layerMap);

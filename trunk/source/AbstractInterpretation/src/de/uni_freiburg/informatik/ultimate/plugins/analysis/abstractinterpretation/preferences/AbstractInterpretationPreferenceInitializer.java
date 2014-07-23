@@ -15,7 +15,7 @@ public class AbstractInterpretationPreferenceInitializer extends
 		UltimatePreferenceInitializer {
 
 	/*
-	 * labels for the different preferencess
+	 * labels for the different preferences
 	 */
 	
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
@@ -38,6 +38,7 @@ public class AbstractInterpretationPreferenceInitializer extends
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
+		AbstractDomainRegistry domainRegistry = AbstractDomainRegistry.getInstance();
 		
 		List<UltimatePreferenceItem<?>> preferenceItems = new LinkedList<UltimatePreferenceItem<?>>();
 
@@ -54,7 +55,7 @@ public class AbstractInterpretationPreferenceInitializer extends
 								DEF_STATE_ANNOTATIONS, PreferenceType.Boolean));
 		
 		// collect valid domain IDs
-		Collection<String> domainIDs = AbstractDomainRegistry.getDomainFactories().keySet();
+		Collection<String> domainIDs = domainRegistry.getDomainFactories().keySet();
 		String[] validDomainIDs = new String[domainIDs.size()];
 		int i = 0;
 		for (String id : domainIDs) {
@@ -71,7 +72,7 @@ public class AbstractInterpretationPreferenceInitializer extends
 					null, PreferenceType.Label));
 			
 			// widening operators
-			Collection<String> wideningOps = AbstractDomainRegistry.getWideningOperators(id).keySet();
+			Collection<String> wideningOps = domainRegistry.getWideningOperators(id).keySet();
 			String[] validWideningOps = new String[wideningOps.size()];
 			i = 0;
 			for (String op : wideningOps) {
@@ -82,7 +83,7 @@ public class AbstractInterpretationPreferenceInitializer extends
 					validWideningOps[0], PreferenceType.Combo, validWideningOps));
 			
 			// merge operators
-			Collection<String> mergeOps = AbstractDomainRegistry.getMergeOperators(id).keySet();
+			Collection<String> mergeOps = domainRegistry.getMergeOperators(id).keySet();
 			String[] validMergeOps = new String[mergeOps.size()];
 			i = 0;
 			for (String op : mergeOps) {

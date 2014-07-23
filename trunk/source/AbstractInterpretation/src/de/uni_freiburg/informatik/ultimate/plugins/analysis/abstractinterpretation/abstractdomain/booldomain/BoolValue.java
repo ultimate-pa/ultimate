@@ -3,13 +3,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 
 /**
  * @author Christopher Dillo
  *
  */
-public class BoolValue implements IAbstractValue {
+public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	
 	/**
 	 * Possible values for the bool domain.
@@ -21,28 +23,28 @@ public class BoolValue implements IAbstractValue {
 	}
 
 	private Bool m_value;
-
+	
+	private BoolDomainFactory m_factory;
+	
+	private Logger m_logger;
 	
 	/**
 	 * Generate a new BoolValue with the given value
 	 * @param value TRUE? UNKNOWN?
 	 */
-	public BoolValue(Bool value) {
+	protected BoolValue(Bool value, BoolDomainFactory factory, Logger logger) {
 		m_value = value;
+		m_factory = factory;
+		m_logger = logger;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#getValue()
+	 */
 	public Bool getValue() {
 		return m_value;
 	}
 	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#getDomainID()
-	 */
-	@Override
-	public String getDomainID() {
-		return BoolDomainFactory.s_DomainID;
-	}
-
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#isTop()
 	 */
@@ -70,7 +72,7 @@ public class BoolValue implements IAbstractValue {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#isEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public boolean isEqual(IAbstractValue value) {
+	public boolean isEqual(IAbstractValue<?> value) {
 		BoolValue val = (BoolValue) value;
 		if (val == null) return false;
 		
@@ -81,7 +83,7 @@ public class BoolValue implements IAbstractValue {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#isSuper(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public boolean isSuper(IAbstractValue value) {
+	public boolean isSuper(IAbstractValue<?> value) {
 		BoolValue val = (BoolValue) value;
 		if (val == null) return false;
 		
@@ -98,7 +100,7 @@ public class BoolValue implements IAbstractValue {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#isSub(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public boolean isSub(IAbstractValue value) {
+	public boolean isSub(IAbstractValue<?> value) {
 		BoolValue val = (BoolValue) value;
 		if (val == null) return false;
 		
@@ -116,47 +118,52 @@ public class BoolValue implements IAbstractValue {
 	 */
 	@Override
 	public BoolValue copy() {
-		return new BoolValue(m_value);
+		return m_factory.makeValue(m_value);
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#add(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public BoolValue add(IAbstractValue value) {
-		return new BoolValue(Bool.EMPTY);
+	public BoolValue add(IAbstractValue<?> value) {
+		m_logger.debug("Invalid operation ADD on BoolValue");
+		return m_factory.makeValue(Bool.EMPTY);
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#subtract(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public BoolValue subtract(IAbstractValue value) {
-		return new BoolValue(Bool.EMPTY);
+	public BoolValue subtract(IAbstractValue<?> value) {
+		m_logger.debug("Invalid operation SUBTRACT on BoolValue");
+		return m_factory.makeValue(Bool.EMPTY);
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#multiply(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public BoolValue multiply(IAbstractValue value) {
-		return new BoolValue(Bool.EMPTY);
+	public BoolValue multiply(IAbstractValue<?> value) {
+		m_logger.debug("Invalid operation MULTIPLY on BoolValue");
+		return m_factory.makeValue(Bool.EMPTY);
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#divide(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public BoolValue divide(IAbstractValue value) {
-		return new BoolValue(Bool.EMPTY);
+	public BoolValue divide(IAbstractValue<?> value) {
+		m_logger.debug("Invalid operation DIVIDE on BoolValue");
+		return m_factory.makeValue(Bool.EMPTY);
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#modulo(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public BoolValue modulo(IAbstractValue value) {
-		return new BoolValue(Bool.EMPTY);
+	public BoolValue modulo(IAbstractValue<?> value) {
+		m_logger.debug("Invalid operation MODULO on BoolValue");
+		return m_factory.makeValue(Bool.EMPTY);
 	}
 
 	/* (non-Javadoc)
@@ -164,50 +171,49 @@ public class BoolValue implements IAbstractValue {
 	 */
 	@Override
 	public BoolValue negative() {
-		return new BoolValue(Bool.EMPTY);
+		m_logger.debug("Invalid operation NEGATIVE on BoolValue");
+		return m_factory.makeValue(Bool.EMPTY);
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public BoolValue compareIsEqual(IAbstractValue value) {
-		BoolValue bval = (BoolValue) value;
+	public BoolValue compareIsEqual(IAbstractValue<?> value) {
+		Bool bool = (Bool) value.getValue();
+		if (bool == null) return m_factory.makeValue(Bool.EMPTY);
 		
-		if (bval == null) return new BoolValue(Bool.EMPTY);
-		
-		Bool bool = bval.getValue();
 		switch (m_value) {
 		case TRUE :
 			switch (bool) {
 			case TRUE :
 			case UNKNOWN :
-				return new BoolValue(Bool.TRUE);
+				return m_factory.makeValue(Bool.TRUE);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case FALSE :
 			switch (bool) {
 			case FALSE :
 			case UNKNOWN :
-				return new BoolValue(Bool.FALSE);
+				return m_factory.makeValue(Bool.FALSE);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case UNKNOWN :
 			switch (bool) {
 			case TRUE :
-				return new BoolValue(Bool.TRUE);
+				return m_factory.makeValue(Bool.TRUE);
 			case FALSE :
-				return new BoolValue(Bool.FALSE);
+				return m_factory.makeValue(Bool.FALSE);
 			case UNKNOWN :
-				return new BoolValue(Bool.UNKNOWN);
+				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case EMPTY :
 		default :
-			return new BoolValue(Bool.EMPTY);
+			return m_factory.makeValue(Bool.EMPTY);
 		}
 	}
 
@@ -215,43 +221,41 @@ public class BoolValue implements IAbstractValue {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsNotEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public BoolValue compareIsNotEqual(IAbstractValue value) {
-		BoolValue bval = (BoolValue) value;
+	public BoolValue compareIsNotEqual(IAbstractValue<?> value) {
+		Bool bool = (Bool) value.getValue();
+		if (bool == null) return m_factory.makeValue(Bool.EMPTY);
 		
-		if (bval == null) return new BoolValue(Bool.EMPTY);
-		
-		Bool bool = bval.getValue();
 		switch (m_value) {
 		case TRUE :
 			switch (bool) {
 			case FALSE :
 			case UNKNOWN :
-				return new BoolValue(Bool.TRUE);
+				return m_factory.makeValue(Bool.TRUE);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case FALSE :
 			switch (bool) {
 			case TRUE :
 			case UNKNOWN :
-				return new BoolValue(Bool.FALSE);
+				return m_factory.makeValue(Bool.FALSE);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case UNKNOWN :
 			switch (bool) {
 			case TRUE :
-				return new BoolValue(Bool.FALSE);
+				return m_factory.makeValue(Bool.FALSE);
 			case FALSE :
-				return new BoolValue(Bool.TRUE);
+				return m_factory.makeValue(Bool.TRUE);
 			case UNKNOWN :
-				return new BoolValue(Bool.UNKNOWN);
+				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case EMPTY :
 		default :
-			return new BoolValue(Bool.EMPTY);
+			return m_factory.makeValue(Bool.EMPTY);
 		}
 	}
 
@@ -259,32 +263,32 @@ public class BoolValue implements IAbstractValue {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsLess(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public BoolValue compareIsLess(IAbstractValue value) {
-		return new BoolValue(Bool.EMPTY);
+	public BoolValue compareIsLess(IAbstractValue<?> value) {
+		return m_factory.makeValue(Bool.EMPTY);
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsGreater(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public BoolValue compareIsGreater(IAbstractValue value) {
-		return new BoolValue(Bool.EMPTY);
+	public BoolValue compareIsGreater(IAbstractValue<?> value) {
+		return m_factory.makeValue(Bool.EMPTY);
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsLessEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public BoolValue compareIsLessEqual(IAbstractValue value) {
-		return new BoolValue(Bool.EMPTY);
+	public BoolValue compareIsLessEqual(IAbstractValue<?> value) {
+		return m_factory.makeValue(Bool.EMPTY);
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsGreaterEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public BoolValue compareIsGreaterEqual(IAbstractValue value) {
-		return new BoolValue(Bool.EMPTY);
+	public BoolValue compareIsGreaterEqual(IAbstractValue<?> value) {
+		return m_factory.makeValue(Bool.EMPTY);
 	}
 	
 	/*
@@ -300,44 +304,44 @@ public class BoolValue implements IAbstractValue {
 	 * @return A BoolValue representing the result of the operation
 	 */
 	public BoolValue logicIff(BoolValue value) {
-		if (value == null) return new BoolValue(Bool.EMPTY);
+		if (value == null) return m_factory.makeValue(Bool.EMPTY);
 		
 		Bool bool = value.getValue();
 		switch (m_value) {
 		case TRUE :
 			switch (bool) {
 			case TRUE :
-				return new BoolValue(Bool.TRUE);
+				return m_factory.makeValue(Bool.TRUE);
 			case FALSE :
-				return new BoolValue(Bool.FALSE);
+				return m_factory.makeValue(Bool.FALSE);
 			case UNKNOWN :
-				return new BoolValue(Bool.UNKNOWN);
+				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case FALSE :
 			switch (bool) {
 			case TRUE :
-				return new BoolValue(Bool.FALSE);
+				return m_factory.makeValue(Bool.FALSE);
 			case FALSE :
-				return new BoolValue(Bool.TRUE);
+				return m_factory.makeValue(Bool.TRUE);
 			case UNKNOWN :
-				return new BoolValue(Bool.UNKNOWN);
+				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case UNKNOWN :
 			switch (bool) {
 			case TRUE :
 			case FALSE :
 			case UNKNOWN :
-				return new BoolValue(Bool.UNKNOWN);
+				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case EMPTY :
 		default :
-			return new BoolValue(Bool.EMPTY);
+			return m_factory.makeValue(Bool.EMPTY);
 		}
 	}
 
@@ -346,43 +350,43 @@ public class BoolValue implements IAbstractValue {
 	 * @return A BoolValue representing the result of the operation
 	 */
 	public BoolValue logicImplies(BoolValue value) {
-		if (value == null) return new BoolValue(Bool.EMPTY);
+		if (value == null) return m_factory.makeValue(Bool.EMPTY);
 		
 		Bool bool = value.getValue();
 		switch (m_value) {
 		case TRUE :
 			switch (bool) {
 			case TRUE :
-				return new BoolValue(Bool.TRUE);
+				return m_factory.makeValue(Bool.TRUE);
 			case FALSE :
-				return new BoolValue(Bool.FALSE);
+				return m_factory.makeValue(Bool.FALSE);
 			case UNKNOWN :
-				return new BoolValue(Bool.UNKNOWN);
+				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case FALSE :
 			switch (bool) {
 			case TRUE :
 			case FALSE :
 			case UNKNOWN :
-				return new BoolValue(Bool.TRUE);
+				return m_factory.makeValue(Bool.TRUE);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case UNKNOWN :
 			switch (bool) {
 			case TRUE :
-				return new BoolValue(Bool.TRUE);
+				return m_factory.makeValue(Bool.TRUE);
 			case FALSE :
 			case UNKNOWN :
-				return new BoolValue(Bool.UNKNOWN);
+				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case EMPTY :
 		default :
-			return new BoolValue(Bool.EMPTY);
+			return m_factory.makeValue(Bool.EMPTY);
 		}
 	}
 
@@ -391,43 +395,43 @@ public class BoolValue implements IAbstractValue {
 	 * @return A BoolValue representing the result of the operation
 	 */
 	public BoolValue logicAnd(BoolValue value) {
-		if (value == null) return new BoolValue(Bool.EMPTY);
+		if (value == null) return m_factory.makeValue(Bool.EMPTY);
 		
 		Bool bool = value.getValue();
 		switch (m_value) {
 		case TRUE :
 			switch (bool) {
 			case TRUE :
-				return new BoolValue(Bool.TRUE);
+				return m_factory.makeValue(Bool.TRUE);
 			case FALSE :
-				return new BoolValue(Bool.FALSE);
+				return m_factory.makeValue(Bool.FALSE);
 			case UNKNOWN :
-				return new BoolValue(Bool.UNKNOWN);
+				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case FALSE :
 			switch (bool) {
 			case TRUE :
 			case FALSE :
 			case UNKNOWN :
-				return new BoolValue(Bool.FALSE);
+				return m_factory.makeValue(Bool.FALSE);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case UNKNOWN :
 			switch (bool) {
 			case FALSE :
-				return new BoolValue(Bool.FALSE);
+				return m_factory.makeValue(Bool.FALSE);
 			case TRUE :
 			case UNKNOWN :
-				return new BoolValue(Bool.UNKNOWN);
+				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case EMPTY :
 		default :
-			return new BoolValue(Bool.EMPTY);
+			return m_factory.makeValue(Bool.EMPTY);
 		}
 	}
 
@@ -436,7 +440,7 @@ public class BoolValue implements IAbstractValue {
 	 * @return A BoolValue representing the result of the operation
 	 */
 	public BoolValue logicOr(BoolValue value) {
-		if (value == null) return new BoolValue(Bool.EMPTY);
+		if (value == null) return m_factory.makeValue(Bool.EMPTY);
 		
 		Bool bool = value.getValue();
 		switch (m_value) {
@@ -445,34 +449,34 @@ public class BoolValue implements IAbstractValue {
 			case TRUE :
 			case FALSE :
 			case UNKNOWN :
-				return new BoolValue(Bool.TRUE);
+				return m_factory.makeValue(Bool.TRUE);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case FALSE :
 			switch (bool) {
 			case TRUE :
-				return new BoolValue(Bool.TRUE);
+				return m_factory.makeValue(Bool.TRUE);
 			case FALSE :
-				return new BoolValue(Bool.FALSE);
+				return m_factory.makeValue(Bool.FALSE);
 			case UNKNOWN :
-				return new BoolValue(Bool.UNKNOWN);
+				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case UNKNOWN :
 			switch (bool) {
 			case TRUE :
-				return new BoolValue(Bool.TRUE);
+				return m_factory.makeValue(Bool.TRUE);
 			case FALSE :
 			case UNKNOWN :
-				return new BoolValue(Bool.UNKNOWN);
+				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return new BoolValue(Bool.EMPTY);
+				return m_factory.makeValue(Bool.EMPTY);
 			}
 		case EMPTY :
 		default :
-			return new BoolValue(Bool.EMPTY);
+			return m_factory.makeValue(Bool.EMPTY);
 		}
 	}
 
@@ -482,14 +486,14 @@ public class BoolValue implements IAbstractValue {
 	public BoolValue logicNot() {
 		switch (m_value) {
 		case TRUE :
-			return new BoolValue(Bool.FALSE);
+			return m_factory.makeValue(Bool.FALSE);
 		case FALSE :
-			return new BoolValue(Bool.TRUE);
+			return m_factory.makeValue(Bool.TRUE);
 		case UNKNOWN :
-			return new BoolValue(Bool.UNKNOWN);
+			return m_factory.makeValue(Bool.UNKNOWN);
 		case EMPTY :
 		default :
-			return new BoolValue(Bool.EMPTY);
+			return m_factory.makeValue(Bool.EMPTY);
 		}
 	}
 

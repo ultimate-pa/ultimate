@@ -11,7 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.AbstractInterpreter;
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
 /**
@@ -38,13 +39,20 @@ public class AbstractState {
 	 */
 	private boolean m_isProcessed = false;
 	
+	private Logger m_logger;
+	
+	private IAbstractDomainFactory<?> m_numberFactory;
+	
 	/**
 	 * Stack of maps from variable identifiers to values. Stack levels represent scope levels,
 	 * index 0 is the global scope.
 	 */
-	private final List<Map<String, IAbstractValue>> m_values = new ArrayList<Map<String, IAbstractValue>>();
+	private final List<Map<String, IAbstractValue<?>>> m_values = new ArrayList<Map<String, IAbstractValue<?>>>();
 	
-	public AbstractState() {
+	public AbstractState(Logger logger, IAbstractDomainFactory<?> numberFactory) {
+		m_logger = logger;
+		m_numberFactory = numberFactory;
+		
 		pushStackLayer(); // global scope
 	}
 	
@@ -58,7 +66,7 @@ public class AbstractState {
 		if (state == null)
 			return false;
 		
-		List<Map<String, IAbstractValue>> otherValues = state.getValues();
+		List<Map<String, IAbstractValue<?>>> otherValues = state.getValues();
 		
 		// must have at least as many stack layers (scopes)
 		if (m_values.size() < otherValues.size())
@@ -66,8 +74,8 @@ public class AbstractState {
 		
 		// for each stack layer (scope level) of the others (which may be less!)
 		for (int i = 0; i < otherValues.size(); i++) {
-			Map<String, IAbstractValue> greaterLayer = m_values.get(i);
-			Map<String, IAbstractValue> smallerLayer = otherValues.get(i);
+			Map<String, IAbstractValue<?>> greaterLayer = m_values.get(i);
+			Map<String, IAbstractValue<?>> smallerLayer = otherValues.get(i);
 			
 			// must have at least as many variables
 			if (greaterLayer.size() < smallerLayer.size())
@@ -76,8 +84,8 @@ public class AbstractState {
 			// check if any variable in the other state occurs and is greater in this state
 			Set<String> smallerKeys = smallerLayer.keySet();
 			for (String key : smallerKeys) {
-				IAbstractValue smallerValue = smallerLayer.get(key);
-				IAbstractValue greaterValue = greaterLayer.get(key); 
+				IAbstractValue<?> smallerValue = smallerLayer.get(key);
+				IAbstractValue<?> greaterValue = greaterLayer.get(key); 
 				
 				// identifier must exist and thus have a value
 				if (greaterValue == null)
@@ -97,12 +105,12 @@ public class AbstractState {
 	 * @return A copy of this abstract program state that is independent of this object.
 	 */
 	public AbstractState copy() {
-		AbstractState result = new AbstractState();
+		AbstractState result = new AbstractState(m_logger, m_numberFactory);
 		
 		for (int i = 0; i < m_values.size(); i++) {
 			if (i > 0) result.pushStackLayer();
 			
-			Map<String, ? extends IAbstractValue> layer = m_values.get(i);
+			Map<String, ? extends IAbstractValue<?>> layer = m_values.get(i);
 			
 			for (String identifier : layer.keySet())
 				result.declareIdentifier(identifier, layer.get(identifier).copy());
@@ -126,22 +134,22 @@ public class AbstractState {
 		if (state == null)
 			return null;
 		
-		IMergeOperator mergeOp = AbstractInterpreter.getNumberDomainFactory().makeMergeOperator();
+		IMergeOperator<?> mergeOp = m_numberFactory.getMergeOperator();
 		
-		List<Map<String, IAbstractValue>> otherValues = state.getValues();
+		List<Map<String, IAbstractValue<?>>> otherValues = state.getValues();
 
-		AbstractState resultingState = new AbstractState();
-		List<Map<String, IAbstractValue>> resultingValues = resultingState.getValues();
+		AbstractState resultingState = new AbstractState(m_logger, m_numberFactory);
+		List<Map<String, IAbstractValue<?>>> resultingValues = resultingState.getValues();
 		
 		int maxLayerCount = Math.max(m_values.size(), otherValues.size());
 		
 		// for each stack layer (scope level) 
 		for (int i = 0; i < maxLayerCount; i++) {
-			Map<String, IAbstractValue> thisLayer = (i < m_values.size()) ? m_values.get(i) : null;
-			Map<String, IAbstractValue> otherLayer = (i < otherValues.size()) ? otherValues.get(i) : null;
+			Map<String, IAbstractValue<?>> thisLayer = (i < m_values.size()) ? m_values.get(i) : null;
+			Map<String, IAbstractValue<?>> otherLayer = (i < otherValues.size()) ? otherValues.get(i) : null;
 			
 			if (i > 0) resultingState.pushStackLayer();
-			Map<String, IAbstractValue> resultingLayer = resultingValues.get(i);
+			Map<String, IAbstractValue<?>> resultingLayer = resultingValues.get(i);
 
 			Set<String> identifiers = new HashSet<String>();
 			if (thisLayer != null)
@@ -151,10 +159,10 @@ public class AbstractState {
 
 			// merge values (or take the single value if only one is present)
 			for (String identifier : identifiers) {
-				IAbstractValue thisValue = (thisLayer == null) ? null : thisLayer.get(identifier);
-				IAbstractValue otherValue = (otherLayer == null) ? null : otherLayer.get(identifier); 
+				IAbstractValue<?> thisValue = (thisLayer == null) ? null : thisLayer.get(identifier);
+				IAbstractValue<?> otherValue = (otherLayer == null) ? null : otherLayer.get(identifier); 
 
-				IAbstractValue resultingValue;
+				IAbstractValue<?> resultingValue;
 				if (thisValue == null) {
 					resultingValue = otherValue.copy();
 				} else if (otherValue == null) {
@@ -180,22 +188,22 @@ public class AbstractState {
 		if (state == null)
 			return null;
 		
-		IWideningOperator wideningOp = AbstractInterpreter.getNumberDomainFactory().makeWideningOperator();
+		IWideningOperator<?> wideningOp = m_numberFactory.getWideningOperator();
 		
-		List<Map<String, IAbstractValue>> otherValues = state.getValues();
+		List<Map<String, IAbstractValue<?>>> otherValues = state.getValues();
 
-		AbstractState resultingState = new AbstractState();
-		List<Map<String, IAbstractValue>> resultingValues = resultingState.getValues();
+		AbstractState resultingState = new AbstractState(m_logger, m_numberFactory);
+		List<Map<String, IAbstractValue<?>>> resultingValues = resultingState.getValues();
 		
 		int maxLayerCount = Math.max(m_values.size(), otherValues.size());
 		
 		// for each stack layer (scope level) 
 		for (int i = 0; i < maxLayerCount; i++) {
-			Map<String, IAbstractValue> thisLayer = (i < m_values.size()) ? m_values.get(i) : null;
-			Map<String, IAbstractValue> otherLayer = (i < otherValues.size()) ? otherValues.get(i) : null;
+			Map<String, IAbstractValue<?>> thisLayer = (i < m_values.size()) ? m_values.get(i) : null;
+			Map<String, IAbstractValue<?>> otherLayer = (i < otherValues.size()) ? otherValues.get(i) : null;
 			
 			if (i > 0) resultingState.pushStackLayer();
-			Map<String, IAbstractValue> resultingLayer = resultingValues.get(i);
+			Map<String, IAbstractValue<?>> resultingLayer = resultingValues.get(i);
 
 			Set<String> identifiers = new HashSet<String>();
 			if (thisLayer != null)
@@ -205,15 +213,15 @@ public class AbstractState {
 
 			// widen values: thisValue wideningOp otherValue
 			for (String identifier : identifiers) {
-				IAbstractValue thisValue = (thisLayer == null) ? null : thisLayer.get(identifier);
-				IAbstractValue otherValue = (otherLayer == null) ? null : otherLayer.get(identifier); 
+				IAbstractValue<?> thisValue = (thisLayer == null) ? null : thisLayer.get(identifier);
+				IAbstractValue<?> otherValue = (otherLayer == null) ? null : otherLayer.get(identifier); 
 
-				IAbstractValue resultingValue = null;
+				IAbstractValue<?> resultingValue = null;
 				if (thisValue == null) {
 					resultingValue = otherValue.copy();
-					AbstractInterpreter.getLogger().warn(String.format("Widening encountered a missing value for %s in the old state.", identifier));
+					m_logger.warn(String.format("Widening encountered a missing value for %s in the old state.", identifier));
 				} else if (otherValue == null) {
-					AbstractInterpreter.getLogger().error(String.format("Widening failed with a missing value for %s in the new state.", identifier));
+					m_logger.error(String.format("Widening failed with a missing value for %s in the new state.", identifier));
 				} else {
 					resultingValue = wideningOp.apply(thisValue, otherValue);
 				}
@@ -229,9 +237,9 @@ public class AbstractState {
 	 * @param identifier
 	 * @return The uppermost layer of the stack which contains a key for the given identifier
 	 */
-	private Map<String, IAbstractValue> getTopmostLayerWithIdentifier(String identifier) {
+	private Map<String, IAbstractValue<?>> getTopmostLayerWithIdentifier(String identifier) {
 		int layerNumber = m_values.size() - 1;
-		Map<String, IAbstractValue> layerMap = null;
+		Map<String, IAbstractValue<?>> layerMap = null;
 		
 		boolean found = false;
 		
@@ -255,7 +263,7 @@ public class AbstractState {
 	 * Creates a new empty symbol table and puts it on the top of the stack
 	 */
 	public void pushStackLayer() {
-		m_values.add(new HashMap<String, IAbstractValue>());
+		m_values.add(new HashMap<String, IAbstractValue<?>>());
 	}
 	
 	/**
@@ -278,12 +286,12 @@ public class AbstractState {
 	 * @param value The new value
 	 * @return True iff a layer with the given identifier exists so the value could be written
 	 */
-	public boolean writeValue(String identifier, IAbstractValue value) {
-		Map<String, IAbstractValue> layer = getTopmostLayerWithIdentifier(identifier);
+	public boolean writeValue(String identifier, IAbstractValue<?> value) {
+		Map<String, IAbstractValue<?>> layer = getTopmostLayerWithIdentifier(identifier);
 		
 		if (layer == null) {
-			// TODO: only do this if it atually is a new declaration on a new scope level, not an undeclared variable?
-			AbstractInterpreter.getLogger().debug(String.format("New variable %s at scope level %d", identifier, getStackSize()));
+			// TODO: only do this if it actually is a new declaration on a new scope level, not an undeclared variable?
+			m_logger.debug(String.format("New variable %s at scope level %d", identifier, getStackSize()));
 			return declareIdentifier(identifier, value);
 		}
 		
@@ -296,8 +304,8 @@ public class AbstractState {
 	 * @param identifier The identifier whose value is to be retrieved
 	 * @return The value associated with the identifier on the topmost layer it occurs, or null if it is not found
 	 */
-	public IAbstractValue readValue(String identifier) {
-		Map<String, IAbstractValue> layer = getTopmostLayerWithIdentifier(identifier);
+	public IAbstractValue<?> readValue(String identifier) {
+		Map<String, IAbstractValue<?>> layer = getTopmostLayerWithIdentifier(identifier);
 		
 		if (layer == null)
 			return null;
@@ -311,13 +319,13 @@ public class AbstractState {
 	 * @param initialValue Its initial value
 	 * @return True if it could be declared, false if such an identifier already exists on the top layer or the stack is empty
 	 */
-	public boolean declareIdentifier(String identifier, IAbstractValue initialValue) {
+	public boolean declareIdentifier(String identifier, IAbstractValue<?> initialValue) {
 		int size = m_values.size();
 		
 		if (size <= 0)
 			return false;
 		
-		Map<String, IAbstractValue> topLayer = m_values.get(size - 1);
+		Map<String, IAbstractValue<?>> topLayer = m_values.get(size - 1);
 		
 		if (topLayer.containsKey(identifier))
 			return false;
@@ -383,7 +391,7 @@ public class AbstractState {
 	/**
 	 * @return The stack as a list, bottom layer at index 0.
 	 */
-	public List<Map<String, IAbstractValue>> getValues() {
+	public List<Map<String, IAbstractValue<?>>> getValues() {
 		return m_values;
 	}
 	

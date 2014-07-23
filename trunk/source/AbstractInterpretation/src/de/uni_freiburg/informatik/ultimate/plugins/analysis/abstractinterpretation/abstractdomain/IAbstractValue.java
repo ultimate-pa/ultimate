@@ -9,12 +9,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  * @author Christopher Dillo
  *
  */
-public interface IAbstractValue {
+public interface IAbstractValue<T> {
 	
 	/**
-	 * @return The unique ID of the abstract domain system the implementing class belongs to
+	 * @return The actual value stored in the AbstractValue object
 	 */
-	public String getDomainID();
+	public T getValue();
 	
 	/**
 	 * @return True iff this value is the top element of its abstract domain
@@ -29,43 +29,43 @@ public interface IAbstractValue {
 	/**
 	 * @return True iff this value is equal to the given value of its abstract domain
 	 */
-	public boolean isEqual(IAbstractValue value);
+	public boolean isEqual(IAbstractValue<?> value);
 
 	/**
 	 * @return True iff this value is ordered greater or equal to the given value of its abstract domain
 	 */
-	public boolean isSuper(IAbstractValue value);
+	public boolean isSuper(IAbstractValue<?> value);
 
 	/**
 	 * @return True iff this value is ordered lesser or equal to the given value of its abstract domain
 	 */
-	public boolean isSub(IAbstractValue value);
+	public boolean isSub(IAbstractValue<?> value);
 	
 	/**
 	 * @return A copy of this abstract value
 	 */
-	public IAbstractValue copy();
+	public IAbstractValue<T> copy();
 	
 	/**
 	 * @param value The value to add to this value
 	 * @return The sum of this value and the given value: this + value
 	 * <br> null if the given abstract state is of an incompatible abstract domain system
 	 */
-	public IAbstractValue add(IAbstractValue value);
+	public IAbstractValue<T> add(IAbstractValue<?> value);
 	
 	/**
 	 * @param value The value to subtract from this value
 	 * @return The difference of this value and the given value: this - value
 	 * <br> null if the given abstract state is of an incompatible abstract domain system
 	 */
-	public IAbstractValue subtract(IAbstractValue value);
+	public IAbstractValue<T> subtract(IAbstractValue<?> value);
 
 	/**
 	 * @param value The value to multiply with this value
 	 * @return The product of this value and the given value: this * value
 	 * <br> If the given abstract state is of an incompatible abstract domain system, bottom should be returned
 	 */
-	public IAbstractValue multiply(IAbstractValue value);
+	public IAbstractValue<T> multiply(IAbstractValue<?> value);
 
 
 	/**
@@ -73,7 +73,7 @@ public interface IAbstractValue {
 	 * @return The quotient of this value and the given value: this / value
 	 * <br> If the given abstract state is of an incompatible abstract domain system, bottom should be returned
 	 */
-	public IAbstractValue divide(IAbstractValue value);
+	public IAbstractValue<T> divide(IAbstractValue<?> value);
 
 
 	/**
@@ -81,12 +81,12 @@ public interface IAbstractValue {
 	 * @return The remainder of this value and the given value: this % value
 	 * <br> If the given abstract state is of an incompatible abstract domain system, bottom should be returned
 	 */
-	public IAbstractValue modulo(IAbstractValue value);
+	public IAbstractValue<T> modulo(IAbstractValue<?> value);
 	
 	/**
 	 * @return The arithmetic negative of this value: -(value)
 	 */
-	public IAbstractValue negative();
+	public IAbstractValue<T> negative();
 	
 	/**
 	 * @param value The value to compare this value to (this == value)
@@ -94,7 +94,7 @@ public interface IAbstractValue {
 	 * 		possible over-approximating. Bottom if false for all concrete values.
 	 * <br> If the given abstract state is of an incompatible abstract domain system, bottom should be returned
 	 */
-	public IAbstractValue compareIsEqual(IAbstractValue value);
+	public IAbstractValue<T> compareIsEqual(IAbstractValue<?> value);
 	
 	/**
 	 * @param value The value to compare this value to (this != value)
@@ -102,7 +102,7 @@ public interface IAbstractValue {
 	 * 		possible over-approximating. Bottom if false for all concrete values.
 	 * <br> If the given abstract state is of an incompatible abstract domain system, bottom should be returned
 	 */
-	public IAbstractValue compareIsNotEqual(IAbstractValue value);
+	public IAbstractValue<T> compareIsNotEqual(IAbstractValue<?> value);
 	
 	/**
 	 * @param value The value to compare this value to (this < value)
@@ -110,7 +110,7 @@ public interface IAbstractValue {
 	 * 		possible over-approximating. Bottom if false for all concrete values.
 	 * <br> If the given abstract state is of an incompatible abstract domain system, bottom should be returned
 	 */
-	public IAbstractValue compareIsLess(IAbstractValue value);
+	public IAbstractValue<T> compareIsLess(IAbstractValue<?> value);
 	
 	/**
 	 * @param value The value to compare this value to (this > value)
@@ -118,7 +118,7 @@ public interface IAbstractValue {
 	 * 		possible over-approximating. Bottom if false for all concrete values.
 	 * <br> If the given abstract state is of an incompatible abstract domain system, bottom should be returned
 	 */
-	public IAbstractValue compareIsGreater(IAbstractValue value);
+	public IAbstractValue<T> compareIsGreater(IAbstractValue<?> value);
 	
 	/**
 	 * @param value The value to compare this value to (this <= value)
@@ -126,7 +126,7 @@ public interface IAbstractValue {
 	 * 		possible over-approximating. Bottom if false for all concrete values.
 	 * <br> If the given abstract state is of an incompatible abstract domain system, bottom should be returned
 	 */
-	public IAbstractValue compareIsLessEqual(IAbstractValue value);
+	public IAbstractValue<T> compareIsLessEqual(IAbstractValue<?> value);
 	
 	/**
 	 * @param value The value to compare this value to (this >= value)
@@ -134,7 +134,7 @@ public interface IAbstractValue {
 	 * 		possible over-approximating. Bottom if false for all concrete values.
 	 * <br> If the given abstract state is of an incompatible abstract domain system, bottom should be returned
 	 */
-	public IAbstractValue compareIsGreaterEqual(IAbstractValue value);
+	public IAbstractValue<T> compareIsGreaterEqual(IAbstractValue<?> value);
 	
 	/**
 	 * @return A string representation of the abstract value

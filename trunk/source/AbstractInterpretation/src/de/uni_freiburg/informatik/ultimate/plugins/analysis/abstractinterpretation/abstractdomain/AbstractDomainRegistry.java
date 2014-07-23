@@ -18,73 +18,66 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Christopher Dillo
  */
 public class AbstractDomainRegistry {
+	
+	private static AbstractDomainRegistry s_instance;
 
 	/**
 	 * A map of domain IDs to factory classes
 	 */
-	private static Map<String, Class<? extends IAbstractDomainFactory>> m_domainFactories =
-			new HashMap<String, Class<? extends IAbstractDomainFactory>>();
+	private Map<String, Class<? extends IAbstractDomainFactory<?>>> m_domainFactories =
+			new HashMap<String, Class<? extends IAbstractDomainFactory<?>>>();
 	
 	/**
 	 * A map of domain IDs to maps of operator names to widening operator classes
 	 */
-	private static Map<String, Map<String, Class<? extends IWideningOperator>>> m_wideningOperators =
-			new HashMap<String, Map<String, Class<? extends IWideningOperator>>>();
+	private Map<String, Map<String, Class<? extends IWideningOperator<?>>>> m_wideningOperators =
+			new HashMap<String, Map<String, Class<? extends IWideningOperator<?>>>>();
 
 	/**
 	 * A map of domain IDs to maps of operator names to merge operator classes
 	 */
-	private static Map<String, Map<String, Class<? extends IMergeOperator>>> m_mergeOperators = 
-			new HashMap<String, Map<String, Class<? extends IMergeOperator>>>();
-	
-	private static boolean s_initialized = false;
-	
-	/**
-	 * Initialize the registry and generate lists of registered classes.
-	 * <br> Expand this method to register new classes!
-	 * @return False if the registry is already initialized.
-	 */
-	public static boolean initialize() {
-		if (s_initialized) return false;
-		
+	private Map<String, Map<String, Class<? extends IMergeOperator<?>>>> m_mergeOperators = 
+			new HashMap<String, Map<String, Class<? extends IMergeOperator<?>>>>();
+
+	private AbstractDomainRegistry() {
 		// BOOL DOMAIN
-		registerDomainFactory(BoolDomainFactory.class);
-		registerWideningOperator(BoolMergeWideningOperator.class);
-		registerMergeOperator(BoolMergeWideningOperator.class);
+		registerDomainFactory(BoolDomainFactory.getDomainID(), BoolDomainFactory.class);
+		registerWideningOperator(BoolDomainFactory.getDomainID(), BoolMergeWideningOperator.getName(), BoolMergeWideningOperator.class);
+		registerMergeOperator(BoolDomainFactory.getDomainID(), BoolMergeWideningOperator.getName(), BoolMergeWideningOperator.class);
 		
 		// SIGN DOMAIN
-		registerDomainFactory(SignDomainFactory.class);
-		registerWideningOperator(SignMergeWideningOperator.class);
-		registerMergeOperator(SignMergeWideningOperator.class);
+		registerDomainFactory(SignDomainFactory.getDomainID(), SignDomainFactory.class);
+		registerWideningOperator(SignDomainFactory.getDomainID(), SignMergeWideningOperator.getName(), SignMergeWideningOperator.class);
+		registerMergeOperator(SignDomainFactory.getDomainID(), SignMergeWideningOperator.getName(), SignMergeWideningOperator.class);
+	}
+
+	/**
+	 * @return the singleton object...
+	 */
+	public static AbstractDomainRegistry getInstance() {
+		if (s_instance == null)
+			s_instance = new AbstractDomainRegistry();
 		
-		return s_initialized = true;
+		return s_instance;
 	}
 	
 	/**
 	 * Register a domain factory class
+	 * @param domainID The domain ID of the given factory's abstract domain system
 	 * @param factoryClass The class to register
 	 * @return True if successful
 	 */
-	public static boolean registerDomainFactory(Class<? extends IAbstractDomainFactory> factoryClass) {		
-		IAbstractDomainFactory factory;
-		try {
-			factory = factoryClass.newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
-			e.printStackTrace();
-			return false;
+	public boolean registerDomainFactory(String domainID, Class<? extends IAbstractDomainFactory<?>> factoryClass) {		
+		if (!m_domainFactories.containsKey(domainID)) {
+			return m_domainFactories.put(domainID, factoryClass) != null;
 		}
-		
-		if (!m_domainFactories.containsKey(factory.getDomainID())) {
-			return m_domainFactories.put(factory.getDomainID(), factoryClass) != null;
-		}
-		
 		return false;
 	}
 
 	/**
 	 * @return The map ID->Class of registered domain factories
 	 */
-	public static Map<String, Class<? extends IAbstractDomainFactory>> getDomainFactories() {
+	public Map<String, Class<? extends IAbstractDomainFactory<?>>> getDomainFactories() {
 		return m_domainFactories;
 	}
 
@@ -92,33 +85,27 @@ public class AbstractDomainRegistry {
 	 * @param domainID
 	 * @return The abstract domain factory for the given domain ID
 	 */
-	public static Class<? extends IAbstractDomainFactory> getDomainFactory(String domainID) {
+	public Class<? extends IAbstractDomainFactory<?>> getDomainFactory(String domainID) {
 		return m_domainFactories.get(domainID);
 	}
 
 	/**
 	 * Register a widening operator class
+	 * @param domainID The domain ID of the given widening operator's abstract domain system
+	 * @param name The name of the given widening operator
 	 * @param wideningOperatorClass The class to register
 	 * @return True if successful
 	 */
-	public static boolean registerWideningOperator(Class<? extends IWideningOperator> wideningOperatorClass) {
-		IWideningOperator op;
-		try {
-			op = wideningOperatorClass.newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
-			e.printStackTrace();
-			return false;
-		}
-		
-		Map<String, Class<? extends IWideningOperator>> opList = getWideningOperators(op.getDomainID());
+	public boolean registerWideningOperator(String domainID, String name, Class<? extends IWideningOperator<?>> wideningOperatorClass) {
+		Map<String, Class<? extends IWideningOperator<?>>> opList = getWideningOperators(domainID);
 		
 		if (opList == null) {
-			opList = new HashMap<String, Class<? extends IWideningOperator>>();
-			m_wideningOperators.put(op.getDomainID(), opList);
+			opList = new HashMap<String, Class<? extends IWideningOperator<?>>>();
+			m_wideningOperators.put(domainID, opList);
 		}
 
-		if (!opList.containsKey(op.getName()))
-			return opList.put(op.getName(), wideningOperatorClass) != null;
+		if (!opList.containsKey(name))
+			return opList.put(name, wideningOperatorClass) != null;
 		
 		return false;
 	}
@@ -127,7 +114,7 @@ public class AbstractDomainRegistry {
 	 * @param domainID
 	 * @return The map Name->Class of widening operators registered for the given domain ID
 	 */
-	public static Map<String, Class<? extends IWideningOperator>> getWideningOperators(String domainID) {
+	public Map<String, Class<? extends IWideningOperator<?>>> getWideningOperators(String domainID) {
 		return m_wideningOperators.get(domainID);
 	}
 	
@@ -136,8 +123,8 @@ public class AbstractDomainRegistry {
 	 * @param operatorName
 	 * @return The widening operator with the given name for the given domain ID, null if it does not exist
 	 */
-	public static Class<? extends IWideningOperator> getWideningOperator(String domainID, String operatorName) {
-		Map<String, Class<? extends IWideningOperator>> opList = getWideningOperators(domainID);
+	public Class<? extends IWideningOperator<?>> getWideningOperator(String domainID, String operatorName) {
+		Map<String, Class<? extends IWideningOperator<?>>> opList = getWideningOperators(domainID);
 		
 		if (opList == null) return null;
 		
@@ -146,27 +133,21 @@ public class AbstractDomainRegistry {
 
 	/**
 	 * Register a merge operator class
+	 * @param domainID The domain ID of the given merge operator's abstract domain system
+	 * @param name The name of the given merge operator
 	 * @param mergeOperatorClass The class to register
 	 * @return True if successful
 	 */
-	public static boolean registerMergeOperator(Class<? extends IMergeOperator> mergeOperatorClass) {
-		IMergeOperator op;
-		try {
-			op = mergeOperatorClass.newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
-			e.printStackTrace();
-			return false;
-		}
-		
-		Map<String, Class<? extends IMergeOperator>> opList = getMergeOperators(op.getDomainID());
+	public boolean registerMergeOperator(String domainID, String name, Class<? extends IMergeOperator<?>> mergeOperatorClass) {
+		Map<String, Class<? extends IMergeOperator<?>>> opList = getMergeOperators(domainID);
 		
 		if (opList == null) {
-			opList = new HashMap<String, Class<? extends IMergeOperator>>();
-			m_mergeOperators.put(op.getDomainID(), opList);
+			opList = new HashMap<String, Class<? extends IMergeOperator<?>>>();
+			m_mergeOperators.put(domainID, opList);
 		}
 
-		if (!opList.containsKey(op.getName()))
-			return opList.put(op.getName(), mergeOperatorClass) != null;
+		if (!opList.containsKey(name))
+			return opList.put(name, mergeOperatorClass) != null;
 		
 		return false;
 	}
@@ -175,7 +156,7 @@ public class AbstractDomainRegistry {
 	 * @param domainID
 	 * @return The map Name->Class of merging operators registered for the given domain ID
 	 */
-	public static Map<String, Class<? extends IMergeOperator>> getMergeOperators(String domainID) {
+	public Map<String, Class<? extends IMergeOperator<?>>> getMergeOperators(String domainID) {
 		return m_mergeOperators.get(domainID);
 	}
 	
@@ -184,8 +165,8 @@ public class AbstractDomainRegistry {
 	 * @param operatorName
 	 * @return The merge operator with the given name for the given domain ID, null if it does not exist
 	 */
-	public static Class<? extends IMergeOperator> getMergeOperator(String domainID, String operatorName) {
-		Map<String, Class<? extends IMergeOperator>> opList = getMergeOperators(domainID);
+	public Class<? extends IMergeOperator<?>> getMergeOperator(String domainID, String operatorName) {
+		Map<String, Class<? extends IMergeOperator<?>>> opList = getMergeOperators(domainID);
 		
 		if (opList == null) return null;
 		

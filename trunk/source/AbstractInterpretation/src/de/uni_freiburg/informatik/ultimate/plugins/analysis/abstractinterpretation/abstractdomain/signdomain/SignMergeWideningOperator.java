@@ -3,6 +3,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IMergeOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IWideningOperator;
@@ -12,21 +14,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Christopher Dillo
  *
  */
-public class SignMergeWideningOperator implements IWideningOperator, IMergeOperator {
-
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IWideningOperator#getDomainID()
-	 */
-	@Override
-	public String getDomainID() {
-		return SignDomainFactory.s_DomainID;
+public class SignMergeWideningOperator implements IWideningOperator<SignValue.Sign>, IMergeOperator<SignValue.Sign> {
+	
+	private SignDomainFactory m_factory;
+	
+	@SuppressWarnings("unused")
+	private Logger m_logger;
+	
+	public SignMergeWideningOperator(SignDomainFactory factory, Logger logger) {
+		m_factory = factory;
+		m_logger = logger;
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IWideningOperator#getName()
-	 */
-	@Override
-	public String getName() {
+	public static String getName() {
 		return "SIGN Merge & Widening";
 	}
 
@@ -34,40 +34,33 @@ public class SignMergeWideningOperator implements IWideningOperator, IMergeOpera
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IWideningOperator#apply(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue, de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public SignValue apply(IAbstractValue oldValue, IAbstractValue newValue) {
-		SignValue oldSignValue = (SignValue) oldValue;
-		SignValue newSignValue = (SignValue) newValue; 
-		
-		// invalid state objects
-		if ((oldSignValue == null) || (newSignValue == null)) {
-			return null;
-		}
+	public SignValue apply(IAbstractValue<?> oldValue, IAbstractValue<?> newValue) {
+		Sign oldV = (Sign) oldValue.getValue();
+		Sign newV = (Sign) newValue.getValue();
+		if ((oldV == null) || (newV == null)) return null;
 
 		// old is PLUSMINUS : PLUSMINUS
-		if (oldSignValue.isTop())
-			return new SignValue(Sign.PLUSMINUS);
+		if (oldValue.isTop())
+			return m_factory.makeValue(Sign.PLUSMINUS);
 		
 		// new is PLUSMINUS : PLUSMINUS
-		if (newSignValue.isTop())
-			return new SignValue(Sign.PLUSMINUS);
-		
-		Sign oldV = oldSignValue.getValue();
-		Sign newV = newSignValue.getValue();
+		if (newValue.isTop())
+			return m_factory.makeValue(Sign.PLUSMINUS);
 		
 		// old is ZERO : new
-		if (oldSignValue.isBottom())
-			return new SignValue(newV);
+		if (oldValue.isBottom())
+			return m_factory.makeValue(newV);
 
 		// new is ZERO : old
-		if (newSignValue.isBottom())
-			return new SignValue(oldV);
+		if (newValue.isBottom())
+			return m_factory.makeValue(oldV);
 		
 		// old is new : old (or new)
 		if (oldV == newV)
-			return new SignValue(oldV);
+			return m_factory.makeValue(oldV);
 		
 		// old is PLUS, new is MINUS or vice versa : PLUSMINUS
-		return new SignValue(Sign.PLUSMINUS);
+		return m_factory.makeValue(Sign.PLUSMINUS);
 	}
 
 }

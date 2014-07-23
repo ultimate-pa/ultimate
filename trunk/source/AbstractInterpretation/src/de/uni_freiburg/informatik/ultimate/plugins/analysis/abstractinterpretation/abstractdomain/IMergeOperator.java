@@ -10,17 +10,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  * @author Christopher Dillo
  *
  */
-public interface IMergeOperator {
-
-	/**
-	 * @return The unique ID of the abstract domain system the implementing class belongs to
-	 */
-	public String getDomainID();
-	
-	/**
-	 * @return A string to identify this merge operator, used for preferences etc
-	 */
-	public String getName();
+public interface IMergeOperator<T> {
 	
 	/**
 	 * Merges two given values. The order should not matter.
@@ -28,6 +18,6 @@ public interface IMergeOperator {
 	 * @param valueB One of the values to merge
 	 * @return A merged value which is greater than both given value wrt the complete lattice of abstract values
 	 */
-	public IAbstractValue apply(IAbstractValue valueA, IAbstractValue valueB);
+	public IAbstractValue<T> apply(IAbstractValue<?> valueA, IAbstractValue<?> valueB);
 	
 }
