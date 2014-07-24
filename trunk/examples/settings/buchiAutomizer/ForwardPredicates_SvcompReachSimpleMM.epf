@@ -1,0 +1,26 @@
+#Thu Mar 06 20:23:14 CET 2014
+\!/instance/CACSL2BoogieTranslator=
+file_export_version=3.0
+@CACSL2BoogieTranslator=0.0.1
+/instance/CACSL2BoogieTranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=IGNORE
+/instance/CACSL2BoogieTranslator/Pointer\ to\ allocated\ memory\ at\ dereference=IGNORE
+/instance/CACSL2BoogieTranslator/Check\ if\ freed\ pointer\ was\ valid=false
+/instance/CACSL2BoogieTranslator/Check\ for\ the\ main\ procedure\ if\ all\ allocated\ memory\ was\ freed=false
+/instance/CACSL2BoogieTranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
+/instance/CACSL2BoogieTranslator/Translation\ Mode\:=SV_COMP14
+#Thu Dec 19 17:31:04 CET 2013
+file_export_version=3.0
+@TraceAbstraction=0.0.1
+\!/instance/TraceAbstraction=
+/instance/TraceAbstraction/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
+/instance/TraceAbstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=false
+#Wed Jan 15 21:36:24 CET 2014
+file_export_version=3.0
+\!/instance/RCFGBuilder=
+@RCFGBuilder=0.0.1
+/instance/RCFGBuilder/Convert\ code\ blocks\ to\ CNF=false
+#Sat Mar 15 16:00:32 CET 2014
+file_export_version=3.0
+@UltimateCore=0.0.1
+/instance/UltimateCore/Generate\ benchmark\ results=false
+/instance/UltimateCore/Toolchain\ timeout\ in\ seconds=120
