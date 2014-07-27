@@ -4,6 +4,9 @@
  * 
  * 'p-1' has not the right type during translation.
  */
+
+#include <stdlib.h>
+
 int main()
 {
     int* p;

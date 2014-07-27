@@ -5,7 +5,12 @@
  * 'continue' is not supported.
  */
 int main() {
-    while (0) {
-        continue;
+	int a;
+    while (1) {
+		if (a != 5) {
+			continue;
+		} else {
+			//@ assert a == 5;
+		}
     }
 }

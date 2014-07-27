@@ -4,6 +4,9 @@
  * Author: heizmann@informtik.uni-freiburg.de
  * 
  */
+
+#include <stdlib.h>
+
 typedef struct {
 	int num;
 	int denom;
