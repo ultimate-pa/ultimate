@@ -10,7 +10,6 @@ implementation main() returns ()
     var p : int;
     var q : int;
 
-  $Ultimate##0:
     call p := ~malloc();
     call q := ~malloc();
     call ~free(p);
