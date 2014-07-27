@@ -7,16 +7,6 @@
 
 #include <stdlib.h>
 
-int main() {
-	int *arg1 = malloc(sizeof(int)),
-		*arg2 = malloc(sizeof(int)),
-		*arg3 = malloc(sizeof(int));
-	nonMain(arg1, arg2, arg3);
-	free(arg1);
-	free(arg2);
-	free(arg3);
-}
-
 int nonMain(int *p, int *q, int *r) {
 	*p = 23;
 	*q = 42;
@@ -31,3 +21,15 @@ int nonMain(int *p, int *q, int *r) {
 		}
 	}
 }
+
+int main() {
+	int *arg1 = malloc(sizeof(int)),
+		*arg2 = malloc(sizeof(int)),
+		*arg3 = malloc(sizeof(int));
+	nonMain(arg1, arg2, arg3);
+	free(arg1);
+	free(arg2);
+	free(arg3);
+}
+
+

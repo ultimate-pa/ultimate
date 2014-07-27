@@ -4,6 +4,9 @@
  * 
  * 'NULL' is not recognized.
  */
+
+#include <stdlib.h>
+
 int main() {
     int* p = NULL;
     
