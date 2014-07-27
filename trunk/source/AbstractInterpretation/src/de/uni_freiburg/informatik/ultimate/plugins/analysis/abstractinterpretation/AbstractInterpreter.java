@@ -61,6 +61,8 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	
 	private AbstractState m_currentState, m_resultingState;
 	
+	private RCFGNode m_currentNode;
+	
 	private AbstractInterpretationBoogieVisitor m_boogieVisitor;
 	
 	private final Set<IAbstractStateChangeListener> m_stateChangeListeners = new HashSet<IAbstractStateChangeListener>();
@@ -126,39 +128,44 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 			List<AbstractState> statesAtNodeBackup = new ArrayList<AbstractState>(statesAtNode);
 			
 			// check for loop entry / widening
+			boolean applyWidening = false;
 			ProgramPoint pp = (ProgramPoint) node;
 			if ((pp != null) && m_loopEntryNodes.contains(pp)) {
 				newState.addLoopEntryNode(node);
-				int visits = newState.getLoopEntryVisitCount(node);
 				
-				if (visits > m_iterationsUntilWidening) {
-					// fetch old state, apply widening, discard old state
-					AbstractState oldState = null;
-					for (AbstractState s : statesAtNode) {
-						if (s.isProcessed() && (s.getLoopEntryVisitCount(node) > 0)) {
-							oldState = s;
-							break;
-						}
-					}
-					if (oldState != null) {
-						newState = newState.widen(oldState);
-						statesAtNode.remove(oldState);
-					}
-				}
+				if (newState.getLoopEntryVisitCount(node) >= m_iterationsUntilWidening)
+					applyWidening = true;
 			}
 			
 			Set<AbstractState> unprocessedStates = new HashSet<AbstractState>();
+			Set<AbstractState> statesToRemove = new HashSet<AbstractState>();
 			for (AbstractState s : statesAtNode) {
 				if (s.isSuper(newState)) return false; // abort if a superstate exists
-				if (!s.isProcessed()) {
+				if (s.isProcessed()) {
+					if (newState.isSuccessor(s)) {
+						// widen if possible
+						if (applyWidening && (s.getLoopEntryVisitCount(node) > 0)) {
+							newState = newState.widen(s);
+							m_logger.debug(String.format("Widening at %s", node.toString()));
+						} else {
+							m_logger.debug(String.format("Not widening at %s: %s with count %d", node.toString(),
+									applyWidening ? "Apply widening" : "Don't apply widening", s.getLoopEntryVisitCount(node)));
+						}
+						
+						statesToRemove.add(s); // remove old obsolete nodes
+					}
+				} else {
 					if (newState.isSuper(s))
-						statesAtNode.remove(s); // remove unprocessed substates of the new state
+						statesToRemove.add(s); // remove unprocessed substates of the new state
 					else
 						unprocessedStates.add(s); // collect unprocessed states
 				}
 			}
+			for (AbstractState s : statesToRemove)
+				statesAtNode.remove(s);
 			if (unprocessedStates.size() >= m_parallelStatesUntilMerge) {
 				// merge states
+				m_logger.debug(String.format("Merging at %s", node.toString()));
 				for (AbstractState s : unprocessedStates) {
 					statesAtNode.remove(s);
 					newState = newState.merge(s);
@@ -191,7 +198,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 			// TODO: get the one root edge to the main function
 			if (e instanceof RootEdge) {
 				RCFGNode target = e.getTarget();
-				putStateToNode(new AbstractState(m_logger, m_numberDomainFactory), target);
+				putStateToNode(new AbstractState(m_logger, m_numberDomainFactory, m_boolDomainFactory), target);
 				m_nodesToVisit.add(target);
 			}
 		}
@@ -227,20 +234,16 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 					m_currentState = unprocessedState;
 					m_currentState.setProcessed(true);
 					
-					if (m_currentState == null) {
-						m_logger.warn("No state found at node " + node.toString());
-					} else {
-						for (RCFGEdge e : node.getOutgoingEdges()) {
-							m_resultingState = null;
-							visit(e);
-							if (m_resultingState != null)
-								m_resultingState.addPassedNode(node);
-						}
+					m_currentNode = node;
+					
+					for (RCFGEdge e : node.getOutgoingEdges()) {
+						m_resultingState = null;
+						visit(e);
 					}
 				} else {
 					hasUnprocessed = false;
 				}
-			} // loop
+			} // hasUnprocessed
 			
 			visitNodes(); // repeat until m_nodesToVisit is empty
 		}
@@ -252,9 +255,9 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		
 		super.visit(e);
 		
-		// TODO: Actual proper state processing
-		
 		if (m_resultingState == null) return; // do not process target node!
+		
+		m_resultingState.addPassedNode(m_currentNode);
 		
 		RCFGNode targetNode = e.getTarget();
 		if (targetNode != null) {
@@ -263,7 +266,6 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				if ((pp != null) && pp.isErrorLocation() && !m_reachedErrorLocs.contains(targetNode)) {
 					m_reachedErrorLocs.add(targetNode);
 					reportErrorResult(targetNode, m_resultingState);
-					// TODO: Abort or proceed?
 				} else {
 					if (!m_nodesToVisit.contains(targetNode))
 						m_nodesToVisit.add(targetNode);

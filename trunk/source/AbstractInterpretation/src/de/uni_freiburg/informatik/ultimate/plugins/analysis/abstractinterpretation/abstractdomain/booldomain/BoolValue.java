@@ -18,7 +18,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	 * EMPTY < TRUE, FALSE < UNKNOWN
 	 * TRUE, FALSE : no relation
 	 */
-	enum Bool {
+	public enum Bool {
 		EMPTY, TRUE, FALSE, UNKNOWN
 	}
 

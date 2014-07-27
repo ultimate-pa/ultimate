@@ -13,6 +13,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
 /**
@@ -42,6 +43,7 @@ public class AbstractState {
 	private Logger m_logger;
 	
 	private IAbstractDomainFactory<?> m_numberFactory;
+	private IAbstractDomainFactory<BoolValue.Bool> m_boolFactory;
 	
 	/**
 	 * Stack of maps from variable identifiers to values. Stack levels represent scope levels,
@@ -49,9 +51,10 @@ public class AbstractState {
 	 */
 	private final List<Map<String, IAbstractValue<?>>> m_values = new ArrayList<Map<String, IAbstractValue<?>>>();
 	
-	public AbstractState(Logger logger, IAbstractDomainFactory<?> numberFactory) {
+	public AbstractState(Logger logger, IAbstractDomainFactory<?> numberFactory, IAbstractDomainFactory<BoolValue.Bool> boolFactory) {
 		m_logger = logger;
 		m_numberFactory = numberFactory;
+		m_boolFactory = boolFactory;
 		
 		pushStackLayer(); // global scope
 	}
@@ -105,7 +108,7 @@ public class AbstractState {
 	 * @return A copy of this abstract program state that is independent of this object.
 	 */
 	public AbstractState copy() {
-		AbstractState result = new AbstractState(m_logger, m_numberFactory);
+		AbstractState result = new AbstractState(m_logger, m_numberFactory, m_boolFactory);
 		
 		for (int i = 0; i < m_values.size(); i++) {
 			if (i > 0) result.pushStackLayer();
@@ -135,10 +138,11 @@ public class AbstractState {
 			return null;
 		
 		IMergeOperator<?> mergeOp = m_numberFactory.getMergeOperator();
+		IWideningOperator<BoolValue.Bool> boolMergeOp = m_boolFactory.getWideningOperator();
 		
 		List<Map<String, IAbstractValue<?>>> otherValues = state.getValues();
 
-		AbstractState resultingState = new AbstractState(m_logger, m_numberFactory);
+		AbstractState resultingState = new AbstractState(m_logger, m_numberFactory, m_boolFactory);
 		List<Map<String, IAbstractValue<?>>> resultingValues = resultingState.getValues();
 		
 		int maxLayerCount = Math.max(m_values.size(), otherValues.size());
@@ -168,12 +172,26 @@ public class AbstractState {
 				} else if (otherValue == null) {
 					resultingValue = thisValue.copy();
 				} else {
-					resultingValue = mergeOp.apply(thisValue, otherValue);
+					if (thisValue instanceof BoolValue)
+						resultingValue = boolMergeOp.apply(thisValue, otherValue);
+					else
+						resultingValue = mergeOp.apply(thisValue, otherValue);
 				}
 				if (resultingValue != null)
 					resultingLayer.put(identifier, resultingValue);
 			}
 		}
+		
+		// add passed loop entry nodes with count
+		for (RCFGNode node : m_loopEntryNodes.keySet())
+			resultingState.addLoopEntryNode(node, m_loopEntryNodes.get(node));
+		for (RCFGNode node : state.m_loopEntryNodes.keySet())
+			resultingState.addLoopEntryNode(node, state.m_loopEntryNodes.get(node));
+
+		// add passed nodes of resultingState : take longer trace
+		List<RCFGNode> passedNodes = (m_passedNodes.size() >= state.m_passedNodes.size()) ? m_passedNodes : state.m_passedNodes;
+		for (RCFGNode node : passedNodes)
+			resultingState.addPassedNode(node);
 		
 		return resultingState;
 	}
@@ -181,7 +199,7 @@ public class AbstractState {
 	/**
 	 * Widen this state with the given state using the given widening operator set in the preferences
 	 * @param state The state to merge with
-	 * @return A new widened state: (this state) wideningOp (the given state)
+	 * @return A new widened state: (the given state) wideningOp (this state)
 	 */
 	public AbstractState widen(AbstractState state) {
 		
@@ -189,10 +207,11 @@ public class AbstractState {
 			return null;
 		
 		IWideningOperator<?> wideningOp = m_numberFactory.getWideningOperator();
+		IWideningOperator<BoolValue.Bool> boolWideningOp = m_boolFactory.getWideningOperator();
 		
 		List<Map<String, IAbstractValue<?>>> otherValues = state.getValues();
 
-		AbstractState resultingState = new AbstractState(m_logger, m_numberFactory);
+		AbstractState resultingState = new AbstractState(m_logger, m_numberFactory, m_boolFactory);
 		List<Map<String, IAbstractValue<?>>> resultingValues = resultingState.getValues();
 		
 		int maxLayerCount = Math.max(m_values.size(), otherValues.size());
@@ -223,12 +242,25 @@ public class AbstractState {
 				} else if (otherValue == null) {
 					m_logger.error(String.format("Widening failed with a missing value for %s in the new state.", identifier));
 				} else {
-					resultingValue = wideningOp.apply(thisValue, otherValue);
+					if (thisValue instanceof BoolValue)
+						resultingValue = boolWideningOp.apply(thisValue, otherValue);
+					else
+						resultingValue = wideningOp.apply(thisValue, otherValue);
 				}
 				if (resultingValue != null)
 					resultingLayer.put(identifier, resultingValue);
 			}
 		}
+		
+		// add passed loop entry nodes with count
+		Map<RCFGNode, Integer> loopEntryNodes = (m_loopEntryNodes.size() >= state.m_loopEntryNodes.size()) ? m_loopEntryNodes : state.m_loopEntryNodes;
+		for (RCFGNode node : loopEntryNodes.keySet()) 
+			resultingState.addLoopEntryNode(node, loopEntryNodes.get(node));
+
+		// add passed nodes of resultingState
+		List<RCFGNode> passedNodes = (m_passedNodes.size() >= state.m_passedNodes.size()) ? m_passedNodes : state.m_passedNodes;
+		for (RCFGNode node : passedNodes)
+			resultingState.addPassedNode(node);
 		
 		return resultingState;
 	}
@@ -353,7 +385,9 @@ public class AbstractState {
 	 * @param visitCount The number of times this node was visited during creating this state
 	 */
 	public void addLoopEntryNode(RCFGNode node, Integer visitCount) {
-		m_loopEntryNodes.put(node, visitCount);
+		if (!m_loopEntryNodes.containsKey(node) || (m_loopEntryNodes.get(node) < visitCount)) {
+			m_loopEntryNodes.put(node, visitCount);
+		}
 	}
 
 	/**
@@ -373,6 +407,13 @@ public class AbstractState {
 	}
 	
 	/**
+	 * @return The set of loop entry nodes with visit counts
+	 */
+	public Map<RCFGNode, Integer> getLoopEntryNodes() {
+		return m_loopEntryNodes;
+	}
+	
+	/**
 	 * Add a node to the list of passed nodes for trace reconstruction
 	 * @param node A node to add
 	 * @return True if the node was successfully added
@@ -386,6 +427,23 @@ public class AbstractState {
 	 */
 	public List<RCFGNode> getPassedNodes() {
 		return m_passedNodes;
+	}
+	
+	/**
+	 * @param predecessor
+	 * @return True iff this state's passed node list contains and begins with all passed nodes of the
+	 * given state in the same order, plus at least one more node
+	 */
+	public boolean isSuccessor(AbstractState predecessor) {
+		if (m_passedNodes.size() <= predecessor.m_passedNodes.size())
+			return false;
+		
+		for (int i = 0; i < predecessor.m_passedNodes.size(); i++) {
+			if (!m_passedNodes.get(i).equals(predecessor.m_passedNodes.get(i)))
+				return false;
+		}
+		
+		return true;
 	}
 	
 	/**

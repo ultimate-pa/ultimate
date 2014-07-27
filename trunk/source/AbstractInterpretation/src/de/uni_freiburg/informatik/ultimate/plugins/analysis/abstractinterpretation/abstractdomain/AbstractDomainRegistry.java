@@ -8,6 +8,9 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolMergeWideningOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain.IntervalDomainFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain.IntervalQuickWideningOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain.IntervalUnionMergeOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain.SignDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain.SignMergeWideningOperator;
 
@@ -40,10 +43,10 @@ public class AbstractDomainRegistry {
 			new HashMap<String, Map<String, Class<? extends IMergeOperator<?>>>>();
 
 	private AbstractDomainRegistry() {
-		// BOOL DOMAIN
-		registerDomainFactory(BoolDomainFactory.getDomainID(), BoolDomainFactory.class);
-		registerWideningOperator(BoolDomainFactory.getDomainID(), BoolMergeWideningOperator.getName(), BoolMergeWideningOperator.class);
-		registerMergeOperator(BoolDomainFactory.getDomainID(), BoolMergeWideningOperator.getName(), BoolMergeWideningOperator.class);
+		// INTERVAL DOMAIN
+		registerDomainFactory(IntervalDomainFactory.getDomainID(), IntervalDomainFactory.class);
+		registerWideningOperator(IntervalDomainFactory.getDomainID(), IntervalQuickWideningOperator.getName(), IntervalQuickWideningOperator.class);
+		registerMergeOperator(IntervalDomainFactory.getDomainID(), IntervalUnionMergeOperator.getName(), IntervalUnionMergeOperator.class);
 		
 		// SIGN DOMAIN
 		registerDomainFactory(SignDomainFactory.getDomainID(), SignDomainFactory.class);

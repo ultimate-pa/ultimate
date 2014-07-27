@@ -3,6 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
 /**
  * @author Christopher Dillo
@@ -43,7 +45,7 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 	 */
 	@Override
 	protected String[] getFieldNames() {
-		return new String[] { "Abstract States",  "Abstract Values" };
+		return new String[] { "Abstract states",  "Abstract values", "Passed loop entry nodes", "Traces"};
 	}
 
 	/* (non-Javadoc)
@@ -52,9 +54,9 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 	@Override
 	protected Object getFieldValue(String field) {
 		switch (field) {
-		case "Abstract States":
+		case "Abstract states" :
 			return m_states;
-		case "Abstract Values":
+		case "Abstract values" :
 			if (m_states == null) return null;
 			Map<String, Map<String, Map<String, IAbstractValue<?>>>> values =
 				new HashMap<String, Map<String, Map<String, IAbstractValue<?>>>>(m_states.size());
@@ -70,6 +72,38 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 				}
 			}
 			return values;
+		case "Passed loop entry nodes" :
+			if (m_states == null) return null;
+			Map<String, Map<String, Integer>> loopEntryNodes =
+				new HashMap<String, Map<String, Integer>>(m_states.size());
+			for (String stateKey : m_states.keySet()) {
+				AbstractState state = m_states.get(stateKey);
+				if (state != null) {
+					Map<RCFGNode, Integer> nodes = state.getLoopEntryNodes();
+					Map<String, Integer> nodeMap =
+							new HashMap<String, Integer>(nodes.size());
+					for (RCFGNode node : nodes.keySet())
+						nodeMap.put(node.toString(), nodes.get(node));
+					loopEntryNodes.put(stateKey, nodeMap);
+				}
+			}
+			return loopEntryNodes;
+		case "Traces" :
+			if (m_states == null) return null;
+			Map<String, List<String>> traces =
+				new HashMap<String, List<String>>(m_states.size());
+			for (String stateKey : m_states.keySet()) {
+				AbstractState state = m_states.get(stateKey);
+				if (state != null) {
+					List<RCFGNode> passed = state.getPassedNodes();
+					List<String> passedList =
+							new ArrayList<String>(passed.size());
+					for (RCFGNode node : passed)
+						passedList.add(node.toString());
+					traces.put(stateKey, passedList);
+				}
+			}
+			return traces;
 		default:
 			return null;
 		}

@@ -4,11 +4,9 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractDomainRegistry;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.result.NoResult;
 
 public class AbstractInterpretationObserver implements IUnmanagedObserver {
 	
@@ -60,9 +58,5 @@ public class AbstractInterpretationObserver implements IUnmanagedObserver {
 		
 		AbstractInterpreter abstractInterpreter = new AbstractInterpreter(m_logger, m_domainRegistry);
 		abstractInterpreter.processRcfg(root);
-
-		UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID,
-				new NoResult<IElement>(root, Activator.s_PLUGIN_ID,
-						UltimateServices.getInstance().getTranslatorSequence()));
 	}
 }
