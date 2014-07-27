@@ -7,7 +7,7 @@ implementation nonMain(#in~p.base:int, #in~p.offset:int, #in~q.base:int, #in~q.o
     var #t~mem1 : int;
     var #t~mem2 : int;
 
-  $Ultimate##0:
+  UltimateLabel0:
     ~p.base, ~p.offset := #in~p.base, #in~p.offset;
     ~q.base, ~q.offset := #in~q.base, #in~q.offset;
     call write~int(23, ~p.base, ~p.offset);
@@ -15,12 +15,12 @@ implementation nonMain(#in~p.base:int, #in~p.offset:int, #in~q.base:int, #in~q.o
     call write~int(42, ~q.base, ~q.offset);
     havoc #t~mem1;
     call #t~mem2 := read~int(~p.base, ~p.offset);
-  $Ultimate##1:
+  UltimateLabel1:
     assume 42 == #t~mem2;
     havoc #t~mem2;
     assert ~q.base == ~p.base && ~q.offset == ~p.offset;
-    goto $Ultimate##3;
-  $Ultimate##3:
+    goto UltimateLabel3;
+  UltimateLabel3:
     return;
 }
 
@@ -64,7 +64,7 @@ procedure ULTIMATE.init() returns ();
 
 implementation ULTIMATE.init() returns ()
 {
-  $Ultimate##0:
+  UltimateLabel0:
     #valid := #valid[0 := false];
     #NULL.base := 0;
     return;
