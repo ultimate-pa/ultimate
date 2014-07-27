@@ -4,6 +4,9 @@
  * Author: heizmann@informtik.uni-freiburg.de
  * 
  */
+
+#include <stdlib.h>
+
 int main() {
 	int *arg1 = malloc(sizeof(int)), 
 		*arg2 = malloc(sizeof(int));

@@ -5,6 +5,8 @@
  * 
  */
 
+#include <stdlib.h>
+
 typedef struct fraction {
 	int num;
 	int denom;

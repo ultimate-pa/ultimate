@@ -6,6 +6,9 @@
  * Problem: node is considered an incomplete struct
  * and hence the offset constants are not declared.
  */
+
+#include <stdlib.h>
+
 typedef struct node {
   int h;
   struct node *n;

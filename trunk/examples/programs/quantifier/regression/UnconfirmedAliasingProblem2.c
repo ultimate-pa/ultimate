@@ -2,6 +2,8 @@
 // and verification of the result.
 // Delete this example if it seems to be redundant.
 
+#include <stdlib.h>
+
 struct Innermost {
    int i ;
 };
