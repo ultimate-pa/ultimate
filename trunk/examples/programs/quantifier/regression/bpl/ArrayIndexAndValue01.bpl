@@ -4,19 +4,26 @@
  */
 var a : [int] int;
 var upper : int;
-var i : int;
 
-procedure main() returns();
-modifies a, i, upper;
+procedure ULTIMATE.start() returns();
+modifies a, upper;
 
-implementation main() returns()
+implementation ULTIMATE.start() returns()
 {
+  var i : int;
   assume upper >= 0;
   a[upper] := 23;
-  i := 0;
+  assume i <= upper;
+  call proc(i);
+}
+
+procedure proc(iin : int) returns()
+modifies a;
+{
+  var i : int;
+  i := iin;
   while(a[i] != 23) {
     assert(i < upper);
     i := i + 1;
   }
 }
-
