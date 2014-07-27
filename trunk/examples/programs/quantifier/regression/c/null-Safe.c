@@ -9,6 +9,9 @@
 
 int main() {
     int* p = NULL;
-    
+	int* q = malloc(sizeof(int));
+	if (p == q) {
+		//@ assert \false;
+	}
     return 0;
 }
