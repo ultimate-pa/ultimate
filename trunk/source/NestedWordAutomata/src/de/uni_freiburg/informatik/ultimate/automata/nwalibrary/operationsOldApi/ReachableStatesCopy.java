@@ -32,9 +32,9 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
@@ -54,8 +53,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Input;
 	private final boolean m_Complement;
 
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID);
+	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
 	/**
 	 * Given an INestedWordAutomaton nwa return a NestedWordAutomaton that has

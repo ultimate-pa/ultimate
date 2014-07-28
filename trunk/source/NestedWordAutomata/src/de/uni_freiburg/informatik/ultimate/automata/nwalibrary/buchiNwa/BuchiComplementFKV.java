@@ -30,8 +30,8 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 	
 
@@ -53,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
-		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+		NestedWordAutomata.getLogger();
 	
 	/**
 	 * TODO Allow definition of a maximal rank for cases where you know that

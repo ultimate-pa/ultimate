@@ -34,9 +34,9 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -46,12 +46,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncl
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class PrefixProduct<S,C> implements IOperation<S,C> {
 	
 	private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+			NestedWordAutomata.getLogger();
 	
 	private final PetriNetJulian<S,C> m_Net;
 	private final NestedWordAutomaton<S,C> m_Nwa;

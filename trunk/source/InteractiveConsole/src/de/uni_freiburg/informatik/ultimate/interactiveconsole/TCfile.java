@@ -5,7 +5,7 @@ import java.util.List;
 
 import javax.xml.bind.JAXBException;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 
 /**
@@ -23,9 +23,9 @@ public class TCfile extends TC {
 	}
 
 	@Override
-	public Toolchain getToolchain(List<ITool> tools) throws Exception {
+	public ToolchainData getToolchain(List<ITool> tools) throws Exception {
 		try {
-			return new Toolchain(this.xml_chain);
+			return new ToolchainData(this.xml_chain);
 		} catch (FileNotFoundException e) {
 			System.err.println("The specified file "+e.getMessage()+" couldn't be found or read.");
 			return null;

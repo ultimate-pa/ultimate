@@ -65,7 +65,6 @@ FILECHAR = ( LETTER | DIGIT | '_' | '-' | ',' | ':' | '.');
   "use"         { return symbol(ConsoleSymbols.USE); }
   "on"          { return symbol(ConsoleSymbols.ON); }
   "set prelude" { return symbol(ConsoleSymbols.SETPRELUDE); }
-  "deletemm"    { return symbol(ConsoleSymbols.DELETEMM); }
   "listmm"      { return symbol(ConsoleSymbols.LISTMM); }
   "rerun"       { return symbol(ConsoleSymbols.RERUN); }
   "output result to" { return symbol(ConsoleSymbols.SETRESULTOUTPUT); }

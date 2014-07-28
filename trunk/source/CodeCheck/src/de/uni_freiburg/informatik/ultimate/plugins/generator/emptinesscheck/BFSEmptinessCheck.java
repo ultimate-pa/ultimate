@@ -10,6 +10,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Stack;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -30,10 +32,18 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 	HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> summaryEdges;
 	HashMap<Pair<AnnotatedProgramPoint,AnnotatedProgramPoint>, AppDoubleDecker> summaryEdgeToReturnSucc;
 
+	private final Logger mLogger;
+
+	
+	public BFSEmptinessCheck(Logger logger){
+		mLogger = logger;
+	}
+	
 	/**
 	 * Search for a nested error path within the graph with the given root. Return null
 	 * if there is none.
 	 * @param root
+	 * @param mLogger 
 	 * @return
 	 */
 	public NestedRun<CodeBlock, AnnotatedProgramPoint> checkForEmptiness(AnnotatedProgramPoint root) {
@@ -120,7 +130,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 							(Stack<Call>) currentAdd.callStack.clone(),
 							(Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
 					if (returnedPath == null)
-						returnedPath = openNewNode(currentAdd, target, new DummyCodeBlock(), newAdd);//convention: AddEdges which are summaries are labeled "null"
+						returnedPath = openNewNode(currentAdd, target, new DummyCodeBlock(mLogger), newAdd);//convention: AddEdges which are summaries are labeled "null"
 				}
 			}
 		}

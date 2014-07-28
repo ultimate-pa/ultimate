@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.interactiveconsole;
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 
 /**
@@ -15,7 +15,7 @@ public class TCcurrent extends TC {
 
 
 	@Override
-	public Toolchain getToolchain(List<ITool> tools) throws Exception {
+	public ToolchainData getToolchain(List<ITool> tools) throws Exception {
 		// simply return null
 		// the caller will know what to do then
 		return null;

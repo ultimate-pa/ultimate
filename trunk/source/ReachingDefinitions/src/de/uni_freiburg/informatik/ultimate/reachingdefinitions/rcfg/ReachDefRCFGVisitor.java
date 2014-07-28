@@ -19,7 +19,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.boogie.ReachDefBoogieAnnotator;
-import de.uni_freiburg.informatik.ultimate.reachingdefinitions.plugin.Activator;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.util.Util;
 
 /**
@@ -38,8 +37,8 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 	private final Logger mLogger;
 	private final String mAnnotationSuffix;
 
-	public ReachDefRCFGVisitor(String annotationSuffix) {
-		mLogger = Activator.getLogger();
+	public ReachDefRCFGVisitor(String annotationSuffix, Logger logger) {
+		mLogger = logger;
 		mAnnotationSuffix = annotationSuffix;
 	}
 
@@ -158,7 +157,7 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 					mPreMap.put(currentSeq, pres);
 				}
 
-				pres.addAll(new ReachDefRCFGPredecessorGenerator(mAnnotationSuffix).process(mCurrentSourceNode));
+				pres.addAll(new ReachDefRCFGPredecessorGenerator(mAnnotationSuffix, mLogger).process(mCurrentSourceNode));
 				predecessors = pres;
 			} else {
 				predecessors = new ArrayList<>();
@@ -166,7 +165,7 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 
 		}
 
-		return new ReachDefBoogieAnnotator(predecessors, stmtAnnotation, mAnnotationSuffix);
+		return new ReachDefBoogieAnnotator(predecessors, stmtAnnotation, mAnnotationSuffix, mLogger);
 	}
 
 	private HashMap<RCFGEdge, HashSet<ReachDefStatementAnnotation>> mPreMap;

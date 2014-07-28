@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +8,6 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;

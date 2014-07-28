@@ -10,7 +10,6 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaWalker;
@@ -35,14 +34,14 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class PredicateGuesser {
 	
-	private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
+	private final Logger mLogger;
 	static final boolean NON_STRICT_EQUALITIES = true; 
 	private final SmtManager m_SmtManager;
 	private final ModifiableGlobalVariableManager m_ModGlobVarManager;
 	private PredicateExtractor m_pe;
-	public PredicateGuesser(SmtManager m_SmtManager, ModifiableGlobalVariableManager modGlobVarManager) {
+	public PredicateGuesser(SmtManager m_SmtManager, ModifiableGlobalVariableManager modGlobVarManager, Logger logger) {
 		super();
+		mLogger = logger;
 		this.m_SmtManager = m_SmtManager;
 		this.m_ModGlobVarManager = modGlobVarManager;
 	}
@@ -68,7 +67,7 @@ public class PredicateGuesser {
 		IPredicate[] result = ps.getPredicates();
 		int i=0;
 		for (IPredicate p : result) {
-			s_Logger.debug(new DebugMessage("GuessedPredicate{0}: {1}", i++, p));
+			mLogger.debug(new DebugMessage("GuessedPredicate{0}: {1}", i++, p));
 		}
 		return result;
 		
@@ -261,8 +260,8 @@ public class PredicateGuesser {
 					result.add(substitute);
 				}
 			}
-			s_Logger.warn("Before: " + this.size() + " predicates");
-			s_Logger.warn("After: " + result.size() + " predicates");
+			mLogger.warn("Before: " + this.size() + " predicates");
+			mLogger.warn("After: " + result.size() + " predicates");
 			return result;
 			
 		}

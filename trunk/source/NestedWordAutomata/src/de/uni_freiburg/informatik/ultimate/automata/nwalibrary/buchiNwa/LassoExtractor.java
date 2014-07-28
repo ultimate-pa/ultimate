@@ -30,18 +30,16 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID);
+	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Reach;

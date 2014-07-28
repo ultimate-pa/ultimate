@@ -1,9 +1,6 @@
 package pea_to_boogie.generator;
 
 import pea.*;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
-import de.uni_freiburg.informatik.ultimate.model.*;
-import pea_to_boogie.translator.*;
 import java.util.*;
 public class VarRemoval {
 	

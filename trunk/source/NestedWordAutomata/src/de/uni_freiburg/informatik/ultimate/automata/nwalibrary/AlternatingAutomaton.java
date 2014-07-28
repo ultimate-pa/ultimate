@@ -25,17 +25,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
-import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 
 public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 	

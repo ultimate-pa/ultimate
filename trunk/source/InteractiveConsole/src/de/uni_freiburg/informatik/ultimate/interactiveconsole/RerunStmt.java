@@ -8,14 +8,14 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultTool
  * with the most recent boogie file.
  * 
  * @author Christian Simon
- *
+  * @deprecated Seems unused. Will not be replaced if no one needs it
  */
 public class RerunStmt extends Stmt {
 
 	@Override
 	public void execute() {
 		BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", 
-				this.controller.getCore(), null, BasicToolchainJob.ChainMode.RERUN_TOOLCHAIN, null, null);
+				this.controller.getCore(), null, BasicToolchainJob.ChainMode.RERUN_TOOLCHAIN, null, null, this.controller.getLogger());
 		tcj.schedule();
 		try {
 			tcj.join();

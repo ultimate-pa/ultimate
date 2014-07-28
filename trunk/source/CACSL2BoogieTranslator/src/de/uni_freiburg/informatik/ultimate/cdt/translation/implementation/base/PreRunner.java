@@ -5,34 +5,25 @@ import java.util.HashSet;
 
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
-import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
-import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
-import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
-import org.eclipse.cdt.core.dom.ast.IASTElaboratedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
-import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
-import org.eclipse.cdt.core.dom.ast.IASTPointerOperator;
-import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 

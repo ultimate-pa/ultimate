@@ -9,7 +9,7 @@ import java.util.List;
 
 import javax.xml.bind.JAXBException;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
@@ -74,8 +74,8 @@ public class AnalysisChooseDialog extends Dialog {
 	 * @throws FileNotFoundException 
 	 * @throws SAXException 
 	 */
-	public Toolchain open() throws FileNotFoundException, JAXBException, SAXException {
-		Toolchain result_chain;
+	public ToolchainData open() throws FileNotFoundException, JAXBException, SAXException {
+		ToolchainData result_chain;
 		createContents();
 		shell.layout();
 		shell.setSize(shell.computeSize(SWT.DEFAULT, SWT.DEFAULT));
@@ -87,10 +87,10 @@ public class AnalysisChooseDialog extends Dialog {
 		}
 		
 		if (toolchain_file != null) {
-			result_chain = new Toolchain(toolchain_file);
+			result_chain = new ToolchainData(toolchain_file);
 		} else if (result != null) {
 			// convert selection into a toolchain
-			result_chain = new Toolchain();
+			result_chain = new ToolchainData();
 			for (ITool t : result) {
 				result_chain.addPlugin(t.getPluginID());
 			}
@@ -131,7 +131,7 @@ public class AnalysisChooseDialog extends Dialog {
 
 			@Override
 			public int compare(ITool o1, ITool o2) {
-				return o1.getName().compareTo(o2.getName());
+				return o1.getPluginName().compareTo(o2.getPluginName());
 			}
 			
 		});
@@ -347,7 +347,7 @@ public class AnalysisChooseDialog extends Dialog {
 	
 	private static void setCaption(TableItem item){
 		IToolchainPlugin isp = (IToolchainPlugin)item.getData();
-		item.setText(isp.getName()+"   id: "+isp.getPluginID());
+		item.setText(isp.getPluginName()+"   id: "+isp.getPluginID());
 	}
 	
 }

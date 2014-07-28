@@ -8,9 +8,9 @@ Require-Bundle: UltimateCore,
  Library-log4j,
  Library-ModelCheckerUtils,
  Library-UltimateUtil,
-  Library-SMTLIB,
+ Library-SMTLIB,
  NestedWordAutomata,
- RCFGBuilder,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  TraceAbstraction
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

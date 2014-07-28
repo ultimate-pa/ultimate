@@ -6,10 +6,11 @@ package de.uni_freiburg.informatik.ultimate.boogie.printer;
 import java.util.Collections;
 import java.util.List;
 
-
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.printer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 
@@ -20,70 +21,37 @@ public class BoogiePrinter implements IOutput {
 	/**
 	 * Holds the plugin's name.
 	 */
-	private static final String s_PLUGIN_NAME = "BoogiePrinter";
+	private static final String sPLUGIN_NAME = "BoogiePrinter";
 	/**
 	 * Holds the plugin's ID.
 	 */
-	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
+	private static final String sPLUGIN_ID = Activator.s_PLUGIN_ID;
 	/**
 	 * The observer for this instance.
 	 */
-	private BoogiePrinterObserver m_Observer;
+	private BoogiePrinterObserver mObserver;
+	private IUltimateServiceProvider mServices;
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#getName()
-	 */
 	@Override
-	public String getName() {
-		return s_PLUGIN_NAME;
+	public String getPluginName() {
+		return sPLUGIN_NAME;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#getPluginID
-	 * ()
-	 */
 	@Override
 	public String getPluginID() {
-		return s_PLUGIN_ID;
+		return sPLUGIN_ID;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#init(java
-	 * .lang.Object)
-	 */
 	@Override
 	public int init() {
-		this.m_Observer = new BoogiePrinterObserver();
 		return 0;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#getQueryKeyword()
-	 */
 	@Override
 	public QueryKeyword getQueryKeyword() {
 		return QueryKeyword.LAST;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#getDesiredToolID
-	 * ()
-	 */
 	@Override
 	public List<String> getDesiredToolID() {
 		// no special tool needed.
@@ -99,35 +67,17 @@ public class BoogiePrinter implements IOutput {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#setInputDefinition
-	 * (de.uni_freiburg.informatik.ultimate.model.GraphType)
-	 */
 	@Override
 	public void setInputDefinition(GraphType graphType) {
 		// not required
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#getObservers()
-	 */
 	@Override
 	public List<IObserver> getObservers() {
-		return Collections.singletonList((IObserver) this.m_Observer);
+		mObserver = new BoogiePrinterObserver(mServices.getLoggingService().getLogger(sPLUGIN_ID));
+		return Collections.singletonList((IObserver) this.mObserver);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#isGuiRequired()
-	 */
 	@Override
 	public boolean isGuiRequired() {
 		return false;
@@ -136,5 +86,16 @@ public class BoogiePrinter implements IOutput {
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
+	}
+
+	@Override
+	public void setToolchainStorage(IToolchainStorage services) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setServices(IUltimateServiceProvider services) {
+		mServices = services;
 	}
 }

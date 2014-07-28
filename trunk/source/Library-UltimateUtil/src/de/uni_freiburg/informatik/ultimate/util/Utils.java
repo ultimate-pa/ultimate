@@ -46,25 +46,82 @@ public class Utils {
 		return builder.toString();
 	}
 
+	/**
+	 * Returns a String representation of time as a fraction of the largest
+	 * whole unit.
+	 * 
+	 * I.e. 1001ms becomes 1,001s, 25h become 1,041d.
+	 * 
+	 * @param time
+	 *            The amount of time
+	 * @param unit
+	 *            The unit of the amount.
+	 * @param decimal
+	 *            The decimal accurracy of the ouptut.
+	 * @return A String with unit symbol.
+	 */
 	public static String humanReadableTime(long time, TimeUnit unit, int decimal) {
+		return humanReadableTime((double) time, unit, decimal);
+	}
+
+	/**
+	 * Returns a String representation of time as a fraction of the largest
+	 * whole unit.
+	 * 
+	 * I.e. 1001ms becomes 1,001s, 25h become 1,041d.
+	 * 
+	 * @param time
+	 *            The amount of time
+	 * @param unit
+	 *            The unit of the amount.
+	 * @param decimal
+	 *            The decimal accurracy of the ouptut.
+	 * @return A String with unit symbol.
+	 */
+	public static String humanReadableTime(double time, TimeUnit unit, int decimal) {
 		String[] units = { "ns", "µs", "ms", "s", "m", "h", "d" };
 
-		int exp = 6;
-
-		if (unit == TimeUnit.DAYS) {
-			return String.format("%." + decimal + "f %s", time, units[exp]);
+		switch (unit) {
+		case DAYS:
+			return String.format("%." + decimal + "f %s", time, units[6]);
+		case HOURS:
+			if (time > 24) {
+				return humanReadableTime(time / 24.0, TimeUnit.DAYS, decimal);
+			} else {
+				return String.format("%." + decimal + "f %s", time, units[5]);
+			}
+		case MINUTES:
+			if (time > 60) {
+				return humanReadableTime(time / 60.0, TimeUnit.HOURS, decimal);
+			} else {
+				return String.format("%." + decimal + "f %s", time, units[4]);
+			}
+		case SECONDS:
+			if (time > 60) {
+				return humanReadableTime(time / 60.0, TimeUnit.MINUTES, decimal);
+			} else {
+				return String.format("%." + decimal + "f %s", time, units[3]);
+			}
+		case MILLISECONDS:
+			if (time > 1000) {
+				return humanReadableTime(time / 1000.0, TimeUnit.SECONDS, decimal);
+			} else {
+				return String.format("%." + decimal + "f %s", time, units[2]);
+			}
+		case MICROSECONDS:
+			if (time > 1000) {
+				return humanReadableTime(time / 1000.0, TimeUnit.MILLISECONDS, decimal);
+			} else {
+				return String.format("%." + decimal + "f %s", time, units[1]);
+			}
+		case NANOSECONDS:
+			if (time > 1000) {
+				return humanReadableTime(time / 1000.0, TimeUnit.MICROSECONDS, decimal);
+			} else {
+				return String.format("%." + decimal + "f %s", time, units[0]);
+			}
+		default:
+			throw new UnsupportedOperationException(unit + " TimeUnit not yet implemented");
 		}
-
-		if (unit == TimeUnit.HOURS) {
-		}
-
-		return "";
 	}
-
-	private double NanosToSeconds(long time) {
-		int factor = 1000;
-		int exp = (int) (Math.log(time) / Math.log(factor));
-		return ((double) time) / Math.pow(factor, exp);
-	}
-
 }

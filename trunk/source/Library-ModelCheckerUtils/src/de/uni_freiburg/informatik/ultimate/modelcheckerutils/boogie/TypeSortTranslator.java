@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -30,10 +31,13 @@ public class TypeSortTranslator {
 
 	private final boolean m_BlackHoleArrays;
 
+	private final IUltimateServiceProvider mServices;
+
 	public TypeSortTranslator(
 			Collection<TypeDeclaration> declarations,
 			Script script,
-			boolean blackHoleArrays) {
+			boolean blackHoleArrays, IUltimateServiceProvider services) {
+		mServices = services;
 		m_BlackHoleArrays = blackHoleArrays;
 		m_Script = script;
 
@@ -144,7 +148,7 @@ public class TypeSortTranslator {
 				}
 				catch (SMTLIBException e) {
 					if (e.getMessage().equals("Sort Array not declared")) {
-						Boogie2SMT.reportUnsupportedSyntax(BoogieASTNode, "Solver does not support arrays");
+						Boogie2SMT.reportUnsupportedSyntax(BoogieASTNode, "Solver does not support arrays", mServices);
 						throw e;
 					}
 					else {

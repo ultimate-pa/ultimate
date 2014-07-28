@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.access.walker;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.access.IManagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
@@ -19,8 +21,8 @@ import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
  */
 public class DFSTreeWalker extends BaseWalker {
 
-	public DFSTreeWalker() {
-		super();
+	public DFSTreeWalker(Logger logger) {
+		super(logger);
 	}
 
 	/**
@@ -48,7 +50,7 @@ public class DFSTreeWalker extends BaseWalker {
 			}
 
 			if (cmds.toString().equals(WalkerOptions.Command.SKIP.toString())) {
-				sLogger.debug("Skipping " + node.getPayload().getName());
+				mLogger.debug("Skipping " + node.getPayload().getName());
 			} else if (cmds.contains(WalkerOptions.Command.DESCEND)) {
 				for (IWalkable i : node.getSuccessors()) {
 					// TODO handle labeled trees
@@ -56,7 +58,7 @@ public class DFSTreeWalker extends BaseWalker {
 				}
 			}
 		} else {
-			sLogger.error("Unsupported model type");
+			mLogger.error("Unsupported model type");
 		}
 
 	}

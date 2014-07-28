@@ -3,12 +3,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces;
 
-import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
-
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieTranslator;
 
 /**
  * @author Markus Lindenmann
@@ -17,10 +14,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  * @date 04.01.2012
  */
 public interface IHandler {
-	/**
-	 * The logger instance for all handler.
-	 */
-	static Logger s_Logger = CACSL2BoogieTranslator.s_Logger;
 	
 	/**
 	 * Visit a given C node.

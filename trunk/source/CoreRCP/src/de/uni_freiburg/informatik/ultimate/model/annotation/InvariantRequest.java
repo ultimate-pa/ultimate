@@ -37,7 +37,7 @@ public class InvariantRequest extends AbstractAnnotations {
 
 	@Override
 	protected Object getFieldValue(String field) {
-		if (field == "Reason")
+		if (field.equals("Reason"))
 			return Arrays.toString(m_Reasons);
 		else
 			throw new UnsupportedOperationException("Unknown field "+field);

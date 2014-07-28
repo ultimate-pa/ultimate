@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTrans
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -33,15 +33,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 /**
  * Given a lasso annotated with predicates, construct an interpolant automaton
  * that is nearly determinisitic.
+ * 
  * @author Matthias Heizmann
- *
+ * 
  */
-public class BuchiInterpolantAutomaton implements
-		INestedWordAutomatonSimple<CodeBlock, IPredicate> {
-	
-	protected final static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-	
+public class BuchiInterpolantAutomaton implements INestedWordAutomatonSimple<CodeBlock, IPredicate> {
+
+	protected final Logger mLogger;
+
 	private final SmtManager m_SmtManager;
 	private final EdgeChecker m_EdgeChecker;
 	private final NestedWordAutomatonCache<CodeBlock, IPredicate> m_InputSuccessorCache;
@@ -49,62 +48,49 @@ public class BuchiInterpolantAutomaton implements
 	private final NwaCacheBookkeeping<CodeBlock, IPredicate> m_InputBookkeeping;
 	private final NestedWordAutomatonCache<CodeBlock, IPredicate> m_Result;
 	private final NwaCacheBookkeeping<CodeBlock, IPredicate> m_ResultBookkeeping;
-	
+
 	private final Set<IPredicate> m_InputStemPredicates;
 	private final Set<IPredicate> m_InputLoopPredicates;
 	private final IPredicate m_HondaPredicate;
-	
+
 	private final Set<IPredicate> m_ResultStemPredicates;
 	private final Set<IPredicate> m_ResultLoopPredicates;
-	
+
 	private final CodeBlock m_HondaEntererStem;
 	private final CodeBlock m_HondaEntererLoop;
-	
-	private final Map<Set<IPredicate>, IPredicate> m_InputPreds2ResultPreds = 
-			new HashMap<Set<IPredicate>, IPredicate>();
+
+	private final Map<Set<IPredicate>, IPredicate> m_InputPreds2ResultPreds = new HashMap<Set<IPredicate>, IPredicate>();
 
 	private boolean m_ComputationFinished = false;
-	
+
 	private final boolean m_ScroogeNondeterminismStem;
 	private final boolean m_ScroogeNondeterminismLoop;
 	private final boolean m_HondaBouncerStem;
 	private final boolean m_HondaBouncerLoop;
-	
-	
+
 	private CodeBlock m_AssertedCodeBlock;
 	private IPredicate m_AssertedState;
 	private IPredicate m_AssertedHier;
-	
 
-	
+	protected final IUltimateServiceProvider mServices;
 
-	public BuchiInterpolantAutomaton(SmtManager smtManager, EdgeChecker edgeChecker,
-			boolean emtpyStem,
-			IPredicate precondition, Set<IPredicate> stemInterpolants, 
-			IPredicate hondaPredicate, 
+	public BuchiInterpolantAutomaton(SmtManager smtManager, EdgeChecker edgeChecker, boolean emtpyStem,
+			IPredicate precondition, Set<IPredicate> stemInterpolants, IPredicate hondaPredicate,
 			Set<IPredicate> loopInterpolants, CodeBlock hondaEntererStem, CodeBlock hondaEntererLoop,
-			INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
-			boolean scroogeNondeterminismStem, boolean scroogeNondeterminismLoop,
-			boolean hondaBouncerStem, boolean hondaBouncerLoop, 
-			PredicateFactory predicateFactory) {
+			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, boolean scroogeNondeterminismStem,
+			boolean scroogeNondeterminismLoop, boolean hondaBouncerStem, boolean hondaBouncerLoop,
+			PredicateFactory predicateFactory, Logger logger, IUltimateServiceProvider services) {
 		super();
+		mLogger = logger;
+		mServices = services;
 		m_SmtManager = smtManager;
 		m_EdgeChecker = edgeChecker;
-		m_InputSuccessorCache = new NestedWordAutomatonCache<CodeBlock, IPredicate>(
-				abstraction.getInternalAlphabet(), 
-				abstraction.getCallAlphabet(), 
-				abstraction.getReturnAlphabet(), 
-				predicateFactory);
-		m_RejectionCache = new NestedWordAutomatonCache<CodeBlock, IPredicate>(
-				abstraction.getInternalAlphabet(), 
-				abstraction.getCallAlphabet(), 
-				abstraction.getReturnAlphabet(), 
-				predicateFactory);
-		m_Result = new NestedWordAutomatonCache<CodeBlock, IPredicate>(
-				abstraction.getInternalAlphabet(), 
-				abstraction.getCallAlphabet(), 
-				abstraction.getReturnAlphabet(), 
-				predicateFactory);
+		m_InputSuccessorCache = new NestedWordAutomatonCache<CodeBlock, IPredicate>(abstraction.getInternalAlphabet(),
+				abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), predicateFactory);
+		m_RejectionCache = new NestedWordAutomatonCache<CodeBlock, IPredicate>(abstraction.getInternalAlphabet(),
+				abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), predicateFactory);
+		m_Result = new NestedWordAutomatonCache<CodeBlock, IPredicate>(abstraction.getInternalAlphabet(),
+				abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), predicateFactory);
 		m_InputStemPredicates = new HashSet<IPredicate>();
 		m_InputLoopPredicates = new HashSet<IPredicate>();
 		m_ResultStemPredicates = new HashSet<IPredicate>();
@@ -146,17 +132,15 @@ public class BuchiInterpolantAutomaton implements
 		m_HondaEntererStem = hondaEntererStem;
 		m_HondaEntererLoop = hondaEntererLoop;
 		/**
-		 * Allow a some special nondeterministic transitions. For this 
-		 * additional transition the
-		 * - predecessor is some stem predicate
-		 * - the letter is m_HondaEntererStem
-		 * - the successor is the honda state
+		 * Allow a some special nondeterministic transitions. For this
+		 * additional transition the - predecessor is some stem predicate - the
+		 * letter is m_HondaEntererStem - the successor is the honda state
 		 */
 		m_ScroogeNondeterminismStem = scroogeNondeterminismStem;
 		m_ScroogeNondeterminismLoop = scroogeNondeterminismLoop;
 		/**
-		 * If set, the nondeterministic transition from the stem predicates
-		 * into the honda is only allowed for the letter m_HondaEntererStem
+		 * If set, the nondeterministic transition from the stem predicates into
+		 * the honda is only allowed for the letter m_HondaEntererStem
 		 */
 		m_HondaBouncerStem = hondaBouncerStem;
 		/**
@@ -164,9 +148,9 @@ public class BuchiInterpolantAutomaton implements
 		 * honda if the letter is m_HondaEntererLoop
 		 */
 		m_HondaBouncerLoop = hondaBouncerLoop;
-		s_Logger.info(startMessage());
+		mLogger.info(startMessage());
 	}
-	
+
 	private StringBuilder startMessage() {
 		StringBuilder sb = new StringBuilder();
 		if (m_ScroogeNondeterminismStem || m_ScroogeNondeterminismLoop) {
@@ -190,11 +174,10 @@ public class BuchiInterpolantAutomaton implements
 		sb.append(m_InputLoopPredicates.size()).append(" loop predicates ");
 		return sb;
 	}
-	
-	
+
 	/**
-	 * Announce that computation is finished. From now on this automaton
-	 * returns only existing transitions but does not compute new ones.
+	 * Announce that computation is finished. From now on this automaton returns
+	 * only existing transitions but does not compute new ones.
 	 */
 	public void finishConstruction() {
 		if (m_ComputationFinished) {
@@ -202,10 +185,10 @@ public class BuchiInterpolantAutomaton implements
 		} else {
 			m_ComputationFinished = true;
 			clearAssertionStack();
-			s_Logger.info(exitMessage());
+			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	private StringBuilder exitMessage() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Resulting Buchi interpolant automaton has ");
@@ -215,8 +198,6 @@ public class BuchiInterpolantAutomaton implements
 		return sb;
 	}
 
-
-	
 	private void computeSuccInternalInput(IPredicate state, CodeBlock symbol, Iterable<IPredicate> preselection) {
 		for (IPredicate succCand : preselection) {
 			LBool sat;
@@ -234,9 +215,9 @@ public class BuchiInterpolantAutomaton implements
 				m_RejectionCache.addInternalTransition(state, symbol, succCand);
 			}
 		}
-		
+
 	}
-	
+
 	private LBool computeSuccInternalSolver(IPredicate state, CodeBlock symbol, IPredicate succCand) {
 		if (m_AssertedHier != null) {
 			m_EdgeChecker.unAssertHierPred();
@@ -260,8 +241,7 @@ public class BuchiInterpolantAutomaton implements
 		LBool result = m_EdgeChecker.postInternalImplies(succCand);
 		return result;
 	}
-	
-	
+
 	private void computeSuccCallInput(IPredicate state, CodeBlock symbol, Iterable<IPredicate> preselection) {
 		for (IPredicate succCand : preselection) {
 			LBool sat;
@@ -279,9 +259,9 @@ public class BuchiInterpolantAutomaton implements
 				m_RejectionCache.addCallTransition(state, symbol, succCand);
 			}
 		}
-		
+
 	}
-	
+
 	private LBool computeSuccCallSolver(IPredicate state, CodeBlock symbol, IPredicate succCand) {
 		if (m_AssertedHier != null) {
 			m_EdgeChecker.unAssertHierPred();
@@ -305,10 +285,9 @@ public class BuchiInterpolantAutomaton implements
 		LBool result = m_EdgeChecker.postCallImplies(succCand);
 		return result;
 	}
-	
-	
-	
-	private void computeSuccReturnInput(IPredicate state, IPredicate hier, Return symbol, Iterable<IPredicate> preselection) {
+
+	private void computeSuccReturnInput(IPredicate state, IPredicate hier, Return symbol,
+			Iterable<IPredicate> preselection) {
 		for (IPredicate succCand : preselection) {
 			LBool sat = null;
 			if (succCand == state || succCand == hier) {
@@ -330,9 +309,9 @@ public class BuchiInterpolantAutomaton implements
 				m_RejectionCache.addReturnTransition(state, hier, symbol, succCand);
 			}
 		}
-		
+
 	}
-	
+
 	private LBool computeSuccReturnSolver(IPredicate state, IPredicate hier, CodeBlock symbol, IPredicate succCand) {
 		if (m_AssertedHier != hier || m_AssertedState != state || m_AssertedCodeBlock != symbol) {
 			if (m_AssertedHier != null) {
@@ -359,10 +338,7 @@ public class BuchiInterpolantAutomaton implements
 		LBool result = m_EdgeChecker.postReturnImplies(succCand);
 		return result;
 	}
-	
-	
-	
-	
+
 	private void clearAssertionStack() {
 		if (m_AssertedState != null) {
 			m_EdgeChecker.unAssertPrecondition();
@@ -447,14 +423,17 @@ public class BuchiInterpolantAutomaton implements
 	public Set<CodeBlock> lettersReturn(IPredicate state) {
 		return getReturnAlphabet();
 	}
-	
+
 	/**
 	 * Get the predicate of the output automaton that represents a set of states
-	 * from the input automaton. If this predicates does not yet exists, 
-	 * construct it an put it to the given equivalence class. 
-	 * @param inputPreds set of IPredicats from the input automaton
-	 * @param equivalenceClass of the resulting automaton to that the resulting
-	 * predicate will belong (either stem predicates or loop predicates)
+	 * from the input automaton. If this predicates does not yet exists,
+	 * construct it an put it to the given equivalence class.
+	 * 
+	 * @param inputPreds
+	 *            set of IPredicats from the input automaton
+	 * @param equivalenceClass
+	 *            of the resulting automaton to that the resulting predicate
+	 *            will belong (either stem predicates or loop predicates)
 	 */
 	private IPredicate getOrConstructPredicate(Set<IPredicate> inputPreds, Set<IPredicate> equivalenceClass) {
 		IPredicate resultPred;
@@ -466,11 +445,10 @@ public class BuchiInterpolantAutomaton implements
 			resultPred = m_InputPreds2ResultPreds.get(inputPreds);
 			if (resultPred == null) {
 				resultPred = m_SmtManager.newBuchiPredicate(inputPreds);
-				m_InputPreds2ResultPreds.put(inputPreds,resultPred);
+				m_InputPreds2ResultPreds.put(inputPreds, resultPred);
 			}
 			for (IPredicate pred : inputPreds) {
-				assert m_InputStemPredicates.contains(pred) || 
-						m_InputLoopPredicates.contains(pred);
+				assert m_InputStemPredicates.contains(pred) || m_InputLoopPredicates.contains(pred);
 			}
 		}
 		assert resultPred != m_HondaPredicate;
@@ -482,8 +460,8 @@ public class BuchiInterpolantAutomaton implements
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(
-			IPredicate state, CodeBlock letter) {
+	public Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(IPredicate state,
+			CodeBlock letter) {
 		if (!m_ResultBookkeeping.isCachedInternal(state, letter) && !m_ComputationFinished) {
 			computeSuccInternal(state, letter);
 			m_ResultBookkeeping.reportCachedInternal(state, letter);
@@ -491,10 +469,8 @@ public class BuchiInterpolantAutomaton implements
 		return m_Result.internalSuccessors(state, letter);
 	}
 
-
 	@Override
-	public Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(
-			IPredicate state) {
+	public Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(IPredicate state) {
 		for (CodeBlock letter : lettersInternal(state)) {
 			if (!m_ResultBookkeeping.isCachedInternal(state, letter) && !m_ComputationFinished) {
 				computeSuccInternal(state, letter);
@@ -505,8 +481,7 @@ public class BuchiInterpolantAutomaton implements
 	}
 
 	@Override
-	public Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(
-			IPredicate state, CodeBlock letter) {
+	public Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(IPredicate state, CodeBlock letter) {
 		Call call = (Call) letter;
 		if (!m_ResultBookkeeping.isCachedCall(state, call) && !m_ComputationFinished) {
 			computeSuccCall(state, call);
@@ -516,8 +491,7 @@ public class BuchiInterpolantAutomaton implements
 	}
 
 	@Override
-	public Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(
-			IPredicate state) {
+	public Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(IPredicate state) {
 		for (CodeBlock letter : lettersCall(state)) {
 			Call call = (Call) letter;
 			if (!m_ResultBookkeeping.isCachedCall(state, call) && !m_ComputationFinished) {
@@ -529,8 +503,8 @@ public class BuchiInterpolantAutomaton implements
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSucccessors(
-			IPredicate state, IPredicate hier, CodeBlock letter) {
+	public Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSucccessors(IPredicate state,
+			IPredicate hier, CodeBlock letter) {
 		Return ret = (Return) letter;
 		if (!m_ResultBookkeeping.isCachedReturn(state, hier, ret) && !m_ComputationFinished) {
 			computeSuccReturn(state, hier, ret);
@@ -540,8 +514,8 @@ public class BuchiInterpolantAutomaton implements
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSuccessorsGivenHier(
-			IPredicate state, IPredicate hier) {
+	public Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSuccessorsGivenHier(IPredicate state,
+			IPredicate hier) {
 		for (CodeBlock letter : lettersReturn(state)) {
 			Return ret = (Return) letter;
 			if (!m_ResultBookkeeping.isCachedReturn(state, hier, ret) && !m_ComputationFinished) {
@@ -551,8 +525,7 @@ public class BuchiInterpolantAutomaton implements
 		}
 		return m_Result.returnSuccessorsGivenHier(state, hier);
 	}
-	
-	
+
 	private void computeSuccInternal(IPredicate resPred, CodeBlock letter) {
 		if (m_ResultStemPredicates.contains(resPred)) {
 			boolean leadsToHonda = false;
@@ -592,7 +565,9 @@ public class BuchiInterpolantAutomaton implements
 	}
 
 	/**
-	 * Do we allow that a transition labeled with letter has the honda as target.
+	 * Do we allow that a transition labeled with letter has the honda as
+	 * target.
+	 * 
 	 * @param letter
 	 * @return
 	 */
@@ -601,18 +576,19 @@ public class BuchiInterpolantAutomaton implements
 	}
 
 	/**
-	 * Do we allow that a transition labeled with letter has the honda as target.
+	 * Do we allow that a transition labeled with letter has the honda as
+	 * target.
+	 * 
 	 * @param letter
 	 * @return
 	 */
 	protected boolean mayEnterHondaFromStem(CodeBlock letter) {
 		return !m_HondaBouncerStem || letter.equals(m_HondaEntererStem);
 	}
-	
+
 	/**
-	 * Returns a set of input predicates such each predicate p
-	 * - Hoare triple {resPred} letter {p} is valid
-	 * - is contained in succCand
+	 * Returns a set of input predicates such each predicate p - Hoare triple
+	 * {resPred} letter {p} is valid - is contained in succCand
 	 */
 	private Set<IPredicate> addSuccInternal(IPredicate resPred, CodeBlock letter, Iterable<IPredicate> succCand) {
 		HashSet<IPredicate> succs = new HashSet<IPredicate>();
@@ -636,8 +612,6 @@ public class BuchiInterpolantAutomaton implements
 		}
 		return succs;
 	}
-	
-	
 
 	private void computeSuccCall(IPredicate resPred, CodeBlock letter) {
 		if (m_ResultStemPredicates.contains(resPred)) {
@@ -677,11 +651,10 @@ public class BuchiInterpolantAutomaton implements
 		}
 
 	}
-	
+
 	/**
-	 * Returns a set of input predicates such each predicate p
-	 * - Hoare triple {resPred} letter {p} is valid
-	 * - is contained in succCand
+	 * Returns a set of input predicates such each predicate p - Hoare triple
+	 * {resPred} letter {p} is valid - is contained in succCand
 	 */
 	private Set<IPredicate> addSuccCall(IPredicate resPred, CodeBlock letter, Iterable<IPredicate> succCand) {
 		HashSet<IPredicate> succs = new HashSet<IPredicate>();
@@ -705,9 +678,7 @@ public class BuchiInterpolantAutomaton implements
 		}
 		return succs;
 	}
-	
-	
-	
+
 	private void computeSuccReturn(IPredicate resPred, IPredicate resHier, CodeBlock letter) {
 		if (m_ResultStemPredicates.contains(resPred)) {
 			boolean leadsToHonda = false;
@@ -743,13 +714,12 @@ public class BuchiInterpolantAutomaton implements
 				}
 			}
 
-
 		}
 
 	}
-	
-	private Set<IPredicate> addSuccReturn(IPredicate resPred, IPredicate resHier, 
-			CodeBlock letter, Iterable<IPredicate> succCand) {
+
+	private Set<IPredicate> addSuccReturn(IPredicate resPred, IPredicate resHier, CodeBlock letter,
+			Iterable<IPredicate> succCand) {
 		HashSet<IPredicate> succs = new HashSet<IPredicate>();
 		Collection<IPredicate> inputPredicates;
 		if (resPred instanceof BuchiPredicate) {
@@ -773,8 +743,7 @@ public class BuchiInterpolantAutomaton implements
 					computeSuccReturnInput(inputPred, inputHier, (Return) letter, succCand);
 					m_InputBookkeeping.reportCachedReturn(inputPred, inputHier, letter);
 				}
-				Collection<IPredicate> inputPredSuccs = 
-						m_InputSuccessorCache.succReturn(inputPred, inputHier, letter);
+				Collection<IPredicate> inputPredSuccs = m_InputSuccessorCache.succReturn(inputPred, inputHier, letter);
 				if (inputPredSuccs != null) {
 					succs.addAll(inputPredSuccs);
 				}
@@ -783,17 +752,14 @@ public class BuchiInterpolantAutomaton implements
 		return succs;
 	}
 
-
-
 	public NestedWordAutomatonCache<CodeBlock, IPredicate> getAugmentedInputAutomaton() {
 		return m_InputSuccessorCache;
 	}
-	
-	
+
 	@Override
 	public String toString() {
 		if (m_ComputationFinished) {
-			return (new AtsDefinitionPrinter<String,String>("nwa", this)).getDefinitionAsString();
+			return (new AtsDefinitionPrinter<String, String>("nwa", this)).getDefinitionAsString();
 		} else {
 			return "automaton under construction";
 		}

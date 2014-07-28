@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTra
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Transitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.SuperDifference;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -129,7 +130,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 */
 	private ArrayList<String> m_ErrorPathHistory;
 	private ArrayList<Integer> m_nofStates;
-	
+
 	/**
 	 * Create and initialize Cegar-Loop.
 	 * 
@@ -141,14 +142,13 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 * @param errorLocs
 	 * @param interpolation
 	 * @param computeHoareAnnotation
+	 * @param services
 	 */
-	public CegarLoopSWBnonRecursive(String name, RootNode rootNode,
-			SmtManager smtManager,
-			TraceAbstractionBenchmarks traceAbstractionBenchmarks,
-			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs,
-			INTERPOLATION interpolation, boolean computeHoareAnnotation) {
-		super(name, rootNode, smtManager, taPrefs, errorLocs,
-				interpolation, computeHoareAnnotation);
+	public CegarLoopSWBnonRecursive(String name, RootNode rootNode, SmtManager smtManager,
+			TraceAbstractionBenchmarks traceAbstractionBenchmarks, TAPreferences taPrefs,
+			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation, boolean computeHoareAnnotation,
+			IUltimateServiceProvider services) {
+		super(name, rootNode, smtManager, taPrefs, errorLocs, interpolation, computeHoareAnnotation, services);
 		m_ErrorPathHistory = new ArrayList<String>();
 		m_nofStates = new ArrayList<Integer>();
 	}
@@ -159,9 +159,8 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 * @throws OperationCanceledException
 	 */
 	@Override
-	protected void constructInterpolantAutomaton()
-			throws OperationCanceledException {
-		s_Logger.debug("Start constructing interpolant automaton.");
+	protected void constructInterpolantAutomaton() throws OperationCanceledException {
+		mLogger.debug("Start constructing interpolant automaton.");
 
 		m_nofAdditionalPaths = 0;
 		m_nofDeclinedPaths = 0;
@@ -171,18 +170,15 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		m_NestedAbstraction = (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;
 
 		m_DoubleDeckerAbstraction = (new RemoveUnreachable<CodeBlock, IPredicate>(
-				(INestedWordAutomatonSimple<CodeBlock, IPredicate>) m_Abstraction))
-				.getResult();
+				(INestedWordAutomatonSimple<CodeBlock, IPredicate>) m_Abstraction)).getResult();
 		// (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) m_Abstraction.get;
 
 		// cast the path as nested run
 		m_CounterExamplePath = (NestedRun<CodeBlock, IPredicate>) m_Counterexample;
 
 		// create an new interpolant automaton
-		m_InterpolAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(
-				m_NestedAbstraction.getAlphabet(),
-				m_NestedAbstraction.getCallAlphabet(),
-				m_NestedAbstraction.getReturnAlphabet(),
+		m_InterpolAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(m_NestedAbstraction.getAlphabet(),
+				m_NestedAbstraction.getCallAlphabet(), m_NestedAbstraction.getReturnAlphabet(),
 				m_NestedAbstraction.getStateFactory());
 
 		// remember some of its properties
@@ -210,37 +206,33 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		m_AnnotatedStates = new ArrayList<IPredicate>();
 
 		// counter example components
-		ArrayList<IPredicate> ce_states = m_CounterExamplePath
-				.getStateSequence();
+		ArrayList<IPredicate> ce_states = m_CounterExamplePath.getStateSequence();
 		NestedWord<CodeBlock> ce_edges = m_CounterExamplePath.getWord();
 		IPredicate[] ce_interp = m_TraceChecker.getInterpolants();
 
 		// -- initialize interpolant automaton --
 		// Add the initial state of the error path
-		s_Logger.debug("Add the initial state of the error path");
+		mLogger.debug("Add the initial state of the error path");
 		m_AnnotatedStates.add(ce_states.get(0));
-		m_InterpolAutomaton.addState(true,
-				m_AbstractionInitialState == m_AbstractionFinalState,
+		m_InterpolAutomaton.addState(true, m_AbstractionInitialState == m_AbstractionFinalState,
 				m_AbstractionInitialState);
 		m_Epimorphism.insert(ce_states.get(0), m_AbstractionInitialState);
 
 		// Add the final state of the error path
-		s_Logger.debug("Add the final state of the error path");
+		mLogger.debug("Add the final state of the error path");
 		if (m_AnnotatedStates.contains(ce_states.get(ce_states.size() - 1)))
 			throw new Error();
 		m_AnnotatedStates.add(ce_states.get(ce_states.size() - 1));
 		if (!m_InterpolAutomaton.getStates().contains(m_AbstractionFinalState)) {
-			m_InterpolAutomaton.addState(
-					m_AbstractionInitialState == m_AbstractionFinalState, true,
+			m_InterpolAutomaton.addState(m_AbstractionInitialState == m_AbstractionFinalState, true,
 					m_AbstractionFinalState);
 		}
-		m_Epimorphism.insert(ce_states.get(ce_states.size() - 1),
-				m_AbstractionFinalState);
+		m_Epimorphism.insert(ce_states.get(ce_states.size() - 1), m_AbstractionFinalState);
 
 		// Add internal states of the error path
-		s_Logger.debug("Add internal states and edges of the error path");
-		addPath(ce_edges, ce_states, ce_interp, m_AbstractionInitialState,
-				m_AbstractionFinalState, new TreeMap<Integer, IPredicate>());
+		mLogger.debug("Add internal states and edges of the error path");
+		addPath(ce_edges, ce_states, ce_interp, m_AbstractionInitialState, m_AbstractionFinalState,
+				new TreeMap<Integer, IPredicate>());
 
 		// // // debugging
 		// {
@@ -252,35 +244,30 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		// }
 
 		// -- Try to add additional paths --
-		s_Logger.debug("--- Try to add additional paths ---");
+		mLogger.debug("--- Try to add additional paths ---");
 		// go through each state in the list of states as
 		// starting point and find a path to any other annotated state
 		// m_AddedStates will grow
-		for (int i = 0; i < m_AnnotatedStates.size(); i++) 
-		{
+		for (int i = 0; i < m_AnnotatedStates.size(); i++) {
 			m_ActualStartingState = m_AnnotatedStates.get(i);
 
-			s_Logger.debug("Start with: " + m_ActualStartingState.toString());
+			mLogger.debug("Start with: " + m_ActualStartingState.toString());
 
-			m_ActualPrecondition = m_Epimorphism
-					.getMapping(m_ActualStartingState);
+			m_ActualPrecondition = m_Epimorphism.getMapping(m_ActualStartingState);
 
 			// return transitions
-			for (IPredicate hier : m_DoubleDeckerAbstraction
-					.getDownStates(m_ActualStartingState)) {
+			for (IPredicate hier : m_DoubleDeckerAbstraction.getDownStates(m_ActualStartingState)) {
 				// if we did not annotate the hierarchical predecessor we cannot
 				// test
 				// the path yet
 				// so we just do not
 				if (m_AnnotatedStates.contains(hier)) {
 					for (OutgoingReturnTransition<CodeBlock, IPredicate> e : m_NestedAbstraction
-							.returnSuccessorsGivenHier(m_ActualStartingState,
-									hier)) {
+							.returnSuccessorsGivenHier(m_ActualStartingState, hier)) {
 						// the next state is the target state of the edge
 						IPredicate target = e.getSucc();
-						exploreInitialEdge(e, target,
-								new NestedWord<CodeBlock>(e.getLetter(),
-										NestedWord.MINUS_INFINITY));
+						exploreInitialEdge(e, target, new NestedWord<CodeBlock>(e.getLetter(),
+								NestedWord.MINUS_INFINITY));
 					}
 				}
 			}
@@ -290,9 +277,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 					.callSuccessors(m_ActualStartingState)) {
 				// the next state is the target state of the edge
 				IPredicate target = e.getSucc();
-				exploreInitialEdge(e, target,
-						new NestedWord<CodeBlock>(e.getLetter(),
-								NestedWord.PLUS_INFINITY));
+				exploreInitialEdge(e, target, new NestedWord<CodeBlock>(e.getLetter(), NestedWord.PLUS_INFINITY));
 			}
 
 			// start the depth first search procedure for every state edge going
@@ -306,26 +291,23 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 				// the next state is the target state of the edge
 				IPredicate target = e.getSucc();
 
-				exploreInitialEdge(e, target,
-						new NestedWord<CodeBlock>(e.getLetter(),
-								NestedWord.INTERNAL_POSITION));
+				exploreInitialEdge(e, target, new NestedWord<CodeBlock>(e.getLetter(), NestedWord.INTERNAL_POSITION));
 			}
 		}
 
-		s_Logger.info("Explored paths: "
-				+ (m_nofDeclinedPaths + m_nofAdditionalPaths));
-		s_Logger.info("Added paths   : " + m_nofAdditionalPaths);
-		s_Logger.info("Declined paths: " + m_nofDeclinedPaths);
-		s_Logger.debug("Epimorphism:");
+		mLogger.info("Explored paths: " + (m_nofDeclinedPaths + m_nofAdditionalPaths));
+		mLogger.info("Added paths   : " + m_nofAdditionalPaths);
+		mLogger.info("Declined paths: " + m_nofDeclinedPaths);
+		mLogger.debug("Epimorphism:");
 		m_Epimorphism.Print();
 
-		assert (new InductivityCheck(m_InterpolAutomaton, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false, true)).getResult() : "Not inductive";
-		
+		assert (new InductivityCheck(m_InterpolAutomaton, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false,
+				true, mLogger)).getResult() : "Not inductive";
+
 		m_nofStates.add(m_Abstraction.size());
 		int ii = 0;
-		for(Integer i : m_nofStates)
-		{
-			s_Logger.debug(ii++ + ":" + i);
+		for (Integer i : m_nofStates) {
+			mLogger.debug(ii++ + ":" + i);
 		}
 	}
 
@@ -340,29 +322,25 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 * @param initialWord
 	 *            Word consisting of the label of the edge
 	 */
-	private void exploreInitialEdge(Transitionlet<CodeBlock, IPredicate> e,
-			IPredicate target, NestedWord<CodeBlock> initialWord) 
-	{
+	private void exploreInitialEdge(Transitionlet<CodeBlock, IPredicate> e, IPredicate target,
+			NestedWord<CodeBlock> initialWord) {
 		m_ActualPath = new ArrayList<IPredicate>(16);
 		// remember the path, we follow
 		m_ActualPath.add(m_ActualStartingState);
 		m_ActualPath.add(target);
 
-		s_Logger.debug("Explore primary edge: " + e.toString() + " wordLen: "
-			+
-			initialWord.length() + " pathLen: " + m_ActualPath.size());
+		mLogger.debug("Explore primary edge: " + e.toString() + " wordLen: " + initialWord.length() + " pathLen: "
+				+ m_ActualPath.size());
 
 		// check if the edge points to an already annotated state
 		// if the target state is already added, we completed a path ...
 		if (m_AnnotatedStates.contains(target)) {
-			s_Logger.debug("Found an annotated state.");
+			mLogger.debug("Found an annotated state.");
 			// check if this is an edge which is already in the automaton
-			if (!m_InterpolAutomaton.succInternal(
-					m_Epimorphism.getMapping(m_ActualStartingState),
-					e.getLetter()).contains(m_Epimorphism.getMapping(target))) {
+			if (!m_InterpolAutomaton.succInternal(m_Epimorphism.getMapping(m_ActualStartingState), e.getLetter())
+					.contains(m_Epimorphism.getMapping(target))) {
 				// we have either a self-loop or another separate edge
-				checkAndAddPath(initialWord, m_ActualPrecondition,
-						m_Epimorphism.getMapping(target));
+				checkAndAddPath(initialWord, m_ActualPrecondition, m_Epimorphism.getMapping(target));
 			}
 		} else {
 			exploreState(target, initialWord);
@@ -390,10 +368,9 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 *            List of the states of the actual path
 	 */
 	@SuppressWarnings("unchecked")
-	private void exploreState(IPredicate state, NestedWord<CodeBlock> word) 
-	{
-		s_Logger.debug("Explore path: " + state.toString() + " wordLen: "
-				+ word.length() + " pathLen: " + m_ActualPath.size());
+	private void exploreState(IPredicate state, NestedWord<CodeBlock> word) {
+		mLogger.debug("Explore path: " + state.toString() + " wordLen: " + word.length() + " pathLen: "
+				+ m_ActualPath.size());
 		m_StackState = new ArrayList<IPredicate>();
 		m_StackIterator = new ArrayList<Iterator<Transitionlet<CodeBlock, IPredicate>>>();
 		m_StackEdgeType = new ArrayList<Integer>();
@@ -410,8 +387,8 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		NestedWord<CodeBlock> actualWord = word;
 
 		while (true) {
-			s_Logger.debug("iterate: " + s.toString() + " wordLen: "
-					+ actualWord.length() + " pathLen: " + m_ActualPath.size());
+			mLogger.debug("iterate: " + s.toString() + " wordLen: " + actualWord.length() + " pathLen: "
+					+ m_ActualPath.size());
 
 			// check if there is another undiscovered edge
 			if (!iter.hasNext()) {
@@ -421,17 +398,13 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 					if (hierPreds == null) {
 						// if we have not looked at the hierarchical
 						// predecessors yet
-						hierPreds = m_DoubleDeckerAbstraction.getDownStates(s)
-								.iterator();
+						hierPreds = m_DoubleDeckerAbstraction.getDownStates(s).iterator();
 					}
 					if (hierPreds.hasNext()) {
 						IPredicate hier = hierPreds.next();
 						if (m_AnnotatedStates.contains(hier)) {
-							s_Logger.debug("iterate through hier"
-									+ hier.toString());
-							iter = m_NestedAbstraction
-									.returnSuccessorsGivenHier(s, hier)
-									.iterator();
+							mLogger.debug("iterate through hier" + hier.toString());
+							iter = m_NestedAbstraction.returnSuccessorsGivenHier(s, hier).iterator();
 							edgeType = 0; // there might still be hierPreds left
 						} else {
 							continue;
@@ -478,22 +451,22 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 				OutgoingInternalTransition<CodeBlock, IPredicate> e_int = (OutgoingInternalTransition<CodeBlock, IPredicate>) iter
 						.next();
 				target = e_int.getSucc();
-				newWord = actualWord.concatenate(new NestedWord<CodeBlock>(
-						e_int.getLetter(), NestedWord.INTERNAL_POSITION));
+				newWord = actualWord.concatenate(new NestedWord<CodeBlock>(e_int.getLetter(),
+						NestedWord.INTERNAL_POSITION));
 				break;
 			case 1:
 				OutgoingReturnTransition<CodeBlock, IPredicate> e_out = (OutgoingReturnTransition<CodeBlock, IPredicate>) iter
 						.next();
 				target = e_out.getSucc();
-				newWord = actualWord.concatenate(new NestedWord<CodeBlock>(
-						e_out.getLetter(), NestedWord.MINUS_INFINITY));
+				newWord = actualWord
+						.concatenate(new NestedWord<CodeBlock>(e_out.getLetter(), NestedWord.MINUS_INFINITY));
 				break;
 			case 2:
 				OutgoingCallTransition<CodeBlock, IPredicate> e_ret = (OutgoingCallTransition<CodeBlock, IPredicate>) iter
 						.next();
 				target = e_ret.getSucc();
-				newWord = actualWord.concatenate(new NestedWord<CodeBlock>(
-						e_ret.getLetter(), NestedWord.PLUS_INFINITY));
+				newWord = actualWord
+						.concatenate(new NestedWord<CodeBlock>(e_ret.getLetter(), NestedWord.PLUS_INFINITY));
 				break;
 			default:
 				throw new Error();
@@ -519,9 +492,8 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 
 			// if the target state is already added, we completed a path ...
 			if (m_AnnotatedStates.contains(target)) {
-				s_Logger.debug("Found an annotated state");
-				IPredicate pre = m_Epimorphism
-						.getMapping(m_ActualStartingState);
+				mLogger.debug("Found an annotated state");
+				IPredicate pre = m_Epimorphism.getMapping(m_ActualStartingState);
 				IPredicate post = m_Epimorphism.getMapping(target);
 
 				if (checkAndAddPath(newWord, pre, post)) {
@@ -542,8 +514,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 				m_StackEdgeType.add(edgeType);
 				m_StackWord.add(actualWord);
 				s = target;
-				iter = m_NestedAbstraction.internalSuccessors(target)
-						.iterator();
+				iter = m_NestedAbstraction.internalSuccessors(target).iterator();
 				edgeType = 0;
 				actualWord = newWord;
 			}
@@ -562,58 +533,51 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 *            the postcondition of the path
 	 * @return true if interpolants were found
 	 */
-	private boolean checkAndAddPath(
-			NestedWord<CodeBlock> word,
-			IPredicate pre,
-			IPredicate post)
-	{
-		s_Logger.debug("Try to add trace: " + pre.toString() + " -- " + word
-				+ " --> " + post);
+	private boolean checkAndAddPath(NestedWord<CodeBlock> word, IPredicate pre, IPredicate post) {
+		mLogger.debug("Try to add trace: " + pre.toString() + " -- " + word + " --> " + post);
 
 		SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<Integer, IPredicate>();
-		for (Entry<Integer, CodeBlock> e : word.getPendingReturns().entrySet()) 
-		{
+		for (Entry<Integer, CodeBlock> e : word.getPendingReturns().entrySet()) {
 			int pos = e.getKey();
 			IPredicate target = m_ActualPath.get(pos + 1);
 			IPredicate source = m_ActualPath.get(pos);
-			for (IncomingReturnTransition<CodeBlock, IPredicate> irt : m_NestedAbstraction.returnPredecessors(word.getSymbolAt(pos), target))
-			{
-				if (irt.getLinPred() == source) 
-				{
+			for (IncomingReturnTransition<CodeBlock, IPredicate> irt : m_NestedAbstraction.returnPredecessors(
+					word.getSymbolAt(pos), target)) {
+				if (irt.getLinPred() == source) {
 					IPredicate interp = m_Epimorphism.getMapping(irt.getHierPred());
-					//assert (interp != null);
-					if(interp == null)
-					{
+					// assert (interp != null);
+					if (interp == null) {
 						return false;
 					}
-					//interp = irt.getHierPred();
+					// interp = irt.getHierPred();
 					pendingContexts.put(pos, interp);
 				}
 			}
 		}
 		// test if we found a new path which can be added
-		m_TraceChecker = new TraceChecker(pre, post, pendingContexts, word,
-				m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(), /* TODO: When Matthias introduced this parameter he set the argument to false. Check if you want to set this to true.  */ false);
+		m_TraceChecker = new TraceChecker(pre, post, pendingContexts, word, m_SmtManager, m_RootNode.getRootAnnot()
+				.getModGlobVarManager(), /*
+										 * TODO: When Matthias introduced this
+										 * parameter he set the argument to
+										 * false. Check if you want to set this
+										 * to true.
+										 */false,mServices);
 
-		if (m_TraceChecker.isCorrect() == LBool.UNSAT)
-		{
-			s_Logger.debug("Accepted");
-			m_TraceChecker.computeInterpolants(new TraceChecker.AllIntegers(),
-					m_PredicateUnifier, m_Pref.interpolation());	
-			
-			addPath(word, m_ActualPath, m_TraceChecker.getInterpolants(), pre,
-					post, pendingContexts);
+		if (m_TraceChecker.isCorrect() == LBool.UNSAT) {
+			mLogger.debug("Accepted");
+			m_TraceChecker.computeInterpolants(new TraceChecker.AllIntegers(), m_PredicateUnifier,
+					m_Pref.interpolation());
+
+			addPath(word, m_ActualPath, m_TraceChecker.getInterpolants(), pre, post, pendingContexts);
 			m_nofAdditionalPaths++;
 			return true;
-		} 
-//		else if (m_TraceChecker.isCorrect() == LBool.SAT)
-//		{
-//		}
-		else
-		{
-			s_Logger.debug("Declined");
-			m_TraceChecker
-					.finishTraceCheckWithoutInterpolantsOrProgramExecution();
+		}
+		// else if (m_TraceChecker.isCorrect() == LBool.SAT)
+		// {
+		// }
+		else {
+			mLogger.debug("Declined");
+			m_TraceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 			m_nofDeclinedPaths++;
 			return false;
 		}
@@ -623,8 +587,8 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 * Adds the path given from the trace checker. Assumes that the first and
 	 * last state is already added. Adds edges states and interpolants
 	 * 
-	 * sorry, but eclipses auto format always messes up the following "graph", meh...
-	 * s0
+	 * sorry, but eclipses auto format always messes up the following "graph",
+	 * meh... s0
 	 * 
 	 * <pre>
 	 *   e0 
@@ -639,93 +603,73 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 * @param pre the formula for the state 0
 	 * @param post the formula for the state n-1
 	 */
-	private void addPath(NestedWord<CodeBlock> edges,
-			ArrayList<IPredicate> states, IPredicate[] interpolants,
-			IPredicate pre, IPredicate post,
-			SortedMap<Integer, IPredicate> pendingContexts) 
-	{
-		s_Logger.debug("Add path: numEdges:" + edges.length() + " numStates:"
-				+ states.size() + " numInterpol:" + interpolants.length);
-		
-		s_Logger.debug("edges:");
+	private void addPath(NestedWord<CodeBlock> edges, ArrayList<IPredicate> states, IPredicate[] interpolants,
+			IPredicate pre, IPredicate post, SortedMap<Integer, IPredicate> pendingContexts) {
+		mLogger.debug("Add path: numEdges:" + edges.length() + " numStates:" + states.size() + " numInterpol:"
+				+ interpolants.length);
+
+		mLogger.debug("edges:");
 		for (int i = 0; i < edges.length(); i++)
-			s_Logger.debug("<" + edges.getSymbol(i).toString() + ">");
-		s_Logger.debug("states:");
+			mLogger.debug("<" + edges.getSymbol(i).toString() + ">");
+		mLogger.debug("states:");
 		for (int i = 0; i < states.size(); i++)
-			s_Logger.debug("<" + states.get(i).toString() + ">");
-		s_Logger.debug("interp:");
+			mLogger.debug("<" + states.get(i).toString() + ">");
+		mLogger.debug("interp:");
 		for (int i = 0; i < interpolants.length; i++)
-			s_Logger.debug("<" + interpolants[i].toString() + ">");
+			mLogger.debug("<" + interpolants[i].toString() + ">");
 
 		ArrayList<IPredicate> callPredecessors = new ArrayList<IPredicate>();
-		
+
 		// Add all edges
-		for (int i = 0; i < edges.length(); i++) 
-		{
+		for (int i = 0; i < edges.length(); i++) {
 			CodeBlock e = edges.getSymbolAt(i);
 			IPredicate targetS = states.get(i + 1);
 
 			IPredicate sourceI = (i == 0) ? pre : interpolants[i - 1];
-			IPredicate targetI = (i == edges.length() - 1) ? post
-					: interpolants[i];
+			IPredicate targetI = (i == edges.length() - 1) ? post : interpolants[i];
 
 			// Add all states in the sequence, but the first and last.
-			if (i < edges.length() - 1)
-			{
+			if (i < edges.length() - 1) {
 				// targetS can(may) not be in m_AddedStates
 				m_AnnotatedStates.add(targetS);
 				// since the interpolant formula might not be unique
 				if (!m_InterpolAutomaton.getStates().contains(targetI)) {
-					m_InterpolAutomaton.addState(
-							targetI == m_AbstractionInitialState,
+					m_InterpolAutomaton.addState(targetI == m_AbstractionInitialState,
 							targetI == m_AbstractionFinalState, targetI);
 				}
 				m_Epimorphism.insert(targetS, targetI);
 			}
 
 			// add the respective edge into the abstraction automaton
-			if (edges.isInternalPosition(i)) 
-			{
+			if (edges.isInternalPosition(i)) {
 				boolean exists = false;
-				for (OutgoingInternalTransition<CodeBlock, IPredicate> t : m_InterpolAutomaton
-						.internalSuccessors(sourceI, e)) 
-				{
-					if (t.getSucc().equals(targetI)) 
-					{
+				for (OutgoingInternalTransition<CodeBlock, IPredicate> t : m_InterpolAutomaton.internalSuccessors(
+						sourceI, e)) {
+					if (t.getSucc().equals(targetI)) {
 						exists = true;
 					}
 					break;
 				}
-				if (!exists) 
-				{
-					m_InterpolAutomaton.addInternalTransition(sourceI, e,
-							targetI);
+				if (!exists) {
+					m_InterpolAutomaton.addInternalTransition(sourceI, e, targetI);
 				}
-			} 
-			else 
-			{
-				if (edges.isCallPosition(i)) 
-				{
-					//pendingContexts.put(arg0, arg1)
+			} else {
+				if (edges.isCallPosition(i)) {
+					// pendingContexts.put(arg0, arg1)
 					callPredecessors.add(sourceI);
 					m_InterpolAutomaton.addCallTransition(sourceI, e, targetI);
-				}
-				else // isReturnPosition(i)
+				} else // isReturnPosition(i)
 				{
 					IPredicate hier;
-					if(callPredecessors.size() <= 0)
-					{
+					if (callPredecessors.size() <= 0) {
 						hier = pendingContexts.get(i);
-					}
-					else
-					{
+					} else {
 						int lastIndex = callPredecessors.size() - 1;
 						hier = callPredecessors.get(lastIndex);
 						callPredecessors.remove(lastIndex);
 					}
-					s_Logger.debug("hier is: " + hier);
-					m_InterpolAutomaton.addReturnTransition(sourceI, hier, e,
-							targetI);
+					mLogger.debug("hier is: " + hier);
+					m_InterpolAutomaton.addReturnTransition(sourceI, hier, e, targetI);
 				}
 			}
 		}
@@ -740,52 +684,48 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 * @throws AutomataLibraryException
 	 */
 	@Override
-	protected boolean refineAbstraction() 
-			throws AutomataLibraryException 
-	{
-		SuperDifference<CodeBlock, IPredicate> diff = new SuperDifference<CodeBlock, IPredicate>(
-				m_NestedAbstraction, m_InterpolAutomaton, m_Epimorphism, false);
+	protected boolean refineAbstraction() throws AutomataLibraryException {
+		SuperDifference<CodeBlock, IPredicate> diff = new SuperDifference<CodeBlock, IPredicate>(m_NestedAbstraction,
+				m_InterpolAutomaton, m_Epimorphism, false);
 
 		m_Abstraction = diff.getResult();
 
-		//assert(!accepts(diff.getResult(), m_Counterexample.getWord()));
-		
-		s_Logger.debug("Actualized abstraction.");
+		// assert(!accepts(diff.getResult(), m_Counterexample.getWord()));
 
-//		s_Logger.debug("ERROR_PATH_HISTORY");
-//		for (int i = 0; i < m_ErrorPathHistory.size(); i++) {
-//			s_Logger.debug("[" + i + "]: " + m_ErrorPathHistory.get(i));
-//		}
+		mLogger.debug("Actualized abstraction.");
 
-		m_CegarLoopBenchmark.reportAbstractionSize(m_Abstraction.size(),
-				m_Iteration);
+		// s_Logger.debug("ERROR_PATH_HISTORY");
+		// for (int i = 0; i < m_ErrorPathHistory.size(); i++) {
+		// s_Logger.debug("[" + i + "]: " + m_ErrorPathHistory.get(i));
+		// }
 
-		s_Logger.info("Abstraction has "
-				+ m_NestedAbstraction.sizeInformation());
-		s_Logger.info("Interpolant automaton has "
-				+ m_InterpolAutomaton.sizeInformation());
+		m_CegarLoopBenchmark.reportAbstractionSize(m_Abstraction.size(), m_Iteration);
+
+		mLogger.info("Abstraction has " + m_NestedAbstraction.sizeInformation());
+		mLogger.info("Interpolant automaton has " + m_InterpolAutomaton.sizeInformation());
 
 		Minimization minimization = m_Pref.minimize();
-		switch (minimization) 
-		{
+		switch (minimization) {
 		case NONE:
 			break;
 		case MINIMIZE_SEVPA:
 		case SHRINK_NWA:
-//			s_Logger.debug("Minimizing interpolant automaton.");
+			// s_Logger.debug("Minimizing interpolant automaton.");
 
-//			RemoveUnreachable<CodeBlock, IPredicate> removeUnreachable = new RemoveUnreachable<CodeBlock, IPredicate>(
-//					(INestedWordAutomatonSimple<CodeBlock, IPredicate>) m_Abstraction);
-//			// m_Abstraction = removeUnreachable.getResult();
-//
-//			// RemoveDeadEnds<CodeBlock, IPredicate> removeDeadEnds = new
-//			// RemoveDeadEnds<CodeBlock, IPredicate>(
-//			// (INestedWordAutomatonOldApi<CodeBlock, IPredicate>)
-//			// m_Abstraction);
-//			// m_Abstraction = removeDeadEnds.getResult();
-//
-//			// minimizeAbstraction(m_StateFactoryForRefinement,
-//			// m_PredicateFactoryResultChecking, minimization);
+			// RemoveUnreachable<CodeBlock, IPredicate> removeUnreachable = new
+			// RemoveUnreachable<CodeBlock, IPredicate>(
+			// (INestedWordAutomatonSimple<CodeBlock, IPredicate>)
+			// m_Abstraction);
+			// // m_Abstraction = removeUnreachable.getResult();
+			//
+			// // RemoveDeadEnds<CodeBlock, IPredicate> removeDeadEnds = new
+			// // RemoveDeadEnds<CodeBlock, IPredicate>(
+			// // (INestedWordAutomatonOldApi<CodeBlock, IPredicate>)
+			// // m_Abstraction);
+			// // m_Abstraction = removeDeadEnds.getResult();
+			//
+			// // minimizeAbstraction(m_StateFactoryForRefinement,
+			// // m_PredicateFactoryResultChecking, minimization);
 			break;
 		default:
 			throw new AssertionError();

@@ -13,6 +13,8 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import java_cup.runtime.Symbol;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -21,8 +23,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * This class runs an external SMT solver.  The main methods are 
- * <code>input</code>, which gives an input to the SMT solver, and the 
+ * This class runs an external SMT solver. The main methods are
+ * <code>input</code>, which gives an input to the SMT solver, and the
  * <code>parse...</code> methods, which parse the output from the SMT solver.
  * 
  * @author Oday Jubran
@@ -36,41 +38,41 @@ class Executor {
 	private Logger m_Logger;
 	private Script m_Script;
 	private InputStream m_stdErr;
-	
-	Executor(String solverCommand, Script script, Logger logger)
-	{
+	private final IUltimateServiceProvider mServices;
+	private final IToolchainStorage mStorage;
+
+	Executor(String solverCommand, Script script, Logger logger, IUltimateServiceProvider services, IToolchainStorage storage) {
+		mServices = services;
+		mStorage = storage;
 		m_Solver = solverCommand;
 		m_Script = script;
 		m_Logger = logger;
 		createProcess();
 	}
-	
-	private void createProcess()
-	{
-//		m_Logger = Logger.getRootLogger();
+
+	private void createProcess() {
+		// m_Logger = Logger.getRootLogger();
 		try {
-			m_Process = MonitoredProcess.exec(m_Solver,"(exit)");
+			m_Process = MonitoredProcess.exec(m_Solver, "(exit)", mServices, mStorage);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
 		OutputStream stdin = m_Process.getOutputStream();
 		InputStream stdout = m_Process.getInputStream();
-		
+
 		m_stdErr = m_Process.getErrorStream();
-		
-		
+
 		MySymbolFactory symfactory = new MySymbolFactory();
 		m_Lexer = new Lexer(new InputStreamReader(stdout));
 		m_Lexer.setSymbolFactory(symfactory);
 		m_Writer = new BufferedWriter(new OutputStreamWriter(stdin));
-		
+
 		input("(set-option :print-success true)");
 		parseSuccess();
 	}
 
-	public void input(String in)
-	{
+	public void input(String in) {
 		m_Logger.debug(in + "\n");
 		try {
 			m_Writer.write(in + "\n");
@@ -79,16 +81,15 @@ class Executor {
 			throw new SMTLIBException("Connection to SMT solver broken", e);
 		}
 	}
-	
-	public void exit(){
-		
+
+	public void exit() {
+
 		input("(exit)");
 		parseSuccess();
 		m_Process.forceShutdown();
 		m_Process = null;
-		
-	}
 
+	}
 
 	private List<Symbol> parseSexpr(Lexer lexer) throws IOException {
 		ArrayList<Symbol> result = new ArrayList<Symbol>();
@@ -104,18 +105,16 @@ class Executor {
 		return result;
 	}
 
-	private List<Symbol> readAnswer()
-	{
+	private List<Symbol> readAnswer() {
 		try {
 			List<Symbol> result = parseSexpr(m_Lexer);
-			for (Symbol s: result)
+			for (Symbol s : result)
 				m_Logger.debug(s.toString() + "\n");
 			return result;
 		} catch (IOException e) {
 			throw new SMTLIBException("Connection to SMT solver broken", e);
 		}
 	}
-
 
 	public void reset() {
 		try {
@@ -125,21 +124,21 @@ class Executor {
 			/* ignore */
 		}
 		m_Process.forceShutdown();
-		createProcess();	
+		createProcess();
 	}
-	
+
 	public Symbol parse(int what) {
 		List<Symbol> answer = readAnswer();
-		
-		//clear the std error buffer as it blocks when it runs full
+
+		// clear the std error buffer as it blocks when it runs full
 		try {
 			while (m_stdErr.available() > 0) {
 				m_stdErr.read();
 			}
 		} catch (IOException e) {
-			//we don't care what happens on stdErr
+			// we don't care what happens on stdErr
 		}
-		
+
 		Parser m_Parser = new Parser();
 		m_Parser.setScript(m_Script);
 		answer.add(0, new Symbol(what));
@@ -154,7 +153,7 @@ class Executor {
 			throw new SMTLIBException("Unexpected Exception while parsing", ex);
 		}
 	}
-	
+
 	public void parseSuccess() {
 		parse(LexerSymbols.SUCCESS);
 	}
@@ -166,16 +165,16 @@ class Executor {
 	public Term[] parseGetAssertionsResult() {
 		return (Term[]) parse(LexerSymbols.GETASSERTIONS).value;
 	}
-	
+
 	public Term[] parseGetUnsatCoreResult() {
 		return (Term[]) parse(LexerSymbols.GETUNSATCORE).value;
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	public Map<Term,Term> parseGetValueResult() {
-		return (Map<Term,Term>) parse(LexerSymbols.GETVALUE).value;
+	public Map<Term, Term> parseGetValueResult() {
+		return (Map<Term, Term>) parse(LexerSymbols.GETVALUE).value;
 	}
-	
+
 	public Assignments parseGetAssignmentResult() {
 		return (Assignments) parse(LexerSymbols.GETASSIGNMENT).value;
 	}

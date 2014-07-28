@@ -31,7 +31,8 @@ import java.io.FileNotFoundException;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -40,63 +41,56 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 
-
 /**
  * Static class that manages SMT-Solver related things.
  * 
  * @author Jan Leike
  */
 public class SMTSolver {
-	private static Logger s_Logger =
-			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-	
+
 	/**
-	 * Auxiliary String that we put into the smt script via an echo.
-	 * This String should help to identify the difficult constraints in a bunch
-	 * of dumped smt2 files.
+	 * Auxiliary String that we put into the smt script via an echo. This String
+	 * should help to identify the difficult constraints in a bunch of dumped
+	 * smt2 files.
 	 */
-	public static String s_SolverUnknownMessage = 
-			"Warning solver responded UNKNOWN to the check-sat above";
-	
+	public static String s_SolverUnknownMessage = "Warning solver responded UNKNOWN to the check-sat above";
+
 	/**
-	 * Create a new SMT solver instance.
-	 * If useExternalSolver is true, we use the Scriptor to start the external 
-	 * SMT solver with the smt_solver_command.
-	 * If useExternalSolver is false, we use SMTInterpol.
+	 * Create a new SMT solver instance. If useExternalSolver is true, we use
+	 * the Scriptor to start the external SMT solver with the
+	 * smt_solver_command. If useExternalSolver is false, we use SMTInterpol.
 	 * 
 	 * @param useExternalSolver
 	 * @param smt_solver_command
-	 * @param dump_filename name of the file the script should be dumped to,
-	 *        can be null
-	 * @param produce_unsat_cores produce unsat cores?
+	 * @param dump_filename
+	 *            name of the file the script should be dumped to, can be null
+	 * @param produce_unsat_cores
+	 *            produce unsat cores?
 	 * @return the new script
 	 */
-	private static Script newScript(boolean useExternalSolver,
-			String smt_solver_command,
-			String dump_filename,
-			boolean produce_unsat_cores) {
-		Logger solverLogger = UltimateServices.getInstance()
-				.getLoggerForExternalTool("constraintLogger");
-		
-		Script script; 
+	private static Script newScript(boolean useExternalSolver, String smt_solver_command, String dump_filename,
+			boolean produce_unsat_cores, IUltimateServiceProvider services, IToolchainStorage storage) {
+		Logger solverLogger = services.getLoggingService().getLoggerForExternalTool("constraintLogger");
+
+		Script script;
 		if (useExternalSolver) {
-			script = new Scriptor(smt_solver_command, solverLogger);
+			script = new Scriptor(smt_solver_command, solverLogger, services, storage);
 		} else {
-			int timeoutMilliseconds = 1099 * 1000; 
+			int timeoutMilliseconds = 1099 * 1000;
 			script = new SMTInterpol(solverLogger);
 			script.setOption(":timeout", String.valueOf(timeoutMilliseconds));
 		}
-		
+
 		// Dump script to file
 		if (dump_filename != null) {
 			try {
 				script = new LoggingScript(script, dump_filename, true);
 			} catch (FileNotFoundException e) {
-				s_Logger.warn("Could not dump SMT script to file '"
-						+ dump_filename + "': " + e);
+				services.getLoggingService().getLogger(Activator.s_PLUGIN_ID)
+						.warn("Could not dump SMT script to file '" + dump_filename + "': " + e);
 			}
 		}
-		
+
 		// Set options
 		script.setOption(":produce-models", true);
 		if (produce_unsat_cores) {
@@ -104,46 +98,51 @@ public class SMTSolver {
 		}
 		return script;
 	}
-	
+
 	/**
 	 * Create a new solver instance with the preferences given
-	 * @param preferences the preferences for creating the solver
-	 * @param constraintsName name of the constraints whose satisfiability is
-	 * checked
+	 * 
+	 * @param preferences
+	 *            the preferences for creating the solver
+	 * @param constraintsName
+	 *            name of the constraints whose satisfiability is checked
+	 * @param services
+	 * @param storage
 	 * @return the new solver instance
 	 */
-	public static Script newScript(LassoRankerPreferences preferences, String constraintsName) {
-		return newScript(preferences.externalSolver,
+	public static Script newScript(LassoRankerPreferences preferences, String constraintsName,
+			IUltimateServiceProvider services, IToolchainStorage storage) {
+		return newScript(
+				preferences.externalSolver,
 				preferences.smt_solver_command,
-				preferences.dumpSmtSolverScript ?
-						composeFullFilename(preferences.path_of_dumped_script, 
-								preferences.baseNameOfDumpedScript, 
-								constraintsName) : null,
-				preferences.annotate_terms);
+				preferences.dumpSmtSolverScript ? composeFullFilename(preferences.path_of_dumped_script,
+						preferences.baseNameOfDumpedScript, constraintsName) : null, preferences.annotate_terms,
+				services, storage);
 	}
-	
+
 	/**
-	 * Compose the full filename (of the dumped script) from 
-	 * name of a path, baseNamePrefix of the file, name of the constraints,
-	 * and the file ending ".smt2".
+	 * Compose the full filename (of the dumped script) from name of a path,
+	 * baseNamePrefix of the file, name of the constraints, and the file ending
+	 * ".smt2".
 	 */
-	public static String composeFullFilename(String path, String baseNamePrefix, 
-			String constraintsName) {
-		return path + File.separator + baseNamePrefix + "_" 
-			+ constraintsName + ".smt2";
+	public static String composeFullFilename(String path, String baseNamePrefix, String constraintsName) {
+		return path + File.separator + baseNamePrefix + "_" + constraintsName + ".smt2";
 	}
-	
+
 	/**
 	 * Define a new constant
-	 * @param script SMT Solver
-	 * @param name name of the new constant
-	 * @param sort the sort of the variable
+	 * 
+	 * @param script
+	 *            SMT Solver
+	 * @param name
+	 *            name of the new constant
+	 * @param sort
+	 *            the sort of the variable
 	 * @return the new variable as a term
-	 * @throws SMTLIBException if something goes wrong, e.g. the name is
-	 *          already defined
+	 * @throws SMTLIBException
+	 *             if something goes wrong, e.g. the name is already defined
 	 */
-	public static Term newConstant(Script script, String name, String sortname)
-			throws SMTLIBException {
+	public static Term newConstant(Script script, String name, String sortname) throws SMTLIBException {
 		script.declareFun(name, new Sort[0], script.sort(sortname));
 		return script.term(name);
 	}

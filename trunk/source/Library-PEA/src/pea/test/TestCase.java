@@ -1,8 +1,6 @@
 package pea.test;
 import java.util.Collections;
 import java.util.Set;
-import java.util.TreeSet;
-
 import pea.*;
 import pea.modelchecking.*;
 
@@ -233,7 +231,7 @@ public class TestCase {
         }
     
   //Test vacuously true Anforderungen
-    //Formel not(true;P & neg(Q); true) für P-->Q
+    //Formel not(true;P & neg(Q); true) fï¿½r P-->Q
     public void runTest7b() {
     	CDD P = BooleanDecision.create("P");
     	CDD Q = BooleanDecision.create("Q");
@@ -247,7 +245,7 @@ public class TestCase {
         }
     
   //Test vacuously true Anforderungen
-    //Formel not(true;P; true; neg(Q); true) für G(P-->G Q)
+    //Formel not(true;P; true; neg(Q); true) fï¿½r G(P-->G Q)
     public PhaseEventAutomata runTest7c(CDD P, CDD Q) {
     	PhaseEventAutomata ctA;
     	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
@@ -264,8 +262,8 @@ public class TestCase {
         }
     
   //Test vacuously true Anforderungen
-    //Formel not(true;P; l<1; Q; neg(R) & l>1; true) für G(P-->X(q --> Xr))
-    //vacuous true für G(neg(P)) sowie für G(P-->Xneg(Q))
+    //Formel not(true;P; l<1; Q; neg(R) & l>1; true) fï¿½r G(P-->X(q --> Xr))
+    //vacuous true fï¿½r G(neg(P)) sowie fï¿½r G(P-->Xneg(Q))
     public void runTest7d() {
     	CDD P = BooleanDecision.create("P");
     	CDD Q = BooleanDecision.create("Q");
@@ -293,8 +291,8 @@ public class TestCase {
         }
     
   //Test vacuously true Anforderungen
-    //Formel not(true;P & l<1; Q & l>1; true) für G(P-->X(neg(q)))
-    //vacuous true für G(neg(P)) 
+    //Formel not(true;P & l<1; Q & l>1; true) fï¿½r G(P-->X(neg(q)))
+    //vacuous true fï¿½r G(neg(P)) 
     public void runTest7e() {
     	CDD P = BooleanDecision.create("P");
     	CDD Q = BooleanDecision.create("Q");
@@ -307,8 +305,8 @@ public class TestCase {
     	compiler.compile("T7e", ct).dump();
         }
   //Test vacuously true Anforderungen
-    //Formel not(true;event P; event Q; not event R; true) für G(P-->X(q-->Xr)))
-    //vacuous true für G(neg(P)) 
+    //Formel not(true;event P; event Q; not event R; true) fï¿½r G(P-->X(q-->Xr)))
+    //vacuous true fï¿½r G(neg(P)) 
     public void runTest7f() {
     	CDD P = BooleanDecision.create("P");
     	CDD Q = BooleanDecision.create("Q");
@@ -324,8 +322,8 @@ public class TestCase {
         }
     
   //Test vacuously true Anforderungen
-    //Formel not(true;event A & neg(B); B & neg(C); true) für G(A-->(neg(B) U C))
-    //vacuous true für G(neg(P)) 
+    //Formel not(true;event A & neg(B); B & neg(C); true) fï¿½r G(A-->(neg(B) U C))
+    //vacuous true fï¿½r G(neg(P)) 
     public void runTest7g() {
     	CDD A = BooleanDecision.create("A");
     	CDD B = BooleanDecision.create("B");
@@ -355,9 +353,9 @@ public class TestCase {
         }
     
   //Test vacuously true Anforderungen
-    // für A-->G(B U C)
+    // fï¿½r A-->G(B U C)
     //Formel1 not(true;A && neg(B) && neg(C); true) 
-    //vacuous true für G(neg A), G(C), G(A&&B&&negC)
+    //vacuous true fï¿½r G(neg A), G(C), G(A&&B&&negC)
     public void runTest7h() {
     	CDD A = BooleanDecision.create("A");
     	CDD B = BooleanDecision.create("B");
@@ -392,8 +390,8 @@ public class TestCase {
     
     
   //Test konsistente Anforderungen
-    //1) Wenn IgnitionOn dann soll spätestens 10Sek später der MotorAn sein
-    //2) Wenn MotorAn wird dann soll frühestens 10Sek später das RadioAn geschaltet werden können
+    //1) Wenn IgnitionOn dann soll spï¿½testens 10Sek spï¿½ter der MotorAn sein
+    //2) Wenn MotorAn wird dann soll frï¿½hestens 10Sek spï¿½ter das RadioAn geschaltet werden kï¿½nnen
     // 1) CE: neg(true; event(IgnitionOn) & neg(MotorOn) & l>10; true)
     // 2) CE: neg(true; event(MotorAn) & l<10; RadioAn; true)
     public void runConsistentEx() {
@@ -442,7 +440,7 @@ public class TestCase {
     	CDD B = BooleanDecision.create("B");
     	PhaseEventAutomata ctParallel, ct1A, ct2A, ct3A;
     	
-    	//counterexample für A--> G(neg(B))
+    	//counterexample fï¿½r A--> G(neg(B))
     	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(A),
@@ -452,7 +450,7 @@ public class TestCase {
     	});
     	ct1A = compiler.compile("Ta", ct); 
     	ct1A.dump();
-    	//counterexample für A--> G(B)
+    	//counterexample fï¿½r A--> G(B)
     	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(),
         	    new CounterTrace.DCPhase(A),

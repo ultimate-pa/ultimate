@@ -61,13 +61,6 @@
          unpack="false"/>
 
    <plugin
-         id="RCFGBuilder"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="LassoRanker"
          download-size="0"
          install-size="0"
@@ -125,13 +118,6 @@
 
    <plugin
          id="ACSLParser"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="JungVisualization"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -258,6 +244,20 @@
 
    <plugin
          id="TraceAbstractionWithAFAs"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"
          download-size="0"
          install-size="0"
          version="0.0.0"

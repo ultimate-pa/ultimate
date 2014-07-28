@@ -2,20 +2,10 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svCom
 
 import java.util.ListIterator;
 
-import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
-
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.ArrayHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 
 /**

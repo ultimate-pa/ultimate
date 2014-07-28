@@ -13,9 +13,8 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.PrintEdgeVisi
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.blockencoding.test.ExecuteUnitTestObserver;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.util.RCFGStore;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -56,8 +55,7 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 	@Before
 	protected void setUp() throws Exception {
 		rcfgNode = RCFGStore.getRCFG();
-		s_Logger = UltimateServices.getInstance().getLogger(
-				Activator.s_PLUGIN_ID);
+		s_Logger = ExecuteUnitTestObserver.getLogger();
 		rcfgVisitor = new PrintEdgeVisitor(s_Logger);
 		visitedOrigNodes = new HashSet<RCFGNode>();
 		visitedMinNodes = new HashSet<MinimizedNode>();

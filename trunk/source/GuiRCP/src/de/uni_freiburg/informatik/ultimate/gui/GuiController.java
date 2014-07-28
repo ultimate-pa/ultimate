@@ -16,9 +16,9 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.xml.sax.SAXException;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
@@ -36,14 +36,15 @@ import de.uni_freiburg.informatik.ultimate.gui.dialogs.ParserChooseDialog;
  */
 public class GuiController implements IController {
 
-	public static final String sPLUGINID = "UltimateGui";
+//	public static final String sPLUGINID = "UltimateGui";
+	public static final String sPLUGINID = GuiController.class.getName();
 	public static final String sPLUGINNAME = "Gui Controller";
 
 	private Logger mLogger;
 	private Display mDisplay;
 
 	private volatile ISource mParser;
-	private volatile Toolchain mTools;
+	private volatile ToolchainData mTools;
 	private volatile List<String> mModels;
 
 	private ICore mCore;
@@ -55,15 +56,15 @@ public class GuiController implements IController {
 	 * 
 	 * @return the exit code for the application
 	 */
-	public int init(ICore controlledCore) {
-		mLogger = UltimateServices.getInstance().getControllerLogger();
-		
-		if(controlledCore == null){
+	public int init(ICore core, ILoggingService loggingService) {
+		mLogger = loggingService.getControllerLogger();
+
+		if (core == null) {
 			mLogger.fatal("Initialization failed because no ICore instance was supplied");
 			return -1;
 		}
 
-		mCore = (ICore) controlledCore;
+		mCore = core;
 		mDisplay = PlatformUI.createDisplay();
 
 		mParser = null;
@@ -74,10 +75,9 @@ public class GuiController implements IController {
 		ApplicationWorkbenchAdvisor workbenchAdvisor = new ApplicationWorkbenchAdvisor();
 		if (mDisplay != null && workbenchAdvisor != null) {
 			mTrayIconNotifier = new TrayIconNotifier(workbenchAdvisor);
-			workbenchAdvisor.init(mCore, mTrayIconNotifier, this);
+			workbenchAdvisor.init(mCore, mTrayIconNotifier, this, mLogger);
 			try {
-				returnCode = PlatformUI.createAndRunWorkbench(mDisplay,
-						workbenchAdvisor);
+				returnCode = PlatformUI.createAndRunWorkbench(mDisplay, workbenchAdvisor);
 				mLogger.debug("GUI return code: " + returnCode);
 				return returnCode;
 			} catch (Exception ex) {
@@ -104,25 +104,21 @@ public class GuiController implements IController {
 	}
 
 	@SuppressWarnings("unchecked")
-	public synchronized Toolchain selectTools(final List<ITool> t) {
+	public synchronized ToolchainData selectTools(final List<ITool> t) {
 		return selectTools(t, Collections.EMPTY_LIST);
 	}
 
-	public synchronized Toolchain selectTools(final List<ITool> t,
-			final List<ITool> previous) {
+	public synchronized ToolchainData selectTools(final List<ITool> t, final List<ITool> previous) {
 		mDisplay.syncExec(new Runnable() {
 			public void run() {
 				Shell shell = new Shell(mDisplay);
 				try {
-					mTools = new AnalysisChooseDialog(shell, t, previous)
-							.open();
+					mTools = new AnalysisChooseDialog(shell, t, previous).open();
 				} catch (FileNotFoundException e) {
-					MessageDialog.openError(shell, "An error occured",
-							"Toolchain XML file was not found.");
+					MessageDialog.openError(shell, "An error occured", "Toolchain XML file was not found.");
 
 				} catch (JAXBException e) {
-					MessageDialog.openError(shell, "An error occured",
-							"Toolchain XML file could not be validated.");
+					MessageDialog.openError(shell, "An error occured", "Toolchain XML file could not be validated.");
 				} catch (SAXException e) {
 					MessageDialog.openError(shell, "An error occured",
 							"Toolchain XML file could not be properly parsed.");
@@ -137,14 +133,13 @@ public class GuiController implements IController {
 		mDisplay.syncExec(new Runnable() {
 			public void run() {
 				Shell shell = new Shell(mDisplay);
-				mModels = new ModelChooseDialog(shell, modelNames,
-						"Choose the model").open();
+				mModels = new ModelChooseDialog(shell, modelNames, "Choose the model").open();
 			}
 		});
 		return mModels;
 	}
 
-	public String getName() {
+	public String getPluginName() {
 		return sPLUGINNAME;
 	}
 
@@ -154,24 +149,21 @@ public class GuiController implements IController {
 
 	@Override
 	public void displayToolchainResultProgramIncorrect() {
-		mTrayIconNotifier.showTrayBalloon("Program is incorrect",
-				"Ultimate proved your program to be incorrect!",
+		mTrayIconNotifier.showTrayBalloon("Program is incorrect", "Ultimate proved your program to be incorrect!",
 				SWT.ICON_WARNING);
 
 	}
 
 	@Override
 	public void displayToolchainResultProgramCorrect() {
-		mTrayIconNotifier.showTrayBalloon("Program is correct",
-				"Ultimate proved your program to be correct!",
+		mTrayIconNotifier.showTrayBalloon("Program is correct", "Ultimate proved your program to be correct!",
 				SWT.ICON_INFORMATION);
 	}
 
 	@Override
 	public void displayToolchainResultProgramUnknown(String description) {
-		mTrayIconNotifier.showTrayBalloon("Program could not be checked",
-				"Ultimate could not prove your program: " + description,
-				SWT.ICON_INFORMATION);
+		mTrayIconNotifier.showTrayBalloon("Program could not be checked", "Ultimate could not prove your program: "
+				+ description, SWT.ICON_INFORMATION);
 
 	}
 
@@ -180,8 +172,7 @@ public class GuiController implements IController {
 		mDisplay.asyncExec(new Runnable() {
 			public void run() {
 				Shell shell = new Shell(mDisplay);
-				MessageDialog.openError(shell, "An error occured", description
-						+ " " + ex.getMessage());
+				MessageDialog.openError(shell, "An error occured", description + " " + ex.getMessage());
 			}
 		});
 

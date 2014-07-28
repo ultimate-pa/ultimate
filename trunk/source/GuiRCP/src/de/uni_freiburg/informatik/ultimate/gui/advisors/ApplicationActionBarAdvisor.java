@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.gui.actions.ResetAndRedoToolChainNewT
 import de.uni_freiburg.informatik.ultimate.gui.actions.ResetAndRedoToolChainOldTCAction;
 import de.uni_freiburg.informatik.ultimate.gui.actions.SaveSettingsAction;
 
+import org.apache.log4j.Logger;
 import org.eclipse.jface.action.ICoolBarManager;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -44,12 +45,13 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 	private IWorkbenchAction resetAndReRun;
 	private IWorkbenchAction resetAndReRunNewTC, resetAndReRunOldTC;
 	private IWorkbenchAction loadSettings, saveSettings;
+	private Logger mLogger;
 
-	public ApplicationActionBarAdvisor(IActionBarConfigurer configurer,
-			ICore icc, IController controller) {
+	public ApplicationActionBarAdvisor(IActionBarConfigurer configurer, ICore icc, IController controller, Logger logger) {
 		super(configurer);
 		this.mCore = icc;
 		mController = controller;
+		mLogger = logger;
 	}
 
 	/**
@@ -72,16 +74,13 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 		// openDottyGraphFromFile = new OpenDottyGraphFromFileAction(window);
 		// register(openDottyGraphFromFile);
 
-		loadSourceFiles = new LoadSourceFilesAction(window, mCore, mController);
+		loadSourceFiles = new LoadSourceFilesAction(window, mCore, mController, mLogger);
 		register(loadSourceFiles);
-		resetAndReRun = new ResetAndRedoToolChainAction(window, mCore,
-				mController);
+		resetAndReRun = new ResetAndRedoToolChainAction(window, mCore, mController, mLogger);
 		register(resetAndReRun);
-		resetAndReRunNewTC = new ResetAndRedoToolChainNewTCAction(window, mCore,
-				mController);
+		resetAndReRunNewTC = new ResetAndRedoToolChainNewTCAction(window, mCore, mController, mLogger);
 		register(resetAndReRunNewTC);
-		resetAndReRunOldTC = new ResetAndRedoToolChainOldTCAction(window, mCore,
-				mController);
+		resetAndReRunOldTC = new ResetAndRedoToolChainOldTCAction(window, mCore, mController, mLogger);
 		register(resetAndReRunOldTC);
 		loadSettings = new LoadSettingsAction(window, mCore);
 		register(loadSettings);

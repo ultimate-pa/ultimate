@@ -15,14 +15,14 @@ import org.apache.log4j.Logger;
 import org.eclipse.equinox.app.IApplication;
 import org.xml.sax.SAXException;
 
-import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.CommandLineParser;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.services.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
@@ -40,15 +40,13 @@ public class CommandlineController implements IController {
 	static {
 		sPLUGIN_ID = Activator.s_PLUGIN_ID;
 		sPLUGIN_NAME = Activator.s_PLUGIN_NAME;
-		sLogger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	}
 
-	private static final Logger sLogger;
-	private Toolchain mToolchain;
+	private Logger mLogger;
+	private ToolchainData mToolchain;
 
 	private static final String sPLUGIN_ID;
 	private static final String sPLUGIN_NAME;
-
 
 	/**
 	 * parse the file with the specified toolchain
@@ -59,49 +57,52 @@ public class CommandlineController implements IController {
 	 * @throws JAXBException
 	 * @throws SAXException
 	 */
-	private Toolchain parseToolFile(String toolFile) throws FileNotFoundException, JAXBException, SAXException {
+	private ToolchainData parseToolFile(String toolFile) throws FileNotFoundException, JAXBException, SAXException {
 		if (toolFile == null || toolFile.equals(""))
 			throw new FileNotFoundException();
-		return new Toolchain(toolFile);
+		return new ToolchainData(toolFile);
 	}
 
-	public int init(ICore core) {
+	public int init(ICore core, ILoggingService loggingService) {
 		if (core == null) {
 			return -1;
 		}
+
+		mLogger = loggingService.getLogger(sPLUGIN_ID);
+
 		CommandLineParser p = core.getCommandLineArguments();
-			try {
-				mToolchain = parseToolFile(p.getToolFile());
-			} catch (FileNotFoundException e1) {
-				sLogger.fatal("Toolchain file not found. Path was: " + p.getToolFile());
-				return -1;
-			} catch (JAXBException e1) {
-				sLogger.fatal("Toolchain file maformed. Path was: " + p.getToolFile());
-				sLogger.fatal(e1);
-				return -1;
-			} catch (SAXException e1) {
-				sLogger.fatal("Toolchain file maformed. Path was: " + p.getToolFile());
-				sLogger.fatal(e1);
-				return -1;
-			}
+		try {
+			mToolchain = parseToolFile(p.getToolFile());
+		} catch (FileNotFoundException e1) {
+			mLogger.fatal("Toolchain file not found. Path was: " + p.getToolFile());
+			return -1;
+		} catch (JAXBException e1) {
+			mLogger.fatal("Toolchain file maformed. Path was: " + p.getToolFile());
+			mLogger.fatal(e1);
+			return -1;
+		} catch (SAXException e1) {
+			mLogger.fatal("Toolchain file maformed. Path was: " + p.getToolFile());
+			mLogger.fatal(e1);
+			return -1;
+		}
 		File bplFile = new File(p.getBoogieFile());
 		if (!bplFile.exists() || !bplFile.canRead()) {
-			sLogger.fatal("Input file not found. Path was: " + p.getBoogieFile());
+			mLogger.fatal("Input file not found. Path was: " + p.getBoogieFile());
 			return -1;
 		}
 
 		// handle prelude file
-		PreludeProvider preludeFile = new PreludeProvider(p.getPreludeFile());
-		
+		PreludeProvider preludeFile = new PreludeProvider(p.getPreludeFile(), mLogger);
+
 		try {
 			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this,
-					BasicToolchainJob.ChainMode.RUN_TOOLCHAIN, bplFile, preludeFile);
+					BasicToolchainJob.ChainMode.RUN_TOOLCHAIN, bplFile, preludeFile, mLogger);
 			tcj.schedule();
 			// in non-GUI mode, we must wait until job has finished!
 			tcj.join();
 
 		} catch (InterruptedException e) {
-			sLogger.error("Exception in Toolchain", e);
+			mLogger.error("Exception in Toolchain", e);
 			return -1;
 		}
 
@@ -138,7 +139,7 @@ public class CommandlineController implements IController {
 		}
 	}
 
-	public String getName() {
+	public String getPluginName() {
 		return sPLUGIN_NAME;
 	}
 
@@ -147,7 +148,7 @@ public class CommandlineController implements IController {
 	}
 
 	@Override
-	public Toolchain selectTools(List<ITool> tools) {
+	public ToolchainData selectTools(List<ITool> tools) {
 		return mToolchain;
 	}
 

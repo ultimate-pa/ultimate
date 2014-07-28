@@ -39,9 +39,9 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
  * minimizer for special type of nested word automata used in Ultimate
@@ -65,8 +64,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
 public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
-	private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+	private static Logger s_Logger = NestedWordAutomata.getLogger();
 	// old automaton
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_operand;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> m_doubleDecker;
@@ -221,7 +219,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 		
 		// cancel if signal is received
-		if (! UltimateServices.getInstance().continueProcessing()) {
+		if (! NestedWordAutomata.getMonitor().continueProcessing()) {
 			throw new OperationCanceledException();
 		}
 		
@@ -632,7 +630,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				a.delete();
 				
 				// cancel iteration iff cancel signal is received
-				if (! UltimateServices.getInstance().continueProcessing()) {
+				if (! NestedWordAutomata.getMonitor().continueProcessing()) {
 					throw new OperationCanceledException();
 				}
 			}

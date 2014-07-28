@@ -1,9 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -17,7 +15,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Determinization;
 
 public class PredicateFactoryRefinement extends PredicateFactory {
 	

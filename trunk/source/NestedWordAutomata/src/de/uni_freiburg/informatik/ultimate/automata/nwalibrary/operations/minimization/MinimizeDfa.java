@@ -37,16 +37,15 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.HasUnreachableStates;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
  * @author Markus Lindenmann
@@ -60,8 +59,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
     /**
      * The jLogger instance.
      */
-    private static Logger s_Logger = UltimateServices.getInstance().getLogger(
-            Activator.PLUGIN_ID);
+    private static Logger s_Logger = NestedWordAutomata.getLogger();
     /**
      * The resulting automaton.
      */
@@ -145,7 +143,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 						}
 					}
 				}
-				if (!UltimateServices.getInstance().continueProcessing()) {
+				if (!NestedWordAutomata.getMonitor().continueProcessing()) {
 					throw new OperationCanceledException();
 				}
 			}

@@ -1,12 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -21,37 +18,36 @@ import de.uni_freiburg.informatik.ultimate.reachingdefinitions.plugin.ReachingDe
  * plan:
  * - von CegarLoopConcurrent erben
  *  --> Produktautomat aus einem parallelen Programm wird automatisch gebaut
- * - computeInterpolantAutomaton überschreiben
- * - "Powerset" einstellung für refineAbstraction wählen
+ * - computeInterpolantAutomaton ï¿½berschreiben
+ * - "Powerset" einstellung fï¿½r refineAbstraction wï¿½hlen
  */
 //
 
-
 public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
-	public TAwAFAsCegarLoop(String name, RootNode rootNode,
-			SmtManager smtManager,
-			TraceAbstractionBenchmarks traceAbstractionBenchmarks,
-			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs,
-			INTERPOLATION interpolation, boolean computeHoareAnnotation) {
-		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs,
-				errorLocs);
+	public TAwAFAsCegarLoop(String name, RootNode rootNode, SmtManager smtManager,
+			TraceAbstractionBenchmarks traceAbstractionBenchmarks, TAPreferences taPrefs,
+			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation, boolean computeHoareAnnotation,
+			IUltimateServiceProvider services) {
+		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs, errorLocs, services);
 		// TODO Auto-generated constructor stub
 	}
 
 	@Override
-	protected void constructInterpolantAutomaton()
-			throws OperationCanceledException {
+	protected void constructInterpolantAutomaton() throws OperationCanceledException {
 
-		
-		//Daniel:
-		Word<CodeBlock> trace = m_TraceChecker.getTrace(); //-> der TraceChecker hat aber auch noch ein paar andere Sachen drin..
+		// Daniel:
+		Word<CodeBlock> trace = m_TraceChecker.getTrace(); // -> der
+															// TraceChecker hat
+															// aber auch noch
+															// ein paar andere
+															// Sachen drin..
 		CodeBlock[] traceAsArray = new CodeBlock[trace.length()];
 		for (int i = 0; i < trace.length(); i++) {
 			traceAsArray[i] = trace.getSymbol(i);
 		}
 		try {
-			CodeBlock[] rdAnnotatedTraceArray = ReachingDefinitions.computeRDForTrace(traceAsArray);
+			CodeBlock[] rdAnnotatedTraceArray = ReachingDefinitions.computeRDForTrace(traceAsArray, mLogger);
 		} catch (Throwable e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -63,11 +59,9 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			int j = 0;
 			j++;
 		}
-		
-//		super.constructInterpolantAutomaton();
+
+		// super.constructInterpolantAutomaton();
 		int i = 0;
 	}
 
-	
-	
 }

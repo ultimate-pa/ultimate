@@ -6,14 +6,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;

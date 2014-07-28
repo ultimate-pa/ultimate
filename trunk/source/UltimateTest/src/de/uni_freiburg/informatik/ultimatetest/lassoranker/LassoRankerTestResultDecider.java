@@ -5,7 +5,7 @@ import java.util.*;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
@@ -90,20 +90,19 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult() {
+	public TestResult getTestResult(IUltimateServiceProvider services) {
 		Logger logger = Logger.getLogger(LassoRankerTestResultDecider.class);
 		Collection<String> customMessages = new LinkedList<String>();
 		boolean fail = false;
 
 		if (m_expected_result == null) {
-			customMessages.add("Could not understand the specification of the "
-					+ "results.");
+			customMessages.add("Could not understand the specification of the " + "results.");
 			fail = true;
 		} else if (m_expected_result == ExpectedResult.UNSPECIFIED) {
 			customMessages.add("No expected results defined in the input file");
 		} else {
 			customMessages.add("Expected Result: " + m_expected_result.toString());
-			Map<String, List<IResult>> resultMap = UltimateServices.getInstance().getResultMap();
+			Map<String, List<IResult>> resultMap = services.getResultService().getResults();
 			List<IResult> results = resultMap.get(Activator.s_PLUGIN_ID);
 			IResult lastResult = results.get(results.size() - 1);
 			customMessages.add("Results: " + results.toString());
@@ -133,12 +132,12 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 			}
 		}
 
-		Util.logResults(logger, m_input_file_name, fail, customMessages);
+		Util.logResults(logger, m_input_file_name, fail, customMessages, services.getResultService());
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
 
 	@Override
-	public TestResult getTestResult(Throwable e) {
+	public TestResult getTestResult(IUltimateServiceProvider services, Throwable e) {
 		return TestResult.FAIL;
 	}
 

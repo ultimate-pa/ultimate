@@ -21,7 +21,6 @@ import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
-import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTGotoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
@@ -49,13 +48,10 @@ import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultContract;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
  * @author Markus Lindenmann

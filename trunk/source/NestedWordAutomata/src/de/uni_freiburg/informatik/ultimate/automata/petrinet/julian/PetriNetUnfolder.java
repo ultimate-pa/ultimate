@@ -32,8 +32,8 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -43,14 +43,11 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID);
-	UltimateServices m_UltiServ = UltimateServices.getInstance();
-
+	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	
 	private final PetriNetJulian<S, C> m_Net;
 	private final boolean m_StopIfAcceptingRunFound;
 	private final boolean m_SameTransitionCutOff;
@@ -230,7 +227,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 			// assert (false);
 			// }
 
-			if (!m_UltiServ.continueProcessing()) {
+			if (!NestedWordAutomata.getMonitor().continueProcessing()) {
 				throw new OperationCanceledException();
 			}
 		}

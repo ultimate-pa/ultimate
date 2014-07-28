@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.interactiveconsole;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SubchainType;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 
 /**
@@ -27,9 +27,9 @@ public class TCSubchain extends TCnew {
 	}
 
 	@Override
-	public Toolchain getToolchain(List<ITool> tools) throws Exception {
-		Toolchain foo = new Toolchain();
-		Toolchain bar = subchain.getToolchain(tools);
+	public ToolchainData getToolchain(List<ITool> tools) throws Exception {
+		ToolchainData foo = new ToolchainData();
+		ToolchainData bar = subchain.getToolchain(tools);
 		SubchainType ct = new SubchainType();
 		ct.getPluginOrSubchain().addAll(bar.getToolchain().getPluginOrSubchain());
 		foo.addSubchain(ct);

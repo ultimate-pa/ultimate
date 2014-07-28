@@ -5,11 +5,10 @@ import java.io.FileNotFoundException;
 
 import javax.xml.bind.JAXBException;
 
-import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.services.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
@@ -49,8 +48,8 @@ public class ResetAndRedoToolChainAction extends Action implements
 	private IController mController;
 
 	public ResetAndRedoToolChainAction(final IWorkbenchWindow window,
-			final ICore icore, final IController controller) {
-		mLogger = UltimateServices.getInstance().getControllerLogger();
+			final ICore icore, final IController controller, Logger logger) {
+		mLogger = logger;
 		mWorkbenchWindow = window;
 		mCore = icore;
 		mController = controller;
@@ -68,72 +67,73 @@ public class ResetAndRedoToolChainAction extends Action implements
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
 	public final void run() {
-		boolean rerun = mCore.canRerun();
-		File prelude = PreludeContribution.getPreludeFile();
-		PreludeProvider preludeprovider = prelude == null ? null
-				: new PreludeProvider(prelude.getAbsolutePath());
-		if (!rerun) {
-			IEclipsePreferences prefscope = InstanceScope.INSTANCE
-					.getNode(GuiController.sPLUGINID);
-			String filterpath = prefscope.get(IPreferencesKeys.LASTPATH, null);
-			if (filterpath != null) {
-				File inputfile = new File(filterpath);
-				if (inputfile.canRead()) {
-					String toolchainxml = prefscope.get(
-							IPreferencesKeys.LASTTOOLCHAINPATH, null);
-					if (toolchainxml != null) {
-						try {
-							Toolchain toolchain = new Toolchain(toolchainxml);
-							mCore.setToolchain(toolchain);
-							mCore.setInputFile(inputfile);
-							// In this case, we have to initiate the parser!
-							mCore.initiateParser(preludeprovider);
-							rerun = true;
-						} catch (FileNotFoundException e) {
-							MessageDialog.openError(
-									mWorkbenchWindow.getShell(),
-									"Error Occurred",
-									"Please run a toolchain before trying to "
-											+ "rerun it.");
-						} catch (JAXBException e) {
-							MessageDialog.openError(
-									mWorkbenchWindow.getShell(),
-									"Error Occurred",
-									"Please run a toolchain before trying to "
-											+ "rerun it.");
-						} catch (SAXException e) {
-							MessageDialog.openError(
-									mWorkbenchWindow.getShell(),
-									"Error Occurred",
-									"Please run a toolchain before trying to "
-											+ "rerun it.");
-						}
-					}
-				}
-			}
-		}
-		if (!rerun) {
-			mWorkbenchWindow.getWorkbench().getDisplay()
-					.asyncExec(new Runnable() {
-
-						@Override
-						public void run() {
-							MessageDialog.openError(
-									mWorkbenchWindow.getShell(),
-									"Error Occurred",
-									"Please run a toolchain before trying to "
-											+ "rerun it.");
-						}
-
-					});
-			return;
-		}
-		mLogger.info("Running Reset and re-execute...");
-
-		BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", mCore,
-				mController, BasicToolchainJob.ChainMode.RERUN_TOOLCHAIN, null,
-				preludeprovider);
-		tcj.schedule();
+		mLogger.fatal("Disabled");
+//		boolean rerun = mCore.canRerun();
+//		File prelude = PreludeContribution.getPreludeFile();
+//		PreludeProvider preludeprovider = prelude == null ? null
+//				: new PreludeProvider(prelude.getAbsolutePath(),mLogger);
+//		if (!rerun) {
+//			IEclipsePreferences prefscope = InstanceScope.INSTANCE
+//					.getNode(GuiController.sPLUGINID);
+//			String filterpath = prefscope.get(IPreferencesKeys.LASTPATH, null);
+//			if (filterpath != null) {
+//				File inputfile = new File(filterpath);
+//				if (inputfile.canRead()) {
+//					String toolchainxml = prefscope.get(
+//							IPreferencesKeys.LASTTOOLCHAINPATH, null);
+//					if (toolchainxml != null) {
+//						try {
+//							ToolchainData toolchain = new ToolchainData(toolchainxml);
+//							mCore.setToolchain(toolchain);
+//							mCore.setInputFile(inputfile);
+//							// In this case, we have to initiate the parser!
+//							mCore.initializeParser(preludeprovider);
+//							rerun = true;
+//						} catch (FileNotFoundException e) {
+//							MessageDialog.openError(
+//									mWorkbenchWindow.getShell(),
+//									"Error Occurred",
+//									"Please run a toolchain before trying to "
+//											+ "rerun it.");
+//						} catch (JAXBException e) {
+//							MessageDialog.openError(
+//									mWorkbenchWindow.getShell(),
+//									"Error Occurred",
+//									"Please run a toolchain before trying to "
+//											+ "rerun it.");
+//						} catch (SAXException e) {
+//							MessageDialog.openError(
+//									mWorkbenchWindow.getShell(),
+//									"Error Occurred",
+//									"Please run a toolchain before trying to "
+//											+ "rerun it.");
+//						}
+//					}
+//				}
+//			}
+//		}
+//		if (!rerun) {
+//			mWorkbenchWindow.getWorkbench().getDisplay()
+//					.asyncExec(new Runnable() {
+//
+//						@Override
+//						public void run() {
+//							MessageDialog.openError(
+//									mWorkbenchWindow.getShell(),
+//									"Error Occurred",
+//									"Please run a toolchain before trying to "
+//											+ "rerun it.");
+//						}
+//
+//					});
+//			return;
+//		}
+//		mLogger.info("Running Reset and re-execute...");
+//
+//		BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", mCore,
+//				mController, BasicToolchainJob.ChainMode.RERUN_TOOLCHAIN, null,
+//				preludeprovider, mLogger);
+//		tcj.schedule();
 
 	}
 

@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -43,16 +45,17 @@ public class TraceCheckerUtils {
 	/**
 	 * Variant of computeCoverageCapability where the sequence of ProgramPoints
 	 * is not a parameter but computed from the trace.
+	 * @param logger 
 	 */
 	public static BackwardCoveringInformation computeCoverageCapability(
-			TraceChecker traceChecker) {
+			TraceChecker traceChecker, Logger logger) {
 		NestedWord<CodeBlock> trace = NestedWord.nestedWord(traceChecker.getTrace());
 		List<ProgramPoint> programPoints = getSequenceOfProgramPoints(trace);
-		return computeCoverageCapability(traceChecker, programPoints);
+		return computeCoverageCapability(traceChecker, programPoints, logger);
 	}
 	
 	public static BackwardCoveringInformation computeCoverageCapability(
-			TraceChecker traceChecker, List<ProgramPoint> programPoints) {
+			TraceChecker traceChecker, List<ProgramPoint> programPoints, Logger logger) {
 		if (traceChecker.isCorrect() != LBool.UNSAT) {
 			throw new AssertionError("We can only build an interpolant "
 					+ "automaton for correct/infeasible traces");
@@ -61,7 +64,7 @@ public class TraceCheckerUtils {
 			throw new AssertionError("We can only build an interpolant "
 					+ "automaton for which interpolants were computed");
 		}
-		CoverageAnalysis ca = new CoverageAnalysis(traceChecker, programPoints);
+		CoverageAnalysis ca = new CoverageAnalysis(traceChecker, programPoints, logger);
 		ca.analyze();
 		return ca.getBackwardCoveringInformation();
 	}

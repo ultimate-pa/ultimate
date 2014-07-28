@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
@@ -28,10 +30,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionListAST.Pair;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AlternatingAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * 
@@ -46,14 +45,20 @@ public class AutomataDefinitionInterpreter {
 	 * A map from automaton name to automaton object, which contains for each automaton, that was defined in the automata
 	 * definitions an entry. 
 	 */
-	private Map<String,Object> m_Automata;
+	private Map<String,Object> mAutomata;
 	/**
 	 * Contains the location of current interpreting automaton.
 	 */
-	private ILocation m_errorLocation;
+	private ILocation mErrorLocation;
+	private IMessagePrinter mMessagePrinter;
+	private final Logger mLogger;
+	private final IUltimateServiceProvider mServices;
 	
-	public AutomataDefinitionInterpreter() {
-		m_Automata = new HashMap<String, Object>();
+	public AutomataDefinitionInterpreter(IMessagePrinter printer, Logger logger, IUltimateServiceProvider services) {
+		mAutomata = new HashMap<String, Object>();
+		mMessagePrinter = printer;
+		mLogger = logger;
+		mServices = services;
 	}
 	
 	/**
@@ -67,7 +72,7 @@ public class AutomataDefinitionInterpreter {
 				try {
 					interpret((NestedwordAutomatonAST) n);
 				} catch (Exception e) {
-					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
+					mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
 							+ System.getProperty("line.separator") + e.getStackTrace(),
 							"Exception thrown", n);
 				}
@@ -76,7 +81,7 @@ public class AutomataDefinitionInterpreter {
 				try {
 					interpret((PetriNetAutomatonAST) n);
 				} catch (Exception e) {
-					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
+					mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
 							+ System.getProperty("line.separator") + e.getStackTrace(), 
 							"Exception thrown", n);
 				}
@@ -85,7 +90,7 @@ public class AutomataDefinitionInterpreter {
 				try {
 					interpret((AlternatingAutomatonAST) n);
 				} catch (Exception e) {
-//					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
+//					mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
 //							+ System.getProperty("line.separator") + e.getStackTrace(), 
 //							"Exception thrown", n.getLocation());
 				}
@@ -96,7 +101,7 @@ public class AutomataDefinitionInterpreter {
 	}
 	
 	public void interpret(AlternatingAutomatonAST aa) throws IllegalArgumentException {
-		m_errorLocation = aa.getLocation();
+		mErrorLocation = aa.getLocation();
 		Set<String> Alphabet = new HashSet<String>(aa.getAlphabet());
 		
 		AlternatingAutomaton<String, String> saa = new AlternatingAutomaton<String, String>(
@@ -150,13 +155,13 @@ public class AutomataDefinitionInterpreter {
 			
 		}
 		
-		m_Automata.put(aa.getName(), saa);
+		mAutomata.put(aa.getName(), saa);
 		
 	}
 
 	
 	public void interpret(NestedwordAutomatonAST nwa) throws IllegalArgumentException {
-		m_errorLocation = nwa.getLocation();
+		mErrorLocation = nwa.getLocation();
 		Set<String> internalAlphabet = new HashSet<String>(nwa.getInternalAlphabet());
 		Set<String> callAlphabet = new HashSet<String>(nwa.getCallAlphabet());
 		Set<String> returnAlphabet = new HashSet<String>(nwa.getReturnAlphabet());
@@ -212,12 +217,12 @@ public class AutomataDefinitionInterpreter {
 				}
 			}
 		}
-		m_Automata.put(nwa.getName(), nw);
+		mAutomata.put(nwa.getName(), nw);
 		
 	}
 	
 	public void interpret(PetriNetAutomatonAST pna) throws IllegalArgumentException {
-		m_errorLocation = pna.getLocation();
+		mErrorLocation = pna.getLocation();
 		PetriNetJulian<String, String> net = new PetriNetJulian<String, String>(
 				new HashSet<String>(pna.getAlphabet()), 
 				new StringFactory(), false);
@@ -252,20 +257,20 @@ public class AutomataDefinitionInterpreter {
 			net.addTransition(ptrans.getSymbol(), preds, succs);
 		}
 
-		m_Automata.put(pna.getName(), net);
+		mAutomata.put(pna.getName(), net);
 	}
 	
 	public Map<String, Object> getAutomata() {
-		return m_Automata;
+		return mAutomata;
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("AutomataDefinitionInterpreter [");
-		if (m_Automata != null) {
+		if (mAutomata != null) {
 			builder.append("#AutomataDefinitions: ");
-			builder.append(m_Automata.size());
+			builder.append(mAutomata.size());
 		}
 		builder.append("]");
 		return builder.toString();
@@ -273,7 +278,7 @@ public class AutomataDefinitionInterpreter {
 
 	
 	public ILocation getErrorLocation() {
-		return m_errorLocation;
+		return mErrorLocation;
 	}
 	
 }

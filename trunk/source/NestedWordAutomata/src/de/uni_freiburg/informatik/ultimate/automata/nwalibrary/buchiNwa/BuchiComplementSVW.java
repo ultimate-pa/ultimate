@@ -27,13 +27,12 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
  * Büchi complementation based on the method of Sistla, Vardi, Wolper: <br>
@@ -50,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
-		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+		NestedWordAutomata.getLogger();
 	
 	private INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
 	private BuchiComplementAutomatonSVW<LETTER,STATE> m_Result;

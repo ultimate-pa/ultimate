@@ -1,20 +1,13 @@
 package pea.reqCheck;
 
-import java.util.Vector;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import pea.BooleanDecision;
 import pea.CDD;
 import pea.CounterTrace;
-import pea.Phase;
 import pea.PhaseEventAutomata;
 import pea.Trace2PEACompiler;
 import pea.modelchecking.DOTWriter;
 import pea.modelchecking.J2UPPAALConverter;
-import pea.modelchecking.J2UPPAALConverterDOM;
 import pea.modelchecking.J2UPPAALWriter;
-import pea.modelchecking.J2UPPAALWriterV4;
 
 public class TestPatternToPEA {
 
@@ -127,7 +120,7 @@ public class TestPatternToPEA {
         
     }    
     
-    //Beispiel von oben, + zusätzliche Anforderungen, die den Deadlock ausschließen
+    //Beispiel von oben, + zusï¿½tzliche Anforderungen, die den Deadlock ausschlieï¿½en
     public void testUppaal2(){
     	PhaseEventAutomata ctParallel, ct1A, ct2A, ct3A, ct4A, ct5A;
         CDD P = BooleanDecision.create("IRTest");
@@ -273,7 +266,7 @@ public class TestPatternToPEA {
 	    dotwriter.write("C:/vacuous/univBet2.dot", a2);
 	    dotwriter.write("C:/vacuous/univBet3.dot", a3);
 	    
-	    //-->zeigt: geseepte Phasen am Ende fallen weg (ct2 und ct führen zum selben Automaten)
+	    //-->zeigt: geseepte Phasen am Ende fallen weg (ct2 und ct fï¿½hren zum selben Automaten)
     }
     
     public void testSeeping2(){
@@ -305,7 +298,7 @@ public class TestPatternToPEA {
 	    dotwriter.write("C:/vacuous/bndExistBef2.dot", a2);
 	    dotwriter.write("C:/vacuous/bndExistBef3.dot", a3);
 	    
-	    //-->zeigt: in diesem Fall fällt jeweils der Zustand der letzten Phase weg
+	    //-->zeigt: in diesem Fall fï¿½llt jeweils der Zustand der letzten Phase weg
     }
     
     public PhaseEventAutomata testBndInvarianceVacuous(){
@@ -362,7 +355,7 @@ public class TestPatternToPEA {
 	    dotwriter.write("C:/vacuous/bndExistAf2.dot", a2);
 	    dotwriter.write("C:/vacuous/bndExistAf3.dot", a3);
 	    
-	    //-->zeigt: in diesem Fall fällt jeweils der Zustand der letzten Phase weg
+	    //-->zeigt: in diesem Fall fï¿½llt jeweils der Zustand der letzten Phase weg
     }
     
     public void testVacuous4(){
@@ -538,7 +531,7 @@ public class TestPatternToPEA {
 
     }
     
-  //Prüfe: Kann man ein Beispiel aufbauen, das einen ZenoRun zu einem Deadlock hat, 
+  //Prï¿½fe: Kann man ein Beispiel aufbauen, das einen ZenoRun zu einem Deadlock hat, 
     //der dann von Uppaal nicht erkannt wird?
     public void testZeno(){
     	CDD P = BooleanDecision.create("Signal_1");

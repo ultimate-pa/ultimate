@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.FunctionSignature;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.StructType;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
@@ -120,11 +120,16 @@ public class TypeChecker implements IUnmanagedObserver {
      * Identifiers of the local variables of the checked procedure
      */
     private Set<String> m_LocalVars;
+	private IUltimateServiceProvider mServices;
 
     private static BoogieType boolType = BoogieType.boolType;
     private static BoogieType intType = BoogieType.intType;
     private static BoogieType realType = BoogieType.realType;
     private static BoogieType errorType = BoogieType.errorType;
+    
+    public TypeChecker(IUltimateServiceProvider services){
+    	mServices = services;
+    }
 
     private static int getBitVecLength(BoogieType t) {
         t = t.getUnderlyingType();
@@ -1211,7 +1216,7 @@ public class TypeChecker implements IUnmanagedObserver {
             declaredProcedures = new HashMap<String, ProcedureInfo>();
             varScopes = new Stack<VariableInfo[]>();
             // pass1: parse type declarations
-            typeManager = new TypeManager(unit.getDeclarations());
+            typeManager = new TypeManager(unit.getDeclarations(),mServices.getLoggingService().getLogger(Activator.PLUGIN_ID));
             typeManager.init();
             // pass2: variable, constant and function declarations
             for (Declaration decl : unit.getDeclarations()) {
@@ -1259,16 +1264,17 @@ public class TypeChecker implements IUnmanagedObserver {
         return true;
     }
 
-    private static void typeError(BoogieASTNode BoogieASTNode, String message) {
+    private void typeError(BoogieASTNode BoogieASTNode, String message) {
         TypeErrorResult<BoogieASTNode> result = new TypeErrorResult<BoogieASTNode>(
         		BoogieASTNode,
         		Activator.PLUGIN_ID,
-        		UltimateServices.getInstance().getTranslatorSequence(), message);
-        UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID)
+        		mServices.getBacktranslationService().getTranslatorSequence(),
+        		message);
+        
+        mServices.getLoggingService().getLogger(Activator.PLUGIN_ID)
                 .error(BoogieASTNode.getLocation() + ": " + message);
-        UltimateServices us = UltimateServices.getInstance();
-        us.reportResult(Activator.PLUGIN_ID, result);
-        us.cancelToolchain();
+        mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
+        mServices.getProgressMonitorService().cancelToolchain();
     }
 
     private static void internalError(String message) {

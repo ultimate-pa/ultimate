@@ -15,7 +15,6 @@ class HelpStmt extends Stmt {
 		System.out.println("exit                                    - quit Ultimate");
 		System.out.println("list                                    - prints index numerated list of available plugins ");
 		System.out.println("listmm                                  - prints index numerated list of stored models");
-		System.out.println("deletemm <model-index>                  - deletes model with specified index");
 		System.out.println("set prelude <filename>                  - sets the prelude to specified file");
 		System.out.println("help                                    - prints these help messages");
 		System.out.println("use <toolchain> on <boogie filename>    - process specified toolchain on boogie file");

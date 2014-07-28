@@ -4,7 +4,6 @@ import java.util.*;
 import pea.*;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.model.*;
 import pea_to_boogie.generator.*;
 import req_to_pea.ReqToPEA;
 import srParse.srParsePattern;

@@ -36,20 +36,19 @@ import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 
 public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID);
+	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	
 	BranchingProcess<L, C> m_Input;
 	PetriNetJulian<L, C> m_Net;
 	private UnionFind<Condition<L, C>> representatives;

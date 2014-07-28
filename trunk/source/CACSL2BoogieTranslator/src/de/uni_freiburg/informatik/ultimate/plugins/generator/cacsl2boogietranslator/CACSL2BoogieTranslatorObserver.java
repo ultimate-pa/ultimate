@@ -3,8 +3,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
-import java.util.HashMap;
-
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.parser.util.ASTPrinter;
@@ -19,8 +17,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.SvComp14MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
@@ -45,89 +44,90 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	/**
 	 * The logger instance.
 	 */
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
-			Activator.s_PLUGIN_ID);
+	private final Logger mLogger;
 	/**
 	 * A Wrapper holding the root node of the resulting Boogie AST.
 	 */
 	private WrapperNode rootNode;
+	private IToolchainStorage mStorage;
+
+	private IUltimateServiceProvider mService;
+
+	public CACSL2BoogieTranslatorObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
+		assert storage != null;
+		assert services != null;
+		mStorage = storage;
+		mService = services;
+		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+	}
 
 	@Override
 	public boolean process(IElement root) {
-		if (!(root instanceof WrapperNode)
-				|| !((((WrapperNode) root).getBacking()) instanceof IASTTranslationUnit)) {
+		if (!(root instanceof WrapperNode) || !((((WrapperNode) root).getBacking()) instanceof IASTTranslationUnit)) {
 			// input not in expected format
-			s_Logger.error("Unexpected input object!");
+			mLogger.error("Unexpected input object!");
 			throw new IllegalArgumentException("Not a valid input type!");
 		}
-		IASTTranslationUnit inputTU = (IASTTranslationUnit) ((WrapperNode) root)
-				.getBacking();
+		IASTTranslationUnit inputTU = (IASTTranslationUnit) ((WrapperNode) root).getBacking();
 
 		if (m_ExtendedDebugOutput) {
 			ASTPrinter.print(inputTU);
 		}
 
-		ASTDecorator decorator = new ASTDecorator();
-		// build a list of ACSL ASTs
-		FunctionLineVisitor visitor = new FunctionLineVisitor();
-		inputTU.accept(visitor);
-		CommentParser cparser = new CommentParser(inputTU.getComments(),
-				visitor.getLineRange());
-		decorator.setAcslASTs(cparser.processComments());
-		// build decorator tree
-		decorator.mapASTs(inputTU);
-
 		// translate to Boogie
 		Dispatcher main;
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(
-				Activator.s_PLUGIN_ID);
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		TranslationMode mode = TranslationMode.BASE;
 		try {
-			mode = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MODE,
-					TranslationMode.class);
+			mode = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class);
 		} catch (Exception e) {
-			throw new IllegalArgumentException(
-					"Unable to determine preferred mode.");
+			throw new IllegalArgumentException("Unable to determine preferred mode.");
 		}
 		CACSL2BoogieBacktranslator backtranslator = new CACSL2BoogieBacktranslator();
-		s_Logger.info("Settings: " + mode);
+		mLogger.info("Settings: " + mode);
 		switch (mode) {
 		case BASE:
-			main = new MainDispatcher(backtranslator);
+			main = new MainDispatcher(backtranslator, mService, mLogger);
 			break;
 		case SV_COMP14:
-			main = new SvComp14MainDispatcher(backtranslator);
+			main = new SvComp14MainDispatcher(backtranslator, mService, mLogger);
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown mode.");
 		}
-		UltimateServices us = UltimateServices.getInstance();
-		us.setIdentifierMapping(new HashMap<String, String>());
+		mStorage.putStorable(IdentifierMapping.getStorageKey(), new IdentifierMapping<String, String>());
+
+		ASTDecorator decorator = new ASTDecorator();
+		// build a list of ACSL ASTs
+		FunctionLineVisitor visitor = new FunctionLineVisitor();
+		inputTU.accept(visitor);
+		CommentParser cparser = new CommentParser(inputTU.getComments(), visitor.getLineRange(), mLogger, main);
+		decorator.setAcslASTs(cparser.processComments());
+		// build decorator tree
+		decorator.mapASTs(inputTU);
 
 		try {
-			this.rootNode = new WrapperNode(null, main.run(decorator
-					.getRootNode()).node);
-			us.setIdentifierMapping(main.getIdentifierMapping());
-			us.getTranslatorSequence().add(backtranslator);
+			this.rootNode = new WrapperNode(null, main.run(decorator.getRootNode()).node);
+			IdentifierMapping<String, String> map = new IdentifierMapping<String, String>();
+			map.setMap(main.getIdentifierMapping());
+			mStorage.putStorable(IdentifierMapping.getStorageKey(), map);
+			mService.getBacktranslationService().getTranslatorSequence().add(backtranslator);
 		} catch (Throwable t) {
 			final IResult result;
-			String message = "There was an error during the translation process! ["
-					+ t.getClass() + ", " + t.getMessage() + "]";
+			String message = "There was an error during the translation process! [" + t.getClass() + ", "
+					+ t.getMessage() + "]";
 			if (t instanceof IncorrectSyntaxException) {
-				result = new SyntaxErrorResult(Activator.s_PLUGIN_NAME, 
-						((IncorrectSyntaxException) t).getLocation(), 
+				result = new SyntaxErrorResult(Activator.s_PLUGIN_NAME, ((IncorrectSyntaxException) t).getLocation(),
 						t.getLocalizedMessage());
 			} else if (t instanceof UnsupportedSyntaxException) {
-				result = new UnsupportedSyntaxResult<IElement>(Activator.s_PLUGIN_NAME, 
-						((UnsupportedSyntaxException) t).getLocation(), 
-						t.getLocalizedMessage());
+				result = new UnsupportedSyntaxResult<IElement>(Activator.s_PLUGIN_NAME,
+						((UnsupportedSyntaxException) t).getLocation(), t.getLocalizedMessage());
 			} else {
 				// something unexpected happened
 				// report it to the user ...
 				String shortDescription = t.getClass().getSimpleName();
 				String longDescription = t.getLocalizedMessage();
-				result = new GenericResult(Activator.s_PLUGIN_ID, 
-						shortDescription, longDescription, Severity.ERROR);
+				result = new GenericResult(Activator.s_PLUGIN_ID, shortDescription, longDescription, Severity.ERROR);
 				// Terminate the compile process with a "real" Exception,
 				// visible to the Ultimate toolchain executer! Something
 				// really went wrong! The core will decide what to do next!
@@ -136,9 +136,9 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 				}
 				throw new RuntimeException(message);
 			}
-			us.reportResult(Activator.s_PLUGIN_ID, result);
-			s_Logger.warn(result.getShortDescription() + " " + result.getLongDescription());
-			us.cancelToolchain();
+			mService.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
+			mLogger.warn(result.getShortDescription() + " " + result.getLongDescription());
+			mService.getProgressMonitorService().cancelToolchain();
 		}
 		return false;
 	}

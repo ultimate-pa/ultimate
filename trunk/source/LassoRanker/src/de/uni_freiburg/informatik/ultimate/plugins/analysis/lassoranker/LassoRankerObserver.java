@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
@@ -24,6 +26,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 public class LassoRankerObserver implements IUnmanagedObserver {
 
 	
+	private final IUltimateServiceProvider mServices;
+	private final IToolchainStorage mStorage;
+	
+	public LassoRankerObserver(IUltimateServiceProvider services, IToolchainStorage storage){
+		mServices = services;
+		mStorage = storage;
+	}
+
 	@Override
 	public boolean process(IElement root) {
 		if (!(root instanceof RootNode)) {
@@ -31,7 +41,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 					"LassoRanker can only be applied to models constructed" +
 					" by the RCFGBuilder");
 		}
-		new LassoRankerStarter((RootNode) root);
+		new LassoRankerStarter((RootNode) root, mServices, mStorage);
 		return false;
 	}
 	

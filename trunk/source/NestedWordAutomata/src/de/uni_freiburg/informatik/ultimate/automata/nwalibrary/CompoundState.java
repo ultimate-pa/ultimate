@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class CompoundState<STATE> {

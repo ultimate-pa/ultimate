@@ -36,12 +36,11 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Senwa;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
  * Visit all states of a SENWA. This can also be used to construct this SEVPA.
@@ -49,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 public class SenwaWalker<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
-		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+		NestedWordAutomata.getLogger();
 	
 	
 	protected Senwa<LETTER,STATE> m_TraversedSenwa;
@@ -256,7 +255,7 @@ public class SenwaWalker<LETTER,STATE> {
 				}
 			}
 			
-			if (!UltimateServices.getInstance().continueProcessing()) {
+			if (!NestedWordAutomata.getMonitor().continueProcessing()) {
 				throw new OperationCanceledException();
 			}
 			

@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -21,9 +23,9 @@ public class RCFGWalkerBreadthFirst extends RCFGWalker
 	protected Queue<RCFGEdge> mRemainingEdges;
 	protected HashSet<RCFGEdge> mProcessedEdges;
 
-	public RCFGWalkerBreadthFirst(ObserverDispatcher dispatcher)
+	public RCFGWalkerBreadthFirst(ObserverDispatcher dispatcher, Logger logger)
 	{
-		super(dispatcher);
+		super(dispatcher, logger);
 		mRemainingEdges = new LinkedList<>();
 		mProcessedEdges = new HashSet<>();
 	}

@@ -5,7 +5,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.BlockEncoder;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
@@ -14,18 +13,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  */
 public class BlockEncodingObserver implements IUnmanagedObserver {
 
-	private IElement root;
+	private IElement mRoot;
+	private Logger mLogger;
+
+	public BlockEncodingObserver(Logger logger) {
+		mLogger = logger;
+	}
 
 	@Override
 	public boolean process(IElement root) {
-		Logger logger = UltimateServices.getInstance().getLogger(
-				Activator.s_PLUGIN_ID);
 		long time = System.currentTimeMillis();
 		RootNode rootNode = (RootNode) root;
-		new BlockEncoder().startMinimization(rootNode);
-		logger.info("Time (in ms) spend in BlockEncoding: "
-				+ (System.currentTimeMillis() - time));
-		this.root = root;
+		new BlockEncoder(mLogger).startMinimization(rootNode);
+		mLogger.info("Time (in ms) spend in BlockEncoding: " + (System.currentTimeMillis() - time));
+		this.mRoot = root;
 		return false;
 	}
 
@@ -53,7 +54,7 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 	 * @return the root
 	 */
 	public IElement getRoot() {
-		return root;
+		return mRoot;
 	}
 
 }

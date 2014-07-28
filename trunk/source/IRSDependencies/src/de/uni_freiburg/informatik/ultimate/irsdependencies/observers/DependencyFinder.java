@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.irsdependencies.observers;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors.DebugRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors.DummyVisitor;
@@ -18,16 +20,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 public class DependencyFinder extends BaseObserver {
 
 	private final int mUnrollings;
+	private final Logger mLogger;
 
-	public DependencyFinder() {
+	public DependencyFinder(Logger logger) {
 		super();
 		mUnrollings = 1;
+		mLogger = logger;
 	}
 
 	@Override
 	public boolean process(IElement root) {
 
-//		doit(root, mUnrollings);
+		// doit(root, mUnrollings);
 		blabla(root);
 
 		// for (int i = 1; i <= 3; ++i) {
@@ -38,27 +42,25 @@ public class DependencyFinder extends BaseObserver {
 	}
 
 	private void doit(IElement root, int unrollings) {
-		ObserverDispatcher od = new ObserverDispatcherSequential();
-		RCFGWalkerUnroller walker = new RCFGWalkerUnroller(od, unrollings);
+		ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
+		RCFGWalkerUnroller walker = new RCFGWalkerUnroller(od, mLogger, unrollings);
 		od.setWalker(walker);
 
-		walker.addObserver(new DebugRCFGVisitor(500));
-//		walker.addObserver(new UseDefVisitor());
-//		walker.addObserver(new SequencingVisitor(walker));
+		walker.addObserver(new DebugRCFGVisitor(mLogger, 500));
+		// walker.addObserver(new UseDefVisitor());
+		// walker.addObserver(new SequencingVisitor(walker));
 		walker.run((RCFGNode) root);
 
-		DebugFileWriterDietsch dfw = new DebugFileWriterDietsch(
-				walker.getPaths(), unrollings);
+		DebugFileWriterDietsch dfw = new DebugFileWriterDietsch(walker.getPaths(), mLogger, unrollings);
 		dfw.run();
 	}
-	
-	
-	private void blabla(IElement root){
-		ObserverDispatcher od = new ObserverDispatcherSequential();
-		RCFGWalkerAStar walker = new RCFGWalkerAStar(od);
+
+	private void blabla(IElement root) {
+		ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
+		RCFGWalkerAStar walker = new RCFGWalkerAStar(od, mLogger);
 		od.setWalker(walker);
-		walker.addObserver(new DummyVisitor());
-		walker.run((RCFGNode)root);
+		walker.addObserver(new DummyVisitor(mLogger));
+		walker.run((RCFGNode) root);
 	}
 
 }

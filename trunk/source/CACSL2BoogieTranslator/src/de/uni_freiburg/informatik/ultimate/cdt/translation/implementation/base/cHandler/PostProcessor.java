@@ -9,17 +9,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.swing.text.StyledEditorKit.UnderlineAction;
+import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
@@ -32,7 +30,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.B
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
@@ -70,16 +67,21 @@ public class PostProcessor {
 	 * Holds the Boogie identifiers of the initialized global variables. Used
 	 * for filling the modifies clause of Ultimate.start and Ultimate.init.
 	 */
-	private LinkedHashSet<String> mInitializedGlobals;
+	private final LinkedHashSet<String> mInitializedGlobals;
+	private final Dispatcher mDispatcher;
+	private final Logger mLogger;
 
 	//	private boolean mSomethingOnHeapIsInitialized = false;
 
 	/**
 	 * Constructor.
 	 */
-	public PostProcessor() {
+	public PostProcessor(Dispatcher dispatcher, Logger logger) {
 		mInitializedGlobals = new LinkedHashSet<String>();
+		mDispatcher = dispatcher;
+		mLogger = logger;
 	}
+
 
 	/**
 	 * Start method for the post processing.
@@ -540,7 +542,7 @@ mInitializedGlobals.size()];
 
 		if (!checkMethod.equals(SFO.EMPTY)
 				&& procedures.containsKey(checkMethod)) {
-			IHandler.s_Logger.info("Settings: Checked method=" + checkMethod);
+			mLogger.info("Settings: Checked method=" + checkMethod);
 
 			functionHandler.getCallGraph().get(SFO.START).add(checkMethod);
 
@@ -608,10 +610,10 @@ mInitializedGlobals.size()];
 			//					+ "\n The program does not have this method. ULTIMATE will continue in library mode (i.e., each procedure can be starting procedure and global variables are not initialized).";
 			//			Dispatcher.warn(loc, msg);
 		} else {
-			IHandler.s_Logger.info("Settings: Library mode!");
+			mLogger.info("Settings: Library mode!");
 			if (procedures.containsKey("main")) {
 				String msg = "You selected the library mode (i.e., each procedure can be starting procedure and global variables are not initialized). This program contains a \"main\" procedure. Maybe you wanted to select the \"main\" procedure as starting procedure.";
-				Dispatcher.warn(loc, msg);
+				mDispatcher.warn(loc, msg);
 			}
 		}
 		startDeclaration = new Procedure(loc, new Attribute[0], SFO.START,

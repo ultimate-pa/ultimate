@@ -8,7 +8,7 @@ Require-Bundle: Library-log4j,
  UltimateCore,
  Library-ModelCheckerUtils,
  Library-SMTLIB,
- RCFGBuilder,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  NestedWordAutomata,
  TraceAbstraction
 Bundle-ActivationPolicy: lazy

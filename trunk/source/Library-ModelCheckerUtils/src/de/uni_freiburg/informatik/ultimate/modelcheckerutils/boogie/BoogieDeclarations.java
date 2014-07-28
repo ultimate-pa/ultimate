@@ -9,7 +9,6 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
@@ -24,7 +23,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 
 /**
  * Objects that stores all global declarations and procedure contracts and makes
@@ -33,8 +31,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
  */
 public class BoogieDeclarations {
 	
-	private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(ModelCheckerUtils.sPluginID);
+	private final Logger mLogger; 
 
 	private final List<Axiom> m_Axioms = 
 			new ArrayList<Axiom>();
@@ -100,7 +97,8 @@ public class BoogieDeclarations {
 								new HashMap<String,Set<String>>();
 	
 	
-	public BoogieDeclarations(Unit unit) {
+	public BoogieDeclarations(Unit unit, Logger logger) {
+		mLogger = logger;
 		for (Declaration decl : unit.getDeclarations()) {
 			if (decl instanceof Axiom)
 				m_Axioms.add((Axiom) decl);
@@ -115,13 +113,13 @@ public class BoogieDeclarations {
 			else if (decl instanceof Procedure) {
 				Procedure proc = (Procedure) decl;
 				if (proc.getSpecification() != null && proc.getBody() != null) {
-					s_Logger.info(String.format(
+					mLogger.info(String.format(
 							"Specification and implementation of procedure %s given in one single declaration",
 							proc.getIdentifier()));
 				}
 
 				if (proc.getSpecification() != null) {
-					s_Logger.info("Found specification of procedure " + proc.getIdentifier());
+					mLogger.info("Found specification of procedure " + proc.getIdentifier());
 					if (m_ProcSpecification.containsKey(proc.getIdentifier())) {
 						throw new UnsupportedOperationException("Procedure" + proc.getIdentifier() + "declarated twice");
 					} else {
@@ -129,7 +127,7 @@ public class BoogieDeclarations {
 					}
 				}
 				if (proc.getBody() != null) {
-					s_Logger.info("Found implementation of procedure " + proc.getIdentifier());
+					mLogger.info("Found implementation of procedure " + proc.getIdentifier());
 					if (m_ProcImplementation.containsKey(proc.getIdentifier())) {
 						throw new UnsupportedOperationException("File " + "contains two implementations of procedure"
 								+ proc.getIdentifier());
@@ -190,7 +188,7 @@ public class BoogieDeclarations {
 					requiresNonFree.add(recSpec);
 				}
 			} else if (spec instanceof LoopInvariantSpecification) {
-				s_Logger.debug("Found LoopInvariantSpecification" + spec
+				mLogger.debug("Found LoopInvariantSpecification" + spec
 						+ "but this plugin does not use loop invariants.");
 				throw new IllegalArgumentException(
 						"LoopInvariantSpecification may not occur in procedure constract");

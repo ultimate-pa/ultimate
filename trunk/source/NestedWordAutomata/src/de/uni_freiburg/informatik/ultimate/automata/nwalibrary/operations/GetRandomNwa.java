@@ -35,13 +35,12 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
  * Class that provides the method {@code generateAutomaton()} for randomly
@@ -53,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 public class GetRandomNwa implements IOperation<String,String> {
 	
 	protected static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+			NestedWordAutomata.getLogger();
 	
 	private final Random m_Random;
 	private final NestedWordAutomaton<String,String> m_Result;

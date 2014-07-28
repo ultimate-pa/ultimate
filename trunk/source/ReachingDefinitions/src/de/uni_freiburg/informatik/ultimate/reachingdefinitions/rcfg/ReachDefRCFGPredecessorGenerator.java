@@ -12,7 +12,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations.ReachDefStatementAnnotation;
-import de.uni_freiburg.informatik.ultimate.reachingdefinitions.plugin.Activator;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.util.Util;
 
 public class ReachDefRCFGPredecessorGenerator extends RCFGEdgeVisitor {
@@ -20,8 +19,8 @@ public class ReachDefRCFGPredecessorGenerator extends RCFGEdgeVisitor {
 	private final Logger mLogger;
 	private final String mAnnotationSuffix;
 
-	public ReachDefRCFGPredecessorGenerator(String annotationSuffix) {
-		mLogger = Activator.getLogger();
+	public ReachDefRCFGPredecessorGenerator(String annotationSuffix, Logger logger) {
+		mLogger = logger;
 		mAnnotationSuffix = annotationSuffix;
 	}
 

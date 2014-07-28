@@ -6,11 +6,11 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.jobs.Job;
 
-import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -27,30 +27,42 @@ public abstract class BasicToolchainJob extends Job {
 	 * 
 	 */
 	public static enum ChainMode {
-		RUN_TOOLCHAIN, RUN_NEWTOOLCHAIN, RERUN_TOOLCHAIN, RUN_OLDTOOLCHAIN
+		RUN_TOOLCHAIN, 
+		RUN_NEWTOOLCHAIN, 
+		RERUN_TOOLCHAIN, 
+		@Deprecated
+		RUN_OLDTOOLCHAIN
 	}
 
 	protected ChainMode mJobMode;
 	protected ICore mCore;
 	protected IController mController;
 	protected Logger mLogger;
-	protected Toolchain mChain;
+	protected ToolchainData mChain;
 	protected PreludeProvider mPreludeFile;
+	protected IUltimateServiceProvider mServices;
+	private long mDeadline;
 
-	public BasicToolchainJob(String name, ICore core, IController controller, ChainMode mode) {
+	public BasicToolchainJob(String name, ICore core, IController controller, ChainMode mode, Logger logger) {
 		super(name);
+		assert logger != null;
 		mCore = core;
 		mController = controller;
 		mJobMode = mode;
-		mLogger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = logger;
+		mDeadline = -1;
+
 	}
 
 	/**
 	 * Write all IResults produced by the toolchain to the logger.
 	 */
 	protected void logResults() {
+		if(mServices == null){
+			return;
+		}
 		mLogger.info(" --- Results ---");
-		for (Entry<String, List<IResult>> entry : UltimateServices.getInstance().getResultMap().entrySet()) {
+		for (Entry<String, List<IResult>> entry : mServices.getResultService().getResults().entrySet()) {
 			mLogger.info(String.format(" * Results from %s:", entry.getKey()));
 
 			for (IResult result : entry.getValue()) {
@@ -83,21 +95,43 @@ public abstract class BasicToolchainJob extends Job {
 		}
 	}
 
-	/**
-	 * Use the timeout specified in the preferences of CoreRCP to set a deadline
-	 * for the toolchain execution. Note that the ultimate core does not check
-	 * that the toolchain execution complies with the deadline. Plugins should
-	 * check if the deadline is overdue and abort. A timeout of 0 means that we
-	 * do not set any deadline.
-	 */
-	public void setTimeout() {
+	private void setTimeout() {
+		long realDeadline = 0;
+
 		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		int timeoutInPreferences = ups.getInt(CorePreferenceInitializer.LABEL_TIMEOUT);
-		if (timeoutInPreferences == 0) {
-			// do not set any timout
+		int preferencesDeadline = ups.getInt(CorePreferenceInitializer.LABEL_TIMEOUT);
+
+		// first , check if we have a deadline set by the executor
+		if (mDeadline != -1) {
+			// mDeadline is in ms
+			realDeadline = mDeadline;
 		} else {
-			long timoutMilliseconds = timeoutInPreferences * 1000L;
-			UltimateServices.getInstance().setDeadline(System.currentTimeMillis() + timoutMilliseconds);
+			// preferenceDeadline is in s
+			realDeadline = preferencesDeadline * 1000L;
+		}
+
+		if (realDeadline > 0) {
+			// only set a timeout if there is a non-zero positive value
+			mServices.getProgressMonitorService().setDeadline(
+					System.currentTimeMillis() + realDeadline);
+		}
+	}
+
+	protected void setServices(IUltimateServiceProvider services) {
+		mServices = services;
+		setTimeout();
+	}
+
+	/**
+	 * Set a deadline in ms after which the toolchain should stop. All values smaller than
+	 * 0 will be ignored. 0 disables all timeouts.
+	 * 
+	 * @param deadline
+	 *            The deadline in ms
+	 */
+	public void setDeadline(long deadline) {
+		if (deadline >= 0) {
+			mDeadline = deadline;
 		}
 	}
 

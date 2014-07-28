@@ -20,7 +20,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
 import java.util.ArrayList;
 import java.util.Collection;

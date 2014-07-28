@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
@@ -24,20 +24,22 @@ public class ResultNotifier {
 	private static final int INCORRECT = 4;
 	private static final int SYNTAXERROR = 5;
 
-	private IController mCurrentController;
+	private final IController mController;
 	private final Logger mLogger;
+	private final IUltimateServiceProvider mServices;
 
-	public ResultNotifier(IController controller) {
-		mCurrentController = controller;
-		mLogger = UltimateServices.getInstance().getControllerLogger();
+	public ResultNotifier(IController controller, IUltimateServiceProvider services) {
+		assert services != null;
+		mController = controller;
+		mServices = services;
+		mLogger = mServices.getLoggingService().getControllerLogger();
 	}
 
 	public void processResults() {
 		int toolchainResult = ResultNotifier.NORESULT;
 		String description = "Toolchain returned no Result.";
-
-		for (List<IResult> PluginResults : UltimateServices.getInstance()
-				.getResultMap().values()) {
+		
+		for (List<IResult> PluginResults : mServices.getResultService().getResults().values()) {
 			for (IResult result : PluginResults) {
 				if (result instanceof SyntaxErrorResult) {
 					toolchainResult = ResultNotifier.SYNTAXERROR;
@@ -61,8 +63,7 @@ public class ResultNotifier {
 				} else if (result instanceof GenericResultAtElement) {
 					if (toolchainResult <= ResultNotifier.GENERICRESULT) {
 						toolchainResult = ResultNotifier.GENERICRESULT;
-						description = result.getShortDescription() + "  " 
-												+ result.getLongDescription();
+						description = result.getShortDescription() + "  " + result.getLongDescription();
 					}
 				}
 			}
@@ -90,16 +91,16 @@ public class ResultNotifier {
 
 	private void programCorrect() {
 		mLogger.info("RESULT: Ultimate proved your program to be correct!");
-		mCurrentController.displayToolchainResultProgramCorrect();
+		mController.displayToolchainResultProgramCorrect();
 	}
 
 	private void programIncorrect() {
 		mLogger.info("RESULT: Ultimate proved your program to be incorrect!");
-		mCurrentController.displayToolchainResultProgramIncorrect();
+		mController.displayToolchainResultProgramIncorrect();
 	}
 
 	private void programUnknown(final String text) {
 		mLogger.info("RESULT: Ultimate could not prove your program: " + text);
-		mCurrentController.displayToolchainResultProgramUnknown(text);
+		mController.displayToolchainResultProgramUnknown(text);
 	}
 }

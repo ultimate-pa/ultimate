@@ -1,35 +1,41 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;
+
 import java.util.HashSet;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
-
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
  */
 public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
-	
-	private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 
-	IElement m_GraphrootOfUltimateModelOfLastPrintedAutomaton;
-	
+	private Logger mLogger;
+
+	IElement mGraphrootOfUltimateModelOfLastPrintedAutomaton;
+
+	private IUltimateServiceProvider mServices;
+
+	public AutomataScriptInterpreterObserver(IUltimateServiceProvider services) {
+		assert services != null;
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+	}
+
 	@Override
 	public boolean process(IElement root) {
 		AssignableTest.initPrimitiveTypes();
-		TestFileInterpreter ti = new TestFileInterpreter();
+		TestFileInterpreter ti = new TestFileInterpreter(mServices);
 		ti.interpretTestFile((AtsASTNode) root);
 
 		IAutomaton<?, ?> printAutomaton = ti.getLastPrintedAutomaton();
@@ -37,10 +43,9 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 			printAutomaton = getDummyAutomatonWithMessage();
 		}
 		try {
-			m_GraphrootOfUltimateModelOfLastPrintedAutomaton = 
-					Automaton2UltimateModel.ultimateModel(printAutomaton);
+			mGraphrootOfUltimateModelOfLastPrintedAutomaton = Automaton2UltimateModel.ultimateModel(printAutomaton);
 		} catch (OperationCanceledException e) {
-			s_Logger.warn("Nothing visualized because of timeout");
+			mLogger.warn("Nothing visualized because of timeout");
 		}
 		return false;
 	}
@@ -48,7 +53,7 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 	@Override
 	public void finish() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -60,7 +65,7 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 	@Override
 	public void init() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -68,19 +73,17 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 		// TODO Auto-generated method stub
 		return false;
 	}
-	
+
 	IElement getUltimateModelOfLastPrintedAutomaton() {
-		return m_GraphrootOfUltimateModelOfLastPrintedAutomaton;
+		return mGraphrootOfUltimateModelOfLastPrintedAutomaton;
 	}
 
-	public IAutomaton<String,String> getDummyAutomatonWithMessage() {
-		NestedWordAutomaton<String,String> dummyAutomaton = 
-			new NestedWordAutomaton<String,String>(
-					new HashSet<String>(0), null, null, new StringFactory());
-		dummyAutomaton.addState(true, false,
-			"Use the print keyword in .ats file to select an automaton" +
-			" for visualization");
+	public IAutomaton<String, String> getDummyAutomatonWithMessage() {
+		NestedWordAutomaton<String, String> dummyAutomaton = new NestedWordAutomaton<String, String>(
+				new HashSet<String>(0), null, null, new StringFactory());
+		dummyAutomaton.addState(true, false, "Use the print keyword in .ats file to select an automaton"
+				+ " for visualization");
 		return dummyAutomaton;
 	}
-	
+
 }

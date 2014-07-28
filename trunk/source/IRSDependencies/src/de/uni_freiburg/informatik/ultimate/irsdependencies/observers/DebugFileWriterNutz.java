@@ -14,8 +14,6 @@ import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.irsdependencies.Activator;
 import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -24,13 +22,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 
 public class DebugFileWriterNutz {
 
-	private static Logger sLogger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID);
+	private final Logger mLogger;
 	private List<List<RCFGEdge>> mPaths;
 	private final int mUnrollingDepth;
 	private final static String sFolderPath = "F:\\repos\\ultimate fresher co\\trunk\\examples\\unrolling-tests\\";
 
-	public DebugFileWriterNutz(List<List<RCFGEdge>> paths, int unrollingDepth) {
+	public DebugFileWriterNutz(List<List<RCFGEdge>> paths, Logger logger, int unrollingDepth) {
+		mLogger = logger;
 		if (paths == null) {
 			throw new IllegalArgumentException("Parameter may not be null");
 		}
@@ -61,12 +59,10 @@ public class DebugFileWriterNutz {
 		prepareTraces(mUnrollingDepth, tmp);
 	}
 
-	private void prepareTraces(int unrollingDepth,
-			HashMap<RootEdge, ArrayList<ArrayList<CodeBlock>>> procToTraces) {
-		sLogger.debug("Sorting all traces of each procedure...");
+	private void prepareTraces(int unrollingDepth, HashMap<RootEdge, ArrayList<ArrayList<CodeBlock>>> procToTraces) {
+		mLogger.debug("Sorting all traces of each procedure...");
 		HashMap<RootEdge, TreeSet<String>> procToTraceStrings = new HashMap<RootEdge, TreeSet<String>>();
-		for (Entry<RootEdge, ArrayList<ArrayList<CodeBlock>>> en : procToTraces
-				.entrySet()) {
+		for (Entry<RootEdge, ArrayList<ArrayList<CodeBlock>>> en : procToTraces.entrySet()) {
 			TreeSet<String> allProcTraces = new TreeSet<String>();
 			for (ArrayList<CodeBlock> trace : en.getValue()) {
 				String traceString = traceToString(trace);
@@ -74,18 +70,14 @@ public class DebugFileWriterNutz {
 			}
 			procToTraceStrings.put(en.getKey(), allProcTraces);
 		}
-		sLogger.debug("Writing all traces of Main to file...");
+		mLogger.debug("Writing all traces of Main to file...");
 		try {
-			for (Entry<RootEdge, TreeSet<String>> en : procToTraceStrings
-					.entrySet()) {
+			for (Entry<RootEdge, TreeSet<String>> en : procToTraceStrings.entrySet()) {
 				String currentFileName = Paths
-						.get(((ProgramPoint) en.getKey().getTarget())
-								.getPayload().getLocation().getFileName())
+						.get(((ProgramPoint) en.getKey().getTarget()).getPayload().getLocation().getFileName())
 						.getFileName().toString();
-				String currentMethodName = ((ProgramPoint) en.getKey()
-						.getTarget()).getProcedure();
-				String filename = "dd_rcfgTraces_" + currentFileName + "_"
-						+ currentMethodName + "__dfs_" + "_n_is_"
+				String currentMethodName = ((ProgramPoint) en.getKey().getTarget()).getProcedure();
+				String filename = "dd_rcfgTraces_" + currentFileName + "_" + currentMethodName + "__dfs_" + "_n_is_"
 						+ unrollingDepth + "_" + ".txt";
 
 				writeLargerTextFile(sFolderPath + filename, en.getValue());
@@ -104,12 +96,10 @@ public class DebugFileWriterNutz {
 		return sb.toString();
 	}
 
-	private void writeLargerTextFile(String aFileName, TreeSet<String> traces)
-			throws IOException {
+	private void writeLargerTextFile(String aFileName, TreeSet<String> traces) throws IOException {
 		Path path = Paths.get(aFileName);
-		sLogger.debug("Writing " + path.toString());
-		try (BufferedWriter writer = Files.newBufferedWriter(path,
-				StandardCharsets.UTF_8)) {
+		mLogger.debug("Writing " + path.toString());
+		try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
 			for (String line : traces) {
 				writer.write(line);
 				writer.newLine();

@@ -10,7 +10,7 @@ import org.osgi.framework.BundleContext;
 public class Activator extends Plugin {
 
 	// The plug-in ID
-	public static final String PLUGIN_ID = "RCFGBuilder";
+	public static final String PLUGIN_ID = RCFGBuilder.class.getPackage().getName();
 
 	// The plug-in name
 	public static final String PLUGIN_NAME = "RCFGBuilder";

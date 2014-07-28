@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.LTL2aut.ast;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class ConditionalBlock extends AstNode {
 	

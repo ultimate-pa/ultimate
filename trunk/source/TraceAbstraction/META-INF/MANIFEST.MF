@@ -11,7 +11,7 @@ Require-Bundle: Library-log4j,
  UltimateCore,
  NestedWordAutomata,
  SMTInterpol,
- RCFGBuilder,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  SMTSolverBridge
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7

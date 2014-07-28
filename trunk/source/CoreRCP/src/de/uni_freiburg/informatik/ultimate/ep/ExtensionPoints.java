@@ -11,7 +11,7 @@ public final class ExtensionPoints {
 	///////////////////////////////////////////
 	//            W A R N I N G              //
 	//  When something is renamed in here,   //
-	//  it MUSST also be renamed in          //
+	//  it MUST also be renamed in          //
 	//  corresponding plugin.xml(s).         //
 	///////////////////////////////////////////	
 	

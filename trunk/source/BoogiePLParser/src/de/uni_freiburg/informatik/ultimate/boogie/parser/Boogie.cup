@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.parser.BoogieSymbolFactory.Boo
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 
 
@@ -18,9 +18,16 @@ option symbols = LexerSymbols;
 option java15, compact_red, newpositions;
 
 parser code {:
-	String filename;
+	String mFilename;
+	private IUltimateServiceProvider mServices;	
+	
+	public Parser(java_cup.runtime.Scanner s, java_cup.runtime.SymbolFactory sf, IUltimateServiceProvider services){
+		super(s,sf);
+		mServices = services;
+	}
+	
 	public void setFileName(String filename) {
-		this.filename = filename;
+		mFilename = filename;
 	}
 	
 	public void syntax_error(Symbol sym) {
@@ -28,21 +35,19 @@ parser code {:
         ILocation loc;
         if (sym instanceof BoogieSymbol) {
             BoogieSymbol bsym = (BoogieSymbol) sym;
-            loc = new BoogieLocation(filename, sym.left, sym.right, 
+            loc = new BoogieLocation(mFilename, sym.left, sym.right, 
                     bsym.getLeftColumn(), bsym.getRightColumn(), false);
-            position = filename+":"+bsym.getLocation();
+            position = mFilename+":"+bsym.getLocation();
         } else  {
-            loc = new BoogieLocation(filename, sym.left, sym.right, 
+            loc = new BoogieLocation(mFilename, sym.left, sym.right, 
                     Integer.MAX_VALUE, Integer.MAX_VALUE, false);
-            position = filename + ":EOF";
+            position = mFilename + ":EOF";
         }
-        BoogieParser.s_Logger.error(position + ": syntax error");
-        SyntaxErrorResult syntaxErrorResult = 
-                new SyntaxErrorResult(Activator.s_PLUGIN_ID, 
-                		loc, String.valueOf(sym));
-        UltimateServices us = UltimateServices.getInstance();
-        us.reportResult(Activator.s_PLUGIN_ID, syntaxErrorResult);
-        us.cancelToolchain();
+		
+		mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID).error(position + ": syntax error");
+		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID,
+				new SyntaxErrorResult(Activator.s_PLUGIN_ID, loc, String.valueOf(sym)));
+		mServices.getProgressMonitorService().cancelToolchain();
 	}
 :}
 
@@ -58,7 +63,7 @@ action code {:
 	    int endLine = sEnd.right;
 	    int startColumn = ((BoogieSymbol) sBegin).getLeftColumn();
 	    int endColumn = ((BoogieSymbol) sBegin).getRightColumn();
-	    return new BoogieLocation(parser.filename,
+	    return new BoogieLocation(parser.mFilename,
 	                   startLine, endLine, startColumn, endColumn, isLoop);
 	}
 	

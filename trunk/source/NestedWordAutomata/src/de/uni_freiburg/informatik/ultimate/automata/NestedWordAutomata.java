@@ -28,9 +28,14 @@ package de.uni_freiburg.informatik.ultimate.automata;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.automata.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -38,23 +43,43 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 public class NestedWordAutomata implements IGenerator {
 	private static final String s_PLUGIN_NAME = "NestedWordAutomata";
 	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
-	
+
 	private NestedWordAutomataObserver m_NestedWordAutomataObserver;
-	
+
 	private GraphType m_InputType;
+	private IUltimateServiceProvider mServices;
 	
-    public String getName() {
-        return s_PLUGIN_NAME;
-    }
+	/********************** Hacky shit ****************************/
+	// setServices(services) contains the rest  
+	private static IProgressMonitorService sProgress;
+	private static NWALoggerProxy sLoggerProxy;
 
-    public String getPluginID() {
-        return s_PLUGIN_ID;
-    }
+	public static Logger getLogger() {
+		if (sLoggerProxy == null) {
+			sLoggerProxy = new NWALoggerProxy();
+		}
+		return sLoggerProxy;
+	}
+	
+	public static IProgressMonitorService getMonitor(){
+		return sProgress;
+	}
+	
+	
+	/********************** End hacky shit ****************************/ 
 
-    public int init() {
-    	m_NestedWordAutomataObserver = new NestedWordAutomataObserver();
-    	return 0;
-    }
+	public String getPluginName() {
+		return s_PLUGIN_NAME;
+	}
+
+	public String getPluginID() {
+		return s_PLUGIN_ID;
+	}
+
+	public int init() {
+		m_NestedWordAutomataObserver = new NestedWordAutomataObserver();
+		return 0;
+	}
 
 	/**
 	 * I give you every model.
@@ -78,7 +103,7 @@ public class NestedWordAutomata implements IGenerator {
 		this.m_InputType = graphType;
 	}
 
-	//@Override
+	// @Override
 	public List<IObserver> getObservers() {
 		List<IObserver> observerList = new ArrayList<IObserver>();
 		observerList.add(m_NestedWordAutomataObserver);
@@ -86,9 +111,8 @@ public class NestedWordAutomata implements IGenerator {
 	}
 
 	public IElement getModel() {
-	    return this.m_NestedWordAutomataObserver.getRoot();
+		return this.m_NestedWordAutomataObserver.getRoot();
 	}
-
 
 	@Override
 	public boolean isGuiRequired() {
@@ -98,5 +122,20 @@ public class NestedWordAutomata implements IGenerator {
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
+	}
+
+	@Override
+	public void setToolchainStorage(IToolchainStorage storage) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void setServices(IUltimateServiceProvider services) {
+		mServices = services;
+
+		// TODO: Huge hack, but real change has to be coordinated with Matthias
+		sProgress = services.getProgressMonitorService();
+		((NWALoggerProxy) getLogger()).setLogger(services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 	}
 }

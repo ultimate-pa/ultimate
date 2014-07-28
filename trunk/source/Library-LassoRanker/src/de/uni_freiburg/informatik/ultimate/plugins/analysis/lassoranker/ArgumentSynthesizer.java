@@ -41,7 +41,8 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -54,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptio
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination.NonTerminationArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.TerminationArgumentSynthesizer;
 
-
 /**
  * Superclass to TerminationArgumentSynthesizer and
  * NonTerminationArgumentSynthesizer.
@@ -66,70 +66,73 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.terminat
  * @see NonTerminationArgumentSynthesizer
  */
 public abstract class ArgumentSynthesizer implements Closeable {
-	protected static Logger s_Logger =
-			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-	
+	protected final Logger mLogger;
+
 	public static final long s_randomSeed = 80085;
-	
+
 	protected static final int s_num_of_simultaneous_simplification_tests = 4;
-	
+
 	/**
 	 * The SMT script for argument synthesis
 	 */
 	protected final Script m_script;
-	
+
 	/**
 	 * The lasso program that we are analyzing
 	 */
 	protected final Lasso m_lasso;
-	
+
 	/**
 	 * Preferences
 	 */
 	protected final LassoRankerPreferences m_preferences;
-	
+
 	/**
 	 * Whether synthesize() has been called
 	 */
 	private boolean m_synthesis_successful = false;
-	
+
 	/**
 	 * Whether close() has been called
 	 */
 	private boolean m_closed = false;
-	
-	
+
 	/**
 	 * Constructor for the argument synthesizer
 	 * 
-	 * @param lasso the lasso program
-	 * @param preferences the preferences
-	 * @param constaintsName name of the constraints whose satisfiability is 
-	 *                       checked
+	 * @param lasso
+	 *            the lasso program
+	 * @param preferences
+	 *            the preferences
+	 * @param constaintsName
+	 *            name of the constraints whose satisfiability is checked
+	 * @param storage 
 	 */
-	public ArgumentSynthesizer(Lasso lasso, LassoRankerPreferences preferences,
-			String constaintsName) {
+	public ArgumentSynthesizer(Lasso lasso, LassoRankerPreferences preferences, String constaintsName,
+			IUltimateServiceProvider services, IToolchainStorage storage) {
+		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_preferences = preferences;
-		m_script = SMTSolver.newScript(preferences, constaintsName);
+		m_script = SMTSolver.newScript(preferences, constaintsName, services, storage);
 		m_lasso = lasso;
 	}
-	
+
 	/**
 	 * @return the SMT script to be used for the argument synthesis
 	 */
 	public Script getScript() {
 		return m_script;
 	}
-	
+
 	/**
 	 * @return whether the last call to synthesize() was successfull
 	 */
 	public boolean synthesisSuccessful() {
 		return m_synthesis_successful;
 	}
-	
+
 	/**
 	 * Try to synthesize an argument for (non-)termination
+	 * 
 	 * @return result of the solver while checking the constraints
 	 */
 	public final LBool synthesize() throws SMTLIBException, TermException {
@@ -137,21 +140,21 @@ public abstract class ArgumentSynthesizer implements Closeable {
 		m_synthesis_successful = (lBool == LBool.SAT);
 		return lBool;
 	}
-	
+
 	/**
-	 * Try to synthesize an argument for (non-)termination
-	 * This is to be derived in the child classes and is wrapped by
-	 * synthesize().
+	 * Try to synthesize an argument for (non-)termination This is to be derived
+	 * in the child classes and is wrapped by synthesize().
+	 * 
 	 * @return result of the solver while checking the constraints
 	 */
-	protected abstract LBool do_synthesis()
-			throws SMTLIBException, TermException;
-	
+	protected abstract LBool do_synthesis() throws SMTLIBException, TermException;
+
 	/**
 	 * Tries to simplify a satisfying assignment by assigning zeros to
 	 * variables. Gets stuck in local optima.
 	 * 
 	 * The procedure works according to this principle:
+	 * 
 	 * <pre>
 	 * random.shuffle(variables)
 	 * for v in variables:
@@ -159,15 +162,16 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 *         set v to 0
 	 * </pre>
 	 * 
-	 * @param variables the list of variables that can be set to 0
+	 * @param variables
+	 *            the list of variables that can be set to 0
 	 * @return the number of pops required on m_script
 	 */
 	@Deprecated
 	protected int simplifyAssignment(ArrayList<Term> variables) {
 		// Shuffle the variable list for better effect
-		Random rnd =  new Random(s_randomSeed);
+		Random rnd = new Random(s_randomSeed);
 		Collections.shuffle(variables, rnd);
-		
+
 		int pops = 0;
 		int checkSat_calls = 0;
 		for (int i = 0; i < variables.size(); ++i) {
@@ -188,30 +192,32 @@ public abstract class ArgumentSynthesizer implements Closeable {
 				pops += 1;
 			}
 		}
-		s_Logger.info("Simplification made " + checkSat_calls
-				+ " calls to the SMT solver.");
+		mLogger.info("Simplification made " + checkSat_calls + " calls to the SMT solver.");
 		return pops;
 	}
-	
+
 	/**
 	 * Tries to simplify a satisfying assignment by assigning zeros to
 	 * variables. Gets stuck in local optima.
 	 * 
 	 * This is a more efficient version
 	 * 
-	 * @param variables the list of variables that can be set to 0
+	 * @param variables
+	 *            the list of variables that can be set to 0
 	 * @return an assignment with (hopefully) many zeros
-	 * @throws TermException if model extraction fails
+	 * @throws TermException
+	 *             if model extraction fails
 	 */
-	protected Map<Term, Rational> getSimplifiedAssignment(
-			ArrayList<Term> variables) throws TermException {
-		Random rnd =  new Random(s_randomSeed);
+	protected Map<Term, Rational> getSimplifiedAssignment(ArrayList<Term> variables) throws TermException {
+		Random rnd = new Random(s_randomSeed);
 		Term zero = m_script.numeral("0");
 		Map<Term, Rational> val = getValuation(variables);
-		
-		Set<Term> zero_vars = new HashSet<Term>(); // set of variables fixed to 0
-		Set<Term> not_zero_vars = new HashSet<Term>(variables); // other variables
-		
+
+		Set<Term> zero_vars = new HashSet<Term>(); // set of variables fixed to
+													// 0
+		Set<Term> not_zero_vars = new HashSet<Term>(variables); // other
+																// variables
+
 		int checkSat_calls = 0;
 		boolean unsat = false;
 		while (true) {
@@ -232,7 +238,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 				List<Term> vars = new ArrayList<Term>(not_zero_vars);
 				// Shuffle the variable list for better effect
 				Collections.shuffle(vars, rnd);
-				
+
 				Term[] disj = new Term[s_num_of_simultaneous_simplification_tests];
 				for (int j = 0; j < s_num_of_simultaneous_simplification_tests; ++j) {
 					disj[j] = m_script.term("=", vars.get(j), zero);
@@ -253,44 +259,42 @@ public abstract class ArgumentSynthesizer implements Closeable {
 			}
 			m_script.pop(1);
 		}
-		
+
 		// Add zero variables to the valuation
 		for (Term var : zero_vars) {
 			val.put(var, Rational.ZERO);
 		}
-		
+
 		// Send stats to the logger
-		s_Logger.info("Simplification made " + checkSat_calls
-				+ " calls to the SMT solver.");
+		mLogger.info("Simplification made " + checkSat_calls + " calls to the SMT solver.");
 		int num_zero_vars = 0;
 		for (Map.Entry<Term, Rational> entry : val.entrySet()) {
 			if (entry.getValue().equals(Rational.ZERO)) {
 				++num_zero_vars;
 			}
 		}
-		s_Logger.info("Setting " + num_zero_vars + " variables to zero.");
-		
+		mLogger.info("Setting " + num_zero_vars + " variables to zero.");
+
 		return val;
 	}
-	
-	
-	
+
 	/**
 	 * Define a new constant
-	 * @param name name of the new constant
-	 * @param sort the sort of the variable
+	 * 
+	 * @param name
+	 *            name of the new constant
+	 * @param sort
+	 *            the sort of the variable
 	 * @return the new variable as a term
-	 * @throws SMTLIBException if something goes wrong, e.g. the name is
-	 *          already defined
+	 * @throws SMTLIBException
+	 *             if something goes wrong, e.g. the name is already defined
 	 */
-	public Term newConstant(String name, String sortname)
-			throws SMTLIBException {
+	public Term newConstant(String name, String sortname) throws SMTLIBException {
 		return SMTSolver.newConstant(m_script, name, sortname);
 	}
-	
+
 	/**
-	 * Convert a BigDecimal into a Rational.
-	 * Stolen from Jochen's code
+	 * Convert a BigDecimal into a Rational. Stolen from Jochen's code
 	 * de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ConvertFormula.
 	 */
 	private static Rational decimalToRational(BigDecimal d) {
@@ -305,15 +309,16 @@ public abstract class ArgumentSynthesizer implements Closeable {
 		}
 		return rat;
 	}
-	
+
 	/**
-	 * Convert a constant term to Rational
-	 * Extracts the value of the number from the term
-	 * @param ct constant term
+	 * Convert a constant term to Rational Extracts the value of the number from
+	 * the term
+	 * 
+	 * @param ct
+	 *            constant term
 	 * @return rational from the value of ct
 	 */
-	static Rational convertCT(ConstantTerm ct)
-			throws TermException {
+	static Rational convertCT(ConstantTerm ct) throws TermException {
 		if (ct.getSort().getName().equals("Rational")) {
 			return (Rational) ct.getValue();
 		} else if (ct.getSort().getName().equals("Real")) {
@@ -323,44 +328,40 @@ public abstract class ArgumentSynthesizer implements Closeable {
 			if (ct.getValue() instanceof Rational) {
 				return (Rational) ct.getValue();
 			} else {
-				Rational r = Rational.valueOf((BigInteger) ct.getValue(),
-					BigInteger.ONE);
+				Rational r = Rational.valueOf((BigInteger) ct.getValue(), BigInteger.ONE);
 				return r;
 			}
 		} else
-			throw new TermException(
-					"Trying to convert a ConstantTerm of unknown sort.", ct);
+			throw new TermException("Trying to convert a ConstantTerm of unknown sort.", ct);
 	}
-	
+
 	/**
 	 * Convert a constant term retrieved from a model valuation to a Rational
-	 * @param t a term containing only +, -, *, / and numerals
+	 * 
+	 * @param t
+	 *            a term containing only +, -, *, / and numerals
 	 * @return the rational represented by the term
-	 * @throws TermException if an error occurred while parsing the term
+	 * @throws TermException
+	 *             if an error occurred while parsing the term
 	 */
 	protected static Rational const2Rational(Term t) throws TermException {
 		if (t instanceof ApplicationTerm) {
 			ApplicationTerm appt = (ApplicationTerm) t;
 			if (appt.getFunction().getName().equals("+")) {
-				return const2Rational(appt.getParameters()[0]).add(
-						const2Rational(appt.getParameters()[1]));
+				return const2Rational(appt.getParameters()[0]).add(const2Rational(appt.getParameters()[1]));
 			}
 			if (appt.getFunction().getName().equals("-")) {
 				if (appt.getParameters().length == 1) {
-					return const2Rational(appt.getParameters()[0]).mul(
-							Rational.MONE);
+					return const2Rational(appt.getParameters()[0]).mul(Rational.MONE);
 				} else {
-					return const2Rational(appt.getParameters()[0]).sub(
-							const2Rational(appt.getParameters()[1]));
+					return const2Rational(appt.getParameters()[0]).sub(const2Rational(appt.getParameters()[1]));
 				}
 			}
 			if (appt.getFunction().getName().equals("*")) {
-				return const2Rational(appt.getParameters()[0]).mul(
-						const2Rational(appt.getParameters()[1]));
+				return const2Rational(appt.getParameters()[0]).mul(const2Rational(appt.getParameters()[1]));
 			}
 			if (appt.getFunction().getName().equals("/")) {
-				return const2Rational(appt.getParameters()[0]).div(
-						const2Rational(appt.getParameters()[1]));
+				return const2Rational(appt.getParameters()[0]).div(const2Rational(appt.getParameters()[1]));
 			}
 		}
 		if (t instanceof ConstantTerm) {
@@ -387,17 +388,19 @@ public abstract class ArgumentSynthesizer implements Closeable {
 		}
 		throw new TermException("Unknown term structure", t);
 	}
-	
+
 	/**
 	 * Extract a valuation from a script and convert ConstantTerms into
 	 * Rationals
-	 * @param vars a collection of variables
+	 * 
+	 * @param vars
+	 *            a collection of variables
 	 * @return a valuation that assigns a Rational to every variable
-	 * @throws TermException if valuation generation or conversion fails
+	 * @throws TermException
+	 *             if valuation generation or conversion fails
 	 */
-	protected Map<Term, Rational> getValuation(Collection<Term> vars)
-			throws TermException {
-//		assert m_script.checkSat() == LBool.SAT;
+	protected Map<Term, Rational> getValuation(Collection<Term> vars) throws TermException {
+		// assert m_script.checkSat() == LBool.SAT;
 		Map<Term, Term> val = m_script.getValue(vars.toArray(new Term[0]));
 		Map<Term, Rational> result = new LinkedHashMap<Term, Rational>();
 		for (Map.Entry<Term, Term> entry : val.entrySet()) {
@@ -405,7 +408,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Perform cleanup actions
 	 */
@@ -415,7 +418,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 			m_closed = true;
 		}
 	}
-	
+
 	protected void finalize() {
 		// Finalize methods are discouraged in Java.
 		// Always call close() as exported by the Closable interface!

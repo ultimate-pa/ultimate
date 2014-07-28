@@ -24,8 +24,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IN
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IPreprocessorHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ISideEffectHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
@@ -50,8 +50,7 @@ import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
  */
 public abstract class Dispatcher {
 	
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
-			Activator.s_PLUGIN_ID);
+	protected final Logger mLogger;
 	/**
 	 * The side effect handler.
 	 */
@@ -88,9 +87,13 @@ public abstract class Dispatcher {
 	 * Translation from Boogie to C for traces and expressions.
 	 */
 	protected final CACSL2BoogieBacktranslator backtranslator;
+	protected final IUltimateServiceProvider mServices;
 
-	public Dispatcher(CACSL2BoogieBacktranslator backtranslator) {
+	public Dispatcher(CACSL2BoogieBacktranslator backtranslator, IUltimateServiceProvider services, Logger logger) {
 		this.backtranslator = backtranslator;
+		mLogger = logger;
+		mServices = services;
+		
 	}
 
 	/**
@@ -207,13 +210,12 @@ public abstract class Dispatcher {
 	 * @param msg
 	 *            description.
 	 */
-	public static void syntaxError(ILocation loc, String msg) {
+	public void syntaxError(ILocation loc, String msg) {
 		SyntaxErrorResult result = 
 				new SyntaxErrorResult(Activator.s_PLUGIN_NAME, loc, msg);
-		s_Logger.warn(msg);
-		UltimateServices us = UltimateServices.getInstance();
-		us.reportResult(Activator.s_PLUGIN_ID, result);
-		us.cancelToolchain();
+		mLogger.warn(msg);
+		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
+		mServices.getProgressMonitorService().cancelToolchain();
 	}
 	
 	/**
@@ -226,13 +228,12 @@ public abstract class Dispatcher {
 	 * @param msg
 	 *            description.
 	 */
-	public static void unsupportedSyntax(ILocation loc, String msg) {
+	public void unsupportedSyntax(ILocation loc, String msg) {
 		UnsupportedSyntaxResult<IElement> result = 
 				new UnsupportedSyntaxResult<IElement>(Activator.s_PLUGIN_NAME, loc, msg);
-		s_Logger.warn(msg);
-		UltimateServices us = UltimateServices.getInstance();
-		us.reportResult(Activator.s_PLUGIN_ID, result);
-		us.cancelToolchain();
+		mLogger.warn(msg);
+		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
+		mServices.getProgressMonitorService().cancelToolchain();
 	}
 	
 	
@@ -245,19 +246,18 @@ public abstract class Dispatcher {
 	 * @param longDesc
 	 *            description.
 	 */
-	public static void warn(ILocation loc, String longDescription) {
+	public void warn(ILocation loc, String longDescription) {
 		UltimatePreferenceStore prefs = new UltimatePreferenceStore(
 				Activator.s_PLUGIN_ID);
 		boolean reportUnsoundnessWarning = prefs.getBoolean(
 				CACSLPreferenceInitializer.LABEL_REPORT_UNSOUNDNESS_WARNING);
 		if (reportUnsoundnessWarning) {
 			String shortDescription = "Unsoundness Warning";
-			s_Logger.warn(shortDescription + " " + longDescription);
+			mLogger.warn(shortDescription + " " + longDescription);
 			GenericResultAtLocation result = new GenericResultAtLocation(
 					Activator.s_PLUGIN_NAME, loc, shortDescription, 
 					longDescription, Severity.WARNING);
-			UltimateServices us = UltimateServices.getInstance();
-			us.reportResult(Activator.s_PLUGIN_ID, result);
+			mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
 		}
 	}
 

@@ -40,7 +40,7 @@ import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IDeterminizedState;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.util.TreeRelation;
 
 	
@@ -66,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.TreeRelation;
 public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomatonSimple<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
-		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+		NestedWordAutomata.getLogger();
 	
 	/**
 	 * TODO Allow definition of a maximal rank for cases where you know that

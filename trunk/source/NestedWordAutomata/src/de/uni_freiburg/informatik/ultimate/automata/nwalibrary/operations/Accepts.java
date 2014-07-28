@@ -30,13 +30,12 @@ import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
  * Check if word is accepted by automaton.
@@ -60,8 +59,7 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	private final boolean m_InputIsSuffixOfAcceptedWord;
 	private boolean m_IsAccepted;
 
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID);
+	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
 
 	public Accepts(INestedWordAutomaton<LETTER,STATE> automaton, NestedWord<LETTER> word,

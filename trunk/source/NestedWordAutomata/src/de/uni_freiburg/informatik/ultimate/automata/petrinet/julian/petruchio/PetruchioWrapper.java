@@ -33,10 +33,9 @@ import org.apache.log4j.Logger;
 import petruchio.interfaces.petrinet.Place;
 import petruchio.interfaces.petrinet.Transition;
 import petruchio.pn.PetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
  * Wraps the Petri net representation used in Tim Straznys Petruchio.
@@ -51,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 public class PetruchioWrapper<S,C> {
 	
 	private static Logger s_Logger = 
-		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+		NestedWordAutomata.getLogger();
 	
 	
 	

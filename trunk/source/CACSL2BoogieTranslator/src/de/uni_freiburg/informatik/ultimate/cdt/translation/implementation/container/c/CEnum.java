@@ -5,7 +5,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 
 import java.util.Arrays;
 
-import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
 /**

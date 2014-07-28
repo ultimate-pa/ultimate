@@ -21,18 +21,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 

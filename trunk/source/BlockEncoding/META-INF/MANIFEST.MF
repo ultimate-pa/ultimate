@@ -7,7 +7,7 @@ Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.blockend
 Require-Bundle: UltimateCore,
  Library-log4j,
  Library-ModelCheckerUtils,
- RCFGBuilder
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.uni_freiburg.informatik.ultimate.blockencoding.model,

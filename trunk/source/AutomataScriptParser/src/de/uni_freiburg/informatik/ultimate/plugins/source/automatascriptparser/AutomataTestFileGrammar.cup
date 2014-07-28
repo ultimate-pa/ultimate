@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingPro
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import java.util.*;
 import java_cup.runtime.*;
+import org.apache.log4j.Logger;
 
 action code {:
     // Here I store the variables, which occur during parsing a file, and their types.
@@ -34,7 +35,7 @@ action code {:
     }
     
     public void reportError(boolean stopParsing, String message) {
-        AutomataScriptParser.s_Logger.info(message);
+        parser.getLogger().info(message);
         if (stopParsing) {
            throw new RuntimeException(message);
         }
@@ -55,6 +56,7 @@ parser code {:
     private String m_errorMessageLong;
     private String m_errorMessageShort;
     private ILocation m_errorLocation;
+	private Logger mLogger;
     
     public void setFileName(String filename) {
        this.m_fileName = filename;
@@ -83,7 +85,15 @@ parser code {:
     public ILocation getErrorLocation() {
     	return m_errorLocation;
     }
-   
+	
+	public Logger getLogger(){
+		return mLogger;
+	}
+    
+	public Parser(java_cup.runtime.Scanner s, Logger logger) {
+		super(s);
+		mLogger = logger;
+	}
 
     @Override
     public void syntax_error(Symbol cur_token)
@@ -137,7 +147,7 @@ parser code {:
         			m.append(", column "+(info.right+1));		
         	}
         }
-        AutomataScriptParser.s_Logger.debug(m);
+        mLogger.debug(m);
     }
    
     @Override

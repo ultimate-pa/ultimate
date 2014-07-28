@@ -28,12 +28,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.xml.sax.SAXException;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
@@ -78,6 +79,7 @@ public class UltimateInterface extends HttpServlet implements IController {
 	private File mSettingsFile;
 	private File mInputFile;
 	private File mToolchainFile;
+	private IUltimateServiceProvider mCurrentServices;
 
 	/**
 	 * Constructor.
@@ -346,8 +348,7 @@ public class UltimateInterface extends HttpServlet implements IController {
 
 	private void processUltimateResults(JSONObject json) throws JSONException {
 		// get Result from Ultimate
-		UltimateServices us = UltimateServices.getInstance();
-		HashMap<String, List<IResult>> results = us.getResultMap();
+		HashMap<String, List<IResult>> results = mCurrentServices.getResultService().getResults();
 		// add result to the json object
 		ArrayList<JSONObject> resultList = new ArrayList<JSONObject>();
 		for (List<IResult> rList : results.values()) {
@@ -555,7 +556,7 @@ public class UltimateInterface extends HttpServlet implements IController {
 	}
 
 	@Override
-	public int init(ICore core) {
+	public int init(ICore core, ILoggingService loggingService) {
 		if (core == null) {
 			return -1;
 		}
@@ -566,7 +567,8 @@ public class UltimateInterface extends HttpServlet implements IController {
 
 		try {
 			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this,
-					BasicToolchainJob.ChainMode.RUN_TOOLCHAIN, mInputFile, null);
+					BasicToolchainJob.ChainMode.RUN_TOOLCHAIN, mInputFile, null,
+					loggingService.getLogger(getPluginID()));
 			tcj.schedule();
 			tcj.join();
 
@@ -579,9 +581,11 @@ public class UltimateInterface extends HttpServlet implements IController {
 	}
 
 	@Override
-	public Toolchain selectTools(List<ITool> tools) {
+	public ToolchainData selectTools(List<ITool> tools) {
 		try {
-			return new Toolchain(mToolchainFile.getAbsolutePath());
+			ToolchainData tc = new ToolchainData(mToolchainFile.getAbsolutePath());
+			mCurrentServices = tc.getServices();
+			return tc;
 		} catch (FileNotFoundException | JAXBException | SAXException e) {
 			e.printStackTrace();
 			return null;
@@ -589,7 +593,7 @@ public class UltimateInterface extends HttpServlet implements IController {
 	}
 
 	@Override
-	public String getName() {
+	public String getPluginName() {
 		return getPluginID();
 	}
 

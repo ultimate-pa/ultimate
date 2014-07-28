@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
@@ -50,15 +49,14 @@ public abstract class CodeBlock extends RCFGEdge {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID);
+	protected final Logger mLogger;
 
 	private final int m_Serialnumber = s_SerialNumberCounter++;
 	public static int s_SerialNumberCounter = 0;
 
 	protected TransFormula m_TransitionFormula;
 	protected TransFormula m_TransitionFormulaWithBranchEncoders;
-	
+
 	protected RCFGEdgeAnnotation m_Annotation;
 
 	int m_OccurenceInCounterexamples = 0;
@@ -68,8 +66,9 @@ public abstract class CodeBlock extends RCFGEdge {
 	 */
 	private static final int MAX_NAME_LENGTH = 20;
 
-	public CodeBlock(ProgramPoint source, ProgramPoint target) {
+	public CodeBlock(ProgramPoint source, ProgramPoint target, Logger logger) {
 		super(source, target);
+		mLogger = logger;
 		m_Annotation = new RCFGEdgeAnnotation(this) {
 
 			private static final long serialVersionUID = 1L;
@@ -78,7 +77,7 @@ public abstract class CodeBlock extends RCFGEdge {
 			protected Object getFieldValue(String field) {
 				return CodeBlock.this.getFieldValue(field);
 			}
-			
+
 			@Override
 			protected String[] getFieldNames() {
 				return CodeBlock.this.getFieldNames();
@@ -117,7 +116,7 @@ public abstract class CodeBlock extends RCFGEdge {
 			throw new UnsupportedOperationException("Unknown field " + field);
 		}
 	}
-	
+
 	protected abstract String[] getFieldNames();
 
 	public abstract String getPrettyPrintedStatements();
@@ -163,7 +162,8 @@ public abstract class CodeBlock extends RCFGEdge {
 		if (source != null) {
 			setSource(source);
 			source.addOutgoing(this);
-//			s_Logger.debug("Edge " + this + " is successor of Node " + source);
+			// s_Logger.debug("Edge " + this + " is successor of Node " +
+			// source);
 		}
 	}
 
@@ -171,28 +171,27 @@ public abstract class CodeBlock extends RCFGEdge {
 		if (target != null) {
 			setTarget(target);
 			target.addIncoming(this);
-//			s_Logger.debug("Node " + target + " is successor of Edge " + this);
+			// s_Logger.debug("Node " + target + " is successor of Edge " +
+			// this);
 		}
 	}
-	
-	
+
 	/**
 	 * Returns the procedure in that the system was before executing this
-	 * CodeBlock.
-	 * E.g., if CodeBlock is a call, the result is the name of the caller, if 
-	 * CodeBlock is a return the result is the callee (from which we return).
+	 * CodeBlock. E.g., if CodeBlock is a call, the result is the name of the
+	 * caller, if CodeBlock is a return the result is the callee (from which we
+	 * return).
 	 */
 	public String getPreceedingProcedure() {
 		ProgramPoint pp = (ProgramPoint) getSource();
 		return pp.getProcedure();
 	}
-	
-	
+
 	/**
-	 * Returns the procedure in that the system will be after executing the 
-	 * CodeBlock.
-	 * E.g., if CodeBlock is a call, the result is the name of the callee, if 
-	 * CodeBlock is a return the result is the caller (to which we return).
+	 * Returns the procedure in that the system will be after executing the
+	 * CodeBlock. E.g., if CodeBlock is a call, the result is the name of the
+	 * callee, if CodeBlock is a return the result is the caller (to which we
+	 * return).
 	 */
 	public String getSucceedingProcedure() {
 		ProgramPoint pp = (ProgramPoint) getTarget();

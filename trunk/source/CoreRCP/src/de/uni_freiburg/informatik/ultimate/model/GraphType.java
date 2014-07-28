@@ -10,11 +10,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.Assert;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.Constants;
 
 
@@ -44,8 +41,6 @@ public class GraphType implements Serializable{
 	 */
 	private static final long serialVersionUID = -2922069733243189149L;
 
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-	
 	private int m_Size;
 	
 	private String m_Creator;
@@ -269,7 +264,6 @@ public class GraphType implements Serializable{
 			m_IsFinite = false;
 			break;
 		default:
-			s_Logger.error("Received wrong Type, throwing IllegalArgumentException...");
 			throw new UnsupportedOperationException("Graphtype "+m_Type+" not implemented yet");
 		}
 	}

@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.gui.TrayIconNotifier;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
 import de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePageFactory;
 
+import org.apache.log4j.Logger;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ShellAdapter;
@@ -39,14 +40,15 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 	private TrayItem mTrayItem;
 	private Image mTrayImage;
 	private TrayIconNotifier mTrayIconNotifier;
+	private Logger mLogger;
 
-	public ApplicationWorkbenchWindowAdvisor(
-			IWorkbenchWindowConfigurer configurer, ICore icc,
-			TrayIconNotifier notifier, IController controller) {
+	public ApplicationWorkbenchWindowAdvisor(IWorkbenchWindowConfigurer configurer, ICore icc,
+			TrayIconNotifier notifier, IController controller, Logger logger) {
 		super(configurer);
 		mCore = icc;
 		mTrayIconNotifier = notifier;
 		mController = controller;
+		mLogger = logger;
 
 	}
 
@@ -54,9 +56,8 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 		return mTrayItem;
 	}
 
-	public ActionBarAdvisor createActionBarAdvisor(
-			IActionBarConfigurer configurer) {
-		return new ApplicationActionBarAdvisor(configurer, mCore, mController);
+	public ActionBarAdvisor createActionBarAdvisor(IActionBarConfigurer configurer) {
+		return new ApplicationActionBarAdvisor(configurer, mCore, mController, mLogger);
 	}
 
 	public void preWindowOpen() {
@@ -78,7 +79,7 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 		if (initTaskItem(window)) {
 			hookMinimized(window);
 		}
-		
+
 	}
 
 	public void dispose() {
@@ -128,8 +129,7 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 			return false;
 		}
 		mTrayItem = new TrayItem(tray, SWT.NONE);
-		ImageDescriptor id = AbstractUIPlugin.imageDescriptorFromPlugin(
-				GuiController.sPLUGINID, IImageKeys.TRAYICON);
+		ImageDescriptor id = AbstractUIPlugin.imageDescriptorFromPlugin(GuiController.sPLUGINID, IImageKeys.TRAYICON);
 		mTrayImage = id.createImage();
 		mTrayItem.setImage(mTrayImage);
 		mTrayItem.setToolTipText("Ultimate Model Checker");
@@ -141,8 +141,7 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 			public void handleEvent(Event event) {
 				exit.dispose();
 				menu.dispose();
-				getWindowConfigurer().getWorkbenchConfigurer().getWorkbench()
-						.close();
+				getWindowConfigurer().getWorkbenchConfigurer().getWorkbench().close();
 			}
 		});
 		mTrayItem.addListener(SWT.MenuDetect, new Listener() {

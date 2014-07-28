@@ -19,7 +19,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -39,62 +38,60 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
-
 /**
- * CEGAR loop of a trace abstraction. Can be used to check safety and 
- * termination of sequential and concurrent programs.
- * Defines roughly the structure of the CEGAR loop, concrete algorithms are
- * implemented in classes which extend this one.
+ * CEGAR loop of a trace abstraction. Can be used to check safety and
+ * termination of sequential and concurrent programs. Defines roughly the
+ * structure of the CEGAR loop, concrete algorithms are implemented in classes
+ * which extend this one.
  * 
  * @author heizmann@informatik.uni-freiburg.de
- *
+ * 
  */
 public abstract class AbstractCegarLoop {
-	
-	protected final static Logger s_Logger = 
-		UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-	
+
+	protected final Logger mLogger;
+
 	/**
-	 * Result of CEGAR loop iteration <ul>
-	 * <li> SAFE: there is no feasible trace to an error location
-	 * <li> UNSAFE: there is a feasible trace to an error location 
-	 * (the underlying program has at least one execution which violates its 
+	 * Result of CEGAR loop iteration
+	 * <ul>
+	 * <li>SAFE: there is no feasible trace to an error location
+	 * <li>UNSAFE: there is a feasible trace to an error location (the
+	 * underlying program has at least one execution which violates its
 	 * specification)
-	 * <li> UNKNOWN: we found a trace for which we could not decide feasibility
-	 * or we found an infeasible trace but were not able to exclude it in 
+	 * <li>UNKNOWN: we found a trace for which we could not decide feasibility
+	 * or we found an infeasible trace but were not able to exclude it in
 	 * abstraction refinement.
-	 * <li> TIMEOUT: 
+	 * <li>TIMEOUT:
 	 */
-	public enum Result { SAFE, UNSAFE, TIMEOUT , UNKNOWN }
-	
+	public enum Result {
+		SAFE, UNSAFE, TIMEOUT, UNKNOWN
+	}
+
 	/**
 	 * Unique m_Name of this CEGAR loop to distinguish this instance from other
-	 * instances in a complex verification task.
-	 * Important only for debugging and debugging output written to files.
+	 * instances in a complex verification task. Important only for debugging
+	 * and debugging output written to files.
 	 */
 	private final String m_Name;
 
-	
 	/**
-	 * Node of a recursive control flow graph which stores additional 
+	 * Node of a recursive control flow graph which stores additional
 	 * information about the program.
 	 */
 	protected final RootNode m_RootNode;
-	
-	
+
 	/**
-	 * Intermediate layer to encapsulate communication with SMT solvers. 
+	 * Intermediate layer to encapsulate communication with SMT solvers.
 	 */
 	protected final SmtManager m_SmtManager;
-	
-	
+
 	protected final ModifiableGlobalVariableManager m_ModGlobVarManager;
-	
+
 	/**
 	 * Intermediate layer to encapsulate preferences.
 	 */
 	protected final TAPreferences m_Pref;
-	
+
 	/**
 	 * Set of error location whose reachability is analyzed by this CEGAR loop.
 	 */
@@ -104,65 +101,51 @@ public abstract class AbstractCegarLoop {
 	 * Current Iteration of this CEGAR loop.
 	 */
 	protected int m_Iteration = 0;
-	
-	
+
 	/**
-	 * Accepting run of the abstraction obtained in this iteration. 
+	 * Accepting run of the abstraction obtained in this iteration.
 	 */
 	protected IRun<CodeBlock, IPredicate> m_Counterexample;
-	
-	
+
 	/**
-	 * Abstraction of this iteration. The language of m_Abstraction is a set
-	 * of traces which is <ul>
-	 * <li> a superset of the feasible program traces.
-	 * <li> a subset of the traces which respect the control flow of the
-	 * program.
+	 * Abstraction of this iteration. The language of m_Abstraction is a set of
+	 * traces which is
+	 * <ul>
+	 * <li>a superset of the feasible program traces.
+	 * <li>a subset of the traces which respect the control flow of the program.
 	 */
 	protected IAutomaton<CodeBlock, IPredicate> m_Abstraction;
-	
-	
+
 	/**
 	 * TraceChecker of this iteration.
 	 */
 	protected TraceChecker m_TraceChecker;
-	
 
 	/**
 	 * Interpolant automaton of this iteration.
 	 */
 	protected NestedWordAutomaton<CodeBlock, IPredicate> m_InterpolAutomaton;
-	
-	
+
 	/**
-	 * Program execution that leads to error. 
-	 * Only computed in the last iteration of the CEGAR loop if the program is
-	 * incorrect.
+	 * Program execution that leads to error. Only computed in the last
+	 * iteration of the CEGAR loop if the program is incorrect.
 	 */
 	protected RcfgProgramExecution m_RcfgProgramExecution;
-	
-	
-	
+
 	// used for the collection of statistics
 	public int m_InitialAbstractionSize = 0;
 	public int m_NumberOfErrorLocations = 0;
-	
-	
+
 	// used for debugging only
 	protected IAutomaton<CodeBlock, IPredicate> m_ArtifactAutomaton;
 	protected PrintWriter m_IterationPW;
 	protected final Labeling m_PrintAutomataLabeling = Labeling.TOSTRING;
 
-
 	protected CegarLoopBenchmarkGenerator m_CegarLoopBenchmark;
 
-	
-	
-	
-	public AbstractCegarLoop(String name, RootNode rootNode,
-			SmtManager smtManager,
-			TAPreferences taPrefs,
-			Collection<ProgramPoint> errorLocs) {
+	public AbstractCegarLoop(String name, RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
+			Collection<ProgramPoint> errorLocs, Logger logger) {
+		mLogger = logger;
 		m_ModGlobVarManager = rootNode.getRootAnnot().getModGlobVarManager();
 		this.m_Name = name;
 		this.m_RootNode = rootNode;
@@ -170,113 +153,107 @@ public abstract class AbstractCegarLoop {
 		this.m_Pref = taPrefs;
 		this.m_ErrorLocs = errorLocs;
 	}
-	
-	
 
 	/**
 	 * Construct the automaton m_Abstraction such that the language recognized
-	 * by m_Abstation is a superset of the language of the program.
-	 * The initial abstraction in our implementations will usually be an
-	 * automaton that has the same graph as the program.
-	 * @throws AutomataLibraryException 
+	 * by m_Abstation is a superset of the language of the program. The initial
+	 * abstraction in our implementations will usually be an automaton that has
+	 * the same graph as the program.
+	 * 
+	 * @throws AutomataLibraryException
 	 */
 	protected abstract void getInitialAbstraction() throws OperationCanceledException, AutomataLibraryException;
-	
-	
+
 	/**
-	 * Return true iff the m_Abstraction does not accept any trace. 
-	 * @throws OperationCanceledException 
+	 * Return true iff the m_Abstraction does not accept any trace.
+	 * 
+	 * @throws OperationCanceledException
 	 */
 	protected abstract boolean isAbstractionCorrect() throws OperationCanceledException;
-	
-	
+
 	/**
 	 * Determine if the trace of m_Counterexample is a feasible sequence of
-	 * CodeBlocks. Return <ul>
-	 * <li> SAT if the trace is feasible
-	 * <li> UNSAT if the trace is infeasible
-	 * <li> UNKNOWN if the algorithm was not able to determine the feasibility.
-	 * </ul>    
+	 * CodeBlocks. Return
+	 * <ul>
+	 * <li>SAT if the trace is feasible
+	 * <li>UNSAT if the trace is infeasible
+	 * <li>UNKNOWN if the algorithm was not able to determine the feasibility.
+	 * </ul>
 	 */
 	protected abstract LBool isCounterexampleFeasible();
-	
-	
+
 	/**
-	 * Construct an automaton m_InterpolantAutomaton which <ul>
-	 * <li> accepts the trace of m_Counterexample,
-	 * <li> accepts only infeasible traces.
+	 * Construct an automaton m_InterpolantAutomaton which
+	 * <ul>
+	 * <li>accepts the trace of m_Counterexample,
+	 * <li>accepts only infeasible traces.
 	 * </ul>
-	 * @throws OperationCanceledException 
+	 * 
+	 * @throws OperationCanceledException
 	 */
 	protected abstract void constructInterpolantAutomaton() throws OperationCanceledException;
-	
-	
+
 	/**
-	 * Construct a new automaton m_Abstraction such that <ul> 
-	 * <li> the language of the new m_Abstraction is (not necessary strictly)
-	 * smaller than the language of the old m_Abstraction
-	 * <li> the new m_Abstraction accepts all feasible traces of the old 
-	 * m_Abstraction  (only infeasible traces are removed)
+	 * Construct a new automaton m_Abstraction such that
 	 * <ul>
+	 * <li>the language of the new m_Abstraction is (not necessary strictly)
+	 * smaller than the language of the old m_Abstraction
+	 * <li>the new m_Abstraction accepts all feasible traces of the old
+	 * m_Abstraction (only infeasible traces are removed)
+	 * <ul>
+	 * 
 	 * @return true iff the trace of m_Counterexample (which was accepted by the
-	 * old m_Abstraction) is not accepted by the m_Abstraction.
-	 * @throws AutomataLibraryException 
+	 *         old m_Abstraction) is not accepted by the m_Abstraction.
+	 * @throws AutomataLibraryException
 	 */
 	protected abstract boolean refineAbstraction() throws OperationCanceledException, AutomataLibraryException;
-	
-	
+
 	/**
-	 * Add Hoare annotation to the control flow graph. Use the information 
-	 * computed so far annotate the ProgramPoints of the control flow graph
-	 * with invariants.
+	 * Add Hoare annotation to the control flow graph. Use the information
+	 * computed so far annotate the ProgramPoints of the control flow graph with
+	 * invariants.
 	 */
 	protected abstract void computeCFGHoareAnnotation();
-	
-	
-	
+
 	/**
-	 * Return the Artifact whose computation was requested. This artifact
-	 * can be either the control flow graph, an abstraction, an interpolant
-	 * automaton, or a negated interpolant automaton. The artifact is only used
-	 * for debugging.
+	 * Return the Artifact whose computation was requested. This artifact can be
+	 * either the control flow graph, an abstraction, an interpolant automaton,
+	 * or a negated interpolant automaton. The artifact is only used for
+	 * debugging.
+	 * 
 	 * @return The root node of the artifact after it was transformed to an
-	 * ULTIMATE model.
+	 *         ULTIMATE model.
 	 */
 	public abstract IElement getArtifact();
 
-
-	
 	public int getIteration() {
 		return m_Iteration;
 	}
-	
+
 	public RcfgProgramExecution getRcfgProgramExecution() {
 		return m_RcfgProgramExecution;
 	}
-	
+
 	public SmtManager getSmtManager() {
 		return m_SmtManager;
 	}
-	
+
 	public String errorLocs() {
 		return m_ErrorLocs.toString();
 	}
-	
-	
-	
-	public final Result iterate() {
-		s_Logger.info("Interprodecural is " + m_Pref.interprocedural());		
-		s_Logger.info("Hoare is " + m_Pref.computeHoareAnnotation());
-		s_Logger.info("Compute interpolants for " + m_Pref.interpolation());
-		s_Logger.info("Backedges is " + m_Pref.interpolantAutomaton());
-		s_Logger.info("Determinization is " + m_Pref.determinization());
-		s_Logger.info("Difference is " + m_Pref.differenceSenwa());
-		s_Logger.info("Minimize is " + m_Pref.minimize());
 
-		
+	public final Result iterate() {
+		mLogger.info("Interprodecural is " + m_Pref.interprocedural());
+		mLogger.info("Hoare is " + m_Pref.computeHoareAnnotation());
+		mLogger.info("Compute interpolants for " + m_Pref.interpolation());
+		mLogger.info("Backedges is " + m_Pref.interpolantAutomaton());
+		mLogger.info("Determinization is " + m_Pref.determinization());
+		mLogger.info("Difference is " + m_Pref.differenceSenwa());
+		mLogger.info("Minimize is " + m_Pref.minimize());
+
 		m_Iteration = 0;
-		s_Logger.info("======== Iteration " + m_Iteration + "==of CEGAR loop == " + m_Name + "========");
-		
+		mLogger.info("======== Iteration " + m_Iteration + "==of CEGAR loop == " + m_Name + "========");
+
 		// intialize dump of debugging output to files if necessary
 		if (m_Pref.dumpAutomata()) {
 			dumpInitinalize();
@@ -284,51 +261,43 @@ public abstract class AbstractCegarLoop {
 		try {
 			getInitialAbstraction();
 		} catch (OperationCanceledException e1) {
-			s_Logger.warn("Verification cancelled");
+			mLogger.warn("Verification cancelled");
 			return Result.TIMEOUT;
 		} catch (AutomataLibraryException e) {
 			throw new AssertionError(e.getMessage());
 		}
-		
-		
-		if (m_Iteration <= m_Pref.watchIteration() && 
-				(m_Pref.artifact() == Artifact.ABSTRACTION || m_Pref.artifact() == Artifact.RCFG)) 
-		{
+
+		if (m_Iteration <= m_Pref.watchIteration()
+				&& (m_Pref.artifact() == Artifact.ABSTRACTION || m_Pref.artifact() == Artifact.RCFG)) {
 			m_ArtifactAutomaton = m_Abstraction;
 		}
 		if (m_Pref.dumpAutomata()) {
-			String filename = m_Name+"Abstraction"+m_Iteration;
+			String filename = m_Name + "Abstraction" + m_Iteration;
 			writeAutomatonToFile(m_Abstraction, filename);
 		}
 		m_InitialAbstractionSize = m_Abstraction.size();
 		m_CegarLoopBenchmark.reportAbstractionSize(m_Abstraction.size(), m_Iteration);
 		m_NumberOfErrorLocations = m_ErrorLocs.size();
-		
-		
-		
+
 		boolean initalAbstractionCorrect;
 		try {
 			initalAbstractionCorrect = isAbstractionCorrect();
 		} catch (OperationCanceledException e1) {
-			s_Logger.warn("Verification cancelled");
+			mLogger.warn("Verification cancelled");
 			return Result.TIMEOUT;
 		}
 		if (initalAbstractionCorrect) {
 			return Result.SAFE;
 		}
-		
-		
-		
-		for (m_Iteration=1; m_Iteration<=m_Pref.maxIterations(); m_Iteration++){
-			s_Logger.info("====== " + errorLocs() + "== Iteration " + m_Iteration + "============");
+
+		for (m_Iteration = 1; m_Iteration <= m_Pref.maxIterations(); m_Iteration++) {
+			mLogger.info("====== " + errorLocs() + "== Iteration " + m_Iteration + "============");
 			m_SmtManager.setIteration(m_Iteration);
 			m_CegarLoopBenchmark.announceNextIteration();
 			if (m_Pref.dumpAutomata()) {
 				dumpInitinalize();
 			}
 
-			
-			
 			LBool isCounterexampleFeasible = isCounterexampleFeasible();
 			if (isCounterexampleFeasible == Script.LBool.SAT) {
 				return Result.UNSAFE;
@@ -336,68 +305,61 @@ public abstract class AbstractCegarLoop {
 			if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
 				return Result.UNKNOWN;
 			}
-			
 
-			
 			try {
 				constructInterpolantAutomaton();
 			} catch (OperationCanceledException e1) {
-				s_Logger.warn("Verification cancelled");
+				mLogger.warn("Verification cancelled");
 				return Result.TIMEOUT;
-			} 			
-			
-			s_Logger.info("Interpolant Automaton has "+m_InterpolAutomaton.getStates().size() +" states");
-			
+			}
+
+			mLogger.info("Interpolant Automaton has " + m_InterpolAutomaton.getStates().size() + " states");
+
 			if (m_Iteration <= m_Pref.watchIteration() && m_Pref.artifact() == Artifact.INTERPOLANT_AUTOMATON) {
 				m_ArtifactAutomaton = m_InterpolAutomaton;
 			}
 			if (m_Pref.dumpAutomata()) {
-				writeAutomatonToFile(m_InterpolAutomaton, "InterpolantAutomaton_Iteration"+m_Iteration);
+				writeAutomatonToFile(m_InterpolAutomaton, "InterpolantAutomaton_Iteration" + m_Iteration);
 			}
-			
-			
-			
-			
+
 			try {
 				boolean progress = refineAbstraction();
 				if (!progress) {
-					s_Logger.warn("No progress! Counterexample is still accepted by refined abstraction.");
+					mLogger.warn("No progress! Counterexample is still accepted by refined abstraction.");
 					throw new AssertionError("No progress! Counterexample is still accepted by refined abstraction.");
-//					return Result.UNKNOWN;
+					// return Result.UNKNOWN;
 				}
 			} catch (OperationCanceledException e) {
-				s_Logger.warn("Verification cancelled");
+				mLogger.warn("Verification cancelled");
 				return Result.TIMEOUT;
 			} catch (AutomataLibraryException e) {
 				throw new AssertionError("Automata Operation failed" + e.getMessage());
 			}
-			
-			s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
-			s_Logger.info("Interpolant automaton has " + m_InterpolAutomaton.sizeInformation());
-			
+
+			mLogger.info("Abstraction has " + m_Abstraction.sizeInformation());
+			mLogger.info("Interpolant automaton has " + m_InterpolAutomaton.sizeInformation());
 
 			if (m_Pref.computeHoareAnnotation()) {
-				assert (new InductivityCheck((INestedWordAutomaton) m_Abstraction, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false, true)).getResult() : "Not inductive";
+				assert (new InductivityCheck((INestedWordAutomaton) m_Abstraction, new EdgeChecker(m_SmtManager,
+						m_ModGlobVarManager), false, true, mLogger)).getResult() : "Not inductive";
 			}
 
 			if (m_Iteration <= m_Pref.watchIteration() && m_Pref.artifact() == Artifact.ABSTRACTION) {
 				m_ArtifactAutomaton = m_Abstraction;
 			}
-			
+
 			if (m_Pref.dumpAutomata()) {
-				String filename = "Abstraction"+m_Iteration;
+				String filename = "Abstraction" + m_Iteration;
 				writeAutomatonToFile(m_Abstraction, filename);
 			}
-			
+
 			m_CegarLoopBenchmark.reportAbstractionSize(m_Abstraction.size(), m_Iteration);
-			
-			
-			
+
 			boolean isAbstractionCorrect;
 			try {
 				isAbstractionCorrect = isAbstractionCorrect();
 			} catch (OperationCanceledException e) {
-				s_Logger.warn("Verification cancelled");
+				mLogger.warn("Verification cancelled");
 				return Result.TIMEOUT;
 			}
 			if (isAbstractionCorrect) {
@@ -406,50 +368,27 @@ public abstract class AbstractCegarLoop {
 		}
 		return Result.TIMEOUT;
 	}
-	
 
-
-
-	
-	
-	
-	protected void writeAutomatonToFile(
-			IAutomaton<CodeBlock, IPredicate> automaton, String filename) {
-		new AtsDefinitionPrinter<String,String>(filename, m_Pref.dumpPath()+"/"+filename, m_PrintAutomataLabeling,
-													"",automaton);
+	protected void writeAutomatonToFile(IAutomaton<CodeBlock, IPredicate> automaton, String filename) {
+		new AtsDefinitionPrinter<String, String>(filename, m_Pref.dumpPath() + "/" + filename, m_PrintAutomataLabeling,
+				"", automaton);
 	}
-	
-	
-	
-	
-	
-	
 
-
-	
-	
-	
-	
-	
-	
-	
 	private void dumpInitinalize() {
-		File file = 
-			new File(m_Pref.dumpPath() + "/" + m_Name + "_iteration" + m_Iteration + ".txt");
+		File file = new File(m_Pref.dumpPath() + "/" + m_Name + "_iteration" + m_Iteration + ".txt");
 		FileWriter fileWriter;
 		try {
 			fileWriter = new FileWriter(file);
 			m_IterationPW = new PrintWriter(fileWriter);
 		} catch (IOException e) {
 			e.printStackTrace();
-		} 
+		}
 	}
 
 	/*
 	 * TODO unify sequential and concurrent
 	 */
-	protected static void dumpNestedRun(IRun<CodeBlock,IPredicate> run,
-			PrintWriter pW) {
+	protected static void dumpNestedRun(IRun<CodeBlock, IPredicate> run, PrintWriter pW,Logger logger) {
 		NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(run.getWord());
 		ArrayList<IPredicate> stateSequence = null;
 		if (run instanceof NestedRun) {
@@ -460,23 +399,21 @@ public abstract class AbstractCegarLoop {
 		try {
 			line = "===============Run of potential Counterexample==========";
 			pW.println(line);
-			for (int i=0; i<counterexample.length(); i++) {
+			for (int i = 0; i < counterexample.length(); i++) {
 
-				if (run instanceof NestedRun) { 
+				if (run instanceof NestedRun) {
 					line = addIndentation(indentation,
-							"Location"+i+": " +
-							((ISLPredicate) stateSequence.get(i)).getProgramPoint());
-					s_Logger.debug(line);
+							"Location" + i + ": " + ((ISLPredicate) stateSequence.get(i)).getProgramPoint());
+					logger.debug(line);
 					pW.println(line);
 				}
-				
+
 				if (counterexample.isCallPosition(i)) {
 					indentation++;
 				}
-				line = addIndentation(indentation,
-						"Statement"+i+": "+
-						counterexample.getSymbolAt(i).getPrettyPrintedStatements());
-				s_Logger.debug(line);
+				line = addIndentation(indentation, "Statement" + i + ": "
+						+ counterexample.getSymbolAt(i).getPrettyPrintedStatements());
+				logger.debug(line);
 				pW.println(line);
 				if (counterexample.isReturnPosition(i)) {
 					indentation--;
@@ -489,17 +426,13 @@ public abstract class AbstractCegarLoop {
 			pW.flush();
 		}
 	}
-	
-	
-	
+
 	private void dumpSsa(Term[] ssa) {
 		FormulaUnLet unflet = new FormulaUnLet();
 		try {
-			m_IterationPW.println(
-					"===============SSA of potential Counterexample==========");
-			for (int i=0; i<ssa.length; i++) {
-				m_IterationPW.println(
-						"UnFletedTerm" + i + ": " +	unflet.unlet(ssa[i]));
+			m_IterationPW.println("===============SSA of potential Counterexample==========");
+			for (int i = 0; i < ssa.length; i++) {
+				m_IterationPW.println("UnFletedTerm" + i + ": " + unflet.unlet(ssa[i]));
 			}
 			m_IterationPW.println("");
 			m_IterationPW.println("");
@@ -508,14 +441,11 @@ public abstract class AbstractCegarLoop {
 		}
 	}
 
-	
 	private void dumpStateFormulas(IPredicate[] interpolants) {
 		try {
-			m_IterationPW.println(
-			"===============Interpolated StateFormulas==========");
-			for (int i=0; i<interpolants.length; i++) {
-				m_IterationPW.println(
-						"Interpolant" + i + ": " +	interpolants[i]);
+			m_IterationPW.println("===============Interpolated StateFormulas==========");
+			for (int i = 0; i < interpolants.length; i++) {
+				m_IterationPW.println("Interpolant" + i + ": " + interpolants[i]);
 			}
 			m_IterationPW.println("");
 			m_IterationPW.println("");
@@ -523,32 +453,19 @@ public abstract class AbstractCegarLoop {
 			m_IterationPW.flush();
 		}
 	}
-	
-	
 
-	
-
-	
 	public static String addIndentation(int indentation, String s) {
 		StringBuilder sb = new StringBuilder("");
-		for (int i=0; i<indentation; i++) {
+		for (int i = 0; i < indentation; i++) {
 			sb.append("    ");
 		}
 		sb.append(s);
 		return sb.toString();
 	}
 
-	
-
-	
-	static void dumpBackedges(ProgramPoint repLocName, int position,
-			IPredicate state,
-			Collection<IPredicate> linPredStates,
-			CodeBlock transition,
-			IPredicate succState,
-			IPredicate sf1,IPredicate sf2,
-			LBool result,
-			int iteration, int satProblem, PrintWriter iterationPW) {
+	static void dumpBackedges(ProgramPoint repLocName, int position, IPredicate state,
+			Collection<IPredicate> linPredStates, CodeBlock transition, IPredicate succState, IPredicate sf1,
+			IPredicate sf2, LBool result, int iteration, int satProblem, PrintWriter iterationPW) {
 		try {
 			iterationPW.println(repLocName + " occured once again at position " + position + ". Added backedge");
 			iterationPW.println("from:   " + state);
@@ -559,11 +476,9 @@ public abstract class AbstractCegarLoop {
 			}
 			if (satProblem == -1) {
 				iterationPW.println("because ");
-			}
-			else {
-				assert ( result == Script.LBool.UNSAT);
-				iterationPW.println("because Iteration" + 
-					iteration+"_SatProblem" + satProblem+" says:");
+			} else {
+				assert (result == Script.LBool.UNSAT);
+				iterationPW.println("because Iteration" + iteration + "_SatProblem" + satProblem + " says:");
 			}
 			iterationPW.println("  " + sf1);
 			iterationPW.println("implies");
@@ -573,8 +488,5 @@ public abstract class AbstractCegarLoop {
 			iterationPW.flush();
 		}
 	}
-	
-	
-	
-	
+
 }

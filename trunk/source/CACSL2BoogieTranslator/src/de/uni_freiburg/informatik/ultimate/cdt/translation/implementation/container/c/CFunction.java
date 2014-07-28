@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
-import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
-
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 
 public class CFunction extends CType {

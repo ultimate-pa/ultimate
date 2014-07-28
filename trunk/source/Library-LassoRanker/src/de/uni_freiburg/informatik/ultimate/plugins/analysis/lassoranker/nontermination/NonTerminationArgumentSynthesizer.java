@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -121,14 +123,16 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @param lasso the lasso program
 	 * @param preferences lasso ranker preferences
 	 * @param settings (local) settings for termination analysis
+	 * @param services 
+	 * @param storage 
 	 */
 	public NonTerminationArgumentSynthesizer(Lasso lasso,
 			LassoRankerPreferences preferences,
-			NonTerminationAnalysisSettings settings) {
-		super(lasso, preferences, "nonterminationTemplate");
+			NonTerminationAnalysisSettings settings, IUltimateServiceProvider services, IToolchainStorage storage) {
+		super(lasso, preferences, "nonterminationTemplate", services, storage);
 		
 		m_settings = new NonTerminationAnalysisSettings(settings); // defensive copy
-		s_Logger.info("Nontermination Analysis Settings:\n"
+		mLogger.info("Nontermination Analysis Settings:\n"
 				+ settings.toString());
 		
 		m_integer_mode = (lasso.getStem().containsIntegers())
@@ -142,11 +146,11 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			}
 			m_sort = m_script.sort("Real");
 		} else {
-			s_Logger.info("Using integer mode.");
+			mLogger.info("Using integer mode.");
 			if (m_settings.analysis.isLinear()) {
 				m_analysis_type = m_settings.analysis;
 			} else {
-				s_Logger.info("Nontermination analysis is set to NONLINEAR, " +
+				mLogger.info("Nontermination analysis is set to NONLINEAR, " +
 						"but we have an integer program. " +
 						"Falling back to linear analysis with guessing.");
 				m_analysis_type = AnalysisType.Linear_with_guesses;
@@ -175,7 +179,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		
 		Term constraints = generateConstraints(vars_init, vars_honda, vars_ray,
 				lambda);
-		s_Logger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(constraints)));
+		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(constraints)));
 		m_script.assertTerm(constraints);
 		
 		// Check for satisfiability
@@ -295,9 +299,9 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			t3 = m_script.term("true");
 		}
 
-		s_Logger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t1)));
-		s_Logger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t2)));
-		s_Logger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t3)));
+		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t1)));
+		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t2)));
+		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t3)));
 		return m_script.term("and", t1, t2, t3);
 	}
 	

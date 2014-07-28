@@ -27,8 +27,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTrans
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
 /**
@@ -57,8 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  */
 public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID);
+	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
 	private final INestedWordAutomaton<LETTER, STATE> m_Operand;
 	private NestedRun<LETTER,STATE> m_Handle;

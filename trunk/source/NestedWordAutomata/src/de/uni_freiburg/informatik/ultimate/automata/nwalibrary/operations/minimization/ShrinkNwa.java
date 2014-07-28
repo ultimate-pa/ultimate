@@ -46,6 +46,7 @@ import java.util.PriorityQueue;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -57,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTrans
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
  * TODO list:
@@ -428,7 +428,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			// iterative refinement
 			while (m_workListIntCall.hasNext()) {
 				// cancel if signal is received
-				if (! UltimateServices.getInstance().continueProcessing()) {
+				if (! NestedWordAutomata.getMonitor().continueProcessing()) {
 					throw new OperationCanceledException();
 				}
 				
@@ -446,14 +446,14 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			// iterative refinement
 			outer: while (true) {
 				// cancel if signal is received
-				if (! UltimateServices.getInstance().continueProcessing()) {
+				if (! NestedWordAutomata.getMonitor().continueProcessing()) {
 					throw new OperationCanceledException();
 				}
 				
 				// internals and calls
 				while (m_workListIntCall.hasNext()) {
 					// cancel if signal is received
-					if (! UltimateServices.getInstance().continueProcessing())
+					if (! NestedWordAutomata.getMonitor().continueProcessing())
 							{
 						throw new OperationCanceledException();
 					}

@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionco
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -13,8 +14,8 @@ public class Cfg2Nwa extends CFG2Automaton {
 	private INestedWordAutomatonOldApi<CodeBlock,IPredicate> m_Result;
 
 	public Cfg2Nwa(RootNode rootNode,
-			StateFactory<IPredicate> contentFactory, SmtManager smtManager) {
-		super(rootNode, contentFactory, smtManager);
+			StateFactory<IPredicate> contentFactory, SmtManager smtManager, IUltimateServiceProvider services) {
+		super(rootNode, contentFactory, smtManager, services);
 		
 		constructProcedureAutomata();
 		m_Result = m_Automata.get(0);

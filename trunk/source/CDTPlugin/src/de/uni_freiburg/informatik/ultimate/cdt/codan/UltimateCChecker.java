@@ -35,7 +35,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.codan.extension.AbstractFullAstCh
 import de.uni_freiburg.informatik.ultimate.cdt.preferences.PreferencePage;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.views.resultlist.ResultList;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
@@ -70,6 +71,10 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	 */
 	private HashMap<String, File> mToolchainFiles;
 
+	private IUltimateServiceProvider mServices;
+
+	private static IToolchainStorage sStorage;
+
 	private static CDTController sController;
 
 	/**
@@ -81,7 +86,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		super();
 		mToolchainFiles = new HashMap<String, File>();
 
-		sController = new CDTController();
+		sController = new CDTController(this);
 		sController.startUltimate();
 	}
 
@@ -167,16 +172,16 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	 *            the FileName
 	 */
 	private void reportProblems(String fileName) {
-		Logger log = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+		Logger log = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		// we obtain the results by UltimateServices
-		Set<String> tools = UltimateServices.getInstance().getResultMap().keySet();
+		Set<String> tools = mServices.getResultService().getResults().keySet();
 
 		// we iterate over the key set, each key represents the name
 		// of the tool, which created the results
 		for (String toolID : tools) {
-			List<IResult> resultsOfTool = UltimateServices.getInstance().getResultMap().get(toolID);
+			List<IResult> resultsOfTool = mServices.getResultService().getResults().get(toolID);
 			CDTResultStore.addResults(fileName, toolID, resultsOfTool);
-			if(resultsOfTool == null){
+			if (resultsOfTool == null) {
 				log.debug("No results for " + toolID);
 				continue;
 			}
@@ -201,18 +206,18 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	}
 
 	private void reportProblemWithLocation(IResultWithLocation result, Logger log) {
-		if(result.getLocation() == null){
+		if (result.getLocation() == null) {
 			log.warn("Result type should have location, but has none: " + result.getShortDescription() + " ("
 					+ result.getClass() + ")");
 			return;
 		}
-		
+
 		if (!(result.getLocation() instanceof CACSLLocation)) {
 			log.warn("Result type has location, but no CACSLLocation: " + result.getShortDescription() + " ("
 					+ result.getClass() + ")");
 			return;
 		}
-		
+
 		CACSLLocation loc = (CACSLLocation) result.getLocation();
 		// seems legit, start the reporting
 
@@ -231,11 +236,11 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		} else if (result instanceof SyntaxErrorResult) {
 			reportProblem(CCheckerDescriptor.SYNERR_ID, result, loc);
 		} else if (result instanceof UnsupportedSyntaxResult) {
-			//TODO: Introduce new String in CCheckerDescriptor for 
+			// TODO: Introduce new String in CCheckerDescriptor for
 			// unsupported Syntax?
 			reportProblem(CCheckerDescriptor.SYNERR_ID, result, loc);
 		} else if (result instanceof TypeErrorResult) {
-			//TODO: Introduce new String in CCheckerDescriptor for 
+			// TODO: Introduce new String in CCheckerDescriptor for
 			// type error?
 			reportProblem(CCheckerDescriptor.SYNERR_ID, result, loc);
 		} else if (result instanceof TimeoutResultAtElement) {
@@ -303,5 +308,18 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 
 			mToolchainFiles.put(tName, f);
 		}
+	}
+
+	public void setServices(IUltimateServiceProvider services) {
+		assert services != null;
+		mServices = services;
+	}
+	
+	public void setStorage(IToolchainStorage storage){
+		sStorage = storage;
+	}
+	
+	public static IToolchainStorage getStorage(){
+		return sStorage;
 	}
 }

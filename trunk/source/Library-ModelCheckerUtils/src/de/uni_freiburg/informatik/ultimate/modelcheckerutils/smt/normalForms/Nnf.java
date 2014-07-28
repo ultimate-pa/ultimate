@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -28,15 +29,15 @@ public class Nnf {
 	private final NnfTransformerHelper m_NnfTransformerHelper;
 	private List<List<TermVariable>> m_QuantifiedVariables;
 	
-	public Nnf(Script script) {
+	public Nnf(Script script, IUltimateServiceProvider services) {
 		super();
 		m_Script = script;
-		m_NnfTransformerHelper = getNnfTransformerHelper();
+		m_NnfTransformerHelper = getNnfTransformerHelper(services);
 		
 	}
 	
-	protected NnfTransformerHelper getNnfTransformerHelper() {
-		return new NnfTransformerHelper();
+	protected NnfTransformerHelper getNnfTransformerHelper(IUltimateServiceProvider services) {
+		return new NnfTransformerHelper(services);
 	}
 	
 	public Term transform(Term term) {
@@ -60,6 +61,12 @@ public class Nnf {
 	}
 
 	protected class NnfTransformerHelper extends TermTransformer {
+		
+		protected IUltimateServiceProvider mServices;
+
+		protected NnfTransformerHelper(IUltimateServiceProvider services){
+			mServices = services;
+		}
 		
 		@Override
 		protected void convert(Term term) {

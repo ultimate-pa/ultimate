@@ -14,8 +14,6 @@ import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.irsdependencies.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -23,13 +21,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 
 public class DebugFileWriterDietsch {
 
-	private static Logger sLogger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID);
+	private final Logger mLogger;
 	private List<List<RCFGEdge>> mPaths;
 	private final int mUnrollingDepth;
 	private final static String sFolderPath = "F:\\repos\\ultimate fresher co\\trunk\\examples\\unrolling-tests\\";
 
-	public DebugFileWriterDietsch(List<List<RCFGEdge>> list, int unrollingDepth) {
+	public DebugFileWriterDietsch(List<List<RCFGEdge>> list, Logger logger, int unrollingDepth) {
+		mLogger = logger;
 		if (list == null) {
 			throw new IllegalArgumentException("Parameter may not be null");
 		}
@@ -88,17 +86,17 @@ public class DebugFileWriterDietsch {
 			try {
 				writeLargerTextFile(sFolderPath + filename, sb);
 			} catch (IOException e) {
-				sLogger.fatal(e.getStackTrace());
+				mLogger.fatal(e.getStackTrace());
 			}
 		} else {
-			sLogger.debug("No traces found; this may be due to infinite recursion");
+			mLogger.debug("No traces found; this may be due to infinite recursion");
 		}
 	}
 
 	private StringBuilder createDebugOutput(
 			HashMap<RootEdge, ArrayList<ArrayList<CodeBlock>>> procToTraces) {
 
-		sLogger.debug("Creating debug output...");
+		mLogger.debug("Creating debug output...");
 
 		// find prefix & max trace length
 		int prefixPos = -1;
@@ -278,7 +276,7 @@ public class DebugFileWriterDietsch {
 	private void writeLargerTextFile(String aFileName, StringBuilder sb)
 			throws IOException {
 		Path path = Paths.get(aFileName);
-		sLogger.debug("Writing " + path.toString());
+		mLogger.debug("Writing " + path.toString());
 		BufferedWriter writer = Files.newBufferedWriter(path,
 				StandardCharsets.UTF_8);
 		writer.write(sb.toString());

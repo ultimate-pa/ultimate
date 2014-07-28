@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.BuchiProgramProduct;
 
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 
 /**
  * When the RCFG is used as a B�chi program, use this Annotation

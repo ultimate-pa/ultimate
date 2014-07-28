@@ -5,10 +5,7 @@ import pea.modelchecking.J2UPPAALConverter;
 import pea.reqCheck.PatternToPEA;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Vector;
-
 import java_cup.runtime.Symbol;
 
 import pea.*;

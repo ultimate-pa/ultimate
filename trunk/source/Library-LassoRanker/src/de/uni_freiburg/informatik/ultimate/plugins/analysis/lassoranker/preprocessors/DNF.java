@@ -26,32 +26,40 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 
-
 /**
- * Convert a formula into disjunctive normal form, i.e., a formula of the
- * form
+ * Convert a formula into disjunctive normal form, i.e., a formula of the form
  * 
- * <pre>OR ( AND ( NOT? inequality ) )</pre>
+ * <pre>
+ * OR ( AND ( NOT? inequality ) )
+ * </pre>
  * 
  * This includes a negation normal form (negations only occur before atoms).
  * 
  * @author Jan Leike
  */
 public class DNF implements PreProcessor {
+	private final IUltimateServiceProvider mServices;
+
+	public DNF(IUltimateServiceProvider services) {
+		super();
+		mServices = services;
+	}
+
 	@Override
 	public String getDescription() {
 		return "Transform the given term into disjunctive normal form.";
 	}
-	
+
 	@Override
 	public Term process(Script script, Term term) throws TermException {
 		// Use the DNF transformer from RCFGBuilder
-		Dnf dnf_transformer = new Dnf(script);
+		Dnf dnf_transformer = new Dnf(script, mServices);
 		return dnf_transformer.transform(term);
 	}
 }

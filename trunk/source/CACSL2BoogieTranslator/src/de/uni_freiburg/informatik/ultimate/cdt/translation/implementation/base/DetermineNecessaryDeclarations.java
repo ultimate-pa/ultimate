@@ -1,9 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map.Entry;
@@ -20,7 +17,6 @@ import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
-import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializer;
@@ -33,18 +29,12 @@ import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTTypeId;
-import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
-import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 /**
@@ -71,8 +61,10 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     
     String checkedMethod;
 	private IASTTranslationUnit translationUnit;
+	private Dispatcher mDispatcher;
 
-    public DetermineNecessaryDeclarations(String checkedMethod) {
+    public DetermineNecessaryDeclarations(String checkedMethod, Dispatcher dispatcher) {
+    	mDispatcher = dispatcher;
     	this.shouldVisitParameterDeclarations = true;
     	this.shouldVisitTranslationUnit = true;
         this.shouldVisitDeclarations = true;
@@ -498,7 +490,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					+ "\n The program does not have this method. ULTIMATE will continue in "
 					+ "library mode (i.e., each procedure can be starting procedure and global "
 					+ "variables are not initialized).";
-    			Dispatcher.warn(new CACSLLocation(translationUnit), msg);
+    			mDispatcher.warn(new CACSLLocation(translationUnit), msg);
     		}
     		entryPoints.addAll(functionTable.keySet());
     	}

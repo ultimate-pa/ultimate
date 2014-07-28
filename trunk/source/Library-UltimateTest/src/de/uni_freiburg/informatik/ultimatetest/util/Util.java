@@ -9,14 +9,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Random;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
@@ -272,12 +270,12 @@ public class Util {
 	 * @param fail
 	 * @param customMessages
 	 */
-	public static void logResults(Logger logger, String inputFile, boolean fail, Collection<String> customMessages) {
+	public static void logResults(Logger logger, String inputFile, boolean fail, Collection<String> customMessages, IResultService resultService) {
 
 		logger.info("#################### TEST RESULT ####################");
 		logger.info("Results for " + inputFile);
 
-		for (Entry<String, List<IResult>> entry : UltimateServices.getInstance().getResultMap().entrySet()) {
+		for (Entry<String, List<IResult>> entry : resultService.getResults().entrySet()) {
 			int i = 0;
 			for (IResult result : entry.getValue()) {
 				logger.info(String.format("[%s] %s --> [%s] %s", i, entry.getKey(), result.getClass().getSimpleName(),

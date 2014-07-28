@@ -16,8 +16,9 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -78,7 +79,7 @@ public class CfgBuilder {
 	/**
 	 * Logger for this plugin.
 	 */
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+	private final Logger mLogger;
 
 	/**
 	 * Identifier of the auxiliary start procedure used e.g., by the
@@ -106,7 +107,12 @@ public class CfgBuilder {
 
 	private CodeBlockSize m_CodeBlockSize;
 
-	public CfgBuilder(Unit unit, RCFGBacktranslator backtranslator) {
+	private final IUltimateServiceProvider mServices;
+
+	public CfgBuilder(Unit unit, RCFGBacktranslator backtranslator, IUltimateServiceProvider services,
+			IToolchainStorage storage) {
+		mServices = services;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_Backtranslator = backtranslator;
 		boolean useExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(PreferenceInitializer.LABEL_ExtSolverFlag);
@@ -114,11 +120,11 @@ public class CfgBuilder {
 		m_CodeBlockSize = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID)).getEnum(
 				PreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
 
-		Logger solverLogger = UltimateServices.getInstance().getLoggerForExternalTool("interpolLogger");
+		Logger solverLogger = mServices.getLoggingService().getLoggerForExternalTool("interpolLogger");
 		if (useExternalSolver) {
 			String command = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 					.getString(PreferenceInitializer.LABEL_ExtSolverCommand);
-			m_Script = new Scriptor(command, solverLogger);
+			m_Script = new Scriptor(command, solverLogger, mServices, storage);
 		} else {
 			m_Script = new SMTInterpol(solverLogger, false);
 		}
@@ -166,12 +172,11 @@ public class CfgBuilder {
 			// m_Script.setOption(":verbosity", 0);
 			blackHolesArrays = false;
 		}
-		m_BoogieDeclarations = new BoogieDeclarations(unit);
-		m_Boogie2smt = new Boogie2SMT(m_Script, m_BoogieDeclarations, blackHolesArrays);
+		m_BoogieDeclarations = new BoogieDeclarations(unit, mLogger);
+		m_Boogie2smt = new Boogie2SMT(m_Script, m_BoogieDeclarations, blackHolesArrays, mServices);
 		m_RootAnnot = new RootAnnot(m_BoogieDeclarations, m_Boogie2smt, m_Backtranslator);
 
 	}
-
 
 	/**
 	 * Build a recursive control flow graph for an unstructured boogie program.
@@ -182,7 +187,7 @@ public class CfgBuilder {
 	 */
 	public RootNode getRootNode(Unit unit) {
 
-		tfb = new TransFormulaBuilder(m_Boogie2smt);
+		tfb = new TransFormulaBuilder(m_Boogie2smt, mServices);
 
 		// Initialize the root node.
 		m_Graphroot = new RootNode(unit.getLocation(), m_RootAnnot);
@@ -219,8 +224,8 @@ public class CfgBuilder {
 		for (Summary se : m_ImplementationSummarys) {
 			addCallTransitionAndReturnTransition(se);
 		}
-		m_RootAnnot.m_ModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(m_BoogieDeclarations.getModifiedVars(),
-				m_Boogie2smt);
+		m_RootAnnot.m_ModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(
+				m_BoogieDeclarations.getModifiedVars(), m_Boogie2smt);
 		m_CodeBlockSize = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID)).getEnum(
 				PreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
 		if (m_CodeBlockSize == CodeBlockSize.LoopFreeBlock) {
@@ -282,27 +287,28 @@ public class CfgBuilder {
 	private void addCallTransitionAndReturnTransition(Summary edge) {
 		CallStatement st = edge.getCallStatement();
 		String callee = st.getMethodName();
-		assert (m_RootAnnot.m_entryNode.containsKey(callee)) : 
-			"Source code contains" + " call of " + callee + " but no such procedure.";
+		assert (m_RootAnnot.m_entryNode.containsKey(callee)) : "Source code contains" + " call of " + callee
+				+ " but no such procedure.";
 
 		// Add call transition from callerNode to procedures entry node
 		ProgramPoint callerNode = (ProgramPoint) edge.getSource();
 		ProgramPoint calleeEntryLoc = m_RootAnnot.m_entryNode.get(callee);
 
 		String caller = callerNode.getProcedure();
-		
-		TransFormula arguments2InParams = m_RootAnnot.getBoogie2SMT().getStatements2TransFormula().inParamAssignment(st);
-		TransFormula outParams2CallerVars = m_RootAnnot.getBoogie2SMT().getStatements2TransFormula().resultAssignment(st, caller);
 
-		Call call = new Call(callerNode, calleeEntryLoc, st);
+		TransFormula arguments2InParams = m_RootAnnot.getBoogie2SMT().getStatements2TransFormula()
+				.inParamAssignment(st);
+		TransFormula outParams2CallerVars = m_RootAnnot.getBoogie2SMT().getStatements2TransFormula()
+				.resultAssignment(st, caller);
+
+		Call call = new Call(callerNode, calleeEntryLoc, st, mLogger);
 		call.setTransitionFormula(arguments2InParams);
 
 		ProgramPoint returnNode = (ProgramPoint) edge.getTarget();
 		ProgramPoint calleeExitLoc = m_RootAnnot.m_exitNode.get(callee);
-		Return returnAnnot = new Return(calleeExitLoc, returnNode, call);
+		Return returnAnnot = new Return(calleeExitLoc, returnNode, call, mLogger);
 		returnAnnot.setTransitionFormula(outParams2CallerVars);
 	}
-
 
 	/**
 	 * Build control flow graph of single procedures.
@@ -322,7 +328,7 @@ public class CfgBuilder {
 		 * the CFG.
 		 */
 		private HashMap<String, ProgramPoint> m_label2LocNodes;
-		
+
 		/**
 		 * Set of all labels that occurred in the procedure. If an element is
 		 * inserted twice this is an error.
@@ -388,7 +394,7 @@ public class CfgBuilder {
 			m_Labels = new HashSet<String>();
 
 			Procedure proc = m_BoogieDeclarations.getProcImplementation().get(m_currentProcedureName);
-//			m_Boogie2smt.declareLocals(proc);
+			// m_Boogie2smt.declareLocals(proc);
 
 			Statement[] statements = m_BoogieDeclarations.getProcImplementation().get(procName).getBody().getBlock();
 			if (statements.length == 0) {
@@ -401,7 +407,7 @@ public class CfgBuilder {
 			m_procLocNodes = new HashMap<String, ProgramPoint>();
 			m_RootAnnot.m_LocNodes.put(procName, m_procLocNodes);
 
-			s_Logger.debug("Start construction of the CFG for" + procName);
+			mLogger.debug("Start construction of the CFG for" + procName);
 
 			{
 				// first LocNode is the entry node of the procedure
@@ -414,22 +420,22 @@ public class CfgBuilder {
 			assumeRequires(false);
 
 			for (Statement st : statements) {
-				
-				if (!UltimateServices.getInstance().continueProcessing()) {
-					s_Logger.warn("Timeout while constructing control flow graph");
+
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+					mLogger.warn("Timeout while constructing control flow graph");
 					throw new ToolchainCanceledException();
 				}
 
 				ILocation loc = st.getLocation();
 				if (loc.isLoop()) {
-					s_Logger.debug("Found loop entry: " + st);
+					mLogger.debug("Found loop entry: " + st);
 				}
 
 				if (st instanceof Label) {
 					if (m_current instanceof ProgramPoint) {
 						assert (m_current == m_RootAnnot.m_entryNode.get(procName) || m_LastSt instanceof Label) : "If st is Label"
 								+ " and m_current is LocNode lastSt is Label";
-						s_Logger.debug("Two Labels in a row: " + m_current + " and " + ((Label) st).getName() + "."
+						mLogger.debug("Two Labels in a row: " + m_current + " and " + ((Label) st).getName() + "."
 								+ " I am expecting that at least one was" + " introduced by the user (or vcc). In the"
 								+ " CFG only the first label of those two (or" + " more) will be used");
 					}
@@ -439,7 +445,7 @@ public class CfgBuilder {
 								+ " is a Label and the last constructed node"
 								+ " was a TransEdge, then the last"
 								+ " Statement must not be a Label, Return or" + " Goto";
-						s_Logger.warn("Label in the middle of a codeblock.");
+						mLogger.warn("Label in the middle of a codeblock.");
 					}
 
 					processLabel((Label) st);
@@ -472,7 +478,7 @@ public class CfgBuilder {
 					// assert (! (m_LastSt instanceof GotoStatement)) :
 					// "Two Gotos in a row";
 					if (m_LastSt instanceof GotoStatement) {
-						s_Logger.warn("Two Gotos in a row! There was dead code");
+						mLogger.warn("Two Gotos in a row! There was dead code");
 					} else {
 						processGotoStatement((GotoStatement) st);
 					}
@@ -519,7 +525,7 @@ public class CfgBuilder {
 			boolean removeGotoEdges = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 					.getBoolean(PreferenceInitializer.LABEL_RemoveGotoEdges);
 			if (removeGotoEdges) {
-				s_Logger.debug("Starting removal of auxiliaryGotoTransitions");
+				mLogger.debug("Starting removal of auxiliaryGotoTransitions");
 				while (!(m_GotoEdges.isEmpty())) {
 					GotoEdge gotoEdge = m_GotoEdges.remove(0);
 					removeAuxiliaryGoto(gotoEdge);
@@ -529,7 +535,7 @@ public class CfgBuilder {
 			for (CodeBlock transEdge : m_Edges) {
 				tfb.addTransitionFormulas(transEdge, procName);
 			}
-//			m_Boogie2smt.removeLocals(proc);
+			// m_Boogie2smt.removeLocals(proc);
 		}
 
 		/**
@@ -605,7 +611,7 @@ public class CfgBuilder {
 
 			for (RCFGEdge grandchild : child.getOutgoingEdges()) {
 				if (grandchild instanceof Call) {
-					s_Logger.info("Will not remove gotoEdge" + gotoEdge
+					mLogger.info("Will not remove gotoEdge" + gotoEdge
 							+ "since this would involve adding/removing call"
 							+ "and return edges and bring my naive goto" + " replacing algorithm into terrible trouble");
 					return;
@@ -616,21 +622,21 @@ public class CfgBuilder {
 			gotoEdge.setSource(null);
 			gotoEdge.setTarget(null);
 			child.removeIncoming(gotoEdge);
-			s_Logger.debug("Removed GotoEdge from" + mother + " to " + child);
+			mLogger.debug("Removed GotoEdge from" + mother + " to " + child);
 			if (mother == child) {
-				s_Logger.debug("GotoEdge was selfloop");
+				mLogger.debug("GotoEdge was selfloop");
 			} else {
 				if (child.getIncomingEdges().isEmpty() || mother.getOutgoingEdges().isEmpty()) {
-					s_Logger.debug(mother + " has no sucessors any more or " + child + "has no predecessors any more.");
-					s_Logger.debug(child + " gets absorbed by " + mother);
+					mLogger.debug(mother + " has no sucessors any more or " + child + "has no predecessors any more.");
+					mLogger.debug(child + " gets absorbed by " + mother);
 					mergeLocNodes(child, mother);
 				} else {
 					// Not allowed to merge mother and child in this case
-					s_Logger.debug(child + " has " + child.getIncomingEdges().size() + " predecessors," + " namely "
+					mLogger.debug(child + " has " + child.getIncomingEdges().size() + " predecessors," + " namely "
 							+ child.getIncomingNodes());
-					s_Logger.debug(mother + " has " + mother.getIncomingEdges().size() + " successors" + ", namely "
+					mLogger.debug(mother + " has " + mother.getIncomingEdges().size() + " successors" + ", namely "
 							+ mother.getOutgoingNodes());
-					s_Logger.debug("Adding for every successor" + " transition of " + child + " a copy of that"
+					mLogger.debug("Adding for every successor" + " transition of " + child + " a copy of that"
 							+ " transition as successor of " + mother);
 					for (RCFGEdge grandchild : child.getOutgoingEdges()) {
 						ProgramPoint target = (ProgramPoint) grandchild.getTarget();
@@ -663,7 +669,7 @@ public class CfgBuilder {
 			m_procLocNodes = new HashMap<String, ProgramPoint>();
 			m_RootAnnot.m_LocNodes.put(procName, m_procLocNodes);
 
-			s_Logger.debug("Start construction of the CFG for" + procName);
+			mLogger.debug("Start construction of the CFG for" + procName);
 
 			// first LocNode is the entry node of the procedure
 			ProgramPoint locNode = m_RootAnnot.m_entryNode.get(procName);
@@ -714,7 +720,8 @@ public class CfgBuilder {
 
 			// Violations against the ensures part of the procedure
 			// specification
-			List<EnsuresSpecification> ensuresNonFree = m_BoogieDeclarations.getEnsuresNonFree().get(m_currentProcedureName);
+			List<EnsuresSpecification> ensuresNonFree = m_BoogieDeclarations.getEnsuresNonFree().get(
+					m_currentProcedureName);
 			if (ensuresNonFree != null && !ensuresNonFree.isEmpty()) {
 				for (EnsuresSpecification spec : ensuresNonFree) {
 					Expression specExpr = spec.getFormula();
@@ -723,7 +730,8 @@ public class CfgBuilder {
 					passAllAnnotations(assumeSt, assumeSt);
 					m_Backtranslator.putAux(assumeSt, assumeSt);
 					ProgramPoint errorLocNode = addErrorNode(m_currentProcedureName, spec);
-					CodeBlock assumeEdge = new StatementSequence(finalNode, errorLocNode, assumeSt, Origin.ENSURES);
+					CodeBlock assumeEdge = new StatementSequence(finalNode, errorLocNode, assumeSt, Origin.ENSURES,
+							mLogger);
 					passAllAnnotations(spec, assumeEdge);
 					passAllAnnotations(spec, errorLocNode);
 					m_Edges.add(assumeEdge);
@@ -834,12 +842,12 @@ public class CfgBuilder {
 		private ProgramPoint getLocNodeforLabel(String labelName, Statement st) {
 			if (m_label2LocNodes.containsKey(labelName)) {
 				ProgramPoint locNode = m_label2LocNodes.get(labelName);
-				s_Logger.debug("LocNode for " + labelName + " already" + " constructed, namely: " + locNode);
+				mLogger.debug("LocNode for " + labelName + " already" + " constructed, namely: " + locNode);
 				if (st instanceof Label && locNode.getLocationName() == labelName) {
 					ILocation loc = st.getLocation();
 					locNode.getPayload().setLocation(loc);
 					if (st.getLocation().isLoop()) {
-						s_Logger.debug("LocNode does not have to Location of the while loop" + st.getLocation());
+						mLogger.debug("LocNode does not have to Location of the while loop" + st.getLocation());
 						m_RootAnnot.m_LoopLocations.put(locNode, st.getLocation());
 					}
 				}
@@ -848,7 +856,7 @@ public class CfgBuilder {
 				ProgramPoint locNode = new ProgramPoint(labelName, m_currentProcedureName, false, st);
 				m_label2LocNodes.put(labelName, locNode);
 				m_procLocNodes.put(labelName, locNode);
-				s_Logger.debug("LocNode for " + labelName + " has not" + " existed yet. Constructed it");
+				mLogger.debug("LocNode for " + labelName + " has not" + " existed yet. Constructed it");
 				if (st != null && st.getLocation().isLoop()) {
 					m_RootAnnot.m_LoopLocations.put(locNode, st.getLocation());
 				}
@@ -894,7 +902,7 @@ public class CfgBuilder {
 				return;
 			}
 			if (m_current instanceof ProgramPoint) {
-				StatementSequence codeBlock = new StatementSequence((ProgramPoint) m_current, null, st, origin);
+				StatementSequence codeBlock = new StatementSequence((ProgramPoint) m_current, null, st, origin, mLogger);
 				passAllAnnotations(st, codeBlock);
 				m_Edges.add(codeBlock);
 				m_current = codeBlock;
@@ -910,7 +918,7 @@ public class CfgBuilder {
 					ProgramPoint locNode = new ProgramPoint(locName, m_currentProcedureName, false, st);
 					((CodeBlock) m_current).connectTarget(locNode);
 					m_procLocNodes.put(locName, locNode);
-					StatementSequence codeBlock = new StatementSequence(locNode, null, st, origin);
+					StatementSequence codeBlock = new StatementSequence(locNode, null, st, origin, mLogger);
 					passAllAnnotations(st, codeBlock);
 					m_Edges.add(codeBlock);
 					m_current = codeBlock;
@@ -939,14 +947,15 @@ public class CfgBuilder {
 			passAllAnnotations(st, assumeError);
 			m_Backtranslator.putAux(assumeError, st);
 			ProgramPoint errorLocNode = addErrorNode(m_currentProcedureName, st);
-			StatementSequence assumeErrorCB = new StatementSequence(locNode, errorLocNode, assumeError, Origin.ASSERT);
+			StatementSequence assumeErrorCB = new StatementSequence(locNode, errorLocNode, assumeError, Origin.ASSERT,
+					mLogger);
 			passAllAnnotations(st, errorLocNode);
 			passAllAnnotations(st, assumeErrorCB);
 			m_Edges.add(assumeErrorCB);
 			AssumeStatement assumeSafe = new AssumeStatement(locationCopy(st.getLocation()), assertion);
 			passAllAnnotations(st, assumeSafe);
 			m_Backtranslator.putAux(assumeSafe, st);
-			StatementSequence assumeSafeCB = new StatementSequence(locNode, null, assumeSafe, Origin.ASSERT);
+			StatementSequence assumeSafeCB = new StatementSequence(locNode, null, assumeSafe, Origin.ASSERT, mLogger);
 			passAllAnnotations(st, assumeSafeCB);
 			// add a new TransEdge labeled with st as successor of the
 			// last constructed LocNode
@@ -960,7 +969,7 @@ public class CfgBuilder {
 			}
 			String[] targets = ((GotoStatement) st).getLabels();
 			assert (targets.length != 0) : "Goto must have at least one target";
-			s_Logger.debug("Goto statement with " + targets.length + " targets.");
+			mLogger.debug("Goto statement with " + targets.length + " targets.");
 			ProgramPoint locNode;
 			if (m_current instanceof CodeBlock) {
 				String locName = getLocName(st.getLocation());
@@ -978,7 +987,7 @@ public class CfgBuilder {
 				// Add an auxiliary GotoEdge and a LocNode
 				// for each target of the GotoStatement.
 				ProgramPoint targetLocNode = getLocNodeforLabel(label, st);
-				m_GotoEdges.add(new GotoEdge(locNode, targetLocNode));
+				m_GotoEdges.add(new GotoEdge(locNode, targetLocNode, mLogger));
 			}
 			// We have not constructed a new node that should be used in the
 			// next iteration step, therefore setting m_current to null.
@@ -1009,11 +1018,11 @@ public class CfgBuilder {
 			String callee = st.getMethodName();
 			Summary summaryEdge;
 			if (m_BoogieDeclarations.getProcImplementation().containsKey(callee)) {
-				summaryEdge = new Summary(locNode, returnNode, st, true);
+				summaryEdge = new Summary(locNode, returnNode, st, true, mLogger);
 				passAllAnnotations(st, summaryEdge);
 				m_ImplementationSummarys.add(summaryEdge);
 			} else {
-				summaryEdge = new Summary(locNode, returnNode, st, false);
+				summaryEdge = new Summary(locNode, returnNode, st, false, mLogger);
 				passAllAnnotations(st, summaryEdge);
 			}
 			m_Edges.add(summaryEdge);
@@ -1044,7 +1053,8 @@ public class CfgBuilder {
 					passAllAnnotations(st, assumeSt);
 					m_Backtranslator.putAux(assumeSt, spec);
 					ProgramPoint errorLocNode = addErrorNode(m_currentProcedureName, st);
-					StatementSequence errorCB = new StatementSequence(locNode, errorLocNode, assumeSt, Origin.REQUIRES);
+					StatementSequence errorCB = new StatementSequence(locNode, errorLocNode, assumeSt, Origin.REQUIRES,
+							mLogger);
 					passAllAnnotations(spec, errorCB);
 					passAllAnnotations(spec, errorLocNode);
 					m_Edges.add(errorCB);
@@ -1066,10 +1076,10 @@ public class CfgBuilder {
 			if (m_current instanceof CodeBlock) {
 				CodeBlock transEdge = (CodeBlock) m_current;
 				transEdge.connectTarget(finalNode);
-				s_Logger.debug("Constructed TransEdge " + transEdge + "as predecessr of " + m_RootAnnot.m_finalNode);
+				mLogger.debug("Constructed TransEdge " + transEdge + "as predecessr of " + m_RootAnnot.m_finalNode);
 			} else if (m_current instanceof ProgramPoint) {
 				mergeLocNodes((ProgramPoint) m_current, finalNode);
-				s_Logger.debug("Replacing " + m_current + " by " + finalNode);
+				mLogger.debug("Replacing " + m_current + " by " + finalNode);
 			} else {
 				// m_current must be either LocNode or TransEdge
 				// s_Logger.warn("Last location of " + m_currentProcedureName +
@@ -1114,7 +1124,7 @@ public class CfgBuilder {
 			}
 			oldLocNode.clearOutgoing();
 			if (oldLocNode.getBoogieASTNode() != null && oldLocNode.getBoogieASTNode().getLocation().isLoop()) {
-				s_Logger.debug("LocNode does not have to Location of the while loop"
+				mLogger.debug("LocNode does not have to Location of the while loop"
 						+ oldLocNode.getBoogieASTNode().getLocation());
 			}
 
@@ -1185,7 +1195,7 @@ public class CfgBuilder {
 			ProgramPoint predecessor = (ProgramPoint) incoming.getSource();
 			ProgramPoint successor = (ProgramPoint) outgoing.getTarget();
 			new SequentialComposition(predecessor, successor, m_Boogie2smt, m_RootAnnot.getModGlobVarManager(),
-					m_SimplifyCodeBlocks, false, incoming, outgoing);
+					m_SimplifyCodeBlocks, false, mServices, incoming, outgoing);
 			if (!sequentialQueue.contains(predecessor)) {
 				List<CodeBlock> outEdges = superfluousParallel(predecessor);
 				if (outEdges != null) {
@@ -1196,7 +1206,7 @@ public class CfgBuilder {
 
 		private void composeParallel(ProgramPoint pp, List<CodeBlock> outgoing) {
 			ProgramPoint successor = (ProgramPoint) outgoing.get(0).getTarget();
-			new ParallelComposition(pp, successor, m_Boogie2smt, outgoing.toArray(new CodeBlock[0]));
+			new ParallelComposition(pp, successor, m_Boogie2smt, mServices, outgoing.toArray(new CodeBlock[0]));
 			if (superfluousSequential(pp)) {
 				sequentialQueue.add(pp);
 			} else {
@@ -1277,8 +1287,8 @@ public class CfgBuilder {
 
 		private static final long serialVersionUID = -2923506946454722306L;
 
-		public GotoEdge(ProgramPoint source, ProgramPoint target) {
-			super(source, target);
+		public GotoEdge(ProgramPoint source, ProgramPoint target, Logger logger) {
+			super(source, target, logger);
 			assert (target != null);
 		}
 
@@ -1299,7 +1309,7 @@ public class CfgBuilder {
 
 		@Override
 		public CodeBlock getCopy(ProgramPoint source, ProgramPoint target) {
-			return new GotoEdge(source, target);
+			return new GotoEdge(source, target, this.mLogger);
 		}
 
 		@Override

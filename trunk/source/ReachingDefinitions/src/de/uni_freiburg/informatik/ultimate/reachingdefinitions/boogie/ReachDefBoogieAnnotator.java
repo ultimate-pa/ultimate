@@ -7,7 +7,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations.ReachDefBaseAnnotation;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations.ReachDefStatementAnnotation;
-import de.uni_freiburg.informatik.ultimate.reachingdefinitions.plugin.Activator;
 
 public class ReachDefBoogieAnnotator {
 
@@ -15,16 +14,16 @@ public class ReachDefBoogieAnnotator {
 
 	private Collection<ReachDefStatementAnnotation> mPredecessors;
 	private ReachDefStatementAnnotation mCurrent;
-	private Logger mLogger;
+	private final Logger mLogger;
 	private final String mAnnotationSuffix;
 
 	public ReachDefBoogieAnnotator(Collection<ReachDefStatementAnnotation> predecessors,
-			ReachDefStatementAnnotation current,String annotationSuffix) {
+			ReachDefStatementAnnotation current,String annotationSuffix, Logger logger) {
 		assert current != null;
 		mPredecessors = predecessors;
 		mCurrent = current;
 		mVisitor = new ReachDefBoogieVisitor(current);
-		mLogger = Activator.getLogger();
+		mLogger = logger;
 		mAnnotationSuffix = annotationSuffix;
 	}
 

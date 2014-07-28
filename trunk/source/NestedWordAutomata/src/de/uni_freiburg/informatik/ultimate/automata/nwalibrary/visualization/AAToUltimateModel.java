@@ -25,29 +25,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AlternatingAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.AutomatonTransition.Transition;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 
 public class AAToUltimateModel<LETTER,STATE> {
 //	private static Logger s_Logger = 
-//		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+//		NestedWordAutomata.getLogger();
 //	
 	public IElement getUltimateModelOfAA(AlternatingAutomaton<LETTER,STATE> aaSimple) throws OperationCanceledException {
 //		final AlternatingAutomaton<LETTER,STATE> aa;

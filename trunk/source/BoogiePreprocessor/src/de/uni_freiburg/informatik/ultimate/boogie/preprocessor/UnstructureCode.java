@@ -5,12 +5,9 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Stack;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -50,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  *
  */
 public class UnstructureCode implements IUnmanagedObserver {
-	private static final Logger s_logger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
 	/** The prefix of automatically generated unique labels. */
 	private static final String s_labelPrefix = "$Ultimate##";

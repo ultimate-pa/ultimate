@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -25,8 +27,8 @@ public class RCFGWalkerAStar extends RCFGWalker {
 	private HashSet<RCFGNode> mClosed;
 	private HashMap<String, HashMap<ProgramPoint, List<RCFGEdge>>> mErrorPaths;
 
-	public RCFGWalkerAStar(ObserverDispatcher dispatcher) {
-		super(dispatcher);
+	public RCFGWalkerAStar(ObserverDispatcher dispatcher, Logger logger) {
+		super(dispatcher, logger);
 		mOpen = new FasterPriorityQueue<RCFGNode>(new Comparator<RCFGNode>() {
 			@Override
 			public int compare(RCFGNode o1, RCFGNode o2) {

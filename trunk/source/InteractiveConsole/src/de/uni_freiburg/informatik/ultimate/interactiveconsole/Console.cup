@@ -29,7 +29,7 @@ parser code {:
 
 
 terminal HELP, EXIT, LIST, USE, ON;
-terminal SETPRELUDE, DELETEMM, LISTMM, RERUN, SETRESULTOUTPUT;
+terminal SETPRELUDE, LISTMM, RERUN, SETRESULTOUTPUT;
 terminal LOADPREFS;
 terminal String NUMBER;
 terminal String FILE_NAME;
@@ -53,8 +53,6 @@ cmdline
     	{: RESULT = new SetPreludeStmt(f); :}
     |	LISTMM
     	{: RESULT = new ListMMStmt(); :}
-    |	DELETEMM NUMBER:n
-    	{: RESULT = new DeleteMMStmt(n); :}
     |	RERUN
     	{: RESULT = new RerunStmt(); :}
     |	SETRESULTOUTPUT FILE_NAME:f

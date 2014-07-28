@@ -4,8 +4,8 @@ Bundle-Name: Cookiefy
 Bundle-SymbolicName: Cookiefy;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.cookiefy.Activator
-Require-Bundle: Library-log4j, 
- UltimateCore, 
+Require-Bundle: Library-log4j,
+ UltimateCore,
  BoogieParser
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

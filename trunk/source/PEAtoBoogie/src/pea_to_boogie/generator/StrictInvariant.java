@@ -1,16 +1,6 @@
 package pea_to_boogie.generator;
 
 import pea.*;
-import pea.RelationDecision.Operator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
-
 import java.util.*;
 public class StrictInvariant {
 

@@ -31,8 +31,8 @@ import java.util.HashSet;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -41,12 +41,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class Accepts<S, C> implements IOperation<S, C> {
 	
-	private static Logger s_Logger = 
-		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+	private static Logger s_Logger = NestedWordAutomata.getLogger();
 		
 	@Override
 	public String operationName() {
@@ -95,7 +93,7 @@ public class Accepts<S, C> implements IOperation<S, C> {
 			return net.isAccepting(marking);
 		
 		
-		if (!UltimateServices.getInstance().continueProcessing()) {
+		if (!NestedWordAutomata.getMonitor().continueProcessing()) {
 			throw new OperationCanceledException();
 		}
 

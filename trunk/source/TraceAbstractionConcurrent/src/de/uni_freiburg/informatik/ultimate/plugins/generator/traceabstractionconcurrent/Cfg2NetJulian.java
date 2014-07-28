@@ -1,10 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PrefixProduct;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -15,9 +15,9 @@ public class Cfg2NetJulian extends CFG2Automaton {
 	private PetriNetJulian<CodeBlock, IPredicate> m_Result;
 	
 	public Cfg2NetJulian(RootNode rootNode,
-			StateFactory<IPredicate> contentFactory, SmtManager smtManager)
+			StateFactory<IPredicate> contentFactory, SmtManager smtManager, IUltimateServiceProvider services)
 					throws AutomataLibraryException {
-		super(rootNode, contentFactory, smtManager);
+		super(rootNode, contentFactory, smtManager, services);
 		
 		constructProcedureAutomata();
 		m_Result = new PetriNetJulian<CodeBlock,IPredicate>(m_Automata.get(0));

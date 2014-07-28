@@ -134,7 +134,7 @@ public class TypeHandler implements ITypeHandler {
             case IASTSimpleDeclSpecifier.t_unspecified:
             {
             	String msg = "unspecified type, defaulting to int";
-            	Dispatcher.warn(loc, msg);
+            	main.warn(loc, msg);
             }
             case IASTSimpleDeclSpecifier.t_bool:
             case IASTSimpleDeclSpecifier.t_char:
@@ -370,7 +370,7 @@ public class TypeHandler implements ITypeHandler {
     		String msg = "TypeHandler: Not yet implemented: "
     				+ type.getClass().toString();
     		// TODO : no idea what location should be set to ...
-            Dispatcher.unsupportedSyntax(null, msg);
+    		main.unsupportedSyntax(null, msg);
     		return new InferredType(Type.Unknown);
     	}
     }

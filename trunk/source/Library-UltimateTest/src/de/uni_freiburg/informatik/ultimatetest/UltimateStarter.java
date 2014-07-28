@@ -17,8 +17,10 @@ import org.xml.sax.SAXException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
@@ -48,6 +50,7 @@ public class UltimateStarter implements IController {
 	private String mLogPattern;
 	private File mLogFile;
 	private UltimateCore mCurrentUltimateInstance;
+	private IUltimateServiceProvider mCurrentSerivces;
 
 	public UltimateStarter(File inputFile, File toolchainFile, long deadline) {
 		this(inputFile, null, toolchainFile, deadline, null, null);
@@ -81,8 +84,8 @@ public class UltimateStarter implements IController {
 	}
 
 	@Override
-	public int init(ICore core) {
-		if (core == null) {
+	public int init(ICore core, ILoggingService loggingService) {
+		if (core == null || loggingService == null) {
 			return -1;
 		}
 
@@ -91,11 +94,10 @@ public class UltimateStarter implements IController {
 		}
 		attachLogger();
 
-		core.setDeadline(System.currentTimeMillis() + mDeadline);
-
 		try {
 			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this,
-					BasicToolchainJob.ChainMode.RUN_TOOLCHAIN, mInputFile, null);
+					BasicToolchainJob.ChainMode.RUN_TOOLCHAIN, mInputFile, null, mLogger);
+			tcj.setDeadline(mDeadline);
 			tcj.schedule();
 			// in non-GUI mode, we must wait until job has finished!
 			tcj.join();
@@ -135,7 +137,7 @@ public class UltimateStarter implements IController {
 	}
 
 	@Override
-	public String getName() {
+	public String getPluginName() {
 		return "UltimateStarter";
 	}
 
@@ -156,9 +158,11 @@ public class UltimateStarter implements IController {
 	}
 
 	@Override
-	public Toolchain selectTools(List<ITool> tools) {
+	public ToolchainData selectTools(List<ITool> tools) {
 		try {
-			return new Toolchain(mToolchainFile.getAbsolutePath());
+			ToolchainData tc = new ToolchainData(mToolchainFile.getAbsolutePath());
+			mCurrentSerivces = tc.getServices();
+			return tc;
 		} catch (FileNotFoundException | JAXBException | SAXException e) {
 			mLogger.fatal("Toolchain could not be created from file " + mToolchainFile + ": " + e);
 			return null;
@@ -189,6 +193,10 @@ public class UltimateStarter implements IController {
 	@Override
 	public void displayException(String description, Throwable ex) {
 
+	}
+	
+	public IUltimateServiceProvider getServices(){
+		return mCurrentSerivces;
 	}
 
 }

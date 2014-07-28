@@ -5,7 +5,6 @@ import java.math.BigInteger;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -13,20 +12,22 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 
 /**
- * Transform a Term into an AffineTerm. 
- * Result is an auxiliary error term if the input was not affine.
+ * Transform a Term into an AffineTerm. Result is an auxiliary error term if the
+ * input was not affine.
  * 
  * @author Matthias Heizman
- *
+ * 
  */
 public class AffineTermTransformer extends TermTransformer {
-	
-	private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(ModelCheckerUtils.sPluginID);
-	
+
+	private final Logger mLogger;
+
+	public AffineTermTransformer(Logger logger) {
+		mLogger = logger;
+	}
+
 	@Override
 	protected void convert(Term term) {
 		if (term instanceof TermVariable) {
@@ -78,7 +79,7 @@ public class AffineTermTransformer extends TermTransformer {
 			} else {
 				throw new UnsupportedOperationException();
 			}
-		} else  if (constTerm.getSort().getName().equals("Real")) {
+		} else if (constTerm.getSort().getName().equals("Real")) {
 			if (value instanceof BigDecimal) {
 				rational = decimalToRational((BigDecimal) value);
 			} else if (value instanceof Rational) {
@@ -86,8 +87,7 @@ public class AffineTermTransformer extends TermTransformer {
 			} else {
 				throw new UnsupportedOperationException();
 			}
-		} 
-		else {
+		} else {
 			throw new UnsupportedOperationException();
 		}
 		AffineTerm result = new AffineTerm(constTerm.getSort(), rational);
@@ -95,8 +95,9 @@ public class AffineTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Convert tem of the form "to_real(param)" to affine term.
-	 * At the moment we support only the case where param in an integer literal
+	 * Convert tem of the form "to_real(param)" to affine term. At the moment we
+	 * support only the case where param in an integer literal
+	 * 
 	 * @param term
 	 * @return
 	 */
@@ -124,14 +125,13 @@ public class AffineTermTransformer extends TermTransformer {
 	}
 
 	private boolean isAffineSymbol(String funName) {
-		return (funName.equals("+") || funName.equals("-") || 
-				funName.equals("*") || funName.equals("/"));
+		return (funName.equals("+") || funName.equals("-") || funName.equals("*") || funName.equals("/"));
 	}
 
 	@Override
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
 		AffineTerm[] affineArgs = new AffineTerm[newArgs.length];
-		for (int i = 0; i<affineArgs.length; i++) {
+		for (int i = 0; i < affineArgs.length; i++) {
 			if (newArgs[i] instanceof AffineTerm) {
 				affineArgs[i] = (AffineTerm) newArgs[i];
 				if (affineArgs[i].isErrorTerm()) {
@@ -143,11 +143,11 @@ public class AffineTermTransformer extends TermTransformer {
 				return;
 			}
 		}
-		
-//		if (!appTerm.getSort().isNumericSort()) {
-//			resultIsNotAffine();
-//			return;
-//		}
+
+		// if (!appTerm.getSort().isNumericSort()) {
+		// resultIsNotAffine();
+		// return;
+		// }
 		if (appTerm.getParameters().length == 0) {
 			AffineTerm result = new AffineTerm(appTerm);
 			setResult(result);
@@ -162,7 +162,7 @@ public class AffineTermTransformer extends TermTransformer {
 			Sort sort = appTerm.getSort();
 			for (Term termArg : affineArgs) {
 				AffineTerm affineArg = (AffineTerm) termArg;
-//				assert affineArg.getSort() == sort;
+				// assert affineArg.getSort() == sort;
 				if (affineArg.isConstant()) {
 					multiplier = multiplier.mul(affineArg.getConstant());
 				} else {
@@ -189,13 +189,13 @@ public class AffineTermTransformer extends TermTransformer {
 		} else if (funName.equals("-")) {
 			AffineTerm result;
 			if (affineArgs.length == 1) {
-				//unary minus
+				// unary minus
 				AffineTerm param = affineArgs[0];
 				result = new AffineTerm(param, Rational.MONE);
 			} else {
 				AffineTerm[] resAffineArgs = new AffineTerm[affineArgs.length];
 				resAffineArgs[0] = affineArgs[0];
-				for (int i = 1; i<resAffineArgs.length; i++) {
+				for (int i = 1; i < resAffineArgs.length; i++) {
 					resAffineArgs[i] = new AffineTerm(affineArgs[i], Rational.MONE);
 				}
 				result = new AffineTerm(resAffineArgs);
@@ -214,7 +214,7 @@ public class AffineTermTransformer extends TermTransformer {
 				affineTerm = affineArgs[0];
 				multiplier = Rational.ONE;
 			}
-			for (int i=1; i<affineArgs.length; i++) {
+			for (int i = 1; i < affineArgs.length; i++) {
 				if (affineArgs[i].isConstant()) {
 					multiplier = multiplier.mul(affineArgs[i].getConstant().inverse());
 				} else {
@@ -236,19 +236,17 @@ public class AffineTermTransformer extends TermTransformer {
 			throw new UnsupportedOperationException("unsupported symbol " + funName);
 		}
 	}
-	
+
 	/**
 	 * set result to auxiliary error term
 	 */
 	private void resultIsNotAffine() {
-		s_Logger.debug("not affine");
+		mLogger.debug("not affine");
 		setResult(new AffineTerm());
 	}
-	
-	
+
 	/**
-	 * Convert a BigDecimal into a Rational.
-	 * Stolen from Jochen's code
+	 * Convert a BigDecimal into a Rational. Stolen from Jochen's code
 	 * de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ConvertFormula.
 	 */
 	public static Rational decimalToRational(BigDecimal d) {

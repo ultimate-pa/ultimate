@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 
@@ -20,9 +22,8 @@ public class Return extends CodeBlock {
 
 	private final Call m_CorrespondingCall;
 
-	public Return(ProgramPoint source, ProgramPoint target,
-			Call correspondingCall) {
-		super(source, target);
+	public Return(ProgramPoint source, ProgramPoint target, Call correspondingCall, Logger logger) {
+		super(source, target, logger);
 		m_CorrespondingCall = correspondingCall;
 		updatePayloadName();
 	}
@@ -30,7 +31,7 @@ public class Return extends CodeBlock {
 	@Override
 	public CodeBlock getCopy(ProgramPoint source, ProgramPoint target) {
 		CodeBlock copy;
-		copy = new Return(source, target, m_CorrespondingCall);
+		copy = new Return(source, target, m_CorrespondingCall, mLogger);
 		copy.setTransitionFormula(getTransitionFormula());
 		return copy;
 	}
@@ -52,8 +53,7 @@ public class Return extends CodeBlock {
 	 * The published attributes. Update this and getFieldValue() if you add new
 	 * attributes.
 	 */
-	private final static String[] s_AttribFields = { "CallStatement",
-			"PrettyPrintedStatements", "TransitionFormula",
+	private final static String[] s_AttribFields = { "CallStatement", "PrettyPrintedStatements", "TransitionFormula",
 			"OccurenceInCounterexamples" };
 
 	@Override
@@ -73,8 +73,7 @@ public class Return extends CodeBlock {
 	}
 
 	public String getPrettyPrintedStatements() {
-		return "Return - Corresponding call: "
-				+ m_CorrespondingCall.getPrettyPrintedStatements();
+		return "Return - Corresponding call: " + m_CorrespondingCall.getPrettyPrintedStatements();
 	}
 
 	public CallStatement getCallStatement() {

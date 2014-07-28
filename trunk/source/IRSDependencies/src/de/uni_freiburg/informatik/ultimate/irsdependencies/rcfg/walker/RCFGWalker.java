@@ -3,8 +3,6 @@ package de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.walker;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.irsdependencies.Activator;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
@@ -33,11 +31,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 public abstract class RCFGWalker implements IRCFGWalker {
 
 	protected ObserverDispatcher mDispatcher;
-	protected static Logger mLogger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID).getLogger("RCFGWalker");
+	protected final Logger mLogger;
 
-	public RCFGWalker(ObserverDispatcher dispatcher) {
+	public RCFGWalker(ObserverDispatcher dispatcher, Logger logger) {
 		mDispatcher = dispatcher;
+		mLogger = logger;
 	}
 
 	@Override
@@ -104,7 +102,7 @@ public abstract class RCFGWalker implements IRCFGWalker {
 			}
 		});
 	}
-	
+
 	protected void level(final RCFGNode node) {
 		mDispatcher.callObservers(new IRCFGVisitorDispatcher() {
 			public void dispatch(SimpleRCFGVisitor visitor) {

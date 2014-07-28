@@ -16,8 +16,6 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
  * $LastChangedRevision$
  */
 public interface ISource extends IToolchainPlugin {
-
-
 	
 	/**
 	 * check if an array of files is parseable

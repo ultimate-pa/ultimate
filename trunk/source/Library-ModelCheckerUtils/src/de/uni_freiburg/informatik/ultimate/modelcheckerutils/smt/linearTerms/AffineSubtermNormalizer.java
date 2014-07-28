@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
@@ -7,15 +9,18 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Bin
 
 /**
  * Transform all subterms that are an affine relation to positive normal form.
+ * 
  * @author Matthias Heizmann
  */
 public class AffineSubtermNormalizer extends TermTransformer {
-	
-	private final Script m_Script;
 
-	public AffineSubtermNormalizer(Script script) {
+	private final Script m_Script;
+	private final Logger mLogger;
+
+	public AffineSubtermNormalizer(Script script, Logger logger) {
 		super();
 		m_Script = script;
+		mLogger = logger;
 	}
 
 	private static boolean isBinaryNumericRelation(Term term) {
@@ -38,7 +43,7 @@ public class AffineSubtermNormalizer extends TermTransformer {
 		if (isBinaryNumericRelation(term)) {
 			AffineRelation affRel = null;
 			try {
-				affRel = new AffineRelation(term);
+				affRel = new AffineRelation(term, mLogger);
 			} catch (NotAffineException e) {
 				setResult(term);
 				return;
@@ -46,11 +51,9 @@ public class AffineSubtermNormalizer extends TermTransformer {
 			Term pnf = affRel.positiveNormalForm(m_Script);
 			setResult(pnf);
 			return;
-			}
+		}
 
 		super.convert(term);
 	}
 
-	
-	
 }

@@ -10,6 +10,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -39,8 +41,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	public AnnotateAndAsserterWithStmtOrderPrioritization(
 			SmtManager smtManager, NestedFormulas<Term, Term> nestedSSA,
 			AnnotateAndAssertCodeBlocks aaacb, 
-			TraceCheckerBenchmarkGenerator tcbg) {
-		super(smtManager, nestedSSA, aaacb, tcbg);
+			TraceCheckerBenchmarkGenerator tcbg, Logger logger) {
+		super(smtManager, nestedSSA, aaacb, tcbg,logger);
 	}
 
 	/**
@@ -217,7 +219,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 				}
 			}
 		}
-		s_Logger.info("Conjunction of SSA is " + m_Satisfiable);
+		mLogger.info("Conjunction of SSA is " + m_Satisfiable);
 	}
 	
 	/**

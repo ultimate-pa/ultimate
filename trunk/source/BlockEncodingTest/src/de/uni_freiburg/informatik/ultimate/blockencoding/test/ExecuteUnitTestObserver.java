@@ -11,9 +11,8 @@ import org.junit.runner.notification.Failure;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.util.RCFGStore;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
 /**
@@ -26,80 +25,75 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
  */
 public class ExecuteUnitTestObserver implements IUnmanagedObserver {
 
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
-			Activator.s_PLUGIN_ID);
+	private static Logger sLogger;
+	private static IUltimateServiceProvider sServices;
+
+	/**
+	 * Dirty hack for unit tests. Do not use elsewhere, will only work if there
+	 * is an instance of {@link ExecuteUnitTestObserver}
+	 * 
+	 * @return Nothing of your damn business.
+	 */
+	public static Logger getLogger() {
+		return sLogger;
+	}
+
+	/**
+	 * Dirty hack for unit tests. Do not use elsewhere, will only work if there
+	 * is an instance of {@link ExecuteUnitTestObserver}
+	 * 
+	 * @return Nothing of your damn business.
+	 */
+	public static IUltimateServiceProvider getServices() {
+		return sServices;
+	}
 
 	private IElement root;
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.access.IObserver#init()
-	 */
+	public ExecuteUnitTestObserver(IUltimateServiceProvider services) {
+		sServices = services;
+		sLogger = sServices.getLoggingService().getLogger("BlockEncodingTest");
+	}
+
 	@Override
 	public void init() {
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.access.IObserver#finish()
-	 */
 	@Override
 	public void finish() {
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.access.IObserver#getWalkerOptions()
-	 */
 	@Override
 	public WalkerOptions getWalkerOptions() {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.access.IObserver#performedChanges()
-	 */
 	@Override
 	public boolean performedChanges() {
 		return false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver#process
-	 * (de.uni_freiburg.informatik.ultimate.model.IElement)
-	 */
 	@Override
 	public boolean process(IElement root) {
 		this.root = root;
 		RCFGStore.setRCFG((RCFGNode) root);
-		Result res = JUnitCore
-				.runClasses(
-						de.uni_freiburg.informatik.ultimate.blockencoding.test.unit.TestAbstractMinimizationVisitor.class,
-						de.uni_freiburg.informatik.ultimate.blockencoding.test.unit.TestMinimizeBranchVisitor.class,
-						de.uni_freiburg.informatik.ultimate.blockencoding.test.unit.TestMinimizeLoopVisitor.class,
-						de.uni_freiburg.informatik.ultimate.blockencoding.test.unit.TestMinimizeCallReturnVisitor.class,
-						de.uni_freiburg.informatik.ultimate.blockencoding.test.unit.TestMinModelConversion.class);
+		Result res = JUnitCore.runClasses(
+				de.uni_freiburg.informatik.ultimate.blockencoding.test.unit.TestAbstractMinimizationVisitor.class,
+				de.uni_freiburg.informatik.ultimate.blockencoding.test.unit.TestMinimizeBranchVisitor.class,
+				de.uni_freiburg.informatik.ultimate.blockencoding.test.unit.TestMinimizeLoopVisitor.class,
+				de.uni_freiburg.informatik.ultimate.blockencoding.test.unit.TestMinimizeCallReturnVisitor.class,
+				de.uni_freiburg.informatik.ultimate.blockencoding.test.unit.TestMinModelConversion.class);
 		// Print out the result of the test!
 		if (res.getFailureCount() > 0) {
-			s_Logger.error("A JUnit Test Case have failed!");
+			sLogger.error("A JUnit Test Case have failed!");
 		}
-		
+
 		for (Failure failure : res.getFailures()) {
-			s_Logger.error(failure);
-			s_Logger.error(failure.getDescription());
-			s_Logger.error(failure.getException());
-			s_Logger.error(failure.getMessage());
-			s_Logger.error(failure.getTrace());
+			sLogger.error(failure);
+			sLogger.error(failure.getDescription());
+			sLogger.error(failure.getException());
+			sLogger.error(failure.getMessage());
+			sLogger.error(failure.getTrace());
 		}
 		return false;
 	}

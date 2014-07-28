@@ -2,10 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionco
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -15,8 +13,8 @@ public class ConcurrentSmtManager extends SmtManager {
 
 	
 	public ConcurrentSmtManager(Boogie2SMT boogie2smt,
-			ModifiableGlobalVariableManager modifiableGlobals) {
-		super(boogie2smt, modifiableGlobals);
+			ModifiableGlobalVariableManager modifiableGlobals, IUltimateServiceProvider services) {
+		super(boogie2smt, modifiableGlobals, services);
 		// TODO Auto-generated constructor stub
 	}
 

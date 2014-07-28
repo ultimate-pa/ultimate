@@ -2,8 +2,6 @@ package de.uni_freiburg.informatik.ultimate.irsdependencies.boogie;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.irsdependencies.Activator;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
@@ -15,11 +13,11 @@ import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 public class CriticalSectionTransformer extends BoogieTransformer {
 	
 	protected SymbolTable mSymbolTable;
-	private static Logger sLogger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID);
+	private final Logger mLogger;
 	
-	public CriticalSectionTransformer(SymbolTable symbolTable) {
+	public CriticalSectionTransformer(SymbolTable symbolTable, Logger logger) {
 		mSymbolTable = symbolTable;
+		mLogger = logger;
 	}
 
 	public boolean process(IElement root)
@@ -40,19 +38,19 @@ public class CriticalSectionTransformer extends BoogieTransformer {
 	
 	@Override
 	protected Declaration processDeclaration(Declaration decl) {
-		sLogger.debug(decl);
+		mLogger.debug(decl);
 		return super.processDeclaration(decl);
 	}
 	
 	@Override
 	protected Body processBody(Body body) {
-		sLogger.debug(body);
+		mLogger.debug(body);
 		return super.processBody(body);
 	}
 	
 	@Override
 	protected Statement processStatement(Statement statement) {
-		sLogger.debug(statement);
+		mLogger.debug(statement);
 		return super.processStatement(statement);
 	}
 

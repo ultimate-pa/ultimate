@@ -8,7 +8,7 @@ public final class ModelCheckerUtils implements IUltimatePlugin {
 	public static final String sPluginID = "ModelCheckerUtils";
 	
 	@Override
-	public String getName() {
+	public String getPluginName() {
 		return sPluginID;
 	}
 

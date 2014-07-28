@@ -4,10 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.services.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
@@ -44,9 +43,9 @@ import org.eclipse.ui.preferences.ScopedPreferenceStore;
  */
 public class LoadSourceFilesAction extends Action implements IWorkbenchAction {
 
-	private IWorkbenchWindow m_WorkbenchWindow;
+	private IWorkbenchWindow mWorkbenchWindow;
 
-	private ICore m_Core;
+	private ICore mCore;
 
 	private IController mController;
 
@@ -54,8 +53,7 @@ public class LoadSourceFilesAction extends Action implements IWorkbenchAction {
 
 	public static final String s_DIALOG_NAME = "Open Source ... ";
 
-	private static Logger s_Logger = UltimateServices.getInstance()
-			.getControllerLogger();
+	private final Logger mLogger;
 
 	/**
 	 * 
@@ -65,10 +63,11 @@ public class LoadSourceFilesAction extends Action implements IWorkbenchAction {
 	 *            the steerablecore that will take the command
 	 */
 	public LoadSourceFilesAction(final IWorkbenchWindow window,
-			final ICore icore, final IController controller) {
-		m_WorkbenchWindow = window;
-		m_Core = icore;
+			final ICore icore, final IController controller,Logger logger) {
+		mWorkbenchWindow = window;
+		mCore = icore;
 		mController = controller;
+		mLogger = logger;
 		setId(s_ID);
 		setText(s_DIALOG_NAME);
 		setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(
@@ -81,6 +80,8 @@ public class LoadSourceFilesAction extends Action implements IWorkbenchAction {
 	 * core
 	 */
 	public final void run() {
+		//TODO: Check this code, its old and uses API in wrong ways 
+		
 		ArrayList<ISource> sourceplugins = new ArrayList<ISource>();
 		IExtensionRegistry reg = Platform.getExtensionRegistry();
 
@@ -95,11 +96,11 @@ public class LoadSourceFilesAction extends Action implements IWorkbenchAction {
 				// and add to plugin ArrayList
 				sourceplugins.add(source);
 			} catch (CoreException e) {
-				s_Logger.error("Cannot create extension " + element, e);
+				mLogger.error("Cannot create extension " + element, e);
 			}
 		}
 
-		FileDialog fd = new FileDialog(m_WorkbenchWindow.getShell(), SWT.OPEN
+		FileDialog fd = new FileDialog(mWorkbenchWindow.getShell(), SWT.OPEN
 				| SWT.MULTI);
 		fd.setText(s_DIALOG_NAME);
 
@@ -112,7 +113,7 @@ public class LoadSourceFilesAction extends Action implements IWorkbenchAction {
 		for (ISource source : sourceplugins) {
 			for (String s : source.getFileTypes()) {
 				extensions.add("*." + s);
-				names.add(source.getName() + " (*." + s + ")");
+				names.add(source.getPluginName() + " (*." + s + ")");
 			}
 		}
 		
@@ -133,13 +134,14 @@ public class LoadSourceFilesAction extends Action implements IWorkbenchAction {
 			}
 		}
 
+		
 		if (fp != null) {
 			File prelude = PreludeContribution.getPreludeFile();
-			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", m_Core,
+			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", mCore,
 					mController, BasicToolchainJob.ChainMode.RUN_TOOLCHAIN,
 					new File(fp),
 					prelude == null ? null : new PreludeProvider(prelude
-							.getAbsolutePath()));
+							.getAbsolutePath(), mLogger), mLogger);
 			tcj.schedule();
 		}
 	}

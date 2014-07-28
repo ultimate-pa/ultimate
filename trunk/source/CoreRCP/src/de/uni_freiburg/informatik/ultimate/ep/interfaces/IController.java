@@ -3,7 +3,9 @@ package de.uni_freiburg.informatik.ultimate.ep.interfaces;
 import java.util.Collection;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.services.LoggingService;
 
 /**
  * This is the interface that all plugins providing a user interface to Ultimate
@@ -22,9 +24,12 @@ public interface IController extends IUltimatePlugin {
 	 * @param core
 	 *            The active {@link UltimateCore} instance that can be used by
 	 *            the controller to start various Ultimate functions.
+	 * @param loggingService
+	 *            A {@link LoggingService} instance so that the controller has
+	 *            access to the logging subsystem
 	 * @return
 	 */
-	int init(ICore core);
+	int init(ICore core, ILoggingService loggingService);
 
 	/**
 	 * Here the controller tells the caller what parser to use. Usually, the
@@ -45,7 +50,7 @@ public interface IController extends IUltimatePlugin {
 	 *            available tools
 	 * @return the desired toolchain as instance of Toolchain
 	 */
-	Toolchain selectTools(List<ITool> tools);
+	ToolchainData selectTools(List<ITool> tools);
 
 	/**
 	 * Here the controller tells the caller (usually the core) what model out of

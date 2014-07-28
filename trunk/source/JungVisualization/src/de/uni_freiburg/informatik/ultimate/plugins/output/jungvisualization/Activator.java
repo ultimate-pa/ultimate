@@ -12,7 +12,7 @@ import org.osgi.framework.BundleContext;
  */
 public class Activator extends Plugin {
 
-	public static final String PLUGIN_ID = "JungVisualization";
+	public static final String PLUGIN_ID = JungVisualization.class.getPackage().getName();
 	
 	// The shared instance
 	private static Activator plugin;

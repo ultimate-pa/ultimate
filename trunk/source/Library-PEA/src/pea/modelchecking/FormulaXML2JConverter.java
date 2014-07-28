@@ -28,9 +28,6 @@ package pea.modelchecking;
 
 import java.util.ArrayList;
 
-import net.sourceforge.czt.parser.util.ParseException;
-import net.sourceforge.czt.z.util.ZString;
-
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.w3c.dom.Element;

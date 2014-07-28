@@ -1,8 +1,6 @@
 package pea.reqCheck;
 
 import java.util.ArrayList;
-import java.util.List;
-
 import pea.*;
 import pea.modelchecking.*;
 
@@ -174,12 +172,12 @@ public class PatternToPEA {
     
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //Existence Pattern
-    //muß noch für 3scopes erweitert werden
+    //muï¿½ noch fï¿½r 3scopes erweitert werden
     //Scope Globally
     public PhaseEventAutomata existencePattern(CDD P, CDD Q, CDD R, String scope) {
     	PhaseEventAutomata ctA;
     	if (scope.contains("Globally")){
-    		System.out.println("Existence-Globally: Hier muß die Methode noch erweitert werden");
+    		System.out.println("Existence-Globally: Hier muï¿½ die Methode noch erweitert werden");
 		//CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 			//    new CounterTrace.DCPhase(P.negate()),
 			    //new CounterTrace.DCPhase(),
@@ -200,11 +198,11 @@ public class PatternToPEA {
     		}
     	else
     	if (scope.contains("until")){
-    		System.out.println("Existence-Until: Hier muß die Methode noch erweitert werden");
+    		System.out.println("Existence-Until: Hier muï¿½ die Methode noch erweitert werden");
         	}
     	else	
     	if (scope.contains("After")){
-    		System.out.println("Existence-After: Hier muß die Methode noch erweitert werden");
+    		System.out.println("Existence-After: Hier muï¿½ die Methode noch erweitert werden");
     	}
     	else
     		if(scope.contains("Between")){
@@ -743,7 +741,7 @@ public class PatternToPEA {
     //in Entwicklung
     public PhaseEventAutomata maxDurationPattern(CDD P, CDD Q, CDD R, int timebound, String scope) {
     	PhaseEventAutomata ctA, ctA2;
-    	//mit der auskommentierten Zeile sind wir näher an der Semantik von Konrad/Cheng, aber in der Benutzung ist 
+    	//mit der auskommentierten Zeile sind wir nï¿½her an der Semantik von Konrad/Cheng, aber in der Benutzung ist 
     	//diese Version die einfachere
     	if (scope.contains("Globally")){
     	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
@@ -825,7 +823,7 @@ public class PatternToPEA {
     
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //bounded Response Pattern
-    //(außer between) validiert
+    //(auï¿½er between) validiert
     public PhaseEventAutomata bndResponsePattern(CDD P, CDD Q, CDD R, CDD S, int timebound, String scope) {
     	PhaseEventAutomata ctA;
     	if (scope.contains("Globally")){
@@ -987,7 +985,7 @@ public class PatternToPEA {
     public PhaseEventAutomata responsePattern(CDD P, CDD Q, CDD R, CDD S, String scope) {
     	PhaseEventAutomata ctA;
     	if (scope.contains("Globally")){
-    		//hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des intervalls gelten
+    		//hier brauchen wir einen anderen Mechanismus denn S.negate mï¿½ï¿½te bis zum ende des intervalls gelten
     		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
      	    	   new CounterTrace.DCPhase()
      	    	});
@@ -1009,7 +1007,7 @@ public class PatternToPEA {
     		}
     	else
     	if (scope.contains("until")){
-    		//hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des intervalls gelten
+    		//hier brauchen wir einen anderen Mechanismus denn S.negate mï¿½ï¿½te bis zum ende des intervalls gelten
     		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 					new CounterTrace.DCPhase(),
     	    	});    	
@@ -1019,7 +1017,7 @@ public class PatternToPEA {
         	}
     	else	
     	if (scope.contains("After")){
-    		//hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des intervalls gelten
+    		//hier brauchen wir einen anderen Mechanismus denn S.negate mï¿½ï¿½te bis zum ende des intervalls gelten
     		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
         			new CounterTrace.DCPhase()
         		 });          		 
@@ -1051,7 +1049,7 @@ public class PatternToPEA {
     
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //bounded Invariance Pattern
-    //(außer between) validiert
+    //(auï¿½er between) validiert
     public PhaseEventAutomata bndInvariancePattern(CDD P, CDD Q, CDD R, CDD S, int timebound, String scope) {
     	PhaseEventAutomata ctA, ctA2;
     	if (scope.contains("Globally")){
@@ -1249,16 +1247,16 @@ public class PatternToPEA {
 	CDD R = BooleanDecision.create("R");
 	CDD Q = BooleanDecision.create("Q");		
     
-	//Zweimal sich wiedersprechende BoundedInvariance Anforderungen; Der resultierende Automat ist nur für den Fall 
-	// G(not(P)) erfüllbar;
+	//Zweimal sich wiedersprechende BoundedInvariance Anforderungen; Der resultierende Automat ist nur fï¿½r den Fall 
+	// G(not(P)) erfï¿½llbar;
     //ct1A = bndInvariance(P, S,10);
     //ct2A = bndInvariance(P, S.negate(),10);
     //ctParallel = ct1A.parallel(ct2A);
     //ctParallel.dump();
     
 	//Zwei sich widersprechende Anforderungen 
-	//P--> neg(S) gilt für mindestens 11 time units
-	//P--> S gilt in höchstens 10 time units
+	//P--> neg(S) gilt fï¿½r mindestens 11 time units
+	//P--> S gilt in hï¿½chstens 10 time units
 	ct1A = bndInvariancePattern(P,Q,R,S.negate(),6, "Globally");   
     ct2A = bndResponsePattern(P,Q,R,S,10, "Globally");
     //ct3A = universalityPattern(P,Q,R,"Globally");

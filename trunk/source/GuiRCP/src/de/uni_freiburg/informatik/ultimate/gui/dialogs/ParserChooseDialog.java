@@ -84,7 +84,7 @@ public class ParserChooseDialog extends Dialog {
 		});
 		combo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1));
 		for ( ISource parser : parsers) {
-			String key = parser.getName();
+			String key = parser.getPluginName();
 			combo.add(key);
 			combo.setData(key, parser);
 		}

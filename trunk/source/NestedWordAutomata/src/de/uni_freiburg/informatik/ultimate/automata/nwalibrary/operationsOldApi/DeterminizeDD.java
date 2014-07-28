@@ -34,9 +34,9 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
@@ -47,14 +47,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
 public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE> 
 							  implements IOperation<LETTER,STATE>  {
 
 	protected static Logger s_Logger = 
-		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+		NestedWordAutomata.getLogger();
 	
 	protected INestedWordAutomaton<LETTER,STATE> m_Operand;
 	protected IStateDeterminizer<LETTER,STATE> stateDeterminizer;

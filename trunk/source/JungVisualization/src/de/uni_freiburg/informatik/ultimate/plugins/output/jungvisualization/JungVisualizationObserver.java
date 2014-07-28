@@ -8,7 +8,6 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.structure.IVisualizable;
 import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
@@ -19,7 +18,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.grap
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.graph.GraphProperties;
 
 import org.apache.log4j.Logger;
-
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -45,12 +43,12 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 	private Layout<VisualizationNode, VisualizationEdge> mGraphLayout;
 	private VisualizationViewer<VisualizationNode, VisualizationEdge> mVisualizationViewer;
 
-	private Logger mLogger;
+	private final Logger mLogger;
 
 	private boolean mOpenWindow;
 
-	public JungVisualizationObserver() {
-		mLogger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+	public JungVisualizationObserver(Logger logger) {
+		mLogger = logger;
 		mGraph = new DirectedOrderedSparseMultigraph<VisualizationNode, VisualizationEdge>();
 		mGraphLayout = new FRLayout2<VisualizationNode, VisualizationEdge>(mGraph);
 		mVisualizationViewer = new VisualizationViewer<VisualizationNode, VisualizationEdge>(mGraphLayout);

@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
@@ -27,6 +27,11 @@ public class ModuleDecompositionBenchmark implements ICsvProviderProvider<Double
 	private Boolean m_HasRemainderModule;
 	private int m_RemainderModuleLocations;
 	private boolean m_RemainderModuleNonterminationKnown;
+	private IBacktranslationService mBacktranslationService;
+	
+	public ModuleDecompositionBenchmark(IBacktranslationService service) {
+		mBacktranslationService = service;
+	}
 	
 	
 	void reportTrivialModule(Integer iteration, Integer size) {
@@ -59,7 +64,7 @@ public class ModuleDecompositionBenchmark implements ICsvProviderProvider<Double
 	
 	private String prettyPrintRankingFunction(TerminationArgumentResult<RcfgElement> tar) {
 		List<ITranslator<?, ?, ?, ?>> translatorSequence = 
-				UltimateServices.getInstance().getTranslatorSequence();
+				mBacktranslationService.getTranslatorSequence();
 		return tar.getRankingFunctionDescription() + " ranking function " + 
 						ResultUtil.backtranslationWorkaround(
 								translatorSequence, tar.getRankingFunction());

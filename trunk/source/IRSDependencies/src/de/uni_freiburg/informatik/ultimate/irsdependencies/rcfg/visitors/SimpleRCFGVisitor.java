@@ -1,12 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors;
 
-
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.irsdependencies.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
@@ -18,9 +15,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
  */
 public abstract class SimpleRCFGVisitor implements IObserver {
 
-	protected static Logger sLogger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID);
-	
+	protected final Logger mLogger;
+
+	public SimpleRCFGVisitor(Logger logger) {
+		mLogger = logger;
+	}
+
 	public void endOfTrace() {
 	}
 

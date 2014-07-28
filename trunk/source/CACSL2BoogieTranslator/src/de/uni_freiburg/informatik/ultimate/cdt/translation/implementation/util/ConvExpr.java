@@ -1,19 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;

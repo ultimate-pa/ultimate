@@ -188,10 +188,10 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_PLUGIN_DETAIL_PREF = "Log levels for specific plugins";
 
 	public static final String DEFAULT_VALUE_ROOT_PREF = "DEBUG";
-	public static final String DEFAULT_VALUE_TOOLS_PREF = "WARN";
-	public static final String DEFAULT_VALUE_CORE_PREF = "INFO";
-	public static final String DEFAULT_VALUE_CONTROLLER_PREF = "INFO";
-	public static final String DEFAULT_VALUE_PLUGINS_PREF = "INFO";
+	public static final String DEFAULT_VALUE_TOOLS_PREF = "DEBUG";
+	public static final String DEFAULT_VALUE_CORE_PREF = "DEBUG";
+	public static final String DEFAULT_VALUE_CONTROLLER_PREF = "DEBUG";
+	public static final String DEFAULT_VALUE_PLUGINS_PREF = "DEBUG";
 	
 	public static final String VALUE_FATAL_LOGGING_PREF = "FATAL";
 	public static final String VALUE_ERROR_LOGGING_PREF = "ERROR";

@@ -8,19 +8,16 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.access.IManagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 public abstract class BaseWalker implements IWalker {
 
-	protected static Logger sLogger = UltimateServices.getInstance().getLogger(
-			Activator.s_PLUGIN_ID);
+	protected Logger mLogger;
 	protected List<IObserver> mObservers;
 
-	protected BaseWalker() {
+	protected BaseWalker(Logger logger) {
 		mObservers = new LinkedList<IObserver>();
-
+		mLogger = logger;
 	}
 
 	@Override
@@ -66,7 +63,7 @@ public abstract class BaseWalker implements IWalker {
 		} else if (observer instanceof IManagedObserver) {
 			runObserver(root, (IManagedObserver) observer);
 		} else {
-			sLogger.error("Illegal observer type supplied, aborting...");
+			mLogger.error("Illegal observer type supplied, aborting...");
 		}
 	}
 	

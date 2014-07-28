@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -11,20 +12,24 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 public class Dnf extends Xnf {
 	
-	public Dnf(Script script) {
-		super(script);
+	public Dnf(Script script, IUltimateServiceProvider services) {
+		super(script, services);
 	}
 	
 	
 	@Override
-	protected NnfTransformerHelper getNnfTransformerHelper() {
-		return new DnfTransformerHelper();
+	protected NnfTransformerHelper getNnfTransformerHelper(IUltimateServiceProvider services) {
+		return new DnfTransformerHelper(services);
 	}
 
 
 
 	protected class DnfTransformerHelper extends XnfTransformerHelper {
 		
+		protected DnfTransformerHelper(IUltimateServiceProvider services) {
+			super(services);
+		}
+
 		@Override
 		public String innerConnectiveSymbol() {
 			return "and";

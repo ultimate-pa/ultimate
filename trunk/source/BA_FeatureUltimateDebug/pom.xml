@@ -12,7 +12,6 @@
 
 	<groupId>BA_FeatureUltimateDebug</groupId>
 	<artifactId>BA_FeatureUltimateDebug</artifactId>
-	<version>0.0.1</version>
 	<packaging>eclipse-feature</packaging>
 
 	<build>

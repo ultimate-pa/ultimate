@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.LTL2aut.ast;
 
-import java.util.List;
-
 public class NeverStatement extends AstNode {
 
 	public NeverStatement() {

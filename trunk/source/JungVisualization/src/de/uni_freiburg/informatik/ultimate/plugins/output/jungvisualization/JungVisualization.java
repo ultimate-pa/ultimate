@@ -3,22 +3,22 @@ package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceInitializer;
 
-
 public class JungVisualization implements IOutput {
-	
+
 	public final static String PLUGIN_ID = Activator.PLUGIN_ID;
 
-	private IObserver mobserver;
-	
-	
-	
-	
+	private Logger mLogger;
+
 	@Override
 	public List<String> getDesiredToolID() {
 		// Never called
@@ -27,7 +27,7 @@ public class JungVisualization implements IOutput {
 
 	@Override
 	public List<IObserver> getObservers() {
-		return Collections.singletonList(mobserver);
+		return Collections.singletonList((IObserver) new JungVisualizationObserver(mLogger));
 	}
 
 	@Override
@@ -41,32 +41,18 @@ public class JungVisualization implements IOutput {
 		// Do not need this information
 	}
 
-
-	/*
-	 * (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#getName()
-	 */
 	@Override
-	public String getName() {
+	public String getPluginName() {
 		return "Jung Graph Visualization";
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#getPluginID()
-	 */
 	@Override
 	public String getPluginID() {
 		return PLUGIN_ID;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#init(java.lang.Object)
-	 */
 	@Override
 	public int init() {
-		mobserver = new JungVisualizationObserver();
 		return 0;
 	}
 
@@ -75,10 +61,20 @@ public class JungVisualization implements IOutput {
 		return true;
 	}
 
-
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
 		return new JungPreferenceInitializer();
+	}
+
+	@Override
+	public void setToolchainStorage(IToolchainStorage services) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void setServices(IUltimateServiceProvider services) {
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 }

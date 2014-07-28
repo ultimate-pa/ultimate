@@ -11,13 +11,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
@@ -199,8 +196,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	/**
 	 * Output to console
 	 */
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
-			Activator.s_PLUGIN_ID);
+	private final Logger mLogger;
 
 	/**
 	 * Root of the newly created AST
@@ -285,6 +281,10 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	 */
 	private int procLabelCounter = 0;
 
+	public DSITransformerObserver(Logger logger){
+		 mLogger = logger;
+	}
+	
 	// @Override
 	public void finish() {
 	}
@@ -304,7 +304,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 
 	// @Override
 	public void init() {
-		s_Logger.info("Initializing DSITransformer...");
+		mLogger.info("Initializing DSITransformer...");
 		procedures = new HashMap<String, ProcedureContainer>();
 
 		// Retrieve settings from the Preferences Page
@@ -325,24 +325,24 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				PreferenceInitializer.LABEL_LEAVEPROCEDURES,
 				PreferenceInitializer.VALUE_LEAVEPROCEDURES);
 
-		s_Logger.info("Generating procedure '" + structureProcID + "'.");
+		mLogger.info("Generating procedure '" + structureProcID + "'.");
 
 		if (!allFunctions) {
-			s_Logger.info("Transforming for Data Structure '" + structureType
+			mLogger.info("Transforming for Data Structure '" + structureType
 					+ "'.");
 
 			String willTrim = "";
 			if (!trimAfterWrap)
 				willTrim = "NOT";
-			s_Logger.info("Will " + willTrim + "trim procedures after $wrap.");
+			mLogger.info("Will " + willTrim + "trim procedures after $wrap.");
 
 			String willLeave = "";
 			if (leaveOriginalProcedures)
 				willLeave = "NOT";
-			s_Logger.info("Will " + willLeave
+			mLogger.info("Will " + willLeave
 					+ "remove original procedure declarations.");
 		} else
-			s_Logger.info("Will process ALL procedures.");
+			mLogger.info("Will process ALL procedures.");
 	}
 
 	@Override
@@ -355,11 +355,11 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	 */
 	// @Override
 	public boolean process(IElement root) {
-		s_Logger.info("Scanning AST...");
+		mLogger.info("Scanning AST...");
 		if (root instanceof Unit) {
 
 			Unit unit = (Unit) root;
-			s_Logger.info("Unit found, processing declarations...");
+			mLogger.info("Unit found, processing declarations...");
 			Unit newUnit = new Unit(null, null);
 			this.root = newUnit;
 			List<Declaration> newDeclarations = new ArrayList<Declaration>();
@@ -386,14 +386,14 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 						if (proc.getBody() == null) {
 							pCont.declaration = (Procedure) processDeclaration(proc);
 
-							s_Logger.debug("Found procedure declaration: "
+							mLogger.debug("Found procedure declaration: "
 									+ proc.getIdentifier());
 						} else {
 							pCont.implementation = (Procedure) processDeclaration(proc);
 							if (pCont.declaration == null)
 								pCont.declaration = pCont.implementation;
 
-							s_Logger.debug("Found procedure implementation: "
+							mLogger.debug("Found procedure implementation: "
 									+ proc.getIdentifier());
 						}
 					}
@@ -421,7 +421,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 			newUnit.setDeclarations(newDeclarations
 					.toArray(new Declaration[newDeclarations.size()]));
 
-			s_Logger.info("Processed " + newUnit.getDeclarations().length
+			mLogger.info("Processed " + newUnit.getDeclarations().length
 					+ " declarations.");
 			return false;
 		}
@@ -454,7 +454,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 							e.getDeclarationInformation());
 					ModelUtils.mergeAnnotations(expr, result);
 
-					s_Logger.debug("Renamed in expression: "
+					mLogger.debug("Renamed in expression: "
 							+ procLocals.get(e.getIdentifier()));
 					return result;
 				}
@@ -739,7 +739,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	 */
 	private Procedure processProcedures() {
 
-		s_Logger.debug("Generating new procedure...");
+		mLogger.debug("Generating new procedure...");
 		// List of the local Variable Declarations
 		List<VariableDeclaration> procVars = new ArrayList<VariableDeclaration>();
 		// List of the newly created procedure's statements
@@ -973,7 +973,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				if (procLocals.containsKey(ids[i])) {
 					newids[i] = procLocals.get(ids[i]);
 
-					s_Logger.debug("Renamed in declaration: " + newids[i]);
+					mLogger.debug("Renamed in declaration: " + newids[i]);
 					changed = true;
 				} else
 					newids[i] = ids[i];

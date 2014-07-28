@@ -6,34 +6,31 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 public class CookiefyPlugin implements IGenerator {
-	
+
 	private static final String s_PLUGIN_NAME = "Cookiefy";
 	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
 	private CookiefyAlgorithm m_CookiefyAlgorithm;
 	private GraphType m_InputType;
-	
-	public static Logger logger =
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
-	
+	private Logger mLogger;
+
 	@Override
 	public GraphType getOutputDefinition() {
-		try 
-		{
+		try {
 			return new GraphType(getPluginID(), GraphType.Type.AST, m_InputType.getFileNames());
-		}
-		catch(Exception e) {
-			return null;	
+		} catch (Exception e) {
+			return null;
 		}
 	}
-	
+
 	@Override
 	public IElement getModel() {
 		return this.m_CookiefyAlgorithm.getRoot();
@@ -44,11 +41,9 @@ public class CookiefyPlugin implements IGenerator {
 		return false;
 	}
 
-
-
 	@Override
 	public QueryKeyword getQueryKeyword() {
-		return  QueryKeyword.LAST;
+		return QueryKeyword.LAST;
 	}
 
 	@Override
@@ -65,24 +60,25 @@ public class CookiefyPlugin implements IGenerator {
 	@Override
 	public List<IObserver> getObservers() {
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
-		//Attention: Every observer here operates on the input
-		//model given to the plugin - not the resulting model
-		//of the Cookiefy algorithm, even if the observer follows the
-		//m_CookiefyAlgorithm observer!
-		//If you want to print the AST use the BoogiePrinter in the
-		//toolchain.
+		// Attention: Every observer here operates on the input
+		// model given to the plugin - not the resulting model
+		// of the Cookiefy algorithm, even if the observer follows the
+		// m_CookiefyAlgorithm observer!
+		// If you want to print the AST use the BoogiePrinter in the
+		// toolchain.
+		m_CookiefyAlgorithm = new CookiefyAlgorithm(mLogger);
 		observers.add(m_CookiefyAlgorithm);
 		return observers;
 	}
 
 	@Override
 	public int init() {
-		m_CookiefyAlgorithm = new CookiefyAlgorithm();
+
 		return 0;
 	}
 
 	@Override
-	public String getName() {
+	public String getPluginName() {
 		return s_PLUGIN_NAME;
 	}
 
@@ -95,6 +91,18 @@ public class CookiefyPlugin implements IGenerator {
 	public UltimatePreferenceInitializer getPreferences() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public void setToolchainStorage(IToolchainStorage services) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void setServices(IUltimateServiceProvider services) {
+		mLogger = services.getLoggingService().getLogger(s_PLUGIN_ID);
+
 	}
 
 }

@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
 /**
@@ -72,7 +71,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		public enum Labeling { NUMERATE, TOSTRING, QUOTED };
 		
 		private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+			NestedWordAutomata.getLogger();
 		
 		/**
 		 * Print hash modulo this number to get shorter identifiers.

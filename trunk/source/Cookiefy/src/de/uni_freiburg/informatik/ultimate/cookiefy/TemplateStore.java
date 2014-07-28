@@ -9,7 +9,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.cookiefy.ContextPath.ContextPathAlphaNode;
 import de.uni_freiburg.informatik.ultimate.cookiefy.ContextPath.ContextPathNode;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -50,8 +49,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
  */
 public class TemplateStore {
 
-	protected static Logger logger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID);
+	protected final Logger mLogger;
 
 	private String filename = "Cook Annotation";
 
@@ -78,17 +76,12 @@ public class TemplateStore {
 	 * type iStack = [int][int]int;
 	 * </code>
 	 */
-	public TypeDeclaration iStackType = new TypeDeclaration(
-			LocationProvider.getLocation(), new Attribute[] {}, false,
-			"iStack", new String[] {}, new ArrayType(
-					LocationProvider.getLocation(), new String[] {},
-					new ASTType[] { new PrimitiveType(LocationProvider
-							.getLocation(), "int") },
-					new ArrayType(LocationProvider.getLocation(),
-							new String[] {}, new ASTType[] { new PrimitiveType(
-									LocationProvider.getLocation(), "int") },
-							new PrimitiveType(LocationProvider.getLocation(),
-									"int"))));
+	public TypeDeclaration iStackType = new TypeDeclaration(LocationProvider.getLocation(), new Attribute[] {}, false,
+			"iStack", new String[] {}, new ArrayType(LocationProvider.getLocation(), new String[] {},
+					new ASTType[] { new PrimitiveType(LocationProvider.getLocation(), "int") }, new ArrayType(
+							LocationProvider.getLocation(), new String[] {}, new ASTType[] { new PrimitiveType(
+									LocationProvider.getLocation(), "int") }, new PrimitiveType(
+									LocationProvider.getLocation(), "int"))));
 
 	/**
 	 * AST Prototype for the type definition of the bool stack.
@@ -97,17 +90,12 @@ public class TemplateStore {
 	 * type bStack = [int][int]bool;
 	 * </code>
 	 */
-	public TypeDeclaration bStackType = new TypeDeclaration(
-			LocationProvider.getLocation(), new Attribute[] {}, false,
-			"bStack", new String[] {}, new ArrayType(
-					LocationProvider.getLocation(), new String[] {},
-					new ASTType[] { new PrimitiveType(LocationProvider
-							.getLocation(), "int") },
-					new ArrayType(LocationProvider.getLocation(),
-							new String[] {}, new ASTType[] { new PrimitiveType(
-									LocationProvider.getLocation(), "int") },
-							new PrimitiveType(LocationProvider.getLocation(),
-									"bool"))));
+	public TypeDeclaration bStackType = new TypeDeclaration(LocationProvider.getLocation(), new Attribute[] {}, false,
+			"bStack", new String[] {}, new ArrayType(LocationProvider.getLocation(), new String[] {},
+					new ASTType[] { new PrimitiveType(LocationProvider.getLocation(), "int") }, new ArrayType(
+							LocationProvider.getLocation(), new String[] {}, new ASTType[] { new PrimitiveType(
+									LocationProvider.getLocation(), "int") }, new PrimitiveType(
+									LocationProvider.getLocation(), "bool"))));
 
 	/**
 	 * AST Prototype for the type definition of the integer array.
@@ -116,13 +104,10 @@ public class TemplateStore {
 	 * type iArray = [int]int;
 	 * </code>
 	 */
-	public TypeDeclaration iArrayType = new TypeDeclaration(
-			LocationProvider.getLocation(), new Attribute[] {}, false,
-			"iArray", new String[] {}, new ArrayType(
-					LocationProvider.getLocation(), new String[] {},
-					new ASTType[] { new PrimitiveType(LocationProvider
-							.getLocation(), "int") },
-					new PrimitiveType(LocationProvider.getLocation(), "int")));
+	public TypeDeclaration iArrayType = new TypeDeclaration(LocationProvider.getLocation(), new Attribute[] {}, false,
+			"iArray", new String[] {}, new ArrayType(LocationProvider.getLocation(), new String[] {},
+					new ASTType[] { new PrimitiveType(LocationProvider.getLocation(), "int") }, new PrimitiveType(
+							LocationProvider.getLocation(), "int")));
 
 	/**
 	 * AST Prototype for the type definition of the stacks.
@@ -131,27 +116,18 @@ public class TemplateStore {
 	 * var intStack : iStack, boolStack : bStack, idStack : iArray, ppStack : iArray, sp : int;
 	 * </code>
 	 */
-	private VariableDeclaration stack = new VariableDeclaration(
-			LocationProvider.getLocation(), new Attribute[] {}, new VarList[] {
-					new VarList(LocationProvider.getLocation(),
-							new String[] { "intStack" }, new NamedType(
-									LocationProvider.getLocation(), "iStack",
-									new ASTType[] {})),
-					new VarList(LocationProvider.getLocation(),
-							new String[] { "boolStack" }, new NamedType(
-									LocationProvider.getLocation(), "bStack",
-									new ASTType[] {})),
-					new VarList(LocationProvider.getLocation(),
-							new String[] { "idStack" }, new NamedType(
-									LocationProvider.getLocation(), "iArray",
-									new ASTType[] {})),
-					new VarList(LocationProvider.getLocation(),
-							new String[] { "ppStack" }, new NamedType(
-									LocationProvider.getLocation(), "iArray",
-									new ASTType[] {})),
-					new VarList(LocationProvider.getLocation(),
-							new String[] { "sp" }, new PrimitiveType(
-									LocationProvider.getLocation(), "int")) });
+	private VariableDeclaration stack = new VariableDeclaration(LocationProvider.getLocation(), new Attribute[] {},
+			new VarList[] {
+					new VarList(LocationProvider.getLocation(), new String[] { "intStack" }, new NamedType(
+							LocationProvider.getLocation(), "iStack", new ASTType[] {})),
+					new VarList(LocationProvider.getLocation(), new String[] { "boolStack" }, new NamedType(
+							LocationProvider.getLocation(), "bStack", new ASTType[] {})),
+					new VarList(LocationProvider.getLocation(), new String[] { "idStack" }, new NamedType(
+							LocationProvider.getLocation(), "iArray", new ASTType[] {})),
+					new VarList(LocationProvider.getLocation(), new String[] { "ppStack" }, new NamedType(
+							LocationProvider.getLocation(), "iArray", new ASTType[] {})),
+					new VarList(LocationProvider.getLocation(), new String[] { "sp" }, new PrimitiveType(
+							LocationProvider.getLocation(), "int")) });
 
 	/**
 	 * AST Prototype for the type definition of the stacks.
@@ -160,9 +136,8 @@ public class TemplateStore {
 	 * pp:int
 	 * </code>
 	 */
-	private VarList pp = new VarList(LocationProvider.getLocation(),
-			new String[] { "pp" }, new PrimitiveType(
-					LocationProvider.getLocation(), "int"));
+	private VarList pp = new VarList(LocationProvider.getLocation(), new String[] { "pp" }, new PrimitiveType(
+			LocationProvider.getLocation(), "int"));
 
 	/**
 	 * Prefix for cookiefy generated procedure arguments
@@ -181,7 +156,8 @@ public class TemplateStore {
 	 * @param u
 	 *            unit generated for
 	 */
-	public TemplateStore(Program program) {
+	public TemplateStore(Program program, Logger logger) {
+		mLogger = logger;
 		InputProgram = program;
 		this.setGlobalStateVars();
 	}
@@ -198,8 +174,7 @@ public class TemplateStore {
 	 *            program point
 	 * @return AST fragment
 	 */
-	public Statement[] programFragmentTemplate(ContextPathNode cp, Procedure p,
-			int pp) {
+	public Statement[] programFragmentTemplate(ContextPathNode cp, Procedure p, int pp) {
 		switch (cp.getFormulaType()) {
 		case Alpha:
 			Expression expr = ((ContextPathAlphaNode) cp).getExpression();
@@ -213,7 +188,7 @@ public class TemplateStore {
 		case AW:
 			return AWTemplate(cp.getPath(), p, pp, pp);
 		default:
-			logger.error("No template found for this property operator!");
+			mLogger.error("No template found for this property operator!");
 			return new Statement[0];
 		}
 	}
@@ -237,25 +212,17 @@ public class TemplateStore {
 	 * }
 	 * </code>
 	 */
-	private Statement[] andTemplate(String contextPath, Procedure p,
-			int currentLine) {
-		VariableLHS[] ret = new VariableLHS[] {
-				new VariableLHS(LocationProvider.getLocation(), "ret")
-		};
+	private Statement[] andTemplate(String contextPath, Procedure p, int currentLine) {
+		VariableLHS[] ret = new VariableLHS[] { new VariableLHS(LocationProvider.getLocation(), "ret") };
 		// left branch call
-		Statement[] lcallL = new Statement[] { new CallStatement(
-				LocationProvider.getLocation(), false, ret,
-				this.methodeNameGen(p, contextPath, "L"),
-				this.concatToEncArgs(p)) };
+		Statement[] lcallL = new Statement[] { new CallStatement(LocationProvider.getLocation(), false, ret,
+				this.methodeNameGen(p, contextPath, "L"), this.concatToEncArgs(p)) };
 		// right branch call
-		Statement[] lcallR = new Statement[] { new CallStatement(
-				LocationProvider.getLocation(), false, ret,
-				this.methodeNameGen(p, contextPath, "R"),
-				this.concatToEncArgs(p)) };
+		Statement[] lcallR = new Statement[] { new CallStatement(LocationProvider.getLocation(), false, ret,
+				this.methodeNameGen(p, contextPath, "R"), this.concatToEncArgs(p)) };
 
-		Statement[] andAST = new Statement[] { new IfStatement(
-				LocationProvider.getLocation(), new WildcardExpression(
-						LocationProvider.getLocation()), lcallL, lcallR) };
+		Statement[] andAST = new Statement[] { new IfStatement(LocationProvider.getLocation(), new WildcardExpression(
+				LocationProvider.getLocation()), lcallL, lcallR) };
 
 		return andAST;
 	}
@@ -281,21 +248,17 @@ public class TemplateStore {
 	 * }
 	 * </code>
 	 */
-	private Statement[] orTemplate(String contextPath, Procedure p,
-			int currentLine) {
+	private Statement[] orTemplate(String contextPath, Procedure p, int currentLine) {
 		Statement[] orAST = new Statement[2];
 		// left call first
 		orAST[0] = this.lcall(contextPath, p, currentLine, "L");
 		// right call
-		Statement[] lcallR = new Statement[] {
-				this.lcall(contextPath, p, currentLine, "R"),
+		Statement[] lcallR = new Statement[] { this.lcall(contextPath, p, currentLine, "R"),
 				new ReturnStatement(LocationProvider.getLocation()) };
 		// if left then right
-		orAST[1] = new IfStatement(
-				LocationProvider.getLocation(),
-				new IdentifierExpression(LocationProvider.getLocation(), "ret"),
-				new Statement[] { new ReturnStatement(LocationProvider
-						.getLocation()) }, lcallR);
+		orAST[1] = new IfStatement(LocationProvider.getLocation(), new IdentifierExpression(
+				LocationProvider.getLocation(), "ret"), new Statement[] { new ReturnStatement(
+				LocationProvider.getLocation()) }, lcallR);
 
 		return orAST;
 	}
@@ -317,26 +280,17 @@ public class TemplateStore {
 	 * }
 	 * </code>
 	 */
-	private Statement[] AGTemplate(String contextPath, Procedure p,
-			int currentLine, int pp) {
+	private Statement[] AGTemplate(String contextPath, Procedure p, int currentLine, int pp) {
 		Statement[] agAST = new Statement[3];
 		// nondeterministic if break
 		agAST[0] = agAST[0] = this.nonDetRet(contextPath, p, currentLine);
 		// left hand call
-		agAST[1] = this.lcall(
-				contextPath,
-				p,
-				currentLine,
-				"L",
-				new IntegerLiteral(LocationProvider.getLocation(), Integer
-						.toString(pp)));
+		agAST[1] = this.lcall(contextPath, p, currentLine, "L", new IntegerLiteral(LocationProvider.getLocation(),
+				Integer.toString(pp)));
 		// return if not true
-		agAST[2] = new IfStatement(LocationProvider.getLocation(),
-				new UnaryExpression(LocationProvider.getLocation(),
-						Operator.LOGICNEG, new IdentifierExpression(
-								LocationProvider.getLocation(), "ret")),
-				new Statement[] { new ReturnStatement(LocationProvider
-						.getLocation()) }, new Statement[0]);
+		agAST[2] = new IfStatement(LocationProvider.getLocation(), new UnaryExpression(LocationProvider.getLocation(),
+				Operator.LOGICNEG, new IdentifierExpression(LocationProvider.getLocation(), "ret")),
+				new Statement[] { new ReturnStatement(LocationProvider.getLocation()) }, new Statement[0]);
 
 		return agAST;
 	}
@@ -359,42 +313,29 @@ public class TemplateStore {
 	 * }
 	 * </code>
 	 */
-	private Statement[] AWTemplate(String contextPath, Procedure p,
-			int currentLine, int pp) {
+	private Statement[] AWTemplate(String contextPath, Procedure p, int currentLine, int pp) {
 		Statement[] agAST = new Statement[3];
 		// nondeterministic if break
 		agAST[0] = this.nonDetRet(contextPath, p, currentLine);
 		// left hand call
-		agAST[1] = this.lcall(
-				contextPath,
-				p,
-				currentLine,
-				"L",
-				new IntegerLiteral(LocationProvider.getLocation(), Integer
-						.toString(pp)));
+		agAST[1] = this.lcall(contextPath, p, currentLine, "L", new IntegerLiteral(LocationProvider.getLocation(),
+				Integer.toString(pp)));
 		// return if not true
-		agAST[2] = new IfStatement(LocationProvider.getLocation(),
-				new UnaryExpression(LocationProvider.getLocation(),
-						Operator.LOGICNEG, new IdentifierExpression(
-								LocationProvider.getLocation(), "ret")),
-				new Statement[] {
-						this.lcall(
-								contextPath,
-								p,
-								currentLine,
-								"R",
-								new IntegerLiteral(LocationProvider
-										.getLocation(), Integer.toString(pp))),
-						new ReturnStatement(LocationProvider.getLocation()) },
-				new Statement[0]);
+		agAST[2] = new IfStatement(LocationProvider.getLocation(), new UnaryExpression(LocationProvider.getLocation(),
+				Operator.LOGICNEG, new IdentifierExpression(LocationProvider.getLocation(), "ret")), new Statement[] {
+				this.lcall(contextPath, p, currentLine, "R",
+						new IntegerLiteral(LocationProvider.getLocation(), Integer.toString(pp))),
+				new ReturnStatement(LocationProvider.getLocation()) }, new Statement[0]);
 
 		return agAST;
 	}
-	
+
 	/**
 	 * Convert an array of strings into VariableLHS needed for call and havoc.
 	 * We use the LocationProvider to generate locations.
-	 * @param ids the array of variable identifiers.
+	 * 
+	 * @param ids
+	 *            the array of variable identifiers.
 	 * @return the corresponding array of VariableLHS objects (type is not set).
 	 */
 	private VariableLHS[] makeVariableLHS(String[] ids) {
@@ -413,22 +354,16 @@ public class TemplateStore {
 	 * @param branch
 	 * @return
 	 */
-	private Statement lcall(String contextPath, Procedure p, int currentLine,
-			String branch, Expression pp) {
-		VariableLHS[] ret = new VariableLHS[] {
-				new VariableLHS(LocationProvider.getLocation(), "ret")
-		};
-		return new CallStatement(LocationProvider.getLocation(), false,
-				ret, this.methodeNameGen(p, contextPath,
-						branch), this.concatToEncArgs(p, pp));
+	private Statement lcall(String contextPath, Procedure p, int currentLine, String branch, Expression pp) {
+		VariableLHS[] ret = new VariableLHS[] { new VariableLHS(LocationProvider.getLocation(), "ret") };
+		return new CallStatement(LocationProvider.getLocation(), false, ret,
+				this.methodeNameGen(p, contextPath, branch), this.concatToEncArgs(p, pp));
 	}
 
-	private Statement lcall(String contextPath, Procedure p, int currentLine,
-			String branch) {
+	private Statement lcall(String contextPath, Procedure p, int currentLine, String branch) {
 		// if no pp Expression is given, we set in the variable
-		return lcall(contextPath, p, currentLine, branch,
-				new IdentifierExpression(LocationProvider.getLocation(),
-						this.pp.getIdentifiers()[0]));
+		return lcall(contextPath, p, currentLine, branch, new IdentifierExpression(LocationProvider.getLocation(),
+				this.pp.getIdentifiers()[0]));
 	}
 
 	/**
@@ -445,18 +380,12 @@ public class TemplateStore {
 	 * </code>
 	 */
 	private Statement nonDetRet(String contextPath, Procedure p, int currentLine) {
-		return new IfStatement(
-				LocationProvider.getLocation(),
-				new WildcardExpression(LocationProvider.getLocation()),
+		return new IfStatement(LocationProvider.getLocation(), new WildcardExpression(LocationProvider.getLocation()),
 				new Statement[] {
-						new AssignmentStatement(
-								LocationProvider.getLocation(),
-								new LeftHandSide[] { new VariableLHS(
-										LocationProvider.getLocation(), "ret") },
-								new Expression[] { new BooleanLiteral(
-										LocationProvider.getLocation(), true) }),
-						new ReturnStatement(LocationProvider.getLocation()) },
-				new Statement[0]);
+						new AssignmentStatement(LocationProvider.getLocation(), new LeftHandSide[] { new VariableLHS(
+								LocationProvider.getLocation(), "ret") }, new Expression[] { new BooleanLiteral(
+								LocationProvider.getLocation(), true) }),
+						new ReturnStatement(LocationProvider.getLocation()) }, new Statement[0]);
 	}
 
 	/**
@@ -475,10 +404,8 @@ public class TemplateStore {
 	 */
 	private Statement[] atomicPropositionTemplate(Expression expr) {
 		Statement[] assign = new Statement[] {
-				new AssignmentStatement(LocationProvider.getLocation(),
-						new VariableLHS[] { new VariableLHS(LocationProvider
-								.getLocation(), "ret") },
-						new Expression[] { expr }),
+				new AssignmentStatement(LocationProvider.getLocation(), new VariableLHS[] { new VariableLHS(
+						LocationProvider.getLocation(), "ret") }, new Expression[] { expr }),
 				new ReturnStatement(LocationProvider.getLocation()) };
 		return assign;
 	}
@@ -506,8 +433,7 @@ public class TemplateStore {
 	 * }
 	 * </code>
 	 */
-	public Procedure programEntryPointTemplate(String entryPoint,
-			Map<String, Expression> entyPointInit,
+	public Procedure programEntryPointTemplate(String entryPoint, Map<String, Expression> entyPointInit,
 			Map<String, Expression> globalVarsInit) {
 		//
 		// Initialize Variables
@@ -532,8 +458,7 @@ public class TemplateStore {
 			}
 			Helper.addVarListToIdentifierList(parameters, v);
 			// havoc this global variable
-			statements.add(new HavocStatement(LocationProvider.getLocation(), 
-					makeVariableLHS(v.getIdentifiers())));
+			statements.add(new HavocStatement(LocationProvider.getLocation(), makeVariableLHS(v.getIdentifiers())));
 		}
 		// stacks (add to parameters)
 		for (VarList v : this.stack.getVariables()) {
@@ -545,43 +470,28 @@ public class TemplateStore {
 		//
 		// local vars
 		//
-		localVars.add(new VariableDeclaration(LocationProvider.getLocation(),
-				new Attribute[0], new VarList[] { new VarList(LocationProvider
-						.getLocation(), new String[] { "CookiefyRet" },
-						new PrimitiveType(LocationProvider.getLocation(),
-								"bool")) }));
+		localVars.add(new VariableDeclaration(LocationProvider.getLocation(), new Attribute[0],
+				new VarList[] { new VarList(LocationProvider.getLocation(), new String[] { "CookiefyRet" },
+						new PrimitiveType(LocationProvider.getLocation(), "bool")) }));
 		localVars.add(this.stack);
-		localVars.add(new VariableDeclaration(LocationProvider.getLocation(),
-				new Attribute[0], this.globalStateVars));
+		localVars.add(new VariableDeclaration(LocationProvider.getLocation(), new Attribute[0], this.globalStateVars));
 
 		Body body = new Body(LocationProvider.getLocation(),
-				localVars.toArray(new VariableDeclaration[localVars.size()]),
-				new Statement[] {
+				localVars.toArray(new VariableDeclaration[localVars.size()]), new Statement[] {
 						new HavocStatement(LocationProvider.getLocation(),
-								makeVariableLHS(
-								modifiesIdentifiers
-										.toArray(new String[modifiesIdentifiers
-												.size()]))),
+								makeVariableLHS(modifiesIdentifiers.toArray(new String[modifiesIdentifiers.size()]))),
 						// this.getHavocCallStatement(new Expression[0], main,
 						// "T", new IntegerLiteral("0")),
-						new CallStatement(LocationProvider.getLocation(),
-								false, 
-								makeVariableLHS(new String[] { "CookiefyRet" }),
-								this.methodeNameGenPrepare(main, "T", ""),
-								parameters.toArray(new Expression[parameters
-										.size()])),
-						new AssertStatement(LocationProvider.getLocation(),
-								new BinaryExpression(
-										LocationProvider.getLocation(),
-										BinaryExpression.Operator.COMPNEQ,
-										new IdentifierExpression(
-												LocationProvider.getLocation(),
-												"CookiefyRet"),
-										new BooleanLiteral(LocationProvider
-												.getLocation(), false))) });
+						new CallStatement(LocationProvider.getLocation(), false,
+								makeVariableLHS(new String[] { "CookiefyRet" }), this.methodeNameGenPrepare(main, "T",
+										""), parameters.toArray(new Expression[parameters.size()])),
+						new AssertStatement(LocationProvider.getLocation(), new BinaryExpression(
+								LocationProvider.getLocation(), BinaryExpression.Operator.COMPNEQ,
+								new IdentifierExpression(LocationProvider.getLocation(), "CookiefyRet"),
+								new BooleanLiteral(LocationProvider.getLocation(), false))) });
 
-		return new Procedure(LocationProvider.getLocation(), new Attribute[0],
-				"main", // identifier of
+		return new Procedure(LocationProvider.getLocation(), new Attribute[0], "main", // identifier
+																						// of
 				// this
 				// procedure
 				new String[0], // type params
@@ -605,8 +515,7 @@ public class TemplateStore {
 	 * 
 	 *         Example: enc_havoc_main_T
 	 */
-	public String methodeNameGenPrepare(Procedure pPrime, String path,
-			String branch) {
+	public String methodeNameGenPrepare(Procedure pPrime, String path, String branch) {
 		return methodNameGen("havoc_" + pPrime.getIdentifier(), path, branch);
 	}
 
@@ -649,29 +558,24 @@ public class TemplateStore {
 		// in parameters of p
 		for (VarList v : p.getInParams())
 			for (String s : v.getIdentifiers())
-				idents.add(new IdentifierExpression(LocationProvider
-						.getLocation(), s));
+				idents.add(new IdentifierExpression(LocationProvider.getLocation(), s));
 		// out parameters of p
 		for (VarList v : p.getOutParams())
 			for (String s : v.getIdentifiers())
-				idents.add(new IdentifierExpression(LocationProvider
-						.getLocation(), s));
+				idents.add(new IdentifierExpression(LocationProvider.getLocation(), s));
 		// local variables of p
 		for (VariableDeclaration vd : p.getBody().getLocalVars())
 			for (VarList v : vd.getVariables())
 				for (String s : v.getIdentifiers())
-					idents.add(new IdentifierExpression(LocationProvider
-							.getLocation(), s));
+					idents.add(new IdentifierExpression(LocationProvider.getLocation(), s));
 		// globals
 		for (VarList v : this.globalStateVars)
 			for (String s : v.getIdentifiers())
-				idents.add(new IdentifierExpression(LocationProvider
-						.getLocation(), s));
+				idents.add(new IdentifierExpression(LocationProvider.getLocation(), s));
 		// stack
 		for (VarList v : this.stack.getVariables())
 			for (String s : v.getIdentifiers())
-				idents.add(new IdentifierExpression(LocationProvider
-						.getLocation(), s));
+				idents.add(new IdentifierExpression(LocationProvider.getLocation(), s));
 		// program counter
 		idents.add(pp);
 
@@ -679,9 +583,7 @@ public class TemplateStore {
 	}
 
 	public Expression[] concatToEncArgs(Procedure p) {
-		return concatToEncArgs(p,
-				new IdentifierExpression(LocationProvider.getLocation(),
-						this.pp.getIdentifiers()[0]));
+		return concatToEncArgs(p, new IdentifierExpression(LocationProvider.getLocation(), this.pp.getIdentifiers()[0]));
 	}
 
 	/**
@@ -705,27 +607,22 @@ public class TemplateStore {
 		// LAMBDA
 		// Args (in parameters of p)
 		for (VarList v : p.getInParams())
-			assignments.addAll(this.prefixVarToLocalVar(v,
-					parameterToVariablePrefix));
+			assignments.addAll(this.prefixVarToLocalVar(v, parameterToVariablePrefix));
 
 		for (VarList v : p.getOutParams())
-			assignments.addAll(this.prefixVarToLocalVar(v,
-					parameterToVariablePrefix));
+			assignments.addAll(this.prefixVarToLocalVar(v, parameterToVariablePrefix));
 		// Locals (local variables of p)
 		for (VariableDeclaration vd : p.getBody().getLocalVars())
 			for (VarList v : vd.getVariables())
-				assignments.addAll(this.prefixVarToLocalVar(v,
-						parameterToVariablePrefix));
+				assignments.addAll(this.prefixVarToLocalVar(v, parameterToVariablePrefix));
 
 		for (VarList v : this.stack.getVariables())
-			assignments.addAll(this.prefixVarToLocalVar(v,
-					parameterToVariablePrefix));
+			assignments.addAll(this.prefixVarToLocalVar(v, parameterToVariablePrefix));
 
 		// GAMMA
 		// globals
 		for (VarList v : this.globalStateVars)
-			assignments.addAll(this.prefixVarToLocalVar(v,
-					parameterToVariablePrefix));
+			assignments.addAll(this.prefixVarToLocalVar(v, parameterToVariablePrefix));
 
 		return assignments.toArray(new Statement[assignments.size()]);
 	}
@@ -742,23 +639,22 @@ public class TemplateStore {
 	 * var foo : bool;
 	 * </code>
 	 */
-	public VariableDeclaration[] cookifyArgsDeclareLocals(Procedure p,
-			boolean withStack, boolean withGlobals) {
+	public VariableDeclaration[] cookifyArgsDeclareLocals(Procedure p, boolean withStack, boolean withGlobals) {
 		ArrayList<VariableDeclaration> declarations = new ArrayList<VariableDeclaration>();
 
 		// LAMBDA
 		// Args (in parameters of p)
 		if (p.getInParams().length > 0)
-			declarations.add(new VariableDeclaration(LocationProvider
-					.getLocation(), new Attribute[] {}, p.getInParams()));
+			declarations.add(new VariableDeclaration(LocationProvider.getLocation(), new Attribute[] {}, p
+					.getInParams()));
 		if (p.getOutParams().length > 0)
-			declarations.add(new VariableDeclaration(LocationProvider
-					.getLocation(), new Attribute[] {}, p.getOutParams()));
+			declarations.add(new VariableDeclaration(LocationProvider.getLocation(), new Attribute[] {}, p
+					.getOutParams()));
 		// Locals (local variables of p)
 		for (VariableDeclaration vd : p.getBody().getLocalVars()) {
 			if (vd.getVariables().length > 0)
-				declarations.add(new VariableDeclaration(LocationProvider
-						.getLocation(), new Attribute[] {}, vd.getVariables()));
+				declarations.add(new VariableDeclaration(LocationProvider.getLocation(), new Attribute[] {}, vd
+						.getVariables()));
 		}
 
 		if (withStack)
@@ -768,12 +664,10 @@ public class TemplateStore {
 		// globals
 		if (withGlobals)
 			if (this.globalStateVars.length > 0)
-				declarations.add(new VariableDeclaration(LocationProvider
-						.getLocation(), new Attribute[] {},
+				declarations.add(new VariableDeclaration(LocationProvider.getLocation(), new Attribute[] {},
 						this.globalStateVars));
 
-		return declarations
-				.toArray(new VariableDeclaration[declarations.size()]);
+		return declarations.toArray(new VariableDeclaration[declarations.size()]);
 	}
 
 	/**
@@ -800,8 +694,7 @@ public class TemplateStore {
 		// Locals (local variables of p)
 		for (VariableDeclaration vd : p.getBody().getLocalVars())
 			for (VarList v : vd.getVariables())
-				Helper.addVarListToArrayList(idents, v,
-						parameterToVariablePrefix);
+				Helper.addVarListToArrayList(idents, v, parameterToVariablePrefix);
 
 		// GAMMA
 		// globals
@@ -889,12 +782,10 @@ public class TemplateStore {
 	private ArrayList<Statement> prefixVarToLocalVar(VarList v, String prefix) {
 		ArrayList<Statement> assignments = new ArrayList<Statement>();
 		for (String s : v.getIdentifiers())
-			assignments.add(new AssignmentStatement(LocationProvider
-					.getLocation(), new LeftHandSide[] { new VariableLHS(
-					LocationProvider.getLocation(), s) },
-					new Expression[] { new IdentifierExpression(
-							LocationProvider.getLocation(), "cookiefy_args_"
-									+ s) }));
+			assignments
+					.add(new AssignmentStatement(LocationProvider.getLocation(), new LeftHandSide[] { new VariableLHS(
+							LocationProvider.getLocation(), s) }, new Expression[] { new IdentifierExpression(
+							LocationProvider.getLocation(), "cookiefy_args_" + s) }));
 		return assignments;
 	}
 
@@ -917,14 +808,12 @@ public class TemplateStore {
 	 * }
 	 * </code>
 	 */
-	public Procedure encodeInitProcedurestateProcedure(Procedure pPrime,
-			String path, Expression[] args) {
+	public Procedure encodeInitProcedurestateProcedure(Procedure pPrime, String path, Expression[] args) {
 		ArrayList<Statement> body = new ArrayList<Statement>();
 		// prepare params for the havoc_... procedure
 		ArrayList<VarList> params = new ArrayList<VarList>();
 		for (VarList v : pPrime.getInParams())
-			Helper.addVarListToArrayList(params, v,
-					this.parameterToVariablePrefix);
+			Helper.addVarListToArrayList(params, v, this.parameterToVariablePrefix);
 		// globals
 		for (VarList v : this.globalStateVars)
 			Helper.addVarListToArrayList(params, v, "");
@@ -936,41 +825,30 @@ public class TemplateStore {
 		// declaration is done in the procedure declaration
 		// havoc Vars
 		for (VarList v : pPrime.getInParams())
-			body.add(new HavocStatement(LocationProvider.getLocation(), 
-					makeVariableLHS(v.getIdentifiers())));
+			body.add(new HavocStatement(LocationProvider.getLocation(), makeVariableLHS(v.getIdentifiers())));
 		for (VarList v : pPrime.getOutParams())
-			body.add(new HavocStatement(LocationProvider.getLocation(),
-					makeVariableLHS(v.getIdentifiers())));
+			body.add(new HavocStatement(LocationProvider.getLocation(), makeVariableLHS(v.getIdentifiers())));
 		for (VariableDeclaration vd : pPrime.getBody().getLocalVars())
 			for (VarList v : vd.getVariables())
-				body.add(new HavocStatement(LocationProvider.getLocation(),
-						makeVariableLHS(v.getIdentifiers())));
+				body.add(new HavocStatement(LocationProvider.getLocation(), makeVariableLHS(v.getIdentifiers())));
 
 		// copy arguments to vars
 		for (VarList v : pPrime.getInParams())
 			for (String ident : v.getIdentifiers())
-				body.add(new AssignmentStatement(
-						LocationProvider.getLocation(),
-						new LeftHandSide[] { new VariableLHS(LocationProvider
-								.getLocation(), ident) },
-						new Expression[] { new IdentifierExpression(
-								LocationProvider.getLocation(),
-								this.parameterToVariablePrefix + ident) }));
+				body.add(new AssignmentStatement(LocationProvider.getLocation(), new LeftHandSide[] { new VariableLHS(
+						LocationProvider.getLocation(), ident) }, new Expression[] { new IdentifierExpression(
+						LocationProvider.getLocation(), this.parameterToVariablePrefix + ident) }));
 
 		// call procedure
-		body.add(new CallStatement(LocationProvider.getLocation(), false,
-				makeVariableLHS(new String[] { "ret" }), this.methodeNameGen(pPrime, path, ""),
-				this.concatToEncArgs(pPrime)));
+		body.add(new CallStatement(LocationProvider.getLocation(), false, makeVariableLHS(new String[] { "ret" }), this
+				.methodeNameGen(pPrime, path, ""), this.concatToEncArgs(pPrime)));
 
-		return new Procedure(LocationProvider.getLocation(), new Attribute[0],
-				this.methodeNameGenPrepare(pPrime, path, ""), new String[0],
-				params.toArray(new VarList[params.size()]),
-				new VarList[] { new VarList(LocationProvider.getLocation(),
-						new String[] { "ret" }, new PrimitiveType(
-								LocationProvider.getLocation(), "bool")) },
-				new Specification[0], new Body(LocationProvider.getLocation(),
-						this.cookifyArgsDeclareLocals(pPrime, false, false),
-						body.toArray(new Statement[body.size()]))
+		return new Procedure(LocationProvider.getLocation(), new Attribute[0], this.methodeNameGenPrepare(pPrime, path,
+				""), new String[0], params.toArray(new VarList[params.size()]), new VarList[] { new VarList(
+				LocationProvider.getLocation(), new String[] { "ret" }, new PrimitiveType(
+						LocationProvider.getLocation(), "bool")) }, new Specification[0], new Body(
+				LocationProvider.getLocation(), this.cookifyArgsDeclareLocals(pPrime, false, false),
+				body.toArray(new Statement[body.size()]))
 
 		);
 
@@ -1003,27 +881,14 @@ public class TemplateStore {
 					noExp = new IntegerLiteral(LocationProvider.getLocation(),
 							Integer.toString(this.boolStackFrameCounter));
 
-				statements
-						.add(new AssignmentStatement(
-								LocationProvider.getLocation(),
-								new LeftHandSide[] { new ArrayLHS(
-										LocationProvider.getLocation(),
-										new ArrayLHS(
-												LocationProvider.getLocation(),
-												new VariableLHS(
-														LocationProvider
-																.getLocation(),
-														this.getStackFromType(v
-																.getType())),
-												new Expression[] { new IdentifierExpression(
-														LocationProvider
-																.getLocation(),
-														"sp") }),
-										new Expression[] { noExp }) },
-								new Expression[] { new IdentifierExpression(
-										LocationProvider.getLocation(), s) }
+				statements.add(new AssignmentStatement(LocationProvider.getLocation(),
+						new LeftHandSide[] { new ArrayLHS(LocationProvider.getLocation(), new ArrayLHS(LocationProvider
+								.getLocation(), new VariableLHS(LocationProvider.getLocation(), this.getStackFromType(v
+								.getType())), new Expression[] { new IdentifierExpression(LocationProvider
+								.getLocation(), "sp") }), new Expression[] { noExp }) },
+						new Expression[] { new IdentifierExpression(LocationProvider.getLocation(), s) }
 
-						));
+				));
 				if (v.getType() instanceof PrimitiveType) {
 					if (((PrimitiveType) v.getType()).getName() == "int")
 						this.intStackFrameCounter++;
@@ -1059,15 +924,10 @@ public class TemplateStore {
 					noExp = new IntegerLiteral(LocationProvider.getLocation(),
 							Integer.toString(this.boolStackFrameCounter));
 
-				expressions.add(new ArrayAccessExpression(LocationProvider
-						.getLocation(), new ArrayAccessExpression(
-						LocationProvider.getLocation(),
-						new IdentifierExpression(
-								LocationProvider.getLocation(), this
-										.getStackFromType(v.getType())),
-						new Expression[] { new IdentifierExpression(
-								LocationProvider.getLocation(), "sp") }),
-						new Expression[] { noExp }));
+				expressions.add(new ArrayAccessExpression(LocationProvider.getLocation(), new ArrayAccessExpression(
+						LocationProvider.getLocation(), new IdentifierExpression(LocationProvider.getLocation(), this
+								.getStackFromType(v.getType())), new Expression[] { new IdentifierExpression(
+								LocationProvider.getLocation(), "sp") }), new Expression[] { noExp }));
 				if (v.getType() instanceof PrimitiveType) {
 					if (((PrimitiveType) v.getType()).getName() == "int")
 						this.intStackFrameCounter++;
@@ -1112,30 +972,23 @@ public class TemplateStore {
 		// globals
 		for (VarList v : this.globalStateVars)
 			for (String s : v.getIdentifiers())
-				expressions.add(new IdentifierExpression(LocationProvider
-						.getLocation(), s));
+				expressions.add(new IdentifierExpression(LocationProvider.getLocation(), s));
 
 		// stacks
 		for (VarList v : this.stack.getVariables())
 			for (String ident : v.getIdentifiers()) {
 				if (ident == "sp")
-					expressions.add(new BinaryExpression(LocationProvider
-							.getLocation(),
-							BinaryExpression.Operator.ARITHMINUS,
-							new IdentifierExpression(LocationProvider
-									.getLocation(), "sp"), new IntegerLiteral(
-									LocationProvider.getLocation(), "1")));
+					expressions.add(new BinaryExpression(LocationProvider.getLocation(),
+							BinaryExpression.Operator.ARITHMINUS, new IdentifierExpression(LocationProvider
+									.getLocation(), "sp"), new IntegerLiteral(LocationProvider.getLocation(), "1")));
 				else
-					expressions.add(new IdentifierExpression(LocationProvider
-							.getLocation(), ident));
+					expressions.add(new IdentifierExpression(LocationProvider.getLocation(), ident));
 
 			}
 		// pp
-		expressions.add(new ArrayAccessExpression(LocationProvider
-				.getLocation(), new IdentifierExpression(LocationProvider
-				.getLocation(), "ppStack"),
-				new Expression[] { new IdentifierExpression(LocationProvider
-						.getLocation(), "sp") }));
+		expressions.add(new ArrayAccessExpression(LocationProvider.getLocation(), new IdentifierExpression(
+				LocationProvider.getLocation(), "ppStack"), new Expression[] { new IdentifierExpression(
+				LocationProvider.getLocation(), "sp") }));
 
 		return expressions.toArray(new Expression[expressions.size()]);
 	}
@@ -1160,26 +1013,18 @@ public class TemplateStore {
 			statements.addAll(this.pushVarListToStack(vd.getVariables()));
 
 		// pp
-		statements.add(new AssignmentStatement(LocationProvider.getLocation(),
-				new LeftHandSide[] { new ArrayLHS(LocationProvider
-						.getLocation(), new VariableLHS(LocationProvider
-						.getLocation(), "ppStack"),
-						new Expression[] { new IdentifierExpression(
-								LocationProvider.getLocation(), "sp") }) },
-				new Expression[] { new IntegerLiteral(LocationProvider
-						.getLocation(), Integer.toString(pp)) }
+		statements.add(new AssignmentStatement(LocationProvider.getLocation(), new LeftHandSide[] { new ArrayLHS(
+				LocationProvider.getLocation(), new VariableLHS(LocationProvider.getLocation(), "ppStack"),
+				new Expression[] { new IdentifierExpression(LocationProvider.getLocation(), "sp") }) },
+				new Expression[] { new IntegerLiteral(LocationProvider.getLocation(), Integer.toString(pp)) }
 
 		));
 		// id
-		statements.add(new AssignmentStatement(LocationProvider.getLocation(),
-				new LeftHandSide[] { new ArrayLHS(LocationProvider
-						.getLocation(), new VariableLHS(LocationProvider
-						.getLocation(), "idStack"),
-						new Expression[] { new IdentifierExpression(
-								LocationProvider.getLocation(), "sp") }) },
-				new Expression[] { new IntegerLiteral(LocationProvider
-						.getLocation(), Integer.toString(this.identMap.getID(p
-						.getIdentifier()))) }
+		statements.add(new AssignmentStatement(LocationProvider.getLocation(), new LeftHandSide[] { new ArrayLHS(
+				LocationProvider.getLocation(), new VariableLHS(LocationProvider.getLocation(), "idStack"),
+				new Expression[] { new IdentifierExpression(LocationProvider.getLocation(), "sp") }) },
+				new Expression[] { new IntegerLiteral(LocationProvider.getLocation(), Integer.toString(this.identMap
+						.getID(p.getIdentifier()))) }
 
 		));
 
@@ -1199,8 +1044,7 @@ public class TemplateStore {
 	 * call ret := enc_havoc_recursive_T(0, ..., intStack, boolStack, idStack, ppStack, sp + 1, 0);
 	 * </code>
 	 */
-	public Statement getHavocCallStatement(Expression[] args, Procedure pPrime,
-			String path, Expression sp) {
+	public Statement getHavocCallStatement(Expression[] args, Procedure pPrime, String path, Expression sp) {
 
 		ArrayList<Expression> params = new ArrayList<Expression>();
 		for (Expression e : args)
@@ -1216,26 +1060,20 @@ public class TemplateStore {
 				if (ident == "sp")
 					params.add(sp);
 				else
-					params.add(new IdentifierExpression(LocationProvider
-							.getLocation(), ident));
+					params.add(new IdentifierExpression(LocationProvider.getLocation(), ident));
 
 			}
 		// pp
 		params.add(new IntegerLiteral(LocationProvider.getLocation(), "0"));
 
-		return new CallStatement(LocationProvider.getLocation(), false,
-				makeVariableLHS(new String[] { "ret" }), this.methodeNameGenPrepare(pPrime,
-						path, ""),
-				params.toArray(new Expression[params.size()]));
+		return new CallStatement(LocationProvider.getLocation(), false, makeVariableLHS(new String[] { "ret" }),
+				this.methodeNameGenPrepare(pPrime, path, ""), params.toArray(new Expression[params.size()]));
 
 	}
 
-	public Statement getHavocCallStatement(Expression[] args, Procedure pPrime,
-			String path) {
-		return getHavocCallStatement(args, pPrime, path, new BinaryExpression(
-				LocationProvider.getLocation(),
-				BinaryExpression.Operator.ARITHPLUS, new IdentifierExpression(
-						LocationProvider.getLocation(), "sp"),
+	public Statement getHavocCallStatement(Expression[] args, Procedure pPrime, String path) {
+		return getHavocCallStatement(args, pPrime, path, new BinaryExpression(LocationProvider.getLocation(),
+				BinaryExpression.Operator.ARITHPLUS, new IdentifierExpression(LocationProvider.getLocation(), "sp"),
 				new IntegerLiteral(LocationProvider.getLocation(), "1")));
 	}
 
@@ -1259,14 +1097,12 @@ public class TemplateStore {
 		// stacks
 		for (VarList v : this.stack.getVariables())
 			for (String ident : v.getIdentifiers()) {
-				params.add(new IdentifierExpression(LocationProvider
-						.getLocation(), ident));
+				params.add(new IdentifierExpression(LocationProvider.getLocation(), ident));
 
 			}
 
-		return new CallStatement(LocationProvider.getLocation(), false,
-				makeVariableLHS(new String[] { "ret" }), "preturn_" + path,
-				params.toArray(new Expression[params.size()]));
+		return new CallStatement(LocationProvider.getLocation(), false, makeVariableLHS(new String[] { "ret" }),
+				"preturn_" + path, params.toArray(new Expression[params.size()]));
 
 	}
 
@@ -1296,38 +1132,24 @@ public class TemplateStore {
 		ArrayList<Statement> statements = new ArrayList<Statement>();
 		int pid = 0;
 
-		statements.add(new AssignmentStatement(LocationProvider.getLocation(),
-				new LeftHandSide[] { new VariableLHS(LocationProvider
-						.getLocation(), "func_id") },
-				new Expression[] { new ArrayAccessExpression(LocationProvider
-						.getLocation(), new IdentifierExpression(
-						LocationProvider.getLocation(), "idStack"),
-						new Expression[] { new IdentifierExpression(
-								LocationProvider.getLocation(), "sp") }) }));
+		statements.add(new AssignmentStatement(LocationProvider.getLocation(), new LeftHandSide[] { new VariableLHS(
+				LocationProvider.getLocation(), "func_id") }, new Expression[] { new ArrayAccessExpression(
+				LocationProvider.getLocation(), new IdentifierExpression(LocationProvider.getLocation(), "idStack"),
+				new Expression[] { new IdentifierExpression(LocationProvider.getLocation(), "sp") }) }));
 
 		// for every procedure in the program add a sp -> procedure call
 		for (String pName : this.InputProgram.Procedures.keySet()) {
 			Procedure p = this.InputProgram.Procedures.get(pName);
 
-			statements
-					.add(new IfStatement(LocationProvider.getLocation(),
-							new BinaryExpression(
-									LocationProvider.getLocation(),
-									BinaryExpression.Operator.COMPEQ,
-									new IdentifierExpression(LocationProvider
-											.getLocation(), "func_id"),
-									new IntegerLiteral(LocationProvider
-											.getLocation(), Integer
-											.toString(this.identMap
-													.getID(pName)))),
-							new Statement[] {
-							// the actual call doing the returning... wtf
-							new CallStatement(LocationProvider.getLocation(),
-									false, makeVariableLHS(new String[] { "ret" }), this
-											.methodeNameGen(p, path, ""), this
-											.stackPop(p)) }, new Statement[] {}
+			statements.add(new IfStatement(LocationProvider.getLocation(), new BinaryExpression(LocationProvider
+					.getLocation(), BinaryExpression.Operator.COMPEQ, new IdentifierExpression(LocationProvider
+					.getLocation(), "func_id"), new IntegerLiteral(LocationProvider.getLocation(), Integer
+					.toString(this.identMap.getID(pName)))), new Statement[] {
+			// the actual call doing the returning... wtf
+			new CallStatement(LocationProvider.getLocation(), false, makeVariableLHS(new String[] { "ret" }), this
+					.methodeNameGen(p, path, ""), this.stackPop(p)) }, new Statement[] {}
 
-					));
+			));
 		}
 
 		ArrayList<VarList> idents = new ArrayList<VarList>();
@@ -1341,23 +1163,14 @@ public class TemplateStore {
 		// idents.add(this.pp); //Jeremi: preturn braucht keinen procedure
 		// counter!
 
-		return new Procedure(LocationProvider.getLocation(),
-				new Attribute[] {}, "preturn_" + path, new String[] {},
-				idents.toArray(new VarList[idents.size()]),
-				new VarList[] { new VarList(LocationProvider.getLocation(),
-						new String[] { "ret" }, new PrimitiveType(
-								LocationProvider.getLocation(), "bool")) },
-				new Specification[] {}, new Body(
-						LocationProvider.getLocation(),
-						new VariableDeclaration[] { new VariableDeclaration(
-								LocationProvider.getLocation(),
-								new Attribute[] {},
-								new VarList[] { new VarList(LocationProvider
-										.getLocation(),
-										new String[] { "func_id" },
-										new PrimitiveType(LocationProvider
-												.getLocation(), "int")) }) },
-						statements.toArray(new Statement[statements.size()])));
+		return new Procedure(LocationProvider.getLocation(), new Attribute[] {}, "preturn_" + path, new String[] {},
+				idents.toArray(new VarList[idents.size()]), new VarList[] { new VarList(LocationProvider.getLocation(),
+						new String[] { "ret" }, new PrimitiveType(LocationProvider.getLocation(), "bool")) },
+				new Specification[] {}, new Body(LocationProvider.getLocation(),
+						new VariableDeclaration[] { new VariableDeclaration(LocationProvider.getLocation(),
+								new Attribute[] {}, new VarList[] { new VarList(LocationProvider.getLocation(),
+										new String[] { "func_id" }, new PrimitiveType(LocationProvider.getLocation(),
+												"int")) }) }, statements.toArray(new Statement[statements.size()])));
 	}
 
 }

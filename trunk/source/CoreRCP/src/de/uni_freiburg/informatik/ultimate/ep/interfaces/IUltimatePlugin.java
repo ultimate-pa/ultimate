@@ -4,16 +4,25 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 
 /**
  * An IUltimatePlugin describes the most basic interface for all plugins that
- * together form the Ultimate eco-system.
+ * together form the Ultimate ecosystem.
  * 
  * The methods at this level are used to provide
  * <ul>
- * <li>different log levels for different plugins via preferences in the core</li>
- * <li>the ability to define preferences per plugin that can be changed by the user</li>
+ * <li>Different log levels for different plugins via preferences in the core</li>
+ * <li>The ability to define preferences per plugin that can be changed by the
+ * user</li>
  * </ul>
  * 
- * Clients should not subclass this interface except if they want to define a Library plugin.
- * For default Ultimate plugins see {@link IToolchainPlugin}.
+ * 
+ * TODO: Currently, preferences are only loaded for implementers of of
+ * {@link IController}, {@link ICore} and {@link IToolchainPlugin}! Library
+ * plugins that implement this interface directly are out of luck! The current
+ * intention is that library plugins do not implement any of the cores
+ * interfaces (subject to change)<br>
+ * <br>
+ * Clients should subclass this interface if they want to define a library
+ * plugin. For toolchain plugins (i.e. the regular Ultimate plugins) see
+ * {@link IToolchainPlugin}.
  * 
  * @author dietsch
  */
@@ -21,15 +30,30 @@ public interface IUltimatePlugin {
 	/**
 	 * 
 	 * @return Returns a human-readable name for the plugin. This will be shown
-	 *         in user interfaces.
+	 *         in the user interface and in most logs.
 	 */
-	String getName();
+	String getPluginName();
 
 	/**
-	 * Returns an unique name for a plugin (unique in the Ultimate eco-system).
-	 * The canonical choice here is the package name of the implementer.
+	 * Returns the name of the package of the implementing class as per the Java
+	 * Language Specification. You can get that name for example with
+	 * {@code getClass().getPackage().getName()} or, e.g.,
+	 * {@code JungVisualization.class.getPackage().getName()}. <br>
+	 * <br>
+	 * The correct implementation of this interface also requires that
+	 * implementers must use the string provided here (case-sensitive) as
+	 * <ul>
+	 * <li>{@code Bundle-SymbolicName} in the plugin's MANIFEST.MF</li>
+	 * <li>{@code <artifactId>} in the plugin's pom.xml</li>
+	 * <li>{@code id} in feature.xml files used to include this plugin in build
+	 * features (i.e. BA_FeatureUltimate...)</li>
+	 * <li>After performing those changes and recompiling, you may have to resync your Launch Configurations</li>
+	 * </ul>
 	 * 
-	 * @return A unique string to identify the plugin.
+	 * Implementers of {@link ICore} and {@link IController} have to take
+	 * additional steps: TODO: Describe additional steps
+	 * 
+	 * @return The name of the namespace of the implementing class.
 	 */
 	String getPluginID();
 

@@ -5,6 +5,8 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -12,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 /**
  * Main class of Plug-In TraceAbstractionConcurrent
  * 
- *
+ * 
  * TODO: refine comments
  * 
  */
@@ -20,96 +22,81 @@ public class TraceAbstractionConcurrent implements IGenerator {
 
 	private static final String s_PLUGIN_NAME = Activator.s_PLUGIN_NAME;
 	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
-	
+
 	private TraceAbstractionConcurrentObserver m_Observer;
 	private GraphType m_InputDefinition;
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#getName()
-	 */
-	@Override
-    public String getName() {
-        return s_PLUGIN_NAME;
-    }
+	private IUltimateServiceProvider mServices;
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#getPluginID()
-	 */
 	@Override
-    public String getPluginID() {
-        return s_PLUGIN_ID;
-    }
+	public String getPluginName() {
+		return s_PLUGIN_NAME;
+	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#init(java.lang.Object)
-	 */
 	@Override
-    public int init() {
-    	m_Observer = new TraceAbstractionConcurrentObserver();
-    	return 0;
-    }
+	public String getPluginID() {
+		return s_PLUGIN_ID;
+	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#getQueryKeyword()
-	 */
+	@Override
+	public int init() {
+		return 0;
+	}
+
 	@Override
 	public QueryKeyword getQueryKeyword() {
 		return QueryKeyword.LAST;
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#getDesiredToolID()
-	 */
 	@Override
 	public List<String> getDesiredToolID() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#setInputDefinition(de.uni_freiburg.informatik.ultimate.model.GraphType)
-	 */
 	@Override
 	public void setInputDefinition(GraphType graphType) {
 		this.m_InputDefinition = graphType;
 	}
 
-	//@Override
+	@Override
 	public List<IObserver> getObservers() {
+		m_Observer = new TraceAbstractionConcurrentObserver(mServices);
 		return Collections.singletonList((IObserver) m_Observer);
 	}
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IModifyingTool#getOutputDefinition()
-	 */
+
+	@Override
 	public GraphType getOutputDefinition() {
-		/* 
-		 * TODO This generated method body only assumes a standard case.
-		 * Adapt it if necessary. Otherwise remove this todo-tag.
+		/*
+		 * TODO This generated method body only assumes a standard case. Adapt
+		 * it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new GraphType(Activator.s_PLUGIN_ID,
-				m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+		return new GraphType(Activator.s_PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
 	}
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator#getModel()
-	 */
+
 	@Override
 	public IElement getModel() {
 		return this.m_Observer.getRoot();
 	}
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#getRequireGui()
-	 */
+
 	@Override
 	public boolean isGuiRequired() {
 		return false;
 	}
-	
+
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public void setToolchainStorage(IToolchainStorage storage) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void setServices(IUltimateServiceProvider services) {
+		mServices = services;
 	}
 }

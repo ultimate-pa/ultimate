@@ -29,9 +29,9 @@ import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Transitionlet;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
  * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
@@ -67,7 +66,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 	/* *** *** *** Fields *** *** *** */
 
 	// For status output
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
 	// Automatons
 	private final INestedWordAutomaton<LETTER, STATE> m_Minuend;

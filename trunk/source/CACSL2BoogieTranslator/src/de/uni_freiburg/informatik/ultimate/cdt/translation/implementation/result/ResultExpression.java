@@ -10,8 +10,6 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;

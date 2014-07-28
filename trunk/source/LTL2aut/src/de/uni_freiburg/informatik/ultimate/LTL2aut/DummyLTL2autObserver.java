@@ -17,7 +17,6 @@ import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AtomicProposition;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
@@ -32,15 +31,18 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 public class DummyLTL2autObserver implements IUnmanagedObserver {
 
 	private AstNode mRootNode;
-	private Logger mLogger;
+	private final Logger mLogger;
 	private String mInputFile;
 
 	private static final String sLTLMarker = "#LTLProperty:";
 	private static final String sIRSMarker = "#IRS:";
 
+	public DummyLTL2autObserver(Logger logger) {
+		mLogger = logger;
+	}
+
 	@Override
 	public void init() {
-		mLogger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 		mRootNode = null;
 		mInputFile = null;
 	}
@@ -114,7 +116,7 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 	private AstNode getProperty(String property) throws Throwable {
 		try {
 			mLogger.debug("Parsing LTL property...");
-			return new WrapLTL2Never().ltl2Ast(property);
+			return new WrapLTL2Never(mLogger).ltl2Ast(property);
 		} catch (Throwable e) {
 			mLogger.error(String.format("Exception during LTL->BA execution: %s", e));
 			throw e;

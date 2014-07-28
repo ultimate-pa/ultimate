@@ -21,7 +21,6 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
 import de.uni_freiburg.informatik.ultimate.cdt.Activator;
-import de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePageFactory;
 
 /**
  * This is should be the main category for all Ultimate configurations. Here we

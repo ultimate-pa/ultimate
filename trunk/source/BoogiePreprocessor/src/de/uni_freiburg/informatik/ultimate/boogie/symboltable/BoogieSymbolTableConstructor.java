@@ -4,9 +4,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
@@ -33,9 +31,12 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 	private Declaration mCurrentDeclaration;
 	private String mCurrentScopeName;
 
+	public BoogieSymbolTableConstructor(Logger logger){
+		mLogger = logger;
+	}
+	
 	@Override
 	public void init() throws Throwable {
-		mLogger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 		mSymbolTable = new BoogieSymbolTable();
 		mCurrentScope = StorageClass.GLOBAL;
 		mCurrentDeclaration = null;

@@ -9,7 +9,7 @@ Require-Bundle: Library-log4j,
  Library-ModelCheckerUtils,
  BoogiePreprocessor,
  LTL2aut,
- RCFGBuilder,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  JavaCup,
  NestedWordAutomata
 Bundle-ActivationPolicy: lazy

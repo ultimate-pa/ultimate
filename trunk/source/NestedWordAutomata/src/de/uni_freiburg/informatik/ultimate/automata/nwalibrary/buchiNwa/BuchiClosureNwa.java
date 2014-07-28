@@ -32,7 +32,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
 /**
@@ -55,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  */
 public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldApi<LETTER, STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
 	private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+			NestedWordAutomata.getLogger();
 	
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	private final Set<STATE> m_AcceptingStates;

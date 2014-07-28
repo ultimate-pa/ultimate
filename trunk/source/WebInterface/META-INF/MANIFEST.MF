@@ -6,7 +6,8 @@ Bundle-Version: 0.0.1
 Bundle-Activator: webinterface.Activator
 Bundle-Localization: plugin
 Require-Bundle: UltimateCore,
- WebUltimateBridge
+ WebUltimateBridge,
+ Library-log4j
 Bundle-ClassPath: .
 Import-Package: javax.servlet,
  javax.servlet.http;version="2.5.0",

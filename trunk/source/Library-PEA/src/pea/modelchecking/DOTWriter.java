@@ -9,12 +9,10 @@ import java.io.Writer;
 import java.util.Iterator;
 import java.util.List;
 
-import pea.CDD;
 import pea.Decision;
 import pea.Phase;
 import pea.PhaseEventAutomata;
 import pea.Transition;
-import pea.modelchecking.PEA2TCSConverter.TransitionConstraint;
 
 /**
  * The class <code>DOTWriter</code> offers functionality to

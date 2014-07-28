@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -17,12 +17,15 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  */
 public abstract class Xnf extends Nnf {
 
-	public Xnf(Script script) {
-		super(script);
+	public Xnf(Script script, IUltimateServiceProvider services) {
+		super(script, services);
 	}
 	
 	protected abstract class XnfTransformerHelper extends NnfTransformerHelper {
 
+		protected XnfTransformerHelper(IUltimateServiceProvider services) {
+			super(services);
+		}
 		public abstract String innerConnectiveSymbol();
 		public abstract String outerConnectiveSymbol();
 		
@@ -90,7 +93,7 @@ public abstract class Xnf extends Nnf {
 				// (A || B) && A is equivalent to A
 				Set<Set<Term>> tidyResOuterSet = new HashSet<Set<Term>>(resOuterSet);
 				for (Set<Term> resInnerSet : resOuterSet) {
-					if (!UltimateServices.getInstance().continueProcessing()) {
+					if (!mServices.getProgressMonitorService().continueProcessing()) {
 						throw new ToolchainCanceledException();
 					}
 					if (tidyResOuterSet.contains(resInnerSet)) {

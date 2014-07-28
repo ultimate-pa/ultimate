@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.OptionStatement;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.SkipStatement;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
@@ -49,17 +49,18 @@ public class Never2Automaton {
 	 * The Never2Automaton instance will build a Büchi automaton from the input.
 	 * 
 	 * @param ast
+	 * @param services
 	 * @throws Exception
 	 */
-	public Never2Automaton(AstNode ast, BoogieSymbolTable boogieSymbolTable) throws Exception {
-		mLogger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+	public Never2Automaton(AstNode ast, BoogieSymbolTable boogieSymbolTable, Logger logger,
+			IUltimateServiceProvider services) throws Exception {
+		mLogger = logger;
 		mAST = ast;
 		mBoogieSymbolTable = boogieSymbolTable;
 
 		mAutomaton = new NestedWordAutomaton<BoogieASTNode, String>(collectAlphabet(), null, // call
 				null, // return
-				new DummyStateFactory<String>() // state factory?!?
-		);
+				new DummyStateFactory<String>());
 
 		collectStates(mAST, null);
 
@@ -227,7 +228,8 @@ public class Never2Automaton {
 				throw new IllegalArgumentException(String.format(
 						"The symbol %s is not in the program. Check your atomic propositions.", identifier));
 			}
-			return new IdentifierExpression(null, type, identifier, new DeclarationInformation(StorageClass.GLOBAL, null));
+			return new IdentifierExpression(null, type, identifier, new DeclarationInformation(StorageClass.GLOBAL,
+					null));
 
 		} else if (branch instanceof Not) {
 			return new UnaryExpression(null, UnaryExpression.Operator.LOGICNEG, toBoogieAst(branch.getOutgoingNodes()

@@ -6,7 +6,8 @@ import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.swt.graphics.Image;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.IdentifierMapping;
 
 /**
  * @author Stefan Wissert
@@ -78,12 +79,14 @@ public class VariableAssignmentLabelProvider implements ITableLabelProvider {
 	 */
 	@Override
 	public String getColumnText(Object element, int columnIndex) {
-		Map<String, String> nameMapping = UltimateServices.getInstance()
-				.getIdentifierMapping();
+
+		Map<String, String> nameMapping = ((IdentifierMapping<String, String>) UltimateCChecker
+				.getStorage().getStorable(IdentifierMapping.getStorageKey())).getMap();
+
 		switch (columnIndex) {
 		case 0:
 			if (element instanceof VarAssNode) {
-				VarAssNode node = (VarAssNode)element;
+				VarAssNode node = (VarAssNode) element;
 				if (nameMapping.containsKey(node.getName())) {
 					return nameMapping.get(node.getName());
 				}

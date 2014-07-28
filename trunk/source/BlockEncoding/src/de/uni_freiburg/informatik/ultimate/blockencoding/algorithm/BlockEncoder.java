@@ -13,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.preferences.PreferenceInitializer;
@@ -33,10 +32,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  */
 public class BlockEncoder {
 
-	/**
-	 * Shared Ultimate Logger instance.
-	 */
-	private static Logger s_Logger;
+	private Logger mLogger;
 
 	private MinimizeBranchVisitor mbVisitor;
 
@@ -50,9 +46,8 @@ public class BlockEncoder {
 
 	private ArrayList<MinimizedNode> nonCallingFunctions;
 
-	public BlockEncoder() {
-		s_Logger = UltimateServices.getInstance().getLogger(
-				Activator.s_PLUGIN_ID);
+	public BlockEncoder(Logger logger) {
+		mLogger = logger;
 	}
 
 	/**
@@ -63,7 +58,7 @@ public class BlockEncoder {
 	 * @return the minimized CFG
 	 */
 	public RootNode startMinimization(RootNode root) {
-		s_Logger.info("Start BlockEncoding on RCFG");
+		mLogger.info("Start BlockEncoding on RCFG");
 		// initialize the statistics
 		EncodingStatistics.init();
 		// We need to know, which rating strategy should be chosen
@@ -76,10 +71,10 @@ public class BlockEncoder {
 		shouldMinimizeCallReturn = prefs
 				.getBoolean(PreferenceInitializer.LABEL_CALLMINIMIZE);
 		// Initialize the Visitors, which apply the minimization rules
-		mbVisitor = new MinimizeBranchVisitor(s_Logger);
-		mlVisitor = new MinimizeLoopVisitor(s_Logger);
-		mcrVisitor = new MinimizeCallReturnVisitor(s_Logger, mbVisitor);
-		tmVisitor = new TestMinimizationVisitor(s_Logger);
+		mbVisitor = new MinimizeBranchVisitor(mLogger);
+		mlVisitor = new MinimizeLoopVisitor(mLogger);
+		mcrVisitor = new MinimizeCallReturnVisitor(mLogger, mbVisitor);
+		tmVisitor = new TestMinimizationVisitor(mLogger);
 
 		nonCallingFunctions = new ArrayList<MinimizedNode>();
 
@@ -90,12 +85,12 @@ public class BlockEncoder {
 					processFunction((ProgramPoint) rootEdge.getTarget(),
 							rootEdge);
 				} else {
-					s_Logger.warn("Minimization canceled, illegal RCFG!");
+					mLogger.warn("Minimization canceled, illegal RCFG!");
 					throw new IllegalArgumentException(
 							"Node is no ProgramPoint, illegal RCFG");
 				}
 			} else {
-				s_Logger.warn("Minimization canceled, illegal RCFG!");
+				mLogger.warn("Minimization canceled, illegal RCFG!");
 				throw new IllegalArgumentException(
 						"An outgoing edge of RootNode is not a RootEdge");
 			}
@@ -122,7 +117,7 @@ public class BlockEncoder {
 			// replace the call and return edges with substitutions
 			do {
 				for (MinimizedNode node : methodNodes) {
-					s_Logger.debug("Try to merge Call- and Return-Edges for the Method: "
+					mLogger.debug("Try to merge Call- and Return-Edges for the Method: "
 							+ node);
 					mcrVisitor.visitNode(node);
 				}
@@ -149,16 +144,16 @@ public class BlockEncoder {
 			} while (!methodNodes.isEmpty());
 		}
 		// print collected statistics
-		s_Logger.info("---- Collected Statistics ----");
-		s_Logger.info("Amount of basic edges: "
+		mLogger.info("---- Collected Statistics ----");
+		mLogger.info("Amount of basic edges: "
 				+ EncodingStatistics.countOfBasicEdges);
-		s_Logger.info("Amount of created disjunctions: "
+		mLogger.info("Amount of created disjunctions: "
 				+ EncodingStatistics.countOfDisjunctions);
-		s_Logger.info("Max. amount of disjunctions in one edge: "
+		mLogger.info("Max. amount of disjunctions in one edge: "
 				+ EncodingStatistics.maxDisjunctionsInOneEdge);
-		s_Logger.info("Max. different variables in one edge: "
+		mLogger.info("Max. different variables in one edge: "
 				+ EncodingStatistics.maxDiffVariablesInOneEdge);
-		s_Logger.info("Min. different variables in one edge: "
+		mLogger.info("Min. different variables in one edge: "
 				+ EncodingStatistics.minDiffVariablesInOneEdge);
 		return root;
 	}
@@ -171,7 +166,7 @@ public class BlockEncoder {
 	 *            the entry point of a function
 	 */
 	private void processFunction(ProgramPoint methodEntryNode, RootEdge rootEdge) {
-		s_Logger.info("Start processing function: "
+		mLogger.info("Start processing function: "
 				+ methodEntryNode.getProcedure());
 		// Remark: While doing the initialization of the min model, we probably
 		// create already a method entry node

@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinte
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.Activator;
 
 /**

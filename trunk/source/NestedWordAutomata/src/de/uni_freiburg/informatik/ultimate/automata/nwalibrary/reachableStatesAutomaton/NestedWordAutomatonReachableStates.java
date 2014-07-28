@@ -41,9 +41,9 @@ import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
@@ -64,13 +64,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLa
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer.DownStateProp;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INestedWordAutomatonOldApi<LETTER,STATE>, INestedWordAutomaton<LETTER,STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
 
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+	private static Logger s_Logger = NestedWordAutomata.getLogger();
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
 	
@@ -722,7 +721,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 						}
 						m_DownPropagationWorklist.add(cont);
 					}
-					if (!UltimateServices.getInstance().continueProcessing()) {
+					if (!NestedWordAutomata.getMonitor().continueProcessing()) {
 						throw new OperationCanceledException();
 					}
 				}

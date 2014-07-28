@@ -13,9 +13,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.grap
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.selection.JungSelectionProvider;
 
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.awt.SWT_AWT;
 import org.eclipse.swt.widgets.Composite;

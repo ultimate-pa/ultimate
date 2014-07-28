@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.annotations.UseDefSequence;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -46,7 +48,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 
 public class UseDefVisitor extends SimpleRCFGVisitor {
 
-
+	public UseDefVisitor(Logger logger) {
+		super(logger);
+	}
 
 	@Override
 	public void pre(RCFGEdge edge) {
@@ -60,29 +64,29 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 			annot.Sequence.add(processStatement(((Call) edge)
 					.getCallStatement()));
 		} else if (edge instanceof GotoEdge) {
-			sLogger.info("Ignoring GotoEdge edge " + edge);
+			mLogger.info("Ignoring GotoEdge edge " + edge);
 			return;
 		} else if (edge instanceof ParallelComposition) {
-			sLogger.info("Ignoring ParallelComposition edge " + edge);
+			mLogger.info("Ignoring ParallelComposition edge " + edge);
 			return;
 		} else if (edge instanceof Return) {
-			sLogger.info("Ignoring Return edge " + edge);
+			mLogger.info("Ignoring Return edge " + edge);
 			return;
 		} else if (edge instanceof SequentialComposition) {
-			sLogger.info("Ignoring SequentialComposition edge " + edge);
+			mLogger.info("Ignoring SequentialComposition edge " + edge);
 			return;
 		} else if (edge instanceof StatementSequence) {
-			sLogger.info("Ignoring StatementSequence edge " + edge);
+			mLogger.info("Ignoring StatementSequence edge " + edge);
 			return;
 		} else if (edge instanceof Summary) {
-			sLogger.info("Ignoring summary edge " + edge);
+			mLogger.info("Ignoring summary edge " + edge);
 			return;
 
 		} else if (edge instanceof RootEdge) {
-			sLogger.info("Ignoring root edge " + edge);
+			mLogger.info("Ignoring root edge " + edge);
 			return;
 		} else {
-			sLogger.debug("Unknown edge type: "
+			mLogger.debug("Unknown edge type: "
 					+ edge.getClass().getCanonicalName() + " " + edge);
 			return;
 		}
@@ -133,7 +137,7 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 		} else if (stmt instanceof IfStatement) {
 
 			IfStatement ifstmt = (IfStatement) stmt;
-			sLogger.debug("IfStatement in edge?");
+			mLogger.debug("IfStatement in edge?");
 
 			uds = processExpression(ifstmt.getCondition());
 			for (Statement s : ifstmt.getThenPart()) {
@@ -151,7 +155,7 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 			return uds;
 		} else if (stmt instanceof WhileStatement) {
 			WhileStatement wstmt = (WhileStatement) stmt;
-			sLogger.debug("WhileStatement in edge?");
+			mLogger.debug("WhileStatement in edge?");
 			uds = processExpression(wstmt.getCondition());
 			for (Statement s : wstmt.getBody()) {
 				uds = uds.merge(processStatement(s));
@@ -159,7 +163,7 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 
 			return uds;
 		}
-		sLogger.debug("Unknown statement type: "
+		mLogger.debug("Unknown statement type: "
 				+ stmt.getClass().getCanonicalName() + " " + stmt);
 		return uds;
 	}
@@ -210,7 +214,7 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 			return uds;
 
 		} else if (exp instanceof QuantifierExpression) {
-			sLogger.warn("Ignoring quantifier expression");
+			mLogger.warn("Ignoring quantifier expression");
 			return uds;
 
 		} else if (exp instanceof RealLiteral) {
@@ -228,7 +232,7 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 			return uds;
 		}
 
-		sLogger.debug("Unknown expression type: "
+		mLogger.debug("Unknown expression type: "
 				+ exp.getClass().getCanonicalName() + " " + exp);
 		return uds;
 	}
@@ -244,7 +248,7 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 			return uds;
 		}
 
-		sLogger.debug("Unknown LeftHandSide type: "
+		mLogger.debug("Unknown LeftHandSide type: "
 				+ lhs.getClass().getCanonicalName() + " " + lhs);
 		return uds;
 	}

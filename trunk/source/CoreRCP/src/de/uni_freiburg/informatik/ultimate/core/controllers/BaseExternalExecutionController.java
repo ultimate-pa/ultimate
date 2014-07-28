@@ -3,9 +3,9 @@ package de.uni_freiburg.informatik.ultimate.core.controllers;
 import org.apache.log4j.Logger;
 import org.eclipse.equinox.app.IApplication;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 
@@ -51,12 +51,12 @@ public abstract class BaseExternalExecutionController implements IController {
 	}
 
 	@Override
-	public int init(ICore core) {
+	public int init(ICore core, ILoggingService loggingService) {
 		if (core == null) {
 			return -1;
 		}
 		mCurrentCoreReference = core;
-		mLogger = UltimateServices.getInstance().getLogger(getPluginID());
+		mLogger = loggingService.getLogger(getPluginID());
 
 		while (!mAbort) {
 			synchronized (mLock) {
@@ -110,10 +110,12 @@ public abstract class BaseExternalExecutionController implements IController {
 					"Ultimate is already started! Close the current instance, create a new instance, restart");
 		}
 
-		if (UltimateServices.getInstance() == null) {
-			mActualCore = new UltimateCore();
-			UltimateServices.createInstance(mActualCore);
-		}
+		//TODO: This is weird, I dont know why we have this.... Ill keep it for future reference 
+//		if (UltimateServices.getInstance() == null) {
+//			mActualCore = new UltimateCore();
+//			UltimateServices.createInstance(mActualCore);
+//		}
+		//END Weirdness
 		final IController activeController = this;
 		Runnable ultim = new Runnable() {
 			@Override

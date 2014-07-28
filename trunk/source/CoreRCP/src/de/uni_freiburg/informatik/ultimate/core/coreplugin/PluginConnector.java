@@ -1,18 +1,22 @@
-package de.uni_freiburg.informatik.ultimate.access;
+package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.access.IObserver;
+import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.access.walker.CFGWalker;
 import de.uni_freiburg.informatik.ultimate.access.walker.DFSTreeWalker;
 import de.uni_freiburg.informatik.ultimate.access.walker.IWalker;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin;
 import de.uni_freiburg.informatik.ultimate.model.GraphNotFoundException;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -20,25 +24,36 @@ import de.uni_freiburg.informatik.ultimate.model.IModelManager;
 
 //@formatter:off
 /**
- * PluginConnector executes observers of a single ITool tool in a toolchain. It
- * uses the following live cycle: - Select all desired models according to
- * tool.getQueryKeyword() - foreach model - tool.setInputDefinition() -
- * tool.getObservers() - execute each observer on the current model with -
- * observer.getWalkerOptions() - observer.init() - observer.run(model.Root) -
- * observer.finish() - if tool instanceof IGenerator, store model in
- * ModelManager by calling - tool.getModel() - tool.getOutputDefinition()
+ * PluginConnector executes observers of a single {@link ITool} in a
+ * {@link ToolchainData}. It uses the following live cycle:
+ * <ul>
+ * <li>Select all desired models according to {@link ITool#getQueryKeyword()}
+ * <li>foreach model
+ * <ul>
+ * <li> {@link ITool#setInputDefinition(GraphType)}
+ * <li> {@link ITool#getObservers()}
+ * <li>execute each {@link IObserver} on the current model with
+ * <ul>
+ * <li> {@link IObserver#getWalkerOptions()}
+ * <li> {@link IObserver#init()}
+ * <li>use an {@link IWalker} to run {@link IObserver} on model
+ * <li> {@link IObserver#finish()}
+ * <li>if tool is an instance of {@link IGenerator}, store model in the
+ * ModelManager by first calling {@link IGenerator#getModel()} and then calling
+ * {@link IGenerator#getOutputDefinition()}
+ * </ul>
+ * </ul>
+ * </ul>
  * 
  * @author dietsch
  */
 // @formatter:on
 public class PluginConnector {
 
-	private static Logger sLogger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
+	private Logger mLogger;
 
 	private IModelManager mModelManager;
-
 	private IController mController;
-
 	private ITool mTool;
 
 	private boolean mHasPerformedChanges;
@@ -46,10 +61,23 @@ public class PluginConnector {
 	private int mCurrent;
 	private int mMax;
 
-	public PluginConnector(IModelManager modelmanager, ITool tool, IController control) {
+	private IToolchainStorage mStorage;
+	private IUltimateServiceProvider mServices;
+
+	public PluginConnector(IModelManager modelmanager, ITool tool, IController control, IToolchainStorage storage,
+			IUltimateServiceProvider services) {
+		assert storage != null;
+		assert control != null;
+		assert modelmanager != null;
+		assert tool != null;
+		assert services != null;
+
 		mModelManager = modelmanager;
 		mController = control;
 		mTool = tool;
+		mStorage = storage;
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		init();
 	}
 
@@ -59,11 +87,13 @@ public class PluginConnector {
 	}
 
 	public void run() throws Throwable {
+		mLogger.info("------------------------" + mTool.getPluginName() + "----------------------------");
 		init();
+		initializePlugin(mLogger, mTool, mServices, mStorage);
 		List<GraphType> models = selectModels();
 		if (models.isEmpty()) {
 			IllegalArgumentException ex = new IllegalArgumentException();
-			sLogger.error("Tool did not select a valid model", ex);
+			mLogger.error("Tool did not select a valid model", ex);
 			throw ex;
 		}
 		mMax = models.size();
@@ -76,6 +106,7 @@ public class PluginConnector {
 			runTool(observers, currentModel);
 			++mCurrent;
 		}
+		mLogger.info("------------------------ END " + mTool.getPluginName() + "----------------------------");
 	}
 
 	public boolean hasPerformedChanges() {
@@ -83,7 +114,7 @@ public class PluginConnector {
 	}
 
 	public String toString() {
-		return mTool.getName();
+		return mTool.getPluginName();
 	}
 
 	private void runTool(List<IObserver> observers, GraphType currentModel) throws Throwable {
@@ -117,7 +148,7 @@ public class PluginConnector {
 		sb.append("Executing the observer ");
 		sb.append(observer.getClass().getSimpleName());
 		sb.append(" from plugin ");
-		sb.append(mTool.getName());
+		sb.append(mTool.getPluginName());
 		sb.append(" for \"");
 		sb.append(model);
 		sb.append("\" (");
@@ -125,7 +156,7 @@ public class PluginConnector {
 		sb.append("/");
 		sb.append(mMax);
 		sb.append(") ...");
-		sLogger.info(sb.toString());
+		mLogger.info(sb.toString());
 	}
 
 	private IElement getEntryPoint(GraphType definition) {
@@ -133,7 +164,7 @@ public class PluginConnector {
 		try {
 			n = mModelManager.getRootNode(definition);
 		} catch (GraphNotFoundException e) {
-			sLogger.error("Graph not found!", e);
+			mLogger.error("Graph not found!", e);
 		}
 		return n;
 	}
@@ -144,9 +175,9 @@ public class PluginConnector {
 		if (element != null && type != null) {
 			mModelManager.addItem(element, type);
 		} else {
-			sLogger.warn(String.format(
+			mLogger.warn(String.format(
 					"%s did return invalid model for observer %s, skipping insertion in model container",
-					tool.getName(), observer));
+					tool.getPluginName(), observer));
 		}
 	}
 
@@ -196,11 +227,11 @@ public class PluginConnector {
 			}
 		default:
 			IllegalStateException ex = new IllegalStateException("Unknown Query type");
-			sLogger.fatal("Unknown Query type", ex);
+			mLogger.fatal("Unknown Query type", ex);
 			throw ex;
 		}
 		if (models.isEmpty()) {
-			sLogger.warn("no suitable model selected, skipping...");
+			mLogger.warn("no suitable model selected, skipping...");
 		}
 		return models;
 	}
@@ -208,8 +239,22 @@ public class PluginConnector {
 	private IWalker selectWalker(GraphType currentModel, WalkerOptions options) {
 		// TODO implement walker selection logics
 		if (currentModel.getType().name().equals("CFG")) {
-			return new CFGWalker();
+			return new CFGWalker(mLogger);
 		}
-		return new DFSTreeWalker();
+		return new DFSTreeWalker(mLogger);
+	}
+
+	static void initializePlugin(Logger logger, IToolchainPlugin plugin, IUltimateServiceProvider services,
+			IToolchainStorage storage) {
+		logger.info("Initializing " + plugin.getPluginName() + "...");
+		try {
+			plugin.setServices(services);
+			plugin.setToolchainStorage(storage);
+			plugin.init();
+			logger.info(plugin.getPluginName() + " initialized");
+		} catch (Exception ex) {
+			logger.fatal("Exception during initialization of " + plugin.getPluginName());
+			throw ex;
+		}
 	}
 }

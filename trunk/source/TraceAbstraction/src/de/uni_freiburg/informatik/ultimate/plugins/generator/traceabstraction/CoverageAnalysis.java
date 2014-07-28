@@ -11,7 +11,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -32,8 +31,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class CoverageAnalysis {
 
-	protected static Logger s_Logger = 
-		UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
+	protected final Logger mLogger ;
 	
 	protected final NestedWord<CodeBlock> m_NestedWord;
 	private List<ProgramPoint> m_ProgramPointSequence;
@@ -53,8 +51,9 @@ public class CoverageAnalysis {
 
 	public CoverageAnalysis(
 			TraceChecker traceChecker,
-			List<ProgramPoint> programPointSequence) {
-		this.m_Interpolants = traceChecker.getInterpolants();
+			List<ProgramPoint> programPointSequence, Logger logger) {
+		mLogger = logger;
+		m_Interpolants = traceChecker.getInterpolants();
 		m_NestedWord = NestedWord.nestedWord(traceChecker.getTrace());
 		m_ProgramPointSequence = programPointSequence;
 		m_PredicateUnifier = traceChecker.getPredicateUnifier();
@@ -109,7 +108,7 @@ public class CoverageAnalysis {
 
 		postprocess();
 		
-		s_Logger.info("Checked inductivity of " +
+		mLogger.info("Checked inductivity of " +
 				(m_Unsat+m_Sat+m_Unknown+m_Trivial) +	" backedges. " + 
 				m_Unsat + " proven. " + 
 				m_Sat + " refuted. " + 

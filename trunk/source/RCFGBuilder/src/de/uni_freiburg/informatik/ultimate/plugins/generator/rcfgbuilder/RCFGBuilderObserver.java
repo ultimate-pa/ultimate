@@ -1,9 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
@@ -17,26 +19,35 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 public class RCFGBuilderObserver implements IUnmanagedObserver {
 
 	/**
-     * Root Node of this Ultimate model. I use this to store information that
-     * should be passed to the next plugin. The Sucessors of this node exactly
-     * the initial nodes of procedures.
+	 * Root Node of this Ultimate model. I use this to store information that
+	 * should be passed to the next plugin. The Sucessors of this node exactly
+	 * the initial nodes of procedures.
 	 */
 	private static RootNode m_graphroot;
-	
+
 	/**
 	 * Logger for this plugin.
 	 */
-	private static Logger s_Logger = 
-		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
-	
+	private final Logger mLogger;
+
+	private final IUltimateServiceProvider mServices;
+
+	private final IToolchainStorage mStorage;
+
+	public RCFGBuilderObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
+		mServices = services;
+		mStorage = storage;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+	}
+
 	/**
 	 * 
 	 * @return the root of the CFG.
 	 */
-	public RootNode getRoot(){
+	public RootNode getRoot() {
 		return RCFGBuilderObserver.m_graphroot;
 	}
-	
+
 	/**
 	 * Copied from CFG Builder
 	 * 
@@ -47,25 +58,24 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	 */
 	public boolean process(IElement root) {
 		if (!(root instanceof Unit)) {
-			//TODO
-			s_Logger.debug("No WrapperNode. Let Ultimate process with next node");
+			// TODO
+			mLogger.debug("No WrapperNode. Let Ultimate process with next node");
 			return true;
-		}
-		else {
+		} else {
 			Unit unit = (Unit) root;
-			RCFGBacktranslator translator =	new RCFGBacktranslator();
-			CfgBuilder recCFGBuilder = new CfgBuilder(unit, translator);
+			RCFGBacktranslator translator = new RCFGBacktranslator();
+			CfgBuilder recCFGBuilder = new CfgBuilder(unit, translator, mServices, mStorage);
 			try {
 				m_graphroot = recCFGBuilder.getRootNode(unit);
 				ModelUtils.mergeAnnotations(unit, m_graphroot);
-				UltimateServices.getInstance().getTranslatorSequence().add(translator);
+				mServices.getBacktranslationService().getTranslatorSequence().add(translator);
 			} catch (SMTLIBException e) {
 				if (e.getMessage().equals("Cannot create quantifier in quantifier-free logic")) {
-					s_Logger.warn("Unsupported syntax: " + e.getMessage());
+					mLogger.warn("Unsupported syntax: " + e.getMessage());
 				} else if (e.getMessage().equals("Sort Array not declared")) {
-					s_Logger.warn("Unsupported syntax: " + e.getMessage());
+					mLogger.warn("Unsupported syntax: " + e.getMessage());
 				} else if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
-					s_Logger.warn("Unsupported syntax: " + e.getMessage());
+					mLogger.warn("Unsupported syntax: " + e.getMessage());
 				} else {
 					throw e;
 				}
@@ -73,11 +83,11 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 		}
 		return false;
 	}
-	
+
 	@Override
 	public void finish() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -89,7 +99,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	@Override
 	public void init() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override

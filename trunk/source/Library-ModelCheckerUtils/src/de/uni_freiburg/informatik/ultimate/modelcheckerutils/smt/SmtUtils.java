@@ -11,7 +11,6 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -21,25 +20,21 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class SmtUtils {
 	
-	private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(ModelCheckerUtils.sPluginID);
-
 	private SmtUtils() {
 		// Prevent instantiation of this utility class
 	}
 	
-	public static Term simplify(Script script, Term formula) {
-		s_Logger.debug(new DebugMessage(
+	public static Term simplify(Script script, Term formula, Logger logger) {
+		logger.debug(new DebugMessage(
 				"simplifying formula of DAG size {0}", 
 				new DagSizePrinter(formula)));
 		Term simplified = (new SimplifyDDA(script)).getSimplifiedTerm(formula);
-		s_Logger.debug(new DebugMessage(
+		logger.debug(new DebugMessage(
 				"DAG size before simplification {0}, DAG size after simplification {1}", 
 				new DagSizePrinter(formula), new DagSizePrinter(simplified)));
 		return simplified;

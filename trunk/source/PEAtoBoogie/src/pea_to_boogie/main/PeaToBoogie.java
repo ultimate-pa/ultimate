@@ -11,15 +11,16 @@ import pea_to_boogie.Activator;
 import pea_to_boogie.translator.Translator;
 import req_to_pea.ReqToPEA;
 import srParse.srParsePattern;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 public class PeaToBoogie implements ISource {
-    protected static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-    List<String> m_FileNames = new ArrayList<String>();
+	protected Logger mLogger;
+	List<String> m_FileNames = new ArrayList<String>();
 
 	@Override
 	public int init() {
@@ -27,7 +28,7 @@ public class PeaToBoogie implements ISource {
 	}
 
 	@Override
-	public String getName() {
+	public String getPluginName() {
 		return "PEA to Boogie";
 	}
 
@@ -48,23 +49,22 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public IElement parseAST(File[] files) throws Exception {
-        throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public IElement parseAST(File file) throws Exception {
 		Translator translator = new Translator();
 		String inputPath = file.getAbsolutePath();
-    	m_FileNames = new ArrayList<String>();
-    	m_FileNames.add(inputPath);
-    	s_Logger.info("Parsing: '"+inputPath+"'");
-    	srParsePattern[] patterns = new ReqToPEA().genPatterns(inputPath);
-    	int combinationNum = Math.min(patterns.length, 3); //TODO preference
- 		translator.setCombinationNum(combinationNum);
- 		translator.setInputFilePath(inputPath);
- 		return translator.genBoogie(patterns);	
+		m_FileNames = new ArrayList<String>();
+		m_FileNames.add(inputPath);
+		mLogger.info("Parsing: '" + inputPath + "'");
+		srParsePattern[] patterns = new ReqToPEA().genPatterns(inputPath);
+		int combinationNum = Math.min(patterns.length, 3); // TODO preference
+		translator.setCombinationNum(combinationNum);
+		translator.setInputFilePath(inputPath);
+		return translator.genBoogie(patterns);
 	}
-
 
 	@Override
 	public String[] getFileTypes() {
@@ -72,13 +72,12 @@ public class PeaToBoogie implements ISource {
 		return new String[] { ".req" };
 	}
 
-
 	@Override
 	public GraphType getOutputDefinition() {
 		try {
 			return new GraphType(getPluginID(), GraphType.Type.AST, m_FileNames);
 		} catch (Exception ex) {
-			s_Logger.log(Level.FATAL,"syntax error: " + ex.getMessage());
+			mLogger.log(Level.FATAL, "syntax error: " + ex.getMessage());
 			return null;
 		}
 	}
@@ -95,4 +94,14 @@ public class PeaToBoogie implements ISource {
 		return null;
 	}
 
+	@Override
+	public void setToolchainStorage(IToolchainStorage storage) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void setServices(IUltimateServiceProvider services) {
+		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+	}
 }

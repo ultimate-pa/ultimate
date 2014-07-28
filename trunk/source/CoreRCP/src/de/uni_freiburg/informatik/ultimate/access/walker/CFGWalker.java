@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.access.IManagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
@@ -16,8 +18,8 @@ public class CFGWalker extends BaseWalker {
 
 	private HashSet<IWalkable> mVisitedNodes = new HashSet<IWalkable>();
 
-	public CFGWalker() {
-		super();
+	public CFGWalker(Logger logger) {
+		super(logger);
 	}
 
 	/**
@@ -46,20 +48,20 @@ public class CFGWalker extends BaseWalker {
 			}
 
 			if (cmds.toString().equals(WalkerOptions.Command.SKIP.toString())) {
-				sLogger.debug("Skipping " + node.getPayload().getName());
+				mLogger.debug("Skipping " + node.getPayload().getName());
 			} else if (cmds.contains(WalkerOptions.Command.DESCEND)
 					&& node.getSuccessors() != null) {
 				for (IWalkable i : node.getSuccessors()) {
 					if (!this.mVisitedNodes.contains(i)) {
 						runObserver(i, observer);
 					} else {
-						sLogger.debug("CFGWalker >> Found Potential CutPoint: "
+						mLogger.debug("CFGWalker >> Found Potential CutPoint: "
 								+ i.getPayload().getName());
 					}
 				}
 			}
 		} else {
-			sLogger.error("Unsupported model type");
+			mLogger.error("Unsupported model type");
 		}
 
 	}

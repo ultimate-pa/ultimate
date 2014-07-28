@@ -3,10 +3,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
-import org.eclipse.cdt.core.dom.ast.IASTElaboratedTypeSpecifier;
-import org.eclipse.cdt.core.dom.ast.IASTName;
-import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
-
 /**
  * @author Markus Lindenmann
  * @date 01.11.2012

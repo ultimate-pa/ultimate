@@ -7,7 +7,6 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -15,7 +14,6 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 
 /**
  * Try to eliminate existentially quantified variables in terms.
@@ -24,11 +22,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
  */
 public class NaiveDestructiveEqualityResolution {
 	private final Script m_Script;
+	private final Logger mLogger;
 	
-	private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(ModelCheckerUtils.sPluginID);
-	
-	public NaiveDestructiveEqualityResolution(Script script) {
+	public NaiveDestructiveEqualityResolution(Script script, Logger logger) {
+		mLogger = logger;
 		m_Script = script;
 	}
 	
@@ -50,7 +47,7 @@ public class NaiveDestructiveEqualityResolution {
 		for (TermVariable tv : vars) {
 			Term replacementTerm = equalTerms(tv, resFormula);
 			if (replacementTerm != null) {
-				s_Logger.debug("eliminated existentially quantifed variable " + tv);
+				mLogger.debug("eliminated existentially quantifed variable " + tv);
 				eliminatedVars.add(tv);
 				TermVariable[] varsAux = { tv };
 				Term[] valuesAux = { replacementTerm };
@@ -58,7 +55,7 @@ public class NaiveDestructiveEqualityResolution {
 				resFormula = new FormulaUnLet().unlet(resFormula);
 			}
 			else {
-				s_Logger.debug("unable to eliminated existentially quantifed variable " + tv);
+				mLogger.debug("unable to eliminated existentially quantifed variable " + tv);
 			}
 		}
 		for (TermVariable tv : eliminatedVars) {
@@ -135,7 +132,7 @@ public class NaiveDestructiveEqualityResolution {
 	 */
 	private int tvOnOneSideOfEquality(TermVariable tv, Term[] params) {
 		if (params.length != 2) {
-			s_Logger.warn("Equality of length " + params.length);
+			mLogger.warn("Equality of length " + params.length);
 		}
 		if (params[0] == tv) {
 			final boolean rightHandSideContainsTv = 

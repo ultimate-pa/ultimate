@@ -5,11 +5,6 @@ package de.uni_freiburg.informatik.ultimate.model;
 
 import java.io.Serializable;
 import java.util.HashSet;
-
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
 
 /**
@@ -26,9 +21,6 @@ public class ModelContainer implements Serializable {
 	 */
 	private static final long serialVersionUID = -1957760572620128974L;
 
-	private static Logger sLogger = UltimateServices.getInstance().getLogger(
-			Activator.s_PLUGIN_ID);
-
 	private IElement mGraphRoot;
 
 	private GraphType mGraphType;
@@ -36,18 +28,18 @@ public class ModelContainer implements Serializable {
 	private String mGraphName;
 
 	protected ModelContainer(IElement rootNode, GraphType type, String name) {
-		this.mGraphRoot = rootNode;
-		this.mGraphType = type;
-		this.mGraphName = name;
+		mGraphRoot = rootNode;
+		mGraphType = type;
+		mGraphName = name;
 		init();
 	}
 
 	protected IElement getRoot() {
-		return this.mGraphRoot;
+		return mGraphRoot;
 	}
 
 	protected String getName() {
-		return this.mGraphName;
+		return mGraphName;
 	}
 
 	protected int getSize() {
@@ -55,17 +47,15 @@ public class ModelContainer implements Serializable {
 	}
 
 	public String toString() {
-		return this.mGraphType.toString();
+		return mGraphType.toString();
 	}
 
 	protected GraphType getType() {
-		return this.mGraphType;
+		return mGraphType;
 	}
 
 	private void init() {
-		this.mGraphType.setSize(countNodes(this.mGraphRoot));
-		sLogger.info(this.mGraphName + " has " + this.mGraphType.getSize()
-				+ " nodes.");
+		mGraphType.setSize(countNodes(this.mGraphRoot));
 	}
 
 	protected void cleanup() {

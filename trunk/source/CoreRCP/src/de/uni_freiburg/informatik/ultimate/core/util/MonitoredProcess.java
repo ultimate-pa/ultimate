@@ -5,14 +5,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.Thread.State;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
+import de.uni_freiburg.informatik.ultimate.core.services.IStorable;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
 
-public final class MonitoredProcess {
+public final class MonitoredProcess implements IStorable {
 
 	private Logger mLogger;
 	private String mCommand;
@@ -22,10 +25,18 @@ public final class MonitoredProcess {
 	private volatile Process mProcess;
 	private volatile boolean mProcessCompleted;
 	private volatile int mReturnCode;
+	private final IToolchainStorage mStorage;
+	private static AtomicInteger sInstanceCounter = new AtomicInteger();
+	private int mID;
+	private IUltimateServiceProvider mServices;
 
-	private MonitoredProcess(Process process, String command, String exitCommand) {
-		mLogger = UltimateServices.getInstance().getLogger(
-				Activator.s_PLUGIN_ID);
+	private MonitoredProcess(Process process, String command, String exitCommand, IUltimateServiceProvider services,
+			IToolchainStorage storage) {
+		assert storage != null;
+		assert services != null;
+		mStorage = storage;
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		mProcess = process;
 		mProcessCompleted = false;
 		mCommand = command;
@@ -46,31 +57,34 @@ public final class MonitoredProcess {
 		return mReturnCode;
 	}
 
-	
-
 	/**
 	 * 
 	 * @param command
 	 * @return
 	 * @throws IOException
 	 */
-	public static MonitoredProcess exec(String command, String exitCommand)
-			throws IOException {
-		final MonitoredProcess mp = new MonitoredProcess(Runtime.getRuntime()
-				.exec(command), command, exitCommand);
+	public static MonitoredProcess exec(String command, String exitCommand, IUltimateServiceProvider services,
+			IToolchainStorage storage) throws IOException {
+		final MonitoredProcess mp = new MonitoredProcess(Runtime.getRuntime().exec(command), command, exitCommand,
+				services, storage);
 
-		UltimateServices.getInstance().registerProcess(mp);
-		
+		mp.mID = sInstanceCounter.incrementAndGet();
+		storage.putStorable(getKey(mp.mID, command), mp);
+
 		mp.mMonitor = new Thread(mp.createProcessRunner(), command);
-		mp.mLogger.info(String.format(
-				"Starting monitored process with %s (exit command is %s)",
-				mp.mCommand, mp.mExitCommand));
+		mp.mLogger.info(String.format("Starting monitored process with %s (exit command is %s)", mp.mCommand,
+				mp.mExitCommand));
 		mp.mMonitor.start();
 		return mp;
 	}
 
-	public static MonitoredProcess exec(String command) throws IOException {
-		return exec(command, null);
+	public static MonitoredProcess exec(String command, IUltimateServiceProvider services, IToolchainStorage storage)
+			throws IOException {
+		return exec(command, null, services, storage);
+	}
+
+	private static String getKey(int id, String command) {
+		return id + " " + command;
 	}
 
 	public void forceShutdown() {
@@ -82,8 +96,7 @@ public final class MonitoredProcess {
 					sw.write(mExitCommand);
 					sw.close();
 				} catch (IOException e) {
-					mLogger.error("The process started with " + mCommand
-							+ " did not receive the exit command "
+					mLogger.error("The process started with " + mCommand + " did not receive the exit command "
 							+ mExitCommand, e);
 				}
 				try {
@@ -99,16 +112,14 @@ public final class MonitoredProcess {
 					return;
 				}
 			}
-			mLogger.warn("Forcibly destroying the process started with "
-					+ mCommand);
+			mLogger.warn("Forcibly destroying the process started with " + mCommand);
 			try {
 				mProcess.destroy();
 			} catch (NullPointerException ex) {
 				mLogger.warn("Rare case: The thread was killed right after we checked if it "
 						+ "was killed and before we wanted to kill it manually");
 			} catch (Exception ex) {
-				mLogger.fatal(String.format(
-						"Something unexpected happened: %s%n%s", ex,
+				mLogger.fatal(String.format("Something unexpected happened: %s%n%s", ex,
 						ExceptionUtils.getStackTrace(ex)));
 
 			}
@@ -119,7 +130,7 @@ public final class MonitoredProcess {
 	public OutputStream getOutputStream() {
 		return mProcess.getOutputStream();
 	}
-	
+
 	public InputStream getErrorStream() {
 		return mProcess.getErrorStream();
 	}
@@ -127,44 +138,46 @@ public final class MonitoredProcess {
 	public InputStream getInputStream() {
 		return mProcess.getInputStream();
 	}
-	
+
 	@Override
 	protected void finalize() throws Throwable {
 		forceShutdown();
 		super.finalize();
 	}
-	
-	private ProcessRunner createProcessRunner(){
+
+	private ProcessRunner createProcessRunner() {
 		return new ProcessRunner(this);
 	}
-	
-	private class ProcessRunner implements Runnable{
-		
+
+	private class ProcessRunner implements Runnable {
+
 		private MonitoredProcess mMonitoredProcess;
-		
-		private ProcessRunner(MonitoredProcess mp){
+
+		private ProcessRunner(MonitoredProcess mp) {
 			mMonitoredProcess = mp;
 		}
-		
+
 		@Override
 		public void run() {
 			try {
 				mMonitoredProcess.mReturnCode = mMonitoredProcess.mProcess.waitFor();
-				
+
 				mMonitoredProcess.mLogger.debug("Finished waiting for process!");
 				mMonitoredProcess.mProcessCompleted = true;
 			} catch (InterruptedException e) {
-				mMonitoredProcess.mLogger.error(
-						"The process started with "
-								+ mMonitoredProcess.mCommand
-								+ " was interrupted. It will terminate abnormally.",
-						e);
+				mMonitoredProcess.mLogger.error("The process started with " + mMonitoredProcess.mCommand
+						+ " was interrupted. It will terminate abnormally.", e);
 			} finally {
 				mMonitoredProcess.mProcess.destroy();
 				mMonitoredProcess.mProcess = null;
-				UltimateServices.getInstance().unregisterProcess(mMonitoredProcess);
+				mMonitoredProcess.mStorage.removeStorable(getKey(mMonitoredProcess.mID, mMonitoredProcess.mCommand));
 			}
 		}
+	}
+
+	@Override
+	public void destroy() {
+		forceShutdown();
 	}
 
 }

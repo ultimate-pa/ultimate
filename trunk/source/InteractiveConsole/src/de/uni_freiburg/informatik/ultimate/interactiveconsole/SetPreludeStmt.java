@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.interactiveconsole;
 
-import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.PreludeProvider;
 
 /**
  * interactive console statement responsible for setting the prelude file
@@ -18,7 +18,7 @@ public class SetPreludeStmt extends Stmt {
 	
 	@Override
 	public void execute() {
-		this.controller.setPrelude(new PreludeProvider(this.prelude));
+		this.controller.setPrelude(new PreludeProvider(this.prelude, null));
 	}
 
 }

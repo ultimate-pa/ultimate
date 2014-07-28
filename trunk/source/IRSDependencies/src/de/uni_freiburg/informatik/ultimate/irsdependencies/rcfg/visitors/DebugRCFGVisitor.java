@@ -2,8 +2,6 @@ package de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.irsdependencies.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
@@ -11,16 +9,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 
 public class DebugRCFGVisitor extends SimpleRCFGVisitor {
 
-	private static Logger sLogger = UltimateServices.getInstance()
-			.getLogger(Activator.PLUGIN_ID);
-
 	private int mPathCount;
 	private int mNodeCount;
 	private int mEdgeCount;
 	private StringBuilder mStringBuilder;
 	public final int mLimit;
 
-	public DebugRCFGVisitor(int limit) {
+	public DebugRCFGVisitor(Logger logger, int limit) {
+		super(logger);
 		mPathCount = 0;
 		mNodeCount = 0;
 		mEdgeCount = 0;
@@ -47,7 +43,7 @@ public class DebugRCFGVisitor extends SimpleRCFGVisitor {
 		mStringBuilder.append("\nEdgeCount: " + mEdgeCount);
 		mStringBuilder.append("\nLimit: " + mLimit);
 		mStringBuilder.append("\n===============");
-		sLogger.debug(mStringBuilder);
+		mLogger.debug(mStringBuilder);
 	}
 
 	@Override
@@ -56,8 +52,7 @@ public class DebugRCFGVisitor extends SimpleRCFGVisitor {
 		if (edge instanceof RootEdge) {
 			mStringBuilder.append("RootEdge");
 		} else {
-			mStringBuilder.append(((CodeBlock) edge)
-					.getPrettyPrintedStatements());
+			mStringBuilder.append(((CodeBlock) edge).getPrettyPrintedStatements());
 		}
 	}
 
@@ -71,8 +66,7 @@ public class DebugRCFGVisitor extends SimpleRCFGVisitor {
 
 	public void endOfTrace() {
 		++mPathCount;
-		mStringBuilder.replace(mStringBuilder.length() - 5,
-				mStringBuilder.length(), "");
+		mStringBuilder.replace(mStringBuilder.length() - 5, mStringBuilder.length(), "");
 		mStringBuilder.append("\n--\n");
 	}
 
@@ -82,7 +76,7 @@ public class DebugRCFGVisitor extends SimpleRCFGVisitor {
 
 	public boolean abortAll() {
 		if ((mPathCount > mLimit || mNodeCount > mLimit || mEdgeCount > mLimit)) {
-			sLogger.debug("Aborting debug session because node, path or edge limit was reached");
+			mLogger.debug("Aborting debug session because node, path or edge limit was reached");
 			return true;
 		}
 		return false;

@@ -36,8 +36,8 @@ import petruchio.cov.Backward;
 import petruchio.cov.SimpleList;
 import petruchio.interfaces.petrinet.Place;
 import petruchio.interfaces.petrinet.Transition;
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
  * Check if a PetriNetJulian has an accepting run.
@@ -64,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 	
 	private static Logger s_Logger = 
-		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+		NestedWordAutomata.getLogger();
 	
 	@Override
 	public String operationName() {

@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -47,9 +49,11 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	private NestedWordAutomaton<CodeBlock, IPredicate> m_LassoAutomaton;
 	private final StateFactory<IPredicate> m_PredicateFactory;
 	private final SmtManager m_SmtManager;
+	private final Logger mLogger;
 	
-	public LassoExtractorBuchi(RootNode rootNode, SmtManager smtManager) 
+	public LassoExtractorBuchi(RootNode rootNode, SmtManager smtManager, Logger logger) 
 			throws AutomataLibraryException {
+		mLogger = logger;
 		m_PredicateFactory = new PredicateFactoryResultChecking(smtManager);
 		m_CfgAutomaton = constructCfgAutomaton(rootNode, smtManager);
 		m_SmtManager = smtManager;
@@ -94,7 +98,7 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	private INestedWordAutomaton<CodeBlock, IPredicate> constructCfgAutomaton(
 			RootNode rootNode, SmtManager smtManager) {
 		CFG2NestedWordAutomaton cFG2NestedWordAutomaton = 
-				new CFG2NestedWordAutomaton(true ,smtManager);
+				new CFG2NestedWordAutomaton(true ,smtManager, mLogger);
 		Collection<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
 		for (Map<String, ProgramPoint> prog2pp : 
 						rootNode.getRootAnnot().getProgramPoints().values()) {

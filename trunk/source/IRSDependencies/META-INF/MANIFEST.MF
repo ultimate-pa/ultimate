@@ -9,6 +9,6 @@ Require-Bundle: UltimateCore,
  Library-ModelCheckerUtils,
  Library-UltimateUtil,
  BoogieParser,
- RCFGBuilder
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy

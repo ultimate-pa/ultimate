@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.cookiefy;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;

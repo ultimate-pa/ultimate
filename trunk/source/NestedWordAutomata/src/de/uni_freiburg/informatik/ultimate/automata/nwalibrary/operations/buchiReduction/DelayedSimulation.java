@@ -45,7 +45,7 @@ import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player0Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player1Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
@@ -85,12 +84,7 @@ public class DelayedSimulation<LETTER,STATE> {
     /**
      * The logger.
      */
-    private static Logger s_Logger = UltimateServices.getInstance().getLogger(
-            Activator.PLUGIN_ID);
-    /**
-     * Ultimate service for cancel operation.
-     */
-    private UltimateServices m_UltiServ = UltimateServices.getInstance();
+    private static Logger s_Logger = NestedWordAutomata.getLogger();
     /**
      * Holding the result automaton.
      */
@@ -163,7 +157,7 @@ public class DelayedSimulation<LETTER,STATE> {
                     infinity++;
                 }
             }
-            if (!m_UltiServ.continueProcessing()) {
+            if (!NestedWordAutomata.getMonitor().continueProcessing()) {
                 s_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
                 throw new OperationCanceledException();
             }
@@ -201,7 +195,7 @@ public class DelayedSimulation<LETTER,STATE> {
                     }
                 }
             }
-            if (!m_UltiServ.continueProcessing()) {
+            if (!NestedWordAutomata.getMonitor().continueProcessing()) {
                 s_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
                 throw new OperationCanceledException();
             }
@@ -318,7 +312,7 @@ public class DelayedSimulation<LETTER,STATE> {
                     }
                 }
             }
-            if (!m_UltiServ.continueProcessing()) {
+            if (!NestedWordAutomata.getMonitor().continueProcessing()) {
                 s_Logger.debug("Stopped in efficientLiftingAlgorithm");
                 throw new OperationCanceledException();
             }
@@ -464,7 +458,7 @@ public class DelayedSimulation<LETTER,STATE> {
             }
         }
 
-        if (!m_UltiServ.continueProcessing()) {
+        if (!NestedWordAutomata.getMonitor().continueProcessing()) {
             s_Logger.debug("Stopped in generateBuchiAutomaton/table filled");
             throw new OperationCanceledException();
         }
@@ -498,7 +492,7 @@ public class DelayedSimulation<LETTER,STATE> {
             marker[i] = true;
         }
 
-        if (!m_UltiServ.continueProcessing()) {
+        if (!NestedWordAutomata.getMonitor().continueProcessing()) {
             s_Logger.debug("Stopped in generateBuchiAutomaton/states added to result BA");
             throw new OperationCanceledException();
         }

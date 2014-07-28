@@ -26,7 +26,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;

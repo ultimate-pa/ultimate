@@ -36,8 +36,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 
 // TODO: rewrite this class, possibly split it up to resolve this horrible ambiguity
 /**
@@ -57,8 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 		Comparable<Configuration<S, C>> {
 
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID);
+	private static Logger s_Logger = NestedWordAutomata.getLogger();
 	private Set<Event<S, C>> m_Events;
 	private Set<Event<S, C>> m_Min;
 	private ArrayList<Transition<S, C>> m_Phi = null;

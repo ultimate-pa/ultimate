@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.walker;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -7,12 +9,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 public class ObserverDispatcherSequential extends ObserverDispatcher
 {
 
+	public ObserverDispatcherSequential(Logger logger) {
+		super(logger);
+	}
+
 	private SimpleRCFGVisitor mCurrentVisitor;
 
 	public void run(RCFGNode node)
 	{
 		if (!(node instanceof RootNode)) {
-			sLogger.error("RCFGWalker can only process models created by RCFGBuilder");
+			mLogger.error("RCFGWalker can only process models created by RCFGBuilder");
 			return;
 		}
 		for (SimpleRCFGVisitor visitor : mObservers) {

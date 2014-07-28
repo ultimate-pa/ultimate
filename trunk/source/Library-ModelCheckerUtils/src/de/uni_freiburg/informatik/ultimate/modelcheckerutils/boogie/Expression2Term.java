@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -29,63 +30,60 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
-
 /**
- * Translate a Boogie Expression into an SMT Term. 
- * Use the here defined interface IndentifierResolver to translate identifier
- * expressions.
+ * Translate a Boogie Expression into an SMT Term. Use the here defined
+ * interface IndentifierResolver to translate identifier expressions.
+ * 
  * @author Matthias Heizmann
- *
+ * 
  */
 public class Expression2Term {
-	
+
 	public interface IdentifierTranslator {
-		public Term getSmtIdentifier(String id, DeclarationInformation declInfo, boolean isOldContext, BoogieASTNode boogieASTNode);
+		public Term getSmtIdentifier(String id, DeclarationInformation declInfo, boolean isOldContext,
+				BoogieASTNode boogieASTNode);
 	}
-	
-	private final ScopedHashMap<String, TermVariable> m_QuantifiedVariables = 
-			new ScopedHashMap<String, TermVariable>();
-	
+
+	private final ScopedHashMap<String, TermVariable> m_QuantifiedVariables = new ScopedHashMap<String, TermVariable>();
+
 	private final Script m_Script;
 	private final TypeSortTranslator m_TypeSortTranslator;
 	private final IdentifierTranslator[] m_SmtIdentifierProviders;
 	private final Term[] m_Result;
-	
+
 	/**
 	 * Count the height of current old(.) expressions. As long as this is
 	 * strictly greater than zero we are have to consider all global vars as
-	 * oldvars.   
+	 * oldvars.
 	 */
 	private int m_OldContextScopeDepth = 0;
-	
 
-	
-	public Expression2Term(IdentifierTranslator[] identifierTranslators, 
-			Script script, 
-			TypeSortTranslator typeSortTranslator, Expression... expressions) {
+	private final IUltimateServiceProvider mServices;
+
+	public Expression2Term(IUltimateServiceProvider services, IdentifierTranslator[] identifierTranslators,
+			Script script, TypeSortTranslator typeSortTranslator, Expression... expressions) {
 		super();
+		mServices = services;
 		m_Script = script;
 		m_TypeSortTranslator = typeSortTranslator;
 		m_SmtIdentifierProviders = identifierTranslators;
 		m_Result = new Term[expressions.length];
-		for (int i=0; i<expressions.length; i++) {
+		for (int i = 0; i < expressions.length; i++) {
 			m_Result[i] = translate(expressions[i]);
 		}
 	}
-	
-	
+
 	public Term getTerm() {
 		if (m_Result.length != 1) {
 			throw new AssertionError("you translated not exactly one expression");
 		}
 		return m_Result[0];
 	}
-	
+
 	public Term[] getTerms() {
 		return m_Result;
 	}
 
-	
 	Term getSmtIdentifier(String id, DeclarationInformation declInfo, boolean isOldContext, BoogieASTNode boogieASTNode) {
 		if (m_QuantifiedVariables.containsKey(id)) {
 			return m_QuantifiedVariables.get(id);
@@ -99,16 +97,16 @@ public class Expression2Term {
 			throw new AssertionError("found no translation for id " + id);
 		}
 	}
-	
+
 	/**
 	 * We are in a context where we have to consider all global vars as oldvars
 	 * if m_OldContextScopeDepth is > 0.
+	 * 
 	 * @return
 	 */
 	private boolean isOldContext() {
 		return m_OldContextScopeDepth > 0;
 	}
-
 
 	private Term translate(Expression exp) {
 		if (exp instanceof ArrayAccessExpression) {
@@ -360,7 +358,7 @@ public class Expression2Term {
 						.quantifier(Script.EXISTS, vars, form, triggers);
 			} catch (SMTLIBException e) {
 				if (e.getMessage().equals("Cannot create quantifier in quantifier-free logic")) {
-					Boogie2SMT.reportUnsupportedSyntax(exp, "Setting does not support quantifiers");
+					Boogie2SMT.reportUnsupportedSyntax(exp, "Setting does not support quantifiers", mServices);
 					throw e;
 				} else {
 					throw new AssertionError();

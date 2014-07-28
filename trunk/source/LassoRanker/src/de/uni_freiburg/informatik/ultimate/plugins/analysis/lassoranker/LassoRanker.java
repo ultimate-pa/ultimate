@@ -5,6 +5,8 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LassoAnalysis;
@@ -22,12 +24,14 @@ public class LassoRanker implements IAnalysis {
 	
 	private LassoRankerObserver m_Observer;
 	private GraphType m_InputDefinition;
+	private IUltimateServiceProvider mServices;
+	private IToolchainStorage mStorage;
 
 	/**
 	 * @return a human readable Name for the plugin
 	 */
 	@Override
-	public String getName() {
+	public String getPluginName() {
 		return s_PLUGIN_NAME;
 	}
 
@@ -45,7 +49,6 @@ public class LassoRanker implements IAnalysis {
 	 */
 	@Override
 	public int init() {
-		m_Observer = new LassoRankerObserver();
 		return 0;
 	}
 
@@ -66,6 +69,7 @@ public class LassoRanker implements IAnalysis {
 
 	//@Override
 	public List<IObserver> getObservers() {
+		m_Observer = new LassoRankerObserver(mServices, mStorage);
 		return Collections.singletonList((IObserver) m_Observer);
 	}
 	
@@ -87,5 +91,15 @@ public class LassoRanker implements IAnalysis {
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
 		return new PreferencesInitializer();
+	}
+
+	@Override
+	public void setToolchainStorage(IToolchainStorage storage) {
+		mStorage = storage;
+	}
+
+	@Override
+	public void setServices(IUltimateServiceProvider services) {
+		mServices = services;
 	}
 }

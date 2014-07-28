@@ -30,8 +30,8 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsitenceCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
@@ -53,8 +52,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Reach;
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
 
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID);
+	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
 	/**
 	 * Given an INestedWordAutomaton nwa return a nested word automaton that has

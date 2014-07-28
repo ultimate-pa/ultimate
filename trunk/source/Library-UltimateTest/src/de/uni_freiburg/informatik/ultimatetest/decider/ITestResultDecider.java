@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimatetest.decider;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 
@@ -22,19 +23,28 @@ public interface ITestResultDecider {
 	 * {@link Throwable}, this method will be called by {@link UltimateTestCase}
 	 * to determine the actual test result.
 	 * 
+	 * @param services
+	 *            Provides the {@link IUltimateServiceProvider} instance of the
+	 *            toolchain that was run for the test on which
+	 *            {@link ITestResultDecider} should decide.
 	 */
-	public TestResult getTestResult();
+	public TestResult getTestResult(IUltimateServiceProvider services);
 
 	/**
 	 * If the execution of an {@link UltimateTestCase} does generate a
 	 * {@link Throwable}, this method will be called by {@link UltimateTestCase}
 	 * to determine the actual test result.
 	 * 
+	 * @param services
+	 *            Provides the {@link IUltimateServiceProvider} instance of the
+	 *            toolchain that was run for the test on which
+	 *            {@link ITestResultDecider} should decide.
+	 * 
 	 * @param e
 	 *            The {@link Throwable} that caused Ultimate to end its
 	 *            execution.
 	 */
-	public TestResult getTestResult(Throwable e);
+	public TestResult getTestResult(IUltimateServiceProvider services, Throwable e);
 
 	/**
 	 * After {@link UltimateTestCase} called {@link #getTestResult()} or

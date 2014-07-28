@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -58,8 +60,8 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 	public DeterministicInterpolantAutomaton(SmtManager smtManager, EdgeChecker edgeChecker,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
-			TraceChecker traceChecker) {
-		super(smtManager,edgeChecker, abstraction, traceChecker.getPostcondition(), interpolantAutomaton);
+			TraceChecker traceChecker, Logger  logger) {
+		super(smtManager ,edgeChecker, abstraction, traceChecker.getPostcondition(), interpolantAutomaton, logger);
 		m_UseLazyEdgeChecks = false;
 		m_PredicateUnifier = traceChecker.getPredicateUnifier();
 		Collection<IPredicate> allPredicates;
@@ -92,7 +94,7 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 			}
 		}
 
-		s_Logger.info(startMessage());
+		mLogger.info(startMessage());
 		
 	}
 	

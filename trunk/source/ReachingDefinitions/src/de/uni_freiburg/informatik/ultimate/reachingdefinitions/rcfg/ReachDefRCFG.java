@@ -9,7 +9,6 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations.ReachDefStatementAnnotation;
-import de.uni_freiburg.informatik.ultimate.reachingdefinitions.plugin.Activator;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.util.Util;
 
 /**
@@ -29,14 +28,15 @@ public class ReachDefRCFG extends BaseObserver {
 
 	private final Logger mLogger;
 	
-	public ReachDefRCFG (){
-		mLogger = Activator.getLogger();
+	public ReachDefRCFG (Logger logger){
+		mLogger = logger;
 	}
 	
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		if (root instanceof RootNode) {
 			RootNode rootNode = (RootNode) root;
+			
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Loops: " + rootNode.getRootAnnot().getLoopLocations().size());
 			}
@@ -60,7 +60,7 @@ public class ReachDefRCFG extends BaseObserver {
 			}
 			RCFGEdge current = remaining.iterator().next();
 			remaining.remove(current);
-			ReachDefRCFGVisitor v = new ReachDefRCFGVisitor(null);
+			ReachDefRCFGVisitor v = new ReachDefRCFGVisitor(null, mLogger);
 
 			boolean fxpReached = v.process(current);
 			if (mLogger.isDebugEnabled()) {

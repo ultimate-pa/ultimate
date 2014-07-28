@@ -1,10 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
-
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
@@ -16,44 +17,44 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Create a script that connects to an external SMT solver.  The solver 
- * must be SMTLIB-2 compliant and expect commands on standard input. It
- * must return its output on standard output. 
+ * Create a script that connects to an external SMT solver. The solver must be
+ * SMTLIB-2 compliant and expect commands on standard input. It must return its
+ * output on standard output.
  * 
- * Some commands are only partially supported.  For example getProof does
- * not return a useful proof object.  Also commands, for which the output
- * format is not fully specified, e.g. (get-model), may not return useful
- * return values.
+ * Some commands are only partially supported. For example getProof does not
+ * return a useful proof object. Also commands, for which the output format is
+ * not fully specified, e.g. (get-model), may not return useful return values.
  * 
  * @author Oday Jubran
  */
 public class Scriptor extends NoopScript {
-	
+
 	private Executor m_Executor;
 	private LBool m_Status = LBool.UNKNOWN;
-	
+
 	/**
 	 * Create a script connecting to an external SMT solver.
-	 * @param command the command that starts the external SMT solver.
-	 *   The solver is expected to read smtlib 2 commands on stdin.
+	 * 
+	 * @param command
+	 *            the command that starts the external SMT solver. The solver is
+	 *            expected to read smtlib 2 commands on stdin.
+	 * @param services
+	 * @param storage
 	 */
-	public Scriptor(String command, Logger logger)
-	{
-		m_Executor = new Executor(command, this, logger);
+	public Scriptor(String command, Logger logger, IUltimateServiceProvider services, IToolchainStorage storage) {
+		m_Executor = new Executor(command, this, logger, services, storage);
 		super.setOption(":print-success", true);
 	}
-	
+
 	@Override
-	public void setLogic(Logics logic) throws UnsupportedOperationException,
-			SMTLIBException {
+	public void setLogic(Logics logic) throws UnsupportedOperationException, SMTLIBException {
 		super.setLogic(logic);
 		m_Executor.input("(set-logic " + logic + ")");
 		m_Executor.parseSuccess();
 	}
 
 	@Override
-	public void setOption(String opt, Object value)
-			throws UnsupportedOperationException, SMTLIBException {
+	public void setOption(String opt, Object value) throws UnsupportedOperationException, SMTLIBException {
 		if (!opt.equals(":print-success")) {
 			StringBuilder sb = new StringBuilder();
 			sb.append("(set-option ").append(opt);
@@ -70,7 +71,7 @@ public class Scriptor extends NoopScript {
 				}
 			}
 			sb.append(")");
-			m_Executor.input(sb.toString());		
+			m_Executor.input(sb.toString());
 			m_Executor.parseSuccess();
 		}
 	}
@@ -92,24 +93,22 @@ public class Scriptor extends NoopScript {
 			}
 		}
 		sb.append(")");
-		m_Executor.input(sb.toString());		
+		m_Executor.input(sb.toString());
 		m_Executor.parseSuccess();
 	}
 
 	@Override
 	public void declareSort(String sort, int arity) throws SMTLIBException {
 		super.declareSort(sort, arity);
-		StringBuilder sb = new StringBuilder("(declare-sort ").append
-				(PrintTerm.quoteIdentifier(sort));
+		StringBuilder sb = new StringBuilder("(declare-sort ").append(PrintTerm.quoteIdentifier(sort));
 		sb.append(" ").append(arity).append(")");
-		m_Executor.input(sb.toString());		
+		m_Executor.input(sb.toString());
 		m_Executor.parseSuccess();
 	}
 
 	@Override
-	public void defineSort(String sort, Sort[] sortParams, Sort definition)
-			throws SMTLIBException {
-		super.defineSort(sort, sortParams, definition);	
+	public void defineSort(String sort, Sort[] sortParams, Sort definition) throws SMTLIBException {
+		super.defineSort(sort, sortParams, definition);
 		PrintTerm pt = new PrintTerm();
 		StringBuilder sb = new StringBuilder();
 		sb.append("(define-sort ");
@@ -129,8 +128,7 @@ public class Scriptor extends NoopScript {
 	}
 
 	@Override
-	public void declareFun(String fun, Sort[] paramSorts, Sort resultSort)
-			throws SMTLIBException {
+	public void declareFun(String fun, Sort[] paramSorts, Sort resultSort) throws SMTLIBException {
 		super.declareFun(fun, paramSorts, resultSort);
 		PrintTerm pt = new PrintTerm();
 		StringBuilder sb = new StringBuilder();
@@ -151,8 +149,7 @@ public class Scriptor extends NoopScript {
 	}
 
 	@Override
-	public void defineFun(String fun, TermVariable[] params, Sort resultSort,
-			Term definition) throws SMTLIBException {
+	public void defineFun(String fun, TermVariable[] params, Sort resultSort, Term definition) throws SMTLIBException {
 		super.defineFun(fun, params, resultSort, definition);
 		PrintTerm pt = new PrintTerm();
 		StringBuilder sb = new StringBuilder();
@@ -178,20 +175,20 @@ public class Scriptor extends NoopScript {
 	@Override
 	public void push(int levels) throws SMTLIBException {
 		super.push(levels);
-		m_Executor.input("(push "+levels+")");
+		m_Executor.input("(push " + levels + ")");
 		m_Executor.parseSuccess();
 	}
 
 	@Override
 	public void pop(int levels) throws SMTLIBException {
 		super.pop(levels);
-		m_Executor.input("(pop "+levels+")");
+		m_Executor.input("(pop " + levels + ")");
 		m_Executor.parseSuccess();
 	}
 
 	@Override
 	public LBool assertTerm(Term term) throws SMTLIBException {
-		//super.assertTerm(term);
+		// super.assertTerm(term);
 		m_Executor.input("(assert " + term.toStringDirect() + ")");
 		m_Executor.parseSuccess();
 		return LBool.UNKNOWN;
@@ -212,24 +209,20 @@ public class Scriptor extends NoopScript {
 
 	/** Proofs are not supported, since they are not standardized **/
 	@Override
-	public Term getProof() throws SMTLIBException,
-			UnsupportedOperationException {
+	public Term getProof() throws SMTLIBException, UnsupportedOperationException {
 		throw new UnsupportedOperationException("Proofs are not supported");
 	}
 
 	@Override
-	public Term[] getUnsatCore() throws SMTLIBException,
-			UnsupportedOperationException {
+	public Term[] getUnsatCore() throws SMTLIBException, UnsupportedOperationException {
 		m_Executor.input("(get-unsat-core)");
 		return m_Executor.parseGetUnsatCoreResult();
 	}
 
 	@Override
-	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException,
-			UnsupportedOperationException {
+	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException, UnsupportedOperationException {
 		for (Term t : terms) {
-			if (!t.getSort().isNumericSort() &&
-				t.getSort() != getTheory().getBooleanSort())
+			if (!t.getSort().isNumericSort() && t.getSort() != getTheory().getBooleanSort())
 				throw new UnsupportedOperationException();
 		}
 		StringBuilder command = new StringBuilder();
@@ -247,8 +240,7 @@ public class Scriptor extends NoopScript {
 	}
 
 	@Override
-	public Assignments getAssignment() throws SMTLIBException,
-			UnsupportedOperationException {
+	public Assignments getAssignment() throws SMTLIBException, UnsupportedOperationException {
 		m_Executor.input("(get-assignment)");
 		return m_Executor.parseGetAssignmentResult();
 	}
@@ -271,9 +263,9 @@ public class Scriptor extends NoopScript {
 	@Override
 	public void exit() {
 		m_Executor.exit();
-		
+
 	}
-	
+
 	@Override
 	public Term simplify(Term term) throws SMTLIBException {
 		throw new UnsupportedOperationException();
@@ -286,11 +278,10 @@ public class Scriptor extends NoopScript {
 	}
 
 	@Override
-	public Model getModel() throws SMTLIBException,
-			UnsupportedOperationException {
+	public Model getModel() throws SMTLIBException, UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	/** This method is used in the output parser, to support (get-info :status) **/
 	public LBool getStatus() {
 		return m_Status;

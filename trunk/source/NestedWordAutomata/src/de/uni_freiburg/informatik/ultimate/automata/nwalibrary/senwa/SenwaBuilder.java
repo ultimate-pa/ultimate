@@ -32,16 +32,15 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Senwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.SenwaWalker.ISuccessorVisitor;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, STATE>, IOperation<LETTER, STATE> {
 	
@@ -54,7 +53,7 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	
 	
 	private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+			NestedWordAutomata.getLogger();
 	
 	
 	@Override

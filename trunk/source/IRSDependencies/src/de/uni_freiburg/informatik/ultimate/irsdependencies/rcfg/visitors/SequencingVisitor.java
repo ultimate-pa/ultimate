@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.annotations.IRSDependenciesAnnotation;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.annotations.UseDefSequence;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.walker.RCFGWalkerUnroller;
@@ -24,7 +26,8 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 	private HashSet<String> mOutputs;
 	private HashMap<List<RCFGEdge>, List<Tuple<Tuple<Integer>>>> mDebugZoneMap;
 
-	public SequencingVisitor(RCFGWalkerUnroller w) {
+	public SequencingVisitor(RCFGWalkerUnroller w, Logger logger) {
+		super(logger);
 		mWalker = w;
 		mInputs = new HashSet<>();
 		mOutputs = new HashSet<>();
@@ -246,12 +249,13 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 			outer.append("\n----------------------------------------\n");
 		}
 
-		sLogger.debug(outer.toString());
+		mLogger.debug(outer.toString());
 
 	}
 
 	private class ZoneAnnotation extends IRSDependenciesAnnotation {
 
+		private static final long serialVersionUID = 1L;
 		private RCFGEdge StartEdge;
 		private Statement StartStatement;
 
@@ -276,7 +280,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 			if (za != null) {
 				if (!za.equals(this)) {
 					// merge
-					sLogger.debug("Need to merge: " + this + " with " + za);
+					mLogger.debug("Need to merge: " + this + " with " + za);
 				}
 
 			} else {

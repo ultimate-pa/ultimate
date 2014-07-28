@@ -33,7 +33,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -66,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  */
 class ShortestLassoExtractor<LETTER, STATE> {
 	
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+	private static Logger s_Logger = NestedWordAutomata.getLogger();
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Nwars;
 	
 	List<Set<StackOfFlaggedStates>> m_Iterations = new ArrayList<Set<StackOfFlaggedStates>>();

@@ -33,9 +33,9 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.SenwaWalker.ISuccessorVisitor;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class DifferenceSenwa<LETTER, STATE> implements 
 								ISuccessorVisitor<LETTER, STATE>,
@@ -60,7 +59,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	
 	
 	private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+			NestedWordAutomata.getLogger();
 		
 	private final INestedWordAutomatonOldApi<LETTER,STATE> minuend;
 	private final INestedWordAutomatonOldApi<LETTER,STATE> subtrahend;

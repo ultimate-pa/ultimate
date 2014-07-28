@@ -29,9 +29,10 @@ import org.eclipse.cdt.internal.core.indexer.StandaloneIndexerFallbackReaderFact
 import org.eclipse.cdt.internal.core.parser.scanner.CPreprocessor;
 
 import de.uni_freiburg.informatik.ultimate.cdt.parser.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -52,12 +53,12 @@ public class CDTParser implements ISource {
 	/**
 	 * The logger instance.
 	 */
-	protected static Logger s_Logger = UltimateServices.getInstance()
-			.getLogger(Activator.PLUGIN_ID);
+	protected Logger mLogger;
 	/**
 	 * List of file names.
 	 */
 	protected List<String> m_FileNames;
+	private IUltimateServiceProvider mServices;
 
 	/**
 	 * Public constructor of this parser.
@@ -66,49 +67,22 @@ public class CDTParser implements ISource {
 		m_FileTypes = new String[] { "c", "i" };
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#init(java
-	 * .lang.Object)
-	 */
 	@Override
 	public int init() {
 		m_FileNames = new ArrayList<String>();
 		return 0;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#getName()
-	 */
 	@Override
-	public String getName() {
+	public String getPluginName() {
 		return "CDTParser";
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#getPluginID
-	 * ()
-	 */
 	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#parseable(java
-	 * .io.File[])
-	 */
 	@Override
 	public boolean parseable(File[] files) {
 		for (File f : files) {
@@ -119,13 +93,6 @@ public class CDTParser implements ISource {
 		return true;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#parseable(java
-	 * .io.File)
-	 */
 	@Override
 	public boolean parseable(File file) {
 		for (String s : getFileTypes()) {
@@ -136,117 +103,74 @@ public class CDTParser implements ISource {
 		return false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#parseAST(java
-	 * .io.File[])
-	 */
 	@Override
 	public IElement parseAST(File[] files) throws Exception {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#parseAST(java
-	 * .io.File)
-	 */
 	@Override
 	public IElement parseAST(File file) throws Exception {
 
 		IParserLogService log = new DefaultLogService();
 
-		FileContent fContent = FileContent.createForExternalFileLocation(file
-				.getAbsolutePath());
+		FileContent fContent = FileContent.createForExternalFileLocation(file.getAbsolutePath());
 
 		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		String path = prefs.getString(PreferenceInitializer.INCLUDE_PATHS);
 		String[] includePaths;
 		IncludeFileContentProvider includeProvider;
 		if (!path.equals("")) {
-			s_Logger.debug("INCLUDE-PATHS:" + path);
+			mLogger.debug("INCLUDE-PATHS:" + path);
 			includePaths = path.split(";");
-			/* If there are some paths specified we have to use the this
-			 * deprecated code. In the used Version of EclipseCDT 
-			 * (see CDTLibrary) there is no other way in doing this, maybe
-			 * in further versions this will be improved.
+			/*
+			 * If there are some paths specified we have to use the this
+			 * deprecated code. In the used Version of EclipseCDT (see
+			 * CDTLibrary) there is no other way in doing this, maybe in further
+			 * versions this will be improved.
 			 */
-			includeProvider = IncludeFileContentProvider
-					.adapt(new StandaloneIndexerFallbackReaderFactory());
+			includeProvider = IncludeFileContentProvider.adapt(new StandaloneIndexerFallbackReaderFactory());
 		} else {
 			includePaths = new String[0];
-			includeProvider = IncludeFileContentProvider
-					.getEmptyFilesProvider();
+			includeProvider = IncludeFileContentProvider.getEmptyFilesProvider();
 		}
 
 		Map<String, String> definedSymbols = new HashMap<String, String>();
 		IScannerInfo info = new ScannerInfo(definedSymbols, includePaths);
 
-		GCCScannerExtensionConfiguration config = GCCScannerExtensionConfiguration
-				.getInstance();
-		CPreprocessor cprep = new CPreprocessor(fContent, info,
-				ParserLanguage.C, log, config, includeProvider);
+		GCCScannerExtensionConfiguration config = GCCScannerExtensionConfiguration.getInstance();
+		CPreprocessor cprep = new CPreprocessor(fContent, info, ParserLanguage.C, log, config, includeProvider);
 
 		// Here we our defined macros to the preproccessor
-//		Map<String, String> macroMap = defineUserMacros();
-//		for (String key : macroMap.keySet()) {
-//			String value = macroMap.get(key);
-//			cprep.addMacroDefinition(key.toCharArray(), value.toCharArray());
-//		}
+		// Map<String, String> macroMap = defineUserMacros();
+		// for (String key : macroMap.keySet()) {
+		// String value = macroMap.get(key);
+		// cprep.addMacroDefinition(key.toCharArray(), value.toCharArray());
+		// }
 
-		GCCParserExtensionConfiguration p_config = GCCParserExtensionConfiguration
-				.getInstance();
-		GNUCSourceParser parser = new GNUCSourceParser(cprep,
-				ParserMode.COMPLETE_PARSE, log, p_config);
+		GCCParserExtensionConfiguration p_config = GCCParserExtensionConfiguration.getInstance();
+		GNUCSourceParser parser = new GNUCSourceParser(cprep, ParserMode.COMPLETE_PARSE, log, p_config);
 
 		parser.setSkipTrivialExpressionsInAggregateInitializers(false);
-		
+
 		IASTTranslationUnit translationUnit = parser.parse();
 		return new WrapperNode(null, translationUnit);
 	}
 
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#getFileTypes()
-	 */
 	@Override
 	public String[] getFileTypes() {
 		return m_FileTypes;
 	}
 
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#getOutputDefinition
-	 * ()
-	 */
 	@Override
 	public GraphType getOutputDefinition() {
 		try {
-			return new GraphType(getPluginID(), GraphType.Type.AST,
-					this.m_FileNames);
+			return new GraphType(getPluginID(), GraphType.Type.AST, this.m_FileNames);
 		} catch (Exception ex) {
-			s_Logger.log(Level.FATAL, ex.getMessage());
+			mLogger.log(Level.FATAL, ex.getMessage());
 			return null;
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#setPreludeFile
-	 * (java.io.File)
-	 */
 	@Override
 	public void setPreludeFile(File prelude) {
 		// not required
@@ -255,5 +179,18 @@ public class CDTParser implements ISource {
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
+	}
+
+	@Override
+	public void setToolchainStorage(IToolchainStorage services) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void setServices(IUltimateServiceProvider services) {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+
 	}
 }

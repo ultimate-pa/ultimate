@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -22,8 +24,8 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	protected final DefaultTransFormulas m_DefaultTransFormulas;
 
 	public AnnotateAndAssertConjunctsOfCodeBlocks(SmtManager smtManager, 
-			NestedFormulas<Term, Term> nestedSSA, DefaultTransFormulas defaultTransformulas) {
-		super(smtManager, nestedSSA);
+			NestedFormulas<Term, Term> nestedSSA, DefaultTransFormulas defaultTransformulas, Logger logger) {
+		super(smtManager, nestedSSA,logger);
 		m_DefaultTransFormulas = defaultTransformulas;
 	}
 	

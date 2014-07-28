@@ -2,8 +2,6 @@ package de.uni_freiburg.informatik.ultimate.irsdependencies.boogie;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.irsdependencies.Activator;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
@@ -17,15 +15,15 @@ import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 public class SymbolTableVisitor extends BoogieTransformer
 {
 
-	protected Logger mLogger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID);
+	protected final Logger mLogger;
 	protected SymbolTable mSymbolTable;
 
 	protected String mCurrentScopeIdentifier;
 
-	public SymbolTableVisitor()
+	public SymbolTableVisitor(Logger logger)
 	{
 		super();
+		mLogger = logger;
 		mSymbolTable = new SymbolTable();
 		mCurrentScopeIdentifier = "";
 	}

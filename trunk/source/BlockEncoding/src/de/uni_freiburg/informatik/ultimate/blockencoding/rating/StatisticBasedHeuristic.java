@@ -5,10 +5,10 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.rating;
 
 import java.util.ArrayList;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
 
 /**
  * To determine a good boundary, which is later used to estimate a good edge
@@ -24,17 +24,19 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 	 * TODO: Strategies for which we can use these statistics, should be entered
 	 * in this list!
 	 */
-	private ArrayList<RatingStrategy> supportedStrategies;
+	private ArrayList<RatingStrategy> mSupportedStrategies;
+	private Logger mLogger;
 
 	/**
 	 * @param strategy
 	 */
-	public StatisticBasedHeuristic(RatingStrategy strategy) {
+	public StatisticBasedHeuristic(RatingStrategy strategy, Logger logger) {
 		super(strategy);
-		supportedStrategies = new ArrayList<RatingStrategy>();
-		supportedStrategies.add(RatingStrategy.DISJUNCTIVE_STMTCOUNT);
-		supportedStrategies.add(RatingStrategy.USED_VARIABLES_RATING);
-		supportedStrategies.add(RatingStrategy.DISJUNCTIVE_VARIABLES_RATING);
+		mLogger = logger;
+		mSupportedStrategies = new ArrayList<RatingStrategy>();
+		mSupportedStrategies.add(RatingStrategy.DISJUNCTIVE_STMTCOUNT);
+		mSupportedStrategies.add(RatingStrategy.USED_VARIABLES_RATING);
+		mSupportedStrategies.add(RatingStrategy.DISJUNCTIVE_VARIABLES_RATING);
 	}
 
 	@Override
@@ -58,7 +60,7 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 
 	@Override
 	public boolean isRatingStrategySupported(RatingStrategy strategy) {
-		return supportedStrategies.contains(strategy);
+		return mSupportedStrategies.contains(strategy);
 	}
 
 	/**
@@ -104,7 +106,7 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 		} else {
 			value = EncodingStatistics.totalRCFGRating / EncodingStatistics.countOfBasicEdges;
 		}
-		UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID).warn("BoundValue: " + value);
+		mLogger.warn("BoundValue: " + value);
 		return new Integer(value).toString();
 	}
 }

@@ -36,9 +36,8 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 
 
 
@@ -53,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutomatonSimple<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
-		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+		NestedWordAutomata.getLogger();
 	
 	
 	private Set<LETTER> m_InternalAlphabet;

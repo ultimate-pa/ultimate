@@ -27,16 +27,15 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
  * This is the superclass of all minimization classes.
@@ -56,7 +55,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 * The logger.
 	 */
 	protected static final Logger s_logger = 
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+			NestedWordAutomata.getLogger();
 	
 	/**
 	 * The operation name.
@@ -208,7 +207,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 */
 	protected final void checkForContinuation()
 			throws OperationCanceledException {
-		if (! UltimateServices.getInstance().continueProcessing()) {
+		if (! NestedWordAutomata.getMonitor().continueProcessing()) {
 			throw new OperationCanceledException();
 		}
 	}

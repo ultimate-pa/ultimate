@@ -9,8 +9,9 @@ import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -32,14 +33,14 @@ import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
  * 
  */
 public class BoogieParser implements ISource {
-	protected String[] m_FileTypes;
-	protected static Logger s_Logger = UltimateServices.getInstance().getLogger(
-			Activator.s_PLUGIN_ID);;
+	protected String[] mFileTypes;
+	protected Logger mLogger;
 	protected List<String> mFileNames;
-	protected Unit m_PreludeUnit;
+	protected Unit mPreludeUnit;
+	private IUltimateServiceProvider mServices;
 
 	public BoogieParser() {
-		m_FileTypes = new String[] { "bpl" };
+		mFileTypes = new String[] { "bpl" };
 		mFileNames = new ArrayList<String>();
 	}
 
@@ -49,12 +50,13 @@ public class BoogieParser implements ISource {
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin#getPluginID()
 	 */
 	public String getPluginID() {
-		return Activator.s_PLUGIN_ID;
+		return getClass().getPackage().getName();
 	}
 
 	/**
 	 * This initializes the plugin. Parsers usually do not get parameters so we
 	 * will just return 0 for anything.
+	 * 
 	 * @param param
 	 *            is ignored
 	 * 
@@ -69,9 +71,9 @@ public class BoogieParser implements ISource {
 	 * This returns the name of the plugin
 	 * 
 	 * @return the name of the plugin
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IParser#getName()
+	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IParser#getPluginName()
 	 */
-	public String getName() {
+	public String getPluginName() {
 		return "Boogie PL CUP Parser";
 	}
 
@@ -82,36 +84,24 @@ public class BoogieParser implements ISource {
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IParser#getTokens()
 	 */
 	public String[] getTokens() {
-		return new String[] { "<invalid>", "<EOR>", "<DOWN>", "<UP>", "TYPE",
-				"ARRAY_TYPE", "GENERIC_TYPE", "UNIT", "VARIABLE_DECLARATION",
-				"TYPE_DECLARATION", "LITERAL", "METHOD", "AXIOM", "PROCEDURE",
-				"BODY", "OPTIDTYPE", "OPTIDTYPELIST", "IDLIST", "CONSTANT",
-				"CONSTANT_UNIQUE", "IDTYPE", "FUNCTION", "PARAMETERS",
-				"RETURN_TYPE", "RETURNS", "VARIABLE", "SIGNATURE", "REQUIRES",
-				"ENSURES", "FREE", "MODIFIES", "IMPLEMENTATION", "IDTYPELIST",
-				"BLOCK", "GOTO", "RETURN", "ASSIGN", "LEFTHANDSIDE",
-				"ASSIGNEXPRESSION", "ARRAYASSIGN", "CALL", "ASSERT", "ASSUME",
-				"HAVOC", "INDEX", "EQUIVALENCE", "IMPLICATION", "ANDEXPR",
-				"OREXPR", "RELATION", "TERM", "EXPRESSIONLIST",
-				"DECIMAL_LITERAL", "BOOLEAN_LITERAL", "INT_LITERAL", "NOT",
-				"NEG", "BV_LITERAL", "STRING_LITERAL", "CHAR_LITERAL",
-				"HEX_LITERAL", "OCT_LITERAL", "NULL", "ARRAYEXPR", "ATOM",
-				"ARITHMUL", "ARITHDIV", "ARITHMOD", "ARITHMINUS", "ARITHPLUS",
-				"COMPEQ", "COMPNEQ", "COMPLT", "COMPLEQ", "COMPGT", "COMPGEQ",
-				"COMPPARTORDER", "ID", "OLD", "CAST", "FORALL", "EXISTS",
-				"TYPEID", "VARID", "Id", "BitvecLiteral", "IntegerLiteral",
-				"BooleanLiteral", "WS", "COMMENT", "ATTTRIBUTES",
-				"LINE_COMMENT", "IdCharacter", "Digit", "Number", "'bool'",
-				"'int'", "'ref'", "'name'", "'any'", "'['", "','", "']'",
-				"'<'", "'>'", "'type'", "';'", "'const'", "'unique'", "':'",
-				"'function'", "'('", "')'", "'returns'", "'axiom'", "'var'",
-				"'procedure'", "'free'", "'requires'", "'modifies'",
-				"'ensures'", "'implementation'", "'{'", "'}'", "'goto'",
-				"'return'", "':='", "'assert'", "'assume'", "'havoc'",
-				"'call'", "'<==>'", "'==>'", "'&&'", "'||'", "'!'", "'-'",
-				"'null'", "'old'", "'cast'", "'::'", "'=='", "'!='", "'>='",
-				"'<='", "'<:'", "'+'", "'*'", "'/'", "'%'", "'forall'",
-				"'exists'" };
+		return new String[] { "<invalid>", "<EOR>", "<DOWN>", "<UP>", "TYPE", "ARRAY_TYPE", "GENERIC_TYPE", "UNIT",
+				"VARIABLE_DECLARATION", "TYPE_DECLARATION", "LITERAL", "METHOD", "AXIOM", "PROCEDURE", "BODY",
+				"OPTIDTYPE", "OPTIDTYPELIST", "IDLIST", "CONSTANT", "CONSTANT_UNIQUE", "IDTYPE", "FUNCTION",
+				"PARAMETERS", "RETURN_TYPE", "RETURNS", "VARIABLE", "SIGNATURE", "REQUIRES", "ENSURES", "FREE",
+				"MODIFIES", "IMPLEMENTATION", "IDTYPELIST", "BLOCK", "GOTO", "RETURN", "ASSIGN", "LEFTHANDSIDE",
+				"ASSIGNEXPRESSION", "ARRAYASSIGN", "CALL", "ASSERT", "ASSUME", "HAVOC", "INDEX", "EQUIVALENCE",
+				"IMPLICATION", "ANDEXPR", "OREXPR", "RELATION", "TERM", "EXPRESSIONLIST", "DECIMAL_LITERAL",
+				"BOOLEAN_LITERAL", "INT_LITERAL", "NOT", "NEG", "BV_LITERAL", "STRING_LITERAL", "CHAR_LITERAL",
+				"HEX_LITERAL", "OCT_LITERAL", "NULL", "ARRAYEXPR", "ATOM", "ARITHMUL", "ARITHDIV", "ARITHMOD",
+				"ARITHMINUS", "ARITHPLUS", "COMPEQ", "COMPNEQ", "COMPLT", "COMPLEQ", "COMPGT", "COMPGEQ",
+				"COMPPARTORDER", "ID", "OLD", "CAST", "FORALL", "EXISTS", "TYPEID", "VARID", "Id", "BitvecLiteral",
+				"IntegerLiteral", "BooleanLiteral", "WS", "COMMENT", "ATTTRIBUTES", "LINE_COMMENT", "IdCharacter",
+				"Digit", "Number", "'bool'", "'int'", "'ref'", "'name'", "'any'", "'['", "','", "']'", "'<'", "'>'",
+				"'type'", "';'", "'const'", "'unique'", "':'", "'function'", "'('", "')'", "'returns'", "'axiom'",
+				"'var'", "'procedure'", "'free'", "'requires'", "'modifies'", "'ensures'", "'implementation'", "'{'",
+				"'}'", "'goto'", "'return'", "':='", "'assert'", "'assume'", "'havoc'", "'call'", "'<==>'", "'==>'",
+				"'&&'", "'||'", "'!'", "'-'", "'null'", "'old'", "'cast'", "'::'", "'=='", "'!='", "'>='", "'<='",
+				"'<:'", "'+'", "'*'", "'/'", "'%'", "'forall'", "'exists'" };
 	}
 
 	/**
@@ -125,8 +115,7 @@ public class BoogieParser implements ISource {
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IParser#parseAST(java.io.File[])
 	 */
 	public IElement parseAST(File[] files) throws IOException {
-		WrapperNode dirRoot = new WrapperNode(null, null, new Payload(null,
-				"PROJECT"));
+		WrapperNode dirRoot = new WrapperNode(null, null, new Payload(null, "PROJECT"));
 
 		for (File f : files) {
 			Unit node = parseFile(f);
@@ -153,7 +142,7 @@ public class BoogieParser implements ISource {
 	}
 
 	private Unit parseFile(File file) throws IOException {
-		s_Logger.info("Parsing: '" + file.getAbsolutePath() + "'");
+		mLogger.info("Parsing: '" + file.getAbsolutePath() + "'");
 		mFileNames.add(file.getAbsolutePath());
 		return reflectiveParse(file.getAbsolutePath());
 	}
@@ -196,7 +185,7 @@ public class BoogieParser implements ISource {
 	 * get all supported file types of this parser
 	 */
 	public String[] getFileTypes() {
-		return m_FileTypes;
+		return mFileTypes;
 	}
 
 	/*
@@ -207,10 +196,9 @@ public class BoogieParser implements ISource {
 	 */
 	public GraphType getOutputDefinition() {
 		try {
-			return new GraphType(getPluginID(), GraphType.Type.AST,
-					this.mFileNames);
+			return new GraphType(getPluginID(), GraphType.Type.AST, this.mFileNames);
 		} catch (Exception ex) {
-			s_Logger.log(Level.FATAL, "syntax error: " + ex.getMessage());
+			mLogger.log(Level.FATAL, "syntax error: " + ex.getMessage());
 			return null;
 		}
 	}
@@ -231,23 +219,22 @@ public class BoogieParser implements ISource {
 
 		lexer = new Lexer(new FileInputStream(fileName));
 		lexer.setSymbolFactory(symFactory);
-		parser = new Parser(lexer, symFactory);
+		parser = new Parser(lexer, symFactory, mServices);
 		parser.setFileName(fileName);
 		try {
 			mainFile = (Unit) parser.parse().value;
 		} catch (Exception e) {
-			s_Logger.fatal("syntax error: ", e);
+			mLogger.fatal("syntax error: ", e);
 			// TODO: Declare to throw a parser exception
 			throw new RuntimeException(e);
 		}
-		if (m_PreludeUnit != null) {
-			Declaration[] prel = m_PreludeUnit.getDeclarations();
+		if (mPreludeUnit != null) {
+			Declaration[] prel = mPreludeUnit.getDeclarations();
 			Declaration[] main = mainFile.getDeclarations();
 			Declaration[] allDecls = new Declaration[prel.length + main.length];
 			System.arraycopy(prel, 0, allDecls, 0, prel.length);
 			System.arraycopy(main, 0, allDecls, prel.length, main.length);
-			ILocation dummyLocation = new BoogieLocation(parser.filename, -1,
-					-1, -1, -1, false);
+			ILocation dummyLocation = new BoogieLocation(parser.mFilename, -1, -1, -1, -1, false);
 			mainFile = new Unit(dummyLocation, allDecls);
 		}
 		return mainFile;
@@ -255,7 +242,7 @@ public class BoogieParser implements ISource {
 
 	@Override
 	public void setPreludeFile(File prelude) {
-		m_PreludeUnit = null;
+		mPreludeUnit = null;
 		if (prelude == null)
 			return;
 		try {
@@ -264,16 +251,26 @@ public class BoogieParser implements ISource {
 			lexer.setSymbolFactory(symFactory);
 			Parser parser = new Parser(lexer, symFactory);
 			parser.setFileName(prelude.getPath());
-			m_PreludeUnit = (Unit) parser.parse().value;
+			mPreludeUnit = (Unit) parser.parse().value;
 		} catch (Exception e) {
-			s_Logger.fatal("syntax error: ", e);
+			mLogger.fatal("syntax error: ", e);
 			throw new RuntimeException(e);
 		}
 	}
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
-		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public void setToolchainStorage(IToolchainStorage services) {
+
+	}
+
+	@Override
+	public void setServices(IUltimateServiceProvider services) {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 	}
 }

@@ -11,14 +11,13 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
@@ -71,12 +70,12 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult() {
+	public TestResult getTestResult(IUltimateServiceProvider services) {
 		Logger log = Logger.getLogger(SafetyCheckTestResultDecider.class);
 		Collection<String> customMessages = new LinkedList<String>();
 		final TestResult testoutcome;
 		mResults = new ArrayList<IResult>();
-		for (Entry<String, List<IResult>> entry : UltimateServices.getInstance().getResultMap().entrySet()) {
+		for (Entry<String, List<IResult>> entry : services.getResultService().getResults().entrySet()) {
 			mResults.addAll(entry.getValue());
 		}
 		if (getExpectedResult() == ExpectedResult.NOANNOTATION) {
@@ -145,16 +144,16 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 		}
 
 		generateResultMessageAndCategory(scResult);
-		Util.logResults(log, mInputFile, !getJUnitTestResult(testoutcome), customMessages);
+		Util.logResults(log, mInputFile, !getJUnitTestResult(testoutcome), customMessages, services.getResultService());
 		return testoutcome;
 	}
 
 	@Override
-	public TestResult getTestResult(Throwable e) {
+	public TestResult getTestResult(IUltimateServiceProvider services, Throwable e) {
 		generateResultMessageAndCategory(new SafetyCheckerResult(SafetyCheckerResultType.EXCEPTION_OR_ERROR,
 				new ExceptionOrErrorResult("Ultimate", e)));
 		Logger log = Logger.getLogger(SafetyCheckTestResultDecider.class);
-		Util.logResults(log, mInputFile, true, new LinkedList<String>());
+		Util.logResults(log, mInputFile, true, new LinkedList<String>(), services.getResultService());
 		return TestResult.FAIL;
 	}
 

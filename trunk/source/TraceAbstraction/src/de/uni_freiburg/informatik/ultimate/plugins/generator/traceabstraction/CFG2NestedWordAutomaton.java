@@ -11,7 +11,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -32,10 +31,10 @@ public class CFG2NestedWordAutomaton {
 	private boolean m_MainMode;
 	private static final String m_StartProcedure = "ULTIMATE.start";
 	
-	private static Logger s_Logger = 
-					UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
+	private final Logger mLogger;
 	
-	public CFG2NestedWordAutomaton(boolean interprocedural, SmtManager predicateFactory) {
+	public CFG2NestedWordAutomaton(boolean interprocedural, SmtManager predicateFactory, Logger logger) {
+		mLogger = logger;
 		m_SmtManager = predicateFactory;
 		m_Interprocedural = interprocedural;
 	}
@@ -65,14 +64,14 @@ public class CFG2NestedWordAutomaton {
 		
 		if (implementations.containsKey(m_StartProcedure)) {
 			m_MainMode = true;
-			s_Logger.info("Mode: main mode - execution starts in main procedure");
+			mLogger.info("Mode: main mode - execution starts in main procedure");
 		}
 		else {
 			m_MainMode = false;
-			s_Logger.info("Mode: library - executation can start in any procedure");
+			mLogger.info("Mode: library - executation can start in any procedure");
 		}
 				
-		s_Logger.debug("Step: put all LocationNodes into m_Nodes");
+		mLogger.debug("Step: put all LocationNodes into m_Nodes");
 		
 		// put all LocationNodes into m_Nodes
 		LinkedList<ProgramPoint> queue = new LinkedList<ProgramPoint>();
@@ -103,7 +102,7 @@ public class CFG2NestedWordAutomaton {
 		}
 		
 		
-		s_Logger.debug("Step: determine the alphabet");
+		mLogger.debug("Step: determine the alphabet");
 		// determine the alphabet
 		Set<CodeBlock> internalAlphabet = new HashSet<CodeBlock>();
 		Set<CodeBlock> callAlphabet = new HashSet<CodeBlock>();
@@ -142,7 +141,7 @@ public class CFG2NestedWordAutomaton {
 			}
 		}
 		
-		s_Logger.debug("Step: construct the automaton");
+		mLogger.debug("Step: construct the automaton");
 		// construct the automaton
 		NestedWordAutomaton<CodeBlock, IPredicate> nwa =
 			new NestedWordAutomaton<CodeBlock, IPredicate>(
@@ -151,7 +150,7 @@ public class CFG2NestedWordAutomaton {
 					returnAlphabet,
 					tAContentFactory);
 		
-		s_Logger.debug("Step: add states");
+		mLogger.debug("Step: add states");
 		// add states
 		for (ProgramPoint locNode : allNodes) {
 			boolean isInitial = initialNodes.contains(locNode);
@@ -183,7 +182,7 @@ public class CFG2NestedWordAutomaton {
 		}
 		
 		
-		s_Logger.debug("Step: add transitions");
+		mLogger.debug("Step: add transitions");
 		// add transitions
 		for (ProgramPoint locNode : allNodes) {
 			IPredicate state = 
@@ -208,7 +207,7 @@ public class CFG2NestedWordAutomaton {
 							nwa.addReturnTransition(state,
 								nodes2States.get(callerLocNode), symbol, succState);
 						} else {
-							s_Logger.debug("Ommited insertion of " + symbol + 
+							mLogger.debug("Ommited insertion of " + symbol + 
 									" because callerNode" + callerLocNode + " is deadcode");
 						}
 					}

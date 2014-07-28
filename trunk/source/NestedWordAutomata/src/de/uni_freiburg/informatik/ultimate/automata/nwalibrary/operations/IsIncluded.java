@@ -27,14 +27,13 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
  * Operation that checks if the language of the first operand is included in the
@@ -47,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+			NestedWordAutomata.getLogger();
 	
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand1;
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand2;

@@ -27,17 +27,16 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.order;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class FinitePrefix<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+			NestedWordAutomata.getLogger();
 
 	private final PetriNetJulian<LETTER,STATE> m_Operand;
 	private final BranchingProcess<LETTER,STATE> m_Result;

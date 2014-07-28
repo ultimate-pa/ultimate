@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
  *
  */
 public class Program {
-	private Logger logger = CookiefyPlugin.logger;
+	private final Logger mLogger;
 	private Unit m_Unit;
 	
 	public Map<String, Procedure> Procedures;
@@ -29,19 +29,23 @@ public class Program {
 
 	/**
 	 * Constructs a new program
+	 * @param logger 
 	 */
-	public Program() {
+	public Program(Logger logger) {
+		mLogger = logger;
 		Procedures = new LinkedHashMap<String, Procedure>();
 		Globals = new LinkedList<VariableDeclaration>();
 		Types = new LinkedList<TypeDeclaration>();
+		
 	}
 	
 	/**
 	 * Constructs a program out of a unit
 	 * @param unit
+	 * @param logger 
 	 */
-	public Program(Unit unit) {
-		this();
+	public Program(Unit unit, Logger logger) {
+		this(logger);
 		this.m_Unit = unit;
 
 		for (Declaration decl : unit.getDeclarations()) {
@@ -52,7 +56,7 @@ public class Program {
 			if (decl instanceof VariableDeclaration) {
 				Globals.add((VariableDeclaration)decl);
 			} else {
-				logger.warn(
+				mLogger.warn(
 					String.format("Cookiefy does not support this AST element: ", decl.getClass().toString()));
 			}
 		}

@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: GuiRCP Plug-in
-Bundle-SymbolicName: UltimateGui;singleton:=true
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.gui.GuiController;singleton:=true
 Bundle-Version: 0.0.1
 Require-Bundle: 
  org.eclipse.ui;visibility:=reexport,

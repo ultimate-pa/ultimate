@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.xml.bind.JAXBException;
 
+import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.xml.sax.SAXException;
 
@@ -14,8 +15,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.Activator;
 import de.uni_freiburg.informatik.ultimate.core.controllers.BaseExternalExecutionController;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ExternalParserToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
@@ -29,26 +31,30 @@ import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
  */
 public class CDTController extends BaseExternalExecutionController {
 
-	private Toolchain mToolchain;
+	private ToolchainData mToolchain;
 	private IElement mAST;
+	private Logger mLogger;
+	private UltimateCChecker mChecker;
 
-	public CDTController() {
+	public CDTController(UltimateCChecker currentChecker) {
 		super();
+		mChecker = currentChecker;
 	}
 
 	@Override
-	public int init(ICore core) {
+	public int init(ICore core, ILoggingService loggingService) {
 		// we create preference pages right after Ultimate has been initialized
 		// and before it delegates control to the controller
+		mLogger = loggingService.getControllerLogger();
 		new UltimatePreferencePageFactory(mActualCore).createPreferencePages();
-		return super.init(core);
+		return super.init(core, loggingService);
 	}
 
 	@Override
 	protected void createAndRunToolchainJob() throws Throwable {
 		BasicToolchainJob tcj = new ExternalParserToolchainJob("Processing Toolchain", mCurrentCoreReference, this,
 				BasicToolchainJob.ChainMode.RUN_TOOLCHAIN, mAST, new GraphType(getPluginID(), GraphType.Type.AST,
-						new ArrayList<String>()));
+						new ArrayList<String>()), mLogger);
 		tcj.setUser(true);
 		tcj.schedule();
 		tcj.join();
@@ -56,7 +62,9 @@ public class CDTController extends BaseExternalExecutionController {
 
 	public void runToolchain(String toolchain, IASTTranslationUnit ast) {
 		try {
-			mToolchain = new Toolchain(toolchain);
+			mToolchain = new ToolchainData(toolchain);
+			mChecker.setServices(mToolchain.getServices());
+			mChecker.setStorage(mToolchain.getStorage());
 			mAST = new WrapperNode(null, ast);
 			nextRun();
 
@@ -70,7 +78,7 @@ public class CDTController extends BaseExternalExecutionController {
 	}
 
 	@Override
-	public String getName() {
+	public String getPluginName() {
 		return Activator.PLUGIN_ID;
 	}
 
@@ -85,7 +93,7 @@ public class CDTController extends BaseExternalExecutionController {
 	}
 
 	@Override
-	public Toolchain selectTools(List<ITool> tools) {
+	public ToolchainData selectTools(List<ITool> tools) {
 		return mToolchain;
 	}
 

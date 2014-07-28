@@ -11,9 +11,7 @@ import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
@@ -23,14 +21,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -55,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;

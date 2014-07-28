@@ -4,13 +4,10 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import org.apache.log4j.Logger;
 import org.eclipse.jface.preference.IPreferenceNode;
 import org.eclipse.jface.preference.PreferenceManager;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
-import org.eclipse.ui.internal.dialogs.WorkbenchPreferenceManager;
-
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
@@ -36,7 +33,8 @@ public class UltimatePreferencePageFactory {
 	}
 
 	public void createPreferencePages() {
-		for (IUltimatePlugin plugin : mCore.getPlugins()) {
+		IUltimatePlugin[] plugins = mCore.getRegisteredUltimatePlugins();
+		for (IUltimatePlugin plugin : plugins) {
 			if (plugin.getPreferences() != null) {
 				UltimatePreferenceItem<?>[] preferenceItems = plugin.getPreferences().getDefaultPreferences();
 				if (preferenceItems != null) {

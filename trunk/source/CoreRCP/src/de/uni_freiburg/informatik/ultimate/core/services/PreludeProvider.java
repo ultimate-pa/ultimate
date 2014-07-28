@@ -1,27 +1,23 @@
-package de.uni_freiburg.informatik.ultimate.core.api;
+package de.uni_freiburg.informatik.ultimate.core.services;
 
 import java.io.File;
-
 import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 
 public class PreludeProvider {
 
 	private File prelude;
 	
-	public PreludeProvider(String preludefile) {
+	public PreludeProvider(String preludefile, Logger logger) {
 		// get the logger of the core
-		Logger s_logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 		if (preludefile != null) {
 			File foo = new File(preludefile);
 			// prelude file must exist and must be readable
 			if (!foo.exists()) {
-				s_logger.error("Prelude file "+preludefile+" doesn't exist! It will be ignored when processing the toolchain!");
+				logger.error("Prelude file "+preludefile+" doesn't exist! It will be ignored when processing the toolchain!");
 				prelude = null;
 			} else {
 				if (!foo.canRead()) {
-					s_logger.error("Prelude file "+preludefile+" is not readable! It will be ignored when processing the toolchain!");
+					logger.error("Prelude file "+preludefile+" is not readable! It will be ignored when processing the toolchain!");
 					prelude = null;
 				} else {
 					this.prelude = foo;

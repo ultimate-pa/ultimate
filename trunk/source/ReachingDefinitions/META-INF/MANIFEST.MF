@@ -5,7 +5,7 @@ Bundle-SymbolicName: ReachingDefinitions;singleton:=true
 Bundle-Version: 0.0.1
 Require-Bundle: UltimateCore,
  Library-log4j,
- RCFGBuilder
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations,

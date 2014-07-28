@@ -13,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.boogie.ReachDefBoogieAnnotator;
-import de.uni_freiburg.informatik.ultimate.reachingdefinitions.plugin.Activator;
 import de.uni_freiburg.informatik.ultimate.reachingdefinitions.util.Util;
 
 /**
@@ -26,8 +25,8 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 	private final String mAnnotationSuffix;
 	private final CodeBlock mPredecessor;
 
-	public ReachDefTraceVisitor(String annotationSuffix, CodeBlock predecessor) {
-		mLogger = Activator.getLogger();
+	public ReachDefTraceVisitor(String annotationSuffix, CodeBlock predecessor, Logger logger) {
+		mLogger = logger;
 		mAnnotationSuffix = annotationSuffix;
 		mPredecessor = predecessor;
 	}
@@ -92,7 +91,7 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 			predecessors = generator.process(mPredecessor);
 		}
 
-		return new ReachDefBoogieAnnotator(predecessors, stmtAnnotation, mAnnotationSuffix);
+		return new ReachDefBoogieAnnotator(predecessors, stmtAnnotation, mAnnotationSuffix, mLogger);
 	}
 
 }

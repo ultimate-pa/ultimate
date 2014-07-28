@@ -14,7 +14,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
@@ -58,10 +58,13 @@ public class Product {
 
 	private HashMap<ProgramPoint, ArrayList<Call>> mCallEdges;
 
-	private Logger mLogger;
+	private final Logger mLogger;
+	private final IUltimateServiceProvider mServices;
 
-	public Product(NestedWordAutomaton<BoogieASTNode, String> aut, RootNode rcfg) throws Exception {
-		mLogger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+	public Product(NestedWordAutomaton<BoogieASTNode, String> aut, RootNode rcfg, IUltimateServiceProvider services)
+			throws Exception {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mRCFGLocations = new ArrayList<ProgramPoint>();
 		mProductLocations = new HashMap<String, ProgramPoint>();
 		mCallEdges = new HashMap<ProgramPoint, ArrayList<Call>>();
@@ -93,11 +96,11 @@ public class Product {
 	private void generateTransFormula() {
 		Boogie2SMT b2smt = mRootNode.getRootAnnot().getBoogie2SMT();
 		RootAnnot rootAnnot = mRootNode.getRootAnnot();
-		TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt);
+		TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, mServices);
 
 		for (String procIdent : rootAnnot.getBoogieDeclarations().getProcImplementation().keySet()) {
 			Procedure proc = rootAnnot.getBoogieDeclarations().getProcImplementation().get(procIdent);
-//			b2smt.declareLocals(proc);
+			// b2smt.declareLocals(proc);
 
 			for (ProgramPoint node : rootAnnot.getProgramPoints().get(procIdent).values()) {
 				if (node.getLocationName().startsWith("h_")) {
@@ -110,7 +113,7 @@ public class Product {
 				}
 			}
 
-//			b2smt.removeLocals(proc);
+			// b2smt.removeLocals(proc);
 		}
 
 	}
@@ -123,7 +126,8 @@ public class Product {
 	private void createEdges() throws Exception {
 		ProgramPoint targetpp, currentpp;
 
-		TransFormulaBuilder transFormulaBuilder = new TransFormulaBuilder(mRootNode.getRootAnnot().getBoogie2SMT());
+		TransFormulaBuilder transFormulaBuilder = new TransFormulaBuilder(mRootNode.getRootAnnot().getBoogie2SMT(),
+				mServices);
 
 		// for Node x Node
 		for (int mode = 0; mode < 2; mode++)
@@ -147,7 +151,7 @@ public class Product {
 							mRootNode.getRootAnnot().getProgramPoints().get(currentpp.getProcedure())
 									.put(helperName, helper);
 
-							Call c = new Call(currentpp, helper, ((Call) rcfgEdge).getCallStatement());
+							Call c = new Call(currentpp, helper, ((Call) rcfgEdge).getCallStatement(), mLogger);
 							c.setTransitionFormula(((Call) rcfgEdge).getTransitionFormula());
 
 							// store all call edge s in hashmap for later return
@@ -172,7 +176,7 @@ public class Product {
 								stmts.add(new AssumeStatement(null, ((Expression) autTrans.getLetter())));
 								// edge
 								StatementSequence s = new StatementSequence(helper, targetpp, stmts,
-										Origin.IMPLEMENTATION);
+										Origin.IMPLEMENTATION, mLogger);
 
 							}
 						} else if (rcfgEdge instanceof Return) {
@@ -217,7 +221,7 @@ public class Product {
 							assert (mCallEdges != null);
 							assert (mCallEdges.get(key) != null);
 							for (Call call : mCallEdges.get(key)) {
-								Return r = new Return(currentpp, helper, call);
+								Return r = new Return(currentpp, helper, call, mLogger);
 								r.setTransitionFormula(((Return) rcfgEdge).getTransitionFormula());
 								// remove call from originating node,
 								// because
@@ -247,7 +251,7 @@ public class Product {
 								stmts.add(new AssumeStatement(null, ((Expression) autTrans.getLetter())));
 								// edge
 								StatementSequence s = new StatementSequence(helper, targetpp, stmts,
-										Origin.IMPLEMENTATION);
+										Origin.IMPLEMENTATION, mLogger);
 
 							}
 						} else if (rcfgEdge instanceof Summary) {
@@ -302,7 +306,7 @@ public class Product {
 								stmts.add(new AssumeStatement(null, ((Expression) autTrans.getLetter())));
 								// edge
 								StatementSequence s = new StatementSequence(currentpp, targetpp, stmts,
-										Origin.IMPLEMENTATION);
+										Origin.IMPLEMENTATION, mLogger);
 
 							}
 						} else
@@ -375,7 +379,7 @@ public class Product {
 			}
 			// append selfloopst o leafs of the rcfg
 			if (cp.getOutgoingEdges().size() == 0) {
-				new StatementSequence(cp, cp, new AssumeStatement(null, new BooleanLiteral(null, true)));
+				new StatementSequence(cp, cp, new AssumeStatement(null, new BooleanLiteral(null, true)), mLogger);
 			}
 		}
 	}

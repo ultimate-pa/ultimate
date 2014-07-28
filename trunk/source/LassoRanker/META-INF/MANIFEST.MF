@@ -9,7 +9,7 @@ Require-Bundle: Library-log4j,
  Library-ModelCheckerUtils,
  Library-LassoRanker,
  UltimateCore,
- RCFGBuilder,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  NestedWordAutomata,
  TraceAbstraction,
  BuchiAutomizer

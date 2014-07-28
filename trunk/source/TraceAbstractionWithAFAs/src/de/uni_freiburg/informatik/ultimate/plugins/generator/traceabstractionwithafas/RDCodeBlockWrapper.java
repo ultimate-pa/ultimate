@@ -1,12 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;

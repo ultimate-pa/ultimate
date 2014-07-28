@@ -32,7 +32,6 @@ import org.apache.log4j.PropertyConfigurator;
 import pea.CounterTrace.DCPhase;
 import pea.modelchecking.MCTrace;
 
-import java.net.URL;
 import java.util.*;
 
 

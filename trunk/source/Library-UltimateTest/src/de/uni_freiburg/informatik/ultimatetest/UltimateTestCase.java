@@ -14,7 +14,7 @@ import static org.junit.Assert.fail;
  * 
  */
 public class UltimateTestCase {
-	
+
 	private String mName;
 	private String mFileName;
 	private UltimateStarter mStarter;
@@ -39,19 +39,20 @@ public class UltimateTestCase {
 
 		try {
 			mStarter.runUltimate();
-			result = mDecider.getTestResult();
+			result = mDecider.getTestResult(mStarter.getServices());
 		} catch (Throwable e) {
-			result = mDecider.getTestResult(e);
+			result = mDecider.getTestResult(mStarter.getServices(), e);
 			mLogger.fatal(String.format("There was an exception during the execution of Ultimate: %s%n%s", e,
 					ExceptionUtils.getStackTrace(e)));
 		} finally {
 			mStarter.complete();
 
 			boolean success = mDecider.getJUnitTestResult(result);
-			
+
 			if (mSummary != null) {
 				mSummary.setTestResultDecider(mDecider);
-				mSummary.addResult(result, success, mDecider.getResultCategory(), mFileName, mDecider.getResultMessage());
+				mSummary.addResult(result, success, mDecider.getResultCategory(), mFileName,
+						mDecider.getResultMessage());
 			}
 
 			if (!success) {

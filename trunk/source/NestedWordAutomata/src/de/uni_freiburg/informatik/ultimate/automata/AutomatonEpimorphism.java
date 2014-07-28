@@ -31,7 +31,6 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
  * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
@@ -50,8 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 public class AutomatonEpimorphism<STATE> {
 
 	// For status output
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
-			Activator.PLUGIN_ID);
+	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
 	private HashMap<STATE, STATE> m_epimorphism;
 

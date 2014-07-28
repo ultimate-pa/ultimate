@@ -4,7 +4,6 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 public class NoResult<P extends IElement> extends AbstractResultAtElement<P> implements IResult {
 	private String shortDescription;

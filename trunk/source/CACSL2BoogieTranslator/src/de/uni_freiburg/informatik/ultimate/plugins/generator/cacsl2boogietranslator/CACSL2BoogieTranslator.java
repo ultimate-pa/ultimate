@@ -6,11 +6,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -23,123 +22,77 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  * @date 03.02.2012
  */
 public class CACSL2BoogieTranslator implements IGenerator {
-	/**
-	 * The plugin's name.
-	 */
 	private static final String s_PLUGIN_NAME = Activator.s_PLUGIN_NAME;
-	/**
-	 * The plugin's ID.
-	 */
 	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
-	/**
-	 * The observer instance.
-	 */
+
 	private CACSL2BoogieTranslatorObserver m_Observer;
-	/**
-	 * Input definition.
-	 */
 	private GraphType m_InputDefinition;
-	/**
-	 * The logger instance.
-	 */
-	public static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-	
-	/*
-	 * (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#getName()
-	 */
-	@Override
-    public String getName() {
-        return s_PLUGIN_NAME;
-    }
+	private IUltimateServiceProvider mServices;
+	private IToolchainStorage mStorage;
 
-	/*
-	 * (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#getPluginID()
-	 */
 	@Override
-    public String getPluginID() {
-        return s_PLUGIN_ID;
-    }
+	public String getPluginName() {
+		return s_PLUGIN_NAME;
+	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#init(java.lang.Object)
-	 */
 	@Override
-    public int init() {
-    	m_Observer = new CACSL2BoogieTranslatorObserver();
-    	return 0;
-    }
+	public String getPluginID() {
+		return s_PLUGIN_ID;
+	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#getQueryKeyword()
-	 */
+	@Override
+	public int init() {
+		m_Observer = new CACSL2BoogieTranslatorObserver(mServices, mStorage);
+		return 0;
+	}
+
 	@Override
 	public QueryKeyword getQueryKeyword() {
 		return QueryKeyword.LAST;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#getDesiredToolID()
-	 */
 	@Override
 	public List<String> getDesiredToolID() {
 		return null;
 	}
 
-
-	/*
-	 * (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#setInputDefinition(de.uni_freiburg.informatik.ultimate.model.GraphType)
-	 */
 	@Override
 	public void setInputDefinition(GraphType graphType) {
 		this.m_InputDefinition = graphType;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#getObservers()
-	 */
 	@Override
 	public List<IObserver> getObservers() {
 		return Collections.singletonList((IObserver) m_Observer);
 	}
-	
-	/*
-	 * (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IModifyingTool#getOutputDefinition()
-	 */
+
 	@Override
 	public GraphType getOutputDefinition() {
-		return new GraphType(Activator.s_PLUGIN_ID,
-				m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+		return new GraphType(Activator.s_PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
 	}
-	
-	/*
-	 * (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator#getModel()
-	 */
+
 	@Override
 	public IElement getModel() {
 		return this.m_Observer.getRoot();
 	}
-	
-	/*
-	 * (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#getRequireGui()
-	 */
+
 	@Override
 	public boolean isGuiRequired() {
 		return false;
 	}
-	
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
 		return new CACSLPreferenceInitializer();
+	}
+
+	@Override
+	public void setToolchainStorage(IToolchainStorage storage) {
+		mStorage = storage;
+	}
+
+	@Override
+	public void setServices(IUltimateServiceProvider services) {
+		mServices = services;
 	}
 }

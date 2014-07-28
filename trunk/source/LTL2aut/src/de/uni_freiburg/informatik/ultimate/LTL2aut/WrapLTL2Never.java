@@ -9,7 +9,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 
 /**
@@ -25,8 +24,8 @@ public class WrapLTL2Never {
 
 	private final Logger mLogger;
 
-	public WrapLTL2Never() {
-		mLogger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+	public WrapLTL2Never(Logger logger) {
+		mLogger = logger;
 	}
 
 	/**

@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -11,23 +10,18 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 
-import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
-import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
-import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
-import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
@@ -46,15 +40,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultContract;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultVarList;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -74,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ReturnStatement;
@@ -88,7 +77,6 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.Check;
-import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
 
 /**
  * Class that handles translation of functions.
@@ -135,11 +123,12 @@ public class FunctionHandler {
 	private LinkedHashMap<String, ArrayList<CType>> procedureToParamCType;
 	
 	private final boolean m_CheckMemoryLeakAtEndOfMain;
+	private Dispatcher mDispatcher;
 
 	/**
 	 * Constructor.
 	 */
-	public FunctionHandler() {
+	public FunctionHandler(Dispatcher dispatch) {
 		this.callGraph = new LinkedHashMap<String, LinkedHashSet<String>>();
 		this.currentProcedureIsVoid = false;
 		this.modifiedGlobals = new LinkedHashMap<String, LinkedHashSet<String>>();
@@ -151,6 +140,7 @@ public class FunctionHandler {
 		m_CheckMemoryLeakAtEndOfMain = 
 				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
 				getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MemoryLeakInMain);
+		mDispatcher = dispatch;
 	}
 
 	/**
@@ -941,7 +931,7 @@ public class FunctionHandler {
 			String longDescription = "Return value of method '"
 					+ methodName
 					+ "' unknown! Methods should be declared, before they are used! Return value assumed to be int ...";
-			Dispatcher.warn(loc, longDescription);
+			mDispatcher.warn(loc, longDescription);
 			String ident = main.nameHandler.getTempVarUID(SFO.AUXVAR.RETURNED);
 			expr = new IdentifierExpression(loc,
 					/*new InferredType(Type.Integer),*/ ident);
@@ -1013,7 +1003,7 @@ public class FunctionHandler {
 				// void method which is returning something! We remove the
 				// return value!
 				String msg = "This method is declared to be void, but returning a value!";
-				Dispatcher.syntaxError(loc, msg);
+				mDispatcher.syntaxError(loc, msg);
 			} else if (outParams.length != 1) {
 				String msg = "We do not support several output parameters for functions";
 				throw new UnsupportedSyntaxException(loc, msg);

@@ -11,7 +11,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -23,7 +22,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmarkGenerator;
 
@@ -35,8 +33,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class AnnotateAndAsserter {
 	
-	protected static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
+	protected final Logger mLogger ;
 		
 		protected final Script m_Script;
 		protected final SmtManager m_SmtManager;
@@ -54,7 +51,8 @@ public class AnnotateAndAsserter {
 		public AnnotateAndAsserter(SmtManager smtManager,
 				NestedFormulas<Term, Term> nestedSSA, 
 				AnnotateAndAssertCodeBlocks aaacb, 
-				TraceCheckerBenchmarkGenerator tcbg) {
+				TraceCheckerBenchmarkGenerator tcbg, Logger logger) {
+			mLogger = logger;
 			m_SmtManager = smtManager;
 			m_Script = smtManager.getScript();
 			m_Trace = nestedSSA.getTrace();
@@ -119,7 +117,7 @@ public class AnnotateAndAsserter {
 			}
 			
 			m_Satisfiable = m_SmtManager.getScript().checkSat();
-			s_Logger.info("Conjunction of SSA is " + m_Satisfiable);
+			mLogger.info("Conjunction of SSA is " + m_Satisfiable);
 		}
 		
 		

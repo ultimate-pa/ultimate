@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.walker;
 
 import java.util.HashMap;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -11,9 +13,9 @@ public class ObserverDispatcherParallel extends ObserverDispatcher
 	private HashMap<SimpleRCFGVisitor, Boolean> mVisitorStateAbortCurrent;
 	private HashMap<SimpleRCFGVisitor, Boolean> mVisitorStateAbortAll;
 
-	public ObserverDispatcherParallel()
+	public ObserverDispatcherParallel(Logger logger)
 	{
-		super();
+		super(logger);
 		mVisitorStateAbortCurrent = new HashMap<>();
 		mVisitorStateAbortAll = new HashMap<>();
 	}
@@ -21,7 +23,7 @@ public class ObserverDispatcherParallel extends ObserverDispatcher
 	public void run(RCFGNode node)
 	{
 		if (!(node instanceof RootNode)) {
-			sLogger.error("RCFGWalker can only process models created by RCFGBuilder");
+			mLogger.error("RCFGWalker can only process models created by RCFGBuilder");
 			return;
 		}
 

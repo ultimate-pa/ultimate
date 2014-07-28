@@ -55,14 +55,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 
 @Deprecated
 public class ResultChecker<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
-		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+		NestedWordAutomata.getLogger();
 	
 	private static int resultCheckStackHeight = 0;
 	public static final int maxResultCheckStackHeight = 1;

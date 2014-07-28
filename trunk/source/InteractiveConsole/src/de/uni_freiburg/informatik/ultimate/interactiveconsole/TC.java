@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.interactiveconsole;
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 
 /**
@@ -23,5 +23,5 @@ abstract class TC {
 	 * shall be maintained
 	 * 
 	 */
-	public abstract Toolchain getToolchain(List<ITool> tools) throws Exception;
+	public abstract ToolchainData getToolchain(List<ITool> tools) throws Exception;
 }

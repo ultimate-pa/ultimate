@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.interactiveconsole;
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 
 /**
@@ -27,8 +27,8 @@ public class TCPlugin extends TCnew {
 	}
 
 	@Override
-	public Toolchain getToolchain(List<ITool> tools) throws Exception {
-		Toolchain foo = new Toolchain();
+	public ToolchainData getToolchain(List<ITool> tools) throws Exception {
+		ToolchainData foo = new ToolchainData();
 		foo.addPlugin(tools.get(Integer.valueOf(number)).getPluginID());
 		if (next != null)
 			foo.addToolchain(next.getToolchain(tools));

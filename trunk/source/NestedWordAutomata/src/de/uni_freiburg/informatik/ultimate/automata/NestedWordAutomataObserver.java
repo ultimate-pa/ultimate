@@ -39,13 +39,12 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.PetriNetToUltimateModel;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 
 public class NestedWordAutomataObserver implements IUnmanagedObserver {
 	private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+			NestedWordAutomata.getLogger();
 	
 	private static IElement graphroot;
 

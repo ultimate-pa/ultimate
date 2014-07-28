@@ -8,7 +8,6 @@ import pea.PhaseEventAutomata;
 import pea.Trace2PEACompiler;
 import pea.modelchecking.DOTWriter;
 import pea.modelchecking.J2UPPAALConverter;
-import pea.modelchecking.J2UPPAALWriter;
 import pea.modelchecking.MCTrace;
 
 public class TestUppaalExport {
