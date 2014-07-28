@@ -34,7 +34,9 @@ import org.osgi.framework.BundleContext;
 public class Activator extends Plugin {
 
 	// The plug-in ID
-	public static final String PLUGIN_ID = "NestedWordAutomata";
+	public static final String PLUGIN_ID = NestedWordAutomata.class.getPackage().getName();
+	
+	public static final String PLUGIN_NAME = "NestedWordAutomata";
 
 	// The shared instance
 	private static Activator plugin;

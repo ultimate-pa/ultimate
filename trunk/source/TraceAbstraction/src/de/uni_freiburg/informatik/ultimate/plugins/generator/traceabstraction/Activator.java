@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
+
 
 /**
  * The activator class controls the plug-in life cycle
@@ -10,7 +12,7 @@ import org.osgi.framework.BundleContext;
 public class Activator extends Plugin {
 
 	// The plug-in ID
-	public static final String s_PLUGIN_ID = "TraceAbstraction";
+	public static final String s_PLUGIN_ID = TraceAbstraction.class.getPackage().getName();
 
 	// The plug-in name
 	public static final String s_PLUGIN_NAME = "TraceAbstraction";

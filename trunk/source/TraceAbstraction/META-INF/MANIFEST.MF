@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: TraceAbstraction
-Bundle-SymbolicName: TraceAbstraction;singleton:=true
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator
 Require-Bundle: Library-log4j,
@@ -9,7 +9,7 @@ Require-Bundle: Library-log4j,
  Library-SMTLIB,
  Library-UltimateUtil,
  UltimateCore,
- NestedWordAutomata,
+ de.uni_freiburg.informatik.ultimate.automata,
  SMTInterpol,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  SMTSolverBridge

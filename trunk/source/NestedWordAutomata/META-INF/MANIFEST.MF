@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: NestedWordAutomata Plug-in
-Bundle-SymbolicName: NestedWordAutomata;singleton:=true
+Bundle-Name: NestedWordAutomata
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.automata;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.automata.Activator
 Require-Bundle: UltimateCore,

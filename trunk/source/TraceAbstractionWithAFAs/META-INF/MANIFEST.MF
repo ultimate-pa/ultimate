@@ -12,8 +12,8 @@ Require-Bundle: Library-log4j,
  Library-SMTLIB,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  SMTInterpol,
- NestedWordAutomata,
- TraceAbstraction,
+ de.uni_freiburg.informatik.ultimate.automata,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;bundle-version="0.0.1",
  TraceAbstractionConcurrent
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy

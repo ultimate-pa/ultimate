@@ -89,7 +89,7 @@
          unpack="false"/>
 
    <plugin
-         id="NestedWordAutomata"
+         id="de.uni_freiburg.informatik.ultimate.automata"
          download-size="0"
          install-size="0"
          version="0.0.0"

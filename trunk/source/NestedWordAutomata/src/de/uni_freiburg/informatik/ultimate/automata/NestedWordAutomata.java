@@ -41,7 +41,8 @@ import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 public class NestedWordAutomata implements IGenerator {
-	private static final String s_PLUGIN_NAME = "NestedWordAutomata";
+	
+	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
 	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
 	private NestedWordAutomataObserver m_NestedWordAutomataObserver;

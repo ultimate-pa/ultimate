@@ -15,7 +15,7 @@ Require-Bundle: UltimateCore,
  BoogiePreprocessor,
  BlockEncoding,
  org.junit,
- TraceAbstraction,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
  Library-LassoRanker,
  LassoRanker,
  CodeCheck

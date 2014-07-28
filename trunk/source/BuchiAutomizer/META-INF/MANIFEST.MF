@@ -10,10 +10,10 @@ Require-Bundle: Library-log4j,
  Library-ModelCheckerUtils,
  Library-LassoRanker,
  UltimateCore,
- NestedWordAutomata,
+ de.uni_freiburg.informatik.ultimate.automata,
  BoogiePreprocessor,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
- TraceAbstraction
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer

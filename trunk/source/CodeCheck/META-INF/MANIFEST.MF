@@ -9,8 +9,8 @@ Require-Bundle: UltimateCore,
  Library-ModelCheckerUtils,
  Library-UltimateUtil,
  Library-SMTLIB,
- NestedWordAutomata,
+ de.uni_freiburg.informatik.ultimate.automata,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
- TraceAbstraction
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7

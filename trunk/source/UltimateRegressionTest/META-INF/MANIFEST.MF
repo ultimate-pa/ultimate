@@ -15,7 +15,7 @@ Require-Bundle: UltimateCore,
  CDTParser,
  BoogiePreprocessor,
  BlockEncoding,
- TraceAbstraction,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
  org.junit
 Import-Package: org.junit,
  org.junit.experimental.categories,
