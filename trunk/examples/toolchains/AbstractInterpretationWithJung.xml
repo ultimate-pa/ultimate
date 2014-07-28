@@ -1,6 +1,6 @@
 ﻿<toolchain>
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
-	<plugin id="RCFGBuilder"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
 	<plugin id="AbstractInterpretation"/>
 	<plugin id="JungVisualization"/>
 </toolchain>

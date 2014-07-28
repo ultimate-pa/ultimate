@@ -1,5 +1,5 @@
 <toolchain>
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
-	<plugin id="RCFGBuilder"/>
-	<plugin id="TraceAbstractionConcurrent"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionConcurrent"/>
 </toolchain>
