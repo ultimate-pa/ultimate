@@ -1,7 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.core.services;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IServiceFactory;
 
 /**
  * Simple implementation of {@link IToolchainStorage} and {@link IUltimateServiceProvider}
@@ -34,7 +38,9 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 
 	@Override
 	public void clear() {
-		for (IStorable storable : this.mToolchainStorage.values()) {
+		//TODO: Somehow unclear why i need this; but if i dont have it, concurrentmod exceptions are flying
+		List<IStorable> current = new ArrayList<>(mToolchainStorage.values());
+		for (IStorable storable : current) {
 			storable.destroy();
 		}
 		mToolchainStorage.clear();
@@ -71,5 +77,10 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	@Override
 	public IProgressMonitorService getProgressMonitorService() {
 		return ProgressMonitorService.getService(this);
+	}
+
+	@Override
+	public <T extends IService> T getServiceInstance(Class<IServiceFactory<T>> serviceType) {
+		return GenericServiceProvider.getServiceInstance(this,serviceType);
 	}
 }

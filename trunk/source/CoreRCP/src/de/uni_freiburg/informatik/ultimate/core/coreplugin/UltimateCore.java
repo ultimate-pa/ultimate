@@ -33,6 +33,8 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin;
  */
 public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
+	//TODO: Remove de.uni_freiburg.informatik.ultimate.core.coreplugin from exported packages 
+	
 	private Logger mLogger;
 
 	private IController mCurrentController;

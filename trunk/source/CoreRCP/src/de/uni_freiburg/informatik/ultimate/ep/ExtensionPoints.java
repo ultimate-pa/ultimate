@@ -45,5 +45,10 @@ public final class ExtensionPoints {
 	/**
 	 * Extension Point-Name for Serialization-Plugins.
 	 */
-	public static final String EP_SERIALIZATION = "de.uni_freiburg.informatik.ultimate.ep.serialization";	
+	public static final String EP_SERIALIZATION = "de.uni_freiburg.informatik.ultimate.ep.serialization";
+	
+	/**
+	 * Extension Point-Name for Serialization-Plugins.
+	 */
+	public static final String EP_SERVICE = "de.uni_freiburg.informatik.ultimate.ep.service";
 }

@@ -65,6 +65,9 @@ public class ResultService implements IStorable, IResultService {
 	
 	@Override
 	public String toString() {
+		if(mResults.size() == 0){
+			return "No Results";
+		}
 		return mResults.toString();
 	}
 

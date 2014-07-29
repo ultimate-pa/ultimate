@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.PluginType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SubchainType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.GenericServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.services.LoggingService;
 import de.uni_freiburg.informatik.ultimate.core.services.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.core.services.ProgressMonitorService;
@@ -161,9 +162,12 @@ public class ToolchainManager {
 				return null;
 			}
 
-			// inject logging services
+			// inject logging services into toolchain storage
 			mLoggingService.setCurrentControllerID(mCurrentController.getPluginID());
 			rtr.getStorage().putStorable(LoggingService.getServiceKey(), mLoggingService);
+			
+			//inject service provider service into toolchain storage 
+			rtr.getStorage().putStorable(GenericServiceProvider.getServiceKey(), new GenericServiceProvider(mPluginFactory));
 
 			mLogger.info("Toolchain data selected.");
 			mToolchainData = rtr;

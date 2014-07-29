@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.2"?>
 <plugin>
-   <extension
-         point="de.uni_freiburg.informatik.ultimate.ep.generator">
-      <impl class="de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata"/>
-   </extension>
 
    <extension
          point="org.eclipse.core.runtime.preferences">
       <initializer
             class="de.uni_freiburg.informatik.ultimate.automata.preferences.PreferenceInitializer">
       </initializer>
+   </extension>
+   <extension
+         point="de.uni_freiburg.informatik.ultimate.ep.service">
+      <impl
+            class="de.uni_freiburg.informatik.ultimate.automata.ExampleNWAFactory">
+      </impl>
    </extension>
 </plugin>
