@@ -18,7 +18,7 @@ public class Minimization extends
 		"examples/programs/recursivePrograms/SV-COMP_Candidates"};
 	
 	// Time out for each test case in milliseconds
-	private static int m_Timeout = 20000;
+	private static int m_Timeout = 60000;
 
 	private static final boolean s_Boogie_TreeInterpolants_MinimizeSevpa = true;
 	private static final boolean s_C_TreeInterpolants_MinimizeSevpa = true;

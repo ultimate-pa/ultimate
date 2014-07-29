@@ -14,22 +14,22 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class Svcomp_Reach_PreciseMemoryModel extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Directories = { 
-		"examples/svcomp/bitvector/",
-		"examples/svcomp/bitvector-regression/",
-		"examples/svcomp/ntdrivers-simplified/",
-		"examples/svcomp/ssh-simplified/",
-		"examples/svcomp/locks/",
-		"examples/svcomp/eca/",
-		"examples/svcomp/loops/",
-		"examples/svcomp/product-lines/",
-		"examples/svcomp/heap-manipulation/",
-		"examples/svcomp/list-properties/",
-		"examples/svcomp/ldv-regression/",
-		"examples/svcomp/ddv-machzwd/",
-		"examples/svcomp/recursive/",
+//		"examples/svcomp/bitvector/",
+//		"examples/svcomp/bitvector-regression/",
+//		"examples/svcomp/ntdrivers-simplified/",
+//		"examples/svcomp/ssh-simplified/",
+//		"examples/svcomp/locks/",
+//		"examples/svcomp/eca/",
+//		"examples/svcomp/loops/",
+//		"examples/svcomp/product-lines/",
+//		"examples/svcomp/heap-manipulation/",
+//		"examples/svcomp/list-properties/",
+//		"examples/svcomp/ldv-regression/",
+//		"examples/svcomp/ddv-machzwd/",
+//		"examples/svcomp/recursive/",
 		"examples/svcomp/systemc/",
-		"examples/svcomp/seq-mthreaded/",
-		"examples/svcomp/seq-pthread/"
+//		"examples/svcomp/seq-mthreaded/",
+//		"examples/svcomp/seq-pthread/"
 		};
 	
 	// Time out for each test case in milliseconds
