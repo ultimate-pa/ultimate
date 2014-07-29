@@ -34,13 +34,14 @@ import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.automata.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.services.IService;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
-public class NestedWordAutomata implements IGenerator {
+public class NestedWordAutomata implements IGenerator,IService {
 	
 	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
 	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
@@ -138,5 +139,11 @@ public class NestedWordAutomata implements IGenerator {
 		// TODO: Huge hack, but real change has to be coordinated with Matthias
 		sProgress = services.getProgressMonitorService();
 		((NWALoggerProxy) getLogger()).setLogger(services.getLoggingService().getLogger(Activator.PLUGIN_ID));
+	}
+
+	@Override
+	public void destroy() {
+		// TODO Auto-generated method stub
+		
 	}
 }

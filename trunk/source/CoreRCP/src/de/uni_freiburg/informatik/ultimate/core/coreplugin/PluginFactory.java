@@ -330,7 +330,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		}
 	}
 
-	public <T> T createService(Class<IServiceFactory<T>> service,
+	public <T,K extends IServiceFactory<T>> T createService(Class<K> service,
 			IUltimateServiceProvider services, IToolchainStorage storage) {
 		IServiceFactory<?> unknownfactory = mAvailableServicesByClassName
 				.get(service);

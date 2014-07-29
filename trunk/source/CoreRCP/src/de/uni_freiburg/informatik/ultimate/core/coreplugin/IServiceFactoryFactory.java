@@ -5,6 +5,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IServiceFactory;
 
 public interface IServiceFactoryFactory {
-	<T> T createService(Class<IServiceFactory<T>> service,
+	<T,K extends IServiceFactory<T>> T createService(Class<K> service,
 			IUltimateServiceProvider services, IToolchainStorage storage);
 }

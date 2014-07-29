@@ -80,7 +80,7 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	}
 
 	@Override
-	public <T extends IService> T getServiceInstance(Class<IServiceFactory<T>> serviceType) {
+	public <T extends IService, K extends IServiceFactory<T>> T getServiceInstance(Class<K> serviceType) {
 		return GenericServiceProvider.getServiceInstance(this,serviceType);
 	}
 }

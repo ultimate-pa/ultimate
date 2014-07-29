@@ -17,6 +17,6 @@ public interface IUltimateServiceProvider {
 
 	IProgressMonitorService getProgressMonitorService();
 
-	<T extends IService> T getServiceInstance(Class<IServiceFactory<T>> serviceType);
+	<T extends IService,K extends IServiceFactory<T>> T getServiceInstance(Class<K> serviceType);
 
 }

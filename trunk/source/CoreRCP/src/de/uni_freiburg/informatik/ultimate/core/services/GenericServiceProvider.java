@@ -13,9 +13,9 @@ public class GenericServiceProvider implements IStorable {
 	}
 
 	@SuppressWarnings("unchecked")
-	static <T extends IService> T getServiceInstance(
+	static <T extends IService,K extends IServiceFactory<T>> T getServiceInstance(
 			ToolchainStorage toolchainStorage,
-			Class<IServiceFactory<T>> serviceType) {
+			Class<K> serviceType) {
 		assert toolchainStorage != null;
 
 		// first, check if this instance already exists in storage
