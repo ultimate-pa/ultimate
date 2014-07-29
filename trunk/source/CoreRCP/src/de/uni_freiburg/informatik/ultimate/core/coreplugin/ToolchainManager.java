@@ -132,9 +132,21 @@ public class ToolchainManager {
 		/*************************** IToolchain Implementation ****************************/
 
 		@Override
-		public void resetCore() {
-			// TODO Auto-generated method stub
-			// is not needed anymore
+		public void init() {
+			if (mToolchainData == null) {
+				return;
+			}
+			
+			mToolchainData.getStorage().clear();
+			
+			// inject logging services into toolchain storage
+			mLoggingService.setCurrentControllerID(mCurrentController.getPluginID());
+			mToolchainData.getStorage().putStorable(LoggingService.getServiceKey(), mLoggingService);
+
+			// inject service provider service into toolchain storage
+			mToolchainData.getStorage().putStorable(GenericServiceProvider.getServiceKey(),
+					new GenericServiceProvider(mPluginFactory));
+
 		}
 
 		@Override
@@ -146,7 +158,7 @@ public class ToolchainManager {
 			List<ITool> tools = mPluginFactory.getAllAvailableTools();
 
 			if (tools.isEmpty()) {
-				mLogger.warn("There are no plugins present, returning null tools.");
+				mLogger.warn(getLogPrefix() + ": There are no plugins present, returning null tools.");
 				return null;
 			}
 
@@ -154,23 +166,16 @@ public class ToolchainManager {
 			ToolchainData rtr = mCurrentController.selectTools(tools);
 			if (rtr == null) {
 				/* dialog was aborted */
-				mLogger.warn("Dialog was aborted, returning null tools.");
+				mLogger.warn(getLogPrefix() + ": Dialog was aborted, returning null tools.");
 				return null;
 			}
 			if (!checkToolchain(rtr.getToolchain().getPluginOrSubchain())) {
-				mLogger.warn("Invalid toolchain selection, returning null tools.");
+				mLogger.warn(getLogPrefix() + ": Invalid toolchain selection, returning null tools.");
 				return null;
 			}
-
-			// inject logging services into toolchain storage
-			mLoggingService.setCurrentControllerID(mCurrentController.getPluginID());
-			rtr.getStorage().putStorable(LoggingService.getServiceKey(), mLoggingService);
-			
-			//inject service provider service into toolchain storage 
-			rtr.getStorage().putStorable(GenericServiceProvider.getServiceKey(), new GenericServiceProvider(mPluginFactory));
-
-			mLogger.info("Toolchain data selected.");
 			mToolchainData = rtr;
+			init();
+			mLogger.info(getLogPrefix() + ": Toolchain data selected.");
 			return rtr;
 		}
 
@@ -179,7 +184,7 @@ public class ToolchainManager {
 			mParser = selectParser(mInputFiles);
 
 			if (mParser == null) {
-				mLogger.warn("No parsers available");
+				mLogger.warn(getLogPrefix() + ": No parsers available");
 				return false;
 			}
 
@@ -191,11 +196,11 @@ public class ToolchainManager {
 			}
 
 			if (mParser.getOutputDefinition() == null) {
-				mLogger.fatal("ISource returned invalid Output Definition, aborting...");
+				mLogger.fatal(getLogPrefix() + ": ISource returned invalid Output Definition, aborting...");
 				return false;
 			}
 
-			mLogger.info("Parser successfully initiated...");
+			mLogger.info(getLogPrefix() + ": Parser successfully initiated...");
 
 			return true;
 		}
@@ -207,7 +212,7 @@ public class ToolchainManager {
 
 		@Override
 		public IStatus processToolchain(IProgressMonitor monitor) throws Throwable {
-			mLogger.info("#######################  Toolchain " + getId() + " #######################");
+			mLogger.info("####################### " + getLogPrefix() + " #######################");
 			boolean useBenchmark = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
 					.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
 			Benchmark bench = null;
@@ -217,7 +222,8 @@ public class ToolchainManager {
 			}
 			try {
 				if (mModelManager.size() < 1) {
-					mLogger.error("There is no model present. Did you run a ISource or IGenerator plugin in your toolchain?");
+					mLogger.error(getLogPrefix()
+							+ ": There is no model present. Did you run a ISource or IGenerator plugin in your toolchain?");
 					throw new IllegalStateException("There is no model present.");
 				}
 				CompleteToolchainData data = mToolchainWalker.new CompleteToolchainData(mToolchainData, mParser,
@@ -245,7 +251,7 @@ public class ToolchainManager {
 				}
 				new ResultNotifier(mCurrentController, mToolchainData.getServices()).processResults();
 				mModelManager.removeAll();
-				mLogger.info("#######################  End Toolchain " + getId() + " #######################");
+				mLogger.info("#######################  End " + getLogPrefix() + " #######################");
 			}
 
 			return Status.OK_STATUS;
@@ -254,9 +260,9 @@ public class ToolchainManager {
 		@Override
 		public void addAST(IElement root, GraphType outputDefinition) {
 			if (mModelManager.addItem(root, outputDefinition)) {
-				mLogger.debug("Successfully added AST to model manager");
+				mLogger.debug(getLogPrefix() + ": Successfully added AST to model manager");
 			} else {
-				mLogger.error("Could not add AST to model manager!");
+				mLogger.error(getLogPrefix() + ": Could not add AST to model manager!");
 			}
 		}
 
@@ -285,11 +291,11 @@ public class ToolchainManager {
 				if (o instanceof PluginType) {
 					PluginType plugin = (PluginType) o;
 					if (!mPluginFactory.isPluginAvailable(plugin.getId())) {
-						mLogger.error("Did not find plugin with id \"" + plugin.getId()
+						mLogger.error(getLogPrefix() + ": Did not find plugin with id \"" + plugin.getId()
 								+ "\". The following plugins are currently available:");
 						if (mLogger.isInfoEnabled()) {
 							for (ITool t : mPluginFactory.getAllAvailableTools()) {
-								mLogger.info(t.getPluginID());
+								mLogger.info(getLogPrefix() + ": " + t.getPluginID());
 							}
 						}
 						return false;
@@ -314,7 +320,7 @@ public class ToolchainManager {
 
 			// parse the files to Graph
 			try {
-				mLogger.info(String.format("Parsing single file: %s", file.getAbsolutePath()));
+				mLogger.info(String.format(getLogPrefix() + ": Parsing single file: %s", file.getAbsolutePath()));
 				if (useBenchmark) {
 					mBenchmark.start(parser.getPluginName());
 				}
@@ -330,7 +336,7 @@ public class ToolchainManager {
 				 * if(in == in) System.out.println(in.toString()); }
 				 */
 			} catch (Exception e) {
-				mLogger.fatal("Parsing gives Exception", e);
+				mLogger.fatal(getLogPrefix() + ": Parsing gives Exception", e);
 				resetModelManager();
 			}
 			return root;
@@ -338,11 +344,11 @@ public class ToolchainManager {
 
 		private void resetModelManager() {
 			if (!mModelManager.isEmpty()) {
-				mLogger.info("Clearing model...");
+				mLogger.info(getLogPrefix() + ": Clearing model...");
 				try {
 					mModelManager.persistAll(false);
 				} catch (StoreObjectException e) {
-					mLogger.error("Failed to persist Models", e);
+					mLogger.error(getLogPrefix() + ": Failed to persist Models", e);
 				}
 			}
 			return;
@@ -353,13 +359,13 @@ public class ToolchainManager {
 			ArrayList<ISource> usableParsers = new ArrayList<ISource>();
 			ISource parser = null;
 			List<String> parserIds = mPluginFactory.getPluginClassNames(ISource.class);
-			mLogger.debug("We have " + parserIds.size() + " parsers present.");
+			mLogger.debug(getLogPrefix() + ": We have " + parserIds.size() + " parsers present.");
 
 			// how many of these parsers can be used on our input file?
 			for (String parserId : parserIds) {
 				ISource p = mPluginFactory.createTool(parserId);
 				if (p != null && p.parseable(files)) {
-					mLogger.info("Parser " + p.getPluginName() + " is usable.");
+					mLogger.info(getLogPrefix() + ": Parser " + p.getPluginName() + " is usable.");
 					usableParsers.add(p);
 				}
 			}
@@ -385,6 +391,10 @@ public class ToolchainManager {
 		@Override
 		public ToolchainData getCurrentToolchainData() {
 			return mToolchainData;
+		}
+
+		private String getLogPrefix() {
+			return "[Toolchain " + mId + "]";
 		}
 	}
 	/*************************** End ToolchainContainer Implementation ****************************/

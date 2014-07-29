@@ -18,33 +18,48 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 	private IElement mAST;
 	private GraphType mOutputDefinition;
 
-	public ExternalParserToolchainJob(String name, ICore core, IController controller, ChainMode mode, IElement ast,
+	public ExternalParserToolchainJob(String name, ICore core, IController controller, IElement ast,
 			GraphType outputDefinition, Logger logger) {
-		super(name, core, controller, mode, logger);
+		super(name, core, controller, logger);
 		mAST = ast;
 		mOutputDefinition = outputDefinition;
 	}
 
 	@Override
-	protected IStatus run(IProgressMonitor monitor) {
+	protected IStatus runToolchainKeepToolchain(IProgressMonitor monitor) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	protected IStatus runToolchainKeepInput(IProgressMonitor monitor) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	protected IStatus rerunToolchain(IProgressMonitor monitor) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	protected IStatus runToolchainDefault(IProgressMonitor monitor) {
 
 		IStatus returnstatus = Status.OK_STATUS;
 		monitor.beginTask(getName(), IProgressMonitor.UNKNOWN);
 		IToolchain currentToolchain = null;
-		
+
 		try {
 			monitor.worked(1);
-			if ((mJobMode == ChainMode.RERUN_TOOLCHAIN || mJobMode == ChainMode.RUN_OLDTOOLCHAIN) ) {
+			if ((mJobMode == ChainMode.RERUN || mJobMode == ChainMode.KEEP_Toolchain)) {
 				throw new Exception("Rerun currently unsupported! Aborting...");
 			}
 			// all modes requires this
 			currentToolchain = mCore.requestToolchain();
-			
-			currentToolchain.resetCore();
+
+			currentToolchain.init();
 			monitor.worked(1);
 			// only RUN_TOOLCHAIN and RUN_NEWTOOLCHAIN require this
-			
-			if (mJobMode == ChainMode.RUN_TOOLCHAIN || mJobMode == ChainMode.RUN_NEWTOOLCHAIN) {
+
+			if (mJobMode == ChainMode.DEFAULT || mJobMode == ChainMode.KEEP_INPUT) {
 				mChain = currentToolchain.makeToolSelection();
 				if (mChain == null) {
 					mLogger.warn("Toolchain selection failed, aborting...");
@@ -52,7 +67,7 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 				}
 				setServices(mChain.getServices());
 			}
-			
+
 			monitor.worked(1);
 			currentToolchain.addAST(mAST, mOutputDefinition);
 			monitor.worked(1);

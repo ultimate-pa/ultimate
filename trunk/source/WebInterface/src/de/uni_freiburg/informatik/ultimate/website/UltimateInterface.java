@@ -566,9 +566,8 @@ public class UltimateInterface extends HttpServlet implements IController {
 		}
 
 		try {
-			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this,
-					BasicToolchainJob.ChainMode.RUN_TOOLCHAIN, mInputFile, null,
-					loggingService.getLogger(getPluginID()));
+			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, loggingService.getLogger(getPluginID()), mInputFile,
+					null);
 			tcj.schedule();
 			tcj.join();
 

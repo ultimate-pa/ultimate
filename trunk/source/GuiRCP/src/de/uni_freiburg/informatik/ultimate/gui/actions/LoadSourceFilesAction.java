@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
+import de.uni_freiburg.informatik.ultimate.gui.GuiToolchainJob;
 import de.uni_freiburg.informatik.ultimate.gui.contrib.PreludeContribution;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
@@ -47,7 +48,7 @@ public class LoadSourceFilesAction extends Action implements IWorkbenchAction {
 
 	private ICore mCore;
 
-	private IController mController;
+	private GuiController mController;
 
 	public static final String s_ID = "de.uni_freiburg.informatik.ultimate.gui.LoadSourceFiles";
 
@@ -62,16 +63,16 @@ public class LoadSourceFilesAction extends Action implements IWorkbenchAction {
 	 * @param ist
 	 *            the steerablecore that will take the command
 	 */
-	public LoadSourceFilesAction(final IWorkbenchWindow window,
-			final ICore icore, final IController controller,Logger logger) {
+	public LoadSourceFilesAction(final IWorkbenchWindow window, final ICore icore, final GuiController controller,
+			Logger logger) {
 		mWorkbenchWindow = window;
 		mCore = icore;
 		mController = controller;
 		mLogger = logger;
 		setId(s_ID);
 		setText(s_DIALOG_NAME);
-		setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(
-				GuiController.sPLUGINID, IImageKeys.LOADSOURCEFILES));
+		setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(GuiController.sPLUGINID,
+				IImageKeys.LOADSOURCEFILES));
 
 	}
 
@@ -80,19 +81,17 @@ public class LoadSourceFilesAction extends Action implements IWorkbenchAction {
 	 * core
 	 */
 	public final void run() {
-		//TODO: Check this code, its old and uses API in wrong ways 
-		
+		// TODO: Check this code, its old and uses API in wrong ways
+
 		ArrayList<ISource> sourceplugins = new ArrayList<ISource>();
 		IExtensionRegistry reg = Platform.getExtensionRegistry();
 
-		IConfigurationElement[] configElements_source = reg
-				.getConfigurationElementsFor(ExtensionPoints.EP_SOURCE);
+		IConfigurationElement[] configElements_source = reg.getConfigurationElementsFor(ExtensionPoints.EP_SOURCE);
 		// iterate through every config element
 		for (IConfigurationElement element : configElements_source) {
 			try {
 				// create class from plugin
-				ISource source = (ISource) element
-						.createExecutableExtension("class");
+				ISource source = (ISource) element.createExecutableExtension("class");
 				// and add to plugin ArrayList
 				sourceplugins.add(source);
 			} catch (CoreException e) {
@@ -100,8 +99,7 @@ public class LoadSourceFilesAction extends Action implements IWorkbenchAction {
 			}
 		}
 
-		FileDialog fd = new FileDialog(mWorkbenchWindow.getShell(), SWT.OPEN
-				| SWT.MULTI);
+		FileDialog fd = new FileDialog(mWorkbenchWindow.getShell(), SWT.OPEN | SWT.MULTI);
 		fd.setText(s_DIALOG_NAME);
 
 		ArrayList<String> extensions = new ArrayList<String>();
@@ -116,9 +114,8 @@ public class LoadSourceFilesAction extends Action implements IWorkbenchAction {
 				names.add(source.getPluginName() + " (*." + s + ")");
 			}
 		}
-		
-		ScopedPreferenceStore store = new ScopedPreferenceStore(InstanceScope.INSTANCE,
-				GuiController.sPLUGINID);
+
+		ScopedPreferenceStore store = new ScopedPreferenceStore(InstanceScope.INSTANCE, GuiController.sPLUGINID);
 		IEclipsePreferences prefscope = InstanceScope.INSTANCE.getNode(GuiController.sPLUGINID);
 		String filterpath = prefscope.get(IPreferencesKeys.LASTPATH, null);
 		fd.setFilterExtensions(extensions.toArray(new String[extensions.size()]));
@@ -134,14 +131,10 @@ public class LoadSourceFilesAction extends Action implements IWorkbenchAction {
 			}
 		}
 
-		
 		if (fp != null) {
 			File prelude = PreludeContribution.getPreludeFile();
-			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", mCore,
-					mController, BasicToolchainJob.ChainMode.RUN_TOOLCHAIN,
-					new File(fp),
-					prelude == null ? null : new PreludeProvider(prelude
-							.getAbsolutePath(), mLogger), mLogger);
+			BasicToolchainJob tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, new File(fp),
+					prelude == null ? null : new PreludeProvider(prelude.getAbsolutePath(), mLogger), mLogger);
 			tcj.schedule();
 		}
 	}
@@ -149,6 +142,6 @@ public class LoadSourceFilesAction extends Action implements IWorkbenchAction {
 	@Override
 	public void dispose() {
 		// TODO Auto-generated method stub
-		
+
 	}
 }

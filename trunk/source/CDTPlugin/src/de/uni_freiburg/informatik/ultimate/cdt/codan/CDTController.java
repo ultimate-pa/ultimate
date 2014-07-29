@@ -53,8 +53,7 @@ public class CDTController extends BaseExternalExecutionController {
 	@Override
 	protected void createAndRunToolchainJob() throws Throwable {
 		BasicToolchainJob tcj = new ExternalParserToolchainJob("Processing Toolchain", mCurrentCoreReference, this,
-				BasicToolchainJob.ChainMode.RUN_TOOLCHAIN, mAST, new GraphType(getPluginID(), GraphType.Type.AST,
-						new ArrayList<String>()), mLogger);
+				mAST, new GraphType(getPluginID(), GraphType.Type.AST, new ArrayList<String>()), mLogger);
 		tcj.setUser(true);
 		tcj.schedule();
 		tcj.join();

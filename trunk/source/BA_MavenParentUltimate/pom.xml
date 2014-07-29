@@ -215,7 +215,7 @@
 		<module>../Library-Jung</module>
 		<module>../CDTParser</module>
 		<module>../CDTPlugin</module>
-		<module>../InteractiveConsole</module>
+		<!-- <module>../InteractiveConsole</module> -->
 		<module>../CACSL2BoogieTranslator</module>
 		<module>../ASTBuilder</module>
 		<module>../JungVisualization</module>

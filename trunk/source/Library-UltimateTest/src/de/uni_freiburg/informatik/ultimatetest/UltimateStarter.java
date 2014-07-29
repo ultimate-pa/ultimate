@@ -95,8 +95,8 @@ public class UltimateStarter implements IController {
 		attachLogger();
 
 		try {
-			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this,
-					BasicToolchainJob.ChainMode.RUN_TOOLCHAIN, mInputFile, null, mLogger);
+			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger, mInputFile,
+					null);
 			tcj.setDeadline(mDeadline);
 			tcj.schedule();
 			// in non-GUI mode, we must wait until job has finished!
@@ -194,8 +194,8 @@ public class UltimateStarter implements IController {
 	public void displayException(String description, Throwable ex) {
 
 	}
-	
-	public IUltimateServiceProvider getServices(){
+
+	public IUltimateServiceProvider getServices() {
 		return mCurrentSerivces;
 	}
 

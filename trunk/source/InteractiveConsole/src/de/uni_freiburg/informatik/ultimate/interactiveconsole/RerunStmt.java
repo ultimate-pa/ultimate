@@ -15,7 +15,7 @@ public class RerunStmt extends Stmt {
 	@Override
 	public void execute() {
 		BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", 
-				this.controller.getCore(), null, BasicToolchainJob.ChainMode.RERUN_TOOLCHAIN, null, null, this.controller.getLogger());
+				this.controller.getCore(), null, BasicToolchainJob.ChainMode.RERUN, null, null, this.controller.getLogger());
 		tcj.schedule();
 		try {
 			tcj.join();

@@ -51,7 +51,7 @@ class UseStmt extends Stmt {
 			}
 
 		BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", this.controller.getCore(),
-				this.controller, BasicToolchainJob.ChainMode.RUN_TOOLCHAIN, boogie, this.controller.getPrelude(),
+				this.controller, BasicToolchainJob.ChainMode.DEFAULT, boogie, this.controller.getPrelude(),
 				controller.getLogger());
 		tcj.schedule();
 		try {

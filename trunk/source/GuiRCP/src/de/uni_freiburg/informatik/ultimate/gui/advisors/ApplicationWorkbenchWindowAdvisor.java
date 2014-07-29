@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.gui.advisors;
 
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.TrayIconNotifier;
@@ -36,14 +35,14 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 
 	private final ICore mCore;
-	private final IController mController;
+	private final GuiController mController;
 	private TrayItem mTrayItem;
 	private Image mTrayImage;
 	private TrayIconNotifier mTrayIconNotifier;
 	private Logger mLogger;
 
 	public ApplicationWorkbenchWindowAdvisor(IWorkbenchWindowConfigurer configurer, ICore icc,
-			TrayIconNotifier notifier, IController controller, Logger logger) {
+			TrayIconNotifier notifier, GuiController controller, Logger logger) {
 		super(configurer);
 		mCore = icc;
 		mTrayIconNotifier = notifier;

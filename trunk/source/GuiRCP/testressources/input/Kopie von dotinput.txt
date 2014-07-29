@@ -1,8 +1,0 @@
-digraph G {
-  a -> b [label="hello", style=dashed];
-  a -> c [label="world"];
-  c -> d; b -> c; d -> a;
-  b [shape=Mdiamond, label="this is b"];
-  c [shape=polygon, sides=5, peripheries=3];
-  d [style=bold];
-}

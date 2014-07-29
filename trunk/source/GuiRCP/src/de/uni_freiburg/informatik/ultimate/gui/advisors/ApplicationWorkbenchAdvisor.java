@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.gui.advisors;
 
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.TrayIconNotifier;
 import de.uni_freiburg.informatik.ultimate.gui.UltimateDefaultPerspective;
 
@@ -24,9 +24,9 @@ public class ApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
 	private ICore mCore;
 	private ApplicationWorkbenchWindowAdvisor mApplicationWorkbenchWindowAdvisor;
 	private TrayIconNotifier mTrayIconNotifier;
-	private IController mController;
+	private GuiController mController;
 
-	public void init(ICore icc, TrayIconNotifier notifier, IController controller, Logger logger) {
+	public void init(ICore icc, TrayIconNotifier notifier, GuiController controller, Logger logger) {
 		mLogger = logger;
 		mCore = icc;
 		mTrayIconNotifier = notifier;

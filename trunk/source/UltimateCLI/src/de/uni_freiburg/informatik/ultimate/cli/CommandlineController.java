@@ -95,8 +95,8 @@ public class CommandlineController implements IController {
 		PreludeProvider preludeFile = new PreludeProvider(p.getPreludeFile(), mLogger);
 
 		try {
-			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this,
-					BasicToolchainJob.ChainMode.RUN_TOOLCHAIN, bplFile, preludeFile, mLogger);
+			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger, bplFile,
+					preludeFile);
 			tcj.schedule();
 			// in non-GUI mode, we must wait until job has finished!
 			tcj.join();

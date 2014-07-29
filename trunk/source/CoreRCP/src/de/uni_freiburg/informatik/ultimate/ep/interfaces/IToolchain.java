@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 /**
  * 
- * 
+ * TODO: Comments ! 
  * 
  * @author dietsch
  * 
@@ -20,18 +20,18 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 public interface IToolchain {
 
 	/**
-	 * Resets the core for processing a toolchain. It (re)-initializes the
-	 * plugins, the memory manager, and the benchmark. This should be called
-	 * every time before starting a new toolchain process.
+	 * (Re)-initializes the plugins, the memory manager, and the benchmark. This
+	 * should be called before calling
+	 * {@link #processToolchain(IProgressMonitor)}.
 	 * 
 	 * <b> Has to be called first</b>
 	 */
-	public void resetCore();
+	public void init();
 
 	/**
-	 * Sets the boogie file(s) on which a toolchain shall be processed.
+	 * Sets the file(s) that should be parsed by this {@link IToolchain}.
 	 * 
-	 * <b> Has to be called after {@link #resetCore()}</b>
+	 * <b> Has to be called after {@link #init()}</b>
 	 * 
 	 * @param inputfiles
 	 *            input files as array of File
@@ -39,20 +39,26 @@ public interface IToolchain {
 	public void setInputFile(File inputfiles);
 
 	/**
-	 * Selects the toolchain to be processed by calling the selectTools method
-	 * of the given controller.
+	 * Call to define the tools that should be used in this toolchain.
 	 * 
-	 * @return Toolchain object denoting the desired toolchain
+	 * @return {@link ToolchainData} instance describing the desired tools and
+	 *         their order.
 	 */
 	public ToolchainData makeToolSelection();
 
 	/**
-	 * initiates a parser for the previously set input files
+	 * Initiates a parser for the previously set input files, possibly with a
+	 * special prelude file.
+	 * 
+	 * If this method returns false, you do not have a valid parser for the
+	 * selected files.
+	 * 
 	 * 
 	 * @param preludefile
 	 *            PreludeProvider object referencing an optional prelude file
 	 *            for the parser, may be 'null'
-	 * @return true/false, depending on success of parser initialization
+	 * @return True iff there is a usable parser for the given files and its
+	 *         initialization worked. False otherwise.
 	 */
 	public boolean initializeParser(PreludeProvider preludefile);
 
@@ -82,7 +88,7 @@ public interface IToolchain {
 	public long getId();
 
 	boolean hasInputFiles();
-	
+
 	public ToolchainData getCurrentToolchainData();
 
 }

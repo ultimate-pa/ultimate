@@ -10,7 +10,7 @@
 	</parent>
 
 	<groupId>GuiRCP</groupId>
-	<artifactId>UltimateGui</artifactId>
+	<artifactId>de.uni_freiburg.informatik.ultimate.gui</artifactId>
 	<version>0.0.1</version>
 	<packaging>eclipse-plugin</packaging>
 </project>

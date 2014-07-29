@@ -26,13 +26,6 @@
          unpack="false"/>
 
    <plugin
-         id="UltimateGui"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="BoogieParser"
          download-size="0"
          install-size="0"
@@ -41,13 +34,6 @@
 
    <plugin
          id="BoogiePrinter"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="TraceAbstraction"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -258,6 +244,20 @@
 
    <plugin
          id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.gui"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"
          download-size="0"
          install-size="0"
          version="0.0.0"

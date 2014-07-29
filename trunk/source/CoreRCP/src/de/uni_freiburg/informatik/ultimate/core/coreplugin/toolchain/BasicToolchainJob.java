@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.jobs.Job;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
@@ -19,19 +21,27 @@ import de.uni_freiburg.informatik.ultimate.result.IResultWithLocation;
 
 public abstract class BasicToolchainJob extends Job {
 
-	/**
-	 * How do you want the toolchain to be processed? RUN_TOOLCHAIN: Everything
-	 * new from the scratch. RERUN_TOOLCHAIN: run old toolchain on old input
-	 * files RUN_OLDTOOLCHAIN: run old toolchain on new input files
-	 * RUN_NEWTOOLCHAIN: run new toolchain on old input files
-	 * 
-	 */
-	public static enum ChainMode {
-		RUN_TOOLCHAIN, 
-		RUN_NEWTOOLCHAIN, 
-		RERUN_TOOLCHAIN, 
+	protected static enum ChainMode {
+		/**
+		 * Run fresh toolchain
+		 */
+		DEFAULT,
+
+		/**
+		 * Run new toolchain on old input files
+		 */
+		KEEP_INPUT,
+
+		/**
+		 * Run old toolchain on old input files
+		 */
+		RERUN,
+
+		/**
+		 * Run old toolchain on new input files
+		 */
 		@Deprecated
-		RUN_OLDTOOLCHAIN
+		KEEP_Toolchain
 	}
 
 	protected ChainMode mJobMode;
@@ -43,22 +53,21 @@ public abstract class BasicToolchainJob extends Job {
 	protected IUltimateServiceProvider mServices;
 	private long mDeadline;
 
-	public BasicToolchainJob(String name, ICore core, IController controller, ChainMode mode, Logger logger) {
+	public BasicToolchainJob(String name, ICore core, IController controller, Logger logger) {
 		super(name);
 		assert logger != null;
 		mCore = core;
 		mController = controller;
-		mJobMode = mode;
+		mJobMode = ChainMode.DEFAULT;
 		mLogger = logger;
 		mDeadline = -1;
-
 	}
 
 	/**
 	 * Write all IResults produced by the toolchain to the logger.
 	 */
 	protected void logResults() {
-		if(mServices == null){
+		if (mServices == null) {
 			return;
 		}
 		mLogger.info(" --- Results ---");
@@ -112,8 +121,7 @@ public abstract class BasicToolchainJob extends Job {
 
 		if (realDeadline > 0) {
 			// only set a timeout if there is a non-zero positive value
-			mServices.getProgressMonitorService().setDeadline(
-					System.currentTimeMillis() + realDeadline);
+			mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + realDeadline);
 		}
 	}
 
@@ -123,8 +131,8 @@ public abstract class BasicToolchainJob extends Job {
 	}
 
 	/**
-	 * Set a deadline in ms after which the toolchain should stop. All values smaller than
-	 * 0 will be ignored. 0 disables all timeouts.
+	 * Set a deadline in ms after which the toolchain should stop. All values
+	 * smaller than 0 will be ignored. 0 disables all timeouts.
 	 * 
 	 * @param deadline
 	 *            The deadline in ms
@@ -134,5 +142,29 @@ public abstract class BasicToolchainJob extends Job {
 			mDeadline = deadline;
 		}
 	}
+
+	@Override
+	protected final IStatus run(IProgressMonitor monitor) {
+		switch (mJobMode) {
+		case RERUN:
+			return rerunToolchain(monitor);
+		case DEFAULT:
+			return runToolchainDefault(monitor);
+		case KEEP_INPUT:
+			return runToolchainKeepInput(monitor);
+		case KEEP_Toolchain:
+			return runToolchainKeepToolchain(monitor);
+		default:
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	protected abstract IStatus runToolchainKeepToolchain(IProgressMonitor monitor);
+
+	protected abstract IStatus runToolchainKeepInput(IProgressMonitor monitor);
+
+	protected abstract IStatus rerunToolchain(IProgressMonitor monitor);
+
+	protected abstract IStatus runToolchainDefault(IProgressMonitor monitor);
 
 }

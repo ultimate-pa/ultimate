@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.gui.advisors;
 
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.actions.LoadSettingsAction;
 import de.uni_freiburg.informatik.ultimate.gui.actions.LoadSourceFilesAction;
 import de.uni_freiburg.informatik.ultimate.gui.actions.ResetAndRedoToolChainAction;
@@ -32,7 +32,7 @@ import org.eclipse.ui.application.IActionBarConfigurer;
 public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 
 	private ICore mCore;
-	private IController mController;
+	private GuiController mController;
 
 	private IWorkbenchAction exitAction;
 
@@ -47,7 +47,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 	private IWorkbenchAction loadSettings, saveSettings;
 	private Logger mLogger;
 
-	public ApplicationActionBarAdvisor(IActionBarConfigurer configurer, ICore icc, IController controller, Logger logger) {
+	public ApplicationActionBarAdvisor(IActionBarConfigurer configurer, ICore icc, GuiController controller, Logger logger) {
 		super(configurer);
 		this.mCore = icc;
 		mController = controller;

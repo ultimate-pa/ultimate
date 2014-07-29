@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
 import de.uni_freiburg.informatik.ultimate.gui.advisors.ApplicationWorkbenchAdvisor;
 import de.uni_freiburg.informatik.ultimate.gui.dialogs.AnalysisChooseDialog;
 import de.uni_freiburg.informatik.ultimate.gui.dialogs.ModelChooseDialog;
@@ -36,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.gui.dialogs.ParserChooseDialog;
  */
 public class GuiController implements IController {
 
-//	public static final String sPLUGINID = "UltimateGui";
-	public static final String sPLUGINID = GuiController.class.getName();
+	// public static final String sPLUGINID = "UltimateGui";
+	public static final String sPLUGINID = GuiController.class.getPackage().getName();
 	public static final String sPLUGINNAME = "Gui Controller";
 
 	private Logger mLogger;
@@ -49,6 +50,7 @@ public class GuiController implements IController {
 
 	private ICore mCore;
 	private TrayIconNotifier mTrayIconNotifier;
+	private IToolchain mCurrentToolchain;
 
 	/**
 	 * Initialization of Controller. The GUI is created here. Note: This methods
@@ -181,6 +183,23 @@ public class GuiController implements IController {
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
 		return null;
+	}
+
+	public void setCurrentToolchain(IToolchain toolchain) {
+		if (mCurrentToolchain != null && mCurrentToolchain != toolchain) {
+			mCore.releaseToolchain(mCurrentToolchain);
+		}
+		mCurrentToolchain = toolchain;
+	}
+
+	public IToolchain getCurrentToolchain() {
+		return mCurrentToolchain;
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		setCurrentToolchain(null);
+		super.finalize();
 	}
 
 }
