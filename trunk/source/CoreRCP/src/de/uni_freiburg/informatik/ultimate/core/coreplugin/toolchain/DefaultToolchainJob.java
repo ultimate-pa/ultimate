@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 public class DefaultToolchainJob extends BasicToolchainJob {
 
 	private File mInputFile;
-	private IToolchain mToolchain;
+	protected IToolchain mToolchain;
 
 	/**
 	 * Prepare to run a normal toolchain with this constructor.
@@ -70,7 +70,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 
 	private void setToolchain(IToolchain toolchain) {
 		assert toolchain != null;
-		//TODO: Check if we can rerun the toolchain (but: why not?) 
+		// TODO: Check if we can rerun the toolchain (but: why not?)
 		mToolchain = toolchain;
 	}
 
@@ -80,8 +80,8 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	 * 
 	 * @param currentToolchain
 	 */
-	protected void releaseToolchain(IToolchain currentToolchain) {
-		mCore.releaseToolchain(currentToolchain);
+	protected void releaseToolchain() {
+		mCore.releaseToolchain(mToolchain);
 	}
 
 	@Override
@@ -100,8 +100,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 		monitor.beginTask(getName(), IProgressMonitor.UNKNOWN);
 
 		try {
-			//TODO: TC services need to be reseted ...
-			mToolchain.init();
+			mToolchain.init(monitor);
 			monitor.worked(1);
 
 			setServices(mToolchain.getCurrentToolchainData().getServices());
@@ -124,7 +123,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 		} finally {
 			monitor.done();
 			logResults();
-			releaseToolchain(mToolchain);
+			releaseToolchain();
 		}
 
 		return returnstatus;
@@ -134,27 +133,26 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	protected IStatus runToolchainDefault(IProgressMonitor monitor) {
 		IStatus returnstatus = Status.OK_STATUS;
 		monitor.beginTask(getName(), IProgressMonitor.UNKNOWN);
-		IToolchain currentToolchain = null;
 
 		try {
 			boolean retval;
 
-			currentToolchain = mCore.requestToolchain();
+			setToolchain(mCore.requestToolchain());
 			monitor.worked(1);
 
-			currentToolchain.init();
+			mToolchain.init(monitor);
 			monitor.worked(1);
 
-			currentToolchain.setInputFile(mInputFile);
+			mToolchain.setInputFile(mInputFile);
 			monitor.worked(1);
 
-			retval = currentToolchain.initializeParser(mPreludeFile);
+			retval = mToolchain.initializeParser(mPreludeFile);
 			if (!retval) {
 				throw new Exception();
 			}
 			monitor.worked(1);
 
-			mChain = currentToolchain.makeToolSelection();
+			mChain = mToolchain.makeToolSelection(monitor);
 			if (mChain == null) {
 				mLogger.warn("Toolchain selection failed, aborting...");
 				return new Status(Status.CANCEL, Activator.s_PLUGIN_ID, "Toolchain selection canceled");
@@ -162,10 +160,10 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			setServices(mChain.getServices());
 			monitor.worked(1);
 
-			currentToolchain.runParser();
+			mToolchain.runParser();
 			monitor.worked(1);
 
-			returnstatus = currentToolchain.processToolchain(monitor);
+			returnstatus = mToolchain.processToolchain(monitor);
 
 		} catch (final Throwable e) {
 			mLogger.fatal(String.format("The toolchain threw an exception: %s", e.getMessage()));
@@ -179,7 +177,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 		} finally {
 			monitor.done();
 			logResults();
-			releaseToolchain(currentToolchain);
+			releaseToolchain();
 		}
 
 		return returnstatus;

@@ -33,30 +33,27 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
  * @author Björn Buchhold
  * 
  */
-public final class LoggingService implements IStorable, ILoggingService{
+public final class LoggingService implements IStorable, ILoggingService {
 
-	private static final String LOGGER_NAME_CORE = "ultimate";
 	private static final String LOGGER_NAME_CONTROLLER = "controller";
 	private static final String LOGGER_NAME_PLUGINS = "plugins";
 	private static final String LOGGER_NAME_TOOLS = "tools";
 	private static final String sKey = "LoggingService";
-	
+
 	private UltimatePreferenceStore mPreferenceStore;
 	private List<String> presentLoggers;
 	private FileAppender logFile;
 	private ConsoleAppender mConsoleAppender;
 
-	
-
 	private ArrayList<Appender> mAdditionalAppenders;
-	
+
 	private String mCurrentControllerName;
 
 	private LoggingService() {
 
 		mPreferenceStore = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		mAdditionalAppenders = new ArrayList<Appender>();
-
+		Logger.getRootLogger().removeAllAppenders();
 		initializeAppenders();
 		refreshPropertiesLoggerHierarchie();
 		refreshPropertiesAppendLogFile();
@@ -98,12 +95,16 @@ public final class LoggingService implements IStorable, ILoggingService{
 					// it does not concern us, just break
 					return;
 				}
-				initializeAppenders();
-				refreshPropertiesLoggerHierarchie();
-				refreshPropertiesAppendLogFile();
-				getLoggerById(Activator.s_PLUGIN_ID).debug("Logger refreshed");
+				refreshLoggingService();
 			}
 		});
+	}
+
+	public void refreshLoggingService() {
+		initializeAppenders();
+		refreshPropertiesLoggerHierarchie();
+		refreshPropertiesAppendLogFile();
+		getLoggerById(Activator.s_PLUGIN_ID).debug("Logger refreshed");
 	}
 
 	public void addAppender(Appender appender) {
@@ -185,8 +186,8 @@ public final class LoggingService implements IStorable, ILoggingService{
 		}
 		return (LoggingService) rtr;
 	}
-	
-	public static String getServiceKey(){
+
+	public static String getServiceKey() {
 		return sKey;
 	}
 
@@ -223,7 +224,7 @@ public final class LoggingService implements IStorable, ILoggingService{
 	private Logger lookupLoggerInHierarchie(String id) {
 		// it is core
 		if (id.equals(Activator.s_PLUGIN_ID)) {
-			return Logger.getLogger(LOGGER_NAME_CORE);
+			return Logger.getLogger(Activator.s_PLUGIN_ID);
 		}
 		// it is a controller
 		assert mCurrentControllerName != null;
@@ -349,33 +350,43 @@ public final class LoggingService implements IStorable, ILoggingService{
 		return elements;
 	}
 
-	public void setCurrentControllerID(String name){
+	public void setCurrentControllerID(String name) {
 		mCurrentControllerName = name;
 	}
-	
+
 	@Override
 	public void destroy() {
-		//the logger factory does not destroy anything 
+		// the logger factory does not destroy anything
 	}
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.core.services.ILoggingService#getLogger(java.lang.String)
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.core.services.ILoggingService#getLogger
+	 * (java.lang.String)
 	 */
 	@Override
 	public Logger getLogger(String pluginId) {
 		return getLoggerById(pluginId);
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.core.services.ILoggingService#getLoggerForExternalTool(java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.core.services.ILoggingService#
+	 * getLoggerForExternalTool(java.lang.String)
 	 */
 	@Override
 	public Logger getLoggerForExternalTool(String id) {
 		return getLoggerById(CorePreferenceInitializer.EXTERNAL_TOOLS_PREFIX + id);
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.core.services.ILoggingService#getControllerLogger()
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.core.services.ILoggingService#
+	 * getControllerLogger()
 	 */
 	@Override
 	public Logger getControllerLogger() {

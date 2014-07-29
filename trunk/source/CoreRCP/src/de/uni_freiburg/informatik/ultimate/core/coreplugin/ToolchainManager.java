@@ -58,7 +58,7 @@ public class ToolchainManager {
 	private final PluginFactory mPluginFactory;
 	private final IController mCurrentController;
 	private final AtomicLong mCurrentId;
-	private final ConcurrentHashMap<Long, ToolchainContainer> mActiveToolchains;
+	private final ConcurrentHashMap<Long, Toolchain> mActiveToolchains;
 	private final LoggingService mLoggingService;
 
 	public ToolchainManager(LoggingService loggingService, PluginFactory factory, IController controller) {
@@ -72,7 +72,7 @@ public class ToolchainManager {
 
 	public void releaseToolchain(IToolchain toolchain) {
 		if (!mActiveToolchains.remove(toolchain.getId(), toolchain)) {
-			mLogger.fatal("An concurrency error occured: Toolchain ID has changed during livecycle");
+			mLogger.warn("An concurrency error occured: Toolchain ID has changed during livecycle");
 		}
 		if (toolchain != null && toolchain.getCurrentToolchainData() != null
 				&& toolchain.getCurrentToolchainData().getStorage() != null) {
@@ -82,7 +82,7 @@ public class ToolchainManager {
 	}
 
 	public IToolchain requestToolchain() {
-		ToolchainContainer tc = new ToolchainContainer(mCurrentId.incrementAndGet(), createModelManager());
+		Toolchain tc = new Toolchain(mCurrentId.incrementAndGet(), createModelManager());
 		mActiveToolchains.put(tc.getId(), tc);
 		return tc;
 	}
@@ -100,6 +100,13 @@ public class ToolchainManager {
 
 		if (mActiveToolchains.size() > 0) {
 			mLogger.info("There are still " + mActiveToolchains.size() + " active toolchains alive");
+			List<Toolchain> openChains = new ArrayList<>(mActiveToolchains.values());
+			for (Toolchain tc : openChains) {
+				if (tc != null && tc.getCurrentToolchainData() != null
+						&& tc.getCurrentToolchainData().getStorage() != null) {
+					tc.getCurrentToolchainData().getStorage().clear();
+				}
+			}
 			mActiveToolchains.clear();
 		}
 	}
@@ -111,7 +118,7 @@ public class ToolchainManager {
 	}
 
 	/*************************** ToolchainContainer Implementation ****************************/
-	private class ToolchainContainer implements IToolchain {
+	private class Toolchain implements IToolchain {
 
 		private final long mId;
 		private final IModelManager mModelManager;
@@ -122,7 +129,7 @@ public class ToolchainManager {
 		private ISource mParser;
 		private File mInputFiles;
 
-		private ToolchainContainer(long id, IModelManager modelManager) {
+		private Toolchain(long id, IModelManager modelManager) {
 			mId = id;
 			mModelManager = modelManager;
 			mBenchmark = new Benchmark();
@@ -132,20 +139,25 @@ public class ToolchainManager {
 		/*************************** IToolchain Implementation ****************************/
 
 		@Override
-		public void init() {
+		public void init(IProgressMonitor monitor) {
 			if (mToolchainData == null) {
 				return;
 			}
-			
+
 			mToolchainData.getStorage().clear();
-			
-			// inject logging services into toolchain storage
+
+			// install logging services into toolchain storage
 			mLoggingService.setCurrentControllerID(mCurrentController.getPluginID());
 			mToolchainData.getStorage().putStorable(LoggingService.getServiceKey(), mLoggingService);
 
-			// inject service provider service into toolchain storage
+			// install service provider service into toolchain storage
 			mToolchainData.getStorage().putStorable(GenericServiceProvider.getServiceKey(),
 					new GenericServiceProvider(mPluginFactory));
+
+			// install new ProgressMonitorService
+			ProgressMonitorService monitorService = new ProgressMonitorService(monitor, Long.MAX_VALUE, mLogger,
+					mToolchainWalker);
+			mToolchainData.getStorage().putStorable(ProgressMonitorService.getServiceKey(), monitorService);
 
 		}
 
@@ -154,7 +166,8 @@ public class ToolchainManager {
 			mInputFiles = files;
 		}
 
-		public ToolchainData makeToolSelection() {
+		@Override
+		public ToolchainData makeToolSelection(IProgressMonitor monitor) {
 			List<ITool> tools = mPluginFactory.getAllAvailableTools();
 
 			if (tools.isEmpty()) {
@@ -174,7 +187,7 @@ public class ToolchainManager {
 				return null;
 			}
 			mToolchainData = rtr;
-			init();
+			init(monitor);
 			mLogger.info(getLogPrefix() + ": Toolchain data selected.");
 			return rtr;
 		}
@@ -195,11 +208,6 @@ public class ToolchainManager {
 				mParser.setPreludeFile(null);
 			}
 
-			if (mParser.getOutputDefinition() == null) {
-				mLogger.fatal(getLogPrefix() + ": ISource returned invalid Output Definition, aborting...");
-				return false;
-			}
-
 			mLogger.info(getLogPrefix() + ": Parser successfully initiated...");
 
 			return true;
@@ -207,7 +215,14 @@ public class ToolchainManager {
 
 		@Override
 		public void runParser() throws Exception {
-			addAST(runParser(mInputFiles, mParser), mParser.getOutputDefinition());
+			IElement element = runParser(mInputFiles, mParser);
+			GraphType t = mParser.getOutputDefinition();
+			if (t == null) {
+				String errorMsg = mParser.getPluginName() + " returned invalid Output Definition";
+				mLogger.fatal(getLogPrefix() + ": " + errorMsg + ", aborting...");
+				throw new IllegalArgumentException(errorMsg);
+			}
+			addAST(element, t);
 		}
 
 		@Override
@@ -228,11 +243,6 @@ public class ToolchainManager {
 				}
 				CompleteToolchainData data = mToolchainWalker.new CompleteToolchainData(mToolchainData, mParser,
 						mCurrentController);
-
-				// install new ProgressMonitorService
-				ProgressMonitorService monitorService = new ProgressMonitorService(monitor, Long.MAX_VALUE, mLogger,
-						mToolchainWalker);
-				mToolchainData.getStorage().putStorable(ProgressMonitorService.getServiceKey(), monitorService);
 
 				mToolchainWalker.walk(data, monitor);
 			} finally {

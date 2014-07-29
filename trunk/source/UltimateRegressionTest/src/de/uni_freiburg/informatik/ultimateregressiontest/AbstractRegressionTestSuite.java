@@ -40,7 +40,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 						inputFile.getAbsolutePath()), inputFile.getAbsolutePath()));
 			}
 		}
-
+//		return Util.firstN(rtr, 3);
 		return rtr;
 	}
 

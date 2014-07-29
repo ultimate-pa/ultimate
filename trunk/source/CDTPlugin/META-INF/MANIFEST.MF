@@ -20,7 +20,7 @@ Require-Bundle: UltimateCore,
  org.eclipse.ui.console;bundle-version="3.5.100",
  org.eclipse.ui,
  org.eclipse.ui.navigator,
- CACSL2BoogieTranslator,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator,
  BoogiePreprocessor
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7

@@ -55,12 +55,12 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 			// all modes requires this
 			currentToolchain = mCore.requestToolchain();
 
-			currentToolchain.init();
+			currentToolchain.init(monitor);
 			monitor.worked(1);
 			// only RUN_TOOLCHAIN and RUN_NEWTOOLCHAIN require this
 
 			if (mJobMode == ChainMode.DEFAULT || mJobMode == ChainMode.KEEP_INPUT) {
-				mChain = currentToolchain.makeToolSelection();
+				mChain = currentToolchain.makeToolSelection(monitor);
 				if (mChain == null) {
 					mLogger.warn("Toolchain selection failed, aborting...");
 					return new Status(Status.CANCEL, Activator.s_PLUGIN_ID, "Toolchain selection canceled");

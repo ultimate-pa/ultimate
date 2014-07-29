@@ -22,8 +22,11 @@ public class GuiToolchainJob extends DefaultToolchainJob {
 	}
 
 	@Override
-	protected void releaseToolchain(IToolchain currentToolchain) {
-		((GuiController) mController).setCurrentToolchain(currentToolchain);
+	protected void releaseToolchain() {
+		// save the current toolchain to the controller instead of releasing it
+		// directly; the controller will save one toolchain and release the last
+		// if it is overwritten
+		((GuiController) mController).setCurrentToolchain(mToolchain);
 	}
 
 }

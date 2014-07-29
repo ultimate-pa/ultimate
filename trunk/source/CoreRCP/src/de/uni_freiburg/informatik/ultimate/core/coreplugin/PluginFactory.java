@@ -34,8 +34,8 @@ final class PluginFactory implements IServiceFactoryFactory {
 
 	// private static final Class<?>[] sIToolClasses = { IAnalysis.class,
 	// IGenerator.class, IOutput.class };
-	private static final Class<?>[] sIToolchainPluginClasses = {
-			IAnalysis.class, IGenerator.class, IOutput.class, ISource.class };
+	private static final Class<?>[] sIToolchainPluginClasses = { IAnalysis.class, IGenerator.class, IOutput.class,
+			ISource.class };
 
 	private final IExtensionRegistry mRegistry;
 	private final Logger mLogger;
@@ -114,8 +114,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		IConfigurationElement element = mAvailableToolsByClassName.get(toolId);
 		if (element == null) {
 			// maybe the user used the PluginID?
-			element = mAvailableToolsByClassName.get(mPluginIDToClassName
-					.get(toolId));
+			element = mAvailableToolsByClassName.get(mPluginIDToClassName.get(toolId));
 		}
 		T plugin = createInstance(element);
 		return prepareToolchainPlugin(plugin);
@@ -129,13 +128,11 @@ final class PluginFactory implements IServiceFactoryFactory {
 		if (plugin instanceof ITool) {
 			ITool tool = (ITool) plugin;
 			if (tool.isGuiRequired() && !mGuiMode) {
-				mLogger.error("Cannot load plugin " + tool.getPluginID()
-						+ ": Requires GUI controller");
+				mLogger.error("Cannot load plugin " + tool.getPluginID() + ": Requires GUI controller");
 				return null;
 			}
 		}
-		mSettingsManager.checkPreferencesForActivePlugins(plugin.getPluginID(),
-				plugin.getPluginName());
+		mSettingsManager.checkPreferencesForActivePlugins(plugin.getPluginID(), plugin.getPluginName());
 		return plugin;
 	}
 
@@ -182,8 +179,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		mLogger.info("Loading all admissible plugins (creating one instance, loading preferences)");
 		int notAdmissible = 0;
 		for (Class<?> type : sIToolchainPluginClasses) {
-			List<IConfigurationElement> elements = mAvailableToolsByClass
-					.get(type);
+			List<IConfigurationElement> elements = mAvailableToolsByClass.get(type);
 			if (elements == null) {
 				continue;
 			}
@@ -197,18 +193,14 @@ final class PluginFactory implements IServiceFactoryFactory {
 				rtr.add(tool);
 			}
 		}
-		mLogger.info("Finished loading "
-				+ rtr.size()
-				+ " admissible plugins"
-				+ (notAdmissible > 0 ? " (" + notAdmissible
-						+ " not admissible)" : " (all were admissible)"));
+		mLogger.info("Finished loading " + rtr.size() + " admissible plugins"
+				+ (notAdmissible > 0 ? " (" + notAdmissible + " not admissible)" : " (all were admissible)"));
 		mLogger.info("--------------------------------------------------------------------------------");
 		return rtr;
 	}
 
 	boolean isPluginAvailable(String pluginId) {
-		return mAvailableToolsByClassName.containsKey(pluginId)
-				|| mPluginIDToClassName.containsKey(pluginId);
+		return mAvailableToolsByClassName.containsKey(pluginId) || mPluginIDToClassName.containsKey(pluginId);
 	}
 
 	/**
@@ -226,8 +218,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 	 * @throws CoreException
 	 */
 	private IController loadControllerPlugin(IExtensionRegistry reg) {
-		List<IConfigurationElement> configElements = mAvailableToolsByClass
-				.get(IController.class);
+		List<IConfigurationElement> configElements = mAvailableToolsByClass.get(IController.class);
 
 		if (configElements.size() != 1) {
 			mLogger.fatal("Invalid configuration. You should have only 1 IController plugin, but you have "
@@ -240,31 +231,26 @@ final class PluginFactory implements IServiceFactoryFactory {
 			for (IConfigurationElement elem : configElements) {
 				mLogger.fatal(elem.getAttribute("class"));
 			}
-
+			return null;
 		}
 		IConfigurationElement controllerDescriptor = configElements.get(0);
 		IController controller = createInstance(controllerDescriptor);
-		mGuiMode = new Boolean(controllerDescriptor.getAttribute("isGraphical"))
-				.booleanValue();
-		mSettingsManager.checkPreferencesForActivePlugins(
-				controller.getPluginID(), controller.getPluginName());
+		mGuiMode = new Boolean(controllerDescriptor.getAttribute("isGraphical")).booleanValue();
+		mSettingsManager.checkPreferencesForActivePlugins(controller.getPluginID(), controller.getPluginName());
 
-		mLogger.info("Loaded " + (mGuiMode ? "graphical" : "") + " controller "
-				+ controller.getPluginName());
+		mLogger.info("Loaded " + (mGuiMode ? "graphical" : "") + " controller " + controller.getPluginName());
 		return controller;
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T extends IUltimatePlugin> T createInstance(
-			IConfigurationElement element) {
+	private <T extends IUltimatePlugin> T createInstance(IConfigurationElement element) {
 		if (element == null) {
 			return null;
 		}
 		try {
 			return (T) element.createExecutableExtension("class");
 		} catch (CoreException ex) {
-			mLogger.fatal("Exception during instantiation of ultimate plugin "
-					+ element.getAttribute("class"), ex);
+			mLogger.fatal("Exception during instantiation of ultimate plugin " + element.getAttribute("class"), ex);
 			return null;
 		}
 	}
@@ -277,15 +263,13 @@ final class PluginFactory implements IServiceFactoryFactory {
 				try {
 					Class<?> myClass = Class.forName(className);
 					IServiceFactory<?> factory = createInstance(element);
-					mSettingsManager.checkPreferencesForActivePlugins(
-							factory.getPluginID(), factory.getPluginName());
+					mSettingsManager.checkPreferencesForActivePlugins(factory.getPluginID(), factory.getPluginName());
 					mAvailableServicesByClassName.put(myClass, factory);
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
 				}
 			}
-			mLogger.info(mAvailableServicesByClassName.size() + " "
-					+ clazz.getSimpleName() + " services available");
+			mLogger.info(mAvailableServicesByClassName.size() + " " + clazz.getSimpleName() + " services available");
 		} else {
 			registerTool(clazz);
 		}
@@ -294,15 +278,13 @@ final class PluginFactory implements IServiceFactoryFactory {
 	private void registerTool(Class<?> clazz) {
 		List<IConfigurationElement> result = new ArrayList<IConfigurationElement>();
 		mAvailableToolsByClass.put(clazz, result);
-		for (IConfigurationElement element : mRegistry
-				.getConfigurationElementsFor(getExtensionPointFromClass(clazz))) {
+		for (IConfigurationElement element : mRegistry.getConfigurationElementsFor(getExtensionPointFromClass(clazz))) {
 			result.add(element);
 			String className = element.getAttribute("class");
 			mAvailableToolsByClassName.put(className, element);
 			mPluginIDToClassName.put(createPluginID(className), className);
 		}
-		mLogger.info(result.size() + " " + clazz.getSimpleName()
-				+ " plugins available");
+		mLogger.info(result.size() + " " + clazz.getSimpleName() + " plugins available");
 	}
 
 	private String createPluginID(String classname) {
@@ -330,11 +312,10 @@ final class PluginFactory implements IServiceFactoryFactory {
 		}
 	}
 
-	public <T,K extends IServiceFactory<T>> T createService(Class<K> service,
-			IUltimateServiceProvider services, IToolchainStorage storage) {
-		IServiceFactory<?> unknownfactory = mAvailableServicesByClassName
-				.get(service);
-		
+	public <T, K extends IServiceFactory<T>> T createService(Class<K> service, IUltimateServiceProvider services,
+			IToolchainStorage storage) {
+		IServiceFactory<?> unknownfactory = mAvailableServicesByClassName.get(service);
+
 		if (unknownfactory == null) {
 			return null;
 		}

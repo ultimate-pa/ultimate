@@ -33,8 +33,9 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin;
  */
 public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
-	//TODO: Remove de.uni_freiburg.informatik.ultimate.core.coreplugin from exported packages 
-	
+	// TODO: Remove de.uni_freiburg.informatik.ultimate.core.coreplugin from
+	// exported packages
+
 	private Logger mLogger;
 
 	private IController mCurrentController;
@@ -86,34 +87,6 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		return returnCode;
 	}
 
-	/**
-	 * Initialization of private variables. Configures the Logging Subsystem and
-	 * adds the first appender. this function must be called before the first
-	 * usage of the logging subsystem
-	 * 
-	 */
-	private void init() {
-		mCoreStorage = new ToolchainStorage();
-		mLoggingService = (LoggingService) mCoreStorage.getLoggingService();
-		mLogger = mCoreStorage.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		mLogger.info("Initializing application");
-
-		final Logger tmp = mLogger;
-		Job.getJobManager().addJobChangeListener(new JobChangeAdapter() {
-
-			@Override
-			public void done(IJobChangeEvent event) {
-				if (event.getResult().getException() != null) {
-					tmp.error("Error during toolchain job processing:", event.getResult().getException());
-					if (Platform.inDebugMode() || Platform.inDevelopmentMode())
-						event.getResult().getException().printStackTrace();
-				}
-			}
-
-		});
-		mLogger.info("--------------------------------------------------------------------------------");
-
-	}
 
 	// TODO: ISource needs to be initialized
 	// TODO: Where is the initialization of iController?
@@ -233,11 +206,31 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		}
 
 		// initializing variables, loggers,...
-		init();
+		mCoreStorage = new ToolchainStorage();
+		mLoggingService = (LoggingService) mCoreStorage.getLoggingService();
+		mLogger = mLoggingService.getLogger(Activator.s_PLUGIN_ID);
+		mLogger.info("Initializing application");
+
+		final Logger tmp = mLogger;
+		Job.getJobManager().addJobChangeListener(new JobChangeAdapter() {
+
+			@Override
+			public void done(IJobChangeEvent event) {
+				if (event.getResult().getException() != null) {
+					tmp.error("Error during toolchain job processing:", event.getResult().getException());
+					if (Platform.inDebugMode() || Platform.inDevelopmentMode())
+						event.getResult().getException().printStackTrace();
+				}
+			}
+
+		});
+		mLogger.info("--------------------------------------------------------------------------------");
 
 		// loading classes exported by plugins
 		mSettingsManager = new SettingsManager(mLogger);
+
 		mSettingsManager.checkPreferencesForActivePlugins(getPluginID(), getPluginName());
+		
 		mPluginFactory = new PluginFactory(mSettingsManager, mLogger);
 		setCurrentController(mPluginFactory.getController());
 
@@ -265,6 +258,16 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	/***************************** Getters & Setters *********************/
 
 	private void setCurrentController(IController controller) {
+		if (mCurrentController != null) {
+			if (controller == null) {
+				mLogger.warn("Controller already set! Using " + mCurrentController.getPluginName()
+						+ " and ignoring request to set controller to NULL (this may indicate test mode!)");
+			} else {
+				mLogger.warn("Controller already set! Using " + mCurrentController.getPluginName()
+						+ " and ignoring request to set " + controller.getPluginName());
+			}
+			return;
+		}
 		assert controller != null;
 		mCurrentController = controller;
 	}

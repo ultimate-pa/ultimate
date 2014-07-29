@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: CACSL2BoogieTranslator
-Bundle-SymbolicName: CACSL2BoogieTranslator;singleton:=true
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator
 Require-Bundle: Library-log4j,

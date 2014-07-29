@@ -26,7 +26,7 @@ public interface IToolchain {
 	 * 
 	 * <b> Has to be called first</b>
 	 */
-	public void init();
+	public void init(IProgressMonitor monitor);
 
 	/**
 	 * Sets the file(s) that should be parsed by this {@link IToolchain}.
@@ -44,7 +44,7 @@ public interface IToolchain {
 	 * @return {@link ToolchainData} instance describing the desired tools and
 	 *         their order.
 	 */
-	public ToolchainData makeToolSelection();
+	public ToolchainData makeToolSelection(IProgressMonitor monitor);
 
 	/**
 	 * Initiates a parser for the previously set input files, possibly with a

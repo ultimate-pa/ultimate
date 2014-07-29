@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 import javax.xml.bind.JAXBException;
 
@@ -15,8 +16,6 @@ import org.eclipse.equinox.app.IApplication;
 import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.ILoggingService;
@@ -51,6 +50,11 @@ public class UltimateStarter implements IController {
 	private File mLogFile;
 	private UltimateCore mCurrentUltimateInstance;
 	private IUltimateServiceProvider mCurrentSerivces;
+	private TestToolchainJob mJob;
+	private Exception mUltimateException;
+
+	private final Semaphore mUltimateExit;
+	private final Semaphore mStarterContinue;
 
 	public UltimateStarter(File inputFile, File toolchainFile, long deadline) {
 		this(inputFile, null, toolchainFile, deadline, null, null);
@@ -72,6 +76,8 @@ public class UltimateStarter implements IController {
 		mDeadline = deadline;
 		mLogFile = logFile;
 		mLogPattern = logPattern;
+		mUltimateExit = new Semaphore(0);
+		mStarterContinue = new Semaphore(0);
 		detachLogger();
 	}
 
@@ -80,7 +86,26 @@ public class UltimateStarter implements IController {
 			throw new Exception("You must call complete() before re-using this instance ");
 		}
 		mCurrentUltimateInstance = new UltimateCore();
-		mCurrentUltimateInstance.start(this, false);
+		mUltimateException = null;
+
+		final UltimateStarter starter = this;
+
+		Thread t = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					mCurrentUltimateInstance.start(starter, false);
+				} catch (Exception e) {
+					mUltimateException = e;
+				}
+			}
+		});
+		
+		t.start();
+		mStarterContinue.acquireUninterruptibly();
+		if (mUltimateException != null) {
+			throw mUltimateException;
+		}
 	}
 
 	@Override
@@ -89,29 +114,36 @@ public class UltimateStarter implements IController {
 			return -1;
 		}
 
+		mLogger = loggingService.getControllerLogger();
+
 		if (mSettingsFile != null) {
 			core.loadPreferences(mSettingsFile.getAbsolutePath());
 		}
 		attachLogger();
 
 		try {
-			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger, mInputFile,
-					null);
-			tcj.setDeadline(mDeadline);
-			tcj.schedule();
+			mJob = new TestToolchainJob("Processing Toolchain", core, this, mLogger, mInputFile, null);
+			mJob.setDeadline(mDeadline);
+			mJob.schedule();
 			// in non-GUI mode, we must wait until job has finished!
-			tcj.join();
+			mJob.join();
 
 		} catch (InterruptedException e) {
 			mLogger.error("Exception in Toolchain", e);
 			return -1;
+		} finally {
+			mStarterContinue.release();
+			mUltimateExit.acquireUninterruptibly();
 		}
-
+		// TODO: find a good way to wait in init until complete is called by
+		// junit...
 		return IApplication.EXIT_OK;
 	}
 
 	public void complete() {
 		detachLogger();
+		mJob.releaseToolchainManually();
+		mUltimateExit.release();
 	}
 
 	private void attachLogger() {
@@ -122,7 +154,7 @@ public class UltimateStarter implements IController {
 		detachLogger();
 		try {
 			mAppender = new FileAppender(new PatternLayout(mLogPattern), mLogFile.getAbsolutePath());
-			Logger.getRootLogger().addAppender(mAppender);
+			mLogger.addAppender(mAppender);
 		} catch (IOException e1) {
 			detachLogger();
 			mLogger.fatal("Failed to create logfile " + mLogFile + ". Reason: " + e1);
@@ -133,7 +165,7 @@ public class UltimateStarter implements IController {
 		if (mAppender == null) {
 			return;
 		}
-		Logger.getRootLogger().removeAppender(mAppender);
+		mLogger.removeAppender(mAppender);
 	}
 
 	@Override
@@ -162,6 +194,7 @@ public class UltimateStarter implements IController {
 		try {
 			ToolchainData tc = new ToolchainData(mToolchainFile.getAbsolutePath());
 			mCurrentSerivces = tc.getServices();
+			mLogger.info("Loaded toolchain from " + mToolchainFile.getAbsolutePath());
 			return tc;
 		} catch (FileNotFoundException | JAXBException | SAXException e) {
 			mLogger.fatal("Toolchain could not be created from file " + mToolchainFile + ": " + e);
