@@ -78,7 +78,13 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 		for (Entry<String, List<IResult>> entry : services.getResultService().getResults().entrySet()) {
 			mResults.addAll(entry.getValue());
 		}
-		if (getExpectedResult() == ExpectedResult.NOANNOTATION) {
+
+		ExpectedResult expected = getExpectedResult();
+		if (expected != null) {
+			customMessages.add("Expected Result: " + expected);
+		}
+
+		if (expected == ExpectedResult.NOANNOTATION) {
 			customMessages.add("Couldn't understand the specification of the file \"" + mInputFile + "\".\n"
 					+ "Use //#Safe or //#Unsafe to indicate that the program is safe resp. unsafe. Use "
 					+ "//#NoSpec if there is still no decision about the specification.");
@@ -92,18 +98,18 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 				testoutcome = TestResult.FAIL;
 				break;
 			case SAFE:
-				if (getExpectedResult() == ExpectedResult.SAFE) {
+				if (expected == ExpectedResult.SAFE) {
 					testoutcome = TestResult.SUCCESS;
-				} else if (getExpectedResult() == ExpectedResult.NOANNOTATION) {
+				} else if (expected == ExpectedResult.NOANNOTATION) {
 					testoutcome = TestResult.UNKNOWN;
 				} else {
 					testoutcome = TestResult.FAIL;
 				}
 				break;
 			case UNSAFE:
-				if (getExpectedResult() == ExpectedResult.UNSAFE) {
+				if (expected == ExpectedResult.UNSAFE) {
 					testoutcome = TestResult.SUCCESS;
-				} else if (getExpectedResult() == ExpectedResult.NOANNOTATION) {
+				} else if (expected == ExpectedResult.NOANNOTATION) {
 					testoutcome = TestResult.UNKNOWN;
 				} else {
 					testoutcome = TestResult.FAIL;
@@ -111,14 +117,14 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 				break;
 			case UNKNOWN:
 				// syntax error should always have been found
-				if (getExpectedResult() == ExpectedResult.SYNTAXERROR) {
+				if (expected == ExpectedResult.SYNTAXERROR) {
 					testoutcome = TestResult.FAIL;
 				} else {
 					testoutcome = TestResult.UNKNOWN;
 				}
 				break;
 			case SYNTAX_ERROR:
-				if (getExpectedResult() == ExpectedResult.SYNTAXERROR) {
+				if (expected == ExpectedResult.SYNTAXERROR) {
 					testoutcome = TestResult.SUCCESS;
 				} else {
 					testoutcome = TestResult.FAIL;
@@ -126,7 +132,7 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 				break;
 			case TIMEOUT:
 				// syntax error should always have been found
-				if (getExpectedResult() == ExpectedResult.SYNTAXERROR) {
+				if (expected == ExpectedResult.SYNTAXERROR) {
 					testoutcome = TestResult.FAIL;
 				} else {
 					testoutcome = TestResult.UNKNOWN;
@@ -206,6 +212,11 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 	 * 
 	 */
 	protected void generateResultMessageAndCategory(SafetyCheckerResult safetyCheckerResult) {
+		if (safetyCheckerResult == null) {
+			// TODO: It may happen, you have to choose which category this gets
+			// (happens e.g. when the toolchain file is corrupt)
+			return;
+		}
 		if (safetyCheckerResult.getAutomizerResultType() == SafetyCheckerResultType.EXCEPTION_OR_ERROR) {
 			setResultMessage("Error: " + safetyCheckerResult.getIResult().getLongDescription());
 		} else if (getExpectedResult() == ExpectedResult.NOANNOTATION) {

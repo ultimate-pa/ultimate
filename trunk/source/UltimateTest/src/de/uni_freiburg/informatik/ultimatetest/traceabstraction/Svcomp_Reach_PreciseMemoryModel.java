@@ -6,6 +6,7 @@ package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -60,6 +61,7 @@ public class Svcomp_Reach_PreciseMemoryModel extends
 				    "CFilesBackwardPredicates",
 				    m_Timeout);
 		}
+//		return Util.firstN(super.createTestCases(), 3);
 		return super.createTestCases();
 	}
 }
