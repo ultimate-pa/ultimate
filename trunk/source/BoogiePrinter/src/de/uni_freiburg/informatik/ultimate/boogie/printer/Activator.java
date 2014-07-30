@@ -12,7 +12,7 @@ public class Activator extends Plugin {
 	/**
 	 * The plug-in ID
 	 */
-	public static final String s_PLUGIN_ID = "BoogiePrinter";
+	public static final String s_PLUGIN_ID = BoogiePrinter.class.getPackage().getName();
 
 	/**
 	 * The constructor
