@@ -33,13 +33,6 @@
          unpack="false"/>
 
    <plugin
-         id="BoogiePrinter"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="TraceAbstractionConcurrent"
          download-size="0"
          install-size="0"
@@ -83,13 +76,6 @@
 
    <plugin
          id="CDTParser"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="CACSL2BoogieTranslator"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -258,6 +244,20 @@
 
    <plugin
          id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.boogie.printer"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator"
          download-size="0"
          install-size="0"
          version="0.0.0"

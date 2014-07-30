@@ -89,13 +89,6 @@
          unpack="false"/>
 
    <plugin
-         id="CACSL2BoogieTranslator"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="ASTBuilder"
          download-size="0"
          install-size="0"
@@ -152,13 +145,6 @@
          unpack="false"/>
 
    <plugin
-         id="BoogiePrinter"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="SMTInterpol"
          download-size="0"
          install-size="0"
@@ -181,6 +167,20 @@
 
    <plugin
          id="UltimateCLI"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.boogie.printer"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator"
          download-size="0"
          install-size="0"
          version="0.0.0"
