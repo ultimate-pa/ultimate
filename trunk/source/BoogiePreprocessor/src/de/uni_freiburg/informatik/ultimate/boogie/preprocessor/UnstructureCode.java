@@ -164,6 +164,11 @@ public class UnstructureCode implements IUnmanagedObserver {
 			Statement s = block[i];
 			if (s instanceof Label) {
 				Label label = (Label) s;
+				if (label.getName().startsWith(s_labelPrefix)) {
+					// FIXME: report unsupported syntax instead
+					throw new AssertionError("labels with prefix " + s_labelPrefix 
+							+ " are reseved for auxiliary labels and are disallowed in input ");
+				}
 				currentBI.breakLabels.add(label.getName());
 				addLabel(label);
 				m_reachable = true;
