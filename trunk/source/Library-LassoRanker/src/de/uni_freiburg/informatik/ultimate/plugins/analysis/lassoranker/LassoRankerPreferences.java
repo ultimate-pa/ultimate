@@ -116,10 +116,12 @@ public class LassoRankerPreferences implements Serializable {
 	public void checkSanity() {
 		assert smt_solver_command != null;
 		assert path_of_dumped_script != null;
-		File f = new File(path_of_dumped_script);
-		assert f.exists();
-		assert f.isDirectory();
-		assert baseNameOfDumpedScript != null;
+		if (dumpSmtSolverScript) {
+			File f = new File(path_of_dumped_script);
+			assert f.exists();
+			assert f.isDirectory();
+			assert baseNameOfDumpedScript != null;
+		}
 	}
 	
 	/**
