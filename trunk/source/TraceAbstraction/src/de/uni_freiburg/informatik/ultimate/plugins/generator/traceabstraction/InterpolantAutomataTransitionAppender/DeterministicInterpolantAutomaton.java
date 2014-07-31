@@ -52,7 +52,8 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 	 * First experiments on few examples showed that this is decreasing the
 	 * performance.
 	 */
-	private boolean m_Cannibalize = false;
+	private boolean m_Cannibalize = !false;
+	private boolean m_SplitNumericEqualities = true;
 	
 
 	
@@ -66,7 +67,7 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 		m_PredicateUnifier = traceChecker.getPredicateUnifier();
 		Collection<IPredicate> allPredicates;
 		if (m_Cannibalize ) {
-			allPredicates = m_PredicateUnifier.cannibalizeAll(interpolantAutomaton.getStates().toArray(new IPredicate[0]));
+			allPredicates = m_PredicateUnifier.cannibalizeAll(m_SplitNumericEqualities, interpolantAutomaton.getStates().toArray(new IPredicate[0]));
 			for (IPredicate pred : allPredicates) {
 				if (!interpolantAutomaton.getStates().contains(pred)) {
 					interpolantAutomaton.addState(false, false, pred);

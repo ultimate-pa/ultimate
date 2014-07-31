@@ -94,7 +94,7 @@ public class LoopCannibalizer {
 						traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), m_PredicateUnifier,
 								interpolation);
 						loopInterpolants = traceChecker.getInterpolants();
-						Set<IPredicate> cannibalized = m_PredicateUnifier.cannibalizeAll(loopInterpolants);
+						Set<IPredicate> cannibalized = m_PredicateUnifier.cannibalizeAll(false, loopInterpolants);
 						m_ResultPredicates.addAll(cannibalized);
 					} else {
 						traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();

@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Formatter.BigDecimalLayoutForm;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -19,6 +21,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryNumericRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
@@ -283,10 +288,15 @@ public class PredicateUnifier {
 	 * Given a term "cut up" all its conjuncts. We bring the term in CNF and
 	 * return an IPredicate for each conjunct.
 	 */
-	public Set<IPredicate> cannibalize(Term term) {
+	public Set<IPredicate> cannibalize(boolean splitNumericEqualities, Term term) {
 		Set<IPredicate> result = new HashSet<IPredicate>();
 		Term cnf = (new Cnf(m_SmtManager.getScript(), mServices)).transform(term);
-		Term[] conjuncts = SmtUtils.getConjuncts(cnf);
+		Term[] conjuncts;
+		if (splitNumericEqualities) {
+			conjuncts = splitNumericEqualities(SmtUtils.getConjuncts(cnf));
+		} else {
+			conjuncts = SmtUtils.getConjuncts(cnf);
+		}
 		for (Term conjunct : conjuncts) {
 			TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunct, m_SmtManager.getBoogie2Smt());
 			IPredicate predicate = getOrConstructPredicate(tvp);
@@ -295,10 +305,30 @@ public class PredicateUnifier {
 		return result;
 	}
 
-	public Set<IPredicate> cannibalizeAll(IPredicate... predicates) {
+	private Term[] splitNumericEqualities(Term[] conjuncts) {
+		ArrayList<Term> result = new ArrayList<>(conjuncts.length * 2);
+		for (Term conjunct : conjuncts) {
+			try {
+				BinaryNumericRelation bnr = new BinaryNumericRelation(conjunct);
+				if (bnr.getRelationSymbol() == RelationSymbol.EQ) {
+					Term leq = m_SmtManager.getScript().term("<=", bnr.getLhs(), bnr.getRhs());
+					result.add(leq);
+					Term geq = m_SmtManager.getScript().term(">=", bnr.getLhs(), bnr.getRhs());
+					result.add(geq);
+				} else {
+					result.add(conjunct);
+				}
+			} catch (NoRelationOfThisKindException e) {
+				result.add(conjunct);
+			}
+		}
+		return result.toArray(new Term[result.size()]);
+	}
+
+	public Set<IPredicate> cannibalizeAll(boolean splitNumericEqualities, IPredicate... predicates) {
 		final Set<IPredicate> result = new HashSet<IPredicate>();
 		for (IPredicate pred : predicates) {
-			result.addAll(cannibalize(pred.getFormula()));
+			result.addAll(cannibalize(splitNumericEqualities, pred.getFormula()));
 		}
 		return result;
 	}

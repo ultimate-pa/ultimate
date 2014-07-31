@@ -218,15 +218,15 @@ public class RefineBuchi {
 				stemInterpolantsForRefinement = Collections.emptySet();
 			} else {
 				if (setting.cannibalizeLoop()) {
-					stemInterpolantsForRefinement = pu.cannibalizeAll(stemInterpolants);
+					stemInterpolantsForRefinement = pu.cannibalizeAll(false, stemInterpolants);
 				} else {
 					stemInterpolantsForRefinement = new HashSet<IPredicate>(Arrays.asList(stemInterpolants));
 				}
 			}
 			Set<IPredicate> loopInterpolantsForRefinement;
 			if (setting.cannibalizeLoop()) {
-				loopInterpolantsForRefinement = pu.cannibalizeAll(loopInterpolants);
-				loopInterpolantsForRefinement.addAll(pu.cannibalize(bspm.getRankEqAndSi().getFormula()));
+				loopInterpolantsForRefinement = pu.cannibalizeAll(false, loopInterpolants);
+				loopInterpolantsForRefinement.addAll(pu.cannibalize(false, bspm.getRankEqAndSi().getFormula()));
 
 				LoopCannibalizer lc = new LoopCannibalizer(m_Counterexample, loopInterpolantsForRefinement, bspm, pu,
 						m_SmtManager, buchiModGlobalVarManager, interpolation, mServices);
