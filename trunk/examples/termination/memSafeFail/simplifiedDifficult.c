@@ -2,7 +2,7 @@
 
 extern int __VERIFIER_nondet_int(void);
 
-void cstrcpy(char *s1, const char *s2)
+void cstrcpy(char *s1, char *s2)
  {
      /* Do the copying in a loop.  */
      while ((*s1++ = *s2++) != '\0')

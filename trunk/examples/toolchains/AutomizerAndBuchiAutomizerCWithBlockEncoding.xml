@@ -4,5 +4,5 @@
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder" />
 	<plugin id="BlockEncoding" />
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction" />
-	<plugin id="BuchiAutomizer"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer"/>
 </toolchain>

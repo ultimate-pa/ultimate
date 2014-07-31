@@ -8,8 +8,8 @@ implementation cstrcpy(#ins : int, #int : int) returns ()
     t := #int;
     while (true)
     {
-	    assert 1 + t  <= ourLength;
-		assert 1 + s  <= ourLength;
+	    assert t  < ourLength;
+		assert s  < ourLength;
 		memory[s] := memory[t];
 
         if (memory[s] == 0) {

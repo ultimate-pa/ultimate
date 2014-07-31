@@ -8,10 +8,10 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Translation\ Mode\:=SV_COMP14
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 #Wed Mar 19 04:15:41 CET 2014
-\!/instance/BuchiAutomizer=
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
 file_export_version=3.0
-@BuchiAutomizer=0.0.1
-/instance/BuchiAutomizer/Use\ external\ solver\ (rank\ synthesis)=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ external\ solver\ (rank\ synthesis)=true
 #Wed Mar 19 04:15:41 CET 2014
 file_export_version=3.0
 /instance/BlockEncoding/Minimize\ Call\ and\ Return\ Edges=true

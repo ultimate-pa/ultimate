@@ -4,6 +4,7 @@
 parseAutomata("../BuchiAutomata/Stratfor.ats");
 
 NestedWordAutomaton nwa2 = buchiComplementFKV(someSCT2001result);
+print(numberOfStates(nwa2));
 assert(numberOfStates(nwa2) == 13170);
 assert(!buchiIsEmpty(nwa2));
 NestedWordAutomaton nwa3 = buchiComplementFKV(someTerminationBlueGreenResult);

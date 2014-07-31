@@ -1,9 +1,9 @@
 #Wed Feb 12 16:57:46 CET 2014
-\!/instance/BuchiAutomizer=
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
 file_export_version=3.0
-/instance/BuchiAutomizer/Template\ benchmark\ mode=true
-@BuchiAutomizer=0.0.1
-/instance/BuchiAutomizer/Allow\ nonlinear\ constraints=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Template\ benchmark\ mode=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Allow\ nonlinear\ constraints=true
 #Wed Feb 12 16:57:46 CET 2014
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 file_export_version=3.0

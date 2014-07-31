@@ -3,5 +3,5 @@
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder" />
 	<plugin id="LTL2aut" />
 	<plugin id="BuchiProgramProrduct" /> 
-	<plugin id="BuchiAutomizer" /> 
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer" /> 
 </toolchain>

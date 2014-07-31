@@ -22,14 +22,14 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=false
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
 #Sat May 03 03:33:13 CEST 2014
-/instance/BuchiAutomizer/Dump\ SMT\ script\ to\ file=true
-\!/instance/BuchiAutomizer=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Dump\ SMT\ script\ to\ file=true
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
 file_export_version=3.0
-/instance/BuchiAutomizer/Allow\ nonlinear\ constraints=true
-/instance/BuchiAutomizer/Template\ benchmark\ mode=true
-@BuchiAutomizer=0.0.1
-/instance/BuchiAutomizer/To\ the\ following\ directory=smtDumpFolder/
-/instance/BuchiAutomizer/Command\ for\ external\ solver\ (rank\ synthesis)=z3 SMTLIB2_COMPLIANT\=true -memory\:2560 -smt2 -in -t\:10000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Allow\ nonlinear\ constraints=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Template\ benchmark\ mode=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/To\ the\ following\ directory=smtDumpFolder/
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Command\ for\ external\ solver\ (rank\ synthesis)=z3 SMTLIB2_COMPLIANT\=true -memory\:2560 -smt2 -in -t\:10000
 #Sat May 03 03:33:13 CEST 2014
 file_export_version=3.0
 \!/instance/UltimateCore=
