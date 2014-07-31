@@ -1,12 +1,12 @@
 #Wed Mar 19 04:15:41 CET 2014
-\!/instance/CACSL2BoogieTranslator=
-/instance/CACSL2BoogieTranslator/Check\ if\ freed\ pointer\ was\ valid=false
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ if\ freed\ pointer\ was\ valid=false
 file_export_version=3.0
-@CACSL2BoogieTranslator=0.0.1
-/instance/CACSL2BoogieTranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=ASSERTandASSUME
-/instance/CACSL2BoogieTranslator/Pointer\ to\ allocated\ memory\ at\ dereference=ASSERTandASSUME
-/instance/CACSL2BoogieTranslator/Translation\ Mode\:=BASE
-/instance/CACSL2BoogieTranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
+@de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=ASSERTandASSUME
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ to\ allocated\ memory\ at\ dereference=ASSERTandASSUME
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Translation\ Mode\:=BASE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 #Wed Mar 19 04:15:41 CET 2014
 \!/instance/BuchiAutomizer=
 file_export_version=3.0
@@ -22,13 +22,13 @@ file_export_version=3.0
 /instance/BlockEncoding/Strategy\ for\ the\ edge\ rating=DISJUNCTIVE_RATING
 #Wed Mar 19 04:15:41 CET 2014
 file_export_version=3.0
-/instance/RCFGBuilder/Simplify\ code\ blocks=true
-\!/instance/RCFGBuilder=
-/instance/RCFGBuilder/Size\ of\ a\ code\ block=SequenceOfStatements
-/instance/RCFGBuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=true
-/instance/RCFGBuilder/Remove\ goto\ edges\ from\ RCFG=false
-@RCFGBuilder=0.0.1
-/instance/RCFGBuilder/Convert\ code\ blocks\ to\ CNF=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Simplify\ code\ blocks=true
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=true
 #Wed Mar 19 04:15:41 CET 2014
 file_export_version=3.0
 /instance/UltimateCore/Log\ level\ for\ plugins=warn
@@ -37,4 +37,4 @@ file_export_version=3.0
 @UltimateCore=0.0.1
 /instance/UltimateCore/Generate\ benchmark\ results=false
 /instance/UltimateCore/Show\ long\ description\ of\ results=true
-/instance/TraceAbstraction/Compute\ Interpolants\ along\ a\ Counterexample=Craig_NestedInterpolation
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=Craig_NestedInterpolation

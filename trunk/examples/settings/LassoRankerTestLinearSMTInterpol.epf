@@ -12,16 +12,16 @@ file_export_version=3.0
 /instance/BlockEncoding/Choose\ the\ strategy\ for\ the\ edge\ rating\:=DISJUNCTIVE_RATING
 #Tue Jul 15 20:56:38 EST 2014
 file_export_version=3.0
-/instance/RCFGBuilder/Simplify\ code\ blocks=true
-\!/instance/RCFGBuilder=
-/instance/RCFGBuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=false
-@RCFGBuilder=0.0.1
-/instance/RCFGBuilder/Convert\ code\ blocks\ to\ CNF=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Simplify\ code\ blocks=true
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=false
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
 #Tue Jul 15 20:56:38 EST 2014
-/instance/TraceAbstraction/Interpolant\ automaton=SINGLETRACE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton=SINGLETRACE
 file_export_version=3.0
-@TraceAbstraction=0.0.1
-\!/instance/TraceAbstraction=
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
 #Tue Jul 15 20:56:38 EST 2014
 /instance/LassoRanker/SMT\ solver\ command=z3 -smt2 -in SMTLIB2_COMPLIANT\=true -t\:10000
 /instance/LassoRanker/Path\ of\ dumped\ script=/tmp/

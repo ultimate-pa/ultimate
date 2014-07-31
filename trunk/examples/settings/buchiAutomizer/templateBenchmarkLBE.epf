@@ -5,21 +5,21 @@ file_export_version=3.0
 @BuchiAutomizer=0.0.1
 /instance/BuchiAutomizer/Allow\ nonlinear\ constraints=true
 #Wed Feb 12 16:57:46 CET 2014
-\!/instance/CACSL2BoogieTranslator=
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 file_export_version=3.0
-@CACSL2BoogieTranslator=0.0.1
-/instance/CACSL2BoogieTranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=IGNORE
-/instance/CACSL2BoogieTranslator/Pointer\ to\ allocated\ memory\ at\ dereference=IGNORE
-/instance/CACSL2BoogieTranslator/Translation\ Mode\:=SV_COMP14
-/instance/CACSL2BoogieTranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
+@de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=IGNORE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ to\ allocated\ memory\ at\ dereference=IGNORE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Translation\ Mode\:=SV_COMP14
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 #Wed Feb 12 16:57:46 CET 2014
 file_export_version=3.0
 /instance/UltimateCore/Toolchain\ timeout\ in\ seconds=100
 \!/instance/UltimateCore=
 @UltimateCore=0.0.1
-/instance/RCFGBuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=false
-/instance/RCFGBuilder/Size\ of\ a\ code\ block=SequenceOfStatements
-/instance/RCFGBuilder/Remove\ goto\ edges\ from\ RCFG=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
 #Fri Feb 14 14:21:10 CET 2014
 file_export_version=3.0
 /instance/BlockEncoding/Minimize\ Call\ and\ Return\ Edges=true
@@ -27,4 +27,4 @@ file_export_version=3.0
 \!/instance/BlockEncoding=
 /instance/BlockEncoding/Rating-Boundary\ (empty\ for\ LBE)=0
 /instance/BlockEncoding/Strategy\ for\ the\ edge\ rating=DISJUNCTIVE_RATING
-/instance/TraceAbstraction/Determinization\ algorithm=EAGERPOST
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Determinization\ algorithm=EAGERPOST
