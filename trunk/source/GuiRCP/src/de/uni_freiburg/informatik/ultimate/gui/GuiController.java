@@ -115,7 +115,7 @@ public class GuiController implements IController {
 			public void run() {
 				Shell shell = new Shell(mDisplay);
 				try {
-					mTools = new AnalysisChooseDialog(shell, t, previous).open();
+					mTools = new AnalysisChooseDialog(mLogger, shell, t, previous).open();
 				} catch (FileNotFoundException e) {
 					MessageDialog.openError(shell, "An error occured", "Toolchain XML file was not found.");
 

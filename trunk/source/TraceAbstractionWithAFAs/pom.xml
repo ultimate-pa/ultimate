@@ -10,7 +10,7 @@
   
   
   <groupId>TraceAbstractionWithAFAs</groupId>
-  <artifactId>TraceAbstractionWithAFAs</artifactId>
+  <artifactId>de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas</artifactId>
   <version>0.0.1</version>
   <packaging>eclipse-plugin</packaging>
 </project>
