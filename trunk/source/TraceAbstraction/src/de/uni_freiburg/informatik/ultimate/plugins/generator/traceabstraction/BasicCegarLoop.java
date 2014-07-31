@@ -414,11 +414,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
 								determinized, true, m_PredicateFactoryInterpolantAutomata);
 						
-						//TODO: Now you can get instances of your library classes for the current toolchain like this: 
-						//NWA is nevertheless very broken, as its static initialization prevents parallelism 
-						//Surprisingly, this call lazily initializes the static fields of NWA Lib and, like magic, the toolchain works ...
-						NestedWordAutomata a = mServices.getServiceInstance(ExampleNWAFactory.class);
-						
 						diff = new Difference<CodeBlock, IPredicate>(oldAbstraction, determinized, psd2,
 								m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
 						determinized.finishConstruction();

@@ -6,6 +6,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.automata.ExampleNWAFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
@@ -62,6 +63,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		if (!(root instanceof RootNode)) {
 			return false;
 		}
+		//TODO: Now you can get instances of your library classes for the current toolchain like this: 
+		//NWA is nevertheless very broken, as its static initialization prevents parallelism 
+		//Surprisingly, this call lazily initializes the static fields of NWA Lib and, like magic, the toolchain works ...
+		mServices.getServiceInstance(ExampleNWAFactory.class);
 
 		rootAnnot = ((RootNode) root).getRootAnnot();
 		TAPreferences taPrefs = new TAPreferences();

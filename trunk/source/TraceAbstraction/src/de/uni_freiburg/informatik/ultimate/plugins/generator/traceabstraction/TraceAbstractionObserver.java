@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.automata.ExampleNWAFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -63,6 +64,13 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) {
+		
+		//TODO: Now you can get instances of your library classes for the current toolchain like this: 
+		//NWA is nevertheless very broken, as its static initialization prevents parallelism 
+		//Surprisingly, this call lazily initializes the static fields of NWA Lib and, like magic, the toolchain works ...
+		mServices.getServiceInstance(ExampleNWAFactory.class);
+
+		
 		RootAnnot rootAnnot = ((RootNode) root).getRootAnnot();
 		TAPreferences taPrefs = new TAPreferences();
 
