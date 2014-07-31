@@ -2,7 +2,7 @@
  * Date: 2012-06-03
  * Author: heizmann@informatik.uni-freiburg.de
  *
- * 2-lex ranking function: f(k, a[k], a[0], a[1048]) = (k, a[k])
+ * 2-lex ranking function: f(k, a[k], a[0], a[1048]) = (1048 - k, a[k])
  *
  */
 #include <stdlib.h>
