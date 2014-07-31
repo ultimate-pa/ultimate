@@ -28,6 +28,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
@@ -240,7 +242,7 @@ public class SmtManager {
 		Term term = getScript().term("true");
 		for (BoogieVar bv : modGlobVarManager.getGlobalVarsAssignment(proc).getAssignedVars()) {
 			vars.add(bv);
-			BoogieVar bvOld = getBoogie2Smt().getOldVar(bv);
+			BoogieVar bvOld = ((BoogieNonOldVar) bv).getOldVar();
 			vars.add(bvOld);
 			TermVariable tv = bv.getTermVariable();
 			TermVariable tvOld = bvOld.getTermVariable();
@@ -268,10 +270,10 @@ public class SmtManager {
 		ArrayList<Term> replacers = new ArrayList<Term>();
 
 		for (BoogieVar bv : vars) {
-			if (bv.isOldvar()) {
+			if (bv instanceof BoogieOldVar) {
 				if (!oldVarsOfmodifiableGlobals.contains(bv)) {
 					replacees.add(bv.getTermVariable());
-					replacers.add(getBoogie2Smt().getNonOldVar(bv).getTermVariable());
+					replacers.add((((BoogieOldVar) bv).getNonOldVar()).getTermVariable());
 					replacedOldVars.add(bv);
 				}
 			}
@@ -284,7 +286,7 @@ public class SmtManager {
 
 		for (BoogieVar bv : replacedOldVars) {
 			vars.remove(bv);
-			vars.add(getBoogie2Smt().getNonOldVar(bv));
+			vars.add(((BoogieOldVar) bv).getNonOldVar());
 		}
 		return result;
 	}
@@ -786,7 +788,7 @@ public class SmtManager {
 		// OldVars not renamed.
 		// All variables get index 0.
 		Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<BoogieVar>(0), 4, 0,
-				Integer.MIN_VALUE, null, -5, 0, m_IndexedConstants, m_Script, m_Boogie2Smt);
+				Integer.MIN_VALUE, null, -5, 0, m_IndexedConstants, m_Script);
 
 		TransFormula tf = ta.getTransitionFormula();
 		Set<BoogieVar> assignedVars = new HashSet<BoogieVar>();
@@ -797,7 +799,7 @@ public class SmtManager {
 		// GlobalVars renamed to index 0
 		// Other vars get index 1
 		Term ps2renamed = PredicateUtils.formulaWithIndexedVars(ps2, new HashSet<BoogieVar>(0), 4, 1, 0, null, 23, 0,
-				m_IndexedConstants, m_Script, m_Boogie2Smt);
+				m_IndexedConstants, m_Script);
 
 		// We want to return true if (fState1 && fTrans)-> fState2 is valid
 		// This is the case if (fState1 && fTrans && !fState2) is unsatisfiable
@@ -857,21 +859,21 @@ public class SmtManager {
 		// oldVars not renamed
 		// other variables get index 0
 		Term pskrenamed = PredicateUtils.formulaWithIndexedVars(psk, new HashSet<BoogieVar>(0), 23, 0,
-				Integer.MIN_VALUE, null, 23, 0, m_IndexedConstants, m_Script, m_Boogie2Smt);
+				Integer.MIN_VALUE, null, 23, 0, m_IndexedConstants, m_Script);
 
 		// oldVars get index 0
 		// modifiable globals get index 2
 		// not modifiable globals get index 0
 		// other variables get index 1
 		Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<BoogieVar>(0), 23, 1, 0,
-				modifiableGlobals, 2, 0, m_IndexedConstants, m_Script, m_Boogie2Smt);
+				modifiableGlobals, 2, 0, m_IndexedConstants, m_Script);
 
 		// oldVars not renamed
 		// modifiable globals get index 2
 		// variables assigned on return get index 2
 		// other variables get index 0
 		Term ps2renamed = PredicateUtils.formulaWithIndexedVars(ps2, assignedVarsOnReturn, 2, 0, Integer.MIN_VALUE,
-				modifiableGlobals, 2, 0, m_IndexedConstants, m_Script, m_Boogie2Smt);
+				modifiableGlobals, 2, 0, m_IndexedConstants, m_Script);
 
 		// We want to return true if (fState1 && fTrans)-> fState2 is valid
 		// This is the case if (fState1 && fTrans && !fState2) is unsatisfiable
@@ -1187,7 +1189,7 @@ public class SmtManager {
 		Map<TermVariable, Term> substitutionMapping = new HashMap<TermVariable, Term>();
 		for (BoogieVar globalBoogieVar : globalVars) {
 			if (!globalBoogieVar.isOldvar()) {
-				BoogieVar oldBoogieVar = getBoogie2Smt().getOldVar(globalBoogieVar);
+				BoogieVar oldBoogieVar = ((BoogieNonOldVar) globalBoogieVar).getOldVar();
 				varsOfRenamed.add(oldBoogieVar);
 				substitutionMapping.put(globalBoogieVar.getTermVariable(), oldBoogieVar.getTermVariable());
 			}

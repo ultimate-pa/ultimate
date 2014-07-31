@@ -8,7 +8,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
@@ -133,10 +133,10 @@ public class Boogie2SMT {
 	 * assertion stack of the script is at the lowest level. Auxiliary variables
 	 * are not supported in any backtranslation.
 	 */
-	public BoogieVar constructAuxiliaryGlobalBoogieVar(String identifier, String procedure, IType iType,
-			boolean isOldvar, BoogieASTNode BoogieASTNode) {
+	public BoogieNonOldVar constructAuxiliaryGlobalBoogieVar(String identifier, String procedure, IType iType,
+			BoogieASTNode BoogieASTNode) {
 
-		return m_Boogie2SmtSymbolTable.constructAuxiliaryGlobalBoogieVar(identifier, procedure, iType, isOldvar,
+		return m_Boogie2SmtSymbolTable.constructAuxiliaryGlobalBoogieVar(identifier, procedure, iType,
 				BoogieASTNode);
 	}
 
@@ -155,32 +155,4 @@ public class Boogie2SMT {
 			return result;
 		}
 	}
-
-	/**
-	 * Return a similar BoogieVar that is not an oldvar. Requires that this is
-	 * an oldvar.
-	 */
-	public BoogieVar getNonOldVar(BoogieVar bv) {
-		if (!bv.isOldvar()) {
-			throw new AssertionError("Not an oldvar" + this);
-		}
-		BoogieVar result = getBoogie2SmtSymbolTable().getGlobals().get(bv.getIdentifier());
-		assert result != null;
-		return result;
-	}
-
-	/**
-	 * Return a similar BoogieVar that is an oldvar. Requires that this not an
-	 * oldvar.
-	 */
-	public BoogieVar getOldVar(BoogieVar bv) {
-		assert bv.isGlobal();
-		if (bv.isOldvar()) {
-			throw new AssertionError("Already an oldvar: " + this);
-		}
-		BoogieVar result = getBoogie2SmtSymbolTable().getOldGlobals().get(bv.getIdentifier());
-		assert result != null;
-		return result;
-	}
-
 }

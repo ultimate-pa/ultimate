@@ -15,16 +15,11 @@ import de.uni_freiburg.informatik.ultimate.model.IType;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class BoogieVar implements Serializable {
+public abstract class BoogieVar implements Serializable {
 
 	private static final long serialVersionUID = 103072739646531062L;
 	private final String m_Identifier;
-	private final String m_Procedure;
 	private final IType m_IType;
-	
-	private final boolean m_Oldvar;
-	
-	private final int m_HashCode;
 	
 	/**
 	 * TermVariable which represents this BoogieVar in SMT terms.
@@ -44,31 +39,12 @@ public class BoogieVar implements Serializable {
 	private final ApplicationTerm m_PrimedConstant;
 
 	
-	public BoogieVar(String identifier, String procedure, IType iType, 
-			boolean oldvar) {
-		m_Identifier = identifier;
-		m_Procedure = procedure;
-		m_IType = iType;
-		m_Oldvar = oldvar;
-		assert (oldvar == false || m_Procedure == null);
-		m_HashCode = computeHashCode();
-		m_TermVariable = null;
-		m_DefaultConstant = null;
-		m_PrimedConstant = null;
-	}
-	
-	
-	public BoogieVar(String identifier, String procedure, IType iType, 
-			boolean oldvar,
+	public BoogieVar(String identifier, IType iType, 
 			TermVariable tv,
 			ApplicationTerm defaultConstant,
 			ApplicationTerm primedContant) {
 		m_Identifier = identifier;
-		m_Procedure = procedure;
 		m_IType = iType;
-		m_Oldvar = oldvar;
-		assert (oldvar == false || m_Procedure == null);
-		m_HashCode = computeHashCode();
 		m_TermVariable = tv;
 		m_DefaultConstant = defaultConstant;
 		m_PrimedConstant = primedContant;
@@ -84,18 +60,14 @@ public class BoogieVar implements Serializable {
 	 * Returns the procedure in which this variable was declared. If this a 
 	 * global variable, then null is returned.
 	 */
-	public String getProcedure() {
-		return m_Procedure;
-	}
+	public abstract String getProcedure();
+	
 	public IType getIType() {
 		return m_IType;
 	}
-	public boolean isGlobal() {
-		return m_Procedure == null;
-	}
-	public boolean isOldvar() {
-		return m_Oldvar;
-	}
+	public abstract boolean isGlobal();
+	
+	public abstract boolean isOldvar();
 	
 	public TermVariable getTermVariable() {
 		assert m_TermVariable != null;
@@ -111,8 +83,8 @@ public class BoogieVar implements Serializable {
 	public ApplicationTerm getPrimedConstant() {
 		return m_PrimedConstant;
 	}
-	
-	
+
+
 	/**
 	 * Returns an identifier that is globally unique. If this is global non-old
 	 * we return the identifier, if this is global oldvar we add old(.), if
@@ -121,12 +93,12 @@ public class BoogieVar implements Serializable {
 	public String getGloballyUniqueId() {
 		if (isGlobal()) {
 			if (isOldvar()) {
-				return "old(" + m_Identifier+")";
+				return "old(" + getIdentifier()+")";
 			} else {
-				return m_Identifier;
+				return getIdentifier();
 			}
 		} else {
-			return m_Procedure + "_" + m_Identifier;
+			return getProcedure() + "_" + getIdentifier();
 		}
 	}
 	
@@ -135,23 +107,6 @@ public class BoogieVar implements Serializable {
 		return getGloballyUniqueId();
 	}
 
-	private int computeHashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result
-				+ ((m_Identifier == null) ? 0 : m_Identifier.hashCode());
-		result = prime * result + (m_Oldvar ? 1231 : 1237);
-		result = prime * result
-				+ ((m_Procedure == null) ? 0 : m_Procedure.hashCode());
-		return result;
-	}
-
-	@Override
-	public int hashCode() {
-		return m_HashCode;
-	}
-	
-	
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -161,17 +116,17 @@ public class BoogieVar implements Serializable {
 		if (getClass() != obj.getClass())
 			return false;
 		BoogieVar other = (BoogieVar) obj;
-		if (m_Identifier == null) {
-			if (other.m_Identifier != null)
+		if (getIdentifier() == null) {
+			if (other.getIdentifier() != null)
 				return false;
-		} else if (!m_Identifier.equals(other.m_Identifier))
+		} else if (!getIdentifier().equals(other.getIdentifier()))
 			return false;
-		if (m_Oldvar != other.m_Oldvar)
+		if (isOldvar() != other.isOldvar())
 			return false;
-		if (m_Procedure == null) {
-			if (other.m_Procedure != null)
+		if (getProcedure() == null) {
+			if (other.getProcedure() != null)
 				return false;
-		} else if (!m_Procedure.equals(other.m_Procedure))
+		} else if (!getProcedure().equals(other.getProcedure()))
 			return false;
 		return true;
 	}

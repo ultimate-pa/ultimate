@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 
 /**
@@ -104,10 +105,10 @@ public class ModifiableGlobalVariableManager {
 		Set<TermVariable> glob2oldAllVars = new HashSet<TermVariable>();
 		Term glob2oldFormula = m_Boogie2smt.getScript().term("true");
 		
-		Map<String, BoogieVar> globals = m_Boogie2smt.getBoogie2SmtSymbolTable().getGlobals();
+		Map<String, BoogieNonOldVar> globals = m_Boogie2smt.getBoogie2SmtSymbolTable().getGlobals();
 		for (String modVar : vars) {
-			BoogieVar boogieVar = globals.get(modVar);
-			BoogieVar boogieOldVar = m_Boogie2smt.getBoogie2SmtSymbolTable().getOldGlobals().get(boogieVar.getIdentifier());
+			BoogieNonOldVar boogieVar = globals.get(modVar);
+			BoogieVar boogieOldVar = boogieVar.getOldVar();
 			Sort sort = boogieVar.getDefaultConstant().getSort();
 			{
 				String nameIn = modVar + "_In";
@@ -147,10 +148,10 @@ public class ModifiableGlobalVariableManager {
 		Set<TermVariable> old2globAllVars = new HashSet<TermVariable>();
 		Term old2globFormula = m_Boogie2smt.getScript().term("true");
 		
-		Map<String, BoogieVar> globals = m_Boogie2smt.getBoogie2SmtSymbolTable().getGlobals();
+		Map<String, BoogieNonOldVar> globals = m_Boogie2smt.getBoogie2SmtSymbolTable().getGlobals();
 		for (String modVar : vars) {
-			BoogieVar boogieVar = globals.get(modVar);
-			BoogieVar boogieOldVar = m_Boogie2smt.getBoogie2SmtSymbolTable().getOldGlobals().get(boogieVar.getIdentifier());
+			BoogieNonOldVar boogieVar = globals.get(modVar);
+			BoogieVar boogieOldVar = boogieVar.getOldVar();
 			Sort sort = boogieVar.getDefaultConstant().getSort();
 			{
 				String nameIn = "old(" + modVar + ")" + "_In";
@@ -178,15 +179,8 @@ public class ModifiableGlobalVariableManager {
 	/**
 	 * Return global variables;
 	 */
-	public Map<String, BoogieVar> getGlobals() {
+	public Map<String, BoogieNonOldVar> getGlobals() {
 		return m_Boogie2smt.getBoogie2SmtSymbolTable().getGlobals();
-	}
-	
-	/**
-	 * Return global oldvars;
-	 */
-	public Map<String, BoogieVar> getOldGlobals() {
-		return m_Boogie2smt.getBoogie2SmtSymbolTable().getOldGlobals();
 	}
 
 }

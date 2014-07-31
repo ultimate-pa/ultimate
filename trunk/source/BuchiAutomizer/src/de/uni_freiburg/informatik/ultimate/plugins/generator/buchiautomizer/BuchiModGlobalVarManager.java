@@ -8,6 +8,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
@@ -15,28 +17,28 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 
 public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
-	private final BoogieVar m_Unseeded;
-	private final BoogieVar[] m_OldRank;
-	private final BoogieVar m_UnseededOldVar;
-	private final BoogieVar[] m_OldRankOldVar;
+	private final BoogieNonOldVar m_Unseeded;
+	private final BoogieNonOldVar[] m_OldRank;
+	private final BoogieOldVar m_UnseededOldVar;
+	private final BoogieOldVar[] m_OldRankOldVar;
 	private final Boogie2SMT m_Boogie2smt;
 	private final Script m_Script;
 	
 	private final Map<String, TransFormula> m_Proc2OldVarsAssignment;
 	private final Map<String, TransFormula> m_Proc2GlobalVarsAssignment;
 
-	public BuchiModGlobalVarManager(BoogieVar unseeded, BoogieVar[] oldRank,
+	public BuchiModGlobalVarManager(BoogieNonOldVar unseeded, BoogieNonOldVar[] oldRank,
 			ModifiableGlobalVariableManager modifiableGlobalVariableManager, 
 			Boogie2SMT boogie2Smt) {
 		super(modifiableGlobalVariableManager);
 		m_Boogie2smt = boogie2Smt;
 		m_Unseeded = unseeded;
-		m_UnseededOldVar = boogie2Smt.getBoogie2SmtSymbolTable().getOldGlobals().get(unseeded.getIdentifier());
+		m_UnseededOldVar = unseeded.getOldVar();
 		assert m_UnseededOldVar != null : "oldVar missing";
 		m_OldRank = oldRank;
-		m_OldRankOldVar = new BoogieVar[oldRank.length];
+		m_OldRankOldVar = new BoogieOldVar[oldRank.length];
 		for (int i=0; i<oldRank.length; i++) {
-			m_OldRankOldVar[i] = boogie2Smt.getBoogie2SmtSymbolTable().getOldGlobals().get(oldRank[i].getIdentifier());
+			m_OldRankOldVar[i] = oldRank[i].getOldVar();
 			assert m_OldRankOldVar[i] != null : "oldVar missing";
 		}
 		m_Script  = boogie2Smt.getScript();
@@ -135,9 +137,9 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 
 
 	@Override
-	public Map<String, BoogieVar> getGlobals() {
-		HashMap<String, BoogieVar> result = 
-				new HashMap<String, BoogieVar>(super.getGlobals());
+	public Map<String, BoogieNonOldVar> getGlobals() {
+		HashMap<String, BoogieNonOldVar> result = 
+				new HashMap<String, BoogieNonOldVar>(super.getGlobals());
 		for (int i=0; i<m_OldRank.length; i++) {
 			result.put(m_OldRank[i].getIdentifier(),m_OldRank[i]);
 		}
@@ -145,19 +147,4 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 		return result;
 	}
 
-
-	@Override
-	public Map<String, BoogieVar> getOldGlobals() {
-		HashMap<String, BoogieVar> result = 
-				new HashMap<String, BoogieVar>(super.getOldGlobals());
-		for (int i=0; i<m_OldRank.length; i++) {
-			result.put(m_OldRankOldVar[i].getIdentifier(),m_OldRankOldVar[i]);
-		}
-		result.put(m_UnseededOldVar.getIdentifier(),m_UnseededOldVar);
-		return result;
-	}
-	
-	
-	
-	
 }

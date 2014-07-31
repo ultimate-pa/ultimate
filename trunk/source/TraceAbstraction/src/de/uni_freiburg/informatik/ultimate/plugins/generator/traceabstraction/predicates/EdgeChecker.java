@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
@@ -109,7 +110,7 @@ public class EdgeChecker {
 							getOldVarsAssignment(proc).getAssignedVars();
 					if (!oldVarsOfModifiable.contains(bv)) {
 						//bv is oldvar of non-modifiable global
-						Term oldVarsEquality = oldVarsEquality(bv);
+						Term oldVarsEquality = oldVarsEquality((BoogieOldVar) bv);
 						if (m_AddDebugInformation) {
 							String name = "oldVarsEquality " + bv;
 							Annotation annot = new Annotation(":named", name);
@@ -435,9 +436,9 @@ public class EdgeChecker {
 		return isSat;
 	}
 	
-	private Term oldVarsEquality(BoogieVar oldVar) {
+	private Term oldVarsEquality(BoogieOldVar oldVar) {
 		assert oldVar.isOldvar();
-		BoogieVar nonOldVar = m_SmtManager.getBoogie2Smt().getNonOldVar(oldVar);
+		BoogieVar nonOldVar = oldVar.getNonOldVar();
 		Term equality = m_Script.term("=", oldVar.getDefaultConstant(), 
 										   nonOldVar.getDefaultConstant());
 		return equality;
@@ -619,8 +620,8 @@ public class EdgeChecker {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
 					replacees.add(bv.getTermVariable());
-					BoogieVar globalBv = m_SmtManager.getBoogie2Smt().getNonOldVar(bv);
-					replacers.add(globalBv.getDefaultConstant());
+					BoogieVar nonOldbv = ((BoogieOldVar) bv).getNonOldVar();
+					replacers.add(nonOldbv.getDefaultConstant());
 				} else {
 					replacees.add(bv.getTermVariable());
 					replacers.add(bv.getDefaultConstant());
@@ -981,7 +982,7 @@ public class EdgeChecker {
 		for (BoogieVar bv : pre.getVars()) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
-					if (hier.getVars().contains(m_SmtManager.getBoogie2Smt().getNonOldVar(bv))) {
+					if (hier.getVars().contains(((BoogieOldVar) bv).getNonOldVar())) {
 						return false;
 					}
 				} else {

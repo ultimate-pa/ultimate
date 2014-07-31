@@ -15,6 +15,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
@@ -265,7 +267,7 @@ public class PredicateTransformer {
 			if (globalVarAssignments.getOutVars().containsKey(bv)) {
 				// If it is a global var, then we substitute it through its
 				// oldvar
-				substitution.put(localVarAssignments.getInVars().get(bv), m_SmtManager.getBoogie2Smt().getOldVar(bv)
+				substitution.put(localVarAssignments.getInVars().get(bv), ((BoogieNonOldVar) bv).getOldVar()
 						.getTermVariable());
 			} else {
 				TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
@@ -339,7 +341,7 @@ public class PredicateTransformer {
 		for (BoogieVar bv : globalVarsAssignment.getInVars().keySet()) {
 			TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 			varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
-			varsToRenameInCallerPred.put(m_SmtManager.getBoogie2Smt().getNonOldVar(bv).getTermVariable(), freshVar);
+			varsToRenameInCallerPred.put((((BoogieOldVar) bv).getNonOldVar()).getTermVariable(), freshVar);
 			varsToQuantifyOverAll.add(freshVar);
 		}
 		// Note: We have to take also the outvars into account, because

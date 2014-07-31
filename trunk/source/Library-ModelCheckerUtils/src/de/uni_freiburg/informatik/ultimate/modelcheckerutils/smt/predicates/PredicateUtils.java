@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
@@ -40,7 +41,7 @@ public class PredicateUtils {
 		//OldVars not renamed
 		//All variables get index 0 
 		Term ps1renamed = formulaWithIndexedVars(ps1,new HashSet<BoogieVar>(0),
-				4, 0, Integer.MIN_VALUE,null,-5,0, indexedConstants, boogie2smt.getScript(), boogie2smt);
+				4, 0, Integer.MIN_VALUE,null,-5,0, indexedConstants, boogie2smt.getScript());
 		
 		Set<BoogieVar> assignedVars = new HashSet<BoogieVar>();
 		Term fTrans = formulaWithIndexedVars(tf, 0, 1, assignedVars, indexedConstants, boogie2smt.getScript(), boogie2smt.getVariableManager());
@@ -50,7 +51,7 @@ public class PredicateUtils {
 		//assigned vars (locals and globals) get index 1
 		//other vars get index 0
 		Term ps2renamed = formulaWithIndexedVars(ps2, assignedVars,
-				1, 0, Integer.MIN_VALUE,assignedVars,1,0, indexedConstants, boogie2smt.getScript(), boogie2smt);
+				1, 0, Integer.MIN_VALUE,assignedVars,1,0, indexedConstants, boogie2smt.getScript());
 		
 		
 		//We want to return true if (fState1 && fTrans)-> fState2 is valid
@@ -94,7 +95,7 @@ public class PredicateUtils {
 						int oldVarIdx,
 						Set<BoogieVar> globalsWithSpecialIdx, int globSpecialIdx,
 						int globDefaultIdx, Map<String, Term> indexedConstants, 
-						Script script, Boogie2SMT boogie2Smt) {
+						Script script) {
 		Term psTerm = ps.getFormula();
 		if (ps.getVars() == null) {
 			return psTerm;
@@ -111,7 +112,7 @@ public class PredicateUtils {
 					cIndex = var.getDefaultConstant();
 				}
 				else {
-					cIndex = getIndexedConstant(boogie2Smt.getNonOldVar(var), oldVarIdx, indexedConstants, script);
+					cIndex = getIndexedConstant(((BoogieOldVar) var).getNonOldVar(), oldVarIdx, indexedConstants, script);
 				}
 			} else if (var.isGlobal()) {
 				if	(globalsWithSpecialIdx != null && 

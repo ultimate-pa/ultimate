@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
@@ -41,8 +42,8 @@ public class BinaryStatePredicateManager {
 
 	private final Script m_Script;
 	private final SmtManager m_SmtManager;
-	private final BoogieVar m_UnseededVariable;
-	private final BoogieVar[] m_OldRankVariables;
+	private final BoogieNonOldVar m_UnseededVariable;
+	private final BoogieNonOldVar[] m_OldRankVariables;
 
 	/**
 	 * True if predicates have been computed. False if predicates have been
@@ -79,7 +80,7 @@ public class BinaryStatePredicateManager {
 		Boogie2SMT boogie2Smt = smtManager.getBoogie2Smt();
 		m_UnseededVariable = constructGlobalBoogieVar(s_UnseededIdentifier, boogie2Smt, BoogieType.boolType);
 
-		m_OldRankVariables = new BoogieVar[s_MaxLexComponents];
+		m_OldRankVariables = new BoogieNonOldVar[s_MaxLexComponents];
 		for (int i = 0; i < s_MaxLexComponents; i++) {
 			String name = s_OldRankIdentifier + i;
 			m_OldRankVariables[i] = constructGlobalBoogieVar(name, boogie2Smt, BoogieType.intType);
@@ -92,10 +93,8 @@ public class BinaryStatePredicateManager {
 	 * 
 	 * @param type
 	 */
-	private BoogieVar constructGlobalBoogieVar(String name, Boogie2SMT boogie2Smt, PrimitiveType type) {
-		BoogieVar globalBv;
-		globalBv = boogie2Smt.constructAuxiliaryGlobalBoogieVar(name, null, type, false, null);
-		boogie2Smt.constructAuxiliaryGlobalBoogieVar(name, null, type, true, null);
+	private BoogieNonOldVar constructGlobalBoogieVar(String name, Boogie2SMT boogie2Smt, PrimitiveType type) {
+		BoogieNonOldVar globalBv = boogie2Smt.constructAuxiliaryGlobalBoogieVar(name, null, type, null);
 		return globalBv;
 	}
 
@@ -160,12 +159,12 @@ public class BinaryStatePredicateManager {
 		return m_RankEqualityAndSi;
 	}
 
-	public BoogieVar getUnseededVariable() {
+	public BoogieNonOldVar getUnseededVariable() {
 		assert m_ProvidesPredicates;
 		return m_UnseededVariable;
 	}
 
-	public BoogieVar[] getOldRankVariables() {
+	public BoogieNonOldVar[] getOldRankVariables() {
 		assert m_ProvidesPredicates;
 		return m_OldRankVariables;
 	}
