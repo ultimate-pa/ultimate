@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.util.ScopedHashSet;
  * @author musab@informatik.uni-freiburg.de, heizmann@informatik.uni-freiburg.de
  *
  */
-public class LiveVariablesNested {
+public class LiveVariables {
 	private final Map<Term,BoogieVar> m_Constants2BoogieVar;
 	private final ModifiableNestedFormulas<Map<TermVariable,Term>, Map<TermVariable,Term>> m_TraceWithConstants;
 	private final Map<BoogieVar, TreeMap<Integer, Term>> m_IndexedVarRepresentative;
@@ -47,7 +47,7 @@ public class LiveVariablesNested {
 
 	
 	
-	public LiveVariablesNested(ModifiableNestedFormulas<Map<TermVariable,Term>, 
+	public LiveVariables(ModifiableNestedFormulas<Map<TermVariable,Term>, 
 			Map<TermVariable,Term>> traceWithConstants,
 			Map<Term,BoogieVar> constants2BoogieVar,
 			Map<BoogieVar, TreeMap<Integer, Term>> indexedVarRepresentative,
