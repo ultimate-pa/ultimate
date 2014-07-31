@@ -1,6 +1,6 @@
 <toolchain>
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
-	<plugin id="IRSDependencies"/>
-	<plugin id="JungVisualization"/> 
+	<plugin id="de.uni_freiburg.informatik.ultimate.irsdependencies"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization"/> 
 </toolchain>

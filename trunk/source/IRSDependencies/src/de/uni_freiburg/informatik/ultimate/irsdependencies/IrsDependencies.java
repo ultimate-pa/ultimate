@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.irsdependencies.loopdetector.LoopDetector;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.observers.DependencyFinder;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.preferences.IRSDependenciesPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
@@ -63,10 +64,11 @@ public class IrsDependencies implements IAnalysis {
 	}
 
 	private void setInputDefinitionModeDefault(GraphType graphType) {
-		switch (graphType.getCreator()) {
-		case "RCFGBuilder":
+		String creator = graphType.getCreator();
+		switch (creator) {
+		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
 			mLogger.info("Preparing to process RCFG...");
-			mObservers.add(new DependencyFinder(mLogger));
+			mObservers.add(new LoopDetector(mServices));
 
 			break;
 		// case "BoogiePLCupParser":
@@ -76,7 +78,7 @@ public class IrsDependencies implements IAnalysis {
 		// .getSymbolTable(),1));
 		// break;
 		default:
-			mLogger.warn("Ignoring input definition");
+			mLogger.warn("Ignoring input definition " + creator);
 		}
 	}
 
@@ -92,7 +94,7 @@ public class IrsDependencies implements IAnalysis {
 
 	@Override
 	public String getPluginName() {
-		return Activator.PLUGIN_ID;
+		return "IRS Dependencies";
 	}
 
 	@Override

@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 
 public interface IRCFGWalker
 {
-	void processProgram(RootNode node);
+	void startFrom(RootNode node);
 	
 	public boolean addObserver(IObserver observer);
 	

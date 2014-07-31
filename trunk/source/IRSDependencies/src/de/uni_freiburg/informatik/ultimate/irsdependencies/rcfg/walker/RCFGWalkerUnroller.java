@@ -40,7 +40,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 	}
 
 	@Override
-	public void processProgram(RootNode node) {
+	public void startFrom(RootNode node) {
 		init();
 		RCFGEdge start = searchMainEdge(node);
 		if (start == null) {

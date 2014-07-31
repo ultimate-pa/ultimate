@@ -4,6 +4,9 @@ import java.util.StringTokenizer;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
+
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.widgets.List;
@@ -68,7 +71,7 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 
 	private boolean isActivePluginId(String pluginId) {
 		// hack until this class is auto-generated
-		java.util.List<String> plugins = UltimateCore.sPluginNames;
+		String[] plugins = UltimateCore.getPluginNames();
 		boolean retVal = false;
 		for (String iTool : plugins) {
 			if (iTool.equals(pluginId)) {
@@ -80,14 +83,17 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 
 	@Override
 	protected String[] getComboSupply() {
-		// UltimateCore.mTools
-		// needed: Pluginds
 		// hack until this class is auto-generated
+		String[] plugins = UltimateCore.getPluginNames();
 
-		java.util.List<String> plugins = UltimateCore.sPluginNames;
-		String[] return_list = new String[plugins.size()];
-		for (int i = 0; i < plugins.size(); i++) {
-			return_list[i] = plugins.get(i) + "=<LOG LEVEL>";
+		if (plugins == null) {
+			return new String[0];
+		}
+
+		String[] return_list = new String[plugins.length];
+
+		for (int i = 0; i < plugins.length; i++) {
+			return_list[i] = plugins[i] + "=<LOG LEVEL>";
 		}
 		return return_list;
 	}

@@ -7,7 +7,6 @@ import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors.DebugRC
 import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.visitors.DummyVisitor;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.walker.ObserverDispatcher;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.walker.ObserverDispatcherSequential;
-import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.walker.RCFGWalkerAStar;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.rcfg.walker.RCFGWalkerUnroller;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
@@ -32,7 +31,7 @@ public class DependencyFinder extends BaseObserver {
 	public boolean process(IElement root) {
 
 		// doit(root, mUnrollings);
-		blabla(root);
+
 
 		// for (int i = 1; i <= 3; ++i) {
 		// doit(root, i);
@@ -55,12 +54,6 @@ public class DependencyFinder extends BaseObserver {
 		dfw.run();
 	}
 
-	private void blabla(IElement root) {
-		ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
-		RCFGWalkerAStar walker = new RCFGWalkerAStar(od, mLogger);
-		od.setWalker(walker);
-		walker.addObserver(new DummyVisitor(mLogger));
-		walker.run((RCFGNode) root);
-	}
+
 
 }

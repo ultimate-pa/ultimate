@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
@@ -21,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.LoggingService;
 import de.uni_freiburg.informatik.ultimate.core.services.ToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
@@ -86,14 +88,6 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		mLogger.info("Preparing to exit Ultimate with return code " + returnCode);
 		return returnCode;
 	}
-
-
-	// TODO: ISource needs to be initialized
-	// TODO: Where is the initialization of iController?
-
-	// hack to have plugin names in LoggingSpecificPluginPages; will go away as
-	// soon as this is auto-generated
-	public static List<String> sPluginNames;
 
 	public void cancelToolchain() {
 		mToolchainWalker.cancelToolchain();
@@ -230,7 +224,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		mSettingsManager = new SettingsManager(mLogger);
 
 		mSettingsManager.checkPreferencesForActivePlugins(getPluginID(), getPluginName());
-		
+
 		mPluginFactory = new PluginFactory(mSettingsManager, mLogger);
 		setCurrentController(mPluginFactory.getController());
 
@@ -281,6 +275,22 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 			return Activator.s_PLUGIN_ID;
 		}
 		return getCurrentController().getPluginID();
+	}
+
+	private static String[] sPluginNames;
+
+	public static String[] getPluginNames() {
+		if (sPluginNames == null) {
+			List<String> lil = new ArrayList<>();
+			for (String ep : ExtensionPoints.PLUGIN_EPS) {
+				for (IConfigurationElement elem : Platform.getExtensionRegistry().getConfigurationElementsFor(ep)) {
+					String classname = elem.getAttribute("class");
+					lil.add(classname.substring(0, classname.lastIndexOf(".")));
+				}
+			}
+			sPluginNames = lil.toArray(new String[0]);
+		}
+		return sPluginNames;
 	}
 
 }

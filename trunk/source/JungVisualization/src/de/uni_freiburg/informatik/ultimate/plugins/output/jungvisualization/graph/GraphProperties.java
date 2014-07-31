@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
 import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceValues;
+import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceValues.EdgeLabels;
 import edu.uci.ics.jung.algorithms.layout.FRLayout;
 import edu.uci.ics.jung.algorithms.layout.FRLayout2;
 import edu.uci.ics.jung.algorithms.layout.ISOMLayout;
@@ -75,26 +76,21 @@ public class GraphProperties {
 			Graph<VisualizationNode, VisualizationEdge> graph, VisualizationNode rootNode) {
 		UltimatePreferenceStore store = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final Font font = vv.getFont();
-		final FontRenderContext frc = vv.getFontMetrics(font)
-				.getFontRenderContext();
+		final FontRenderContext frc = vv.getFontMetrics(font).getFontRenderContext();
 		Layout<VisualizationNode, VisualizationEdge> layout = vv.getGraphLayout();
 
 		Transformer<VisualizationNode, Shape> vertexShapeTransformer;
-		String vertexShapePreference = store.getString(
-				JungPreferenceValues.LABEL_SHAPE_NODE);
+		String vertexShapePreference = store.getString(JungPreferenceValues.LABEL_SHAPE_NODE);
 
 		if (store.getBoolean(JungPreferenceValues.LABEL_ANNOTATED_NODES)) {
-			vv.getRenderContext().setVertexLabelTransformer(
-					new ToStringLabeller<VisualizationNode>());
+			vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller<VisualizationNode>());
 
 			if (vertexShapePreference.equalsIgnoreCase("RoundRectangle")) {
 				vertexShapeTransformer = new Transformer<VisualizationNode, Shape>() {
 					public Shape transform(VisualizationNode n) {
-						Rectangle2D bounds = font.getStringBounds(n.toString(),
-								frc);
+						Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
 						int vertexShapeLength = (int) bounds.getWidth() + 2;
-						Shape vertexShape = new RoundRectangle2D.Float(
-								-vertexShapeLength / 2, -10, vertexShapeLength,
+						Shape vertexShape = new RoundRectangle2D.Float(-vertexShapeLength / 2, -10, vertexShapeLength,
 								20, 8, 8);
 						return vertexShape;
 					}
@@ -102,67 +98,67 @@ public class GraphProperties {
 			} else if (vertexShapePreference.equalsIgnoreCase("Rectangle")) {
 				vertexShapeTransformer = new Transformer<VisualizationNode, Shape>() {
 					public Shape transform(VisualizationNode n) {
-						Rectangle2D bounds = font.getStringBounds(n.toString(),
-								frc);
+						Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
 						int vertexShapeLength = (int) bounds.getWidth() + 2;
-						Shape vertexShape = new Rectangle(
-								-vertexShapeLength / 2, -10, vertexShapeLength,
-								20);
+						Shape vertexShape = new Rectangle(-vertexShapeLength / 2, -10, vertexShapeLength, 20);
 						return vertexShape;
 					}
 				};
 			} else {
 				vertexShapeTransformer = new EllipseVertexShapeTransformer<VisualizationNode>() {
 					public Shape transform(VisualizationNode n) {
-						Rectangle2D bounds = font.getStringBounds(n.toString(),
-								frc);
+						Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
 						int vertexShapeLength = (int) bounds.getWidth() + 2;
-						Shape vertexShape = new Ellipse2D.Float(
-								-vertexShapeLength / 2, -10,
-								vertexShapeLength + 3, 24);
+						Shape vertexShape = new Ellipse2D.Float(-vertexShapeLength / 2, -10, vertexShapeLength + 3, 24);
 						return vertexShape;
 					}
 
 				};
 			}
-			vv.getRenderContext().setVertexShapeTransformer(
-					vertexShapeTransformer);
-			vv.getRenderer().getVertexLabelRenderer()
-					.setPosition(Renderer.VertexLabel.Position.CNTR);
+			vv.getRenderContext().setVertexShapeTransformer(vertexShapeTransformer);
+			vv.getRenderer().getVertexLabelRenderer().setPosition(Renderer.VertexLabel.Position.CNTR);
 		}
- ;
- 
+		;
+
 		RGB rgb = StringConverter.asRGB(store.getString(JungPreferenceValues.LABEL_COLOR_NODE));
 		Color nodeFillColor = new Color(rgb.red, rgb.green, rgb.blue);
-		
+
 		rgb = StringConverter.asRGB(store.getString(JungPreferenceValues.LABEL_COLOR_NODE_PICKED));
 		Color nodePickedColor = new Color(rgb.red, rgb.green, rgb.blue);
 
-		
-		
 		rgb = StringConverter.asRGB(store.getString(JungPreferenceValues.LABEL_COLOR_BACKGROUND));
 		Color backgroundColor = new Color(rgb.red, rgb.green, rgb.blue);
 		vv.setBackground(backgroundColor);
 
-		vv.getRenderContext()
-				.setVertexFillPaintTransformer(
-						new PickableVertexPaintTransformer<VisualizationNode>(vv
-								.getPickedVertexState(), nodeFillColor,
-								nodePickedColor));
+		vv.getRenderContext().setVertexFillPaintTransformer(
+				new PickableVertexPaintTransformer<VisualizationNode>(vv.getPickedVertexState(), nodeFillColor,
+						nodePickedColor));
 
-		if (store.getBoolean(JungPreferenceValues.LABEL_ANNOTATED_EDGES)) {
-			vv.getRenderContext().setEdgeLabelTransformer(
-					new ToStringLabeller<VisualizationEdge>() {
-						public String transform(VisualizationEdge edge) {
-							String edgeName = "";
-							if (edge.getPayload() != null) {
-								edgeName = edge.getPayload().getName();
-							} else {
-								edgeName = edge.toString();
-							}
-							return edgeName;
-						}
-					});
+		switch (store.getEnum(JungPreferenceValues.LABEL_ANNOTATED_EDGES, EdgeLabels.class)) {
+		case None:
+			break;
+		case Text:
+			vv.getRenderContext().setEdgeLabelTransformer(new ToStringLabeller<VisualizationEdge>() {
+				public String transform(VisualizationEdge edge) {
+					String edgeName = "";
+					if (edge.getPayload() != null) {
+						edgeName = edge.getPayload().getName();
+					} else {
+						edgeName = edge.toString();
+					}
+					return edgeName;
+				}
+			});
+			break;
+		case Hashcode:
+			vv.getRenderContext().setEdgeLabelTransformer(new ToStringLabeller<VisualizationEdge>() {
+				public String transform(VisualizationEdge edge) {
+					return Integer.toString(edge.hashCode());
+				}
+			});
+			break;
+		default:
+			throw new UnsupportedOperationException("New enum value!");
 		}
 
 		// set preferred Graph Layout, default Layout = KKLayout
@@ -179,16 +175,15 @@ public class GraphProperties {
 		} else {
 			MinimumSpanningForest2<VisualizationNode, VisualizationEdge> prim = new MinimumSpanningForest2<VisualizationNode, VisualizationEdge>(
 					graph, new DelegateForest<VisualizationNode, VisualizationEdge>(),
-					DelegateTree.<VisualizationNode, VisualizationEdge> getFactory(),
-					new ConstantTransformer(1.0));
+					DelegateTree.<VisualizationNode, VisualizationEdge> getFactory(), new ConstantTransformer(1.0));
 
 			Forest<VisualizationNode, VisualizationEdge> tree = prim.getForest();
-			Layout<VisualizationNode, VisualizationEdge> layout1 = new TreeLayout<VisualizationNode, VisualizationEdge>(tree);
+			Layout<VisualizationNode, VisualizationEdge> layout1 = new TreeLayout<VisualizationNode, VisualizationEdge>(
+					tree);
 			layout = new StaticLayout<VisualizationNode, VisualizationEdge>(graph, layout1);
 		}
 		this.vv = vv;
 		vv.setGraphLayout(layout);
 
 	}
-
 }

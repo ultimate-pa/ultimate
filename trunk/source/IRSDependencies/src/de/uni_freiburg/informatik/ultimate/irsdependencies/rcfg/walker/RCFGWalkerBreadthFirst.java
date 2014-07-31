@@ -30,7 +30,7 @@ public class RCFGWalkerBreadthFirst extends RCFGWalker
 		mProcessedEdges = new HashSet<>();
 	}
 
-	public void processProgram(RootNode node)
+	public void startFrom(RootNode node)
 	{
 		level(node);
 		for (RCFGEdge edge : node.getOutgoingEdges()) {

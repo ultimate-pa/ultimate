@@ -24,7 +24,7 @@ public class ObserverDispatcherSequential extends ObserverDispatcher
 		for (SimpleRCFGVisitor visitor : mObservers) {
 			mCurrentVisitor = visitor;
 			mCurrentVisitor.init();
-			mWalker.processProgram((RootNode) node);
+			mWalker.startFrom((RootNode) node);
 			mCurrentVisitor.finish();
 		}
 
