@@ -245,6 +245,7 @@ public class NestedInterpolantsBuilder {
 	private void addToLastInterpolInputFormula(Term term) {
 		int lastPosition = interpolInput.size() - 1;
 		Term newFormula = Util.and(m_Script, interpolInput.get(lastPosition), term);
+		assert newFormula != null : "newFormula must be != null";
 		interpolInput.set(lastPosition, newFormula);
 	}
 
