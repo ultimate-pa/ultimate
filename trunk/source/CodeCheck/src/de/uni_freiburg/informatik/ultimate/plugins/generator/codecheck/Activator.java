@@ -10,7 +10,7 @@ import org.osgi.framework.BundleContext;
 public class Activator extends Plugin {
 
 	// The plug-in ID
-	public static final String s_PLUGIN_ID = "CodeCheck";
+	public static final String s_PLUGIN_ID = "de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck";
 
 	// The plug-in name
 	public static final String s_PLUGIN_NAME = "CodeCheck";

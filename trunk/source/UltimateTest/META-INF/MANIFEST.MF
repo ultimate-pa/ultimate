@@ -18,7 +18,7 @@ Require-Bundle: UltimateCore,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
  Library-LassoRanker,
  LassoRanker,
- CodeCheck
+ de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,
