@@ -52,7 +52,7 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 	 * First experiments on few examples showed that this is decreasing the
 	 * performance.
 	 */
-	private boolean m_Cannibalize = !false;
+	private boolean m_Cannibalize = false;
 	private boolean m_SplitNumericEqualities = true;
 	
 
