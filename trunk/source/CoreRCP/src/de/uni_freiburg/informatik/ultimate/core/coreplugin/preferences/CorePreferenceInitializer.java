@@ -191,7 +191,7 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String DEFAULT_VALUE_TOOLS_PREF = "WARN";
 	public static final String DEFAULT_VALUE_CORE_PREF = "INFO";
 	public static final String DEFAULT_VALUE_CONTROLLER_PREF = "INFO";
-	public static final String DEFAULT_VALUE_PLUGINS_PREF = "WARN";
+	public static final String DEFAULT_VALUE_PLUGINS_PREF = "INFO";
 	
 	public static final String VALUE_FATAL_LOGGING_PREF = "FATAL";
 	public static final String VALUE_ERROR_LOGGING_PREF = "ERROR";
