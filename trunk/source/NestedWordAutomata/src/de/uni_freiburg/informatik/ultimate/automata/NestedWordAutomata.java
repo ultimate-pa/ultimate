@@ -25,30 +25,22 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.automata.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.services.IService;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin;
 
-public class NestedWordAutomata implements IGenerator,IService {
+public class NestedWordAutomata implements IUltimatePlugin, IService {
 	
 	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
 	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
-	private NestedWordAutomataObserver m_NestedWordAutomataObserver;
 
-	private GraphType m_InputType;
 	private IUltimateServiceProvider mServices;
 	
 	/********************** Hacky shit ****************************/
@@ -70,55 +62,14 @@ public class NestedWordAutomata implements IGenerator,IService {
 	
 	/********************** End hacky shit ****************************/ 
 
+	@Override
 	public String getPluginName() {
 		return s_PLUGIN_NAME;
 	}
 
+	@Override
 	public String getPluginID() {
 		return s_PLUGIN_ID;
-	}
-
-	public int init() {
-		m_NestedWordAutomataObserver = new NestedWordAutomataObserver();
-		return 0;
-	}
-
-	/**
-	 * I give you every model.
-	 */
-	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.LAST;
-	}
-
-	/**
-	 * I don't need a special tool
-	 */
-	public List<String> getDesiredToolID() {
-		return null;
-	}
-
-	public GraphType getOutputDefinition() {
-		return new GraphType(getPluginID(), GraphType.Type.CFG, m_InputType.getFileNames());
-	}
-
-	public void setInputDefinition(GraphType graphType) {
-		this.m_InputType = graphType;
-	}
-
-	// @Override
-	public List<IObserver> getObservers() {
-		List<IObserver> observerList = new ArrayList<IObserver>();
-		observerList.add(m_NestedWordAutomataObserver);
-		return observerList;
-	}
-
-	public IElement getModel() {
-		return this.m_NestedWordAutomataObserver.getRoot();
-	}
-
-	@Override
-	public boolean isGuiRequired() {
-		return false;
 	}
 
 	@Override
@@ -126,13 +77,13 @@ public class NestedWordAutomata implements IGenerator,IService {
 		return new PreferenceInitializer();
 	}
 
-	@Override
+	//@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
 		// TODO Auto-generated method stub
 
 	}
 
-	@Override
+	//@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
 
@@ -143,6 +94,11 @@ public class NestedWordAutomata implements IGenerator,IService {
 
 	@Override
 	public void destroy() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void init() {
 		// TODO Auto-generated method stub
 		
 	}
