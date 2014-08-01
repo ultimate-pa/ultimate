@@ -27,17 +27,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  * loop head.
  * 
  * If your graph looks like this and L1 and L2 are loop heads,
+ * 
  * <pre>
-		 e1              e4 
-		+--+            +--+
-		\  v     e2     \  v
-		 L1  --------->  L2 
-		     <---------     
-		         e3         
+ * 		 e1              e4 
+ * 		+--+            +--+
+ * 		\  v     e2     \  v
+ * 		 L1  --------->  L2 
+ * 		     <---------     
+ * 		         e3
  * </pre>
+ * 
  * you will get the following map:<br>
  * L1 -> (e2 -> e3, e1 -> e1)<br>
- * L2 -> (e4 -> e4) 
+ * L2 -> (e4 -> e4) <br>
+ * <br>
+ * 
+ * You should call {@link #process(IElement)} on the root element of your RCFG
+ * and then get the resulting map via {@link #getResult()}.
  * 
  * @author dietsch
  * 
@@ -54,12 +60,15 @@ public class LoopDetector extends BaseObserver {
 		mLoopEntryExit = new HashMap<>();
 	}
 
-	public HashMap<ProgramPoint, HashMap<RCFGEdge, RCFGEdge>> getResult(){
+	public HashMap<ProgramPoint, HashMap<RCFGEdge, RCFGEdge>> getResult() {
 		return mLoopEntryExit;
 	}
-	
+
 	@Override
 	public boolean process(IElement root) throws Throwable {
+		if (!(root instanceof RootNode)) {
+			return true;
+		}
 		RootNode rootNode = (RootNode) root;
 		RootAnnot annot = rootNode.getRootAnnot();
 

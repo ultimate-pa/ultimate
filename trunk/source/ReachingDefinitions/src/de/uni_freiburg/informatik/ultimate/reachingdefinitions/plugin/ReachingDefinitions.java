@@ -77,6 +77,11 @@ public class ReachingDefinitions implements IAnalysis {
 	}
 
 	public static CodeBlock[] computeRDForTrace(CodeBlock[] trace, Logger logger) throws Throwable {
+		//TODO: Der neue Plan
+		// - Forest bauen, jedes assume ist eine Wurzel (nach hinten) 
+		// - assume macht use und def 
+		// - ...? 
+		
 		ReachDefTrace rdt = new ReachDefTrace(logger);
 		rdt.process(trace);
 		return trace;

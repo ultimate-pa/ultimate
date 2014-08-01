@@ -12,3 +12,4 @@ Require-Bundle: UltimateCore,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
+Export-Package: de.uni_freiburg.informatik.ultimate.irsdependencies.loopdetector

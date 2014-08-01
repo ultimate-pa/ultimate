@@ -37,11 +37,12 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
 
 		// Daniel:
-		Word<CodeBlock> trace = m_TraceChecker.getTrace(); // -> der
-															// TraceChecker hat
-															// aber auch noch
-															// ein paar andere
-															// Sachen drin..
+		Word<CodeBlock> trace = m_TraceChecker.getTrace();
+		// -> der
+		// TraceChecker hat
+		// aber auch noch
+		// ein paar andere
+		// Sachen drin..
 		CodeBlock[] traceAsArray = new CodeBlock[trace.length()];
 		for (int i = 0; i < trace.length(); i++) {
 			traceAsArray[i] = trace.getSymbol(i);
