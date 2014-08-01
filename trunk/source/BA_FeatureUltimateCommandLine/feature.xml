@@ -117,28 +117,7 @@
          unpack="false"/>
 
    <plugin
-         id="AutomataScriptInterpreter"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="AutomataScriptParser"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="BuchiAutomizer"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="CodeCheck"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -181,6 +160,27 @@
 
    <plugin
          id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck"
          download-size="0"
          install-size="0"
          version="0.0.0"
