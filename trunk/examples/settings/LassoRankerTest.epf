@@ -23,16 +23,16 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
 #Tue Jul 15 20:59:31 EST 2014
-/instance/LassoRanker/Multiphase\ template\ size=3
-/instance/LassoRanker/SMT\ solver\ command=z3 -smt2 -in SMTLIB2_COMPLIANT\=true -t\:10000
-/instance/LassoRanker/Path\ of\ dumped\ script=/tmp/
-/instance/LassoRanker/Nontermination\ analysis=Nonlinear
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Multiphase\ template\ size=3
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/SMT\ solver\ command=z3 -smt2 -in SMTLIB2_COMPLIANT\=true -t\:10000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Path\ of\ dumped\ script=/tmp/
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nontermination\ analysis=Nonlinear
 file_export_version=3.0
-/instance/LassoRanker/Termination\ analysis=Nonlinear
-/instance/LassoRanker/Nested\ template\ size=4
-/instance/LassoRanker/Simplify\ discovered\ termination\ arguments=false
-\!/instance/LassoRanker=
-@LassoRanker=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Termination\ analysis=Nonlinear
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nested\ template\ size=4
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Simplify\ discovered\ termination\ arguments=false
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=
+@de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=0.0.1
 #Tue Jul 15 20:59:31 EST 2014
 file_export_version=3.0
 /instance/UltimateCore/Log\ Level\ for\ Controller\ Plugin=INFO
@@ -41,10 +41,10 @@ file_export_version=3.0
 /instance/UltimateCore/Log\ Level\ for\ External\ Tools=INFO
 @UltimateCore=0.0.1
 /instance/UltimateCore/Root\ Log\ Level=INFO
-/instance/UltimateCore/ultimate.logging.details=LassoRanker\=INFO;
+/instance/UltimateCore/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker\=INFO;
 #Tue Jul 15 20:59:31 EST 2014
 file_export_version=3.0
 \!/instance/UltimateGui=
-/instance/UltimateGui/LASTTOOLCHAINPATH=/home/jan/Downloads/ultimate/trunk/examples/toolchains/LassoRanker.xml
+/instance/UltimateGui/LASTTOOLCHAINPATH=/home/jan/Downloads/ultimate/trunk/examples/toolchains/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.xml
 /instance/UltimateGui/LASTPATH=/home/jan/Downloads/ultimate/trunk/examples/lassos/Collatz.bpl
 @UltimateGui=0.0.1
