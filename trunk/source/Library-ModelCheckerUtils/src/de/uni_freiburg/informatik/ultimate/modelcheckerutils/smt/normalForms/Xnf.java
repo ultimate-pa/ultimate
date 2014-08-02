@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -11,7 +13,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
- * Common abstract superclass of Cnf and Dnf. 
+ * Common abstract superclass of Cnf and Dnf.
+ * In order to understand the meaning of variables names 
+ * replace "outer" by "conjunct" and "inner" by "disjunct" for CNF, and
+ * replace "outer" by "disjunct" and "inner" by "conjunct" for CNF.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
@@ -45,15 +51,11 @@ public abstract class Xnf extends Nnf {
 				// result set of sets e.g. for CNF this is a conjunction of 
 				// disjuncts
 				HashSet<Set<Term>> resOuterSet = new HashSet<Set<Term>>();
-				HashSet<Term> resOuterTerms = new HashSet<Term>();
 				// for CNF we start with the empty disjunction (which is false)
-				resOuterTerms.add(m_Script.term(innerConnectiveNeutralElement()));
 				resOuterSet.add(new HashSet<Term>());
 				for (Term inputInner : newArgs) {
 					//e.g. for CNF we iterate over each disjunct of the input
-					HashSet<Term> oldResOuterTerms = resOuterTerms;
 					HashSet<Set<Term>> oldResOuterSet = resOuterSet;
-					resOuterTerms = new HashSet<Term>();
 					resOuterSet = new HashSet<Set<Term>>();
 					if ((inputInner instanceof ApplicationTerm) && 
 							((ApplicationTerm) inputInner).getFunction().getName().equals(outerConnectiveSymbol())) {
@@ -63,10 +65,6 @@ public abstract class Xnf extends Nnf {
 						Term[] inputOuters = ((ApplicationTerm) inputInner).getParameters();
 						// for CNF: we iterate over all disjuncts
 						for (Term inputOuter : inputOuters) {
-							for (Term oldOuter : oldResOuterTerms) {
-								resOuterTerms.add(
-										innerConnective(m_Script, oldOuter, inputOuter));
-							}
 							for (Set<Term> oldOuter : oldResOuterSet) {
 								HashSet<Term> newOuter = new HashSet<Term>(oldOuter);
 								newOuter.add(inputOuter);
@@ -76,10 +74,6 @@ public abstract class Xnf extends Nnf {
 					} else {
 						// for CNF if this input conjunct is an atom have to add
 						// this atom to each result disjunction
-						for (Term oldOuter : oldResOuterTerms) {
-							resOuterTerms.add(
-									innerConnective(m_Script, oldOuter, inputInner));
-						}
 						for (Set<Term> oldOuter : oldResOuterSet) {
 							// for efficiency we reuse the old set in this case
 							Set<Term> newOuter = oldOuter;
