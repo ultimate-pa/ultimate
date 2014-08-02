@@ -40,7 +40,7 @@
          unpack="false"/>
 
    <plugin
-         id="LassoRanker"
+         id="de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker"
          download-size="0"
          install-size="0"
          version="0.0.0"

@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Library-LassoRanker
 Bundle-SymbolicName: Library-LassoRanker
 Bundle-Version: 0.9.5
-Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.analysis.lassoranker.Activator
 Require-Bundle: UltimateCore,
  Library-log4j,
  Library-SMTLIB,
@@ -11,16 +11,10 @@ Require-Bundle: UltimateCore,
  SMTInterpol;resolution:=optional,
  SMTSolverBridge;bundle-version="0.0.1"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
-  uses:="org.eclipse.core.runtime,
-   de.uni_freiburg.informatik.ultimate.model,
-   de.uni_freiburg.informatik.ultimate.ep.interfaces,
-   org.osgi.framework,
-   de.uni_freiburg.informatik.ultimate.core.preferences,
-   de.uni_freiburg.informatik.ultimate.access",
- de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions,
- de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination,
- de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors,
- de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination,
- de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.rankingfunctions,
- de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.termination.templates
+Export-Package: de.uni_freiburg.informatik.ultimate.lassoranker,
+ de.uni_freiburg.informatik.ultimate.lassoranker.exceptions,
+ de.uni_freiburg.informatik.ultimate.lassoranker.nontermination,
+ de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors,
+ de.uni_freiburg.informatik.ultimate.lassoranker.termination,
+ de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions,
+ de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates
