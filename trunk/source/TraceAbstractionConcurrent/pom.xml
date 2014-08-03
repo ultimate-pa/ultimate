@@ -10,7 +10,7 @@
   
   
   <groupId>TraceAbstractionConcurrent</groupId>
-  <artifactId>TraceAbstractionConcurrent</artifactId>
+  <artifactId>de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent</artifactId>
   <version>0.0.1</version>
   <packaging>eclipse-plugin</packaging>
 </project>

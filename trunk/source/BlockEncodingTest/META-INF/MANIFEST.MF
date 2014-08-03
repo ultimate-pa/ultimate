@@ -3,6 +3,6 @@ Bundle-ManifestVersion: 2
 Bundle-Name: BlockEncodingTest
 Bundle-SymbolicName: BlockEncodingTest
 Bundle-Version: 0.0.1
-Fragment-Host: BlockEncoding
+Fragment-Host: de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: org.junit;bundle-version="4.8.1"
