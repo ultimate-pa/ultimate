@@ -4,6 +4,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,16 +29,23 @@ import de.uni_freiburg.informatik.ultimate.util.RelationWithTreeSet;
  *
  */
 public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndAsserter {
+	
+//	TODO: Document heuristics
 	/**
 	 * 1. Heuristic:
 	 */
-	boolean m_SkipFirstLoopAndThenConventionallyContinue = !true;
+	private static boolean m_Heuristic_1 = true;
 	
 	/**
 	 * 2. Heuristic: 
 	 */
-	boolean m_IterativelySkipLoopsUntilUnsatReached = true;
+	private static boolean m_Heuristic_2 = !true;
 
+	/**
+	 * 3. Heuristic: ..
+	 */
+	private static boolean m_Heuristic_3 = !true;
+	
 	public AnnotateAndAsserterWithStmtOrderPrioritization(
 			SmtManager smtManager, NestedFormulas<Term, Term> nestedSSA,
 			AnnotateAndAssertCodeBlocks aaacb, 
@@ -53,6 +61,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 *  <li> l_2: the greatest index of the same program point p, such that l_2 <= upperIndex
 	 *  </ul>
 	**/
+	@SuppressWarnings("unused")
 	private Set<Integer> getSubTrace(NestedWord<CodeBlock> trace, int lowerIndex, int upperIndex) {
 		assert lowerIndex >= 0 : "Lower index is negative";
 		assert upperIndex > lowerIndex : "Upper index is <= lower index";
@@ -103,6 +112,24 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	}
 
 	
+	private TreeSet<Integer> getStatementsOfLoopOccurrence(NestedWord<CodeBlock> trace, int lowerIndex, int upperIndex) {
+		assert lowerIndex >= 0 : "Lower index is negative";
+		assert upperIndex > lowerIndex : "Upper index is <= lower index";
+		assert upperIndex <= trace.length() : "Upper index is out of range";
+		List<ProgramPoint> pps = TraceCheckerUtils.getSequenceOfProgramPoints(trace);
+		RelationWithTreeSet<ProgramPoint, Integer> rwt = new RelationWithTreeSet<ProgramPoint, Integer>();
+		for (int i = lowerIndex; i <= upperIndex; i++) {
+			rwt.addPair(pps.get(i), i);
+		}
+		
+		for (int i = lowerIndex; i <= upperIndex; i++) {
+			if (rwt.getImage(pps.get(i)).size() > 1) {
+				return (TreeSet<Integer>) rwt.getImage(pps.get(i));
+			}
+		}
+		return new TreeSet<Integer>();
+	}
+	
 	private Map.Entry<Integer, Integer> getIndicesOfStmThatOccursTwice(NestedWord<CodeBlock> trace, int lowerIndex, int upperIndex) {
 		assert lowerIndex >= 0 : "Lower index is negative";
 		assert upperIndex <= trace.length() : "Upper index is out of range";
@@ -130,6 +157,11 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		return new AbstractMap.SimpleEntry<Integer, Integer>(lowestIndexOfPPThatOccursTwice, greatestIndexOfPPThatOccursTwice);
 	}
 	
+	
+
+	
+	
+	
 	private Set<Integer> getSetOfIntegerForGivenInterval(int lowerBound, int upperBound) {
 		Set<Integer> result = new HashSet<Integer>();
 		for (int i = lowerBound; i < upperBound; i++) {
@@ -140,6 +172,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	
 	
 	private Set<Integer> integerSetDifference(Set<Integer> firstSet, Set<Integer> secondSet) {
+		if (secondSet.isEmpty()) return firstSet;
+		
 		Set<Integer> result = new HashSet<Integer>();
 		for (Integer i : firstSet) {
 			if (!secondSet.contains(i)) {
@@ -149,18 +183,20 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		return result;
 	}
 	
+	private List<Map.Entry<Integer, Integer>> getPartitionsOfStatements(List<Integer> statements) {
+		List<Map.Entry<Integer, Integer>> result = new ArrayList<Map.Entry<Integer, Integer>>();
+		for (int i = 0; i < statements.size(); i = i + 2) {
+			if (i + 1 == statements.size()) {
+				result.add(new AbstractMap.SimpleEntry<Integer, Integer>(statements.get(i-1), statements.get(i)));
+			} else {
+				result.add(new AbstractMap.SimpleEntry<Integer, Integer>(statements.get(i), statements.get(i+1)));
+			}
+		}
+		return result;
+	}
+	
 	@Override
 	public void buildAnnotatedSsaAndAssertTerms() {
-//		Set<Integer> stmtsOutsideOfLoop = getSubTrace(m_Trace, 0, m_Trace.length());
-//		Set<Integer> stmtsWithinLoop = new HashSet<Integer>();
-//		// Slice the part of integers, that doesn't occur in the set stmtsWithoutLoop
-//		if (stmtsOutsideOfLoop.size() != m_Trace.length()) {
-//			for (int i = 0; i < m_Trace.length(); i++) {
-//				if (!stmtsOutsideOfLoop.contains(i)) {
-//					stmtsWithinLoop.add(i);
-//				}
-//			}
-//		}
 		
 		Map.Entry<Integer, Integer> indicesOfStmtThatOccursTwice = getIndicesOfStmThatOccursTwice(m_Trace, 0, m_Trace.length());
 		int lowerIndexOfStmtThatOccursTwice = indicesOfStmtThatOccursTwice.getKey();
@@ -176,13 +212,17 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		m_AnnotSSA.setPostcondition(m_AnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());
 		Collection<Integer> callPositions = new ArrayList<Integer>();
 		Collection<Integer> pendingReturnPositions = new ArrayList<Integer>();
+		// Report benchmark
+		m_Tcbg.reportnewCodeBlocks(m_Trace.length());
 		// Apply 1. heuristic
-		if (m_SkipFirstLoopAndThenConventionallyContinue) {
+		if (m_Heuristic_1) {
 			// First, annotate and assert the statements, which doesn't occur within a loop
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(m_Trace, callPositions, pendingReturnPositions, stmtsOutsideOfLoop);
 
-
 			m_Satisfiable = m_SmtManager.getScript().checkSat();
+			// Report statistics
+			m_Tcbg.reportnewCheckSat();
+			m_Tcbg.reportnewAssertedCodeBlocks(stmtsOutsideOfLoop.size());
 			// If the statements outside of a loop are not unsatisfiable, then annotate and assert also
 			// the rest of the statements
 			if (m_Satisfiable != LBool.UNSAT && stmtsOutsideOfLoop.size() != m_Trace.length()) {
@@ -193,10 +233,10 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			}
 		} 
 		// Apply 2. heuristic
-		else if (m_IterativelySkipLoopsUntilUnsatReached) {
+		else if (m_Heuristic_2) {
 			m_Satisfiable = LBool.UNKNOWN;
 			Set<Integer> stmtsAlreadyAsserted = stmtsOutsideOfLoop;
-			m_Tcbg.reportnewCodeBlocks(m_Trace.length());
+			
 			while (m_Satisfiable != LBool.UNSAT) {
 				// First, annotate and assert the statements, which doesn't occur within a loop
 				buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(m_Trace, callPositions, pendingReturnPositions, stmtsOutsideOfLoop);
@@ -218,8 +258,52 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 					stmtsAlreadyAsserted.addAll(stmtsOutsideOfLoop);
 				}
 			}
+		} 
+		// Apply 3. heuristic
+		else if (m_Heuristic_3) {
+			TreeSet<Integer> loopStatements = getStatementsOfLoopOccurrence(m_Trace, 0, m_Trace.length());
+			m_Satisfiable = annotateAndAssertStmtsAccording3Heuristic(m_Trace, integersFromTrace, loopStatements,
+					callPositions,
+					pendingReturnPositions);
 		}
 		mLogger.info("Conjunction of SSA is " + m_Satisfiable);
+	}
+	
+	private LBool annotateAndAssertStmtsAccording3Heuristic(NestedWord<CodeBlock> trace,
+			Set<Integer> unassertedStmts, TreeSet<Integer> loopStatements,
+			Collection<Integer> callPositions,
+			Collection<Integer> pendingReturnPositions
+			) {
+		Set<Integer> stmtsWithinLoop = null;
+		if (loopStatements.isEmpty()) {
+			stmtsWithinLoop = new HashSet<Integer>();
+		} else {
+			stmtsWithinLoop = getSetOfIntegerForGivenInterval(loopStatements.first(), loopStatements.last());
+		}
+		Set<Integer> stmtsOutsideOfLoop = integerSetDifference(unassertedStmts, stmtsWithinLoop);
+		
+		// Annotate and assert the statements which don't occur inside or in-between the @param loopStatements 
+		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(m_Trace, callPositions, pendingReturnPositions, stmtsOutsideOfLoop);
+		LBool sat = m_SmtManager.getScript().checkSat();
+		// Report benchmarks
+		m_Tcbg.reportnewCheckSat();
+		m_Tcbg.reportnewAssertedCodeBlocks(stmtsOutsideOfLoop.size());
+		if (sat == LBool.UNSAT) {
+			return sat;
+		}
+		List<Map.Entry<Integer, Integer>> parts = getPartitionsOfStatements(new ArrayList<Integer>(loopStatements));
+		for (Map.Entry<Integer, Integer> p : parts) {
+			if (p.getKey() + 1 >= p.getValue() - 1) {
+				loopStatements = new TreeSet<Integer>();
+			} else {
+				loopStatements = getStatementsOfLoopOccurrence(trace, p.getKey() + 1, p.getValue() - 1);
+			}
+			sat = annotateAndAssertStmtsAccording3Heuristic(trace, stmtsWithinLoop, loopStatements, callPositions, pendingReturnPositions);
+			if (sat == LBool.UNSAT) {
+				return sat;
+			}
+		}
+		return sat;
 	}
 	
 	/**
