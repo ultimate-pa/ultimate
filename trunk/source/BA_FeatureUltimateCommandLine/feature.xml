@@ -103,14 +103,14 @@
          unpack="false"/>
 
    <plugin
-         id="TraceAbstractionConcurrent"
+         id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="BlockEncoding"
+         id="de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding"
          download-size="0"
          install-size="0"
          version="0.0.0"
