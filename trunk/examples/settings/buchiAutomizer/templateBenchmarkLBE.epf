@@ -22,9 +22,9 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
 #Fri Feb 14 14:21:10 CET 2014
 file_export_version=3.0
-/instance/BlockEncoding/Minimize\ Call\ and\ Return\ Edges=true
-@BlockEncoding=0.0.1
-\!/instance/BlockEncoding=
-/instance/BlockEncoding/Rating-Boundary\ (empty\ for\ LBE)=0
-/instance/BlockEncoding/Strategy\ for\ the\ edge\ rating=DISJUNCTIVE_RATING
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding/Minimize\ Call\ and\ Return\ Edges=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding/Rating-Boundary\ (empty\ for\ LBE)=0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding/Strategy\ for\ the\ edge\ rating=DISJUNCTIVE_RATING
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Determinization\ algorithm=EAGERPOST

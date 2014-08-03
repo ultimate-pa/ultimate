@@ -13,9 +13,9 @@ file_export_version=3.0
 @BoogiePrinter=0.0.1
 #Fri Feb 21 11:44:54 CET 2014
 file_export_version=3.0
-@BlockEncoding=0.0.1
-\!/instance/BlockEncoding=
-/instance/BlockEncoding/Choose\ the\ strategy\ for\ the\ edge\ rating\:=LARGE_BLOCK
+@de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding/Choose\ the\ strategy\ for\ the\ edge\ rating\:=LARGE_BLOCK
 #Fri Feb 21 11:44:54 CET 2014
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Interpolants=ForwardPredicates
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/BlockSize=single program statement

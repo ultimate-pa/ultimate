@@ -5,11 +5,11 @@ file_export_version=3.0
 @JungVisualization=0.0.1
 #Tue Jul 15 20:56:38 EST 2014
 file_export_version=3.0
-/instance/BlockEncoding/Minimize\ Call\ and\ Return\ Edges=true
-@BlockEncoding=0.0.1
-\!/instance/BlockEncoding=
-/instance/BlockEncoding/Enter\ Rating-Boundary\ (empty\ for\ LBE)\:=0
-/instance/BlockEncoding/Choose\ the\ strategy\ for\ the\ edge\ rating\:=DISJUNCTIVE_RATING
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding/Minimize\ Call\ and\ Return\ Edges=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding/Enter\ Rating-Boundary\ (empty\ for\ LBE)\:=0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding/Choose\ the\ strategy\ for\ the\ edge\ rating\:=DISJUNCTIVE_RATING
 #Tue Jul 15 20:56:38 EST 2014
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Simplify\ code\ blocks=true
