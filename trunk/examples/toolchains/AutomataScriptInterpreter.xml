@@ -1,3 +1,3 @@
 <toolchain>
-	<plugin id="AutomataScriptInterpreter"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter"/>
 </toolchain>

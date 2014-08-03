@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
+import de.uni_freiburg.informatik.ultimate.automata.ExampleNWAFactory;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -34,6 +35,12 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) {
+		
+		//TODO: Now you can get instances of your library classes for the current toolchain like this: 
+		//NWA is nevertheless very broken, as its static initialization prevents parallelism 
+		//Surprisingly, this call lazily initializes the static fields of NWA Lib and, like magic, the toolchain works ...
+		mServices.getServiceInstance(ExampleNWAFactory.class);
+		
 		AssignableTest.initPrimitiveTypes();
 		TestFileInterpreter ti = new TestFileInterpreter(mServices);
 		ti.interpretTestFile((AtsASTNode) root);
