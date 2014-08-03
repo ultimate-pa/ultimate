@@ -10,13 +10,9 @@ implementation main() returns ()
 {
   var i : int;
   i := 0;
-  while (true)
+  while (i < 1048)
   {
-    if (i < 1048) {
     assert 4 + i <= 1048;
-    } else {
-      break;
-    }
     i := i + 4;
   }
 }
