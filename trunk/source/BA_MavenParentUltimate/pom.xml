@@ -206,7 +206,7 @@
 		<module>../TraceAbstractionWithAFAs</module>
 		<module>../JavaCup</module>
 		<module>../RCFGBuilder</module>
-		<module>../NestedWordAutomata</module>
+		
 		<module>../CodeCheck</module>
 		<module>../Library-log4j</module>
 		<module>../ACSLParser</module>
@@ -238,6 +238,7 @@
 		<module>../Library-UltimateUtil</module>
 		<module>../Library-SMTLIB</module>
 		<module>../Library-LassoRanker</module>
+		<module>../Library-Automata</module>
 		<module>../BuchiProgramProduct</module>
 		<module>../LTL2aut</module>
 		<module>../ReachingDefinitions</module>
