@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -55,31 +55,20 @@ public abstract class Xnf extends Nnf {
 				resOuterSet.add(new HashSet<Term>());
 				for (Term inputInner : newArgs) {
 					//e.g. for CNF we iterate over each disjunct of the input
-					HashSet<Set<Term>> oldResOuterSet = resOuterSet;
-					resOuterSet = new HashSet<Set<Term>>();
 					if ((inputInner instanceof ApplicationTerm) && 
 							((ApplicationTerm) inputInner).getFunction().getName().equals(outerConnectiveSymbol())) {
+						HashSet<Set<Term>> oldResOuterSet = resOuterSet;
+						resOuterSet = new HashSet<Set<Term>>();
 						// for CNF: if this input conjunct is a disjunction we
 						// have a construct a copy of each result disjunction
 						// and add this disjunct
 						Term[] inputOuters = ((ApplicationTerm) inputInner).getParameters();
-						// for CNF: we iterate over all disjuncts
-						for (Term inputOuter : inputOuters) {
-							for (Set<Term> oldOuter : oldResOuterSet) {
-								HashSet<Term> newOuter = new HashSet<Term>(oldOuter);
-								newOuter.add(inputOuter);
-								resOuterSet.add(newOuter);
-							}
-						}
+						product(resOuterSet, oldResOuterSet, 
+								new HashSet<Term>(Arrays.asList(inputOuters)));
 					} else {
 						// for CNF if this input conjunct is an atom have to add
 						// this atom to each result disjunction
-						for (Set<Term> oldOuter : oldResOuterSet) {
-							// for efficiency we reuse the old set in this case
-							Set<Term> newOuter = oldOuter;
-							newOuter.add(inputInner);
-							resOuterSet.add(newOuter);
-						}
+						product(resOuterSet, inputInner);
 					}
 				}
 				// remove all sets for which a strict subset is contained
@@ -116,6 +105,74 @@ public abstract class Xnf extends Nnf {
 				throw new AssertionError();
 			}
 			setResult(result);
+		}
+		
+		/**
+		 * Add inputInner to all subsets of resOuterSet.
+		 * Additional Optimization:
+		 * In a preprocessing step, we check if the singleton {inputInner} is
+		 * already an element of resOuter Set. If this is the case we do not
+		 * add anything.
+		 * This optimization (in terms of CNF) corresponds to the fact
+		 * that
+		 * (A /\ (B_1 \/ B2) /\ (C_1 \/ C2))  \/ A
+		 * and 
+		 * (A /\ (B_1 \/ B2) /\ (C_1 \/ C2))
+		 * are equivalent.
+		 */
+		private void product(HashSet<Set<Term>> resOuterSet, Term inputInner) {
+			if (resOuterSet.contains(Collections.singleton(inputInner))) {
+				// do nothing
+			} else {
+				for (Set<Term> outer : resOuterSet) {
+					// for efficiency we reuse the old set in this case
+					outer.add(inputInner);
+				}
+			}
+		}
+		
+		/**
+		 * Take inputOuters.lenth copies of oldResOuterSet. In each copy we
+		 * put in each set an element of inputOuters.
+		 * 
+		 * Additional Optimization:
+		 * In a preprocessing step, we check if there is an element x in 
+		 * inputOuters, such that the singleton {x} is in oldResOuter set.
+		 * If this is the case, 
+		 * - we remove x from inputOuters, 
+		 * - we remove {x} from oldResOuterSet, and
+		 * - we add {x} to resOuterSet
+		 * This optimization (in terms of CNF) corresponds to the fact
+		 * that
+		 * (A /\ (B_1 \/ B2) /\ (C_1 \/ C2))  \/ (A /\ D)
+		 * and 
+		 * (A /\ (B_1 \/ B2 \/ D) /\ (C_1 \/ C2 \/ D))
+		 * are equivalent.
+		 *  
+		 */
+		private void product(HashSet<Set<Term>> resOuterSet,
+				HashSet<Set<Term>> oldResOuterSet, Set<Term> inputOuters) {
+			// above mentioned preprocessing
+			Iterator<Set<Term>> it = oldResOuterSet.iterator();
+			while (it.hasNext()) {
+				Set<Term> oldResOuter = it.next();
+				if (oldResOuter.size() == 1) {
+					Term oldResOuterSingletonElement = oldResOuter.iterator().next();
+					if (inputOuters.contains(oldResOuterSingletonElement)) {
+						inputOuters.remove(oldResOuterSingletonElement);
+						resOuterSet.add(oldResOuter);
+						it.remove();
+					}
+				}
+			}
+			// for CNF: we iterate over all disjuncts
+			for (Term inputOuter : inputOuters) {
+				for (Set<Term> oldOuter : oldResOuterSet) {
+					HashSet<Term> newOuter = new HashSet<Term>(oldOuter);
+					newOuter.add(inputOuter);
+					resOuterSet.add(newOuter);
+				}
+			}
 		}
 
 	}
