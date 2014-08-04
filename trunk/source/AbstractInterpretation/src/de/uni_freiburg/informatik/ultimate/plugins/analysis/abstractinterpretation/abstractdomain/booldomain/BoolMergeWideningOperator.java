@@ -19,7 +19,6 @@ public class BoolMergeWideningOperator implements IMergeOperator<BoolValue.Bool>
 	
 	private BoolDomainFactory m_factory;
 	
-	@SuppressWarnings("unused")
 	private Logger m_logger;
 	
 	public BoolMergeWideningOperator(BoolDomainFactory factory, Logger logger) {
@@ -41,7 +40,7 @@ public class BoolMergeWideningOperator implements IMergeOperator<BoolValue.Bool>
 		
 		// invalid state objects
 		if ((bvalA == null) || (bvalB == null)) {
-			return null;
+			return m_factory.makeTopValue();
 		}
 		
 		Bool boolA = bvalA.getValue();
@@ -59,6 +58,11 @@ public class BoolMergeWideningOperator implements IMergeOperator<BoolValue.Bool>
 		}
 		
 		return m_factory.makeValue(Bool.UNKNOWN);
+	}
+
+	@Override
+	public BoolMergeWideningOperator copy() {
+		return new BoolMergeWideningOperator(m_factory, m_logger);
 	}
 
 }

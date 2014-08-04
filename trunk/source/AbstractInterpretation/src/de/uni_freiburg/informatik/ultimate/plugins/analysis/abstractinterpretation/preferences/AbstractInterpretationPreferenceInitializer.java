@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.preferences;
 
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractDomainRegistry;
@@ -21,6 +21,8 @@ public class AbstractInterpretationPreferenceInitializer extends
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_STATES_UNTIL_MERGE = "Parallel states before merging";
 	public static final String LABEL_STATE_ANNOTATIONS = "Save abstract states as node annotations";
+	public static final String LABEL_WIDENING_FIXEDNUMBERS = "Set of numbers for widening (comma-separated list)";
+	public static final String LABEL_WIDENING_AUTONUMBERS = "Collect literals from the RCFG's expressions";
 	
 	public static final String LABEL_ABSTRACTDOMAIN = "Abstract domain for numbers";
 
@@ -35,10 +37,12 @@ public class AbstractInterpretationPreferenceInitializer extends
 	public static final int DEF_ITERATIONS_UNTIL_WIDENING = 1;
 	public static final int DEF_STATES_UNTIL_MERGE = 1;
 	public static final boolean DEF_STATE_ANNOTATIONS = false;
+	public static final String DEF_WIDENING_FIXEDNUMBERS = "0, 1, 3.14";
+	public static final boolean DEF_WIDENING_AUTONUMBERS = false;
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		AbstractDomainRegistry domainRegistry = AbstractDomainRegistry.getInstance();
+		AbstractDomainRegistry domainRegistry = new AbstractDomainRegistry();
 		
 		List<UltimatePreferenceItem<?>> preferenceItems = new LinkedList<UltimatePreferenceItem<?>>();
 
@@ -53,9 +57,13 @@ public class AbstractInterpretationPreferenceInitializer extends
 				new IUltimatePreferenceItemValidator.IntegerValidator(1, 10000)));
 		preferenceItems.add(new UltimatePreferenceItem<Boolean>(LABEL_STATE_ANNOTATIONS,
 								DEF_STATE_ANNOTATIONS, PreferenceType.Boolean));
+		preferenceItems.add(new UltimatePreferenceItem<String>(LABEL_WIDENING_FIXEDNUMBERS,
+				DEF_WIDENING_FIXEDNUMBERS, PreferenceType.String));
+		preferenceItems.add(new UltimatePreferenceItem<Boolean>(LABEL_WIDENING_AUTONUMBERS,
+				DEF_WIDENING_AUTONUMBERS, PreferenceType.Boolean));
 		
 		// collect valid domain IDs
-		Collection<String> domainIDs = domainRegistry.getDomainFactories().keySet();
+		Set<String> domainIDs = domainRegistry.getDomainIDs();
 		String[] validDomainIDs = new String[domainIDs.size()];
 		int i = 0;
 		for (String id : domainIDs) {
@@ -72,26 +80,30 @@ public class AbstractInterpretationPreferenceInitializer extends
 					null, PreferenceType.Label));
 			
 			// widening operators
-			Collection<String> wideningOps = domainRegistry.getWideningOperators(id).keySet();
-			String[] validWideningOps = new String[wideningOps.size()];
-			i = 0;
-			for (String op : wideningOps) {
-				validWideningOps[i] = op;
-				i++;
+			Set<String> wideningOps = domainRegistry.getWideningOperators(id);
+			if (wideningOps.size() > 0) {
+				String[] validWideningOps = new String[wideningOps.size()];
+				i = 0;
+				for (String op : wideningOps) {
+					validWideningOps[i] = op;
+					i++;
+				}
+				preferenceItems.add(new UltimatePreferenceItem<String>(String.format(LABEL_WIDENINGOP, id),
+						validWideningOps[0], PreferenceType.Combo, validWideningOps));
 			}
-			preferenceItems.add(new UltimatePreferenceItem<String>(String.format(LABEL_WIDENINGOP, id),
-					validWideningOps[0], PreferenceType.Combo, validWideningOps));
 			
 			// merge operators
-			Collection<String> mergeOps = domainRegistry.getMergeOperators(id).keySet();
-			String[] validMergeOps = new String[mergeOps.size()];
-			i = 0;
-			for (String op : mergeOps) {
-				validMergeOps[i] = op;
-				i++;
+			Set<String> mergeOps = domainRegistry.getMergeOperators(id);
+			if (mergeOps.size() > 0) {
+				String[] validMergeOps = new String[mergeOps.size()];
+				i = 0;
+				for (String op : mergeOps) {
+					validMergeOps[i] = op;
+					i++;
+				}
+				preferenceItems.add(new UltimatePreferenceItem<String>(String.format(LABEL_MERGEOP, id),
+						validMergeOps[0], PreferenceType.Combo, validMergeOps));
 			}
-			preferenceItems.add(new UltimatePreferenceItem<String>(String.format(LABEL_MERGEOP, id),
-					validMergeOps[0], PreferenceType.Combo, validMergeOps));
 		}
 		
 		return preferenceItems.toArray(new UltimatePreferenceItem<?>[0]);

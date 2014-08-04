@@ -18,7 +18,6 @@ public class SignMergeWideningOperator implements IWideningOperator<SignValue.Si
 	
 	private SignDomainFactory m_factory;
 	
-	@SuppressWarnings("unused")
 	private Logger m_logger;
 	
 	public SignMergeWideningOperator(SignDomainFactory factory, Logger logger) {
@@ -37,7 +36,7 @@ public class SignMergeWideningOperator implements IWideningOperator<SignValue.Si
 	public SignValue apply(IAbstractValue<?> oldValue, IAbstractValue<?> newValue) {
 		Sign oldV = (Sign) oldValue.getValue();
 		Sign newV = (Sign) newValue.getValue();
-		if ((oldV == null) || (newV == null)) return null;
+		if ((oldV == null) || (newV == null)) return m_factory.makeTopValue();
 
 		// old is PLUSMINUS : PLUSMINUS
 		if (oldValue.isTop())
@@ -61,6 +60,11 @@ public class SignMergeWideningOperator implements IWideningOperator<SignValue.Si
 		
 		// old is PLUS, new is MINUS or vice versa : PLUSMINUS
 		return m_factory.makeValue(Sign.PLUSMINUS);
+	}
+
+	@Override
+	public SignMergeWideningOperator copy() {
+		return new SignMergeWideningOperator(m_factory, m_logger);
 	}
 
 }

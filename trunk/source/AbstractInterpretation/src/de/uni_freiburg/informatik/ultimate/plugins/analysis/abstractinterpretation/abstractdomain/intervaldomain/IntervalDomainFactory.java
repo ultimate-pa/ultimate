@@ -3,11 +3,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Set;
+
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractDomainRegistry;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IMergeOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IWideningOperator;
 
@@ -19,41 +22,18 @@ public class IntervalDomainFactory implements IAbstractDomainFactory<Interval> {
 	
 	private static final String s_domainID = "INTERVAL";
 	
-	private Logger m_logger;
+	private final Logger m_logger;
+	private final String m_wideningOperatorName, m_mergeOperatorName;
 	
-	private AbstractDomainRegistry m_domainRegistry;
+	private final Set<String> m_numbersForWidening;
 	
-	private IWideningOperator<Interval> m_wideningOp;
-	private IMergeOperator<Interval> m_mergeOp;
+	private IWideningOperator<Interval> m_wideningOperator = null;
 
-	@SuppressWarnings("unchecked")
-	public IntervalDomainFactory(Logger logger, AbstractDomainRegistry domainRegistry, String wideningOperatorName, String mergeOperatorName) {
+	public IntervalDomainFactory(Logger logger, Set<String> numbersForWidening, String wideningOperatorName, String mergeOperatorName) {
 		m_logger = logger;
-		m_domainRegistry = domainRegistry;
-		
-		// create widening operator
-		IWideningOperator<?> wideningOp;
-		try {
-			wideningOp = m_domainRegistry.getWideningOperator(getDomainID(), wideningOperatorName).
-					getConstructor(IntervalDomainFactory.class, Logger.class).newInstance(this, m_logger);
-			m_wideningOp = (IWideningOperator<Interval>) wideningOp;
-		} catch (Exception e) {
-			/*m_logger.warn(String.format("Invalid widening operator %s chosen for the %s domain, using default operator %s",
-					wideningOperatorName, s_domainID, SignMergeWideningOperator.getName()));
-			m_wideningOp = new SignMergeWideningOperator(this, m_logger); // fallback */ // TODO: !!!
-		}
-		
-		// create merge operator
-		IMergeOperator<?> mergeOp;
-		try {
-			mergeOp = m_domainRegistry.getMergeOperator(getDomainID(), mergeOperatorName).
-					getConstructor(IntervalDomainFactory.class, Logger.class).newInstance(this, m_logger);
-			m_mergeOp = (IMergeOperator<Interval>) mergeOp;
-		} catch (Exception e) {
-			/*m_logger.warn(String.format("Invalid merge operator %s chosen for the %s domain, using default operator %s",
-					mergeOperatorName, s_domainID, SignMergeWideningOperator.getName()));
-			m_mergeOp = new SignMergeWideningOperator(this, m_logger); // fallback */ // TODO: !!!
-		}
+		m_numbersForWidening = numbersForWidening;
+		m_wideningOperatorName = wideningOperatorName;
+		m_mergeOperatorName = mergeOperatorName;
 	}
 	
 	public static String getDomainID() {
@@ -64,7 +44,7 @@ public class IntervalDomainFactory implements IAbstractDomainFactory<Interval> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#makeValue(java.lang.Object)
 	 */
 	@Override
-	public IAbstractValue<Interval> makeValue(Interval value) {
+	public IntervalValue makeValue(Interval value) {
 		return new IntervalValue(value, this, m_logger);
 	}
 
@@ -72,15 +52,15 @@ public class IntervalDomainFactory implements IAbstractDomainFactory<Interval> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#makeTopValue()
 	 */
 	@Override
-	public IAbstractValue<Interval> makeTopValue() {
-		return new IntervalValue(new Interval(null, null), this, m_logger);
+	public IntervalValue makeTopValue() {
+		return new IntervalValue(new Interval(Rational.NEGATIVE_INFINITY, Rational.POSITIVE_INFINITY), this, m_logger);
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#makeBottomValue()
 	 */
 	@Override
-	public IAbstractValue<Interval> makeBottomValue() {
+	public IntervalValue makeBottomValue() {
 		return new IntervalValue(new Interval(), this, m_logger);
 	}
 
@@ -88,16 +68,33 @@ public class IntervalDomainFactory implements IAbstractDomainFactory<Interval> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#makeIntegerValue(java.lang.String)
 	 */
 	@Override
-	public IAbstractValue<Interval> makeIntegerValue(String integer) {
-		return new IntervalValue(new Interval(integer, integer), this, m_logger);
+	public IntervalValue makeIntegerValue(String integer) {
+		BigInteger bigInt;
+		try {
+			bigInt = new BigInteger(integer);
+		} catch (NumberFormatException e) {
+			m_logger.warn(String.format("Invalid number format: \"%s\" - Using (-infinity, infinity)", integer));
+			return makeTopValue();
+		}
+		Rational ratInt = Rational.valueOf(bigInt, BigInteger.ONE);
+		return new IntervalValue(new Interval(ratInt), this, m_logger);
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#makeRealValue(java.lang.String)
 	 */
 	@Override
-	public IAbstractValue<Interval> makeRealValue(String real) {
-		return new IntervalValue(new Interval(real, real), this, m_logger);
+	public IntervalValue makeRealValue(String real) {
+		BigDecimal bigDec;
+		try {
+			bigDec = new BigDecimal(real);
+		} catch (NumberFormatException e) {
+			m_logger.warn(String.format("Invalid number format: \"%s\" - Using (-infinity, infinity)", real));
+			return makeTopValue();
+		}
+		Rational lower = Rational.valueOf(bigDec.setScale(0, BigDecimal.ROUND_FLOOR).toBigInteger(), BigInteger.ONE);
+		Rational upper = Rational.valueOf(bigDec.setScale(0, BigDecimal.ROUND_CEILING).toBigInteger(), BigInteger.ONE);
+		return new IntervalValue(new Interval(lower, upper), this, m_logger);
 	}
 
 	/* (non-Javadoc)
@@ -105,7 +102,25 @@ public class IntervalDomainFactory implements IAbstractDomainFactory<Interval> {
 	 */
 	@Override
 	public IWideningOperator<Interval> getWideningOperator() {
-		return m_wideningOp;
+		if (m_wideningOperator == null)
+			m_wideningOperator = makeWideningOperator();
+		return m_wideningOperator.copy();
+	}
+	
+	private IWideningOperator<Interval> makeWideningOperator() {
+		if (m_wideningOperatorName.equals(IntervalQuickWideningOperator.getName()))
+			return new IntervalQuickWideningOperator(this, m_logger);
+
+		if (m_wideningOperatorName.equals(IntervalIntWideningOperator.getName()))
+			return new IntervalIntWideningOperator(this, m_numbersForWidening, m_logger);
+
+		if (m_wideningOperatorName.equals(IntervalSetWideningOperator.getName()))
+			return new IntervalSetWideningOperator(this, m_numbersForWidening, m_logger);
+		
+		// default: IntervalQuickWideningOperator
+		m_logger.warn(String.format("Unknown Interval widening operator \"%s\" chosen, using \"%s\" instead",
+				m_mergeOperatorName, IntervalQuickWideningOperator.getName()));
+		return new IntervalQuickWideningOperator(this, m_logger);
 	}
 
 	/* (non-Javadoc)
@@ -113,7 +128,13 @@ public class IntervalDomainFactory implements IAbstractDomainFactory<Interval> {
 	 */
 	@Override
 	public IMergeOperator<Interval> getMergeOperator() {
-		return m_mergeOp;
+		if (m_mergeOperatorName.equals(IntervalUnionMergeOperator.getName()))
+			return new IntervalUnionMergeOperator(this, m_logger);
+		
+		// default: IntervalUnionMergeOperator
+		m_logger.warn(String.format("Unknown Interval merge operator \"%s\" chosen, using \"%s\" instead",
+				m_mergeOperatorName, IntervalUnionMergeOperator.getName()));
+		return new IntervalUnionMergeOperator(this, m_logger);
 	}
 
 }

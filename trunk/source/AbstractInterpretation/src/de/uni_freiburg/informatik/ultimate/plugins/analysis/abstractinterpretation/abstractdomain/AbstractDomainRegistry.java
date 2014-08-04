@@ -4,12 +4,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolDomainFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolMergeWideningOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain.IntervalDomainFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain.IntervalIntWideningOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain.IntervalQuickWideningOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain.IntervalSetWideningOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain.IntervalUnionMergeOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain.SignDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain.SignMergeWideningOperator;
@@ -21,158 +23,114 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Christopher Dillo
  */
 public class AbstractDomainRegistry {
-	
-	private static AbstractDomainRegistry s_instance;
 
 	/**
-	 * A map of domain IDs to factory classes
+	 * A set of domain IDs
 	 */
-	private Map<String, Class<? extends IAbstractDomainFactory<?>>> m_domainFactories =
-			new HashMap<String, Class<? extends IAbstractDomainFactory<?>>>();
+	private Set<String> m_domainIDs = new HashSet<String>();
 	
 	/**
-	 * A map of domain IDs to maps of operator names to widening operator classes
+	 * A map of domain IDs to sets of operator names
 	 */
-	private Map<String, Map<String, Class<? extends IWideningOperator<?>>>> m_wideningOperators =
-			new HashMap<String, Map<String, Class<? extends IWideningOperator<?>>>>();
+	private Map<String, Set<String>> m_wideningOperators =
+			new HashMap<String, Set<String>>();
 
 	/**
-	 * A map of domain IDs to maps of operator names to merge operator classes
+	 * A map of domain IDs to sets of operator names
 	 */
-	private Map<String, Map<String, Class<? extends IMergeOperator<?>>>> m_mergeOperators = 
-			new HashMap<String, Map<String, Class<? extends IMergeOperator<?>>>>();
+	private Map<String, Set<String>> m_mergeOperators = 
+			new HashMap<String, Set<String>>();
 
-	private AbstractDomainRegistry() {
+	public AbstractDomainRegistry() {
 		// INTERVAL DOMAIN
-		registerDomainFactory(IntervalDomainFactory.getDomainID(), IntervalDomainFactory.class);
-		registerWideningOperator(IntervalDomainFactory.getDomainID(), IntervalQuickWideningOperator.getName(), IntervalQuickWideningOperator.class);
-		registerMergeOperator(IntervalDomainFactory.getDomainID(), IntervalUnionMergeOperator.getName(), IntervalUnionMergeOperator.class);
+		registerDomainFactory(IntervalDomainFactory.getDomainID());
+		registerWideningOperator(IntervalDomainFactory.getDomainID(), IntervalQuickWideningOperator.getName());
+		registerWideningOperator(IntervalDomainFactory.getDomainID(), IntervalIntWideningOperator.getName());
+		registerWideningOperator(IntervalDomainFactory.getDomainID(), IntervalSetWideningOperator.getName());
+		registerMergeOperator(IntervalDomainFactory.getDomainID(), IntervalUnionMergeOperator.getName());
 		
 		// SIGN DOMAIN
-		registerDomainFactory(SignDomainFactory.getDomainID(), SignDomainFactory.class);
-		registerWideningOperator(SignDomainFactory.getDomainID(), SignMergeWideningOperator.getName(), SignMergeWideningOperator.class);
-		registerMergeOperator(SignDomainFactory.getDomainID(), SignMergeWideningOperator.getName(), SignMergeWideningOperator.class);
-	}
-
-	/**
-	 * @return the singleton object...
-	 */
-	public static AbstractDomainRegistry getInstance() {
-		if (s_instance == null)
-			s_instance = new AbstractDomainRegistry();
-		
-		return s_instance;
+		registerDomainFactory(SignDomainFactory.getDomainID());
+		registerWideningOperator(SignDomainFactory.getDomainID(), SignMergeWideningOperator.getName());
+		registerMergeOperator(SignDomainFactory.getDomainID(), SignMergeWideningOperator.getName());
 	}
 	
 	/**
-	 * Register a domain factory class
-	 * @param domainID The domain ID of the given factory's abstract domain system
-	 * @param factoryClass The class to register
+	 * Register an abstract domain system ID
+	 * @param domainID The domain ID of the abstract domain system
 	 * @return True if successful
 	 */
-	public boolean registerDomainFactory(String domainID, Class<? extends IAbstractDomainFactory<?>> factoryClass) {		
-		if (!m_domainFactories.containsKey(domainID)) {
-			return m_domainFactories.put(domainID, factoryClass) != null;
+	public boolean registerDomainFactory(String domainID) {		
+		if (!m_domainIDs.contains(domainID)) {
+			return m_domainIDs.add(domainID);
 		}
 		return false;
 	}
 
 	/**
-	 * @return The map ID->Class of registered domain factories
+	 * @return The set of registered domain IDs
 	 */
-	public Map<String, Class<? extends IAbstractDomainFactory<?>>> getDomainFactories() {
-		return m_domainFactories;
+	public Set<String> getDomainIDs() {
+		return new HashSet<String>(m_domainIDs);
 	}
 
 	/**
-	 * @param domainID
-	 * @return The abstract domain factory for the given domain ID
-	 */
-	public Class<? extends IAbstractDomainFactory<?>> getDomainFactory(String domainID) {
-		return m_domainFactories.get(domainID);
-	}
-
-	/**
-	 * Register a widening operator class
+	 * Register a widening operator
 	 * @param domainID The domain ID of the given widening operator's abstract domain system
 	 * @param name The name of the given widening operator
-	 * @param wideningOperatorClass The class to register
 	 * @return True if successful
 	 */
-	public boolean registerWideningOperator(String domainID, String name, Class<? extends IWideningOperator<?>> wideningOperatorClass) {
-		Map<String, Class<? extends IWideningOperator<?>>> opList = getWideningOperators(domainID);
+	public boolean registerWideningOperator(String domainID, String name) {
+		Set<String> ops = m_wideningOperators.get(domainID);
 		
-		if (opList == null) {
-			opList = new HashMap<String, Class<? extends IWideningOperator<?>>>();
-			m_wideningOperators.put(domainID, opList);
+		if (ops == null) {
+			ops = new HashSet<String>();
+			m_wideningOperators.put(domainID, ops);
 		}
 
-		if (!opList.containsKey(name))
-			return opList.put(name, wideningOperatorClass) != null;
+		if (!ops.contains(name))
+			return ops.add(name);
 		
 		return false;
 	}
 	
 	/**
 	 * @param domainID
-	 * @return The map Name->Class of widening operators registered for the given domain ID
+	 * @return The set of names of widening operators registered for the given domain ID
 	 */
-	public Map<String, Class<? extends IWideningOperator<?>>> getWideningOperators(String domainID) {
-		return m_wideningOperators.get(domainID);
-	}
-	
-	/**
-	 * @param domainID
-	 * @param operatorName
-	 * @return The widening operator with the given name for the given domain ID, null if it does not exist
-	 */
-	public Class<? extends IWideningOperator<?>> getWideningOperator(String domainID, String operatorName) {
-		Map<String, Class<? extends IWideningOperator<?>>> opList = getWideningOperators(domainID);
-		
-		if (opList == null) return null;
-		
-		return opList.get(operatorName);
+	public Set<String> getWideningOperators(String domainID) {
+		Set<String> ops = m_wideningOperators.get(domainID);
+		if (ops == null) return new HashSet<String>();
+		return new HashSet<String>(ops);
 	}
 
 	/**
-	 * Register a merge operator class
+	 * Register a merge operator
 	 * @param domainID The domain ID of the given merge operator's abstract domain system
 	 * @param name The name of the given merge operator
-	 * @param mergeOperatorClass The class to register
 	 * @return True if successful
 	 */
-	public boolean registerMergeOperator(String domainID, String name, Class<? extends IMergeOperator<?>> mergeOperatorClass) {
-		Map<String, Class<? extends IMergeOperator<?>>> opList = getMergeOperators(domainID);
+	public boolean registerMergeOperator(String domainID, String name) {
+		Set<String> ops = m_mergeOperators.get(domainID);
 		
-		if (opList == null) {
-			opList = new HashMap<String, Class<? extends IMergeOperator<?>>>();
-			m_mergeOperators.put(domainID, opList);
+		if (ops == null) {
+			ops = new HashSet<String>();
+			m_mergeOperators.put(domainID, ops);
 		}
 
-		if (!opList.containsKey(name))
-			return opList.put(name, mergeOperatorClass) != null;
+		if (!ops.contains(name))
+			return ops.add(name);
 		
 		return false;
 	}
 
 	/**
 	 * @param domainID
-	 * @return The map Name->Class of merging operators registered for the given domain ID
+	 * @return The set of names of merging operators registered for the given domain ID
 	 */
-	public Map<String, Class<? extends IMergeOperator<?>>> getMergeOperators(String domainID) {
-		return m_mergeOperators.get(domainID);
-	}
-	
-	/**
-	 * @param domainID
-	 * @param operatorName
-	 * @return The merge operator with the given name for the given domain ID, null if it does not exist
-	 */
-	public Class<? extends IMergeOperator<?>> getMergeOperator(String domainID, String operatorName) {
-		Map<String, Class<? extends IMergeOperator<?>>> opList = getMergeOperators(domainID);
-		
-		if (opList == null) return null;
-		
-		return opList.get(operatorName);
+	public Set<String> getMergeOperators(String domainID) {
+		Set<String> ops = m_mergeOperators.get(domainID);
+		if (ops == null) return new HashSet<String>();
+		return new HashSet<String>(ops);
 	}
 }

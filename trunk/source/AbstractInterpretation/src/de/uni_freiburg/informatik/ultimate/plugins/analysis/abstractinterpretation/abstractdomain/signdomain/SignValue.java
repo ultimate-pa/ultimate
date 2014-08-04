@@ -285,7 +285,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			return m_factory.makeValue(Sign.EMPTY);
 		}
 		
-		return m_factory.makeValue(Sign.PLUS); // remainder is always >= 0
+		return m_factory.makeValue(Sign.PLUSMINUS); // remainder is always >= 0, which is only covered by PLUSMINUS
 	}
 
 	/* (non-Javadoc)

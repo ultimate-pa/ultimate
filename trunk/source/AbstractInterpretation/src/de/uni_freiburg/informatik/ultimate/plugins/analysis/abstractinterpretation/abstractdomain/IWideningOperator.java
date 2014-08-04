@@ -21,4 +21,8 @@ public interface IWideningOperator<T> {
 	 */
 	public IAbstractValue<T> apply(IAbstractValue<?> oldValue, IAbstractValue<?> newValue);
 	
+	/**
+	 * @return A copy of this widening operator
+	 */
+	public IWideningOperator<T> copy();
 }

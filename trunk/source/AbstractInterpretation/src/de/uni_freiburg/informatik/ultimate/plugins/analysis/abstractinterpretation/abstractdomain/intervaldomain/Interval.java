@@ -3,136 +3,64 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain;
 
-import java.math.BigInteger;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * An integer interval [l, u] with l <= u
  * (-infinity, infinity), (-infinity, u], [l, infinity) are also allowed
- * l and u are stored as strings, null if at positive/negative infinity
+ * l and u are stored as Rational. If l > u, the interval is empty.
  * 
  * @author Christopher Dillo
  */
 public class Interval {	
-	private String m_lower, m_upper;
-	
-	private boolean m_empty, m_lowerInfty, m_upperInfty;
+	private Rational m_lower, m_upper;
 	
 	/**
 	 * [lowerBound, upperBound] lowerBound <= upperBound
-	 * @param lowerBound integer in string representation for the lower bound of the interval, null for negative infinity
-	 * @param upperBound integer in string representation for the upper bound of the interval, null for positive infinity
+	 * @param lowerBound Rational for the lower bound
+	 * @param upperBound Rational for the upper bound
 	 */
-	public Interval(String lowerBound, String upperBound) {
-		if (lowerBound == null)
-			setLowerToInfty();
-		else
-			setLower(lowerBound);
+	public Interval(Rational lowerBound, Rational upperBound) {
+		m_lower = lowerBound.floor();
+		m_upper = upperBound.ceil();
+	}
 
-		if (upperBound == null)
-			setUpperToInfty();
-		else
-			setUpper(upperBound);
-		
-		// check for lower <= upper. If not: Empty!
-		if (!m_lowerInfty && !m_upperInfty) {
-			BigInteger lower = new BigInteger(m_lower);
-			BigInteger upper = new BigInteger(m_upper);
-			if (lower.compareTo(upper) > 0)
-				setEmpty();
-		}
+	/**
+	 * [bound, bound]
+	 * @param bound Rational for the lower and upper bound
+	 */
+	public Interval(Rational bound) {
+		m_lower = bound.floor();
+		m_upper = bound.ceil();
 	}
 	
 	/**
-	 * Creates an empty interval
+	 * Creates an empty interval [1, -1]
 	 */
 	public Interval() {
-		setEmpty();
-	}
-	
-	private void setLower(String lowerBound) {
-		try {
-			// for real values: discard fractional part (-> floor)
-			BigInteger lower = new BigInteger(lowerBound.split("\\.")[0]);
-			m_lower = lower.toString();
-		} catch (NumberFormatException e) {
-			setLowerToInfty();
-		}
-	}
-	
-	private void setUpper(String upperBound) {
-		try {
-			// for real values: if fractional part isn't zero, add one! (-> ceil)
-			String[] split = upperBound.split("\\.");
-			String trunc = split[0];
-			String frac = (split.length > 1) ? split[1] : "0";
-			BigInteger upper = new BigInteger(trunc);
-			BigInteger fracPart = new BigInteger(frac);
-			if (!fracPart.equals(BigInteger.ZERO)) upper = upper.add(BigInteger.ONE);
-			m_upper = upper.toString();
-		} catch (NumberFormatException e) {
-			setUpperToInfty();
-		}
-	}
-
-	private void setLowerToInfty() {
-		m_lower = null;
-		m_lowerInfty = true;
-		if (m_empty) {
-			m_empty = false;
-			setUpperToInfty();
-		}
-	}
-
-	private void setUpperToInfty() {
-		m_upper = null;
-		m_upperInfty = true;
-		if (m_empty) {
-			m_empty = false;
-			setLowerToInfty();
-		}
-	}
-
-	private void setEmpty() {
-		m_lower = null;
-		m_upper = null;
-		m_lowerInfty = false;
-		m_upperInfty = false;
-		m_empty = true;
+		m_lower = Rational.ONE;
+		m_upper = Rational.MONE;
 	}
 	
 	/**
 	 * @return A string representing the lower bound, null if at negative infinity
 	 */
-	public String getLowerBound() {
+	public Rational getLowerBound() {
 		return m_lower;
 	}
 	
 	/**
 	 * @return A string representing the upper bound, null if at positive infinity
 	 */
-	public String getUpperBound() {
+	public Rational getUpperBound() {
 		return m_upper;
-	}
-	
-	/**
-	 * @return True if the lower bound is at negative infinity
-	 */
-	public boolean lowerBoundIsNegInfty() {
-		return m_lowerInfty;
-	}
-	
-	/**
-	 * @return True if the upper bound is at positive infinity
-	 */
-	public boolean upperBoundIsPosInfty() {
-		return m_upperInfty;
 	}
 
 	/**
 	 * @return True iff the interval is empty
 	 */
 	public boolean isEmpty() {
-		return m_empty;
+		return m_lower.compareTo(m_upper) > 0;
 	}
 	
 	/**
@@ -152,32 +80,24 @@ public class Interval {
 		if (isEmpty() && interval.isEmpty())
 			return true;
 		
-		boolean lowerEqual, upperEqual;
-		
-		if (lowerBoundIsNegInfty()) {
-			lowerEqual = interval.lowerBoundIsNegInfty();
-		} else {
-			if (interval.lowerBoundIsNegInfty())
-				return false;
+		boolean lowerEqual = m_lower.compareTo(interval.getLowerBound()) == 0;
 			
-			lowerEqual = m_lower.equals(interval.getLowerBound());
-		}
-		
-		if (upperBoundIsPosInfty()) {
-			upperEqual = interval.upperBoundIsPosInfty();
-		} else {
-			if (interval.upperBoundIsPosInfty())
-				return false;
-			
-			upperEqual = m_upper.equals(interval.getUpperBound());
-		}
+		boolean upperEqual = m_upper.compareTo(interval.getUpperBound()) == 0;
 		
 		return lowerEqual && upperEqual;
 	}
 	
+	/**
+	 * @return True iff the interval is an interval [a, a] containing only a single integer value
+	 */
+	public boolean isSingleValueInterval() {
+		return m_lower.compareTo(m_upper) == 0;
+	}
+	
 	public String toString() {
-		String lower = m_lowerInfty ?  "(-infinity" : "[" + m_lower;
-		String upper = m_upperInfty ?  "infinity)" : m_upper + "]";
+		if (isEmpty()) return "{}";
+		String lower = (m_lower.compareTo(Rational.NEGATIVE_INFINITY) == 0) ?  "(-infinity" : "[" + m_lower.toString();
+		String upper = (m_upper.compareTo(Rational.POSITIVE_INFINITY) == 0) ?  "infinity)" : m_upper.toString() + "]";
 		return lower + ", " + upper;
 	}
 }

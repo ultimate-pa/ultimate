@@ -4,9 +4,12 @@ Bundle-Name: AbstractInterpretation
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.Activator
-Require-Bundle: Library-log4j;bundle-version="1.2.15",
- UltimateCore;bundle-version="0.0.1",
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;bundle-version="0.0.1"
+Require-Bundle: UltimateCore,
+ Library-log4j,
+ Library-SMTLIB,
+ BoogiePreprocessor,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
+ de.uni_freiburg.informatik.ultimate.irsdependencies
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation

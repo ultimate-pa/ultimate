@@ -12,12 +12,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Christopher Dillo
  *
  */
-public class IntervalQuickWideningOperator implements
-		IWideningOperator<Interval> {
+public class IntervalQuickWideningOperator implements IWideningOperator<Interval> {
 	
 	private IntervalDomainFactory m_factory;
 	
-	@SuppressWarnings("unused")
 	private Logger m_logger;
 	
 	public IntervalQuickWideningOperator(IntervalDomainFactory factory, Logger logger) {
@@ -26,7 +24,7 @@ public class IntervalQuickWideningOperator implements
 	}
 
 	public static String getName() {
-		return "Interval Quick (-infinity, infinity)";
+		return "Quick (-infinity, infinity)";
 	}
 
 	/* (non-Javadoc)
@@ -36,6 +34,11 @@ public class IntervalQuickWideningOperator implements
 	public IAbstractValue<Interval> apply(IAbstractValue<?> oldValue,
 			IAbstractValue<?> newValue) {
 		return m_factory.makeTopValue();
+	}
+
+	@Override
+	public IntervalQuickWideningOperator copy() {
+		return new IntervalQuickWideningOperator(m_factory, m_logger);
 	}
 
 }

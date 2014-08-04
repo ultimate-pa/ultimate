@@ -7,6 +7,7 @@ import java.math.BigInteger;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 
 /**
@@ -40,7 +41,8 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 */
 	@Override
 	public boolean isTop() {
-		return m_value.lowerBoundIsNegInfty() && m_value.upperBoundIsPosInfty();
+		return (m_value.getLowerBound().compareTo(Rational.NEGATIVE_INFINITY) <= 0)
+				&& (m_value.getUpperBound().compareTo(Rational.POSITIVE_INFINITY) >= 0);
 	}
 
 	/* (non-Javadoc)
@@ -70,35 +72,14 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		Interval interval = (Interval) value.getValue();
 		if (interval == null) return false;
 		
+		if (m_value.isEmpty())
+			return interval.isEmpty();
+		
 		boolean lowerIsLessEq, upperIsGreaterEq;
 		
-		if (interval.lowerBoundIsNegInfty()) {
-			if (!m_value.lowerBoundIsNegInfty())
-				return false;
-			lowerIsLessEq = true;
-		} else {
-			if (m_value.lowerBoundIsNegInfty()) {
-				lowerIsLessEq = true;
-			} else {
-				BigInteger l1 = new BigInteger(m_value.getLowerBound());
-				BigInteger l2 = new BigInteger(interval.getLowerBound());
-				lowerIsLessEq = l1.compareTo(l2) <= 0;
-			}
-		}
+		lowerIsLessEq = m_value.getLowerBound().compareTo(interval.getLowerBound()) <= 0;
 
-		if (interval.upperBoundIsPosInfty()) {
-			if (!m_value.upperBoundIsPosInfty())
-				return false;
-			upperIsGreaterEq = true;
-		} else {
-			if (m_value.upperBoundIsPosInfty()) {
-				upperIsGreaterEq = true;
-			} else {
-				BigInteger u1 = new BigInteger(m_value.getUpperBound());
-				BigInteger u2 = new BigInteger(interval.getUpperBound());
-				upperIsGreaterEq = u1.compareTo(u2) >= 0;
-			}
-		}
+		upperIsGreaterEq = m_value.getUpperBound().compareTo(interval.getUpperBound()) >= 0;
 		
 		return lowerIsLessEq && upperIsGreaterEq;
 	}
@@ -111,35 +92,14 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		Interval interval = (Interval) value.getValue();
 		if (interval == null) return false;
 		
+		if (m_value.isEmpty())
+			return true;
+		
 		boolean lowerIsGreaterEq, upperIsLessEq;
 		
-		if (interval.lowerBoundIsNegInfty()) {
-			if (!m_value.lowerBoundIsNegInfty())
-				return false;
-			lowerIsGreaterEq = true;
-		} else {
-			if (m_value.lowerBoundIsNegInfty()) {
-				lowerIsGreaterEq = true;
-			} else {
-				BigInteger l1 = new BigInteger(m_value.getLowerBound());
-				BigInteger l2 = new BigInteger(interval.getLowerBound());
-				lowerIsGreaterEq = l1.compareTo(l2) >= 0;
-			}
-		}
-		
-		if (interval.upperBoundIsPosInfty()) {
-			if (!m_value.upperBoundIsPosInfty())
-				return false;
-			upperIsLessEq = true;
-		} else {
-			if (m_value.upperBoundIsPosInfty()) {
-				upperIsLessEq = true;
-			} else {
-				BigInteger u1 = new BigInteger(m_value.getUpperBound());
-				BigInteger u2 = new BigInteger(interval.getUpperBound());
-				upperIsLessEq = u1.compareTo(u2) <= 0;
-			}
-		}
+		lowerIsGreaterEq = m_value.getLowerBound().compareTo(interval.getLowerBound()) >= 0;
+
+		upperIsLessEq = m_value.getUpperBound().compareTo(interval.getUpperBound()) <= 0;
 		
 		return lowerIsGreaterEq && upperIsLessEq;
 	}
@@ -148,7 +108,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#copy()
 	 */
 	@Override
-	public IAbstractValue<Interval> copy() {
+	public IntervalValue copy() {
 		return m_factory.makeValue(m_value.copy());
 	}
 
@@ -156,33 +116,18 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#add(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public IAbstractValue<Interval> add(IAbstractValue<?> value) {
+	public IntervalValue add(IAbstractValue<?> value) {
 		/*
 		 * [a, b] + [x, y] = [a + x, b + y]
 		 */
 		
 		Interval interval = (Interval) value.getValue();
-		if (interval == null) return m_factory.makeBottomValue();
+		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+			return m_factory.makeBottomValue();
 		
-		String resultLower, resultUpper;
+		Rational resultLower = m_value.getLowerBound().add(interval.getLowerBound());
 		
-		if (m_value.lowerBoundIsNegInfty() || interval.lowerBoundIsNegInfty()) {
-			resultLower = null; // -> -infty
-		} else {
-			BigInteger l1 = new BigInteger(m_value.getLowerBound());
-			BigInteger l2 = new BigInteger(interval.getLowerBound());
-			
-			resultLower = l1.add(l2).toString();
-		}
-
-		if (m_value.upperBoundIsPosInfty() || interval.upperBoundIsPosInfty()) {
-			resultUpper = null; // -> +infty
-		} else {
-			BigInteger u1 = new BigInteger(m_value.getUpperBound());
-			BigInteger u2 = new BigInteger(interval.getUpperBound());
-			
-			resultUpper = u1.add(u2).toString();
-		}
+		Rational resultUpper = m_value.getUpperBound().add(interval.getUpperBound());
 		
 		return m_factory.makeValue(new Interval(resultLower, resultUpper));
 	}
@@ -191,33 +136,18 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#subtract(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public IAbstractValue<Interval> subtract(IAbstractValue<?> value) {
+	public IntervalValue subtract(IAbstractValue<?> value) {
 		/*
 		 * [a, b] - [x, y] = [a - y, b - x]
 		 */
 		
 		Interval interval = (Interval) value.getValue();
-		if (interval == null) return m_factory.makeBottomValue();
+		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+			return m_factory.makeBottomValue();
 		
-		String resultLower, resultUpper;
+		Rational resultLower = m_value.getLowerBound().sub(interval.getUpperBound());
 		
-		if (m_value.lowerBoundIsNegInfty() || interval.upperBoundIsPosInfty()) {
-			resultLower = null; // -> -infty
-		} else {
-			BigInteger l1 = new BigInteger(m_value.getLowerBound());
-			BigInteger u2 = new BigInteger(interval.getUpperBound());
-			
-			resultLower = l1.subtract(u2).toString();
-		}
-	
-		if (m_value.upperBoundIsPosInfty() || interval.lowerBoundIsNegInfty()) {
-			resultUpper = null; // -> +infty
-		} else {
-			BigInteger u1 = new BigInteger(m_value.getUpperBound());
-			BigInteger l2 = new BigInteger(interval.getLowerBound());
-			
-			resultUpper = u1.subtract(l2).toString();
-		}
+		Rational resultUpper = m_value.getUpperBound().sub(interval.getLowerBound());
 		
 		return m_factory.makeValue(new Interval(resultLower, resultUpper));
 	}
@@ -226,7 +156,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#multiply(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public IAbstractValue<Interval> multiply(IAbstractValue<?> value) {
+	public IntervalValue multiply(IAbstractValue<?> value) {
 		/*
 		 * [a, b] * [x, y] = [min(a * x, a * y, b * x, b * y),
 		 * 					   max(a * x, a * y, b * x, b * y)]
@@ -240,21 +170,22 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		 */
 		
 		Interval interval = (Interval) value.getValue();
-		if (interval == null) return m_factory.makeBottomValue();
+		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+			return m_factory.makeBottomValue();
 
-		String resultLower, resultUpper;
+		Rational resultLower, resultUpper;
 
-		// big integers for calculations
-		BigInteger l1 = m_value.lowerBoundIsNegInfty() ? null : new BigInteger(m_value.getLowerBound());
-		BigInteger u1 = m_value.upperBoundIsPosInfty() ? null : new BigInteger(m_value.getUpperBound());
-		BigInteger l2 = interval.lowerBoundIsNegInfty() ? null : new BigInteger(interval.getLowerBound());
-		BigInteger u2 = interval.upperBoundIsPosInfty() ? null : new BigInteger(interval.getUpperBound());
+		// rationals for calculations
+		Rational l1 = m_value.getLowerBound();
+		Rational u1 = m_value.getUpperBound();
+		Rational l2 = interval.getLowerBound();
+		Rational u2 = interval.getUpperBound();
 
 		// flags for sign checks
-		boolean l1_geq0 = !m_value.lowerBoundIsNegInfty() && (l1.compareTo(BigInteger.ZERO) >= 0);
-		boolean u1_geq0 = m_value.upperBoundIsPosInfty() || (u1.compareTo(BigInteger.ZERO) >= 0);
-		boolean l2_geq0 = !interval.lowerBoundIsNegInfty() && (l2.compareTo(BigInteger.ZERO) >= 0);
-		boolean u2_geq0 = interval.upperBoundIsPosInfty() || (u2.compareTo(BigInteger.ZERO) >= 0);
+		boolean l1_geq0 = l1.signum() >= 0;
+		boolean u1_geq0 = u1.signum() >= 0;
+		boolean l2_geq0 = l2.signum() >= 0;
+		boolean u2_geq0 = u2.signum() >= 0;
 		
 		if (l1_geq0) {
 			/*
@@ -266,36 +197,24 @@ public class IntervalValue implements IAbstractValue<Interval> {
 				/*
 				 * 	a >= 0, b >= 0, x >= 0, y >= 0 => [a * x, b * y]
 				 */
-				resultLower = l1.multiply(l2).toString();
-				if (m_value.upperBoundIsPosInfty() || interval.upperBoundIsPosInfty()) {
-					resultUpper = null; // -> +infty
-				} else {
-					resultUpper = u1.multiply(u2).toString();
-				}
+				resultLower = l1.mul(l2);
+				resultUpper = u1.mul(u2);
 			} else {
 				/*
 				 * 	a >= 0, b >= 0, x <= 0, y >= 0 => [b * x, b * y]
 				 * 	a >= 0, b >= 0, x <= 0, y <= 0 => [b * x, a * y]
 				 */
-				if (m_value.upperBoundIsPosInfty()) {
-					resultLower = null; // -> -infty
-				} else {
-					resultLower = u1.multiply(l2).toString();
-				}
+				resultLower = u1.mul(l2);
 				if (u2_geq0) {
 					/*
 					 * 	a >= 0, b >= 0, x <= 0, y >= 0 => [b * x, b * y]
 					 */
-					if (m_value.upperBoundIsPosInfty() || interval.upperBoundIsPosInfty()) {
-						resultUpper = null; // -> +infty
-					} else {
-						resultUpper = u1.multiply(u2).toString();
-					}
+					resultUpper = u1.mul(u2);
 				} else {
 					/*
 					 * 	a >= 0, b >= 0, x <= 0, y <= 0 => [b * x, a * y]
 					 */
-					resultUpper = l1.multiply(u2).toString();
+					resultUpper = l1.mul(u2);
 				}
 			}
 		} else {
@@ -317,16 +236,8 @@ public class IntervalValue implements IAbstractValue<Interval> {
 					/*
 					 * 	a <= 0, b >= 0, x >= 0, y >= 0 => [a * y, b * y]
 					 */
-					if (m_value.lowerBoundIsNegInfty() || interval.upperBoundIsPosInfty()) {
-						resultLower = null; // -> -infty
-					} else {
-						resultLower = l1.multiply(u2).toString();
-					}
-					if (m_value.upperBoundIsPosInfty() || interval.upperBoundIsPosInfty()) {
-						resultUpper = null; // -> +infty
-					} else {
-						resultUpper = u1.multiply(u2).toString();
-					}
+					resultLower = l1.mul(u2);
+					resultUpper = u1.mul(u2);
 				} else {
 					/*
 					 * 	a <= 0, b >= 0, x <= 0, y >= 0 => [min(a * y, b * x), max(a * x, b * y)]
@@ -336,32 +247,18 @@ public class IntervalValue implements IAbstractValue<Interval> {
 						/*
 						 * 	a <= 0, b >= 0, x <= 0, y >= 0 => [min(a * y, b * x), max(a * x, b * y)]
 						 */
-						if (m_value.lowerBoundIsNegInfty() || interval.upperBoundIsPosInfty()
-								|| m_value.upperBoundIsPosInfty() || interval.lowerBoundIsNegInfty()) {
-							resultLower = null; // -> -infty
-							resultUpper = null; // -> +infty
-						} else {
-							BigInteger l1u2 = l1.multiply(u2);
-							BigInteger u1l2 = u1.multiply(l2);
-							resultLower = ((l1u2.compareTo(u1l2) < 0) ? l1u2 : u1l2).toString();
-							BigInteger l1l2 = l1.multiply(l2);
-							BigInteger u1u2 = u1.multiply(u2);
-							resultUpper = ((l1l2.compareTo(u1u2) > 0) ? l1l2 : u1u2).toString();
-						}
+						Rational l1u2 = l1.mul(u2);
+						Rational u1l2 = u1.mul(l2);
+						resultLower = ((l1u2.compareTo(u1l2) < 0) ? l1u2 : u1l2);
+						Rational l1l2 = l1.mul(l2);
+						Rational u1u2 = u1.mul(u2);
+						resultUpper = ((l1l2.compareTo(u1u2) > 0) ? l1l2 : u1u2);
 					} else {
 						/*
 						 * 	a <= 0, b >= 0, x <= 0, y <= 0 => [b * x, a * x]
 						 */
-						if (m_value.upperBoundIsPosInfty() || interval.lowerBoundIsNegInfty()) {
-							resultLower = null; // -> -infty
-						} else {
-							resultLower = u1.multiply(l2).toString();
-						}
-						if (m_value.lowerBoundIsNegInfty() || interval.lowerBoundIsNegInfty()) {
-							resultUpper = null; // -> +infty
-						} else {
-							resultUpper = l1.multiply(l2).toString();
-						}
+						resultLower = u1.mul(l2);
+						resultUpper = l1.mul(l2);
 					}
 				}
 			} else {
@@ -374,12 +271,8 @@ public class IntervalValue implements IAbstractValue<Interval> {
 					/*
 					 * 	a <= 0, b <= 0, x >= 0, y >= 0 => [a * y, b * x]
 					 */
-					if (m_value.lowerBoundIsNegInfty() || interval.upperBoundIsPosInfty()) {
-						resultLower = null; // -> -infty
-					} else {
-						resultLower = l1.multiply(u2).toString();
-					}
-					resultUpper = u1.multiply(l2).toString();
+					resultLower = l1.mul(u2);
+					resultUpper = u1.mul(l2);
 				} else {
 					/*
 					 * 	a <= 0, b <= 0, x <= 0, y >= 0 => [a * y, max(a * x, b * y)]
@@ -389,34 +282,28 @@ public class IntervalValue implements IAbstractValue<Interval> {
 						/*
 						 * 	a <= 0, b <= 0, x <= 0, y >= 0 => [a * y, max(a * x, b * y)]
 						 */
-						if (m_value.lowerBoundIsNegInfty() || interval.upperBoundIsPosInfty()) {
-							resultLower = null; // -> -infty
-						} else {
-							resultLower = l1.multiply(u2).toString();
-						}
-						if (m_value.lowerBoundIsNegInfty() || interval.lowerBoundIsNegInfty()
-								|| m_value.upperBoundIsPosInfty() || interval.upperBoundIsPosInfty()) {
-							resultUpper = null; // -> +infty
-						} else {
-							BigInteger l1l2 = l1.multiply(l2);
-							BigInteger u1u2 = u1.multiply(u2);
-							resultUpper = ((l1l2.compareTo(u1u2) > 0) ? l1l2 : u1u2).toString();
-						}
+						resultLower = l1.mul(u2);
+
+						Rational l1l2 = l1.mul(l2);
+						Rational u1u2 = u1.mul(u2);
+						resultUpper = ((l1l2.compareTo(u1u2) > 0) ? l1l2 : u1u2);
 					} else {
 						/*
 						 * 	a <= 0, b <= 0, x <= 0, y <= 0 => [b * y, a * x]
 						 */
-						resultLower = u1.multiply(u2).toString();
-						if (m_value.lowerBoundIsNegInfty() || interval.lowerBoundIsNegInfty()) {
-							resultUpper = null; // -> +infty
-						} else {
-							resultUpper = l1.multiply(l2).toString();
-						}
+						resultLower = u1.mul(u2);
+						resultUpper = l1.mul(l2);
 					}
 				}
 			}
 		}
 
+		if (resultLower.equals(Rational.NAN))
+			resultLower = Rational.NEGATIVE_INFINITY;
+
+		if (resultUpper.equals(Rational.NAN))
+			resultUpper = Rational.POSITIVE_INFINITY;
+		
 		return m_factory.makeValue(new Interval(resultLower, resultUpper));
 	}
 
@@ -424,195 +311,120 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#divide(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public IAbstractValue<Interval> divide(IAbstractValue<?> value) {
+	public IntervalValue divide(IAbstractValue<?> value) {
 		/*
-		 * [a, b] / [x, y] = [floor(min(a / x, a / y, b / x, b / y)),
-		 * 					ceil(max(a / x, a / y, b / x, b / y))]
+		 * [a, b] / [x, y] = [min(a / x, a / y, b / x, b / y),
+		 * 					max(a / x, a / y, b / x, b / y)]
+		 * Important: Euclidean division!!
 		 * Potential division by zero -> Warning/Error, value to (-infty, infty) ///// BOTTOM!!
 		 * Optimisations by taking signs into account:
-		 * 		a >= 0, b >= 0, x >  0, y >  0 => [floor(a / y), ceil(b / x)]
-		 * 		a >= 0, b >= 0, x <  0, y <  0 => [floor(b / y), ceil(a / x)]
-		 * 		a <= 0, b >= 0, x >  0, y >  0 => [floor(a / x), ceil(b / x)]
-		 * 		a <= 0, b >= 0, x <  0, y <  0 => [floor(b / y), ceil(a / y)]
-		 * 		a <= 0, b <= 0, x >  0, y >  0 => [floor(a / x), ceil(b / y)]
-		 * 		a <= 0, b <= 0, x <  0, y <  0 => [floor(b / x), ceil(a / y)]
+		 * 		a >= 0, b >= 0, x >  0, y >  0 => [a / y, b / x]
+		 * 		a >= 0, b >= 0, x <  0, y <  0 => [b / y, a / x]
+		 * 		a <= 0, b >= 0, x >  0, y >  0 => [a / x, b / x]
+		 * 		a <= 0, b >= 0, x <  0, y <  0 => [b / y, a / y]
+		 * 		a <= 0, b <= 0, x >  0, y >  0 => [a / x, b / y]
+		 * 		a <= 0, b <= 0, x <  0, y <  0 => [b / x, a / y]
 				                x <= 0, y >= 0 => (-infty, infty), Warning/Error
 		 */
 		
 		Interval interval = (Interval) value.getValue();
-		if (interval == null) return m_factory.makeBottomValue();
+		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+			return m_factory.makeBottomValue();
 
-		String resultLower, resultUpper;
+		Rational resultLower, resultUpper;
 
-		// big integers for calculations
-		BigInteger l1 = m_value.lowerBoundIsNegInfty() ? null : new BigInteger(m_value.getLowerBound());
-		BigInteger u1 = m_value.upperBoundIsPosInfty() ? null : new BigInteger(m_value.getUpperBound());
-		BigInteger l2 = interval.lowerBoundIsNegInfty() ? null : new BigInteger(interval.getLowerBound());
-		BigInteger u2 = interval.upperBoundIsPosInfty() ? null : new BigInteger(interval.getUpperBound());
+		// rationals for calculations
+		Rational l1 = m_value.getLowerBound();
+		Rational u1 = m_value.getUpperBound();
+		Rational l2 = interval.getLowerBound();
+		Rational u2 = interval.getUpperBound();
 		
 		// check for division by zero
-		if ((interval.lowerBoundIsNegInfty() || (l2.compareTo(BigInteger.ZERO) <= 0))
-				&& (interval.upperBoundIsPosInfty() || (u2.compareTo(BigInteger.ZERO) >= 0))) {
+		if ((l2.signum() <= 0) && (u2.signum() >= 0)) {
 			m_logger.warn(String.format("Potential division by zero: %s / %s", m_value.toString(), interval.toString()));
 			return m_factory.makeBottomValue();
 		}
 
 		// flags for sign checks
-		boolean l1_geq0 = !m_value.lowerBoundIsNegInfty() && (l1.compareTo(BigInteger.ZERO) >= 0);
-		boolean u1_geq0 = m_value.upperBoundIsPosInfty() || (u1.compareTo(BigInteger.ZERO) >= 0);
-		boolean lu2_g0 = !interval.lowerBoundIsNegInfty() && (l2.compareTo(BigInteger.ZERO) > 0);
+		boolean l1_geq0 = l1.signum() >= 0;
+		boolean u1_geq0 = u1.signum() >= 0;
+		boolean lu2_g0 = l2.signum() > 0;
+
+		// [a, a] / [x, x]
+		if (m_value.isSingleValueInterval() && interval.isSingleValueInterval()) {
+			Rational d = l1.div(l2);
+			return m_factory.makeValue(new Interval(lu2_g0 ? d.floor() : d.ceil()));
+		}
 		
 		if (l1_geq0) {
 			/*
-			 * 		a >= 0, b >= 0, x >  0, y >  0 => [floor(a / y), ceil(b / x)]
-			 * 		a >= 0, b >= 0, x <  0, y <  0 => [floor(b / y), ceil(a / x)]
+			 * 		a >= 0, b >= 0, x >  0, y >  0 => [a / y, b / x]
+			 * 		a >= 0, b >= 0, x <  0, y <  0 => [b / y, a / x]
 			 */
 			if (lu2_g0) {
 				/*
-				 * 		a >= 0, b >= 0, x >  0, y >  0 => [floor(a / y), ceil(b / x)]
+				 * 		a >= 0, b >= 0, x >  0, y >  0 => [a / y, b / x]
 				 */
-				if (interval.upperBoundIsPosInfty()) {
-					resultLower = BigInteger.ZERO.toString();
-				} else {
-					resultLower = l1.divide(u2).toString();
-				}
-				if (m_value.upperBoundIsPosInfty()) {
-					resultUpper = null;
-				} else {
-					BigInteger[] upper = u1.divideAndRemainder(l2);
-					if (upper[1].equals(BigInteger.ZERO)) {
-						resultUpper = upper[0].toString();
-					} else {
-						resultUpper = upper[0].add(BigInteger.ONE).toString(); // round up!
-					}
-				}
+				resultLower = l1.div(u2).floor();
+				resultUpper = u1.div(l2).floor();
 			} else {
 				/*
-				 * 		a >= 0, b >= 0, x <  0, y <  0 => [floor(b / y), ceil(a / x)]
+				 * 		a >= 0, b >= 0, x <  0, y <  0 => [b / y, a / x]
 				 */
-				if (m_value.upperBoundIsPosInfty()) {
-					resultLower = null;
-				} else {
-					BigInteger[] lower = u1.divideAndRemainder(u2);
-					if (lower[1].equals(BigInteger.ZERO)) {
-						resultLower = lower[0].toString();
-					} else {
-						resultLower = lower[0].subtract(BigInteger.ONE).toString(); // round down!
-					}
-				}
-				if (interval.lowerBoundIsNegInfty()) {
-					resultUpper = BigInteger.ZERO.toString();
-				} else {
-					resultUpper = l1.divide(l2).toString();
-				}
+				resultLower = u1.div(u2).ceil();
+				resultUpper = l1.div(l2).ceil();
 			}
 		} else {
 			/*
-			 * 		a <= 0, b >= 0, x >  0, y >  0 => [floor(a / x), ceil(b / x)]
-			 * 		a <= 0, b >= 0, x <  0, y <  0 => [floor(b / y), ceil(a / y)]
-			 * 		a <= 0, b <= 0, x >  0, y >  0 => [floor(a / x), ceil(b / y)]
-			 * 		a <= 0, b <= 0, x <  0, y <  0 => [floor(b / x), ceil(a / y)]
+			 * 		a <= 0, b >= 0, x >  0, y >  0 => [a / x, b / x]
+			 * 		a <= 0, b >= 0, x <  0, y <  0 => [b / y, a / y]
+			 * 		a <= 0, b <= 0, x >  0, y >  0 => [a / x, b / y]
+			 * 		a <= 0, b <= 0, x <  0, y <  0 => [b / x, a / y]
 			 */
 			if (u1_geq0) {
 				/*
-				 * 		a <= 0, b >= 0, x >  0, y >  0 => [floor(a / x), ceil(b / x)]
-				 * 		a <= 0, b >= 0, x <  0, y <  0 => [floor(b / y), ceil(a / y)]
+				 * 		a <= 0, b >= 0, x >  0, y >  0 => [a / x, b / x]
+				 * 		a <= 0, b >= 0, x <  0, y <  0 => [b / y, a / y]
 				 */
 				if (lu2_g0) {
 					/*
-					 * 		a <= 0, b >= 0, x >  0, y >  0 => [floor(a / x), ceil(b / x)]
+					 * 		a <= 0, b >= 0, x >  0, y >  0 => [a / x, b / x]
 					 */
-					if (m_value.lowerBoundIsNegInfty()) {
-						resultLower = null;
-					} else {
-						BigInteger[] lower = l1.divideAndRemainder(l2);
-						if (lower[1].equals(BigInteger.ZERO)) {
-							resultLower = lower[0].toString();
-						} else {
-							resultLower = lower[0].subtract(BigInteger.ONE).toString(); // round down!
-						}
-					}
-					if (m_value.upperBoundIsPosInfty()) {
-						resultUpper = null;
-					} else {
-						BigInteger[] upper = u1.divideAndRemainder(l2);
-						if (upper[1].equals(BigInteger.ZERO)) {
-							resultUpper = upper[0].toString();
-						} else {
-							resultUpper = upper[0].add(BigInteger.ONE).toString(); // round up!
-						}
-					}
+					resultLower = l1.div(l2).floor();
+					resultUpper = u1.div(l2).floor();
 				} else {
 					/*
-					 * 		a <= 0, b >= 0, x <  0, y <  0 => [floor(b / y), ceil(a / y)]
+					 * 		a <= 0, b >= 0, x <  0, y <  0 => [b / y, a / y]
 					 */
-					if (m_value.upperBoundIsPosInfty()) {
-						resultLower = null;
-					} else {
-						BigInteger[] lower = u1.divideAndRemainder(u2);
-						if (lower[1].equals(BigInteger.ZERO)) {
-							resultLower = lower[0].toString();
-						} else {
-							resultLower = lower[0].subtract(BigInteger.ONE).toString(); // round down!
-						}
-					}
-					if (m_value.lowerBoundIsNegInfty()) {
-						resultUpper = null;
-					} else {
-						BigInteger[] upper = l1.divideAndRemainder(u2);
-						if (upper[1].equals(BigInteger.ZERO)) {
-							resultUpper = upper[0].toString();
-						} else {
-							resultUpper = upper[0].add(BigInteger.ONE).toString(); // round up!
-						}
-					}
+					resultLower = u1.div(u2).ceil();
+					resultUpper = l1.div(u2).ceil();
 				}
 			} else {
 				/*
-				 * 		a <= 0, b <= 0, x >  0, y >  0 => [floor(a / x), ceil(b / y)]
-				 * 		a <= 0, b <= 0, x <  0, y <  0 => [floor(b / x), ceil(a / y)]
+				 * 		a <= 0, b <= 0, x >  0, y >  0 => [a / x, b / y]
+				 * 		a <= 0, b <= 0, x <  0, y <  0 => [b / x, a / y]
 				 */
 				if (lu2_g0) {
 					/*
-					 * 		a <= 0, b <= 0, x >  0, y >  0 => [floor(a / x), ceil(b / y)]
+					 * 		a <= 0, b <= 0, x >  0, y >  0 => [a / x, b / y]
 					 */
-					if (m_value.lowerBoundIsNegInfty()) {
-						resultLower = null;
-					} else {
-						BigInteger[] lower = l1.divideAndRemainder(l2);
-						if (lower[1].equals(BigInteger.ZERO)) {
-							resultLower = lower[0].toString();
-						} else {
-							resultLower = lower[0].subtract(BigInteger.ONE).toString(); // round down!
-						}
-					}
-					if (interval.upperBoundIsPosInfty()) {
-						resultUpper = BigInteger.ZERO.toString();
-					} else {
-						resultUpper = u1.divide(u2).toString();
-					}
+					resultLower = l1.div(l2).floor();
+					resultUpper = u1.div(u2).floor();
 				} else {
 					/*
-					 * 		a <= 0, b <= 0, x <  0, y <  0 => [floor(b / x), ceil(a / y)]
+					 * 		a <= 0, b <= 0, x <  0, y <  0 => [b / x, a / y]
 					 */
-					if (interval.lowerBoundIsNegInfty()) {
-						resultLower = BigInteger.ZERO.toString();
-					} else {
-						resultLower = u1.divide(l2).toString();
-					}
-					if (m_value.lowerBoundIsNegInfty()) {
-						resultUpper = null;
-					} else {
-						BigInteger[] upper = l1.divideAndRemainder(u2);
-						if (upper[1].equals(BigInteger.ZERO)) {
-							resultUpper = upper[0].toString();
-						} else {
-							resultUpper = upper[0].add(BigInteger.ONE).toString(); // round up!
-						}
-					}
+					resultLower = u1.div(l2).ceil();
+					resultUpper = l1.div(u2).ceil();
 				}
 			}
 		}
+
+		if (resultLower.equals(Rational.NAN))
+			resultLower = Rational.NEGATIVE_INFINITY;
+
+		if (resultUpper.equals(Rational.NAN))
+			resultUpper = Rational.POSITIVE_INFINITY;
 
 		return m_factory.makeValue(new Interval(resultLower, resultUpper));
 	}
@@ -621,193 +433,83 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#modulo(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public IAbstractValue<Interval> modulo(IAbstractValue<?> value) {
+	public IntervalValue modulo(IAbstractValue<?> value) {
 		/*
-		 * [a, b] % [x, y] = [min(a % x, a % y, b % x, b % y),
-		 * 					   max(a % x, a % y, b % x, b % y)]
+		 * [a, b] % [x, y] = [0, min(max(|a|, |b|), max(|x|, |y|)-1)]
 		 */
 		
 		Interval interval = (Interval) value.getValue();
-		if (interval == null) return m_factory.makeBottomValue();
+		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+			return m_factory.makeBottomValue();
 
-		// big integers for calculations
-		BigInteger l1 = m_value.lowerBoundIsNegInfty() ? null : new BigInteger(m_value.getLowerBound());
-		BigInteger u1 = m_value.upperBoundIsPosInfty() ? null : new BigInteger(m_value.getUpperBound());
-		BigInteger l2 = interval.lowerBoundIsNegInfty() ? null : new BigInteger(interval.getLowerBound());
-		BigInteger u2 = interval.upperBoundIsPosInfty() ? null : new BigInteger(interval.getUpperBound());
+		// [a, a] % [x, x]
+		if (m_value.isSingleValueInterval() && interval.isSingleValueInterval()) {
+			Rational a = m_value.getLowerBound();
+			Rational x = interval.getLowerBound();
+			
+			BigInteger aInt = a.numerator().divide(a.denominator());
+			
+			BigInteger xInt = x.numerator().divide(x.denominator());
+			
+			BigInteger[] dr = aInt.divideAndRemainder(xInt);
+			BigInteger r = dr[1].compareTo(BigInteger.ZERO) >= 0 ? dr[1] : xInt.abs().add(dr[1]);
+
+			return m_factory.makeIntegerValue(r.toString());
+		}
+
+		// rationals for calculations
+		Rational l1 = m_value.getLowerBound();
+		Rational u1 = m_value.getUpperBound();
+		Rational l2 = interval.getLowerBound();
+		Rational u2 = interval.getUpperBound();
 		
 		// check for division by zero
-		if ((interval.lowerBoundIsNegInfty() || (l2.compareTo(BigInteger.ZERO) <= 0))
-				&& (interval.upperBoundIsPosInfty() || (u2.compareTo(BigInteger.ZERO) >= 0))) {
+		if ((l2.signum() <= 0) && (u2.signum() >= 0)) {
 			m_logger.warn(String.format("Potential modulo division by zero: %s %% %s", m_value.toString(), interval.toString()));
 			return m_factory.makeBottomValue();
 		}
 
-		// flags for sign checks
-		boolean lu2_g0 = !interval.lowerBoundIsNegInfty() && (l2.compareTo(BigInteger.ZERO) > 0);
+		Rational max1 = l1.compareTo(u1) > 0 ? l1 : u1;
 		
-		// l1 % l2
-		BigInteger l1ml2 = null;
-		boolean l1ml2_negInf = false;
-		boolean l1ml2_posInf = false;
-		if (m_value.lowerBoundIsNegInfty()) {
-			if (lu2_g0) {
-				l1ml2_negInf = true;
-			} else {
-				l1ml2_posInf = true;
-			}
-		} if (interval.lowerBoundIsNegInfty()) {
-			l1ml2 = l1.negate();
-		} else {
-			l1ml2 = l1.remainder(l2);
-		}
+		Rational max2 = l2.compareTo(u2) > 0 ? l2 : u2;
+		max2 = max2.sub(Rational.ONE);
 		
-		// l1 % u2
-		BigInteger l1mu2 = null;
-		boolean l1mu2_negInf = false;
-		boolean l1mu2_posInf = false;
-		if (m_value.lowerBoundIsNegInfty()) {
-			if (lu2_g0) {
-				l1ml2_negInf = true;
-			} else {
-				l1ml2_posInf = true;
-			}
-		} if (interval.upperBoundIsPosInfty()) {
-			l1mu2 = l1;
-		} else {
-			l1mu2 = l1.remainder(u2);
-		}
-		
-		// u1 % l2
-		BigInteger u1ml2 = null;
-		boolean u1ml2_negInf = false;
-		boolean u1ml2_posInf = false;
-		if (m_value.upperBoundIsPosInfty()) {
-			if (lu2_g0) {
-				u1ml2_posInf = true;
-			} else {
-				u1ml2_negInf = true;
-			}
-		} if (interval.lowerBoundIsNegInfty()) {
-			u1ml2 = u1.negate();
-		} else {
-			u1ml2 = u1.remainder(l2);
-		}
-		
-		// u1 % u2
-		BigInteger u1mu2 = null;
-		boolean u1mu2_negInf = false;
-		boolean u1mu2_posInf = false;
-		if (m_value.upperBoundIsPosInfty()) {
-			if (lu2_g0) {
-				u1mu2_posInf = true;
-			} else {
-				u1mu2_negInf = true;
-			}
-		} if (interval.upperBoundIsPosInfty()) {
-			u1mu2 = u1;
-		} else {
-			u1mu2 = u1.remainder(u2);
-		}
-		
-		// determine minimum for lower bound
-		BigInteger resultLower = null;
-		boolean resultLower_negInf = false;
+		if (max1.compareTo(max2) < 0)
+			return m_factory.makeValue(new Interval(Rational.ZERO, max1));
 
-		if (l1ml2_negInf || l1mu2_negInf || u1ml2_negInf || u1mu2_negInf) {
-			resultLower_negInf = true;
-		} else {
-			resultLower = l1ml2;
-			
-			if (!l1mu2_posInf && ((resultLower == null) || (l1mu2.compareTo(resultLower) < 0)))
-				resultLower = l1mu2;
-
-			if (!u1ml2_posInf && ((resultLower == null) || (u1ml2.compareTo(resultLower) < 0)))
-				resultLower = u1ml2;
-
-			if (!u1mu2_posInf && ((resultLower == null) || (u1mu2.compareTo(resultLower) < 0)))
-				resultLower = u1mu2;
-		}
-		
-		// determine maximum for upper bound
-		BigInteger resultUpper = null;
-		boolean resultUpper_posInf = false;
-
-		if (l1ml2_posInf || l1mu2_posInf || u1ml2_posInf || u1mu2_posInf) {
-			resultUpper_posInf = true;
-		} else {
-			resultLower = l1ml2;
-			
-			if (!l1mu2_negInf && ((resultUpper == null) || (l1mu2.compareTo(resultUpper) > 0)))
-				resultUpper = l1mu2;
-
-			if (!u1ml2_negInf && ((resultUpper == null) || (u1ml2.compareTo(resultUpper) > 0)))
-				resultUpper = u1ml2;
-
-			if (!u1mu2_negInf && ((resultUpper == null) || (u1mu2.compareTo(resultUpper) > 0)))
-				resultUpper = u1mu2;
-		}
-		
-		return m_factory.makeValue(new Interval((resultLower_negInf || (resultLower == null)) ? null : resultLower.toString(),
-				(resultUpper_posInf || (resultUpper == null)) ? null : resultUpper.toString()));
+		return m_factory.makeValue(new Interval(Rational.ZERO, max2));
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#negative()
 	 */
 	@Override
-	public IAbstractValue<Interval> negative() {
-		return m_factory.makeValue(new Interval(m_value.upperBoundIsPosInfty() ? null : m_value.getUpperBound(),
-				m_value.lowerBoundIsNegInfty() ? null : m_value.getUpperBound()));
+	public IntervalValue negative() {
+		return m_factory.makeValue(new Interval(m_value.getUpperBound().negate(), m_value.getLowerBound().negate()));
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public IAbstractValue<Interval> compareIsEqual(IAbstractValue<?> value) {
+	public IntervalValue compareIsEqual(IAbstractValue<?> value) {
 		/*
 			[a, b] == [x, y] => [max(a, x), min(b, y)]
 		*/
 		
 		Interval interval = (Interval) value.getValue();
-		if (interval == null) return m_factory.makeBottomValue();
-		
-		String resultLower, resultUpper;
-		
-		if (m_value.lowerBoundIsNegInfty()) {
-			if (interval.lowerBoundIsNegInfty()) {
-				resultLower = null;
-			} else {
-				resultLower = interval.getLowerBound();
-			}
-		} else if (interval.lowerBoundIsNegInfty()) {
-			resultLower = m_value.getLowerBound();
-		} else {
-			BigInteger l1 = new BigInteger(m_value.getLowerBound());
-			BigInteger l2 = new BigInteger(interval.getLowerBound());
-			if (l1.compareTo(l2) > 0)
-				resultLower = m_value.getLowerBound();
-			else
-				resultLower = interval.getLowerBound();
-		}
+		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+			return m_factory.makeBottomValue();
 
-		if (m_value.upperBoundIsPosInfty()) {
-			if (interval.upperBoundIsPosInfty()) {
-				resultUpper = null;
-			} else {
-				resultUpper = interval.getUpperBound();
-			}
-		} else if (interval.upperBoundIsPosInfty()) {
-			resultUpper = m_value.getUpperBound();
-		} else {
-			BigInteger u1 = new BigInteger(m_value.getUpperBound());
-			BigInteger u2 = new BigInteger(interval.getUpperBound());
-			if (u1.compareTo(u2) < 0)
-				resultUpper = m_value.getUpperBound();
-			else
-				resultUpper = interval.getUpperBound();
-		}
+		// rationals for calculations
+		Rational l1 = m_value.getLowerBound();
+		Rational u1 = m_value.getUpperBound();
+		Rational l2 = interval.getLowerBound();
+		Rational u2 = interval.getUpperBound();
+
+		Rational resultLower = l1.compareTo(l2) > 0 ? l1 : l2;
+
+		Rational resultUpper = u1.compareTo(u2) < 0 ? u1 : u2;
 		
 		return m_factory.makeValue(new Interval(resultLower, resultUpper));
 	}
@@ -816,45 +518,31 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsNotEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public IAbstractValue<Interval> compareIsNotEqual(IAbstractValue<?> value) {
+	public IntervalValue compareIsNotEqual(IAbstractValue<?> value) {
 		/*
 			[a, b] != [x, y] => [min(a, x), max(b, y)]
 			[a, a] != [a, a] => empty
 		*/
 		
 		Interval interval = (Interval) value.getValue();
-		if (interval == null) return m_factory.makeBottomValue();
+		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+			return m_factory.makeBottomValue();
+
+		// rationals for calculations
+		Rational l1 = m_value.getLowerBound();
+		Rational u1 = m_value.getUpperBound();
+		Rational l2 = interval.getLowerBound();
+		Rational u2 = interval.getUpperBound();
 		
 		// [a, a] != [a, a] => empty
-		if (!m_value.lowerBoundIsNegInfty()
-				&& m_value.getLowerBound().equals(m_value.getUpperBound())
-				&& m_value.getLowerBound().equals(interval.getLowerBound())
-				&& m_value.getLowerBound().equals(interval.getUpperBound()))
+		if (m_value.isSingleValueInterval()
+				&& interval.isSingleValueInterval()
+				&& (l1.compareTo(l2) == 0))
 			return m_factory.makeBottomValue();
-		
-		String resultLower, resultUpper;
-		
-		if (m_value.lowerBoundIsNegInfty() || interval.lowerBoundIsNegInfty()) {
-			resultLower = null;
-		} else {
-			BigInteger l1 = new BigInteger(m_value.getLowerBound());
-			BigInteger l2 = new BigInteger(interval.getLowerBound());
-			if (l1.compareTo(l2) < 0)
-				resultLower = m_value.getLowerBound();
-			else
-				resultLower = interval.getLowerBound();
-		}
 
-		if (m_value.upperBoundIsPosInfty() || interval.upperBoundIsPosInfty()) {
-			resultUpper = null;
-		} else {
-			BigInteger u1 = new BigInteger(m_value.getUpperBound());
-			BigInteger u2 = new BigInteger(interval.getUpperBound());
-			if (u1.compareTo(u2) > 0)
-				resultUpper = m_value.getUpperBound();
-			else
-				resultUpper = interval.getUpperBound();
-		}
+		Rational resultLower = l1.compareTo(l2) < 0 ? l1 : l2;
+
+		Rational resultUpper = u1.compareTo(u2) > 0 ? u1 : u2;
 		
 		return m_factory.makeValue(new Interval(resultLower, resultUpper));
 	}
@@ -863,35 +551,20 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsLess(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public IAbstractValue<Interval> compareIsLess(IAbstractValue<?> value) {
+	public IntervalValue compareIsLess(IAbstractValue<?> value) {
 		/*
 			[a, b] <  [x, y] => [a, min(b, y - 1)]
 		*/
 		
 		Interval interval = (Interval) value.getValue();
-		if (interval == null) return m_factory.makeBottomValue();
+		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+			return m_factory.makeBottomValue();
 
-		String resultUpper;
+		// rationals for calculations
+		Rational u1 = m_value.getUpperBound();
+		Rational u2m1 = interval.getUpperBound().sub(Rational.ONE);
 		
-		if (m_value.upperBoundIsPosInfty()) {
-			if (interval.upperBoundIsPosInfty()) {
-				resultUpper = null;
-			} else {
-				resultUpper = (new BigInteger(interval.getUpperBound())).subtract(BigInteger.ONE).toString();
-			}
-		} else {
-			if (interval.upperBoundIsPosInfty()) {
-				resultUpper = m_value.getUpperBound();
-			} else {
-				BigInteger u1 = new BigInteger(m_value.getUpperBound());
-				BigInteger u2 = (new BigInteger(interval.getUpperBound())).subtract(BigInteger.ONE);
-				if (u1.compareTo(u2) <= 0) {
-					resultUpper = m_value.getUpperBound();
-				} else {
-					resultUpper = u2.toString();
-				}
-			}
-		}
+		Rational resultUpper = u1.compareTo(u2m1) < 0 ? u1 : u2m1;
 
 		return m_factory.makeValue(new Interval(m_value.getLowerBound(), resultUpper));
 	}
@@ -900,35 +573,20 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsGreater(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public IAbstractValue<Interval> compareIsGreater(IAbstractValue<?> value) {
+	public IntervalValue compareIsGreater(IAbstractValue<?> value) {
 		/*
 			[a, b] >  [x, y] => [max(a, x + 1), b]
 		*/
 		
 		Interval interval = (Interval) value.getValue();
-		if (interval == null) return m_factory.makeBottomValue();
-	
-		String resultLower;
+		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+			return m_factory.makeBottomValue();
+
+		// rationals for calculations
+		Rational l1 = m_value.getLowerBound();
+		Rational l2p1 = interval.getLowerBound().add(Rational.ONE);
 		
-		if (m_value.lowerBoundIsNegInfty()) {
-			if (interval.lowerBoundIsNegInfty()) {
-				resultLower = null;
-			} else {
-				resultLower = (new BigInteger(interval.getLowerBound())).add(BigInteger.ONE).toString();
-			}
-		} else {
-			if (interval.lowerBoundIsNegInfty()) {
-				resultLower = m_value.getLowerBound();
-			} else {
-				BigInteger l1 = new BigInteger(m_value.getLowerBound());
-				BigInteger l2 = (new BigInteger(interval.getLowerBound())).add(BigInteger.ONE);
-				if (l1.compareTo(l2) >= 0) {
-					resultLower = m_value.getLowerBound();
-				} else {
-					resultLower = l2.toString();
-				}
-			}
-		}
+		Rational resultLower = l1.compareTo(l2p1) > 0 ? l1 : l2p1;
 	
 		return m_factory.makeValue(new Interval(resultLower, m_value.getUpperBound()));
 	}
@@ -937,35 +595,20 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsLessEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public IAbstractValue<Interval> compareIsLessEqual(IAbstractValue<?> value) {
+	public IntervalValue compareIsLessEqual(IAbstractValue<?> value) {
 		/*
 			[a, b] <= [x, y] => [a, min(b, y)]
 		*/
 		
 		Interval interval = (Interval) value.getValue();
-		if (interval == null) return m_factory.makeBottomValue();
-	
-		String resultUpper;
+		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+			return m_factory.makeBottomValue();
+
+		// rationals for calculations
+		Rational u1 = m_value.getUpperBound();
+		Rational u2 = interval.getUpperBound();
 		
-		if (m_value.upperBoundIsPosInfty()) {
-			if (interval.upperBoundIsPosInfty()) {
-				resultUpper = null;
-			} else {
-				resultUpper = interval.getUpperBound();
-			}
-		} else {
-			if (interval.upperBoundIsPosInfty()) {
-				resultUpper = m_value.getUpperBound();
-			} else {
-				BigInteger u1 = new BigInteger(m_value.getUpperBound());
-				BigInteger u2 = new BigInteger(interval.getUpperBound());
-				if (u1.compareTo(u2) <= 0) {
-					resultUpper = m_value.getUpperBound();
-				} else {
-					resultUpper = interval.getUpperBound();
-				}
-			}
-		}
+		Rational resultUpper = u1.compareTo(u2) < 0 ? u1 : u2;
 	
 		return m_factory.makeValue(new Interval(m_value.getLowerBound(), resultUpper));
 	}
@@ -974,35 +617,20 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsGreaterEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public IAbstractValue<Interval> compareIsGreaterEqual(IAbstractValue<?> value) {
+	public IntervalValue compareIsGreaterEqual(IAbstractValue<?> value) {
 		/*
 			[a, b] >= [x, y] => [max(a, x), b]
 		*/
 		
 		Interval interval = (Interval) value.getValue();
-		if (interval == null) return m_factory.makeBottomValue();
-	
-		String resultLower;
+		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+			return m_factory.makeBottomValue();
+
+		// rationals for calculations
+		Rational l1 = m_value.getLowerBound();
+		Rational l2 = interval.getLowerBound();
 		
-		if (m_value.lowerBoundIsNegInfty()) {
-			if (interval.lowerBoundIsNegInfty()) {
-				resultLower = null;
-			} else {
-				resultLower = interval.getLowerBound();
-			}
-		} else {
-			if (interval.lowerBoundIsNegInfty()) {
-				resultLower = m_value.getLowerBound();
-			} else {
-				BigInteger l1 = new BigInteger(m_value.getLowerBound());
-				BigInteger l2 = new BigInteger(interval.getLowerBound());
-				if (l1.compareTo(l2) >= 0) {
-					resultLower = m_value.getLowerBound();
-				} else {
-					resultLower = interval.getLowerBound();
-				}
-			}
-		}
+		Rational resultLower = l1.compareTo(l2) > 0 ? l1 : l2;
 	
 		return m_factory.makeValue(new Interval(resultLower, m_value.getUpperBound()));
 	}

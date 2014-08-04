@@ -3,6 +3,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory;
@@ -58,7 +61,17 @@ public class BoolDomainFactory implements IAbstractDomainFactory<BoolValue.Bool>
 	 */
 	@Override
 	public BoolValue makeIntegerValue(String integer) {
-		if (integer == "0") return new BoolValue(Bool.FALSE, this, m_logger); // TODO: proper int string handling
+		BigInteger number;
+		try {
+			number = new BigInteger(integer);
+		} catch (NumberFormatException e) {
+			m_logger.warn(String.format("Invalid number format: \"%s\" - Using Bool.UNKNOWN", integer));
+			return new BoolValue(Bool.UNKNOWN, this, m_logger);
+		}
+		
+		if (number.equals(BigInteger.ZERO))
+			return new BoolValue(Bool.FALSE, this, m_logger);
+		
 		return new BoolValue(Bool.TRUE, this, m_logger);
 	}
 
@@ -67,7 +80,17 @@ public class BoolDomainFactory implements IAbstractDomainFactory<BoolValue.Bool>
 	 */
 	@Override
 	public BoolValue makeRealValue(String real) {
-		if (real == "0") return new BoolValue(Bool.FALSE, this, m_logger); // TODO: proper real string handling
+		BigDecimal number;
+		try {
+			number = new BigDecimal(real);
+		} catch (NumberFormatException e) {
+			m_logger.warn(String.format("Invalid number format: \"%s\" - Using Bool.UNKNOWN", real));
+			return new BoolValue(Bool.UNKNOWN, this, m_logger);
+		}
+		
+		if (number.signum() == 0)
+			return new BoolValue(Bool.FALSE, this, m_logger);
+		
 		return new BoolValue(Bool.TRUE, this, m_logger);
 	}
 	

@@ -3,9 +3,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractDomainRegistry;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IMergeOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IWideningOperator;
@@ -19,41 +21,14 @@ public class SignDomainFactory implements IAbstractDomainFactory<SignValue.Sign>
 
 	private static final String s_domainID = "SIGN";
 	
-	private Logger m_logger;
+	private final Logger m_logger;
 	
-	private AbstractDomainRegistry m_domainRegistry;
-	
-	private IWideningOperator<SignValue.Sign> m_wideningOp;
-	private IMergeOperator<SignValue.Sign> m_mergeOp;
+	private final String m_wideningOperatorName, m_mergeOperatorName;
 
-	@SuppressWarnings("unchecked")
-	public SignDomainFactory(Logger logger, AbstractDomainRegistry domainRegistry, String wideningOperatorName, String mergeOperatorName) {
+	public SignDomainFactory(Logger logger, String wideningOperatorName, String mergeOperatorName) {
 		m_logger = logger;
-		m_domainRegistry = domainRegistry;
-		
-		// create widening operator
-		IWideningOperator<?> wideningOp;
-		try {
-			wideningOp = m_domainRegistry.getWideningOperator(getDomainID(), wideningOperatorName).
-					getConstructor(SignDomainFactory.class, Logger.class).newInstance(this, m_logger);
-			m_wideningOp = (IWideningOperator<SignValue.Sign>) wideningOp;
-		} catch (Exception e) {
-			m_logger.warn(String.format("Invalid widening operator %s chosen for the %s domain, using default operator %s",
-					wideningOperatorName, s_domainID, SignMergeWideningOperator.getName()));
-			m_wideningOp = new SignMergeWideningOperator(this, m_logger); // fallback
-		}
-		
-		// create merge operator
-		IMergeOperator<?> mergeOp;
-		try {
-			mergeOp = m_domainRegistry.getMergeOperator(getDomainID(), mergeOperatorName).
-					getConstructor(SignDomainFactory.class, Logger.class).newInstance(this, m_logger);
-			m_mergeOp = (IMergeOperator<SignValue.Sign>) mergeOp;
-		} catch (Exception e) {
-			m_logger.warn(String.format("Invalid merge operator %s chosen for the %s domain, using default operator %s",
-					mergeOperatorName, s_domainID, SignMergeWideningOperator.getName()));
-			m_mergeOp = new SignMergeWideningOperator(this, m_logger); // fallback
-		}
+		m_wideningOperatorName = wideningOperatorName;
+		m_mergeOperatorName = mergeOperatorName;
 	}
 	
 	public static String getDomainID() {
@@ -89,12 +64,20 @@ public class SignDomainFactory implements IAbstractDomainFactory<SignValue.Sign>
 	 */
 	@Override
 	public SignValue makeIntegerValue(String integer) {
-		// TODO: Representation of integers as a string??
+		BigInteger number;
+		try {
+			number = new BigInteger(integer);
+		} catch (NumberFormatException e) {
+			m_logger.warn(String.format("Invalid number format: \"%s\" - Using Sign.PLUSMINUS", integer));
+			return new SignValue(Sign.PLUSMINUS, this, m_logger);
+		}
 		
-		if (integer.equals("0"))
+		int signum = number.signum();
+		
+		if (signum == 0)
 			return new SignValue(Sign.ZERO, this, m_logger);
 		
-		if (integer.startsWith("-"))
+		if (signum < 0)
 			return new SignValue(Sign.MINUS, this, m_logger);
 		
 		return new SignValue(Sign.PLUS, this, m_logger);
@@ -105,12 +88,20 @@ public class SignDomainFactory implements IAbstractDomainFactory<SignValue.Sign>
 	 */
 	@Override
 	public SignValue makeRealValue(String real) {
-		// TODO: Representation of reals as a string??
+		BigDecimal number;
+		try {
+			number = new BigDecimal(real);
+		} catch (NumberFormatException e) {
+			m_logger.warn(String.format("Invalid number format: \"%s\" - Using Sign.PLUSMINUS", real));
+			return new SignValue(Sign.PLUSMINUS, this, m_logger);
+		}
 		
-		if (real.equals("0"))
+		int signum = number.signum();
+		
+		if (signum == 0)
 			return new SignValue(Sign.ZERO, this, m_logger);
 		
-		if (real.startsWith("-"))
+		if (signum < 0)
 			return new SignValue(Sign.MINUS, this, m_logger);
 		
 		return new SignValue(Sign.PLUS, this, m_logger);
@@ -121,7 +112,13 @@ public class SignDomainFactory implements IAbstractDomainFactory<SignValue.Sign>
 	 */
 	@Override
 	public IWideningOperator<SignValue.Sign> getWideningOperator() {
-		return m_wideningOp;
+		if (m_wideningOperatorName.equals(SignMergeWideningOperator.getName()))
+			return new SignMergeWideningOperator(this, m_logger);
+		
+		// default: SignMergeWideningOperator
+		m_logger.warn(String.format("Unknown Sign widening operator \"%s\" chosen, using \"%s\" instead",
+				m_mergeOperatorName, SignMergeWideningOperator.getName()));
+		return new SignMergeWideningOperator(this, m_logger);
 	}
 
 	/* (non-Javadoc)
@@ -129,7 +126,13 @@ public class SignDomainFactory implements IAbstractDomainFactory<SignValue.Sign>
 	 */
 	@Override
 	public IMergeOperator<SignValue.Sign> getMergeOperator() {
-		return m_mergeOp;
+		if (m_mergeOperatorName.equals(SignMergeWideningOperator.getName()))
+			return new SignMergeWideningOperator(this, m_logger);
+		
+		// default: SignMergeWideningOperator
+		m_logger.warn(String.format("Unknown Sign merge operator \"%s\" chosen, using \"%s\" instead",
+				m_mergeOperatorName, SignMergeWideningOperator.getName()));
+		return new SignMergeWideningOperator(this, m_logger);
 	}
 
 }

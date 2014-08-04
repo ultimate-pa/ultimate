@@ -45,7 +45,7 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 	 */
 	@Override
 	protected String[] getFieldNames() {
-		return new String[] { "Abstract states",  "Abstract values", "Passed loop entry nodes", "Traces"};
+		return new String[] { "Abstract states",  "Abstract values", "Traces"};
 	}
 
 	/* (non-Javadoc)
@@ -63,31 +63,18 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 			for (String stateKey : m_states.keySet()) {
 				AbstractState state = m_states.get(stateKey);
 				if (state != null) {
-					List<Map<String, IAbstractValue<?>>> layer = state.getValues();
+					List<AbstractState.CallStackElement> layer = state.getCallStack();
 					Map<String, Map<String, IAbstractValue<?>>> layerMap =
 							new HashMap<String, Map<String, IAbstractValue<?>>>(layer.size());
-					for (int j = 0; j < layer.size(); j++)
-						layerMap.put(String.format("Scope level %d", j), layer.get(j));
+					for (int j = 0; j < layer.size(); j++) {
+						AbstractState.CallStackElement cse = layer.get(j);
+						String functionName = cse.getFunctionName();
+						layerMap.put(String.format("%s", functionName.equals("") ? "GLOBAL" : functionName), cse.getValues());
+					}
 					values.put(stateKey, layerMap);
 				}
 			}
 			return values;
-		case "Passed loop entry nodes" :
-			if (m_states == null) return null;
-			Map<String, Map<String, Integer>> loopEntryNodes =
-				new HashMap<String, Map<String, Integer>>(m_states.size());
-			for (String stateKey : m_states.keySet()) {
-				AbstractState state = m_states.get(stateKey);
-				if (state != null) {
-					Map<RCFGNode, Integer> nodes = state.getLoopEntryNodes();
-					Map<String, Integer> nodeMap =
-							new HashMap<String, Integer>(nodes.size());
-					for (RCFGNode node : nodes.keySet())
-						nodeMap.put(node.toString(), nodes.get(node));
-					loopEntryNodes.put(stateKey, nodeMap);
-				}
-			}
-			return loopEntryNodes;
 		case "Traces" :
 			if (m_states == null) return null;
 			Map<String, List<String>> traces =

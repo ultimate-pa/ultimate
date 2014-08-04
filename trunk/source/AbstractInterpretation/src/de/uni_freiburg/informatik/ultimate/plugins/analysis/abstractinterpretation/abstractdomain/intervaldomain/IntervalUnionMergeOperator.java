@@ -3,10 +3,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain;
 
-import java.math.BigInteger;
-
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IMergeOperator;
 
@@ -18,7 +17,6 @@ public class IntervalUnionMergeOperator implements IMergeOperator<Interval> {
 	
 	private IntervalDomainFactory m_factory;
 	
-	@SuppressWarnings("unused")
 	private Logger m_logger;
 	
 	public IntervalUnionMergeOperator(IntervalDomainFactory factory, Logger logger) {
@@ -42,32 +40,22 @@ public class IntervalUnionMergeOperator implements IMergeOperator<Interval> {
 		Interval intervalA = (Interval) valueA.getValue();
 		Interval intervalB = (Interval) valueB.getValue();
 		if ((intervalA == null) || (intervalB == null)) return m_factory.makeBottomValue();
+
+		Rational lA = intervalA.getLowerBound();
+		Rational uA = intervalA.getUpperBound();
+		Rational lB = intervalB.getLowerBound();
+		Rational uB = intervalB.getUpperBound();
 		
-		String resultLower, resultUpper;
-		
-		if (intervalA.lowerBoundIsNegInfty() || intervalB.lowerBoundIsNegInfty()) {
-			resultLower = null;
-		} else {
-			BigInteger lA = new BigInteger(intervalA.getLowerBound());
-			BigInteger lB = new BigInteger(intervalB.getLowerBound());
-			if (lA.compareTo(lB) <= 0)
-				resultLower = intervalA.getLowerBound();
-			else
-				resultLower = intervalB.getLowerBound();
-		}
-	
-		if (intervalA.upperBoundIsPosInfty() || intervalB.upperBoundIsPosInfty()) {
-			resultUpper = null;
-		} else {
-			BigInteger uA = new BigInteger(intervalA.getUpperBound());
-			BigInteger uB = new BigInteger(intervalB.getUpperBound());
-			if (uA.compareTo(uB) >= 0)
-				resultUpper = intervalA.getUpperBound();
-			else
-				resultUpper = intervalB.getUpperBound();
-		}
+		Rational resultLower = (lA.compareTo(lB) < 0) ? lA : lB;
+
+		Rational resultUpper = (uA.compareTo(uB) > 0) ? uA : uB;
 		
 		return m_factory.makeValue(new Interval(resultLower, resultUpper));
+	}
+
+	@Override
+	public IntervalUnionMergeOperator copy() {
+		return new IntervalUnionMergeOperator(m_factory, m_logger);
 	}
 
 }

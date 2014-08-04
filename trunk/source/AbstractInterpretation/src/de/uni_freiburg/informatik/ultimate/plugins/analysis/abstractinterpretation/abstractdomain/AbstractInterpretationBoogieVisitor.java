@@ -3,8 +3,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
@@ -31,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolValue.Bool;
 
 /**
  * Used to evaluate boogie statements during abstract interpretation
@@ -49,17 +57,23 @@ public class AbstractInterpretationBoogieVisitor {
 	 */
 	private IAbstractValue<?> m_resultValue;
 	
-	private Logger m_logger;
+	private final Logger m_logger;
 	
-	private IAbstractDomainFactory<?> m_numberFactory;
+	private final BoogieSymbolTable m_symbolTable;
 	
-	private BoolDomainFactory m_boolFactory;
+	private final IAbstractDomainFactory<?> m_numberFactory;
+	
+	private final BoolDomainFactory m_boolFactory;
 	
 	/**
 	 * The identifier for an LHS expression
 	 * TODO: what about arrays and structs?
 	 */
 	private String m_lhsIdentifier;
+	
+	private IType m_lhsType;
+	
+	private Map<Expression, IAbstractValue<?>> m_interimResults = new HashMap<Expression, IAbstractValue<?>>();
 	
 	/**
 	 * Flag set when encountering a unary NOT operation as !(a comp b) needs to be calculated as (a !comp b)
@@ -76,8 +90,10 @@ public class AbstractInterpretationBoogieVisitor {
 		return false;
 		}
 	
-	public AbstractInterpretationBoogieVisitor(Logger logger, IAbstractDomainFactory<?> numberFactory, BoolDomainFactory boolFactory) {
+	public AbstractInterpretationBoogieVisitor(Logger logger, BoogieSymbolTable symbolTable,
+			IAbstractDomainFactory<?> numberFactory, BoolDomainFactory boolFactory) {
 		m_logger = logger;
+		m_symbolTable = symbolTable;
 		m_numberFactory = numberFactory;
 		m_boolFactory = boolFactory;
 	}
@@ -97,6 +113,8 @@ public class AbstractInterpretationBoogieVisitor {
 		if (currentState == null) return null;
 		m_resultingState = currentState.copy();
 		
+		m_interimResults.clear();
+		
 		if (statement instanceof ReturnStatement) {
 			visit((ReturnStatement) statement);
 		} else if (statement instanceof HavocStatement) {
@@ -110,6 +128,8 @@ public class AbstractInterpretationBoogieVisitor {
 		} else {
 			throw new UnsupportedOperationException(String.format("Unsupported statement type %s", statement.getClass()));
 		}
+
+		m_interimResults.clear();
 		
 		return m_resultingState;
 	}
@@ -120,11 +140,32 @@ public class AbstractInterpretationBoogieVisitor {
 	}
 
 	protected void visit(HavocStatement statement) {
+		// TODO: arrays/structs
 		LeftHandSide[] lhs = statement.getIdentifiers();
 		for (int i = 0; i < lhs.length; i++) {
+			m_lhsType = null;
 			evaluateLeftHandSide(lhs[i]); // get identifier to m_lhsIdentifier
-			m_resultingState.writeValue(m_lhsIdentifier, m_numberFactory.makeTopValue());
-			// TODO: Check type, generate abstract value of proper domain (int, bool...)
+			if (m_lhsType != null) {
+				if (m_lhsType instanceof PrimitiveType) {
+					PrimitiveType pt = (PrimitiveType) m_lhsType;
+					IAbstractValue<?> havocedValue = null;
+					if (pt.getTypeCode() == PrimitiveType.BOOL) {
+						havocedValue = m_boolFactory.makeTopValue();
+					} else if ((pt.getTypeCode() == PrimitiveType.INT)
+							|| (pt.getTypeCode() == PrimitiveType.REAL)) {
+						havocedValue = m_numberFactory.makeTopValue();
+					} else {
+						m_logger.error(String.format("Unknown primitive type \"%s\" of left hand side \"%s\".", pt, lhs[i]));
+					}
+					if (havocedValue != null) {
+						if (!m_resultingState.writeValue(m_lhsIdentifier, havocedValue)) {
+							m_resultingState.declareIdentifier(m_lhsIdentifier, havocedValue);
+						}
+					}
+				}
+			} else {
+				m_logger.error(String.format("Type of left hand side \"%s\" could not be determined.", lhs[i]));
+			}
 		}
 	}
 
@@ -143,8 +184,28 @@ public class AbstractInterpretationBoogieVisitor {
 		}
 
 		for (int i = 0; i < lhs.length; i++) {
+			// TODO: arrays/structs
+			m_lhsType = null;
 			evaluateLeftHandSide(lhs[i]); // get identifier to m_lhsIdentifier
-			m_resultingState.writeValue(m_lhsIdentifier, evaluateExpression(rhs[i]));
+			IAbstractValue<?> rhsValue = evaluateExpression(rhs[i]);
+			boolean writeSuccessful = m_resultingState.writeValue(m_lhsIdentifier, rhsValue);
+			if (!writeSuccessful) {
+				if (m_lhsType != null) {
+					if (m_lhsType instanceof PrimitiveType) {
+						PrimitiveType pt = (PrimitiveType) m_lhsType;
+						if (pt.getTypeCode() == PrimitiveType.BOOL) {
+							m_resultingState.declareIdentifier(m_lhsIdentifier, m_boolFactory.makeTopValue());
+						} else if ((pt.getTypeCode() == PrimitiveType.INT)
+								|| (pt.getTypeCode() == PrimitiveType.REAL)) {
+							m_resultingState.declareIdentifier(m_lhsIdentifier, m_numberFactory.makeTopValue());
+						} else {
+							m_logger.error(String.format("Unknown primitive type \"%s\" of left hand side \"%s\".", pt, lhs[i]));
+						}
+					}
+				} else {
+					m_logger.error(String.format("Type of left hand side \"%s\" could not be determined.", lhs[i]));
+				}
+			}
 		}
 	}
 
@@ -162,13 +223,14 @@ public class AbstractInterpretationBoogieVisitor {
 			return;
 		}
 		
-		// TODO: reconstruct variable values that pass through the formula, adjust resulting statement
+		// reconstruct variable values that pass through the formula, adjust resulting statement
+		applyAssumption(statement.getFormula());
 	}
 
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	 * LEFT-HAND-SIDES
 	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
+	
 	protected void evaluateLeftHandSide(LeftHandSide lhs) {
 		if (lhs instanceof ArrayLHS) {
 			visit((ArrayLHS) lhs);
@@ -183,16 +245,21 @@ public class AbstractInterpretationBoogieVisitor {
 	
 	protected void visit(VariableLHS lhs) {
 		m_lhsIdentifier = lhs.getIdentifier();
+		m_lhsType = lhs.getType();
 	}
 
 	protected void visit(StructLHS lhs) {
 		// TODO: support!
 		m_logger.warn(String.format("Unsupported LeftHandSide type: %s", lhs.getClass()));
+		//evaluateLeftHandSide(lhs.getStruct());
+		//m_lhsIdentifier = m_lhsIdentifier + "!" + lhs.getField();
+		m_lhsType = lhs.getType();
 	}
 
 	protected void visit(ArrayLHS lhs) {
 		// TODO: support!
 		m_logger.warn(String.format("Unsupported LeftHandSide type: %s", lhs.getClass()));
+		m_lhsType = lhs.getType();
 	}
 	
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -239,9 +306,20 @@ public class AbstractInterpretationBoogieVisitor {
 			throw new UnsupportedOperationException(String.format("Extend this with new type %s", expr.getClass()));
 		}
 		
+		m_interimResults.put(expr, m_resultValue);
 		IAbstractValue<?> returnValue = m_resultValue;
 		m_resultValue = backup; // restore result value
 		return returnValue;
+	}
+
+	/**
+	 * Evaluate the expression as if it was !(expr)
+	 * @param expr
+	 * @return
+	 */
+	protected IAbstractValue<?> evaluateNegatedExpression(Expression expr) {
+		setNegate();
+		return evaluateExpression(expr);
 	}
 
 	protected void visit(UnaryExpression expr) {
@@ -252,13 +330,11 @@ public class AbstractInterpretationBoogieVisitor {
 				m_resultValue = m_resultValue.negative();
 			break;
 		case LOGICNEG :
-			setNegate();
-			m_resultValue = evaluateExpression(expr.getExpr());
+			m_resultValue = evaluateNegatedExpression(expr.getExpr());
 			break;
 		case OLD :
 			// TODO: trace back? keep reference in abstract state?
 		default:
-			// TODO: support!
 			m_logger.warn(String.format("Unsupported %s operator: %s", expr.getClass(), expr.getOperator()));
 		}
 	}
@@ -288,10 +364,40 @@ public class AbstractInterpretationBoogieVisitor {
 
 	protected void visit(IdentifierExpression expr) {
 		m_resultValue = m_currentState.readValue(expr.getIdentifier());
+		if (m_resultValue == null)
+			m_resultValue = m_resultingState.readValue(expr.getIdentifier());
+		if (m_resultValue == null) {
+			// first time we encounter this identifier: look up in symbol table, impicit havoc to TOP
+			String ident = expr.getIdentifier();
+			IType t = m_symbolTable.getTypeForVariableSymbol(ident, StorageClass.LOCAL,
+					m_resultingState.getCurrentScopeName()); // TODO: current scope; GLOBAL, in/put params...
+			if (t != null) {
+				if (t instanceof PrimitiveType) {
+					PrimitiveType pt = (PrimitiveType) t;
+					IAbstractValue<?> newValue = null;
+					if (pt.getTypeCode() == PrimitiveType.BOOL) {
+						newValue = m_boolFactory.makeTopValue();
+					} else if ((pt.getTypeCode() == PrimitiveType.INT)
+							|| (pt.getTypeCode() == PrimitiveType.REAL)) {
+						newValue = m_numberFactory.makeTopValue();
+					} else {
+						m_logger.error(String.format("Unknown primitive type \"%s\" of identifier \"%s\".", pt, ident));
+					}
+					if (newValue != null) {
+						m_resultValue = newValue;
+						m_resultingState.declareIdentifier(ident, m_resultValue);
+					}
+				} else {
+					m_logger.error(String.format("Unknown non-primitive type \"%s\" of identifier \"%s\".", t, ident));
+				}
+			} else {
+				m_logger.error(String.format("Type of identifier \"%s\" could not be determined.", ident));
+			}
+		}
+		if (m_resultValue == null) m_resultValue = m_numberFactory.makeBottomValue(); // prevent null value in an expression
 	}
 
 	protected void visit(BooleanLiteral expr) {
-		// TODO: support!
 		boolean val = expr.getValue();
 		m_resultValue = m_boolFactory.makeBooleanValue(doNegate() ? !val : val);
 	}
@@ -308,72 +414,145 @@ public class AbstractInterpretationBoogieVisitor {
 
 	protected void visit(BinaryExpression expr) {
 		boolean neg = doNegate();
-		IAbstractValue<?> left, right;
-		left = evaluateExpression(expr.getLeft());
-		right = evaluateExpression(expr.getRight());
-		if ((left == null) || (right == null)) {
-			m_logger.warn(String.format("Encountered null values in an %s", expr.getClass()));
-			m_resultValue = null;
-			return;
-		}
+		IAbstractValue<?> left = null, right = null;
 		switch (expr.getOperator()) {
 		case COMPLT :
+			left = evaluateExpression(expr.getLeft());
+			if (left == null) return;
+			right = evaluateExpression(expr.getRight());
 			m_resultValue = neg ? left.compareIsGreaterEqual(right) : left.compareIsLess(right);
 			break;
 		case COMPGT :
+			left = evaluateExpression(expr.getLeft());
+			if (left == null) return;
+			right = evaluateExpression(expr.getRight());
 			m_resultValue = neg ? left.compareIsLessEqual(right) : left.compareIsGreater(right);
 			break;
 		case COMPLEQ :
+			left = evaluateExpression(expr.getLeft());
+			if (left == null) return;
+			right = evaluateExpression(expr.getRight());
 			m_resultValue = neg ? left.compareIsGreater(right) : left.compareIsLessEqual(right);
 			break;
 		case COMPGEQ :
+			left = evaluateExpression(expr.getLeft());
+			if (left == null) return;
+			right = evaluateExpression(expr.getRight());
 			m_resultValue = neg ? left.compareIsLess(right) : left.compareIsGreaterEqual(right);
 			break;
 		case COMPEQ :
+			left = evaluateExpression(expr.getLeft());
+			if (left == null) return;
+			right = evaluateExpression(expr.getRight());
 			m_resultValue = neg ? left.compareIsNotEqual(right) : left.compareIsEqual(right);
 			break;
 		case COMPNEQ :
+			left = evaluateExpression(expr.getLeft());
+			if (left == null) return;
+			right = evaluateExpression(expr.getRight());
 			m_resultValue = neg ? left.compareIsEqual(right) : left.compareIsNotEqual(right);
 			break;
 		case ARITHPLUS :
+			left = evaluateExpression(expr.getLeft());
+			if (left == null) return;
+			right = evaluateExpression(expr.getRight());
 			m_resultValue = left.add(right);
 			break;
 		case ARITHMINUS :
+			left = evaluateExpression(expr.getLeft());
+			if (left == null) return;
+			right = evaluateExpression(expr.getRight());
 			m_resultValue = left.subtract(right);
 			break;
 		case ARITHMUL :
+			left = evaluateExpression(expr.getLeft());
+			if (left == null) return;
+			right = evaluateExpression(expr.getRight());
 			m_resultValue = left.multiply(right);
 			break;
 		case ARITHDIV :
+			left = evaluateExpression(expr.getLeft());
+			if (left == null) return;
+			right = evaluateExpression(expr.getRight());
 			m_resultValue = left.divide(right);
 			break;
 		case ARITHMOD :
+			left = evaluateExpression(expr.getLeft());
+			if (left == null) return;
+			right = evaluateExpression(expr.getRight());
 			m_resultValue = left.modulo(right);
 			break;
 		case LOGICIFF :
 		case LOGICIMPLIES :
 		case LOGICAND :
 		case LOGICOR :
-			BoolValue leftBool = m_boolFactory.makeFromAbstractValue(left);
-			BoolValue rightBool = m_boolFactory.makeFromAbstractValue(right);
-			BoolValue result;
+			BoolValue leftBool = null, rightBool = null, result;
 			switch (expr.getOperator()) {
 			case LOGICIFF :
-				result = leftBool.logicIff(rightBool);
+				if (neg) {
+					// !(a <-> b) <=> (a || b) && (!a || !b)
+					leftBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getLeft()));
+					if (leftBool == null) return;
+					rightBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getRight()));
+					BoolValue leftBool2 = leftBool.logicOr(rightBool);
+					leftBool = m_boolFactory.makeFromAbstractValue(evaluateNegatedExpression(expr.getLeft()));
+					if (leftBool == null) return;
+					rightBool = m_boolFactory.makeFromAbstractValue(evaluateNegatedExpression(expr.getRight()));
+					BoolValue rightBool2 = leftBool.logicOr(rightBool);
+					result = leftBool2.logicAnd(rightBool2);
+				} else {
+					leftBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getRight()));
+					if (leftBool == null) return;
+					rightBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getRight()));
+					result = leftBool.logicIff(rightBool);
+				}
 				break;
 			case LOGICIMPLIES :
-				result = leftBool.logicImplies(rightBool);
+				leftBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getLeft()));
+				if (leftBool == null) return;
+				if (neg) {
+					// !(a -> b) <=> a && !b
+					rightBool = m_boolFactory.makeFromAbstractValue(evaluateNegatedExpression(expr.getRight()));
+					result = leftBool.logicImplies(rightBool);
+				} else {
+					rightBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getRight()));
+					result = leftBool.logicImplies(rightBool);
+				}
 				break;
 			case LOGICAND :
-				result = leftBool.logicAnd(rightBool);
+				if (neg) {
+					// !(a && b) <=> !a || !b
+					leftBool = m_boolFactory.makeFromAbstractValue(evaluateNegatedExpression(expr.getLeft()));
+					if (leftBool == null) return;
+					rightBool = m_boolFactory.makeFromAbstractValue(evaluateNegatedExpression(expr.getRight()));
+					result = leftBool.logicOr(rightBool);
+				} else {
+					leftBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getLeft()));
+					if (leftBool == null) return;
+					rightBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getRight()));
+					result = leftBool.logicAnd(rightBool);
+				}
 				break;
 			case LOGICOR :
-				result = leftBool.logicOr(rightBool);
+				if (neg) {
+					// !(a || b) <=> !a && !b
+					leftBool = m_boolFactory.makeFromAbstractValue(evaluateNegatedExpression(expr.getLeft()));
+					if (leftBool == null) return;
+					rightBool = m_boolFactory.makeFromAbstractValue(evaluateNegatedExpression(expr.getRight()));
+					result = leftBool.logicAnd(rightBool);
+				} else {
+					leftBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getLeft()));
+					if (leftBool == null) return;
+					rightBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getRight()));
+					result = leftBool.logicOr(rightBool);
+				}
 				break;
 			default :
 				result = m_boolFactory.makeBottomValue();
 			}
-			m_resultValue = neg ? result.logicNot() : result;
+			left = leftBool;
+			right = rightBool;
+			m_resultValue =  result;
 			break;
 		case COMPPO :
 		case BITVECCONCAT :
@@ -392,5 +571,74 @@ public class AbstractInterpretationBoogieVisitor {
 	protected void visit(ArrayAccessExpression expr) {
 		// TODO: support!
 		m_logger.warn(String.format("Unsupported expression type: %s", expr.getClass()));
+	}
+
+
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 * ASSUMPTIONS * * * TODO: General cases
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 * Currently, only expressions "x ~ y" where x or y is a variable are covered. 
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	
+	/**
+	 * Adjusts m_resultingState to narrow the possible values with information taken from
+	 * an assume statement.
+	 * @param assumeFormula The assume statement's formula expression
+	 * @param assumeResult The AbstractValue representing the assume formula's result
+	 */
+	private void applyAssumption(Expression assumeFormula) {
+		// only apply when the assumption can be true
+		IAbstractValue<?> assumeResult = m_interimResults.get(assumeFormula);
+		
+		if (m_boolFactory.makeFromAbstractValue(assumeResult).getValue() == Bool.FALSE)
+			return;
+		
+		if (assumeFormula instanceof BinaryExpression) {
+			BinaryExpression binOp = (BinaryExpression) assumeFormula;
+			m_logger.debug(String.format("ASSUME ## %s", assumeFormula.toString()));
+
+			switch (binOp.getOperator()) {
+			case LOGICAND :
+				if (binOp.getLeft() instanceof BinaryExpression)
+					applyAssumption(binOp.getLeft());
+				if (binOp.getRight() instanceof BinaryExpression)
+					applyAssumption(binOp.getRight());
+			case COMPLT :
+			case COMPGT :
+			case COMPLEQ :
+			case COMPGEQ :
+			case COMPEQ :
+			case COMPNEQ :
+			case LOGICIFF :
+			case LOGICIMPLIES :
+			case LOGICOR :
+				if (binOp.getLeft() instanceof IdentifierExpression) {
+					IdentifierExpression ieLeft = (IdentifierExpression) binOp.getLeft();
+					
+					IAbstractValue<?> oldValue = m_resultingState.readValue(ieLeft.getIdentifier());
+					if (oldValue != null) {
+						IAbstractValue<?> newValue = oldValue.compareIsEqual(assumeResult);
+						m_logger.debug(String.format("ASSUME ## [%s] == [%s] => [%s]", oldValue, assumeResult, newValue));
+						if (newValue != null)
+							m_resultingState.writeValue(ieLeft.getIdentifier(), newValue);
+					}
+				}
+
+				if (binOp.getRight() instanceof IdentifierExpression) {
+					IdentifierExpression ieRight = (IdentifierExpression) binOp.getRight();
+
+					IAbstractValue<?> oldValue = m_currentState.readValue(ieRight.getIdentifier());
+					if (oldValue != null) {
+						IAbstractValue<?> newValue = oldValue.compareIsEqual(assumeResult);
+						if (newValue != null)
+							m_resultingState.writeValue(ieRight.getIdentifier(), newValue);
+					}
+				}
+				break;
+			default:
+				break;
+			}
+			
+		}
 	}
 }

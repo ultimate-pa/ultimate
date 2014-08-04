@@ -19,5 +19,9 @@ public interface IMergeOperator<T> {
 	 * @return A merged value which is greater than both given value wrt the complete lattice of abstract values
 	 */
 	public IAbstractValue<T> apply(IAbstractValue<?> valueA, IAbstractValue<?> valueB);
-	
+
+	/**
+	 * @return A copy of this merge operator
+	 */
+	public IMergeOperator<T> copy();
 }
