@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.junit.runners.BlockJUnit4ClassRunner;
@@ -73,6 +74,13 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 				}
 			}
 		}
+
+		Collections.sort(tests, new Comparator<FrameworkFactoryTest>() {
+			@Override
+			public int compare(FrameworkFactoryTest o1, FrameworkFactoryTest o2) {
+				return o1.getName().compareTo(o2.getName());
+			}
+		});
 
 		return tests;
 	}
