@@ -10,3 +10,4 @@ Require-Bundle: UltimateCore,
  AutomataScriptParser
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter
