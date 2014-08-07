@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;

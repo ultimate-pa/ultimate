@@ -1,56 +1,66 @@
 package de.uni_freiburg.informatik.ultimatetest.automatascript;
 
 import java.io.File;
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
-import de.uni_freiburg.informatik.ultimatetest.traceabstraction.TraceAbstractionTestResultDecider;
 
 public class AutomataScriptTestSummary implements ITestSummary {
 	
 	
-	private String mName;
-	private String mLogFilePath;
-	private TraceAbstractionTestResultDecider mTestResultDecider;
-	private LinkedHashMap<String, String> mSummaryMap;
+	private String m_Name;
+	private String m_LogFilePath;
+	private ITestResultDecider m_TestResultDecider;
+	private List<Triple<String, String, String>> m_Results;
 
 	public AutomataScriptTestSummary(String summaryName, String logFilePath) {
-		mName = summaryName;
-		mLogFilePath = logFilePath;
-		mSummaryMap = new LinkedHashMap<>();
+		m_Name = summaryName;
+		m_LogFilePath = logFilePath;
+		m_Results = new ArrayList<Triple<String, String, String>>();
 	}
 
 	@Override
 	public String getSummaryLog() {
-		// TODO Auto-generated method stub
-		return null;
+		StringBuilder sb = new StringBuilder();
+		sb.append("################# ");
+		sb.append(m_Name);
+		sb.append(" #################");
+		sb.append("\n");
+		for (Triple<String, String, String> triple  : m_Results) {
+			sb.append(triple.getFirst());
+			sb.append("\t");
+			sb.append(triple.getSecond());
+			sb.append("\t");
+			sb.append(triple.getThird());
+			sb.append("\n");
+		}
+		return sb.toString();
 	}
 
 	@Override
 	public File getSummaryLogFileName() {
-		// TODO Auto-generated method stub
-		return null;
+		return new File(m_LogFilePath);
 	}
 
 	@Override
 	public String getTestSuiteCanonicalName() {
-		// TODO Auto-generated method stub
-		return null;
+		return m_Name;
 	}
 
 	@Override
 	public void addResult(TestResult actualResult, boolean junitResult,
 			String category, String filename, String message) {
-		// TODO Auto-generated method stub
+		m_Results.add(new Triple<String, String, String>(filename, category, message));
 
 	}
 
 	@Override
 	public void setTestResultDecider(ITestResultDecider decider) {
-		// TODO Auto-generated method stub
-
+		m_TestResultDecider = decider;
 	}
 
 }

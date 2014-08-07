@@ -8,6 +8,7 @@ Bundle-ActivationPolicy: lazy
 Require-Bundle: UltimateCore,
  Library-junit-helper,
  Library-log4j,
+ Library-UltimateUtil;bundle-version="0.0.1",
  Library-UltimateTest,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator,

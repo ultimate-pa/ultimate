@@ -22,8 +22,6 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 		};
 	private static final String[] m_FileEndings = { ".ats" };
 	
-	public AutomataScriptTestSuite() {
-	}
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
