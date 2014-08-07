@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -22,20 +23,21 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitVectorAccessExpre
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.CallStackElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolValue.Bool;
@@ -67,13 +69,22 @@ public class AbstractInterpretationBoogieVisitor {
 	
 	/**
 	 * The identifier for an LHS expression
-	 * TODO: what about arrays and structs?
+	 * TODO: what about arrays?
 	 */
 	private String m_lhsIdentifier;
 	
 	private IType m_lhsType;
 	
+	private StorageClass m_lhsStorageClass;
+	
 	private Map<Expression, IAbstractValue<?>> m_interimResults = new HashMap<Expression, IAbstractValue<?>>();
+	
+	/**
+	 * Flag for use with return statements, as both CALL and RETURN use CallStatement objects
+	 */
+	private boolean m_isReturnStatement = false;
+	
+	private boolean m_useOldValues = false;
 	
 	/**
 	 * Flag set when encountering a unary NOT operation as !(a comp b) needs to be calculated as (a !comp b)
@@ -115,12 +126,11 @@ public class AbstractInterpretationBoogieVisitor {
 		
 		m_interimResults.clear();
 		
-		if (statement instanceof ReturnStatement) {
-			visit((ReturnStatement) statement);
-		} else if (statement instanceof HavocStatement) {
+		if (statement instanceof HavocStatement) {
 			visit((HavocStatement) statement);
 		} else if (statement instanceof CallStatement) {
-			visit((CallStatement) statement);
+			CallStatement cs = (CallStatement) statement;
+			if (m_isReturnStatement) visitReturn(cs); else visitCall(cs);
 		} else if (statement instanceof AssignmentStatement) {
 			visit((AssignmentStatement) statement);
 		} else if (statement instanceof AssumeStatement) {
@@ -134,44 +144,124 @@ public class AbstractInterpretationBoogieVisitor {
 		return m_resultingState;
 	}
 
-	protected void visit(ReturnStatement statement) {
-		// TODO: support! (pop stack?)
-		m_logger.warn(String.format("Unsupported statement type: %s", statement.getClass()));
+	/**
+	 * Evaluates a return statement with regards to a current state and returns a resulting state 
+	 * @param statement The return edges' corresponding call statement to evaluate
+	 * @param currentState The current abstract program state
+	 * @return The resulting abstract program state
+	 */
+	public AbstractState evaluateReturnStatement(CallStatement statement, AbstractState currentState) {
+		m_isReturnStatement = true;
+		AbstractState result = evaluateStatement(statement, currentState);
+		m_isReturnStatement = false;
+		return result;
 	}
 
-	protected void visit(HavocStatement statement) {
-		// TODO: arrays/structs
-		LeftHandSide[] lhs = statement.getIdentifiers();
-		for (int i = 0; i < lhs.length; i++) {
-			m_lhsType = null;
-			evaluateLeftHandSide(lhs[i]); // get identifier to m_lhsIdentifier
-			if (m_lhsType != null) {
-				if (m_lhsType instanceof PrimitiveType) {
-					PrimitiveType pt = (PrimitiveType) m_lhsType;
-					IAbstractValue<?> havocedValue = null;
-					if (pt.getTypeCode() == PrimitiveType.BOOL) {
-						havocedValue = m_boolFactory.makeTopValue();
-					} else if ((pt.getTypeCode() == PrimitiveType.INT)
-							|| (pt.getTypeCode() == PrimitiveType.REAL)) {
-						havocedValue = m_numberFactory.makeTopValue();
-					} else {
-						m_logger.error(String.format("Unknown primitive type \"%s\" of left hand side \"%s\".", pt, lhs[i]));
-					}
-					if (havocedValue != null) {
-						if (!m_resultingState.writeValue(m_lhsIdentifier, havocedValue)) {
-							m_resultingState.declareIdentifier(m_lhsIdentifier, havocedValue);
+	protected void visitCall(CallStatement statement) {
+		String methodName = statement.getMethodName();
+
+		// add scope level for entered method
+		m_resultingState.pushStackLayer(statement);
+		
+		m_logger.debug(String.format("CALL: %s", methodName));
+		
+		Expression[] arguments = statement.getArguments();
+		
+		// fetch method declaration to get input parameters
+		List<Declaration> methodDecList = m_symbolTable.getFunctionOrProcedureDeclaration(methodName);
+		if (methodDecList.size() >= 1) {
+			Declaration methodDec = methodDecList.get(0);
+			VarList[] parameters = null;
+			if (methodDec instanceof FunctionDeclaration) {
+				FunctionDeclaration functionDec = (FunctionDeclaration) methodDec;
+				parameters = functionDec.getInParams();
+			} else if (methodDec instanceof Procedure) {
+				Procedure procedureDec = (Procedure) methodDec;
+				parameters = procedureDec.getInParams();
+			} else {
+				m_logger.warn(String.format("Unknown method declaration kind \"%s\" encountered.", methodDec));
+			}
+			if (parameters != null) {
+				// match input parameters to arguments
+				if (parameters.length == arguments.length) {
+					for (int i = 0; i < parameters.length; i++) {
+						IAbstractValue<?> argValue = evaluateExpression(arguments[i]);
+						String[] identifiers = parameters[i].getIdentifiers();
+						if (identifiers.length != 1) {
+							m_logger.warn(String.format("Invalid number method \"%s\" input parameter argument %d", methodName, i));
+						} else {
+							m_resultingState.declareIdentifier(identifiers[0], argValue, false);
 						}
 					}
+				} else {
+					m_logger.warn(String.format("Invalid number of arguments for method call of \"%s\"", methodName));
 				}
-			} else {
-				m_logger.error(String.format("Type of left hand side \"%s\" could not be determined.", lhs[i]));
 			}
 		}
 	}
 
-	protected void visit(CallStatement statement) {
-		// TODO: support! (push stack?)
-		m_logger.warn(String.format("Unsupported statement type: %s", statement.getClass()));
+	protected void visitReturn(CallStatement statement) {
+		CallStatement currentScopeCall = m_currentState.getCurrentScope().getCallStatement();
+		
+		if (currentScopeCall != statement) {
+			// abort on not matching return
+			m_resultingState = null;
+			return;
+		}
+
+		String methodName = statement.getMethodName();
+
+		// remove scope level of exited method
+		m_resultingState.popStackLayer();
+		
+		m_logger.debug(String.format("RETURN: %s", methodName));
+
+		LeftHandSide[] leftHandSides = statement.getLhs();
+		
+		// fetch method declaration to get input parameters
+		List<Declaration> methodDecList = m_symbolTable.getFunctionOrProcedureDeclaration(methodName);
+		if (methodDecList.size() >= 1) {
+			Declaration methodDec = methodDecList.get(0);
+			VarList[] parameters = null;
+			if (methodDec instanceof FunctionDeclaration) {
+				FunctionDeclaration functionDec = (FunctionDeclaration) methodDec;
+				parameters = new VarList[]{functionDec.getOutParam()};
+			} else if (methodDec instanceof Procedure) {
+				Procedure procedureDec = (Procedure) methodDec;
+				parameters = procedureDec.getOutParams();
+			} else {
+				m_logger.warn(String.format("Unknown method declaration kind \"%s\" encountered.", methodDec));
+			}
+			if (parameters != null) {
+				// get value for each output parameter && write it to the destination variable
+				if (parameters.length == leftHandSides.length) {
+					for (int i = 0; i < parameters.length; i++) {
+						String[] identifiers = parameters[i].getIdentifiers();
+						if (identifiers.length != 1) {
+							m_logger.warn(String.format("Invalid number method \"%s\" output parameter argument %d", methodName, i));
+						} else {
+							IAbstractValue<?> returnValue = m_currentState.readValue(identifiers[0], false);
+							evaluateLeftHandSide(leftHandSides[i]);
+							boolean writeSuccessful = m_resultingState.writeValue(m_lhsIdentifier, returnValue);
+							if (!writeSuccessful)
+								m_resultingState.declareIdentifier(m_lhsIdentifier, returnValue, m_lhsStorageClass == StorageClass.GLOBAL);
+						}
+					}
+				} else {
+					m_logger.warn(String.format("Invalid number of result parameters for method return of \"%s\"", methodName));
+				}
+			}
+		}
+	}
+
+	protected void visit(HavocStatement statement) {
+		// TODO: arrays
+		LeftHandSide[] lhs = statement.getIdentifiers();
+		for (int i = 0; i < lhs.length; i++) {
+			m_lhsType = null;
+			evaluateLeftHandSide(lhs[i]); // get identifier to m_lhsIdentifier
+			havocValue(m_lhsIdentifier, m_lhsType, m_lhsStorageClass);
+		}
 	}
 
 	protected void visit(AssignmentStatement statement) {
@@ -184,28 +274,14 @@ public class AbstractInterpretationBoogieVisitor {
 		}
 
 		for (int i = 0; i < lhs.length; i++) {
-			// TODO: arrays/structs
+			// TODO: arrays
 			m_lhsType = null;
 			evaluateLeftHandSide(lhs[i]); // get identifier to m_lhsIdentifier
 			IAbstractValue<?> rhsValue = evaluateExpression(rhs[i]);
+			m_logger.debug(String.format("Assignment: %s := %s", m_lhsIdentifier, rhsValue));
 			boolean writeSuccessful = m_resultingState.writeValue(m_lhsIdentifier, rhsValue);
-			if (!writeSuccessful) {
-				if (m_lhsType != null) {
-					if (m_lhsType instanceof PrimitiveType) {
-						PrimitiveType pt = (PrimitiveType) m_lhsType;
-						if (pt.getTypeCode() == PrimitiveType.BOOL) {
-							m_resultingState.declareIdentifier(m_lhsIdentifier, m_boolFactory.makeTopValue());
-						} else if ((pt.getTypeCode() == PrimitiveType.INT)
-								|| (pt.getTypeCode() == PrimitiveType.REAL)) {
-							m_resultingState.declareIdentifier(m_lhsIdentifier, m_numberFactory.makeTopValue());
-						} else {
-							m_logger.error(String.format("Unknown primitive type \"%s\" of left hand side \"%s\".", pt, lhs[i]));
-						}
-					}
-				} else {
-					m_logger.error(String.format("Type of left hand side \"%s\" could not be determined.", lhs[i]));
-				}
-			}
+			if (!writeSuccessful)
+				m_resultingState.declareIdentifier(m_lhsIdentifier, rhsValue, m_lhsStorageClass == StorageClass.GLOBAL);
 		}
 	}
 
@@ -234,8 +310,6 @@ public class AbstractInterpretationBoogieVisitor {
 	protected void evaluateLeftHandSide(LeftHandSide lhs) {
 		if (lhs instanceof ArrayLHS) {
 			visit((ArrayLHS) lhs);
-		} else if (lhs instanceof StructLHS) {
-			visit((StructLHS) lhs);
 		} else if (lhs instanceof VariableLHS) {
 			visit((VariableLHS) lhs);
 		} else {
@@ -246,20 +320,14 @@ public class AbstractInterpretationBoogieVisitor {
 	protected void visit(VariableLHS lhs) {
 		m_lhsIdentifier = lhs.getIdentifier();
 		m_lhsType = lhs.getType();
-	}
-
-	protected void visit(StructLHS lhs) {
-		// TODO: support!
-		m_logger.warn(String.format("Unsupported LeftHandSide type: %s", lhs.getClass()));
-		//evaluateLeftHandSide(lhs.getStruct());
-		//m_lhsIdentifier = m_lhsIdentifier + "!" + lhs.getField();
-		m_lhsType = lhs.getType();
+		m_lhsStorageClass = lhs.getDeclarationInformation().getStorageClass();
 	}
 
 	protected void visit(ArrayLHS lhs) {
 		// TODO: support!
 		m_logger.warn(String.format("Unsupported LeftHandSide type: %s", lhs.getClass()));
 		m_lhsType = lhs.getType();
+		m_lhsStorageClass = null;
 	}
 	
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -296,10 +364,6 @@ public class AbstractInterpretationBoogieVisitor {
 			visit((RealLiteral) expr);
 		} else if (expr instanceof StringLiteral) {
 			visit((StringLiteral) expr);
-		} else if (expr instanceof StructAccessExpression) {
-			visit((StructAccessExpression) expr);
-		} else if (expr instanceof StructConstructor) {
-			visit((StructConstructor) expr);
 		} else if (expr instanceof UnaryExpression) {
 			visit((UnaryExpression) expr);
 		} else {
@@ -333,20 +397,14 @@ public class AbstractInterpretationBoogieVisitor {
 			m_resultValue = evaluateNegatedExpression(expr.getExpr());
 			break;
 		case OLD :
-			// TODO: trace back? keep reference in abstract state?
+			boolean useOld_bak = m_useOldValues;
+			m_useOldValues = true;
+			m_resultValue = evaluateExpression(expr.getExpr());
+			m_useOldValues = useOld_bak;
+			break;
 		default:
 			m_logger.warn(String.format("Unsupported %s operator: %s", expr.getClass(), expr.getOperator()));
 		}
-	}
-
-	protected void visit(StructConstructor expr) {
-		// TODO: support!
-		m_logger.warn(String.format("Unsupported expression type: %s", expr.getClass()));
-	}
-
-	protected void visit(StructAccessExpression expr) {
-		// TODO: support!
-		m_logger.warn(String.format("Unsupported expression type: %s", expr.getClass()));
 	}
 
 	protected void visit(StringLiteral expr) {
@@ -363,38 +421,13 @@ public class AbstractInterpretationBoogieVisitor {
 	}
 
 	protected void visit(IdentifierExpression expr) {
-		m_resultValue = m_currentState.readValue(expr.getIdentifier());
+		String ident = expr.getIdentifier();
+		m_resultValue = m_currentState.readValue(ident, m_useOldValues);
+		if ((m_resultValue == null) && !m_useOldValues)
+			m_resultValue = m_resultingState.readValue(ident, m_useOldValues);
 		if (m_resultValue == null)
-			m_resultValue = m_resultingState.readValue(expr.getIdentifier());
-		if (m_resultValue == null) {
-			// first time we encounter this identifier: look up in symbol table, impicit havoc to TOP
-			String ident = expr.getIdentifier();
-			IType t = m_symbolTable.getTypeForVariableSymbol(ident, StorageClass.LOCAL,
-					m_resultingState.getCurrentScopeName()); // TODO: current scope; GLOBAL, in/put params...
-			if (t != null) {
-				if (t instanceof PrimitiveType) {
-					PrimitiveType pt = (PrimitiveType) t;
-					IAbstractValue<?> newValue = null;
-					if (pt.getTypeCode() == PrimitiveType.BOOL) {
-						newValue = m_boolFactory.makeTopValue();
-					} else if ((pt.getTypeCode() == PrimitiveType.INT)
-							|| (pt.getTypeCode() == PrimitiveType.REAL)) {
-						newValue = m_numberFactory.makeTopValue();
-					} else {
-						m_logger.error(String.format("Unknown primitive type \"%s\" of identifier \"%s\".", pt, ident));
-					}
-					if (newValue != null) {
-						m_resultValue = newValue;
-						m_resultingState.declareIdentifier(ident, m_resultValue);
-					}
-				} else {
-					m_logger.error(String.format("Unknown non-primitive type \"%s\" of identifier \"%s\".", t, ident));
-				}
-			} else {
-				m_logger.error(String.format("Type of identifier \"%s\" could not be determined.", ident));
-			}
-		}
-		if (m_resultValue == null) m_resultValue = m_numberFactory.makeBottomValue(); // prevent null value in an expression
+			// first time we encounter this identifier: look up in symbol table, implicit havoc to TOP
+			m_resultValue = havocValue(ident, null, null);
 	}
 
 	protected void visit(BooleanLiteral expr) {
@@ -573,6 +606,83 @@ public class AbstractInterpretationBoogieVisitor {
 		m_logger.warn(String.format("Unsupported expression type: %s", expr.getClass()));
 	}
 
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 * MISC
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+	private IAbstractValue<?> havocValue(String identifier, IType type, StorageClass storageClass) {
+		IType identType;
+		StorageClass identStorageClass;
+		if ((type == null) || (storageClass == null)) {
+			String scopeName = m_resultingState.getCurrentScopeName();
+			// try local
+			identStorageClass = StorageClass.LOCAL;
+			identType = m_symbolTable.getTypeForVariableSymbol(identifier, identStorageClass, scopeName);
+			if (identType == null) {
+				// try return parameter
+				List<Declaration> decList = m_symbolTable.getFunctionOrProcedureDeclaration(scopeName);
+				if (!decList.isEmpty()) {
+					Declaration dec = decList.get(0);
+					if (dec instanceof FunctionDeclaration) {
+						FunctionDeclaration funcDec = (FunctionDeclaration) dec;
+						VarList outParam = funcDec.getOutParam();
+						if (outParam.getIdentifiers()[0].equals(identifier)) {
+							identType = outParam.getType().getBoogieType();
+							identStorageClass = StorageClass.PROC_FUNC_OUTPARAM;
+								// identStorageClass doesn't matter, as long as it isn't GLOBAL
+						}
+					} else if (dec instanceof Procedure) {
+						Procedure procDec = (Procedure) dec;
+						VarList[] outParams = procDec.getOutParams();
+						for (VarList v : outParams) {
+							if (v.getIdentifiers()[0].equals(identifier)) {
+								identType = v.getType().getBoogieType();
+								identStorageClass = StorageClass.PROC_FUNC_OUTPARAM;
+									// identStorageClass doesn't matter, as long as it isn't GLOBAL
+								break;
+							}
+						}
+					}
+				}
+			}
+			if (identType == null) {
+				// try global
+				identStorageClass = StorageClass.GLOBAL;
+				identType = m_symbolTable.getTypeForVariableSymbol(identifier, identStorageClass,
+						m_resultingState.getCurrentScopeName());
+			}
+		} else {
+			identType = type;
+			identStorageClass = storageClass;
+		}
+		if (identType != null) {
+			if (identType instanceof PrimitiveType) {
+				PrimitiveType pt = (PrimitiveType) identType;
+				IAbstractValue<?> newValue = null;
+				if (pt.getTypeCode() == PrimitiveType.BOOL) {
+					newValue = m_boolFactory.makeTopValue();
+				} else if ((pt.getTypeCode() == PrimitiveType.INT)
+						|| (pt.getTypeCode() == PrimitiveType.REAL)) {
+					newValue = m_numberFactory.makeTopValue();
+				} else {
+					m_logger.error(String.format("Unknown primitive type \"%s\" of identifier \"%s\".", pt, identifier));
+				}
+				if (newValue != null) {
+					IAbstractValue<?> result = newValue;
+					boolean isGlobal = identStorageClass == StorageClass.GLOBAL;
+					if (!(m_useOldValues && isGlobal))
+						m_resultingState.declareIdentifier(identifier, result, isGlobal);
+					m_logger.debug(String.format("Havoc: %s\"%s\" := \"%s\".", m_useOldValues ? "old " : "", identifier, result));
+					return result;
+				}
+			} else {
+				m_logger.error(String.format("Unknown non-primitive type \"%s\" of identifier \"%s\".", identType, identifier));
+			}
+		} else {
+			m_logger.error(String.format("Type of identifier \"%s\" could not be determined.", identifier));
+		}
+		return null;
+	}
 
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	 * ASSUMPTIONS * * * TODO: General cases
@@ -586,23 +696,28 @@ public class AbstractInterpretationBoogieVisitor {
 	 * @param assumeFormula The assume statement's formula expression
 	 * @param assumeResult The AbstractValue representing the assume formula's result
 	 */
-	private void applyAssumption(Expression assumeFormula) {
+	private boolean applyAssumption(Expression assumeFormula) {
+		return applyAssumption(assumeFormula, false);
+	}
+	
+	private boolean applyAssumption(Expression assumeFormula, boolean negate) {
 		// only apply when the assumption can be true
 		IAbstractValue<?> assumeResult = m_interimResults.get(assumeFormula);
 		
 		if (m_boolFactory.makeFromAbstractValue(assumeResult).getValue() == Bool.FALSE)
-			return;
+			return false;
+		
+		boolean didNarrow = false;
 		
 		if (assumeFormula instanceof BinaryExpression) {
 			BinaryExpression binOp = (BinaryExpression) assumeFormula;
-			m_logger.debug(String.format("ASSUME ## %s", assumeFormula.toString()));
 
 			switch (binOp.getOperator()) {
 			case LOGICAND :
 				if (binOp.getLeft() instanceof BinaryExpression)
-					applyAssumption(binOp.getLeft());
+					didNarrow = applyAssumption(binOp.getLeft()) || didNarrow;
 				if (binOp.getRight() instanceof BinaryExpression)
-					applyAssumption(binOp.getRight());
+					didNarrow = applyAssumption(binOp.getRight()) || didNarrow;
 			case COMPLT :
 			case COMPGT :
 			case COMPLEQ :
@@ -614,31 +729,84 @@ public class AbstractInterpretationBoogieVisitor {
 			case LOGICOR :
 				if (binOp.getLeft() instanceof IdentifierExpression) {
 					IdentifierExpression ieLeft = (IdentifierExpression) binOp.getLeft();
-					
-					IAbstractValue<?> oldValue = m_resultingState.readValue(ieLeft.getIdentifier());
-					if (oldValue != null) {
-						IAbstractValue<?> newValue = oldValue.compareIsEqual(assumeResult);
-						m_logger.debug(String.format("ASSUME ## [%s] == [%s] => [%s]", oldValue, assumeResult, newValue));
-						if (newValue != null)
-							m_resultingState.writeValue(ieLeft.getIdentifier(), newValue);
-					}
+
+					didNarrow = applyAssumptionResult(ieLeft.getIdentifier(), assumeResult) || didNarrow;
 				}
 
+				/*
+				 *  Not all comparision operators can simply be "mirrored" (e.g. [5,5] < [10,10] = [5,5], [10,10] > [5,5] = [10,10],
+				 *  so for some of them, we need to calculate the missing intermediate result
+				 */
 				if (binOp.getRight() instanceof IdentifierExpression) {
 					IdentifierExpression ieRight = (IdentifierExpression) binOp.getRight();
 
-					IAbstractValue<?> oldValue = m_currentState.readValue(ieRight.getIdentifier());
-					if (oldValue != null) {
-						IAbstractValue<?> newValue = oldValue.compareIsEqual(assumeResult);
-						if (newValue != null)
-							m_resultingState.writeValue(ieRight.getIdentifier(), newValue);
+					IAbstractValue<?> leftValue = m_interimResults.get(binOp.getLeft());
+					IAbstractValue<?> rightValue = m_interimResults.get(ieRight);
+
+					IAbstractValue<?> rightHandAssumeResult;
+					switch (binOp.getOperator()) {
+					case COMPLT :
+						rightHandAssumeResult = negate ?
+								rightValue.compareIsLess(leftValue) :
+									rightValue.compareIsGreaterEqual(leftValue);
+						break;
+					case COMPGT :
+						rightHandAssumeResult = negate ?
+								rightValue.compareIsGreater(leftValue) :
+									rightValue.compareIsLessEqual(leftValue);
+						break;
+					case COMPLEQ :
+						rightHandAssumeResult = negate ?
+								rightValue.compareIsLessEqual(leftValue) :
+									rightValue.compareIsGreater(leftValue);
+						break;
+					case COMPGEQ :
+						rightHandAssumeResult = negate ?
+								rightValue.compareIsGreaterEqual(leftValue) :
+									rightValue.compareIsLess(leftValue);
+						break;
+					case COMPEQ :
+					case COMPNEQ :
+						rightHandAssumeResult = assumeResult;
+					case LOGICAND :
+					case LOGICIFF :
+					case LOGICIMPLIES :
+					case LOGICOR :
+					default:
+						// case not covered
+						rightHandAssumeResult = null;
 					}
+					if (rightHandAssumeResult != null)
+						didNarrow = applyAssumptionResult(ieRight.getIdentifier(), rightHandAssumeResult) || didNarrow;
 				}
 				break;
 			default:
 				break;
 			}
 			
+		} else if (assumeFormula instanceof UnaryExpression) {
+			UnaryExpression unaryFormula = (UnaryExpression) assumeFormula;
+			if (unaryFormula.getOperator() == UnaryExpression.Operator.LOGICNEG)
+				didNarrow = applyAssumption(unaryFormula.getExpr(), true) || didNarrow;
+		} else if (assumeFormula instanceof BooleanLiteral) {
+			didNarrow = true; // "assume true;" -> nothing to narrow
 		}
+		if (!didNarrow)
+			m_logger.warn(String.format("Could not narrow values at assume statement \"%s\"", assumeFormula));
+		return didNarrow;
+	}
+	
+	private boolean applyAssumptionResult(String identifier, IAbstractValue<?> assumeResult) {
+		IAbstractValue<?> oldValue = m_resultingState.readValue(identifier, false);
+		if (oldValue != null) {
+			IAbstractValue<?> newValue = oldValue.compareIsEqual(assumeResult);
+			m_logger.debug(String.format("ASSUME for \"%s\": old[%s], assume[%s] => new[%s]",
+					identifier, oldValue, assumeResult, newValue));
+			if (newValue != null) {
+				m_resultingState.writeValue(identifier, newValue);
+				return true;
+			}
+		}
+		return false;
 	}
 }

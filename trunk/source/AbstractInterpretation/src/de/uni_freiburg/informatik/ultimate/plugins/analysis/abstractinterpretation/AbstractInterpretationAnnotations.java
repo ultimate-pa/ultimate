@@ -10,6 +10,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
@@ -68,8 +69,9 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 							new HashMap<String, Map<String, IAbstractValue<?>>>(layer.size());
 					for (int j = 0; j < layer.size(); j++) {
 						AbstractState.CallStackElement cse = layer.get(j);
-						String functionName = cse.getFunctionName();
-						layerMap.put(String.format("%s", functionName.equals("") ? "GLOBAL" : functionName), cse.getValues());
+						CallStatement csmt = cse.getCallStatement();
+						String functionName = (csmt == null) ? "GLOBAL" : cse.getCallStatement().getMethodName();
+						layerMap.put(String.format("%s", functionName), cse.getValues());
 					}
 					values.put(stateKey, layerMap);
 				}

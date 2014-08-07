@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.irsdependencies.loopdetector.LoopDetector;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractInterpretationBoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
@@ -241,15 +242,17 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		Map<String,ProgramPoint> entryNodes = root.getRootAnnot().getEntryNodes();
 		ProgramPoint mainEntry = entryNodes.get(s_mainProcedureName);
 		
+		// TODO: preference for main method name
 		// add entry node of Main procedure / any if no Main() exists
 		for (RCFGEdge e : root.getOutgoingEdges()) {
-			// TODO: get the one root edge to the main function
 			if (e instanceof RootEdge) {
 				RCFGNode target = e.getTarget();
 				if ((mainEntry == null) || (target == mainEntry)) {
 					AbstractState state = new AbstractState(m_logger, m_numberDomainFactory, m_boolDomainFactory);
-					if (mainEntry != null)
-						state.pushStackLayer(s_mainProcedureName); // layer for Main()
+					if (mainEntry != null) {
+						CallStatement mainProcMockStatement = new CallStatement(null, false, null, s_mainProcedureName, null);
+						state.pushStackLayer(mainProcMockStatement); // layer for main method
+					}
 					putStateToNode(state, target, e);
 					m_nodesToVisit.add(target);
 				}
@@ -361,7 +364,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 		super.visit(c);
 
-		m_resultingState = m_boogieVisitor.evaluateStatement(c.getCallStatement(), m_resultingState);
+		m_resultingState = m_boogieVisitor.evaluateStatement(c.getCallStatement(), m_currentState);
 	}
 
 	@Override
@@ -403,7 +406,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 		super.visit(c);
 
-		m_resultingState = m_boogieVisitor.evaluateStatement(c.getCallStatement(), m_resultingState);
+		m_resultingState = m_boogieVisitor.evaluateReturnStatement(c.getCallStatement(), m_currentState);
 	}
 
 	@Override
