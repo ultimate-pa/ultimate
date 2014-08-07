@@ -207,10 +207,15 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 	@Override
 	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
 			throws SMTLIBException {
+		Rational gcd_f = Rational.ONE; // The ranking pieces need a common gcd
+		for (int i = 0; i < size; ++i) {
+			gcd_f.gcd(m_fgens[i].getGcd(val));
+		}
+		
 		AffineFunction[] fs = new AffineFunction[size];
 		AffineFunction[] gs = new AffineFunction[size];
 		for (int i = 0; i < size; ++i) {
-			fs[i] = m_fgens[i].extractAffineFunction(val);
+			fs[i] = m_fgens[i].extractAffineFunction(val, gcd_f);
 			gs[i] = m_pgens[i].extractAffineFunction(val);
 		}
 		return new PiecewiseRankingFunction(fs, gs);
