@@ -1260,7 +1260,7 @@ public class EdgeChecker {
 			m_Benchmark.pause(EdgeCheckerBenchmarkType.s_EdgeCheckerTime);
 		}
 		@Override
-		public Iterable<String> getKeys() {
+		public Collection<String> getKeys() {
 			return EdgeCheckerBenchmarkType.getInstance().getKeys();
 		}
 		public Object getValue(String key) {

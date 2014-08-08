@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark;
 
+import java.util.Collection;
+
 /**
  * Classes that implement this interface can provide data to our benchmarks.
  * Our benchmarks are key-value stores.
@@ -8,7 +10,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.b
  */
 public interface IBenchmarkDataProvider {
 
-	public abstract Iterable<String> getKeys();
+	public abstract Collection<String> getKeys();
 	
 	public abstract Object getValue(String key);
 	

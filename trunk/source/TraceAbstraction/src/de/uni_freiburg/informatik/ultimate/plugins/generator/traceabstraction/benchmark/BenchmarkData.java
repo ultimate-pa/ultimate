@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -65,7 +66,7 @@ public class BenchmarkData implements IBenchmarkDataProvider {
 	}
 
 	@Override
-	public Iterable<String> getKeys() {
+	public Collection<String> getKeys() {
 		if (m_BenchmarkType == null) {
 			throw new AssertionError("BenchmarkData not yet initialized");
 		} else {

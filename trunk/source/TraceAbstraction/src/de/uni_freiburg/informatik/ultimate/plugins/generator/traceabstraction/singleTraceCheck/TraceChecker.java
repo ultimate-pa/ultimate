@@ -958,7 +958,7 @@ public class TraceChecker {
 		}
 
 		@Override
-		public Iterable<String> getKeys() {
+		public Collection<String> getKeys() {
 			return TraceCheckerBenchmarkType.getInstance().getKeys();
 		}
 

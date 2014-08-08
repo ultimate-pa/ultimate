@@ -953,7 +953,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 
 		@Override
-		public Iterable<String> getKeys() {
+		public Collection<String> getKeys() {
 			return TraceCheckerSpWpBenchmarkType.getInstance().getKeys();
 		}
 

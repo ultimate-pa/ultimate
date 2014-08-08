@@ -1,12 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.Collection;
+
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
-public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
+public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object>{
 	
 	private final BenchmarkData m_CegarLoopBenchmarkData;
 	private final int m_Locations;
@@ -43,9 +45,19 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Double>{
 	}
 
 	@Override
-	public ICsvProvider<Double> createCvsProvider() {
-		SimpleCsvProvider<Double> rtr = new SimpleCsvProvider<>(new String[] { });
-		return rtr;
+	public ICsvProvider<Object> createCvsProvider() {
+		Collection<String> keys = m_CegarLoopBenchmarkData.getKeys();
+		String[] keysArray = keys.toArray(new String[keys.size()]);
+		SimpleCsvProvider<Object> scp = new SimpleCsvProvider<Object>(keysArray);
+		
+		Object[] values = new Object[keys.size()];
+		int offset = 0;
+		for (String key : keys) {
+			values[offset] = m_CegarLoopBenchmarkData.getValue(key);
+			offset++;
+		}
+		scp.addRow("theCrowRow", values );
+		return scp;
 	}
 	
 }

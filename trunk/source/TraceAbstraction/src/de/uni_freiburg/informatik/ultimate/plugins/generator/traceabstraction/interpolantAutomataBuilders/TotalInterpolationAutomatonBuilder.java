@@ -594,7 +594,7 @@ public class TotalInterpolationAutomatonBuilder {
 		}
 
 		@Override
-		public Iterable<String> getKeys() {
+		public Collection<String> getKeys() {
 			return TotalInterpolationBenchmarkType.getInstance().getKeys();
 		}
 
