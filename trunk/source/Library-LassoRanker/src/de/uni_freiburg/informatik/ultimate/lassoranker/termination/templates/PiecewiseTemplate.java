@@ -209,7 +209,7 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 			throws SMTLIBException {
 		Rational gcd_f = Rational.ONE; // The ranking pieces need a common gcd
 		for (int i = 0; i < size; ++i) {
-			gcd_f.gcd(m_fgens[i].getGcd(val));
+			gcd_f = gcd_f.gcd(m_fgens[i].getGcd(val));
 		}
 		
 		AffineFunction[] fs = new AffineFunction[size];
