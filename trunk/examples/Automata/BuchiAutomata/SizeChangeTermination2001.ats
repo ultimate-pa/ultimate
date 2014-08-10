@@ -14,7 +14,7 @@
 
 
 NestedWordAutomaton infeasibleComplementFKV = buchiComplementFKV(infeasible);
-assert(numberOfStates(infeasibleComplementFKV) == 80);
+assert(numberOfStates(infeasibleComplementFKV) == 66);
 NestedWordAutomaton infeasibleNComplementFKV = buchiComplementFKV(infeasibleN);
 assert(numberOfStates(infeasibleNComplementFKV) == 11);
 
