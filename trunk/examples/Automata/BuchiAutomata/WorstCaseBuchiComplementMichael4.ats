@@ -13,8 +13,17 @@ NestedWordAutomaton michael4FKV = buchiComplementFKV(Michael4);
 assert(!buchiAccepts(michael4FKV, [ "1", "1" "2" "3" "4" "1" hash]));
 assert(buchiAccepts(michael4FKV, [ "1", "1" "2" "3" "4" hash]));
 
-assert(numberOfStates(michael4FKV) == 2307);
-print(numberOfStates(buchiComplementSVW(Michael4)));
+// 2014-08-10 Matthias: according to this file the result of my old
+// buchiComplementFKV had only 2307 states
+// I am skeptical. Maybe this was without removal of non-live states
+// or with some minimization?
+assert(numberOfStates(michael4FKV) == 3943);
+
+NestedWordAutomaton michael4FKV_live = removeNonLiveStates(michael4FKV);
+assert(numberOfStates(michael4FKV_live) == 2377);
+
+// Unfortunately buchiComplementSVW runs out of memory
+// print(numberOfStates(buchiComplementSVW(Michael4)));
 print(Michael4);
 
 
