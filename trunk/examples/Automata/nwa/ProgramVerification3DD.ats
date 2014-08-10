@@ -57,7 +57,7 @@ assert(isIncluded(Abstraction8, diff8));
 
 NestedWordAutomaton diff9 = differenceDD(diff8,InterpolantAutomaton_Iteration9);
 print(numberOfStates(diff9));
-assert(!isEmpty(diff9));
+assert(isEmpty(diff9));
 assert(isIncluded(diff9, Abstraction9));
 assert(isIncluded(Abstraction9, diff9));
 
