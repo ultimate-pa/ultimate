@@ -37,7 +37,7 @@ parseAutomata("../BuchiAutomata/SizeChangeTermination2001.ats");
 
 NestedWordAutomaton nwa = buchiComplementFKV(infeasible);
 print(numberOfStates(nwa));
-assert(numberOfStates(nwa) == 80);
+assert(numberOfStates(nwa) == 66);
 assert(buchiIsEmpty(nwa));
 
 
