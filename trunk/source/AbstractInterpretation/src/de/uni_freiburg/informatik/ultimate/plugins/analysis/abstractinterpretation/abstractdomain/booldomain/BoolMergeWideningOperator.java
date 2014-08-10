@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Christopher Dillo
  *
  */
-public class BoolMergeWideningOperator implements IMergeOperator<BoolValue.Bool>,
+public class BoolMergeWideningOperator implements IMergeOperator<Bool>,
 		IWideningOperator<BoolValue.Bool> {
 	
 	private BoolDomainFactory m_factory;

@@ -25,6 +25,11 @@ public interface IAbstractValue<T> {
 	 * @return True iff this value is the bottom element of its abstract domain
 	 */
 	public boolean isBottom();
+	
+	/**
+	 * @return True iff this abstract value represents only one single concrete value
+	 */
+	public boolean representsSingleConcreteValue();
 
 	/**
 	 * @return True iff this value is equal to the given value of its abstract domain

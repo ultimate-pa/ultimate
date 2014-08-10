@@ -12,7 +12,8 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.ArrayData;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.CallStackElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
 /**
@@ -59,24 +60,38 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 			return m_states;
 		case "Abstract values" :
 			if (m_states == null) return null;
-			Map<String, Map<String, Map<String, IAbstractValue<?>>>> values =
-				new HashMap<String, Map<String, Map<String, IAbstractValue<?>>>>(m_states.size());
+			// state -> scope -> (value, array -> (value, has unclear indices))
+			Map<String, Map<String, Object>> states =
+				new HashMap<String, Map<String, Object>>(m_states.size());
 			for (String stateKey : m_states.keySet()) {
 				AbstractState state = m_states.get(stateKey);
 				if (state != null) {
-					List<AbstractState.CallStackElement> layer = state.getCallStack();
-					Map<String, Map<String, IAbstractValue<?>>> layerMap =
-							new HashMap<String, Map<String, IAbstractValue<?>>>(layer.size());
-					for (int j = 0; j < layer.size(); j++) {
-						AbstractState.CallStackElement cse = layer.get(j);
+					// scope -> (value, array -> (value, has unclear indices))
+					List<CallStackElement> callstack = state.getCallStack();
+					Map<String, Object> callstackData = new HashMap<String, Object>(2);
+					for (CallStackElement cse : callstack) {
+						// array -> (value, has unclear indices)
+						Map<String, Map<String, Object>> arrayInfo = new HashMap<String, Map<String, Object>>(2);
+						Map<String, ArrayData> arrays = cse.getArrays();
+						for (String ident : arrays.keySet()) {
+							ArrayData a = arrays.get(ident);
+							Map<String, Object> aInfo = new HashMap<String, Object>();
+							aInfo.put("Merged value", a.getValue());
+							aInfo.put("Has unclear indices", a.getIndicesUnclear());
+							arrayInfo.put(ident, aInfo);
+						}
+						// store (value, array -> (value, has unclear indices))
+						Map<String, Object> stateData = new HashMap<String, Object>();
+						stateData.put("Values", cse.getValues());
+						stateData.put("Arrays", arrayInfo);
 						CallStatement csmt = cse.getCallStatement();
-						String functionName = (csmt == null) ? "GLOBAL" : cse.getCallStatement().getMethodName();
-						layerMap.put(String.format("%s", functionName), cse.getValues());
+						String functionName = (csmt == null) ? "GLOBAL" : csmt.getMethodName();
+						callstackData.put(String.format("%s", functionName), stateData);
 					}
-					values.put(stateKey, layerMap);
+					states.put(stateKey, callstackData);
 				}
 			}
-			return values;
+			return states;
 		case "Traces" :
 			if (m_states == null) return null;
 			Map<String, List<String>> traces =

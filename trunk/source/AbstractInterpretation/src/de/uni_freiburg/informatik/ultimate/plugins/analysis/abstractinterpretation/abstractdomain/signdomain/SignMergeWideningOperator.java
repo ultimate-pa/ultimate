@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Christopher Dillo
  *
  */
-public class SignMergeWideningOperator implements IWideningOperator<SignValue.Sign>, IMergeOperator<SignValue.Sign> {
+public class SignMergeWideningOperator implements IWideningOperator<Sign>, IMergeOperator<Sign> {
 	
 	private SignDomainFactory m_factory;
 	

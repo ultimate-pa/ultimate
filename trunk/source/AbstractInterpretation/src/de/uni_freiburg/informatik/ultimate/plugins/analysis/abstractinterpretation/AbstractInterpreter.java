@@ -25,9 +25,11 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractInterpretationBoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.bitvectordomain.BitVectorDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain.IntervalDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain.SignDomainFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.stringdomain.StringDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.preferences.AbstractInterpretationPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -52,8 +54,6 @@ import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
  * 
  */
 public class AbstractInterpreter extends RCFGEdgeVisitor {
-	
-	private static final String s_mainProcedureName = "Main";
 
 	private final IUltimateServiceProvider m_services;
 
@@ -62,6 +62,8 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	private IAbstractDomainFactory<?> m_numberDomainFactory;
 
 	private BoolDomainFactory m_boolDomainFactory;
+	private BitVectorDomainFactory m_bitVectorDomainFactory;
+	private StringDomainFactory m_stringDomainFactory;
 
 	private final LinkedList<RCFGNode> m_nodesToVisit = new LinkedList<RCFGNode>();
 
@@ -85,6 +87,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	private BoogieSymbolTable m_symbolTable;
 
 	// for preferences
+	private String m_mainMethodName;
 	private int m_iterationsUntilWidening;
 	private int m_parallelStatesUntilMerge;
 	private boolean m_generateStateAnnotations;
@@ -218,6 +221,8 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 		// factories which are present independent from preferences
 		m_boolDomainFactory = new BoolDomainFactory(m_logger);
+		m_bitVectorDomainFactory = new BitVectorDomainFactory(m_logger);
+		m_stringDomainFactory = new StringDomainFactory(m_logger);
 
 		// fetch loop nodes with their entry/exit edges
 		LoopDetector loopDetector = new LoopDetector(m_services);
@@ -236,13 +241,13 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		}
 		m_symbolTable = pa.getSymbolTable();
 
-		m_boogieVisitor = new AbstractInterpretationBoogieVisitor(m_logger, m_symbolTable, m_numberDomainFactory, m_boolDomainFactory);
+		m_boogieVisitor = new AbstractInterpretationBoogieVisitor(m_logger, m_symbolTable, m_numberDomainFactory, m_boolDomainFactory,
+				m_bitVectorDomainFactory, m_stringDomainFactory);
 
 		// root annotation: get location list
 		Map<String,ProgramPoint> entryNodes = root.getRootAnnot().getEntryNodes();
-		ProgramPoint mainEntry = entryNodes.get(s_mainProcedureName);
+		ProgramPoint mainEntry = entryNodes.get(m_mainMethodName);
 		
-		// TODO: preference for main method name
 		// add entry node of Main procedure / any if no Main() exists
 		for (RCFGEdge e : root.getOutgoingEdges()) {
 			if (e instanceof RootEdge) {
@@ -250,7 +255,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				if ((mainEntry == null) || (target == mainEntry)) {
 					AbstractState state = new AbstractState(m_logger, m_numberDomainFactory, m_boolDomainFactory);
 					if (mainEntry != null) {
-						CallStatement mainProcMockStatement = new CallStatement(null, false, null, s_mainProcedureName, null);
+						CallStatement mainProcMockStatement = new CallStatement(null, false, null, m_mainMethodName, null);
 						state.pushStackLayer(mainProcMockStatement); // layer for main method
 					}
 					putStateToNode(state, target, e);
@@ -302,8 +307,9 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 			// remove states if they aren't needed for possible widening anymore
 			if (node.getIncomingEdges().size() <= 1)
 				m_states.remove(node);
-
-			visitNodes(); // repeat until m_nodesToVisit is empty
+			
+			if (m_services.getProgressMonitorService().continueProcessing())
+				visitNodes(); // repeat until m_nodesToVisit is empty
 		}
 	}
 
@@ -407,6 +413,8 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		super.visit(c);
 
 		m_resultingState = m_boogieVisitor.evaluateReturnStatement(c.getCallStatement(), m_currentState);
+		
+		// TODO: Widening for recursive functions
 	}
 
 	@Override
@@ -532,6 +540,8 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	 */
 	private void fetchPreferences() {
 		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		
+		m_mainMethodName = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_MAIN_METHOD_NAME);
 
 		m_iterationsUntilWidening = prefs
 				.getInt(AbstractInterpretationPreferenceInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);

@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Christopher Dillo
  *
  */
-public class BoolDomainFactory implements IAbstractDomainFactory<BoolValue.Bool> {
+public class BoolDomainFactory implements IAbstractDomainFactory<Bool> {
 
 	private static final String s_DomainID = "BOOL";
 	

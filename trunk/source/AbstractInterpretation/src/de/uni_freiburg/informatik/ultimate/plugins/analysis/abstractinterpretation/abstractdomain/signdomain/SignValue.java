@@ -66,6 +66,14 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	}
 
 	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#representsSingleConcreteValue()
+	 */
+	@Override
+	public boolean representsSingleConcreteValue() {
+		return (m_value == Sign.PLUS) || (m_value == Sign.MINUS) || (m_value == Sign.ZERO);
+	}
+
+	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#isEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override

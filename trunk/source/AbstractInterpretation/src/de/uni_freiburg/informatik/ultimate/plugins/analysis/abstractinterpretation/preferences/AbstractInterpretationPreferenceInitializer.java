@@ -17,7 +17,8 @@ public class AbstractInterpretationPreferenceInitializer extends
 	/*
 	 * labels for the different preferences
 	 */
-	
+
+	public static final String LABEL_MAIN_METHOD_NAME = "Name of the program's main method";
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_STATES_UNTIL_MERGE = "Parallel states before merging";
 	public static final String LABEL_STATE_ANNOTATIONS = "Save abstract states as node annotations";
@@ -34,6 +35,7 @@ public class AbstractInterpretationPreferenceInitializer extends
 	 * default values for the different preferences
 	 */
 
+	public static final String DEF_MAIN_METHOD_NAME = "Main";
 	public static final int DEF_ITERATIONS_UNTIL_WIDENING = 1;
 	public static final int DEF_STATES_UNTIL_MERGE = 1;
 	public static final boolean DEF_STATE_ANNOTATIONS = false;
@@ -48,7 +50,9 @@ public class AbstractInterpretationPreferenceInitializer extends
 
 		preferenceItems.add(new UltimatePreferenceItem<Integer>("--- General preferences ---",
 				null, PreferenceType.Label));
-		
+
+		preferenceItems.add(new UltimatePreferenceItem<String>(LABEL_MAIN_METHOD_NAME,
+				DEF_MAIN_METHOD_NAME, PreferenceType.String));
 		preferenceItems.add(new UltimatePreferenceItem<Integer>(LABEL_ITERATIONS_UNTIL_WIDENING,
 				DEF_ITERATIONS_UNTIL_WIDENING, PreferenceType.Integer,
 				new IUltimatePreferenceItemValidator.IntegerValidator(1, 10000)));

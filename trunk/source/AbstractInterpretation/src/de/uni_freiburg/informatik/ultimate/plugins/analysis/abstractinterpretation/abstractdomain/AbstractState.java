@@ -13,7 +13,9 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.bitvectordomain.BitVectorValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.stringdomain.StringValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
@@ -59,20 +61,39 @@ public class AbstractState {
 		}
 	}
 	
+	public class ArrayData {
+		private final String m_identifier;
+		private IAbstractValue<?> m_value;
+		private boolean m_unclearIndices;
+		public ArrayData(String identifier) {
+			m_identifier = identifier;
+			m_value = null;
+			m_unclearIndices = false;
+		}
+		public String getIdentifier() { return m_identifier; }
+		public IAbstractValue<?> getValue() { return m_value; }
+		public void setValue(IAbstractValue<?> value) { m_value = value; }
+		public boolean getIndicesUnclear() { return m_unclearIndices; }
+		public void setIndicesUnclear() { m_unclearIndices = true; }
+	}
+	
 	public class CallStackElement {
 		private final CallStatement m_callStatement;
 		private final Map<String, IAbstractValue<?>> m_values, m_oldValues;
 		private final LinkedList<LoopStackElement> m_loopStack = new LinkedList<LoopStackElement>();
+		private final Map<String, ArrayData> m_arrays;
 		public CallStackElement(CallStatement callStatement, Map<String, IAbstractValue<?>> oldValues) {
 			m_callStatement = callStatement;
 			m_values = new HashMap<String, IAbstractValue<?>>();
 			m_oldValues = oldValues == null ? new HashMap<String, IAbstractValue<?>>() : new HashMap<String, IAbstractValue<?>>(oldValues);
 			m_loopStack.add(new LoopStackElement(null, null)); // global stack element
+			m_arrays = new HashMap<String, ArrayData>();
 		}
 		public CallStatement getCallStatement() { return m_callStatement; }
 		public Map<String, IAbstractValue<?>> getValues() { return m_values; }
 		public Map<String, IAbstractValue<?>> getOldValues() { return m_oldValues; }
 		public LinkedList<LoopStackElement> getLoopStack() { return m_loopStack; }
+		public Map<String, ArrayData> getArrays() { return m_arrays; }
 	}
 	
 	/**
@@ -89,6 +110,8 @@ public class AbstractState {
 	
 	private IAbstractDomainFactory<?> m_numberFactory;
 	private IAbstractDomainFactory<BoolValue.Bool> m_boolFactory;
+	private IAbstractDomainFactory<BitVectorValue.BitVector> m_bitVectorFactory;
+	private IAbstractDomainFactory<StringValue.AIString> m_stringFactory;
 	
 	/**
 	 * Stack of maps from variable identifiers to values. Stack levels represent scope levels,
@@ -163,7 +186,6 @@ public class AbstractState {
 			CallStackElement cse = m_callStack.get(i);
 			
 			Map<String, IAbstractValue<?>> thisLayer = cse.getValues();
-			
 			CallStackElement resultCSE = new CallStackElement(cse.getCallStatement(), cse.getOldValues());
 			result.m_callStack.add(resultCSE);
 			Map<String, IAbstractValue<?>> copyLayer = result.m_callStack.get(i).getValues();
@@ -174,6 +196,17 @@ public class AbstractState {
 				} else {
 					copyLayer.put(identifier, originalValue.copy());
 				}
+			}
+
+			Map<String, ArrayData> thisArray = cse.getArrays();
+			Map<String, ArrayData> copyArray = result.m_callStack.get(i).getArrays();
+			for (String identifier : thisArray.keySet()) {
+				ArrayData originalArrayData = thisArray.get(identifier);
+				ArrayData resultArrayData = new ArrayData(identifier);
+				resultArrayData.setValue(originalArrayData.getValue());
+				if (originalArrayData.getIndicesUnclear())
+					resultArrayData.setIndicesUnclear();
+				copyArray.put(identifier, resultArrayData);
 			}
 			
 			resultCSE.getLoopStack().clear();
@@ -195,9 +228,6 @@ public class AbstractState {
 		if (state == null)
 			return null;
 		
-		IMergeOperator<?> mergeOp = m_numberFactory.getMergeOperator();
-		IWideningOperator<BoolValue.Bool> boolMergeOp = m_boolFactory.getWideningOperator();
-		
 		List<CallStackElement> otherValues = state.getCallStack();
 
 		AbstractState resultingState = new AbstractState(m_logger, m_numberFactory, m_boolFactory);
@@ -210,13 +240,15 @@ public class AbstractState {
 		for (int i = 0; i < maxLayerCount; i++) {
 			CallStackElement thisCSE = (i < m_callStack.size()) ? m_callStack.get(i) : null;
 			CallStackElement otherCSE = (i < otherValues.size()) ? otherValues.get(i) : null;
-			Map<String, IAbstractValue<?>> thisLayer = (thisCSE != null) ? thisCSE.getValues() : null;
-			Map<String, IAbstractValue<?>> otherLayer = (otherCSE != null) ? otherCSE.getValues() : null;
 			
 			CallStackElement useCSE = thisCSE == null ? otherCSE : thisCSE;
 			CallStackElement resultCSE = new CallStackElement(useCSE.getCallStatement(), useCSE.getOldValues());
-			resultingState.m_callStack.add(resultCSE);
-			Map<String, IAbstractValue<?>> resultingLayer = resultingValues.get(i).getValues();
+			resultingValues.add(resultCSE);
+			
+			// merge values
+			Map<String, IAbstractValue<?>> thisLayer = (thisCSE != null) ? thisCSE.getValues() : null;
+			Map<String, IAbstractValue<?>> otherLayer = (otherCSE != null) ? otherCSE.getValues() : null;
+			Map<String, IAbstractValue<?>> resultingLayer = resultCSE.getValues();
 
 			Set<String> identifiers = new HashSet<String>();
 			if (thisLayer != null)
@@ -235,13 +267,48 @@ public class AbstractState {
 				} else if (otherValue == null) {
 					resultingValue = thisValue.copy();
 				} else {
-					if (thisValue instanceof BoolValue)
-						resultingValue = boolMergeOp.apply(thisValue, otherValue);
-					else
-						resultingValue = mergeOp.apply(thisValue, otherValue);
+					resultingValue = mergeValues(thisValue, otherValue);
 				}
 				if (resultingValue != null)
 					resultingLayer.put(identifier, resultingValue);
+			}
+
+			// merge array data
+			Map<String, ArrayData> thisArrays = (thisCSE != null) ? thisCSE.getArrays() : null;
+			Map<String, ArrayData> otherArrays = (otherCSE != null) ? otherCSE.getArrays() : null;
+			Map<String, ArrayData> resultingArrays = resultCSE.getArrays();
+
+			identifiers.clear();
+			if (thisArrays != null)
+				identifiers.addAll(thisArrays.keySet());
+			if (otherArrays != null)
+				identifiers.addAll(otherArrays.keySet());
+
+			for (String identifier : identifiers) {
+				ArrayData thisData = thisArrays.get(identifier);
+				ArrayData otherData = otherArrays.get(identifier);
+
+				boolean indicesUnclear;
+				IAbstractValue<?> mergedValue;
+				
+				if (thisData == null) {
+					indicesUnclear = otherData.getIndicesUnclear();
+					mergedValue = otherData.getValue();
+				} else if (otherData == null) {
+					indicesUnclear = thisData.getIndicesUnclear();
+					mergedValue = thisData.getValue();
+				} else {
+					indicesUnclear = thisData.getIndicesUnclear() || otherData.getIndicesUnclear();
+					IAbstractValue<?> thisValue = thisData.getValue();
+					IAbstractValue<?> otherValue = otherData.getValue();
+					mergedValue = mergeValues(thisValue, otherValue);
+				}
+				
+				ArrayData resultData = new ArrayData(identifier);
+				resultData.setValue(mergedValue);
+				if (indicesUnclear)
+					resultData.setIndicesUnclear();
+				resultingArrays.put(identifier, resultData);
 			}
 			
 			// add passed loop entry nodes : take larger stack
@@ -256,6 +323,21 @@ public class AbstractState {
 		return resultingState;
 	}
 	
+	private IAbstractValue<?> mergeValues(IAbstractValue<?> A, IAbstractValue<?> B) {
+		IMergeOperator<?> mergeOp;
+		if (A instanceof BoolValue) {
+			mergeOp = m_boolFactory.getMergeOperator();
+		} else if (A instanceof BitVectorValue) {
+			mergeOp = m_bitVectorFactory.getMergeOperator();
+		} else if (A instanceof StringValue) {
+			mergeOp = m_stringFactory.getMergeOperator();
+		} else {
+			mergeOp = m_numberFactory.getMergeOperator();
+		}
+
+		return mergeOp.apply(A, B);
+	}
+	
 	/**
 	 * Widen this state with the given state using the given widening operator set in the preferences
 	 * @param state The state to widen with
@@ -264,9 +346,6 @@ public class AbstractState {
 	public AbstractState widen(AbstractState state) {
 		if (state == null)
 			return this.copy();
-		
-		IWideningOperator<?> wideningOp = m_numberFactory.getWideningOperator();
-		IWideningOperator<BoolValue.Bool> boolWideningOp = m_boolFactory.getWideningOperator();
 		
 		List<CallStackElement> otherValues = state.getCallStack();
 
@@ -285,8 +364,8 @@ public class AbstractState {
 
 			CallStackElement useCSE = thisCSE == null ? otherCSE : thisCSE;
 			CallStackElement resultCSE = new CallStackElement(useCSE.getCallStatement(), useCSE.getOldValues());
-			resultingState.m_callStack.add(resultCSE);
-			Map<String, IAbstractValue<?>> resultingLayer = resultingValues.get(i).getValues();
+			resultingValues.add(resultCSE);
+			Map<String, IAbstractValue<?>> resultingLayer = resultCSE.getValues();
 
 			Set<String> identifiers = new HashSet<String>();
 			if (thisLayer != null)
@@ -306,13 +385,47 @@ public class AbstractState {
 				} else if (otherValue == null) {
 					m_logger.error(String.format("Widening failed with a missing value for %s in the new state.", identifier));
 				} else {
-					if (thisValue instanceof BoolValue)
-						resultingValue = boolWideningOp.apply(thisValue, otherValue);
-					else
-						resultingValue = wideningOp.apply(thisValue, otherValue);
+					resultingValue = widenValues(thisValue, otherValue);
 				}
 				if (resultingValue != null)
 					resultingLayer.put(identifier, resultingValue);
+			}
+
+			// merge array data
+			Map<String, ArrayData> thisArrays = (thisCSE != null) ? thisCSE.getArrays() : null;
+			Map<String, ArrayData> otherArrays = (otherCSE != null) ? otherCSE.getArrays() : null;
+			Map<String, ArrayData> resultingArrays = resultCSE.getArrays();
+
+			identifiers.clear();
+			if (thisArrays != null)
+				identifiers.addAll(thisArrays.keySet());
+			if (otherArrays != null)
+				identifiers.addAll(otherArrays.keySet());
+
+			for (String identifier : identifiers) {
+				ArrayData thisData = thisArrays.get(identifier);
+				ArrayData otherData = otherArrays.get(identifier);
+				
+				if (thisData == null) {
+					ArrayData resultData = new ArrayData(identifier);
+					resultData.setValue(otherData.getValue());
+					if (otherData.getIndicesUnclear())
+						resultData.setIndicesUnclear();
+					resultingArrays.put(identifier, resultData);
+					m_logger.warn(String.format("Widening encountered a missing value for %s in the old state.", identifier));
+				} else if (otherData == null) {
+					m_logger.error(String.format("Widening failed with a missing value for array %s in the new state.", identifier));
+				} else {
+					boolean indicesUnclear = thisData.getIndicesUnclear() || otherData.getIndicesUnclear();
+					IAbstractValue<?> thisValue = thisData.getValue();
+					IAbstractValue<?> otherValue = otherData.getValue();
+					IAbstractValue<?> widenedValue = widenValues(thisValue, otherValue);
+					ArrayData resultData = new ArrayData(identifier);
+					resultData.setValue(widenedValue);
+					if (indicesUnclear)
+						resultData.setIndicesUnclear();
+					resultingArrays.put(identifier, resultData);
+				}
 			}
 
 			// add passed loop entry nodes : take stack from given (supposedly newer) state
@@ -328,6 +441,21 @@ public class AbstractState {
 		return resultingState;
 	}
 	
+	private IAbstractValue<?> widenValues(IAbstractValue<?> A, IAbstractValue<?> B) {
+		IWideningOperator<?> wideningOp;
+		if (A instanceof BoolValue) {
+			wideningOp = m_boolFactory.getWideningOperator();
+		} else if (A instanceof BitVectorValue) {
+			wideningOp = m_bitVectorFactory.getWideningOperator();
+		} else if (A instanceof StringValue) {
+			wideningOp = m_stringFactory.getWideningOperator();
+		} else {
+			wideningOp = m_numberFactory.getWideningOperator();
+		}
+
+		return wideningOp.apply(A, B);
+	}
+	
 	/**
 	 * @param identifier
 	 * @return The current scope if it has the given identifier,
@@ -335,11 +463,11 @@ public class AbstractState {
 	 * 		else null if none of them has it. 
 	 */
 	private CallStackElement getScopeOfIdentifier(String identifier) {
-		CallStackElement cse = m_callStack.peek();
+		CallStackElement cse = getCurrentScope();
 		if (cse.getValues().containsKey(identifier))
 			return cse;
 		
-		cse = m_callStack.getLast(); // GLOBAL scope
+		cse = getGlobalScope();
 		if (cse.getValues().containsKey(identifier))
 			return cse;
 		
@@ -369,11 +497,18 @@ public class AbstractState {
 	}
 	
 	/**
+	 * @return The global scope level
+	 */
+	public CallStackElement getGlobalScope() {
+		return m_callStack.getLast();
+	}
+	
+	/**
 	 * Creates a new empty symbol table and puts it on the top of the stack
 	 * @param CallStatement The call statement of the method call that creates this scope level
 	 */
 	public void pushStackLayer(CallStatement callStatement) {
-		Map<String, IAbstractValue<?>> oldValues = m_callStack.isEmpty() ? null : m_callStack.getLast().getValues();
+		Map<String, IAbstractValue<?>> oldValues = m_callStack.isEmpty() ? null : getGlobalScope().getValues();
 		m_callStack.push(new CallStackElement(callStatement, oldValues));
 	}
 	
@@ -436,7 +571,7 @@ public class AbstractState {
 	 * @return True if it could be declared, false if such an identifier already exists on the top layer or the stack is empty
 	 */
 	public boolean declareIdentifier(String identifier, IAbstractValue<?> initialValue, boolean asGlobal) {
-		CallStackElement layer = asGlobal ? m_callStack.getLast() : m_callStack.peek();
+		CallStackElement layer = asGlobal ? getGlobalScope() : getCurrentScope();
 
 		m_logger.debug(String.format("New variable %s at scope level %d %s", identifier, getStackSize()-1,
 				getCurrentScopeName()));

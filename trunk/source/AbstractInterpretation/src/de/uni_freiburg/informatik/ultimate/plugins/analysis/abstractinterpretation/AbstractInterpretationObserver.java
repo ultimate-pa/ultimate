@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -10,12 +8,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 
 public class AbstractInterpretationObserver implements IUnmanagedObserver {
 
-	private final Logger m_logger;
 	private final IUltimateServiceProvider mServices;
 
 	public AbstractInterpretationObserver(IUltimateServiceProvider services) {
 		mServices = services;
-		m_logger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 	}
 
 	@Override
@@ -45,17 +41,11 @@ public class AbstractInterpretationObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		if (root instanceof RootNode) {
-			processRootNode((RootNode) root);
+			AbstractInterpreter abstractInterpreter = new AbstractInterpreter(mServices);
+			abstractInterpreter.processRcfg((RootNode) root);
+			
 			return false;
 		}
 		return true;
-	}
-
-	private void processRootNode(RootNode root) {
-		// TODO: Actual stuff ;)
-		m_logger.info("Processing a root node...");
-
-		AbstractInterpreter abstractInterpreter = new AbstractInterpreter(mServices);
-		abstractInterpreter.processRcfg(root);
 	}
 }

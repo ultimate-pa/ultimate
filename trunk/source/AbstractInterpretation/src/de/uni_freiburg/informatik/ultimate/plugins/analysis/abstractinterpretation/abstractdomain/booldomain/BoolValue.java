@@ -60,6 +60,14 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	public boolean isBottom() {
 		return m_value == Bool.EMPTY;
 	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#representsSingleConcreteValue()
+	 */
+	@Override
+	public boolean representsSingleConcreteValue() {
+		return (m_value == Bool.TRUE) || (m_value == Bool.FALSE);
+	}
 	
 	/**
 	 * @return True iff the value is FALSE or EMPTY

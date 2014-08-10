@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Christopher Dillo
  *
  */
-public class SignDomainFactory implements IAbstractDomainFactory<SignValue.Sign> {
+public class SignDomainFactory implements IAbstractDomainFactory<Sign> {
 
 	private static final String s_domainID = "SIGN";
 	

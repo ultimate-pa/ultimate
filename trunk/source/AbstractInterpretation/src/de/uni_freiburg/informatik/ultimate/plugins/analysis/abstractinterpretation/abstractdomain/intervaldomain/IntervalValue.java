@@ -54,10 +54,20 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	}
 
 	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#representsSingleConcreteValue()
+	 */
+	@Override
+	public boolean representsSingleConcreteValue() {
+		return m_value.isSingleValueInterval();
+	}
+
+	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#isEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
 	public boolean isEqual(IAbstractValue<?> value) {
+		if (value == null) return false;
+		
 		Interval interval = (Interval) value.getValue();
 		if (interval == null) return false;
 
@@ -69,6 +79,8 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 */
 	@Override
 	public boolean isSuper(IAbstractValue<?> value) {
+		if (value == null) return false;
+		
 		Interval interval = (Interval) value.getValue();
 		if (interval == null) return false;
 		
@@ -89,6 +101,8 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 */
 	@Override
 	public boolean isSub(IAbstractValue<?> value) {
+		if (value == null) return false;
+		
 		Interval interval = (Interval) value.getValue();
 		if (interval == null) return false;
 		
