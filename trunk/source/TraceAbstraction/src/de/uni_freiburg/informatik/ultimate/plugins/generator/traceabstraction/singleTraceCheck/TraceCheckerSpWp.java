@@ -369,7 +369,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 			mLogger.debug("#quantifiedPredicates in WP: " + numberOfQuantifiedPredicates[2]);
 			mLogger.debug("#quantifiedPredicates in BP: " + numberOfQuantifiedPredicates[3]);
 		}
-
+		
+		
+		// Check the validity of the computed interpolants.
 		if (m_ComputeInterpolantsSp && m_ComputeInterpolantsWp) {
 			checkSPImpliesWP(m_InterpolantsSp, m_InterpolantsWp);
 		}
