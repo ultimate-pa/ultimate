@@ -5,17 +5,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.Semaphore;
-
 import javax.xml.bind.JAXBException;
-
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
-import org.eclipse.equinox.app.IApplication;
 import org.xml.sax.SAXException;
-
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
+import de.uni_freiburg.informatik.ultimate.core.controllers.ExternalUltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.ILoggingService;
@@ -48,13 +43,9 @@ public class UltimateStarter implements IController {
 
 	private String mLogPattern;
 	private File mLogFile;
-	private UltimateCore mCurrentUltimateInstance;
 	private IUltimateServiceProvider mCurrentSerivces;
-	private TestToolchainJob mJob;
-	private Exception mUltimateException;
+	private final ExternalUltimateCore mExternalUltimateCore;
 
-	private final Semaphore mUltimateExit;
-	private final Semaphore mStarterContinue;
 
 	public UltimateStarter(File inputFile, File toolchainFile, long deadline) {
 		this(inputFile, null, toolchainFile, deadline, null, null);
@@ -67,6 +58,7 @@ public class UltimateStarter implements IController {
 	public UltimateStarter(File inputFile, File settingsFile, File toolchainFile, long deadline, File logFile,
 			String logPattern) {
 		mLogger = Logger.getLogger(UltimateStarter.class);
+		mExternalUltimateCore = new ExternalUltimateCoreTest(this);
 		mInputFile = inputFile;
 		mToolchainFile = toolchainFile;
 		if (mInputFile == null || mToolchainFile == null) {
@@ -76,74 +68,20 @@ public class UltimateStarter implements IController {
 		mDeadline = deadline;
 		mLogFile = logFile;
 		mLogPattern = logPattern;
-		mUltimateExit = new Semaphore(0);
-		mStarterContinue = new Semaphore(0);
 		detachLogger();
 	}
 
-	public void runUltimate() throws Exception {
-		if (mCurrentUltimateInstance != null) {
-			throw new Exception("You must call complete() before re-using this instance ");
-		}
-		mCurrentUltimateInstance = new UltimateCore();
-		mUltimateException = null;
-
-		final UltimateStarter starter = this;
-
-		Thread t = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					mCurrentUltimateInstance.start(starter, false);
-				} catch (Exception e) {
-					mUltimateException = e;
-				}
-			}
-		});
-		
-		t.start();
-		mStarterContinue.acquireUninterruptibly();
-		if (mUltimateException != null) {
-			throw mUltimateException;
-		}
+	public void runUltimate() throws Throwable {
+		mExternalUltimateCore.runUltimate();
 	}
 
 	@Override
 	public int init(ICore core, ILoggingService loggingService) {
-		if (core == null || loggingService == null) {
-			return -1;
-		}
-
-		mLogger = loggingService.getControllerLogger();
-
-		if (mSettingsFile != null) {
-			core.loadPreferences(mSettingsFile.getAbsolutePath());
-		}
-		attachLogger();
-
-		try {
-			mJob = new TestToolchainJob("Processing Toolchain", core, this, mLogger, mInputFile, null);
-			mJob.setDeadline(mDeadline);
-			mJob.schedule();
-			// in non-GUI mode, we must wait until job has finished!
-			mJob.join();
-
-		} catch (InterruptedException e) {
-			mLogger.error("Exception in Toolchain", e);
-			return -1;
-		} finally {
-			mStarterContinue.release();
-			mUltimateExit.acquireUninterruptibly();
-		}
-		// TODO: find a good way to wait in init until complete is called by
-		// junit...
-		return IApplication.EXIT_OK;
+		return mExternalUltimateCore.init(core, loggingService, mSettingsFile,mDeadline,mInputFile,null);
 	}
-
+	
 	public void complete() {
-		detachLogger();
-		mJob.releaseToolchainManually();
-		mUltimateExit.release();
+		mExternalUltimateCore.complete();
 	}
 
 	private void attachLogger() {
@@ -231,5 +169,25 @@ public class UltimateStarter implements IController {
 	public IUltimateServiceProvider getServices() {
 		return mCurrentSerivces;
 	}
+	
+	private class ExternalUltimateCoreTest extends ExternalUltimateCore{
 
+		public ExternalUltimateCoreTest(IController controller) {
+			super(controller);
+		}
+		
+		@Override
+		protected Logger getLogger(ILoggingService loggingService) {
+			mLogger = super.getLogger(loggingService);
+			attachLogger();
+			return mLogger;
+		}
+		
+		@Override
+		public void complete() {
+			detachLogger();
+			super.complete();
+		}
+		
+	}
 }

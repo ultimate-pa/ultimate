@@ -10,7 +10,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -22,8 +21,6 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
@@ -35,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.codan.extension.AbstractFullAstCh
 import de.uni_freiburg.informatik.ultimate.cdt.preferences.PreferencePage;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.views.resultlist.ResultList;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
@@ -75,25 +73,24 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 
 	private static IToolchainStorage sStorage;
 
-	private static CDTController sController;
+	private CDTController mController;
+
 
 	/**
 	 * The Constructor of this Checker
 	 * 
 	 * @throws Exception
 	 */
-	public UltimateCChecker() throws Exception {
+	public UltimateCChecker() throws Throwable {
 		super();
 		mToolchainFiles = new HashMap<String, File>();
-
-		sController = new CDTController(this);
-		sController.startUltimate();
+		mController = new CDTController(this);
 	}
 
 	@Override
 	protected void finalize() throws Throwable {
 		super.finalize();
-		sController.close();
+		mController.close();
 	}
 
 	@Override
@@ -104,7 +101,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 
 		// run ultimate
 		try {
-			sController.runToolchain(getToolchainPath(), ast);
+			mController.runToolchain(getToolchainPath(), ast);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -119,22 +116,21 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		final String completePath = ast.getFilePath();
 		reportProblems(completePath);
 		updateFileView(completePath);
+		mController.complete();
 
 	}
 
 	private String getToolchainPath() {
 		// obtain selected toolchain from preferences
-		File toolChain = null;
-		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(Activator.PLUGIN_ID);
-		String selectedToolchain = prefs.get(PreferencePage.TOOLCHAIN_SELECTION_TEXT, "");
+		String selectedToolchain = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+				.getString(PreferencePage.TOOLCHAIN_SELECTION_TEXT);
 
-		for (Entry<String, File> entry : mToolchainFiles.entrySet()) {
-			if (selectedToolchain.equals(entry.getKey())) {
-				toolChain = entry.getValue();
-				break;
-			}
+		File tc = mToolchainFiles.get(selectedToolchain);
+		String path = null;
+		if (tc != null) {
+			path = tc.getAbsolutePath();
 		}
-		return toolChain.getAbsolutePath();
+		return path;
 	}
 
 	private void updateFileView(final String completePath) {
@@ -314,12 +310,13 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		assert services != null;
 		mServices = services;
 	}
-	
-	public void setStorage(IToolchainStorage storage){
+
+	public void setStorage(IToolchainStorage storage) {
 		sStorage = storage;
 	}
-	
-	public static IToolchainStorage getStorage(){
+
+	public static IToolchainStorage getStorage() {
 		return sStorage;
 	}
+
 }

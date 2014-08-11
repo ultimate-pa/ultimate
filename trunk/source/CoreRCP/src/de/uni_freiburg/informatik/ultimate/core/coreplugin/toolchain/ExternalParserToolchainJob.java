@@ -83,12 +83,22 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 		} finally {
 			monitor.worked(1);
 			logResults();
-			mCore.releaseToolchain(currentToolchain);
+			releaseToolchain(currentToolchain);
 			// TODO: Maybe we need to destroy the storage here, but I think not.
 			monitor.done();
 		}
 
 		return returnstatus;
+	}
+	
+	/**
+	 * This method releases the active toolchain back to the core. Overwrite
+	 * this method if you want to delay the release of the toolchain.
+	 * 
+	 * @param currentToolchain
+	 */
+	protected void releaseToolchain(IToolchain chain) {
+		mCore.releaseToolchain(chain);
 	}
 
 }

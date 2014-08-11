@@ -1,7 +1,7 @@
 <toolchain>
-	<plugin id="CACSL2BoogieTranslator"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
-	<plugin id="RCFGBuilder"/>
-	<plugin id="BlockEncoding"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding"/>
 	<plugin id="CodeCheck"/>
 </toolchain>

@@ -35,12 +35,15 @@ public class UltimateTestCase {
 	@FactoryTestMethod
 	public void test() {
 
+		Throwable th = null;
+
 		TestResult result = TestResult.FAIL;
 
 		try {
 			mStarter.runUltimate();
 			result = mDecider.getTestResult(mStarter.getServices());
 		} catch (Throwable e) {
+			th = e;
 			result = mDecider.getTestResult(mStarter.getServices(), e);
 			mLogger.fatal(String.format("There was an exception during the execution of Ultimate: %s%n%s", e,
 					ExceptionUtils.getStackTrace(e)));
@@ -56,7 +59,14 @@ public class UltimateTestCase {
 			}
 
 			if (!success) {
-				fail();
+				String message = mDecider.getResultMessage();
+				if (message == null) {
+					message = "ITestResultDecider provided no message";
+				}
+				if (th != null) {
+					message += " (Ultimate threw an Exception: " + th.getMessage() + ")";
+				}
+				fail(message);
 			}
 		}
 	}

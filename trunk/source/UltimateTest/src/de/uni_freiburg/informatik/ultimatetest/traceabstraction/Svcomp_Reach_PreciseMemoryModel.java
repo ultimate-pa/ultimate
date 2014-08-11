@@ -3,6 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
@@ -61,7 +62,8 @@ public class Svcomp_Reach_PreciseMemoryModel extends
 				    "CFilesBackwardPredicates",
 				    m_Timeout);
 		}
-//		return Util.firstN(super.createTestCases(), 3);
-		return super.createTestCases();
+//		return new ArrayList<UltimateTestCase>();
+		return Util.firstN(super.createTestCases(), 30);
+//		return super.createTestCases();
 	}
 }
