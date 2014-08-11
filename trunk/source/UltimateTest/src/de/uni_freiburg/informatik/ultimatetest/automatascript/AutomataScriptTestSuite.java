@@ -15,10 +15,21 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 	
 	private static final String m_Toolchain = "examples/toolchains/AutomataScriptInterpreter.xml";
 	private static final File m_ToolchainFile = new File(Util.getPathFromTrunk(m_Toolchain));
-	private static int m_Timeout = 60000;
+	private static int m_Timeout = 10000;
 	private static String m_Description = "AutomataScriptTest";
 	private static final String[] m_Directories = { 
-		"examples/programs" 
+		"examples/Automata/atsTestFiles",
+		"examples/Automata/AUTOMATA_SCRIPT",
+		"examples/Automata/BuchiAutomata",
+		"examples/Automata/BuchiNwa",
+		"examples/Automata/finiteAutomata",
+		"examples/Automata/nwa",
+		"examples/Automata/nwaOperations",
+// the following two have still bugs
+//		"examples/Automata/PetriNet",
+//		"examples/Automata/senwa",
+// the following is not yet tested
+//		"examples/Automata/syntaxError",
 		};
 	private static final String[] m_FileEndings = { ".ats" };
 	

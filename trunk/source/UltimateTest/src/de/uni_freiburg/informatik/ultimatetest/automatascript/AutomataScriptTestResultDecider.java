@@ -5,44 +5,38 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.result.AutomataScriptInterpreterOverallResult;
+import de.uni_freiburg.informatik.ultimate.result.AutomataScriptInterpreterOverallResult.OverallResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 
 public class AutomataScriptTestResultDecider implements ITestResultDecider {
 	
-	enum AutomataScriptTestResultCategory {
-		ALL_HOLD, ALL_HOLD_TRIVIALLY, SOME_FAIL, EXCEPTION_OR_ERROR, TIMEOUT, SYNTAX_ERROR
-	}
-
-	AutomataScriptTestResultCategory m_Category = AutomataScriptTestResultCategory.ALL_HOLD_TRIVIALLY;
+	OverallResult m_Category;
 
 	@Override
 	public TestResult getTestResult(IUltimateServiceProvider services) {
+		AutomataScriptInterpreterOverallResult asior = null;
 		HashMap<String, List<IResult>> allResults = services.getResultService().getResults();
 		for (Entry<String, List<IResult>> entry  : allResults.entrySet()) {
 			for (IResult iResult : entry.getValue()) {
-				processResult(iResult);
+				if (iResult instanceof AutomataScriptInterpreterOverallResult) {
+					asior = (AutomataScriptInterpreterOverallResult) iResult;
+				}
 			}
 		}
-		return getTestResultFromCategory(m_Category);
-	}
-
-	private void processResult(IResult iResult) {
-		if (iResult instanceof SyntaxErrorResult) {
-			m_Category = AutomataScriptTestResultCategory.SYNTAX_ERROR;
-		} else if (iResult instanceof IResultWithSeverity) {
-			IResultWithSeverity irws = (IResultWithSeverity) iResult;
-			throw new AssertionError("not yet implemented");
+		if (asior == null) {
+			throw new AssertionError("no overall result");
+		} else {
+			m_Category = asior.getOverallResult();
 		}
-		throw new AssertionError("not yet implemented");
+		return getTestResultFromCategory(m_Category);
 	}
 
 	@Override
 	public TestResult getTestResult(IUltimateServiceProvider services,
 			Throwable e) {
-		m_Category = AutomataScriptTestResultCategory.EXCEPTION_OR_ERROR;
+		m_Category = OverallResult.EXCEPTION_OR_ERROR;
 		return getTestResultFromCategory(m_Category);
 	}
 
@@ -69,13 +63,13 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 		}
 	}
 	
-	private TestResult getTestResultFromCategory(AutomataScriptTestResultCategory category) {
+	private TestResult getTestResultFromCategory(OverallResult category) {
 		switch (category) {
-		case ALL_HOLD:
-		case ALL_HOLD_TRIVIALLY:
+		case ALL_ASSERTIONS_HOLD:
+		case NO_ASSERTION:
 			return TestResult.SUCCESS;
 		case EXCEPTION_OR_ERROR:
-		case SOME_FAIL:
+		case SOME_ASSERTION_FAILED:
 			return TestResult.FAIL;
 		case TIMEOUT:
 			return TestResult.UNKNOWN;
