@@ -4,7 +4,7 @@
 
 NestedWordAutomaton res = buchiComplementFKV(bia);
 assert( !BuchiAccepts(bia, [a b, a b]));
-assert( !BuchiAccepts(res, [a b, a b]));
+assert( BuchiAccepts(res, [a b, a b]));
 print(res);
 
 NestedWordAutomaton bia = (
