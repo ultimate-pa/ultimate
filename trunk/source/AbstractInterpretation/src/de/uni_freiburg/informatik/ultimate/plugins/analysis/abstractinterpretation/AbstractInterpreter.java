@@ -3,8 +3,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation;
 
+import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -25,11 +29,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractInterpretationBoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.bitvectordomain.BitVectorDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain.IntervalDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain.SignDomainFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.stringdomain.StringDomainFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.topbottomdomain.TopBottomDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.preferences.AbstractInterpretationPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -59,11 +62,11 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 	private Logger m_logger;
 
-	private IAbstractDomainFactory<?> m_numberDomainFactory;
-
-	private BoolDomainFactory m_boolDomainFactory;
-	private BitVectorDomainFactory m_bitVectorDomainFactory;
-	private StringDomainFactory m_stringDomainFactory;
+	private IAbstractDomainFactory<?> m_intDomainFactory;
+	private IAbstractDomainFactory<?> m_realDomainFactory;
+	private IAbstractDomainFactory<?> m_boolDomainFactory;
+	private IAbstractDomainFactory<?> m_bitVectorDomainFactory;
+	private IAbstractDomainFactory<?> m_stringDomainFactory;
 
 	private final LinkedList<RCFGNode> m_nodesToVisit = new LinkedList<RCFGNode>();
 
@@ -90,12 +93,36 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	private String m_mainMethodName;
 	private int m_iterationsUntilWidening;
 	private int m_parallelStatesUntilMerge;
-	private boolean m_generateStateAnnotations;
 	private String m_widening_fixedNumbers;
 	private boolean m_widening_autoNumbers;
-	private String m_numberDomainID;
-	private String m_numberWideningOpName;
-	private String m_numberMergeOpName;
+
+	private boolean m_generateStateAnnotations;
+	private boolean m_stateChangeLogConsole;
+	private boolean m_stateChangeLogFile;
+	private boolean m_stateChangeLogUseSourcePath;
+	private String m_stateChangeLogPath;
+	
+	private String m_intDomainID;
+	private String m_intWideningOpName;
+	private String m_intMergeOpName;
+	
+	private String m_realDomainID;
+	private String m_realWideningOpName;
+	private String m_realMergeOpName;
+	
+	private String m_boolDomainID;
+	private String m_boolWideningOpName;
+	private String m_boolMergeOpName;
+	
+	private String m_bitVectorDomainID;
+	private String m_bitVectorWideningOpName;
+	private String m_bitVectorMergeOpName;
+	
+	private String m_stringDomainID;
+	private String m_stringWideningOpName;
+	private String m_stringMergeOpName;
+	
+	
 
 	public AbstractInterpreter(IUltimateServiceProvider services) {
 		m_services = services;
@@ -190,7 +217,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 			}
 		}
 		statesAtNode.add(newState);
-		notifyStateChangeListeners(node, statesAtNodeBackup, state, newState);
+		notifyStateChangeListeners(fromEdge, statesAtNodeBackup, state, newState);
 
 		if (m_generateStateAnnotations)
 			annotateElement(node, statesAtNode);
@@ -207,6 +234,28 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	public void processRcfg(RootNode root) {
 		m_reachedErrorLocs.clear();
 
+		// state change logger
+		if (m_stateChangeLogConsole || m_stateChangeLogFile) {
+			String fileDir = "";
+			String fileName = "";
+			if (m_stateChangeLogFile) {
+				File sourceFile = new File(root.getFilename());
+				DateFormat dfm = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+				fileName = sourceFile.getName() + "_AI_" + dfm.format(new Date()) + ".txt";
+				if (m_stateChangeLogUseSourcePath) {
+					fileDir = sourceFile.getParent();
+				} else {
+					fileDir = null;
+				}
+				if (fileDir == null) {
+					fileDir = new File(m_stateChangeLogPath).getAbsolutePath();
+				}
+			}
+			StateChangeLogger scl = new StateChangeLogger(m_logger, m_stateChangeLogConsole, m_stateChangeLogFile,
+					fileDir + File.separatorChar + fileName);
+			this.registerStateChangeListener(scl);
+		}
+
 		// numbers for widening
 		m_numbersForWidening.clear();
 		m_numbersForWidening.addAll(m_fixedNumbersForWidening);
@@ -216,13 +265,12 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 			m_numbersForWidening.addAll(literalCollector.getResult());
 		}
 
-		// number domain factory chosen in preferences
-		m_numberDomainFactory = makeNumberDomainFactory(m_numberDomainID);
-
-		// factories which are present independent from preferences
-		m_boolDomainFactory = new BoolDomainFactory(m_logger);
-		m_bitVectorDomainFactory = new BitVectorDomainFactory(m_logger);
-		m_stringDomainFactory = new StringDomainFactory(m_logger);
+		// domain factories chosen in preferences
+		m_intDomainFactory = makeDomainFactory(m_intDomainID, m_intWideningOpName, m_intMergeOpName);
+		m_realDomainFactory = makeDomainFactory(m_realDomainID, m_realWideningOpName, m_realMergeOpName);
+		m_boolDomainFactory = makeDomainFactory(m_boolDomainID, m_boolWideningOpName, m_boolMergeOpName);
+		m_bitVectorDomainFactory = makeDomainFactory(m_bitVectorDomainID, m_bitVectorWideningOpName, m_bitVectorMergeOpName);
+		m_stringDomainFactory = makeDomainFactory(m_stringDomainID, m_stringWideningOpName, m_stringMergeOpName);
 
 		// fetch loop nodes with their entry/exit edges
 		LoopDetector loopDetector = new LoopDetector(m_services);
@@ -241,7 +289,8 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		}
 		m_symbolTable = pa.getSymbolTable();
 
-		m_boogieVisitor = new AbstractInterpretationBoogieVisitor(m_logger, m_symbolTable, m_numberDomainFactory, m_boolDomainFactory,
+		m_boogieVisitor = new AbstractInterpretationBoogieVisitor(m_logger, m_symbolTable,
+				m_intDomainFactory, m_realDomainFactory, m_boolDomainFactory,
 				m_bitVectorDomainFactory, m_stringDomainFactory);
 
 		// root annotation: get location list
@@ -253,7 +302,9 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 			if (e instanceof RootEdge) {
 				RCFGNode target = e.getTarget();
 				if ((mainEntry == null) || (target == mainEntry)) {
-					AbstractState state = new AbstractState(m_logger, m_numberDomainFactory, m_boolDomainFactory);
+					AbstractState state = new AbstractState(m_logger, m_intDomainFactory,
+							m_realDomainFactory, m_boolDomainFactory,
+							m_bitVectorDomainFactory, m_stringDomainFactory);
 					if (mainEntry != null) {
 						CallStatement mainProcMockStatement = new CallStatement(null, false, null, m_mainMethodName, null);
 						state.pushStackLayer(mainProcMockStatement); // layer for main method
@@ -498,17 +549,17 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	/**
 	 * Notifies all state change listeners of a state change
 	 * 
-	 * @param location
+	 * @param viaEdge
 	 * @param oldStates
 	 * @param newState
 	 * @param mergedState
 	 */
-	private void notifyStateChangeListeners(IElement location, List<AbstractState> oldStates, AbstractState newState,
+	private void notifyStateChangeListeners(RCFGEdge viaEdge, List<AbstractState> oldStates, AbstractState newState,
 			AbstractState mergedState) {
 		for (IAbstractStateChangeListener l : m_stateChangeListeners) {
 			List<AbstractState> statesCopy = new ArrayList<AbstractState>(oldStates.size());
 			statesCopy.addAll(oldStates);
-			l.onStateChange(location, statesCopy, newState, mergedState);
+			l.onStateChange(viaEdge, statesCopy, newState, mergedState);
 		}
 	}
 
@@ -546,34 +597,75 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		m_iterationsUntilWidening = prefs
 				.getInt(AbstractInterpretationPreferenceInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
 		m_parallelStatesUntilMerge = prefs.getInt(AbstractInterpretationPreferenceInitializer.LABEL_STATES_UNTIL_MERGE);
-		m_generateStateAnnotations = prefs
-				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_STATE_ANNOTATIONS);
 
 		m_widening_fixedNumbers = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_WIDENING_FIXEDNUMBERS);
 		m_widening_autoNumbers = prefs.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_WIDENING_AUTONUMBERS);
+		
+		m_generateStateAnnotations = prefs
+				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_STATE_ANNOTATIONS);
+		m_stateChangeLogConsole = prefs
+		.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_CONSOLE);
+		m_stateChangeLogFile = prefs
+				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_FILE);
+		m_stateChangeLogUseSourcePath = prefs
+				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_USESOURCEPATH);
+		m_stateChangeLogPath = prefs
+				.getString(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_PATH);
 
-		m_numberDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACTDOMAIN);
-		m_numberWideningOpName = prefs.getString(String.format(
-				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_numberDomainID));
-		m_numberMergeOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
-				m_numberDomainID));
+		m_intDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_INTDOMAIN);
+		m_intWideningOpName = prefs.getString(String.format(
+				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_intDomainID));
+		m_intMergeOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
+				m_intDomainID));
+
+		m_realDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_REALDOMAIN);
+		m_realWideningOpName = prefs.getString(String.format(
+				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_realDomainID));
+		m_realMergeOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
+				m_realDomainID));
+
+		m_boolDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_BOOLDOMAIN);
+		m_boolWideningOpName = prefs.getString(String.format(
+				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_boolDomainID));
+		m_boolMergeOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
+				m_boolDomainID));
+
+		m_bitVectorDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_BITVECTORDOMAIN);
+		m_bitVectorWideningOpName = prefs.getString(String.format(
+				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_bitVectorDomainID));
+		m_bitVectorMergeOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
+				m_bitVectorDomainID));
+
+		m_stringDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_STRINGDOMAIN);
+		m_stringWideningOpName = prefs.getString(String.format(
+				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_stringDomainID));
+		m_stringMergeOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
+				m_stringDomainID));
 	}
 
 
 	/**
 	 * @param domainID
+	 * @param wideningOpName
+	 * @param mergeOpName
 	 * @return An abstract domain factory for the abstract domain system given by its ID
 	 */
-	private IAbstractDomainFactory<?> makeNumberDomainFactory(String domainID) {
+	private IAbstractDomainFactory<?> makeDomainFactory(String domainID, String wideningOpName, String mergeOpName) {
+		if (domainID.equals(TopBottomDomainFactory.getDomainID()))
+			return new TopBottomDomainFactory(m_logger);
+		
+		if (domainID.equals(BoolDomainFactory.getDomainID()))
+			return new BoolDomainFactory(m_logger);
+		
 		if (domainID.equals(SignDomainFactory.getDomainID()))
-			return new SignDomainFactory(m_logger, m_numberWideningOpName, m_numberMergeOpName);
+			return new SignDomainFactory(m_logger, wideningOpName, mergeOpName);
 
 		if (domainID.equals(IntervalDomainFactory.getDomainID()))
-			return new IntervalDomainFactory(m_logger, new HashSet<String>(m_numbersForWidening), m_numberWideningOpName, m_numberMergeOpName);
+			return new IntervalDomainFactory(m_logger, new HashSet<String>(m_numbersForWidening), wideningOpName, mergeOpName);
 
-		// default ADS: SIGN
+		// default ADS: TOPBOTTOM
 		m_logger.warn(String.format("Unknown abstract domain system \"%s\" chosen, using \"%s\" instead",
-				domainID, SignDomainFactory.getDomainID()));
-		return new SignDomainFactory(m_logger, m_numberWideningOpName, m_numberMergeOpName);
+				domainID, TopBottomDomainFactory.getDomainID()));
+		return new TopBottomDomainFactory(m_logger);
 	}
 }

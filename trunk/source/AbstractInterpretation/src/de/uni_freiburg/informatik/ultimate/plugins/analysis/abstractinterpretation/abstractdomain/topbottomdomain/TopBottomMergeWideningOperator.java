@@ -1,54 +1,54 @@
 /**
  * 
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.bitvectordomain;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.topbottomdomain;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IMergeOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IWideningOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.bitvectordomain.BitVectorValue.BitVector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.topbottomdomain.TopBottomValue.TopBottom;
 
 /**
  * @author Christopher Dillo
  *
  */
-public class BitVectorMergeWideningOperator implements IWideningOperator<BitVector>,
-		IMergeOperator<BitVector> {
+public class TopBottomMergeWideningOperator implements IWideningOperator<TopBottom>,
+		IMergeOperator<TopBottom> {
 	
-	private BitVectorDomainFactory m_factory;
+	private TopBottomDomainFactory m_factory;
 	
 	private Logger m_logger;
 	
-	public BitVectorMergeWideningOperator(BitVectorDomainFactory factory, Logger logger) {
+	public TopBottomMergeWideningOperator(TopBottomDomainFactory factory, Logger logger) {
 		m_factory = factory;
 		m_logger = logger;
 	}
 
 	public static String getName() {
-		return "BITVECTOR Merge & Widening";
+		return "TOP-BOTTOM Merge & Widening";
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IWideningOperator#apply(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue, de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public BitVectorValue apply(IAbstractValue<?> oldValue, IAbstractValue<?> newValue) {
-		BitVectorValue bvalA = (BitVectorValue) oldValue;
-		BitVectorValue bvalB = (BitVectorValue) newValue; 
+	public TopBottomValue apply(IAbstractValue<?> oldValue, IAbstractValue<?> newValue) {
+		TopBottomValue bvalA = (TopBottomValue) oldValue;
+		TopBottomValue bvalB = (TopBottomValue) newValue; 
 		
 		// invalid state objects
 		if ((bvalA == null) || (bvalB == null)) {
 			return m_factory.makeTopValue();
 		}
 		
-		BitVector bvA = bvalA.getValue();
-		BitVector bvB = bvalB.getValue();
+		TopBottom bvA = bvalA.getValue();
+		TopBottom bvB = bvalB.getValue();
 		
 		if (bvA == bvB) return m_factory.makeValue(bvA);
 
-		if ((bvA == BitVector.TOP) || (bvB == BitVector.TOP))
+		if ((bvA == TopBottom.TOP) || (bvB == TopBottom.TOP))
 			return m_factory.makeTopValue();
 
 		return m_factory.makeBottomValue();
@@ -58,8 +58,8 @@ public class BitVectorMergeWideningOperator implements IWideningOperator<BitVect
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IWideningOperator#copy()
 	 */
 	@Override
-	public BitVectorMergeWideningOperator copy() {
-		return new BitVectorMergeWideningOperator(m_factory, m_logger);
+	public TopBottomMergeWideningOperator copy() {
+		return new TopBottomMergeWideningOperator(m_factory, m_logger);
 	}
 
 }

@@ -593,6 +593,62 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#logicIff(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public SignValue logicIff(IAbstractValue<?> value) {
+		return m_factory.makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#logicImplies(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public SignValue logicImplies(IAbstractValue<?> value) {
+		return m_factory.makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#logicAnd(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public SignValue logicAnd(IAbstractValue<?> value) {
+		return m_factory.makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#logicOr(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public SignValue logicOr(IAbstractValue<?> value) {
+		return m_factory.makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#logicNot()
+	 */
+	@Override
+	public SignValue logicNot() {
+		return m_factory.makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#bitVectorConcat(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public SignValue bitVectorConcat(IAbstractValue<?> value) {
+		return m_factory.makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#bitVectorAccess(int, int)
+	 */
+	@Override
+	public SignValue bitVectorAccess(int start, int end) {
+		return m_factory.makeBottomValue();
+	}
+
 	@Override
 	public String toString() {
 		switch (m_value) {

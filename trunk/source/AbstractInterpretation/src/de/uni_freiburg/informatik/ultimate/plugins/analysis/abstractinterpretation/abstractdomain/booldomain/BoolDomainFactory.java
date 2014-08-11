@@ -93,24 +93,35 @@ public class BoolDomainFactory implements IAbstractDomainFactory<Bool> {
 		
 		return new BoolValue(Bool.TRUE, this, m_logger);
 	}
-	
-	/**
-	 * @param bool
-	 * @return A BoolValue based on a given boolean value (true or false)
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#makeBoolValue(boolean)
 	 */
-	public BoolValue makeBooleanValue(boolean bool) {
+	@Override
+	public BoolValue makeBoolValue(boolean bool) {
 		return new BoolValue(bool ? Bool.TRUE : Bool.FALSE, this, m_logger);
 	}
-	
-	/**
-	 * For use with values generated from IAbstractValue's comparison operators
-	 * @param value An abstract value to get a boolean value for
-	 * @return A copy of the value if it is a BoolValue, otherwise FALSE, if the given value is bottom; else true
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#makeBitVectorValue(java.lang.String)
 	 */
-	public BoolValue makeFromAbstractValue(IAbstractValue<?> value) {
-		if (value instanceof BoolValue) return (BoolValue) value.copy();
-		
-		return new BoolValue(value.isBottom() ? Bool.FALSE : Bool.TRUE, this, m_logger);
+	public BoolValue makeBitVectorValue(String bitvector) {
+		return makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#makeStringValue(java.lang.String)
+	 */
+	public BoolValue makeStringValue(String value) {
+		return makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#valueIsCompatible(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public boolean valueBelongsToDomainSystem(IAbstractValue<?> value) {
+		return (value instanceof BoolValue);
 	}
 
 	/* (non-Javadoc)

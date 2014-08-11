@@ -1,7 +1,7 @@
 /**
  * 
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.stringdomain;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.topbottomdomain;
 
 import org.apache.log4j.Logger;
 
@@ -11,30 +11,30 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Christopher Dillo
  *
  */
-public class StringValue implements IAbstractValue<StringValue.AIString> {
+public class TopBottomValue implements IAbstractValue<TopBottomValue.TopBottom> {
 	
-	public enum AIString {
+	public enum TopBottom {
 		BOTTOM, TOP;
 	}
 	
-	private AIString m_value;
+	private TopBottom m_value;
 	
-	private StringDomainFactory m_factory;
+	private TopBottomDomainFactory m_factory;
 	
 	private Logger m_logger;
 	
-	protected StringValue(AIString value, StringDomainFactory factory, Logger logger) {
+	protected TopBottomValue(TopBottom value, TopBottomDomainFactory factory, Logger logger) {
 		m_value = value;
 		m_factory = factory;
 		m_logger = logger;
-		m_logger.warn("String support is very limited, all strings are treated as TOP");
+		m_logger.warn("TOP-BOTTOM domain offers very imprecise analysis only.");
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#getValue()
 	 */
 	@Override
-	public AIString getValue() {
+	public TopBottom getValue() {
 		return m_value;
 	}
 
@@ -43,7 +43,7 @@ public class StringValue implements IAbstractValue<StringValue.AIString> {
 	 */
 	@Override
 	public boolean isTop() {
-		return m_value == AIString.TOP;
+		return m_value == TopBottom.TOP;
 	}
 
 	/* (non-Javadoc)
@@ -51,7 +51,7 @@ public class StringValue implements IAbstractValue<StringValue.AIString> {
 	 */
 	@Override
 	public boolean isBottom() {
-		return m_value == AIString.BOTTOM;
+		return m_value == TopBottom.BOTTOM;
 	}
 
 	/* (non-Javadoc)
@@ -70,7 +70,7 @@ public class StringValue implements IAbstractValue<StringValue.AIString> {
 		if (value == null)
 			return false;
 		
-		AIString val = (AIString) value.getValue();
+		TopBottom val = (TopBottom) value.getValue();
 		if (val == null)
 			return false;
 		
@@ -100,7 +100,7 @@ public class StringValue implements IAbstractValue<StringValue.AIString> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#copy()
 	 */
 	@Override
-	public StringValue copy() {
+	public TopBottomValue copy() {
 		return m_factory.makeValue(m_value);
 	}
 
@@ -108,7 +108,7 @@ public class StringValue implements IAbstractValue<StringValue.AIString> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#add(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public StringValue add(IAbstractValue<?> value) {
+	public TopBottomValue add(IAbstractValue<?> value) {
 		return m_factory.makeTopValue();
 	}
 
@@ -116,7 +116,7 @@ public class StringValue implements IAbstractValue<StringValue.AIString> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#subtract(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public StringValue subtract(IAbstractValue<?> value) {
+	public TopBottomValue subtract(IAbstractValue<?> value) {
 		return m_factory.makeTopValue();
 	}
 
@@ -124,7 +124,7 @@ public class StringValue implements IAbstractValue<StringValue.AIString> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#multiply(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public StringValue multiply(IAbstractValue<?> value) {
+	public TopBottomValue multiply(IAbstractValue<?> value) {
 		return m_factory.makeTopValue();
 	}
 
@@ -132,7 +132,7 @@ public class StringValue implements IAbstractValue<StringValue.AIString> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#divide(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public StringValue divide(IAbstractValue<?> value) {
+	public TopBottomValue divide(IAbstractValue<?> value) {
 		return m_factory.makeTopValue();
 	}
 
@@ -140,7 +140,7 @@ public class StringValue implements IAbstractValue<StringValue.AIString> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#modulo(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public StringValue modulo(IAbstractValue<?> value) {
+	public TopBottomValue modulo(IAbstractValue<?> value) {
 		return m_factory.makeTopValue();
 	}
 
@@ -148,7 +148,7 @@ public class StringValue implements IAbstractValue<StringValue.AIString> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#negative()
 	 */
 	@Override
-	public StringValue negative() {
+	public TopBottomValue negative() {
 		return m_factory.makeTopValue();
 	}
 
@@ -156,7 +156,7 @@ public class StringValue implements IAbstractValue<StringValue.AIString> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public StringValue compareIsEqual(IAbstractValue<?> value) {
+	public TopBottomValue compareIsEqual(IAbstractValue<?> value) {
 		return isEqual(value) ? copy() : m_factory.makeBottomValue();
 	}
 
@@ -164,7 +164,7 @@ public class StringValue implements IAbstractValue<StringValue.AIString> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsNotEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public StringValue compareIsNotEqual(IAbstractValue<?> value) {
+	public TopBottomValue compareIsNotEqual(IAbstractValue<?> value) {
 		return copy();
 	}
 
@@ -172,7 +172,7 @@ public class StringValue implements IAbstractValue<StringValue.AIString> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsLess(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public StringValue compareIsLess(IAbstractValue<?> value) {
+	public TopBottomValue compareIsLess(IAbstractValue<?> value) {
 		return isEqual(value) ? copy() : m_factory.makeBottomValue();
 	}
 
@@ -180,7 +180,7 @@ public class StringValue implements IAbstractValue<StringValue.AIString> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsGreater(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public StringValue compareIsGreater(IAbstractValue<?> value) {
+	public TopBottomValue compareIsGreater(IAbstractValue<?> value) {
 		return isEqual(value) ? copy() : m_factory.makeBottomValue();
 	}
 
@@ -188,7 +188,7 @@ public class StringValue implements IAbstractValue<StringValue.AIString> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsLessEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public StringValue compareIsLessEqual(IAbstractValue<?> value) {
+	public TopBottomValue compareIsLessEqual(IAbstractValue<?> value) {
 		return isEqual(value) ? copy() : m_factory.makeBottomValue();
 	}
 
@@ -196,7 +196,74 @@ public class StringValue implements IAbstractValue<StringValue.AIString> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#compareIsGreaterEqual(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
 	 */
 	@Override
-	public StringValue compareIsGreaterEqual(IAbstractValue<?> value) {
+	public TopBottomValue compareIsGreaterEqual(IAbstractValue<?> value) {
 		return isEqual(value) ? copy() : m_factory.makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#logicIff(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public TopBottomValue logicIff(IAbstractValue<?> value) {
+		return m_factory.makeTopValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#logicImplies(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public TopBottomValue logicImplies(IAbstractValue<?> value) {
+		return m_factory.makeTopValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#logicAnd(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public TopBottomValue logicAnd(IAbstractValue<?> value) {
+		return m_factory.makeTopValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#logicOr(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public TopBottomValue logicOr(IAbstractValue<?> value) {
+		return m_factory.makeTopValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#logicNot()
+	 */
+	@Override
+	public TopBottomValue logicNot() {
+		return m_factory.makeTopValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#bitVectorConcat(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public TopBottomValue bitVectorConcat(IAbstractValue<?> value) {
+		return m_factory.makeTopValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#bitVectorAccess(int, int)
+	 */
+	@Override
+	public TopBottomValue bitVectorAccess(int start, int end) {
+		return m_factory.makeTopValue();
+	}
+	
+	public String toString() {
+		switch (m_value) {
+		case BOTTOM :
+			return "BOTTOM";
+		case TOP :
+			return "TOP";
+		default:
+			return "ERROR";
+		}
 	}
 }

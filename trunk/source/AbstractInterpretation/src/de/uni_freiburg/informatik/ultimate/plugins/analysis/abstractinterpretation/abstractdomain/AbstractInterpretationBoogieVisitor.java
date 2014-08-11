@@ -39,12 +39,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.ArrayData;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.bitvectordomain.BitVectorDomainFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.bitvectordomain.BitVectorValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolDomainFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.stringdomain.StringDomainFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.stringdomain.StringValue;
 
 /**
  * Used to evaluate boogie statements during abstract interpretation
@@ -66,12 +60,12 @@ public class AbstractInterpretationBoogieVisitor {
 	private final Logger m_logger;
 	
 	private final BoogieSymbolTable m_symbolTable;
-	
-	private final IAbstractDomainFactory<?> m_numberFactory;
 
-	private final BoolDomainFactory m_boolFactory;
-	private final BitVectorDomainFactory m_bitVectorFactory;
-	private final StringDomainFactory m_stringFactory;
+	private final IAbstractDomainFactory<?> m_intFactory;
+	private final IAbstractDomainFactory<?> m_realFactory;
+	private final IAbstractDomainFactory<?> m_boolFactory;
+	private final IAbstractDomainFactory<?> m_bitVectorFactory;
+	private final IAbstractDomainFactory<?> m_stringFactory;
 
 	/**
 	 * The identifier for an LHS expression
@@ -109,11 +103,13 @@ public class AbstractInterpretationBoogieVisitor {
 		}
 	
 	public AbstractInterpretationBoogieVisitor(Logger logger, BoogieSymbolTable symbolTable,
-			IAbstractDomainFactory<?> numberFactory, BoolDomainFactory boolFactory,
-			BitVectorDomainFactory bitVectorFactory, StringDomainFactory stringFactory) {
+			IAbstractDomainFactory<?> intFactory, IAbstractDomainFactory<?> realFactory,
+			IAbstractDomainFactory<?> boolFactory, IAbstractDomainFactory<?> bitVectorFactory,
+			IAbstractDomainFactory<?> stringFactory) {
 		m_logger = logger;
 		m_symbolTable = symbolTable;
-		m_numberFactory = numberFactory;
+		m_intFactory = intFactory;
+		m_realFactory = realFactory;
 		m_boolFactory = boolFactory;
 		m_bitVectorFactory = bitVectorFactory;
 		m_stringFactory = stringFactory;
@@ -424,11 +420,11 @@ public class AbstractInterpretationBoogieVisitor {
 	}
 
 	protected void visit(RealLiteral expr) {
-		m_resultValue = m_numberFactory.makeRealValue(expr.getValue());
+		m_resultValue = m_realFactory.makeRealValue(expr.getValue());
 	}
 
 	protected void visit(IntegerLiteral expr) {
-		m_resultValue = m_numberFactory.makeIntegerValue(expr.getValue());
+		m_resultValue = m_intFactory.makeIntegerValue(expr.getValue());
 	}
 
 	protected void visit(IdentifierExpression expr) {
@@ -438,18 +434,17 @@ public class AbstractInterpretationBoogieVisitor {
 
 	protected void visit(BooleanLiteral expr) {
 		boolean val = expr.getValue();
-		m_resultValue = m_boolFactory.makeBooleanValue(doNegate() ? !val : val);
+		val = doNegate() ? !val : val;
+		m_resultValue = val ? m_boolFactory.makeBoolValue(true) : m_boolFactory.makeBottomValue();
+		// bottom for "assume false;"
 	}
 
 	protected void visit(BitVectorAccessExpression expr) {
 		IAbstractValue<?> bitVec = evaluateExpression(expr.getBitvec());
-		if (bitVec instanceof BitVectorValue) {
-			BitVectorValue bv = (BitVectorValue) bitVec;
-			m_resultValue = bv.access(expr.getStart(), expr.getEnd());
-		} else {
-			m_logger.warn(String.format("Invalid BitVector access on %s.", bitVec));
-			m_resultValue = m_bitVectorFactory.makeTopValue();
-		}
+		if (bitVec == null)
+			m_resultValue = null;
+		
+		m_resultValue = bitVec.bitVectorAccess(expr.getStart(), expr.getEnd());
 	}
 
 	protected void visit(BitvecLiteral expr) {
@@ -530,64 +525,64 @@ public class AbstractInterpretationBoogieVisitor {
 		case LOGICIMPLIES :
 		case LOGICAND :
 		case LOGICOR :
-			BoolValue leftBool = null, rightBool = null, result;
+			IAbstractValue<?> leftBool = null, rightBool = null, result;
 			switch (expr.getOperator()) {
 			case LOGICIFF :
 				if (neg) {
 					// !(a <-> b) <=> (a || b) && (!a || !b)
-					leftBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getLeft()));
+					leftBool = booleanFromAbstractValue(evaluateExpression(expr.getLeft()));
 					if (leftBool == null) return;
-					rightBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getRight()));
-					BoolValue leftBool2 = leftBool.logicOr(rightBool);
-					leftBool = m_boolFactory.makeFromAbstractValue(evaluateNegatedExpression(expr.getLeft()));
+					rightBool = booleanFromAbstractValue(evaluateExpression(expr.getRight()));
+					IAbstractValue<?> leftBool2 = leftBool.logicOr(rightBool);
+					leftBool = booleanFromAbstractValue(evaluateNegatedExpression(expr.getLeft()));
 					if (leftBool == null) return;
-					rightBool = m_boolFactory.makeFromAbstractValue(evaluateNegatedExpression(expr.getRight()));
-					BoolValue rightBool2 = leftBool.logicOr(rightBool);
+					rightBool = booleanFromAbstractValue(evaluateNegatedExpression(expr.getRight()));
+					IAbstractValue<?> rightBool2 = leftBool.logicOr(rightBool);
 					result = leftBool2.logicAnd(rightBool2);
 				} else {
-					leftBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getRight()));
+					leftBool = booleanFromAbstractValue(evaluateExpression(expr.getRight()));
 					if (leftBool == null) return;
-					rightBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getRight()));
+					rightBool = booleanFromAbstractValue(evaluateExpression(expr.getRight()));
 					result = leftBool.logicIff(rightBool);
 				}
 				break;
 			case LOGICIMPLIES :
-				leftBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getLeft()));
+				leftBool = booleanFromAbstractValue(evaluateExpression(expr.getLeft()));
 				if (leftBool == null) return;
 				if (neg) {
 					// !(a -> b) <=> a && !b
-					rightBool = m_boolFactory.makeFromAbstractValue(evaluateNegatedExpression(expr.getRight()));
+					rightBool = booleanFromAbstractValue(evaluateNegatedExpression(expr.getRight()));
 					result = leftBool.logicImplies(rightBool);
 				} else {
-					rightBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getRight()));
+					rightBool = booleanFromAbstractValue(evaluateExpression(expr.getRight()));
 					result = leftBool.logicImplies(rightBool);
 				}
 				break;
 			case LOGICAND :
 				if (neg) {
 					// !(a && b) <=> !a || !b
-					leftBool = m_boolFactory.makeFromAbstractValue(evaluateNegatedExpression(expr.getLeft()));
+					leftBool = booleanFromAbstractValue(evaluateNegatedExpression(expr.getLeft()));
 					if (leftBool == null) return;
-					rightBool = m_boolFactory.makeFromAbstractValue(evaluateNegatedExpression(expr.getRight()));
+					rightBool = booleanFromAbstractValue(evaluateNegatedExpression(expr.getRight()));
 					result = leftBool.logicOr(rightBool);
 				} else {
-					leftBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getLeft()));
+					leftBool = booleanFromAbstractValue(evaluateExpression(expr.getLeft()));
 					if (leftBool == null) return;
-					rightBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getRight()));
+					rightBool = booleanFromAbstractValue(evaluateExpression(expr.getRight()));
 					result = leftBool.logicAnd(rightBool);
 				}
 				break;
 			case LOGICOR :
 				if (neg) {
 					// !(a || b) <=> !a && !b
-					leftBool = m_boolFactory.makeFromAbstractValue(evaluateNegatedExpression(expr.getLeft()));
+					leftBool = booleanFromAbstractValue(evaluateNegatedExpression(expr.getLeft()));
 					if (leftBool == null) return;
-					rightBool = m_boolFactory.makeFromAbstractValue(evaluateNegatedExpression(expr.getRight()));
+					rightBool = booleanFromAbstractValue(evaluateNegatedExpression(expr.getRight()));
 					result = leftBool.logicAnd(rightBool);
 				} else {
-					leftBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getLeft()));
+					leftBool = booleanFromAbstractValue(evaluateExpression(expr.getLeft()));
 					if (leftBool == null) return;
-					rightBool = m_boolFactory.makeFromAbstractValue(evaluateExpression(expr.getRight()));
+					rightBool = booleanFromAbstractValue(evaluateExpression(expr.getRight()));
 					result = leftBool.logicOr(rightBool);
 				}
 				break;
@@ -600,9 +595,9 @@ public class AbstractInterpretationBoogieVisitor {
 			break;
 		case BITVECCONCAT :
 			left = evaluateExpression(expr.getLeft());
-			if ((left == null) || !(left instanceof BitVectorValue)) return;
+			if (left == null) return;
 			right = evaluateExpression(expr.getRight());
-			m_resultValue = ((BitVectorValue) left).concat(right);
+			m_resultValue = left.bitVectorConcat(right);
 			break;
 		case COMPPO :
 		default :
@@ -726,18 +721,22 @@ public class AbstractInterpretationBoogieVisitor {
 			arrayData.setValue(value);
 		} else if (!oldValue.isSuper(value)) {
 			IMergeOperator<?> mop = null;
-			if (oldValue instanceof BoolValue) {
+			if (m_boolFactory.valueBelongsToDomainSystem(oldValue)) {
 				mop = m_boolFactory.getMergeOperator();
-			} else if (oldValue instanceof BitVectorValue) {
+			} else if (m_bitVectorFactory.valueBelongsToDomainSystem(oldValue)) {
 				mop = m_bitVectorFactory.getMergeOperator();
-			} else if (oldValue instanceof StringValue) {
+			} else if (m_stringFactory.valueBelongsToDomainSystem(oldValue)) {
 				mop = m_stringFactory.getMergeOperator();
-			} else {
-				mop = m_numberFactory.getMergeOperator();
+			} else if (m_intFactory.valueBelongsToDomainSystem(oldValue)) {
+				mop = m_intFactory.getMergeOperator();
+			} else if (m_realFactory.valueBelongsToDomainSystem(oldValue)) {
+				mop = m_realFactory.getMergeOperator();
 			}
 			if (mop != null) {
 				IAbstractValue<?> newValue = mop.apply(oldValue, value);
 				arrayData.setValue(newValue);
+			} else {
+				m_logger.warn(String.format("Can't create merge operator for value %s", oldValue));
 			}
 		}
 	}
@@ -768,9 +767,10 @@ public class AbstractInterpretationBoogieVisitor {
 			IAbstractValue<?> topValue = null;
 			if (pt.getTypeCode() == PrimitiveType.BOOL) {
 				topValue = m_boolFactory.makeTopValue();
-			} else if ((pt.getTypeCode() == PrimitiveType.INT)
-					|| (pt.getTypeCode() == PrimitiveType.REAL)) {
-				topValue = m_numberFactory.makeTopValue();
+			} else if (pt.getTypeCode() == PrimitiveType.INT) {
+				topValue = m_intFactory.makeTopValue();
+			} else if (pt.getTypeCode() == PrimitiveType.REAL) {
+				topValue = m_realFactory.makeTopValue();
 			} else {
 				m_logger.error(String.format("Unsupported primitive type \"%s\"", pt));
 			}
@@ -808,6 +808,19 @@ public class AbstractInterpretationBoogieVisitor {
 			m_logger.error(String.format("Type of identifier \"%s\" could not be determined.", identifier));
 		}
 		return null;
+	}
+	
+	/**
+	 * @param value An abstract value to get a boolean value for
+	 * @return A value in the boolean domain representing the given value:
+	 * <br> If it already is a value in the boolean domain, a copy is returned.
+	 * <br> Else, a boolean value of FALSE is returned iff the given value is bottom.
+	 */
+	public IAbstractValue<?> booleanFromAbstractValue(IAbstractValue<?> value) {
+		if (m_boolFactory.valueBelongsToDomainSystem(value))
+			return value.copy();
+		
+		return m_boolFactory.makeBoolValue(!value.isBottom());
 	}
 
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

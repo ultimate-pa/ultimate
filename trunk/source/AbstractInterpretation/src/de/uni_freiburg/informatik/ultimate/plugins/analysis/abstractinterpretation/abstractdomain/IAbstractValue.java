@@ -140,6 +140,47 @@ public interface IAbstractValue<T> {
 	 * <br> If the given abstract state is of an incompatible abstract domain system, bottom should be returned
 	 */
 	public IAbstractValue<T> compareIsGreaterEqual(IAbstractValue<?> value);
+
+	/**
+	 * @param value The value to operate with (this <-> value)
+	 * @return An abstract value representing the result of the operation
+	 */
+	public IAbstractValue<T> logicIff(IAbstractValue<?> value);
+
+	/**
+	 * @param value The value to operate with (this -> value)
+	 * @return An abstract value representing the result of the operation
+	 */
+	public IAbstractValue<T> logicImplies(IAbstractValue<?> value);
+
+	/**
+	 * @param value The value to operate with (this && value)
+	 * @return An abstract value representing the result of the operation
+	 */
+	public IAbstractValue<T> logicAnd(IAbstractValue<?> value);
+
+	/**
+	 * @param value The value to operate with (this || value)
+	 * @return A BoolValue representing the result of the operation
+	 */
+	public IAbstractValue<T> logicOr(IAbstractValue<?> value);
+
+	/**
+	 * @return A BoolValue representing the result of the operation: not value
+	 */
+	public IAbstractValue<T> logicNot();
+
+	/**
+	 * @param value
+	 * @return BitVector concatenation of this value and the given value
+	 */
+	public IAbstractValue<T> bitVectorConcat(IAbstractValue<?> value);
+
+	/**
+	 * @param value
+	 * @return Part of this BitVector from start to end
+	 */
+	public IAbstractValue<T> bitVectorAccess(int start, int end);
 	
 	/**
 	 * @return A string representation of the abstract value

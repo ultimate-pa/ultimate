@@ -13,9 +13,6 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.bitvectordomain.BitVectorValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.stringdomain.StringValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
@@ -108,10 +105,11 @@ public class AbstractState {
 	
 	private Logger m_logger;
 	
-	private IAbstractDomainFactory<?> m_numberFactory;
-	private IAbstractDomainFactory<BoolValue.Bool> m_boolFactory;
-	private IAbstractDomainFactory<BitVectorValue.BitVector> m_bitVectorFactory;
-	private IAbstractDomainFactory<StringValue.AIString> m_stringFactory;
+	private IAbstractDomainFactory<?> m_intFactory;
+	private IAbstractDomainFactory<?> m_realFactory;
+	private IAbstractDomainFactory<?> m_boolFactory;
+	private IAbstractDomainFactory<?> m_bitVectorFactory;
+	private IAbstractDomainFactory<?> m_stringFactory;
 	
 	/**
 	 * Stack of maps from variable identifiers to values. Stack levels represent scope levels,
@@ -119,10 +117,15 @@ public class AbstractState {
 	 */
 	private final LinkedList<CallStackElement> m_callStack = new LinkedList<CallStackElement>();
 	
-	public AbstractState(Logger logger, IAbstractDomainFactory<?> numberFactory, IAbstractDomainFactory<BoolValue.Bool> boolFactory) {
+	public AbstractState(Logger logger, IAbstractDomainFactory<?> intFactory, IAbstractDomainFactory<?> realFactory,
+			IAbstractDomainFactory<?> boolFactory, IAbstractDomainFactory<?> bitVectorFactory,
+			IAbstractDomainFactory<?> stringFactory) {
 		m_logger = logger;
-		m_numberFactory = numberFactory;
+		m_intFactory = intFactory;
+		m_realFactory = realFactory;
 		m_boolFactory = boolFactory;
+		m_bitVectorFactory = bitVectorFactory;
+		m_stringFactory = stringFactory;
 		
 		pushStackLayer(null); // global scope
 		
@@ -179,7 +182,8 @@ public class AbstractState {
 	 * @return A copy of this abstract program state that is independent of this object.
 	 */
 	public AbstractState copy() {
-		AbstractState result = new AbstractState(m_logger, m_numberFactory, m_boolFactory);
+		AbstractState result = new AbstractState(m_logger, m_intFactory, m_realFactory, m_boolFactory,
+				m_bitVectorFactory, m_stringFactory);
 		
 		result.m_callStack.clear();
 		for (int i = 0; i < m_callStack.size(); i++) {
@@ -230,7 +234,8 @@ public class AbstractState {
 		
 		List<CallStackElement> otherValues = state.getCallStack();
 
-		AbstractState resultingState = new AbstractState(m_logger, m_numberFactory, m_boolFactory);
+		AbstractState resultingState = new AbstractState(m_logger, m_intFactory, m_realFactory, m_boolFactory,
+				m_bitVectorFactory, m_stringFactory);
 		List<CallStackElement> resultingValues = resultingState.getCallStack();
 		
 		int maxLayerCount = Math.max(m_callStack.size(), otherValues.size());
@@ -324,18 +329,24 @@ public class AbstractState {
 	}
 	
 	private IAbstractValue<?> mergeValues(IAbstractValue<?> A, IAbstractValue<?> B) {
-		IMergeOperator<?> mergeOp;
-		if (A instanceof BoolValue) {
+		IMergeOperator<?> mergeOp = null;
+		
+		if (m_boolFactory.valueBelongsToDomainSystem(A)) {
 			mergeOp = m_boolFactory.getMergeOperator();
-		} else if (A instanceof BitVectorValue) {
+		} else if (m_bitVectorFactory.valueBelongsToDomainSystem(A)) {
 			mergeOp = m_bitVectorFactory.getMergeOperator();
-		} else if (A instanceof StringValue) {
+		} else if (m_stringFactory.valueBelongsToDomainSystem(A)) {
 			mergeOp = m_stringFactory.getMergeOperator();
-		} else {
-			mergeOp = m_numberFactory.getMergeOperator();
+		} else if (m_intFactory.valueBelongsToDomainSystem(A)) {
+			mergeOp = m_intFactory.getMergeOperator();
+		} else if (m_realFactory.valueBelongsToDomainSystem(A)) {
+			mergeOp = m_realFactory.getMergeOperator();
 		}
+		if (mergeOp != null)
+			return mergeOp.apply(A, B);
 
-		return mergeOp.apply(A, B);
+		m_logger.warn(String.format("Can't create merge operator for value %s", A));
+		return null;
 	}
 	
 	/**
@@ -349,7 +360,8 @@ public class AbstractState {
 		
 		List<CallStackElement> otherValues = state.getCallStack();
 
-		AbstractState resultingState = new AbstractState(m_logger, m_numberFactory, m_boolFactory);
+		AbstractState resultingState = new AbstractState(m_logger, m_intFactory, m_realFactory, m_boolFactory,
+				m_bitVectorFactory, m_stringFactory);
 		List<CallStackElement> resultingValues = resultingState.getCallStack();
 		
 		int maxLayerCount = Math.max(m_callStack.size(), otherValues.size());
@@ -442,18 +454,24 @@ public class AbstractState {
 	}
 	
 	private IAbstractValue<?> widenValues(IAbstractValue<?> A, IAbstractValue<?> B) {
-		IWideningOperator<?> wideningOp;
-		if (A instanceof BoolValue) {
+		IWideningOperator<?> wideningOp = null;
+		
+		if (m_boolFactory.valueBelongsToDomainSystem(A)) {
 			wideningOp = m_boolFactory.getWideningOperator();
-		} else if (A instanceof BitVectorValue) {
+		} else if (m_bitVectorFactory.valueBelongsToDomainSystem(A)) {
 			wideningOp = m_bitVectorFactory.getWideningOperator();
-		} else if (A instanceof StringValue) {
+		} else if (m_stringFactory.valueBelongsToDomainSystem(A)) {
 			wideningOp = m_stringFactory.getWideningOperator();
-		} else {
-			wideningOp = m_numberFactory.getWideningOperator();
+		} else if (m_intFactory.valueBelongsToDomainSystem(A)) {
+			wideningOp = m_intFactory.getWideningOperator();
+		} else if (m_realFactory.valueBelongsToDomainSystem(A)) {
+			wideningOp = m_realFactory.getWideningOperator();
 		}
+		if (wideningOp != null)
+			return wideningOp.apply(A, B);
 
-		return wideningOp.apply(A, B);
+		m_logger.warn(String.format("Can't create widening operator for value %s", A));
+		return null;
 	}
 	
 	/**

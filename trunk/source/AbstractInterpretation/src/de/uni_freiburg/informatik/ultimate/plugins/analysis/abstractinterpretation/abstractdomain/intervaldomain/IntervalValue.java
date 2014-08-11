@@ -649,6 +649,62 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return m_factory.makeValue(new Interval(resultLower, m_value.getUpperBound()));
 	}
 
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#logicIff(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public IntervalValue logicIff(IAbstractValue<?> value) {
+		return m_factory.makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#logicImplies(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public IntervalValue logicImplies(IAbstractValue<?> value) {
+		return m_factory.makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#logicAnd(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public IntervalValue logicAnd(IAbstractValue<?> value) {
+		return m_factory.makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#logicOr(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public IntervalValue logicOr(IAbstractValue<?> value) {
+		return m_factory.makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#logicNot()
+	 */
+	@Override
+	public IntervalValue logicNot() {
+		return m_factory.makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#bitVectorConcat(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public IntervalValue bitVectorConcat(IAbstractValue<?> value) {
+		return m_factory.makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#bitVectorAccess(int, int)
+	 */
+	@Override
+	public IntervalValue bitVectorAccess(int start, int end) {
+		return m_factory.makeBottomValue();
+	}
+
 	public String toString() {
 		return "Interval: " + m_value.toString();
 	}

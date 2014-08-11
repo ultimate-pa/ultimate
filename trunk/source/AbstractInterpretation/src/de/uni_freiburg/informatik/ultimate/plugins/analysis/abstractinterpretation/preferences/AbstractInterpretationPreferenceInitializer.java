@@ -21,11 +21,20 @@ public class AbstractInterpretationPreferenceInitializer extends
 	public static final String LABEL_MAIN_METHOD_NAME = "Name of the program's main method";
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_STATES_UNTIL_MERGE = "Parallel states before merging";
-	public static final String LABEL_STATE_ANNOTATIONS = "Save abstract states as node annotations";
 	public static final String LABEL_WIDENING_FIXEDNUMBERS = "Set of numbers for widening (comma-separated list)";
 	public static final String LABEL_WIDENING_AUTONUMBERS = "Collect literals from the RCFG's expressions";
-	
-	public static final String LABEL_ABSTRACTDOMAIN = "Abstract domain for numbers";
+
+	public static final String LABEL_STATE_ANNOTATIONS = "Save abstract states as node annotations";
+	public static final String LABEL_LOGSTATES_CONSOLE = "Log state changes to console";
+	public static final String LABEL_LOGSTATES_FILE = "Log state changes to file";
+	public static final String LABEL_LOGSTATES_USESOURCEPATH = "Use source directory for state change logs";
+	public static final String LABEL_LOGSTATES_PATH = "Directory for state change logs";
+
+	public static final String LABEL_INTDOMAIN = "Domain for int";
+	public static final String LABEL_REALDOMAIN = "Domain for real";
+	public static final String LABEL_BOOLDOMAIN = "Domain for bool";
+	public static final String LABEL_BITVECTORDOMAIN = "Domain for BitVector";
+	public static final String LABEL_STRINGDOMAIN = "Domain for String";
 
 	// %s -> domain ID
 	public static final String LABEL_WIDENINGOP = "%s - Widening operator";
@@ -38,9 +47,14 @@ public class AbstractInterpretationPreferenceInitializer extends
 	public static final String DEF_MAIN_METHOD_NAME = "Main";
 	public static final int DEF_ITERATIONS_UNTIL_WIDENING = 1;
 	public static final int DEF_STATES_UNTIL_MERGE = 1;
-	public static final boolean DEF_STATE_ANNOTATIONS = false;
 	public static final String DEF_WIDENING_FIXEDNUMBERS = "0, 1, 3.14";
 	public static final boolean DEF_WIDENING_AUTONUMBERS = false;
+
+	public static final boolean DEF_STATE_ANNOTATIONS = false;
+	public static final boolean DEF_LOGSTATES_CONSOLE = false;
+	public static final boolean DEF_LOGSTATES_FILE = false;
+	public static final boolean DEF_LOGSTATES_USESOURCEPATH = true;
+	public static final String DEF_LOGSTATES_PATH = "./";
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -59,12 +73,21 @@ public class AbstractInterpretationPreferenceInitializer extends
 		preferenceItems.add(new UltimatePreferenceItem<Integer>(LABEL_STATES_UNTIL_MERGE,
 				DEF_STATES_UNTIL_MERGE, PreferenceType.Integer,
 				new IUltimatePreferenceItemValidator.IntegerValidator(1, 10000)));
-		preferenceItems.add(new UltimatePreferenceItem<Boolean>(LABEL_STATE_ANNOTATIONS,
-								DEF_STATE_ANNOTATIONS, PreferenceType.Boolean));
 		preferenceItems.add(new UltimatePreferenceItem<String>(LABEL_WIDENING_FIXEDNUMBERS,
 				DEF_WIDENING_FIXEDNUMBERS, PreferenceType.String));
 		preferenceItems.add(new UltimatePreferenceItem<Boolean>(LABEL_WIDENING_AUTONUMBERS,
 				DEF_WIDENING_AUTONUMBERS, PreferenceType.Boolean));
+
+		preferenceItems.add(new UltimatePreferenceItem<Boolean>(LABEL_STATE_ANNOTATIONS,
+								DEF_STATE_ANNOTATIONS, PreferenceType.Boolean));
+		preferenceItems.add(new UltimatePreferenceItem<Boolean>(LABEL_LOGSTATES_CONSOLE,
+				DEF_LOGSTATES_CONSOLE, PreferenceType.Boolean));
+		preferenceItems.add(new UltimatePreferenceItem<Boolean>(LABEL_LOGSTATES_FILE,
+				DEF_LOGSTATES_FILE, PreferenceType.Boolean));
+		preferenceItems.add(new UltimatePreferenceItem<Boolean>(LABEL_LOGSTATES_USESOURCEPATH,
+				DEF_LOGSTATES_USESOURCEPATH, PreferenceType.Boolean));
+		preferenceItems.add(new UltimatePreferenceItem<String>(LABEL_LOGSTATES_PATH,
+				DEF_LOGSTATES_PATH, PreferenceType.Directory));
 		
 		// collect valid domain IDs
 		Set<String> domainIDs = domainRegistry.getDomainIDs();
@@ -74,8 +97,16 @@ public class AbstractInterpretationPreferenceInitializer extends
 			validDomainIDs[i] = id;
 			i++;
 		}
-		preferenceItems.add(new UltimatePreferenceItem<String>(LABEL_ABSTRACTDOMAIN, validDomainIDs[0],
+		preferenceItems.add(new UltimatePreferenceItem<String>(LABEL_INTDOMAIN, domainRegistry.getDefaultDomainIDForInt(),
 						PreferenceType.Combo, validDomainIDs));
+		preferenceItems.add(new UltimatePreferenceItem<String>(LABEL_REALDOMAIN, domainRegistry.getDefaultDomainIDForReal(),
+				PreferenceType.Combo, validDomainIDs));
+		preferenceItems.add(new UltimatePreferenceItem<String>(LABEL_BOOLDOMAIN, domainRegistry.getDefaultDomainIDForBool(),
+				PreferenceType.Combo, validDomainIDs));
+		preferenceItems.add(new UltimatePreferenceItem<String>(LABEL_BITVECTORDOMAIN, domainRegistry.getDefaultDomainIDForBitVector(),
+				PreferenceType.Combo, validDomainIDs));
+		preferenceItems.add(new UltimatePreferenceItem<String>(LABEL_STRINGDOMAIN, domainRegistry.getDefaultDomainIDForString(),
+				PreferenceType.Combo, validDomainIDs));
 
 		// preferences per abstract domain system
 		for (String id : domainIDs) {

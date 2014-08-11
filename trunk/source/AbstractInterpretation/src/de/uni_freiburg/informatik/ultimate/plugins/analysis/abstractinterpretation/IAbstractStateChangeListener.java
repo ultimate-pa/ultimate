@@ -5,8 +5,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 
 /**
  * Abstract state change listeners can register with the AbstractInterpreter and will
@@ -17,10 +17,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public interface IAbstractStateChangeListener {
 	/**
-	 * @param location The location where the state change happens.
+	 * @param viaEdge The edge that changed the state
 	 * @param oldStates A list of old states. May be null if no old states exist.
 	 * @param newState The new state which arrived at the location.
 	 * @param mergedState The merged state. Same as the new state if no merging happened.
 	 */
-	public void onStateChange(IElement location, List<AbstractState> oldStates, AbstractState newState, AbstractState mergedState);
+	public void onStateChange(RCFGEdge viaEdge, List<AbstractState> oldStates, AbstractState newState, AbstractState mergedState);
 }

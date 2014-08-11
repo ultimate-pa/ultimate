@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IMergeOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IWideningOperator;
 
@@ -95,6 +96,36 @@ public class IntervalDomainFactory implements IAbstractDomainFactory<Interval> {
 		Rational lower = Rational.valueOf(bigDec.setScale(0, BigDecimal.ROUND_FLOOR).toBigInteger(), BigInteger.ONE);
 		Rational upper = Rational.valueOf(bigDec.setScale(0, BigDecimal.ROUND_CEILING).toBigInteger(), BigInteger.ONE);
 		return new IntervalValue(new Interval(lower, upper), this, m_logger);
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#makeBoolValue(boolean)
+	 */
+	@Override
+	public IntervalValue makeBoolValue(boolean bool) {
+		return makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#makeBitVectorValue(java.lang.String)
+	 */
+	public IntervalValue makeBitVectorValue(String bitvector) {
+		return makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#makeStringValue(java.lang.String)
+	 */
+	public IntervalValue makeStringValue(String value) {
+		return makeBottomValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#valueIsCompatible(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public boolean valueBelongsToDomainSystem(IAbstractValue<?> value) {
+		return (value instanceof IntervalValue);
 	}
 
 	/* (non-Javadoc)

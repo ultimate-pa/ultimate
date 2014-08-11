@@ -9,6 +9,7 @@ import java.math.BigInteger;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IMergeOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IWideningOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain.SignValue.Sign;
@@ -105,6 +106,36 @@ public class SignDomainFactory implements IAbstractDomainFactory<Sign> {
 			return new SignValue(Sign.MINUS, this, m_logger);
 		
 		return new SignValue(Sign.PLUS, this, m_logger);
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#makeBoolValue(boolean)
+	 */
+	@Override
+	public SignValue makeBoolValue(boolean bool) {
+		return new SignValue(Sign.EMPTY, this, m_logger);
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#makeBitVectorValue(java.lang.String)
+	 */
+	public SignValue makeBitVectorValue(String bitvector) {
+		return new SignValue(Sign.EMPTY, this, m_logger);
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#makeStringValue(java.lang.String)
+	 */
+	public SignValue makeStringValue(String value) {
+		return new SignValue(Sign.EMPTY, this, m_logger);
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory#valueIsCompatible(de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue)
+	 */
+	@Override
+	public boolean valueBelongsToDomainSystem(IAbstractValue<?> value) {
+		return (value instanceof SignValue);
 	}
 
 	/* (non-Javadoc)

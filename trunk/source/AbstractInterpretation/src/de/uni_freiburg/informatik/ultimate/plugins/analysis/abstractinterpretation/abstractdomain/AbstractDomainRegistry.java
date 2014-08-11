@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolDomainFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolMergeWideningOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain.IntervalDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain.IntervalIntWideningOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain.IntervalQuickWideningOperator;
@@ -15,6 +17,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain.IntervalUnionMergeOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain.SignDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain.SignMergeWideningOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.topbottomdomain.TopBottomDomainFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.topbottomdomain.TopBottomMergeWideningOperator;
 
 /**
  * Collects abstract domains as well as their widening and merge operators.
@@ -27,7 +31,7 @@ public class AbstractDomainRegistry {
 	/**
 	 * A set of domain IDs
 	 */
-	private Set<String> m_domainIDs = new HashSet<String>();
+	private final Set<String> m_domainIDs = new HashSet<String>();
 	
 	/**
 	 * A map of domain IDs to sets of operator names
@@ -40,6 +44,10 @@ public class AbstractDomainRegistry {
 	 */
 	private Map<String, Set<String>> m_mergeOperators = 
 			new HashMap<String, Set<String>>();
+	
+	// default domain IDs
+	private final String defaultDomainForInt, defaultDomainForReal, defaultDomainForBool,
+			defaultDomainForBitVector, defaultDomainForString;
 
 	public AbstractDomainRegistry() {
 		// INTERVAL DOMAIN
@@ -53,6 +61,23 @@ public class AbstractDomainRegistry {
 		registerDomainFactory(SignDomainFactory.getDomainID());
 		registerWideningOperator(SignDomainFactory.getDomainID(), SignMergeWideningOperator.getName());
 		registerMergeOperator(SignDomainFactory.getDomainID(), SignMergeWideningOperator.getName());
+		
+		// BOOL DOMAIN
+		registerDomainFactory(BoolDomainFactory.getDomainID());
+		registerWideningOperator(BoolDomainFactory.getDomainID(), BoolMergeWideningOperator.getName());
+		registerMergeOperator(BoolDomainFactory.getDomainID(), BoolMergeWideningOperator.getName());
+
+		// TOP-BOTTOM DOMAIN
+		registerDomainFactory(TopBottomDomainFactory.getDomainID());
+		registerWideningOperator(TopBottomDomainFactory.getDomainID(), TopBottomMergeWideningOperator.getName());
+		registerMergeOperator(TopBottomDomainFactory.getDomainID(), TopBottomMergeWideningOperator.getName());
+
+		// default domains if no preference is set yet
+		defaultDomainForInt = IntervalDomainFactory.getDomainID();
+		defaultDomainForReal = IntervalDomainFactory.getDomainID();
+		defaultDomainForBool = BoolDomainFactory.getDomainID();
+		defaultDomainForBitVector = TopBottomDomainFactory.getDomainID();
+		defaultDomainForString = TopBottomDomainFactory.getDomainID();
 	}
 	
 	/**
@@ -132,5 +157,40 @@ public class AbstractDomainRegistry {
 		Set<String> ops = m_mergeOperators.get(domainID);
 		if (ops == null) return new HashSet<String>();
 		return new HashSet<String>(ops);
+	}
+	
+	/**
+	 * @return Default domain for int
+	 */
+	public String getDefaultDomainIDForInt() {
+		return defaultDomainForInt;
+	}
+	
+	/**
+	 * @return Default domain for real
+	 */
+	public String getDefaultDomainIDForReal() {
+		return defaultDomainForReal;
+	}
+	
+	/**
+	 * @return Default domain for bool
+	 */
+	public String getDefaultDomainIDForBool() {
+		return defaultDomainForBool;
+	}
+	
+	/**
+	 * @return Default domain for BitVector
+	 */
+	public String getDefaultDomainIDForBitVector() {
+		return defaultDomainForBitVector;
+	}
+	
+	/**
+	 * @return Default domain for String
+	 */
+	public String getDefaultDomainIDForString() {
+		return defaultDomainForString;
 	}
 }

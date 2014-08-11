@@ -40,6 +40,30 @@ public interface IAbstractDomainFactory<T> {
 	public IAbstractValue<T> makeRealValue(String real);
 
 	/**
+	 * @param bool
+	 * @return An abstract value representing the given boolean value
+	 */
+	public IAbstractValue<T> makeBoolValue(boolean bool);
+
+	/**
+	 * @param bitvector Given as a string to support arbitrarily large BitVectors.
+	 * @return An abstract value representing the given BitVector
+	 */
+	public IAbstractValue<T> makeBitVectorValue(String bitvector);
+
+	/**
+	 * @param value
+	 * @return An abstract value representing the given String
+	 */
+	public IAbstractValue<T> makeStringValue(String value);
+	
+	/**
+	 * @param value
+	 * @return True iff the given value belongs to this factory's abstract domain system
+	 */
+	public boolean valueBelongsToDomainSystem(IAbstractValue<?> value);
+
+	/**
 	 * @return A widening operator object corresponding to the choice in the plugin preferences
 	 */
 	public IWideningOperator<T> getWideningOperator();
