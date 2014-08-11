@@ -228,7 +228,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(m_Trace, callPositions, pendingReturnPositions, stmtsOutsideOfLoop);
 
 			m_Satisfiable = m_SmtManager.getScript().checkSat();
-			// Report statistics
+			// Report benchmarks
 			m_Tcbg.reportnewCheckSat();
 			m_Tcbg.reportnewAssertedCodeBlocks(stmtsOutsideOfLoop.size());
 			// If the statements outside of a loop are not unsatisfiable, then annotate and assert also
@@ -238,6 +238,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 				assert callPositions.containsAll(m_Trace.getCallPositions());
 				assert m_Trace.getCallPositions().containsAll(callPositions);
 				m_Satisfiable = m_SmtManager.getScript().checkSat();
+				// Report benchmarks
+				m_Tcbg.reportnewCheckSat();
+				m_Tcbg.reportnewAssertedCodeBlocks(stmtsWithinLoop.size());
 			}
 		} 
 		// Apply 2. heuristic
@@ -249,6 +252,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 				// First, annotate and assert the statements, which doesn't occur within a loop
 				buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(m_Trace, callPositions, pendingReturnPositions, stmtsOutsideOfLoop);
 				m_Satisfiable = m_SmtManager.getScript().checkSat();
+				// Report benchmarks
 				m_Tcbg.reportnewCheckSat();
 				m_Tcbg.reportnewAssertedCodeBlocks(stmtsOutsideOfLoop.size());
 				
