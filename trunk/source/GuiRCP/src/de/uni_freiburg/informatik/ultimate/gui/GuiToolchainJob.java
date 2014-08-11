@@ -5,6 +5,7 @@ import java.io.File;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.services.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
@@ -19,6 +20,11 @@ public class GuiToolchainJob extends DefaultToolchainJob {
 
 	public GuiToolchainJob(String name, ICore core, IController controller, Logger logger, IToolchain toolchain) {
 		super(name, core, controller, logger, toolchain);
+	}
+
+	public GuiToolchainJob(String name, ICore core, IController controller, Logger logger, ToolchainData data,
+			File inputfile, PreludeProvider prelude) {
+		super(name, core, controller, logger, data, inputfile, prelude);
 	}
 
 	@Override

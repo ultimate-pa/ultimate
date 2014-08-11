@@ -27,7 +27,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	protected IToolchain mToolchain;
 
 	/**
-	 * Prepare to run a normal toolchain with this constructor.
+	 * Use this constructor to run a new toolchain
 	 * 
 	 * @param name
 	 *            The name of the job. Will be displayed in the UI.
@@ -49,10 +49,11 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 		setSystem(false);
 		mInputFile = input;
 		mPreludeFile = preludefile;
+		mJobMode = ChainMode.DEFAULT;
 	}
 
 	/**
-	 * Prepare to rerun the given toolchain (if possible)
+	 * Use this constructor to re-run the given toolchain.
 	 * 
 	 * @param name
 	 * @param core
@@ -68,9 +69,31 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 		mJobMode = ChainMode.RERUN;
 	}
 
+	/**
+	 * Use this constructor to run a toolchain based on the given
+	 * {@link ToolchainData} definition.
+	 * 
+	 * @param name
+	 * @param core
+	 * @param controller
+	 * @param logger
+	 * @param data
+	 * @param input
+	 * @param prelude
+	 */
+	public DefaultToolchainJob(String name, ICore core, IController controller, Logger logger, ToolchainData data,
+			File input, PreludeProvider prelude) {
+		super(name, core, controller, logger);
+		setUser(true);
+		setSystem(false);
+		mInputFile = input;
+		mPreludeFile = prelude;
+		mChain = data;
+		mJobMode = ChainMode.DEFAULT;
+	}
+
 	private void setToolchain(IToolchain toolchain) {
 		assert toolchain != null;
-		// TODO: Check if we can rerun the toolchain (but: why not?)
 		mToolchain = toolchain;
 	}
 
@@ -152,7 +175,13 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			}
 			monitor.worked(1);
 
-			mChain = mToolchain.makeToolSelection(monitor);
+			if (mChain == null) {
+				mChain = mToolchain.makeToolSelection(monitor);
+			} else {
+				// this may happen if someone provided us with a preselected
+				// toolchain
+				mChain = mToolchain.setToolSelection(monitor, mChain);
+			}
 			if (mChain == null) {
 				mLogger.warn("Toolchain selection failed, aborting...");
 				return new Status(Status.CANCEL, Activator.s_PLUGIN_ID, "Toolchain selection canceled");
@@ -182,5 +211,4 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 
 		return returnstatus;
 	}
-
 }

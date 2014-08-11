@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 /**
  * 
- * TODO: Comments ! 
+ * TODO: Comments !
  * 
  * @author dietsch
  * 
@@ -42,9 +42,19 @@ public interface IToolchain {
 	 * Call to define the tools that should be used in this toolchain.
 	 * 
 	 * @return {@link ToolchainData} instance describing the desired tools and
-	 *         their order.
+	 *         their order or null if no valid data could be selected.
 	 */
 	public ToolchainData makeToolSelection(IProgressMonitor monitor);
+
+	/**
+	 * Instead of {@link #makeToolSelection(IProgressMonitor)}, you can directly
+	 * give {@link ToolchainData} to the toolchain to initialize it.
+	 * 
+	 * @param monitor
+	 * @param data
+	 * @return data or null if data was an invalid selection
+	 */
+	public ToolchainData setToolSelection(IProgressMonitor monitor, ToolchainData data);
 
 	/**
 	 * Initiates a parser for the previously set input files, possibly with a

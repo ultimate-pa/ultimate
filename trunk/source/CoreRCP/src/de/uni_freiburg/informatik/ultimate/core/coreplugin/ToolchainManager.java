@@ -177,19 +177,23 @@ public class ToolchainManager {
 
 			// present selection dialog
 			ToolchainData rtr = mCurrentController.selectTools(tools);
-			if (rtr == null) {
+			return setToolSelection(monitor, rtr);
+		}
+		
+		public ToolchainData setToolSelection(IProgressMonitor monitor, ToolchainData data){
+			if (data == null) {
 				/* dialog was aborted */
 				mLogger.warn(getLogPrefix() + ": Dialog was aborted, returning null tools.");
 				return null;
 			}
-			if (!checkToolchain(rtr.getToolchain().getPluginOrSubchain())) {
+			if (!checkToolchain(data.getToolchain().getPluginOrSubchain())) {
 				mLogger.warn(getLogPrefix() + ": Invalid toolchain selection, returning null tools.");
 				return null;
 			}
-			mToolchainData = rtr;
+			mToolchainData = data;
 			init(monitor);
 			mLogger.info(getLogPrefix() + ": Toolchain data selected.");
-			return rtr;
+			return data;
 		}
 
 		@Override

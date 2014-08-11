@@ -5,22 +5,7 @@ import java.io.FileNotFoundException;
 
 import javax.xml.bind.JAXBException;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.services.PreludeProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
-import de.uni_freiburg.informatik.ultimate.gui.GuiController;
-import de.uni_freiburg.informatik.ultimate.gui.GuiToolchainJob;
-import de.uni_freiburg.informatik.ultimate.gui.contrib.PreludeContribution;
-import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
-import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
-
 import org.apache.log4j.Logger;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -30,6 +15,18 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.xml.sax.SAXException;
+
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.PreludeProvider;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
+import de.uni_freiburg.informatik.ultimate.gui.GuiController;
+import de.uni_freiburg.informatik.ultimate.gui.GuiToolchainJob;
+import de.uni_freiburg.informatik.ultimate.gui.contrib.PreludeContribution;
+import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
+import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
 
 /**
  * 
@@ -59,6 +56,49 @@ public class ResetAndRedoToolChainAction extends Action implements IWorkbenchAct
 		setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(GuiController.sPLUGINID, IImageKeys.REEXEC));
 	}
 
+	private BasicToolchainJob getToolchainJobFromPreferences() {
+		// the core does not contain the last-run toolchain, but we can try to
+		// retrieve it from the settings
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(GuiController.sPLUGINID);
+		String lastInputFilePath = prefs.getString(IPreferencesKeys.LASTPATH);
+		if (lastInputFilePath == null || lastInputFilePath.isEmpty()) {
+			// there is no last input file saved
+			return null;
+		}
+		File lastInputFile = new File(lastInputFilePath);
+
+		if (!lastInputFile.canRead()) {
+			// there is an inputfile saved, but its not there anymore
+			return null;
+		}
+
+		String toolchainxml = prefs.getString(IPreferencesKeys.LASTTOOLCHAINPATH);
+		if (toolchainxml == null || toolchainxml.isEmpty()) {
+			// there is no last toolchain saved
+			return null;
+		}
+
+		File prelude = PreludeContribution.getPreludeFile();
+
+		try {
+			ToolchainData toolchain = new ToolchainData(toolchainxml);
+			return new GuiToolchainJob("Re-running toolchain from preferences...", mCore, mController, mLogger,
+					toolchain, lastInputFile, prelude == null ? null : new PreludeProvider(prelude.getAbsolutePath(),
+							mLogger));
+
+		} catch (FileNotFoundException e) {
+			MessageDialog.openError(mWorkbenchWindow.getShell(), "Error Occurred",
+					"Please run a toolchain before trying to " + "rerun it.");
+		} catch (JAXBException e) {
+			MessageDialog.openError(mWorkbenchWindow.getShell(), "Error Occurred",
+					"Please run a toolchain before trying to " + "rerun it.");
+		} catch (SAXException e) {
+			MessageDialog.openError(mWorkbenchWindow.getShell(), "Error Occurred",
+					"Please run a toolchain before trying to " + "rerun it.");
+		}
+		return null;
+	}
+
 	/**
 	 * ! This is a generated comment ! The action has been activated. The
 	 * argument of the method represents the 'real' action sitting in the
@@ -68,94 +108,23 @@ public class ResetAndRedoToolChainAction extends Action implements IWorkbenchAct
 	 */
 	public final void run() {
 		IToolchain tc = mController.getCurrentToolchain();
-		if (tc == null) {
-			MessageDialog.openError(mWorkbenchWindow.getShell(), "Error Occurred",
-					"Please run a toolchain before trying to " + "rerun it.");
-			return;
+
+		if (tc != null) {
+			// we have a toolchain that we can rerun
+			BasicToolchainJob tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, mLogger, tc);
+			tcj.schedule();
+		} else {
+			// we dont have a toolchain that we can rerun, but perhaps we can
+			// construct one from our preferences
+			BasicToolchainJob tcj = getToolchainJobFromPreferences();
+			if (tcj == null) {
+				//ok, that also didnt work, we give up
+				MessageDialog.openError(mWorkbenchWindow.getShell(), "Error Occurred",
+						"Please run a toolchain before trying to " + "rerun it.");
+				return;
+			}
+			tcj.schedule();
 		}
-
-		BasicToolchainJob tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, mLogger, tc);
-		tcj.schedule();
-
-		// TODO: Rerun here
-		// File prelude = PreludeContribution.getPreludeFile();
-		// PreludeProvider preludeprovider = prelude == null ? null : new
-		// PreludeProvider(prelude.getAbsolutePath(),
-		// mLogger);
-		//
-		// BasicToolchainJob tcj = new GuiToolchainJob("Processing Toolchain",
-		// mCore, mController,
-		// BasicToolchainJob.ChainMode.RERUN, null, preludeprovider, mLogger);
-		// tcj.schedule();
-
-		// boolean rerun = mCore.canRerun();
-		// File prelude = PreludeContribution.getPreludeFile();
-		// PreludeProvider preludeprovider = prelude == null ? null
-		// : new PreludeProvider(prelude.getAbsolutePath(),mLogger);
-		// if (!rerun) {
-		// IEclipsePreferences prefscope = InstanceScope.INSTANCE
-		// .getNode(GuiController.sPLUGINID);
-		// String filterpath = prefscope.get(IPreferencesKeys.LASTPATH, null);
-		// if (filterpath != null) {
-		// File inputfile = new File(filterpath);
-		// if (inputfile.canRead()) {
-		// String toolchainxml = prefscope.get(
-		// IPreferencesKeys.LASTTOOLCHAINPATH, null);
-		// if (toolchainxml != null) {
-		// try {
-		// ToolchainData toolchain = new ToolchainData(toolchainxml);
-		// mCore.setToolchain(toolchain);
-		// mCore.setInputFile(inputfile);
-		// // In this case, we have to initiate the parser!
-		// mCore.initializeParser(preludeprovider);
-		// rerun = true;
-		// } catch (FileNotFoundException e) {
-		// MessageDialog.openError(
-		// mWorkbenchWindow.getShell(),
-		// "Error Occurred",
-		// "Please run a toolchain before trying to "
-		// + "rerun it.");
-		// } catch (JAXBException e) {
-		// MessageDialog.openError(
-		// mWorkbenchWindow.getShell(),
-		// "Error Occurred",
-		// "Please run a toolchain before trying to "
-		// + "rerun it.");
-		// } catch (SAXException e) {
-		// MessageDialog.openError(
-		// mWorkbenchWindow.getShell(),
-		// "Error Occurred",
-		// "Please run a toolchain before trying to "
-		// + "rerun it.");
-		// }
-		// }
-		// }
-		// }
-		// }
-		// if (!rerun) {
-		// mWorkbenchWindow.getWorkbench().getDisplay()
-		// .asyncExec(new Runnable() {
-		//
-		// @Override
-		// public void run() {
-		// MessageDialog.openError(
-		// mWorkbenchWindow.getShell(),
-		// "Error Occurred",
-		// "Please run a toolchain before trying to "
-		// + "rerun it.");
-		// }
-		//
-		// });
-		// return;
-		// }
-		// mLogger.info("Running Reset and re-execute...");
-		//
-		// BasicToolchainJob tcj = new
-		// DefaultToolchainJob("Processing Toolchain", mCore,
-		// mController, BasicToolchainJob.ChainMode.RERUN_TOOLCHAIN, null,
-		// preludeprovider, mLogger);
-		// tcj.schedule();
-
 	}
 
 	/**
