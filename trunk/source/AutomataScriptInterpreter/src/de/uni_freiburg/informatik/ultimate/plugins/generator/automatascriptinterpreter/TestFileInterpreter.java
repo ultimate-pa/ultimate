@@ -57,6 +57,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableDeclarationAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableExpressionAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.WhileStatementAST;
+import de.uni_freiburg.informatik.ultimate.result.AutomataScriptInterpreterOverallResult;
+import de.uni_freiburg.informatik.ultimate.result.AutomataScriptInterpreterOverallResult.OverallResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
@@ -607,6 +609,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private enum Finished {
 		FINISHED, TIMEOUT, ERROR, OUTOFMEMORY
 	};
+	
+	public static final String s_AssertionHoldsMessage = "Assertion holds.";
+	public static final String s_AssertionViolatedMessage = "Assertion violated!";
 
 	/**
 	 * If an error occurred during the interpretation this is set to true and
@@ -1033,11 +1038,11 @@ public class TestFileInterpreter implements IMessagePrinter {
 				if ((Boolean) result) {
 
 					mResultOfAssertStatements.add(new GenericResultAtElement<AtsASTNode>(oe, Activator.s_PLUGIN_ID,
-							mServices.getBacktranslationService().getTranslatorSequence(), "Assertion holds.", oe
+							mServices.getBacktranslationService().getTranslatorSequence(), s_AssertionHoldsMessage , oe
 									.getAsString(), Severity.INFO));
 				} else {
 					mResultOfAssertStatements.add(new GenericResultAtElement<AtsASTNode>(oe, Activator.s_PLUGIN_ID,
-							mServices.getBacktranslationService().getTranslatorSequence(), "Assertion violated!", oe
+							mServices.getBacktranslationService().getTranslatorSequence(), s_AssertionViolatedMessage, oe
 									.getAsString(), Severity.ERROR));
 				}
 			} else {
@@ -1223,44 +1228,32 @@ public class TestFileInterpreter implements IMessagePrinter {
 			reportToLogger(LoggerSeverity.INFO,
 					"Line " + test.getLocation().getStartLine() + ": " + test.getShortDescription());
 		}
-		Severity userSeverity;
+		OverallResult overallResult;
 		final LoggerSeverity loggerSeverity;
-		final String shortDescr;
-		String longDescr;
 		if (finished == Finished.FINISHED) {
-			userSeverity = Severity.INFO;
 			loggerSeverity = LoggerSeverity.INFO;
-			shortDescr = "Finished interpretation of automata script.";
-			longDescr = shortDescr;
 			if (mResultOfAssertStatements.isEmpty()) {
-				longDescr += " You have not used any assert statement in your automata"
-						+ " script. Assert statements can be used to check Boolean results.";
-			} else if (!oneOrMoreAssertionsFailed) {
-				longDescr += "All assert statements have been evaluated to true.";
+				overallResult = OverallResult.NO_ASSERTION;
+			} else if (oneOrMoreAssertionsFailed) {
+				overallResult = OverallResult.SOME_ASSERTION_FAILED;
+			} else {
+				overallResult = OverallResult.ALL_ASSERTIONS_HOLD;
 			}
 		} else if (finished == Finished.TIMEOUT) {
-			userSeverity = Severity.WARNING;
 			loggerSeverity = LoggerSeverity.INFO;
-			shortDescr = "Timeout during interpretation of automata script.";
-			longDescr = shortDescr;
+			overallResult = OverallResult.TIMEOUT;
 		} else if (finished == Finished.OUTOFMEMORY) {
-			userSeverity = Severity.WARNING;
 			loggerSeverity = LoggerSeverity.INFO;
-			shortDescr = "Run out of memory during interpretation of automata script.";
-			longDescr = shortDescr;
+			overallResult = OverallResult.OUT_OF_MEMORY;
 		} else if (finished == Finished.ERROR) {
-			userSeverity = Severity.ERROR;
 			loggerSeverity = LoggerSeverity.ERROR;
-			shortDescr = "Interpretation of automata script failed.";
-			longDescr = shortDescr;
+			overallResult = OverallResult.EXCEPTION_OR_ERROR;
 		} else {
 			throw new AssertionError();
 		}
-		if (oneOrMoreAssertionsFailed) {
-			userSeverity = Severity.ERROR;
-			longDescr += "Some assert statements have been evaluated to false.";
-		}
-		printMessage(userSeverity, loggerSeverity, longDescr, shortDescr, null);
+		IResult result = new AutomataScriptInterpreterOverallResult(Activator.s_PLUGIN_ID, overallResult);
+		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
+		reportToLogger(loggerSeverity, result.getLongDescription());
 	}
 
 	@Override
