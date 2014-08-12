@@ -30,6 +30,13 @@ public class AbstractInterpretationPreferenceInitializer extends
 	public static final String LABEL_LOGSTATES_USESOURCEPATH = "Use source directory for state change logs";
 	public static final String LABEL_LOGSTATES_PATH = "Directory for state change logs";
 
+	public static final String LABEL_STOPAFTER = "Stop abstract interpretation after...";
+	public static final String  OPTION_STOPAFTER_ANYERROR = "any error location is reached";
+	public static final String  OPTION_STOPAFTER_ALLERRORS = "all error locations are reached";
+	public static final String  OPTION_STOPAFTER_FULLSTATESPACE = "full abstract state space is explored";
+	public static final String[] OPTIONS_STOPAFTER = {OPTION_STOPAFTER_ANYERROR,
+		OPTION_STOPAFTER_ALLERRORS, OPTION_STOPAFTER_FULLSTATESPACE};
+
 	public static final String LABEL_INTDOMAIN = "Domain for int";
 	public static final String LABEL_REALDOMAIN = "Domain for real";
 	public static final String LABEL_BOOLDOMAIN = "Domain for bool";
@@ -55,6 +62,8 @@ public class AbstractInterpretationPreferenceInitializer extends
 	public static final boolean DEF_LOGSTATES_FILE = false;
 	public static final boolean DEF_LOGSTATES_USESOURCEPATH = true;
 	public static final String DEF_LOGSTATES_PATH = "./";
+	
+	public static final String DEF_STOPAFTER = OPTION_STOPAFTER_FULLSTATESPACE;
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -88,6 +97,9 @@ public class AbstractInterpretationPreferenceInitializer extends
 				DEF_LOGSTATES_USESOURCEPATH, PreferenceType.Boolean));
 		preferenceItems.add(new UltimatePreferenceItem<String>(LABEL_LOGSTATES_PATH,
 				DEF_LOGSTATES_PATH, PreferenceType.Directory));
+		
+		preferenceItems.add(new UltimatePreferenceItem<String>(LABEL_STOPAFTER, DEF_STOPAFTER,
+				PreferenceType.Combo, OPTIONS_STOPAFTER));
 		
 		// collect valid domain IDs
 		Set<String> domainIDs = domainRegistry.getDomainIDs();

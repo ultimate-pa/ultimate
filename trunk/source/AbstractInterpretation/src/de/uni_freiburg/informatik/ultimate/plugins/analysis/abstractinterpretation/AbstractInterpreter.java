@@ -80,7 +80,8 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 	private final Set<IAbstractStateChangeListener> m_stateChangeListeners = new HashSet<IAbstractStateChangeListener>();
 
-	private final Set<RCFGNode> m_reachedErrorLocs = new HashSet<RCFGNode>();
+	private final Set<ProgramPoint> m_errorLocs = new HashSet<ProgramPoint>();
+	private final Set<ProgramPoint> m_reachedErrorLocs = new HashSet<ProgramPoint>();
 
 	private HashMap<ProgramPoint, HashMap<RCFGEdge, RCFGEdge>> m_loopEntryNodes;
 	
@@ -88,6 +89,8 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	private Set<String> m_numbersForWidening = new HashSet<String>();
 	
 	private BoogieSymbolTable m_symbolTable;
+	
+	private boolean continueProcessing;
 
 	// for preferences
 	private String m_mainMethodName;
@@ -101,6 +104,9 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	private boolean m_stateChangeLogFile;
 	private boolean m_stateChangeLogUseSourcePath;
 	private String m_stateChangeLogPath;
+	
+	private boolean m_stopAfterAnyError;
+	private boolean m_stopAfterAllErrors;
 	
 	private String m_intDomainID;
 	private String m_intWideningOpName;
@@ -233,6 +239,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	 */
 	public void processRcfg(RootNode root) {
 		m_reachedErrorLocs.clear();
+		continueProcessing = true;
 
 		// state change logger
 		if (m_stateChangeLogConsole || m_stateChangeLogFile) {
@@ -293,9 +300,13 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				m_intDomainFactory, m_realDomainFactory, m_boolDomainFactory,
 				m_bitVectorDomainFactory, m_stringDomainFactory);
 
-		// root annotation: get location list
+		// root annotation: get location list, error locations
 		Map<String,ProgramPoint> entryNodes = root.getRootAnnot().getEntryNodes();
 		ProgramPoint mainEntry = entryNodes.get(m_mainMethodName);
+		
+		Map<String,Collection<ProgramPoint>> errorLocMap = root.getRootAnnot().getErrorNodes();
+		for (String s : errorLocMap.keySet())
+			m_errorLocs.addAll(errorLocMap.get(s));
 		
 		// add entry node of Main procedure / any if no Main() exists
 		for (RCFGEdge e : root.getOutgoingEdges()) {
@@ -359,7 +370,8 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 			if (node.getIncomingEdges().size() <= 1)
 				m_states.remove(node);
 			
-			if (m_services.getProgressMonitorService().continueProcessing())
+			if (continueProcessing
+					&& m_services.getProgressMonitorService().continueProcessing())
 				visitNodes(); // repeat until m_nodesToVisit is empty
 		}
 	}
@@ -386,9 +398,9 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		if (targetNode != null) {
 			if (putStateToNode(m_resultingState, targetNode, e)) {
 				ProgramPoint pp = (ProgramPoint) targetNode;
-				if ((pp != null) && pp.isErrorLocation() && !m_reachedErrorLocs.contains(targetNode)) {
-					m_reachedErrorLocs.add(targetNode);
-					reportErrorResult(targetNode, m_resultingState);
+				if (m_errorLocs.contains(pp) && !m_reachedErrorLocs.contains(pp)) {
+					m_reachedErrorLocs.add(pp);
+					reportErrorResult(pp, m_resultingState);
 				} else {
 					if (!m_nodesToVisit.contains(targetNode))
 						m_nodesToVisit.add(targetNode);
@@ -571,11 +583,23 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	 * @param state
 	 *            The abstract state at the error location
 	 */
-	private void reportErrorResult(IElement location, AbstractState state) {
+	private void reportErrorResult(ProgramPoint location, AbstractState state) {
 		m_services.getResultService().reportResult(
 				Activator.s_PLUGIN_ID,
 				new GenericResult(Activator.s_PLUGIN_ID, "Possible error",
-						"Some program specifications may be violated", Severity.ERROR));
+						String.format("Some program specifications may be violated. "
+								+ "Error location %s has been reached in the over-approximation.",
+								location.getLocationName()), Severity.ERROR));
+		
+		if (m_stopAfterAnyError) {
+			continueProcessing = false;
+			m_logger.info(String.format("Abstract interpretation finished after reaching error location %s",
+					location.getLocationName()));
+		} else if (m_stopAfterAllErrors) {
+			if (m_reachedErrorLocs.containsAll(m_errorLocs))
+				continueProcessing = false;
+			m_logger.info("Abstract interpretation finished after reaching all error locations");
+		}
 	}
 
 	/**
@@ -611,6 +635,10 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_USESOURCEPATH);
 		m_stateChangeLogPath = prefs
 				.getString(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_PATH);
+		
+		String stopAfter = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_STOPAFTER);
+		m_stopAfterAnyError = (stopAfter.equals(AbstractInterpretationPreferenceInitializer.OPTION_STOPAFTER_ANYERROR));
+		m_stopAfterAllErrors = (stopAfter.equals(AbstractInterpretationPreferenceInitializer.OPTION_STOPAFTER_ALLERRORS));
 
 		m_intDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_INTDOMAIN);
 		m_intWideningOpName = prefs.getString(String.format(
