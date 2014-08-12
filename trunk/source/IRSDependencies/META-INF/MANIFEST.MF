@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: IRSDependencies
-Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.irsdependencies;singleton:=true
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-Activator: de.uni_freiburg.informatik.ultimate.irsdependencies.Activator
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.Activator
 Require-Bundle: UltimateCore,
  Library-log4j,
  Library-ModelCheckerUtils,
@@ -12,4 +12,4 @@ Require-Bundle: UltimateCore,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
-Export-Package: de.uni_freiburg.informatik.ultimate.irsdependencies.loopdetector
+Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector

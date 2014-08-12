@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.gui.dialogs;
 
+import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -9,15 +9,7 @@ import java.util.List;
 
 import javax.xml.bind.JAXBException;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
-import de.uni_freiburg.informatik.ultimate.gui.GuiController;
-import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
-
 import org.apache.log4j.Logger;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
@@ -35,8 +27,14 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
-import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.xml.sax.SAXException;
+
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin;
+import de.uni_freiburg.informatik.ultimate.gui.GuiController;
+import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
 
 public class AnalysisChooseDialog extends Dialog {
 
@@ -104,6 +102,14 @@ public class AnalysisChooseDialog extends Dialog {
 			for (ITool t : mResult) {
 				result_chain.addPlugin(t.getPluginID());
 			}
+			//save this toolchain in a tempfile for redo actions 
+			String tDir = System.getProperty("java.io.tmpdir");
+			File tmpToolchain = new File(tDir, "lastUltimateToolchain.xml");
+			result_chain.writeToFile(tmpToolchain.getAbsolutePath());
+			new UltimatePreferenceStore(GuiController.sPLUGINID).put(IPreferencesKeys.LASTTOOLCHAINPATH,
+					tmpToolchain.getAbsolutePath());
+			mLogger.info("Saved custom toolchain to " + tmpToolchain.getAbsolutePath());
+
 		} else {
 			result_chain = null;
 		}
@@ -253,10 +259,8 @@ public class AnalysisChooseDialog extends Dialog {
 		xmlButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(final SelectionEvent e) {
 
-				InstanceScope iscope = new InstanceScope();
-				ScopedPreferenceStore store = new ScopedPreferenceStore(iscope, GuiController.sPLUGINID);
-				IEclipsePreferences prefscope = iscope.getNode(GuiController.sPLUGINID);
-				String filterpath = prefscope.get(IPreferencesKeys.LASTTOOLCHAINPATH, null);
+				UltimatePreferenceStore prefs = new UltimatePreferenceStore(GuiController.sPLUGINID);
+				String filterpath = prefs.getString(IPreferencesKeys.LASTTOOLCHAINPATH, null);
 
 				String[] extensions = new String[1];
 				extensions[0] = "*.xml";
@@ -266,12 +270,7 @@ public class AnalysisChooseDialog extends Dialog {
 				fd.setFileName(filterpath);
 				mToolchainFile = fd.open();
 				if (mToolchainFile != null) {
-					prefscope.put(IPreferencesKeys.LASTTOOLCHAINPATH, mToolchainFile);
-					try {
-						store.save();
-					} catch (IOException exc) {
-						exc.printStackTrace();
-					}
+					prefs.put(IPreferencesKeys.LASTTOOLCHAINPATH, mToolchainFile);
 					mShell.dispose();
 				}
 			}

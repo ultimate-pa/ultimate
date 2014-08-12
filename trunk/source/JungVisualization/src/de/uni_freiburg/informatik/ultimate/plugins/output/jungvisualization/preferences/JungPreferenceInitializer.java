@@ -47,7 +47,7 @@ public class JungPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	@Override
 	public String getPreferencePageTitle() {
-		return Activator.PLUGIN_ID;
+		return Activator.PLUGIN_NAME;
 	}
 
 }

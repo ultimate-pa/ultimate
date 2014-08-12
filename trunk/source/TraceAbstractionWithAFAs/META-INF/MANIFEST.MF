@@ -13,9 +13,9 @@ Require-Bundle: Library-log4j,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  SMTInterpol,
  de.uni_freiburg.informatik.ultimate.automata,
- de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;bundle-version="0.0.1",
- de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent,
+ de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas
-Import-Package: de.uni_freiburg.informatik.ultimate.reachingdefinitions.plugin

@@ -19,7 +19,6 @@ import org.osgi.service.prefs.BackingStoreException;
 
 public class UltimatePreferenceStore {
 
-	// private Logger mLogger;
 	private final String mPluginID;
 
 	private static HashMap<String, HashSet<IPreferenceChangeListener>> sActiveListener = new HashMap<String, HashSet<IPreferenceChangeListener>>();
@@ -27,6 +26,8 @@ public class UltimatePreferenceStore {
 	public UltimatePreferenceStore(String pluginID) {
 		mPluginID = pluginID;
 	}
+
+	/*********************************** Getter ***********************************/
 
 	/**
 	 * Retrieves a preference value of type boolean from the store. If the key
@@ -41,8 +42,7 @@ public class UltimatePreferenceStore {
 	}
 
 	public boolean getBoolean(String key, boolean defaultValue) {
-		return InstanceScope.INSTANCE.getNode(mPluginID).getBoolean(key,
-				DefaultScope.INSTANCE.getNode(mPluginID).getBoolean(key, defaultValue));
+		return getInstance().getBoolean(key, getDefault().getBoolean(key, defaultValue));
 	}
 
 	/**
@@ -57,9 +57,7 @@ public class UltimatePreferenceStore {
 	}
 
 	public String getString(String key, String defaultValue) {
-		String defaultScopeValue = DefaultScope.INSTANCE.getNode(mPluginID).get(key, defaultValue);
-		String instanceScopeValue = InstanceScope.INSTANCE.getNode(mPluginID).get(key, defaultScopeValue);
-		return instanceScopeValue;
+		return getInstance().get(key, getDefault().get(key, defaultValue));
 	}
 
 	/**
@@ -73,7 +71,6 @@ public class UltimatePreferenceStore {
 	 * @throws UnknownFormatConversionException
 	 */
 	public <T extends Enum<T>> T getEnum(String key, Class<T> enumType) throws UnknownFormatConversionException {
-
 		String strValue = getString(key);
 		if (strValue.isEmpty()) {
 			throw new UnknownFormatConversionException("String " + strValue + " cannot be converted to type "
@@ -94,7 +91,6 @@ public class UltimatePreferenceStore {
 	 * @return
 	 */
 	public <T extends Enum<T>> T getEnum(String key, T defaultValue, Class<T> enumType) {
-
 		String strValue = getString(key);
 		if (strValue.isEmpty()) {
 			return defaultValue;
@@ -116,8 +112,7 @@ public class UltimatePreferenceStore {
 	}
 
 	public byte[] getByteArray(String key, byte[] defaultValue) {
-		return InstanceScope.INSTANCE.getNode(mPluginID).getByteArray(key,
-				DefaultScope.INSTANCE.getNode(mPluginID).getByteArray(key, defaultValue));
+		return getInstance().getByteArray(key, getDefault().getByteArray(key, defaultValue));
 	}
 
 	/**
@@ -132,8 +127,7 @@ public class UltimatePreferenceStore {
 	}
 
 	public double getDouble(String key, double defaultValue) {
-		return InstanceScope.INSTANCE.getNode(mPluginID).getDouble(key,
-				DefaultScope.INSTANCE.getNode(mPluginID).getDouble(key, defaultValue));
+		return getInstance().getDouble(key, getDefault().getDouble(key, defaultValue));
 	}
 
 	/**
@@ -148,8 +142,7 @@ public class UltimatePreferenceStore {
 	}
 
 	public float getFloat(String key, float defaultValue) {
-		return InstanceScope.INSTANCE.getNode(mPluginID).getFloat(key,
-				DefaultScope.INSTANCE.getNode(mPluginID).getFloat(key, defaultValue));
+		return getInstance().getFloat(key, getDefault().getFloat(key, defaultValue));
 	}
 
 	/**
@@ -164,8 +157,7 @@ public class UltimatePreferenceStore {
 	}
 
 	public int getInt(String key, int defaultValue) {
-		return InstanceScope.INSTANCE.getNode(mPluginID).getInt(key,
-				DefaultScope.INSTANCE.getNode(mPluginID).getInt(key, defaultValue));
+		return getInstance().getInt(key, getDefault().getInt(key, defaultValue));
 	}
 
 	/**
@@ -180,9 +172,23 @@ public class UltimatePreferenceStore {
 	}
 
 	public long getLong(String key, long defaultValue) {
-		return InstanceScope.INSTANCE.getNode(mPluginID).getLong(key,
-				DefaultScope.INSTANCE.getNode(mPluginID).getLong(key, defaultValue));
+		return getInstance().getLong(key, getDefault().getLong(key, defaultValue));
 	}
+
+	/*********************************** End Getter ***********************************/
+
+	/*********************************** Setter ***********************************/
+
+	public void put(String key, String value) {
+		getInstance().put(key, value);
+		try {
+			getInstance().flush();
+		} catch (BackingStoreException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/*********************************** End Setter ***********************************/
 
 	public void addPreferenceChangeListener(IPreferenceChangeListener iPreferenceChangeListener) {
 		addPreferenceChangeListener(mPluginID, iPreferenceChangeListener);
@@ -202,18 +208,18 @@ public class UltimatePreferenceStore {
 	}
 
 	public void removePreferenceChangeListener(IPreferenceChangeListener iPreferenceChangeListener) {
-		InstanceScope.INSTANCE.getNode(mPluginID).removePreferenceChangeListener(iPreferenceChangeListener);
+		getInstance().removePreferenceChangeListener(iPreferenceChangeListener);
 		if (sActiveListener.containsKey(mPluginID)) {
 			sActiveListener.get(mPluginID).remove(iPreferenceChangeListener);
 		}
 	}
 
 	public IEclipsePreferences getDefaultEclipsePreferences() {
-		return DefaultScope.INSTANCE.getNode(mPluginID);
+		return getDefault();
 	}
 
 	public IEclipsePreferences getEclipsePreferences() {
-		return InstanceScope.INSTANCE.getNode(mPluginID);
+		return getInstance();
 	}
 
 	public IScopeContext getScopeContext() {
@@ -221,8 +227,7 @@ public class UltimatePreferenceStore {
 	}
 
 	public void exportPreferences(OutputStream outputStream) throws CoreException {
-		Platform.getPreferencesService().exportPreferences(InstanceScope.INSTANCE.getNode(mPluginID), outputStream,
-				null);
+		Platform.getPreferencesService().exportPreferences(getInstance(), outputStream, null);
 	}
 
 	public static IStatus importPreferences(InputStream inputStream) throws CoreException {
@@ -243,9 +248,8 @@ public class UltimatePreferenceStore {
 	public String getDefaultPreferencesString() {
 		StringBuilder sb = new StringBuilder();
 		try {
-			for (String key : DefaultScope.INSTANCE.getNode(mPluginID).keys()) {
-				sb.append(key).append("=").append(DefaultScope.INSTANCE.getNode(mPluginID).get(key, "NO DEFAULT SET"))
-						.append("\n");
+			for (String key : getDefault().keys()) {
+				sb.append(key).append("=").append(getDefault().get(key, "NO DEFAULT SET")).append("\n");
 			}
 		} catch (BackingStoreException e) {
 			e.printStackTrace();
@@ -257,7 +261,7 @@ public class UltimatePreferenceStore {
 	public String getCurrentPreferencesString() {
 		StringBuilder sb = new StringBuilder();
 		try {
-			for (String key : DefaultScope.INSTANCE.getNode(mPluginID).keys()) {
+			for (String key : getDefault().keys()) {
 				sb.append(key).append("=").append(getString(key, "NO DEFAULT SET")).append("\n");
 			}
 		} catch (BackingStoreException e) {
@@ -270,6 +274,14 @@ public class UltimatePreferenceStore {
 	@Override
 	public String toString() {
 		return mPluginID + " UltimatePreferenceStore";
+	}
+
+	private IEclipsePreferences getInstance() {
+		return InstanceScope.INSTANCE.getNode(mPluginID);
+	}
+
+	private IEclipsePreferences getDefault() {
+		return DefaultScope.INSTANCE.getNode(mPluginID);
 	}
 
 }

@@ -25,6 +25,9 @@ public class SaveSettingsAction extends Action implements IWorkbenchAction {
 
 	public void run() {
 		FileDialog fd = new FileDialog(mWindow.getShell(), SWT.SAVE);
+		fd.setText("Save settings to...");
+		fd.setFilterExtensions(new String[] { "*.epf" });
+		fd.setFilterNames(new String[] { "Eclipse preference file (*.epf)" });
 		mCore.savePreferences(fd.open());
 	}
 

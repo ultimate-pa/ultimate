@@ -1,6 +1,6 @@
 <toolchain>
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
-	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder"/>
-	<plugin id="de.uni_freiburg.informatik.ultimate.reachingdefinitions.plugin.ReachingDefinitions"/>
-	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.JungVisualization"/> 
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization"/> 
 </toolchain>

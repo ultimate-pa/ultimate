@@ -2,7 +2,7 @@
 <?eclipse version="3.2"?>
 <plugin>
 	<extension point="de.uni_freiburg.informatik.ultimate.ep.analysis">
-      <impl class="de.uni_freiburg.informatik.ultimate.reachingdefinitions.plugin.ReachingDefinitions" />
+      <impl class="de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.ReachingDefinitions" />
       
    </extension>
 </plugin>

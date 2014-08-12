@@ -4,12 +4,12 @@
    <extension
          point="de.uni_freiburg.informatik.ultimate.ep.analysis">
       <impl
-            class="de.uni_freiburg.informatik.ultimate.irsdependencies.IrsDependencies">
+            class="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.IrsDependencies">
       </impl>
    </extension>
    
       <extension point="org.eclipse.core.runtime.preferences">
-      <initializer class="de.uni_freiburg.informatik.ultimate.irsdependencies.preferences.IRSDependenciesPreferenceInitializer"/>
+      <initializer class="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.preferences.IRSDependenciesPreferenceInitializer"/>
    </extension>
 
 </plugin>

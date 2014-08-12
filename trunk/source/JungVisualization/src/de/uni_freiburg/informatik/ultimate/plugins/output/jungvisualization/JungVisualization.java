@@ -43,7 +43,7 @@ public class JungVisualization implements IOutput {
 
 	@Override
 	public String getPluginName() {
-		return "Jung Graph Visualization";
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
