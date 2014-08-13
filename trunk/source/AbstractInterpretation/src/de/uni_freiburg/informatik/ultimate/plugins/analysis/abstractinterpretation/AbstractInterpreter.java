@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractInterpretationBoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.LoopStackElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.intervaldomain.IntervalDomainFactory;
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
@@ -84,6 +86,8 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	private final Set<ProgramPoint> m_reachedErrorLocs = new HashSet<ProgramPoint>();
 
 	private HashMap<ProgramPoint, HashMap<RCFGEdge, RCFGEdge>> m_loopEntryNodes;
+	
+	private final Set<ProgramPoint> m_recursionEntryNodes = new HashSet<ProgramPoint>();
 	
 	private Set<String> m_fixedNumbersForWidening = new HashSet<String>();
 	private Set<String> m_numbersForWidening = new HashSet<String>();
@@ -144,11 +148,8 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	/**
 	 * Adds an AbstractInterpretationAnnotation with states at the given
 	 * location IElement
-	 * 
-	 * @param element
-	 *            The location of the given states
-	 * @param states
-	 *            The states at the given location
+	 * @param element The location of the given states
+	 * @param states The states at the given location
 	 */
 	private void annotateElement(IElement element, List<AbstractState> states) {
 		AbstractInterpretationAnnotations anno = new AbstractInterpretationAnnotations(states);
@@ -176,19 +177,24 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		List<AbstractState> statesAtNodeBackup = new ArrayList<AbstractState>(statesAtNode);
 
 		// check for loop entry / widening
-		boolean applyWidening = false;
+		boolean applyLoopWidening = false;
 		ProgramPoint pp = (ProgramPoint) node;
 		if ((pp != null) && m_loopEntryNodes.containsKey(pp)) {
-			AbstractState.LoopStackElement le = newState.peekLoopEntry();
+			LoopStackElement le = newState.peekLoopEntry();
 			if (le != null) {
 				if ((le.getLoopNode() == node) && (le.getExitEdge() == fromEdge))
 					newState.popLoopEntry();
 			}
 
 			if (newState.peekLoopEntry().getIterationCount(pp) >= m_iterationsUntilWidening)
-				applyWidening = true;
+				applyLoopWidening = true;
 		}
+		// check for recursive method exit / widening
+		boolean applyRecursionWidening = false;
+		if (m_recursionEntryNodes.contains(node))
+			applyRecursionWidening = newState.getRecursionCount() >= m_iterationsUntilWidening;
 
+		// check existing states: super/sub/widening/merging
 		Set<AbstractState> unprocessedStates = new HashSet<AbstractState>();
 		Set<AbstractState> statesToRemove = new HashSet<AbstractState>();
 		for (AbstractState s : statesAtNode) {
@@ -196,18 +202,22 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				return false; // abort if a superstate exists
 			if (s.isProcessed()) {
 				if (newState.isSuccessor(s)) {
-					// widen if possible
-					if (applyWidening && (s.peekLoopEntry().getIterationCount(pp) > 0)) {
+					// widen after loop if possible
+					if (applyLoopWidening && (s.peekLoopEntry().getIterationCount(pp) > 0)) {
 						newState = s.widen(newState);
-						m_logger.debug(String.format("Widening at %s", node.toString()));
+						m_logger.debug(String.format("Widening at %s", pp));
+					}
+					// widen at new recursive call if possible
+					if (applyRecursionWidening) {
+						newState = s.widenRecursion(newState);
+						m_logger.debug(String.format("Widening after recursion at %s", pp));
 					}
 
 					statesToRemove.add(s); // remove old obsolete nodes
 				}
 			} else {
 				if (newState.isSuper(s))
-					statesToRemove.add(s); // remove unprocessed substates
-											// of the new state
+					statesToRemove.add(s); // remove unprocessed substates of the new state
 				else
 					unprocessedStates.add(s); // collect unprocessed states
 			}
@@ -238,7 +248,10 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	 *            detection etc.
 	 */
 	public void processRcfg(RootNode root) {
+		m_errorLocs.clear();
 		m_reachedErrorLocs.clear();
+		m_recursionEntryNodes.clear();
+		
 		continueProcessing = true;
 
 		// state change logger
@@ -301,10 +314,23 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				m_bitVectorDomainFactory, m_stringDomainFactory);
 
 		// root annotation: get location list, error locations
-		Map<String,ProgramPoint> entryNodes = root.getRootAnnot().getEntryNodes();
-		ProgramPoint mainEntry = entryNodes.get(m_mainMethodName);
+		RootAnnot ra = root.getRootAnnot();
 		
-		Map<String,Collection<ProgramPoint>> errorLocMap = root.getRootAnnot().getErrorNodes();
+		Map<String, ProgramPoint> entryNodes = ra.getEntryNodes();
+		ProgramPoint mainEntry = entryNodes.get(m_mainMethodName);
+
+		for (String s : entryNodes.keySet()) {
+			ProgramPoint entryNode = entryNodes.get(s);
+			Collection<ProgramPoint> methodNodes = ra.getProgramPoints().get(s).values();
+			for (RCFGEdge e : entryNode.getIncomingEdges()) {
+				if (methodNodes.contains(e.getSource())) {
+					// entryNode belongs to recursive method
+					m_recursionEntryNodes.add(entryNode);
+				}
+			}
+		}
+		
+		Map<String,Collection<ProgramPoint>> errorLocMap = ra.getErrorNodes();
 		for (String s : errorLocMap.keySet())
 			m_errorLocs.addAll(errorLocMap.get(s));
 		
@@ -476,8 +502,6 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		super.visit(c);
 
 		m_resultingState = m_boogieVisitor.evaluateReturnStatement(c.getCallStatement(), m_currentState);
-		
-		// TODO: Widening for recursive functions
 	}
 
 	@Override

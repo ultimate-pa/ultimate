@@ -24,22 +24,12 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 
 	private static final long serialVersionUID = 1L;
 
-	public static final String s_annotationName = "AbstractInterpretation";
+	public static final String s_annotationName = "Abstract Interpretation";
 	
-	private Map<String, AbstractState> m_states = null;
-	
-	public Map<String, AbstractState> getStates() { return m_states; }
-	public void setStates(Map<String, AbstractState> states) { m_states = states; }
+	private final List<AbstractState> m_states;
 	
 	public AbstractInterpretationAnnotations(List<AbstractState> states) {
-		if ((states == null) || (states.size() <= 0)) return;
-		
-		Map<String, AbstractState> statesMap = new HashMap<String, AbstractState>();
-		
-		for (int i = 0; i < states.size(); i++)
-			statesMap.put(String.format("Abstract state %d", i), states.get(i));
-		
-		setStates(statesMap);
+		m_states = states;
 	}
 
 	/* (non-Javadoc)
@@ -47,7 +37,7 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 	 */
 	@Override
 	protected String[] getFieldNames() {
-		return new String[] { "Abstract states",  "Abstract values", "Traces"};
+		return new String[] { "Abstract states"};
 	}
 
 	/* (non-Javadoc)
@@ -57,57 +47,45 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 	protected Object getFieldValue(String field) {
 		switch (field) {
 		case "Abstract states" :
-			return m_states;
-		case "Abstract values" :
-			if (m_states == null) return null;
-			// state -> scope -> (value, array -> (value, has unclear indices))
-			Map<String, Map<String, Object>> states =
-				new HashMap<String, Map<String, Object>>(m_states.size());
-			for (String stateKey : m_states.keySet()) {
-				AbstractState state = m_states.get(stateKey);
-				if (state != null) {
-					// scope -> (value, array -> (value, has unclear indices))
-					List<CallStackElement> callstack = state.getCallStack();
-					Map<String, Object> callstackData = new HashMap<String, Object>(2);
-					for (CallStackElement cse : callstack) {
-						// array -> (value, has unclear indices)
-						Map<String, Map<String, Object>> arrayInfo = new HashMap<String, Map<String, Object>>(2);
-						Map<String, ArrayData> arrays = cse.getArrays();
-						for (String ident : arrays.keySet()) {
-							ArrayData a = arrays.get(ident);
-							Map<String, Object> aInfo = new HashMap<String, Object>();
-							aInfo.put("Merged value", a.getValue());
-							aInfo.put("Has unclear indices", a.getIndicesUnclear());
-							arrayInfo.put(ident, aInfo);
-						}
-						// store (value, array -> (value, has unclear indices))
-						Map<String, Object> stateData = new HashMap<String, Object>();
-						stateData.put("Values", cse.getValues());
-						stateData.put("Arrays", arrayInfo);
-						CallStatement csmt = cse.getCallStatement();
-						String functionName = (csmt == null) ? "GLOBAL" : csmt.getMethodName();
-						callstackData.put(String.format("%s", functionName), stateData);
+			if (m_states == null) return "No states";
+			// state -> (scope -> (value, array -> (value, has unclear indices)), trace)
+			List<Object> states = new ArrayList<Object>(m_states.size());
+			for (AbstractState state : m_states) {
+				// scope -> (value, array -> (value, has unclear indices))
+				Map<String, Object> callstackData = new HashMap<String, Object>(2);
+				List<CallStackElement> callstack = state.getCallStack();
+				for (CallStackElement cse : callstack) {
+					// array -> (value, has unclear indices)
+					Map<String, Map<String, Object>> arrayInfo = new HashMap<String, Map<String, Object>>(2);
+					Map<String, ArrayData> arrays = cse.getArrays();
+					for (String ident : arrays.keySet()) {
+						ArrayData a = arrays.get(ident);
+						Map<String, Object> aInfo = new HashMap<String, Object>();
+						aInfo.put("Merged value", a.getValue());
+						aInfo.put("Has unclear indices", a.getIndicesUnclear());
+						arrayInfo.put(ident, aInfo);
 					}
-					states.put(stateKey, callstackData);
+					// store (value, array -> (value, has unclear indices))
+					Map<String, Object> scopeData = new HashMap<String, Object>();
+					if (!cse.getValues().isEmpty())
+						scopeData.put("Values", cse.getValues());
+					if (!arrayInfo.isEmpty())
+						scopeData.put("Arrays", arrayInfo);
+					CallStatement csmt = cse.getCallStatement();
+					String functionName = (csmt == null) ? "GLOBAL" : csmt.getMethodName();
+					callstackData.put(String.format("%s", functionName), scopeData);
 				}
+				List<RCFGNode> passedNodes = state.getPassedNodes();
+				List<String> trace =
+						new ArrayList<String>(passedNodes.size());
+				for (RCFGNode node : passedNodes)
+					trace.add(node.toString());
+				Map<String, Object> stateData = new HashMap<String, Object>();
+				stateData.put("Call stack", callstackData);
+				stateData.put("Trace", trace);
+				states.add(stateData);
 			}
 			return states;
-		case "Traces" :
-			if (m_states == null) return null;
-			Map<String, List<String>> traces =
-				new HashMap<String, List<String>>(m_states.size());
-			for (String stateKey : m_states.keySet()) {
-				AbstractState state = m_states.get(stateKey);
-				if (state != null) {
-					List<RCFGNode> passed = state.getPassedNodes();
-					List<String> passedList =
-							new ArrayList<String>(passed.size());
-					for (RCFGNode node : passed)
-						passedList.add(node.toString());
-					traces.put(stateKey, passedList);
-				}
-			}
-			return traces;
 		default:
 			return null;
 		}
@@ -138,7 +116,7 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 	
 	@Override
 	public String toString() {
-		return "AbstractInterpretation : " + m_states.toString();
+		return "Abstract Interpretation";
 	}
 
 }

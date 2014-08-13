@@ -100,7 +100,7 @@ public class StateChangeLogger implements IAbstractStateChangeListener {
 		logState(newState, targetName, output);
 
 		if (mergedState != newState) {
-			output.append("\n-> Merged state:\n");
+			output.append("\n-> Merged/widened state:\n");
 			logState(mergedState, targetName, output);
 		}
 		
@@ -150,7 +150,7 @@ public class StateChangeLogger implements IAbstractStateChangeListener {
 				output.append(n.toString());
 			}
 		}
-		output.append(String.format("-> %s\n", targetName));
+		output.append(String.format(" -> %s\n", targetName));
 	}
 
 }

@@ -133,7 +133,7 @@ public class AbstractState {
 	}
 	
 	/**
-	 * @return True iff this state contains all variables of the given state
+	 * @return True iff this state contains all variables of the given state on the global and (matching!) current scope
 	 * and all variable values are greater or equal to their corresponding values
 	 */
 	public boolean isSuper(AbstractState state) {
@@ -142,39 +142,63 @@ public class AbstractState {
 		if (state == null)
 			return false;
 		
-		List<CallStackElement> otherValues = state.getCallStack();
-		
-		// must have at least as many stack layers (scopes)
-		if (m_callStack.size() < otherValues.size())
+		// check global scope
+		if (!isSuper(getGlobalScope(), state.getGlobalScope()))
 			return false;
-		
-		// for each stack layer (scope level) of the others (which may be less!)
-		for (int i = 0; i < otherValues.size(); i++) {
-			CallStackElement greaterLayer = m_callStack.get(i);
-			CallStackElement smallerLayer = otherValues.get(i);
-			
-			// must be of the same method call and have at least as many variables
-			if ((greaterLayer.getCallStatement() != smallerLayer.getCallStatement())
-					|| (greaterLayer.getValues().size() < smallerLayer.getValues().size()))
-				return false;
 
-			// check if any variable in the other state occurs and is greater in this state
-			Set<String> smallerKeys = smallerLayer.getValues().keySet();
-			for (String key : smallerKeys) {
-				IAbstractValue<?> smallerValue = smallerLayer.getValues().get(key);
-				IAbstractValue<?> greaterValue = greaterLayer.getValues().get(key); 
-				
-				// identifier must exist and thus have a value
-				if (greaterValue == null)
-					return false;
-				
-				// value of this state must be greater than the value of the other state
-				if (!greaterValue.isSuper(smallerValue))
-					return false;
-			}
+		// check current scope if it is not the global scope
+		if (getStackSize() > 1) {
+			if (!isSuper(getCurrentScope(), state.getCurrentScope()))
+				return false;
 		}
 		
 		// all checks passed, this state is greater or equal to the argument state
+		return true;
+	}
+	
+	/**
+	 * Checks if the left CSE contains all variables of the right CSE
+	 * and all variable values are greater or equal to their corresponding values
+	 * @param left
+	 * @param right
+	 * @return True iff left isSuper right
+	 */
+	private boolean isSuper(CallStackElement left, CallStackElement right) {
+		// must be of the same method call and have at least as many variables
+		if ((left.getCallStatement() != right.getCallStatement())
+				|| (left.getValues().size() < right.getValues().size()))
+			return false;
+
+		// check if any variable in the right CSE occurs and is greater in the left CSE
+		Set<String> rightKeys = right.getValues().keySet();
+		for (String key : rightKeys) {
+			IAbstractValue<?> rightValue = right.getValues().get(key);
+			IAbstractValue<?> leftValue = left.getValues().get(key);
+			
+			// identifier must exist and thus have a value
+			if (leftValue == null)
+				return false;
+			
+			// value of left CSE must be greater than the value of the right CSE
+			if (!leftValue.isSuper(rightValue))
+				return false;
+		}
+
+		// check if any array value in the right CSE occurs and is greater in the left CSE
+		rightKeys = right.getArrays().keySet();
+		for (String key : rightKeys) {
+			ArrayData rightData = right.getArrays().get(key);
+			ArrayData leftData = left.getArrays().get(key); 
+			
+			// identifier must exist and thus have a value
+			if (leftData == null)
+				return false;
+			
+			// value of left CSE must be greater than the value of the right CSE
+			if (!leftData.getValue().isSuper(rightData.getValue()))
+				return false;
+		}
+		
 		return true;
 	}
 	
@@ -318,8 +342,14 @@ public class AbstractState {
 			
 			// add passed loop entry nodes : take larger stack
 			resultCSE.getLoopStack().clear();
-			resultCSE.getLoopStack().addAll(((thisCSE.getLoopStack().size() >= otherCSE.getLoopStack().size())
-							? thisCSE : otherCSE).getLoopStack());
+			if (thisCSE == null) {
+				resultCSE.getLoopStack().addAll(otherCSE.getLoopStack());
+			} else if (otherCSE == null) {
+				resultCSE.getLoopStack().addAll(thisCSE.getLoopStack());
+			} else {
+				resultCSE.getLoopStack().addAll(((thisCSE.getLoopStack().size() >= otherCSE.getLoopStack().size())
+								? thisCSE : otherCSE).getLoopStack());
+			}
 		}
 
 		// add passed nodes of resultingState : take longer trace
@@ -350,7 +380,7 @@ public class AbstractState {
 	}
 	
 	/**
-	 * Widen this state with the given state using the given widening operator set in the preferences
+	 * Widen this state with the given state using the widening operator set in the preferences
 	 * @param state The state to widen with
 	 * @return A new widened state: (this state) wideningOp (the given state)
 	 */
@@ -371,79 +401,12 @@ public class AbstractState {
 		for (int i = 0; i < maxLayerCount; i++) {
 			CallStackElement thisCSE = (i < m_callStack.size()) ? m_callStack.get(i) : null;
 			CallStackElement otherCSE = (i < otherValues.size()) ? otherValues.get(i) : null;
-			Map<String, IAbstractValue<?>> thisLayer = (thisCSE != null) ? thisCSE.getValues() : null;
-			Map<String, IAbstractValue<?>> otherLayer = (otherCSE != null) ? otherCSE.getValues() : null;
 
 			CallStackElement useCSE = thisCSE == null ? otherCSE : thisCSE;
 			CallStackElement resultCSE = new CallStackElement(useCSE.getCallStatement(), useCSE.getOldValues());
 			resultingValues.add(resultCSE);
-			Map<String, IAbstractValue<?>> resultingLayer = resultCSE.getValues();
-
-			Set<String> identifiers = new HashSet<String>();
-			if (thisLayer != null)
-				identifiers.addAll(thisLayer.keySet());
-			if (otherLayer != null)
-				identifiers.addAll(otherLayer.keySet());
-
-			// widen values: thisValue wideningOp otherValue
-			for (String identifier : identifiers) {
-				IAbstractValue<?> thisValue = (thisLayer == null) ? null : thisLayer.get(identifier);
-				IAbstractValue<?> otherValue = (otherLayer == null) ? null : otherLayer.get(identifier); 
-
-				IAbstractValue<?> resultingValue = null;
-				if (thisValue == null) {
-					resultingValue = otherValue.copy();
-					m_logger.warn(String.format("Widening encountered a missing value for %s in the old state.", identifier));
-				} else if (otherValue == null) {
-					m_logger.error(String.format("Widening failed with a missing value for %s in the new state.", identifier));
-				} else {
-					resultingValue = widenValues(thisValue, otherValue);
-				}
-				if (resultingValue != null)
-					resultingLayer.put(identifier, resultingValue);
-			}
-
-			// merge array data
-			Map<String, ArrayData> thisArrays = (thisCSE != null) ? thisCSE.getArrays() : null;
-			Map<String, ArrayData> otherArrays = (otherCSE != null) ? otherCSE.getArrays() : null;
-			Map<String, ArrayData> resultingArrays = resultCSE.getArrays();
-
-			identifiers.clear();
-			if (thisArrays != null)
-				identifiers.addAll(thisArrays.keySet());
-			if (otherArrays != null)
-				identifiers.addAll(otherArrays.keySet());
-
-			for (String identifier : identifiers) {
-				ArrayData thisData = thisArrays.get(identifier);
-				ArrayData otherData = otherArrays.get(identifier);
-				
-				if (thisData == null) {
-					ArrayData resultData = new ArrayData(identifier);
-					resultData.setValue(otherData.getValue());
-					if (otherData.getIndicesUnclear())
-						resultData.setIndicesUnclear();
-					resultingArrays.put(identifier, resultData);
-					m_logger.warn(String.format("Widening encountered a missing value for %s in the old state.", identifier));
-				} else if (otherData == null) {
-					m_logger.error(String.format("Widening failed with a missing value for array %s in the new state.", identifier));
-				} else {
-					boolean indicesUnclear = thisData.getIndicesUnclear() || otherData.getIndicesUnclear();
-					IAbstractValue<?> thisValue = thisData.getValue();
-					IAbstractValue<?> otherValue = otherData.getValue();
-					IAbstractValue<?> widenedValue = widenValues(thisValue, otherValue);
-					ArrayData resultData = new ArrayData(identifier);
-					resultData.setValue(widenedValue);
-					if (indicesUnclear)
-						resultData.setIndicesUnclear();
-					resultingArrays.put(identifier, resultData);
-				}
-			}
-
-			// add passed loop entry nodes : take stack from given (supposedly newer) state
-			resultCSE.getLoopStack().clear();
-			for (LoopStackElement e : otherCSE.getLoopStack())
-				resultCSE.getLoopStack().add(e.copy());
+			
+			widenLayers(thisCSE, otherCSE, resultCSE);
 		}
 
 		// add passed nodes of resultingState : take trace from given (supposedly newer) state
@@ -451,6 +414,110 @@ public class AbstractState {
 			resultingState.addPassedNode(node);
 		
 		return resultingState;
+	}
+	
+	/**
+	 * Widen this state's top layer (the current scope) with the given state's top layer
+	 * using the widening operator set in the preferences
+	 * @param state The state to widen with
+	 * @return A new state with widened top layer: (this state's top layer) wideningOp (the given state's top layer)
+	 * <br> All other layers remain as found in the given state
+	 */
+	public AbstractState widenRecursion(AbstractState state) {
+		if (state == null)
+			return copy();
+
+		AbstractState result = state.copy();
+		
+		CallStackElement thisCSE = getCurrentScope();
+		CallStackElement otherCSE = state.getCurrentScope();
+		CallStackElement resultCSE = result.getCurrentScope();
+		resultCSE.getArrays().clear();
+		resultCSE.getValues().clear();
+		
+		widenLayers(thisCSE, otherCSE, resultCSE);
+		
+		return result;
+	}
+	
+	/**
+	 * Widens values from left and right, storing the resulting values in result:
+	 * result-value = left-value widen right-value
+	 * @param left
+	 * @param right
+	 * @param result
+	 */
+	private void widenLayers(CallStackElement left, CallStackElement right, CallStackElement result) {
+		if (result == null)
+			return;
+		
+		Map<String, IAbstractValue<?>> leftValues = (left != null) ? left.getValues() : null;
+		Map<String, IAbstractValue<?>> rightValues = (right != null) ? right.getValues() : null;
+		Map<String, IAbstractValue<?>> resultValues = result.getValues();
+
+		Set<String> identifiers = new HashSet<String>();
+		if (leftValues != null)
+			identifiers.addAll(leftValues.keySet());
+		if (rightValues != null)
+			identifiers.addAll(rightValues.keySet());
+
+		// widen values: thisValue wideningOp otherValue
+		for (String identifier : identifiers) {
+			IAbstractValue<?> leftValue = (leftValues == null) ? null : leftValues.get(identifier);
+			IAbstractValue<?> rightValue = (rightValues == null) ? null : rightValues.get(identifier); 
+
+			IAbstractValue<?> resultValue = null;
+			if (leftValue == null) {
+				resultValue = rightValue.copy();
+				m_logger.warn(String.format("Widening encountered a missing value for %s in the old state.", identifier));
+			} else if (rightValue == null) {
+				m_logger.error(String.format("Widening failed with a missing value for %s in the new state.", identifier));
+			} else {
+				resultValue = widenValues(leftValue, rightValue);
+			}
+			if (resultValue != null)
+				resultValues.put(identifier, resultValue);
+		}
+
+		// merge array data
+		Map<String, ArrayData> leftArrays = (left != null) ? left.getArrays() : null;
+		Map<String, ArrayData> rightArrays = (right != null) ? right.getArrays() : null;
+		Map<String, ArrayData> resultArrays = result.getArrays();
+
+		identifiers.clear();
+		if (leftArrays != null)
+			identifiers.addAll(leftArrays.keySet());
+		if (rightArrays != null)
+			identifiers.addAll(rightArrays.keySet());
+
+		for (String identifier : identifiers) {
+			ArrayData leftData = leftArrays.get(identifier);
+			ArrayData rightData = rightArrays.get(identifier);
+			
+			if (leftData == null) {
+				ArrayData resultData = new ArrayData(identifier);
+				resultData.setValue(rightData.getValue());
+				if (rightData.getIndicesUnclear())
+					resultData.setIndicesUnclear();
+				resultArrays.put(identifier, resultData);
+				m_logger.warn(String.format("Widening encountered a missing value for %s in the old state.", identifier));
+			} else if (rightData == null) {
+				m_logger.error(String.format("Widening failed with a missing value for array %s in the new state.", identifier));
+			} else {
+				boolean indicesUnclear = leftData.getIndicesUnclear() || rightData.getIndicesUnclear();
+				IAbstractValue<?> widenedValue = widenValues(leftData.getValue(), rightData.getValue());
+				ArrayData resultData = new ArrayData(identifier);
+				resultData.setValue(widenedValue);
+				if (indicesUnclear)
+					resultData.setIndicesUnclear();
+				resultArrays.put(identifier, resultData);
+			}
+		}
+
+		// add passed loop entry nodes : take stack from given (supposedly newer) state
+		result.getLoopStack().clear();
+		for (LoopStackElement e : right.getLoopStack())
+			result.getLoopStack().add(e.copy());
 	}
 	
 	private IAbstractValue<?> widenValues(IAbstractValue<?> A, IAbstractValue<?> B) {
@@ -545,7 +612,23 @@ public class AbstractState {
 	}
 	
 	/**
-	 * Assigns the given value to the topmost occurance of the identifier in the stack.
+	 * @return Number of occurrences of the current method with the same call statement in the call stack
+	 */
+	public int getRecursionCount() {
+		int result = 0;
+		
+		CallStatement currentCall = getCurrentScope().getCallStatement();
+		
+		for (CallStackElement cse : m_callStack) {
+			if (cse.getCallStatement() == currentCall)
+				result++;
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * Assigns the given value to the topmost occurrence of the identifier in the stack.
 	 * @param identifier An existing identifier
 	 * @param value The new value
 	 * @return True iff a layer with the given identifier exists so the value could be written
