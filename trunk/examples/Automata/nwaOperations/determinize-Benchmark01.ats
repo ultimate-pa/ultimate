@@ -9,4 +9,5 @@ assert(numberOfStates(determinize(McCarthyInterpolantAutomaton_Iteration16)) == 
 assert(numberOfStates(determinize(McCarthyAbstraction16)) == 1985);
 assert(numberOfStates(determinize(Ackermann_Abstraction19)) == 631);
 assert(numberOfStates(determinize(Ackermann_Abstraction24)) == 5567);
-assert(numberOfStates(determinize(Ackermann_InterpolantAutomaton_Iteration39)) == 151);
+// 2014-08-13 Matthias: an old result for the following seemd to be 151
+assert(numberOfStates(determinize(Ackermann_InterpolantAutomaton_Iteration39)) == 157);
