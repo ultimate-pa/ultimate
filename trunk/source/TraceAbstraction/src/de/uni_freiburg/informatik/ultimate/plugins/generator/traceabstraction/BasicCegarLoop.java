@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -92,7 +93,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	protected final boolean m_ComputeHoareAnnotation;
 
-	protected final boolean m_AssertCodeBlocksIncrementally;
+	protected final AssertCodeBlockOrder m_AssertCodeBlocksIncrementally;
 
 	protected final IUltimateServiceProvider mServices;
 
@@ -111,7 +112,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_PredicateFactoryInterpolantAutomata = new PredicateFactory(super.m_SmtManager, m_Pref);
 
 		m_AssertCodeBlocksIncrementally = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID))
-				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_AssertCodeBlocksIncrementally);
+				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_AssertCodeBlocksIncrementally, AssertCodeBlockOrder.class);
 
 		m_PredicateFactoryResultChecking = new PredicateFactoryResultChecking(smtManager);
 		m_CegarLoopBenchmark = new CegarLoopBenchmarkGenerator();

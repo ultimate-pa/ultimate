@@ -33,8 +33,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<INTERPOLATION>(
 						LABEL_INTERPOLATED_LOCS, DEF_INTERPOLANTS,
 						PreferenceType.Combo, INTERPOLATION.values()),
-				new UltimatePreferenceItem<Boolean>(LABEL_AssertCodeBlocksIncrementally, 
-							false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<AssertCodeBlockOrder>(LABEL_AssertCodeBlocksIncrementally, 
+							AssertCodeBlockOrder.NOT_INCREMENTALLY, PreferenceType.Combo,
+							AssertCodeBlockOrder.values()),
 				new UltimatePreferenceItem<InterpolantAutomaton>(
 						LABEL_InterpolantAutomaton,
 						InterpolantAutomaton.CANONICAL, PreferenceType.Combo,
@@ -96,7 +97,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_Order = "Order in Petri net unfolding";
 	public static final String LABEL_cutOff = "cut-off requires same transition";
 	public static final String LABEL_unfolding2Net = "use unfolding as abstraction";
-	public static final String LABEL_AssertCodeBlocksIncrementally = "Assert CodeBlocks incrementally";
+	public static final String LABEL_AssertCodeBlocksIncrementally = "Assert CodeBlocks";
 
 	public static final String VALUE_ABSTRACTION = "Abstraction";
 	public static final String VALUE_RCFG = "RecursiveControlFlowGraph";
@@ -146,7 +147,17 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		Craig_NestedInterpolation, Craig_TreeInterpolation, ForwardPredicates, BackwardPredicates, FPandBP
 	}
 	
-	public enum Minimization { NONE, MINIMIZE_SEVPA, SHRINK_NWA }
+	public enum Minimization { 
+		NONE, MINIMIZE_SEVPA, SHRINK_NWA 
+	}
+	
+	public enum AssertCodeBlockOrder { 
+		NOT_INCREMENTALLY, OUTSIDE_LOOP_FIRST1, OUTSIDE_LOOP_FIRST2, OUTSIDE_LOOP_FIRST3 
+	}
+	
+	
+	
+	
 	
 
 }

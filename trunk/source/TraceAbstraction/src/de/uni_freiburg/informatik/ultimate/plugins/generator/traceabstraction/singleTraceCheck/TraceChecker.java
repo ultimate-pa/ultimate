@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.be
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
@@ -157,7 +158,7 @@ public class TraceChecker {
 
 	protected final TraceCheckerBenchmarkGenerator m_TraceCheckerBenchmarkGenerator;
 
-	private final boolean m_assertCodeBlocksIncrementally;
+	private final AssertCodeBlockOrder m_assertCodeBlocksIncrementally;
 
 	protected final IUltimateServiceProvider mServices;
 
@@ -177,7 +178,7 @@ public class TraceChecker {
 	 */
 	public TraceChecker(IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
-			ModifiableGlobalVariableManager modifiedGlobals, boolean assertCodeBlocksIncrementally,
+			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			IUltimateServiceProvider services) {
 		this(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, modifiedGlobals, false),
@@ -197,7 +198,7 @@ public class TraceChecker {
 	private TraceChecker(IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, DefaultTransFormulas defaultTransFormulas,
-			boolean assertCodeBlocksIncrementally, IUltimateServiceProvider services) {
+			AssertCodeBlockOrder assertCodeBlocksIncrementally, IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_SmtManager = smtManager;
@@ -256,9 +257,9 @@ public class TraceChecker {
 		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SsaConstruction);
 
 		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis);
-		if (m_assertCodeBlocksIncrementally) {
+		if (m_assertCodeBlocksIncrementally != AssertCodeBlockOrder.NOT_INCREMENTALLY) {
 			m_AAA = new AnnotateAndAsserterWithStmtOrderPrioritization(m_SmtManager, ssa,
-					getAnnotateAndAsserterCodeBlocks(ssa), m_TraceCheckerBenchmarkGenerator, mLogger);
+					getAnnotateAndAsserterCodeBlocks(ssa), m_TraceCheckerBenchmarkGenerator, m_assertCodeBlocksIncrementally, mLogger);
 		} else {
 			m_AAA = new AnnotateAndAsserter(m_SmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
 					m_TraceCheckerBenchmarkGenerator, mLogger);
@@ -305,7 +306,7 @@ public class TraceChecker {
 						m_PendingContexts, m_ModifiedGlobals, true);
 				TraceChecker tc = new TraceChecker(m_DefaultTransFormulas.getPrecondition(),
 						m_DefaultTransFormulas.getPostcondition(), m_PendingContexts,
-						m_DefaultTransFormulas.getTrace(), m_SmtManager, m_ModifiedGlobals, withBE, false, mServices);
+						m_DefaultTransFormulas.getTrace(), m_SmtManager, m_ModifiedGlobals, withBE, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
 				assert tc.isCorrect() == LBool.SAT;
 				tc.computeRcfgProgramExecution();
 				m_RcfgProgramExecution = tc.getRcfgProgramExecution();

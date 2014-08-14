@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
@@ -72,7 +73,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
-			ModifiableGlobalVariableManager modifiedGlobals, boolean assertCodeBlocksIncrementally,
+			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			IUltimateServiceProvider services) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
 				assertCodeBlocksIncrementally, services);
@@ -436,9 +437,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 				new TreeMap<Integer, IPredicate>(), rv.getTrace(), m_SmtManager, m_ModifiedGlobals,
 				/*
 				 * TODO : When Matthias introduced this parameter he set the
-				 * argument to false . Check if you want to set this to true .
+				 * argument to AssertCodeBlockOrder.NOT_INCREMENTALLY . Check if you want to set this to true .
 				 */
-				false, mServices);
+				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
 		tc.unlockSmtManager();
 		boolean result = (tc.isCorrect() == LBool.UNSAT);
 		return result;

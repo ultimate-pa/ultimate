@@ -4,7 +4,6 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.util.RelationWithTreeSet;
 
@@ -30,27 +30,32 @@ import de.uni_freiburg.informatik.ultimate.util.RelationWithTreeSet;
  */
 public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndAsserter {
 	
-//	TODO: Document heuristics
-	/**
-	 * 1. Heuristic:
-	 */
-	private static boolean m_Heuristic_1 = !true;
+////	TODO: Document heuristics
+//	/**
+//	 * 1. Heuristic:
+//	 */
+//	private static boolean m_Heuristic_1 = !true;
+//	
+//	/**
+//	 * 2. Heuristic: 
+//	 */
+//	private static boolean m_Heuristic_2 = !true;
+//
+//	/**
+//	 * 3. Heuristic: ..
+//	 */
+//	private static boolean m_Heuristic_3 = true;
 	
-	/**
-	 * 2. Heuristic: 
-	 */
-	private static boolean m_Heuristic_2 = !true;
-
-	/**
-	 * 3. Heuristic: ..
-	 */
-	private static boolean m_Heuristic_3 = true;
+	private final AssertCodeBlockOrder m_AssertCodeBlocksOrder;
 	
 	public AnnotateAndAsserterWithStmtOrderPrioritization(
 			SmtManager smtManager, NestedFormulas<Term, Term> nestedSSA,
 			AnnotateAndAssertCodeBlocks aaacb, 
-			TraceCheckerBenchmarkGenerator tcbg, Logger logger) {
+			TraceCheckerBenchmarkGenerator tcbg,
+			AssertCodeBlockOrder assertCodeBlocksOrder, 
+			Logger logger) {
 		super(smtManager, nestedSSA, aaacb, tcbg,logger);
+		m_AssertCodeBlocksOrder = assertCodeBlocksOrder;
 	}
 
 	/**
@@ -223,7 +228,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		// Report benchmark
 		m_Tcbg.reportnewCodeBlocks(m_Trace.length());
 		// Apply 1. heuristic
-		if (m_Heuristic_1) {
+		if (m_AssertCodeBlocksOrder == AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST1) {
 			// First, annotate and assert the statements, which doesn't occur within a loop
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(m_Trace, callPositions, pendingReturnPositions, stmtsOutsideOfLoop);
 
@@ -244,7 +249,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			}
 		} 
 		// Apply 2. heuristic
-		else if (m_Heuristic_2) {
+		else if (m_AssertCodeBlocksOrder == AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST2) {
 			m_Satisfiable = LBool.UNKNOWN;
 			Set<Integer> stmtsAlreadyAsserted = stmtsOutsideOfLoop;
 			
@@ -272,11 +277,13 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			}
 		} 
 		// Apply 3. heuristic
-		else if (m_Heuristic_3) {
+		else if (m_AssertCodeBlocksOrder == AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST3) {
 			TreeSet<Integer> loopProgramPoints = getPositionsOfLoopStatements(m_Trace, 0, m_Trace.length());
 			m_Satisfiable = annotateAndAssertStmtsAccording3Heuristic(m_Trace, integersFromTrace, loopProgramPoints,
 					callPositions,
 					pendingReturnPositions);
+		} else {
+			throw new AssertionError("unknown value " + m_AssertCodeBlocksOrder);
 		}
 		mLogger.info("Conjunction of SSA is " + m_Satisfiable);
 	}

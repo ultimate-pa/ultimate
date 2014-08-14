@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Pred
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
 public class BinaryStatePredicateManager {
@@ -371,10 +372,10 @@ public class BinaryStatePredicateManager {
 				m_SmtManager, modGlobVarManager, /*
 												 * TODO: When Matthias
 												 * introduced this parameter he
-												 * set the argument to false.
+												 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 												 * Check if you want to set this
-												 * to true.
-												 */false, mServices);
+												 * to a different value.
+												 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
 		LBool stemCheck = traceChecker.isCorrect();
 		if (stemCheck == LBool.UNSAT) {
 			traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
@@ -387,12 +388,12 @@ public class BinaryStatePredicateManager {
 		}
 		traceChecker = new TraceChecker(siPredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem,
 				m_SmtManager, modGlobVarManager, /*
-												 * TODO: When Matthias
-												 * introduced this parameter he
-												 * set the argument to false.
-												 * Check if you want to set this
-												 * to true.
-												 */false, mServices);
+				 * TODO: When Matthias
+				 * introduced this parameter he
+				 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
+				 * Check if you want to set this
+				 * to a different value.
+				 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
 		LBool loopCheck = traceChecker.isCorrect();
 		if (loopCheck == LBool.UNSAT) {
 			traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
@@ -410,9 +411,12 @@ public class BinaryStatePredicateManager {
 		TraceChecker traceChecker = new TraceChecker(m_RankEqualityAndSi, m_RankDecreaseAndBound,
 				new TreeMap<Integer, IPredicate>(), loop, m_SmtManager, modGlobVarManager,
 				/*
-				 * TODO : When Matthias introduced this parameter he set the
-				 * argument to false . Check if you want to set this to true .
-				 */false, mServices);
+				 * TODO: When Matthias
+				 * introduced this parameter he
+				 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
+				 * Check if you want to set this
+				 * to a different value.
+				 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
 		LBool loopCheck = traceChecker.isCorrect();
 		traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 		return (loopCheck == LBool.UNSAT);

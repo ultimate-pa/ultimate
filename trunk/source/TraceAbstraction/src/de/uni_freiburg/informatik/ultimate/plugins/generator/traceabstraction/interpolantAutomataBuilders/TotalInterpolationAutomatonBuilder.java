@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.be
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
@@ -256,9 +257,9 @@ public class TotalInterpolationAutomatonBuilder {
 		TraceChecker tc = new TraceChecker(precondition, postcondition, pendingContexts, run.getWord(), m_SmtManager,
 				m_ModifiedGlobals, /*
 									 * TODO: When Matthias introduced this
-									 * parameter he set the argument to false.
+									 * parameter he set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 									 * Check if you want to set this to true.
-									 */false, mServices);
+									 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
 		if (tc.isCorrect() == LBool.UNSAT) {
 			m_BenchmarkGenerator.incrementUsefullRunGeq2();
 			tc.computeInterpolants(new TraceChecker.AllIntegers(), m_PredicateUnifier, m_Interpolation);

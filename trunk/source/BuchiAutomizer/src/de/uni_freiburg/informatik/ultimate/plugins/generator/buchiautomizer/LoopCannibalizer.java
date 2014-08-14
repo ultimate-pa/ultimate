@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
@@ -114,10 +115,12 @@ public class LoopCannibalizer {
 			traceChecker = new TraceChecker(m_Bspm.getRankEqAndSi(), m_Bspm.getHondaPredicate(),
 					new TreeMap<Integer, IPredicate>(), shifted, m_SmtManager, m_buchiModGlobalVarManager,
 					/*
-					 * TODO : When Matthias introduced this parameter he set the
-					 * argument to false . Check if you want to set this to true
-					 * .
-					 */false, mServices);
+					 * TODO: When Matthias
+					 * introduced this parameter he
+					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
+					 * Check if you want to set this
+					 * to a different value.
+					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
@@ -125,10 +128,12 @@ public class LoopCannibalizer {
 			traceChecker = new TraceCheckerSpWp(m_Bspm.getRankEqAndSi(), m_Bspm.getHondaPredicate(),
 					new TreeMap<Integer, IPredicate>(), shifted, m_SmtManager, m_buchiModGlobalVarManager,
 					/*
-					 * TODO : When Matthias introduced this parameter he set the
-					 * argument to false . Check if you want to set this to true
-					 * .
-					 */false, mServices);
+					 * TODO: When Matthias
+					 * introduced this parameter he
+					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
+					 * Check if you want to set this
+					 * to a different value.
+					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

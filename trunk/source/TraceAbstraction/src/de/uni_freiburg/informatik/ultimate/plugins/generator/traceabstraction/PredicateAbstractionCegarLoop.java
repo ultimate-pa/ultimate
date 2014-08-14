@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
@@ -35,10 +36,10 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 						.getModGlobVarManager(), /*
 												 * TODO: When Matthias
 												 * introduced this parameter he
-												 * set the argument to false.
+												 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 												 * Check if you want to set this
 												 * to true.
-												 */false, mServices);
+												 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
 
 		LBool feasibility = m_TraceChecker.isCorrect();
 		if (feasibility != LBool.UNSAT) {

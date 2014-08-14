@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -313,9 +314,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 										.getRootAnnot().getModGlobVarManager(),
 								/*
 								 * TODO : When Matthias introduced this
-								 * parameter he set the argument to false .
-								 * Check if you want to set this to true .
-								 */false, mServices);
+								 * parameter he set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY .
+								 * Check if you want to set this to a different value.
+								 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
 						break;
 					case Z3SPWP:
 						traceChecker = new TraceCheckerSpWp(m_truePredicate,
@@ -336,10 +337,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								errorRun.getWord(), m_smtManager, m_originalRoot.getRootAnnot().getModGlobVarManager(),
 								/*
 								 * TODO : When Matthias introduced this
-								 * parameter he set the argument to false .
-								 * Check if you want to set this to true .
+								 * parameter he set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY .
+								 * Check if you want to set this to a different value.
 								 */
-								false, mServices);
+								AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
 						break;
 					}
 
