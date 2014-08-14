@@ -202,7 +202,11 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Iterable<STATE> succCall(STATE state, LETTER letter) {
-		return new FilteredIterable<STATE>(m_Nwa.succCall(state, letter), m_RemainingStates);
+		Set<STATE> result = new HashSet<STATE>();
+		for ( OutgoingCallTransition<LETTER, STATE> outTrans  : callSuccessors(state, letter)) {
+			result.add(outTrans.getSucc());
+		}
+		return result;
 	}
 
 	@Override
@@ -222,7 +226,11 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Iterable<STATE> predCall(STATE state, LETTER letter) {
-		return new FilteredIterable<STATE>(m_Nwa.predCall(state, letter), m_RemainingStates);
+		Set<STATE> result = new HashSet<STATE>();
+		for (IncomingCallTransition<LETTER, STATE> inTrans  : callPredecessors(letter, state)) {
+			result.add(inTrans.getPred());
+		}
+		return result;
 	}
 
 	@Override
@@ -277,24 +285,30 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	}
 
 	@Override
-	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(LETTER letter, STATE succ) {
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(LETTER letter, final STATE succ) {
 		SetSupportingOnlyContains<IncomingCallTransition<LETTER, STATE>> predicate = new SetSupportingOnlyContains<IncomingCallTransition<LETTER,STATE>>() {
 			@Override
 			public boolean contains(Object o) {
 				IncomingCallTransition<LETTER, STATE> trans = (IncomingCallTransition<LETTER, STATE>) o;
-				return m_RemainingStates.contains(trans.getPred());
+				// filter out also transitions that are not contained any more 
+				// because (succ, trans.getPred()) is not a DoubleDecker of the
+				// resulting automaton
+				return m_RemainingStates.contains(trans.getPred()) && isDoubleDecker(succ, trans.getPred());
 			}
 		};
 		return new FilteredIterable<IncomingCallTransition<LETTER, STATE>>(m_Nwa.callPredecessors(letter,succ), predicate);
 	}
 
 	@Override
-	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(STATE succ) {
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ) {
 		SetSupportingOnlyContains<IncomingCallTransition<LETTER, STATE>> predicate = new SetSupportingOnlyContains<IncomingCallTransition<LETTER,STATE>>() {
 			@Override
 			public boolean contains(Object o) {
 				IncomingCallTransition<LETTER, STATE> trans = (IncomingCallTransition<LETTER, STATE>) o;
-				return m_RemainingStates.contains(trans.getPred());
+				// filter out also transitions that are not contained any more 
+				// because (succ, trans.getPred()) is not a DoubleDecker of the
+				// resulting automaton
+				return m_RemainingStates.contains(trans.getPred()) && isDoubleDecker(succ, trans.getPred());
 			}
 		};
 		return new FilteredIterable<IncomingCallTransition<LETTER, STATE>>(m_Nwa.callPredecessors(succ), predicate);
@@ -325,24 +339,30 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	}
 
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(STATE state, LETTER letter) {
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, LETTER letter) {
 		SetSupportingOnlyContains<OutgoingCallTransition<LETTER, STATE>> predicate = new SetSupportingOnlyContains<OutgoingCallTransition<LETTER,STATE>>() {
 			@Override
 			public boolean contains(Object o) {
 				OutgoingCallTransition<LETTER, STATE> trans = (OutgoingCallTransition<LETTER, STATE>) o;
-				return m_RemainingStates.contains(trans.getSucc());
+				// filter out also transitions that are not contained any more 
+				// because (trans.getSucc(), state) is not a DoubleDecker of the
+				// resulting automaton
+				return m_RemainingStates.contains(trans.getSucc()) && isDoubleDecker(trans.getSucc(), state);
 			}
 		};
 		return new FilteredIterable<OutgoingCallTransition<LETTER, STATE>>(m_Nwa.callSuccessors(state,letter), predicate);
 	}
 
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(STATE state) {
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
 		SetSupportingOnlyContains<OutgoingCallTransition<LETTER, STATE>> predicate = new SetSupportingOnlyContains<OutgoingCallTransition<LETTER,STATE>>() {
 			@Override
 			public boolean contains(Object o) {
 				OutgoingCallTransition<LETTER, STATE> trans = (OutgoingCallTransition<LETTER, STATE>) o;
-				return m_RemainingStates.contains(trans.getSucc());
+				// filter out also transitions that are not contained any more 
+				// because (trans.getSucc(), state) is not a DoubleDecker of the
+				// resulting automaton
+				return m_RemainingStates.contains(trans.getSucc()) && isDoubleDecker(trans.getSucc(), state);
 			}
 		};
 		return new FilteredIterable<OutgoingCallTransition<LETTER, STATE>>(m_Nwa.callSuccessors(state), predicate);
