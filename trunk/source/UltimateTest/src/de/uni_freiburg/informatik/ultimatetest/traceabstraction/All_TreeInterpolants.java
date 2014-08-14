@@ -13,7 +13,13 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
  */
 public class All_TreeInterpolants extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String[] m_Directories = { "examples/programs" };
+	private static final String[] m_Directories = {
+		"examples/programs/regression",
+//		"examples/programs/quantifier",
+		"examples/programs/recursivePrograms",
+//		"examples/programs/toy"
+//		"examples/termination/AProVE"
+	};
 	
 	// Time out for each test case in milliseconds
 	private static int m_Timeout = 10000;
