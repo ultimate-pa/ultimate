@@ -37,8 +37,8 @@ public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation<LETTER,ST
 
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
-	INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
-	NestedLassoWord<LETTER> m_AcceptedWord;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
+	private final NestedLassoWord<LETTER> m_AcceptedWord;
 
 	public GetAcceptedLassoWord(INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
 		m_Operand = operand;

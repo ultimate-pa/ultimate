@@ -318,20 +318,61 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		public StatePair(STATE state, STATE callerState) {
 			this.state = state;
 			this.callerState = callerState;
-			m_hashCode = 3 * state.hashCode() + 5 * callerState.hashCode(); 
+			m_hashCode = computeHashCode();; 
 		}
 
-		public boolean equals(StatePair statePair) {
-			return state.equals(statePair.state) && 
-									callerState.equals(statePair.callerState);
+
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			@SuppressWarnings("unchecked")
+			StatePair other = (StatePair) obj;
+			if (!getOuterType().equals(other.getOuterType()))
+				return false;
+			if (callerState == null) {
+				if (other.callerState != null)
+					return false;
+			} else if (!callerState.equals(other.callerState))
+				return false;
+			if (state == null) {
+				if (other.state != null)
+					return false;
+			} else if (!state.equals(other.state))
+				return false;
+			return true;
 		}
 		
+		@Override
 		public int hashCode() {
 			return m_hashCode;
+		}
+
+
+
+		public int computeHashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + getOuterType().hashCode();
+			result = prime * result
+					+ ((callerState == null) ? 0 : callerState.hashCode());
+			result = prime * result + ((state == null) ? 0 : state.hashCode());
+			return result;
 		}
 		
 		public String toString() {
 			return "CallerState: " + callerState + "  State: "+ state;
+		}
+
+
+
+		private DeterminizeSadd getOuterType() {
+			return DeterminizeSadd.this;
 		}
 		
 	}
