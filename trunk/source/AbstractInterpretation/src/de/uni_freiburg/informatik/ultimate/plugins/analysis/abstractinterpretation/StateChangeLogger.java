@@ -140,17 +140,13 @@ public class StateChangeLogger implements IAbstractStateChangeListener {
 				}
 			}
 		}
-		output.append("\tTrace: Root");
-		List<RCFGNode> trace = state.getPassedNodes();
-		for (RCFGNode n : trace) {
-			output.append(" -> ");
-			if (n instanceof ProgramPoint) {
-				output.append(((ProgramPoint) n).getLocationName());
-			} else {
-				output.append(n.toString());
-			}
+		output.append("\tTrace:\n");
+		List<CodeBlock> trace = state.getTrace();
+		for (CodeBlock c : trace) {
+			output.append("\t\t");
+			output.append(c.getPrettyPrintedStatements());
+			output.append("\n");
 		}
-		output.append(String.format(" -> %s\n", targetName));
 	}
 
 }

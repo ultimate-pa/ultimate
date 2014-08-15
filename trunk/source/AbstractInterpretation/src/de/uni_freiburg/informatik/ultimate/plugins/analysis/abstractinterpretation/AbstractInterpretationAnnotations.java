@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.ArrayData;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.CallStackElement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * @author Christopher Dillo
@@ -75,11 +75,11 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 					String functionName = (csmt == null) ? "GLOBAL" : csmt.getMethodName();
 					callstackData.put(String.format("%s", functionName), scopeData);
 				}
-				List<RCFGNode> passedNodes = state.getPassedNodes();
+				List<CodeBlock> passedCodeBlocks = state.getTrace();
 				List<String> trace =
-						new ArrayList<String>(passedNodes.size());
-				for (RCFGNode node : passedNodes)
-					trace.add(node.toString());
+						new ArrayList<String>(passedCodeBlocks.size());
+				for (CodeBlock block : passedCodeBlocks)
+					trace.add(block.getPrettyPrintedStatements());
 				Map<String, Object> stateData = new HashMap<String, Object>();
 				stateData.put("Call stack", callstackData);
 				stateData.put("Trace", trace);

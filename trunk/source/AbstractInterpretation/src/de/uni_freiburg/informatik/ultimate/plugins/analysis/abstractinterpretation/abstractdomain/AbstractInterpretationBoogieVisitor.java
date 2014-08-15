@@ -244,9 +244,11 @@ public class AbstractInterpretationBoogieVisitor {
 					for (int i = 0; i < parameters.length; i++) {
 						String[] identifiers = parameters[i].getIdentifiers();
 						if (identifiers.length != 1) {
-							m_logger.warn(String.format("Invalid number method \"%s\" output parameter argument %d", methodName, i));
+							m_logger.warn(String.format("Invalid number of identifiers for method \"%s\" output parameter argument %d", methodName, i));
 						} else {
 							IAbstractValue<?> returnValue = m_currentState.readValue(identifiers[0], false);
+							if (returnValue == null)
+								returnValue = getTopValueForType(parameters[i].getType().getBoogieType());
 							evaluateLeftHandSide(leftHandSides[i]);
 							boolean writeSuccessful = m_resultingState.writeValue(m_lhsIdentifier, returnValue);
 							if (!writeSuccessful)
@@ -805,7 +807,7 @@ public class AbstractInterpretationBoogieVisitor {
 				return result;
 			}
 		} else {
-			m_logger.error(String.format("Type of identifier \"%s\" could not be determined.", identifier));
+			m_logger.error(String.format("Unknown type of identifier \"%s\"", identifier));
 		}
 		return null;
 	}

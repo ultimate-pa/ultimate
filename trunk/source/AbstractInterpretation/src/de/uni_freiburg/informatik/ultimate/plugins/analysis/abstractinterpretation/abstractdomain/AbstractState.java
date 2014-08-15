@@ -13,9 +13,9 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
 /**
  * An AbstractState represents an abstract program state, mapping variable
@@ -96,7 +96,7 @@ public class AbstractState {
 	/**
 	 * Sequence of nodes passed leading to this state -> "execution trace" 
 	 */
-	private final List<RCFGNode> m_passedNodes = new LinkedList<RCFGNode>();
+	private final List<CodeBlock> m_trace = new LinkedList<CodeBlock>();
 	
 	/**
 	 * True if the state at a node has been processed already (prevent processing the same state twice)
@@ -242,120 +242,117 @@ public class AbstractState {
 		}
 		
 		
-		result.m_passedNodes.addAll(m_passedNodes);
+		result.m_trace.addAll(m_trace);
 		
 		return result;
 	}
 	
 	/**
-	 * Merge this state with the given state using the merge operator set in the preferences
+	 * Merge this state with the given state using the merge operator set in the preferences.
+	 * Merges the global and current (matching) scope only, all other scope layers are copied
+	 * from the state with a longer trace
 	 * @param state The state to merge with
-	 * @return A new merged state
+	 * @return A new state with merged global and current layer:
+	 * (this state's global layer) mergeOp (the given state's global layer)
+	 * (this state's current layer) mergeOp (the given state's current layer)
+	 * <br> All other layers remain as found in the state with longer trace
 	 */
-	public AbstractState merge(AbstractState state) {		
+	public AbstractState merge(AbstractState state) {
 		if (state == null)
-			return null;
+			return copy();
 		
-		List<CallStackElement> otherValues = state.getCallStack();
+		boolean thisIsLonger = getTrace().size() > state.getTrace().size();
 
-		AbstractState resultingState = new AbstractState(m_logger, m_intFactory, m_realFactory, m_boolFactory,
-				m_bitVectorFactory, m_stringFactory);
-		List<CallStackElement> resultingValues = resultingState.getCallStack();
+		AbstractState shorter = thisIsLonger ? state : this;
+		AbstractState longer = thisIsLonger ? this : state;
+		AbstractState result = longer.copy();
 		
-		int maxLayerCount = Math.max(m_callStack.size(), otherValues.size());
+		mergeLayers(shorter.getGlobalScope(), longer.getGlobalScope(), result.getGlobalScope());
 		
-		// for each stack layer (scope level)
-		resultingState.m_callStack.clear();
-		for (int i = 0; i < maxLayerCount; i++) {
-			CallStackElement thisCSE = (i < m_callStack.size()) ? m_callStack.get(i) : null;
-			CallStackElement otherCSE = (i < otherValues.size()) ? otherValues.get(i) : null;
-			
-			CallStackElement useCSE = thisCSE == null ? otherCSE : thisCSE;
-			CallStackElement resultCSE = new CallStackElement(useCSE.getCallStatement(), useCSE.getOldValues());
-			resultingValues.add(resultCSE);
-			
-			// merge values
-			Map<String, IAbstractValue<?>> thisLayer = (thisCSE != null) ? thisCSE.getValues() : null;
-			Map<String, IAbstractValue<?>> otherLayer = (otherCSE != null) ? otherCSE.getValues() : null;
-			Map<String, IAbstractValue<?>> resultingLayer = resultCSE.getValues();
+		if (longer.getStackSize() > 1) {
+			// if data for a non-global scope exists
+			mergeLayers(shorter.getCurrentScope(), longer.getCurrentScope(), result.getCurrentScope());
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * Merges values from left and right, storing the resulting values in result:
+	 * result-value = left-value merge right-value
+	 * left and right need to belong to the same method call (or be both global)
+	 * @param left
+	 * @param right
+	 * @param result Existing data (values, arrays, loop stack) will be cleared & replaced
+	 */
+	private void mergeLayers(CallStackElement left, CallStackElement right, CallStackElement result) {
+		if ((left == null) || (right == null) || (result == null))
+			return;
+		
+		// clear possibly existing data
+		result.getArrays().clear();
+		result.getValues().clear();
+		
+		Map<String, IAbstractValue<?>> leftValues = left.getValues();
+		Map<String, IAbstractValue<?>> rightValues = right.getValues();
+		Map<String, IAbstractValue<?>> resultValues = result.getValues();
 
-			Set<String> identifiers = new HashSet<String>();
-			if (thisLayer != null)
-				identifiers.addAll(thisLayer.keySet());
-			if (otherLayer != null)
-				identifiers.addAll(otherLayer.keySet());
+		Set<String> identifiers = new HashSet<String>();
+		identifiers.addAll(leftValues.keySet());
+		identifiers.addAll(rightValues.keySet());
 
-			// merge values (or take the single value if only one is present)
-			for (String identifier : identifiers) {
-				IAbstractValue<?> thisValue = (thisLayer == null) ? null : thisLayer.get(identifier);
-				IAbstractValue<?> otherValue = (otherLayer == null) ? null : otherLayer.get(identifier); 
+		// widen values: thisValue wideningOp otherValue
+		for (String identifier : identifiers) {
+			IAbstractValue<?> leftValue = leftValues.get(identifier);
+			IAbstractValue<?> rightValue = rightValues.get(identifier); 
 
-				IAbstractValue<?> resultingValue;
-				if (thisValue == null) {
-					resultingValue = otherValue.copy();
-				} else if (otherValue == null) {
-					resultingValue = thisValue.copy();
-				} else {
-					resultingValue = mergeValues(thisValue, otherValue);
-				}
-				if (resultingValue != null)
-					resultingLayer.put(identifier, resultingValue);
-			}
-
-			// merge array data
-			Map<String, ArrayData> thisArrays = (thisCSE != null) ? thisCSE.getArrays() : null;
-			Map<String, ArrayData> otherArrays = (otherCSE != null) ? otherCSE.getArrays() : null;
-			Map<String, ArrayData> resultingArrays = resultCSE.getArrays();
-
-			identifiers.clear();
-			if (thisArrays != null)
-				identifiers.addAll(thisArrays.keySet());
-			if (otherArrays != null)
-				identifiers.addAll(otherArrays.keySet());
-
-			for (String identifier : identifiers) {
-				ArrayData thisData = thisArrays.get(identifier);
-				ArrayData otherData = otherArrays.get(identifier);
-
-				boolean indicesUnclear;
-				IAbstractValue<?> mergedValue;
-				
-				if (thisData == null) {
-					indicesUnclear = otherData.getIndicesUnclear();
-					mergedValue = otherData.getValue();
-				} else if (otherData == null) {
-					indicesUnclear = thisData.getIndicesUnclear();
-					mergedValue = thisData.getValue();
-				} else {
-					indicesUnclear = thisData.getIndicesUnclear() || otherData.getIndicesUnclear();
-					IAbstractValue<?> thisValue = thisData.getValue();
-					IAbstractValue<?> otherValue = otherData.getValue();
-					mergedValue = mergeValues(thisValue, otherValue);
-				}
-				
-				ArrayData resultData = new ArrayData(identifier);
-				resultData.setValue(mergedValue);
-				if (indicesUnclear)
-					resultData.setIndicesUnclear();
-				resultingArrays.put(identifier, resultData);
-			}
-			
-			// add passed loop entry nodes : take larger stack
-			resultCSE.getLoopStack().clear();
-			if (thisCSE == null) {
-				resultCSE.getLoopStack().addAll(otherCSE.getLoopStack());
-			} else if (otherCSE == null) {
-				resultCSE.getLoopStack().addAll(thisCSE.getLoopStack());
+			IAbstractValue<?> resultValue = null;
+			if (leftValue == null) {
+				resultValue = rightValue.copy();
+			} else if (rightValue == null) {
+				resultValue = leftValue.copy();
 			} else {
-				resultCSE.getLoopStack().addAll(((thisCSE.getLoopStack().size() >= otherCSE.getLoopStack().size())
-								? thisCSE : otherCSE).getLoopStack());
+				resultValue = widenValues(leftValue, rightValue);
 			}
+			if (resultValue != null)
+				resultValues.put(identifier, resultValue);
 		}
 
-		// add passed nodes of resultingState : take longer trace
-		resultingState.m_passedNodes.addAll((m_passedNodes.size() >= state.m_passedNodes.size()) ? m_passedNodes : state.m_passedNodes);
-		
-		return resultingState;
+		// merge array data
+		Map<String, ArrayData> leftArrays = left.getArrays();
+		Map<String, ArrayData> rightArrays = right.getArrays();
+		Map<String, ArrayData> resultArrays = result.getArrays();
+
+		identifiers.clear();
+		identifiers.addAll(leftArrays.keySet());
+		identifiers.addAll(rightArrays.keySet());
+
+		for (String identifier : identifiers) {
+			ArrayData leftData = leftArrays.get(identifier);
+			ArrayData rightData = rightArrays.get(identifier);
+			
+			boolean indicesUnclear;
+			IAbstractValue<?> mergedValue;
+			
+			if (leftData == null) {
+				indicesUnclear = rightData.getIndicesUnclear();
+				mergedValue = rightData.getValue();
+			} else if (rightData == null) {
+				indicesUnclear = leftData.getIndicesUnclear();
+				mergedValue = leftData.getValue();
+			} else {
+				indicesUnclear = leftData.getIndicesUnclear() || rightData.getIndicesUnclear();
+				IAbstractValue<?> thisValue = leftData.getValue();
+				IAbstractValue<?> otherValue = rightData.getValue();
+				mergedValue = mergeValues(thisValue, otherValue);
+			}
+			
+			ArrayData resultData = new ArrayData(identifier);
+			resultData.setValue(mergedValue);
+			if (indicesUnclear)
+				resultData.setIndicesUnclear();
+			resultArrays.put(identifier, resultData);
+		}
 	}
 	
 	private IAbstractValue<?> mergeValues(IAbstractValue<?> A, IAbstractValue<?> B) {
@@ -380,62 +377,27 @@ public class AbstractState {
 	}
 	
 	/**
-	 * Widen this state with the given state using the widening operator set in the preferences
+	 * Widen this state with the given state using the widening operator set in the preferences.
+	 * Widens the global and current (matching) scope only, all other scope layers are copied
+	 * from the given state
 	 * @param state The state to widen with
-	 * @return A new widened state: (this state) wideningOp (the given state)
-	 */
-	public AbstractState widen(AbstractState state) {
-		if (state == null)
-			return this.copy();
-		
-		List<CallStackElement> otherValues = state.getCallStack();
-
-		AbstractState resultingState = new AbstractState(m_logger, m_intFactory, m_realFactory, m_boolFactory,
-				m_bitVectorFactory, m_stringFactory);
-		List<CallStackElement> resultingValues = resultingState.getCallStack();
-		
-		int maxLayerCount = Math.max(m_callStack.size(), otherValues.size());
-		
-		// for each stack layer (scope level)
-		resultingState.m_callStack.clear();
-		for (int i = 0; i < maxLayerCount; i++) {
-			CallStackElement thisCSE = (i < m_callStack.size()) ? m_callStack.get(i) : null;
-			CallStackElement otherCSE = (i < otherValues.size()) ? otherValues.get(i) : null;
-
-			CallStackElement useCSE = thisCSE == null ? otherCSE : thisCSE;
-			CallStackElement resultCSE = new CallStackElement(useCSE.getCallStatement(), useCSE.getOldValues());
-			resultingValues.add(resultCSE);
-			
-			widenLayers(thisCSE, otherCSE, resultCSE);
-		}
-
-		// add passed nodes of resultingState : take trace from given (supposedly newer) state
-		for (RCFGNode node : state.m_passedNodes)
-			resultingState.addPassedNode(node);
-		
-		return resultingState;
-	}
-	
-	/**
-	 * Widen this state's top layer (the current scope) with the given state's top layer
-	 * using the widening operator set in the preferences
-	 * @param state The state to widen with
-	 * @return A new state with widened top layer: (this state's top layer) wideningOp (the given state's top layer)
+	 * @return A new state with widened global and current layer:
+	 * (this state's global layer) wideningOp (the given state's global layer)
+	 * (this state's current layer) wideningOp (the given state's current layer)
 	 * <br> All other layers remain as found in the given state
 	 */
-	public AbstractState widenRecursion(AbstractState state) {
+	public AbstractState widen(AbstractState state) {
 		if (state == null)
 			return copy();
 
 		AbstractState result = state.copy();
 		
-		CallStackElement thisCSE = getCurrentScope();
-		CallStackElement otherCSE = state.getCurrentScope();
-		CallStackElement resultCSE = result.getCurrentScope();
-		resultCSE.getArrays().clear();
-		resultCSE.getValues().clear();
+		widenLayers(getGlobalScope(), state.getGlobalScope(), result.getGlobalScope());
 		
-		widenLayers(thisCSE, otherCSE, resultCSE);
+		if (state.getStackSize() > 1) {
+			// if data for a non-global scope exists
+			widenLayers(getCurrentScope(), state.getCurrentScope(), result.getCurrentScope());
+		}
 		
 		return result;
 	}
@@ -443,28 +405,31 @@ public class AbstractState {
 	/**
 	 * Widens values from left and right, storing the resulting values in result:
 	 * result-value = left-value widen right-value
+	 * left and right need to belong to the same method call (or be both global)
 	 * @param left
 	 * @param right
-	 * @param result
+	 * @param result Existing data (values, arrays, loop stack) will be cleared & replaced
 	 */
 	private void widenLayers(CallStackElement left, CallStackElement right, CallStackElement result) {
-		if (result == null)
+		if ((left == null) || (right == null) || (result == null))
 			return;
 		
-		Map<String, IAbstractValue<?>> leftValues = (left != null) ? left.getValues() : null;
-		Map<String, IAbstractValue<?>> rightValues = (right != null) ? right.getValues() : null;
+		// clear possibly existing data
+		result.getArrays().clear();
+		result.getValues().clear();
+		
+		Map<String, IAbstractValue<?>> leftValues = left.getValues();
+		Map<String, IAbstractValue<?>> rightValues = right.getValues();
 		Map<String, IAbstractValue<?>> resultValues = result.getValues();
 
 		Set<String> identifiers = new HashSet<String>();
-		if (leftValues != null)
-			identifiers.addAll(leftValues.keySet());
-		if (rightValues != null)
-			identifiers.addAll(rightValues.keySet());
+		identifiers.addAll(leftValues.keySet());
+		identifiers.addAll(rightValues.keySet());
 
 		// widen values: thisValue wideningOp otherValue
 		for (String identifier : identifiers) {
-			IAbstractValue<?> leftValue = (leftValues == null) ? null : leftValues.get(identifier);
-			IAbstractValue<?> rightValue = (rightValues == null) ? null : rightValues.get(identifier); 
+			IAbstractValue<?> leftValue = leftValues.get(identifier);
+			IAbstractValue<?> rightValue = rightValues.get(identifier); 
 
 			IAbstractValue<?> resultValue = null;
 			if (leftValue == null) {
@@ -480,15 +445,13 @@ public class AbstractState {
 		}
 
 		// merge array data
-		Map<String, ArrayData> leftArrays = (left != null) ? left.getArrays() : null;
-		Map<String, ArrayData> rightArrays = (right != null) ? right.getArrays() : null;
+		Map<String, ArrayData> leftArrays = left.getArrays();
+		Map<String, ArrayData> rightArrays = right.getArrays();
 		Map<String, ArrayData> resultArrays = result.getArrays();
 
 		identifiers.clear();
-		if (leftArrays != null)
-			identifiers.addAll(leftArrays.keySet());
-		if (rightArrays != null)
-			identifiers.addAll(rightArrays.keySet());
+		identifiers.addAll(leftArrays.keySet());
+		identifiers.addAll(rightArrays.keySet());
 
 		for (String identifier : identifiers) {
 			ArrayData leftData = leftArrays.get(identifier);
@@ -513,11 +476,6 @@ public class AbstractState {
 				resultArrays.put(identifier, resultData);
 			}
 		}
-
-		// add passed loop entry nodes : take stack from given (supposedly newer) state
-		result.getLoopStack().clear();
-		for (LoopStackElement e : right.getLoopStack())
-			result.getLoopStack().add(e.copy());
 	}
 	
 	private IAbstractValue<?> widenValues(IAbstractValue<?> A, IAbstractValue<?> B) {
@@ -732,19 +690,21 @@ public class AbstractState {
 	}
 	
 	/**
-	 * Add a node to the list of passed nodes for trace reconstruction
-	 * @param node A node to add
-	 * @return True if the node was successfully added
+	 * Add a block to the list of passed CodeBlocks for trace reconstruction
+	 * @param CodeBlock A block to add
+	 * @return True if the block was successfully added
 	 */
-	public boolean addPassedNode(RCFGNode node) {
-		return m_passedNodes.add(node);
+	public boolean addCodeBlockToTrace(CodeBlock block) {
+		if (block == null)
+			return false;
+		return m_trace.add(block);
 	}
 	
 	/**
-	 * @return A list of nodes passed during creating this state
+	 * @return A list of codeblocks passed during creating this state
 	 */
-	public List<RCFGNode> getPassedNodes() {
-		return m_passedNodes;
+	public List<CodeBlock> getTrace() {
+		return m_trace;
 	}
 	
 	/**
@@ -753,11 +713,11 @@ public class AbstractState {
 	 * given state in the same order, plus at least one more node
 	 */
 	public boolean isSuccessor(AbstractState predecessor) {
-		if (m_passedNodes.size() <= predecessor.m_passedNodes.size())
+		if (m_trace.size() <= predecessor.m_trace.size())
 			return false;
 		
-		for (int i = 0; i < predecessor.m_passedNodes.size(); i++) {
-			if (!m_passedNodes.get(i).equals(predecessor.m_passedNodes.get(i)))
+		for (int i = 0; i < predecessor.m_trace.size(); i++) {
+			if (!m_trace.get(i).equals(predecessor.m_trace.get(i)))
 				return false;
 		}
 		

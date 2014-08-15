@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractInterpretationBoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
@@ -35,12 +36,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.topbottomdomain.TopBottomDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.preferences.AbstractInterpretationPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.LoopDetector;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
@@ -51,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 
 /**
  * @author Christopher Dillo
@@ -132,7 +135,8 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	private String m_stringWideningOpName;
 	private String m_stringMergeOpName;
 	
-	
+	// ULTIMATE.start
+	private final String m_ultimateStartProcName = "ULTIMATE.start";
 
 	public AbstractInterpreter(IUltimateServiceProvider services) {
 		m_services = services;
@@ -209,7 +213,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 					}
 					// widen at new recursive call if possible
 					if (applyRecursionWidening) {
-						newState = s.widenRecursion(newState);
+						newState = s.widen(newState);
 						m_logger.debug(String.format("Widening after recursion at %s", pp));
 					}
 
@@ -319,8 +323,13 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		Map<String, ProgramPoint> entryNodes = ra.getEntryNodes();
 		ProgramPoint mainEntry = entryNodes.get(m_mainMethodName);
 
+		// check for ULTIMATE.start and recursive methods
 		for (String s : entryNodes.keySet()) {
 			ProgramPoint entryNode = entryNodes.get(s);
+			// check for ULTIMATE.start
+			if (entryNode.getProcedure().startsWith(m_ultimateStartProcName))
+				mainEntry = entryNode;
+			// check for recursive methods
 			Collection<ProgramPoint> methodNodes = ra.getProgramPoints().get(s).values();
 			for (RCFGEdge e : entryNode.getIncomingEdges()) {
 				if (methodNodes.contains(e.getSource())) {
@@ -343,7 +352,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 							m_realDomainFactory, m_boolDomainFactory,
 							m_bitVectorDomainFactory, m_stringDomainFactory);
 					if (mainEntry != null) {
-						CallStatement mainProcMockStatement = new CallStatement(null, false, null, m_mainMethodName, null);
+						CallStatement mainProcMockStatement = new CallStatement(null, false, null, mainEntry.getProcedure(), null);
 						state.pushStackLayer(mainProcMockStatement); // layer for main method
 					}
 					putStateToNode(state, target, e);
@@ -418,7 +427,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				m_resultingState.pushLoopEntry((ProgramPoint) m_currentNode, exitEdge);
 		}
 
-		m_resultingState.addPassedNode(m_currentNode);
+		m_resultingState.addCodeBlockToTrace((CodeBlock) e);
 
 		RCFGNode targetNode = e.getTarget();
 		if (targetNode != null) {
@@ -601,19 +610,21 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 	/**
 	 * Reports a possible error as the plugin's result
-	 * 
-	 * @param location
-	 *            The error location
-	 * @param state
-	 *            The abstract state at the error location
+	 * @param location The error location
+	 * @param state The abstract state at the error location
 	 */
 	private void reportErrorResult(ProgramPoint location, AbstractState state) {
-		m_services.getResultService().reportResult(
-				Activator.s_PLUGIN_ID,
-				new GenericResult(Activator.s_PLUGIN_ID, "Possible error",
-						String.format("Some program specifications may be violated. "
-								+ "Error location %s has been reached in the over-approximation.",
-								location.getLocationName()), Severity.ERROR));
+		RcfgProgramExecution programExecution = new RcfgProgramExecution(state.getTrace(),
+				new HashMap<Integer, ProgramState<Expression>>(),
+				null);
+		
+		UnprovableResult<RcfgElement, RcfgElement, Expression> result =
+				new UnprovableResult<RcfgElement, RcfgElement, Expression>(Activator.s_PLUGIN_ID,
+						location,
+						m_services.getBacktranslationService().getTranslatorSequence(),
+						programExecution);
+		
+		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
 		
 		if (m_stopAfterAnyError) {
 			continueProcessing = false;
