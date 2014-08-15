@@ -1215,19 +1215,15 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		public boolean isDownState(STATE up, STATE down) {
 			StateContainer<LETTER, STATE> cont = m_States.get(up);
 			assert (cont.getReachProp() == m_rpAllDown || cont.getReachProp() == m_rpSomeDown);
-			return cont.getDownStates().containsKey(down);
-//			if (cont.getReachProp() == ReachProp.NODEADEND_AD) {
-//				assert (cont.getDownStates().containsKey(down));
-//				return true;
-//			} else {
-//				assert cont.getReachProp() == m_rpSomeDown;
-//				ReachProp reach = cont.getDownStates().get(up);
-//				if (reach == m_rpSomeDown) {
-//					return true;
-//				} else {
-//					return false;
-//				}
-//			}
+//			return cont.getDownStates().containsKey(down);
+			if (cont.getReachProp() == m_rpAllDown) {
+				assert (cont.getDownStates().containsKey(down));
+				return true;
+			} else {
+				assert cont.getReachProp() == m_rpSomeDown;
+				boolean hasDownProp = cont.hasDownProp(down, m_DownStateProp);
+				return hasDownProp;
+			}
 		}
 		
 
@@ -1240,21 +1236,20 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		 * resulting automaton.
 		 */
 		public Set<STATE> getDownStates(STATE state) {
-			Set<STATE> downStates;
 			StateContainer<LETTER, STATE> cont = m_States.get(state);
-//			if (cont.getReachProp() == ReachProp.NODEADEND_AD) {
+//			return cont.getDownStates().keySet();
+			Set<STATE> downStates;
+			if (cont.getReachProp() == m_rpAllDown) {
 				downStates = cont.getDownStates().keySet();
-//			} else {
-//				assert cont.getReachProp() == ReachProp.NODEADEND_SD;
-//				downStates = new HashSet<STATE>();
-//				for (Entry<STATE, ReachProp> down : cont.getDownStates().entrySet()) {
-//					if (down.getValue() == ReachProp.NODEADEND_SD) {
-//						downStates.add(down.getKey());
-//					} else {
-//						assert down.getValue() == ReachProp.REACHABLE;
-//					}
-//				}
-//			}
+			} else {
+				assert cont.getReachProp() == m_rpSomeDown;
+				downStates = new HashSet<STATE>();
+				for (STATE down : cont.getDownStates().keySet()) {
+					if (cont.hasDownProp(down, m_DownStateProp)) {
+						downStates.add(down);
+					} 
+				}
+			}
 //			for(Entry<LETTER,STATE> entry : m_States.get(up).getCommonEntriesComponent().getEntries()) {
 //				STATE entryState = entry.getState();
 //				for (IncomingCallTransition<LETTER, STATE> trans : callPredecessors(entryState)) {
