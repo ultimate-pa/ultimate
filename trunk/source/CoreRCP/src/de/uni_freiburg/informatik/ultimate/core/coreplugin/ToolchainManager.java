@@ -122,18 +122,18 @@ public class ToolchainManager {
 
 		private final long mId;
 		private final IModelManager mModelManager;
-		private final ToolchainWalker mToolchainWalker;
 		private final Benchmark mBenchmark;
 
 		private ToolchainData mToolchainData;
 		private ISource mParser;
 		private File mInputFiles;
-
+		private ToolchainWalker mToolchainWalker;
+		
 		private Toolchain(long id, IModelManager modelManager) {
 			mId = id;
 			mModelManager = modelManager;
 			mBenchmark = new Benchmark();
-			mToolchainWalker = new ToolchainWalker(mBenchmark, mModelManager, mPluginFactory, mLogger);
+			
 		}
 
 		/*************************** IToolchain Implementation ****************************/
@@ -143,6 +143,7 @@ public class ToolchainManager {
 			if (mToolchainData == null) {
 				return;
 			}
+			mToolchainWalker = new ToolchainWalker(mBenchmark, mModelManager, mPluginFactory, mLogger);
 
 			mToolchainData.getStorage().clear();
 
