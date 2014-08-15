@@ -1215,14 +1215,17 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		public boolean isDownState(STATE up, STATE down) {
 			StateContainer<LETTER, STATE> cont = m_States.get(up);
 			assert (cont.getReachProp() == m_rpAllDown || cont.getReachProp() == m_rpSomeDown);
-//			return cont.getDownStates().containsKey(down);
-			if (cont.getReachProp() == m_rpAllDown) {
-				assert (cont.getDownStates().containsKey(down));
-				return true;
+			if (cont.getDownStates().containsKey(down)) {
+				if (cont.getReachProp() == m_rpAllDown) {
+					assert (cont.getDownStates().containsKey(down));
+					return true;
+				} else {
+					assert cont.getReachProp() == m_rpSomeDown;
+					boolean hasDownProp = cont.hasDownProp(down, m_DownStateProp);
+					return hasDownProp;
+				}
 			} else {
-				assert cont.getReachProp() == m_rpSomeDown;
-				boolean hasDownProp = cont.hasDownProp(down, m_DownStateProp);
-				return hasDownProp;
+				return false;
 			}
 		}
 		
