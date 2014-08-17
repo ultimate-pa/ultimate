@@ -640,14 +640,12 @@ public class CfgBuilder {
 							+ " transition as successor of " + mother);
 					for (RCFGEdge grandchild : child.getOutgoingEdges()) {
 						ProgramPoint target = (ProgramPoint) grandchild.getTarget();
-						CodeBlock edge = ((CodeBlock) grandchild).getCopy(null, target);
+						CodeBlock edge = ((CodeBlock) grandchild).getCopy(mother, target);
 						if (edge instanceof GotoEdge) {
 							m_GotoEdges.add((GotoEdge) edge);
 						} else {
 							m_Edges.add(edge);
 						}
-						mother.addOutgoing(edge);
-						edge.setSource(mother);
 					}
 				}
 			}
