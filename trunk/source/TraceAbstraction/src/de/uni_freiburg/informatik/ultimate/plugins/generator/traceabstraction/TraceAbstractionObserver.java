@@ -245,6 +245,8 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	}
 
 	private void reportCounterexampleResult(RcfgProgramExecution pe) {
+//		String ppls = ResultUtil.getPrettyprintedLocationSequence(pe);
+//		mLogger.info(ppls);
 		ProgramPoint errorPP = getErrorPP(pe);
 		List<ILocation> failurePath = pe.getLocationList();
 		ILocation origin = errorPP.getPayload().getLocation().getOrigin();
@@ -260,7 +262,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		BoogieProgramExecution bpe = (BoogieProgramExecution) backtrans.translateProgramExecution(pe);
 		CounterExampleResult<RcfgElement, Expression> ctxRes = new CounterExampleResult<RcfgElement, Expression>(
 				errorPP, Activator.s_PLUGIN_NAME, translatorSequence, pe,
-				CounterExampleResult.getLocationSequence(bpe), bpe.getValuation());
+				CounterExampleResult.getLocationSequence(bpe), bpe.getValuation(translatorSequence));
 		ctxRes.setLongDescription(bpe.toString());
 		reportResult(ctxRes);
 		// s_Logger.warn(ctxMessage);

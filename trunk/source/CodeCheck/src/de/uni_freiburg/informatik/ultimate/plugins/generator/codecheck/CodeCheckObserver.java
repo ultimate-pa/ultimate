@@ -528,7 +528,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		BoogieProgramExecution bpe = (BoogieProgramExecution) backtrans.translateProgramExecution(pe);
 		CounterExampleResult<RcfgElement, Expression> ctxRes = new CounterExampleResult<RcfgElement, Expression>(
 				errorPP, Activator.s_PLUGIN_NAME, translatorSequence, pe,
-				CounterExampleResult.getLocationSequence(bpe), bpe.getValuation());
+				CounterExampleResult.getLocationSequence(bpe), bpe.getValuation(translatorSequence));
 		ctxRes.setLongDescription(bpe.toString());
 		reportResult(ctxRes);
 		// s_Logger.warn(ctxMessage);

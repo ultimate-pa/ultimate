@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -15,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IValuation;
+import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 
 public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, Expression> {
 
@@ -97,7 +99,7 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 		return sb.toString();
 	}
 
-	public IValuation getValuation() {
+	public IValuation getValuation(final List<ITranslator<?, ?, ?, ?>> translatorSequence) {
 		return new IValuation() {
 			@Override
 			public Map<String, SimpleEntry<IType, List<String>>> getValuesForFailurePathIndex(int index) {
@@ -116,7 +118,7 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 			public Map<String, SimpleEntry<IType, List<String>>> translateProgramState(ProgramState<Expression> ps) {
 				Map<String, SimpleEntry<IType, List<String>>> result = new HashMap<String, SimpleEntry<IType, List<String>>>();
 				for (Expression var : ps.getVariables()) {
-					String varString = BoogieStatementPrettyPrinter.print(var);
+					String varString = ResultUtil.backtranslationWorkaround(translatorSequence, var);
 					List<String> valuesString = exprSet2StringList(ps.getValues(var));
 					result.put(varString, new SimpleEntry<IType, List<String>>(var.getType(), valuesString));
 				}
@@ -126,47 +128,10 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 			private List<String> exprSet2StringList(Collection<Expression> expressions) {
 				List<String> result = new ArrayList<String>(expressions.size());
 				for (Expression expr : expressions) {
-					result.add(BoogieStatementPrettyPrinter.print(expr));
+					result.add(ResultUtil.backtranslationWorkaround(translatorSequence, expr));
 				}
 				return result;
 			}
 		};
 	}
-
-	public class IValuationWrapper implements IValuation {
-
-		@Override
-		public Map<String, SimpleEntry<IType, List<String>>> getValuesForFailurePathIndex(int index) {
-			ProgramState<Expression> ps = getProgramState(index);
-			if (ps == null) {
-				return getEmtpyProgramState();
-			} else {
-				return translateProgramState(ps);
-			}
-		}
-
-		public Map<String, SimpleEntry<IType, List<String>>> getEmtpyProgramState() {
-			return Collections.emptyMap();
-		}
-
-		public Map<String, SimpleEntry<IType, List<String>>> translateProgramState(ProgramState<Expression> ps) {
-			Map<String, SimpleEntry<IType, List<String>>> result = new HashMap<String, SimpleEntry<IType, List<String>>>();
-			for (Expression var : ps.getVariables()) {
-				String varString = BoogieStatementPrettyPrinter.print(var);
-				List<String> valuesString = exprSet2StringList(ps.getValues(var));
-				result.put(varString, new SimpleEntry<IType, List<String>>(var.getType(), valuesString));
-			}
-			return result;
-		}
-
-		private List<String> exprSet2StringList(Collection<Expression> expressions) {
-			List<String> result = new ArrayList<String>(expressions.size());
-			for (Expression expr : expressions) {
-				result.add(BoogieStatementPrettyPrinter.print(expr));
-			}
-			return result;
-		}
-
-	}
-
 }
