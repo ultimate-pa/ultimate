@@ -6,10 +6,6 @@ import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphE
 public abstract class RCFGEdge extends
 		ModifiableMultigraphEdge<RCFGNode, RCFGEdge> implements RcfgElement {
 
-	protected RCFGEdge(RCFGNode source, RCFGNode target) {
-		this(source, target, null);
-	}
-
 	protected RCFGEdge(RCFGNode source, RCFGNode target, IPayload payload) {
 		super(source, target, payload);
 	}

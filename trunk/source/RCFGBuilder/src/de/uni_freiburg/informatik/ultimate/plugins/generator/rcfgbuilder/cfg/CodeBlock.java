@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.model.Payload;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
@@ -67,7 +68,8 @@ public abstract class CodeBlock extends RCFGEdge {
 	private static final int MAX_NAME_LENGTH = 20;
 
 	public CodeBlock(ProgramPoint source, ProgramPoint target, Logger logger) {
-		super(source, target);
+		super(source, target, new Payload(source.getPayload().getLocation(), 
+				"Matthias does not know what he should use here as a name"));
 		mLogger = logger;
 		m_Annotation = new RCFGEdgeAnnotation(this) {
 
