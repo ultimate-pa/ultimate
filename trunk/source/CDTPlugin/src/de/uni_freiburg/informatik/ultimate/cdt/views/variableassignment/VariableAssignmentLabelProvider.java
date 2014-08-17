@@ -7,6 +7,8 @@ import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.swt.graphics.Image;
 
 import de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCChecker;
+import de.uni_freiburg.informatik.ultimate.core.services.IStorable;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.IdentifierMapping;
 
 /**
@@ -79,24 +81,23 @@ public class VariableAssignmentLabelProvider implements ITableLabelProvider {
 	 */
 	@Override
 	public String getColumnText(Object element, int columnIndex) {
-
-		Map<String, String> nameMapping = ((IdentifierMapping<String, String>) UltimateCChecker
-				.getStorage().getStorable(IdentifierMapping.getStorageKey())).getMap();
-
-		switch (columnIndex) {
-		case 0:
-			if (element instanceof VarAssNode) {
-				VarAssNode node = (VarAssNode) element;
-				if (nameMapping.containsKey(node.getName())) {
-					return nameMapping.get(node.getName());
-				}
-				return ((VarAssNode) element).getName();
+		/* The variable assignment view has two columns.
+		 * The first column shows the variable name.
+		 * The second column shows the value that is assigned to this variable.
+		 */
+		if (element instanceof VarAssNode) {
+			VarAssNode node = (VarAssNode) element;
+			switch (columnIndex) {
+			case 0:
+				return node.getName();
+			case 1:
+				return node.getValue();
+			default:
+				throw new AssertionError("variable assignment view has only two columns");	
 			}
-		case 1:
-			if (element instanceof VarAssNode)
-				return ((VarAssNode) element).getValue();
+		} else {
+			throw new AssertionError("variable assignment view needs VarAssNode");
 		}
-		return null;
 	}
 
 }
