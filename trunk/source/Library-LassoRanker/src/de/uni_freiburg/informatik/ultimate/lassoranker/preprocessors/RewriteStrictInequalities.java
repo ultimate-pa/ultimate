@@ -28,56 +28,55 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 
 /**
  * Replace strict inequalities that compare terms of sort int by equivalent
  * non-strict inequalities. E.g., the term <i>x > 0</i> is replaced by the term
- * <i> x >= 1</i>. 
- * @author Matthias Heizmann
+ * <i>x >= 1</i>.
+ * 
+ * @author Matthias Heizmann, Jan Leike
  */
-public class RewriteStrictInequalities implements PreProcessor {
-	private Script m_Script;
-
-	/**
-	 * Use assert statement to check if result is equivalent to the input.
-	 */
-	private static final boolean s_CheckResult = true;
-	
+public class RewriteStrictInequalities extends TransformerPreProcessor {
 	@Override
 	public String getDescription() {
 		return "Replace strict inequalities by non-strict inequalities";
 	}
 	
 	@Override
-	public Term process(Script script, Term term) {
-		assert m_Script == null;
-		m_Script = script;
-		Term result = (new RewriteStrictInequalitiesHelper()).transform(term);
-		assert !s_CheckResult || !isIncorrect(term, result);
-		return result;
+	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
+			TransFormulaLR newTF) {
+		Term old_term = oldTF.getFormula();
+		Term new_term = newTF.getFormula();
+		return LBool.SAT != Util.checkSat(script,
+				script.term("distinct", old_term, new_term));
 	}
 	
-	/**
-	 * Return true if we were able to prove that the result is incorrect.
-	 */
-	private boolean isIncorrect(Term input, Term result) {
-		return (Util.checkSat(m_Script, m_Script.term("distinct", 
-				input, result)) == LBool.SAT);
+	@Override
+	protected TermTransformer getTransformer(Script script) {
+		return new RewriteStrictInequalitiesTransformer(script);
 	}
-
+	
 	/**
 	 * Replace strict inequalities that compare terms of sort Int by equivalent
 	 * non-strict inequalities.
 	 *
 	 */
-	private class RewriteStrictInequalitiesHelper extends TermTransformer {
+	private class RewriteStrictInequalitiesTransformer extends TermTransformer {
+		
+		private final Script m_Script;
+		
+		RewriteStrictInequalitiesTransformer(Script script) {
+			assert script != null;
+			m_Script = script;
+		}
 		
 		@Override
 		protected void convert(Term term) {
@@ -108,7 +107,7 @@ public class RewriteStrictInequalities implements PreProcessor {
 		private Term computeCorrespondingInequality(ApplicationTerm appTerm) {
 			String functionSymbolName = appTerm.getFunction().getName();
 			if (appTerm.getParameters().length != 2) {
-				throw new AssertionError("expected binay terms");
+				throw new AssertionError("expected binary terms");
 			}
 			if (!appTerm.getParameters()[0].getSort().getName().equals("Int")) {
 				return null;

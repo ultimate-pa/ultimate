@@ -294,14 +294,14 @@ public class SmtUtils {
 		return false;
 	}
 	
-	
-	public static void isArrayFree(Term term) {
-		assert !containsArrayVariables(term);
+	public static boolean isArrayFree(Term term) {
+		boolean result = !containsArrayVariables(term);
 		Set<ApplicationTerm> selectTerms = 
 				(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
-		assert selectTerms.isEmpty();
+		result = result && selectTerms.isEmpty();
 		Set<ApplicationTerm> storeTerms = 
 				(new ApplicationTermFinder("store", true)).findMatchingSubterms(term);
-		assert storeTerms.isEmpty();
+		result = result && storeTerms.isEmpty();
+		return result;
 	}
 }

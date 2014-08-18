@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArrays;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.VarCollector;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -31,7 +31,7 @@ public class IndexAnalyzer {
 	private final Term m_Term;
 	private final Script m_Script;
 	private final Boogie2SMT m_boogie2smt;
-	private final VarCollector m_VarCollector;
+	private final TransFormulaLR m_TransFormula;
 	private final Collection<Term> m_SupportingInvariants;
 	private final ArrayList<Object> m_AdditionalEqualities;
 	private final ArrayList<Object> m_AdditionalNotequals;
@@ -47,17 +47,17 @@ public class IndexAnalyzer {
 	public IndexAnalyzer(Term term, HashRelation<TermVariable, 
 			List<Term>> array2Indices, 
 			boolean searchAdditionalSupportingInvariants, 
-			Boogie2SMT boogie2smt, VarCollector varCollector, 
+			Boogie2SMT boogie2smt, TransFormulaLR tf, 
 			TransFormula originalStem, TransFormula originalLoop) {
 		super();
-		if (!searchAdditionalSupportingInvariants && (originalStem != null || originalLoop != null)) {
-			throw new AssertionError("specified originalStem or originalLoop but I will not search for additionalSupportingInvariants");
-		}
+//		if (!searchAdditionalSupportingInvariants && (originalStem != null || originalLoop != null)) {
+//			throw new AssertionError("specified originalStem or originalLoop but I will not search for additionalSupportingInvariants");
+//		}
 		m_Term = term;
 		m_SearchAdditionalSupportingInvariants = searchAdditionalSupportingInvariants;
 		m_boogie2smt = boogie2smt;
 		m_Script = boogie2smt.getScript();
-		m_VarCollector = varCollector;
+		m_TransFormula = tf;
 		m_SupportingInvariants = new ArrayList<>();
 		m_AdditionalEqualities = new ArrayList<>();
 		m_AdditionalNotequals = new ArrayList<>();
@@ -191,10 +191,10 @@ public class IndexAnalyzer {
 		Term oneElement = inVarDoubleton.getOneElement();
 		Term otherElement = inVarDoubleton.getOtherElement();
 		Term[] translatedOne = RewriteArrays.translateTermVariablesToDefinitions(
-				m_Script, m_VarCollector, oneElement);
+				m_Script, m_TransFormula, oneElement);
 		assert translatedOne.length == 1;
 		Term[] translatedOther = RewriteArrays.translateTermVariablesToDefinitions(
-				m_Script, m_VarCollector, otherElement);
+				m_Script, m_TransFormula, otherElement);
 		assert translatedOther.length == 1;
 		return new Doubleton<Term>(translatedOne[0], translatedOther[0]);
 		
@@ -213,7 +213,8 @@ public class IndexAnalyzer {
 	private void markForComparison(Term term1, Term term2) {
 		Doubleton<Term> Doubleton = new Doubleton<Term>(term1, term2);
 		allDoubletons.addDoubleton(Doubleton);
-		if (RewriteArrays.allVariablesAreInVars(term1, m_VarCollector) && RewriteArrays.allVariablesAreInVars(term2, m_VarCollector)) {
+		if (RewriteArrays.allVariablesAreInVars(term1, m_TransFormula)
+				&& RewriteArrays.allVariablesAreInVars(term2, m_TransFormula)) {
 			inVarDoubletons.addDoubleton(Doubleton);
 		}
 	}

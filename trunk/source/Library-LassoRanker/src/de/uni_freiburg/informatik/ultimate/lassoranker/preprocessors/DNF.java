@@ -28,38 +28,51 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 
+
 /**
- * Convert a formula into disjunctive normal form, i.e., a formula of the form
+ * Convert a formula into disjunctive normal form, i.e., a formula of the
+ * form
  * 
- * <pre>
- * OR ( AND ( NOT? inequality ) )
- * </pre>
+ * <pre>OR ( AND ( NOT? inequality ) )</pre>
  * 
  * This includes a negation normal form (negations only occur before atoms).
  * 
  * @author Jan Leike
  */
-public class DNF implements PreProcessor {
+public class DNF extends PreProcessor {
 	private final IUltimateServiceProvider mServices;
-
+	
 	public DNF(IUltimateServiceProvider services) {
 		super();
 		mServices = services;
 	}
-
+	
 	@Override
 	public String getDescription() {
-		return "Transform the given term into disjunctive normal form.";
+		return "Transform into disjunctive normal form";
 	}
-
+	
 	@Override
-	public Term process(Script script, Term term) throws TermException {
-		// Use the DNF transformer from RCFGBuilder
-		Dnf dnf_transformer = new Dnf(script, mServices);
-		return dnf_transformer.transform(term);
+	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
+			TransFormulaLR newTF) {
+		Term old_term = oldTF.getFormula();
+		Term new_term = newTF.getFormula();
+		return LBool.SAT != Util.checkSat(script,
+				script.term("distinct", old_term, new_term));
+	}
+	
+	@Override
+	protected TransFormulaLR processTransition(Script script, TransFormulaLR tf,
+			boolean stem) throws TermException {
+		Dnf dnf = new Dnf(script, mServices);
+		tf.setFormula(dnf.transform(tf.getFormula()));
+		return tf;
 	}
 }

@@ -26,10 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
 
 /**
@@ -42,44 +45,60 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
  * 
  * @author Jan Leike
  */
-public class RemoveNegation extends TermTransformer implements PreProcessor {
-	private Script m_script;
-	
+public class RemoveNegation extends TransformerPreProcessor {
 	@Override
 	public String getDescription() {
-		return "Removes negation before atoms.";
-	}
-
-	@Override
-	public Term process(Script script, Term term) {
-		m_script = script;
-		return transform(term);
+		return "Remove negation before atoms";
 	}
 	
 	@Override
-	protected void convert(Term term) {
-		assert(m_script != null);
-		if (term instanceof ApplicationTerm) {
-			ApplicationTerm appt = (ApplicationTerm) term;
-			if (appt.getFunction().getName().equals("not")) {
-				assert(appt.getParameters().length == 1);
-				Term param = appt.getParameters()[0];
-				assert(param instanceof ApplicationTerm);
-				ApplicationTerm appt2 = (ApplicationTerm)param;
-				if (appt2.getFunction().getName().equals("<=")) {
-					setResult(m_script.term(">", appt2.getParameters()));
-				} else if (appt2.getFunction().getName().equals("<")) {
-					setResult(m_script.term(">=", appt2.getParameters()));
-				} else if (appt2.getFunction().getName().equals(">=")) {
-					setResult(m_script.term("<", appt2.getParameters()));
-				} else if (appt2.getFunction().getName().equals(">")) {
-					setResult(m_script.term("<=", appt2.getParameters()));
-				} else {
-					assert(false);
-				}
-				return;
-			}
+	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
+			TransFormulaLR newTF) {
+		Term old_term = oldTF.getFormula();
+		Term new_term = newTF.getFormula();
+		return LBool.SAT != Util.checkSat(script,
+				script.term("distinct", old_term, new_term));
+	}
+	
+	@Override
+	protected TermTransformer getTransformer(Script script) {
+		return new RemoveNegationTransformer(script);
+	}
+	
+	private class RemoveNegationTransformer extends TermTransformer {
+		
+		private final Script m_Script;
+		
+		RemoveNegationTransformer(Script script) {
+			super();
+			assert script != null;
+			m_Script = script;
 		}
-		super.convert(term);
+		
+		@Override
+		protected void convert(Term term) {
+			if (term instanceof ApplicationTerm) {
+				ApplicationTerm appt = (ApplicationTerm) term;
+				if (appt.getFunction().getName().equals("not")) {
+					assert(appt.getParameters().length == 1);
+					Term param = appt.getParameters()[0];
+					assert(param instanceof ApplicationTerm);
+					ApplicationTerm appt2 = (ApplicationTerm)param;
+					if (appt2.getFunction().getName().equals("<=")) {
+						setResult(m_Script.term(">", appt2.getParameters()));
+					} else if (appt2.getFunction().getName().equals("<")) {
+						setResult(m_Script.term(">=", appt2.getParameters()));
+					} else if (appt2.getFunction().getName().equals(">=")) {
+						setResult(m_Script.term("<", appt2.getParameters()));
+					} else if (appt2.getFunction().getName().equals(">")) {
+						setResult(m_Script.term("<=", appt2.getParameters()));
+					} else {
+						assert(false);
+					}
+					return;
+				}
+			}
+			super.convert(term);
+		}
 	}
 }

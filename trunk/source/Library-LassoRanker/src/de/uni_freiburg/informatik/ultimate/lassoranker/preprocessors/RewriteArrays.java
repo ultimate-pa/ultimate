@@ -41,13 +41,14 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
+import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.IndexAnalyzer;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.SingleUpdateNormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.IndexAnalyzer.Equality;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.SingleUpdateNormalFormTransformer;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoBuilder;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.VarCollector;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.VarFactory;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -56,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
@@ -78,7 +78,7 @@ import de.uni_freiburg.informatik.ultimate.util.UnionFind;
  * 
  * @author Matthias Heizmann
  */
-public class RewriteArrays implements PreProcessor {
+public class RewriteArrays extends PreProcessor {
 
 	private final Logger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -91,7 +91,6 @@ public class RewriteArrays implements PreProcessor {
 	 * The script used to transform the formula
 	 */
 	private Script m_Script;
-	private Boogie2SMT m_boogie2SMT;
 
 	/**
 	 * Collection of all generated replacement variables and the terms that they
@@ -104,12 +103,7 @@ public class RewriteArrays implements PreProcessor {
 	 * These terms will be set in conjunction with the whole formula.
 	 */
 	private final Collection<Term> m_repTerms;
-
-	/**
-	 * For generating replacement variables
-	 */
-	private final VarCollector m_VarCollector;
-
+	
 	/**
 	 * Use assert statement to check if result is equivalent to the conjunction
 	 * of input term and definition of replacement variables.
@@ -121,10 +115,10 @@ public class RewriteArrays implements PreProcessor {
 	 * in the result term.
 	 */
 	private static final boolean s_CheckResultWithQuantifiers = false;
-
+	
 	private HashRelation<TermVariable, List<Term>> m_Array2Indices;
-	List<ArrayUpdate>[] m_ArrayUpdates;
-	List<MultiDimensionalSelect>[] m_ArrayReads;
+	List<List<ArrayUpdate>> m_ArrayUpdates;
+	List<List<MultiDimensionalSelect>> m_ArrayReads;
 	/**
 	 * Array reads that are added while constructing additional in/out vars.
 	 */
@@ -132,7 +126,7 @@ public class RewriteArrays implements PreProcessor {
 	ArrayGenealogy[] m_ArrayGenealogy;
 	private Map<TermVariable, Map<List<Term>, TermVariable>> m_ArrayInstance2Index2CellVariable;
 	private Term[] sunnf;
-	private List<ArrayEquality>[] m_ArrayEqualities;
+	private List<List<ArrayEquality>> m_ArrayEqualities;
 	private SafeSubstitution m_Select2CellVariable[];
 
 	// private SetOfDoubletons<Term> m_EqualDoubletons;
@@ -140,7 +134,7 @@ public class RewriteArrays implements PreProcessor {
 	// private SetOfDoubletons<Term> m_UnknownDoubletons;
 	private IndexAnalyzer m_IndexAnalyzer;
 
-	private final boolean m_SearchAdditionalSupportingInvariants;
+//	private final boolean m_SearchAdditionalSupportingInvariants;
 	private final TransFormula m_OriginalStem;
 	private final TransFormula m_OriginalLoop;
 
@@ -149,64 +143,71 @@ public class RewriteArrays implements PreProcessor {
 
 	private final boolean m_OverapproximateByOmmitingDisjointIndices;
 
-	public RewriteArrays(VarCollector rankVarCollector, boolean searchAdditionalSupportingInvariants,
-			TransFormula originalStem, TransFormula originalLoop, Boogie2SMT boogie2smt,
-			Set<Term> arrayIndexsupportingInvariants, boolean overapproximateByOmmitingDisjointIndices,
+	public RewriteArrays(Set<Term> arrayIndexsupportingInvariants,
+			boolean overapproximateByOmmitingDisjointIndices,
+			TransFormula originalStem, TransFormula originalLoop,
 			IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		m_VarCollector = rankVarCollector;
 		m_repVars = new LinkedHashMap<TermVariable, Term>();
 		m_repTerms = new ArrayList<Term>();
-		m_SearchAdditionalSupportingInvariants = searchAdditionalSupportingInvariants;
 		m_OriginalStem = originalStem;
 		m_OriginalLoop = originalLoop;
-		m_boogie2SMT = boogie2smt;
 		m_ArrayIndexSupportingInvariants = arrayIndexsupportingInvariants;
 		m_OverapproximateByOmmitingDisjointIndices = overapproximateByOmmitingDisjointIndices;
 	}
 
 	@Override
 	public String getDescription() {
-		return "Removes arrays by introducing new variables for each " + "relevant array cell";
+		return "Removes arrays by introducing new variables for each "
+				+ "relevant array cell";
 	}
 
 	@Override
-	public Term process(Script script, Term term) {
+	public void process(LassoBuilder lassoBuilder) throws TermException {
+		m_Script = lassoBuilder.getScript();
+		super.process(lassoBuilder);
+	}
+	
+	@Override
+	protected TransFormulaLR processTransition(Script script, TransFormulaLR tf,
+			boolean stem) {
+		Term term = tf.getFormula();
 		if (!SmtUtils.containsArrayVariables(term)) {
-			return term;
+			return tf;
 		}
-		m_Script = script;
+		// Create a new TransFormula by copying the old one
+		TransFormulaLR new_tf = new TransFormulaLR(tf);
+		
 		term = SmtUtils.simplify(m_Script, term, mLogger);
 		Term dnf = (new Dnf(script, mServices)).transform(term);
 		dnf = SmtUtils.simplify(m_Script, dnf, mLogger);
 		Term[] disjuncts = SmtUtils.getDisjuncts(dnf);
 		sunnf = new Term[disjuncts.length];
-		m_ArrayUpdates = new List[disjuncts.length];
-		m_ArrayReads = new List[disjuncts.length];
-		m_ArrayEqualities = new List[disjuncts.length];
+		m_ArrayUpdates = new ArrayList<List<ArrayUpdate>>(disjuncts.length);
+		m_ArrayReads = new ArrayList<List<MultiDimensionalSelect>>(disjuncts.length);
+		m_ArrayEqualities = new ArrayList<List<ArrayEquality>>(disjuncts.length);
 		m_ArrayGenealogy = new ArrayGenealogy[disjuncts.length];
 		for (int i = 0; i < disjuncts.length; i++) {
 			Term[] conjuncts = SmtUtils.getConjuncts(disjuncts[i]);
 			ArrayEqualityExtractor aee = new ArrayEqualityExtractor(conjuncts);
-			m_ArrayEqualities[i] = aee.getArrayEqualities();
+			m_ArrayEqualities.add(aee.getArrayEqualities());
 			SingleUpdateNormalFormTransformer sunnft = new SingleUpdateNormalFormTransformer(Util.and(m_Script, aee
-					.getRemainingTerms().toArray(new Term[0])), m_Script, m_VarCollector.getFactory());
-			m_ArrayUpdates[i] = sunnft.getArrayUpdates();
+					.getRemainingTerms().toArray(new Term[0])), m_Script, m_lassoBuilder);
+			m_ArrayUpdates.add(sunnft.getArrayUpdates());
 			sunnf[i] = sunnft.getRemainderTerm();
-			m_ArrayReads[i] = extractArrayReads(sunnft.getArrayUpdates(), sunnft.getRemainderTerm());
-			m_ArrayGenealogy[i] = new ArrayGenealogy(m_ArrayEqualities[i], m_ArrayUpdates[i], m_ArrayReads[i]);
+			m_ArrayReads.add(extractArrayReads(sunnft.getArrayUpdates(), sunnft.getRemainderTerm()));
+			m_ArrayGenealogy[i] = new ArrayGenealogy(new_tf, m_ArrayEqualities.get(i), m_ArrayUpdates.get(i), m_ArrayReads.get(i));
 		}
 
-		new IndexCollector();
-		m_IndexAnalyzer = new IndexAnalyzer(term, m_Array2Indices, m_SearchAdditionalSupportingInvariants,
-				m_boogie2SMT, m_VarCollector, m_OriginalStem, m_OriginalLoop);
+		new IndexCollector(tf);
+		m_IndexAnalyzer = new IndexAnalyzer(term, m_Array2Indices, stem, m_lassoBuilder.getBoogie2SMT(), tf, m_OriginalStem, m_OriginalLoop);
 		m_ArrayIndexSupportingInvariants.addAll(m_IndexAnalyzer.getSupportingInvariants());
-		CellVariableBuilder cvb = new CellVariableBuilder();
+		CellVariableBuilder cvb = new CellVariableBuilder(new_tf);
 		m_ArrayInstance2Index2CellVariable = cvb.getArrayInstance2Index2CellVariable();
 		m_EquivalentCells = new EquivalentCells[disjuncts.length];
 		for (int i = 0; i < disjuncts.length; i++) {
-			m_EquivalentCells[i] = computeEquivalentCells(m_ArrayEqualities[i], m_ArrayUpdates[i]);
+			m_EquivalentCells[i] = computeEquivalentCells(new_tf, m_ArrayEqualities.get(i), m_ArrayUpdates.get(i));
 		}
 
 		m_Select2CellVariable = new SafeSubstitution[disjuncts.length];
@@ -226,7 +227,7 @@ public class RewriteArrays implements PreProcessor {
 
 		Term[] arrayUpdateConstraints = new Term[sunnf.length];
 		for (int i = 0; i < disjuncts.length; i++) {
-			arrayUpdateConstraints[i] = buildArrayUpdateConstraints(m_ArrayUpdates[i], m_Select2CellVariable[i],
+			arrayUpdateConstraints[i] = buildArrayUpdateConstraints(m_ArrayUpdates.get(i), m_Select2CellVariable[i],
 					m_EquivalentCells[i]);
 		}
 		Term[] disjunctsWithUpdateConstraints = new Term[sunnf.length];
@@ -248,27 +249,22 @@ public class RewriteArrays implements PreProcessor {
 		}
 		Term resultDisjuntion = Util.or(m_Script, disjunctsWithUpdateConstraints);
 
-		Term result = PartialQuantifierElimination.elim(m_Script, QuantifiedFormula.EXISTS, cvb.getAuxVars(),
-				resultDisjuntion, mServices, mLogger);
-
-		m_VarCollector.addAuxVars(cvb.getAuxVars());
-
-		// assert !s_CheckResult || !isIncorrect(term, result, repTerm)
-		// : "rewrite division unsound";
-		// assert !s_CheckResultWithQuantifiers
-		// || !isIncorrectWithQuantifiers(term, result, repTerm)
-		// : "rewrite division unsound";
-		SmtUtils.isArrayFree(result);
+		Term result = PartialQuantifierElimination.elim(m_Script, QuantifiedFormula.EXISTS, cvb.getAuxVars(), resultDisjuntion, mServices, mLogger);
+		
+		assert SmtUtils.isArrayFree(result);
 		result = SmtUtils.simplify(m_Script, result, mLogger);
-		return result;
+		
+		new_tf.setFormula(result);
+		new_tf.addAuxVars(cvb.getAuxVars());
+		return new_tf;
 	}
 
-	private EquivalentCells computeEquivalentCells(List<ArrayEquality> arrayEqualities, List<ArrayUpdate> arrayUpdates) {
+	private EquivalentCells computeEquivalentCells(TransFormulaLR tf, List<ArrayEquality> arrayEqualities, List<ArrayUpdate> arrayUpdates) {
 		UnionFind<TermVariable> uf = new UnionFind<TermVariable>();
 		addArrayIndexConstraints(uf);
 		addArrayEqualityConstraints(uf, arrayEqualities);
 		addArrayUpdateConstraints(uf, arrayUpdates);
-		return new EquivalentCells(uf);
+		return new EquivalentCells(uf, tf);
 	}
 
 	private void addArrayUpdateConstraints(UnionFind<TermVariable> uf, List<ArrayUpdate> arrayUpdates) {
@@ -355,6 +351,17 @@ public class RewriteArrays implements PreProcessor {
 		return result;
 	}
 
+//	@Override
+//	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
+//			TransFormulaLR newTF) {
+//		Term old_term = oldTF.getFormula();
+//		Term new_term = newTF.getFormula();
+//		boolean check1 = !s_CheckResult || !isIncorrect(old_term, new_term);
+//		boolean check2 = !s_CheckResultWithQuantifiers
+//				|| !isIncorrectWithQuantifiers(script, old_term, new_term);
+//		return check1 && check2;
+//	}
+	
 	/**
 	 * Return true if we were able to prove that the result is incorrect. For
 	 * this check we add to the input term the definition of the replacement
@@ -433,17 +440,20 @@ public class RewriteArrays implements PreProcessor {
 
 		List<ArrayGeneration> m_ArrayGenerations = new ArrayList<>();
 
+		private final TransFormulaLR m_TransFormula;
+		
 		private ArrayGeneration getOrConstructArrayGeneration(TermVariable array) {
 			ArrayGeneration ag = m_Array2Generation.get(array);
 			if (ag == null) {
-				ag = new ArrayGeneration(array);
+				ag = new ArrayGeneration(m_TransFormula, array);
 				m_ArrayGenerations.add(ag);
 			}
 			return ag;
 		}
 
-		ArrayGenealogy(List<ArrayEquality> arrayEqualities, List<ArrayUpdate> arrayUpdates,
+		ArrayGenealogy(TransFormulaLR tf, List<ArrayEquality> arrayEqualities, List<ArrayUpdate> arrayUpdates,
 				List<MultiDimensionalSelect> arrayReads) {
+			m_TransFormula = tf;
 			UnionFind<TermVariable> uf = new UnionFind<>();
 			for (ArrayEquality ae : arrayEqualities) {
 				TermVariable lhs = ae.getLhs();
@@ -506,7 +516,7 @@ public class RewriteArrays implements PreProcessor {
 				ArrayGeneration fg = m_Generation2OriginalGeneration.get(ag);
 				assert fg != null : "no original generation!";
 				TermVariable representative = fg.getRepresentative();
-				if (isInvar(representative, m_VarCollector)) {
+				if (isInvar(representative, m_TransFormula)) {
 					m_Instance2Representative.put(array, representative);
 				} else {
 					throw new AssertionError("no invar");
@@ -556,9 +566,11 @@ public class RewriteArrays implements PreProcessor {
 		public class ArrayGeneration {
 			private final Set<TermVariable> m_Arrays = new HashSet<>();
 			private TermVariable m_Representative;
+			private final TransFormulaLR m_TransFormula;
 
-			public ArrayGeneration(TermVariable array) {
-				add(array);
+			public ArrayGeneration(TransFormulaLR tf, TermVariable array) {
+				m_TransFormula = tf;
+				this.add(array);
 			}
 
 			public TermVariable getRepresentative() {
@@ -570,7 +582,7 @@ public class RewriteArrays implements PreProcessor {
 
 			private void determineRepresentative() {
 				for (TermVariable array : m_Arrays) {
-					if (isInvar(array, m_VarCollector)) {
+					if (isInvar(array, m_TransFormula)) {
 						m_Representative = array;
 						return;
 					}
@@ -596,20 +608,21 @@ public class RewriteArrays implements PreProcessor {
 	}
 
 	private class IndexCollector {
-
+		private final TransFormulaLR m_TransFormula;
 		SafeSubstitution m_InVars2OutVars;
 		SafeSubstitution m_OutVars2InVars;
 
-		public IndexCollector() {
+		public IndexCollector(TransFormulaLR tf) {
+			m_TransFormula = tf;
 			constructSubstitutions();
 			m_Array2Indices = new HashRelation<TermVariable, List<Term>>();
 			for (int i = 0; i < sunnf.length; i++) {
-				for (ArrayUpdate au : m_ArrayUpdates[i]) {
+				for (ArrayUpdate au : m_ArrayUpdates.get(i)) {
 					TermVariable firstGeneration = m_ArrayGenealogy[i].getProgenitor(au.getOldArray());
 					Term[] index = au.getIndex();
 					addFirstGenerationIndexPair(firstGeneration, index);
 				}
-				for (MultiDimensionalSelect ar : m_ArrayReads[i]) {
+				for (MultiDimensionalSelect ar : m_ArrayReads.get(i)) {
 					TermVariable firstGeneration = m_ArrayGenealogy[i].getProgenitor((TermVariable) ar.getArray());
 					Term[] index = ar.getIndex();
 					m_Array2Indices.addPair(firstGeneration, Arrays.asList(index));
@@ -621,12 +634,12 @@ public class RewriteArrays implements PreProcessor {
 			m_Array2Indices.addPair(firstGeneration, Arrays.asList(index));
 			// TODO: optimization the following is only necessary if the first
 			// generation is no auxiliary variable.
-			if (allVariablesAreInVars(Arrays.asList(index), m_VarCollector)) {
+			if (allVariablesAreInVars(Arrays.asList(index), m_TransFormula)) {
 				Term[] inReplacedByOut = SmtUtils.substitutionElementwise(index, m_InVars2OutVars);
 				m_Array2Indices.addPair(firstGeneration, Arrays.asList(inReplacedByOut));
 				m_AdditionalArrayReads.addAll(extractArrayReads(inReplacedByOut));
 			}
-			if (allVariablesAreOutVars(Arrays.asList(index), m_VarCollector)) {
+			if (allVariablesAreOutVars(Arrays.asList(index), m_TransFormula)) {
 				Term[] outReplacedByIn = SmtUtils.substitutionElementwise(index, m_OutVars2InVars);
 				m_Array2Indices.addPair(firstGeneration, Arrays.asList(outReplacedByIn));
 				m_AdditionalArrayReads.addAll(extractArrayReads(outReplacedByIn));
@@ -644,10 +657,10 @@ public class RewriteArrays implements PreProcessor {
 		private void constructSubstitutions() {
 			Map<Term, Term> in2outMapping = new HashMap<Term, Term>();
 			Map<Term, Term> out2inMapping = new HashMap<Term, Term>();
-			for (RankVar rv : m_VarCollector.getInVars().keySet()) {
-				Term inVar = m_VarCollector.getInVars().get(rv);
+			for (RankVar rv : m_TransFormula.getInVars().keySet()) {
+				Term inVar = m_TransFormula.getInVars().get(rv);
 				assert inVar != null;
-				Term outVar = m_VarCollector.getOutVars().get(rv);
+				Term outVar = m_TransFormula.getOutVars().get(rv);
 				assert outVar != null;
 				in2outMapping.put(inVar, outVar);
 				out2inMapping.put(outVar, inVar);
@@ -661,8 +674,10 @@ public class RewriteArrays implements PreProcessor {
 		private Map<TermVariable, Map<List<Term>, TermVariable>> m_ArrayInstance2Index2CellVariable;
 		private Map<TermVariable, Map<List<Term>, ReplacementVar>> m_Array2Index2RepVar;
 		private Set<TermVariable> m_AuxVars = new HashSet<TermVariable>();
+		private final TransFormulaLR m_TransFormula;
 
-		public CellVariableBuilder() {
+		public CellVariableBuilder(TransFormulaLR tf) {
+			m_TransFormula = tf;
 			m_ArrayInstance2Index2CellVariable = new HashMap<TermVariable, Map<List<Term>, TermVariable>>();
 			m_Array2Index2RepVar = new HashMap<TermVariable, Map<List<Term>, ReplacementVar>>();
 			dotSomething();
@@ -673,7 +688,7 @@ public class RewriteArrays implements PreProcessor {
 		 * cell array[index].
 		 */
 		private ReplacementVar getOrConstructReplacementVar(TermVariable array, List<Term> index) {
-			List<Term> translatedIndex = Arrays.asList(translateTermVariablesToDefinitions(m_Script, m_VarCollector,
+			List<Term> translatedIndex = Arrays.asList(translateTermVariablesToDefinitions(m_Script, m_TransFormula,
 					index.toArray(new Term[0])));
 			Map<List<Term>, ReplacementVar> index2repVar = m_Array2Index2RepVar.get(array);
 			if (index2repVar == null) {
@@ -681,17 +696,32 @@ public class RewriteArrays implements PreProcessor {
 				m_Array2Index2RepVar.put(array, index2repVar);
 			}
 			ReplacementVar repVar = index2repVar.get(translatedIndex);
+			
+			// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			// TODO @Matthias: Please look at the following code
+			
+			// old code:
+//			if (repVar == null) {
+//				VarFactory fac = m_VarCollector.getFactory();
+//				String name = getArrayCellName(array, translatedIndex);
+//				repVar = fac.getRepVar(name);
+//				if (repVar == null) {
+//					Term definition = SmtUtils.multiDimensionalSelect(m_Script, array,
+//							translatedIndex.toArray(new Term[0]));
+//					repVar = fac.registerRepVar(name, definition);
+//				}
+//				index2repVar.put(translatedIndex, repVar);
+//			}
+			
+			// new code:
 			if (repVar == null) {
-				VarFactory fac = m_VarCollector.getFactory();
 				String name = getArrayCellName(array, translatedIndex);
-				repVar = fac.getRepVar(name);
-				if (repVar == null) {
-					Term definition = SmtUtils.multiDimensionalSelect(m_Script, array,
-							translatedIndex.toArray(new Term[0]));
-					repVar = fac.registerRepVar(name, definition);
-				}
+				Term definition = SmtUtils.multiDimensionalSelect(m_Script, array, translatedIndex.toArray(new Term[0]));
+				repVar = new ReplacementVar(name, definition);
 				index2repVar.put(translatedIndex, repVar);
 			}
+			// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			
 			return repVar;
 		}
 
@@ -726,20 +756,20 @@ public class RewriteArrays implements PreProcessor {
 						boolean isInVarCell = isInVarCell(instance, index);
 						boolean isOutVarCell = isOutVarCell(instance, index);
 						if (isInVarCell || isOutVarCell) {
-							TermVariable arrayRepresentative = (TermVariable) getDefinition(m_VarCollector, instance);
+							TermVariable arrayRepresentative = (TermVariable) getDefinition(m_TransFormula, instance);
 							ReplacementVar rv = getOrConstructReplacementVar(arrayRepresentative, index);
 							if (isInVarCell) {
-								if (!m_VarCollector.getInVars().containsKey(rv)) {
-									m_VarCollector.addInVar(rv, tv);
+								if (!m_TransFormula.getInVars().containsKey(rv)) {
+									m_TransFormula.addInVar(rv, tv);
 								} else {
-									assert m_VarCollector.getInVars().get(rv) == tv;
+									assert m_TransFormula.getInVars().get(rv) == tv;
 								}
 							}
 							if (isOutVarCell) {
-								if (!m_VarCollector.getOutVars().containsKey(rv)) {
-									m_VarCollector.addOutVar(rv, tv);
+								if (!m_TransFormula.getOutVars().containsKey(rv)) {
+									m_TransFormula.addOutVar(rv, tv);
 								} else {
-									assert m_VarCollector.getOutVars().get(rv) == tv;
+									assert m_TransFormula.getOutVars().get(rv) == tv;
 								}
 							}
 						} else {
@@ -763,7 +793,7 @@ public class RewriteArrays implements PreProcessor {
 			assert mdias.getDimension() == index.size();
 			Sort valueSort = mdias.getArrayValueSort();
 			String name = getArrayCellName(instance, index);
-			TermVariable tv = m_VarCollector.getFactory().getNewTermVariable(name, valueSort);
+			TermVariable tv = m_lassoBuilder.getNewTermVariable(name, valueSort);
 			return tv;
 		}
 
@@ -773,16 +803,16 @@ public class RewriteArrays implements PreProcessor {
 		 * index is an inVar.
 		 */
 		private boolean isInVarCell(TermVariable arrayInstance, List<Term> index) {
-			if (isInvar(arrayInstance, m_VarCollector)) {
-				return allVariablesAreInVars(index, m_VarCollector);
+			if (isInvar(arrayInstance, m_TransFormula)) {
+				return allVariablesAreInVars(index, m_TransFormula);
 			} else {
 				return false;
 			}
 		}
 
 		private boolean isOutVarCell(TermVariable arrayInstance, List<Term> index) {
-			if (isOutvar(arrayInstance, m_VarCollector)) {
-				return allVariablesAreOutVars(index, m_VarCollector);
+			if (isOutvar(arrayInstance, m_TransFormula)) {
+				return allVariablesAreOutVars(index, m_TransFormula);
 			} else {
 				return false;
 			}
@@ -802,9 +832,10 @@ public class RewriteArrays implements PreProcessor {
 		private final UnionFind<TermVariable> m_UnionFind;
 		private final Map<TermVariable, TermVariable> m_Representative;
 		private final Term m_InOutEqauality;
+		private final TransFormulaLR m_TransFormula;
 
-		public EquivalentCells(UnionFind<TermVariable> unionFind) {
-			super();
+		public EquivalentCells(UnionFind<TermVariable> unionFind, TransFormulaLR tf) {
+			m_TransFormula = tf;
 			m_UnionFind = unionFind;
 			m_Representative = computeRepresentatives(unionFind);
 			m_InOutEqauality = computeInOutEqualities(unionFind);
@@ -815,7 +846,7 @@ public class RewriteArrays implements PreProcessor {
 			for (TermVariable representative : unionFind.getAllRepresentatives()) {
 				List<TermVariable> equalInOutVars = new ArrayList<TermVariable>();
 				for (TermVariable member : unionFind.getEquivalenceClassMembers(representative)) {
-					if (isInvar(member, m_VarCollector) || isOutvar(member, m_VarCollector)) {
+					if (isInvar(member, m_TransFormula) || isOutvar(member, m_TransFormula)) {
 						equalInOutVars.add(member);
 					}
 				}
@@ -840,7 +871,7 @@ public class RewriteArrays implements PreProcessor {
 		private TermVariable computeInOutRepresentative(UnionFind<TermVariable> uf, TermVariable ufRepresentative) {
 			Set<TermVariable> eq = uf.getEquivalenceClassMembers(ufRepresentative);
 			for (TermVariable member : eq) {
-				if (isInvar(member, m_VarCollector) || isOutvar(member, m_VarCollector)) {
+				if (isInvar(member, m_TransFormula) || isOutvar(member, m_TransFormula)) {
 					return member;
 				}
 			}
@@ -858,46 +889,46 @@ public class RewriteArrays implements PreProcessor {
 
 	}
 
-	private static boolean allVariablesAreInVars(List<Term> terms, VarCollector vc) {
+	private static boolean allVariablesAreInVars(List<Term> terms, TransFormulaLR tf) {
 		for (Term term : terms) {
-			if (!allVariablesAreInVars(term, vc)) {
+			if (!allVariablesAreInVars(term, tf)) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	private static boolean allVariablesAreOutVars(List<Term> terms, VarCollector vc) {
+	private static boolean allVariablesAreOutVars(List<Term> terms, TransFormulaLR tf) {
 		for (Term term : terms) {
-			if (!allVariablesAreOutVars(term, vc)) {
+			if (!allVariablesAreOutVars(term, tf)) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	public static boolean allVariablesAreInVars(Term term, VarCollector vc) {
+	public static boolean allVariablesAreInVars(Term term, TransFormulaLR tf) {
 		for (TermVariable tv : term.getFreeVars()) {
-			if (!isInvar(tv, vc)) {
+			if (!isInvar(tv, tf)) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	private static boolean allVariablesAreOutVars(Term term, VarCollector vc) {
+	private static boolean allVariablesAreOutVars(Term term, TransFormulaLR tf) {
 		for (TermVariable tv : term.getFreeVars()) {
-			if (!isOutvar(tv, vc)) {
+			if (!isOutvar(tv, tf)) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	public static Term getDefinition(VarCollector vc, TermVariable tv) {
-		RankVar rv = vc.getInVarsReverseMapping().get(tv);
+	public static Term getDefinition(TransFormulaLR tf, TermVariable tv) {
+		RankVar rv = tf.getInVarsReverseMapping().get(tv);
 		if (rv == null) {
-			rv = vc.getOutVarsReverseMapping().get(tv);
+			rv = tf.getOutVarsReverseMapping().get(tv);
 		}
 		if (rv == null) {
 			throw new AssertionError();
@@ -905,12 +936,12 @@ public class RewriteArrays implements PreProcessor {
 		return rv.getDefinition();
 	}
 
-	public static Term[] translateTermVariablesToDefinitions(Script script, VarCollector vc, Term... terms) {
+	public static Term[] translateTermVariablesToDefinitions(Script script, TransFormulaLR tf, Term... terms) {
 		Term[] result = new Term[terms.length];
 		for (int i = 0; i < terms.length; i++) {
 			Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 			for (TermVariable tv : terms[i].getFreeVars()) {
-				Term definition = getDefinition(vc, tv);
+				Term definition = getDefinition(tf, tv);
 				substitutionMapping.put(tv, definition);
 			}
 			result[i] = (new SafeSubstitution(script, substitutionMapping)).transform(terms[i]);
@@ -918,12 +949,12 @@ public class RewriteArrays implements PreProcessor {
 		return result;
 	}
 
-	private static boolean isInvar(TermVariable tv, VarCollector vc) {
-		return vc.getInVarsReverseMapping().keySet().contains(tv);
+	private static boolean isInvar(TermVariable tv, TransFormulaLR tf) {
+		return tf.getInVarsReverseMapping().keySet().contains(tv);
 	}
 
-	private static boolean isOutvar(TermVariable tv, VarCollector vc) {
-		return vc.getOutVarsReverseMapping().keySet().contains(tv);
+	private static boolean isOutvar(TermVariable tv, TransFormulaLR tf) {
+		return tf.getOutVarsReverseMapping().keySet().contains(tv);
 	}
 
 	private Term buildArrayEqualityConstraints(List<ArrayEquality> arrayEqualities) {
@@ -1067,7 +1098,7 @@ public class RewriteArrays implements PreProcessor {
 	 */
 	private SafeSubstitution constructIndex2CellVariableSubstitution(EquivalentCells ec, int i) {
 		Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-		for (MultiDimensionalSelect ar : m_ArrayReads[i]) {
+		for (MultiDimensionalSelect ar : m_ArrayReads.get(i)) {
 			TermVariable cellVariable = m_ArrayInstance2Index2CellVariable.get(ar.getArray()).get(
 					Arrays.asList(ar.getIndex()));
 			Term inOutRepresentative = ec.getInOutRepresentative(cellVariable);
@@ -1089,7 +1120,7 @@ public class RewriteArrays implements PreProcessor {
 	private SafeSubstitution constructIndex2CellVariableSubstitution() {
 		Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (int i = 0; i < sunnf.length; i++) {
-			for (MultiDimensionalSelect ar : m_ArrayReads[i]) {
+			for (MultiDimensionalSelect ar : m_ArrayReads.get(i)) {
 				Term cellVariable = m_ArrayInstance2Index2CellVariable.get(ar.getArray()).get(
 						Arrays.asList(ar.getIndex()));
 				substitutionMapping.put(ar.getSelectTerm(), cellVariable);

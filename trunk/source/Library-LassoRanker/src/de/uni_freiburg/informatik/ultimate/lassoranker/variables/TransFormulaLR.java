@@ -34,29 +34,31 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.lassoranker.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 
 
 /**
- * Object that stores
+ * This class stores
  * <ul> 
  * <li> a mapping between inVars and RankVars,
  * <li> a mapping between outVars and RankVars, and
  * <li> a set of auxiliary variables.
+ * <li> a transition formula (Term)
  * </ul>
- * Together with a term whose free variables are the inVars, ourVars and 
- * auxVars, this object defines a transition relation.
+ * 
+ * It is similar to TransFormula, and there are hopes that on some glorious
+ * future day the two classes shall become one. LR stands for LassoRanker.
+ * 
+ * This object is *not* immutable.
  * 
  * @author Jan Leike, Matthias Heizmann
  * 
  * @see VarFactory
  * @see RankVar
  */
-public class VarCollector implements Serializable {
+public class TransFormulaLR implements Serializable {
 	private static final long serialVersionUID = -1005909010259944923L;
 	
 	private final Map<RankVar, Term> m_inVars;
@@ -64,55 +66,32 @@ public class VarCollector implements Serializable {
 	private final Map<RankVar, Term> m_outVars;
 	private final Map<Term, RankVar> m_outVarsReverseMapping;
 	private final Set<TermVariable> m_AuxVars;
-	private final VarFactory m_factory;
+	
+	private Term m_formula;
 	
 	/**
-	 * Create a new VarCollector
-	 * @param factory the VarFactory to be used for creating RankVars
+	 * Create a new TransformulaLR
+	 * @param formula the transition formula
 	 */
-	public VarCollector(VarFactory factory) {
-		assert factory != null;
+	TransFormulaLR(Term formula) {
 		m_inVars = new LinkedHashMap<RankVar, Term>();
 		m_inVarsReverseMapping = new LinkedHashMap<Term, RankVar>();
 		m_outVars = new LinkedHashMap<RankVar, Term>();
 		m_outVarsReverseMapping = new LinkedHashMap<Term, RankVar>();
 		m_AuxVars = new HashSet<TermVariable>();
-		m_factory = factory;
+		m_formula = formula;
 	}
 	
 	/**
-	 * Construct a VarCollector from a TransFormula, adding and translating
-	 * all existing in- and outVars in the process.
-	 * @param factory the VarFactory to be used for creating RankVars
-	 * @param transition for extracting in- and outVars
+	 * Copy constructor
 	 */
-	public VarCollector(VarFactory factory, TransFormula transition) {
-		this(factory);
-		
-		// Add existing in- and outVars
-		for (Map.Entry<BoogieVar, TermVariable> entry
-				: transition.getInVars().entrySet()) {
-			addInVar(m_factory.fromBoogieVar(entry.getKey()),
-					entry.getValue());
-		}
-		for (Map.Entry<BoogieVar, TermVariable> entry
-				: transition.getOutVars().entrySet()) {
-			addOutVar(m_factory.fromBoogieVar(entry.getKey()),
-					entry.getValue());
-		}
-		for (TermVariable auxVar : transition.getAuxVars()) {
-			m_AuxVars.add(auxVar);
-		}
-		
-		// Add constant variables as in- and outVars
-		for (ApplicationTerm constVar : transition.getConstants()) {
-			ReplacementVar repVar = m_factory.getRepVar(constVar.toString());
-			if (repVar == null) {
-				repVar = m_factory.registerRepVar(constVar.toString(), constVar);
-			}
-			addInVar(repVar, constVar);
-			addOutVar(repVar, constVar);
-		}
+	public TransFormulaLR(TransFormulaLR other) {
+		this(other.getFormula());
+		m_inVars.putAll(other.m_inVars);
+		m_inVarsReverseMapping.putAll(other.m_inVarsReverseMapping);
+		m_outVars.putAll(other.m_outVars);
+		m_outVarsReverseMapping.putAll(other.m_outVarsReverseMapping);
+		m_AuxVars.addAll(other.getAuxVars());
 	}
 	
 	/**
@@ -150,13 +129,6 @@ public class VarCollector implements Serializable {
 	 */
 	public Set<TermVariable> getAuxVars() {
 		return Collections.unmodifiableSet(m_AuxVars);
-	}
-	
-	/**
-	 * @return the associated VarFactory
-	 */
-	public VarFactory getFactory() {
-		return m_factory;
 	}
 	
 	/**
@@ -220,23 +192,17 @@ public class VarCollector implements Serializable {
 	}
 	
 	/**
-	 * Add a corresponding inVar for all outVars.
-	 * 
-	 * This is required to prevent a problem that was reported by Matthias
-	 * in Madrid.bpl. This problem occurs when there are outVars that do not
-	 * have a corresponding inVar. Supporting invariant generation then becomes
-	 * unsound for the inductiveness property.
+	 * @return the transition formula
 	 */
-	public void matchInVars() {
-		for (Map.Entry<RankVar, Term> entry : m_outVars.entrySet()) {
-			if (!m_inVars.containsKey(entry.getKey())) {
-				TermVariable inVar = m_factory.getNewTermVariable(
-						entry.getKey().getGloballyUniqueId(),
-						entry.getValue().getSort()
-				);
-				addInVar(entry.getKey(), inVar);
-			}
-		}
+	public Term getFormula() {
+		return m_formula;
+	}
+	
+	/**
+	 * @param term the new transition formula
+	 */
+	public void setFormula(Term formula) {
+		m_formula = formula;
 	}
 	
 	/**
@@ -272,8 +238,7 @@ public class VarCollector implements Serializable {
 	}
 	
 	/**
-	 * Return true iff the TermVariable tv occurs as inVar as outVar or as
-	 * auxVar.
+	 * @return whether the TermVariable tv occurs as inVar, outVar, or auxVar.
 	 */
 	private boolean isInOurAux(TermVariable tv) {
 		if (m_inVarsReverseMapping.containsKey(tv)) {
@@ -287,7 +252,6 @@ public class VarCollector implements Serializable {
 		}
 	}
 	
-	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -295,6 +259,10 @@ public class VarCollector implements Serializable {
 		sb.append(m_inVars.toString());
 		sb.append("\nOutVars: ");
 		sb.append(m_outVars.toString());
+		sb.append("\nAuxVars: ");
+		sb.append(m_AuxVars.toString());
+		sb.append("\nTransition formula: ");
+		sb.append(new SMTPrettyPrinter(m_formula));
 		return sb.toString();
 	}
 }

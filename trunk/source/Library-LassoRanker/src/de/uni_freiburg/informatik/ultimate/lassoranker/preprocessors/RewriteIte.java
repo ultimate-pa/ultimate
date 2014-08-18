@@ -26,24 +26,40 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
+import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IteRemover;
 
 
 /**
  * Transform term into an equivalent term without ite terms.
- * @author Matthias Heizmann
+ * 
+ * @author Matthias Heizmann, Jan Leike
  */
-public class RewriteIte implements PreProcessor {
-
-	@Override
-	public Term process(Script script, Term term) {
-		return (new IteRemover(script)).transform(term);
-	}
-
+public class RewriteIte extends PreProcessor {
 	@Override
 	public String getDescription() {
-		return "Remove ite terms.";
+		return "Remove if-then-else terms.";
+	}
+	
+	@Override
+	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
+			TransFormulaLR newTF) {
+		Term old_term = oldTF.getFormula();
+		Term new_term = newTF.getFormula();
+		return LBool.SAT != Util.checkSat(script,
+				script.term("distinct", old_term, new_term));
+	}
+	
+	@Override
+	protected TransFormulaLR processTransition(Script script, TransFormulaLR tf,
+			boolean stem) throws TermException {
+		IteRemover iteRemover = new IteRemover(script);
+		tf.setFormula(iteRemover.transform(tf.getFormula()));
+		return tf;
 	}
 }

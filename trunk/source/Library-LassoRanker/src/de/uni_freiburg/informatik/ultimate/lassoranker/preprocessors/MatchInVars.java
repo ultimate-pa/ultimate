@@ -24,48 +24,44 @@
  * License, the licensors of the ULTIMATE LassoRanker Library grant you
  * additional permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
+package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
+import java.util.Map;
+
+import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 
 /**
- * A replacement variable replacing another variable or term that cannot be
- * used directly.
+ * Add a corresponding inVar for all outVars.
  * 
- * @author Jan Leike
+ * This is required to prevent a problem that was reported by Matthias
+ * in Madrid.bpl. This problem occurs when there are outVars that do not
+ * have a corresponding inVar. Supporting invariant generation then becomes
+ * unsound for the inductiveness property.
  */
-public class ReplacementVar extends RankVar {
-	private static final long serialVersionUID = 5797704734079950805L;
-	
-	private final String m_name;
-	private final Term m_definition;
-	
-	/**
-	 * @param name a globally unique name
-	 * @param definition the definition of this replacement variable, i.e.,
-	 *                   the term it replaces
-	 */
-	public ReplacementVar(String name, Term definition) {
-		m_name = name;
-		m_definition = definition;
-	}
-	
-	/**
-	 * @return the definition of this replacement variable, i.e., the term it
-	 *         replaces
-	 */
-	public Term getDefinition() {
-		return m_definition;
+public class MatchInVars extends PreProcessor {
+	@Override
+	public String getDescription() {
+		return "Add a corresponding inVar for all outVars";
 	}
 	
 	@Override
-	public String getGloballyUniqueId() {
-		return m_name;
-	}
-	
-	@Override
-	public String toString() {
-		return m_name;
+	protected TransFormulaLR processTransition(Script script, TransFormulaLR tf,
+			boolean stem) throws TermException {
+		for (Map.Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
+			if (!tf.getInVars().containsKey(entry.getKey())) {
+				TermVariable inVar = m_lassoBuilder.getNewTermVariable(
+						entry.getKey().getGloballyUniqueId(),
+						entry.getValue().getSort()
+				);
+				tf.addInVar(entry.getKey(), inVar);
+			}
+		}
+		return tf;
 	}
 }

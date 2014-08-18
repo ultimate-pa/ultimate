@@ -26,10 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
 
 /**
@@ -37,39 +40,53 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
  * 
  * @author Jan Leike
  */
-public class RewriteTrueFalse extends TermTransformer implements PreProcessor {
-
-	private Script m_script;
-	
+public class RewriteTrueFalse extends TransformerPreProcessor {
 	@Override
 	public String getDescription() {
-		return "Replaces 'true' with '0 >= 0' and 'false' with '0 >= 1";
-	}
-
-	@Override
-	public Term process(Script script, Term term) {
-		m_script = script;
-		return transform(term);
+		return "Replace 'true' with '0 >= 0' and 'false' with '0 >= 1'";
 	}
 	
 	@Override
-	protected void convert(Term term) {
-		assert(m_script != null);
-		if (term instanceof ApplicationTerm) {
-			ApplicationTerm appt = (ApplicationTerm) term;
-			if (appt.getFunction().getName().equals("true")) {
-				assert(appt.getParameters().length == 0);
-				setResult(m_script.term(">=", m_script.decimal("0"),
-						m_script.decimal("0")));
-				return;
-			}
-			if (appt.getFunction().getName().equals("false")) {
-				assert(appt.getParameters().length == 0);
-				setResult(m_script.term(">=", m_script.decimal("0"),
-						m_script.decimal("1")));
-				return;
-			}
+	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
+			TransFormulaLR newTF) {
+		Term old_term = oldTF.getFormula();
+		Term new_term = newTF.getFormula();
+		return LBool.SAT != Util.checkSat(script,
+				script.term("distinct", old_term, new_term));
+	}
+	
+	@Override
+	protected TermTransformer getTransformer(Script script) {
+		return new RewriteTrueFalseTransformer(script);
+	}
+	
+	private class RewriteTrueFalseTransformer extends TermTransformer {
+		
+		private final Script m_Script;
+		
+		RewriteTrueFalseTransformer(Script script) {
+			assert script != null;
+			m_Script = script;
 		}
-		super.convert(term);
+		
+		@Override
+		protected void convert(Term term) {
+			if (term instanceof ApplicationTerm) {
+				ApplicationTerm appt = (ApplicationTerm) term;
+				if (appt.getFunction().getName().equals("true")) {
+					assert(appt.getParameters().length == 0);
+					setResult(m_Script.term(">=", m_Script.decimal("0"),
+							m_Script.decimal("0")));
+					return;
+				}
+				if (appt.getFunction().getName().equals("false")) {
+					assert(appt.getParameters().length == 0);
+					setResult(m_Script.term(">=", m_Script.decimal("0"),
+							m_Script.decimal("1")));
+					return;
+				}
+			}
+			super.convert(term);
+		}
 	}
 }

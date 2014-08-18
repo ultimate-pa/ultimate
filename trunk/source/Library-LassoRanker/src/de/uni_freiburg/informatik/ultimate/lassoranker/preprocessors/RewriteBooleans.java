@@ -29,13 +29,15 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoBuilder;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.VarCollector;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.VarFactory;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -49,28 +51,15 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * 
  * @author Jan Leike, Matthias Heizmann
  */
-public class RewriteBooleans implements PreProcessor {
+public class RewriteBooleans extends TransformerPreProcessor {
 	private static final String s_repInPostfix  = "_in_bool";
 	private static final String s_repOutPostfix = "_out_bool";
 	private static final String s_repVarSortName = "Int"; // FIXME: this should depend on the logic
-	
-	private Script m_Script;
 	
 	/**
 	 * The sort to be used for new replacement TermVariable's
 	 */
 	private Sort m_repVarSort;
-	
-	/**
-	 * For generating replacement variables
-	 */
-	private final VarCollector m_rankVarCollector;
-	
-	/**
-	 * A collection of the generated replacement variables.
-	 * Used only for debugging.
-	 */
-	private final Collection<ReplacementVar> m_repVars;
 	
 	/**
 	 * Maps boolean-valued TermVariable's to their translated counterpart,
@@ -79,16 +68,18 @@ public class RewriteBooleans implements PreProcessor {
 	private final Map<Term, Term> m_SubstitutionMapping;
 	
 	/**
+	 * A mapping from RankVars that are booleans to their replacing variables
+	 */
+	private final Map<RankVar, ReplacementVar> m_RepVars;
+	
+	/**
 	 * Create a new RewriteBooleans preprocessor
 	 * @param rankVarCollector collecting the new in- and outVars
 	 * @param script the Script for creating new variables
 	 */
-	public RewriteBooleans(VarCollector rankVarCollector) {
-		m_rankVarCollector = rankVarCollector;
+	public RewriteBooleans() {
 		m_SubstitutionMapping = new LinkedHashMap<Term, Term>();
-		m_repVars = new ArrayList<ReplacementVar>();
-
-		
+		m_RepVars = new HashMap<RankVar, ReplacementVar>();
 	}
 	
 	/**
@@ -96,14 +87,13 @@ public class RewriteBooleans implements PreProcessor {
 	 * Creates a new replacement variable, if needed.
 	 */
 	private ReplacementVar getOrConstructReplacementVar(RankVar rankVar) {
-		String rankVarId = rankVar.getGloballyUniqueId();
-		String repVarName = rankVarId + "_bool";
-		VarFactory rvFactory = m_rankVarCollector.getFactory();
-		ReplacementVar repVar = rvFactory.getRepVar(repVarName);
+		ReplacementVar repVar = m_RepVars.get(rankVar);
 		if (repVar == null) {
-			repVar = rvFactory.registerRepVar(repVarName, 
-					getDefinition(rankVar.getDefinition()));
-			m_repVars.add(repVar);
+			Script script = m_lassoBuilder.getScript();
+			String name = rankVar.getGloballyUniqueId() + "_bool";
+			repVar = new ReplacementVar(name,
+					getDefinition(script, rankVar.getDefinition()));
+			m_RepVars.put(rankVar, repVar);
 		}
 		return repVar;
 	}
@@ -113,11 +103,10 @@ public class RewriteBooleans implements PreProcessor {
 	 * variables.
 	 * @param transFormula the transition formula from which the term originated
 	 */
-	private void generateRepVars() {
-		VarFactory rvFactory = m_rankVarCollector.getFactory();
+	private void generateRepVars(TransFormulaLR tf) {
 		Collection<Map.Entry<RankVar, Term>> entrySet =
 				new ArrayList<Map.Entry<RankVar, Term>>(
-						m_rankVarCollector.getInVars().entrySet());
+						tf.getInVars().entrySet());
 		for (Map.Entry<RankVar, Term> entry : entrySet) {
 			if (entry.getValue().getSort().getName().equals("Bool")) {
 				ReplacementVar repVar = 
@@ -126,18 +115,18 @@ public class RewriteBooleans implements PreProcessor {
 						m_SubstitutionMapping.get(entry.getValue());
 				if (newInVar == null) {
 					// Create a new TermVariable
-					newInVar = rvFactory.getNewTermVariable(
+					newInVar = m_lassoBuilder.getNewTermVariable(
 							repVar.getGloballyUniqueId() + s_repInPostfix,
 						m_repVarSort
 					);
 					m_SubstitutionMapping.put(entry.getValue(), newInVar);
 				}
-				m_rankVarCollector.removeInVar(entry.getKey());
-				m_rankVarCollector.addInVar(repVar, newInVar);
+				tf.removeInVar(entry.getKey());
+				tf.addInVar(repVar, newInVar);
 			}
 		}
 		entrySet = new ArrayList<Map.Entry<RankVar, Term>>(
-						m_rankVarCollector.getOutVars().entrySet());
+						tf.getOutVars().entrySet());
 		for (Map.Entry<RankVar, Term> entry : entrySet) {
 			if (entry.getValue().getSort().getName().equals("Bool")) {
 				ReplacementVar repVar = 
@@ -146,50 +135,67 @@ public class RewriteBooleans implements PreProcessor {
 						m_SubstitutionMapping.get(entry.getValue());
 				if (newOutVar == null) {
 					// Create a new TermVariable
-					newOutVar = rvFactory.getNewTermVariable(
+					newOutVar = m_lassoBuilder.getNewTermVariable(
 							repVar.getGloballyUniqueId() + s_repOutPostfix,
 						m_repVarSort
 					);
 					m_SubstitutionMapping.put(entry.getValue(), newOutVar);
 				}
-				m_rankVarCollector.removeOutVar(entry.getKey());
-				m_rankVarCollector.addOutVar(repVar, newOutVar);
+				tf.removeOutVar(entry.getKey());
+				tf.addOutVar(repVar, newOutVar);
 			}
 		}
 	}
 	
 	@Override
 	public String getDescription() {
-		return "Replaces boolean variables by replacement integer variables";
+		return "Replace boolean variables by integer variables";
 	}
 	
 	@Override
-	public Term process(Script script, Term term) {
-		m_Script = script;
-		m_repVarSort = m_Script.sort(s_repVarSortName);
-		generateRepVars();
-		return (new RewriteBooleanHelper()).transform(term);
+	protected TransFormulaLR processTransition(Script script, TransFormulaLR tf,
+			boolean stem) throws TermException {
+		this.generateRepVars(tf);
+		return super.processTransition(script, tf, stem);
+	}
+	
+	@Override
+	public void process(LassoBuilder lasso_builder) throws TermException {
+		Script script = lasso_builder.getScript();
+		m_repVarSort = script.sort(s_repVarSortName);
+		super.process(lasso_builder);
 	}
 	
 	/**
 	 * Given the Term booleanTerm whose Sort is "Bool" return the term
 	 * (ite booleanTerm one zero)
 	 */
-	private Term getDefinition(Term booleanTerm) {
+	private Term getDefinition(Script script, Term booleanTerm) {
 		assert booleanTerm.getSort().getName().equals("Bool");
-		Term one = m_Script.numeral(BigInteger.ONE);
-		Term zero = m_Script.numeral(BigInteger.ZERO);
-		return m_Script.term("ite", booleanTerm, one, zero);
+		Term one = script.numeral(BigInteger.ONE);
+		Term zero = script.numeral(BigInteger.ZERO);
+		return script.term("ite", booleanTerm, one, zero);
+	}
+	
+	@Override
+	protected TermTransformer getTransformer(Script script) {
+		return new RewriteBooleanTransformer(script);
 	}
 	
 	/**
 	 * TermTransformer that replaces Boolean TermVariables.  
 	 *
 	 */
-	private class RewriteBooleanHelper extends TermTransformer {
+	private class RewriteBooleanTransformer extends TermTransformer {
+		private final Script m_Script;
+		
+		RewriteBooleanTransformer(Script script) {
+			assert script != null;
+			m_Script = script;
+		}
+		
 		@Override
 		protected void convert(Term term) {
-			assert(m_Script != null);
 			if (term instanceof TermVariable &&
 					term.getSort().getName().equals("Bool")) {
 				TermVariable var = (TermVariable) term;

@@ -24,48 +24,38 @@
  * License, the licensors of the ULTIMATE LassoRanker Library grant you
  * additional permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
+package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
 
 /**
- * A replacement variable replacing another variable or term that cannot be
- * used directly.
+ * A preprocessor performs some modifications to the input formulae for
+ * stem and loop.
+ * 
+ * This is the base class for processors that use a TermTransformer on the
+ * transition formula. Creates a new TermTransformer instance for each
+ * TransFormulaLR that is processed.
  * 
  * @author Jan Leike
  */
-public class ReplacementVar extends RankVar {
-	private static final long serialVersionUID = 5797704734079950805L;
-	
-	private final String m_name;
-	private final Term m_definition;
+public abstract class TransformerPreProcessor extends PreProcessor {
 	
 	/**
-	 * @param name a globally unique name
-	 * @param definition the definition of this replacement variable, i.e.,
-	 *                   the term it replaces
+	 * Create a TermTransformer instance that will be applied to the stem and
+	 * the loop transition formula.
 	 */
-	public ReplacementVar(String name, Term definition) {
-		m_name = name;
-		m_definition = definition;
-	}
-	
-	/**
-	 * @return the definition of this replacement variable, i.e., the term it
-	 *         replaces
-	 */
-	public Term getDefinition() {
-		return m_definition;
-	}
+	protected abstract TermTransformer getTransformer(Script script);
 	
 	@Override
-	public String getGloballyUniqueId() {
-		return m_name;
-	}
-	
-	@Override
-	public String toString() {
-		return m_name;
+	protected TransFormulaLR processTransition(Script script, TransFormulaLR tf,
+			boolean stem) throws TermException {
+		TermTransformer transformer = this.getTransformer(script);
+		TransFormulaLR new_tf = new TransFormulaLR(tf);
+		new_tf.setFormula(transformer.transform(tf.getFormula()));
+		return new_tf;
 	}
 }

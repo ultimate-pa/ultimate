@@ -35,9 +35,10 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.InequalityConverter;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.IntegralHull;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -169,26 +170,23 @@ public class LinearTransition implements Serializable {
 	}
 	
 	/**
-	 * Convert a term in the proper form into a linear transition.
+	 * Convert a TransFormulaLR in the proper form into a linear transition.
 	 * 
-	 * The term must be in DNF, contain no negations, and only atoms in
-	 * the form a <= b, a < b, a >= b, and a > b, with a and b being linear
-	 * expressions.
+	 * The transition formula must be in DNF, contain no negations, and only
+	 * atoms of the form a <= b, a < b, a >= b, and a > b, with a and b being
+	 * linear expressions, otherwise this method fails.
 	 * 
-	 * @param term the input term
-	 * @param inVars input variables
-	 * @param outVars output variables
+	 * @param tf the transition formula
 	 * @throws TermException if the supplied term does not have the correct form
 	 */
-	public static LinearTransition fromTerm(Term term,
-			Map<RankVar, Term> inVars,
-			Map<RankVar, Term> outVars) throws TermException {
+	public static LinearTransition fromTransFormulaLR(TransFormulaLR tf)
+			throws TermException {
 		List<List<LinearInequality>> polyhedra =
 				new ArrayList<List<LinearInequality>>();
-		for (Term disjunct : toClauses(term)) {
+		for (Term disjunct : toClauses(tf.getFormula())) {
 			polyhedra.add(InequalityConverter.convert(disjunct));
 		}
-		return new LinearTransition(polyhedra, inVars, outVars);
+		return new LinearTransition(polyhedra, tf.getInVars(), tf.getOutVars());
 	}
 	
 	/**

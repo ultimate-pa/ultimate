@@ -38,7 +38,9 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgumentSynthesizer;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.AddAxioms;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.DNF;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.MatchInVars;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.PreProcessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RemoveNegation;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArrays;
@@ -52,14 +54,12 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAn
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingFunctionTemplate;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.VarCollector;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.VarFactory;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoBuilder;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -90,11 +90,6 @@ public class LassoAnalysis {
 	 * The lasso program that we are analyzing
 	 */
 	private Lasso m_lasso;
-
-	/**
-	 * The RankVarFactory used by the preprocessors and the RankVarCollector
-	 */
-	private final VarFactory m_rankVarFactory;
 
 	/**
 	 * SMT script that created the transition formulae
@@ -163,7 +158,7 @@ public class LassoAnalysis {
 	public LassoAnalysis(Script script, Boogie2SMT boogie2smt, TransFormula stem_transition,
 			TransFormula loop_transition, Term[] axioms, LassoRankerPreferences preferences,
 			IUltimateServiceProvider services, IToolchainStorage storage) throws TermException {
-
+		
 		mServices = services;
 		mStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
@@ -171,27 +166,28 @@ public class LassoAnalysis {
 																	// copy
 		m_preferences.checkSanity();
 		mLogger.info("Preferences:\n" + m_preferences.toString());
-
-		m_rankVarFactory = new VarFactory(boogie2smt);
+		
 		m_old_script = script;
 		m_axioms = axioms;
 		m_ArrayIndexSupportingInvariants = new HashSet<Term>();
 		m_Boogie2SMT = boogie2smt;
-
+		
 		m_stem_transition = stem_transition;
 		m_loop_transition = loop_transition;
 		assert (m_loop_transition != null);
-
+		
 		// Preprocessing creates the Lasso object
-		this.do_preprocessing();
+		m_lasso = this.preprocess();
+		
+		// This is now a good time to do garbage collection to free the memory
+		// allocated during preprocessing. Hopefully it is then available when
+		// we call the SMT solver.
+		System.gc();
 	}
 
 	/**
 	 * Constructor for the LassoRanker interface. Calling this invokes the
 	 * preprocessor on the stem and loop formula.
-	 * 
-	 * This constructor may only be supplied a loop transition, a stem has to be
-	 * added later by calling addStem().
 	 * 
 	 * @param script
 	 *            the SMT script used to construct the transition formulae
@@ -216,43 +212,7 @@ public class LassoAnalysis {
 			throws TermException, FileNotFoundException {
 		this(script, boogie2smt, null, loop, axioms, preferences, services, storage);
 	}
-
-	/**
-	 * Preprocess the stem and loop transition into a lasso object
-	 */
-	protected void do_preprocessing() throws TermException {
-		LinearTransition stem;
-		if (m_stem_transition != null) {
-			mLogger.debug("Stem transition:\n" + m_stem_transition);
-			stem = this.preprocess(m_stem_transition, false, null, null);
-			mLogger.debug("Preprocessed stem:\n" + stem);
-		} else {
-			stem = null;
-		}
-
-		mLogger.debug("Loop transition:\n" + m_loop_transition);
-		LinearTransition loop = this.preprocess(m_loop_transition, true, m_stem_transition, m_loop_transition);
-		mLogger.debug("Preprocessed loop:\n" + loop);
-		m_lasso = new Lasso(stem, loop);
-		mLogger.debug("Guesses for Motzkin coefficients: " + motzkinGuesses());
-	}
-
-	/**
-	 * @param rvc
-	 *            the ranking variable collector to be passed to the
-	 *            preprocessors
-	 * @return an array of all preprocessors that should be called before
-	 *         termination analysis
-	 */
-	protected PreProcessor[] getPreProcessors(VarCollector rvc, boolean searchArrayIndexSupportingInvariants,
-			TransFormula stem, TransFormula loop, boolean overapproximateArrayIndexConnection) {
-		return new PreProcessor[] {
-				new RewriteArrays(rvc, searchArrayIndexSupportingInvariants, stem, loop, m_Boogie2SMT,
-						m_ArrayIndexSupportingInvariants, overapproximateArrayIndexConnection, mServices),
-				new RewriteDivision(rvc), new RewriteBooleans(rvc), new RewriteIte(), new RewriteTrueFalse(),
-				new RewriteEquality(), new DNF(mServices), new RemoveNegation(), new RewriteStrictInequalities() };
-	}
-
+	
 	/**
 	 * Preprocess the stem or loop transition. This applies the preprocessor
 	 * classes and transforms the formula into a list of inequalities in DNF.
@@ -260,77 +220,74 @@ public class LassoAnalysis {
 	 * The list of preprocessors is given by this.getPreProcessors().
 	 * 
 	 * @see PreProcessor
-	 * @throws TermException
+	 * @throws TermException if preprocessing fails
 	 */
-	protected LinearTransition preprocess(TransFormula transition, boolean searchArrayIndexSupportingInvariants,
-			TransFormula originalStem, TransFormula originalLoop) throws TermException {
-		mLogger.info("Starting preprocessing step...");
-
-		Term trans_term = transition.getFormula();
-		Term axioms = Util.and(m_old_script, m_axioms);
-		trans_term = Util.and(m_old_script, trans_term, axioms);
-		VarCollector rvc = new VarCollector(m_rankVarFactory, transition);
-		assert rvc.auxVarsDisjointFromInOutVars();
-		assert rvc.allAreInOutAux(trans_term.getFreeVars()) == null;
-
+	protected Lasso preprocess() throws TermException {
+		mLogger.info("Starting lasso preprocessing...");
+		LassoBuilder lassoBuilder = new LassoBuilder(m_old_script, m_Boogie2SMT,
+				m_stem_transition, m_loop_transition);
+		assert lassoBuilder.isSane();
+		
 		// Apply preprocessors
-		for (PreProcessor preprocessor : this.getPreProcessors(rvc, searchArrayIndexSupportingInvariants, originalStem,
-				originalLoop, m_preferences.overapproximateArrayIndexConnection)) {
-			trans_term = preprocessor.process(m_old_script, trans_term);
+		for (PreProcessor preprocessor : this.getPreProcessors(
+				m_preferences.overapproximateArrayIndexConnection)) {
+			mLogger.debug(preprocessor.getDescription());
+			preprocessor.process(lassoBuilder);
 		}
-
-		assert rvc.auxVarsDisjointFromInOutVars();
-		assert rvc.allAreInOutAux(trans_term.getFreeVars()) == null;
-
-		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(trans_term)));
-
-		// Match inVars
-		rvc.matchInVars();
-
-		LinearTransition linear_trans = LinearTransition.fromTerm(trans_term, rvc.getInVars(), rvc.getOutVars());
-
-		return linear_trans;
+		
+		assert lassoBuilder.isSane();
+		
+		// Some debug messages
+		Lasso lasso = lassoBuilder.getLasso();
+		mLogger.debug(new DebugMessage("Stem transition:\n{0}",
+				m_stem_transition));
+		mLogger.debug(new DebugMessage("Preprocessed stem:\n{0}",
+				lasso.getStem()));
+		mLogger.debug(new DebugMessage("Loop transition:\n{0}",
+				m_loop_transition));
+		mLogger.debug(new DebugMessage("Preprocessed loop:\n{0}",
+				lasso.getLoop()));
+		mLogger.info("Preprocessing complete.");
+		mLogger.debug("Guesses for Motzkin coefficients: "
+				+ eigenvalueGuesses(lasso));
+		
+		return lasso;
 	}
-
+	
+	/**
+	 * @return an array of all preprocessors that should be called before
+	 *         termination analysis
+	 */
+	protected PreProcessor[] getPreProcessors(
+			boolean overapproximateArrayIndexConnection) {
+		return new PreProcessor[] {
+				new MatchInVars(),
+				new AddAxioms(m_axioms),
+				new RewriteArrays(
+						m_ArrayIndexSupportingInvariants,
+						overapproximateArrayIndexConnection,
+						m_stem_transition,
+						m_loop_transition,
+						mServices
+				),
+				new RewriteDivision(),
+				new RewriteBooleans(),
+				new RewriteIte(),
+				new RewriteTrueFalse(),
+				new RewriteEquality(),
+				new DNF(mServices),
+				new RemoveNegation(),
+				new RewriteStrictInequalities()
+		};
+	}
+	
 	/**
 	 * @return the preprocesses lasso
 	 */
 	public Lasso getLasso() {
 		return m_lasso;
 	}
-
-	/**
-	 * @return the number of variables occurring in the preprocessed loop
-	 *         transition
-	 */
-	public int getLoopVarNum() {
-		return m_lasso.getLoop().getVariables().size();
-	}
-
-	/**
-	 * @return the number of variables occurring in the preprocessed stem
-	 *         transition
-	 */
-	public int getStemVarNum() {
-		return m_lasso.getStem().getVariables().size();
-	}
-
-	/**
-	 * @return the number of disjuncts in the loop transition's DNF after
-	 *         preprocessing
-	 */
-	public int getLoopDisjuncts() {
-		return m_lasso.getLoop().getNumPolyhedra();
-	}
-
-	/**
-	 * @return the number of disjuncts in the stem transition's DNF after
-	 *         preprocessing
-	 */
-	public int getStemDisjuncts() {
-		return m_lasso.getStem().getNumPolyhedra();
-	}
-
+	
 	/**
 	 * @return the number of supporting invariants generated by the last
 	 *         termination analysis
@@ -361,11 +318,11 @@ public class LassoAnalysis {
 	}
 
 	/**
-	 * @return a pretty version of the guesses for Motzkin coefficients
+	 * @return a pretty version of the guesses for loop eigenvalues
 	 */
-	protected String motzkinGuesses() {
+	protected static String eigenvalueGuesses(Lasso lasso) {
 		StringBuilder sb = new StringBuilder();
-		Rational[] eigenvalues = m_lasso.guessEigenvalues(true);
+		Rational[] eigenvalues = lasso.guessEigenvalues(true);
 		sb.append("[");
 		for (int i = 0; i < eigenvalues.length; ++i) {
 			if (i > 0) {
@@ -383,13 +340,13 @@ public class LassoAnalysis {
 	public String getStatistics() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Number of variables in the stem: ");
-		sb.append(getStemVarNum());
+		sb.append(m_lasso.getStemVarNum());
 		sb.append("  Number of variables in the loop: ");
-		sb.append(getLoopVarNum());
+		sb.append(m_lasso.getLoopVarNum());
 		sb.append("  Number of disjunctions in the stem: ");
-		sb.append(getStemDisjuncts());
+		sb.append(m_lasso.getStemDisjuncts());
 		sb.append("  Number of disjunctions in the loop: ");
-		sb.append(getLoopDisjuncts());
+		sb.append(m_lasso.getLoopDisjuncts());
 		sb.append("  Number of supporting invariants: ");
 		sb.append(getNumSIs());
 		sb.append("  Number of Motzkin applications: ");

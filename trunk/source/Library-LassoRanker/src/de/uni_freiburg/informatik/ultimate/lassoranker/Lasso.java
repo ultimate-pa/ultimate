@@ -103,6 +103,39 @@ public class Lasso implements Serializable {
 	}
 	
 	/**
+	 * @return the number of variables occurring in the preprocessed loop
+	 *         transition
+	 */
+	public int getLoopVarNum() {
+		return m_loop.getVariables().size();
+	}
+	
+	/**
+	 * @return the number of variables occurring in the preprocessed stem
+	 *         transition
+	 */
+	public int getStemVarNum() {
+		return m_stem.getVariables().size();
+	}
+	
+	/**
+	 * @return the number of disjuncts in the loop transition's DNF after
+	 *         preprocessing
+	 */
+	public int getLoopDisjuncts() {
+		return m_loop.getNumPolyhedra();
+	}
+	
+	/**
+	 * @return the number of disjuncts in the stem transition's DNF after
+	 *         preprocessing
+	 */
+	public int getStemDisjuncts() {
+		return m_stem.getNumPolyhedra();
+	}
+	
+	
+	/**
 	 * @return all RankVars that occur in the lasso
 	 */
 	public Collection<RankVar> getAllRankVars() {

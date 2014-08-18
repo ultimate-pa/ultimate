@@ -26,64 +26,45 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
+import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
 
 /**
- * Replaces equalities (atoms of the form a = b) with (a ≤ b \/ a ≥ b).
+ * Adds axioms to the stem and loop transition
  * 
  * @author Jan Leike
  */
-public class RewriteEquality extends TransformerPreProcessor {
+public class AddAxioms extends PreProcessor {
+	
+	private final Term[] m_axioms;
+	
+	/**
+	 * @param axioms the axioms that should be added to stem and loop
+	 */
+	public AddAxioms(Term[] axioms) {
+		if (axioms == null) {
+			m_axioms = new Term[0];
+		} else {
+			m_axioms = axioms;
+		}
+	}
+	
+	@Override
+	protected TransFormulaLR processTransition(Script script, TransFormulaLR tf,
+			boolean stem) throws TermException {
+		Term formula = tf.getFormula();
+		Term axioms = Util.and(script, m_axioms);
+		formula = Util.and(script, formula, axioms);
+		tf.setFormula(formula);
+		return tf;
+	}
 	
 	@Override
 	public String getDescription() {
-		return "Replaces atoms of the form a = b with (a <= b /\\ a >= b)";
-	}
-	
-	@Override
-	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
-			TransFormulaLR newTF) {
-		Term old_term = oldTF.getFormula();
-		Term new_term = newTF.getFormula();
-		return LBool.SAT != Util.checkSat(script,
-				script.term("distinct", old_term, new_term));
-	}
-	
-	@Override
-	protected TermTransformer getTransformer(Script script) {
-		return new RewriteEqualityTransformer(script);
-	}
-	
-	private class RewriteEqualityTransformer extends TermTransformer {
-		
-		private final Script m_Script;
-		
-		RewriteEqualityTransformer(Script script) {
-			assert script != null;
-			m_Script = script;
-		}
-		
-		@Override
-		protected void convert(Term term) {
-			if (term instanceof ApplicationTerm) {
-				ApplicationTerm appt = (ApplicationTerm) term;
-				if (appt.getFunction().getName().equals("=") &&
-						!appt.getParameters()[0].getSort().getName().equals("Bool")) {
-					assert(appt.getParameters().length == 2);
-					Term param1 = m_Script.term("<=", appt.getParameters());
-					Term param2 = m_Script.term(">=", appt.getParameters());
-					setResult(m_Script.term("and", param1, param2));
-					return;
-				}
-			}
-			super.convert(term);
-		}
+		return "Add axioms to the transition";
 	}
 }

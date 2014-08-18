@@ -24,7 +24,7 @@
  * License, the licensors of the ULTIMATE LassoRanker Library grant you
  * additional permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
+package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 
 import java.util.ArrayList;
 import java.util.List;

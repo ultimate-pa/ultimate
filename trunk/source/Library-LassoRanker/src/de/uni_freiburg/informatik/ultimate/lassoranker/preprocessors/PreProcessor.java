@@ -26,9 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoBuilder;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 
 /**
@@ -37,18 +41,90 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * 
  * @author Jan Leike
  */
-public interface PreProcessor {
+public abstract class PreProcessor {
+	/**
+	 * The LassoBuilder that we are processing.
+	 * Is null before process() has been called.
+	 */
+	protected LassoBuilder m_lassoBuilder = null;
+	
 	/**
 	 * @return a description of the preprocessing
 	 */
-	public String getDescription();
+	public abstract String getDescription();
+	
+	/**
+	 * Process a single transition (stem or loop) independently of the other
+	 * @param script the script
+	 * @param tf the transition formula
+	 * @param stem is this a stem (as opposed to a loop) transition?
+	 * @return a new (processed) transition formula
+	 * @throws TermException if processing fails
+	 */
+	protected abstract TransFormulaLR processTransition(
+			Script script, TransFormulaLR tf, boolean stem) throws TermException;
+	
+	/**
+	 * Check if the processing was sound.
+	 * 
+	 * @param script the script
+	 * @param oldTF the old TransFormulaLR
+	 * @param newTF the new TransFormulaLR (after processing
+	 * @return whether the result is ok
+	 */
+	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
+			TransFormulaLR newTF) {
+		return true; // check nothing
+	}
 	
 	/**
 	 * Apply the preprocessing step
 	 * @param script the SMT script to use 
-	 * @param term   the formula to be processed
+	 * @param lasso_builder the lasso builder object to perform the processing on
 	 * @return the processed formula
 	 * @throws TermException if an error occurred while traversing the term
 	 */
-	public Term process(Script script, Term term) throws TermException;
+	public void process(LassoBuilder lasso_builder)
+			throws TermException {
+		m_lassoBuilder = lasso_builder;
+		Script script = lasso_builder.getScript();
+		
+		// Process stem
+		{
+			Collection<TransFormulaLR> old_stem_components =
+					lasso_builder.getStemComponents();
+			Collection<TransFormulaLR> new_stem_components =
+					new ArrayList<TransFormulaLR>(old_stem_components.size());
+			for (TransFormulaLR tf : old_stem_components) {
+				TransFormulaLR new_tf =
+						this.processTransition(script, tf, true);
+				assert checkSoundness(script, tf, new_tf)
+					: "Soundness check failed for preprocessor "
+					+ this.getClass().getSimpleName();
+				new_stem_components.add(new_tf);
+			}
+			lasso_builder.setStemComponents(new_stem_components);
+		}
+		
+		// Process loop
+		{
+			Collection<TransFormulaLR> old_loop_components =
+					lasso_builder.getLoopComponents();
+			Collection<TransFormulaLR> new_loop_components =
+					new ArrayList<TransFormulaLR>(old_loop_components.size());
+			for (TransFormulaLR tf : old_loop_components) {
+				TransFormulaLR new_tf =
+						this.processTransition(script, tf, false);
+				assert checkSoundness(script, tf, new_tf)
+					: "Soundness check failed for preprocessor "
+					+ this.getClass().getSimpleName();
+				new_loop_components.add(new_tf);
+			}
+			lasso_builder.setLoopComponents(new_loop_components);
+		}
+	}
+	
+	public String toString() {
+		return this.getDescription();
+	}
 }

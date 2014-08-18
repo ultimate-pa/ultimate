@@ -27,17 +27,20 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.VarCollector;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.VarFactory;
+import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 
 /**
@@ -58,14 +61,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * 
  * @author Jan Leike, Matthias Heizmann
  */
-public class RewriteDivision implements PreProcessor {
+public class RewriteDivision extends TransformerPreProcessor {
 	private static final String s_DivAuxPrefix = "div_aux";
 	private static final String s_ModAuxPrefix = "mod_aux";
-	
-	/**
-	 * The script used to transform the formula
-	 */
-	private Script m_Script;
 	
 	/**
 	 * Collection of all generated auxiliary variables and the terms
@@ -81,11 +79,6 @@ public class RewriteDivision implements PreProcessor {
 	private final Collection<Term> m_auxTerms;
 	
 	/**
-	 * For generating auxiliary variables
-	 */
-	private final VarCollector m_varCollector;
-	
-	/**
 	 * Use assert statement to check if result is equivalent to the conjunction
 	 * of input term and definition of auxiliary variables. 
 	 */
@@ -97,8 +90,11 @@ public class RewriteDivision implements PreProcessor {
 	 */
 	private static final boolean s_CheckResultWithQuantifiers = false;
 	
-	public RewriteDivision(VarCollector varCollector) {
-		m_varCollector = varCollector;
+	/**
+	 * Constructor
+	 */
+	public RewriteDivision() {
+		super();
 		m_auxVars = new LinkedHashMap<TermVariable, Term>();
 		m_auxTerms = new ArrayList<Term>();
 	}
@@ -108,25 +104,37 @@ public class RewriteDivision implements PreProcessor {
 		return "Replace integer division by equivalent linear constraints";
 	}
 	
-	@SuppressWarnings("unused")
 	@Override
-	public Term process(Script script, Term term) {
-		assert m_Script == null;
-		m_Script = script;
-		Term result = (new RewriteDivisionHelper()).transform(term);
-		if (m_auxTerms.size() > 0) {
-			Term auxTerms = Util.and(m_Script, m_auxTerms.toArray(new Term[0]));
-			result = Util.and(script, result, auxTerms);
-			m_varCollector.addAuxVars(m_auxVars.keySet());
-			
-			assert !s_CheckResult || !isIncorrect(term, result, auxTerms) 
-					: "rewrite division unsound";
-			assert !s_CheckResultWithQuantifiers
-					||	!isIncorrectWithQuantifiers(term, result, auxTerms) 
-					: "rewrite division unsound";
-		}
+	protected TransFormulaLR processTransition(Script script, TransFormulaLR tf,
+			boolean stem) throws TermException {
+		// Clear the data structures
+		m_auxVars.clear();
+		m_auxTerms.clear();
 		
-		return result;
+		// Call parent that applies the TermTransformer
+		TransFormulaLR new_tf = super.processTransition(script, tf, stem);
+		
+		// Add auxTerms to the transition
+		Term formula = new_tf.getFormula();
+		Term auxTerms = Util.and(script, m_auxTerms.toArray(new Term[0]));
+		new_tf.setFormula(Util.and(script, formula, auxTerms));
+		new_tf.addAuxVars(m_auxVars.keySet());
+		
+		return new_tf;
+	}
+	
+	@Override
+	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
+			TransFormulaLR newTF) {
+		Term old_term = oldTF.getFormula();
+		Term old_term_with_def = Util.and(script, old_term,
+				Util.and(script, m_auxTerms.toArray(new Term[0])));
+		Term new_term = newTF.getFormula();
+		boolean fail1 = s_CheckResult &&
+				isIncorrect(script, old_term_with_def, new_term);
+		boolean fail2 = s_CheckResultWithQuantifiers &&
+				isIncorrectWithQuantifiers(script, old_term_with_def, new_term);
+		return !fail1 || fail2;
 	}
 	
 	/**
@@ -134,10 +142,9 @@ public class RewriteDivision implements PreProcessor {
 	 * For this check we add to the input term the definition of the auxiliary
 	 * variables.
 	 */
-	private boolean isIncorrect(Term input, Term result, Term auxTerm) {
-		Term inputWithDefinitions = m_Script.term("and", input, auxTerm);
-		return LBool.SAT == Util.checkSat(m_Script,
-				m_Script.term("distinct",  inputWithDefinitions, result));
+	private boolean isIncorrect(Script script, Term input, Term result) {
+		return LBool.SAT == Util.checkSat(script,
+				script.term("distinct", input, result));
 	}
 	
 	/**
@@ -145,33 +152,44 @@ public class RewriteDivision implements PreProcessor {
 	 * For this check we existentially quantify auxiliary variables in the
 	 * result term.
 	 */
-	private boolean isIncorrectWithQuantifiers(Term input, Term result,
-			Term auxTerm) {
+	private boolean isIncorrectWithQuantifiers(Script script, Term input,
+			Term result) {
 		Term quantified;
 		if (m_auxVars.size() > 0) {
-			quantified = m_Script.quantifier(Script.EXISTS,
+			quantified = script.quantifier(Script.EXISTS,
 					m_auxVars.keySet().toArray(new TermVariable[0]), result);
 		} else {
-			quantified = m_Script.term("true");
+			quantified = script.term("true");
 		}
-		return Util.checkSat(m_Script, m_Script.term("distinct", 
-				input, quantified)) == LBool.SAT;
+		return Util.checkSat(script,
+				script.term("distinct", input, quantified)) == LBool.SAT;
+	}
+	
+	@Override
+	protected TermTransformer getTransformer(Script script) {
+		return new RewriteDivisionTransformer(script);
 	}
 	
 	/**
 	 * Replace integer division and modulo by auxiliary variables and
 	 * add definitions of these auxiliary variables.
 	 */
-	private class RewriteDivisionHelper extends TermTransformer {
+	private class RewriteDivisionTransformer extends TermTransformer {
+		private final Script m_Script;
+		
+		RewriteDivisionTransformer(Script script) {
+			assert script != null;
+			m_Script = script;
+		}
+		
 		@Override
 		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-			VarFactory rvFactory = m_varCollector.getFactory();
 			String func = appTerm.getFunction().getName();
 			if (func.equals("div")) {
 				assert(appTerm.getParameters().length == 2);
 				Term dividend = newArgs[0];
 				Term divisor = newArgs[1];
-				TermVariable quotientAuxVar = rvFactory.getNewTermVariable(
+				TermVariable quotientAuxVar = m_lassoBuilder.getNewTermVariable(
 						s_DivAuxPrefix, appTerm.getSort());
 				m_auxVars.put(quotientAuxVar, appTerm);
 				Term divAuxTerm = computeDivAuxTerms(
@@ -183,14 +201,13 @@ public class RewriteDivision implements PreProcessor {
 				assert(appTerm.getParameters().length == 2);
 				Term dividend = newArgs[0];
 				Term divisor = newArgs[1];
-				TermVariable quotientAuxVar = rvFactory.getNewTermVariable(
-						s_DivAuxPrefix,
-						appTerm.getSort()
-				);
+				TermVariable quotientAuxVar = m_lassoBuilder.getNewTermVariable(
+						s_DivAuxPrefix, appTerm.getSort());
 				m_auxVars.put(quotientAuxVar,
 						m_Script.term("div", dividend, divisor));
-				TermVariable remainderAuxVar = rvFactory.getNewTermVariable(
-						s_ModAuxPrefix, appTerm.getSort());
+				TermVariable remainderAuxVar =
+						m_lassoBuilder.getNewTermVariable(
+								s_ModAuxPrefix, appTerm.getSort());
 				m_auxVars.put(remainderAuxVar, appTerm);
 				Term modAuxTerms = computeModAuxTerms(dividend,
 						divisor, quotientAuxVar, remainderAuxVar);

@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.VarFactory;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoBuilder;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate.ArrayUpdateExtractor;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 
 
 /**
@@ -59,12 +59,12 @@ public class SingleUpdateNormalFormTransformer {
 	private List<Term> m_RemainderTerms;
 	private Map<Term, Term> m_Store2TermVariable;
 	private final Script m_Script;
-	private final VarFactory m_VarFactory;
+	private final LassoBuilder m_lassoBuilder;
 	
 	public SingleUpdateNormalFormTransformer(final Term input, Script script,
-			VarFactory varFactory) {
+			LassoBuilder lassoBuilder) {
 		m_Script = script;
-		m_VarFactory = varFactory;
+		m_lassoBuilder = lassoBuilder;
 		m_ArrayUpdates = new ArrayList<ArrayUpdate>();
 		Term[] conjuncts = SmtUtils.getConjuncts(input);
 		ArrayUpdateExtractor aue = new ArrayUpdateExtractor(conjuncts);
@@ -198,7 +198,7 @@ public class SingleUpdateNormalFormTransformer {
 	private TermVariable constructAuxiliaryVariable(Term oldArray) {
 		String name = SmtUtils.removeSmtQuoteCharacters(oldArray.toString() + s_AuxArray); 
 		TermVariable auxArray = 
-				m_VarFactory.getNewTermVariable(name, oldArray.getSort());
+				m_lassoBuilder.getNewTermVariable(name, oldArray.getSort());
 		return auxArray;
 	}
 
