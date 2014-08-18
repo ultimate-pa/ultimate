@@ -9,8 +9,8 @@
 // Date: 03.06.2013
 // Author: heizmann@informatik.uni-freiburg.de and Christian Schilling
 
-//NestedWordAutomaton minimized = minimizeSevpa(removeDeadEnds(nwa));
-NestedWordAutomaton minimized = minimizeSevpa(reachableStatesCopy(nwa, false, false, true, false));
+NestedWordAutomaton minimized1 = minimizeSevpa(removeDeadEnds(nwa));
+NestedWordAutomaton minimized2 = minimizeSevpa(reachableStatesCopy(nwa, false, false, true, false));
 print(nwa);
 
 
