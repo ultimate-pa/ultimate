@@ -2,7 +2,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.b
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Default implementation for objects that store benchmark data.
@@ -81,5 +83,32 @@ public class BenchmarkData implements IBenchmarkDataProvider {
 	
 	public boolean isEmpty() {
 		return m_Key2Value.isEmpty();
+	}
+	
+	/**
+	 * Returns the map from keys to values with the following modification:
+	 * Each pair (k,v) where the value v is an IBenchmarkDataProvider is
+	 * omitted. Instead, we add the set of pairs {(k + "_" + k_1, v_1),..., 
+	 * (k + "_" + k_n, v_n)} where (v_1,k_1), ..., (v_n,k_n) are the key
+	 * value pairs of IBenchmarkDataProvider v.
+	 * This modification is applied recursively. This method does not modify
+	 * the original data.
+	 */
+	public LinkedHashMap<String, Object> getFlattenedKeyValueMap() {
+		LinkedHashMap<String, Object> result = new LinkedHashMap<>();
+		for(String key : getKeys()) {
+			Object value = getValue(key);
+			if (value instanceof BenchmarkData) {
+				LinkedHashMap<String, Object> FlattenedKeyValueMap = 
+						((BenchmarkData) value).getFlattenedKeyValueMap();
+				for (Entry<String, Object> entry : FlattenedKeyValueMap.entrySet()) {
+					String composedKey = key + "_" + entry.getKey();
+					result.put(composedKey, entry.getValue());
+				}
+			} else {
+				result.put(key, value);
+			}
+		}
+		return result;
 	}
 }
