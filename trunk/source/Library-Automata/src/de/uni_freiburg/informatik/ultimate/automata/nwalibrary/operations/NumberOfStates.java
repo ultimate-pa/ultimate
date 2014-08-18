@@ -27,7 +27,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 /**
@@ -39,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  */
 public class NumberOfStates<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
-	INestedWordAutomatonOldApi<LETTER, STATE> m_Nwa;
+	INestedWordAutomatonSimple<LETTER, STATE> m_Nwa;
 	
-	public NumberOfStates(INestedWordAutomatonOldApi<LETTER, STATE> nwa) {
+	public NumberOfStates(INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		m_Nwa = nwa;
 	}
 
