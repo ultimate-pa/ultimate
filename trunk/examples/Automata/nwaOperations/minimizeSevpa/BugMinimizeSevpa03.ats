@@ -2,12 +2,12 @@
 
 // Problem with run [{q_0}, {(€,q_0)}] a_0 [{q_1, q_5}, {(€,q_1), (€,q_5), (€,q_4)}] a_0 [{q_1, q_5}, {(€,q_5), (€,q_3), (€,q_2), (€,q_6)}] a_1 [{q_1, q_5}, {(€,q_4), (€,q_2), (€,q_6)}] a_1 [{q_1, q_5}, {(€,q_0)}] a_0 [{q_3}, {(€,q_1), (€,q_5), (€,q_4)}] a_1 [{q_2}, {(€,q_1), (€,q_0), (€,q_6)}] 
 
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(nwa)));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
 print(minimizeSevpaSize);
-assert(minimizeSevpaSize == 7);
-int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(nwa)));
+assert(minimizeSevpaSize == 6);
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
 print(shrinkNwaSize);
-assert(shrinkNwaSize == 7);
+assert(shrinkNwaSize == 6);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {},

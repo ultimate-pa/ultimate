@@ -3,10 +3,10 @@
 // Problem with run #25280#TestENTRY x = 1;havoc n; #25283#L22 call< #25287#encTENTRY x_local = x;n_local... #25291#L39loopEntry' assume star; #25295#L42 call< #25293#encLTENTRY x_local = x;n_local... #25297#L109 call< #25299#encLLTENTRY assume x == 0;ret :=... #25303#L123' assume x == 0 <==> r... #25307#encLLTEXIT > return#25311#L109' assume CallRet;ret :... #25315#L115' assume x == 0 || x =... #25319#encLTEXIT > return#25326#L42' assume !!blockCall;h... #25336#L45 assume !star;x_local... #25346#L50 call< #25355#encLTENTRY x_local = x;n_local... #25363#L109 call< #25299#encLLTENTRY assume !(x == 0);ret... #25301#L123' assume x == 0 <==> r... #25305#encLLTEXIT > return#25383#L109' assume !CallRet; #25387#L115 call< #25317#encRLTENTRY assume !(x == 1);ret... #25323#L133' assume x == 1 <==> r... #25333#encRLTEXIT > return#25419#L115' assume x == 0 || x =... #25437#encLTEXIT > return#25450#L50' assume !blockCall;re... #25466#encTFINAL assume !(x == 1 ==> ... #25485#encRLTErr0EnsuresViolation 
 
 //reveals bug in revision 7230
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(nwa)));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
 print(minimizeSevpaSize);
 assert(minimizeSevpaSize == 85);
-int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(nwa)));
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
 print(shrinkNwaSize);
 assert(shrinkNwaSize == 81);
 

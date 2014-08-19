@@ -2,10 +2,10 @@
 
 // Problem with run TestENTRY x = 1;havoc n; L22 call< encTENTRY x_local = x;n_local... L38loopEntry' assume star; L41 call< encLTENTRY x_local = x;n_local... L107 call< encLLTENTRY PARALLELassume x == ... encLLTEXIT > returnL107' assume CallRet;ret :... L113' assume true; encLTEXIT > returnL41' assume !!blockCall;h... L44 assume !star;x_local... L49 call< encLTENTRY x_local = x;n_local... L107 call< encLLTENTRY PARALLELassume x == ... encLLTEXIT > returnL107' assume !CallRet; L113 call< encRLTENTRY PARALLELassume x != ... encRLTEXIT > returnL113' assume true; encLTEXIT > returnL49' assume !!blockCall;h... L52 assume !star;havoc n... L56loopEntry' assume !(n_local > 0... L76 call< encLTENTRY x_local = x;n_local... L107 call< encLLTENTRY PARALLELassume x == ... encLLTEXIT > returnL107' assume CallRet;ret :... L113' assume true; encLTEXIT > returnL76' assume !!blockCall;h... L79 assume star;ret = t... encTFINAL assume true; encTEXIT > returnL22' assume !(ret != fals... TestErr0AssertViolation 
 
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(nwa)));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
 print(minimizeSevpaSize);
 assert(minimizeSevpaSize == 52);
-int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(nwa)));
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
 print(shrinkNwaSize);
 assert(shrinkNwaSize == 49);
 

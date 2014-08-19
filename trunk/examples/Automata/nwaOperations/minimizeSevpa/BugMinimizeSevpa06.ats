@@ -17,10 +17,10 @@
 // 	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa.<init>(MinimizeSevpa.java:51)
 
 
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(nwa)));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
 print(minimizeSevpaSize);
 assert(minimizeSevpaSize == 14);
-int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(nwa)));
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
 print(shrinkNwaSize);
 assert(shrinkNwaSize == 11);
 

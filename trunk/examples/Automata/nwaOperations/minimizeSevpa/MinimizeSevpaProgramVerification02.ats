@@ -1,10 +1,10 @@
 // Testfile dumped by Ultimate at 2012/09/21 12:42:11
 
 
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(nwa)));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
 print(minimizeSevpaSize);
 assert(minimizeSevpaSize == 4525);
-int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(nwa)));
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
 print(shrinkNwaSize);
 assert(shrinkNwaSize == 639);
 

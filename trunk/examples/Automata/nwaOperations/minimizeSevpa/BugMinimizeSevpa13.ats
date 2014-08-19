@@ -5,13 +5,13 @@
 // Author: heizmann@informatik.uni-freiburg.de
 
 assert(!accepts(nwa, ["a1" "a1" "a1" "a1"]));
-NestedWordAutomaton minimized = minimizeSevpa(removeUnreachable(nwa));
+NestedWordAutomaton minimized = minimizeSevpa(removeDeadEnds(nwa));
 assert(!accepts(minimized, ["a1" "a1" "a1" "a1"]));
 
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(nwa)));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
 print(minimizeSevpaSize);
 assert(minimizeSevpaSize == 3);
-int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(nwa)));
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
 print(shrinkNwaSize);
 assert(shrinkNwaSize == 3);
 

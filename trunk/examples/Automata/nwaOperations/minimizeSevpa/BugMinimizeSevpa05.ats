@@ -7,10 +7,10 @@
 
 // Problem with run fibonacciENTRY assume !(n < 1); L20 assume !(n == 1); L24 call< fibonacciENTRY assume n < 1;res = ... L20'' assume res >= 0; fibonacciEXIT > returnL24' call< fibonacciENTRY assume n < 1;res = ... L20'' assume res >= 0; fibonacciEXIT > returnL25 res = tmpFst + tmpS... L20'' assume !(res >= 0); fibonacciErr0EnsuresViolation 
 
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(nwa)));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
 print(minimizeSevpaSize);
 assert(minimizeSevpaSize == 13);
-int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(nwa)));
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
 print(shrinkNwaSize);
 assert(shrinkNwaSize == 13);
 

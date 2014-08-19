@@ -1,9 +1,9 @@
 // Testfile dumped by Ultimate at 2013/06/17 16:59:45
 
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(AbstractionBeforeMinimization_Iteration14)));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(AbstractionBeforeMinimization_Iteration14)));
 print(minimizeSevpaSize);
 assert(minimizeSevpaSize == 859);
-int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(AbstractionBeforeMinimization_Iteration14)));
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(AbstractionBeforeMinimization_Iteration14)));
 print(shrinkNwaSize);
 assert(shrinkNwaSize == 375);
 
