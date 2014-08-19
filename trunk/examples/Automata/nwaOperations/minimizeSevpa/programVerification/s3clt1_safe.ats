@@ -1,7 +1,11 @@
 // Testfile dumped by Ultimate at 2013/06/17 17:02:44
 
-minimizeSevpa(removeUnreachable(AbstractionBeforeMinimization_Iteration16));
-shrinkNwa(removeUnreachable(AbstractionBeforeMinimization_Iteration16));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(AbstractionBeforeMinimization_Iteration16)));
+print(minimizeSevpaSize);
+assert(minimizeSevpaSize == 5000);
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(AbstractionBeforeMinimization_Iteration16)));
+print(shrinkNwaSize);
+assert(shrinkNwaSize == 5000);
 
 NestedWordAutomaton AbstractionBeforeMinimization_Iteration16 = (
 	callAlphabet = {c0 c1 c2 },
