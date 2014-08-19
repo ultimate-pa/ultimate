@@ -8,6 +8,13 @@ assert(!accepts(nwa, ["a1" "a1" "a1" "a1"]));
 NestedWordAutomaton minimized = minimizeSevpa(removeUnreachable(nwa));
 assert(!accepts(minimized, ["a1" "a1" "a1" "a1"]));
 
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(nwa)));
+print(minimizeSevpaSize);
+assert(minimizeSevpaSize == 3);
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(nwa)));
+print(shrinkNwaSize);
+assert(shrinkNwaSize == 3);
+
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"a0" "a1" },

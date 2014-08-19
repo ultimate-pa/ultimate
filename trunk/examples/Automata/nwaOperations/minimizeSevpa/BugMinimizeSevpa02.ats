@@ -2,7 +2,12 @@
 
 
 
-print(minimizeSevpa(removeUnreachable(nwa)));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(nwa)));
+print(minimizeSevpaSize);
+assert(minimizeSevpaSize == 10);
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(nwa)));
+print(shrinkNwaSize);
+assert(shrinkNwaSize == 10);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {},

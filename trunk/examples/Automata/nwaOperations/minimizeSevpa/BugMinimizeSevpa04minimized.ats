@@ -1,7 +1,11 @@
 // Problem with run [{q0}, {(€,q0)}] c1< [{q1}, {(q0,q1)}] i2 [{q2, q3}, {(q0,q2)}] > r1[{qE}, {}]
 
-print(minimizeSevpa(removeUnreachable(nwa)));
-//print(removeUnreachable(nwa));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(nwa)));
+print(minimizeSevpaSize);
+assert(minimizeSevpaSize == 5);
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(nwa)));
+print(shrinkNwaSize);
+assert(shrinkNwaSize == 5);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c1" "c2" },

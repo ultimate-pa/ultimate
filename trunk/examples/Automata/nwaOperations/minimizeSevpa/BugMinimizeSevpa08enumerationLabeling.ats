@@ -1,6 +1,11 @@
 // Testfile dumped by Ultimate at 2012/10/08 16:15:29
 
-print(numberOfStates(minimizeSevpa(removeDeadEnds(nwa))));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
+print(minimizeSevpaSize);
+assert(minimizeSevpaSize == 5633);
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
+print(shrinkNwaSize);
+assert(shrinkNwaSize == 1937);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {c0 c2 c1 c4 c3 c6 c5 c8 c7 c9 c10 c11 c12 c13 c14 c15 c16 c17 c18 c19 c20 c21 c22 c23 c24 },

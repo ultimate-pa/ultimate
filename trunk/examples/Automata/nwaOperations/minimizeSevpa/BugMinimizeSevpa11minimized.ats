@@ -2,7 +2,12 @@
 
 // problem: t1 and t2 are merged
 
-print(minimizeSevpa( removeUnreachable(nwa)));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(nwa)));
+print(minimizeSevpaSize);
+assert(minimizeSevpaSize == 6);
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(nwa)));
+print(shrinkNwaSize);
+assert(shrinkNwaSize == 6);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c_1" "c_2"},

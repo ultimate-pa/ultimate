@@ -8,7 +8,12 @@
 // into the worklist.
 // This is disproved for NFAs by this example.
 
-print(minimizeSevpa(removeUnreachable(nwa)));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(nwa)));
+print(minimizeSevpaSize);
+assert(minimizeSevpaSize == 4);
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(nwa)));
+print(shrinkNwaSize);
+assert(shrinkNwaSize == 4);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {},

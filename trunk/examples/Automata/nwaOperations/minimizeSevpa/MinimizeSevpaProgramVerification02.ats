@@ -1,7 +1,12 @@
 // Testfile dumped by Ultimate at 2012/09/21 12:42:11
 
 
-NestedWordAutomaton minimized = minimizeSevpa(removeUnreachable(nwa));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(nwa)));
+print(minimizeSevpaSize);
+assert(minimizeSevpaSize == 4525);
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(nwa)));
+print(shrinkNwaSize);
+assert(shrinkNwaSize == 639);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"call763" "call761" "call751" "call767" "call765" "call769" "call755" "call753" "call759" "call757" },

@@ -17,7 +17,12 @@
 // 	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa.<init>(MinimizeSevpa.java:51)
 
 
-print(minimizeSevpa(removeUnreachable(nwa)));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(nwa)));
+print(minimizeSevpaSize);
+assert(minimizeSevpaSize == 14);
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(nwa)));
+print(shrinkNwaSize);
+assert(shrinkNwaSize == 11);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"call3572" "call3570" },

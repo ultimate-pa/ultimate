@@ -1,5 +1,10 @@
 //reveals bug in revision 7244
-print(removeUnreachable(nwa));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(nwa)));
+print(minimizeSevpaSize);
+assert(minimizeSevpaSize == 7);
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(nwa)));
+print(shrinkNwaSize);
+assert(shrinkNwaSize == 7);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c"},

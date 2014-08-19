@@ -3,7 +3,12 @@
 // Problem with run #49835#MainENTRY call< #49837#McCarthyRecENTRY assume x > 100;res :... #49841#L20 assume true; #49845#McCarthyRecEXIT > return#49851#L62 call< #49855#McCarthyImpENTRY assume !(x <= 101);r... #49859#L29' assume true; #49865#McCarthyImpEXIT > return#49877#L63 assume !(b == c); #49882#MainErr0AssertViolation 
 
 //reveals bug in revision 7230
-print(minimizeSevpa( removeUnreachable(nwa)));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeUnreachable(nwa)));
+print(minimizeSevpaSize);
+assert(minimizeSevpaSize == 17);
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeUnreachable(nwa)));
+print(shrinkNwaSize);
+assert(shrinkNwaSize == 16);
 
 
 NestedWordAutomaton nwa = (
