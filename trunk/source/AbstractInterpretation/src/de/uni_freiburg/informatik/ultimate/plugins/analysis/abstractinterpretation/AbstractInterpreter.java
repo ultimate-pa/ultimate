@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
 /**
  * @author Christopher Dillo
@@ -97,7 +98,11 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	
 	private BoogieSymbolTable m_symbolTable;
 	
-	private boolean continueProcessing;
+	private boolean m_continueProcessing;
+
+	// Lists of call statements to check if there is any node with a summary that has no corresponding regular call
+	private List<CallStatement> m_callStatementsAtCalls = new LinkedList<CallStatement>();
+	private List<CallStatement> m_callStatementsAtSummaries = new LinkedList<CallStatement>();
 
 	// for preferences
 	private String m_mainMethodName;
@@ -260,7 +265,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		m_reachedErrorLocs.clear();
 		m_recursionEntryNodes.clear();
 		
-		continueProcessing = true;
+		m_continueProcessing = true;
 
 		// state change logger
 		if (m_stateChangeLogConsole || m_stateChangeLogFile) {
@@ -367,10 +372,10 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 		visitNodes();
 
-		if (m_reachedErrorLocs.isEmpty()) {
-			// report as safe
+		/* report as safe if the analysis terminated after having explored the
+		 * whole reachable state space without finding an error */
+		if (m_reachedErrorLocs.isEmpty() && m_continueProcessing)
 			reportSafeResult();
-		}
 	}
 
 	/**
@@ -379,6 +384,9 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	protected void visitNodes() {
 		RCFGNode node = m_nodesToVisit.poll();
 		if (node != null) {
+			m_callStatementsAtCalls.clear();
+			m_callStatementsAtSummaries.clear();
+			
 			List<AbstractState> statesAtNode = m_states.get(node);
 			m_logger.debug(String.format("---- PROCESSING NODE %S ----", (ProgramPoint) node));
 			// process all unprocessed states at the node
@@ -410,7 +418,10 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 			if (node.getIncomingEdges().size() <= 1)
 				m_states.remove(node);
 			
-			if (continueProcessing
+			if (!m_callStatementsAtCalls.containsAll(m_callStatementsAtSummaries))
+				reportUnsupportedSyntaxResult(node);
+			
+			if (m_continueProcessing
 					&& m_services.getProgressMonitorService().continueProcessing())
 				visitNodes(); // repeat until m_nodesToVisit is empty
 		}
@@ -471,7 +482,9 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	protected void visit(Call c) {
 		m_logger.debug("> Call");
 
-		m_resultingState = m_boogieVisitor.evaluateStatement(c.getCallStatement(), m_currentState);
+		CallStatement cs = c.getCallStatement();
+		m_callStatementsAtCalls.add(cs);
+		m_resultingState = m_boogieVisitor.evaluateStatement(cs, m_currentState);
 	}
 
 	@Override
@@ -538,9 +551,9 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	@Override
 	protected void visit(Summary c) {
 		m_logger.debug("> Summary");
-
-		m_resultingState = null; // do not process target node (ignore summary
-									// edges)
+		
+		m_callStatementsAtSummaries.add(c.getCallStatement());
+		m_resultingState = null; // do not process target node (ignore summary edges)
 	}
 
 	@Override
@@ -622,14 +635,26 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
 		
 		if (m_stopAfterAnyError) {
-			continueProcessing = false;
+			m_continueProcessing = false;
 			m_logger.info(String.format("Abstract interpretation finished after reaching error location %s",
 					location.getLocationName()));
 		} else if (m_stopAfterAllErrors) {
 			if (m_reachedErrorLocs.containsAll(m_errorLocs))
-				continueProcessing = false;
+				m_continueProcessing = false;
 			m_logger.info("Abstract interpretation finished after reaching all error locations");
 		}
+	}
+	
+	private void reportUnsupportedSyntaxResult(IElement location) {
+		UnsupportedSyntaxResult<IElement> result =
+				new UnsupportedSyntaxResult<IElement>(location, Activator.s_PLUGIN_ID,
+						m_services.getBacktranslationService().getTranslatorSequence(),
+						"Abstract interpretation plug-in can't verify "
+						+ "programs which contain procedures without implementations.");
+
+		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
+
+		m_continueProcessing = false;
 	}
 
 	/**

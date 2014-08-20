@@ -381,10 +381,11 @@ public class AbstractInterpretationBoogieVisitor {
 		} else if (expr instanceof UnaryExpression) {
 			visit((UnaryExpression) expr);
 		} else {
-			throw new UnsupportedOperationException(String.format("Extend this with new type %s", expr.getClass()));
+			m_logger.error(String.format("Unsupported expression class ", expr.getClass()));
 		}
 		
-		m_interimResults.put(expr, m_resultValue);
+		if (m_resultValue != null)
+			m_interimResults.put(expr, m_resultValue);
 		IAbstractValue<?> returnValue = m_resultValue;
 		m_resultValue = backup; // restore result value
 		return returnValue;
@@ -683,8 +684,14 @@ public class AbstractInterpretationBoogieVisitor {
 			if (type instanceof ArrayType)
 				type = ((ArrayType) type).getValueType();
 			storageClass = arrayIdent.getDeclarationInformation().getStorageClass();
+		} else if (array instanceof ArrayAccessExpression) {
+			ArrayAccessExpression arrayAccess = (ArrayAccessExpression) array;
+			evaluateArrayIdentifier(arrayAccess.getArray(), arrayAccess.getIndices());
+			variableIdentifier = m_lhsIdentifier;
+			storageClass = m_lhsStorageClass;
+			type = m_lhsType;
 		} else {
-			m_logger.warn(String.format("Unsupported array identifier found: %s", array));
+			m_logger.error(String.format("Unsupported array identifier found: %s", array));
 			m_lhsIdentifier = null;
 			m_lhsType = null;
 			m_resultValue = null;

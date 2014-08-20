@@ -640,6 +640,9 @@ public class AbstractState {
 	 * @return True if it could be declared, false if such an identifier already exists on the top layer or the stack is empty
 	 */
 	public boolean declareIdentifier(String identifier, IAbstractValue<?> initialValue, boolean asGlobal) {
+		if (initialValue == null)
+			return false;
+		
 		CallStackElement layer = asGlobal ? getGlobalScope() : getCurrentScope();
 
 		m_logger.debug(String.format("New variable %s at scope level %d %s", identifier, getStackSize()-1,

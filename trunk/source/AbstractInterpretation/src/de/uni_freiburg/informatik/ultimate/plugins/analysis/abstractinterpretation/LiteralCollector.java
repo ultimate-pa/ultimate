@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
@@ -186,6 +187,8 @@ public class LiteralCollector extends RCFGEdgeVisitor {
 			visit((StructConstructor) expr);
 		} else if (expr instanceof UnaryExpression) {
 			visit((UnaryExpression) expr);
+		} else if (expr instanceof FunctionApplication) {
+			visit((FunctionApplication) expr);
 		} else {
 			throw new UnsupportedOperationException(String.format("Extend this with new type %s", expr.getClass()));
 		}
@@ -248,4 +251,11 @@ public class LiteralCollector extends RCFGEdgeVisitor {
 		for (Expression e : expr.getIndices())
 			visit(e);
 	}
+
+	protected void visit(FunctionApplication expr) {
+		for (Expression e : expr.getArguments())
+			visit(e);
+	}
+	
+	
 }
