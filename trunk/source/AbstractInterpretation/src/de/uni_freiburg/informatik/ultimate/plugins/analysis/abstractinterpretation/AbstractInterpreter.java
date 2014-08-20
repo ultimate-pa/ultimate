@@ -171,6 +171,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	 *         at the node)
 	 */
 	private boolean putStateToNode(AbstractState state, RCFGNode node, RCFGEdge fromEdge) {
+		m_logger.debug("Put state to node?");
 		List<AbstractState> statesAtNode = m_states.get(node);
 		if (statesAtNode == null) {
 			statesAtNode = new LinkedList<AbstractState>();
@@ -202,8 +203,10 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		Set<AbstractState> unprocessedStates = new HashSet<AbstractState>();
 		Set<AbstractState> statesToRemove = new HashSet<AbstractState>();
 		for (AbstractState s : statesAtNode) {
-			if (s.isSuper(newState))
+			if (s.isSuper(newState)) {
+				m_logger.debug("NO!");
 				return false; // abort if a superstate exists
+			}
 			if (s.isProcessed()) {
 				if (newState.isSuccessor(s)) {
 					// widen after loop if possible
@@ -237,6 +240,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 			}
 		}
 		statesAtNode.add(newState);
+		m_logger.debug("Yes!!");
 		notifyStateChangeListeners(fromEdge, statesAtNodeBackup, state, newState);
 
 		if (m_generateStateAnnotations)
@@ -376,6 +380,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		RCFGNode node = m_nodesToVisit.poll();
 		if (node != null) {
 			List<AbstractState> statesAtNode = m_states.get(node);
+			m_logger.debug(String.format("---- PROCESSING NODE %S ----", (ProgramPoint) node));
 			// process all unprocessed states at the node
 			boolean hasUnprocessed = true;
 			while (hasUnprocessed) {
@@ -455,18 +460,16 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(CodeBlock c) {
-		m_logger.debug("> CodeBlock begin");
+		m_logger.debug("> CodeBlock START");
 
 		super.visit(c);
 
-		m_logger.debug("> CodeBlock end");
+		m_logger.debug("< CodeBlock END");
 	}
 
 	@Override
 	protected void visit(Call c) {
 		m_logger.debug("> Call");
-
-		super.visit(c);
 
 		m_resultingState = m_boogieVisitor.evaluateStatement(c.getCallStatement(), m_currentState);
 	}
@@ -475,16 +478,12 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	protected void visit(GotoEdge c) {
 		m_logger.debug("> GotoEdge");
 
-		super.visit(c);
-
 		m_resultingState = m_currentState.copy();
 	}
 
 	@Override
 	protected void visit(ParallelComposition c) {
-		m_logger.debug("> ParallelComposition");
-
-		super.visit(c);
+		m_logger.debug("> ParallelComposition START");
 
 		Collection<CodeBlock> blocks = c.getBranchIndicator2CodeBlock().values();
 
@@ -497,27 +496,25 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				if (mergedState == null) {
 					mergedState = m_resultingState;
 				} else {
-					mergedState.merge(m_resultingState);
+					mergedState = mergedState.merge(m_resultingState);
 				}
 			}
 		}
 		m_resultingState = mergedState;
+
+		m_logger.debug("< ParallelComposition END");
 	}
 
 	@Override
 	protected void visit(Return c) {
 		m_logger.debug("> Return");
 
-		super.visit(c);
-
 		m_resultingState = m_boogieVisitor.evaluateReturnStatement(c.getCallStatement(), m_currentState);
 	}
 
 	@Override
 	protected void visit(SequentialComposition c) {
-		m_logger.debug("> SequentialComposition");
-
-		super.visit(c);
+		m_logger.debug("> SequentialComposition START");
 
 		AbstractState currentState = m_currentState;
 			// backup, as the member variable is manipulated during iterating the CodeBlocks
@@ -534,13 +531,13 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		}
 
 		m_currentState = currentState;
+
+		m_logger.debug("< SequentialComposition END");
 	}
 
 	@Override
 	protected void visit(Summary c) {
 		m_logger.debug("> Summary");
-
-		super.visit(c);
 
 		m_resultingState = null; // do not process target node (ignore summary
 									// edges)
@@ -549,8 +546,6 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	@Override
 	protected void visit(StatementSequence c) {
 		m_logger.debug("> StatementSequence");
-
-		super.visit(c);
 
 		List<Statement> statements = c.getStatements();
 

@@ -66,6 +66,8 @@ public class AbstractInterpretationBoogieVisitor {
 	private final IAbstractDomainFactory<?> m_boolFactory;
 	private final IAbstractDomainFactory<?> m_bitVectorFactory;
 	private final IAbstractDomainFactory<?> m_stringFactory;
+	
+	private final IAbstractValue<?> m_boolFalse;
 
 	/**
 	 * The identifier for an LHS expression
@@ -113,6 +115,8 @@ public class AbstractInterpretationBoogieVisitor {
 		m_boolFactory = boolFactory;
 		m_bitVectorFactory = bitVectorFactory;
 		m_stringFactory = stringFactory;
+		
+		m_boolFalse = m_boolFactory.makeBoolValue(false); // used for assume evaluation
 	}
 	
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -305,7 +309,7 @@ public class AbstractInterpretationBoogieVisitor {
 			return;
 		}
 		
-		if (formulaResult.isBottom()) {
+		if (assumptionValueIsFalse(formulaResult)) {
 			// expression evaluates to false for all values, so there is no resulting state.
 			m_resultingState = null;
 			return;
@@ -430,15 +434,17 @@ public class AbstractInterpretationBoogieVisitor {
 	}
 
 	protected void visit(IdentifierExpression expr) {
+		boolean negate = doNegate();
 		getValueOfIdentifier(expr.getIdentifier(), expr.getType(),
 				expr.getDeclarationInformation().getStorageClass());
+		if (negate)
+			m_resultValue = m_resultValue.logicNot();
 	}
 
 	protected void visit(BooleanLiteral expr) {
 		boolean val = expr.getValue();
 		val = doNegate() ? !val : val;
-		m_resultValue = val ? m_boolFactory.makeBoolValue(true) : m_boolFactory.makeBottomValue();
-		// bottom for "assume false;"
+		m_resultValue = m_boolFactory.makeBoolValue(val);
 	}
 
 	protected void visit(BitVectorAccessExpression expr) {
@@ -831,6 +837,17 @@ public class AbstractInterpretationBoogieVisitor {
 	 * Currently, only expressions "x ~ y" where x or y is a variable are covered. 
 	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	
+	private boolean assumptionValueIsFalse(IAbstractValue<?> assumptionValue) {
+		if (assumptionValue.isBottom())
+			return true;
+		
+		if (m_boolFactory.valueBelongsToDomainSystem(assumptionValue)
+				&& m_boolFalse.isEqual(assumptionValue))
+			return true;
+		
+		return false;
+	}
+	
 	/**
 	 * Adjusts m_resultingState to narrow the possible values with information taken from
 	 * an assume statement.
@@ -845,7 +862,7 @@ public class AbstractInterpretationBoogieVisitor {
 		// only apply when the assumption can be true
 		IAbstractValue<?> assumeResult = m_interimResults.get(assumeFormula);
 		
-		if (assumeResult.isBottom())
+		if (assumptionValueIsFalse(assumeResult))
 			return false;
 		
 		boolean didNarrow = false;

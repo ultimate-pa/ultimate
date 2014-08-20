@@ -708,4 +708,13 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	public String toString() {
 		return "Interval: " + m_value.toString();
 	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#setIdentifier(java.lang.String, boolean)
+	 */
+	@Override
+	public void setIdentifier(String identifier, boolean isGlobal) {
+		// TODO Auto-generated method stub
+		
+	}
 }

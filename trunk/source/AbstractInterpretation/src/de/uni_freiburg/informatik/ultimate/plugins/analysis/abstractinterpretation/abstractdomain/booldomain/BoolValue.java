@@ -527,4 +527,13 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			return "EMPTY";
 		}
 	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#setIdentifier(java.lang.String, boolean)
+	 */
+	@Override
+	public void setIdentifier(String identifier, boolean isGlobal) {
+		// TODO Auto-generated method stub
+		
+	}
 }

@@ -79,6 +79,7 @@ public class AbstractState {
 		private final Map<String, IAbstractValue<?>> m_values, m_oldValues;
 		private final LinkedList<LoopStackElement> m_loopStack = new LinkedList<LoopStackElement>();
 		private final Map<String, ArrayData> m_arrays;
+		private boolean m_isGlobalScope = false;
 		public CallStackElement(CallStatement callStatement, Map<String, IAbstractValue<?>> oldValues) {
 			m_callStatement = callStatement;
 			m_values = new HashMap<String, IAbstractValue<?>>();
@@ -91,6 +92,8 @@ public class AbstractState {
 		public Map<String, IAbstractValue<?>> getOldValues() { return m_oldValues; }
 		public LinkedList<LoopStackElement> getLoopStack() { return m_loopStack; }
 		public Map<String, ArrayData> getArrays() { return m_arrays; }
+		public boolean isGlobalScope() { return m_isGlobalScope; }
+		public void SetIsGlobalScope(boolean isGlobalScope) { m_isGlobalScope = isGlobalScope; }
 	}
 	
 	/**
@@ -128,6 +131,7 @@ public class AbstractState {
 		m_stringFactory = stringFactory;
 		
 		pushStackLayer(null); // global scope
+		getGlobalScope().SetIsGlobalScope(true);
 		
 		pushLoopEntry(null, null); // global iteration count
 	}
@@ -142,13 +146,13 @@ public class AbstractState {
 		if (state == null)
 			return false;
 		
-		// check global scope
-		if (!isSuper(getGlobalScope(), state.getGlobalScope()))
+		// check current scope
+		if (!isSuper(getCurrentScope(), state.getCurrentScope()))
 			return false;
 
-		// check current scope if it is not the global scope
+		// check global scope if we didn't just check that one
 		if (getStackSize() > 1) {
-			if (!isSuper(getCurrentScope(), state.getCurrentScope()))
+			if (!isSuper(getGlobalScope(), state.getGlobalScope()))
 				return false;
 		}
 		
@@ -215,6 +219,7 @@ public class AbstractState {
 			
 			Map<String, IAbstractValue<?>> thisLayer = cse.getValues();
 			CallStackElement resultCSE = new CallStackElement(cse.getCallStatement(), cse.getOldValues());
+			resultCSE.SetIsGlobalScope(cse.isGlobalScope());
 			result.m_callStack.add(resultCSE);
 			Map<String, IAbstractValue<?>> copyLayer = result.m_callStack.get(i).getValues();
 			for (String identifier : thisLayer.keySet()) {
@@ -312,7 +317,8 @@ public class AbstractState {
 			} else if (rightValue == null) {
 				resultValue = leftValue.copy();
 			} else {
-				resultValue = widenValues(leftValue, rightValue);
+				resultValue = mergeValues(leftValue, rightValue);
+				m_logger.debug(String.format("%s: %s merge %s => %s", identifier, leftValue, rightValue, resultValue));
 			}
 			if (resultValue != null)
 				resultValues.put(identifier, resultValue);
@@ -510,9 +516,11 @@ public class AbstractState {
 		if (cse.getValues().containsKey(identifier))
 			return cse;
 		
-		cse = getGlobalScope();
-		if (cse.getValues().containsKey(identifier))
-			return cse;
+		if (!cse.isGlobalScope()) {
+			cse = getGlobalScope();
+			if (cse.getValues().containsKey(identifier))
+				return cse;
+		}
 		
 		return null;
 	}
@@ -599,6 +607,8 @@ public class AbstractState {
 		
 		layer.getValues().put(identifier, value);
 		
+		value.setIdentifier(identifier, layer.isGlobalScope());
+		
 		return true;
 	}
 	
@@ -641,6 +651,8 @@ public class AbstractState {
 		}
 		
 		layer.getValues().put(identifier, initialValue);
+		
+		initialValue.setIdentifier(identifier, asGlobal);
 		
 		return true;
 	}

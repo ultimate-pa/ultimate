@@ -664,4 +664,13 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			return "Sign: empty";
 		}
 	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#setIdentifier(java.lang.String, boolean)
+	 */
+	@Override
+	public void setIdentifier(String identifier, boolean isGlobal) {
+		// TODO Auto-generated method stub
+		
+	}
 }

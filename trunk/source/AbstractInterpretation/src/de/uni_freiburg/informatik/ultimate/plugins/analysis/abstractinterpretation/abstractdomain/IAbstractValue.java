@@ -183,6 +183,17 @@ public interface IAbstractValue<T> {
 	public IAbstractValue<T> bitVectorAccess(int start, int end);
 	
 	/**
+	 * Called by AbstractState when a value is stored. Enables abstract domains to
+	 * get more information about a value, for example at a statement "x := 2 * y"
+	 * the resulting abstract value of x could store that it is 2 * y regardless
+	 * of the abstract value of y.
+	 * @param identifier The identifier of the variable this value object belongs to
+	 * @param isGlobal Set to true if the identifier belongs to the global scope,
+	 * false if it is a local identifier
+	 */
+	public void setIdentifier(String identifier, boolean isGlobal);
+	
+	/**
 	 * @return A string representation of the abstract value
 	 */
 	public String toString();
