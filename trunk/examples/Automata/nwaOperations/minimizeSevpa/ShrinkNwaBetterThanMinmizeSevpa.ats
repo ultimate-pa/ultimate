@@ -1,0 +1,33 @@
+// Example where the result of shrinkNwa is smaller than the result of
+// minimizeSevpa.
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2014-08-20
+
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
+print(minimizeSevpaSize);
+assert(minimizeSevpaSize == 4);
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
+print(shrinkNwaSize);
+assert(shrinkNwaSize == 3);
+print(shrinkNwa(removeDeadEnds(nwa)));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c"},
+	internalAlphabet = {"a" "b"},
+	returnAlphabet = {"r"},
+	states = {"q0" "q1" "q2" "qE"},
+	initialStates = {"q0"},
+	finalStates = {"qE"},
+	callTransitions = {
+		 ("q0" "c" "q1")
+	},
+	internalTransitions = {
+		 ("q0" "a" "q2")
+		 ("q2" "a" "qE")
+		 ("q1" "a" "qE")
+	},
+	returnTransitions = {
+		 ("q1" "q0" "r" "qE")
+	}
+);

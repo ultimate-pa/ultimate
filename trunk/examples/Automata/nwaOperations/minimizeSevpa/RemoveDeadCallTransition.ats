@@ -1,0 +1,40 @@
+// Example where there is a difference between removeDeadEnds() and the old
+// dead end removal operation reachableStatesCopy(nwa, false, false, true, false)
+// The new removeDeadEnds() also removes the call transition ("q1" "c1" "t").
+// Therefor (t,q1) is no longer a DoubleDecker and we may merge the states
+// "s" and "t".
+//
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2014-08-20
+
+
+int lessDoubleDeckers = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
+print(lessDoubleDeckers);
+assert(lessDoubleDeckers == 4);
+int moreDoubleDeckers = numberOfStates(shrinkNwa(reachableStatesCopy(nwa, false, false, true, false)));
+print(moreDoubleDeckers);
+assert(moreDoubleDeckers == 5);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c" "c1" "c2"},
+	internalAlphabet = {"a" "b"},
+	returnAlphabet = {"r" "r2"},
+	states = {"q0" "q1" "qE" "qS" "t" "s"},
+	initialStates = {"q0"},
+	finalStates = {"qE"},
+	callTransitions = {
+		 ("q0" "c" "t")
+		 ("q0" "c" "s")
+		 ("q1" "c1" "t")
+		 ("q1" "c2" "s")
+	},
+	internalTransitions = {
+		 ("q0" "a" "q1")
+	},
+	returnTransitions = {
+		 ("t" "q0" "r" "qE")
+		 ("s" "q0" "r" "qE")
+		 ("s" "q1" "r2" "qE")
+		 ("t" "q1" "r2" "qS")
+	}
+);
