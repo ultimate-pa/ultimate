@@ -42,9 +42,31 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
 public abstract class StateContainer<LETTER, STATE> {
 	
 	enum DownStateProp {
+		/**
+		 * There is a (not necessarily initial) run starting in DoubleDecker 
+		 * (up, down) that visits a final state at least once. 
+		 */
 		REACH_FINAL_ONCE(1),
+		/**
+		 * There is a (not necessarily initial) run starting in DoubleDecker 
+		 * (up, down) that visits a final state at infinitely often. 
+		 */
 		REACH_FINAL_INFTY(2),
-		REACHABLE_FROM_FINAL_WITHOUT_CALL(4);
+		REACHABLE_FROM_FINAL_WITHOUT_CALL(4),
+		/**
+		 * The DoubleDecker (up,down) cannot reach a final state 
+		 * (REACH_FINAL_ONCE does not hold), but is still reachable, if dead 
+		 * ends have been removed.
+		 */
+		REACHABLE_AFTER_DEADEND_REMOVAL(8),
+		/**
+		 * The DoubleDecker (up,down) cannot reach a final state infinitely 
+		 * often (REACH_FINAL_INFTY) does not hold, but is still reachable, 
+		 * if dead ends have been removed.
+		 */
+		REACHABLE_AFTER_NONLIVE_REMOVAL(16);
+		
+		
 		private final int bitcode;
 		
 		DownStateProp(int bitcode) {

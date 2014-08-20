@@ -146,7 +146,9 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				assert correct;
 			}
 			for (OutgoingCallTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.callSuccessors(state)) {
-				correct &= m_Reach.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
+				// TODO: fix or remove
+				 correct &= m_Reach.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
+				// ignore call transitions
 				assert correct;
 			}
 			for (OutgoingReturnTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.returnSuccessors(state)) {
@@ -169,7 +171,9 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			Set<STATE> rCAdownStates = m_Reach.getWithOutDeadEnds().getDownStates(state);
 			correct &= ResultChecker.isSubset(rCAdownStates, rCSdownStates);
 			assert correct;
-			correct &= ResultChecker.isSubset(rCSdownStates, rCAdownStates);
+			// After enhanced non-live/dead end removal the following does not
+			// hold.
+//			 correct &= ResultChecker.isSubset(rCSdownStates, rCAdownStates);
 			assert correct;
 		}
 		if (!correct) {

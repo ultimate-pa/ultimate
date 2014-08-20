@@ -173,7 +173,9 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 			Set<STATE> rCAdownStates = m_Reach.getOnlyLiveStates().getDownStates(state);
 			correct &= ResultChecker.isSubset(rCAdownStates, rCSdownStates);
 			assert correct;
-			correct &= ResultChecker.isSubset(rCSdownStates, rCAdownStates);
+			// After enhanced non-live/dead end removal the following does not
+			// hold.
+			// correct &= ResultChecker.isSubset(rCSdownStates, rCAdownStates);
 			assert correct;
 		}
 		

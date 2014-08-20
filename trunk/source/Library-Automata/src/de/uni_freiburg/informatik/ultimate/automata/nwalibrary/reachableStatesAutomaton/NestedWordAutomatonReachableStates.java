@@ -621,7 +621,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			acceptings.add(cont);
 		}
 		m_WithOutDeadEnds = new AncestorComputation(acceptings, 
-				ReachProp.NODEADEND_AD, ReachProp.NODEADEND_SD, DownStateProp.REACH_FINAL_ONCE);
+				ReachProp.NODEADEND_AD, ReachProp.NODEADEND_SD, DownStateProp.REACH_FINAL_ONCE, DownStateProp.REACHABLE_AFTER_DEADEND_REMOVAL);
 	}
 	
 	public void computeStronglyConnectedComponents() {
@@ -645,7 +645,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		HashSet<StateContainer<LETTER, STATE>> nonLiveStartingSet = 
 				new HashSet<StateContainer<LETTER,STATE>>(m_StronglyConnectedComponents.getStatesOfAllSCCs());
 		m_OnlyLiveStates = new AncestorComputation(nonLiveStartingSet, 
-				ReachProp.LIVE_AD, ReachProp.LIVE_SD, DownStateProp.REACH_FINAL_INFTY);
+				ReachProp.LIVE_AD, ReachProp.LIVE_SD, DownStateProp.REACH_FINAL_INFTY, DownStateProp.REACHABLE_AFTER_NONLIVE_REMOVAL);
 	}
 	
 	
@@ -978,7 +978,16 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		
 		private final ReachProp m_rpAllDown;
 		private final ReachProp m_rpSomeDown;
-		private final DownStateProp m_DownStateProp;
+		/**
+		 * Property stating that from this DoubleDecker precious states are
+		 * reachable (infinitely often).
+		 */
+		private final DownStateProp m_DspReachPrecious;
+		/**
+		 * Property stating that from this DoubleDecker is reachable after
+		 * removal of states.
+		 */
+		private final DownStateProp m_DspReachableAfterRemoval;
 		
 		private final Set<STATE> m_Ancestors = new HashSet<STATE>();
 		private final Set<STATE> m_AncestorsInitial = new HashSet<STATE>();
@@ -1006,10 +1015,13 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		}
 
 		AncestorComputation(HashSet<StateContainer<LETTER,STATE>> preciousStates, 
-				ReachProp allDownProp, ReachProp someDownProp, DownStateProp downStateProp) {
+				ReachProp allDownProp, ReachProp someDownProp, 
+				DownStateProp downStatePropReachPrecious,
+				DownStateProp downStatePropReachableAfterRemoval) {
 			m_rpAllDown = allDownProp;
 			m_rpSomeDown = someDownProp;
-			m_DownStateProp = downStateProp;
+			m_DspReachPrecious = downStatePropReachPrecious;
+			m_DspReachableAfterRemoval = downStatePropReachableAfterRemoval;
 			
 			for (StateContainer<LETTER,STATE> cont : preciousStates) {
 				cont.setReachProp(m_rpAllDown);
@@ -1018,7 +1030,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 
 			while (!m_NonReturnBackwardWorklist.isEmpty()) {
-				StateContainer<LETTER,STATE> cont = m_NonReturnBackwardWorklist.removeFirst();
+				StateContainer<LETTER,STATE> cont = 
+						m_NonReturnBackwardWorklist.removeFirst();
 				if (m_initialStates.contains(cont.getState())) {
 					m_AncestorsInitial.add(cont.getState());
 				}
@@ -1083,6 +1096,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				propagateBackward(cont);
 			}
 			removeUnnecessaryInitialStates();
+			propagateReachableAfterRemovalDoubleDeckers();
 		}
 		
 		
@@ -1129,7 +1143,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				if (linCont.getReachProp() != m_rpAllDown) {
 					if (atLeastOneOccursAsDownState(hierCont, unpropagatedDownStates)) {
 						if (linCont == cont) {
-							boolean hierAlreadyPropagated = cont.hasDownProp(hier, m_DownStateProp);
+							boolean hierAlreadyPropagated = cont.hasDownProp(hier, m_DspReachPrecious);
 							if (!hierAlreadyPropagated) {
 								if (newUnpropagatedDownStatesSelfloop == null) {
 									newUnpropagatedDownStatesSelfloop = new HashSet<STATE>();
@@ -1147,7 +1161,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 			if (newUnpropagatedDownStatesSelfloop != null) {
 				for (STATE down : newUnpropagatedDownStatesSelfloop) {
-					cont.setDownProp(down, m_DownStateProp);
+					cont.setDownProp(down, m_DspReachPrecious);
 				}
 				assert !m_PropagationWorklist.contains(cont);
 				m_PropagationWorklist.add(cont);
@@ -1179,7 +1193,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				boolean newDownStateWasPropagated = false;
 				for (STATE down : potentiallyNewDownStates) {
 					if (predCont.getDownStates().containsKey(down)) {
-						boolean modified = predCont.setDownProp(down, m_DownStateProp);
+						boolean modified = predCont.setDownProp(down, m_DspReachPrecious);
 						if (modified) {
 							newDownStateWasPropagated = true;
 						}
@@ -1204,6 +1218,116 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 		}
 		
+		/**
+		 * Among all DoubleDeckers that cannot reach a precious state, there
+		 * are some that are reachable (even after removing states that
+		 * cannot reach precious states).
+		 * This method marks all these DoubleDeckers with m_DspReachableAfterRemoval 
+		 */
+		public void propagateReachableAfterRemovalDoubleDeckers() {
+			ArrayDeque<StateContainer<LETTER,STATE>> propagationWorklist =
+					new ArrayDeque<StateContainer<LETTER,STATE>>();
+			Set<StateContainer<LETTER,STATE>> visited = new HashSet<>();
+
+			// start only at states that are still initial after removal
+			// of states
+			for (STATE state : m_AncestorsInitial) {
+				assert (isInitial(state));
+				StateContainer<LETTER, STATE> sc = m_States.get(state);
+				propagationWorklist.add(sc);
+				visited.add(sc);
+			}
+			
+			while (!propagationWorklist.isEmpty()) {
+				StateContainer<LETTER, STATE> cont = propagationWorklist.removeFirst();
+				for (OutgoingInternalTransition<LETTER, STATE> inTrans : cont
+						.internalSuccessors()) {
+					STATE succ = inTrans.getSucc();
+					if (!m_Ancestors.contains(succ)){
+						// succ will be removed
+						continue;
+					}
+					StateContainer<LETTER,STATE> succCont = m_States.get(succ);
+					boolean alreadyVisited = 
+							addToWorklistIfNotAlreadyVisited(propagationWorklist, visited,
+							succCont);
+					if (!alreadyVisited) {
+						propagateReachableAfterRemovalProperty(cont, succCont);
+					}
+				}
+				for (SummaryReturnTransition<LETTER, STATE> inTrans : returnSummarySuccessor(cont.getState())) {
+					STATE succ = inTrans.getSucc();
+					if (!m_Ancestors.contains(succ)){
+						// succ will be removed
+						continue;
+					}
+
+					StateContainer<LETTER,STATE> succCont = m_States.get(succ);
+					boolean alreadyVisited = 
+							addToWorklistIfNotAlreadyVisited(propagationWorklist, visited,
+							succCont);
+					if (!alreadyVisited) {
+						propagateReachableAfterRemovalProperty(cont, succCont);
+					}
+				}
+				for (OutgoingCallTransition<LETTER, STATE> inTrans : cont.callSuccessors()) {
+					STATE succ = inTrans.getSucc();
+					if (!m_Ancestors.contains(succ)){
+						// succ will be removed
+						continue;
+					}
+
+					StateContainer<LETTER,STATE> succCont = m_States.get(succ);
+					addToWorklistIfNotAlreadyVisited(propagationWorklist, visited,
+							succCont);
+				}
+			}
+		}
+
+
+		private void propagateReachableAfterRemovalProperty(
+				StateContainer<LETTER, STATE> cont,
+				StateContainer<LETTER, STATE> succCont) throws AssertionError {
+			if (succCont.getReachProp() == m_rpAllDown) {
+				return;
+			} else if (succCont.getReachProp() == m_rpSomeDown) {
+				for (STATE down : succCont.getDownStates().keySet()) {
+					if (succCont.hasDownProp(down, m_DspReachPrecious) || succCont.hasDownProp(down, m_DspReachableAfterRemoval)) {
+						// do nothing
+					} else {
+						// check if we can propagate some down state
+						if (cont.getDownStates().containsKey(down)) {
+							if (cont.getReachProp() == m_rpAllDown) {
+								succCont.setDownProp(down, m_DspReachableAfterRemoval);
+							} else {
+								if (cont.hasDownProp(down, m_DspReachPrecious) || cont.hasDownProp(down, m_DspReachableAfterRemoval)) {
+									succCont.setDownProp(down, m_DspReachableAfterRemoval);
+								}
+							}
+							
+						}
+					}
+				}
+			} else {
+				throw new AssertionError("succ will be removed");
+			}
+		}
+
+
+		private boolean addToWorklistIfNotAlreadyVisited(
+				ArrayDeque<StateContainer<LETTER, STATE>> propagationWorklist,
+				Set<StateContainer<LETTER, STATE>> visited,
+				StateContainer<LETTER, STATE> succCont) {
+			boolean alreadyVisited = visited.contains(succCont);
+			if (!alreadyVisited) {
+				propagationWorklist.add(succCont);
+				visited.add(succCont);
+			}
+			return alreadyVisited;
+		}
+		
+		
+		
 		
 		/**
 		 * Return true iff the DoubleDecker (up,down) is reachable in the 
@@ -1221,8 +1345,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					return true;
 				} else {
 					assert cont.getReachProp() == m_rpSomeDown;
-					boolean hasDownProp = cont.hasDownProp(down, m_DownStateProp);
-					return hasDownProp;
+					boolean notRemoved = cont.hasDownProp(down, m_DspReachPrecious) || 
+							cont.hasDownProp(down, m_DspReachableAfterRemoval);
+					return notRemoved;
 				}
 			} else {
 				return false;
@@ -1248,11 +1373,14 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				assert cont.getReachProp() == m_rpSomeDown;
 				downStates = new HashSet<STATE>();
 				for (STATE down : cont.getDownStates().keySet()) {
-					if (cont.hasDownProp(down, m_DownStateProp)) {
+					boolean notRemoved = cont.hasDownProp(down, m_DspReachPrecious) || 
+							cont.hasDownProp(down, m_DspReachableAfterRemoval);
+					if (notRemoved) {
 						downStates.add(down);
 					} 
 				}
 			}
+			
 //			for(Entry<LETTER,STATE> entry : m_States.get(up).getCommonEntriesComponent().getEntries()) {
 //				STATE entryState = entry.getState();
 //				for (IncomingCallTransition<LETTER, STATE> trans : callPredecessors(entryState)) {
@@ -1284,7 +1412,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 //				assert cont.getDownStates().get(getEmptyStackState()) == ReachProp.REACHABLE;
 				return true;
 			} else {
-				if (cont.hasDownProp(getEmptyStackState(),m_DownStateProp)) {
+				if (cont.hasDownProp(getEmptyStackState(),m_DspReachPrecious)) {
 					return true;
 				} else {
 					return false;
@@ -1337,7 +1465,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 										m_Down = downCandidate;
 									} else {
 										assert m_StateContainer.getReachProp() == m_rpSomeDown;
-										if (!m_StateContainer.hasDownProp(downCandidate, m_DownStateProp)) {
+										if (!m_StateContainer.hasDownProp(downCandidate, m_DspReachPrecious)) {
 											m_Down = downCandidate;
 										}
 									}
