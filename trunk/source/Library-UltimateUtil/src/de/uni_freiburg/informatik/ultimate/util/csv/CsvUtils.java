@@ -2,9 +2,13 @@ package de.uni_freiburg.informatik.ultimate.util.csv;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -224,4 +228,75 @@ public class CsvUtils {
 		}
 		return new SimpleCsvProvider<>(newColumnTitles, newMap);
 	}
+	
+	/**
+	 * Creates a new ICsvProvider that contains the rows of providerA and then
+	 * the rows of providerB.
+	 * 
+	 * If the providers have different columns the missing columns are added
+	 * and the missing cells are filled with null values.
+	 * 
+	 * The case where providerA and providerB contain the same column titles
+	 * in different order is unsupported and an Exception is thrown.
+	 * 
+	 * @param providerA
+	 * @param providerB
+	 * @return
+	 */
+	public static <T> ICsvProvider<T> concatenateRowsWithDifferentColumns(
+			ICsvProvider<T> providerA, ICsvProvider<T> providerB) {
+		List<String> providerAColumns = Arrays.asList(providerA.getColumnTitles());
+		List<String> providerBColumns = Arrays.asList(providerB.getColumnTitles());
+		List<Integer> additionalColumnForProvider1 = new ArrayList<Integer>();
+		List<Integer> additionalColumnForProvider2 = new ArrayList<Integer>();
+		List<String> resultColumns = new ArrayList<String>();
+		int pAindex = 0;
+		int pBindex = 0;
+		while (pAindex < providerAColumns.size() || pBindex < providerBColumns.size()) {
+			String currentPACol = providerAColumns.get(pAindex);
+			String currentPBCol = providerBColumns.get(pBindex);
+			if (currentPACol.equals(currentPBCol)) {
+				resultColumns.add(currentPACol);
+				pAindex++;
+				pBindex++;
+			} else if (pAindex < providerAColumns.size() && !providerBColumns.contains(currentPACol)) {
+				resultColumns.add(currentPACol);
+				additionalColumnForProvider2.add(pBindex);
+				pAindex++;
+			} else if (pBindex < providerBColumns.size() && !providerAColumns.contains(currentPBCol)) {
+				resultColumns.add(currentPACol);
+				additionalColumnForProvider1.add(pAindex);
+				pBindex++;
+			} else {
+				throw new IllegalArgumentException("unable to merge, both "
+						+ "providers have similar columns but in different order");
+			}
+		}
+		SimpleCsvProvider<T> result = new SimpleCsvProvider<>(resultColumns.toArray(new String[resultColumns.size()]));
+		for (String rowTitle : providerA.getRowTitles()) {
+			T[] p1Row = providerA.getRow(rowTitle);
+			result.addRow(rowTitle, insertNullElements(p1Row, additionalColumnForProvider1));
+		}
+		for (String rowTitle : providerB.getRowTitles()) {
+			T[] p2Row = providerB.getRow(rowTitle);
+			result.addRow(rowTitle, insertNullElements(p2Row, additionalColumnForProvider2));
+		}
+		return result;
+	}
+	
+	/**
+	 * Given an array and a list of (not strictly) ascending positive integers,
+	 * return an array that has at each position that occurs in the list
+	 * additionalNullValuePositions an additional cell whose value is null.
+	 */
+	@SuppressWarnings("unchecked")
+	private static <T> T[] insertNullElements(T[] array, 
+			List<Integer> additionalNullValuePositions) {
+		List<T> result = new LinkedList<T>(Arrays.asList(array));
+		for (int i=additionalNullValuePositions.size()-1; i>=0; i--) {
+			result.add(i, null);
+		}
+		return (T[]) result.toArray();
+	}
+	
 }
