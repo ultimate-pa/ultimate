@@ -94,6 +94,11 @@ public class MemoryHandler {
      */
     private LinkedHashSet<String> sizeofConsts;
     /**
+     * The set holding the Ids of all (struct) offset constants.
+     */
+    private LinkedHashSet<String> structOffSetConstants;
+ 
+    /**
      * The type describing a pointer.
      */
     public static final ASTType POINTER_TYPE = new NamedType(null, SFO.POINTER, new ASTType[0]);
@@ -177,6 +182,7 @@ private boolean useConstantTypeSizes = true;
     public MemoryHandler(FunctionHandler functionHandler, boolean checkPointerValidity) {
     	m_functionHandler = functionHandler;
         this.sizeofConsts = new LinkedHashSet<String>();
+        this.structOffSetConstants = new LinkedHashSet<String>();
         this.axioms = new LinkedHashSet<Axiom>();
         this.constants = new LinkedHashSet<ConstDeclaration>();
 		this.variablesToBeMalloced = new LinkedScopedHashMap<LocalLValue, Integer>();
@@ -1021,14 +1027,56 @@ private boolean useConstantTypeSizes = true;
  				size *= Integer.parseInt(((IntegerLiteral) dim).getValue());
  			}
  		} else if (cType instanceof CStruct) {
- 			for (CType fieldType : ((CStruct) cType).getFieldTypes()) {
- 				if (cType instanceof CUnion) {
- 					int fieldSize = calculateSizeOfWithGivenTypeSizes(loc, fieldType);
- 					size = size >= fieldSize ? size : fieldSize;
- 				} else {
- 					size += calculateSizeOfWithGivenTypeSizes(loc, fieldType);
+ 			Attribute[] attr = new Attribute[0];
+ 			ASTType intT = new PrimitiveType(loc, SFO.INT);
+ 			CStruct cs = (CStruct) cType;
+// 			Expression nextOffset = new IntegerLiteral(loc, SFO.NR0);
+ 			if (cs.isIncomplete()) {
+ 				// do nothing
+ 			} else {
+ 				for (int i = 0; i < cs.getFieldCount(); i++) {
+ 					CType csf = cs.getFieldTypes()[i];
+ 					String csfId = cs.getFieldIds()[i];	
+ 					String oId = SFO.OFFSET + cType.toString() + "~" + csfId;
+ 					
+ 					if (!structOffSetConstants.contains(oId)) {
+ 						structOffSetConstants.add(oId);
+ 						this.constants.add(new ConstDeclaration(loc, attr, false,
+ 								new VarList(loc, new String[] { oId }, intT), null,
+ 								false));
+ 						Expression offIdEx = new IdentifierExpression(loc, oId);
+ 						Expression offsetOfField = new BinaryExpression(loc, Operator.COMPEQ,
+ 								offIdEx, new IntegerLiteral(loc, (new Integer(size).toString())));
+ 						this.axioms.add(new Axiom(loc, attr, offsetOfField));
+ 					}
+
+
+					if (cType instanceof CUnion) {
+//						Expression fieldSize = new IntegerLiteral(loc, 
+//							(new Integer(calculateSizeOfWithGivenTypeSizes(loc, csf)).toString()));
+//						String id = SFO.SIZEOF + cType.toString();
+//						IdentifierExpression idex = new IdentifierExpression(loc, id);
+//						this.axioms.add(new Axiom(loc, attr, 
+//								new BinaryExpression(loc, Operator.COMPGEQ, idex, fieldSize)));
+						 // --> the above is unneccessary with given type sizes, right?? (and it causes problems..)
+					} else {//only in the struct case, the offsets grow, in the union case they stay at 0
+//						nextOffset = new BinaryExpression(loc, Operator.ARITHPLUS,
+//								nextOffset, fieldSize);
+						size += calculateSizeOfWithGivenTypeSizes(loc, csf);
+					}
  				}
  			}
+
+
+ 			// 			for (CType fieldType : ((CStruct) cType).getFieldTypes()) {
+
+ 			// 				if (cType instanceof CUnion) {
+ 			// 					int fieldSize = calculateSizeOfWithGivenTypeSizes(loc, fieldType);
+ 			// 					size = size >= fieldSize ? size : fieldSize;
+ 			// 				} else {
+ 			// 					size += calculateSizeOfWithGivenTypeSizes(loc, fieldType);
+ 			// 				}
+
  		} else if (cType instanceof CNamed) {
  			return calculateSizeOfWithGivenTypeSizes(loc, ((CNamed) cType).getUnderlyingType());
  		} else {
