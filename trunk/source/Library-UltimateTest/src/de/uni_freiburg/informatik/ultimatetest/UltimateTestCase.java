@@ -16,20 +16,20 @@ import static org.junit.Assert.fail;
 public class UltimateTestCase {
 
 	private String mName;
-	private String mFileName;
+	private UltimateRunDefinition m_UltimateRunDefinition;
 	private UltimateStarter mStarter;
 	private ITestResultDecider mDecider;
 	private ITestSummary mSummary;
 	private Logger mLogger;
 
 	public UltimateTestCase(UltimateStarter starter, ITestResultDecider decider, ITestSummary summary, String name,
-			String filename) {
+			UltimateRunDefinition ultimateRunDefinition) {
 		mLogger = Logger.getLogger(UltimateStarter.class);
 		mStarter = starter;
 		mName = name;
 		mDecider = decider;
 		mSummary = summary;
-		mFileName = filename;
+		m_UltimateRunDefinition = ultimateRunDefinition;
 	}
 
 	@FactoryTestMethod
@@ -54,7 +54,7 @@ public class UltimateTestCase {
 
 			if (mSummary != null) {
 				mSummary.setTestResultDecider(mDecider);
-				mSummary.addResult(result, success, mDecider.getResultCategory(), mFileName,
+				mSummary.addResult(result, success, mDecider.getResultCategory(), m_UltimateRunDefinition,
 						mDecider.getResultMessage());
 			}
 

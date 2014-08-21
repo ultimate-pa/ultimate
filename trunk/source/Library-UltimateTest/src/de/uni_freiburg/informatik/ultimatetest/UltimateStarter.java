@@ -36,9 +36,7 @@ public class UltimateStarter implements IController {
 	private Logger mLogger;
 	private FileAppender mAppender;
 
-	private File mInputFile;
-	private File mSettingsFile;
-	private File mToolchainFile;
+	private final UltimateRunDefinition m_UltimateRunDefinition;
 	private long mDeadline;
 
 	private String mLogPattern;
@@ -47,24 +45,16 @@ public class UltimateStarter implements IController {
 	private final ExternalUltimateCore mExternalUltimateCore;
 
 
-	public UltimateStarter(File inputFile, File toolchainFile, long deadline) {
-		this(inputFile, null, toolchainFile, deadline, null, null);
+
+	public UltimateStarter(UltimateRunDefinition ultimateRunDefinition, long deadline) {
+		this(ultimateRunDefinition, deadline, null, null);
 	}
 
-	public UltimateStarter(File inputFile, File settingsFile, File toolchainFile, long deadline) {
-		this(inputFile, settingsFile, toolchainFile, deadline, null, null);
-	}
-
-	public UltimateStarter(File inputFile, File settingsFile, File toolchainFile, long deadline, File logFile,
+	public UltimateStarter(UltimateRunDefinition ultimateRunDefintion, long deadline, File logFile,
 			String logPattern) {
+		m_UltimateRunDefinition = ultimateRunDefintion;
 		mLogger = Logger.getLogger(UltimateStarter.class);
 		mExternalUltimateCore = new ExternalUltimateCoreTest(this);
-		mInputFile = inputFile;
-		mToolchainFile = toolchainFile;
-		if (mInputFile == null || mToolchainFile == null) {
-			throw new IllegalArgumentException("Toolchain and Input may not be null");
-		}
-		mSettingsFile = settingsFile;
 		mDeadline = deadline;
 		mLogFile = logFile;
 		mLogPattern = logPattern;
@@ -77,7 +67,9 @@ public class UltimateStarter implements IController {
 
 	@Override
 	public int init(ICore core, ILoggingService loggingService) {
-		return mExternalUltimateCore.init(core, loggingService, mSettingsFile,mDeadline,mInputFile,null);
+		return mExternalUltimateCore.init(core, loggingService, 
+				m_UltimateRunDefinition.getSettings(), mDeadline, 
+				m_UltimateRunDefinition.getInput(), null);
 	}
 	
 	public void complete() {
@@ -130,12 +122,12 @@ public class UltimateStarter implements IController {
 	@Override
 	public ToolchainData selectTools(List<ITool> tools) {
 		try {
-			ToolchainData tc = new ToolchainData(mToolchainFile.getAbsolutePath());
+			ToolchainData tc = new ToolchainData(m_UltimateRunDefinition.getToolchain().getAbsolutePath());
 			mCurrentSerivces = tc.getServices();
-			mLogger.info("Loaded toolchain from " + mToolchainFile.getAbsolutePath());
+			mLogger.info("Loaded toolchain from " + m_UltimateRunDefinition.getToolchain().getAbsolutePath());
 			return tc;
 		} catch (FileNotFoundException | JAXBException | SAXException e) {
-			mLogger.fatal("Toolchain could not be created from file " + mToolchainFile + ": " + e);
+			mLogger.fatal("Toolchain could not be created from file " + m_UltimateRunDefinition.getToolchain() + ": " + e);
 			return null;
 		}
 	}

@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimatetest.summary;
 
 import java.io.File;
 
+import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
@@ -52,14 +53,14 @@ public interface ITestSummary {
 	 * @param category
 	 *            The category of this test result as specified by
 	 *            {@link ITestResultDecider#getResultCategory()}
-	 * @param filename
-	 *            The absolute path of the current input file
+	 * @param ultimateRunDefinition
+	 *            Input file, settings file and toolchain file.
 	 * @param message
 	 *            A message for this specific result and this specific input
 	 *            file as specified by
 	 *            {@link ITestResultDecider#getResultMessage()}
 	 */
-	public void addResult(TestResult actualResult, boolean junitResult, String category, String filename, String message);
+	public void addResult(TestResult actualResult, boolean junitResult, String category, UltimateRunDefinition ultimateRunDefinition, String message);
 
 	public void setTestResultDecider(ITestResultDecider decider);
 }

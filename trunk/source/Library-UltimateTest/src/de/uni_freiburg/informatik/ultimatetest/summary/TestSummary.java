@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 
@@ -23,16 +24,16 @@ public abstract class TestSummary implements ITestSummary {
 	}
 
 	@Override
-	public void addResult(TestResult actualResult, boolean junitResult, String category, String filename, String message) {
+	public void addResult(TestResult actualResult, boolean junitResult, String category, UltimateRunDefinition ultimateRunDefinition, String message) {
 		switch (actualResult) {
 		case FAIL:
-			add(getSummary(mFailure, category), filename, message);
+			add(getSummary(mFailure, category), ultimateRunDefinition, message);
 			break;
 		case SUCCESS:
-			add(getSummary(mSuccess, category), filename, message);
+			add(getSummary(mSuccess, category), ultimateRunDefinition, message);
 			break;
 		case UNKNOWN:
-			add(getSummary(mUnknown, category), filename, message);
+			add(getSummary(mUnknown, category), ultimateRunDefinition, message);
 			break;
 		default:
 			throw new IllegalArgumentException("TestResult 'actualResult' has an unknown value");
@@ -125,9 +126,9 @@ public abstract class TestSummary implements ITestSummary {
 		return s;
 	}
 
-	private void add(Summary s, String filename, String message) {
+	private void add(Summary s, UltimateRunDefinition ultimateRunDefinition, String message) {
 		s.setCount(s.getCount() + 1);
-		s.getFileToMessage().put(filename, message);
+		s.getFileToMessage().put(ultimateRunDefinition.getInput().getAbsolutePath(), message);
 	}
 
 	public class Summary {
