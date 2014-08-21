@@ -5,6 +5,7 @@ import java.util.HashSet;
 
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
+import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
@@ -24,6 +25,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
@@ -113,32 +115,33 @@ public class PreRunner extends ASTVisitor {
     			IASTNode operand = ue.getOperand();
     			// add the operand to VariablesOnHeap!
     			String id = null;
-    			if (operand instanceof IASTExpression)
-    				operand = removeBrackets((IASTExpression) operand);
+//    			if (operand instanceof IASTExpression)
+//    				operand = removeBrackets((IASTExpression) operand);
     			
-    			if (operand instanceof IASTIdExpression) {
-    				id = ((IASTIdExpression) operand).getName().toString();
-    			 // TODO : add other cases! ie. structs, where the &-operator
-    			// is applied to one field, etc
-    			} else if ((operand instanceof IASTUnaryExpression) 
-    					&& ((IASTUnaryExpression) operand).getOperand() instanceof IASTFieldReference
-    					) {
-    				if (((IASTFieldReference) ((IASTUnaryExpression) operand).getOperand()).isPointerDereference()) {
-    					id = null; //already on the heap (a pointer), do nothing
-    				} else {
-    					IASTExpression owner = ((IASTFieldReference) ((IASTUnaryExpression) operand).getOperand()).getFieldOwner();
-    					owner = removeBrackets(owner);
-    					if (owner instanceof IASTIdExpression) {
-    						id = owner.getRawSignature();
-    					} else if (owner instanceof IASTUnaryExpression 
-    							&& ((IASTUnaryExpression) owner).getOperator() == IASTUnaryExpression.op_star) { 
-    						id = null; // already on the heap
-    					} else {
-    						String msg = "PR: Unsupported operand in UnaryExpression!";
-    						throw new UnsupportedSyntaxException(loc, msg);
-    					}
-    				}
-                }
+    			id = extraxtExpressionIdFromPossiblyComplexExpression(operand);
+//    			if (operand instanceof IASTIdExpression) {
+//    				id = ((IASTIdExpression) operand).getName().toString();
+//    			 // TODO : add other cases! ie. structs, where the &-operator
+//    			// is applied to one field, etc
+//    			} else if ((operand instanceof IASTUnaryExpression) 
+//    					&& ((IASTUnaryExpression) operand).getOperand() instanceof IASTFieldReference
+//    					) {
+//    				if (((IASTFieldReference) ((IASTUnaryExpression) operand).getOperand()).isPointerDereference()) {
+//    					id = null; //already on the heap (a pointer), do nothing
+//    				} else {
+//    					IASTExpression owner = ((IASTFieldReference) ((IASTUnaryExpression) operand).getOperand()).getFieldOwner();
+//    					owner = removeBrackets(owner);
+//    					if (owner instanceof IASTIdExpression) {
+//    						id = owner.getRawSignature();
+//    					} else if (owner instanceof IASTUnaryExpression 
+//    							&& ((IASTUnaryExpression) owner).getOperator() == IASTUnaryExpression.op_star) { 
+//    						id = null; // already on the heap
+//    					} else {
+//    						String msg = "PR: Unsupported operand in UnaryExpression!";
+//    						throw new UnsupportedSyntaxException(loc, msg);
+//    					}
+//    				}
+//                }
                 this.isMMRequired = true;
                 if (id != null) {
                     IASTFunctionDefinition function = functionTable.get(id);
@@ -177,7 +180,34 @@ public class PreRunner extends ASTVisitor {
         return super.visit(expression);
     }
 
-    @Override
+    /**
+     * For an IdentifierExpression just return the identifier. For something like a struct access (s.a)
+     * return the identifier that designates the storage array used by the expression (here: s).
+     * 
+     */
+    private String extraxtExpressionIdFromPossiblyComplexExpression(
+			IASTNode operand) {
+    	if (operand instanceof IASTIdExpression) {
+    		return ((IASTIdExpression) operand).getName().toString();
+    	} else if (operand instanceof IASTFieldReference) {
+    		return extraxtExpressionIdFromPossiblyComplexExpression(((IASTFieldReference) operand).getFieldOwner());
+    	} else if (operand instanceof IASTArraySubscriptExpression) {
+    		return extraxtExpressionIdFromPossiblyComplexExpression(((IASTArraySubscriptExpression) operand).getArrayExpression());
+    	} else if (operand instanceof IASTUnaryExpression) {
+    		int operator = ((IASTUnaryExpression) operand).getOperator();
+    		switch (operator) {
+    		case IASTUnaryExpression.op_star:
+    			return null; //the star and the amper cancel each other out here -> do nothing
+    		case IASTUnaryExpression.op_bracketedPrimary:
+    			return extraxtExpressionIdFromPossiblyComplexExpression(operand);
+    		default:
+    			return null;
+    		}
+    	}
+		return null;
+	}
+
+	@Override
     public int visit(IASTDeclaration declaration) {
         if (declaration instanceof CASTSimpleDeclaration) {
             CASTSimpleDeclaration cd = (CASTSimpleDeclaration) declaration;
@@ -247,14 +277,14 @@ public class PreRunner extends ASTVisitor {
  		return super.leave(statement);
  	}
 
-    IASTExpression removeBrackets(IASTExpression exp) {
-    	IASTExpression result = exp;
-    	while (result instanceof IASTUnaryExpression 
-    			&& ((IASTUnaryExpression) result).getOperator() == IASTUnaryExpression.op_bracketedPrimary) {
-    		result = ((IASTUnaryExpression) result).getOperand();
-    	}
-    	return result;
-    }
+//	IASTExpression removeBrackets(IASTExpression exp) {
+//    	IASTExpression result = exp;
+//    	while (result instanceof IASTUnaryExpression 
+//    			&& ((IASTUnaryExpression) result).getOperator() == IASTUnaryExpression.op_bracketedPrimary) {
+//    		result = ((IASTUnaryExpression) result).getOperand();
+//    	}
+//    	return result;
+//    }
     
     /**
      * Getter to access the symbol table.
