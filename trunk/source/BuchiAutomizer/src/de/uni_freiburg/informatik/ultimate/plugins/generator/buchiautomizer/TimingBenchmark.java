@@ -9,7 +9,7 @@ public class TimingBenchmark implements ICsvProviderProvider<Double>{
 	private BenchmarkData m_BenchmarkData;
 	
 	public TimingBenchmark(BuchiCegarLoopBenchmarkGenerator benchGen) {
-		m_BenchmarkData = new BenchmarkData();
+		m_BenchmarkData = new BenchmarkData(BuchiCegarLoopBenchmark.getInstance());
 		m_BenchmarkData.aggregateBenchmarkData(benchGen);
 	}
 

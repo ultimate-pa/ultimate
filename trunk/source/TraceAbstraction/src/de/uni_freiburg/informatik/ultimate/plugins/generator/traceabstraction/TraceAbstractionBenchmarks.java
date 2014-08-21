@@ -1,9 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
@@ -17,7 +19,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object>{
 	public TraceAbstractionBenchmarks(RootAnnot rootAnnot) {
 		m_Locations = rootAnnot.getNumberOfProgramPoints();
 		m_ErrorLocations = rootAnnot.getNumberOfErrorNodes();
-		m_CegarLoopBenchmarkData = new BenchmarkData();
+		m_CegarLoopBenchmarkData = new BenchmarkData(CegarLoopBenchmarkType.getInstance());
 	}
 	
 	public void aggregateBenchmarkData(
@@ -46,14 +48,15 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object>{
 
 	@Override
 	public ICsvProvider<Object> createCvsProvider() {
-		Collection<String> keys = m_CegarLoopBenchmarkData.getKeys();
+		LinkedHashMap<String, Object> flatKeyValueMap = m_CegarLoopBenchmarkData.getFlattenedKeyValueMap();
+		Collection<String> keys = flatKeyValueMap.keySet();
 		String[] keysArray = keys.toArray(new String[keys.size()]);
 		SimpleCsvProvider<Object> scp = new SimpleCsvProvider<Object>(keysArray);
 		
 		Object[] values = new Object[keys.size()];
 		int offset = 0;
 		for (String key : keys) {
-			values[offset] = m_CegarLoopBenchmarkData.getValue(key);
+			values[offset] = flatKeyValueMap.get(key);
 			offset++;
 		}
 		scp.addRow(this.getClass().getName(), values );

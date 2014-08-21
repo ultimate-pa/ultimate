@@ -8,12 +8,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.be
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkGeneratorWithStopwatches;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.TotalInterpolationAutomatonBuilder.TotalInterpolationBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmarkType;
 
 public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatches implements IBenchmarkDataProvider {
 	
-	private final BenchmarkData m_EcData = new BenchmarkData();
-	private final BenchmarkData m_TcData = new BenchmarkData();
-	private final BenchmarkData m_TiData = new BenchmarkData();
+	private final BenchmarkData m_EcData = new BenchmarkData(EdgeCheckerBenchmarkType.getInstance());
+	private final BenchmarkData m_TcData = new BenchmarkData(TraceCheckerBenchmarkType.getInstance());
+	private final BenchmarkData m_TiData = new BenchmarkData(TotalInterpolationBenchmarkType.getInstance());
 	private int m_StatesRemovedByMinimization = 0;
 	private int m_Iterations = 0;
 	private SizeIterationPair m_BiggestAbstraction = CegarLoopBenchmarkType.getInstance().new SizeIterationPair(-1, -1);

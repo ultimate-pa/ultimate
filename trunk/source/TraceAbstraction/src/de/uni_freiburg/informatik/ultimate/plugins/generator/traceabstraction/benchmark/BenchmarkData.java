@@ -12,17 +12,24 @@ import java.util.Map.Entry;
  */
 public class BenchmarkData implements IBenchmarkDataProvider {
 	private final Map<String, Object> m_Key2Value = new HashMap<String, Object>();
-	private IBenchmarkType m_BenchmarkType;
+	private final IBenchmarkType m_BenchmarkType;
 	
+	
+	public BenchmarkData(IBenchmarkType benchmarkType) {
+		super();
+		m_BenchmarkType = benchmarkType;
+	}
+
 	/**
 	 * Aggregate the benchmark data of this object and another 
 	 * IBenchmarkDataProvider. The aggregated data is stored in this object.
 	 * Both objects have to have the same IBenchmarkType.
 	 */
 	public void aggregateBenchmarkData(IBenchmarkDataProvider benchmarkDataProvider) {
-		if (m_BenchmarkType == null) {
-			assert m_Key2Value.isEmpty() : "may not contain data if type is not known";
-			m_BenchmarkType = benchmarkDataProvider.getBenchmarkType();
+		if (m_BenchmarkType != benchmarkDataProvider.getBenchmarkType()) {
+			throw new AssertionError("incompatible benchmarks");
+		}
+		if (m_Key2Value.isEmpty()) {
 			for (String key : m_BenchmarkType.getKeys()) {
 				Object value = benchmarkDataProvider.getValue(key);
 				// TODO: maybe we want to allow null values
@@ -34,9 +41,7 @@ public class BenchmarkData implements IBenchmarkDataProvider {
 		} else {
 			//TODO: maybe we want to allow different types and only the keys
 			// have to be the same...
-			if (m_BenchmarkType != benchmarkDataProvider.getBenchmarkType()) {
-				throw new AssertionError("incompatible benchmarks");
-			}
+
 			for (String key : m_BenchmarkType.getKeys()) {
 				Object valueThis = m_Key2Value.get(key);
 				Object valueOther = benchmarkDataProvider.getValue(key);
@@ -52,15 +57,15 @@ public class BenchmarkData implements IBenchmarkDataProvider {
 	@Override
 	public Object getValue(String key) {
 		Object data = m_Key2Value.get(key);
-		if (data == null) {
-			throw new IllegalArgumentException("No value for " + key + " available");
-		}
+//		if (data == null) {
+//			throw new IllegalArgumentException("No value for " + key + " available");
+//		}
 		return data;
 	}
 	
 	@Override
 	public String toString() {
-		if (m_BenchmarkType == null) {
+		if (isEmpty()) {
 			return "No data available";
 		} else {
 			return m_BenchmarkType.prettyprintBenchmarkData(this);
@@ -69,7 +74,7 @@ public class BenchmarkData implements IBenchmarkDataProvider {
 
 	@Override
 	public Collection<String> getKeys() {
-		if (m_BenchmarkType == null) {
+		if (isEmpty()) {
 			throw new AssertionError("BenchmarkData not yet initialized");
 		} else {
 			return m_BenchmarkType.getKeys();
@@ -99,11 +104,15 @@ public class BenchmarkData implements IBenchmarkDataProvider {
 		for(String key : getKeys()) {
 			Object value = getValue(key);
 			if (value instanceof BenchmarkData) {
-				LinkedHashMap<String, Object> FlattenedKeyValueMap = 
-						((BenchmarkData) value).getFlattenedKeyValueMap();
-				for (Entry<String, Object> entry : FlattenedKeyValueMap.entrySet()) {
-					String composedKey = key + "_" + entry.getKey();
-					result.put(composedKey, entry.getValue());
+				if (((BenchmarkData) value).isEmpty()) {
+					// do nothing, we omit the empty result in our map
+				} else {
+					LinkedHashMap<String, Object> FlattenedKeyValueMap = 
+							((BenchmarkData) value).getFlattenedKeyValueMap();
+					for (Entry<String, Object> entry : FlattenedKeyValueMap.entrySet()) {
+						String composedKey = key + "_" + entry.getKey();
+						result.put(composedKey, entry.getValue());
+					}
 				}
 			} else {
 				result.put(key, value);

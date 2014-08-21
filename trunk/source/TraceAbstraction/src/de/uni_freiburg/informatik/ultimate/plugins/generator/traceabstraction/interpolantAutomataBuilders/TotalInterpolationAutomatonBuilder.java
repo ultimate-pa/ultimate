@@ -33,11 +33,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.be
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 public class TotalInterpolationAutomatonBuilder {
@@ -588,8 +590,8 @@ public class TotalInterpolationAutomatonBuilder {
 		private int m_RunSearches = 0;
 		private int m_UsefullRunGeq2 = 0;
 		private int m_UselessRunGeq2 = 0;
-		private final BenchmarkData m_EcData = new BenchmarkData();
-		private final BenchmarkData m_TcData = new BenchmarkData();
+		private final BenchmarkData m_EcData = new BenchmarkData(EdgeCheckerBenchmarkType.getInstance());
+		private final BenchmarkData m_TcData = new BenchmarkData(TraceCheckerBenchmarkType.getInstance());
 
 		public TotalInterpolationBenchmarkGenerator() {
 		}
