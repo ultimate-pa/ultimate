@@ -56,7 +56,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object>{
 			values[offset] = m_CegarLoopBenchmarkData.getValue(key);
 			offset++;
 		}
-		scp.addRow("theCrowRow", values );
+		scp.addRow(this.getClass().getName(), values );
 		return scp;
 	}
 	
