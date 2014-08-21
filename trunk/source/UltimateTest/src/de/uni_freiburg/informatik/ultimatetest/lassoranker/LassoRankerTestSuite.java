@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.junit_helper.testfactory.TestFactory;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
+import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
@@ -69,10 +70,9 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 		String logPattern = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
 				.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
 		for (File inputFile : inputFiles) {
+			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
 			UltimateStarter starter = new UltimateStarter(
-					inputFile,
-					settingsFile,
-					toolchainFile,
+					urd,
 					s_deadline,
 					s_produceLogFiles ? new File(Util.generateLogFilename(
 							inputFile, "LassoRanker")) : null,
@@ -82,7 +82,7 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 			if (decider.getExpectedResult() == ExpectedResult.IGNORE) {
 				continue;
 			}
-			rtr.add(new UltimateTestCase(starter, decider, null, inputFile.getName(), logPattern));
+			rtr.add(new UltimateTestCase(starter, decider, null, inputFile.getName(), urd));
 		}
 
 		return rtr;

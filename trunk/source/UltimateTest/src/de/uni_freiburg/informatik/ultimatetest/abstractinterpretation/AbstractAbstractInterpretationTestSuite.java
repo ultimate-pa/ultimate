@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
@@ -45,10 +46,11 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 		}
 
 		for (File inputFile : inputFiles) {
-			UltimateStarter starter = new UltimateStarter(inputFile, settingsFile, toolchainFile, deadline, null, null);
+			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
+			UltimateStarter starter = new UltimateStarter(urd, deadline, null, null);
 			m_testCases.add(new UltimateTestCase(starter,
 					new AbstractInterpretationTestResultDecider(inputFile), m_Summary, uniqueString + "_"
-							+ inputFile.getAbsolutePath(), inputFile.getAbsolutePath()));
+							+ inputFile.getAbsolutePath(), urd));
 		}
 	}
 

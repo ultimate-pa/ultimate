@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
@@ -172,18 +173,19 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 			}
 
 			String name = categoryName + ": " + singleFile.getAbsolutePath();
+			UltimateRunDefinition urd = new UltimateRunDefinition(singleFile, settingsFile, toolchainFile);
 			UltimateStarter starter;
 			if (!getCreateLogfileForEachTestCase()) {
-				starter = new UltimateStarter(singleFile, settingsFile, toolchainFile, deadline);
+				starter = new UltimateStarter(urd, deadline);
 			} else {
 				String logPattern = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
 						.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
-				starter = new UltimateStarter(singleFile, settingsFile, toolchainFile, deadline, new File(
+				starter = new UltimateStarter(urd, deadline, new File(
 						Util.generateLogFilename(singleFile, description)), logPattern);
 			}
 
 			UltimateTestCase testCase = new UltimateTestCase(starter, new SVCOMP14TestResultDecider(singleFile),
-					summary, name, name);
+					summary, name, urd);
 			rtr.add(testCase);
 
 		}

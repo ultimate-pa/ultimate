@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
@@ -33,11 +34,11 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 			Collection<File> inputFiles = getInputFiles(runConfiguration.ToolchainFile.getParentFile());
 
 			for (File inputFile : inputFiles) {
-				UltimateStarter starter = new UltimateStarter(inputFile, runConfiguration.SettingsFile,
-						runConfiguration.ToolchainFile, mTimeout, null, null);
+				UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, runConfiguration.SettingsFile, runConfiguration.ToolchainFile);
+				UltimateStarter starter = new UltimateStarter(urd, mTimeout, null, null);
 				rtr.add(new UltimateTestCase(starter, getTestResultDecider(inputFile), null, String.format(
 						"%s+%s: %s", runConfiguration.ToolchainFile.getName(), runConfiguration.SettingsFile.getName(),
-						inputFile.getAbsolutePath()), inputFile.getAbsolutePath()));
+						inputFile.getAbsolutePath()), urd));
 			}
 		}
 //		return Util.firstN(rtr, 3);

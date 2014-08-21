@@ -23,20 +23,21 @@ public class TraceAbstractionTestSummary extends TestSummary {
 	 */
 	private Map<String, Collection<BenchmarkResult>> m_TraceAbstractionBenchmarks;
 
-	public TraceAbstractionTestSummary(String testSuiteCanonicalName, String logFilePath) {
+	public TraceAbstractionTestSummary(String testSuiteCanonicalName, String description) {
 		super(testSuiteCanonicalName);
-		mLogFilePath = logFilePath;
+		mLogFilePath = Util.generateSummaryLogFilename(
+				Util.getPathFromSurefire(".", this.getClass().getCanonicalName()), description);
 		mCount = 0;
 		m_TraceAbstractionBenchmarks = new HashMap<String, Collection<BenchmarkResult>>();
 	}
 
 	@Override
-	public void addResult(TestResult actualResult, boolean junitResult, String category, String filename, String message) {
-		super.addResult(actualResult, junitResult, category, filename, message);
+	public void addResult(TestResult actualResult, boolean junitResult, String category, UltimateRunDefinition ultimateRunDefinition, String message) {
+		super.addResult(actualResult, junitResult, category, ultimateRunDefinition, message);
 
 		ITestResultDecider decider = getTestResultDecider();
 		if (decider instanceof TraceAbstractionTestResultDecider) {
-			addTraceAbstractionBenchmarks(filename, Util.filterResults(
+			addTraceAbstractionBenchmarks(ultimateRunDefinition.getInput().getAbsolutePath(), Util.filterResults(
 					((TraceAbstractionTestResultDecider) decider).getUltimateResults(), BenchmarkResult.class));
 		}
 

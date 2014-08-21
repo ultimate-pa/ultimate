@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
@@ -34,16 +35,17 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 					Util.getPathFromSurefire(".", this.getClass().getCanonicalName()), description);
 		}
 		if (m_Summary == null) {
-//			m_Summary = new TraceAbstractionTestSummary(this.getClass().getCanonicalName(), m_summaryLogFileName);
-			m_Summary = new NewTraceAbstractionTestSummary(this.getClass().getCanonicalName(), m_summaryLogFileName);
+//			m_Summary = new TraceAbstractionTestSummary(this.getClass().getCanonicalName(), description);
+			m_Summary = new NewTraceAbstractionTestSummary(this.getClass().getCanonicalName(), description);
 			getSummaries().add(m_Summary);
 		}
 
 		for (File inputFile : inputFiles) {
-			UltimateStarter starter = new UltimateStarter(inputFile, settingsFile, toolchainFile, deadline, null, null);
+			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
+			UltimateStarter starter = new UltimateStarter(urd, deadline, null, null);
 			m_testCases.add(new UltimateTestCase(starter,
 					new TraceAbstractionTestResultDecider(inputFile, settingsFile), m_Summary, uniqueString + "_"
-							+ inputFile.getAbsolutePath(), inputFile.getAbsolutePath()));
+							+ inputFile.getAbsolutePath(), urd));
 		}
 	}
 

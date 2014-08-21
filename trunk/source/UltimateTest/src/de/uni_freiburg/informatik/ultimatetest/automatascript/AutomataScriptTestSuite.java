@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
@@ -50,13 +51,14 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 
 		for (File inputFile : inputFiles) {
 			File settingsFile = null;
-			UltimateStarter starter = new UltimateStarter(inputFile, settingsFile , m_ToolchainFile, m_Timeout, null, null);
+			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, m_ToolchainFile);
+			UltimateStarter starter = new UltimateStarter(urd, m_Timeout, null, null);
 			UltimateTestCase utc = new UltimateTestCase(
 					starter,
 					new AutomataScriptTestResultDecider(), 
 					testResultSummary, 
 					m_Description + "_" + inputFile.getAbsolutePath(), 
-					inputFile.getAbsolutePath());
+					urd);
 			testCases.add(utc);
 		}
 		return testCases;

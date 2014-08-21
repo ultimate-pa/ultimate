@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
+import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
@@ -53,8 +54,8 @@ public class AutomataScriptTestSummary implements ITestSummary {
 
 	@Override
 	public void addResult(TestResult actualResult, boolean junitResult,
-			String category, String filename, String message) {
-		m_Results.add(new Triple<String, String, String>(filename, category, message));
+			String category, UltimateRunDefinition ultimateRunDefinition, String message) {
+		m_Results.add(new Triple<String, String, String>(ultimateRunDefinition.getInput().getAbsolutePath(), category, message));
 
 	}
 

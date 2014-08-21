@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
@@ -27,13 +28,14 @@ public abstract class AbstractCTranslationTestSuite extends UltimateTestSuite {
 		long deadline = 10000;
 
 		for (File inputFile : inputFiles) {
-			UltimateStarter starter = new UltimateStarter(inputFile, null, toolchainFile, deadline, null, null);
+			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, null, toolchainFile);
+			UltimateStarter starter = new UltimateStarter(urd, deadline, null, null);
 			rtr.add(new UltimateTestCase(
 					starter, 
 					new TranslationTestResultDecider(inputFile.getAbsolutePath()), 
 					summary,
 					inputFile.getAbsolutePath(), 
-					inputFile.getAbsolutePath()));
+					urd));
 		}
 
 		return rtr;
