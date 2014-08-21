@@ -247,8 +247,8 @@ public class CsvUtils {
 			ICsvProvider<T> providerA, ICsvProvider<T> providerB) {
 		List<String> providerAColumns = Arrays.asList(providerA.getColumnTitles());
 		List<String> providerBColumns = Arrays.asList(providerB.getColumnTitles());
-		List<Integer> additionalColumnForProvider1 = new ArrayList<Integer>();
-		List<Integer> additionalColumnForProvider2 = new ArrayList<Integer>();
+		List<Integer> additionalColumnForProviderA = new ArrayList<Integer>();
+		List<Integer> additionalColumnForProviderB = new ArrayList<Integer>();
 		List<String> resultColumns = new ArrayList<String>();
 		int pAindex = 0;
 		int pBindex = 0;
@@ -261,11 +261,11 @@ public class CsvUtils {
 				pBindex++;
 			} else if (pAindex < providerAColumns.size() && !providerBColumns.contains(currentPACol)) {
 				resultColumns.add(currentPACol);
-				additionalColumnForProvider2.add(pBindex);
+				additionalColumnForProviderB.add(pBindex);
 				pAindex++;
 			} else if (pBindex < providerBColumns.size() && !providerAColumns.contains(currentPBCol)) {
 				resultColumns.add(currentPACol);
-				additionalColumnForProvider1.add(pAindex);
+				additionalColumnForProviderA.add(pAindex);
 				pBindex++;
 			} else {
 				throw new IllegalArgumentException("unable to merge, both "
@@ -275,11 +275,11 @@ public class CsvUtils {
 		SimpleCsvProvider<T> result = new SimpleCsvProvider<>(resultColumns.toArray(new String[resultColumns.size()]));
 		for (String rowTitle : providerA.getRowTitles()) {
 			T[] p1Row = providerA.getRow(rowTitle);
-			result.addRow(rowTitle, insertNullElements(p1Row, additionalColumnForProvider1));
+			result.addRow(rowTitle, insertNullElements(p1Row, additionalColumnForProviderA));
 		}
 		for (String rowTitle : providerB.getRowTitles()) {
 			T[] p2Row = providerB.getRow(rowTitle);
-			result.addRow(rowTitle, insertNullElements(p2Row, additionalColumnForProvider2));
+			result.addRow(rowTitle, insertNullElements(p2Row, additionalColumnForProviderB));
 		}
 		return result;
 	}
@@ -294,7 +294,11 @@ public class CsvUtils {
 			List<Integer> additionalNullValuePositions) {
 		List<T> result = new LinkedList<T>(Arrays.asList(array));
 		for (int i=additionalNullValuePositions.size()-1; i>=0; i--) {
-			result.add(i, null);
+			try {
+				result.add(additionalNullValuePositions.get(i), null);
+			} catch (IndexOutOfBoundsException e) {
+				//do nothing
+			}
 		}
 		return (T[]) result.toArray();
 	}
