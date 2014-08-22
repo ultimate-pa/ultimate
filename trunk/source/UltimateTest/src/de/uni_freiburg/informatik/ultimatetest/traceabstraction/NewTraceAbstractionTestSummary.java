@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -39,7 +40,7 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 		mName = summaryName;
 		m_TestDescription = description;
 		mLogFilePath = Util.generateSummaryLogFilename(
-				Util.getPathFromSurefire(".", this.getClass().getCanonicalName()), description);
+				Util.getPathFromSurefire(".", mName), description);
 		mSummaryMap = new LinkedHashMap<>();
 	}
 
@@ -153,41 +154,59 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 	}
 	
 	private class CsvProviderSummary {
-		private Map<Class, ICsvProvider> m_Benchmark2CsvProvider = new HashMap<Class, ICsvProvider>();
+		private Map<Class, ICsvProvider<Object>> m_Benchmark2CsvProvider = new HashMap<Class, ICsvProvider<Object>>();
 		
 		void add(UltimateRunDefinition ultimateRunDefintion, BenchmarkResult<?> result) {
 			ICsvProviderProvider<?> benchmark = result.getBenchmark();
-			ICsvProvider<?> benchmarkCsv = benchmark.createCvsProvider();
-			ICsvProvider oldCsvProvider = m_Benchmark2CsvProvider.get(benchmark.getClass());
+			ICsvProvider<Object> benchmarkCsv = (ICsvProvider<Object>) benchmark.createCvsProvider();
+			ICsvProvider<Object> benchmarkCsvWithRunDefinition = addUltimateRunDefinition(ultimateRunDefintion, benchmarkCsv);
+			
+			ICsvProvider<Object> oldCsvProvider = m_Benchmark2CsvProvider.get(benchmark.getClass());
 			if (oldCsvProvider == null) {
 				oldCsvProvider = new SimpleCsvProvider<>(benchmarkCsv.getColumnTitles());
 				m_Benchmark2CsvProvider.put(benchmark.getClass(), oldCsvProvider);
 			}
-			if (benchmarkCsv.getRowTitles().length != 1) {
-				throw new AssertionError("expecting that benchmark has exactly one row");
-			}
-			ICsvProvider benchmarkCsvWithDescription  = new SimpleCsvProvider<>(benchmarkCsv.getColumnTitles());
-			benchmarkCsvWithDescription.addRow(ultimateRunDefintion.toString(), benchmarkCsv.getRow(benchmark.getClass().getName()));
-//			for (String test : benchmarkCsv.getRowTitles()) {
-//				
-//			}
-			ICsvProvider newCsvProvider = CsvUtils.concatenateRowsWithDifferentColumns(oldCsvProvider, benchmarkCsv);
+			
+			ICsvProvider<Object> newCsvProvider = CsvUtils.concatenateRowsWithDifferentColumns(oldCsvProvider, benchmarkCsvWithRunDefinition);
 			m_Benchmark2CsvProvider.put(benchmark.getClass(), newCsvProvider);
 
 		}
 		
+		private ICsvProvider<Object> addUltimateRunDefinition(UltimateRunDefinition ultimateRunDefinition, ICsvProvider<Object> singleRowProvider) {
+			String[] resultColumns = new String[singleRowProvider.getColumnTitles().length + 2];
+			resultColumns[0] = "Settings";
+			resultColumns[1] = "Toolchain";
+			System.arraycopy(singleRowProvider.getColumnTitles(), 0, resultColumns, 2, singleRowProvider.getColumnTitles().length);
+			if (singleRowProvider.getRowTitles().length != 1) {
+				throw new AssertionError("expecting that benchmark has exactly one row");
+			}
+			String rowTitle = Arrays.asList(singleRowProvider.getRowTitles()).iterator().next();
+			Object[] row = singleRowProvider.getRow(rowTitle);
+			Object[] resultRow = new Object[singleRowProvider.getRow(rowTitle).length + 2];
+			resultRow[0] = ultimateRunDefinition.getSettings().getAbsolutePath();
+			resultRow[1] = ultimateRunDefinition.getToolchain().getAbsolutePath();
+			System.arraycopy(row, 0, resultRow, 2, row.length);
+			ICsvProvider<Object> result = new SimpleCsvProvider<>(resultColumns);
+			result.addRow(ultimateRunDefinition.getInput().getAbsolutePath(), resultRow);
+			return result;
+		}
+		
 		
 		private void writeAllCsv() {
+			String logFilePath = Util.generateSummaryLogFilename(
+					Util.getPathFromSurefire(".", mName), m_TestDescription);
+			String csvPrefix = logFilePath.substring(0, logFilePath.length() - 4);
 			
-			for (Entry<Class, ICsvProvider> entry : m_Benchmark2CsvProvider.entrySet()) {
-				String csvFileName = entry.getKey().getName() + getTestSuiteCanonicalName();
-				File csvFile = new File(Util.getPathFromSurefire("test.csv", getTestSuiteCanonicalName()));
+			for (Entry<Class, ICsvProvider<Object>> entry : m_Benchmark2CsvProvider.entrySet()) {
+				String csvFileName = csvPrefix + entry.getKey().getSimpleName() + ".csv";
+				
+				File csvFile = new File(csvFileName);
 				
 				try {
 					FileWriter fw = new FileWriter(csvFile);
 					Logger.getLogger(UltimateTestSuite.class).info(
 							"Writing CSV for " + entry.getKey() + " to " + csvFile.getAbsolutePath());
-					fw.write(entry.getValue().toString());
+					fw.write(entry.getValue().toCsv("File").toString());
 					fw.close();
 				} catch (IOException e) {
 					e.printStackTrace();
