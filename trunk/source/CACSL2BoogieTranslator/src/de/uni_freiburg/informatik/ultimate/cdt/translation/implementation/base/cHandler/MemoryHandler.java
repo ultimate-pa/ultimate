@@ -148,34 +148,9 @@ public class MemoryHandler {
 	
 	
 	//constants for the sizes of the base types
-private boolean useConstantTypeSizes = true;
-	//base types
-	private int sizeOfIntType = 4;
-	private int sizeOfPointerType = 8;
-	private int sizeOfFloatType = 4;
-	//other types
-	private int sizeOfCharType = 1;
-	private int sizeOfBoolType = 1;
-	private int sizeOfShortType = 1;
-	private int sizeOfLongType = 8;
-	private int sizeOfDoubleType = 8;
-	private int sizeOfSCharType = 1;
-	private int sizeOfUCharType = 1;
-	private int sizeOfWCharType = 1;
-	private int sizeOfChar16Type = 2;
-	private int sizeOfChar32Type = 4;
-	private int sizeOfUShortType = 2;
-	private int sizeOfUIntType = 4;
-	private int sizeOfULongType = 8;
-	private int sizeOfLongLongType = 8;
-	private int sizeOfULongLongType = 8;
-	private int sizeOfComplexFloatType = 8;
-	private int sizeOfComplexDoubleType = 8;
-	private int sizeOfLongDoubleType = 8;
-	private int sizeOfComplexLongDoubleType = 8;
-	private int defaultTypeSize = 8;
-
-    /**
+	private boolean useConstantTypeSizes = true;
+	private TypeSizeConstants typeSizeConstants;
+	/**
      * Constructor.
      * @param checkPointerValidity 
      */
@@ -189,7 +164,10 @@ private boolean useConstantTypeSizes = true;
 		this.variablesToBeFreed = new LinkedScopedHashMap<LocalLValue, Integer>();
 		//read preferences from settings
 		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-    	m_PointerBaseValidity = 
+		
+		typeSizeConstants = new TypeSizeConstants(ups);
+
+		m_PointerBaseValidity = 
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, POINTER_CHECKMODE.class);
     	m_PointerAllocated = 
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_ALLOC, POINTER_CHECKMODE.class);
@@ -201,51 +179,7 @@ private boolean useConstantTypeSizes = true;
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY, POINTER_CHECKMODE.class);
 		useConstantTypeSizes =
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
-		sizeOfBoolType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
-		sizeOfCharType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR);
-		sizeOfShortType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_SHORT);
-		sizeOfIntType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_INT);
-		sizeOfLongType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONG);
-		sizeOfFloatType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_FLOAT);
-		sizeOfDoubleType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_DOUBLE);
-		sizeOfPointerType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_POINTER);
-		sizeOfBoolType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
-		sizeOfUCharType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_UCHAR);
-		sizeOfWCharType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_WCHAR);
-		sizeOfChar16Type = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR16);
-		sizeOfChar32Type = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR32);
-		sizeOfUShortType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_USHORT);
-		sizeOfUIntType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_UINT);
-		sizeOfULongType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_ULONG);
-		sizeOfLongLongType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGLONG);
-		sizeOfULongLongType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_ULONGLONG);
-		sizeOfComplexFloatType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_COMPLEXFLOAT);
-		sizeOfComplexDoubleType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_COMPLEXDOUBLE);
-		sizeOfLongDoubleType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE);
-		sizeOfComplexLongDoubleType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_COMPLEXLONGDOUBLE);
-
+		
 		isIntArrayRequiredInMM = false;
 		isFloatArrayRequiredInMM = false;
 		isPointerArrayRequiredInMM = false;
@@ -356,19 +290,19 @@ private boolean useConstantTypeSizes = true;
         	int value = 0;
         	switch (t) {
         	case "INT":
-        		value = sizeOfIntType;
+        		value = typeSizeConstants.sizeOfIntType;
         		break;
         	case "CHAR":
-        		value = sizeOfCharType;
+        		value = typeSizeConstants.sizeOfCharType;
         		break;
         	case "FLOAT":
-        		value = sizeOfFloatType;
+        		value = typeSizeConstants.sizeOfFloatType;
         		break;
         	case "DOUBLE":
-        		value = sizeOfDoubleType;
+        		value = typeSizeConstants.sizeOfDoubleType;
         		break;
         	default:
-        		value = defaultTypeSize;
+        		value = typeSizeConstants.defaultTypeSize;
         	}
         	axioms.add(new Axiom(l, new Attribute[0], new BinaryExpression(l,
         			Operator.COMPEQ, idex, new IntegerLiteral(l, new Integer(value).toString()))));
@@ -953,74 +887,74 @@ private boolean useConstantTypeSizes = true;
 		if (cType instanceof CPrimitive) {
 			switch (((CPrimitive) cType).getType()) {
 			case INT:
-				size = sizeOfIntType;
+				size = typeSizeConstants.sizeOfIntType;
 				break;
 			case FLOAT:
-				size = sizeOfFloatType;
+				size = typeSizeConstants.sizeOfFloatType;
 				break;
 			case CHAR:
-				size = sizeOfCharType;
+				size = typeSizeConstants.sizeOfCharType;
 				break;
 			case BOOL:
-				size = sizeOfBoolType;
+				size = typeSizeConstants.sizeOfBoolType;
 				break;
 			case SHORT:
-				size = sizeOfShortType;
+				size = typeSizeConstants.sizeOfShortType;
 				break;
 			case DOUBLE:
-				size = sizeOfDoubleType;
+				size = typeSizeConstants.sizeOfDoubleType;
 				break;
 			case LONG:
-				size = sizeOfLongType;
+				size = typeSizeConstants.sizeOfLongType;
 				break;
 			case SCHAR:
-				size = sizeOfSCharType;
+				size = typeSizeConstants.sizeOfSCharType;
 				break;
 			case UCHAR:
-				size = sizeOfUCharType;
+				size = typeSizeConstants.sizeOfUCharType;
 				break;
 			case WCHAR:
-				size = sizeOfWCharType;
+				size = typeSizeConstants.sizeOfWCharType;
 				break;
 			case CHAR16:
-				size = sizeOfChar16Type;
+				size = typeSizeConstants.sizeOfChar16Type;
 				break;
 			case CHAR32:
-				size = sizeOfChar32Type;
+				size = typeSizeConstants.sizeOfChar32Type;
 				break;
 			case USHORT:
-				size = sizeOfUShortType;
+				size = typeSizeConstants.sizeOfUShortType;
 				break;
 			case UINT:
-				size = sizeOfUIntType;
+				size = typeSizeConstants.sizeOfUIntType;
 				break;
 			case ULONG:
-				size = sizeOfULongType;
+				size = typeSizeConstants.sizeOfULongType;
 				break;
 			case LONGLONG:
-				size = sizeOfLongLongType;
+				size = typeSizeConstants.sizeOfLongLongType;
 				break;
 			case ULONGLONG:
-				size = sizeOfULongLongType;
+				size = typeSizeConstants.sizeOfULongLongType;
 				break;
 			case COMPLEX_FLOAT:
-				size = sizeOfComplexFloatType;
+				size = typeSizeConstants.sizeOfComplexFloatType;
 				break;
 			case COMPLEX_DOUBLE:
-				size = sizeOfComplexDoubleType;
+				size = typeSizeConstants.sizeOfComplexDoubleType;
 				break;
 			case LONGDOUBLE:
-				size = sizeOfLongDoubleType;
+				size = typeSizeConstants.sizeOfLongDoubleType;
 				break;
 			case COMPLEX_LONGDOUBLE:
-				size = sizeOfComplexLongDoubleType;
+				size = typeSizeConstants.sizeOfComplexLongDoubleType;
 				break;
 			default:
-				size = defaultTypeSize;
+				size = typeSizeConstants.defaultTypeSize;
 				break;
 			}
 		} else if (cType instanceof CPointer) {
-			size = sizeOfPointerType;
+			size = typeSizeConstants.sizeOfPointerType;
  		} else if (cType instanceof CArray) {
  			size = calculateSizeOfWithGivenTypeSizes(loc, ((CArray) cType).getValueType());
  			for (Expression dim : ((CArray) cType).getDimensions()) {
