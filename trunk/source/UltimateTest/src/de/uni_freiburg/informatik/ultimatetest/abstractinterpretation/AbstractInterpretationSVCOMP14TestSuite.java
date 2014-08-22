@@ -9,14 +9,16 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
- * Stolen from Svcomp_Reach_PreciseMemoryModel ;-)
+ * @author Christopher Dillo
+ *
  */
-public class AbstractInterpretationToyTestSuite extends
+public class AbstractInterpretationSVCOMP14TestSuite extends
 		AbstractAbstractInterpretationTestSuite {
 	
 	private static final String[] m_Directories = {
-		//"examples/programs/toy/",
-		"examples/programs/regression/bpl/",
+		"examples/svcomp/loops/",
+		"examples/svcomp/eca/",
+		"examples/svcomp/systemc/",
 		};
 	
 	// Time out for each test case in milliseconds
@@ -25,15 +27,16 @@ public class AbstractInterpretationToyTestSuite extends
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		addTestCases(
-				"AbstractInterpretation.xml",
+				"AbstractInterpretationC.xml",
 				"AbstractInterpretation.epf",
 			    m_Directories,
-			    new String[] {".bpl"},
-			    "Abstract interpretation BPL safety check",
-			    "absintbpl",
+			    new String[] {".c"},
+			    "Abstract interpretation SVCOMP safety check",
+			    "absintsvcomp",
 			    m_Timeout,
-			    false);
-		//return Util.firstN(super.createTestCases(), 30);
+			    true);
+		//return Util.firstN(super.createTestCases(), 10);
 		return super.createTestCases();
 	}
+
 }

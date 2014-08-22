@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
@@ -219,28 +220,25 @@ public class AbstractInterpretationBoogieVisitor {
 			return;
 		}
 
-		String methodName = statement.getMethodName();
+		String procedureName = statement.getMethodName();
 
 		// remove scope level of exited method
 		m_resultingState.popStackLayer();
 		
-		m_logger.debug(String.format("RETURN: %s", methodName));
+		m_logger.debug(String.format("RETURN: %s", procedureName));
 
 		LeftHandSide[] leftHandSides = statement.getLhs();
 		
 		// fetch method declaration to get input parameters
-		List<Declaration> methodDecList = m_symbolTable.getFunctionOrProcedureDeclaration(methodName);
+		List<Declaration> methodDecList = m_symbolTable.getFunctionOrProcedureDeclaration(procedureName);
 		if (methodDecList.size() >= 1) {
 			Declaration methodDec = methodDecList.get(0);
 			VarList[] parameters = null;
-			if (methodDec instanceof FunctionDeclaration) {
-				FunctionDeclaration functionDec = (FunctionDeclaration) methodDec;
-				parameters = new VarList[]{functionDec.getOutParam()};
-			} else if (methodDec instanceof Procedure) {
+			if (methodDec instanceof Procedure) {
 				Procedure procedureDec = (Procedure) methodDec;
 				parameters = procedureDec.getOutParams();
 			} else {
-				m_logger.warn(String.format("Unknown method declaration kind \"%s\" encountered.", methodDec));
+				m_logger.warn(String.format("Invalid procedure declaration \"%s\" encountered.", methodDec));
 			}
 			if (parameters != null) {
 				// get value for each output parameter && write it to the destination variable
@@ -248,7 +246,8 @@ public class AbstractInterpretationBoogieVisitor {
 					for (int i = 0; i < parameters.length; i++) {
 						String[] identifiers = parameters[i].getIdentifiers();
 						if (identifiers.length != 1) {
-							m_logger.warn(String.format("Invalid number of identifiers for method \"%s\" output parameter argument %d", methodName, i));
+							m_logger.warn(String.format("Invalid number of identifiers for procedure \"%s\" output parameter argument %d",
+									procedureName, i));
 						} else {
 							IAbstractValue<?> returnValue = m_currentState.readValue(identifiers[0], false);
 							if (returnValue == null)
@@ -260,7 +259,7 @@ public class AbstractInterpretationBoogieVisitor {
 						}
 					}
 				} else {
-					m_logger.warn(String.format("Invalid number of result parameters for method return of \"%s\"", methodName));
+					m_logger.warn(String.format("Invalid number of result parameters for procedure return of \"%s\"", procedureName));
 				}
 			}
 		}
@@ -380,8 +379,10 @@ public class AbstractInterpretationBoogieVisitor {
 			visit((StringLiteral) expr);
 		} else if (expr instanceof UnaryExpression) {
 			visit((UnaryExpression) expr);
+		} else if (expr instanceof FunctionApplication) {
+			visit((FunctionApplication) expr);
 		} else {
-			m_logger.error(String.format("Unsupported expression class ", expr.getClass()));
+			m_logger.error(String.format("Unsupported expression %s", expr.getClass()));
 		}
 		
 		if (m_resultValue != null)
@@ -661,6 +662,26 @@ public class AbstractInterpretationBoogieVisitor {
 			m_resultValue = getTopValueForType(m_lhsType);
 		}
 	}
+	
+	protected void visit(FunctionApplication expr) {
+		String ident = expr.getIdentifier();
+		List<Declaration> decList = m_symbolTable.getFunctionOrProcedureDeclaration(ident);
+		if ((decList == null) || decList.isEmpty()) {
+			m_resultValue = getTopValueForType(expr.getType());
+			return;
+		}
+		Declaration dec = decList.get(0);
+		if (dec instanceof FunctionDeclaration) {
+			FunctionDeclaration funDec = (FunctionDeclaration) dec;
+			Expression functionBody = funDec.getBody();
+			if (functionBody == null) {
+				m_logger.warn(String.format("Function %s has no body expression, returning TOP of its result type.", ident));
+				m_resultValue = getTopValueForType(funDec.getOutParam().getType().getBoogieType());
+				return;
+			}
+			m_resultValue = evaluateExpression(functionBody);
+		}
+	}
 
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	 * MISC
@@ -876,13 +897,18 @@ public class AbstractInterpretationBoogieVisitor {
 		
 		if (assumeFormula instanceof BinaryExpression) {
 			BinaryExpression binOp = (BinaryExpression) assumeFormula;
-
-			switch (binOp.getOperator()) {
+			BinaryExpression.Operator oper = binOp.getOperator();
+			
+			switch (oper) {
 			case LOGICAND :
-				if (binOp.getLeft() instanceof BinaryExpression)
-					didNarrow = applyAssumption(binOp.getLeft()) || didNarrow;
-				if (binOp.getRight() instanceof BinaryExpression)
-					didNarrow = applyAssumption(binOp.getRight()) || didNarrow;
+			case LOGICOR :
+				if (((oper == BinaryExpression.Operator.LOGICAND) && !negate)
+						|| ((oper == BinaryExpression.Operator.LOGICOR) && negate)) {
+					if (binOp.getLeft() instanceof BinaryExpression)
+						didNarrow = applyAssumption(binOp.getLeft(), negate) || didNarrow;
+					if (binOp.getRight() instanceof BinaryExpression)
+						didNarrow = applyAssumption(binOp.getRight(), negate) || didNarrow;
+				}
 			case COMPLT :
 			case COMPGT :
 			case COMPLEQ :
@@ -891,7 +917,6 @@ public class AbstractInterpretationBoogieVisitor {
 			case COMPNEQ :
 			case LOGICIFF :
 			case LOGICIMPLIES :
-			case LOGICOR :
 				if (binOp.getLeft() instanceof IdentifierExpression) {
 					IdentifierExpression ieLeft = (IdentifierExpression) binOp.getLeft();
 
@@ -899,7 +924,7 @@ public class AbstractInterpretationBoogieVisitor {
 				}
 
 				/*
-				 *  Not all comparision operators can simply be "mirrored" (e.g. [5,5] < [10,10] = [5,5], [10,10] > [5,5] = [10,10],
+				 *  Not all comparison operators can simply be "mirrored" (e.g. [5,5] < [10,10] => [5,5], [10,10] > [5,5] => [10,10],
 				 *  so for some of them, we need to calculate the missing intermediate result
 				 */
 				if (binOp.getRight() instanceof IdentifierExpression) {
