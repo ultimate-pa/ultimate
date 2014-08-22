@@ -19,7 +19,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object>{
 	public TraceAbstractionBenchmarks(RootAnnot rootAnnot) {
 		m_Locations = rootAnnot.getNumberOfProgramPoints();
 		m_ErrorLocations = rootAnnot.getNumberOfErrorNodes();
-		m_CegarLoopBenchmarkData = new BenchmarkData(CegarLoopBenchmarkType.getInstance());
+		m_CegarLoopBenchmarkData = new BenchmarkData();
 	}
 	
 	public void aggregateBenchmarkData(

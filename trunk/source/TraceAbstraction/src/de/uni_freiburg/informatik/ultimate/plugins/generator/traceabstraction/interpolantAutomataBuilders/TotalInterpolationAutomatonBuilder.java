@@ -590,8 +590,8 @@ public class TotalInterpolationAutomatonBuilder {
 		private int m_RunSearches = 0;
 		private int m_UsefullRunGeq2 = 0;
 		private int m_UselessRunGeq2 = 0;
-		private final BenchmarkData m_EcData = new BenchmarkData(EdgeCheckerBenchmarkType.getInstance());
-		private final BenchmarkData m_TcData = new BenchmarkData(TraceCheckerBenchmarkType.getInstance());
+		private final BenchmarkData m_EcData = new BenchmarkData();
+		private final BenchmarkData m_TcData = new BenchmarkData();
 
 		public TotalInterpolationBenchmarkGenerator() {
 		}
