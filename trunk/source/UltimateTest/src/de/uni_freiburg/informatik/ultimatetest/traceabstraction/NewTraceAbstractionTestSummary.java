@@ -32,7 +32,6 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 	private final String mName;
 	private final String mLogFilePath;
 	private final String m_TestDescription;
-	private TraceAbstractionTestResultDecider mTestResultDecider;
 	private final LinkedHashMap<String, List<Summary>> mSummaryMap;
 	private CsvProviderSummary m_CsvProviderSummary = new CsvProviderSummary();
 
@@ -62,19 +61,17 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 
 	@Override
 	public void addResult(TestResult actualResult, boolean junitResult, String category,
-			UltimateRunDefinition ultimateRunDefintion, String message) {
+			UltimateRunDefinition ultimateRunDefintion, String message, Map<String, List<IResult>> ultimateIResults) {
 		Summary sum = new Summary();
 		sum.mActualResult = actualResult;
 		sum.mJUnitResult = junitResult;
 		sum.mCategory = category;
 		sum.mMessage = message;
 
-		if (mTestResultDecider != null) {
-			sum.mSettingsFile = mTestResultDecider.getSettingsFile().getAbsolutePath();
-			sum.interpretUltimateResults(mTestResultDecider.getUltimateResults());
-		}
+		sum.mSettingsFile = ultimateRunDefintion.getSettings().getAbsolutePath();
+		sum.interpretUltimateResults(ultimateIResults);
 
-		for (IResult result : Util.filterResults(mTestResultDecider.getUltimateResults(), BenchmarkResult.class)) {
+		for (IResult result : Util.filterResults(ultimateIResults, BenchmarkResult.class)) {
 			m_CsvProviderSummary.add(ultimateRunDefintion, (BenchmarkResult<?>) result);
 		}
 
@@ -100,19 +97,6 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 		return mName;
 	}
 
-	@Override
-	public void setTestResultDecider(ITestResultDecider decider) {
-		if (decider instanceof TraceAbstractionTestResultDecider) {
-			mTestResultDecider = (TraceAbstractionTestResultDecider) decider;
-		} else {
-			mTestResultDecider = null;
-		}
-	}
-
-	public void writeAllCsv() {
-
-	}
-
 	private class Summary {
 
 		public String mSettingsFile;
@@ -122,14 +106,14 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 		public TestResult mActualResult;
 		public List<String> mFlattenedBenchmarkResults;
 
-		public void interpretUltimateResults(Collection<IResult> ultimateResults) {
-			if (ultimateResults == null) {
+		public void interpretUltimateResults(Map<String,List<IResult>> ultimateIResults) {
+			if (ultimateIResults == null) {
 				return;
 			}
 
 			mFlattenedBenchmarkResults = new ArrayList<>();
 
-			for (IResult result : Util.filterResults(ultimateResults, BenchmarkResult.class)) {
+			for (IResult result : Util.filterResults(ultimateIResults, BenchmarkResult.class)) {
 				StringBuilder sb = new StringBuilder();
 				sb.append(result.getPlugin()).append(": ").append(result.getShortDescription()).append(": ")
 						.append(Util.flatten(result.getLongDescription(), " # "));

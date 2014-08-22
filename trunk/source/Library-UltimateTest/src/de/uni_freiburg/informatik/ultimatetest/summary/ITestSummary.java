@@ -1,7 +1,10 @@
 package de.uni_freiburg.informatik.ultimatetest.summary;
 
 import java.io.File;
+import java.util.List;
+import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
@@ -59,8 +62,13 @@ public interface ITestSummary {
 	 *            A message for this specific result and this specific input
 	 *            file as specified by
 	 *            {@link ITestResultDecider#getResultMessage()}
+	 * @param ultimateIResults
+	 * 	          All IResults produced during the run of Ultimate.
+	 *            The results are given as a map which maps plugin IDs to a 
+	 *            the list of results produced by that plugin.
+	 *            
 	 */
-	public void addResult(TestResult actualResult, boolean junitResult, String category, UltimateRunDefinition ultimateRunDefinition, String message);
-
-	public void setTestResultDecider(ITestResultDecider decider);
+	public void addResult(TestResult actualResult, boolean junitResult, 
+			String category, UltimateRunDefinition ultimateRunDefinition, 
+			String message, Map<String, List<IResult>> ultimateIResults);
 }

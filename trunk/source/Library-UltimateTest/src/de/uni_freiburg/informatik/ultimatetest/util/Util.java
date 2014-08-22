@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
@@ -367,16 +368,18 @@ public class Util {
 	}
 
 	/**
-	 * Returns new Collections that contains all IResults from resCollection
+	 * Returns new Collections that contains all IResults from ultimateIResults
 	 * that are subclasses of the class resClass.
 	 */
-	public static <E extends IResult> Collection<E> filterResults(Collection<IResult> resCollection, Class<E> resClass) {
+	public static <E extends IResult> Collection<E> filterResults(Map<String,List<IResult>> ultimateIResults, Class<E> resClass) {
 		ArrayList<E> filteredList = new ArrayList<E>();
-		for (IResult res : resCollection) {
-			if (res.getClass().isAssignableFrom(resClass)) {
-				@SuppressWarnings("unchecked")
-				E benchmarkResult = (E) res;
-				filteredList.add((E) benchmarkResult);
+		for (Entry<String, List<IResult>> entry  : ultimateIResults.entrySet()) {
+			for (IResult res : entry.getValue()) {
+				if (res.getClass().isAssignableFrom(resClass)) {
+					@SuppressWarnings("unchecked")
+					E benchmarkResult = (E) res;
+					filteredList.add((E) benchmarkResult);
+				}
 			}
 		}
 		return filteredList;

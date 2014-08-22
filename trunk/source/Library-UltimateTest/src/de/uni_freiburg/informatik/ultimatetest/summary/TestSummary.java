@@ -1,11 +1,12 @@
 package de.uni_freiburg.informatik.ultimatetest.summary;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 
 public abstract class TestSummary implements ITestSummary {
@@ -14,7 +15,6 @@ public abstract class TestSummary implements ITestSummary {
 	private HashMap<String, Summary> mUnknown;
 	private HashMap<String, Summary> mFailure;
 	private String mTestSuiteCanonicalName;
-	private ITestResultDecider mCurrentTestResultDecider;
 
 	public TestSummary(String testSuiteCanonicalName) {
 		mSuccess = new HashMap<String, Summary>();
@@ -24,7 +24,7 @@ public abstract class TestSummary implements ITestSummary {
 	}
 
 	@Override
-	public void addResult(TestResult actualResult, boolean junitResult, String category, UltimateRunDefinition ultimateRunDefinition, String message) {
+	public void addResult(TestResult actualResult, boolean junitResult, String category, UltimateRunDefinition ultimateRunDefinition, String message, Map<String, List<IResult>> ultimateIResults) {
 		switch (actualResult) {
 		case FAIL:
 			add(getSummary(mFailure, category), ultimateRunDefinition, message);
@@ -43,11 +43,6 @@ public abstract class TestSummary implements ITestSummary {
 	@Override
 	public String getTestSuiteCanonicalName() {
 		return mTestSuiteCanonicalName;
-	}
-
-	@Override
-	public void setTestResultDecider(ITestResultDecider currentTestResultDecider) {
-		mCurrentTestResultDecider = currentTestResultDecider;
 	}
 
 	public StringBuilder generateCanonicalSummary() {
@@ -92,10 +87,6 @@ public abstract class TestSummary implements ITestSummary {
 		}
 		sb.append("Total: ").append(total).append(lineSeparator);
 		return sb;
-	}
-
-	protected ITestResultDecider getTestResultDecider() {
-		return mCurrentTestResultDecider;
 	}
 
 	protected Map<String, Summary> getSummaryMap(TestResult result) {

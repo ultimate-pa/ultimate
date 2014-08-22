@@ -1,8 +1,13 @@
 package de.uni_freiburg.informatik.ultimatetest;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.junit_helper.testfactory.FactoryTestMethod;
+import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
@@ -48,14 +53,17 @@ public class UltimateTestCase {
 			mLogger.fatal(String.format("There was an exception during the execution of Ultimate: %s%n%s", e,
 					ExceptionUtils.getStackTrace(e)));
 		} finally {
+			// we need to obtain results here, because afterwards the run is
+			// completed we cannot obtain the results any more
+			HashMap<String, List<IResult>> ultimateIResults = 
+					new HashMap<String, List<IResult>>(mStarter.getServices().getResultService().getResults());
 			mStarter.complete();
 
 			boolean success = mDecider.getJUnitTestResult(result);
 
 			if (mSummary != null) {
-				mSummary.setTestResultDecider(mDecider);
 				mSummary.addResult(result, success, mDecider.getResultCategory(), m_UltimateRunDefinition,
-						mDecider.getResultMessage());
+						mDecider.getResultMessage(), ultimateIResults);
 			}
 
 			if (!success) {

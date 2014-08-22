@@ -3,7 +3,9 @@ package de.uni_freiburg.informatik.ultimatetest.automatascript;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
@@ -15,7 +17,6 @@ public class AutomataScriptTestSummary implements ITestSummary {
 	
 	private String m_Name;
 	private String m_LogFilePath;
-	private ITestResultDecider m_TestResultDecider;
 	private List<Triple<String, String, String>> m_Results;
 
 	public AutomataScriptTestSummary(String summaryName, String logFilePath) {
@@ -54,14 +55,9 @@ public class AutomataScriptTestSummary implements ITestSummary {
 
 	@Override
 	public void addResult(TestResult actualResult, boolean junitResult,
-			String category, UltimateRunDefinition ultimateRunDefinition, String message) {
+			String category, UltimateRunDefinition ultimateRunDefinition, String message, Map<String, List<IResult>> ultimateIResults) {
 		m_Results.add(new Triple<String, String, String>(ultimateRunDefinition.getInput().getAbsolutePath(), category, message));
 
-	}
-
-	@Override
-	public void setTestResultDecider(ITestResultDecider decider) {
-		m_TestResultDecider = decider;
 	}
 
 }

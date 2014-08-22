@@ -3,14 +3,14 @@ package de.uni_freiburg.informatik.ultimatetest;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.TestSummary;
-import de.uni_freiburg.informatik.ultimatetest.traceabstraction.TraceAbstractionTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public class TraceAbstractionTestSummary extends TestSummary {
@@ -32,14 +32,11 @@ public class TraceAbstractionTestSummary extends TestSummary {
 	}
 
 	@Override
-	public void addResult(TestResult actualResult, boolean junitResult, String category, UltimateRunDefinition ultimateRunDefinition, String message) {
-		super.addResult(actualResult, junitResult, category, ultimateRunDefinition, message);
+	public void addResult(TestResult actualResult, boolean junitResult, String category, UltimateRunDefinition ultimateRunDefinition, String message, Map<String, List<IResult>> ultimateIResults) {
+		super.addResult(actualResult, junitResult, category, ultimateRunDefinition, message, ultimateIResults);
 
-		ITestResultDecider decider = getTestResultDecider();
-		if (decider instanceof TraceAbstractionTestResultDecider) {
 			addTraceAbstractionBenchmarks(ultimateRunDefinition.getInput().getAbsolutePath(), Util.filterResults(
-					((TraceAbstractionTestResultDecider) decider).getUltimateResults(), BenchmarkResult.class));
-		}
+					ultimateIResults, BenchmarkResult.class));
 
 	}
 
