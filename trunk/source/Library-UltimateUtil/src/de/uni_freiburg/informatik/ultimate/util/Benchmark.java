@@ -437,37 +437,38 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 			return sb.toString();
 
 		}
-		
-		public long getPeakMemoryDelta(){
+
+		public long getPeakMemoryDelta() {
 			return mPeakMemorySize - mStartPeakMemorySize;
 		}
-		
-		
+
 	}
 
 	@Override
 	public ICsvProvider<Double> createCvsProvider() {
-		SimpleCsvProvider<Double> rtr = new SimpleCsvProvider<>(new String[] { 
-				"Runtime", 
-				"Peak memory consumption",
-				"Allocated memory (Start)",
-				"Allocated memory (End)",
-				"Free memory (Start)",
-				"Free memory (End)",
-				"Max. memory available"
-		});
+
+		List<String> columHeaders = new ArrayList<>();
+		columHeaders.add("Runtime");
+		columHeaders.add("Peak memory consumption");
+		columHeaders.add("Allocated memory (Start)");
+		columHeaders.add("Allocated memory (End)");
+		columHeaders.add("Free memory (Start)");
+		columHeaders.add("Free memory (End)");
+		columHeaders.add("Max. memory available");
+
+		SimpleCsvProvider<Double> rtr = new SimpleCsvProvider<>(columHeaders);
 
 		for (Watch w : getSortedWatches()) {
-			rtr.addRow(w.mTitle, new Double[] { 
-					Double.valueOf(w.mElapsedTime),
-					Double.valueOf(w.getPeakMemoryDelta()),
-					Double.valueOf(w.mStartMemorySize),
-					Double.valueOf(w.mStopMemorySize),
-					Double.valueOf(w.mStartMemoryFreeSize),
-					Double.valueOf(w.mStopMemoryFreeSize),
-					Double.valueOf(mMaxMemorySize),
-			});
 
+			List<Double> values = new ArrayList<>();
+			values.add(Double.valueOf(w.mElapsedTime));
+			values.add(Double.valueOf(w.getPeakMemoryDelta()));
+			values.add(Double.valueOf(w.mStartMemorySize));
+			values.add(Double.valueOf(w.mStopMemorySize));
+			values.add(Double.valueOf(w.mStartMemoryFreeSize));
+			values.add(Double.valueOf(w.mStopMemoryFreeSize));
+			values.add(Double.valueOf(mMaxMemorySize));
+			rtr.addRow(w.mTitle, values);
 		}
 
 		return rtr;

@@ -2,10 +2,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 
 import java.util.HashMap;
 import java.util.HashSet;
-
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 
 public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 
@@ -28,23 +28,23 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 		}
 	}
 
-	protected abstract HashMap<String, HashSet<Statement>> getDefs();
+	protected abstract HashMap<ScopedBoogieVar, HashSet<Statement>> getDefs();
 
-	protected abstract HashMap<String, HashSet<Statement>> getUse();
+	protected abstract HashMap<ScopedBoogieVar, HashSet<Statement>> getUse();
 
 	public ReachDefBaseAnnotation() {
 		super();
 	}
 
-	private String prettyPrintDefUse(HashMap<String, HashSet<Statement>> map) {
+	private String prettyPrintDefUse(HashMap<ScopedBoogieVar, HashSet<Statement>> map) {
 		if (map.isEmpty()) {
 			return "Empty";
 		}
 
 		StringBuilder sb = new StringBuilder();
 
-		for (String s : map.keySet()) {
-			sb.append(s).append(": {");
+		for (ScopedBoogieVar s : map.keySet()) {
+			sb.append(s.getIdentifier()).append(": {");
 			HashSet<Statement> set = map.get(s);
 			if (set.isEmpty()) {
 				continue;
@@ -80,9 +80,9 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 		return compareMap(getDefs(), arg0.getDefs()) && compareMap(getUse(), arg0.getUse());
 	}
 
-	private boolean compareMap(HashMap<String, HashSet<Statement>> mine, HashMap<String, HashSet<Statement>> theirs) {
+	private boolean compareMap(HashMap<ScopedBoogieVar, HashSet<Statement>> mine, HashMap<ScopedBoogieVar, HashSet<Statement>> theirs) {
 		if (mine != null && theirs != null) {
-			for (String key : mine.keySet()) {
+			for (ScopedBoogieVar key : mine.keySet()) {
 				HashSet<Statement> myStmts = mine.get(key);
 				HashSet<Statement> theirStmts = theirs.get(key);
 
@@ -104,15 +104,23 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 
 	@Override
 	public String toString() {
+		return "Def: " + getDefAsString() + " Use: " + getUseAsString();
+	}
+
+	public String getDefAsString() {
 		return prettyPrintDefUse(getDefs());
 	}
 
-	protected HashMap<String, HashSet<Statement>> copy(HashMap<String, HashSet<Statement>> other) {
+	public String getUseAsString() {
+		return prettyPrintDefUse(getUse());
+	}
+
+	protected HashMap<ScopedBoogieVar, HashSet<Statement>> copy(HashMap<ScopedBoogieVar, HashSet<Statement>> other) {
 		if (other == null) {
 			return null;
 		}
-		HashMap<String, HashSet<Statement>> newmap = new HashMap<>();
-		for (String key : other.keySet()) {
+		HashMap<ScopedBoogieVar, HashSet<Statement>> newmap = new HashMap<>();
+		for (ScopedBoogieVar key : other.keySet()) {
 			HashSet<Statement> otherset = other.get(key);
 			if (otherset == null) {
 				continue;

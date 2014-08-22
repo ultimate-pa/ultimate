@@ -19,11 +19,12 @@ public class ReachDefBoogieAnnotator {
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mProvider;
 
 	public ReachDefBoogieAnnotator(Collection<ReachDefStatementAnnotation> predecessors,
-			ReachDefStatementAnnotation current,IAnnotationProvider<ReachDefStatementAnnotation> provider, Logger logger) {
+			ReachDefStatementAnnotation current, IAnnotationProvider<ReachDefStatementAnnotation> provider,
+			Logger logger, ScopedBoogieVarBuilder builder) {
 		assert current != null;
 		mPredecessors = predecessors;
 		mCurrent = current;
-		mVisitor = new ReachDefBoogieVisitor(current);
+		mVisitor = new ReachDefBoogieVisitor(current, builder);
 		mLogger = logger;
 		mProvider = provider;
 	}
@@ -37,10 +38,13 @@ public class ReachDefBoogieAnnotator {
 		ReachDefBaseAnnotation old = mCurrent.clone();
 		assert old.equals(mProvider.getAnnotation(stmt)) && old.equals(mCurrent);
 		union(mCurrent, mPredecessors);
-		mVisitor.process(stmt);
+
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("			                              Old: " + old);
+			mLogger.debug("                                      Old Use: " + mCurrent.getUseAsString());
+			mLogger.debug("                                      Old Def: " + mCurrent.getDefAsString());
 		}
+
+		mVisitor.process(stmt);
 
 		return !old.equals(mCurrent);
 	}

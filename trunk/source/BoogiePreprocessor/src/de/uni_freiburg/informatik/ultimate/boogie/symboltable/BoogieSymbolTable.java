@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
@@ -208,6 +209,11 @@ public class BoogieSymbolTable {
 	 */
 	public Declaration getDeclaration(String symbolname, StorageClass scope, String scopeName) {
 		return getMap(scope, scopeName).get(symbolname);
+	}
+
+	public Declaration getDeclaration(IdentifierExpression exp) {
+		return getDeclaration(exp.getIdentifier(), exp.getDeclarationInformation().getStorageClass(), exp
+				.getDeclarationInformation().getProcedure());
 	}
 
 	public IType getTypeForVariableSymbol(String symbolname, StorageClass scope, String scopeName) {

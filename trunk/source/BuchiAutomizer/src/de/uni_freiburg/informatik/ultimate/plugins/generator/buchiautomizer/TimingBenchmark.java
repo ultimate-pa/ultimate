@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+import java.util.ArrayList;
+
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -20,8 +22,7 @@ public class TimingBenchmark implements ICsvProviderProvider<Double>{
 
 	@Override
 	public ICsvProvider<Double> createCvsProvider() {
-		SimpleCsvProvider<Double> rtr = new SimpleCsvProvider<>(new String[] { });
-
+		ICsvProvider<Double> rtr = new SimpleCsvProvider<>(new ArrayList<String>());
 		return rtr;
 	}
 }

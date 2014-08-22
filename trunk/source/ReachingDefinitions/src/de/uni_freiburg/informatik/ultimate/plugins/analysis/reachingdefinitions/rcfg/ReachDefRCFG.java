@@ -5,10 +5,12 @@ import java.util.LinkedHashSet;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVarBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.util.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -47,12 +49,22 @@ public class ReachDefRCFG extends BaseObserver {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Loops: " + rootNode.getRootAnnot().getLoopLocations().size());
 			}
+
 			process(rootNode);
 		}
 		return false;
 	}
 
 	private void process(RootNode node) throws Throwable {
+
+		PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(node);
+		if (pa == null || pa.getSymbolTable() == null) {
+			String errorMsg = "No symbol table found on given RootNode.";
+			mLogger.fatal(errorMsg);
+			throw new UnsupportedOperationException(errorMsg);
+		}
+		ScopedBoogieVarBuilder builder = new ScopedBoogieVarBuilder(pa.getSymbolTable());
+
 		LinkedHashSet<RCFGEdge> remaining = new LinkedHashSet<>();
 
 		for (RCFGEdge next : node.getOutgoingEdges()) {
@@ -62,16 +74,16 @@ public class ReachDefRCFG extends BaseObserver {
 		while (!remaining.isEmpty()) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("");
-				mLogger.debug(" 		              Open: "
+				mLogger.debug("                    Open: "
 						+ Util.prettyPrintIterable(remaining, Util.<RCFGEdge> createHashCodePrinter()));
 			}
 			RCFGEdge current = remaining.iterator().next();
 			remaining.remove(current);
-			ReachDefRCFGVisitor v = new ReachDefRCFGVisitor(mEdgeProvider, mStatementProvider, mLogger);
+			ReachDefRCFGVisitor v = new ReachDefRCFGVisitor(mEdgeProvider, mStatementProvider, mLogger, builder);
 
 			boolean fxpReached = v.process(current);
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(" 		              Fixpoint reached: " + fxpReached);
+				mLogger.debug("                    Fixpoint reached: " + fxpReached);
 			}
 			if (!fxpReached) {
 				for (RCFGEdge next : current.getTarget().getOutgoingEdges()) {

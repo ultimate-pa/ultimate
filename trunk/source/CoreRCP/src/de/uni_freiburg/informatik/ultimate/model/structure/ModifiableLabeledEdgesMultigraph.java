@@ -1,7 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.model.structure;
 
 
-
+/**
+ * 
+ * @author dietsch
+ *
+ * @param <T>
+ * @param <L>
+ */
 public class ModifiableLabeledEdgesMultigraph<T extends ModifiableLabeledEdgesMultigraph<T,L>,L> extends
 		BaseLabeledEdgesMultigraph<T,L> {
 

@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.util.Map.Entry;
+import java.util.ArrayList;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
@@ -77,7 +78,7 @@ public class TermcompProofBenchmark implements ICsvProviderProvider<Double> {
 
 	@Override
 	public ICsvProvider<Double> createCvsProvider() {
-		SimpleCsvProvider<Double> rtr = new SimpleCsvProvider<>(new String[] {});
+		ICsvProvider<Double> rtr = new SimpleCsvProvider<>(new ArrayList<String>());
 
 		return rtr;
 	}

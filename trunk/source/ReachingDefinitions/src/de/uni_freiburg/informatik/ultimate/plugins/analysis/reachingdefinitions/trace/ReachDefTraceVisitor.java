@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ReachDefBoogieAnnotator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVarBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.util.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
@@ -26,13 +27,16 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 	private final CodeBlock mPredecessor;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mStatementProvider;
 	private final IAnnotationProvider<ReachDefEdgeAnnotation> mEdgeProvider;
+	private final ScopedBoogieVarBuilder mBuilder;
 
 	public ReachDefTraceVisitor(IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
-			IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider, CodeBlock predecessor, Logger logger) {
+			IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider, CodeBlock predecessor, Logger logger,
+			ScopedBoogieVarBuilder builder) {
 		mLogger = logger;
 		mPredecessor = predecessor;
 		mStatementProvider = stmtProvider;
 		mEdgeProvider = edgeProvider;
+		mBuilder = builder;
 	}
 
 	public void process(CodeBlock e) {
@@ -95,7 +99,7 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 			predecessors = generator.process(mPredecessor);
 		}
 
-		return new ReachDefBoogieAnnotator(predecessors, stmtAnnotation, mStatementProvider, mLogger);
+		return new ReachDefBoogieAnnotator(predecessors, stmtAnnotation, mStatementProvider, mLogger, mBuilder);
 	}
 
 }

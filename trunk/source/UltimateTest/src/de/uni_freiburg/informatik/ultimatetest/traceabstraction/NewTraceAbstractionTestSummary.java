@@ -39,8 +39,7 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 	public NewTraceAbstractionTestSummary(String summaryName, String description) {
 		mName = summaryName;
 		m_TestDescription = description;
-		mLogFilePath = Util.generateSummaryLogFilename(
-				Util.getPathFromSurefire(".", mName), description);
+		mLogFilePath = Util.generateSummaryLogFilename(Util.getPathFromSurefire(".", mName), description);
 		mSummaryMap = new LinkedHashMap<>();
 	}
 
@@ -56,13 +55,13 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 			}
 			sb.append(lineSeparator);
 		}
-//		Hack for checking if csv output is working		
-//		m_CsvProviderSummary.writeAllCsv();
+		// Hack for checking if csv output is working
+		// m_CsvProviderSummary.writeAllCsv();
 		return sb.toString();
 	}
 
 	@Override
-	public void addResult(TestResult actualResult, boolean junitResult, String category, 
+	public void addResult(TestResult actualResult, boolean junitResult, String category,
 			UltimateRunDefinition ultimateRunDefintion, String message) {
 		Summary sum = new Summary();
 		sum.mActualResult = actualResult;
@@ -74,7 +73,7 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 			sum.mSettingsFile = mTestResultDecider.getSettingsFile().getAbsolutePath();
 			sum.interpretUltimateResults(mTestResultDecider.getUltimateResults());
 		}
-		
+
 		for (IResult result : Util.filterResults(mTestResultDecider.getUltimateResults(), BenchmarkResult.class)) {
 			m_CsvProviderSummary.add(ultimateRunDefintion, (BenchmarkResult<?>) result);
 		}
@@ -109,9 +108,9 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 			mTestResultDecider = null;
 		}
 	}
-	
+
 	public void writeAllCsv() {
-		
+
 	}
 
 	private class Summary {
@@ -152,56 +151,58 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 		}
 
 	}
-	
+
 	private class CsvProviderSummary {
 		private Map<Class, ICsvProvider<Object>> m_Benchmark2CsvProvider = new HashMap<Class, ICsvProvider<Object>>();
-		
+
 		void add(UltimateRunDefinition ultimateRunDefintion, BenchmarkResult<?> result) {
 			ICsvProviderProvider<?> benchmark = result.getBenchmark();
 			ICsvProvider<Object> benchmarkCsv = (ICsvProvider<Object>) benchmark.createCvsProvider();
-			ICsvProvider<Object> benchmarkCsvWithRunDefinition = addUltimateRunDefinition(ultimateRunDefintion, benchmarkCsv);
-			
+			ICsvProvider<Object> benchmarkCsvWithRunDefinition = addUltimateRunDefinition(ultimateRunDefintion,
+					benchmarkCsv);
+
 			ICsvProvider<Object> oldCsvProvider = m_Benchmark2CsvProvider.get(benchmark.getClass());
 			if (oldCsvProvider == null) {
 				oldCsvProvider = new SimpleCsvProvider<>(benchmarkCsv.getColumnTitles());
 				m_Benchmark2CsvProvider.put(benchmark.getClass(), oldCsvProvider);
 			}
-			
-			ICsvProvider<Object> newCsvProvider = CsvUtils.concatenateRowsWithDifferentColumns(oldCsvProvider, benchmarkCsvWithRunDefinition);
+
+			ICsvProvider<Object> newCsvProvider = CsvUtils.concatenateRows(oldCsvProvider,
+					benchmarkCsvWithRunDefinition);
 			m_Benchmark2CsvProvider.put(benchmark.getClass(), newCsvProvider);
 
 		}
-		
-		private ICsvProvider<Object> addUltimateRunDefinition(UltimateRunDefinition ultimateRunDefinition, ICsvProvider<Object> singleRowProvider) {
-			String[] resultColumns = new String[singleRowProvider.getColumnTitles().length + 2];
-			resultColumns[0] = "Settings";
-			resultColumns[1] = "Toolchain";
-			System.arraycopy(singleRowProvider.getColumnTitles(), 0, resultColumns, 2, singleRowProvider.getColumnTitles().length);
-			if (singleRowProvider.getRowTitles().length != 1) {
+
+		private ICsvProvider<Object> addUltimateRunDefinition(UltimateRunDefinition ultimateRunDefinition,
+				ICsvProvider<Object> singleRowProvider) {
+			List<String> resultColumns = new ArrayList<>();
+			resultColumns.add("Settings");
+			resultColumns.add("Toolchain");
+			resultColumns.addAll(singleRowProvider.getColumnTitles());
+
+			if (singleRowProvider.getRowHeaders().size() != 1) {
 				throw new AssertionError("expecting that benchmark has exactly one row");
 			}
-			String rowTitle = Arrays.asList(singleRowProvider.getRowTitles()).iterator().next();
-			Object[] row = singleRowProvider.getRow(rowTitle);
-			Object[] resultRow = new Object[singleRowProvider.getRow(rowTitle).length + 2];
-			resultRow[0] = ultimateRunDefinition.getSettings().getAbsolutePath();
-			resultRow[1] = ultimateRunDefinition.getToolchain().getAbsolutePath();
-			System.arraycopy(row, 0, resultRow, 2, row.length);
+			List<Object> row = singleRowProvider.getRow(0);
+			List<Object> resultRow = new ArrayList<>();
+			resultRow.add(ultimateRunDefinition.getSettings().getAbsolutePath());
+			resultRow.add(ultimateRunDefinition.getToolchain().getAbsolutePath());
+			resultRow.addAll(row);
 			ICsvProvider<Object> result = new SimpleCsvProvider<>(resultColumns);
 			result.addRow(ultimateRunDefinition.getInput().getAbsolutePath(), resultRow);
 			return result;
 		}
-		
-		
+
 		private void writeAllCsv() {
-			String logFilePath = Util.generateSummaryLogFilename(
-					Util.getPathFromSurefire(".", mName), m_TestDescription);
+			String logFilePath = Util.generateSummaryLogFilename(Util.getPathFromSurefire(".", mName),
+					m_TestDescription);
 			String csvPrefix = logFilePath.substring(0, logFilePath.length() - 4);
-			
+
 			for (Entry<Class, ICsvProvider<Object>> entry : m_Benchmark2CsvProvider.entrySet()) {
 				String csvFileName = csvPrefix + entry.getKey().getSimpleName() + ".csv";
-				
+
 				File csvFile = new File(csvFileName);
-				
+
 				try {
 					FileWriter fw = new FileWriter(csvFile);
 					Logger.getLogger(UltimateTestSuite.class).info(
@@ -213,26 +214,21 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 				}
 
 			}
-			
 
-//			File logFile = new File(Util.getPathFromSurefire(mLogFilePath, getTestSuiteCanonicalName()));
-//
-//			if (!logFile.isDirectory()) {
-//				logFile.getParentFile().mkdirs();
-//			}
+			// File logFile = new File(Util.getPathFromSurefire(mLogFilePath,
+			// getTestSuiteCanonicalName()));
+			//
+			// if (!logFile.isDirectory()) {
+			// logFile.getParentFile().mkdirs();
+			// }
 
-//			String summaryLog = summary.getSummaryLog();
-//			if (summaryLog == null || summaryLog.isEmpty()) {
-//				return;
-//			}
+			// String summaryLog = summary.getSummaryLog();
+			// if (summaryLog == null || summaryLog.isEmpty()) {
+			// return;
+			// }
 
 		}
 
-		
-
 	}
-	
-	
-	
 
 }

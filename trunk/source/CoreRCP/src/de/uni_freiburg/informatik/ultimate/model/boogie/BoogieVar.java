@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.model.IType;
  * they have the same identifier, same procedure, same old-flag. Equivalence
  * does not depend on the IType. We expect that two equivalent BoogieVars with
  * different ITypes never occur in the same program. 
+ * 
  * @author heizmann@informatik.uni-freiburg.de
  *
  */

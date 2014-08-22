@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 
 public class ReachDefEdgeAnnotation extends ReachDefBaseAnnotation {
@@ -21,7 +22,7 @@ public class ReachDefEdgeAnnotation extends ReachDefBaseAnnotation {
 	}
 
 	@Override
-	protected HashMap<String, HashSet<Statement>> getDefs() {
+	protected HashMap<ScopedBoogieVar, HashSet<Statement>> getDefs() {
 		if (mEdge == null) {
 			return new HashMap<>();
 		}
@@ -34,7 +35,7 @@ public class ReachDefEdgeAnnotation extends ReachDefBaseAnnotation {
 	}
 
 	@Override
-	protected HashMap<String, HashSet<Statement>> getUse() {
+	protected HashMap<ScopedBoogieVar, HashSet<Statement>> getUse() {
 		if (mEdge == null) {
 			return new HashMap<>();
 		}

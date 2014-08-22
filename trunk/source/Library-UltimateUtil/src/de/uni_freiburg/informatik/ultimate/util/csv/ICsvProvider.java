@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.util.csv;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * 
@@ -9,15 +9,17 @@ import java.util.Map;
  */
 public interface ICsvProvider<T> {
 	
-	String[] getColumnTitles();
+	List<String> getColumnTitles();
 	
-	Map<String,T[]> getTable();
+	List<String> getRowHeaders();
 	
-	String[] getRowTitles();
+	void addRow(String rowName, List<T> values);
 	
-	void addRow(String rowName, T[] values);
+	void addRow(List<T> values);
 	
-	T[] getRow(String rowName);
+	List<T> getRow(int index);
+	
+	List<List<T>> getTable();
 	
 	StringBuilder toCsv(String rowHeaderTitle);
 	

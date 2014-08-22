@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -143,8 +144,7 @@ public class ModuleDecompositionBenchmark implements ICsvProviderProvider<Double
 
 	@Override
 	public ICsvProvider<Double> createCvsProvider() {
-		SimpleCsvProvider<Double> rtr = new SimpleCsvProvider<>(new String[] { });
-
+		ICsvProvider<Double> rtr = new SimpleCsvProvider<>(new ArrayList<String>());
 		return rtr;
 	}
 

@@ -1,16 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.util.csv;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * 
@@ -21,8 +15,6 @@ public class CsvUtils {
 
 	public interface IExplicitConverter<T, K> {
 		public K convert(T something);
-
-		public K[] createArray(int length);
 	}
 
 	/**
@@ -32,17 +24,23 @@ public class CsvUtils {
 	 * @param provider
 	 * @return
 	 */
-
 	public static <T, K> ICsvProvider<K> convert(ICsvProvider<T> provider, IExplicitConverter<T, K> converter) {
-		LinkedHashMap<String, K[]> newMap = new LinkedHashMap<>();
-		for (Entry<String, T[]> entry : provider.getTable().entrySet()) {
-			ArrayList<K> newArray = new ArrayList<>();
-			for (T value : entry.getValue()) {
-				newArray.add(converter.convert(value));
+		ICsvProvider<K> rtr = new SimpleCsvProvider<>(provider.getColumnTitles());
+		List<String> rowTitles = provider.getRowHeaders();
+		List<List<T>> table = provider.getTable();
+
+		for (int i = 0; i < table.size(); ++i) {
+			List<T> oldrow = table.get(i);
+			List<K> newrow = new ArrayList<>();
+
+			for (T oldentry : oldrow) {
+				newrow.add(converter.convert(oldentry));
 			}
-			newMap.put(entry.getKey(), newArray.toArray((converter.createArray(newArray.size()))));
+
+			String rowTitle = rowTitles.get(i);
+			rtr.addRow(rowTitle, newrow);
 		}
-		return new SimpleCsvProvider<>(provider.getColumnTitles(), newMap);
+		return rtr;
 	}
 
 	/**
@@ -57,26 +55,25 @@ public class CsvUtils {
 	 * 
 	 * @param provider
 	 * @param headerSeparator
-	 * @param buffer
-	 *            A prototype array. Use an array of size 0 here.
 	 * @return
 	 */
-	public static <T> ICsvProvider<T> flatten(ICsvProvider<T> provider, String headerSeparator, T[] buffer) {
-		assert buffer != null && buffer.length == 0;
+	public static <T> ICsvProvider<T> flatten(ICsvProvider<T> provider, String headerSeparator) {
 		ArrayList<String> newHeader = new ArrayList<>();
 		ArrayList<T> newRow = new ArrayList<>();
-		Map<String, T[]> currentMap = provider.getTable();
+		List<List<T>> currentMap = provider.getTable();
 
-		for (int i = 0; i < provider.getColumnTitles().length; i++) {
-			String currentColumnHeader = provider.getColumnTitles()[i];
-			for (String currentRowHeader : currentMap.keySet()) {
+		for (int i = 0; i < provider.getColumnTitles().size(); i++) {
+			String currentColumnHeader = provider.getColumnTitles().get(i);
+
+			for (int j = 0; j < provider.getRowHeaders().size(); j++) {
+				String currentRowHeader = provider.getRowHeaders().get(j);
 				newHeader.add(currentColumnHeader + headerSeparator + currentRowHeader);
-				newRow.add(currentMap.get(currentRowHeader)[i]);
+				newRow.add(currentMap.get(j).get(i));
 			}
 		}
-		LinkedHashMap<String, T[]> newMap = new LinkedHashMap<>();
-		newMap.put("", newRow.toArray(buffer));
-		return new SimpleCsvProvider<>(newHeader.toArray(new String[0]), newMap);
+		ICsvProvider<T> rtr = new SimpleCsvProvider<>(newHeader);
+		rtr.addRow(newRow);
+		return rtr;
 	}
 
 	public static <T> ICsvProvider<T> projectColumn(ICsvProvider<T> provider, String columnTitle) {
@@ -88,62 +85,30 @@ public class CsvUtils {
 	 * the order of the original ICsvProvider.
 	 * 
 	 * @param provider
-	 * @param columnTitles
+	 * @param newColumnTitles
 	 * @return
 	 */
-	public static <T> ICsvProvider<T> projectColumn(ICsvProvider<T> provider, Collection<String> columnTitles) {
-		SimpleCsvProvider<T> newProvider = new SimpleCsvProvider<>(columnTitles.toArray(new String[0]));
+	public static <T> ICsvProvider<T> projectColumn(ICsvProvider<T> provider, Collection<String> newColumnTitles) {
+		ICsvProvider<T> newProvider = new SimpleCsvProvider<>(new ArrayList<>(newColumnTitles));
 
 		if (provider.isEmpty()) {
 			return newProvider;
 		}
 
-		T[] referenceType = provider.getRow(provider.getRowTitles()[0]);
-		int newLength = columnTitles.size();
-
-		for (String s : provider.getRowTitles()) {
-			@SuppressWarnings("unchecked")
-			T[] newvalues = (T[]) Array.newInstance(referenceType[0].getClass(), newLength);
-
+		int rowIndex = 0;
+		for (String rowTitle : provider.getRowHeaders()) {
+			List<T> newRow = new ArrayList<>();
 			int i = 0;
 			int j = 0;
-			for (String k : provider.getColumnTitles()) {
-				if (columnTitles.contains(k)) {
-					newvalues[i] = provider.getRow(s)[j];
+			for (String originalColumnTitle : provider.getColumnTitles()) {
+				if (newColumnTitles.contains(originalColumnTitle)) {
+					newRow.add(i, provider.getRow(rowIndex).get(j));
 					i++;
 				}
 				j++;
 			}
-			newProvider.addRow(s, newvalues);
-		}
-		return newProvider;
-	}
-
-	/**
-	 * Creates a new ICsvProvider that contains the rows of providerA and then
-	 * the rows of providerB.
-	 * 
-	 * If the providers have the same number of column titles, the titles of
-	 * providerA are used. If the length differs, an exception is thrown.
-	 * 
-	 * @param providerA
-	 * @param providerB
-	 * @return
-	 */
-	public static <T> ICsvProvider<T> concatenateRows(ICsvProvider<T> providerA, ICsvProvider<T> providerB) {
-
-		String[] aTitles = providerA.getColumnTitles();
-		if (aTitles.length != providerB.getColumnTitles().length) {
-			throw new IllegalArgumentException();
-		}
-
-		SimpleCsvProvider<T> newProvider = new SimpleCsvProvider<>(aTitles);
-
-		for (String rowName : providerA.getRowTitles()) {
-			newProvider.addRow(rowName, providerA.getRow(rowName));
-		}
-		for (String rowName : providerB.getRowTitles()) {
-			newProvider.addRow(rowName, providerB.getRow(rowName));
+			rowIndex++;
+			newProvider.addRow(rowTitle, newRow);
 		}
 		return newProvider;
 	}
@@ -156,18 +121,18 @@ public class CsvUtils {
 	 * @param values
 	 * @return
 	 */
-	public static <T> ICsvProvider<T> addColumn(ICsvProvider<T> provider, String columnTitle, int index, T[] values) {
-		if (index < 0 || index > provider.getColumnTitles().length) {
+	public static <T> ICsvProvider<T> addColumn(ICsvProvider<T> provider, String columnTitle, int index, List<T> values) {
+		if (index < 0 || index > provider.getColumnTitles().size()) {
 			throw new IllegalArgumentException();
 		}
-		String[] oldTitles = provider.getColumnTitles();
-		String[] newTitles = new String[oldTitles.length + 1];
+		List<String> oldTitles = provider.getColumnTitles();
+		List<String> newTitles = new ArrayList<>();
 
-		for (int i = 0, j = 0; i < newTitles.length; ++i) {
+		for (int i = 0, j = 0; i < oldTitles.size() + 1; ++i) {
 			if (i == index) {
-				newTitles[i] = columnTitle;
+				newTitles.add(i, columnTitle);
 			} else {
-				newTitles[i] = oldTitles[j];
+				newTitles.add(i, oldTitles.get(j));
 				j++;
 			}
 		}
@@ -175,20 +140,19 @@ public class CsvUtils {
 		SimpleCsvProvider<T> newProvider = new SimpleCsvProvider<>(newTitles);
 
 		int k = 0;
-		for (String s : provider.getRowTitles()) {
-			T[] rowValues = provider.getRow(s);
-			@SuppressWarnings("unchecked")
-			T[] newvalues = (T[]) Array.newInstance(rowValues[0].getClass(), oldTitles.length + 1);
 
-			for (int i = 0, j = 0; i < newTitles.length; ++i) {
+		for (List<T> oldRow : provider.getTable()) {
+			List<T> newRow = new ArrayList<>();
+
+			for (int i = 0, j = 0; i < newTitles.size(); ++i) {
 				if (i == index) {
-					newvalues[i] = values[k];
+					newRow.add(i, values.get(k));
 				} else {
-					newvalues[i] = rowValues[j];
+					newRow.add(i, oldRow.get(j));
 					j++;
 				}
 			}
-			newProvider.addRow(s, newvalues);
+			newProvider.addRow(provider.getRowHeaders().get(k), newRow);
 			k++;
 		}
 
@@ -202,51 +166,47 @@ public class CsvUtils {
 	 * @param provider
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
 	public static <T> ICsvProvider<T> transpose(ICsvProvider<T> provider) {
 		if (provider == null || provider.isEmpty()) {
 			throw new IllegalArgumentException("provider may not be null or empty");
 		}
 
-		String[] newColumnTitles = provider.getRowTitles();
-		String[] newRowTitles = provider.getColumnTitles();
-		T[] referenceType = provider.getRow(newColumnTitles[0]);
-		LinkedHashMap<String, T[]> newMap = new LinkedHashMap<>();
+		List<String> newColumnTitles = new ArrayList<>(provider.getRowHeaders());
+		ICsvProvider<T> rtr = new SimpleCsvProvider<>(newColumnTitles);
 
-		for (String s : newRowTitles) {
-			newMap.put(s, ((T[]) Array.newInstance(referenceType[0].getClass(), newColumnTitles.length)));
-		}
+		List<String> newRowTitles = new ArrayList<>(provider.getColumnTitles());
+
 		int i = 0;
-		for(String oldRowName : newColumnTitles){
-			T[] oldrow = provider.getRow(oldRowName);
-			int j = 0;
-			for(String newRowName : newRowTitles){
-				newMap.get(newRowName)[i] = oldrow[j];
-				j++;
+		for (String newRowTitle : newRowTitles) {
+			List<T> newRow = new ArrayList<T>();
+
+			for (List<T> oldRow : provider.getTable()) {
+				newRow.add(oldRow.get(i));
 			}
+
+			rtr.addRow(newRowTitle, newRow);
 			i++;
 		}
-		return new SimpleCsvProvider<>(newColumnTitles, newMap);
+		return rtr;
 	}
-	
+
 	/**
 	 * Creates a new ICsvProvider that contains the rows of providerA and then
 	 * the rows of providerB.
 	 * 
-	 * If the providers have different columns the missing columns are added
-	 * and the missing cells are filled with null values.
+	 * If the providers have different columns the missing columns are added and
+	 * the missing cells are filled with null values.
 	 * 
-	 * The case where providerA and providerB contain the same column titles
-	 * in different order is unsupported and an Exception is thrown.
+	 * The case where providerA and providerB contain the same column titles in
+	 * different order is unsupported and an Exception is thrown.
 	 * 
 	 * @param providerA
 	 * @param providerB
 	 * @return
 	 */
-	public static <T> ICsvProvider<T> concatenateRowsWithDifferentColumns(
-			ICsvProvider<T> providerA, ICsvProvider<T> providerB) {
-		List<String> providerAColumns = Arrays.asList(providerA.getColumnTitles());
-		List<String> providerBColumns = Arrays.asList(providerB.getColumnTitles());
+	public static <T> ICsvProvider<T> concatenateRows(ICsvProvider<T> providerA, ICsvProvider<T> providerB) {
+		List<String> providerAColumns = providerA.getColumnTitles();
+		List<String> providerBColumns = providerB.getColumnTitles();
 		List<Integer> additionalColumnForProviderA = new ArrayList<Integer>();
 		List<Integer> additionalColumnForProviderB = new ArrayList<Integer>();
 		List<String> resultColumns = new ArrayList<String>();
@@ -272,31 +232,34 @@ public class CsvUtils {
 						+ "providers have similar columns but in different order");
 			}
 		}
-		SimpleCsvProvider<T> result = new SimpleCsvProvider<>(resultColumns.toArray(new String[resultColumns.size()]));
-		for (String rowTitle : providerA.getRowTitles()) {
-			T[] p1Row = providerA.getRow(rowTitle);
+		ICsvProvider<T> result = new SimpleCsvProvider<>(resultColumns);
+		int rowIndex = 0;
+		for (String rowTitle : providerA.getRowHeaders()) {
+			List<T> p1Row = providerA.getRow(rowIndex);
 			result.addRow(rowTitle, insertNullElements(p1Row, additionalColumnForProviderA));
+			++rowIndex;
 		}
-		for (String rowTitle : providerB.getRowTitles()) {
-			T[] p2Row = providerB.getRow(rowTitle);
+		rowIndex = 0;
+		for (String rowTitle : providerB.getRowHeaders()) {
+			List<T> p2Row = providerB.getRow(rowIndex);
 			result.addRow(rowTitle, insertNullElements(p2Row, additionalColumnForProviderB));
+			++rowIndex;
 		}
 		return result;
 	}
-	
+
 	/**
-	 * Given an array and a list of (not strictly) ascending positive integers,
-	 * return an array that has at each position that occurs in the list
-	 * additionalNullValuePositions an additional cell whose value is null.
+	 * Given a list of values and a list of (not strictly) ascending positive
+	 * integers, return a list that has at each position that occurs in the
+	 * integer list additionalNullValuePositions an additional cell whose value
+	 * is null.
 	 */
-	@SuppressWarnings("unchecked")
-	private static <T> T[] insertNullElements(T[] array, 
-			List<Integer> additionalNullValuePositions) {
-		List<T> result = new LinkedList<T>(Arrays.asList(array));
-		for (int i=additionalNullValuePositions.size()-1; i>=0; i--) {
+	private static <T> List<T> insertNullElements(List<T> array, List<Integer> additionalNullValuePositions) {
+		List<T> result = new LinkedList<T>(array);
+		for (int i = additionalNullValuePositions.size() - 1; i >= 0; i--) {
 			result.add(additionalNullValuePositions.get(i), null);
 		}
-		return (T[]) result.toArray();
+		return result;
 	}
-	
+
 }
