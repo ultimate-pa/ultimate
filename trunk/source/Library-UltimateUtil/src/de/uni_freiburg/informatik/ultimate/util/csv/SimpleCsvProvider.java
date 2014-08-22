@@ -62,6 +62,7 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
+		String separator = ",";
 		String lineSeparator = System.getProperty("line.separator");
 
 		// get longest string
@@ -76,17 +77,22 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 		}
 
 		for (String s : mColumnTitles) {
-			sb.append(s).append(", ");
+			sb.append(s).append(separator);
 		}
 		sb.replace(sb.length() - 2, sb.length(), "").append(lineSeparator);
 
 		for (Entry<String, T[]> x : mTable.entrySet()) {
-			sb.append(x.getKey());
-			for (int i = 0; i < maxLength + 1 - x.getKey().length(); i++) {
+			String rowTitle = x.getKey();
+			checkForSeparators(rowTitle, separator, lineSeparator);
+			sb.append(rowTitle).append(separator);
+			for (int i = 0; i < maxLength + 1 - rowTitle.length(); i++) {
 				sb.append(" ");
 			}
+			sb.append(rowTitle).append(separator);
 			for (T value : x.getValue()) {
-				sb.append(value.toString()).append(", ");
+				String cellString = String.valueOf(value);
+				checkForSeparators(cellString, separator, lineSeparator);
+				sb.append(cellString).append(", ");
 			}
 			sb.replace(sb.length() - 2, sb.length(), "").append(lineSeparator);
 		}
@@ -106,14 +112,27 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 		sb.replace(sb.length() - separator.length(), sb.length(), "").append(lineSeparator);
 		
 		for (Entry<String, T[]> x : mTable.entrySet()) {
-			sb.append(x.getKey());
+			String rowTitle = x.getKey();
+			checkForSeparators(rowTitle, separator, lineSeparator);
+			sb.append(rowTitle).append(separator);
 			for (T value : x.getValue()) {
-				sb.append(value.toString()).append(separator);
+				String cellString = String.valueOf(value);
+				checkForSeparators(cellString, separator, lineSeparator);
+				sb.append(cellString).append(separator);
 			}
 			sb.replace(sb.length() - separator.length(), sb.length(), "").append(lineSeparator);
 		}
 		
 		return sb;
+	}
+	
+	private void checkForSeparators(String cellString, String cellSeparator, String lineSeparator) {
+		if (cellString.contains(cellSeparator)) {
+			throw new IllegalArgumentException("The following cell contains the character that is used to separate cells: ");
+		}
+		if (cellString.contains(lineSeparator)) {
+			throw new IllegalArgumentException("The following cell contains the character that is used to separate lines: ");
+		}
 	}
 
 	@Override
