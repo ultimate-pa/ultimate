@@ -264,7 +264,7 @@ public class CsvUtils {
 				additionalColumnForProviderB.add(pBindex);
 				pAindex++;
 			} else if (pBindex < providerBColumns.size() && !providerAColumns.contains(currentPBCol)) {
-				resultColumns.add(currentPACol);
+				resultColumns.add(currentPBCol);
 				additionalColumnForProviderA.add(pAindex);
 				pBindex++;
 			} else {
@@ -294,11 +294,7 @@ public class CsvUtils {
 			List<Integer> additionalNullValuePositions) {
 		List<T> result = new LinkedList<T>(Arrays.asList(array));
 		for (int i=additionalNullValuePositions.size()-1; i>=0; i--) {
-			try {
-				result.add(additionalNullValuePositions.get(i), null);
-			} catch (IndexOutOfBoundsException e) {
-				//do nothing
-			}
+			result.add(additionalNullValuePositions.get(i), null);
 		}
 		return (T[]) result.toArray();
 	}
