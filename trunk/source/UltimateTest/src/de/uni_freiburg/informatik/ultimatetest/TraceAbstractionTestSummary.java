@@ -23,8 +23,8 @@ public class TraceAbstractionTestSummary extends TestSummary {
 	 */
 	private Map<String, Collection<BenchmarkResult>> m_TraceAbstractionBenchmarks;
 
-	public TraceAbstractionTestSummary(String testSuiteCanonicalName, String description) {
-		super(testSuiteCanonicalName);
+	public TraceAbstractionTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite, String description) {
+		super(ultimateTestSuite);
 		mLogFilePath = Util.generateSummaryLogFilename(
 				Util.getPathFromSurefire(".", this.getClass().getCanonicalName()), description);
 		mCount = 0;

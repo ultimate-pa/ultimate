@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.TestSummary;
 
@@ -14,8 +15,8 @@ public class SVCOMP14TestSummary extends TestSummary {
 	private String mCategoryName;
 	private String mLogFilePath;
 
-	public SVCOMP14TestSummary(String categoryName, String logFilePath, String testSuiteCanonicalName) {
-		super(testSuiteCanonicalName);
+	public SVCOMP14TestSummary(String categoryName, String logFilePath, Class<? extends UltimateTestSuite> ultimateTestSuite) {
+		super(ultimateTestSuite);
 		mCategoryName = categoryName;
 		mLogFilePath = logFilePath;
 	}

@@ -43,7 +43,7 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 					Util.getPathFromSurefire(".", "TOOLONG"), description);
 		}
 		if (m_Summary == null) {
-			m_Summary = new AbstractInterpretationTestSummary(this.getClass().getCanonicalName(), m_summaryLogFileName);
+			m_Summary = new AbstractInterpretationTestSummary(this.getClass(), m_summaryLogFileName);
 			getSummaries().add(m_Summary);
 		}
 

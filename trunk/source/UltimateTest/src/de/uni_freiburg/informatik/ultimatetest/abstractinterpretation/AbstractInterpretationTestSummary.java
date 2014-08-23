@@ -5,6 +5,7 @@ package de.uni_freiburg.informatik.ultimatetest.abstractinterpretation;
 
 import java.io.File;
 
+import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summary.TestSummary;
 
 /**
@@ -18,8 +19,8 @@ public class AbstractInterpretationTestSummary extends TestSummary {
 	/**
 	 * @param testSuiteCanonicalName
 	 */
-	public AbstractInterpretationTestSummary(String testSuiteCanonicalName, String logFileName) {
-		super(testSuiteCanonicalName);
+	public AbstractInterpretationTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite, String logFileName) {
+		super(ultimateTestSuite);
 		m_logFileName = logFileName;
 	}
 

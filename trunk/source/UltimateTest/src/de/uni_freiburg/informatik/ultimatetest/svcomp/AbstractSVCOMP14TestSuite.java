@@ -153,8 +153,7 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 
 		String categoryName = setFile.getName().replace(".set", "");
 		String summaryLogfileName = Util.generateSummaryLogFilename(svcomproot, description + " " + categoryName);
-		ITestSummary summary = new SVCOMP14TestSummary(categoryName, summaryLogfileName, this.getClass()
-				.getCanonicalName());
+		ITestSummary summary = new SVCOMP14TestSummary(categoryName, summaryLogfileName, this.getClass());
 		Collection<ITestSummary> summaries = getSummaries();
 		summaries.add(summary);
 

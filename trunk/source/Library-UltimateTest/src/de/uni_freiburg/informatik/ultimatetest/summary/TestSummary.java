@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 
 public abstract class TestSummary implements ITestSummary {
@@ -14,13 +15,13 @@ public abstract class TestSummary implements ITestSummary {
 	private HashMap<String, Summary> mSuccess;
 	private HashMap<String, Summary> mUnknown;
 	private HashMap<String, Summary> mFailure;
-	private String mTestSuiteCanonicalName;
+	private Class<? extends UltimateTestSuite> m_UltimateTestSuite;
 
-	public TestSummary(String testSuiteCanonicalName) {
+	public TestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		mSuccess = new HashMap<String, Summary>();
 		mFailure = new HashMap<String, Summary>();
 		mUnknown = new HashMap<String, Summary>();
-		mTestSuiteCanonicalName = testSuiteCanonicalName;
+		m_UltimateTestSuite = ultimateTestSuite;
 	}
 
 	@Override
@@ -42,7 +43,7 @@ public abstract class TestSummary implements ITestSummary {
 
 	@Override
 	public String getTestSuiteCanonicalName() {
-		return mTestSuiteCanonicalName;
+		return m_UltimateTestSuite.getCanonicalName();
 	}
 
 	public StringBuilder generateCanonicalSummary() {

@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimatetest.translation;
 
 import java.io.File;
 
+import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summary.TestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
@@ -9,8 +10,8 @@ public class TranslationTestSummary extends TestSummary {
 
 	private String mLogFileDirectory;
 
-	public TranslationTestSummary(String testSuiteCanonicalName, String logFileDirectory) {
-		super(testSuiteCanonicalName);
+	public TranslationTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite, String logFileDirectory) {
+		super(ultimateTestSuite);
 		mLogFileDirectory = logFileDirectory;
 	}
 
