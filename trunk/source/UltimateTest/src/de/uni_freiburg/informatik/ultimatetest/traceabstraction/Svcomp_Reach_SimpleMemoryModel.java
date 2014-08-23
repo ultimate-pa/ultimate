@@ -37,7 +37,7 @@ public class Svcomp_Reach_SimpleMemoryModel extends
 					"traceAbstractionTestSuite/ForwardPredicates_SvcompReachSimpleMM.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-				    "Trace Abstraction via Forward Predicates (SP)",
+//				    "Trace Abstraction via Forward Predicates (SP)",
 				    "CFilesForwardPredicates",
 				    m_Timeout);
 		}
@@ -47,7 +47,7 @@ public class Svcomp_Reach_SimpleMemoryModel extends
 					"traceAbstractionTestSuite/BackwardPredicates_SvcompReachSimpleMM.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-				    "Trace Abstraction via Backward Predicates (BP)",
+//				    "Trace Abstraction via Backward Predicates (BP)",
 				    "CFilesBackwardPredicates",
 				    m_Timeout);
 		}

@@ -39,7 +39,7 @@ public class Totalinterpolation extends
 					"traceAbstractionTestSuite/TreeInterpolants.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
-				    "Treeinterpolants",
+//				    "Treeinterpolants",
 				    "Boogie",
 				    m_Timeout);
 		} 
@@ -49,7 +49,7 @@ public class Totalinterpolation extends
 					"traceAbstractionTestSuite/TreeInterpolants.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-				    "Treeinterpolants",
+//				    "Treeinterpolants",
 				    "C",
 				    m_Timeout);
 		}
@@ -60,7 +60,7 @@ public class Totalinterpolation extends
 					"traceAbstractionTestSuite/TreeInterpolants_TotalInterpolation.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
-				    "Treeinterpolants with totalinterpolation",
+//				    "Treeinterpolants with totalinterpolation",
 				    "Boogie",
 				    m_Timeout);
 		} 
@@ -70,7 +70,7 @@ public class Totalinterpolation extends
 					"traceAbstractionTestSuite/TreeInterpolants_TotalInterpolation.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-				    "Treeinterpolants with totalinterpolation",
+//				    "Treeinterpolants with totalinterpolation",
 				    "C",
 				    m_Timeout);
 		}

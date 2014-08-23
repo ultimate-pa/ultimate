@@ -17,12 +17,10 @@ public class AutomataScriptTestSummary implements ITestSummary {
 	
 	
 	private Class<? extends UltimateTestSuite> m_UltimateTestSuite;
-	private String m_LogFilePath;
 	private List<Triple<String, String, String>> m_Results;
 
-	public AutomataScriptTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite, String logFilePath) {
+	public AutomataScriptTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		m_UltimateTestSuite = ultimateTestSuite;
-		m_LogFilePath = logFilePath;
 		m_Results = new ArrayList<Triple<String, String, String>>();
 	}
 	
@@ -57,16 +55,6 @@ public class AutomataScriptTestSummary implements ITestSummary {
 			sb.append("\n");
 		}
 		return sb.toString();
-	}
-
-	@Override
-	public File getSummaryLogFileName() {
-		return new File(m_LogFilePath);
-	}
-
-	@Override
-	public String getTestSuiteCanonicalName() {
-		return m_UltimateTestSuite.getCanonicalName();
 	}
 
 	@Override

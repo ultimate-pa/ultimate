@@ -14,14 +14,11 @@ import de.uni_freiburg.informatik.ultimatetest.summary.TestSummary;
  */
 public class AbstractInterpretationTestSummary extends TestSummary {
 
-	private final String m_logFileName;
-	
 	/**
 	 * @param testSuiteCanonicalName
 	 */
-	public AbstractInterpretationTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite, String logFileName) {
+	public AbstractInterpretationTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);
-		m_logFileName = logFileName;
 	}
 	
 	@Override
@@ -40,14 +37,6 @@ public class AbstractInterpretationTestSummary extends TestSummary {
 	@Override
 	public String getSummaryLog() {
 		return generateCanonicalSummary().toString();
-	}
-
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary#getSummaryLogFileName()
-	 */
-	@Override
-	public File getSummaryLogFileName() {
-		return new File(m_logFileName);
 	}
 
 }

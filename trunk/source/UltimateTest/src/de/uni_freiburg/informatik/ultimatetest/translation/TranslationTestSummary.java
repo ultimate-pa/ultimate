@@ -8,11 +8,8 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public class TranslationTestSummary extends TestSummary {
 
-	private String mLogFileDirectory;
-
-	public TranslationTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite, String logFileDirectory) {
+	public TranslationTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);
-		mLogFileDirectory = logFileDirectory;
 	}
 	
 	@Override
@@ -28,11 +25,6 @@ public class TranslationTestSummary extends TestSummary {
 	@Override
 	public String getSummaryLog() {
 		return generateCanonicalSummary().toString();
-	}
-
-	@Override
-	public File getSummaryLogFileName() {
-		return new File(Util.generateSummaryLogFilename(mLogFileDirectory, getTestSuiteCanonicalName()));
 	}
 
 }

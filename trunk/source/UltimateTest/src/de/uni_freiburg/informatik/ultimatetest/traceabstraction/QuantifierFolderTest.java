@@ -31,7 +31,7 @@ public class QuantifierFolderTest extends
 					"traceAbstractionTestSuite/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
-				    "Automizer via ForwardPredicates",
+//				    "Automizer via ForwardPredicates",
 				    "Boogie",
 				    m_Timeout);
 		} 
@@ -41,7 +41,7 @@ public class QuantifierFolderTest extends
 					"traceAbstractionTestSuite/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-				    "Automizer via ForwardPredicates",
+//				    "Automizer via ForwardPredicates",
 				    "C",
 				    m_Timeout);
 		}

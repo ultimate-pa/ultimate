@@ -16,7 +16,7 @@ public class All_TreeInterpolants extends
 	private static final String[] m_Directories = {
 		"examples/programs/regression",
 //		"examples/programs/quantifier",
-		"examples/programs/recursivePrograms",
+//		"examples/programs/recursivePrograms",
 //		"examples/programs/toy"
 //		"examples/termination/AProVE"
 	};
@@ -35,7 +35,7 @@ public class All_TreeInterpolants extends
 					"traceAbstractionTestSuite/TreeInterpolants.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
-				    "TraceAbstraction via tree interpolation",
+//				    "TraceAbstraction via tree interpolation",
 				    "Boogie",
 				    m_Timeout);
 		} 
@@ -45,7 +45,7 @@ public class All_TreeInterpolants extends
 					"traceAbstractionTestSuite/TreeInterpolants.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-				    "TraceAbstraction via tree interpolation",
+//				    "TraceAbstraction via tree interpolation",
 				    "C",
 				    m_Timeout);
 		}

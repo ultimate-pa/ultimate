@@ -31,7 +31,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 					"traceAbstractionTestSuite/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
-				    "Trace Abstraction via Forward Predicates (SP)",
+//				    "Trace Abstraction via Forward Predicates (SP)",
 				    "BoogieFilesForwardPredicates",
 				    m_Timeout);
 		} 
@@ -41,7 +41,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 					"traceAbstractionTestSuite/BackwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
-				    "Trace Abstraction via Backward Predicates (WP)",
+//				    "Trace Abstraction via Backward Predicates (WP)",
 				    "BoogieFilesBackwardPredicates",
 				    m_Timeout);
 		}
@@ -51,7 +51,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 					"traceAbstractionTestSuite/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-				    "Trace Abstraction via Forward Predicates (SP)",
+//				    "Trace Abstraction via Forward Predicates (SP)",
 				    "CFilesForwardPredicates",
 				    m_Timeout);
 		}
@@ -61,7 +61,7 @@ public class AllExamplesTraceAbstractionTestSuite extends
 					"traceAbstractionTestSuite/BackwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-				    "Trace Abstraction via Backward Predicates (WP)",
+//				    "Trace Abstraction via Backward Predicates (WP)",
 				    "CFilesBackwardPredicates",
 				    m_Timeout);
 		}

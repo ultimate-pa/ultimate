@@ -34,8 +34,6 @@ public interface ITestSummary {
 	 */
 	public String getSummaryLog();
 
-	public File getSummaryLogFileName();
-	
 	/**
 	 * Class of the UltimateTestSuite for which this summary was constructed.
 	 */
@@ -53,12 +51,6 @@ public interface ITestSummary {
 	 * ".csv"
 	 */
 	public String getFilenameExtension();
-
-	/**
-	 * A string that names this test summary 
-	 * @return
-	 */
-	public String getTestSuiteCanonicalName();
 
 	/**
 	 * This method is called after the execution of each

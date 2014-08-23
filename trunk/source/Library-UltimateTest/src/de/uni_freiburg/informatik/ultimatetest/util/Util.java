@@ -18,6 +18,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 
 public class Util {
 
@@ -123,6 +124,30 @@ public class Util {
 		}
 
 		return singleFiles;
+	}
+	
+	/**
+	 * Get absolute path for the file in which an ITestSummary will be written.
+	 * This includes also the filename.
+	 */
+	public static String generateSummaryLogAbsolutPath(ITestSummary testSummary) {
+		String absolutPath = Util.getPathFromSurefire(
+				generateSummaryLogFilename(testSummary), 
+				testSummary.getUltimateTestSuite().getCanonicalName());
+		return absolutPath;
+	}
+
+	/**
+	 * Get filename for the file in which an ITestSummary will be written.
+	 * Returns only the name of the file without directories.
+	 */
+	private static String generateSummaryLogFilename(ITestSummary testSummary) {
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS");
+		String filename = testSummary.getSummaryTypeDescription() 
+				+ " " 
+				+ dateFormat.format(Calendar.getInstance().getTime())
+				+ testSummary.getFilenameExtension();
+		return filename;
 	}
 
 	public static String generateSummaryLogFilename(String directory, String description) {

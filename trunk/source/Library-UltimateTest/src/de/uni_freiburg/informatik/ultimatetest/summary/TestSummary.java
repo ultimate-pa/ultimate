@@ -48,11 +48,6 @@ public abstract class TestSummary implements ITestSummary {
 		return m_UltimateTestSuite;
 	}
 
-	@Override
-	public String getTestSuiteCanonicalName() {
-		return m_UltimateTestSuite.getCanonicalName();
-	}
-
 	public StringBuilder generateCanonicalSummary() {
 		StringBuilder sb = new StringBuilder();
 		String lineSeparator = System.getProperty("line.separator");

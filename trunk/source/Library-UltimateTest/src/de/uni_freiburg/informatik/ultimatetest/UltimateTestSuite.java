@@ -62,16 +62,15 @@ public abstract class UltimateTestSuite {
 		sSummaries = null;
 	}
 
-	private static void writeSummary(ITestSummary summary) {
-		File summaryLogFile = summary.getSummaryLogFileName();
+	private static void writeSummary(ITestSummary testSummary) {
 
-		File logFile = new File(Util.getPathFromSurefire(summaryLogFile.getName(), summary.getTestSuiteCanonicalName()));
+		File logFile = new File(Util.generateSummaryLogAbsolutPath(testSummary));
 
 		if (!logFile.isDirectory()) {
 			logFile.getParentFile().mkdirs();
 		}
 
-		String summaryLog = summary.getSummaryLog();
+		String summaryLog = testSummary.getSummaryLog();
 		if (summaryLog == null || summaryLog.isEmpty()) {
 			return;
 		}
@@ -79,7 +78,9 @@ public abstract class UltimateTestSuite {
 		try {
 			FileWriter fw = new FileWriter(logFile);
 			Logger.getLogger(UltimateTestSuite.class).info(
-					"Writing summary for " + summary.getTestSuiteCanonicalName() + " to " + logFile.getAbsolutePath());
+					"Writing " + testSummary.getSummaryTypeDescription() 
+					+ " for " + testSummary.getUltimateTestSuite().getCanonicalName() 
+					+ " to " + logFile.getAbsolutePath());
 			fw.write(summaryLog);
 			fw.close();
 		} catch (IOException e) {

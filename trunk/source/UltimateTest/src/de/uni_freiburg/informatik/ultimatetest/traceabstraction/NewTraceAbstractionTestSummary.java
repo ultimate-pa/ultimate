@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,7 +20,6 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
@@ -30,15 +27,12 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 public class NewTraceAbstractionTestSummary implements ITestSummary {
 
 	private final Class<? extends UltimateTestSuite> m_UltimateTestSuite;
-	private final String mLogFilePath;
-	private final String m_TestDescription;
+//	private final String m_TestDescription;
 	private final LinkedHashMap<String, List<Summary>> mSummaryMap;
 	private CsvProviderSummary m_CsvProviderSummary = new CsvProviderSummary();
 
-	public NewTraceAbstractionTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite, String description) {
+	public NewTraceAbstractionTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		m_UltimateTestSuite = ultimateTestSuite;
-		m_TestDescription = description;
-		mLogFilePath = Util.generateSummaryLogFilename(Util.getPathFromSurefire(".", m_UltimateTestSuite.getCanonicalName()), description);
 		mSummaryMap = new LinkedHashMap<>();
 	}
 	
@@ -100,16 +94,6 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 			mSummaryMap.put(filename, sumList);
 		}
 		sumList.add(sum);
-	}
-
-	@Override
-	public File getSummaryLogFileName() {
-		return new File(mLogFilePath);
-	}
-
-	@Override
-	public String getTestSuiteCanonicalName() {
-		return m_UltimateTestSuite.getCanonicalName();
 	}
 
 	private class Summary {
@@ -193,8 +177,9 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 		}
 
 		private void writeAllCsv() {
-			String logFilePath = Util.generateSummaryLogFilename(Util.getPathFromSurefire(".", m_UltimateTestSuite.getCanonicalName()),
-					m_TestDescription);
+			String logFilePath = null;
+//					Util.generateSummaryLogFilename(Util.getPathFromSurefire(".", m_UltimateTestSuite.getCanonicalName()),
+//					m_TestDescription);
 			String csvPrefix = logFilePath.substring(0, logFilePath.length() - 4);
 
 			for (Entry<Class, ICsvProvider<Object>> entry : m_Benchmark2CsvProvider.entrySet()) {

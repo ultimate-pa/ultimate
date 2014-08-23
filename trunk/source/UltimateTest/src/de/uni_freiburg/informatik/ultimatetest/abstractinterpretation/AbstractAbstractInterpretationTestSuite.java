@@ -22,7 +22,6 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
  */
 public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 	private List<UltimateTestCase> m_testCases;
-	private String m_summaryLogFileName;
 	private ITestSummary m_Summary;
 
 	private static final String m_PathToSettings = "examples/settings/";
@@ -38,12 +37,9 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 		if (m_testCases == null) {
 			m_testCases = new ArrayList<UltimateTestCase>();
 		}
-		if (m_summaryLogFileName == null) {
-			m_summaryLogFileName = Util.generateSummaryLogFilename(
-					Util.getPathFromSurefire(".", "TOOLONG"), description);
-		}
+		
 		if (m_Summary == null) {
-			m_Summary = new AbstractInterpretationTestSummary(this.getClass(), m_summaryLogFileName);
+			m_Summary = new AbstractInterpretationTestSummary(this.getClass());
 			getSummaries().add(m_Summary);
 		}
 

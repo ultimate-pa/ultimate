@@ -14,7 +14,6 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuite {
 	private List<UltimateTestCase> m_testCases;
-	private String m_summaryLogFileName;
 	private ITestSummary m_Summary;
 
 	private static final String m_PathToSettings = "examples/settings/";
@@ -25,18 +24,14 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 		return m_testCases;
 	}
 
-	protected void addTestCases(File toolchainFile, File settingsFile, Collection<File> inputFiles, String description,
+	protected void addTestCases(File toolchainFile, File settingsFile, Collection<File> inputFiles,
 			String uniqueString, long deadline) {
 		if (m_testCases == null) {
 			m_testCases = new ArrayList<UltimateTestCase>();
 		}
-		if (m_summaryLogFileName == null) {
-			m_summaryLogFileName = Util.generateSummaryLogFilename(
-					Util.getPathFromSurefire(".", this.getClass().getCanonicalName()), description);
-		}
 		if (m_Summary == null) {
 //			m_Summary = new TraceAbstractionTestSummary(this.getClass().getCanonicalName(), description);
-			m_Summary = new NewTraceAbstractionTestSummary(this.getClass(), description);
+			m_Summary = new NewTraceAbstractionTestSummary(this.getClass());
 			getSummaries().add(m_Summary);
 		}
 
@@ -60,7 +55,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 	 * @param deadline
 	 */
 	protected void addTestCases(String toolchain, String settings, String[] directories, String[] fileEndings,
-			String description, String uniqueString, long deadline) {
+			String uniqueString, long deadline) {
 
 		File toolchainFile = new File(Util.getPathFromTrunk(m_PathToToolchains + toolchain));
 		File settingsFile = new File(Util.getPathFromTrunk(m_PathToSettings + settings));
@@ -68,7 +63,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 		for (String directory : directories) {
 			testFiles.addAll(getInputFiles(directory, fileEndings));
 		}
-		addTestCases(toolchainFile, settingsFile, testFiles, description, uniqueString, deadline);
+		addTestCases(toolchainFile, settingsFile, testFiles, uniqueString, deadline);
 	}
 
 	private Collection<File> getInputFiles(String directory, String[] fileEndings) {

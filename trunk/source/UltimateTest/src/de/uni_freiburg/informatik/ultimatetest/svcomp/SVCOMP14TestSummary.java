@@ -13,12 +13,10 @@ public class SVCOMP14TestSummary extends TestSummary {
 	private int mCount;
 
 	private String mCategoryName;
-	private String mLogFilePath;
 
-	public SVCOMP14TestSummary(String categoryName, String logFilePath, Class<? extends UltimateTestSuite> ultimateTestSuite) {
+	public SVCOMP14TestSummary(String categoryName, Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);
 		mCategoryName = categoryName;
-		mLogFilePath = logFilePath;
 	}
 	
 	@Override
@@ -59,11 +57,6 @@ public class SVCOMP14TestSummary extends TestSummary {
 		sb.append("Failures:\t" + fail).append("\n");
 		sb.append("Total:\t\t" + total);
 		return sb.toString();
-	}
-
-	@Override
-	public File getSummaryLogFileName() {
-		return new File(mLogFilePath);
 	}
 
 	private String getSummaryLog(Map<String, Summary> map, String title) {

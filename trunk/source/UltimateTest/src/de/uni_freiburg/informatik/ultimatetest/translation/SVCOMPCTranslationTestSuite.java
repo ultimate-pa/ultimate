@@ -20,7 +20,7 @@ public class SVCOMPCTranslationTestSuite extends AbstractCTranslationTestSuite {
 
 	@Override
 	public ITestSummary getSummary() {
-		return new TranslationTestSummary(this.getClass(), sInputDirectory.getAbsolutePath());
+		return new TranslationTestSummary(this.getClass());
 	}
 
 }

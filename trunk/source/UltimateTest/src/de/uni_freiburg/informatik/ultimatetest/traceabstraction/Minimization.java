@@ -33,7 +33,7 @@ public class Minimization extends
 					"automizer/TreeInterpolants.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
-				    "Treeinterpolants MinimizeSevpa",
+//				    "Treeinterpolants MinimizeSevpa",
 				    "Boogie",
 				    m_Timeout);
 		} 
@@ -43,7 +43,7 @@ public class Minimization extends
 					"automizer/TreeInterpolants.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-				    "Treeinterpolants MinimizeSevpa",
+//				    "Treeinterpolants MinimizeSevpa",
 				    "C",
 				    m_Timeout);
 		}
@@ -54,7 +54,7 @@ public class Minimization extends
 					"automizer/TreeInterpolants_ShrinkNwa.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
-				    "Treeinterpolants ShrinkNwa",
+//				    "Treeinterpolants ShrinkNwa",
 				    "Boogie",
 				    m_Timeout);
 		} 
@@ -64,7 +64,7 @@ public class Minimization extends
 					"automizer/TreeInterpolants_ShrinkNwa.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-				    "Treeinterpolants ShrinkNwa",
+//				    "Treeinterpolants ShrinkNwa",
 				    "C",
 				    m_Timeout);
 		}

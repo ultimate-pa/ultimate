@@ -17,7 +17,7 @@ public class ExamplesDirectoryCTranslationTestSuite extends AbstractCTranslation
 
 	@Override
 	public ITestSummary getSummary() {
-		return new TranslationTestSummary(this.getClass(), sInputDirectory.getAbsolutePath());
+		return new TranslationTestSummary(this.getClass());
 	}
 
 }

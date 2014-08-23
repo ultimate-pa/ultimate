@@ -17,16 +17,13 @@ public class TraceAbstractionTestSummary extends TestSummary {
 
 	private int mCount;
 
-	private String mLogFilePath;
 	/**
 	 * A map from file names to benchmark results.
 	 */
 	private Map<String, Collection<BenchmarkResult>> m_TraceAbstractionBenchmarks;
 
-	public TraceAbstractionTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite, String description) {
+	public TraceAbstractionTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);
-		mLogFilePath = Util.generateSummaryLogFilename(
-				Util.getPathFromSurefire(".", this.getClass().getCanonicalName()), description);
 		mCount = 0;
 		m_TraceAbstractionBenchmarks = new HashMap<String, Collection<BenchmarkResult>>();
 	}
@@ -115,8 +112,4 @@ public class TraceAbstractionTestSummary extends TestSummary {
 		return sb.toString();
 	}
 
-	@Override
-	public File getSummaryLogFileName() {
-		return new File(mLogFilePath);
-	}
 }

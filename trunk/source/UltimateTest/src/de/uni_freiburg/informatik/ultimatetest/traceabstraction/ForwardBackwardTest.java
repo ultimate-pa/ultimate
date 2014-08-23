@@ -38,7 +38,7 @@ public class ForwardBackwardTest extends
 					"traceAbstractionTestSuite/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
-				    "Trace Abstraction",
+//				    "Trace Abstraction",
 				    "BoogieFilesForwardPredicates",
 				    m_Timeout);
 		} 
@@ -48,7 +48,7 @@ public class ForwardBackwardTest extends
 					"traceAbstractionTestSuite/BackwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
-				    "Trace Abstraction",
+//				    "Trace Abstraction",
 				    "BoogieFilesBackwardPredicates",
 				    m_Timeout);
 		}
@@ -58,7 +58,7 @@ public class ForwardBackwardTest extends
 					"traceAbstractionTestSuite/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-				    "Trace Abstraction",
+//				    "Trace Abstraction",
 				    "CFilesForwardPredicates",
 				    m_Timeout);
 		}
@@ -68,7 +68,7 @@ public class ForwardBackwardTest extends
 					"traceAbstractionTestSuite/BackwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-				    "Trace Abstraction",
+//				    "Trace Abstraction",
 				    "CFilesBackwardPredicates",
 				    m_Timeout);
 		}

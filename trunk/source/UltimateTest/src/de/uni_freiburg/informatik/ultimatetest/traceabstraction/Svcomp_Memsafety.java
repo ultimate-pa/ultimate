@@ -33,7 +33,7 @@ public class Svcomp_Memsafety extends
 					"traceAbstractionTestSuite/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-				    "Trace Abstraction via Forward Predicates (SP)",
+//				    "Trace Abstraction via Forward Predicates (SP)",
 				    "CFilesForwardPredicates",
 				    m_Timeout);
 		}
@@ -43,7 +43,7 @@ public class Svcomp_Memsafety extends
 					"traceAbstractionTestSuite/BackwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-				    "traceAbstractionTestSuite/BackwardPredicates.epf",
+//				    "traceAbstractionTestSuite/BackwardPredicates.epf",
 				    "CFilesBackwardPredicates",
 				    m_Timeout);
 		}
