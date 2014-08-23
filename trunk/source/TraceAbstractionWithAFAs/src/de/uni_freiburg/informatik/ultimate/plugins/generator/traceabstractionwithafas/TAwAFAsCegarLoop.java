@@ -49,7 +49,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			traceAsArray[i] = trace.getSymbol(i);
 		}
 		try {
-			CodeBlock[] rdAnnotatedTraceArray = ReachingDefinitions.computeRDForTrace(traceAsArray, mLogger);
+			//TODO: You need to get BoogieSymbolTable here 
+			CodeBlock[] rdAnnotatedTraceArray = ReachingDefinitions.computeRDForTrace(traceAsArray, mLogger, null);
 		} catch (Throwable e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
