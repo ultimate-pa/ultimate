@@ -40,6 +40,13 @@ public abstract class TestSummary implements ITestSummary {
 			throw new IllegalArgumentException("TestResult 'actualResult' has an unknown value");
 		}
 	}
+	
+	
+
+	@Override
+	public Class<? extends UltimateTestSuite> getUltimateTestSuite() {
+		return m_UltimateTestSuite;
+	}
 
 	@Override
 	public String getTestSuiteCanonicalName() {

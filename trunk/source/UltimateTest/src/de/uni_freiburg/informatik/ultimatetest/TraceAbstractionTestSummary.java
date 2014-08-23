@@ -30,6 +30,16 @@ public class TraceAbstractionTestSummary extends TestSummary {
 		mCount = 0;
 		m_TraceAbstractionBenchmarks = new HashMap<String, Collection<BenchmarkResult>>();
 	}
+	
+	@Override
+	public String getFilenameExtension() {
+		return ".log";
+	}
+	
+	@Override
+	public String getSummaryTypeDescription() {
+		return this.getClass().getSimpleName();
+	}
 
 	@Override
 	public void addResult(TestResult actualResult, boolean junitResult, String category, UltimateRunDefinition ultimateRunDefinition, String message, Map<String, List<IResult>> ultimateIResults) {

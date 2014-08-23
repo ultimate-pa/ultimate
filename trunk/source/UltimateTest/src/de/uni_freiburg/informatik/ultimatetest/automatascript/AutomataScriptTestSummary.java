@@ -8,6 +8,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
@@ -15,21 +16,36 @@ import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 public class AutomataScriptTestSummary implements ITestSummary {
 	
 	
-	private String m_Name;
+	private Class<? extends UltimateTestSuite> m_UltimateTestSuite;
 	private String m_LogFilePath;
 	private List<Triple<String, String, String>> m_Results;
 
-	public AutomataScriptTestSummary(String summaryName, String logFilePath) {
-		m_Name = summaryName;
+	public AutomataScriptTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite, String logFilePath) {
+		m_UltimateTestSuite = ultimateTestSuite;
 		m_LogFilePath = logFilePath;
 		m_Results = new ArrayList<Triple<String, String, String>>();
+	}
+	
+	@Override
+	public Class<? extends UltimateTestSuite> getUltimateTestSuite() {
+		return m_UltimateTestSuite;
+	}
+	
+	@Override
+	public String getSummaryTypeDescription() {
+		return this.getClass().getSimpleName();
+	}
+	
+	@Override
+	public String getFilenameExtension() {
+		return ".log";
 	}
 
 	@Override
 	public String getSummaryLog() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("################# ");
-		sb.append(m_Name);
+		sb.append(m_UltimateTestSuite);
 		sb.append(" #################");
 		sb.append("\n");
 		for (Triple<String, String, String> triple  : m_Results) {
@@ -50,7 +66,7 @@ public class AutomataScriptTestSummary implements ITestSummary {
 
 	@Override
 	public String getTestSuiteCanonicalName() {
-		return m_Name;
+		return m_UltimateTestSuite.getCanonicalName();
 	}
 
 	@Override
@@ -59,5 +75,7 @@ public class AutomataScriptTestSummary implements ITestSummary {
 		m_Results.add(new Triple<String, String, String>(ultimateRunDefinition.getInput().getAbsolutePath(), category, message));
 
 	}
+
+
 
 }

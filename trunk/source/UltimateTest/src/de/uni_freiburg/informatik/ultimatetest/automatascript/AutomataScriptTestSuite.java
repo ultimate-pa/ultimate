@@ -41,7 +41,7 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 
 		String summaryLogFileName = Util.generateSummaryLogFilename(
 				Util.getPathFromSurefire(".", this.getClass().getCanonicalName()), m_Description);
-		AutomataScriptTestSummary testResultSummary = new AutomataScriptTestSummary(this.getClass().getCanonicalName(), summaryLogFileName);
+		AutomataScriptTestSummary testResultSummary = new AutomataScriptTestSummary(this.getClass(), summaryLogFileName);
 		getSummaries().add(testResultSummary);
 
 		Collection<File> inputFiles = new ArrayList<File>();

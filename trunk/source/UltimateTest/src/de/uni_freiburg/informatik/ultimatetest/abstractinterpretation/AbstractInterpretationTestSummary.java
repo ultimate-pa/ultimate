@@ -23,6 +23,16 @@ public class AbstractInterpretationTestSummary extends TestSummary {
 		super(ultimateTestSuite);
 		m_logFileName = logFileName;
 	}
+	
+	@Override
+	public String getFilenameExtension() {
+		return ".log";
+	}
+	
+	@Override
+	public String getSummaryTypeDescription() {
+		return this.getClass().getSimpleName();
+	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary#getSummaryLog()

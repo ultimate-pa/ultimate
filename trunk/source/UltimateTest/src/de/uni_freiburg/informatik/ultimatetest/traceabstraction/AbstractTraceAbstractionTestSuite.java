@@ -36,7 +36,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 		}
 		if (m_Summary == null) {
 //			m_Summary = new TraceAbstractionTestSummary(this.getClass().getCanonicalName(), description);
-			m_Summary = new NewTraceAbstractionTestSummary(this.getClass().getCanonicalName(), description);
+			m_Summary = new NewTraceAbstractionTestSummary(this.getClass(), description);
 			getSummaries().add(m_Summary);
 		}
 

@@ -14,6 +14,16 @@ public class TranslationTestSummary extends TestSummary {
 		super(ultimateTestSuite);
 		mLogFileDirectory = logFileDirectory;
 	}
+	
+	@Override
+	public String getSummaryTypeDescription() {
+		return this.getClass().getSimpleName();
+	}
+	
+	@Override
+	public String getFilenameExtension() {
+		return ".log";
+	}
 
 	@Override
 	public String getSummaryLog() {

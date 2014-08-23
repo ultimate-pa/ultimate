@@ -35,6 +35,24 @@ public interface ITestSummary {
 	public String getSummaryLog();
 
 	public File getSummaryLogFileName();
+	
+	/**
+	 * Class of the UltimateTestSuite for which this summary was constructed.
+	 */
+	public Class<? extends UltimateTestSuite> getUltimateTestSuite();
+	
+	/**
+	 * Description of this type of summary, e.g., "AutomataScriptSummary", 
+	 * "TraceAbstractionBenchmarks". This String is part of the filename
+	 * to which this summary is written.
+	 */
+	public String getSummaryTypeDescription();
+	
+	/**
+	 * Filename extension of the log file that will be written. E.g., ".log", or
+	 * ".csv"
+	 */
+	public String getFilenameExtension();
 
 	/**
 	 * A string that names this test summary 

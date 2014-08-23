@@ -29,17 +29,32 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public class NewTraceAbstractionTestSummary implements ITestSummary {
 
-	private final String mName;
+	private final Class<? extends UltimateTestSuite> m_UltimateTestSuite;
 	private final String mLogFilePath;
 	private final String m_TestDescription;
 	private final LinkedHashMap<String, List<Summary>> mSummaryMap;
 	private CsvProviderSummary m_CsvProviderSummary = new CsvProviderSummary();
 
-	public NewTraceAbstractionTestSummary(String summaryName, String description) {
-		mName = summaryName;
+	public NewTraceAbstractionTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite, String description) {
+		m_UltimateTestSuite = ultimateTestSuite;
 		m_TestDescription = description;
-		mLogFilePath = Util.generateSummaryLogFilename(Util.getPathFromSurefire(".", mName), description);
+		mLogFilePath = Util.generateSummaryLogFilename(Util.getPathFromSurefire(".", m_UltimateTestSuite.getCanonicalName()), description);
 		mSummaryMap = new LinkedHashMap<>();
+	}
+	
+	@Override
+	public Class<? extends UltimateTestSuite> getUltimateTestSuite() {
+		return m_UltimateTestSuite;
+	}
+	
+	@Override
+	public String getSummaryTypeDescription() {
+		return this.getClass().getSimpleName();
+	}
+	
+	@Override
+	public String getFilenameExtension() {
+		return ".log";
 	}
 
 	@Override
@@ -94,7 +109,7 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 
 	@Override
 	public String getTestSuiteCanonicalName() {
-		return mName;
+		return m_UltimateTestSuite.getCanonicalName();
 	}
 
 	private class Summary {
@@ -178,7 +193,7 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 		}
 
 		private void writeAllCsv() {
-			String logFilePath = Util.generateSummaryLogFilename(Util.getPathFromSurefire(".", mName),
+			String logFilePath = Util.generateSummaryLogFilename(Util.getPathFromSurefire(".", m_UltimateTestSuite.getCanonicalName()),
 					m_TestDescription);
 			String csvPrefix = logFilePath.substring(0, logFilePath.length() - 4);
 
@@ -214,5 +229,7 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 		}
 
 	}
+
+
 
 }

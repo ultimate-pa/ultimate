@@ -20,6 +20,16 @@ public class SVCOMP14TestSummary extends TestSummary {
 		mCategoryName = categoryName;
 		mLogFilePath = logFilePath;
 	}
+	
+	@Override
+	public String getSummaryTypeDescription() {
+		return this.getClass().getSimpleName();
+	}
+	
+	@Override
+	public String getFilenameExtension() {
+		return ".log";
+	}
 
 	@Override
 	public String getSummaryLog() {
