@@ -48,7 +48,7 @@ public class CsvConcatenator implements ITestSummary {
 
 	@Override
 	public String getSummaryLog() {
-		return m_CsvProvider.toCsv("Filename").toString();
+		return m_CsvProvider.toCsv(null).toString();
 	}
 
 	@Override
@@ -77,7 +77,7 @@ public class CsvConcatenator implements ITestSummary {
 			if (m_Benchmark.isAssignableFrom(benchmark.getClass())) {
 				ICsvProvider<Object> benchmarkCsv = (ICsvProvider<Object>) benchmark.createCvsProvider();
 				ICsvProvider<Object> benchmarkCsvWithRunDefinition = addUltimateRunDefinition(ultimateRunDefinition,
-						benchmarkCsv);
+						benchmarkCsv, category, message);
 				add(benchmarkCsvWithRunDefinition);
 			}
 		}
@@ -95,22 +95,26 @@ public class CsvConcatenator implements ITestSummary {
 
 	private ICsvProvider<Object> addUltimateRunDefinition(
 			UltimateRunDefinition ultimateRunDefinition,
-			ICsvProvider<Object> singleRowProvider) {
+			ICsvProvider<Object> benchmark, String category, String message) {
 		List<String> resultColumns = new ArrayList<>();
+		resultColumns.add("File");
 		resultColumns.add("Settings");
 		resultColumns.add("Toolchain");
-		resultColumns.addAll(singleRowProvider.getColumnTitles());
-
-		if (singleRowProvider.getRowHeaders().size() != 1) {
-			throw new AssertionError("expecting that benchmark has exactly one row");
-		}
-		List<Object> row = singleRowProvider.getRow(0);
-		List<Object> resultRow = new ArrayList<>();
-		resultRow.add(ultimateRunDefinition.getSettings().getAbsolutePath());
-		resultRow.add(ultimateRunDefinition.getToolchain().getAbsolutePath());
-		resultRow.addAll(row);
+		resultColumns.add("Expected Result");
+		resultColumns.add("Message Result");
+		resultColumns.addAll(benchmark.getColumnTitles());
 		ICsvProvider<Object> result = new SimpleCsvProvider<>(resultColumns);
-		result.addRow(ultimateRunDefinition.getInput().getAbsolutePath(), resultRow);
+		int rows = benchmark.getRowHeaders().size();
+		for (int i=0; i<rows; i++) {
+			List<Object> resultRow = new ArrayList<>();
+			resultRow.add(ultimateRunDefinition.getInput().getAbsolutePath());
+			resultRow.add(ultimateRunDefinition.getSettings().getAbsolutePath());
+			resultRow.add(ultimateRunDefinition.getToolchain().getAbsolutePath());
+			resultRow.add(category);
+			resultRow.add(message);
+			resultRow.addAll(benchmark.getRow(i));
+			result.addRow(resultRow);
+		}
 		return result;
 	}
 

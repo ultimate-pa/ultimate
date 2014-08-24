@@ -56,7 +56,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> 
 		for (String key : keys) {
 			values.add(flatKeyValueMap.get(key));
 		}
-		scp.addRow(this.getClass().getName(), values);
+		scp.addRow(values);
 		return scp;
 	}
 
