@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.lassoranker.LassoRankerTestResultDecider.ExpectedResult;
+import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 
@@ -59,6 +60,12 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 	public static final long s_deadline = 5 * 1000; // in ms
 
 	@Override
+	protected ITestSummary[] constructTestSummaries() {
+		return new ITestSummary[0];
+	}
+	
+	
+	@Override
 	@TestFactory
 	public Collection<UltimateTestCase> createTestCases() {
 		ArrayList<UltimateTestCase> rtr = new ArrayList<UltimateTestCase>();
@@ -82,7 +89,7 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 			if (decider.getExpectedResult() == ExpectedResult.IGNORE) {
 				continue;
 			}
-			rtr.add(new UltimateTestCase(starter, decider, null, inputFile.getName(), urd));
+			rtr.add(new UltimateTestCase(starter, decider, super.getSummaries(), inputFile.getName(), urd));
 		}
 
 		return rtr;
@@ -92,4 +99,6 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 		return Util.getFiles(new File(Util.getPathFromTrunk(s_test_files_dir)),
 				new String[] { ".bpl" });
 	}
+
+
 }

@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
+import de.uni_freiburg.informatik.ultimatetest.translation.TranslationTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
@@ -79,6 +80,22 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 	 */
 	protected abstract String getSVCOMP14RootDirectory();
 
+	
+	@Override
+	protected ITestSummary[] constructTestSummaries() {
+		String svcompRootDir = Util.getFromMavenVariableSVCOMPRoot(getSVCOMP14RootDirectory());
+		Collection<File> setFiles = getAllSetFiles(svcompRootDir);
+		
+		ITestSummary[] testSummaries = new ITestSummary[setFiles.size()];
+		int offset = 0;
+		for (File setFile : setFiles) {
+			String categoryName = setFile.getName().replace(".set", "");
+			testSummaries[offset] = new SVCOMP14TestSummary(categoryName, this.getClass());
+			offset++;
+		}
+		return testSummaries;
+	}
+	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		Collection<UltimateTestCase> rtr = new ArrayList<UltimateTestCase>();
@@ -152,9 +169,6 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 			throws Exception {
 
 		String categoryName = setFile.getName().replace(".set", "");
-		ITestSummary summary = new SVCOMP14TestSummary(categoryName, this.getClass());
-		Collection<ITestSummary> summaries = getSummaries();
-		summaries.add(summary);
 
 		Collection<File> currentFiles = getFilesForSetFile(allFiles, setFile);
 		File toolchainFile = new File(toolchainPath);
@@ -183,7 +197,7 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 			}
 
 			UltimateTestCase testCase = new UltimateTestCase(starter, new SVCOMP14TestResultDecider(singleFile),
-					summary, name, urd);
+					super.getSummaries(), name, urd);
 			rtr.add(testCase);
 
 		}

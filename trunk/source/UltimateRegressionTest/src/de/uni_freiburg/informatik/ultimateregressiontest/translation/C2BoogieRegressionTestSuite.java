@@ -8,6 +8,7 @@ import org.junit.AfterClass;
 import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.TranslationTestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 
@@ -21,6 +22,13 @@ public class C2BoogieRegressionTestSuite extends AbstractRegressionTestSuite {
 		mRootFolder = sRootFolder;
 		mFiletypesToConsider = new String[] { ".c" };
 	}
+	
+	@Override
+	protected ITestSummary[] constructTestSummaries() {
+		// does not use any summary
+		return new ITestSummary[0];
+	}
+
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(File inputFile) {

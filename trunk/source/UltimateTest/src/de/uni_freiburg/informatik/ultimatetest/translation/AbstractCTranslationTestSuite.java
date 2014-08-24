@@ -21,8 +21,6 @@ public abstract class AbstractCTranslationTestSuite extends UltimateTestSuite {
 		// get a set of input files
 
 		Collection<File> inputFiles = getInputFiles();
-		ITestSummary summary = getSummary();
-		getSummaries().add(summary);
 
 		File toolchainFile = new File(Util.getPathFromTrunk("examples/toolchains/CTranslationTest.xml"));
 		long deadline = 10000;
@@ -33,7 +31,7 @@ public abstract class AbstractCTranslationTestSuite extends UltimateTestSuite {
 			rtr.add(new UltimateTestCase(
 					starter, 
 					new TranslationTestResultDecider(inputFile.getAbsolutePath()), 
-					summary,
+					super.getSummaries(),
 					inputFile.getAbsolutePath(), 
 					urd));
 		}
@@ -43,6 +41,4 @@ public abstract class AbstractCTranslationTestSuite extends UltimateTestSuite {
 
 	public abstract Collection<File> getInputFiles();
 	
-	public abstract ITestSummary getSummary();
-
 }

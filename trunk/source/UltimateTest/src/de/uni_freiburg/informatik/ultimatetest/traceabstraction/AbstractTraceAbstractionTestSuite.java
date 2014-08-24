@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimatetest.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
@@ -13,33 +14,34 @@ import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuite {
-	private List<UltimateTestCase> m_testCases;
-	private ITestSummary m_Summary;
-
+	private List<UltimateTestCase> m_testCases = new ArrayList<UltimateTestCase>();
 	private static final String m_PathToSettings = "examples/settings/";
 	private static final String m_PathToToolchains = "examples/toolchains/";
+	
+
+	@Override
+	protected ITestSummary[] constructTestSummaries() {
+		return new ITestSummary[] {
+				new NewTraceAbstractionTestSummary(this.getClass()),
+				new TraceAbstractionTestSummary(this.getClass())
+		};
+	}
+
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		return m_testCases;
 	}
+	
 
 	protected void addTestCases(File toolchainFile, File settingsFile, Collection<File> inputFiles,
 			String uniqueString, long deadline) {
-		if (m_testCases == null) {
-			m_testCases = new ArrayList<UltimateTestCase>();
-		}
-		if (m_Summary == null) {
-//			m_Summary = new TraceAbstractionTestSummary(this.getClass().getCanonicalName(), description);
-			m_Summary = new NewTraceAbstractionTestSummary(this.getClass());
-			getSummaries().add(m_Summary);
-		}
 
 		for (File inputFile : inputFiles) {
 			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
 			UltimateStarter starter = new UltimateStarter(urd, deadline, null, null);
 			m_testCases.add(new UltimateTestCase(starter,
-					new TraceAbstractionTestResultDecider(inputFile, settingsFile), m_Summary, uniqueString + "_"
+					new TraceAbstractionTestResultDecider(inputFile, settingsFile), super.getSummaries(), uniqueString + "_"
 							+ inputFile.getAbsolutePath(), urd));
 		}
 	}

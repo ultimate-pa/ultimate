@@ -2,13 +2,17 @@ package de.uni_freiburg.informatik.ultimatetest.automatascript;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimatetest.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
+import de.uni_freiburg.informatik.ultimatetest.traceabstraction.NewTraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public class AutomataScriptTestSuite extends UltimateTestSuite {
@@ -34,6 +38,16 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 		};
 	private static final String[] m_FileEndings = { ".ats" };
 	
+	
+	
+	@Override
+	protected ITestSummary[] constructTestSummaries() {
+		return new ITestSummary[] {
+				new AutomataScriptTestSummary(this.getClass())
+		};
+	}
+
+
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
@@ -54,7 +68,7 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 			UltimateTestCase utc = new UltimateTestCase(
 					starter,
 					new AutomataScriptTestResultDecider(), 
-					testResultSummary, 
+					super.getSummaries(), 
 					m_Description + "_" + inputFile.getAbsolutePath(), 
 					urd);
 			testCases.add(utc);
@@ -65,5 +79,7 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 	private Collection<File> getInputFiles(String directory, String[] fileEndings) {
 		return Util.getFiles(new File(Util.getPathFromTrunk(directory)), fileEndings);
 	}
+
+
 
 }

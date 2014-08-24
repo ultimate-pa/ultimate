@@ -22,10 +22,17 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
  */
 public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 	private List<UltimateTestCase> m_testCases;
-	private ITestSummary m_Summary;
 
 	private static final String m_PathToSettings = "examples/settings/";
 	private static final String m_PathToToolchains = "examples/toolchains/";
+	
+	
+	@Override
+	protected ITestSummary[] constructTestSummaries() {
+		return new ITestSummary[] {
+				new AbstractInterpretationTestSummary(this.getClass())
+		};
+	}
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
@@ -38,18 +45,13 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 			m_testCases = new ArrayList<UltimateTestCase>();
 		}
 		
-		if (m_Summary == null) {
-			m_Summary = new AbstractInterpretationTestSummary(this.getClass());
-			getSummaries().add(m_Summary);
-		}
-
 		for (File inputFile : inputFiles) {
 			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
 			UltimateStarter starter = new UltimateStarter(urd, deadline, null, null);
 			ITestResultDecider decider = useSVCOMP14resultDecider
 					? new SVCOMP14TestResultDecider(inputFile)
 					: new AbstractInterpretationTestResultDecider(inputFile);
-			m_testCases.add(new UltimateTestCase(starter, decider, m_Summary,
+			m_testCases.add(new UltimateTestCase(starter, decider, super.getSummaries(),
 					uniqueString + "_" + inputFile.getAbsolutePath(), urd));
 		}
 	}

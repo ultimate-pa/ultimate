@@ -4,6 +4,7 @@ import java.io.File;
 
 import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 
@@ -24,7 +25,15 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 	}
 	
 	@Override
+	protected ITestSummary[] constructTestSummaries() {
+		// does not use any summary
+		return new ITestSummary[0];
+	}
+	
+	@Override
 	protected ITestResultDecider getTestResultDecider(File inputFile) {
 		return new RegressionTestResultDecider(inputFile);
 	}
+
+
 }
