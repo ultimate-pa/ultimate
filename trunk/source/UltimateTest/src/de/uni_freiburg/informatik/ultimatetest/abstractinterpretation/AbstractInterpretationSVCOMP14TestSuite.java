@@ -31,12 +31,12 @@ public class AbstractInterpretationSVCOMP14TestSuite extends
 				"AbstractInterpretation.epf",
 			    m_Directories,
 			    new String[] {".c"},
-			    "Abstract interpretation SVCOMP safety check",
+			    "AI c",
 			    "absintsvcomp",
 			    m_Timeout,
 			    true);
-		//return Util.firstN(super.createTestCases(), 10);
-		return super.createTestCases();
+		return Util.firstN(super.createTestCases(), 20);
+		//return super.createTestCases();
 	}
 
 }

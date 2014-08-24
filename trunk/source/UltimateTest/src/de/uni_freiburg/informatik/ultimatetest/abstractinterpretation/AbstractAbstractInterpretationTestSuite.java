@@ -14,7 +14,6 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
-import de.uni_freiburg.informatik.ultimatetest.svcomp.SVCOMP14TestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
@@ -26,11 +25,12 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 	private static final String m_PathToSettings = "examples/settings/";
 	private static final String m_PathToToolchains = "examples/toolchains/";
 	
+	private String m_tablePrefix = "";
 	
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
 		return new ITestSummary[] {
-				new AbstractInterpretationTestSummary(this.getClass())
+				new AbstractInterpretationTestSummary(this.getClass(), m_tablePrefix)
 		};
 	}
 
@@ -40,16 +40,18 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 	}
 
 	protected void addTestCases(File toolchainFile, File settingsFile, Collection<File> inputFiles, String description,
-			String uniqueString, long deadline, boolean useSVCOMP14resultDecider) {
+			String uniqueString, long deadline, boolean forSVCOMP14) {
 		if (m_testCases == null) {
 			m_testCases = new ArrayList<UltimateTestCase>();
 		}
 		
+		m_tablePrefix = forSVCOMP14 ? "S" : "U";
+		
 		for (File inputFile : inputFiles) {
 			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
 			UltimateStarter starter = new UltimateStarter(urd, deadline, null, null);
-			ITestResultDecider decider = useSVCOMP14resultDecider
-					? new SVCOMP14TestResultDecider(inputFile)
+			ITestResultDecider decider = forSVCOMP14
+					? new AbstractInterpretationSVCOMPTestResultDecider(inputFile)
 					: new AbstractInterpretationTestResultDecider(inputFile);
 			m_testCases.add(new UltimateTestCase(starter, decider, super.getSummaries(),
 					uniqueString + "_" + inputFile.getAbsolutePath(), urd));
@@ -66,7 +68,7 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 	 * @param deadline
 	 */
 	protected void addTestCases(String toolchain, String settings, String[] directories, String[] fileEndings,
-			String description, String uniqueString, long deadline, boolean useSVCOMP14resultDecider) {
+			String description, String uniqueString, long deadline, boolean forSVCOMP14) {
 
 		File toolchainFile = new File(Util.getPathFromTrunk(m_PathToToolchains + toolchain));
 		File settingsFile = new File(Util.getPathFromTrunk(m_PathToSettings + settings));
@@ -74,7 +76,7 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 		for (String directory : directories) {
 			testFiles.addAll(getInputFiles(directory, fileEndings));
 		}
-		addTestCases(toolchainFile, settingsFile, testFiles, description, uniqueString, deadline, useSVCOMP14resultDecider);
+		addTestCases(toolchainFile, settingsFile, testFiles, description, uniqueString, deadline, forSVCOMP14);
 	}
 
 	private Collection<File> getInputFiles(String directory, String[] fileEndings) {

@@ -11,12 +11,13 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 /**
  * Stolen from Svcomp_Reach_PreciseMemoryModel ;-)
  */
-public class AbstractInterpretationToyTestSuite extends
+public class AbstractInterpretationBoogieTestSuite extends
 		AbstractAbstractInterpretationTestSuite {
 	
 	private static final String[] m_Directories = {
 		//"examples/programs/toy/",
 		"examples/programs/regression/bpl/",
+		//"examples/programs/recursivePrograms",
 		};
 	
 	// Time out for each test case in milliseconds
@@ -29,11 +30,11 @@ public class AbstractInterpretationToyTestSuite extends
 				"AbstractInterpretation.epf",
 			    m_Directories,
 			    new String[] {".bpl"},
-			    "Abstract interpretation BPL safety check",
+			    "AI bpl",
 			    "absintbpl",
 			    m_Timeout,
 			    false);
-		//return Util.firstN(super.createTestCases(), 30);
-		return super.createTestCases();
+		return Util.firstN(super.createTestCases(), 10);
+		//return super.createTestCases();
 	}
 }

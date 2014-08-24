@@ -91,6 +91,13 @@ public class AbstractInterpretationBoogieVisitor {
 	private boolean m_useOldValues = false;
 	
 	/**
+	 * If the boogie visitor encounters any errors (like unsupported syntax), an error message
+	 * is written to this variable. The AbstractInterpreter checks for such messages and returns
+	 * an appropriate result.
+	 */
+	private String m_error = "";
+	
+	/**
 	 * Flag set when encountering a unary NOT operation as !(a comp b) needs to be calculated as (a !comp b)
 	 */
 	private boolean m_negate;
@@ -304,9 +311,11 @@ public class AbstractInterpretationBoogieVisitor {
 		IAbstractValue<?> formulaResult = evaluateExpression(statement.getFormula());
 
 		if (formulaResult == null) {
-			m_logger.warn(String.format("Evaluating statement failed, returned null: %s", statement));
+			m_logger.warn(String.format("Evaluating assume statement failed, returned null: %s", statement));
 			return;
 		}
+		
+		m_logger.debug(String.format("ASSUMESTATEMENT \"%s\" => %s", statement, formulaResult.toString()));
 		
 		if (assumptionValueIsFalse(formulaResult)) {
 			// expression evaluates to false for all values, so there is no resulting state.
@@ -382,7 +391,7 @@ public class AbstractInterpretationBoogieVisitor {
 		} else if (expr instanceof FunctionApplication) {
 			visit((FunctionApplication) expr);
 		} else {
-			m_logger.error(String.format("Unsupported expression %s", expr.getClass()));
+			writeError(String.format("Unsupported expression %s", expr.getClass()));
 		}
 		
 		if (m_resultValue != null)
@@ -410,7 +419,9 @@ public class AbstractInterpretationBoogieVisitor {
 				m_resultValue = m_resultValue.negative();
 			break;
 		case LOGICNEG :
-			m_resultValue = evaluateNegatedExpression(expr.getExpr());
+			m_resultValue = doNegate()
+					? evaluateExpression(expr.getExpr())
+					: evaluateNegatedExpression(expr.getExpr());
 			break;
 		case OLD :
 			boolean useOld_bak = m_useOldValues;
@@ -712,7 +723,7 @@ public class AbstractInterpretationBoogieVisitor {
 			storageClass = m_lhsStorageClass;
 			type = m_lhsType;
 		} else {
-			m_logger.error(String.format("Unsupported array identifier found: %s", array));
+			writeError(String.format("Unsupported array identifier found: %s", array));
 			m_lhsIdentifier = null;
 			m_lhsType = null;
 			m_resultValue = null;
@@ -808,11 +819,11 @@ public class AbstractInterpretationBoogieVisitor {
 			} else if (pt.getTypeCode() == PrimitiveType.REAL) {
 				topValue = m_realFactory.makeTopValue();
 			} else {
-				m_logger.error(String.format("Unsupported primitive type \"%s\"", pt));
+				writeError(String.format("Unsupported primitive type \"%s\"", pt));
 			}
 			return topValue;
 		} else {
-			m_logger.error(String.format("Unsupported non-primitive type \"%s\" of %s", type, type.getClass()));
+			writeError(String.format("Unsupported non-primitive type \"%s\" of %s", type, type.getClass()));
 			return null;
 		}
 	}
@@ -822,8 +833,10 @@ public class AbstractInterpretationBoogieVisitor {
 		if (type instanceof ArrayType) {
 			ArrayData arrayData = getArrayData(identifier);
 			arrayData.setIndicesUnclear();
-			arrayData.setValue(getTopValueForType(((ArrayType) type).getValueType()));
+			IAbstractValue<?> result = getTopValueForType(((ArrayType) type).getValueType());
+			arrayData.setValue(result);
 			// no need to havoc any individual values, since now only the global one will be accessed
+			return result;
 		}
 		
 		// not an array
@@ -841,7 +854,7 @@ public class AbstractInterpretationBoogieVisitor {
 				return result;
 			}
 		} else {
-			m_logger.error(String.format("Unknown type of identifier \"%s\"", identifier));
+			writeError(String.format("Unknown type of identifier \"%s\"", identifier));
 		}
 		return null;
 	}
@@ -852,11 +865,33 @@ public class AbstractInterpretationBoogieVisitor {
 	 * <br> If it already is a value in the boolean domain, a copy is returned.
 	 * <br> Else, a boolean value of FALSE is returned iff the given value is bottom.
 	 */
-	public IAbstractValue<?> booleanFromAbstractValue(IAbstractValue<?> value) {
+	private IAbstractValue<?> booleanFromAbstractValue(IAbstractValue<?> value) {
+		if (value == null)
+			return null;
+		
 		if (m_boolFactory.valueBelongsToDomainSystem(value))
 			return value.copy();
 		
 		return m_boolFactory.makeBoolValue(!value.isBottom());
+	}
+	
+	/**
+	 * Writes an error message to the log and m_error
+	 * @param message
+	 */
+	private void writeError(String message) {
+		if (!m_error.isEmpty())
+			m_error += "\n";
+		m_error += message;
+		
+		m_logger.error(message);
+	}
+	
+	/**
+	 * @return An error message if an error was encountered. Returns an empty string if no error is present.
+	 */
+	public String getErrorMessage() {
+		return m_error;
 	}
 
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -977,7 +1012,7 @@ public class AbstractInterpretationBoogieVisitor {
 		} else if (assumeFormula instanceof UnaryExpression) {
 			UnaryExpression unaryFormula = (UnaryExpression) assumeFormula;
 			if (unaryFormula.getOperator() == UnaryExpression.Operator.LOGICNEG)
-				didNarrow = applyAssumption(unaryFormula.getExpr(), true) || didNarrow;
+				didNarrow = applyAssumption(unaryFormula.getExpr(), !negate) || didNarrow;
 		} else if (assumeFormula instanceof BooleanLiteral) {
 			didNarrow = true; // "assume true;" -> nothing to narrow
 		}

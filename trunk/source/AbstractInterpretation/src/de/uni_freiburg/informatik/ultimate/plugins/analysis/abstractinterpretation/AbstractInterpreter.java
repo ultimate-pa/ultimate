@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cfg
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
@@ -149,9 +150,11 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 		fetchPreferences();
 
-		String[] nums = m_widening_fixedNumbers.split(",");
-		for (int i = 0; i < nums.length; i++)
-			m_fixedNumbersForWidening.add(nums[i].trim());
+		if (!m_widening_fixedNumbers.isEmpty()) {
+			String[] nums = m_widening_fixedNumbers.split(",");
+			for (int i = 0; i < nums.length; i++)
+				m_fixedNumbersForWidening.add(nums[i].trim());
+		}
 	}
 
 	/**
@@ -374,8 +377,12 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 		/* report as safe if the analysis terminated after having explored the
 		 * whole reachable state space without finding an error */
-		if (m_reachedErrorLocs.isEmpty() && m_continueProcessing)
-			reportSafeResult();
+		if (m_reachedErrorLocs.isEmpty()) {
+			if (m_continueProcessing)
+				reportSafeResult();
+			else if (!m_services.getProgressMonitorService().continueProcessing())
+				reportTimeoutResult();
+		}
 	}
 
 	/**
@@ -391,7 +398,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 			m_logger.debug(String.format("---- PROCESSING NODE %S ----", (ProgramPoint) node));
 			// process all unprocessed states at the node
 			boolean hasUnprocessed = true;
-			while (hasUnprocessed) {
+			while (hasUnprocessed && m_continueProcessing) {
 				AbstractState unprocessedState = null;
 				for (AbstractState s : statesAtNode) {
 					if (!s.isProcessed()) {
@@ -412,6 +419,8 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				} else {
 					hasUnprocessed = false;
 				}
+				// abort if asked to cancel
+				m_continueProcessing = m_continueProcessing && m_services.getProgressMonitorService().continueProcessing();
 			} // hasUnprocessed
 			
 			// remove states if they aren't needed for possible widening anymore
@@ -419,10 +428,10 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				m_states.remove(node);
 			
 			if (!m_callStatementsAtCalls.containsAll(m_callStatementsAtSummaries))
-				reportUnsupportedSyntaxResult(node);
+				reportUnsupportedSyntaxResult(node, "Abstract interpretation plug-in can't verify "
+						+ "programs which contain procedures without implementations.");
 			
-			if (m_continueProcessing
-					&& m_services.getProgressMonitorService().continueProcessing())
+			if (m_continueProcessing)
 				visitNodes(); // repeat until m_nodesToVisit is empty
 		}
 	}
@@ -432,6 +441,13 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		m_logger.debug("Visiting: " + e.getSource() + " -> " + e.getTarget());
 
 		super.visit(e);
+		
+		String evaluationError = m_boogieVisitor.getErrorMessage();
+		if (!evaluationError.isEmpty()) {
+			reportUnsupportedSyntaxResult(e, evaluationError);
+			
+			m_resultingState = null; // return, abort, stop.
+		}
 
 		if (m_resultingState == null)
 			return; // do not process target node!
@@ -645,12 +661,10 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		}
 	}
 	
-	private void reportUnsupportedSyntaxResult(IElement location) {
+	private void reportUnsupportedSyntaxResult(IElement location, String message) {
 		UnsupportedSyntaxResult<IElement> result =
 				new UnsupportedSyntaxResult<IElement>(location, Activator.s_PLUGIN_ID,
-						m_services.getBacktranslationService().getTranslatorSequence(),
-						"Abstract interpretation plug-in can't verify "
-						+ "programs which contain procedures without implementations.");
+						m_services.getBacktranslationService().getTranslatorSequence(), message);
 
 		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
 
@@ -662,7 +676,15 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	 */
 	private void reportSafeResult() {
 		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID,
-				new AllSpecificationsHoldResult(Activator.s_PLUGIN_ID, ""));
+				new AllSpecificationsHoldResult(Activator.s_PLUGIN_ID, "No error locations were reached."));
+	}
+
+	/**
+	 * Reports a timeout of the analysis
+	 */
+	private void reportTimeoutResult() {
+		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID,
+				new TimeoutResult(Activator.s_PLUGIN_ID, "Analysis aborted."));
 	}
 
 	/**
