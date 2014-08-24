@@ -5,11 +5,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimatetest.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimatetest.summary.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
@@ -23,7 +25,8 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 	protected ITestSummary[] constructTestSummaries() {
 		return new ITestSummary[] {
 				new NewTraceAbstractionTestSummary(this.getClass()),
-				new TraceAbstractionTestSummary(this.getClass())
+				new TraceAbstractionTestSummary(this.getClass()),
+				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class)
 		};
 	}
 

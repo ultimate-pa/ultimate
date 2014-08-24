@@ -1,23 +1,12 @@
 package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-
-import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
@@ -27,9 +16,7 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 public class NewTraceAbstractionTestSummary implements ITestSummary {
 
 	private final Class<? extends UltimateTestSuite> m_UltimateTestSuite;
-//	private final String m_TestDescription;
 	private final LinkedHashMap<String, List<Summary>> mSummaryMap;
-	private CsvProviderSummary m_CsvProviderSummary = new CsvProviderSummary();
 
 	public NewTraceAbstractionTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		m_UltimateTestSuite = ultimateTestSuite;
@@ -63,8 +50,6 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 			}
 			sb.append(lineSeparator);
 		}
-		// Hack for checking if csv output is working
-		// m_CsvProviderSummary.writeAllCsv();
 		return sb.toString();
 	}
 
@@ -79,10 +64,6 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 
 		sum.mSettingsFile = ultimateRunDefintion.getSettings().getAbsolutePath();
 		sum.interpretUltimateResults(ultimateIResults);
-
-		for (IResult result : Util.filterResults(ultimateIResults, BenchmarkResult.class)) {
-			m_CsvProviderSummary.add(ultimateRunDefintion, (BenchmarkResult<?>) result);
-		}
 
 		addToMap(ultimateRunDefintion.getInput().getAbsolutePath(), sum);
 	}
@@ -134,87 +115,6 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 		}
 
 	}
-
-	private class CsvProviderSummary {
-		private Map<Class, ICsvProvider<Object>> m_Benchmark2CsvProvider = new HashMap<Class, ICsvProvider<Object>>();
-
-		void add(UltimateRunDefinition ultimateRunDefintion, BenchmarkResult<?> result) {
-			ICsvProviderProvider<?> benchmark = result.getBenchmark();
-			ICsvProvider<Object> benchmarkCsv = (ICsvProvider<Object>) benchmark.createCvsProvider();
-			ICsvProvider<Object> benchmarkCsvWithRunDefinition = addUltimateRunDefinition(ultimateRunDefintion,
-					benchmarkCsv);
-
-			ICsvProvider<Object> oldCsvProvider = m_Benchmark2CsvProvider.get(benchmark.getClass());
-			if (oldCsvProvider == null) {
-				oldCsvProvider = new SimpleCsvProvider<>(benchmarkCsv.getColumnTitles());
-				m_Benchmark2CsvProvider.put(benchmark.getClass(), oldCsvProvider);
-			}
-
-			ICsvProvider<Object> newCsvProvider = CsvUtils.concatenateRows(oldCsvProvider,
-					benchmarkCsvWithRunDefinition);
-			m_Benchmark2CsvProvider.put(benchmark.getClass(), newCsvProvider);
-
-		}
-
-		private ICsvProvider<Object> addUltimateRunDefinition(UltimateRunDefinition ultimateRunDefinition,
-				ICsvProvider<Object> singleRowProvider) {
-			List<String> resultColumns = new ArrayList<>();
-			resultColumns.add("Settings");
-			resultColumns.add("Toolchain");
-			resultColumns.addAll(singleRowProvider.getColumnTitles());
-
-			if (singleRowProvider.getRowHeaders().size() != 1) {
-				throw new AssertionError("expecting that benchmark has exactly one row");
-			}
-			List<Object> row = singleRowProvider.getRow(0);
-			List<Object> resultRow = new ArrayList<>();
-			resultRow.add(ultimateRunDefinition.getSettings().getAbsolutePath());
-			resultRow.add(ultimateRunDefinition.getToolchain().getAbsolutePath());
-			resultRow.addAll(row);
-			ICsvProvider<Object> result = new SimpleCsvProvider<>(resultColumns);
-			result.addRow(ultimateRunDefinition.getInput().getAbsolutePath(), resultRow);
-			return result;
-		}
-
-		private void writeAllCsv() {
-			String logFilePath = null;
-//					Util.generateSummaryLogFilename(Util.getPathFromSurefire(".", m_UltimateTestSuite.getCanonicalName()),
-//					m_TestDescription);
-			String csvPrefix = logFilePath.substring(0, logFilePath.length() - 4);
-
-			for (Entry<Class, ICsvProvider<Object>> entry : m_Benchmark2CsvProvider.entrySet()) {
-				String csvFileName = csvPrefix + entry.getKey().getSimpleName() + ".csv";
-
-				File csvFile = new File(csvFileName);
-
-				try {
-					FileWriter fw = new FileWriter(csvFile);
-					Logger.getLogger(UltimateTestSuite.class).info(
-							"Writing CSV for " + entry.getKey() + " to " + csvFile.getAbsolutePath());
-					fw.write(entry.getValue().toCsv("File").toString());
-					fw.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-
-			}
-
-			// File logFile = new File(Util.getPathFromSurefire(mLogFilePath,
-			// getTestSuiteCanonicalName()));
-			//
-			// if (!logFile.isDirectory()) {
-			// logFile.getParentFile().mkdirs();
-			// }
-
-			// String summaryLog = summary.getSummaryLog();
-			// if (summaryLog == null || summaryLog.isEmpty()) {
-			// return;
-			// }
-
-		}
-
-	}
-
 
 
 }

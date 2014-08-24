@@ -1,8 +1,9 @@
 package de.uni_freiburg.informatik.ultimatetest;
 
+import static org.junit.Assert.fail;
+
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -12,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
-import static org.junit.Assert.fail;
 
 /**
  * @author dietsch
@@ -24,16 +24,16 @@ public class UltimateTestCase {
 	private UltimateRunDefinition m_UltimateRunDefinition;
 	private UltimateStarter mStarter;
 	private ITestResultDecider mDecider;
-	private ITestSummary mSummary;
+	private List<ITestSummary> mSummaries;
 	private Logger mLogger;
 
-	public UltimateTestCase(UltimateStarter starter, ITestResultDecider decider, ITestSummary summary, String name,
+	public UltimateTestCase(UltimateStarter starter, ITestResultDecider decider, List<ITestSummary> summaries, String name,
 			UltimateRunDefinition ultimateRunDefinition) {
 		mLogger = Logger.getLogger(UltimateStarter.class);
 		mStarter = starter;
 		mName = name;
 		mDecider = decider;
-		mSummary = summary;
+		mSummaries = summaries;
 		m_UltimateRunDefinition = ultimateRunDefinition;
 	}
 
@@ -61,8 +61,8 @@ public class UltimateTestCase {
 
 			boolean success = mDecider.getJUnitTestResult(result);
 
-			if (mSummary != null) {
-				mSummary.addResult(result, success, mDecider.getResultCategory(), m_UltimateRunDefinition,
+			for (ITestSummary summary : mSummaries) {
+				summary.addResult(result, success, mDecider.getResultCategory(), m_UltimateRunDefinition,
 						mDecider.getResultMessage(), ultimateIResults);
 			}
 
@@ -81,6 +81,6 @@ public class UltimateTestCase {
 
 	@Override
 	public String toString() {
-		return mName;
+		return m_UltimateRunDefinition.toString();
 	}
 }

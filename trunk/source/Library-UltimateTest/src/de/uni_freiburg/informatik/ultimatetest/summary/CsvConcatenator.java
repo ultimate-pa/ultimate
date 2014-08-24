@@ -1,0 +1,117 @@
+package de.uni_freiburg.informatik.ultimatetest.summary;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
+import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
+
+/**
+ * Summarizes all benchmarks of a certain class to a CSV.
+ * Searches through all IResults and takes only the BenchmarkResults whose
+ * benchmarks is an ICsvProvider<Object>> of a specified type.
+ * Each row is extends by an entry for the following.
+ * <ul> 
+ * <li> File
+ * <li> Setting
+ * <li> Toolchain
+ * <li> Expected Result
+ * <li> Computed Result
+ * </ul>
+ * Furthermore the rows of each Benchmark and each test case are concatenated 
+ * to a single CSV.
+ * @author heizmann@informatik.uni-freiburg.de
+ *
+ */
+public class CsvConcatenator implements ITestSummary {
+	
+	private final Class<? extends UltimateTestSuite> m_UltimateTestSuite;
+	private final Class<? extends ICsvProviderProvider<Object>> m_Benchmark;
+	private ICsvProvider<Object> m_CsvProvider;
+	
+	public CsvConcatenator(
+			Class<? extends UltimateTestSuite> ultimateTestSuite,
+			Class<? extends ICsvProviderProvider<Object>> benchmark) {
+		super();
+		m_UltimateTestSuite = ultimateTestSuite;
+		m_Benchmark = benchmark;
+	}
+
+	@Override
+	public String getSummaryLog() {
+		return m_CsvProvider.toCsv("Filename").toString();
+	}
+
+	@Override
+	public Class<? extends UltimateTestSuite> getUltimateTestSuite() {
+		return m_UltimateTestSuite;
+	}
+
+	@Override
+	public String getSummaryTypeDescription() {
+		return "Summarized " + m_Benchmark.getSimpleName();
+	}
+
+	@Override
+	public String getFilenameExtension() {
+		return ".csv";
+	}
+
+	@Override
+	public void addResult(TestResult actualResult, boolean junitResult,
+			String category, UltimateRunDefinition ultimateRunDefinition,
+			String message, Map<String, List<IResult>> ultimateIResults) {
+		
+		for (IResult result : Util.filterResults(ultimateIResults, BenchmarkResult.class)) {
+			BenchmarkResult<Object> benchmarkResult = (BenchmarkResult<Object>) result;
+			ICsvProviderProvider<Object> benchmark = benchmarkResult.getBenchmark();
+			if (m_Benchmark.isAssignableFrom(benchmark.getClass())) {
+				ICsvProvider<Object> benchmarkCsv = (ICsvProvider<Object>) benchmark.createCvsProvider();
+				ICsvProvider<Object> benchmarkCsvWithRunDefinition = addUltimateRunDefinition(ultimateRunDefinition,
+						benchmarkCsv);
+				add(benchmarkCsvWithRunDefinition);
+			}
+		}
+	}
+	
+	private void add(ICsvProvider<Object> benchmarkCsvWithRunDefinition) {
+		if (m_CsvProvider == null) {
+			m_CsvProvider = benchmarkCsvWithRunDefinition;
+		} else {
+			m_CsvProvider = CsvUtils.concatenateRows(m_CsvProvider,
+					benchmarkCsvWithRunDefinition);
+		}
+		
+	}
+
+	private ICsvProvider<Object> addUltimateRunDefinition(
+			UltimateRunDefinition ultimateRunDefinition,
+			ICsvProvider<Object> singleRowProvider) {
+		List<String> resultColumns = new ArrayList<>();
+		resultColumns.add("Settings");
+		resultColumns.add("Toolchain");
+		resultColumns.addAll(singleRowProvider.getColumnTitles());
+
+		if (singleRowProvider.getRowHeaders().size() != 1) {
+			throw new AssertionError("expecting that benchmark has exactly one row");
+		}
+		List<Object> row = singleRowProvider.getRow(0);
+		List<Object> resultRow = new ArrayList<>();
+		resultRow.add(ultimateRunDefinition.getSettings().getAbsolutePath());
+		resultRow.add(ultimateRunDefinition.getToolchain().getAbsolutePath());
+		resultRow.addAll(row);
+		ICsvProvider<Object> result = new SimpleCsvProvider<>(resultColumns);
+		result.addRow(ultimateRunDefinition.getInput().getAbsolutePath(), resultRow);
+		return result;
+	}
+
+}

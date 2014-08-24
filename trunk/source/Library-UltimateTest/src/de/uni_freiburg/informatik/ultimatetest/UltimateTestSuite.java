@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.junit.AfterClass;
@@ -24,16 +27,25 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 public abstract class UltimateTestSuite {
 
 
-	private static Collection<ITestSummary> sSummaries;
+	private static List<ITestSummary> sSummaries;
 	protected Logger mLogger;
 
 	public UltimateTestSuite() {
 		mLogger = Logger.getLogger(UltimateTestSuite.class);
-		
+		if (sSummaries == null) {
+			sSummaries = Arrays.asList(constructTestSummaries());
+		}
 	}
 
 	@TestFactory
 	public abstract Collection<UltimateTestCase> createTestCases();
+	
+	/**
+	 * Returns the ITestSummaries Objects that produce summaries while
+	 * running the UltimateTestSuite.
+	 * This method is called only once during each run of an UltimateTestSuite.
+	 */
+	protected abstract ITestSummary[] constructTestSummaries();
 
 	/**
 	 * Provides a collection of ITestSummary instances.
@@ -42,11 +54,8 @@ public abstract class UltimateTestSuite {
 	 *         accessed at the end of this test suite and their content written
 	 *         in a file.
 	 */
-	protected Collection<ITestSummary> getSummaries() {
-		if (sSummaries == null) {
-			sSummaries = new ArrayList<ITestSummary>();
-		}
-		return sSummaries;
+	protected List<ITestSummary> getSummaries() {
+		return Collections.unmodifiableList(sSummaries);
 	}
 
 	@AfterClass
