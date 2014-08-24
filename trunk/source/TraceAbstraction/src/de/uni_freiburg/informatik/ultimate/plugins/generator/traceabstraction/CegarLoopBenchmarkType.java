@@ -175,6 +175,13 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 		public int getIteration() {
 			return m_Iteration;
 		}
+		@Override
+		public String toString() {
+			return "size=" + m_Size + "occurred in iteration="
+					+ m_Iteration;
+		}
+		
+		
 		
 		
 	}
