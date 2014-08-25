@@ -12,7 +12,6 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
@@ -22,15 +21,15 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 	private List<UltimateTestCase> m_testCases;
 
+	private final boolean m_logAsLaTeXTable = true;
+	
 	private static final String m_PathToSettings = "examples/settings/";
 	private static final String m_PathToToolchains = "examples/toolchains/";
-	
-	private String m_tablePrefix = "";
 	
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
 		return new ITestSummary[] {
-				new AbstractInterpretationTestSummary(this.getClass(), m_tablePrefix)
+				new AbstractInterpretationTestSummary(this.getClass(), m_logAsLaTeXTable)
 		};
 	}
 
@@ -45,15 +44,12 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 			m_testCases = new ArrayList<UltimateTestCase>();
 		}
 		
-		m_tablePrefix = forSVCOMP14 ? "S" : "U";
-		
 		for (File inputFile : inputFiles) {
 			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
 			UltimateStarter starter = new UltimateStarter(urd, deadline, null, null);
-			ITestResultDecider decider = forSVCOMP14
-					? new AbstractInterpretationSVCOMPTestResultDecider(inputFile)
-					: new AbstractInterpretationTestResultDecider(inputFile);
-			m_testCases.add(new UltimateTestCase(starter, decider, super.getSummaries(),
+			m_testCases.add(new UltimateTestCase(starter,
+						new AbstractInterpretationTestResultDecider(inputFile, m_logAsLaTeXTable),
+						super.getSummaries(),
 					uniqueString + "_" + inputFile.getAbsolutePath(), urd));
 		}
 	}

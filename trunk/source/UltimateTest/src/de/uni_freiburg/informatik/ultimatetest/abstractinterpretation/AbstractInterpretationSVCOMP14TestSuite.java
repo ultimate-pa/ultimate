@@ -19,7 +19,7 @@ public class AbstractInterpretationSVCOMP14TestSuite extends
 		"examples/svcomp/loops/",
 		"examples/svcomp/eca/",
 		"examples/svcomp/systemc/",
-		};
+	};
 	
 	// Time out for each test case in milliseconds
 	private static int m_Timeout = 20000;

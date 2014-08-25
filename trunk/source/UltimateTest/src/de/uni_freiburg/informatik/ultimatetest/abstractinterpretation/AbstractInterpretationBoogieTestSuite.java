@@ -18,7 +18,8 @@ public class AbstractInterpretationBoogieTestSuite extends
 		//"examples/programs/toy/",
 		"examples/programs/regression/bpl/",
 		//"examples/programs/recursivePrograms",
-		};
+	};
+	
 	
 	// Time out for each test case in milliseconds
 	private static int m_Timeout = 20000;
@@ -34,7 +35,7 @@ public class AbstractInterpretationBoogieTestSuite extends
 			    "absintbpl",
 			    m_Timeout,
 			    false);
-		return Util.firstN(super.createTestCases(), 10);
-		//return super.createTestCases();
+		//return Util.firstN(super.createTestCases(), 10);
+		return super.createTestCases();
 	}
 }

@@ -14,31 +14,38 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util.ExpectedResult;
  */
 public class AbstractInterpretationTestResultDecider extends
 		SafetyCheckTestResultDecider {
+	
+	private final boolean m_logAsLaTeXTable;
 
 	/**
 	 * @param inputFile
 	 */
-	public AbstractInterpretationTestResultDecider(File inputFile) {
+	public AbstractInterpretationTestResultDecider(File inputFile, boolean logAsLaTeXTable) {
 		super(inputFile);
+		m_logAsLaTeXTable = logAsLaTeXTable;
 	}
 
 	/**
 	 * Message: Symbol for the LaTeX table denoting the expected result.
 	 */
 	protected void generateResultMessageAndCategory(SafetyCheckerResult safetyCheckerResult) {
-		if (safetyCheckerResult == null) {
-			setResultMessage("--");
-			setResultCategory("Null");
-			return;
-		}
-		if ((safetyCheckerResult.getAutomizerResultType() == SafetyCheckerResultType.EXCEPTION_OR_ERROR)
-				|| (getExpectedResult() == ExpectedResult.NOANNOTATION)) {
-			setResultMessage("--");
+		if (m_logAsLaTeXTable) {
+			if (safetyCheckerResult == null) {
+				setResultMessage("--");
+				setResultCategory("Null");
+				return;
+			}
+			if ((safetyCheckerResult.getAutomizerResultType() == SafetyCheckerResultType.EXCEPTION_OR_ERROR)
+					|| (getExpectedResult() == ExpectedResult.NOANNOTATION)) {
+				setResultMessage("--");
+			} else {
+				setResultMessage(expectedResultTag(getExpectedResult()));
+			}
+	
+			setResultCategory(automizerResultCategoryTag(safetyCheckerResult.getAutomizerResultType()));
 		} else {
-			setResultMessage(expectedResultTag(getExpectedResult()));
+			super.generateResultMessageAndCategory(safetyCheckerResult);
 		}
-
-		setResultCategory(automizerResultCategoryTag(safetyCheckerResult.getAutomizerResultType()));
 	}
 
 	
