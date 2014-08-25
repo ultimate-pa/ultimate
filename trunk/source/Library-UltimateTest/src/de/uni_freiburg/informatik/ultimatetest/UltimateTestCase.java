@@ -35,11 +35,6 @@ public class UltimateTestCase {
 		m_UltimateRunDefinition = ultimateRunDefinition;
 	}
 
-	public UltimateTestCase(UltimateStarter starter, ITestResultDecider decider, List<ITestSummary> summaries,
-			UltimateRunDefinition ultimateRunDefinition) {
-		this(starter, decider, summaries, ultimateRunDefinition.toString(), ultimateRunDefinition);
-	}
-
 	@FactoryTestMethod
 	public void test() {
 
