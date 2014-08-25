@@ -48,7 +48,7 @@ public class CsvConcatenator implements ITestSummary {
 
 	@Override
 	public String getSummaryLog() {
-		return m_CsvProvider.toCsv(null).toString();
+		return m_CsvProvider.toCsv().toString();
 	}
 
 	@Override

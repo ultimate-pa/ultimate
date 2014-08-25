@@ -21,7 +21,7 @@ public interface ICsvProvider<T> {
 	
 	List<List<T>> getTable();
 	
-	StringBuilder toCsv(String rowHeaderTitle);
+	StringBuilder toCsv();
 	
 	boolean isEmpty();
 

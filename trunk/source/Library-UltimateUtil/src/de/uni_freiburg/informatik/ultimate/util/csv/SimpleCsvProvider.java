@@ -59,6 +59,9 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 		// get longest string
 		int maxLength = 0;
 		for (String rowTitle : mRowTitles) {
+			if(rowTitle == null){
+				continue;
+			}
 			if (rowTitle.length() > maxLength) {
 				maxLength = rowTitle.length();
 			}
@@ -98,11 +101,11 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 	}
 
 	@Override
-	public StringBuilder toCsv(String rowHeaderTitle) {
+	public StringBuilder toCsv() {
 		StringBuilder sb = new StringBuilder();
 		String lineSeparator = System.getProperty("line.separator");
 		String separator = ",";
-		sb.append(rowHeaderTitle).append(separator);
+		sb.append(separator);
 		for (String s : mColumnTitles) {
 			sb.append(s).append(separator);
 		}
@@ -157,5 +160,6 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 		}
 		return mTable.get(index);
 	}
+
 
 }

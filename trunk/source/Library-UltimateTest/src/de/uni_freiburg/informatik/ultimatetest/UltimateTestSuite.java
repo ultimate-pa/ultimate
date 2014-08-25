@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimatetest;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,7 +24,6 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
  */
 @RunWith(FactoryTestRunner.class)
 public abstract class UltimateTestSuite {
-
 
 	private static List<ITestSummary> sSummaries;
 	protected Logger mLogger;

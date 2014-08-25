@@ -27,14 +27,19 @@ public class UltimateTestCase {
 	private List<ITestSummary> mSummaries;
 	private Logger mLogger;
 
-	public UltimateTestCase(UltimateStarter starter, ITestResultDecider decider, List<ITestSummary> summaries, String name,
-			UltimateRunDefinition ultimateRunDefinition) {
+	public UltimateTestCase(UltimateStarter starter, ITestResultDecider decider, List<ITestSummary> summaries,
+			String name, UltimateRunDefinition ultimateRunDefinition) {
 		mLogger = Logger.getLogger(UltimateStarter.class);
 		mStarter = starter;
 		mName = name;
 		mDecider = decider;
 		mSummaries = summaries;
 		m_UltimateRunDefinition = ultimateRunDefinition;
+	}
+
+	public UltimateTestCase(UltimateStarter starter, ITestResultDecider decider, List<ITestSummary> summaries,
+			UltimateRunDefinition ultimateRunDefinition) {
+		this(starter, decider, summaries, ultimateRunDefinition.toString(), ultimateRunDefinition);
 	}
 
 	@FactoryTestMethod
@@ -55,8 +60,8 @@ public class UltimateTestCase {
 		} finally {
 			// we need to obtain results here, because afterwards the run is
 			// completed we cannot obtain the results any more
-			HashMap<String, List<IResult>> ultimateIResults = 
-					new HashMap<String, List<IResult>>(mStarter.getServices().getResultService().getResults());
+			HashMap<String, List<IResult>> ultimateIResults = new HashMap<String, List<IResult>>(mStarter.getServices()
+					.getResultService().getResults());
 			mStarter.complete();
 
 			boolean success = mDecider.getJUnitTestResult(result);
@@ -81,6 +86,7 @@ public class UltimateTestCase {
 
 	@Override
 	public String toString() {
-		return m_UltimateRunDefinition.toString();
+		return mName;
+		// return m_UltimateRunDefinition.toString();
 	}
 }

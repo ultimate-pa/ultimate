@@ -68,6 +68,10 @@ public interface ITestResultDecider {
 	 * The category should be used by {@link ITestSummary} to group tests of a
 	 * test suite.
 	 * 
+	 * The category string is not necessarily related to the result computed by
+	 * Ultimate, nor related to the expected result. It can be chosen freely by
+	 * the {@link ITestResultDecider} implementer.
+	 * 
 	 * @return A String representing the result category. May be null.
 	 */
 	public String getResultCategory();

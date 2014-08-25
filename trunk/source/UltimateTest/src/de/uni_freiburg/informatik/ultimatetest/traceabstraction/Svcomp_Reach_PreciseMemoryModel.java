@@ -63,7 +63,7 @@ public class Svcomp_Reach_PreciseMemoryModel extends
 				    m_Timeout);
 		}
 //		return new ArrayList<UltimateTestCase>();
-		return Util.firstN(super.createTestCases(), 30);
+		return Util.firstN(super.createTestCases(), 3);
 //		return super.createTestCases();
 	}
 }
