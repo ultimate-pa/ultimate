@@ -1,14 +1,12 @@
 package de.uni_freiburg.informatik.ultimatetest;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.TestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
@@ -39,11 +37,11 @@ public class TraceAbstractionTestSummary extends TestSummary {
 	}
 
 	@Override
-	public void addResult(TestResult actualResult, boolean junitResult, String category, UltimateRunDefinition ultimateRunDefinition, String message, Map<String, List<IResult>> ultimateIResults) {
-		super.addResult(actualResult, junitResult, category, ultimateRunDefinition, message, ultimateIResults);
+	public void addResult(TestResult threeValuedResult, String category, UltimateRunDefinition ultimateRunDefinition, String message, IResultService resultService) {
+		super.addResult(threeValuedResult, category, ultimateRunDefinition, message, resultService);
 
 			addTraceAbstractionBenchmarks(ultimateRunDefinition.getInput().getAbsolutePath(), Util.filterResults(
-					ultimateIResults, BenchmarkResult.class));
+					resultService.getResults(), BenchmarkResult.class));
 
 	}
 
@@ -96,7 +94,7 @@ public class TraceAbstractionTestSummary extends TestSummary {
 				if (benchmarks == null) {
 					sb.append("\t\t").append("No benchmark results available.").append("\n");
 				} else {
-					for (BenchmarkResult benchmark : benchmarks) {
+					for (BenchmarkResult<Object> benchmark : benchmarks) {
 						sb.append("\t\t").append(benchmark.getLongDescription()).append("\n");
 					}
 				}

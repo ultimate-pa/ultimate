@@ -3,8 +3,8 @@ package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
@@ -54,16 +54,15 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 	}
 
 	@Override
-	public void addResult(TestResult actualResult, boolean junitResult, String category,
-			UltimateRunDefinition ultimateRunDefintion, String message, Map<String, List<IResult>> ultimateIResults) {
+	public void addResult(TestResult threeValuedResult, String category, UltimateRunDefinition ultimateRunDefintion,
+			String message, IResultService resultService) {
 		Summary sum = new Summary();
-		sum.mActualResult = actualResult;
-		sum.mJUnitResult = junitResult;
+		sum.mThreeValuedResult = threeValuedResult;
 		sum.mCategory = category;
 		sum.mMessage = message;
 
 		sum.mSettingsFile = ultimateRunDefintion.getSettings().getAbsolutePath();
-		sum.interpretUltimateResults(ultimateIResults);
+		sum.interpretUltimateResults(resultService);
 
 		addToMap(ultimateRunDefintion.getInput().getAbsolutePath(), sum);
 	}
@@ -82,18 +81,14 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 		public String mSettingsFile;
 		public String mMessage;
 		public String mCategory;
-		public boolean mJUnitResult;
-		public TestResult mActualResult;
+		public TestResult mThreeValuedResult;
 		public List<String> mFlattenedBenchmarkResults;
 
-		public void interpretUltimateResults(Map<String,List<IResult>> ultimateIResults) {
-			if (ultimateIResults == null) {
-				return;
-			}
+		public void interpretUltimateResults(IResultService resultService) {
 
 			mFlattenedBenchmarkResults = new ArrayList<>();
 
-			for (IResult result : Util.filterResults(ultimateIResults, BenchmarkResult.class)) {
+			for (IResult result : Util.filterResults(resultService.getResults(), BenchmarkResult.class)) {
 				StringBuilder sb = new StringBuilder();
 				sb.append(result.getPlugin()).append(": ").append(result.getShortDescription()).append(": ")
 						.append(Util.flatten(result.getLongDescription(), " # "));
@@ -105,7 +100,7 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 			StringBuilder sb = new StringBuilder();
 
 			sb.append(indent).append(mSettingsFile).append(lineSeparator);
-			sb.append(indent).append("Test result: ").append(mActualResult).append(lineSeparator);
+			sb.append(indent).append("Test result: ").append(mThreeValuedResult).append(lineSeparator);
 			sb.append(indent).append("Message:     ").append(Util.flatten(mMessage, " # ")).append(lineSeparator);
 			sb.append(indent).append("Benchmarks:").append(lineSeparator);
 			for (String s : mFlattenedBenchmarkResults) {

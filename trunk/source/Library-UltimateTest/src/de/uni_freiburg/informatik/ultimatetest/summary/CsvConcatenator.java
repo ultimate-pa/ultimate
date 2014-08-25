@@ -2,8 +2,8 @@ package de.uni_freiburg.informatik.ultimatetest.summary;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
@@ -67,11 +67,11 @@ public class CsvConcatenator implements ITestSummary {
 	}
 
 	@Override
-	public void addResult(TestResult actualResult, boolean junitResult,
-			String category, UltimateRunDefinition ultimateRunDefinition,
-			String message, Map<String, List<IResult>> ultimateIResults) {
+	public void addResult(TestResult threeValuedResult, String category,
+			UltimateRunDefinition ultimateRunDefinition, String message,
+			IResultService resultService) {
 		
-		for (IResult result : Util.filterResults(ultimateIResults, BenchmarkResult.class)) {
+		for (IResult result : Util.filterResults(resultService.getResults(), BenchmarkResult.class)) {
 			BenchmarkResult<Object> benchmarkResult = (BenchmarkResult<Object>) result;
 			ICsvProviderProvider<Object> benchmark = benchmarkResult.getBenchmark();
 			if (m_Benchmark.isAssignableFrom(benchmark.getClass())) {

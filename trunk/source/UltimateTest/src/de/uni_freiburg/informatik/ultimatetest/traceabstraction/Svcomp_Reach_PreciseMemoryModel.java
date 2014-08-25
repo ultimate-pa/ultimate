@@ -62,8 +62,7 @@ public class Svcomp_Reach_PreciseMemoryModel extends
 				    "CFilesBackwardPredicates",
 				    m_Timeout);
 		}
-//		return new ArrayList<UltimateTestCase>();
-		return Util.firstN(super.createTestCases(), 3);
-//		return super.createTestCases();
+//		return Util.firstN(super.createTestCases(), 3);
+		return super.createTestCases();
 	}
 }

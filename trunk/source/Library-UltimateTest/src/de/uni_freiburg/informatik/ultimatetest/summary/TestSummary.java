@@ -1,11 +1,10 @@
 package de.uni_freiburg.informatik.ultimatetest.summary;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
@@ -25,8 +24,8 @@ public abstract class TestSummary implements ITestSummary {
 	}
 
 	@Override
-	public void addResult(TestResult actualResult, boolean junitResult, String category, UltimateRunDefinition ultimateRunDefinition, String message, Map<String, List<IResult>> ultimateIResults) {
-		switch (actualResult) {
+	public void addResult(TestResult threeValuedResult, String category, UltimateRunDefinition ultimateRunDefinition, String message, IResultService resultService) {
+		switch (threeValuedResult) {
 		case FAIL:
 			add(getSummary(mFailure, category), ultimateRunDefinition, message);
 			break;

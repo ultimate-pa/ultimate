@@ -1,10 +1,6 @@
 package de.uni_freiburg.informatik.ultimatetest.summary;
 
-import java.io.File;
-import java.util.List;
-import java.util.Map;
-
-import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
@@ -58,11 +54,8 @@ public interface ITestSummary {
 	 * {@link ITestSummary} instance of the active {@link UltimateTestSuite test
 	 * suite}.
 	 * 
-	 * @param actualResult
+	 * @param threeValuedResult
 	 *            The actual result of the test case.
-	 * @param junitResult
-	 *            The actual result of the test case mapped to JUnits result
-	 *            type
 	 * @param category
 	 *            The category of this test result as specified by
 	 *            {@link ITestResultDecider#getResultCategory()}
@@ -72,13 +65,13 @@ public interface ITestSummary {
 	 *            A message for this specific result and this specific input
 	 *            file as specified by
 	 *            {@link ITestResultDecider#getResultMessage()}
-	 * @param ultimateIResults
+	 * @param resultService
 	 * 	          All IResults produced during the run of Ultimate.
 	 *            The results are given as a map which maps plugin IDs to a 
 	 *            the list of results produced by that plugin.
 	 *            
 	 */
-	public void addResult(TestResult actualResult, boolean junitResult, 
-			String category, UltimateRunDefinition ultimateRunDefinition, 
-			String message, Map<String, List<IResult>> ultimateIResults);
+	public void addResult(TestResult threeValuedResult, String category, 
+			UltimateRunDefinition ultimateRunDefinition, String message, 
+			IResultService resultService);
 }

@@ -3,9 +3,8 @@ package de.uni_freiburg.informatik.ultimatetest.automatascript;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
@@ -58,8 +57,8 @@ public class AutomataScriptTestSummary implements ITestSummary {
 	}
 
 	@Override
-	public void addResult(TestResult actualResult, boolean junitResult,
-			String category, UltimateRunDefinition ultimateRunDefinition, String message, Map<String, List<IResult>> ultimateIResults) {
+	public void addResult(TestResult threeValuedResult, String category,
+			UltimateRunDefinition ultimateRunDefinition, String message, IResultService resultService) {
 		m_Results.add(new Triple<String, String, String>(ultimateRunDefinition.getInput().getAbsolutePath(), category, message));
 
 	}
