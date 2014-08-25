@@ -163,10 +163,6 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 		return TestResult.FAIL;
 	}
 
-	public Collection<IResult> getUltimateResults() {
-		return mResults;
-	}
-
 	/**
 	 * Generate the expected result for the current test (i.e. call
 	 * {@link #setExpectedResult(ExpectedResult)}.
