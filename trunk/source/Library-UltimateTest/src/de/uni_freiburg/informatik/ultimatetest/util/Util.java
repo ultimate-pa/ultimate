@@ -9,6 +9,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -350,6 +351,44 @@ public class Util {
 	public enum ExpectedResult {
 		SAFE, UNSAFE, SYNTAXERROR, NOANNOTATION
 	}
+	
+	/**
+	 * Returns a map from keywords to verification results.
+	 * We use keywords in filenames to specify expected verification results.
+	 * If a key of this map is a substring of the filename, the value of this
+	 * map is the expected verification result of a safety checker 
+	 */
+	public static Map<String, ExpectedResult> constructFilenameKeywordMap_SafetyChecker() {
+		Map<String, ExpectedResult> map = new HashMap<String, ExpectedResult>();
+		map.put("-safe", ExpectedResult.SAFE);
+		map.put("_safe", ExpectedResult.SAFE);
+		map.put("-Safe", ExpectedResult.SAFE);
+		map.put("_Safe", ExpectedResult.SAFE);
+		map.put("-unsafe", ExpectedResult.UNSAFE);
+		map.put("_unsafe", ExpectedResult.UNSAFE);
+		map.put("-Unsafe", ExpectedResult.UNSAFE);
+		map.put("_Unsafe", ExpectedResult.UNSAFE);
+		// true-unreach-call is the SV-COMP annotation for safe
+		map.put("_true-unreach-call", ExpectedResult.SAFE);
+		// false-unreach-call is the SV-COMP annotation for safe
+		map.put("_false-unreach-call", ExpectedResult.UNSAFE);
+		return map;
+	}
+	
+	/**
+	 * Returns a map from keywords to verification results.
+	 * We use keywords in the first line of files to specify expected 
+	 * verification results.
+	 * If a key of this map is a substring of the first line, the value of this
+	 * map is the expected verification result of a safety checker 
+	 */
+	public static Map<String, ExpectedResult> constructFirstlineKeywordMap_SafetyChecker() {
+		Map<String, ExpectedResult> map = new HashMap<String, ExpectedResult>();
+		map.put("#Safe", ExpectedResult.SAFE);
+		map.put("#Unsafe", ExpectedResult.UNSAFE);
+		map.put("#SyntaxError", ExpectedResult.SYNTAXERROR);
+		return map;
+	}
 
 	/**
 	 * Read the expected result from the current input file.
@@ -360,15 +399,7 @@ public class Util {
 	 * via the suffix "-safe" or "-unsafe".
 	 */
 	public static ExpectedResult getExpectedResult(File inputFile) {
-		BufferedReader br;
-		String line = null;
-		try {
-			br = new BufferedReader(new FileReader(inputFile));
-			line = br.readLine();
-			br.close();
-		} catch (IOException e) {
-			line = null;
-		}
+		String line = extractFirstLine(inputFile);
 		if (line != null) {
 			if (line.contains("#Safe")) {
 				return ExpectedResult.SAFE;
@@ -390,6 +421,22 @@ public class Util {
 			return ExpectedResult.UNSAFE;
 		}
 		return ExpectedResult.NOANNOTATION;
+	}
+
+	/**
+	 * Returns the first line of File file as String.
+	 */
+	public static String extractFirstLine(File file) {
+		BufferedReader br;
+		String line = null;
+		try {
+			br = new BufferedReader(new FileReader(file));
+			line = br.readLine();
+			br.close();
+		} catch (IOException e) {
+			throw new AssertionError("unable to read file " + file);
+		}
+		return line;
 	}
 
 	/**
