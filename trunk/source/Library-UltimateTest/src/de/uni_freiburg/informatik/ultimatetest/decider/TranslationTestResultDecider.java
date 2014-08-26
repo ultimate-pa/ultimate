@@ -11,7 +11,7 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.Path;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
@@ -32,7 +32,7 @@ public class TranslationTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(IUltimateServiceProvider services) {
+	public TestResult getTestResult(IResultService resultService) {
 
 		setResultCategory("");
 		setResultMessage("");
@@ -42,7 +42,7 @@ public class TranslationTestResultDecider extends TestResultDecider {
 		customMessages
 				.add("Expecting results to not contain SyntaxErrorResult, TypeErrorResult or ExceptionOrErrorResult");
 		boolean fail = false;
-		Set<Entry<String, List<IResult>>> resultSet = services.getResultService().getResults().entrySet();
+		Set<Entry<String, List<IResult>>> resultSet = resultService.getResults().entrySet();
 		if (resultSet.size() == 0) {
 			setResultCategory("No results");
 			customMessages.add("There were no results (this is good for this test)");
@@ -111,12 +111,12 @@ public class TranslationTestResultDecider extends TestResultDecider {
 
 		}
 
-		Util.logResults(log, mInputFile, fail, customMessages, services.getResultService());
+		Util.logResults(log, mInputFile, fail, customMessages, resultService);
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
 
 	@Override
-	public TestResult getTestResult(IUltimateServiceProvider services, Throwable e) {
+	public TestResult getTestResult(IResultService resultService, Throwable e) {
 		return TestResult.FAIL;
 	}
 

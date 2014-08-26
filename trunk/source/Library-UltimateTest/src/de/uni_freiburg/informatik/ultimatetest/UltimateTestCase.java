@@ -44,10 +44,10 @@ public class UltimateTestCase {
 
 		try {
 			mStarter.runUltimate();
-			result = mDecider.getTestResult(mStarter.getServices());
+			result = mDecider.getTestResult(mStarter.getServices().getResultService());
 		} catch (Throwable e) {
 			th = e;
-			result = mDecider.getTestResult(mStarter.getServices(), e);
+			result = mDecider.getTestResult(mStarter.getServices().getResultService(), e);
 			mLogger.fatal(String.format("There was an exception during the execution of Ultimate: %s%n%s", e,
 					ExceptionUtils.getStackTrace(e)));
 		} finally {

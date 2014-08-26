@@ -5,7 +5,7 @@ import java.util.*;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
@@ -90,7 +90,7 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(IUltimateServiceProvider services) {
+	public TestResult getTestResult(IResultService resultService) {
 		Logger logger = Logger.getLogger(LassoRankerTestResultDecider.class);
 		Collection<String> customMessages = new LinkedList<String>();
 		boolean fail = false;
@@ -102,7 +102,7 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 			customMessages.add("No expected results defined in the input file");
 		} else {
 			customMessages.add("Expected Result: " + m_expected_result.toString());
-			Map<String, List<IResult>> resultMap = services.getResultService().getResults();
+			Map<String, List<IResult>> resultMap = resultService.getResults();
 			List<IResult> results = resultMap.get(Activator.s_PLUGIN_ID);
 			IResult lastResult = results.get(results.size() - 1);
 			customMessages.add("Results: " + results.toString());
@@ -132,12 +132,12 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 			}
 		}
 
-		Util.logResults(logger, m_input_file_name, fail, customMessages, services.getResultService());
+		Util.logResults(logger, m_input_file_name, fail, customMessages, resultService);
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
 
 	@Override
-	public TestResult getTestResult(IUltimateServiceProvider services, Throwable e) {
+	public TestResult getTestResult(IResultService resultService, Throwable e) {
 		return TestResult.FAIL;
 	}
 

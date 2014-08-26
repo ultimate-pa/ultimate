@@ -11,7 +11,7 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
@@ -70,12 +70,12 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(IUltimateServiceProvider services) {
+	public TestResult getTestResult(IResultService resultService) {
 		Logger log = Logger.getLogger(SafetyCheckTestResultDecider.class);
 		Collection<String> customMessages = new LinkedList<String>();
 		final TestResult testoutcome;
 		mResults = new ArrayList<IResult>();
-		for (Entry<String, List<IResult>> entry : services.getResultService().getResults().entrySet()) {
+		for (Entry<String, List<IResult>> entry : resultService.getResults().entrySet()) {
 			mResults.addAll(entry.getValue());
 		}
 
@@ -150,16 +150,16 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 		}
 
 		generateResultMessageAndCategory(scResult);
-		Util.logResults(log, mInputFile, !getJUnitTestResult(testoutcome), customMessages, services.getResultService());
+		Util.logResults(log, mInputFile, !getJUnitTestResult(testoutcome), customMessages, resultService);
 		return testoutcome;
 	}
 
 	@Override
-	public TestResult getTestResult(IUltimateServiceProvider services, Throwable e) {
+	public TestResult getTestResult(IResultService resultService, Throwable e) {
 		generateResultMessageAndCategory(new SafetyCheckerResult(SafetyCheckerResultType.EXCEPTION_OR_ERROR,
 				new ExceptionOrErrorResult("Ultimate", e)));
 		Logger log = Logger.getLogger(SafetyCheckTestResultDecider.class);
-		Util.logResults(log, mInputFile, true, new LinkedList<String>(), services.getResultService());
+		Util.logResults(log, mInputFile, true, new LinkedList<String>(), resultService);
 		return TestResult.FAIL;
 	}
 

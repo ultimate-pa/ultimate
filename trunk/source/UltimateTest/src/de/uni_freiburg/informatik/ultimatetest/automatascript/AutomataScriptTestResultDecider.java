@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.AutomataScriptInterpreterOverallResult;
 import de.uni_freiburg.informatik.ultimate.result.AutomataScriptInterpreterOverallResult.OverallResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
@@ -15,9 +15,9 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 	OverallResult m_Category;
 
 	@Override
-	public TestResult getTestResult(IUltimateServiceProvider services) {
+	public TestResult getTestResult(IResultService resultService) {
 		AutomataScriptInterpreterOverallResult asior = null;
-		HashMap<String, List<IResult>> allResults = services.getResultService().getResults();
+		HashMap<String, List<IResult>> allResults = resultService.getResults();
 		for (Entry<String, List<IResult>> entry  : allResults.entrySet()) {
 			for (IResult iResult : entry.getValue()) {
 				if (iResult instanceof AutomataScriptInterpreterOverallResult) {
@@ -34,7 +34,7 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(IUltimateServiceProvider services,
+	public TestResult getTestResult(IResultService resultService,
 			Throwable e) {
 		m_Category = OverallResult.EXCEPTION_OR_ERROR;
 		return getTestResultFromCategory(m_Category);
