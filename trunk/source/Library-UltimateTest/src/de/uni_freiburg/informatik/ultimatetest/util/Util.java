@@ -19,6 +19,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.SafetyCheckerOverallResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 
 public class Util {
@@ -358,20 +359,20 @@ public class Util {
 	 * If a key of this map is a substring of the filename, the value of this
 	 * map is the expected verification result of a safety checker 
 	 */
-	public static Map<String, ExpectedResult> constructFilenameKeywordMap_SafetyChecker() {
-		Map<String, ExpectedResult> map = new HashMap<String, ExpectedResult>();
-		map.put("-safe", ExpectedResult.SAFE);
-		map.put("_safe", ExpectedResult.SAFE);
-		map.put("-Safe", ExpectedResult.SAFE);
-		map.put("_Safe", ExpectedResult.SAFE);
-		map.put("-unsafe", ExpectedResult.UNSAFE);
-		map.put("_unsafe", ExpectedResult.UNSAFE);
-		map.put("-Unsafe", ExpectedResult.UNSAFE);
-		map.put("_Unsafe", ExpectedResult.UNSAFE);
+	public static Map<String, SafetyCheckerOverallResult> constructFilenameKeywordMap_SafetyChecker() {
+		Map<String, SafetyCheckerOverallResult> map = new HashMap<String, SafetyCheckerOverallResult>();
+		map.put("-safe", SafetyCheckerOverallResult.SAFE);
+		map.put("_safe", SafetyCheckerOverallResult.SAFE);
+		map.put("-Safe", SafetyCheckerOverallResult.SAFE);
+		map.put("_Safe", SafetyCheckerOverallResult.SAFE);
+		map.put("-unsafe", SafetyCheckerOverallResult.UNSAFE);
+		map.put("_unsafe", SafetyCheckerOverallResult.UNSAFE);
+		map.put("-Unsafe", SafetyCheckerOverallResult.UNSAFE);
+		map.put("_Unsafe", SafetyCheckerOverallResult.UNSAFE);
 		// true-unreach-call is the SV-COMP annotation for safe
-		map.put("_true-unreach-call", ExpectedResult.SAFE);
+		map.put("_true-unreach-call", SafetyCheckerOverallResult.SAFE);
 		// false-unreach-call is the SV-COMP annotation for safe
-		map.put("_false-unreach-call", ExpectedResult.UNSAFE);
+		map.put("_false-unreach-call", SafetyCheckerOverallResult.UNSAFE);
 		return map;
 	}
 	
@@ -382,11 +383,11 @@ public class Util {
 	 * If a key of this map is a substring of the first line, the value of this
 	 * map is the expected verification result of a safety checker 
 	 */
-	public static Map<String, ExpectedResult> constructFirstlineKeywordMap_SafetyChecker() {
-		Map<String, ExpectedResult> map = new HashMap<String, ExpectedResult>();
-		map.put("#Safe", ExpectedResult.SAFE);
-		map.put("#Unsafe", ExpectedResult.UNSAFE);
-		map.put("#SyntaxError", ExpectedResult.SYNTAXERROR);
+	public static Map<String, SafetyCheckerOverallResult> constructFirstlineKeywordMap_SafetyChecker() {
+		Map<String, SafetyCheckerOverallResult> map = new HashMap<String, SafetyCheckerOverallResult>();
+		map.put("#Safe", SafetyCheckerOverallResult.SAFE);
+		map.put("#Unsafe", SafetyCheckerOverallResult.UNSAFE);
+		map.put("#SyntaxError", SafetyCheckerOverallResult.SYNTAX_ERROR);
 		return map;
 	}
 
