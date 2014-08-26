@@ -53,9 +53,6 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 	public Collection<UltimateTestCase> createTestCases() {
 		List<UltimateTestCase> testCases = new ArrayList<UltimateTestCase>();
 
-		AutomataScriptTestSummary testResultSummary = new AutomataScriptTestSummary(this.getClass());
-		getSummaries().add(testResultSummary);
-
 		Collection<File> inputFiles = new ArrayList<File>();
 		for (String directory : m_Directories) {
 			inputFiles.addAll(getInputFiles(directory, m_FileEndings));
