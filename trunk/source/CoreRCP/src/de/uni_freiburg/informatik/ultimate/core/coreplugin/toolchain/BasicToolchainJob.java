@@ -166,5 +166,5 @@ public abstract class BasicToolchainJob extends Job {
 	protected abstract IStatus rerunToolchain(IProgressMonitor monitor);
 
 	protected abstract IStatus runToolchainDefault(IProgressMonitor monitor);
-
+	
 }

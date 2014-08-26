@@ -126,7 +126,11 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			mToolchain.init(monitor);
 			monitor.worked(1);
 
-			setServices(mToolchain.getCurrentToolchainData().getServices());
+			ToolchainData data = mToolchain.getCurrentToolchainData();
+			if(data == null){
+				return Status.CANCEL_STATUS;
+			}
+			setServices(data.getServices());
 			monitor.worked(1);
 
 			mToolchain.runParser();
@@ -211,4 +215,5 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 
 		return returnstatus;
 	}
+
 }

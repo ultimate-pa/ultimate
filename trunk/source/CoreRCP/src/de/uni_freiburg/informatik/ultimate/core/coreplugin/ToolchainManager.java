@@ -128,12 +128,12 @@ public class ToolchainManager {
 		private ISource mParser;
 		private File mInputFiles;
 		private ToolchainWalker mToolchainWalker;
-		
+
 		private Toolchain(long id, IModelManager modelManager) {
 			mId = id;
 			mModelManager = modelManager;
 			mBenchmark = new Benchmark();
-			
+
 		}
 
 		/*************************** IToolchain Implementation ****************************/
@@ -180,8 +180,8 @@ public class ToolchainManager {
 			ToolchainData rtr = mCurrentController.selectTools(tools);
 			return setToolSelection(monitor, rtr);
 		}
-		
-		public ToolchainData setToolSelection(IProgressMonitor monitor, ToolchainData data){
+
+		public ToolchainData setToolSelection(IProgressMonitor monitor, ToolchainData data) {
 			if (data == null) {
 				/* dialog was aborted */
 				mLogger.warn(getLogPrefix() + ": Dialog was aborted, returning null tools.");
@@ -249,7 +249,7 @@ public class ToolchainManager {
 				CompleteToolchainData data = mToolchainWalker.new CompleteToolchainData(mToolchainData, mParser,
 						mCurrentController);
 
-				mToolchainWalker.walk(data, monitor);
+				mToolchainWalker.walk(data, mToolchainData.getServices().getProgressMonitorService(), monitor);
 			} finally {
 				if (useBenchmark) {
 					bench.stopAll();

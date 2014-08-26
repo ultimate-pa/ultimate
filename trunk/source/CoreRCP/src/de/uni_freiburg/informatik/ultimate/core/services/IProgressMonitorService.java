@@ -6,9 +6,9 @@ public interface IProgressMonitorService {
 	 * Return false iff cancellation of Toolchain is requested or deadline is
 	 * exceeded.
 	 */
-	public abstract boolean continueProcessing();
+	public boolean continueProcessing();
 
-	public abstract void setSubtask(String task);
+	public void setSubtask(String task);
 
 	/**
 	 * Set a time limit after which the toolchain should be stopped.
@@ -23,8 +23,8 @@ public interface IProgressMonitorService {
 	 *            1, 1970 UTC) after which a running toolchain should be
 	 *            stopped.
 	 */
-	public abstract void setDeadline(long date);
+	public void setDeadline(long date);
 
-	public abstract void cancelToolchain();
+	public void cancelToolchain();
 
 }

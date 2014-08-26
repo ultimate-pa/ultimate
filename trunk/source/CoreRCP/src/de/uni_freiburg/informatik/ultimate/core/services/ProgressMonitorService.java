@@ -10,14 +10,16 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 	private IProgressMonitor mMonitor;
 	private long mDeadline;
 	private Logger mLogger;
-	private IToolchainCancel mCancel;
+	private IToolchainCancel mToolchainCancel;
+	private boolean mCancelRequest;
 
 	public ProgressMonitorService(IProgressMonitor monitor, long deadline, Logger logger, IToolchainCancel cancel) {
 		assert monitor != null;
 		mMonitor = monitor;
 		mDeadline = deadline;
 		mLogger = logger;
-		mCancel = cancel;
+		mToolchainCancel = cancel;
+		mCancelRequest = false;
 	}
 
 	/* (non-Javadoc)
@@ -25,9 +27,9 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 	 */
 	@Override
 	public boolean continueProcessing() {
-		boolean cancel = mMonitor.isCanceled() || System.currentTimeMillis() > mDeadline;
+		boolean cancel = mMonitor.isCanceled() || mCancelRequest || System.currentTimeMillis() > mDeadline;
 		if (cancel) {
-			mLogger.debug("Tool knows that it should cancel! It called continueProcessing and received false.");
+			mLogger.debug("Do not continue processing!");
 		}
 		return !cancel;
 	}
@@ -70,7 +72,8 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 
 	@Override
 	public void cancelToolchain() {
-		mCancel.cancelToolchain();
+		mToolchainCancel.cancelToolchain();
+		mCancelRequest = true;
 	}
 
 }

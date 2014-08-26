@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.PluginType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SerializeType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SubchainType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainCancel;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
@@ -49,7 +50,8 @@ final class ToolchainWalker implements IToolchainCancel {
 		mOpenPlugins = new HashMap<String, PluginConnector>();
 	}
 
-	public void walk(CompleteToolchainData data, IProgressMonitor monitor) throws Throwable {
+	public void walk(CompleteToolchainData data, IProgressMonitorService service, IProgressMonitor monitor)
+			throws Throwable {
 		ToolchainData chain = data.getToolchain();
 
 		// convert monitor to submonitor
@@ -62,7 +64,8 @@ final class ToolchainWalker implements IToolchainCancel {
 		for (Object o : chain.getToolchain().getPluginOrSubchain()) {
 			// If a cancel-request was initiated during the loop,
 			// obey it!
-			if (monitor.isCanceled() || this.mToolchainCancelRequest) {
+			if (!service.continueProcessing() || monitor.isCanceled() || this.mToolchainCancelRequest) {
+				mLogger.info("Toolchain execution was canceled (Timeout or user)");
 				return;
 			}
 			// Otherwise deal with the current toolchain element
