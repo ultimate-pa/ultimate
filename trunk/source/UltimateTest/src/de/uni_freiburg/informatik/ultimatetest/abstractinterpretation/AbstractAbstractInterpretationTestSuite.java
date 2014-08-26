@@ -21,15 +21,14 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 	private List<UltimateTestCase> m_testCases;
 
-	private final boolean m_logAsLaTeXTable = true;
-	
 	private static final String m_PathToSettings = "examples/settings/";
 	private static final String m_PathToToolchains = "examples/toolchains/";
 	
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
 		return new ITestSummary[] {
-				new AbstractInterpretationTestSummary(this.getClass(), m_logAsLaTeXTable)
+				new AbstractInterpretationTestSummary(this.getClass()),
+				new AbstractInterpretationLaTeXTestSummary(this.getClass()),
 		};
 	}
 
@@ -39,7 +38,7 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 	}
 
 	protected void addTestCases(File toolchainFile, File settingsFile, Collection<File> inputFiles, String description,
-			String uniqueString, long deadline, boolean forSVCOMP14) {
+			String uniqueString, long deadline) {
 		if (m_testCases == null) {
 			m_testCases = new ArrayList<UltimateTestCase>();
 		}
@@ -48,7 +47,7 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
 			UltimateStarter starter = new UltimateStarter(urd, deadline, null, null);
 			m_testCases.add(new UltimateTestCase(starter,
-						new AbstractInterpretationTestResultDecider(inputFile, m_logAsLaTeXTable),
+						new AbstractInterpretationTestResultDecider(inputFile),
 						super.getSummaries(),
 					uniqueString + "_" + inputFile.getAbsolutePath(), urd));
 		}
@@ -64,7 +63,7 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 	 * @param deadline
 	 */
 	protected void addTestCases(String toolchain, String settings, String[] directories, String[] fileEndings,
-			String description, String uniqueString, long deadline, boolean forSVCOMP14) {
+			String description, String uniqueString, long deadline) {
 
 		File toolchainFile = new File(Util.getPathFromTrunk(m_PathToToolchains + toolchain));
 		File settingsFile = new File(Util.getPathFromTrunk(m_PathToSettings + settings));
@@ -72,7 +71,7 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 		for (String directory : directories) {
 			testFiles.addAll(getInputFiles(directory, fileEndings));
 		}
-		addTestCases(toolchainFile, settingsFile, testFiles, description, uniqueString, deadline, forSVCOMP14);
+		addTestCases(toolchainFile, settingsFile, testFiles, description, uniqueString, deadline);
 	}
 
 	private Collection<File> getInputFiles(String directory, String[] fileEndings) {

@@ -67,14 +67,11 @@ public class TopBottomValue implements IAbstractValue<TopBottomValue.TopBottom> 
 	 */
 	@Override
 	public boolean isEqual(IAbstractValue<?> value) {
-		if (value == null)
-			return false;
+		TopBottomValue tbVal = (TopBottomValue) value;
+		if (tbVal == null) return false;
+		TopBottom tbvalue = tbVal.getValue();
 		
-		TopBottom val = (TopBottom) value.getValue();
-		if (val == null)
-			return false;
-		
-		return m_value == val;
+		return m_value == tbvalue;
 	}
 
 	/* (non-Javadoc)

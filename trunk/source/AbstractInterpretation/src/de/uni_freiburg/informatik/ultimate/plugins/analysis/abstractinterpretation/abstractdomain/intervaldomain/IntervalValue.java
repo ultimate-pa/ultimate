@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain.SignValue;
 
 /**
  * @author Christopher Dillo
@@ -66,12 +67,10 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 */
 	@Override
 	public boolean isEqual(IAbstractValue<?> value) {
-		if (value == null) return false;
+		IntervalValue intVal = (IntervalValue) value;
+		if (intVal == null) return false;
 		
-		Interval interval = (Interval) value.getValue();
-		if (interval == null) return false;
-
-		return m_value.equals(interval);
+		return (m_value.isEqual(intVal.getValue()));
 	}
 
 	/* (non-Javadoc)
@@ -79,10 +78,9 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 */
 	@Override
 	public boolean isSuper(IAbstractValue<?> value) {
-		if (value == null) return false;
-		
-		Interval interval = (Interval) value.getValue();
-		if (interval == null) return false;
+		IntervalValue intVal = (IntervalValue) value;
+		if (intVal == null) return false;
+		Interval interval = intVal.getValue();
 		
 		if (m_value.isEmpty())
 			return interval.isEmpty();
@@ -101,10 +99,9 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 */
 	@Override
 	public boolean isSub(IAbstractValue<?> value) {
-		if (value == null) return false;
-		
-		Interval interval = (Interval) value.getValue();
-		if (interval == null) return false;
+		IntervalValue intVal = (IntervalValue) value;
+		if (intVal == null) return false;
+		Interval interval = intVal.getValue();
 		
 		if (m_value.isEmpty())
 			return true;
@@ -134,9 +131,11 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		/*
 		 * [a, b] + [x, y] = [a + x, b + y]
 		 */
+		IntervalValue intVal = (IntervalValue) value;
+		if (intVal == null) return m_factory.makeBottomValue();
+		Interval interval = intVal.getValue();
 		
-		Interval interval = (Interval) value.getValue();
-		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+		if (m_value.isEmpty() || interval.isEmpty())
 			return m_factory.makeBottomValue();
 		
 		Rational resultLower = m_value.getLowerBound().add(interval.getLowerBound());
@@ -154,9 +153,11 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		/*
 		 * [a, b] - [x, y] = [a - y, b - x]
 		 */
+		IntervalValue intVal = (IntervalValue) value;
+		if (intVal == null) return m_factory.makeBottomValue();
+		Interval interval = intVal.getValue();
 		
-		Interval interval = (Interval) value.getValue();
-		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+		if (m_value.isEmpty() || interval.isEmpty())
 			return m_factory.makeBottomValue();
 		
 		Rational resultLower = m_value.getLowerBound().sub(interval.getUpperBound());
@@ -182,9 +183,11 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		 * 		a <= 0, b >= 0, x <= 0, y <= 0 => [b * x, a * x]
 		 * 		a <= 0, b <= 0, x <= 0, y <= 0 => [b * y, a * x]
 		 */
+		IntervalValue intVal = (IntervalValue) value;
+		if (intVal == null) return m_factory.makeBottomValue();
+		Interval interval = intVal.getValue();
 		
-		Interval interval = (Interval) value.getValue();
-		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+		if (m_value.isEmpty() || interval.isEmpty())
 			return m_factory.makeBottomValue();
 
 		Rational resultLower, resultUpper;
@@ -340,11 +343,12 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		 * 		a <= 0, b <= 0, x <  0, y <  0 => [b / x, a / y]
 				                x <= 0, y >= 0 => (-infty, infty), Warning/Error
 		 */
+		IntervalValue intVal = (IntervalValue) value;
+		if (intVal == null) return m_factory.makeBottomValue();
+		Interval interval = intVal.getValue();
 		
-		Interval interval = (Interval) value.getValue();
-		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+		if (m_value.isEmpty() || interval.isEmpty())
 			return m_factory.makeBottomValue();
-
 		Rational resultLower, resultUpper;
 
 		// rationals for calculations
@@ -451,9 +455,11 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		/*
 		 * [a, b] % [x, y] = [0, min(max(|a|, |b|), max(|x|, |y|)-1)]
 		 */
+		IntervalValue intVal = (IntervalValue) value;
+		if (intVal == null) return m_factory.makeBottomValue();
+		Interval interval = intVal.getValue();
 		
-		Interval interval = (Interval) value.getValue();
-		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+		if (m_value.isEmpty() || interval.isEmpty())
 			return m_factory.makeBottomValue();
 
 		// [a, a] % [x, x]
@@ -510,9 +516,11 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		/*
 			[a, b] == [x, y] => [max(a, x), min(b, y)]
 		*/
+		IntervalValue intVal = (IntervalValue) value;
+		if (intVal == null) return m_factory.makeBottomValue();
+		Interval interval = intVal.getValue();
 		
-		Interval interval = (Interval) value.getValue();
-		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+		if (m_value.isEmpty() || interval.isEmpty())
 			return m_factory.makeBottomValue();
 
 		// rationals for calculations
@@ -537,9 +545,11 @@ public class IntervalValue implements IAbstractValue<Interval> {
 			[a, b] != [x, y] => [min(a, x), max(b, y)]
 			[a, a] != [a, a] => empty
 		*/
+		IntervalValue intVal = (IntervalValue) value;
+		if (intVal == null) return m_factory.makeBottomValue();
+		Interval interval = intVal.getValue();
 		
-		Interval interval = (Interval) value.getValue();
-		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+		if (m_value.isEmpty() || interval.isEmpty())
 			return m_factory.makeBottomValue();
 
 		// rationals for calculations
@@ -569,9 +579,11 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		/*
 			[a, b] <  [x, y] => [a, min(b, y - 1)]
 		*/
+		IntervalValue intVal = (IntervalValue) value;
+		if (intVal == null) return m_factory.makeBottomValue();
+		Interval interval = intVal.getValue();
 		
-		Interval interval = (Interval) value.getValue();
-		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+		if (m_value.isEmpty() || interval.isEmpty())
 			return m_factory.makeBottomValue();
 
 		// rationals for calculations
@@ -591,9 +603,11 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		/*
 			[a, b] >  [x, y] => [max(a, x + 1), b]
 		*/
+		IntervalValue intVal = (IntervalValue) value;
+		if (intVal == null) return m_factory.makeBottomValue();
+		Interval interval = intVal.getValue();
 		
-		Interval interval = (Interval) value.getValue();
-		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+		if (m_value.isEmpty() || interval.isEmpty())
 			return m_factory.makeBottomValue();
 
 		// rationals for calculations
@@ -613,9 +627,11 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		/*
 			[a, b] <= [x, y] => [a, min(b, y)]
 		*/
+		IntervalValue intVal = (IntervalValue) value;
+		if (intVal == null) return m_factory.makeBottomValue();
+		Interval interval = intVal.getValue();
 		
-		Interval interval = (Interval) value.getValue();
-		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+		if (m_value.isEmpty() || interval.isEmpty())
 			return m_factory.makeBottomValue();
 
 		// rationals for calculations
@@ -635,9 +651,11 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		/*
 			[a, b] >= [x, y] => [max(a, x), b]
 		*/
+		IntervalValue intVal = (IntervalValue) value;
+		if (intVal == null) return m_factory.makeBottomValue();
+		Interval interval = intVal.getValue();
 		
-		Interval interval = (Interval) value.getValue();
-		if ((interval == null) || m_value.isEmpty() || interval.isEmpty())
+		if (m_value.isEmpty() || interval.isEmpty())
 			return m_factory.makeBottomValue();
 
 		// rationals for calculations

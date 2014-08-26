@@ -54,7 +54,7 @@ public class AbstractInterpretationPreferenceInitializer extends
 	public static final String DEF_MAIN_METHOD_NAME = "Main";
 	public static final int DEF_ITERATIONS_UNTIL_WIDENING = 2;
 	public static final int DEF_STATES_UNTIL_MERGE = 1;
-	public static final String DEF_WIDENING_FIXEDNUMBERS = "0, 1, 3.14";
+	public static final String DEF_WIDENING_FIXEDNUMBERS = "0, 1, 3.14, -128, 127";
 	public static final boolean DEF_WIDENING_AUTONUMBERS = false;
 
 	public static final boolean DEF_STATE_ANNOTATIONS = false;

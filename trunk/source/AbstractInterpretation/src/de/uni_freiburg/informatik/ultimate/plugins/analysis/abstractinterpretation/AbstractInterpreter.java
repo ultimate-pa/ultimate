@@ -520,6 +520,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		// states
 		AbstractState mergedState = null;
 		for (CodeBlock block : blocks) {
+			m_logger.debug(String.format("Parallel: %s", block.getPrettyPrintedStatements()));
 			visit(block);
 			if (m_resultingState != null) {
 				if (mergedState == null) {

@@ -298,6 +298,9 @@ public class AbstractInterpretationBoogieVisitor {
 				String identifier = m_lhsIdentifier;
 				IAbstractValue<?> rhsValue = evaluateExpression(rhs[i]); // may change m_lhsIdentifier in an ArrayAccessExpression
 				if (rhsValue != null) {
+					if (m_lhsType.equals(PrimitiveType.boolType))
+						rhsValue = booleanFromAbstractValue(rhsValue);
+					
 					m_logger.debug(String.format("Assignment: %s := %s", identifier, rhsValue));
 					boolean writeSuccessful = m_resultingState.writeValue(identifier, rhsValue);
 					if (!writeSuccessful)
@@ -866,11 +869,19 @@ public class AbstractInterpretationBoogieVisitor {
 	 * <br> Else, a boolean value of FALSE is returned iff the given value is bottom.
 	 */
 	private IAbstractValue<?> booleanFromAbstractValue(IAbstractValue<?> value) {
-		if (value == null)
-			return null;
+		if (value == null) {
+			m_logger.warn("Encountered a boolean value of null, using UNKNOWN instead.");
+			return m_boolFactory.makeTopValue();
+		}
 		
-		if (m_boolFactory.valueBelongsToDomainSystem(value))
+		if (m_boolFactory.valueBelongsToDomainSystem(value)) {
+			if (value.isBottom())
+				return m_boolFactory.makeBoolValue(false);
+				/*	(true == false) || true; -> empty || true -> empty (invalid op), but should be true
+					thus, we turn empty to false to get
+					(true == false) || true; -> false || true -> true		*/
 			return value.copy();
+		}
 		
 		return m_boolFactory.makeBoolValue(!value.isBottom());
 	}

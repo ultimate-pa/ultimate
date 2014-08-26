@@ -11,13 +11,19 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 /**
  * Stolen from Svcomp_Reach_PreciseMemoryModel ;-)
  */
-public class AbstractInterpretationBoogieTestSuite extends
+public class AbstractInterpretationEvalTestSuite extends
 		AbstractAbstractInterpretationTestSuite {
 	
-	private static final String[] m_Directories = {
+	private static final String[] m_directories = {
+		/* ULTIMATE repo */
 		//"examples/programs/toy/",
 		"examples/programs/regression/bpl/",
+		"examples/programs/regression/c/",
 		//"examples/programs/recursivePrograms",
+		/* SV-COMP repo */
+		//"examples/svcomp/loops/",
+		//"examples/svcomp/eca/",
+		//"examples/svcomp/systemc/",
 	};
 	
 	
@@ -29,13 +35,20 @@ public class AbstractInterpretationBoogieTestSuite extends
 		addTestCases(
 				"AbstractInterpretation.xml",
 				"AbstractInterpretation.epf",
-			    m_Directories,
+				m_directories,
 			    new String[] {".bpl"},
-			    "AI bpl",
+			    "AI .bpl",
 			    "absintbpl",
-			    m_Timeout,
-			    false);
-		//return Util.firstN(super.createTestCases(), 10);
-		return super.createTestCases();
+			    m_Timeout);
+		addTestCases(
+				"AbstractInterpretationC.xml",
+				"AbstractInterpretation.epf",
+				m_directories,
+			    new String[] {".c"},
+			    "AI .c",
+			    "absintc",
+			    m_Timeout);
+		return Util.firstN(super.createTestCases(), 5);
+		//return super.createTestCases();
 	}
 }

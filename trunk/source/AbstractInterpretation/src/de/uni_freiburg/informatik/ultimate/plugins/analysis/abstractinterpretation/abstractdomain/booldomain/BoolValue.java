@@ -135,7 +135,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	@Override
 	public BoolValue add(IAbstractValue<?> value) {
 		m_logger.debug("Invalid operation ADD on BoolValue");
-		return m_factory.makeValue(Bool.EMPTY);
+		return m_factory.makeBottomValue();
 	}
 
 	/* (non-Javadoc)
@@ -144,7 +144,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	@Override
 	public BoolValue subtract(IAbstractValue<?> value) {
 		m_logger.debug("Invalid operation SUBTRACT on BoolValue");
-		return m_factory.makeValue(Bool.EMPTY);
+		return m_factory.makeBottomValue();
 	}
 
 	/* (non-Javadoc)
@@ -153,7 +153,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	@Override
 	public BoolValue multiply(IAbstractValue<?> value) {
 		m_logger.debug("Invalid operation MULTIPLY on BoolValue");
-		return m_factory.makeValue(Bool.EMPTY);
+		return m_factory.makeBottomValue();
 	}
 
 	/* (non-Javadoc)
@@ -162,7 +162,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	@Override
 	public BoolValue divide(IAbstractValue<?> value) {
 		m_logger.debug("Invalid operation DIVIDE on BoolValue");
-		return m_factory.makeValue(Bool.EMPTY);
+		return m_factory.makeBottomValue();
 	}
 
 	/* (non-Javadoc)
@@ -171,7 +171,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	@Override
 	public BoolValue modulo(IAbstractValue<?> value) {
 		m_logger.debug("Invalid operation MODULO on BoolValue");
-		return m_factory.makeValue(Bool.EMPTY);
+		return m_factory.makeBottomValue();
 	}
 
 	/* (non-Javadoc)
@@ -180,7 +180,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	@Override
 	public BoolValue negative() {
 		m_logger.debug("Invalid operation NEGATIVE on BoolValue");
-		return m_factory.makeValue(Bool.EMPTY);
+		return m_factory.makeBottomValue();
 	}
 
 	/* (non-Javadoc)
@@ -188,8 +188,9 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	 */
 	@Override
 	public BoolValue compareIsEqual(IAbstractValue<?> value) {
-		Bool bool = (Bool) value.getValue();
-		if (bool == null) return m_factory.makeValue(Bool.EMPTY);
+		BoolValue boolVal = booleanFromAbstractValue(value);
+		if (boolVal == null) return m_factory.makeBottomValue();
+		Bool bool = boolVal.getValue();
 		
 		switch (m_value) {
 		case TRUE :
@@ -198,7 +199,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.TRUE);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case FALSE :
 			switch (bool) {
@@ -206,7 +207,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.FALSE);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case UNKNOWN :
 			switch (bool) {
@@ -217,11 +218,11 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case EMPTY :
 		default :
-			return m_factory.makeValue(Bool.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 	}
 
@@ -230,8 +231,9 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	 */
 	@Override
 	public BoolValue compareIsNotEqual(IAbstractValue<?> value) {
-		Bool bool = (Bool) value.getValue();
-		if (bool == null) return m_factory.makeValue(Bool.EMPTY);
+		BoolValue boolVal = booleanFromAbstractValue(value);
+		if (boolVal == null) return m_factory.makeBottomValue();
+		Bool bool = boolVal.getValue();
 		
 		switch (m_value) {
 		case TRUE :
@@ -240,7 +242,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.TRUE);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case FALSE :
 			switch (bool) {
@@ -248,7 +250,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.FALSE);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case UNKNOWN :
 			switch (bool) {
@@ -259,11 +261,11 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case EMPTY :
 		default :
-			return m_factory.makeValue(Bool.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 	}
 
@@ -272,7 +274,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	 */
 	@Override
 	public BoolValue compareIsLess(IAbstractValue<?> value) {
-		return m_factory.makeValue(Bool.EMPTY);
+		return m_factory.makeBottomValue();
 	}
 
 	/* (non-Javadoc)
@@ -280,7 +282,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	 */
 	@Override
 	public BoolValue compareIsGreater(IAbstractValue<?> value) {
-		return m_factory.makeValue(Bool.EMPTY);
+		return m_factory.makeBottomValue();
 	}
 
 	/* (non-Javadoc)
@@ -288,7 +290,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	 */
 	@Override
 	public BoolValue compareIsLessEqual(IAbstractValue<?> value) {
-		return m_factory.makeValue(Bool.EMPTY);
+		return m_factory.makeBottomValue();
 	}
 
 	/* (non-Javadoc)
@@ -296,7 +298,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	 */
 	@Override
 	public BoolValue compareIsGreaterEqual(IAbstractValue<?> value) {
-		return m_factory.makeValue(Bool.EMPTY);
+		return m_factory.makeBottomValue();
 	}
 	
 	/**
@@ -304,9 +306,10 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	 * @return A BoolValue representing the result of the operation
 	 */
 	public BoolValue logicIff(IAbstractValue<?> value) {
-		if (value == null) return m_factory.makeValue(Bool.EMPTY);
+		BoolValue boolVal = booleanFromAbstractValue(value);
+		if (boolVal == null) return m_factory.makeBottomValue();
+		Bool bool = boolVal.getValue();
 		
-		Bool bool = (Bool) value.getValue();
 		switch (m_value) {
 		case TRUE :
 			switch (bool) {
@@ -317,7 +320,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case FALSE :
 			switch (bool) {
@@ -328,7 +331,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case UNKNOWN :
 			switch (bool) {
@@ -337,11 +340,11 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case EMPTY :
 		default :
-			return m_factory.makeValue(Bool.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 	}
 
@@ -350,9 +353,10 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	 * @return A BoolValue representing the result of the operation
 	 */
 	public BoolValue logicImplies(IAbstractValue<?> value) {
-		if (value == null) return m_factory.makeValue(Bool.EMPTY);
+		BoolValue boolVal = booleanFromAbstractValue(value);
+		if (boolVal == null) return m_factory.makeBottomValue();
+		Bool bool = boolVal.getValue();
 		
-		Bool bool = (Bool) value.getValue();
 		switch (m_value) {
 		case TRUE :
 			switch (bool) {
@@ -363,7 +367,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case FALSE :
 			switch (bool) {
@@ -372,7 +376,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.TRUE);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case UNKNOWN :
 			switch (bool) {
@@ -382,11 +386,11 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case EMPTY :
 		default :
-			return m_factory.makeValue(Bool.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 	}
 
@@ -395,9 +399,10 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	 * @return A BoolValue representing the result of the operation
 	 */
 	public BoolValue logicAnd(IAbstractValue<?> value) {
-		if (value == null) return m_factory.makeValue(Bool.EMPTY);
+		BoolValue boolVal = booleanFromAbstractValue(value);
+		if (boolVal == null) return m_factory.makeBottomValue();
+		Bool bool = boolVal.getValue();
 		
-		Bool bool = (Bool) value.getValue();
 		switch (m_value) {
 		case TRUE :
 			switch (bool) {
@@ -408,7 +413,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case FALSE :
 			switch (bool) {
@@ -417,7 +422,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.FALSE);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case UNKNOWN :
 			switch (bool) {
@@ -427,11 +432,11 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case EMPTY :
 		default :
-			return m_factory.makeValue(Bool.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 	}
 
@@ -440,9 +445,10 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	 * @return A BoolValue representing the result of the operation
 	 */
 	public BoolValue logicOr(IAbstractValue<?> value) {
-		if (value == null) return m_factory.makeValue(Bool.EMPTY);
+		BoolValue boolVal = booleanFromAbstractValue(value);
+		if (boolVal == null) return m_factory.makeBottomValue();
+		Bool bool = boolVal.getValue();
 		
-		Bool bool = (Bool) value.getValue();
 		switch (m_value) {
 		case TRUE :
 			switch (bool) {
@@ -451,7 +457,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.TRUE);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case FALSE :
 			switch (bool) {
@@ -462,7 +468,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case UNKNOWN :
 			switch (bool) {
@@ -472,11 +478,11 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			case UNKNOWN :
 				return m_factory.makeValue(Bool.UNKNOWN);
 			default :
-				return m_factory.makeValue(Bool.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case EMPTY :
 		default :
-			return m_factory.makeValue(Bool.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 	}
 
@@ -493,7 +499,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 			return m_factory.makeValue(Bool.UNKNOWN);
 		case EMPTY :
 		default :
-			return m_factory.makeValue(Bool.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 	}
 
@@ -511,6 +517,24 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	@Override
 	public BoolValue bitVectorAccess(int start, int end) {
 		return m_factory.makeBottomValue();
+	}
+	
+	/**
+	 * Used to compare bool with not-bool, treating not-bool as false iff it is not-bool.bottom
+	 * @param value
+	 * @return
+	 */
+	private BoolValue booleanFromAbstractValue(IAbstractValue<?> value) {
+		if (value == null)
+			return null;
+		
+		if (value instanceof BoolValue) {
+			if (value.isBottom())
+				return m_factory.makeBoolValue(false);
+			return (BoolValue) value;
+		}
+		
+		return m_factory.makeBoolValue(!value.isBottom());
 	}
 
 	@Override

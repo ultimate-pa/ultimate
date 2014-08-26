@@ -64,6 +64,10 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) {
+		if(!(root instanceof RootNode)){
+			return true;
+		}
+		
 		
 		//TODO: Now you can get instances of your library classes for the current toolchain like this: 
 		//NWA is nevertheless very broken, as its static initialization prevents parallelism 

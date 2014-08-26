@@ -78,10 +78,10 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	 */
 	@Override
 	public boolean isEqual(IAbstractValue<?> value) {
-		if (value == null)
-			return false;
+		SignValue signVal = (SignValue) value;
+		if (signVal == null) return false;
 		
-		return (m_value == value.getValue());
+		return (m_value == signVal.getValue());
 	}
 
 	/* (non-Javadoc)
@@ -89,16 +89,16 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	 */
 	@Override
 	public boolean isSuper(IAbstractValue<?> value) {
-		if (value == null)
-			return false;
+		SignValue signVal = (SignValue) value;
+		if (signVal == null) return false;
 		
 		if (m_value == Sign.PLUSMINUS)
 			return true;
 		
-		if (m_value == value.getValue())
+		if (m_value == signVal.getValue())
 			return true;
 		
-		if (value.getValue() == Sign.EMPTY)
+		if (signVal.getValue() == Sign.EMPTY)
 			return true;
 		
 		return false;
@@ -109,16 +109,16 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	 */
 	@Override
 	public boolean isSub(IAbstractValue<?> value) {
-		if (value == null)
-			return false;
+		SignValue signVal = (SignValue) value;
+		if (signVal == null) return false;
 		
 		if (m_value == Sign.EMPTY)
 			return true;
 		
-		if (m_value == value.getValue())
+		if (m_value == signVal.getValue())
 			return true;
 		
-		if (value.getValue() == Sign.PLUSMINUS)
+		if (signVal.getValue() == Sign.PLUSMINUS)
 			return true;
 		
 		return false;
@@ -137,8 +137,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	 */
 	@Override
 	public SignValue add(IAbstractValue<?> value) {
-		Sign otherSign = (Sign) value.getValue();
-		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
+		SignValue signVal = (SignValue) value;
+		if (signVal == null) return m_factory.makeBottomValue();
+		Sign otherSign = signVal.getValue();
 		
 		switch (m_value) {
 		case ZERO :
@@ -152,7 +153,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case PLUSMINUS :
 				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case MINUS :
 			switch (otherSign) {
@@ -163,12 +164,12 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case PLUSMINUS :
 				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case PLUSMINUS :
 			return m_factory.makeValue(Sign.PLUSMINUS);
 		default :
-			return m_factory.makeValue(Sign.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 	}
 
@@ -177,8 +178,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	 */
 	@Override
 	public SignValue subtract(IAbstractValue<?> value) {
-		Sign otherSign = (Sign) value.getValue();
-		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
+		SignValue signVal = (SignValue) value;
+		if (signVal == null) return m_factory.makeBottomValue();
+		Sign otherSign = signVal.getValue();
 		
 		switch (m_value) {
 		case ZERO :
@@ -191,7 +193,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case MINUS :
 				return m_factory.makeValue(Sign.PLUS);
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case PLUS :
 			switch (otherSign) {
@@ -202,7 +204,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case PLUSMINUS :
 				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case MINUS :
 			switch (otherSign) {
@@ -213,12 +215,12 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case PLUSMINUS :
 				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case PLUSMINUS :
 			return m_factory.makeValue(Sign.PLUSMINUS);
 		default :
-			return m_factory.makeValue(Sign.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 	}
 
@@ -227,8 +229,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	 */
 	@Override
 	public SignValue multiply(IAbstractValue<?> value) {
-		Sign otherSign = (Sign) value.getValue();
-		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
+		SignValue signVal = (SignValue) value;
+		if (signVal == null) return m_factory.makeBottomValue();
+		Sign otherSign = signVal.getValue();
 		
 		switch (m_value) {
 		case ZERO :
@@ -244,7 +247,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case PLUSMINUS :
 				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case MINUS :
 			switch (otherSign) {
@@ -257,12 +260,12 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case PLUSMINUS :
 				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case PLUSMINUS :
 			return m_factory.makeValue(Sign.PLUSMINUS);
 		default :
-			return m_factory.makeValue(Sign.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 	}
 
@@ -271,11 +274,11 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	 */
 	@Override
 	public SignValue divide(IAbstractValue<?> value) {
-		if (value == null) return m_factory.makeValue(Sign.EMPTY);
+		if (value == null) return m_factory.makeBottomValue();
 		
 		if ((value.getValue() == Sign.ZERO) || (value.getValue() == Sign.PLUSMINUS)) {
 			m_logger.warn(String.format("Potential division by zero: %s / %s", this, value));
-			return m_factory.makeValue(Sign.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 		
 		return this.multiply(value);
@@ -286,11 +289,11 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	 */
 	@Override
 	public SignValue modulo(IAbstractValue<?> value) {
-		if (value == null) return m_factory.makeValue(Sign.EMPTY);
+		if (value == null) return m_factory.makeBottomValue();
 
 		if ((value.getValue() == Sign.ZERO) || (value.getValue() == Sign.PLUSMINUS)) {
 			m_logger.warn(String.format("Potential modulo division by zero: %s %% %s", this, value));
-			return m_factory.makeValue(Sign.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 		
 		return m_factory.makeValue(Sign.PLUSMINUS); // remainder is always >= 0, which is only covered by PLUSMINUS
@@ -316,8 +319,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	 */
 	@Override
 	public SignValue compareIsEqual(IAbstractValue<?> value) {
-		Sign otherSign = (Sign) value.getValue();
-		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
+		SignValue signVal = (SignValue) value;
+		if (signVal == null) return m_factory.makeBottomValue();
+		Sign otherSign = signVal.getValue();
 		
 		if (m_value == otherSign)
 			return m_factory.makeValue(m_value);
@@ -331,7 +335,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case MINUS :
 			case PLUS :
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case PLUS :
 			switch (otherSign) {
@@ -341,7 +345,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case ZERO :
 			case MINUS :
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case MINUS :
 			switch (otherSign) {
@@ -351,12 +355,12 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case ZERO :
 			case PLUS :
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case PLUSMINUS :
 			return m_factory.makeValue(otherSign);
 		default :
-			return m_factory.makeValue(Sign.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 	}
 
@@ -365,14 +369,15 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	 */
 	@Override
 	public SignValue compareIsNotEqual(IAbstractValue<?> value) {
-		Sign otherSign = (Sign) value.getValue();
-		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
+		SignValue signVal = (SignValue) value;
+		if (signVal == null) return m_factory.makeBottomValue();
+		Sign otherSign = signVal.getValue();
 		
 		switch (m_value) {
 		case ZERO :
 			switch (otherSign) {
 			case ZERO :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			default :
 				return m_factory.makeValue(otherSign);
 			}
@@ -385,7 +390,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case PLUSMINUS :
 				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case MINUS :
 			switch (otherSign) {
@@ -396,12 +401,12 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case PLUSMINUS :
 				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case PLUSMINUS :
 			return m_factory.makeValue(Sign.PLUSMINUS);
 		default :
-			return m_factory.makeValue(Sign.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 	}
 
@@ -410,8 +415,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	 */
 	@Override
 	public SignValue compareIsLess(IAbstractValue<?> value) {
-		Sign otherSign = (Sign) value.getValue();
-		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
+		SignValue signVal = (SignValue) value;
+		if (signVal == null) return m_factory.makeBottomValue();
+		Sign otherSign = signVal.getValue();
 		
 		switch (m_value) {
 		case ZERO :
@@ -422,7 +428,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case ZERO :
 			case MINUS :
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case PLUS :
 			switch (otherSign) {
@@ -432,7 +438,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case ZERO :
 			case MINUS :
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case MINUS :
 			return m_factory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.MINUS);
@@ -445,10 +451,10 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case PLUSMINUS :
 				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		default :
-			return m_factory.makeValue(Sign.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 	}
 
@@ -457,8 +463,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	 */
 	@Override
 	public SignValue compareIsGreater(IAbstractValue<?> value) {
-		Sign otherSign = (Sign) value.getValue();
-		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
+		SignValue signVal = (SignValue) value;
+		if (signVal == null) return m_factory.makeBottomValue();
+		Sign otherSign = signVal.getValue();
 		
 		switch (m_value) {
 		case ZERO :
@@ -469,7 +476,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case ZERO :
 			case PLUS :
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case PLUS :
 			return m_factory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.PLUS);
@@ -481,7 +488,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case ZERO :
 			case PLUS :
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case PLUSMINUS :
 			switch (otherSign) {
@@ -492,10 +499,10 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case PLUSMINUS :
 				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		default :
-			return m_factory.makeValue(Sign.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 	}
 
@@ -504,8 +511,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	 */
 	@Override
 	public SignValue compareIsLessEqual(IAbstractValue<?> value) {
-		Sign otherSign = (Sign) value.getValue();
-		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
+		SignValue signVal = (SignValue) value;
+		if (signVal == null) return m_factory.makeBottomValue();
+		Sign otherSign = signVal.getValue();
 		
 		switch (m_value) {
 		case ZERO :
@@ -516,7 +524,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 				return m_factory.makeValue(Sign.ZERO);
 			case MINUS :
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case PLUS :
 			switch (otherSign) {
@@ -526,7 +534,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case ZERO :
 			case MINUS :
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case MINUS :
 			return m_factory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.MINUS);
@@ -539,10 +547,10 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case PLUSMINUS :
 				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		default :
-			return m_factory.makeValue(Sign.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 	}
 
@@ -551,8 +559,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	 */
 	@Override
 	public SignValue compareIsGreaterEqual(IAbstractValue<?> value) {
-		Sign otherSign = (Sign) value.getValue();
-		if (otherSign == null) return m_factory.makeValue(Sign.EMPTY);
+		SignValue signVal = (SignValue) value;
+		if (signVal == null) return m_factory.makeBottomValue();
+		Sign otherSign = signVal.getValue();
 		
 		switch (m_value) {
 		case ZERO :
@@ -563,7 +572,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 				return m_factory.makeValue(Sign.ZERO);
 			case PLUS :
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case PLUS :
 			return m_factory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.PLUS);
@@ -575,7 +584,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case ZERO :
 			case PLUS :
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		case PLUSMINUS :
 			switch (otherSign) {
@@ -586,10 +595,10 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			case PLUSMINUS :
 				return m_factory.makeValue(Sign.PLUSMINUS);
 			default :
-				return m_factory.makeValue(Sign.EMPTY);
+				return m_factory.makeBottomValue();
 			}
 		default :
-			return m_factory.makeValue(Sign.EMPTY);
+			return m_factory.makeBottomValue();
 		}
 	}
 
