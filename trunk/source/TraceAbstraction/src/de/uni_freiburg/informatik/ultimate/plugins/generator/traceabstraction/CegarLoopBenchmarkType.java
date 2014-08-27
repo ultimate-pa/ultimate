@@ -3,13 +3,17 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 
 public class CegarLoopBenchmarkType implements IBenchmarkType {
 	
+	public static final String s_Result = "Result";
 	public static final String s_OverallTime = "Overall time";
 	public static final String s_OverallIterations = "Overall iterations";
 	public static final String s_AutomataDifference = "Automata difference";
@@ -34,7 +38,8 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 	public Collection<String> getKeys() {
 		ArrayList<String> keyList = new ArrayList<String>();
 		keyList.addAll(Arrays.asList(new String[] { 
-				s_OverallTime, s_OverallIterations, s_AutomataDifference, 
+				s_Result, s_OverallTime, s_OverallIterations, 
+				s_AutomataDifference, 
 				s_DeadEndRemovalTime, 
 				s_AutomataMinimizationTime, s_HoareAnnotationTime, 
 				s_BasicInterpolantAutomatonTime, s_BiggestAbstraction }));
@@ -49,6 +54,23 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 	@Override
 	public Object aggregate(String key, Object value1, Object value2) {
 		switch (key) {
+		case s_Result:
+			Result result1 = (Result) value1;
+			Result result2 = (Result) value2;
+			Set<Result> results = new HashSet<Result>();
+			results.add(result1);
+			results.add(result2);
+			if (results.contains(Result.UNSAFE)) {
+				return Result.UNSAFE;
+			} else if (results.contains(Result.UNKNOWN)) {
+				return Result.UNKNOWN;
+			} else if (results.contains(Result.TIMEOUT)) {
+				return Result.TIMEOUT;
+			} else if (results.contains(Result.SAFE)) {
+				return Result.SAFE;
+			} else {
+				throw new AssertionError();
+			}
 		case s_OverallTime:
 		case s_AutomataDifference:
 		case s_DeadEndRemovalTime:

@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType.SizeIterationPair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
@@ -14,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 
 public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatches implements IBenchmarkDataProvider {
 	
+	private Result m_Result;
 	private final BenchmarkData m_EcData = new BenchmarkData();
 	private final BenchmarkData m_TcData = new BenchmarkData();
 	private final BenchmarkData m_TiData = new BenchmarkData();
@@ -25,6 +27,10 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 	@Override
 	public Collection<String> getKeys() {
 		return getBenchmarkType().getKeys();
+	}
+	
+	public void setResult(Result result) {
+		m_Result = result;
 	}
 	
 	public void addEdgeCheckerData(IBenchmarkDataProvider ecbd) {
@@ -60,6 +66,8 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 	@Override
 	public Object getValue(String key) {
 		switch (key) {
+		case CegarLoopBenchmarkType.s_Result:
+			return m_Result;
 		case CegarLoopBenchmarkType.s_OverallTime:
 		case CegarLoopBenchmarkType.s_AutomataDifference:
 		case CegarLoopBenchmarkType.s_DeadEndRemovalTime:

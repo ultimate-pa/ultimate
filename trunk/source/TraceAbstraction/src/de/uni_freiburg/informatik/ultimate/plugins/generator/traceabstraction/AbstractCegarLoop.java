@@ -262,6 +262,7 @@ public abstract class AbstractCegarLoop {
 			getInitialAbstraction();
 		} catch (OperationCanceledException e1) {
 			mLogger.warn("Verification cancelled");
+			m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 			return Result.TIMEOUT;
 		} catch (AutomataLibraryException e) {
 			throw new AssertionError(e.getMessage());
@@ -284,9 +285,11 @@ public abstract class AbstractCegarLoop {
 			initalAbstractionCorrect = isAbstractionCorrect();
 		} catch (OperationCanceledException e1) {
 			mLogger.warn("Verification cancelled");
+			m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 			return Result.TIMEOUT;
 		}
 		if (initalAbstractionCorrect) {
+			m_CegarLoopBenchmark.setResult(Result.SAFE);
 			return Result.SAFE;
 		}
 
@@ -300,9 +303,11 @@ public abstract class AbstractCegarLoop {
 
 			LBool isCounterexampleFeasible = isCounterexampleFeasible();
 			if (isCounterexampleFeasible == Script.LBool.SAT) {
+				m_CegarLoopBenchmark.setResult(Result.UNSAFE);
 				return Result.UNSAFE;
 			}
 			if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
+				m_CegarLoopBenchmark.setResult(Result.UNKNOWN);
 				return Result.UNKNOWN;
 			}
 
@@ -310,6 +315,7 @@ public abstract class AbstractCegarLoop {
 				constructInterpolantAutomaton();
 			} catch (OperationCanceledException e1) {
 				mLogger.warn("Verification cancelled");
+				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			}
 
@@ -331,6 +337,7 @@ public abstract class AbstractCegarLoop {
 				}
 			} catch (OperationCanceledException e) {
 				mLogger.warn("Verification cancelled");
+				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			} catch (AutomataLibraryException e) {
 				throw new AssertionError("Automata Operation failed" + e.getMessage());
@@ -360,12 +367,15 @@ public abstract class AbstractCegarLoop {
 				isAbstractionCorrect = isAbstractionCorrect();
 			} catch (OperationCanceledException e) {
 				mLogger.warn("Verification cancelled");
+				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			}
 			if (isAbstractionCorrect) {
+				m_CegarLoopBenchmark.setResult(Result.SAFE);
 				return Result.SAFE;
 			}
 		}
+		m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 		return Result.TIMEOUT;
 	}
 
