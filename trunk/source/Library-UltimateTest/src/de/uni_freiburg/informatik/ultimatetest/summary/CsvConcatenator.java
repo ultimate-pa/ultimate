@@ -24,8 +24,6 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
  * <li> File
  * <li> Setting
  * <li> Toolchain
- * <li> Expected Result
- * <li> Computed Result
  * </ul>
  * Furthermore the rows of each Benchmark and each test case are concatenated 
  * to a single CSV.
@@ -100,8 +98,6 @@ public class CsvConcatenator implements ITestSummary {
 		resultColumns.add("File");
 		resultColumns.add("Settings");
 		resultColumns.add("Toolchain");
-		resultColumns.add("Expected Result");
-		resultColumns.add("Message Result");
 		resultColumns.addAll(benchmark.getColumnTitles());
 		ICsvProvider<Object> result = new SimpleCsvProvider<>(resultColumns);
 		int rows = benchmark.getRowHeaders().size();
@@ -110,8 +106,6 @@ public class CsvConcatenator implements ITestSummary {
 			resultRow.add(ultimateRunDefinition.getInput().getAbsolutePath());
 			resultRow.add(ultimateRunDefinition.getSettings().getAbsolutePath());
 			resultRow.add(ultimateRunDefinition.getToolchain().getAbsolutePath());
-			resultRow.add(category);
-			resultRow.add(message);
 			resultRow.addAll(benchmark.getRow(i));
 			result.addRow(resultRow);
 		}
