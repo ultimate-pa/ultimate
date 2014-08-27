@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimatetest;
 
 import java.io.File;
+
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
 /**
  * A run of ultimate is defined by three files:
  * <ul> 
@@ -36,9 +38,42 @@ public class UltimateRunDefinition {
 	}
 	@Override
 	public String toString() {
-		return "Input: " + m_Input + ", Settings: "
-				+ m_Settings + ", Toolchain: " + m_Toolchain + "]";
+		return generateShortStringRepresentation();
 	}
+	
+	public String generateLongStringRepresentation() {
+		return "Input: " + m_Input + ", Settings: "
+				+ m_Settings + ", Toolchain: " + m_Toolchain;
+	}
+	
+	public String generateShortStringRepresentation() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Input:");
+		sb.append(removeTrunkExamplesPrefix(getInput().getAbsolutePath()));
+		sb.append(" Settings:");
+		if (getSettings() == null) {
+			sb.append("default");
+		} else {
+			sb.append(removeTrunkExamplesPrefix(getSettings().getAbsolutePath()));
+		}
+		sb.append(" Toolchain:");
+		sb.append(removeTrunkExamplesPrefix(getToolchain().getAbsolutePath()));
+		return sb.toString();
+	}
+	
+	public String removeTrunkExamplesPrefix(String path) {
+		String trunk = Util.getPathFromTrunk("");
+		String examples = trunk + File.separator + "examples" + File.separator;
+		int lastIndexOf = path.lastIndexOf(examples);
+		if (lastIndexOf != -1) {
+			String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
+			return trunkated;
+		} else {
+			return path;
+		}
+		
+	}
+
 	
 	
 	

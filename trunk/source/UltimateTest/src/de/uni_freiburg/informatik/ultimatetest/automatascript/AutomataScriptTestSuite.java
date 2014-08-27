@@ -65,8 +65,9 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 			UltimateTestCase utc = new UltimateTestCase(
 					starter,
 					new AutomataScriptTestResultDecider(), 
-					super.getSummaries(), 
-					m_Description + "_" + inputFile.getAbsolutePath(), 
+					super.getSummaries(),
+					urd.generateShortStringRepresentation(),
+//					m_Description + "_" + inputFile.getAbsolutePath(), 
 					urd);
 			testCases.add(utc);
 		}
