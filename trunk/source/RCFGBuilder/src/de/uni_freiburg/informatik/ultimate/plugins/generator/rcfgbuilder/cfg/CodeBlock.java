@@ -68,8 +68,9 @@ public abstract class CodeBlock extends RCFGEdge {
 	private static final int MAX_NAME_LENGTH = 20;
 
 	public CodeBlock(ProgramPoint source, ProgramPoint target, Logger logger) {
-		super(source, target, new Payload(source.getPayload().getLocation(), 
-				"Matthias does not know what he should use here as a name"));
+		super(source, target, 
+				(source == null ? new Payload() : new Payload(source.getPayload().getLocation(), 
+				"Matthias does not know what he should use here as a name")));
 		mLogger = logger;
 		m_Annotation = new RCFGEdgeAnnotation(this) {
 
