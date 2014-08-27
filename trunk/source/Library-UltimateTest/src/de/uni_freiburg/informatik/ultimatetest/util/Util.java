@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.SafetyCheckerOverallResult;
+import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.TerminationAnalysisOverallResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 
 public class Util {
@@ -351,7 +352,7 @@ public class Util {
 	 * Returns a map from keywords to verification results.
 	 * We use keywords in filenames to specify expected verification results.
 	 * If a key of this map is a substring of the filename, the value of this
-	 * map is the expected verification result of a safety checker 
+	 * map is the expected verification result of a safety checker.
 	 */
 	public static Map<String, SafetyCheckerOverallResult> constructFilenameKeywordMap_SafetyChecker() {
 		Map<String, SafetyCheckerOverallResult> map = new HashMap<String, SafetyCheckerOverallResult>();
@@ -375,13 +376,45 @@ public class Util {
 	 * We use keywords in the first line of files to specify expected 
 	 * verification results.
 	 * If a key of this map is a substring of the first line, the value of this
-	 * map is the expected verification result of a safety checker 
+	 * map is the expected verification result of a safety checker.
 	 */
 	public static Map<String, SafetyCheckerOverallResult> constructFirstlineKeywordMap_SafetyChecker() {
 		Map<String, SafetyCheckerOverallResult> map = new HashMap<String, SafetyCheckerOverallResult>();
 		map.put("#Safe", SafetyCheckerOverallResult.SAFE);
 		map.put("#Unsafe", SafetyCheckerOverallResult.UNSAFE);
 		map.put("#SyntaxError", SafetyCheckerOverallResult.SYNTAX_ERROR);
+		return map;
+	}
+	
+	/**
+	 * Returns a map from keywords to verification results.
+	 * We use keywords in filenames to specify expected verification results.
+	 * If a key of this map is a substring of the filename, the value of this
+	 * map is the expected verification result of a termination analysis.
+	 */
+	public static Map<String, TerminationAnalysisOverallResult> constructFilenameKeywordMap_TerminationAnalysis() {
+		Map<String, TerminationAnalysisOverallResult> map = new HashMap<String, TerminationAnalysisOverallResult>();
+		// true-unreach-call is the SV-COMP annotation for safe
+		map.put("_true-termination", TerminationAnalysisOverallResult.TERMINATING);
+		// false-unreach-call is the SV-COMP annotation for safe
+		map.put("_false-termination", TerminationAnalysisOverallResult.NONTERMINATING);
+		return map;
+	}
+	
+	/**
+	 * Returns a map from keywords to verification results.
+	 * We use keywords in the first line of files to specify expected 
+	 * verification results.
+	 * If a key of this map is a substring of the first line, the value of this
+	 * map is the expected verification result of a termination analysis.
+	 */
+	public static Map<String, TerminationAnalysisOverallResult> constructFirstlineKeywordMap_TerminationAnalysis() {
+		Map<String, TerminationAnalysisOverallResult> map = new HashMap<String, TerminationAnalysisOverallResult>();
+		map.put("#rTerminationDerivable", TerminationAnalysisOverallResult.TERMINATING);
+		map.put("#rTermination", TerminationAnalysisOverallResult.TERMINATING);
+		map.put("#rNonTerminationDerivable", TerminationAnalysisOverallResult.NONTERMINATING);
+		map.put("#rNonTermination", TerminationAnalysisOverallResult.NONTERMINATING);
+		map.put("#SyntaxError", TerminationAnalysisOverallResult.SYNTAX_ERROR);
 		return map;
 	}
 

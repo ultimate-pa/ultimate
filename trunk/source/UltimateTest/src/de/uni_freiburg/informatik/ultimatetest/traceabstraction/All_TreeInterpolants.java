@@ -5,7 +5,10 @@ package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider2;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -26,6 +29,7 @@ public class All_TreeInterpolants extends
 
 	private static final boolean s_Boogie_TreeInterpolants = true;
 	private static final boolean s_C_TreeInterpolants = true;
+	
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
