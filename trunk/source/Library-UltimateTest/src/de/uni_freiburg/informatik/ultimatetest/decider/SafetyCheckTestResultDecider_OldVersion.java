@@ -22,7 +22,6 @@ import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
-import de.uni_freiburg.informatik.ultimatetest.util.Util.ExpectedResult;
 
 /**
  * Decide if one of Ultimate's Safety Checkers verified a program correctly.
@@ -34,6 +33,15 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util.ExpectedResult;
  */
 @Deprecated
 public abstract class SafetyCheckTestResultDecider_OldVersion extends TestResultDecider {
+	
+	/**
+	 * Result that we expect after checking filename and keywords of the input
+	 * file.
+	 */
+	public enum ExpectedResult {
+		SAFE, UNSAFE, SYNTAXERROR, NOANNOTATION
+	}
+	
 	private String mInputFile;
 	private ExpectedResult mExpectedResult;
 
@@ -181,9 +189,43 @@ public abstract class SafetyCheckTestResultDecider_OldVersion extends TestResult
 	 */
 	protected void generateExpectedResult(File inputFile) {
 		if (getExpectedResult() == null) {
-			setExpectedResult(Util.getExpectedResult(inputFile));
+			setExpectedResult(getExpectedResult(inputFile));
 		}
 	}
+	
+	/**
+	 * Read the expected result from the current input file.
+	 * 
+	 * Expected results are expected to be specified in an input file's first
+	 * line and start with '//#Unsafe', '//#Safe' or '//#SyntaxError'. If this
+	 * is not case, the expected result may be specified within the file name
+	 * via the suffix "-safe" or "-unsafe".
+	 */
+	public static ExpectedResult getExpectedResult(File inputFile) {
+		String line = Util.extractFirstLine(inputFile);
+		if (line != null) {
+			if (line.contains("#Safe")) {
+				return ExpectedResult.SAFE;
+			} else if (line.contains("#Unsafe")) {
+				return ExpectedResult.UNSAFE;
+			} else if (line.contains("#SyntaxError")) {
+				return ExpectedResult.SYNTAXERROR;
+			}
+		}
+		if (inputFile.getName().toLowerCase().contains("-safe") 
+				|| inputFile.getName().toLowerCase().contains("_safe")
+				// true-unreach-call is the SV-COMP annotation for safe
+				|| inputFile.getName().toLowerCase().contains("true-unreach-call")){
+			return ExpectedResult.SAFE;
+		} else if (inputFile.getName().toLowerCase().contains("-unsafe")
+				|| inputFile.getName().toLowerCase().contains("_unsafe")
+				// false-unreach-call is the SV-COMP annotation for safe
+				|| inputFile.getName().toLowerCase().contains("false-unreach-call")){
+			return ExpectedResult.UNSAFE;
+		}
+		return ExpectedResult.NOANNOTATION;
+	}
+	
 
 	protected ExpectedResult getExpectedResult() {
 		return mExpectedResult;

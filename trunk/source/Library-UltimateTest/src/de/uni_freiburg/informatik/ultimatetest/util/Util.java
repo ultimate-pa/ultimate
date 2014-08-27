@@ -345,13 +345,7 @@ public class Util {
 		logger.info("#################### END TEST RESULT ####################");
 	}
 
-	/**
-	 * Result that we expect after checking filename and keywords of the input
-	 * file.
-	 */
-	public enum ExpectedResult {
-		SAFE, UNSAFE, SYNTAXERROR, NOANNOTATION
-	}
+
 	
 	/**
 	 * Returns a map from keywords to verification results.
@@ -391,38 +385,7 @@ public class Util {
 		return map;
 	}
 
-	/**
-	 * Read the expected result from the current input file.
-	 * 
-	 * Expected results are expected to be specified in an input file's first
-	 * line and start with '//#Unsafe', '//#Safe' or '//#SyntaxError'. If this
-	 * is not case, the expected result may be specified within the file name
-	 * via the suffix "-safe" or "-unsafe".
-	 */
-	public static ExpectedResult getExpectedResult(File inputFile) {
-		String line = extractFirstLine(inputFile);
-		if (line != null) {
-			if (line.contains("#Safe")) {
-				return ExpectedResult.SAFE;
-			} else if (line.contains("#Unsafe")) {
-				return ExpectedResult.UNSAFE;
-			} else if (line.contains("#SyntaxError")) {
-				return ExpectedResult.SYNTAXERROR;
-			}
-		}
-		if (inputFile.getName().toLowerCase().contains("-safe") 
-				|| inputFile.getName().toLowerCase().contains("_safe")
-				// true-unreach-call is the SV-COMP annotation for safe
-				|| inputFile.getName().toLowerCase().contains("true-unreach-call")){
-			return ExpectedResult.SAFE;
-		} else if (inputFile.getName().toLowerCase().contains("-unsafe")
-				|| inputFile.getName().toLowerCase().contains("_unsafe")
-				// false-unreach-call is the SV-COMP annotation for safe
-				|| inputFile.getName().toLowerCase().contains("false-unreach-call")){
-			return ExpectedResult.UNSAFE;
-		}
-		return ExpectedResult.NOANNOTATION;
-	}
+
 
 	/**
 	 * Returns the first line of File file as String.

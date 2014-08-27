@@ -18,7 +18,6 @@ import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider_OldVersion;
-import de.uni_freiburg.informatik.ultimatetest.util.Util.ExpectedResult;
 
 /**
  * @author Christopher Dillo
