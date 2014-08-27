@@ -34,7 +34,7 @@ public class Svcomp_Memsafety extends
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Trace Abstraction via Forward Predicates (SP)",
-				    "CFilesForwardPredicates",
+//				    "CFilesForwardPredicates",
 				    m_Timeout);
 		}
 		if (m_AutomizerWithBackwardPredicates) {
@@ -44,7 +44,7 @@ public class Svcomp_Memsafety extends
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "traceAbstractionTestSuite/BackwardPredicates.epf",
-				    "CFilesBackwardPredicates",
+//				    "CFilesBackwardPredicates",
 				    m_Timeout);
 		}
 		return super.createTestCases();

@@ -34,7 +34,7 @@ public class Minimization extends
 				    m_Directories,
 				    new String[] {".bpl"},
 //				    "Treeinterpolants MinimizeSevpa",
-				    "Boogie",
+//				    "Boogie",
 				    m_Timeout);
 		} 
 		if (s_C_TreeInterpolants_MinimizeSevpa) {
@@ -44,7 +44,7 @@ public class Minimization extends
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Treeinterpolants MinimizeSevpa",
-				    "C",
+//				    "C",
 				    m_Timeout);
 		}
 		
@@ -55,7 +55,7 @@ public class Minimization extends
 				    m_Directories,
 				    new String[] {".bpl"},
 //				    "Treeinterpolants ShrinkNwa",
-				    "Boogie",
+//				    "Boogie",
 				    m_Timeout);
 		} 
 		if (s_C_TreeInterpolants_ShrinkNwa) {
@@ -65,7 +65,7 @@ public class Minimization extends
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Treeinterpolants ShrinkNwa",
-				    "C",
+//				    "C",
 				    m_Timeout);
 		}
 		return super.createTestCases();

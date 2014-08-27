@@ -49,7 +49,7 @@ public class Svcomp_Reach_PreciseMemoryModel extends
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Trace Abstraction via Forward Predicates (SP)",
-				    "CFilesForwardPredicates",
+//				    "CFilesForwardPredicates",
 				    m_Timeout);
 		}
 		if (m_AutomizerWithBackwardPredicates) {
@@ -59,7 +59,7 @@ public class Svcomp_Reach_PreciseMemoryModel extends
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Trace Abstraction via Backward Predicates (BP)",
-				    "CFilesBackwardPredicates",
+//				    "CFilesBackwardPredicates",
 				    m_Timeout);
 		}
 //		return Util.firstN(super.createTestCases(), 3);

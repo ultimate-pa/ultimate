@@ -40,7 +40,7 @@ public class Totalinterpolation extends
 				    m_Directories,
 				    new String[] {".bpl"},
 //				    "Treeinterpolants",
-				    "Boogie",
+//				    "Boogie",
 				    m_Timeout);
 		} 
 		if (s_C_TreeInterpolants) {
@@ -50,7 +50,7 @@ public class Totalinterpolation extends
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Treeinterpolants",
-				    "C",
+//				    "C",
 				    m_Timeout);
 		}
 		
@@ -61,7 +61,7 @@ public class Totalinterpolation extends
 				    m_Directories,
 				    new String[] {".bpl"},
 //				    "Treeinterpolants with totalinterpolation",
-				    "Boogie",
+//				    "Boogie",
 				    m_Timeout);
 		} 
 		if (s_C_TreeInterpolantsWithTotalinterpolation) {
@@ -71,7 +71,7 @@ public class Totalinterpolation extends
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Treeinterpolants with totalinterpolation",
-				    "C",
+//				    "C",
 				    m_Timeout);
 		}
 		return super.createTestCases();

@@ -39,7 +39,7 @@ public class ForwardBackwardTest extends
 				    m_Directories,
 				    new String[] {".bpl"},
 //				    "Trace Abstraction",
-				    "BoogieFilesForwardPredicates",
+//				    "BoogieFilesForwardPredicates",
 				    m_Timeout);
 		} 
 		if (m_TraceAbstractionBoogieWithBackwardPredicates) {
@@ -49,7 +49,7 @@ public class ForwardBackwardTest extends
 				    m_Directories,
 				    new String[] {".bpl"},
 //				    "Trace Abstraction",
-				    "BoogieFilesBackwardPredicates",
+//				    "BoogieFilesBackwardPredicates",
 				    m_Timeout);
 		}
 		if (m_TraceAbstractionCWithForwardPredicates) {
@@ -59,7 +59,7 @@ public class ForwardBackwardTest extends
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Trace Abstraction",
-				    "CFilesForwardPredicates",
+//				    "CFilesForwardPredicates",
 				    m_Timeout);
 		}
 		if (m_TraceAbstractionCWithBackwardPredicates) {
@@ -69,7 +69,7 @@ public class ForwardBackwardTest extends
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Trace Abstraction",
-				    "CFilesBackwardPredicates",
+//				    "CFilesBackwardPredicates",
 				    m_Timeout);
 		}
 		return super.createTestCases();

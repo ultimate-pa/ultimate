@@ -32,7 +32,7 @@ public class QuantifierFolderTest extends
 				    m_Directories,
 				    new String[] {".bpl"},
 //				    "Automizer via ForwardPredicates",
-				    "Boogie",
+//				    "Boogie",
 				    m_Timeout);
 		} 
 		if (s_C) {
@@ -42,7 +42,7 @@ public class QuantifierFolderTest extends
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Automizer via ForwardPredicates",
-				    "C",
+//				    "C",
 				    m_Timeout);
 		}
 		return super.createTestCases();

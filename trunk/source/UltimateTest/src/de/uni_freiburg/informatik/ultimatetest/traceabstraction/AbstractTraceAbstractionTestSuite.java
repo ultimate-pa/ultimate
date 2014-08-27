@@ -38,16 +38,15 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 	}
 	
 
-	protected void addTestCases(File toolchainFile, File settingsFile, Collection<File> inputFiles,
-			String uniqueString, long deadline) {
-
+	protected void addTestCases(File toolchainFile, File settingsFile, Collection<File> inputFiles, long deadline) {
 		for (File inputFile : inputFiles) {
 			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
 			UltimateStarter starter = new UltimateStarter(urd, deadline, null, null);
 			m_testCases.add(new UltimateTestCase(starter,
-					//new TraceAbstractionTestResultDecider(inputFile, settingsFile)
-					new SafetyCheckTestResultDecider2(urd, true)
-					, super.getSummaries(), uniqueString + "_" + inputFile.getAbsolutePath(), urd)
+					new SafetyCheckTestResultDecider2(urd, true), 
+					super.getSummaries(), 
+					urd.generateShortStringRepresentation(), 
+					urd)
 					
 			);
 		}
@@ -63,8 +62,8 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 	 * @param uniqueString
 	 * @param deadline
 	 */
-	protected void addTestCases(String toolchain, String settings, String[] directories, String[] fileEndings,
-			String uniqueString, long deadline) {
+	protected void addTestCases(String toolchain, String settings, 
+			String[] directories, String[] fileEndings,	long deadline) {
 
 		File toolchainFile = new File(Util.getPathFromTrunk(m_PathToToolchains + toolchain));
 		File settingsFile = new File(Util.getPathFromTrunk(m_PathToSettings + settings));
@@ -72,7 +71,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 		for (String directory : directories) {
 			testFiles.addAll(getInputFiles(directory, fileEndings));
 		}
-		addTestCases(toolchainFile, settingsFile, testFiles, uniqueString, deadline);
+		addTestCases(toolchainFile, settingsFile, testFiles, deadline);
 	}
 
 	private Collection<File> getInputFiles(String directory, String[] fileEndings) {

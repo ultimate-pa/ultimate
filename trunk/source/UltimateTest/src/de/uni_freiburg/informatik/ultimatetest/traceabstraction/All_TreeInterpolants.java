@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class All_TreeInterpolants extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Directories = {
-		"examples/programs/regression/bpl/interprocedural",
+		"examples/programs/regression",
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
 //		"examples/programs/toy"
@@ -36,7 +36,7 @@ public class All_TreeInterpolants extends
 				    m_Directories,
 				    new String[] {".bpl"},
 //				    "TraceAbstraction via tree interpolation",
-				    "Boogie",
+//				    "Boogie",
 				    m_Timeout);
 		} 
 		if (s_C_TreeInterpolants) {
@@ -46,7 +46,7 @@ public class All_TreeInterpolants extends
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "TraceAbstraction via tree interpolation",
-				    "C",
+//				    "C",
 				    m_Timeout);
 		}
 		return super.createTestCases();
