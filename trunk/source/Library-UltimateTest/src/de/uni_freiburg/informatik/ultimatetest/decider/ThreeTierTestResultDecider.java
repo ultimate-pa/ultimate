@@ -1,0 +1,98 @@
+package de.uni_freiburg.informatik.ultimatetest.decider;
+
+import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
+import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimatetest.decider.expectedResult.ExpectedResultEvaluation;
+import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.IOverallResultEvaluator;
+
+/**
+ * Abstract class for deciding a test result in three steps:
+ * <ul>
+ * <li> 1. Use UltimateRunDefinition to decide expected result
+ * <li> 2. Use IResults from Ultimate to decide the overall result provided by
+ * Ultimate
+ * <li> 3. Compare expected result with the overall result computed by
+ * ultimate to decide the test result.
+ * </ul> 
+ * 
+ * @author heizmann@informatik.uni-freiburg.de
+ *
+ * @param <OVERALL_RESULT>
+ * @param <UltimateResult>
+ */
+public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITestResultDecider {
+
+	UltimateRunDefinition m_UltimateRunDefinition;
+	ExpectedResultEvaluation<OVERALL_RESULT> m_ExpectedResultEvaluation;
+	IOverallResultEvaluator<OVERALL_RESULT> m_UltimateResultEvaluation;
+	TestResultEvaluation<OVERALL_RESULT> m_TestResultEvaluation;
+	
+	public ThreeTierTestResultDecider(UltimateRunDefinition ultimateRunDefinition) {
+		m_UltimateRunDefinition = ultimateRunDefinition;
+		m_ExpectedResultEvaluation = constructExpectedResultEvaluation();
+		m_ExpectedResultEvaluation.evaluateExpectedResult(ultimateRunDefinition);
+	}
+	
+	@Override
+	public final TestResult getTestResult(IResultService resultService) {
+		m_UltimateResultEvaluation = constructUltimateResultEvaluation();
+		m_UltimateResultEvaluation.evaluateOverallResult(resultService);
+		m_TestResultEvaluation = constructTestResultEvaluation();
+		m_TestResultEvaluation.evaluateTestResult(m_ExpectedResultEvaluation, m_UltimateResultEvaluation);
+		return m_TestResultEvaluation.getTestResult();
+	}
+
+	@Override
+	public final TestResult getTestResult(IResultService resultService,
+			Throwable e) {
+		m_TestResultEvaluation = constructTestResultEvaluation();
+		m_TestResultEvaluation.evaluateTestResult(m_ExpectedResultEvaluation, e);
+		return m_TestResultEvaluation.getTestResult();
+	}
+
+	@Override
+	public final String getResultMessage() {
+		return m_TestResultEvaluation.getTestResultMessage();
+	}
+	
+	@Override
+	public final String getResultCategory() {
+		return m_TestResultEvaluation.getTestResultCategory();
+	}
+
+	@Override
+	public boolean getJUnitTestResult(TestResult testResult) {
+		switch (testResult) {
+		case SUCCESS:
+		case UNKNOWN:
+			return true;
+		case FAIL:
+			return false;
+		default:
+			throw new AssertionError("unknown actualResult");
+		}
+
+	}
+	
+	public abstract ExpectedResultEvaluation<OVERALL_RESULT> constructExpectedResultEvaluation();
+	
+	public abstract IOverallResultEvaluator<OVERALL_RESULT> constructUltimateResultEvaluation();
+	
+	public abstract TestResultEvaluation<OVERALL_RESULT> constructTestResultEvaluation();
+	
+	
+
+	public interface TestResultEvaluation<OVERALL_RESULT> {
+		public void evaluateTestResult(
+				ExpectedResultEvaluation<OVERALL_RESULT> expectedResultEvaluation,
+				IOverallResultEvaluator<OVERALL_RESULT> overallResultDeterminer);
+		
+		public void evaluateTestResult(ExpectedResultEvaluation<OVERALL_RESULT> expectedResultEvaluation, Throwable e);
+		
+		public TestResult getTestResult();
+		
+		public String getTestResultCategory();
+		
+		public String getTestResultMessage();
+	}
+}
