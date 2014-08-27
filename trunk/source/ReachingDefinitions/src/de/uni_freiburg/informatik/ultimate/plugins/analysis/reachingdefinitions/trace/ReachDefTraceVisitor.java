@@ -65,10 +65,10 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 			ReachDefBoogieAnnotator generator = createBoogieAnnotator(edge, s, annot);
 			try {
 				generator.annotate(s);
-				String pre = " 		      " + edge.hashCode() + " " + BoogieStatementPrettyPrinter.print(s);
-
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(pre + Util.repeat((40 - pre.length()), " ") + " New: " + annot);
+					String pre = "            " + edge.hashCode() + " " + BoogieStatementPrettyPrinter.print(s);
+					mLogger.debug(pre + Util.repeat((40 - pre.length()), " ") + " New Use: " + annot.getUseAsString());
+					mLogger.debug(pre + Util.repeat((40 - pre.length()), " ") + " New Def: " + annot.getDefAsString());
 				}
 			} catch (Throwable e) {
 				// Fail fast after fatal error

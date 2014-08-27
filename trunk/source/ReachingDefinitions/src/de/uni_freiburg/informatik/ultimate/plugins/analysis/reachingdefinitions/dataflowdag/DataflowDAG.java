@@ -1,21 +1,51 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableLabeledEdgesMultigraph;
+import org.apache.log4j.Logger;
 
-public class DataflowDAG extends ModifiableLabeledEdgesMultigraph<DataflowDAG, IdentifierExpression> {
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableLabeledEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
+
+public class DataflowDAG<T> extends ModifiableLabeledEdgesMultigraph<DataflowDAG<T>, ScopedBoogieVar> {
 
 	private static final long serialVersionUID = 1L;
 
-	private Statement mStatement;
+	private T mNodeLabel;
 
-	public DataflowDAG(Statement stmt) {
-		mStatement = stmt;
+	public DataflowDAG(T stmt) {
+		mNodeLabel = stmt;
 	}
-	
-	public Statement getStatement(){
-		return mStatement;
+
+	public T getNodeLabel() {
+		return mNodeLabel;
+	}
+
+	@Override
+	public String toString() {
+		if (mNodeLabel == null) {
+			return "NULL";
+		}
+		if (mNodeLabel instanceof Statement) {
+			return BoogieStatementPrettyPrinter.print((Statement) mNodeLabel);
+		}
+		return mNodeLabel.toString();
+	}
+
+	public void printGraphDebug(Logger logger) {
+		printDebugDAG(logger, this, "", "");
+	}
+
+	private void printDebugDAG(Logger logger, DataflowDAG<T> dag, String edgeLabel, String ident) {
+		if (edgeLabel.isEmpty()) {
+			logger.debug(dag);
+		} else {
+			logger.debug(ident + "--" + edgeLabel + "--> " + dag);
+		}
+
+		for (DataflowDAG<T> next : dag.getOutgoingNodes()) {
+			printDebugDAG(logger, next, dag.getOutgoingEdgeLabel(next).toString(), ident + "  ");
+		}
 	}
 
 }

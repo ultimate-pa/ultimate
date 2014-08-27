@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefMapAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.AssumeFinder;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAGGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.rcfg.ReachDefRCFG;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.trace.ReachDefTrace;
@@ -68,8 +69,7 @@ public class ReachingDefinitions implements IAnalysis {
 			rtr.add(new ReachDefRCFG(logger, stmtProvider, edgeProvider));
 			rtr.add(finder);
 			// rtr.add(new DataflowDAGGenerator(logger, stmtProvider,
-			// edgeProvider));
-
+			// edgeProvider, finder.getEdgesWithAssumes()));
 			return rtr;
 		}
 		return Collections.emptyList();
@@ -95,17 +95,12 @@ public class ReachingDefinitions implements IAnalysis {
 		return null;
 	}
 
-	public static CodeBlock[] computeRDForTrace(CodeBlock[] trace, Logger logger, BoogieSymbolTable symbolTable)
-			throws Throwable {
-		// TODO: Der neue Plan
-		// - Forest bauen, jedes assume ist eine Wurzel (nach hinten)
-		// - assume macht use und def
-		// - ...?
+	public static List<DataflowDAG<CodeBlock>> computeRDForTrace(List<CodeBlock> trace, Logger logger,
+			BoogieSymbolTable symbolTable) throws Throwable {
 		IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider = new ReachDefMapAnnotationProvider<>();
 		IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider = new ReachDefMapAnnotationProvider<>();
 		ReachDefTrace rdt = new ReachDefTrace(edgeProvider, stmtProvider, logger, symbolTable);
-		rdt.process(trace);
-		return trace;
+		return rdt.process(trace);
 	}
 
 	@Override

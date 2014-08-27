@@ -72,7 +72,7 @@ public class BoogieOutput {
 	 * The file writer.
 	 */
 	PrintWriter m_Writer;
-	
+
 	public BoogieOutput(PrintWriter output) {
 		m_Writer = output;
 	}
@@ -102,21 +102,12 @@ public class BoogieOutput {
 	 * @param expr
 	 *            the expression to print.
 	 * @param precedence
-	 *            the precedence of the surrounding operator.
-	 *            0: if and only if
-	 *            1: implies
-	 *            3: logical or
-	 *            4: logical and
-	 *            5: comparison  
-	 *            6: bitvec concat
-	 *            7: addition
-	 *            8: multiplication
-	 *            9: unary minus/logical not
-	 *            10: struct/array/bitvector access
-	 *            11: old
+	 *            the precedence of the surrounding operator. 0: if and only if
+	 *            1: implies 3: logical or 4: logical and 5: comparison 6:
+	 *            bitvec concat 7: addition 8: multiplication 9: unary
+	 *            minus/logical not 10: struct/array/bitvector access 11: old
 	 */
-	private void appendExpression(StringBuilder sb, Expression expr,
-			int precedence) {
+	private void appendExpression(StringBuilder sb, Expression expr, int precedence) {
 		if (expr instanceof BinaryExpression) {
 			BinaryExpression binexpr = (BinaryExpression) expr;
 			int opPrec, lPrec, rPrec;
@@ -327,8 +318,7 @@ public class BoogieOutput {
 		} else if (expr instanceof BooleanLiteral) {
 			sb.append(((BooleanLiteral) expr).getValue());
 		} else if (expr instanceof StringLiteral) {
-			sb.append('"').append(((StringLiteral) expr).getValue())
-					.append('"');
+			sb.append('"').append(((StringLiteral) expr).getValue()).append('"');
 		} else if (expr instanceof StructConstructor) {
 			StructConstructor struct = (StructConstructor) expr;
 			String comma = "";
@@ -485,24 +475,28 @@ public class BoogieOutput {
 			}
 		}
 	}
-	
+
 	public void appendExpression(StringBuilder sb, Expression expr) {
 		appendExpression(sb, expr, 0);
 	}
-	
+
 	/**
-	 * Append the string representation of vls (comma separated list
-	 * of declarations) to the stringbuilder sb.
-	 * @param sb the string builder where we append to
-	 * @param vls the variable declaration that are appended.
+	 * Append the string representation of vls (comma separated list of
+	 * declarations) to the stringbuilder sb.
+	 * 
+	 * @param sb
+	 *            the string builder where we append to
+	 * @param vls
+	 *            the variable declaration that are appended.
 	 */
 	public void appendVarList(StringBuilder sb, VarList[] vls) {
 		String comma = "";
 		for (VarList vl : vls) {
 			sb.append(comma);
 			if (vl.getIdentifiers().length > 0) {
-				/* identifiers array can only be empty for
-				 * function parameters (unnamed parameter).  
+				/*
+				 * identifiers array can only be empty for function parameters
+				 * (unnamed parameter).
 				 */
 				String subcomma = "";
 				for (String id : vl.getIdentifiers()) {
@@ -686,13 +680,14 @@ public class BoogieOutput {
 			}
 		}
 	}
-	
+
 	/**
 	 * Add the string representation of the statement to the string builder.
 	 * This method will only work with simple statements, if-statements and
 	 * while-statements are not supported and will result in an exception.
 	 * 
-	 * @param sb the string builder where the string will be appended to.
+	 * @param sb
+	 *            the string builder where the string will be appended to.
 	 * @param s
 	 *            the statement to print.
 	 */
@@ -799,8 +794,7 @@ public class BoogieOutput {
 				sb = new StringBuilder();
 				sb.append(indent).append("}");
 				elsePart = stmt.getElsePart();
-				if (elsePart.length != 1
-						|| !(elsePart[0] instanceof IfStatement))
+				if (elsePart.length != 1 || !(elsePart[0] instanceof IfStatement))
 					break;
 				stmt = (IfStatement) elsePart[0];
 				sb.append(" else ");
@@ -900,11 +894,19 @@ public class BoogieOutput {
 	 */
 	public void printVarDeclaration(VariableDeclaration decl, String indent) {
 		StringBuilder sb = new StringBuilder();
+		appendVariableDeclaration(sb, decl, indent);
+		m_Writer.println(sb.toString());
+	}
+
+	protected void appendVariableDeclaration(StringBuilder sb, VariableDeclaration decl, String indent) {
 		sb.append(indent).append("var ");
 		appendAttributes(sb, decl.getAttributes());
 		appendVarList(sb, decl.getVariables());
 		sb.append(";");
-		m_Writer.println(sb.toString());
+	}
+
+	public void appendVariableDeclaration(StringBuilder sb, VariableDeclaration decl) {
+		appendVariableDeclaration(sb, decl, "");
 	}
 
 	/**

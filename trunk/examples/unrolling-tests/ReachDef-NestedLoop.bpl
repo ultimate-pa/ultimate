@@ -22,3 +22,11 @@ implementation Main()
   z := 2;
   assert x - y == z;
 }
+
+procedure ~init() returns();  
+modifies ;
+
+implementation ~init() returns()
+{
+
+}

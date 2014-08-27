@@ -65,7 +65,7 @@ public abstract class CFG2Automaton {
 		}
 
 		if (!m_RootAnnot.getBoogieDeclarations().getProcImplementation().containsKey(m_InitProcedure)) {
-			throw new IllegalArgumentException("Concurrent program need proceudre " + m_InitProcedure
+			throw new IllegalArgumentException("Concurrent program needs procedure " + m_InitProcedure
 					+ " to initialize shared variables");
 		}
 

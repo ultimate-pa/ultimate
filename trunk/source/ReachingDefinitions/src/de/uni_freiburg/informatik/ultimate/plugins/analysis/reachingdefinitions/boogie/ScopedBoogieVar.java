@@ -1,9 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie;
 
-import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 
 /***
  * 
@@ -25,11 +24,6 @@ public class ScopedBoogieVar {
 		mDeclarationInformation = declarationInformation;
 	}
 
-	public ScopedBoogieVar(IdentifierExpression identifier, BoogieSymbolTable symbolTable) {
-		this(identifier.getIdentifier(), (VariableDeclaration) symbolTable.getDeclaration(identifier), identifier
-				.getDeclarationInformation());
-	}
-
 	public VariableDeclaration getDeclaration() {
 		return mDeclaration;
 	}
@@ -40,6 +34,11 @@ public class ScopedBoogieVar {
 
 	public DeclarationInformation getDeclarationInformation() {
 		return mDeclarationInformation;
+	}
+
+	@Override
+	public String toString() {
+		return BoogieStatementPrettyPrinter.print(getDeclaration());
 	}
 
 }

@@ -10,5 +10,6 @@ Require-Bundle: UltimateCore,
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions,
- de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations
+ de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations,
+ de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.Activator

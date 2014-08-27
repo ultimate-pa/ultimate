@@ -9,13 +9,14 @@ Require-Bundle: Library-log4j,
  Library-ModelCheckerUtils,
  org.eclipse.core.runtime,
  UltimateCore,
+ BoogiePreprocessor,
  Library-SMTLIB,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  SMTInterpol,
  de.uni_freiburg.informatik.ultimate.automata,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent,
- de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
+ de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions 
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas

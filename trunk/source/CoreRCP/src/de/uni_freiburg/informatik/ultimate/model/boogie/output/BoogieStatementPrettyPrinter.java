@@ -2,16 +2,18 @@ package de.uni_freiburg.informatik.ultimate.model.boogie.output;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 
 /**
  * Provides a static method to get a prettyprinted String representation of a
  * (Boogie) Statement.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
- *
+ * 
  */
 
 public class BoogieStatementPrettyPrinter {
-	
+
 	/**
 	 * @return prettyprinted String representation the Statement st
 	 */
@@ -21,7 +23,7 @@ public class BoogieStatementPrettyPrinter {
 		output.appendStatement(sb, st);
 		return sb.toString();
 	}
-	
+
 	/**
 	 * @return prettyprinted Expression
 	 */
@@ -31,4 +33,12 @@ public class BoogieStatementPrettyPrinter {
 		output.appendExpression(sb, expr);
 		return sb.toString();
 	}
+
+	public static String print(VariableDeclaration decl) {
+		BoogieOutput output = new BoogieOutput(null);
+		StringBuilder sb = new StringBuilder();
+		output.appendVariableDeclaration(sb, decl);
+		return sb.toString();
+	}
+
 }

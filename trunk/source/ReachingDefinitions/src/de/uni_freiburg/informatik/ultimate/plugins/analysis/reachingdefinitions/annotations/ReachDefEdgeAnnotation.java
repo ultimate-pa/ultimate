@@ -22,7 +22,7 @@ public class ReachDefEdgeAnnotation extends ReachDefBaseAnnotation {
 	}
 
 	@Override
-	protected HashMap<ScopedBoogieVar, HashSet<Statement>> getDefs() {
+	public HashMap<ScopedBoogieVar, HashSet<Statement>> getDefs() {
 		if (mEdge == null) {
 			return new HashMap<>();
 		}
@@ -35,7 +35,7 @@ public class ReachDefEdgeAnnotation extends ReachDefBaseAnnotation {
 	}
 
 	@Override
-	protected HashMap<ScopedBoogieVar, HashSet<Statement>> getUse() {
+	public HashMap<ScopedBoogieVar, HashSet<Statement>> getUse() {
 		if (mEdge == null) {
 			return new HashMap<>();
 		}

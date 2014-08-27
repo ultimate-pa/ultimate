@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -19,9 +21,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 /**
  * Auto-Generated Stub for the plug-in's Observer
  */
-public class TraceAbstractionWithAFAsObserver implements IUnmanagedObserver {
+public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 
-//	private final Logger mLogger;
+	private final Logger mLogger;
 
 	/**
 	 * Root Node of this Ultimate model. I use this to store information that
@@ -34,7 +36,7 @@ public class TraceAbstractionWithAFAsObserver implements IUnmanagedObserver {
 
 	public TraceAbstractionWithAFAsObserver(IUltimateServiceProvider services) {
 		mServices = services;
-//		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 	}
 
 	@Override
@@ -52,8 +54,16 @@ public class TraceAbstractionWithAFAsObserver implements IUnmanagedObserver {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
+		PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(root);
+		if (pa == null || pa.getSymbolTable() == null) {
+			String errorMsg = "No symbol table found on given RootNode.";
+			mLogger.fatal(errorMsg);
+			throw new UnsupportedOperationException(errorMsg);
+		}
+
 		TAwAFAsCegarLoop cegarLoop = new TAwAFAsCegarLoop("bla", rootNode, smtManager, taBenchmarks, taPrefs,
-				errNodesOfAllProc, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices);
+				errNodesOfAllProc, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices,
+				pa.getSymbolTable());
 
 		Result result = cegarLoop.iterate();
 
@@ -65,30 +75,6 @@ public class TraceAbstractionWithAFAsObserver implements IUnmanagedObserver {
 	 */
 	public IElement getRoot() {
 		return m_graphroot;
-	}
-
-	@Override
-	public void finish() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void init() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public boolean performedChanges() {
-		// TODO Auto-generated method stub
-		return false;
 	}
 
 }

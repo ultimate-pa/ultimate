@@ -1,11 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas;
 
 import java.util.Collection;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.ReachingDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -26,45 +29,41 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractioncon
 
 public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
+	private final BoogieSymbolTable mSymbolTable;
+
 	public TAwAFAsCegarLoop(String name, RootNode rootNode, SmtManager smtManager,
 			TraceAbstractionBenchmarks traceAbstractionBenchmarks, TAPreferences taPrefs,
 			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation, boolean computeHoareAnnotation,
-			IUltimateServiceProvider services) {
+			IUltimateServiceProvider services, BoogieSymbolTable table) {
 		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs, errorLocs, services);
-		// TODO Auto-generated constructor stub
+		assert table != null;
+		mSymbolTable = table;
 	}
 
 	@Override
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
 
-		// Daniel:
 		Word<CodeBlock> trace = m_TraceChecker.getTrace();
-		// -> der
-		// TraceChecker hat
-		// aber auch noch
-		// ein paar andere
-		// Sachen drin..
-		CodeBlock[] traceAsArray = new CodeBlock[trace.length()];
-		for (int i = 0; i < trace.length(); i++) {
-			traceAsArray[i] = trace.getSymbol(i);
-		}
+
+		List<DataflowDAG<CodeBlock>> dags = null;
 		try {
-			//TODO: You need to get BoogieSymbolTable here 
-			CodeBlock[] rdAnnotatedTraceArray = ReachingDefinitions.computeRDForTrace(traceAsArray, mLogger, null);
+			dags = ReachingDefinitions.computeRDForTrace(trace.asList(), mLogger,
+					mSymbolTable);
 		} catch (Throwable e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			mLogger.fatal("DataflowDAG generation threw an exception.", e);
 		}
 
-		for (int i = 0; i < trace.length(); i++) {
-			CodeBlock cb = trace.getSymbol(i);
-			RDCodeBlockWrapper rdcbw = new RDCodeBlockWrapper(cb);
-			int j = 0;
-			j++;
-		}
+		mLogger.debug("Ich bin ein Breakpoint");
 
-		// super.constructInterpolantAutomaton();
-		int i = 0;
+		// for (int i = 0; i < trace.length(); i++) {
+		// CodeBlock cb = trace.getSymbol(i);
+		// RDCodeBlockWrapper rdcbw = new RDCodeBlockWrapper(cb);
+		// int j = 0;
+		// j++;
+		// }
+		//
+		// // super.constructInterpolantAutomaton();
+		// int i = 0;
 	}
 
 }

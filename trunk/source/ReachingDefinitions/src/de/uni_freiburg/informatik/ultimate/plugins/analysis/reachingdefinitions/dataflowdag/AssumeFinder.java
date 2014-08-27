@@ -57,7 +57,7 @@ public class AssumeFinder extends BaseObserver {
 		return mEdgesWithAssumes;
 	}
 
-	private void process(RootNode node) {
+	private void process(RCFGNode node) {
 		Queue<RCFGEdge> openEdges = new LinkedList<>();
 		HashSet<RCFGEdge> completed = new HashSet<>();
 		AssumeFinderVisitor visitor = new AssumeFinderVisitor();

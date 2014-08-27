@@ -91,5 +91,7 @@ public class ReachDefRCFG extends BaseObserver {
 				}
 			}
 		}
+		
+		mLogger.debug("bla");
 	}
 }
