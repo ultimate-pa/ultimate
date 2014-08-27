@@ -38,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.NonterminatingLassoResult;
+import de.uni_freiburg.informatik.ultimate.result.TerminationAnalysisResult;
+import de.uni_freiburg.informatik.ultimate.result.TerminationAnalysisResult.TERMINATION;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 
 /**
@@ -106,9 +108,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		// + ": " + benchTiming.getLongDescription());
 
 		if (result == Result.TERMINATING) {
-			String shortDescr = "Termination proven";
+//			String shortDescr = "Termination proven";
 			String longDescr = "Buchi Automizer proved that your program is terminating";
-			IResult reportRes = new GenericResult(Activator.s_PLUGIN_ID, shortDescr, longDescr, Severity.INFO);
+			IResult reportRes = new TerminationAnalysisResult(Activator.s_PLUGIN_ID, TERMINATION.TERMINATING, longDescr); 
+					//new GenericResult(Activator.s_PLUGIN_ID, shortDescr, longDescr, Severity.INFO);
 			reportResult(reportRes);
 			// s_Logger.info(shortDescr + ": " + longDescr);
 		} else if (result == Result.UNKNOWN) {
@@ -124,9 +127,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			longDescr.append(System.getProperty("line.separator"));
 			longDescr.append("Loop: ");
 			longDescr.append(counterexample.getLoop().getWord());
-			IResult reportRes = new GenericResultAtElement<RcfgElement>(honda, Activator.s_PLUGIN_ID, mServices
-					.getBacktranslationService().getTranslatorSequence(), shortDescr, longDescr.toString(),
-					Severity.ERROR);
+			IResult reportRes = new TerminationAnalysisResult(Activator.s_PLUGIN_ID, TERMINATION.UNKNOWN, longDescr.toString());
+					//new GenericResultAtElement<RcfgElement>(honda, Activator.s_PLUGIN_ID, mServices
+					//.getBacktranslationService().getTranslatorSequence(), shortDescr, longDescr.toString(),
+					//Severity.ERROR);
 			reportResult(reportRes);
 			// s_Logger.info(shortDescr + ": " + longDescr);
 		} else if (result == Result.TIMEOUT) {
@@ -136,9 +140,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					.getBacktranslationService().getTranslatorSequence(), longDescr);
 			reportResult(reportRes);
 		} else if (result == Result.NONTERMINATING) {
-			String shortDescr = "Nontermination possible";
+//			String shortDescr = "Nontermination possible";
 			String longDescr = "Buchi Automizer proved that your program is nonterminating for some inputs";
-			IResult reportRes = new GenericResult(Activator.s_PLUGIN_ID, shortDescr, longDescr, Severity.ERROR);
+			IResult reportRes =  new TerminationAnalysisResult(Activator.s_PLUGIN_ID, TERMINATION.NONTERMINATING, longDescr);
+					// new GenericResult(Activator.s_PLUGIN_ID, shortDescr, longDescr, Severity.ERROR);
 			reportResult(reportRes);
 			// s_Logger.info(shortDescr + ": " + longDescr);
 			NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();

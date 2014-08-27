@@ -3,7 +3,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
@@ -42,6 +45,23 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 	@Override
 	public Object aggregate(String key, Object value1, Object value2) {
 		switch (key) {
+		case s_Result:
+			Result result1 = (Result) value1;
+			Result result2 = (Result) value2;
+			Set<Result> results = new HashSet<Result>();
+			results.add(result1);
+			results.add(result2);
+			if (results.contains(Result.NONTERMINATING)) {
+				return Result.NONTERMINATING;
+			} else if (results.contains(Result.UNKNOWN)) {
+				return Result.UNKNOWN;
+			} else if (results.contains(Result.TIMEOUT)) {
+				return Result.TIMEOUT;
+			} else if (results.contains(Result.TERMINATING)) {
+				return Result.TERMINATING;
+			} else {
+				throw new AssertionError();
+			}
 		case s_NontrivialModuleStages:
 		{
 			int[] array1 = (int[]) value1;

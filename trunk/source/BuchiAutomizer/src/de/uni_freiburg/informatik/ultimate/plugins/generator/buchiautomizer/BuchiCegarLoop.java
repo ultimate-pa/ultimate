@@ -307,10 +307,12 @@ public class BuchiCegarLoop {
 		} catch (OperationCanceledException e1) {
 			mLogger.warn("Verification cancelled");
 			m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), false);
+			m_BenchmarkGenerator.setResult(Result.TIMEOUT);
 			return Result.TIMEOUT;
 		}
 		if (initalAbstractionCorrect) {
 			m_MDBenchmark.reportNoRemainderModule();
+			m_BenchmarkGenerator.setResult(Result.TERMINATING);
 			return Result.TERMINATING;
 		}
 
@@ -328,6 +330,7 @@ public class BuchiCegarLoop {
 				if (m_ConstructTermcompProof) {
 					m_TermcompProofBenchmark.reportRemainderModule(false);
 				}
+				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			}
 			if (abstractionCorrect) {
@@ -335,6 +338,7 @@ public class BuchiCegarLoop {
 				if (m_ConstructTermcompProof) {
 					m_TermcompProofBenchmark.reportNoRemainderModule();
 				}
+				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
 				return Result.TERMINATING;
 			}
 
@@ -401,6 +405,7 @@ public class BuchiCegarLoop {
 					if (m_ConstructTermcompProof) {
 						m_TermcompProofBenchmark.reportRemainderModule(false);
 					}
+					m_BenchmarkGenerator.setResult(Result.UNKNOWN);
 					return Result.UNKNOWN;
 				case REPORT_NONTERMINATION:
 					m_NonterminationArgument = lassoChecker.getNonTerminationArgument();
@@ -408,6 +413,7 @@ public class BuchiCegarLoop {
 					if (m_ConstructTermcompProof) {
 						m_TermcompProofBenchmark.reportRemainderModule(true);
 					}
+					m_BenchmarkGenerator.setResult(Result.NONTERMINATING);
 					return Result.NONTERMINATING;
 				default:
 					throw new AssertionError("impossible case");
@@ -431,10 +437,12 @@ public class BuchiCegarLoop {
 				m_BenchmarkGenerator.reportAbstractionSize(m_Abstraction.size(), m_Iteration);
 
 			} catch (AutomataLibraryException e) {
+				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			}
 			m_InterpolAutomaton = null;
 		}
+		m_BenchmarkGenerator.setResult(Result.TIMEOUT);
 		return Result.TIMEOUT;
 	}
 

@@ -21,7 +21,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 	public IBenchmarkType getBenchmarkType() {
 		return BuchiCegarLoopBenchmark.getInstance();
 	}
-
+	
 	@Override
 	public String[] getStopwatches() {
 		ArrayList<String> al = new ArrayList<String>();
