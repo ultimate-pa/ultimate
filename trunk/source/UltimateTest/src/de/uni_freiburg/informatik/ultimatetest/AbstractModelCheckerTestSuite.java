@@ -5,11 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.summary.CsvConcatenator;
-import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
-import de.uni_freiburg.informatik.ultimatetest.traceabstraction.TestSummaryWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
@@ -17,16 +13,6 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	private static final String m_PathToSettings = "examples/settings/";
 	private static final String m_PathToToolchains = "examples/toolchains/";
 	
-
-	@Override
-	protected ITestSummary[] constructTestSummaries() {
-		return new ITestSummary[] {
-				new TestSummaryWithBenchmarkResults(this.getClass()),
-				new TraceAbstractionTestSummary(this.getClass()),
-				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class)
-		};
-	}
-
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {

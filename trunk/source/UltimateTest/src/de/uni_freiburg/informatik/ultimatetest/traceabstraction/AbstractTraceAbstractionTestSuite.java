@@ -1,9 +1,13 @@
 package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimatetest.AbstractModelCheckerTestSuite;
+import de.uni_freiburg.informatik.ultimatetest.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider2;
+import de.uni_freiburg.informatik.ultimatetest.summary.CsvConcatenator;
+import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 
 public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelCheckerTestSuite {
 
@@ -11,6 +15,15 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 	public ITestResultDecider constructITestResultDecider(
 			UltimateRunDefinition ultimateRunDefinition) {
 		return new SafetyCheckTestResultDecider2(ultimateRunDefinition, true);
+	}
+
+	@Override
+	protected ITestSummary[] constructTestSummaries() {
+		return new ITestSummary[] {
+				new TestSummaryWithBenchmarkResults(this.getClass()),
+				new TraceAbstractionTestSummary(this.getClass()),
+				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class)
+		};
 	}
 
 }
