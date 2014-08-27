@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 
 public class AutomataScriptTestResultDecider implements ITestResultDecider {
 	
-	OverallResult m_Category;
+	private OverallResult m_Category;
 
 	@Override
 	public TestResult getTestResult(IResultService resultService) {

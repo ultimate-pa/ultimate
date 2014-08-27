@@ -1,13 +1,10 @@
 package de.uni_freiburg.informatik.ultimatetest.translation;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import org.junit.Ignore;
 
-import de.uni_freiburg.informatik.ultimatetest.automatascript.AutomataScriptTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 

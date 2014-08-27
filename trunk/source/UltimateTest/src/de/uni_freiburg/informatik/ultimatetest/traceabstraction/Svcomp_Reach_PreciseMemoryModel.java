@@ -3,11 +3,9 @@
  */
 package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de

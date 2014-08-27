@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimatetest.svcomp;
 
-import java.io.File;
 import java.util.Map;
 import java.util.Map.Entry;
 

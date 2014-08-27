@@ -1,10 +1,7 @@
 package de.uni_freiburg.informatik.ultimatetest.translation;
 
-import java.io.File;
-
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summary.TestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public class TranslationTestSummary extends TestSummary {
 
