@@ -2,9 +2,9 @@ package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 
 import java.io.File;
 
-import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider_OldVersion;
 
-public class TraceAbstractionTestResultDecider extends SafetyCheckTestResultDecider {
+public class TraceAbstractionTestResultDecider extends SafetyCheckTestResultDecider_OldVersion {
 
 	private File mSettingsFile;
 

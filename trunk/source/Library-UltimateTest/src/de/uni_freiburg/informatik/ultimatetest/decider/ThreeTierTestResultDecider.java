@@ -2,13 +2,14 @@ package de.uni_freiburg.informatik.ultimatetest.decider;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.decider.expectedResult.ExpectedResultEvaluation;
+import de.uni_freiburg.informatik.ultimatetest.decider.expectedResult.IExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.IOverallResultEvaluator;
 
 /**
  * Abstract class for deciding a test result in three steps:
  * <ul>
- * <li> 1. Use UltimateRunDefinition to decide expected result
+ * <li> 1. Use IExpectedResultFinder to decide expected result for an
+ * UltimateRunDefinition
  * <li> 2. Use IResults from Ultimate to decide the overall result provided by
  * Ultimate
  * <li> 3. Compare expected result with the overall result computed by
@@ -18,19 +19,22 @@ import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.IOverallRes
  * @author heizmann@informatik.uni-freiburg.de
  *
  * @param <OVERALL_RESULT>
- * @param <UltimateResult>
  */
 public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITestResultDecider {
 
-	UltimateRunDefinition m_UltimateRunDefinition;
-	ExpectedResultEvaluation<OVERALL_RESULT> m_ExpectedResultEvaluation;
-	IOverallResultEvaluator<OVERALL_RESULT> m_UltimateResultEvaluation;
-	TestResultEvaluation<OVERALL_RESULT> m_TestResultEvaluation;
+	/**
+	 * if true the TestResult UNKNOWN is a success for JUnit, if false, 
+	 * the TestResult UNKNOWN is a failure for JUnit.
+	 */
+	private final boolean m_UnknownIsJUnitSuccess;
+	private final IExpectedResultFinder<OVERALL_RESULT> m_ExpectedResultEvaluation;
+	private IOverallResultEvaluator<OVERALL_RESULT> m_UltimateResultEvaluation;
+	private TestResultEvaluation<OVERALL_RESULT> m_TestResultEvaluation;
 	
-	public ThreeTierTestResultDecider(UltimateRunDefinition ultimateRunDefinition) {
-		m_UltimateRunDefinition = ultimateRunDefinition;
-		m_ExpectedResultEvaluation = constructExpectedResultEvaluation();
-		m_ExpectedResultEvaluation.evaluateExpectedResult(ultimateRunDefinition);
+	public ThreeTierTestResultDecider(UltimateRunDefinition ultimateRunDefinition, boolean unknownIsJUnitSuccess) {
+		m_UnknownIsJUnitSuccess = unknownIsJUnitSuccess;
+		m_ExpectedResultEvaluation = constructExpectedResultFinder();
+		m_ExpectedResultEvaluation.findExpectedResult(ultimateRunDefinition);
 	}
 	
 	@Override
@@ -65,7 +69,7 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 		switch (testResult) {
 		case SUCCESS:
 		case UNKNOWN:
-			return true;
+			return m_UnknownIsJUnitSuccess;
 		case FAIL:
 			return false;
 		default:
@@ -74,7 +78,7 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 
 	}
 	
-	public abstract ExpectedResultEvaluation<OVERALL_RESULT> constructExpectedResultEvaluation();
+	public abstract IExpectedResultFinder<OVERALL_RESULT> constructExpectedResultFinder();
 	
 	public abstract IOverallResultEvaluator<OVERALL_RESULT> constructUltimateResultEvaluation();
 	
@@ -84,10 +88,10 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 
 	public interface TestResultEvaluation<OVERALL_RESULT> {
 		public void evaluateTestResult(
-				ExpectedResultEvaluation<OVERALL_RESULT> expectedResultEvaluation,
+				IExpectedResultFinder<OVERALL_RESULT> expectedResultEvaluation,
 				IOverallResultEvaluator<OVERALL_RESULT> overallResultDeterminer);
 		
-		public void evaluateTestResult(ExpectedResultEvaluation<OVERALL_RESULT> expectedResultEvaluation, Throwable e);
+		public void evaluateTestResult(IExpectedResultFinder<OVERALL_RESULT> expectedResultEvaluation, Throwable e);
 		
 		public TestResult getTestResult();
 		

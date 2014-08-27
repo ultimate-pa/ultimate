@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider_OldVersion;
 import de.uni_freiburg.informatik.ultimatetest.util.Util.ExpectedResult;
 
 /**
@@ -25,7 +25,7 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util.ExpectedResult;
  *
  */
 public class AbstractInterpretationTestResultDecider extends
-		SafetyCheckTestResultDecider {
+		SafetyCheckTestResultDecider_OldVersion {
 	
 	public AbstractInterpretationTestResultDecider(File inputFile) {
 		super(inputFile);

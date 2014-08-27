@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider2;
 import de.uni_freiburg.informatik.ultimatetest.summary.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
@@ -24,7 +25,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
 		return new ITestSummary[] {
-				new NewTraceAbstractionTestSummary(this.getClass()),
+				new TestSummaryWithBenchmarkResults(this.getClass()),
 				new TraceAbstractionTestSummary(this.getClass()),
 				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class)
 		};
@@ -44,8 +45,11 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
 			UltimateStarter starter = new UltimateStarter(urd, deadline, null, null);
 			m_testCases.add(new UltimateTestCase(starter,
-					new TraceAbstractionTestResultDecider(inputFile, settingsFile), super.getSummaries(), uniqueString + "_"
-							+ inputFile.getAbsolutePath(), urd));
+					//new TraceAbstractionTestResultDecider(inputFile, settingsFile)
+					new SafetyCheckTestResultDecider2(urd, true)
+					, super.getSummaries(), uniqueString + "_" + inputFile.getAbsolutePath(), urd)
+					
+			);
 		}
 	}
 

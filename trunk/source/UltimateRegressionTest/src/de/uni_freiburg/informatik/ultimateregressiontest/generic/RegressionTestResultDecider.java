@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimateregressiontest.generic;
 import java.io.File;
 
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider_OldVersion;
 
 /**
  * This {@link ITestResultDecider} tries to interpret the results of Ultimate's
@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDeci
  * @author dietsch
  * 
  */
-public class RegressionTestResultDecider extends SafetyCheckTestResultDecider {
+public class RegressionTestResultDecider extends SafetyCheckTestResultDecider_OldVersion {
 
 	public RegressionTestResultDecider(File inputFile) {
 		super(inputFile);

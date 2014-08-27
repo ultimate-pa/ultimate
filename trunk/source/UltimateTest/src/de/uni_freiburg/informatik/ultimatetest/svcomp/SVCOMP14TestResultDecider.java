@@ -2,10 +2,10 @@ package de.uni_freiburg.informatik.ultimatetest.svcomp;
 
 import java.io.File;
 
-import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider_OldVersion;
 import de.uni_freiburg.informatik.ultimatetest.util.Util.ExpectedResult;
 
-public class SVCOMP14TestResultDecider extends SafetyCheckTestResultDecider {
+public class SVCOMP14TestResultDecider extends SafetyCheckTestResultDecider_OldVersion {
 
 	public SVCOMP14TestResultDecider(File inputFile) {
 		super(inputFile);

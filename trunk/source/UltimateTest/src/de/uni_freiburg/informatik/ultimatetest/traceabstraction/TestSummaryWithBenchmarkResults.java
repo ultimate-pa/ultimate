@@ -13,12 +13,18 @@ import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestRe
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
-public class NewTraceAbstractionTestSummary implements ITestSummary {
+/**
+ * Summary in which the tests are ordered by filenames and for each test the
+ * BenchmarkResults are shown.
+ * @author heizmann@informatik.uni-freiburg.de and Daniel Dietsch
+ *
+ */
+public class TestSummaryWithBenchmarkResults implements ITestSummary {
 
 	private final Class<? extends UltimateTestSuite> m_UltimateTestSuite;
-	private final LinkedHashMap<String, List<Summary>> mSummaryMap;
+	private final LinkedHashMap<String, List<Entry>> mSummaryMap;
 
-	public NewTraceAbstractionTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
+	public TestSummaryWithBenchmarkResults(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		m_UltimateTestSuite = ultimateTestSuite;
 		mSummaryMap = new LinkedHashMap<>();
 	}
@@ -45,7 +51,7 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 		String indent = "\t";
 		for (String filename : mSummaryMap.keySet()) {
 			sb.append(filename).append(lineSeparator);
-			for (Summary currentSummary : mSummaryMap.get(filename)) {
+			for (Entry currentSummary : mSummaryMap.get(filename)) {
 				sb.append(currentSummary.toLogString(indent, lineSeparator));
 			}
 			sb.append(lineSeparator);
@@ -54,21 +60,16 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 	}
 
 	@Override
-	public void addResult(TestResult threeValuedResult, String category, UltimateRunDefinition ultimateRunDefintion,
+	public void addResult(TestResult threeValuedResult, String category, 
+			UltimateRunDefinition ultimateRunDefintion,
 			String message, IResultService resultService) {
-		Summary sum = new Summary();
-		sum.mThreeValuedResult = threeValuedResult;
-		sum.mCategory = category;
-		sum.mMessage = message;
-
-		sum.mSettingsFile = ultimateRunDefintion.getSettings().getAbsolutePath();
-		sum.interpretUltimateResults(resultService);
-
+		Entry sum = new Entry(threeValuedResult, message, ultimateRunDefintion, 
+				resultService);
 		addToMap(ultimateRunDefintion.getInput().getAbsolutePath(), sum);
 	}
 
-	private void addToMap(String filename, Summary sum) {
-		List<Summary> sumList = mSummaryMap.get(filename);
+	private void addToMap(String filename, Entry sum) {
+		List<Entry> sumList = mSummaryMap.get(filename);
 		if (sumList == null) {
 			sumList = new ArrayList<>();
 			mSummaryMap.put(filename, sumList);
@@ -76,17 +77,23 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 		sumList.add(sum);
 	}
 
-	private class Summary {
+	private class Entry {
 
-		public String mSettingsFile;
-		public String mMessage;
-		public String mCategory;
-		public TestResult mThreeValuedResult;
-		public List<String> mFlattenedBenchmarkResults;
+		private final TestResult mThreeValuedResult;
+		private final String mMessage;
+		private final UltimateRunDefinition m_UltimateRunDefinition;
+		private final List<String> mFlattenedBenchmarkResults = new ArrayList<>();
+		
+		public Entry(TestResult threeValuedResult, String message,
+				UltimateRunDefinition ultimateRunDefinition, IResultService resultService) {
+			super();
+			this.mThreeValuedResult = threeValuedResult;
+			this.mMessage =message;
+			m_UltimateRunDefinition = ultimateRunDefinition;
+			interpretUltimateResults(resultService);
+		}
 
-		public void interpretUltimateResults(IResultService resultService) {
-
-			mFlattenedBenchmarkResults = new ArrayList<>();
+		private void interpretUltimateResults(IResultService resultService) {
 
 			for (IResult result : Util.filterResults(resultService.getResults(), BenchmarkResult.class)) {
 				StringBuilder sb = new StringBuilder();
@@ -99,7 +106,7 @@ public class NewTraceAbstractionTestSummary implements ITestSummary {
 		public StringBuilder toLogString(String indent, String lineSeparator) {
 			StringBuilder sb = new StringBuilder();
 
-			sb.append(indent).append(mSettingsFile).append(lineSeparator);
+			sb.append(indent).append(m_UltimateRunDefinition.getSettings()).append(lineSeparator);
 			sb.append(indent).append("Test result: ").append(mThreeValuedResult).append(lineSeparator);
 			sb.append(indent).append("Message:     ").append(Util.flatten(mMessage, " # ")).append(lineSeparator);
 			sb.append(indent).append("Benchmarks:").append(lineSeparator);

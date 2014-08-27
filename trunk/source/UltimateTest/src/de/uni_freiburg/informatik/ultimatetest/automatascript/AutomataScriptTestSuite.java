@@ -2,17 +2,14 @@ package de.uni_freiburg.informatik.ultimatetest.automatascript;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimatetest.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
-import de.uni_freiburg.informatik.ultimatetest.traceabstraction.NewTraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public class AutomataScriptTestSuite extends UltimateTestSuite {
@@ -21,7 +18,6 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 	private static final String m_Toolchain = "examples/toolchains/AutomataScriptInterpreter.xml";
 	private static final File m_ToolchainFile = new File(Util.getPathFromTrunk(m_Toolchain));
 	private static int m_Timeout = 10000;
-	private static String m_Description = "AutomataScriptTest";
 	private static final String[] m_Directories = { 
 		"examples/Automata/atsTestFiles",
 		"examples/Automata/AUTOMATA_SCRIPT",

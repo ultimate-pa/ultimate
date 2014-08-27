@@ -26,11 +26,14 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util.ExpectedResult;
 
 /**
  * Decide if one of Ultimate's Safety Checkers verified a program correctly.
+ * 2014-08-27 Matthias: I think this is superseded by the 
+ * new SafetyCheckTestResultDecider and can be deleted.
  * 
  * @author Betim Musa, Matthias Heizmann, dietsch
  * 
  */
-public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
+@Deprecated
+public abstract class SafetyCheckTestResultDecider_OldVersion extends TestResultDecider {
 	private String mInputFile;
 	private ExpectedResult mExpectedResult;
 
@@ -63,7 +66,7 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 
 	}
 
-	public SafetyCheckTestResultDecider(File inputFile) {
+	public SafetyCheckTestResultDecider_OldVersion(File inputFile) {
 		super();
 		mInputFile = inputFile.getAbsolutePath();
 		generateExpectedResult(inputFile);
@@ -71,7 +74,7 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 
 	@Override
 	public TestResult getTestResult(IResultService resultService) {
-		Logger log = Logger.getLogger(SafetyCheckTestResultDecider.class);
+		Logger log = Logger.getLogger(SafetyCheckTestResultDecider_OldVersion.class);
 		Collection<String> customMessages = new LinkedList<String>();
 		final TestResult testoutcome;
 		mResults = new ArrayList<IResult>();
@@ -158,7 +161,7 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 	public TestResult getTestResult(IResultService resultService, Throwable e) {
 		generateResultMessageAndCategory(new SafetyCheckerResult(SafetyCheckerResultType.EXCEPTION_OR_ERROR,
 				new ExceptionOrErrorResult("Ultimate", e)));
-		Logger log = Logger.getLogger(SafetyCheckTestResultDecider.class);
+		Logger log = Logger.getLogger(SafetyCheckTestResultDecider_OldVersion.class);
 		Util.logResults(log, mInputFile, true, new LinkedList<String>(), resultService);
 		return TestResult.FAIL;
 	}
@@ -198,7 +201,7 @@ public abstract class SafetyCheckTestResultDecider extends TestResultDecider {
 	 * result and actual result) what the overall result of the current test
 	 * case should be.
 	 * 
-	 * If your {@link SafetyCheckTestResultDecider} is not used to support
+	 * If your {@link SafetyCheckTestResultDecider_OldVersion} is not used to support
 	 * summaries, you should overwrite this method to prevent the generation of
 	 * those Strings.
 	 * 
