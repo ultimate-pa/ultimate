@@ -18,5 +18,19 @@ public abstract class AbstractResult implements IResult {
 	public final String getPlugin() {
 		return m_Plugin;
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+//		sb.append(getClass().getSimpleName());
+//		sb.append(" ");
+		sb.append("ShortDescription: ");
+		sb.append(getShortDescription());
+		sb.append(" ");
+		sb.append("LongDescription: ");
+		sb.append(getLongDescription());
+		return sb.toString();
+		
+	}
 
 }
