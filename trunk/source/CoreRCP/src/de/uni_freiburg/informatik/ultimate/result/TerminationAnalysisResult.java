@@ -20,6 +20,11 @@ public class TerminationAnalysisResult extends AbstractResult implements
 		m_Termination = termination;
 		m_LongDescription = longDescription;
 	}
+	
+
+	public TERMINATION getTermination() {
+		return m_Termination;
+	}
 
 	public enum TERMINATION {
 		TERMINATING,

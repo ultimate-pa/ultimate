@@ -5,20 +5,19 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
-import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.result.TerminationAnalysisResult;
+import de.uni_freiburg.informatik.ultimate.result.TerminationAnalysisResult.TERMINATION;
 import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 
 /**
- * Evaluate the overall result of a safety checker.
+ * Evaluate the overall result of a termination analysis.
  * 
  * First, we iterate through all IResults returned by Ultimate and put them
  * into categories (which IResult is a witness for which overall result).
@@ -68,25 +67,25 @@ public class TerminationAnalysisOverallResultEvaluator implements IOverallResult
 	
 	
 	private TerminationAnalysisOverallResult detectResultCategory(IResult result) {
-//		if (result instanceof AllSpecificationsHoldResult) {
-//			return TerminationAnalysisOverallResult.SAFE;
-//		} else if (result instanceof CounterExampleResult) {
-//			return TerminationAnalysisOverallResult.UNSAFE;
-//		} else if (result instanceof UnprovableResult) {
-//			return TerminationAnalysisOverallResult.UNKNOWN;
-//		} else if (result instanceof TypeErrorResult) {
-//			return TerminationAnalysisOverallResult.SYNTAX_ERROR;
-//		} else if (result instanceof SyntaxErrorResult) {
-//			return TerminationAnalysisOverallResult.SYNTAX_ERROR;
-//		} else if (result instanceof ITimeoutResult) {
-//			return TerminationAnalysisOverallResult.TIMEOUT;
-//		} else if (result instanceof UnsupportedSyntaxResult) {
-//			return TerminationAnalysisOverallResult.UNSUPPORTED_SYNTAX;
-//		} else if (result instanceof ExceptionOrErrorResult) {
-//			return TerminationAnalysisOverallResult.EXCEPTION_OR_ERROR;
-//		} else {
+		if (result instanceof TerminationAnalysisResult && ((TerminationAnalysisResult) result).getTermination() == TERMINATION.TERMINATING) {
+			return TerminationAnalysisOverallResult.TERMINATING;
+		} else if (result instanceof TerminationAnalysisResult && ((TerminationAnalysisResult) result).getTermination() == TERMINATION.NONTERMINATING) {
+			return TerminationAnalysisOverallResult.NONTERMINATING;
+		} else if (result instanceof TerminationAnalysisResult && ((TerminationAnalysisResult) result).getTermination() == TERMINATION.UNKNOWN) {
+			return TerminationAnalysisOverallResult.UNKNOWN;
+		} else if (result instanceof TypeErrorResult) {
+			return TerminationAnalysisOverallResult.SYNTAX_ERROR;
+		} else if (result instanceof SyntaxErrorResult) {
+			return TerminationAnalysisOverallResult.SYNTAX_ERROR;
+		} else if (result instanceof ITimeoutResult) {
+			return TerminationAnalysisOverallResult.TIMEOUT;
+		} else if (result instanceof UnsupportedSyntaxResult) {
+			return TerminationAnalysisOverallResult.UNSUPPORTED_SYNTAX;
+		} else if (result instanceof ExceptionOrErrorResult) {
+			return TerminationAnalysisOverallResult.EXCEPTION_OR_ERROR;
+		} else {
 			return null;
-//		}
+		}
 	}
 
 
