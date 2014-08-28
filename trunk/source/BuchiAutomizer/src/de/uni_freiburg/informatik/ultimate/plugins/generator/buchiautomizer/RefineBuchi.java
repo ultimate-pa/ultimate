@@ -157,12 +157,11 @@ public class RefineBuchi {
 		// }
 		NestedWord<CodeBlock> loop = m_Counterexample.getLoop().getWord();
 
-		IPredicate falsePredicate = m_SmtManager.newFalsePredicate();
 		assert !bspm.getStemPrecondition().getFormula().toString().equals("false");
 		assert !bspm.getHondaPredicate().getFormula().toString().equals("false");
 		assert !bspm.getRankEqAndSi().getFormula().toString().equals("false");
 		PredicateUnifier pu = new PredicateUnifier(mServices, m_SmtManager, bspm.getStemPrecondition(),
-				bspm.getHondaPredicate(), bspm.getRankEqAndSi(), bspm.getStemPostcondition(), falsePredicate);
+				bspm.getHondaPredicate(), bspm.getRankEqAndSi(), bspm.getStemPostcondition());
 		IPredicate[] stemInterpolants;
 		TraceChecker traceChecker;
 		if (BuchiCegarLoop.emptyStem(m_Counterexample)) {
@@ -243,7 +242,7 @@ public class RefineBuchi {
 							: stem.getSymbol(stem.length() - 1), loop.getSymbol(loop.length() - 1), m_Abstraction,
 					setting.isScroogeNondeterminismStem(), setting.isScroogeNondeterminismLoop(),
 					setting.isBouncerStem(), setting.isBouncerLoop(), m_StateFactoryInterpolAutom, pu, pu,
-					falsePredicate, mServices);
+					pu.getFalsePredicate(), mServices);
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");

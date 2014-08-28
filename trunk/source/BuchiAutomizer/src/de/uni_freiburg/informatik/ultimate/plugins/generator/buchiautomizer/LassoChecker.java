@@ -223,9 +223,9 @@ public class LassoChecker {
 		m_Bspm = bspm;
 		m_Counterexample = counterexample;
 		m_LassoCheckerIdentifier = lassoCheckerIdentifier;
-		m_TruePredicate = m_SmtManager.newTruePredicate();
-		m_FalsePredicate = m_SmtManager.newFalsePredicate();
-		m_PredicateUnifier = new PredicateUnifier(mServices, m_SmtManager, m_TruePredicate, m_FalsePredicate);
+		m_PredicateUnifier = new PredicateUnifier(mServices, m_SmtManager);
+		m_TruePredicate = m_PredicateUnifier.getTruePredicate();
+		m_FalsePredicate = m_PredicateUnifier.getFalsePredicate();
 		m_Axioms = axioms;
 		checkFeasibility();
 		assert m_ContinueDirective != null;

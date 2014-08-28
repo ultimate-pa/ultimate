@@ -153,9 +153,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	@Override
 	protected LBool isCounterexampleFeasible() {
-		IPredicate truePredicate = m_SmtManager.newTruePredicate();
-		IPredicate falsePredicate = m_SmtManager.newFalsePredicate();
-		PredicateUnifier predicateUnifier = new PredicateUnifier(mServices, m_SmtManager, truePredicate, falsePredicate);
+		PredicateUnifier predicateUnifier = new PredicateUnifier(mServices, m_SmtManager);
+		IPredicate truePredicate = predicateUnifier.getTruePredicate();
+		IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
+
 		switch (m_Interpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:

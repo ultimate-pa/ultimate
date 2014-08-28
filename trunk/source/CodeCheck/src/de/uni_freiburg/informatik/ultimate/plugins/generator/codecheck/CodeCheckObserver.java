@@ -116,10 +116,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		RootAnnot rootAnnot = m_originalRoot.getRootAnnot();
 		m_smtManager = new SmtManager(rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices);
 
-		m_truePredicate = m_smtManager.newTruePredicate();
-		m_falsePredicate = m_smtManager.newFalsePredicate();
+		_predicateUnifier = new PredicateUnifier(mServices, m_smtManager);
+		
+		m_truePredicate = _predicateUnifier.getTruePredicate();
+		m_falsePredicate = _predicateUnifier.getFalsePredicate();
 
-		_predicateUnifier = new PredicateUnifier(mServices, m_smtManager, m_truePredicate, m_falsePredicate);
 		m_edgeChecker = new EdgeChecker(m_smtManager, rootAnnot.getModGlobVarManager());
 
 		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();

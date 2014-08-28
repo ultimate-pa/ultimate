@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Formatter.BigDecimalLayoutForm;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -33,7 +32,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
- * Data structure that stores for each term a unique predicate.
+ * Data structure that stores for each term a unique predicate. 
+ * Initially a predicate unifier constructs a "true" predicate and a "false" 
+ * predicate.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * 
@@ -46,16 +47,51 @@ public class PredicateUnifier {
 	private boolean m_BringTermsToPositiveNormalForm = true;
 	private final Logger mLogger;
 	private final IUltimateServiceProvider mServices;
+	
+	private final IPredicate m_TruePredicate;
+	private final IPredicate m_FalsePredicate;
 
 	public PredicateUnifier(IUltimateServiceProvider services, SmtManager smtManager, IPredicate... initialPredicates) {
 		m_SmtManager = smtManager;
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_Term2Predicates = new HashMap<Term, IPredicate>();
+		Term trueTerm = m_SmtManager.getScript().term("true");
+		IPredicate truePredicate = null;
+		Term falseTerm = m_SmtManager.getScript().term("false");
+		IPredicate falsePredicate = null;
+		for (IPredicate pred : initialPredicates) {
+			if (pred.getFormula().equals(trueTerm)) {
+				truePredicate = pred;
+			} else if (pred.getFormula().equals(falseTerm)) {
+				falsePredicate = pred;
+			}
+		}
+		if (truePredicate == null) {
+			m_TruePredicate = m_SmtManager.newTruePredicate();
+		} else {
+			m_TruePredicate = truePredicate;
+		}
+		if (falsePredicate == null) {
+			m_FalsePredicate = m_SmtManager.newFalsePredicate();
+		} else {
+			m_FalsePredicate = falsePredicate;
+		}
+		declarePredicate(m_TruePredicate);
+		declarePredicate(m_FalsePredicate);
 		for (IPredicate pred : initialPredicates) {
 			declarePredicate(pred);
 		}
 	}
+	
+	public IPredicate getTruePredicate() {
+		return m_TruePredicate;
+	}
+
+	public IPredicate getFalsePredicate() {
+		return m_FalsePredicate;
+	}
+
 
 	/**
 	 * Return true iff pred is the representative IPredicate for the Term
