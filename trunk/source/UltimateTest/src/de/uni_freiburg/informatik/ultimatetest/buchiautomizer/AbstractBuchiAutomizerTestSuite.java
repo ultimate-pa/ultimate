@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimatetest.buchiautomizer;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.TimingBenchmark;
 import de.uni_freiburg.informatik.ultimatetest.AbstractModelCheckerTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
@@ -23,7 +23,7 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 		return new ITestSummary[] {
 				new TestSummaryWithBenchmarkResults(this.getClass()),
 				new TraceAbstractionTestSummary(this.getClass()),
-				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class)
+				new CsvConcatenator(this.getClass(), TimingBenchmark.class)
 		};
 	}
 

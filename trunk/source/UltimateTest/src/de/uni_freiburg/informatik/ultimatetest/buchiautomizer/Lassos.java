@@ -14,7 +14,8 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class Lassos extends
 		AbstractBuchiAutomizerTestSuite {
 	private static final String[] m_Directories = {
-		"examples/lassos",
+//		"examples/lassos",
+		"examples/termination/TermCompOfficialBenchmarkSet/ultimate"
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
 //		"examples/programs/toy"
@@ -36,6 +37,12 @@ public class Lassos extends
 		    m_Directories,
 		    new String[] {".bpl"},
 		    m_Timeout);
+		addTestCases(
+				"BuchiAutomizerCWithBlockEncoding.xml",
+				"buchiAutomizerTestSuite/staged300-SMTInterpol.epf",
+			    m_Directories,
+			    new String[] {".c"},
+			    m_Timeout);
 		return super.createTestCases();
 	}
 }
