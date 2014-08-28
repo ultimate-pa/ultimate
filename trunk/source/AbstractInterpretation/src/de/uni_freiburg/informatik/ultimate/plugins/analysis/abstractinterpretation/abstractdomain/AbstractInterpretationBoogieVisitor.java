@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
@@ -68,7 +69,7 @@ public class AbstractInterpretationBoogieVisitor {
 	private final IAbstractDomainFactory<?> m_bitVectorFactory;
 	private final IAbstractDomainFactory<?> m_stringFactory;
 	
-	private final IAbstractValue<?> m_boolFalse;
+	private final IAbstractValue<?> m_boolFalse, m_boolTrue;
 
 	/**
 	 * The identifier for an LHS expression
@@ -125,6 +126,7 @@ public class AbstractInterpretationBoogieVisitor {
 		m_stringFactory = stringFactory;
 		
 		m_boolFalse = m_boolFactory.makeBoolValue(false); // used for assume evaluation
+		m_boolTrue = m_boolFactory.makeBoolValue(true); // used for ifthenelseexpression evaluation
 	}
 	
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -393,6 +395,8 @@ public class AbstractInterpretationBoogieVisitor {
 			visit((UnaryExpression) expr);
 		} else if (expr instanceof FunctionApplication) {
 			visit((FunctionApplication) expr);
+		} else if (expr instanceof IfThenElseExpression) {
+			visit((IfThenElseExpression) expr);
 		} else {
 			writeError(String.format("Unsupported expression %s", expr.getClass()));
 		}
@@ -403,7 +407,7 @@ public class AbstractInterpretationBoogieVisitor {
 		m_resultValue = backup; // restore result value
 		return returnValue;
 	}
-
+	
 	/**
 	 * Evaluate the expression as if it was !(expr)
 	 * @param expr
@@ -697,6 +701,47 @@ public class AbstractInterpretationBoogieVisitor {
 		}
 	}
 
+	protected void visit(IfThenElseExpression expr) {
+		/*
+		 * Check if the condition can be true and/or false.
+		 * Only true: Get value of then branch
+		 * Only false: Get value of else branch
+		 * Both: Get values of both branches, merge
+		 */
+		
+		Expression condition = expr.getCondition();
+		Expression thenBranch = expr.getThenPart();
+		Expression elseBranch = expr.getElsePart();
+
+		IAbstractValue<?> evalTrue = evaluateExpression(condition);
+		IAbstractValue<?> evalFalse = evaluateNegatedExpression(condition);
+
+		IAbstractValue<?> isTrue = booleanFromAbstractValue(evalTrue);
+		IAbstractValue<?> isFalse = booleanFromAbstractValue(evalFalse);
+		
+		IAbstractValue<?> trueResult = null;
+		if (isTrue.isEqual(m_boolTrue))
+			trueResult = evaluateExpression(thenBranch);
+
+		IAbstractValue<?> falseResult = null;
+		if (isFalse.isEqual(m_boolTrue))
+			falseResult = evaluateExpression(elseBranch);
+		
+		if (trueResult == null) {
+			m_resultValue = falseResult;
+			return;
+		}
+		
+		if (falseResult == null) {
+			m_resultValue = trueResult;
+			return;
+		}
+		
+		// merge both values
+		IMergeOperator<?> mergeOp = mergeOperatorForDomainOfValue(trueResult);
+		m_resultValue = mergeOp.apply(trueResult, falseResult);
+	}
+
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	 * MISC
 	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -770,18 +815,7 @@ public class AbstractInterpretationBoogieVisitor {
 		if (oldValue == null) {
 			arrayData.setValue(value);
 		} else if (!oldValue.isSuper(value)) {
-			IMergeOperator<?> mop = null;
-			if (m_boolFactory.valueBelongsToDomainSystem(oldValue)) {
-				mop = m_boolFactory.getMergeOperator();
-			} else if (m_bitVectorFactory.valueBelongsToDomainSystem(oldValue)) {
-				mop = m_bitVectorFactory.getMergeOperator();
-			} else if (m_stringFactory.valueBelongsToDomainSystem(oldValue)) {
-				mop = m_stringFactory.getMergeOperator();
-			} else if (m_intFactory.valueBelongsToDomainSystem(oldValue)) {
-				mop = m_intFactory.getMergeOperator();
-			} else if (m_realFactory.valueBelongsToDomainSystem(oldValue)) {
-				mop = m_realFactory.getMergeOperator();
-			}
+			IMergeOperator<?> mop = mergeOperatorForDomainOfValue(oldValue);
 			if (mop != null) {
 				IAbstractValue<?> newValue = mop.apply(oldValue, value);
 				arrayData.setValue(newValue);
@@ -791,6 +825,29 @@ public class AbstractInterpretationBoogieVisitor {
 		}
 	}
 
+	/**
+	 * @param value
+	 * @return A merge operator which is compatible with the given value,
+	 * 		as in, of the same abstract domain system
+	 */
+	private IMergeOperator<?> mergeOperatorForDomainOfValue(IAbstractValue<?> value) {
+		if (m_boolFactory.valueBelongsToDomainSystem(value))
+			return m_boolFactory.getMergeOperator();
+
+		if (m_bitVectorFactory.valueBelongsToDomainSystem(value))
+			return m_bitVectorFactory.getMergeOperator();
+
+		if (m_stringFactory.valueBelongsToDomainSystem(value))
+			return m_stringFactory.getMergeOperator();
+
+		if (m_intFactory.valueBelongsToDomainSystem(value))
+			return m_intFactory.getMergeOperator();
+
+		if (m_realFactory.valueBelongsToDomainSystem(value))
+			return m_realFactory.getMergeOperator();
+
+		return null;
+	}
 	/**
 	 * Stores the value of the given identifier in m_resultValue, with havoc if necessary
 	 * @param identifier

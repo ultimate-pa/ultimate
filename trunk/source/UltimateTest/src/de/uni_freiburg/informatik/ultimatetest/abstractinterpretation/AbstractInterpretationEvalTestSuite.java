@@ -20,12 +20,12 @@ public class AbstractInterpretationEvalTestSuite extends
 		/* ULTIMATE repo */
 		//"examples/programs/toy/",
 		"examples/programs/regression/bpl/",
-		//"examples/programs/regression/c/",
-		//"examples/programs/recursivePrograms",
+		"examples/programs/regression/c/",
+		"examples/programs/recursivePrograms",
 		/* SV-COMP repo */
-		//"examples/svcomp/loops/",
-		//"examples/svcomp/eca/",
-		//"examples/svcomp/systemc/",
+		"examples/svcomp/loops/",
+		"examples/svcomp/eca/",
+		"examples/svcomp/systemc/",
 	};
 	
 	
