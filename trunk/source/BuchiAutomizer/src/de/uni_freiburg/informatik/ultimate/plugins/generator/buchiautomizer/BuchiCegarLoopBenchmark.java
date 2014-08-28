@@ -219,15 +219,15 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
 			sb.append("nont " + m_LassoNonterminating);
-			sb.append(", unkn " + m_TerminationUnknown);
-			sb.append(", SFLI " + m_StemFeasibleLoopInfeasible);
-			sb.append(", SFLT " + m_StemFeasibleLoopTerminating);
-			sb.append(", conc " + m_ConcatenationInfeasible);
-			sb.append(", concLT " + m_ConcatInfeasibleLoopTerminating);
-			sb.append(", lasso " + m_LassoTerminating);
-			sb.append(", SILU " + m_StemInfeasibleLoopUnknown);
-			sb.append(", SILI " + m_StemInfeasibleLoopInfeasible);
-			sb.append(", SILT " + m_StemInfeasibleLoopTerminating);
+			sb.append(" unkn " + m_TerminationUnknown);
+			sb.append(" SFLI " + m_StemFeasibleLoopInfeasible);
+			sb.append(" SFLT " + m_StemFeasibleLoopTerminating);
+			sb.append(" conc " + m_ConcatenationInfeasible);
+			sb.append(" concLT " + m_ConcatInfeasibleLoopTerminating);
+			sb.append(" lasso " + m_LassoTerminating);
+			sb.append(" SILU " + m_StemInfeasibleLoopUnknown);
+			sb.append(" SILI " + m_StemInfeasibleLoopInfeasible);
+			sb.append(" SILT " + m_StemInfeasibleLoopTerminating);
 			sb.append(".");
 			return sb.toString();
 		}
