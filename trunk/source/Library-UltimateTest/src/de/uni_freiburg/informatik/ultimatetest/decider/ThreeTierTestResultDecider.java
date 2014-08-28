@@ -1,9 +1,14 @@
 package de.uni_freiburg.informatik.ultimatetest.decider;
 
+import java.util.LinkedList;
+
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.decider.expectedResult.IExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.IOverallResultEvaluator;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
  * Abstract class for deciding a test result in three steps:
@@ -27,12 +32,14 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 	 * the TestResult UNKNOWN is a failure for JUnit.
 	 */
 	private final boolean m_UnknownIsJUnitSuccess;
+	private final UltimateRunDefinition m_UltimateRunDefinition;
 	private final IExpectedResultFinder<OVERALL_RESULT> m_ExpectedResultEvaluation;
 	private IOverallResultEvaluator<OVERALL_RESULT> m_UltimateResultEvaluation;
 	private TestResultEvaluation<OVERALL_RESULT> m_TestResultEvaluation;
 	
 	public ThreeTierTestResultDecider(UltimateRunDefinition ultimateRunDefinition, boolean unknownIsJUnitSuccess) {
 		m_UnknownIsJUnitSuccess = unknownIsJUnitSuccess;
+		m_UltimateRunDefinition = ultimateRunDefinition;
 		m_ExpectedResultEvaluation = constructExpectedResultFinder();
 		m_ExpectedResultEvaluation.findExpectedResult(ultimateRunDefinition);
 	}
@@ -43,6 +50,8 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 		m_UltimateResultEvaluation.evaluateOverallResult(resultService);
 		m_TestResultEvaluation = constructTestResultEvaluation();
 		m_TestResultEvaluation.evaluateTestResult(m_ExpectedResultEvaluation, m_UltimateResultEvaluation);
+		Logger log = Logger.getLogger(getClass());
+		Util.logResults(log, m_UltimateRunDefinition.generateShortStringRepresentation(), true, new LinkedList<String>(), resultService);
 		return m_TestResultEvaluation.getTestResult();
 	}
 
@@ -51,6 +60,8 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 			Throwable e) {
 		m_TestResultEvaluation = constructTestResultEvaluation();
 		m_TestResultEvaluation.evaluateTestResult(m_ExpectedResultEvaluation, e);
+		Logger log = Logger.getLogger(getClass());
+		Util.logResults(log, m_UltimateRunDefinition.generateShortStringRepresentation(), true, new LinkedList<String>(), resultService);
 		return m_TestResultEvaluation.getTestResult();
 	}
 
