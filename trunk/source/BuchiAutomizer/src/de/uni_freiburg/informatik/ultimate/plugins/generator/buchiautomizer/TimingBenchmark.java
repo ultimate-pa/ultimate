@@ -1,13 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
-import java.util.ArrayList;
-
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
-public class TimingBenchmark implements ICsvProviderProvider<Double>{
+public class TimingBenchmark implements ICsvProviderProvider<Object>{
 	private BenchmarkData m_BenchmarkData;
 	
 	public TimingBenchmark(BuchiCegarLoopBenchmarkGenerator benchGen) {
@@ -21,8 +18,7 @@ public class TimingBenchmark implements ICsvProviderProvider<Double>{
 	}
 
 	@Override
-	public ICsvProvider<Double> createCvsProvider() {
-		ICsvProvider<Double> rtr = new SimpleCsvProvider<>(new ArrayList<String>());
-		return rtr;
+	public ICsvProvider<Object> createCvsProvider() {
+		return m_BenchmarkData.createCvsProvider();
 	}
 }

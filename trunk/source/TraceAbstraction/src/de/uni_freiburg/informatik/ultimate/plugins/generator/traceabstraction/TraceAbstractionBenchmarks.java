@@ -1,15 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> {
 
@@ -47,17 +41,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> 
 
 	@Override
 	public ICsvProvider<Object> createCvsProvider() {
-		LinkedHashMap<String, Object> flatKeyValueMap = m_CegarLoopBenchmarkData.getFlattenedKeyValueMap();
-		Collection<String> keys = flatKeyValueMap.keySet();
-		List<String> keysArray = new ArrayList<>(keys);
-		SimpleCsvProvider<Object> scp = new SimpleCsvProvider<Object>(keysArray);
-
-		List<Object> values = new ArrayList<>();
-		for (String key : keys) {
-			values.add(flatKeyValueMap.get(key));
-		}
-		scp.addRow(values);
-		return scp;
+		return m_CegarLoopBenchmarkData.createCvsProvider();
 	}
 
 }

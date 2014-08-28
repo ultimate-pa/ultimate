@@ -1,10 +1,15 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 /**
  * Default implementation for objects that store benchmark data.
@@ -114,5 +119,20 @@ public class BenchmarkData implements IBenchmarkDataProvider {
 			}
 		}
 		return result;
+	}
+	
+	
+	public ICsvProvider<Object> createCvsProvider() {
+		LinkedHashMap<String, Object> flatKeyValueMap = getFlattenedKeyValueMap();
+		
+		List<String> keys = new ArrayList<String>(flatKeyValueMap.keySet());
+		SimpleCsvProvider<Object> scp = new SimpleCsvProvider<Object>(keys);
+
+		List<Object> values = new ArrayList<Object>();
+		for (String key : keys) {
+			values.add(flatKeyValueMap.get(key));
+		}
+		scp.addRow(values);
+		return scp;
 	}
 }
