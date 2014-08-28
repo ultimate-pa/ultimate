@@ -103,15 +103,23 @@ public class BenchmarkData implements IBenchmarkDataProvider {
 		LinkedHashMap<String, Object> result = new LinkedHashMap<>();
 		for(String key : getKeys()) {
 			Object value = getValue(key);
-			if (value instanceof BenchmarkData) {
-				if (((BenchmarkData) value).isEmpty()) {
-					// do nothing
+			if (value instanceof IBenchmarkDataProvider) {
+				if (value instanceof BenchmarkData) {
+					if (((BenchmarkData) value).isEmpty()) {
+						// do nothing
+					} else {
+						LinkedHashMap<String, Object> FlattenedKeyValueMap = 
+								((BenchmarkData) value).getFlattenedKeyValueMap();
+						for (Entry<String, Object> entry : FlattenedKeyValueMap.entrySet()) {
+							String composedKey = key + "_" + entry.getKey();
+							result.put(composedKey, entry.getValue());
+						}
+					}
 				} else {
-					LinkedHashMap<String, Object> FlattenedKeyValueMap = 
-							((BenchmarkData) value).getFlattenedKeyValueMap();
-					for (Entry<String, Object> entry : FlattenedKeyValueMap.entrySet()) {
-						String composedKey = key + "_" + entry.getKey();
-						result.put(composedKey, entry.getValue());
+					for (String subKey : ((IBenchmarkDataProvider) value).getKeys()) {
+						Object subValue = ((IBenchmarkDataProvider) value).getValue(subKey);
+						String composedKey = key + "_" + subKey;
+						result.put(composedKey, subValue);
 					}
 				}
 			} else {

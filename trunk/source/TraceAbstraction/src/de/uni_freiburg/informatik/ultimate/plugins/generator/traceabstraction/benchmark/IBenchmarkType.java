@@ -19,6 +19,6 @@ public interface IBenchmarkType {
 	
 	Object aggregate(String key, Object value1, Object value2);
 
-	String prettyprintBenchmarkData(BenchmarkData benchmarkData);
+	String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData);
 
 }

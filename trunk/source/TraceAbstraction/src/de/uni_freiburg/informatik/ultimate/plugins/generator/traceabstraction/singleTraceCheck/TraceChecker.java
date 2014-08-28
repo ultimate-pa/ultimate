@@ -908,7 +908,7 @@ public class TraceChecker {
 		}
 
 		@Override
-		public String prettyprintBenchmarkData(BenchmarkData benchmarkData) {
+		public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
 			StringBuilder sb = new StringBuilder();
 			sb.append(s_SsaConstruction);
 			sb.append(": ");

@@ -868,7 +868,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 
 		@Override
-		public String prettyprintBenchmarkData(BenchmarkData benchmarkData) {
+		public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
 			StringBuilder sb = new StringBuilder();
 			sb.append(super.prettyprintBenchmarkData(benchmarkData));
 			sb.append("\t");

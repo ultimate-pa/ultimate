@@ -3,13 +3,20 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+
+import javax.swing.text.html.parser.Entity;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkType;
 
@@ -85,7 +92,7 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 	}
 
 	@Override
-	public String prettyprintBenchmarkData(BenchmarkData benchmarkData) {
+	public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
 		StringBuilder sb = new StringBuilder();
 		
 		sb.append("BüchiAutomizer plugin needed ");
@@ -170,81 +177,133 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		return sb.toString();
 	}
 	
-	public static class LassoAnalysisResults {
-		public int m_LassoNonterminating;
-		public int m_TerminationUnknown;
+	public static class LassoAnalysisResults implements IBenchmarkDataProvider, IBenchmarkType {
+		public static final String s_LassoNonterminating = "nont";
+		public static final String s_TerminationUnknown = "unkn";
 		/**
 		 * Cases where (already a single iteration of) the loop is infeasible.
 		 */
-		public int m_StemFeasibleLoopInfeasible;
+		public static final String s_StemFeasibleLoopInfeasible = "SFLI";
 		/**
 		 * Cases where the stem is feasible, (a single iteration of) the loop 
 		 * is feasible but the loop is terminating.
 		 */
-		public int m_StemFeasibleLoopTerminating;
+		public static final String s_StemFeasibleLoopTerminating = "SFLT";
 		/**
 		 * Cases where stem and loop are feasible but the concatenation of stem
 		 * and loop is infeasible.
 		 */
-		public int m_ConcatenationInfeasible;
+		public static final String s_ConcatenationInfeasible = "conc";
 		/**
 		 * Cases where stem and loop are feasible but the concatenation of stem
 		 * and loop is infeasible and the loop is terminating.
 		 */
-		public int m_ConcatInfeasibleLoopTerminating;
+		public static final String s_ConcatInfeasibleLoopTerminating = "concLT";
 		/**
 		 * Cases where the stem is infeasible and the loop is nonterminating.
 		 */
-		public int m_StemInfeasibleLoopNonterminating;
+		public static final String s_StemInfeasibleLoopNonterminating = "SILN";
 		/**
 		 * Cases where the stem is infeasible and the termination/feasibility
 		 * of the loop is unknown.
 		 */
-		public int m_StemInfeasibleLoopUnknown;
+		public static final String s_StemInfeasibleLoopUnknown = "SILU";
 		/**
 		 * Cases where the stem is infeasible and the loop is infeasible.
 		 */
-		public int m_StemInfeasibleLoopInfeasible;
+		public static final String s_StemInfeasibleLoopInfeasible = "SILI";
 		/**
 		 * Cases where both, stem and loop are infeasible.
 		 */
-		public int m_StemInfeasibleLoopTerminating;
+		public static final String s_StemInfeasibleLoopTerminating = "SILT";
 		/**
 		 * Cases where the stem and the loop are feasible, the loop itself is
 		 * nonterminating but the lasso is terminating.
 		 */
-		public int m_LassoTerminating;
+		public static final String s_LassoTerminating = "lasso";
+		
+		public final Map<String, Integer> m_Map;
+		
+		public LassoAnalysisResults() {
+			m_Map = new LinkedHashMap<String, Integer>();
+			m_Map.put(s_LassoNonterminating, 0);
+			m_Map.put(s_TerminationUnknown, 0);
+			m_Map.put(s_StemFeasibleLoopInfeasible, 0);
+			m_Map.put(s_StemFeasibleLoopTerminating, 0);
+			m_Map.put(s_ConcatenationInfeasible, 0);
+			m_Map.put(s_ConcatInfeasibleLoopTerminating, 0);
+			m_Map.put(s_StemInfeasibleLoopNonterminating, 0);
+			m_Map.put(s_StemInfeasibleLoopUnknown, 0);
+			m_Map.put(s_StemInfeasibleLoopInfeasible, 0);
+			m_Map.put(s_StemInfeasibleLoopTerminating, 0);
+			m_Map.put(s_LassoTerminating, 0);
+		}
+		
 		
 		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
-			sb.append("nont " + m_LassoNonterminating);
-			sb.append(" unkn " + m_TerminationUnknown);
-			sb.append(" SFLI " + m_StemFeasibleLoopInfeasible);
-			sb.append(" SFLT " + m_StemFeasibleLoopTerminating);
-			sb.append(" conc " + m_ConcatenationInfeasible);
-			sb.append(" concLT " + m_ConcatInfeasibleLoopTerminating);
-			sb.append(" lasso " + m_LassoTerminating);
-			sb.append(" SILU " + m_StemInfeasibleLoopUnknown);
-			sb.append(" SILI " + m_StemInfeasibleLoopInfeasible);
-			sb.append(" SILT " + m_StemInfeasibleLoopTerminating);
-			sb.append(".");
+			for (String key : getKeys()) {
+				sb.append(key);
+				sb.append(getValue(key));
+				sb.append(" ");
+			}
 			return sb.toString();
 		}
 		
-		public void aggregate(LassoAnalysisResults lassoAnalysisResults) {
-			m_LassoNonterminating = lassoAnalysisResults.m_LassoNonterminating;
-			m_TerminationUnknown = lassoAnalysisResults.m_TerminationUnknown;
-			m_StemFeasibleLoopInfeasible = lassoAnalysisResults.m_StemFeasibleLoopInfeasible;
-			m_StemFeasibleLoopTerminating = lassoAnalysisResults.m_StemFeasibleLoopTerminating;
-			m_ConcatenationInfeasible = lassoAnalysisResults.m_ConcatenationInfeasible;
-			m_ConcatInfeasibleLoopTerminating = lassoAnalysisResults.m_ConcatInfeasibleLoopTerminating;
-			m_StemInfeasibleLoopNonterminating = lassoAnalysisResults.m_StemInfeasibleLoopNonterminating;
-			m_StemInfeasibleLoopUnknown = lassoAnalysisResults.m_StemInfeasibleLoopUnknown;
-			m_StemInfeasibleLoopInfeasible = lassoAnalysisResults.m_StemInfeasibleLoopInfeasible;
-			m_StemInfeasibleLoopTerminating = lassoAnalysisResults.m_StemInfeasibleLoopTerminating;
-			m_LassoTerminating = lassoAnalysisResults.m_LassoTerminating;
+
+		public void increment(String key) {
+			int value = m_Map.get(key);
+			m_Map.put(key, value + 1);
 		}
+		
+//		public void aggregate(LassoAnalysisResults lassoAnalysisResults) {
+//			m_LassoNonterminating = lassoAnalysisResults.m_LassoNonterminating;
+//			m_TerminationUnknown = lassoAnalysisResults.m_TerminationUnknown;
+//			m_StemFeasibleLoopInfeasible = lassoAnalysisResults.m_StemFeasibleLoopInfeasible;
+//			m_StemFeasibleLoopTerminating = lassoAnalysisResults.m_StemFeasibleLoopTerminating;
+//			m_ConcatenationInfeasible = lassoAnalysisResults.m_ConcatenationInfeasible;
+//			m_ConcatInfeasibleLoopTerminating = lassoAnalysisResults.m_ConcatInfeasibleLoopTerminating;
+//			m_StemInfeasibleLoopNonterminating = lassoAnalysisResults.m_StemInfeasibleLoopNonterminating;
+//			m_StemInfeasibleLoopUnknown = lassoAnalysisResults.m_StemInfeasibleLoopUnknown;
+//			m_StemInfeasibleLoopInfeasible = lassoAnalysisResults.m_StemInfeasibleLoopInfeasible;
+//			m_StemInfeasibleLoopTerminating = lassoAnalysisResults.m_StemInfeasibleLoopTerminating;
+//			m_LassoTerminating = lassoAnalysisResults.m_LassoTerminating;
+//		}
+
+		@Override
+		public Collection<String> getKeys() {
+			return m_Map.keySet();
+		}
+
+		@Override
+		public Object getValue(String key) {
+			return m_Map.get(key);
+		}
+
+		@Override
+		public IBenchmarkType getBenchmarkType() {
+			return this;
+		}
+
+		@Override
+		public Object aggregate(String key, Object value1, Object value2) {
+			throw new AssertionError("not yet implemented");
+		}
+
+		@Override
+		public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
+			LassoAnalysisResults lar = (LassoAnalysisResults) benchmarkData;
+			StringBuilder sb = new StringBuilder();
+			for (String key : lar.getKeys()) {
+				sb.append(key);
+				sb.append(lar.getValue(key));
+				sb.append(" ");
+			}
+			return sb.toString();
+		}
+
+
 	}
 
 }

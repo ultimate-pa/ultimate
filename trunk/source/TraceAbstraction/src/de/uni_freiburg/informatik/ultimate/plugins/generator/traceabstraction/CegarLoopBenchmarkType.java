@@ -9,6 +9,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 
 public class CegarLoopBenchmarkType implements IBenchmarkType {
@@ -110,7 +111,7 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 	}
 
 	@Override
-	public String prettyprintBenchmarkData(BenchmarkData benchmarkData) {
+	public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
 		StringBuilder sb = new StringBuilder();
 		
 		sb.append("Automizer needed ");

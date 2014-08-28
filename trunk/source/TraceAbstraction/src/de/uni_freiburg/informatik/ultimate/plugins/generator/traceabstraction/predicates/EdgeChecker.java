@@ -1191,7 +1191,7 @@ public class EdgeChecker {
 		}
 
 		@Override
-		public String prettyprintBenchmarkData(BenchmarkData benchmarkData) {
+		public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
 			StringBuilder sb = new StringBuilder();
 			sb.append("EdgeChecker queries: ");
 			sb.append(benchmarkData.getValue(s_SdCounter) + " trivial, ");

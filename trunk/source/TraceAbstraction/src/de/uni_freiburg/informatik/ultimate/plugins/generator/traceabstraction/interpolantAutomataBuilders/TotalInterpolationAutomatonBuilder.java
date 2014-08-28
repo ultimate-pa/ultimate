@@ -556,7 +556,7 @@ public class TotalInterpolationAutomatonBuilder {
 		}
 
 		@Override
-		public String prettyprintBenchmarkData(BenchmarkData benchmarkData) {
+		public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
 			StringBuilder sb = new StringBuilder();
 
 			for (String id : new String[] { s_AdditionalInterpolants, s_PathLenght1, s_RunSearches, s_UsefullRunGeq2,

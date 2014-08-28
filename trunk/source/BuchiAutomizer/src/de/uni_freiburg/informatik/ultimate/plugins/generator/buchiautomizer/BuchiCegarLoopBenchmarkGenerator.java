@@ -75,36 +75,36 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 
 		case REFINE_BOTH:
 			if (lassoChecker.isStemInfeasible()) {
-				m_LassoAnalysisResults.m_StemInfeasibleLoopTerminating++;
+				m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopTerminating);
 			} else {
 				assert lassoChecker.isConcatInfeasible();
 				assert (lassoChecker.getLoopTermination() == SynthesisResult.TERMINATING);
-				m_LassoAnalysisResults.m_ConcatInfeasibleLoopTerminating++;
+				m_LassoAnalysisResults.increment(LassoAnalysisResults.s_ConcatInfeasibleLoopTerminating);
 			}
 			break;
 		case REFINE_BUCHI:
 			assert !lassoChecker.isStemInfeasible();
 			if (lassoChecker.getLoopTermination() == SynthesisResult.TERMINATING) {
-				m_LassoAnalysisResults.m_StemFeasibleLoopTerminating++;
+				m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemFeasibleLoopTerminating);
 			} else {
 				assert lassoChecker.getLassoTermination() == SynthesisResult.TERMINATING;
-				m_LassoAnalysisResults.m_LassoTerminating++;
+				m_LassoAnalysisResults.increment(LassoAnalysisResults.s_LassoTerminating);
 			}
 			break;
 		case REFINE_FINITE:
 			if (lassoChecker.isStemInfeasible()) {
 				if (lassoChecker.isLoopInfeasible()) {
-					m_LassoAnalysisResults.m_StemInfeasibleLoopInfeasible++;
+					m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopInfeasible);
 				} else {
-					m_LassoAnalysisResults.m_StemInfeasibleLoopNonterminating++;
+					m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopNonterminating);
 					//TODO: Loop unknown??
 				}
 			} else {
 				if (lassoChecker.isLoopInfeasible()) {
-					m_LassoAnalysisResults.m_StemFeasibleLoopInfeasible++;
+					m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemFeasibleLoopInfeasible);
 				} else {
 					assert lassoChecker.isConcatInfeasible();
-					m_LassoAnalysisResults.m_ConcatenationInfeasible++;
+					m_LassoAnalysisResults.increment(LassoAnalysisResults.s_ConcatenationInfeasible);
 				}
 			}
 			break;
@@ -114,7 +114,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 			assert !lassoChecker.isConcatInfeasible();
 			assert lassoChecker.getNonTerminationArgument() != null;
 			assert !lassoChecker.getBinaryStatePredicateManager().providesPredicates();
-			m_LassoAnalysisResults.m_LassoNonterminating++;
+			m_LassoAnalysisResults.increment(LassoAnalysisResults.s_LassoNonterminating);
 			break;
 		case REPORT_UNKNOWN:
 			assert !lassoChecker.isStemInfeasible();
@@ -122,7 +122,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 			assert !lassoChecker.isConcatInfeasible();
 			assert lassoChecker.getNonTerminationArgument() == null;
 			assert !lassoChecker.getBinaryStatePredicateManager().providesPredicates();
-			m_LassoAnalysisResults.m_TerminationUnknown++;
+			m_LassoAnalysisResults.increment(LassoAnalysisResults.s_TerminationUnknown);
 			break;
 		default:
 			throw new AssertionError("unknown case");
