@@ -13,7 +13,6 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	private static final String m_PathToSettings = "examples/settings/";
 	private static final String m_PathToToolchains = "examples/toolchains/";
 	
-
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		return m_testCases;
@@ -24,7 +23,7 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	protected void addTestCases(File toolchainFile, File settingsFile, Collection<File> inputFiles, long deadline) {
 		for (File inputFile : inputFiles) {
 			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
-			UltimateStarter starter = new UltimateStarter(urd, deadline, null, null);
+			UltimateStarter starter = new UltimateStarter(urd, deadline);
 			m_testCases.add(new UltimateTestCase(starter,
 					constructITestResultDecider(urd), 
 					super.getSummaries(), 

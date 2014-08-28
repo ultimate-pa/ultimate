@@ -118,11 +118,12 @@ public final class LoggingService implements IStorable, ILoggingService {
 	}
 
 	private void initializeAppenders() {
-
+		//Its somewhat double, but why not...
 		try {
 			if (mConsoleAppender != null) {
 				Logger.getRootLogger().removeAppender(mConsoleAppender);
 			}
+			Logger.getRootLogger().removeAppender("ConsoleAppender");
 
 			// defining format of logging output
 			PatternLayout layout = new PatternLayout(
@@ -130,6 +131,7 @@ public final class LoggingService implements IStorable, ILoggingService {
 
 			// attaching output to console (stout)
 			mConsoleAppender = new ConsoleAppender(layout);
+			mConsoleAppender.setName("ConsoleAppender");
 			Logger.getRootLogger().addAppender(mConsoleAppender);
 
 		} catch (Exception ex) {
