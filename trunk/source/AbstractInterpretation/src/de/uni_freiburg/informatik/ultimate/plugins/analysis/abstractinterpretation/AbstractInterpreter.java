@@ -644,7 +644,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				null);
 		
 		UnprovableResult<RcfgElement, RcfgElement, Expression> result =
-				new UnprovableResult<RcfgElement, RcfgElement, Expression>(Activator.s_PLUGIN_ID,
+				new UnprovableResult<RcfgElement, RcfgElement, Expression>(Activator.s_PLUGIN_NAME,
 						location,
 						m_services.getBacktranslationService().getTranslatorSequence(),
 						programExecution);
@@ -664,7 +664,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	
 	private void reportUnsupportedSyntaxResult(IElement location, String message) {
 		UnsupportedSyntaxResult<IElement> result =
-				new UnsupportedSyntaxResult<IElement>(location, Activator.s_PLUGIN_ID,
+				new UnsupportedSyntaxResult<IElement>(location, Activator.s_PLUGIN_NAME,
 						m_services.getBacktranslationService().getTranslatorSequence(), message);
 
 		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
@@ -677,7 +677,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	 */
 	private void reportSafeResult() {
 		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID,
-				new AllSpecificationsHoldResult(Activator.s_PLUGIN_ID, "No error locations were reached."));
+				new AllSpecificationsHoldResult(Activator.s_PLUGIN_NAME, "No error locations were reached."));
 	}
 
 	/**
@@ -685,7 +685,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	 */
 	private void reportTimeoutResult() {
 		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID,
-				new TimeoutResult(Activator.s_PLUGIN_ID, "Analysis aborted."));
+				new TimeoutResult(Activator.s_PLUGIN_NAME, "Analysis aborted."));
 	}
 
 	/**

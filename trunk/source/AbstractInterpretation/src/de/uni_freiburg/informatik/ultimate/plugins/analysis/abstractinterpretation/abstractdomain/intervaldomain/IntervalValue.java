@@ -9,7 +9,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain.SignValue;
 
 /**
  * @author Christopher Dillo
@@ -359,8 +358,8 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		
 		// check for division by zero
 		if ((l2.signum() <= 0) && (u2.signum() >= 0)) {
-			m_logger.warn(String.format("Potential division by zero: %s / %s", m_value.toString(), interval.toString()));
-			return m_factory.makeBottomValue();
+			m_logger.warn(String.format("Potential division by zero: %s / %s, returning TOP", m_value.toString(), interval.toString()));
+			return m_factory.makeTopValue();
 		}
 
 		// flags for sign checks
@@ -467,6 +466,11 @@ public class IntervalValue implements IAbstractValue<Interval> {
 			Rational a = m_value.getLowerBound();
 			Rational x = interval.getLowerBound();
 			
+			if (x.compareTo(Rational.ZERO) == 0) {
+				m_logger.error(String.format("Modulo division by zero: %s %% %s", m_value.toString(), interval.toString()));
+				return m_factory.makeBottomValue();
+			}
+			
 			BigInteger aInt = a.numerator().divide(a.denominator());
 			
 			BigInteger xInt = x.numerator().divide(x.denominator());
@@ -485,8 +489,9 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		
 		// check for division by zero
 		if ((l2.signum() <= 0) && (u2.signum() >= 0)) {
-			m_logger.warn(String.format("Potential modulo division by zero: %s %% %s", m_value.toString(), interval.toString()));
-			return m_factory.makeBottomValue();
+			m_logger.warn(String.format("Potential modulo division by zero: %s %% %s, returning [0, infty)",
+					m_value.toString(), interval.toString()));
+			return m_factory.makeValue(new Interval(Rational.ZERO, Rational.POSITIVE_INFINITY));
 		}
 
 		Rational max1 = l1.compareTo(u1) > 0 ? l1 : u1;

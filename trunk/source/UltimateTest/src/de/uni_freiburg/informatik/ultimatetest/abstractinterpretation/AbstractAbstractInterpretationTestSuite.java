@@ -29,6 +29,7 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 		return new ITestSummary[] {
 				new AbstractInterpretationTestSummary(this.getClass()),
 				new AbstractInterpretationLaTeXTestSummary(this.getClass()),
+				new AbstractInterpretationComparisonTestSummary(this.getClass())
 		};
 	}
 

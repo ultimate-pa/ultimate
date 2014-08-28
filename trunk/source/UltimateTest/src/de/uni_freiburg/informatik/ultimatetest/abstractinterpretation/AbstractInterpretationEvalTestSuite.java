@@ -14,11 +14,13 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 public class AbstractInterpretationEvalTestSuite extends
 		AbstractAbstractInterpretationTestSuite {
 	
+	private boolean m_compareToAutomizer = true;
+	
 	private static final String[] m_directories = {
 		/* ULTIMATE repo */
 		//"examples/programs/toy/",
 		"examples/programs/regression/bpl/",
-		"examples/programs/regression/c/",
+		//"examples/programs/regression/c/",
 		//"examples/programs/recursivePrograms",
 		/* SV-COMP repo */
 		//"examples/svcomp/loops/",
@@ -32,6 +34,7 @@ public class AbstractInterpretationEvalTestSuite extends
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
+		// Abstract Interpretation
 		addTestCases(
 				"AbstractInterpretation.xml",
 				"AbstractInterpretation.epf",
@@ -48,7 +51,26 @@ public class AbstractInterpretationEvalTestSuite extends
 			    "AI .c",
 			    "absintc",
 			    m_Timeout);
-		return Util.firstN(super.createTestCases(), 5);
-		//return super.createTestCases();
+		// Automizer
+		if (m_compareToAutomizer) {
+			addTestCases(
+					"AutomizerBpl.xml",
+					"AbstractInterpretation.epf",
+					m_directories,
+				    new String[] {".bpl"},
+				    "AI .bpl",
+				    "automizerbpl",
+				    m_Timeout);
+			addTestCases(
+					"AutomizerC.xml",
+					"AbstractInterpretation.epf",
+					m_directories,
+				    new String[] {".c"},
+				    "AI .c",
+				    "automizerc",
+				    m_Timeout);
+		}
+		//return Util.firstN(super.createTestCases(), 20);
+		return super.createTestCases();
 	}
 }
