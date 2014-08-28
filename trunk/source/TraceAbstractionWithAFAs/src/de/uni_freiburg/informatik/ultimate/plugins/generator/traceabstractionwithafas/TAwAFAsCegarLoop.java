@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.ReachingDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.TraceCodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -45,7 +46,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 		Word<CodeBlock> trace = m_TraceChecker.getTrace();
 
-		List<DataflowDAG<CodeBlock>> dags = null;
+		List<DataflowDAG<TraceCodeBlock>> dags = null;
 		try {
 			dags = ReachingDefinitions.computeRDForTrace(trace.asList(), mLogger,
 					mSymbolTable);

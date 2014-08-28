@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVarBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.TraceCodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
@@ -38,10 +39,10 @@ public class ReachDefTrace {
 		mSymbolTable = symboltable;
 	}
 
-	public List<DataflowDAG<CodeBlock>> process(List<CodeBlock> trace) throws Throwable {
+	public List<DataflowDAG<TraceCodeBlock>> process(List<CodeBlock> trace) throws Throwable {
 		annotateReachingDefinitions(trace);
 		List<BlockAndAssumes> assumes = findAssumes(trace);
-		List<DataflowDAG<CodeBlock>> rtr = buildDAG(trace, assumes);
+		List<DataflowDAG<TraceCodeBlock>> rtr = buildDAG(trace, assumes);
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("#" + rtr.size() + " dataflow DAGs constructed");
@@ -52,8 +53,8 @@ public class ReachDefTrace {
 
 	}
 
-	private List<DataflowDAG<CodeBlock>> buildDAG(List<CodeBlock> trace, List<BlockAndAssumes> assumeContainers) {
-		List<DataflowDAG<CodeBlock>> rtr = new ArrayList<>();
+	private List<DataflowDAG<TraceCodeBlock>> buildDAG(List<CodeBlock> trace, List<BlockAndAssumes> assumeContainers) {
+		List<DataflowDAG<TraceCodeBlock>> rtr = new ArrayList<>();
 		for (BlockAndAssumes assumeContainer : assumeContainers) {
 			for (AssumeStatement stmt : assumeContainer.getAssumes()) {
 				rtr.add(buildDAG(trace, assumeContainer, stmt));
@@ -62,12 +63,13 @@ public class ReachDefTrace {
 		return rtr;
 	}
 
-	private DataflowDAG<CodeBlock> buildDAG(List<CodeBlock> trace, BlockAndAssumes assumeContainer,
+	private DataflowDAG<TraceCodeBlock> buildDAG(List<CodeBlock> trace, BlockAndAssumes assumeContainer,
 			AssumeStatement assume) {
-		LinkedList<DataflowDAG<CodeBlock>> store = new LinkedList<>();
+		LinkedList<DataflowDAG<TraceCodeBlock>> store = new LinkedList<>();
 
-		DataflowDAG<CodeBlock> current = new DataflowDAG<CodeBlock>(assumeContainer.getBlock());
-		DataflowDAG<CodeBlock> root = current;
+		DataflowDAG<TraceCodeBlock> current = new DataflowDAG<TraceCodeBlock>(new TraceCodeBlock(trace,
+				assumeContainer.getBlock(), assumeContainer.getIndex()));
+		DataflowDAG<TraceCodeBlock> root = current;
 		store.add(current);
 
 		while (!store.isEmpty()) {
@@ -75,9 +77,10 @@ public class ReachDefTrace {
 			Set<Entry<ScopedBoogieVar, HashSet<Statement>>> uses = getUse(current);
 			for (Entry<ScopedBoogieVar, HashSet<Statement>> use : uses) {
 				for (Statement stmt : use.getValue()) {
-					CodeBlock nextBlock = getBlockContainingStatement(trace, stmt);
+					TraceCodeBlock nextBlock = getBlockContainingStatement(trace, stmt);
 					assert nextBlock != null;
-					DataflowDAG<CodeBlock> next = new DataflowDAG<CodeBlock>(nextBlock);
+					assert nextBlock.getBlock() != null;
+					DataflowDAG<TraceCodeBlock> next = new DataflowDAG<TraceCodeBlock>(nextBlock);
 					current.connectOutgoing(next, use.getKey());
 					store.addFirst(next); // use last for BFS
 				}
@@ -86,7 +89,7 @@ public class ReachDefTrace {
 		return root;
 	}
 
-	private CodeBlock getBlockContainingStatement(List<CodeBlock> trace, final Statement stmt) {
+	private TraceCodeBlock getBlockContainingStatement(List<CodeBlock> trace, final Statement stmt) {
 		StatementFinder finder = new StatementFinder();
 		ISearchPredicate<Statement> predicate = new ISearchPredicate<Statement>() {
 			@Override
@@ -98,14 +101,14 @@ public class ReachDefTrace {
 			CodeBlock current = trace.get(i);
 			List<Statement> lil = finder.start(current, predicate);
 			if (!lil.isEmpty()) {
-				return current;
+				return new TraceCodeBlock(trace, current, i);
 			}
 		}
 		return null;
 	}
 
-	private Set<Entry<ScopedBoogieVar, HashSet<Statement>>> getUse(DataflowDAG<CodeBlock> current) {
-		ReachDefEdgeAnnotation annot = mEdgeProvider.getAnnotation(current.getNodeLabel());
+	private Set<Entry<ScopedBoogieVar, HashSet<Statement>>> getUse(DataflowDAG<TraceCodeBlock> current) {
+		ReachDefEdgeAnnotation annot = mEdgeProvider.getAnnotation(current.getNodeLabel().getBlock());
 		assert annot != null;
 		HashMap<ScopedBoogieVar, HashSet<Statement>> use = annot.getUse();
 		assert use != null;
@@ -150,12 +153,12 @@ public class ReachDefTrace {
 		return rtr;
 	}
 
-	private void printDebugForest(List<DataflowDAG<CodeBlock>> forest) {
+	private void printDebugForest(List<DataflowDAG<TraceCodeBlock>> forest) {
 		if (forest == null) {
 			return;
 		}
 
-		for (DataflowDAG<CodeBlock> dag : forest) {
+		for (DataflowDAG<TraceCodeBlock> dag : forest) {
 			dag.printGraphDebug(mLogger);
 		}
 	}

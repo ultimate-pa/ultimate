@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.AssumeFinder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAGGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.TraceCodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.rcfg.ReachDefRCFG;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.trace.ReachDefTrace;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -95,7 +95,7 @@ public class ReachingDefinitions implements IAnalysis {
 		return null;
 	}
 
-	public static List<DataflowDAG<CodeBlock>> computeRDForTrace(List<CodeBlock> trace, Logger logger,
+	public static List<DataflowDAG<TraceCodeBlock>> computeRDForTrace(List<CodeBlock> trace, Logger logger,
 			BoogieSymbolTable symbolTable) throws Throwable {
 		IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider = new ReachDefMapAnnotationProvider<>();
 		IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider = new ReachDefMapAnnotationProvider<>();

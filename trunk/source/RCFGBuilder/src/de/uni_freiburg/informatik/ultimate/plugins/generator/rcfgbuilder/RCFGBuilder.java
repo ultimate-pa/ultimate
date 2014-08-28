@@ -20,8 +20,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
  * 
  */
 public class RCFGBuilder implements IGenerator {
-
-	
 	
 	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
 	public static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
