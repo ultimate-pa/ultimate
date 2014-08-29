@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
@@ -132,15 +134,6 @@ public class BenchmarkData implements IBenchmarkDataProvider {
 	
 	public ICsvProvider<Object> createCvsProvider() {
 		LinkedHashMap<String, Object> flatKeyValueMap = getFlattenedKeyValueMap();
-		
-		List<String> keys = new ArrayList<String>(flatKeyValueMap.keySet());
-		SimpleCsvProvider<Object> scp = new SimpleCsvProvider<Object>(keys);
-
-		List<Object> values = new ArrayList<Object>();
-		for (String key : keys) {
-			values.add(flatKeyValueMap.get(key));
-		}
-		scp.addRow(values);
-		return scp;
+		return CsvUtils.constructCvsProviderFromMap(flatKeyValueMap);
 	}
 }

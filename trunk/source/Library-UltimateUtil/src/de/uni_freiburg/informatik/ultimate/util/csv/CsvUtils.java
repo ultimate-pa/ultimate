@@ -3,8 +3,10 @@ package de.uni_freiburg.informatik.ultimate.util.csv;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 
@@ -260,6 +262,22 @@ public class CsvUtils {
 			result.add(additionalNullValuePositions.get(i), null);
 		}
 		return result;
+	}
+	
+	/**
+	 * Given a map, return an ICsvProvider that has a single row. Its column
+	 * header are the keys of the map, the row entries are the values of the 
+	 * map.
+	 */
+	public static <T> ICsvProvider<T> constructCvsProviderFromMap(Map<String,T> map) {
+		List<String> keys = new ArrayList<String>(map.keySet());
+		SimpleCsvProvider<T> scp = new SimpleCsvProvider<T>(keys);
+		List<T> values = new ArrayList<T>();
+		for (String key : keys) {
+			values.add(map.get(key));
+		}
+		scp.addRow(values);
+		return scp;
 	}
 
 }
