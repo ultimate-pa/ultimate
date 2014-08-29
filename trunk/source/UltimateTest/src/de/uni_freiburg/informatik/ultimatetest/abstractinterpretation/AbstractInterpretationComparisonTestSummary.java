@@ -159,6 +159,15 @@ public class AbstractInterpretationComparisonTestSummary extends AbstractInterpr
 			String[] wermutResult = fileToWermutResult.get(fileName);
 			String[] automizerResult = fileToAutomizerResult.get(fileName);
 			
+			// if no matching Abstract Interpretation result should exist: empty table entries
+			if (wermutResult == null) {
+				wermutResult = new String[SIZE];
+				wermutResult[EXP] = "---";
+				wermutResult[ACT] = "---";
+				wermutResult[TIM] = "---";
+				wermutResult[MEM] = "---";
+			}
+			
 			// if no matching Automizer result should exist: empty table entries
 			if (automizerResult == null) {
 				automizerResult = new String[SIZE];
@@ -233,17 +242,17 @@ public class AbstractInterpretationComparisonTestSummary extends AbstractInterpr
 				sb.append("\t").append((a == s_actualResultTypes[0]) ? tool : "").append(" & ")
 					.append(actualResultTag(a));
 				if (statistics == null) {
-					sb.append(" & 0 & --- & --- & 0 & --- & --- & 0 & --- & ---");
+					sb.append(" & 0 & --- & --- & 0 & --- & --- & 0 & --- & --- \\\\");
 				} else {
 					printResultStatistics(sb, statistics);
 					cummulative.addStats(statistics, true, true);
 				}
-				sb.append(" \\\\").append(lineSeparator);
+				sb.append(lineSeparator);
 			}
 			// cummulative stats
-			sb.append("\t\\hline\\linestrut & $\\sum$");
+			sb.append("\t\\hline\\linestrut & $\\sum$ ");
 			printResultStatistics(sb, cummulative);
-			sb.append(" \\\\").append(lineSeparator)
+			sb.append(lineSeparator)
 				.append("\t\\dhline").append(lineSeparator);
 		}
 		
@@ -254,6 +263,7 @@ public class AbstractInterpretationComparisonTestSummary extends AbstractInterpr
 	
 	protected void printResultStatistics(StringBuilder target, ResultStatistics statistics) {
 		long timeSum = 0, timeCount = 0, memSum = 0, memCount = 0;
+		StringBuilder rawData = new StringBuilder();
 		for (ExpectedResultType e : s_expectedResultTypes) {
 			Long[] data = statistics.getData(e);
 			if (data == null) {
@@ -263,6 +273,9 @@ public class AbstractInterpretationComparisonTestSummary extends AbstractInterpr
 						data[ResultStatistics.MEMCOUNT],
 						calculateAverage(data[ResultStatistics.TIMESUM], data[ResultStatistics.TIMECOUNT]),
 						calculateAverage(data[ResultStatistics.MEMSUM], data[ResultStatistics.MEMCOUNT])));
+				rawData.append(String.format(" %s: %s / %s ms, %s / %s MiB %%", e,
+						data[ResultStatistics.TIMESUM], data[ResultStatistics.TIMECOUNT],
+						data[ResultStatistics.MEMSUM], data[ResultStatistics.MEMCOUNT]));
 				timeSum += data[ResultStatistics.TIMESUM];
 				timeCount += data[ResultStatistics.TIMECOUNT];
 				memSum += data[ResultStatistics.MEMSUM];
@@ -272,5 +285,7 @@ public class AbstractInterpretationComparisonTestSummary extends AbstractInterpr
 		// totals
 		target.append(String.format(" & %s & %s & %s",
 				memCount, calculateAverage(timeSum, timeCount), calculateAverage(memSum, memCount)));
+		rawData.append(String.format(" %s / %s ms, %s / %s MiB", timeSum, timeCount, memSum, memCount));
+		target.append(" \\\\ %% RAW:").append(rawData);
 	}
 }

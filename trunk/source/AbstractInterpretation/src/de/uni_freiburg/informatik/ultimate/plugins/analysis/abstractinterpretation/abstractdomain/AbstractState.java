@@ -137,7 +137,7 @@ public class AbstractState {
 	}
 	
 	/**
-	 * @return True iff this state contains all variables of the given state on the global and (matching!) current scope
+	 * @return True iff this state contains all variables of the given state on all scopes
 	 * and all variable values are greater or equal to their corresponding values
 	 */
 	public boolean isSuper(AbstractState state) {
@@ -145,14 +145,12 @@ public class AbstractState {
 		
 		if (state == null)
 			return false;
-		
-		// check current scope
-		if (!isSuper(getCurrentScope(), state.getCurrentScope()))
-			return false;
 
-		// check global scope if we didn't just check that one
-		if (getStackSize() > 1) {
-			if (!isSuper(getGlobalScope(), state.getGlobalScope()))
+		List<CallStackElement> thisCallStack = getCallStack();
+		List<CallStackElement> otherCallStack = state.getCallStack();
+		
+		for (int i = 0; i < thisCallStack.size(); i++) {
+			if (!isSuper(thisCallStack.get(i), otherCallStack.get(i)))
 				return false;
 		}
 		

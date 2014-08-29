@@ -221,11 +221,12 @@ public class AbstractInterpretationLaTeXTestSummary extends TestSummary {
 					memoryCount = currentStatsNumbers[ResultStatistics.MEMCOUNT];
 				}
 				int localCount = entry.getValue().getCount();
-				sb.append("\t\\hline & Count: ").append(localCount)
-					.append(" & Avg: & ")
-					.append(String.format("%s & ", calculateAverage(runtimeSum, runtimeCount)))
-					.append(String.format("%s", calculateAverage(memorySum, memoryCount)))
-					.append(" \\\\").append(lineSeparator)
+				sb.append("\t\\hline \\linestrut & Count: ").append(localCount)
+					.append(String.format(" & Avg: & %s & %s \\\\ %% RAW: %s / %s ms, %s / %s MiB",
+							calculateAverage(runtimeSum, runtimeCount),
+							calculateAverage(memorySum, memoryCount),
+							runtimeSum, runtimeCount,
+							memorySum, memoryCount)).append(lineSeparator)
 					.append("\t\\dhline").append(lineSeparator);
 				
 				resultCategoryCount = resultCategoryCount + localCount;
@@ -265,10 +266,10 @@ public class AbstractInterpretationLaTeXTestSummary extends TestSummary {
 			}
 			
 			sb.append("\t\\dhline \\linestrut").append(lineSeparator)
-				.append(String.format("\t Average runtime for %s & %s ms \\\\",
-					e, calculateAverage(runtimeSum, runtimeCount))).append(lineSeparator)
-				.append(String.format("\t Average peak memory usage for %s & %s MiB \\\\",
-					e, calculateAverage(memorySum, memoryCount))).append(lineSeparator);
+				.append(String.format("\t Average runtime for %s & %s~ms \\\\ %% RAW: %s / %s ms",
+					e, calculateAverage(runtimeSum, runtimeCount), runtimeSum, runtimeCount)).append(lineSeparator)
+				.append(String.format("\t Average peak memory usage for %s & %s~MiB \\\\ %% RAW: %s / %s MiB",
+					e, calculateAverage(memorySum, memoryCount), memorySum, memoryCount)).append(lineSeparator);
 		}
 		sb.append("\t\\dhline \\\\").append(lineSeparator).append("\\end{longtabu}").append(lineSeparator);	
 		
@@ -311,6 +312,8 @@ public class AbstractInterpretationLaTeXTestSummary extends TestSummary {
 	}
 
 	protected String actualResultTag(ActualResultType result) {
+		if (result == null) return "---";
+		
 		switch (result) {
 		case SAFE :
 			return "$\\checkmark$";
@@ -329,6 +332,8 @@ public class AbstractInterpretationLaTeXTestSummary extends TestSummary {
 	}
 	
 	protected String expectedResultTag(ExpectedResultType result) {
+		if (result == null) return "---";
+		
 		switch (result) {
 		case SAFE :
 			return "$\\checkmark$";
@@ -338,11 +343,13 @@ public class AbstractInterpretationLaTeXTestSummary extends TestSummary {
 		case NOANNOTATION :
 			return "?";
 		default :
-			return "--";
+			return "---";
 		}
 	}
 
 	protected ActualResultType actualResultFromTag(String resultTag) {
+		if (resultTag == null) return ActualResultType.STRANGE_RESULT;
+		
 		switch (resultTag) {
 		case "SAFE" :
 			return ActualResultType.SAFE;
@@ -368,6 +375,8 @@ public class AbstractInterpretationLaTeXTestSummary extends TestSummary {
 	}
 	
 	protected ExpectedResultType expectedResultFromTag(String resultTag) {
+		if (resultTag == null) return ExpectedResultType.NOANNOTATION;
+		
 		switch (resultTag) {
 		case "SAFE" :
 			return ExpectedResultType.SAFE;

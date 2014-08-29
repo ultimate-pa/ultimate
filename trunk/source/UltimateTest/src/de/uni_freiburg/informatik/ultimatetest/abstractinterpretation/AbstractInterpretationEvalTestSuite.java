@@ -19,13 +19,19 @@ public class AbstractInterpretationEvalTestSuite extends
 	private static final String[] m_directories = {
 		/* ULTIMATE repo */
 		//"examples/programs/toy/",
-		"examples/programs/regression/bpl/",
-		"examples/programs/regression/c/",
-		"examples/programs/recursivePrograms",
+		//"examples/programs/regression/bpl/",		// DONE
+		//"examples/programs/regression/c/",		// DONE
+		//"examples/programs/recursivePrograms",	// DONE
 		/* SV-COMP repo */
-		"examples/svcomp/loops/",
-		"examples/svcomp/eca/",
-		"examples/svcomp/systemc/",
+		//"examples/svcomp/loops/",					// DONE
+		//"examples/svcomp/eca/",					// SPLIT
+		//"examples/svcomp/eca1/",					// DONE
+		//"examples/svcomp/eca2/",					// 
+		//"examples/svcomp/eca3/",					// 
+		//"examples/svcomp/eca4/",					// 
+		//"examples/svcomp/eca5/",					// 
+		//"examples/svcomp/eca6/",					// 
+		"examples/svcomp/systemc/",				// 
 	};
 	
 	

@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.ITimeoutResult;
+import de.uni_freiburg.informatik.ultimate.result.NoResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
@@ -121,7 +122,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		if (expected == ExpectedResultType.NOANNOTATION) {
 			customMessages.add("Couldn't understand the specification of the file \"" + m_inputFile + "\".");
 		}
-		ActualResult scResult = getSafetyCheckerResult(m_results);
+		ActualResult scResult = getActualResult(m_results);
 		if (scResult == null) {
 			testoutcome = TestResult.FAIL;
 		} else {
@@ -215,9 +216,9 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	public static ExpectedResultType getExpectedResult(File inputFile) {
 		String line = Util.extractFirstLine(inputFile);
 		if (line != null) {
-			if (line.contains("#Safe")) {
+			if (line.contains("#Safe") || line.contains("iSafe")) {
 				return ExpectedResultType.SAFE;
-			} else if (line.contains("#Unsafe")) {
+			} else if (line.contains("#Unsafe") || line.contains("iUnsafe")) {
 				return ExpectedResultType.UNSAFE;
 			} else if (line.contains("#SyntaxError")) {
 				return ExpectedResultType.SYNTAXERROR;
@@ -249,7 +250,8 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	 */
 	protected void generateResultMessageAndCategory(ActualResult safetyCheckerResult) {
 		if (safetyCheckerResult == null) {
-			setResultCategory("NULL OH NO");
+			setResultMessage("NULL ## NULL ## NULL ## NULL ## NULL OH NO");
+			setResultCategory("NULL ## NULL ## NULL OH NO");
 			return;
 		}
 		if (safetyCheckerResult.getResultType() == ActualResultType.EXCEPTION_OR_ERROR) {
@@ -265,7 +267,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		IResult iResult = safetyCheckerResult.getIResult();
 		if (iResult != null) {
 			setResultMessage(getResultMessage() + "\t ShortDescription: " + iResult.getShortDescription());
-			setResultMessage(getResultMessage() + "\t LongDescription: " + iResult.getLongDescription());
+			//setResultMessage(getResultMessage() + "\t LongDescription: " + iResult.getLongDescription());
 		}
 		
 		// category: Plug-in, expected, actual
@@ -283,7 +285,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 				getResultMessage().replace("\n", "\n\t\t\t")));
 	}
 
-	private ActualResult getSafetyCheckerResult(Collection<IResult> results) {
+	private ActualResult getActualResult(Collection<IResult> results) {
 		final ActualResult returnValue;
 		Map<ActualResultType, ActualResult> resultSet = new HashMap<ActualResultType, ActualResult>();
 		for (IResult result : results) {
@@ -306,8 +308,10 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 			returnValue = resultSet.get(ActualResultType.UNKNOWN);
 		} else if (resultSet.containsKey(ActualResultType.TIMEOUT)) {
 			returnValue = resultSet.get(ActualResultType.TIMEOUT);
-		} else {
+		} else if (resultSet.containsKey(ActualResultType.NO_RESULT)) {
 			returnValue = resultSet.get(ActualResultType.NO_RESULT);
+		} else {
+			returnValue = resultSet.get(ActualResultType.STRANGE_RESULT);
 		}
 		assert returnValue != null : "no result!";
 		return returnValue;
@@ -330,6 +334,8 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 			return new ActualResult(ActualResultType.UNSUPPORTED_SYNTAX, result);
 		} else if (result instanceof ExceptionOrErrorResult) {
 			return new ActualResult(ActualResultType.EXCEPTION_OR_ERROR, result);
+		} else if (result instanceof NoResult) {
+			return new ActualResult(ActualResultType.NO_RESULT, result);
 		} else {
 			return new ActualResult(ActualResultType.STRANGE_RESULT, result);
 		}
