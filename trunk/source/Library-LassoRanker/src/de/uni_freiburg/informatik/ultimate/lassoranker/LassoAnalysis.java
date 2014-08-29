@@ -475,9 +475,9 @@ public class LassoAnalysis {
 			result.put("VariablesLoop", m_VariablesLoop);
 			result.put("DisjunctsStem", m_DisjunctsStem);
 			result.put("DisjunctsLoop", m_DisjunctsLoop);
+			result.put("SupportingInvariants", m_SupportingInvariants);
 			result.put("Template", m_Template);
 			result.put("Degree", m_Degree);
-			result.put("SupportingInvariants", m_SupportingInvariants);
 			result.put("MotzkinApplications", m_MotzkinApplications);
 			return Collections.unmodifiableMap(result);
 		}
