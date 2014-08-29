@@ -23,15 +23,14 @@ public class AbstractInterpretationEvalTestSuite extends
 		//"examples/programs/regression/c/",		// DONE
 		//"examples/programs/recursivePrograms",	// DONE
 		/* SV-COMP repo */
-		//"examples/svcomp/loops/",					// DONE
+		//"examples/svcomp/loops/",					// SPLIT
+		"examples/svcomp/loops1/",				// 
+		//"examples/svcomp/loops2/",				// 
 		//"examples/svcomp/eca/",					// SPLIT
-		//"examples/svcomp/eca1/",					// DONE
-		//"examples/svcomp/eca2/",					// 
-		//"examples/svcomp/eca3/",					// 
-		//"examples/svcomp/eca4/",					// 
-		//"examples/svcomp/eca5/",					// 
-		//"examples/svcomp/eca6/",					// 
-		"examples/svcomp/systemc/",				// 
+		//"examples/svcomp/ecaSelection/",			// 
+		//"examples/svcomp/systemc/",				// SPLIT
+		//"examples/svcomp/systemc1/",				// 
+		//"examples/svcomp/systemc2/",				// 
 	};
 	
 	
@@ -47,7 +46,7 @@ public class AbstractInterpretationEvalTestSuite extends
 				m_directories,
 			    new String[] {".bpl"},
 			    "AI .bpl",
-			    "absintbpl",
+			    "abstractinterpretationbpl",
 			    m_Timeout);
 		addTestCases(
 				"AbstractInterpretationC.xml",
@@ -55,7 +54,7 @@ public class AbstractInterpretationEvalTestSuite extends
 				m_directories,
 			    new String[] {".c"},
 			    "AI .c",
-			    "absintc",
+			    "abstractinterpretationc",
 			    m_Timeout);
 		// Automizer
 		if (m_compareToAutomizer) {

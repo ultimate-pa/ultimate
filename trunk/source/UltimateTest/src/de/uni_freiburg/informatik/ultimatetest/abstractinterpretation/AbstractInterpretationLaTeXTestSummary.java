@@ -109,7 +109,7 @@ public class AbstractInterpretationLaTeXTestSummary extends TestSummary {
 	
 	@Override
 	public String getSummaryTypeDescription() {
-		return "AbsIntSummary";
+		return "WermutTeXSummary";
 	}
 
 	/* (non-Javadoc)
@@ -154,7 +154,7 @@ public class AbstractInterpretationLaTeXTestSummary extends TestSummary {
 				ActualResultType actualResult = categoryBlurb.length > 2 ? actualResultFromTag(categoryBlurb[2]) : null;
 				
 				// this summary only checks for abstract interpretation stuff!
-				if (!tool.equals("AbstractInterpretation"))
+				if (!tool.startsWith("abstractinterpretation"))
 					break;
 
 				sb.append("\t\\multicolumn{5}{c}{\\linestrut\\textbf{")
@@ -348,7 +348,7 @@ public class AbstractInterpretationLaTeXTestSummary extends TestSummary {
 	}
 
 	protected ActualResultType actualResultFromTag(String resultTag) {
-		if (resultTag == null) return ActualResultType.STRANGE_RESULT;
+		if (resultTag == null) return ActualResultType.NO_RESULT;
 		
 		switch (resultTag) {
 		case "SAFE" :
@@ -367,8 +367,6 @@ public class AbstractInterpretationLaTeXTestSummary extends TestSummary {
 			return ActualResultType.EXCEPTION_OR_ERROR;
 		case "NO_RESULT" :
 			return ActualResultType.NO_RESULT;
-		case "STRANGE_RESULT" :
-			return ActualResultType.STRANGE_RESULT;
 		default :
 			return null;
 		}

@@ -45,7 +45,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	}
 	
 	protected enum ActualResultType {
-		SAFE, UNSAFE, UNKNOWN, SYNTAX_ERROR, TIMEOUT, UNSUPPORTED_SYNTAX, EXCEPTION_OR_ERROR, NO_RESULT, STRANGE_RESULT;
+		SAFE, UNSAFE, UNKNOWN, SYNTAX_ERROR, TIMEOUT, UNSUPPORTED_SYNTAX, EXCEPTION_OR_ERROR, NO_RESULT;
 	}
 	protected class ActualResult {
 		private final IResult m_IResult;
@@ -63,6 +63,9 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	}
 	
 	private String m_inputFile;
+	
+	private String m_toolIdentifier;
+	
 	private ExpectedResultType m_expectedResult;
 
 	private Collection<IResult> m_results;
@@ -72,9 +75,14 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	/** Runtime in ms **/
 	private String m_resultTime = "";
 	
-	public AbstractInterpretationTestResultDecider(File inputFile) {
+	/**
+	 * @param inputFile Well duh ;-)
+	 * @param toolIdentifier Used to identify which tool the result belongs to.
+	 */
+	public AbstractInterpretationTestResultDecider(File inputFile, String toolIdentifier) {
 		super();
 		m_inputFile = inputFile.getAbsolutePath();
+		m_toolIdentifier = toolIdentifier;
 		generateExpectedResult(inputFile);
 	}
 
@@ -177,9 +185,6 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 			case NO_RESULT:
 				testoutcome = TestResult.FAIL;
 				break;
-			case STRANGE_RESULT:
-				testoutcome = TestResult.UNKNOWN;
-				break;
 			default:
 				throw new AssertionError("unknown case");
 			}
@@ -192,16 +197,8 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 
 	@Override
 	public TestResult getTestResult(IResultService resultService, Throwable e) {
-		String plugIn = "";
-		for (List<IResult> results : resultService.getResults().values()) {
-			for (IResult result : results) {
-				plugIn = result.getPlugin();
-				break;
-			}
-			if (!plugIn.isEmpty()) break;
-		}
 		generateResultMessageAndCategory(new ActualResult(ActualResultType.EXCEPTION_OR_ERROR,
-				new ExceptionOrErrorResult(plugIn, e)));
+				new ExceptionOrErrorResult("Ultimate", e)));
 		Logger log = Logger.getLogger(AbstractInterpretationTestResultDecider.class);
 		Util.logResults(log, m_inputFile, true, new LinkedList<String>(), resultService);
 		return TestResult.FAIL;
@@ -267,12 +264,13 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		IResult iResult = safetyCheckerResult.getIResult();
 		if (iResult != null) {
 			setResultMessage(getResultMessage() + "\t ShortDescription: " + iResult.getShortDescription());
-			//setResultMessage(getResultMessage() + "\t LongDescription: " + iResult.getLongDescription());
+			setResultMessage(getResultMessage() + "\t LongDescription: "
+					+ iResult.getLongDescription().replace(System.getProperty("line.separator"), " ##NEWLINE## ").replace("\n", " ##NEWLINE## "));
 		}
 		
 		// category: Plug-in, expected, actual
 		setResultCategory(String.format("%s ## %s ## %s",
-				iResult == null ? "unknown" : iResult.getPlugin(),
+				m_toolIdentifier,
 				getExpectedResult(),
 				safetyCheckerResult.getResultType()));
 		
@@ -288,12 +286,20 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	private ActualResult getActualResult(Collection<IResult> results) {
 		final ActualResult returnValue;
 		Map<ActualResultType, ActualResult> resultSet = new HashMap<ActualResultType, ActualResult>();
+		BenchmarkResult<?> benchmark = null;
 		for (IResult result : results) {
+			if (result instanceof BenchmarkResult)
+				benchmark = (BenchmarkResult<?>) result;
 			ActualResult extracted = extractResult(result);
 			if (extracted != null) {
 				resultSet.put(extracted.getResultType(), extracted);
 			}
 		}
+		
+		// only benchmark result: assume timeout~
+		if ((benchmark != null) && results.size() == 1)
+			return new ActualResult(ActualResultType.TIMEOUT, benchmark);
+			
 		if (resultSet.containsKey(ActualResultType.EXCEPTION_OR_ERROR)) {
 			returnValue = resultSet.get(ActualResultType.EXCEPTION_OR_ERROR);
 		} else if (resultSet.containsKey(ActualResultType.SYNTAX_ERROR)) {
@@ -308,37 +314,41 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 			returnValue = resultSet.get(ActualResultType.UNKNOWN);
 		} else if (resultSet.containsKey(ActualResultType.TIMEOUT)) {
 			returnValue = resultSet.get(ActualResultType.TIMEOUT);
-		} else if (resultSet.containsKey(ActualResultType.NO_RESULT)) {
-			returnValue = resultSet.get(ActualResultType.NO_RESULT);
 		} else {
-			returnValue = resultSet.get(ActualResultType.STRANGE_RESULT);
+			returnValue = resultSet.get(ActualResultType.NO_RESULT);
 		}
-		assert returnValue != null : "no result!";
 		return returnValue;
 	}
 
 	private ActualResult extractResult(IResult result) {
-		if (result instanceof AllSpecificationsHoldResult) {
+		if (result instanceof AllSpecificationsHoldResult)
 			return new ActualResult(ActualResultType.SAFE, result);
-		} else if (result instanceof CounterExampleResult) {
+		
+		if (result instanceof CounterExampleResult)
 			return new ActualResult(ActualResultType.UNSAFE, result);
-		} else if (result instanceof UnprovableResult) {
+		
+		if (result instanceof UnprovableResult)
 			return new ActualResult(ActualResultType.UNKNOWN, result);
-		} else if (result instanceof TypeErrorResult) {
+		
+		if (result instanceof TypeErrorResult)
 			return new ActualResult(ActualResultType.SYNTAX_ERROR, result);
-		} else if (result instanceof SyntaxErrorResult) {
+		
+		if (result instanceof SyntaxErrorResult)
 			return new ActualResult(ActualResultType.SYNTAX_ERROR, result);
-		} else if (result instanceof ITimeoutResult) {
+		
+		if (result instanceof ITimeoutResult)
 			return new ActualResult(ActualResultType.TIMEOUT, result);
-		} else if (result instanceof UnsupportedSyntaxResult) {
+		
+		if (result instanceof UnsupportedSyntaxResult)
 			return new ActualResult(ActualResultType.UNSUPPORTED_SYNTAX, result);
-		} else if (result instanceof ExceptionOrErrorResult) {
+		
+		if (result instanceof ExceptionOrErrorResult)
 			return new ActualResult(ActualResultType.EXCEPTION_OR_ERROR, result);
-		} else if (result instanceof NoResult) {
+
+		if (result instanceof NoResult)
 			return new ActualResult(ActualResultType.NO_RESULT, result);
-		} else {
-			return new ActualResult(ActualResultType.STRANGE_RESULT, result);
-		}
+
+		return null;
 	}
 
 

@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ReturnStatement;
@@ -131,7 +132,7 @@ public class LiteralCollector extends RCFGEdgeVisitor {
 		} else if (statement instanceof AssumeStatement) {
 			visit((AssumeStatement) statement);
 		} else {
-			throw new UnsupportedOperationException(String.format("Unsupported statement type %s", statement.getClass()));
+			m_logger.error(String.format("Unsupported statement type %s", statement.getClass()));
 		}
 	}
 
@@ -189,8 +190,10 @@ public class LiteralCollector extends RCFGEdgeVisitor {
 			visit((UnaryExpression) expr);
 		} else if (expr instanceof FunctionApplication) {
 			visit((FunctionApplication) expr);
+		} else if (expr instanceof IfThenElseExpression) {
+			visit((IfThenElseExpression) expr);
 		} else {
-			throw new UnsupportedOperationException(String.format("Extend this with new type %s", expr.getClass()));
+			m_logger.error(String.format("Extend this with new type %s", expr.getClass()));
 		}
 	}
 
@@ -250,6 +253,12 @@ public class LiteralCollector extends RCFGEdgeVisitor {
 	protected void visit(ArrayAccessExpression expr) {
 		for (Expression e : expr.getIndices())
 			visit(e);
+	}
+	
+	private void visit(IfThenElseExpression expr) {
+		visit(expr.getCondition());
+		visit(expr.getThenPart());
+		visit(expr.getElsePart());
 	}
 
 	protected void visit(FunctionApplication expr) {

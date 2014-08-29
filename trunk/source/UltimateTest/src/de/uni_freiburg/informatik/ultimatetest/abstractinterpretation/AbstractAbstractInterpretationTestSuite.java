@@ -48,7 +48,7 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
 			UltimateStarter starter = new UltimateStarter(urd, deadline, null, null);
 			m_testCases.add(new UltimateTestCase(starter,
-						new AbstractInterpretationTestResultDecider(inputFile),
+						new AbstractInterpretationTestResultDecider(inputFile, uniqueString),
 						super.getSummaries(),
 					uniqueString + "_" + inputFile.getAbsolutePath(), urd));
 		}

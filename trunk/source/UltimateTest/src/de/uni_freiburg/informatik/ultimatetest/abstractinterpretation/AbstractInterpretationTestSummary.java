@@ -23,7 +23,7 @@ public class AbstractInterpretationTestSummary extends TestSummary {
 	
 	@Override
 	public String getSummaryTypeDescription() {
-		return "AbsIntSummary";
+		return "WermutSummary";
 	}
 
 	/* (non-Javadoc)

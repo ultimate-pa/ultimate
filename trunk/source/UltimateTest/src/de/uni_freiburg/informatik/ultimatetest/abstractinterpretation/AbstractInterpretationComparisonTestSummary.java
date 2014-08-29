@@ -39,7 +39,7 @@ public class AbstractInterpretationComparisonTestSummary extends AbstractInterpr
 	
 	@Override
 	public String getSummaryTypeDescription() {
-		return "AbsIntCompSummary";
+		return "WermutCompSummary";
 	}
 
 	/* (non-Javadoc)
@@ -72,10 +72,10 @@ public class AbstractInterpretationComparisonTestSummary extends AbstractInterpr
 				// compare tool to the string Plug-Ins add to IResult for identification
 				Map<String, String[]> fileToResult = null;
 				Map<String, ResultStatistics> toolResultStatistics = null;
-				if (tool.equals("AbstractInterpretation")) {
+				if (tool.startsWith("abstractinterpretation")) {
 					fileToResult = fileToWermutResult;
 					toolResultStatistics = wermutResultStatistics;
-				} else if (tool.equals("TraceAbstraction")) {
+				} else if (tool.startsWith("automizer")) {
 					fileToResult = fileToAutomizerResult;
 					toolResultStatistics = automizerResultStatistics;
 				}
