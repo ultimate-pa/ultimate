@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.model;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 
 public class BlockEncodingAnnotation extends AbstractAnnotations {
 

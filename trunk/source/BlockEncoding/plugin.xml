@@ -2,12 +2,12 @@
 <?eclipse version="3.2"?>
 <plugin>
 	<extension point="de.uni_freiburg.informatik.ultimate.ep.generator">
-      <impl class="de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.BlockEncoding">
+      <impl class="de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.BlockEncoding">
       </impl>
    </extension>
  
     <extension point="org.eclipse.core.runtime.preferences">
-      <initializer class="de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.preferences.PreferenceInitializer"/>
+      <initializer class="de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.preferences.PreferenceInitializer"/>
    </extension>
  
 </plugin>

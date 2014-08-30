@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding;
 
 import org.apache.log4j.Logger;
 
