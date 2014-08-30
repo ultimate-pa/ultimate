@@ -371,7 +371,6 @@ public class LassoAnalysis {
 		TerminationArgumentSynthesizer tas = new TerminationArgumentSynthesizer(m_lasso, template, m_preferences,
 				settings, m_ArrayIndexSupportingInvariants, mServices, mStorage);
 		final LBool constraintSat = tas.synthesize();
-		mLogger.debug(benchmarkScriptMessage(constraintSat, template));
 		if (constraintSat == LBool.SAT) {
 			mLogger.info("Proved termination.");
 			TerminationArgument arg = tas.getArgument();
@@ -386,6 +385,7 @@ public class LassoAnalysis {
 				m_lasso.getStemDisjuncts(), m_lasso.getLoopDisjuncts(), 
 				template.getName(), template.getDegree(), 
 				tas.getNumSIs(), tas.getNumMotzkin());
+		mLogger.debug(benchmarkScriptMessage(constraintSat, template));
 		tas.close();
 		return (constraintSat == LBool.SAT) ? tas.getArgument() : null;
 	}
