@@ -16,11 +16,11 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Try\ to\ simplify\ termination\ arguments=true
 #Wed Mar 19 04:15:41 CET 2014
 file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding/Minimize\ Call\ and\ Return\ Edges=true
-@de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding=0.0.1
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding/Rating-Boundary\ (empty\ for\ LBE)=0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding/Strategy\ for\ the\ edge\ rating=DISJUNCTIVE_RATING
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Minimize\ Call\ and\ Return\ Edges=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Rating-Boundary\ (empty\ for\ LBE)=0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Strategy\ for\ the\ edge\ rating=DISJUNCTIVE_RATING
 #Wed Mar 19 04:15:41 CET 2014
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Simplify\ code\ blocks=true

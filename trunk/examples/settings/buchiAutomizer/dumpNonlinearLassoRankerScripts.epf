@@ -9,11 +9,11 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 #Sat May 03 03:33:13 CEST 2014
 file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding/Minimize\ Call\ and\ Return\ Edges=true
-@de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding=0.0.1
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding/Rating-Boundary\ (empty\ for\ LBE)=3
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding/Strategy\ for\ the\ edge\ rating=LARGE_BLOCK
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Minimize\ Call\ and\ Return\ Edges=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Rating-Boundary\ (empty\ for\ LBE)=3
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Strategy\ for\ the\ edge\ rating=LARGE_BLOCK
 #Sat May 03 03:33:13 CEST 2014
 file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=

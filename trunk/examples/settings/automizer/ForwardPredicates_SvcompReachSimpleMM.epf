@@ -23,4 +23,4 @@ file_export_version=3.0
 file_export_version=3.0
 @UltimateCore=0.0.1
 /instance/UltimateCore/Generate\ benchmark\ results=false
-/instance/UltimateCore/Toolchain\ timeout\ in\ seconds=120
+/instance/UltimateCore/Toolchain\ timeout\ in\ seconds=1
