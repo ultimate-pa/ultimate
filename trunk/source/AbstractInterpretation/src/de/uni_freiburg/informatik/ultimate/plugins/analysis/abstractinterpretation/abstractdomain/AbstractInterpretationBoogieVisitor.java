@@ -54,6 +54,8 @@ public class AbstractInterpretationBoogieVisitor {
 	 */
 	private AbstractState m_currentState, m_resultingState;
 	
+	private Statement m_currentStatement;
+	
 	/**
 	 * Result value of evaluating an expression
 	 */
@@ -140,6 +142,8 @@ public class AbstractInterpretationBoogieVisitor {
 	 * @return The resulting abstract program state
 	 */
 	public AbstractState evaluateStatement(Statement statement, AbstractState currentState) {
+		m_currentStatement = statement;
+		
 		m_currentState = currentState;
 		if (currentState == null) return null;
 		m_resultingState = currentState.copy();
@@ -857,8 +861,16 @@ public class AbstractInterpretationBoogieVisitor {
 	 */
 	private boolean getValueOfIdentifier(String identifier, IType type, StorageClass storageClass) {
 		m_resultValue = m_currentState.readValue(identifier, m_useOldValues);
+		
+		if ((m_resultValue == null) && (m_currentStatement instanceof CallStatement)) {
+			// Call or Return -> do not access m_resultingState as the current scopes do not match!
+			m_resultValue = getTopValueForType(type);
+			return false;
+		}
+		
 		if ((m_resultValue == null) && !m_useOldValues)
 			m_resultValue = m_resultingState.readValue(identifier, m_useOldValues);
+		
 		if (m_resultValue == null) {
 			// first time we encounter this identifier: look up in symbol table, implicit havoc to TOP
 			m_resultValue = havocValue(identifier, type, storageClass);

@@ -4,7 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -14,7 +14,9 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.ArrayData;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.CallStackElement;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.LoopStackElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
 /**
  * @author Christopher Dillo
@@ -48,25 +50,25 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 		switch (field) {
 		case "Abstract states" :
 			if (m_states == null) return "No states";
-			// state -> (scope -> (value, array -> (value, has unclear indices)), trace)
+			// state -> (scope -> (value, array -> (value, has unclear indices)), trace, loop stack)
 			List<Object> states = new ArrayList<Object>(m_states.size());
 			for (AbstractState state : m_states) {
 				// scope -> (value, array -> (value, has unclear indices))
-				Map<String, Object> callstackData = new HashMap<String, Object>(2);
+				Map<String, Object> callstackData = new LinkedHashMap<String, Object>(2);
 				List<CallStackElement> callstack = state.getCallStack();
 				for (CallStackElement cse : callstack) {
 					// array -> (value, has unclear indices)
-					Map<String, Map<String, Object>> arrayInfo = new HashMap<String, Map<String, Object>>(2);
+					Map<String, Map<String, Object>> arrayInfo = new LinkedHashMap<String, Map<String, Object>>(2);
 					Map<String, ArrayData> arrays = cse.getArrays();
 					for (String ident : arrays.keySet()) {
 						ArrayData a = arrays.get(ident);
-						Map<String, Object> aInfo = new HashMap<String, Object>();
+						Map<String, Object> aInfo = new LinkedHashMap<String, Object>();
 						aInfo.put("Merged value", a.getValue());
 						aInfo.put("Has unclear indices", a.getIndicesUnclear());
 						arrayInfo.put(ident, aInfo);
 					}
 					// store (value, array -> (value, has unclear indices))
-					Map<String, Object> scopeData = new HashMap<String, Object>();
+					Map<String, Object> scopeData = new LinkedHashMap<String, Object>();
 					if (!cse.getValues().isEmpty())
 						scopeData.put("Values", cse.getValues());
 					if (!arrayInfo.isEmpty())
@@ -80,9 +82,17 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 						new ArrayList<String>(passedCodeBlocks.size());
 				for (CodeBlock block : passedCodeBlocks)
 					trace.add(block.getPrettyPrintedStatements());
-				Map<String, Object> stateData = new HashMap<String, Object>();
+				List<LoopStackElement> loopStackEntries = state.getLoopEntryNodes();
+				List<String> loopStack =
+						new ArrayList<String>(loopStackEntries.size());
+				for (LoopStackElement lse : loopStackEntries)
+					if (lse.getLoopNode() != null)
+					loopStack.add(String.format("%s -> ... -> %s -> %s",
+							lse.getLoopNode(), (ProgramPoint) lse.getExitEdge().getSource(), lse.getLoopNode()));
+				Map<String, Object> stateData = new LinkedHashMap<String, Object>();
 				stateData.put("Call stack", callstackData);
 				stateData.put("Trace", trace);
+				stateData.put("Loop stack", loopStack);
 				states.add(stateData);
 			}
 			return states;

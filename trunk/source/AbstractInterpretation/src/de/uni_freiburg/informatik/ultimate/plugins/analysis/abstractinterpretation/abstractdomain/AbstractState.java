@@ -94,6 +94,7 @@ public class AbstractState {
 		public Map<String, ArrayData> getArrays() { return m_arrays; }
 		public boolean isGlobalScope() { return m_isGlobalScope; }
 		public void SetIsGlobalScope(boolean isGlobalScope) { m_isGlobalScope = isGlobalScope; }
+		public String toString() { return m_values.toString(); }
 	}
 	
 	/**
@@ -146,13 +147,27 @@ public class AbstractState {
 		if (state == null)
 			return false;
 
+
 		List<CallStackElement> thisCallStack = getCallStack();
 		List<CallStackElement> otherCallStack = state.getCallStack();
 		
-		for (int i = 0; i < thisCallStack.size(); i++) {
-			if (!isSuper(thisCallStack.get(i), otherCallStack.get(i)))
+		int thisCallStackSize = thisCallStack.size();
+		int otherCallStackSize = otherCallStack.size();
+		if (thisCallStackSize < otherCallStackSize)
+			return false;
+		for (int i = 1; i <= thisCallStackSize; i++) {
+			CallStackElement thisCSE =  i >= thisCallStackSize
+					? thisCallStack.get(0)
+					: thisCallStack.get(thisCallStackSize - i);
+			CallStackElement otherCSE =  i >= otherCallStackSize
+					? otherCallStack.get(0)
+					: otherCallStack.get(otherCallStackSize - i);
+			
+			if (!isSuper(thisCSE, otherCSE))
 				return false;
 		}
+		
+		m_logger.debug(String.format("is super? %s ~ %s", thisCallStack, otherCallStack));
 		
 		// all checks passed, this state is greater or equal to the argument state
 		return true;
@@ -177,6 +192,8 @@ public class AbstractState {
 			IAbstractValue<?> rightValue = right.getValues().get(key);
 			IAbstractValue<?> leftValue = left.getValues().get(key);
 			
+			m_logger.debug(String.format("is super? %s ~ %s", leftValue, rightValue));
+			
 			// identifier must exist and thus have a value
 			if (leftValue == null)
 				return false;
@@ -184,6 +201,8 @@ public class AbstractState {
 			// value of left CSE must be greater than the value of the right CSE
 			if (!leftValue.isSuper(rightValue))
 				return false;
+
+			m_logger.debug(String.format("Is super! %s ~ %s (-:", leftValue, rightValue));
 		}
 
 		// check if any array value in the right CSE occurs and is greater in the left CSE
@@ -259,10 +278,28 @@ public class AbstractState {
 	 * (this state's global layer) mergeOp (the given state's global layer)
 	 * (this state's current layer) mergeOp (the given state's current layer)
 	 * <br> All other layers remain as found in the state with longer trace
+	 * <br> Returns null if the states can't be merged, i.e. belong to different calls
 	 */
 	public AbstractState merge(AbstractState state) {
 		if (state == null)
 			return copy();
+
+		List<CallStackElement> thisCallStack = getCallStack();
+		List<CallStackElement> otherCallStack = state.getCallStack();
+		int thisCallStackSize = thisCallStack.size();
+		int otherCallStackSize = otherCallStack.size();
+		if (thisCallStackSize < otherCallStackSize)
+			return null;
+		for (int i = 1; i < thisCallStackSize; i++) {
+			CallStackElement thisCSE =  i >= thisCallStackSize
+					? thisCallStack.get(0)
+					: thisCallStack.get(thisCallStackSize - i);
+			CallStackElement otherCSE =  i >= otherCallStackSize
+					? otherCallStack.get(0)
+					: otherCallStack.get(otherCallStackSize - i);
+			if (thisCSE.getCallStatement() != otherCSE.getCallStatement())
+				return null;
+		}
 		
 		boolean thisIsLonger = getTrace().size() > state.getTrace().size();
 
@@ -557,6 +594,75 @@ public class AbstractState {
 	 * @param CallStatement The call statement of the method call that creates this scope level
 	 */
 	public void pushStackLayer(CallStatement callStatement) {
+		if (m_callStack.size() > 2) {
+			/*
+			 * For recursive calls: Determine a pair of matching call statements in the call
+			 * stack, where one is the current top element and the other is the next element
+			 * with the same call statement:
+			 * global - ... - call A2 - ... - call A1
+			 * 				(second)		(first)
+			 * 
+			 * If now for every element between first and second, the same sequence follows 
+			 * under second, we merge all these:
+			 * global - ... - call D2 - call C2 - call B2 - call A2 - call D1 - call C1 - call B1 - call A1
+			 * 												(second)								(first)
+			 * merged:
+			 * global - ... - call D* - call C* - call B* - call A*
+			 * where call X* = call X1 merge call X2
+			 * 
+			 * the new scope is added on top of this shortened scope.
+			 */
+			
+			LinkedList<CallStackElement> headSequence = new LinkedList<CallStackElement>();
+			int max = m_callStack.size();
+			CallStackElement first = m_callStack.get(0);
+			CallStackElement second = null;
+			for (int i = 1; i < max; i++) {
+				CallStackElement current = m_callStack.get(i);
+				if (current.getCallStatement() == first.getCallStatement()) {
+					second = current;
+					break;
+				} else {
+					headSequence.add(current);
+				}
+			}
+			// if a matching recursive call exists, check if its predecessors match the headSequence
+			if (second != null) {
+				int headSize = headSequence.size();
+				LinkedList<CallStackElement> tailSequence = new LinkedList<CallStackElement>();
+				boolean isMatch = true;
+				for (int i = 0; i < headSize; i++) {
+					int tailId = headSize + i + 2;
+					if (tailId >= max) {
+						isMatch = false;
+						break;
+					}
+					CallStackElement head = headSequence.get(i);
+					CallStackElement tail = m_callStack.get(tailId);
+					if (head.getCallStatement() != tail.getCallStatement()) {
+						isMatch = false;
+						break;
+					}
+					tailSequence.add(tail);
+				}
+				if (isMatch) {
+					//merge all corresponding states, cutting off the head
+					for (int i = 0; i <= headSize; i++) {
+						m_callStack.pop(); m_callStack.pop();
+					}
+					headSequence.push(first);
+					tailSequence.push(second);
+					for (int i = headSize; i >= 0; i--) {
+						CallStackElement head = headSequence.get(i);
+						CallStackElement tail = tailSequence.get(i);
+						CallStackElement merged = new CallStackElement(head.getCallStatement(), head.getOldValues());
+						mergeLayers(head, tail, merged);
+						m_callStack.push(merged);
+					}
+				}
+			}
+		}
+		
 		Map<String, IAbstractValue<?>> oldValues = m_callStack.isEmpty() ? null : getGlobalScope().getValues();
 		m_callStack.push(new CallStackElement(callStatement, oldValues));
 	}

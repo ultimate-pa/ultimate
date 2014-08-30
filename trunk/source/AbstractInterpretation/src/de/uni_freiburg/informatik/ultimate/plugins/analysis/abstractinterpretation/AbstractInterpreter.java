@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -193,13 +194,13 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		boolean applyLoopWidening = false;
 		ProgramPoint pp = (ProgramPoint) node;
 		if ((pp != null) && m_loopEntryNodes.containsKey(pp)) {
-			LoopStackElement le = newState.peekLoopEntry();
-			if (le != null) {
-				if ((le.getLoopNode() == node) && (le.getExitEdge() == fromEdge))
-					newState.popLoopEntry();
-			}
-
-			if (newState.peekLoopEntry().getIterationCount(pp) >= m_iterationsUntilWidening)
+			LoopStackElement le = newState.popLoopEntry();
+			while ((le != null)
+					&& (le.getLoopNode() != null)
+					&& (le.getLoopNode() != node)
+					&& (le.getExitEdge() == fromEdge))
+				le = newState.popLoopEntry();
+			if ((le != null) && (newState.peekLoopEntry().getIterationCount(pp) >= m_iterationsUntilWidening))
 				applyLoopWidening = true;
 		}
 		// check for recursive method exit / widening
@@ -211,7 +212,8 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		Set<AbstractState> unprocessedStates = new HashSet<AbstractState>();
 		Set<AbstractState> statesToRemove = new HashSet<AbstractState>();
 		for (AbstractState s : statesAtNode) {
-			if (s.isSuper(newState)) {
+			// TODO: FIX
+			if (!(fromEdge instanceof Return) && s.isSuper(newState)) {
 				m_logger.debug("NO!");
 				return false; // abort if a superstate exists
 			}
@@ -243,8 +245,11 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 			// merge states
 			m_logger.debug(String.format("Merging at %s", node.toString()));
 			for (AbstractState s : unprocessedStates) {
-				statesAtNode.remove(s);
-				newState = newState.merge(s);
+				AbstractState mergedState = s.merge(newState);
+				if (mergedState != null) {
+					statesAtNode.remove(s);
+					newState = mergedState;
+				}
 			}
 		}
 		statesAtNode.add(newState);
@@ -317,6 +322,16 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		}
 		m_loopEntryNodes = loopDetector.getResult();
 
+		m_logger.debug("Loop information:");
+		for (ProgramPoint pp : m_loopEntryNodes.keySet()) {
+			Map<RCFGEdge, RCFGEdge> loopsie = m_loopEntryNodes.get(pp);
+			for (Entry<RCFGEdge, RCFGEdge> e : loopsie.entrySet()) {
+				m_logger.debug(String.format("Loop: %s -> %s -> ... -> %s -> %s",
+						pp, (ProgramPoint) e.getKey().getTarget(),
+						(ProgramPoint) e.getValue().getSource(), pp));
+			}
+		}
+
 		// preprocessor annotation: get symboltable
 		PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(root);
 		if (pa == null) {
@@ -363,8 +378,9 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 					AbstractState state = new AbstractState(m_logger, m_intDomainFactory,
 							m_realDomainFactory, m_boolDomainFactory,
 							m_bitVectorDomainFactory, m_stringDomainFactory);
-					if (mainEntry != null) {
-						CallStatement mainProcMockStatement = new CallStatement(null, false, null, mainEntry.getProcedure(), null);
+					if (target instanceof ProgramPoint) {
+						CallStatement mainProcMockStatement =
+								new CallStatement(null, false, null, ((ProgramPoint) target).getProcedure(), null);
 						state.pushStackLayer(mainProcMockStatement); // layer for main method
 					}
 					putStateToNode(state, target, e);

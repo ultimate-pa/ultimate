@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.ArrayData;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.CallStackElement;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.LoopStackElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -92,6 +93,7 @@ public class StateChangeLogger implements IAbstractStateChangeListener {
 		output.append(String.format(" to %s via\n\n", targetName));
 		if (viaEdge instanceof CodeBlock) {
 			output.append(((CodeBlock) viaEdge).getPrettyPrintedStatements());
+			output.append("\t\t(").append(viaEdge.hashCode()).append(")");
 		} else {
 			output.append(viaEdge.toString());
 		}
@@ -102,6 +104,12 @@ public class StateChangeLogger implements IAbstractStateChangeListener {
 		if (mergedState != newState) {
 			output.append("\n-> Merged/widened state:\n");
 			logState(mergedState, targetName, output);
+		}
+
+		if (!oldStates.isEmpty()) {
+			output.append("\n-> Old states:\n");
+			for (AbstractState oldState : oldStates)
+				logState(oldState, targetName, output);
 		}
 		
 		String stateInfo = output.toString();
@@ -120,7 +128,9 @@ public class StateChangeLogger implements IAbstractStateChangeListener {
 		List<CallStackElement> callStack = state.getCallStack();
 		for (CallStackElement cse : callStack) {
 			CallStatement cs = cse.getCallStatement();
-			output.append(String.format("\tCall stack level: %s\n", (cs == null) ? "GLOBAL" : cs.getMethodName()));
+			output.append(String.format("\tCall stack level: %s\t\t(%s)\n",
+					(cs == null) ? "GLOBAL" : cs.getMethodName(),
+					(cs == null) ? "---" : cs.hashCode()));
 			Map<String, IAbstractValue<?>> values = cse.getValues();
 			if (!values.isEmpty()) {
 				output.append("\t\tValues:\n");
@@ -143,9 +153,24 @@ public class StateChangeLogger implements IAbstractStateChangeListener {
 		output.append("\tTrace:\n");
 		List<CodeBlock> trace = state.getTrace();
 		for (CodeBlock c : trace) {
-			output.append("\t\t");
-			output.append(c.getPrettyPrintedStatements());
-			output.append("\n");
+			output.append("\t\t")
+				.append(c.getPrettyPrintedStatements())
+				.append("\t\t(")
+				.append(c.hashCode())
+				.append(")\n");
+		}
+		output.append("\tLoopStack:\n");
+		List<LoopStackElement> loopsies = state.getLoopEntryNodes();
+		for (LoopStackElement l : loopsies) {
+			// (l.getLoopNode() == null) -> global loopstack layer
+			if (l.getLoopNode() != null) {
+				output.append("\t\t")
+					.append(String.format("%s -> ... -> %s -> %s",
+						l.getLoopNode(),
+						(ProgramPoint) l.getExitEdge().getSource(),
+						l.getLoopNode()))
+					.append("\n");
+			}
 		}
 	}
 

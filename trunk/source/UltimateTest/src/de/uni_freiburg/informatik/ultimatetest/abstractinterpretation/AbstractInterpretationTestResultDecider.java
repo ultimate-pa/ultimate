@@ -89,6 +89,8 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 
 	@Override
 	public TestResult getTestResult(IResultService resultService) {
+		System.gc();
+		
 		Logger log = Logger.getLogger(AbstractInterpretationTestResultDecider.class);
 		Collection<String> customMessages = new LinkedList<String>();
 		final TestResult testoutcome;
@@ -160,6 +162,8 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 				// syntax error should always have been found
 				if (expected == ExpectedResultType.SYNTAXERROR) {
 					testoutcome = TestResult.FAIL;
+				} else if (expected == ExpectedResultType.UNSAFE) {
+					testoutcome = TestResult.SUCCESS;
 				} else {
 					testoutcome = TestResult.UNKNOWN;
 				}
@@ -197,6 +201,8 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 
 	@Override
 	public TestResult getTestResult(IResultService resultService, Throwable e) {
+		System.gc();
+		
 		generateResultMessageAndCategory(new ActualResult(ActualResultType.EXCEPTION_OR_ERROR,
 				new ExceptionOrErrorResult("Ultimate", e)));
 		Logger log = Logger.getLogger(AbstractInterpretationTestResultDecider.class);
@@ -357,9 +363,9 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		// Matthias wants to see Unknown results as success, and so does Christopher
 		switch (actualResult) {
 		case FAIL:
+		case UNKNOWN:
 			return false;
 		case SUCCESS:
-		case UNKNOWN:
 			return true;
 		default:
 			throw new IllegalArgumentException("actualResult has an unknown value");

@@ -154,84 +154,83 @@ public class AbstractInterpretationLaTeXTestSummary extends TestSummary {
 				ActualResultType actualResult = categoryBlurb.length > 2 ? actualResultFromTag(categoryBlurb[2]) : null;
 				
 				// this summary only checks for abstract interpretation stuff!
-				if (!tool.startsWith("abstractinterpretation"))
-					break;
-
-				sb.append("\t\\multicolumn{5}{c}{\\linestrut\\textbf{")
-						.append(resultTag)
-					.append(":}} \\\\").append(lineSeparator)
-					.append("\t\\multicolumn{5}{c}{\\textbf{")
-						.append("Expected ``")
-							.append(expectedResult)
-						.append(",'' analysis returned ``")
-							.append(actualResult)
-						.append("''")
-					.append("}} \\\\").append(lineSeparator)
-					.append("\t\\hline \\linestrut").append(lineSeparator);
-
-				// stats for current actual-expected results pair
-				ResultStatistics currentStats = new ResultStatistics();
-				
-				for (Entry<String, String> fileMsgPair : entry.getValue().getFileToMessage().entrySet()) {
-					// \sffamily [SOURCE] & \small [FILENAME] & [LINES] & [RUNTIME] & [MAXMEM] \\
+				if (tool.startsWith("abstractinterpretation")) {
+					sb.append("\t\\multicolumn{5}{c}{\\linestrut\\textbf{")
+							.append(resultTag)
+						.append(":}} \\\\").append(lineSeparator)
+						.append("\t\\multicolumn{5}{c}{\\textbf{")
+							.append("Expected ``")
+								.append(expectedResult)
+							.append(",'' analysis returned ``")
+								.append(actualResult)
+							.append("''")
+						.append("}} \\\\").append(lineSeparator)
+						.append("\t\\hline \\linestrut").append(lineSeparator);
+	
+					// stats for current actual-expected results pair
+					ResultStatistics currentStats = new ResultStatistics();
 					
-					// filename and source tag, file size
-					String fileName = fileMsgPair.getKey();
-					String tablePrefix = "---";
-					String fileLines = calculateNumberOfLines(fileName);
-					if (fileName.startsWith(m_pathOfTrunk + m_svcompFolder)) {
-						tablePrefix = "S"; // file from SV-COMP
-					} else {
-						tablePrefix = "U"; // file from ULTIMATE
-					}
-					String[] fileBlurb = fileName.split("\\\\");
-					if (fileBlurb.length > 1)
-						fileName = fileBlurb[fileBlurb.length-1];
-					
-					sb.append("\t\\sffamily ").append(tablePrefix)
-						.append(" & \\small ").append(fileName).append(" & ")
-						.append(fileLines).append(" & ");
-					
-					// runtime, max memory usage
-					String customMessage = fileMsgPair.getValue();
-					if (customMessage != null && !customMessage.isEmpty()) {
-						// customMessage: expected result, actual result, runtime, max memory usage, original result message
-						String[] message = customMessage.split(" ## ");
-						if (message.length > 3) {
-							sb.append(message[2]).append(" & ").append(message[3]).append(" \\\\");
-							currentStats.addData(expectedResult, Long.parseLong(message[2]), Long.parseLong(message[3]));
+					for (Entry<String, String> fileMsgPair : entry.getValue().getFileToMessage().entrySet()) {
+						// \sffamily [SOURCE] & \small [FILENAME] & [LINES] & [RUNTIME] & [MAXMEM] \\
+						
+						// filename and source tag, file size
+						String fileName = fileMsgPair.getKey();
+						String tablePrefix = "---";
+						String fileLines = calculateNumberOfLines(fileName);
+						if (fileName.startsWith(m_pathOfTrunk + m_svcompFolder)) {
+							tablePrefix = "S"; // file from SV-COMP
+						} else {
+							tablePrefix = "U"; // file from ULTIMATE
 						}
-					} else {
-						sb.append("--- & --- \\\\");
+						String[] fileBlurb = fileName.split("\\\\");
+						if (fileBlurb.length > 1)
+							fileName = fileBlurb[fileBlurb.length-1];
+						
+						sb.append("\t\\sffamily ").append(tablePrefix)
+							.append(" & \\small ").append(fileName).append(" & ")
+							.append(fileLines).append(" & ");
+						
+						// runtime, max memory usage
+						String customMessage = fileMsgPair.getValue();
+						if (customMessage != null && !customMessage.isEmpty()) {
+							// customMessage: expected result, actual result, runtime, max memory usage, original result message
+							String[] message = customMessage.split(" ## ");
+							if (message.length > 3) {
+								sb.append(message[2]).append(" & ").append(message[3]).append(" \\\\");
+								currentStats.addData(expectedResult, Long.parseLong(message[2]), Long.parseLong(message[3]));
+							}
+						} else {
+							sb.append("--- & --- \\\\");
+						}
+						sb.append(lineSeparator);
 					}
-					sb.append(lineSeparator);
+	
+					Long[] currentStatsNumbers = currentStats.getData(expectedResult);
+					long runtimeSum, runtimeCount, memorySum, memoryCount;
+					if (currentStatsNumbers == null) {
+						runtimeSum = 0;
+						runtimeCount = 0;
+						memorySum = 0;
+						memoryCount = 0;
+					} else {
+						runtimeSum = currentStatsNumbers[ResultStatistics.TIMESUM];
+						runtimeCount = currentStatsNumbers[ResultStatistics.TIMECOUNT];
+						memorySum = currentStatsNumbers[ResultStatistics.MEMSUM];
+						memoryCount = currentStatsNumbers[ResultStatistics.MEMCOUNT];
+					}
+					int localCount = entry.getValue().getCount();
+					sb.append("\t\\hline \\linestrut & Count: ").append(localCount)
+						.append(String.format(" & Avg: & %s & %s \\\\ %% RAW: %s / %s ms, %s / %s MiB",
+								calculateAverage(runtimeSum, runtimeCount),
+								calculateAverage(memorySum, memoryCount),
+								runtimeSum, runtimeCount,
+								memorySum, memoryCount)).append(lineSeparator)
+						.append("\t\\dhline").append(lineSeparator);
+					
+					resultCategoryCount = resultCategoryCount + localCount;
+					
+					totalStats.addStats(currentStats, actualResult != ActualResultType.TIMEOUT, true);
 				}
-
-				Long[] currentStatsNumbers = currentStats.getData(expectedResult);
-				long runtimeSum, runtimeCount, memorySum, memoryCount;
-				if (currentStatsNumbers == null) {
-					runtimeSum = 0;
-					runtimeCount = 0;
-					memorySum = 0;
-					memoryCount = 0;
-				} else {
-					runtimeSum = currentStatsNumbers[ResultStatistics.TIMESUM];
-					runtimeCount = currentStatsNumbers[ResultStatistics.TIMECOUNT];
-					memorySum = currentStatsNumbers[ResultStatistics.MEMSUM];
-					memoryCount = currentStatsNumbers[ResultStatistics.MEMCOUNT];
-				}
-				int localCount = entry.getValue().getCount();
-				sb.append("\t\\hline \\linestrut & Count: ").append(localCount)
-					.append(String.format(" & Avg: & %s & %s \\\\ %% RAW: %s / %s ms, %s / %s MiB",
-							calculateAverage(runtimeSum, runtimeCount),
-							calculateAverage(memorySum, memoryCount),
-							runtimeSum, runtimeCount,
-							memorySum, memoryCount)).append(lineSeparator)
-					.append("\t\\dhline").append(lineSeparator);
-				
-				resultCategoryCount = resultCategoryCount + localCount;
-				
-				totalStats.addStats(currentStats, actualResult != ActualResultType.TIMEOUT, true);
 			}
 
 			totalCounts.put(result, resultCategoryCount);

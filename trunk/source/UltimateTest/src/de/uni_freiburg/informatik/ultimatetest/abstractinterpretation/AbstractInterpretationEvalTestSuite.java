@@ -14,23 +14,21 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 public class AbstractInterpretationEvalTestSuite extends
 		AbstractAbstractInterpretationTestSuite {
 	
-	private boolean m_compareToAutomizer = true;
+	private boolean m_compareToAutomizer = false;
 	
 	private static final String[] m_directories = {
 		/* ULTIMATE repo */
-		//"examples/programs/toy/",
-		//"examples/programs/regression/bpl/",		// DONE
-		//"examples/programs/regression/c/",		// DONE
-		//"examples/programs/recursivePrograms",	// DONE
+		"examples/programs/regression/bpl/",
+		"examples/programs/regression/c/",
+		"examples/programs/recursivePrograms",
 		/* SV-COMP repo */
-		//"examples/svcomp/loops/",					// SPLIT
-		"examples/svcomp/loops1/",				// 
-		//"examples/svcomp/loops2/",				// 
-		//"examples/svcomp/eca/",					// SPLIT
-		//"examples/svcomp/ecaSelection/",			// 
-		//"examples/svcomp/systemc/",				// SPLIT
-		//"examples/svcomp/systemc1/",				// 
-		//"examples/svcomp/systemc2/",				// 
+		//"examples/svcomp/loops/",			// SPLIT
+		//"examples/svcomp/loopsSelection/",
+		//"examples/svcomp/eca/",			// SPLIT
+		//"examples/svcomp/ecaSelection/",
+		//"examples/svcomp/systemc/",		// SPLIT
+		//"examples/svcomp/systemc1/",
+		//"examples/svcomp/systemc2/",
 	};
 	
 	
