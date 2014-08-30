@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class Lassos extends
+public class BuchiAutomizerDefaultTests extends
 		AbstractBuchiAutomizerTestSuite {
 	private static final String[] m_Directories = {
 //		"examples/lassos",
