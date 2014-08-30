@@ -9,7 +9,7 @@
 	</parent>
   
   <groupId>BlockEncoding</groupId>
-  <artifactId>de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding</artifactId>
+  <artifactId>de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding</artifactId>
   <version>0.0.1</version>
   <packaging>eclipse-plugin</packaging>
 </project>

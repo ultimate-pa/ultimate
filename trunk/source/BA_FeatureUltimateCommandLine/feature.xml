@@ -110,7 +110,7 @@
          unpack="false"/>
 
    <plugin
-         id="de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding"
+         id="de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding"
          download-size="0"
          install-size="0"
          version="0.0.0"
