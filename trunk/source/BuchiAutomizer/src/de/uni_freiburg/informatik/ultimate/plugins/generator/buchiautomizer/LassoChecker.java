@@ -51,6 +51,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.result.IResult;
 
 public class LassoChecker {
 
@@ -708,6 +710,10 @@ public class LassoChecker {
 			try {
 				TerminationAnalysisSettings settings = constructTASettings();
 				termArg = la.tryTemplate(rft, settings);
+				if (m_TemplateBenchmarkMode) {
+					IResult benchmarkResult = new BenchmarkResult<>(Activator.s_PLUGIN_ID, "LassoTerminationAnalysisBenchmarks", la.getLassoTerminationAnalysisBenchmarks());
+					mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, benchmarkResult);
+				}
 			} catch (SMTLIBException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
