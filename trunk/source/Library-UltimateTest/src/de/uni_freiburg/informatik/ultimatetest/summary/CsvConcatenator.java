@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimatetest.summary;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
@@ -42,6 +43,8 @@ public class CsvConcatenator implements ITestSummary {
 		super();
 		m_UltimateTestSuite = ultimateTestSuite;
 		m_Benchmark = benchmark;
+		List<String> emtpyList = Collections.emptyList();
+		m_CsvProvider = new SimpleCsvProvider<Object>(emtpyList);
 	}
 
 	@Override
@@ -82,13 +85,8 @@ public class CsvConcatenator implements ITestSummary {
 	}
 	
 	private void add(ICsvProvider<Object> benchmarkCsvWithRunDefinition) {
-		if (m_CsvProvider == null) {
-			m_CsvProvider = benchmarkCsvWithRunDefinition;
-		} else {
-			m_CsvProvider = CsvUtils.concatenateRows(m_CsvProvider,
+		m_CsvProvider = CsvUtils.concatenateRows(m_CsvProvider,
 					benchmarkCsvWithRunDefinition);
-		}
-		
 	}
 
 	private ICsvProvider<Object> addUltimateRunDefinition(
