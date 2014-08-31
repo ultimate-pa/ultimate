@@ -209,29 +209,36 @@ public class CsvUtils {
 	public static <T> ICsvProvider<T> concatenateRows(ICsvProvider<T> providerA, ICsvProvider<T> providerB) {
 		List<String> providerAColumns = providerA.getColumnTitles();
 		List<String> providerBColumns = providerB.getColumnTitles();
+		List<String> resultColumns;
 		List<Integer> additionalColumnForProviderA = new ArrayList<Integer>();
 		List<Integer> additionalColumnForProviderB = new ArrayList<Integer>();
-		List<String> resultColumns = new ArrayList<String>();
-		int pAindex = 0;
-		int pBindex = 0;
-		while (pAindex < providerAColumns.size() || pBindex < providerBColumns.size()) {
-			String currentPACol = providerAColumns.get(pAindex);
-			String currentPBCol = providerBColumns.get(pBindex);
-			if (currentPACol.equals(currentPBCol)) {
-				resultColumns.add(currentPACol);
-				pAindex++;
-				pBindex++;
-			} else if (pAindex < providerAColumns.size() && !providerBColumns.contains(currentPACol)) {
-				resultColumns.add(currentPACol);
-				additionalColumnForProviderB.add(pBindex);
-				pAindex++;
-			} else if (pBindex < providerBColumns.size() && !providerAColumns.contains(currentPBCol)) {
-				resultColumns.add(currentPBCol);
-				additionalColumnForProviderA.add(pAindex);
-				pBindex++;
-			} else {
-				throw new IllegalArgumentException("unable to merge, both "
-						+ "providers have similar columns but in different order");
+		if (providerAColumns.size() == 0) {
+			resultColumns = providerBColumns;
+		} else if (providerBColumns.size() == 0) {
+			resultColumns = providerBColumns;
+		} else {
+			resultColumns = new ArrayList<String>();
+			int pAindex = 0;
+			int pBindex = 0;
+			while (pAindex < providerAColumns.size() || pBindex < providerBColumns.size()) {
+				String currentPACol = providerAColumns.get(pAindex);
+				String currentPBCol = providerBColumns.get(pBindex);
+				if (currentPACol.equals(currentPBCol)) {
+					resultColumns.add(currentPACol);
+					pAindex++;
+					pBindex++;
+				} else if (pAindex < providerAColumns.size() && !providerBColumns.contains(currentPACol)) {
+					resultColumns.add(currentPACol);
+					additionalColumnForProviderB.add(pBindex);
+					pAindex++;
+				} else if (pBindex < providerBColumns.size() && !providerAColumns.contains(currentPBCol)) {
+					resultColumns.add(currentPBCol);
+					additionalColumnForProviderA.add(pAindex);
+					pBindex++;
+				} else {
+					throw new IllegalArgumentException("unable to merge, both "
+							+ "providers have similar columns but in different order");
+				}
 			}
 		}
 		ICsvProvider<T> result = new SimpleCsvProvider<>(resultColumns);
