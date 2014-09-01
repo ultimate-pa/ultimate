@@ -34,7 +34,7 @@ public class Svcomp_Reach_SimpleMemoryModel extends
 		if (m_AutomizerWithForwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
-					"traceAbstractionTestSuite/ForwardPredicates_SvcompReachSimpleMM.epf",
+					"automizer/ForwardPredicates_SvcompReachSimpleMM.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Trace Abstraction via Forward Predicates (SP)",
@@ -44,7 +44,7 @@ public class Svcomp_Reach_SimpleMemoryModel extends
 		if (m_AutomizerWithBackwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
-					"traceAbstractionTestSuite/BackwardPredicates_SvcompReachSimpleMM.epf",
+					"automizer/BackwardPredicates_SvcompReachSimpleMM.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Trace Abstraction via Backward Predicates (BP)",

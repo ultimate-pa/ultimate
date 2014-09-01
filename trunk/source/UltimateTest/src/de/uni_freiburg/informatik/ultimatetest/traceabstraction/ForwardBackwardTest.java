@@ -35,7 +35,7 @@ public class ForwardBackwardTest extends
 		if (m_TraceAbstractionBoogieWithForwardPredicates) {
 			addTestCases(
 					"AutomizerBpl.xml",
-					"traceAbstractionTestSuite/ForwardPredicates.epf",
+					"automizer/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
 //				    "Trace Abstraction",
@@ -45,7 +45,7 @@ public class ForwardBackwardTest extends
 		if (m_TraceAbstractionBoogieWithBackwardPredicates) {
 			addTestCases(
 					"AutomizerBpl.xml",
-					"traceAbstractionTestSuite/BackwardPredicates.epf",
+					"automizer/BackwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
 //				    "Trace Abstraction",
@@ -55,7 +55,7 @@ public class ForwardBackwardTest extends
 		if (m_TraceAbstractionCWithForwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
-					"traceAbstractionTestSuite/ForwardPredicates.epf",
+					"automizer/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Trace Abstraction",
@@ -65,7 +65,7 @@ public class ForwardBackwardTest extends
 		if (m_TraceAbstractionCWithBackwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
-					"traceAbstractionTestSuite/BackwardPredicates.epf",
+					"automizer/BackwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Trace Abstraction",

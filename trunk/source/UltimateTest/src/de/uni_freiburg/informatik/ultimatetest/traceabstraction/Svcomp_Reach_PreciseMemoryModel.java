@@ -43,7 +43,7 @@ public class Svcomp_Reach_PreciseMemoryModel extends
 		if (m_AutomizerWithForwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
-					"traceAbstractionTestSuite/ForwardPredicates_SvcompReachPreciseMM.epf",
+					"automizer/ForwardPredicates_SvcompReachPreciseMM.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Trace Abstraction via Forward Predicates (SP)",
@@ -53,7 +53,7 @@ public class Svcomp_Reach_PreciseMemoryModel extends
 		if (m_AutomizerWithBackwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
-					"traceAbstractionTestSuite/BackwardPredicates_SvcompReachPreciseMM.epf",
+					"automizer/BackwardPredicates_SvcompReachPreciseMM.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Trace Abstraction via Backward Predicates (BP)",

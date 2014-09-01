@@ -36,7 +36,7 @@ public class Totalinterpolation extends
 		if (s_Boogie_TreeInterpolants) {
 			addTestCases(
 					"AutomizerBpl.xml",
-					"traceAbstractionTestSuite/TreeInterpolants.epf",
+					"automizer/TreeInterpolants.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
 //				    "Treeinterpolants",
@@ -46,7 +46,7 @@ public class Totalinterpolation extends
 		if (s_C_TreeInterpolants) {
 			addTestCases(
 					"AutomizerC.xml",
-					"traceAbstractionTestSuite/TreeInterpolants.epf",
+					"automizer/TreeInterpolants.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Treeinterpolants",
@@ -57,7 +57,7 @@ public class Totalinterpolation extends
 		if (s_Boogie_TreeInterpolantsWithTotalinterpolation) {
 			addTestCases(
 					"AutomizerBpl.xml",
-					"traceAbstractionTestSuite/TreeInterpolants_TotalInterpolation.epf",
+					"automizer/TreeInterpolants_TotalInterpolation.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
 //				    "Treeinterpolants with totalinterpolation",
@@ -67,7 +67,7 @@ public class Totalinterpolation extends
 		if (s_C_TreeInterpolantsWithTotalinterpolation) {
 			addTestCases(
 					"AutomizerC.xml",
-					"traceAbstractionTestSuite/TreeInterpolants_TotalInterpolation.epf",
+					"automizer/TreeInterpolants_TotalInterpolation.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Treeinterpolants with totalinterpolation",

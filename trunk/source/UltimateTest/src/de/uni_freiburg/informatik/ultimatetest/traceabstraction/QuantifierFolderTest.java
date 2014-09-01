@@ -28,7 +28,7 @@ public class QuantifierFolderTest extends
 		if (s_Boogie) {
 			addTestCases(
 					"AutomizerBpl.xml",
-					"traceAbstractionTestSuite/ForwardPredicates.epf",
+					"automizer/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
 //				    "Automizer via ForwardPredicates",
@@ -38,7 +38,7 @@ public class QuantifierFolderTest extends
 		if (s_C) {
 			addTestCases(
 					"AutomizerC.xml",
-					"traceAbstractionTestSuite/ForwardPredicates.epf",
+					"automizer/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Automizer via ForwardPredicates",

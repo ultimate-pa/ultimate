@@ -33,7 +33,7 @@ public class All_TreeInterpolants extends
 		if (s_Boogie_TreeInterpolants) {
 			addTestCases(
 					"AutomizerBpl.xml",
-					"traceAbstractionTestSuite/TreeInterpolants.epf",
+					"automizer/TreeInterpolants.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
 //				    "TraceAbstraction via tree interpolation",
@@ -43,7 +43,7 @@ public class All_TreeInterpolants extends
 		if (s_C_TreeInterpolants) {
 			addTestCases(
 					"AutomizerC.xml",
-					"traceAbstractionTestSuite/TreeInterpolants.epf",
+					"automizer/TreeInterpolants.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "TraceAbstraction via tree interpolation",
