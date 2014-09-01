@@ -24,7 +24,6 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 		return new ITestSummary[] {
 				new TestSummaryWithBenchmarkResults(this.getClass()),
 				new TraceAbstractionTestSummary(this.getClass()),
-				new CsvConcatenator(this.getClass(), LassoTerminationAnalysisBenchmarks.class),
 				new CsvConcatenator(this.getClass(), TimingBenchmark.class),
 		};
 	}
