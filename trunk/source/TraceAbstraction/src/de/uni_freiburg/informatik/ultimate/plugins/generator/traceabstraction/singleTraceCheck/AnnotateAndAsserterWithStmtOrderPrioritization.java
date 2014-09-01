@@ -3,7 +3,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,83 +64,21 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	}
 
 	/**
-	 *  Returns a set of integer where each integer <i>i</i> corresponds to a statement <i>i</i> of the given trace, such that:
-	 *  <ul>
-	 *  <li> every integer <i>i</i>: <i>i</i> < l_1 or <i>i</i> >= l_2 
-	 *  <li> l_1: the lowest index of a program point p, such that p occurs at least twice, and l_1 >= lowerIndex
-	 *  <li> l_2: the greatest index of the same program point p, such that l_2 <= upperIndex
-	 *  </ul>
-	**/
-	@SuppressWarnings("unused")
-	private Set<Integer> getSubTrace(NestedWord<CodeBlock> trace, int lowerIndex, int upperIndex) {
-		assert lowerIndex >= 0 : "Lower index is negative";
-		assert upperIndex > lowerIndex : "Upper index is <= lower index";
-		assert upperIndex <= trace.length() : "Upper index is out of range";
-		List<ProgramPoint> pps = TraceCheckerUtils.getSequenceOfProgramPoints(trace);
-		RelationWithTreeSet<ProgramPoint, Integer> rwt = new RelationWithTreeSet<ProgramPoint, Integer>();
-		for (int i = lowerIndex; i <= upperIndex; i++) {
-			rwt.addPair(pps.get(i), i);
-		}
-		
-		int lowestIndexOfPPThatOccursTwice = 0;
-		int greatestIndexOfPPThatOccursTwice = trace.length();
-		boolean existsPPThatOccursMoreThanOnce = false;
-		for (int i = lowerIndex; i <= upperIndex; i++) {
-			if (rwt.getImage(pps.get(i)).size() > 1) {
-				// Get the first occurrence in the trace of that program-point, that occurs more than one time
-				lowestIndexOfPPThatOccursTwice = ((TreeSet<Integer>) rwt.getImage(pps.get(i))).first();
-				// Get the last occurrence of that program-point
-				greatestIndexOfPPThatOccursTwice = ((TreeSet<Integer>) rwt.getImage(pps.get(i))).last();
-				existsPPThatOccursMoreThanOnce = true;
-				break;
-			}
-		}
-		
-		if (!existsPPThatOccursMoreThanOnce) {
-			// If every program point occurs only once (no loops in the trace),
-			// then return the set of integers {i | 0 <= i < trace.length}
-			Set<Integer> allStmts = new HashSet<Integer>();
-			for (int i = 0; i <  trace.length(); i++) {
-				allStmts.add(i);
-			}
-			return allStmts;
-		} else {
-			// If there is a program point with more than one occurrences, then
-			// put every statement before the index of the first occurrence and every statement 
-			// after the index of the last occurrence into the set to be returned
-			Set<Integer> stmtsWithOutLoop = new HashSet<Integer>();
-			for (int i = lowerIndex; i < upperIndex; i++) {
-				// Since a program-point represents the source node of a stmt, we have to
-				// take here also greatestIndexOfPPThatOccursTwice-th element into our set stmtsWithOutLoop
-				// that's why we have (i >= greatestIndexOfPPThatOccursTwice)
-				if (i < lowestIndexOfPPThatOccursTwice || i >= greatestIndexOfPPThatOccursTwice) {
-					stmtsWithOutLoop.add(i);
-				}
-			}
-			return stmtsWithOutLoop;
-		}
-	}
-
-	
-	/**
 	 * Returns the positions of program-points, which are equal to each other. (E.g. Program point x occurs at positions
 	 * 1, 3, 9, then a treeset containing those values is returned.) 
 	 * It considers the trace only at the interval [lowerIndex, upperIndex].
-	 * @param trace
-	 * @param lowerIndex
-	 * @param upperIndex
-	 * @return
 	 */
-	private TreeSet<Integer> getPositionsOfLoopStatements(NestedWord<CodeBlock> trace, int lowerIndex, int upperIndex) {
-		assert lowerIndex >= 0 : "Lower index is negative";
-		assert upperIndex > lowerIndex : "Upper index is <= lower index";
-		assert upperIndex <= trace.length() : "Upper index is out of range";
+	private TreeSet<Integer> getPositionsOfLoopStatements(NestedWord<CodeBlock> trace, int lowerIndex, int upperIndex,
+			RelationWithTreeSet<ProgramPoint, Integer> rwt) {
+//		assert lowerIndex >= 0 : "Lower index is negative";
+//		assert upperIndex > lowerIndex : "Upper index is <= lower index";
+//		assert upperIndex <= trace.length() : "Upper index is out of range";
+//		
+//		RelationWithTreeSet<ProgramPoint, Integer> rwt = new RelationWithTreeSet<ProgramPoint, Integer>();
+//		for (int i = lowerIndex; i <= upperIndex; i++) {
+//			rwt.addPair(pps.get(i), i);
+//		}
 		List<ProgramPoint> pps = TraceCheckerUtils.getSequenceOfProgramPoints(trace);
-		RelationWithTreeSet<ProgramPoint, Integer> rwt = new RelationWithTreeSet<ProgramPoint, Integer>();
-		for (int i = lowerIndex; i <= upperIndex; i++) {
-			rwt.addPair(pps.get(i), i);
-		}
-		
 		for (int i = lowerIndex; i <= upperIndex; i++) {
 			if (rwt.getImage(pps.get(i)).size() > 1) {
 				return (TreeSet<Integer>) rwt.getImage(pps.get(i));
@@ -175,8 +118,10 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 	
 	
-	
-	private Set<Integer> getSetOfIntegerForGivenInterval(int lowerBound, int upperBound) {
+	/**
+	 * Returns a set of integers containing the values {lowerBound, lowerBound + 1, ..., upperBound - 1}.
+	 */
+private Set<Integer> getSetOfIntegerForGivenInterval(int lowerBound, int upperBound) {
 		Set<Integer> result = new HashSet<Integer>();
 		for (int i = lowerBound; i < upperBound; i++) {
 			result.add(i);
@@ -185,6 +130,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	}
 	
 	
+	/**
+	 * Returns the set difference between first set and the second set.
+	 */
 	private Set<Integer> integerSetDifference(Set<Integer> firstSet, Set<Integer> secondSet) {
 		if (secondSet.isEmpty()) return firstSet;
 		
@@ -208,14 +156,109 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		return result;
 	}
 	
+	
+	private void dfsPartitionStatementsAccordingToDepth(Integer lowerIndex,
+			Integer upperIndex, int depth,
+			RelationWithTreeSet<ProgramPoint, Integer> rwt,
+			Map<Integer, Set<Integer>> depth2Statements, List<ProgramPoint> pps) {
+		int i = lowerIndex;
+		while (i < upperIndex) {
+			// Is the current statement a loop entry?
+			if (rwt.getImage(pps.get(i)).size() >= 2 &&
+					((TreeSet<Integer>) rwt.getImage(pps.get(i))).higher(i) != null &&
+					((TreeSet<Integer>) rwt.getImage(pps.get(i))).higher(i) < upperIndex) {
+				int newUpperIndex = ((TreeSet<Integer>) rwt.getImage(pps.get(i))).higher(i);
+				addStmtPositionToDepth(depth + 1, depth2Statements, i);
+				// recursively partition the statements within this loop 
+				dfsPartitionStatementsAccordingToDepth(i + 1, newUpperIndex, depth + 1,
+						rwt, depth2Statements ,pps);
+				// If there is no position greater than newUpperIndex, then the statement at position=newUpperIndex
+				// is the loop exit
+				if (((TreeSet<Integer>) rwt.getImage(pps.get(i))).higher(newUpperIndex) == null) {
+					addStmtPositionToDepth(depth, depth2Statements, newUpperIndex);
+					i = newUpperIndex + 1;
+				} else { 
+					// Otherwise the statement at position=newUpperIndex is a loop entry, which represents
+					// another loop iteration
+					i = newUpperIndex;	
+				}
+				
+			} else {
+				addStmtPositionToDepth(depth, depth2Statements, i);
+				i++;
+			}
+		}
+		
+		
+	}
+
+	/**
+	 * TODO:
+	 */
+	private void addStmtPositionToDepth(int depth,
+			Map<Integer, Set<Integer>> depth2Statements, int stmtPos) {
+		if (depth2Statements.keySet().contains(depth)) {
+			depth2Statements.get(depth).add(stmtPos);
+		} else {
+			Set<Integer> s = new HashSet<Integer>();
+			s.add(stmtPos);
+			depth2Statements.put(depth, s);
+		}
+	}
+
+	
+
+	private List<TreeSet<Integer>> getListOfLoopProgramPoints(
+			Integer lowerIndex, Integer upperIndex,
+			RelationWithTreeSet<ProgramPoint, Integer> rwt,
+			NestedWord<CodeBlock> trace) {
+		List<TreeSet<Integer>> listOfLoopProgramPoints = new LinkedList<TreeSet<Integer>>();
+		TreeSet<Integer> loopProgramPoints = getPositionsOfLoopStatements(trace, lowerIndex, upperIndex, rwt);
+		loopProgramPoints = getIntersectionSet_vs_Interval(loopProgramPoints, lowerIndex, upperIndex);
+		
+		if (loopProgramPoints.isEmpty()) return  listOfLoopProgramPoints;
+		
+		int leastIndex = loopProgramPoints.first();
+		listOfLoopProgramPoints.add(loopProgramPoints);
+		while (leastIndex < upperIndex) {
+			TreeSet<Integer> loopProgramPointsTemp = getPositionsOfLoopStatements(trace, leastIndex, upperIndex, rwt);
+			// Check, whether we have the same loop
+			if (loopProgramPointsTemp.last() == loopProgramPoints.last()) {
+				break;
+			} else {
+				loopProgramPoints = loopProgramPointsTemp;
+				loopProgramPoints = (TreeSet<Integer>) getIntersectionSet_vs_Interval(loopProgramPoints, leastIndex, upperIndex);
+				if (leastIndex == loopProgramPoints.first()) {
+					leastIndex = loopProgramPoints.ceiling(leastIndex);
+					if ((Integer)leastIndex == null) break;
+				} else {
+					leastIndex = loopProgramPointsTemp.first();
+				}
+				listOfLoopProgramPoints.add(loopProgramPoints);
+			}
+		}
+		return listOfLoopProgramPoints;
+	}
+
+	private Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(NestedWord<CodeBlock> trace, RelationWithTreeSet<ProgramPoint, Integer> rwt,
+			List<ProgramPoint> pps) {
+		Map<Integer, Set<Integer>> depth2Statements = new HashMap<Integer, Set<Integer>>();
+		
+		dfsPartitionStatementsAccordingToDepth(0, trace.length(), 0, rwt, depth2Statements, pps);
+		
+		return depth2Statements;
+		
+	}
+	
 	@Override
 	public void buildAnnotatedSsaAndAssertTerms() {
-		
+		List<ProgramPoint> pps = TraceCheckerUtils.getSequenceOfProgramPoints(m_Trace);
+		RelationWithTreeSet<ProgramPoint, Integer> rwt = computeRelationWithTreeSetForTrace(0, m_Trace.length(), pps);
 		Map.Entry<Integer, Integer> indicesOfStmtThatOccursTwice = getIndicesOfProgramPointThatOccursTwice(m_Trace, 0, m_Trace.length());
-		int lowerIndexOfStmtThatOccursTwice = indicesOfStmtThatOccursTwice.getKey();
+		int lowerPositionOfPPThatOccursTwice = indicesOfStmtThatOccursTwice.getKey();
 		int upperIndexOfStmtThatOccursTwice =  indicesOfStmtThatOccursTwice.getValue();
 		
-		Set<Integer> stmtsWithinLoop = getSetOfIntegerForGivenInterval(lowerIndexOfStmtThatOccursTwice, upperIndexOfStmtThatOccursTwice);
+		Set<Integer> stmtsWithinLoop = getSetOfIntegerForGivenInterval(lowerPositionOfPPThatOccursTwice, upperIndexOfStmtThatOccursTwice);
 		Set<Integer> integersFromTrace = getSetOfIntegerForGivenInterval(0, m_Trace.length());
 		Set<Integer> stmtsOutsideOfLoop = integerSetDifference(integersFromTrace, stmtsWithinLoop);
 		
@@ -264,13 +307,13 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 				if (stmtsAlreadyAsserted.size() == m_Trace.length()) break;
 				if (m_Satisfiable != LBool.UNSAT) {
 					// TODO: if lowerIndexOfStat.. + 1 > upperIndex - 1 --> then break, and add all the remaining statements
-					indicesOfStmtThatOccursTwice = getIndicesOfProgramPointThatOccursTwice(m_Trace, lowerIndexOfStmtThatOccursTwice + 1, 
+					indicesOfStmtThatOccursTwice = getIndicesOfProgramPointThatOccursTwice(m_Trace, lowerPositionOfPPThatOccursTwice + 1, 
 							upperIndexOfStmtThatOccursTwice-1);
-					lowerIndexOfStmtThatOccursTwice = indicesOfStmtThatOccursTwice.getKey();
+					lowerPositionOfPPThatOccursTwice = indicesOfStmtThatOccursTwice.getKey();
 					upperIndexOfStmtThatOccursTwice =  indicesOfStmtThatOccursTwice.getValue();
 					// update the set of statements which are already asserted
 					Set<Integer> stmtsWithinLoopOld = stmtsWithinLoop; 
-					stmtsWithinLoop = getSetOfIntegerForGivenInterval(lowerIndexOfStmtThatOccursTwice, upperIndexOfStmtThatOccursTwice);
+					stmtsWithinLoop = getSetOfIntegerForGivenInterval(lowerPositionOfPPThatOccursTwice, upperIndexOfStmtThatOccursTwice);
 					stmtsOutsideOfLoop = integerSetDifference(stmtsWithinLoopOld, stmtsWithinLoop);
 					stmtsAlreadyAsserted.addAll(stmtsOutsideOfLoop);
 				}
@@ -278,54 +321,191 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		} 
 		// Apply 3. heuristic
 		else if (m_AssertCodeBlocksOrder == AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST3) {
-			TreeSet<Integer> loopProgramPoints = getPositionsOfLoopStatements(m_Trace, 0, m_Trace.length());
-			m_Satisfiable = annotateAndAssertStmtsAccording3Heuristic(m_Trace, integersFromTrace, loopProgramPoints,
-					callPositions,
-					pendingReturnPositions);
+			Map<Integer, Set<Integer>> depth2Statements = partitionStatementsAccordingDepth(m_Trace, rwt, pps);
+			
+			m_Satisfiable = annotateAndAssertStmtsAccording3Heuristic(m_Trace, callPositions,
+					pendingReturnPositions, depth2Statements);
+		}// Apply 4. heuristic
+		else if (m_AssertCodeBlocksOrder == AssertCodeBlockOrder.INSIDE_LOOP_FIRST1) {
+			Map<Integer, Set<Integer>> depth2Statements = partitionStatementsAccordingDepth(m_Trace, rwt, pps);
+			
+			m_Satisfiable = annotateAndAssertStmtsAccording4Heuristic(m_Trace, callPositions,
+					pendingReturnPositions, depth2Statements);
 		} else {
 			throw new AssertionError("unknown value " + m_AssertCodeBlocksOrder);
 		}
 		mLogger.info("Conjunction of SSA is " + m_Satisfiable);
 	}
 	
-	private LBool annotateAndAssertStmtsAccording3Heuristic(NestedWord<CodeBlock> trace,
-			Set<Integer> unassertedStmts, TreeSet<Integer> loopProgramPoints,
-			Collection<Integer> callPositions,
-			Collection<Integer> pendingReturnPositions
-			) {
-		Set<Integer> stmtsWithinLoop = null;
-		if (loopProgramPoints.isEmpty()) {
-			stmtsWithinLoop = new HashSet<Integer>();
-		} else {
-			stmtsWithinLoop = getSetOfIntegerForGivenInterval(loopProgramPoints.first(), loopProgramPoints.last());
-		}
-		Set<Integer> stmtsOutsideOfLoop = integerSetDifference(unassertedStmts, stmtsWithinLoop);
-		
-		// Annotate and assert the statements which don't occur inside or in-between the @param loopProgramPoints 
-		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(m_Trace, callPositions, pendingReturnPositions, stmtsOutsideOfLoop);
-		LBool sat = m_SmtManager.getScript().checkSat();
-		// Report benchmarks
-		m_Tcbg.reportnewCheckSat();
-		m_Tcbg.reportnewAssertedCodeBlocks(stmtsOutsideOfLoop.size());
-		if (sat == LBool.UNSAT) {
-			return sat;
-		}
-		List<Map.Entry<Integer, Integer>> parts = getPartitionsOfStatements(new ArrayList<Integer>(loopProgramPoints));
-		// Treat every part of the partition as a loop, and call this method recursively with this part.
-		for (Map.Entry<Integer, Integer> p : parts) {
-			if (p.getKey() + 1 >= p.getValue() - 1) {
-				loopProgramPoints = new TreeSet<Integer>();
-			} else {
-				loopProgramPoints = getPositionsOfLoopStatements(trace, p.getKey() + 1, p.getValue() - 1);
+
+	private LBool annotateAndAssertStmtsAccording4Heuristic(
+			NestedWord<CodeBlock> trace, Collection<Integer> callPositions,
+			Collection<Integer> pendingReturnPositions,
+			Map<Integer, Set<Integer>> depth2Statements) {
+		List<Integer> keysInDescendingOrder = new ArrayList<Integer>(depth2Statements.keySet()); 
+		Collections.sort(keysInDescendingOrder, new Comparator<Integer>() {
+			@Override
+			public int compare(Integer i1, Integer i2) {
+				return i2.compareTo(i1);
 			}
-			Set<Integer> stmtsWithinThisPart = getSetOfIntegerForGivenInterval(p.getKey(), p.getValue());
-			sat = annotateAndAssertStmtsAccording3Heuristic(trace, stmtsWithinThisPart, loopProgramPoints, callPositions, pendingReturnPositions);
+		});
+		LBool sat = null;
+		for (Integer key : keysInDescendingOrder) {
+			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, depth2Statements.get(key));
+			sat = m_SmtManager.getScript().checkSat();
+			// Report benchmarks
+			m_Tcbg.reportnewCheckSat();
+			m_Tcbg.reportnewAssertedCodeBlocks(depth2Statements.get(key).size());
 			if (sat == LBool.UNSAT) {
 				return sat;
 			}
 		}
 		return sat;
 	}
+
+	private RelationWithTreeSet<ProgramPoint, Integer> computeRelationWithTreeSetForTrace(
+			int lowerIndex, int upperIndex,
+			List<ProgramPoint> pps) {
+		RelationWithTreeSet<ProgramPoint, Integer> rwt = new RelationWithTreeSet<ProgramPoint, Integer>();
+		for (int i = lowerIndex; i <= upperIndex; i++) {
+			rwt.addPair(pps.get(i), i);
+		}
+		return rwt;
+	}
+
+	private LBool annotateAndAssertStmtsAccording3Heuristic(NestedWord<CodeBlock> trace,
+			Collection<Integer> callPositions,
+			Collection<Integer> pendingReturnPositions,
+			Map<Integer, Set<Integer>> depth2Statements
+			) {
+		List<Integer> keysInSortedOrder = new ArrayList<Integer>(depth2Statements.keySet()); 
+		Collections.sort(keysInSortedOrder);
+		LBool sat = null;
+		for (Integer key : keysInSortedOrder) {
+			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, depth2Statements.get(key));
+			sat = m_SmtManager.getScript().checkSat();
+			// Report benchmarks
+			m_Tcbg.reportnewCheckSat();
+			m_Tcbg.reportnewAssertedCodeBlocks(depth2Statements.get(key).size());
+			if (sat == LBool.UNSAT) {
+				return sat;
+			}
+		}
+		return sat;
+	}
+	
+//	private LBool annotateAndAssertStmtsAccording3Heuristic(NestedWord<CodeBlock> trace,
+//			Set<Integer> unassertedStmts, TreeSet<Integer> loopProgramPoints,
+//			Collection<Integer> callPositions,
+//			Collection<Integer> pendingReturnPositions,
+//			RelationWithTreeSet<ProgramPoint, Integer> rwt,
+//			List<ProgramPoint> pps
+//			) {
+//		Set<Integer> stmtsWithinLoop = null;
+//		if (loopProgramPoints.isEmpty()) {
+//			stmtsWithinLoop = new HashSet<Integer>();
+//		} else {
+//			stmtsWithinLoop = getSetOfIntegerForGivenInterval(loopProgramPoints.first(), loopProgramPoints.last());
+//		}
+//		Set<Integer> stmtsOutsideOfLoop = integerSetDifference(unassertedStmts, stmtsWithinLoop);
+//		
+//		// Annotate and assert the statements which don't occur inside or in-between the @param loopProgramPoints 
+//		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, stmtsOutsideOfLoop);
+//		LBool sat = m_SmtManager.getScript().checkSat();
+//		// Report benchmarks
+//		m_Tcbg.reportnewCheckSat();
+//		m_Tcbg.reportnewAssertedCodeBlocks(stmtsOutsideOfLoop.size());
+//		if (sat == LBool.UNSAT) {
+//			return sat;
+//		}
+//		unassertedStmts = integerSetDifference(unassertedStmts, stmtsOutsideOfLoop);
+//		List<Map.Entry<Integer, Integer>> parts = getPartitionsOfStatements(new ArrayList<Integer>(loopProgramPoints));
+//		while (true) {
+//			loopProgramPoints = new TreeSet<Integer>();
+//			for (int i = 0; i < parts.size(); i++) {
+//				Set<Integer> stmtsToAssert = new HashSet<Integer>();
+//				Map.Entry<Integer, Integer> currentPart = parts.get(i);
+//				loopProgramPoints.addAll(getPositionsOfLoopStatements(trace, currentPart.getKey() + 1, currentPart.getValue()-1, rwt));
+//				
+//				// If it is not the last part, then add both the start and the end value of the
+//				// current part to stmtsToAssert
+//				if (i < parts.size() - 1) {
+//					stmtsToAssert.add(currentPart.getKey());
+//					stmtsToAssert.add(currentPart.getValue());
+//				} 
+//				// Add statements from within the current part, if they are no loop statements
+////				stmtsToAssert.addAll(getPositionsOfSingleStatementsFromPart(currentPart.getKey(), currentPart.getValue(), rwt));
+//				Set<Integer> singleStmts = getPositionsOfSingleStatementsFromPart(currentPart.getKey()+1, currentPart.getValue()-1, 
+//						rwt, pps);
+//				if (singleStmts.isEmpty() && loopProgramPoints.isEmpty()) {
+//					singleStmts.addAll(getSetOfIntegerForGivenInterval(currentPart.getKey(), currentPart.getValue()));
+//				} else if (!loopProgramPoints.isEmpty()) {
+//					stmtsToAssert.add(currentPart.getKey());
+//					stmtsToAssert.add(loopProgramPoints.last());
+//				} 
+//				stmtsToAssert.addAll(singleStmts);
+//				// Make sure, that no statements will be asserted more times
+//				stmtsToAssert.retainAll(unassertedStmts);
+//				if (!stmtsToAssert.isEmpty()) {
+//					buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, stmtsToAssert);
+//					sat = m_SmtManager.getScript().checkSat();
+//					// Report benchmarks
+//					m_Tcbg.reportnewCheckSat();
+//					m_Tcbg.reportnewAssertedCodeBlocks(stmtsToAssert.size());
+//					if (sat == LBool.UNSAT) {
+//						return sat;
+//					}
+//				}
+//				// If all stmts have been asserted, then return
+//				unassertedStmts = integerSetDifference(unassertedStmts, stmtsToAssert);
+//			}
+//			
+//			if (unassertedStmts.isEmpty()) {
+//				return sat;
+//			}
+//			// Otherwise:
+//			parts = getPartitionsOfStatements(new ArrayList<Integer>(loopProgramPoints));
+//		}
+//	}
+	
+	private TreeSet<Integer> getIntersectionSet_vs_Interval(Set<Integer> s, int lowerIndex, int upperIndex) {
+		TreeSet<Integer> result = new TreeSet<Integer>();
+		for (Integer i : s) {
+			if (i >= lowerIndex && i <= upperIndex) {
+				result .add(i);
+			}
+		}
+		return result;
+	}
+	
+	private Set<Integer> getPositionsOfSingleStatementsFromPart(int lowerIndex, int upperIndex, 
+			RelationWithTreeSet<ProgramPoint, Integer> rwt,
+			List<ProgramPoint> pps) {
+		Set<Integer> result = new HashSet<Integer>();
+		if (lowerIndex > upperIndex) {
+			return new HashSet<Integer>();
+		} else if (lowerIndex == upperIndex) {
+			result.add(lowerIndex);
+			return result;
+		}
+		
+		for (int i = lowerIndex; i <= upperIndex; i++) {
+			if (rwt.getImage(pps.get(i)).size() >= 1) {
+				Set<Integer> tempResult = getIntersectionSet_vs_Interval(rwt.getImage(pps.get(i)), lowerIndex, upperIndex);
+				if (tempResult.size() == 1) {
+					result.addAll(tempResult);
+				}
+				TreeSet<Integer> loopPositionsAsTreeSet = (TreeSet<Integer>) rwt.getImage(pps.get(i));
+				if (loopPositionsAsTreeSet.first() == lowerIndex && loopPositionsAsTreeSet.last() == upperIndex) {
+					break;
+				}
+				
+			} 
+		}
+		return result;
+	}
+	
+	
 	
 	/**
 	 * Annotate and assert every statement <i>i</i> from the given trace, such that
