@@ -980,11 +980,11 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		private final ReachProp m_rpSomeDown;
 		/**
 		 * Property stating that from this DoubleDecker precious states are
-		 * reachable (infinitely often).
+		 * reachable (resp reachable infinitely often).
 		 */
 		private final DownStateProp m_DspReachPrecious;
 		/**
-		 * Property stating that from this DoubleDecker is reachable after
+		 * Property stating that this DoubleDecker is reachable after
 		 * removal of states.
 		 */
 		private final DownStateProp m_DspReachableAfterRemoval;
@@ -1424,7 +1424,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		/**
 		 * returns all triples (up,down,entry) such that from the DoubleDecker
 		 * (up,down) the starting states of this ancestor computation (e.g., 
-		 * final states in dead end computation) is reachalbe.
+		 * final states in dead end computation) is reachable.
 		 * This is a workaround to maintain backward compatibility. In the 
 		 * future we return triples reachable in resulting automaton.
 		 * @return
