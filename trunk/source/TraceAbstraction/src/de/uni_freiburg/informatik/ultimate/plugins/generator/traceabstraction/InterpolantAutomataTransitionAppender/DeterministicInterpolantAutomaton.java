@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Term
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.DivisibilityPredicateGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -54,6 +56,7 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 	 */
 	private boolean m_Cannibalize = false;
 	private boolean m_SplitNumericEqualities = true;
+	private boolean m_DivisibilityPredicates = false;
 	
 
 	
@@ -76,6 +79,18 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 		} else {
 			allPredicates = interpolantAutomaton.getStates(); 
 		}
+		if (m_DivisibilityPredicates) {
+			allPredicates = new ArrayList<IPredicate>(allPredicates);
+			DivisibilityPredicateGenerator dpg = new DivisibilityPredicateGenerator(m_SmtManager, m_PredicateUnifier);
+			Collection<IPredicate> divPreds = dpg.divisibilityPredicates(allPredicates);
+			allPredicates.addAll(divPreds);
+			for (IPredicate pred : divPreds) {
+				if (!interpolantAutomaton.getStates().contains(pred)) {
+					interpolantAutomaton.addState(false, false, pred);
+				}
+			}
+		}
+		
 		m_IaTrueState = traceChecker.getPrecondition();
 		assert m_IaTrueState.getFormula().toString().equals("true");
 		assert allPredicates.contains(m_IaTrueState);
