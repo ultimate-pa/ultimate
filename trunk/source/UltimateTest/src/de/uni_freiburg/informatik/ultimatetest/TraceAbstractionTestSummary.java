@@ -18,12 +18,12 @@ public class TraceAbstractionTestSummary extends TestSummary {
 	/**
 	 * A map from file names to benchmark results.
 	 */
-	private Map<String, Collection<BenchmarkResult>> m_TraceAbstractionBenchmarks;
+	private Map<UltimateRunDefinition, Collection<BenchmarkResult>> m_TraceAbstractionBenchmarks;
 
 	public TraceAbstractionTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);
 		mCount = 0;
-		m_TraceAbstractionBenchmarks = new HashMap<String, Collection<BenchmarkResult>>();
+		m_TraceAbstractionBenchmarks = new HashMap<UltimateRunDefinition, Collection<BenchmarkResult>>();
 	}
 	
 	@Override
@@ -40,14 +40,14 @@ public class TraceAbstractionTestSummary extends TestSummary {
 	public void addResult(TestResult threeValuedResult, String category, UltimateRunDefinition ultimateRunDefinition, String message, IResultService resultService) {
 		super.addResult(threeValuedResult, category, ultimateRunDefinition, message, resultService);
 
-			addTraceAbstractionBenchmarks(ultimateRunDefinition.getInput().getAbsolutePath(), Util.filterResults(
+			addTraceAbstractionBenchmarks(ultimateRunDefinition, Util.filterResults(
 					resultService.getResults(), BenchmarkResult.class));
 
 	}
 
-	public void addTraceAbstractionBenchmarks(String filename, Collection<BenchmarkResult> benchmarkResults) {
-		assert !m_TraceAbstractionBenchmarks.containsKey(filename) : "benchmarks already added";
-		m_TraceAbstractionBenchmarks.put(filename, benchmarkResults);
+	public void addTraceAbstractionBenchmarks(UltimateRunDefinition ultimateRunDefinition, Collection<BenchmarkResult> benchmarkResults) {
+		assert !m_TraceAbstractionBenchmarks.containsKey(ultimateRunDefinition) : "benchmarks already added";
+		m_TraceAbstractionBenchmarks.put(ultimateRunDefinition, benchmarkResults);
 	}
 
 	@Override
