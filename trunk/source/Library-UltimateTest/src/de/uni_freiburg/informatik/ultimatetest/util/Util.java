@@ -17,8 +17,10 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.SafetyCheckerOverallResult;
 import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.TerminationAnalysisOverallResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
@@ -452,6 +454,33 @@ public class Util {
 			}
 		}
 		return filteredList;
+	}
+	
+	/**
+	 * Returns all ICsvProviderProvider of class benchmarkClass that are stored
+	 * in the BenchmarkResults benchmarkResults.
+	 */
+	@SuppressWarnings("rawtypes")
+	private static <E extends ICsvProviderProvider> Collection<E> filterBenchmarks(Collection<BenchmarkResult> benchmarkResults, Class<E> benchmarkClass) {
+		ArrayList<E> filteredList = new ArrayList<E>();
+		for (BenchmarkResult<?> benchmarkResult : benchmarkResults) {
+			@SuppressWarnings("unchecked")
+			E benchmark = (E) benchmarkResult.getBenchmark();
+			if (benchmark.getClass().isAssignableFrom(benchmarkClass)) {
+				filteredList.add(benchmark);
+			}
+		}
+		return filteredList;
+	}
+
+	/**
+	 * Returns all ICsvProviderProvider of class benchmarkClass that are stored
+	 * in the BenchmarkResults of ultimateIResults.
+	 */
+	@SuppressWarnings("rawtypes")
+	public static <E extends ICsvProviderProvider<?>> Collection<E> filterBenchmarks(Map<String,List<IResult>> ultimateIResults, Class<E> benchmarkClass) {
+		Collection<BenchmarkResult> benchmarks = filterResults(ultimateIResults, BenchmarkResult.class);
+		return filterBenchmarks(benchmarks, benchmarkClass);
 	}
 
 	/**

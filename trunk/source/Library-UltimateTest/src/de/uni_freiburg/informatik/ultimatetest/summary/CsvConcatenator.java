@@ -71,16 +71,11 @@ public class CsvConcatenator implements ITestSummary {
 	public void addResult(TestResult threeValuedResult, String category,
 			UltimateRunDefinition ultimateRunDefinition, String message,
 			IResultService resultService) {
-		
-		for (IResult result : Util.filterResults(resultService.getResults(), BenchmarkResult.class)) {
-			BenchmarkResult<Object> benchmarkResult = (BenchmarkResult<Object>) result;
-			ICsvProviderProvider<Object> benchmark = benchmarkResult.getBenchmark();
-			if (m_Benchmark.isAssignableFrom(benchmark.getClass())) {
-				ICsvProvider<Object> benchmarkCsv = (ICsvProvider<Object>) benchmark.createCvsProvider();
-				ICsvProvider<Object> benchmarkCsvWithRunDefinition = addUltimateRunDefinition(ultimateRunDefinition,
-						benchmarkCsv, category, message);
-				add(benchmarkCsvWithRunDefinition);
-			}
+		for (ICsvProviderProvider<Object> benchmarkResult : Util.filterBenchmarks(resultService.getResults(), m_Benchmark)) {
+			ICsvProvider<Object> benchmarkCsv = benchmarkResult.createCvsProvider();
+			ICsvProvider<Object> benchmarkCsvWithRunDefinition = addUltimateRunDefinition(ultimateRunDefinition,
+					benchmarkCsv, category, message);
+			add(benchmarkCsvWithRunDefinition);
 		}
 	}
 	
