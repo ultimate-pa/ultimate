@@ -144,7 +144,7 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 		// does not hold. Old non-live removal has bugs, see 'removeNonLive-Bug05.ats' example
 //		correct &= ResultChecker.isSubset(rscStates,rsaStates);
 //		assert correct;
-		for (STATE state : reachalbeStatesCopy.getStates()) {
+		for (STATE state : m_Result.getStates()) {
 			for (OutgoingInternalTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.internalSuccessors(state)) {
 				correct &= m_Reach.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
