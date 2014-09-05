@@ -18,15 +18,17 @@ public class ForwardBackwardTest extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Directories = {
 		"examples/programs/regression",
-		"examples/programs/quantifier",
+//		"examples/programs/quantifier",
 		"examples/programs/recursivePrograms",
 		"examples/programs/toy"
 	};
 	
 	private static final boolean m_TraceAbstractionBoogieWithBackwardPredicates = !true;
 	private static final boolean m_TraceAbstractionBoogieWithForwardPredicates = !true;
-	private static final boolean m_TraceAbstractionCWithBackwardPredicates = true;
-	private static final boolean m_TraceAbstractionCWithForwardPredicates = true;		
+	private static final boolean m_TraceAbstractionBoogieWithFPandBP = true;
+	private static final boolean m_TraceAbstractionCWithBackwardPredicates = !true;
+	private static final boolean m_TraceAbstractionCWithForwardPredicates = !true;		
+	private static final boolean m_TraceAbstractionCWithFPandBP = true;
 	// Time out for each test case in milliseconds
 	private final static int m_Timeout = 10000;
 	
@@ -38,8 +40,6 @@ public class ForwardBackwardTest extends
 					"automizer/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
-//				    "Trace Abstraction",
-//				    "BoogieFilesForwardPredicates",
 				    m_Timeout);
 		} 
 		if (m_TraceAbstractionBoogieWithBackwardPredicates) {
@@ -48,8 +48,14 @@ public class ForwardBackwardTest extends
 					"automizer/BackwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
-//				    "Trace Abstraction",
-//				    "BoogieFilesBackwardPredicates",
+				    m_Timeout);
+		}
+		if (m_TraceAbstractionBoogieWithFPandBP) {
+			addTestCases(
+					"AutomizerBpl.xml",
+					"automizer/ForwardPredicatesAndBackwardPredicates.epf",
+				    m_Directories,
+				    new String[] {".bpl"},
 				    m_Timeout);
 		}
 		if (m_TraceAbstractionCWithForwardPredicates) {
@@ -58,8 +64,6 @@ public class ForwardBackwardTest extends
 					"automizer/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-//				    "Trace Abstraction",
-//				    "CFilesForwardPredicates",
 				    m_Timeout);
 		}
 		if (m_TraceAbstractionCWithBackwardPredicates) {
@@ -68,8 +72,14 @@ public class ForwardBackwardTest extends
 					"automizer/BackwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-//				    "Trace Abstraction",
-//				    "CFilesBackwardPredicates",
+				    m_Timeout);
+		}
+		if (m_TraceAbstractionCWithFPandBP) {
+			addTestCases(
+					"AutomizerC.xml",
+					"automizer/ForwardPredicatesAndBackwardPredicates.epf",
+				    m_Directories,
+				    new String[] {".c", ".i"},
 				    m_Timeout);
 		}
 		return super.createTestCases();
