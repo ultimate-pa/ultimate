@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
@@ -178,12 +179,13 @@ public class TraceCheckerSpWp extends TraceChecker {
 	 * @param call_pos
 	 * @return
 	 */
-	private TransFormula computeProcedureSummary(NestedWord<CodeBlock> trace, TransFormula Call, TransFormula Return,
+	private ProcedureSummary computeProcedureSummary(NestedWord<CodeBlock> trace, TransFormula Call, TransFormula Return,
 			TransFormula oldVarsAssignment, RelevantTransFormulas rv, int call_pos, int return_pos) {
 		TransFormula summaryOfInnerStatements = computeSummaryForInterproceduralTrace(trace, rv, call_pos + 1,
 				return_pos);
-		return TransFormula.sequentialCompositionWithCallAndReturn(m_SmtManager.getBoogie2Smt(), true, false,
+		TransFormula summaryWithCallAndReturn = TransFormula.sequentialCompositionWithCallAndReturn(m_SmtManager.getBoogie2Smt(), true, false,
 				s_TransformToCNF, Call, oldVarsAssignment, summaryOfInnerStatements, Return, mLogger, mServices);
+		return new ProcedureSummary(summaryWithCallAndReturn, summaryOfInnerStatements);
 	}
 
 	/**
@@ -608,6 +610,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					TransFormula oldVarAssignments = null;
 					TransFormula callTF = null;
 					IPredicate callerPred = null;
+					Set<BoogieVar> varsOccurringBetweenCallAndReturn = null;
 					if (trace.isPendingReturn(i)) {
 						callerPred = m_PendingContexts.get(new Integer(i));
 						// we may get the local variable assignment (pending
@@ -623,10 +626,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 						globalVarsAssignments = rv.getGlobalVarAssignment(call_pos);
 						oldVarAssignments = rv.getOldVarAssignment(call_pos);
 						// TODO: Documentation!
-						TransFormula summary = computeProcedureSummary(trace, callTF,
+						ProcedureSummary summary = computeProcedureSummary(trace, callTF,
 								rv.getFormulaFromNonCallPos(i + 1), oldVarAssignments, rv, call_pos, i + 1);
+						varsOccurringBetweenCallAndReturn = summary.computeVariableInInnerSummary();
 						callerPred = m_PredicateTransformer.weakestPrecondition(
-								getBackwardPredicateAtPosition(i + 1, tracePostcondition, true), summary);
+								getBackwardPredicateAtPosition(i + 1, tracePostcondition, true), summary.getWithCallAndReturn());
 						callerPredicatesComputed.put(
 								call_pos,
 								m_PredicateUnifier.getOrConstructPredicate(callerPred.getFormula(),
@@ -640,7 +644,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 							globalVarsAssignments,
 							oldVarAssignments,
 							m_ModifiedGlobals.getModifiedBoogieVars(((Return) trace.getSymbol(i + 1))
-									.getCorrespondingCall().getCallStatement().getMethodName()));
+									.getCorrespondingCall().getCallStatement().getMethodName()),
+							varsOccurringBetweenCallAndReturn);
 					m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(wp.getFormula(), wp.getVars(),
 							wp.getProcedures());
 
@@ -668,6 +673,110 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 		}
 
+	}
+	
+	private class ProcedureSummary {
+		private final TransFormula m_WithCallAndReturn;
+		private final TransFormula m_WithoutCallAndReturn;
+		
+		
+		
+		public ProcedureSummary(TransFormula withCallAndReturn,
+				TransFormula withoutCallAndReturn) {
+			super();
+			m_WithCallAndReturn = withCallAndReturn;
+			m_WithoutCallAndReturn = withoutCallAndReturn;
+		}
+
+
+
+		public TransFormula getWithCallAndReturn() {
+			return m_WithCallAndReturn;
+		}
+
+
+
+		public TransFormula getWithoutCallAndReturn() {
+			return m_WithoutCallAndReturn;
+		}
+
+
+
+		/**
+		 * Returns a set that contains all variables that occur in the 
+		 * summary without call and return.
+		 */
+		public Set<BoogieVar> computeVariableInInnerSummary() {
+			return new Set<BoogieVar>() {
+
+				@Override
+				public boolean add(BoogieVar e) {
+					throw new UnsupportedOperationException();
+				}
+
+				@Override
+				public boolean addAll(Collection<? extends BoogieVar> c) {
+					throw new UnsupportedOperationException();
+				}
+
+				@Override
+				public void clear() {
+					throw new UnsupportedOperationException();
+				}
+
+				@Override
+				public boolean contains(Object o) {
+					return m_WithoutCallAndReturn.getInVars().containsKey(o) || 
+							m_WithoutCallAndReturn.getOutVars().containsKey(o);
+				}
+
+				@Override
+				public boolean containsAll(Collection<?> c) {
+					throw new UnsupportedOperationException();
+				}
+
+				@Override
+				public boolean isEmpty() {
+					throw new UnsupportedOperationException();
+				}
+
+				@Override
+				public Iterator<BoogieVar> iterator() {
+					throw new UnsupportedOperationException();
+				}
+
+				@Override
+				public boolean remove(Object o) {
+					throw new UnsupportedOperationException();
+				}
+
+				@Override
+				public boolean removeAll(Collection<?> c) {
+					throw new UnsupportedOperationException();
+				}
+
+				@Override
+				public boolean retainAll(Collection<?> c) {
+					throw new UnsupportedOperationException();
+				}
+
+				@Override
+				public int size() {
+					throw new UnsupportedOperationException();
+				}
+
+				@Override
+				public Object[] toArray() {
+					throw new UnsupportedOperationException();
+				}
+
+				@Override
+				public <T> T[] toArray(T[] a) {
+					throw new UnsupportedOperationException();
+				}
+			};
+		}
+		
 	}
 
 	/***

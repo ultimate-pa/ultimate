@@ -627,11 +627,12 @@ public class PredicateTransformer {
 	 * variables and their occurrence in the caller predicate is substituted by
 	 * the same fresh variables. InVars of returnTF are renamed to
 	 * representatives, their occurrence in ..
+	 * @param varsOccurringBetweenCallAndReturn 
 	 * 
 	 */
 	public IPredicate weakestPrecondition(IPredicate returnerPred, IPredicate callerPred, TransFormula returnTF,
 			TransFormula callTF, TransFormula globalVarsAssignments, TransFormula oldVarAssignments,
-			Set<BoogieVar> modifiableGlobals) {
+			Set<BoogieVar> modifiableGlobals, Set<BoogieVar> varsOccurringBetweenCallAndReturn) {
 
 		Map<TermVariable, Term> varsToRenameInCallerAndReturnPred = new HashMap<TermVariable, Term>();
 		Map<TermVariable, Term> varsToRenameInReturnPred = new HashMap<TermVariable, Term>();
@@ -789,7 +790,7 @@ public class PredicateTransformer {
 				}
 			} else {
 				// 3.case: bv is a global var
-				if (modifiableGlobals.contains(bv) || !returnerPred.getVars().contains(bv)) {
+				if (modifiableGlobals.contains(bv) || varOccursBetweenCallAndReturn(varsOccurringBetweenCallAndReturn, bv)) {
 					if (!varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
 						TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
 						varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
@@ -817,6 +818,24 @@ public class PredicateTransformer {
 		Term result = Util.or(m_Script, Util.not(m_Script, callerPredANDCallANDReturnAndGlobalVars), returnPredRenamed);
 		return m_SmtManager.constructPredicate(result, Script.FORALL, varsToQuantify);
 	}
+	
+
+	/**
+	 * return true if varsOccurringBetweenCallAndReturn contains bv or 
+	 * varsOccurringBetweenCallAndReturn is null (which means that the return
+	 * is a pending return and possibly all vars may occur before return)
+	 * @param bv
+	 * @return
+	 */
+	private boolean varOccursBetweenCallAndReturn(
+			Set<BoogieVar> varsOccurringBetweenCallAndReturn, BoogieVar bv) {
+		if (varsOccurringBetweenCallAndReturn == null) {
+			return true;
+		} else {
+			return varsOccurringBetweenCallAndReturn.contains(bv);
+		}
+	}
+
 
 	private enum GlobalType {
 		OLDVAR, NONOLDVAR
