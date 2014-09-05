@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -1225,8 +1226,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		 * This method marks all these DoubleDeckers with m_DspReachableAfterRemoval 
 		 */
 		public void propagateReachableAfterRemovalDoubleDeckers() {
-			ArrayDeque<StateContainer<LETTER,STATE>> propagationWorklist =
-					new ArrayDeque<StateContainer<LETTER,STATE>>();
+			LinkedHashSet<StateContainer<LETTER,STATE>> propagationWorklist =
+					new LinkedHashSet<StateContainer<LETTER,STATE>>();
 			Set<StateContainer<LETTER,STATE>> visited = new HashSet<>();
 
 			// start only at states that are still initial after removal
@@ -1239,7 +1240,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 			
 			while (!propagationWorklist.isEmpty()) {
-				StateContainer<LETTER, STATE> cont = propagationWorklist.removeFirst();
+				StateContainer<LETTER, STATE> cont = propagationWorklist.iterator().next();
+				propagationWorklist.remove(cont);
 				for (OutgoingInternalTransition<LETTER, STATE> inTrans : cont
 						.internalSuccessors()) {
 					STATE succ = inTrans.getSucc();
@@ -1248,12 +1250,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 						continue;
 					}
 					StateContainer<LETTER,STATE> succCont = m_States.get(succ);
-					boolean alreadyVisited = 
-							addToWorklistIfNotAlreadyVisited(propagationWorklist, visited,
-							succCont);
-					if (!alreadyVisited) {
-						propagateReachableAfterRemovalProperty(cont, succCont);
-					}
+					boolean modified = propagateReachableAfterRemovalProperty(cont, succCont);
+					addToWorklistIfModfiedOrNotVisited(propagationWorklist, visited, modified, succCont);
 				}
 				for (SummaryReturnTransition<LETTER, STATE> inTrans : returnSummarySuccessor(cont.getState())) {
 					STATE succ = inTrans.getSucc();
@@ -1261,14 +1259,15 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 						// succ will be removed
 						continue;
 					}
+					STATE lin = inTrans.getLinPred();
+					if (!m_Ancestors.contains(lin)){
+						// linear predecessor will be removed
+						continue;
+					}
 
 					StateContainer<LETTER,STATE> succCont = m_States.get(succ);
-					boolean alreadyVisited = 
-							addToWorklistIfNotAlreadyVisited(propagationWorklist, visited,
-							succCont);
-					if (!alreadyVisited) {
-						propagateReachableAfterRemovalProperty(cont, succCont);
-					}
+					boolean modified = propagateReachableAfterRemovalProperty(cont, succCont);
+					addToWorklistIfModfiedOrNotVisited(propagationWorklist, visited, modified, succCont);
 				}
 				for (OutgoingCallTransition<LETTER, STATE> inTrans : cont.callSuccessors()) {
 					STATE succ = inTrans.getSucc();
@@ -1278,18 +1277,33 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					}
 
 					StateContainer<LETTER,STATE> succCont = m_States.get(succ);
-					addToWorklistIfNotAlreadyVisited(propagationWorklist, visited,
-							succCont);
+					boolean modified = false;
+					addToWorklistIfModfiedOrNotVisited(propagationWorklist, visited, modified, succCont);
 				}
 			}
 		}
 
 
-		private void propagateReachableAfterRemovalProperty(
+		private void addToWorklistIfModfiedOrNotVisited(
+				LinkedHashSet<StateContainer<LETTER, STATE>> propagationWorklist,
+				Set<StateContainer<LETTER, STATE>> visited, boolean modified,
+				StateContainer<LETTER, STATE> succCont) {
+			if (modified || !visited.contains(succCont)) {
+				propagationWorklist.add(succCont);
+				visited.add(succCont);
+			}
+		}
+
+
+		/**
+		 * Returns true if property was modified. 
+		 */
+		private boolean propagateReachableAfterRemovalProperty(
 				StateContainer<LETTER, STATE> cont,
 				StateContainer<LETTER, STATE> succCont) throws AssertionError {
+			boolean modified = false;
 			if (succCont.getReachProp() == m_rpAllDown) {
-				return;
+				// do nothing
 			} else if (succCont.getReachProp() == m_rpSomeDown) {
 				for (STATE down : succCont.getDownStates().keySet()) {
 					if (succCont.hasDownProp(down, m_DspReachPrecious) || succCont.hasDownProp(down, m_DspReachableAfterRemoval)) {
@@ -1298,10 +1312,15 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 						// check if we can propagate some down state
 						if (cont.getDownStates().containsKey(down)) {
 							if (cont.getReachProp() == m_rpAllDown) {
-								succCont.setDownProp(down, m_DspReachableAfterRemoval);
+								boolean alreadySet = succCont.setDownProp(down, m_DspReachableAfterRemoval);
+								modified |= !alreadySet;
 							} else {
 								if (cont.hasDownProp(down, m_DspReachPrecious) || cont.hasDownProp(down, m_DspReachableAfterRemoval)) {
-									succCont.setDownProp(down, m_DspReachableAfterRemoval);
+									boolean alreadySet = succCont.setDownProp(down, m_DspReachableAfterRemoval);
+									modified |= !alreadySet;
+								} else {
+									// DoubleDecker (cont,down) has neither
+									// m_DspReachPrecious nor m_DspReachableAfterRemoval property
 								}
 							}
 							
@@ -1311,20 +1330,21 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			} else {
 				throw new AssertionError("succ will be removed");
 			}
+			return modified;
 		}
 
 
-		private boolean addToWorklistIfNotAlreadyVisited(
-				ArrayDeque<StateContainer<LETTER, STATE>> propagationWorklist,
-				Set<StateContainer<LETTER, STATE>> visited,
-				StateContainer<LETTER, STATE> succCont) {
-			boolean alreadyVisited = visited.contains(succCont);
-			if (!alreadyVisited) {
-				propagationWorklist.add(succCont);
-				visited.add(succCont);
-			}
-			return alreadyVisited;
-		}
+//		private void addToWorklistIfNotAlreadyVisited(
+//				ArrayDeque<StateContainer<LETTER, STATE>> propagationWorklist,
+//				Set<StateContainer<LETTER, STATE>> visited,
+//				StateContainer<LETTER, STATE> succCont) {
+//			boolean alreadyVisited = visited.contains(succCont);
+//			if (!alreadyVisited) {
+//				propagationWorklist.add(succCont);
+//				visited.add(succCont);
+//			}
+////			return alreadyVisited;
+//		}
 		
 		
 		
