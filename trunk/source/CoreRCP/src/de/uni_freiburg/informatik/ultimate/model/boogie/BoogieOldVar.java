@@ -16,7 +16,7 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable {
 
 	private static final long serialVersionUID = 103072739646531062L;
 	
-	private BoogieVar m_NonOldVar;
+	private BoogieNonOldVar m_NonOldVar;
 	
 	private final int m_HashCode;
 
@@ -35,7 +35,7 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable {
 	}
 
 	
-	public BoogieVar getNonOldVar() {
+	public BoogieNonOldVar getNonOldVar() {
 		return m_NonOldVar;
 	}
 
