@@ -112,17 +112,18 @@ public abstract class Xnf extends Nnf {
 		 * Additional Optimization:
 		 * In a preprocessing step, we check if the singleton {inputInner} is
 		 * already an element of resOuter Set. If this is the case we do not
-		 * add anything.
+		 * add anything and remove all sets from resOutSet but {inputInner}.
 		 * This optimization (in terms of CNF) corresponds to the fact
 		 * that
 		 * (A /\ (B_1 \/ B2) /\ (C_1 \/ C2))  \/ A
 		 * and 
-		 * (A /\ (B_1 \/ B2) /\ (C_1 \/ C2))
+		 * A
 		 * are equivalent.
 		 */
 		private void product(HashSet<Set<Term>> resOuterSet, Term inputInner) {
-			if (resOuterSet.contains(Collections.singleton(inputInner))) {
-				// do nothing
+			Set<Term> singleton = Collections.singleton(inputInner);
+			if (resOuterSet.contains(singleton)) {
+				resOuterSet.retainAll(Collections.singleton(singleton));
 			} else {
 				for (Set<Term> outer : resOuterSet) {
 					// for efficiency we reuse the old set in this case
