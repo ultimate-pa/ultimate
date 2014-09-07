@@ -55,7 +55,7 @@ public class Nnf {
 				result = m_Script.quantifier(quantor, variables, result);
 			}
 		}
-		assert (Util.checkSat(m_Script, m_Script.term("distinct", term, result)) != LBool.SAT);
+		assert (Util.checkSat(m_Script, m_Script.term("distinct", term, result)) != LBool.SAT) : "Nnf transformation unsound";
 		m_QuantifiedVariables = null;
 		return result;
 	}
