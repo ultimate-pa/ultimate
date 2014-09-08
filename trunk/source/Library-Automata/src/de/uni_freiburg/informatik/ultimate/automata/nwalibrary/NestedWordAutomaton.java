@@ -336,8 +336,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 		return result == null ? m_EmptySetOfStates : result;
 	}
 
-	@Override
-	public Set<STATE> predReturnLin(STATE state, LETTER letter, STATE hier) {
+	private Set<STATE> predReturnLin(STATE state, LETTER letter, STATE hier) {
 		assert contains(state);
 		assert contains(hier);
 		Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2preds = m_ReturnIn.get(state);
@@ -352,8 +351,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 		return result == null ? m_EmptySetOfStates : result;
 	}
 
-	@Override
-	public Set<STATE> predReturnHier(STATE state, LETTER letter) {
+	private Set<STATE> predReturnHier(STATE state, LETTER letter) {
 		assert contains(state);
 		Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2preds = m_ReturnIn.get(state);
 		if (letter2hier2preds == null) {

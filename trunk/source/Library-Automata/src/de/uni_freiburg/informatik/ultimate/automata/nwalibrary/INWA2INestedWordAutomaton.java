@@ -325,19 +325,6 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 	}
 
 	@Override
-	public Iterable<STATE> predReturnLin(STATE state, LETTER letter, STATE hier) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Iterable<STATE> predReturnHier(STATE state, LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	@Override
 	public boolean finalIsTrap() {
 		throw new UnsupportedOperationException();
 	}

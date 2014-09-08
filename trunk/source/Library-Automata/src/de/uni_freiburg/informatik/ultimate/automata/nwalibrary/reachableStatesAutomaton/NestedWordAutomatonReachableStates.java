@@ -375,16 +375,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	}
 
 	@Override
-	public Iterable<STATE> predReturnLin(STATE state, LETTER letter, STATE hier) {
-		return m_States.get(state).predReturnLin(letter, hier);
-	}
-
-	@Override
-	public Iterable<STATE> predReturnHier(STATE state, LETTER letter) {
-		return m_States.get(state).predReturnHier(letter);
-	}
-
-	@Override
 	public boolean finalIsTrap() {
 		throw new UnsupportedOperationException();
 	}
@@ -2228,15 +2218,11 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					assert result;
 				}
 			}
-			for (LETTER letter : lettersReturnIncoming(state)) {
-				for (STATE hier : predReturnHier(state, letter)) {
-					for (STATE lin : predReturnLin(state, letter, hier)) {
-						result &= containsReturnTransition(lin, hier, letter, state);
-						assert result;
-					}
-				}
+			for (IncomingReturnTransition<LETTER, STATE> inTrans : returnPredecessors(state)) {
+				result &= containsReturnTransition(inTrans.getLinPred(), 
+						inTrans.getHierPred(), inTrans.getLetter(), state);
+				assert result;
 			}
-			
 		}
 
 		return result;

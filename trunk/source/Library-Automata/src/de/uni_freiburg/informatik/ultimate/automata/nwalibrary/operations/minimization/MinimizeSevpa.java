@@ -45,7 +45,9 @@ import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
@@ -70,10 +72,6 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final IDoubleDeckerAutomaton<LETTER, STATE> m_doubleDecker;
 	// new (minimized) automaton
 	private NestedWordAutomaton<LETTER,STATE> m_nwa;
-	// enables/disables detection of unnecessary states
-	private final boolean m_removeUnreachables, m_removeDeadEnds;
-	// indicates if states were removed during preprocessing steps
-	private boolean m_noStatesRemoved;
 	// ID for equivalence classes (inner class, so no static field possible)
 	private static int equivalenceClassId = 0;
 	// Partition of states into equivalence classes
@@ -119,7 +117,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	public MinimizeSevpa(INestedWordAutomatonOldApi<LETTER,STATE> operand)
 			throws OperationCanceledException {
-		this(operand, null, true, false, operand.getStateFactory());
+		this(operand, null, operand.getStateFactory());
 	}
 	
 	/**
@@ -135,8 +133,6 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public MinimizeSevpa(
 			final INestedWordAutomatonOldApi<LETTER,STATE> operand,
 			Collection<Set<STATE>> equivalenceClasses,
-			final boolean removeUnreachables,
-			final boolean removeDeadEnds,
 			StateFactory<STATE> stateFactoryConstruction)
 					throws OperationCanceledException {
 		m_operand = operand;
@@ -147,14 +143,9 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			throw new IllegalArgumentException(
 					"Operand must be an IDoubleDeckerAutomaton.");
 		}
-		m_removeUnreachables = removeUnreachables;
-		m_removeDeadEnds = removeDeadEnds;
 		m_StateFactoryConstruction = stateFactoryConstruction;
 		
-		// if no preprocessing is considered, no states can be removed there
-		m_noStatesRemoved = 
-				! (this.m_removeUnreachables || this.m_removeDeadEnds);
-		
+
 		// must be the last part of the constructor
 		s_Logger.info(startMessage());
 		minimize(equivalenceClasses);
@@ -199,172 +190,16 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		// intermediate container for the states
 		StatesContainer states = new StatesContainer(m_operand);
 		
-		// remove unreachable states
-		if (m_removeUnreachables) {
-			removeUnneccessary(states, true);
-			
-			s_Logger.debug("Size after deleting unreachable states: " +
-					states.size());
-		}
-		
-		// remove dead end states (never lead to final states)
-		if (m_removeDeadEnds) {
-			removeUnneccessary(states, false);
-			
-			s_Logger.debug("Size after deleting dead end states: " +
-					states.size());
-			s_Logger.warn("After some changes by Matthias removal of dead " +
-					"ends might lead to wrong results. Remove dead ends" +
-					"in advance.");
-		}
-		
 		// cancel if signal is received
 		if (! NestedWordAutomata.getMonitor().continueProcessing()) {
 			throw new OperationCanceledException();
 		}
 		
-		// if no states were removed, some methods can be used more efficiently
-		m_noStatesRemoved = (m_operand.size() == states.size());
-		
+	
 		// merge non-distinguishable states
 		m_nwa = mergeStates(states, equivalenceClasses);
 		s_Logger.debug("Size after merging identical states: " +
 				m_nwa.size());
-	}
-	
-	/**
-	 * removes states that are trivially not needed (unreachable or dead end)
-	 * 
-	 * NOTE: removes less states than possible, since unreachable hierarchical
-	 * states are still added, which is much easier to achieve
-	 * 
-	 * @param states container with reachable states
-	 * @param forwards search direction
-	 *  - true: removes all states never reachable
-	 *  - false: removes all states from which a final state is never reached
-	 */
-	private void removeUnneccessary(final StatesContainer states,
-									final boolean forwards) {
-		// expansion list (initialized with either initial or final states)
-		LinkedList<STATE> expand = new LinkedList<STATE>();
-		/*
-		 * already visited states (initialized with expansion list)
-		 * (only used for backwards search)
-		 */
-		HashSet<STATE> visited;
-		
-		/*
-		 * forwards search; starts from initial states
-		 * removes unreachable states
-		 */
-		if (forwards) {
-			visited = null;
-			Collection<STATE> initials = m_operand.getInitialStates();
-			states.addAll(initials);
-			expand.addAll(initials);
-			
-			while (! expand.isEmpty()) {
-				STATE state = expand.pop();
-				
-				// internal transitions
-				for (LETTER letter : m_operand.lettersInternal(state)) {
-					for (STATE next : m_operand.succInternal(state, letter)) {
-						if (! states.contains(next)) {
-							states.addState(next);
-							expand.add(next);
-						}
-					}
-				}
-				
-				// call transitions
-				for (LETTER letter : m_operand.lettersCall(state)) {
-					for (STATE next : m_operand.succCall(state, letter)) {
-						if (! states.contains(next)) {
-							states.addState(next);
-							expand.add(next);
-						}
-					}
-				}
-				
-				// return transitions
-				for (LETTER letter : m_operand.lettersReturn(state)) {
-					for (STATE hier : m_operand.hierPred(state, letter)) {
-						if (! states.contains(hier)) {
-							states.addState(hier);
-							expand.add(hier);
-						}
-						for (STATE next :
-								m_operand.succReturn(state, hier, letter)) {
-							if (! states.contains(next)) {
-								states.addState(next);
-								expand.add(next);
-							}
-						}
-					}
-				}
-			}
-		}
-		/*
-		 * backwards search; starts from reachable final states
-		 * removes dead end states from which no final state is reachable
-		 */
-		else {
-			visited = new HashSet<STATE>(computeHashSetCapacity(states.size()));
-			Iterator<STATE> iterator = states.getFinalsIterator();
-			while (iterator.hasNext()) {
-				STATE state = iterator.next();
-				expand.add(state);
-				visited.add(state);
-			}
-			
-			while (! expand.isEmpty()) {
-				STATE state = expand.pop();
-				
-				// internal transitions
-				for (LETTER letter :
-						m_operand.lettersInternalIncoming(state)) {
-					for (STATE pred : states.predInternal(state, letter)) {
-						if (! visited.contains(pred)) {
-							visited.add(pred);
-							expand.add(pred);
-						}
-					}
-				}
-				
-				// call transitions
-				for (LETTER letter : m_operand.lettersCallIncoming(state)) {
-					for (STATE pred : states.predCall(state, letter)) {
-						if (! visited.contains(pred)) {
-							visited.add(pred);
-							expand.add(pred);
-						}
-					}
-				}
-				
-				// return transitions
-				for (LETTER letter : m_operand.lettersReturnIncoming(state)) {
-					for (STATE hier : states.predReturnHier(state, letter)) {
-						if (! visited.contains(hier)) {
-							visited.add(hier);
-							expand.add(hier);
-						}
-						for (STATE next :
-								states.predReturnLin(state, letter, hier)) {
-							if (!  visited.contains(next)) {
-								visited.add(next);
-								expand.add(next);
-							}
-						}
-					}
-				}
-			}
-			
-			// remove non-reached states (= all states - visited states)
-			for (STATE state : m_operand.getStates()) {
-				if (! visited.contains(state))
-					states.removeState(state);
-			}
-		}
 	}
 	
 	/**
@@ -392,45 +227,37 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 					assertStatesSeparation(equivalenceClasses));
 			m_Partition = new Partition(m_operand, states.size());
 			
-			if (m_noStatesRemoved) {
-				for (Set<STATE> ecSet : equivalenceClasses) {
-					assert ecSet.size() > 0;
-					m_Partition.addEquivalenceClass(
-						new EquivalenceClass(ecSet,
-							m_operand.isFinal(ecSet.iterator().next())));
-				}
+
+			// number of states to remove (for faster use)
+			int toRemove = 0;
+			for (Set<STATE> ecSet : equivalenceClasses) {
+				toRemove += ecSet.size();
 			}
-			else {
-				// number of states to remove (for faster use)
-				int toRemove = 0;
-				for (Set<STATE> ecSet : equivalenceClasses) {
-					toRemove += ecSet.size();
-				}
-				toRemove -= states.size();
-				assert toRemove > 0;
-				
-				/*
-				 * if initial partition was passed, but unnecessary states
-				 * were found, then remove them from the partition
-				 */
-				for (Set<STATE> ecSet : equivalenceClasses) {
-					if (toRemove > 0) {
-						for (STATE state : ecSet) {
-							if (! states.contains(state)) {
-								ecSet.remove(state);
-								toRemove--;
-								if (toRemove == 0) {
-									break;
-								}
+			toRemove -= states.size();
+			assert toRemove > 0;
+
+			/*
+			 * if initial partition was passed, but unnecessary states
+			 * were found, then remove them from the partition
+			 */
+			for (Set<STATE> ecSet : equivalenceClasses) {
+				if (toRemove > 0) {
+					for (STATE state : ecSet) {
+						if (! states.contains(state)) {
+							ecSet.remove(state);
+							toRemove--;
+							if (toRemove == 0) {
+								break;
 							}
 						}
 					}
-					
-					m_Partition.addEquivalenceClass(
-						new EquivalenceClass(ecSet,
-							m_operand.isFinal(ecSet.iterator().next())));
 				}
+
+				m_Partition.addEquivalenceClass(
+						new EquivalenceClass(ecSet,
+								m_operand.isFinal(ecSet.iterator().next())));
 			}
+
 		}
 		
 		/*
@@ -487,23 +314,6 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			nonfinals = states.getNonfinals();
 		}
 		// make a copy here if states container has no sets
-		else
-		// if states were removed, use iterator of states container
-		if (! m_noStatesRemoved) {
-			finals = new HashSet<STATE>(
-					computeHashSetCapacity(states.getRemovedSize(true)));
-			nonfinals = new HashSet<STATE>(computeHashSetCapacity(
-											states.getRemovedSize(false)));
-			Iterator<STATE> iterator = states.getFinalsIterator();
-			while (iterator.hasNext()) {
-				finals.add(iterator.next());
-			}
-			iterator = states.getNonfinalsIterator();
-			while (iterator.hasNext()) {
-				nonfinals.add(iterator.next());
-			}
-		}
-		// if no states were removed, use iterator of original automaton
 		else {
 			finals = new HashSet<STATE>(
 					computeHashSetCapacity(m_operand.getFinalStates().size()));
@@ -739,19 +549,19 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				Iterator<STATE> iterator = a.iterator();
 				while (iterator.hasNext()) {
 					STATE state = iterator.next();
-					Iterable<STATE> hierPreds =
-							partition.hierPredIncoming(state, letter);
-					for (STATE hier : hierPreds) {
+					for (IncomingReturnTransition<LETTER, STATE> inTrans : 
+								partition.hierPredIncoming(state, letter)) {
 						EquivalenceClass ec =
-								partition.getEquivalenceClass(hier);
+								partition.getEquivalenceClass(inTrans.getHierPred());
 						HashSet<STATE> linSet = ec2linSet.get(ec);
 						if (linSet == null) {
 							linSet = new HashSet<STATE>();
 							ec2linSet.put(ec, linSet);
 						}
-						for (STATE pred : partition.linPredIncoming(
-								state, hier, letter))
-						linSet.add(pred);
+						for (IncomingReturnTransition<LETTER, STATE> inTransInner : 
+									partition.linPredIncoming(state, inTrans.getHierPred(), letter)) {
+							linSet.add(inTransInner.getLinPred());							
+						}
 					}
 				}
 				
@@ -785,9 +595,9 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				Iterator<STATE> iterator = a.iterator();
 				Collection<STATE> hierPreds = new HashSet<STATE>();
 				while (iterator.hasNext()) {
-					for (STATE pred : partition.hierPredIncoming(
-							iterator.next(), letter)) {
-						hierPreds.add(pred);
+					for (IncomingReturnTransition<LETTER, STATE> inTrans : 
+							partition.hierPredIncoming(iterator.next(), letter)) {
+						hierPreds.add(inTrans.getHierPred());
 					}
 				}
 				
@@ -811,20 +621,17 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				Iterator<STATE> iterator = a.iterator();
 				while (iterator.hasNext()) {
 					STATE state = iterator.next();
-					for (STATE hier : 
-							partition.hierPredIncoming(state, letter)) {
-						Iterable<STATE> linPreds =
-								partition.linPredIncoming(state, hier, letter);
-						for (STATE lin : linPreds) {
-							EquivalenceClass ec =
-									partition.getEquivalenceClass(lin);
-							HashSet<STATE> set = ec2hierSet.get(ec);
-							if (set == null) {
-								set = new HashSet<STATE>();
-								ec2hierSet.put(ec, set);
-							}
-							set.add(hier);
+					for (IncomingReturnTransition<LETTER, STATE> inTrans : partition.hierPredIncoming(state, letter)) {
+						STATE hier = inTrans.getHierPred();
+						STATE lin = inTrans.getLinPred();
+						EquivalenceClass ec =
+								partition.getEquivalenceClass(lin);
+						HashSet<STATE> set = ec2hierSet.get(ec);
+						if (set == null) {
+							set = new HashSet<STATE>();
+							ec2hierSet.put(ec, set);
 						}
+						set.add(hier);
 					}
 				}
 				
@@ -869,7 +676,8 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				STATE state = iterator.next();
 				
 				// for each hierarchical predecessor 'hier' of 'state':
-				for (STATE hier : partition.hierPredIncoming(state, letter)) {
+				for (IncomingReturnTransition<LETTER, STATE> inTrans : partition.hierPredIncoming(state, letter)) {
+					STATE hier = inTrans.getHierPred();
 					EquivalenceClass ecHier =
 							partition.getEquivalenceClass(hier);
 					
@@ -882,8 +690,8 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 					}
 					
 					// for each linear predecessor 'lin' of 'state' and 'hier':
-					for (STATE lin :
-							partition.linPredIncoming(state, hier, letter)) {
+					for (IncomingReturnTransition<LETTER, STATE> inTransInner : partition.linPredIncoming(state, hier, letter)) {
+						STATE lin = inTransInner.getLinPred();
 						EquivalenceClass ecLin =
 								partition.getEquivalenceClass(lin);
 						
@@ -1483,8 +1291,8 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		@Override
 		protected void addPred(STATE state,
 								LETTER letter, PredecessorSet x) {
-			for (STATE hier : m_partition.hierPredIncoming(state, letter)) {
-				m_partition.addPredReturnLin(state, letter, hier, x);
+			for (IncomingReturnTransition<LETTER, STATE> inTrans : m_partition.hierPredIncoming(state, letter)) {
+				m_partition.addPredReturnLin(state, letter, inTrans.getHierPred(), x);
 			}
 		}
 	}
@@ -2020,39 +1828,18 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				}
 				
 				// successors via hierarchical edge
-				if (m_noStatesRemoved) {
-					for (LETTER letter :
-							m_parentOperand.lettersReturnSummary(state)) {
-						Iterable<SummaryReturnTransition<LETTER, STATE>>
-							succs =
-								m_parentOperand.returnSummarySuccessor(
-										letter, state);
-						for (SummaryReturnTransition<LETTER, STATE> t :
-								succs) {
-							EquivalenceClass ec = getEquivalenceClass(
-									t.getSucc());
-							if (! ec.isInWorkList()) {
-								addToWorkList(ec);
-							}
-						}
-					}
-				}
-				else {
-					for (LETTER letter :
-							m_parentOperand.lettersReturnSummary(state)) {
-						Iterable<SummaryReturnTransition<LETTER, STATE>>
-							succs =
-								m_parentOperand.returnSummarySuccessor(
-										letter, state);
-						for (SummaryReturnTransition<LETTER, STATE> t :
-								succs) {
-							EquivalenceClass ec = getEquivalenceClass(
-									t.getSucc());
-							if (ec != null) {
-								if (! ec.isInWorkList()) {
-									addToWorkList(ec);
-								}
-							}
+				for (LETTER letter :
+					m_parentOperand.lettersReturnSummary(state)) {
+					Iterable<SummaryReturnTransition<LETTER, STATE>>
+					succs =
+					m_parentOperand.returnSummarySuccessor(
+							letter, state);
+					for (SummaryReturnTransition<LETTER, STATE> t :
+						succs) {
+						EquivalenceClass ec = getEquivalenceClass(
+								t.getSucc());
+						if (! ec.isInWorkList()) {
+							addToWorkList(ec);
 						}
 					}
 				}
@@ -2091,76 +1878,27 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			}
 			return result;
 		}
-		/**
-		 * finds successor states more efficiently if no states were removed
-		 * 
-		 * NOTE: method exists if return value of NestedWordAutomaton
-		 * is changed to Iterable<STATE>, so one can create a list here
-		 * 
-		 * @param states set of target states
-		 */
-		private Iterable<STATE> neighborsEfficient(
-				Iterable<STATE> states) {
-			return states;
-		}
 		Iterable<STATE> succInternal(STATE state, LETTER letter) {
-			if (m_noStatesRemoved) {
-				return neighborsEfficient(
-								m_parentOperand.succInternal(state, letter));
-			}
-			else {
-				return neighbors(m_parentOperand.succInternal(state, letter));
-			}
+				return m_parentOperand.succInternal(state, letter);
 		}
 		Iterable<STATE> succCall(STATE state, LETTER letter) {
-			if (m_noStatesRemoved) {
-				return neighborsEfficient(m_parentOperand.succCall(state,
-																	letter));
-			}
-			else {
-				return neighbors(m_parentOperand.succCall(state, letter));
-			}
+				return m_parentOperand.succCall(state,
+				letter);
 		}
 		Iterable<STATE> succReturn(STATE state, STATE hier, LETTER letter) {
-			if (m_noStatesRemoved) {
-				return neighborsEfficient(
-								m_parentOperand.succReturn(state, hier,
-															letter));
-			}
-			else {
-				return neighbors(m_parentOperand.succReturn(state, hier,
-															letter));
-			}
+				return m_parentOperand.succReturn(state, hier,
+				letter);
 		}
 		Iterable<STATE> hierPred(STATE state, LETTER letter) {
-			if (m_noStatesRemoved) {
-				return neighborsEfficient(m_parentOperand.hierPred(state,
-																	letter));
-			}
-			else {
-				return neighbors(m_parentOperand.hierPred(state, letter));
-			}
+				return m_parentOperand.hierPred(state,
+				letter);
 		}
-		Iterable<STATE> linPredIncoming(STATE state, STATE hier,
+		Iterable<IncomingReturnTransition<LETTER, STATE>> linPredIncoming(STATE state, STATE hier,
 											LETTER letter) {
-			if (m_noStatesRemoved) {
-				return neighborsEfficient(m_parentOperand.predReturnLin(
-						state, letter, hier));
-			}
-			else {
-				return neighbors(m_parentOperand.predReturnLin(
-						state, letter, hier));
-			}
+			return m_parentOperand.returnPredecessors(hier, letter, state);
 		}
-		Iterable<STATE> hierPredIncoming(STATE state, LETTER letter) {
-			if (m_noStatesRemoved) {
-				return neighborsEfficient(m_parentOperand.predReturnHier(
-						state, letter));
-			}
-			else {
-				return neighbors(m_parentOperand.predReturnHier(state,
-																letter));
-			}
+		Iterable<IncomingReturnTransition<LETTER, STATE>> hierPredIncoming(STATE state, LETTER letter) {
+			return m_parentOperand.returnPredecessors(letter, state);
 		}
 		
 		/**
@@ -2190,43 +1928,39 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				x.add(s);
 			}
 		}
-		void addPredInternal(STATE state, LETTER letter, PredecessorSet x) {
-			if (m_noStatesRemoved) {
-				addNeighborsEfficient(m_parentOperand.predInternal(state,
-																letter), x);
-			}
-			else {
-				addNeighbors(m_parentOperand.predInternal(state, letter), x);
+		
+		private void addNeighborsEfficientLin(Iterable<IncomingReturnTransition<LETTER, STATE>> transitions,
+				PredecessorSet x) {
+			for (IncomingReturnTransition<LETTER, STATE> inTrans : transitions) {
+				x.add(inTrans.getLinPred());
 			}
 		}
+		
+		private void addNeighborsEfficientHier(Iterable<IncomingReturnTransition<LETTER, STATE>> transitions,
+				PredecessorSet x) {
+			for (IncomingReturnTransition<LETTER, STATE> inTrans : transitions) {
+				x.add(inTrans.getHierPred());
+			}
+		}
+
+
+		
+		void addPredInternal(STATE state, LETTER letter, PredecessorSet x) {
+				addNeighborsEfficient(m_parentOperand.predInternal(state,
+																letter), x);
+		}
 		void addPredCall(STATE state, LETTER letter, PredecessorSet x) {
-			if (m_noStatesRemoved) {
 				addNeighborsEfficient(m_parentOperand.predCall(state, letter),
 										x);
-			}
-			else {
-				addNeighbors(m_parentOperand.predCall(state, letter), x);
-			}
 		}
 		void addPredReturnLin(STATE state, LETTER letter,
 				STATE hier, PredecessorSet x) {
-			if (m_noStatesRemoved) {
-				addNeighborsEfficient(
-						m_parentOperand.predReturnLin(state, letter, hier), x);
-			}
-			else {
-				addNeighbors(
-						m_parentOperand.predReturnLin(state, letter, hier), x);
-			}
+				addNeighborsEfficientLin(
+						m_parentOperand.returnPredecessors(hier, letter, state), x);
 		}
 		void addPredReturnHier(STATE state, LETTER letter, PredecessorSet x) {
-			if (m_noStatesRemoved) {
-				addNeighborsEfficient(
-						m_parentOperand.predReturnHier(state, letter), x);
-			}
-			else {
-				addNeighbors(m_parentOperand.predReturnHier(state, letter), x);
-			}
+				addNeighborsEfficientHier(
+						m_parentOperand.returnPredecessors(letter, state), x);
 		}
 		void addSuccReturnHier(STATE state, LETTER letter, PredecessorSet x) {
 			HashSet<STATE> hierSet = new HashSet<STATE>();
@@ -2234,12 +1968,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				hierSet.add(hier);
 			}
 			
-			if (m_noStatesRemoved) {
 				addNeighborsEfficient(hierSet, x);
-			}
-			else {
-				addNeighbors(hierSet, x);
-			}
 		}
 		
 		/**
@@ -2554,15 +2283,8 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		 */
 		StatesContainer(INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 			this.m_parentOperand = operand;
-			if (m_removeUnreachables) {
-				this.m_mode = StatesContainerMode.makeCopy;
-			}
-			else if (m_removeDeadEnds) {
-				this.m_mode = StatesContainerMode.saveRemoved;
-			}
-			else {
-				this.m_mode = StatesContainerMode.none;
-			}
+			this.m_mode = StatesContainerMode.none;
+
 			
 			switch (this.m_mode) {
 				// if unreachable states shall be removed, make a copy
@@ -2930,41 +2652,6 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			}
 		}
 		
-		/*
-		 * --- transition helpers
-		 * (for avoiding states that have already been removed)
-		 */
-		private Collection<STATE> neighbors(Iterable<STATE> states) {
-			switch (m_mode) {
-				case makeCopy :
-				case saveRemoved :
-					LinkedList<STATE> result = new LinkedList<STATE>();
-					for (STATE s : states) {
-						if (contains(s)) {
-							result.add(s);
-						}
-					}
-					return result;
-				case none :
-				default :
-					assert false;
-					return null;
-			}
-		}
-		Collection<STATE> predInternal(STATE state, LETTER letter) {
-			return neighbors(m_parentOperand.predInternal(state, letter));
-		}
-		Collection<STATE> predCall(STATE state, LETTER letter) {
-			return neighbors(m_parentOperand.predCall(state, letter));
-		}
-		Collection<STATE> predReturnLin(STATE state, LETTER letter,
-										STATE hier) {
-			return neighbors(m_parentOperand.predReturnLin(state, letter,
-															hier));
-		}
-		Collection<STATE> predReturnHier(STATE state, LETTER letter) {
-			return neighbors(m_parentOperand.predReturnHier(state, letter));
-		}
 	}
 	
 	/**

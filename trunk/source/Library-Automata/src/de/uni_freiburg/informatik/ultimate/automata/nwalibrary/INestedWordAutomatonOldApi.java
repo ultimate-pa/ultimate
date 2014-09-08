@@ -67,20 +67,7 @@ public interface INestedWordAutomatonOldApi<LETTER,STATE>
 	public Iterable<STATE> predCall(STATE state, LETTER letter);
 	
 	
-	/**
-	 * @return All states pred such that there is an incoming 
-	 * return transition (pred, hier, letter, state)
-	 */
-	public Iterable<STATE> predReturnLin(STATE state, LETTER letter, STATE hier);
 
-	/**
-	 * @return All states hier such that there is a state pred such that there 
-	 * is an incoming return transition (pred, hier, letter, state)
-	 */
-	public Iterable<STATE> predReturnHier(STATE state, LETTER letter);
-	
-	
-	
 	
 	/**
 	 * Return true iff we can not leave the set of final states, i.e.,

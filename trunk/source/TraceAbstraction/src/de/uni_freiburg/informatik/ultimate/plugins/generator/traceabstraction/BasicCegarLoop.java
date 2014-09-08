@@ -560,7 +560,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			switch (minimization) {
 			case MINIMIZE_SEVPA: {
 				MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(
-						newAbstraction, partition, false, false, predicateFactoryRefinement);
+						newAbstraction, partition, predicateFactoryRefinement);
 				assert minimizeOp.checkResult(resultCheckPredFac);
 				minimized = minimizeOp.getResult();
 				if (m_ComputeHoareAnnotation) {

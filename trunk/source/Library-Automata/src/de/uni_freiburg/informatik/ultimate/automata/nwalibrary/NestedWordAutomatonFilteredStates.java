@@ -234,16 +234,6 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	}
 
 	@Override
-	public Iterable<STATE> predReturnLin(STATE state, LETTER letter, STATE hier) {
-		return new FilteredIterable<STATE>(m_Nwa.predReturnLin(state, letter, hier), m_RemainingStates);
-	}
-
-	@Override
-	public Iterable<STATE> predReturnHier(STATE state, LETTER letter) {
-		return new FilteredIterable<STATE>(m_Nwa.predReturnHier(state, letter), m_RemainingStates);
-	}
-
-	@Override
 	public boolean finalIsTrap() {
 		throw new UnsupportedOperationException();
 	}

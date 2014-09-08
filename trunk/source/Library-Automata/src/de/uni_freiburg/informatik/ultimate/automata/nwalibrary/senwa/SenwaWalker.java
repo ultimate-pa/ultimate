@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Senwa;
 
 /**
@@ -372,14 +373,11 @@ public class SenwaWalker<LETTER,STATE> {
 					}
 				}
 			}
-			for (LETTER letter: m_TraversedSenwa.lettersReturnIncoming(state)) {
-				for (STATE hier : m_TraversedSenwa.predReturnHier(state, letter)) {
-					for (STATE pred : m_TraversedSenwa.predReturnLin(state, letter, hier)) {
-						boolean wasContained = statesNeverReachFinal.remove(pred);
-						if (wasContained) {
-							ancestorSearchWorklist.add(pred);
-						}
-					}
+			for (IncomingReturnTransition<LETTER, STATE> inTrans : m_TraversedSenwa.returnPredecessors(state)) {
+				STATE pred = inTrans.getLinPred();
+				boolean wasContained = statesNeverReachFinal.remove(pred);
+				if (wasContained) {
+					ancestorSearchWorklist.add(pred);
 				}
 			}
 		}

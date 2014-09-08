@@ -475,16 +475,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	}
 
 	@Override
-	public Collection<STATE> predReturnLin(STATE state, LETTER letter, STATE hier) {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
-	}
-
-	@Override
-	public Collection<STATE> predReturnHier(STATE state, LETTER letter) {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
-	}
-
-	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(LETTER letter, STATE hier) {
 		throw new UnsupportedOperationException(UnsupportedOperationMessage);
 	}

@@ -471,7 +471,7 @@ public class BuchiCegarLoop {
 		Collection<Set<IPredicate>> partition = computePartition(m_Abstraction);
 		try {
 			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(m_Abstraction,
-					partition, false, false, m_StateFactoryForRefinement);
+					partition, m_StateFactoryForRefinement);
 			assert (minimizeOp.checkResult(m_PredicateFactoryResultChecking));
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
 			m_Abstraction = minimized;

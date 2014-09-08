@@ -381,16 +381,6 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 	}
 
 
-	public Iterable<STATE> predReturnLin(STATE state, LETTER letter, STATE hier) {
-		return m_Operand.predReturnLin(state, letter, hier);
-	}
-
-
-	public Iterable<STATE> predReturnHier(STATE state, LETTER letter) {
-		return m_Operand.predReturnHier(state, letter);
-	}
-
-
 	public boolean finalIsTrap() {
 		throw new UnsupportedOperationException();
 	}
