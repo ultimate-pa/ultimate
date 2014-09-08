@@ -63,10 +63,10 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 	public AlternatingAutomaton(Set<LETTER> alphabet,
 			StateFactory<STATE> stateFactory) {
 		if (alphabet == null) {
-			throw new IllegalArgumentException("aa must have alphabet");
+			throw new IllegalArgumentException("The aa must have an alphabet");
 		}
 		if (stateFactory == null) {
-			throw new IllegalArgumentException("aa must have stateFactory");
+			throw new IllegalArgumentException("The aa must have a stateFactory");
 		}
 		this.m_Alphabet = alphabet;
 		this.m_StateFactory = stateFactory;
