@@ -47,10 +47,11 @@ public class CDTController implements IController {
 	private final Semaphore mUltimateReady;
 	private ToolchainData mToolchainData;
 
-	public CDTController(UltimateCChecker currentChecker) {
+	public CDTController(UltimateCChecker currentChecker) throws Exception {
 		mChecker = currentChecker;
 		mUltimateExit = new Semaphore(0);
 		mUltimateReady = new Semaphore(0);
+		initUltimateThread();
 	}
 
 	@Override
@@ -67,6 +68,20 @@ public class CDTController implements IController {
 	}
 
 	public void runToolchain(String toolchainPath, IASTTranslationUnit ast) throws Exception {
+		initUltimateThread();
+		mLogger.info("Using toolchain " + toolchainPath);
+		mToolchainData = new ToolchainData(toolchainPath);
+		mChecker.setServices(mToolchainData.getServices());
+		mChecker.setStorage(mToolchainData.getStorage());
+
+		mCurrentJob = new ManualReleaseToolchainJob("Run Ultimate...", mUltimate, this, new WrapperNode(null, ast),
+				new GraphType(Activator.PLUGIN_ID, Type.AST, new ArrayList<String>()), mLogger);
+		mCurrentJob.setUser(true);
+		mCurrentJob.schedule();
+		mCurrentJob.join();
+	}
+	
+	private void initUltimateThread() throws Exception {
 		if (mUltimateThread == null) {
 			mUltimateThread = new UltimateThread(this);
 			mUltimateThread.startUltimate();
@@ -78,17 +93,6 @@ public class CDTController implements IController {
 			close();
 			throw ex;
 		}
-		mLogger.info("Using toolchain " + toolchainPath);
-		mToolchainData = new ToolchainData(toolchainPath);
-		mChecker.setServices(mToolchainData.getServices());
-		mChecker.setStorage(mToolchainData.getStorage());
-
-		mCurrentJob = new ManualReleaseToolchainJob("Run Ultimate...", mUltimate, this, new WrapperNode(null, ast),
-				new GraphType(Activator.PLUGIN_ID, Type.AST, new ArrayList<String>()), mLogger);
-		mCurrentJob.setUser(true);
-		mCurrentJob.schedule();
-		mCurrentJob.join();
-
 	}
 
 	public void close() {
