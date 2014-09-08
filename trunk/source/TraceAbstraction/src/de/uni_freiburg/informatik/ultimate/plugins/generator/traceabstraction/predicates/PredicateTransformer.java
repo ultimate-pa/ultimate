@@ -983,21 +983,12 @@ public class PredicateTransformer {
 		public TermVariable getOrConstuctBeforeCallInstance(BoogieVar bv) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
-					BoogieNonOldVar nonOld = ((BoogieOldVar) bv).getNonOldVar();
-					if (m_ModifiableGlobals.contains(nonOld)) {
-						return getOrConstructTermVariable(m_BeforeAfterCallCoincide, bv);
-					} else {
-						if (doesVarOrOldVarOccurBetweenCallAndReturn(nonOld)) {
-							return bv.getTermVariable();
-						} else {
-							return getOrConstructTermVariable(m_BeforeAfterCallCoincide, bv);
-						}
-					}
+					return getOrConstructTermVariable(m_BeforeAfterCallCoincide, bv);
 				} else {
 					if (m_ModifiableGlobals.contains(bv)) {
 						return getOrConstructTermVariable(m_BeforeCall, bv);
 					} else {
-						if (doesVarOrOldVarOccurBetweenCallAndReturn((BoogieNonOldVar) bv)) {
+						if (doesVarOccurBetweenCallAndReturn((BoogieNonOldVar) bv)) {
 							return bv.getTermVariable();
 						} else {
 							return getOrConstructTermVariable_BeforeAndAfterIfNecessary(bv, m_BeforeCall);
@@ -1026,20 +1017,7 @@ public class PredicateTransformer {
 		public TermVariable getOrConstuctAfterReturnInstance(BoogieVar bv) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
-					BoogieNonOldVar nonOld = ((BoogieOldVar) bv).getNonOldVar();
-					if (m_ModifiableGlobals.contains(nonOld)) {
-						return getOrConstructTermVariable(m_BeforeAfterCallCoincide, bv);
-					} else {
-						if (doesVarOrOldVarOccurBetweenCallAndReturn(nonOld)) {
-							if (m_AssignedOnReturn.contains(bv)) {
-								return getOrConstructTermVariable(m_AfterReturn, bv);
-							} else {
-								return bv.getTermVariable();
-							}
-						} else {
-							return getOrConstructTermVariable(m_BeforeAfterCallCoincide, bv);
-						}
-					}
+					return getOrConstructTermVariable(m_BeforeAfterCallCoincide, bv);
 				} else {
 					if (m_ModifiableGlobals.contains(bv)) {
 						if (m_AssignedOnReturn.contains(bv)) {
@@ -1048,7 +1026,7 @@ public class PredicateTransformer {
 							return bv.getTermVariable();
 						}
 					} else {
-						if (doesVarOrOldVarOccurBetweenCallAndReturn((BoogieNonOldVar) bv)) {
+						if (doesVarOccurBetweenCallAndReturn((BoogieNonOldVar) bv)) {
 							if (m_AssignedOnReturn.contains(bv)) {
 								return getOrConstructTermVariable(m_AfterReturn, bv);
 							} else {
@@ -1070,11 +1048,9 @@ public class PredicateTransformer {
 			return m_FreshTermVariables;
 		}
 
-		private boolean doesVarOrOldVarOccurBetweenCallAndReturn(
+		private boolean doesVarOccurBetweenCallAndReturn(
 				BoogieNonOldVar nonOld) {
-			BoogieOldVar oldVar = nonOld.getOldVar();
-			return m_VarsOccurringBetweenCallAndReturn.contains(nonOld) || 
-					m_VarsOccurringBetweenCallAndReturn.contains(oldVar);
+			return m_VarsOccurringBetweenCallAndReturn.contains(nonOld);
 		}
 
 		/**
