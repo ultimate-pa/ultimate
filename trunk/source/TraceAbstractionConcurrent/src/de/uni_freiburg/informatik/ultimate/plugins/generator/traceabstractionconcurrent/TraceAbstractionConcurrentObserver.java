@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionco
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -11,22 +10,18 @@ import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
@@ -178,32 +173,18 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	private void reportPositiveResult(Collection<ProgramPoint> errorPPs) {
 		for (ProgramPoint errorPP : errorPPs) {
 			PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.s_PLUGIN_NAME, errorPP,
-					mServices.getBacktranslationService().getTranslatorSequence());
+					mServices.getBacktranslationService());
 			reportResult(pResult);
 		}
 	}
 
 	private void reportCounterexampleResult(RcfgProgramExecution pe) {
-		ProgramPoint errorPP = getErrorPP(pe);
-		List<ILocation> failurePath = pe.getLocationList();
-		ILocation origin = errorPP.getPayload().getLocation().getOrigin();
-
-		List<ITranslator<?, ?, ?, ?>> translatorSequence = mServices.getBacktranslationService()
-				.getTranslatorSequence();
 		if (pe.isOverapproximation()) {
 			reportUnproveableResult(pe);
 			return;
 		}
-		String ctxMessage = getCheckedSpecification(errorPP).getNegativeMessage();
-		ctxMessage += " (line " + origin.getStartLine() + ")";
-		RCFGBacktranslator backtrans = (RCFGBacktranslator) translatorSequence.get(translatorSequence.size() - 1);
-		BoogieProgramExecution bpe = (BoogieProgramExecution) backtrans.translateProgramExecution(pe);
-		CounterExampleResult<RcfgElement, Expression> ctxRes = new CounterExampleResult<RcfgElement, Expression>(
-				errorPP, Activator.s_PLUGIN_NAME, translatorSequence, pe,
-				CounterExampleResult.getLocationSequence(bpe), bpe.getValuation(translatorSequence));
-		ctxRes.setLongDescription(bpe.toString());
-		reportResult(ctxRes);
-		mLogger.warn(ctxMessage);
+		reportResult(new CounterExampleResult<RcfgElement, Expression>(getErrorPP(pe), Activator.s_PLUGIN_NAME,
+				mServices.getBacktranslationService(), pe));
 	}
 
 	private void reportTimoutResult(Collection<ProgramPoint> errorLocs) {
@@ -213,7 +194,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 					+ origin.checkedSpecification().getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
 			TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
-					Activator.s_PLUGIN_NAME, mServices.getBacktranslationService().getTranslatorSequence(),
+					Activator.s_PLUGIN_NAME, mServices.getBacktranslationService(),
 					timeOutMessage);
 			reportResult(timeOutRes);
 			mLogger.warn(timeOutMessage);
@@ -223,7 +204,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	private void reportUnproveableResult(RcfgProgramExecution pe) {
 		ProgramPoint errorPP = getErrorPP(pe);
 		UnprovableResult<RcfgElement, RcfgElement, Expression> uknRes = new UnprovableResult<RcfgElement, RcfgElement, Expression>(
-				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService().getTranslatorSequence(), pe);
+				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe);
 		reportResult(uknRes);
 	}
 

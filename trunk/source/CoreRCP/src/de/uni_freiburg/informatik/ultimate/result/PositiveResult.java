@@ -1,9 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
-import java.util.List;
-
+import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 
 /**
  * Result to store that the specification given at some location always holds. 
@@ -26,7 +24,7 @@ public class PositiveResult<ELEM extends IElement> extends AbstractResultAtEleme
 	 *            the location
 	 */
 	public PositiveResult(String plugin, ELEM position, 
-			List<ITranslator<?,?,?,?>> translatorSequence) {
+			IBacktranslationService translatorSequence) {
 		super(position, plugin, translatorSequence);
 		m_CheckedSpecification = ResultUtil.getCheckedSpecification(position);
 	}

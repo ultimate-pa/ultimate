@@ -1,9 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
-import java.util.List;
-
+import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 
 public class NoResult<P extends IElement> extends AbstractResultAtElement<P> implements IResult {
 	private String shortDescription;
@@ -15,7 +13,7 @@ public class NoResult<P extends IElement> extends AbstractResultAtElement<P> imp
 	 *            the valuation
 	 */
 	public NoResult(P position, String plugin, 
-			List<ITranslator<?,?,?,?>> translatorSequence) {
+			IBacktranslationService translatorSequence) {
 		super(position, plugin, translatorSequence);
 		this.shortDescription = new String();
 		this.longDescription = new String();

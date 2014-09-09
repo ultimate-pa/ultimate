@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.result;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
@@ -9,26 +10,24 @@ import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 
-
 /**
  * 
  * @author Matthias Heizmann, Jan Leike
  */
 public class ResultUtil {
-	
+
 	/**
-	 * Use Ultimate's translator sequence do translate a result expression
-	 * back through the toolchain.
+	 * Use Ultimate's translator sequence do translate a result expression back
+	 * through the toolchain.
 	 * 
-	 * @param expr the resulting expression
+	 * @param expr
+	 *            the resulting expression
 	 * @return a string corresponding to the backtranslated expression
 	 */
-	public static <SE> String backtranslationWorkaround(
-			List<ITranslator<?, ?, ?, ?>> translatorSequence,
-			SE expr) {
-		Object backExpr = DefaultTranslator.translateExpressionIteratively(
-				expr, translatorSequence.toArray(new ITranslator[0]));
-		
+	public static <SE> String backtranslationWorkaround(List<ITranslator<?, ?, ?, ?>> translatorSequence, SE expr) {
+		Object backExpr = DefaultTranslator.translateExpressionIteratively(expr,
+				translatorSequence.toArray(new ITranslator[0]));
+
 		// If the result is a Boogie expression, we use the Boogie pretty
 		// printer
 		String result;
@@ -41,21 +40,19 @@ public class ResultUtil {
 		}
 		return result;
 	}
-	
-	public static <SE> String backtranslationWorkaround(
-			List<ITranslator<?, ?, ?, ?>> translatorSequence,
-			SE[] exprArray) {
+
+	public static <SE> String translateExpressionToString(IBacktranslationService translator, Class<SE> clazz,
+			SE[] expression) {
 		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < exprArray.length; ++i) {
+		for (int i = 0; i < expression.length; ++i) {
 			if (i > 0) {
 				sb.append(", ");
 			}
-			sb.append(ResultUtil.backtranslationWorkaround(
-					translatorSequence, exprArray[i]));
+			sb.append(translator.translateExpressionToString(expression[i], clazz));
 		}
 		return sb.toString();
 	}
-	
+
 	/**
 	 * Return the checked specification that is checked at the error location.
 	 */

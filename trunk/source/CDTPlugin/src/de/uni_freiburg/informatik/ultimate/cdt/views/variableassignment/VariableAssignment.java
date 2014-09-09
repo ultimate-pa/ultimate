@@ -50,8 +50,7 @@ public class VariableAssignment extends ViewPart implements ISelectionListener {
 	 */
 	@Override
 	public void createPartControl(Composite parent) {
-		Tree variableTree = new Tree(parent, SWT.BORDER | SWT.H_SCROLL
-				| SWT.V_SCROLL);
+		Tree variableTree = new Tree(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
 		variableTree.setHeaderVisible(true);
 		viewer = new TreeViewer(variableTree);
 
@@ -93,31 +92,29 @@ public class VariableAssignment extends ViewPart implements ISelectionListener {
 				IEditorPart edPart = getSite().getPage().getActiveEditor();
 				actualAllowedInput = edPart.getTitle();
 				CounterExampleResult res = (CounterExampleResult) first;
-				if (res.getValuation() != null) {
-					contProv.setValuation(res.getValuation());
+
+				if (res.getProgramExecution() != null) {
+					// TODO: Implement this right with IProgramExecution and known values for generic 
+					// contProv.setValuation(res.getValuation());
 				} else {
 					contProv.setValuation(new TestValuation());
 				}
 			}
 			viewer.getTree().removeAll();
-		} else if (selection instanceof ITreeSelection
-				&& part instanceof LocationTrace) {
+		} else if (selection instanceof ITreeSelection && part instanceof LocationTrace) {
 			Object first = ((ITreeSelection) selection).getFirstElement();
 			if (first != null)
 				viewer.setInput(((TraceNode) first).getOriginalIndex());
-		} else if (selection instanceof ITextSelection
-				&& part instanceof EditorPart) {
+		} else if (selection instanceof ITextSelection && part instanceof EditorPart) {
 			String text = ((EditorPart) part).getTitle();
 			if (!text.equals(actualAllowedInput)) {
 				viewer.getTree().removeAll();
 			}
-		} else if (selection instanceof ITreeSelection
-				&& part instanceof CommonNavigator) {
+		} else if (selection instanceof ITreeSelection && part instanceof CommonNavigator) {
 			CommonNavigator navi = (CommonNavigator) part;
 			if (navi.isLinkingEnabled()) {
 				if (((ITreeSelection) selection).getFirstElement() != null) {
-					String text = ((ITreeSelection) selection)
-							.getFirstElement().toString();
+					String text = ((ITreeSelection) selection).getFirstElement().toString();
 					if (!text.equals(actualAllowedInput)) {
 						viewer.getTree().removeAll();
 					}

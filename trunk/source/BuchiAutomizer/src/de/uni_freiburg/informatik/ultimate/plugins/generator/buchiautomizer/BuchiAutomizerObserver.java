@@ -9,12 +9,12 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.ExampleNWAFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
@@ -31,12 +31,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
-import de.uni_freiburg.informatik.ultimate.result.NonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.result.NonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.NonterminatingLassoResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationAnalysisResult.TERMINATION;
@@ -129,7 +126,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			longDescr.append(counterexample.getLoop().getWord());
 			IResult reportRes = new TerminationAnalysisResult(Activator.s_PLUGIN_ID, TERMINATION.UNKNOWN, longDescr.toString());
 					//new GenericResultAtElement<RcfgElement>(honda, Activator.s_PLUGIN_ID, mServices
-					//.getBacktranslationService().getTranslatorSequence(), shortDescr, longDescr.toString(),
+					//.getBacktranslationService(), shortDescr, longDescr.toString(),
 					//Severity.ERROR);
 			reportResult(reportRes);
 			// s_Logger.info(shortDescr + ": " + longDescr);
@@ -137,7 +134,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			ProgramPoint position = rootAnnot.getEntryNodes().values().iterator().next();
 			String longDescr = "Timeout while trying to prove termination";
 			IResult reportRes = new TimeoutResultAtElement<RcfgElement>(position, Activator.s_PLUGIN_ID, mServices
-					.getBacktranslationService().getTranslatorSequence(), longDescr);
+					.getBacktranslationService(), longDescr);
 			reportResult(reportRes);
 		} else if (result == Result.NONTERMINATING) {
 //			String shortDescr = "Nontermination possible";
@@ -158,8 +155,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					partialProgramStateMapping, new Map[counterexample.getStem().getLength()]);
 			RcfgProgramExecution loopPE = new RcfgProgramExecution(counterexample.getLoop().getWord().lettersAsList(),
 					partialProgramStateMapping, new Map[counterexample.getLoop().getLength()]);
-			IResult ntreportRes = new NonterminatingLassoResult<RcfgElement>(honda, Activator.s_PLUGIN_ID, mServices
-					.getBacktranslationService().getTranslatorSequence(), stemPE, loopPE, honda.getPayload()
+			IResult ntreportRes = new NonterminatingLassoResult<RcfgElement,Expression>(honda, Activator.s_PLUGIN_ID, mServices
+					.getBacktranslationService(), stemPE, loopPE, honda.getPayload()
 					.getLocation());
 			reportResult(ntreportRes);
 			// s_Logger.info(ntreportRes.getShortDescription());
@@ -185,19 +182,15 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 		NonTerminationArgumentResult<RcfgElement> result = new NonTerminationArgumentResult<RcfgElement>(honda,
 				Activator.s_PLUGIN_NAME, initHondaRay.get(0), initHondaRay.get(1), initHondaRay.get(2),
-				arg.getLambda(), getTranslatorSequence());
+				arg.getLambda(), getBacktranslationService());
 		reportResult(result);
 	}
 
 	/**
 	 * @return the current translator sequence for building results
 	 */
-	private List<ITranslator<?, ?, ?, ?>> getTranslatorSequence() {
-		// getTranslatorSequence() is marked deprecated, but an alternative
-		// has yet to arise
-		List<ITranslator<?, ?, ?, ?>> translator_sequence = mServices.getBacktranslationService()
-				.getTranslatorSequence();
-		return translator_sequence;
+	private IBacktranslationService getBacktranslationService() {
+		return mServices.getBacktranslationService();
 	}
 
 	void reportResult(IResult res) {

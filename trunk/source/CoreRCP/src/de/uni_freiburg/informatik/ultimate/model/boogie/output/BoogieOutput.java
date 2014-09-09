@@ -68,6 +68,9 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
  * @author hoenicke
  */
 public class BoogieOutput {
+
+	private static final String sLinebreak = System.getProperty("line.separator");
+
 	/**
 	 * The file writer.
 	 */
@@ -579,6 +582,11 @@ public class BoogieOutput {
 	 */
 	public void printProcedure(Procedure decl) {
 		StringBuilder sb = new StringBuilder();
+		appendProcedure(sb, decl);
+		m_Writer.print(sb.toString());
+	}
+
+	public void appendProcedure(StringBuilder sb, Procedure decl) {
 		if (decl.getSpecification() != null) {
 			sb.append("procedure ");
 		} else {
@@ -601,17 +609,16 @@ public class BoogieOutput {
 		sb.append(")");
 		if (decl.getBody() == null)
 			sb.append(";");
-		m_Writer.println(sb.toString());
 		if (decl.getSpecification() != null) {
 			for (Specification spec : decl.getSpecification())
-				printSpecification(spec);
+				appendSpecification(sb, spec);
 		}
 		if (decl.getBody() != null) {
-			m_Writer.println("{");
-			printBody(decl.getBody());
-			m_Writer.println("}");
+			sb.append("{" + sLinebreak);
+			appendBody(sb, decl.getBody());
+			sb.append("}" + sLinebreak);
 		}
-		m_Writer.println();
+		sb.append(sLinebreak);
 	}
 
 	/**
@@ -622,6 +629,11 @@ public class BoogieOutput {
 	 */
 	public void printSpecification(Specification spec) {
 		StringBuilder sb = new StringBuilder();
+		appendSpecification(sb, spec);
+		m_Writer.print(sb.toString());
+	}
+
+	public void appendSpecification(StringBuilder sb, Specification spec) {
 		sb.append("    ");
 		if (spec.isFree())
 			sb.append("free ");
@@ -641,8 +653,7 @@ public class BoogieOutput {
 		} else {
 			throw new IllegalArgumentException(spec.toString());
 		}
-		sb.append(";");
-		m_Writer.println(sb.toString());
+		sb.append(";" + sLinebreak);
 	}
 
 	/**
@@ -652,12 +663,19 @@ public class BoogieOutput {
 	 *            the body to print.
 	 */
 	public void printBody(Body body) {
+		StringBuilder sb = new StringBuilder();
+		appendBody(sb, body);
+		m_Writer.print(sb.toString());
+	}
+
+	public void appendBody(StringBuilder sb, Body body) {
 		for (VariableDeclaration decl : body.getLocalVars()) {
-			printVarDeclaration(decl, "    ");
+			appendVariableDeclaration(sb, decl, "    ");
 		}
-		if (body.getLocalVars().length > 0)
-			m_Writer.println();
-		printBlock(body.getBlock(), "");
+		if (body.getLocalVars().length > 0) {
+			sb.append(sLinebreak);
+		}
+		appendBlock(sb, body.getBlock(), "");
 	}
 
 	/**
@@ -669,29 +687,45 @@ public class BoogieOutput {
 	 *            the current indent level.
 	 */
 	public void printBlock(Statement[] block, String indent) {
+		StringBuilder sb = new StringBuilder();
+		appendBlock(sb, block, indent);
+		m_Writer.print(sb.toString());
+	}
+
+	public void appendBlock(StringBuilder sb, Statement[] block) {
+		appendBlock(sb, block, "");
+	}
+
+	public void appendBlock(StringBuilder sb, Statement[] block, String indent) {
 		String nextIndent = indent + "    ";
 		for (Statement s : block) {
 			if (s instanceof Label) {
 				// SF: Labels aren't on the first column anymore, they are
 				// treated as pragmas if they are. Added "  "
-				m_Writer.println(indent + "  " + ((Label) s).getName() + ":");
+				sb.append(indent + "  " + ((Label) s).getName() + ":" + sLinebreak);
 			} else {
-				printStatement(s, nextIndent);
+				appendStatement(sb, s, nextIndent);
 			}
 		}
+
+	}
+
+	public void appendStatement(StringBuilder sb, Statement s) {
+		appendStatement(sb, s, "");
 	}
 
 	/**
 	 * Add the string representation of the statement to the string builder.
-	 * This method will only work with simple statements, if-statements and
-	 * while-statements are not supported and will result in an exception.
 	 * 
 	 * @param sb
 	 *            the string builder where the string will be appended to.
 	 * @param s
 	 *            the statement to print.
+	 * @param indent
+	 *            The current identation
 	 */
-	public void appendStatement(StringBuilder sb, Statement s) {
+	public void appendStatement(StringBuilder sb, Statement s, String indent) {
+		sb.append(indent);
 		if (s instanceof AssertStatement) {
 			AssertStatement assertstmt = (AssertStatement) s;
 			sb.append("assert ");
@@ -766,9 +800,48 @@ public class BoogieOutput {
 				comma = ", ";
 			}
 			sb.append(";");
+		} else if (s instanceof IfStatement) {
+			IfStatement stmt = (IfStatement) s;
+			Statement[] elsePart;
+			while (true) {
+				sb.append("if (");
+				appendExpression(sb, stmt.getCondition(), 0);
+				sb.append(") {" + sLinebreak);
+				appendBlock(sb, stmt.getThenPart(), indent);
+				sb.append(indent).append("}");
+				elsePart = stmt.getElsePart();
+				if (elsePart.length != 1 || !(elsePart[0] instanceof IfStatement))
+					break;
+				stmt = (IfStatement) elsePart[0];
+				sb.append(" else ");
+			}
+			if (elsePart.length > 0) {
+				sb.append(" else {" + sLinebreak);
+				appendBlock(sb, stmt.getElsePart(), indent);
+				sb.append(indent).append("}");
+			}
+			sb.append(sb.toString());
+		} else if (s instanceof WhileStatement) {
+			WhileStatement stmt = (WhileStatement) s;
+			sb.append("while (");
+			appendExpression(sb, stmt.getCondition(), 0);
+			sb.append(")" + sLinebreak);
+			for (LoopInvariantSpecification spec : stmt.getInvariants()) {
+				sb.append(indent).append("    ");
+				if (spec.isFree()) {
+					sb.append("free ");
+				}
+				sb.append("invariant ");
+				appendExpression(sb, spec.getFormula(), 0);
+				sb.append(";" + sLinebreak);
+			}
+			sb.append(indent).append("{" + sLinebreak);
+			appendBlock(sb, stmt.getBody(), indent);
+			sb.append(indent).append("}");
 		} else {
 			throw new IllegalArgumentException(s.toString());
 		}
+		sb.append(sLinebreak);
 	}
 
 	/**
@@ -781,60 +854,8 @@ public class BoogieOutput {
 	 */
 	public void printStatement(Statement s, String indent) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(indent);
-		if (s instanceof IfStatement) {
-			IfStatement stmt = (IfStatement) s;
-			Statement[] elsePart;
-			while (true) {
-				sb.append("if (");
-				appendExpression(sb, stmt.getCondition(), 0);
-				sb.append(") {");
-				m_Writer.println(sb.toString());
-				printBlock(stmt.getThenPart(), indent);
-				sb = new StringBuilder();
-				sb.append(indent).append("}");
-				elsePart = stmt.getElsePart();
-				if (elsePart.length != 1 || !(elsePart[0] instanceof IfStatement))
-					break;
-				stmt = (IfStatement) elsePart[0];
-				sb.append(" else ");
-			}
-			if (elsePart.length > 0) {
-				sb.append(" else {");
-				m_Writer.println(sb.toString());
-				printBlock(stmt.getElsePart(), indent);
-				sb = new StringBuilder();
-				sb.append(indent).append("}");
-			}
-			m_Writer.println(sb.toString());
-		} else if (s instanceof WhileStatement) {
-			WhileStatement stmt = (WhileStatement) s;
-			sb.append("while (");
-			appendExpression(sb, stmt.getCondition(), 0);
-			sb.append(")");
-			m_Writer.println(sb.toString());
-			for (LoopInvariantSpecification spec : stmt.getInvariants()) {
-				sb = new StringBuilder();
-				sb.append(indent).append("    ");
-				if (spec.isFree()) {
-					sb.append("free ");
-				}
-				sb.append("invariant ");
-				appendExpression(sb, spec.getFormula(), 0);
-				sb.append(";");
-				m_Writer.println(sb.toString());
-			}
-			sb = new StringBuilder();
-			sb.append(indent).append("{");
-			m_Writer.println(sb.toString());
-			printBlock(stmt.getBody(), indent);
-			sb = new StringBuilder();
-			sb.append(indent).append("}");
-			m_Writer.println(sb.toString());
-		} else {
-			appendStatement(sb, s);
-			m_Writer.println(sb.toString());
-		}
+		appendStatement(sb, s, indent);
+		m_Writer.print(sb.toString());
 	}
 
 	/**
@@ -903,6 +924,7 @@ public class BoogieOutput {
 		appendAttributes(sb, decl.getAttributes());
 		appendVarList(sb, decl.getVariables());
 		sb.append(";");
+		sb.append(sLinebreak);
 	}
 
 	public void appendVariableDeclaration(StringBuilder sb, VariableDeclaration decl) {

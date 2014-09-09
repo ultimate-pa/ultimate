@@ -1,9 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
-import java.util.List;
-
+import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
@@ -17,7 +15,7 @@ public class UnsupportedSyntaxResult<ELEM extends IElement>
 						extends AbstractResult implements IResultWithLocation {
 	
 	private final ELEM m_Position;
-	protected final List<ITranslator<?, ?, ?, ?>> m_TranslatorSequence;
+	protected final IBacktranslationService m_TranslatorSequence;
 	private final ILocation m_Location;
 	private String m_LongDescription;
 
@@ -26,7 +24,7 @@ public class UnsupportedSyntaxResult<ELEM extends IElement>
 	 * @param syntaxErrorType
 	 */
 	public UnsupportedSyntaxResult(ELEM position, String plugin, 
-			List<ITranslator<?,?,?,?>> translatorSequence, String longDescription) {
+			IBacktranslationService translatorSequence, String longDescription) {
 		super(plugin);
 		m_Position = position;
 		m_TranslatorSequence = translatorSequence;

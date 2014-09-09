@@ -1,9 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
-import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
@@ -17,13 +16,13 @@ public abstract class AbstractResultAtElement<ELEM extends IElement>
 						extends AbstractResult implements IResultWithLocation {
 	
 	private final ELEM m_Element;
-	protected final List<ITranslator<?, ?, ?, ?>> m_TranslatorSequence;
+	protected final IBacktranslationService m_TranslatorSequence;
 	
 	public AbstractResultAtElement(ELEM element, String plugin,
-			List<ITranslator<?, ?, ?, ?>> translatorSequence) {
+			IBacktranslationService translatorSequence) {
 		super(plugin);
 		m_Element = element;
-		m_TranslatorSequence = translatorSequence;
+		m_TranslatorSequence = translatorSequence.getTranslationServiceCopy();
 	}
 	
 	public final ILocation getLocation() {

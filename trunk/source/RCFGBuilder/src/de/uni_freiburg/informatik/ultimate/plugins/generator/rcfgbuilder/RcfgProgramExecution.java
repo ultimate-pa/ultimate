@@ -144,4 +144,14 @@ public class RcfgProgramExecution implements IProgramExecution<RcfgElement, Expr
 		return result;
 	}
 
+	@Override
+	public Class<Expression> getExpressionClass() {
+		return Expression.class;
+	}
+
+	@Override
+	public Class<RcfgElement> getTraceElementClass() {
+		return RcfgElement.class;
+	}
+
 }

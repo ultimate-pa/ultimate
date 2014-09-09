@@ -1,9 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
-import java.util.List;
-
+import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 
 /**
  * Use this to report that there was a timeout.
@@ -20,7 +18,7 @@ public class TimeoutResultAtElement<ELEM extends IElement>
 
 
 	public TimeoutResultAtElement(ELEM element, String plugin, 
-			List<ITranslator<?,?,?,?>> translatorSequence, String longDescription) {
+			IBacktranslationService translatorSequence, String longDescription) {
 		super(element, plugin, translatorSequence);
 		this.m_longDescription = longDescription;
 	}

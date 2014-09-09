@@ -52,6 +52,10 @@ public interface IProgramExecution<TE, E> {
 	public ProgramState<E> getInitialProgramState();
 	
 	
+	public Class<E> getExpressionClass();
+	
+	public Class<TE> getTraceElementClass();
+	
 	
 	/**
 	 * Program state that is can be defined only partially. This class defines 

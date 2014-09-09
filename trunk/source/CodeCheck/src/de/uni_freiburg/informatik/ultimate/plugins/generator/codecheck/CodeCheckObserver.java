@@ -19,7 +19,6 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -37,9 +36,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.IEmp
 import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.NWAEmptinessCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.impulse.ImpulseChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.kojak.UltimateChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
@@ -49,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
@@ -59,10 +56,9 @@ import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
-import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -117,7 +113,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		m_smtManager = new SmtManager(rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices);
 
 		_predicateUnifier = new PredicateUnifier(mServices, m_smtManager);
-		
+
 		m_truePredicate = _predicateUnifier.getTruePredicate();
 		m_falsePredicate = _predicateUnifier.getFalsePredicate();
 
@@ -315,8 +311,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 										.getRootAnnot().getModGlobVarManager(),
 								/*
 								 * TODO : When Matthias introduced this
-								 * parameter he set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY .
-								 * Check if you want to set this to a different value.
+								 * parameter he set the argument to
+								 * AssertCodeBlockOrder.NOT_INCREMENTALLY .
+								 * Check if you want to set this to a different
+								 * value.
 								 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
 						break;
 					case Z3SPWP:
@@ -338,8 +336,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								errorRun.getWord(), m_smtManager, m_originalRoot.getRootAnnot().getModGlobVarManager(),
 								/*
 								 * TODO : When Matthias introduced this
-								 * parameter he set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY .
-								 * Check if you want to set this to a different value.
+								 * parameter he set the argument to
+								 * AssertCodeBlockOrder.NOT_INCREMENTALLY .
+								 * Check if you want to set this to a different
+								 * value.
 								 */
 								AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
 						break;
@@ -502,7 +502,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			longDescription = errorLocs.size() + " specifications checked. All of them hold";
 			for (ProgramPoint errorLoc : errorLocs) {
 				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.s_PLUGIN_NAME,
-						errorLoc, mServices.getBacktranslationService().getTranslatorSequence());
+						errorLoc, mServices.getBacktranslationService());
 				reportResult(pResult);
 			}
 		}
@@ -512,33 +512,19 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private void reportCounterexampleResult(RcfgProgramExecution pe) {
-
-		ProgramPoint errorPP = getErrorPP(pe);
-		List<ILocation> failurePath = pe.getLocationList();
-		ILocation origin = errorPP.getPayload().getLocation().getOrigin();
-
-		List<ITranslator<?, ?, ?, ?>> translatorSequence = mServices.getBacktranslationService()
-				.getTranslatorSequence();
 		if (pe.isOverapproximation()) {
 			reportUnproveableResult(pe);
 			return;
 		}
-		String ctxMessage = ResultUtil.getCheckedSpecification(errorPP).getNegativeMessage();
-		ctxMessage += " (line " + origin.getStartLine() + ")";
-		RCFGBacktranslator backtrans = (RCFGBacktranslator) translatorSequence.get(translatorSequence.size() - 1);
-		BoogieProgramExecution bpe = (BoogieProgramExecution) backtrans.translateProgramExecution(pe);
-		CounterExampleResult<RcfgElement, Expression> ctxRes = new CounterExampleResult<RcfgElement, Expression>(
-				errorPP, Activator.s_PLUGIN_NAME, translatorSequence, pe,
-				CounterExampleResult.getLocationSequence(bpe), bpe.getValuation(translatorSequence));
-		ctxRes.setLongDescription(bpe.toString());
-		reportResult(ctxRes);
-		// s_Logger.warn(ctxMessage);
+
+		reportResult(new CounterExampleResult<RcfgElement, Expression>(getErrorPP(pe), Activator.s_PLUGIN_NAME,
+				mServices.getBacktranslationService(), pe));
 	}
 
 	private void reportUnproveableResult(RcfgProgramExecution pe) {
 		ProgramPoint errorPP = getErrorPP(pe);
 		UnprovableResult<RcfgElement, RcfgElement, Expression> uknRes = new UnprovableResult<RcfgElement, RcfgElement, Expression>(
-				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService().getTranslatorSequence(), pe);
+				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe);
 		reportResult(uknRes);
 	}
 

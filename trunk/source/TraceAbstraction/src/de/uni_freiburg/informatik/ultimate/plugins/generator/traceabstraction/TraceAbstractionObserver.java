@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -10,15 +9,13 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.ExampleNWAFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
@@ -64,17 +61,18 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) {
-		if(!(root instanceof RootNode)){
+		if (!(root instanceof RootNode)) {
 			return true;
 		}
-		
-		
-		//TODO: Now you can get instances of your library classes for the current toolchain like this: 
-		//NWA is nevertheless very broken, as its static initialization prevents parallelism 
-		//Surprisingly, this call lazily initializes the static fields of NWA Lib and, like magic, the toolchain works ...
+
+		// TODO: Now you can get instances of your library classes for the
+		// current toolchain like this:
+		// NWA is nevertheless very broken, as its static initialization
+		// prevents parallelism
+		// Surprisingly, this call lazily initializes the static fields of NWA
+		// Lib and, like magic, the toolchain works ...
 		mServices.getServiceInstance(ExampleNWAFactory.class);
 
-		
 		RootAnnot rootAnnot = ((RootNode) root).getRootAnnot();
 		TAPreferences taPrefs = new TAPreferences();
 
@@ -117,7 +115,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				&& mServices.getProgressMonitorService().continueProcessing()) {
 			assert (smtManager.cfgInductive((RootNode) root));
 
-			List<ITranslator<?, ?, ?, ?>> translator_sequence = mServices.getBacktranslationService().getTranslatorSequence();
+			IBacktranslationService translator_sequence = mServices.getBacktranslationService();
 
 			Map<String, ProgramPoint> finalNodes = rootAnnot.getExitNodes();
 			for (String proc : finalNodes.keySet()) {
@@ -238,7 +236,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			longDescription = errorLocs.size() + " specifications checked. All of them hold";
 			for (ProgramPoint errorLoc : errorLocs) {
 				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.s_PLUGIN_NAME,
-						errorLoc, mServices.getBacktranslationService().getTranslatorSequence());
+						errorLoc, mServices.getBacktranslationService());
 				reportResult(pResult);
 			}
 		}
@@ -249,27 +247,12 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	}
 
 	private void reportCounterexampleResult(RcfgProgramExecution pe) {
-//		String ppls = ResultUtil.getPrettyprintedLocationSequence(pe);
-//		mLogger.info(ppls);
-		ProgramPoint errorPP = getErrorPP(pe);
-		List<ILocation> failurePath = pe.getLocationList();
-		ILocation origin = errorPP.getPayload().getLocation().getOrigin();
-
-		List<ITranslator<?, ?, ?, ?>> translatorSequence = mServices.getBacktranslationService().getTranslatorSequence();
 		if (pe.isOverapproximation()) {
 			reportUnproveableResult(pe);
 			return;
 		}
-		String ctxMessage = ResultUtil.getCheckedSpecification(errorPP).getNegativeMessage();
-		ctxMessage += " (line " + origin.getStartLine() + ")";
-		RCFGBacktranslator backtrans = (RCFGBacktranslator) translatorSequence.get(translatorSequence.size() - 1);
-		BoogieProgramExecution bpe = (BoogieProgramExecution) backtrans.translateProgramExecution(pe);
-		CounterExampleResult<RcfgElement, Expression> ctxRes = new CounterExampleResult<RcfgElement, Expression>(
-				errorPP, Activator.s_PLUGIN_NAME, translatorSequence, pe,
-				CounterExampleResult.getLocationSequence(bpe), bpe.getValuation(translatorSequence));
-		ctxRes.setLongDescription(bpe.toString());
-		reportResult(ctxRes);
-		// s_Logger.warn(ctxMessage);
+		reportResult(new CounterExampleResult<RcfgElement, Expression>(getErrorPP(pe), Activator.s_PLUGIN_NAME,
+				mServices.getBacktranslationService(), pe));
 	}
 
 	private void reportTimoutResult(Collection<ProgramPoint> errorLocs) {
@@ -279,7 +262,8 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 					+ ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
 			TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
-					Activator.s_PLUGIN_NAME, mServices.getBacktranslationService().getTranslatorSequence(), timeOutMessage);
+					Activator.s_PLUGIN_NAME, mServices.getBacktranslationService(),
+					timeOutMessage);
 			reportResult(timeOutRes);
 			// s_Logger.warn(timeOutMessage);
 		}
@@ -288,7 +272,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private void reportUnproveableResult(RcfgProgramExecution pe) {
 		ProgramPoint errorPP = getErrorPP(pe);
 		UnprovableResult<RcfgElement, RcfgElement, Expression> uknRes = new UnprovableResult<RcfgElement, RcfgElement, Expression>(
-				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService().getTranslatorSequence(), pe);
+				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe);
 		reportResult(uknRes);
 	}
 

@@ -21,16 +21,14 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
  */
 public class BoogiePreprocessor implements IAnalysis {
 
-	private static final String s_PLUGIN_NAME = "Boogie Preprocessor";
-	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 	private IUltimateServiceProvider mServices;
 
 	public String getPluginName() {
-		return s_PLUGIN_NAME;
+		return Activator.PLUGIN_NAME;
 	}
 
 	public String getPluginID() {
-		return getClass().getName();
+		return Activator.PLUGIN_ID;
 	}
 
 	public int init() {
@@ -62,10 +60,14 @@ public class BoogiePreprocessor implements IAnalysis {
 
 	// @Override
 	public List<IObserver> getObservers() {
+		BoogiePreprocessorBacktranslator backTranslator = new BoogiePreprocessorBacktranslator(mServices
+				.getLoggingService().getLogger(Activator.PLUGIN_ID));
+		mServices.getBacktranslationService().addTranslator(backTranslator);
+		mServices.getBacktranslationService().addTranslator(backTranslator);
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		observers.add(new TypeChecker(mServices));
-		observers.add(new ConstExpander());
-		observers.add(new StructExpander());
+		observers.add(new ConstExpander(backTranslator));
+		observers.add(new StructExpander(backTranslator));
 		observers.add(new UnstructureCode());
 		observers.add(new FunctionInliner());
 		observers.add(new BoogieSymbolTableConstructor(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID)));
@@ -98,9 +100,8 @@ public class BoogiePreprocessor implements IAnalysis {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage services) {
-		// TODO Auto-generated method stub
-
+	public void setToolchainStorage(IToolchainStorage storage) {
+		// storage is not used by this plugin
 	}
 
 	@Override

@@ -134,4 +134,14 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 			}
 		};
 	}
+
+	@Override
+	public Class<Expression> getExpressionClass() {
+		return Expression.class;
+	}
+
+	@Override
+	public Class<BoogieASTNode> getTraceElementClass() {
+		return BoogieASTNode.class;
+	}
 }

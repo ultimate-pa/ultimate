@@ -1,9 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
-import java.util.List;
-
+import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 
 /**
  * Object for all results for which ULTIMATE does not offer a special result class.
@@ -20,7 +18,7 @@ public class GenericResultAtElement<ELEM extends IElement>
 	
 
 	public GenericResultAtElement(ELEM element, String plugin,
-			List<ITranslator<?, ?, ?, ?>> translatorSequence, 
+			IBacktranslationService translatorSequence, 
 			String shortDescription, String longDescription,
 			Severity severity) {
 		super(element, plugin, translatorSequence);

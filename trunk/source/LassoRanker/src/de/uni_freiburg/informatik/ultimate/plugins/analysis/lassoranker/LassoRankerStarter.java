@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
@@ -33,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
@@ -310,12 +310,8 @@ public class LassoRankerStarter {
 	/**
 	 * @return the current translator sequence for building results
 	 */
-	private List<ITranslator<?, ?, ?, ?>> getTranslatorSequence() {
-		// getTranslatorSequence() is marked deprecated, but an alternative
-		// has yet to arise
-		List<ITranslator<?, ?, ?, ?>> translator_sequence = mServices.getBacktranslationService()
-				.getTranslatorSequence();
-		return translator_sequence;
+	private IBacktranslationService getTranslatorSequence() {
+		return mServices.getBacktranslationService();
 	}
 
 	/**

@@ -1,28 +1,22 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
-import java.util.List;
-
-import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-
 
 /**
  * Result that reports that a nonterminating execution for a lasso shaped
  * sequence of statements has been found.
  * 
  * @author Matthias Heizmann
- *
+ * 
  * @param <ELEM>
  */
-public class NonterminatingLassoResult<ELEM extends IElement> 
-										extends AbstractResultWithLasso<ELEM> {
-	
-	public NonterminatingLassoResult(ELEM position, String plugin,
-			List<ITranslator<?, ?, ?, ?>> translatorSequence,
-			IProgramExecution<ELEM, ?> stem, IProgramExecution<ELEM, ?> loop,
-			ILocation location) {
+public class NonterminatingLassoResult<ELEM extends IElement, EXP extends IElement> extends
+		AbstractResultWithLasso<ELEM, EXP> {
+
+	public NonterminatingLassoResult(ELEM position, String plugin, IBacktranslationService translatorSequence,
+			IProgramExecution<ELEM, EXP> stem, IProgramExecution<ELEM, EXP> loop, ILocation location) {
 		super(plugin, position, translatorSequence, stem, loop);
 	}
 
@@ -38,14 +32,11 @@ public class NonterminatingLassoResult<ELEM extends IElement>
 		sb.append(System.getProperty("line.separator"));
 		sb.append("Stem:");
 		sb.append(System.getProperty("line.separator"));
-		sb.append(DefaultTranslator.translateProgramExecutionIteratively(m_Stem, 
-				m_TranslatorSequence.toArray(new ITranslator[0])));
+		sb.append(m_TranslatorSequence.translateProgramExecution(m_Stem));
 		sb.append("Loop:");
 		sb.append(System.getProperty("line.separator"));
-		sb.append(DefaultTranslator.translateProgramExecutionIteratively(m_Loop, 
-				m_TranslatorSequence.toArray(new ITranslator[0])));
+		sb.append(m_TranslatorSequence.translateProgramExecution(m_Loop));
 		sb.append("End of lasso representation.");
 		return sb.toString();
 	}
-
 }

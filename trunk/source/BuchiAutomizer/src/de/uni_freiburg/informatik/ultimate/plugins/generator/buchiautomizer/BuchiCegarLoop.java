@@ -662,7 +662,7 @@ public class BuchiCegarLoop {
 		TerminationArgumentResult<RcfgElement> result = new TerminationArgumentResult<RcfgElement>(honda,
 				Activator.s_PLUGIN_NAME, rf.asLexExpression(m_SmtManager.getScript(), m_RootNode.getRootAnnot()
 						.getBoogie2SMT().getTerm2Expression()), rf.getName(), supporting_invariants, mServices
-						.getBacktranslationService().getTranslatorSequence());
+						.getBacktranslationService());
 		return result;
 	}
 

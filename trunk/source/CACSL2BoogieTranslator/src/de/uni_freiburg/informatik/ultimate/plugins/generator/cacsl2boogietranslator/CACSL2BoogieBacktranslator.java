@@ -29,30 +29,29 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
  */
 public class CACSL2BoogieBacktranslator extends DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, String> {
 
-	Map<BoogieASTNode, CACSLLocation> m_Position = 
-			new HashMap<BoogieASTNode, CACSLLocation>();
+	Map<BoogieASTNode, CACSLLocation> m_Position = new HashMap<BoogieASTNode, CACSLLocation>();
 	Boogie2C m_boogie2C;
 
 	public CACSL2BoogieBacktranslator() {
+		super(BoogieASTNode.class, CACSLLocation.class, Expression.class, String.class);
 	}
-	
+
 	@Override
 	public List<CACSLLocation> translateTrace(List<BoogieASTNode> trace) {
 		// TODO Auto-generated method stub
 		return super.translateTrace(trace);
 	}
-	
-	
-//	protected Expression[] processExpressions(Expression[] exprs) {
-//		Expression[] newExprs = new Expression[exprs.length];
-//		boolean changed = false;
-//		for (int j = 0; j < exprs.length; j++) {
-//			newExprs[j] = processExpression(exprs[j]);
-//			if (newExprs[j] != exprs[j])
-//				changed = true;
-//		}
-//		return changed ? newExprs : exprs;
-//	}
+
+	// protected Expression[] processExpressions(Expression[] exprs) {
+	// Expression[] newExprs = new Expression[exprs.length];
+	// boolean changed = false;
+	// for (int j = 0; j < exprs.length; j++) {
+	// newExprs[j] = processExpression(exprs[j]);
+	// if (newExprs[j] != exprs[j])
+	// changed = true;
+	// }
+	// return changed ? newExprs : exprs;
+	// }
 
 	@Override
 	public String translateExpression(Expression expression) {
@@ -65,68 +64,87 @@ public class CACSL2BoogieBacktranslator extends DefaultTranslator<BoogieASTNode,
 		return result;
 
 	}
-	
+
 	public void setBoogie2C(Boogie2C boogie2c) {
 		m_boogie2C = boogie2c;
 	}
-	
-	
+
 	private String translateBinExpOp(BinaryExpression.Operator op) {
 		switch (op) {
-		case ARITHDIV: return "/";
-		case ARITHMINUS: return "-";
-		case ARITHMOD: return "%";
-		case ARITHMUL: return "*";
-		case ARITHPLUS: return "+";
-		case BITVECCONCAT: throw new UnsupportedOperationException("Unsupported BITVECCONCAT");
-		case COMPEQ: return "==";
-		case COMPGEQ: return ">=";
-		case COMPGT: return ">";
-		case COMPLEQ: return "<=";
-		case COMPLT: return "<";
-		case COMPNEQ: return "!=";
-		case COMPPO: throw new UnsupportedOperationException("Unsupported COMPPO");
-		case LOGICAND: return "&&";
-		case LOGICIFF: return "<==>";
-		case LOGICIMPLIES: return "==>";
-		case LOGICOR: return "||";
+		case ARITHDIV:
+			return "/";
+		case ARITHMINUS:
+			return "-";
+		case ARITHMOD:
+			return "%";
+		case ARITHMUL:
+			return "*";
+		case ARITHPLUS:
+			return "+";
+		case BITVECCONCAT:
+			throw new UnsupportedOperationException("Unsupported BITVECCONCAT");
+		case COMPEQ:
+			return "==";
+		case COMPGEQ:
+			return ">=";
+		case COMPGT:
+			return ">";
+		case COMPLEQ:
+			return "<=";
+		case COMPLT:
+			return "<";
+		case COMPNEQ:
+			return "!=";
+		case COMPPO:
+			throw new UnsupportedOperationException("Unsupported COMPPO");
+		case LOGICAND:
+			return "&&";
+		case LOGICIFF:
+			return "<==>";
+		case LOGICIMPLIES:
+			return "==>";
+		case LOGICOR:
+			return "||";
 		default:
 			throw new UnsupportedOperationException("Unknown binary operator");
 		}
 	}
-		
+
 	private String translateUnExpOp(UnaryExpression.Operator op) {
 		switch (op) {
-		case ARITHNEGATIVE: return "-";
-		case LOGICNEG: return "!";
-		case OLD: return "\\old";
+		case ARITHNEGATIVE:
+			return "-";
+		case LOGICNEG:
+			return "!";
+		case OLD:
+			return "\\old";
 		default:
 			throw new UnsupportedOperationException("Unknown unary operator");
 		}
 	}
-	
+
 	private String translateIdentifierExpression(IdentifierExpression expr) {
 		final String boogieId = ((IdentifierExpression) expr).getIdentifier();
 		final String cId;
 		if (boogieId.equals(SFO.RES)) {
 			cId = "\\result";
 		} else if (m_boogie2C.getVar2cvar().containsKey(boogieId)) {
-			cId = m_boogie2C.getVar2cvar().get(boogieId);			
+			cId = m_boogie2C.getVar2cvar().get(boogieId);
 		} else if (m_boogie2C.getInvar2cvar().containsKey(boogieId)) {
 			cId = "\\old(" + m_boogie2C.getInvar2cvar().get(boogieId) + ")";
 		} else if (m_boogie2C.getTempvar2obj().containsKey(boogieId)) {
-			throw new UnsupportedOperationException(
-					"auxilliary boogie variable " + boogieId);
+			throw new UnsupportedOperationException("auxilliary boogie variable " + boogieId);
 		} else if (boogieId.equals(SFO.VALID)) {
-			cId = "\\valid";	
+			cId = "\\valid";
 		} else {
-			//FIXME: handle unknown variables
+			// FIXME: handle unknown variables
 			return boogieId;
-//			throw new UnsupportedOperationException("unknown boogie variable " + boogieId);
+			// throw new
+			// UnsupportedOperationException("unknown boogie variable " +
+			// boogieId);
 		}
 		return cId;
 	}
-	
 
 	private String processExpression(Expression expr) {
 		if (expr instanceof BinaryExpression) {
@@ -158,7 +176,7 @@ public class CACSL2BoogieBacktranslator extends DefaultTranslator<BoogieASTNode,
 			ArrayAccessExpression aae = (ArrayAccessExpression) expr;
 			String array = processExpression(aae.getArray());
 			String indices[] = new String[aae.getIndices().length];
-			for (int i=0; i<indices.length; i++) {
+			for (int i = 0; i < indices.length; i++) {
 				indices[i] = processExpression(aae.getIndices()[i]);
 			}
 			return array + Arrays.toString(indices);
@@ -173,7 +191,7 @@ public class CACSL2BoogieBacktranslator extends DefaultTranslator<BoogieASTNode,
 			String cond = processExpression(ite.getCondition());
 			String thenPart = processExpression(ite.getThenPart());
 			String elsePart = processExpression(ite.getElsePart());
-			return "(" + cond + " ? " + thenPart + " : " + elsePart + ")"; 
+			return "(" + cond + " ? " + thenPart + " : " + elsePart + ")";
 		} else if (expr instanceof QuantifierExpression) {
 			throw new UnsupportedOperationException("Unsupported QuantifierExpression");
 		} else if (expr instanceof IdentifierExpression) {
@@ -194,9 +212,5 @@ public class CACSL2BoogieBacktranslator extends DefaultTranslator<BoogieASTNode,
 		}
 		throw new UnsupportedOperationException("Unknown Expression");
 	}
-
-
-	
-	
 
 }

@@ -662,7 +662,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		UnprovableResult<RcfgElement, RcfgElement, Expression> result =
 				new UnprovableResult<RcfgElement, RcfgElement, Expression>(Activator.s_PLUGIN_NAME,
 						location,
-						m_services.getBacktranslationService().getTranslatorSequence(),
+						m_services.getBacktranslationService(),
 						programExecution);
 		
 		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
@@ -681,7 +681,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	private void reportUnsupportedSyntaxResult(IElement location, String message) {
 		UnsupportedSyntaxResult<IElement> result =
 				new UnsupportedSyntaxResult<IElement>(location, Activator.s_PLUGIN_NAME,
-						m_services.getBacktranslationService().getTranslatorSequence(), message);
+						m_services.getBacktranslationService(), message);
 
 		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
 

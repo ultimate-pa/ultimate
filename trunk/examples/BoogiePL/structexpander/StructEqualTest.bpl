@@ -6,7 +6,7 @@ procedure test (a: rational) returns (r:rational)
 
    tmp := a;
    tmp!n := a!d;
-   assert (tmp == a || tmp != a);
+   assert (tmp == a);
    call tmp := test(tmp);
    r   := tmp;
 }

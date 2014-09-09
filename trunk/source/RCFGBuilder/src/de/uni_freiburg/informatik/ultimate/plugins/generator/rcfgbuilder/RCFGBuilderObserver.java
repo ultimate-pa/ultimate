@@ -68,7 +68,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 			try {
 				m_graphroot = recCFGBuilder.getRootNode(unit);
 				ModelUtils.mergeAnnotations(unit, m_graphroot);
-				mServices.getBacktranslationService().getTranslatorSequence().add(translator);
+				mServices.getBacktranslationService().addTranslator(translator);
 			} catch (SMTLIBException e) {
 				if (e.getMessage().equals("Cannot create quantifier in quantifier-free logic")) {
 					mLogger.warn("Unsupported syntax: " + e.getMessage());

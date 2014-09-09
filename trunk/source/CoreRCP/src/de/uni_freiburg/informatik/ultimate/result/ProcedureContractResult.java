@@ -1,9 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
-import java.util.List;
-
+import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 
 /**
  * Report a procedure contract that holds at ELEM which is a node in an 
@@ -22,7 +20,7 @@ public class ProcedureContractResult<ELEM extends IElement, E>
 	 * @param location the Location
 	 */
 	public ProcedureContractResult(String plugin, ELEM position, 
-			List<ITranslator<?,?,?,?>> translatorSequence,
+			IBacktranslationService translatorSequence,
 			String procedureName, E contract) {
 		super(position, plugin, translatorSequence);
 		this.m_ProcedureName = procedureName;
@@ -38,14 +36,14 @@ public class ProcedureContractResult<ELEM extends IElement, E>
 		return "Procedure Contract for " + m_ProcedureName;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public String getLongDescription() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("Derived contract for procedure ");
 		sb.append(m_ProcedureName);
 		sb.append(": ");
-		sb.append(ResultUtil.backtranslationWorkaround(
-				m_TranslatorSequence, m_Contract));
+		sb.append(m_TranslatorSequence.translateExpressionToString(m_Contract, (Class<E>)m_Contract.getClass()));
 		return sb.toString();
 	}
 }

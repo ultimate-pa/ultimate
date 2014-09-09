@@ -1038,11 +1038,11 @@ public class TestFileInterpreter implements IMessagePrinter {
 				if ((Boolean) result) {
 
 					mResultOfAssertStatements.add(new GenericResultAtElement<AtsASTNode>(oe, Activator.s_PLUGIN_ID,
-							mServices.getBacktranslationService().getTranslatorSequence(), s_AssertionHoldsMessage , oe
+							mServices.getBacktranslationService(), s_AssertionHoldsMessage , oe
 									.getAsString(), Severity.INFO));
 				} else {
 					mResultOfAssertStatements.add(new GenericResultAtElement<AtsASTNode>(oe, Activator.s_PLUGIN_ID,
-							mServices.getBacktranslationService().getTranslatorSequence(), s_AssertionViolatedMessage, oe
+							mServices.getBacktranslationService(), s_AssertionViolatedMessage, oe
 									.getAsString(), Severity.ERROR));
 				}
 			} else {
@@ -1280,7 +1280,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			result = new GenericResult(Activator.s_PLUGIN_ID, shortDescr, longDescr, sev);
 		} else {
 			result = new GenericResultAtElement<AtsASTNode>(node, Activator.s_PLUGIN_ID, mServices
-					.getBacktranslationService().getTranslatorSequence(), shortDescr, longDescr, sev);
+					.getBacktranslationService(), shortDescr, longDescr, sev);
 		}
 		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
 	}
