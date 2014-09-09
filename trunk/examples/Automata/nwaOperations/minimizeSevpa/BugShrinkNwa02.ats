@@ -1,4 +1,13 @@
-print(shrinkNwa(removeDeadEnds(nwa)));
+// Another reduced version of BugShrinkNwa01.ats
+
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
+print(minimizeSevpaSize);
+assert(minimizeSevpaSize == 9);
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
+print(shrinkNwaSize);
+assert(shrinkNwaSize == 9);
+
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {c},
