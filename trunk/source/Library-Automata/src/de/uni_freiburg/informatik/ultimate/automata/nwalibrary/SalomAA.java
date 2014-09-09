@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -14,7 +15,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 
 
-//TODO: 32 states werden nicht reichen, sobald ein trace auftritt, der einen RD-DAG der Größe >32 hat.. --> BitSets!
 public class SalomAA<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 	
 	/**
@@ -22,7 +22,7 @@ public class SalomAA<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 	 * An Integer stands for a bitvector. A bitvector represents the conjunction of states 
 	 * (negated or not). The set of bitvectors represents a DNF.
 	 */
-	private HashMap<STATE, HashMap<LETTER, DNFAsInts>> m_TransitionFunction;
+	private HashMap<STATE, HashMap<LETTER, DNFAsBitSetList>> m_TransitionFunction;
 	
 	/**
 	 * List of all states of the automaton, note that the index of the state in this
@@ -40,12 +40,12 @@ public class SalomAA<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 	/**
 	 * Generalisation of initial state (set), called h in the papers.
 	 */
-	DNFAsInts m_acceptingFunction;
+	DNFAsBitSetList m_acceptingFunction;
 	
 	/**
 	 * Set of final states, represented as characteristic bitvector.
 	 */
-	long m_finalStates;
+	BitSet m_finalStates;
 
 	private Set<LETTER> m_Alphabet;
 	protected final StateFactory<STATE> m_StateFactory;
@@ -64,7 +64,7 @@ public class SalomAA<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 		this.m_StateFactory = stateFactory;
 		this.m_stateToIndex = new HashMap<>();
 		this.m_stateList = new ArrayList<>();
-		this.m_finalStates = 0;
+		this.m_finalStates = new BitSet();
 		this.m_TransitionFunction = new HashMap<>();
 		this.m_logger = logger;
 	}
@@ -108,7 +108,6 @@ public class SalomAA<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 	}
 
 	public void addState(boolean isInitial, boolean isFinal, STATE state) {
-//		assert m_stateToIndex.containsValue(state) : "the same state should not be added twice";
 		if (m_stateToIndex.containsKey(state)) {
 			return;
 		}
@@ -125,7 +124,7 @@ public class SalomAA<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 	}
 
 	private void addFinalState(int stateIndex) {
-		m_finalStates += twoToThe(stateIndex);
+		m_finalStates.set(stateIndex);
 	}
 
 
@@ -134,7 +133,7 @@ public class SalomAA<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 	 * @param stateIndex
 	 */
 	private void addInitialStateByIndex(int stateIndex) {
-		DNFAsInts stateRep = computeIntsFromSingleState(stateIndex);
+		DNFAsBitSetList stateRep = computeIntsFromSingleState(stateIndex);
 		if (m_acceptingFunction == null) {
 			m_acceptingFunction = stateRep;
 		} else {
@@ -142,22 +141,6 @@ public class SalomAA<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 		}
 	}
 	
-//	public boolean isFinal(STATE state) {
-//		return isFinal(m_stateToIndex.get(state));
-//	}
-//
-//	private boolean isFinal(int stateIndex) {
-//		return (m_finalStates & twoToThe(stateIndex))/twoToThe(stateIndex) == 1;
-//	}
-
-//	public boolean isInitial(STATE state) {
-//		return isFinal(m_stateToIndex.get(state));
-//	}
-
-//	private boolean isInitial(int stateIndex) {
-//		return (m_initialStates & twoToThe(stateIndex))/twoToThe(stateIndex) == 1;
-//	}
-
 	/**
 	 * Add a conjunction of positive boolean variables to the transition function of sourceState, letter
 	 * according to the state set
@@ -174,12 +157,12 @@ public class SalomAA<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 				addState(false, false, sourceState);
 		}
 		
-		HashMap<LETTER, DNFAsInts> letterToSuccFormula = m_TransitionFunction.get(sourceState);
+		HashMap<LETTER, DNFAsBitSetList> letterToSuccFormula = m_TransitionFunction.get(sourceState);
 		if (letterToSuccFormula == null) {
 			letterToSuccFormula = new HashMap<>();
 			m_TransitionFunction.put(sourceState, letterToSuccFormula);
 		}
-		DNFAsInts succFormula = m_TransitionFunction.get(sourceState).get(letter);
+		DNFAsBitSetList succFormula = m_TransitionFunction.get(sourceState).get(letter);
 		if (succFormula == null) {
 			m_TransitionFunction.get(sourceState).put(letter, computeConjunctionFromStateSet(succs));
 		} else {
@@ -187,17 +170,17 @@ public class SalomAA<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 		}
 	}
 
-	private DNFAsInts computeConjunctionFromStateSet(Set<STATE> succs) {
-		long alpha = 0;
-		long beta = 0;
+	private DNFAsBitSetList computeConjunctionFromStateSet(Set<STATE> succs) {
+		BitSet alpha = new BitSet();
+		BitSet beta = new BitSet();
 
 		for (int i = 0; i < m_stateList.size(); i++) {
 			if (succs.contains(m_stateList.get(i))) {
-				alpha += twoToThe(i);
-				beta += twoToThe(i);
+				alpha.set(i);
+				beta.set(i);
 			}
 		}
-		return new DNFAsInts(alpha, beta, null);
+		return new DNFAsBitSetList(alpha, beta, null);
 	}
 
 	/**
@@ -213,12 +196,12 @@ public class SalomAA<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 		if (!m_stateToIndex.containsKey(succ))
 			addState(false, false, sourceState);
 		
-		HashMap<LETTER, DNFAsInts> letterToSuccFormula = m_TransitionFunction.get(sourceState);
+		HashMap<LETTER, DNFAsBitSetList> letterToSuccFormula = m_TransitionFunction.get(sourceState);
 		if (letterToSuccFormula == null) {
 			letterToSuccFormula = new HashMap<>();
 			m_TransitionFunction.put(sourceState, letterToSuccFormula);
 		}
-		DNFAsInts succFormula = m_TransitionFunction.get(sourceState).get(letter);
+		DNFAsBitSetList succFormula = m_TransitionFunction.get(sourceState).get(letter);
 		if (succFormula == null) {
 			succFormula = 
 			m_TransitionFunction.get(sourceState).put(letter, computeIntsFromSingleState(succ));
@@ -227,55 +210,20 @@ public class SalomAA<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 		}
 	}
 
-	private DNFAsInts computeIntsFromSingleState(STATE state) {
+	private DNFAsBitSetList computeIntsFromSingleState(STATE state) {
 		Integer stateIndex = m_stateToIndex.get(state);
 		if (stateIndex != null) {
 			return computeIntsFromSingleState(stateIndex);
 		}
 		throw new UnsupportedOperationException("tried to compute an int of a bitvector for a state that is not in the state list.");
 	}
-	private DNFAsInts computeIntsFromSingleState(int stateIndex) {
-		long tttSi = twoToThe(stateIndex);
-		return new DNFAsInts(tttSi, tttSi, null);
+	private DNFAsBitSetList computeIntsFromSingleState(int stateIndex) {
+		BitSet alpha = new BitSet();
+		alpha.set(stateIndex);
+		BitSet beta = new BitSet();
+		beta.set(stateIndex);
+		return new DNFAsBitSetList(alpha, beta, null);
 	}
-	
-	private String prettyPrintBitVector(long bvAsInt) {
-		Boolean[] bv = new Boolean[m_stateList.size()];
-		for (int i = 0; i < m_stateList.size(); i++) {
-			bv[i] = (bvAsInt & twoToThe(i))/twoToThe(i) == 1;
-		}
-		return Arrays.toString(bv);
-	}
-
-	private long twoToThe(long x) {
-		assert x < 31 : "we need longs..";
-		return 1 << x; //with leftshift it is fastest, right?
-//		int result = 1;
-//		for (int i = 0; i < x; i++) {
-//			result *= 2; 
-//		}
-//		return result;
-	}
-	
-//	/**
-//	 * Returns an int that corresponds to the bitvector representation of
-//	 * the input state set (according to the indices in m_stateList).
-//	 * @param succs
-//	 * @return
-//	 */
-//	private Integer computeIntsFromStateSet(Set<STATE> succs) {
-//		//what is better? 
-//		// going over all the states in m_stateList?
-//		// or using the hashmap to only use the needed indices?
-//		int result = 0;
-//		//for now: going over all the states
-//		for (int i = 0; i < m_stateList.size(); i++) {
-//			if (succs.contains(m_stateList.get(i))) {
-//				result += twoToThe(i);
-//			}
-//		}
-//		return result;
-//	}
 	
 	public List<STATE> getStates() {
 		return m_stateList;
@@ -297,23 +245,24 @@ public class SalomAA<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 		StringBuilder sb = new StringBuilder();
 		sb.append("alphabet = " + this.getAlphabet() + "\n");
 		sb.append("state set = " + this.getStates() + "\n");
-		sb.append("final states" + prettyPrintBitVector(m_finalStates) + "\n");
+//		sb.append("final states" + prettyPrintBitVector(m_finalStates) + "\n");
+		sb.append("final states" + m_finalStates + "\n");
 
 		StringBuilder sbTf = new StringBuilder();
-		for (Entry<STATE, HashMap<LETTER, DNFAsInts>> en1 : this.m_TransitionFunction.entrySet()) {
-			for (Entry<LETTER, DNFAsInts> en2 : en1.getValue().entrySet()) {
+		for (Entry<STATE, HashMap<LETTER, DNFAsBitSetList>> en1 : this.m_TransitionFunction.entrySet()) {
+			for (Entry<LETTER, DNFAsBitSetList> en2 : en1.getValue().entrySet()) {
 				STATE sourceState = en1.getKey();
 				LETTER letter = en2.getKey();
-				DNFAsInts dnf = en2.getValue();	
+				DNFAsBitSetList dnf = en2.getValue();	
 				StringBuilder dnfSb = new StringBuilder();
-				dnf.prettyPrintDNF(dnfSb);
+				dnf.prettyPrintDNF(dnfSb, m_stateList);
 				sbTf.append(sourceState + " |-> " + letter + " |-> " + dnfSb.toString() + "\n");
 			}
 		}
 		sb.append("transition function: \n" + sbTf.toString());
 
 		StringBuilder dnfSb = new StringBuilder();
-		m_acceptingFunction.prettyPrintDNF(dnfSb);
+		m_acceptingFunction.prettyPrintDNF(dnfSb, m_stateList);
 		sb.append("accepting function : " + dnfSb.toString() + "\n");
 		return sb.toString();
 	}
@@ -324,12 +273,12 @@ public class SalomAA<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 	
 	
 
-	public HashMap<STATE, HashMap<LETTER, DNFAsInts>> getM_TransitionFunction() {
+	public HashMap<STATE, HashMap<LETTER, DNFAsBitSetList>> getTransitionFunction() {
 		return m_TransitionFunction;
 	}
 
 	public void setTransitionFunction(
-			HashMap<STATE, HashMap<LETTER, DNFAsInts>> m_TransitionFunction) {
+			HashMap<STATE, HashMap<LETTER, DNFAsBitSetList>> m_TransitionFunction) {
 		this.m_TransitionFunction = m_TransitionFunction;
 	}
 
@@ -349,77 +298,25 @@ public class SalomAA<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 		this.m_stateToIndex = m_stateToIndex;
 	}
 
-	public DNFAsInts getAcceptingFunction() {
+	public DNFAsBitSetList getAcceptingFunction() {
 		return m_acceptingFunction;
 	}
 
-	public void setAcceptingFunction(DNFAsInts m_acceptingFunction) {
+	public void setAcceptingFunction(DNFAsBitSetList m_acceptingFunction) {
 		this.m_acceptingFunction = m_acceptingFunction;
 	}
 
-	public long getFinalStates() {
+	public BitSet getFinalStates() {
 		return m_finalStates;
 	}
 
-	public void setFinalStates(long m_finalStates) {
+	public void setFinalStates(BitSet m_finalStates) {
 		this.m_finalStates = m_finalStates;
 	}
 
 
 
-	/**
-	 * Salomaa style representation of a DNF as a list of conjunctions.
-	 * Each conjunction is stored as two ints.
-	 * alpha says whiche state variables appear in the conjunction.
-	 * beta says whether the appearing ones appera positive or negative.
-	 */
-	class DNFAsInts {
-		long alpha;
-		long beta;
-		DNFAsInts next;
-
-		public DNFAsInts(long alpha, long beta, DNFAsInts next) {
-			super();
-			this.alpha = alpha;
-			this.beta = beta;
-			this.next = next;
-		}
-		
-		void insert(DNFAsInts dai) {
-			if (this.next == null) {
-				this.next = dai;
-			} else {
-				this.next.insert(dai);
-			}
-		}
-		
-		public void prettyPrintDNF(StringBuilder sb) {
-			if (sb.toString().equals(""))
-				sb.append(" \\/ (");
-			
-			String comma = "";
-			for (int i = 0; i < m_stateList.size(); i++) {
-				if (alpha != 0 && i == 0)
-					sb.append(" /\\ {");
-				boolean isStateVariablePresent = (alpha & twoToThe(i))/twoToThe(i) == 1;
-				boolean isStateVariablePositive = (beta & twoToThe(i))/twoToThe(i) == 1;
-				if (isStateVariablePresent) {
-					if (!isStateVariablePositive) {
-						sb.append(" not");
-					}
-//					sb.append(comma + i); // or put the state here?
-					sb.append(comma + m_stateList.get(i)); // or put the state here?
-					comma = ", ";
-				}
-				if (alpha != 0 && i == m_stateList.size() - 1)
-					sb.append("}, ");
-			}
-			if (next != null)
-				next.prettyPrintDNF(sb);
-			else 
-				sb.append(")\n");
-		}
-	}
+	
 	
 	
 }
