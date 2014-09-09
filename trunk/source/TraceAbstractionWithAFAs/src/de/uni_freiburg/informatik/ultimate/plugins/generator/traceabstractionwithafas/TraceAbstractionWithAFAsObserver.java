@@ -7,6 +7,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.automata.ExampleNWAFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -47,6 +48,11 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		SmtManager smtManager = new SmtManager(rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices);
 		TraceAbstractionBenchmarks taBenchmarks = new TraceAbstractionBenchmarks(rootAnnot);
 		TAPreferences taPrefs = new TAPreferences();
+
+		//TODO: Now you can get instances of your library classes for the current toolchain like this: 
+		//NWA is nevertheless very broken, as its static initialization prevents parallelism 
+		//Surprisingly, this call lazily initializes the static fields of NWA Lib and, like magic, the toolchain works ...
+		mServices.getServiceInstance(ExampleNWAFactory.class);
 
 		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
 		Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();
