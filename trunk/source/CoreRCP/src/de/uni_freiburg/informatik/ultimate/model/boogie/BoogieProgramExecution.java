@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie;
+package de.uni_freiburg.informatik.ultimate.model.boogie;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;

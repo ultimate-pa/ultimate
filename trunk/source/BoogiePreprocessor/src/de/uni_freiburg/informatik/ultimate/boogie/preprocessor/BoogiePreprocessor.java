@@ -63,7 +63,6 @@ public class BoogiePreprocessor implements IAnalysis {
 		BoogiePreprocessorBacktranslator backTranslator = new BoogiePreprocessorBacktranslator(mServices
 				.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		mServices.getBacktranslationService().addTranslator(backTranslator);
-		mServices.getBacktranslationService().addTranslator(backTranslator);
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		observers.add(new TypeChecker(mServices));
 		observers.add(new ConstExpander(backTranslator));
