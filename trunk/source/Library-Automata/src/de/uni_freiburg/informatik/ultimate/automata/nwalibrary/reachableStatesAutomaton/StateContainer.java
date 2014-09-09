@@ -176,7 +176,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	
 	/**
 	 * Set DownStateProp prop for down state. Returns true iff this property was
-	 * already set.
+	 * modified (not already set).
 	 */
 	boolean setDownProp(STATE down, DownStateProp prop) {
 		int currentProps = m_DownStates.get(down);

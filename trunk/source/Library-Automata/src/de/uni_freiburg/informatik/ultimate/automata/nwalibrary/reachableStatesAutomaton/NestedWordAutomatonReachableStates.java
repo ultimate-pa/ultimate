@@ -1302,12 +1302,10 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 						// check if we can propagate some down state
 						if (cont.getDownStates().containsKey(down)) {
 							if (cont.getReachProp() == m_rpAllDown) {
-								boolean alreadySet = succCont.setDownProp(down, m_DspReachableAfterRemoval);
-								modified |= !alreadySet;
+								modified |= succCont.setDownProp(down, m_DspReachableAfterRemoval);
 							} else {
 								if (cont.hasDownProp(down, m_DspReachPrecious) || cont.hasDownProp(down, m_DspReachableAfterRemoval)) {
-									boolean alreadySet = succCont.setDownProp(down, m_DspReachableAfterRemoval);
-									modified |= !alreadySet;
+									modified |= succCont.setDownProp(down, m_DspReachableAfterRemoval);
 								} else {
 									// DoubleDecker (cont,down) has neither
 									// m_DspReachPrecious nor m_DspReachableAfterRemoval property
