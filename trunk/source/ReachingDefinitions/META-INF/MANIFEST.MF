@@ -4,6 +4,7 @@ Bundle-Name: Reaching Definitions
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions;singleton:=true
 Bundle-Version: 0.0.1
 Require-Bundle: UltimateCore,
+ Library-ModelCheckerUtils,
  Library-log4j,
  BoogiePreprocessor,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
