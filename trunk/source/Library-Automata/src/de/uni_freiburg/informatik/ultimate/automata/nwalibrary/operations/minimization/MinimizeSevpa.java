@@ -227,39 +227,12 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 					assertStatesSeparation(equivalenceClasses));
 			m_Partition = new Partition(m_operand, states.size());
 			
-// 2014-09-07 Matthias: I commented the following lines, I guess they are not
-//	necessary if we do not remove states
-//			// number of states to remove (for faster use)
-//			int toRemove = 0;
-//			for (Set<STATE> ecSet : equivalenceClasses) {
-//				toRemove += ecSet.size();
-//			}
-//			toRemove -= states.size();
-//			assert toRemove > 0;
-
-			/*
-			 * if initial partition was passed, but unnecessary states
-			 * were found, then remove them from the partition
-			 */
-			for (Set<STATE> ecSet : equivalenceClasses) {
-// 2014-09-07 Matthias: I commented the following lines, I guess they are not
-//	necessary if we do not remove states
-//				if (toRemove > 0) {
-//					for (STATE state : ecSet) {
-//						if (! states.contains(state)) {
-//							ecSet.remove(state);
-//							toRemove--;
-//							if (toRemove == 0) {
-//								break;
-//							}
-//						}
-//					}
-//				}
-
-				m_Partition.addEquivalenceClass(
-						new EquivalenceClass(ecSet,
-								m_operand.isFinal(ecSet.iterator().next())));
-			}
+			for (Set<STATE> ecSet : equivalenceClasses) { 
+				assert ecSet.size() > 0; 
+				m_Partition.addEquivalenceClass( 
+						new EquivalenceClass(ecSet, 
+								m_operand.isFinal(ecSet.iterator().next()))); 
+			} 
 
 		}
 		
