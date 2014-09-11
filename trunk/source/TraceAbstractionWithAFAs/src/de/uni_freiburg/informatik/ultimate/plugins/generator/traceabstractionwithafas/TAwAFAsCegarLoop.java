@@ -20,7 +20,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DNFAsBitSetList;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SalomAA;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DeterminizeRAFA;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.NonDeterminizeAA;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.SAAUnion;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
