@@ -23,8 +23,8 @@ public class ResultDeclaration extends Result {
 	}
 	
 //	public void addDeclaration(CType type, String name, ResultExpression initializer, boolean onHeap) {
-	public void addDeclaration(CType type, String name, IASTInitializer cAstInitializer, boolean onHeap) {
-		mDecls.add(new CDeclaration(type, name, cAstInitializer, onHeap));
+	public void addDeclaration(CType type, String name, IASTInitializer cAstInitializer, ResultExpression initializer, boolean onHeap) {
+		mDecls.add(new CDeclaration(type, name, cAstInitializer, initializer, onHeap));
 	}
 
 	public void addDeclaration(CDeclaration decl) {

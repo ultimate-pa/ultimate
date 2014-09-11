@@ -455,14 +455,37 @@ mInitializedGlobals.size()];
 						new Expression[] { mallocRex.lrVal.getValue()});
 				stmt.add(assign);
 
-				stmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, structHandler, loc, 
-						initializer == null ? null : ((ResultExpressionListRec) initializer).list,
-								address,
-								functionHandler, (CArray) lCType));
+				if (initializer == null) {
+					stmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, structHandler, loc, 
+						null, address, functionHandler, (CArray) lCType));				
+				} else if (initializer instanceof ResultExpressionListRec) {
+					stmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, structHandler, loc, 
+							((ResultExpressionListRec) initializer).list, address, functionHandler, (CArray) lCType));				
+				} else if (initializer instanceof ResultExpression) {// we have a variable length array and need the corresponding aux vars
+//					stmt.addAll(initializer.stmt);
+//					decl.addAll(initializer.decl);
+//					auxVars.putAll(initializer.auxVars);
+				} else {
+					assert false;
+				}
+
 			} else { //not on Heap
 				stmt.addAll(arrayHandler.initBoogieArray(main, memoryHandler, structHandler, functionHandler, loc,
 						initializer == null ? null : ((ResultExpressionListRec) initializer).list,
 								lhs, (CArray) lCType));
+				if (initializer == null) {
+					stmt.addAll(arrayHandler.initBoogieArray(main, memoryHandler, structHandler, functionHandler, loc,
+						null, lhs, (CArray) lCType));
+				} else if (initializer instanceof ResultExpressionListRec) {
+					stmt.addAll(arrayHandler.initBoogieArray(main, memoryHandler, structHandler, functionHandler, loc,
+						((ResultExpressionListRec) initializer).list, lhs, (CArray) lCType));
+				} else if (initializer instanceof ResultExpression) {// we have a variable length array and need the corresponding aux vars
+//					stmt.addAll(initializer.stmt);
+//					decl.addAll(initializer.decl);
+//					auxVars.putAll(initializer.auxVars);
+				} else {
+					assert false;
+				}
 			}
 			assert lhs != null;
 		} else if (lCType instanceof CStruct) {

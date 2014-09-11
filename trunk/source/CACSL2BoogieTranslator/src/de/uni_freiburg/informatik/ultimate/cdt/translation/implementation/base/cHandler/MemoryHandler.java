@@ -121,7 +121,7 @@ public class MemoryHandler {
 	
 	
 	private final POINTER_CHECKMODE m_PointerBaseValidity;
-	private final POINTER_CHECKMODE m_PointerSubtractionAndComparisonValidity;
+	private final POINTER_CHECKMODE m_checkPointerSubtractionAndComparisonValidity;
 	private final POINTER_CHECKMODE m_PointerAllocated;
 	private final boolean m_CheckFreeValid;
 	private final boolean m_CheckMallocNonNegative;
@@ -175,7 +175,7 @@ public class MemoryHandler {
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID);
 		m_CheckMallocNonNegative = 
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MallocNonNegative);
-    	m_PointerSubtractionAndComparisonValidity = 
+    	m_checkPointerSubtractionAndComparisonValidity = 
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY, POINTER_CHECKMODE.class);
 		useConstantTypeSizes =
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
@@ -1358,6 +1358,6 @@ public class MemoryHandler {
 	}
 
 	public POINTER_CHECKMODE getPointerSubtractionAndComparisonValidityCheckMode() {
-		return m_PointerSubtractionAndComparisonValidity;
+		return m_checkPointerSubtractionAndComparisonValidity;
 	}
 }

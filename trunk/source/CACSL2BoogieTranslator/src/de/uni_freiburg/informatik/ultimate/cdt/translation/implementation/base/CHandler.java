@@ -8,6 +8,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -593,7 +594,14 @@ public class CHandler implements ICHandler {
 					globalInBoogie = true;
 					mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
 				} else {
-					if (!cDec.hasInitializer() && !functionHandler.noCurrentProcedure()
+					/**
+					 * For Variable length arrays we have a "non-real" initializer which just initializes the aux var for the array's
+					 * size. We do not want to treat this like other initializers (call initVar and so).
+					 */
+					boolean hasRealInitializer = cDec.hasInitializer() && 
+							!(cDec.getType() instanceof CArray && !(cDec.getInitializer() instanceof ResultExpressionListRec));
+
+					if (!hasRealInitializer && !functionHandler.noCurrentProcedure()
 							&& !typeHandler.isStructDeclaration()) {
 						// in case of a local variable declaration without an
 						// initializer, we need to insert a
@@ -605,13 +613,7 @@ public class CHandler implements ICHandler {
 						// memoryHandler.addVariableToBeMallocedAndFreed(...))
 						assert result instanceof ResultSkip || result instanceof ResultExpression;
 
-						if (result instanceof ResultSkip)// --> this line
-															// missing was a bug
-															// that eliminated
-															// the
-															// initialization of
-															// statements before
-															// the initialized
+						if (result instanceof ResultSkip)
 							result = new ResultExpression((LRValue) null);
 
 						VariableLHS lhs = new VariableLHS(loc, bId);
@@ -619,12 +621,20 @@ public class CHandler implements ICHandler {
 							((ResultExpression) result).stmt.add(
 									new HavocStatement(loc, new VariableLHS[] { lhs }));
 						} else {
+							if (cDec.hasInitializer()) { //must be a non-real initializer for variable length array size --> need to pass this on
+								((ResultExpression) result).decl.addAll(cDec.getInitializer().decl);
+								((ResultExpression) result).stmt.addAll(cDec.getInitializer().stmt);
+								((ResultExpression) result).auxVars.putAll(cDec.getInitializer().auxVars);
+							}
+							
 							LocalLValue llVal = new LocalLValue(lhs, cDec.getType());
 							((ResultExpression) result).stmt.add(memoryHandler.getMallocCall(main, functionHandler, 
 									memoryHandler.calculateSizeOf(cDec.getType(), loc), llVal , loc));
 							memoryHandler.addVariableToBeFreed(main, llVal);
+							
+
 						}
-					} else if (cDec.hasInitializer() && !functionHandler.noCurrentProcedure() && !typeHandler.isStructDeclaration()) { 
+					} else if (hasRealInitializer && !functionHandler.noCurrentProcedure() && !typeHandler.isStructDeclaration()) { 
 						//in case of a local variable declaration with an initializer, the statements and delcs
 						// necessary for the initialization are the result
 						assert result instanceof ResultSkip || result instanceof ResultExpression;
@@ -699,6 +709,7 @@ public class CHandler implements ICHandler {
 		for (int i = 0; i < pointerOps.length; i++) {
 			newResType.cType = new CPointer(newResType.cType);
 		}
+		ResultExpression variableLengthArrayAuxVarInitializer = null;
 		if (node instanceof IASTArrayDeclarator) {
 			IASTArrayDeclarator arrDecl = (IASTArrayDeclarator) node;
 
@@ -743,9 +754,36 @@ public class CHandler implements ICHandler {
 					variableLength = true;
 			}
 			CArray arrayType = null;
+
 			if (variableLength) {
-				arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType,
+				if (!(overallSize instanceof IntegerLiteral)) { //size is given but variable --> a real variable length array
+					//introduce a new auxiliary variable storing the size of the array 
+					//(the variable used may change independently from the array)
+					String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYDIM);
+					VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, new PrimitiveType(loc, SFO.INT) , loc);
+
+					ArrayList<Statement> initStmts = new ArrayList<>();
+					initStmts.add(new AssignmentStatement(loc, 
+							new LeftHandSide[] { new VariableLHS(loc, tmpName) }, new Expression[] { overallSize }));
+					ArrayList<Declaration> initDecls = new ArrayList<>();
+					initDecls.add(tmpVar);
+					HashMap<VariableDeclaration, ILocation> initAuxVars = new HashMap<>();
+					initAuxVars.put(tmpVar, loc);
+
+//					ResultExpression tmpInitializer = new ResultExpression(initStmts, 
+//							null, initDecls, initAuxVars);
+
+//					variableLengthArrayAuxVarCDec = new CDeclaration(new CPrimitive(PRIMITIVE.INT), tmpName, tmpInitializer);
+					variableLengthArrayAuxVarInitializer = new ResultExpression(initStmts, 
+							null, initDecls, initAuxVars);
+	
+//					arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType,
+					arrayType = new CArray(new Expression[] { new IdentifierExpression(loc, tmpName)}, newResType.cType,
 						true);
+				} else { //something like int a[] -- no size given
+					arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType,
+						true);
+				}
 			} else {
 				arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType);
 			}
@@ -780,6 +818,8 @@ public class CHandler implements ICHandler {
 			mCurrentDeclaredTypes.push(newResType);
 			ResultDeclaration result = (ResultDeclaration) main.dispatch(node.getNestedDeclarator());
 			mCurrentDeclaredTypes.pop();
+//			if (variableLengthArrayAuxVarInitializer != null)
+//				result.addDeclaration(variableLengthArrayAuxVarCDec);
 			if (node.getInitializer() != null) {
 				assert result.getDeclarations().size() == 1;
 				CDeclaration cdec = result.getDeclarations().remove(0);// have
@@ -792,13 +832,15 @@ public class CHandler implements ICHandler {
 																		// right?
 				result.addDeclaration(cdec.getType(), cdec.getName(),
 				// (ResultExpression) main.dispatch(node.getInitializer()),
-						node.getInitializer(), cdec.isOnHeap());
+						node.getInitializer(), variableLengthArrayAuxVarInitializer, cdec.isOnHeap());
 			}
 			return result;
 		} else {
 			ResultDeclaration result = new ResultDeclaration();
+//			if (variableLengthArrayAuxVarCDec != null)
+//				result.addDeclaration(variableLengthArrayAuxVarCDec);
 			result.addDeclaration(newResType.cType, node.getName().toString(), node.getInitializer(),
-					newResType.isOnHeap);
+					variableLengthArrayAuxVarInitializer, newResType.isOnHeap);
 			return result;
 		}
 	}

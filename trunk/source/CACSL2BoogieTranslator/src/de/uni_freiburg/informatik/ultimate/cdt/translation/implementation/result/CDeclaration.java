@@ -16,23 +16,47 @@ public class CDeclaration {
 	boolean mIsOnHeap;
 	boolean mIsInitializerTranslated;
 
-	//	public CDeclaration(CType type, String name, ResultExpression initializer, boolean onHeap) {
-	public CDeclaration(CType type, String name, IASTInitializer cAstInitializer, boolean onHeap) {
+//	public CDeclaration(CType type, String name, ResultExpression initializer, boolean onHeap) {
+//		mType = type;
+//		mName = name;
+////		mCAstInitializer = cAstInitializer;
+//		mInitializer = initializer;
+//		mIsOnHeap = onHeap;//TODO actually make use of this flag
+//		mIsInitializerTranslated = false;
+//	}
+//	
+	/**
+	 * We can give either an initializer from C-AST and an ResultExpression. 
+	 * @param type
+	 * @param name
+	 * @param cAstInitializer
+	 * @param initializer
+	 * @param onHeap
+	 */
+	public CDeclaration(CType type, String name, IASTInitializer cAstInitializer, ResultExpression initializer, boolean onHeap) {
 		mType = type;
 		mName = name;
 		mCAstInitializer = cAstInitializer;
-//		mInitializer = initializer;
-		mIsOnHeap = onHeap;//TODO actually make use of this constructor/flag
+		mInitializer = initializer;
+		assert cAstInitializer == null || initializer == null;
+		mIsOnHeap = onHeap;//TODO actually make use of this flag
 		mIsInitializerTranslated = false;
 	}
 	
 //	public CDeclaration(CType type, String name, ResultExpression initializer) {
+//		mType = type;
+//		mName = name;
+//		mInitializer = initializer;
+//		mIsOnHeap = false;
+//		mIsInitializerTranslated = true;
+//    }
+
 	public CDeclaration(CType type, String name, IASTInitializer cAstInitializer) {
-		this(type, name, cAstInitializer, false);
+		this(type, name, cAstInitializer, null, false);
 	}
 	
 	public CDeclaration(CType type, String name) {
-		this(type, name, null);
+		this(type, name, (IASTInitializer) null);
 	}
 
 	public CType getType() {
@@ -51,7 +75,7 @@ public class CDeclaration {
 	}
 	
 	public boolean hasInitializer() {
-		return mCAstInitializer != null;
+		return mCAstInitializer != null || mInitializer != null;
 	}
 
 	
@@ -72,8 +96,10 @@ public class CDeclaration {
 	 */
 	public void translateInitializer(Dispatcher main) {
 		assert !mIsInitializerTranslated : "initializer has already been translated";
-		if (mCAstInitializer != null)
+		if (mCAstInitializer != null) {
+			assert mInitializer == null;
 			mInitializer = (ResultExpression) main.dispatch(mCAstInitializer);
+		}
 		mIsInitializerTranslated = true;
 	}
 }
