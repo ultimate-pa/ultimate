@@ -24,31 +24,40 @@
  * License, the licensors of the ULTIMATE LassoRanker Library grant you
  * additional permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays;
+package de.uni_freiburg.informatik.ultimate.util.relation;
 
 import java.util.HashMap;
 import java.util.Map;
 
-
-public class Multimap3<K1, K2, V> {
+/**
+ * TODO: comment
+ * @author Matthias Heizmann
+ *
+ * @param <K1>
+ * @param <K2>
+ * @param <K3>
+ * @param <V>
+ */
+public class NestedMap3<K1, K2, K3, V> {
 	
-	Map<K1, Map<K2, V>> m_K1ToK2ToV = new HashMap<K1, Map<K2, V>>();
+	private final Map<K1, NestedMap2<K2, K3, V>> m_K1ToK2ToK3V = 
+			new HashMap<K1, NestedMap2<K2, K3, V>>();
 	
-	public V put(K1 key1, K2 key2, V value) {
-		Map<K2, V> k2toV = m_K1ToK2ToV.get(key1);
-		if (k2toV == null) {
-			k2toV = new HashMap<>();
-			m_K1ToK2ToV.put(key1, k2toV);
+	public V put(K1 key1, K2 key2, K3 key3, V value) {
+		NestedMap2<K2, K3, V> k2tok3toV = m_K1ToK2ToK3V.get(key1);
+		if (k2tok3toV == null) {
+			k2tok3toV = new NestedMap2<>();
+			m_K1ToK2ToK3V.put(key1, k2tok3toV);
 		}
-		return k2toV.put(key2, value);
+		return k2tok3toV.put(key2, key3, value);
 	}
 	
-	public V get(K1 key1, K2 key2) {
-		Map<K2, V> k2toV = m_K1ToK2ToV.get(key1);
-		if (k2toV == null) {
+	public V get(K1 key1, K2 key2, K3 key3) {
+		NestedMap2<K2, K3, V> k2tok3toV = m_K1ToK2ToK3V.get(key1);
+		if (k2tok3toV == null) {
 			return null;
 		} else {
-			return k2toV.get(key2);
+			return k2tok3toV.get(key2, key3);
 		}
 	}
 }
