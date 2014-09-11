@@ -42,6 +42,29 @@ class ModelTranslationContainer implements IBacktranslationService {
 
 	@Override
 	public <SE> Object translateExpression(SE expression, Class<SE> clazz) {
+		Stack<ITranslator<?, ?, ?, ?>> current = prepareExpressionStack(expression, clazz);
+		return translateExpression(current, expression);
+	}
+	
+	@Override
+	public <SE> String translateExpressionToString(SE expression, Class<SE> clazz) {
+		Stack<ITranslator<?, ?, ?, ?>> current = prepareExpressionStack(expression, clazz);
+		ITranslator<?, ?, ?, ?> last = current.lastElement();
+		Object exp = translateExpression(current, expression);
+		return last.targetExpressionToString(exp);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private <TE, SE> TE translateExpression(Stack<ITranslator<?, ?, ?, ?>> remaining, SE expression) {
+		if (remaining.isEmpty()) {
+			return (TE) expression;
+		} else {
+			ITranslator<?, ?, SE, TE> tmp = (ITranslator<?, ?, SE, TE>) remaining.pop();
+			return translateExpression(remaining, tmp.translateExpression(expression));
+		}
+	}	
+	
+	private <SE> Stack<ITranslator<?, ?, ?, ?>> prepareExpressionStack(SE expression, Class<SE> clazz){
 		Stack<ITranslator<?, ?, ?, ?>> current = new Stack<ITranslator<?, ?, ?, ?>>();
 		boolean canTranslate = false;
 		for (ITranslator<?, ?, ?, ?> trans : mTranslationSequence) {
@@ -58,22 +81,26 @@ class ModelTranslationContainer implements IBacktranslationService {
 			throw new IllegalArgumentException("You cannot translate " + expression
 					+ " with this backtranslation service, as the last ITranslator in this chain is not compatible");
 		}
-
-		return translateExpression(current, expression);
+		return current;
 	}
 
-	@SuppressWarnings("unchecked")
-	private <TE, SE> TE translateExpression(Stack<ITranslator<?, ?, ?, ?>> remaining, SE expression) {
-		if (remaining.isEmpty()) {
-			return (TE) expression;
-		} else {
-			ITranslator<?, ?, SE, TE> tmp = (ITranslator<?, ?, SE, TE>) remaining.pop();
-			return translateExpression(remaining, tmp.translateExpression(expression));
-		}
-	}
+
 
 	@Override
 	public <STE> List<?> translateTrace(List<STE> trace, Class<STE> clazz) {
+		Stack<ITranslator<?, ?, ?, ?>> current = prepareTraceStack(trace, clazz);
+		return translateTrace(current, trace);
+	}
+	
+	@Override
+	public <STE> List<String> translateTraceToString(List<STE> trace, Class<STE> clazz) {
+		Stack<ITranslator<?, ?, ?, ?>> current = prepareTraceStack(trace, clazz);
+		ITranslator<?, ?, ?, ?> last = current.lastElement();
+		Object translatedTrace = translateTrace(current, trace);
+		return last.targetTraceToString((List<?>) translatedTrace);
+	}
+	
+	private <STE> Stack<ITranslator<?, ?, ?, ?>> prepareTraceStack(List<STE> trace, Class<STE> clazz){
 		Stack<ITranslator<?, ?, ?, ?>> current = new Stack<ITranslator<?, ?, ?, ?>>();
 		boolean canTranslate = false;
 		for (ITranslator<?, ?, ?, ?> trans : mTranslationSequence) {
@@ -90,7 +117,7 @@ class ModelTranslationContainer implements IBacktranslationService {
 			throw new IllegalArgumentException("You cannot translate " + Utils.join(trace, ",")
 					+ " with this backtranslation service, as the last ITranslator in this chain is not compatible");
 		}
-		return translateTrace(current, trace);
+		return current;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -143,21 +170,6 @@ class ModelTranslationContainer implements IBacktranslationService {
 		return new ModelTranslationContainer(this);
 	}
 
-	@Override
-	public <SE> String translateExpressionToString(SE expression, Class<SE> clazz) {
-		// TODO: The idea is the same as in translateTraceToString(..)
-		throw new UnsupportedOperationException("Not yet implemented");
-	}
-
-	@Override
-	public <STE> List<String> translateTraceToString(List<STE> trace, Class<STE> clazz) {
-		// TODO: The idea is that a backtranslator may contain a reference to an
-		// toString implementation (via some interface and some object) that can
-		// be called after the actual back translation (i.e. the last/first
-		// translator has such a toString, and it is called element-wise
-
-		throw new UnsupportedOperationException("Not yet implemented");
-	}
 
 	@Override
 	public String toString() {

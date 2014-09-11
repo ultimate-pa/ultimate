@@ -83,6 +83,15 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	}
 
 	@Override
+	public List<String> targetTraceToString(List<?> trace) {
+		List<String> rtr = new ArrayList<>();
+		for (Object elem : trace) {
+			rtr.add(elem.toString());
+		}
+		return rtr;
+	}
+
+	@Override
 	public TE translateExpression(SE expression) {
 		TE result;
 		try {
@@ -94,6 +103,11 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 			throw new AssertionError(message);
 		}
 		return result;
+	}
+
+	@Override
+	public String targetExpressionToString(Object expression) {
+		return expression.toString();
 	}
 
 	@Override

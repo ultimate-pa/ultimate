@@ -34,12 +34,16 @@ public interface ITranslator<STE, TTE, SE, TE> {
 
 	public TE translateExpression(SE expression);
 
+	public String targetExpressionToString(Object expression);
+	
 	/**
 	 * Translate trace that is represented as a list of Source Trace Elements
 	 * (resp. list of Target Trace Elements).
 	 */
 	public List<TTE> translateTrace(List<STE> trace);
 
+	public List<String> targetTraceToString(List<?> trace);
+	
 	public IProgramExecution<TTE, TE> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
 
 	public Class<STE> getSourceTraceElementClass();
