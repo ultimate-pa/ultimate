@@ -2032,6 +2032,10 @@ public class CHandler implements ICHandler {
 					&& ((IntegerLiteral) reNegative.lrVal.getValue()).getValue().equals("0")
 					&& rePositive.lrVal.cType instanceof CPointer) {
 				reNegative.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), rePositive.lrVal.cType);
+			} else if (reNegative.lrVal.getValue() == null
+					|| rePositive.lrVal.getValue() == null) {
+				// one of the values is void --> can only come from the call of a void function, i think..
+				//do nothing here.. (should crash later if the value is assigned..)
 			} else {
 				assert false : "types do not match";
 			}
