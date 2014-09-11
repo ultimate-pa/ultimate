@@ -8,12 +8,13 @@
 
 implementation main() returns ()
 {
-  var i : int;
-  i := 0;
-  while (i < 1048)
+  var offset, length: int;
+  offset := 0;
+  length := 1048;
+  while (offset < length)
   {
-    assert 4 + i <= 1048;
-    i := i + 4;
+    assert 4 + offset <= length;
+    offset := offset + 4;
   }
 }
 
