@@ -1,11 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
@@ -14,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 
 public class BoogiePreprocessorBacktranslator extends
 		DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression> {
@@ -91,9 +97,40 @@ public class BoogiePreprocessorBacktranslator extends
 	@Override
 	public IProgramExecution<BoogieASTNode, Expression> translateProgramExecution(
 			IProgramExecution<BoogieASTNode, Expression> programExecution) {
-		// use BoogieProgramExecution
-		// TODO Auto-generated method stub
+
+		List<Statement> newTrace = new ArrayList<>();
+		Map<Integer, ProgramState<Expression>> newPartialProgramStateMapping = new HashMap<>();
+
+		int length = programExecution.getLength();
+		for (int i = 0; i < length; ++i) {
+			BoogieASTNode elem = programExecution.getTraceElement(i);
+			BoogieASTNode newElem = mMapping.get(elem);
+
+			if (newElem == null) {
+				// do scary stuff
+			} else {
+				if (newElem instanceof Statement) {
+					newTrace.add((Statement) newElem);
+				} else {
+					// do scary stuff
+				}
+			}
+
+			// do stuff for the state
+			ProgramState<Expression> state = programExecution.getProgramState(i);
+			if (state == null) {
+				newPartialProgramStateMapping.put(i, null);
+			} else {
+				Map<Expression, Collection<Expression>> newVariable2Values = new HashMap<>();
+
+				// do smart stuff
+
+				newPartialProgramStateMapping.put(i, new ProgramState<>(newVariable2Values));
+			}
+		}
 		return super.translateProgramExecution(programExecution);
+		// return new BoogieProgramExecution(newTrace,
+		// newPartialProgramStateMapping);
 	}
 
 	@Override

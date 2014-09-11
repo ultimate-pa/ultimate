@@ -305,9 +305,9 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			ArrayDeque<Declaration> newDecls = new ArrayDeque<Declaration>();
 			for (Declaration d : unit.getDeclarations()) {
 				Declaration[] funcs = expandDeclaration(d);
+				newDecls.addAll(Arrays.asList(funcs));
 				for (Declaration newDecl : funcs) {
 					mTranslator.addMapping(d, newDecl);
-					newDecls.add(newDecl);
 				}
 			}
 			for (TypeConstructor tc : m_StructTypes.values()) {
@@ -337,15 +337,17 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	protected VarList[] processVarLists(VarList[] vls) {
 		ArrayList<VarList> flat = new ArrayList<VarList>();
 		for (VarList vl : vls) {
-			for (VarList newVl : expandVarList(vl)) {
+			VarList[] expanded = expandVarList(vl);
+			flat.addAll(Arrays.asList(expanded));
+
+			for (VarList newVl : expanded) {
 				if (newVl == vl) {
 					continue;
 				}
-				flat.add(newVl);
 				mTranslator.addMapping(vl, newVl);
 			}
 		}
-		if (flat.isEmpty()) {
+		if (flat.equals(Arrays.asList(vls))) {
 			return vls;
 		}
 		return flat.toArray(new VarList[flat.size()]);
