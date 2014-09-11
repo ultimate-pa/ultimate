@@ -617,15 +617,17 @@ public class CHandler implements ICHandler {
 							result = new ResultExpression((LRValue) null);
 
 						VariableLHS lhs = new VariableLHS(loc, bId);
+
+						if (cDec.hasInitializer()) { //must be a non-real initializer for variable length array size --> need to pass this on
+								((ResultExpression) result).decl.addAll(cDec.getInitializer().decl);
+								((ResultExpression) result).stmt.addAll(cDec.getInitializer().stmt);
+								((ResultExpression) result).auxVars.putAll(cDec.getInitializer().auxVars);
+						}
+							
 						if (!onHeap) {
 							((ResultExpression) result).stmt.add(
 									new HavocStatement(loc, new VariableLHS[] { lhs }));
 						} else {
-							if (cDec.hasInitializer()) { //must be a non-real initializer for variable length array size --> need to pass this on
-								((ResultExpression) result).decl.addAll(cDec.getInitializer().decl);
-								((ResultExpression) result).stmt.addAll(cDec.getInitializer().stmt);
-								((ResultExpression) result).auxVars.putAll(cDec.getInitializer().auxVars);
-							}
 							
 							LocalLValue llVal = new LocalLValue(lhs, cDec.getType());
 							((ResultExpression) result).stmt.add(memoryHandler.getMallocCall(main, functionHandler, 
