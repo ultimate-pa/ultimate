@@ -21,8 +21,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
@@ -30,6 +35,9 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_CHECKMODE;
 
 /**
  * Class that handles translation of arrays.
@@ -38,6 +46,14 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @date 12.10.2012
  */
 public class ArrayHandler {
+	
+	private POINTER_CHECKMODE m_checkArrayAccessOffHeap;
+
+	public ArrayHandler() {
+		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		m_checkArrayAccessOffHeap = 
+				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_ARRAYACCESSOFFHEAP, POINTER_CHECKMODE.class);
+	}
 
 	public ArrayList<Statement> initArrayOnHeap(Dispatcher main, MemoryHandler memoryHandler, StructHandler structHandler, ILocation loc, 
 			ArrayList<ResultExpressionListRec> list, Expression startAddress,
@@ -242,7 +258,6 @@ public class ArrayHandler {
 	 * When going up again the ResultExpressions are popped/used.
 	 */
 	Stack<ResultExpression> mCollectedSubscripts = new Stack<ResultExpression>();
-	
 	public ResultExpression handleArraySubscriptExpression(Dispatcher main,
 			MemoryHandler memoryHandler, StructHandler structHandler,
 			IASTArraySubscriptExpression node) {		
@@ -281,7 +296,6 @@ public class ArrayHandler {
 					(RValue) currentSubscriptRex.lrVal,
 					pointedType);
 			result.lrVal  = new HeapLValue(address.getValue(), pointedType);
-//			result.lrVal.cType = pointedType;
 		} else {
 			assert result.lrVal.cType instanceof CArray;
 			ArrayList<Expression> newDimensions = 
@@ -314,6 +328,25 @@ public class ArrayHandler {
 				} else {
 					newLLVal.lhs = new ArrayLHS(loc, 
 							innerArrayLHS, new Expression[] { currentSubscriptRex.lrVal.getValue() });	
+				}
+				
+				if (m_checkArrayAccessOffHeap == POINTER_CHECKMODE.ASSERTandASSUME
+						|| m_checkArrayAccessOffHeap == POINTER_CHECKMODE.ASSUME) {
+					Expression checkNotTooBig = new BinaryExpression(loc, Operator.COMPLEQ, 
+							new BinaryExpression(loc, Operator.ARITHMUL,
+									currentSubscriptRex.lrVal.getValue(), 
+									memoryHandler.calculateSizeOf(newCType, loc)),
+									new BinaryExpression(loc, Operator.ARITHMINUS,
+											memoryHandler.calculateSizeOf(innerResult.lrVal.cType, loc),
+											memoryHandler.calculateSizeOf(newCType, loc)));
+					Expression checkNotNegative = new BinaryExpression(loc, Operator.COMPGEQ,
+							currentSubscriptRex.lrVal.getValue(),
+							new IntegerLiteral(loc, "0"));
+					Expression check = new BinaryExpression(loc, Operator.LOGICAND, 
+							checkNotNegative, checkNotTooBig);
+					if (m_checkArrayAccessOffHeap == POINTER_CHECKMODE.ASSERTandASSUME)
+						result.stmt.add(new AssertStatement(loc, check));
+					result.stmt.add(new AssumeStatement(loc, check));
 				}
 				
 				newLLVal.cType = newCType;

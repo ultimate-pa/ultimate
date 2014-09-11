@@ -26,6 +26,10 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 							LABEL_CHECK_POINTER_ALLOC, 
 							POINTER_CHECKMODE.ASSERTandASSUME,
 							PreferenceType.Combo, POINTER_CHECKMODE.values()),
+				new UltimatePreferenceItem<POINTER_CHECKMODE>(
+							LABEL_CHECK_ARRAYACCESSOFFHEAP, 
+							POINTER_CHECKMODE.ASSERTandASSUME,
+							PreferenceType.Combo, POINTER_CHECKMODE.values()),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_CHECK_FREE_VALID, true,
 						PreferenceType.Boolean),
@@ -134,6 +138,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
 	public static final String LABEL_CHECK_MemoryLeakInMain = "Check for the main procedure if all allocated memory was freed";
 	public static final String LABEL_CHECK_MallocNonNegative = "Check if the input of malloc is non-negative";
+	public static final String LABEL_CHECK_ARRAYACCESSOFFHEAP = "Check array bounds for arrays that are off heap";
 	public static final String LABEL_REPORT_UNSOUNDNESS_WARNING = "Report unsoundness warnings";
 	public static final String LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY = 
 			"If two pointers are subtracted or compared they have the same base address";
