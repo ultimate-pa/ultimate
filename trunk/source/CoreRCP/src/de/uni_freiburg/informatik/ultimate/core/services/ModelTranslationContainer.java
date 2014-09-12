@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
@@ -48,6 +51,13 @@ class ModelTranslationContainer implements IBacktranslationService {
 	
 	@Override
 	public <SE> String translateExpressionToString(SE expression, Class<SE> clazz) {
+		
+		// FIXME: 2014-09-12 Matthias The following three lines are a workaround
+		// that we use until the final solution is implemented correctly.
+		if (Expression.class.isAssignableFrom(expression.getClass())) {
+			return BoogieStatementPrettyPrinter.print((Expression) expression);
+		}
+		
 		Stack<ITranslator<?, ?, ?, ?>> current = prepareExpressionStack(expression, clazz);
 		ITranslator<?, ?, ?, ?> last = current.lastElement();
 		Object exp = translateExpression(current, expression);
