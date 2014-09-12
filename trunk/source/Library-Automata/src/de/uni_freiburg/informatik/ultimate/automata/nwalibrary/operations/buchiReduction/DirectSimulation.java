@@ -32,35 +32,26 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
-
-import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player0Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player1Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
+import de.uni_freiburg.informatik.ultimate.util.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 
 /**
- * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
- * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
- * @date 16.01.2012
  */
-public class DelayedSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, STATE> {
+public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, STATE> {
 
     /**
      * Constructor.
@@ -71,13 +62,13 @@ public class DelayedSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, 
      *            whether to use strongly connected components
      * @throws OperationCanceledException
      */
-    public DelayedSimulation(INestedWordAutomatonOldApi<LETTER,STATE> ba, boolean useSCCs, StateFactory<STATE> stateFactory)
+    public DirectSimulation(INestedWordAutomatonOldApi<LETTER,STATE> ba, boolean useSCCs, StateFactory<STATE> stateFactory)
             throws OperationCanceledException {
     	super(ba, useSCCs, stateFactory);
     }
 
     /**
-     * Generates a GameGraph for a given Buchi automaton.
+     * Generates a GameGraph for a given DFA
      * 
      * @param ba
      *            a Buchi automaton <b>without</b> dead ends
@@ -85,23 +76,14 @@ public class DelayedSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, 
      */
     protected void generateGameGraph(INestedWordAutomatonOldApi<LETTER,STATE> ba)
             throws OperationCanceledException {
-        HashMap<STATE, HashMap<STATE, ArrayList<Player1Vertex<LETTER,STATE>>>> edgeH =
-                new HashMap<STATE, HashMap<STATE, ArrayList<Player1Vertex<LETTER,STATE>>>>();
+    	NestedMap2<STATE, STATE, Player1Vertex<LETTER,STATE>> map1 = new NestedMap2<STATE, STATE, Player1Vertex<LETTER,STATE>>();
         // Calculate v1 [paper ref 10]
         for (STATE q0 : ba.getStates()) {
-            edgeH.put(q0, new HashMap<STATE, ArrayList<Player1Vertex<LETTER,STATE>>>());
             for (STATE q1 : ba.getStates()) {
-                edgeH.get(q0).put(q1, new ArrayList<Player1Vertex<LETTER,STATE>>(2));
                 Player1Vertex<LETTER,STATE> v1e = new Player1Vertex<LETTER, STATE>(
                         (byte) 0, false, q0, q1);
                 v1.add(v1e);
-                edgeH.get(q0).get(q1).add(0, v1e);
-                if (!ba.isFinal(q1)) {
-                    v1e = new Player1Vertex<LETTER,STATE>((byte) 1, true, q0, q1);
-                    v1.add(v1e);
-                    edgeH.get(q0).get(q1).add(1, v1e);
-                    infinity++;
-                }
+                map1.put(q0, q1, v1e);
             }
             if (!NestedWordAutomata.getMonitor().continueProcessing()) {
                 s_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
@@ -112,31 +94,21 @@ public class DelayedSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, 
         for (STATE q0 : ba.getStates()) {
             for (STATE q1 : ba.getStates()) {
                 for (LETTER s : ba.lettersInternalIncoming(q0)) {
-                    if (ba.predInternal(q0, s).iterator().hasNext()) {
-                        Player0Vertex<LETTER,STATE> v0e = new Player0Vertex<LETTER, STATE>(
-                                (byte) 2, false, q0, q1, s);
-                        v0.add(v0e);
-                        // V0 -> V1 edges [paper ref 11]
-                        for (STATE q2 : ba.succInternal(q1, s))
-                            addEdge(v0e, edgeH.get(q0).get(q2).get(0));
-                        // V1 -> V0 edges [paper ref 11]
-                        for (STATE q2 : ba.predInternal(q0, s))
-                            if (!ba.isFinal(q0))
-                                addEdge(edgeH.get(q2).get(q1).get(0), v0e);
-                        v0e = new Player0Vertex<LETTER,STATE>((byte) 2, true, q0, q1, s);
-                        v0.add(v0e);
-                        // V0 -> V1 edges [paper ref 11]
-                        for (STATE q2 : ba.succInternal(q1, s)) {
-                            if (!ba.isFinal(q2) && edgeH.get(q0).get(q2).size() > 1)
-                                addEdge(v0e, edgeH.get(q0).get(q2).get(1));
-                            else addEdge(v0e, edgeH.get(q0).get(q2).get(0));
+                    Player0Vertex<LETTER,STATE> v0e = new Player0Vertex<LETTER, STATE>(
+                            (byte) 0, false, q0, q1, s);
+                    v0.add(v0e);
+                    // V1 -> V0 edges [paper ref 11]
+                    for (STATE pred0 : ba.predInternal(q0, s)) {
+                    	//TODO: check conditions
+                        if (!ba.isFinal(pred0) || ba.isFinal(q1)) {
+                            addEdge(map1.get(pred0, q1), v0e);
                         }
-                        // V1 -> V0 edges [paper ref 11]
-                        for (STATE q2 : ba.predInternal(q0, s)) {
-                            if (edgeH.get(q2).get(q1).size() > 1)
-                                addEdge(edgeH.get(q2).get(q1).get(1), v0e);
-                            if (ba.isFinal(q0))
-                                addEdge(edgeH.get(q2).get(q1).get(0), v0e);
+                    }
+                    // V0 -> V1 edges [paper ref 11]
+                    for (STATE succ1 : ba.succInternal(q1, s)) {
+                    	//TODO: check conditions
+                        if (!ba.isFinal(q0) || ba.isFinal(succ1)) {
+                            addEdge(v0e, map1.get(q0, succ1));
                         }
                     }
                 }
@@ -173,19 +145,16 @@ public class DelayedSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, 
     protected void generateBuchiAutomaton(INestedWordAutomatonOldApi<LETTER,STATE> m_Operand)
             throws OperationCanceledException {
         // determine which states to merge
-        ArrayList<STATE> states = new ArrayList<STATE>();
-        states.addAll(m_Operand.getStates());
-        boolean[][] table = new boolean[states.size()][states.size()];
+    	UnionFind<STATE> uf = new UnionFind<>();
+    	for (STATE state : m_Operand.getStates()) {
+    		uf.makeEquivalenceClass(state);
+    	}
         for (Player1Vertex<LETTER,STATE> v : v1) {
             // all the states we need are in V1...
-            if ((m_Operand.isFinal(v.getQ0()) && m_Operand.isFinal(v.getQ1()))
-                    ^ v.isB() ^ m_Operand.isFinal(v.getQ0())) {
-                // skip all elements that not fulfill:
-                // letting b=1 if q0 in F and q1 not in F, and b=0 else
-                continue;
-            }
             if (v.getPM(null,infinity) < infinity) {
-                table[states.indexOf(v.getQ0())][states.indexOf(v.getQ1())] = true;
+            	STATE state1 = v.getQ0();
+            	STATE state2 = v.getQ1();
+            	uf.union(state1, state2);
             }
         }
 
@@ -195,47 +164,38 @@ public class DelayedSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, 
         }
 
         // merge states
-        boolean[] marker = new boolean[states.size()];
-        Set<STATE> temp = new HashSet<STATE>();
-        HashMap<STATE,STATE> oldSNames2newSNames = new HashMap<STATE,STATE>();
-        @SuppressWarnings("unchecked")
-        StateFactory<STATE> snf = (StateFactory<STATE>) new StringFactory();
         result = new NestedWordAutomaton<LETTER,STATE>(m_Operand.getInternalAlphabet(),
-                null, null, snf);
-        for (int i = 0; i < states.size(); i++) {
-            if (marker[i]) continue;
-            temp.clear();
-            temp.add(states.get(i));
-            marker[i] = true;
-            boolean isFinal = m_Operand.isFinal(states.get(i));
-            boolean isInitial = m_Operand.isInitial(states.get(i));
-            for (int j = i; j < states.size(); j++) {
-                if (table[i][j] && table[j][i] && !marker[j]) {
-                    temp.add(states.get(j));
-                    marker[j] = true;
-                    if (m_Operand.isFinal(states.get(j))) isFinal = true;
-                    if (m_Operand.isInitial(states.get(j))) isInitial = true;
-                }
-            }
-            STATE minimizedStateName = snf.minimize(temp);
-            for (STATE c : temp) oldSNames2newSNames.put(c, minimizedStateName);
-            result.addState(isInitial, isFinal, minimizedStateName);
-            marker[i] = true;
+                null, null, m_StateFactory);
+        Set<STATE> representativesOfInitials = new HashSet<STATE>();
+        for (STATE initial : m_Operand.getInitialStates()) {
+        	representativesOfInitials.add(uf.find(initial));
         }
-
+        
+        Map<STATE,STATE> input2result = new HashMap<STATE,STATE>(m_Operand.size());
+        for (STATE representative : uf.getAllRepresentatives()) {
+        	boolean isInitial = representativesOfInitials.contains(representative);
+        	boolean isFinal = m_Operand.isFinal(representative);
+        	Set<STATE> eqClass = uf.getEquivalenceClassMembers(representative);
+        	STATE resultState = m_StateFactory.minimize(eqClass);
+        	result.addState(isInitial, isFinal, resultState);
+        	for (STATE eqClassMember : eqClass) {
+        		input2result.put(eqClassMember, resultState);
+        	}
+        }
+        
+        for (STATE state : uf.getAllRepresentatives()) {
+        	STATE pred = input2result.get(state);
+        	for (OutgoingInternalTransition<LETTER, STATE> outTrans : m_Operand.internalSuccessors(state)) {
+        		STATE succ = input2result.get(outTrans.getSucc());
+        		result.addInternalTransition(pred, outTrans.getLetter(), succ);
+        	}
+        }
+        
         if (!NestedWordAutomata.getMonitor().continueProcessing()) {
             s_Logger.debug("Stopped in generateBuchiAutomaton/states added to result BA");
             throw new OperationCanceledException();
         }
 
-        // add edges
-        for (STATE c : m_Operand.getStates())
-            for (LETTER s : m_Operand.getInternalAlphabet())
-                for (STATE succ : m_Operand.succInternal(c, s)) {
-                    STATE newPred = oldSNames2newSNames.get(c);
-                    STATE newSucc = oldSNames2newSNames.get(succ);
-                    result.addInternalTransition(newPred, s, newSucc);
-                }
     }
 
 }
