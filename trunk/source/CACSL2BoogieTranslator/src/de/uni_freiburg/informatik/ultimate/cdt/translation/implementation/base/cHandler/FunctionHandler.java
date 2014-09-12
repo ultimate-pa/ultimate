@@ -744,10 +744,6 @@ public class FunctionHandler {
 	/**
 	 * Take the parameter information from the CDeclaration. Make a Varlist from it.
 	 * Add the parameters to the symboltable. Also update procedureToParamCType member.
-	 * @param main
-	 * @param loc
-	 * @param decl
-	 * @param methodName
 	 * @return
 	 */
 	private VarList[] processInParams(Dispatcher main, ILocation loc,
@@ -855,18 +851,27 @@ public class FunctionHandler {
 
 		callGraph.get(currentProcedure.getIdentifier()).add(methodName);
 
-		ArrayList<Expression> args = new ArrayList<Expression>();
+		boolean procedureDeclaredWithOutInparamsButCalledWithInParams = 
+				procedures.get(methodName) != null 
+				&& (procedures.get(methodName).getBody() == null) 
+				&& procedures.get(methodName).getInParams().length == 0;
+
 		if (procedures.containsKey(methodName)
 				&& node.getArguments().length != procedures.get(methodName)
 						.getInParams().length) {
 			if (!(procedures.get(methodName).getInParams().length == 1
-					&& procedures.get(methodName).getInParams()[0].getType() == null && node
-						.getArguments().length == 0)) {
+					&& procedures.get(methodName).getInParams()[0].getType() == null && node.getArguments().length == 0)
+					//ok, if the procedure is declared (and not implemented) as having no parameters --> then we may call it with parameters later
+						&& !procedureDeclaredWithOutInparamsButCalledWithInParams
+						) {
 				String msg = "Function call has incorrect number of in-params!";
 				throw new IncorrectSyntaxException(loc, msg);
 			} // else: this means param of declaration is void and parameter
 				// list of call is empty! --> OK
 		}
+
+		//dispatch the inparams
+		ArrayList<Expression> args = new ArrayList<Expression>();
 		for (int i = 0; i < node.getArguments().length; i++) {
 			IASTInitializerClause inParam = node.getArguments()[i];
 			ResultExpression in = ((ResultExpression) main.dispatch(inParam))
@@ -876,9 +881,17 @@ public class FunctionHandler {
 						+ loc.toString();
 				throw new IncorrectSyntaxException(loc, msg);
 			}
-			
-			//implicit casts and bool/int conversion
-			if (procedureToParamCType.containsKey(methodName)) {
+
+			//if the procedure is declared (and not implemented) as having no parameters --> then we may call it with parameters later
+			// --> but from then on we know its parameters
+			if (procedureDeclaredWithOutInparamsButCalledWithInParams) {
+				//add the current parameter to the procedure's signature
+				if (!procedureToParamCType.containsKey(methodName)) {
+					procedureToParamCType.put(methodName, new ArrayList<CType>());
+				}
+				procedureToParamCType.get(methodName).add(in.lrVal.cType);
+			} else if (procedureToParamCType.containsKey(methodName)) { //we already know the parameters
+				//do implicit casts and bool/int conversion
 				CType expectedParamType = procedureToParamCType.get(methodName).get(i);
 				//bool/int conversion
 				if (expectedParamType instanceof CPrimitive &&
@@ -902,6 +915,20 @@ public class FunctionHandler {
 			decl.addAll(in.decl);
 			auxVars.putAll(in.auxVars);
 			overappr.addAll(in.overappr);
+		}
+		
+		if (procedureDeclaredWithOutInparamsButCalledWithInParams) {
+			VarList[] procParams = new VarList[procedureToParamCType.get(methodName).size()];
+			for (int i = 0; i < procedureToParamCType.get(methodName).size(); i++) {
+				procParams[i] = new VarList(loc, new String[] { SFO.IN_PARAM + i }, 
+						((TypeHandler) main.typeHandler).ctype2asttype(loc, 
+								procedureToParamCType.get(methodName).get(i)));
+			}
+			Procedure currentProc = procedures.get(methodName);
+			Procedure newProc = new Procedure(currentProc.getLocation(), currentProc.getAttributes(), 
+					currentProc.getIdentifier(), currentProc.getTypeParams(), procParams, currentProc.getOutParams(), 
+					currentProc.getSpecification(), currentProc.getBody());
+			procedures.put(methodName, newProc);
 		}
 
 		Statement call;
