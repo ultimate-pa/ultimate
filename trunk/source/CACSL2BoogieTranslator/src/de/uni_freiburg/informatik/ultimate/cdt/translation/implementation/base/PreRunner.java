@@ -101,6 +101,9 @@ public class PreRunner extends ASTVisitor {
     
     @Override
  	public int visit(IASTParameterDeclaration declaration) {
+    	if (declaration.getDeclarator().getPointerOperators().length > 0) 
+    		isMMRequired = true;
+    	
      	sT.put(declaration.getDeclarator().getName().toString(), declaration);
     	return super.visit(declaration);
  	}
@@ -115,33 +118,9 @@ public class PreRunner extends ASTVisitor {
     			IASTNode operand = ue.getOperand();
     			// add the operand to VariablesOnHeap!
     			String id = null;
-//    			if (operand instanceof IASTExpression)
-//    				operand = removeBrackets((IASTExpression) operand);
-    			
+     			
     			id = extraxtExpressionIdFromPossiblyComplexExpression(operand);
-//    			if (operand instanceof IASTIdExpression) {
-//    				id = ((IASTIdExpression) operand).getName().toString();
-//    			 // TODO : add other cases! ie. structs, where the &-operator
-//    			// is applied to one field, etc
-//    			} else if ((operand instanceof IASTUnaryExpression) 
-//    					&& ((IASTUnaryExpression) operand).getOperand() instanceof IASTFieldReference
-//    					) {
-//    				if (((IASTFieldReference) ((IASTUnaryExpression) operand).getOperand()).isPointerDereference()) {
-//    					id = null; //already on the heap (a pointer), do nothing
-//    				} else {
-//    					IASTExpression owner = ((IASTFieldReference) ((IASTUnaryExpression) operand).getOperand()).getFieldOwner();
-//    					owner = removeBrackets(owner);
-//    					if (owner instanceof IASTIdExpression) {
-//    						id = owner.getRawSignature();
-//    					} else if (owner instanceof IASTUnaryExpression 
-//    							&& ((IASTUnaryExpression) owner).getOperator() == IASTUnaryExpression.op_star) { 
-//    						id = null; // already on the heap
-//    					} else {
-//    						String msg = "PR: Unsupported operand in UnaryExpression!";
-//    						throw new UnsupportedSyntaxException(loc, msg);
-//    					}
-//    				}
-//                }
+ 
                 this.isMMRequired = true;
                 if (id != null) {
                     IASTFunctionDefinition function = functionTable.get(id);
