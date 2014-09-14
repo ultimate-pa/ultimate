@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAr
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoBuilder;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoPartitioneer;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -266,6 +267,7 @@ public class LassoAnalysis {
 		return new PreProcessor[] {
 				new MatchInVars(),
 				new AddAxioms(m_axioms),
+				new LassoPartitioneer(mServices),
 				new RewriteArrays(
 						m_ArrayIndexSupportingInvariants,
 						overapproximateArrayIndexConnection,
