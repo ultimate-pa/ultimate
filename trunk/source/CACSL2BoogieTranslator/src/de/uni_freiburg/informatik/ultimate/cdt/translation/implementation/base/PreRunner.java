@@ -6,6 +6,7 @@ import java.util.HashSet;
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
+import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
@@ -17,8 +18,10 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
+import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
+import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 
@@ -120,9 +123,45 @@ public class PreRunner extends ASTVisitor {
     			String id = null;
      			
     			id = extraxtExpressionIdFromPossiblyComplexExpression(operand);
+
+
+    	
  
                 this.isMMRequired = true;
                 if (id != null) {
+                	
+//                	//are we inside a struct declaration? --> an initializer may reference the fields of 
+//                	// a compositeTypeSpecifier its declarator belongs to
+//                	// example: 
+//                	/*struct dummy {
+//                	   int *a, *b;
+//                      } global = {&a, &b};
+//                	 */
+//                	IASTNode ancestor = sT.get(id);// operand;
+//                	IASTCompositeTypeSpecifier cts = null;
+//                	while (!(ancestor instanceof IASTTranslationUnit)) {
+//                		if (ancestor instanceof IASTSimpleDeclaration) {
+//                			if (((IASTSimpleDeclaration) ancestor).getDeclSpecifier() 
+//                					instanceof IASTCompositeTypeSpecifier) {
+//                				cts = (IASTCompositeTypeSpecifier) (((IASTSimpleDeclaration) ancestor).getDeclSpecifier());
+//                			} 
+//                		}
+//                		ancestor = ancestor.getParent();
+//                	}
+//                	ancestor = operand;
+//                	if (cts != null) { //cts is the topmost compositeTypeSpecifier
+//                		IASTDeclarator declaratorBelongingToCurrentInitializer = null;
+//                		while (!(ancestor instanceof IASTTranslationUnit)) {
+//                			if (ancestor instanceof IASTDeclarator) {
+//                				id = ((IASTDeclarator) ancestor).getName().toString();
+//                				break;
+//                			}
+//                			ancestor = ancestor.getParent();
+//                		}
+//                	}
+
+                	
+                	
                     IASTFunctionDefinition function = functionTable.get(id);
                     if (function != null) {
                         functionPointers.put(id, function);
@@ -166,6 +205,8 @@ public class PreRunner extends ASTVisitor {
      */
     private String extraxtExpressionIdFromPossiblyComplexExpression(
 			IASTNode operand) {
+    	
+    	
     	if (operand instanceof IASTIdExpression) {
     		return ((IASTIdExpression) operand).getName().toString();
     	} else if (operand instanceof IASTFieldReference) {
@@ -199,8 +240,8 @@ public class PreRunner extends ASTVisitor {
                 if (d.getPointerOperators() != null
                 		&& d.getPointerOperators().length != 0) 
                 	isMMRequired = true;
-                if (d instanceof IASTArrayDeclarator)
-                	isMMRequired = true;//FIXME: right all arrays are on the heap -- change this in case of a change of mind
+//                if (d instanceof IASTArrayDeclarator)
+//                	isMMRequired = true;//FIXME: right all arrays are on the heap -- change this in case of a change of mind
             }
 
         }
