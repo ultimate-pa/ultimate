@@ -193,7 +193,10 @@ public class PreRunner extends ASTVisitor {
     	if (operand instanceof IASTIdExpression) {
     		return ((IASTIdExpression) operand).getName().toString();
     	} else if (operand instanceof IASTFieldReference) {
-    		return extraxtExpressionIdFromPossiblyComplexExpression(((IASTFieldReference) operand).getFieldOwner());
+    		if (((IASTFieldReference) operand).isPointerDereference())
+    			return null; // "->" cancels out "&", like "*"
+    		else
+    			return extraxtExpressionIdFromPossiblyComplexExpression(((IASTFieldReference) operand).getFieldOwner());
     	} else if (operand instanceof IASTArraySubscriptExpression) {
     		return extraxtExpressionIdFromPossiblyComplexExpression(((IASTArraySubscriptExpression) operand).getArrayExpression());
     	} else if (operand instanceof IASTUnaryExpression) {
