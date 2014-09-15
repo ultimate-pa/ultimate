@@ -34,6 +34,8 @@ public class CPointer extends CType {
     
     @Override
     public boolean equals(Object o) {
+    	if (super.equals(o)) //to break a mutual recursion with CStruct -- TODO: is that a general solution??
+    		return true;
         if (!(o instanceof CType)) {
             return false;
         }
