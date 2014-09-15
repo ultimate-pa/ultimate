@@ -98,7 +98,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     	}
     	if (declSpec instanceof IASTElaboratedTypeSpecifier) {//i.e. sth like struct/union/enum typename varname
     		IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) declSpec;
-    		String name = elts.getName().toString();
+    		String name = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
     		IASTDeclaration decOfName = (IASTDeclaration) sT.get(name);
     		if (decOfName != null) {//if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
     			//    				addDependency(currentFunOrStructDef.peek(), decOfName);
@@ -125,7 +125,8 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 		if (typeId.getDeclSpecifier() instanceof IASTNamedTypeSpecifier) {
 			symbolName = ((IASTNamedTypeSpecifier) typeId.getDeclSpecifier()).getName().toString();
 		} else if (typeId.getDeclSpecifier() instanceof IASTElaboratedTypeSpecifier) {
-			symbolName = ((IASTElaboratedTypeSpecifier) typeId.getDeclSpecifier()).getName().toString();
+			IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) typeId.getDeclSpecifier();
+			symbolName = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
 //		} else if (typeId.getDeclSpecifier() instanceof IASTCompositeTypeSpecifier) {
 		}
     	IASTDeclaration symbolDec = sT.get(symbolName);
@@ -195,8 +196,12 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					IASTCompositeTypeSpecifier cts = (IASTCompositeTypeSpecifier) declSpec;
 					String declSpecName = cts.getName().toString();
 					if (!declSpecName.isEmpty()) {
-						//						sT.put(declSpecName, declSpec);//two times put with the same key..
-						sT.put(declSpecName, declaration);
+						//convention:
+						// a struct/union declaration is saved in the symbolTable under a key that includes
+						// the struct/union keyword --> otherwise we would have a collision
+						// in case of something like typedef struct a a;
+						String structOrUnion = getKindStringFromCompositeOrElaboratedTS(cts);
+						sT.put(structOrUnion + declSpecName, declaration);
 					}
 
 					for (String id : dependencyGraphPreliminaryInverse.keySet()) {
@@ -223,7 +228,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 				//if we use a globally defined type, this introduces a dependency 
 				if (declSpec instanceof IASTElaboratedTypeSpecifier) {//i.e. sth like struct/union/enum typename varname
 					IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) declSpec;
-					String name = elts.getName().toString();
+					String name = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
 					IASTDeclaration decOfName = sT.get(name);
 					if (decOfName != null) { //if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
 						addDependency(currentFunOrStructDefOrInitializer.peek(), decOfName);
@@ -256,7 +261,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					//					addDependency(d, declaration); //not needed for what delcarations are made but for computing the memory model requirements
 				} else if (declSpec instanceof IASTElaboratedTypeSpecifier) {//i.e. sth like struct/union/enum typename varname
 					IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) declSpec;
-					declSpecName = elts.getName().toString();
+					declSpecName = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
 					IASTDeclaration decOfName = sT.get(declSpecName);
 					if (decOfName != null) {//if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway (most cases..)
 						addDependency(declaration, sT.get(declSpecName));
@@ -315,6 +320,32 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 	}
 	
 	
+
+	private String getKindStringFromCompositeOrElaboratedTS(
+			IASTDeclSpecifier cts) {
+		if (cts instanceof IASTCompositeTypeSpecifier) {
+			switch (((IASTCompositeTypeSpecifier) cts).getKey()) {
+			case IASTCompositeTypeSpecifier.k_struct:
+				return "struct";
+			case IASTCompositeTypeSpecifier.k_union:
+				return "union";
+			default:
+				assert false : "??";
+			}
+		} else if (cts instanceof IASTElaboratedTypeSpecifier) {
+			switch (((IASTElaboratedTypeSpecifier) cts).getKind()) {
+			case IASTElaboratedTypeSpecifier.k_struct:
+				return "struct";
+			case IASTElaboratedTypeSpecifier.k_union:
+				return "union";
+			default:
+				assert false : "??";
+			}
+		}
+		return null;
+	}
+
+
 
 	@Override
 	public int visit(IASTInitializer initializer) {
