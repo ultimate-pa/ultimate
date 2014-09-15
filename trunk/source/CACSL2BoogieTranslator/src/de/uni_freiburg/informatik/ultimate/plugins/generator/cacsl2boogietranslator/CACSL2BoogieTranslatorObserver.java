@@ -112,7 +112,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			map.setMap(main.getIdentifierMapping());
 			mStorage.putStorable(IdentifierMapping.getStorageKey(), map);
 			mService.getBacktranslationService().addTranslator(backtranslator);
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			final IResult result;
 			String message = "There was an error during the translation process! [" + t.getClass() + ", "
 					+ t.getMessage() + "]";
