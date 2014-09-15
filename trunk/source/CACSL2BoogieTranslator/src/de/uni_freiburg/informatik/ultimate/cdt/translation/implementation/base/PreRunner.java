@@ -8,6 +8,7 @@ import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
+import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
@@ -66,6 +67,7 @@ public class PreRunner extends ASTVisitor {
     	this.shouldVisitParameterDeclarations = true;
         this.shouldVisitExpressions = true;
         this.shouldVisitStatements = true;
+        this.shouldVisitDeclSpecifiers = true;
         this.isMMRequired = false;
         this.sT = new ScopedHashMap<String, IASTNode>();
         this.variablesOnHeap = new HashSet<IASTNode>();
@@ -100,9 +102,26 @@ public class PreRunner extends ASTVisitor {
     public boolean isMMRequired() {
     	return this.isMMRequired;
     }
+    
 
     
     @Override
+	public int visit(IASTDeclSpecifier declSpec) {
+    	if (declSpec instanceof IASTCompositeTypeSpecifier) {
+    		sT.beginScope();
+    	}
+		return super.visit(declSpec);
+	}
+
+	@Override
+	public int leave(IASTDeclSpecifier declSpec) {
+    	if (declSpec instanceof IASTCompositeTypeSpecifier) {
+    		sT.endScope();
+    	}
+		return super.leave(declSpec);
+	}
+
+	@Override
  	public int visit(IASTParameterDeclaration declaration) {
     	if (declaration.getDeclarator().getPointerOperators().length > 0) 
     		isMMRequired = true;
@@ -124,44 +143,8 @@ public class PreRunner extends ASTVisitor {
      			
     			id = extraxtExpressionIdFromPossiblyComplexExpression(operand);
 
-
-    	
- 
                 this.isMMRequired = true;
                 if (id != null) {
-                	
-//                	//are we inside a struct declaration? --> an initializer may reference the fields of 
-//                	// a compositeTypeSpecifier its declarator belongs to
-//                	// example: 
-//                	/*struct dummy {
-//                	   int *a, *b;
-//                      } global = {&a, &b};
-//                	 */
-//                	IASTNode ancestor = sT.get(id);// operand;
-//                	IASTCompositeTypeSpecifier cts = null;
-//                	while (!(ancestor instanceof IASTTranslationUnit)) {
-//                		if (ancestor instanceof IASTSimpleDeclaration) {
-//                			if (((IASTSimpleDeclaration) ancestor).getDeclSpecifier() 
-//                					instanceof IASTCompositeTypeSpecifier) {
-//                				cts = (IASTCompositeTypeSpecifier) (((IASTSimpleDeclaration) ancestor).getDeclSpecifier());
-//                			} 
-//                		}
-//                		ancestor = ancestor.getParent();
-//                	}
-//                	ancestor = operand;
-//                	if (cts != null) { //cts is the topmost compositeTypeSpecifier
-//                		IASTDeclarator declaratorBelongingToCurrentInitializer = null;
-//                		while (!(ancestor instanceof IASTTranslationUnit)) {
-//                			if (ancestor instanceof IASTDeclarator) {
-//                				id = ((IASTDeclarator) ancestor).getName().toString();
-//                				break;
-//                			}
-//                			ancestor = ancestor.getParent();
-//                		}
-//                	}
-
-                	
-                	
                     IASTFunctionDefinition function = functionTable.get(id);
                     if (function != null) {
                         functionPointers.put(id, function);
@@ -244,8 +227,7 @@ public class PreRunner extends ASTVisitor {
 //                	isMMRequired = true;//FIXME: right all arrays are on the heap -- change this in case of a change of mind
             }
 
-        }
-        if (declaration instanceof IASTFunctionDefinition) {
+        } else  if (declaration instanceof IASTFunctionDefinition) {
             IASTFunctionDefinition funDef = (IASTFunctionDefinition)declaration;
             functionTable.put(funDef.getDeclarator().getName().toString(), funDef);
             sT.beginScope();
