@@ -29,8 +29,8 @@ public abstract class CodeChecker {
 	protected SmtManager m_smtManager;
 	protected ImpRootNode m_graphRoot;
 
-	protected IPredicate m_truePredicate;
-	protected IPredicate m_falsePredicate;
+//	protected IPredicate m_truePredicate;
+//	protected IPredicate m_falsePredicate;
 
 	protected EdgeChecker _edgeChecker;
 	protected PredicateUnifier m_predicateUnifier;
@@ -48,13 +48,12 @@ public abstract class CodeChecker {
 
 	protected GraphWriter _graphWriter;
 
-	public CodeChecker(IElement root, SmtManager smtManager, IPredicate truePredicate, IPredicate falsePredicate,
-			TAPreferences taPrefs, RootNode originalRoot, ImpRootNode graphRoot, GraphWriter graphWriter,
+	public CodeChecker(IElement root, SmtManager smtManager, TAPreferences taPrefs, RootNode originalRoot, ImpRootNode graphRoot, GraphWriter graphWriter,
 			EdgeChecker edgeChecker, PredicateUnifier predicateUnifier, Logger logger) {
 		mLogger = logger;
 		this.m_smtManager = smtManager;
-		this.m_truePredicate = truePredicate;
-		this.m_falsePredicate = falsePredicate;
+//		this.m_truePredicate = truePredicate;
+//		this.m_falsePredicate = falsePredicate;
 		this.m_taPrefs = taPrefs;
 		this.m_originalRoot = originalRoot;
 		this.m_graphRoot = graphRoot;

@@ -44,10 +44,6 @@ public class ImpulseChecker extends CodeChecker {
 	 *            root node of the RCFG graph
 	 * @param m_smtManager
 	 *            the SMT Manager
-	 * @param m_truePredicate
-	 *            the predicate true
-	 * @param m_falsePredicate
-	 *            the predicate false
 	 * @param m_taPrefs
 	 *            TAPreferences
 	 * @param m_originalRoot
@@ -59,10 +55,9 @@ public class ImpulseChecker extends CodeChecker {
 	 * @param m_edgeChecker
 	 * @param m_graphWriter
 	 */
-	public ImpulseChecker(IElement root, SmtManager m_smtManager, IPredicate m_truePredicate,
-			IPredicate m_falsePredicate, TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot,
+	public ImpulseChecker(IElement root, SmtManager m_smtManager, TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot,
 			GraphWriter graphWriter, EdgeChecker edgeChecker, PredicateUnifier predicateUnifier, Logger logger) {
-		super(root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, m_originalRoot, m_graphRoot,
+		super(root, m_smtManager, m_taPrefs, m_originalRoot, m_graphRoot,
 				graphWriter, edgeChecker, predicateUnifier, logger);
 		redirectionTargetFinder = new RedirectionTargetFinder(this);
 		LocationPredicates = new HashMap<ProgramPoint, HashMap<IPredicate, AnnotatedProgramPoint>>();
@@ -178,7 +173,7 @@ public class ImpulseChecker extends CodeChecker {
 	private AnnotatedProgramPoint copyNode(AnnotatedProgramPoint oldNode, IPredicate interpolant) {
 		// First we search for an old node similar to the one to be created, and
 		// return it if found.
-		if (interpolant == m_truePredicate) {
+		if (interpolant == m_predicateUnifier.getTruePredicate()) {
 			return oldNode;
 		}
 		ProgramPoint programPoint = oldNode.getProgramPoint();

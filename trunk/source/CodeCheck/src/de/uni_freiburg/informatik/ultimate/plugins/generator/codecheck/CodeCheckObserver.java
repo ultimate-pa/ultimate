@@ -78,8 +78,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	ImpRootNode m_graphRoot;
 
 	SmtManager m_smtManager;
-	IPredicate m_truePredicate;
-	IPredicate m_falsePredicate;
+//	IPredicate m_truePredicate;
+//	IPredicate m_falsePredicate;
 	PredicateUnifier _predicateUnifier;
 	EdgeChecker m_edgeChecker;
 
@@ -114,8 +114,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		_predicateUnifier = new PredicateUnifier(mServices, m_smtManager);
 
-		m_truePredicate = _predicateUnifier.getTruePredicate();
-		m_falsePredicate = _predicateUnifier.getFalsePredicate();
+//		m_truePredicate = _predicateUnifier.getTruePredicate();
+//		m_falsePredicate = _predicateUnifier.getFalsePredicate();
 
 		m_edgeChecker = new EdgeChecker(m_smtManager, rootAnnot.getModGlobVarManager());
 
@@ -137,7 +137,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				m_smtManager.getScript());
 
 		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager, mLogger);
-		m_graphRoot = r2ar.convert(m_originalRoot, m_truePredicate);
+		m_graphRoot = r2ar.convert(m_originalRoot, _predicateUnifier.getTruePredicate());
 
 		_graphWriter.writeGraphAsImage(m_graphRoot,
 				String.format("graph_%s_originalAfterConversion", _graphWriter._graphCounter));
@@ -148,10 +148,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				String.format("graph_%s_originalSummaryEdgesRemoved", _graphWriter._graphCounter));
 
 		if (GlobalSettings._instance.checker == Checker.IMPULSE) {
-			codeChecker = new ImpulseChecker(root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs,
+			codeChecker = new ImpulseChecker(root, m_smtManager, m_taPrefs,
 					m_originalRoot, m_graphRoot, _graphWriter, m_edgeChecker, _predicateUnifier, mLogger);
 		} else {
-			codeChecker = new UltimateChecker(root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs,
+			codeChecker = new UltimateChecker(root, m_smtManager, m_taPrefs,
 					m_originalRoot, m_graphRoot, _graphWriter, m_edgeChecker, _predicateUnifier, mLogger);
 		}
 		return false;
@@ -289,11 +289,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					_graphWriter.writeGraphAsImage(procedureRoot, String.format("graph_%s_%s_foundEP",
 							_graphWriter._graphCounter, procedureRoot.toString().substring(0, 5)), errorRun
 							.getStateSequence().toArray(new AnnotatedProgramPoint[] {}));
+					
+					if (GlobalSettings._instance._predicateUnification == PredicateUnification.PER_ITERATION)
+						_predicateUnifier = new PredicateUnifier(mServices, m_smtManager);
 
 					TraceChecker traceChecker = null;
 					switch (GlobalSettings._instance._solverAndInterpolator) {
 					case SMTINTERPOL:
-						traceChecker = new TraceChecker(m_truePredicate,
+						traceChecker = new TraceChecker(_predicateUnifier.getTruePredicate(),
 						// checks
 						// whether
 						// the
@@ -305,7 +308,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						// formula
 						// is
 						// satisfiable
-								m_falsePredicate, // return LBool.UNSAT if trace
+								_predicateUnifier.getFalsePredicate(), // return LBool.UNSAT if trace
 													// is infeasible
 								new TreeMap<Integer, IPredicate>(), errorRun.getWord(), m_smtManager, m_originalRoot
 										.getRootAnnot().getModGlobVarManager(),
@@ -318,7 +321,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
 						break;
 					case Z3SPWP:
-						traceChecker = new TraceCheckerSpWp(m_truePredicate,
+						traceChecker = new TraceCheckerSpWp(_predicateUnifier.getTruePredicate(),
 						// checks
 						// whether
 						// the
@@ -330,7 +333,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						// formula
 						// is
 						// satisfiable
-								m_falsePredicate, // return LBool.UNSAT if trace
+								_predicateUnifier.getFalsePredicate(), // return LBool.UNSAT if trace
 								new TreeMap<Integer, IPredicate>(), // is
 																	// infeasible
 								errorRun.getWord(), m_smtManager, m_originalRoot.getRootAnnot().getModGlobVarManager(),
@@ -347,9 +350,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 					LBool isSafe = traceChecker.isCorrect();
 					if (isSafe == LBool.UNSAT) { // trace is infeasible
-						if (GlobalSettings._instance._predicateUnification == PredicateUnification.PER_ITERATION)
-							_predicateUnifier = new PredicateUnifier(mServices, m_smtManager, m_truePredicate,
-									m_falsePredicate);
+						
 
 						switch (GlobalSettings._instance._solverAndInterpolator) {
 						case SMTINTERPOL:

@@ -43,10 +43,9 @@ public class UltimateChecker extends CodeChecker {
 	HashMap<AnnotatedProgramPoint, HashMap<CodeBlock, AnnotatedProgramPoint>> _pre2stm2post_toConnectIfSat;
 	HashMap<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>>> _pre2hier2stm2post_toConnectIfSat;
 
-	public UltimateChecker(IElement root, SmtManager m_smtManager, IPredicate m_truePredicate,
-			IPredicate m_falsePredicate, TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot,
+	public UltimateChecker(IElement root, SmtManager m_smtManager, TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot,
 			GraphWriter m_graphWriter, EdgeChecker edgeChecker, PredicateUnifier predicateUnifier, Logger logger) {
-		super(root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, m_originalRoot, m_graphRoot,
+		super(root, m_smtManager, m_taPrefs, m_originalRoot, m_graphRoot,
 				m_graphWriter, edgeChecker, predicateUnifier, logger);
 	}
 
@@ -648,11 +647,11 @@ public class UltimateChecker extends CodeChecker {
 		boolean satResult = false;
 
 		if (GlobalSettings._instance._predicateUnification != PredicateUnification.NONE)
-			if (source.getPredicate().equals(this.m_falsePredicate))
+			if (source.getPredicate().equals(m_predicateUnifier.getFalsePredicate()))
 				satResult = false;
 			else if (statement.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE)
 				satResult = false;
-			else if (target.getPredicate().equals(this.m_falsePredicate))
+			else if (target.getPredicate().equals(m_predicateUnifier.getFalsePredicate()))
 				satResult = false;
 			else if ((statement instanceof Call ? _edgeChecker.sdecCall(source.getPredicate(), statement,
 					target.getPredicate()) : _edgeChecker.sdecInteral(source.getPredicate(), statement,
@@ -689,13 +688,13 @@ public class UltimateChecker extends CodeChecker {
 
 		// assuming any not-NONE PredicateUnifier at least has true & false
 		if (GlobalSettings._instance._predicateUnification != PredicateUnification.NONE)
-			if (source.getPredicate().equals(this.m_falsePredicate))
+			if (source.getPredicate().equals(m_predicateUnifier.getFalsePredicate()))
 				satResult = false;
-			else if (hier.getPredicate().equals(this.m_falsePredicate))
+			else if (hier.getPredicate().equals(m_predicateUnifier.getFalsePredicate()))
 				satResult = false;
 			else if (statement.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) // FIXME
 				satResult = false;
-			else if (target.getPredicate().equals(this.m_falsePredicate)) // checking
+			else if (target.getPredicate().equals(m_predicateUnifier.getFalsePredicate())) // checking
 																			// for
 																			// sat
 																			// of
