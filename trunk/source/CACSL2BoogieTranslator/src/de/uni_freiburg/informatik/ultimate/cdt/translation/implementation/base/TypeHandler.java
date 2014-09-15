@@ -177,7 +177,7 @@ public class TypeHandler implements ITypeHandler {
             
             // quick solution --> TODO: maybe make this dependent on includes, 
             // maybe be more elegant (make an entry to symboltable, make a typedef in boogie file??)
-            if (cId.equals("size_t")) {
+            if (cId.equals("size_t") || cId.equals("ssize_t")) {
                 return (new ResultTypes(new PrimitiveType(loc, SFO.REAL), node.isConst(),
                 		false, new CPrimitive(PRIMITIVE.UINT)));
             }
