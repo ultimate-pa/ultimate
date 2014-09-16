@@ -809,7 +809,7 @@ public class CHandler implements ICHandler {
 				}
 				paramsParsed[i] = decl.getDeclarations().get(0);
 			}
-			CFunction funcType = new CFunction(newResType.cType, paramsParsed);
+			CFunction funcType = new CFunction(newResType.cType, paramsParsed, funcDecl.takesVarArgs());
 			newResType.cType = funcType;
 		} else if (node instanceof CASTDeclarator) {
 			/* nothing */
@@ -910,7 +910,7 @@ public class CHandler implements ICHandler {
 		// Christian: function name, handle separately
 		IASTFunctionDefinition funDef = ((MainDispatcher) main).getFunctionPointers().get(cId);
 		if (funDef != null) {
-			cType = new CPointer(new CFunction(null, null));
+			cType = new CPointer(new CFunction(null, null, false));
 			bId = SFO.FUNCTION_ADDRESS + cId;
 			useHeap = true;
 		} else {

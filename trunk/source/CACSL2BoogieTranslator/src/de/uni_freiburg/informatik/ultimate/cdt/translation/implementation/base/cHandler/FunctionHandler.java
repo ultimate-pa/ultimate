@@ -119,8 +119,10 @@ public class FunctionHandler {
 	 * map that is used to communicate the returned CType of a procedure from 
 	 * its declaration to its definition.
 	 */
-	private LinkedHashMap<String, CType> procedureToReturnCType;
-	private LinkedHashMap<String, ArrayList<CType>> procedureToParamCType;
+//	private LinkedHashMap<String, CType> procedureToReturnCType;
+//	private LinkedHashMap<String, ArrayList<CType>> procedureToParamCType;
+
+	private LinkedHashMap<String, CFunction> procedureToCFunctionType;
 	
 	private final boolean m_CheckMemoryLeakAtEndOfMain;
 	private Dispatcher mDispatcher;
@@ -134,8 +136,9 @@ public class FunctionHandler {
 		this.modifiedGlobals = new LinkedHashMap<String, LinkedHashSet<String>>();
 		this.methodsCalledBeforeDeclared = new LinkedHashSet<String>();
 		this.procedures = new LinkedHashMap<String, Procedure>();
-		this.procedureToReturnCType = new LinkedHashMap<String, CType>();
-		this.procedureToParamCType = new LinkedHashMap<String, ArrayList<CType>>(); 
+//		this.procedureToReturnCType = new LinkedHashMap<String, CType>();
+//		this.procedureToParamCType = new LinkedHashMap<String, ArrayList<CType>>(); 
+		this.procedureToCFunctionType = new LinkedHashMap<>();
 		this.modifiedGlobalsIsUserDefined = new LinkedHashSet<String>();
 		m_CheckMemoryLeakAtEndOfMain = 
 				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
@@ -259,7 +262,12 @@ public class FunctionHandler {
 				out, spec, null);
 					
 		procedures.put(methodName, proc);
-		procedureToReturnCType.put(methodName, funcType.getResultType());
+//		procedureToReturnCType.put(methodName, funcType.getResultType());
+		procedureToCFunctionType.put(methodName, 
+				new CFunction(
+						funcType.getResultType(), 
+						procedureToCFunctionType.get(methodName).getParameterTypes(), 
+						funcType.takesVarArgs()));
 		
 		// end scope for retranslation of ACSL specification
 		main.cHandler.endScope();
@@ -605,7 +613,11 @@ public class FunctionHandler {
         CType returnCType = ((CFunction) cDec.getType()).getResultType();
         boolean returnTypeIsVoid = returnCType instanceof CPrimitive && 
 				((CPrimitive) returnCType).getType() == PRIMITIVE.VOID;
-		procedureToReturnCType.put(methodName, returnCType);
+//		procedureToReturnCType.put(methodName, returnCType);
+        CFunction oldCFunction = procedureToCFunctionType.get(methodName);
+		procedureToCFunctionType.put(methodName, new CFunction(returnCType, 
+				oldCFunction == null ? new CDeclaration[0] : oldCFunction.getParameterTypes(), 
+				oldCFunction == null ? false : oldCFunction.takesVarArgs()));
 		
 		VarList[] in = processInParams(main, loc, cDec, methodName);
         
@@ -749,7 +761,7 @@ public class FunctionHandler {
 	private VarList[] processInParams(Dispatcher main, ILocation loc,
 			CDeclaration decl, String methodName) {
 		// fill map of parameter types
-        ArrayList<CType> paramTypes = new ArrayList<CType>();
+//        ArrayList<CType> paramTypes = new ArrayList<CType>();
         CDeclaration[] paramDecs =
                 ((CFunction) decl.getType()).getParameterTypes();
 		VarList[] in  = new VarList[paramDecs.length];
@@ -765,12 +777,22 @@ public class FunctionHandler {
         	
         	String paramId = main.nameHandler.getInParamIdentifier(paramDec.getName());
         	in[i] = new VarList(loc, new String[] { paramId }, type);
-            paramTypes.add(i, paramDec.getType());
+//            paramTypes.add(i, paramDec.getType());
             main.cHandler.getSymbolTable().put(paramDec.getName(), 
             		new SymbolTableValue(paramId, null, paramDec, false, null));
         }
-        procedureToParamCType.put(methodName, paramTypes);
+//        procedureToParamCType.put(methodName, paramTypes);
+        setParamDecsForCFunction(methodName, paramDecs);
 		return in;
+	}
+
+	private void setParamDecsForCFunction(String methodName,
+			CDeclaration[] paramDecs) {
+		CFunction oldCFunction = procedureToCFunctionType.get(methodName);
+		procedureToCFunctionType.put(methodName, new CFunction(
+        		oldCFunction == null ? null : oldCFunction.getResultType(),
+        		paramDecs, 
+         		oldCFunction == null ? false : oldCFunction.takesVarArgs()));
 	}
 	
 
@@ -855,12 +877,22 @@ public class FunctionHandler {
 				procedures.get(methodName) != null 
 				&& (procedures.get(methodName).getBody() == null) 
 				&& procedures.get(methodName).getInParams().length == 0;
+		
+		//if the function has varArgs, we throw away all parameters that belong to the varArgs part and only keep the normal ones
+		IASTInitializerClause[] inParams = node.getArguments();
+		if (procedureToCFunctionType.get(methodName).takesVarArgs()) {
+			int noParameterWOVarArgs = procedureToCFunctionType.get(methodName).getParameterTypes().length;
+			inParams = new IASTInitializerClause[noParameterWOVarArgs];
+			for (int i = 0; i < noParameterWOVarArgs; i++) {
+				inParams[i] = node.getArguments()[i];
+			}
+		}
 
 		if (procedures.containsKey(methodName)
-				&& node.getArguments().length != procedures.get(methodName)
+				&& inParams.length != procedures.get(methodName)
 						.getInParams().length) {
 			if (!(procedures.get(methodName).getInParams().length == 1
-					&& procedures.get(methodName).getInParams()[0].getType() == null && node.getArguments().length == 0)
+					&& procedures.get(methodName).getInParams()[0].getType() == null && inParams.length == 0)
 					//ok, if the procedure is declared (and not implemented) as having no parameters --> then we may call it with parameters later
 						&& !procedureDeclaredWithOutInparamsButCalledWithInParams
 						) {
@@ -872,8 +904,8 @@ public class FunctionHandler {
 
 		//dispatch the inparams
 		ArrayList<Expression> args = new ArrayList<Expression>();
-		for (int i = 0; i < node.getArguments().length; i++) {
-			IASTInitializerClause inParam = node.getArguments()[i];
+		for (int i = 0; i < inParams.length; i++) {
+			IASTInitializerClause inParam = inParams[i];
 			ResultExpression in = ((ResultExpression) main.dispatch(inParam))
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			if (in.lrVal.getValue() == null) {
@@ -886,13 +918,17 @@ public class FunctionHandler {
 			// --> but from then on we know its parameters
 			if (procedureDeclaredWithOutInparamsButCalledWithInParams) {
 				//add the current parameter to the procedure's signature
-				if (!procedureToParamCType.containsKey(methodName)) {
-					procedureToParamCType.put(methodName, new ArrayList<CType>());
-				}
-				procedureToParamCType.get(methodName).add(in.lrVal.cType);
-			} else if (procedureToParamCType.containsKey(methodName)) { //we already know the parameters
+//				if (!procedureToParamCType.containsKey(methodName)) {
+//				if (!procedureToCFunctionType.containsKey(methodName)) {
+//					procedureToParamCType.put(methodName, new ArrayList<CType>());
+//				}
+//				procedureToParamCType.get(methodName).add(in.lrVal.cType);
+				addCFunctionInParam(methodName, SFO.IN_PARAM + i, in.lrVal.cType);
+//			} else if (procedureToParamCType.containsKey(methodName)) { //we already know the parameters
+			} else if (procedureToCFunctionType.containsKey(methodName)) { //we already know the parameters
 				//do implicit casts and bool/int conversion
-				CType expectedParamType = procedureToParamCType.get(methodName).get(i);
+//				CType expectedParamType = procedureToParamCType.get(methodName).get(i);
+				CType expectedParamType = procedureToCFunctionType.get(methodName).getParameterTypes()[i].getType();
 				//bool/int conversion
 				if (expectedParamType instanceof CPrimitive &&
 						((CPrimitive) expectedParamType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
@@ -918,11 +954,15 @@ public class FunctionHandler {
 		}
 		
 		if (procedureDeclaredWithOutInparamsButCalledWithInParams) {
-			VarList[] procParams = new VarList[procedureToParamCType.get(methodName).size()];
-			for (int i = 0; i < procedureToParamCType.get(methodName).size(); i++) {
-				procParams[i] = new VarList(loc, new String[] { SFO.IN_PARAM + i }, 
+//			VarList[] procParams = new VarList[procedureToParamCType.get(methodName).size()];
+			VarList[] procParams = new VarList[procedureToCFunctionType.get(methodName).getParameterTypes().length];
+//			for (int i = 0; i < procedureToParamCType.get(methodName).size(); i++) {
+			for (int i = 0; i < procParams.length; i++) {
+				procParams[i] = new VarList(loc, 
+						new String[] { procedureToCFunctionType.get(methodName).getParameterTypes()[i].getName() }, 
 						((TypeHandler) main.typeHandler).ctype2asttype(loc, 
-								procedureToParamCType.get(methodName).get(i)));
+//								procedureToParamCType.get(methodName).get(i)));
+								procedureToCFunctionType.get(methodName).getParameterTypes()[i].getType()));
 			}
 			Procedure currentProc = procedures.get(methodName);
 			Procedure newProc = new Procedure(currentProc.getLocation(), currentProc.getAttributes(), 
@@ -975,10 +1015,29 @@ public class FunctionHandler {
 		stmt.add(call);
 		CType returnCType = methodsCalledBeforeDeclared.contains(methodName) ? 
 				new CPrimitive(PRIMITIVE.INT) : 
-					procedureToReturnCType.get(methodName);
+					procedureToCFunctionType.get(methodName).getResultType();
+//					procedureToReturnCType.get(methodName);
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
 		return new ResultExpression(stmt, new RValue(expr, returnCType), decl,
 		        auxVars, overappr);
+	}
+
+	private void addCFunctionInParam(String methodName, String newInParamName, CType newInParamType) {
+		CFunction cf = procedureToCFunctionType.get(methodName);
+		CType oldRetType = null;
+		CDeclaration[] oldInParams = null;
+		boolean  oldTakesVarArgs = false;
+		if (cf != null) {
+			oldRetType = cf.getResultType();
+			oldInParams = cf.getParameterTypes();
+			oldTakesVarArgs = cf.takesVarArgs();
+		}
+		
+		ArrayList<CDeclaration> ips = new ArrayList<>(Arrays.asList(oldInParams));
+		ips.add(new CDeclaration(newInParamType, newInParamName));
+		
+		procedureToCFunctionType.put(methodName, 
+				new CFunction(oldRetType, ips.toArray(new CDeclaration[ips.size()]), oldTakesVarArgs));
 	}
 
 	/**
@@ -1011,7 +1070,8 @@ public class FunctionHandler {
 			exprResult = ConvExpr.rexBoolToIntIfNecessary(loc, exprResult);
 			
 			//do some implicit casts
-			CType functionResultType = this.procedureToReturnCType.get(currentProcedure.getIdentifier());
+//			CType functionResultType = this.procedureToReturnCType.get(currentProcedure.getIdentifier());
+			CType functionResultType = this.procedureToCFunctionType.get(currentProcedure.getIdentifier()).getResultType();
 			if (!exprResult.lrVal.cType.equals(functionResultType)) {
 				if (functionResultType instanceof CPointer 
 						&& exprResult.lrVal.cType instanceof CPrimitive

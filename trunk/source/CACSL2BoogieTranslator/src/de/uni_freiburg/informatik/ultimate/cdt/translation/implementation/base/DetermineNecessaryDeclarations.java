@@ -69,6 +69,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     	this.shouldVisitTranslationUnit = true;
         this.shouldVisitDeclarations = true;
         this.shouldVisitExpressions = true;
+        this.shouldVisitDeclSpecifiers = true;
         this.shouldVisitTypeIds = true;
         this.shouldVisitInitializers = true;
         this.shouldVisitStatements = true;
@@ -84,6 +85,23 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     
     
     @Override
+  	public int visit(IASTDeclSpecifier declSpec) {
+      	if (declSpec instanceof IASTCompositeTypeSpecifier) {
+      		sT.beginScope();
+      	}
+  		return super.visit(declSpec);
+  	}
+
+  	@Override
+  	public int leave(IASTDeclSpecifier declSpec) {
+      	if (declSpec instanceof IASTCompositeTypeSpecifier) {
+      		sT.endScope();
+      	}
+  		return super.leave(declSpec);
+  	}
+
+
+	@Override
 	public int visit(IASTParameterDeclaration declaration) {
     	IASTDeclSpecifier declSpec = declaration.getDeclSpecifier();
     	IASTDeclaration funcDec = null;
