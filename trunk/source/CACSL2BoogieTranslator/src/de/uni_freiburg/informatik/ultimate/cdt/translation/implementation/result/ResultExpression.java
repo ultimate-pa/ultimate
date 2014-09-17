@@ -190,16 +190,17 @@ public class ResultExpression extends Result {
 					new LinkedHashMap<VariableDeclaration, ILocation>(this.auxVars); 
 			RValue newValue = null;
 
-			CType underlyingType = this.lrVal.cType instanceof CNamed ? 
-					((CNamed) this.lrVal.cType).getUnderlyingType() :
-						this.lrVal.cType;
+			CType underlyingType = this.lrVal.cType.getUnderlyingType();
+//					this.lrVal.cType instanceof CNamed ? 
+//					((CNamed) this.lrVal.cType).getUnderlyingType() :
+//						this.lrVal.cType;
 
 					//has the type of what lies at that address
 					RValue addressRVal = new RValue(hlv.getAddress(), hlv.cType,
 											hlv.isBoogieBool);
 
 					if (underlyingType instanceof CPrimitive) {
-						CPrimitive cp = (CPrimitive) this.lrVal.cType;
+						CPrimitive cp = (CPrimitive) underlyingType;
 						switch (cp.getGeneralType()) {
 						case INTTYPE: {
 							ResultExpression rex = memoryHandler.getReadCall(

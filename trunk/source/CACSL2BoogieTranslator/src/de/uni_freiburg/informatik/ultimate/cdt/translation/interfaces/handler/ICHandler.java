@@ -3,6 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler;
 
+import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBreakStatement;
@@ -104,6 +105,8 @@ public interface ICHandler extends IHandler {
      * @return a result object
      */
     public Result visit(Dispatcher main, IASTTranslationUnit node);
+
+	public Result visit(Dispatcher main, IASTASMDeclaration node);
 
     /**
      * Translates an IASTFunctionDefinition.

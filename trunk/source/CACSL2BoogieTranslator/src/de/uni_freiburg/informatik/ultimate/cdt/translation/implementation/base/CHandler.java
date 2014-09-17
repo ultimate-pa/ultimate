@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 import java.util.Stack;
 
 import org.apache.log4j.Logger;
+import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTArrayModifier;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
@@ -316,6 +317,12 @@ public class CHandler implements ICHandler {
 				+ node.getClass().getName() + ")";
 		ILocation loc = new CACSLLocation(node);
 		throw new UnsupportedSyntaxException(loc, msg);
+	}
+	
+	@Override
+	public Result visit(Dispatcher main, IASTASMDeclaration node) {
+		//FIXME: workaround for now: ignore inline assembler instructions
+		return new ResultSkip();
 	}
 
 	/**

@@ -26,6 +26,7 @@ public class TypeSizeConstants {
 	public int sizeOfComplexDoubleType;
 	public int sizeOfLongDoubleType;
 	public int sizeOfComplexLongDoubleType;
+	public int sizeOfEnumType; //something like sizeof(enum s)
 	public int defaultTypeSize;
 
 	public TypeSizeConstants(UltimatePreferenceStore ups) {
@@ -73,6 +74,8 @@ public class TypeSizeConstants {
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE);
 		this.sizeOfComplexLongDoubleType = 
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_COMPLEXLONGDOUBLE);
+		this.sizeOfEnumType = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_ENUM);
 
 	}
 }

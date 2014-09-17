@@ -115,6 +115,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.Integer) ,
    				new UltimatePreferenceItem<Integer>(
 						LABEL_EXPLICIT_TYPESIZE_COMPLEXLONGDOUBLE, 8,
+						PreferenceType.Integer),
+   				new UltimatePreferenceItem<Integer>(
+						LABEL_EXPLICIT_TYPESIZE_ENUM, 4,
 						PreferenceType.Integer)
     };
 	}
@@ -165,4 +168,5 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_EXPLICIT_TYPESIZE_COMPLEXDOUBLE = "Size of complex double (in bytes)";
 	public static final String LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE = "Size of long double (in bytes)";
 	public static final String LABEL_EXPLICIT_TYPESIZE_COMPLEXLONGDOUBLE = "Size of complex long double (in bytes)";
+	public static final String LABEL_EXPLICIT_TYPESIZE_ENUM = "Size of complex long double (in bytes)";
 }

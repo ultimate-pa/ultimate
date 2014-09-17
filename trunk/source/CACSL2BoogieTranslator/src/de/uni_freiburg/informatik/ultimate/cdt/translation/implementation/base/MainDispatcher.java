@@ -309,6 +309,9 @@ public class MainDispatcher extends Dispatcher {
 		if (n instanceof IASTParameterDeclaration) {
 			return cHandler.visit(this, (IASTParameterDeclaration) n);
 		}
+		if (n instanceof IASTASMDeclaration) {
+			return cHandler.visit(this, (IASTASMDeclaration) n);
+		}
 		if (n instanceof IASTDeclarator) {
 			return cHandler.visit(this, (IASTDeclarator) n);
 		}

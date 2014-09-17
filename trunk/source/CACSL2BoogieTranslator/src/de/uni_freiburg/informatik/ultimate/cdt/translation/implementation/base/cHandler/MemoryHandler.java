@@ -1013,6 +1013,8 @@ public class MemoryHandler {
 
  		} else if (cType instanceof CNamed) {
  			return calculateSizeOfWithGivenTypeSizes(loc, ((CNamed) cType).getUnderlyingType());
+ 		} else if (cType instanceof CEnum) {
+ 			return typeSizeConstants.sizeOfEnumType;
  		} else {
  			throw new UnsupportedSyntaxException(loc, "failed trying to calculate size of " + cType + " (with constant sizes)");
  		}
@@ -1114,6 +1116,7 @@ public class MemoryHandler {
     			// value of the corresponding possible enums value domain!
     			// TODO : no idea how to do that, w/o log_2 function in boogie!
     			// so it is just ignored and assumed to be >0!
+    			assert false : "need to do something (insert an enum size), here..";
     		}
     	}
     	return idex;
