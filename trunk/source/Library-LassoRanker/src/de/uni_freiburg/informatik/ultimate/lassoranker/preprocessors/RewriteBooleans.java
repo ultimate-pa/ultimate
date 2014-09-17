@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -68,18 +67,12 @@ public class RewriteBooleans extends TransformerPreProcessor {
 	private final Map<Term, Term> m_SubstitutionMapping;
 	
 	/**
-	 * A mapping from RankVars that are booleans to their replacing variables
-	 */
-	private final Map<RankVar, ReplacementVar> m_RepVars;
-	
-	/**
 	 * Create a new RewriteBooleans preprocessor
 	 * @param rankVarCollector collecting the new in- and outVars
 	 * @param script the Script for creating new variables
 	 */
 	public RewriteBooleans() {
 		m_SubstitutionMapping = new LinkedHashMap<Term, Term>();
-		m_RepVars = new HashMap<RankVar, ReplacementVar>();
 	}
 	
 	/**
@@ -87,14 +80,10 @@ public class RewriteBooleans extends TransformerPreProcessor {
 	 * Creates a new replacement variable, if needed.
 	 */
 	private ReplacementVar getOrConstructReplacementVar(RankVar rankVar) {
-		ReplacementVar repVar = m_RepVars.get(rankVar);
-		if (repVar == null) {
-			Script script = m_lassoBuilder.getScript();
-			String name = rankVar.getGloballyUniqueId() + "_bool";
-			repVar = new ReplacementVar(name,
-					getDefinition(script, rankVar.getDefinition()));
-			m_RepVars.put(rankVar, repVar);
-		}
+		Term definition = getDefinition(
+				m_lassoBuilder.getScript(), rankVar.getDefinition());
+		ReplacementVar repVar = m_lassoBuilder.getReplacementVarFactory().
+				getOrConstuctReplacementVar(definition);
 		return repVar;
 	}
 	

@@ -715,9 +715,9 @@ public class RewriteArrays extends PreProcessor {
 			
 			// new code:
 			if (repVar == null) {
-				String name = getArrayCellName(array, translatedIndex);
+//				String name = getArrayCellName(array, translatedIndex);
 				Term definition = SmtUtils.multiDimensionalSelect(m_Script, array, translatedIndex.toArray(new Term[0]));
-				repVar = new ReplacementVar(name, definition);
+				repVar = m_lassoBuilder.getReplacementVarFactory().getOrConstuctReplacementVar(definition);
 				index2repVar.put(translatedIndex, repVar);
 			}
 			// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

@@ -66,12 +66,6 @@ public class LassoBuilder {
 	private final Map<BoogieVar, BoogieVarWrapper> m_boogieWrappers;
 	
 	/**
-	 * Mapping constants in the formula to their corresponding replacement
-	 * variables
-	 */
-	private final Map<ApplicationTerm, ReplacementVar> m_replacementVars;
-	
-	/**
 	 * Collection of all generated replacement TermVariables
 	 */
 	private final Collection<TermVariable> m_termVariables;
@@ -92,6 +86,12 @@ public class LassoBuilder {
 	private final Script m_Script;
 	
 	/**
+	 * Object that has to be used for getting and constructing ReplacementVars
+	 * that occur in this LassoBuilder.
+	 */
+	private final ReplacementVarFactory m_ReplacementVarFactory;
+	
+	/**
 	 * Create new (empty) LassoBuilder
 	 */
 	LassoBuilder(Script script, Boogie2SMT boogie2smt) {
@@ -103,7 +103,8 @@ public class LassoBuilder {
 		m_termVariables = new ArrayList<TermVariable>();
 		m_stem_components = new ArrayList<TransFormulaLR>();
 		m_loop_components = new ArrayList<TransFormulaLR>();
-		m_replacementVars = new HashMap<ApplicationTerm, ReplacementVar>();
+		m_ReplacementVarFactory = new ReplacementVarFactory();
+		
 	}
 	
 	/**
@@ -135,6 +136,10 @@ public class LassoBuilder {
 		return m_boogie2smt;
 	}
 	
+	public ReplacementVarFactory getReplacementVarFactory() {
+		return m_ReplacementVarFactory;
+	}
+
 	/**
 	 * @return a collection of all new TermVariable's created with this object
 	 */
@@ -217,11 +222,8 @@ public class LassoBuilder {
 		
 		// Add constant variables as in- and outVars
 		for (ApplicationTerm constVar : transition.getConstants()) {
-			ReplacementVar repVar = m_replacementVars.get(constVar);
-			if (repVar == null) {
-				repVar = new ReplacementVar(constVar.toString(), constVar);
-				m_replacementVars.put(constVar, repVar);
-			}
+			ReplacementVar repVar = 
+					m_ReplacementVarFactory.getOrConstuctReplacementVar(constVar); 
 			tf.addInVar(repVar, constVar);
 			tf.addOutVar(repVar, constVar);
 		}
@@ -267,4 +269,5 @@ public class LassoBuilder {
 		LinearTransition loop = LinearTransition.fromTransFormulaLR(loopTF);
 		return new Lasso(stem, loop);
 	}
+	
 }
