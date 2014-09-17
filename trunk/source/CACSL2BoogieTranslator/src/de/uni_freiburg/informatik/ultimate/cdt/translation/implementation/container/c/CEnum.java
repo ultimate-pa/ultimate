@@ -7,6 +7,8 @@ import java.util.Arrays;
 
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
+
 /**
  * @author Markus Lindenmann
  * @date 18.09.2012
@@ -19,9 +21,9 @@ public class CEnum extends CType {
     /**
      * Field values.
      */
-    private final IASTExpression[] fValues;
+    private final IntegerLiteral[] fValues;
     /**
-     * The identifier of this enum set.
+     * The _boogie_ identifier of this enum set.
      */
     private final String identifier;
 
@@ -38,7 +40,7 @@ public class CEnum extends CType {
      *            this enums identifier.
      */
     public CEnum(String id, String[] fNames,
-            IASTExpression[] fValues) {
+            IntegerLiteral[] fValues) {
         super(false, false, false, false); //FIXME: integrate those flags
         assert fNames.length == fValues.length;
         this.identifier = id;
@@ -62,7 +64,7 @@ public class CEnum extends CType {
      *            the fields id.
      * @return the fields value.
      */
-    public IASTExpression getFieldValue(String id) {
+    public IntegerLiteral getFieldValue(String id) {
         int idx = Arrays.asList(fNames).indexOf(id);
         if (idx < 0) {
             throw new IllegalArgumentException("Field '" + id
@@ -91,13 +93,14 @@ public class CEnum extends CType {
 
     @Override
     public String toString() {
-        StringBuilder id = new StringBuilder("ENUM#");
-        for (int i = 0; i < getFieldCount(); i++) {
-            id.append("?");
-            id.append(fNames[i]);
-        }
-        id.append("#");
-        return id.toString();
+//        StringBuilder id = new StringBuilder("ENUM#");
+//        for (int i = 0; i < getFieldCount(); i++) {
+//            id.append("?");
+//            id.append(fNames[i]);
+//        }
+//        id.append("#");
+//        return id.toString();
+    	return identifier;
     }
     
     @Override
@@ -122,14 +125,14 @@ public class CEnum extends CType {
                 return false;
             }
         }
-        if (fValues.length != oEnum.fValues.length) {
-            return false;
-        }
-        for (int i = fValues.length - 1; i >= 0; --i) {
-            if (!(fValues[i].equals(oEnum.fValues[i]))) {
-                return false;
-            }
-        }
+//        if (fValues.length != oEnum.fValues.length) {
+//            return false;
+//        }
+//        for (int i = fValues.length - 1; i >= 0; --i) {
+//            if (!(fValues[i].equals(oEnum.fValues[i]))) {
+//                return false;
+//            }
+//        }
         return true;
     }
 }

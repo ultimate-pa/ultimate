@@ -13,6 +13,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
@@ -37,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
@@ -152,7 +154,7 @@ public class PostProcessor {
 	 * @param arrayHandler
 	 *            a reference to the arrayHandler.
 	 * @param structHandler 
-	 * @param mDeclarationsGlobalInBoogie 
+	 * @param declarationsGlobalInBoogie 
 	 * @param initStatements
 	 *            a list of all global init statements.
 	 * @param uninitGlobalVars
@@ -161,7 +163,7 @@ public class PostProcessor {
 	 */
 	private ArrayList<Declaration> createUltimateInitProcedure(ILocation loc,
 			Dispatcher main, MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler,   
-			StructHandler structHandler, LinkedHashMap<Declaration, CDeclaration> mDeclarationsGlobalInBoogie) {
+			StructHandler structHandler, LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie) {
 		functionHandler.beginUltimateInit(main, loc, SFO.INIT);
 		ArrayList<Statement> initStatements = new ArrayList<Statement>();
 
@@ -198,8 +200,8 @@ public class PostProcessor {
 
 
 		//initialization for statics and other globals
-		for (Entry<Declaration, CDeclaration> en : mDeclarationsGlobalInBoogie.entrySet()) {
-			if (en.getKey() instanceof TypeDeclaration)
+		for (Entry<Declaration, CDeclaration> en : declarationsGlobalInBoogie.entrySet()) {
+			if (en.getKey() instanceof TypeDeclaration || en.getKey() instanceof ConstDeclaration)
 				continue;
 			ResultExpression initializer = en.getValue().getInitializer();
 
@@ -489,7 +491,6 @@ mInitializedGlobals.size()];
 			}
 			assert lhs != null;
 		} else if (lCType instanceof CStruct) {
-
 			CStruct structType = (CStruct) lCType;
 
 			if (onHeap) {
@@ -521,6 +522,27 @@ mInitializedGlobals.size()];
 				} else {
 					lrVal = new RValue(rhs, lCType);
 				}
+			}
+		} else if (lCType instanceof CEnum) {
+			if (initializer == null) {
+				rhs = new IntegerLiteral(loc, SFO.NR0);
+			} else {
+				initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer);
+				rhs = initializer.lrVal.getValue();
+			}		
+			if (var != null) {
+				if (onHeap) {
+					stmt.addAll(memoryHandler.getWriteCall(
+							(HeapLValue) var,
+							new RValue(rhs, cType)));
+				} else {
+					assert lhs != null;
+					stmt.add(new AssignmentStatement(loc, 
+							new LeftHandSide[] { lhs },
+							new Expression[] { rhs } ));
+				}
+			} else {
+				lrVal = new RValue(rhs, lCType);
 			}
 		} else {
 			String msg = "Unknown type - don't know how to initialize!";

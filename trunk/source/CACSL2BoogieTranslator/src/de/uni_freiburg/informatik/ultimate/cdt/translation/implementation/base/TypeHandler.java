@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
@@ -52,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
@@ -193,21 +195,26 @@ public class TypeHandler implements ITypeHandler {
     @Override
     public Result visit(Dispatcher main, IASTEnumerationSpecifier node) {
         CACSLLocation loc = new CACSLLocation(node);
-        String enumId = node.getName().getRawSignature();
+        String cId = node.getName().toString();
+        String enumId = main.nameHandler.getUniqueIdentifier(node, node.getName().toString(),
+        		main.cHandler.getSymbolTable().getCompoundCounter(), false);
         int nrFields = node.getEnumerators().length;
         String[] fNames = new String[nrFields];
-        IASTExpression[] fValues = new IASTExpression[nrFields];
+        IntegerLiteral[] fValues = new IntegerLiteral[nrFields];
         for (int i = 0; i < nrFields; i++) {
             IASTEnumerator e = node.getEnumerators()[i];
-            fNames[i] = e.getName().getRawSignature();
-            fValues[i] = e.getValue();
+            fNames[i] = e.getName().toString();
+//          FIXME: assuming there may only be integerliterals in c at this place -> or is something else allowed here??
+            if (e.getValue() != null)
+            	fValues[i] = (IntegerLiteral) ((ResultExpression) main.dispatch(e.getValue())).lrVal.getValue(); 
+            else
+            	fValues[i] = null;
         }
         CEnum cEnum = new CEnum(enumId, fNames, fValues);
-        IType it = new InferredType(Type.Integer);
-        ASTType at = new PrimitiveType(loc, it, SFO.INT);
+        ASTType at = new PrimitiveType(loc, SFO.INT);
         ResultTypes result = new ResultTypes(at, false, false, cEnum);
         if (!enumId.equals(SFO.EMPTY)) {
-            m_DefinedTypes.put(enumId, result);
+            m_DefinedTypes.put(cId, result);
         }
         return result;
     }
@@ -225,10 +232,14 @@ public class TypeHandler implements ITypeHandler {
             } else if (node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
             	name = "UNION~" + type;
             } else {
-            	throw new UnsupportedOperationException("TODO: enums");
+//            	throw new UnsupportedOperationException("TODO: enums");
+//          	name is only for incomplete types what is an incomplete enum type? 
+            	// -- probably we don't have to treat it as its contents are only relevant for
+            	// const declarations, not the cType
+            	name = null;//"~" + type; 
             }
             
-            if (m_DefinedTypes.containsKey(type)) {
+            if (m_DefinedTypes.containsKey(type) || node.getKind() == IASTElaboratedTypeSpecifier.k_enum) {
                 ResultTypes originalType = m_DefinedTypes.get(type);
                 ResultTypes withoutBoogieTypedef = new ResultTypes(
                 		originalType.getType(), originalType.isConst, 
@@ -236,14 +247,15 @@ public class TypeHandler implements ITypeHandler {
                 return withoutBoogieTypedef;
             }
 
+
             // This is a definition of an incomplete struct or enum.
             m_IncompleteType.add(name);
 // 			FIXME : not sure, if null is a good idea!
 //            ResultTypes r = new ResultTypes(new NamedType(loc, name,
 //                    new ASTType[0]), false, false, null);
-            if (node.getKind() == IASTElaboratedTypeSpecifier.k_enum) {
-            	throw new UnsupportedOperationException("TODO: support incomplete enums");
-            }
+//            if (node.getKind() == IASTElaboratedTypeSpecifier.k_enum) {
+//            	throw new UnsupportedOperationException("TODO: support incomplete enums");
+//            }
             CType ctype;
             if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
 //            	ctype = new CStruct(true);
@@ -252,7 +264,8 @@ public class TypeHandler implements ITypeHandler {
 //            	ctype = new CUnion(true);
             	ctype = new CUnion(type);
             } else {
-            	throw new UnsupportedOperationException("TODO: enums");
+            	ctype = null;
+//            	throw new UnsupportedOperationException("TODO: enums");
             }
             ResultTypes r = new ResultTypes(new NamedType(loc, name,
                   new ASTType[0]), false, false, ctype);
@@ -377,6 +390,7 @@ public class TypeHandler implements ITypeHandler {
 
     @Override
     public InferredType visit(Dispatcher main, ITypedef type) {
+    	assert false : "I don't think this should still be used";
         if (!m_DefinedTypes.containsKey(type.getName())) {
             String msg = "Unknown C typedef: " + type.getName();
             // TODO : no idea what location should be set to ...
@@ -512,6 +526,9 @@ public class TypeHandler implements ITypeHandler {
 		} else if (cType instanceof CFunction) {
 //				throw new UnsupportedSyntaxException(loc, "how to translate function type?");
 			return null; //FIXME -- is this ok??
+		} else if (cType instanceof CEnum) {
+//			return new NamedType(loc, ((CEnum) cType).getIdentifier(), new ASTType[0]);
+			return new PrimitiveType(loc, SFO.INT);
 		}
 		throw new UnsupportedSyntaxException(loc, "unknown type");
 	}

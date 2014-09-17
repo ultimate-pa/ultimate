@@ -221,7 +221,8 @@ public class CHandler implements ICHandler {
 	/**
 	 * A set holding declarations of global variables required for variables,
 	 * declared locally in C but required to be global in Boogie. e.g. constants
-	 * for enums or local static variables. Each declaration can have a set of
+	 * for enums (in boogie constants may only be defined globally)
+	 * or local static variables. Each declaration can have a set of
 	 * initialization statements. So the procedure is: typeDeclarations: added
 	 * to this map in IASTSimpleDeclaration, declared using this map in
 	 * ITranslationUnit static variables: added to this map in
@@ -2844,33 +2845,41 @@ public class CHandler implements ICHandler {
 		assert rt.cType instanceof CEnum;
 		CEnum cEnum = (CEnum) rt.cType;
 		ILocation loc = new CACSLLocation(node);
-		String enumId = main.nameHandler.getUniqueIdentifier(node, cEnum.getIdentifier(),
-				symbolTable.getCompoundCounter(), false);
+		ASTType at = new PrimitiveType(loc, SFO.INT);
+		String enumId = cEnum.getIdentifier();
+//		String enumId = main.nameHandler.getUniqueIdentifier(node, cEnum.getIdentifier(),
+//				symbolTable.getCompoundCounter(), false);
 		Expression oldValue = null;
 		Expression[] enumDomain = new Expression[cEnum.getFieldCount()];
+		
+		ResultDeclaration result = new ResultDeclaration();
+		
 		for (int i = 0; i < cEnum.getFieldCount(); i++) {
 			String fId = cEnum.getFieldIds()[i];
 			String bId = enumId + "~" + fId;
 			ResultExpression rex = null;
-			if (cEnum.getFieldValue(fId) != null) {
-				Result resultValue = main.dispatch(cEnum.getFieldValue(fId));
-				assert resultValue instanceof ResultExpression;
-				rex = (ResultExpression) resultValue;
-				assert rex.stmt.isEmpty();
-				assert rex.decl.isEmpty();
-			}
-			ASTType at = new PrimitiveType(loc, SFO.INT);
+//			if (cEnum.getFieldValue(fId) != null) {
+//				Result resultValue = main.dispatch(cEnum.getFieldValue(fId));
+//				assert resultValue instanceof ResultExpression;
+//				rex = (ResultExpression) resultValue;
+//				assert rex.stmt.isEmpty();
+//				assert rex.decl.isEmpty();
+//			}
 			VarList vl = new VarList(loc, new String[] { bId }, at);
 			ConstDeclaration cd = new ConstDeclaration(loc, new Attribute[0], false, vl, null, false);
-			mDeclarationsGlobalInBoogie.put(cd, null);
+			mDeclarationsGlobalInBoogie.put(cd, new CDeclaration(cEnum, fId));
 			Expression l = new IdentifierExpression(loc, bId);
 			Expression newValue = oldValue;
-			if (oldValue == null && rex == null) {
+//			if (oldValue == null && rex == null) {
+			if (oldValue == null && cEnum.getFieldValue(fId) == null) {
 				newValue = new IntegerLiteral(loc, SFO.NR0);
-			} else if (rex == null) {
-				newValue = new BinaryExpression(loc, Operator.ARITHPLUS, oldValue, new IntegerLiteral(loc, SFO.NR1));
+//			} else if (rex == null) {
+			} else if (cEnum.getFieldValue(fId) == null) {
+				newValue = createArithmeticExpression(IASTBinaryExpression.op_plus, oldValue, new IntegerLiteral(loc, SFO.NR1), loc);
+				// new BinaryExpression(loc, Operator.ARITHPLUS, oldValue, new IntegerLiteral(loc, SFO.NR1));
 			} else {
-				newValue = rex.lrVal.getValue();
+//				newValue = rex.lrVal.getValue();
+				newValue = cEnum.getFieldValue(fId);
 			}
 			oldValue = newValue;
 			enumDomain[i] = newValue;
@@ -2880,43 +2889,53 @@ public class CHandler implements ICHandler {
 																							// ??
 			// staticStorageClass(node)));
 		}
-		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		ArrayList<Statement> stmt = new ArrayList<Statement>();
-		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
-		List<Overapprox> overapprox = new ArrayList<Overapprox>();
-		boolean isGlobal = node.getTranslationUnit() == node.getParent();
-		for (IASTDeclarator d : node.getDeclarators()) {
-			String cId = d.getName().getRawSignature();
-			// declare an integer variable
-			String bId = main.nameHandler.getUniqueIdentifier(node, cId, symbolTable.getCompoundCounter(), false);
-			VarList vl = new VarList(loc, new String[] { bId }, new PrimitiveType(loc, SFO.INT));
-			VariableDeclaration vd = new VariableDeclaration(loc, new Attribute[0], new VarList[] { vl });
-			decl.add(vd);
-			symbolTable.put(cId, new SymbolTableValue(bId, vd, new CDeclaration(null, cId), isGlobal,
-			// staticStorageClass(node))); //FIXME ??
-					scConstant2StorageClass(node.getDeclSpecifier().getStorageClass()))); // FIXME
-																							// ??
-			// initialize variable
-			if (d.getInitializer() != null) {
-				Result init = main.dispatch(d.getInitializer());
-				assert init instanceof ResultExpression;
-				ResultExpression i = (ResultExpression) init;
-				decl.addAll(i.decl);
-				stmt.addAll(i.stmt);
-				VariableLHS lhs = new VariableLHS(loc, bId);
-				AssignmentStatement assign = new AssignmentStatement(loc, new LeftHandSide[] { lhs },
-						new Expression[] { i.lrVal.getValue() });
-				Map<String, IAnnotations> annots = assign.getPayload().getAnnotations();
-				for (Overapprox overapprItem : overapprox) {
-					annots.put(Overapprox.getIdentifier(), overapprItem);
-				}
-				stmt.add(assign);
-				auxVars.putAll(i.auxVars);
-				overapprox.addAll(i.overappr);
-			}
-		}
-		assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
-		return new ResultExpression(stmt, null, decl, auxVars, overapprox);
+//		mDeclarationsGlobalInBoogie.put(
+//				new TypeDeclaration(loc, new Attribute[0], false, enumId, new String[0], at),
+//				null);
+//		main.typeHandler.addDefinedType(enumId, 
+//				rt);
+//				new ResultTypes(new NamedType(loc, cDec.getName(), null),
+//				false, false, cEnum);
+
+		//TODO: replace this with up-to-date treatment of delcarators
+//		ArrayList<Declaration> decl = new ArrayList<Declaration>();
+//		ArrayList<Statement> stmt = new ArrayList<Statement>();
+//		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
+//		List<Overapprox> overapprox = new ArrayList<Overapprox>();
+//		boolean isGlobal = node.getTranslationUnit() == node.getParent();
+//		for (IASTDeclarator d : node.getDeclarators()) {
+//			String cId = d.getName().getRawSignature();
+//			// declare an integer variable
+//			String bId = main.nameHandler.getUniqueIdentifier(node, cId, symbolTable.getCompoundCounter(), false);
+//			VarList vl = new VarList(loc, new String[] { bId }, new PrimitiveType(loc, SFO.INT));
+//			VariableDeclaration vd = new VariableDeclaration(loc, new Attribute[0], new VarList[] { vl });
+//			decl.add(vd);
+//			symbolTable.put(cId, new SymbolTableValue(bId, vd, new CDeclaration(null, cId), isGlobal,
+//			// staticStorageClass(node))); //FIXME ??
+//					scConstant2StorageClass(node.getDeclSpecifier().getStorageClass()))); // FIXME
+//																							// ??
+//			// initialize variable
+//			if (d.getInitializer() != null) {
+//				Result init = main.dispatch(d.getInitializer());
+//				assert init instanceof ResultExpression;
+//				ResultExpression i = (ResultExpression) init;
+//				decl.addAll(i.decl);
+//				stmt.addAll(i.stmt);
+//				VariableLHS lhs = new VariableLHS(loc, bId);
+//				AssignmentStatement assign = new AssignmentStatement(loc, new LeftHandSide[] { lhs },
+//						new Expression[] { i.lrVal.getValue() });
+//				Map<String, IAnnotations> annots = assign.getPayload().getAnnotations();
+//				for (Overapprox overapprItem : overapprox) {
+//					annots.put(Overapprox.getIdentifier(), overapprItem);
+//				}
+//				stmt.add(assign);
+//				auxVars.putAll(i.auxVars);
+//				overapprox.addAll(i.overappr);
+//			}
+//		}
+//		assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
+//		return new ResultExpression(stmt, null, decl, auxVars, overapprox);
+		return result;
 	}
 
 	public Result handleLabelCommonCode(Dispatcher main, IASTLabelStatement node, ILocation loc) {

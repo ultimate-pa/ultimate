@@ -13,6 +13,7 @@ import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTElaboratedTypeSpecifier;
+import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
@@ -215,8 +216,8 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					String declSpecName = cts.getName().toString();
 					if (!declSpecName.isEmpty()) {
 						//convention:
-						// a struct/union declaration is saved in the symbolTable under a key that includes
-						// the struct/union keyword --> otherwise we would have a collision
+						// a struct/union/enum declaration is saved in the symbolTable under a key that includes
+						// the struct/union/enum keyword --> otherwise we would have a collision
 						// in case of something like typedef struct a a;
 						String structOrUnion = getKindStringFromCompositeOrElaboratedTS(cts);
 						sT.put(structOrUnion + declSpecName, declaration);
@@ -227,6 +228,17 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 							addDependency(dependencyGraphPreliminaryInverse.get(id), declaration);
 						}
 					}
+				} else if (declSpec instanceof IASTEnumerationSpecifier) {
+					IASTEnumerationSpecifier es = (IASTEnumerationSpecifier) declSpec;
+					String declSpecName = es.getName().toString();
+					if (!declSpecName.isEmpty()) {
+						//convention:
+						// a struct/union/enum declaration is saved in the symbolTable under a key that includes
+						// the struct/union/enum keyword --> otherwise we would have a collision
+						// in case of something like typedef struct a a;
+						sT.put("enum " + declSpecName, declaration);
+					}
+
 				}
 
 				// each declarator of a global declaration has to be stored in the symbolTable
@@ -344,18 +356,20 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 		if (cts instanceof IASTCompositeTypeSpecifier) {
 			switch (((IASTCompositeTypeSpecifier) cts).getKey()) {
 			case IASTCompositeTypeSpecifier.k_struct:
-				return "struct";
+				return "struct ";
 			case IASTCompositeTypeSpecifier.k_union:
-				return "union";
+				return "union ";
 			default:
 				assert false : "??";
 			}
 		} else if (cts instanceof IASTElaboratedTypeSpecifier) {
 			switch (((IASTElaboratedTypeSpecifier) cts).getKind()) {
 			case IASTElaboratedTypeSpecifier.k_struct:
-				return "struct";
+				return "struct ";
 			case IASTElaboratedTypeSpecifier.k_union:
-				return "union";
+				return "union ";
+			case IASTElaboratedTypeSpecifier.k_enum:
+				return "enum ";
 			default:
 				assert false : "??";
 			}
