@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoBuilder;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate.ArrayUpdateExtractor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
+
 
 
 /**
@@ -59,12 +60,12 @@ public class SingleUpdateNormalFormTransformer {
 	private List<Term> m_RemainderTerms;
 	private Map<Term, Term> m_Store2TermVariable;
 	private final Script m_Script;
-	private final LassoBuilder m_lassoBuilder;
+	private final ReplacementVarFactory m_ReplacementVarFactory;
 	
 	public SingleUpdateNormalFormTransformer(final Term input, Script script,
-			LassoBuilder lassoBuilder) {
+			ReplacementVarFactory replacementVarFactory) {
 		m_Script = script;
-		m_lassoBuilder = lassoBuilder;
+		m_ReplacementVarFactory = replacementVarFactory;
 		m_ArrayUpdates = new ArrayList<ArrayUpdate>();
 		Term[] conjuncts = SmtUtils.getConjuncts(input);
 		ArrayUpdateExtractor aue = new ArrayUpdateExtractor(conjuncts);
@@ -198,7 +199,7 @@ public class SingleUpdateNormalFormTransformer {
 	private TermVariable constructAuxiliaryVariable(Term oldArray) {
 		String name = SmtUtils.removeSmtQuoteCharacters(oldArray.toString() + s_AuxArray); 
 		TermVariable auxArray = 
-				m_lassoBuilder.getReplacementVarFactory().getOrConstructAuxVar(name, oldArray.getSort());
+				m_ReplacementVarFactory.getOrConstructAuxVar(name, oldArray.getSort());
 		return auxArray;
 	}
 
