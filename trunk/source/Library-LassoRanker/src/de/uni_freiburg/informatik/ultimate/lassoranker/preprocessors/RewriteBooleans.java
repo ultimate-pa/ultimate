@@ -33,9 +33,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoBuilder;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -67,11 +67,22 @@ public class RewriteBooleans extends TransformerPreProcessor {
 	private final Map<Term, Term> m_SubstitutionMapping;
 	
 	/**
+	 * Factory for construction of auxVars.
+	 */
+	private final ReplacementVarFactory m_VarFactory;
+	
+	private final Script m_Script;
+	
+	
+	/**
 	 * Create a new RewriteBooleans preprocessor
 	 * @param rankVarCollector collecting the new in- and outVars
 	 * @param script the Script for creating new variables
 	 */
-	public RewriteBooleans() {
+	public RewriteBooleans(ReplacementVarFactory varFactory, Script script) {
+		m_VarFactory = varFactory;
+		m_Script = script;
+		m_repVarSort = m_Script.sort(s_repVarSortName);
 		m_SubstitutionMapping = new LinkedHashMap<Term, Term>();
 	}
 	
@@ -81,8 +92,8 @@ public class RewriteBooleans extends TransformerPreProcessor {
 	 */
 	private ReplacementVar getOrConstructReplacementVar(RankVar rankVar) {
 		Term definition = getDefinition(
-				m_lassoBuilder.getScript(), rankVar.getDefinition());
-		ReplacementVar repVar = m_lassoBuilder.getReplacementVarFactory().
+				m_Script, rankVar.getDefinition());
+		ReplacementVar repVar = m_VarFactory.
 				getOrConstuctReplacementVar(definition);
 		return repVar;
 	}
@@ -104,7 +115,7 @@ public class RewriteBooleans extends TransformerPreProcessor {
 						m_SubstitutionMapping.get(entry.getValue());
 				if (newInVar == null) {
 					// Create a new TermVariable
-					newInVar = m_lassoBuilder.getNewTermVariable(
+					newInVar = m_VarFactory.getOrConstructAuxVar(
 							repVar.getGloballyUniqueId() + s_repInPostfix,
 						m_repVarSort
 					);
@@ -124,7 +135,7 @@ public class RewriteBooleans extends TransformerPreProcessor {
 						m_SubstitutionMapping.get(entry.getValue());
 				if (newOutVar == null) {
 					// Create a new TermVariable
-					newOutVar = m_lassoBuilder.getNewTermVariable(
+					newOutVar = m_VarFactory.getOrConstructAuxVar(
 							repVar.getGloballyUniqueId() + s_repOutPostfix,
 						m_repVarSort
 					);
@@ -142,17 +153,9 @@ public class RewriteBooleans extends TransformerPreProcessor {
 	}
 	
 	@Override
-	protected TransFormulaLR processTransition(Script script, TransFormulaLR tf,
-			boolean stem) throws TermException {
+	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		this.generateRepVars(tf);
-		return super.processTransition(script, tf, stem);
-	}
-	
-	@Override
-	public void process(LassoBuilder lasso_builder) throws TermException {
-		Script script = lasso_builder.getScript();
-		m_repVarSort = script.sort(s_repVarSortName);
-		super.process(lasso_builder);
+		return super.process(m_Script, tf);
 	}
 	
 	/**

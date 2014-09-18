@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf
  * 
  * @author Jan Leike
  */
-public class DNF extends PreProcessor {
+public class DNF extends TransitionPreProcessor {
 	private final IUltimateServiceProvider mServices;
 	
 	public DNF(IUltimateServiceProvider services) {
@@ -69,8 +69,7 @@ public class DNF extends PreProcessor {
 	}
 	
 	@Override
-	protected TransFormulaLR processTransition(Script script, TransFormulaLR tf,
-			boolean stem) throws TermException {
+	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		Dnf dnf = new Dnf(script, mServices);
 		tf.setFormula(dnf.transform(tf.getFormula()));
 		return tf;

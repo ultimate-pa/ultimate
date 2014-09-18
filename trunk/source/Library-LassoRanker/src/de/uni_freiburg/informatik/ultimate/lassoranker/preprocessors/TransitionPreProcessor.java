@@ -29,41 +29,44 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 
 /**
- * Adds axioms to the stem and loop transition
+ * A preprocessor takes a TransformulaLR and returns a TransformulaLR.
  * 
- * @author Jan Leike
+ * @author Jan Leike, Matthias Heizmann
  */
-public class AddAxioms extends TransitionPreProcessor {
-	
-	private final Term[] m_axioms;
+public abstract class TransitionPreProcessor {
 	
 	/**
-	 * @param axioms the axioms that should be added to stem and loop
+	 * @return a description of the preprocessing
 	 */
-	public AddAxioms(Term[] axioms) {
-		if (axioms == null) {
-			m_axioms = new Term[0];
-		} else {
-			m_axioms = axioms;
-		}
+	public abstract String getDescription();
+	
+	/**
+	 * Process a single transition (stem or loop) independently of the other
+	 * @param script the script
+	 * @param tf the transition formula
+	 * @return a new (processed) transition formula
+	 * @throws TermException if processing fails
+	 */
+	protected abstract TransFormulaLR process(
+			Script script, TransFormulaLR tf) throws TermException;
+	
+	/**
+	 * Check if the processing was sound.
+	 * 
+	 * @param script the script
+	 * @param oldTF the old TransFormulaOLR
+	 * @param newTF the new TransFormulaLR (after processing
+	 * @return whether the result is ok
+	 */
+	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
+			TransFormulaLR newTF) {
+		return true; // check nothing
 	}
 	
-	@Override
-	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
-		Term formula = tf.getFormula();
-		Term axioms = Util.and(script, m_axioms);
-		formula = Util.and(script, formula, axioms);
-		tf.setFormula(formula);
-		return tf;
-	}
-	
-	@Override
-	public String getDescription() {
-		return "Add axioms to the transition";
+	public String toString() {
+		return this.getDescription();
 	}
 }

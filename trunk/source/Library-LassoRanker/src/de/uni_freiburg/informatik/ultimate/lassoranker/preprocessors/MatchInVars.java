@@ -30,6 +30,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -44,18 +45,28 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * have a corresponding inVar. Supporting invariant generation then becomes
  * unsound for the inductiveness property.
  */
-public class MatchInVars extends PreProcessor {
+public class MatchInVars extends TransitionPreProcessor {
+
+	/**
+	 * Factory for construction of auxVars.
+	 */
+	private final ReplacementVarFactory m_VarFactory;
+	
+	public MatchInVars(ReplacementVarFactory varFactory) {
+		super();
+		m_VarFactory = varFactory;
+	}
+
 	@Override
 	public String getDescription() {
 		return "Add a corresponding inVar for all outVars";
 	}
 	
 	@Override
-	protected TransFormulaLR processTransition(Script script, TransFormulaLR tf,
-			boolean stem) throws TermException {
+	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		for (Map.Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
 			if (!tf.getInVars().containsKey(entry.getKey())) {
-				TermVariable inVar = m_lassoBuilder.getNewTermVariable(
+				TermVariable inVar = m_VarFactory.getOrConstructAuxVar(
 						entry.getKey().getGloballyUniqueId(),
 						entry.getValue().getSort()
 				);

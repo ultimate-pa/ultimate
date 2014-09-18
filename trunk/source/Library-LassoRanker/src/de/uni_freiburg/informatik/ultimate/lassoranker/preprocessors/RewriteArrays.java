@@ -78,7 +78,7 @@ import de.uni_freiburg.informatik.ultimate.util.UnionFind;
  * 
  * @author Matthias Heizmann
  */
-public class RewriteArrays extends PreProcessor {
+public class RewriteArrays extends LassoPreProcessor {
 
 	private final Logger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -164,13 +164,47 @@ public class RewriteArrays extends PreProcessor {
 	}
 
 	@Override
-	public void process(LassoBuilder lassoBuilder) throws TermException {
-		m_Script = lassoBuilder.getScript();
-		super.process(lassoBuilder);
+	public void process(LassoBuilder lasso_builder) 
+			throws TermException {
+		m_lassoBuilder = lasso_builder;
+		m_Script = lasso_builder.getScript();
+		
+		// Process stem
+		{
+			Collection<TransFormulaLR> old_stem_components =
+					lasso_builder.getStemComponents();
+			Collection<TransFormulaLR> new_stem_components =
+					new ArrayList<TransFormulaLR>(old_stem_components.size());
+			for (TransFormulaLR tf : old_stem_components) {
+				TransFormulaLR new_tf =
+						this.process(m_Script, tf, true);
+				assert checkSoundness(m_Script, tf, new_tf)
+					: "Soundness check failed for preprocessor "
+					+ this.getClass().getSimpleName();
+				new_stem_components.add(new_tf);
+			}
+			lasso_builder.setStemComponents(new_stem_components);
+		}
+		
+		// Process loop
+		{
+			Collection<TransFormulaLR> old_loop_components =
+					lasso_builder.getLoopComponents();
+			Collection<TransFormulaLR> new_loop_components =
+					new ArrayList<TransFormulaLR>(old_loop_components.size());
+			for (TransFormulaLR tf : old_loop_components) {
+				TransFormulaLR new_tf =
+						this.process(m_Script, tf, false);
+				assert checkSoundness(m_Script, tf, new_tf)
+					: "Soundness check failed for preprocessor "
+					+ this.getClass().getSimpleName();
+				new_loop_components.add(new_tf);
+			}
+			lasso_builder.setLoopComponents(new_loop_components);
+		}
 	}
 	
-	@Override
-	protected TransFormulaLR processTransition(Script script, TransFormulaLR tf,
+	private TransFormulaLR process(Script script, TransFormulaLR tf,
 			boolean stem) {
 		Term term = tf.getFormula();
 		if (!SmtUtils.containsArrayVariables(term)) {
@@ -793,7 +827,8 @@ public class RewriteArrays extends PreProcessor {
 			assert mdias.getDimension() == index.size();
 			Sort valueSort = mdias.getArrayValueSort();
 			String name = getArrayCellName(instance, index);
-			TermVariable tv = m_lassoBuilder.getNewTermVariable(name, valueSort);
+			TermVariable tv = m_lassoBuilder.getReplacementVarFactory().
+					getOrConstructAuxVar(name, valueSort);
 			return tv;
 		}
 

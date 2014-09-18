@@ -36,47 +36,20 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 
 
 /**
- * A preprocessor performs some modifications to the input formulae for
- * stem and loop.
- * 
- * @author Jan Leike
+ * Preprocessor for lassos that takes a preprocessor for TransFormulaLR to
+ * translate stem and loop.
+ * @author Jan Leike, Matthias Heizmann
  */
-public abstract class PreProcessor {
-	/**
-	 * The LassoBuilder that we are processing.
-	 * Is null before process() has been called.
-	 */
-	protected LassoBuilder m_lassoBuilder = null;
+public class StemAndLoopPreProcessor extends LassoPreProcessor {
 	
-	/**
-	 * @return a description of the preprocessing
-	 */
-	public abstract String getDescription();
+	private final TransitionPreProcessor m_TransitionPreProcessor;
 	
-	/**
-	 * Process a single transition (stem or loop) independently of the other
-	 * @param script the script
-	 * @param tf the transition formula
-	 * @param stem is this a stem (as opposed to a loop) transition?
-	 * @return a new (processed) transition formula
-	 * @throws TermException if processing fails
-	 */
-	protected abstract TransFormulaLR processTransition(
-			Script script, TransFormulaLR tf, boolean stem) throws TermException;
 	
-	/**
-	 * Check if the processing was sound.
-	 * 
-	 * @param script the script
-	 * @param oldTF the old TransFormulaLR
-	 * @param newTF the new TransFormulaLR (after processing
-	 * @return whether the result is ok
-	 */
-	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
-			TransFormulaLR newTF) {
-		return true; // check nothing
+	public StemAndLoopPreProcessor(TransitionPreProcessor transitionPreProcessor) {
+		super();
+		m_TransitionPreProcessor = transitionPreProcessor;
 	}
-	
+
 	/**
 	 * Apply the preprocessing step
 	 * @param script the SMT script to use 
@@ -97,7 +70,7 @@ public abstract class PreProcessor {
 					new ArrayList<TransFormulaLR>(old_stem_components.size());
 			for (TransFormulaLR tf : old_stem_components) {
 				TransFormulaLR new_tf =
-						this.processTransition(script, tf, true);
+						m_TransitionPreProcessor.process(script, tf);
 				assert checkSoundness(script, tf, new_tf)
 					: "Soundness check failed for preprocessor "
 					+ this.getClass().getSimpleName();
@@ -114,7 +87,7 @@ public abstract class PreProcessor {
 					new ArrayList<TransFormulaLR>(old_loop_components.size());
 			for (TransFormulaLR tf : old_loop_components) {
 				TransFormulaLR new_tf =
-						this.processTransition(script, tf, false);
+						m_TransitionPreProcessor.process(script, tf);
 				assert checkSoundness(script, tf, new_tf)
 					: "Soundness check failed for preprocessor "
 					+ this.getClass().getSimpleName();
@@ -123,8 +96,10 @@ public abstract class PreProcessor {
 			lasso_builder.setLoopComponents(new_loop_components);
 		}
 	}
-	
-	public String toString() {
-		return this.getDescription();
+
+	@Override
+	public String getDescription() {
+		return m_TransitionPreProcessor.getDescription();
 	}
+	
 }

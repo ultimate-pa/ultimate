@@ -103,7 +103,7 @@ public class LassoBuilder {
 		m_termVariables = new ArrayList<TermVariable>();
 		m_stem_components = new ArrayList<TransFormulaLR>();
 		m_loop_components = new ArrayList<TransFormulaLR>();
-		m_ReplacementVarFactory = new ReplacementVarFactory();
+		m_ReplacementVarFactory = new ReplacementVarFactory(m_boogie2smt.getVariableManager());
 		
 	}
 	
@@ -188,18 +188,7 @@ public class LassoBuilder {
 		}
 	}
 	
-	/**
-	 * Construct and return a unique term variable with the given name.
-	 * The new variable has the same sort as the given Term definition.
-	 * @param name an identifier for the variable
-	 * @param definition a term that new variable is replacing
-	 */
-	public TermVariable getNewTermVariable(String name, Sort sort) {
-		VariableManager varMan = m_boogie2smt.getVariableManager();
-		TermVariable newVar = varMan.constructFreshTermVariable(name, sort);
-		m_termVariables.add(newVar);
-		return newVar;
-	}
+
 	
 	/**
 	 * Construct a TransFormulaLR from a TransFormula, adding and translating

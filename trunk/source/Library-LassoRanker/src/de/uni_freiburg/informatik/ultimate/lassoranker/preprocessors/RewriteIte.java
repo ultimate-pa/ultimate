@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IteRemover;
  * 
  * @author Matthias Heizmann, Jan Leike
  */
-public class RewriteIte extends PreProcessor {
+public class RewriteIte extends TransitionPreProcessor {
 	@Override
 	public String getDescription() {
 		return "Remove if-then-else terms.";
@@ -56,8 +56,7 @@ public class RewriteIte extends PreProcessor {
 	}
 	
 	@Override
-	protected TransFormulaLR processTransition(Script script, TransFormulaLR tf,
-			boolean stem) throws TermException {
+	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		IteRemover iteRemover = new IteRemover(script);
 		tf.setFormula(iteRemover.transform(tf.getFormula()));
 		return tf;

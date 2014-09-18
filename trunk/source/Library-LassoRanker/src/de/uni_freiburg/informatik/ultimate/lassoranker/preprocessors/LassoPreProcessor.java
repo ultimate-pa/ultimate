@@ -27,43 +27,52 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoBuilder;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 
 /**
- * Adds axioms to the stem and loop transition
+ * A preprocessor that modifies a given LassoBuilder
  * 
- * @author Jan Leike
+ * @author Jan Leike, Matthias
  */
-public class AddAxioms extends TransitionPreProcessor {
+public abstract class LassoPreProcessor {
+	/**
+	 * The LassoBuilder that we are processing.
+	 * Is null before process() has been called.
+	 */
+	protected LassoBuilder m_lassoBuilder = null;
 	
-	private final Term[] m_axioms;
 	
 	/**
-	 * @param axioms the axioms that should be added to stem and loop
+	 * Apply the preprocessing step
+	 * @param script the SMT script to use 
+	 * @param lasso_builder the lasso builder object to perform the processing on
+	 * @return the processed formula
+	 * @throws TermException if an error occurred while traversing the term
 	 */
-	public AddAxioms(Term[] axioms) {
-		if (axioms == null) {
-			m_axioms = new Term[0];
-		} else {
-			m_axioms = axioms;
-		}
+	public abstract void process(LassoBuilder lasso_builder) throws TermException;
+	
+	/**
+	 * @return a description of the preprocessing
+	 */
+	public abstract String getDescription();
+	
+	/**
+	 * Check if the processing was sound.
+	 * 
+	 * @param script the script
+	 * @param oldTF the old TransFormulaLR
+	 * @param newTF the new TransFormulaLR (after processing
+	 * @return whether the result is ok
+	 */
+	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
+			TransFormulaLR newTF) {
+		return true; // check nothing
 	}
 	
-	@Override
-	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
-		Term formula = tf.getFormula();
-		Term axioms = Util.and(script, m_axioms);
-		formula = Util.and(script, formula, axioms);
-		tf.setFormula(formula);
-		return tf;
-	}
-	
-	@Override
-	public String getDescription() {
-		return "Add axioms to the transition";
+	public String toString() {
+		return this.getDescription();
 	}
 }

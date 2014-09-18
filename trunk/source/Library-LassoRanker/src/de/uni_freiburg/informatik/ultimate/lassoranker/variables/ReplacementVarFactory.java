@@ -29,7 +29,10 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 
 /**
  * Factory for constructing ReplacementVars ensures that for each defining
@@ -38,20 +41,45 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  */
 public class ReplacementVarFactory {
-	private final Map<Term, ReplacementVar> m_Mapping = 
-			new HashMap<Term, ReplacementVar>();
 	
+	private final VariableManager m_VariableManager;
+	private final Map<Term, ReplacementVar> m_RepVarMapping = 
+			new HashMap<Term, ReplacementVar>();
+	private final Map<String, TermVariable> m_AuxVarMapping = 
+			new HashMap<String, TermVariable>();
+
+	public ReplacementVarFactory(VariableManager variableManager) {
+		super();
+		m_VariableManager = variableManager;
+	}
+
 	/**
 	 * Get the ReplacementVar that is used as a replacement for the Term
 	 * definition. Construct this ReplacementVar if it does not exist yet.
 	 */
 	public ReplacementVar getOrConstuctReplacementVar(Term definition) {
-		ReplacementVar repVar = m_Mapping.get(definition);
+		ReplacementVar repVar = m_RepVarMapping.get(definition);
 		if (repVar == null) {
 			repVar = new ReplacementVar(definition.toString(), definition);
-			m_Mapping.put(definition, repVar);
+			m_RepVarMapping.put(definition, repVar);
 		}
 		return repVar;
+	}
+	
+	/**
+	 * Construct and return a unique TermVariable with the given name.
+	 */
+	public TermVariable getOrConstructAuxVar(String name, Sort sort) {
+		TermVariable auxVar = m_AuxVarMapping.get(name);
+		if (auxVar == null) {
+			auxVar = m_VariableManager.constructFreshTermVariable(name, sort);
+			m_AuxVarMapping.put(name, auxVar);
+		} else {
+			if (sort != auxVar.getSort()) {
+				throw new AssertionError("cannot construct auxVars with same name and different sort");
+			}
+		}
+		return auxVar;
 	}
 
 }

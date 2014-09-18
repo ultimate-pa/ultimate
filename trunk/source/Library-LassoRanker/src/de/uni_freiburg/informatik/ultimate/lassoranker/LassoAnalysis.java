@@ -38,15 +38,14 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.LassoTerminationAnalysisBenchmarks;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.AddAxioms;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.DNF;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPreProcessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.MatchInVars;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.PreProcessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RemoveNegation;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArrays;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteBooleans;
@@ -55,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteEqua
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteIte;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteStrictInequalities;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteTrueFalse;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.StemAndLoopPreProcessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgumentSynthesizer;
@@ -231,9 +231,8 @@ public class LassoAnalysis {
 		LassoBuilder lassoBuilder = new LassoBuilder(m_old_script, m_Boogie2SMT,
 				m_stem_transition, m_loop_transition);
 		assert lassoBuilder.isSane();
-		
 		// Apply preprocessors
-		for (PreProcessor preprocessor : this.getPreProcessors(
+		for (LassoPreProcessor preprocessor : this.getPreProcessors(lassoBuilder,
 				m_preferences.overapproximateArrayIndexConnection)) {
 			mLogger.debug(preprocessor.getDescription());
 			preprocessor.process(lassoBuilder);
@@ -259,14 +258,15 @@ public class LassoAnalysis {
 	}
 	
 	/**
+	 * @param lassoBuilder 
 	 * @return an array of all preprocessors that should be called before
 	 *         termination analysis
 	 */
-	protected PreProcessor[] getPreProcessors(
-			boolean overapproximateArrayIndexConnection) {
-		return new PreProcessor[] {
-				new MatchInVars(),
-				new AddAxioms(m_axioms),
+	protected LassoPreProcessor[] getPreProcessors(
+			LassoBuilder lassoBuilder, boolean overapproximateArrayIndexConnection) {
+		return new LassoPreProcessor[] {
+				new StemAndLoopPreProcessor(new MatchInVars(lassoBuilder.getReplacementVarFactory())),
+				new StemAndLoopPreProcessor(new AddAxioms(m_axioms)),
 				new LassoPartitioneer(mServices),
 				new RewriteArrays(
 						m_ArrayIndexSupportingInvariants,
@@ -275,14 +275,14 @@ public class LassoAnalysis {
 						m_loop_transition,
 						mServices
 				),
-				new RewriteDivision(),
-				new RewriteBooleans(),
-				new RewriteIte(),
-				new RewriteTrueFalse(),
-				new RewriteEquality(),
-				new DNF(mServices),
-				new RemoveNegation(),
-				new RewriteStrictInequalities()
+				new StemAndLoopPreProcessor(new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
+				new StemAndLoopPreProcessor(new RewriteBooleans(lassoBuilder.getReplacementVarFactory(), lassoBuilder.getScript())),
+				new StemAndLoopPreProcessor(new RewriteIte()),
+				new StemAndLoopPreProcessor(new RewriteTrueFalse()),
+				new StemAndLoopPreProcessor(new RewriteEquality()),
+				new StemAndLoopPreProcessor(new DNF(mServices)),
+				new StemAndLoopPreProcessor(new RemoveNegation()),
+				new StemAndLoopPreProcessor(new RewriteStrictInequalities()),
 		};
 	}
 	

@@ -198,7 +198,7 @@ public class SingleUpdateNormalFormTransformer {
 	private TermVariable constructAuxiliaryVariable(Term oldArray) {
 		String name = SmtUtils.removeSmtQuoteCharacters(oldArray.toString() + s_AuxArray); 
 		TermVariable auxArray = 
-				m_lassoBuilder.getNewTermVariable(name, oldArray.getSort());
+				m_lassoBuilder.getReplacementVarFactory().getOrConstructAuxVar(name, oldArray.getSort());
 		return auxArray;
 	}
 

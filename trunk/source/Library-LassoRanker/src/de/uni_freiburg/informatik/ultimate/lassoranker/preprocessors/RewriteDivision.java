@@ -33,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -73,6 +74,11 @@ public class RewriteDivision extends TransformerPreProcessor {
 	private final Map<TermVariable, Term> m_auxVars;
 	
 	/**
+	 * Factory for construction of auxVars.
+	 */
+	private final ReplacementVarFactory m_VarFactory;
+	
+	/**
 	 * Terms for the auxiliary variables for the formula.
 	 * These terms will be set in conjunction with the whole formula.
 	 */
@@ -93,8 +99,9 @@ public class RewriteDivision extends TransformerPreProcessor {
 	/**
 	 * Constructor
 	 */
-	public RewriteDivision() {
+	public RewriteDivision(ReplacementVarFactory varFactory) {
 		super();
+		m_VarFactory = varFactory;
 		m_auxVars = new LinkedHashMap<TermVariable, Term>();
 		m_auxTerms = new ArrayList<Term>();
 	}
@@ -105,14 +112,13 @@ public class RewriteDivision extends TransformerPreProcessor {
 	}
 	
 	@Override
-	protected TransFormulaLR processTransition(Script script, TransFormulaLR tf,
-			boolean stem) throws TermException {
+	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		// Clear the data structures
 		m_auxVars.clear();
 		m_auxTerms.clear();
 		
 		// Call parent that applies the TermTransformer
-		TransFormulaLR new_tf = super.processTransition(script, tf, stem);
+		TransFormulaLR new_tf = super.process(script, tf);
 		
 		// Add auxTerms to the transition
 		Term formula = new_tf.getFormula();
@@ -189,7 +195,7 @@ public class RewriteDivision extends TransformerPreProcessor {
 				assert(appTerm.getParameters().length == 2);
 				Term dividend = newArgs[0];
 				Term divisor = newArgs[1];
-				TermVariable quotientAuxVar = m_lassoBuilder.getNewTermVariable(
+				TermVariable quotientAuxVar = m_VarFactory.getOrConstructAuxVar(
 						s_DivAuxPrefix, appTerm.getSort());
 				m_auxVars.put(quotientAuxVar, appTerm);
 				Term divAuxTerm = computeDivAuxTerms(
@@ -201,12 +207,12 @@ public class RewriteDivision extends TransformerPreProcessor {
 				assert(appTerm.getParameters().length == 2);
 				Term dividend = newArgs[0];
 				Term divisor = newArgs[1];
-				TermVariable quotientAuxVar = m_lassoBuilder.getNewTermVariable(
+				TermVariable quotientAuxVar = m_VarFactory.getOrConstructAuxVar(
 						s_DivAuxPrefix, appTerm.getSort());
 				m_auxVars.put(quotientAuxVar,
 						m_Script.term("div", dividend, divisor));
 				TermVariable remainderAuxVar =
-						m_lassoBuilder.getNewTermVariable(
+						m_VarFactory.getOrConstructAuxVar(
 								s_ModAuxPrefix, appTerm.getSort());
 				m_auxVars.put(remainderAuxVar, appTerm);
 				Term modAuxTerms = computeModAuxTerms(dividend,

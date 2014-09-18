@@ -41,7 +41,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.PreProcessor;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPreProcessor;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.util.UnionFind;
  * @author Matthias Heizmann
  *
  */
-public class LassoPartitioneer extends PreProcessor {
+public class LassoPartitioneer extends LassoPreProcessor {
 	private final IUltimateServiceProvider m_Services;
 	private final Map<TermVariable, TransFormulaLR> m_OriginalTF = new HashMap<TermVariable, TransFormulaLR>();
 	private HashRelation<TermVariable, Term> m_TermVariable2StemConjuncts;
@@ -277,13 +277,5 @@ public class LassoPartitioneer extends PreProcessor {
 	public String getDescription() {
 		return this.getClass().getSimpleName();
 	}
-
-	@Override
-	protected TransFormulaLR processTransition(Script script,
-			TransFormulaLR tf, boolean stem) throws TermException {
-		throw new UnsupportedOperationException();
-	}
-
-
 
 }

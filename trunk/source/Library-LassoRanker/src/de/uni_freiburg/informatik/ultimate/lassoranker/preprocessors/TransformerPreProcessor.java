@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
  * 
  * @author Jan Leike
  */
-public abstract class TransformerPreProcessor extends PreProcessor {
+public abstract class TransformerPreProcessor extends TransitionPreProcessor {
 	
 	/**
 	 * Create a TermTransformer instance that will be applied to the stem and
@@ -51,8 +51,7 @@ public abstract class TransformerPreProcessor extends PreProcessor {
 	protected abstract TermTransformer getTransformer(Script script);
 	
 	@Override
-	protected TransFormulaLR processTransition(Script script, TransFormulaLR tf,
-			boolean stem) throws TermException {
+	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		TermTransformer transformer = this.getTransformer(script);
 		TransFormulaLR new_tf = new TransFormulaLR(tf);
 		new_tf.setFormula(transformer.transform(tf.getFormula()));
