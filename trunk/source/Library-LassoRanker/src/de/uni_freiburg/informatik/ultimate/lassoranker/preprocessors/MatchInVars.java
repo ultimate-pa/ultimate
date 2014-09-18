@@ -30,11 +30,11 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 
 
 /**
@@ -50,11 +50,11 @@ public class MatchInVars extends TransitionPreProcessor {
 	/**
 	 * Factory for construction of auxVars.
 	 */
-	private final ReplacementVarFactory m_VarFactory;
+	private final VariableManager m_VariableManager;
 	
-	public MatchInVars(ReplacementVarFactory varFactory) {
+	public MatchInVars(VariableManager variableManager) {
 		super();
-		m_VarFactory = varFactory;
+		m_VariableManager = variableManager;
 	}
 
 	@Override
@@ -66,7 +66,7 @@ public class MatchInVars extends TransitionPreProcessor {
 	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		for (Map.Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
 			if (!tf.getInVars().containsKey(entry.getKey())) {
-				TermVariable inVar = m_VarFactory.getOrConstructAuxVar(
+				TermVariable inVar = m_VariableManager.constructFreshTermVariable(
 						entry.getKey().getGloballyUniqueId(),
 						entry.getValue().getSort()
 				);
