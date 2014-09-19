@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player0Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player1Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
+import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 
@@ -93,7 +94,10 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
         // Calculate v0 and edges [paper ref 10, 11, 12]
         for (STATE q0 : ba.getStates()) {
             for (STATE q1 : ba.getStates()) {
-                for (LETTER s : ba.lettersInternalIncoming(q0)) {
+            	Set<LETTER> relevantLetters = new HashSet<LETTER>();
+            	relevantLetters.addAll(ba.lettersInternalIncoming(q0));
+            	relevantLetters.addAll(ba.lettersInternal(q1));
+                for (LETTER s : relevantLetters) {
                     Player0Vertex<LETTER,STATE> v0e = new Player0Vertex<LETTER, STATE>(
                             (byte) 0, false, q0, q1, s);
                     v0.add(v0e);
@@ -149,14 +153,25 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
     	for (STATE state : m_Operand.getStates()) {
     		uf.makeEquivalenceClass(state);
     	}
+    	HashRelation<STATE, STATE> similarStates = new HashRelation<STATE, STATE>();
         for (Player1Vertex<LETTER,STATE> v : v1) {
             // all the states we need are in V1...
             if (v.getPM(null,infinity) < infinity) {
             	STATE state1 = v.getQ0();
             	STATE state2 = v.getQ1();
-            	uf.union(state1, state2);
+            	similarStates.addPair(state1, state2);
+            	
             }
         }
+        // merge if bisimilar
+        for (STATE state1 : similarStates.getDomain()) {
+        	for (STATE state2 : similarStates.getImage(state1)) {
+        		if (similarStates.containsPair(state2, state1)) {
+        			uf.union(state1, state2);	
+        		}
+        	}
+        }
+        
 
         if (!NestedWordAutomata.getMonitor().continueProcessing()) {
             s_Logger.debug("Stopped in generateBuchiAutomaton/table filled");
