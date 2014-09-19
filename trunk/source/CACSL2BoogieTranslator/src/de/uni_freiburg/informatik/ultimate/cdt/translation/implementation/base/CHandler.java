@@ -3,6 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
+import java.math.BigInteger;
 import java.text.ParseException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -80,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.PostProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizeConstants;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -1958,9 +1960,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTCastExpression node) {
-		ResultExpression expr = (ResultExpression) main.dispatch(node.getOperand());
-		ILocation loc = new CACSLLocation(node);
-		expr = expr.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		ResultExpression expr = (ResultExpression) main.dispatch(node.getOperand()); ILocation loc = new CACSLLocation(node); expr = expr.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 
 		// TODO: check validity of cast?
 
@@ -1972,6 +1972,13 @@ public class CHandler implements ICHandler {
 		CType newCType = declResult.getDeclarations().get(0).getType();
 		mCurrentDeclaredTypes.pop();
 
+//		BigInteger soPtrType = new BigInteger(new Integer(memoryHandler.typeSizeConstants.sizeOfPointerType).toString());
+//		BigInteger eight = new BigInteger(new Integer(8).toString());
+//		BigInteger soPtrTypeInBits = soPtrType.multiply(eight);
+		BigInteger maxPtrValue = new BigInteger("2").pow(memoryHandler.typeSizeConstants.sizeOfPointerType * 8);
+		IntegerLiteral max_Pointer = new IntegerLiteral(loc, maxPtrValue.toString());
+//		IntegerLiteral max_Pointer = new IntegerLiteral(loc, new BigInteger(val).toString());
+//				new Long(1L << memoryHandler.typeSizeConstants.sizeOfPointerType * 8).toString()); //--> overflow
 		// cast pointer -> integer/other pointer
 		CType underlyingType = expr.lrVal.cType.getUnderlyingType();
 		if (underlyingType instanceof CPointer) {
@@ -1979,7 +1986,18 @@ public class CHandler implements ICHandler {
 			if (newCType instanceof CPrimitive &&
 			// ((CPrimitive)newCType).getType() == PRIMITIVE.INT) {
 					((CPrimitive) newCType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				Expression e = MemoryHandler.getPointerOffset(expr.lrVal.getValue(), loc);
+				Expression e = null;
+				if (memoryHandler.useConstantTypeSizes) {
+					e = createArithmeticExpression(IASTBinaryExpression.op_plus,
+							createArithmeticExpression(IASTBinaryExpression.op_multiply, 
+									MemoryHandler.getPointerBaseAddress(expr.lrVal.getValue(),  loc), 
+									max_Pointer, 
+									loc),
+							MemoryHandler.getPointerOffset(expr.lrVal.getValue(), loc), 
+							loc);
+				} else {
+					e = MemoryHandler.getPointerOffset(expr.lrVal.getValue(), loc);
+				}
 				expr.lrVal = new RValue(e, newCType);
 			}
 			// cast from pointer to pointer is ignored -- alex: now no more --
@@ -1993,8 +2011,22 @@ public class CHandler implements ICHandler {
 			CPrimitive cprim = (CPrimitive) underlyingType;
 			// if (cprim.getType() == PRIMITIVE.INT &&
 			if (cprim.getGeneralType() == GENERALPRIMITIVE.INTTYPE && newCType instanceof CPointer) {
-				Expression e = MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc, "0"),
+				Expression e = null;
+				if (memoryHandler.useConstantTypeSizes) {
+					e = MemoryHandler.constructPointerFromBaseAndOffset(
+							createArithmeticExpression(IASTBinaryExpression.op_divide,
+									expr.lrVal.getValue(),
+									max_Pointer, 
+									loc),
+							createArithmeticExpression(IASTBinaryExpression.op_modulo,
+									expr.lrVal.getValue(),
+									max_Pointer, 
+									loc),
+							loc);
+				} else {
+					e = MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc, "0"),
 						expr.lrVal.getValue(), loc);
+				}
 				expr.lrVal = new RValue(e, newCType);
 			}
 		}
@@ -2493,45 +2525,57 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_minus:
 			operator = Operator.ARITHMINUS;
 			if (bothAreIntegerLiterals) {
-				constantResult = new Long(
-						(Long.parseLong(((IntegerLiteral) left).getValue()) - Long.parseLong(((IntegerLiteral) right)
-								.getValue()))).toString();
+				constantResult = 
+						new BigInteger(((IntegerLiteral) left).getValue())
+							.subtract(new BigInteger(((IntegerLiteral) right).getValue())).toString();
 			}
 			break;
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_multiply:
 			operator = Operator.ARITHMUL;
 			if (bothAreIntegerLiterals) {
-				constantResult = new Long(
-						(Long.parseLong(((IntegerLiteral) left).getValue()) * Long.parseLong(((IntegerLiteral) right)
-								.getValue()))).toString();
+				constantResult = 
+						new BigInteger(((IntegerLiteral) left).getValue())
+							.multiply(new BigInteger(((IntegerLiteral) right).getValue())).toString();
+//				constantResult = new Long(
+//						(Long.parseLong(((IntegerLiteral) left).getValue()) * Long.parseLong(((IntegerLiteral) right)
+//								.getValue()))).toString();
 			}
 			break;
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_divide:
 			operator = Operator.ARITHDIV;
 			if (bothAreIntegerLiterals) {
-				constantResult = new Long(
-						(Long.parseLong(((IntegerLiteral) left).getValue()) / Long.parseLong(((IntegerLiteral) right)
-								.getValue()))).toString();
+				constantResult = 
+						new BigInteger(((IntegerLiteral) left).getValue())
+							.divide(new BigInteger(((IntegerLiteral) right).getValue())).toString();
+//				constantResult = new Long(
+//						(Long.parseLong(((IntegerLiteral) left).getValue()) / Long.parseLong(((IntegerLiteral) right)
+//								.getValue()))).toString();
 			}
 			break;
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_modulo:
 			operator = Operator.ARITHMOD;
 			if (bothAreIntegerLiterals) {
-				constantResult = new Integer(
-						(Integer.parseInt(((IntegerLiteral) left).getValue()) % Integer
-								.parseInt(((IntegerLiteral) right).getValue()))).toString();
+				constantResult = 
+						new BigInteger(((IntegerLiteral) left).getValue())
+							.mod(new BigInteger(((IntegerLiteral) right).getValue())).toString();
+//				constantResult = new Long(
+//						(Long.parseLong(((IntegerLiteral) left).getValue()) % Long
+//								.parseLong(((IntegerLiteral) right).getValue()))).toString();
 			}
 			break;
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_plus:
 			operator = Operator.ARITHPLUS;
 			if (bothAreIntegerLiterals) {
-				constantResult = new Integer(
-						(Integer.parseInt(((IntegerLiteral) left).getValue()) + Integer
-								.parseInt(((IntegerLiteral) right).getValue()))).toString();
+				constantResult = 
+						new BigInteger(((IntegerLiteral) left).getValue())
+							.add(new BigInteger(((IntegerLiteral) right).getValue())).toString();
+//				constantResult = new Long(
+//						(Long.parseLong(((IntegerLiteral) left).getValue()) + Long
+//								.parseLong(((IntegerLiteral) right).getValue()))).toString();
 			}
 			break;
 		default:
@@ -3069,5 +3113,41 @@ public class CHandler implements ICHandler {
 		}
 
 		return rVal;
+	}
+
+	@Override
+	public BigInteger computeConstantValue(Expression value) {
+		if (value instanceof IntegerLiteral) {
+			return new BigInteger(((IntegerLiteral) value).getValue());
+		} else if (value instanceof UnaryExpression) {
+			switch (((UnaryExpression) value).getOperator()) {
+			case ARITHNEGATIVE:
+				return computeConstantValue(((UnaryExpression) value).getExpr()).negate();
+			default:
+				throw new UnsupportedOperationException("could not compute constant value");
+			}
+		} else if (value instanceof BinaryExpression) {
+			switch (((BinaryExpression) value).getOperator()) {
+			case ARITHDIV:
+				return computeConstantValue(((BinaryExpression) value).getLeft())
+						.divide(computeConstantValue(((BinaryExpression) value).getRight()));
+			case ARITHMINUS:
+				return computeConstantValue(((BinaryExpression) value).getLeft())
+						.subtract(computeConstantValue(((BinaryExpression) value).getRight()));
+			case ARITHMOD:
+				return computeConstantValue(((BinaryExpression) value).getLeft())
+						.mod(computeConstantValue(((BinaryExpression) value).getRight()));
+			case ARITHMUL:
+				return computeConstantValue(((BinaryExpression) value).getLeft())
+						.multiply(computeConstantValue(((BinaryExpression) value).getRight()));
+			case ARITHPLUS:
+				return computeConstantValue(((BinaryExpression) value).getLeft())
+						.add(computeConstantValue(((BinaryExpression) value).getRight()));
+			default:
+				throw new UnsupportedOperationException("could not compute constant value");
+			}
+		} else {
+				throw new UnsupportedOperationException("could not compute constant value");
+		}
 	}
 }

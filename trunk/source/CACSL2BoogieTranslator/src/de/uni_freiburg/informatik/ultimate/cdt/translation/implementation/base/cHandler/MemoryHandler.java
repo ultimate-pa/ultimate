@@ -148,8 +148,8 @@ public class MemoryHandler {
 	
 	
 	//constants for the sizes of the base types
-	private boolean useConstantTypeSizes = true;
-	private TypeSizeConstants typeSizeConstants;
+	public boolean useConstantTypeSizes = true; //using this in CHandler, too (for pointer/int cast)
+	public TypeSizeConstants typeSizeConstants;
 	/**
      * Constructor.
      * @param checkPointerValidity 

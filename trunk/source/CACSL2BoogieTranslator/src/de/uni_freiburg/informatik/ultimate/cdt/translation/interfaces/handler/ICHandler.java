@@ -3,6 +3,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler;
 
+import java.math.BigInteger;
+
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -53,6 +55,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 
 /**
  * @author Markus Lindenmann
@@ -562,5 +566,11 @@ public interface ICHandler extends IHandler {
     public void endScope();
 
 	boolean isHeapVar(String boogieId);
+
+	/**
+	 * Takes an arithmetic expression that has integer value and can be computed at compile-time, i.e., that
+	 * contains no variables, and returns an IntegerLiteral containing the result.
+	 */
+	public BigInteger computeConstantValue(Expression value);
 
 }

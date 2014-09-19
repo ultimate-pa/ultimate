@@ -206,7 +206,8 @@ public class TypeHandler implements ITypeHandler {
             fNames[i] = e.getName().toString();
 //          FIXME: assuming there may only be integerliterals in c at this place -> or is something else allowed here??
             if (e.getValue() != null)
-            	fValues[i] = (IntegerLiteral) ((ResultExpression) main.dispatch(e.getValue())).lrVal.getValue(); 
+            	fValues[i] = (IntegerLiteral) new IntegerLiteral(loc, main.cHandler.computeConstantValue(
+            			((ResultExpression) main.dispatch(e.getValue())).lrVal.getValue()).toString()); 
             else
             	fValues[i] = null;
         }
