@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -871,6 +872,18 @@ public class FunctionHandler {
 			pRex.stmt.add(memoryHandler.getFreeCall(main, this, pRex.lrVal, loc));
 			return pRex;
 		}
+		
+//		if (methodName.equals("printf")) { //this is already done in SVComp mode..
+//			ArrayList<Declaration> decl = new ArrayList<>();
+//			LinkedHashMap<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+//			String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
+//			VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, new PrimitiveType(loc, SFO.INT), loc);
+//			decl.add(tVarDecl);
+//			auxVars.put(tVarDecl, loc);
+//			RValue returnValue = new RValue(new IdentifierExpression(loc, tmpName), new CPrimitive(PRIMITIVE.INT));
+//			assert (main.isAuxVarMapcomplete(decl, auxVars));
+//			return new ResultExpression(new ArrayList<Statement>(), returnValue, decl, auxVars);
+//		}
 
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
@@ -894,7 +907,13 @@ public class FunctionHandler {
 			for (int i = 0; i < noParameterWOVarArgs; i++) {
 				inParams[i] = node.getArguments()[i];
 			}
+			// .. and if it is really called with more that its normal parameter number, we throw an exception, because we may be unsound
+			// (the code before this does not make so much sense, but maybe some day we want that solution again..
+			if (inParams.length < node.getArguments().length)
+				throw new UnsupportedSyntaxException(loc, "we cannot deal with varargs right now");
 		}
+	
+		
 
 		if (procedures.containsKey(methodName)
 				&& inParams.length != procedures.get(methodName)

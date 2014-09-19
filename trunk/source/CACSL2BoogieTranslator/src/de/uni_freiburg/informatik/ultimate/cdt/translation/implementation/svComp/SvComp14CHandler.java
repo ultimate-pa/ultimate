@@ -190,6 +190,11 @@ public class SvComp14CHandler extends CHandler {
 			assert (main.isAuxVarMapcomplete(decl, auxVars));
 			return new ResultExpression(stmt, returnValue, decl, auxVars, overappr);
 		}
+//		this is a gcc-builtin function that helps with branch predication, it always returns the first argument.
+		if (methodName.equals("__builtin_expect")) { 
+			return main.dispatch(node.getArguments()[0]);
+		}
+
 		return super.visit(main, node);
 	}
 
