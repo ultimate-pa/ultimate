@@ -1,4 +1,5 @@
 // Date: 2014-09-12
+// Author: heizmann@informatik.uni-freiburg.de and Christian Schilling
 
 assert(!isEmpty(nwa));
 
