@@ -147,11 +147,14 @@ public final class ISOIEC9899TC3 {
 				// this case is awful! do not want to support it!
 				// we would have to split the number, parse the values
 				// separately and then merge them to a new base 10 float
-				String msg = "hexadecimal float constants are not yet supported!";
-				dispatch.unsupportedSyntax(loc, msg);
-				return value;
+//				String msg = "hexadecimal float constants are not yet supported!";
+//				dispatch.unsupportedSyntax(loc, msg);
+				//alex: .. maybe not that bad as java has almost the same format
+				//FIXME: --> is removing the + in front of the exponent enough??
+				return Double.valueOf(value.replaceAll("\\+", "")).toString();
 			} // else
-			Float.parseFloat(value); // check if correct!
+//			Float.parseFloat(value); // check if correct!
+			Double.valueOf(value); //using double for good measure..
 			return value;
 		} catch (NumberFormatException nfe) {
 			String msg = "Unable to translate float!";
