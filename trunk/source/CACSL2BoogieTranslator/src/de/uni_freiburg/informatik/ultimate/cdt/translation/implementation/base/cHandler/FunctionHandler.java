@@ -873,18 +873,6 @@ public class FunctionHandler {
 			return pRex;
 		}
 		
-//		if (methodName.equals("printf")) { //this is already done in SVComp mode..
-//			ArrayList<Declaration> decl = new ArrayList<>();
-//			LinkedHashMap<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-//			String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
-//			VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, new PrimitiveType(loc, SFO.INT), loc);
-//			decl.add(tVarDecl);
-//			auxVars.put(tVarDecl, loc);
-//			RValue returnValue = new RValue(new IdentifierExpression(loc, tmpName), new CPrimitive(PRIMITIVE.INT));
-//			assert (main.isAuxVarMapcomplete(decl, auxVars));
-//			return new ResultExpression(new ArrayList<Statement>(), returnValue, decl, auxVars);
-//		}
-
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = 

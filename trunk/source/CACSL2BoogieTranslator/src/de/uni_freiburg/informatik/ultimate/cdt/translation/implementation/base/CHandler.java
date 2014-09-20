@@ -323,7 +323,7 @@ public class CHandler implements ICHandler {
 	
 	@Override
 	public Result visit(Dispatcher main, IASTASMDeclaration node) {
-		//FIXME: workaround for now: ignore inline assembler instructions
+		//FIXME: workaround for now: ignore inline assembler instructions --> or move this to svCompCHander??
 		return new ResultSkip();
 	}
 
