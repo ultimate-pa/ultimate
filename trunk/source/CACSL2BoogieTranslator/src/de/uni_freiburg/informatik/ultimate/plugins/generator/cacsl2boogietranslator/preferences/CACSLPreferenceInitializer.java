@@ -50,7 +50,10 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						LABEL_USE_EXPLICIT_TYPESIZES, true,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_BOOL, 1,
+						LABEL_EXPLICIT_TYPESIZE_VOID, 1,
+						PreferenceType.Integer) ,
+				new UltimatePreferenceItem<Integer>(
+						LABEL_EXPLICIT_TYPESIZE_BOOL, 4,
 						PreferenceType.Integer) ,
 				new UltimatePreferenceItem<Integer>(
 						LABEL_EXPLICIT_TYPESIZE_CHAR, 1,
@@ -118,6 +121,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.Integer),
    				new UltimatePreferenceItem<Integer>(
 						LABEL_EXPLICIT_TYPESIZE_ENUM, 4,
+						PreferenceType.Integer),
+   				new UltimatePreferenceItem<Integer>(
+						LABEL_EXPLICIT_TYPESIZE_DEFAULT, 8,
 						PreferenceType.Integer)
     };
 	}
@@ -146,6 +152,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY = 
 			"If two pointers are subtracted or compared they have the same base address";
 	public static final String LABEL_USE_EXPLICIT_TYPESIZES = "Use the constants given below as storage sizes for the correponding types";
+	public static final String LABEL_EXPLICIT_TYPESIZE_VOID = "Size of void (in bytes)";
 	public static final String LABEL_EXPLICIT_TYPESIZE_BOOL = "Size of bool (in bytes)";
 	public static final String LABEL_EXPLICIT_TYPESIZE_CHAR = "Size of char (in bytes)";
 	public static final String LABEL_EXPLICIT_TYPESIZE_SHORT = "Size of short (in bytes)";
@@ -168,5 +175,6 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_EXPLICIT_TYPESIZE_COMPLEXDOUBLE = "Size of complex double (in bytes)";
 	public static final String LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE = "Size of long double (in bytes)";
 	public static final String LABEL_EXPLICIT_TYPESIZE_COMPLEXLONGDOUBLE = "Size of complex long double (in bytes)";
-	public static final String LABEL_EXPLICIT_TYPESIZE_ENUM = "Size of complex long double (in bytes)";
+	public static final String LABEL_EXPLICIT_TYPESIZE_ENUM = "Size of an enum (in bytes)";
+	public static final String LABEL_EXPLICIT_TYPESIZE_DEFAULT = "Size of any base type not listed here (in bytes)";
 }

@@ -1029,9 +1029,7 @@ public class CHandler implements ICHandler {
 				annots.put(Overapprox.getIdentifier(), overapprItem);
 			}
 			stmt.add(assignStmt);
-			RValue tmpRValue = new RValue(new IdentifierExpression(loc, /*
-																		 * tmpIType,
-																		 */tmpName), o.lrVal.cType);
+			RValue tmpRValue = new RValue(new IdentifierExpression(loc, tmpName), o.lrVal.cType);
 			int op;
 			if (node.getOperator() == IASTUnaryExpression.op_postFixIncr)
 				op = IASTBinaryExpression.op_plus;
@@ -3078,7 +3076,6 @@ public class CHandler implements ICHandler {
 		if (underlyingType instanceof CPointer) {
 			// cast from pointer to integer
 			if (expectedType instanceof CPrimitive &&
-			// ((CPrimitive)newCType).getType() == PRIMITIVE.INT) {
 					((CPrimitive) expectedType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 				Expression e = null;
 				if (memoryHandler.useConstantTypeSizes) {
@@ -3095,7 +3092,8 @@ public class CHandler implements ICHandler {
 				rVal = new RValue(e, expectedType);
 			}
 			// type is changed
-			else if (!(expectedType.getUnderlyingType() instanceof CPointer)) {
+//			else if (!(expectedType.getUnderlyingType() instanceof CPointer)) { //why did I make this distinction??
+			else {
 				rVal.cType = expectedType;
 			}
 		}

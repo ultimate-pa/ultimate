@@ -8,6 +8,7 @@ public class TypeSizeConstants {
 	public int sizeOfPointerType;
 	public int sizeOfFloatType;
 	public int sizeOfCharType;
+	public int sizeOfVoidType;
 	public int sizeOfBoolType;
 	public int sizeOfShortType;
 	public int sizeOfLongType;
@@ -30,6 +31,8 @@ public class TypeSizeConstants {
 	public int defaultTypeSize;
 
 	public TypeSizeConstants(UltimatePreferenceStore ups) {
+		this.sizeOfVoidType = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
 		this.sizeOfBoolType = 
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
 		this.sizeOfCharType = 
@@ -76,6 +79,8 @@ public class TypeSizeConstants {
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_COMPLEXLONGDOUBLE);
 		this.sizeOfEnumType = 
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_ENUM);
+		this.sizeOfEnumType = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_DEFAULT);
 
 	}
 }

@@ -895,6 +895,9 @@ public class MemoryHandler {
 			case CHAR:
 				size = typeSizeConstants.sizeOfCharType;
 				break;
+			case VOID:
+				size = typeSizeConstants.sizeOfVoidType;
+				break;
 			case BOOL:
 				size = typeSizeConstants.sizeOfBoolType;
 				break;
