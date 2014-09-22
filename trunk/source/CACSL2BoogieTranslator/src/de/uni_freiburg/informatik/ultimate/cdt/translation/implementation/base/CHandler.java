@@ -1231,51 +1231,74 @@ public class CHandler implements ICHandler {
 			overappr.addAll(rrToInt.overappr);
 
 			RValue rval = null;
-			// we have a pointer comparison
-			if (lType instanceof CPointer || rType instanceof CPointer) {
-				// both of the two following ifs will lead to an assertion
-				// violation if the pointer compared to
-				// is something different from NULL (as we construct Pointers
-				// with base 0) --> but this is ok, as
-				// it would be undefined behaviour
-				// except if we converted a pointer into an allocated region to
-				// int, this is not supported yet (TODO)
-				if (!(lType instanceof CPointer)) {
-					rlToInt.lrVal = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc,
-							"0"), rlToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
+			if (node.getOperator() == IASTBinaryExpression.op_equals 
+					|| node.getOperator() == IASTBinaryExpression.op_notequals) {
+				//!= and == are treated differently from the inequality operators
+				// --> behaviour is never undefined for instance..
+				
+				// implicit casts
+				if (lType instanceof CPointer || rType instanceof CPointer) {
+					if (!(lType instanceof CPointer)) {
+						rlToInt.lrVal = castToType(loc, (RValue) rlToInt.lrVal, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+//								new RValue(MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc,
+//								"0"), rlToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
+					}
+					if (!(rType instanceof CPointer)) {
+						rrToInt.lrVal = castToType(loc, (RValue) rrToInt.lrVal, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+//						new RValue(MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc,
+//								"0"), rrToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
+					}
 				}
-				if (!(rType instanceof CPointer)) {
-					rrToInt.lrVal = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc,
-							"0"), rrToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
-				}
-				// assert ((CPointer)
-				// rlToInt.lrVal.cType).pointsToType.equals(((CPointer)
-				// rrToInt.lrVal.cType).pointsToType); //FIXME macht dieses
-				// assert Sinn?
-				// assert (in Boogie) that the base value of the pointers
-				// matches
-				if (this.memoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSERTandASSUME) {
-					Statement assertStm = new AssertStatement(loc, new BinaryExpression(loc,
-							BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
-									SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
-									SFO.POINTER_BASE)));
-					stmt.add(assertStm);
-					Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
-					chk.addToNodeAnnot(assertStm);
-				} else if (this.memoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSUME) {
-					Statement assumeStm = new AssumeStatement(loc, new BinaryExpression(loc,
-							BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
-									SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
-									SFO.POINTER_BASE)));
-					stmt.add(assumeStm);
-				}
-
-				rval = new RValue(new BinaryExpression(loc, op, new StructAccessExpression(loc,
-						rlToInt.lrVal.getValue(), SFO.POINTER_OFFSET), new StructAccessExpression(loc,
-						rrToInt.lrVal.getValue(), SFO.POINTER_OFFSET)), new CPrimitive(PRIMITIVE.INT));
-			} else {
 				rval = new RValue(new BinaryExpression(loc, op, rlToInt.lrVal.getValue(), rrToInt.lrVal.getValue()),
 						new CPrimitive(PRIMITIVE.INT));
+			} else {
+				// we have a "relational" pointer comparison
+				if (lType instanceof CPointer || rType instanceof CPointer) {
+					// both of the two following ifs will lead to an assertion
+					// violation if the pointer compared to
+					// is something different from NULL (as we construct Pointers
+					// with base 0) --> but this is ok, as
+					// it would be undefined behaviour
+					// except if we converted a pointer into an allocated region to
+					// int, this is not supported yet (TODO)
+					if (!(lType instanceof CPointer)) {
+						rlToInt.lrVal = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc,
+								"0"), rlToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
+					}
+					if (!(rType instanceof CPointer)) {
+						rrToInt.lrVal = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc,
+								"0"), rrToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
+					}
+					// assert ((CPointer)
+					// rlToInt.lrVal.cType).pointsToType.equals(((CPointer)
+					// rrToInt.lrVal.cType).pointsToType); //FIXME macht dieses
+					// assert Sinn?
+					// assert (in Boogie) that the base value of the pointers
+					// matches
+					if (this.memoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSERTandASSUME) {
+						Statement assertStm = new AssertStatement(loc, new BinaryExpression(loc,
+								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
+										SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
+												SFO.POINTER_BASE)));
+						stmt.add(assertStm);
+						Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
+						chk.addToNodeAnnot(assertStm);
+					} else if (this.memoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSUME) {
+						Statement assumeStm = new AssumeStatement(loc, new BinaryExpression(loc,
+								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
+										SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
+												SFO.POINTER_BASE)));
+						stmt.add(assumeStm);
+					}
+
+					rval = new RValue(new BinaryExpression(loc, op, 
+							new StructAccessExpression(loc, rlToInt.lrVal.getValue(), SFO.POINTER_OFFSET), 
+							new StructAccessExpression(loc, rrToInt.lrVal.getValue(), SFO.POINTER_OFFSET)), 
+							new CPrimitive(PRIMITIVE.INT));
+				} else {
+					rval = new RValue(new BinaryExpression(loc, op, rlToInt.lrVal.getValue(), rrToInt.lrVal.getValue()),
+							new CPrimitive(PRIMITIVE.INT));
+				}
 			}
 			rval.isBoogieBool = true;
 			return new ResultExpression(stmt, rval, decl, auxVars, overappr);
@@ -1971,67 +1994,8 @@ public class CHandler implements ICHandler {
 		assert declResult.getDeclarations().size() == 1;
 		CType newCType = declResult.getDeclarations().get(0).getType();
 		mCurrentDeclaredTypes.pop();
-
-//		BigInteger soPtrType = new BigInteger(new Integer(memoryHandler.typeSizeConstants.sizeOfPointerType).toString());
-//		BigInteger eight = new BigInteger(new Integer(8).toString());
-//		BigInteger soPtrTypeInBits = soPtrType.multiply(eight);
-		BigInteger maxPtrValue = new BigInteger("2").pow(memoryHandler.typeSizeConstants.sizeOfPointerType * 8);
-		IntegerLiteral max_Pointer = new IntegerLiteral(loc, maxPtrValue.toString());
-//		IntegerLiteral max_Pointer = new IntegerLiteral(loc, new BigInteger(val).toString());
-//				new Long(1L << memoryHandler.typeSizeConstants.sizeOfPointerType * 8).toString()); //--> overflow
-		// cast pointer -> integer/other pointer
-		CType underlyingType = expr.lrVal.cType.getUnderlyingType();
-		if (underlyingType instanceof CPointer) {
-			// cast from pointer to integer
-			if (newCType instanceof CPrimitive &&
-			// ((CPrimitive)newCType).getType() == PRIMITIVE.INT) {
-					((CPrimitive) newCType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				Expression e = null;
-				if (memoryHandler.useConstantTypeSizes) {
-					e = createArithmeticExpression(IASTBinaryExpression.op_plus,
-							createArithmeticExpression(IASTBinaryExpression.op_multiply, 
-									MemoryHandler.getPointerBaseAddress(expr.lrVal.getValue(),  loc), 
-									max_Pointer, 
-									loc),
-							MemoryHandler.getPointerOffset(expr.lrVal.getValue(), loc), 
-							loc);
-				} else {
-					e = MemoryHandler.getPointerOffset(expr.lrVal.getValue(), loc);
-				}
-				expr.lrVal = new RValue(e, newCType);
-			}
-			// cast from pointer to pointer is ignored -- alex: now no more --
-			// type is changed
-			else if (!(newCType.getUnderlyingType() instanceof CPointer)) {
-				expr.lrVal.cType = newCType;
-			}
-		}
-		// cast integer -> pointer
-		else if (underlyingType instanceof CPrimitive) {
-			CPrimitive cprim = (CPrimitive) underlyingType;
-			// if (cprim.getType() == PRIMITIVE.INT &&
-			if (cprim.getGeneralType() == GENERALPRIMITIVE.INTTYPE && newCType instanceof CPointer) {
-				Expression e = null;
-				if (memoryHandler.useConstantTypeSizes) {
-					e = MemoryHandler.constructPointerFromBaseAndOffset(
-							createArithmeticExpression(IASTBinaryExpression.op_divide,
-									expr.lrVal.getValue(),
-									max_Pointer, 
-									loc),
-							createArithmeticExpression(IASTBinaryExpression.op_modulo,
-									expr.lrVal.getValue(),
-									max_Pointer, 
-									loc),
-							loc);
-				} else {
-					e = MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc, "0"),
-						expr.lrVal.getValue(), loc);
-				}
-				expr.lrVal = new RValue(e, newCType);
-			}
-		}
-
-		expr.lrVal.cType = newCType;
+		
+		expr.lrVal = castToType(loc, (RValue) expr.lrVal, newCType);
 
 		// String msg = "Ignored cast! At line: "
 		// + node.getFileLocation().getStartingLineNumber();
@@ -3104,13 +3068,70 @@ public class CHandler implements ICHandler {
 		this.memoryHandler.getVariablesToBeFreed().endScope();
 	}
 
-	public static RValue castToType(ILocation loc, RValue rVal, CType expectedType) {
-		if (!rVal.cType.equals(expectedType)) {
-			if (rVal.cType instanceof CPointer && expectedType instanceof CPrimitive
-					&& ((CPrimitive) expectedType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				return new RValue(new StructAccessExpression(loc, rVal.getValue(), SFO.POINTER_OFFSET), expectedType);
+	@Override
+	public RValue castToType(ILocation loc, RValue rVal, CType expectedType) {
+
+		BigInteger maxPtrValue = new BigInteger("2").pow(memoryHandler.typeSizeConstants.sizeOfPointerType * 8);
+		IntegerLiteral max_Pointer = new IntegerLiteral(loc, maxPtrValue.toString());
+		// cast pointer -> integer/other pointer
+		CType underlyingType = rVal.cType.getUnderlyingType();
+		if (underlyingType instanceof CPointer) {
+			// cast from pointer to integer
+			if (expectedType instanceof CPrimitive &&
+			// ((CPrimitive)newCType).getType() == PRIMITIVE.INT) {
+					((CPrimitive) expectedType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+				Expression e = null;
+				if (memoryHandler.useConstantTypeSizes) {
+					e = createArithmeticExpression(IASTBinaryExpression.op_plus,
+							createArithmeticExpression(IASTBinaryExpression.op_multiply, 
+									MemoryHandler.getPointerBaseAddress(rVal.getValue(),  loc), 
+									max_Pointer, 
+									loc),
+							MemoryHandler.getPointerOffset(rVal.getValue(), loc), 
+							loc);
+				} else {
+					e = MemoryHandler.getPointerOffset(rVal.getValue(), loc);
+				}
+				rVal = new RValue(e, expectedType);
+			}
+			// type is changed
+			else if (!(expectedType.getUnderlyingType() instanceof CPointer)) {
+				rVal.cType = expectedType;
 			}
 		}
+		// cast integer -> pointer
+		else if (underlyingType instanceof CPrimitive) {
+			CPrimitive cprim = (CPrimitive) underlyingType;
+			// if (cprim.getType() == PRIMITIVE.INT &&
+			if (cprim.getGeneralType() == GENERALPRIMITIVE.INTTYPE && expectedType instanceof CPointer) {
+				Expression e = null;
+				if (memoryHandler.useConstantTypeSizes) {
+					e = MemoryHandler.constructPointerFromBaseAndOffset(
+							createArithmeticExpression(IASTBinaryExpression.op_divide,
+									rVal.getValue(),
+									max_Pointer, 
+									loc),
+							createArithmeticExpression(IASTBinaryExpression.op_modulo,
+									rVal.getValue(),
+									max_Pointer, 
+									loc),
+							loc);
+				} else {
+					e = MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc, "0"),
+						rVal.getValue(), loc);
+				}
+				rVal = new RValue(e, expectedType);
+			}
+		}
+		
+		//alt:
+//		if (!rVal.cType.equals(expectedType)) {
+////			ptr to int
+//			if (rVal.cType instanceof CPointer && expectedType instanceof CPrimitive
+//					&& ((CPrimitive) expectedType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+//				return new RValue(new StructAccessExpression(loc, rVal.getValue(), SFO.POINTER_OFFSET), expectedType);
+//			}
+//		}
 
 		return rVal;
 	}

@@ -845,9 +845,19 @@ public class FunctionHandler {
 		// f.i. we get a wrong methodname here in defineFunction.c, because of a #define in the original code
 		String methodName = ((IASTIdExpression) functionName).getName().toString();
 		
+		IASTInitializerClause[] arguments = node.getArguments();
+		
+		return handleFunctionCallGivenNameAndArguments(main, memoryHandler,
+				structHandler, loc, methodName, arguments);
+	}
+
+	private Result handleFunctionCallGivenNameAndArguments(Dispatcher main,
+			MemoryHandler memoryHandler, StructHandler structHandler,
+			CACSLLocation loc, String methodName,
+			IASTInitializerClause[] arguments) {
 		if (methodName.equals("malloc") || methodName.equals("alloca")) {
-			assert node.getArguments().length == 1;
-			Result sizeRes = main.dispatch(node.getArguments()[0]);
+			assert arguments.length == 1;
+			Result sizeRes = main.dispatch(arguments[0]);
 			assert sizeRes instanceof ResultExpression;
 			ResultExpression sizeRex = ((ResultExpression) sizeRes)
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
@@ -864,8 +874,8 @@ public class FunctionHandler {
 		} 
 	
 		if (methodName.equals("free")) {
-			assert node.getArguments().length == 1;
-			Result pRes = main.dispatch(node.getArguments()[0]);
+			assert arguments.length == 1;
+			Result pRes = main.dispatch(arguments[0]);
 			assert pRes instanceof ResultExpression;
 			ResultExpression pRex = ((ResultExpression) pRes)
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
@@ -888,16 +898,16 @@ public class FunctionHandler {
 				&& procedures.get(methodName).getInParams().length == 0;
 		
 		//if the function has varArgs, we throw away all parameters that belong to the varArgs part and only keep the normal ones
-		IASTInitializerClause[] inParams = node.getArguments();
+		IASTInitializerClause[] inParams = arguments;
 		if (procedureToCFunctionType.get(methodName).takesVarArgs()) {
 			int noParameterWOVarArgs = procedureToCFunctionType.get(methodName).getParameterTypes().length;
 			inParams = new IASTInitializerClause[noParameterWOVarArgs];
 			for (int i = 0; i < noParameterWOVarArgs; i++) {
-				inParams[i] = node.getArguments()[i];
+				inParams[i] = arguments[i];
 			}
 			// .. and if it is really called with more that its normal parameter number, we throw an exception, because we may be unsound
 			// (the code before this does not make so much sense, but maybe some day we want that solution again..
-			if (inParams.length < node.getArguments().length)
+			if (inParams.length < arguments.length)
 				throw new UnsupportedSyntaxException(loc, "we cannot deal with varargs right now");
 		}
 	
@@ -996,7 +1006,8 @@ public class FunctionHandler {
 			} else { // unsupported!
 				String msg = "Cannot handle multiple out params! "
 						+ loc.toString();
-				throw new IncorrectSyntaxException(loc, msg);
+				//throw new IncorrectSyntaxException(loc, msg);
+				return null; //FIXME ..
 			}
 		} else {
 			methodsCalledBeforeDeclared.add(methodName);
@@ -1082,7 +1093,7 @@ public class FunctionHandler {
 			} else {
 				String id = outParams[0].getIdentifiers()[0];
 				VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
-				RValue castExprResultRVal = CHandler.castToType(loc, (RValue) exprResult.lrVal, functionResultType);
+				RValue castExprResultRVal = main.cHandler.castToType(loc, (RValue) exprResult.lrVal, functionResultType);
 				stmt.add(new AssignmentStatement(loc, lhs,
 						new Expression[] { castExprResultRVal.getValue() }));
 //				//assuming that we need no auxvars or overappr, here
