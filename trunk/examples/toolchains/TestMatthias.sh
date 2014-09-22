@@ -60,6 +60,31 @@ trunk/examples/toolchains/AutomizerTestDir.sh -da 1900 "$2" \
 fi
 
 
+if [ "$1" = "svcompSimple" ]; then
+echo "$1"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/ssh/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_SvcompReachSimpleMM.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/ntdrivers/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_SvcompReachSimpleMM.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/ldv-consumption/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_SvcompReachSimpleMM.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/ldv-commit-tester/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_SvcompReachSimpleMM.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/ldv-linux-3.7.3/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_SvcompReachSimpleMM.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/ldv-linux-3.4-simple/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_SvcompReachSimpleMM.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/ldv-linux-3.0/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_SvcompReachSimpleMM.epf"
+fi
+
 
 
 
