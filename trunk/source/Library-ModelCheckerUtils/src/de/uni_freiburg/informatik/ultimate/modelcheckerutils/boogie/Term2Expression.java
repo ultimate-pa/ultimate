@@ -334,12 +334,15 @@ public class Term2Expression implements Serializable {
 			m_freeVariables.add((IdentifierExpression) result);
 		}
 		else {
-			BoogieVar var = m_Boogie2SmtSymbolTable.getBoogieVar(term);
-			result = new IdentifierExpression(null, type, var.getIdentifier(), 
-					null /* FIXME: obtain declaration info from bv*/);
-			if (var.isOldvar()) {
-				assert(var.isGlobal());
-				result = new UnaryExpression(null, type, UnaryExpression.Operator.OLD, result);
+			BoogieVar bv = m_Boogie2SmtSymbolTable.getBoogieVar(term);
+			DeclarationInformation declInfo = 
+					m_Boogie2SmtSymbolTable.getDeclarationInformation(bv);
+			result = new IdentifierExpression(null, type, bv.getIdentifier(), 
+					declInfo);
+			if (bv.isOldvar()) {
+				assert(bv.isGlobal());
+				result = new UnaryExpression(null, type, 
+						UnaryExpression.Operator.OLD, result);
 			}
 		}
 		return result;
