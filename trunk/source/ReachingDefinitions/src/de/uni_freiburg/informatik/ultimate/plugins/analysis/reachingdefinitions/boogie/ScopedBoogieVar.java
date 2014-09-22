@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 
 /***
  * 
@@ -38,7 +38,7 @@ public class ScopedBoogieVar {
 
 	@Override
 	public String toString() {
-		return BoogieStatementPrettyPrinter.print(getDeclaration());
+		return BoogiePrettyPrinter.print(getDeclaration());
 	}
 
 }

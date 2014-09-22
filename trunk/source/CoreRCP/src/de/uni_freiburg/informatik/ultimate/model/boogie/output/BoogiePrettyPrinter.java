@@ -11,10 +11,11 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
  * (Boogie) Statement.
  * 
  * @author heizmann@informatik.uni-freiburg.de
+ * @author dietsch@informatik.uni-freiburg.de
  * 
  */
 
-public class BoogieStatementPrettyPrinter {
+public class BoogiePrettyPrinter {
 
 	private static final String sLinebreak = System.getProperty("line.separator");
 

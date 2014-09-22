@@ -67,6 +67,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 		return mTargetExpressionType;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public List<TTE> translateTrace(List<STE> trace) {
 		List<TTE> result = null;
@@ -83,7 +84,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	}
 
 	@Override
-	public List<String> targetTraceToString(List<?> trace) {
+	public List<String> targetTraceToString(List<TTE> trace) {
 		List<String> rtr = new ArrayList<>();
 		for (Object elem : trace) {
 			rtr.add(elem.toString());
@@ -91,6 +92,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 		return rtr;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public TE translateExpression(SE expression) {
 		TE result;
@@ -106,10 +108,11 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	}
 
 	@Override
-	public String targetExpressionToString(Object expression) {
+	public String targetExpressionToString(TE expression) {
 		return expression.toString();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public IProgramExecution<TTE, TE> translateProgramExecution(IProgramExecution<STE, SE> programExecution) {
 		IProgramExecution<TTE, TE> result = null;
@@ -129,6 +132,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	 * Returns true if all elements of IProgramExecution are of type TTE, throws
 	 * a ClassCastException otherwise.
 	 */
+	@SuppressWarnings("unchecked")
 	private boolean consistsOfTargetTraceElements(IProgramExecution<STE, SE> programExecution) {
 		List<TTE> auxilliaryList = new ArrayList<TTE>(programExecution.getLength());
 		for (int i = 0; i < programExecution.getLength(); i++) {
@@ -141,6 +145,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	 * Returns true if all elements of trace are of type TTE, throws a
 	 * ClassCastException otherwise.
 	 */
+	@SuppressWarnings("unchecked")
 	private boolean consistsOfTargetTraceElements(List<STE> trace) {
 		List<TTE> auxilliaryList = new ArrayList<TTE>(trace.size());
 		for (STE ste : trace) {
@@ -168,6 +173,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	 *            the expression expr)
 	 *            </ul>
 	 */
+	@SuppressWarnings("unchecked")
 	public static <STE, TTE, SE, TE> TE translateExpressionIteratively(SE expr, ITranslator<?, ?, ?, ?>... iTranslators) {
 		TE result;
 
@@ -182,25 +188,23 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 		return result;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static <STE, TTE, SE, TE> List<TTE> translateTraceIteratively(List<STE> trace,
 			ITranslator<?, ?, ?, ?>... iTranslators) {
 		List<TTE> result;
-		List<STE> traceOfSourceType;
 		if (iTranslators.length == 0) {
 			result = (List<TTE>) trace;
 		} else {
-			ITranslator<STE, ?, SE, ?> last = (ITranslator<STE, ?, SE, ?>) iTranslators[iTranslators.length - 1];
 			ITranslator<?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
-			List<?> traceOfIntermediateType = last.translateTrace(trace);
 			result = (List<TTE>) translateTraceIteratively(trace, allButLast);
 		}
 		return result;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static <STE, TTE, SE, TE> IProgramExecution<TTE, TE> translateProgramExecutionIteratively(
 			IProgramExecution<STE, SE> programExecution, ITranslator<?, ?, ?, ?>... iTranslators) {
 		IProgramExecution<TTE, TE> result;
-		IProgramExecution<STE, SE> programExecutionOfSourceType;
 		if (iTranslators.length == 0) {
 			result = (IProgramExecution<TTE, TE>) programExecution;
 		} else {

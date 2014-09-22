@@ -1,25 +1,27 @@
 package de.uni_freiburg.informatik.ultimate.core.services;
 
-import java.util.LinkedList;
+import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
+/**
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ *
+ */
 class ModelTranslationContainer implements IBacktranslationService {
-	private LinkedList<ITranslator<?, ?, ?, ?>> mTranslationSequence;
+	private ArrayDeque<ITranslator<?, ?, ?, ?>> mTranslationSequence;
 
 	protected ModelTranslationContainer() {
-		mTranslationSequence = new LinkedList<>();
+		mTranslationSequence = new ArrayDeque<>();
 	}
 
 	protected ModelTranslationContainer(ModelTranslationContainer other) {
-		mTranslationSequence = new LinkedList<>(other.mTranslationSequence);
+		mTranslationSequence = new ArrayDeque<>(other.mTranslationSequence);
 	}
 
 	public <STE, TTE, SE, TE> void addTranslator(ITranslator<STE, TTE, SE, TE> translator) {
@@ -51,18 +53,17 @@ class ModelTranslationContainer implements IBacktranslationService {
 	
 	@Override
 	public <SE> String translateExpressionToString(SE expression, Class<SE> clazz) {
-		
-		// FIXME: 2014-09-12 Matthias The following three lines are a workaround
-		// that we use until the final solution is implemented correctly.
-		if (Expression.class.isAssignableFrom(expression.getClass())) {
-			return BoogieStatementPrettyPrinter.print((Expression) expression);
-		}
-		
 		Stack<ITranslator<?, ?, ?, ?>> current = prepareExpressionStack(expression, clazz);
-		ITranslator<?, ?, ?, ?> last = current.lastElement();
-		Object exp = translateExpression(current, expression);
-		return last.targetExpressionToString(exp);
+		ITranslator<?, ?, ?, ?> last = current.firstElement();
+		return translateExpressionToString(translateExpression(current, expression), last);
 	}
+	
+	@SuppressWarnings("unchecked")
+	private <TE> String translateExpressionToString(TE expression, ITranslator<?, ?, ?, ?> trans) {
+		ITranslator<?, ?, ?, TE> last = (ITranslator<?, ?, ?, TE>) trans;
+		return last.targetExpressionToString(expression);
+	}
+	
 	
 	@SuppressWarnings("unchecked")
 	private <TE, SE> TE translateExpression(Stack<ITranslator<?, ?, ?, ?>> remaining, SE expression) {
@@ -105,9 +106,14 @@ class ModelTranslationContainer implements IBacktranslationService {
 	@Override
 	public <STE> List<String> translateTraceToString(List<STE> trace, Class<STE> clazz) {
 		Stack<ITranslator<?, ?, ?, ?>> current = prepareTraceStack(trace, clazz);
-		ITranslator<?, ?, ?, ?> last = current.lastElement();
-		Object translatedTrace = translateTrace(current, trace);
-		return last.targetTraceToString((List<?>) translatedTrace);
+		ITranslator<?, ?, ?, ?> last = current.firstElement();
+		return translateTraceToString(translateTrace(current, trace), last);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private <TTE> List<String> translateTraceToString(List<TTE> trace, ITranslator<?, ?, ?, ?> trans) {
+		ITranslator<?, TTE, ?, ?> last = (ITranslator<?, TTE, ?, ?>) trans;
+		return last.targetTraceToString(trace);
 	}
 	
 	private <STE> Stack<ITranslator<?, ?, ?, ?>> prepareTraceStack(List<STE> trace, Class<STE> clazz){

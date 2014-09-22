@@ -6,7 +6,7 @@ import java.util.Collection;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
@@ -66,7 +66,7 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 			try {
 				generator.annotate(s);
 				if (mLogger.isDebugEnabled()) {
-					String pre = "            " + edge.hashCode() + " " + BoogieStatementPrettyPrinter.print(s);
+					String pre = "            " + edge.hashCode() + " " + BoogiePrettyPrinter.print(s);
 					mLogger.debug(pre + Util.repeat((40 - pre.length()), " ") + " New Use: " + annot.getUseAsString());
 					mLogger.debug(pre + Util.repeat((40 - pre.length()), " ") + " New Def: " + annot.getDefAsString());
 				}

@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
@@ -90,8 +90,8 @@ public class RcfgProgramExecution implements IProgramExecution<RcfgElement, Expr
 			for (Expression variable : pps.getVariables()) {
 				Expression value = pps.getValues(variable).iterator().next();
 				sb.append("  ");
-				String var = BoogieStatementPrettyPrinter.print(variable);
-				String val = BoogieStatementPrettyPrinter.print(value);
+				String var = BoogiePrettyPrinter.print(variable);
+				String val = BoogiePrettyPrinter.print(value);
 				sb.append(var + "=" + val);
 			}
 			result = sb.toString();

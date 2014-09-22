@@ -7,7 +7,7 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 
 /**
  * 
- * @author dietsch
+ * @author dietsch@informatik.uni-freiburg.de
  * 
  */
 public class BacktranslationService implements IStorable, IBacktranslationService {

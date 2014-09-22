@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 
 /**
  * Edge in a recursive control flow graph that represents a sequence of
@@ -70,7 +70,7 @@ public class StatementSequence extends CodeBlock {
 		m_Origin = origin;
 		m_PrettyPrintedStatements = "";
 		for (Statement st : stmts) {
-			m_PrettyPrintedStatements += BoogieStatementPrettyPrinter.print(st);
+			m_PrettyPrintedStatements += BoogiePrettyPrinter.print(st);
 		}
 		updatePayloadName();
 	}
@@ -114,7 +114,7 @@ public class StatementSequence extends CodeBlock {
 			m_PrettyPrintedStatements = "";
 		}
 		m_Statements.add(st);
-		m_PrettyPrintedStatements += BoogieStatementPrettyPrinter.print(st);
+		m_PrettyPrintedStatements += BoogiePrettyPrinter.print(st);
 	}
 
 	public List<Statement> getStatements() {
@@ -133,7 +133,7 @@ public class StatementSequence extends CodeBlock {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		for (Statement st : m_Statements) {
-			sb.append(BoogieStatementPrettyPrinter.print(st));
+			sb.append(BoogiePrettyPrinter.print(st));
 		}
 		return sb.toString();
 	}

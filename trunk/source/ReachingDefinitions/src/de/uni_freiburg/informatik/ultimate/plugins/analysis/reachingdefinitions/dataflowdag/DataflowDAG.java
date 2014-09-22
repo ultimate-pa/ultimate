@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableLabeledEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 
@@ -27,7 +27,7 @@ public class DataflowDAG<T> extends ModifiableLabeledEdgesMultigraph<DataflowDAG
 			return "NULL";
 		}
 		if (mNodeLabel instanceof Statement) {
-			return BoogieStatementPrettyPrinter.print((Statement) mNodeLabel);
+			return BoogiePrettyPrinter.print((Statement) mNodeLabel);
 		}
 		return mNodeLabel.toString();
 	}

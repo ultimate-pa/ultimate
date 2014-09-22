@@ -34,7 +34,7 @@ public interface ITranslator<STE, TTE, SE, TE> {
 
 	public TE translateExpression(SE expression);
 
-	public String targetExpressionToString(Object expression);
+	public String targetExpressionToString(TE expression);
 	
 	/**
 	 * Translate trace that is represented as a list of Source Trace Elements
@@ -42,7 +42,7 @@ public interface ITranslator<STE, TTE, SE, TE> {
 	 */
 	public List<TTE> translateTrace(List<STE> trace);
 
-	public List<String> targetTraceToString(List<?> trace);
+	public List<String> targetTraceToString(List<TTE> trace);
 	
 	public IProgramExecution<TTE, TE> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
 

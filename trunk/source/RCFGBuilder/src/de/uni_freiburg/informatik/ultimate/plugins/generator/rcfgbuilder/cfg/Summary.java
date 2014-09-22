@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 
 /**
  * Edge in a recursive control flow graph that represents the call of a
@@ -52,7 +52,7 @@ public class Summary extends CodeBlock {
 		super(source, target, logger);
 		m_CallStatement = st;
 		m_CalledProcedureHasImplementation = calledProcedureHasImplementation;
-		m_PrettyPrintedStatements = BoogieStatementPrettyPrinter.print(st);
+		m_PrettyPrintedStatements = BoogiePrettyPrinter.print(st);
 		updatePayloadName();
 	}
 

@@ -820,7 +820,6 @@ public class BoogieOutput {
 				appendBlock(sb, stmt.getElsePart(), indent);
 				sb.append(indent).append("}");
 			}
-			sb.append(sb.toString());
 		} else if (s instanceof WhileStatement) {
 			WhileStatement stmt = (WhileStatement) s;
 			sb.append("while (");

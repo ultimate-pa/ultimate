@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -45,7 +45,7 @@ public class AssumeFinder extends BaseObserver {
 				mLogger.debug("AssumeFinder result (edge.hashCode(), pretty-printed assume statement):");
 				for (RCFGEdge e : mEdgesWithAssumes.keySet()) {
 					for (AssumeStatement ass : mEdgesWithAssumes.get(e)) {
-						mLogger.debug(e.hashCode() + " " + BoogieStatementPrettyPrinter.print(ass));
+						mLogger.debug(e.hashCode() + " " + BoogiePrettyPrinter.print(ass));
 					}
 				}
 			}

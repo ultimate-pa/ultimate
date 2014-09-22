@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 
 public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
@@ -50,7 +50,7 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 				continue;
 			}
 			for (Statement stmt : map.get(s)) {
-				sb.append(BoogieStatementPrettyPrinter.print(stmt)).append(", ");
+				sb.append(BoogiePrettyPrinter.print(stmt)).append(", ");
 			}
 			sb.delete(sb.length() - 2, sb.length());
 			sb.append("}, ");

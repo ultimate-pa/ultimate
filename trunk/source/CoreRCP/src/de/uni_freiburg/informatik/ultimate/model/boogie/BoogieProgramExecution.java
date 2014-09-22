@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IValuation;
 import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
@@ -62,8 +62,8 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 			for (Expression variable : pps.getVariables()) {
 				Expression value = pps.getValues(variable).iterator().next();
 				sb.append("  ");
-				String var = BoogieStatementPrettyPrinter.print(variable);
-				String val = BoogieStatementPrettyPrinter.print(value);
+				String var = BoogiePrettyPrinter.print(variable);
+				String val = BoogiePrettyPrinter.print(value);
 				sb.append(var + "=" + val);
 			}
 			result = sb.toString();
@@ -85,7 +85,7 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 			sb.append("statement");
 			sb.append(i);
 			sb.append(": ");
-			sb.append(BoogieStatementPrettyPrinter.print(m_Trace.get(i)));
+			sb.append(BoogiePrettyPrinter.print(m_Trace.get(i)));
 			sb.append(lineSeparator);
 			valuation = ppstoString(getProgramState(i));
 			if (valuation != null) {

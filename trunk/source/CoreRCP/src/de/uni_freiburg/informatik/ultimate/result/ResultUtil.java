@@ -8,7 +8,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 
 /**
  * 
@@ -34,7 +34,7 @@ public class ResultUtil {
 		if (backExpr instanceof String) {
 			result = (String) backExpr;
 		} else if (backExpr instanceof Expression) {
-			result = BoogieStatementPrettyPrinter.print((Expression) backExpr);
+			result = BoogiePrettyPrinter.print((Expression) backExpr);
 		} else {
 			result = backExpr.toString();
 		}

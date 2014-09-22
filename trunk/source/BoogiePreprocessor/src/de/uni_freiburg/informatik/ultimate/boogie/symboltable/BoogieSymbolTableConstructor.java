@@ -33,11 +33,11 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 
 	public BoogieSymbolTableConstructor(Logger logger){
 		mLogger = logger;
+		mSymbolTable = new BoogieSymbolTable();	
 	}
 	
 	@Override
 	public void init() throws Throwable {
-		mSymbolTable = new BoogieSymbolTable();
 		mCurrentScope = StorageClass.GLOBAL;
 		mCurrentDeclaration = null;
 		mCurrentScopeName = null;
@@ -52,6 +52,7 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("SymbolTable\r" + mSymbolTable.prettyPrintSymbolTable());
 		}
+		mSymbolTable = null;
 	}
 
 	@Override
