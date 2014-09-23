@@ -75,18 +75,17 @@ public class CTraceAbstractionTC extends WebToolchain {
 				new String[] { "Best SV_COMP" }, false, new String[] {
 						"BASE", "SV_COMP14" }, true));
         List<Setting> mCACSL = new ArrayList<Setting>();
-        tools.add(new Tool("CACSL2BoogieTranslator", oCACSL, mCACSL,
+        tools.add(new Tool(PrefStrings.s_cacsl2boogietranslator, oCACSL, mCACSL,
                 LoggingLevel.WARN));
 
         List<Setting> oPre = new ArrayList<Setting>();
         List<Setting> mPre = new ArrayList<Setting>();
-        tools.add(new Tool(
-                "de.uni_freiburg.informatik.ultimate.boogie.preprocessor",
+        tools.add(new Tool(PrefStrings.s_boogiePreprocessor,
                 oPre, mPre, LoggingLevel.WARN));
 
         List<Setting> oRCFGB = new ArrayList<Setting>();
         List<Setting> mRCFGB = new ArrayList<Setting>();
-        tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
+        tools.add(new Tool(PrefStrings.s_rcfgBuilder, oRCFGB, mRCFGB, LoggingLevel.WARN));
         oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_ExternalSolver, Setting.SettingType.BOOLEAN,
                 "external solver", "false", false));
         List<Setting> oTrAbs = new ArrayList<Setting>();
@@ -113,7 +112,7 @@ public class CTraceAbstractionTC extends WebToolchain {
         List<Setting> mTrAbs = new ArrayList<Setting>();
         mTrAbs.add(new Setting("/DumpPath", Setting.SettingType.STRING,
                 "Where to dump", "C:\\Code\\log\\dump", false));
-        tools.add(new Tool("TraceAbstraction", oTrAbs, mTrAbs,
+        tools.add(new Tool(PrefStrings.s_traceAbstraction, oTrAbs, mTrAbs,
                 LoggingLevel.WARN));
         return tools;
     }

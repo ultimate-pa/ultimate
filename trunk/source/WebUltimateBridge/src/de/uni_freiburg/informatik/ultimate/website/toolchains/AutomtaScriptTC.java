@@ -66,10 +66,10 @@ public class AutomtaScriptTC extends WebToolchain {
     protected List<Tool> setTools() {
         List<Tool> tools = new ArrayList<Tool>();
         List<Setting> oCACSL = new ArrayList<Setting>();
-        oCACSL.add(new Setting("/AutomataScriptInterpreter", Setting.SettingType.INTEGER,
+        oCACSL.add(new Setting("/" + PrefStrings.s_automatascriptinterpreter, Setting.SettingType.INTEGER,
                 "Timeout", "10", true));
         List<Setting> mCACSL = new ArrayList<Setting>();
-        tools.add(new Tool("AutomataScriptInterpreter", oCACSL, mCACSL,
+        tools.add(new Tool(PrefStrings.s_automatascriptinterpreter, oCACSL, mCACSL,
                 LoggingLevel.WARN));
         return tools;
     }

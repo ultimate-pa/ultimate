@@ -65,7 +65,7 @@ public class CBuchiAutomizerTC extends WebToolchain {
 		oCACSL.add(new Setting("Checked\\ method.\\ Library\\ mode\\ if\\ empty.", SettingType.STRING,
 				"Starting procedure: ", "main", true));
 		List<Setting> mCACSL = new ArrayList<Setting>();
-		tools.add(new Tool("CACSL2BoogieTranslator", oCACSL, mCACSL,
+		tools.add(new Tool(PrefStrings.s_cacsl2boogietranslator, oCACSL, mCACSL,
 				LoggingLevel.WARN));
 
 		tools.addAll(BoogieBuchiAutomizerTC.boogieTools());

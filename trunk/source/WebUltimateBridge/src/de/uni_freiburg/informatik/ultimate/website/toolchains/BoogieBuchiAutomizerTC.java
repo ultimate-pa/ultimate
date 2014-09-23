@@ -67,22 +67,21 @@ public class BoogieBuchiAutomizerTC extends WebToolchain {
 		
 		List<Setting> oPre = new ArrayList<Setting>();
 		List<Setting> mPre = new ArrayList<Setting>();
-		tools.add(new Tool(
-				"de.uni_freiburg.informatik.ultimate.boogie.preprocessor",
+		tools.add(new Tool(PrefStrings.s_boogiePreprocessor,
 				oPre, mPre, LoggingLevel.WARN));
 		
 		List<Setting> oRCFGB = new ArrayList<Setting>();
 		List<Setting> mRCFGB = new ArrayList<Setting>();
-		tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
+		tools.add(new Tool(PrefStrings.s_rcfgBuilder, oRCFGB, mRCFGB, LoggingLevel.WARN));
         oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_ExternalSolver, Setting.SettingType.BOOLEAN,
-        		PrefStrings.s_RCFG_LABEL_ExternalSolver, "false", false));
+        		PrefStrings.s_RCFG_LABEL_ExternalSolver, "true", false));
         oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_BlockSize, PrefStrings.s_RCFG_LABEL_BlockSize,
         		new String[] { PrefStrings.s_RCFG_VALUE_Seq }, false, new String[] {
         		PrefStrings.s_RCFG_VALUE_Single, PrefStrings.s_RCFG_VALUE_Seq, PrefStrings.s_RCFG_VALUE_Block }, false));
         
 		List<Setting> oBE = new ArrayList<Setting>();
 		List<Setting> mBE = new ArrayList<Setting>();
-		tools.add(new Tool("BlockEncoding", oBE, mBE, LoggingLevel.WARN));
+		tools.add(new Tool(PrefStrings.s_blockencoding, oBE, mBE, LoggingLevel.WARN));
 		oBE.add(new Setting(PrefStrings.s_BE_LABEL_CALLMINIMIZE, Setting.SettingType.BOOLEAN,
 				PrefStrings.s_BE_LABEL_CALLMINIMIZE, "true", false));
 		oBE.add(new Setting(PrefStrings.s_BE_LABEL_STRATEGY, PrefStrings.s_BE_LABEL_STRATEGY,
@@ -102,7 +101,7 @@ public class BoogieBuchiAutomizerTC extends WebToolchain {
 				"AllowNonlinearConstraints", "false", false));
 		oBA.add(new Setting(PrefStrings.s_BA_LABEL_SimplifyTA, Setting.SettingType.BOOLEAN,
 				PrefStrings.s_BA_LABEL_SimplifyTA, "true", false));
-		tools.add(new Tool("BuchiAutomizer", oBA, mBA, LoggingLevel.WARN));
+		tools.add(new Tool(PrefStrings.s_buchiautomizer, oBA, mBA, LoggingLevel.WARN));
 		return tools;
 	}
 

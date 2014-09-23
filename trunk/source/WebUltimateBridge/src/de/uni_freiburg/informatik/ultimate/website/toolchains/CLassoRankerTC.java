@@ -64,7 +64,7 @@ public class CLassoRankerTC extends WebToolchain {
 //      oCACSL.add(new Setting("/CheckedMethod", Setting.SettingType.STRING,
 //              "Checked Method: ", "main", true));
       List<Setting> mCACSL = new ArrayList<Setting>();
-      tools.add(new Tool("CACSL2BoogieTranslator", oCACSL, mCACSL,
+      tools.add(new Tool(PrefStrings.s_cacsl2boogietranslator, oCACSL, mCACSL,
               LoggingLevel.WARN));
 		
       tools.addAll(BoogieLassoRankerTC.boogieTools());

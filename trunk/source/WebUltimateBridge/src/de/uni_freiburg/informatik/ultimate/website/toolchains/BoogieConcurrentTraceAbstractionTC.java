@@ -68,13 +68,12 @@ public class BoogieConcurrentTraceAbstractionTC extends WebToolchain {
 		
 		List<Setting> oPre = new ArrayList<Setting>();
 		List<Setting> mPre = new ArrayList<Setting>();
-		tools.add(new Tool(
-				"de.uni_freiburg.informatik.ultimate.boogie.preprocessor",
+		tools.add(new Tool(PrefStrings.s_boogiePreprocessor,
 				oPre, mPre, LoggingLevel.WARN));
 		
 		List<Setting> oRCFGB = new ArrayList<Setting>();
 		List<Setting> mRCFGB = new ArrayList<Setting>();
-		tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
+		tools.add(new Tool(PrefStrings.s_rcfgBuilder, oRCFGB, mRCFGB, LoggingLevel.WARN));
         mRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_ExternalSolver, Setting.SettingType.BOOLEAN,
                 "external solver", "false", false));
         mRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_BlockSize, PrefStrings.s_RCFG_LABEL_BlockSize,
@@ -82,7 +81,7 @@ public class BoogieConcurrentTraceAbstractionTC extends WebToolchain {
         		PrefStrings.s_RCFG_VALUE_Single, PrefStrings.s_RCFG_VALUE_Seq, PrefStrings.s_RCFG_VALUE_Block }, true));
 		List<Setting> oTrConcur = new ArrayList<Setting>();
 		List<Setting> mTrConcur = new ArrayList<Setting>();
-        tools.add(new Tool("TraceAbstractionConcurrent", oTrConcur, mTrConcur,
+        tools.add(new Tool(PrefStrings.s_traceAbstractionConcurrent, oTrConcur, mTrConcur,
                 LoggingLevel.WARN));
 		return tools;
 	}

@@ -71,13 +71,12 @@ public class BoogieLassoRankerTC extends WebToolchain {
 		
 		List<Setting> oPre = new ArrayList<Setting>();
 		List<Setting> mPre = new ArrayList<Setting>();
-		tools.add(new Tool(
-				"de.uni_freiburg.informatik.ultimate.boogie.preprocessor",
+		tools.add(new Tool(PrefStrings.s_boogiePreprocessor,
 				oPre, mPre, LoggingLevel.WARN));
 		
 		List<Setting> oRCFGB = new ArrayList<Setting>();
 		List<Setting> mRCFGB = new ArrayList<Setting>();
-		tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
+		tools.add(new Tool(PrefStrings.s_rcfgBuilder, oRCFGB, mRCFGB, LoggingLevel.WARN));
         oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_ExternalSolver, Setting.SettingType.BOOLEAN,
         		PrefStrings.s_RCFG_LABEL_ExternalSolver, "false", false));
         oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_BlockSize, PrefStrings.s_RCFG_LABEL_BlockSize,
@@ -88,7 +87,7 @@ public class BoogieLassoRankerTC extends WebToolchain {
         
 		List<Setting> oBE = new ArrayList<Setting>();
 		List<Setting> mBE = new ArrayList<Setting>();
-		tools.add(new Tool("BlockEncoding", oBE, mBE, LoggingLevel.WARN));
+		tools.add(new Tool(PrefStrings.s_blockencoding, oBE, mBE, LoggingLevel.WARN));
 		oBE.add(new Setting(PrefStrings.s_BE_LABEL_CALLMINIMIZE, Setting.SettingType.BOOLEAN,
 				PrefStrings.s_BE_LABEL_CALLMINIMIZE, "true", false));
 		oBE.add(new Setting(PrefStrings.s_BE_LABEL_STRATEGY, PrefStrings.s_BE_LABEL_STRATEGY,
@@ -99,7 +98,7 @@ public class BoogieLassoRankerTC extends WebToolchain {
 		
 		List<Setting> oRank = new ArrayList<Setting>();
 		List<Setting> mRank = new ArrayList<Setting>();
-		tools.add(new Tool("LassoRanker", oRank, mRank,	LoggingLevel.WARN));
+		tools.add(new Tool(PrefStrings.s_lassoRanker, oRank, mRank,	LoggingLevel.WARN));
 		oRank.add(new Setting(PrefStrings.s_LR_LABEL_use_external_solver, Setting.SettingType.BOOLEAN,
 				PrefStrings.s_LR_LABEL_use_external_solver, "false", false));
 		oRank.add(new Setting(PrefStrings.s_LR_LABEL_only_nondecreasing_invariants, Setting.SettingType.BOOLEAN,
