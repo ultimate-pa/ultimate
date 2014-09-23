@@ -1,7 +1,13 @@
 package de.uni_freiburg.informatik.ultimatetest.lassoranker;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -95,43 +101,51 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 		Collection<String> customMessages = new LinkedList<String>();
 		boolean fail = false;
 
+		String result = "";
 		if (m_expected_result == null) {
 			customMessages.add("Could not understand the specification of the " + "results.");
 			fail = true;
 		} else if (m_expected_result == ExpectedResult.UNSPECIFIED) {
 			customMessages.add("No expected results defined in the input file");
 		} else {
-			customMessages.add("Expected Result: " + m_expected_result.toString());
 			Map<String, List<IResult>> resultMap = resultService.getResults();
 			List<IResult> results = resultMap.get(Activator.s_PLUGIN_ID);
-			IResult lastResult = results.get(results.size() - 1);
-			customMessages.add("Results: " + results.toString());
+			if (results != null) {
+				IResult lastResult = results.get(results.size() - 1);
+				customMessages.add("Expected Result: " + m_expected_result.toString());
+				customMessages.add("Results: " + results.toString());
 
-			switch (m_expected_result) {
-			case TERMINATION:
-				fail = lastResult instanceof NonTerminationArgumentResult;
-				break;
-			case TERMINATIONDERIVABLE:
-				fail = !(lastResult instanceof TerminationArgumentResult);
-				break;
-			case NONTERMINATION:
-				fail = lastResult instanceof TerminationArgumentResult;
-				break;
-			case NONTERMINATIONDERIVABLE:
-				fail = !(lastResult instanceof NonTerminationArgumentResult);
-				break;
-			case UNKNOWN:
-				fail = !(lastResult instanceof NoResult);
-				break;
-			case ERROR:
-				fail = !(lastResult instanceof SyntaxErrorResult);
-				break;
-			default:
+				switch (m_expected_result) {
+				case TERMINATION:
+					fail = lastResult instanceof NonTerminationArgumentResult;
+					break;
+				case TERMINATIONDERIVABLE:
+					fail = !(lastResult instanceof TerminationArgumentResult);
+					break;
+				case NONTERMINATION:
+					fail = lastResult instanceof TerminationArgumentResult;
+					break;
+				case NONTERMINATIONDERIVABLE:
+					fail = !(lastResult instanceof NonTerminationArgumentResult);
+					break;
+				case UNKNOWN:
+					fail = !(lastResult instanceof NoResult);
+					break;
+				case ERROR:
+					fail = !(lastResult instanceof SyntaxErrorResult);
+					break;
+				default:
+					fail = true;
+					break;
+				}
+				result = lastResult.getClass().getSimpleName();
+			} else {
 				fail = true;
-				break;
 			}
 		}
 
+		setResultCategory(result + " (Expected: " + m_expected_result + ")");
+		setResultMessage(customMessages.toString());
 		Util.logResults(logger, m_input_file_name, fail, customMessages, resultService);
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
