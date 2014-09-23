@@ -220,7 +220,8 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 						// the struct/union/enum keyword --> otherwise we would have a collision
 						// in case of something like typedef struct a a;
 						String structOrUnion = getKindStringFromCompositeOrElaboratedTS(cts);
-						sT.put(structOrUnion + declSpecName, declaration);
+						declSpecName = structOrUnion + declSpecName;
+						sT.put(declSpecName, declaration);
 					}
 
 					for (String id : dependencyGraphPreliminaryInverse.keySet()) {
