@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPrePro
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.MatchInVars;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RemoveNegation;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArrays;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArrays2;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteBooleans;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteDivision;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteEquality;
@@ -275,6 +276,7 @@ public class LassoAnalysis {
 						m_loop_transition,
 						mServices
 				),
+//				new RewriteArrays2(overapproximateArrayIndexConnection, m_stem_transition, m_loop_transition, mServices, m_ArrayIndexSupportingInvariants),
 				new StemAndLoopPreProcessor(new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
 				new StemAndLoopPreProcessor(new RewriteBooleans(lassoBuilder.getReplacementVarFactory(), lassoBuilder.getScript())),
 				new StemAndLoopPreProcessor(new RewriteIte()),

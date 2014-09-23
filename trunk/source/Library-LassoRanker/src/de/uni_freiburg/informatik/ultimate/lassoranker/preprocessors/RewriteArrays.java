@@ -196,17 +196,19 @@ public class RewriteArrays extends LassoPreProcessor {
 	
 	private TransFormulaLR process(Script script, TransFormulaLR tf,
 			boolean stem) {
-		tflrwai = 
-				new TransFormulaLRWithArrayInformation(mServices, tf, m_lassoBuilder.getReplacementVarFactory(), m_Script);
 		Term term = tf.getFormula();
 		if (!SmtUtils.containsArrayVariables(term)) {
 			return tf;
 		}
+		tflrwai = 
+				new TransFormulaLRWithArrayInformation(mServices, tf, m_lassoBuilder.getReplacementVarFactory(), m_Script);
+		
+
 		// Create a new TransFormula by copying the old one
 		TransFormulaLR new_tf = new TransFormulaLR(tf);
 		
 
-		m_IndexAnalyzer = new IndexAnalyzer(term, tflrwai.getArray2Indices(), stem, m_lassoBuilder.getBoogie2SMT(), tf, m_OriginalStem, m_OriginalLoop);
+		m_IndexAnalyzer = new IndexAnalyzer(term, tflrwai.getArrayFirstGeneration2Indices(), true, m_lassoBuilder.getBoogie2SMT(), tf, m_OriginalStem, m_OriginalLoop);
 		m_ArrayIndexSupportingInvariants.addAll(m_IndexAnalyzer.getSupportingInvariants());
 		CellVariableBuilder cvb = new CellVariableBuilder(new_tf);
 		m_ArrayInstance2Index2CellVariable = cvb.getArrayInstance2Index2CellVariable();
@@ -493,17 +495,16 @@ public class RewriteArrays extends LassoPreProcessor {
 		}
 
 		public void dotSomething() {
-			for (int i = 0; i < tflrwai.numberOfDisjuncts(); i++) {
-				for (TermVariable instance : tflrwai.getArrayGenealogy()[i].getInstances()) {
-					TermVariable originalGeneration = tflrwai.getArrayGenealogy()[i].getProgenitor(instance);
+			for (TermVariable firstGeneration : tflrwai.getArrayFirstGeneration2Instances().getDomain()) {
+				for (TermVariable instance : tflrwai.getArrayFirstGeneration2Instances().getImage(firstGeneration)) {
 					Map<List<Term>, TermVariable> index2ArrayCellTv = m_ArrayInstance2Index2CellVariable.get(instance);
 					if (index2ArrayCellTv == null) {
 						index2ArrayCellTv = new HashMap<List<Term>, TermVariable>();
 						m_ArrayInstance2Index2CellVariable.put(instance, index2ArrayCellTv);
 					}
-					Set<List<Term>> indicesOfOriginalGeneration = tflrwai.getArray2Indices().getImage(originalGeneration);
+					Set<List<Term>> indicesOfOriginalGeneration = tflrwai.getArrayFirstGeneration2Indices().getImage(firstGeneration);
 					if (indicesOfOriginalGeneration == null) {
-						mLogger.info("Array " + originalGeneration + " is never accessed");
+						mLogger.info("Array " + firstGeneration + " is never accessed");
 						continue;
 					}
 					for (List<Term> index : indicesOfOriginalGeneration) {

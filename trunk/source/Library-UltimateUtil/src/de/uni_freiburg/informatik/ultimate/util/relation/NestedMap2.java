@@ -26,8 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.relation;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * TODO: comment
@@ -57,5 +60,24 @@ public class NestedMap2<K1, K2, V> {
 		} else {
 			return k2toV.get(key2);
 		}
+	}
+	
+	public Map<K2,V> get(K1 key1) {
+		return m_K1ToK2ToV.get(key1);
+	}
+	
+	public Set<K1> keySet() {
+		return m_K1ToK2ToV.keySet();
+	}
+	
+	//TODO more efficient iterable
+	public Iterable<Triple<K1,K2,V>> entrySet() {
+		ArrayList<Triple<K1,K2,V>> result = new ArrayList<Triple<K1,K2,V>>();
+		for (Entry<K1, Map<K2, V>> entryOuter  : m_K1ToK2ToV.entrySet()) {
+			for (Entry<K2, V> entryInner : entryOuter.getValue().entrySet()) {
+				result.add(new Triple<>(entryOuter.getKey(), entryInner.getKey(), entryInner.getValue()));
+			}
+		}
+		return result;
 	}
 }
