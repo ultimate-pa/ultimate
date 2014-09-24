@@ -81,6 +81,9 @@ public class LassoChecker {
 	 * nontermination argument. This may reveal unsoundness bugs.
 	 */
 	private static final boolean s_CheckTerminationEvenIfNonterminating = false;
+	
+	
+	private static final boolean s_AvoidNonterminationCheckIfArraysAreContained = false;
 
 	private final INTERPOLATION m_Interpolation;
 
@@ -471,13 +474,13 @@ public class LassoChecker {
 	private void checkLoopTermination(TransFormula loopTF) {
 		assert !m_Bspm.providesPredicates() : "termination already checked";
 		boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula());
-//		if (containsArrays) {
-//			// if there are array variables we will probably run in a huge
-//			// DNF, so as a precaution we do not check and say unknown
-//			m_LoopTermination = SynthesisResult.UNKNOWN;
-//		} else {
+		if (s_AvoidNonterminationCheckIfArraysAreContained && containsArrays) {
+			// if there are array variables we will probably run in a huge
+			// DNF, so as a precaution we do not check and say unknown
+			m_LoopTermination = SynthesisResult.UNKNOWN;
+		} else {
 			m_LoopTermination = synthesize(false, null, loopTF, containsArrays);
-//		}
+		}
 	}
 
 	private void checkLassoTermination(TransFormula stemTF, TransFormula loopTF) {
@@ -603,7 +606,7 @@ public class LassoChecker {
 
 		LassoAnalysis la = null;
 		NonTerminationArgument nonTermArgument = null;
-		if (!containsArrays) {
+		if (!(s_AvoidNonterminationCheckIfArraysAreContained && containsArrays)) {
 			try {
 				boolean overapproximateArrayIndexConnection = false;
 				la = new LassoAnalysis(m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), stemTF, loopTF,
@@ -671,7 +674,7 @@ public class LassoChecker {
 		}
 		// }
 
-		if (containsArrays) {
+		if (s_AvoidNonterminationCheckIfArraysAreContained && containsArrays) {
 			// if stem or loop contain arrays, overapproximate the
 			// index connection of RewriteArrays
 			try {
