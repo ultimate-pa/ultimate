@@ -37,8 +37,9 @@ public class VariableManager {
 	
 	public TermVariable constructFreshTermVariable(String name, Sort sort) {
 		final Integer newIndex = m_TvForBoogieVarCounter.increase(name);
+		String withoutSmtQuoteChar = SmtUtils.removeSmtQuoteCharacters(name);
 		TermVariable result = m_Script.variable(
-				"v_" + name + "_" + newIndex, sort);
+				"v_" + withoutSmtQuoteChar + "_" + newIndex, sort);
 		return result;
 	}
 	
