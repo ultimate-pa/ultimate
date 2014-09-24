@@ -269,7 +269,8 @@ public class LassoPartitioneer extends LassoPreProcessor {
 				}
 			}
 			for (Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
-				if (!termVariable2conjuncts.getDomain().contains(entry.getValue())) {
+				if (!termVariable2conjuncts.getDomain().contains(entry.getValue()) && 
+						!termVariablesWithoutConjuncts.contains(entry.getValue())) {
 					m_EquivalentTermVariables.makeEquivalenceClass((TermVariable) entry.getValue());
 					termVariablesWithoutConjuncts.add(entry.getValue());
 					TransFormulaLR oldValue = m_OriginalTF.put((TermVariable) entry.getValue(), tf);
