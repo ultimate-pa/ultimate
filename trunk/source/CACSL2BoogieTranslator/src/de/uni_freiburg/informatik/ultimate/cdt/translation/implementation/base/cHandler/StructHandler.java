@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 /**
  * Class that handles translation of Structs.
  * 
- * @author Markus Lindenmann
+ * @authors Markus Lindenmann, Alexander Nutz
  * @date 12.10.2012
  * modified (a lot) by Alexander Nutz in later 2013/early 2014
  */

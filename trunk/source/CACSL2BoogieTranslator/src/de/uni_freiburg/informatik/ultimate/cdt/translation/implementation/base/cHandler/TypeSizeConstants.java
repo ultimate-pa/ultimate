@@ -8,7 +8,8 @@ public class TypeSizeConstants {
 	public int sizeOfPointerType;
 	public int sizeOfFloatType;
 	public int sizeOfCharType;
-	public int sizeOfVoidType;
+//for pointer arithmetic on a void pointer -- c standard disallows that, but gcc does not..
+	public int sizeOfVoidType; 
 	public int sizeOfBoolType;
 	public int sizeOfShortType;
 	public int sizeOfLongType;

@@ -379,15 +379,27 @@ public class CHandler implements ICHandler {
 			}
 		}
 
-		// Christian: function pointers
-		String[] constants = new String[((MainDispatcher) main).getFunctionPointers().size()];
-		if (constants.length > 0) {
-			int i = 0;
-			for (final String cId : ((MainDispatcher) main).getFunctionPointers().keySet()) {
-				constants[i++] = SFO.FUNCTION_ADDRESS + cId;
-			}
-			VarList varList = new VarList(loc, constants, MemoryHandler.POINTER_TYPE);
-			decl.add(new ConstDeclaration(loc, new Attribute[0], true, varList, null, false));
+//		// Christian: function pointers
+//		String[] constants = new String[((MainDispatcher) main).getFunctionPointers().size()];
+//		if (constants.length > 0) {
+//			int i = 0;
+//			for (final String cId : ((MainDispatcher) main).getFunctionPointers().keySet()) {
+//				constants[i++] = SFO.FUNCTION_ADDRESS + cId;
+//			}
+//			VarList varList = new VarList(loc, constants, MemoryHandler.POINTER_TYPE);
+//			decl.add(new ConstDeclaration(loc, new Attribute[0], true, varList, null, false));
+//		}
+		//(alex:) new function pointers
+		for (Entry<String, Integer> en : ((MainDispatcher) main).getFunctionToIndex().entrySet()) {
+			String funcId = SFO.FUNCTION_ADDRESS + en.getKey();
+			VarList varList = new VarList(loc, new String[]{ funcId }, MemoryHandler.POINTER_TYPE);
+			decl.add(new ConstDeclaration(loc, new Attribute[0], false, varList, null, false));//would unique make sense here?? -- would potentially add lots of axioms
+			decl.add(new Axiom(loc, new Attribute[0], new BinaryExpression(loc, 
+					BinaryExpression.Operator.COMPEQ, 
+					new IdentifierExpression(loc, funcId), 
+					MemoryHandler.constructPointerFromBaseAndOffset(
+							new IntegerLiteral(loc, "-1"), 
+							new IntegerLiteral(loc, en.getValue().toString()), loc))));
 		}
 
 		for (Declaration d : mDeclarationsGlobalInBoogie.keySet()) {
@@ -913,17 +925,29 @@ public class CHandler implements ICHandler {
 					new LinkedHashMap<VariableDeclaration, ILocation>(0));
 		}
 
-		String bId;
-		CType cType;
-		boolean useHeap;
+		String bId = null;
+		CType cType = null;
+		boolean useHeap = false;
 
 		// Christian: function name, handle separately
-		IASTFunctionDefinition funDef = ((MainDispatcher) main).getFunctionPointers().get(cId);
-		if (funDef != null) {
-			cType = new CPointer(new CFunction(null, null, false));
-			bId = SFO.FUNCTION_ADDRESS + cId;
-			useHeap = true;
+//		IASTFunctionDefinition funDef = ((MainDispatcher) main).getFunctionPointers().get(cId);
+		if (!symbolTable.containsCSymbol(cId)) {
+//			if (funDef != null) {
+			if (((MainDispatcher) main).getFunctionToIndex().get(cId) != null) {
+//				assert !(node.getParent() instanceof IASTUnaryExpression  
+//						&& ((IASTUnaryExpression) node.getParent()).getOperator() == IASTUnaryExpression.op_amper)
+//						: "we should have dealt with an addressof at another point";
+				cType = new CPointer(new CFunction(null, null, false));
+				bId = SFO.FUNCTION_ADDRESS + cId;
+				useHeap = true;
+			} else {
+				
+			}
+//			Integer funIndex = ((MainDispatcher) main).getFunctionToIndex().get(cId);
+//			return new ResultExpression(new RValue(new IntegerLiteral(loc, funIndex.toString()), 
+//					new CPointer(new CFunction(null, null, false))));
 		} else {
+			// we have a normal variable
 			bId = symbolTable.get(cId, loc).getBoogieName();
 			cType = symbolTable.get(cId, loc).getCVariable();
 			useHeap = isHeapVar(bId);
@@ -1131,6 +1155,9 @@ public class CHandler implements ICHandler {
 				Expression addr = ((HeapLValue) o.lrVal).getAddress();
 				return new ResultExpression(o.stmt, new RValue(addr, new CPointer(o.lrVal.cType)), o.decl, o.auxVars,
 						o.overappr);
+			} else if (o.lrVal instanceof RValue && o.lrVal.getValue() instanceof IntegerLiteral) {
+				assert node.getOperand() instanceof IASTIdExpression : "this is a function pointer, right??";
+				return o;
 			} else {
 				throw new AssertionError("Address of something that is not on the heap.");
 			}

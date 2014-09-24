@@ -84,6 +84,7 @@ public class CStruct extends CType {
      * @return the field type.
      */
     public CType getFieldType(String id) {
+    	assert !this.isIncomplete() : "Cannot get a field type in an incomplete struct type.";
         int idx = Arrays.asList(fNames).indexOf(id);
         if (idx < 0) {
             throw new IllegalArgumentException("Field '" + id

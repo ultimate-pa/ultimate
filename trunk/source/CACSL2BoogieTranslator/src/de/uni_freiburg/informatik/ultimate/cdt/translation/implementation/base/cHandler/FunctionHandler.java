@@ -49,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
@@ -837,13 +839,21 @@ public class FunctionHandler {
 		CACSLLocation loc = new CACSLLocation(node, check);
 		IASTExpression functionName = node.getFunctionNameExpression(); 
 		if (!(functionName instanceof IASTIdExpression)) {
-			String msg = "Function pointer or similar is not supported. "
-					+ loc.toString();
-			throw new IncorrectSyntaxException(loc, msg);
+//			String msg = "Function pointer or similar is not supported. "
+//					+ loc.toString();
+//			throw new IncorrectSyntaxException(loc, msg);
+//			return new ResultExpression(new RValue(new IntegerLiteral(loc, "-1"), new CPrimitive(PRIMITIVE.INT)));
+			return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, node.getArguments());
 		}
 		//don't use getRawSignature because it refers to the code before preprocessing 
 		// f.i. we get a wrong methodname here in defineFunction.c, because of a #define in the original code
 		String methodName = ((IASTIdExpression) functionName).getName().toString();
+		
+//		if (((MainDispatcher) main).getFunctionPointers().containsKey(methodName)) { //FIXME just for now
+		if (main.cHandler.getSymbolTable().containsCSymbol(methodName)) {
+//			return new ResultExpression(new RValue(new IntegerLiteral(loc, "-1"), new CPrimitive(PRIMITIVE.INT)));
+			return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, node.getArguments());
+		}
 		
 		IASTInitializerClause[] arguments = node.getArguments();
 		
@@ -851,9 +861,84 @@ public class FunctionHandler {
 				structHandler, loc, methodName, arguments);
 	}
 
+	private Result handleFunctionPointerCall(ILocation loc, Dispatcher main,
+			MemoryHandler memoryHandler, StructHandler structHandler,
+			IASTExpression functionName, IASTInitializerClause[] arguments) {
+		assert ((MainDispatcher) main).getFunctionToIndex().size() > 0;
+		ResultExpression funcNameRex = (ResultExpression) main.dispatch(functionName);
+		RValue calledFuncRVal = (RValue) funcNameRex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc).lrVal;
+		CType calledFuncType = calledFuncRVal.cType;
+		if (!(calledFuncType instanceof CFunction)) {
+			//.. because function pointers don't need to be dereferenced in order to be called
+			if (calledFuncType instanceof CPointer) {
+				calledFuncType = ((CPointer) calledFuncType).pointsToType;
+			}
+		}
+		assert calledFuncType instanceof CFunction : "We need to unpack it further, right?";
+	
+		ArrayList<Entry<String, Integer>> fittingFunctions = new ArrayList<>();
+		for (Entry<String, Integer> en : ((MainDispatcher) main).getFunctionToIndex().entrySet()) {
+			CType ptdToFuncType = procedureToCFunctionType.get(en.getKey());
+			if (ptdToFuncType.equals(((CFunction) calledFuncType))) {
+				fittingFunctions.add(en);
+			}
+		}
+		
+		if (fittingFunctions.size() == 1) {
+			return handleFunctionCallGivenNameAndArguments(main, memoryHandler, 
+					structHandler, loc, fittingFunctions.get(0).getKey(), arguments);
+		} else {
+			ArrayList<Statement> stmt = new ArrayList<>();
+			ArrayList<Declaration> decl = new ArrayList<>();
+			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+//			Expression expr = null;
+
+			ResultExpression firstElseRex = (ResultExpression) handleFunctionCallGivenNameAndArguments(main, memoryHandler, 
+					structHandler, loc, fittingFunctions.get(0).getKey(), arguments);
+			stmt.addAll(firstElseRex.stmt);
+			decl.addAll(firstElseRex.decl);
+			auxVars.putAll(firstElseRex.auxVars);
+
+//			IfThenElseExpression currentITE = new IfThenElseExpression(loc, null, null, firstElseRex.lrVal.getValue());
+			Expression currentElseExpr = firstElseRex.lrVal.getValue();
+
+			for (int i = 1; i < fittingFunctions.size(); i++) {
+				ResultExpression currentRex = (ResultExpression) handleFunctionCallGivenNameAndArguments(main, memoryHandler, 
+					structHandler, loc, fittingFunctions.get(i).getKey(), arguments);
+				stmt.addAll(currentRex.stmt);
+				decl.addAll(currentRex.decl);
+				auxVars.putAll(currentRex.auxVars);			
+				
+				currentElseExpr = new IfThenElseExpression(loc, new BooleanLiteral(loc, true), currentRex.lrVal.getValue(), currentElseExpr);
+			}
+
+//			ResultExpression lastThenRex = (ResultExpression) handleFunctionCallGivenNameAndArguments(main, memoryHandler, 
+//					structHandler, loc, fittingFunctions.get(fittingFunctions.size() - 1).getKey(), arguments);
+//			stmt.addAll(lastThenRex.stmt);
+//			decl.addAll(lastThenRex.decl);
+//			auxVars.putAll(lastThenRex.auxVars);
+			return new ResultExpression(stmt, new RValue(currentElseExpr, ((CFunction) calledFuncType).getResultType()), decl, auxVars);
+		}
+		
+
+//			if (expr == null) {
+//				expr = new IfThenElseExpression(loc,
+//						new BinaryExpression(loc, 
+//								BinaryExpression.Operator.COMPEQ, 
+//								calledFuncExpr, 
+//								new IdentifierExpression(loc, SFO.FUNCTION_ADDRESS + en.getKey())), 
+//							null, 
+//							null);
+//			}
+////			stmt.add(new If)
+//			
+//		}
+//		return null;
+	}
+
 	private Result handleFunctionCallGivenNameAndArguments(Dispatcher main,
 			MemoryHandler memoryHandler, StructHandler structHandler,
-			CACSLLocation loc, String methodName,
+			ILocation loc, String methodName,
 			IASTInitializerClause[] arguments) {
 		if (methodName.equals("malloc") || methodName.equals("alloca")) {
 			assert arguments.length == 1;

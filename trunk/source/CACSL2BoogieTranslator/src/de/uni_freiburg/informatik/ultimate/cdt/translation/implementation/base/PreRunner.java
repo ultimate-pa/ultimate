@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
@@ -15,6 +17,7 @@ import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -31,48 +34,64 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 /**
- * @author Markus Lindenmann
+ * @authors Markus Lindenmann, Alexander Nutz
  * @date 12.12.2012
  */
 public class PreRunner extends ASTVisitor {
     /**
      * Variables, that have to go on the heap.
      */
-    private HashSet<IASTNode> variablesOnHeap;
+    private LinkedHashSet<IASTNode> variablesOnHeap;
     /**
      * The table containing all functions.
      */
-    private HashMap<String, IASTFunctionDefinition> functionTable;
+    private LinkedHashMap<String, IASTNode> functionTable;
     /**
      * The table containing functions which are used as function pointers.
      */
-    private HashMap<String, IASTFunctionDefinition> functionPointers;
+    private LinkedHashMap<String, IASTDeclaration> functionPointers;
     /**
      * The symbol table during the translation.
      */
-    ScopedHashMap<String, IASTNode> sT;
+    LinkedScopedHashMap<String, IASTNode> sT;
     /**
      * Whether or not the memory model is required.
      */
     private boolean isMMRequired;
+    
+    /**
+     * every function that is pointed to gets assigned an index -- its "address". 
+     * This is the variable used for counting.
+     */
+    int pointedToFunctionCounter;
+
+    /**
+     * Every function that is pointed to gets assigned an index -- its "address".
+     * This mapping stores the association.
+     */
+    private LinkedHashMap<String, Integer> functionToIndex;
 
     /**
      * Constructor.
      */
-    public PreRunner() {
+    public PreRunner(LinkedHashMap<String, IASTNode> fT) {
         this.shouldVisitDeclarations = true;
     	this.shouldVisitParameterDeclarations = true;
         this.shouldVisitExpressions = true;
         this.shouldVisitStatements = true;
         this.shouldVisitDeclSpecifiers = true;
         this.isMMRequired = false;
-        this.sT = new ScopedHashMap<String, IASTNode>();
-        this.variablesOnHeap = new HashSet<IASTNode>();
-        this.functionTable = new HashMap<String, IASTFunctionDefinition>();
-        this.functionPointers = new HashMap<String, IASTFunctionDefinition>();
+        this.sT = new LinkedScopedHashMap<String, IASTNode>();
+        this.variablesOnHeap = new LinkedHashSet<IASTNode>();
+//        this.functionTable = new HashMap<String, IASTFunctionDefinition>();
+        this.functionTable = fT;
+        this.functionPointers = new LinkedHashMap<String, IASTDeclaration>();
+        this.pointedToFunctionCounter = 0;
+        this.functionToIndex = new LinkedHashMap<>();
     }
 
     /**
@@ -90,7 +109,7 @@ public class PreRunner extends ASTVisitor {
      * @return a map of functions used as pointers.
      * @author Christian
      */
-    public HashMap<String, IASTFunctionDefinition> getFunctionPointers() {
+    public HashMap<String, IASTDeclaration> getFunctionPointers() {
         return functionPointers;
     }
 
@@ -125,8 +144,8 @@ public class PreRunner extends ASTVisitor {
  	public int visit(IASTParameterDeclaration declaration) {
     	if (declaration.getDeclarator().getPointerOperators().length > 0) 
     		isMMRequired = true;
-    	
-     	sT.put(declaration.getDeclarator().getName().toString(), declaration);
+    	String name = declaration.getDeclarator().getName().toString();
+     	sT.put(name, declaration);
     	return super.visit(declaration);
  	}
     
@@ -145,11 +164,13 @@ public class PreRunner extends ASTVisitor {
 
                 this.isMMRequired = true;
                 if (id != null) {
-                    IASTFunctionDefinition function = functionTable.get(id);
-                    if (function != null) {
-                        functionPointers.put(id, function);
+                    IASTNode function = functionTable.get(id);
+                    if (function != null && sT.get(id) == null) { //id is the name of a function and not shadowed here
+                    	updateFunctionPointers(id, function);
+//                        functionPointers.put(id, function);
+                        updateFunctionToIndex(id);
                     } else {
-                        this.variablesOnHeap.add(get(id, loc));//TODO why put the location of expression, not operand, here?
+                        this.variablesOnHeap.add(get(id, loc));
                     }
                 }
             } else if (!this.isMMRequired
@@ -157,9 +178,23 @@ public class PreRunner extends ASTVisitor {
                 this.isMMRequired = true;
             }
     	} else if (expression instanceof IASTIdExpression) {
-            String identifier = ((IASTIdExpression) expression).getName().toString();
-            IASTNode d = sT.get(identifier); // don't check contains here!
-            		//if the identifier refers to an array and is used in a functioncall, the Array has to go on the heap
+            String id = ((IASTIdExpression) expression).getName().toString();
+            
+            //a function address may be assigned to a function pointer without addressof
+            // like fptr = f; where f is a function
+            IASTNode function = functionTable.get(id);
+            if (function != null && sT.get(id) == null //id is the name of a function and not shadowed here
+            		&& !(expression.getParent() instanceof IASTFunctionCallExpression 
+            				//&& ((IASTFunctionCallExpression) expression.getParent()).getFunctionNameExpression().equals(expression)) (not necessary as the parameter declarations are treated separately
+            				)
+            		) {
+            	updateFunctionPointers(id, function);
+//            	functionPointers.put(id, function);
+            	updateFunctionToIndex(id);
+            }
+            
+            IASTNode d = sT.get(id); // don't check contains here!
+            //if the identifier refers to an array and is used in a functioncall, the Array has to go on the heap
             if (d instanceof IASTArrayDeclarator
             		&& expression.getParent() instanceof IASTFunctionCallExpression) {
             	variablesOnHeap.add(d);
@@ -170,23 +205,36 @@ public class PreRunner extends ASTVisitor {
             // if field is an array and there is no array sub expr!
         } else if (expression instanceof IASTFunctionCallExpression) {
             IASTFunctionCallExpression fce = (IASTFunctionCallExpression) expression;
-            if (fce.getFunctionNameExpression().getRawSignature()
-                    .equals("malloc")) {
-                this.isMMRequired = true;
-            } else if (fce.getFunctionNameExpression().getRawSignature()
-                    .equals("free")) {
-                this.isMMRequired = true;
+            IASTExpression fne = fce.getFunctionNameExpression();
+            if (fne instanceof IASTIdExpression) {
+            	String name = ((IASTIdExpression) fne).getName().toString();
+            	if (name.equals("malloc")) {
+            		this.isMMRequired = true;
+            	} else if (name.equals("free")) {
+            		this.isMMRequired = true;
+            	}
             }
         }
         return super.visit(expression);
     }
 
-    /**
+
+	private void updateFunctionPointers(String id, IASTNode function) {
+		if (function instanceof IASTFunctionDefinition) {
+			functionPointers.put(id, (IASTDeclaration) function);
+		} else if (function instanceof IASTFunctionDeclarator) {
+			functionPointers.put(id, (IASTDeclaration) function.getParent());
+		} else {
+			assert false : "should not happen.. right?..";
+		}
+	}
+
+	/**
      * For an IdentifierExpression just return the identifier. For something like a struct access (s.a)
      * return the identifier that designates the storage array used by the expression (here: s).
      * 
      */
-    private String extraxtExpressionIdFromPossiblyComplexExpression(
+    public static String extraxtExpressionIdFromPossiblyComplexExpression(
 			IASTNode operand) {
     	
     	
@@ -218,21 +266,18 @@ public class PreRunner extends ASTVisitor {
         if (declaration instanceof CASTSimpleDeclaration) {
             CASTSimpleDeclaration cd = (CASTSimpleDeclaration) declaration;
             for (IASTDeclarator d : cd.getDeclarators()) {
-                String key = d.getName().getRawSignature();
-                sT.put(key, d);
+                String key = d.getName().toString();
+                if (!(d instanceof IASTFunctionDeclarator))
+                	sT.put(key, d);
 
-                //--> that's the simple solution, if there are pointers declared, we introduce the (full) memory model
-                // might be done better in the future..
                 if (d.getPointerOperators() != null
                 		&& d.getPointerOperators().length != 0) 
                 	isMMRequired = true;
-//                if (d instanceof IASTArrayDeclarator)
-//                	isMMRequired = true;//FIXME: right all arrays are on the heap -- change this in case of a change of mind
             }
 
         } else  if (declaration instanceof IASTFunctionDefinition) {
-            IASTFunctionDefinition funDef = (IASTFunctionDefinition)declaration;
-            functionTable.put(funDef.getDeclarator().getName().toString(), funDef);
+//            IASTFunctionDefinition funDef = (IASTFunctionDefinition)declaration;
+//            functionTable.put(funDef.getDeclarator().getName().toString(), funDef);
             sT.beginScope();
         }
         return super.visit(declaration);
@@ -251,8 +296,6 @@ public class PreRunner extends ASTVisitor {
         if (statement instanceof IASTCompoundStatement
                 && !(statement.getParent() instanceof IASTFunctionDefinition || statement
                         .getParent() instanceof IASTForStatement)) {
-            // the scope for IASTFunctionDefinition and IASTForStatement was //FIXME what about while, do, ..?
-            // opened in parent before!
             sT.beginScope();
         }
         if (statement instanceof IASTSwitchStatement) {
@@ -281,7 +324,15 @@ public class PreRunner extends ASTVisitor {
          }
  		return super.leave(statement);
  	}
-
+    
+    public LinkedHashMap<String, Integer> getFunctionToIndex() {
+		return functionToIndex;
+    } 
+    private void updateFunctionToIndex(String id) {
+    	if (!functionToIndex.containsKey(id)) {
+    		functionToIndex.put(id, pointedToFunctionCounter++);
+    	}
+	}
 //	IASTExpression removeBrackets(IASTExpression exp) {
 //    	IASTExpression result = exp;
 //    	while (result instanceof IASTUnaryExpression 
@@ -291,7 +342,8 @@ public class PreRunner extends ASTVisitor {
 //    	return result;
 //    }
     
-    /**
+
+	/**
      * Getter to access the symbol table.
      * 
      * @param n

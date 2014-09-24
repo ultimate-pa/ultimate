@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.util.ArrayDeque;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map.Entry;
@@ -18,6 +19,7 @@ import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializer;
@@ -36,6 +38,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 /**
@@ -46,11 +49,12 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
    /**
      * The symbol table for this class
      */
-    ScopedHashMap<String, IASTDeclaration> sT;
+    LinkedScopedHashMap<String, IASTDeclaration> sT;
     /**
      * The table containing all functions.
      */
-    private LinkedHashMap<String, IASTFunctionDefinition> functionTable;
+    private LinkedHashMap<String, IASTNode> functionTable;
+//    private LinkedHashMap<String, IASTFunctionDefinition> functionTable;
     
     Stack<IASTDeclaration> currentFunOrStructDefOrInitializer;
     
@@ -63,8 +67,10 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     String checkedMethod;
 	private IASTTranslationUnit translationUnit;
 	private Dispatcher mDispatcher;
+	private LinkedHashMap<String, Integer> functionToIndex;
 
-    public DetermineNecessaryDeclarations(String checkedMethod, Dispatcher dispatcher) {
+    public DetermineNecessaryDeclarations(String checkedMethod, Dispatcher dispatcher, 
+    		LinkedHashMap<String, IASTNode> fT, LinkedHashMap<String,Integer> functionToIndex) {
     	mDispatcher = dispatcher;
     	this.shouldVisitParameterDeclarations = true;
     	this.shouldVisitTranslationUnit = true;
@@ -74,13 +80,15 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
         this.shouldVisitTypeIds = true;
         this.shouldVisitInitializers = true;
         this.shouldVisitStatements = true;
-        this.sT = new ScopedHashMap<String, IASTDeclaration>();
-        this.functionTable = new LinkedHashMap<>();
+        this.sT = new LinkedScopedHashMap<String, IASTDeclaration>();
+//        this.functionTable = new LinkedHashMap<>();
+        this.functionTable = fT;
         this.dependencyGraph = new LinkedHashMap<>();
         this.dependencyGraphPreliminaryInverse = new LinkedHashMap<>();
         this.reachableDeclarations = new LinkedHashSet<>();
         this.currentFunOrStructDefOrInitializer = new Stack<>();
         this.checkedMethod = checkedMethod;
+        this.functionToIndex = functionToIndex;
     }
     
     
@@ -184,19 +192,46 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     	IASTExpression funNameEx = expression.getFunctionNameExpression();
     	if (funNameEx instanceof IASTIdExpression) {
     		IASTIdExpression idEx = (IASTIdExpression) funNameEx;
-    		IASTFunctionDefinition funcTableEntry = functionTable.get(idEx.getName().toString());
-    		if (funcTableEntry != null)
-    			addDependency(currentFunOrStructDefOrInitializer.peek(), funcTableEntry);
+//    		IASTFunctionDefinition funcTableEntry = functionTable.get(idEx.getName().toString());
+    		IASTDeclaration decFromFuncTableEntry = getDeclarationFromFuncDefinitionOrFuncDeclarator(
+    				functionTable.get(idEx.getName().toString()));
+//    		if (funcTableEntry != null)
+    		if (decFromFuncTableEntry != null)
+    			addDependency(currentFunOrStructDefOrInitializer.peek(), decFromFuncTableEntry);
     		IASTDeclaration sTEntry = sT.get(idEx.getName().toString());
     		if (sTEntry != null)
     			addDependency(currentFunOrStructDefOrInitializer.peek(), sTEntry);
-    		if (sTEntry == null || funcTableEntry == null) //we have to delay making the entry in the dependency graph
+    		if (sTEntry == null || decFromFuncTableEntry == null) //we have to delay making the entry in the dependency graph
     			dependencyGraphPreliminaryInverse.put(idEx.getName().toString(), currentFunOrStructDefOrInitializer.peek());
     	} else {
-    		assert false; //TODO: handle calls via function pointers
+    		// We add a dependency from the method/whatever the function pointer is used in to 
+    		//all methods that a function pointer may point to (from PreRunner's analysis)
+    		for (String fName : functionToIndex.keySet()) {
+    			addDependency(currentFunOrStructDefOrInitializer.peek(), getDeclarationFromFuncDefinitionOrFuncDeclarator(functionTable.get(fName)));
+    		}
+    		
     	}
     	return super.visit(expression);
 	}
+
+	private IASTDeclaration getDeclarationFromFuncDefinitionOrFuncDeclarator(
+			IASTNode node) {
+		if (node == null) {
+			return null;
+		} else if (node instanceof IASTFunctionDefinition) {
+			return (IASTDeclaration) node;
+		} else if (node instanceof IASTFunctionDeclarator) {
+			IASTNode parent = node.getParent();
+			while (!(parent instanceof IASTDeclaration))
+				parent = parent.getParent();
+			return (IASTDeclaration) parent;
+		} else {
+			assert false : "should not happen";
+			return null;
+		}
+	}
+
+
 
 	@Override
 	public int visit(IASTDeclaration declaration) {
@@ -318,12 +353,12 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 			return super.visit(declaration);
 		} else if (declaration instanceof IASTFunctionDefinition) {
 			IASTFunctionDefinition funDef = (IASTFunctionDefinition)declaration;
-			IASTDeclarator possiblyNestedDeclarator = funDef.getDeclarator();
-			while (possiblyNestedDeclarator.getNestedDeclarator() != null) {
-				possiblyNestedDeclarator = possiblyNestedDeclarator.getNestedDeclarator();
-			}
-			String nameOfInnermostDeclarator = possiblyNestedDeclarator.getName().toString();
-			functionTable.put(nameOfInnermostDeclarator, funDef);
+//			IASTDeclarator possiblyNestedDeclarator = funDef.getDeclarator();
+//			while (possiblyNestedDeclarator.getNestedDeclarator() != null) {
+//				possiblyNestedDeclarator = possiblyNestedDeclarator.getNestedDeclarator();
+//			}
+//			String nameOfInnermostDeclarator = possiblyNestedDeclarator.getName().toString();
+//			functionTable.put(nameOfInnermostDeclarator, funDef);
 
 			if (declaration.getParent() instanceof IASTTranslationUnit) {
 				for (String id : dependencyGraphPreliminaryInverse.keySet()) {
@@ -561,7 +596,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     	
     	ArrayDeque<IASTDeclaration> openNodes = new ArrayDeque<>();
     	for (String ep : entryPoints) {
-    		openNodes.add(functionTable.get(ep));
+    		openNodes.add(getDeclarationFromFuncDefinitionOrFuncDeclarator(functionTable.get(ep)));
     	}
     	
     	while(!openNodes.isEmpty()) {

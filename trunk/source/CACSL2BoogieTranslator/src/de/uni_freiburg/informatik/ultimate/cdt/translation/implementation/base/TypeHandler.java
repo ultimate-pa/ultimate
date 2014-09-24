@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
  * @author Oleksii Saukh
  * @author Stefan Wissert
  * @date 07.02.2012
+ * @author Alexander Nutz
  */
 public class TypeHandler implements ITypeHandler {
     /**

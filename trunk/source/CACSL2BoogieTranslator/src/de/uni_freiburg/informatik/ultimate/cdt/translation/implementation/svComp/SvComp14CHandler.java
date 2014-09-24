@@ -97,7 +97,9 @@ public class SvComp14CHandler extends CHandler {
 	@Override
 	public Result visit(Dispatcher main, IASTFunctionCallExpression node) {
 		ILocation loc = new CACSLLocation(node);
-		assert (node.getFunctionNameExpression() instanceof IASTIdExpression) : "we assumed that getFunctionNameExpression is IASTIdExpression, this might be wrong for function pointers";
+//		assert (node.getFunctionNameExpression() instanceof IASTIdExpression) : "we assumed that getFunctionNameExpression is IASTIdExpression, this might be wrong for function pointers";
+		if (!(node.getFunctionNameExpression() instanceof IASTIdExpression))
+			return super.visit(main, node);
 		IASTIdExpression astIdExpression = (IASTIdExpression) node.getFunctionNameExpression();
 		String methodName = astIdExpression.getName().toString();
 

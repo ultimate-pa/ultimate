@@ -31,7 +31,35 @@ public class CFunction extends CType {
 
 	@Override
 	public String toString() {
-		return "CFunction";
+		StringBuilder sb = new StringBuilder();
+		sb.append("CFunction: ");
+		String times = "";
+		for (int i = 0; i < mParamTypes.length; i++) {
+			sb.append(mParamTypes[i].toString());
+			sb.append(times);
+			times = " x ";
+		}
+		if (mTakesVarArgs)
+			sb.append(" x ...");
+		sb.append(" -> ");
+		sb.append(mResultType.toString());
+		return sb.toString();
+//		return "CFunction:";
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof CFunction)) {
+			return false;
+		}
+		CFunction other = (CFunction) o;
+		if (this.mParamTypes.length != other.mParamTypes.length)
+			return false;
+		boolean result = true;
+		result &= this.mResultType.equals(other.mResultType);
+		for (int i = 0; i < mParamTypes.length; i++)
+			result &= this.mParamTypes[i].getType().equals(other.mParamTypes[i].getType());
+		result &= this.mTakesVarArgs == other.mTakesVarArgs;
+		return result;
+	}
 }

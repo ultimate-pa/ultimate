@@ -259,7 +259,8 @@ public class ResultExpression extends Result {
 					} else if (underlyingType instanceof CNamed) {
 						throw new AssertionError("This should not be the case as we took the underlying type.");
 					} else {
-						throw new UnsupportedSyntaxException(loc, "..");
+						newValue = addressRVal;
+//						throw new UnsupportedSyntaxException(loc, "..");
 					}
 					newValue.isBoogieBool = lrVal.isBoogieBool;
 					return new ResultExpression(newStmt, newValue, newDecl,
