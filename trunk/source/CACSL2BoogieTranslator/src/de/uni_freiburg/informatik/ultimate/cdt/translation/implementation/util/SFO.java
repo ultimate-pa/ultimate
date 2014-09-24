@@ -148,7 +148,12 @@ public final class SFO {
     */
    public enum AUXVAR {
 	   /**
-	    * Auxiliary variable used to get nondeterministically some value.
+	    *  Auxiliary variable used to store the result of a call of a function pointer.
+	    */
+	   FUNCPTRRES("funptrres"),
+	   
+	   /**
+	    * Auxiliary variable used to get some value nondeterministically.
 	    */
 	   NONDET("nondet"),
 	   

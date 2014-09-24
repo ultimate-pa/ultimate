@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
@@ -864,6 +865,7 @@ public class FunctionHandler {
 	private Result handleFunctionPointerCall(ILocation loc, Dispatcher main,
 			MemoryHandler memoryHandler, StructHandler structHandler,
 			IASTExpression functionName, IASTInitializerClause[] arguments) {
+
 		assert ((MainDispatcher) main).getFunctionToIndex().size() > 0;
 		ResultExpression funcNameRex = (ResultExpression) main.dispatch(functionName);
 		RValue calledFuncRVal = (RValue) funcNameRex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc).lrVal;
@@ -876,64 +878,88 @@ public class FunctionHandler {
 		}
 		assert calledFuncType instanceof CFunction : "We need to unpack it further, right?";
 	
-		ArrayList<Entry<String, Integer>> fittingFunctions = new ArrayList<>();
+//		ArrayList<Entry<String, Integer>> fittingFunctions = new ArrayList<>();
+		ArrayList<String> fittingFunctions = new ArrayList<>();
 		for (Entry<String, Integer> en : ((MainDispatcher) main).getFunctionToIndex().entrySet()) {
 			CType ptdToFuncType = procedureToCFunctionType.get(en.getKey());
 			if (ptdToFuncType.equals(((CFunction) calledFuncType))) {
-				fittingFunctions.add(en);
+//				fittingFunctions.add(en);
+				fittingFunctions.add(en.getKey());
 			}
 		}
 		
 		if (fittingFunctions.size() == 1) {
 			return handleFunctionCallGivenNameAndArguments(main, memoryHandler, 
-					structHandler, loc, fittingFunctions.get(0).getKey(), arguments);
+					structHandler, loc, fittingFunctions.get(0), arguments);
 		} else {
-			ArrayList<Statement> stmt = new ArrayList<>();
 			ArrayList<Declaration> decl = new ArrayList<>();
 			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-//			Expression expr = null;
+
+			String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES);
+			VariableDeclaration tmpVarDec = new VariableDeclaration(loc, new Attribute[0], 
+					new VarList[] { new VarList(loc, 
+							new String[] { tmpId }, 
+							main.typeHandler.ctype2asttype(loc, ((CFunction) calledFuncType).getResultType())) });
+			decl.add(tmpVarDec);
+			auxVars.put(tmpVarDec, loc);
 
 			ResultExpression firstElseRex = (ResultExpression) handleFunctionCallGivenNameAndArguments(main, memoryHandler, 
-					structHandler, loc, fittingFunctions.get(0).getKey(), arguments);
-			stmt.addAll(firstElseRex.stmt);
+					structHandler, loc, fittingFunctions.get(0), arguments);
+//			stmt.addAll(firstElseRex.stmt);
 			decl.addAll(firstElseRex.decl);
 			auxVars.putAll(firstElseRex.auxVars);
 
-//			IfThenElseExpression currentITE = new IfThenElseExpression(loc, null, null, firstElseRex.lrVal.getValue());
-			Expression currentElseExpr = firstElseRex.lrVal.getValue();
+
+			ArrayList<Statement> firstElseStmt = new ArrayList<>();
+			{
+				firstElseStmt.addAll(firstElseRex.stmt);
+				AssignmentStatement assignment = new AssignmentStatement(loc, 
+						new VariableLHS[] { new VariableLHS(loc, tmpId) }, 
+						new Expression[] { firstElseRex.lrVal.getValue() });
+				firstElseStmt.add(assignment);
+			}
+//			Expression currentElseExpr = firstElseRex.lrVal.getValue();
+			
+//			Statement[] currentElseStmts = firstElseStmt.toArray(new Statement[firstElseStmt.size()]);
+			IfStatement currentIfStmt = null;
 
 			for (int i = 1; i < fittingFunctions.size(); i++) {
 				ResultExpression currentRex = (ResultExpression) handleFunctionCallGivenNameAndArguments(main, memoryHandler, 
-					structHandler, loc, fittingFunctions.get(i).getKey(), arguments);
-				stmt.addAll(currentRex.stmt);
+					structHandler, loc, fittingFunctions.get(i), arguments);
+//				stmt.addAll(currentRex.stmt);
 				decl.addAll(currentRex.decl);
 				auxVars.putAll(currentRex.auxVars);			
+
+				ArrayList<Statement> newStmts = new ArrayList<>();
+				newStmts.addAll(currentRex.stmt);
+				AssignmentStatement assignment = new AssignmentStatement(loc, 
+					new VariableLHS[] { new VariableLHS(loc, tmpId) }, 
+					new Expression[] { currentRex.lrVal.getValue() });
+				newStmts.add(assignment);
 				
-				currentElseExpr = new IfThenElseExpression(loc, new BooleanLiteral(loc, true), currentRex.lrVal.getValue(), currentElseExpr);
+				BinaryExpression condition = new BinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+						calledFuncRVal.getValue(), new IdentifierExpression(loc, SFO.FUNCTION_ADDRESS + fittingFunctions.get(i)));
+				
+//				currentElseExpr = new IfThenElseExpression(loc, new BooleanLiteral(loc, true), currentRex.lrVal.getValue(), currentElseExpr);
+				//newStmts.toArray(new Statement[newStmts.size()]));
+//				Statement[] currentElseStmts = firstElseStmt.toArray(new Statement[firstElseStmt.size()]);
+				if (i == 1) { //currentIfStmt == null)
+					currentIfStmt = new IfStatement(loc, condition,
+							newStmts.toArray(new Statement[newStmts.size()]), 
+							firstElseStmt.toArray(new Statement[firstElseStmt.size()]));
+				} else {
+						currentIfStmt = new IfStatement(loc, condition,
+							newStmts.toArray(new Statement[newStmts.size()]), 
+							new Statement[] { currentIfStmt });
+				}
 			}
 
-//			ResultExpression lastThenRex = (ResultExpression) handleFunctionCallGivenNameAndArguments(main, memoryHandler, 
-//					structHandler, loc, fittingFunctions.get(fittingFunctions.size() - 1).getKey(), arguments);
-//			stmt.addAll(lastThenRex.stmt);
-//			decl.addAll(lastThenRex.decl);
-//			auxVars.putAll(lastThenRex.auxVars);
-			return new ResultExpression(stmt, new RValue(currentElseExpr, ((CFunction) calledFuncType).getResultType()), decl, auxVars);
+			ArrayList<Statement> stmt = new ArrayList<>();
+			stmt.add(currentIfStmt);
+//			return new ResultExpression(stmt, new RValue(currentElseExpr, ((CFunction) calledFuncType).getResultType()), decl, auxVars);
+			return new ResultExpression(stmt, new RValue(new IdentifierExpression(loc, tmpId), 
+					((CFunction) calledFuncType).getResultType()), decl, auxVars);
 		}
-		
-
-//			if (expr == null) {
-//				expr = new IfThenElseExpression(loc,
-//						new BinaryExpression(loc, 
-//								BinaryExpression.Operator.COMPEQ, 
-//								calledFuncExpr, 
-//								new IdentifierExpression(loc, SFO.FUNCTION_ADDRESS + en.getKey())), 
-//							null, 
-//							null);
-//			}
-////			stmt.add(new If)
-//			
-//		}
-//		return null;
 	}
 
 	private Result handleFunctionCallGivenNameAndArguments(Dispatcher main,

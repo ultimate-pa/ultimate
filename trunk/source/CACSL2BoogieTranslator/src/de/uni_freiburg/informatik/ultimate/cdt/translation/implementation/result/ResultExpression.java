@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -191,80 +192,87 @@ public class ResultExpression extends Result {
 			RValue newValue = null;
 
 			CType underlyingType = this.lrVal.cType.getUnderlyingType();
-//					this.lrVal.cType instanceof CNamed ? 
-//					((CNamed) this.lrVal.cType).getUnderlyingType() :
-//						this.lrVal.cType;
+		
+			//a pointer to a function is a special case..
+			if (underlyingType instanceof CPointer 
+					&& ((CPointer) underlyingType).pointsToType instanceof CFunction) {
+				underlyingType = ((CPointer) underlyingType).pointsToType;
+			}
+			//					this.lrVal.cType instanceof CNamed ? 
+			//					((CNamed) this.lrVal.cType).getUnderlyingType() :
+			//						this.lrVal.cType;
 
-					//has the type of what lies at that address
-					RValue addressRVal = new RValue(hlv.getAddress(), hlv.cType,
-											hlv.isBoogieBool);
+			//has the type of what lies at that address
+			RValue addressRVal = new RValue(hlv.getAddress(), hlv.cType,
+					hlv.isBoogieBool);
 
-					if (underlyingType instanceof CPrimitive) {
-						CPrimitive cp = (CPrimitive) underlyingType;
-						switch (cp.getGeneralType()) {
-						case INTTYPE: {
-							ResultExpression rex = memoryHandler.getReadCall(
-									main, addressRVal);
-							newStmt.addAll(rex.stmt);
-							newDecl.addAll(rex.decl);
-							newAuxVars.putAll(rex.auxVars);	
-							newValue = (RValue) rex.lrVal;
-							break;
-						}
-						case FLOATTYPE: {
-							ResultExpression rex = memoryHandler.getReadCall(
-									main, addressRVal);
-							newStmt.addAll(rex.stmt);
-							newDecl.addAll(rex.decl);
-							newAuxVars.putAll(rex.auxVars);	
-							newValue = (RValue) rex.lrVal;	
-							break;
-						}
-						case VOID:
-							//(in this case we return nothing, because this should not be read anyway..)
-//							throw new UnsupportedSyntaxException("void should have been cast before dereferencing");
-							break;
-						default:
-							throw new UnsupportedSyntaxException(loc, "..");
-						}
-					} else if (underlyingType instanceof CPointer) {
-						ResultExpression rex = memoryHandler.getReadCall(
-									main, addressRVal);
-						newStmt.addAll(rex.stmt);
-						newDecl.addAll(rex.decl);
-						newAuxVars.putAll(rex.auxVars);	
-						newValue = (RValue) rex.lrVal;
-					} else if (underlyingType instanceof CArray) {
-//						return null; //"you can't assign arrays in C"
-//						throw new AssertionError("you can't assign arrays in C");
-						// if it is a HeapLValue, it must be on heap -> treat it as a pointer
-//						rex = memoryHandler.getReadCall(
-//									main, addressRVal);
-//						newStmt.addAll(rex.stmt);
-//						newDecl.addAll(rex.decl);
-//						newAuxVars.putAll(rex.auxVars);	
-//						newValue = (RValue) rex.lrVal;
-						newStmt.addAll(this.stmt);
-						newDecl.addAll(this.decl);
-						newAuxVars.putAll(this.auxVars);	
-						newValue = new RValue(hlv.getAddress(), this.lrVal.cType);
-					} else if (underlyingType instanceof CEnum) {
-					} else if (underlyingType instanceof CStruct) {
-						ResultExpression rex = readStructFromHeap(main, structHandler, memoryHandler, loc, 
-									addressRVal);
-						newStmt.addAll(rex.stmt);
-						newDecl.addAll(rex.decl);
-						newAuxVars.putAll(rex.auxVars);	
-						newValue = (RValue) rex.lrVal;	
-					} else if (underlyingType instanceof CNamed) {
-						throw new AssertionError("This should not be the case as we took the underlying type.");
-					} else {
-						newValue = addressRVal;
-//						throw new UnsupportedSyntaxException(loc, "..");
-					}
-					newValue.isBoogieBool = lrVal.isBoogieBool;
-					return new ResultExpression(newStmt, newValue, newDecl,
-					        newAuxVars, this.overappr, this.unionFieldIdToCType);
+			if (underlyingType instanceof CPrimitive) {
+				CPrimitive cp = (CPrimitive) underlyingType;
+				switch (cp.getGeneralType()) {
+				case INTTYPE: {
+					ResultExpression rex = memoryHandler.getReadCall(
+							main, addressRVal);
+					newStmt.addAll(rex.stmt);
+					newDecl.addAll(rex.decl);
+					newAuxVars.putAll(rex.auxVars);	
+					newValue = (RValue) rex.lrVal;
+					break;
+				}
+				case FLOATTYPE: {
+					ResultExpression rex = memoryHandler.getReadCall(
+							main, addressRVal);
+					newStmt.addAll(rex.stmt);
+					newDecl.addAll(rex.decl);
+					newAuxVars.putAll(rex.auxVars);	
+					newValue = (RValue) rex.lrVal;	
+					break;
+				}
+				case VOID:
+					//(in this case we return nothing, because this should not be read anyway..)
+					//							throw new UnsupportedSyntaxException("void should have been cast before dereferencing");
+					break;
+				default:
+					throw new UnsupportedSyntaxException(loc, "..");
+				}
+			} else if (underlyingType instanceof CPointer) {
+				ResultExpression rex = memoryHandler.getReadCall(
+						main, addressRVal);
+				newStmt.addAll(rex.stmt);
+				newDecl.addAll(rex.decl);
+				newAuxVars.putAll(rex.auxVars);	
+				newValue = (RValue) rex.lrVal;
+			} else if (underlyingType instanceof CArray) {
+				//						return null; //"you can't assign arrays in C"
+				//						throw new AssertionError("you can't assign arrays in C");
+				// if it is a HeapLValue, it must be on heap -> treat it as a pointer
+				//						rex = memoryHandler.getReadCall(
+				//									main, addressRVal);
+				//						newStmt.addAll(rex.stmt);
+				//						newDecl.addAll(rex.decl);
+				//						newAuxVars.putAll(rex.auxVars);	
+				//						newValue = (RValue) rex.lrVal;
+				newStmt.addAll(this.stmt);
+				newDecl.addAll(this.decl);
+				newAuxVars.putAll(this.auxVars);	
+				newValue = new RValue(hlv.getAddress(), this.lrVal.cType);
+			} else if (underlyingType instanceof CEnum) {
+			} else if (underlyingType instanceof CStruct) {
+				ResultExpression rex = readStructFromHeap(main, structHandler, memoryHandler, loc, 
+						addressRVal);
+				newStmt.addAll(rex.stmt);
+				newDecl.addAll(rex.decl);
+				newAuxVars.putAll(rex.auxVars);	
+				newValue = (RValue) rex.lrVal;	
+			} else if (underlyingType instanceof CNamed) {
+				throw new AssertionError("This should not be the case as we took the underlying type.");
+			} else if (underlyingType instanceof CFunction) {
+				newValue = addressRVal;
+			} else {
+				throw new UnsupportedSyntaxException(loc, "..");
+			}
+			newValue.isBoogieBool = lrVal.isBoogieBool;
+			return new ResultExpression(newStmt, newValue, newDecl,
+					newAuxVars, this.overappr, this.unionFieldIdToCType);
 		} else {
 			throw new AssertionError("an LRValue that is not null, and no LocalLValue, RValue or HeapLValue???");
 		}
