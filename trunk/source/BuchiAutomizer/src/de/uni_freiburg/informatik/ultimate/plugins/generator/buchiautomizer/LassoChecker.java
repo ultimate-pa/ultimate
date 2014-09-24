@@ -471,13 +471,13 @@ public class LassoChecker {
 	private void checkLoopTermination(TransFormula loopTF) {
 		assert !m_Bspm.providesPredicates() : "termination already checked";
 		boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula());
-		if (containsArrays) {
-			// if there are array variables we will probably run in a huge
-			// DNF, so as a precaution we do not check and say unknown
-			m_LoopTermination = SynthesisResult.UNKNOWN;
-		} else {
+//		if (containsArrays) {
+//			// if there are array variables we will probably run in a huge
+//			// DNF, so as a precaution we do not check and say unknown
+//			m_LoopTermination = SynthesisResult.UNKNOWN;
+//		} else {
 			m_LoopTermination = synthesize(false, null, loopTF, containsArrays);
-		}
+//		}
 	}
 
 	private void checkLassoTermination(TransFormula stemTF, TransFormula loopTF) {
@@ -605,8 +605,9 @@ public class LassoChecker {
 		NonTerminationArgument nonTermArgument = null;
 		if (!containsArrays) {
 			try {
+				boolean overapproximateArrayIndexConnection = false;
 				la = new LassoAnalysis(m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), stemTF, loopTF,
-						m_Axioms.toArray(new Term[m_Axioms.size()]), constructLassoRankerPreferences(withStem, false), mServices, mStorage);
+						m_Axioms.toArray(new Term[m_Axioms.size()]), constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection ), mServices, mStorage);
 			} catch (TermException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -674,8 +675,9 @@ public class LassoChecker {
 			// if stem or loop contain arrays, overapproximate the
 			// index connection of RewriteArrays
 			try {
+				boolean overapproximateArrayIndexConnection = !true; // not now
 				la = new LassoAnalysis(m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), stemTF, loopTF,
-						m_Axioms.toArray(new Term[m_Axioms.size()]), constructLassoRankerPreferences(withStem, true), mServices, mStorage);
+						m_Axioms.toArray(new Term[m_Axioms.size()]), constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection ), mServices, mStorage);
 			} catch (TermException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
