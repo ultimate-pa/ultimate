@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
@@ -46,8 +47,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 
@@ -171,16 +174,32 @@ public class LassoPartitioneer extends LassoPreProcessor {
 		if (m_NewStem.isEmpty()) {
 			m_NewStem.add(new TransFormulaLR(m_Script.term("true")));
 		}
-		String message = "Stem components before: " + m_lassoBuilder.getStemComponents().size()
+
+		String messageC = "Stem components before: " + m_lassoBuilder.getStemComponents().size()
 				+ " Loop components before: " + m_lassoBuilder.getLoopComponents().size()
 				+ " Stem components after: " + m_NewStem.size()
 				+ " Loop components after: " + m_NewLoop.size();
-		m_Logger.info(message);
+		m_Logger.info(messageC);
+		String messageS = "Stem maxDagSize before: " + computeMaxDagSize(m_lassoBuilder.getStemComponents())
+				+ " Loop maxDagSize before: " + computeMaxDagSize(m_lassoBuilder.getLoopComponents())
+				+ " Stem maxDagSize after: " + computeMaxDagSize(m_NewStem)
+				+ " Loop maxDagSize after: " + computeMaxDagSize(m_NewLoop);
+		m_Logger.info(messageS);
+
 		if (!m_DryRun) {
 			m_lassoBuilder.setStemComponents(m_NewStem);
 			m_lassoBuilder.setLoopComponents(m_NewLoop);
 			
 		}
+	}
+	
+	private static int computeMaxDagSize(Collection<TransFormulaLR> components) {
+		TreeSet<Integer> sizes = new TreeSet<>();
+		for (TransFormulaLR tflr : components) {
+			int dagSize = (new DAGSize()).size(tflr.getFormula());
+			sizes.add(dagSize);
+		}
+		return sizes.descendingIterator().next();
 	}
 
 
