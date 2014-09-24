@@ -112,7 +112,6 @@ public class IndexAnalyzer2 {
 		Term termWithAdditionalInvariants;
 		
 		if (m_SearchAdditionalSupportingInvariants) { 
-
 			termWithAdditionalInvariants = Util.and(m_Script, m_Term, getAdditionalConjunctsEqualities(), getAdditionalConjunctsNotEquals());
 		} else {
 			termWithAdditionalInvariants = m_Term;

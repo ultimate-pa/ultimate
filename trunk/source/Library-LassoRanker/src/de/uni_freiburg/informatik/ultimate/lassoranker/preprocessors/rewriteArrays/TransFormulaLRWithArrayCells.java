@@ -101,13 +101,17 @@ public class TransFormulaLRWithArrayCells {
 	private Map<TermVariable, Map<List<Term>, TermVariable>> m_ArrayInstance2Index2CellVariable;
 	private EquivalentCells[] m_EquivalentCells;
 	private boolean m_OverapproximateByOmmitingDisjointIndices;
-	private HashRelation<TermVariable, List<Term>> array2Indices;
+	private HashRelation<TermVariable, List<Term>> m_FirstGeneration2Indices;
 	private IndexAnalyzer2 indexAnalyzer;
+	private NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> m_ArrayCellInVars;
+	private NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> m_ArrayCellOutVars;
 
 	public TransFormulaLRWithArrayCells(
 			IUltimateServiceProvider services, 
 			ReplacementVarFactory replacementVarFactory, Script script,
-			TransFormulaLRWithArrayInformation tflrwai, IndexSupportingInvariantAnalysis indexSupportingInvariantAnalysis, Boogie2SMT boogie2smt) {
+			TransFormulaLRWithArrayInformation tflrwai, 
+			IndexSupportingInvariantAnalysis indexSupportingInvariantAnalysis, 
+			Boogie2SMT boogie2smt, ArrayCellRepVarConstructor acrvc) {
 			mServices = services;
 			mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 			this.tflrwai = tflrwai;
@@ -118,13 +122,24 @@ public class TransFormulaLRWithArrayCells {
 				return;
 			}
 			m_Result = new TransFormulaLR(tflrwai.getTransFormulaLR());
-			array2Indices = new HashRelation<>();
-			array2Indices.addAll(tflrwai.getArrayFirstGeneration2Indices());
+			m_FirstGeneration2Indices = new HashRelation<>();
+			m_FirstGeneration2Indices.addAll(tflrwai.getArrayFirstGeneration2Indices());
+			if (acrvc != null) {
+				addForeignReplacementVars(acrvc);
+			}
+			m_ArrayCellInVars = new NestedMap2<>();
+			m_ArrayCellInVars.addAll(tflrwai.getArrayCellInVars());
+			m_ArrayCellInVars.addAll(m_ForeignReplacementVars);
+			m_ArrayCellOutVars = new NestedMap2<>();
+			m_ArrayCellOutVars.addAll(tflrwai.getArrayCellOutVars());
+			m_ArrayCellOutVars.addAll(m_ForeignReplacementVars);
+
+			doSomething();
 			
 			
 			
-			indexAnalyzer = new IndexAnalyzer2(m_Result.getFormula(), array2Indices, boogie2smt, m_Result, indexSupportingInvariantAnalysis);
-			CellVariableBuilder cvb = new CellVariableBuilder(m_Result, this, replacementVarFactory, mLogger);
+			indexAnalyzer = new IndexAnalyzer2(m_Result.getFormula(), m_FirstGeneration2Indices, boogie2smt, m_Result, indexSupportingInvariantAnalysis);
+			CellVariableBuilder cvb = new CellVariableBuilder(m_Result, this, replacementVarFactory, mLogger, m_FirstGeneration2Indices, m_ArrayCellInVars, m_ArrayCellOutVars);
 			m_ArrayInstance2Index2CellVariable = cvb.getArrayInstance2Index2CellVariable();
 			m_EquivalentCells = new EquivalentCells[tflrwai.numberOfDisjuncts()];
 			for (int i = 0; i < tflrwai.numberOfDisjuncts(); i++) {
@@ -170,14 +185,15 @@ public class TransFormulaLRWithArrayCells {
 				disjunctsWithUpdateConstraints[i] = Util.and(m_Script, conjuncts);
 			}
 			Term resultDisjuntion = Util.or(m_Script, disjunctsWithUpdateConstraints);
+			HashSet<TermVariable> auxVars = new HashSet<TermVariable>(cvb.getAuxVars());
 
-			Term result = PartialQuantifierElimination.elim(m_Script, QuantifiedFormula.EXISTS, cvb.getAuxVars(), resultDisjuntion, mServices, mLogger);
+			Term result = PartialQuantifierElimination.elim(m_Script, QuantifiedFormula.EXISTS, auxVars, resultDisjuntion, mServices, mLogger);
 			
 			assert SmtUtils.isArrayFree(result);
 			result = SmtUtils.simplify(m_Script, result, mLogger);
 			
 			m_Result.setFormula(result);
-			m_Result.addAuxVars(cvb.getAuxVars());
+			m_Result.addAuxVars(auxVars);
 	}
 	
 	
@@ -188,7 +204,7 @@ public class TransFormulaLRWithArrayCells {
 
 
 
-	public void addForeignReplacementVars(ArrayCellRepVarConstructor arrayCellRepVarConstructor) {
+	private void addForeignReplacementVars(ArrayCellRepVarConstructor arrayCellRepVarConstructor) {
 		NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> array2Index2RepVar = 
 				arrayCellRepVarConstructor.getArrayRepresentative2IndexRepresentative2ReplacementVar();
 		for (TermVariable array : array2Index2RepVar.keySet()) {
@@ -214,7 +230,9 @@ public class TransFormulaLRWithArrayCells {
 					addRankVar(rv);
 				}
 			}
+			TermVariable translatedArray = (TermVariable) tflrwai.getTransFormulaLR().getInVars().get(acrvi.getArrayRankVar());
 			List<Term> translatedIndex = translateIndex(acrvi.getIndex(), acrvi.termVariableToRankVarMappingForIndex());
+			m_FirstGeneration2Indices.addPair(translatedArray, translatedIndex);
 		}
 	}
 	

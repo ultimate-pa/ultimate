@@ -140,4 +140,8 @@ public class ArrayCellReplacementVarInformation {
 		return result;
 	}
 	
+	public RankVar getArrayRankVar() {
+		return m_TransFormulaLR.getInVarsReverseMapping().get(m_ArrayInstance);
+	}
+	
 }

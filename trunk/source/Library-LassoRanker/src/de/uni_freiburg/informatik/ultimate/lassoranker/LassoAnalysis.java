@@ -269,14 +269,14 @@ public class LassoAnalysis {
 				new StemAndLoopPreProcessor(new MatchInVars(m_Boogie2SMT.getVariableManager())),
 				new StemAndLoopPreProcessor(new AddAxioms(m_axioms)),
 				new LassoPartitioneer(mServices),
-				new RewriteArrays(
-						m_ArrayIndexSupportingInvariants,
-						overapproximateArrayIndexConnection,
-						m_stem_transition,
-						m_loop_transition,
-						mServices
-				),
-//				new RewriteArrays2(overapproximateArrayIndexConnection, m_stem_transition, m_loop_transition, mServices, m_ArrayIndexSupportingInvariants),
+//				new RewriteArrays(
+//						m_ArrayIndexSupportingInvariants,
+//						overapproximateArrayIndexConnection,
+//						m_stem_transition,
+//						m_loop_transition,
+//						mServices
+//				),
+				new RewriteArrays2(overapproximateArrayIndexConnection, m_stem_transition, m_loop_transition, mServices, m_ArrayIndexSupportingInvariants),
 				new StemAndLoopPreProcessor(new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
 				new StemAndLoopPreProcessor(new RewriteBooleans(lassoBuilder.getReplacementVarFactory(), lassoBuilder.getScript())),
 				new StemAndLoopPreProcessor(new RewriteIte()),

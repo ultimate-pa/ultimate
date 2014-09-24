@@ -494,7 +494,7 @@ public class TransFormulaLRWithArrayInformation {
 					boolean isInVarCell = this.isInVarCell(instance, index);
 					boolean isOutVarCell = this.isOutVarCell(instance, index);
 					if (isInVarCell || isOutVarCell) {
-						TermVariable arrayRepresentative = (TermVariable) this.getDefinition(firstGeneration);
+						TermVariable arrayRepresentative = (TermVariable) this.getDefinition(instance);
 						List<Term> indexRepresentative = this.getOrConstructIndexRepresentative(index);
 						if (isInVarCell) {
 							ArrayCellReplacementVarInformation acrvi = 

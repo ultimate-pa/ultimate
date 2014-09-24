@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
+import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 
 public class CellVariableBuilder {
 	private final Map<TermVariable, Map<List<Term>, TermVariable>> m_ArrayInstance2Index2CellVariable;
@@ -53,15 +55,22 @@ public class CellVariableBuilder {
 	private final TransFormulaLRWithArrayCells tflrwac;
 	private final ReplacementVarFactory m_ReplacementVarFactory;
 	private final Logger mLogger;
+	private final HashRelation<TermVariable, List<Term>> m_FirstGeneration2Indices;
+	private NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> m_ArrayCellInVars;
+	private NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> m_ArrayCellOutVars;
 
-	public CellVariableBuilder(TransFormulaLR tf, TransFormulaLRWithArrayCells tflrwac, ReplacementVarFactory replacementVarFactory, Logger logger) {
+
+	public CellVariableBuilder(TransFormulaLR tf, TransFormulaLRWithArrayCells tflrwac, ReplacementVarFactory replacementVarFactory, Logger logger, HashRelation<TermVariable, List<Term>> firstGeneration2Indices, NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> arrayCellInVars, NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> arrayCellOutVars) {
 		m_ReplacementVarFactory = replacementVarFactory;
 		mLogger = logger;
 		m_TransFormula = tf;
+		m_FirstGeneration2Indices = firstGeneration2Indices;
 		this.tflrwac = tflrwac;
 		this.tflrwai = tflrwac.getTransFormulaLRWithArrayInformation();
 		m_ArrayInstance2Index2CellVariable = new HashMap<TermVariable, Map<List<Term>, TermVariable>>();
 		m_Array2Index2RepVar = new HashMap<TermVariable, Map<List<Term>, ReplacementVar>>();
+		m_ArrayCellInVars = arrayCellInVars;
+		m_ArrayCellOutVars = arrayCellOutVars;
 		dotSomething();
 	}
 
@@ -82,12 +91,12 @@ public class CellVariableBuilder {
 					index2ArrayCellTv = new HashMap<List<Term>, TermVariable>();
 					m_ArrayInstance2Index2CellVariable.put(instance, index2ArrayCellTv);
 				}
-				Set<List<Term>> indicesOfOriginalGeneration = tflrwai.getArrayFirstGeneration2Indices().getImage(firstGeneration);
-				if (indicesOfOriginalGeneration == null) {
+				Set<List<Term>> indicesOfFirstGeneration = m_FirstGeneration2Indices.getImage(firstGeneration);
+				if (indicesOfFirstGeneration == null) {
 					mLogger.info("Array " + firstGeneration + " is never accessed");
 					continue;
 				}
-				for (List<Term> index : indicesOfOriginalGeneration) {
+				for (List<Term> index : indicesOfFirstGeneration) {
 					TermVariable tv = index2ArrayCellTv.get(index);
 					if (tv == null) {
 						tv = constructTermVariable(instance, index);
@@ -96,22 +105,32 @@ public class CellVariableBuilder {
 					boolean isInVarCell = isInVarCell(instance, index);
 					boolean isOutVarCell = isOutVarCell(instance, index);
 					if (isInVarCell || isOutVarCell) {
-						TermVariable arrayRepresentative = (TermVariable) tflrwai.getDefinition(firstGeneration);
+						TermVariable arrayRepresentative = (TermVariable) tflrwai.getDefinition(instance);
 						List<Term> indexRepresentative = tflrwai.getOrConstructIndexRepresentative(index);
 						if (isInVarCell) {
-							ReplacementVar rv = tflrwac.getTransFormulaLRWithArrayInformation().getArrayCellInVars().get(arrayRepresentative, indexRepresentative).getReplacementVar();
-							if (!m_TransFormula.getInVars().containsKey(rv)) {
+							ReplacementVar rv = m_ArrayCellInVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
+							TermVariable inVar = (TermVariable) m_TransFormula.getInVars().get(rv);
+							if (inVar == null) {
 								m_TransFormula.addInVar(rv, tv);
 							} else {
-								assert m_TransFormula.getInVars().get(rv) == tv;
+								// case where two TermVariables have the same
+								// ReplacementVar is also possible e.g. if there
+								// is an array equality, see 
+								// SyntaxSupportArrays20-ArrayEquality.bpl
+								addToAuxVars(tv);
 							}
 						}
 						if (isOutVarCell) {
-							ReplacementVar rv = tflrwac.getTransFormulaLRWithArrayInformation().getArrayCellOutVars().get(arrayRepresentative, indexRepresentative).getReplacementVar();
-							if (!m_TransFormula.getOutVars().containsKey(rv)) {
+							ReplacementVar rv = m_ArrayCellOutVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
+							TermVariable outVar = (TermVariable) m_TransFormula.getOutVars().get(rv);
+							if (outVar == null) {
 								m_TransFormula.addOutVar(rv, tv);
 							} else {
-								assert m_TransFormula.getOutVars().get(rv) == tv;
+								// case where two TermVariables have the same
+								// ReplacementVar is also possible e.g. if there
+								// is an array equality, see 
+								// SyntaxSupportArrays20-ArrayEquality.bpl
+								addToAuxVars(tv);
 							}
 						}
 					} else {

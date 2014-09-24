@@ -187,11 +187,11 @@ public class IndexSupportingInvariantAnalysis {
 		return unknownDoubletons.containsDoubleton(t1, t2);
 	}
 	
-	public Term getAdditionalConjunctsEqualities() {
-		return Util.and(m_Script, m_EqualitySupportingInvariants.toArray(new Term[m_EqualitySupportingInvariants.size()]));
+	public List<Term> getAdditionalConjunctsEqualities() {
+		return m_EqualitySupportingInvariants;
 	}
 	
-	public Term getAdditionalConjunctsNotEquals() {
-		return Util.and(m_Script, m_NotEqualsSupportingInvariants.toArray(new Term[m_NotEqualsSupportingInvariants.size()]));
+	public List<Term> getAdditionalConjunctsNotEquals() {
+		return m_NotEqualsSupportingInvariants;
 	}
 }

@@ -80,4 +80,11 @@ public class NestedMap2<K1, K2, V> {
 		}
 		return result;
 	}
+
+	public void addAll(NestedMap2<K1, K2, V> nestedMap) {
+		for (Triple<K1, K2, V> triple : nestedMap.entrySet()) {
+			this.put(triple.getFirst(), triple.getSecond(), triple.getThird());
+		}
+	}
+
 }
