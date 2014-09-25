@@ -171,7 +171,7 @@ public class LiveVariables {
 		@SuppressWarnings("unchecked")
 		Set<Term>[] result = new Set[m_TraceWithConstants.getTrace().length() + 1];
 		{
-			HashSet<Term> liveConstants = new HashSet<Term>(m_ConstantsForEachPosition[result.length - 1]);
+			HashSet<Term> liveConstants = new HashSet<Term>(m_ConstantsForEachPosition[result.length]);
 			removeConstantsWithIndex_i(liveConstants, result.length - 1);
 			result[result.length - 1] = liveConstants;
 		}
