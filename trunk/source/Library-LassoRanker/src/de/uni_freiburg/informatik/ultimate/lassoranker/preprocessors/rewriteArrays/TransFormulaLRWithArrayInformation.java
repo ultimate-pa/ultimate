@@ -434,7 +434,7 @@ public class TransFormulaLRWithArrayInformation {
 				for (MultiDimensionalSelect ar : m_ArrayReads.get(i)) {
 					TermVariable firstGeneration = m_ArrayGenealogy[i].getProgenitor((TermVariable) ar.getArray());
 					Term[] index = ar.getIndex();
-					m_ArrayFirstGeneration2Indices.addPair(firstGeneration, Arrays.asList(index));
+					addFirstGenerationIndexPair(firstGeneration, index);
 				}
 			}
 		}
