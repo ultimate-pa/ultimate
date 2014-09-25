@@ -104,16 +104,14 @@ public class IndexAnalyzer2 {
 					List<Term> fstIndex = testArr[i];
 					List<Term> sndIndex = testArr[j];
 					assert fstIndex.size() == sndIndex.size();
-					boolean fstIndexIsInvarIndexOrOutVarIndex = 
-								RewriteArrays.allVariablesAreInVars(fstIndex, m_TransFormula) ||
-								RewriteArrays.allVariablesAreOutVars(fstIndex, m_TransFormula);
+					boolean fstIndexIsInvarIndex = 
+								RewriteArrays.allVariablesAreInVars(fstIndex, m_TransFormula);
 					boolean sndIndexIsInvarIndexOrOutVarIndex = 
-								RewriteArrays.allVariablesAreInVars(sndIndex, m_TransFormula) ||
-								RewriteArrays.allVariablesAreOutVars(sndIndex, m_TransFormula);
-					boolean isInvarOrOutvarPair = fstIndexIsInvarIndexOrOutVarIndex && 
+								RewriteArrays.allVariablesAreInVars(sndIndex, m_TransFormula);
+					boolean isInvarPair = fstIndexIsInvarIndex && 
 								sndIndexIsInvarIndexOrOutVarIndex;
 					for (int k=0; k<fstIndex.size(); k++) {
-						markForComparison(fstIndex.get(k), sndIndex.get(k), isInvarOrOutvarPair);
+						markForComparison(fstIndex.get(k), sndIndex.get(k), isInvarPair);
 					}
 				}
 			}
@@ -173,7 +171,10 @@ public class IndexAnalyzer2 {
 	private void processInVarDoubletons() {
 		for (Doubleton<Term> doubleton : inVarDoubletons.elements()) {
 			Doubleton<Term> definingDoubleton = constructDefiningDoubleton(doubleton);
-			if (m_IndexSupportingInvariantAnalysis.isEqualDoubleton(definingDoubleton.getOneElement(), definingDoubleton.getOtherElement())) {
+			if (definingDoubleton.getOneElement() == definingDoubleton.getOtherElement()) {
+				// trivially equal
+				addEqualDoubleton(doubleton);
+			} else if (m_IndexSupportingInvariantAnalysis.isEqualDoubleton(definingDoubleton.getOneElement(), definingDoubleton.getOtherElement())) {
 				addEqualDoubleton(doubleton);
 			} else if (m_IndexSupportingInvariantAnalysis.isDistinctDoubleton(definingDoubleton.getOneElement(), definingDoubleton.getOtherElement())) {
 				addDistinctDoubleton(doubleton);
@@ -220,12 +221,16 @@ public class IndexAnalyzer2 {
 	}
 	
 	private void markForComparison(Term term1, Term term2, boolean isInvarOrOutvarPair) {
-		Doubleton<Term> Doubleton = new Doubleton<Term>(term1, term2);
-		if (isInvarOrOutvarPair) {
-			inVarDoubletons.addDoubleton(Doubleton);
-		} else {
-			nonInvarDoubletons.addDoubleton(Doubleton);
-		}
+//		if (term1 == term2) {
+//			// do nothing, omit this pair
+//		} else {
+			Doubleton<Term> Doubleton = new Doubleton<Term>(term1, term2);
+			if (isInvarOrOutvarPair) {
+				inVarDoubletons.addDoubleton(Doubleton);
+			} else {
+				nonInvarDoubletons.addDoubleton(Doubleton);
+			}
+//		}
 	}
 	
 	public enum Equality { EQUAL, NOT_EQUAL, UNKNOWN };
