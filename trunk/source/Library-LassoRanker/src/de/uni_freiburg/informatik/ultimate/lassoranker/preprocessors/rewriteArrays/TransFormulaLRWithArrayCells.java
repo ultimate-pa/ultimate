@@ -187,7 +187,8 @@ public class TransFormulaLRWithArrayCells {
 			Term resultDisjuntion = Util.or(m_Script, disjunctsWithUpdateConstraints);
 			HashSet<TermVariable> auxVars = new HashSet<TermVariable>(cvb.getAuxVars());
 
-			Term result = PartialQuantifierElimination.elim(m_Script, QuantifiedFormula.EXISTS, auxVars, resultDisjuntion, mServices, mLogger);
+			Term result = //resultDisjuntion;
+					PartialQuantifierElimination.elim(m_Script, QuantifiedFormula.EXISTS, auxVars, resultDisjuntion, mServices, mLogger);
 			
 			assert SmtUtils.isArrayFree(result);
 			result = SmtUtils.simplify(m_Script, result, mLogger);
@@ -223,7 +224,7 @@ public class TransFormulaLRWithArrayCells {
 		for (Triple<TermVariable, List<Term>, ArrayCellReplacementVarInformation> triple  : m_ForeignReplacementVars.entrySet()) {
 			ArrayCellReplacementVarInformation acrvi = triple.getThird();
 			assert acrvi.getArrayRepresentative().equals(triple.getFirst());
-			assert acrvi.getIndex().equals(triple.getSecond());
+			assert acrvi.getIndexRepresentative().equals(triple.getSecond());
 			Collection<RankVar> rankVarsOccurringInIndex = acrvi.termVariableToRankVarMappingForIndex().values();
 			for (RankVar rv : rankVarsOccurringInIndex) {
 				if (!rankVarOccursInThisTransformula(rv, tflrwai.getTransFormulaLR())) {
