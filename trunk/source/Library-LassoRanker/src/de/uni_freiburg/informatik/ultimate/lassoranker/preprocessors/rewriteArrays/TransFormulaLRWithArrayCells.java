@@ -190,7 +190,7 @@ public class TransFormulaLRWithArrayCells {
 			Term result = //resultDisjuntion;
 					PartialQuantifierElimination.elim(m_Script, QuantifiedFormula.EXISTS, auxVars, resultDisjuntion, mServices, mLogger);
 			
-			assert SmtUtils.isArrayFree(result);
+			assert SmtUtils.isArrayFree(result) : "Result contains still arrays!";
 			result = SmtUtils.simplify(m_Script, result, mLogger);
 			
 			m_Result.setFormula(result);
