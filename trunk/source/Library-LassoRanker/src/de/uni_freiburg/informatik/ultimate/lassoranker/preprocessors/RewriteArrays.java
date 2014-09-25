@@ -650,7 +650,7 @@ public class RewriteArrays extends LassoPreProcessor {
 
 	}
 
-	private static boolean allVariablesAreInVars(List<Term> terms, TransFormulaLR tf) {
+	public static boolean allVariablesAreInVars(List<Term> terms, TransFormulaLR tf) {
 		for (Term term : terms) {
 			if (!allVariablesAreInVars(term, tf)) {
 				return false;
@@ -659,7 +659,7 @@ public class RewriteArrays extends LassoPreProcessor {
 		return true;
 	}
 
-	private static boolean allVariablesAreOutVars(List<Term> terms, TransFormulaLR tf) {
+	public static boolean allVariablesAreOutVars(List<Term> terms, TransFormulaLR tf) {
 		for (Term term : terms) {
 			if (!allVariablesAreOutVars(term, tf)) {
 				return false;

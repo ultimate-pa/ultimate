@@ -104,8 +104,16 @@ public class IndexAnalyzer2 {
 					List<Term> fstIndex = testArr[i];
 					List<Term> sndIndex = testArr[j];
 					assert fstIndex.size() == sndIndex.size();
+					boolean fstIndexIsInvarIndexOrOutVarIndex = 
+								RewriteArrays.allVariablesAreInVars(fstIndex, m_TransFormula) ||
+								RewriteArrays.allVariablesAreOutVars(fstIndex, m_TransFormula);
+					boolean sndIndexIsInvarIndexOrOutVarIndex = 
+								RewriteArrays.allVariablesAreInVars(sndIndex, m_TransFormula) ||
+								RewriteArrays.allVariablesAreOutVars(sndIndex, m_TransFormula);
+					boolean isInvarOrOutvarPair = fstIndexIsInvarIndexOrOutVarIndex && 
+								sndIndexIsInvarIndexOrOutVarIndex;
 					for (int k=0; k<fstIndex.size(); k++) {
-						markForComparison(fstIndex.get(k), sndIndex.get(k));
+						markForComparison(fstIndex.get(k), sndIndex.get(k), isInvarOrOutvarPair);
 					}
 				}
 			}
@@ -211,10 +219,9 @@ public class IndexAnalyzer2 {
 		}
 	}
 	
-	private void markForComparison(Term term1, Term term2) {
+	private void markForComparison(Term term1, Term term2, boolean isInvarOrOutvarPair) {
 		Doubleton<Term> Doubleton = new Doubleton<Term>(term1, term2);
-		if (RewriteArrays.allVariablesAreInVars(term1, m_TransFormula)
-				&& RewriteArrays.allVariablesAreInVars(term2, m_TransFormula)) {
+		if (isInvarOrOutvarPair) {
 			inVarDoubletons.addDoubleton(Doubleton);
 		} else {
 			nonInvarDoubletons.addDoubleton(Doubleton);
