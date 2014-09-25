@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -151,7 +152,7 @@ public class IndexAnalyzer {
 		}
 
 		m_Script.push(1);
-		Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(m_Script, m_boogie2smt.getVariableManager(), termWithAdditionalInvariants.getFreeVars());
+		Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(m_Script, m_boogie2smt.getVariableManager(), Arrays.asList(termWithAdditionalInvariants.getFreeVars()));
 		SafeSubstitution subst = new SafeSubstitution(m_Script, substitutionMapping);
 		m_Script.assertTerm(subst.transform(termWithAdditionalInvariants));
 		for (Doubleton<Term> Doubleton : allDoubletons.elements()) {

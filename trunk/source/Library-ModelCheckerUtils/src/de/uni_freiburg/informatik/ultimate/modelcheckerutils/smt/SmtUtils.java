@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -264,7 +265,7 @@ public class SmtUtils {
 	}
 	
 	public static Map<Term, Term> termVariables2Constants(Script script, 
-			VariableManager variableManager, TermVariable[] termVariables) {
+			VariableManager variableManager, Collection<TermVariable> termVariables) {
 		Map<Term, Term> mapping = new HashMap<Term, Term>();
 		for (TermVariable tv : termVariables) {
 			Term constant = variableManager.getCorrespondingConstant(tv);

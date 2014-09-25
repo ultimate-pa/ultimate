@@ -27,6 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 public class IndexAnalyzer2 {
 	private final SetOfDoubletons<Term> nonInvarDoubletons = new SetOfDoubletons<>();
@@ -123,7 +127,10 @@ public class IndexAnalyzer2 {
 
 	private void processNonInvarDoubletons(Term termWithAdditionalInvariants) {
 		m_Script.push(1);
-		Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(m_Script, m_boogie2smt.getVariableManager(), termWithAdditionalInvariants.getFreeVars());
+		Set<TermVariable> allTvs = new HashSet<>(Arrays.asList(termWithAdditionalInvariants.getFreeVars()));
+		allTvs.addAll(Utils.filter(m_TransFormula.getInVarsReverseMapping().keySet(), TermVariable.class));
+		allTvs.addAll(Utils.filter(m_TransFormula.getOutVarsReverseMapping().keySet(), TermVariable.class));
+		Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(m_Script, m_boogie2smt.getVariableManager(), allTvs);
 		SafeSubstitution subst = new SafeSubstitution(m_Script, substitutionMapping);
 		m_Script.assertTerm(subst.transform(termWithAdditionalInvariants));
 		for (Doubleton<Term> Doubleton : nonInvarDoubletons.elements()) {
@@ -153,6 +160,8 @@ public class IndexAnalyzer2 {
 		m_Script.pop(1);
 	}
 	
+
+
 	private void processInVarDoubletons() {
 		for (Doubleton<Term> doubleton : inVarDoubletons.elements()) {
 			Doubleton<Term> definingDoubleton = constructDefiningDoubleton(doubleton);
