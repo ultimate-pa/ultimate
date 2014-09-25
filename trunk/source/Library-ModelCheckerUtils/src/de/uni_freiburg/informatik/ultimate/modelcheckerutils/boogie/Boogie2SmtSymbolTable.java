@@ -265,15 +265,29 @@ public class Boogie2SmtSymbolTable {
 	}
 	
 	private void declareSpecImpl(Procedure spec, Procedure impl) {
-		assert (spec == impl || isSpecAndImpl(spec, impl));
 		String procId = spec.getIdentifier();
 		assert procId.equals(impl.getIdentifier());
+		DeclarationInformation declInfoInParam;
+		DeclarationInformation declInfoOutParam;
+		if (spec == impl) {
+			// implementation is given in procedure declaration, in this case
+			// we consider all in/out-params as procedure variables
+			declInfoInParam = new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procId);
+			declInfoOutParam = new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, procId);
+		} else {
+			assert (isSpecAndImpl(spec, impl));
+			// implementation is given in a separate declaration, in this case
+			// we consider all in/out-params as implementation variables
+			declInfoInParam = new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procId);
+			declInfoOutParam = new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, procId);
+			
+		}
 		declareParams(procId, spec.getInParams(), impl.getInParams(), 
 				m_SpecificationInParam, m_ImplementationInParam, 
-				new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procId));
+				declInfoInParam);
 		declareParams(procId, spec.getOutParams(), impl.getOutParams(), 
 				m_SpecificationOutParam, m_ImplementationOutParam, 
-				new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, procId));
+				declInfoOutParam);
 		declareLocals(impl);
 	}
 	
