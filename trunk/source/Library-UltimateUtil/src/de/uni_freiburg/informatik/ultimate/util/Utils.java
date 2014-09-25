@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.util;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
@@ -123,5 +124,20 @@ public class Utils {
 		default:
 			throw new UnsupportedOperationException(unit + " TimeUnit not yet implemented");
 		}
+	}
+	
+	
+	/**
+	 * Filter Collection to all elements that are subclasses of clazz.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <E> Collection<E> filter(Collection<?> iterable, Class<E> clazz) {
+		ArrayList<E> filteredList = new ArrayList<E>();
+		for (Object e: iterable) {
+			if (clazz.isAssignableFrom(e.getClass())) {
+				filteredList.add((E) e);
+			}
+		}
+		return filteredList;
 	}
 }
