@@ -105,8 +105,8 @@ public class CellVariableBuilder {
 					boolean isInVarCell = isInVarCell(instance, index);
 					boolean isOutVarCell = isOutVarCell(instance, index);
 					if (isInVarCell || isOutVarCell) {
-						TermVariable arrayRepresentative = (TermVariable) tflrwai.getDefinition(instance);
-						List<Term> indexRepresentative = tflrwai.getOrConstructIndexRepresentative(index);
+						TermVariable arrayRepresentative = (TermVariable) TransFormulaUtils.getDefinition(m_TransFormula, instance);
+						List<Term> indexRepresentative = tflrwac.getOrConstructIndexRepresentative(index);
 						if (isInVarCell) {
 							ReplacementVar rv = m_ArrayCellInVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
 							TermVariable inVar = (TermVariable) m_TransFormula.getInVars().get(rv);

@@ -213,7 +213,7 @@ public class TransFormulaLRWithArrayInformation {
 	public List<Term> getOrConstructIndexRepresentative(List<Term> indexInstance) {
 		List<Term> indexRepresentative = m_IndexInstance2IndexRepresentative.get(indexInstance);
 		if (indexRepresentative == null) {
-			indexRepresentative = translateTermVariablesToDefinitions(indexInstance);
+			indexRepresentative = TransFormulaUtils.translateTermVariablesToDefinitions(m_Script, m_TransFormulaLR, indexInstance);
 			m_IndexInstance2IndexRepresentative.put(indexInstance, indexRepresentative);
 		}
 		return indexRepresentative;
@@ -494,7 +494,7 @@ public class TransFormulaLRWithArrayInformation {
 					boolean isInVarCell = this.isInVarCell(instance, index);
 					boolean isOutVarCell = this.isOutVarCell(instance, index);
 					if (isInVarCell || isOutVarCell) {
-						TermVariable arrayRepresentative = (TermVariable) this.getDefinition(instance);
+						TermVariable arrayRepresentative = (TermVariable) TransFormulaUtils.getDefinition(m_TransFormulaLR, instance);
 						List<Term> indexRepresentative = this.getOrConstructIndexRepresentative(index);
 						if (isInVarCell) {
 							ArrayCellReplacementVarInformation acrvi = 
@@ -556,32 +556,6 @@ public class TransFormulaLRWithArrayInformation {
 	}
 
 
-	public Term getDefinition(TermVariable tv) {
-		RankVar rv = getTransFormulaLR().getInVarsReverseMapping().get(tv);
-		if (rv == null) {
-			rv = getTransFormulaLR().getOutVarsReverseMapping().get(tv);
-		}
-		if (rv == null) {
-			throw new AssertionError();
-		}
-		return rv.getDefinition();
-	}
 
-	private List<Term> translateTermVariablesToDefinitions(List<Term> terms) {
-		List<Term> result = new ArrayList<Term>();
-		for (Term term : terms) {
-			result.add(translateTermVariablesToDefinitions(term));
-		}
-		return result;
-	}
-	
-	private Term translateTermVariablesToDefinitions(Term term) {
-		Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-		for (TermVariable tv : term.getFreeVars()) {
-			Term definition = getDefinition(tv);
-			substitutionMapping.put(tv, definition);
-		}
-		return (new SafeSubstitution(m_Script, substitutionMapping)).transform(term);
-	}
 
 }

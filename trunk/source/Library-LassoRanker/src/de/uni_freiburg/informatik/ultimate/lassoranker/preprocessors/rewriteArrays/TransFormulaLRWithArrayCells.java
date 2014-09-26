@@ -40,6 +40,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.ArrayCellReplacementVarInformation.VarType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
@@ -105,6 +106,8 @@ public class TransFormulaLRWithArrayCells {
 	private IndexAnalyzer2 indexAnalyzer;
 	private NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> m_ArrayCellInVars;
 	private NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> m_ArrayCellOutVars;
+	
+	private final Map<List<Term>, List<Term>> m_IndexInstance2IndexRepresentative = new HashMap<>();
 
 	public TransFormulaLRWithArrayCells(
 			IUltimateServiceProvider services, 
@@ -197,6 +200,15 @@ public class TransFormulaLRWithArrayCells {
 			m_Result.addAuxVars(auxVars);
 	}
 	
+	public List<Term> getOrConstructIndexRepresentative(List<Term> indexInstance) {
+		List<Term> indexRepresentative = m_IndexInstance2IndexRepresentative.get(indexInstance);
+		if (indexRepresentative == null) {
+			indexRepresentative = TransFormulaUtils.translateTermVariablesToDefinitions(m_Script, m_Result, indexInstance);
+			m_IndexInstance2IndexRepresentative.put(indexInstance, indexRepresentative);
+		}
+		return indexRepresentative;
+	}
+	
 	
 	
 	public TransFormulaLRWithArrayInformation getTransFormulaLRWithArrayInformation() {
@@ -227,7 +239,7 @@ public class TransFormulaLRWithArrayCells {
 			assert acrvi.getIndexRepresentative().equals(triple.getSecond());
 			Collection<RankVar> rankVarsOccurringInIndex = acrvi.termVariableToRankVarMappingForIndex().values();
 			for (RankVar rv : rankVarsOccurringInIndex) {
-				if (!rankVarOccursInThisTransformula(rv, tflrwai.getTransFormulaLR())) {
+				if (!rankVarOccursInThisTransformula(rv, m_Result)) {
 					addRankVar(rv);
 				}
 			}
