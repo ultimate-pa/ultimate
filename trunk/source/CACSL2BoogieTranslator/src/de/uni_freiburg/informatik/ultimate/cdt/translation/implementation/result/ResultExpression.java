@@ -49,7 +49,7 @@ public class ResultExpression extends Result {
 	 * Declaration list. Some translations need to declare some temporary
 	 * variables, which we do here.
 	 */
-	public final ArrayList<Declaration> decl;
+	public final ArrayList<Declaration> decl; //FIXME: could we also use the more special type VariableDeclaration here??
 
 	/**
 	 * A list of overapproximation flags.

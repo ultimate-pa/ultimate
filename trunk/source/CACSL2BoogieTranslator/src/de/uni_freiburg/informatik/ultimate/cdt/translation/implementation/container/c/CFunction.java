@@ -35,8 +35,8 @@ public class CFunction extends CType {
 		sb.append("CFunction: ");
 		String times = "";
 		for (int i = 0; i < mParamTypes.length; i++) {
-			sb.append(mParamTypes[i].toString());
 			sb.append(times);
+			sb.append(mParamTypes[i].getType().toString());
 			times = " x ";
 		}
 		if (mTakesVarArgs)
@@ -61,5 +61,21 @@ public class CFunction extends CType {
 			result &= this.mParamTypes[i].getType().equals(other.mParamTypes[i].getType());
 		result &= this.mTakesVarArgs == other.mTakesVarArgs;
 		return result;
+	}
+	
+	public String functionSignatureAsProcedureName() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("##fun~");
+		String times = "";
+		for (int i = 0; i < mParamTypes.length; i++) {
+			sb.append(times);
+			sb.append(mParamTypes[i].getType().toString());
+			times = "~X~";
+		}
+		if (mTakesVarArgs)
+			sb.append("X~varArgs~");
+		sb.append("~TO~");
+		sb.append(mResultType.toString());
+		return sb.toString();
 	}
 }

@@ -126,6 +126,13 @@ public class FunctionHandler {
 	private Dispatcher mDispatcher;
 
 	/**
+	 * Herein the function Signatures (as a CFunction) are stored for which
+	 * a boogie procedure has to be created in the postProcessor that deals
+	 * with the function pointer calls that can happen.
+	 */
+	LinkedHashSet<CFunction> functionSignaturesThatHaveAFunctionPointer;
+
+	/**
 	 * Constructor.
 	 */
 	public FunctionHandler(Dispatcher dispatch) {
@@ -140,6 +147,7 @@ public class FunctionHandler {
 				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
 				getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MemoryLeakInMain);
 		mDispatcher = dispatch;
+		this.functionSignaturesThatHaveAFunctionPointer = new LinkedHashSet<>();
 	}
 
 	/**
@@ -207,10 +215,24 @@ public class FunctionHandler {
 		String methodName = cDec.getName();
 		CFunction funcType = (CFunction) cDec.getType();
 		
+	
+		addAProcedure(main, loc, contract, methodName, funcType);
+		
+
+		return new ResultSkip();
+	}
+
+	/**
+	 * Add a procedure to procedures according to a given CFunction. 
+	 * I.e. do a procedure declaration.
+	 */
+	private void addAProcedure(Dispatcher main, ILocation loc,
+			List<ACSLNode> contract, String methodName,
+			CFunction funcType) {
 		// begin new scope for retranslation of ACSL specification
 		main.cHandler.beginScope();
-		
-		VarList[] in = processInParams(main, loc, cDec, methodName);
+	
+		VarList[] in = processInParams(main, loc, funcType, methodName);
 		
 		// OUT VARLIST : only one out param in C
 		VarList[] out = new VarList[1];
@@ -259,10 +281,8 @@ public class FunctionHandler {
 					
 		procedures.put(methodName, proc);
 		updateCFunction(methodName, funcType.getResultType(), null, null, funcType.takesVarArgs());
-		
 		// end scope for retranslation of ACSL specification
 		main.cHandler.endScope();
-		return new ResultSkip();
 	}
 
 	/**
@@ -607,7 +627,7 @@ public class FunctionHandler {
 
 		updateCFunction(methodName, returnCType, null, null, false);
 		
-		VarList[] in = processInParams(main, loc, cDec, methodName);
+		VarList[] in = processInParams(main, loc, (CFunction) cDec.getType(), methodName);
         
 		VarList[] out = new VarList[1];
 		ASTType type = main.typeHandler.ctype2asttype(loc, returnCType);
@@ -747,9 +767,10 @@ public class FunctionHandler {
 	 * @return
 	 */
 	private VarList[] processInParams(Dispatcher main, ILocation loc,
-			CDeclaration decl, String methodName) {
+			CFunction cFun, String methodName) {
         CDeclaration[] paramDecs =
-                ((CFunction) decl.getType()).getParameterTypes();
+//                ((CFunction) decl.getType()).getParameterTypes();
+        		cFun.getParameterTypes();
 		VarList[] in  = new VarList[paramDecs.length];
         for (int i = 0; i < paramDecs.length; ++i) {
         	CDeclaration paramDec = paramDecs[i];
@@ -862,6 +883,7 @@ public class FunctionHandler {
 				structHandler, loc, methodName, arguments);
 	}
 
+
 	private Result handleFunctionPointerCall(ILocation loc, Dispatcher main,
 			MemoryHandler memoryHandler, StructHandler structHandler,
 			IASTExpression functionName, IASTInitializerClause[] arguments) {
@@ -877,22 +899,104 @@ public class FunctionHandler {
 			}
 		}
 		assert calledFuncType instanceof CFunction : "We need to unpack it further, right?";
+		CFunction calledFuncCFunction = (CFunction) calledFuncType;
+		
+		functionSignaturesThatHaveAFunctionPointer.add(calledFuncCFunction);
+
+		String procName = (calledFuncCFunction.functionSignatureAsProcedureName());
+		
+		CFunction cFuncWithFP = addFPParamToCFunction(calledFuncCFunction);
+		
+		if (!procedures.containsKey(procName)) {
+//			addAProcedure(main, loc, null, procName, calledFuncCFunction);
+			addAProcedure(main, loc, null, procName, cFuncWithFP);
+		}
+		
+		IASTInitializerClause[] newArgs = new IASTInitializerClause[arguments.length + 1];
+		for (int i = 0; i < newArgs.length - 1; i++)
+			newArgs[i] = arguments[i];
+		newArgs[newArgs.length - 1] = functionName;
+		
+		return handleFunctionCallGivenNameAndArguments(main, memoryHandler, structHandler, loc, 
+				procName, newArgs);
+//		return makeTheFunctionCallItself(main, loc, procName,
+//					new ArrayList<Statement>(), new ArrayList<Declaration>(), 
+//					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), 
+//					args);
+	}
+
+	public CFunction addFPParamToCFunction(CFunction calledFuncCFunction) {
+		CDeclaration[] newCDecs = new CDeclaration[calledFuncCFunction.getParameterTypes().length + 1];
+		for (int i = 0; i < newCDecs.length - 1; i++)
+			newCDecs[i] = calledFuncCFunction.getParameterTypes()[i];
+		newCDecs[newCDecs.length - 1] = 
+				new CDeclaration(new CPointer(new CPrimitive(PRIMITIVE.VOID)), "#fp"); //FIXME string to SFO..?
+		CFunction cFuncWithFP = new CFunction(calledFuncCFunction.getResultType(), newCDecs, false);
+		return cFuncWithFP;
+	}
 	
-//		ArrayList<Entry<String, Integer>> fittingFunctions = new ArrayList<>();
+	public Body getFunctionPointerFunctionBody(ILocation loc, Dispatcher main,
+			MemoryHandler memoryHandler, StructHandler structHandler, CFunction funcSignature, VarList[] inParams, VarList[] outParam) {
+		//FIXME this is just to keep the code for later.. (and not have syntax errors)
+		CType calledFuncType = funcSignature;
+//		IASTInitializerClause[] arguments = null;
+		RValue calledFuncRVal = null;
+		
+		//FIXME: Frage: werden am Boogie-prozedurEnde alle Vars automatisch gehavoct, aus SMTInterpol-sicht?
+		// wenn nicht: hier und an anderer stelle auxVars anpassen..
+		ArrayList<Statement> stmt = new ArrayList<>();
+		ArrayList<VariableDeclaration> decl = new ArrayList<>();
+
+
+		ArrayList<Expression> args = new ArrayList<>();
+//		for (VarList vl : inParams) {
+		for (int i = 0; i < inParams.length - 1; i++) {// the last inParam is the function pointer -> therefore "..length - 1"
+			VarList vl = inParams[i];
+			assert vl.getIdentifiers().length == 1;
+			String oldId = vl.getIdentifiers()[0];
+			String newId = oldId.replaceFirst("in", "");
+			decl.add(new VariableDeclaration(loc, 
+					new Attribute[0], 
+					new VarList[] { new VarList(loc, new String[] { newId }, vl.getType()) }));
+			stmt.add(new AssignmentStatement(loc, 
+					new LeftHandSide[] { new VariableLHS(loc, newId) }, 
+					new Expression[] { new IdentifierExpression(loc, oldId) } ));
+			args.add(new IdentifierExpression(loc, newId));
+		}
+
 		ArrayList<String> fittingFunctions = new ArrayList<>();
 		for (Entry<String, Integer> en : ((MainDispatcher) main).getFunctionToIndex().entrySet()) {
 			CType ptdToFuncType = procedureToCFunctionType.get(en.getKey());
 			if (ptdToFuncType.equals(((CFunction) calledFuncType))) {
-//				fittingFunctions.add(en);
 				fittingFunctions.add(en.getKey());
 			}
 		}
 		
+		IdentifierExpression funcCallResult = null;
 		if (fittingFunctions.size() == 1) {
-			return handleFunctionCallGivenNameAndArguments(main, memoryHandler, 
-					structHandler, loc, fittingFunctions.get(0), arguments);
+			//			ResultExpression rex = (ResultExpression) handleFunctionCallGivenNameAndArguments(main, memoryHandler, 
+//					structHandler, loc, fittingFunctions.get(0), arguments);
+			ResultExpression rex = (ResultExpression) makeTheFunctionCallItself(main, loc, fittingFunctions.get(0), 
+					new ArrayList<Statement>(), new ArrayList<Declaration>(), 
+					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
+			funcCallResult = (IdentifierExpression) rex.lrVal.getValue();
+			for (Declaration dec : rex.decl)
+				decl.add((VariableDeclaration) dec);
+//			decl.addAll(rex.decl);
+			stmt.addAll(rex.stmt);
+			if (outParam.length == 1) {
+				stmt.add(new AssignmentStatement(loc, 
+						new LeftHandSide[] { new VariableLHS(loc, outParam[0].getIdentifiers()[0]) },
+						new Expression[] { funcCallResult }));
+			}
+			stmt.addAll(Dispatcher.createHavocsForAuxVars(rex.auxVars));
+			stmt.add(new ReturnStatement(loc));
+			return new Body(loc, 
+//					rex.auxVars.keySet().toArray(new VariableDeclaration[rex.auxVars.keySet().size()]), 
+					decl.toArray(new VariableDeclaration[decl.size()]),
+					stmt.toArray(new Statement[stmt.size()]));
 		} else {
-			ArrayList<Declaration> decl = new ArrayList<>();
+//			ArrayList<Declaration> decl = new ArrayList<>();
 			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 
 			String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES);
@@ -902,13 +1006,17 @@ public class FunctionHandler {
 							main.typeHandler.ctype2asttype(loc, ((CFunction) calledFuncType).getResultType())) });
 			decl.add(tmpVarDec);
 			auxVars.put(tmpVarDec, loc);
+			funcCallResult = new IdentifierExpression(loc, tmpId);
 
-			ResultExpression firstElseRex = (ResultExpression) handleFunctionCallGivenNameAndArguments(main, memoryHandler, 
-					structHandler, loc, fittingFunctions.get(0), arguments);
-//			stmt.addAll(firstElseRex.stmt);
-			decl.addAll(firstElseRex.decl);
+			ResultExpression firstElseRex = (ResultExpression) makeTheFunctionCallItself(main, loc, fittingFunctions.get(0), 
+					new ArrayList<Statement>(), new ArrayList<Declaration>(), 
+					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
+//			ResultExpression firstElseRex = (ResultExpression) handleFunctionCallGivenNameAndArguments(main, memoryHandler, 
+//					structHandler, loc, fittingFunctions.get(0), arguments);
+			for (Declaration dec : firstElseRex.decl)
+				decl.add((VariableDeclaration) dec);
+//			decl.addAll(firstElseRex.decl);
 			auxVars.putAll(firstElseRex.auxVars);
-
 
 			ArrayList<Statement> firstElseStmt = new ArrayList<>();
 			{
@@ -918,16 +1026,17 @@ public class FunctionHandler {
 						new Expression[] { firstElseRex.lrVal.getValue() });
 				firstElseStmt.add(assignment);
 			}
-//			Expression currentElseExpr = firstElseRex.lrVal.getValue();
-			
-//			Statement[] currentElseStmts = firstElseStmt.toArray(new Statement[firstElseStmt.size()]);
 			IfStatement currentIfStmt = null;
 
 			for (int i = 1; i < fittingFunctions.size(); i++) {
-				ResultExpression currentRex = (ResultExpression) handleFunctionCallGivenNameAndArguments(main, memoryHandler, 
-					structHandler, loc, fittingFunctions.get(i), arguments);
-//				stmt.addAll(currentRex.stmt);
-				decl.addAll(currentRex.decl);
+				ResultExpression currentRex = (ResultExpression) makeTheFunctionCallItself(main, loc, fittingFunctions.get(0), 
+					new ArrayList<Statement>(), new ArrayList<Declaration>(), 
+					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
+//				ResultExpression currentRex = (ResultExpression) handleFunctionCallGivenNameAndArguments(main, memoryHandler, 
+//					structHandler, loc, fittingFunctions.get(i), arguments);
+				for (Declaration dec : currentRex.decl)
+					decl.add((VariableDeclaration) dec);
+//				decl.addAll(currentRex.decl);
 				auxVars.putAll(currentRex.auxVars);			
 
 				ArrayList<Statement> newStmts = new ArrayList<>();
@@ -937,13 +1046,12 @@ public class FunctionHandler {
 					new Expression[] { currentRex.lrVal.getValue() });
 				newStmts.add(assignment);
 				
-				BinaryExpression condition = new BinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
-						calledFuncRVal.getValue(), new IdentifierExpression(loc, SFO.FUNCTION_ADDRESS + fittingFunctions.get(i)));
+				Expression condition = 
+						new BooleanLiteral(loc, true);
+//						new BinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+//						calledFuncRVal.getValue(), new IdentifierExpression(loc, SFO.FUNCTION_ADDRESS + fittingFunctions.get(i)));
 				
-//				currentElseExpr = new IfThenElseExpression(loc, new BooleanLiteral(loc, true), currentRex.lrVal.getValue(), currentElseExpr);
-				//newStmts.toArray(new Statement[newStmts.size()]));
-//				Statement[] currentElseStmts = firstElseStmt.toArray(new Statement[firstElseStmt.size()]);
-				if (i == 1) { //currentIfStmt == null)
+				if (i == 1) {
 					currentIfStmt = new IfStatement(loc, condition,
 							newStmts.toArray(new Statement[newStmts.size()]), 
 							firstElseStmt.toArray(new Statement[firstElseStmt.size()]));
@@ -954,11 +1062,21 @@ public class FunctionHandler {
 				}
 			}
 
-			ArrayList<Statement> stmt = new ArrayList<>();
+//			ArrayList<Statement> stmt = new ArrayList<>();
 			stmt.add(currentIfStmt);
-//			return new ResultExpression(stmt, new RValue(currentElseExpr, ((CFunction) calledFuncType).getResultType()), decl, auxVars);
-			return new ResultExpression(stmt, new RValue(new IdentifierExpression(loc, tmpId), 
-					((CFunction) calledFuncType).getResultType()), decl, auxVars);
+			if (outParam.length == 1) {
+				stmt.add(new AssignmentStatement(loc, 
+						new LeftHandSide[] { new VariableLHS(loc, outParam[0].getIdentifiers()[0]) },
+						new Expression[] { funcCallResult }));
+			}
+			stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
+			stmt.add(new ReturnStatement(loc));
+			return new Body(loc, 
+//					auxVars.keySet().toArray(new VariableDeclaration[auxVars.keySet().size()]), 
+					decl.toArray(new VariableDeclaration[decl.size()]),
+					stmt.toArray(new Statement[stmt.size()]));
+//			return new ResultExpression(stmt, new RValue(new IdentifierExpression(loc, tmpId), 
+//					((CFunction) calledFuncType).getResultType()), decl, auxVars);
 		}
 	}
 
@@ -999,7 +1117,6 @@ public class FunctionHandler {
 		Map<VariableDeclaration, ILocation> auxVars = 
 				new LinkedHashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-		Expression expr = null;
 
 		callGraph.get(currentProcedure.getIdentifier()).add(methodName);
 
@@ -1097,6 +1214,17 @@ public class FunctionHandler {
 			procedures.put(methodName, newProc);
 		}
 
+
+		return makeTheFunctionCallItself(main, loc, methodName, stmt, decl,
+				auxVars, overappr, args);
+	}
+
+	public Result makeTheFunctionCallItself(Dispatcher main, ILocation loc,
+			String methodName, ArrayList<Statement> stmt,
+			ArrayList<Declaration> decl,
+			Map<VariableDeclaration, ILocation> auxVars,
+			ArrayList<Overapprox> overappr, ArrayList<Expression> args) {
+		Expression expr = null;
 		Statement call;
 		if (procedures.containsKey(methodName)) {
 			VarList[] type = procedures.get(methodName).getOutParams();

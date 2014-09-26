@@ -14,6 +14,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
@@ -121,8 +122,35 @@ public class PostProcessor {
 				mDeclarationsGlobalInBoogie));
 		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler));
 		decl.addAll(functions);
+		decl.addAll(declareFunctionPointerProcedures(main, loc, functionHandler, memoryHandler, structHandler));
 		return decl;
 	}
+
+	private ArrayList<Declaration> declareFunctionPointerProcedures(
+			Dispatcher main, ILocation loc, FunctionHandler functionHandler, 
+			MemoryHandler memoryHandler, StructHandler structHandler) {
+		ArrayList<Declaration> result = new ArrayList<>();
+		for (CFunction cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
+			String procName = cFunc.functionSignatureAsProcedureName();
+			
+//			CFunction cFuncWithFP = functionHandler.addFPParamToCFunction(cFunc);
+
+			VarList[] inParams = functionHandler.getProcedures().get(procName).getInParams();
+			VarList[] outParams = functionHandler.getProcedures().get(procName).getOutParams();
+			assert outParams.length <= 1;
+			result.add(new Procedure(loc, new Attribute[0], 
+					procName, 
+					new String[0], 
+					inParams, 
+					outParams, 
+//					FIXME: it seems an odd convention that giving it "null" as Specification makes it an implementation (instead of procedure) in Boogie
+//					new Specification[0], 
+					null, 
+					functionHandler.getFunctionPointerFunctionBody(loc, main, memoryHandler, structHandler, cFunc, inParams, outParams)));
+		}
+		return result;
+	}
+
 
 	/**
 	 * Declares a type for each identifier in the set.
