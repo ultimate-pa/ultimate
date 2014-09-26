@@ -199,7 +199,11 @@ public class LassoPartitioneer extends LassoPreProcessor {
 			int dagSize = (new DAGSize()).size(tflr.getFormula());
 			sizes.add(dagSize);
 		}
-		return sizes.descendingIterator().next();
+		if (sizes.isEmpty()) {
+			return 0;
+		} else {
+			return sizes.descendingIterator().next();
+		}
 	}
 
 
