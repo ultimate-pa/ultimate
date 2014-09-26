@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteEqua
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteIte;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteStrictInequalities;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteTrueFalse;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.SimplifyPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.StemAndLoopPreProcessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
@@ -284,6 +285,7 @@ public class LassoAnalysis {
 				new StemAndLoopPreProcessor(new RewriteTrueFalse()),
 				new StemAndLoopPreProcessor(new RewriteEquality()),
 				new StemAndLoopPreProcessor(new DNF(mServices)),
+				new StemAndLoopPreProcessor(new SimplifyPreprocessor(mServices)),
 				new StemAndLoopPreProcessor(new RemoveNegation()),
 				new StemAndLoopPreProcessor(new RewriteStrictInequalities()),
 		};
