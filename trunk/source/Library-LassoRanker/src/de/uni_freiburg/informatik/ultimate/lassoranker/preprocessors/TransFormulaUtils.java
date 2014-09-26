@@ -26,11 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 
 /**
  * Some static methods for TransFormulaLR 
@@ -83,6 +89,52 @@ public class TransFormulaUtils {
 
 	public static boolean isOutvar(TermVariable tv, TransFormulaLR tf) {
 		return tf.getOutVarsReverseMapping().keySet().contains(tv);
+	}
+	
+	
+	/**
+	 * Compute the RankVar of a given TermVariable and return its definition. 
+	 */
+	public static Term getDefinition(TransFormulaLR tf, TermVariable tv) {
+		RankVar rv = tf.getInVarsReverseMapping().get(tv);
+		if (rv == null) {
+			rv = tf.getOutVarsReverseMapping().get(tv);
+		}
+		if (rv == null) {
+			return null;
+		}
+		return rv.getDefinition();
+	}
+	
+	/**
+	 * Compute the RankVar for each TermVariable that occurs in the Term term.
+	 * Return a term in which each TermVarialbe is substituted by the definition
+	 * of the RankVar.
+	 * Throws an IllegalArgumentException if there occurs term contains a
+	 * TermVariable that does not have a RankVar (e.g., an auxiliary variable).
+	 */
+	public static Term translateTermVariablesToDefinitions(Script script, 
+			TransFormulaLR tf, Term term) {
+		Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		for (TermVariable tv : term.getFreeVars()) {
+			Term definition = getDefinition(tf, tv);
+			if (definition == null) {
+				throw new IllegalArgumentException(tv + "has no RankVar");
+			}
+			substitutionMapping.put(tv, definition);
+		}
+		return (new SafeSubstitution(script, substitutionMapping)).transform(term);
+	}
+
+
+	
+	public static List<Term> translateTermVariablesToDefinitions(Script script, 
+			TransFormulaLR tf, List<Term> terms) {
+		List<Term> result = new ArrayList<Term>();
+		for (Term term : terms) {
+			result.add(translateTermVariablesToDefinitions(script, tf, term));
+		}
+		return result;
 	}
 
 
