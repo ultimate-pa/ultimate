@@ -120,6 +120,10 @@ public class TransFormula implements Serializable {
 		m_Constants = (new ConstantFinder()).findConstants(m_Formula);
 		// assert isSupersetOfOccurringConstants(m_Constants, m_Formula) :
 		// "forgotten constant";
+		
+//		if (!eachInVarOccursAsOutVar()) {
+//			System.out.println("Fixietest failed");
+//		}
 	}
 
 	public TransFormula(Term formula, Map<BoogieVar, TermVariable> inVars, Map<BoogieVar, TermVariable> outVars,
@@ -301,6 +305,15 @@ public class TransFormula implements Serializable {
 			assert result : "superfluous auxVar";
 		}
 		return result;
+	}
+	
+	private boolean eachInVarOccursAsOutVar() {
+		for (BoogieVar bv : m_InVars.keySet()) {
+			if (!m_OutVars.containsKey(bv)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public Term getFormula() {
@@ -1303,6 +1316,13 @@ public class TransFormula implements Serializable {
 			}
 			for (BoogieVar bv : outVarsToRemove) {
 				result.removeOutVar(bv);
+			}
+		}
+		{
+			for (Entry<BoogieVar, TermVariable> entry : callTf.getInVars().entrySet()) {
+				if (!result.getOutVars().containsKey(entry.getKey())) {
+					result.m_OutVars.put(entry.getKey(), entry.getValue());
+				}
 			}
 		}
 		// // Add all inVars (bv,tv) of the call to outVars of the result except
