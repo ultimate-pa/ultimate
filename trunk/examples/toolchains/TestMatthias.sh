@@ -86,6 +86,36 @@ trunk/examples/svcomp/ldv-linux-3.0/ \
 fi
 
 
+if [ "$1" = "svcompPrecise" ]; then
+echo "$1"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcompheap-manipulation/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_SvcompReachPreciseMM.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/heap-manipulation/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/BackwardPredicates_SvcompReachPreciseMM.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/list-properties/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_SvcompReachPreciseMM.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/list-properties/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/BackwardPredicates_SvcompReachPreciseMM.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/ldv-regression/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_SvcompReachPreciseMM.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/ldv-regression/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/BackwardPredicates_SvcompReachPreciseMM.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/ddv-machzwd/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_SvcompReachPreciseMM.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/ddv-machzwd/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/BackwardPredicates_SvcompReachPreciseMM.epf"
+
+fi
+
+
 
 
 if [ "$1" = "templateBenchmark" ]; then
