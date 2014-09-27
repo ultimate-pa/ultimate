@@ -20,10 +20,10 @@ import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 
 public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, Expression> {
 
-	private final List<Statement> m_Trace;
+	private final List<BoogieASTNode> m_Trace;
 	private final Map<Integer, ProgramState<Expression>> m_PartialProgramStateMapping;
 
-	public BoogieProgramExecution(List<Statement> trace,
+	public BoogieProgramExecution(List<BoogieASTNode> trace,
 			Map<Integer, ProgramState<Expression>> partialProgramStateMapping) {
 		super();
 		m_Trace = trace;
@@ -36,7 +36,7 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	}
 
 	@Override
-	public Statement getTraceElement(int i) {
+	public BoogieASTNode getTraceElement(int i) {
 		return m_Trace.get(i);
 	}
 
@@ -85,7 +85,11 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 			sb.append("statement");
 			sb.append(i);
 			sb.append(": ");
-			sb.append(BoogiePrettyPrinter.print(m_Trace.get(i)));
+			if (m_Trace.get(i) instanceof Statement) {
+				sb.append(BoogiePrettyPrinter.print((Statement) m_Trace.get(i)));
+			} else {
+				sb.append(m_Trace.get(i));
+			}
 			sb.append(lineSeparator);
 			valuation = ppstoString(getProgramState(i));
 			if (valuation != null) {
