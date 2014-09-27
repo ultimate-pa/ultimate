@@ -30,7 +30,8 @@ public class RCFGBacktranslator extends DefaultTranslator<RcfgElement, BoogieAST
 		super(RcfgElement.class, BoogieASTNode.class, Expression.class, Expression.class);
 	}
 
-	private Map<Statement, BoogieASTNode> m_CodeBlock2Statement = new HashMap<Statement, BoogieASTNode>();
+	private Map<Statement, BoogieASTNode> m_CodeBlock2Statement = 
+			new HashMap<Statement, BoogieASTNode>();
 
 	public BoogieASTNode putAux(Statement aux, BoogieASTNode source) {
 		return m_CodeBlock2Statement.put(aux, source);
@@ -42,7 +43,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RcfgElement, BoogieAST
 		List<BoogieASTNode> result = new ArrayList<BoogieASTNode>();
 		for (RcfgElement elem : cbTrace) {
 			if (elem instanceof CodeBlock) {
-				addCodeBlock((CodeBlock) elem, result);
+				addCodeBlock((CodeBlock) elem, result, null);
 			} else if (elem instanceof ProgramPoint) {
 
 			} else {
@@ -52,37 +53,74 @@ public class RCFGBacktranslator extends DefaultTranslator<RcfgElement, BoogieAST
 		return result;
 	}
 
-	private void addCodeBlock(CodeBlock cb, List<BoogieASTNode> resultTrace) {
-		if (cb instanceof StatementSequence) {
+	
+	/**
+	 * Transform a single (possibly large) CodeBlock to a list of BoogieASTNodes
+	 * and add these BoogieASTNodes to the List trace. If
+	 * <ul>
+	 * <li>if the CodeBlock contains a single Statement we add this statement
+	 * <li>if the CodeBlock is a StatementsSequence we translate all Statements
+	 * back to their original BoogieASTNodes (e.g., assume Statements might be
+	 * translated to assert Statements, assume Statements might be translated to
+	 * requires/ensures specifications)
+	 * <li>if the CodeBlock is a SequentialComposition we call this method
+	 * recursively
+	 * <li>if the CodeBlock is a ParallelComposition we ask the branchEncoders
+	 * mapping on which branch we call this method recursively. If the
+	 * branchEncoders mapping is null (occurs e.g., for traces whose feasibility
+	 * can not be determined) we call this method recursively on some branch.
+	 * </ul>
+	 */
+	private void addCodeBlock(CodeBlock cb, List<BoogieASTNode> trace, 
+			Map<TermVariable, Boolean> branchEncoders) {
+		if (cb instanceof Call) {
+			Statement st = ((Call) cb).getCallStatement();
+			trace.add(st);
+		} else if (cb instanceof Return) {
+			Statement st = ((Return) cb).getCallStatement();
+			trace.add(st);
+		} else if (cb instanceof Summary) {
+			Statement st = ((Summary) cb).getCallStatement();
+			trace.add(st);
+		} else if (cb instanceof StatementSequence) {
 			StatementSequence ss = (StatementSequence) cb;
 			for (Statement statement : ss.getStatements()) {
 				if (m_CodeBlock2Statement.containsKey(statement)) {
 					BoogieASTNode source = m_CodeBlock2Statement.get(statement);
-					resultTrace.add(source);
+					trace.add(source);
 				} else {
-					resultTrace.add(statement);
+					trace.add(statement);
 				}
 			}
 		} else if (cb instanceof SequentialComposition) {
-			SequentialComposition sc = (SequentialComposition) cb;
-			for (CodeBlock sccb : sc.getCodeBlocks()) {
-				addCodeBlock(sccb, resultTrace);
+			SequentialComposition seqComp = (SequentialComposition) cb;
+			for (CodeBlock sccb : seqComp.getCodeBlocks()) {
+				addCodeBlock(sccb, trace, branchEncoders);
 			}
-		} else if (cb instanceof Call) {
-			Call call = (Call) cb;
-			assert call.getCallStatement() != null;
-			resultTrace.add(call.getCallStatement());
-		} else if (cb instanceof Return) {
-			Return ret = (Return) cb;
-			Call correspondingCall = ret.getCorrespondingCall();
-			assert correspondingCall.getCallStatement() != null;
-			resultTrace.add(correspondingCall.getCallStatement());
 		} else if (cb instanceof ParallelComposition) {
-			throw new UnsupportedOperationException("Backtranslation of ParallelComposition not supported");
+			ParallelComposition parComp = (ParallelComposition) cb;
+			Map<TermVariable, CodeBlock> bi2cb = parComp.getBranchIndicator2CodeBlock();
+			if (branchEncoders == null) {
+				CodeBlock someBranch = bi2cb.entrySet().iterator().next().getValue();
+				addCodeBlock(someBranch, trace, branchEncoders);
+			} else {
+				for (Entry<TermVariable, CodeBlock> entry : bi2cb.entrySet()) {
+					boolean taken = branchEncoders.get(entry.getKey());
+					if (taken) {
+						addCodeBlock(entry.getValue(), trace, branchEncoders);
+						return;
+					}
+				}
+			}
+			throw new AssertionError("no branch was taken");
 		} else {
-			throw new UnsupportedOperationException("Unsupported CodeBlock" + cb.getClass().getCanonicalName());
+			throw new UnsupportedOperationException(
+					"Unsupported CodeBlock" + cb.getClass().getCanonicalName());
 		}
 	}
+	
+	
+	
 
 	@Override
 	public IProgramExecution<BoogieASTNode, Expression> translateProgramExecution(
@@ -92,15 +130,17 @@ public class RCFGBacktranslator extends DefaultTranslator<RcfgElement, BoogieAST
 		}
 		RcfgProgramExecution rcfgProgramExecution = (RcfgProgramExecution) programExecution;
 
-		List<Statement> trace = new ArrayList<Statement>();
-		Map<Integer, ProgramState<Expression>> programStateMapping = new HashMap<Integer, ProgramState<Expression>>();
-		BoogieProgramExecution boogieProgramExecution = new BoogieProgramExecution(trace, programStateMapping);
+		List<BoogieASTNode> trace = new ArrayList<BoogieASTNode>();
+		Map<Integer, ProgramState<Expression>> programStateMapping = 
+				new HashMap<Integer, ProgramState<Expression>>();
+		BoogieProgramExecution boogieProgramExecution = 
+				new BoogieProgramExecution(trace, programStateMapping);
 		if (rcfgProgramExecution.getInitialProgramState() != null) {
 			programStateMapping.put(-1, rcfgProgramExecution.getInitialProgramState());
 		}
 		for (int i = 0; i < rcfgProgramExecution.getLength(); i++) {
 			CodeBlock codeBlock = rcfgProgramExecution.getTraceElement(i);
-			toList(codeBlock, trace, rcfgProgramExecution.getBranchEncoders()[i]);
+			addCodeBlock(codeBlock, trace, rcfgProgramExecution.getBranchEncoders()[i]);
 			int posInNewTrace = trace.size() - 1;
 			ProgramState<Expression> programState = rcfgProgramExecution.getProgramState(i);
 			programStateMapping.put(posInNewTrace, programState);
@@ -108,59 +148,6 @@ public class RCFGBacktranslator extends DefaultTranslator<RcfgElement, BoogieAST
 		return boogieProgramExecution;
 	}
 
-	/**
-	 * Transform a single (possibly large) CodeBlock to a list of Statements and
-	 * add these Statements to the stList. If
-	 * <ul>
-	 * <li>if the CodeBlock contains a single Statement we add this statement
-	 * <li>if the CodeBlock is a StatementsSequence we add all statements
-	 * <li>if the CodeBlock is a SequentialComposition we call this method
-	 * recursively
-	 * <li>if the CodeBlock is a ParallelComposition we ask the branchEncoders
-	 * mapping on which branch we call this method recursively. If the
-	 * branchEncoders mapping is null (occurs e.g., for traces whose feasibility
-	 * can not be determined) we call this method recursively on some branch.
-	 * </ul>
-	 */
-	private static void toList(CodeBlock codeBlock, List<Statement> stList, Map<TermVariable, Boolean> branchEncoders) {
-		if (codeBlock instanceof Call) {
-			Statement st = ((Call) codeBlock).getCallStatement();
-			stList.add(st);
-		} else if (codeBlock instanceof Return) {
-			Statement st = ((Return) codeBlock).getCallStatement();
-			stList.add(st);
-		} else if (codeBlock instanceof Summary) {
-			Statement st = ((Summary) codeBlock).getCallStatement();
-			stList.add(st);
-		} else if (codeBlock instanceof StatementSequence) {
-			List<Statement> stmtsOfTrans = ((StatementSequence) codeBlock).getStatements();
-			for (Statement st : stmtsOfTrans) {
-				stList.add(st);
-			}
-		} else if (codeBlock instanceof SequentialComposition) {
-			SequentialComposition seqComp = (SequentialComposition) codeBlock;
-			for (CodeBlock cb : seqComp.getCodeBlocks()) {
-				toList(cb, stList, branchEncoders);
-			}
-		} else if (codeBlock instanceof ParallelComposition) {
-			ParallelComposition parComp = (ParallelComposition) codeBlock;
-			Map<TermVariable, CodeBlock> bi2cb = parComp.getBranchIndicator2CodeBlock();
-			if (branchEncoders == null) {
-				CodeBlock someBranch = bi2cb.entrySet().iterator().next().getValue();
-				toList(someBranch, stList, branchEncoders);
-			} else {
-				for (Entry<TermVariable, CodeBlock> entry : bi2cb.entrySet()) {
-					boolean taken = branchEncoders.get(entry.getKey());
-					if (taken) {
-						toList(entry.getValue(), stList, branchEncoders);
-						return;
-					}
-				}
-			}
-			throw new AssertionError("no branch was taken");
-		} else {
-			throw new IllegalArgumentException("unkown code block");
-		}
-	}
+
 
 }

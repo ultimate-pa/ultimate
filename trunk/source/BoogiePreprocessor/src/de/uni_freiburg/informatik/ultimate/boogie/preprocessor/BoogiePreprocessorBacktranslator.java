@@ -125,7 +125,7 @@ public class BoogiePreprocessorBacktranslator extends
 			BoogieASTNode newElem = mMapping.get(elem);
 
 			if (newElem == null) {
-				mLogger.warn("Unfinished backtranslation: No mapping for " + elem.toString() + " " + elem.hashCode());
+				mLogger.warn("Unfinished backtranslation: No mapping for " + elem.toString());
 			} else {
 				if (newElem instanceof Statement) {
 					newTrace.add((Statement) newElem);
