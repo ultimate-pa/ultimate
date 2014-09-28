@@ -15,22 +15,26 @@
  * BackwardPredicates.
  * 
  * Author: heizmann@informatik.uni-freiburg.de
- * Date: 2014-09-04
+ * Date: 2014-09-07
  *
  */
 
-var g,m : int;
+var g : int;
 
 implementation proc() returns ()
 {
-    assume g == m;
+  if (*) {
+    assume g != 3;
+  } else {
+  }
 }
 
 implementation main() returns ()
 {
-  assume g != m;
+  assume old(g) == g;
+  g := 7;
   call proc();
-  assert (false);
+  assert (old(g) == 7);
 
 }
 
