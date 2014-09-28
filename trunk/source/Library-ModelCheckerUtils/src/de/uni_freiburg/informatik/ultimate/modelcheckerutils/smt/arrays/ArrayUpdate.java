@@ -9,9 +9,12 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryEqualityRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.RelationSymbol;
 
 /**
- * Wrapper for an equality of the form 
+ * Wrapper for an equality (resp. not equals relation) of the form 
  * arr' = (store, arr, index, value), 
  * where 
  * the array arr' is a TermVariable, and
@@ -28,20 +31,22 @@ public class ArrayUpdate {
 	 * Construct ArrayUpdate wrapper from term. Throw an ArrayUpdateException if
 	 * term is no array update.
 	 */
-	public ArrayUpdate(Term term) throws ArrayUpdateException {
-		if (!(term instanceof ApplicationTerm)) {
-			throw new ArrayUpdateException("no ApplicationTerm");
+	public ArrayUpdate(Term term, boolean isNegated) throws ArrayUpdateException {
+		BinaryEqualityRelation ber = null;
+		try {
+			ber = new BinaryEqualityRelation(term);
+		} catch (NoRelationOfThisKindException e) {
+			throw new ArrayUpdateException(e.getMessage());
 		}
-		ApplicationTerm eqAppTerm = (ApplicationTerm) term;
-		if (!eqAppTerm.getFunction().getName().equals("=")) {
-			throw new ArrayUpdateException("no equality");
+		if (isNegated && ber.getRelationSymbol() != RelationSymbol.DISTINCT) {
+			throw new ArrayUpdateException("no negated array update");
 		}
-		if (!(eqAppTerm.getParameters().length == 2)) {
-			throw new ArrayUpdateException("no binary equality");
+		if (!isNegated && ber.getRelationSymbol() != RelationSymbol.EQ) {
+			throw new ArrayUpdateException("no not negated array update");
 		}
 		m_ArrayUpdateTerm = term;
-		Term lhs = eqAppTerm.getParameters()[0];
-		Term rhs = eqAppTerm.getParameters()[1];
+		Term lhs = ber.getLhs();
+		Term rhs = ber.getRhs();
 		ApplicationTerm allegedStoreTerm;
 		if (isArrayTermVariable(lhs)) {
 			if (isStoreTerm(rhs)) {
@@ -163,11 +168,15 @@ public class ArrayUpdate {
 		private final List<Term> remainingTerms = 
 				new ArrayList<Term>();
 		
-		public ArrayUpdateExtractor(Term... terms) {
+		/**
+		 * If negatedUpdate is true we search for terms of the form
+		 * (not (= a (store a' b c)))
+		 */
+		public ArrayUpdateExtractor(boolean negatedUpdate, Term... terms) {
 			for (Term term : terms) {
 				ArrayUpdate au;
 				try {
-					au = new ArrayUpdate(term);
+					au = new ArrayUpdate(term, negatedUpdate);
 				} catch (ArrayUpdateException e) {
 					au = null;
 				}

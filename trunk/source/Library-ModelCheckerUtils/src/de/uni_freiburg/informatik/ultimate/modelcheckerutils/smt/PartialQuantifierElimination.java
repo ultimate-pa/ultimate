@@ -251,11 +251,12 @@ public class PartialQuantifierElimination {
 		while (it.hasNext()) {
 			TermVariable tv = it.next();
 			if (tv.getSort().isArraySort()) {
-				if (quantifier != QuantifiedFormula.EXISTS) {
-					throw new UnsupportedOperationException("QE for universal quantified arrays not implemented yet.");
-				}
+//				if (quantifier != QuantifiedFormula.EXISTS) {
+////					return term;
+//					throw new UnsupportedOperationException("QE for universal quantified arrays not implemented yet.");
+//				}
 				Set<TermVariable> thisIterationAuxVars = new HashSet<TermVariable>();
-				Term elim = (new ElimStore3(script,services)).elim(tv, result, thisIterationAuxVars);
+				Term elim = (new ElimStore3(script,services)).elim(quantifier, tv, result, thisIterationAuxVars);
 				logger.debug(new DebugMessage("eliminated quantifier via SOS for {0}, additionally introduced {1}", tv,
 						thisIterationAuxVars));
 				overallAuxVars.addAll(thisIterationAuxVars);
@@ -386,13 +387,13 @@ public class PartialQuantifierElimination {
 
 	/**
 	 * Return true if connectedVars is a subset of quantifiedVars and the
-	 * disjunction of terms is unsatisfiable.
+	 * disjunction of terms is not valid.
 	 */
 	public static boolean isSuperfluousDisjunction(Script script, Set<Term> terms, Set<TermVariable> connectedVars,
 			Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
 			Term disjunction = Util.or(script, terms.toArray(new Term[0]));
-			if (Util.checkSat(script, disjunction) == LBool.UNSAT) {
+			if (Util.checkSat(script, Util.not(script, disjunction)) == LBool.SAT) {
 				return true;
 			}
 		}
