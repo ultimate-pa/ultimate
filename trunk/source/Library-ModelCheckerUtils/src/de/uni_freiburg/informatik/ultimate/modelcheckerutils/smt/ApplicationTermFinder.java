@@ -49,7 +49,7 @@ public class ApplicationTermFinder extends NonRecursive {
 		}
 		@Override
 		public void walk(NonRecursive walker, QuantifiedFormula term) {
-			throw new UnsupportedOperationException();
+			walker.enqueueWalker(new FindWalker(term.getSubformula()));
 		}
 		@Override
 		public void walk(NonRecursive walker, TermVariable term) {
