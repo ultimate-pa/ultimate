@@ -305,4 +305,14 @@ public class SmtUtils {
 		result = result && storeTerms.isEmpty();
 		return result;
 	}
+	
+	public static boolean isFalse(Term term) {
+		if (term instanceof ApplicationTerm) {
+			ApplicationTerm appTerm = (ApplicationTerm) term;
+			FunctionSymbol fun = appTerm.getFunction();
+			return fun.getApplicationString().equals("false");
+		} else {
+			return false;
+		}
+	}
 }
