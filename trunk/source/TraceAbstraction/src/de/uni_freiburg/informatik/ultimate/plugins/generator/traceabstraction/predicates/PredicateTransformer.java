@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,6 +11,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -705,7 +707,7 @@ public class PredicateTransformer {
 			callTermRenamed = new Substitution(substitution, m_Script).transform(callTF.getFormula());
 		}
 		
-		final Term callerPredRenamed;
+		Term callerPredRenamed;
 		{
 			Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
 			for (BoogieVar bv : callerPred.getVars()) {
@@ -714,7 +716,7 @@ public class PredicateTransformer {
 			callerPredRenamed = new Substitution(substitution, m_Script).transform(callerPred.getFormula());
 		}
 		
-		final Term returnPredRenamed;
+		Term returnPredRenamed;
 		{
 			Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
 			for (BoogieVar bv : returnerPred.getVars()) {
@@ -917,10 +919,26 @@ public class PredicateTransformer {
 //		callerPredRenamed = new Substitution(varsToRenameInCallerPred, m_Script).transform(callerPredRenamed);
 
 		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>(ir.getFreshTermVariables());
-		// Add aux vars to quantify them
-		varsToQuantify .addAll(callTF.getAuxVars());
-		varsToQuantify.addAll(returnTF.getAuxVars());
-		varsToQuantify.addAll(globalVarsAssignments.getAuxVars());
+		assert(callTF.getAuxVars().isEmpty()) : "no auxvars allowed";
+		assert(returnTF.getAuxVars().isEmpty()) : "no auxvars allowed";
+		assert(globalVarsAssignments.getAuxVars().isEmpty()) : "no auxvars allowed";
+		if (callerPredRenamed instanceof QuantifiedFormula) {
+			QuantifiedFormula quantifiedFormula = (QuantifiedFormula) callerPredRenamed;
+			if (quantifiedFormula.getQuantifier() != QuantifiedFormula.EXISTS) {
+//			if (quantifiedFormula.getQuantifier() != QuantifiedFormula.FORALL) {
+				throw new UnsupportedOperationException("only existentially quantified callerPred supported");
+			}
+			varsToQuantify.addAll(Arrays.asList(quantifiedFormula.getVariables()));
+			callerPredRenamed = ((QuantifiedFormula) callerPredRenamed).getSubformula();
+		}
+		if (returnPredRenamed instanceof QuantifiedFormula) {
+			QuantifiedFormula quantifiedFormula = (QuantifiedFormula) returnPredRenamed;
+			if (quantifiedFormula.getQuantifier() != QuantifiedFormula.FORALL) {
+				throw new UnsupportedOperationException("only universally quantified returnPred supported");
+			}
+			varsToQuantify.addAll(Arrays.asList(quantifiedFormula.getVariables()));
+			returnPredRenamed = ((QuantifiedFormula) returnPredRenamed).getSubformula();
+		}
 
 		Term callerPredANDCallANDReturnAndGlobalVars = Util.and(m_Script, callerPredRenamed, returnTermRenamed,
 				callTermRenamed, globalVarsRenamed);
