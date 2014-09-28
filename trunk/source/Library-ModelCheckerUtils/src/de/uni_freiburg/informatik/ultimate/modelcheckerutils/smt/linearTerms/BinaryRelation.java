@@ -136,7 +136,7 @@ public abstract class BinaryRelation {
 		}
 		if (relSymb == null) {
 			throw new NoRelationOfThisKindException(
-					"no binary numberic relation symbol");
+					"no binary numeric relation symbol");
 		} else {
 			m_RelationSymbol = relSymb;
 			m_Lhs = params[0];
