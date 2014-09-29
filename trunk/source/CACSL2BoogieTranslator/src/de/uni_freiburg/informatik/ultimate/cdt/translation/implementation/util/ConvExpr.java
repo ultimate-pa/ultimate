@@ -5,6 +5,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -44,6 +45,7 @@ public class ConvExpr {
 	 */
 	public static RValue toBoolean(final ILocation loc, final RValue rVal) {
 		assert !rVal.isBoogieBool;
+		CType underlyingType = rVal.cType.getUnderlyingType();
 		Expression resultEx = null;
 		Expression e = rVal.getValue();
 		if (e instanceof IntegerLiteral) {
@@ -54,8 +56,8 @@ public class ConvExpr {
 				resultEx = new BooleanLiteral(loc, new InferredType(
 						Type.Boolean), true);
 		} else {
-			if (rVal.cType instanceof CPrimitive) {
-				switch (((CPrimitive) rVal.cType).getGeneralType()) {
+			if (underlyingType instanceof CPrimitive) {
+				switch (((CPrimitive) underlyingType).getGeneralType()) {
 				case FLOATTYPE:
 					resultEx = new BinaryExpression(loc, new InferredType(
 							InferredType.Type.Boolean),
@@ -78,7 +80,7 @@ public class ConvExpr {
 				case VOID:
 					default:
 				}
-			} else if (rVal.cType instanceof CPointer) {
+			} else if (underlyingType instanceof CPointer) {
 //				resultEx = new BinaryExpression(loc, 
 ////						new InferredType(
 ////						InferredType.Type.Boolean),

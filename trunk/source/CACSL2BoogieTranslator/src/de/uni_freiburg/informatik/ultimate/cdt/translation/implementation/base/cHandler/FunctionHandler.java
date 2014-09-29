@@ -1127,7 +1127,8 @@ public class FunctionHandler {
 		
 		//if the function has varArgs, we throw away all parameters that belong to the varArgs part and only keep the normal ones
 		IASTInitializerClause[] inParams = arguments;
-		if (procedureToCFunctionType.get(methodName).takesVarArgs()) {
+		if (procedureToCFunctionType.containsKey(methodName) 
+				&& procedureToCFunctionType.get(methodName).takesVarArgs()) {
 			int noParameterWOVarArgs = procedureToCFunctionType.get(methodName).getParameterTypes().length;
 			inParams = new IASTInitializerClause[noParameterWOVarArgs];
 			for (int i = 0; i < noParameterWOVarArgs; i++) {

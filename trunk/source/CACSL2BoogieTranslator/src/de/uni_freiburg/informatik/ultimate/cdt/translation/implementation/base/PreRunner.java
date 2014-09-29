@@ -235,25 +235,23 @@ public class PreRunner extends ASTVisitor {
      * 
      */
     public static String extraxtExpressionIdFromPossiblyComplexExpression(
-			IASTNode operand) {
-    	
-    	
-    	if (operand instanceof IASTIdExpression) {
-    		return ((IASTIdExpression) operand).getName().toString();
-    	} else if (operand instanceof IASTFieldReference) {
-    		if (((IASTFieldReference) operand).isPointerDereference())
+			IASTNode expression) {
+    	if (expression instanceof IASTIdExpression) {
+    		return ((IASTIdExpression) expression).getName().toString();
+    	} else if (expression instanceof IASTFieldReference) {
+    		if (((IASTFieldReference) expression).isPointerDereference())
     			return null; // "->" cancels out "&", like "*"
     		else
-    			return extraxtExpressionIdFromPossiblyComplexExpression(((IASTFieldReference) operand).getFieldOwner());
-    	} else if (operand instanceof IASTArraySubscriptExpression) {
-    		return extraxtExpressionIdFromPossiblyComplexExpression(((IASTArraySubscriptExpression) operand).getArrayExpression());
-    	} else if (operand instanceof IASTUnaryExpression) {
-    		int operator = ((IASTUnaryExpression) operand).getOperator();
+    			return extraxtExpressionIdFromPossiblyComplexExpression(((IASTFieldReference) expression).getFieldOwner());
+    	} else if (expression instanceof IASTArraySubscriptExpression) {
+    		return extraxtExpressionIdFromPossiblyComplexExpression(((IASTArraySubscriptExpression) expression).getArrayExpression());
+    	} else if (expression instanceof IASTUnaryExpression) {
+    		int operator = ((IASTUnaryExpression) expression).getOperator();
     		switch (operator) {
     		case IASTUnaryExpression.op_star:
     			return null; //the star and the amper cancel each other out here -> do nothing
     		case IASTUnaryExpression.op_bracketedPrimary:
-    			return extraxtExpressionIdFromPossiblyComplexExpression(operand);
+    			return extraxtExpressionIdFromPossiblyComplexExpression(((IASTUnaryExpression) expression).getOperand());
     		default:
     			return null;
     		}
