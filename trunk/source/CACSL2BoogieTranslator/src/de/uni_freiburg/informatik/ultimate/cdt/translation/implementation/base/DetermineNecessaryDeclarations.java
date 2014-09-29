@@ -180,8 +180,11 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     public int visit(IASTIdExpression expression) {
     	String symbolName = expression.getName().toString();
     	IASTDeclaration symbolDec = sT.get(symbolName);
+    	IASTNode funDec = functionTable.get(symbolName);
     	if (symbolDec != null)
     		addDependency(currentFunOrStructDefOrInitializer.peek(), symbolDec);
+    	else if (funDec != null)
+    		addDependency(currentFunOrStructDefOrInitializer.peek(), getDeclarationFromFuncDefinitionOrFuncDeclarator(funDec));
     	else
     		dependencyGraphPreliminaryInverse.put(symbolName, currentFunOrStructDefOrInitializer.peek());
         return super.visit(expression);

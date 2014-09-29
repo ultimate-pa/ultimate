@@ -527,7 +527,8 @@ public class TypeHandler implements ITypeHandler {
 			return new NamedType(loc, ((CNamed) cType).getName(), new ASTType[0]);
 		} else if (cType instanceof CFunction) {
 //				throw new UnsupportedSyntaxException(loc, "how to translate function type?");
-			return null; //FIXME -- is this ok??
+//			return null; 
+			return MemoryHandler.POINTER_TYPE;
 		} else if (cType instanceof CEnum) {
 //			return new NamedType(loc, ((CEnum) cType).getIdentifier(), new ASTType[0]);
 			return new PrimitiveType(loc, SFO.INT);

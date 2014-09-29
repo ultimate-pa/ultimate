@@ -185,7 +185,7 @@ public class PreRunner extends ASTVisitor {
             IASTNode function = functionTable.get(id);
             if (function != null && sT.get(id) == null //id is the name of a function and not shadowed here
             		&& !(expression.getParent() instanceof IASTFunctionCallExpression 
-            				//&& ((IASTFunctionCallExpression) expression.getParent()).getFunctionNameExpression().equals(expression)) (not necessary as the parameter declarations are treated separately
+            				&& ((IASTFunctionCallExpression) expression.getParent()).getFunctionNameExpression().equals(expression) 
             				)
             		) {
             	updateFunctionPointers(id, function);
