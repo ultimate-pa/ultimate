@@ -51,19 +51,20 @@ public class UnstructureCode extends BaseObserver {
 	/** The prefix of automatically generated unique labels. */
 	private static final String s_labelPrefix = "$Ultimate##";
 	/** The list of unstructured statements of the procedure that were produced. */
-	private LinkedList<Statement> m_flatStatements;
+	private LinkedList<Statement> mFlatStatements;
 	/** A counter to produce unique label names. */
-	int m_labelNr;
+	private int mLabelNr;
 	/**
 	 * True, iff the current statement is reachable. This is set to false after
 	 * a Return or Goto Statement was seen and to true if a label was just seen.
 	 */
-	boolean m_reachable;
+	private boolean mReachable;
 	/**
 	 * This stack remembers for each named block the break info that maps the
 	 * label of the break block to the destination label after the block.
 	 */
-	Stack<BreakInfo> m_breakStack;
+	Stack<BreakInfo> mBreakStack;
+	private final BoogiePreprocessorBacktranslator mTranslator;
 
 	/**
 	 * This class stores the information needed for breaking out of a block.
@@ -88,8 +89,12 @@ public class UnstructureCode extends BaseObserver {
 		}
 	}
 
+	protected UnstructureCode(BoogiePreprocessorBacktranslator translator) {
+		mTranslator = translator;
+	}
+
 	public BreakInfo findLabel(String label) {
-		ListIterator<BreakInfo> it = m_breakStack.listIterator(m_breakStack.size());
+		ListIterator<BreakInfo> it = mBreakStack.listIterator(mBreakStack.size());
 		while (it.hasPrevious()) {
 			BreakInfo bi = (BreakInfo) it.previous();
 			if (bi.breakLabels.contains(label))
@@ -125,10 +130,11 @@ public class UnstructureCode extends BaseObserver {
 	private void unstructureBody(Procedure proc) {
 		Body body = proc.getBody();
 		/* Initialize member variables */
-		m_flatStatements = new LinkedList<Statement>();
-		m_labelNr = 0;
-		m_reachable = true;
-		m_breakStack = new Stack<BreakInfo>();
+		mFlatStatements = new LinkedList<Statement>();
+		mLabelNr = 0;
+		mReachable = true;
+		mBreakStack = new Stack<BreakInfo>();
+		// TODO: Add label as "do not backtranslate"?
 		addLabel(new Label(proc.getLocation(), generateLabel()));
 
 		/* Transform the procedure block */
@@ -139,9 +145,9 @@ public class UnstructureCode extends BaseObserver {
 		 * statement
 		 */
 		// TODO Christian: add annotations? how?
-		if (m_reachable)
-			m_flatStatements.add(new ReturnStatement(proc.getLocation()));
-		body.setBlock(m_flatStatements.toArray(new Statement[m_flatStatements.size()]));
+		if (mReachable)
+			mFlatStatements.add(new ReturnStatement(proc.getLocation()));
+		body.setBlock(mFlatStatements.toArray(new Statement[mFlatStatements.size()]));
 	}
 
 	private void addLabel(Label lab) {
@@ -150,10 +156,10 @@ public class UnstructureCode extends BaseObserver {
 		 * block
 		 */
 		// TODO Christian: add annotations? how?
-		if (m_reachable && m_flatStatements.size() > 0 && !(m_flatStatements.getLast() instanceof Label)) {
-			m_flatStatements.add(new GotoStatement(lab.getLocation(), new String[] { lab.getName() }));
+		if (mReachable && mFlatStatements.size() > 0 && !(mFlatStatements.getLast() instanceof Label)) {
+			mFlatStatements.add(new GotoStatement(lab.getLocation(), new String[] { lab.getName() }));
 		}
-		m_flatStatements.add(lab);
+		mFlatStatements.add(lab);
 	}
 
 	/**
@@ -180,7 +186,7 @@ public class UnstructureCode extends BaseObserver {
 				}
 				currentBI.breakLabels.add(label.getName());
 				addLabel(label);
-				m_reachable = true;
+				mReachable = true;
 			} else {
 				boolean reusedLabel = false;
 				/* Hack: reuse label for breaks if possible */
@@ -188,16 +194,16 @@ public class UnstructureCode extends BaseObserver {
 					currentBI.destLabel = ((Label) block[i + 1]).getName();
 					reusedLabel = true;
 				}
-				m_breakStack.push(currentBI);
+				mBreakStack.push(currentBI);
 				unstructureStatement(currentBI, s);
-				m_breakStack.pop();
+				mBreakStack.pop();
 				/*
 				 * Create break label unless no break occurred or we reused
 				 * existing label
 				 */
 				if (!reusedLabel && currentBI.destLabel != null) {
 					addLabel(new Label(s.getLocation(), currentBI.destLabel));
-					m_reachable = true;
+					mReachable = true;
 				}
 				currentBI.clear();
 			}
@@ -231,8 +237,8 @@ public class UnstructureCode extends BaseObserver {
 	 */
 	private void unstructureStatement(BreakInfo outer, Statement s) {
 		if (s instanceof GotoStatement || s instanceof ReturnStatement) {
-			m_flatStatements.add(s);
-			m_reachable = false;
+			mFlatStatements.add(s);
+			mReachable = false;
 		} else if (s instanceof BreakStatement) {
 			String label = ((BreakStatement) s).getLabel();
 			if (label == null)
@@ -241,7 +247,7 @@ public class UnstructureCode extends BaseObserver {
 			if (dest.destLabel == null)
 				dest.destLabel = generateLabel();
 			addStmtAndAnnots(s, new GotoStatement(s.getLocation(), new String[] { dest.destLabel }));
-			m_reachable = false;
+			mReachable = false;
 		} else if (s instanceof WhileStatement) {
 			WhileStatement stmt = (WhileStatement) s;
 			String head = generateLabel();
@@ -276,16 +282,16 @@ public class UnstructureCode extends BaseObserver {
 			}
 			outer.breakLabels.add("*");
 			unstructureBlock(stmt.getBody());
-			if (m_reachable) {
+			if (mReachable) {
 				addStmtAndAnnots(s, new GotoStatement(s.getLocation(), new String[] { head }));
 			}
-			m_reachable = false;
+			mReachable = false;
 
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
 				addStmtAndAnnots(s, new Label(s.getLocation(), done));
 				addStmtAndAnnots(s, new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition()
 						.getLocation(), BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())));
-				m_reachable = true;
+				mReachable = true;
 			}
 		} else if (s instanceof IfStatement) {
 			IfStatement stmt = (IfStatement) s;
@@ -297,49 +303,45 @@ public class UnstructureCode extends BaseObserver {
 				addStmtAndAnnots(s, new AssumeStatement(stmt.getLocation(), stmt.getCondition()));
 			}
 			unstructureBlock(stmt.getThenPart());
-			if (m_reachable) {
+			if (mReachable) {
 				if (outer.destLabel == null)
 					outer.destLabel = generateLabel();
 				addStmtAndAnnots(s, new GotoStatement(s.getLocation(), new String[] { outer.destLabel }));
 			}
-			m_reachable = true;
+			mReachable = true;
 			addStmtAndAnnots(s, new Label(s.getLocation(), elseLabel));
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
 				addStmtAndAnnots(s, new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition()
 						.getLocation(), BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())));
 			}
 			unstructureBlock(stmt.getElsePart());
-		} else {
-			if (s instanceof AssignmentStatement) {
-				AssignmentStatement assign = (AssignmentStatement) s;
-				LeftHandSide[] lhs = assign.getLhs();
-				Expression[] rhs = assign.getRhs();
-				boolean changed = false;
-				for (int i = 0; i < lhs.length; i++) {
-					while (lhs[i] instanceof ArrayLHS) {
-						LeftHandSide array = ((ArrayLHS) lhs[i]).getArray();
-						Expression[] indices = ((ArrayLHS) lhs[i]).getIndices();
-						Expression arrayExpr = (Expression) getLHSExpression(array);
-						rhs[i] = new ArrayStoreExpression(lhs[i].getLocation(), array.getType(), arrayExpr, indices,
-								rhs[i]);
-						lhs[i] = array;
-						changed = true;
-					}
+		} else if (s instanceof AssignmentStatement) {
+			AssignmentStatement assign = (AssignmentStatement) s;
+			LeftHandSide[] lhs = assign.getLhs();
+			Expression[] rhs = assign.getRhs();
+			boolean changed = false;
+			for (int i = 0; i < lhs.length; i++) {
+				while (lhs[i] instanceof ArrayLHS) {
+					LeftHandSide array = ((ArrayLHS) lhs[i]).getArray();
+					Expression[] indices = ((ArrayLHS) lhs[i]).getIndices();
+					Expression arrayExpr = (Expression) getLHSExpression(array);
+					rhs[i] = new ArrayStoreExpression(lhs[i].getLocation(), array.getType(), arrayExpr, indices, rhs[i]);
+					lhs[i] = array;
+					changed = true;
 				}
-				if (changed)
-					s = new AssignmentStatement(assign.getLocation(), lhs, rhs);
 			}
-			m_flatStatements.add(s);
+			if (changed) {
+				addStmtAndAnnots(assign, new AssignmentStatement(assign.getLocation(), lhs, rhs));
+			}
+			mFlatStatements.add(s);
+		} else {
+			mFlatStatements.add(s);
 		}
 	}
 
 	/**
 	 * Adds a new statement to the list and also adds all annotations.
 	 * 
-	 * @param annotations
-	 *            annotations
-	 * @param statement
-	 *            new statement to add
 	 * @author Christian & Matthias
 	 */
 	private void addStmtAndAnnots(Statement sourceStmt, Statement newStmt) {
@@ -347,11 +349,14 @@ public class UnstructureCode extends BaseObserver {
 		BoogiePreprocessor.passAnnotations(sourceStmt, newStmt);
 
 		// adds new statement to list
-		m_flatStatements.add(newStmt);
+		mFlatStatements.add(newStmt);
+
+		// add mapping to backtranslation
+		mTranslator.addMapping(sourceStmt, newStmt);
 	}
 
 	private String generateLabel() {
-		return s_labelPrefix + (m_labelNr++);
+		return s_labelPrefix + (mLabelNr++);
 	}
 
 }

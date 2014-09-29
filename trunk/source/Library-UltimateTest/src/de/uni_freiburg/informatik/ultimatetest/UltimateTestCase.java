@@ -51,13 +51,14 @@ public class UltimateTestCase {
 			mLogger.fatal(String.format("There was an exception during the execution of Ultimate: %s%n%s", e,
 					ExceptionUtils.getStackTrace(e)));
 		} finally {
-			
+
 			boolean success = mDecider.getJUnitTestResult(result);
 
-			for (ITestSummary summary : mSummaries) {
-				summary.addResult(result, mDecider.getResultCategory(), m_UltimateRunDefinition, 
-						mDecider.getResultMessage(),
-						mStarter.getServices().getResultService());
+			if (mSummaries != null) {
+				for (ITestSummary summary : mSummaries) {
+					summary.addResult(result, mDecider.getResultCategory(), m_UltimateRunDefinition,
+							mDecider.getResultMessage(), mStarter.getServices().getResultService());
+				}
 			}
 			mStarter.complete();
 

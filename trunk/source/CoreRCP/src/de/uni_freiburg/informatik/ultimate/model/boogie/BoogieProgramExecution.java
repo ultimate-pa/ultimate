@@ -4,6 +4,7 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,8 +59,16 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 		if (pps == null) {
 			result = null;
 		} else {
+			List<Expression> keys = new ArrayList<>(pps.getVariables());
+			Collections.sort(keys, new Comparator<Expression>() {
+				@Override
+				public int compare(Expression arg0, Expression arg1) {
+					return BoogiePrettyPrinter.print(arg0).compareToIgnoreCase(BoogiePrettyPrinter.print(arg1));
+				}
+			});
+
 			StringBuilder sb = new StringBuilder();
-			for (Expression variable : pps.getVariables()) {
+			for (Expression variable : keys) {
 				Expression value = pps.getValues(variable).iterator().next();
 				sb.append("  ");
 				String var = BoogiePrettyPrinter.print(variable);

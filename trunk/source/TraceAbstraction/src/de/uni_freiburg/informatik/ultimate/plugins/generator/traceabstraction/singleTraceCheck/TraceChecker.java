@@ -342,7 +342,7 @@ public class TraceChecker {
 	private RcfgProgramExecution computeRcfgProgramExecutionCaseSAT(NestedSsaBuilder nsb) {
 		RelevantVariables relVars = new RelevantVariables(m_DefaultTransFormulas);
 		RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(m_ModifiedGlobals,
-				(NestedWord<CodeBlock>) m_Trace, relVars);
+				(NestedWord<CodeBlock>) m_Trace, relVars,m_SmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 		for (int i = 0; i < m_Trace.length(); i++) {
 			CodeBlock cb = m_Trace.getSymbolAt(i);
 			TransFormula tf = cb.getTransitionFormulaWithBranchEncoders();

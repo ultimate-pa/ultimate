@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
@@ -20,20 +21,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 
 public class RcfgProgramExecutionBuilder {
-	
+
 	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
 	private final NestedWord<CodeBlock> m_Trace;
-	private final Map<BoogieVar,Map<Integer, Expression>> m_var2pos2value;
+	private final Map<BoogieVar, Map<Integer, Expression>> m_var2pos2value;
 	private final RelevantVariables m_RelevantVariables;
 	private RcfgProgramExecution m_RcfgProgramExecution;
 	private final Map<TermVariable, Boolean>[] m_BranchEncoders;
-	
-	
-	
-	public RcfgProgramExecutionBuilder(
-			ModifiableGlobalVariableManager modifiableGlobalVariableManager,
-			NestedWord<CodeBlock> trace,
-			RelevantVariables relevantVariables) {
+	private final Boogie2SmtSymbolTable m_SymbolTable;
+
+	public RcfgProgramExecutionBuilder(ModifiableGlobalVariableManager modifiableGlobalVariableManager,
+			NestedWord<CodeBlock> trace, RelevantVariables relevantVariables, Boogie2SmtSymbolTable symbolTable) {
 		super();
 		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
 		m_Trace = trace;
@@ -41,18 +39,15 @@ public class RcfgProgramExecutionBuilder {
 		m_RelevantVariables = relevantVariables;
 		m_BranchEncoders = new Map[m_Trace.length()];
 		m_RcfgProgramExecution = null;
+		m_SymbolTable = symbolTable;
 	}
-	
-	
 
 	public RcfgProgramExecution getRcfgProgramExecution() {
 		if (m_RcfgProgramExecution == null) {
-			m_RcfgProgramExecution = computeRcfgProgramExecution();	
+			m_RcfgProgramExecution = computeRcfgProgramExecution();
 		}
 		return m_RcfgProgramExecution;
 	}
-
-
 
 	private boolean isReAssigned(BoogieVar bv, int position) {
 		boolean result;
@@ -63,12 +58,15 @@ public class RcfgProgramExecutionBuilder {
 			Call call = (Call) m_Trace.getSymbolAt(position);
 			String callee = call.getCallStatement().getMethodName();
 			if (bv.isGlobal()) {
-				Set<BoogieVar> modGlobals = m_ModifiableGlobalVariableManager.getGlobalVarsAssignment(callee).getOutVars().keySet();
-				Set<BoogieVar> modOldGlobals = m_ModifiableGlobalVariableManager.getOldVarsAssignment(callee).getOutVars().keySet();
+				Set<BoogieVar> modGlobals = m_ModifiableGlobalVariableManager.getGlobalVarsAssignment(callee)
+						.getOutVars().keySet();
+				Set<BoogieVar> modOldGlobals = m_ModifiableGlobalVariableManager.getOldVarsAssignment(callee)
+						.getOutVars().keySet();
 				result = modGlobals.contains(bv) || modOldGlobals.contains(bv);
 			} else {
-//			TransFormula locVarAssign = m_Trace.getSymbolAt(position).getTransitionFormula();
-//				result = locVarAssign.getAssignedVars().contains(bv);
+				// TransFormula locVarAssign =
+				// m_Trace.getSymbolAt(position).getTransitionFormula();
+				// result = locVarAssign.getAssignedVars().contains(bv);
 				result = (callee.equals(bv.getProcedure()));
 			}
 		} else {
@@ -76,11 +74,10 @@ public class RcfgProgramExecutionBuilder {
 		}
 		return result;
 	}
-	
+
 	void addValueAtVarAssignmentPosition(BoogieVar bv, int index, Expression value) {
 		assert index >= -1;
-		assert index == -1 || isReAssigned(bv, index) : 
-			"oldVar in procedure where it is not modified?";
+		assert index == -1 || isReAssigned(bv, index) : "oldVar in procedure where it is not modified?";
 		Map<Integer, Expression> pos2value = m_var2pos2value.get(bv);
 		if (pos2value == null) {
 			pos2value = new HashMap<Integer, Expression>();
@@ -89,11 +86,11 @@ public class RcfgProgramExecutionBuilder {
 		assert !pos2value.containsKey(index);
 		pos2value.put(index, value);
 	}
-	
+
 	public void setBranchEncoders(int i, Map<TermVariable, Boolean> beMapping) {
 		m_BranchEncoders[i] = beMapping;
 	}
-	
+
 	private int indexWhereVarWasAssignedTheLastTime(BoogieVar bv, int pos) {
 		assert pos >= -1;
 		if (pos == -1) {
@@ -114,15 +111,15 @@ public class RcfgProgramExecutionBuilder {
 		} else {
 			throw new AssertionError();
 		}
-		
+
 	}
-	
+
 	public Map<BoogieVar, Expression> varValAtPos(int position) {
 		Map<BoogieVar, Expression> result = new HashMap<BoogieVar, Expression>();
-		Set<BoogieVar> vars = m_RelevantVariables.getForwardRelevantVariables()[position+1];
+		Set<BoogieVar> vars = m_RelevantVariables.getForwardRelevantVariables()[position + 1];
 		for (BoogieVar bv : vars) {
-			if (bv.getTermVariable().getSort().isNumericSort() || 
-					bv.getTermVariable().getSort().getName().equals("Bool")) {
+			if (bv.getTermVariable().getSort().isNumericSort()
+					|| bv.getTermVariable().getSort().getName().equals("Bool")) {
 				int assignPos = indexWhereVarWasAssignedTheLastTime(bv, position);
 				Expression value = m_var2pos2value.get(bv).get(assignPos);
 				assert value != null;
@@ -131,31 +128,22 @@ public class RcfgProgramExecutionBuilder {
 		}
 		return result;
 	}
-	
+
 	private RcfgProgramExecution computeRcfgProgramExecution() {
-		Map<Integer, ProgramState<Expression>> partialProgramStateMapping = 
-				new HashMap<Integer, ProgramState<Expression>>();
-		for (int i=0; i<m_Trace.length(); i++) {
+		Map<Integer, ProgramState<Expression>> partialProgramStateMapping = new HashMap<Integer, ProgramState<Expression>>();
+		for (int i = 0; i < m_Trace.length(); i++) {
 			Map<BoogieVar, Expression> varValAtPos = varValAtPos(i);
-			Map<Expression,Collection<Expression>> variable2Values = 
-					new HashMap<Expression,Collection<Expression>>();
-			for (Entry<BoogieVar, Expression> entry  : varValAtPos.entrySet()) {
-				IdentifierExpression idExpr = new IdentifierExpression(null, 
-						entry.getKey().getIType(), entry.getKey().getIdentifier(), 
-						null /*FIXME: add declaration information*/);
+			Map<Expression, Collection<Expression>> variable2Values = new HashMap<Expression, Collection<Expression>>();
+			for (Entry<BoogieVar, Expression> entry : varValAtPos.entrySet()) {
+				IdentifierExpression idExpr = new IdentifierExpression(null, entry.getKey().getIType(), entry.getKey()
+						.getIdentifier(), m_SymbolTable.getDeclarationInformation(entry.getKey()));
 				variable2Values.put(idExpr, Collections.singleton(entry.getValue()));
 			}
 			ProgramState<Expression> pps = new ProgramState<Expression>(variable2Values);
 			partialProgramStateMapping.put(i, pps);
 		}
 		return new RcfgProgramExecution(m_Trace.lettersAsList(), partialProgramStateMapping, m_BranchEncoders);
-		
+
 	}
-	
-
-
-
-
-
 
 }
