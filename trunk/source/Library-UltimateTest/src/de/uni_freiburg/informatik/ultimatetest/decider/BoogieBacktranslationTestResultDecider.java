@@ -23,11 +23,11 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
  * @author dietsch
  * 
  */
-public class TranslationTestResultDecider extends TestResultDecider {
+public class BoogieBacktranslationTestResultDecider extends TestResultDecider {
 
 	private String mInputFile;
 
-	public TranslationTestResultDecider(String inputFile) {
+	public BoogieBacktranslationTestResultDecider(String inputFile) {
 		mInputFile = inputFile;
 	}
 
@@ -37,10 +37,10 @@ public class TranslationTestResultDecider extends TestResultDecider {
 		setResultCategory("");
 		setResultMessage("");
 
-		Logger log = Logger.getLogger(TranslationTestResultDecider.class);
+		Logger log = Logger.getLogger(BoogieBacktranslationTestResultDecider.class);
 		Collection<String> customMessages = new LinkedList<String>();
-		customMessages.add("Expecting results to have a counterexample that matches the .bpl file, "
-				+ "and no generic result \"Unhandled Backtranslation\"");
+		customMessages
+				.add("Expecting results to not contain SyntaxErrorResult, TypeErrorResult or ExceptionOrErrorResult");
 		boolean fail = false;
 		Set<Entry<String, List<IResult>>> resultSet = resultService.getResults().entrySet();
 		if (resultSet.size() == 0) {

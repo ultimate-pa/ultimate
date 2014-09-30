@@ -195,7 +195,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		}
 
 		generateResultMessageAndCategory(scResult);
-		Util.logResults(log, m_inputFile, !getJUnitTestResult(testoutcome), customMessages, resultService);
+		Util.logResults(log, m_inputFile, !getJUnitSuccess(testoutcome), customMessages, resultService);
 		return testoutcome;
 	}
 
@@ -359,7 +359,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 
 
 	@Override
-	public boolean getJUnitTestResult(TestResult actualResult) {
+	public boolean getJUnitSuccess(TestResult actualResult) {
 		// Matthias wants to see Unknown results as success, and so does Christopher
 		switch (actualResult) {
 		case FAIL:

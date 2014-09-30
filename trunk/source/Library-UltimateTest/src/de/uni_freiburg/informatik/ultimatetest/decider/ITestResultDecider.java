@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
  * 
  * {@link UltimateTestCase} will call the methods of this interface <b>after
  * each test case run</b> and determine the JUnit result based on their return
- * values and the implementation of {@link #getJUnitTestResult(TestResult)}.
+ * values and the implementation of {@link #getJUnitSuccess(TestResult)}.
  * 
  * @author dietsch
  * 
@@ -86,7 +86,7 @@ public interface ITestResultDecider {
 	 *            {@link #isResultFail(Throwable))} of this instance.
 	 * @return true iff the JUnitTest should pass, fail iff it should fail.
 	 */
-	public boolean getJUnitTestResult(TestResult actualResult);
+	public boolean getJUnitSuccess(TestResult actualResult);
 
 	/**
 	 * This enum represents the actual results of a test.

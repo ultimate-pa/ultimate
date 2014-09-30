@@ -17,6 +17,14 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 public class SafetyCheckTestResultDecider2 extends
 		ThreeTierTestResultDecider<SafetyCheckerOverallResult> {
 
+	/**
+	 * 
+	 * @param ultimateRunDefinition
+	 * 
+	 * @param unknownIsJUnitSuccess
+	 *            if true the TestResult UNKNOWN is a success for JUnit, if
+	 *            false, the TestResult UNKNOWN is a failure for JUnit.
+	 */
 	public SafetyCheckTestResultDecider2(
 			UltimateRunDefinition ultimateRunDefinition, boolean unknownIsJUnitSuccess) {
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
@@ -36,13 +44,13 @@ public class SafetyCheckTestResultDecider2 extends
 	}
 
 	@Override
-	public TestResultEvaluation<SafetyCheckerOverallResult> constructTestResultEvaluation() {
+	public ITestResultEvaluation<SafetyCheckerOverallResult> constructTestResultEvaluation() {
 		return new SafetyCheckerTestResultEvaluation();
 	}
 	
 	
 	
-	public class SafetyCheckerTestResultEvaluation implements TestResultEvaluation<SafetyCheckerOverallResult> {
+	public class SafetyCheckerTestResultEvaluation implements ITestResultEvaluation<SafetyCheckerOverallResult> {
 		String m_Category;
 		String m_Message;
 		TestResult m_TestResult;

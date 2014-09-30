@@ -51,7 +51,7 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 	}
 
 	@Override
-	public boolean getJUnitTestResult(TestResult actualResult) {
+	public boolean getJUnitSuccess(TestResult actualResult) {
 		switch (actualResult) {
 		case SUCCESS:
 		case UNKNOWN:

@@ -130,15 +130,14 @@ public class Util {
 
 		return singleFiles;
 	}
-	
+
 	/**
 	 * Get absolute path for the file in which an ITestSummary will be written.
 	 * This includes also the filename.
 	 */
 	public static String generateSummaryLogAbsolutPath(ITestSummary testSummary) {
-		String absolutPath = Util.getPathFromSurefire(
-				generateSummaryLogFilename(testSummary), 
-				testSummary.getUltimateTestSuite().getCanonicalName());
+		String absolutPath = Util.getPathFromSurefire(generateSummaryLogFilename(testSummary), testSummary
+				.getUltimateTestSuite().getCanonicalName());
 		return absolutPath;
 	}
 
@@ -148,10 +147,8 @@ public class Util {
 	 */
 	private static String generateSummaryLogFilename(ITestSummary testSummary) {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS");
-		String filename = testSummary.getSummaryTypeDescription() 
-				+ " " 
-				+ dateFormat.format(Calendar.getInstance().getTime())
-				+ testSummary.getFilenameExtension();
+		String filename = testSummary.getSummaryTypeDescription() + " "
+				+ dateFormat.format(Calendar.getInstance().getTime()) + testSummary.getFilenameExtension();
 		return filename;
 	}
 
@@ -301,7 +298,8 @@ public class Util {
 	 * @param fail
 	 * @param customMessages
 	 */
-	public static void logResults(Logger logger, String inputFile, boolean fail, Collection<String> customMessages, IResultService resultService) {
+	public static void logResults(Logger logger, String inputFile, boolean fail, Collection<String> customMessages,
+			IResultService resultService) {
 
 		logger.info("#################### TEST RESULT ####################");
 		logger.info("Results for " + inputFile);
@@ -348,13 +346,11 @@ public class Util {
 		logger.info("#################### END TEST RESULT ####################");
 	}
 
-
-	
 	/**
-	 * Returns a map from keywords to verification results.
-	 * We use keywords in filenames to specify expected verification results.
-	 * If a key of this map is a substring of the filename, the value of this
-	 * map is the expected verification result of a safety checker.
+	 * Returns a map from keywords to verification results. We use keywords in
+	 * filenames to specify expected verification results. If a key of this map
+	 * is a substring of the filename, the value of this map is the expected
+	 * verification result of a safety checker.
 	 */
 	public static Map<String, SafetyCheckerOverallResult> constructFilenameKeywordMap_SafetyChecker() {
 		Map<String, SafetyCheckerOverallResult> map = new HashMap<String, SafetyCheckerOverallResult>();
@@ -372,13 +368,12 @@ public class Util {
 		map.put("_false-unreach-call", SafetyCheckerOverallResult.UNSAFE);
 		return map;
 	}
-	
+
 	/**
-	 * Returns a map from keywords to verification results.
-	 * We use keywords in the first line of files to specify expected 
-	 * verification results.
-	 * If a key of this map is a substring of the first line, the value of this
-	 * map is the expected verification result of a safety checker.
+	 * Returns a map from keywords to verification results. We use keywords in
+	 * the first line of files to specify expected verification results. If a
+	 * key of this map is a substring of the first line, the value of this map
+	 * is the expected verification result of a safety checker.
 	 */
 	public static Map<String, SafetyCheckerOverallResult> constructFirstlineKeywordMap_SafetyChecker() {
 		Map<String, SafetyCheckerOverallResult> map = new HashMap<String, SafetyCheckerOverallResult>();
@@ -387,12 +382,12 @@ public class Util {
 		map.put("#SyntaxError", SafetyCheckerOverallResult.SYNTAX_ERROR);
 		return map;
 	}
-	
+
 	/**
-	 * Returns a map from keywords to verification results.
-	 * We use keywords in filenames to specify expected verification results.
-	 * If a key of this map is a substring of the filename, the value of this
-	 * map is the expected verification result of a termination analysis.
+	 * Returns a map from keywords to verification results. We use keywords in
+	 * filenames to specify expected verification results. If a key of this map
+	 * is a substring of the filename, the value of this map is the expected
+	 * verification result of a termination analysis.
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructFilenameKeywordMap_TerminationAnalysis() {
 		Map<String, TerminationAnalysisOverallResult> map = new HashMap<String, TerminationAnalysisOverallResult>();
@@ -402,13 +397,12 @@ public class Util {
 		map.put("_false-termination", TerminationAnalysisOverallResult.NONTERMINATING);
 		return map;
 	}
-	
+
 	/**
-	 * Returns a map from keywords to verification results.
-	 * We use keywords in the first line of files to specify expected 
-	 * verification results.
-	 * If a key of this map is a substring of the first line, the value of this
-	 * map is the expected verification result of a termination analysis.
+	 * Returns a map from keywords to verification results. We use keywords in
+	 * the first line of files to specify expected verification results. If a
+	 * key of this map is a substring of the first line, the value of this map
+	 * is the expected verification result of a termination analysis.
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructFirstlineKeywordMap_TerminationAnalysis() {
 		Map<String, TerminationAnalysisOverallResult> map = new HashMap<String, TerminationAnalysisOverallResult>();
@@ -419,8 +413,6 @@ public class Util {
 		map.put("#SyntaxError", TerminationAnalysisOverallResult.SYNTAX_ERROR);
 		return map;
 	}
-
-
 
 	/**
 	 * Returns the first line of File file as String.
@@ -442,9 +434,10 @@ public class Util {
 	 * Returns new Collections that contains all IResults from ultimateIResults
 	 * that are subclasses of the class resClass.
 	 */
-	public static <E extends IResult> Collection<E> filterResults(Map<String,List<IResult>> ultimateIResults, Class<E> resClass) {
+	public static <E extends IResult> Collection<E> filterResults(Map<String, List<IResult>> ultimateIResults,
+			Class<E> resClass) {
 		ArrayList<E> filteredList = new ArrayList<E>();
-		for (Entry<String, List<IResult>> entry  : ultimateIResults.entrySet()) {
+		for (Entry<String, List<IResult>> entry : ultimateIResults.entrySet()) {
 			for (IResult res : entry.getValue()) {
 				if (res.getClass().isAssignableFrom(resClass)) {
 					@SuppressWarnings("unchecked")
@@ -455,13 +448,14 @@ public class Util {
 		}
 		return filteredList;
 	}
-	
+
 	/**
 	 * Returns all ICsvProviderProvider of class benchmarkClass that are stored
 	 * in the BenchmarkResults benchmarkResults.
 	 */
 	@SuppressWarnings("rawtypes")
-	private static <E extends ICsvProviderProvider> Collection<E> filterBenchmarks(Collection<BenchmarkResult> benchmarkResults, Class<E> benchmarkClass) {
+	private static <E extends ICsvProviderProvider> Collection<E> filterBenchmarks(
+			Collection<BenchmarkResult> benchmarkResults, Class<E> benchmarkClass) {
 		ArrayList<E> filteredList = new ArrayList<E>();
 		for (BenchmarkResult<?> benchmarkResult : benchmarkResults) {
 			@SuppressWarnings("unchecked")
@@ -478,7 +472,8 @@ public class Util {
 	 * in the BenchmarkResults of ultimateIResults.
 	 */
 	@SuppressWarnings("rawtypes")
-	public static <E extends ICsvProviderProvider<?>> Collection<E> filterBenchmarks(Map<String,List<IResult>> ultimateIResults, Class<E> benchmarkClass) {
+	public static <E extends ICsvProviderProvider<?>> Collection<E> filterBenchmarks(
+			Map<String, List<IResult>> ultimateIResults, Class<E> benchmarkClass) {
 		Collection<BenchmarkResult> benchmarks = filterResults(ultimateIResults, BenchmarkResult.class);
 		return filterBenchmarks(benchmarks, benchmarkClass);
 	}

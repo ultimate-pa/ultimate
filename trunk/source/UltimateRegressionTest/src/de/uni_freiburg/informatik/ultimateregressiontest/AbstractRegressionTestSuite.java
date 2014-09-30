@@ -36,7 +36,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 			for (File inputFile : inputFiles) {
 				UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, runConfiguration.SettingsFile, runConfiguration.ToolchainFile);
 				UltimateStarter starter = new UltimateStarter(urd, mTimeout, null, null);
-				rtr.add(new UltimateTestCase(starter, getTestResultDecider(inputFile), null, String.format(
+				rtr.add(new UltimateTestCase(starter, getTestResultDecider(urd), null, String.format(
 						"%s+%s: %s", runConfiguration.ToolchainFile.getName(), runConfiguration.SettingsFile.getName(),
 						inputFile.getAbsolutePath()), urd));
 			}
@@ -98,7 +98,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		return Util.getFiles(rootFolder, mFiletypesToConsider);
 	}
 
-	protected abstract ITestResultDecider getTestResultDecider(File inputFile);
+	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition);
 
 	private class Pair {
 

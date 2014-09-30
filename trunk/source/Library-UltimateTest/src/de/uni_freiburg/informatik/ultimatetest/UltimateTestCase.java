@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 public class UltimateTestCase {
 
 	private String mName;
-	private UltimateRunDefinition m_UltimateRunDefinition;
+	private UltimateRunDefinition mUltimateRunDefinition;
 	private UltimateStarter mStarter;
 	private ITestResultDecider mDecider;
 	private List<ITestSummary> mSummaries;
@@ -32,7 +32,7 @@ public class UltimateTestCase {
 		mName = name;
 		mDecider = decider;
 		mSummaries = summaries;
-		m_UltimateRunDefinition = ultimateRunDefinition;
+		mUltimateRunDefinition = ultimateRunDefinition;
 	}
 
 	@FactoryTestMethod
@@ -52,11 +52,11 @@ public class UltimateTestCase {
 					ExceptionUtils.getStackTrace(e)));
 		} finally {
 
-			boolean success = mDecider.getJUnitTestResult(result);
+			boolean success = mDecider.getJUnitSuccess(result);
 
 			if (mSummaries != null) {
 				for (ITestSummary summary : mSummaries) {
-					summary.addResult(result, mDecider.getResultCategory(), m_UltimateRunDefinition,
+					summary.addResult(result, mDecider.getResultCategory(), mUltimateRunDefinition,
 							mDecider.getResultMessage(), mStarter.getServices().getResultService());
 				}
 			}

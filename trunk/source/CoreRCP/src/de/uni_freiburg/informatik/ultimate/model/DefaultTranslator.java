@@ -220,14 +220,14 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(getClass().getSimpleName());
-		sb.append(" SourceExp=");
-		sb.append(getSourceExpressionClass().getSimpleName());
-		sb.append(" TargetExp=");
-		sb.append(getTargetExpressionClass().getSimpleName());
-		sb.append(" SourceTraceELement=");
-		sb.append(getSourceTraceElementClass().getSimpleName());
-		sb.append(" TargetTraceELement=");
-		sb.append(getTargetTraceElementClass().getSimpleName());
+		sb.append(" SE=");
+		sb.append(getSourceExpressionClass().getName());
+		sb.append(" TE=");
+		sb.append(getTargetExpressionClass().getName());
+		sb.append(" STE=");
+		sb.append(getSourceTraceElementClass().getName());
+		sb.append(" TTE=");
+		sb.append(getTargetTraceElementClass().getName());
 		return sb.toString();
 	}
 

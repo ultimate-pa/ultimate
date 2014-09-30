@@ -161,7 +161,7 @@ public abstract class SafetyCheckTestResultDecider_OldVersion extends TestResult
 		}
 
 		generateResultMessageAndCategory(scResult);
-		Util.logResults(log, mInputFile, !getJUnitTestResult(testoutcome), customMessages, resultService);
+		Util.logResults(log, mInputFile, !getJUnitSuccess(testoutcome), customMessages, resultService);
 		return testoutcome;
 	}
 

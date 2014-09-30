@@ -7,20 +7,20 @@ import org.junit.AfterClass;
 
 import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimatetest.decider.BoogieBacktranslationTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.TranslationTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
-public class C2BoogieRegressionTestSuite extends AbstractRegressionTestSuite {
+public class BoogieBacktranslationRegressionTestSuite extends AbstractRegressionTestSuite {
 
-	private static String sRootFolder = Util.getPathFromTrunk("examples/CToBoogieTranslation");
+	private static String sRootFolder = Util.getPathFromTrunk("examples/BoogiePL/Backtranslation");
 
-	public C2BoogieRegressionTestSuite() {
+	public BoogieBacktranslationRegressionTestSuite() {
 		super();
 		mTimeout = 5000;
 		mRootFolder = sRootFolder;
-		mFiletypesToConsider = new String[] { ".c" };
+		mFiletypesToConsider = new String[] { ".bpl" };
 	}
 
 	@Override
@@ -31,7 +31,7 @@ public class C2BoogieRegressionTestSuite extends AbstractRegressionTestSuite {
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition) {
-		return new TranslationTestResultDecider(runDefinition.getInput().getAbsolutePath());
+		return new BoogieBacktranslationTestResultDecider(runDefinition.getInput().getAbsolutePath());
 	}
 
 	@AfterClass
@@ -50,7 +50,7 @@ public class C2BoogieRegressionTestSuite extends AbstractRegressionTestSuite {
 				if (f.delete()) {
 					System.out.println(String.format("Sucessfully deleted %s", f.getAbsolutePath()));
 				} else {
-					System.out.println(String.format("Deleteing %s failed", f.getAbsolutePath()));
+					System.out.println(String.format("Deleting %s failed", f.getAbsolutePath()));
 				}
 			} catch (Exception e) {
 				e.printStackTrace();

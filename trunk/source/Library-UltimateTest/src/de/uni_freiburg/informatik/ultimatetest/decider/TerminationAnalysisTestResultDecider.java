@@ -38,13 +38,13 @@ public class TerminationAnalysisTestResultDecider extends
 	}
 
 	@Override
-	public TestResultEvaluation<TerminationAnalysisOverallResult> constructTestResultEvaluation() {
+	public ITestResultEvaluation<TerminationAnalysisOverallResult> constructTestResultEvaluation() {
 		return new TerminationAnalysisResultEvaluation();
 	}
 	
 	
 	
-	public class TerminationAnalysisResultEvaluation implements TestResultEvaluation<TerminationAnalysisOverallResult> {
+	public class TerminationAnalysisResultEvaluation implements ITestResultEvaluation<TerminationAnalysisOverallResult> {
 		String m_Category;
 		String m_Message;
 		TestResult m_TestResult;
