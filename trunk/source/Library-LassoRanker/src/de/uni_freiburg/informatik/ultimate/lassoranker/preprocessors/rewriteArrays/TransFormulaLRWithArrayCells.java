@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitutio
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality.ArrayEqualityExtractor;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
@@ -92,22 +93,22 @@ public class TransFormulaLRWithArrayCells {
 
 
 	
-	private final NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> m_ForeignReplacementVars =
-			new NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation>();
-	private final HashRelation<TermVariable, List<Term>> m_ForeignIndices = new HashRelation<>();
+	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> m_ForeignReplacementVars =
+			new NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation>();
+	private final HashRelation<TermVariable, ArrayIndex> m_ForeignIndices = new HashRelation<>();
 	
 	private final TransFormulaLRWithArrayInformation tflrwai;
 	private final TransFormulaLR m_Result;
 	private final ReplacementVarFactory m_ReplacementVarFactory;
-	private Map<TermVariable, Map<List<Term>, TermVariable>> m_ArrayInstance2Index2CellVariable;
+	private Map<TermVariable, Map<ArrayIndex, TermVariable>> m_ArrayInstance2Index2CellVariable;
 	private EquivalentCells[] m_EquivalentCells;
 	private boolean m_OverapproximateByOmmitingDisjointIndices;
-	private HashRelation<TermVariable, List<Term>> m_FirstGeneration2Indices;
+	private HashRelation<TermVariable, ArrayIndex> m_FirstGeneration2Indices;
 	private IndexAnalyzer2 indexAnalyzer;
-	private NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> m_ArrayCellInVars;
-	private NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> m_ArrayCellOutVars;
+	private NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> m_ArrayCellInVars;
+	private NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> m_ArrayCellOutVars;
 	
-	private final Map<List<Term>, List<Term>> m_IndexInstance2IndexRepresentative = new HashMap<>();
+	private final Map<List<Term>, ArrayIndex> m_IndexInstance2IndexRepresentative = new HashMap<>();
 
 	public TransFormulaLRWithArrayCells(
 			IUltimateServiceProvider services, 
@@ -200,10 +201,10 @@ public class TransFormulaLRWithArrayCells {
 			m_Result.addAuxVars(auxVars);
 	}
 	
-	public List<Term> getOrConstructIndexRepresentative(List<Term> indexInstance) {
-		List<Term> indexRepresentative = m_IndexInstance2IndexRepresentative.get(indexInstance);
+	public ArrayIndex getOrConstructIndexRepresentative(ArrayIndex indexInstance) {
+		ArrayIndex indexRepresentative = m_IndexInstance2IndexRepresentative.get(indexInstance);
 		if (indexRepresentative == null) {
-			indexRepresentative = TransFormulaUtils.translateTermVariablesToDefinitions(m_Script, m_Result, indexInstance);
+			indexRepresentative = new ArrayIndex(TransFormulaUtils.translateTermVariablesToDefinitions(m_Script, m_Result, indexInstance));
 			m_IndexInstance2IndexRepresentative.put(indexInstance, indexRepresentative);
 		}
 		return indexRepresentative;
@@ -218,12 +219,12 @@ public class TransFormulaLRWithArrayCells {
 
 
 	private void addForeignReplacementVars(ArrayCellRepVarConstructor arrayCellRepVarConstructor) {
-		NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> array2Index2RepVar = 
+		NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> array2Index2RepVar = 
 				arrayCellRepVarConstructor.getArrayRepresentative2IndexRepresentative2ReplacementVar();
 		for (TermVariable array : array2Index2RepVar.keySet()) {
 			if (arrayOccursInThisTransFormula(array)) {
-				for (Entry<List<Term>, ArrayCellReplacementVarInformation> entry : array2Index2RepVar.get(array).entrySet()) {
-					List<Term> index = entry.getKey();
+				for (Entry<ArrayIndex, ArrayCellReplacementVarInformation> entry : array2Index2RepVar.get(array).entrySet()) {
+					ArrayIndex index = entry.getKey();
 					if (!arrayCellOccursInThisTransFormula(array, index)) {
 						m_ForeignReplacementVars.put(array, index, entry.getValue());
 					}
@@ -233,7 +234,7 @@ public class TransFormulaLRWithArrayCells {
 	}
 	
 	public void doSomething() {
-		for (Triple<TermVariable, List<Term>, ArrayCellReplacementVarInformation> triple  : m_ForeignReplacementVars.entrySet()) {
+		for (Triple<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> triple  : m_ForeignReplacementVars.entrySet()) {
 			ArrayCellReplacementVarInformation acrvi = triple.getThird();
 			assert acrvi.getArrayRepresentative().equals(triple.getFirst());
 			assert acrvi.getIndexRepresentative().equals(triple.getSecond());
@@ -244,21 +245,21 @@ public class TransFormulaLRWithArrayCells {
 				}
 			}
 			TermVariable translatedArray = (TermVariable) tflrwai.getTransFormulaLR().getInVars().get(acrvi.getArrayRankVar());
-			List<Term> translatedIndex = translateIndex(acrvi.getIndex(), acrvi.termVariableToRankVarMappingForIndex());
+			ArrayIndex translatedIndex = translateIndex(acrvi.getIndex(), acrvi.termVariableToRankVarMappingForIndex());
 			m_FirstGeneration2Indices.addPair(translatedArray, translatedIndex);
 		}
 	}
 	
 	
 	
-	private List<Term> translateIndex(List<Term> index,
+	private ArrayIndex translateIndex(ArrayIndex index,
 			Map<TermVariable, RankVar> termVariableToRankVarMappingForIndex) {
 		List<Term> translatedIndex = new ArrayList<Term>();
 		for (Term entry : index) {
 			Term translatedEntry = translateIndexEntry(entry, termVariableToRankVarMappingForIndex);
 			translatedIndex.add(translatedEntry);
 		}
-		return translatedIndex;
+		return new ArrayIndex(translatedIndex);
 	}
 
 	private Term translateIndexEntry(Term entry,
@@ -315,8 +316,8 @@ public class TransFormulaLRWithArrayCells {
 	
 
 	private Term buildArrayEqualityConstraints(TermVariable oldArray, TermVariable newArray) {
-		Map<List<Term>, TermVariable> newInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(newArray);
-		Map<List<Term>, TermVariable> oldInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(oldArray);
+		Map<ArrayIndex, TermVariable> newInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(newArray);
+		Map<ArrayIndex, TermVariable> oldInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(oldArray);
 		if (newInstance2Index2CellVariable == null && oldInstance2Index2CellVariable == null) {
 			return m_Script.term("true");
 		}
@@ -345,19 +346,19 @@ public class TransFormulaLRWithArrayCells {
 		return result;
 	}
 
-	private Term buildArrayUpdateConstraints(TermVariable newArray, TermVariable oldArray, Term[] updateIndex,
+	private Term buildArrayUpdateConstraints(TermVariable newArray, TermVariable oldArray, ArrayIndex updateIndex,
 			Term data, SafeSubstitution select2CellVariable, EquivalentCells equivalentCells) {
 		data = select2CellVariable.transform(data);
-		Map<List<Term>, TermVariable> newInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(newArray);
-		Map<List<Term>, TermVariable> oldInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(oldArray);
+		Map<ArrayIndex, TermVariable> newInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(newArray);
+		Map<ArrayIndex, TermVariable> oldInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(oldArray);
 		Term[] conjuncts = new Term[newInstance2Index2CellVariable.keySet().size()];
 		int offset = 0;
-		for (List<Term> index : newInstance2Index2CellVariable.keySet()) {
+		for (ArrayIndex index : newInstance2Index2CellVariable.keySet()) {
 			TermVariable newCellVariable = newInstance2Index2CellVariable.get(index);
 			newCellVariable = equivalentCells.getInOutRepresentative(newCellVariable);
 			TermVariable oldCellVariable = oldInstance2Index2CellVariable.get(index);
 			oldCellVariable = equivalentCells.getInOutRepresentative(oldCellVariable);
-			Term indexIsUpdateIndex = pairwiseEqualityExploitDoubletons(index, Arrays.asList(updateIndex),
+			Term indexIsUpdateIndex = pairwiseEqualityExploitDoubletons(index, updateIndex,
 					select2CellVariable);
 			Term newDataIsUpdateData = SmtUtils.binaryEquality(m_Script, newCellVariable, data);
 			Term newDateIsOldData = SmtUtils.binaryEquality(m_Script, newCellVariable, oldCellVariable);
@@ -374,20 +375,20 @@ public class TransFormulaLRWithArrayCells {
 	private Term buildIndexValueConstraints(SafeSubstitution select2CellVariable, EquivalentCells equivalentCells) {
 		Term[] conjuncts = new Term[m_ArrayInstance2Index2CellVariable.size()];
 		int offset = 0;
-		for (Entry<TermVariable, Map<List<Term>, TermVariable>> entry : m_ArrayInstance2Index2CellVariable.entrySet()) {
-			Map<List<Term>, TermVariable> indices2values = entry.getValue();
+		for (Entry<TermVariable, Map<ArrayIndex, TermVariable>> entry : m_ArrayInstance2Index2CellVariable.entrySet()) {
+			Map<ArrayIndex, TermVariable> indices2values = entry.getValue();
 			conjuncts[offset] = buildIndexValueConstraints(indices2values, select2CellVariable, equivalentCells);
 			offset++;
 		}
 		return Util.and(m_Script, conjuncts);
 	}
 
-	private Term buildIndexValueConstraints(Map<List<Term>, TermVariable> indices2values,
+	private Term buildIndexValueConstraints(Map<ArrayIndex, TermVariable> indices2values,
 			SafeSubstitution select2CellVariable, EquivalentCells equivalentCells) {
-		List<Term>[] indices = new List[indices2values.size()];
+		ArrayIndex[] indices = new ArrayIndex[indices2values.size()];
 		TermVariable[] values = new TermVariable[indices2values.size()];
 		int offset = 0;
-		for (Entry<List<Term>, TermVariable> index2value : indices2values.entrySet()) {
+		for (Entry<ArrayIndex, TermVariable> index2value : indices2values.entrySet()) {
 			indices[offset] = index2value.getKey();
 			values[offset] = index2value.getValue();
 			offset++;
@@ -397,8 +398,8 @@ public class TransFormulaLRWithArrayCells {
 		int k = 0;
 		for (int i = 0; i < indices2values.size(); i++) {
 			for (int j = 0; j < i; j++) {
-				List<Term> index1 = indices[i];
-				List<Term> index2 = indices[j];
+				ArrayIndex index1 = indices[i];
+				ArrayIndex index2 = indices[j];
 				TermVariable value1 = values[i];
 				TermVariable value2 = values[j];
 				TermVariable value1Representative = equivalentCells.getInOutRepresentative(value1);
@@ -412,14 +413,14 @@ public class TransFormulaLRWithArrayCells {
 		return result;
 	}
 
-	private Term indexEqualityImpliesValueEquality(List<Term> index1, List<Term> index2, Term value1, Term value2,
+	private Term indexEqualityImpliesValueEquality(ArrayIndex index1, ArrayIndex index2, Term value1, Term value2,
 			SafeSubstitution select2CellVariable) {
 		Term indexEquality = pairwiseEqualityExploitDoubletons(index1, index2, select2CellVariable);
 		Term valueEquality = SmtUtils.binaryEquality(m_Script, value1, value2);
 		return Util.or(m_Script, Util.not(m_Script, indexEquality), valueEquality);
 	}
 
-	Term pairwiseEqualityExploitDoubletons(List<Term> index1, List<Term> index2, SafeSubstitution select2CellVariable) {
+	Term pairwiseEqualityExploitDoubletons(ArrayIndex index1, ArrayIndex index2, SafeSubstitution select2CellVariable) {
 		assert index1.size() == index2.size();
 		Term[] conjuncts = new Term[index1.size()];
 		for (int i = 0; i < index1.size(); i++) {
@@ -446,16 +447,16 @@ public class TransFormulaLRWithArrayCells {
 	private SafeSubstitution constructIndex2CellVariableSubstitution(EquivalentCells ec, int i) {
 		Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (MultiDimensionalSelect ar : tflrwai.getArrayReads().get(i)) {
-			TermVariable cellVariable = m_ArrayInstance2Index2CellVariable.get(ar.getArray()).get(
-					Arrays.asList(ar.getIndex()));
+			TermVariable cellVariable = m_ArrayInstance2Index2CellVariable.get(ar.getArray()).get(ar.getIndex());
 			Term inOutRepresentative = ec.getInOutRepresentative(cellVariable);
+			assert inOutRepresentative != null;
 			substitutionMapping.put(ar.getSelectTerm(), inOutRepresentative);
 		}
 
 		for (MultiDimensionalSelect ar : tflrwai.getAdditionalArrayReads()) {
-			TermVariable cellVariable = m_ArrayInstance2Index2CellVariable.get(ar.getArray()).get(
-					Arrays.asList(ar.getIndex()));
+			TermVariable cellVariable = m_ArrayInstance2Index2CellVariable.get(ar.getArray()).get(ar.getIndex());
 			Term inOutRepresentative = ec.getInOutRepresentative(cellVariable);
+			assert inOutRepresentative != null;
 			substitutionMapping.put(ar.getSelectTerm(), inOutRepresentative);
 		}
 		return new SafeSubstitution(m_Script, substitutionMapping);

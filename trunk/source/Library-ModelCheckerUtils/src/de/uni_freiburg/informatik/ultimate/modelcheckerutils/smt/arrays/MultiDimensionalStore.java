@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTerm
  */
 public class MultiDimensionalStore {
 	private Term m_Array;
-	private final Term[] m_Index;
+	private final ArrayIndex m_Index;
 	private final Term m_Value;
 	private final ApplicationTerm m_StoreTerm;
 	
@@ -60,14 +60,14 @@ public class MultiDimensionalStore {
 			value = appTerm.getParameters()[2];
 		}
 		m_Array = array;
-		m_Index = index.toArray(new Term[0]);
+		m_Index = new ArrayIndex(index);
 		m_Value = value;
 		assert classInvariant();
 	}
 	
 	private boolean classInvariant() {
 		if (m_Array == null) {
-			return m_Index.length == 0 && m_StoreTerm == m_Value;
+			return m_Index.size() == 0 && m_StoreTerm == m_Value;
 		} else {
 			return m_Array.getSort() == m_StoreTerm.getSort() &&
 					MultiDimensionalSort.
@@ -77,14 +77,14 @@ public class MultiDimensionalStore {
 	
 	private boolean isCompatibleSelect(Term term, Term array, ArrayList<Term> index) {
 		MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(term);
-		return mdSelect.getArray() == array && index.equals(Arrays.asList(mdSelect.getIndex()));
+		return mdSelect.getArray() == array && index.equals(mdSelect.getIndex());
 	}
 
 	public Term getArray() {
 		return m_Array;
 	}
 
-	public Term[] getIndex() {
+	public ArrayIndex getIndex() {
 		return m_Index;
 	}
 
@@ -131,7 +131,7 @@ public class MultiDimensionalStore {
 				(new ApplicationTermFinder("store", false)).findMatchingSubterms(term);
 		for (Term storeTerm : storeTerms) {
 			MultiDimensionalStore mdStore = new MultiDimensionalStore(storeTerm);
-			if (mdStore.getIndex().length == 0) {
+			if (mdStore.getIndex().size() == 0) {
 				throw new AssertionError("store must not have dimension 0");
 			}
 			arrayStoreDefs.add(mdStore);
@@ -159,7 +159,7 @@ public class MultiDimensionalStore {
 			for (MultiDimensionalStore asd : foundInLastIteration) {
 				foundInThisIteration.addAll(extractArrayStoresShallow(asd.getArray()));
 				foundInThisIteration.addAll(extractArrayStoresShallow(asd.getValue()));
-				Term[] index = asd.getIndex();
+				ArrayIndex index = asd.getIndex();
 				for (Term entry : index) {
 					foundInThisIteration.addAll(extractArrayStoresShallow(entry));
 				}

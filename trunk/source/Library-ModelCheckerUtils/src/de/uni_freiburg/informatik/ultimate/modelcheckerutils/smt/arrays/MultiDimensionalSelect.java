@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTerm
 public class MultiDimensionalSelect {
 
 	private final Term m_Array;
-	private final Term[] m_Index;
+	private final ArrayIndex m_Index;
 	private final ApplicationTerm m_SelectTerm;
 	
 	/**
@@ -53,14 +53,14 @@ public class MultiDimensionalSelect {
 			index.add(0,appTerm.getParameters()[1]);
 			term = appTerm.getParameters()[0];
 		}
-		m_Index = index.toArray(new Term[0]);
+		m_Index = new ArrayIndex(index);
 		m_Array = term;
 		assert classInvariant();
 	}
 	
 	private boolean classInvariant() {
 		if (m_Array == null) {
-			return m_Index.length == 0;
+			return m_Index.size() == 0;
 		} else {
 			return MultiDimensionalSort.
 					areDimensionsConsistent(m_Array, m_Index, m_SelectTerm);
@@ -71,7 +71,7 @@ public class MultiDimensionalSelect {
 		return m_Array;
 	}
 
-	public Term[] getIndex() {
+	public ArrayIndex getIndex() {
 		return m_Index;
 	}
 
@@ -119,7 +119,7 @@ public class MultiDimensionalSelect {
 		for (Term storeTerm : selectTerms) {
 			if (allowArrayValues || !storeTerm.getSort().isArraySort()) {
 				MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(storeTerm);
-				if (mdSelect.getIndex().length == 0) {
+				if (mdSelect.getIndex().size() == 0) {
 					throw new AssertionError("select must not have dimension 0");
 				}
 				result.add(mdSelect);
@@ -150,7 +150,7 @@ public class MultiDimensionalSelect {
 			foundInThisIteration = new ArrayList<MultiDimensionalSelect>();
 			for (MultiDimensionalSelect mdSelect : foundInLastIteration) {
 				foundInThisIteration.addAll(extractSelectShallow(mdSelect.getArray(), allowArrayValues));
-				Term[] index = mdSelect.getIndex();
+				ArrayIndex index = mdSelect.getIndex();
 				for (Term entry : index) {
 					foundInThisIteration.addAll(extractSelectShallow(entry, allowArrayValues));
 				}

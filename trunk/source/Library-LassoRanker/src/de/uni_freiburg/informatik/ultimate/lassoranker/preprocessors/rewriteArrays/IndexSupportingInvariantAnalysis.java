@@ -31,8 +31,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -42,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
@@ -109,12 +108,12 @@ public class IndexSupportingInvariantAnalysis {
 	}
 	
 	private SetOfDoubletons<Term> computeDoubletons() {
-		NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> array2index2repVar = 
+		NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> array2index2repVar = 
 				m_ArrayCellRepVarConstructor.getArrayRepresentative2IndexRepresentative2ReplacementVar();
 		SetOfDoubletons<Term> result = new SetOfDoubletons<>();
 		for (TermVariable array : array2index2repVar.keySet()) {
-			Set<List<Term>> allIndices = array2index2repVar.get(array).keySet();
-			List<Term>[] allIndicesArr = allIndices.toArray(new List[allIndices.size()]);
+			Set<ArrayIndex> allIndices = array2index2repVar.get(array).keySet();
+			ArrayIndex[] allIndicesArr = allIndices.toArray(new ArrayIndex[allIndices.size()]);
 			for (int i=0; i<allIndicesArr.length; i++) {
 				for (int j=i+1; j<allIndicesArr.length; j++) {
 					List<Term> fstIndex = allIndicesArr[i];

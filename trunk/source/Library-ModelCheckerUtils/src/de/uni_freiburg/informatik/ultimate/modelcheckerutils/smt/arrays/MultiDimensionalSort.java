@@ -53,11 +53,11 @@ public class MultiDimensionalSort {
 	 * consistent.
 	 */
 	public static boolean areDimensionsConsistent(Term outerArray, 
-			Term[] index, Term innerArray) {
+			ArrayIndex index, Term innerArray) {
 		int dimensionInnerArray = (new MultiDimensionalSort(
 				innerArray.getSort())).getDimension();
 		int dimensionOuterArray = (new MultiDimensionalSort(
 				outerArray.getSort())).getDimension();
-		return (index.length == dimensionOuterArray - dimensionInnerArray);
+		return (index.size() == dimensionOuterArray - dimensionInnerArray);
 	}
 }

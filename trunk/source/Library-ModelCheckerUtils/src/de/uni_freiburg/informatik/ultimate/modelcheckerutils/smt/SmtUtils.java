@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class SmtUtils {
@@ -139,12 +140,12 @@ public class SmtUtils {
 	 * E.g. If the array has Sort (Int -> Int -> Int) and index is [23, 42],
 	 * this method returns the term ("select" ("select" a 23) 42).  
 	 */
-	public static Term multiDimensionalSelect(Script script, Term a, Term[] index) {
-		assert index.length > 0;
+	public static Term multiDimensionalSelect(Script script, Term a, ArrayIndex index) {
+		assert index.size() > 0;
 		assert a.getSort().isArraySort();
 		Term result = a;
-		for (int i=0; i<index.length; i++) {
-			result = script.term("select", result, index[i]);
+		for (int i=0; i<index.size(); i++) {
+			result = script.term("select", result, index.get(i));
 		}
 		return result;
 	}
@@ -246,10 +247,10 @@ public class SmtUtils {
 	}
 	
 	
-	public static Term[] substitutionElementwise(Term[] subtituents, SafeSubstitution subst) {
-		Term[] result = new Term[subtituents.length];
-		for (int i=0; i<subtituents.length; i++) {
-			result[i] = subst.transform(subtituents[i]);
+	public static List<Term> substitutionElementwise(List<Term> subtituents, SafeSubstitution subst) {
+		List<Term> result = new ArrayList<Term>();
+		for (int i=0; i<subtituents.size(); i++) {
+			result.add(subst.transform(subtituents.get(i)));
 		}
 		return result;
 	}

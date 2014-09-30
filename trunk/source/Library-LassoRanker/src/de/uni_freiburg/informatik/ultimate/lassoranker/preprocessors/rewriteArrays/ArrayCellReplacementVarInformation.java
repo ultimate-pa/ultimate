@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 
 /**
  * Object for storing information about an array cell for which we will
@@ -56,12 +57,12 @@ public class ArrayCellReplacementVarInformation {
 	/**
 	 * Index as it occurs in the formula.
 	 */
-	private final List<Term> m_Index;
+	private final ArrayIndex m_Index;
 	/**
 	 * Index in which each TermVariable is translated to the representative
 	 * of the corresponding BoogieVar.
 	 */
-	private final List<Term> m_IndexRepresentative;
+	private final ArrayIndex m_IndexRepresentative;
 	private final VarType m_VarType;
 	
 	/**
@@ -73,8 +74,8 @@ public class ArrayCellReplacementVarInformation {
 	
 	
 	public ArrayCellReplacementVarInformation(TermVariable arrayInstance,
-			TermVariable arrayRepresentative, List<Term> index,
-			List<Term> indexRepresentative, VarType varType, TransFormulaLR transFormulaLR) {
+			TermVariable arrayRepresentative, ArrayIndex index,
+			ArrayIndex indexRepresentative, VarType varType, TransFormulaLR transFormulaLR) {
 		super();
 		m_ArrayInstance = arrayInstance;
 		m_ArrayRepresentative = arrayRepresentative;
@@ -95,12 +96,12 @@ public class ArrayCellReplacementVarInformation {
 	}
 
 
-	public List<Term> getIndex() {
+	public ArrayIndex getIndex() {
 		return m_Index;
 	}
 
 
-	public List<Term> getIndexRepresentative() {
+	public ArrayIndex getIndexRepresentative() {
 		return m_IndexRepresentative;
 	}
 

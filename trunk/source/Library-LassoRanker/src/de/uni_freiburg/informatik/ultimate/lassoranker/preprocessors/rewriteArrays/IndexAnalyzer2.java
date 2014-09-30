@@ -28,13 +28,12 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArr
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArrays;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -44,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
@@ -66,7 +66,7 @@ public class IndexAnalyzer2 {
 	private final boolean m_SearchAdditionalSupportingInvariants = true;
 	
 	public IndexAnalyzer2(Term term, HashRelation<TermVariable, 
-			List<Term>> array2Indices, 
+			ArrayIndex> array2Indices, 
 			Boogie2SMT boogie2smt, TransFormulaLR tf, 
 			IndexSupportingInvariantAnalysis indexSupportingInvariantAnalysis) {
 		super();
@@ -95,19 +95,19 @@ public class IndexAnalyzer2 {
 		unknownDoubletons.addDoubleton(doubleton);
 	}
 	
-	void analyze(HashRelation<TermVariable, List<Term>> array2Indices) { 
+	void analyze(HashRelation<TermVariable, ArrayIndex> array2Indices) { 
 		for (TermVariable tv : array2Indices.getDomain()) {
-			Set<List<Term>> test = array2Indices.getImage(tv);
-			List<Term>[] testArr = test.toArray(new List[test.size()]);
+			Set<ArrayIndex> test = array2Indices.getImage(tv);
+			ArrayIndex[] testArr = test.toArray(new ArrayIndex[test.size()]);
 			for (int i=0; i<testArr.length; i++) {
 				for (int j=i+1; j<testArr.length; j++) {
-					List<Term> fstIndex = testArr[i];
-					List<Term> sndIndex = testArr[j];
+					ArrayIndex fstIndex = testArr[i];
+					ArrayIndex sndIndex = testArr[j];
 					assert fstIndex.size() == sndIndex.size();
 					boolean fstIndexIsInvarIndex = 
-								RewriteArrays.allVariablesAreInVars(fstIndex, m_TransFormula);
+							TransFormulaUtils.allVariablesAreInVars(fstIndex, m_TransFormula);
 					boolean sndIndexIsInvarIndexOrOutVarIndex = 
-								RewriteArrays.allVariablesAreInVars(sndIndex, m_TransFormula);
+							TransFormulaUtils.allVariablesAreInVars(sndIndex, m_TransFormula);
 					boolean isInvarPair = fstIndexIsInvarIndex && 
 								sndIndexIsInvarIndexOrOutVarIndex;
 					for (int k=0; k<fstIndex.size(); k++) {
@@ -200,13 +200,11 @@ public class IndexAnalyzer2 {
 	private Doubleton<Term> constructDefiningDoubleton(Doubleton<Term> inVarDoubleton) {
 		Term oneElement = inVarDoubleton.getOneElement();
 		Term otherElement = inVarDoubleton.getOtherElement();
-		Term[] translatedOne = RewriteArrays.translateTermVariablesToDefinitions(
+		Term translatedOne = TransFormulaUtils.translateTermVariablesToDefinitions(
 				m_Script, m_TransFormula, oneElement);
-		assert translatedOne.length == 1;
-		Term[] translatedOther = RewriteArrays.translateTermVariablesToDefinitions(
+		Term translatedOther = TransFormulaUtils.translateTermVariablesToDefinitions(
 				m_Script, m_TransFormula, otherElement);
-		assert translatedOther.length == 1;
-		return new Doubleton<Term>(translatedOne[0], translatedOther[0]);
+		return new Doubleton<Term>(translatedOne, translatedOther);
 		
 	}
 	

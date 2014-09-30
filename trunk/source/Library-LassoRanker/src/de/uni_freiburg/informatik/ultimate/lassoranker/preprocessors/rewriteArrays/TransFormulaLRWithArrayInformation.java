@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -43,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArra
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -52,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitutio
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality.ArrayEqualityExtractor;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
@@ -86,9 +85,9 @@ public class TransFormulaLRWithArrayInformation {
 	 * Mapping from the first generation of an array to all indices that
 	 * occur in instances of the same array.
 	 */
-	private HashRelation<TermVariable, List<Term>> m_ArrayFirstGeneration2Indices;
+	private HashRelation<TermVariable, ArrayIndex> m_ArrayFirstGeneration2Indices;
 	private final HashRelation<TermVariable, TermVariable> m_ArrayFirstGeneration2Instances;
-	private final Map<List<Term>, List<Term>> m_IndexInstance2IndexRepresentative = new HashMap<>();
+	private final Map<ArrayIndex, ArrayIndex> m_IndexInstance2IndexRepresentative = new HashMap<>();
 	private final List<List<ArrayUpdate>> m_ArrayUpdates;
 	private final List<List<MultiDimensionalSelect>> m_ArrayReads;
 	/**
@@ -102,10 +101,10 @@ public class TransFormulaLRWithArrayInformation {
 	private final TransFormulaLR m_TransFormulaLR;
 	private final ReplacementVarFactory m_ReplacementVarFactory;
 	
-	private final NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> m_ArrayCellInVars = 
-			new NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation>();
-	private final NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> m_ArrayCellOutVars = 
-			new NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation>();
+	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> m_ArrayCellInVars = 
+			new NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation>();
+	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> m_ArrayCellOutVars = 
+			new NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation>();
 	
 	
 	
@@ -174,7 +173,7 @@ public class TransFormulaLRWithArrayInformation {
 		return result;
 	}
 
-	public HashRelation<TermVariable, List<Term>> getArrayFirstGeneration2Indices() {
+	public HashRelation<TermVariable, ArrayIndex> getArrayFirstGeneration2Indices() {
 		return m_ArrayFirstGeneration2Indices;
 	}
 	
@@ -210,10 +209,10 @@ public class TransFormulaLRWithArrayInformation {
 		return m_TransFormulaLR;
 	}
 	
-	public List<Term> getOrConstructIndexRepresentative(List<Term> indexInstance) {
-		List<Term> indexRepresentative = m_IndexInstance2IndexRepresentative.get(indexInstance);
+	public ArrayIndex getOrConstructIndexRepresentative(ArrayIndex indexInstance) {
+		ArrayIndex indexRepresentative = m_IndexInstance2IndexRepresentative.get(indexInstance);
 		if (indexRepresentative == null) {
-			indexRepresentative = TransFormulaUtils.translateTermVariablesToDefinitions(m_Script, m_TransFormulaLR, indexInstance);
+			indexRepresentative = new ArrayIndex(TransFormulaUtils.translateTermVariablesToDefinitions(m_Script, m_TransFormulaLR, indexInstance));
 			m_IndexInstance2IndexRepresentative.put(indexInstance, indexRepresentative);
 		}
 		return indexRepresentative;
@@ -424,38 +423,38 @@ public class TransFormulaLRWithArrayInformation {
 		public IndexCollector(TransFormulaLR tf) {
 			m_TransFormula = tf;
 			constructSubstitutions();
-			m_ArrayFirstGeneration2Indices = new HashRelation<TermVariable, List<Term>>();
+			m_ArrayFirstGeneration2Indices = new HashRelation<TermVariable, ArrayIndex>();
 			for (int i = 0; i < sunnf.length; i++) {
 				for (ArrayUpdate au : m_ArrayUpdates.get(i)) {
 					TermVariable firstGeneration = m_ArrayGenealogy[i].getProgenitor(au.getOldArray());
-					Term[] index = au.getIndex();
+					ArrayIndex index = au.getIndex();
 					addFirstGenerationIndexPair(firstGeneration, index);
 				}
 				for (MultiDimensionalSelect ar : m_ArrayReads.get(i)) {
 					TermVariable firstGeneration = m_ArrayGenealogy[i].getProgenitor((TermVariable) ar.getArray());
-					Term[] index = ar.getIndex();
+					ArrayIndex index = ar.getIndex();
 					addFirstGenerationIndexPair(firstGeneration, index);
 				}
 			}
 		}
 
-		private void addFirstGenerationIndexPair(TermVariable firstGeneration, Term[] index) {
-			m_ArrayFirstGeneration2Indices.addPair(firstGeneration, Arrays.asList(index));
+		private void addFirstGenerationIndexPair(TermVariable firstGeneration, ArrayIndex index) {
+			m_ArrayFirstGeneration2Indices.addPair(firstGeneration, index);
 			// TODO: optimization the following is only necessary if the first
 			// generation is no auxiliary variable.
-			if (TransFormulaUtils.allVariablesAreInVars(Arrays.asList(index), getTransFormulaLR())) {
-				Term[] inReplacedByOut = SmtUtils.substitutionElementwise(index, m_InVars2OutVars);
-				m_ArrayFirstGeneration2Indices.addPair(firstGeneration, Arrays.asList(inReplacedByOut));
+			if (TransFormulaUtils.allVariablesAreInVars(index, getTransFormulaLR())) {
+				ArrayIndex inReplacedByOut = new ArrayIndex(SmtUtils.substitutionElementwise(index, m_InVars2OutVars));
+				m_ArrayFirstGeneration2Indices.addPair(firstGeneration, inReplacedByOut);
 				m_AdditionalArrayReads.addAll(extractArrayReads(inReplacedByOut));
 			}
-			if (TransFormulaUtils.allVariablesAreOutVars(Arrays.asList(index), getTransFormulaLR())) {
-				Term[] outReplacedByIn = SmtUtils.substitutionElementwise(index, m_OutVars2InVars);
-				m_ArrayFirstGeneration2Indices.addPair(firstGeneration, Arrays.asList(outReplacedByIn));
+			if (TransFormulaUtils.allVariablesAreOutVars(index, getTransFormulaLR())) {
+				ArrayIndex outReplacedByIn = new ArrayIndex(SmtUtils.substitutionElementwise(index, m_OutVars2InVars));
+				m_ArrayFirstGeneration2Indices.addPair(firstGeneration, outReplacedByIn);
 				m_AdditionalArrayReads.addAll(extractArrayReads(outReplacedByIn));
 			}
 		}
 
-		private List<MultiDimensionalSelect> extractArrayReads(Term[] terms) {
+		private List<MultiDimensionalSelect> extractArrayReads(List<Term> terms) {
 			ArrayList<MultiDimensionalSelect> result = new ArrayList<>();
 			for (Term term : terms) {
 				result.addAll(MultiDimensionalSelect.extractSelectDeep(term, true));
@@ -485,17 +484,17 @@ public class TransFormulaLRWithArrayInformation {
 	public void computeInVarAndOutVarArrayCells() {
 		for (TermVariable firstGeneration : this.getArrayFirstGeneration2Instances().getDomain()) {
 			for (TermVariable instance : this.getArrayFirstGeneration2Instances().getImage(firstGeneration)) {
-				Set<List<Term>> indicesOfAllGenerations = this.getArrayFirstGeneration2Indices().getImage(firstGeneration);
+				Set<ArrayIndex> indicesOfAllGenerations = this.getArrayFirstGeneration2Indices().getImage(firstGeneration);
 				if (indicesOfAllGenerations == null) {
 					mLogger.info("Array " + firstGeneration + " is never accessed");
 					continue;
 				}
-				for (List<Term> index : indicesOfAllGenerations) {
+				for (ArrayIndex index : indicesOfAllGenerations) {
 					boolean isInVarCell = this.isInVarCell(instance, index);
 					boolean isOutVarCell = this.isOutVarCell(instance, index);
 					if (isInVarCell || isOutVarCell) {
 						TermVariable arrayRepresentative = (TermVariable) TransFormulaUtils.getDefinition(m_TransFormulaLR, instance);
-						List<Term> indexRepresentative = this.getOrConstructIndexRepresentative(index);
+						ArrayIndex indexRepresentative = this.getOrConstructIndexRepresentative(index);
 						if (isInVarCell) {
 							ArrayCellReplacementVarInformation acrvi = 
 									new ArrayCellReplacementVarInformation(
@@ -519,13 +518,13 @@ public class TransFormulaLRWithArrayInformation {
 		}
 	}
 	
-	public NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> getArrayCellInVars() {
+	public NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> getArrayCellInVars() {
 		return m_ArrayCellInVars;
 	}
 
 
 
-	public NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> getArrayCellOutVars() {
+	public NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> getArrayCellOutVars() {
 		return m_ArrayCellOutVars;
 	}
 	
@@ -539,7 +538,7 @@ public class TransFormulaLRWithArrayInformation {
 	 * inVar. This is the case if arrayInstance and each free variable of
 	 * index is an inVar.
 	 */
-	public boolean isInVarCell(TermVariable arrayInstance, List<Term> index) {
+	public boolean isInVarCell(TermVariable arrayInstance, ArrayIndex index) {
 		if (TransFormulaUtils.isInvar(arrayInstance, getTransFormulaLR())) {
 			return TransFormulaUtils.allVariablesAreInVars(index, getTransFormulaLR());
 		} else {
@@ -547,7 +546,7 @@ public class TransFormulaLRWithArrayInformation {
 		}
 	}
 
-	public boolean isOutVarCell(TermVariable arrayInstance, List<Term> index) {
+	public boolean isOutVarCell(TermVariable arrayInstance, ArrayIndex index) {
 		if (TransFormulaUtils.isOutvar(arrayInstance, getTransFormulaLR())) {
 			return TransFormulaUtils.allVariablesAreOutVars(index, getTransFormulaLR());
 		} else {

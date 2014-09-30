@@ -42,33 +42,41 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 
 public class CellVariableBuilder {
-	private final Map<TermVariable, Map<List<Term>, TermVariable>> m_ArrayInstance2Index2CellVariable;
-	private final Map<TermVariable, Map<List<Term>, ReplacementVar>> m_Array2Index2RepVar;
+	private final Map<TermVariable, Map<ArrayIndex, TermVariable>> m_ArrayInstance2Index2CellVariable;
+	private final Map<TermVariable, Map<ArrayIndex, ReplacementVar>> m_Array2Index2RepVar;
 	private final Set<TermVariable> m_AuxVars = new HashSet<TermVariable>();
 	private final TransFormulaLR m_TransFormula;
 	private final TransFormulaLRWithArrayInformation tflrwai;
 	private final TransFormulaLRWithArrayCells tflrwac;
 	private final ReplacementVarFactory m_ReplacementVarFactory;
 	private final Logger mLogger;
-	private final HashRelation<TermVariable, List<Term>> m_FirstGeneration2Indices;
-	private NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> m_ArrayCellInVars;
-	private NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> m_ArrayCellOutVars;
+	private final HashRelation<TermVariable, ArrayIndex> m_FirstGeneration2Indices;
+	private NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> m_ArrayCellInVars;
+	private NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> m_ArrayCellOutVars;
 
 
-	public CellVariableBuilder(TransFormulaLR tf, TransFormulaLRWithArrayCells tflrwac, ReplacementVarFactory replacementVarFactory, Logger logger, HashRelation<TermVariable, List<Term>> firstGeneration2Indices, NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> arrayCellInVars, NestedMap2<TermVariable, List<Term>, ArrayCellReplacementVarInformation> arrayCellOutVars) {
+	public CellVariableBuilder(TransFormulaLR tf, 
+			TransFormulaLRWithArrayCells tflrwac, 
+			ReplacementVarFactory replacementVarFactory, 
+			Logger logger, 
+			HashRelation<TermVariable, ArrayIndex> firstGeneration2Indices, 
+			NestedMap2<TermVariable, ArrayIndex, 
+			ArrayCellReplacementVarInformation> arrayCellInVars, 
+			NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> arrayCellOutVars) {
 		m_ReplacementVarFactory = replacementVarFactory;
 		mLogger = logger;
 		m_TransFormula = tf;
 		m_FirstGeneration2Indices = firstGeneration2Indices;
 		this.tflrwac = tflrwac;
 		this.tflrwai = tflrwac.getTransFormulaLRWithArrayInformation();
-		m_ArrayInstance2Index2CellVariable = new HashMap<TermVariable, Map<List<Term>, TermVariable>>();
-		m_Array2Index2RepVar = new HashMap<TermVariable, Map<List<Term>, ReplacementVar>>();
+		m_ArrayInstance2Index2CellVariable = new HashMap<TermVariable, Map<ArrayIndex, TermVariable>>();
+		m_Array2Index2RepVar = new HashMap<TermVariable, Map<ArrayIndex, ReplacementVar>>();
 		m_ArrayCellInVars = arrayCellInVars;
 		m_ArrayCellOutVars = arrayCellOutVars;
 		dotSomething();
@@ -86,17 +94,17 @@ public class CellVariableBuilder {
 	public void dotSomething() {
 		for (TermVariable firstGeneration : tflrwai.getArrayFirstGeneration2Instances().getDomain()) {
 			for (TermVariable instance : tflrwai.getArrayFirstGeneration2Instances().getImage(firstGeneration)) {
-				Map<List<Term>, TermVariable> index2ArrayCellTv = m_ArrayInstance2Index2CellVariable.get(instance);
+				Map<ArrayIndex, TermVariable> index2ArrayCellTv = m_ArrayInstance2Index2CellVariable.get(instance);
 				if (index2ArrayCellTv == null) {
-					index2ArrayCellTv = new HashMap<List<Term>, TermVariable>();
+					index2ArrayCellTv = new HashMap<ArrayIndex, TermVariable>();
 					m_ArrayInstance2Index2CellVariable.put(instance, index2ArrayCellTv);
 				}
-				Set<List<Term>> indicesOfFirstGeneration = m_FirstGeneration2Indices.getImage(firstGeneration);
+				Set<ArrayIndex> indicesOfFirstGeneration = m_FirstGeneration2Indices.getImage(firstGeneration);
 				if (indicesOfFirstGeneration == null) {
 					mLogger.info("Array " + firstGeneration + " is never accessed");
 					continue;
 				}
-				for (List<Term> index : indicesOfFirstGeneration) {
+				for (ArrayIndex index : indicesOfFirstGeneration) {
 					TermVariable tv = index2ArrayCellTv.get(index);
 					if (tv == null) {
 						tv = constructTermVariable(instance, index);
@@ -106,7 +114,7 @@ public class CellVariableBuilder {
 					boolean isOutVarCell = isOutVarCell(instance, index);
 					if (isInVarCell || isOutVarCell) {
 						TermVariable arrayRepresentative = (TermVariable) TransFormulaUtils.getDefinition(m_TransFormula, instance);
-						List<Term> indexRepresentative = tflrwac.getOrConstructIndexRepresentative(index);
+						ArrayIndex indexRepresentative = tflrwac.getOrConstructIndexRepresentative(index);
 						if (isInVarCell) {
 							ReplacementVar rv = m_ArrayCellInVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
 							TermVariable inVar = (TermVariable) m_TransFormula.getInVars().get(rv);
@@ -180,7 +188,7 @@ public class CellVariableBuilder {
 		}
 	}
 
-	public Map<TermVariable, Map<List<Term>, TermVariable>> getArrayInstance2Index2CellVariable() {
+	public Map<TermVariable, Map<ArrayIndex, TermVariable>> getArrayInstance2Index2CellVariable() {
 		return m_ArrayInstance2Index2CellVariable;
 	}
 

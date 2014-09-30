@@ -70,7 +70,7 @@ public class ArrayUpdate {
 		assert m_NewArray.getSort() == allegedStoreTerm.getSort();
 		
 		m_MultiDimensionalStore = new MultiDimensionalStore(allegedStoreTerm);
-		if (m_MultiDimensionalStore.getIndex().length == 0) {
+		if (m_MultiDimensionalStore.getIndex().size() == 0) {
 			throw new ArrayUpdateException("no multidimensional array");
 		}
 		TermVariable oldArray = isArrayWithSort(
@@ -128,7 +128,7 @@ public class ArrayUpdate {
 	public TermVariable getNewArray() {
 		return m_NewArray;
 	}
-	public Term[] getIndex() {
+	public ArrayIndex getIndex() {
 		return m_MultiDimensionalStore.getIndex();
 	}
 	public Term getValue() {

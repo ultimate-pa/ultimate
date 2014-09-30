@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 
@@ -53,14 +54,14 @@ public class EquivalentCells {
 	private final Map<TermVariable, TermVariable> m_Representative;
 	private final Term m_InOutEqauality;
 	private final TransFormulaLR m_TransFormula;
-	private final Map<TermVariable, Map<List<Term>, TermVariable>> m_ArrayInstance2Index2CellVariable;
+	private final Map<TermVariable, Map<ArrayIndex, TermVariable>> m_ArrayInstance2Index2CellVariable;
 	private final IndexAnalyzer2 m_IndexAnalyzer;
 
 	public EquivalentCells(Script script, TransFormulaLR tf, 
 			List<ArrayEquality> arrayEqualities, 
 			List<ArrayUpdate> arrayUpdates, IndexAnalyzer2 indexAnalyzer, 
 			Map<TermVariable, 
-			Map<List<Term>, TermVariable>> arrayInstance2Index2CellVariable) {
+			Map<ArrayIndex, TermVariable>> arrayInstance2Index2CellVariable) {
 		m_Script = script;
 		m_TransFormula = tf;
 		m_IndexAnalyzer = indexAnalyzer;
@@ -75,12 +76,12 @@ public class EquivalentCells {
 	
 	private void addArrayUpdateConstraints(UnionFind<TermVariable> uf, List<ArrayUpdate> arrayUpdates) {
 		for (ArrayUpdate au : arrayUpdates) {
-			List<Term> updateIndex = Arrays.asList(au.getIndex());
-			Map<List<Term>, TermVariable> newInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(au
+			List<Term> updateIndex = au.getIndex();
+			Map<ArrayIndex, TermVariable> newInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(au
 					.getNewArray());
-			Map<List<Term>, TermVariable> oldInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(au
+			Map<ArrayIndex, TermVariable> oldInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(au
 					.getOldArray());
-			for (List<Term> index : newInstance2Index2CellVariable.keySet()) {
+			for (ArrayIndex index : newInstance2Index2CellVariable.keySet()) {
 				TermVariable newCellVariable = newInstance2Index2CellVariable.get(index);
 				TermVariable oldCellVariable = oldInstance2Index2CellVariable.get(index);
 				Equality indexEquality = m_IndexAnalyzer.isEqual(index, updateIndex);
@@ -101,12 +102,12 @@ public class EquivalentCells {
 	}
 
 	private void addArrayIndexConstraints(UnionFind<TermVariable> uf) {
-		for (Entry<TermVariable, Map<List<Term>, TermVariable>> entry : m_ArrayInstance2Index2CellVariable.entrySet()) {
-			Map<List<Term>, TermVariable> indices2values = entry.getValue();
+		for (Entry<TermVariable, Map<ArrayIndex, TermVariable>> entry : m_ArrayInstance2Index2CellVariable.entrySet()) {
+			Map<ArrayIndex, TermVariable> indices2values = entry.getValue();
 			List<Term>[] indices = new List[indices2values.size()];
 			TermVariable[] values = new TermVariable[indices2values.size()];
 			int offset = 0;
-			for (Entry<List<Term>, TermVariable> index2value : indices2values.entrySet()) {
+			for (Entry<ArrayIndex, TermVariable> index2value : indices2values.entrySet()) {
 				indices[offset] = index2value.getKey();
 				TermVariable value = index2value.getValue();
 				values[offset] = value;
@@ -130,9 +131,9 @@ public class EquivalentCells {
 
 	private void addArrayEqualityConstraints(UnionFind<TermVariable> uf, List<ArrayEquality> arrayEqualities) {
 		for (ArrayEquality ae : arrayEqualities) {
-			Map<List<Term>, TermVariable> lhsInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(ae
+			Map<ArrayIndex, TermVariable> lhsInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(ae
 					.getLhs());
-			Map<List<Term>, TermVariable> rhsInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(ae
+			Map<ArrayIndex, TermVariable> rhsInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(ae
 					.getRhs());
 			if (lhsInstance2Index2CellVariable == null && rhsInstance2Index2CellVariable == null) {
 				// has no index at all

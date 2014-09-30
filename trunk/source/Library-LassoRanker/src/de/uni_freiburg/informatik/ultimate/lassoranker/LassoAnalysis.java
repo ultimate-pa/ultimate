@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.DNF;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPreProcessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.MatchInVars;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RemoveNegation;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArrays;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArrays2;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteBooleans;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteDivision;

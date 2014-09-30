@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination.EqualityInformation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
@@ -208,7 +209,7 @@ public class ElimStore3 {
 			}
 			Term newConjunctsFromStore = subst.transform(conjunction);
 			Term newData = subst.transform(writeInto.getValue());
-			Term newWriteIndex[] = SmtUtils.substitutionElementwise(writeInto.getIndex(), subst);
+			ArrayIndex newWriteIndex = new ArrayIndex(SmtUtils.substitutionElementwise(writeInto.getIndex(), subst));
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				Term writeSubstituent = mScript.term("=",
 						SmtUtils.multiDimensionalSelect(mScript, writeInto.getNewArray(), newWriteIndex), newData);
@@ -223,10 +224,10 @@ public class ElimStore3 {
 
 		ArrayList<Term> additionalConjuncsFromSelect = new ArrayList<Term>();
 		{
-			Term[][] indices = new Term[iav.getIndices().length][];
+			ArrayIndex[] indices = new ArrayIndex[iav.getIndices().length];
 			Term[] values = new Term[iav.getIndices().length];
 			for (int i = 0; i < iav.getIndices().length; i++) {
-				indices[i] = SmtUtils.substitutionElementwise(iav.getIndices()[i], subst);
+				indices[i] = new ArrayIndex(SmtUtils.substitutionElementwise(iav.getIndices()[i], subst));
 				values[i] = subst.transform(iav.getValues()[i]);
 			}
 
@@ -252,13 +253,13 @@ public class ElimStore3 {
 		return result;
 	}
 
-	public static Term indexValueConnections(Term[] ourIndex, Term ourValue, Term[][] othersIndices,
+	public static Term indexValueConnections(ArrayIndex ourIndex, Term ourValue, ArrayIndex[] othersIndices,
 			Term[] othersValues, int othersPosition, Script script, int quantifier) {
 		assert othersIndices.length == othersValues.length;
 		ArrayList<Term> additionalConjuncs = new ArrayList<Term>();
 		for (int i = othersPosition; i < othersIndices.length; i++) {
-			Term[] othersIndex = othersIndices[i];
-			assert ourIndex.length == othersIndex.length;
+			ArrayIndex othersIndex = othersIndices[i];
+			assert ourIndex.size() == othersIndex.size();
 			Term indexEquality = Util.and(script, buildPairwiseEquality(ourIndex, othersIndices[i], null, script));
 			Term valueEquality = SmtUtils.binaryEquality(script, ourValue, othersValues[i]);
 			Term conjunct = Util.or(script, Util.not(script, indexEquality), valueEquality);
@@ -283,8 +284,8 @@ public class ElimStore3 {
 	}
 
 	private class IndicesAndValues {
-		private final Term m_SelectTerm[];
-		private final Term m_Indices[][];
+		private final Term[] m_SelectTerm;
+		private final ArrayIndex[] m_Indices;
 		private final Term m_Values[];
 		private final Set<TermVariable> m_NewAuxVars;
 		private final Map<Term, Term> m_SelectTerm2Value = new HashMap<Term, Term>();
@@ -300,7 +301,7 @@ public class ElimStore3 {
 			}
 			MultiDimensionalSelect[] arrayReads = set.toArray(new MultiDimensionalSelect[0]);
 			m_SelectTerm = new Term[arrayReads.length];
-			m_Indices = new Term[arrayReads.length][];
+			m_Indices = new ArrayIndex[arrayReads.length];
 			m_Values = new Term[arrayReads.length];
 			m_NewAuxVars = new HashSet<TermVariable>();
 			for (int i = 0; i < arrayReads.length; i++) {
@@ -324,7 +325,7 @@ public class ElimStore3 {
 			return m_SelectTerm;
 		}
 
-		public Term[][] getIndices() {
+		public ArrayIndex[] getIndices() {
 			return m_Indices;
 		}
 
@@ -342,15 +343,15 @@ public class ElimStore3 {
 	}
 
 	private class IndexValueConnection {
-		private final Term[] m_fstIndex;
-		private final Term[] m_sndIndex;
+		private final ArrayIndex m_fstIndex;
+		private final ArrayIndex m_sndIndex;
 		private final Term m_fstValue;
 		private final Term m_sndValue;
 		private final boolean m_SelectConnection;
 		private final Term m_IndexEquality;
 		private final Term m_ValueEquality;
 
-		public IndexValueConnection(Term[] fstIndex, Term[] sndIndex, Term fstValue, Term sndValue,
+		public IndexValueConnection(ArrayIndex fstIndex, ArrayIndex sndIndex, Term fstValue, Term sndValue,
 				boolean selectConnection) {
 			m_fstIndex = fstIndex;
 			m_sndIndex = sndIndex;
@@ -455,17 +456,17 @@ public class ElimStore3 {
 	 * conjunctions subst(first_1) == subst(second_1), ... ,subst(first_n) ==
 	 * subst(second_n) if subst is null we use the identity function.
 	 */
-	static Term[] buildPairwiseEquality(Term[] first, Term[] second, SafeSubstitution subst, Script script) {
-		assert first.length == second.length;
-		Term[] equivalent = new Term[first.length];
-		for (int i = 0; i < first.length; i++) {
+	static Term[] buildPairwiseEquality(ArrayIndex first, ArrayIndex second, SafeSubstitution subst, Script script) {
+		assert first.size() == second.size();
+		Term[] equivalent = new Term[first.size()];
+		for (int i = 0; i < first.size(); i++) {
 			Term firstTerm, secondTerm;
 			if (subst == null) {
-				firstTerm = first[i];
-				secondTerm = second[i];
+				firstTerm = first.get(i);
+				secondTerm = second.get(i);
 			} else {
-				firstTerm = subst.transform(first[i]);
-				secondTerm = subst.transform(second[i]);
+				firstTerm = subst.transform(first.get(i));
+				secondTerm = subst.transform(second.get(i));
 			}
 			equivalent[i] = SmtUtils.binaryEquality(script, firstTerm, secondTerm);
 		}
