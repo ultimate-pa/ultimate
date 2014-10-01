@@ -150,7 +150,12 @@ public class CDTParser implements ISource {
 		GCCParserExtensionConfiguration p_config = GCCParserExtensionConfiguration.getInstance();
 		GNUCSourceParser parser = new GNUCSourceParser(cprep, ParserMode.COMPLETE_PARSE, log, p_config);
 
-		parser.setSkipTrivialExpressionsInAggregateInitializers(false);
+		// The following methods was introduced in CDT8. Before there was the
+		// following method that took a boolean parameter
+		// parser.setSkipTrivialExpressionsInAggregateInitializers(false);
+		// Matthias changed this on 2014-10-01. 
+		// If there are no problems you may delete this comment.
+		parser.setMaximumTrivialExpressionsInAggregateInitializers(Integer.MAX_VALUE);
 
 		IASTTranslationUnit translationUnit = parser.parse();
 		return new WrapperNode(null, translationUnit);
