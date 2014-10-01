@@ -183,6 +183,9 @@ public class TypeHandler implements ITypeHandler {
             if (cId.equals("size_t") || cId.equals("ssize_t")) {
                 return (new ResultTypes(new PrimitiveType(loc, SFO.REAL), node.isConst(),
                 		false, new CPrimitive(PRIMITIVE.UINT)));
+            } else if (cId.equals("__builtin_va_list")) {
+                return (new ResultTypes(MemoryHandler.POINTER_TYPE, node.isConst(),
+                		false, new CPointer(new CPrimitive(PRIMITIVE.CHAR))));
             }
             
             String bId = main.cHandler.getSymbolTable().get(cId, loc).getBoogieName();
