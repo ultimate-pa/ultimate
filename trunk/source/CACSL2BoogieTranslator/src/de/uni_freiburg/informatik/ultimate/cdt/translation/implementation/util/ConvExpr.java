@@ -65,28 +65,18 @@ public class ConvExpr {
 							new RealLiteral(loc, SFO.NR0F));
 					break;
 				case INTTYPE:
-//					final Expression unwrappedInt =
-//					unwrapInt2Boolean(e);
-//					if (unwrappedInt != null) {
-//						resultEx = unwrappedInt;
-//					}
-//					else {
-						resultEx = new BinaryExpression(loc, new InferredType(
-								InferredType.Type.Boolean),
-								BinaryExpression.Operator.COMPNEQ, e,
-								new IntegerLiteral(loc, SFO.NR0));
-//					}
+					resultEx = new BinaryExpression(loc, new InferredType(
+							InferredType.Type.Boolean),
+							BinaryExpression.Operator.COMPNEQ, e,
+							new IntegerLiteral(loc, SFO.NR0));
 					break;
 				case VOID:
 					default:
 				}
 			} else if (underlyingType instanceof CPointer) {
-//				resultEx = new BinaryExpression(loc, 
-////						new InferredType(
-////						InferredType.Type.Boolean),
-//						BinaryExpression.Operator.COMPNEQ, e,
-//						MemoryHandler.constructNullPointer(loc));
-				resultEx = new IdentifierExpression(loc, SFO.NULL);
+				resultEx = new BinaryExpression(loc, 
+						BinaryExpression.Operator.COMPNEQ, e,
+						new IdentifierExpression(loc, SFO.NULL));
 			} else {
 				String msg = "Don't know the type of this expression. Line: "
 						+ e.getLocation().getStartLine();

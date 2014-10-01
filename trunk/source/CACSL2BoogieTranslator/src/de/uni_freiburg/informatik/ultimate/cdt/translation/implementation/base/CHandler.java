@@ -354,9 +354,6 @@ public class CHandler implements ICHandler {
 		}
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 
-		// //inserting a NamedType for "void" -- TODO: is this a good place??
-		// decl.add(new TypeDeclaration(loc, new Attribute[0], true, SFO.VOID,
-		// new String[0]));
 
 		for (IASTNode child : node.getChildren()) {
 			checkForACSL(main, null, child, null);
@@ -377,16 +374,6 @@ public class CHandler implements ICHandler {
 			}
 		}
 
-//		// Christian: function pointers
-//		String[] constants = new String[((MainDispatcher) main).getFunctionPointers().size()];
-//		if (constants.length > 0) {
-//			int i = 0;
-//			for (final String cId : ((MainDispatcher) main).getFunctionPointers().keySet()) {
-//				constants[i++] = SFO.FUNCTION_ADDRESS + cId;
-//			}
-//			VarList varList = new VarList(loc, constants, MemoryHandler.POINTER_TYPE);
-//			decl.add(new ConstDeclaration(loc, new Attribute[0], true, varList, null, false));
-//		}
 		//(alex:) new function pointers
 		for (Entry<String, Integer> en : ((MainDispatcher) main).getFunctionToIndex().entrySet()) {
 			String funcId = SFO.FUNCTION_ADDRESS + en.getKey();
@@ -939,8 +926,8 @@ public class CHandler implements ICHandler {
 				bId = SFO.FUNCTION_ADDRESS + cId;
 				useHeap = true;
 			} else {
-				
 			}
+				//TODO does this work correctly??
 //			Integer funIndex = ((MainDispatcher) main).getFunctionToIndex().get(cId);
 //			return new ResultExpression(new RValue(new IntegerLiteral(loc, funIndex.toString()), 
 //					new CPointer(new CFunction(null, null, false))));
