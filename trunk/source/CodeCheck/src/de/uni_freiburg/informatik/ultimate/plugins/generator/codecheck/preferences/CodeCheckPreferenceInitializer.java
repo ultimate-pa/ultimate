@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences;
 
+import java.util.prefs.PreferenceChangeEvent;
+
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
@@ -41,6 +43,10 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 						PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(
 								0, 1000000)),
+				new UltimatePreferenceItem<Integer>(LABEL_ITERATIONS, DEF_ITERATIONS,
+						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(
+								-1, 1000000)),
+								
 
 		};
 	}
@@ -94,6 +100,8 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String LABEL_GRAPHWRITERPATH = "write dot graph files here (empty for don't write)";
 
 	public static final String LABEL_TIMEOUT = "Timeout in seconds";
+	
+	public static final String LABEL_ITERATIONS = "Limit maxmium number of iterations. (-1 for no limitations)";
 
 	// /*
 	// * default values for the different preferences
@@ -112,5 +120,7 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String DEF_GRAPHWRITERPATH = "";
 
 	public static final int DEF_TIMEOUT = 1000;
+	
+	public static final int DEF_ITERATIONS = -1;
 
 }

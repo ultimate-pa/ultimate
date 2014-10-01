@@ -212,4 +212,42 @@ public abstract class CodeChecker {
 		}
 		return false;
 	}
+	
+
+
+	protected void addSatTriple(IPredicate pre, CodeBlock stm, IPredicate post) {
+		if (_satTriples.get(pre) == null)
+			_satTriples.put(pre, new HashMap<CodeBlock, HashSet<IPredicate>>());
+		if (_satTriples.get(pre).get(stm) == null)
+			_satTriples.get(pre).put(stm, new HashSet<IPredicate>());
+		_satTriples.get(pre).get(stm).add(post);
+	}
+
+	protected void addUnsatTriple(IPredicate pre, CodeBlock stm, IPredicate post) {
+		if (_unsatTriples.get(pre) == null)
+			_unsatTriples.put(pre, new HashMap<CodeBlock, HashSet<IPredicate>>());
+		if (_unsatTriples.get(pre).get(stm) == null)
+			_unsatTriples.get(pre).put(stm, new HashSet<IPredicate>());
+		_unsatTriples.get(pre).get(stm).add(post);
+	}
+
+	protected void addSatQuadruple(IPredicate pre, IPredicate hier, CodeBlock stm, IPredicate post) {
+		if (_satQuadruples.get(pre) == null)
+			_satQuadruples.put(pre, new HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>());
+		if (_satQuadruples.get(pre).get(hier) == null)
+			_satQuadruples.get(pre).put(hier, new HashMap<CodeBlock, HashSet<IPredicate>>());
+		if (_satQuadruples.get(pre).get(hier).get(stm) == null)
+			_satQuadruples.get(pre).get(hier).put(stm, new HashSet<IPredicate>());
+		_satQuadruples.get(pre).get(hier).get(stm).add(post);
+	}
+
+	protected void addUnsatQuadruple(IPredicate pre, IPredicate hier, CodeBlock stm, IPredicate post) {
+		if (_unsatQuadruples.get(pre) == null)
+			_unsatQuadruples.put(pre, new HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>());
+		if (_unsatQuadruples.get(pre).get(hier) == null)
+			_unsatQuadruples.get(pre).put(hier, new HashMap<CodeBlock, HashSet<IPredicate>>());
+		if (_unsatQuadruples.get(pre).get(hier).get(stm) == null)
+			_unsatQuadruples.get(pre).get(hier).put(stm, new HashSet<IPredicate>());
+		_unsatQuadruples.get(pre).get(hier).get(stm).add(post);
+	}
 }

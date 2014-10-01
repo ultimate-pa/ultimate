@@ -28,6 +28,7 @@ public class GlobalSettings {
 //	boolean _checkOnlyMain = false;
 	public boolean _memoizeNormalEdgeChecks = true;
 	public boolean _memoizeReturnEdgeChecks = true;
+	public int _iterations = -1;
 
 	public static void init() {
 		_instance = new GlobalSettings();

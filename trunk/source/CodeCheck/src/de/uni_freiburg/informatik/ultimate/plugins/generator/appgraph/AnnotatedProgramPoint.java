@@ -1,8 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
+import javax.annotation.PreDestroy;
+
+import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeChecker;
@@ -62,7 +67,7 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	 * @param copyOutgoingEdges if true, the hyperedges will be copied
 	 */
 	public AnnotatedProgramPoint(AnnotatedProgramPoint oldApp, IPredicate newPred, boolean copyOutgoingEdges) {
-		this(newPred, oldApp._programPoint);
+		this(oldApp, newPred);
 		if(copyOutgoingEdges) {
 			for (AppEdge oldOutEdge : oldApp.getOutgoingEdges()) {
 				if (oldOutEdge instanceof AppHyperEdge) {
@@ -72,6 +77,10 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 				} else {
 					this.connectOutgoing(oldOutEdge.getStatement(), oldOutEdge.getTarget());
 				}
+			}
+			
+			for (AppHyperEdge oldOutHypEdge : oldApp.getOutgoingHyperEdges()) {
+				oldOutHypEdge.getSource().connectOutgoingReturn(this, (Return) oldOutHypEdge.getStatement(), oldOutHypEdge.getTarget());
 			}
 		}
 	}
@@ -116,8 +125,9 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 //	}
 	
 	public String toString() {
+		String ref = CodeChecker.objectReference(this);
 		return _programPoint.toString() + 
-				CodeChecker.objectReference(this);// + ":" + m_predicate.toString();
+				ref.substring(Math.max(ref.length() - 3, 0)) + ":" + _predicate.getFormula().toString();
 	}
 	
 	
@@ -134,6 +144,15 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 		hier._outgoingHyperEdges.add(hyperEdge);
 		this.mOutgoingEdges.add(hyperEdge);
 		target.mIncomingEdges.add(hyperEdge);
+	}
+	
+	public AppEdge getEdge(AnnotatedProgramPoint target) {
+		for (AppEdge edge : mOutgoingEdges) {
+			if (edge.getTarget() == target) {
+				return edge;
+			}
+		}
+		return null;
 	}
 	
 //	public void disconnectOutgoing(AppEdge outEdge) {

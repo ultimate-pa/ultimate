@@ -464,6 +464,7 @@ public class UltimateChecker extends CodeChecker {
 		ArrayList<IPredicate> interpolantsDBG = new ArrayList<IPredicate>();
 		Collections.addAll(interpolantsDBG, interpolants);
 		mLogger.debug(String.format("Inters: %s\n", interpolantsDBG));
+		System.err.println(String.format("Inters: %s\n", interpolantsDBG));
 
 		EdgeCheckOptimization splitMode = GlobalSettings._instance._edgeCheckOptimization;
 		for (int i = 0; i < interpolants.length; i++) {
@@ -532,111 +533,6 @@ public class UltimateChecker extends CodeChecker {
 						pre2.getKey().connectOutgoingReturn(hier2.getKey(), stm2.getKey(), stm2.getValue());
 	}
 
-	/**
-	 * Check if an edge between two AnnotatedProgramPoints is satisfiable or
-	 * not, works with the cases if the edge is a normal edge or a call edge.
-	 * 
-	 * @param preCondition
-	 * @param statement
-	 * @param postCondition
-	 * @return
-	 */
-	protected boolean isSatEdge(IPredicate preCondition, CodeBlock statement, IPredicate postCondition) {
-		if (statement instanceof DummyCodeBlock)
-			return false;
-		// System.out.print(".");
-
-		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
-			if (_satTriples.get(preCondition) != null && _satTriples.get(preCondition).get(statement) != null
-					&& _satTriples.get(preCondition).get(statement).contains(postCondition)) {
-				memoizationHitsSat++;
-				return true;
-			}
-			if (_unsatTriples.get(preCondition) != null && _unsatTriples.get(preCondition).get(statement) != null
-					&& _unsatTriples.get(preCondition).get(statement).contains(postCondition)) {
-				memoizationHitsUnsat++;
-				return false;
-			}
-		}
-
-		boolean result = false;
-		if (statement instanceof Call)
-			result = m_smtManager.isInductiveCall(preCondition, (Call) statement, negatePredicateNoPU(postCondition)) != LBool.UNSAT;
-		else
-			result = m_smtManager.isInductive(preCondition, statement, negatePredicateNoPU(postCondition)) != LBool.UNSAT;
-
-		if (GlobalSettings._instance._memoizeNormalEdgeChecks)
-			if (result)
-				addSatTriple(preCondition, statement, postCondition);
-			else
-				addUnsatTriple(preCondition, statement, postCondition);
-
-		return result;
-	}
-
-	/**
-	 * Check if a return edge between two AnnotatedProgramPoints is satisfiable
-	 * or not.
-	 * 
-	 * @param preCondition
-	 * @param statement
-	 * @param destinationNode
-	 * @param hier
-	 * @return
-	 */
-	protected boolean isSatRetEdge(IPredicate preCondition, IPredicate hier, Return statement, IPredicate postCondition) {
-		if (GlobalSettings._instance._memoizeReturnEdgeChecks) {
-			if (_satQuadruples.get(preCondition) != null && _satQuadruples.get(preCondition).get(hier) != null
-					&& _satQuadruples.get(preCondition).get(hier).get(statement) != null
-					&& _satQuadruples.get(preCondition).get(hier).get(statement).contains(postCondition)) {
-				memoizationReturnHitsSat++;
-				return true;
-			}
-			if (_unsatQuadruples.get(preCondition) != null && _unsatQuadruples.get(preCondition).get(hier) != null
-					&& _unsatQuadruples.get(preCondition).get(hier).get(statement) != null
-					&& _unsatQuadruples.get(preCondition).get(hier).get(statement).contains(postCondition)) {
-				memoizationReturnHitsUnsat++;
-				return false;
-			}
-		}
-
-		boolean result = m_smtManager.isInductiveReturn(preCondition, hier, (Return) statement,
-				negatePredicateNoPU(postCondition)) != LBool.UNSAT;
-
-		if (GlobalSettings._instance._memoizeReturnEdgeChecks)
-			if (result)
-				addSatQuadruple(preCondition, hier, statement, postCondition);
-			else
-				addUnsatQuadruple(preCondition, hier, statement, postCondition);
-
-		return result;
-	}
-
-	protected void connectOutgoingIfSat(AnnotatedProgramPoint source, CodeBlock statement, AnnotatedProgramPoint target) {
-		// if (_pre2stm2post_toConnectIfSat.get(source) == null)
-		// _pre2stm2post_toConnectIfSat.put(source, new HashMap<CodeBlock,
-		// AnnotatedProgramPoint>());
-		// _pre2stm2post_toConnectIfSat.get(source).put(statement, target);
-
-		if (isSatEdge(source.getPredicate(), statement, target.getPredicate()))
-			source.connectOutgoing(statement, target);
-	}
-
-	protected void connectOutgoingReturnIfSat(AnnotatedProgramPoint source, AnnotatedProgramPoint hier,
-			Return statement, AnnotatedProgramPoint target) {
-		// if (_pre2hier2stm2post_toConnectIfSat.get(source) == null)
-		// _pre2hier2stm2post_toConnectIfSat.put(source, new
-		// HashMap<AnnotatedProgramPoint,
-		// HashMap<Return,AnnotatedProgramPoint>>());
-		// if (_pre2hier2stm2post_toConnectIfSat.get(source).get(hier) == null)
-		// _pre2hier2stm2post_toConnectIfSat.get(source).put(hier, new
-		// HashMap<Return, AnnotatedProgramPoint>());
-		// _pre2hier2stm2post_toConnectIfSat.get(source).get(hier).put(statement,
-		// target);
-
-		if (isSatRetEdge(source.getPredicate(), hier.getPredicate(), statement, target.getPredicate()))
-			source.connectOutgoingReturn(hier, statement, target);
-	}
 
 	private void sdecConnectOutgoingIfSat(AnnotatedProgramPoint source, CodeBlock statement,
 			AnnotatedProgramPoint target) {
@@ -729,40 +625,120 @@ public class UltimateChecker extends CodeChecker {
 		} else if (GlobalSettings._instance._memoizeReturnEdgeChecks)
 			addUnsatTriple(source.getPredicate(), statement, target.getPredicate());
 	}
+	
+	protected boolean connectOutgoingIfSat(AnnotatedProgramPoint source, CodeBlock statement, AnnotatedProgramPoint target) {
+		// if (_pre2stm2post_toConnectIfSat.get(source) == null)
+		// _pre2stm2post_toConnectIfSat.put(source, new HashMap<CodeBlock,
+		// AnnotatedProgramPoint>());
+		// _pre2stm2post_toConnectIfSat.get(source).put(statement, target);
 
-	void addSatTriple(IPredicate pre, CodeBlock stm, IPredicate post) {
-		if (_satTriples.get(pre) == null)
-			_satTriples.put(pre, new HashMap<CodeBlock, HashSet<IPredicate>>());
-		if (_satTriples.get(pre).get(stm) == null)
-			_satTriples.get(pre).put(stm, new HashSet<IPredicate>());
-		_satTriples.get(pre).get(stm).add(post);
+		if (isSatEdge(source.getPredicate(), statement, target.getPredicate())) {
+			source.connectOutgoing(statement, target);
+			return true;
+		} else {
+			return false;
+		}
 	}
 
-	void addUnsatTriple(IPredicate pre, CodeBlock stm, IPredicate post) {
-		if (_unsatTriples.get(pre) == null)
-			_unsatTriples.put(pre, new HashMap<CodeBlock, HashSet<IPredicate>>());
-		if (_unsatTriples.get(pre).get(stm) == null)
-			_unsatTriples.get(pre).put(stm, new HashSet<IPredicate>());
-		_unsatTriples.get(pre).get(stm).add(post);
+	protected boolean connectOutgoingReturnIfSat(AnnotatedProgramPoint source, AnnotatedProgramPoint hier,
+			Return statement, AnnotatedProgramPoint target) {
+		// if (_pre2hier2stm2post_toConnectIfSat.get(source) == null)
+		// _pre2hier2stm2post_toConnectIfSat.put(source, new
+		// HashMap<AnnotatedProgramPoint,
+		// HashMap<Return,AnnotatedProgramPoint>>());
+		// if (_pre2hier2stm2post_toConnectIfSat.get(source).get(hier) == null)
+		// _pre2hier2stm2post_toConnectIfSat.get(source).put(hier, new
+		// HashMap<Return, AnnotatedProgramPoint>());
+		// _pre2hier2stm2post_toConnectIfSat.get(source).get(hier).put(statement,
+		// target);
+
+		if (isSatRetEdge(source.getPredicate(), hier.getPredicate(), statement, target.getPredicate())) {
+			source.connectOutgoingReturn(hier, statement, target);
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+
+	/**
+	 * Check if an edge between two AnnotatedProgramPoints is satisfiable or
+	 * not, works with the cases if the edge is a normal edge or a call edge.
+	 * 
+	 * @param preCondition
+	 * @param statement
+	 * @param postCondition
+	 * @return
+	 */
+	protected boolean isSatEdge(IPredicate preCondition, CodeBlock statement, IPredicate postCondition) {
+		if (statement instanceof DummyCodeBlock)
+			return false;
+		// System.out.print(".");
+
+		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
+			if (_satTriples.get(preCondition) != null && _satTriples.get(preCondition).get(statement) != null
+					&& _satTriples.get(preCondition).get(statement).contains(postCondition)) {
+				memoizationHitsSat++;
+				return true;
+			}
+			if (_unsatTriples.get(preCondition) != null && _unsatTriples.get(preCondition).get(statement) != null
+					&& _unsatTriples.get(preCondition).get(statement).contains(postCondition)) {
+				memoizationHitsUnsat++;
+				return false;
+			}
+		}
+
+		boolean result = false;
+		if (statement instanceof Call)
+			result = m_smtManager.isInductiveCall(preCondition, (Call) statement, negatePredicateNoPU(postCondition)) != LBool.UNSAT;
+		else
+			result = m_smtManager.isInductive(preCondition, statement, negatePredicateNoPU(postCondition)) != LBool.UNSAT;
+
+		if (GlobalSettings._instance._memoizeNormalEdgeChecks)
+			if (result)
+				addSatTriple(preCondition, statement, postCondition);
+			else
+				addUnsatTriple(preCondition, statement, postCondition);
+
+		return result;
 	}
 
-	void addSatQuadruple(IPredicate pre, IPredicate hier, CodeBlock stm, IPredicate post) {
-		if (_satQuadruples.get(pre) == null)
-			_satQuadruples.put(pre, new HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>());
-		if (_satQuadruples.get(pre).get(hier) == null)
-			_satQuadruples.get(pre).put(hier, new HashMap<CodeBlock, HashSet<IPredicate>>());
-		if (_satQuadruples.get(pre).get(hier).get(stm) == null)
-			_satQuadruples.get(pre).get(hier).put(stm, new HashSet<IPredicate>());
-		_satQuadruples.get(pre).get(hier).get(stm).add(post);
+	/**
+	 * Check if a return edge between two AnnotatedProgramPoints is satisfiable
+	 * or not.
+	 * 
+	 * @param preCondition
+	 * @param statement
+	 * @param destinationNode
+	 * @param hier
+	 * @return
+	 */
+	protected boolean isSatRetEdge(IPredicate preCondition, IPredicate hier, Return statement, IPredicate postCondition) {
+		if (GlobalSettings._instance._memoizeReturnEdgeChecks) {
+			if (_satQuadruples.get(preCondition) != null && _satQuadruples.get(preCondition).get(hier) != null
+					&& _satQuadruples.get(preCondition).get(hier).get(statement) != null
+					&& _satQuadruples.get(preCondition).get(hier).get(statement).contains(postCondition)) {
+				memoizationReturnHitsSat++;
+				return true;
+			}
+			if (_unsatQuadruples.get(preCondition) != null && _unsatQuadruples.get(preCondition).get(hier) != null
+					&& _unsatQuadruples.get(preCondition).get(hier).get(statement) != null
+					&& _unsatQuadruples.get(preCondition).get(hier).get(statement).contains(postCondition)) {
+				memoizationReturnHitsUnsat++;
+				return false;
+			}
+		}
+
+		boolean result = m_smtManager.isInductiveReturn(preCondition, hier, (Return) statement,
+				negatePredicateNoPU(postCondition)) != LBool.UNSAT;
+
+		if (GlobalSettings._instance._memoizeReturnEdgeChecks)
+			if (result)
+				addSatQuadruple(preCondition, hier, statement, postCondition);
+			else
+				addUnsatQuadruple(preCondition, hier, statement, postCondition);
+
+		return result;
 	}
 
-	void addUnsatQuadruple(IPredicate pre, IPredicate hier, CodeBlock stm, IPredicate post) {
-		if (_unsatQuadruples.get(pre) == null)
-			_unsatQuadruples.put(pre, new HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>());
-		if (_unsatQuadruples.get(pre).get(hier) == null)
-			_unsatQuadruples.get(pre).put(hier, new HashMap<CodeBlock, HashSet<IPredicate>>());
-		if (_unsatQuadruples.get(pre).get(hier).get(stm) == null)
-			_unsatQuadruples.get(pre).get(hier).put(stm, new HashSet<IPredicate>());
-		_unsatQuadruples.get(pre).get(hier).get(stm).add(post);
-	}
 }

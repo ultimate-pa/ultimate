@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferenc
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.SolverAndInterpolator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.IEmptinessCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.NWAEmptinessCheck;
+//import de.uni_freiburg.informatik.ultimate.plugins.generator.impulse.ImpulsChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.impulse.ImpulseChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.kojak.UltimateChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
@@ -93,6 +94,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private final IUltimateServiceProvider mServices;
 
 	private static final boolean DEBUG = false;
+	
+
+	boolean loop_forever = true; // for DEBUG
+	int iterationsLimit = -1; // for DEBUG
+
 
 	CodeCheckObserver(IUltimateServiceProvider services) {
 		mServices = services;
@@ -154,6 +160,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			codeChecker = new UltimateChecker(root, m_smtManager, m_taPrefs,
 					m_originalRoot, m_graphRoot, _graphWriter, m_edgeChecker, _predicateUnifier, mLogger);
 		}
+		iterationsLimit = GlobalSettings._instance._iterations;
+		loop_forever = (iterationsLimit == -1);
+		
 		return false;
 	}
 
@@ -185,6 +194,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		GlobalSettings._instance._edgeCheckOptimization = prefs.getEnum(
 				CodeCheckPreferenceInitializer.LABEL_EDGECHECKOPTIMIZATION, EdgeCheckOptimization.class);
+		
+		GlobalSettings._instance._iterations = prefs.getInt(CodeCheckPreferenceInitializer.LABEL_ITERATIONS,
+				CodeCheckPreferenceInitializer.DEF_ITERATIONS);
 	}
 
 	private void removeSummaryEdges() {
@@ -211,9 +223,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	public boolean process(IElement root) {
 		initialize(root);
-
-		final boolean loop_forever = true; // for DEBUG
-		final int iterationsLimit = 0; // for DEBUG
 
 		_graphWriter.writeGraphAsImage(m_graphRoot, String.format("graph_%s_original", _graphWriter._graphCounter));
 
@@ -282,7 +291,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					_graphWriter.writeGraphAsImage(procedureRoot, String.format("graph_%s_%s_noEP",
 							_graphWriter._graphCounter, procedureRoot.toString().substring(0, 5)));
 					// if an error trace doesn't exist, return safe
-					mLogger.info("This Program is SAFE, Check terminated with " + iterationsCount + " iterations.");
+					mLogger.warn("This Program is SAFE, Check terminated with " + iterationsCount + " iterations.");
 					break;
 				} else {
 					mLogger.info("Error Path is FOUND.");
@@ -350,7 +359,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 					LBool isSafe = traceChecker.isCorrect();
 					if (isSafe == LBool.UNSAT) { // trace is infeasible
-						
+						//if (GlobalSettings._instance._predicateUnification == PredicateUnification.PER_ITERATION)
+							//_predicateUnifier = new PredicateUnifier(mServices, m_smtManager);//, m_truePredicate, m_falsePredicate);
 
 						switch (GlobalSettings._instance._solverAndInterpolator) {
 						case SMTINTERPOL:
@@ -374,7 +384,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						else
 							codeChecker.codeCheck(errorRun, interpolants, procedureRoot);
 					} else { // trace is feasible
-						mLogger.info("This program is UNSAFE, Check terminated with " + iterationsCount
+						mLogger.warn("This program is UNSAFE, Check terminated with " + iterationsCount
 								+ " iterations.");
 						allSafe = false;
 						realErrorRun = errorRun;
@@ -407,7 +417,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				overallResult = Result.INCORRECT;
 
 		mLogger.info("-----------------");
-		mLogger.info(overallResult);
+		mLogger.warn(overallResult);
 		mLogger.info("-----------------");
 
 		mLogger.info("PC#: " + m_smtManager.getInterpolQueries());
