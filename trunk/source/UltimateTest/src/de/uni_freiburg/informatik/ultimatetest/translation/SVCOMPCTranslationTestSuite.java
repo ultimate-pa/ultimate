@@ -8,10 +8,10 @@ import org.junit.Ignore;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
-@Ignore
 public class SVCOMPCTranslationTestSuite extends AbstractCTranslationTestSuite {
 
-	private static File sInputDirectory = new File(Util.getFromMavenVariableSVCOMPRoot("../../svcomp/"));
+//	private static File sInputDirectory = new File(Util.getFromMavenVariableSVCOMPRoot("../../svcomp/"));
+	private static File sInputDirectory = new File(Util.getPathFromTrunk("examples/svcomp/ldv-regression"));
 	
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
