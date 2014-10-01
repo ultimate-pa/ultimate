@@ -88,7 +88,7 @@ public class ElimStore3 {
 	// return result;
 	// }
 
-	public Term elim(int quantifier, TermVariable oldArr, Term term, final Set<TermVariable> newAuxVars) {
+	public Term elim(int quantifier, TermVariable eliminatee, Term term, final Set<TermVariable> newAuxVars) {
 		mQuantifier = quantifier;
 		ArrayUpdate writeInto = null;
 		ArrayUpdate writtenFrom = null;
@@ -96,7 +96,7 @@ public class ElimStore3 {
 		Term othersT;
 
 		while (true) {
-			assert oldArr.getSort().isArraySort();
+			assert eliminatee.getSort().isArraySort();
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException();
 			}
@@ -107,22 +107,22 @@ public class ElimStore3 {
 				conjuncts = SmtUtils.getDisjuncts(term);
 			}
 
-			MultiDimensionalStore store = getArrayStore(oldArr, term);
+			MultiDimensionalStore store = getArrayStore(eliminatee, term);
 
 			HashSet<Term> others = new HashSet<Term>();
 
 			for (Term conjunct : conjuncts) {
 				try {
 					ArrayUpdate au = new ArrayUpdate(conjunct, quantifier == QuantifiedFormula.FORALL);
-					if (au.getOldArray().equals(oldArr)) {
+					if (au.getOldArray().equals(eliminatee)) {
 						if (writeInto != null) {
 							throw new UnsupportedOperationException("unsupported: write into several arrays");
 						}
 						writeInto = au;
-						if (au.getNewArray().equals(oldArr)) {
+						if (au.getNewArray().equals(eliminatee)) {
 							throw new UnsupportedOperationException("unsupported: self update");
 						}
-					} else if (au.getNewArray().equals(oldArr)) {
+					} else if (au.getNewArray().equals(eliminatee)) {
 						if (writtenFrom != null) {
 							throw new UnsupportedOperationException("unsupported: written from several arrayas");
 						}
@@ -148,7 +148,7 @@ public class ElimStore3 {
 			
 
 			if (store != null && writeInto == null) {
-				TermVariable auxArray = oldArr.getTheory().createFreshTermVariable("arrayElim", oldArr.getSort());
+				TermVariable auxArray = eliminatee.getTheory().createFreshTermVariable("arrayElim", eliminatee.getSort());
 				Map<Term, Term> auxMap = Collections.singletonMap((Term) store.getStoreTerm(), (Term) auxArray);
 				SafeSubstitution subst = new SafeSubstitution(mScript, auxMap);
 				Term auxTerm = subst.transform(term);
@@ -160,10 +160,10 @@ public class ElimStore3 {
 					auxTerm = Util.or(mScript, auxTerm, Util.not(mScript, auxVarDef));
 				}
 				Set<TermVariable> auxAuxVars = new HashSet<TermVariable>();
-				Term auxRes = elim(quantifier, oldArr, auxTerm, newAuxVars);
+				Term auxRes = elim(quantifier, eliminatee, auxTerm, newAuxVars);
 
 				term = auxRes;
-				oldArr = auxArray;
+				eliminatee = auxArray;
 				newAuxVars.addAll(auxAuxVars);
 			} else {
 				break;
@@ -174,14 +174,23 @@ public class ElimStore3 {
 
 		Script script = mScript;
 		;
-		IndicesAndValues iav = new IndicesAndValues(oldArr, conjuncts);
+		IndicesAndValues iav = new IndicesAndValues(eliminatee, conjuncts);
 
 		SafeSubstitution subst = new SafeSubstitution(script, iav.getMapping());
 
 		Term intermediateResult = subst.transform(othersT);
 		if (write) {
+			// let idx be the index to which the store writes
+			// let newSelect represent the value that is written by the store
+			// let k_1,...,k_n be indices of the eliminated array
+			// let v_1,...,v_n be terms that are equivalent to the corresponding
+			// values of the eliminated array (i.e. v_i is equivalent to a[k_i]
+			// add for each i the conjunct
+			// (idx == k_i) ==> (v_i == a[i])
 			ArrayList<Term> additionalConjuncsFromStore = new ArrayList<Term>();
 			for (int i = 0; i < iav.getIndices().length; i++) {
+				// select term that represents the array cell to which the
+				// store term writes
 				Term newSelect = SmtUtils.multiDimensionalSelect(mScript, writeInto.getNewArray(), iav.getIndices()[i]);
 				IndexValueConnection ivc = new IndexValueConnection(iav.getIndices()[i], writeInto.getIndex(),
 						iav.getValues()[i], newSelect, false);
@@ -211,6 +220,7 @@ public class ElimStore3 {
 			Term newData = subst.transform(writeInto.getValue());
 			ArrayIndex newWriteIndex = new ArrayIndex(SmtUtils.substitutionElementwise(writeInto.getIndex(), subst));
 			if (quantifier == QuantifiedFormula.EXISTS) {
+				// a_new[idx] = newData
 				Term writeSubstituent = mScript.term("=",
 						SmtUtils.multiDimensionalSelect(mScript, writeInto.getNewArray(), newWriteIndex), newData);
 				intermediateResult = Util.and(mScript, intermediateResult, writeSubstituent, newConjunctsFromStore);
@@ -283,6 +293,13 @@ public class ElimStore3 {
 		return result;
 	}
 
+	/**
+	 * Given an array a, find all multi-dimensional selects on this array.
+	 * For each of them, try to obtain an representation of that value in which
+	 * a does not occur. If not such representation exists, add a new auxiliary
+	 * variable that represents that value.
+	 *
+	 */
 	private class IndicesAndValues {
 		private final Term[] m_SelectTerm;
 		private final ArrayIndex[] m_Indices;
@@ -342,6 +359,14 @@ public class ElimStore3 {
 		}
 	}
 
+	/**
+	 * Class that constructs the term 
+	 *     (fstIndex == sndIndex) ==> (fstValue == sndValue)
+	 * if selectConnection is true and the term
+	 *     (fstIndex != sndIndex) ==> (fstValue == sndValue)
+	 * if selectConnection is false.
+	 *
+	 */
 	private class IndexValueConnection {
 		private final ArrayIndex m_fstIndex;
 		private final ArrayIndex m_sndIndex;
