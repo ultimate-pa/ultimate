@@ -87,7 +87,6 @@ public class PreRunner extends ASTVisitor {
         this.isMMRequired = false;
         this.sT = new LinkedScopedHashMap<String, IASTNode>();
         this.variablesOnHeap = new LinkedHashSet<IASTNode>();
-//        this.functionTable = new HashMap<String, IASTFunctionDefinition>();
         this.functionTable = fT;
         this.functionPointers = new LinkedHashMap<String, IASTDeclaration>();
         this.pointedToFunctionCounter = 0;
@@ -143,6 +142,10 @@ public class PreRunner extends ASTVisitor {
 	@Override
  	public int visit(IASTParameterDeclaration declaration) {
     	if (declaration.getDeclarator().getPointerOperators().length > 0) 
+    		isMMRequired = true;
+    	if (declaration.getDeclarator() instanceof IASTArrayDeclarator)
+    		isMMRequired = true;
+    	if (declaration.getDeclarator() instanceof IASTFunctionDeclarator)
     		isMMRequired = true;
     	String name = declaration.getDeclarator().getName().toString();
      	sT.put(name, declaration);

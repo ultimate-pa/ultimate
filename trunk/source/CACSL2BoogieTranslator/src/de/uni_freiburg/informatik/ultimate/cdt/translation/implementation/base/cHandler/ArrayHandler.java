@@ -83,12 +83,11 @@ public class ArrayHandler {
 			RValue val = null;
 
 			for (int i = 0; i < currentSizeInt; i++) {
+				CType valueType = arrayType.getValueType().getUnderlyingType();
 				//TODO: we may need to pass statements, decls, ...
 				if (list != null && list.size() > i && list.get(i).lrVal != null) {
 					val = (RValue) list.get(i).lrVal; 
 				} else {
-					CType valueType = arrayType.getValueType().getUnderlyingType();
-
 					if (valueType instanceof CArray) {
 						throw new AssertionError("this should not be the case as we are in the inner/outermost array right??");
 					} else if  (valueType instanceof CStruct) {
@@ -122,7 +121,7 @@ public class ArrayHandler {
 						writeOffset, 
 						loc);
 
-				arrayWrites.addAll(memoryHandler.getWriteCall(new HeapLValue(writeLocation, null), val));
+				arrayWrites.addAll(memoryHandler.getWriteCall(new HeapLValue(writeLocation, valueType), val));
 			}
 		} else {
 			for (int i = 0; i < currentSizeInt; i++) { 
