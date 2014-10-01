@@ -138,7 +138,7 @@ public class ElimStore3 {
 				}
 			}
 			if (writtenFrom != null) {
-//				throw new UnsupportedOperationException("not yet implemented: written from");
+				throw new UnsupportedOperationException("not yet implemented: written from");
 			}
 
 			if (quantifier == QuantifiedFormula.EXISTS) {
