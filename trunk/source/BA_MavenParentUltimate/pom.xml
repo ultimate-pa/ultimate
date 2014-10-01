@@ -47,6 +47,11 @@
 			<url>http://download.eclipse.org/releases/indigo</url>
 		</repository>
 		<repository>
+			<id>eclipse-luna</id>
+			<layout>p2</layout>
+			<url>http://download.eclipse.org/releases/luna</url>
+		</repository>
+		<repository>
 			<id>javaxRepository</id>
 			<name>Java.net Repository for Maven</name>
 			<url>https://maven.java.net/content/repositories/releases/javax/</url>
@@ -206,7 +211,7 @@
 		<module>../TraceAbstractionWithAFAs</module>
 		<module>../JavaCup</module>
 		<module>../RCFGBuilder</module>
-		
+
 		<module>../CodeCheck</module>
 		<module>../Library-log4j</module>
 		<module>../ACSLParser</module>
