@@ -5,7 +5,7 @@ import de.uni_freiburg.informatik.ultimatetest.AbstractModelCheckerTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider2;
+import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.summary.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 
@@ -14,7 +14,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 	@Override
 	public ITestResultDecider constructITestResultDecider(
 			UltimateRunDefinition ultimateRunDefinition) {
-		return new SafetyCheckTestResultDecider2(ultimateRunDefinition, true);
+		return new SafetyCheckTestResultDecider(ultimateRunDefinition, true);
 	}
 
 	@Override

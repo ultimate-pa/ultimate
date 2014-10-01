@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class SafetyCheckTestResultDecider2 extends
+public class SafetyCheckTestResultDecider extends
 		ThreeTierTestResultDecider<SafetyCheckerOverallResult> {
 
 	/**
@@ -25,7 +25,7 @@ public class SafetyCheckTestResultDecider2 extends
 	 *            if true the TestResult UNKNOWN is a success for JUnit, if
 	 *            false, the TestResult UNKNOWN is a failure for JUnit.
 	 */
-	public SafetyCheckTestResultDecider2(
+	public SafetyCheckTestResultDecider(
 			UltimateRunDefinition ultimateRunDefinition, boolean unknownIsJUnitSuccess) {
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
 	}

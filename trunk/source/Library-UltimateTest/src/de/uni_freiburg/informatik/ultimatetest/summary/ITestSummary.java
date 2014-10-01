@@ -39,6 +39,7 @@ public interface ITestSummary {
 	 * Description of this type of summary, e.g., "AutomataScriptSummary", 
 	 * "TraceAbstractionBenchmarks". This String is part of the filename
 	 * to which this summary is written.
+	 * 
 	 */
 	public String getSummaryTypeDescription();
 	

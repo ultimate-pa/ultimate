@@ -837,6 +837,8 @@ public class BoogieOutput {
 			sb.append(indent).append("{" + sLinebreak);
 			appendBlock(sb, stmt.getBody(), indent);
 			sb.append(indent).append("}");
+		} else if (s instanceof Label) {
+			sb.append(((Label) s).getName()).append(":");
 		} else {
 			throw new IllegalArgumentException(s.toString());
 		}

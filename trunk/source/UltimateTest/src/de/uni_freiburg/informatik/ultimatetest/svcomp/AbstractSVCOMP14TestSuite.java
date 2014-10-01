@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
@@ -79,12 +80,11 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 	 */
 	protected abstract String getSVCOMP14RootDirectory();
 
-	
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
 		String svcompRootDir = Util.getFromMavenVariableSVCOMPRoot(getSVCOMP14RootDirectory());
 		Collection<File> setFiles = getAllSetFiles(svcompRootDir);
-		
+
 		ITestSummary[] testSummaries = new ITestSummary[setFiles.size()];
 		int offset = 0;
 		for (File setFile : setFiles) {
@@ -94,7 +94,7 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 		}
 		return testSummaries;
 	}
-	
+
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		Collection<UltimateTestCase> rtr = new ArrayList<UltimateTestCase>();
@@ -191,11 +191,11 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 			} else {
 				String logPattern = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
 						.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
-				starter = new UltimateStarter(urd, deadline, new File(
-						Util.generateLogFilename(singleFile, description)), logPattern);
+				starter = new UltimateStarter(urd, deadline,
+						new File(Util.generateLogFilename(singleFile, description)), logPattern);
 			}
 
-			UltimateTestCase testCase = new UltimateTestCase(starter, new SVCOMP14TestResultDecider(singleFile),
+			UltimateTestCase testCase = new UltimateTestCase(starter, new SafetyCheckTestResultDecider(urd, false),
 					super.getSummaries(), name, urd);
 			rtr.add(testCase);
 

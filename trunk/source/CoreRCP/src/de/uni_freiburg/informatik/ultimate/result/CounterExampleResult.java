@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 public class CounterExampleResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM> implements
 		IResultWithTrace {
 	private final Check mCheckedSpecification;
-	private String mLongDescription;
+	private String mProgramExecutionAsString;
 	private final List<ILocation> mFailurePath;
 	private final IProgramExecution<ELEM, E> mProgramExecution;
 
@@ -47,12 +47,7 @@ public class CounterExampleResult<ELEM extends IElement, E> extends AbstractResu
 		StringBuilder sb = new StringBuilder();
 		sb.append("We found a FailurePath: ");
 		sb.append(System.getProperty("line.separator"));
-		
-		if(mLongDescription == null){
-			mLongDescription = m_TranslatorSequence.translateProgramExecution(mProgramExecution).toString();
-		}
-		
-		sb.append(mLongDescription);
+		sb.append(getProgramExecutionAsString());
 		return sb.toString();
 	}
 
@@ -67,6 +62,13 @@ public class CounterExampleResult<ELEM extends IElement, E> extends AbstractResu
 
 	public IProgramExecution<ELEM, E> getProgramExecution() {
 		return mProgramExecution;
+	}
+
+	public String getProgramExecutionAsString() {
+		if (mProgramExecutionAsString == null) {
+			mProgramExecutionAsString = m_TranslatorSequence.translateProgramExecution(mProgramExecution).toString();
+		}
+		return mProgramExecutionAsString;
 	}
 
 	private static <TE extends IElement, E> List<ILocation> getLocationSequence(IProgramExecution<TE, E> pe) {
