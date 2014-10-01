@@ -133,6 +133,18 @@ public class SmtUtils {
 		return Util.and(script, oneIsTrue, oneIsFalse);
 	}
 	
+	/**
+	 * Given a list of Terms term_1, ... ,term_n returns a new list that 
+	 * contains (not term_1), ... ,(not term_n) in this order.
+	 */
+	public static List<Term> negateElementwise(Script script, List<Term> terms) {
+		List<Term> result = new ArrayList<>(terms.size());
+		for (Term term : terms) {
+			result.add(Util.not(script, term));
+		}
+		return result;
+	}
+	
 	
 	/**
 	 * Returns the term that selects the element at index from (possibly) multi
@@ -167,16 +179,30 @@ public class SmtUtils {
 	 * [rhs_1, ..., rhs_n], return the conjunction of the following equalities
 	 * lhs_1 = rhs_1, ... , lhs_n = rhs_n.  
 	 */
-	public static Term pairwiseEquality(Script script, Term[] lhs, Term[] rhs) {
-		if (lhs.length != rhs.length) {
+	public static Term pairwiseEquality(Script script, List<Term> lhs, List<Term> rhs) {
+		if (lhs.size() != rhs.size()) {
 			throw new IllegalArgumentException("must have same length");
 		}
-		Term[] equalities = new Term[lhs.length];
-		for (int i=0; i<lhs.length; i++) {
-
-			equalities[i] = binaryEquality(script, lhs[i], rhs[i]); 
+		Term[] equalities = new Term[lhs.size()];
+		for (int i=0; i<lhs.size(); i++) {
+			equalities[i] = binaryEquality(script, lhs.get(i), rhs.get(i)); 
 		}
 		return Util.and(script, equalities);
+	}
+	
+	/**
+	 * Construct the following term.
+	 * (index1 == index2) ==> (value1 == value2)
+	 * 
+	 */
+	public static Term indexEqualityImpliesValueEquality(Script script, 
+			ArrayIndex index1, ArrayIndex index2, 
+			Term value1, Term value2) {
+		assert index1.size() == index2.size();
+		Term indexEquality = Util.and(script, SmtUtils.pairwiseEquality(script, index1, index2));
+		Term valueEquality = SmtUtils.binaryEquality(script, value1, value2);
+		Term result = Util.or(script, Util.not(script, indexEquality), valueEquality);
+		return result;
 	}
 	
 	

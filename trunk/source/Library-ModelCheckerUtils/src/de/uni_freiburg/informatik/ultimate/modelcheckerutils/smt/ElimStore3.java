@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -119,6 +120,7 @@ public class ElimStore3 {
 							throw new UnsupportedOperationException("unsupported: write into several arrays");
 						}
 						writeInto = au;
+						assert quantifier == QuantifiedFormula.EXISTS : "neue Tasche?";
 						if (au.getNewArray().equals(eliminatee)) {
 							throw new UnsupportedOperationException("unsupported: self update");
 						}
@@ -136,7 +138,7 @@ public class ElimStore3 {
 				}
 			}
 			if (writtenFrom != null) {
-				throw new UnsupportedOperationException("not yet implemented: written from");
+//				throw new UnsupportedOperationException("not yet implemented: written from");
 			}
 
 			if (quantifier == QuantifiedFormula.EXISTS) {
@@ -146,6 +148,7 @@ public class ElimStore3 {
 				othersT = Util.or(mScript, others.toArray(new Term[others.size()]));
 			}
 			
+
 
 			if (store != null && writeInto == null) {
 				TermVariable auxArray = eliminatee.getTheory().createFreshTermVariable("arrayElim", eliminatee.getSort());
@@ -170,90 +173,82 @@ public class ElimStore3 {
 			}
 		}
 
-		boolean write = (writeInto != null);
+		boolean write = (writeInto != null || writtenFrom != null);
 
 		Script script = mScript;
-		;
+		
+		// Indices and corresponding values of a_elim 
 		IndicesAndValues iav = new IndicesAndValues(eliminatee, conjuncts);
 
 		SafeSubstitution subst = new SafeSubstitution(script, iav.getMapping());
 
+		ArrayList<Term> additionalConjuncs = new ArrayList<Term>();
 		Term intermediateResult = subst.transform(othersT);
 		if (write) {
-			// let idx be the index to which the store writes
-			// let newSelect represent the value that is written by the store
-			// let k_1,...,k_n be indices of the eliminated array
-			// let v_1,...,v_n be terms that are equivalent to the corresponding
-			// values of the eliminated array (i.e. v_i is equivalent to a[k_i]
-			// add for each i the conjunct
-			// (idx == k_i) ==> (v_i == a[i])
-			ArrayList<Term> additionalConjuncsFromStore = new ArrayList<Term>();
-			for (int i = 0; i < iav.getIndices().length; i++) {
-				// select term that represents the array cell to which the
-				// store term writes
-				Term newSelect = SmtUtils.multiDimensionalSelect(mScript, writeInto.getNewArray(), iav.getIndices()[i]);
-				IndexValueConnection ivc = new IndexValueConnection(iav.getIndices()[i], writeInto.getIndex(),
-						iav.getValues()[i], newSelect, false);
-				Term conjunct = ivc.getTerm();
-				if (quantifier == QuantifiedFormula.EXISTS) {
-					additionalConjuncsFromStore.add(conjunct);
-				} else {
-					assert quantifier == QuantifiedFormula.FORALL;
-					additionalConjuncsFromStore.add(Util.not(mScript, conjunct));
-				}
-				if (ivc.indexInequality() && !ivc.valueEquality()) {
-					assert !ivc.valueInequality() : "term would be false!";
-					// case where we have valueEquality hat is not true
-					// do something useful...
-					// e.g., mark newSelect as occurring or mark auxVar as
-					// equal to something
-				}
+			
+			additionalConjuncs.addAll(disjointIndexImpliesValueEquality(quantifier, writeInto.getNewArray(), writeInto.getIndex(), iav, subst));
+			if (writeInto != null) {
+				assert writeInto.getOldArray() == eliminatee : "array not eliminatee";
+				// if store is of the form
+				// a_heir == store(a_elim, idx_write, data)
+				// construct term a_heir[idx_write] == data
+				Term writtenCellHasNewValue;
+				ArrayIndex idx_writeRenamed = new ArrayIndex(SmtUtils.substitutionElementwise(writeInto.getIndex(), subst));
+				Term dataRenamed = subst.transform(writeInto.getValue());
+				writtenCellHasNewValue = mScript.term("=",
+						SmtUtils.multiDimensionalSelect(mScript, writeInto.getNewArray(), idx_writeRenamed), dataRenamed);
+				additionalConjuncs.add(writtenCellHasNewValue);
 			}
-			Term conjunction;
+			
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				conjunction = Util.and(script, additionalConjuncsFromStore.toArray(new Term[additionalConjuncsFromStore.size()]));
+				Term additionalConjuncts = Util.and(script, additionalConjuncs.toArray(new Term[additionalConjuncs.size()])); 
+				intermediateResult = Util.and(script, intermediateResult, additionalConjuncts); 
 			} else {
 				assert quantifier == QuantifiedFormula.FORALL;
-				conjunction = Util.or(script, additionalConjuncsFromStore.toArray(new Term[additionalConjuncsFromStore.size()]));
-			}
-			Term newConjunctsFromStore = subst.transform(conjunction);
-			Term newData = subst.transform(writeInto.getValue());
-			ArrayIndex newWriteIndex = new ArrayIndex(SmtUtils.substitutionElementwise(writeInto.getIndex(), subst));
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				// a_new[idx] = newData
-				Term writeSubstituent = mScript.term("=",
-						SmtUtils.multiDimensionalSelect(mScript, writeInto.getNewArray(), newWriteIndex), newData);
-				intermediateResult = Util.and(mScript, intermediateResult, writeSubstituent, newConjunctsFromStore);
-			} else {
-				assert quantifier == QuantifiedFormula.FORALL;
-				Term writeSubstituent = Util.not(mScript, mScript.term("=",
-						SmtUtils.multiDimensionalSelect(mScript, writeInto.getNewArray(), newWriteIndex), newData));
-				intermediateResult = Util.or(mScript, intermediateResult, writeSubstituent, newConjunctsFromStore);
+				Term additionalConjuncts = Util.or(script, SmtUtils.negateElementwise(mScript, additionalConjuncs).toArray(new Term[additionalConjuncs.size()])); 
+				intermediateResult = Util.or(script, intermediateResult, additionalConjuncts); 
 			}
 		}
 
-		ArrayList<Term> additionalConjuncsFromSelect = new ArrayList<Term>();
+		ArrayList<Term> indexValueConstraintsFromEliminatee = new ArrayList<Term>();
 		{
-			ArrayIndex[] indices = new ArrayIndex[iav.getIndices().length];
-			Term[] values = new Term[iav.getIndices().length];
-			for (int i = 0; i < iav.getIndices().length; i++) {
-				indices[i] = new ArrayIndex(SmtUtils.substitutionElementwise(iav.getIndices()[i], subst));
-				values[i] = subst.transform(iav.getValues()[i]);
+			List<ArrayIndex> indices = new ArrayList<ArrayIndex>();
+			List<Term> values = new ArrayList<Term>();
+			for (int i=0; i<iav.getIndices().length; i++) {
+				ArrayIndex translatedIndex = new ArrayIndex(SmtUtils.substitutionElementwise(iav.getIndices()[i], subst));
+				Term translatedValue = subst.transform(iav.getValues()[i]);
+				indices.add(translatedIndex);
+				values.add(translatedValue);
+			}
+			
+			
+			if (writtenFrom != null) {
+				assert writeInto.getNewArray() == eliminatee : "array not eliminatee";
+				// in the writtenFrom case there is an additional index-value
+				// connection on eliminatee, namely
+				// that the stored data is the value at index idx_write
+				ArrayIndex idx_writeRenamed = new ArrayIndex(SmtUtils.substitutionElementwise(writtenFrom.getIndex(), subst));
+				Term dataRenamed = subst.transform(writtenFrom.getValue());
+				indices.add(idx_writeRenamed);
+				values.add(dataRenamed);
 			}
 
-			for (int i = 0; i < indices.length; i++) {
-				Term newConjunct = indexValueConnections(indices[i], values[i], indices, values, i + 1, script, quantifier);
-				additionalConjuncsFromSelect.add(newConjunct);
+			for (int i = 0; i < indices.size(); i++) {
+				for (int j = i; j < indices.size(); j++) {
+					Term newConjunct = SmtUtils.indexEqualityImpliesValueEquality(
+							mScript, indices.get(i), indices.get(j), values.get(i), values.get(j));
+					indexValueConstraintsFromEliminatee.add(newConjunct);
+				}
 			}
 		}
 		
 		Term result;
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			Term newConjunctsFromSelect = Util.and(mScript, additionalConjuncsFromSelect.toArray(new Term[additionalConjuncsFromSelect.size()]));
+			Term newConjunctsFromSelect = Util.and(mScript, indexValueConstraintsFromEliminatee.toArray(new Term[indexValueConstraintsFromEliminatee.size()]));
 			result = Util.and(script, intermediateResult, newConjunctsFromSelect);
 		} else {
 			assert quantifier == QuantifiedFormula.FORALL;
-			Term newConjunctsFromSelect = Util.or(mScript, additionalConjuncsFromSelect.toArray(new Term[additionalConjuncsFromSelect.size()]));
+			Term newConjunctsFromSelect = Util.or(mScript, SmtUtils.negateElementwise(mScript, indexValueConstraintsFromEliminatee).toArray(new Term[indexValueConstraintsFromEliminatee.size()]));
 			result = Util.or(script, intermediateResult, newConjunctsFromSelect);
 		}
 
@@ -263,35 +258,74 @@ public class ElimStore3 {
 		return result;
 	}
 
-	public static Term indexValueConnections(ArrayIndex ourIndex, Term ourValue, ArrayIndex[] othersIndices,
-			Term[] othersValues, int othersPosition, Script script, int quantifier) {
-		assert othersIndices.length == othersValues.length;
-		ArrayList<Term> additionalConjuncs = new ArrayList<Term>();
-		for (int i = othersPosition; i < othersIndices.length; i++) {
-			ArrayIndex othersIndex = othersIndices[i];
-			assert ourIndex.size() == othersIndex.size();
-			Term indexEquality = Util.and(script, buildPairwiseEquality(ourIndex, othersIndices[i], null, script));
-			Term valueEquality = SmtUtils.binaryEquality(script, ourValue, othersValues[i]);
-			Term conjunct = Util.or(script, Util.not(script, indexEquality), valueEquality);
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				additionalConjuncs.add(conjunct);
-			} else {
-				assert quantifier == QuantifiedFormula.FORALL;
-				additionalConjuncs.add(Util.not(script, conjunct));
+	
+	/**
+	 * let idx_write be the index to which the store writes
+	 * let k_1,...,k_n be indices of the eliminated array
+	 * let v_1,...,v_n be terms that are equivalent to the corresponding
+	 * values of the eliminated array (i.e. v_i is equivalent to a_elim[k_i]
+	 * add for each i the conjunct
+	 * (idx_write != k_i) ==> (v_i == a_heir[i])
+	 * 
+	 * Says that for each index that is different from the write index the
+	 * arrayCells of a_heir have the same values than the arrayCells of
+	 * a_elim
+	 * @param subst 
+	 */
+	private ArrayList<Term> disjointIndexImpliesValueEquality(int quantifier,
+			TermVariable a_heir, ArrayIndex idx_write, IndicesAndValues iav, SafeSubstitution subst) {
+		ArrayList<Term> result = new ArrayList<Term>();
+		for (int i = 0; i < iav.getIndices().length; i++) {
+			// select term that represents the array cell a[]
+			Term selectOnHeir = SmtUtils.multiDimensionalSelect(mScript, a_heir, iav.getIndices()[i]);
+			IndexValueConnection ivc = new IndexValueConnection(iav.getIndices()[i], idx_write,
+					iav.getValues()[i], selectOnHeir, false);
+			Term conjunct = ivc.getTerm();
+			conjunct = subst.transform(conjunct);
+			result.add(conjunct);
+			if (ivc.indexInequality() && !ivc.valueEquality()) {
+				assert !ivc.valueInequality() : "term would be false!";
+				// case where we have valueEquality hat is not true
+				// do something useful...
+				// e.g., mark newSelect as occurring or mark auxVar as
+				// equal to something
 			}
 		}
-		Term result;
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			result = Util.and(script, additionalConjuncs.toArray(new Term[additionalConjuncs.size()]));
-		} else {
-			assert quantifier == QuantifiedFormula.FORALL;
-			result = Util.or(script, additionalConjuncs.toArray(new Term[additionalConjuncs.size()]));
-		}
-
-		
-
 		return result;
 	}
+
+//	public static Term indexValueConnections(ArrayIndex ourIndex, Term ourValue, ArrayIndex[] othersIndices,
+//			Term[] othersValues, int othersPosition, Script script, int quantifier) {
+//		assert othersIndices.length == othersValues.length;
+//		ArrayList<Term> additionalConjuncs = new ArrayList<Term>();
+//		for (int i = othersPosition; i < othersIndices.length; i++) {
+//			ArrayIndex othersIndex = othersIndices[i];
+//			assert ourIndex.size() == othersIndex.size();
+//			Term indexEquality = Util.and(script, buildPairwiseEquality(ourIndex, othersIndices[i], null, script));
+//			Term valueEquality = SmtUtils.binaryEquality(script, ourValue, othersValues[i]);
+//			Term conjunct = Util.or(script, Util.not(script, indexEquality), valueEquality);
+//			if (quantifier == QuantifiedFormula.EXISTS) {
+//				additionalConjuncs.add(conjunct);
+//			} else {
+//				assert quantifier == QuantifiedFormula.FORALL;
+//				additionalConjuncs.add(Util.not(script, conjunct));
+//			}
+//		}
+//		Term result;
+//		if (quantifier == QuantifiedFormula.EXISTS) {
+//			result = Util.and(script, additionalConjuncs.toArray(new Term[additionalConjuncs.size()]));
+//		} else {
+//			assert quantifier == QuantifiedFormula.FORALL;
+//			result = Util.or(script, additionalConjuncs.toArray(new Term[additionalConjuncs.size()]));
+//		}
+//
+//		
+//
+//		return result;
+//	}
+	
+	
+
 
 	/**
 	 * Given an array a, find all multi-dimensional selects on this array.
@@ -383,7 +417,7 @@ public class ElimStore3 {
 			m_fstValue = fstValue;
 			m_sndValue = sndValue;
 			m_SelectConnection = selectConnection;
-			m_IndexEquality = Util.and(mScript, buildPairwiseEquality(fstIndex, sndIndex, null, mScript));
+			m_IndexEquality = Util.and(mScript, SmtUtils.pairwiseEquality(mScript, fstIndex, sndIndex));
 			m_ValueEquality = SmtUtils.binaryEquality(mScript, fstValue, sndValue);
 		}
 
@@ -481,7 +515,7 @@ public class ElimStore3 {
 	 * conjunctions subst(first_1) == subst(second_1), ... ,subst(first_n) ==
 	 * subst(second_n) if subst is null we use the identity function.
 	 */
-	static Term[] buildPairwiseEquality(ArrayIndex first, ArrayIndex second, SafeSubstitution subst, Script script) {
+	private static Term[] buildPairwiseEquality(ArrayIndex first, ArrayIndex second, SafeSubstitution subst, Script script) {
 		assert first.size() == second.size();
 		Term[] equivalent = new Term[first.size()];
 		for (int i = 0; i < first.size(); i++) {
@@ -503,7 +537,7 @@ public class ElimStore3 {
 	 * constants defined by mapping, if no constant defined by mapping declare
 	 * constant and add to mapping
 	 */
-	public void assertTermWithTvs(Map<TermVariable, Term> mapping, Script script, Term term) {
+	private void assertTermWithTvs(Map<TermVariable, Term> mapping, Script script, Term term) {
 		for (TermVariable tv : term.getFreeVars()) {
 			if (!mapping.containsKey(tv)) {
 				String name = "arrayElim_" + tv.getName();
