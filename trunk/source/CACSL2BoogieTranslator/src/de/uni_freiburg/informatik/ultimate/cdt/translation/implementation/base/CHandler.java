@@ -277,7 +277,6 @@ public class CHandler implements ICHandler {
 	 */
 	Stack<String> mInnerMostLoopLabel;
 	private Logger mLogger;
-	private Dispatcher mDispatcher;
 
 	/**
 	 * Constructor.
@@ -290,12 +289,11 @@ public class CHandler implements ICHandler {
 	public CHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, boolean errorLabelWarning,
 			Logger logger) {
 
-		mDispatcher = main;
 		mLogger = logger;
 
 		this.arrayHandler = new ArrayHandler();
-		this.functionHandler = new FunctionHandler(mDispatcher);
-		this.postProcessor = new PostProcessor(mDispatcher, mLogger);
+		this.functionHandler = new FunctionHandler();
+		this.postProcessor = new PostProcessor(main, mLogger);
 		this.structHandler = new StructHandler();
 		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		boolean checkPointerValidity = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
@@ -352,7 +350,7 @@ public class CHandler implements ICHandler {
 			acsl = main.nextACSLStatement();
 		} catch (ParseException e1) {
 			String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-			mDispatcher.unsupportedSyntax(loc, msg);
+			main.unsupportedSyntax(loc, msg);
 		}
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 
@@ -527,7 +525,7 @@ public class CHandler implements ICHandler {
 		CACSLLocation loc = new CACSLLocation(node);
 		if (node.getDeclSpecifier() == null) {
 			String msg = "This statement can be removed!";
-			mDispatcher.warn(loc, msg);
+			main.warn(loc, msg);
 			return new ResultSkip();
 		}
 		/*
@@ -876,15 +874,15 @@ public class CHandler implements ICHandler {
 		switch (node.getKind()) {
 		case IASTLiteralExpression.lk_float_constant:
 			String val = new String(node.getValue());
-			val = ISOIEC9899TC3.handleFloatConstant(val, loc, mDispatcher);
+			val = ISOIEC9899TC3.handleFloatConstant(val, loc, main);
 			return new ResultExpression(new RValue(new RealLiteral(loc, val), new CPrimitive(PRIMITIVE.FLOAT)));
 		case IASTLiteralExpression.lk_char_constant:
 			val = new String(node.getValue());
-			val = ISOIEC9899TC3.handleCharConstant(val, loc, mDispatcher);
+			val = ISOIEC9899TC3.handleCharConstant(val, loc, main);
 			return new ResultExpression(new RValue(new IntegerLiteral(loc, val), new CPrimitive(PRIMITIVE.CHAR)));
 		case IASTLiteralExpression.lk_integer_constant:
 			val = new String(node.getValue());
-			val = ISOIEC9899TC3.handleIntegerConstant(val, loc, mDispatcher);
+			val = ISOIEC9899TC3.handleIntegerConstant(val, loc, main);
 			return new ResultExpression(new RValue(new IntegerLiteral(loc, val), new CPrimitive(PRIMITIVE.INT)));
 		case IASTLiteralExpression.lk_string_literal:
 			// Translate string to uninitialized char pointer
@@ -1633,7 +1631,7 @@ public class CHandler implements ICHandler {
 				return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
 			} else {
 				String msg = "This statement has no effect and will be dropped: " + node.getRawSignature();
-				mDispatcher.warn(new CACSLLocation(node), msg);
+				main.warn(new CACSLLocation(node), msg);
 				return new ResultSkip();
 			}
 		} else if (r instanceof ResultExpressionList) {
@@ -1964,7 +1962,7 @@ public class CHandler implements ICHandler {
 		String label = node.getName().toString();
 		if (mErrorLabelWarning && label.equals("ERROR")) {
 			String longDescription = "The label \"ERROR\" does not have a special meaning in the translation mode you selected. You might want to change your settings and use the SV-COMP translation mode.";
-			mDispatcher.warn(loc, longDescription);
+			main.warn(loc, longDescription);
 		}
 		stmt.add(new Label(loc, label));
 		Result r = main.dispatch(node.getNestedStatement());
@@ -2288,7 +2286,7 @@ public class CHandler implements ICHandler {
 		if (lrVal instanceof HeapLValue) {
 			HeapLValue hlv = (HeapLValue) lrVal;
 
-			stmt.addAll(memoryHandler.getWriteCall(hlv, rVal));
+			stmt.addAll(memoryHandler.getWriteCall(hlv, rightHandSide));
 
 			return new ResultExpression(stmt, rightHandSide, decl, auxVars, overappr);
 		} else if (lrVal instanceof LocalLValue) {
@@ -2362,7 +2360,7 @@ public class CHandler implements ICHandler {
 								} catch (ParseException e1) {
 									String msg = "Skipped a ACSL node due to: " + e1.getMessage();
 									ILocation loc = new CACSLLocation(parent);
-									mDispatcher.unsupportedSyntax(loc, msg);
+									main.unsupportedSyntax(loc, msg);
 								}
 							}
 						} else {
@@ -2404,7 +2402,7 @@ public class CHandler implements ICHandler {
 				} catch (ParseException e1) {
 					String msg = "Skipped a ACSL node due to: " + e1.getMessage();
 					ILocation loc = new CACSLLocation(parent);
-					mDispatcher.unsupportedSyntax(loc, msg);
+					main.unsupportedSyntax(loc, msg);
 				}
 			}
 		}

@@ -123,7 +123,6 @@ public class FunctionHandler {
 	private LinkedHashMap<String, CFunction> procedureToCFunctionType;
 	
 	private final boolean m_CheckMemoryLeakAtEndOfMain;
-	private Dispatcher mDispatcher;
 
 	/**
 	 * Herein the function Signatures (as a CFunction) are stored for which
@@ -135,7 +134,7 @@ public class FunctionHandler {
 	/**
 	 * Constructor.
 	 */
-	public FunctionHandler(Dispatcher dispatch) {
+	public FunctionHandler() {
 		this.callGraph = new LinkedHashMap<String, LinkedHashSet<String>>();
 		this.currentProcedureIsVoid = false;
 		this.modifiedGlobals = new LinkedHashMap<String, LinkedHashSet<String>>();
@@ -146,7 +145,6 @@ public class FunctionHandler {
 		m_CheckMemoryLeakAtEndOfMain = 
 				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
 				getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MemoryLeakInMain);
-		mDispatcher = dispatch;
 		this.functionSignaturesThatHaveAFunctionPointer = new LinkedHashSet<>();
 	}
 
@@ -214,11 +212,9 @@ public class FunctionHandler {
 			List<ACSLNode> contract, CDeclaration cDec) {
 		String methodName = cDec.getName();
 		CFunction funcType = (CFunction) cDec.getType();
-		
 	
 		addAProcedure(main, loc, contract, methodName, funcType);
 		
-
 		return new ResultSkip();
 	}
 
@@ -572,9 +568,6 @@ public class FunctionHandler {
 				spec[nrSpec] = new ModifiesSpecification(loc, false, modifyList);
 			}
 			if (main.isMMRequired() &&
-//					(memoryHandler.isIntArrayRequiredInMM ||
-//							memoryHandler.isFloatArrayRequiredInMM ||	
-//							memoryHandler.isPointerArrayRequiredInMM) &&
 					(main.getCheckedMethod() == SFO.EMPTY || main
 							.getCheckedMethod().equals(mId))) {
 				if(m_CheckMemoryLeakAtEndOfMain) {
@@ -769,7 +762,6 @@ public class FunctionHandler {
 	private VarList[] processInParams(Dispatcher main, ILocation loc,
 			CFunction cFun, String methodName) {
         CDeclaration[] paramDecs =
-//                ((CFunction) decl.getType()).getParameterTypes();
         		cFun.getParameterTypes();
 		VarList[] in  = new VarList[paramDecs.length];
         for (int i = 0; i < paramDecs.length; ++i) {
@@ -861,19 +853,13 @@ public class FunctionHandler {
 		CACSLLocation loc = new CACSLLocation(node, check);
 		IASTExpression functionName = node.getFunctionNameExpression(); 
 		if (!(functionName instanceof IASTIdExpression)) {
-//			String msg = "Function pointer or similar is not supported. "
-//					+ loc.toString();
-//			throw new IncorrectSyntaxException(loc, msg);
-//			return new ResultExpression(new RValue(new IntegerLiteral(loc, "-1"), new CPrimitive(PRIMITIVE.INT)));
 			return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, node.getArguments());
 		}
 		//don't use getRawSignature because it refers to the code before preprocessing 
 		// f.i. we get a wrong methodname here in defineFunction.c, because of a #define in the original code
 		String methodName = ((IASTIdExpression) functionName).getName().toString();
 		
-//		if (((MainDispatcher) main).getFunctionPointers().containsKey(methodName)) { //FIXME just for now
 		if (main.cHandler.getSymbolTable().containsCSymbol(methodName)) {
-//			return new ResultExpression(new RValue(new IntegerLiteral(loc, "-1"), new CPrimitive(PRIMITIVE.INT)));
 			return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, node.getArguments());
 		}
 		
@@ -908,7 +894,6 @@ public class FunctionHandler {
 		CFunction cFuncWithFP = addFPParamToCFunction(calledFuncCFunction);
 		
 		if (!procedures.containsKey(procName)) {
-//			addAProcedure(main, loc, null, procName, calledFuncCFunction);
 			addAProcedure(main, loc, null, procName, cFuncWithFP);
 		}
 		
@@ -919,10 +904,6 @@ public class FunctionHandler {
 		
 		return handleFunctionCallGivenNameAndArguments(main, memoryHandler, structHandler, loc, 
 				procName, newArgs);
-//		return makeTheFunctionCallItself(main, loc, procName,
-//					new ArrayList<Statement>(), new ArrayList<Declaration>(), 
-//					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), 
-//					args);
 	}
 
 	public CFunction addFPParamToCFunction(CFunction calledFuncCFunction) {
@@ -937,10 +918,7 @@ public class FunctionHandler {
 	
 	public Body getFunctionPointerFunctionBody(ILocation loc, Dispatcher main,
 			MemoryHandler memoryHandler, StructHandler structHandler, CFunction funcSignature, VarList[] inParams, VarList[] outParam) {
-		//FIXME this is just to keep the code for later.. (and not have syntax errors)
 		CType calledFuncType = funcSignature;
-//		IASTInitializerClause[] arguments = null;
-		RValue calledFuncRVal = null;
 		
 		//FIXME: Frage: werden am Boogie-prozedurEnde alle Vars automatisch gehavoct, aus SMTInterpol-sicht?
 		// wenn nicht: hier und an anderer stelle auxVars anpassen..
@@ -949,7 +927,6 @@ public class FunctionHandler {
 
 
 		ArrayList<Expression> args = new ArrayList<>();
-//		for (VarList vl : inParams) {
 		for (int i = 0; i < inParams.length - 1; i++) {// the last inParam is the function pointer -> therefore "..length - 1"
 			VarList vl = inParams[i];
 			assert vl.getIdentifiers().length == 1;
@@ -974,8 +951,6 @@ public class FunctionHandler {
 		
 		IdentifierExpression funcCallResult = null;
 		if (fittingFunctions.size() == 1) {
-			//			ResultExpression rex = (ResultExpression) handleFunctionCallGivenNameAndArguments(main, memoryHandler, 
-//					structHandler, loc, fittingFunctions.get(0), arguments);
 			ResultExpression rex = (ResultExpression) makeTheFunctionCallItself(main, loc, fittingFunctions.get(0), 
 					new ArrayList<Statement>(), new ArrayList<Declaration>(), 
 					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
@@ -992,11 +967,9 @@ public class FunctionHandler {
 			stmt.addAll(Dispatcher.createHavocsForAuxVars(rex.auxVars));
 			stmt.add(new ReturnStatement(loc));
 			return new Body(loc, 
-//					rex.auxVars.keySet().toArray(new VariableDeclaration[rex.auxVars.keySet().size()]), 
 					decl.toArray(new VariableDeclaration[decl.size()]),
 					stmt.toArray(new Statement[stmt.size()]));
 		} else {
-//			ArrayList<Declaration> decl = new ArrayList<>();
 			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 
 			String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES);
@@ -1011,11 +984,8 @@ public class FunctionHandler {
 			ResultExpression firstElseRex = (ResultExpression) makeTheFunctionCallItself(main, loc, fittingFunctions.get(0), 
 					new ArrayList<Statement>(), new ArrayList<Declaration>(), 
 					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
-//			ResultExpression firstElseRex = (ResultExpression) handleFunctionCallGivenNameAndArguments(main, memoryHandler, 
-//					structHandler, loc, fittingFunctions.get(0), arguments);
 			for (Declaration dec : firstElseRex.decl)
 				decl.add((VariableDeclaration) dec);
-//			decl.addAll(firstElseRex.decl);
 			auxVars.putAll(firstElseRex.auxVars);
 
 			ArrayList<Statement> firstElseStmt = new ArrayList<>();
@@ -1032,11 +1002,8 @@ public class FunctionHandler {
 				ResultExpression currentRex = (ResultExpression) makeTheFunctionCallItself(main, loc, fittingFunctions.get(0), 
 					new ArrayList<Statement>(), new ArrayList<Declaration>(), 
 					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
-//				ResultExpression currentRex = (ResultExpression) handleFunctionCallGivenNameAndArguments(main, memoryHandler, 
-//					structHandler, loc, fittingFunctions.get(i), arguments);
 				for (Declaration dec : currentRex.decl)
 					decl.add((VariableDeclaration) dec);
-//				decl.addAll(currentRex.decl);
 				auxVars.putAll(currentRex.auxVars);			
 
 				ArrayList<Statement> newStmts = new ArrayList<>();
@@ -1048,8 +1015,6 @@ public class FunctionHandler {
 				
 				Expression condition = 
 						new BooleanLiteral(loc, true);
-//						new BinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
-//						calledFuncRVal.getValue(), new IdentifierExpression(loc, SFO.FUNCTION_ADDRESS + fittingFunctions.get(i)));
 				
 				if (i == 1) {
 					currentIfStmt = new IfStatement(loc, condition,
@@ -1062,7 +1027,6 @@ public class FunctionHandler {
 				}
 			}
 
-//			ArrayList<Statement> stmt = new ArrayList<>();
 			stmt.add(currentIfStmt);
 			if (outParam.length == 1) {
 				stmt.add(new AssignmentStatement(loc, 
@@ -1072,11 +1036,8 @@ public class FunctionHandler {
 			stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
 			stmt.add(new ReturnStatement(loc));
 			return new Body(loc, 
-//					auxVars.keySet().toArray(new VariableDeclaration[auxVars.keySet().size()]), 
 					decl.toArray(new VariableDeclaration[decl.size()]),
 					stmt.toArray(new Statement[stmt.size()]));
-//			return new ResultExpression(stmt, new RValue(new IdentifierExpression(loc, tmpId), 
-//					((CFunction) calledFuncType).getResultType()), decl, auxVars);
 		}
 	}
 
@@ -1192,7 +1153,6 @@ public class FunctionHandler {
 					} 
 				} 
 			}
-			
 			args.add(in.lrVal.getValue());
 			stmt.addAll(in.stmt);
 			decl.addAll(in.decl);
@@ -1254,10 +1214,9 @@ public class FunctionHandler {
 			String longDescription = "Return value of method '"
 					+ methodName
 					+ "' unknown! Methods should be declared, before they are used! Return value assumed to be int ...";
-			mDispatcher.warn(loc, longDescription);
+			main.warn(loc, longDescription);
 			String ident = main.nameHandler.getTempVarUID(SFO.AUXVAR.RETURNED);
-			expr = new IdentifierExpression(loc,
-					/*new InferredType(Type.Integer),*/ ident);
+			expr = new IdentifierExpression(loc, ident);
 			VarList tempVar = new VarList(loc, new String[] { ident },
 					new PrimitiveType(loc, SFO.INT));
 			VariableDeclaration tmpVar = new VariableDeclaration(loc,
@@ -1317,8 +1276,6 @@ public class FunctionHandler {
 				}
 			}
 			
-			
-//			Expression rhs = (Expression) exprResult.lrVal.getValue();
 			stmt.addAll(exprResult.stmt);
 			decl.addAll(exprResult.decl);
 			auxVars.putAll(exprResult.auxVars);
@@ -1326,7 +1283,7 @@ public class FunctionHandler {
 				// void method which is returning something! We remove the
 				// return value!
 				String msg = "This method is declared to be void, but returning a value!";
-				mDispatcher.syntaxError(loc, msg);
+				main.syntaxError(loc, msg);
 			} else if (outParams.length != 1) {
 				String msg = "We do not support several output parameters for functions";
 				throw new UnsupportedSyntaxException(loc, msg);
@@ -1337,11 +1294,6 @@ public class FunctionHandler {
 				stmt.add(new AssignmentStatement(loc, lhs,
 						new Expression[] { castExprResultRVal.getValue() }));
 //				//assuming that we need no auxvars or overappr, here
-//				ResultExpression assignmentRex = ((CHandler) main.cHandler).makeAssignment(main, loc, new ArrayList<Statement>(), 
-//						new LocalLValue(new VariableLHS(loc, id), functionResultType), (RValue) exprResult.lrVal, new ArrayList<Declaration>(),
-//						new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>());
-//				stmt.addAll(assignmentRex.stmt);
-//				decl.addAll(assignmentRex.decl);
 			}
 		}
 		stmt.addAll(CHandler.createHavocsForNonMallocAuxVars(auxVars));

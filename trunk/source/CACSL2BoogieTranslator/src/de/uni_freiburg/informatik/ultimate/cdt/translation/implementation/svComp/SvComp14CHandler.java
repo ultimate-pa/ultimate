@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
@@ -195,6 +196,11 @@ public class SvComp14CHandler extends CHandler {
 //		this is a gcc-builtin function that helps with branch predication, it always returns the first argument.
 		if (methodName.equals("__builtin_expect")) { 
 			return main.dispatch(node.getArguments()[0]);
+		}
+		
+		if (methodName.equals("abort")) {
+			stmt.add(new AssumeStatement(loc, new BooleanLiteral(loc, false)));
+			return new ResultExpression(stmt, null, decl, auxVars);
 		}
 
 		return super.visit(main, node);

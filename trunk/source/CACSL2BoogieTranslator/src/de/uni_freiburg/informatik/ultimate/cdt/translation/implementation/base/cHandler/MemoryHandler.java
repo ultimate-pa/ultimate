@@ -301,6 +301,9 @@ public class MemoryHandler {
         	case "DOUBLE":
         		value = typeSizeConstants.sizeOfDoubleType;
         		break;
+        	case SFO.POINTER:
+        		value = typeSizeConstants.sizeOfPointerType;
+        		break;
         	default:
         		value = typeSizeConstants.defaultTypeSize;
         	}
