@@ -111,6 +111,7 @@
 					<reuseForks>false</reuseForks>
 					<showEclipseLog>true</showEclipseLog>
 					<threadCount>1</threadCount>
+					<failIfNoTests>false</failIfNoTests>
 					<trimStackTrace>false</trimStackTrace>
 					<!-- if we use argline, jacocos argline will be overwritten, resulting 
 						in no coverage -->
@@ -292,7 +293,7 @@
 				<module>../Library-junit-helper</module>
 				<module>../Library-UltimateTest</module>
 
-				<!-- modules containing actual tests utilities -->
+				<!-- modules containing actual tests -->
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
 				<module>../CoreRCPTest</module>
@@ -308,8 +309,11 @@
 				<module>../Library-junit-helper</module>
 				<module>../Library-UltimateTest</module>
 
-				<!-- modules containing actual tests utilities -->
-				<module>../UltimateTest</module>
+				<!-- modules containing actual tests -->
+				<module>../Library-UltimateUtilTest</module>
+				<module>../Library-UltimateTestTest</module>
+				<module>../CoreRCPTest</module>
+				<module>../UltimateRegressionTest</module>
 			</modules>
 		</profile>
 	</profiles>
