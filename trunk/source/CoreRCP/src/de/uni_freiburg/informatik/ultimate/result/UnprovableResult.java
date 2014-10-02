@@ -23,6 +23,10 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Stefan Wissert
  * @author Oleksii Saukh
  * @date 02.01.2012
+ * 
+ * @param <ELEM> Type of position
+ * @param <TE> Type of trace element
+ * @param <E> Type of expression
  */
 public class UnprovableResult<ELEM extends IElement, TE, E> extends AbstractResultAtElement<ELEM> implements
 		IResultWithTrace {

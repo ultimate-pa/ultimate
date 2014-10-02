@@ -18,6 +18,10 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceE
  * @author Stefan Wissert
  * @author Oleksii Saukh
  * @date 02.01.2012
+ * 
+ * @param <ELEM> Type of position
+ * @param <TE> Type of trace element
+ * @param <E> Type of expression
  */
 public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E> extends AbstractResultAtElement<ELEM> implements
 		IResultWithTrace {
