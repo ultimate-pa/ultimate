@@ -478,7 +478,8 @@ public class PartialQuantifierElimination {
 				switch (functionSymbol) {
 				case "=":
 					if (quantifier == QuantifiedFormula.EXISTS) {
-						throw new AssertionError("term should have been removed with DER");
+						// unable to eliminate quantifier
+						return null;
 					} else if (quantifier == QuantifiedFormula.FORALL) {
 						// we may drop this parameter
 					} else {
@@ -489,7 +490,8 @@ public class PartialQuantifierElimination {
 					if (quantifier == QuantifiedFormula.EXISTS) {
 						// we may drop this parameter
 					} else if (quantifier == QuantifiedFormula.FORALL) {
-						throw new AssertionError("term should have been removed with DER");
+						// unable to eliminate quantifier
+						return null;
 					} else {
 						throw new AssertionError("unknown quantifier");
 					}
