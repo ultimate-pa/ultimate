@@ -296,7 +296,7 @@ public class ArrayHandler {
 					pointedType);
 			result.lrVal  = new HeapLValue(address.getValue(), pointedType);
 		} else {
-			assert result.lrVal.cType instanceof CArray;
+			assert result.lrVal.cType instanceof CArray : "cType not instanceof CArray";
 			ArrayList<Expression> newDimensions = 
 					new ArrayList<Expression>(Arrays.asList(((CArray) result.lrVal.cType)
 							.getDimensions()));
