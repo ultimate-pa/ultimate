@@ -3,7 +3,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * @author Markus Lindenmann
@@ -47,4 +49,27 @@ public class CPointer extends CType {
             return false;
         }
     }
+
+	@Override
+	public boolean isCompatibleWith(CType o) {
+		if (o instanceof CPrimitive &&
+				((CPrimitive) o).getType() == PRIMITIVE.VOID)
+			return true;
+
+		if (super.equals(o)) //to break a mutual recursion with CStruct -- TODO: is that a general solution??
+    		return true;
+        CType oType = ((CType)o).getUnderlyingType();
+        if (oType instanceof CPointer) {
+            return pointsToType.isCompatibleWith(((CPointer)oType).pointsToType);
+        }
+        else {
+            return false;
+        }
+	}
+	
+	
+	@Override
+	public int hashCode() {
+		return HashUtils.hashJenkins(31, pointsToType);
+	}
 }

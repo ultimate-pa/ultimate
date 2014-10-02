@@ -6,6 +6,8 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
+
 /**
  * @author Markus Lindenmann
  * @date 13.07.2012
@@ -246,4 +248,22 @@ public class CPrimitive extends CType {
             return false;
         }
     }
+    
+    @Override
+    public int hashCode() {
+    	return HashUtils.hashJenkins(31, type);
+    }
+
+	@Override
+	public boolean isCompatibleWith(CType o) {
+		if (this.type == PRIMITIVE.VOID)
+			return true;
+        CType oType = ((CType) o).getUnderlyingType();
+        if (oType instanceof CPrimitive) {
+            return type == ((CPrimitive)oType).type;
+        }
+        else {
+            return false;
+        }
+	}
 }

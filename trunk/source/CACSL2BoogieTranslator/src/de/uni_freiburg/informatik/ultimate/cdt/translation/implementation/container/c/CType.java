@@ -92,4 +92,6 @@ public abstract class CType {
 		}
 		return this;
 	}
+
+	public abstract boolean isCompatibleWith(CType cT);
 }

@@ -178,16 +178,20 @@ public class TypeHandler implements ITypeHandler {
             node = (CASTTypedefNameSpecifier) node;
             String cId = node.getName().toString();
             
-            // quick solution --> TODO: maybe make this dependent on includes, 
-            // maybe be more elegant (make an entry to symboltable, make a typedef in boogie file??)
-            if (cId.equals("size_t") || cId.equals("ssize_t")) {
-                return (new ResultTypes(new PrimitiveType(loc, SFO.REAL), node.isConst(),
-                		false, new CPrimitive(PRIMITIVE.UINT)));
-            } else if (cId.equals("__builtin_va_list")) {
-                return (new ResultTypes(MemoryHandler.POINTER_TYPE, node.isConst(),
-                		false, new CPointer(new CPrimitive(PRIMITIVE.CHAR))));
-            }
-            
+//            // quick solution --> TODO: maybe make this dependent on includes,  
+//            // maybe be more elegant (make an entry to symboltable, make a typedef in boogie file??)
+//            if (cId.equals("size_t") || cId.equals("ssize_t")) {
+//                return (new ResultTypes(new PrimitiveType(loc, SFO.REAL), node.isConst(),
+//                		false, new CPrimitive(PRIMITIVE.UINT)));
+//            } else if (cId.equals("__builtin_va_list")) {
+//                return (new ResultTypes(MemoryHandler.POINTER_TYPE, node.isConst(),
+//                		false, new CPointer(new CPrimitive(PRIMITIVE.CHAR))));
+//            } else if (cId.equals("__pthread_list_t")) {
+//            	    return (new ResultTypes(MemoryHandler.POINTER_TYPE, node.isConst(),
+//                		false, new CPointer(new CPrimitive(PRIMITIVE.VOID))));
+//            }
+             // --> moved this to SVCompTypeHandler
+
             String bId = main.cHandler.getSymbolTable().get(cId, loc).getBoogieName();
             return new ResultTypes(new NamedType(loc, bId, null), false, false, //TODO: replace constants
             		new CNamed(bId, m_DefinedTypes.get(bId).cType));

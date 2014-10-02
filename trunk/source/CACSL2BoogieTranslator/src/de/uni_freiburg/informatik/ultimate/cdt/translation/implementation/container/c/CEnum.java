@@ -7,10 +7,13 @@ import java.util.Arrays;
 
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * @author Markus Lindenmann
+ * @author nutz
  * @date 18.09.2012
  */
 public class CEnum extends CType {
@@ -125,14 +128,36 @@ public class CEnum extends CType {
                 return false;
             }
         }
-//        if (fValues.length != oEnum.fValues.length) {
-//            return false;
-//        }
-//        for (int i = fValues.length - 1; i >= 0; --i) {
-//            if (!(fValues[i].equals(oEnum.fValues[i]))) {
-//                return false;
-//            }
-//        }
         return true;
     }
+
+	@Override
+	public boolean isCompatibleWith(CType o) {
+		if (o instanceof CPrimitive &&
+				((CPrimitive) o).getType() == PRIMITIVE.VOID)
+			return true;
+		
+		CType oType = ((CType)o).getUnderlyingType();
+        if (!(oType instanceof CEnum)) 
+            return false;
+        
+        CEnum oEnum = (CEnum)oType;
+        if (!(identifier.equals(oEnum.identifier))) {
+            return false;
+        }
+        if (fNames.length != oEnum.fNames.length) {
+            return false;
+        }
+        for (int i = fNames.length - 1; i >= 0; --i) {
+            if (!(fNames[i].equals(oEnum.fNames[i]))) {
+                return false;
+            }
+        }
+        return true;
+	}
+	
+	@Override
+	public int hashCode() {
+		return HashUtils.hashJenkins(31, fNames, fValues, identifier);
+	}
 }

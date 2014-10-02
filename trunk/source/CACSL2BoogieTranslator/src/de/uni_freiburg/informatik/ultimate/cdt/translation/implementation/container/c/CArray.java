@@ -5,6 +5,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -17,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.result.Check;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * @author Markus Lindenmann
@@ -256,4 +258,34 @@ public class CArray extends CType {
         }
         return true;
     }
+
+	@Override
+	public boolean isCompatibleWith(CType o) {
+		if (o instanceof CPrimitive &&
+				((CPrimitive) o).getType() == PRIMITIVE.VOID)
+			return true;
+		
+        CType oType = ((CType)o).getUnderlyingType();
+        if (!(oType instanceof CArray))
+            return false;
+        
+        CArray oArr = (CArray) oType;
+        if (!(valueType.isCompatibleWith(oArr.valueType))) {
+            return false;
+        }
+        if (dimensions.length != oArr.dimensions.length) {
+            return false;
+        }
+        for (int i = dimensions.length - 1; i >= 0; --i) {
+            if (!(dimensions[i].equals(oArr.dimensions[i]))) {
+                return false;
+            }
+        }
+        return true;
+	}
+	
+	@Override
+	public int hashCode() {
+		return HashUtils.hashJenkins(31, dimensions, valueType, variableLength);
+	}
 }

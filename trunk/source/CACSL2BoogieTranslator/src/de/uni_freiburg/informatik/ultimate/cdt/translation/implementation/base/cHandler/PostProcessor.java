@@ -138,7 +138,7 @@ public class PostProcessor {
 			VarList[] inParams = functionHandler.getProcedures().get(procName).getInParams();
 			VarList[] outParams = functionHandler.getProcedures().get(procName).getOutParams();
 			assert outParams.length <= 1;
-			result.add(new Procedure(loc, new Attribute[0], 
+			Procedure functionPointerMuxProc = new Procedure(loc, new Attribute[0], 
 					procName, 
 					new String[0], 
 					inParams, 
@@ -146,7 +146,8 @@ public class PostProcessor {
 //					FIXME: it seems an odd convention that giving it "null" as Specification makes it an implementation (instead of procedure) in Boogie
 //					new Specification[0], 
 					null, 
-					functionHandler.getFunctionPointerFunctionBody(loc, main, memoryHandler, structHandler, cFunc, inParams, outParams)));
+					functionHandler.getFunctionPointerFunctionBody(loc, main, memoryHandler, structHandler, procName, cFunc, inParams, outParams));
+			result.add(functionPointerMuxProc);
 		}
 		return result;
 	}

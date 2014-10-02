@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultContract;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
@@ -887,9 +888,21 @@ public class FunctionHandler {
 		assert calledFuncType instanceof CFunction : "We need to unpack it further, right?";
 		CFunction calledFuncCFunction = (CFunction) calledFuncType;
 		
+		//check if the function is declared without parameters -- then the signature is determined by the (first) call
+		if (calledFuncCFunction.getParameterTypes().length == 0
+				&& arguments.length > 0) {
+			CDeclaration[] paramDecsFromCall = new CDeclaration[arguments.length];
+			for (int i = 0; i < arguments.length; i++) {
+				ResultExpression rex = (ResultExpression) main.dispatch(arguments[i]);
+				paramDecsFromCall[i] = new CDeclaration(rex.lrVal.cType, "#param" + i); //TODO: SFO?
+			}
+			calledFuncCFunction = new CFunction(calledFuncCFunction.getResultType(), 
+					paramDecsFromCall , calledFuncCFunction.takesVarArgs());
+		}
+		
 		functionSignaturesThatHaveAFunctionPointer.add(calledFuncCFunction);
 
-		String procName = (calledFuncCFunction.functionSignatureAsProcedureName());
+		String procName = calledFuncCFunction.functionSignatureAsProcedureName();
 		
 		CFunction cFuncWithFP = addFPParamToCFunction(calledFuncCFunction);
 		
@@ -917,8 +930,11 @@ public class FunctionHandler {
 	}
 	
 	public Body getFunctionPointerFunctionBody(ILocation loc, Dispatcher main,
-			MemoryHandler memoryHandler, StructHandler structHandler, CFunction funcSignature, VarList[] inParams, VarList[] outParam) {
-		CType calledFuncType = funcSignature;
+			MemoryHandler memoryHandler, StructHandler structHandler, String fpfName, CFunction funcSignature, VarList[] inParams, VarList[] outParam) {
+		CFunction calledFuncType = funcSignature;
+		
+		boolean resultTypeIsVoid = calledFuncType.getResultType() instanceof CPrimitive 
+					&& ((CPrimitive) calledFuncType.getResultType()).getType() == PRIMITIVE.VOID;
 		
 		//FIXME: Frage: werden am Boogie-prozedurEnde alle Vars automatisch gehavoct, aus SMTInterpol-sicht?
 		// wenn nicht: hier und an anderer stelle auxVars anpassen..
@@ -941,14 +957,22 @@ public class FunctionHandler {
 			args.add(new IdentifierExpression(loc, newId));
 		}
 
+		//collect all functions that are addressoffed in the program and that match the signature
 		ArrayList<String> fittingFunctions = new ArrayList<>();
 		for (Entry<String, Integer> en : ((MainDispatcher) main).getFunctionToIndex().entrySet()) {
 			CType ptdToFuncType = procedureToCFunctionType.get(en.getKey());
-			if (ptdToFuncType.equals(((CFunction) calledFuncType))) {
+			if (ptdToFuncType.isCompatibleWith(calledFuncType)) {
 				fittingFunctions.add(en.getKey());
 			}
 		}
 		
+		// add the functionPointerProcedure and the procedures it calls to the call graph and modifiedGlobals
+		// such that calculateTransitive (which is executed later, in visit(TranslationUnit) after the postprocessor)
+		// can compute the correct modifies clause
+		modifiedGlobals.put(fpfName, new LinkedHashSet<String>());
+		callGraph.get(fpfName).addAll(fittingFunctions);
+		
+		//generate the actual body
 		IdentifierExpression funcCallResult = null;
 		if (fittingFunctions.size() == 1) {
 			ResultExpression rex = (ResultExpression) makeTheFunctionCallItself(main, loc, fittingFunctions.get(0), 
@@ -957,7 +981,7 @@ public class FunctionHandler {
 			funcCallResult = (IdentifierExpression) rex.lrVal.getValue();
 			for (Declaration dec : rex.decl)
 				decl.add((VariableDeclaration) dec);
-//			decl.addAll(rex.decl);
+
 			stmt.addAll(rex.stmt);
 			if (outParam.length == 1) {
 				stmt.add(new AssignmentStatement(loc, 
@@ -972,14 +996,18 @@ public class FunctionHandler {
 		} else {
 			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 
-			String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES);
-			VariableDeclaration tmpVarDec = new VariableDeclaration(loc, new Attribute[0], 
-					new VarList[] { new VarList(loc, 
-							new String[] { tmpId }, 
-							main.typeHandler.ctype2asttype(loc, ((CFunction) calledFuncType).getResultType())) });
-			decl.add(tmpVarDec);
-			auxVars.put(tmpVarDec, loc);
-			funcCallResult = new IdentifierExpression(loc, tmpId);
+			String tmpId = null;
+
+			if (!resultTypeIsVoid) {
+				tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES);
+				VariableDeclaration tmpVarDec = new VariableDeclaration(loc, new Attribute[0], 
+						new VarList[] { new VarList(loc, 
+								new String[] { tmpId }, 
+								main.typeHandler.ctype2asttype(loc, ((CFunction) calledFuncType).getResultType())) });
+				decl.add(tmpVarDec);
+				auxVars.put(tmpVarDec, loc);
+				funcCallResult = new IdentifierExpression(loc, tmpId);
+			}
 
 			ResultExpression firstElseRex = (ResultExpression) makeTheFunctionCallItself(main, loc, fittingFunctions.get(0), 
 					new ArrayList<Statement>(), new ArrayList<Declaration>(), 
@@ -989,8 +1017,8 @@ public class FunctionHandler {
 			auxVars.putAll(firstElseRex.auxVars);
 
 			ArrayList<Statement> firstElseStmt = new ArrayList<>();
-			{
-				firstElseStmt.addAll(firstElseRex.stmt);
+			firstElseStmt.addAll(firstElseRex.stmt);
+			if (!resultTypeIsVoid) {
 				AssignmentStatement assignment = new AssignmentStatement(loc, 
 						new VariableLHS[] { new VariableLHS(loc, tmpId) }, 
 						new Expression[] { firstElseRex.lrVal.getValue() });
@@ -999,7 +1027,7 @@ public class FunctionHandler {
 			IfStatement currentIfStmt = null;
 
 			for (int i = 1; i < fittingFunctions.size(); i++) {
-				ResultExpression currentRex = (ResultExpression) makeTheFunctionCallItself(main, loc, fittingFunctions.get(0), 
+				ResultExpression currentRex = (ResultExpression) makeTheFunctionCallItself(main, loc, fittingFunctions.get(i), 
 					new ArrayList<Statement>(), new ArrayList<Declaration>(), 
 					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
 				for (Declaration dec : currentRex.decl)
@@ -1008,13 +1036,18 @@ public class FunctionHandler {
 
 				ArrayList<Statement> newStmts = new ArrayList<>();
 				newStmts.addAll(currentRex.stmt);
-				AssignmentStatement assignment = new AssignmentStatement(loc, 
-					new VariableLHS[] { new VariableLHS(loc, tmpId) }, 
-					new Expression[] { currentRex.lrVal.getValue() });
-				newStmts.add(assignment);
+				if (!resultTypeIsVoid) {
+					AssignmentStatement assignment = new AssignmentStatement(loc, 
+							new VariableLHS[] { new VariableLHS(loc, tmpId) }, 
+							new Expression[] { currentRex.lrVal.getValue() });
+					newStmts.add(assignment);
+				}
 				
 				Expression condition = 
-						new BooleanLiteral(loc, true);
+						new BinaryExpression(loc, BinaryExpression.Operator.COMPEQ, 
+								new IdentifierExpression(loc, inParams[inParams.length - 1].getIdentifiers()[0]),
+								new IdentifierExpression(loc, SFO.FUNCTION_ADDRESS + fittingFunctions.get(i)));
+//						new BooleanLiteral(loc, true);
 				
 				if (i == 1) {
 					currentIfStmt = new IfStatement(loc, condition,

@@ -5,6 +5,9 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 
 import java.util.Arrays;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
+
 /**
  * @author Markus Lindenmann
  * @date 18.09.2012
@@ -173,5 +176,47 @@ public class CStruct extends CType {
 		incompleteName = "";
 		fNames = cvar.fNames;
 		fTypes = cvar.fTypes;
+	}
+
+	@Override
+	public boolean isCompatibleWith(CType o) {
+		if (o instanceof CPrimitive &&
+				((CPrimitive) o).getType() == PRIMITIVE.VOID)
+			return true;
+
+		if (super.equals(o)) //to break a mutual recursion with CPointer -- TODO: is that a general solution??
+    		return true;
+        if (!(o instanceof CType)) {
+            return false;
+        }
+        CType oType = ((CType)o).getUnderlyingType();
+        if (!(oType instanceof CStruct)) {
+            return false;
+        }
+        
+        CStruct oStruct = (CStruct)oType;
+        if (fNames.length != oStruct.fNames.length) {
+            return false;
+        }
+//        for (int i = fNames.length - 1; i >= 0; --i) { //names of fields seem irrelevant for compatibility??
+//            if (!(fNames[i].equals(oStruct.fNames[i]))) {
+//                return false;
+//            }
+//        }
+        if (fTypes.length != oStruct.fTypes.length) {
+            return false;
+        }
+        for (int i = fTypes.length - 1; i >= 0; --i) {
+            if (!(fTypes[i].equals(oStruct.fTypes[i]))) {
+                return false;
+            }
+        }
+        return true;    
+	}
+	
+	
+	@Override
+	public int hashCode() {
+		return HashUtils.hashJenkins(31, fNames, fTypes, incompleteName);
 	}
 }

@@ -3,6 +3,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
+
 /**
  * @author Markus Lindenmann
  * @date 01.11.2012
@@ -76,4 +78,18 @@ public class CNamed extends CType {
         }
         return getUnderlyingType().equals(o);
     }
+
+	@Override
+	public boolean isCompatibleWith(CType o) {
+		if (!(o instanceof CType)) {
+            return false;
+        }
+        return getUnderlyingType().isCompatibleWith(o);
+	}
+	
+	
+	@Override
+	public int hashCode() {
+		return HashUtils.hashJenkins(31, this.getUnderlyingType());
+	}
 }
