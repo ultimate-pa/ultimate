@@ -20,6 +20,8 @@ public class VariableManager {
 			new MultiElementCounter<String>();
 	private final Map<TermVariable, Term> m_TermVariable2Constant = 
 			new HashMap<TermVariable, Term>();
+	private final MultiElementCounter<TermVariable> m_ConstForTvCounter = 
+			new MultiElementCounter<TermVariable>();
 	private final Script m_Script;
 	
 	VariableManager(Script script) {
@@ -54,6 +56,14 @@ public class VariableManager {
 	
 	public Term getCorrespondingConstant(TermVariable tv) {
 		return m_TermVariable2Constant.get(tv);
+	}
+	
+	public Term constructFreshConstant(TermVariable tv) {
+		final Integer newIndex = m_ConstForTvCounter.increase(tv);
+		String name = SmtUtils.removeSmtQuoteCharacters(tv.getName()) + "_fresh_" + newIndex;
+		Sort resultSort = tv.getSort();
+		m_Script.declareFun(name, new Sort[0], resultSort);
+		return m_Script.term(name);
 	}
 	
 //	/**
