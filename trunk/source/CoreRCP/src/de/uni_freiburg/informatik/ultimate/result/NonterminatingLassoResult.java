@@ -10,13 +10,13 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * 
  * @author Matthias Heizmann
  * 
- * @param <ELEM>
+ * @param <TE>
  */
-public class NonterminatingLassoResult<ELEM extends IElement, EXP extends IElement> extends
-		AbstractResultWithLasso<ELEM, EXP> {
+public class NonterminatingLassoResult<ELEM extends IElement, TE extends IElement, EXP extends IElement> extends
+		AbstractResultWithLasso<ELEM, TE, EXP> {
 
 	public NonterminatingLassoResult(ELEM position, String plugin, IBacktranslationService translatorSequence,
-			IProgramExecution<ELEM, EXP> stem, IProgramExecution<ELEM, EXP> loop, ILocation location) {
+			IProgramExecution<TE, EXP> stem, IProgramExecution<TE, EXP> loop, ILocation location) {
 		super(plugin, position, translatorSequence, stem, loop);
 	}
 

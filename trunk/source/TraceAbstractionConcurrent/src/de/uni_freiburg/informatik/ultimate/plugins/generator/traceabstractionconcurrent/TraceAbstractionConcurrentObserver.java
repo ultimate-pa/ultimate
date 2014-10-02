@@ -183,8 +183,8 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			reportUnproveableResult(pe);
 			return;
 		}
-		reportResult(new CounterExampleResult<RcfgElement, Expression>(getErrorPP(pe), Activator.s_PLUGIN_NAME,
-				mServices.getBacktranslationService(), pe));
+		reportResult(new CounterExampleResult<RcfgElement, CodeBlock, Expression>(getErrorPP(pe),
+				Activator.s_PLUGIN_NAME, mServices.getBacktranslationService(), pe));
 	}
 
 	private void reportTimoutResult(Collection<ProgramPoint> errorLocs) {
@@ -194,8 +194,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 					+ origin.checkedSpecification().getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
 			TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
-					Activator.s_PLUGIN_NAME, mServices.getBacktranslationService(),
-					timeOutMessage);
+					Activator.s_PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 			mLogger.warn(timeOutMessage);
 		}
@@ -203,7 +202,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 	private void reportUnproveableResult(RcfgProgramExecution pe) {
 		ProgramPoint errorPP = getErrorPP(pe);
-		UnprovableResult<RcfgElement, RcfgElement, Expression> uknRes = new UnprovableResult<RcfgElement, RcfgElement, Expression>(
+		UnprovableResult<RcfgElement, CodeBlock, Expression> uknRes = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
 				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe);
 		reportResult(uknRes);
 	}
@@ -256,7 +255,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 	public ProgramPoint getErrorPP(RcfgProgramExecution rcfgProgramExecution) {
 		int lastPosition = rcfgProgramExecution.getLength() - 1;
-		CodeBlock last = rcfgProgramExecution.getTraceElement(lastPosition);
+		CodeBlock last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
 		ProgramPoint errorPP = (ProgramPoint) last.getTarget();
 		return errorPP;
 	}

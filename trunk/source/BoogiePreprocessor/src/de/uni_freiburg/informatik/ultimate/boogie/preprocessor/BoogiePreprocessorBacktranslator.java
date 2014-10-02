@@ -131,7 +131,7 @@ public class BoogiePreprocessorBacktranslator extends
 
 		int length = programExecution.getLength();
 		for (int i = 0; i < length; ++i) {
-			BoogieASTNode elem = programExecution.getTraceElement(i);
+			BoogieASTNode elem = programExecution.getTraceElement(i).getTraceElement();
 			BoogieASTNode newElem = mMapping.get(elem);
 
 			if (newElem == null) {

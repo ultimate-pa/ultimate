@@ -45,7 +45,7 @@ public class BoogieBacktranslationTestResultDecider extends TestResultDecider {
 				+ "and that there is a counter example result, and that the contained error trace "
 				+ "matches the given one.");
 		boolean fail = false;
-		ArrayList<CounterExampleResult<?, ?>> cex = new ArrayList<>();
+		ArrayList<CounterExampleResult<?, ?, ?>> cex = new ArrayList<>();
 		Set<Entry<String, List<IResult>>> resultSet = resultService.getResults().entrySet();
 		for (Entry<String, List<IResult>> x : resultSet) {
 			for (IResult result : x.getValue()) {
@@ -59,8 +59,8 @@ public class BoogieBacktranslationTestResultDecider extends TestResultDecider {
 						setCategoryAndMessageAndCustomMessage(result.getShortDescription(), customMessages);
 						fail = true;
 					}
-				} else if (result instanceof CounterExampleResult<?, ?>) {
-					cex.add((CounterExampleResult<?, ?>) result);
+				} else if (result instanceof CounterExampleResult<?, ?, ?>) {
+					cex.add((CounterExampleResult<?, ?, ?>) result);
 				}
 			}
 		}
@@ -94,12 +94,13 @@ public class BoogieBacktranslationTestResultDecider extends TestResultDecider {
 					desiredCounterExample = desiredCounterExample.trim();
 					actualCounterExample = actualCounterExample.trim();
 
-					// compare linewise					
+					// compare linewise
 					String platformLineSeparator = System.getProperty("line.separator");
 					String[] desiredLines = desiredCounterExample.split(platformLineSeparator);
 					String[] actualLines = actualCounterExample.split(platformLineSeparator);
-					
-//					Util.writeFile(desiredCounterExampleFile.getAbsolutePath()+"bla", actualLines);
+
+					// Util.writeFile(desiredCounterExampleFile.getAbsolutePath()+"bla",
+					// actualLines);
 
 					if (desiredLines.length != actualLines.length) {
 						fail = true;

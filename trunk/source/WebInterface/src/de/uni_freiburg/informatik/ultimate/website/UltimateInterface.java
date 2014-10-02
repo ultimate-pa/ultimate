@@ -376,7 +376,7 @@ public class UltimateInterface extends HttpServlet implements IController {
 				} else if (r instanceof TerminationArgumentResult) {
 					type = "invariant";
 					packagedResult.logLvl = "info";
-				} else if (r instanceof NonterminatingLassoResult<?,?>) {
+				} else if (r instanceof NonterminatingLassoResult<?,?,?>) {
 					type = "invariant";
 					packagedResult.logLvl = "info";
 				} else if (r instanceof AllSpecificationsHoldResult) {

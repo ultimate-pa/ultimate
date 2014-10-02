@@ -218,7 +218,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 			IEditorPart editorPart) {
 		if (res instanceof CounterExampleResult
 				&& input instanceof IFileEditorInput) {
-			for (ILocation loc : ((CounterExampleResult<?,?>) res).getFailurePath()) {
+			for (ILocation loc : ((CounterExampleResult<?,?,?>) res).getFailurePath()) {
 				if (loc instanceof CACSLLocation) {
 					try {
 						IRegion lineInfo = getLineInformation(editorPart,

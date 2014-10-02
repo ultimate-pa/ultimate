@@ -15,7 +15,8 @@ import java.util.Set;
  * 
  * TODO: how should an interface for infinite traces look?
  * 
- * @author Matthias Heizmann
+ * @author heizmann@informatik.uni-freiburg.de
+ * @author dietsch@informatik.uni-freiburg.de
  * 
  * @param <TE>
  *            Type of the elements whose sequence are the trace.
@@ -34,7 +35,7 @@ public interface IProgramExecution<TE, E> {
 	/**
 	 * Returns the trace element at position i of this program execution.
 	 */
-	public TE getTraceElement(int i);
+	public AtomicTraceElement<TE> getTraceElement(int i);
 
 	/**
 	 * Returns the partial program state at position i of this program
@@ -62,7 +63,8 @@ public interface IProgramExecution<TE, E> {
 	 * Variables and values are expressions of type E. We use a map to assign to
 	 * each variable a set of possible values.
 	 * 
-	 * @author Matthias Heizmann
+	 * @author heizmann@informatik.uni-freiburg.de
+	 * @author dietsch@informatik.uni-freiburg.de
 	 */
 	public class ProgramState<E> {
 		private final Map<E, Collection<E>> mVariable2Values;
@@ -91,5 +93,65 @@ public interface IProgramExecution<TE, E> {
 			});
 			return toSort.toString();
 		}
+	}
+
+	/**
+	 * An atomic trace element in the sense of a debugger trace of a program. It
+	 * consists of an {@link AtomicTraceElement#getTraceElement() trace element}
+	 * , which is probably a statement of some program, and the currently
+	 * evaluated {@link AtomicTraceElement#getStep() part of this statement}.
+	 * 
+	 * This class is used to display an error trace for the user.
+	 * 
+	 * @author dietsch@informatik.uni-freiburg.de
+	 * 
+	 * @param <TE>
+	 *            The type of the trace element and the step.
+	 */
+	public class AtomicTraceElement<TE> {
+		private final TE mElement;
+		private final TE mStep;
+
+		/**
+		 * Creates an instance where the trace element is evaluated atomically
+		 * (i.e. {@link #getTraceElement()} == {@link #getStep()}).
+		 */
+		public AtomicTraceElement(TE element) {
+			this(element, element);
+		}
+
+		/**
+		 * Creates an instance where the trace element is not necessarily
+		 * evaluated atomically (i.e. {@link #getTraceElement()} !=
+		 * {@link #getStep()} is allowed)
+		 * 
+		 * @param element
+		 * @param step
+		 */
+		public AtomicTraceElement(TE element, TE step) {
+			mElement = element;
+			mStep = step;
+		}
+
+		/**
+		 * @return The statement which is currently executed. Is never null.
+		 */
+		public TE getTraceElement() {
+			return mElement;
+		}
+
+		/**
+		 * @return An expression or statement which is evaluated atomically as
+		 *         part of the evaluation of {@link #getTraceElement()} or a
+		 *         statement that is equal to {@link #getTraceElement()} when
+		 *         {@link #getTraceElement()} itself is evaluated atomically.
+		 * 
+		 *         This is always a reference to some subtree of
+		 *         {@link #getTraceElement()}.
+		 */
+		public TE getStep() {
+			return mStep;
+		}
+
 	}
 }

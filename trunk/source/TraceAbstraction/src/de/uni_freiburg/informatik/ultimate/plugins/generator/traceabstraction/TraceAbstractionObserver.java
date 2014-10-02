@@ -251,7 +251,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			reportUnproveableResult(pe);
 			return;
 		}
-		reportResult(new CounterExampleResult<RcfgElement, Expression>(getErrorPP(pe), Activator.s_PLUGIN_NAME,
+		reportResult(new CounterExampleResult<RcfgElement,CodeBlock, Expression>(getErrorPP(pe), Activator.s_PLUGIN_NAME,
 				mServices.getBacktranslationService(), pe));
 	}
 
@@ -271,7 +271,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	private void reportUnproveableResult(RcfgProgramExecution pe) {
 		ProgramPoint errorPP = getErrorPP(pe);
-		UnprovableResult<RcfgElement, RcfgElement, Expression> uknRes = new UnprovableResult<RcfgElement, RcfgElement, Expression>(
+		UnprovableResult<RcfgElement, CodeBlock, Expression> uknRes = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
 				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe);
 		reportResult(uknRes);
 	}
@@ -341,7 +341,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	public ProgramPoint getErrorPP(RcfgProgramExecution rcfgProgramExecution) {
 		int lastPosition = rcfgProgramExecution.getLength() - 1;
-		CodeBlock last = rcfgProgramExecution.getTraceElement(lastPosition);
+		CodeBlock last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
 		ProgramPoint errorPP = (ProgramPoint) last.getTarget();
 		return errorPP;
 	}

@@ -12,12 +12,11 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 
-public class RcfgProgramExecution implements IProgramExecution<RcfgElement, Expression> {
+public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expression> {
 
-	private final List<CodeBlock> m_Trace;
+	private final List<AtomicTraceElement<CodeBlock>> m_Trace;
 	private final Map<Integer, ProgramState<Expression>> m_PartialProgramStateMapping;
 	private final Map<TermVariable, Boolean>[] m_BranchEncoders;
 	private final boolean m_Overapproximation;
@@ -25,11 +24,19 @@ public class RcfgProgramExecution implements IProgramExecution<RcfgElement, Expr
 	public RcfgProgramExecution(List<CodeBlock> trace,
 			Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
 			Map<TermVariable, Boolean>[] branchEncoders) {
-		super();
 		assert trace != null;
 		assert partialProgramStateMapping != null;
 		assert branchEncoders != null;
-		m_Trace = trace;
+
+		// a list of boogieastnodes is a trace that consists of atomic
+		// statements.
+		ArrayList<AtomicTraceElement<CodeBlock>> atomictrace = new ArrayList<>();
+		for (CodeBlock te : trace) {
+			atomictrace.add(new AtomicTraceElement<CodeBlock>(te));
+		}
+
+		m_Trace = atomictrace;
+
 		m_PartialProgramStateMapping = partialProgramStateMapping;
 		m_BranchEncoders = branchEncoders;
 		m_Overapproximation = containsOverapproximationFlag(trace);
@@ -52,7 +59,7 @@ public class RcfgProgramExecution implements IProgramExecution<RcfgElement, Expr
 	}
 
 	@Override
-	public CodeBlock getTraceElement(int i) {
+	public AtomicTraceElement<CodeBlock> getTraceElement(int i) {
 		return m_Trace.get(i);
 	}
 
@@ -138,8 +145,8 @@ public class RcfgProgramExecution implements IProgramExecution<RcfgElement, Expr
 	@Deprecated
 	public List<ILocation> getLocationList() {
 		List<ILocation> result = new ArrayList<ILocation>();
-		for (CodeBlock cb : m_Trace) {
-			result.add(cb.getPayload().getLocation());
+		for (AtomicTraceElement<CodeBlock> cb : m_Trace) {
+			result.add(cb.getTraceElement().getPayload().getLocation());
 		}
 		return result;
 	}
@@ -150,8 +157,8 @@ public class RcfgProgramExecution implements IProgramExecution<RcfgElement, Expr
 	}
 
 	@Override
-	public Class<RcfgElement> getTraceElementClass() {
-		return RcfgElement.class;
+	public Class<CodeBlock> getTraceElementClass() {
+		return CodeBlock.class;
 	}
 
 }

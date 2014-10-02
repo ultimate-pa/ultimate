@@ -13,7 +13,9 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IValuation;
@@ -21,12 +23,25 @@ import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 
 public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, Expression> {
 
-	private final List<BoogieASTNode> m_Trace;
+	private final List<AtomicTraceElement<BoogieASTNode>> m_Trace;
 	private final Map<Integer, ProgramState<Expression>> m_PartialProgramStateMapping;
 
 	public BoogieProgramExecution(List<BoogieASTNode> trace,
 			Map<Integer, ProgramState<Expression>> partialProgramStateMapping) {
-		super();
+
+		// a list of boogieastnodes is a trace that consists of atomic
+		// statements.
+		ArrayList<AtomicTraceElement<BoogieASTNode>> atomictrace = new ArrayList<>();
+		for (BoogieASTNode te : trace) {
+			atomictrace.add(new AtomicTraceElement<BoogieASTNode>(te));
+		}
+
+		m_Trace = atomictrace;
+		m_PartialProgramStateMapping = partialProgramStateMapping;
+	}
+
+	public BoogieProgramExecution(Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
+			List<AtomicTraceElement<BoogieASTNode>> trace) {
 		m_Trace = trace;
 		m_PartialProgramStateMapping = partialProgramStateMapping;
 	}
@@ -37,7 +52,7 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	}
 
 	@Override
-	public BoogieASTNode getTraceElement(int i) {
+	public AtomicTraceElement<BoogieASTNode> getTraceElement(int i) {
 		return m_Trace.get(i);
 	}
 
@@ -91,13 +106,35 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 			sb.append(lineSeparator);
 		}
 		for (int i = 0; i < m_Trace.size(); i++) {
+			AtomicTraceElement<BoogieASTNode> currentATE = m_Trace.get(i);
+			BoogieASTNode current = currentATE.getTraceElement();
+			
 			sb.append("statement");
 			sb.append(i);
 			sb.append(": ");
-			if (m_Trace.get(i) instanceof Statement) {
-				sb.append(BoogiePrettyPrinter.print((Statement) m_Trace.get(i)));
+			if (current instanceof WhileStatement) {
+				// its a while statement: we should look at the next statement
+				// to see if this is inside the loop body or outside
+				int nxt = i + 1;
+				if (nxt < m_Trace.size()) {
+					WhileStatement whileStmt = (WhileStatement) current;
+					BoogieASTNode nxtStmt = m_Trace.get(nxt).getTraceElement();
+					for (Statement stmt : whileStmt.getBody()) {
+
+					}
+
+					sb.append(BoogiePrettyPrinter.print(((WhileStatement) current).getCondition()));
+
+				} else {
+					// we are at the end, strangely ...
+					sb.append(BoogiePrettyPrinter.print(((WhileStatement) current).getCondition()));
+				}
+			} else if (current instanceof IfStatement) {
+				sb.append(BoogiePrettyPrinter.print(((IfStatement) current).getCondition()));
+			} else if (current instanceof Statement) {
+				sb.append(BoogiePrettyPrinter.print((Statement) current));
 			} else {
-				sb.append(m_Trace.get(i));
+				sb.append(current);
 			}
 			sb.append(lineSeparator);
 			valuation = ppstoString(getProgramState(i));

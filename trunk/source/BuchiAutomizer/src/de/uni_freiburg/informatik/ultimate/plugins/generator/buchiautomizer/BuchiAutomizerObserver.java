@@ -62,9 +62,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		if (!(root instanceof RootNode)) {
 			return false;
 		}
-		//TODO: Now you can get instances of your library classes for the current toolchain like this: 
-		//NWA is nevertheless very broken, as its static initialization prevents parallelism 
-		//Surprisingly, this call lazily initializes the static fields of NWA Lib and, like magic, the toolchain works ...
+		// TODO: Now you can get instances of your library classes for the
+		// current toolchain like this:
+		// NWA is nevertheless very broken, as its static initialization
+		// prevents parallelism
+		// Surprisingly, this call lazily initializes the static fields of NWA
+		// Lib and, like magic, the toolchain works ...
 		mServices.getServiceInstance(ExampleNWAFactory.class);
 
 		rootAnnot = ((RootNode) root).getRootAnnot();
@@ -105,10 +108,11 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		// + ": " + benchTiming.getLongDescription());
 
 		if (result == Result.TERMINATING) {
-//			String shortDescr = "Termination proven";
+			// String shortDescr = "Termination proven";
 			String longDescr = "Buchi Automizer proved that your program is terminating";
-			IResult reportRes = new TerminationAnalysisResult(Activator.s_PLUGIN_ID, TERMINATION.TERMINATING, longDescr); 
-					//new GenericResult(Activator.s_PLUGIN_ID, shortDescr, longDescr, Severity.INFO);
+			IResult reportRes = new TerminationAnalysisResult(Activator.s_PLUGIN_ID, TERMINATION.TERMINATING, longDescr);
+			// new GenericResult(Activator.s_PLUGIN_ID, shortDescr, longDescr,
+			// Severity.INFO);
 			reportResult(reportRes);
 			// s_Logger.info(shortDescr + ": " + longDescr);
 		} else if (result == Result.UNKNOWN) {
@@ -124,23 +128,27 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			longDescr.append(System.getProperty("line.separator"));
 			longDescr.append("Loop: ");
 			longDescr.append(counterexample.getLoop().getWord());
-			IResult reportRes = new TerminationAnalysisResult(Activator.s_PLUGIN_ID, TERMINATION.UNKNOWN, longDescr.toString());
-					//new GenericResultAtElement<RcfgElement>(honda, Activator.s_PLUGIN_ID, mServices
-					//.getBacktranslationService(), shortDescr, longDescr.toString(),
-					//Severity.ERROR);
+			IResult reportRes = new TerminationAnalysisResult(Activator.s_PLUGIN_ID, TERMINATION.UNKNOWN,
+					longDescr.toString());
+			// new GenericResultAtElement<RcfgElement>(honda,
+			// Activator.s_PLUGIN_ID, mServices
+			// .getBacktranslationService(), shortDescr, longDescr.toString(),
+			// Severity.ERROR);
 			reportResult(reportRes);
 			// s_Logger.info(shortDescr + ": " + longDescr);
 		} else if (result == Result.TIMEOUT) {
 			ProgramPoint position = rootAnnot.getEntryNodes().values().iterator().next();
 			String longDescr = "Timeout while trying to prove termination";
-			IResult reportRes = new TimeoutResultAtElement<RcfgElement>(position, Activator.s_PLUGIN_ID, mServices
-					.getBacktranslationService(), longDescr);
+			IResult reportRes = new TimeoutResultAtElement<RcfgElement>(position, Activator.s_PLUGIN_ID,
+					mServices.getBacktranslationService(), longDescr);
 			reportResult(reportRes);
 		} else if (result == Result.NONTERMINATING) {
-//			String shortDescr = "Nontermination possible";
+			// String shortDescr = "Nontermination possible";
 			String longDescr = "Buchi Automizer proved that your program is nonterminating for some inputs";
-			IResult reportRes =  new TerminationAnalysisResult(Activator.s_PLUGIN_ID, TERMINATION.NONTERMINATING, longDescr);
-					// new GenericResult(Activator.s_PLUGIN_ID, shortDescr, longDescr, Severity.ERROR);
+			IResult reportRes = new TerminationAnalysisResult(Activator.s_PLUGIN_ID, TERMINATION.NONTERMINATING,
+					longDescr);
+			// new GenericResult(Activator.s_PLUGIN_ID, shortDescr, longDescr,
+			// Severity.ERROR);
 			reportResult(reportRes);
 			// s_Logger.info(shortDescr + ": " + longDescr);
 			NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
@@ -155,9 +163,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					partialProgramStateMapping, new Map[counterexample.getStem().getLength()]);
 			RcfgProgramExecution loopPE = new RcfgProgramExecution(counterexample.getLoop().getWord().lettersAsList(),
 					partialProgramStateMapping, new Map[counterexample.getLoop().getLength()]);
-			IResult ntreportRes = new NonterminatingLassoResult<RcfgElement,Expression>(honda, Activator.s_PLUGIN_ID, mServices
-					.getBacktranslationService(), stemPE, loopPE, honda.getPayload()
-					.getLocation());
+			IResult ntreportRes = new NonterminatingLassoResult<RcfgElement, CodeBlock, Expression>(honda,
+					Activator.s_PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE, honda.getPayload()
+							.getLocation());
 			reportResult(ntreportRes);
 			// s_Logger.info(ntreportRes.getShortDescription());
 			// s_Logger.info(ntreportRes.getLongDescription());

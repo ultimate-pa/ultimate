@@ -6,6 +6,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement;
 
 /**
  * Result to store that the specification given at some location does not always
@@ -18,15 +19,15 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Oleksii Saukh
  * @date 02.01.2012
  */
-public class CounterExampleResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM> implements
+public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E> extends AbstractResultAtElement<ELEM> implements
 		IResultWithTrace {
 	private final Check mCheckedSpecification;
 	private String mProgramExecutionAsString;
 	private final List<ILocation> mFailurePath;
-	private final IProgramExecution<ELEM, E> mProgramExecution;
+	private final IProgramExecution<TE, E> mProgramExecution;
 
 	public CounterExampleResult(ELEM position, String plugin, IBacktranslationService translatorSequence,
-			IProgramExecution<ELEM, E> pe) {
+			IProgramExecution<TE, E> pe) {
 		super(position, plugin, translatorSequence);
 		mCheckedSpecification = ResultUtil.getCheckedSpecification(position);
 		mProgramExecution = pe;
@@ -60,7 +61,7 @@ public class CounterExampleResult<ELEM extends IElement, E> extends AbstractResu
 		return mFailurePath;
 	}
 
-	public IProgramExecution<ELEM, E> getProgramExecution() {
+	public IProgramExecution<TE, E> getProgramExecution() {
 		return mProgramExecution;
 	}
 
@@ -74,8 +75,8 @@ public class CounterExampleResult<ELEM extends IElement, E> extends AbstractResu
 	private static <TE extends IElement, E> List<ILocation> getLocationSequence(IProgramExecution<TE, E> pe) {
 		List<ILocation> result = new ArrayList<ILocation>();
 		for (int i = 0; i < pe.getLength(); i++) {
-			TE te = pe.getTraceElement(i);
-			result.add(te.getPayload().getLocation());
+			AtomicTraceElement<TE> te = pe.getTraceElement(i);
+			result.add(te.getTraceElement().getPayload().getLocation());
 		}
 		return result;
 	}

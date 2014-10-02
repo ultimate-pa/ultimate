@@ -7,14 +7,14 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
  * Superclass of all Results that refer to a lasso shaped infinite execution. 
  * @author Matthias Heizmann
  */
-public abstract class AbstractResultWithLasso<ELEM extends IElement, EXP extends IElement> 
+public abstract class AbstractResultWithLasso<ELEM extends IElement, TE extends IElement, EXP extends IElement> 
 										extends AbstractResultAtElement<ELEM> {
-	protected final IProgramExecution<ELEM, EXP> m_Stem;
-	protected final IProgramExecution<ELEM, EXP> m_Loop;
+	protected final IProgramExecution<TE, EXP> m_Stem;
+	protected final IProgramExecution<TE, EXP> m_Loop;
 	
 	public AbstractResultWithLasso(String plugin, ELEM position,
 			IBacktranslationService translatorSequence,
-			IProgramExecution<ELEM, EXP> stem, IProgramExecution<ELEM, EXP> loop) {
+			IProgramExecution<TE, EXP> stem, IProgramExecution<TE, EXP> loop) {
 		super(position, plugin, translatorSequence);
 		m_Stem = stem;
 		m_Loop = loop;

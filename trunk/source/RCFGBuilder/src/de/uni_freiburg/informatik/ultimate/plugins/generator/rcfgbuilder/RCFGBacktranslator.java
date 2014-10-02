@@ -22,12 +22,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 
-public class RCFGBacktranslator extends DefaultTranslator<RcfgElement, BoogieASTNode, Expression, Expression> {
+public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNode, Expression, Expression> {
 
 	public RCFGBacktranslator() {
-		super(RcfgElement.class, BoogieASTNode.class, Expression.class, Expression.class);
+		super(CodeBlock.class, BoogieASTNode.class, Expression.class, Expression.class);
 	}
 
 	private Map<Statement, BoogieASTNode> m_CodeBlock2Statement = 
@@ -38,8 +39,8 @@ public class RCFGBacktranslator extends DefaultTranslator<RcfgElement, BoogieAST
 	}
 
 	@Override
-	public List<BoogieASTNode> translateTrace(List<RcfgElement> trace) {
-		List<RcfgElement> cbTrace = trace;
+	public List<BoogieASTNode> translateTrace(List<CodeBlock> trace) {
+		List<CodeBlock> cbTrace = trace;
 		List<BoogieASTNode> result = new ArrayList<BoogieASTNode>();
 		for (RcfgElement elem : cbTrace) {
 			if (elem instanceof CodeBlock) {
@@ -124,7 +125,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RcfgElement, BoogieAST
 
 	@Override
 	public IProgramExecution<BoogieASTNode, Expression> translateProgramExecution(
-			IProgramExecution<RcfgElement, Expression> programExecution) {
+			IProgramExecution<CodeBlock, Expression> programExecution) {
 		if (!(programExecution instanceof RcfgProgramExecution)) {
 			throw new IllegalArgumentException();
 		}
@@ -133,19 +134,18 @@ public class RCFGBacktranslator extends DefaultTranslator<RcfgElement, BoogieAST
 		List<BoogieASTNode> trace = new ArrayList<BoogieASTNode>();
 		Map<Integer, ProgramState<Expression>> programStateMapping = 
 				new HashMap<Integer, ProgramState<Expression>>();
-		BoogieProgramExecution boogieProgramExecution = 
-				new BoogieProgramExecution(trace, programStateMapping);
+
 		if (rcfgProgramExecution.getInitialProgramState() != null) {
 			programStateMapping.put(-1, rcfgProgramExecution.getInitialProgramState());
 		}
 		for (int i = 0; i < rcfgProgramExecution.getLength(); i++) {
-			CodeBlock codeBlock = rcfgProgramExecution.getTraceElement(i);
-			addCodeBlock(codeBlock, trace, rcfgProgramExecution.getBranchEncoders()[i]);
+			AtomicTraceElement<CodeBlock> codeBlock = rcfgProgramExecution.getTraceElement(i);
+			addCodeBlock(codeBlock.getTraceElement(), trace, rcfgProgramExecution.getBranchEncoders()[i]);
 			int posInNewTrace = trace.size() - 1;
 			ProgramState<Expression> programState = rcfgProgramExecution.getProgramState(i);
 			programStateMapping.put(posInNewTrace, programState);
 		}
-		return boogieProgramExecution;
+		return new BoogieProgramExecution(trace, programStateMapping);
 	}
 
 
