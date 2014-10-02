@@ -140,11 +140,11 @@ public class TransFormulaLRWithArrayInformation {
 				Term[] conjuncts = SmtUtils.getConjuncts(disjuncts[i]);
 				ArrayEqualityExtractor aee = new ArrayEqualityExtractor(conjuncts);
 				m_ArrayEqualities.add(aee.getArrayEqualities());
-				SingleUpdateNormalFormTransformer sunnft = new SingleUpdateNormalFormTransformer(Util.and(m_Script, aee
+				SingleUpdateNormalFormTransformer sunft = new SingleUpdateNormalFormTransformer(Util.and(m_Script, aee
 						.getRemainingTerms().toArray(new Term[0])), m_Script, m_ReplacementVarFactory);
-				m_ArrayUpdates.add(sunnft.getArrayUpdates());
-				sunnf[i] = sunnft.getRemainderTerm();
-				m_ArrayReads.add(extractArrayReads(sunnft.getArrayUpdates(), sunnft.getRemainderTerm()));
+				m_ArrayUpdates.add(sunft.getArrayUpdates());
+				sunnf[i] = sunft.getRemainderTerm();
+				m_ArrayReads.add(extractArrayReads(sunft.getArrayUpdates(), sunft.getRemainderTerm()));
 				m_ArrayGenealogy[i] = new ArrayGenealogy(m_TransFormulaLR, m_ArrayEqualities.get(i), m_ArrayUpdates.get(i), m_ArrayReads.get(i));
 			}
 
