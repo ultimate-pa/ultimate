@@ -91,18 +91,15 @@ public class BoogieBacktranslationTestResultDecider extends TestResultDecider {
 				try {
 					String desiredCounterExample = Util.readFile(desiredCounterExampleFile);
 
-					// as the tests may be executed on different platforms and
-					// we only know the linebreaks in the CEX are the ones used
-					// on this platform, we convert linebreaks of the test spec
-					// to the platform linebreaks
-					String platformLineSeparator = System.getProperty("line.separator");
-					desiredCounterExample = desiredCounterExample.replace("\r\n", platformLineSeparator)
-							.replace("\n", platformLineSeparator).trim();
+					desiredCounterExample = desiredCounterExample.trim();
 					actualCounterExample = actualCounterExample.trim();
 
-					// compare linewise
+					// compare linewise					
+					String platformLineSeparator = System.getProperty("line.separator");
 					String[] desiredLines = desiredCounterExample.split(platformLineSeparator);
 					String[] actualLines = actualCounterExample.split(platformLineSeparator);
+					
+//					Util.writeFile(desiredCounterExampleFile.getAbsolutePath()+"bla", actualLines);
 
 					if (desiredLines.length != actualLines.length) {
 						fail = true;

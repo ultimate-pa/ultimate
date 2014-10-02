@@ -1,9 +1,17 @@
 package de.uni_freiburg.informatik.ultimatetest.util;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -27,24 +35,43 @@ import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 
 public class Util {
 
+	private static String sPlatformLineSeparator = System.getProperty("line.separator");
+
 	public static String readFile(File file) throws IOException {
 		return readFile(file.getAbsolutePath());
 	}
 
 	public static String readFile(String filename) throws IOException {
-		BufferedReader br = new BufferedReader(new FileReader(filename));
+		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(filename)), "UTF8"));
 		try {
+
 			StringBuilder sb = new StringBuilder();
 			String line = br.readLine();
-
 			while (line != null) {
 				sb.append(line);
-				sb.append("\n");
+				sb.append(sPlatformLineSeparator);
 				line = br.readLine();
 			}
 			return sb.toString();
 		} finally {
 			br.close();
+		}
+	}
+
+	public static void writeFile(String filename, String[] content) throws IOException {
+
+		File outputFile = new File(filename);
+		outputFile.createNewFile();
+		
+		Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
+		try {
+			for (String s : content) {
+				out.write(s);
+				out.write(sPlatformLineSeparator);
+			}
+
+		} finally {
+			out.close();
 		}
 	}
 
