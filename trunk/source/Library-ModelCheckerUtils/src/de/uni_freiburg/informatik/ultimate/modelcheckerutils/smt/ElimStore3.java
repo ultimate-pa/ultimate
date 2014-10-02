@@ -120,7 +120,6 @@ public class ElimStore3 {
 							throw new UnsupportedOperationException("unsupported: write into several arrays");
 						}
 						writeInto = au;
-						assert quantifier == QuantifiedFormula.EXISTS : "neue Tasche?";
 						if (au.getNewArray().equals(eliminatee)) {
 							throw new UnsupportedOperationException("unsupported: self update");
 						}
@@ -129,7 +128,6 @@ public class ElimStore3 {
 							throw new UnsupportedOperationException("unsupported: written from several arrayas");
 						}
 						writtenFrom = au;
-						others.add(conjunct);
 					} else {
 						others.add(conjunct);
 					}
@@ -138,7 +136,7 @@ public class ElimStore3 {
 				}
 			}
 			if (writtenFrom != null) {
-				throw new UnsupportedOperationException("not yet implemented: written from");
+//				throw new UnsupportedOperationException("not yet implemented: written from");
 			}
 
 			if (quantifier == QuantifiedFormula.EXISTS) {
@@ -150,7 +148,7 @@ public class ElimStore3 {
 			
 
 
-			if (store != null && writeInto == null) {
+			if (store != null && (writeInto == null && writtenFrom == null)) {
 				TermVariable auxArray = eliminatee.getTheory().createFreshTermVariable("arrayElim", eliminatee.getSort());
 				Map<Term, Term> auxMap = Collections.singletonMap((Term) store.getStoreTerm(), (Term) auxArray);
 				SafeSubstitution subst = new SafeSubstitution(mScript, auxMap);
@@ -185,18 +183,30 @@ public class ElimStore3 {
 		ArrayList<Term> additionalConjuncs = new ArrayList<Term>();
 		Term intermediateResult = subst.transform(othersT);
 		if (write) {
-			
-			additionalConjuncs.addAll(disjointIndexImpliesValueEquality(quantifier, writeInto.getNewArray(), writeInto.getIndex(), iav, subst));
+			TermVariable a_heir;
+			ArrayIndex idx_write;
+			Term data;
+			if (writeInto != null) {
+				a_heir = writeInto.getNewArray();
+				idx_write = writeInto.getIndex();
+				data = writeInto.getValue();
+			} else {
+				assert writtenFrom != null;
+				a_heir = writtenFrom.getOldArray();
+				idx_write = writtenFrom.getIndex();
+				data = writtenFrom.getValue();
+			}
+			additionalConjuncs.addAll(disjointIndexImpliesValueEquality(quantifier, a_heir, idx_write, iav, subst));
 			if (writeInto != null) {
 				assert writeInto.getOldArray() == eliminatee : "array not eliminatee";
 				// if store is of the form
 				// a_heir == store(a_elim, idx_write, data)
 				// construct term a_heir[idx_write] == data
 				Term writtenCellHasNewValue;
-				ArrayIndex idx_writeRenamed = new ArrayIndex(SmtUtils.substitutionElementwise(writeInto.getIndex(), subst));
-				Term dataRenamed = subst.transform(writeInto.getValue());
+				ArrayIndex idx_writeRenamed = new ArrayIndex(SmtUtils.substitutionElementwise(idx_write, subst));
+				Term dataRenamed = subst.transform(data);
 				writtenCellHasNewValue = mScript.term("=",
-						SmtUtils.multiDimensionalSelect(mScript, writeInto.getNewArray(), idx_writeRenamed), dataRenamed);
+						SmtUtils.multiDimensionalSelect(mScript, a_heir, idx_writeRenamed), dataRenamed);
 				additionalConjuncs.add(writtenCellHasNewValue);
 			}
 			
@@ -223,7 +233,7 @@ public class ElimStore3 {
 			
 			
 			if (writtenFrom != null) {
-				assert writeInto.getNewArray() == eliminatee : "array not eliminatee";
+				assert writtenFrom.getNewArray() == eliminatee : "array not eliminatee";
 				// in the writtenFrom case there is an additional index-value
 				// connection on eliminatee, namely
 				// that the stored data is the value at index idx_write
