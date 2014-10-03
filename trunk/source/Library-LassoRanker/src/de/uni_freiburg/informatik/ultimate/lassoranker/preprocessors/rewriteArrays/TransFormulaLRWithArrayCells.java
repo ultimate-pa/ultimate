@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -188,10 +189,39 @@ public class TransFormulaLRWithArrayCells {
 			assert SmtUtils.isArrayFree(result) : "Result contains still arrays!";
 			result = SmtUtils.simplify(m_Script, result, mLogger);
 			
+			removeArrayInOutVars();
+			
 			m_Result.setFormula(result);
 			m_Result.addAuxVars(auxVars);
 	}
 	
+	private void removeArrayInOutVars() {
+		{
+			List<RankVar> toRemove = new ArrayList<RankVar>();
+			toRemove.addAll(filterArrays(m_Result.getInVars().keySet()));
+			for (RankVar rv : toRemove) {
+				m_Result.removeInVar(rv);
+			}
+		}
+		{
+			List<RankVar> toRemove = new ArrayList<RankVar>();
+			toRemove.addAll(filterArrays(m_Result.getOutVars().keySet()));
+			for (RankVar rv : toRemove) {
+				m_Result.removeOutVar(rv);
+			}
+		}
+	}
+
+	private Collection<RankVar> filterArrays(Set<RankVar> keySet) {
+		List<RankVar> result = new ArrayList<RankVar>();
+		for (RankVar rv : keySet) {
+			if (rv.getDefinition().getSort().isArraySort()) {
+				result.add(rv);
+			}
+		}
+		return result;
+	}
+
 	public ArrayIndex getOrConstructIndexRepresentative(ArrayIndex indexInstance) {
 		ArrayIndex indexRepresentative = m_IndexInstance2IndexRepresentative.get(indexInstance);
 		if (indexRepresentative == null) {
