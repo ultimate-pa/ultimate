@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
