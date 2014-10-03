@@ -22,7 +22,7 @@ public class AbstractInterpretationTestSummary extends TestSummary {
 	}
 	
 	@Override
-	public String getSummaryTypeDescription() {
+	public String getDescriptiveLogName() {
 		return "WermutSummary";
 	}
 

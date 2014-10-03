@@ -30,12 +30,12 @@ public class TestSummaryWithBenchmarkResults implements ITestSummary {
 	}
 	
 	@Override
-	public Class<? extends UltimateTestSuite> getUltimateTestSuite() {
+	public Class<? extends UltimateTestSuite> getUltimateTestSuiteClass() {
 		return m_UltimateTestSuite;
 	}
 	
 	@Override
-	public String getSummaryTypeDescription() {
+	public String getDescriptiveLogName() {
 		return this.getClass().getSimpleName();
 	}
 	
@@ -60,8 +60,8 @@ public class TestSummaryWithBenchmarkResults implements ITestSummary {
 	}
 
 	@Override
-	public void addResult(TestResult threeValuedResult, String category, 
-			UltimateRunDefinition ultimateRunDefintion,
+	public void addResult(UltimateRunDefinition ultimateRunDefintion, TestResult threeValuedResult, 
+			String category,
 			String message, IResultService resultService) {
 		Entry sum = new Entry(threeValuedResult, message, ultimateRunDefintion, 
 				resultService);

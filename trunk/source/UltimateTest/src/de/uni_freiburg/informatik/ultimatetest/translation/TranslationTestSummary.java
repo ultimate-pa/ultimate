@@ -10,7 +10,7 @@ public class TranslationTestSummary extends TestSummary {
 	}
 	
 	@Override
-	public String getSummaryTypeDescription() {
+	public String getDescriptiveLogName() {
 		return this.getClass().getSimpleName();
 	}
 	

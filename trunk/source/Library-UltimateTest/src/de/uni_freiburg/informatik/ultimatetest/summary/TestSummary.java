@@ -24,7 +24,7 @@ public abstract class TestSummary implements ITestSummary {
 	}
 
 	@Override
-	public void addResult(TestResult threeValuedResult, String category, UltimateRunDefinition ultimateRunDefinition, String message, IResultService resultService) {
+	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult, String category, String message, IResultService resultService) {
 		switch (threeValuedResult) {
 		case FAIL:
 			add(getSummary(mFailure, category), ultimateRunDefinition, message);
@@ -43,7 +43,7 @@ public abstract class TestSummary implements ITestSummary {
 	
 
 	@Override
-	public Class<? extends UltimateTestSuite> getUltimateTestSuite() {
+	public Class<? extends UltimateTestSuite> getUltimateTestSuiteClass() {
 		return m_UltimateTestSuite;
 	}
 

@@ -26,12 +26,12 @@ public class AutomataScriptTestSummary implements ITestSummary {
 	}
 	
 	@Override
-	public Class<? extends UltimateTestSuite> getUltimateTestSuite() {
+	public Class<? extends UltimateTestSuite> getUltimateTestSuiteClass() {
 		return m_UltimateTestSuite;
 	}
 	
 	@Override
-	public String getSummaryTypeDescription() {
+	public String getDescriptiveLogName() {
 		return this.getClass().getSimpleName();
 	}
 	
@@ -61,8 +61,8 @@ public class AutomataScriptTestSummary implements ITestSummary {
 	}
 
 	@Override
-	public void addResult(TestResult threeValuedResult, String category,
-			UltimateRunDefinition ultimateRunDefinition, String message, IResultService resultService) {
+	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult,
+			String category, String message, IResultService resultService) {
 		Collection<Benchmark> benchmarkSingleton = Util.filterBenchmarks(resultService.getResults(), Benchmark.class);
 		if (benchmarkSingleton.size() != 1) {
 			throw new AssertionError("expected single benchmark result");

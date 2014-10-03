@@ -34,14 +34,15 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 			Collection<File> inputFiles = getInputFiles(runConfiguration.ToolchainFile.getParentFile());
 
 			for (File inputFile : inputFiles) {
-				UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, runConfiguration.SettingsFile, runConfiguration.ToolchainFile);
+				UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, runConfiguration.SettingsFile,
+						runConfiguration.ToolchainFile);
 				UltimateStarter starter = new UltimateStarter(urd, mTimeout, null, null);
-				rtr.add(new UltimateTestCase(starter, getTestResultDecider(urd), null, String.format(
-						"%s+%s: %s", runConfiguration.ToolchainFile.getName(), runConfiguration.SettingsFile.getName(),
-						inputFile.getAbsolutePath()), urd));
+				rtr.add(new UltimateTestCase(String.format("%s+%s: %s", runConfiguration.ToolchainFile.getName(),
+						runConfiguration.SettingsFile.getName(), inputFile.getAbsolutePath()),
+						getTestResultDecider(urd), starter, urd, null, null));
 			}
 		}
-//		return Util.firstN(rtr, 3);
+		// return Util.firstN(rtr, 3);
 		return rtr;
 	}
 

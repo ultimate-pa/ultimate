@@ -4,13 +4,12 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -31,12 +30,17 @@ import de.uni_freiburg.informatik.ultimate.util.Utils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.SafetyCheckerOverallResult;
 import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.TerminationAnalysisOverallResult;
+import de.uni_freiburg.informatik.ultimatetest.summary.ITestLogfile;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 
 public class Util {
 
 	private static String sPlatformLineSeparator = System.getProperty("line.separator");
 
+	public static String getPlatformLineSeparator(){
+		return sPlatformLineSeparator;
+	}
+	
 	public static String readFile(File file) throws IOException {
 		return readFile(file.getAbsolutePath());
 	}
@@ -62,7 +66,7 @@ public class Util {
 
 		File outputFile = new File(filename);
 		outputFile.createNewFile();
-		
+
 		Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
 		try {
 			for (String s : content) {
@@ -159,12 +163,12 @@ public class Util {
 	}
 
 	/**
-	 * Get absolute path for the file in which an ITestSummary will be written.
+	 * Get absolute path for the file in which an ITestLogfile will be written.
 	 * This includes also the filename.
 	 */
-	public static String generateSummaryLogAbsolutPath(ITestSummary testSummary) {
-		String absolutPath = Util.getPathFromSurefire(generateSummaryLogFilename(testSummary), testSummary
-				.getUltimateTestSuite().getCanonicalName());
+	public static String generateAbsolutePathForLogfile(ITestLogfile testSummary) {
+		String absolutPath = Util.getPathFromSurefire(generateLogfilename(testSummary), testSummary
+				.getUltimateTestSuiteClass().getCanonicalName());
 		return absolutPath;
 	}
 
@@ -172,16 +176,17 @@ public class Util {
 	 * Get filename for the file in which an ITestSummary will be written.
 	 * Returns only the name of the file without directories.
 	 */
-	private static String generateSummaryLogFilename(ITestSummary testSummary) {
-		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS");
-		String filename = testSummary.getSummaryTypeDescription() + " "
-				+ dateFormat.format(Calendar.getInstance().getTime()) + testSummary.getFilenameExtension();
+	private static String generateLogfilename(ITestLogfile testSummary) {
+		String filename = testSummary.getDescriptiveLogName() + " " + getCurrentDateTimeAsString()
+				+ testSummary.getFilenameExtension();
 		return filename;
 	}
 
-	public static String generateSummaryLogFilename(String directory, String description) {
-		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS");
+	public static String getCurrentDateTimeAsString() {
+		return new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS").format(Calendar.getInstance().getTime());
+	}
 
+	public static String generateLogfilename(String directory, String description) {
 		if (description == null) {
 			description = "";
 		}
@@ -198,8 +203,7 @@ public class Util {
 		} else {
 			dir = f.getParent() + File.separator;
 		}
-		String name = "UltimateTest Summary " + description + dateFormat.format(Calendar.getInstance().getTime())
-				+ ".log";
+		String name = "UltimateTest Summary " + description + getCurrentDateTimeAsString() + ".log";
 
 		return dir + name;
 	}
@@ -597,4 +601,30 @@ public class Util {
 		sb.replace(sb.length() - separator.length(), sb.length(), "");
 		return sb;
 	}
+
+	public static void writeSummary(ITestSummary testSummary) {
+		File logFile = new File(Util.generateAbsolutePathForLogfile(testSummary));
+
+		if (!logFile.isDirectory()) {
+			logFile.getParentFile().mkdirs();
+		}
+
+		String summaryLog = testSummary.getSummaryLog();
+		if (summaryLog == null || summaryLog.isEmpty()) {
+			return;
+		}
+
+		try {
+			FileWriter fw = new FileWriter(logFile);
+			Logger.getLogger(testSummary.getUltimateTestSuiteClass()).info(
+					"Writing " + testSummary.getDescriptiveLogName() + " for "
+							+ testSummary.getUltimateTestSuiteClass().getCanonicalName() + " to "
+							+ logFile.getAbsolutePath());
+			fw.write(summaryLog);
+			fw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 }

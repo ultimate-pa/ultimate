@@ -38,7 +38,7 @@ public class AbstractInterpretationComparisonTestSummary extends AbstractInterpr
 	}
 	
 	@Override
-	public String getSummaryTypeDescription() {
+	public String getDescriptiveLogName() {
 		return "WermutCompSummary";
 	}
 

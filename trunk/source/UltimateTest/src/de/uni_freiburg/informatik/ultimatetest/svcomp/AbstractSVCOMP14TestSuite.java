@@ -195,8 +195,8 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 						new File(Util.generateLogFilename(singleFile, description)), logPattern);
 			}
 
-			UltimateTestCase testCase = new UltimateTestCase(starter, new SafetyCheckTestResultDecider(urd, false),
-					super.getSummaries(), name, urd);
+			UltimateTestCase testCase = new UltimateTestCase(name, new SafetyCheckTestResultDecider(urd, false),
+					starter, urd, super.getSummaries(), null);
 			rtr.add(testCase);
 
 		}

@@ -11,15 +11,20 @@ import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestRe
  * This interface describes test summaries that can be used to create a summary
  * log file of the results of a whole test suite.
  * 
- * As our test suites have typically a lot of tests, it is more convenient to
+ * As our test suites have typically a lot of tests, it can be convenient to
  * write a summary file to see which test failed why and group the tests
  * according to some criteria. This interface describes classes that can be used
  * to do this.
  * 
- * @author dietsch
+ * Note that summaries are only written <b>after</b> a whole test suite
+ * completed. This means it may take several hours before you can have a look at
+ * the summary. If you want information after each test case, consider
+ * {@link IIncrementalLog}.
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public interface ITestSummary {
+public interface ITestSummary extends ITestLogfile {
 
 	/**
 	 * Produces the actual content of the summary.
@@ -31,48 +36,27 @@ public interface ITestSummary {
 	public String getSummaryLog();
 
 	/**
-	 * Class of the UltimateTestSuite for which this summary was constructed.
-	 */
-	public Class<? extends UltimateTestSuite> getUltimateTestSuite();
-	
-	/**
-	 * Description of this type of summary, e.g., "AutomataScriptSummary", 
-	 * "TraceAbstractionBenchmarks". This String is part of the filename
-	 * to which this summary is written.
-	 * 
-	 */
-	public String getSummaryTypeDescription();
-	
-	/**
-	 * Filename extension of the log file that will be written. E.g., ".log", or
-	 * ".csv"
-	 */
-	public String getFilenameExtension();
-
-	/**
 	 * This method is called after the execution of each
 	 * {@link UltimateTestCase} and reports the result to the
 	 * {@link ITestSummary} instance of the active {@link UltimateTestSuite test
 	 * suite}.
-	 * 
+	 * @param ultimateRunDefinition
+	 *            Input file, settings file and toolchain file.
 	 * @param threeValuedResult
 	 *            The actual result of the test case.
 	 * @param category
 	 *            The category of this test result as specified by
 	 *            {@link ITestResultDecider#getResultCategory()}
-	 * @param ultimateRunDefinition
-	 *            Input file, settings file and toolchain file.
 	 * @param message
 	 *            A message for this specific result and this specific input
 	 *            file as specified by
 	 *            {@link ITestResultDecider#getResultMessage()}
 	 * @param resultService
-	 * 	          All IResults produced during the run of Ultimate.
-	 *            The results are given as a map which maps plugin IDs to a 
-	 *            the list of results produced by that plugin.
-	 *            
+	 *            All IResults produced during the run of Ultimate. The results
+	 *            are given as a map which maps plugin IDs to a the list of
+	 *            results produced by that plugin.
+	 * 
 	 */
-	public void addResult(TestResult threeValuedResult, String category, 
-			UltimateRunDefinition ultimateRunDefinition, String message, 
-			IResultService resultService);
+	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult, String category,
+			String message, IResultService resultService);
 }

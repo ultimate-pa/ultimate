@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
@@ -19,16 +20,21 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	}
 	
 	public abstract ITestResultDecider constructITestResultDecider(UltimateRunDefinition ultimateRunDefinition);
+	
+	public List<IIncrementalLog> getLogFiles(){
+		return null;
+	}
 
 	protected void addTestCases(File toolchainFile, File settingsFile, Collection<File> inputFiles, long deadline) {
 		for (File inputFile : inputFiles) {
 			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
 			UltimateStarter starter = new UltimateStarter(urd, deadline);
-			m_testCases.add(new UltimateTestCase(starter,
+			m_testCases.add(new UltimateTestCase(urd.generateShortStringRepresentation(),
 					constructITestResultDecider(urd), 
-					super.getSummaries(), 
-					urd.generateShortStringRepresentation(), 
-					urd)
+					starter, 
+					urd, 
+					super.getSummaries(),
+					getLogFiles())
 			);
 		}
 	}

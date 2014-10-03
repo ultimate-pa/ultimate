@@ -19,7 +19,6 @@ import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.traceabstraction.TestSummaryWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
-
 /**
  * Test Suite for the LassoRanker plugin
  * 
@@ -55,9 +54,10 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 public class LassoRankerTestSuite extends UltimateTestSuite {
 	public static final String s_test_files_dir = "examples/lassos/";
 	public static final String s_toolchain = "examples/toolchains/LassoRanker.xml";
-//  Workaround by Matthias: Use following line for linear constraints
-//	public static final String s_settings_file = "examples/settings/LassoRankerTestLinearSMTInterpol.epf";
-//  Workaround by Matthias: Use following line for non-linear constraints
+	// Workaround by Matthias: Use following line for linear constraints
+	// public static final String s_settings_file =
+	// "examples/settings/LassoRankerTestLinearSMTInterpol.epf";
+	// Workaround by Matthias: Use following line for non-linear constraints
 	public static final String s_settings_file = "examples/settings/LassoRankerTest.epf";
 	public static final boolean s_produceLogFiles = false;
 
@@ -65,48 +65,38 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		return new ITestSummary[] {
-				new TestSummaryWithBenchmarkResults(this.getClass()),
+		return new ITestSummary[] { new TestSummaryWithBenchmarkResults(this.getClass()),
 				new TraceAbstractionTestSummary(this.getClass()),
-				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class)
-		};
+				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class) };
 	}
-	
-	
+
 	@Override
 	@TestFactory
 	public Collection<UltimateTestCase> createTestCases() {
 		ArrayList<UltimateTestCase> rtr = new ArrayList<UltimateTestCase>();
 		ArrayList<File> inputFiles = new ArrayList<File>(getInputFiles());
 		Collections.sort(inputFiles);
-		
+
 		File toolchainFile = new File(Util.getPathFromTrunk(s_toolchain));
 		File settingsFile = new File(Util.getPathFromTrunk(s_settings_file));
 		String logPattern = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
 				.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
 		for (File inputFile : inputFiles) {
 			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
-			UltimateStarter starter = new UltimateStarter(
-					urd,
-					s_deadline,
-					s_produceLogFiles ? new File(Util.generateLogFilename(
-							inputFile, "LassoRanker")) : null,
-					s_produceLogFiles ? logPattern : null);
-			LassoRankerTestResultDecider decider = new LassoRankerTestResultDecider(
-					inputFile);
+			UltimateStarter starter = new UltimateStarter(urd, s_deadline, s_produceLogFiles ? new File(
+					Util.generateLogFilename(inputFile, "LassoRanker")) : null, s_produceLogFiles ? logPattern : null);
+			LassoRankerTestResultDecider decider = new LassoRankerTestResultDecider(inputFile);
 			if (decider.getExpectedResult() == ExpectedResult.IGNORE) {
 				continue;
 			}
-			rtr.add(new UltimateTestCase(starter, decider, super.getSummaries(), inputFile.getName(), urd));
+			rtr.add(new UltimateTestCase(inputFile.getName(), decider, starter, urd, super.getSummaries(), null));
 		}
 
 		return rtr;
 	}
 
 	public Collection<File> getInputFiles() {
-		return Util.getFiles(new File(Util.getPathFromTrunk(s_test_files_dir)),
-				new String[] { ".bpl" });
+		return Util.getFiles(new File(Util.getPathFromTrunk(s_test_files_dir)), new String[] { ".bpl" });
 	}
-
 
 }

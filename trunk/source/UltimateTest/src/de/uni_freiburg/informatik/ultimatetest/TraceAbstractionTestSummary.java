@@ -32,13 +32,13 @@ public class TraceAbstractionTestSummary extends TestSummary {
 	}
 	
 	@Override
-	public String getSummaryTypeDescription() {
+	public String getDescriptiveLogName() {
 		return this.getClass().getSimpleName();
 	}
 
 	@Override
-	public void addResult(TestResult threeValuedResult, String category, UltimateRunDefinition ultimateRunDefinition, String message, IResultService resultService) {
-		super.addResult(threeValuedResult, category, ultimateRunDefinition, message, resultService);
+	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult, String category, String message, IResultService resultService) {
+		super.addResult(ultimateRunDefinition, threeValuedResult, category, message, resultService);
 
 			addTraceAbstractionBenchmarks(ultimateRunDefinition, Util.filterResults(
 					resultService.getResults(), BenchmarkResult.class));

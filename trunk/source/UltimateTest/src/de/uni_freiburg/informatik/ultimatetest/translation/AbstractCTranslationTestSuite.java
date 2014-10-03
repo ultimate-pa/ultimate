@@ -27,17 +27,13 @@ public abstract class AbstractCTranslationTestSuite extends UltimateTestSuite {
 		for (File inputFile : inputFiles) {
 			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, null, toolchainFile);
 			UltimateStarter starter = new UltimateStarter(urd, deadline, null, null);
-			rtr.add(new UltimateTestCase(
-					starter, 
-					new TranslationTestResultDecider(inputFile.getAbsolutePath()), 
-					super.getSummaries(),
-					inputFile.getAbsolutePath(), 
-					urd));
+			rtr.add(new UltimateTestCase(inputFile.getAbsolutePath(), new TranslationTestResultDecider(inputFile
+					.getAbsolutePath()), starter, urd, super.getSummaries(), null));
 		}
 
 		return rtr;
 	}
 
 	public abstract Collection<File> getInputFiles();
-	
+
 }

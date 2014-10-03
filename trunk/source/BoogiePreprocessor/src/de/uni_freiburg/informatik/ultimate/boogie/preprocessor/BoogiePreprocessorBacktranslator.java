@@ -34,8 +34,8 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 
 /**
@@ -128,14 +128,15 @@ public class BoogiePreprocessorBacktranslator extends
 
 		if (newElem == null) {
 			reportUnfinishedBacktranslation("Unfinished backtranslation: No mapping for " + elem.toString());
+			// TODO: This can also occur if specifications are inserted, e.g.
+			// ensure specifications. It is unclear what should happen with them
+		} else if (newElem instanceof Statement) {
+			return newElem;
 		} else {
-			if (newElem instanceof Statement) {
-				return newElem;
-			} else {
-				reportUnfinishedBacktranslation("Unfinished backtranslation: Ignored translation of "
-						+ newElem.getClass().getSimpleName());
-			}
+			reportUnfinishedBacktranslation("Unfinished backtranslation: Ignored translation of "
+					+ newElem.getClass().getSimpleName());
 		}
+
 		return null;
 	}
 
@@ -186,6 +187,9 @@ public class BoogiePreprocessorBacktranslator extends
 						condEval ? StepInfo.CONDITION_EVAL_TRUE : StepInfo.CONDITION_EVAL_FALSE));
 
 			} else if (elem instanceof CallStatement) {
+				// FIXME: This does not work for recursive functions, as there
+				// are corner cases which make it impossible to infer if this is
+				// a call or a return (at least for all strategies I considered)
 				CallStatement stmt = (CallStatement) elem;
 				List<Declaration> procDecls = mSymbolTable.getFunctionOrProcedureDeclaration(stmt.getMethodName());
 				boolean isCall = false;
@@ -195,16 +199,18 @@ public class BoogiePreprocessorBacktranslator extends
 					for (Declaration decl : procDecls) {
 						if (decl instanceof Procedure) {
 							Procedure proc = (Procedure) decl;
-							if(proc.getBody() == null){
+							if (proc.getBody() == null) {
 								continue;
 							}
+
 							for (Statement bodyStmt : proc.getBody().getBlock()) {
 								// TODO: Replace this with a call to
 								// backtranslateTraceElement as soon as this is
-								// able to translate every trace element (not only those in IProgramExecution
+								// able to translate every trace element (not
+								// only those in IProgramExecution
 
 								BoogieASTNode mappedBodyElem = mMapping.get(bodyStmt);
-								
+
 								if (nextStmt == mappedBodyElem) {
 									isCall = true;
 								}

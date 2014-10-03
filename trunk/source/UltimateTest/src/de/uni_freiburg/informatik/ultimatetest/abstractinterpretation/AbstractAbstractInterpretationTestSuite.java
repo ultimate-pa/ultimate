@@ -23,14 +23,12 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 
 	private static final String m_PathToSettings = "examples/settings/";
 	private static final String m_PathToToolchains = "examples/toolchains/";
-	
+
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		return new ITestSummary[] {
-				new AbstractInterpretationTestSummary(this.getClass()),
+		return new ITestSummary[] { new AbstractInterpretationTestSummary(this.getClass()),
 				new AbstractInterpretationLaTeXTestSummary(this.getClass()),
-				new AbstractInterpretationComparisonTestSummary(this.getClass())
-		};
+				new AbstractInterpretationComparisonTestSummary(this.getClass()) };
 	}
 
 	@Override
@@ -43,14 +41,13 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 		if (m_testCases == null) {
 			m_testCases = new ArrayList<UltimateTestCase>();
 		}
-		
+
 		for (File inputFile : inputFiles) {
 			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
 			UltimateStarter starter = new UltimateStarter(urd, deadline, null, null);
-			m_testCases.add(new UltimateTestCase(starter,
-						new AbstractInterpretationTestResultDecider(inputFile, uniqueString),
-						super.getSummaries(),
-					uniqueString + "_" + inputFile.getAbsolutePath(), urd));
+			m_testCases.add(new UltimateTestCase(uniqueString + "_" + inputFile.getAbsolutePath(),
+					new AbstractInterpretationTestResultDecider(inputFile, uniqueString), starter, urd, super
+							.getSummaries(), null));
 		}
 	}
 

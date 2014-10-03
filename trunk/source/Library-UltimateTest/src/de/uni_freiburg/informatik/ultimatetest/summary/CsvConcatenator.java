@@ -53,12 +53,12 @@ public class CsvConcatenator implements ITestSummary {
 	}
 
 	@Override
-	public Class<? extends UltimateTestSuite> getUltimateTestSuite() {
+	public Class<? extends UltimateTestSuite> getUltimateTestSuiteClass() {
 		return m_UltimateTestSuite;
 	}
 
 	@Override
-	public String getSummaryTypeDescription() {
+	public String getDescriptiveLogName() {
 		return "Summarized " + m_Benchmark.getSimpleName();
 	}
 
@@ -68,8 +68,8 @@ public class CsvConcatenator implements ITestSummary {
 	}
 
 	@Override
-	public void addResult(TestResult threeValuedResult, String category,
-			UltimateRunDefinition ultimateRunDefinition, String message,
+	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult,
+			String category, String message,
 			IResultService resultService) {
 		for (ICsvProviderProvider<Object> benchmarkResult : Util.filterBenchmarks(resultService.getResults(), m_Benchmark)) {
 			ICsvProvider<Object> benchmarkCsv = benchmarkResult.createCvsProvider();

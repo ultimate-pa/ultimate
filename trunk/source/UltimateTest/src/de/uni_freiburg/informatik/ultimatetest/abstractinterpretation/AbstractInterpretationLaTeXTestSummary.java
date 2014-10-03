@@ -108,7 +108,7 @@ public class AbstractInterpretationLaTeXTestSummary extends TestSummary {
 	}
 	
 	@Override
-	public String getSummaryTypeDescription() {
+	public String getDescriptiveLogName() {
 		return "WermutTeXSummary";
 	}
 
