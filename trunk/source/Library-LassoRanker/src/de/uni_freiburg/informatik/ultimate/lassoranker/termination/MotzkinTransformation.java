@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.lassoranker.SMTSolver;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality.PossibleMotzkinCoefficients;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -179,6 +180,20 @@ class MotzkinTransformation extends InstanceCounting {
 	}
 	
 	/**
+	 * Will the given inequality need a variable for its Motzkin coefficient?
+	 */
+	private boolean needsMotzkinCoefficient(LinearInequality li) {
+		if (m_analysis_type.isLinear()) {
+			return li.allAffineTermsAreConstant();
+		} else if (m_analysis_type == AnalysisType.Nonlinear) {
+			return li.motzkin_coefficient != PossibleMotzkinCoefficients.ONE;
+		} else {
+			assert false;
+		}
+		return true;
+	}
+	
+	/**
 	 * Registers the Motzkin coefficients.
 	 */
 	private void registerMotzkinCoefficients() {
@@ -190,13 +205,13 @@ class MotzkinTransformation extends InstanceCounting {
 		int num_coefficients = m_inequalities.size();
 		m_coefficients = new Term[num_coefficients];
 		for (int i = 0; i < num_coefficients; ++i) {
-			PossibleMotzkinCoefficients mcs = m_inequalities.get(i).motzkin_coefficient;
-			if (mcs.multipleValues()) {
+			LinearInequality li = m_inequalities.get(i);
+			if (needsMotzkinCoefficient(li)) {
 				Term coefficient = SMTSolver.newConstant(m_script,
 						s_motzkin_prefix + this.getInstanceNumber() + "_" + i,
 						"Real");
 				m_coefficients[i] = coefficient;
-			} else if (mcs == PossibleMotzkinCoefficients.ONE) {
+			} else {
 				m_coefficients[i] = m_script.numeral(BigInteger.ONE);
 			}
 		}
@@ -299,7 +314,7 @@ class MotzkinTransformation extends InstanceCounting {
 	 * @return a formula equivalent to the negated conjunction of the
 	 *         inequalities
 	 */
-	public Term transform(Rational[] guessed_eigenvalues) throws SMTLIBException {
+	public Term transform(Rational[] motzkin_guesses) throws SMTLIBException {
 		m_transformed = true;
 		this.registerMotzkinCoefficients();
 		
@@ -334,48 +349,44 @@ class MotzkinTransformation extends InstanceCounting {
 				// This array is way to big, but I don't care
 			for (int i = 0; i < m_inequalities.size(); ++i) {
 				LinearInequality li = m_inequalities.get(i);
-				if (li.motzkin_coefficient.isFixed()
-						|| !li.allAffineTermsAreConstant()) {
+				if (!needsMotzkinCoefficient(li) && li.motzkin_coefficient
+						!= PossibleMotzkinCoefficients.ONE) {
 					fixed_indeces[num_fixed_coeffs] = i;
 					++num_fixed_coeffs;
 				}
 			}
 			assert num_fixed_coeffs < 31 : "Too many fixed coefficients!";
 			
-			if (m_analysis_type.wantsGuesses() && guessed_eigenvalues.length > 0) {
-				// TODO: This will be the new code for using guesses for the loop's eigenvalues
-				// It is not thouroughly tested, probably slower than the old code
-				// and it's not clear whether it's really that useful.
-				
-//				Term one = Rational.ONE.toTerm(m_script.sort("Real"));
-//				Rational[] motzkin_coeff_rational = new Rational[] { Rational.ZERO, Rational.ONE, Rational.valueOf(5, 1) }; // FIXME: get from guesses
-				int num_guesses = guessed_eigenvalues.length;
+			// Create a new coefficients array so that we can edit it
+			Term[] fixed_coefficients = new Term[m_coefficients.length];
+			for (int i = 0; i < m_coefficients.length; ++i) {
+				fixed_coefficients[i] = m_coefficients[i];
+			}
+			
+			if (m_analysis_type.wantsGuesses() && motzkin_guesses.length > 0) {
 				// Convert Motzkin coefficients from Rationals into Terms
-				Term[] motzkin_coeffs = new Term[guessed_eigenvalues.length];
-				for (int i = 0; i < guessed_eigenvalues.length; ++i) {
-					motzkin_coeffs[i] = guessed_eigenvalues[i].toTerm(m_script.sort("Real"));
+				Term[] motzkin_coeffs = new Term[motzkin_guesses.length];
+				for (int i = 0; i < motzkin_guesses.length; ++i) {
+					motzkin_coeffs[i] = motzkin_guesses[i].toTerm(m_script.sort("Real"));
 				}
-				
-				// Create a new coefficients array so that we can edit it
-				Term[] fixed_coefficients = new Term[m_coefficients.length];
-				num_fixed_coeffs = m_coefficients.length;
 				
 				int[] cases = new int[num_fixed_coeffs]; // initialized to 0 by default
 				List<Term> disjunction = new ArrayList<Term>();
 				if (num_fixed_coeffs == 0) {
 					disjunction.add(doTransform(fixed_coefficients, vars));
 				} else {
-					while (cases[num_fixed_coeffs - 1] < num_guesses) {
+					while (cases[num_fixed_coeffs - 1] < motzkin_guesses.length) {
 						// Update the coefficients array
 						for (int j = 0; j < num_fixed_coeffs; ++j) {
-							fixed_coefficients[j] = motzkin_coeffs[cases[j]];
+							fixed_coefficients[fixed_indeces[j]] =
+									motzkin_coeffs[cases[j]];
 						}
 						disjunction.add(doTransform(fixed_coefficients, vars));
 						// Increment the cases counter
 						int i = 0;
 						while (i < num_fixed_coeffs) {
 							++cases[i];
-							if (i < num_fixed_coeffs - 1 && cases[i] >= num_guesses) {
+							if (i < num_fixed_coeffs - 1 && cases[i] >= motzkin_guesses.length) {
 								cases[i] = 0;
 								++i;
 							} else {
@@ -391,17 +402,6 @@ class MotzkinTransformation extends InstanceCounting {
 				Term zero = m_script.decimal("0");
 				Term one = m_script.decimal("1");
 				
-				// Create a new coefficients array so that we can edit it
-				Term[] fixed_coefficients = new Term[m_coefficients.length];
-				for (int i = 0; i < m_coefficients.length; ++i) {
-					if (m_inequalities.get(i).motzkin_coefficient
-							== PossibleMotzkinCoefficients.ONE) {
-						fixed_coefficients[i] = one;
-					} else {
-						fixed_coefficients[i] = m_coefficients[i];
-					}
-				}
-				
 				List<Term> disjunction = new ArrayList<Term>();
 				for (int i = 0; i < (1 << num_fixed_coeffs); ++i) {
 					// Update the coefficients array
@@ -414,34 +414,25 @@ class MotzkinTransformation extends InstanceCounting {
 				conjunction.add(
 						Util.or(m_script, disjunction.toArray(new Term[0])));
 			}
-		} else {
-			assert m_analysis_type == AnalysisType.Nonlinear;
+		} else if (m_analysis_type == AnalysisType.Nonlinear) {
 			conjunction.add(doTransform(m_coefficients, vars));
 			
 			// Fixed Motzkin coefficients
 			for (int i = 0; i < m_inequalities.size(); ++i) {
 				LinearInequality li = m_inequalities.get(i);
-				if (li.motzkin_coefficient.isFixed()) {
-					Term coefficient = m_coefficients[i];
-					if (li.motzkin_coefficient
-							== PossibleMotzkinCoefficients.ZERO_AND_ONE) {
-						// Fixing Motzkin coefficient to { 0, 1 }
-						conjunction.add(Util.or(m_script,
-							m_script.term("=",
-									coefficient, m_script.decimal("0")),
-							m_script.term("=",
-									coefficient, m_script.decimal("1"))
-						));
-					} else if (li.motzkin_coefficient
-							== PossibleMotzkinCoefficients.ONE) {
-						// Fixing Motzkin coefficient to { 1 }
-						conjunction.add(m_script.term("=",
-								coefficient, m_script.decimal("1")));
-					} else {
-						assert false;
-					}
+				if (li.motzkin_coefficient
+						== PossibleMotzkinCoefficients.ZERO_AND_ONE) {
+					// Fixing Motzkin coefficient to { 0, 1 }
+					conjunction.add(Util.or(m_script,
+						m_script.term("=",
+								m_coefficients[i], m_script.decimal("0")),
+						m_script.term("=",
+								m_coefficients[i], m_script.decimal("1"))
+					));
 				}
 			}
+		} else {
+			assert false;
 		}
 		Term t = Util.and(m_script, conjunction.toArray(new Term[0]));
 		

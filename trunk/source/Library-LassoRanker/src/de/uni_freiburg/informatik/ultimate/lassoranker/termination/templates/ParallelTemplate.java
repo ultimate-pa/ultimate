@@ -81,10 +81,10 @@ public class ParallelTemplate extends RankingFunctionTemplate {
 	 * @param num_functions number of parallel ranking functions
 	 */
 	public ParallelTemplate(int num_functions) {
-		assert(num_functions > 0);
+		assert(num_functions > 1);
 		assert(num_functions <= 30); // reasonable upper size bound
-		                             // until the singularity
-		assert((1 << num_functions) > 0); // remember, this is exponential
+		                             // until the singularity arrives
+		assert((1 << num_functions) > 0); // remember, this template's size is exponential!
 		size = num_functions;
 		m_deltas = new Term[size];
 		m_fgens = new AffineFunctionGenerator[size];
@@ -234,6 +234,6 @@ public class ParallelTemplate extends RankingFunctionTemplate {
 	@Override
 	public int getDegree() {
 		assert(size > 0);
-		return (1 << size)*(size - 1);
+		return (1 << size)*(size - 1); // TODO: find some blue atoms
 	}
 }

@@ -73,7 +73,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 	 * @param num_functions number of lexicographic components
 	 */
 	public LexicographicTemplate(int num_lex) {
-		assert(num_lex > 0);
+		assert(num_lex > 1);
 		size = num_lex;
 		m_deltas = new Term[size];
 		m_fgens = new AffineFunctionGenerator[size];
@@ -223,6 +223,6 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 	@Override
 	public int getDegree() {
 		assert(size > 0);
-		return (size - 1)*(size - 2) / 2;
+		return size*(size - 1) / 2;
 	}
 }

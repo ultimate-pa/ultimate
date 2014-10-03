@@ -72,7 +72,7 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 	 * @param num_phases number of phases in the multiphase template
 	 */
 	public MultiphaseTemplate(int num_phases) {
-		assert(num_phases > 0);
+		assert(num_phases > 1);
 		size = num_phases;
 		m_deltas = new Term[size];
 		m_fgens = new AffineFunctionGenerator[size];
@@ -150,12 +150,12 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 			AffineTerm a = new AffineTerm(m_deltas[i], Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
-			li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
+			li.motzkin_coefficient = PossibleMotzkinCoefficients.ZERO_AND_ONE;
 			disjunction.add(li);
 			if (i > 0) {
 				LinearInequality li3 = m_fgens[i - 1].generate(inVars);
 				li3.setStrict(true);
-				li3.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
+				li3.motzkin_coefficient = PossibleMotzkinCoefficients.ZERO_AND_ONE;
 				disjunction.add(li3);
 			}
 			conjunction.add(disjunction);

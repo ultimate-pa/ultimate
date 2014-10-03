@@ -75,7 +75,7 @@ public class NestedTemplate extends RankingFunctionTemplate {
 	 * @param functions number of linear functions in the nested template
 	 */
 	public NestedTemplate(int functions) {
-		assert(functions > 0);
+		assert(functions > 1);
 		m_Size = functions;
 		m_fgens = new AffineFunctionGenerator[m_Size];
 	}
