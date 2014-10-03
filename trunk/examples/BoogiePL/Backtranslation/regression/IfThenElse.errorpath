@@ -1,0 +1,4 @@
+step0: r := (if a > 3 then 0 else 3);
+values0:  a=0  r=3
+step1: assert r != 3;
+values1:  a=0  r=3

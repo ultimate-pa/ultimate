@@ -84,11 +84,14 @@ public interface IProgramExecution<TE, E> {
 
 		@Override
 		public String toString() {
-			ArrayList<Entry<E, Collection<E>>> toSort = new ArrayList<>(mVariable2Values.entrySet());
+			ArrayList<Entry<E, Collection<E>>> toSort = new ArrayList<>(
+					mVariable2Values.entrySet());
 			Collections.sort(toSort, new Comparator<Entry<E, Collection<E>>>() {
 				@Override
-				public int compare(Entry<E, Collection<E>> arg0, Entry<E, Collection<E>> arg1) {
-					return arg0.getKey().toString().compareToIgnoreCase(arg1.getKey().toString());
+				public int compare(Entry<E, Collection<E>> arg0,
+						Entry<E, Collection<E>> arg1) {
+					return arg0.getKey().toString()
+							.compareToIgnoreCase(arg1.getKey().toString());
 				}
 			});
 			return toSort.toString();
@@ -111,13 +114,14 @@ public interface IProgramExecution<TE, E> {
 	public class AtomicTraceElement<TE> {
 		private final TE mElement;
 		private final TE mStep;
+		private final StepInfo mStepInfo;
 
 		/**
 		 * Creates an instance where the trace element is evaluated atomically
 		 * (i.e. {@link #getTraceElement()} == {@link #getStep()}).
 		 */
 		public AtomicTraceElement(TE element) {
-			this(element, element);
+			this(element, element, StepInfo.NONE);
 		}
 
 		/**
@@ -127,10 +131,15 @@ public interface IProgramExecution<TE, E> {
 		 * 
 		 * @param element
 		 * @param step
+		 * @param info
+		 *            provides additional information about the step, e.g. if
+		 *            its a condition that evaluated to true or false, if it is
+		 *            a call or a return, etc.
 		 */
-		public AtomicTraceElement(TE element, TE step) {
+		public AtomicTraceElement(TE element, TE step, StepInfo info) {
 			mElement = element;
 			mStep = step;
+			mStepInfo = info;
 		}
 
 		/**
@@ -151,6 +160,29 @@ public interface IProgramExecution<TE, E> {
 		 */
 		public TE getStep() {
 			return mStep;
+		}
+
+		public StepInfo getStepInfo() {
+			return mStepInfo;
+		}
+
+		/**
+		 * StepInfo provides additional information for
+		 * {@link AtomicTraceElement#getStep()}.
+		 * 
+		 * This may be replaced by an actual object later, but for now it should
+		 * be sufficient.
+		 * 
+		 * @author dietsch@informatik.uni-freiburg.de
+		 * 
+		 */
+		public enum StepInfo {
+			NONE, CONDITION_EVAL_TRUE, CONDITION_EVAL_FALSE, CALL, RETURN,
+		}
+		
+		@Override
+		public String toString() {
+			return getTraceElement().toString();
 		}
 
 	}

@@ -1,6 +1,6 @@
-statement0: tmp := a;
-values0:  a!d=1  a!n=0  a!v=0.0  tmp.d=1  tmp.n=0  tmp.v=0.0
-statement1: tmp!n := a!d;
-values1:  a!d=1  a!n=0  a!v=0.0  tmp.d=1  tmp.n=1  tmp.v=0.0
-statement2: assert tmp == a;
-values2:  a!d=1  a!n=0  a!v=0.0  tmp.d=1  tmp.n=1  tmp.v=0.0
+step0: tmp := a;
+values0:  a!d=0  a!n=1  a!v=0.0  tmp.d=0  tmp.n=1  tmp.v=0.0
+step1: tmp!n := a!d;
+values1:  a!d=0  a!n=1  a!v=0.0  tmp.d=0  tmp.n=0  tmp.v=0.0
+step2: assert tmp == a;
+values2:  a!d=0  a!n=1  a!v=0.0  tmp.d=0  tmp.n=0  tmp.v=0.0

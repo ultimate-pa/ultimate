@@ -19,18 +19,23 @@ import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 
 /**
@@ -77,6 +82,182 @@ public class BoogiePreprocessorBacktranslator extends
 		}
 	}
 
+	@Override
+	public IProgramExecution<BoogieASTNode, Expression> translateProgramExecution(
+			IProgramExecution<BoogieASTNode, Expression> programExecution) {
+
+		List<BoogieASTNode> newTrace = new ArrayList<>();
+		Map<Integer, ProgramState<Expression>> newPartialProgramStateMapping = new HashMap<>();
+
+		newPartialProgramStateMapping.put(-1, backtranslateProgramState(programExecution.getInitialProgramState()));
+
+		int length = programExecution.getLength();
+		for (int i = 0; i < length; ++i) {
+			BoogieASTNode elem = programExecution.getTraceElement(i).getTraceElement();
+			BoogieASTNode newElem = backtranslateTraceElement(elem);
+
+			if (newElem != null) {
+				newTrace.add(newElem);
+			}
+			newPartialProgramStateMapping.put(i, backtranslateProgramState(programExecution.getProgramState(i)));
+		}
+
+		// return super.translateProgramExecution(programExecution);
+		return createProgramExecutionFromTrace(newTrace, newPartialProgramStateMapping);
+	}
+
+	private ProgramState<Expression> backtranslateProgramState(ProgramState<Expression> state) {
+		if (state == null) {
+			return null;
+		} else {
+			Map<Expression, Collection<Expression>> newVariable2Values = new HashMap<>();
+			for (Expression var : state.getVariables()) {
+				Expression newVar = translateExpression(var);
+				Collection<Expression> newValues = new ArrayList<>();
+				for (Expression value : state.getValues(var)) {
+					newValues.add(translateExpression(value));
+				}
+				newVariable2Values.put(newVar, newValues);
+			}
+			return new ProgramState<>(newVariable2Values);
+		}
+	}
+
+	private BoogieASTNode backtranslateTraceElement(BoogieASTNode elem) {
+		BoogieASTNode newElem = mMapping.get(elem);
+
+		if (newElem == null) {
+			reportUnfinishedBacktranslation("Unfinished backtranslation: No mapping for " + elem.toString());
+		} else {
+			if (newElem instanceof Statement) {
+				return newElem;
+			} else {
+				reportUnfinishedBacktranslation("Unfinished backtranslation: Ignored translation of "
+						+ newElem.getClass().getSimpleName());
+			}
+		}
+		return null;
+	}
+
+	private IProgramExecution<BoogieASTNode, Expression> createProgramExecutionFromTrace(List<BoogieASTNode> trace,
+			Map<Integer, ProgramState<Expression>> partialProgramStateMapping) {
+
+		List<AtomicTraceElement<BoogieASTNode>> atomicTrace = new ArrayList<>();
+
+		for (int i = 0; i < trace.size(); ++i) {
+			BoogieASTNode elem = trace.get(i);
+
+			if (elem instanceof WhileStatement) {
+				// check if the next statement in the error trace is part of the
+				// body of the WhileStatement. If so, the condition evaluated to
+				// true; if not or if the trace ends, the condition evaluated to
+				// false
+				WhileStatement stmt = (WhileStatement) elem;
+				boolean condEval = false;
+				int nxt = i + 1;
+				if (nxt < trace.size()) {
+					BoogieASTNode nextStmt = trace.get(nxt);
+					for (Statement bodyStmt : stmt.getBody()) {
+						if (nextStmt == bodyStmt) {
+							condEval = true;
+						}
+					}
+				}
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(),
+						condEval ? StepInfo.CONDITION_EVAL_TRUE : StepInfo.CONDITION_EVAL_FALSE));
+
+			} else if (elem instanceof IfStatement) {
+				// check if the next statement in the error trace is part of the
+				// then-part of the IfStatement. If so, the condition evaluated
+				// to true; if not or if the trace ends, the condition evaluated
+				// to false
+				IfStatement stmt = (IfStatement) elem;
+				boolean condEval = false;
+				int nxt = i + 1;
+				if (nxt < trace.size()) {
+					BoogieASTNode nextStmt = trace.get(nxt);
+					for (Statement bodyStmt : stmt.getThenPart()) {
+						if (nextStmt == bodyStmt) {
+							condEval = true;
+						}
+					}
+				}
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(),
+						condEval ? StepInfo.CONDITION_EVAL_TRUE : StepInfo.CONDITION_EVAL_FALSE));
+
+			} else if (elem instanceof CallStatement) {
+				CallStatement stmt = (CallStatement) elem;
+				List<Declaration> procDecls = mSymbolTable.getFunctionOrProcedureDeclaration(stmt.getMethodName());
+				boolean isCall = false;
+				int nxt = i + 1;
+				if (nxt < trace.size()) {
+					BoogieASTNode nextStmt = trace.get(nxt);
+					for (Declaration decl : procDecls) {
+						if (decl instanceof Procedure) {
+							Procedure proc = (Procedure) decl;
+							if(proc.getBody() == null){
+								continue;
+							}
+							for (Statement bodyStmt : proc.getBody().getBlock()) {
+								// TODO: Replace this with a call to
+								// backtranslateTraceElement as soon as this is
+								// able to translate every trace element (not only those in IProgramExecution
+
+								BoogieASTNode mappedBodyElem = mMapping.get(bodyStmt);
+								
+								if (nextStmt == mappedBodyElem) {
+									isCall = true;
+								}
+							}
+						}
+					}
+				}
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt, isCall ? StepInfo.CALL
+						: StepInfo.RETURN));
+			} else if (elem instanceof Statement) {
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem));
+			} else {
+				throw new UnsupportedOperationException("Not yet implemented");
+			}
+		}
+
+		return new BoogieProgramExecution(partialProgramStateMapping, atomicTrace);
+	}
+
+	@Override
+	public List<BoogieASTNode> translateTrace(List<BoogieASTNode> trace) {
+		return super.translateTrace(trace);
+	}
+
+	@Override
+	public Expression translateExpression(Expression expression) {
+		return new ExpressionTranslator().processExpression(expression);
+	}
+
+	@Override
+	public String targetExpressionToString(Expression expression) {
+		return BoogiePrettyPrinter.print(expression);
+	}
+
+	@Override
+	public List<String> targetTraceToString(List<BoogieASTNode> trace) {
+		List<String> rtr = new ArrayList<>();
+		for (BoogieASTNode node : trace) {
+			if (node instanceof Statement) {
+				rtr.add(BoogiePrettyPrinter.print((Statement) node));
+			} else {
+				return super.targetTraceToString(trace);
+			}
+		}
+		return rtr;
+	}
+
+	private void reportUnfinishedBacktranslation(String message) {
+		mLogger.warn(message);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new GenericResult(Activator.PLUGIN_ID, "Unfinished Backtranslation", message, Severity.WARNING));
+	}
+
 	private String printDebug(BoogieASTNode node) {
 		if (node instanceof Statement) {
 			return BoogiePrettyPrinter.print((Statement) node);
@@ -120,92 +301,6 @@ public class BoogiePreprocessorBacktranslator extends
 			}
 		}
 		return output.toString();
-	}
-
-	@Override
-	public IProgramExecution<BoogieASTNode, Expression> translateProgramExecution(
-			IProgramExecution<BoogieASTNode, Expression> programExecution) {
-
-		List<BoogieASTNode> newTrace = new ArrayList<>();
-		Map<Integer, ProgramState<Expression>> newPartialProgramStateMapping = new HashMap<>();
-
-		int length = programExecution.getLength();
-		for (int i = 0; i < length; ++i) {
-			BoogieASTNode elem = programExecution.getTraceElement(i).getTraceElement();
-			BoogieASTNode newElem = mMapping.get(elem);
-
-			if (newElem == null) {
-				reportUnfinishedBacktranslation("Unfinished backtranslation: No mapping for " + elem.toString());
-			} else {
-				if (newElem instanceof Statement) {
-					newTrace.add((Statement) newElem);
-				} else {
-					reportUnfinishedBacktranslation("Unfinished backtranslation: Ignored translation of "
-							+ newElem.getClass().getSimpleName());
-				}
-			}
-
-			ProgramState<Expression> initialState = programExecution.getInitialProgramState();
-			if (initialState != null) {
-				// was macht man damit?
-				reportUnfinishedBacktranslation("Unfinished backtranslation: Ignored initial programstate "
-						+ initialState);
-			}
-
-			ProgramState<Expression> state = programExecution.getProgramState(i);
-			if (state == null) {
-				newPartialProgramStateMapping.put(i, null);
-			} else {
-				Map<Expression, Collection<Expression>> newVariable2Values = new HashMap<>();
-				for (Expression var : state.getVariables()) {
-					Expression newVar = translateExpression(var);
-					Collection<Expression> newValues = new ArrayList<>();
-					for (Expression value : state.getValues(var)) {
-						newValues.add(translateExpression(value));
-					}
-					newVariable2Values.put(newVar, newValues);
-				}
-				newPartialProgramStateMapping.put(i, new ProgramState<>(newVariable2Values));
-			}
-		}
-		// TODO: During development, I switch these comments to have a "clean"
-		// boogie translation
-		// return super.translateProgramExecution(programExecution);
-		return new BoogieProgramExecution(newTrace, newPartialProgramStateMapping);
-	}
-
-	@Override
-	public List<BoogieASTNode> translateTrace(List<BoogieASTNode> trace) {
-		// TODO Auto-generated method stub
-		return super.translateTrace(trace);
-	}
-
-	@Override
-	public Expression translateExpression(Expression expression) {
-		return new ExpressionTranslator().processExpression(expression);
-	}
-
-	@Override
-	public String targetExpressionToString(Expression expression) {
-		return BoogiePrettyPrinter.print(expression);
-	}
-
-	@Override
-	public List<String> targetTraceToString(List<BoogieASTNode> trace) {
-		List<String> rtr = new ArrayList<>();
-		for (BoogieASTNode node : trace) {
-			if (node instanceof Statement) {
-				rtr.add(BoogiePrettyPrinter.print((Statement) node));
-			} else {
-				return super.targetTraceToString(trace);
-			}
-		}
-		return rtr;
-	}
-
-	private void reportUnfinishedBacktranslation(String message) {
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new GenericResult(Activator.PLUGIN_ID, "Unfinished Backtranslation", message, Severity.WARNING));
 	}
 
 	private class ExpressionTranslator extends BoogieTransformer {

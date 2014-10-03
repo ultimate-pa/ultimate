@@ -1,0 +1,8 @@
+step0: !(a > 10)
+values0:  a=0
+step1: a < 5
+values1:  a=0
+step2: r := 3;
+values2:  a=0  r=3
+step3: assert r != 3;
+values3:  a=0  r=3

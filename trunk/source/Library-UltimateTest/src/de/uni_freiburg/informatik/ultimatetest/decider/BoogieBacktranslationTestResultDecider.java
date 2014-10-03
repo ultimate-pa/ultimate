@@ -56,7 +56,9 @@ public class BoogieBacktranslationTestResultDecider extends TestResultDecider {
 				} else if (result instanceof GenericResult) {
 					GenericResult genRes = (GenericResult) result;
 					if (genRes.getShortDescription().equals("Unfinished Backtranslation")) {
-						setCategoryAndMessageAndCustomMessage(result.getShortDescription(), customMessages);
+						setResultCategory(result.getShortDescription());
+						setResultMessage(result.getLongDescription());
+						customMessages.add(result.getShortDescription()+": "+result.getLongDescription());
 						fail = true;
 					}
 				} else if (result instanceof CounterExampleResult<?, ?, ?>) {
@@ -99,9 +101,6 @@ public class BoogieBacktranslationTestResultDecider extends TestResultDecider {
 					String[] desiredLines = desiredCounterExample.split(platformLineSeparator);
 					String[] actualLines = actualCounterExample.split(platformLineSeparator);
 
-					// Util.writeFile(desiredCounterExampleFile.getAbsolutePath()+"bla",
-					// actualLines);
-
 					if (desiredLines.length != actualLines.length) {
 						fail = true;
 					} else {
@@ -116,9 +115,13 @@ public class BoogieBacktranslationTestResultDecider extends TestResultDecider {
 					}
 
 					if (fail) {
+
+						Util.writeFile(desiredCounterExampleFile.getAbsolutePath() + "-actual", actualLines);
+
 						setCategoryAndMessageAndCustomMessage("Desired error trace does not match actual error trace.",
 								customMessages);
-						customMessages.add(desiredCounterExample.length() + " " + actualCounterExample.length());
+						customMessages.add("Lengths: Desired=" + desiredCounterExample.length() + " Actual="
+								+ actualCounterExample.length());
 						customMessages.add("Desired error trace:");
 						int i = 0;
 						for (String s : desiredCounterExample.split(platformLineSeparator)) {

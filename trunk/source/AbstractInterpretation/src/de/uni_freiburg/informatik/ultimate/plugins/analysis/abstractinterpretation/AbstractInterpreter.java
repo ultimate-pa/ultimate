@@ -659,8 +659,8 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				new HashMap<Integer, ProgramState<Expression>>(),
 				null);
 		
-		UnprovableResult<RcfgElement, RcfgElement, Expression> result =
-				new UnprovableResult<RcfgElement, RcfgElement, Expression>(Activator.s_PLUGIN_NAME,
+		UnprovableResult<RcfgElement, CodeBlock, Expression> result =
+				new UnprovableResult<RcfgElement, CodeBlock, Expression>(Activator.s_PLUGIN_NAME,
 						location,
 						m_services.getBacktranslationService(),
 						programExecution);
