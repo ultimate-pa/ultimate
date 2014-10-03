@@ -364,19 +364,18 @@ public class FunctionHandler {
 				final String cId = main.cHandler.getSymbolTable()
 						.getCID4BoogieID(bId, loc);
 				
-				//onHeap case for a function parameter means the parameter is addressoffed in the function body
-				final boolean isOnHeap = ((MainDispatcher) main).
-				        getVariablesForHeap().contains(paramDec);
-				
-				// Copy of inparam that is writeable
-				String auxInvar = main.nameHandler.getUniqueIdentifier(parent,
-						cId, 0, isOnHeap);
-
 				ASTType type = varList.getType();
 				CType cvar = main.cHandler.getSymbolTable().get(cId, loc)
                         .getCVariable();
 				
-				
+				//onHeap case for a function parameter means the parameter is addressoffed in the function body
+				final boolean isOnHeap = ((MainDispatcher) main).
+				        getVariablesForHeap().contains(paramDec);
+
+				// Copy of inparam that is writeable
+				String auxInvar = main.nameHandler.getUniqueIdentifier(parent,
+						cId, 0, isOnHeap);
+			
 				if (isOnHeap || cvar instanceof CArray) {
 				    type = MemoryHandler.POINTER_TYPE;
 	                ((CHandler)main.cHandler).addBoogieIdsOfHeapVars(
@@ -728,9 +727,14 @@ public class FunctionHandler {
 		handleFunctionsInParams(main, loc, memoryHandler, decls, stmts, node);
 		// 2)
 		Body body = ((Body) main.dispatch(node.getBody()).node);
+		stmts.addAll(Arrays.asList(body.getBlock()));
+        for (VariableDeclaration declaration : body.getLocalVars()) {
+            decls.add(declaration);
+        }
 		// 3)
-		stmts.addAll(memoryHandler.insertMallocs(main, loc,
-		        new ArrayList<Statement>(Arrays.asList(body.getBlock()))));
+		stmts = memoryHandler.insertMallocs(main, loc, stmts);
+//		stmts.addAll(memoryHandler.insertMallocs(main, loc,
+//		        new ArrayList<Statement>(Arrays.asList(body.getBlock()))));
 		// 4)
 		for (SymbolTableValue stv : main.cHandler.getSymbolTable().currentScopeValues()) {
 			//there may be a null declaration in case of foo(void)
@@ -738,12 +742,10 @@ public class FunctionHandler {
 				decls.add(stv.getBoogieDecl());
 			}
 		}
-        for (VariableDeclaration declaration : body.getLocalVars()) {
-            decls.add(declaration);
-        }
+
         
-		body = new Body(loc, decls.toArray(new VariableDeclaration[0]),
-		        stmts.toArray(new Statement[0]));
+		body = new Body(loc, decls.toArray(new VariableDeclaration[decls.size()]),
+		        stmts.toArray(new Statement[stmts.size()]));
 		
 		proc = currentProcedure;
 		// Implementation -> Specification always null!
