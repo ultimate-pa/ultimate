@@ -133,7 +133,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 		for (int i = 0; i < size; ++i) {
 			LinearInequality li = m_fgens[i].generate(inVars);
 			li.setStrict(true);
-			li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;;
+			li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
 			conjunction.add(Collections.singletonList(li));
 		}
 		

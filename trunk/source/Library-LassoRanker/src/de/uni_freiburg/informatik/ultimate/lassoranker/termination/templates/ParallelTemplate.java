@@ -148,7 +148,7 @@ public class ParallelTemplate extends RankingFunctionTemplate {
 			LinearInequality li2 = m_fgens[i].generate(outVars);
 			li2.negate();
 			li.add(li2);
-			li.motzkin_coefficient = PossibleMotzkinCoefficients.ZERO_AND_ONE;
+			li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
 			conjunction.add(Collections.singletonList(li));
 		}
 		

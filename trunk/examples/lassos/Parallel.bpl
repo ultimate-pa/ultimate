@@ -5,7 +5,8 @@
  *
  * Was previously known as SyntaxSupportDisjunction2 and Canberra.bpl.
  *
- * Terminates, but requires a new kind of ranking function.
+ * Has the 2-parallel ranking function:
+ * f = max{0, x + 1} + max{0, y + 1}
  */
 
 procedure main() returns (x: int, y:int)
