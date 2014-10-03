@@ -132,8 +132,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		super(lasso, preferences, "nonterminationTemplate", services, storage);
 		
 		m_settings = new NonTerminationAnalysisSettings(settings); // defensive copy
-		mLogger.info("Nontermination Analysis Settings:\n"
-				+ settings.toString());
+		mLogger.info(settings.toString());
 		
 		m_integer_mode = (lasso.getStem().containsIntegers())
 				|| lasso.getLoop().containsIntegers();

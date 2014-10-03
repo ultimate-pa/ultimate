@@ -148,7 +148,7 @@ public abstract class RankingFunctionTemplate {
 	 */
 	protected Term newDelta(String name) {
 		Term delta = m_tas.newConstant(name, "Real");
-		Term t = m_script.term(">", delta, m_tas.getScript().decimal("0"));
+		Term t = m_script.term(">", delta, m_script.decimal("0"));
 		m_script.assertTerm(t);
 		return delta;
 	}
