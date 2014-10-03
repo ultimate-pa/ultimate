@@ -1,6 +1,9 @@
-// #Safe
+// #Unsafe
 /* 
- * Variant of Alex's bitcounters reduced to two bit.
+ * Bug in r12467. SSA construct used default constants for auxVars (instead of 
+ * fresh constant). 
+ * If TransFormula occurs twice in trace, same constant is used.
+ * 
  * Author: heizmann@informatik.uni-freiburg.de
  * Date: 2014-09-28
  */
@@ -11,7 +14,6 @@ modifies x, y, z;
 {
 
 	x := false;
-//     y := true;
 	
 	while(z == false) {
 		if (*) {
