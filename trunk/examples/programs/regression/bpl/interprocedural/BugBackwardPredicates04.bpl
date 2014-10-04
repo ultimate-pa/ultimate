@@ -1,4 +1,4 @@
-//#Safe
+//#Unsafe
 /* Shows bug in BackwardPredicates in revision 12306.
  * Computed BP at beginning of proc is
  *     (distinct g m)
