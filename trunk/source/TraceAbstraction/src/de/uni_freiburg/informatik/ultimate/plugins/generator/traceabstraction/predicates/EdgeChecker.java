@@ -19,17 +19,20 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.Status;
@@ -48,7 +51,7 @@ public class EdgeChecker {
 	private CodeBlock m_CodeBlock;
 	private TransFormula m_TransFormula;
 	private ScopedHashMap<BoogieVar, Term> m_HierConstants;
-	public final static boolean m_AddDebugInformation = false;
+	public final static boolean m_AddDebugInformation = !false;
 	public final static boolean m_UnletTerms = true;
 	
 	private final EdgeCheckerBenchmarkGenerator m_EdgeCheckerBenchmark;
@@ -100,30 +103,50 @@ public class EdgeChecker {
 			predcondition = m_Script.annotate(predcondition, annot);
 		}
 		LBool quickCheck = m_SmtManager.assertTerm(predcondition);
-		if (m_CodeBlock instanceof Return) {
-			for (BoogieVar bv : p.getVars()) {
-				if (bv.isOldvar()) {
-					Return ret = (Return) m_CodeBlock;
-					Call call = ret.getCorrespondingCall();
-					String proc = call.getCallStatement().getMethodName();
-					Set<BoogieVar> oldVarsOfModifiable = m_ModifiableGlobalVariableManager.
-							getOldVarsAssignment(proc).getAssignedVars();
-					if (!oldVarsOfModifiable.contains(bv)) {
-						//bv is oldvar of non-modifiable global
-						Term oldVarsEquality = oldVarsEquality((BoogieOldVar) bv);
-						if (m_AddDebugInformation) {
-							String name = "oldVarsEquality " + bv;
-							Annotation annot = new Annotation(":named", name);
-							predcondition = m_Script.annotate(oldVarsEquality, annot);
-						}
-					}
-				}
+		String predProc = m_CodeBlock.getPreceedingProcedure();
+		Set<BoogieVar> oldVarsOfModifiable = m_ModifiableGlobalVariableManager.
+				getOldVarsAssignment(predProc).getAssignedVars();
+		Collection<Term> oldVarEqualities = constructNonModOldVarsEquality(p.getVars(), oldVarsOfModifiable);
+		if (!oldVarEqualities.isEmpty()) {
+			Term nonModOldVarsEquality = Util.and(m_Script, oldVarEqualities.toArray(new Term[oldVarEqualities.size()]));
+			if (m_AddDebugInformation) {
+				String name = "precondNonModGlobalEquality";
+				Annotation annot = new Annotation(":named", name);
+				nonModOldVarsEquality = m_Script.annotate(nonModOldVarsEquality, annot);
 			}
+			quickCheck = m_SmtManager.assertTerm(nonModOldVarsEquality);
 		}
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return quickCheck;
 	}
 	
+	
+	/**
+	 * Return a set of equalities such that for each oldvar old(g) that occurs
+	 * in vars that is not contained in oldVarsOfModifiableGlobals there is
+	 * an equality (= c_g c_old(g)) where c_g is the default constant of the 
+	 * global variable g and c_old(g) is the default constant of old(g).
+	 */
+	private Collection<Term> constructNonModOldVarsEquality(Set<BoogieVar> vars,
+			Set<BoogieVar> oldVarsOfModifiableGlobals) {
+		Collection<Term> conjunction = new ArrayList<>();
+		for (BoogieVar bv : vars) {
+			if (bv instanceof BoogieOldVar && !oldVarsOfModifiableGlobals.contains(bv)) {
+				conjunction.add(oldVarsEquality((BoogieOldVar) bv));
+			}
+		}
+		return conjunction;
+	}
+	
+	private Term oldVarsEquality(BoogieOldVar oldVar) {
+		assert oldVar.isOldvar();
+		BoogieVar nonOldVar = oldVar.getNonOldVar();
+		Term equality = m_Script.term("=", oldVar.getDefaultConstant(), 
+										   nonOldVar.getDefaultConstant());
+		return equality;
+	}
+	
+
 	public void unAssertPrecondition() {
 		assert m_SmtManager.getStatus() == Status.EDGECHECK : "No edgecheck in progress";
 		assert m_PrePred != null : "No PrePred asserted";
@@ -232,23 +255,43 @@ public class EdgeChecker {
 		m_Script.push(1);
 		m_HierConstants.beginScope();
 		Term hierFormula = p.getFormula();
+
 		
-		//rename non-modifiable globals to default constants
-		Return ret = (Return) m_CodeBlock;
-		Call call = ret.getCorrespondingCall();
-		String proc = call.getCallStatement().getMethodName();
-		TransFormula oldVarAssignment = m_ModifiableGlobalVariableManager.
-				getOldVarsAssignment(proc);
-		Set<BoogieVar> modifiableGlobals = oldVarAssignment.getInVars().keySet();
+		// rename globals that are not modifiable by callee to default constants
+		String callee = m_CodeBlock.getPreceedingProcedure();
+		Set<BoogieVar> modifiableGlobalsCallee = m_ModifiableGlobalVariableManager.
+				getModifiedBoogieVars(callee);
+		hierFormula = renameNonModifiableNonOldGlobalsToDefaultConstants(
+				p.getVars(), modifiableGlobalsCallee, hierFormula);
 		
-		hierFormula = renameNonModifiableGlobalsToDefaultConstants(
-				p.getVars(), modifiableGlobals, hierFormula);
+		// rename oldvars of globals that are not modifiable by caller to 
+		// default constants of nonOldVar
+		String caller = m_CodeBlock.getSucceedingProcedure();
+		Set<BoogieVar> modifiableGlobalsCaller = m_ModifiableGlobalVariableManager.
+				getModifiedBoogieVars(caller);
+		hierFormula = renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(
+				p.getVars(), modifiableGlobalsCaller, hierFormula);
+		
+
+
+		// rename modifiable globals of callee to default constants
+//		hierFormula = renameVarsToDefaultConstants(modifiableGlobalsCallee, hierFormula);
+//		//rename non-modifiable globals to default constants
+//		Return ret = (Return) m_CodeBlock;
+//		Call call = ret.getCorrespondingCall();
+//		String proc = call.getCallStatement().getMethodName();
+//		TransFormula oldVarAssignment = m_ModifiableGlobalVariableManager.
+//				getOldVarsAssignment(proc);
+//		Set<BoogieVar> modifiableGlobals = oldVarAssignment.getInVars().keySet();
+		
 
 		//rename vars which are assigned on return to Hier vars
 		hierFormula = renameVarsToHierConstants(p.getVars(), hierFormula);
 		if (m_UnletTerms ) {
 			hierFormula = (new FormulaUnLet()).unlet(hierFormula);
 		}
+		
+		
 		//TODO auxvars
 		assert hierFormula.getFreeVars().length == 0;
 		
@@ -258,10 +301,73 @@ public class EdgeChecker {
 			hierFormula = m_Script.annotate(hierFormula, annot);
 		}
 		LBool quickCheck = m_SmtManager.assertTerm(hierFormula);
+		
+		// Now, we have to take care for variables g that are modifiable in the
+		// caller but not in the callee.
+		// In the succPred and in the hierPred they will be treated as usual
+		// (i.e., nonOldVar renamed to default or primed constant depending on
+		// if assigned at return or not)
+		// we additionally have to state that old(g) and g both have the value
+		// of g at the position before the call.
+		
+//		Collection<Term> calleeNonModOldVarsEqualities = 
+//				constructCalleeNonModOldVarsEquality(m_PrePred.getVars(), 
+//						modifiableGlobalsCaller, modifiableGlobalsCallee);
+//		if (!calleeNonModOldVarsEqualities.isEmpty()) {
+//			Term nonModOldVarsEquality = Util.and(m_Script, 
+//					calleeNonModOldVarsEqualities.toArray(new Term[calleeNonModOldVarsEqualities.size()]));
+//			if (m_AddDebugInformation) {
+//				String name = "NonModGlobalEqualityForCallerCalleeDifference";
+//				Annotation annot = new Annotation(":named", name);
+//				nonModOldVarsEquality = m_Script.annotate(nonModOldVarsEquality, annot);
+//			}
+//			quickCheck = m_SmtManager.assertTerm(nonModOldVarsEquality);
+//		}
+		
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return quickCheck;
 	}
 	
+
+	/**
+	 * Return a set of equalities such that for each oldvar old(g) that occurs
+	 * in vars and for which the corresponding nonOldVar occurs in 
+	 * modifiableGlobalsCaller but not in modifiableGlobalsCallee we add the
+	 * equality (= c_old(g) c_g_hier) and
+	 * for each nonOldVar that occurs in 
+	 * modifiableGlobalsCaller but not in modifiableGlobalsCallee we add the
+	 * equality (= c_g c_g_hier),
+	 * where c_g is the default constant of the 
+	 * global variable g and c_old(g) is the default constant of old(g) and
+	 * c_g_hier is the constant for the nonOldVar g at the position of the
+	 * hierarchical predecessor.
+	 */
+	private Collection<Term> constructCalleeNonModOldVarsEquality(Set<BoogieVar> vars,
+			Set<BoogieVar> modifiableGlobalsCaller,
+			Set<BoogieVar> modifiableGlobalsCallee) {
+		if (!modifiableGlobalsCallee.containsAll(modifiableGlobalsCaller)) {
+			boolean test = true;
+		}
+		Collection<Term> conjunction = new ArrayList<>();
+		for (BoogieVar bv : vars) {
+			if (bv instanceof GlobalBoogieVar) {
+				BoogieNonOldVar bnov;
+				if (bv instanceof BoogieOldVar) {
+					bnov = ((BoogieOldVar) bv).getNonOldVar();
+				} else {
+					bnov = (BoogieNonOldVar) bv;
+				}
+				if (modifiableGlobalsCaller.contains(bnov) && 
+						!modifiableGlobalsCallee.contains(bnov)) {
+					Term hierConst = getOrConstructHierConstant(bnov);
+					Term conjunct = SmtUtils.binaryEquality(m_Script, bv.getDefaultConstant(), hierConst);
+					conjunction.add(conjunct);
+				}
+			}
+		}
+		return conjunction;
+	}
+
 	public void unAssertHierPred() {
 		assert m_SmtManager.getStatus() == Status.EDGECHECK : "No edgecheck in progress";
 		assert m_HierPred != null : "No HierPred asserted";
@@ -280,12 +386,15 @@ public class EdgeChecker {
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_Script.push(1);
 		
-		//OldVars not renamed
+		//OldVars renamed (depending on modifiability)
 		//All variables get index 0 
 		//assigned vars (locals and globals) get index 1
 		//other vars get index 0
 		Set<BoogieVar> assignedVars = m_TransFormula.getAssignedVars();
 		Term renamedFormula = renameVarsToPrimedConstants(assignedVars, p.getFormula());
+		String succProc = m_CodeBlock.getSucceedingProcedure();
+		Set<BoogieVar> modifiableGlobals = m_ModifiableGlobalVariableManager.getModifiedBoogieVars(succProc);
+		renamedFormula = renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(p.getVars(), modifiableGlobals, renamedFormula);
 		renamedFormula = renameVarsToDefaultConstants(p.getVars(), renamedFormula);
 		if (m_UnletTerms ) {
 			renamedFormula = (new FormulaUnLet()).unlet(renamedFormula);
@@ -330,7 +439,7 @@ public class EdgeChecker {
 		m_Script.push(1);
 		
 		Set<BoogieVar> boogieVars = p.getVars();
-		// rename oldVars to default contants of non-oldvars
+		// rename oldVars to default constants of non-oldvars
 		Term renamedFormula = renameGlobalsAndOldVarsToNonOldDefaultConstants(
 												boogieVars, p.getFormula());
 		// rename remaining variables
@@ -384,18 +493,28 @@ public class EdgeChecker {
 		//rename assignedVars to primed vars
 		Set<BoogieVar> assignedVars = m_TransFormula.getAssignedVars();
 		Term renamedFormula = renameVarsToPrimedConstants(assignedVars, p.getFormula());
-		//rename modifiable globals to primed vars
-		Return ret = (Return) m_CodeBlock;
-		Call call = ret.getCorrespondingCall();
-		String proc = call.getCallStatement().getMethodName();
-		TransFormula oldVarAssignment = m_ModifiableGlobalVariableManager.
-				getOldVarsAssignment(proc);
-		Set<BoogieVar> modifiableGlobals = oldVarAssignment.getInVars().keySet();
-		renamedFormula = renameVarsToDefaultConstants(modifiableGlobals, renamedFormula);
 		
-		//rename non-modifiable globals to default vars
-		renamedFormula = renameNonModifiableGlobalsToDefaultConstants(
-				p.getVars(), modifiableGlobals, renamedFormula);
+		String callee = m_CodeBlock.getPreceedingProcedure();
+		Set<BoogieVar> modifiableGlobalsCallee = m_ModifiableGlobalVariableManager.
+				getModifiedBoogieVars(callee);
+		
+		//rename modifiable globals to default constants
+		renamedFormula = renameVarsToDefaultConstants(modifiableGlobalsCallee, renamedFormula);
+		
+		// rename globals that are not modifiable by callee to default constants
+		renamedFormula = renameNonModifiableNonOldGlobalsToDefaultConstants(
+				p.getVars(), modifiableGlobalsCallee, renamedFormula);
+		
+		// rename oldvars of globals that are not modifiable by caller to 
+		// default constants of nonOldVar
+		String caller = m_CodeBlock.getSucceedingProcedure();
+		Set<BoogieVar> modifiableGlobalsCaller = m_ModifiableGlobalVariableManager.
+				getModifiedBoogieVars(caller);
+		renamedFormula = renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(
+				p.getVars(), modifiableGlobalsCaller, renamedFormula);
+		
+		// rename remaining non-old Globals to default constants
+//		renamedFormula = renameNonOldGlobalsToDefaultConstants(p.getVars(), renamedFormula);
 		
 		//rename remaining vars to Hier vars
 		renamedFormula = renameVarsToHierConstants(p.getVars(), renamedFormula);
@@ -436,13 +555,7 @@ public class EdgeChecker {
 		return isSat;
 	}
 	
-	private Term oldVarsEquality(BoogieOldVar oldVar) {
-		assert oldVar.isOldvar();
-		BoogieVar nonOldVar = oldVar.getNonOldVar();
-		Term equality = m_Script.term("=", oldVar.getDefaultConstant(), 
-										   nonOldVar.getDefaultConstant());
-		return equality;
-	}
+
 	
 	
 	
@@ -546,9 +659,10 @@ public class EdgeChecker {
 	
 
 	/**
-	 * oldVars not renamed 
+	 * Rename each g in boogieVars that is not contained in modifiableGlobals
+	 * to c_g, where c_g is the default constant for g.
 	 */
-	private Term renameNonModifiableGlobalsToDefaultConstants(
+	private Term renameNonModifiableNonOldGlobalsToDefaultConstants(
 			Set<BoogieVar> boogieVars, 
 			Set<BoogieVar> modifiableGlobals,
 			Term formula) {
@@ -556,26 +670,49 @@ public class EdgeChecker {
 		ArrayList<Term> replacers = new ArrayList<Term>();
 		for (BoogieVar bv : boogieVars) {
 			if (bv.isGlobal()) {
-				if (bv.isOldvar()) {
-					assert !modifiableGlobals.contains(bv);
-					// do nothing
-				} else {
+				if (bv instanceof BoogieNonOldVar) {
 					if (modifiableGlobals.contains(bv)) {
-						//do noting
+						//do nothing
 					} else {
-						//oldVar of global which is not modifiable by called proc
 						replacees.add(bv.getTermVariable());
 						replacers.add(bv.getDefaultConstant());
 					}
 				}
-			} else {
-				assert !modifiableGlobals.contains(bv);
 			}
 		}
 		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
 		Term[] values = replacers.toArray(new Term[replacers.size()]);
 		return m_Script.let( vars , values, formula);
 	}
+	
+	
+	/**
+	 * Rename oldVars old(g) of non-modifiable globals to the
+	 * default constants of g. 
+	 */
+	private Term renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(
+			Set<BoogieVar> boogieVars, 
+			Set<BoogieVar> modifiableGlobals,
+			Term formula) {
+		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		ArrayList<Term> replacers = new ArrayList<Term>();
+		for (BoogieVar bv : boogieVars) {
+			if (bv instanceof BoogieOldVar) {
+				BoogieNonOldVar nonOldVar = ((BoogieOldVar) bv).getNonOldVar();
+				if (modifiableGlobals.contains(nonOldVar)) {
+					//do nothing
+				} else {
+					replacees.add(bv.getTermVariable());
+					replacers.add(nonOldVar.getDefaultConstant());
+				}
+				
+			}
+		}
+		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		return m_Script.let( vars , values, formula);
+	}
+
 	
 	
 	
@@ -632,6 +769,26 @@ public class EdgeChecker {
 		Term[] values = replacers.toArray(new Term[replacers.size()]);
 		return m_Script.let( vars , values, formula);
 	}
+	
+//	private Term renameNonOldGlobalsToDefaultConstants(
+//			Set<BoogieVar> boogieVars, 
+//			Term formula) {
+//		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+//		ArrayList<Term> replacers = new ArrayList<Term>();
+//		for (BoogieVar bv : boogieVars) {
+//			if (bv.isGlobal()) {
+//				if (bv.isOldvar()) {
+//					// do nothing
+//				} else {
+//					replacees.add(bv.getTermVariable());
+//					replacers.add(bv.getDefaultConstant());
+//				}
+//			}
+//		}
+//		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+//		Term[] values = replacers.toArray(new Term[replacers.size()]);
+//		return m_Script.let( vars , values, formula);
+//	}
 	
 	
 	
