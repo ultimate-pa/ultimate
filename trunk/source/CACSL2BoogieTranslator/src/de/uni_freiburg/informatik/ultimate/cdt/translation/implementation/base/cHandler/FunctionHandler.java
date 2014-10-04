@@ -386,9 +386,9 @@ public class FunctionHandler {
 						new Attribute[0], new VarList[] { var });
 				
 
-                if (isOnHeap) {
-                    cvar = new CPointer(cvar);
-                }
+//                if (isOnHeap) {
+//                    cvar = new CPointer(cvar);
+//                }
                 
 				VariableLHS tempLHS = new VariableLHS(loc, auxInvar);
 				IdentifierExpression rhsId = new IdentifierExpression(loc, bId);
@@ -401,7 +401,9 @@ public class FunctionHandler {
                     ArrayList<Declaration> decls = new ArrayList<Declaration>();
                     ResultExpression assign = ((CHandler) main.cHandler).
                         makeAssignment(main, loc, stmt, hlv,
-                            new RValue(rhsId, ((CPointer)cvar).pointsToType),
+//                            new RValue(rhsId, ((CPointer)cvar).pointsToType),
+                        //convention: if a variable is put on heap or not, its ctype stays the same
+                            new RValue(rhsId, cvar),
                             decls,
                             new LinkedHashMap<VariableDeclaration, ILocation>(),
                             new ArrayList<Overapprox>());

@@ -941,6 +941,8 @@ public class CHandler implements ICHandler {
 		LRValue lrVal = null;
 		if (useHeap) {
 			IdentifierExpression idExp = new IdentifierExpression(loc, bId);
+			//convention: the ctype in the symbol table of something that we put on the heap
+			// is the same as it would be if we did not put it on heap
 			lrVal = new HeapLValue(idExp, cType);
 		} else {
 			VariableLHS idLhs = new VariableLHS(loc, bId);
