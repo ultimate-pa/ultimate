@@ -474,7 +474,7 @@ public class LassoChecker {
 	private void checkLoopTermination(TransFormula loopTF) {
 		assert !m_Bspm.providesPredicates() : "termination already checked";
 		boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula());
-		if (s_AvoidNonterminationCheckIfArraysAreContained && containsArrays) {
+		if (containsArrays) {
 			// if there are array variables we will probably run in a huge
 			// DNF, so as a precaution we do not check and say unknown
 			m_LoopTermination = SynthesisResult.UNKNOWN;
