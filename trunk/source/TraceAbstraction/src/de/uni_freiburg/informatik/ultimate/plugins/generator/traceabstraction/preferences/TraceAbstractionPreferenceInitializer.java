@@ -152,8 +152,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 	
 	public enum AssertCodeBlockOrder { 
-		NOT_INCREMENTALLY, OUTSIDE_LOOP_FIRST1, OUTSIDE_LOOP_FIRST2, OUTSIDE_LOOP_FIRST3,
-		INSIDE_LOOP_FIRST1
+		NOT_INCREMENTALLY, OUTSIDE_LOOP_FIRST1, OUTSIDE_LOOP_FIRST2,
+		INSIDE_LOOP_FIRST1, MIX_INSIDE_OUTSIDE
 	}
 	
 	
