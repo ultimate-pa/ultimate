@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.model.IType;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class BoogieNonOldVar extends BoogieVar implements Serializable {
+public class BoogieNonOldVar extends GlobalBoogieVar implements Serializable {
 
 	private static final long serialVersionUID = 103072739646531062L;
 	
