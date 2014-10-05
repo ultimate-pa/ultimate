@@ -149,9 +149,9 @@ public class IndexSupportingInvariantAnalysis {
 		IPredicate invariantCandidate = new BasicPredicate(0, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(), tvp.getClosedFormula());
 		Set<BoogieVar> emptyVarSet = Collections.emptySet();
 		IPredicate truePredicate = new BasicPredicate(0, new String[0], m_Script.term("true"), emptyVarSet, m_Script.term("true"));
-		LBool impliedByStem = PredicateUtils.isInductiveHelper(m_boogie2smt, truePredicate, invariantCandidate, m_OriginalStem);
+		LBool impliedByStem = PredicateUtils.isInductiveHelper(m_boogie2smt, truePredicate, invariantCandidate, m_OriginalStem, null);
 		if (impliedByStem == LBool.UNSAT) {
-			LBool invariantOfLoop = PredicateUtils.isInductiveHelper(m_boogie2smt, invariantCandidate, invariantCandidate, m_OriginalLoop);
+			LBool invariantOfLoop = PredicateUtils.isInductiveHelper(m_boogie2smt, invariantCandidate, invariantCandidate, m_OriginalLoop, null);
 			if (invariantOfLoop == LBool.UNSAT) {
 				return true;
 			} else {
