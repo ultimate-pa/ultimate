@@ -112,10 +112,17 @@ trunk/examples/svcomp/ddv-machzwd/ \
 trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
 trunk/examples/svcomp/ddv-machzwd/ \
 "AutomizerBpl.xml;AutomizerC.xml;automizer/BackwardPredicates_SvcompReachPreciseMM.epf"
-
 fi
 
 
+if [ "$1" = "unsatCore" ]; then
+echo "$1"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 600 "$2" \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/unsatCore/ForwardPredicates.epf" \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/unsatCore/ForwardPredicates_WithoutUnsatCore.epf" \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/unsatCore/BackwardPredicates.epf" \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/unsatCore/BackwardPredicates_WithoutUnsatCore.epf.epf"
+fi
 
 
 if [ "$1" = "templateBenchmark" ]; then
