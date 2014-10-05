@@ -1322,7 +1322,11 @@ public class TransFormula implements Serializable {
 			for (Entry<BoogieVar, TermVariable> entry : callTf.getInVars().entrySet()) {
 				if (!result.getOutVars().containsKey(entry.getKey())) {
 					TermVariable inVar = result.getInVars().get(entry.getKey());
-					result.m_OutVars.put(entry.getKey(), inVar);
+					if (inVar == null) {
+						// do nothing, not in formula any more
+					} else {
+						result.m_OutVars.put(entry.getKey(), inVar);
+					}
 				}
 			}
 		}
