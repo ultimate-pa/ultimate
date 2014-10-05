@@ -33,6 +33,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<INTERPOLATION>(
 						LABEL_INTERPOLATED_LOCS, DEF_INTERPOLANTS,
 						PreferenceType.Combo, INTERPOLATION.values()),
+				new UltimatePreferenceItem<UnsatCores>(
+						LABEL_UnsatCores, UnsatCores.CONJUNCT_LEVEL,
+						PreferenceType.Combo, UnsatCores.values()),
 				new UltimatePreferenceItem<AssertCodeBlockOrder>(LABEL_AssertCodeBlocksIncrementally, 
 							AssertCodeBlockOrder.NOT_INCREMENTALLY, PreferenceType.Combo,
 							AssertCodeBlockOrder.values()),
@@ -98,6 +101,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_cutOff = "cut-off requires same transition";
 	public static final String LABEL_unfolding2Net = "use unfolding as abstraction";
 	public static final String LABEL_AssertCodeBlocksIncrementally = "Assert CodeBlocks";
+	public static final String LABEL_UnsatCores = "Use unsat cores";
 
 	public static final String VALUE_ABSTRACTION = "Abstraction";
 	public static final String VALUE_RCFG = "RecursiveControlFlowGraph";
@@ -115,6 +119,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String VALUE_KMM = "Ken McMillan";
 	public static final String VALUE_EVR = "Esparza Römer Vogler";
 	public static final String VALUE_EVRMark = "ERV with equal markings";
+
 
 	/*
 	 * default values for the different preferences
@@ -154,6 +159,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public enum AssertCodeBlockOrder { 
 		NOT_INCREMENTALLY, OUTSIDE_LOOP_FIRST1, OUTSIDE_LOOP_FIRST2,
 		INSIDE_LOOP_FIRST1, MIX_INSIDE_OUTSIDE
+	}
+	
+	public enum UnsatCores {
+		IGNORE, STATEMENT_LEVEL, CONJUNCT_LEVEL
 	}
 	
 	

@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
@@ -90,6 +91,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final PredicateFactoryResultChecking m_PredicateFactoryResultChecking;
 
 	protected final INTERPOLATION m_Interpolation;
+	protected final UnsatCores m_UnsatCores;
 
 	protected final boolean m_ComputeHoareAnnotation;
 
@@ -117,6 +119,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_PredicateFactoryResultChecking = new PredicateFactoryResultChecking(smtManager);
 		m_CegarLoopBenchmark = new CegarLoopBenchmarkGenerator();
 		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_OverallTime);
+		
+		UltimatePreferenceStore m_Prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		m_UnsatCores = m_Prefs.getEnum(
+				TraceAbstractionPreferenceInitializer.LABEL_UnsatCores,
+				UnsatCores.class);
 	}
 
 	@Override
@@ -169,7 +176,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case FPandBP:
 			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
-							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, mServices);
+							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_UnsatCores, mServices);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
