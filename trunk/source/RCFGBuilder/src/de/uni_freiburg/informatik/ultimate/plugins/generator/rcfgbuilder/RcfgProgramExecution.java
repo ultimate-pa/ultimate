@@ -12,7 +12,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement.StepInfo;
 
 public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expression> {
 
@@ -32,7 +35,13 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 		// statements.
 		ArrayList<AtomicTraceElement<CodeBlock>> atomictrace = new ArrayList<>();
 		for (CodeBlock te : trace) {
-			atomictrace.add(new AtomicTraceElement<CodeBlock>(te));
+			if (te instanceof Call) {
+				atomictrace.add(new AtomicTraceElement<CodeBlock>(te, te, StepInfo.CALL));
+			} else if (te instanceof Return) {
+				atomictrace.add(new AtomicTraceElement<CodeBlock>(te, te, StepInfo.RETURN));
+			} else {
+				atomictrace.add(new AtomicTraceElement<CodeBlock>(te));
+			}
 		}
 
 		m_Trace = atomictrace;
