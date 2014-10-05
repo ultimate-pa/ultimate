@@ -121,7 +121,7 @@ trunk/examples/toolchains/AutomizerTestDir.sh -da 600 "$2" \
 "AutomizerBpl.xml;AutomizerC.xml;automizer/unsatCore/ForwardPredicates.epf" \
 "AutomizerBpl.xml;AutomizerC.xml;automizer/unsatCore/ForwardPredicates_WithoutUnsatCore.epf" \
 "AutomizerBpl.xml;AutomizerC.xml;automizer/unsatCore/BackwardPredicates.epf" \
-"AutomizerBpl.xml;AutomizerC.xml;automizer/unsatCore/BackwardPredicates_WithoutUnsatCore.epf.epf"
+"AutomizerBpl.xml;AutomizerC.xml;automizer/unsatCore/BackwardPredicates_WithoutUnsatCore.epf"
 fi
 
 
