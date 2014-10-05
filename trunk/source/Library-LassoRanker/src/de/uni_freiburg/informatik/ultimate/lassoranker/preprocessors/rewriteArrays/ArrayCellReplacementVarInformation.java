@@ -128,7 +128,7 @@ public class ArrayCellReplacementVarInformation {
 				if (inVar != null) {
 					result.put(tv, inVar);
 				} else {
-					RankVar outVar = m_TransFormulaLR.getInVarsReverseMapping().get(tv);
+					RankVar outVar = m_TransFormulaLR.getOutVarsReverseMapping().get(tv);
 					if (outVar != null) {
 						result.put(tv, outVar);
 					} else {

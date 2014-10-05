@@ -442,16 +442,16 @@ public class TransFormulaLRWithArrayInformation {
 			m_ArrayFirstGeneration2Indices.addPair(firstGeneration, index);
 			// TODO: optimization the following is only necessary if the first
 			// generation is no auxiliary variable.
-			if (TransFormulaUtils.allVariablesAreInVars(index, getTransFormulaLR())) {
-				ArrayIndex inReplacedByOut = new ArrayIndex(SmtUtils.substitutionElementwise(index, m_InVars2OutVars));
-				m_ArrayFirstGeneration2Indices.addPair(firstGeneration, inReplacedByOut);
-				m_AdditionalArrayReads.addAll(extractArrayReads(inReplacedByOut));
-			}
-			if (TransFormulaUtils.allVariablesAreOutVars(index, getTransFormulaLR())) {
-				ArrayIndex outReplacedByIn = new ArrayIndex(SmtUtils.substitutionElementwise(index, m_OutVars2InVars));
-				m_ArrayFirstGeneration2Indices.addPair(firstGeneration, outReplacedByIn);
-				m_AdditionalArrayReads.addAll(extractArrayReads(outReplacedByIn));
-			}
+//			if (TransFormulaUtils.allVariablesAreInVars(index, getTransFormulaLR())) {
+//				ArrayIndex inReplacedByOut = new ArrayIndex(SmtUtils.substitutionElementwise(index, m_InVars2OutVars));
+//				m_ArrayFirstGeneration2Indices.addPair(firstGeneration, inReplacedByOut);
+//				m_AdditionalArrayReads.addAll(extractArrayReads(inReplacedByOut));
+//			}
+//			if (TransFormulaUtils.allVariablesAreOutVars(index, getTransFormulaLR())) {
+//				ArrayIndex outReplacedByIn = new ArrayIndex(SmtUtils.substitutionElementwise(index, m_OutVars2InVars));
+//				m_ArrayFirstGeneration2Indices.addPair(firstGeneration, outReplacedByIn);
+//				m_AdditionalArrayReads.addAll(extractArrayReads(outReplacedByIn));
+//			}
 		}
 
 		private List<MultiDimensionalSelect> extractArrayReads(List<Term> terms) {

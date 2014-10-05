@@ -243,17 +243,31 @@ public class TransFormulaLRWithArrayCells {
 		NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> array2Index2RepVar = 
 				arrayCellRepVarConstructor.getArrayRepresentative2IndexRepresentative2ReplacementVar();
 		for (TermVariable array : array2Index2RepVar.keySet()) {
-			if (arrayOccursInThisTransFormula(array)) {
+			if (arrayOccursInThisTransFormulaAsInvar(array)) {
 				for (Entry<ArrayIndex, ArrayCellReplacementVarInformation> entry : array2Index2RepVar.get(array).entrySet()) {
 					ArrayIndex index = entry.getKey();
-					if (!arrayCellOccursInThisTransFormula(array, index)) {
-						m_ForeignReplacementVars.put(array, index, entry.getValue());
+					ArrayCellReplacementVarInformation acrvi = entry.getValue();
+					if (allVarsOfIndexOccurInThisTransFormulaAsInvar(acrvi)) {
+						if (!arrayCellOccursInThisTransFormula(array, index)) {
+							m_ForeignReplacementVars.put(array, index, entry.getValue());
+						}
 					}
 				}
 			}
 		}
 	}
 	
+	private boolean allVarsOfIndexOccurInThisTransFormulaAsInvar(
+			ArrayCellReplacementVarInformation acrvi) {
+		Collection<RankVar> rankVarsOccurringInIndex = acrvi.termVariableToRankVarMappingForIndex().values();
+		for (RankVar rv : rankVarsOccurringInIndex) {
+			if (!this.tflrwai.getTransFormulaLR().getInVars().containsKey(rv)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public void doSomething() {
 		for (Triple<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> triple  : m_ForeignReplacementVars.entrySet()) {
 			ArrayCellReplacementVarInformation acrvi = triple.getThird();
@@ -263,6 +277,7 @@ public class TransFormulaLRWithArrayCells {
 			for (RankVar rv : rankVarsOccurringInIndex) {
 				if (!rankVarOccursInThisTransformula(rv, m_Result)) {
 					addRankVar(rv);
+					throw new AssertionError("case may not occur any more");
 				}
 			}
 			TermVariable translatedArray = (TermVariable) tflrwai.getTransFormulaLR().getInVars().get(acrvi.getArrayRankVar());
@@ -316,14 +331,13 @@ public class TransFormulaLRWithArrayCells {
 		throw new AssertionError(rv + " occurs only as inVar or only as outVar");
 	}
 
-	private boolean arrayOccursInThisTransFormula(TermVariable array) {
-		return this.tflrwai.getArrayCellInVars().keySet().contains(array) || 
-				this.tflrwai.getArrayCellOutVars().keySet().contains(array);
+	private boolean arrayOccursInThisTransFormulaAsInvar(TermVariable array) {
+		return this.tflrwai.getArrayCellInVars().keySet().contains(array);
 	}
 	
 	private boolean arrayCellOccursInThisTransFormula(TermVariable array, List<Term> index) {
-		return this.tflrwai.getArrayCellInVars().get(array).containsKey(index) || 
-				this.tflrwai.getArrayCellOutVars().get(array).containsKey(index);
+		return this.tflrwai.getArrayCellInVars().get(array).containsKey(index);
+//		||	this.tflrwai.getArrayCellOutVars().get(array).containsKey(index);
 	}
 
 	
