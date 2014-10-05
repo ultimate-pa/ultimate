@@ -626,8 +626,11 @@ public class SmtManager {
 		// }
 
 		TransFormula tf = ta.getTransitionFormula();
+		String proc = ta.getPreceedingProcedure();
+		assert proc.equals(ta.getSucceedingProcedure()) : "different procedure before and after";
+		Set<BoogieVar> modifiableGlobals = m_ModifiableGlobals.getModifiedBoogieVars(proc);
 
-		LBool result = PredicateUtils.isInductiveHelper(m_Boogie2Smt, ps1, ps2, tf);
+		LBool result = PredicateUtils.isInductiveHelper(m_Boogie2Smt, ps1, ps2, tf, modifiableGlobals);
 
 		if (expectUnsat) {
 			if (result == LBool.SAT) {
@@ -785,10 +788,13 @@ public class SmtManager {
 
 		m_Script.push(1);
 		m_IndexedConstants = new ScopedHashMap<String, Term>();
-		// OldVars not renamed.
+		// OldVars not renamed if modifiable.
 		// All variables get index 0.
+		String caller = ta.getPreceedingProcedure();
+		Set<BoogieVar> modifiableGlobalsCaller = m_ModifiableGlobals.
+				getModifiedBoogieVars(caller);
 		Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<BoogieVar>(0), 4, 0,
-				Integer.MIN_VALUE, null, -5, 0, m_IndexedConstants, m_Script);
+				Integer.MIN_VALUE, null, -5, 0, m_IndexedConstants, m_Script, modifiableGlobalsCaller);
 
 		TransFormula tf = ta.getTransitionFormula();
 		Set<BoogieVar> assignedVars = new HashSet<BoogieVar>();
@@ -798,8 +804,11 @@ public class SmtManager {
 		// OldVars renamed to index 0
 		// GlobalVars renamed to index 0
 		// Other vars get index 1
+		String callee = ta.getSucceedingProcedure();
+		Set<BoogieVar> modifiableGlobalsCallee = m_ModifiableGlobals.
+				getModifiedBoogieVars(callee);
 		Term ps2renamed = PredicateUtils.formulaWithIndexedVars(ps2, new HashSet<BoogieVar>(0), 4, 1, 0, null, 23, 0,
-				m_IndexedConstants, m_Script);
+				m_IndexedConstants, m_Script, modifiableGlobalsCallee);
 
 		// We want to return true if (fState1 && fTrans)-> fState2 is valid
 		// This is the case if (fState1 && fTrans && !fState2) is unsatisfiable
@@ -841,8 +850,6 @@ public class SmtManager {
 		m_Script.push(1);
 		m_IndexedConstants = new ScopedHashMap<String, Term>();
 		Call ca = ta.getCorrespondingCall();
-		Set<BoogieVar> modifiableGlobals = m_ModifiableGlobals.getModifiedBoogieVars(ca.getCallStatement()
-				.getMethodName());
 
 		TransFormula tfReturn = ta.getTransitionFormula();
 		Set<BoogieVar> assignedVarsOnReturn = new HashSet<BoogieVar>();
@@ -855,25 +862,33 @@ public class SmtManager {
 		Term fCall = PredicateUtils.formulaWithIndexedVars(tfCall, 0, 1, assignedVarsOnCall, m_IndexedConstants,
 				m_Script, m_Boogie2Smt.getVariableManager());
 		// fCall = (new FormulaUnLet()).unlet(fCall);
+		
+		String callee = ta.getPreceedingProcedure();
+		Set<BoogieVar> modifiableGlobalsCallee = m_ModifiableGlobals.
+				getModifiedBoogieVars(callee);
 
-		// oldVars not renamed
+		String caller = ta.getSucceedingProcedure();
+		Set<BoogieVar> modifiableGlobalsCaller = m_ModifiableGlobals.
+				getModifiedBoogieVars(caller);
+
+		// oldVars not renamed if modifiable
 		// other variables get index 0
 		Term pskrenamed = PredicateUtils.formulaWithIndexedVars(psk, new HashSet<BoogieVar>(0), 23, 0,
-				Integer.MIN_VALUE, null, 23, 0, m_IndexedConstants, m_Script);
+				Integer.MIN_VALUE, null, 23, 0, m_IndexedConstants, m_Script, modifiableGlobalsCaller);
 
 		// oldVars get index 0
 		// modifiable globals get index 2
 		// not modifiable globals get index 0
 		// other variables get index 1
 		Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<BoogieVar>(0), 23, 1, 0,
-				modifiableGlobals, 2, 0, m_IndexedConstants, m_Script);
+				modifiableGlobalsCallee, 2, 0, m_IndexedConstants, m_Script, modifiableGlobalsCallee);
 
-		// oldVars not renamed
+		// oldVars not renamed if modifiable
 		// modifiable globals get index 2
 		// variables assigned on return get index 2
 		// other variables get index 0
 		Term ps2renamed = PredicateUtils.formulaWithIndexedVars(ps2, assignedVarsOnReturn, 2, 0, Integer.MIN_VALUE,
-				modifiableGlobals, 2, 0, m_IndexedConstants, m_Script);
+				modifiableGlobalsCallee, 2, 0, m_IndexedConstants, m_Script, modifiableGlobalsCaller);
 
 		// We want to return true if (fState1 && fTrans)-> fState2 is valid
 		// This is the case if (fState1 && fTrans && !fState2) is unsatisfiable

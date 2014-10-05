@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -35,23 +36,23 @@ public class PredicateUtils {
 	}
 	
 	public static LBool isInductiveHelper(Boogie2SMT boogie2smt, IPredicate ps1, IPredicate ps2,
-			TransFormula tf) {
+			TransFormula tf, Set<BoogieVar> modifiableGlobals) {
 		boogie2smt.getScript().push(1);
 		Map<String, Term> indexedConstants = new HashMap<String, Term>();
-		//OldVars not renamed
+		//OldVars not renamed if modifiable
 		//All variables get index 0 
 		Term ps1renamed = formulaWithIndexedVars(ps1,new HashSet<BoogieVar>(0),
-				4, 0, Integer.MIN_VALUE,null,-5,0, indexedConstants, boogie2smt.getScript());
+				4, 0, Integer.MIN_VALUE,null,-5,0, indexedConstants, boogie2smt.getScript(), modifiableGlobals);
 		
 		Set<BoogieVar> assignedVars = new HashSet<BoogieVar>();
 		Term fTrans = formulaWithIndexedVars(tf, 0, 1, assignedVars, indexedConstants, boogie2smt.getScript(), boogie2smt.getVariableManager());
 
-		//OldVars not renamed
+		//OldVars not renamed if modifiable
 		//All variables get index 0 
 		//assigned vars (locals and globals) get index 1
 		//other vars get index 0
 		Term ps2renamed = formulaWithIndexedVars(ps2, assignedVars,
-				1, 0, Integer.MIN_VALUE,assignedVars,1,0, indexedConstants, boogie2smt.getScript());
+				1, 0, Integer.MIN_VALUE,assignedVars,1,0, indexedConstants, boogie2smt.getScript(), modifiableGlobals);
 		
 		
 		//We want to return true if (fState1 && fTrans)-> fState2 is valid
@@ -84,8 +85,12 @@ public class PredicateUtils {
 	 *  renamed to v_defaultIdx
 	 * <li> If oldVarIdx is Integer.MIN_VALUE, each oldVar v is renamed to
 	 * v_OLD
-	 * <li> If oldVarIdx is not Integer.MIN_VALUE, each oldVar v is renamed to
-	 * v_oldVarIdx. This means v can get the same name as a non-oldVar!
+	 * <li> For oldvars we check if the the corresponding non-old
+	 * var is in the set of modifiableGlobals. If NO, the oldvar becomes the 
+	 * same constant as the corresponding non-old var. if YES the following
+	 * applies. If oldVarIdx is not Integer.MIN_VALUE, each oldVar v is renamed 
+	 * to v_oldVarIdx. This means v can get the same name as a non-oldVar!
+	 * If oldVar is Integer.MIN_VALUE, we check 
 	 * </ul> 
 
 	 */
@@ -95,7 +100,7 @@ public class PredicateUtils {
 						int oldVarIdx,
 						Set<BoogieVar> globalsWithSpecialIdx, int globSpecialIdx,
 						int globDefaultIdx, Map<String, Term> indexedConstants, 
-						Script script) {
+						Script script, Set<BoogieVar> modifiableGlobals) {
 		Term psTerm = ps.getFormula();
 		if (ps.getVars() == null) {
 			return psTerm;
@@ -108,11 +113,16 @@ public class PredicateUtils {
 			if (varsWithSpecialIdx.contains(var)) {
 				 cIndex = getIndexedConstant(var,specialIdx, indexedConstants, script);
 			} else if (var.isOldvar()) {
-				if (oldVarIdx == Integer.MIN_VALUE) {
-					cIndex = var.getDefaultConstant();
-				}
-				else {
-					cIndex = getIndexedConstant(((BoogieOldVar) var).getNonOldVar(), oldVarIdx, indexedConstants, script);
+				BoogieNonOldVar bnov = ((BoogieOldVar) var).getNonOldVar();
+				if (modifiableGlobals.contains(bnov)) {
+					if (oldVarIdx == Integer.MIN_VALUE) {
+						cIndex = var.getDefaultConstant();
+					}
+					else {
+						cIndex = getIndexedConstant(((BoogieOldVar) var).getNonOldVar(), oldVarIdx, indexedConstants, script);
+					}
+				} else {
+					cIndex = getIndexedConstant(bnov, globDefaultIdx, indexedConstants, script);
 				}
 			} else if (var.isGlobal()) {
 				if	(globalsWithSpecialIdx != null && 
