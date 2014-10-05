@@ -87,4 +87,11 @@ public class NestedMap2<K1, K2, V> {
 		}
 	}
 
+	@Override
+	public String toString() {
+		return m_K1ToK2ToV.toString();
+	}
+	
+	
+
 }
