@@ -970,7 +970,6 @@ public class MemoryHandler {
  			Attribute[] attr = new Attribute[0];
  			ASTType intT = new PrimitiveType(loc, SFO.INT);
  			CStruct cs = (CStruct) cType;
-// 			Expression nextOffset = new IntegerLiteral(loc, SFO.NR0);
  			if (cs.isIncomplete()) {
  				// do nothing
  			} else {
@@ -985,38 +984,21 @@ public class MemoryHandler {
  								new VarList(loc, new String[] { oId }, intT), null,
  								false));
  						Expression offIdEx = new IdentifierExpression(loc, oId);
+ 						int offsetValue = cType instanceof CUnion ? 0 : size;
  						Expression offsetOfField = new BinaryExpression(loc, Operator.COMPEQ,
- 								offIdEx, new IntegerLiteral(loc, (new Integer(size).toString())));
+ 								offIdEx, new IntegerLiteral(loc, (new Integer(offsetValue).toString())));
  						this.axioms.add(new Axiom(loc, attr, offsetOfField));
  					}
 
 
 					if (cType instanceof CUnion) {
-//						Expression fieldSize = new IntegerLiteral(loc, 
-//							(new Integer(calculateSizeOfWithGivenTypeSizes(loc, csf)).toString()));
-//						String id = SFO.SIZEOF + cType.toString();
-//						IdentifierExpression idex = new IdentifierExpression(loc, id);
-//						this.axioms.add(new Axiom(loc, attr, 
-//								new BinaryExpression(loc, Operator.COMPGEQ, idex, fieldSize)));
-						 // --> the above is unneccessary with given type sizes, right?? (and it causes problems..)
-					} else {//only in the struct case, the offsets grow, in the union case they stay at 0
-//						nextOffset = new BinaryExpression(loc, Operator.ARITHPLUS,
-//								nextOffset, fieldSize);
+						int s = calculateSizeOfWithGivenTypeSizes(loc, csf);
+						size = size < s ? s : size;
+					} else {
 						size += calculateSizeOfWithGivenTypeSizes(loc, csf);
 					}
  				}
  			}
-
-
- 			// 			for (CType fieldType : ((CStruct) cType).getFieldTypes()) {
-
- 			// 				if (cType instanceof CUnion) {
- 			// 					int fieldSize = calculateSizeOfWithGivenTypeSizes(loc, fieldType);
- 			// 					size = size >= fieldSize ? size : fieldSize;
- 			// 				} else {
- 			// 					size += calculateSizeOfWithGivenTypeSizes(loc, fieldType);
- 			// 				}
-
  		} else if (cType instanceof CNamed) {
  			return calculateSizeOfWithGivenTypeSizes(loc, ((CNamed) cType).getUnderlyingType());
  		} else if (cType instanceof CEnum) {
