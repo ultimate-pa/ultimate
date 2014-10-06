@@ -12,6 +12,7 @@ public class SVCOMPCTranslationTestSuite extends AbstractCTranslationTestSuite {
 
 //	private static File sInputDirectory = new File(Util.getFromMavenVariableSVCOMPRoot("../../svcomp/"));
 	private static File sInputDirectory = new File(Util.getPathFromTrunk("examples/svcomp/ldv-regression"));
+	private static File sSettings = new File(Util.getPathFromTrunk("examples/settings/automizer/ForwardPredicates_SvcompReachPreciseMM.epf"));
 	
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
@@ -23,6 +24,11 @@ public class SVCOMPCTranslationTestSuite extends AbstractCTranslationTestSuite {
 	@Override
 	public Collection<File> getInputFiles() {
 		return Util.getFiles(sInputDirectory, new String[] { ".c", ".i" });
+	}
+	
+	@Override 
+	public File getSettings() {
+		return sSettings;
 	}
 
 }

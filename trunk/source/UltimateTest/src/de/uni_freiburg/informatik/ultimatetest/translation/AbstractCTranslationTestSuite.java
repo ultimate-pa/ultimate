@@ -20,12 +20,13 @@ public abstract class AbstractCTranslationTestSuite extends UltimateTestSuite {
 		// get a set of input files
 
 		Collection<File> inputFiles = getInputFiles();
+		File settingsFile = getSettings();
 
 		File toolchainFile = new File(Util.getPathFromTrunk("examples/toolchains/CTranslationTest.xml"));
 		long deadline = 10000;
 
 		for (File inputFile : inputFiles) {
-			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, null, toolchainFile);
+			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
 			UltimateStarter starter = new UltimateStarter(urd, deadline, null, null);
 			rtr.add(new UltimateTestCase(inputFile.getAbsolutePath(), new TranslationTestResultDecider(inputFile
 					.getAbsolutePath()), starter, urd, super.getSummaries(), null));
@@ -36,4 +37,7 @@ public abstract class AbstractCTranslationTestSuite extends UltimateTestSuite {
 
 	public abstract Collection<File> getInputFiles();
 
+	public File getSettings() {
+		return null;
+	}
 }
