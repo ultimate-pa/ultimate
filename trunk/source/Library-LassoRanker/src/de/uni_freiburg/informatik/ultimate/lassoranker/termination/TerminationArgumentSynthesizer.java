@@ -309,7 +309,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		}
 		Collection<RankVar> rankVars = getRankVars();
 		Collection<RankVar> siVars = getSIVars();
-		m_template.init(this, m_settings.analysis.isLinear());
+		m_template.init(this);
 		mLogger.debug("Variables for ranking functions: " + rankVars);
 		mLogger.debug("Variables for supporting invariants: " + siVars);
 		/*

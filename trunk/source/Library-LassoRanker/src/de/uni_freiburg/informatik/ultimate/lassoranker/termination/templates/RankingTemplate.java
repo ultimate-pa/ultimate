@@ -41,8 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 
 /**
- * This is the superclass for templates for linear ranking. All templates will
- * derive from this class.
+ * This is the superclass for all linear ranking templates.
  * 
  * @author Jan Leike
  *
@@ -58,11 +57,10 @@ public abstract class RankingTemplate {
 	 */
 	public static final boolean sBlueAtoms = true;
 	
-	protected TerminationArgumentSynthesizer m_tas = null;
 	protected Script m_script = null;
+	protected TerminationArgumentSynthesizer m_tas = null;
 	protected Collection<RankVar> m_variables = null;
 	
-	protected boolean m_linear;
 	private boolean m_initialized = false;
 	
 	/**
@@ -73,8 +71,7 @@ public abstract class RankingTemplate {
 	 * 
 	 * @param tas the parent TerminationArgumentSynthesizer
 	 */
-	public final void init(TerminationArgumentSynthesizer tas, boolean linear) {
-		m_linear = linear;
+	public final void init(TerminationArgumentSynthesizer tas) {
 		m_tas = tas;
 		m_script = tas.getScript();
 		m_variables = tas.getRankVars();
