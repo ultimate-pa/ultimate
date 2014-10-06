@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -440,18 +441,42 @@ public class TransFormulaLRWithArrayInformation {
 
 		private void addFirstGenerationIndexPair(TermVariable firstGeneration, ArrayIndex index) {
 			m_ArrayFirstGeneration2Indices.addPair(firstGeneration, index);
-			// TODO: optimization the following is only necessary if the first
-			// generation is no auxiliary variable.
-//			if (TransFormulaUtils.allVariablesAreInVars(index, getTransFormulaLR())) {
-//				ArrayIndex inReplacedByOut = new ArrayIndex(SmtUtils.substitutionElementwise(index, m_InVars2OutVars));
-//				m_ArrayFirstGeneration2Indices.addPair(firstGeneration, inReplacedByOut);
-//				m_AdditionalArrayReads.addAll(extractArrayReads(inReplacedByOut));
-//			}
-//			if (TransFormulaUtils.allVariablesAreOutVars(index, getTransFormulaLR())) {
-//				ArrayIndex outReplacedByIn = new ArrayIndex(SmtUtils.substitutionElementwise(index, m_OutVars2InVars));
-//				m_ArrayFirstGeneration2Indices.addPair(firstGeneration, outReplacedByIn);
-//				m_AdditionalArrayReads.addAll(extractArrayReads(outReplacedByIn));
-//			}
+			if (m_TransFormulaLR.getInVarsReverseMapping().containsKey(firstGeneration)) {
+				if (TransFormulaUtils.allVariablesAreInVars(index, getTransFormulaLR())) {
+					ArrayIndex inReplacedByOut = new ArrayIndex(SmtUtils.substitutionElementwise(index, m_InVars2OutVars));
+					if (allVariablesOccurInFormula(inReplacedByOut, getTransFormulaLR())) {
+						m_ArrayFirstGeneration2Indices.addPair(firstGeneration, inReplacedByOut);
+						m_AdditionalArrayReads.addAll(extractArrayReads(inReplacedByOut));
+					}
+				}
+				if (TransFormulaUtils.allVariablesAreOutVars(index, getTransFormulaLR())) {
+					ArrayIndex outReplacedByIn = new ArrayIndex(SmtUtils.substitutionElementwise(index, m_OutVars2InVars));
+					if (allVariablesOccurInFormula(outReplacedByIn, getTransFormulaLR())) {
+						m_ArrayFirstGeneration2Indices.addPair(firstGeneration, outReplacedByIn);
+						m_AdditionalArrayReads.addAll(extractArrayReads(outReplacedByIn));
+					}
+				}
+
+				
+			}
+		}
+
+		/**
+		 * Returns true iff all TermVariables that occur in index also occur
+		 * in the Term of TransFormulaLR.
+		 */
+		private boolean allVariablesOccurInFormula(ArrayIndex index,
+				TransFormulaLR transFormulaLR) {
+			HashSet<TermVariable> varsInTransFormula = new HashSet<TermVariable>(
+					Arrays.asList(transFormulaLR.getFormula().getFreeVars()));
+			for (Term term : index) {
+				for (TermVariable tv : term.getFreeVars()) {
+					if (!varsInTransFormula.contains(tv)) {
+						return false;
+					}
+				}
+			}
+			return true;
 		}
 
 		private List<MultiDimensionalSelect> extractArrayReads(List<Term> terms) {
