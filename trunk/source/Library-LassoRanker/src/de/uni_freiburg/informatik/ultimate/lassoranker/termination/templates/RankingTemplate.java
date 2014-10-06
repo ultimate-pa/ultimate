@@ -48,12 +48,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public abstract class RankingTemplate {
 	/**
-	 * Fix Motzkin coefficients of the red atoms
+	 * Fix Motzkin coefficients of the red atoms?
 	 */
 	public static final boolean sRedAtoms = true;
 	
 	/**
-	 * Fix Motzkin coefficients of the blue atoms
+	 * Fix Motzkin coefficients of the blue atoms?
 	 */
 	public static final boolean sBlueAtoms = true;
 	
