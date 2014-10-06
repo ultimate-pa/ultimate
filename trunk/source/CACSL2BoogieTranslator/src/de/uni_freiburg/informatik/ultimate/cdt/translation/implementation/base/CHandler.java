@@ -1599,23 +1599,14 @@ public class CHandler implements ICHandler {
 	public Result visit(Dispatcher main, IASTExpressionStatement node) {
 		Result r = main.dispatch(node.getExpression());
 		if (r instanceof ResultExpression) {
-			ResultExpression res = (ResultExpression) r;
-			if (!res.stmt.isEmpty()) {
-				ResultExpression rExp = (ResultExpression) r;
+			ResultExpression rExp = (ResultExpression) r;
+			if (!rExp.stmt.isEmpty()) {
 				ArrayList<Statement> stmt = new ArrayList<Statement>(rExp.stmt);
 				ArrayList<Declaration> decl = new ArrayList<Declaration>(rExp.decl);
 				List<Overapprox> overappr = new ArrayList<Overapprox>();
-				assert (main.isAuxVarMapcomplete(decl, rExp.auxVars));
-				stmt.addAll(createHavocsForNonMallocAuxVars(res.auxVars)); // alex:
-																			// inserted
-																			// this
-																			// ..
-																			// why
-																			// wasn't
-																			// it
-																			// here
-																			// before???
-				overappr.addAll(res.overappr);
+				assert (main.isAuxVarMapcomplete(rExp.decl, rExp.auxVars));
+				stmt.addAll(createHavocsForNonMallocAuxVars(rExp.auxVars));
+				overappr.addAll(rExp.overappr);
 				Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
 				return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
 			} else {
@@ -2292,14 +2283,27 @@ public class CHandler implements ICHandler {
 			// otherwise the heap model should deal with everything)
 			if (unionFieldsToCType != null) {
 				for (Entry<StructLHS, CType> en : unionFieldsToCType.entrySet()) {
-					// TODO: maybe not use auxiliary variables so lavishly
-					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
-					decl.add(new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(loc,
-							new String[] { tmpId }, main.typeHandler.ctype2asttype(loc, en.getValue())) }));
+					//do not havoc when the type of the field is "compatible"
+					if (rightHandSide.cType.equals(en.getValue())
+							|| (rightHandSide.cType instanceof CPrimitive && en.getValue() instanceof CPrimitive
+							 && ((CPrimitive) rightHandSide.cType).getGeneralType().equals(((CPrimitive) en.getValue()).getGeneralType())
+							 && (memoryHandler.calculateSizeOfWithGivenTypeSizes(loc, rightHandSide.cType) 
+									 == memoryHandler.calculateSizeOfWithGivenTypeSizes(loc, en.getValue())))) {
+						stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { en.getKey() },
+								new Expression[] { rightHandSide.getValue() }));
+						continue;
+					} else { //otherwise we consider the value undefined, thus havoc it
+						// TODO: maybe not use auxiliary variables so lavishly
+						String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
+						VariableDeclaration tVarDec = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(loc,
+								new String[] { tmpId }, main.typeHandler.ctype2asttype(loc, en.getValue())) });
+						decl.add(tVarDec);
+						auxVars.put(tVarDec, loc); //ensures that the variable will be havoced
 
-					stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { en.getKey() },
-							new Expression[] { new IdentifierExpression(loc, tmpId) }));
-					stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tmpId) }));
+						stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { en.getKey() },
+								new Expression[] { new IdentifierExpression(loc, tmpId) }));
+						//					stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tmpId) })); //this is unnecessary, when we make the right entry in auxVars
+					}
 				}
 			}
 
