@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * 
  * @author Jan Leike
  */
-public class AffineTemplate extends RankingFunctionTemplate {
+public class AffineTemplate extends RankingTemplate {
 	
 	private static final String s_name_delta = "delta";
 	private static final String s_name_function = "rank";
@@ -90,7 +90,9 @@ public class AffineTemplate extends RankingFunctionTemplate {
 		{
 			LinearInequality li = m_fgen.generate(inVars);
 			li.setStrict(true);
-			li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
+			li.motzkin_coefficient = sRedAtoms ?
+					PossibleMotzkinCoefficients.ONE
+					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
 		}
 		
@@ -103,7 +105,8 @@ public class AffineTemplate extends RankingFunctionTemplate {
 			AffineTerm a = new AffineTerm(m_delta, Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
-			li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
+			li.motzkin_coefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
+					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
 		}
 		

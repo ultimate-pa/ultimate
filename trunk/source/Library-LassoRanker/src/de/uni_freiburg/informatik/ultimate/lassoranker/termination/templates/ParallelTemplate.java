@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * 
  * @author Jan Leike
  */
-public class ParallelTemplate extends RankingFunctionTemplate {
+public class ParallelTemplate extends RankingTemplate {
 	
 	public final int size;
 	
@@ -148,7 +148,9 @@ public class ParallelTemplate extends RankingFunctionTemplate {
 			LinearInequality li2 = m_fgens[i].generate(outVars);
 			li2.negate();
 			li.add(li2);
-			li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
+			li.motzkin_coefficient = sRedAtoms ?
+					PossibleMotzkinCoefficients.ONE
+					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
 		}
 		
@@ -162,9 +164,9 @@ public class ParallelTemplate extends RankingFunctionTemplate {
 					// f_i(x) > 0
 					LinearInequality li = m_fgens[i].generate(inVars);
 					li.setStrict(true);
-					li.motzkin_coefficient = i > 0 ?
-							PossibleMotzkinCoefficients.ANYTHING
-							: PossibleMotzkinCoefficients.ZERO_AND_ONE;
+					li.motzkin_coefficient = sRedAtoms && i == 0 ?
+							PossibleMotzkinCoefficients.ZERO_AND_ONE
+							: PossibleMotzkinCoefficients.ANYTHING;
 					disjunction.add(li);
 				} else {
 					// f_i(x') < f_i(x) - δ_i
@@ -175,9 +177,9 @@ public class ParallelTemplate extends RankingFunctionTemplate {
 					AffineTerm a = new AffineTerm(m_deltas[i], Rational.MONE);
 					li.add(a);
 					li.setStrict(true);
-					li.motzkin_coefficient = i > 0 ?
-							PossibleMotzkinCoefficients.ANYTHING
-							: PossibleMotzkinCoefficients.ZERO_AND_ONE;
+					li.motzkin_coefficient = sRedAtoms && i == 0 ?
+							PossibleMotzkinCoefficients.ZERO_AND_ONE
+							: PossibleMotzkinCoefficients.ANYTHING;
 					disjunction.add(li);
 				}
 			}

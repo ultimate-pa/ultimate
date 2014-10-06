@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * 
  * @author Jan Leike
  */
-public class MultiphaseTemplate extends RankingFunctionTemplate {
+public class MultiphaseTemplate extends RankingTemplate {
 	
 	public final int size;
 	
@@ -132,9 +132,9 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 		for (int i = 0; i < size; ++i) {
 			LinearInequality li = m_fgens[i].generate(inVars);
 			li.setStrict(true);
-			li.motzkin_coefficient = i > 0 ?
-					PossibleMotzkinCoefficients.ANYTHING
-					: PossibleMotzkinCoefficients.ZERO_AND_ONE;
+			li.motzkin_coefficient = (i == 0 && sRedAtoms) || (i > 0 && sBlueAtoms) ?
+					PossibleMotzkinCoefficients.ZERO_AND_ONE
+					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);
 		}
 		conjunction.add(disjunction);
@@ -150,12 +150,17 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 			AffineTerm a = new AffineTerm(m_deltas[i], Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
-			li.motzkin_coefficient = PossibleMotzkinCoefficients.ZERO_AND_ONE;
+			li.motzkin_coefficient = sRedAtoms ?
+					PossibleMotzkinCoefficients.ZERO_AND_ONE
+					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);
 			if (i > 0) {
 				LinearInequality li3 = m_fgens[i - 1].generate(inVars);
 				li3.setStrict(true);
-				li3.motzkin_coefficient = PossibleMotzkinCoefficients.ZERO_AND_ONE;
+				li3.motzkin_coefficient = PossibleMotzkinCoefficients.ANYTHING;
+//				li3.motzkin_coefficient = blue_atoms ?
+//						PossibleMotzkinCoefficients.ZERO_AND_ONE
+//						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li3);
 			}
 			conjunction.add(disjunction);

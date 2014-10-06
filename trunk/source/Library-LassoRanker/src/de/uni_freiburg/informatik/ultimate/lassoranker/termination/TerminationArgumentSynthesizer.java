@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.SMTSolver;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingFunctionTemplate;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
@@ -68,7 +68,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	/**
 	 * The template to be used
 	 */
-	private final RankingFunctionTemplate m_template;
+	private final RankingTemplate m_template;
 
 	/**
 	 * List of supporting invariant generators used by the last synthesize()
@@ -109,7 +109,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @param services
 	 * @param storage
 	 */
-	public TerminationArgumentSynthesizer(Lasso lasso, RankingFunctionTemplate template,
+	public TerminationArgumentSynthesizer(Lasso lasso, RankingTemplate template,
 			LassoRankerPreferences preferences, TerminationAnalysisSettings settings,
 			Set<Term> arrayIndexSupportingInvariants, IUltimateServiceProvider services, IToolchainStorage storage) {
 		super(lasso, preferences, template.getName() + "Template", services, storage);
@@ -174,7 +174,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 *            Output container for the used SI generators
 	 * @return List of all conjuncts of the constraints
 	 */
-	private Collection<Term> buildConstraints(RankingFunctionTemplate template,
+	private Collection<Term> buildConstraints(RankingTemplate template,
 			Collection<SupportingInvariantGenerator> si_generators) {
 		LinearTransition stem = m_lasso.getStem();
 		LinearTransition loop = m_lasso.getLoop();

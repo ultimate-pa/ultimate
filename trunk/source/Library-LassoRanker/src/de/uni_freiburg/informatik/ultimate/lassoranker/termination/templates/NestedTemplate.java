@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * 
  * @author Matthias Heizmann
  */
-public class NestedTemplate extends RankingFunctionTemplate {
+public class NestedTemplate extends RankingTemplate {
 	
 	public final int m_Size;
 	
@@ -130,7 +130,9 @@ public class NestedTemplate extends RankingFunctionTemplate {
 			AffineTerm a = new AffineTerm(m_delta, Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
-			li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
+			li.motzkin_coefficient = sRedAtoms ?
+					PossibleMotzkinCoefficients.ONE
+					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
 		}
 		
@@ -143,7 +145,9 @@ public class NestedTemplate extends RankingFunctionTemplate {
 			LinearInequality li3 = m_fgens[i-1].generate(inVars);
 			li.add(li3);
 			li.setStrict(true);
-			li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
+			li.motzkin_coefficient = sRedAtoms ?
+					PossibleMotzkinCoefficients.ONE
+					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
 		}
 		
@@ -151,7 +155,9 @@ public class NestedTemplate extends RankingFunctionTemplate {
 		{
 			LinearInequality li = m_fgens[m_Size-1].generate(inVars);
 			li.setStrict(true);
-			li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
+			li.motzkin_coefficient = sRedAtoms ?
+					PossibleMotzkinCoefficients.ONE
+					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
 		}
 		

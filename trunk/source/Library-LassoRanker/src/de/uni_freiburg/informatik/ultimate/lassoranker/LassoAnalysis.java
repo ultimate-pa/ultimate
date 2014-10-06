@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.StemAndLoop
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgumentSynthesizer;
-import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingFunctionTemplate;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoBuilder;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoPartitioneer;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -303,7 +303,7 @@ public class LassoAnalysis {
 		return m_LassoTerminationAnalysisBenchmarks;
 	}
 
-	protected String benchmarkScriptMessage(LBool constraintSat, RankingFunctionTemplate template) {
+	protected String benchmarkScriptMessage(LBool constraintSat, RankingTemplate template) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("BenchmarkResult: ");
 		sb.append(constraintSat);
@@ -367,7 +367,7 @@ public class LassoAnalysis {
 	 *            (local) settings for termination analysis
 	 * @return the termination argument or null of none is found
 	 */
-	public TerminationArgument tryTemplate(RankingFunctionTemplate template, TerminationAnalysisSettings settings)
+	public TerminationArgument tryTemplate(RankingTemplate template, TerminationAnalysisSettings settings)
 			throws SMTLIBException, TermException {
 		// ignore stem
 		mLogger.info("Using template '" + template.getName() + "'.");

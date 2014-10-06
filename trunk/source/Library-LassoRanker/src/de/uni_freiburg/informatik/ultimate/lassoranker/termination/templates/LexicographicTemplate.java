@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * 
  * @author Jan Leike
  */
-public class LexicographicTemplate extends RankingFunctionTemplate {
+public class LexicographicTemplate extends RankingTemplate {
 	
 	public final int size;
 	
@@ -133,7 +133,8 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 		for (int i = 0; i < size; ++i) {
 			LinearInequality li = m_fgens[i].generate(inVars);
 			li.setStrict(true);
-			li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
+			li.motzkin_coefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
+					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
 		}
 		
@@ -146,7 +147,9 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 			li2.negate();
 			li.add(li2);
 			li.setStrict(false);
-			li.motzkin_coefficient = PossibleMotzkinCoefficients.ZERO_AND_ONE;
+			li.motzkin_coefficient = sBlueAtoms ?
+					PossibleMotzkinCoefficients.ZERO_AND_ONE
+					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);
 			
 			for (int j = i - 1; j >= 0; --j) {
@@ -157,9 +160,9 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 				AffineTerm a = new AffineTerm(m_deltas[j], Rational.MONE);
 				li.add(a);
 				li.setStrict(true);
-				li.motzkin_coefficient = j > 0 ?
-						PossibleMotzkinCoefficients.ANYTHING
-						: PossibleMotzkinCoefficients.ZERO_AND_ONE;
+				li.motzkin_coefficient = sRedAtoms && j == 0 ?
+						PossibleMotzkinCoefficients.ZERO_AND_ONE
+						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li);
 			}
 			conjunction.add(disjunction);
@@ -175,9 +178,9 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 			AffineTerm a = new AffineTerm(m_deltas[i], Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
-			li.motzkin_coefficient = i > 0 && i < size - 1 ?
-					PossibleMotzkinCoefficients.ANYTHING
-					: PossibleMotzkinCoefficients.ZERO_AND_ONE;
+			li.motzkin_coefficient = (sRedAtoms && i == 0) || (sBlueAtoms && i == size - 1) ?
+					PossibleMotzkinCoefficients.ZERO_AND_ONE
+					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);
 		}
 		conjunction.add(disjunction);

@@ -47,10 +47,21 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Jan Leike
  *
  */
-public abstract class RankingFunctionTemplate {
+public abstract class RankingTemplate {
+	/**
+	 * Fix Motzkin coefficients of the red atoms
+	 */
+	public static final boolean sRedAtoms = true;
+	
+	/**
+	 * Fix Motzkin coefficients of the blue atoms
+	 */
+	public static final boolean sBlueAtoms = true;
+	
 	protected TerminationArgumentSynthesizer m_tas = null;
 	protected Script m_script = null;
 	protected Collection<RankVar> m_variables = null;
+	
 	protected boolean m_linear;
 	private boolean m_initialized = false;
 	

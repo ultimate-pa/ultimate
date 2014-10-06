@@ -52,7 +52,7 @@ public class IndexSupportingInvariantAnalysis {
 	private final Script m_Script;
 	private final Boogie2SMT m_boogie2smt;
 	private final ArrayList<Term> m_EqualitySupportingInvariants = new ArrayList<Term>();
-	private final ArrayList<Term> m_NotEqualsSupportingInvariants = new ArrayList<Term>();;
+	private final ArrayList<Term> m_NotEqualsSupportingInvariants = new ArrayList<Term>();
 	
 	private final SetOfDoubletons<Term> distinctDoubletons = new SetOfDoubletons<>();
 	private final SetOfDoubletons<Term> equalDoubletons = new SetOfDoubletons<>();

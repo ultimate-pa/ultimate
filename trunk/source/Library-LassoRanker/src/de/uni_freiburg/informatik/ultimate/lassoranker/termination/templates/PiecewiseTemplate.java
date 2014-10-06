@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * 
  * @author Jan Leike
  */
-public class PiecewiseTemplate extends RankingFunctionTemplate {
+public class PiecewiseTemplate extends RankingTemplate {
 	
 	public final int size;
 	
@@ -144,9 +144,9 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 				LinearInequality li1 = m_pgens[i].generate(inVars);
 				li1.negate();
 				li1.setStrict(true);
-				li1.motzkin_coefficient = i != j ?
-						PossibleMotzkinCoefficients.ANYTHING
-						: PossibleMotzkinCoefficients.ZERO_AND_ONE;;
+				li1.motzkin_coefficient = sBlueAtoms && i == j ?
+						PossibleMotzkinCoefficients.ZERO_AND_ONE
+						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li1);
 				
 				LinearInequality li2 = m_pgens[j].generate(outVars);
@@ -162,8 +162,9 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 				AffineTerm a = new AffineTerm(m_delta, Rational.MONE);
 				li3.add(a);
 				li3.setStrict(true);
-				li3.motzkin_coefficient =
-						PossibleMotzkinCoefficients.ZERO_AND_ONE;
+				li3.motzkin_coefficient = sRedAtoms ?
+						PossibleMotzkinCoefficients.ZERO_AND_ONE
+						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li3);
 				conjunction.add(disjunction);
 			}
@@ -173,7 +174,8 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 		for (int i = 0; i < size; ++i) {
 			LinearInequality li = m_fgens[i].generate(inVars);
 			li.setStrict(true);
-			li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
+			li.motzkin_coefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
+					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
 		}
 		
@@ -182,9 +184,9 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 		for (int i = 0; i < size; ++i) {
 			LinearInequality li = m_pgens[i].generate(inVars);
 			li.setStrict(false);
-			li.motzkin_coefficient = i > 0 ?
-					PossibleMotzkinCoefficients.ANYTHING
-					: PossibleMotzkinCoefficients.ZERO_AND_ONE;
+			li.motzkin_coefficient = sRedAtoms && i == 0 ?
+					PossibleMotzkinCoefficients.ZERO_AND_ONE
+					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);
 		}
 		conjunction.add(disjunction);
