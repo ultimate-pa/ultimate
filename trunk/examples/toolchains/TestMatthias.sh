@@ -124,6 +124,15 @@ trunk/examples/toolchains/AutomizerTestDir.sh -da 600 "$2" \
 "AutomizerBpl.xml;AutomizerC.xml;automizer/unsatCore/BackwardPredicates_WithoutUnsatCore.epf"
 fi
 
+if [ "$1" = "3interpol" ]; then
+echo "$1"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 600 "$2" \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/3interpol/TreeInterpolation.epf" \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/3interpol/ForwardPredicates.epf" \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/3interpol/BackwardPredicates.epf"
+fi
+
+
 
 if [ "$1" = "templateBenchmark" ]; then
 echo "buchiAutomizer for folder $2"
