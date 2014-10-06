@@ -1,39 +1,29 @@
-#Tue Jul 15 20:59:31 EST 2014
-\!/instance/JungVisualization=
+#Fri Oct 03 12:44:52 EST 2014
+@de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nontermination\ analysis=Nonlinear
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Termination\ analysis=Nonlinear
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Path\ of\ dumped\ script=/tmp/
+#
+# Template sizes here:
+#
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Multiphase\ template\ size=4
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nested\ template\ size=6
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Piecewise\ template\ size=2
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Lexicographic\ template\ size=3
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Parallel\ template\ size=3
+#
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Simplify\ discovered\ termination\ arguments=false
 file_export_version=3.0
-/instance/JungVisualization/shapeForNodePreference=RoundRectangle
-@JungVisualization=0.0.1
-#Tue Jul 15 20:59:31 EST 2014
-file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Minimize\ Call\ and\ Return\ Edges=true
-@de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=0.0.1
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Enter\ Rating-Boundary\ (empty\ for\ LBE)\:=0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Choose\ the\ strategy\ for\ the\ edge\ rating\:=DISJUNCTIVE_RATING
-#Tue Jul 15 20:59:31 EST 2014
-file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Simplify\ code\ blocks=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/SMT\ solver\ command=z3 -smt2 -in SMTLIB2_COMPLIANT\=true -t\:10000
+#Fri Oct 03 12:44:52 EST 2014
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Simplify\ code\ blocks=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=false
+file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
-#Tue Jul 15 20:59:31 EST 2014
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton=SINGLETRACE
-file_export_version=3.0
-@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
-#Tue Jul 15 20:59:31 EST 2014
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Multiphase\ template\ size=3
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/SMT\ solver\ command=z3 -smt2 -in SMTLIB2_COMPLIANT\=true -t\:10000
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Path\ of\ dumped\ script=/tmp/
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nontermination\ analysis=Nonlinear
-file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Termination\ analysis=Nonlinear
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nested\ template\ size=4
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Simplify\ discovered\ termination\ arguments=false
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=
-@de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=0.0.1
-#Tue Jul 15 20:59:31 EST 2014
+#Fri Oct 03 12:44:52 EST 2014
 file_export_version=3.0
 /instance/UltimateCore/Log\ Level\ for\ Controller\ Plugin=INFO
 /instance/UltimateCore/Log\ Level\ for\ Core\ Plugin=INFO
@@ -42,9 +32,3 @@ file_export_version=3.0
 @UltimateCore=0.0.1
 /instance/UltimateCore/Root\ Log\ Level=INFO
 /instance/UltimateCore/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker\=INFO;
-#Tue Jul 15 20:59:31 EST 2014
-file_export_version=3.0
-\!/instance/UltimateGui=
-/instance/UltimateGui/LASTTOOLCHAINPATH=/home/jan/Downloads/ultimate/trunk/examples/toolchains/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.xml
-/instance/UltimateGui/LASTPATH=/home/jan/Downloads/ultimate/trunk/examples/lassos/Collatz.bpl
-@UltimateGui=0.0.1
