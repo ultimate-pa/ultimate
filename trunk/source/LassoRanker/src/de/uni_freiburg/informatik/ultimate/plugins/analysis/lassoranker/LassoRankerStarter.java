@@ -29,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.Mul
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.NestedTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.ParallelTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.PiecewiseTemplate;
-import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingFunctionTemplate;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingTemplate;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -151,14 +151,14 @@ public class LassoRankerStarter {
 		TerminationAnalysisSettings termination_settings = PreferencesInitializer.getTerminationAnalysisSettings();
 
 		// Get all templates
-		RankingFunctionTemplate[] templates;
+		RankingTemplate[] templates;
 		if (termination_settings.analysis == AnalysisType.Disabled) {
-			templates = new RankingFunctionTemplate[0];
+			templates = new RankingTemplate[0];
 		} else {
 			templates = getTemplates();
 		}
 		// Do the termination analysis
-		for (RankingFunctionTemplate template : templates) {
+		for (RankingTemplate template : templates) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				reportTimeoutResult(templates, template);
 				// Timeout or abort
@@ -210,9 +210,9 @@ public class LassoRankerStarter {
 	 * @param preferences
 	 * @return the templates specified in the preferences
 	 */
-	private RankingFunctionTemplate[] getTemplates() {
+	private RankingTemplate[] getTemplates() {
 		UltimatePreferenceStore store = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		List<RankingFunctionTemplate> templates = new ArrayList<RankingFunctionTemplate>();
+		List<RankingTemplate> templates = new ArrayList<RankingTemplate>();
 
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_affine_template)) {
 			templates.add(new AffineTemplate());
@@ -247,7 +247,7 @@ public class LassoRankerStarter {
 				templates.add(new ParallelTemplate(i));
 			}
 		}
-		return templates.toArray(new RankingFunctionTemplate[0]);
+		return templates.toArray(new RankingTemplate[0]);
 	}
 
 	/**
@@ -256,9 +256,9 @@ public class LassoRankerStarter {
 	 * @param preferences
 	 * @return the templates specified in the preferences
 	 */
-	private RankingFunctionTemplate[] getTemplatesExactly() {
+	private RankingTemplate[] getTemplatesExactly() {
 		UltimatePreferenceStore store = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		List<RankingFunctionTemplate> templates = new ArrayList<RankingFunctionTemplate>();
+		List<RankingTemplate> templates = new ArrayList<RankingTemplate>();
 
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_affine_template)) {
 			templates.add(new AffineTemplate());
@@ -278,7 +278,7 @@ public class LassoRankerStarter {
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_parallel_template)) {
 			templates.add(new ParallelTemplate(store.getInt(PreferencesInitializer.LABEL_parallel_template_size)));
 		}
-		return templates.toArray(new RankingFunctionTemplate[0]);
+		return templates.toArray(new RankingTemplate[0]);
 	}
 
 	private boolean isTerminationArgumentCorrect(TerminationArgument arg) {
@@ -365,14 +365,14 @@ public class LassoRankerStarter {
 	 * @param preferences
 	 *            the current preferences
 	 */
-	private void reportNoResult(RankingFunctionTemplate[] templates) {
+	private void reportNoResult(RankingTemplate[] templates) {
 		NoResult<RcfgElement> result = new NoResult<RcfgElement>(m_Honda, Activator.s_PLUGIN_NAME,
 				getTranslatorSequence());
 		result.setShortDescription("LassoRanker could not prove termination");
 		StringBuilder sb = new StringBuilder();
 		sb.append("LassoRanker could not prove termination " + "or nontermination of the given linear lasso program.\n");
 		sb.append("Templates:");
-		for (RankingFunctionTemplate template : templates) {
+		for (RankingTemplate template : templates) {
 			sb.append(" ");
 			sb.append(template.getClass().getSimpleName());
 		}
@@ -385,12 +385,12 @@ public class LassoRankerStarter {
 	 * Report that there was a timeout. TODO: which templates already failed,
 	 * where did the timeout occur.
 	 */
-	private void reportTimeoutResult(RankingFunctionTemplate[] templates,
-			RankingFunctionTemplate templateWhereTimeoutOccurred) {
+	private void reportTimeoutResult(RankingTemplate[] templates,
+			RankingTemplate templateWhereTimeoutOccurred) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("LassoRanker could not prove termination " + "or nontermination of the given linear lasso program.\n");
 		sb.append("Templates:");
-		for (RankingFunctionTemplate template : templates) {
+		for (RankingTemplate template : templates) {
 			sb.append(" ");
 			sb.append(template.getClass().getSimpleName());
 		}

@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.Lex
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.MultiphaseTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.NestedTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.PiecewiseTemplate;
-import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingFunctionTemplate;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingTemplate;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -638,7 +638,7 @@ public class LassoChecker {
 			}
 		}
 
-		List<RankingFunctionTemplate> rankingFunctionTemplates = new ArrayList<RankingFunctionTemplate>();
+		List<RankingTemplate> rankingFunctionTemplates = new ArrayList<RankingTemplate>();
 		rankingFunctionTemplates.add(new AffineTemplate());
 
 		// if (m_AllowNonLinearConstraints) {
@@ -710,9 +710,9 @@ public class LassoChecker {
 	 * @throws AssertionError
 	 */
 	private TerminationArgument tryTemplatesAndComputePredicates(final boolean withStem, LassoAnalysis la,
-			List<RankingFunctionTemplate> rankingFunctionTemplates) throws AssertionError {
+			List<RankingTemplate> rankingFunctionTemplates) throws AssertionError {
 		TerminationArgument firstTerminationArgument = null;
-		for (RankingFunctionTemplate rft : rankingFunctionTemplates) {
+		for (RankingTemplate rft : rankingFunctionTemplates) {
 			TerminationArgument termArg;
 			try {
 				TerminationAnalysisSettings settings = constructTASettings();
