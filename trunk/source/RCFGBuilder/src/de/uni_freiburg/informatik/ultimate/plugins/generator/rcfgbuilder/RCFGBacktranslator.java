@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 
 public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNode, Expression, Expression> {
@@ -41,15 +42,20 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 	@Override
 	public List<BoogieASTNode> translateTrace(List<CodeBlock> trace) {
 		List<CodeBlock> cbTrace = trace;
-		List<BoogieASTNode> result = new ArrayList<BoogieASTNode>();
+		List<AtomicTraceElement<BoogieASTNode>> atomicTeList = 
+				new ArrayList<AtomicTraceElement<BoogieASTNode>>();
 		for (RcfgElement elem : cbTrace) {
 			if (elem instanceof CodeBlock) {
-				addCodeBlock((CodeBlock) elem, result, null);
+				addCodeBlock((CodeBlock) elem, atomicTeList, null);
 			} else if (elem instanceof ProgramPoint) {
 
 			} else {
 				throw new AssertionError("unknown rcfg element");
 			}
+		}
+		List<BoogieASTNode> result = new ArrayList<BoogieASTNode>();
+		for (AtomicTraceElement<BoogieASTNode> ate : atomicTeList) {
+			result.add(ate.getTraceElement());
 		}
 		return result;
 	}
@@ -72,25 +78,26 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 	 * can not be determined) we call this method recursively on some branch.
 	 * </ul>
 	 */
-	private void addCodeBlock(CodeBlock cb, List<BoogieASTNode> trace, 
+	private void addCodeBlock(CodeBlock cb, List<AtomicTraceElement<BoogieASTNode>> trace, 
 			Map<TermVariable, Boolean> branchEncoders) {
 		if (cb instanceof Call) {
 			Statement st = ((Call) cb).getCallStatement();
-			trace.add(st);
+			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.CALL));
 		} else if (cb instanceof Return) {
 			Statement st = ((Return) cb).getCallStatement();
-			trace.add(st);
+			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.RETURN));
 		} else if (cb instanceof Summary) {
 			Statement st = ((Summary) cb).getCallStatement();
-			trace.add(st);
+			//FIXME: Is summary call, return or something new?
+			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.NONE));
 		} else if (cb instanceof StatementSequence) {
 			StatementSequence ss = (StatementSequence) cb;
 			for (Statement statement : ss.getStatements()) {
 				if (m_CodeBlock2Statement.containsKey(statement)) {
 					BoogieASTNode source = m_CodeBlock2Statement.get(statement);
-					trace.add(source);
+					trace.add(new AtomicTraceElement<BoogieASTNode>(source));
 				} else {
-					trace.add(statement);
+					trace.add(new AtomicTraceElement<BoogieASTNode>(statement));
 				}
 			}
 		} else if (cb instanceof SequentialComposition) {
@@ -131,7 +138,7 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 		}
 		RcfgProgramExecution rcfgProgramExecution = (RcfgProgramExecution) programExecution;
 
-		List<BoogieASTNode> trace = new ArrayList<BoogieASTNode>();
+		List<AtomicTraceElement<BoogieASTNode>> trace = new ArrayList<AtomicTraceElement<BoogieASTNode>>();
 		Map<Integer, ProgramState<Expression>> programStateMapping = 
 				new HashMap<Integer, ProgramState<Expression>>();
 
@@ -145,7 +152,7 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 			ProgramState<Expression> programState = rcfgProgramExecution.getProgramState(i);
 			programStateMapping.put(posInNewTrace, programState);
 		}
-		return new BoogieProgramExecution(trace, programStateMapping);
+		return new BoogieProgramExecution(programStateMapping, trace);
 	}
 
 
