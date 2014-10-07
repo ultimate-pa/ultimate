@@ -59,7 +59,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 	protected IPredicate[] m_InterpolantsBp;
 
 	private final UnsatCores m_UnsatCores;
-	private final boolean m_useUnsatCoreOfFineGranularity = true;
 	private final static boolean m_useLiveVariables = true;
 	private final static boolean m_LogInformation = true;
 	private final static boolean m_CollectInformationAboutQuantifiedPredicates = true;
@@ -290,7 +289,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		IPredicate tracePostcondition = m_Postcondition;
 		NestedWord<CodeBlock> trace = m_Trace;
 		unlockSmtManager();
-		NestedFormulas<TransFormula, IPredicate> rv = null;
+		NestedFormulas<TransFormula, IPredicate> rtf = null;
 
 		if (m_LogInformation) {
 			int totalNumberOfConjunctsInTrace = m_AnnotateAndAsserterConjuncts.getAnnotated2Original().keySet().size();
@@ -301,20 +300,20 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 
 		if (m_UnsatCores == UnsatCores.IGNORE) {
-			rv = new DefaultTransFormulas(m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, m_ModifiedGlobals, false);
+			rtf = new DefaultTransFormulas(m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, m_ModifiedGlobals, false);
 		} else if (m_UnsatCores == UnsatCores.STATEMENT_LEVEL) {
 			boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[trace.length()];
 			boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[trace.length()];
 			// Filter out the statements, which doesn't occur in the unsat core.
 			Set<CodeBlock> codeBlocksInUnsatCore = filterOutIrrelevantStatements(trace, unsat_coresAsSet,
 					localVarAssignmentAtCallInUnsatCore, oldVarAssignmentAtCallInUnsatCore);
-			rv = new RelevantTransFormulas(trace, m_Precondition, m_Postcondition, m_PendingContexts,
+			rtf = new RelevantTransFormulas(trace, m_Precondition, m_Postcondition, m_PendingContexts,
 					codeBlocksInUnsatCore, m_ModifiedGlobals, localVarAssignmentAtCallInUnsatCore,
 					oldVarAssignmentAtCallInUnsatCore, m_SmtManager);
 		} else if (m_UnsatCores == UnsatCores.CONJUNCT_LEVEL) {
-			rv = new RelevantTransFormulas(trace, m_Precondition, m_Postcondition, m_PendingContexts, unsat_coresAsSet,
+			rtf = new RelevantTransFormulas(trace, m_Precondition, m_Postcondition, m_PendingContexts, unsat_coresAsSet,
 					m_ModifiedGlobals, m_SmtManager, m_AAA, m_AnnotateAndAsserterConjuncts);
-			assert stillInfeasible(rv);
+			assert stillInfeasible(rtf);
 		}
 		
 		Set<BoogieVar>[] relevantVarsToUseForFPBP = null;
@@ -324,13 +323,13 @@ public class TraceCheckerSpWp extends TraceChecker {
 					m_Nsb.getIndexedVarRepresentative(), m_SmtManager, m_ModifiedGlobals);
 			relevantVarsToUseForFPBP = lvar.getLiveVariables();
 		} else {
-			RelevantVariables rvar = new RelevantVariables(rv);
+			RelevantVariables rvar = new RelevantVariables(rtf);
 			relevantVarsToUseForFPBP = rvar.getRelevantVariables();
 		}
 
 		if (m_ComputeInterpolantsFp) {
 			mLogger.debug("Computing forward relevant predicates...");
-			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rv, trace, tracePrecondition, true,
+			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, true,
 					numberOfQuantifiedPredicates);
 			mLogger.debug("Checking inductivity of forward relevant predicates...");
 			assert checkPredicatesCorrect(m_InterpolantsFp, trace, tracePrecondition, tracePostcondition, "FP") : "invalid Hoare triple in FP";
@@ -339,7 +338,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 		} else if (m_ComputeInterpolantsSp && !m_ComputeInterpolantsFp) {
 			mLogger.debug("Computing forward relevant predicates...");
-			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rv, trace, tracePrecondition, false,
+			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, false,
 					numberOfQuantifiedPredicates);
 			mLogger.debug("Checking inductivity of forward relevant predicates...");
 			assert checkPredicatesCorrect(m_InterpolantsFp, trace, tracePrecondition, tracePostcondition, "FP") : "invalid Hoare triple in FP";
@@ -353,7 +352,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 		if (m_ComputeInterpolantsBp) {
 			mLogger.debug("Computing backward relevant predicates...");
-			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rv, trace, tracePostcondition, true,
+			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePostcondition, true,
 					numberOfQuantifiedPredicates);
 			mLogger.debug("Checking inductivity of backward relevant predicates...");
 			assert checkInterpolantsCorrectBackwards(m_InterpolantsBp, trace, tracePrecondition, tracePostcondition,
@@ -363,7 +362,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 		} else if (m_ComputeInterpolantsWp && !m_ComputeInterpolantsBp) {
 			mLogger.debug("Computing backward relevant predicates...");
-			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rv, trace, tracePostcondition, false,
+			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePostcondition, false,
 					numberOfQuantifiedPredicates);
 			mLogger.debug("Checking inductivity of backward relevant predicates...");
 			assert checkInterpolantsCorrectBackwards(m_InterpolantsBp, trace, tracePrecondition, tracePostcondition,

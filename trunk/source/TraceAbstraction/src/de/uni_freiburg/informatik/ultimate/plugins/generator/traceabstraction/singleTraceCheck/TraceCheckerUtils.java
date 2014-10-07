@@ -101,6 +101,14 @@ public class TraceCheckerUtils {
 			m_Interpolants = traceChecker.getInterpolants();
 		}
 		
+		public InterpolantsPreconditionPostcondition(IPredicate precondition,
+				IPredicate postcondition, IPredicate[] interpolants) {
+			super();
+			m_Precondition = precondition;
+			m_Postcondition = postcondition;
+			m_Interpolants = interpolants;
+		}
+
 		public IPredicate getInterpolant(int i) {
 			if (i < 0) {
 				throw new AssertionError("index beyond precondition");
