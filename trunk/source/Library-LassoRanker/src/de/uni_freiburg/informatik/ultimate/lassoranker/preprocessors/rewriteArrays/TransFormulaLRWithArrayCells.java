@@ -94,7 +94,7 @@ public class TransFormulaLRWithArrayCells {
 	private final ReplacementVarFactory m_ReplacementVarFactory;
 	private Map<TermVariable, Map<ArrayIndex, TermVariable>> m_ArrayInstance2Index2CellVariable;
 	private EquivalentCells[] m_EquivalentCells;
-	private boolean m_OverapproximateByOmmitingDisjointIndices;
+	private boolean m_OverapproximateByOmmitingDisjointIndices = true;
 	private HashRelation<TermVariable, ArrayIndex> m_FirstGeneration2Indices;
 	private IndexAnalyzer2 indexAnalyzer;
 	private NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> m_ArrayCellInVars;
@@ -107,9 +107,10 @@ public class TransFormulaLRWithArrayCells {
 			ReplacementVarFactory replacementVarFactory, Script script,
 			TransFormulaLRWithArrayInformation tflrwai, 
 			IndexSupportingInvariantAnalysis indexSupportingInvariantAnalysis, 
-			Boogie2SMT boogie2smt, ArrayCellRepVarConstructor acrvc) {
+			Boogie2SMT boogie2smt, ArrayCellRepVarConstructor acrvc, boolean m_overapproximateByOmmitingDisjointIndices) {
 			mServices = services;
 			mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+			m_OverapproximateByOmmitingDisjointIndices = m_overapproximateByOmmitingDisjointIndices;
 			this.tflrwai = tflrwai;
 			m_Script = script;
 			m_ReplacementVarFactory = replacementVarFactory;
