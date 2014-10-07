@@ -30,6 +30,16 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
  */
 public class CACSL2BoogieBacktranslator extends DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, String> {
 
+	/*
+	 * TODO 
+	 * Expression -> CACSLLocation 
+	 * CACSLProgramExecution bauen 
+	 * 
+	 */
+	
+	
+	
+	
 	Map<BoogieASTNode, CACSLLocation> m_Position = new HashMap<BoogieASTNode, CACSLLocation>();
 	Boogie2C m_boogie2C;
 

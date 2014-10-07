@@ -67,7 +67,6 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 		if (logmessage == null || logmessage.isEmpty()) {
 			return;
 		}
-
 		if (mLogFile == null) {
 			mLogFile = new File(Util.generateAbsolutePathForLogfile(this));
 			if (!mLogFile.isDirectory()) {
@@ -90,5 +89,4 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 			e.printStackTrace();
 		}
 	}
-
 }

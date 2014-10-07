@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.model.boogie.output;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
@@ -37,6 +38,14 @@ public class BoogiePrettyPrinter {
 		BoogieOutput output = new BoogieOutput(null);
 		StringBuilder sb = new StringBuilder();
 		output.appendExpression(sb, expr);
+		removeLastLinebreak(sb);
+		return sb.toString();
+	}
+
+	public static String print(Specification spec) {
+		BoogieOutput output = new BoogieOutput(null);
+		StringBuilder sb = new StringBuilder();
+		output.appendSpecification(sb, spec);
 		removeLastLinebreak(sb);
 		return sb.toString();
 	}
@@ -78,10 +87,10 @@ public class BoogiePrettyPrinter {
 	private static void removeLastLinebreak(StringBuilder sb) {
 		int length = sb.length();
 		int linebreakLength = sLinebreak.length();
-		if(length<linebreakLength){
+		if (length < linebreakLength) {
 			return;
 		}
-		
+
 		if (sb.substring(length - linebreakLength, length).equals(sLinebreak)) {
 			sb.replace(length - linebreakLength, length, "");
 		}

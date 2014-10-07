@@ -19,8 +19,10 @@ import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
@@ -94,16 +96,16 @@ public class BoogiePreprocessorBacktranslator extends
 		int length = programExecution.getLength();
 		for (int i = 0; i < length; ++i) {
 			BoogieASTNode elem = programExecution.getTraceElement(i).getTraceElement();
-			BoogieASTNode newElem = backtranslateTraceElement(elem);
+			// the call to backtranslateTraceElements may produce null values,
+			// but we keep them anyways s.t. the indices between newTrace and
+			// programExecution match
+			newTrace.add(backtranslateTraceElement(elem));
 
-			if (newElem != null) {
-				newTrace.add(newElem);
-			}
 			newPartialProgramStateMapping.put(i, backtranslateProgramState(programExecution.getProgramState(i)));
 		}
 
 		// return super.translateProgramExecution(programExecution);
-		return createProgramExecutionFromTrace(newTrace, newPartialProgramStateMapping);
+		return createProgramExecutionFromTrace(newTrace, newPartialProgramStateMapping, programExecution);
 	}
 
 	private ProgramState<Expression> backtranslateProgramState(ProgramState<Expression> state) {
@@ -127,26 +129,52 @@ public class BoogiePreprocessorBacktranslator extends
 		BoogieASTNode newElem = mMapping.get(elem);
 
 		if (newElem == null) {
+			if (elem instanceof EnsuresSpecification) {
+				EnsuresSpecification spec = (EnsuresSpecification) elem;
+				Expression formula = spec.getFormula();
+				if (formula instanceof BooleanLiteral) {
+					if (((BooleanLiteral) formula).getValue()) {
+						// we come to this place because this
+						// EnuresSpecification was inserted by RCFG Builder and
+						// does not provide any additional information. We
+						// safely exclude it from the error path.
+						return null;
+					}
+				}
+				// if we reach this point, we have an EnuresSpecification that
+				// was not inserted by the user (probably by RCFGBuilder),
+				// because there is no mapping, and that this spec is
+				// unexpected. If this happens, we have to find a strategy for
+				// that, so we throw an exception here.
+				throw new UnsupportedOperationException("Generated EnsuresSpecification "
+						+ BoogiePrettyPrinter.print(spec) + " is not ensure(true)");
+			}
 			reportUnfinishedBacktranslation("Unfinished backtranslation: No mapping for " + elem.toString());
-			// TODO: This can also occur if specifications are inserted, e.g.
-			// ensure specifications. It is unclear what should happen with them
+			return null;
 		} else if (newElem instanceof Statement) {
 			return newElem;
 		} else {
 			reportUnfinishedBacktranslation("Unfinished backtranslation: Ignored translation of "
 					+ newElem.getClass().getSimpleName());
+			return null;
 		}
 
-		return null;
 	}
 
 	private IProgramExecution<BoogieASTNode, Expression> createProgramExecutionFromTrace(List<BoogieASTNode> trace,
-			Map<Integer, ProgramState<Expression>> partialProgramStateMapping) {
+			Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
+			IProgramExecution<BoogieASTNode, Expression> programExecution) {
 
 		List<AtomicTraceElement<BoogieASTNode>> atomicTrace = new ArrayList<>();
 
 		for (int i = 0; i < trace.size(); ++i) {
 			BoogieASTNode elem = trace.get(i);
+
+			if (elem == null) {
+				// we kept the null values so that indices match between trace
+				// and inputProgramExecution
+				continue;
+			}
 
 			if (elem instanceof WhileStatement) {
 				// check if the next statement in the error trace is part of the
@@ -187,39 +215,11 @@ public class BoogiePreprocessorBacktranslator extends
 						condEval ? StepInfo.CONDITION_EVAL_TRUE : StepInfo.CONDITION_EVAL_FALSE));
 
 			} else if (elem instanceof CallStatement) {
-				// FIXME: This does not work for recursive functions, as there
-				// are corner cases which make it impossible to infer if this is
-				// a call or a return (at least for all strategies I considered)
-				CallStatement stmt = (CallStatement) elem;
-				List<Declaration> procDecls = mSymbolTable.getFunctionOrProcedureDeclaration(stmt.getMethodName());
-				boolean isCall = false;
-				int nxt = i + 1;
-				if (nxt < trace.size()) {
-					BoogieASTNode nextStmt = trace.get(nxt);
-					for (Declaration decl : procDecls) {
-						if (decl instanceof Procedure) {
-							Procedure proc = (Procedure) decl;
-							if (proc.getBody() == null) {
-								continue;
-							}
+				// for call statements, we simply rely on the stepinfo of our
+				// input
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, programExecution.getTraceElement(i)
+						.getStepInfo()));
 
-							for (Statement bodyStmt : proc.getBody().getBlock()) {
-								// TODO: Replace this with a call to
-								// backtranslateTraceElement as soon as this is
-								// able to translate every trace element (not
-								// only those in IProgramExecution
-
-								BoogieASTNode mappedBodyElem = mMapping.get(bodyStmt);
-
-								if (nextStmt == mappedBodyElem) {
-									isCall = true;
-								}
-							}
-						}
-					}
-				}
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt, isCall ? StepInfo.CALL
-						: StepInfo.RETURN));
 			} else if (elem instanceof Statement) {
 				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem));
 			} else {
@@ -227,7 +227,15 @@ public class BoogiePreprocessorBacktranslator extends
 			}
 		}
 
-		return new BoogieProgramExecution(partialProgramStateMapping, atomicTrace);
+		// we need to clear the null values before creating the final
+		// BoogieProgramExecution
+		List<AtomicTraceElement<BoogieASTNode>> actualAtomicTrace = new ArrayList<>();
+		for (AtomicTraceElement<BoogieASTNode> possibleNullElem : atomicTrace) {
+			if (possibleNullElem != null) {
+				actualAtomicTrace.add(possibleNullElem);
+			}
+		}
+		return new BoogieProgramExecution(partialProgramStateMapping, actualAtomicTrace);
 	}
 
 	@Override
