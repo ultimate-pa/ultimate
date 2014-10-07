@@ -321,7 +321,8 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		 * m_preferences.num_non_strict_invariants = 0; }
 		 */
 		if (m_lasso.getStem().isTrue()) {
-			mLogger.info("There is no stem transition; " + "disabling supporting invariant generation.");
+			mLogger.info("There is no stem transition; "
+					+ "disabling supporting invariant generation.");
 			m_settings.num_strict_invariants = 0;
 			m_settings.num_non_strict_invariants = 0;
 		}

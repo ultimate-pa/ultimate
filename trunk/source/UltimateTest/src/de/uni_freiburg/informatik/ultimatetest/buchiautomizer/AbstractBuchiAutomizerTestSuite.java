@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimatetest.buchiautomizer;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.LassoTerminationAnalysisBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.TimingBenchmark;
 import de.uni_freiburg.informatik.ultimatetest.AbstractModelCheckerTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.TraceAbstractionTestSummary;

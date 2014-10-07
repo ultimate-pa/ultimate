@@ -5,7 +5,7 @@ package de.uni_freiburg.informatik.ultimatetest.buchiautomizer;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.LassoTerminationAnalysisBenchmarks;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.TimingBenchmark;
 import de.uni_freiburg.informatik.ultimatetest.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
@@ -21,7 +21,8 @@ public class BuchiAutomizerTemplateBenchmarkMode extends
 		AbstractBuchiAutomizerTestSuite {
 	private static final String[] m_Directories = {
 //		"examples/lassos",
-		"examples/termination/TermCompOfficialBenchmarkSet/ultimate"
+		"examples/termination/TermCompOfficialBenchmarkSet",
+//		"examples/termination/TermCompOfficialBenchmarkSet/ultimate",
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
 //		"examples/programs/toy"
@@ -40,7 +41,7 @@ public class BuchiAutomizerTemplateBenchmarkMode extends
 		return new ITestSummary[] {
 				new TestSummaryWithBenchmarkResults(this.getClass()),
 				new TraceAbstractionTestSummary(this.getClass()),
-				new CsvConcatenator(this.getClass(), LassoTerminationAnalysisBenchmarks.class),
+				new CsvConcatenator(this.getClass(), TerminationAnalysisBenchmark.class),
 				new CsvConcatenator(this.getClass(), TimingBenchmark.class),
 		};
 	}

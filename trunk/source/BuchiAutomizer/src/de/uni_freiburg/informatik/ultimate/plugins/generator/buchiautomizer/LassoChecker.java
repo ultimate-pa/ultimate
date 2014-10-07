@@ -718,7 +718,7 @@ public class LassoChecker {
 				TerminationAnalysisSettings settings = constructTASettings();
 				termArg = la.tryTemplate(rft, settings);
 				if (m_TemplateBenchmarkMode) {
-					IResult benchmarkResult = new BenchmarkResult<>(Activator.s_PLUGIN_ID, "LassoTerminationAnalysisBenchmarks", la.getLassoTerminationAnalysisBenchmarks());
+					IResult benchmarkResult = new BenchmarkResult<>(Activator.s_PLUGIN_ID, "LassoTerminationAnalysisBenchmarks", la.getTerminationAnalysisBenchmark());
 					mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, benchmarkResult);
 				}
 			} catch (SMTLIBException e) {

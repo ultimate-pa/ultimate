@@ -27,11 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker;
 
 import java.io.FileNotFoundException;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -56,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteStri
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteTrueFalse;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.SimplifyPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.StemAndLoopPreProcessor;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgumentSynthesizer;
@@ -70,9 +67,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
-import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**
  * This is the class that controls LassoRanker's (non-)termination analysis
@@ -131,7 +125,7 @@ public class LassoAnalysis {
 	 * Benchmark data from last termination analysis. 
 	 * Includes e.g., the number  of Motzkin's Theorem applications.
 	 */
-	private LassoTerminationAnalysisBenchmarks m_LassoTerminationAnalysisBenchmarks;
+	private TerminationAnalysisBenchmark m_LassoTerminationAnalysisBenchmark;
 
 	/**
 	 * Constructor for the LassoRanker interface. Calling this invokes the
@@ -297,12 +291,10 @@ public class LassoAnalysis {
 		return m_lasso;
 	}
 	
-
-
-	public LassoTerminationAnalysisBenchmarks getLassoTerminationAnalysisBenchmarks() {
-		return m_LassoTerminationAnalysisBenchmarks;
+	public TerminationAnalysisBenchmark getTerminationAnalysisBenchmark() {
+		return m_LassoTerminationAnalysisBenchmark;
 	}
-
+	
 	protected String benchmarkScriptMessage(LBool constraintSat, RankingTemplate template) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("BenchmarkResult: ");
@@ -312,7 +304,7 @@ public class LassoAnalysis {
 		sb.append(" with degree ");
 		sb.append(template.getDegree());
 		sb.append(". ");
-		sb.append(getLassoTerminationAnalysisBenchmarks().toString());
+		sb.append(getTerminationAnalysisBenchmark().toString());
 		return sb.toString();
 	}
 
@@ -373,7 +365,8 @@ public class LassoAnalysis {
 		mLogger.info("Using template '" + template.getName() + "'.");
 		mLogger.info("Template has degree " + template.getDegree() + ".");
 		mLogger.debug(template);
-
+		long startTime = System.nanoTime();
+		
 		TerminationArgumentSynthesizer tas = new TerminationArgumentSynthesizer(m_lasso, template, m_preferences,
 				settings, m_ArrayIndexSupportingInvariants, mServices, mStorage);
 		final LBool constraintSat = tas.synthesize();
@@ -386,110 +379,15 @@ public class LassoAnalysis {
 				mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t)));
 			}
 		}
-		m_LassoTerminationAnalysisBenchmarks = new LassoTerminationAnalysisBenchmarks(
+		
+		long endTime = System.nanoTime();
+		m_LassoTerminationAnalysisBenchmark = new TerminationAnalysisBenchmark(
 				constraintSat, m_lasso.getStemVarNum(), m_lasso.getLoopVarNum(), 
 				m_lasso.getStemDisjuncts(), m_lasso.getLoopDisjuncts(), 
 				template.getName(), template.getDegree(), 
-				tas.getNumSIs(), tas.getNumMotzkin());
+				tas.getNumSIs(), tas.getNumMotzkin(), endTime - startTime);
 		mLogger.debug(benchmarkScriptMessage(constraintSat, template));
 		tas.close();
 		return (constraintSat == LBool.SAT) ? tas.getArgument() : null;
-	}
-	
-	
-	
-	public class LassoTerminationAnalysisBenchmarks implements ICsvProviderProvider<Object> {
-		private final LBool m_ConstraintsSatisfiability;
-		private final int m_VariablesStem;
-		private final int m_VariablesLoop;
-		private final int m_DisjunctsStem;
-		private final int m_DisjunctsLoop;
-		private final String m_Template;
-		private final int m_Degree;
-		private final int m_SupportingInvariants;
-		private final int m_MotzkinApplications;
-		public LassoTerminationAnalysisBenchmarks(
-				LBool constraintsSatisfiability, int variablesStem,
-				int variablesLoop, int disjunctsStem, int disjunctsLoop,
-				String template, int degree, int supportingInvariants,
-				int motzkinApplications) {
-			super();
-			m_ConstraintsSatisfiability = constraintsSatisfiability;
-			m_VariablesStem = variablesStem;
-			m_VariablesLoop = variablesLoop;
-			m_DisjunctsStem = disjunctsStem;
-			m_DisjunctsLoop = disjunctsLoop;
-			m_Template = template;
-			m_Degree = degree;
-			m_SupportingInvariants = supportingInvariants;
-			m_MotzkinApplications = motzkinApplications;
-		}
-		public LBool getConstraintsSatisfiability() {
-			return m_ConstraintsSatisfiability;
-		}
-		public int getVariablesStem() {
-			return m_VariablesStem;
-		}
-		public int getVariablesLoop() {
-			return m_VariablesLoop;
-		}
-		public int getDisjunctsStem() {
-			return m_DisjunctsStem;
-		}
-		public int getDisjunctsLoop() {
-			return m_DisjunctsLoop;
-		}
-		public String getTemplate() {
-			return m_Template;
-		}
-		public int getDegree() {
-			return m_Degree;
-		}
-		public int getSupportingInvariants() {
-			return m_SupportingInvariants;
-		}
-		public int getMotzkinApplications() {
-			return m_MotzkinApplications;
-		}
-		public String toString() {
-			StringBuilder sb = new StringBuilder();
-//			sb.append("Number of variables in the stem: ");
-//			sb.append(getVariablesStem());
-//			sb.append("  Number of variables in the loop: ");
-//			sb.append(getVariablesLoop());
-//			sb.append("  Number of disjunctions in the stem: ");
-//			sb.append(getDisjunctsStem());
-//			sb.append("  Number of disjunctions in the loop: ");
-//			sb.append(getDisjunctsLoop());
-//			sb.append("  Number of supporting invariants: ");
-//			sb.append(getNumSIs());
-//			sb.append("  Number of Motzkin applications: ");
-//			sb.append(getNumMotzkin());
-			for (Entry<String, Object> entry : getKeyValueMap().entrySet()) {
-				sb.append(entry.getKey());
-				sb.append(": ");
-				sb.append(entry.getValue());
-				sb.append("  ");
-			}
-			return sb.toString();
-		}
-		
-		public Map<String, Object> getKeyValueMap() {
-			Map<String, Object> result = new LinkedHashMap<String, Object>();
-			result.put("ConstraintsSatisfiability", m_ConstraintsSatisfiability);
-			result.put("VariablesStem", m_VariablesStem);
-			result.put("VariablesLoop", m_VariablesLoop);
-			result.put("DisjunctsStem", m_DisjunctsStem);
-			result.put("DisjunctsLoop", m_DisjunctsLoop);
-			result.put("SupportingInvariants", m_SupportingInvariants);
-			result.put("Template", m_Template);
-			result.put("Degree", m_Degree);
-			result.put("MotzkinApplications", m_MotzkinApplications);
-			return Collections.unmodifiableMap(result);
-		}
-		@Override
-		public ICsvProvider<Object> createCvsProvider() {
-			return CsvUtils.constructCvsProviderFromMap(getKeyValueMap());
-		}
 	}
 }
