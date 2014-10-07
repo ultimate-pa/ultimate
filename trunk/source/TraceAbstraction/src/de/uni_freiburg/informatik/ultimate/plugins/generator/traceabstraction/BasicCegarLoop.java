@@ -244,6 +244,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			TwoTrackInterpolantAutomatonBuilder ttiab = new TwoTrackInterpolantAutomatonBuilder(m_Counterexample,
 					m_SmtManager, m_TraceChecker, m_Abstraction);
 			m_InterpolAutomaton = ttiab.getResult();
+			break;
 		}
 		case TOTALINTERPOLATION2: {
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction = (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;

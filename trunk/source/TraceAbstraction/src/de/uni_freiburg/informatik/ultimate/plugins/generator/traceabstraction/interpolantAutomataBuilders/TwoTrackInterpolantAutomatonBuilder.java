@@ -28,7 +28,13 @@ public class TwoTrackInterpolantAutomatonBuilder {
 	private final SmtManager m_SmtManager;
 	private static boolean m_TotalTransitions = true;
 	
-	
+	/**
+	 * 
+	 * @param nestedRun
+	 * @param smtManager
+	 * @param traceChecker
+	 * @param abstraction
+	 */
 	public TwoTrackInterpolantAutomatonBuilder(
 			IRun<CodeBlock,IPredicate> nestedRun,
 			SmtManager smtManager,
@@ -131,9 +137,6 @@ public class TwoTrackInterpolantAutomatonBuilder {
 		
 	}
 	
-	private boolean selfLoopAllowed(IPredicate p1, int symbolPos) {
-		return transitionFromSPtoWPOrVVAllowed(p1, symbolPos, p1, true);
-	}
 	
 	/**
 	 * This is a naive strategy to add transitions between the two interpolant types.
@@ -148,35 +151,44 @@ public class TwoTrackInterpolantAutomatonBuilder {
 		for (int i = 0; i < m_NestedWord.length(); i++) {
 			IPredicate fp_i = m_TraceCheckerSpWp.getForwardPredicateAtPosition(i);
 			for (int j = 0; j < m_NestedWord.length(); j++) {
-				IPredicate bp_j = m_TraceCheckerSpWp.getBackwardPredicateAtPosition(j); 
-				if (transitionFromSPtoWPOrVVAllowed(fp_i, j, bp_j, true)) {
-					addTransition(nwa, fp_i, j, bp_j, true);
+				IPredicate bp_j = m_TraceCheckerSpWp.getBackwardPredicateAtPosition(j);
+				if (m_NestedWord.isReturnPosition(j)) {
+					int callPos = m_NestedWord.getCallPosition(j);
+					
+					if (transitionFromOneStateToTheOppositeStateAllowed(fp_i, j, bp_j, 
+							m_TraceCheckerSpWp.getForwardPredicateAtPosition(callPos-1))) {
+						addTransition(nwa, fp_i, j, bp_j, true);
+					}
+					if (transitionFromOneStateToTheOppositeStateAllowed(bp_j, j, fp_i,
+							m_TraceCheckerSpWp.getBackwardPredicateAtPosition(callPos-1))) {
+						addTransition(nwa, bp_j, j, fp_i, false);
+					}
+				} else {
+					if (transitionFromOneStateToTheOppositeStateAllowed(fp_i, j, bp_j, null)) {
+						addTransition(nwa, fp_i, j, bp_j, true);
+					}
+					if (transitionFromOneStateToTheOppositeStateAllowed(bp_j, j, fp_i, null)) {
+						addTransition(nwa, bp_j, j, fp_i, false);
+					}
 				}
-				if (transitionFromSPtoWPOrVVAllowed(bp_j, j, fp_i, false)) {
-					addTransition(nwa, bp_j, j, fp_i, false);
-				}
+				
 			}
 		}
 	}
 	
 	/**
-	 * Checks whether we are allowed to add a transition from a state annotated with the assertion p1 computed via
+	 Checks whether we are allowed to add a transition from a state annotated with the predicate p1 computed via
 	 * SP (or WP)  with the statement obtained by symbolPos to a state annotated with the assertion p2 computed via WP (or SP).
-	 * The boolean variable fromSPToWp indicates which direction we want to check, if it is true, then p1 is computed
-	 * via SP and p2 via WP, else the other way around.
+	 * @param symbolPos - represents the corresponding statement
+	 * @param callerPred - this predicate may be null if the statement represented by the given argument symbolPos is not interprocedural,
+	 *               otherwise not
 	 */
-	private boolean transitionFromSPtoWPOrVVAllowed(IPredicate p1, int symbolPos, IPredicate p2, boolean fromSPToWP) {
+	private boolean transitionFromOneStateToTheOppositeStateAllowed(IPredicate p1, int symbolPos, IPredicate p2, IPredicate callerPred) {
 		CodeBlock statement = m_NestedWord.getSymbol(symbolPos);
 		if (m_NestedWord.isCallPosition(symbolPos)) {
 			return (m_SmtManager.isInductiveCall(p1, (Call) statement, p2) == LBool.UNSAT);
 		} else if (m_NestedWord.isReturnPosition(symbolPos)) {
-			int callPos= m_NestedWord.getCallPosition(symbolPos);
-			IPredicate callerPred = null;
-			if (fromSPToWP) {
-				m_TraceCheckerSpWp.getForwardPredicateAtPosition(callPos-1);
-			} else {
-				callerPred = m_TraceCheckerSpWp.getBackwardPredicateAtPosition(callPos-1);
-			}
+			assert callerPred != null : "callerPred shouldn't be null for a Return statement.";
 			return (m_SmtManager.isInductiveReturn(p1, callerPred,(Return) statement, p2) == LBool.UNSAT);
 		} else {
 			return (m_SmtManager.isInductive(p1, statement, p2) == LBool.UNSAT);
@@ -204,9 +216,6 @@ public class TwoTrackInterpolantAutomatonBuilder {
 		CodeBlock symbol = m_NestedWord.getSymbol(symbolPos);
 		if (m_NestedWord.isCallPosition(symbolPos)) {
 			nwa.addCallTransition(pred, symbol, succ);
-//			if (getInterpolant(prePos) != getInterpolant(symbolPos)) {
-//				addAlternativeCallPredecessor(symbolPos, getInterpolant(prePos));
-//			}
 		}
 		else if (m_NestedWord.isReturnPosition(symbolPos)) {
 			int callPos= m_NestedWord.getCallPosition(symbolPos);
@@ -217,9 +226,6 @@ public class TwoTrackInterpolantAutomatonBuilder {
 				hier = m_TraceCheckerSpWp.getBackwardPredicateAtPosition(callPos-1);
 			}
 			nwa.addReturnTransition(pred, hier, symbol, succ);
-//			if(m_AdditionalEdges == InterpolantAutomaton.CANONICAL) {
-//				addAlternativeReturnTransitions(pred, callPos, symbol, succ);
-//			}
 		}
 		else {
 			nwa.addInternalTransition(pred, symbol,  succ);

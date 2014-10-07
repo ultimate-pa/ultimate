@@ -132,15 +132,27 @@ public class TraceCheckerSpWp extends TraceChecker {
 	}
 
 	public IPredicate getForwardPredicateAtPosition(int i) {
-		assert i >= 0 && i < m_InterpolantsFp.length : ("The given position " + i
+		assert i >= -1 && i <= m_InterpolantsFp.length : ("The given position " + i
 				+ " is not a correct position. #Interpolants = " + m_InterpolantsFp.length);
-		return m_InterpolantsFp[i];
+		if (i == -1) {
+			return super.getPrecondition();
+		} else if (i == m_InterpolantsFp.length) {
+			return super.getPostcondition();
+		} else {
+			return m_InterpolantsFp[i];
+		}
 	}
 
 	public IPredicate getBackwardPredicateAtPosition(int i) {
-		assert i >= 0 && i < m_InterpolantsBp.length : ("The given position " + i
+		assert i >= -1 && i <= m_InterpolantsBp.length : ("The given position " + i
 				+ " is not a correct position! #Interpolants = " + m_InterpolantsBp.length);
-		return m_InterpolantsBp[i];
+		if (i == -1) {
+			return super.getPrecondition();
+		} else if (i == m_InterpolantsBp.length) {
+			return super.getPostcondition();
+		} else {
+			return m_InterpolantsBp[i];
+		}
 	}
 
 	private IPredicate getBackwardPredicateAtPosition(int i, IPredicate tracePostcondition, boolean backwardPredicate) {
