@@ -52,8 +52,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * Template:
  * <pre>
  *    /\_i δ_i > 0
- * /\ f_k(x) > 0
- * /\ ( /\_i (f_i(x') < f_i(x) - δ_i \/ \/_(j<i) f_j(x) > 0 )
+ * /\ \/_i f_i(x) > 0
+ * /\ f_0(x') < f_0(x) - δ_0
+ * /\ /\_{i>0} (f_i(x') < f_i(x) - δ_i \/ f_{i-1}(x) > 0)
  * </pre>
  * 
  * @author Jan Leike
