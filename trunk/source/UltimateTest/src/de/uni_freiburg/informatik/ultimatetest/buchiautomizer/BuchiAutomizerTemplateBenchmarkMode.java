@@ -21,8 +21,8 @@ public class BuchiAutomizerTemplateBenchmarkMode extends
 		AbstractBuchiAutomizerTestSuite {
 	private static final String[] m_Directories = {
 //		"examples/lassos",
-		"examples/termination/TermCompOfficialBenchmarkSet",
-//		"examples/termination/TermCompOfficialBenchmarkSet/ultimate",
+//		"examples/termination/TermCompOfficialBenchmarkSet",
+		"examples/termination/TermCompOfficialBenchmarkSet/ultimate",
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
 //		"examples/programs/toy"
