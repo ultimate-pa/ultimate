@@ -74,8 +74,6 @@ public class PostProcessor {
 	private final Dispatcher mDispatcher;
 	private final Logger mLogger;
 
-	//	private boolean mSomethingOnHeapIsInitialized = false;
-
 	/**
 	 * Constructor.
 	 */
@@ -133,7 +131,6 @@ public class PostProcessor {
 		for (CFunction cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
 			String procName = cFunc.functionSignatureAsProcedureName();
 			
-//			CFunction cFuncWithFP = functionHandler.addFPParamToCFunction(cFunc);
 
 			VarList[] inParams = functionHandler.getProcedures().get(procName).getInParams();
 			VarList[] outParams = functionHandler.getProcedures().get(procName).getOutParams();
@@ -143,7 +140,8 @@ public class PostProcessor {
 					new String[0], 
 					inParams, 
 					outParams, 
-//					FIXME: it seems an odd convention that giving it "null" as Specification makes it an implementation (instead of procedure) in Boogie
+//					FIXME: it seems an odd convention that giving it "null" as Specification makes it an implementation 
+					//(instead of a procedure) in Boogie
 //					new Specification[0], 
 					null, 
 					functionHandler.getFunctionPointerFunctionBody(loc, main, memoryHandler, structHandler, procName, cFunc, inParams, outParams));
@@ -227,7 +225,6 @@ public class PostProcessor {
 			}
 		}
 
-
 		//initialization for statics and other globals
 		for (Entry<Declaration, CDeclaration> en : declarationsGlobalInBoogie.entrySet()) {
 			if (en.getKey() instanceof TypeDeclaration || en.getKey() instanceof ConstDeclaration)
@@ -246,17 +243,15 @@ public class PostProcessor {
 						assert ((VariableDeclaration)en.getKey()).getVariables().length == 1 
 								&& ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers().length == 1;
 						ResultExpression initRex = 
-								PostProcessor.initVar(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler, 
+								main.cHandler.getInitHandler().initVar(loc, main, 
 										new VariableLHS(loc, id), en.getValue().getType(), initializer);
 						initStatements.addAll(initRex.stmt);
 						initStatements.addAll(CHandler.createHavocsForNonMallocAuxVars(initRex.auxVars));
 						for (Declaration d : initRex.decl)
 							initDecl.add((VariableDeclaration) d);
 					} else { //no initializer --> default initialization
-						ResultExpression nullInitializer = initVar(loc, main, 
-								memoryHandler, arrayHandler, functionHandler, structHandler, 
-								new VariableLHS(loc, id),
-								en.getValue().getType(), null) ;
+						ResultExpression nullInitializer = main.cHandler.getInitHandler().initVar(loc, main, 
+								new VariableLHS(loc, id), en.getValue().getType(), null) ;
 
 						initStatements.addAll(nullInitializer.stmt);
 						initStatements.addAll(CHandler.createHavocsForNonMallocAuxVars(nullInitializer.auxVars));
@@ -301,287 +296,7 @@ mInitializedGlobals.size()];
 		return decl;
 	}
 
-	/**
-	 * Initializes global variables recursively, according to ISO/IEC 9899:TC3,
-	 * 6.7.8 §10:<br>
-	 * <blockquote
-	 * cite="http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf"><i>"If
-	 * an object that has automatic storage duration is not initialized
-	 * explicitly, its value is indeterminate. If an object that has static
-	 * storage duration is not initialized explicitly, then:
-	 * <ul>
-	 * <li>if it has pointer type, it is initialized to a null pointer;</li>
-	 * <li>if it has arithmetic type, it is initialized to (positive or
-	 * unsigned) zero;</li>
-	 * <li>if it is an aggregate, every member is initialized (recursively)
-	 * according to these rules;</li>
-	 * <li>if it is a union, the first named member is initialized (recursively)
-	 * according to these rules."</li>
-	 * </ul>
-	 * </i></blockquote> where (from 6.2.5 Types §21): <blockquote
-	 * cite="http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf"
-	 * ><i>"Arithmetic types and pointer types are collectively called scalar
-	 * types. Array and structure types are collectively called aggregate
-	 * types."</i></blockquote>
-	 * 
-	 * -- version for Expression that have an identifier in the program, i.e. where 
-	 *  onHeap is determined via the corresponding store in the CHandler  --
-	 * 
-	 * @param lhs
-	 *            the LeftHandSide to initialize. If this is null, the initializing value
-	 *            is returned in the lrValue of the returned ResultExpression which otherwise
-	 *            is null.
-	 *            (Detail: if we initialize something onHeap, lhs may not be null)
-	 * @param cType
-	 *            The CType of the initialized variable
-	 * 
-	 * @return 
-	 */
-	public static ResultExpression initVar(ILocation loc, Dispatcher main,
-			MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler, 
-			StructHandler structHandler, 
-			final LeftHandSide lhs,
-			CType cType, ResultExpression initializerRaw) {
 
-		boolean onHeap = false;
-		if (lhs != null && lhs instanceof VariableLHS) 
-			onHeap = ((CHandler )main.cHandler).isHeapVar(((VariableLHS) lhs).getIdentifier());
-
-		LRValue var = null;
-		if (onHeap)
-			var = new HeapLValue(new IdentifierExpression(loc, ((VariableLHS)lhs).getIdentifier()), cType);
-		else
-			var = lhs == null ? null : new LocalLValue(lhs, cType);
-
-
-		return initVar(loc, main, memoryHandler, arrayHandler, functionHandler, 
-				structHandler, var, cType, initializerRaw);
-	}
-
-
-	/**
-	 * same as other initVar but with an LRValue as argument, not a LHS
-	 * if var is a HeapLValue, something on Heap is initialized, 
-	 * if it is a LocalLValue something off the Heap is initialized
-	 */
-	public static ResultExpression initVar(ILocation loc, Dispatcher main,
-			MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler, 
-			StructHandler structHandler, 
-			LRValue var,
-			CType cType, ResultExpression initializerRaw
-			) {
-		assert var == null || var instanceof LocalLValue || var instanceof HeapLValue;
-
-		boolean onHeap = var instanceof HeapLValue;
-
-		CType lCType = cType.getUnderlyingType();
-
-		assert !onHeap || var != null : "Cannot store something on heap without an identifier to begin with.";
-
-		ArrayList<Statement> stmt = new ArrayList<Statement>();
-		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
-		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-		LRValue lrVal = null;
-
-		//if (f.i.) the initializer comes from a function call, it has statements and declarations that we need to
-		//carry over
-		ResultExpression initializer = null;
-		if (initializerRaw != null) {
-			initializer = 
-					initializerRaw.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			stmt.addAll(initializer.stmt);
-			decl.addAll(initializer.decl);
-			overappr.addAll(initializer.overappr);
-			auxVars.putAll(initializer.auxVars);
-		}
-
-		VariableLHS lhs = null;
-		if (var instanceof LocalLValue)
-			lhs = (VariableLHS) ((LocalLValue) var).getLHS();
-		Expression rhs = null;
-		if (lCType instanceof CPrimitive) {
-			switch (((CPrimitive) lCType).getGeneralType()) {
-			case INTTYPE:
-				if (initializer == null) {
-					rhs = new IntegerLiteral(loc, SFO.NR0);
-				} else {
-					initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer);
-					rhs = initializer.lrVal.getValue();
-				}
-				break;
-			case FLOATTYPE:
-				if (initializer == null) {
-					rhs = new RealLiteral(loc, SFO.NR0F);
-				} else {
-					rhs = initializer.lrVal.getValue();
-				}
-				break;
-			case VOID:
-			default:
-				throw new AssertionError("unknown type to init");
-			}
-			if (var != null) {
-				if (onHeap) {
-					stmt.addAll(memoryHandler.getWriteCall(
-							(HeapLValue) var,
-							new RValue(rhs, cType)));
-				} else {
-					assert lhs != null;
-					stmt.add(new AssignmentStatement(loc, 
-							new LeftHandSide[] { lhs },
-							new Expression[] { rhs } ));
-				}
-			} else {
-				lrVal = new RValue(rhs, lCType);
-			}
-		} else if (lCType instanceof CPointer) {
-			if (initializer == null) {
-				rhs = new IdentifierExpression(loc, SFO.NULL);
-			} else {
-				CType initializerUnderlyingType = initializer.lrVal.cType.getUnderlyingType();
-				if (initializerUnderlyingType instanceof CPointer
-						|| initializerUnderlyingType instanceof CArray) {
-					rhs = initializer.lrVal.getValue();
-				} else if (initializerUnderlyingType instanceof CPrimitive 
-						//						&& ((CPrimitive) initializerUnderlyingType).getType() == PRIMITIVE.INT){
-						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == GENERALPRIMITIVE.INTTYPE){
-					String offset = ((IntegerLiteral) initializer.lrVal.getValue()).getValue();
-					if (offset.equals("0")) {
-						rhs = new IdentifierExpression(loc, SFO.NULL);
-					} else {
-						rhs = MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc, "0"), 
-								new IntegerLiteral(loc, offset), loc);
-					}
-				} else {
-					throw new AssertionError("trying to initialize a pointer with something different from int and pointer");
-				}
-			}
-			if (var != null) {
-				if (onHeap) {
-					stmt.addAll(memoryHandler.getWriteCall((HeapLValue) var, new RValue(rhs, lCType)));
-				} else {
-					assert lhs != null;
-					stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
-							new Expression[] { rhs } ));
-				}
-			} else {
-				lrVal = new RValue(rhs, lCType);
-			}
-		} else if (lCType instanceof CArray) {
-
-			if (onHeap) { 
-				IdentifierExpression arrayAddress = (IdentifierExpression)((HeapLValue) var).getAddress();
-				lhs = new VariableLHS(arrayAddress.getLocation(),
-						arrayAddress.getIdentifier());			
-
-				ResultExpression mallocRex = memoryHandler.getMallocCall(main, functionHandler,
-						memoryHandler.calculateSizeOf(lCType, loc), loc);
-				stmt.addAll(mallocRex.stmt);
-				decl.addAll(mallocRex.decl);
-				auxVars.putAll(mallocRex.auxVars);
-				Expression address = mallocRex.lrVal.getValue();
-
-				Statement assign = new AssignmentStatement(loc, new LeftHandSide[] {lhs}, 
-						new Expression[] { mallocRex.lrVal.getValue()});
-				stmt.add(assign);
-
-				if (initializer == null) {
-					stmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, structHandler, loc, 
-						null, address, functionHandler, (CArray) lCType));				
-				} else if (initializer instanceof ResultExpressionListRec) {
-					stmt.addAll(arrayHandler.initArrayOnHeap(main, memoryHandler, structHandler, loc, 
-							((ResultExpressionListRec) initializer).list, address, functionHandler, (CArray) lCType));				
-				} else if (initializer instanceof ResultExpression) {// we have a variable length array and need the corresponding aux vars
-//					stmt.addAll(initializer.stmt);
-//					decl.addAll(initializer.decl);
-//					auxVars.putAll(initializer.auxVars);
-				} else {
-					assert false;
-				}
-
-			} else { //not on Heap
-				stmt.addAll(arrayHandler.initBoogieArray(main, memoryHandler, structHandler, functionHandler, loc,
-						initializer == null ? null : ((ResultExpressionListRec) initializer).list,
-								lhs, (CArray) lCType));
-				if (initializer == null) {
-					stmt.addAll(arrayHandler.initBoogieArray(main, memoryHandler, structHandler, functionHandler, loc,
-						null, lhs, (CArray) lCType));
-				} else if (initializer instanceof ResultExpressionListRec) {
-					stmt.addAll(arrayHandler.initBoogieArray(main, memoryHandler, structHandler, functionHandler, loc,
-						((ResultExpressionListRec) initializer).list, lhs, (CArray) lCType));
-				} else if (initializer instanceof ResultExpression) {// we have a variable length array and need the corresponding aux vars
-//					stmt.addAll(initializer.stmt);
-//					decl.addAll(initializer.decl);
-//					auxVars.putAll(initializer.auxVars);
-				} else {
-					assert false;
-				}
-			}
-			assert lhs != null;
-		} else if (lCType instanceof CStruct) {
-			CStruct structType = (CStruct) lCType;
-
-			if (onHeap) {
-				assert var != null;
-				ResultExpression heapWrites = structHandler.initStructOnHeapFromRERL(main, 
-						loc, memoryHandler, arrayHandler, functionHandler, 
-						((HeapLValue) var).getAddress(),
-						(ResultExpressionListRec) initializer,
-						structType);
-
-				stmt.addAll(heapWrites.stmt);
-				decl.addAll(heapWrites.decl);
-				overappr.addAll(heapWrites.overappr);
-				auxVars.putAll(heapWrites.auxVars);
-			} else {
-				ResultExpression scRex = structHandler.makeStructConstructorFromRERL(main, 
-						loc, memoryHandler, arrayHandler, functionHandler, 
-						(ResultExpressionListRec) initializer,
-						structType);
-
-				stmt.addAll(scRex.stmt);
-				decl.addAll(scRex.decl);
-				overappr.addAll(scRex.overappr);
-				auxVars.putAll(scRex.auxVars);
-
-				if (var != null) {
-					assert lhs != null;
-					stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { scRex.lrVal.getValue() }));
-				} else {
-					lrVal = new RValue(rhs, lCType);
-				}
-			}
-		} else if (lCType instanceof CEnum) {
-			if (initializer == null) {
-				rhs = new IntegerLiteral(loc, SFO.NR0);
-			} else {
-				initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer);
-				rhs = initializer.lrVal.getValue();
-			}		
-			if (var != null) {
-				if (onHeap) {
-					stmt.addAll(memoryHandler.getWriteCall(
-							(HeapLValue) var,
-							new RValue(rhs, cType)));
-				} else {
-					assert lhs != null;
-					stmt.add(new AssignmentStatement(loc, 
-							new LeftHandSide[] { lhs },
-							new Expression[] { rhs } ));
-				}
-			} else {
-				lrVal = new RValue(rhs, lCType);
-			}
-		} else {
-			String msg = "Unknown type - don't know how to initialize!";
-			throw new UnsupportedSyntaxException(loc, msg);
-		}
-		assert (main.isAuxVarMapcomplete(decl, auxVars));
-
-		// lrVal is null in case we got a lhs to assign to, the initializing value otherwise
-		return new ResultExpression(stmt, lrVal, decl, auxVars, overappr);
-	}
 
 	/**
 	 * Create the Ultimate start procedure, calling the init method, and the

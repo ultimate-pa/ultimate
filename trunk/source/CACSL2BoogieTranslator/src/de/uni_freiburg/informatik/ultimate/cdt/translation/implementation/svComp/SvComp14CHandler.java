@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -88,7 +89,7 @@ public class SvComp14CHandler extends CHandler {
 	 */
 	public SvComp14CHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, Logger logger) {
 		super(main, backtranslator, false, logger);
-		super.arrayHandler = new SVCompArrayHandler();
+		super.mArrayHandler = new SVCompArrayHandler();
 	}
 
 	//
@@ -128,7 +129,7 @@ public class SvComp14CHandler extends CHandler {
 			ArrayList<Expression> args = new ArrayList<Expression>();
 			for (IASTInitializerClause inParam : node.getArguments()) {
 				ResultExpression in = ((ResultExpression) main.dispatch(inParam)).switchToRValueIfNecessary(main,
-						memoryHandler, structHandler, loc);
+						mMemoryHandler, mStructHandler, loc);
 				if (in.lrVal.getValue() == null) {
 					String msg = "Incorrect or invalid in-parameter! " + loc.toString();
 					throw new IncorrectSyntaxException(loc, msg);
@@ -223,6 +224,12 @@ public class SvComp14CHandler extends CHandler {
 					it.remove();
 		}
 		return r;
+	}
+
+	@Override
+	public Result visit(Dispatcher main, IASTASMDeclaration node) {
+		//FIXME: workaround for now: ignore inline assembler instructions --> or move this to svCompCHander??
+		return new ResultSkip();
 	}
 
 }

@@ -52,14 +52,25 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.ArrayHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.FunctionHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.InitializationHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
@@ -69,7 +80,8 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @date 04.01.2012
  */
 public interface ICHandler extends IHandler {
-    /**
+
+	/**
      * Holds the variables for the different scopes in a c program.
      * 
      * @return the variables in scopes.
@@ -583,5 +595,16 @@ public interface ICHandler extends IHandler {
 	 */
 	public RValue castToType(ILocation loc, RValue lrVal,
 			CType functionResultType);
+
+	public InitializationHandler getInitHandler();
+
+//	public ResultExpression initVar(ILocation loc, Dispatcher main,
+//			LRValue lrVal, CType underlyingFieldType,
+//			ResultExpression resultExpression);
+//
+//
+//	public ResultExpression initVar(ILocation loc, Dispatcher main,
+//			LeftHandSide lhs, CType cT,
+//			ResultExpression resultExpression);
 
 }

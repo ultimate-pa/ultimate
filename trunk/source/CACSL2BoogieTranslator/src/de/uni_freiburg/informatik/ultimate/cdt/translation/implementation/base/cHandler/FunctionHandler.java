@@ -940,8 +940,6 @@ public class FunctionHandler {
 		boolean resultTypeIsVoid = calledFuncType.getResultType() instanceof CPrimitive 
 					&& ((CPrimitive) calledFuncType.getResultType()).getType() == PRIMITIVE.VOID;
 		
-		//FIXME: Frage: werden am Boogie-prozedurEnde alle Vars automatisch gehavoct, aus SMTInterpol-sicht?
-		// wenn nicht: hier und an anderer stelle auxVars anpassen..
 		ArrayList<Statement> stmt = new ArrayList<>();
 		ArrayList<VariableDeclaration> decl = new ArrayList<>();
 
@@ -1051,7 +1049,6 @@ public class FunctionHandler {
 						new BinaryExpression(loc, BinaryExpression.Operator.COMPEQ, 
 								new IdentifierExpression(loc, inParams[inParams.length - 1].getIdentifiers()[0]),
 								new IdentifierExpression(loc, SFO.FUNCTION_ADDRESS + fittingFunctions.get(i)));
-//						new BooleanLiteral(loc, true);
 				
 				if (i == 1) {
 					currentIfStmt = new IfStatement(loc, condition,
