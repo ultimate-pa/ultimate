@@ -314,6 +314,7 @@
 				<module>../Library-UltimateTestTest</module>
 				<module>../CoreRCPTest</module>
 				<module>../UltimateRegressionTest</module>
+				<module>../UltimateTest</module>
 			</modules>
 		</profile>
 	</profiles>
