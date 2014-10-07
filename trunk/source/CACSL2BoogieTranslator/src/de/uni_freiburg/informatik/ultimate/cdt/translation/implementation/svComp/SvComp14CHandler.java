@@ -228,7 +228,7 @@ public class SvComp14CHandler extends CHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTASMDeclaration node) {
-		//FIXME: workaround for now: ignore inline assembler instructions --> or move this to svCompCHander??
+		//workaround for now: ignore inline assembler instructions
 		return new ResultSkip();
 	}
 

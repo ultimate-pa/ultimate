@@ -50,24 +50,19 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 public class InitializationHandler {
 
-//	ArrayHandler arrayHandler;
+	FunctionHandler mFunctionHandler;
 	
-	FunctionHandler functionHandler;
+	StructHandler mStructHandler;
 	
-	StructHandler structHandler;
+	MemoryHandler mMemoryHandler;	
 	
-	MemoryHandler memoryHandler;	
-	
-	
-
-	public InitializationHandler(//ArrayHandler arrayHandler,
+	public InitializationHandler(
 			FunctionHandler functionHandler, StructHandler structHandler,
 			MemoryHandler memoryHandler) {
 		super();
-//		this.arrayHandler = arrayHandler;
-		this.functionHandler = functionHandler;
-		this.structHandler = structHandler;
-		this.memoryHandler = memoryHandler;
+		this.mFunctionHandler = functionHandler;
+		this.mStructHandler = structHandler;
+		this.mMemoryHandler = memoryHandler;
 	}
 
 
@@ -152,7 +147,7 @@ public class InitializationHandler {
 		ResultExpression initializer = null;
 		if (initializerRaw != null) {
 			initializer = 
-					initializerRaw.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+					initializerRaw.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 			stmt.addAll(initializer.stmt);
 			decl.addAll(initializer.decl);
 			overappr.addAll(initializer.overappr);
@@ -186,7 +181,7 @@ public class InitializationHandler {
 			}
 			if (var != null) {
 				if (onHeap) {
-					stmt.addAll(memoryHandler.getWriteCall(
+					stmt.addAll(mMemoryHandler.getWriteCall(
 							(HeapLValue) var,
 							new RValue(rhs, cType)));
 				} else {
@@ -222,7 +217,7 @@ public class InitializationHandler {
 			}
 			if (var != null) {
 				if (onHeap) {
-					stmt.addAll(memoryHandler.getWriteCall((HeapLValue) var, new RValue(rhs, lCType)));
+					stmt.addAll(mMemoryHandler.getWriteCall((HeapLValue) var, new RValue(rhs, lCType)));
 				} else {
 					assert lhs != null;
 					stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
@@ -238,8 +233,8 @@ public class InitializationHandler {
 				lhs = new VariableLHS(arrayAddress.getLocation(),
 						arrayAddress.getIdentifier());			
 
-				ResultExpression mallocRex = memoryHandler.getMallocCall(main, functionHandler,
-						memoryHandler.calculateSizeOf(lCType, loc), loc);
+				ResultExpression mallocRex = mMemoryHandler.getMallocCall(main, mFunctionHandler,
+						mMemoryHandler.calculateSizeOf(lCType, loc), loc);
 				stmt.addAll(mallocRex.stmt);
 				decl.addAll(mallocRex.decl);
 				auxVars.putAll(mallocRex.auxVars);
@@ -250,15 +245,11 @@ public class InitializationHandler {
 				stmt.add(assign);
 
 				if (initializer == null) {
-					stmt.addAll(this.initArrayOnHeap(main, 
-//							memoryHandler, structHandler, 
-							loc, 
-						null, address, functionHandler, (CArray) lCType));				
+					stmt.addAll(this.initArrayOnHeap(main, loc, 
+						null, address, mFunctionHandler, (CArray) lCType));				
 				} else if (initializer instanceof ResultExpressionListRec) {
-					stmt.addAll(this.initArrayOnHeap(main,
-//							memoryHandler, structHandler, 
-							loc, 
-							((ResultExpressionListRec) initializer).list, address, functionHandler, (CArray) lCType));				
+					stmt.addAll(this.initArrayOnHeap(main, loc, 
+							((ResultExpressionListRec) initializer).list, address, mFunctionHandler, (CArray) lCType));				
 				} else if (initializer instanceof ResultExpression) {// we have a variable length array and need the corresponding aux vars
 //					stmt.addAll(initializer.stmt);
 //					decl.addAll(initializer.decl);
@@ -268,20 +259,14 @@ public class InitializationHandler {
 				}
 
 			} else { //not on Heap
-				stmt.addAll(this.initBoogieArray(main, 
-//						memoryHandler, structHandler, functionHandler, 
-						loc,
+				stmt.addAll(this.initBoogieArray(main, loc,
 						initializer == null ? null : ((ResultExpressionListRec) initializer).list,
 								lhs, (CArray) lCType));
 				if (initializer == null) {
-					stmt.addAll(this.initBoogieArray(main, 
-//							memoryHandler, structHandler, functionHandler, 
-							loc,
+					stmt.addAll(this.initBoogieArray(main, loc,
 						null, lhs, (CArray) lCType));
 				} else if (initializer instanceof ResultExpressionListRec) {
-					stmt.addAll(this.initBoogieArray(main, 
-//							memoryHandler, structHandler, functionHandler, 
-							loc,
+					stmt.addAll(this.initBoogieArray(main, loc,
 						((ResultExpressionListRec) initializer).list, lhs, (CArray) lCType));
 				} else if (initializer instanceof ResultExpression) {// we have a variable length array and need the corresponding aux vars
 //					stmt.addAll(initializer.stmt);
@@ -297,9 +282,7 @@ public class InitializationHandler {
 
 			if (onHeap) {
 				assert var != null;
-				ResultExpression heapWrites = this.initStructOnHeapFromRERL(main, 
-						loc, 
-//						memoryHandler, arrayHandler, functionHandler, 
+				ResultExpression heapWrites = this.initStructOnHeapFromRERL(main, loc, 
 						((HeapLValue) var).getAddress(),
 						(ResultExpressionListRec) initializer,
 						structType);
@@ -309,9 +292,7 @@ public class InitializationHandler {
 				overappr.addAll(heapWrites.overappr);
 				auxVars.putAll(heapWrites.auxVars);
 			} else {
-				ResultExpression scRex = this.makeStructConstructorFromRERL(main, 
-						loc, 
-//						memoryHandler, arrayHandler, functionHandler, 
+				ResultExpression scRex = this.makeStructConstructorFromRERL(main, loc, 
 						(ResultExpressionListRec) initializer,
 						structType);
 
@@ -336,7 +317,7 @@ public class InitializationHandler {
 			}		
 			if (var != null) {
 				if (onHeap) {
-					stmt.addAll(memoryHandler.getWriteCall(
+					stmt.addAll(mMemoryHandler.getWriteCall(
 							(HeapLValue) var,
 							new RValue(rhs, cType)));
 				} else {
@@ -359,14 +340,12 @@ public class InitializationHandler {
 	}
 	
 	
-	public ArrayList<Statement> initArrayOnHeap(Dispatcher main, 
-//			MemoryHandler memoryHandler, StructHandler structHandler, 
-			ILocation loc, 
+	public ArrayList<Statement> initArrayOnHeap(Dispatcher main, ILocation loc, 
 			ArrayList<ResultExpressionListRec> list, Expression startAddress,
 			FunctionHandler functionHandler, CArray arrayType) {
 		ArrayList<Statement> arrayWrites = new ArrayList<Statement>();
 		
-		Expression sizeOfCell = memoryHandler.calculateSizeOf(arrayType.getValueType(), loc); 
+		Expression sizeOfCell = mMemoryHandler.calculateSizeOf(arrayType.getValueType(), loc); 
 		Expression[] dimensions = arrayType.getDimensions();
 		Integer currentSizeInt = null;
 		try {
@@ -398,8 +377,6 @@ public class InitializationHandler {
 						throw new AssertionError("this should not be the case as we are in the inner/outermost array right??");
 					} else if  (valueType instanceof CStruct) {
 						ResultExpression sInit = this.initStructOnHeapFromRERL(main, loc, 
-//								memoryHandler, 
-//								arrayHandler, functionHandler, 
 								null, null, (CStruct) valueType);
 						arrayWrites.addAll(sInit.stmt);
 						assert sInit.decl.size() == 0 && sInit.auxVars.size() == 0 : "==> change return type of initArray..";
@@ -428,7 +405,7 @@ public class InitializationHandler {
 						writeOffset, 
 						loc);
 
-				arrayWrites.addAll(memoryHandler.getWriteCall(new HeapLValue(writeLocation, valueType), val));
+				arrayWrites.addAll(mMemoryHandler.getWriteCall(new HeapLValue(writeLocation, valueType), val));
 			}
 		} else {
 			for (int i = 0; i < currentSizeInt; i++) { 
@@ -459,7 +436,6 @@ public class InitializationHandler {
 
 				arrayWrites.addAll(
 						initArrayOnHeap(main, 
-//								memoryHandler, structHandler, 
 								loc, 
 								list != null ? list.get(i).list : null,
 								MemoryHandler.constructPointerFromBaseAndOffset(
@@ -472,10 +448,7 @@ public class InitializationHandler {
 		return arrayWrites;
 	}
 	
-	public ArrayList<Statement> initBoogieArray(Dispatcher main, 
-//			MemoryHandler memoryHandler, StructHandler structHandler,
-//			FunctionHandler functionHandler,  
-			ILocation loc, 
+	public ArrayList<Statement> initBoogieArray(Dispatcher main, ILocation loc, 
 			ArrayList<ResultExpressionListRec> list, LeftHandSide innerArrayAccessLHS,
 			CArray arrayType) {
 		ArrayList<Statement> arrayWrites = new ArrayList<Statement>();
@@ -502,7 +475,6 @@ public class InitializationHandler {
 						throw new AssertionError("this should not be the case as we are in the inner/outermost array right??");
 					} else if  (valueType instanceof CStruct) {
 						ResultExpression sInit = this.makeStructConstructorFromRERL(main, loc, 
-//								memoryHandler, arrayHandler, functionHandler, 
 								null, (CStruct) valueType);
 						arrayWrites.addAll(sInit.stmt);
 						assert sInit.decl.size() == 0 && sInit.auxVars.size() == 0 : "==> change return type of initArray..";
@@ -555,7 +527,6 @@ public class InitializationHandler {
 
 				arrayWrites.addAll(
 						initBoogieArray(main, 
-//								memoryHandler, structHandler, functionHandler, 
 								loc,
 								list != null ? list.get(i).list : null,
 								new ArrayLHS(loc, newLHS, newIndices), innerArrayType)); 
@@ -568,8 +539,6 @@ public class InitializationHandler {
 	 * Generate the write calls for the initialization of the struct onHeap.
 	 */
 	public ResultExpression initStructOnHeapFromRERL(Dispatcher main, ILocation loc, 
-//			MemoryHandler memoryHandler, ArrayHandler arrayHandler, 
-//			FunctionHandler functionHandler, 
 			Expression startAddress, 
 			ResultExpressionListRec rerlIn, CStruct structType) {
 		ResultExpressionListRec rerl = null;
@@ -580,7 +549,7 @@ public class InitializationHandler {
 		
 		if (rerl.lrVal != null) {//we have an identifier (or sth else too?)
 			ResultExpression writes = new ResultExpression((RValue) null);
-			ArrayList<Statement> writeCalls = memoryHandler.getWriteCall(
+			ArrayList<Statement> writeCalls = mMemoryHandler.getWriteCall(
 					new HeapLValue(startAddress, rerl.lrVal.cType), (RValue) rerl.lrVal);
 			writes.stmt.addAll(writeCalls);
 			return writes;
@@ -616,7 +585,7 @@ public class InitializationHandler {
 			CType underlyingFieldType = fieldTypes[i].getUnderlyingType();
 			
 			Expression fieldAddressBase = newStartAddressBase;
-			Expression fieldAddressOffset = structHandler.computeStructFieldOffset(memoryHandler, loc, fieldIds[i], 
+			Expression fieldAddressOffset = mStructHandler.computeStructFieldOffset(mMemoryHandler, loc, fieldIds[i], 
 					newStartAddressOffset, structType);
 			StructConstructor fieldPointer = MemoryHandler.constructPointerFromBaseAndOffset(
 					fieldAddressBase, fieldAddressOffset, loc);
@@ -644,7 +613,7 @@ public class InitializationHandler {
 					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
 				
 					fieldWrites = new ResultExpression((RValue) null);
-					fieldWrites.stmt.addAll(memoryHandler.getWriteCall(
+					fieldWrites.stmt.addAll(mMemoryHandler.getWriteCall(
 							fieldHlv,
 							new RValue(new IdentifierExpression(loc, tmpId), underlyingFieldType)));
 					VariableDeclaration auxVarDec = new VariableDeclaration(loc, new Attribute[0], 
@@ -673,12 +642,10 @@ public class InitializationHandler {
 					if (i < rerl.list.size())
 						arrayInitRerl = rerl.list.get(i);
 
-					fieldStmt.addAll(this.initArrayOnHeap(main, 
-//							memoryHandler, structHandler, 
-							loc, 
+					fieldStmt.addAll(this.initArrayOnHeap(main, loc, 
 							arrayInitRerl == null ? null : arrayInitRerl.list, 
 									fieldPointer,
-									functionHandler, (CArray) underlyingFieldType));
+									mFunctionHandler, (CArray) underlyingFieldType));
 
 					fieldWrites = new ResultExpression(fieldStmt, 
 							null,
@@ -689,8 +656,6 @@ public class InitializationHandler {
 					ResultExpressionListRec fieldRerl = i < rerl.list.size() ? 
 							rerl.list.get(i) : new ResultExpressionListRec();
 					fieldWrites = initStructOnHeapFromRERL(main, loc, 
-//							memoryHandler, arrayHandler, 
-//							functionHandler, 
 							fieldPointer, fieldRerl, (CStruct) underlyingFieldType);
 							
 				} else if (underlyingFieldType instanceof CNamed) {
@@ -715,8 +680,6 @@ public class InitializationHandler {
 	 * If the RERL is null, the default initialization (int: 0, Ptr: NULL, ...) is used for each entry.
 	 */
 	public ResultExpression makeStructConstructorFromRERL(Dispatcher main, ILocation loc, 
-//			MemoryHandler memoryHandler, ArrayHandler arrayHandler,
-//			FunctionHandler functionHandler, 
 			ResultExpressionListRec rerlIn, CStruct structType) {
 		ResultExpressionListRec rerl = null;
 		if (rerlIn == null)
@@ -811,9 +774,7 @@ public class InitializationHandler {
 					fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
 					fieldDecl.add(tVarDecl);
 					VariableLHS fieldLHS = new VariableLHS(loc, tmpId);
-					fieldStmt.addAll(main.cHandler.getInitHandler().initBoogieArray(main,
-//							memoryHandler, this, functionHandler, 
-							loc, 
+					fieldStmt.addAll(main.cHandler.getInitHandler().initBoogieArray(main, loc, 
 							arrayInitRerl == null ? null : arrayInitRerl.list, 
 									fieldLHS, (CArray) underlyingFieldType));
 
@@ -823,13 +784,9 @@ public class InitializationHandler {
 				} else if (underlyingFieldType instanceof CStruct) {
 					if (i < rerl.list.size())
 						fieldContents = makeStructConstructorFromRERL(main, loc,
-//								memoryHandler, arrayHandler, 
-//								functionHandler, 
 								rerl.list.get(i), (CStruct) underlyingFieldType);
 					else
 						fieldContents = makeStructConstructorFromRERL(main, loc, 
-//								memoryHandler, arrayHandler,
-//								functionHandler, 
 								new ResultExpressionListRec(), (CStruct) underlyingFieldType);	
 				} else if (underlyingFieldType instanceof CNamed) {
 					throw new AssertionError("This should not be the case as we took the underlying type.");
@@ -852,5 +809,4 @@ public class InitializationHandler {
 		        new RValue(sc, structType), newDecl, newAuxVars, newOverappr);
 		return result;
 	} 
-		
 }

@@ -2542,9 +2542,6 @@ public class CHandler implements ICHandler {
 				constantResult = 
 						new BigInteger(((IntegerLiteral) left).getValue())
 							.multiply(new BigInteger(((IntegerLiteral) right).getValue())).toString();
-//				constantResult = new Long(
-//						(Long.parseLong(((IntegerLiteral) left).getValue()) * Long.parseLong(((IntegerLiteral) right)
-//								.getValue()))).toString();
 			}
 			break;
 		case IASTBinaryExpression.op_divideAssign:
@@ -2554,9 +2551,6 @@ public class CHandler implements ICHandler {
 				constantResult = 
 						new BigInteger(((IntegerLiteral) left).getValue())
 							.divide(new BigInteger(((IntegerLiteral) right).getValue())).toString();
-//				constantResult = new Long(
-//						(Long.parseLong(((IntegerLiteral) left).getValue()) / Long.parseLong(((IntegerLiteral) right)
-//								.getValue()))).toString();
 			}
 			break;
 		case IASTBinaryExpression.op_moduloAssign:
@@ -2566,9 +2560,6 @@ public class CHandler implements ICHandler {
 				constantResult = 
 						new BigInteger(((IntegerLiteral) left).getValue())
 							.mod(new BigInteger(((IntegerLiteral) right).getValue())).toString();
-//				constantResult = new Long(
-//						(Long.parseLong(((IntegerLiteral) left).getValue()) % Long
-//								.parseLong(((IntegerLiteral) right).getValue()))).toString();
 			}
 			break;
 		case IASTBinaryExpression.op_plusAssign:
@@ -2578,9 +2569,6 @@ public class CHandler implements ICHandler {
 				constantResult = 
 						new BigInteger(((IntegerLiteral) left).getValue())
 							.add(new BigInteger(((IntegerLiteral) right).getValue())).toString();
-//				constantResult = new Long(
-//						(Long.parseLong(((IntegerLiteral) left).getValue()) + Long
-//								.parseLong(((IntegerLiteral) right).getValue()))).toString();
 			}
 			break;
 		default:
@@ -3071,7 +3059,6 @@ public class CHandler implements ICHandler {
 		// cast integer -> pointer
 		else if (underlyingType instanceof CPrimitive) {
 			CPrimitive cprim = (CPrimitive) underlyingType;
-			// if (cprim.getType() == PRIMITIVE.INT &&
 			if (cprim.getGeneralType() == GENERALPRIMITIVE.INTTYPE && expectedType instanceof CPointer) {
 				Expression e = null;
 				if (mMemoryHandler.useConstantTypeSizes) {
@@ -3092,16 +3079,6 @@ public class CHandler implements ICHandler {
 				rVal = new RValue(e, expectedType);
 			}
 		}
-		
-		//alt:
-//		if (!rVal.cType.equals(expectedType)) {
-////			ptr to int
-//			if (rVal.cType instanceof CPointer && expectedType instanceof CPrimitive
-//					&& ((CPrimitive) expectedType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-//				return new RValue(new StructAccessExpression(loc, rVal.getValue(), SFO.POINTER_OFFSET), expectedType);
-//			}
-//		}
-
 		return rVal;
 	}
 
