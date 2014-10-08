@@ -17,17 +17,11 @@ public class SVCOMP15TestSuite extends AbstractSVCOMP15TestSuite {
 	protected List<TestDefinition> getTestDefinitions() {
 		List<TestDefinition> rtr = new ArrayList<>();
 
-//		rtr.add(getTestDefinitionFromExamples("BitVectors.false-unreach-label", "AutomizerC.xml",
-//				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("BitVectors", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("Concurrency", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
-//		rtr.add(getTestDefinitionFromExamples("ControlFlowInteger.false-unreach-label", "AutomizerC.xml",
-//				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("ControlFlowInteger", "AutomizerC.xml",
-//				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
-//		rtr.add(getTestDefinitionFromExamples("DeviceDrivers64.false-unreach-label", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("DeviceDrivers64", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
@@ -37,17 +31,11 @@ public class SVCOMP15TestSuite extends AbstractSVCOMP15TestSuite {
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("Floats", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
-//		rtr.add(getTestDefinitionFromExamples("HeapManipulation.false-unreach-label", "AutomizerC.xml",
-//				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("HeapManipulation", "AutomizerC.xml",
-//				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
-//		rtr.add(getTestDefinitionFromExamples("Loops.false-unreach-label", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("Loops", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("MemorySafety", "AutomizerC.xml",
-//				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
-//		rtr.add(getTestDefinitionFromExamples("ProductLines.false-unreach-label", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("ProductLines", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
@@ -59,13 +47,11 @@ public class SVCOMP15TestSuite extends AbstractSVCOMP15TestSuite {
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("Recursive", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
-//		rtr.add(getTestDefinitionFromExamples("Sequentialized.false-unreach-label", "AutomizerC.xml",
-//				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("Sequentialized", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
-		rtr.add(getTestDefinitionFromExamples("Simple.false-unreach-label", "AutomizerC.xml",
+		rtr.add(getTestDefinitionFromExamples("Simple", "AutomizerC.xml",
 				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
-		rtr.add(getTestDefinitionFromExamples("Simple.false-unreach-label", "AutomizerC.xml",
+		rtr.add(getTestDefinitionFromExamples("Simple", "AutomizerC.xml",
 				"automizer/BackwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("Simple", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
