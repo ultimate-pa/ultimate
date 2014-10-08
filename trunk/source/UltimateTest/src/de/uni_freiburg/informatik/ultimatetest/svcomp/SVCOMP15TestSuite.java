@@ -35,8 +35,8 @@ public class SVCOMP15TestSuite extends AbstractSVCOMP15TestSuite {
 				"svcomp2015/svComp-32bit-precise.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("Loops", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
-//		rtr.add(getTestDefinitionFromExamples("MemorySafety", "AutomizerC.xml",
-//				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
+		rtr.add(getTestDefinitionFromExamples("MemorySafety", "AutomizerC.xml",
+				"svcomp2015/svComp-32bit-memsafety.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("ProductLines", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("PropertyERROR.prp", "AutomizerC.xml",
