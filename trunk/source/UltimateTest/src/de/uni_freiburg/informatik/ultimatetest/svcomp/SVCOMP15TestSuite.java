@@ -21,18 +21,18 @@ public class SVCOMP15TestSuite extends AbstractSVCOMP15TestSuite {
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("Concurrency", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
-//		rtr.add(getTestDefinitionFromExamples("ControlFlowInteger", "AutomizerC.xml",
-//				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
-//		rtr.add(getTestDefinitionFromExamples("DeviceDrivers64", "AutomizerC.xml",
-//				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
+		rtr.add(getTestDefinitionFromExamples("ControlFlowInteger", "AutomizerC.xml",
+				"svcomp2015/svComp-32bit-precise.epf", sTimeout));
+		rtr.add(getTestDefinitionFromExamples("DeviceDrivers64", "AutomizerC.xml",
+				"svcomp2015/svComp-64bit-simple.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("DriverChallenges", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("ECA", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("Floats", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
-//		rtr.add(getTestDefinitionFromExamples("HeapManipulation", "AutomizerC.xml",
-//				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
+		rtr.add(getTestDefinitionFromExamples("HeapManipulation", "AutomizerC.xml",
+				"svcomp2015/svComp-32bit-precise.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("Loops", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("MemorySafety", "AutomizerC.xml",
@@ -53,8 +53,8 @@ public class SVCOMP15TestSuite extends AbstractSVCOMP15TestSuite {
 				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 		rtr.add(getTestDefinitionFromExamples("Simple", "AutomizerC.xml",
 				"automizer/BackwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
-//		rtr.add(getTestDefinitionFromExamples("Simple", "AutomizerC.xml",
-//				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
+		rtr.add(getTestDefinitionFromExamples("Simple", "AutomizerC.xml",
+				"svcomp2015/svComp-32bit-simple.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("Stateful", "AutomizerC.xml",
 //				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
 //		rtr.add(getTestDefinitionFromExamples("Termination-crafted", "AutomizerC.xml",
