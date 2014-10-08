@@ -9,6 +9,8 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.TranslationTestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public abstract class AbstractCTranslationTestSuite extends UltimateTestSuite {
@@ -39,5 +41,17 @@ public abstract class AbstractCTranslationTestSuite extends UltimateTestSuite {
 
 	public File getSettings() {
 		return null;
+	}
+	
+	@Override
+	protected ITestSummary[] constructTestSummaries() {
+		return new ITestSummary[] {
+				new TranslationTestSummary(this.getClass())
+		};
+	}
+	
+	@Override
+	protected IIncrementalLog[] constructIncrementalLog() {
+		return new IIncrementalLog[0];
 	}
 }

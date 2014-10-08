@@ -34,7 +34,7 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 					starter, 
 					urd, 
 					super.getSummaries(),
-					getLogFiles())
+					super.getIncrementalLogs())
 			);
 		}
 	}

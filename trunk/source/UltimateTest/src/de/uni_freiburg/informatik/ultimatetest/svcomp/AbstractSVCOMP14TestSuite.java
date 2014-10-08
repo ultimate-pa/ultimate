@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
@@ -93,6 +94,11 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 			offset++;
 		}
 		return testSummaries;
+	}
+	
+	@Override
+	protected IIncrementalLog[] constructIncrementalLog() {
+		return new IIncrementalLog[0];
 	}
 
 	@Override

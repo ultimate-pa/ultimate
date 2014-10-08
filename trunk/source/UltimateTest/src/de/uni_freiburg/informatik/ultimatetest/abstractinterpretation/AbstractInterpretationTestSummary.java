@@ -4,13 +4,13 @@
 package de.uni_freiburg.informatik.ultimatetest.abstractinterpretation;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.summary.TestSummary;
+import de.uni_freiburg.informatik.ultimatetest.summary.OldTestSummary;
 
 /**
  * @author Christopher Dillo
  *
  */
-public class AbstractInterpretationTestSummary extends TestSummary {
+public class AbstractInterpretationTestSummary extends OldTestSummary {
 	
 	public AbstractInterpretationTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);

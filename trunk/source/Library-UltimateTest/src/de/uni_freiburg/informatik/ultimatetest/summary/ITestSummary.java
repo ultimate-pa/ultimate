@@ -40,6 +40,7 @@ public interface ITestSummary extends ITestLogfile {
 	 * {@link UltimateTestCase} and reports the result to the
 	 * {@link ITestSummary} instance of the active {@link UltimateTestSuite test
 	 * suite}.
+	 * 
 	 * @param ultimateRunDefinition
 	 *            Input file, settings file and toolchain file.
 	 * @param threeValuedResult
@@ -51,6 +52,8 @@ public interface ITestSummary extends ITestLogfile {
 	 *            A message for this specific result and this specific input
 	 *            file as specified by
 	 *            {@link ITestResultDecider#getResultMessage()}
+	 * @param testname
+	 *            Name of the test for which the result was produced
 	 * @param resultService
 	 *            All IResults produced during the run of Ultimate. The results
 	 *            are given as a map which maps plugin IDs to a the list of
@@ -58,5 +61,5 @@ public interface ITestSummary extends ITestLogfile {
 	 * 
 	 */
 	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult, String category,
-			String message, IResultService resultService);
+			String message, String testname, IResultService resultService);
 }

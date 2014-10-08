@@ -6,7 +6,6 @@ package de.uni_freiburg.informatik.ultimatetest.abstractinterpretation;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
  * Stolen from Svcomp_Reach_PreciseMemoryModel ;-)

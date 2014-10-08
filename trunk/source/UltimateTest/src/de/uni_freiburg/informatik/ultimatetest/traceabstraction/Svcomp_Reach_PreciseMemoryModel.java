@@ -3,13 +3,9 @@
  */
 package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.summary.DefaultIncrementalLogfile;
-import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -27,10 +23,10 @@ public class Svcomp_Reach_PreciseMemoryModel extends AbstractTraceAbstractionTes
 	// "examples/svcomp/product-lines/",
 	// "examples/svcomp/heap-manipulation/",
 	// "examples/svcomp/list-properties/",
-	// "examples/svcomp/ldv-regression/",
+	 "examples/svcomp/ldv-regression/",
 	// "examples/svcomp/ddv-machzwd/",
 	// "examples/svcomp/recursive/",
-	"examples/svcomp/systemc/",
+//	"examples/svcomp/systemc/",
 	// "examples/svcomp/seq-mthreaded/",
 	// "examples/svcomp/seq-pthread/"
 	};
@@ -40,12 +36,6 @@ public class Svcomp_Reach_PreciseMemoryModel extends AbstractTraceAbstractionTes
 
 	private static final boolean m_AutomizerWithForwardPredicates = true;
 	private static final boolean m_AutomizerWithBackwardPredicates = true;
-
-	private List<IIncrementalLog> mLogFiles;
-
-	public Svcomp_Reach_PreciseMemoryModel() {
-		mLogFiles = Arrays.asList(new IIncrementalLog[] { new DefaultIncrementalLogfile(getClass()) });
-	}
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
@@ -67,8 +57,5 @@ public class Svcomp_Reach_PreciseMemoryModel extends AbstractTraceAbstractionTes
 		return super.createTestCases();
 	}
 
-	@Override
-	public List<IIncrementalLog> getLogFiles() {
-		return mLogFiles;
-	}
+	
 }

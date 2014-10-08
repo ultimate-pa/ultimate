@@ -9,6 +9,8 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
@@ -74,6 +76,17 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		}
 
 		return rtr;
+	}
+	
+
+	@Override
+	protected ITestSummary[] constructTestSummaries() {
+		return new ITestSummary[0];
+	}
+	
+	@Override
+	protected IIncrementalLog[] constructIncrementalLog() {
+		return new IIncrementalLog[0];
 	}
 
 	/***

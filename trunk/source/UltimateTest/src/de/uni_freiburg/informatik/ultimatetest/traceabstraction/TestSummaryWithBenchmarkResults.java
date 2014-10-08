@@ -1,80 +1,43 @@
 package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
+import de.uni_freiburg.informatik.ultimatetest.summary.DefaultIncrementalLogfile;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
- * Summary in which the tests are ordered by filenames and for each test the
- * BenchmarkResults are shown.
- * @author heizmann@informatik.uni-freiburg.de and Daniel Dietsch
- *
+ * Incremental log in which for each test the BenchmarkResults are shown.
+ * 
+ * @author heizmann@informatik.uni-freiburg.de
+ * @author dietsch@informatik.uni-freiburg.de
+ * 
  */
-public class TestSummaryWithBenchmarkResults implements ITestSummary {
-
-	private final Class<? extends UltimateTestSuite> m_UltimateTestSuite;
-	private final LinkedHashMap<String, List<Entry>> mSummaryMap;
+public class TestSummaryWithBenchmarkResults extends DefaultIncrementalLogfile {
 
 	public TestSummaryWithBenchmarkResults(Class<? extends UltimateTestSuite> ultimateTestSuite) {
-		m_UltimateTestSuite = ultimateTestSuite;
-		mSummaryMap = new LinkedHashMap<>();
-	}
-	
-	@Override
-	public Class<? extends UltimateTestSuite> getUltimateTestSuiteClass() {
-		return m_UltimateTestSuite;
-	}
-	
-	@Override
-	public String getDescriptiveLogName() {
-		return this.getClass().getSimpleName();
-	}
-	
-	@Override
-	public String getFilenameExtension() {
-		return ".log";
+		super(ultimateTestSuite);
 	}
 
 	@Override
-	public String getSummaryLog() {
-		StringBuilder sb = new StringBuilder();
-		String lineSeparator = System.getProperty("line.separator");
+	public void addEntryPreStart(UltimateRunDefinition runDef) {
+		writeToFile(runDef.getInput().getAbsolutePath() + Util.getPlatformLineSeparator());
+	}
+
+	@Override
+	public void addEntryPostCompletion(UltimateRunDefinition runDef, TestResult result, String resultCategory,
+			String resultMessage, IUltimateServiceProvider services) {
 		String indent = "\t";
-		for (String filename : mSummaryMap.keySet()) {
-			sb.append(filename).append(lineSeparator);
-			for (Entry currentSummary : mSummaryMap.get(filename)) {
-				sb.append(currentSummary.toLogString(indent, lineSeparator));
-			}
-			sb.append(lineSeparator);
-		}
-		return sb.toString();
-	}
-
-	@Override
-	public void addResult(UltimateRunDefinition ultimateRunDefintion, TestResult threeValuedResult, 
-			String category,
-			String message, IResultService resultService) {
-		Entry sum = new Entry(threeValuedResult, message, ultimateRunDefintion, 
-				resultService);
-		addToMap(ultimateRunDefintion.getInput().getAbsolutePath(), sum);
-	}
-
-	private void addToMap(String filename, Entry sum) {
-		List<Entry> sumList = mSummaryMap.get(filename);
-		if (sumList == null) {
-			sumList = new ArrayList<>();
-			mSummaryMap.put(filename, sumList);
-		}
-		sumList.add(sum);
+		String lineSeparator = System.getProperty("line.separator");
+		Entry sum = new Entry(result, resultMessage, runDef, services.getResultService());
+		writeToFile(sum.toLogString(indent, lineSeparator).append(Util.getPlatformLineSeparator()).toString());
 	}
 
 	private class Entry {
@@ -83,12 +46,12 @@ public class TestSummaryWithBenchmarkResults implements ITestSummary {
 		private final String mMessage;
 		private final UltimateRunDefinition m_UltimateRunDefinition;
 		private final List<String> mFlattenedBenchmarkResults = new ArrayList<>();
-		
-		public Entry(TestResult threeValuedResult, String message,
-				UltimateRunDefinition ultimateRunDefinition, IResultService resultService) {
+
+		public Entry(TestResult threeValuedResult, String message, UltimateRunDefinition ultimateRunDefinition,
+				IResultService resultService) {
 			super();
 			this.mThreeValuedResult = threeValuedResult;
-			this.mMessage =message;
+			this.mMessage = message;
 			m_UltimateRunDefinition = ultimateRunDefinition;
 			interpretUltimateResults(resultService);
 		}
@@ -117,6 +80,5 @@ public class TestSummaryWithBenchmarkResults implements ITestSummary {
 		}
 
 	}
-
 
 }

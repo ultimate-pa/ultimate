@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Timi
 import de.uni_freiburg.informatik.ultimatetest.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.summary.CsvConcatenator;
+import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.traceabstraction.TestSummaryWithBenchmarkResults;
 
@@ -41,11 +42,15 @@ public class BuchiAutomizerTemplateBenchmarkMode extends
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
 		return new ITestSummary[] {
-				new TestSummaryWithBenchmarkResults(this.getClass()),
 				new TraceAbstractionTestSummary(this.getClass()),
 				new CsvConcatenator(this.getClass(), TerminationAnalysisBenchmark.class),
 				new CsvConcatenator(this.getClass(), TimingBenchmark.class),
 		};
+	}
+	
+	@Override
+	protected IIncrementalLog[] constructIncrementalLog() {
+		return new IIncrementalLog[] { new TestSummaryWithBenchmarkResults(this.getClass()) };
 	}
 	
 	

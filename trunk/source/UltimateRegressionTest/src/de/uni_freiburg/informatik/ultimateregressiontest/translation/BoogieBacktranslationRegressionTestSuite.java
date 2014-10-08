@@ -4,7 +4,6 @@ import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestS
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.decider.BoogieBacktranslationTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public class BoogieBacktranslationRegressionTestSuite extends AbstractRegressionTestSuite {
@@ -18,11 +17,6 @@ public class BoogieBacktranslationRegressionTestSuite extends AbstractRegression
 		mFiletypesToConsider = new String[] { ".bpl" };
 	}
 
-	@Override
-	protected ITestSummary[] constructTestSummaries() {
-		// does not use any summary
-		return new ITestSummary[0];
-	}
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition) {

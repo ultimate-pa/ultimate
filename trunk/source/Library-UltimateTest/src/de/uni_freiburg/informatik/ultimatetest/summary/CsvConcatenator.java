@@ -70,7 +70,7 @@ public class CsvConcatenator implements ITestSummary {
 	@Override
 	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult,
 			String category, String message,
-			IResultService resultService) {
+			String testname, IResultService resultService) {
 		for (ICsvProviderProvider<Object> benchmarkResult : Util.filterBenchmarks(resultService.getResults(), m_Benchmark)) {
 			ICsvProvider<Object> benchmarkCsv = benchmarkResult.createCvsProvider();
 			ICsvProvider<Object> benchmarkCsvWithRunDefinition = addUltimateRunDefinition(ultimateRunDefinition,

@@ -96,7 +96,7 @@ public class UltimateTestCase {
 		if (mSummaries != null) {
 			for (ITestSummary summary : mSummaries) {
 				summary.addResult(mUltimateRunDefinition, result, mDecider.getResultCategory(),
-						mDecider.getResultMessage(), mStarter.getServices().getResultService());
+						mDecider.getResultMessage(), mName, mStarter.getServices().getResultService());
 			}
 		}
 	}

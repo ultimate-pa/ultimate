@@ -5,9 +5,9 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimatetest.summary.TestSummary;
+import de.uni_freiburg.informatik.ultimatetest.summary.OldTestSummary;
 
-public class SVCOMP14TestSummary extends TestSummary {
+public class SVCOMP14TestSummary extends OldTestSummary {
 
 	private int mCount;
 

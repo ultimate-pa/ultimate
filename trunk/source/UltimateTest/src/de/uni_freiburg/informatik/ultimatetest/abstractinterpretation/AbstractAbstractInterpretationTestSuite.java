@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
@@ -29,6 +30,11 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 		return new ITestSummary[] { new AbstractInterpretationTestSummary(this.getClass()),
 				new AbstractInterpretationLaTeXTestSummary(this.getClass()),
 				new AbstractInterpretationComparisonTestSummary(this.getClass()) };
+	}
+	
+	@Override
+	protected IIncrementalLog[] constructIncrementalLog() {
+		return new IIncrementalLog[0];
 	}
 
 	@Override
@@ -75,4 +81,6 @@ public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 	private Collection<File> getInputFiles(String directory, String[] fileEndings) {
 		return Util.getFiles(new File(Util.getPathFromTrunk(directory)), fileEndings);
 	}
+
+
 }

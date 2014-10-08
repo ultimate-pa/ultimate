@@ -37,24 +37,24 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 	}
 
 	@Override
-	public void addEntryPreStart(UltimateRunDefinition mUltimateRunDefinition) {
+	public void addEntryPreStart(UltimateRunDefinition urd) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(Util.getCurrentDateTimeAsString());
 		sb.append(" Starting test for ");
-		sb.append(mUltimateRunDefinition);
+		sb.append(urd);
 		sb.append(Util.getPlatformLineSeparator());
 		writeToFile(sb.toString());
 	}
 
 	@Override
-	public void addEntryPostCompletion(UltimateRunDefinition mUltimateRunDefinition, TestResult result,
+	public void addEntryPostCompletion(UltimateRunDefinition urd, TestResult result,
 			String resultCategory, String resultMessage, IUltimateServiceProvider services) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(Util.getCurrentDateTimeAsString());
 		sb.append(" Finishing test with ");
 		sb.append(result);
 		sb.append(" for ");
-		sb.append(mUltimateRunDefinition);
+		sb.append(urd);
 		sb.append(": ");
 		sb.append(resultCategory);
 		sb.append(": ");
@@ -63,7 +63,7 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 		writeToFile(sb.toString());
 	}
 
-	private void writeToFile(String logmessage) {
+	protected void writeToFile(String logmessage) {
 		if (logmessage == null || logmessage.isEmpty()) {
 			return;
 		}

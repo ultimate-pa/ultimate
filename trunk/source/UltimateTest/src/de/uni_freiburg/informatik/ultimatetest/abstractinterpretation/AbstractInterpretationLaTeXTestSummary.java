@@ -15,14 +15,14 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.abstractinterpretation.AbstractInterpretationTestResultDecider.ActualResultType;
 import de.uni_freiburg.informatik.ultimatetest.abstractinterpretation.AbstractInterpretationTestResultDecider.ExpectedResultType;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimatetest.summary.TestSummary;
+import de.uni_freiburg.informatik.ultimatetest.summary.OldTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
  * @author Christopher Dillo
  *
  */
-public class AbstractInterpretationLaTeXTestSummary extends TestSummary {
+public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 
 	protected final String m_pathOfTrunk;
 	

@@ -4,12 +4,11 @@ import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestS
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
  * 
- * @author dietsch
+ * @author dietsch@informatik.uni-freiburg.de
  * 
  */
 public class RegressionTestSuite extends AbstractRegressionTestSuite {
@@ -24,14 +23,9 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 	}
 
 	@Override
-	protected ITestSummary[] constructTestSummaries() {
-		// does not use any summary
-		return new ITestSummary[0];
-	}
-
-	@Override
 	protected ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition) {
 		return new SafetyCheckTestResultDecider(runDefinition, false);
 	}
+
 
 }

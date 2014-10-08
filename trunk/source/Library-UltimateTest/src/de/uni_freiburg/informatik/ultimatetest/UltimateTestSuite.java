@@ -11,36 +11,52 @@ import org.junit.runner.RunWith;
 
 import de.uni_freiburg.informatik.junit_helper.testfactory.FactoryTestRunner;
 import de.uni_freiburg.informatik.junit_helper.testfactory.TestFactory;
+import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
  * 
- * @author dietsch
- *
+ * @author dietsch@informatik.uni-freiburg.de
+ * 
  */
 @RunWith(FactoryTestRunner.class)
 public abstract class UltimateTestSuite {
 
 	private static List<ITestSummary> sSummaries;
+	private List<IIncrementalLog> mLogFiles;
 	protected Logger mLogger;
 
 	public UltimateTestSuite() {
 		mLogger = Logger.getLogger(UltimateTestSuite.class);
 		if (sSummaries == null) {
-			sSummaries = Arrays.asList(constructTestSummaries());
+			ITestSummary[] summaries = constructTestSummaries();
+			if (summaries != null) {
+				sSummaries = Arrays.asList(summaries);
+			} else {
+				sSummaries = null;
+			}
+
+		}
+		IIncrementalLog[] logs = constructIncrementalLog();
+		if (logs != null) {
+			mLogFiles = Arrays.asList(constructIncrementalLog());
+		} else {
+			mLogFiles = null;
 		}
 	}
 
 	@TestFactory
 	public abstract Collection<UltimateTestCase> createTestCases();
-	
+
 	/**
-	 * Returns the ITestSummaries Objects that produce summaries while
-	 * running the UltimateTestSuite.
-	 * This method is called only once during each run of an UltimateTestSuite.
+	 * Returns the ITestSummaries instances that produce summaries while running
+	 * the UltimateTestSuite. This method is called only once during each run of
+	 * an UltimateTestSuite.
 	 */
 	protected abstract ITestSummary[] constructTestSummaries();
+
+	protected abstract IIncrementalLog[] constructIncrementalLog();
 
 	/**
 	 * Provides a collection of ITestSummary instances.
@@ -51,6 +67,10 @@ public abstract class UltimateTestSuite {
 	 */
 	protected List<ITestSummary> getSummaries() {
 		return Collections.unmodifiableList(sSummaries);
+	}
+
+	protected List<IIncrementalLog> getIncrementalLogs() {
+		return Collections.unmodifiableList(mLogFiles);
 	}
 
 	@AfterClass

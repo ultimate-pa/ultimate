@@ -11,9 +11,9 @@ import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestRe
  */
 public interface IIncrementalLog extends ITestLogfile {
 
-	void addEntryPreStart(UltimateRunDefinition mUltimateRunDefinition);
+	void addEntryPreStart(UltimateRunDefinition urd);
 
-	void addEntryPostCompletion(UltimateRunDefinition mUltimateRunDefinition, TestResult result, String resultCategory,
+	void addEntryPostCompletion(UltimateRunDefinition urd, TestResult result, String resultCategory,
 			String resultMessage, IUltimateServiceProvider services);
 
 }

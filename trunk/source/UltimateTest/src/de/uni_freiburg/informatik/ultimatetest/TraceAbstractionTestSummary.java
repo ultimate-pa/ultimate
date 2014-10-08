@@ -8,10 +8,10 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimatetest.summary.TestSummary;
+import de.uni_freiburg.informatik.ultimatetest.summary.OldTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
-public class TraceAbstractionTestSummary extends TestSummary {
+public class TraceAbstractionTestSummary extends OldTestSummary {
 
 	private int mCount;
 
@@ -37,8 +37,8 @@ public class TraceAbstractionTestSummary extends TestSummary {
 	}
 
 	@Override
-	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult, String category, String message, IResultService resultService) {
-		super.addResult(ultimateRunDefinition, threeValuedResult, category, message, resultService);
+	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult, String category, String message, String testname, IResultService resultService) {
+		super.addResult(ultimateRunDefinition, threeValuedResult, category, message, testname, resultService);
 
 			addTraceAbstractionBenchmarks(ultimateRunDefinition, Util.filterResults(
 					resultService.getResults(), BenchmarkResult.class));
