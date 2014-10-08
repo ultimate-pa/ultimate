@@ -87,9 +87,6 @@ public class RewriteArrays2 extends LassoPreProcessor {
 		m_OriginalLoop = originalLoop;
 		m_ArrayIndexSupportingInvariants = arrayIndexSupportingInvariants;
 		m_OverapproximateByOmmitingDisjointIndices = overapproximateByOmmitingDisjointIndices;
-		if (overapproximateByOmmitingDisjointIndices) {
-			throw new AssertionError("overapproximateByOmmitingDisjointIndices currently not supported");
-		}
 	}
 
 	@Override
