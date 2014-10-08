@@ -25,6 +25,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Minimize\ Call\ and\ Return\ Edges=true
 @de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Rating-Boundary\ (empty\ for\ LBE)=99
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Rating-Boundary\ (empty\ for\ LBE)=0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Strategy\ for\ the\ edge\ rating=DISJUNCTIVE_RATING
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Determinization\ algorithm=EAGERPOST
