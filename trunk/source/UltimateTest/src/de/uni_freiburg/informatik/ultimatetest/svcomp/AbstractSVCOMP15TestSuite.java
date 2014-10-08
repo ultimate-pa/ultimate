@@ -72,17 +72,22 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 
 		Collection<File> inputFiles = getFilesForSetFile(possibleInputFiles, setFile);
 		// use this for testing
-//		 inputFiles = Util.firstN(inputFiles, 3);
+		// inputFiles = Util.firstN(inputFiles, 3);
 		for (File input : inputFiles) {
 
-			String name = createTestCaseName(svcompRootDir, input, def);
-			UltimateRunDefinition urd = new UltimateRunDefinition(input, def.getSettings(), def.getToolchain());
-			UltimateStarter starter = new UltimateStarter(urd, def.getTimeout());
+			try {
+				String name = createTestCaseName(svcompRootDir, input, def);
+				UltimateRunDefinition urd = new UltimateRunDefinition(input, def.getSettings(), def.getToolchain());
+				UltimateStarter starter = new UltimateStarter(urd, def.getTimeout());
 
-			UltimateTestCase testCase = new UltimateTestCase(name, new SafetyCheckTestResultDecider(urd, true),
-					starter, urd, super.getSummaries(), super.getIncrementalLogs());
+				UltimateTestCase testCase = new UltimateTestCase(name, new SafetyCheckTestResultDecider(urd, true),
+						starter, urd, super.getSummaries(), super.getIncrementalLogs());
 
-			testcases.add(testCase);
+				testcases.add(testCase);
+			} catch (Exception ex) {
+				System.err.println("Exception while creating test case, skipping this one: " + input.getAbsolutePath());
+				ex.printStackTrace();
+			}
 		}
 
 	}
