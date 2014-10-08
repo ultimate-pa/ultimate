@@ -89,7 +89,7 @@ fi
 if [ "$1" = "svcompPrecise" ]; then
 echo "$1"
 trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
-trunk/examples/svcompheap-manipulation/ \
+trunk/examples/svcomp/heap-manipulation/ \
 "AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_SvcompReachPreciseMM.epf"
 trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
 trunk/examples/svcomp/heap-manipulation/ \
@@ -113,6 +113,37 @@ trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
 trunk/examples/svcomp/ddv-machzwd/ \
 "AutomizerBpl.xml;AutomizerC.xml;automizer/BackwardPredicates_SvcompReachPreciseMM.epf"
 fi
+
+
+if [ "$1" = "svcompMemsafety" ]; then
+echo "$1"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/memsafety/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_SvcompMemsafety.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/memsafety/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/BackwardPredicates_SvcompMemsafety.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/memsafety-ext/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_SvcompMemsafety.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/memsafety-ext/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/BackwardPredicates_SvcompMemsafety.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/memory-alloca/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_SvcompMemsafety.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/memory-alloca/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/BackwardPredicates_SvcompMemsafety.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/memory-unsafe/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/ForwardPredicates_SvcompMemsafety.epf"
+trunk/examples/toolchains/AutomizerTestDir.sh -da 360 \
+trunk/examples/svcomp/memory-unsafe/ \
+"AutomizerBpl.xml;AutomizerC.xml;automizer/BackwardPredicates_SvcompMemsafety.epf"
+fi
+
+
 
 
 if [ "$1" = "unsatCore" ]; then
