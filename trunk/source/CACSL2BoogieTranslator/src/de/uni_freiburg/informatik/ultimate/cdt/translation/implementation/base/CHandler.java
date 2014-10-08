@@ -648,8 +648,6 @@ public class CHandler implements ICHandler {
 						VariableLHS lhs = new VariableLHS(loc, bId);
 						ResultExpression initRex = 
 								mInitHandler.initVar(loc, main, 
-//										memoryHandler, arrayHandler, functionHandler,
-//										structHandler, 
 										lhs, cDec.getType(),
 										cDec.getInitializer());
 						if (result instanceof ResultSkip)
@@ -2250,35 +2248,43 @@ public class CHandler implements ICHandler {
 					convertToPointer = true;
 				}
 			}
-		} 
-//		else if (lType instanceof CPrimitive //--- to be added later -- but the next commit (where this is inserted but commented out is about sth else) 
+//		} else if (lType instanceof CPrimitive
 //				&& ((CPrimitive) lType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 //			CPrimitive lPrim = (CPrimitive) lType;
-//			BigInteger maxValue = null;
+//			Integer exponentInBytes = null;
 //			switch (lPrim.getType()) {
 //			case UCHAR:
-//				maxValue = new BigInteger("2")
-//				.pow(memoryHandler.typeSizeConstants.sizeOfUCharType * 8);
+//				exponentInBytes = mMemoryHandler.typeSizeConstants.sizeOfUCharType;
 //				break;
 //			case UINT:
-//				maxValue = new BigInteger("2")
-//				.pow(memoryHandler.typeSizeConstants.sizeOfUIntType * 8);
+//				exponentInBytes = mMemoryHandler.typeSizeConstants.sizeOfUIntType;
 //				break;
 //			case ULONG:
-//				maxValue = new BigInteger("2")
-//				.pow(memoryHandler.typeSizeConstants.sizeOfULongType * 8);
+//				exponentInBytes = mMemoryHandler.typeSizeConstants.sizeOfULongType;
 //				break;
 //			default:
 //				break;
 //			}
-//			if (maxValue != null) {
+//			if (exponentInBytes != null) {
+//				BigInteger maxValue = null;
+//				maxValue = new BigInteger("2")
+//					.pow(exponentInBytes * 8);
 //				IntegerLiteral maxValIL = new IntegerLiteral(loc, maxValue.toString());
-//				BinaryExpression moduloExp = new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
-//						rExpr, 
-//						maxValIL);
-//				rightHandSide = new RValue(moduloExp, rType);
+//
+//				boolean doWrapAround = false;
+//				boolean insertAssume = true;
+//				if (doWrapAround) {
+//					BinaryExpression moduloExp = new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
+//							rExpr, 
+//							maxValIL);
+//					rightHandSide = new RValue(moduloExp, rType);
+//				} else if (insertAssume) {
+//					BinaryExpression biggerZero = new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
+//							lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0));
+//					stmt.add(new AssumeStatement(loc, biggerZero));
+//				}
 //			}
-//		}
+		}
 		// convert to pointer
 		if (convertToPointer) {
 			if (((IntegerLiteral) rExpr).getValue().equals("0")) {

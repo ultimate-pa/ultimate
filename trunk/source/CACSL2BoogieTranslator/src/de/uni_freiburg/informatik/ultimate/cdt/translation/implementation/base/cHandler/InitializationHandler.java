@@ -126,11 +126,11 @@ public class InitializationHandler {
 
 
 	/**
-	 * same as other initVar but with an LRValue as argument, not a LHS
-	 * if var is a HeapLValue, something on Heap is initialized, 
-	 * if it is a LocalLValue something off the Heap is initialized
+	 * Helper for variable initialization. This version does not take any form of the initialized
+	 * variable as an argument but instead returns a ResultExpression with an lrValue that can be 
+	 * stored in such a variable.
 	 */
-	public ResultExpression initVar(ILocation loc, Dispatcher main,
+	private ResultExpression initVar(ILocation loc, Dispatcher main,
 			CType cType, ResultExpression initializerRaw) {
 		CType lCType = cType.getUnderlyingType();
 
@@ -254,11 +254,11 @@ public class InitializationHandler {
 	}
 
 	/**
-	 * same as other initVar but with an LRValue as argument, not a LHS
+	 * Same as other initVar but with an LRValue as argument, not a LHS
 	 * if var is a HeapLValue, something on Heap is initialized, 
 	 * if it is a LocalLValue something off the Heap is initialized
 	 */
-	public ResultExpression initVar(ILocation loc, Dispatcher main,
+	private ResultExpression initVar(ILocation loc, Dispatcher main,
 			LRValue var, CType cType, ResultExpression initializerRaw) {
 		assert var != null;
 
@@ -270,7 +270,6 @@ public class InitializationHandler {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-		LRValue lrVal = null;
 
 		//if (f.i.) the initializer comes from a function call, it has statements and declarations that we need to
 		//carry over
@@ -368,10 +367,10 @@ public class InitializationHandler {
 
 				if (initializer == null) {
 					stmt.addAll(this.initArrayOnHeap(main, loc, 
-							null, address, mFunctionHandler, (CArray) lCType));				
+							null, address, (CArray) lCType));				
 				} else if (initializer instanceof ResultExpressionListRec) {
 					stmt.addAll(this.initArrayOnHeap(main, loc, 
-							((ResultExpressionListRec) initializer).list, address, mFunctionHandler, (CArray) lCType));				
+							((ResultExpressionListRec) initializer).list, address, (CArray) lCType));				
 				} else if (initializer instanceof ResultExpression) {// we have a variable length array and need the corresponding aux vars
 					//					stmt.addAll(initializer.stmt);
 					//					decl.addAll(initializer.decl);
@@ -449,13 +448,19 @@ public class InitializationHandler {
 		}
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
 
-		// lrVal is null in case we got a lhs to assign to, the initializing value otherwise
-		return new ResultExpression(stmt, lrVal, decl, auxVars, overappr);
+		return new ResultExpression(stmt, null, decl, auxVars, overappr);
 	}
 
-	public ArrayList<Statement> initArrayOnHeap(Dispatcher main, ILocation loc, 
+	/**
+	 * Initializes an array that lies on heap, either with some given values or to its default values.
+	 * @param list The values that the array should be initialized with, null for default init
+	 * @param startAddress The address on the heap that the array starts at
+	 * @param arrayType The type of the array (containing its size and value type)
+	 * @return a list of statements that do the initialization
+	 */
+	private ArrayList<Statement> initArrayOnHeap(Dispatcher main, ILocation loc, 
 			ArrayList<ResultExpressionListRec> list, Expression startAddress,
-			FunctionHandler functionHandler, CArray arrayType) {
+			CArray arrayType) {
 		ArrayList<Statement> arrayWrites = new ArrayList<Statement>();
 
 		Expression sizeOfCell = mMemoryHandler.calculateSizeOf(arrayType.getValueType(), loc); 
@@ -554,13 +559,23 @@ public class InitializationHandler {
 												newStartAddressBase,
 												newStartAddressOffsetInner, 
 												loc),
-												functionHandler, innerArrayType)); 
+												innerArrayType)); 
 			}
 		}
 		return arrayWrites;
 	}
 
-	public ArrayList<Statement> initBoogieArray(Dispatcher main, ILocation loc, 
+	/**
+	 * Initializes an array that is represented as a boogie array, either with some given values 
+	 * or to its default values.
+	 * @param list The values that the array should be initialized with, null for default init
+	 * @param innerArrayAccessLHS Something representing the array that is to be initialized 
+	 * currently (in case of a nested array this may again represent an arrayAccess, otherwise 
+	 * the array identifier)
+	 * @param arrayType The type of the array (containing its size and value type)
+	 * @return a list of statements that do the initialization
+	 */
+	private ArrayList<Statement> initBoogieArray(Dispatcher main, ILocation loc, 
 			ArrayList<ResultExpressionListRec> list, LeftHandSide innerArrayAccessLHS,
 			CArray arrayType) {
 		ArrayList<Statement> arrayWrites = new ArrayList<Statement>();
@@ -650,7 +665,7 @@ public class InitializationHandler {
 	/**
 	 * Generate the write calls for the initialization of the struct onHeap.
 	 */
-	public ResultExpression initStructOnHeapFromRERL(Dispatcher main, ILocation loc, 
+	private ResultExpression initStructOnHeapFromRERL(Dispatcher main, ILocation loc, 
 			Expression startAddress, 
 			ResultExpressionListRec rerlIn, CStruct structType) {
 		ResultExpressionListRec rerl = null;
@@ -757,7 +772,7 @@ public class InitializationHandler {
 					fieldStmt.addAll(this.initArrayOnHeap(main, loc, 
 							arrayInitRerl == null ? null : arrayInitRerl.list, 
 									fieldPointer,
-									mFunctionHandler, (CArray) underlyingFieldType));
+									 (CArray) underlyingFieldType));
 
 					fieldWrites = new ResultExpression(fieldStmt, 
 							null,
@@ -791,7 +806,7 @@ public class InitializationHandler {
 	 * nesting structure from the CStruct and the values from the RERL.
 	 * If the RERL is null, the default initialization (int: 0, Ptr: NULL, ...) is used for each entry.
 	 */
-	public ResultExpression makeStructConstructorFromRERL(Dispatcher main, ILocation loc, 
+	private ResultExpression makeStructConstructorFromRERL(Dispatcher main, ILocation loc, 
 			ResultExpressionListRec rerlIn, CStruct structType) {
 		ResultExpressionListRec rerl = null;
 		if (rerlIn == null)

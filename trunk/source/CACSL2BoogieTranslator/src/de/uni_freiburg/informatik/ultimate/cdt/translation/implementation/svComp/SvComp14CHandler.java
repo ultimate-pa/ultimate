@@ -148,21 +148,17 @@ public class SvComp14CHandler extends CHandler {
 		}
 		for (String t : NONDET_TYPE_STRINGS)
 			if (methodName.equals(NONDET_STRING + t)) {
-				// final InferredType type;
 				final ASTType type;
 				CType cType;
 				if (t.equals("float")) {
-					// type = new InferredType(Type.Real);
 					type = new PrimitiveType(loc, SFO.REAL);
 					cType = new CPrimitive(PRIMITIVE.FLOAT);
 				} else if (t.equals("pointer")) {
-					// type = new InferredType(Type.Pointer);
 					NamedType boogiePointerType = new NamedType(null, new InferredType(Type.Struct), SFO.POINTER,
 							new ASTType[0]);
 					type = boogiePointerType;
 					cType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
 				} else {
-					// type = new InferredType(Type.Integer);
 					type = new PrimitiveType(loc, SFO.INT);
 					cType = new CPrimitive(PRIMITIVE.INT);
 				}
@@ -170,8 +166,7 @@ public class SvComp14CHandler extends CHandler {
 				VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
 				decl.add(tVarDecl);
 				auxVars.put(tVarDecl, loc);
-				// returnValue = new RValue(new IdentifierExpression(loc, type,
-				// tmpName), cType);
+
 				returnValue = new RValue(new IdentifierExpression(loc, tmpName), cType);
 				assert (main.isAuxVarMapcomplete(decl, auxVars));
 				return new ResultExpression(stmt, returnValue, decl, auxVars, overappr);

@@ -7,6 +7,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 /**
  * @author Markus Lindenmann
  * @date 18.09.2012
+ * @author nutz
  */
 public abstract class CType {
 
@@ -42,45 +43,6 @@ public abstract class CType {
 	@Override
 	public abstract String toString();
 
-//	/**
-//	 * Returns the corresponding CVariable for the given expression, starting at
-//	 * this CVariable.
-//	 * 
-//	 * @param e
-//	 *            the expression defining, which CVariable to return
-//	 * @return the CVariable defined by e (intermediate Named typed get resolved
-//	 *         to their underlying type! The returned CVariable however, might
-//	 *         be of instance CNamed!).
-//	 */
-//	public CType getCVarForAccessExpression(final Expression e) {
-//		CType ret = this;
-//		while (ret instanceof CNamed)
-//			ret = ((CNamed) ret).getUnderlyingType();
-//		if (e instanceof IdentifierExpression) {
-//			return ret;
-//		}
-//		assert e instanceof StructAccessExpression
-//				|| e instanceof ArrayAccessExpression;
-//		LeftHandSide lhs = BoogieASTUtil.getLHSforExpression(e);
-//		String[] list = BoogieASTUtil.getLHSList(lhs);
-//		for (String s : list) {
-//			while (ret instanceof CNamed)
-//				ret = ((CNamed) ret).getUnderlyingType();
-//			assert ret instanceof CArray || ret instanceof CStruct;
-//			if (ret instanceof CArray) {
-//				ret = ((CArray) ret).getValueType();
-//			} else if (ret instanceof CStruct) {
-//				ret = ((CStruct) ret).getFieldType(s);
-//			} else {
-//				String msg = "Unexpected access expression on this type!";
-//				Dispatcher.error(e.getLocation(),
-//						SyntaxErrorType.IncorrectSyntax, msg);
-//				throw new IncorrectSyntaxException(msg);
-//			}
-//		}
-//		return ret;
-//	}
-
 	/**
 	 * @param cType
 	 *            CType object
@@ -93,5 +55,11 @@ public abstract class CType {
 		return this;
 	}
 
+	/**
+	 * This is a special notion of type compatibility that we use for matching function signatures.
+	 * TODO: think about how general this notion is..
+	 * @param cT
+	 * @return
+	 */
 	public abstract boolean isCompatibleWith(CType cT);
 }

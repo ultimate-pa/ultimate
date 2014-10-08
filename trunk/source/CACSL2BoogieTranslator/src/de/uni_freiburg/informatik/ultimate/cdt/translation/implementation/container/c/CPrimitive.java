@@ -76,6 +76,8 @@ public class CPrimitive extends CType {
     	FLOATTYPE,
     	VOID
     }
+    
+    private boolean isUnsigned = false;
 
     /**
      * The C type of the variable.
@@ -103,6 +105,13 @@ public class CPrimitive extends CType {
 		case FLOAT:
 			generalType = GENERALPRIMITIVE.FLOATTYPE;
 			break;
+		case UCHAR:
+		case UINT:
+		case ULONG:
+		case ULONGLONG:
+		case USHORT:
+			this.isUnsigned = true;
+			//fallthrough
 		case BOOL:
 		case CHAR:
 		case CHAR16:
@@ -113,11 +122,6 @@ public class CPrimitive extends CType {
 		case LONGLONG:
 		case SCHAR:
 		case SHORT:
-		case UCHAR:
-		case UINT:
-		case ULONG:
-		case ULONGLONG:
-		case USHORT:
 		case WCHAR:
 			generalType = GENERALPRIMITIVE.INTTYPE;
 			break;
@@ -216,12 +220,11 @@ public class CPrimitive extends CType {
         }
     	setGeneralType(type);
     }
+    
+    public boolean isUnsigned() {
+    	return isUnsigned;
+    }
 
-    /**
-     * Getter for the primitive type.
-     * 
-     * @return the type
-     */
     public PRIMITIVE getType() {
         return type;
     }

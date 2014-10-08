@@ -239,25 +239,25 @@ public class PostProcessor {
 								new LocalLValue(new VariableLHS(loc, id), en.getValue().getType()), loc));
 					}
 
-					if (initializer != null) {
-						assert ((VariableDeclaration)en.getKey()).getVariables().length == 1 
-								&& ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers().length == 1;
-						ResultExpression initRex = 
-								main.cHandler.getInitHandler().initVar(loc, main, 
-										new VariableLHS(loc, id), en.getValue().getType(), initializer);
-						initStatements.addAll(initRex.stmt);
-						initStatements.addAll(CHandler.createHavocsForNonMallocAuxVars(initRex.auxVars));
-						for (Declaration d : initRex.decl)
-							initDecl.add((VariableDeclaration) d);
-					} else { //no initializer --> default initialization
-						ResultExpression nullInitializer = main.cHandler.getInitHandler().initVar(loc, main, 
-								new VariableLHS(loc, id), en.getValue().getType(), null) ;
-
-						initStatements.addAll(nullInitializer.stmt);
-						initStatements.addAll(CHandler.createHavocsForNonMallocAuxVars(nullInitializer.auxVars));
-						for (Declaration d : nullInitializer.decl)
-							initDecl.add((VariableDeclaration) d);
-					}
+					//					if (initializer != null) {
+					//						assert ((VariableDeclaration)en.getKey()).getVariables().length == 1 
+					//								&& ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers().length == 1;
+					ResultExpression initRex = 
+							main.cHandler.getInitHandler().initVar(loc, main, 
+									new VariableLHS(loc, id), en.getValue().getType(), initializer);
+					initStatements.addAll(initRex.stmt);
+					initStatements.addAll(CHandler.createHavocsForNonMallocAuxVars(initRex.auxVars));
+					for (Declaration d : initRex.decl)
+						initDecl.add((VariableDeclaration) d);
+					//					} else { //no initializer --> default initialization
+					//						ResultExpression nullInitializer = main.cHandler.getInitHandler().initVar(loc, main, 
+					//								new VariableLHS(loc, id), en.getValue().getType(), null) ;
+					//
+					//						initStatements.addAll(nullInitializer.stmt);
+					//						initStatements.addAll(CHandler.createHavocsForNonMallocAuxVars(nullInitializer.auxVars));
+					//						for (Declaration d : nullInitializer.decl)
+					//							initDecl.add((VariableDeclaration) d);
+					//					}
 				}
 			}
 			for (VarList vl  : ((VariableDeclaration) en.getKey()).getVariables())
@@ -268,21 +268,11 @@ public class PostProcessor {
 
 		Specification[] specsInit = new Specification[1];
 
-		VariableLHS[] modifyList = new VariableLHS[
-//		                                           mSomethingOnHeapIsInitialized ? 
-//				mInitializedGlobals.size() + 4 :
-//mInitializedGlobals.size() + 3: //FIXME: changed from 4 to 3 when removing boolean memory model array --> still very dirty.. 
-mInitializedGlobals.size()];
+		VariableLHS[] modifyList = new VariableLHS[mInitializedGlobals.size()];
 		int i = 0;
 		for (String var: mInitializedGlobals) {
 			modifyList[i++] = new VariableLHS(loc, var);
 		}
-		//		if (mSomethingOnHeapIsInitialized) {
-		//			for (String t : new String[] { SFO.INT, SFO.POINTER,
-		//						SFO.REAL/*, SFO.BOOL*/ }) {
-		//				modifyList[i++] = new VariableLHS(loc, SFO.MEMORY + "_" + t);
-		//			}		
-		//		}
 		specsInit[0] = new ModifiesSpecification(loc, false, modifyList);
 		Procedure initProcedureDecl = new Procedure(loc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], specsInit, null);

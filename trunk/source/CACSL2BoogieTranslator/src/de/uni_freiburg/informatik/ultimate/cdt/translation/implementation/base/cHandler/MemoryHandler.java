@@ -888,77 +888,11 @@ public class MemoryHandler {
 	public int calculateSizeOfWithGivenTypeSizes(ILocation loc, CType cType) {
 		int size = 0;
 		if (cType instanceof CPrimitive) {
-			switch (((CPrimitive) cType).getType()) {
-			case INT:
-				size = typeSizeConstants.sizeOfIntType;
-				break;
-			case FLOAT:
-				size = typeSizeConstants.sizeOfFloatType;
-				break;
-			case CHAR:
-				size = typeSizeConstants.sizeOfCharType;
-				break;
-			case VOID:
-				size = typeSizeConstants.sizeOfVoidType;
-				break;
-			case BOOL:
-				size = typeSizeConstants.sizeOfBoolType;
-				break;
-			case SHORT:
-				size = typeSizeConstants.sizeOfShortType;
-				break;
-			case DOUBLE:
-				size = typeSizeConstants.sizeOfDoubleType;
-				break;
-			case LONG:
-				size = typeSizeConstants.sizeOfLongType;
-				break;
-			case SCHAR:
-				size = typeSizeConstants.sizeOfSCharType;
-				break;
-			case UCHAR:
-				size = typeSizeConstants.sizeOfUCharType;
-				break;
-			case WCHAR:
-				size = typeSizeConstants.sizeOfWCharType;
-				break;
-			case CHAR16:
-				size = typeSizeConstants.sizeOfChar16Type;
-				break;
-			case CHAR32:
-				size = typeSizeConstants.sizeOfChar32Type;
-				break;
-			case USHORT:
-				size = typeSizeConstants.sizeOfUShortType;
-				break;
-			case UINT:
-				size = typeSizeConstants.sizeOfUIntType;
-				break;
-			case ULONG:
-				size = typeSizeConstants.sizeOfULongType;
-				break;
-			case LONGLONG:
-				size = typeSizeConstants.sizeOfLongLongType;
-				break;
-			case ULONGLONG:
-				size = typeSizeConstants.sizeOfULongLongType;
-				break;
-			case COMPLEX_FLOAT:
-				size = typeSizeConstants.sizeOfComplexFloatType;
-				break;
-			case COMPLEX_DOUBLE:
-				size = typeSizeConstants.sizeOfComplexDoubleType;
-				break;
-			case LONGDOUBLE:
-				size = typeSizeConstants.sizeOfLongDoubleType;
-				break;
-			case COMPLEX_LONGDOUBLE:
-				size = typeSizeConstants.sizeOfComplexLongDoubleType;
-				break;
-			default:
+			Integer sizeI = typeSizeConstants.CPrimitiveToTypeSizeConstant.get(((CPrimitive) cType).getType());
+			if (sizeI != null)
+				size = sizeI;
+			else
 				size = typeSizeConstants.defaultTypeSize;
-				break;
-			}
 		} else if (cType instanceof CPointer) {
 			size = typeSizeConstants.sizeOfPointerType;
  		} else if (cType instanceof CArray) {
