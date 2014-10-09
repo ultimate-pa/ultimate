@@ -39,7 +39,7 @@ public class ExternalUltimateCore {
 	private final Semaphore mUltimateExit;
 	private final Semaphore mStarterContinue;
 	private final IController mController;
-	
+
 	protected ManualReleaseToolchainJob mJob;
 
 	public ExternalUltimateCore(IController controller) {
@@ -64,7 +64,7 @@ public class ExternalUltimateCore {
 					mUltimateThrowable = e;
 				}
 			}
-		});
+		}, "ActualUltimateInstance");
 
 		t.start();
 		mStarterContinue.acquireUninterruptibly();
@@ -72,7 +72,7 @@ public class ExternalUltimateCore {
 			throw mUltimateThrowable;
 		}
 	}
-	
+
 	public int init(ICore core, ILoggingService loggingService) {
 		return init(core, loggingService, null, 0, null, null);
 	}
