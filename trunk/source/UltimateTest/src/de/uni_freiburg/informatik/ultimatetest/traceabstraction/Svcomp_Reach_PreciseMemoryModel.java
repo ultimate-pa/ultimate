@@ -19,11 +19,11 @@ public class Svcomp_Reach_PreciseMemoryModel extends AbstractTraceAbstractionTes
 	// "examples/svcomp/ssh-simplified/",
 	// "examples/svcomp/locks/",
 	// "examples/svcomp/eca/",
-	 "examples/svcomp/loops/",
+	// "examples/svcomp/loops/",
 	// "examples/svcomp/product-lines/",
 	// "examples/svcomp/heap-manipulation/",
 	// "examples/svcomp/list-properties/",
-//	 "examples/svcomp/ldv-regression/",
+	 "examples/svcomp/ldv-regression/",
 	// "examples/svcomp/ddv-machzwd/",
 	// "examples/svcomp/recursive/",
 //	"examples/svcomp/systemc/",
@@ -35,7 +35,7 @@ public class Svcomp_Reach_PreciseMemoryModel extends AbstractTraceAbstractionTes
 	private static int m_Timeout = 20000;
 
 	private static final boolean m_AutomizerWithForwardPredicates = true;
-	private static final boolean m_AutomizerWithBackwardPredicates = false;
+	private static final boolean m_AutomizerWithBackwardPredicates = true;
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
