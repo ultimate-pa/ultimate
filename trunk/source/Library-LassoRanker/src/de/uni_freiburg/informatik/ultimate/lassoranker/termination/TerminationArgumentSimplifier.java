@@ -53,6 +53,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * (/\_{i != j} SI_i) -> SI_j
  * for every j and dropping SI_j if it is true.
  * 
+ * This implication is transformed using Motzkin's Theorem and checked for
+ * satisfiability using a new solver instance.
+ * 
  * @author Jan Leike
  */
 class TerminationArgumentSimplifier {
