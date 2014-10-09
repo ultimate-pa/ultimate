@@ -333,7 +333,9 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			mLogger.info("Overapproximating stem...");
 			StemOverapproximator so = new StemOverapproximator(m_preferences,
 					m_services, m_storage);
+			int stem_disjuncts = stem.getNumPolyhedra();
 			stem = so.overapproximate(stem);
+			mLogger.info("Reduced " + stem_disjuncts + " stem disjuncts to 1.");
 		}
 
 		// Assert all conjuncts generated from the template

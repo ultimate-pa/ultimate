@@ -50,8 +50,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
  * Since this is an overapproximation, it can only be used for termination
  * analysis, not nontermination analysis.
  * 
- * The overapproximation works by only retaining those inequalities that
- * are implied by all disjuncts.
+ * The overapproximation works by selecting inequalities from the stem that
+ * are implied by all disjuncts:
+ * 
+ * new_stem = /\ { ineq ∈ old_stem | old_stem -> ineq }
  * 
  * This method is generally incomplete.
  * 
