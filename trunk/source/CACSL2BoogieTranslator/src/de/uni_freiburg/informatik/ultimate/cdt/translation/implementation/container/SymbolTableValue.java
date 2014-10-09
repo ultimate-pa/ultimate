@@ -47,6 +47,9 @@ public class SymbolTableValue {
      */
     StorageClass storageClass;
     
+    
+    public boolean isIntFromPointer;
+    
     /**
      * The description of the C variable.
      */

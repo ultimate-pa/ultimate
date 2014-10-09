@@ -6,6 +6,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svCom
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -18,6 +19,7 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -33,8 +35,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompArrayHandler;
 //import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
@@ -47,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
@@ -87,8 +92,9 @@ public class SvComp14CHandler extends CHandler {
 	 * @param main
 	 *            a reference to the main dispatcher.
 	 */
-	public SvComp14CHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, Logger logger) {
-		super(main, backtranslator, false, logger);
+	public SvComp14CHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, 
+			Logger logger, ITypeHandler typeHandler) {
+		super(main, backtranslator, false, logger, typeHandler);
 		super.mArrayHandler = new SVCompArrayHandler();
 	}
 
@@ -134,6 +140,7 @@ public class SvComp14CHandler extends CHandler {
 					String msg = "Incorrect or invalid in-parameter! " + loc.toString();
 					throw new IncorrectSyntaxException(loc, msg);
 				}
+//				in = ConvExpr.rexIntToBoolIfNecessary(loc, in);
 				args.add(in.lrVal.getValue());
 				stmt.addAll(in.stmt);
 				decl.addAll(in.decl);
@@ -141,8 +148,11 @@ public class SvComp14CHandler extends CHandler {
 				overappr.addAll(in.overappr);
 			}
 			assert args.size() == 1; // according to SV-Comp specification!
-			stmt.add(new AssumeStatement(loc, ConvExpr.toBoolean(loc,
-					new RValue(args.get(0), new CPrimitive(PRIMITIVE.INT))).getValue()));
+//			stmt.add(new AssumeStatement(loc, ConvExpr.toBoolean(loc,
+//					new RValue(args.get(0), new CPrimitive(PRIMITIVE.INT))).getValue()));
+			for (Expression a : args) {//could just take the first as there is only one, but it's so easy to make it more general..
+				stmt.add(new AssumeStatement(loc, a));
+			}
 			assert (main.isAuxVarMapcomplete(decl, auxVars));
 			return new ResultExpression(stmt, returnValue, decl, auxVars, overappr);
 		}
@@ -199,6 +209,29 @@ public class SvComp14CHandler extends CHandler {
 			return new ResultExpression(stmt, null, decl, auxVars);
 		}
 
+		return super.visit(main, node);
+	}
+	
+	@Override
+	public Result visit(Dispatcher main, IASTIdExpression node) {
+		ILocation loc = new CACSLLocation(node);
+		if (node.getName().toString().equals("null")) {
+			return new ResultExpression(
+					new RValue(new IdentifierExpression(loc, SFO.NULL),
+					new CPointer(new CPrimitive(PRIMITIVE.VOID))));
+		}
+		if (node.getName().toString().equals("__PRETTY_FUNCTION__")
+				|| node.getName().toString().equals("__FUNCTION__")){
+			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
+			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
+					loc, new String[] { tId }, MemoryHandler.POINTER_TYPE) });
+			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(PRIMITIVE.CHAR)));
+			ArrayList<Declaration> decls = new ArrayList<Declaration>();
+			decls.add(tVarDecl);
+			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
+			auxVars.put(tVarDecl, loc);
+			return new ResultExpression(new ArrayList<Statement>(), rvalue, decls, auxVars);
+		}
 		return super.visit(main, node);
 	}
 

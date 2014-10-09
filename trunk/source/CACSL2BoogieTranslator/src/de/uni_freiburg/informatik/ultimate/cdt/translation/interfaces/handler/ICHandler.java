@@ -19,6 +19,7 @@ import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTDefaultStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
+import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionList;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
@@ -72,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UNSIGNED_TREATMENT;
 
 /**
  * @author Markus Lindenmann
@@ -571,6 +573,16 @@ public interface ICHandler extends IHandler {
     public Result visit(Dispatcher main, IASTTypeIdExpression node);
     
     /**
+     * FIXME: added by alex, 2014-10-08
+     * supposed to return a ResultExpression that does stuff that -additionally to
+     * the special treatment- has to be done for every Expression
+     * @param main
+     * @param node
+     * @return
+     */
+    public Result visit(Dispatcher main, IASTExpression node);
+    
+    /**
      * central methods for beginning a scope in all necessary ScopedThings
      * (f.i. symbolTable,..)
      */
@@ -597,6 +609,10 @@ public interface ICHandler extends IHandler {
 			CType functionResultType);
 
 	public InitializationHandler getInitHandler();
+
+	UNSIGNED_TREATMENT getUnsignedTreatment();
+
+	FunctionHandler getFunctionHandler();
 
 //	public ResultExpression initVar(ILocation loc, Dispatcher main,
 //			LRValue lrVal, CType underlyingFieldType,

@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopVariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.MallocableExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Requires;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ResultExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 
@@ -165,7 +165,7 @@ public interface IACSLHandler extends IHandler {
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(Dispatcher main, ResultExpression node);
+	public Result visit(Dispatcher main, ACSLResultExpression node);
 	
 	/**
 	 * Translates an LoopAnnot.

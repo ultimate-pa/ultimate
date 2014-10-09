@@ -165,7 +165,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Predicate;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Requires;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ResultExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.SizeOfExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.SyntacticNamingExpression;
@@ -312,11 +312,10 @@ public class MainDispatcher extends Dispatcher {
 	@Override
 	protected void init() {
 		sideEffectHandler = new SideEffectHandler();
-		cHandler = new CHandler(this, backtranslator, true, mLogger);
-		typeHandler = new TypeHandler();// already done in preRun(), but make it
-										// fresh..
+		typeHandler = new TypeHandler();
 		acslHandler = new ACSLHandler();
 		nameHandler = new NameHandler();
+		cHandler = new CHandler(this, backtranslator, true, mLogger, typeHandler);
 		backtranslator.setBoogie2C(nameHandler.getBoogie2C());
 		preprocessorHandler = new PreprocessorHandler();
 		REPORT_WARNINGS = true;
@@ -610,8 +609,8 @@ public class MainDispatcher extends Dispatcher {
 			if (n instanceof MallocableExpression) {
 				return acslHandler.visit(this, (MallocableExpression) n);
 			}
-			if (n instanceof ResultExpression) {
-				return acslHandler.visit(this, (ResultExpression) n);
+			if (n instanceof ACSLResultExpression) {
+				return acslHandler.visit(this, (ACSLResultExpression) n);
 			}
 			if (n instanceof FieldAccessExpression) {
 				return acslHandler.visit(this, (FieldAccessExpression) n);

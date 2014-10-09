@@ -171,6 +171,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_CHECKMODE;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UNSIGNED_TREATMENT;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 
@@ -272,6 +273,8 @@ public class CHandler implements ICHandler {
 	 */
 	Stack<String> mInnerMostLoopLabel;
 	private Logger mLogger;
+	
+	CACSLPreferenceInitializer.UNSIGNED_TREATMENT mUnsignedTreatment;
 
 	/**
 	 * Constructor.
@@ -282,18 +285,24 @@ public class CHandler implements ICHandler {
 	 *            a reference to the Backtranslator object.
 	 */
 	public CHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, boolean errorLabelWarning,
-			Logger logger) {
+			Logger logger, ITypeHandler typeHandler) {
 
 		mLogger = logger;
+		this.mTypeHandler = typeHandler;
+
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		
+		this.mUnsignedTreatment = prefs.getEnum(CACSLPreferenceInitializer.LABEL_UNSIGNED_TREATMENT, 
+				CACSLPreferenceInitializer.UNSIGNED_TREATMENT.class);
 
 		this.mArrayHandler = new ArrayHandler();
 		this.mFunctionHandler = new FunctionHandler();
-		this.mPostProcessor = new PostProcessor(main, mLogger);
 		this.mStructHandler = new StructHandler();
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		boolean checkPointerValidity = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
 		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, checkPointerValidity);
 		this.mInitHandler = new InitializationHandler(mFunctionHandler, mStructHandler, mMemoryHandler);
+		this.mPostProcessor = new PostProcessor(main, mLogger);
+		
 		this.mSymbolTable = new SymbolTable(main);
 		this.mFunctions = new LinkedHashMap<String, FunctionDeclaration>();
 		this.mDeclarationsGlobalInBoogie = new LinkedHashMap<Declaration, CDeclaration>();
@@ -333,9 +342,6 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTTranslationUnit node) {
-		this.mTypeHandler = main.typeHandler;// FIXME -- not such a nice solution
-											// (but typeHandler is null at
-											// CHandler constructor)
 
 		for (IASTPreprocessorStatement preS : node.getAllPreprocessorStatements()) {
 			Result r = main.dispatch(preS);
@@ -871,12 +877,9 @@ public class CHandler implements ICHandler {
 		case IASTLiteralExpression.lk_string_literal:
 			// Translate string to uninitialized char pointer
 			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
-			NamedType boogiePointerType = new NamedType(null, SFO.POINTER, new ASTType[0]);
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
-					loc, new String[] { tId }, boogiePointerType) });
-			CPrimitive charType = new CPrimitive(PRIMITIVE.CHAR);
-			CPointer cPointer = new CPointer(charType);
-			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), cPointer);
+					loc, new String[] { tId }, MemoryHandler.POINTER_TYPE) });
+			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(PRIMITIVE.CHAR)));
 			ArrayList<Declaration> decls = new ArrayList<Declaration>();
 			decls.add(tVarDecl);
 			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
@@ -897,42 +900,41 @@ public class CHandler implements ICHandler {
 		ILocation loc = new CACSLLocation(node);
 		String cId = node.getName().toString();
 
-		// Christian: special case: 'NULL'
+		//deal with builtin constants
 		if (cId.equals("NULL")) {
-			// TODO CType is set to 'pointer to integer', is this correct...?
-			CType ctype = new CPointer(new CPrimitive(PRIMITIVE.VOID));
-
-			return new ResultExpression(new ArrayList<Statement>(0), new RValue(
-					new IdentifierExpression(loc, SFO.NULL), ctype), new ArrayList<Declaration>(0),
-					new LinkedHashMap<VariableDeclaration, ILocation>(0));
+			return new ResultExpression(new RValue(new IdentifierExpression(loc, SFO.NULL), 
+					new CPointer(new CPrimitive(PRIMITIVE.VOID))));
+		} else if (node.getName().toString().equals("__func__")){
+			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
+			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
+					loc, new String[] { tId }, MemoryHandler.POINTER_TYPE) });
+			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(PRIMITIVE.CHAR)));
+			ArrayList<Declaration> decls = new ArrayList<Declaration>();
+			decls.add(tVarDecl);
+			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
+			auxVars.put(tVarDecl, loc);
+			return new ResultExpression(new ArrayList<Statement>(), rvalue, decls, auxVars);
 		}
 
 		String bId = null;
 		CType cType = null;
 		boolean useHeap = false;
+		boolean intFromPtr = false;
 
 		// Christian: function name, handle separately
-//		IASTFunctionDefinition funDef = ((MainDispatcher) main).getFunctionPointers().get(cId);
 		if (!mSymbolTable.containsCSymbol(cId)) {
-//			if (funDef != null) {
 			if (((MainDispatcher) main).getFunctionToIndex().get(cId) != null) {
-//				assert !(node.getParent() instanceof IASTUnaryExpression  
-//						&& ((IASTUnaryExpression) node.getParent()).getOperator() == IASTUnaryExpression.op_amper)
-//						: "we should have dealt with an addressof at another point";
 				cType = new CPointer(new CFunction(null, null, false));
 				bId = SFO.FUNCTION_ADDRESS + cId;
 				useHeap = true;
 			} else {
 			}
-				//TODO does this work correctly??
-//			Integer funIndex = ((MainDispatcher) main).getFunctionToIndex().get(cId);
-//			return new ResultExpression(new RValue(new IntegerLiteral(loc, funIndex.toString()), 
-//					new CPointer(new CFunction(null, null, false))));
 		} else {
 			// we have a normal variable
 			bId = mSymbolTable.get(cId, loc).getBoogieName();
 			cType = mSymbolTable.get(cId, loc).getCVariable();
 			useHeap = isHeapVar(bId);
+			intFromPtr = mSymbolTable.get(cId, loc).isIntFromPointer;
 		}
 
 		LRValue lrVal = null;
@@ -940,15 +942,13 @@ public class CHandler implements ICHandler {
 			IdentifierExpression idExp = new IdentifierExpression(loc, bId);
 			//convention: the ctype in the symbol table of something that we put on the heap
 			// is the same as it would be if we did not put it on heap
-			lrVal = new HeapLValue(idExp, cType);
+			lrVal = new HeapLValue(idExp, cType, intFromPtr);
 		} else {
 			VariableLHS idLhs = new VariableLHS(loc, bId);
-			lrVal = new LocalLValue(idLhs, cType);
+			lrVal = new LocalLValue(idLhs, cType, false, intFromPtr);
 		}
-		ResultExpression result = new ResultExpression(new ArrayList<Statement>(0), lrVal,
-				new ArrayList<Declaration>(0), new LinkedHashMap<VariableDeclaration, ILocation>(0));
-
-		return result;
+		return new ResultExpression(new ArrayList<Statement>(), lrVal,
+				new ArrayList<Declaration>(), new LinkedHashMap<VariableDeclaration, ILocation>());
 	}
 
 	@Override
@@ -1983,7 +1983,9 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTCastExpression node) {
-		ResultExpression expr = (ResultExpression) main.dispatch(node.getOperand()); ILocation loc = new CACSLLocation(node); expr = expr.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		ResultExpression expr = (ResultExpression) main.dispatch(node.getOperand()); 
+		ILocation loc = new CACSLLocation(node); 
+		expr = expr.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 
 		// TODO: check validity of cast?
 
@@ -2180,25 +2182,7 @@ public class CHandler implements ICHandler {
 			ResultTypes rt = (ResultTypes) main.dispatch(node.getTypeId().getDeclSpecifier());
 			ResultTypes checked = checkForPointer(main, node.getTypeId().getAbstractDeclarator().getPointerOperators(),
 					rt, false);
-			// Quick hack for getting rid of sizeof int --> big solution:
-			// (optionally) compute as much as possible, also offsets, ..
-			// String intSize = "64";
-			// String ptrSize = "64";
-			// String fltSize = "64";
-			// if (checked.cType instanceof CPrimitive) {
-			// if (((CPrimitive) checked.cType).getGeneralType() ==
-			// GENERALPRIMITIVE.INTTYPE) {
-			// return new ResultExpression(new RValue(new IntegerLiteral(loc,
-			// intSize), new CPrimitive(PRIMITIVE.INT)));
-			// } else if (((CPrimitive) checked.cType).getGeneralType() ==
-			// GENERALPRIMITIVE.FLOATTYPE) {
-			// return new ResultExpression(new RValue(new IntegerLiteral(loc,
-			// fltSize), new CPrimitive(PRIMITIVE.INT)));
-			// }
-			// } else if (checked.cType instanceof CPointer) {
-			// return new ResultExpression(new RValue(new IntegerLiteral(loc,
-			// ptrSize), new CPrimitive(PRIMITIVE.INT)));
-			// } else {
+
 			return new ResultExpression(new RValue(mMemoryHandler.calculateSizeOf(checked.cType, loc), new CPrimitive(
 					PRIMITIVE.INT)));
 			// }
@@ -2208,6 +2192,13 @@ public class CHandler implements ICHandler {
 		String msg = "Unsupported boogie AST node type: " + node.getClass();
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
+	
+	@Override
+	public Result visit(Dispatcher main, IASTExpression node) {
+//		ArrayList<Statement> stmt = new ArrayList<>();
+		return null;
+	}
+
 
 	public ResultExpression makeAssignment(Dispatcher main, ILocation loc, ArrayList<Statement> stmt, LRValue lrVal,
 			RValue rVal, ArrayList<Declaration> decl, Map<VariableDeclaration, ILocation> auxVars,
@@ -2285,6 +2276,7 @@ public class CHandler implements ICHandler {
 //				}
 //			}
 		}
+		
 		// convert to pointer
 		if (convertToPointer) {
 			if (((IntegerLiteral) rExpr).getValue().equals("0")) {
@@ -2294,6 +2286,16 @@ public class CHandler implements ICHandler {
 				rightHandSide = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
 						new IntegerLiteral(loc, "0"), rExpr, loc), new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 			}
+		}
+		
+		if (rVal.isIntFromPointer) {
+			String lId = null;
+			if (lrVal instanceof HeapLValue) {
+				lId = ((IdentifierExpression ) ((HeapLValue) lrVal).getAddress()).getIdentifier();
+			} else {
+				lId = ((VariableLHS) ((LocalLValue) lrVal).getLHS()).getIdentifier();
+			}
+			mSymbolTable.get(mSymbolTable.getCID4BoogieID(lId, loc), loc).isIntFromPointer = true;
 		}
 
 		if (lrVal instanceof HeapLValue) {
@@ -3055,6 +3057,9 @@ public class CHandler implements ICHandler {
 					e = MemoryHandler.getPointerOffset(rVal.getValue(), loc);
 				}
 				rVal = new RValue(e, expectedType);
+				rVal.isIntFromPointer = true;
+//				Hack --> avoid that we do our unsigned wraparound here as it conflicts with this pointer->int conversion
+//				rVal = new RValue(e, new CPrimitive(PRIMITIVE.INT)); 
 			}
 			// type is changed
 //			else if (!(expectedType.getUnderlyingType() instanceof CPointer)) { //why did I make this distinction??
@@ -3125,8 +3130,19 @@ public class CHandler implements ICHandler {
 	}
 	
 	@Override
+	public FunctionHandler getFunctionHandler() {
+		return mFunctionHandler;
+	}
+
+	@Override
+	public UNSIGNED_TREATMENT getUnsignedTreatment() {
+		return mUnsignedTreatment;
+	}
+	
+	@Override
 	public InitializationHandler getInitHandler() {
 		return mInitHandler;
 	}
+
 
 }

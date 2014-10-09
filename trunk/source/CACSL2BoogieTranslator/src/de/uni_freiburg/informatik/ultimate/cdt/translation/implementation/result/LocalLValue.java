@@ -17,19 +17,22 @@ public class LocalLValue extends LRValue {
 	 * @param expr
 	 */
 	public LocalLValue(LeftHandSide lhs, CType cType) {
-		this(lhs, cType, false);
+		this(lhs, cType, false, false);
 	}
 	
-	
 	public LocalLValue(LeftHandSide lhs, CType cType, boolean wrappedBool) {
+		this(lhs, cType, wrappedBool, false);
+	}
+
+	public LocalLValue(LeftHandSide lhs, CType cType, boolean wrappedBool, boolean isIntFromPtr) {
 		this.lhs = lhs;
 		this.cType = cType;
 		this.isBoogieBool = wrappedBool;
-//		this.isPointer = isPtr;
+		this.isIntFromPointer = isIntFromPtr;
 	}
 
 	public LocalLValue(LocalLValue llVal) {
-		this(llVal.lhs, llVal.cType, llVal.isBoogieBool);
+		this(llVal.lhs, llVal.cType, llVal.isBoogieBool, llVal.isIntFromPointer);
 	}
 	
 	public LeftHandSide getLHS() {

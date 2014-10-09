@@ -57,6 +57,7 @@ public abstract class CType {
 
 	/**
 	 * This is a special notion of type compatibility that we use for matching function signatures.
+	 * -- i.e. for the most part we say void is "compatible" with everything..
 	 * TODO: think about how general this notion is..
 	 * @param cT
 	 * @return

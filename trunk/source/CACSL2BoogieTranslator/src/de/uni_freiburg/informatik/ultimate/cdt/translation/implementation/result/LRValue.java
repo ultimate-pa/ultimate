@@ -24,7 +24,8 @@ public abstract class LRValue {
 	 * like x == 0.
 	 */
 	public boolean isBoogieBool;
-	
+
+	public boolean isIntFromPointer;
 //	public boolean isPointer;
 	
 //	public boolean isOnHeap;

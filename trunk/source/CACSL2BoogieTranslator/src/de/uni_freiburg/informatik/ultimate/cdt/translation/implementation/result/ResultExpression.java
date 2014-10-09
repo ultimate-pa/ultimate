@@ -3,6 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,16 +20,20 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UNSIGNED_TREATMENT;
 
 /**
  * @author Markus Lindenmann
@@ -167,21 +172,21 @@ public class ResultExpression extends Result {
 
 	public ResultExpression switchToRValueIfNecessary(Dispatcher main, MemoryHandler memoryHandler, 
 			StructHandler structHandler, ILocation loc) {
+		ResultExpression toReturn = null;
 		if (lrVal == null) {
-			return this;
+			toReturn =  this;
 		} else if (lrVal instanceof RValue) {
-			return this;
+			toReturn =  this;
 		} else if (lrVal instanceof LocalLValue) {
 			RValue newRVal = new RValue(((LocalLValue) lrVal).getValue(),
 					        lrVal.cType, lrVal.isBoogieBool);
-			return new ResultExpression(
+			toReturn = new ResultExpression(
 					this.stmt, newRVal, this.decl, this.auxVars,
 					        this.overappr, this.unionFieldIdToCType);
 		} else if (lrVal instanceof HeapLValue) {
 			if (m_Locked) {
 				throw new AssertionError("this ResultExpression is already locked");
 			}
-			//ResultExpression rex = null;
 			HeapLValue hlv = (HeapLValue) lrVal;
 			
 			//retain already created stmt, decl, auxVars
@@ -198,13 +203,10 @@ public class ResultExpression extends Result {
 					&& ((CPointer) underlyingType).pointsToType instanceof CFunction) {
 				underlyingType = ((CPointer) underlyingType).pointsToType;
 			}
-			//					this.lrVal.cType instanceof CNamed ? 
-			//					((CNamed) this.lrVal.cType).getUnderlyingType() :
-			//						this.lrVal.cType;
 
 			//has the type of what lies at that address
 			RValue addressRVal = new RValue(hlv.getAddress(), hlv.cType,
-					hlv.isBoogieBool);
+					hlv.isBoogieBool, hlv.isIntFromPointer);
 
 			if (underlyingType instanceof CPrimitive) {
 				CPrimitive cp = (CPrimitive) underlyingType;
@@ -229,7 +231,6 @@ public class ResultExpression extends Result {
 				}
 				case VOID:
 					//(in this case we return nothing, because this should not be read anyway..)
-					//							throw new UnsupportedSyntaxException("void should have been cast before dereferencing");
 					break;
 				default:
 					throw new UnsupportedSyntaxException(loc, "..");
@@ -271,11 +272,47 @@ public class ResultExpression extends Result {
 				throw new UnsupportedSyntaxException(loc, "..");
 			}
 			newValue.isBoogieBool = lrVal.isBoogieBool;
-			return new ResultExpression(newStmt, newValue, newDecl,
+			toReturn = new ResultExpression(newStmt, newValue, newDecl,
 					newAuxVars, this.overappr, this.unionFieldIdToCType);
 		} else {
 			throw new AssertionError("an LRValue that is not null, and no LocalLValue, RValue or HeapLValue???");
 		}
+		
+		if(toReturn != null
+				&& toReturn.lrVal != null)
+			toReturn.lrVal.isIntFromPointer = this.lrVal.isIntFromPointer; //FIXME niceer
+		
+		//special treatment for unsigned integer types
+		if (main.cHandler.getUnsignedTreatment() != UNSIGNED_TREATMENT.IGNORE
+				&& toReturn != null
+				&& toReturn.lrVal != null 
+				&& !toReturn.lrVal.isIntFromPointer
+				&& toReturn.lrVal.cType instanceof CPrimitive 
+				&& ((CPrimitive) toReturn.lrVal.cType).isUnsigned()) {
+			int exponentInBytes = memoryHandler.typeSizeConstants
+						.CPrimitiveToTypeSizeConstant.get(((CPrimitive) toReturn.lrVal.cType).getType());
+			BigInteger maxValue = new BigInteger("2")
+					.pow(exponentInBytes * 8);
+
+			if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.ASSUME_ALL) {
+				AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
+						toReturn.lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0)));
+				toReturn.stmt.add(assumeGeq0);
+				
+				AssumeStatement assumeLtMax = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT,
+						toReturn.lrVal.getValue(), new IntegerLiteral(loc, maxValue.toString())));
+				toReturn.stmt.add(assumeLtMax);
+			} else if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.WRAPAROUND) {
+				toReturn.lrVal = new RValue(new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
+							toReturn.lrVal.getValue(), 
+							new IntegerLiteral(loc, maxValue.toString())), 
+						toReturn.lrVal.cType, 
+						toReturn.lrVal.isBoogieBool,
+						false);
+			}
+		}
+
+		return toReturn;
 	}
 
 	/**

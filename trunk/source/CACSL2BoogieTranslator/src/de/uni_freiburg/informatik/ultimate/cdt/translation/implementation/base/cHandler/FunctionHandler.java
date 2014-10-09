@@ -1085,16 +1085,21 @@ public class FunctionHandler {
 			assert sizeRes instanceof ResultExpression;
 			ResultExpression sizeRex = ((ResultExpression) sizeRes)
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			assert(sizeRex.stmt.isEmpty() && sizeRex.decl.isEmpty() && sizeRex.auxVars.isEmpty()) :
-				"if this happens, the ResultExpression in the next line has to contain those nonempty stmt/decl/auxvars, too";
+//			assert(sizeRex.stmt.isEmpty() && sizeRex.decl.isEmpty() && sizeRex.auxVars.isEmpty()) :
+//				"if this happens, the ResultExpression in the next line has to contain those nonempty stmt/decl/auxvars, too";
+
 
 			ResultExpression mallocRex = memoryHandler.getMallocCall(main, this, sizeRex.lrVal.getValue(), loc);		
+			
+			sizeRex.addAll(mallocRex);
+			sizeRex.lrVal = mallocRex.lrVal;
 
 			// for alloc a we have to free the variable ourselves when the stackframe is closed, i.e. at a return
 			if (methodName.equals("alloca")) {
 				memoryHandler.addVariableToBeFreed(main, (LocalLValue) mallocRex.lrVal);
 			}
-			return mallocRex;
+//			return mallocRex;
+			return sizeRex;
 		} 
 	
 		if (methodName.equals("free")) {

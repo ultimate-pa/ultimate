@@ -15,9 +15,9 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 
 /**
- * TODO Currently only the old SV-COMP 2013 options are imitated.
- * 
+ * TODO: rename this to 2015 perhaps??
  * @author Christian Schilling
+ * @author nutz
  */
 public class SvComp14MainDispatcher extends MainDispatcher {
 
@@ -29,10 +29,10 @@ public class SvComp14MainDispatcher extends MainDispatcher {
 	@Override
 	protected void init() {
 		sideEffectHandler = new SideEffectHandler();
-		cHandler = new SvComp14CHandler(this, backtranslator, mLogger);
 		typeHandler = new SVCompTypeHandler();
 		acslHandler = new ACSLHandler();
 		nameHandler = new NameHandler();
+		cHandler = new SvComp14CHandler(this, backtranslator, mLogger, typeHandler);
 		preprocessorHandler = new SvComp14PreprocessorHandler();
 		backtranslator.setBoogie2C(nameHandler.getBoogie2C());
 		REPORT_WARNINGS = false;
