@@ -266,9 +266,15 @@ public class BinaryStatePredicateManager {
 			j++;
 		}
 		Term conjunction = Util.and(m_Script, siTerms);
-		Term simplified = m_SmtManager.simplify(conjunction);
-		Term normalized = (new AffineSubtermNormalizer(m_SmtManager.getScript(), mLogger)).transform(simplified);
-		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(normalized, m_SmtManager.getBoogie2Smt());
+		Term si;
+		if (false) {
+			Term simplified = m_SmtManager.simplify(conjunction);
+			Term normalized = (new AffineSubtermNormalizer(m_SmtManager.getScript(), mLogger)).transform(simplified);
+			si = normalized;
+		} else {
+			si = conjunction;
+		}
+		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(si, m_SmtManager.getBoogie2Smt());
 		return m_SmtManager.newPredicate(tvp);
 	}
 
