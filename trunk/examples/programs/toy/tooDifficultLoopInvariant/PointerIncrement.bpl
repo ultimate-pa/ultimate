@@ -33,10 +33,27 @@ implementation main() returns (main : int){
     return;
 }
 
+implementation ULTIMATE.init() returns (){
+    #NULL := { base: 0, offset: 0 };
+    #valid[0] := false;
+}
+
+implementation ULTIMATE.start() returns (){
+    var #t~ret4 : int;
+
+    call ULTIMATE.init();
+    call #t~ret4 := main();
+}
+
 type $Pointer$ = { base : int, offset : int };
 var #NULL : { base : int, offset : int };
 
 var #memory_int : [$Pointer$]int;
+
+procedure write~int(#value : int, #ptr : $Pointer$, #sizeOfWrittenType : int) returns ();    requires #valid[#ptr!base];
+    requires #sizeOfWrittenType + #ptr!offset <= #length[#ptr!base];
+    modifies #memory_int;
+    ensures #memory_int == old(#memory_int)[#ptr := #value];
 
 procedure read~int(#ptr : $Pointer$, #sizeOfReadType : int) returns (#value : int);    requires #valid[#ptr!base];
     requires #sizeOfReadType + #ptr!offset <= #length[#ptr!base];
@@ -46,6 +63,11 @@ var #valid : [int]bool;
 
 var #length : [int]int;
 
+procedure ~free(~addr : $Pointer$) returns ();    requires ~addr!offset == 0;
+    requires #valid[~addr!base];
+    ensures #valid == old(#valid)[~addr!base := false];
+    modifies #valid;
+
 procedure ~malloc(~size : int) returns (#res : $Pointer$);    ensures old(#valid)[#res!base] == false;
     ensures #valid == old(#valid)[#res!base := true];
     ensures #res!offset == 0;
@@ -53,6 +75,13 @@ procedure ~malloc(~size : int) returns (#res : $Pointer$);    ensures old(#valid
     ensures #length == old(#length)[#res!base := ~size];
     modifies #valid, #length;
 
+const #sizeof~INT : int;
+axiom #sizeof~INT == 4;
 procedure main() returns (main : int);    modifies #valid, #length;
 
+procedure ULTIMATE.init() returns ();    modifies #valid, #NULL;
+    modifies ;
+
+procedure ULTIMATE.start() returns ();    modifies #valid, #NULL;
+    modifies #valid, #length;
 

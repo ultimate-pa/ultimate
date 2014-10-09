@@ -10,9 +10,9 @@
 extern int __VERIFIER_nondet_int(void);
 
 int main() {
-	int *p = malloc(1048 * sizeof(int));
+	int *p = malloc(400 * sizeof(int));
 	int *q = p;
-	while (q < p + 1048 && *q >= 0) {
+	while (q < p + 400 && *q >= 0) {
 		q++;
 	}
 	return 0;
