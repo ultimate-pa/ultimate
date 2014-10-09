@@ -14,12 +14,12 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class Svcomp_Reach_SimpleMemoryModel extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Directories = { 
-		"examples/svcomp/ldv-linux-3.0/",
-		"examples/svcomp/ldv-linux-3.4-simple/",
-		"examples/svcomp/ldv-linux-3.7.3/",
-		"examples/svcomp/ldv-commit-tester/",
-		"examples/svcomp/ldv-consumption/",
-		"examples/svcomp/ntdrivers/",
+//		"examples/svcomp/ldv-linux-3.0/",
+//		"examples/svcomp/ldv-linux-3.4-simple/",
+//		"examples/svcomp/ldv-linux-3.7.3/",
+//		"examples/svcomp/ldv-commit-tester/",
+//		"examples/svcomp/ldv-consumption/",
+//		"examples/svcomp/ntdrivers/",
 		"examples/svcomp/ssh/"
 		};
 	
@@ -27,7 +27,7 @@ public class Svcomp_Reach_SimpleMemoryModel extends
 	private static int m_Timeout = 20000;
 
 	private static final boolean m_AutomizerWithForwardPredicates = true;
-	private static final boolean m_AutomizerWithBackwardPredicates = true;
+	private static final boolean m_AutomizerWithBackwardPredicates = false;
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
