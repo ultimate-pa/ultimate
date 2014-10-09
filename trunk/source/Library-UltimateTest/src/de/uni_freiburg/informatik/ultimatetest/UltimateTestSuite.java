@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 public abstract class UltimateTestSuite {
 
 	private static List<ITestSummary> sSummaries;
-	private List<IIncrementalLog> mLogFiles;
+	private static List<IIncrementalLog> sLogFiles;
 	protected Logger mLogger;
 
 	public UltimateTestSuite() {
@@ -38,11 +38,13 @@ public abstract class UltimateTestSuite {
 			}
 
 		}
-		IIncrementalLog[] logs = constructIncrementalLog();
-		if (logs != null) {
-			mLogFiles = Arrays.asList(constructIncrementalLog());
-		} else {
-			mLogFiles = null;
+		if (sLogFiles == null) {
+			IIncrementalLog[] logs = constructIncrementalLog();
+			if (logs != null) {
+				sLogFiles = Arrays.asList(logs);
+			} else {
+				sLogFiles = null;
+			}
 		}
 	}
 
@@ -70,7 +72,7 @@ public abstract class UltimateTestSuite {
 	}
 
 	protected List<IIncrementalLog> getIncrementalLogs() {
-		return Collections.unmodifiableList(mLogFiles);
+		return Collections.unmodifiableList(sLogFiles);
 	}
 
 	@AfterClass

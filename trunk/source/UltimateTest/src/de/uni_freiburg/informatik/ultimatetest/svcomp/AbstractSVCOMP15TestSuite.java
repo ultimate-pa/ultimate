@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDeci
 import de.uni_freiburg.informatik.ultimatetest.summary.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
-import de.uni_freiburg.informatik.ultimatetest.traceabstraction.TestSummaryWithBenchmarkResults;
+import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
@@ -76,6 +76,7 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 		for (File input : inputFiles) {
 
 			try {
+				//note: do not change the name without also checking SVCOMP15TestSummary
 				String name = createTestCaseName(svcompRootDir, input, def);
 				UltimateRunDefinition urd = new UltimateRunDefinition(input, def.getSettings(), def.getToolchain());
 				UltimateStarter starter = new UltimateStarter(urd, def.getTimeout());
@@ -84,7 +85,7 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 						starter, urd, super.getSummaries(), super.getIncrementalLogs());
 
 				testcases.add(testCase);
-			} catch (Exception ex) {
+			} catch (Throwable ex) {
 				System.err.println("Exception while creating test case, skipping this one: " + input.getAbsolutePath());
 				ex.printStackTrace();
 			}
@@ -93,6 +94,7 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 	}
 
 	private String createTestCaseName(File svcompRootDir, File input, TestDefinition def) {
+		//note: do not change the name without also checking SVCOMP15TestSummary
 		StringBuilder sb = new StringBuilder();
 		sb.append(def.getSetName());
 		sb.append(" ");
@@ -106,7 +108,7 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 	}
 
 	protected IIncrementalLog[] constructIncrementalLog() {
-		return new IIncrementalLog[] { new TestSummaryWithBenchmarkResults(this.getClass()) };
+		return new IIncrementalLog[] { new IncrementalLogWithVMParameters(this.getClass()) };
 	}
 
 	@Override

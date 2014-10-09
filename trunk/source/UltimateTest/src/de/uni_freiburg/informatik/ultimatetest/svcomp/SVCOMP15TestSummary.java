@@ -12,6 +12,9 @@ import de.uni_freiburg.informatik.ultimatetest.summary.NewTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
+ * This summary should only be used with {@link SVCOMP15TestSuite}, because it
+ * relies on the name of the test case generated there to extract the SVCOMP
+ * category of a given test.
  * 
  * @author dietsch@informatik.uni-freiburg.de
  * 

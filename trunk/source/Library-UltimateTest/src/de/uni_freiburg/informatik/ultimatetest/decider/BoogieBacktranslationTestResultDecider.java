@@ -58,7 +58,7 @@ public class BoogieBacktranslationTestResultDecider extends TestResultDecider {
 					if (genRes.getShortDescription().equals("Unfinished Backtranslation")) {
 						setResultCategory(result.getShortDescription());
 						setResultMessage(result.getLongDescription());
-						customMessages.add(result.getShortDescription()+": "+result.getLongDescription());
+						customMessages.add(result.getShortDescription() + ": " + result.getLongDescription());
 						fail = true;
 					}
 				} else if (result instanceof CounterExampleResult<?, ?, ?>) {
@@ -97,7 +97,7 @@ public class BoogieBacktranslationTestResultDecider extends TestResultDecider {
 					actualCounterExample = actualCounterExample.trim();
 
 					// compare linewise
-					String platformLineSeparator = System.getProperty("line.separator");
+					String platformLineSeparator = Util.getPlatformLineSeparator();
 					String[] desiredLines = desiredCounterExample.split(platformLineSeparator);
 					String[] actualLines = actualCounterExample.split(platformLineSeparator);
 
@@ -115,9 +115,7 @@ public class BoogieBacktranslationTestResultDecider extends TestResultDecider {
 					}
 
 					if (fail) {
-
-						Util.writeFile(desiredCounterExampleFile.getAbsolutePath() + "-actual", actualLines);
-
+						tryWritingActualResultToFile(desiredCounterExampleFile, actualCounterExample);
 						setCategoryAndMessageAndCustomMessage("Desired error trace does not match actual error trace.",
 								customMessages);
 						customMessages.add("Lengths: Desired=" + desiredCounterExample.length() + " Actual="
@@ -147,6 +145,7 @@ public class BoogieBacktranslationTestResultDecider extends TestResultDecider {
 			} else {
 				setResultCategory("No .errorpath file for comparison");
 				String errorMsg = String.format("There is no .errorpath file for %s!", mInputFile);
+				tryWritingActualResultToFile(desiredCounterExampleFile, actualCounterExample);
 				setResultMessage(errorMsg);
 				customMessages.add(errorMsg);
 				fail = true;
@@ -170,6 +169,16 @@ public class BoogieBacktranslationTestResultDecider extends TestResultDecider {
 		setResultCategory(msg);
 		setResultMessage(msg);
 		customMessages.add(msg);
+	}
+
+	private boolean tryWritingActualResultToFile(File desiredCounterExampleFile, String actualCounterExample) {
+		String[] actualLines = actualCounterExample.split(Util.getPlatformLineSeparator());
+		try {
+			Util.writeFile(desiredCounterExampleFile.getAbsolutePath() + "-actual", actualLines);
+			return true;
+		} catch (IOException e) {
+			return false;
+		}
 	}
 
 }

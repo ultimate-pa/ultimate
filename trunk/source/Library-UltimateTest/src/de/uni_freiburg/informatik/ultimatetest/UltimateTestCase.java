@@ -7,6 +7,8 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.junit_helper.testfactory.FactoryTestMethod;
+import de.uni_freiburg.informatik.ultimate.core.controllers.LivecycleException;
+import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
@@ -43,27 +45,41 @@ public class UltimateTestCase {
 	public void test() {
 
 		Throwable th = null;
-
 		TestResult result = TestResult.FAIL;
-
+		boolean livecycleFailure = false;
 		try {
 			updateLogsPreStart();
 			mStarter.runUltimate();
 			result = mDecider.getTestResult(mStarter.getServices().getResultService());
+		} catch (LivecycleException lex) {
+			// if this happens, mStarter, mLogger, etc. are not initialized
+			th = lex;
+			result = mDecider.getTestResult(null, lex);
+			lex.printStackTrace();
+			livecycleFailure = true;
 		} catch (Throwable e) {
 			th = e;
 			result = mDecider.getTestResult(mStarter.getServices().getResultService(), e);
 			mLogger.fatal(String.format("There was an exception during the execution of Ultimate: %s%n%s", e,
 					ExceptionUtils.getStackTrace(e)));
 		} finally {
+			boolean success = false;
 
-			boolean success = mDecider.getJUnitSuccess(result);
+			if (!livecycleFailure) {
+				success = mDecider.getJUnitSuccess(result);
+			}
+
 			updateSummaries(result);
 			updateLogsPostCompletion(result);
 			mStarter.complete();
 
 			if (!success) {
-				String message = mDecider.getResultMessage();
+				String message = null;
+
+				if (!livecycleFailure) {
+					message = mDecider.getResultMessage();
+				}
+
 				if (message == null) {
 					message = "ITestResultDecider provided no message";
 				}
@@ -93,10 +109,16 @@ public class UltimateTestCase {
 	}
 
 	private void updateSummaries(TestResult result) {
+
+		IResultService rservice = null;
+		if (mStarter.getServices() != null) {
+			rservice = mStarter.getServices().getResultService();
+		}
+
 		if (mSummaries != null) {
 			for (ITestSummary summary : mSummaries) {
 				summary.addResult(mUltimateRunDefinition, result, mDecider.getResultCategory(),
-						mDecider.getResultMessage(), mName, mStarter.getServices().getResultService());
+						mDecider.getResultMessage(), mName, rservice);
 			}
 		}
 	}

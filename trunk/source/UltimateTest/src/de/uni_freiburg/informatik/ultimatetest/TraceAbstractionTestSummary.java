@@ -25,27 +25,31 @@ public class TraceAbstractionTestSummary extends OldTestSummary {
 		mCount = 0;
 		m_TraceAbstractionBenchmarks = new HashMap<UltimateRunDefinition, Collection<BenchmarkResult>>();
 	}
-	
+
 	@Override
 	public String getFilenameExtension() {
 		return ".log";
 	}
-	
+
 	@Override
 	public String getDescriptiveLogName() {
 		return this.getClass().getSimpleName();
 	}
 
 	@Override
-	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult, String category, String message, String testname, IResultService resultService) {
+	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult, String category,
+			String message, String testname, IResultService resultService) {
 		super.addResult(ultimateRunDefinition, threeValuedResult, category, message, testname, resultService);
 
-			addTraceAbstractionBenchmarks(ultimateRunDefinition, Util.filterResults(
-					resultService.getResults(), BenchmarkResult.class));
+		if (resultService != null) {
+			addTraceAbstractionBenchmarks(ultimateRunDefinition,
+					Util.filterResults(resultService.getResults(), BenchmarkResult.class));
+		}
 
 	}
 
-	public void addTraceAbstractionBenchmarks(UltimateRunDefinition ultimateRunDefinition, Collection<BenchmarkResult> benchmarkResults) {
+	public void addTraceAbstractionBenchmarks(UltimateRunDefinition ultimateRunDefinition,
+			Collection<BenchmarkResult> benchmarkResults) {
 		assert !m_TraceAbstractionBenchmarks.containsKey(ultimateRunDefinition) : "benchmarks already added";
 		m_TraceAbstractionBenchmarks.put(ultimateRunDefinition, benchmarkResults);
 	}

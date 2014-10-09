@@ -35,6 +35,7 @@ public class ExternalUltimateCore {
 
 	private UltimateCore mCurrentUltimateInstance;
 	private Throwable mUltimateThrowable;
+	private volatile boolean mReachedInit;
 
 	private final Semaphore mUltimateExit;
 	private final Semaphore mStarterContinue;
@@ -46,6 +47,7 @@ public class ExternalUltimateCore {
 		mUltimateExit = new Semaphore(0);
 		mStarterContinue = new Semaphore(0);
 		mController = controller;
+		mReachedInit = false;
 	}
 
 	public void runUltimate() throws Throwable {
@@ -62,6 +64,14 @@ public class ExternalUltimateCore {
 					mCurrentUltimateInstance.start(mController, false);
 				} catch (Throwable e) {
 					mUltimateThrowable = e;
+				}
+
+				if (!mReachedInit) {
+					if (mUltimateThrowable == null) {
+						mUltimateThrowable = new LivecycleException(
+								"Ultimate terminated before calling init(...) on ExternalUltimateCore");
+					}
+					mStarterContinue.release();
 				}
 			}
 		}, "ActualUltimateInstance");
@@ -83,17 +93,18 @@ public class ExternalUltimateCore {
 
 	public int init(ICore core, ILoggingService loggingService, File settingsFile, long deadline, File inputFile,
 			PreludeProvider prelude) {
-		if (core == null || loggingService == null) {
-			return -1;
-		}
-
-		Logger logger = getLogger(loggingService);
-
-		if (settingsFile != null) {
-			core.loadPreferences(settingsFile.getAbsolutePath());
-		}
-
+		Logger logger = null;
 		try {
+			mReachedInit = true;
+			if (core == null || loggingService == null) {
+				return -1;
+			}
+
+			logger = getLogger(loggingService);
+
+			if (settingsFile != null) {
+				core.loadPreferences(settingsFile.getAbsolutePath());
+			}
 			mJob = getToolchainJob(core, mController, logger, inputFile, prelude);
 			if (deadline > 0) {
 				mJob.setDeadline(deadline);
@@ -101,14 +112,15 @@ public class ExternalUltimateCore {
 			mJob.schedule();
 			mJob.join();
 
-		} catch (InterruptedException e) {
-			logger.error("Exception in Toolchain", e);
+		} catch (Throwable e) {
+			logger.error("Exception during toolchain execution.", e);
 			return -1;
 		} finally {
 			mStarterContinue.release();
 			mUltimateExit.acquireUninterruptibly();
 		}
 		return IApplication.EXIT_OK;
+
 	}
 
 	protected Logger getLogger(ILoggingService loggingService) {
@@ -121,7 +133,10 @@ public class ExternalUltimateCore {
 	}
 
 	public void complete() {
-		mJob.releaseToolchainManually();
+		if (mJob != null) {
+			//mJob may be null if Ultimate did not complete its init phase
+			mJob.releaseToolchainManually();
+		}
 		mUltimateExit.release();
 	}
 

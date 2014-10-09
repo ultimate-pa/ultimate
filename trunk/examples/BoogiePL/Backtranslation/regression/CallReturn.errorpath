@@ -1,0 +1,36 @@
+step0: y := 0;
+values0:  y=0
+step1: call z := inc(y); (CALL)
+values1:  x=0
+step2: !(x > 10)
+values2:  x=0
+step3: y := x + 5;
+values3:  x=0  y=5
+step4: call res := inc(y); (CALL)
+values4:  x=5
+step5: !(x > 10)
+values5:  x=5
+step6: y := x + 5;
+values6:  x=5  y=10
+step7: call res := inc(y); (CALL)
+values7:  x=10
+step8: !(x > 10)
+values8:  x=10
+step9: y := x + 5;
+values9:  x=10  y=15
+step10: call res := inc(y); (CALL)
+values10:  x=15
+step11: x > 10
+values11:  x=15
+step12: res := x + 1;
+values12:  res=16  x=15
+step13: call res := inc(y); (RETURN)
+values13:  res=16  x=15
+step14: call res := inc(y); (RETURN)
+values14:  res=16  x=10  y=15
+step15: call res := inc(y); (RETURN)
+values15:  res=16  x=10  y=15
+step16: call z := inc(y); (RETURN)
+values16:  res=16  x=5  y=10
+step17: assert z == 0;
+values17:  res=16  x=5  y=10

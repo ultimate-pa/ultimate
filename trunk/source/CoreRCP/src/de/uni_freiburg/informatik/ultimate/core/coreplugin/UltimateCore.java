@@ -188,7 +188,6 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	 */
 	@Override
 	public final Object start(IApplicationContext context) throws Exception {
-
 		// parse command line parameters and select ultimate mode
 		mCmdLineArgs = new CommandLineParser();
 		mCmdLineArgs.parse(Platform.getCommandLineArgs());

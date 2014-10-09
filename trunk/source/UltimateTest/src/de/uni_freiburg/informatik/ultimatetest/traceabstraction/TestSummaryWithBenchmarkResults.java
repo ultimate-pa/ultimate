@@ -36,7 +36,13 @@ public class TestSummaryWithBenchmarkResults extends DefaultIncrementalLogfile {
 			String resultMessage, IUltimateServiceProvider services) {
 		String indent = "\t";
 		String lineSeparator = System.getProperty("line.separator");
-		Entry sum = new Entry(result, resultMessage, runDef, services.getResultService());
+		Entry sum = null;
+		if (services != null) {
+			sum = new Entry(result, resultMessage, runDef, services.getResultService());
+		} else {
+			sum = new Entry(result, resultMessage, runDef, null);
+		}
+
 		writeToFile(sum.toLogString(indent, lineSeparator).append(Util.getPlatformLineSeparator()).toString());
 	}
 
@@ -44,16 +50,19 @@ public class TestSummaryWithBenchmarkResults extends DefaultIncrementalLogfile {
 
 		private final TestResult mThreeValuedResult;
 		private final String mMessage;
-		private final UltimateRunDefinition m_UltimateRunDefinition;
-		private final List<String> mFlattenedBenchmarkResults = new ArrayList<>();
+		private final UltimateRunDefinition mUltimateRunDefinition;
+		private final List<String> mFlattenedBenchmarkResults;
 
 		public Entry(TestResult threeValuedResult, String message, UltimateRunDefinition ultimateRunDefinition,
 				IResultService resultService) {
 			super();
-			this.mThreeValuedResult = threeValuedResult;
-			this.mMessage = message;
-			m_UltimateRunDefinition = ultimateRunDefinition;
-			interpretUltimateResults(resultService);
+			mThreeValuedResult = threeValuedResult;
+			mMessage = message;
+			mUltimateRunDefinition = ultimateRunDefinition;
+			mFlattenedBenchmarkResults = new ArrayList<>();
+			if (resultService != null) {
+				interpretUltimateResults(resultService);
+			}
 		}
 
 		private void interpretUltimateResults(IResultService resultService) {
@@ -69,12 +78,14 @@ public class TestSummaryWithBenchmarkResults extends DefaultIncrementalLogfile {
 		public StringBuilder toLogString(String indent, String lineSeparator) {
 			StringBuilder sb = new StringBuilder();
 
-			sb.append(indent).append(m_UltimateRunDefinition.getSettings()).append(lineSeparator);
+			sb.append(indent).append(mUltimateRunDefinition.getSettings()).append(lineSeparator);
 			sb.append(indent).append("Test result: ").append(mThreeValuedResult).append(lineSeparator);
 			sb.append(indent).append("Message:     ").append(Util.flatten(mMessage, " # ")).append(lineSeparator);
-			sb.append(indent).append("Benchmarks:").append(lineSeparator);
-			for (String s : mFlattenedBenchmarkResults) {
-				sb.append(indent).append(indent).append(s).append(lineSeparator);
+			if (mFlattenedBenchmarkResults.size() > 0) {
+				sb.append(indent).append("Benchmarks:").append(lineSeparator);
+				for (String s : mFlattenedBenchmarkResults) {
+					sb.append(indent).append(indent).append(s).append(lineSeparator);
+				}
 			}
 			return sb;
 		}

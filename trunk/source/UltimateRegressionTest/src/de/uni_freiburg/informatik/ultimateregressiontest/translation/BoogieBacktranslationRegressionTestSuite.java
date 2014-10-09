@@ -17,7 +17,6 @@ public class BoogieBacktranslationRegressionTestSuite extends AbstractRegression
 		mFiletypesToConsider = new String[] { ".bpl" };
 	}
 
-
 	@Override
 	protected ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition) {
 		return new BoogieBacktranslationTestResultDecider(runDefinition.getInput().getAbsolutePath());

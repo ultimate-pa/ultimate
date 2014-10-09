@@ -57,7 +57,8 @@ public interface ITestSummary extends ITestLogfile {
 	 * @param resultService
 	 *            All IResults produced during the run of Ultimate. The results
 	 *            are given as a map which maps plugin IDs to a the list of
-	 *            results produced by that plugin.
+	 *            results produced by that plugin. May be null if Ultimate
+	 *            failed early.
 	 * 
 	 */
 	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult, String category,

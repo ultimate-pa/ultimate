@@ -37,10 +37,10 @@ public class Util {
 
 	private static String sPlatformLineSeparator = System.getProperty("line.separator");
 
-	public static String getPlatformLineSeparator(){
+	public static String getPlatformLineSeparator() {
 		return sPlatformLineSeparator;
 	}
-	
+
 	public static String readFile(File file) throws IOException {
 		return readFile(file.getAbsolutePath());
 	}
@@ -183,7 +183,7 @@ public class Util {
 	}
 
 	public static String getCurrentDateTimeAsString() {
-		return new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS").format(Calendar.getInstance().getTime());
+		return new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS").format(Calendar.getInstance().getTime());
 	}
 
 	public static String generateLogfilename(String directory, String description) {
@@ -329,33 +329,57 @@ public class Util {
 	 * @param fail
 	 * @param customMessages
 	 */
-	public static void logResults(Logger logger, String inputFile, boolean fail, Collection<String> customMessages,
-			IResultService resultService) {
+	public static void logResults(final Logger logger, String inputFile, boolean fail,
+			Collection<String> customMessages, IResultService resultService) {
 
-		logger.info("#################### TEST RESULT ####################");
-		logger.info("Results for " + inputFile);
+		if (logger == null) {
+			logResults(new ILogWriter() {
+				@Override
+				public void write(String message) {
+					System.err.println(message);
+				}
+			}, inputFile, fail, customMessages, resultService);
+		} else {
+			logResults(new ILogWriter() {
+				@Override
+				public void write(String message) {
+					logger.info(message);
+				}
+			}, inputFile, fail, customMessages, resultService);
+		}
+	}
 
-		for (Entry<String, List<IResult>> entry : resultService.getResults().entrySet()) {
-			int i = 0;
-			for (IResult result : entry.getValue()) {
-				logger.info(String.format("[%s] %s --> [%s] %s", i, entry.getKey(), result.getClass().getSimpleName(),
-						result.getLongDescription()));
-				++i;
+	private static void logResults(ILogWriter logger, String inputFile, boolean fail,
+			Collection<String> customMessages, IResultService resultService) {
+		logger.write("#################### TEST RESULT ####################");
+		logger.write("Results for " + inputFile);
+
+		if (resultService == null) {
+			logger.write("There is no IResultService (this indicates that Ultimate terminated abnormally");
+		} else {
+
+			for (Entry<String, List<IResult>> entry : resultService.getResults().entrySet()) {
+				int i = 0;
+				for (IResult result : entry.getValue()) {
+					logger.write(String.format("[%s] %s --> [%s] %s", i, entry.getKey(), result.getClass()
+							.getSimpleName(), result.getLongDescription()));
+					++i;
+				}
 			}
 		}
 
 		if (customMessages != null && customMessages.size() > 0) {
 			for (String s : customMessages) {
 				if (s != null) {
-					logger.info(s);
+					logger.write(s);
 				}
 			}
 		}
 
 		if (fail) {
-			logger.info("TEST FAILED");
+			logger.write("TEST FAILED");
 		} else {
-			logger.info("TEST SUCCEEDED");
+			logger.write("TEST SUCCEEDED");
 		}
 
 		// Get current size of heap in bytes
@@ -370,11 +394,15 @@ public class Util {
 		// size.// Any attempt will result in an OutOfMemoryException.
 		long heapMaxSize = Runtime.getRuntime().maxMemory();
 
-		logger.info(String.format("Statistics: heapSize=%s heapFreeSize=%s heapMaxSize=%s",
+		logger.write(String.format("Statistics: heapSize=%s heapFreeSize=%s heapMaxSize=%s",
 				Utils.humanReadableByteCount(heapSize, true), Utils.humanReadableByteCount(heapFreeSize, true),
 				Utils.humanReadableByteCount(heapMaxSize, true)));
 
-		logger.info("#################### END TEST RESULT ####################");
+		logger.write("#################### END TEST RESULT ####################");
+	}
+
+	private interface ILogWriter {
+		public void write(String message);
 	}
 
 	/**

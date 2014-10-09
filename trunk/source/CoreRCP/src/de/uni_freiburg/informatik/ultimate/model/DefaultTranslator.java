@@ -109,6 +109,9 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 
 	@Override
 	public String targetExpressionToString(TE expression) {
+		if(expression == null){
+			return "NULL";
+		}
 		return expression.toString();
 	}
 
