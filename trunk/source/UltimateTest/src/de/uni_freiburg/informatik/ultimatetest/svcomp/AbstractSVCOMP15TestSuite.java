@@ -76,7 +76,8 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 		for (File input : inputFiles) {
 
 			try {
-				//note: do not change the name without also checking SVCOMP15TestSummary
+				// note: do not change the name without also checking
+				// SVCOMP15TestSummary
 				String name = createTestCaseName(svcompRootDir, input, def);
 				UltimateRunDefinition urd = new UltimateRunDefinition(input, def.getSettings(), def.getToolchain());
 				UltimateStarter starter = new UltimateStarter(urd, def.getTimeout());
@@ -94,7 +95,8 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 	}
 
 	private String createTestCaseName(File svcompRootDir, File input, TestDefinition def) {
-		//note: do not change the name without also checking SVCOMP15TestSummary
+		// note: do not change the name without also checking
+		// SVCOMP15TestSummary
 		StringBuilder sb = new StringBuilder();
 		sb.append(def.getSetName());
 		sb.append(" ");
@@ -113,10 +115,7 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		return new ITestSummary[] {
-
-		new SVCOMP15TestSummary(this.getClass()), new TraceAbstractionTestSummary(this.getClass()),
-				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class) };
+		return new ITestSummary[] { new SVCOMP15TestSummary(this.getClass()) };
 	}
 
 	/**
