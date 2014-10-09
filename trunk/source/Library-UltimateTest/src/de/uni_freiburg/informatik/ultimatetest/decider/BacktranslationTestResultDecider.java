@@ -21,15 +21,24 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
  * 
- * @author dietsch
+ * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class BoogieBacktranslationTestResultDecider extends TestResultDecider {
+public class BacktranslationTestResultDecider extends TestResultDecider {
 
-	private String mInputFile;
+	private final String mInputFile;
+	private final String mFileEnding;
 
-	public BoogieBacktranslationTestResultDecider(String inputFile) {
+	/**
+	 * 
+	 * @param inputFile
+	 * @param fileending
+	 *            use .c or .bpl or something like that. The . is important
+	 * 
+	 */
+	public BacktranslationTestResultDecider(String inputFile, String fileending) {
 		mInputFile = inputFile;
+		mFileEnding = fileending;
 	}
 
 	@Override
@@ -38,7 +47,7 @@ public class BoogieBacktranslationTestResultDecider extends TestResultDecider {
 		setResultCategory("");
 		setResultMessage("");
 
-		Logger log = Logger.getLogger(BoogieBacktranslationTestResultDecider.class);
+		Logger log = Logger.getLogger(BacktranslationTestResultDecider.class);
 		Collection<String> customMessages = new LinkedList<String>();
 		customMessages.add("Expecting results to not contain GenericResult \"Unhandled Backtranslation\" "
 				+ "or ExceptionOrErrorResult, "
@@ -84,7 +93,7 @@ public class BoogieBacktranslationTestResultDecider extends TestResultDecider {
 			// error path
 
 			File inputFile = new File(mInputFile);
-			String inputFileNameWithoutEnding = inputFile.getName().replaceAll("\\.bpl", "");
+			String inputFileNameWithoutEnding = inputFile.getName().replaceAll("\\" + mFileEnding, "");
 			File desiredCounterExampleFile = new File(String.format("%s%s%s%s", inputFile.getParentFile()
 					.getAbsolutePath(), Path.SEPARATOR, inputFileNameWithoutEnding, ".errorpath"));
 			String actualCounterExample = cex.get(0).getProgramExecutionAsString();
@@ -160,7 +169,7 @@ public class BoogieBacktranslationTestResultDecider extends TestResultDecider {
 	public TestResult getTestResult(IResultService resultService, Throwable e) {
 		setResultCategory("Unexpected exception");
 		setResultMessage("Unexpected exception: " + e.getMessage());
-		Util.logResults(Logger.getLogger(BoogieBacktranslationTestResultDecider.class), mInputFile, true,
+		Util.logResults(Logger.getLogger(BacktranslationTestResultDecider.class), mInputFile, true,
 				new ArrayList<String>(), resultService);
 		return TestResult.FAIL;
 	}

@@ -6,12 +6,12 @@ import de.uni_freiburg.informatik.ultimatetest.decider.BacktranslationTestResult
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
-public class BoogieBacktranslationRegressionTestSuite extends AbstractRegressionTestSuite {
+public class CBacktranslationRegressionTestSuite extends AbstractRegressionTestSuite {
 
 	private static String sRootFolder = Util.getPathFromTrunk("examples/Backtranslation");
-	private static String sFileending = ".bpl";
+	private static String sFileending = ".c";
 
-	public BoogieBacktranslationRegressionTestSuite() {
+	public CBacktranslationRegressionTestSuite() {
 		super();
 		mTimeout = 5000;
 		mRootFolder = sRootFolder;
