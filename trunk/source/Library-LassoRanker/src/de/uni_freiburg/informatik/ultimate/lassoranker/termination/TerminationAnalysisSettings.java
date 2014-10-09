@@ -100,6 +100,13 @@ public class TerminationAnalysisSettings implements Serializable {
 	public boolean simplify_supporting_invariants = true; // Default: true
 	
 	/**
+	 * Should we try to simplify the stem transition and reduce disjunctions?
+	 * This generally incomplete but it increases performance a bunch if
+	 * the stem has many disjuncts.
+	 */
+	public boolean overapproximate_stem = false; // Default: false
+	
+	/**
 	 * Default construction intializes default values
 	 */
 	public TerminationAnalysisSettings() {
@@ -139,8 +146,12 @@ public class TerminationAnalysisSettings implements Serializable {
 		sb.append(this.num_non_strict_invariants);
 		sb.append("\nConsider only non-deceasing supporting invariants: ");
 		sb.append(this.nondecreasing_invariants);
-		sb.append("\nTermination argument simplification enabled: ");
+		sb.append("\nSimplify termination arguments: ");
 		sb.append(this.simplify_termination_argument);
+		sb.append("\nSimplify supporting invariants: ");
+		sb.append(this.simplify_supporting_invariants);
+		sb.append("Overapproximate stem: ");
+		sb.append(this.overapproximate_stem);
 		return sb.toString();
 	}
 }

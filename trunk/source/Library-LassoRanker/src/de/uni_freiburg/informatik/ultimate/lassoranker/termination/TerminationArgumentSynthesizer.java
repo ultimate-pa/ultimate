@@ -174,11 +174,10 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 *            Output container for the used SI generators
 	 * @return List of all conjuncts of the constraints
 	 */
-	private Collection<Term> buildConstraints(RankingTemplate template,
+	private Collection<Term> buildConstraints(LinearTransition stem,
+			LinearTransition loop, RankingTemplate template,
 			Collection<SupportingInvariantGenerator> si_generators) {
-		LinearTransition stem = m_lasso.getStem();
-		LinearTransition loop = m_lasso.getLoop();
-
+		
 		List<Term> conj = new ArrayList<Term>(); // List of constraints
 
 		Collection<RankVar> siVars = getSIVars();
@@ -313,6 +312,10 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		m_template.init(this);
 		mLogger.debug("Variables for ranking functions: " + rankVars);
 		mLogger.debug("Variables for supporting invariants: " + siVars);
+		
+		LinearTransition stem = m_lasso.getStem();
+		LinearTransition loop = m_lasso.getLoop();
+		
 		/*
 		 * // The following code makes examples like StemUnsat.bpl fail if
 		 * (siVars.isEmpty()) {
@@ -326,10 +329,16 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 					+ "disabling supporting invariant generation.");
 			m_settings.num_strict_invariants = 0;
 			m_settings.num_non_strict_invariants = 0;
+		} else if (m_settings.overapproximate_stem) {
+			mLogger.info("Overapproximating stem...");
+			StemOverapproximator so = new StemOverapproximator(m_preferences,
+					m_services, m_storage);
+			stem = so.overapproximate(stem);
 		}
 
 		// Assert all conjuncts generated from the template
-		Collection<Term> constraints = buildConstraints(m_template, m_si_generators);
+		Collection<Term> constraints = buildConstraints(stem, loop, m_template,
+				m_si_generators);
 		m_num_motzkin = constraints.size();
 		mLogger.info("We have " + getNumMotzkin() + " Motzkin's Theorem applications.");
 		mLogger.info("A total of " + getNumSIs() + " supporting invariants were added.");
