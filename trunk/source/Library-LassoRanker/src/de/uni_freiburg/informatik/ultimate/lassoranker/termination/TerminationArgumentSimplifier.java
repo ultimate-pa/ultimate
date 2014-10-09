@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.termination;
 
 import java.math.BigInteger;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -44,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 
 /**
@@ -62,11 +60,6 @@ class TerminationArgumentSimplifier {
 	private boolean m_annotate_terms;
 	
 	/**
-	 * Internal new variables for every RankVar
-	 */
-	private Map<RankVar, Term> m_varTranslation;
-	
-	/**
 	 * This script is a new script of QF_LRA that belongs only to this object
 	 */
 	private Script m_script;
@@ -77,26 +70,11 @@ class TerminationArgumentSimplifier {
 	 */
 	public TerminationArgumentSimplifier(LassoRankerPreferences preferences,
 			IUltimateServiceProvider services, IToolchainStorage storage) {
-		m_varTranslation = new HashMap<RankVar, Term>();
 		m_annotate_terms = preferences.annotate_terms;
 		
 		// Create a new QF_LRA script
 		m_script = SMTSolver.newScript(preferences, "SimplifySIs", services, storage);
 		m_script.setLogic(Logics.QF_LRA);
-	}
-	
-	/**
-	 * @return the internal representation of a RankVar
-	 */
-	private Term getVar(RankVar rankVar) {
-		if (m_varTranslation.containsKey(rankVar)) {
-			return m_varTranslation.get(rankVar);
-		} else {
-			Term var = SMTSolver.newConstant(m_script,
-					rankVar.getGloballyUniqueId(), "Real");
-			m_varTranslation.put(rankVar, var);
-			return var;
-		}
 	}
 	
 	/**
@@ -106,8 +84,7 @@ class TerminationArgumentSimplifier {
 		LinearInequality li = new LinearInequality();
 		li.add(new AffineTerm(si.m_constant));
 		for (Map.Entry<RankVar, BigInteger> entry : si.m_coefficients.entrySet()) {
-			Term var = getVar(entry.getKey());
-			li.add(var, new AffineTerm(entry.getValue()));
+			li.add(entry.getKey().getDefinition(), new AffineTerm(entry.getValue()));
 		}
 		return li;
 	}

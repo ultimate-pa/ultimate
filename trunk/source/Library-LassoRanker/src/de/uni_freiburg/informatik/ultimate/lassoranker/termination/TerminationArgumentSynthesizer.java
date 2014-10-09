@@ -371,7 +371,8 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				int before = m_supporting_invariants.size();
 				m_supporting_invariants = tas.simplify(m_supporting_invariants);
 				mLogger.info("Removed " + (before - m_supporting_invariants.size())
-						+ " redundant supporting invariants.");
+						+ " redundant supporting invariants from a total of "
+						+ before + ".");
 			}
 		} else if (sat == LBool.UNKNOWN) {
 			m_script.echo(new QuotedObject(SMTSolver.s_SolverUnknownMessage));
