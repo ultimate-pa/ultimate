@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.termination;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -35,6 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.ArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.Lasso;
@@ -51,8 +53,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
+import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
  * This is the synthesizer that generates ranking functions.
@@ -186,8 +191,9 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		List<String> annotations = template.getAnnotations();
 		assert annotations.size() == templateConstraints.size();
 
-		mLogger.info("We have " + loop.getNumPolyhedra() + " loop disjuncts and " + templateConstraints.size()
-				+ " template conjuncts.");
+		mLogger.info(stem.getNumPolyhedra() + " stem disjuncts");
+		mLogger.info(loop.getNumPolyhedra() + " loop disjuncts");
+		mLogger.info(templateConstraints.size() + " template conjuncts.");
 
 		// Negate template inequalities
 		for (List<LinearInequality> templateDisj : templateConstraints) {
@@ -359,6 +365,18 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			m_ranking_function = m_template.extractRankingFunction(val);
 			for (SupportingInvariantGenerator sig : m_si_generators) {
 				m_supporting_invariants.add(sig.extractSupportingInvariant(val));
+			}
+			
+			// Simplify supporting invariants
+			if (m_settings.simplify_supporting_invariants) {
+				TerminationArgumentSimplifier tas =
+						new TerminationArgumentSimplifier(m_preferences,
+								m_services, m_storage);
+				mLogger.info("Simplifying supporting invariants...");
+				int before = m_supporting_invariants.size();
+				m_supporting_invariants = tas.simplify(m_supporting_invariants);
+				mLogger.info("Removed " + (before - m_supporting_invariants.size())
+						+ " redundant supporting invariants.");
 			}
 		} else if (sat == LBool.UNKNOWN) {
 			m_script.echo(new QuotedObject(SMTSolver.s_SolverUnknownMessage));

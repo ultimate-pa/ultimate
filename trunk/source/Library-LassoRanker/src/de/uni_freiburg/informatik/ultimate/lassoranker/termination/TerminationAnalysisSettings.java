@@ -91,7 +91,13 @@ public class TerminationAnalysisSettings implements Serializable {
 	 * If the solver efficiently supports push() and pop(),
 	 * this might be reasonably fast.
 	 */
-	public boolean simplify_termination_argument = false; // Default: false
+	public boolean simplify_termination_argument = false; // Default: true
+	
+	/**
+	 * Should we try to simplify the termination argument's
+	 * supporting invariants?
+	 */
+	public boolean simplify_supporting_invariants = true; // Default: true
 	
 	/**
 	 * Default construction intializes default values

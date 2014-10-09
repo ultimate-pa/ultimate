@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker;
 
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -62,6 +63,14 @@ public class AffineTerm implements Serializable {
 	public AffineTerm() {
 		m_Coefficients = new LinkedHashMap<Term, Rational>();
 		m_Constant = Rational.ZERO;
+	}
+	
+	/**
+	 * Construct an affine term from a constant
+	 */
+	public AffineTerm(BigInteger i) {
+		this();
+		m_Constant = Rational.valueOf(i, BigInteger.ONE);
 	}
 	
 	/**

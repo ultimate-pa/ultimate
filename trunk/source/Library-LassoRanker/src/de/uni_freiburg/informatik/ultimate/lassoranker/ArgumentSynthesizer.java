@@ -97,6 +97,10 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 */
 	private boolean m_closed = false;
 
+	
+	protected IUltimateServiceProvider m_services;
+	protected IToolchainStorage m_storage;
+	
 	/**
 	 * Constructor for the argument synthesizer
 	 * 
@@ -108,12 +112,15 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 *            name of the constraints whose satisfiability is checked
 	 * @param storage 
 	 */
-	public ArgumentSynthesizer(Lasso lasso, LassoRankerPreferences preferences, String constaintsName,
-			IUltimateServiceProvider services, IToolchainStorage storage) {
+	public ArgumentSynthesizer(Lasso lasso, LassoRankerPreferences preferences,
+			String constaintsName, IUltimateServiceProvider services,
+			IToolchainStorage storage) {
 		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_preferences = preferences;
 		m_script = SMTSolver.newScript(preferences, constaintsName, services, storage);
 		m_lasso = lasso;
+		m_services = services;
+		m_storage = storage;
 	}
 
 	/**
