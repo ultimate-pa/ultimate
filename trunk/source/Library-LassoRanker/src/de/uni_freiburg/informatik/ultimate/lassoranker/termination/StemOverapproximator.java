@@ -69,6 +69,12 @@ class StemOverapproximator {
 	private static final boolean s_less_efficient_and_more_complete = false;
 	
 	/**
+	 * If approximation fails, return the transition 'true'.
+	 * If this is set to false, the original transition will be returned.
+	 */
+	private static final boolean s_return_true_if_approximation_fails = false;
+	
+	/**
 	 * This script is a new script of QF_LRA that belongs only to this object
 	 */
 	private Script m_script;
@@ -87,6 +93,10 @@ class StemOverapproximator {
 	}
 	
 	public LinearTransition overapproximate(LinearTransition stem) {
+		if (stem.getNumPolyhedra() < 2) {
+			return stem; // nothing to do
+		}
+		
 		Collection<LinearInequality> candidate_lis = new HashSet<LinearInequality>();
 		if (s_less_efficient_and_more_complete) {
 			// Add all linear inequalities occuring somewhere in the stem to the
@@ -96,6 +106,7 @@ class StemOverapproximator {
 			}
 		} else {
 			candidate_lis.addAll(stem.getPolyhedra().get(0));
+			candidate_lis.addAll(stem.getPolyhedra().get(1));
 		}
 		
 		List<LinearInequality> new_stem = new ArrayList<LinearInequality>();
@@ -106,7 +117,7 @@ class StemOverapproximator {
 				MotzkinTransformation motzkin = new MotzkinTransformation(m_script,
 						AnalysisType.Linear, m_annotate_terms);
 				motzkin.add_inequalities(polyhedron);
-				LinearInequality li = candidate_li;
+				LinearInequality li = new LinearInequality(candidate_li);
 				li.negate();
 				motzkin.add_inequality(li);
 				motzkin.annotation = "stem implies candidate linear inequality";
@@ -118,7 +129,15 @@ class StemOverapproximator {
 			m_script.pop(1);
 		}
 		
-		return new LinearTransition(Collections.singletonList(new_stem),
-				stem.getInVars(), stem.getOutVars());
+		if (new_stem.isEmpty()) {
+			if (s_return_true_if_approximation_fails) {
+				return LinearTransition.getTranstionTrue();
+			} else {
+				return stem;
+			}
+		} else {
+			return new LinearTransition(Collections.singletonList(new_stem),
+					stem.getInVars(), stem.getOutVars());
+		}
 	}
 }

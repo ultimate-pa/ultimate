@@ -120,6 +120,19 @@ public class LinearInequality implements Serializable {
 	}
 	
 	/**
+	 * Copy constructor
+	 */
+	public LinearInequality(LinearInequality other) {
+		m_constant = new AffineTerm(other.m_constant);
+		m_strict = other.m_strict;
+		motzkin_coefficient = other.motzkin_coefficient;
+		m_coefficients = new LinkedHashMap<Term, AffineTerm>();
+		for (Map.Entry<Term, AffineTerm> entry : other.m_coefficients.entrySet()) {
+			m_coefficients.put(entry.getKey(), new AffineTerm(entry.getValue()));
+		}
+	}
+	
+	/**
 	 * Construct an linear inequality from a Term instance.
 	 * @param term an affine-linear sum of values with termvariables
 	 * @throws TermIsNotAffineException if the term was not an affine-linear sum 

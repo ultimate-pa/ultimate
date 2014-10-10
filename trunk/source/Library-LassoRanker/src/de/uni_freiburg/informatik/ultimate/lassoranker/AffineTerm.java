@@ -66,6 +66,14 @@ public class AffineTerm implements Serializable {
 	}
 	
 	/**
+	 * Copy constructor
+	 */
+	public AffineTerm(AffineTerm at) {
+		m_Constant = at.m_Constant;
+		m_Coefficients = new LinkedHashMap<Term, Rational>(at.m_Coefficients);
+	}
+	
+	/**
 	 * Construct an affine term from a constant
 	 */
 	public AffineTerm(BigInteger i) {
