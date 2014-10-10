@@ -108,11 +108,12 @@ class TerminationArgumentSimplifier {
 				if (si2 == si) {
 					continue;
 				}
-				LinearInequality li2 = SI2LI(si);
+				LinearInequality li2 = SI2LI(si2);
 				motzkin.add_inequality(li2);
 			}
 			motzkin.annotation = "Simplifying supporting invariant";
 			m_script.assertTerm(motzkin.transform(new Rational[0]));
+			li.negate();
 			if (m_script.checkSat().equals(LBool.SAT)) {
 				new_sis.remove(si);
 			}
