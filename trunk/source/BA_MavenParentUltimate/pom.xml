@@ -41,8 +41,7 @@
 		<sonar.java.source>1.7</sonar.java.source>
 
 		<!-- Global arguments for the VM used during junit tests -->
-		<test-argline>-XX:MaxPermSize=1g -Xmx6g -XX:-UseGCOverheadLimit
-			-XX:+HeapDumpOnOutOfMemoryError</test-argline>
+		<test-argline>-XX:MaxPermSize=1g -Xmx6g -XX:-UseGCOverheadLimit -XX:+HeapDumpOnOutOfMemoryError</test-argline>
 
 	</properties>
 
@@ -324,6 +323,11 @@
 				-T n uses n threads during build
 				export _JAVA_OPTIONS="-enableassertions" (Linux) or set _JAVA_OPTIONS=-enableassertions (Windows)
 				before the actual command supplies additional options to the test VM without changing this pom.xml
+
+				Further notes: Maven chooses your VM by inspecting JAVA_HOME. Under Windows, you can show it with
+				echo %JAVA_HOME%
+				and change it temporarily with
+				set JAVA_HOME=C:\Program Files\Java\jdk1.8.0_05
 
 				This profile should (probably) only be used manually. -->
 			<id>manualtest</id>
