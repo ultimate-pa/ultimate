@@ -8,7 +8,7 @@
 
 	<properties>
 		<!-- maven tool versions -->
-		<tycho-version>0.19.0</tycho-version>
+		<tycho-version>0.21.0</tycho-version>
 
 		<!-- reference to workspace root -->
 		<workspaceDir>${basedir}/..</workspaceDir>
@@ -39,9 +39,17 @@
 		<!-- Sonar parameters -->
 		<sonar.language>java</sonar.language>
 		<sonar.java.source>1.7</sonar.java.source>
+		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+		<sonar.jacoco.reportPath>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPath>
+		<sonar.jacoco.itReportPath>${project.basedir}/../target/jacoco-it.exec</sonar.jacoco.itReportPath>
+		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+		
+		<!-- Jacoco version -->
+		<jacoco.version>0.7.2.201409121644</jacoco.version>
 
 		<!-- Global arguments for the VM used during junit tests -->
-		<test-argline>-XX:MaxPermSize=1g -Xmx6g -XX:-UseGCOverheadLimit -XX:+HeapDumpOnOutOfMemoryError</test-argline>
+		<test-argline>-Xmx6g -XX:-UseGCOverheadLimit -XX:+HeapDumpOnOutOfMemoryError</test-argline>
 
 	</properties>
 
@@ -63,8 +71,6 @@
 			<layout>default</layout>
 		</repository>
 	</repositories>
-
-
 
 	<build>
 		<plugins>
@@ -113,7 +119,6 @@
 				<artifactId>sonar-maven-plugin</artifactId>
 				<version>2.1</version>
 			</plugin>
-
 		</plugins>
 
 		<pluginManagement>
@@ -236,17 +241,6 @@
 				manualtest. You should not need to run this profile manually. -->
 			<id>coverage</id>
 
-			<properties>
-				<!-- Jacoco version -->
-				<jacoco.version>0.5.6.201201232323</jacoco.version>
-
-				<!-- Sonar properties -->
-				<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
-				<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
-				<sonar.jacoco.reportPath>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPath>
-				<sonar.jacoco.itReportPath>${project.basedir}/../target/jacoco-it.exec</sonar.jacoco.itReportPath>
-				<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
-			</properties>
 			<build>
 				<plugins>
 					<plugin>
