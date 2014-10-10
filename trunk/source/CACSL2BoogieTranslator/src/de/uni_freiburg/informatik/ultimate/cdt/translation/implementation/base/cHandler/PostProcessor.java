@@ -173,7 +173,7 @@ public class PostProcessor {
 	/**
 	 * Create the Ultimate initializer procedure for global variables.
 	 * 
-	 * @param loc
+	 * @param translationUnitLoc
 	 *            the location of the translation unit. declaration.
 	 * @param main
 	 *            a reference to the main dispatcher.
@@ -188,10 +188,10 @@ public class PostProcessor {
 	 *            a set of uninitialized global variables.
 	 * @return a list the initialized variables.
 	 */
-	private ArrayList<Declaration> createUltimateInitProcedure(ILocation loc,
+	private ArrayList<Declaration> createUltimateInitProcedure(ILocation translationUnitLoc,
 			Dispatcher main, MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler,   
 			StructHandler structHandler, LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie) {
-		functionHandler.beginUltimateInit(main, loc, SFO.INIT);
+		functionHandler.beginUltimateInit(main, translationUnitLoc, SFO.INIT);
 		ArrayList<Statement> initStatements = new ArrayList<Statement>();
 
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
@@ -200,19 +200,19 @@ public class PostProcessor {
 			if (memoryHandler.isFloatArrayRequiredInMM ||
 					memoryHandler.isIntArrayRequiredInMM ||
 					memoryHandler.isPointerArrayRequiredInMM) {
-				LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(loc,
-						new VariableLHS(loc, SFO.VALID),
-						new Expression[] { new IntegerLiteral(loc, SFO.NR0) }) };
-				Expression[] rhs = new Expression[] { new BooleanLiteral(loc, false) };
-				initStatements.add(0, new AssignmentStatement(loc, lhs, rhs));
+				LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(translationUnitLoc,
+						new VariableLHS(translationUnitLoc, SFO.VALID),
+						new Expression[] { new IntegerLiteral(translationUnitLoc, SFO.NR0) }) };
+				Expression[] rhs = new Expression[] { new BooleanLiteral(translationUnitLoc, false) };
+				initStatements.add(0, new AssignmentStatement(translationUnitLoc, lhs, rhs));
 				mInitializedGlobals.add(SFO.VALID);
 			}
 
-			VariableLHS slhs = new VariableLHS(loc, SFO.NULL);
-			initStatements.add(0, new AssignmentStatement(loc, 
+			VariableLHS slhs = new VariableLHS(translationUnitLoc, SFO.NULL);
+			initStatements.add(0, new AssignmentStatement(translationUnitLoc, 
 					new LeftHandSide[] { slhs }, 
-					new Expression[] { new StructConstructor(loc, new String[]{"base", "offset"}, 
-							new Expression[]{new IntegerLiteral(loc, "0"), new IntegerLiteral(loc, "0")})}));
+					new Expression[] { new StructConstructor(translationUnitLoc, new String[]{"base", "offset"}, 
+							new Expression[]{new IntegerLiteral(translationUnitLoc, "0"), new IntegerLiteral(translationUnitLoc, "0")})}));
 			mInitializedGlobals.add(SFO.NULL);
 		}
 		for (Statement stmt : initStatements) {
@@ -229,22 +229,23 @@ public class PostProcessor {
 		for (Entry<Declaration, CDeclaration> en : declarationsGlobalInBoogie.entrySet()) {
 			if (en.getKey() instanceof TypeDeclaration || en.getKey() instanceof ConstDeclaration)
 				continue;
+			ILocation currentDeclsLoc = en.getKey().getLocation();
 			ResultExpression initializer = en.getValue().getInitializer();
 
 			for (VarList vl  : ((VariableDeclaration) en.getKey()).getVariables()) {
 				for (String id : vl.getIdentifiers()) {
 					if (main.cHandler.isHeapVar(id)) {
 						initStatements.add(memoryHandler.getMallocCall(main, functionHandler, 
-								memoryHandler.calculateSizeOf(en.getValue().getType(), loc), 
-								new LocalLValue(new VariableLHS(loc, id), en.getValue().getType()), loc));
+								memoryHandler.calculateSizeOf(en.getValue().getType(), currentDeclsLoc), 
+								new LocalLValue(new VariableLHS(currentDeclsLoc, id), en.getValue().getType()), currentDeclsLoc));
 					}
 
 					//					if (initializer != null) {
 					//						assert ((VariableDeclaration)en.getKey()).getVariables().length == 1 
 					//								&& ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers().length == 1;
 					ResultExpression initRex = 
-							main.cHandler.getInitHandler().initVar(loc, main, 
-									new VariableLHS(loc, id), en.getValue().getType(), initializer);
+							main.cHandler.getInitHandler().initVar(currentDeclsLoc, main, 
+									new VariableLHS(currentDeclsLoc, id), en.getValue().getType(), initializer);
 					initStatements.addAll(initRex.stmt);
 					initStatements.addAll(CHandler.createHavocsForNonMallocAuxVars(initRex.auxVars));
 					for (Declaration d : initRex.decl)
@@ -271,15 +272,15 @@ public class PostProcessor {
 		VariableLHS[] modifyList = new VariableLHS[mInitializedGlobals.size()];
 		int i = 0;
 		for (String var: mInitializedGlobals) {
-			modifyList[i++] = new VariableLHS(loc, var);
+			modifyList[i++] = new VariableLHS(translationUnitLoc, var);
 		}
-		specsInit[0] = new ModifiesSpecification(loc, false, modifyList);
-		Procedure initProcedureDecl = new Procedure(loc, new Attribute[0], SFO.INIT, new String[0],
+		specsInit[0] = new ModifiesSpecification(translationUnitLoc, false, modifyList);
+		Procedure initProcedureDecl = new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], specsInit, null);
-		Body initBody = new Body(loc,
+		Body initBody = new Body(translationUnitLoc,
 				initDecl.toArray(new VariableDeclaration[0]),
 				initStatements.toArray(new Statement[0]));
-		decl.add(new Procedure(loc, new Attribute[0], SFO.INIT, new String[0],
+		decl.add(new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], null, initBody));
 
 		functionHandler.endUltimateInit(main, initProcedureDecl, SFO.INIT);

@@ -368,6 +368,10 @@ public class ACSLHandler implements IACSLHandler {
         	lrVal = new LocalLValue(idLhs, cType);
         }
         
+        //for now, to make the error output clearer:
+        if (lrVal instanceof HeapLValue)
+        	throw new UnsupportedOperationException("variables on heap are not supported in ACSL code right now.");
+        
         return new Result(lrVal.getValue());
     }
 
