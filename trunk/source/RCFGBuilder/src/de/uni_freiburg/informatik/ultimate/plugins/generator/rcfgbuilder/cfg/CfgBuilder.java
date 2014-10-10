@@ -705,7 +705,7 @@ public class CfgBuilder {
 			m_current = finalNode;
 
 			for (EnsuresSpecification spec : ensures) {
-				AssumeStatement st = new AssumeStatement(locationCopy(spec.getLocation()), spec.getFormula());
+				AssumeStatement st = new AssumeStatement(spec.getLocation(), spec.getFormula());
 				passAllAnnotations(spec, st);
 				m_Backtranslator.putAux(st, spec);
 				processAssuAssiHavoStatement(st, Origin.ENSURES);
@@ -724,7 +724,7 @@ public class CfgBuilder {
 				for (EnsuresSpecification spec : ensuresNonFree) {
 					Expression specExpr = spec.getFormula();
 					AssumeStatement assumeSt;
-					assumeSt = new AssumeStatement(locationCopy(spec.getLocation()), getNegation(specExpr));
+					assumeSt = new AssumeStatement(spec.getLocation(), getNegation(specExpr));
 					passAllAnnotations(assumeSt, assumeSt);
 					m_Backtranslator.putAux(assumeSt, assumeSt);
 					ProgramPoint errorLocNode = addErrorNode(m_currentProcedureName, spec);
@@ -749,7 +749,7 @@ public class CfgBuilder {
 			}
 			if (requires != null && !requires.isEmpty()) {
 				for (RequiresSpecification spec : requires) {
-					AssumeStatement st = new AssumeStatement(locationCopy(spec.getLocation()), spec.getFormula());
+					AssumeStatement st = new AssumeStatement(spec.getLocation(), spec.getFormula());
 					passAllAnnotations(spec, st);
 					m_Backtranslator.putAux(st, spec);
 					processAssuAssiHavoStatement(st, Origin.REQUIRES);
@@ -941,7 +941,7 @@ public class CfgBuilder {
 			}
 			ProgramPoint locNode = (ProgramPoint) m_current;
 			Expression assertion = ((AssertStatement) st).getFormula();
-			AssumeStatement assumeError = new AssumeStatement(locationCopy(st.getLocation()), getNegation(assertion));
+			AssumeStatement assumeError = new AssumeStatement(st.getLocation(), getNegation(assertion));
 			passAllAnnotations(st, assumeError);
 			m_Backtranslator.putAux(assumeError, st);
 			ProgramPoint errorLocNode = addErrorNode(m_currentProcedureName, st);
@@ -950,7 +950,7 @@ public class CfgBuilder {
 			passAllAnnotations(st, errorLocNode);
 			passAllAnnotations(st, assumeErrorCB);
 			m_Edges.add(assumeErrorCB);
-			AssumeStatement assumeSafe = new AssumeStatement(locationCopy(st.getLocation()), assertion);
+			AssumeStatement assumeSafe = new AssumeStatement(st.getLocation(), assertion);
 			passAllAnnotations(st, assumeSafe);
 			m_Backtranslator.putAux(assumeSafe, st);
 			StatementSequence assumeSafeCB = new StatementSequence(locNode, null, assumeSafe, Origin.ASSERT, mLogger);
@@ -1237,7 +1237,7 @@ public class CfgBuilder {
 			if (outgoing instanceof Return) {
 				return false;
 			}
-			assert (outgoing instanceof StatementSequence || outgoing instanceof SequentialComposition || outgoing instanceof ParallelComposition || incoming instanceof Summary);
+			assert (outgoing instanceof StatementSequence || outgoing instanceof SequentialComposition || outgoing instanceof ParallelComposition || outgoing instanceof Summary);
 			return true;
 		}
 
@@ -1315,11 +1315,6 @@ public class CfgBuilder {
 			return "goto;";
 		}
 
-	}
-
-	public static BoogieLocation locationCopy(ILocation loc) {
-		return new BoogieLocation(loc.getFileName(), loc.getStartLine(), loc.getEndLine(), loc.getStartColumn(),
-				loc.getEndColumn(), loc);
 	}
 
 	private static void passAllAnnotations(BoogieASTNode node, RcfgElement cb) {
