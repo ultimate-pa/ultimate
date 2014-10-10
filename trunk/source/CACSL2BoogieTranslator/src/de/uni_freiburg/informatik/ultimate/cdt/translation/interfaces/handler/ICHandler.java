@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
@@ -613,6 +614,8 @@ public interface ICHandler extends IHandler {
 	UNSIGNED_TREATMENT getUnsignedTreatment();
 
 	FunctionHandler getFunctionHandler();
+
+	UltimatePreferenceStore getPreferences();
 
 //	public ResultExpression initVar(ILocation loc, Dispatcher main,
 //			LRValue lrVal, CType underlyingFieldType,

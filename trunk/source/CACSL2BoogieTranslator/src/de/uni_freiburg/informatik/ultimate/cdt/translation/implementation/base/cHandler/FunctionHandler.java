@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.SvComp14MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
@@ -385,11 +386,6 @@ public class FunctionHandler {
 				VariableDeclaration inVarDecl = new VariableDeclaration(loc,
 						new Attribute[0], new VarList[] { var });
 				
-
-//                if (isOnHeap) {
-//                    cvar = new CPointer(cvar);
-//                }
-                
 				VariableLHS tempLHS = new VariableLHS(loc, auxInvar);
 				IdentifierExpression rhsId = new IdentifierExpression(loc, bId);
 				if (isOnHeap) {
@@ -401,7 +397,6 @@ public class FunctionHandler {
                     ArrayList<Declaration> decls = new ArrayList<Declaration>();
                     ResultExpression assign = ((CHandler) main.cHandler).
                         makeAssignment(main, loc, stmt, hlv,
-//                            new RValue(rhsId, ((CPointer)cvar).pointsToType),
                         //convention: if a variable is put on heap or not, its ctype stays the same
                             new RValue(rhsId, cvar),
                             decls,
@@ -735,8 +730,6 @@ public class FunctionHandler {
         }
 		// 3)
 		stmts = memoryHandler.insertMallocs(main, loc, stmts);
-//		stmts.addAll(memoryHandler.insertMallocs(main, loc,
-//		        new ArrayList<Statement>(Arrays.asList(body.getBlock()))));
 		// 4)
 		for (SymbolTableValue stv : main.cHandler.getSymbolTable().currentScopeValues()) {
 			//there may be a null declaration in case of foo(void)
@@ -1083,23 +1076,19 @@ public class FunctionHandler {
 			assert arguments.length == 1;
 			Result sizeRes = main.dispatch(arguments[0]);
 			assert sizeRes instanceof ResultExpression;
-			ResultExpression sizeRex = ((ResultExpression) sizeRes)
+			ResultExpression rex = ((ResultExpression) sizeRes)
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-//			assert(sizeRex.stmt.isEmpty() && sizeRex.decl.isEmpty() && sizeRex.auxVars.isEmpty()) :
-//				"if this happens, the ResultExpression in the next line has to contain those nonempty stmt/decl/auxvars, too";
 
-
-			ResultExpression mallocRex = memoryHandler.getMallocCall(main, this, sizeRex.lrVal.getValue(), loc);		
+			ResultExpression mallocRex = memoryHandler.getMallocCall(main, this, rex.lrVal.getValue(), loc);		
 			
-			sizeRex.addAll(mallocRex);
-			sizeRex.lrVal = mallocRex.lrVal;
+			rex.addAll(mallocRex);
+			rex.lrVal = mallocRex.lrVal;
 
 			// for alloc a we have to free the variable ourselves when the stackframe is closed, i.e. at a return
 			if (methodName.equals("alloca")) {
 				memoryHandler.addVariableToBeFreed(main, (LocalLValue) mallocRex.lrVal);
 			}
-//			return mallocRex;
-			return sizeRex;
+			return rex;
 		} 
 	
 		if (methodName.equals("free")) {
@@ -1134,9 +1123,19 @@ public class FunctionHandler {
 			for (int i = 0; i < noParameterWOVarArgs; i++) {
 				inParams[i] = arguments[i];
 			}
+//			CACSLPreferenceInitializer.T
+//		TranslationMode mode = TranslationMode.BASE;
+//		try {
+//			mode = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class);
+//		} catch (Exception e) {
+//			throw new IllegalArgumentException("Unable to determine preferred mode.");
+//		}
+
 			// .. and if it is really called with more that its normal parameter number, we throw an exception, because we may be unsound
 			// (the code before this does not make so much sense, but maybe some day we want that solution again..
-			if (inParams.length < arguments.length)
+			if (//main.cHandler.getPreferences().getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class) != TranslationMode
+					!(main instanceof SvComp14MainDispatcher)
+					&& inParams.length < arguments.length)
 				throw new UnsupportedSyntaxException(loc, "we cannot deal with varargs right now");
 		}
 	
@@ -1213,7 +1212,6 @@ public class FunctionHandler {
 					currentProc.getSpecification(), currentProc.getBody());
 			procedures.put(methodName, newProc);
 		}
-
 
 		return makeTheFunctionCallItself(main, loc, methodName, stmt, decl,
 				auxVars, overappr, args);

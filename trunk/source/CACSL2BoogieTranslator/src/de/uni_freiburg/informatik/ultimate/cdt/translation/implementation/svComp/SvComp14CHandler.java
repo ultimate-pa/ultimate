@@ -105,7 +105,7 @@ public class SvComp14CHandler extends CHandler {
 	@Override
 	public Result visit(Dispatcher main, IASTFunctionCallExpression node) {
 		ILocation loc = new CACSLLocation(node);
-//		assert (node.getFunctionNameExpression() instanceof IASTIdExpression) : "we assumed that getFunctionNameExpression is IASTIdExpression, this might be wrong for function pointers";
+
 		if (!(node.getFunctionNameExpression() instanceof IASTIdExpression))
 			return super.visit(main, node);
 		IASTIdExpression astIdExpression = (IASTIdExpression) node.getFunctionNameExpression();
@@ -140,7 +140,7 @@ public class SvComp14CHandler extends CHandler {
 					String msg = "Incorrect or invalid in-parameter! " + loc.toString();
 					throw new IncorrectSyntaxException(loc, msg);
 				}
-//				in = ConvExpr.rexIntToBoolIfNecessary(loc, in);
+				in = ConvExpr.rexIntToBoolIfNecessary(loc, in);
 				args.add(in.lrVal.getValue());
 				stmt.addAll(in.stmt);
 				decl.addAll(in.decl);
@@ -148,9 +148,8 @@ public class SvComp14CHandler extends CHandler {
 				overappr.addAll(in.overappr);
 			}
 			assert args.size() == 1; // according to SV-Comp specification!
-//			stmt.add(new AssumeStatement(loc, ConvExpr.toBoolean(loc,
-//					new RValue(args.get(0), new CPrimitive(PRIMITIVE.INT))).getValue()));
-			for (Expression a : args) {//could just take the first as there is only one, but it's so easy to make it more general..
+			for (Expression a : args) {
+//			could just take the first as there is only one, but it's so easy to make it more general..
 				stmt.add(new AssumeStatement(loc, a));
 			}
 			assert (main.isAuxVarMapcomplete(decl, auxVars));

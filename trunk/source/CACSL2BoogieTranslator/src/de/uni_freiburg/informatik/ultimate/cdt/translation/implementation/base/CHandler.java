@@ -276,6 +276,8 @@ public class CHandler implements ICHandler {
 	
 	CACSLPreferenceInitializer.UNSIGNED_TREATMENT mUnsignedTreatment;
 
+	UltimatePreferenceStore mPreferences;
+
 	/**
 	 * Constructor.
 	 * 
@@ -290,15 +292,15 @@ public class CHandler implements ICHandler {
 		mLogger = logger;
 		this.mTypeHandler = typeHandler;
 
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		mPreferences= new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		
-		this.mUnsignedTreatment = prefs.getEnum(CACSLPreferenceInitializer.LABEL_UNSIGNED_TREATMENT, 
+		this.mUnsignedTreatment = mPreferences.getEnum(CACSLPreferenceInitializer.LABEL_UNSIGNED_TREATMENT, 
 				CACSLPreferenceInitializer.UNSIGNED_TREATMENT.class);
 
 		this.mArrayHandler = new ArrayHandler();
 		this.mFunctionHandler = new FunctionHandler();
 		this.mStructHandler = new StructHandler();
-		boolean checkPointerValidity = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
+		boolean checkPointerValidity = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
 		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, checkPointerValidity);
 		this.mInitHandler = new InitializationHandler(mFunctionHandler, mStructHandler, mMemoryHandler);
 		this.mPostProcessor = new PostProcessor(main, mLogger);
@@ -3058,8 +3060,6 @@ public class CHandler implements ICHandler {
 				}
 				rVal = new RValue(e, expectedType);
 				rVal.isIntFromPointer = true;
-//				Hack --> avoid that we do our unsigned wraparound here as it conflicts with this pointer->int conversion
-//				rVal = new RValue(e, new CPrimitive(PRIMITIVE.INT)); 
 			}
 			// type is changed
 //			else if (!(expectedType.getUnderlyingType() instanceof CPointer)) { //why did I make this distinction??
@@ -3144,5 +3144,9 @@ public class CHandler implements ICHandler {
 		return mInitHandler;
 	}
 
+	@Override
+	public UltimatePreferenceStore getPreferences() {
+		return mPreferences;
+	}
 
 }
