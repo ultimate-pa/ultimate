@@ -15,7 +15,7 @@ public class BuchiAutomizerDefaultTests extends
 		AbstractBuchiAutomizerTestSuite {
 	private static final String[] m_Directories = {
 //		"examples/lassos",
-		"examples/termination/TermCompOfficialBenchmarkSet/ultimate"
+		"examples/termination/TermCompOfficialBenchmarkSet/aprove_memory/alloca"
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
 //		"examples/programs/toy"
@@ -23,7 +23,7 @@ public class BuchiAutomizerDefaultTests extends
 	};
 	
 	// Time out for each test case in milliseconds
-	private static int m_Timeout = 10000;
+	private static int m_Timeout = 60 * 1000;
 
 //	private static final boolean s_Boogie_TreeInterpolants = true;
 //	private static final boolean s_C_TreeInterpolants = true;
@@ -32,17 +32,17 @@ public class BuchiAutomizerDefaultTests extends
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		addTestCases(
-			"BuchiAutomizerBplWithBlockEncoding.xml",
-			"buchiAutomizer/staged300-SMTInterpol.epf",
-		    m_Directories,
-		    new String[] {".bpl"},
-		    m_Timeout);
+				"BuchiAutomizerBplWithBlockEncoding.xml",
+				"buchiAutomizer/staged300Forward-Z3.epf",
+				m_Directories,
+				new String[] {".bpl"},
+				m_Timeout);
 		addTestCases(
 				"BuchiAutomizerCWithBlockEncoding.xml",
-				"buchiAutomizer/staged300-SMTInterpol.epf",
-			    m_Directories,
-			    new String[] {".c"},
-			    m_Timeout);
+				"buchiAutomizer/staged300Forward-Z3.epf",
+				m_Directories,
+				new String[] {".c"},
+				m_Timeout);
 		return super.createTestCases();
 	}
 }
