@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 /**
@@ -335,13 +336,14 @@ public class Term2Expression implements Serializable {
 		}
 		else {
 			BoogieVar bv = m_Boogie2SmtSymbolTable.getBoogieVar(term);
+			ILocation loc = m_Boogie2SmtSymbolTable.getAstNode(bv).getLocation();
 			DeclarationInformation declInfo = 
 					m_Boogie2SmtSymbolTable.getDeclarationInformation(bv);
-			result = new IdentifierExpression(null, type, bv.getIdentifier(), 
+			result = new IdentifierExpression(loc, type, bv.getIdentifier(), 
 					declInfo);
 			if (bv.isOldvar()) {
 				assert(bv.isGlobal());
-				result = new UnaryExpression(null, type, 
+				result = new UnaryExpression(loc, type, 
 						UnaryExpression.Operator.OLD, result);
 			}
 		}

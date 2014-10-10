@@ -53,6 +53,8 @@ public class Boogie2SmtSymbolTable {
 			new HashMap<TermVariable,BoogieVar>();
 	private final Map<BoogieVar,DeclarationInformation> m_BoogieVar2DeclarationInformation = 
 			new HashMap<BoogieVar,DeclarationInformation>();
+	private final Map<BoogieVar, BoogieASTNode> m_BoogieVar2AstNode = 
+			new HashMap<BoogieVar, BoogieASTNode>();
 	private final Map<ApplicationTerm, BoogieConst> m_SmtConst2BoogieConst = 
 			new HashMap<ApplicationTerm,BoogieConst>();
 	
@@ -171,6 +173,10 @@ public class Boogie2SmtSymbolTable {
 	
 	public DeclarationInformation getDeclarationInformation(BoogieVar bv) {
 		return m_BoogieVar2DeclarationInformation.get(bv);
+	}
+	
+	public BoogieASTNode getAstNode(BoogieVar bv) {
+		return m_BoogieVar2AstNode.get(bv);
 	}
 	
 	private void declareConstants(ConstDeclaration constdecl) {

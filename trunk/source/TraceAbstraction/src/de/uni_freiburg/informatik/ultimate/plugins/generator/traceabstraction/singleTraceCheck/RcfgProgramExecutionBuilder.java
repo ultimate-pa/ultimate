@@ -10,8 +10,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
@@ -135,8 +137,12 @@ public class RcfgProgramExecutionBuilder {
 			Map<BoogieVar, Expression> varValAtPos = varValAtPos(i);
 			Map<Expression, Collection<Expression>> variable2Values = new HashMap<Expression, Collection<Expression>>();
 			for (Entry<BoogieVar, Expression> entry : varValAtPos.entrySet()) {
-				IdentifierExpression idExpr = new IdentifierExpression(null, entry.getKey().getIType(), entry.getKey()
-						.getIdentifier(), m_SymbolTable.getDeclarationInformation(entry.getKey()));
+				BoogieVar bv = entry.getKey();
+				ILocation loc = m_SymbolTable.getAstNode(bv).getLocation();
+				DeclarationInformation declInfo = 
+						m_SymbolTable.getDeclarationInformation(bv);
+				IdentifierExpression idExpr = new IdentifierExpression(loc, entry.getKey().getIType(), entry.getKey()
+						.getIdentifier(), declInfo);
 				variable2Values.put(idExpr, Collections.singleton(entry.getValue()));
 			}
 			ProgramState<Expression> pps = new ProgramState<Expression>(variable2Values);
