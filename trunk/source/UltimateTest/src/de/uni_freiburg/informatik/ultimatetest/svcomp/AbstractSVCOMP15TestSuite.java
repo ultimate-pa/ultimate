@@ -9,14 +9,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimatetest.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.summary.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
@@ -29,6 +26,8 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
  * 
  */
 public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
+
+	private IncrementalLogWithVMParameters mIncrementalLog;
 
 	private ArrayList<UltimateTestCase> mTestCases;
 
@@ -63,6 +62,8 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 					}
 				}
 			}
+
+			mIncrementalLog.setCountTotal(mTestCases.size());
 		}
 		return mTestCases;
 	}
@@ -109,8 +110,12 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 		return sb.toString();
 	}
 
+	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
-		return new IIncrementalLog[] { new IncrementalLogWithVMParameters(this.getClass()) };
+		if(mIncrementalLog == null){
+			mIncrementalLog = new IncrementalLogWithVMParameters(this.getClass());
+		}
+		return new IIncrementalLog[] { mIncrementalLog };
 	}
 
 	@Override

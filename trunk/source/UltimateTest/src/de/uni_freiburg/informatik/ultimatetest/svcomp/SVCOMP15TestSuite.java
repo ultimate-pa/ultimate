@@ -11,7 +11,7 @@ import java.util.List;
 public class SVCOMP15TestSuite extends AbstractSVCOMP15TestSuite {
 
 	// Timeout for each test case in milliseconds
-	private static long sTimeout = 20000;
+	private static long sTimeout = 60000;
 
 	@Override
 	protected List<TestDefinition> getTestDefinitions() {

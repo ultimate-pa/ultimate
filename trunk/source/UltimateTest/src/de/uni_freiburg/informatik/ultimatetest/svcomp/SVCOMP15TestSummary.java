@@ -1,7 +1,12 @@
 package de.uni_freiburg.informatik.ultimatetest.svcomp;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.Map.Entry;
 
@@ -125,6 +130,10 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 									.append(Util.getPlatformLineSeparator());
 
 						}
+
+						sb.append(indent).append("Total: ").append(resultsByCategory.size())
+								.append(Util.getPlatformLineSeparator());
+						sb.append(Util.getPlatformLineSeparator());
 					}
 					sb.append(Util.getPlatformLineSeparator());
 				}
@@ -136,6 +145,34 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 			}
 
 		}
+
+		HashMap<String, Integer> nemesisMap = new HashMap<>();
+		for (Entry<UltimateRunDefinition, ExtendedResult> entry : mResults.entrySet()) {
+			if (entry.getValue().Result.equals(TestResult.SUCCESS)) {
+				continue;
+			}
+
+			String message = entry.getValue().Message.intern();
+			if (!nemesisMap.containsKey(message)) {
+				nemesisMap.put(message, 1);
+			} else {
+				nemesisMap.put(message, nemesisMap.get(message) + 1);
+			}
+		}
+
+		List<Entry<String, Integer>> nemesis = new ArrayList<>(nemesisMap.entrySet());
+		Collections.sort(nemesis, new Comparator<Entry<String, Integer>>() {
+			@Override
+			public int compare(Entry<String, Integer> o1, Entry<String, Integer> o2) {
+				return -o1.getValue().compareTo(o2.getValue());
+			}
+		});
+
+		sb.append("################# Reasons for !SUCCESS #################").append(Util.getPlatformLineSeparator());
+		for (Entry<String, Integer> entry : nemesis) {
+			sb.append(entry.getValue()).append(indent).append(entry.getKey()).append(Util.getPlatformLineSeparator());
+		}
+		sb.append(Util.getPlatformLineSeparator());
 
 		sb.append("################# Total Comparison #################").append(Util.getPlatformLineSeparator());
 		sb.append("Toolchain").append(indent);

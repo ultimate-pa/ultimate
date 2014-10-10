@@ -8,14 +8,23 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 
 	private boolean mFirstRun;
+	private int mCountTotal;
+	private int mCountCurrent;
 
 	public IncrementalLogWithVMParameters(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);
 		mFirstRun = true;
+		mCountCurrent = 0;
+		mCountTotal = 0;
+	}
+
+	public void setCountTotal(int total) {
+		mCountTotal = total;
 	}
 
 	@Override
 	public void addEntryPreStart(UltimateRunDefinition urd) {
+		mCountCurrent++;
 		StringBuilder sb = new StringBuilder();
 
 		if (mFirstRun) {
@@ -30,8 +39,13 @@ public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 					.append(Util.getPlatformLineSeparator());
 			mFirstRun = false;
 		}
-
 		sb.append(Util.getCurrentDateTimeAsString());
+		sb.append(" ### ");
+		sb.append(mCountCurrent);
+		if (mCountTotal != 0) {
+			sb.append("/");
+			sb.append(mCountTotal);
+		}
 		sb.append(" ### Starting test for ");
 		sb.append(urd);
 		sb.append(Util.getPlatformLineSeparator());

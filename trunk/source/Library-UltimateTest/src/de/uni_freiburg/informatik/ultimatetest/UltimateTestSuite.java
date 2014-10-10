@@ -31,7 +31,11 @@ public abstract class UltimateTestSuite {
 		mLogger = Logger.getLogger(UltimateTestSuite.class);
 		if (sSummaries == null) {
 			ITestSummary[] summaries = constructTestSummaries();
+
 			if (summaries != null) {
+				for (ITestSummary sum : summaries) {
+					assert sum != null;
+				}
 				sSummaries = Arrays.asList(summaries);
 			} else {
 				sSummaries = null;
@@ -41,6 +45,9 @@ public abstract class UltimateTestSuite {
 		if (sLogFiles == null) {
 			IIncrementalLog[] logs = constructIncrementalLog();
 			if (logs != null) {
+				for (IIncrementalLog log : logs) {
+					assert log != null;
+				}
 				sLogFiles = Arrays.asList(logs);
 			} else {
 				sLogFiles = null;
