@@ -157,9 +157,11 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 				if (((IBasicEdge) incoming).getOriginalEdge() instanceof Return) {
 					return false;
 				}
-				if (((IBasicEdge) incoming).getOriginalEdge() instanceof Summary) {
-					return false;
-				}
+// Following three lines were commented by Matthias at 2014-10-08 because
+// he thought that it is ok to merge summary edges with other edges.
+//				if (((IBasicEdge) incoming).getOriginalEdge() instanceof Summary) {
+//					return false;
+//				}
 			}
 			if (outgoing.isBasicEdge()) {
 				if (((IBasicEdge) outgoing).getOriginalEdge() instanceof Call) {
@@ -168,9 +170,11 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 				if (((IBasicEdge) outgoing).getOriginalEdge() instanceof Return) {
 					return false;
 				}
-				if (((IBasicEdge) outgoing).getOriginalEdge() instanceof Summary) {
-					return false;
-				}
+// Following three lines were commented by Matthias at 2014-10-08 because
+// he thought that it is ok to merge summary edges with other edges.
+//				if (((IBasicEdge) outgoing).getOriginalEdge() instanceof Summary) {
+//					return false;
+//				}
 			}
 			return true;
 		}

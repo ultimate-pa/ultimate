@@ -1229,15 +1229,15 @@ public class CfgBuilder {
 			if (incoming instanceof RootEdge) {
 				return false;
 			}
-			if (incoming instanceof Call || incoming instanceof Summary) {
+			if (incoming instanceof Call ) {
 				return false;
 			}
-			assert (incoming instanceof StatementSequence || incoming instanceof SequentialComposition || incoming instanceof ParallelComposition);
+			assert (incoming instanceof StatementSequence || incoming instanceof SequentialComposition || incoming instanceof ParallelComposition || incoming instanceof Summary);
 			RCFGEdge outgoing = pp.getOutgoingEdges().get(0);
-			if (outgoing instanceof Return || outgoing instanceof Summary) {
+			if (outgoing instanceof Return) {
 				return false;
 			}
-			assert (outgoing instanceof StatementSequence || outgoing instanceof SequentialComposition || outgoing instanceof ParallelComposition);
+			assert (outgoing instanceof StatementSequence || outgoing instanceof SequentialComposition || outgoing instanceof ParallelComposition || incoming instanceof Summary);
 			return true;
 		}
 
