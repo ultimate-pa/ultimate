@@ -32,12 +32,18 @@
 		<ltl2autParserDir>${workspaceDir}/LTL2aut/src/de/uni_freiburg/informatik/ultimate/LTL2aut </ltl2autParserDir>
 
 		<srparseparserDir>${workspaceDir}/Library-srParse/src/srParse</srparseparserDir>
+
 		<!-- Encoding settings -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<!-- Sonar parameters -->
 		<sonar.language>java</sonar.language>
 		<sonar.java.source>1.7</sonar.java.source>
+
+		<!-- Global arguments for the VM used during junit tests -->
+		<test-argline>-XX:MaxPermSize=1g -Xmx6g -XX:-UseGCOverheadLimit
+			-XX:+HeapDumpOnOutOfMemoryError</test-argline>
+
 	</properties>
 
 	<repositories>
@@ -100,34 +106,7 @@
 					</environments>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.eclipse.tycho</groupId>
-				<artifactId>tycho-surefire-plugin</artifactId>
-				<version>${tycho-version}</version>
-				<configuration>
-					<providerHint>junit47</providerHint>
-					<useUIHarness>false</useUIHarness>
-					<useUIThread>false</useUIThread>
-					<reuseForks>false</reuseForks>
-					<showEclipseLog>true</showEclipseLog>
-					<threadCount>1</threadCount>
-					<failIfNoTests>false</failIfNoTests>
-					<trimStackTrace>false</trimStackTrace>
-					<!-- if we use argline, jacocos argline will be overwritten, resulting 
-						in no coverage -->
-					<!--<argLine>-Xmx2048M</argLine> -->
-					<systemProperties>
-						<svcompdir>../svcomp</svcompdir>
-					</systemProperties>
 
-					<!-- Use this for global timeouts per class -->
-					<!-- <forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds> -->
-
-					<includes>
-						<include>**/*.java</include>
-					</includes>
-				</configuration>
-			</plugin>
 
 			<!-- fix sonar plugin version -->
 			<plugin>
@@ -140,7 +119,7 @@
 
 		<pluginManagement>
 			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings 
+				<!--This plugin's configuration is used to store Eclipse m2e settings
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
@@ -221,7 +200,6 @@
 		<module>../Library-Jung</module>
 		<module>../CDTParser</module>
 		<module>../CDTPlugin</module>
-		<!-- <module>../InteractiveConsole</module> -->
 		<module>../CACSL2BoogieTranslator</module>
 		<module>../ASTBuilder</module>
 		<module>../JungVisualization</module>
@@ -253,6 +231,10 @@
 	<profiles>
 
 		<profile>
+			<!-- The profile coverage is used to generate junit test case coverage
+				through jenkins and sonar. It uses all regression tests, but not UltimateTest,
+				as those tests are very slow and should be executed manually via profile
+				manualtest. You should not need to run this profile manually. -->
 			<id>coverage</id>
 
 			<properties>
@@ -268,6 +250,35 @@
 			</properties>
 			<build>
 				<plugins>
+					<plugin>
+						<groupId>org.eclipse.tycho</groupId>
+						<artifactId>tycho-surefire-plugin</artifactId>
+						<version>${tycho-version}</version>
+						<configuration>
+							<providerHint>junit47</providerHint>
+							<useUIHarness>false</useUIHarness>
+							<useUIThread>false</useUIThread>
+							<reuseForks>false</reuseForks>
+							<showEclipseLog>true</showEclipseLog>
+							<threadCount>1</threadCount>
+							<failIfNoTests>false</failIfNoTests>
+							<trimStackTrace>false</trimStackTrace>
+							<!-- if you want to change the argLine, use the global property -->
+							<argLine>${tycho.testArgLine} ${test-argline}</argLine>
+
+							<systemProperties>
+								<svcompdir>../svcomp</svcompdir>
+							</systemProperties>
+
+							<!-- Use this for global timeouts per class -->
+							<!-- <forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds> -->
+
+							<includes>
+								<include>**/*.java</include>
+							</includes>
+						</configuration>
+					</plugin>
+
 					<!-- Code Coverage Analysis -->
 					<plugin>
 						<groupId>org.jacoco</groupId>
@@ -302,7 +313,52 @@
 		</profile>
 
 		<profile>
+			<!-- The profile manualtest is used to start manual tests from the commandline.
+				It allows you to run all tests, but you should nevertheless specify which suite you want to run, as
+				all the suites may require several days to run. To run this, you can use the following syntax:
+
+				time mvn clean integration-test -Pmanualtest -Dtest=SVCOMP15TestSuite > output.log 2>&1
+
+				You can also use the following options to customize your run:
+				-o enables offline mode, skipping lookup of online repositories
+				-T n uses n threads during build
+				export _JAVA_OPTIONS="-enableassertions" (Linux) or set _JAVA_OPTIONS=-enableassertions (Windows)
+				before the actual command supplies additional options to the test VM without changing this pom.xml
+
+				This profile should (probably) only be used manually. -->
 			<id>manualtest</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.eclipse.tycho</groupId>
+						<artifactId>tycho-surefire-plugin</artifactId>
+						<version>${tycho-version}</version>
+						<configuration>
+							<providerHint>junit47</providerHint>
+							<useUIHarness>false</useUIHarness>
+							<useUIThread>false</useUIThread>
+							<reuseForks>false</reuseForks>
+							<showEclipseLog>true</showEclipseLog>
+							<threadCount>1</threadCount>
+							<failIfNoTests>false</failIfNoTests>
+							<trimStackTrace>false</trimStackTrace>
+							<!-- if you want to change the argLine, use the global property -->
+							<argLine>${test-argline}</argLine>
+
+							<systemProperties>
+								<svcompdir>../svcomp</svcompdir>
+							</systemProperties>
+
+							<!-- Use this for global timeouts per class -->
+							<!-- <forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds> -->
+
+							<includes>
+								<include>**/*.java</include>
+							</includes>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
 
 			<modules>
 				<!-- modules containing test utilities -->
