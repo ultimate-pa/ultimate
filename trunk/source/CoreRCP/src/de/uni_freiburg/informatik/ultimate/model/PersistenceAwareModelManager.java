@@ -68,9 +68,15 @@ public class PersistenceAwareModelManager implements IModelManager {
 	 * @return File name for a given node.
 	 */
 	private String createFileNameFromNode(IElement node) {
-		if (node == null)
+		if (node == null) {
 			return "";
-		String graphName = node.getPayload().getLocation().getFileName();
+		}
+		String graphName = "";
+		if (node.hasPayload()) {
+			if (node.getPayload().hasLocation()) {
+				graphName = node.getPayload().getLocation().getFileName();
+			}
+		}
 		if (graphName.contains(Constants.getFileSep())) {
 			String fileSep = Constants.getFileSep();
 			String[] names = graphName.split(fileSep);

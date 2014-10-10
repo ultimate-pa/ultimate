@@ -1,0 +1,9 @@
+step0: int a, b;
+step1: !(a > 10)
+step2: a < 5
+step3: b = 3
+step4: b == 3
+values4:  a=4  b=3
+step5: assert_fail()
+step6: __VERIFIER_error()
+values6:  a=4  b=3

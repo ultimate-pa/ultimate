@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
@@ -138,8 +137,13 @@ public class CfgBuilder {
 					.getProperty("file.separator"));
 			String filename;
 			{
-				String pathAndFilename = unit.getPayload().getLocation().getFileName();
-				filename = (new File(pathAndFilename)).getName();
+				filename = "";
+				if (unit.hasPayload()) {
+					if (unit.getPayload().hasLocation()) {
+						String pathAndFilename = unit.getPayload().getLocation().getFileName();
+						filename = (new File(pathAndFilename)).getName();
+					}
+				}
 			}
 			String fullFilename = directory + filename + ".smt2";
 			try {
@@ -1229,15 +1233,17 @@ public class CfgBuilder {
 			if (incoming instanceof RootEdge) {
 				return false;
 			}
-			if (incoming instanceof Call ) {
+			if (incoming instanceof Call) {
 				return false;
 			}
-			assert (incoming instanceof StatementSequence || incoming instanceof SequentialComposition || incoming instanceof ParallelComposition || incoming instanceof Summary);
+			assert (incoming instanceof StatementSequence || incoming instanceof SequentialComposition
+					|| incoming instanceof ParallelComposition || incoming instanceof Summary);
 			RCFGEdge outgoing = pp.getOutgoingEdges().get(0);
 			if (outgoing instanceof Return) {
 				return false;
 			}
-			assert (outgoing instanceof StatementSequence || outgoing instanceof SequentialComposition || outgoing instanceof ParallelComposition || outgoing instanceof Summary);
+			assert (outgoing instanceof StatementSequence || outgoing instanceof SequentialComposition
+					|| outgoing instanceof ParallelComposition || outgoing instanceof Summary);
 			return true;
 		}
 

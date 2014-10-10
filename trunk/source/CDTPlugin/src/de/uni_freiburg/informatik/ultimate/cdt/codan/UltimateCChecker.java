@@ -251,8 +251,8 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	}
 
 	private void reportProblem(String descriptorId, IResult result, CACSLLocation loc) {
-		if (loc.getcNode() != null) {
-			reportProblem(descriptorId, loc.getcNode(), result.getShortDescription(),
+		if (loc.getCNode() != null) {
+			reportProblem(descriptorId, loc.getCNode(), result.getShortDescription(),
 					CDTResultStore.addHackyResult(result));
 		} else {
 			reportProblem(descriptorId, getFile(), loc.getStartLine(), result.getShortDescription(),

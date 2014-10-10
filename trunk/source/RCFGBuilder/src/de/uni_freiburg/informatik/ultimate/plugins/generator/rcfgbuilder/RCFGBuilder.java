@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
  * 
  */
 public class RCFGBuilder implements IGenerator {
-	
+
 	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
 	public static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
@@ -62,7 +62,7 @@ public class RCFGBuilder implements IGenerator {
 
 	@Override
 	public List<IObserver> getObservers() {
-		m_Observer = new RCFGBuilderObserver(mServices,mStorage);
+		m_Observer = new RCFGBuilderObserver(mServices, mStorage);
 		return Collections.singletonList((IObserver) m_Observer);
 	}
 

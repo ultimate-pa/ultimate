@@ -44,14 +44,11 @@ public class UltimateStarter implements IController {
 	private IUltimateServiceProvider mCurrentSerivces;
 	private final ExternalUltimateCore mExternalUltimateCore;
 
-
-
 	public UltimateStarter(UltimateRunDefinition ultimateRunDefinition, long deadline) {
 		this(ultimateRunDefinition, deadline, null, null);
 	}
 
-	public UltimateStarter(UltimateRunDefinition ultimateRunDefintion, long deadline, File logFile,
-			String logPattern) {
+	public UltimateStarter(UltimateRunDefinition ultimateRunDefintion, long deadline, File logFile, String logPattern) {
 		m_UltimateRunDefinition = ultimateRunDefintion;
 		mLogger = Logger.getLogger(UltimateStarter.class);
 		mExternalUltimateCore = new ExternalUltimateCoreTest(this);
@@ -67,11 +64,10 @@ public class UltimateStarter implements IController {
 
 	@Override
 	public int init(ICore core, ILoggingService loggingService) {
-		return mExternalUltimateCore.init(core, loggingService, 
-				m_UltimateRunDefinition.getSettings(), mDeadline, 
+		return mExternalUltimateCore.init(core, loggingService, m_UltimateRunDefinition.getSettings(), mDeadline,
 				m_UltimateRunDefinition.getInput(), null);
 	}
-	
+
 	public void complete() {
 		mExternalUltimateCore.complete();
 	}
@@ -127,7 +123,8 @@ public class UltimateStarter implements IController {
 			mLogger.info("Loaded toolchain from " + m_UltimateRunDefinition.getToolchain().getAbsolutePath());
 			return tc;
 		} catch (FileNotFoundException | JAXBException | SAXException e) {
-			mLogger.fatal("Toolchain could not be created from file " + m_UltimateRunDefinition.getToolchain() + ": " + e);
+			mLogger.fatal("Toolchain could not be created from file " + m_UltimateRunDefinition.getToolchain() + ": "
+					+ e);
 			return null;
 		}
 	}
@@ -161,25 +158,25 @@ public class UltimateStarter implements IController {
 	public IUltimateServiceProvider getServices() {
 		return mCurrentSerivces;
 	}
-	
-	private class ExternalUltimateCoreTest extends ExternalUltimateCore{
+
+	private class ExternalUltimateCoreTest extends ExternalUltimateCore {
 
 		public ExternalUltimateCoreTest(IController controller) {
 			super(controller);
 		}
-		
+
 		@Override
 		protected Logger getLogger(ILoggingService loggingService) {
 			mLogger = super.getLogger(loggingService);
 			attachLogger();
 			return mLogger;
 		}
-		
+
 		@Override
 		public void complete() {
 			detachLogger();
 			super.complete();
 		}
-		
+
 	}
 }

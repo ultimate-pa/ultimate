@@ -119,6 +119,7 @@ public class NameHandler implements INameHandler {
 	 * the identifiers of variables and operators in C.
 	 * 
 	 * This class is in an immature state and translates Strings to Strings.
+	 * 
 	 * @author heizmann@informatik.uni-freiburg.de
 	 *
 	 */

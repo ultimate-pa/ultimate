@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
@@ -27,8 +28,7 @@ import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
  * @author heizmann@informatik.uni-freiburg.de
  * 
  */
-public class BoogieProgramExecution implements
-		IProgramExecution<BoogieASTNode, Expression> {
+public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, Expression> {
 
 	private final List<AtomicTraceElement<BoogieASTNode>> m_Trace;
 	private final Map<Integer, ProgramState<Expression>> m_PartialProgramStateMapping;
@@ -56,8 +56,7 @@ public class BoogieProgramExecution implements
 		m_PartialProgramStateMapping = partialProgramStateMapping;
 	}
 
-	public BoogieProgramExecution(
-			Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
+	public BoogieProgramExecution(Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
 			List<AtomicTraceElement<BoogieASTNode>> trace) {
 		m_Trace = trace;
 		m_PartialProgramStateMapping = partialProgramStateMapping;
@@ -95,8 +94,7 @@ public class BoogieProgramExecution implements
 			Collections.sort(keys, new Comparator<Expression>() {
 				@Override
 				public int compare(Expression arg0, Expression arg1) {
-					return BoogiePrettyPrinter.print(arg0).compareToIgnoreCase(
-							BoogiePrettyPrinter.print(arg1));
+					return BoogiePrettyPrinter.print(arg0).compareToIgnoreCase(BoogiePrettyPrinter.print(arg1));
 				}
 			});
 
@@ -134,15 +132,21 @@ public class BoogieProgramExecution implements
 
 			switch (currentStepInfo) {
 			case NONE:
-				sb.append(BoogiePrettyPrinter.print((Statement) currentStep));
+				if (currentStep instanceof Statement) {
+					sb.append(BoogiePrettyPrinter.print((Statement) currentStep));
+				} else if (currentStep instanceof Specification) {
+					sb.append(BoogiePrettyPrinter.print((Specification) currentStep));
+				} else {
+					throw new IllegalArgumentException("current step is neither Statement nor Specification");
+				}
 				break;
 			case CONDITION_EVAL_TRUE:
 				sb.append(BoogiePrettyPrinter.print((Expression) currentStep));
 				break;
 			case CONDITION_EVAL_FALSE:
 				Expression exp = (Expression) currentStep;
-				sb.append(BoogiePrettyPrinter.print(new UnaryExpression(exp
-						.getLocation(), UnaryExpression.Operator.LOGICNEG, exp)));
+				sb.append(BoogiePrettyPrinter.print(new UnaryExpression(exp.getLocation(),
+						UnaryExpression.Operator.LOGICNEG, exp)));
 				break;
 			case CALL:
 			case RETURN:
@@ -151,6 +155,8 @@ public class BoogieProgramExecution implements
 				sb.append(currentStepInfo.toString());
 				sb.append(")");
 				break;
+			default:
+				throw new UnsupportedOperationException("Did not implement stepinfo " + currentStepInfo);
 			}
 			sb.append(lineSeparator);
 			valuation = ppstoString(getProgramState(i));
@@ -165,12 +171,10 @@ public class BoogieProgramExecution implements
 		return sb.toString();
 	}
 
-	public IValuation getValuation(
-			final List<ITranslator<?, ?, ?, ?>> translatorSequence) {
+	public IValuation getValuation(final List<ITranslator<?, ?, ?, ?>> translatorSequence) {
 		return new IValuation() {
 			@Override
-			public Map<String, SimpleEntry<IType, List<String>>> getValuesForFailurePathIndex(
-					int index) {
+			public Map<String, SimpleEntry<IType, List<String>>> getValuesForFailurePathIndex(int index) {
 				ProgramState<Expression> ps = getProgramState(index);
 				if (ps == null) {
 					return getEmtpyProgramState();
@@ -183,26 +187,20 @@ public class BoogieProgramExecution implements
 				return Collections.emptyMap();
 			}
 
-			public Map<String, SimpleEntry<IType, List<String>>> translateProgramState(
-					ProgramState<Expression> ps) {
+			public Map<String, SimpleEntry<IType, List<String>>> translateProgramState(ProgramState<Expression> ps) {
 				Map<String, SimpleEntry<IType, List<String>>> result = new HashMap<String, SimpleEntry<IType, List<String>>>();
 				for (Expression var : ps.getVariables()) {
-					String varString = ResultUtil.backtranslationWorkaround(
-							translatorSequence, var);
-					List<String> valuesString = exprSet2StringList(ps
-							.getValues(var));
-					result.put(varString, new SimpleEntry<IType, List<String>>(
-							var.getType(), valuesString));
+					String varString = ResultUtil.backtranslationWorkaround(translatorSequence, var);
+					List<String> valuesString = exprSet2StringList(ps.getValues(var));
+					result.put(varString, new SimpleEntry<IType, List<String>>(var.getType(), valuesString));
 				}
 				return result;
 			}
 
-			private List<String> exprSet2StringList(
-					Collection<Expression> expressions) {
+			private List<String> exprSet2StringList(Collection<Expression> expressions) {
 				List<String> result = new ArrayList<String>(expressions.size());
 				for (Expression expr : expressions) {
-					result.add(ResultUtil.backtranslationWorkaround(
-							translatorSequence, expr));
+					result.add(ResultUtil.backtranslationWorkaround(translatorSequence, expr));
 				}
 				return result;
 			}

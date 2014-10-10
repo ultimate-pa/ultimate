@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * This interface describes all information contained in an INode. We use it to
  * hide the data structure from the information and to save resources
  * 
- * @author dietsch
+ * @author dietsch@informatik.uni-freiburg.de
  * 
  */
 public interface IPayload extends Serializable {
@@ -50,7 +50,8 @@ public interface IPayload extends Serializable {
 	void setName(String name);
 
 	/**
-	 * tries to give you a satisfying answer where this token was found
+	 * Tries to give you a satisfying answer where this token was found. May be
+	 * null.
 	 * 
 	 * @return the location itself
 	 */

@@ -149,8 +149,9 @@ public class BoogiePreprocessorBacktranslator extends
 				throw new UnsupportedOperationException("Generated EnsuresSpecification "
 						+ BoogiePrettyPrinter.print(spec) + " is not ensure(true)");
 			}
-			reportUnfinishedBacktranslation("Unfinished backtranslation: No mapping for " + elem.toString());
-			return null;
+			// if there is no mapping, we return the identity (we do not change
+			// everything, so this may be right)
+			return elem;
 		} else if (newElem instanceof Statement) {
 			return newElem;
 		} else {
@@ -161,14 +162,14 @@ public class BoogiePreprocessorBacktranslator extends
 
 	}
 
-	private IProgramExecution<BoogieASTNode, Expression> createProgramExecutionFromTrace(List<BoogieASTNode> trace,
-			Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
+	private IProgramExecution<BoogieASTNode, Expression> createProgramExecutionFromTrace(
+			List<BoogieASTNode> translatedTrace, Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
 			IProgramExecution<BoogieASTNode, Expression> programExecution) {
 
 		List<AtomicTraceElement<BoogieASTNode>> atomicTrace = new ArrayList<>();
 
-		for (int i = 0; i < trace.size(); ++i) {
-			BoogieASTNode elem = trace.get(i);
+		for (int i = 0; i < translatedTrace.size(); ++i) {
+			BoogieASTNode elem = translatedTrace.get(i);
 
 			if (elem == null) {
 				// we kept the null values so that indices match between trace
@@ -184,8 +185,8 @@ public class BoogiePreprocessorBacktranslator extends
 				WhileStatement stmt = (WhileStatement) elem;
 				boolean condEval = false;
 				int nxt = i + 1;
-				if (nxt < trace.size()) {
-					BoogieASTNode nextStmt = trace.get(nxt);
+				if (nxt < translatedTrace.size()) {
+					BoogieASTNode nextStmt = translatedTrace.get(nxt);
 					for (Statement bodyStmt : stmt.getBody()) {
 						if (nextStmt == bodyStmt) {
 							condEval = true;
@@ -203,8 +204,8 @@ public class BoogiePreprocessorBacktranslator extends
 				IfStatement stmt = (IfStatement) elem;
 				boolean condEval = false;
 				int nxt = i + 1;
-				if (nxt < trace.size()) {
-					BoogieASTNode nextStmt = trace.get(nxt);
+				if (nxt < translatedTrace.size()) {
+					BoogieASTNode nextStmt = translatedTrace.get(nxt);
 					for (Statement bodyStmt : stmt.getThenPart()) {
 						if (nextStmt == bodyStmt) {
 							condEval = true;
@@ -220,10 +221,10 @@ public class BoogiePreprocessorBacktranslator extends
 				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, programExecution.getTraceElement(i)
 						.getStepInfo()));
 
-			} else if (elem instanceof Statement) {
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem));
 			} else {
-				throw new UnsupportedOperationException("Not yet implemented");
+				// it could be that we missed some cases... revisit this if you
+				// suspect errors in the backtranslation
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem));
 			}
 		}
 

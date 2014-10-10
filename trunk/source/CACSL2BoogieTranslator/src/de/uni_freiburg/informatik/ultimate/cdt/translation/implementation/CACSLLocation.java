@@ -105,13 +105,9 @@ public class CACSLLocation implements Serializable, ILocation {
     public CACSLLocation(CACSLLocation loc) {
         this.acslNode = loc.acslNode;
         this.cNode = loc.cNode;
+        this.m_CheckedSpecification = loc.m_CheckedSpecification;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -133,11 +129,6 @@ public class CACSLLocation implements Serializable, ILocation {
         // + "-" + getEndLine() + "/" + getEndColumn();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.model.Location#getStartLine()
-     */
     @Override
     public int getStartLine() {
         if (cNode != null) {
@@ -149,11 +140,6 @@ public class CACSLLocation implements Serializable, ILocation {
         throw new IllegalArgumentException("One node was null!");
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.model.Location#getEndLine()
-     */
     @Override
     public int getEndLine() {
         if (cNode != null) {
@@ -165,31 +151,16 @@ public class CACSLLocation implements Serializable, ILocation {
         throw new IllegalArgumentException("One node was null!");
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.model.Location#getStartColumn()
-     */
     @Override
     public int getStartColumn() {
         return -1;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.model.Location#getEndColumn()
-     */
     @Override
     public int getEndColumn() {
         return -1;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.model.Location#getFileName()
-     */
     @Override
     public String getFileName() {
         if (cNode != null) {
@@ -201,22 +172,11 @@ public class CACSLLocation implements Serializable, ILocation {
         throw new IllegalArgumentException("One node was null!");
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.model.Location#getOrigin()
-     */
     @Override
     public ILocation getOrigin() {
         return this;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * de.uni_freiburg.informatik.ultimate.model.Location#checkedSpecification()
-     */
     @Override
     public Check checkedSpecification() {
     	return m_CheckedSpecification;
@@ -225,7 +185,7 @@ public class CACSLLocation implements Serializable, ILocation {
     /**
      * @return the cNode
      */
-    public IASTNode getcNode() {
+    public IASTNode getCNode() {
         return cNode;
     }
 
