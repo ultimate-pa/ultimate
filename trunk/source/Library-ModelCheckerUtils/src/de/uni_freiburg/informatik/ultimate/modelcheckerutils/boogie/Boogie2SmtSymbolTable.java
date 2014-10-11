@@ -404,9 +404,9 @@ public class Boogie2SmtSymbolTable {
 	 * @param declarationInformation 
 	 */
 	private LocalBoogieVar constructLocalBoogieVar(String identifier, 
-			String procedure, IType iType, BoogieASTNode boogieASTNode, 
+			String procedure, IType iType, VarList varList, 
 			DeclarationInformation declarationInformation) {
-		Sort sort = m_TypeSortTranslator.getSort(iType, boogieASTNode);
+		Sort sort = m_TypeSortTranslator.getSort(iType, varList);
 
 		String name = constructBoogieVarName(identifier, procedure,
 				false, false);
@@ -421,7 +421,7 @@ public class Boogie2SmtSymbolTable {
 		
 		m_SmtVar2BoogieVar.put(termVariable, bv);
 		m_BoogieVar2DeclarationInformation.put(bv, declarationInformation);
-		m_BoogieVar2AstNode.put(bv, boogieASTNode);
+		m_BoogieVar2AstNode.put(bv, varList);
 		return bv;
 	}
 	
@@ -434,8 +434,8 @@ public class Boogie2SmtSymbolTable {
 	 *            reported
 	 */
 	private BoogieNonOldVar constructGlobalBoogieVar(String identifier,
-			IType iType, BoogieASTNode boogieASTNode) {
-		Sort sort = m_TypeSortTranslator.getSort(iType, boogieASTNode);
+			IType iType, VarList varlist) {
+		Sort sort = m_TypeSortTranslator.getSort(iType, varlist);
 		String procedure = null;
 		DeclarationInformation declarationInformation = 
 				new DeclarationInformation(StorageClass.GLOBAL, null);
@@ -453,7 +453,7 @@ public class Boogie2SmtSymbolTable {
 					isOldVar, termVariable, defaultConstant, primedConstant);
 			m_SmtVar2BoogieVar.put(termVariable, oldVar);
 			m_BoogieVar2DeclarationInformation.put(oldVar, declarationInformation);
-			m_BoogieVar2AstNode.put(oldVar, boogieASTNode);
+			m_BoogieVar2AstNode.put(oldVar, varlist);
 		}
 		BoogieNonOldVar nonOldVar;
 		{
@@ -468,7 +468,7 @@ public class Boogie2SmtSymbolTable {
 					termVariable, defaultConstant, primedConstant, oldVar);
 			m_SmtVar2BoogieVar.put(termVariable, nonOldVar);
 			m_BoogieVar2DeclarationInformation.put(nonOldVar, declarationInformation);
-			m_BoogieVar2AstNode.put(nonOldVar, boogieASTNode);
+			m_BoogieVar2AstNode.put(nonOldVar, varlist);
 		}
 		oldVar.setNonOldVar(nonOldVar);
 		return nonOldVar;
@@ -513,8 +513,8 @@ public class Boogie2SmtSymbolTable {
 	}
 	
 	BoogieNonOldVar constructAuxiliaryGlobalBoogieVar(String identifier, String procedure,
-			IType iType, BoogieASTNode BoogieASTNode) {
-		BoogieNonOldVar bv = constructGlobalBoogieVar(identifier, iType, BoogieASTNode);
+			IType iType, VarList varList) {
+		BoogieNonOldVar bv = constructGlobalBoogieVar(identifier, iType, varList);
 		m_Globals.put(identifier, bv);
 		m_OldGlobals.put(identifier, bv.getOldVar());
 		return bv;

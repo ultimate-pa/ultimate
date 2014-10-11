@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
@@ -134,10 +135,10 @@ public class Boogie2SMT {
 	 * are not supported in any backtranslation.
 	 */
 	public BoogieNonOldVar constructAuxiliaryGlobalBoogieVar(String identifier, String procedure, IType iType,
-			BoogieASTNode BoogieASTNode) {
+			VarList varList) {
 
 		return m_Boogie2SmtSymbolTable.constructAuxiliaryGlobalBoogieVar(identifier, procedure, iType,
-				BoogieASTNode);
+				varList);
 	}
 
 	class ConstOnlyIdentifierTranslator implements IdentifierTranslator {
