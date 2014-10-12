@@ -13,6 +13,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
@@ -417,25 +419,21 @@ public class NestedSsaBuilder {
 	private Term getCurrentVarVersion(BoogieVar bv) {
 		Term result;
 		if (bv.isGlobal()) {
-			if (bv.isOldvar()) {
-				result = currentLocalAndOldVarVersion.get(bv);
-				if (result == null) {
-					assert m_ModGlobVarManager.getOldVarsAssignment(m_currentProcedure).getAssignedVars().contains(bv) : "unable to find oldvar "
-							+ bv;
-					throw new UnsupportedOperationException("oldvar " + bv + " occurs in procedure "
-							+ m_currentProcedure + " but " + bv.getIdentifier()
-							+ " is not modifiable in this procedure");
+			if (bv instanceof BoogieOldVar) {
+				assert bv.isOldvar();
+				BoogieOldVar oldVar = (BoogieOldVar) bv;
+				if (m_ModGlobVarManager.isModifiable((BoogieOldVar) oldVar, m_currentProcedure)) {
+					result = currentLocalAndOldVarVersion.get(oldVar);
+				} else {
+					// not modifiable in current procedure
+					// according to semantics value of oldvar is value of
+					// non-oldvar at beginning of procedure
+					// we use current var version of non-oldvar
+					result = getOrSetCurrentGlobalVarVersion(oldVar.getNonOldVar());
 				}
 			} else {
-				result = currentGlobalVarVersion.get(bv);
-				if (result == null) {
-					// variable was not yet assigned in trace
-					// FIXME: in oder to be compliant with the documentation
-					// we should use an initial calling context
-					// -1-numberOfCallingContexts. But this should not have
-					// an impact on correctness.
-					result = setCurrentVarVersion(bv, -1);
-				}
+				BoogieNonOldVar bnov = (BoogieNonOldVar) bv;
+				result = getOrSetCurrentGlobalVarVersion(bnov);
 			}
 		} else {
 			result = currentLocalAndOldVarVersion.get(bv);
@@ -443,6 +441,24 @@ public class NestedSsaBuilder {
 				// variable was not yet assigned in the calling context
 				result = setCurrentVarVersion(bv, startOfCallingContext);
 			}
+		}
+		return result;
+	}
+
+	/**
+	 * Get current version for global variable. Set current var version if it
+	 * has not yet been set.
+	 */
+	private Term getOrSetCurrentGlobalVarVersion(BoogieNonOldVar bv) {
+		Term result;
+		result = currentGlobalVarVersion.get(bv);
+		if (result == null) {
+			// variable was not yet assigned in trace
+			// FIXME: in oder to be compliant with the documentation
+			// we should use an initial calling context
+			// -1-numberOfCallingContexts. But this should not have
+			// an impact on correctness.
+			result = setCurrentVarVersion(bv, -1);
 		}
 		return result;
 	}
