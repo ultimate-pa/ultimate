@@ -14,35 +14,53 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class BuchiAutomizerDefaultTests extends
 		AbstractBuchiAutomizerTestSuite {
 	private static final String[] m_Directories = {
-//		"examples/lassos",
-		"examples/termination/TermCompOfficialBenchmarkSet/aprove_memory/alloca"
+		"examples/lassos",
+		"examples/termination/TermCompOfficialBenchmarkSet/",
 //		"examples/programs/quantifier",
-//		"examples/programs/recursivePrograms",
+		"examples/programs/recursivePrograms",
 //		"examples/programs/toy"
 //		"examples/termination/AProVE"
 	};
 	
 	// Time out for each test case in milliseconds
-	private static int m_Timeout = 60 * 1000;
+	private static int m_Timeout = 300 * 1000;
 
-//	private static final boolean s_Boogie_TreeInterpolants = true;
-//	private static final boolean s_C_TreeInterpolants = true;
+	private static final boolean s_UseMediumBlockEncoding = true;
+	private static final String s_MediumBlockEncodingSetting = "buchiAutomizer/staged300Forward-Z3.epf";
+	private static final boolean s_UseLargeBlockEncoding = true;
+	private static final String s_LargeBlockEncodingSetting = "buchiAutomizer/staged300Forward-Z3-LBE.epf";
 	
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		addTestCases(
-				"BuchiAutomizerBplWithBlockEncoding.xml",
-				"buchiAutomizer/staged300Forward-Z3.epf",
-				m_Directories,
-				new String[] {".bpl"},
-				m_Timeout);
-		addTestCases(
-				"BuchiAutomizerCWithBlockEncoding.xml",
-				"buchiAutomizer/staged300Forward-Z3.epf",
-				m_Directories,
-				new String[] {".c"},
-				m_Timeout);
+		if (s_UseMediumBlockEncoding) {
+			addTestCases(
+					"BuchiAutomizerBplWithBlockEncoding.xml",
+					s_MediumBlockEncodingSetting,
+					m_Directories,
+					new String[] {".bpl"},
+					m_Timeout);
+			addTestCases(
+					"BuchiAutomizerCWithBlockEncoding.xml",
+					s_MediumBlockEncodingSetting,
+					m_Directories,
+					new String[] {".c"},
+					m_Timeout);
+		}
+		if (s_UseLargeBlockEncoding) {
+			addTestCases(
+					"BuchiAutomizerBplWithBlockEncoding.xml",
+					s_LargeBlockEncodingSetting,
+					m_Directories,
+					new String[] {".bpl"},
+					m_Timeout);
+			addTestCases(
+					"BuchiAutomizerCWithBlockEncoding.xml",
+					s_LargeBlockEncodingSetting,
+					m_Directories,
+					new String[] {".c"},
+					m_Timeout);
+		}
 		return super.createTestCases();
 	}
 }
