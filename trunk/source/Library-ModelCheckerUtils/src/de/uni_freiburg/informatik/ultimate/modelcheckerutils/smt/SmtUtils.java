@@ -342,4 +342,17 @@ public class SmtUtils {
 			return false;
 		}
 	}
+	
+	/**
+	 * A constant is an ApplicationTerm with zero parameters whose function
+	 * symbol is not intern.
+	 */
+	public static boolean isConstant(Term term) {
+		if (term instanceof ApplicationTerm) {
+			ApplicationTerm appTerm = (ApplicationTerm) term;
+			return appTerm.getParameters().length == 0 && !appTerm.getFunction().isIntern();	
+		} else {
+			return false;
+		}
+	}
 }
