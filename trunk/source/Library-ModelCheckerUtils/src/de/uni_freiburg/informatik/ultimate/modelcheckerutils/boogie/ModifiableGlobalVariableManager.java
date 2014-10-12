@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 
 /**
@@ -59,6 +60,21 @@ public class ModifiableGlobalVariableManager {
 		return getOldVarsAssignment(proc).getInVars().keySet();
 	}
 
+	/**
+	 * Returns true iff the corresponding non-oldVar of bv is modifiable by
+	 * procedure proc.
+	 */
+	public boolean isModifiable(BoogieOldVar bv, String proc) {
+		BoogieNonOldVar bnov = bv.getNonOldVar();
+		return getModifiedBoogieVars(proc).contains(bnov);
+	}
+
+	/**
+	 * Returns true iff the variable bv is modifiable by procedure proc.
+	 */
+	public boolean isModifiable(BoogieNonOldVar bnov, String proc) {
+		return getModifiedBoogieVars(proc).contains(bnov);
+	}
 
 	/**
 	 * Returns a TransFormula that represents an assignment 
