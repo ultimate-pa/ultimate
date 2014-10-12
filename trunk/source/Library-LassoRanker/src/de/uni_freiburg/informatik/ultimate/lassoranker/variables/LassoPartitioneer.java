@@ -43,15 +43,18 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPreProcessor;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 
 /**
  * Split lasso into independent components.
@@ -61,20 +64,23 @@ import de.uni_freiburg.informatik.ultimate.util.UnionFind;
  */
 public class LassoPartitioneer extends LassoPreProcessor {
 	private final IUltimateServiceProvider m_Services;
-	private final Map<TermVariable, TransFormulaLR> m_OriginalTF = new HashMap<TermVariable, TransFormulaLR>();
-	private HashRelation<TermVariable, Term> m_TermVariable2StemConjuncts;
+	private enum Part { STEM, LOOP };
+	
+	private final NestedMap2<Part, NonTheorySymbol<?>, TransFormulaLR> m_Symbol2OriginalTF = 
+			new NestedMap2<Part, NonTheorySymbol<?>, TransFormulaLR>();
+	private HashRelation<NonTheorySymbol<?>, Term> m_Symbol2StemConjuncts;
 	/**
-	 * TermVariables of stem that do not occur in any conjunct (only occur as
+	 * NonTheorySymbols of stem that do not occur in any conjunct (only occur as
 	 * inVar or outVar in original lasso.
 	 */
-	private HashSet<Term> m_StemTermVariablesWithoutConjuncts;
-	private HashRelation<TermVariable, Term> m_TermVariable2LoopConjuncts;
+	private HashSet<NonTheorySymbol<?>> m_StemSymbolsWithoutConjuncts;
+	private HashRelation<NonTheorySymbol<?>, Term> m_Symbol2LoopConjuncts;
 	/**
-	 * TermVariables of loop that do not occur in any conjunct (only occur as
+	 * NonTheorySymbols of loop that do not occur in any conjunct (only occur as
 	 * inVar or outVar in original lasso.
 	 */
-	private HashSet<Term> m_LoopTermVariablesWithoutConjuncts;
-	private final UnionFind<TermVariable> m_EquivalentTermVariables = new UnionFind<>();
+	private HashSet<NonTheorySymbol<?>> m_LoopSymbolsWithoutConjuncts;
+	private final UnionFind<NonTheorySymbol<?>> m_EquivalentSymbols = new UnionFind<>();
 	private Set<RankVar> m_AllRankVars = new HashSet<RankVar>();
 	private Script m_Script;
 	private final List<TransFormulaLR> m_NewStem = new ArrayList<>();
@@ -106,67 +112,67 @@ public class LassoPartitioneer extends LassoPreProcessor {
 
 
 	public void partitioneer() {
-		m_TermVariable2StemConjuncts = new HashRelation<>();
-		m_TermVariable2LoopConjuncts = new HashRelation<>();
-		m_StemTermVariablesWithoutConjuncts = new HashSet<>();
-		m_LoopTermVariablesWithoutConjuncts = new HashSet<>();
-		extractTermVariables(m_lassoBuilder.getStemComponents(), m_TermVariable2StemConjuncts, m_StemTermVariablesWithoutConjuncts);
-		extractTermVariables(m_lassoBuilder.getLoopComponents(), m_TermVariable2LoopConjuncts, m_LoopTermVariablesWithoutConjuncts);
+		m_Symbol2StemConjuncts = new HashRelation<>();
+		m_Symbol2LoopConjuncts = new HashRelation<>();
+		m_StemSymbolsWithoutConjuncts = new HashSet<>();
+		m_LoopSymbolsWithoutConjuncts = new HashSet<>();
+		extractSymbols(Part.STEM, m_lassoBuilder.getStemComponents(), m_Symbol2StemConjuncts, m_StemSymbolsWithoutConjuncts);
+		extractSymbols(Part.LOOP, m_lassoBuilder.getLoopComponents(), m_Symbol2LoopConjuncts, m_LoopSymbolsWithoutConjuncts);
 		
 		for (RankVar rv : m_AllRankVars) {
-			Set<TermVariable> termVariables = new HashSet<TermVariable>();
+			Set<NonTheorySymbol<?>> symbols = new HashSet<NonTheorySymbol<?>>();
 			for (TransFormulaLR transFormulaLR : m_lassoBuilder.getStemComponents()) {
-				TermVariable inVar = (TermVariable) transFormulaLR.getInVars().get(rv);
+				Term inVar = transFormulaLR.getInVars().get(rv);
 				if (inVar != null) {
-					termVariables.add(inVar);
+					symbols.add(constructSymbol(inVar));
 				}
-				TermVariable outVar = (TermVariable) transFormulaLR.getOutVars().get(rv);
+				Term outVar = transFormulaLR.getOutVars().get(rv);
 				if (outVar != null) {
-					termVariables.add(outVar);
+					symbols.add(constructSymbol(outVar));
 				}
 				assert (inVar == null) == (outVar == null) : "both or none";
 			}
 			for (TransFormulaLR transFormulaLR : m_lassoBuilder.getLoopComponents()) {
-				TermVariable inVar = (TermVariable) transFormulaLR.getInVars().get(rv);
+				Term inVar = transFormulaLR.getInVars().get(rv);
 				if (inVar != null) {
-					termVariables.add(inVar);
+					symbols.add(constructSymbol(inVar));
 				}
-				TermVariable outVar = (TermVariable) transFormulaLR.getOutVars().get(rv);
+				Term outVar = transFormulaLR.getOutVars().get(rv);
 				if (outVar != null) {
-					termVariables.add(outVar);
+					symbols.add(constructSymbol(outVar));
 				}
 				assert (inVar == null) == (outVar == null) : "both or none"; 
 			}
-			announceEquivalence(termVariables);
+			announceEquivalence(symbols);
 		}
 		
-		for (TermVariable equivalenceClassRepresentative : 
-								m_EquivalentTermVariables.getAllRepresentatives()) {
-			Set<TermVariable> termVariableEquivalenceClass = 
-					m_EquivalentTermVariables.getEquivalenceClassMembers(equivalenceClassRepresentative);
+		for (NonTheorySymbol<?> equivalenceClassRepresentative : 
+								m_EquivalentSymbols.getAllRepresentatives()) {
+			Set<NonTheorySymbol<?>> symbolEquivalenceClass = 
+					m_EquivalentSymbols.getEquivalenceClassMembers(equivalenceClassRepresentative);
 			Set<Term> equivalentStemConjuncts = new HashSet<Term>();
-			Set<TermVariable> equivalentStemVariablesWithoutConjunct = new HashSet<TermVariable>();
+			Set<NonTheorySymbol<?>> equivalentStemSymbolsWithoutConjunct = new HashSet<NonTheorySymbol<?>>();
 			Set<Term> equivalentLoopConjuncts = new HashSet<Term>();
-			Set<TermVariable> equivalentLoopVariablesWithoutConjunct = new HashSet<TermVariable>();
-			for (TermVariable tv : termVariableEquivalenceClass) {
-				if (m_TermVariable2StemConjuncts.getDomain().contains(tv)) {
-					equivalentStemConjuncts.addAll(m_TermVariable2StemConjuncts.getImage(tv));
-				} else if (m_StemTermVariablesWithoutConjuncts.contains(tv)) {
-					equivalentStemVariablesWithoutConjunct.add(tv);
-				} else if (m_TermVariable2LoopConjuncts.getDomain().contains(tv)) {
-					equivalentLoopConjuncts.addAll(m_TermVariable2LoopConjuncts.getImage(tv));
-				} else if (m_LoopTermVariablesWithoutConjuncts.contains(tv)) {
-					equivalentLoopVariablesWithoutConjunct.add(tv);
+			Set<NonTheorySymbol<?>> equivalentLoopSymbolsWithoutConjunct = new HashSet<NonTheorySymbol<?>>();
+			for (NonTheorySymbol<?> tv : symbolEquivalenceClass) {
+				if (m_Symbol2StemConjuncts.getDomain().contains(tv)) {
+					equivalentStemConjuncts.addAll(m_Symbol2StemConjuncts.getImage(tv));
+				} else if (m_StemSymbolsWithoutConjuncts.contains(tv)) {
+					equivalentStemSymbolsWithoutConjunct.add(tv);
+				} else if (m_Symbol2LoopConjuncts.getDomain().contains(tv)) {
+					equivalentLoopConjuncts.addAll(m_Symbol2LoopConjuncts.getImage(tv));
+				} else if (m_LoopSymbolsWithoutConjuncts.contains(tv)) {
+					equivalentLoopSymbolsWithoutConjunct.add(tv);
 				} else {
 					throw new AssertionError("unknown variable " + tv);
 				}
 			}
-			if (!equivalentStemConjuncts.isEmpty() || !equivalentStemVariablesWithoutConjunct.isEmpty()) {
-				TransFormulaLR stemTransformulaLR = constructTransFormulaLR(equivalentStemConjuncts, equivalentStemVariablesWithoutConjunct);
+			if (!equivalentStemConjuncts.isEmpty() || !equivalentStemSymbolsWithoutConjunct.isEmpty()) {
+				TransFormulaLR stemTransformulaLR = constructTransFormulaLR(Part.STEM, equivalentStemConjuncts, equivalentStemSymbolsWithoutConjunct);
 				m_NewStem.add(stemTransformulaLR);
 			}
-			if (!equivalentLoopConjuncts.isEmpty() || !equivalentLoopVariablesWithoutConjunct.isEmpty()) {
-				TransFormulaLR loopTransformulaLR = constructTransFormulaLR(equivalentLoopConjuncts, equivalentLoopVariablesWithoutConjunct);
+			if (!equivalentLoopConjuncts.isEmpty() || !equivalentLoopSymbolsWithoutConjunct.isEmpty()) {
+				TransFormulaLR loopTransformulaLR = constructTransFormulaLR(Part.LOOP, equivalentLoopConjuncts, equivalentLoopSymbolsWithoutConjunct);
 				m_NewLoop.add(loopTransformulaLR);
 			}
 		}
@@ -207,43 +213,54 @@ public class LassoPartitioneer extends LassoPreProcessor {
 
 
 	private TransFormulaLR constructTransFormulaLR(
-			Set<Term> equivalentStemConjuncts, Set<TermVariable> equivalentVariablesWithoutConjunct) {
+			Part part, Set<Term> equivalentConjuncts, Set<NonTheorySymbol<?>> equivalentVariablesWithoutConjunct) {
 		TransFormulaLR transformulaLR;
-		Term formula = Util.and(m_Script, equivalentStemConjuncts.toArray(new Term[equivalentStemConjuncts.size()]));
+		Term formula = Util.and(m_Script, equivalentConjuncts.toArray(new Term[equivalentConjuncts.size()]));
 		transformulaLR = new TransFormulaLR(formula);
-		for (TermVariable tv : formula.getFreeVars()) {
-			addInOuAuxVar(transformulaLR, tv);
+		for (NonTheorySymbol<?> symbol : NonTheorySymbol.extractNonTheorySymbols(formula)) {
+			addInOuAuxVar(part, transformulaLR, symbol);
 		}
-		for (TermVariable tv : equivalentVariablesWithoutConjunct) {
-			addInOuAuxVar(transformulaLR, tv);
+		for (NonTheorySymbol<?> symbol : equivalentVariablesWithoutConjunct) {
+			addInOuAuxVar(part, transformulaLR, symbol);
 		}
 		return transformulaLR;
 	}
 
 
-	private void addInOuAuxVar(TransFormulaLR transformulaLR, TermVariable tv) {
-		TransFormulaLR original = m_OriginalTF.get(tv);
-		RankVar inVarRankVar = original.getInVarsReverseMapping().get(tv);
-		RankVar outVarRankVar = original.getOutVarsReverseMapping().get(tv);
-		boolean isAuxVar = original.getAuxVars().contains(tv);
-		assert (!isAuxVar || (inVarRankVar == null && outVarRankVar == null)) : "auxVar may neither be inVar nor outVar";
-		assert (!(inVarRankVar == null && outVarRankVar == null) || isAuxVar) : "neither inVar nor outVar may be auxVar";
+	private void addInOuAuxVar(Part part, TransFormulaLR transformulaLR, NonTheorySymbol<?> symbol) {
+		TransFormulaLR original = m_Symbol2OriginalTF.get(part, symbol);
+		boolean isConstant;
+		Term term;
+		if (symbol instanceof NonTheorySymbol.Variable) {
+			term = (Term) symbol.getSymbol();
+			isConstant = false;
+		} else if (symbol instanceof NonTheorySymbol.Constant) {
+			term = (Term) symbol.getSymbol();
+			isConstant = true;
+		} else {
+			throw new UnsupportedOperationException("function symbols not yet supported");
+		}
+		RankVar inVarRankVar = original.getInVarsReverseMapping().get(term);
+		RankVar outVarRankVar = original.getOutVarsReverseMapping().get(term);
+		boolean isAuxVar = original.getAuxVars().contains(term);
+		assert (isConstant || !isAuxVar || (inVarRankVar == null && outVarRankVar == null)) : "auxVar may neither be inVar nor outVar";
+		assert (isConstant || !(inVarRankVar == null && outVarRankVar == null) || isAuxVar) : "neither inVar nor outVar may be auxVar";
 		if (inVarRankVar != null) {
-			transformulaLR.addInVar(inVarRankVar, tv);
+			transformulaLR.addInVar(inVarRankVar, term);
 		}
 		if (outVarRankVar != null) {
-			transformulaLR.addOutVar(outVarRankVar, tv);
+			transformulaLR.addOutVar(outVarRankVar, term);
 		}
 		if (isAuxVar) {
-			transformulaLR.addAuxVars(Collections.singleton(tv));
+			transformulaLR.addAuxVars(Collections.singleton((TermVariable) term));
 		}
 	}
 
 
-	private HashRelation<TermVariable, Term> extractTermVariables(
-			Collection<TransFormulaLR> components, 
-			HashRelation<TermVariable, Term> termVariable2conjuncts, 
-			HashSet<Term> termVariablesWithoutConjuncts) {
+	private HashRelation<NonTheorySymbol<?>, Term> extractSymbols(
+			Part part, Collection<TransFormulaLR> components, 
+			HashRelation<NonTheorySymbol<?>, Term> symbol2Conjuncts, 
+			HashSet<NonTheorySymbol<?>> symbolsWithoutConjuncts) {
 		for (TransFormulaLR tf : components) {
 			m_AllRankVars.addAll(tf.getInVars().keySet());
 			m_AllRankVars.addAll(tf.getOutVars().keySet());
@@ -251,47 +268,63 @@ public class LassoPartitioneer extends LassoPreProcessor {
 			Term cnf = (new Cnf(m_Script, m_Services)).transform(tf.getFormula());
 			Term[] conjuncts = SmtUtils.getConjuncts(cnf);
 			for (Term conjunct : conjuncts) {
-				Set<TermVariable> allTermVariablesOfConjunct = new HashSet<>();
-				for (TermVariable tv : conjunct.getFreeVars()) {
-					TransFormulaLR oldValue = m_OriginalTF.put(tv, tf);
+				Set<NonTheorySymbol<?>> allSymbolsOfConjunct = NonTheorySymbol.extractNonTheorySymbols(conjunct);
+				for (NonTheorySymbol<?> symbol : allSymbolsOfConjunct) {
+					TransFormulaLR oldValue = m_Symbol2OriginalTF.put(part, symbol, tf);
 					assert oldValue == null || oldValue == tf : "may not be modified";
-					allTermVariablesOfConjunct.add(tv);
-					if (m_EquivalentTermVariables.find(tv) == null) {
-						m_EquivalentTermVariables.makeEquivalenceClass(tv);
+					allSymbolsOfConjunct.add(symbol);
+					if (m_EquivalentSymbols.find(symbol) == null) {
+						m_EquivalentSymbols.makeEquivalenceClass(symbol);
 					}
-					announceEquivalence(allTermVariablesOfConjunct);
-					termVariable2conjuncts.addPair(tv, conjunct);
+					symbol2Conjuncts.addPair(symbol, conjunct);
 				}
+				announceEquivalence(allSymbolsOfConjunct);
 			}
 			for (Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
-				if (!termVariable2conjuncts.getDomain().contains(entry.getValue())) {
-					m_EquivalentTermVariables.makeEquivalenceClass((TermVariable) entry.getValue());
-					termVariablesWithoutConjuncts.add(entry.getValue());
-					TransFormulaLR oldValue = m_OriginalTF.put((TermVariable) entry.getValue(), tf);
-					assert oldValue == null || oldValue == tf : "may not be modified";
-				}
+				addIfNotAlreadyAdded(part, symbolsWithoutConjuncts, tf, entry.getValue(), symbol2Conjuncts);
 			}
 			for (Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
-				if (!termVariable2conjuncts.getDomain().contains(entry.getValue()) && 
-						!termVariablesWithoutConjuncts.contains(entry.getValue())) {
-					m_EquivalentTermVariables.makeEquivalenceClass((TermVariable) entry.getValue());
-					termVariablesWithoutConjuncts.add(entry.getValue());
-					TransFormulaLR oldValue = m_OriginalTF.put((TermVariable) entry.getValue(), tf);
-					assert oldValue == null || oldValue == tf : "may not be modified";
-				}
+				addIfNotAlreadyAdded(part, symbolsWithoutConjuncts, tf, entry.getValue(), symbol2Conjuncts);
 			}
 		}
-		return termVariable2conjuncts;
+		return symbol2Conjuncts;
 	}
 
 
-	private void announceEquivalence(Set<TermVariable> allRankVarsOfConjunct) {
-		TermVariable last = null;
-		for (TermVariable tv : allRankVarsOfConjunct) {
-			if (last != null) {
-				m_EquivalentTermVariables.union(tv, last);
+	private void addIfNotAlreadyAdded(
+			Part part, HashSet<NonTheorySymbol<?>> symbolsWithoutConjuncts, TransFormulaLR tf,
+			Term tvOrConstant,
+			HashRelation<NonTheorySymbol<?>, Term> symbol2Conjuncts) {
+		NonTheorySymbol<?> symbol = constructSymbol(tvOrConstant);
+		if (!symbol2Conjuncts.getDomain().contains(symbol)) {
+			m_EquivalentSymbols.makeEquivalenceClass(symbol);
+			symbolsWithoutConjuncts.add(symbol);
+			TransFormulaLR oldValue = m_Symbol2OriginalTF.put(part, symbol, tf);
+			assert oldValue == null || oldValue == tf : "may not be modified";
+		}
+	}
+
+
+	private NonTheorySymbol<?> constructSymbol(Term tvOrConstant) {
+		if (tvOrConstant instanceof TermVariable) {
+			return new NonTheorySymbol.Variable((TermVariable) tvOrConstant);
+		} else {
+			if (SmtUtils.isConstant(tvOrConstant)) {
+				return new NonTheorySymbol.Constant((ApplicationTerm) tvOrConstant);
+			} else {
+				throw new IllegalArgumentException();
 			}
-			last = tv;
+		}
+	}
+
+
+	private void announceEquivalence(Set<NonTheorySymbol<?>> allSymbolsOfConjunct) {
+		NonTheorySymbol<?> last = null;
+		for (NonTheorySymbol<?> symbol : allSymbolsOfConjunct) {
+			if (last != null) {
+				m_EquivalentSymbols.union(symbol, last);
+			}
+			last = symbol;
 		}
 	}
 
