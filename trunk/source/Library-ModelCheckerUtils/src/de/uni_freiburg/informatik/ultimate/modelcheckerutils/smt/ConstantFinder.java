@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  */
 public class ConstantFinder extends NonRecursive {
-	class ConstantFindWalker extends TermWalker {
+	private class ConstantFindWalker extends TermWalker {
 		ConstantFindWalker(Term term) { super(term); }
 		
 		@Override
@@ -33,7 +33,7 @@ public class ConstantFinder extends NonRecursive {
 		}
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			if (isConstant(term)) {
+			if (SmtUtils.isConstant(term)) {
 				m_Result.add(term);
 			}
 			for (Term t : term.getParameters()) {
@@ -72,11 +72,5 @@ public class ConstantFinder extends NonRecursive {
 	}
 	
 	
-	/**
-	 * A constant is an ApplicationTerm with zero parameters whose function
-	 * symbol is not intern.
-	 */
-	public static boolean isConstant(ApplicationTerm term) {
-		return term.getParameters().length == 0 && !term.getFunction().isIntern();
-	}
+
 }
