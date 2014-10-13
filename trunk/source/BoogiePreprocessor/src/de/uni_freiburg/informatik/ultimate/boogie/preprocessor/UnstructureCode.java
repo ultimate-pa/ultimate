@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -270,9 +271,9 @@ public class UnstructureCode extends BaseObserver {
 			addLabel(new Label(loopLocation, head));
 			for (LoopInvariantSpecification spec : stmt.getInvariants()) {
 				if (spec.isFree()) {
-					addStmtAndAnnots(s, new AssumeStatement(spec.getLocation(), spec.getFormula()));
+					addStmtAndAnnots(spec, new AssumeStatement(spec.getLocation(), spec.getFormula()));
 				} else {
-					addStmtAndAnnots(s, new AssertStatement(spec.getLocation(), spec.getFormula()));
+					addStmtAndAnnots(spec, new AssertStatement(spec.getLocation(), spec.getFormula()));
 				}
 			}
 			addStmtAndAnnots(s, new GotoStatement(s.getLocation(), new String[] { body, done }));
@@ -344,15 +345,15 @@ public class UnstructureCode extends BaseObserver {
 	 * 
 	 * @author Christian & Matthias
 	 */
-	private void addStmtAndAnnots(Statement sourceStmt, Statement newStmt) {
+	private void addStmtAndAnnots(BoogieASTNode source, Statement newStmt) {
 		// adds annotations from old statement to new statement (if any)
-		BoogiePreprocessor.passAnnotations(sourceStmt, newStmt);
+		BoogiePreprocessor.passAnnotations(source, newStmt);
 
 		// adds new statement to list
 		mFlatStatements.add(newStmt);
 
 		// add mapping to backtranslation
-		mTranslator.addMapping(sourceStmt, newStmt);
+		mTranslator.addMapping(source, newStmt);
 	}
 
 	private String generateLabel() {

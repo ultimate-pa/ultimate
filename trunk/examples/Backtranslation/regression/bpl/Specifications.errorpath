@@ -1,0 +1,4 @@
+step0: z := 0;
+values0:  z=0
+step1: requires x > 0;
+values1:  z=0

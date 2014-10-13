@@ -1,0 +1,38 @@
+step0: requires x > 0;
+values0:  x=1
+step1: y := 4;
+values1:  x=1  y=4
+step2: invariant y > 0;
+values2:  x=1  y=4
+step3: y > 0
+values3:  x=1  y=4
+step4: res := res + x;
+values4:  res=-2  x=1  y=4
+step5: y := y - 1;
+values5:  res=-2  x=1  y=3
+step6: invariant y > 0;
+values6:  res=-2  x=1  y=3
+step7: y > 0
+values7:  res=-2  x=1  y=3
+step8: res := res + x;
+values8:  res=-1  x=1  y=3
+step9: y := y - 1;
+values9:  res=-1  x=1  y=2
+step10: invariant y > 0;
+values10:  res=-1  x=1  y=2
+step11: y > 0
+values11:  res=-1  x=1  y=2
+step12: res := res + x;
+values12:  res=0  x=1  y=2
+step13: y := y - 1;
+values13:  res=0  x=1  y=1
+step14: invariant y > 0;
+values14:  res=0  x=1  y=1
+step15: y > 0
+values15:  res=0  x=1  y=1
+step16: res := res + x;
+values16:  res=1  x=1  y=1
+step17: y := y - 1;
+values17:  res=1  x=1  y=0
+step18: invariant y > 0;
+values18:  res=1  x=1  y=0

@@ -1,0 +1,26 @@
+step0: requires ain == 51;
+values0:  ain=51
+step1: a := ain;
+values1:  a=51  ain=51
+step2: r := 0;
+values2:  a=51  ain=51  r=0
+step3: a > 0
+values3:  a=51  ain=51  r=0
+step4: a < 100
+values4:  a=51  ain=51  r=0
+step5: !(a % 2 == 0)
+values5:  a=51  ain=51  r=0
+step6: r := r + 1;
+values6:  a=51  ain=51  r=1
+step7: a := a + a + 1;
+values7:  a=103  ain=51  r=1
+step8: !(a < 100)
+values8:  a=103  ain=51  r=1
+step9: r := r + r;
+values9:  a=103  ain=51  r=2
+step10: a := -a - a - a - 1;
+values10:  a=-310  ain=51  r=2
+step11: !(a > 0)
+values11:  a=-310  ain=51  r=2
+step12: assert r == 0;
+values12:  a=-310  ain=51  r=2

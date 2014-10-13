@@ -1,6 +1,8 @@
-step0: tmp := a;
-values0:  a!d=0  a!n=1  a!v=0.0  tmp.d=0  tmp.n=1  tmp.v=0.0
-step1: tmp!n := a!d;
-values1:  a!d=0  a!n=1  a!v=0.0  tmp.d=0  tmp.n=0  tmp.v=0.0
-step2: assert tmp == a;
+step0: requires a.n == 1 && a.d == 0 && a.v == 0.0;
+values0:  a!d=0  a!n=1  a!v=0.0
+step1: tmp := a;
+values1:  a!d=0  a!n=1  a!v=0.0  tmp.d=0  tmp.n=1  tmp.v=0.0
+step2: tmp!n := a!d;
 values2:  a!d=0  a!n=1  a!v=0.0  tmp.d=0  tmp.n=0  tmp.v=0.0
+step3: assert tmp == a;
+values3:  a!d=0  a!n=1  a!v=0.0  tmp.d=0  tmp.n=0  tmp.v=0.0

@@ -610,8 +610,10 @@ public class BoogieOutput {
 		if (decl.getBody() == null)
 			sb.append(";");
 		if (decl.getSpecification() != null) {
-			for (Specification spec : decl.getSpecification())
+			for (Specification spec : decl.getSpecification()) {
+				sb.append(sLinebreak);
 				appendSpecification(sb, spec);
+			}
 		}
 		if (decl.getBody() != null) {
 			sb.append("{" + sLinebreak);
@@ -634,7 +636,6 @@ public class BoogieOutput {
 	}
 
 	public void appendSpecification(StringBuilder sb, Specification spec) {
-		sb.append("    ");
 		if (spec.isFree())
 			sb.append("free ");
 		if (spec instanceof RequiresSpecification) {
@@ -650,6 +651,9 @@ public class BoogieOutput {
 				sb.append(comma).append(id.getIdentifier());
 				comma = ", ";
 			}
+		} else if (spec instanceof LoopInvariantSpecification) {
+			sb.append("invariant ");
+			appendExpression(sb, ((LoopInvariantSpecification) spec).getFormula(), 0);
 		} else {
 			throw new IllegalArgumentException(spec.toString());
 		}

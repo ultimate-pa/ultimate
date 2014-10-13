@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
  * This class initializes the boogie preprocessor.
  * 
  * @author hoenicke
+ * @author dietsch@informatik.uni-freiburg.de (for backtranslation)
  * 
  */
 public class BoogiePreprocessor implements IAnalysis {

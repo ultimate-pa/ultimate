@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
@@ -153,6 +154,8 @@ public class BoogiePreprocessorBacktranslator extends
 			// everything, so this may be right)
 			return elem;
 		} else if (newElem instanceof Statement) {
+			return newElem;
+		} else if (newElem instanceof LoopInvariantSpecification) {
 			return newElem;
 		} else {
 			reportUnfinishedBacktranslation("Unfinished backtranslation: Ignored translation of "
