@@ -3,8 +3,10 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -354,5 +356,16 @@ public class SmtUtils {
 		} else {
 			return false;
 		}
+	}
+	
+	/**
+	 * Return all free TermVariables that occur in a set of Terms.
+	 */
+	public static Set<TermVariable> getFreeVars(Set<Term> terms) {
+		Set<TermVariable> freeVars = new HashSet<TermVariable>();
+		for (Term term : terms) {
+			freeVars.addAll(Arrays.asList(term.getFreeVars()));
+		}
+		return freeVars;
 	}
 }

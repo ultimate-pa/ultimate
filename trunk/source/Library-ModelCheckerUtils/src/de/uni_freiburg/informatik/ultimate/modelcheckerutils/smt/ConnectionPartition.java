@@ -10,18 +10,17 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 
 /**
  * Partition set of terms into equivalence classes. 
- * We call two terms connected if both share a common free variable.
+ * We call two terms connected if both share a common NonTheorySymbols.
  * we define two terms to be equivalent (resp. this partition) if they
  * are in the transitive closure of the connection relation.
  */
 public class ConnectionPartition {
-	Map<TermVariable, Set<Term>> m_Tv2Terms = new HashMap<TermVariable, Set<Term>>();
-	UnionFind<TermVariable> unionFind = new UnionFind<TermVariable>();
+	Map<NonTheorySymbol<?>, Set<Term>> m_Symbol2Terms = new HashMap<NonTheorySymbol<?>, Set<Term>>();
+	UnionFind<NonTheorySymbol<?>> unionFind = new UnionFind<NonTheorySymbol<?>>();
 	List<Term> m_TermWithoutTvs = new ArrayList<Term>();
 	
 	public ConnectionPartition(Collection<Term> parameters) {
@@ -31,46 +30,46 @@ public class ConnectionPartition {
 	}
 
 	private void addTerm(Term term) {
-		TermVariable[] tvs = term.getFreeVars();
-		if (tvs.length == 0) {
+		Set<NonTheorySymbol<?>> symbols = NonTheorySymbol.extractNonTheorySymbols(term);
+		if (symbols.size() == 0) {
 			m_TermWithoutTvs.add(term);
 			return;
 		}
-		TermVariable firstTv = tvs[0];
-		add(term, firstTv);
-		if (unionFind.find(firstTv) == null) {
-			unionFind.makeEquivalenceClass(firstTv);
-		}
-		for (int i=1; i < tvs.length; i++) {
-			add(term, tvs[i]);
-			if (unionFind.find(tvs[i]) == null) {
-				unionFind.makeEquivalenceClass(tvs[i]);					
-			} 
-			if (unionFind.find(firstTv).equals(unionFind.find(tvs[i]))) {
-				// already in same equivalence class
-			} else {
-				unionFind.union(tvs[i], firstTv);
+		NonTheorySymbol<?> last = null;
+		for (NonTheorySymbol<?> symbol : symbols) {
+			add(term, symbol);
+			if (unionFind.find(symbol) == null) {
+				unionFind.makeEquivalenceClass(symbol);
 			}
+			if (last != null) {
+				if (unionFind.find(last).equals(unionFind.find(symbol))) {
+					// do nothing
+					// already in same equivalence class
+				} else {
+					unionFind.union(symbol, last);
+				}
+			}
+			last = symbol;
 		}
 	}
 	
-	private void add(Term term, TermVariable tv) {
-		Set<Term> terms = m_Tv2Terms.get(tv);
+	private void add(Term term, NonTheorySymbol<?> symbol) {
+		Set<Term> terms = m_Symbol2Terms.get(symbol);
 		if (terms == null) {
 			terms = new HashSet<Term>();
-			m_Tv2Terms.put(tv, terms);
+			m_Symbol2Terms.put(symbol, terms);
 		}
 		terms.add(term);
 	}
 	
-	Iterable<Set<TermVariable>> getConnectedVariables() {
-		return new Iterable<Set<TermVariable>>() {
+	Iterable<Set<Term>> getConnectedVariables() {
+		return new Iterable<Set<Term>>() {
 			
 			@Override
-			public Iterator<Set<TermVariable>> iterator() {
+			public Iterator<Set<Term>> iterator() {
 
-				return new Iterator<Set<TermVariable>>() {
-					private Iterator<TermVariable> m_It;
+				return new Iterator<Set<Term>>() {
+					private Iterator<NonTheorySymbol<?>> m_It;
 
 					{
 						m_It = unionFind.getAllRepresentatives().iterator();
@@ -82,8 +81,9 @@ public class ConnectionPartition {
 					}
 
 					@Override
-					public Set<TermVariable> next() {
-						return unionFind.getEquivalenceClassMembers(m_It.next());
+					public Set<Term> next() {
+						Set<NonTheorySymbol<?>> eqMembers = unionFind.getEquivalenceClassMembers(m_It.next());
+						return getTermsOfConnectedVariables(eqMembers);
 					}
 
 					@Override
@@ -96,10 +96,10 @@ public class ConnectionPartition {
 		};
 	}
 	
-	Set<Term> getTermsOfConnectedVariables(Set<TermVariable> connectedVars) {
+	Set<Term> getTermsOfConnectedVariables(Set<NonTheorySymbol<?>> eqMembers) {
 		Set<Term> result = new HashSet<Term>();
-		for (TermVariable tv : connectedVars) {
-			result.addAll(m_Tv2Terms.get(tv));
+		for (NonTheorySymbol<?> symbol : eqMembers) {
+			result.addAll(m_Symbol2Terms.get(symbol));
 		}
 		return result;
 	}

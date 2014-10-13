@@ -9,7 +9,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -307,22 +309,22 @@ public class PartialQuantifierElimination {
 		List<TermVariable> unremoveableTvs = new ArrayList<TermVariable>();
 		List<Term> removeableTerms = new ArrayList<Term>();
 		List<Term> unremoveableTerms = new ArrayList<Term>();
-		for (Set<TermVariable> connectedVars : connection.getConnectedVariables()) {
-			Set<Term> terms = connection.getTermsOfConnectedVariables(connectedVars);
+		for (Set<Term> connectedTerms : connection.getConnectedVariables()) {
+			Set<TermVariable> connectedVars = SmtUtils.getFreeVars(connectedTerms);
 			boolean isSuperfluous;
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				isSuperfluous = isSuperfluousConjunction(script, terms, connectedVars, vars);
+				isSuperfluous = isSuperfluousConjunction(script, connectedTerms, connectedVars, vars);
 			} else if (quantifier == QuantifiedFormula.FORALL) {
-				isSuperfluous = isSuperfluousDisjunction(script, terms, connectedVars, vars);
+				isSuperfluous = isSuperfluousDisjunction(script, connectedTerms, connectedVars, vars);
 			} else {
 				throw new AssertionError("unknown quantifier");
 			}
 			if (isSuperfluous) {
 				removeableTvs.addAll(connectedVars);
-				removeableTerms.addAll(terms);
+				removeableTerms.addAll(connectedTerms);
 			} else {
 				unremoveableTvs.addAll(connectedVars);
-				unremoveableTerms.addAll(terms);
+				unremoveableTerms.addAll(connectedTerms);
 			}
 		}
 		List<Term> termsWithoutTvs = connection.getTermsWithOutTvs();
@@ -369,6 +371,8 @@ public class PartialQuantifierElimination {
 			return result;
 		}
 	}
+
+
 
 	/**
 	 * Return true if connectedVars is a subset of quantifiedVars and the
