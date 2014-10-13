@@ -1146,8 +1146,8 @@ public class MemoryHandler {
      *            the value to write.
      * @return the required Statements to perform the write.
      */
-    public ArrayList<Statement> getWriteCall(HeapLValue hlv, RValue rval) {
-        ILocation loc = hlv.getAddress().getLocation();
+    public ArrayList<Statement> getWriteCall(ILocation loc, HeapLValue hlv, RValue rval) {
+//        ILocation loc = hlv.getAddress().getLocation();
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         
         CType rType = rval.cType;
@@ -1204,7 +1204,7 @@ public class MemoryHandler {
         		HeapLValue fieldHlv = new HeapLValue(
         				constructPointerFromBaseAndOffset(newStartAddressBase,
         				newOffset, loc), fieldType);
-        		stmt.addAll(getWriteCall(fieldHlv, new RValue(sae, fieldType)));
+        		stmt.addAll(getWriteCall(loc, fieldHlv, new RValue(sae, fieldType)));
         	}
         	
         } else if (rType instanceof CArray) {

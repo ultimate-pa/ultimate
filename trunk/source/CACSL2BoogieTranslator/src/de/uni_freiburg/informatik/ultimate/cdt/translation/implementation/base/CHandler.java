@@ -2303,7 +2303,7 @@ public class CHandler implements ICHandler {
 		if (lrVal instanceof HeapLValue) {
 			HeapLValue hlv = (HeapLValue) lrVal;
 
-			stmt.addAll(mMemoryHandler.getWriteCall(hlv, rightHandSide));
+			stmt.addAll(mMemoryHandler.getWriteCall(loc, hlv, rightHandSide));
 
 			return new ResultExpression(stmt, rightHandSide, decl, auxVars, overappr);
 		} else if (lrVal instanceof LocalLValue) {

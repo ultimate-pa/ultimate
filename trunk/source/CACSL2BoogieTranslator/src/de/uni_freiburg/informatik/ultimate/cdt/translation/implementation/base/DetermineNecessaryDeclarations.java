@@ -284,7 +284,9 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 				// --> we check all uses in IdExpression and add a dependecy to the declarator accordingly
 				// the symbolTable connects identifer and declarator
 				for (IASTDeclarator d : cd.getDeclarators()) {
-					String declaratorName = d.getName().toString();
+					IASTDeclarator nd = getInnermostFromNestedDeclarators(d);
+					
+					String declaratorName = nd.getName().toString();
 					sT.put(declaratorName, declaration);
 
 					for (String id : dependencyGraphPreliminaryInverse.keySet()) {
@@ -389,6 +391,16 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 	}
 	
 	
+
+	private IASTDeclarator getInnermostFromNestedDeclarators(IASTDeclarator d) {
+		IASTDeclarator possiblyNestedDeclarator = d;
+		while (possiblyNestedDeclarator.getNestedDeclarator() != null) {
+			possiblyNestedDeclarator = possiblyNestedDeclarator.getNestedDeclarator();
+		}
+		return possiblyNestedDeclarator;
+	}
+
+
 
 	private String getKindStringFromCompositeOrElaboratedTS(
 			IASTDeclSpecifier cts) {

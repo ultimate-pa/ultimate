@@ -309,7 +309,7 @@ public class InitializationHandler {
 				throw new AssertionError("unknown type to init");
 			}
 			if (onHeap) {
-				stmt.addAll(mMemoryHandler.getWriteCall(
+				stmt.addAll(mMemoryHandler.getWriteCall(loc,
 						(HeapLValue) var,
 						new RValue(rhs, cType)));
 			} else {
@@ -341,7 +341,7 @@ public class InitializationHandler {
 				}
 			}
 			if (onHeap) {
-				stmt.addAll(mMemoryHandler.getWriteCall((HeapLValue) var, new RValue(rhs, lCType)));
+				stmt.addAll(mMemoryHandler.getWriteCall(loc, (HeapLValue) var, new RValue(rhs, lCType)));
 			} else {
 				assert lhs != null;
 				stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
@@ -433,7 +433,7 @@ public class InitializationHandler {
 				rhs = initializer.lrVal.getValue();
 			}		
 			if (onHeap) {
-				stmt.addAll(mMemoryHandler.getWriteCall(
+				stmt.addAll(mMemoryHandler.getWriteCall(loc,
 						(HeapLValue) var,
 						new RValue(rhs, cType)));
 			} else {
@@ -522,7 +522,7 @@ public class InitializationHandler {
 						writeOffset, 
 						loc);
 
-				arrayWrites.addAll(mMemoryHandler.getWriteCall(new HeapLValue(writeLocation, valueType), val));
+				arrayWrites.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val));
 			}
 		} else {
 			for (int i = 0; i < currentSizeInt; i++) { 
@@ -676,7 +676,7 @@ public class InitializationHandler {
 
 		if (rerl.lrVal != null) {//we have an identifier (or sth else too?)
 			ResultExpression writes = new ResultExpression((RValue) null);
-			ArrayList<Statement> writeCalls = mMemoryHandler.getWriteCall(
+			ArrayList<Statement> writeCalls = mMemoryHandler.getWriteCall(loc,
 					new HeapLValue(startAddress, rerl.lrVal.cType), (RValue) rerl.lrVal);
 			writes.stmt.addAll(writeCalls);
 			return writes;
@@ -740,7 +740,7 @@ public class InitializationHandler {
 					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
 
 					fieldWrites = new ResultExpression((RValue) null);
-					fieldWrites.stmt.addAll(mMemoryHandler.getWriteCall(
+					fieldWrites.stmt.addAll(mMemoryHandler.getWriteCall(loc,
 							fieldHlv,
 							new RValue(new IdentifierExpression(loc, tmpId), underlyingFieldType)));
 					VariableDeclaration auxVarDec = new VariableDeclaration(loc, new Attribute[0], 
