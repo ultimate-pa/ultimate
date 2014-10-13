@@ -1,6 +1,5 @@
 <toolchain>
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
-	<plugin id="CodeCheck"/>
-	<plugin id="JungVisualization"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck"/>
 </toolchain>
