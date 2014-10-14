@@ -406,7 +406,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		case FPandBP:
 			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
-							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, UnsatCores.CONJUNCT_LEVEL, mServices);
+							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, UnsatCores.CONJUNCT_LEVEL, true, mServices);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

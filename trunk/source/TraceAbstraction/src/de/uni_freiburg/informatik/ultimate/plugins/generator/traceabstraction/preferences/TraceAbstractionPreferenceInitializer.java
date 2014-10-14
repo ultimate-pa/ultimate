@@ -36,6 +36,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<UnsatCores>(
 						LABEL_UnsatCores, UnsatCores.CONJUNCT_LEVEL,
 						PreferenceType.Combo, UnsatCores.values()),
+				new UltimatePreferenceItem<Boolean>(LABEL_LiveVariables, true,
+							PreferenceType.Boolean),
 				new UltimatePreferenceItem<AssertCodeBlockOrder>(LABEL_AssertCodeBlocksIncrementally, 
 							AssertCodeBlockOrder.NOT_INCREMENTALLY, PreferenceType.Combo,
 							AssertCodeBlockOrder.values()),
@@ -102,6 +104,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_unfolding2Net = "use unfolding as abstraction";
 	public static final String LABEL_AssertCodeBlocksIncrementally = "Assert CodeBlocks";
 	public static final String LABEL_UnsatCores = "Use unsat cores";
+	public static final String LABEL_LiveVariables = "Use live variables";
 
 	public static final String VALUE_ABSTRACTION = "Abstraction";
 	public static final String VALUE_RCFG = "RecursiveControlFlowGraph";

@@ -370,7 +370,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								 * value.
 								 */
 								AssertCodeBlockOrder.NOT_INCREMENTALLY,
-								UnsatCores.CONJUNCT_LEVEL, mServices);
+								UnsatCores.CONJUNCT_LEVEL, true, mServices);
 						break;
 					}
 

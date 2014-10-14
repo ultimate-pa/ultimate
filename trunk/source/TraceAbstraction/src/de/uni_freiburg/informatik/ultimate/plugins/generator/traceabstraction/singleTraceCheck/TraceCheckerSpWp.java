@@ -59,6 +59,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	protected IPredicate[] m_InterpolantsBp;
 
 	private final UnsatCores m_UnsatCores;
+	private final boolean m_LiveVariables;
 	private final static boolean m_useLiveVariables = true;
 	private final static boolean m_LogInformation = true;
 	private final static boolean m_CollectInformationAboutQuantifiedPredicates = true;
@@ -76,10 +77,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally, UnsatCores unsatCores,
-			IUltimateServiceProvider services) {
+			boolean useLiveVariables, IUltimateServiceProvider services) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
 				assertCodeBlocksIncrementally, services);
 		m_UnsatCores = unsatCores;
+		m_LiveVariables = useLiveVariables;
 	}
 
 	@Override

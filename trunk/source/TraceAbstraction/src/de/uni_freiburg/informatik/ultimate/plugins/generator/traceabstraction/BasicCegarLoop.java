@@ -92,6 +92,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	protected final INTERPOLATION m_Interpolation;
 	protected final UnsatCores m_UnsatCores;
+	protected final boolean m_UseLiveVariables;
 
 	protected final boolean m_ComputeHoareAnnotation;
 
@@ -124,6 +125,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_UnsatCores = m_Prefs.getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_UnsatCores,
 				UnsatCores.class);
+		m_UseLiveVariables = m_Prefs.getBoolean(
+				TraceAbstractionPreferenceInitializer.LABEL_LiveVariables);
 	}
 
 	@Override
@@ -176,7 +179,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case FPandBP:
 			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
-							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_UnsatCores, mServices);
+							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_UnsatCores, true, mServices);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
