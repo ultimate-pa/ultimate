@@ -64,12 +64,12 @@ public class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
 			addTestCases("AutomizerC.xml", "TACASInterpolation2015/TreeInterpolation.epf", mDirectories, mFileEndings,
 					mTimeout);
 
-			addTestCases("CodeCheckWithBE_C.xml", "TACASInterpolation2015/svComp-32bit-precise-BE-Kojak.epf",
-					mDirectories, mFileEndings, mTimeout);
-
-			addTestCases("CodeCheckWithBE_C.xml",
-					"TACASInterpolation2015/svComp-32bit-precise-BE-Kojak-SmtInterpol.epf", mDirectories, mFileEndings,
-					mTimeout);
+//			addTestCases("CodeCheckWithBE_C.xml", "TACASInterpolation2015/svComp-32bit-precise-BE-Kojak.epf",
+//					mDirectories, mFileEndings, mTimeout);
+//
+//			addTestCases("CodeCheckWithBE_C.xml",
+//					"TACASInterpolation2015/svComp-32bit-precise-BE-Kojak-SmtInterpol.epf", mDirectories, mFileEndings,
+//					mTimeout);
 
 //			addTestCases("CodeCheckWithBE_C.xml",
 //					"TACASInterpolation2015/blabla-fp.epf", mDirectories, mFileEndings,
