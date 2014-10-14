@@ -344,7 +344,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 		if (m_ComputeInterpolantsFp) {
 			mLogger.debug("Computing forward relevant predicates...");
-			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, true,
+			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, m_LiveVariables,
 					numberOfQuantifiedPredicates);
 			mLogger.debug("Checking inductivity of forward relevant predicates...");
 			assert checkPredicatesCorrect(m_InterpolantsFp, trace, tracePrecondition, tracePostcondition, "FP") : "invalid Hoare triple in FP";
@@ -367,7 +367,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 		if (m_ComputeInterpolantsBp) {
 			mLogger.debug("Computing backward relevant predicates...");
-			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePostcondition, true,
+			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePostcondition, m_LiveVariables,
 					numberOfQuantifiedPredicates);
 			mLogger.debug("Checking inductivity of backward relevant predicates...");
 			assert checkInterpolantsCorrectBackwards(m_InterpolantsBp, trace, tracePrecondition, tracePostcondition,
