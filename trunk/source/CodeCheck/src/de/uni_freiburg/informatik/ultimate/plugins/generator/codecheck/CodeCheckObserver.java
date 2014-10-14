@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -55,12 +56,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -262,6 +266,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		NestedRun<CodeBlock, AnnotatedProgramPoint> realErrorRun = null;
 		RcfgProgramExecution realErrorProgramExecution = null;
 		List<ILocation> realErrorFailurePath = null;
+		int iterationsCount = 0;
+		long startTime = System.nanoTime();
 
 		for (AnnotatedProgramPoint procRoot : procRootsToCheck) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -272,11 +278,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			mLogger.debug("Exploring : " + procRoot);
 			AnnotatedProgramPoint procedureRoot = procRoot;
 
-			// FIXME
-			// IEmptinessCheck emptinessCheck = new BFSEmptinessCheck();
 			IEmptinessCheck emptinessCheck = new NWAEmptinessCheck();
 
-			int iterationsCount = 0; // for DEBUG
+//			iterationsCount = 0;
 			if (DEBUG)
 				codeChecker.debug();
 			while (loop_forever | iterationsCount++ < iterationsLimit) {
@@ -417,22 +421,31 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				overallResult = Result.CORRECT;
 			else
 				overallResult = Result.INCORRECT;
+//
+//		mLogger.info("-----------------");
+//		mLogger.warn(overallResult);
+//		mLogger.info("-----------------");
 
-		mLogger.info("-----------------");
-		mLogger.warn(overallResult);
-		mLogger.info("-----------------");
-
-		mLogger.info("PC#: " + m_smtManager.getInterpolQueries());
-		mLogger.info("TIME#: " + m_smtManager.getInterpolQuriesTime());
-		mLogger.info("ManipulationTIME#: " + m_smtManager.getTraceCheckTime());
-		mLogger.info("EC#: " + m_smtManager.getNontrivialSatQueries());
-		mLogger.info("TIME#: " + m_smtManager.getSatCheckTime());
+//		mLogger.info("PC#: " + m_smtManager.getInterpolQueries());
+//		mLogger.info("TIME#: " + m_smtManager.getInterpolQuriesTime());
+//		mLogger.info("ManipulationTIME#: " + m_smtManager.getTraceCheckTime());
+//		mLogger.info("EC#: " + m_smtManager.getNontrivialSatQueries());
+//		mLogger.info("TIME#: " + m_smtManager.getSatCheckTime());
 		// s_Logger.info("ManipulationTIME#: " +
 		// m_smtManager.getCodeBlockCheckTime());
 		mLogger.info("MemoizationHitsSat: " + codeChecker.memoizationHitsSat);
 		mLogger.info("MemoizationHitsUnsat: " + codeChecker.memoizationHitsUnsat);
 		mLogger.info("MemoizationReturnHitsSat: " + codeChecker.memoizationReturnHitsSat);
 		mLogger.info("MemoizationReturnHitsUnsat: " + codeChecker.memoizationReturnHitsUnsat);
+		
+		//inserted by alex: we should return this kind of benchmark result
+		CodeCheckBenchmarks ccb = new CodeCheckBenchmarks();
+		ICsvProvider<Integer> ccbcsvp = ccb.createCvsProvider();
+		ArrayList<Integer> values = new ArrayList<>();
+		values.add((int) ((System.nanoTime() - startTime)/1000000));
+		values.add(iterationsCount);
+		ccbcsvp.addRow(values);
+		reportBenchmark(ccb);
 
 		if (overallResult == Result.CORRECT) {
 			// String shortDescription = "Program is safe!";
@@ -504,6 +517,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			}
 		}
 		return newRoot;
+	}
+
+	private <T> void reportBenchmark(ICsvProviderProvider<T> benchmark) {
+		String shortDescription = "Ultimate Automizer benchmark data";
+		BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.s_PLUGIN_NAME, shortDescription, benchmark);
+		// s_Logger.warn(res.getLongDescription());
+
+		reportResult(res);
 	}
 
 	private void reportPositiveResults(Collection<ProgramPoint> errorLocs) {
