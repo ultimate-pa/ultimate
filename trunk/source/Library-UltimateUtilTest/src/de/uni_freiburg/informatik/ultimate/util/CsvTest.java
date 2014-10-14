@@ -21,7 +21,7 @@ public class CsvTest {
 		A.addRow("Row", Arrays.asList(new Integer[] { 1 }));
 		B.addRow("Row", Arrays.asList(new Long[] { 1L }));
 
-		ICsvProvider<Long> something = CsvUtils.convert(A, new IExplicitConverter<Integer, Long>() {
+		ICsvProvider<Long> something = CsvUtils.convertPerValue(A, new IExplicitConverter<Integer, Long>() {
 			@Override
 			public Long convert(Integer something) {
 				return something.longValue();
@@ -89,23 +89,32 @@ public class CsvTest {
 
 	@Test
 	public void testCsvConcatenate() {
-		SimpleCsvProvider<Integer> A = new SimpleCsvProvider<>(Arrays.asList(new String[] { "A", "B", "C" }));
-		A.addRow("Row 1", Arrays.asList(new Integer[] { 1, 2, 3 }));
-		A.addRow("Row 2", Arrays.asList(new Integer[] { 4, 5, 6 }));
+		SimpleCsvProvider<Integer> A = new SimpleCsvProvider<>(Arrays.asList(new String[] { "A", "B", "C", "X" }));
+		A.addRow("Row 1", Arrays.asList(new Integer[] { 1, 2, 3, 10 }));
+		A.addRow("Row 2", Arrays.asList(new Integer[] { 4, 5, 6, 20 }));
 
 		SimpleCsvProvider<Integer> B = new SimpleCsvProvider<>(Arrays.asList(new String[] { "A", "B", "C" }));
 		B.addRow("Row 3", Arrays.asList(new Integer[] { 1, 2, 3 }));
 		B.addRow("Row 4", Arrays.asList(new Integer[] { 4, 5, 6 }));
 
-		SimpleCsvProvider<Integer> C = new SimpleCsvProvider<>(Arrays.asList(new String[] { "A", "B", "C" }));
-		C.addRow("Row 1", Arrays.asList(new Integer[] { 1, 2, 3 }));
-		C.addRow("Row 2", Arrays.asList(new Integer[] { 4, 5, 6 }));
-		C.addRow("Row 3", Arrays.asList(new Integer[] { 1, 2, 3 }));
-		C.addRow("Row 4", Arrays.asList(new Integer[] { 4, 5, 6 }));
+		SimpleCsvProvider<Integer> C = new SimpleCsvProvider<>(Arrays.asList(new String[] { "A", "B", "C", "X" }));
+		C.addRow("Row 1", Arrays.asList(new Integer[] { 1, 2, 3, 10 }));
+		C.addRow("Row 2", Arrays.asList(new Integer[] { 4, 5, 6, 20 }));
+		C.addRow("Row 3", Arrays.asList(new Integer[] { 1, 2, 3, null }));
+		C.addRow("Row 4", Arrays.asList(new Integer[] { 4, 5, 6, null }));
 
 		ICsvProvider<Integer> something = CsvUtils.concatenateRows(A, B);
 
-		Assert.assertTrue("something is not equal to B", contentAsStringIsEqual(B.getTable(), something.getTable()));
+		boolean isEqual = contentAsStringIsEqual(C.getTable(), something.getTable());
+		if (!isEqual) {
+			System.err.println("B");
+			System.err.println(B.toCsv(null, null));
+
+			System.err.println("something");
+			System.err.println(something.toCsv(null, null));
+		}
+
+		Assert.assertTrue("something is not equal to B", isEqual);
 	}
 
 	@Test
@@ -120,7 +129,9 @@ public class CsvTest {
 
 		ICsvProvider<Integer> something = CsvUtils.addColumn(B, "C", 2, Arrays.asList(new Integer[] { 3, 6 }));
 
-		Assert.assertTrue("something is not equal to A", contentAsStringIsEqual(A.getTable(), something.getTable()));
+		boolean isEqual = contentAsStringIsEqual(A.getTable(), something.getTable());
+
+		Assert.assertTrue("something is not equal to A", isEqual);
 	}
 
 	@Test
@@ -138,9 +149,9 @@ public class CsvTest {
 
 		Assert.assertTrue("something is not equal to A", contentAsStringIsEqual(B.getTable(), something.getTable()));
 	}
-	
-	public void testWriteCsv(){
-		
+
+	public void testWriteCsv() {
+
 	}
 
 	private <T> boolean contentAsStringIsEqual(List<List<T>> aList, List<List<T>> bList) {
@@ -155,9 +166,17 @@ public class CsvTest {
 			for (int j = 0; j < rowA.size(); ++j) {
 				T entryA = rowA.get(j);
 				T entryB = rowB.get(j);
-				if (!entryA.toString().equals(entryB.toString())) {
+				if (entryA == null && entryB == null) {
+					continue;
+				}
+				if (entryA != null && entryB != null) {
+					if (!entryA.toString().equals(entryB.toString())) {
+						return false;
+					}
+				} else {
 					return false;
 				}
+
 			}
 		}
 		return true;

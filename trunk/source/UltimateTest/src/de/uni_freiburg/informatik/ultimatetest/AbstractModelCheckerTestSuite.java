@@ -6,30 +6,25 @@ import java.util.Collection;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
-	private List<UltimateTestCase> m_testCases = new ArrayList<UltimateTestCase>();
-	private static final String m_PathToSettings = "examples/settings/";
-	private static final String m_PathToToolchains = "examples/toolchains/";
+	protected List<UltimateTestCase> mTestCases = new ArrayList<UltimateTestCase>();
+	private static final String mPathToSettings = "examples/settings/";
+	private static final String mPathToToolchains = "examples/toolchains/";
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		return m_testCases;
+		return mTestCases;
 	}
 	
 	public abstract ITestResultDecider constructITestResultDecider(UltimateRunDefinition ultimateRunDefinition);
-	
-	public List<IIncrementalLog> getLogFiles(){
-		return null;
-	}
 
 	protected void addTestCases(File toolchainFile, File settingsFile, Collection<File> inputFiles, long deadline) {
 		for (File inputFile : inputFiles) {
 			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
 			UltimateStarter starter = new UltimateStarter(urd, deadline);
-			m_testCases.add(new UltimateTestCase(urd.generateShortStringRepresentation(),
+			mTestCases.add(new UltimateTestCase(urd.generateShortStringRepresentation(),
 					constructITestResultDecider(urd), 
 					starter, 
 					urd, 
@@ -52,8 +47,8 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	protected void addTestCases(String toolchain, String settings, 
 			String[] directories, String[] fileEndings,	long deadline) {
 
-		File toolchainFile = new File(Util.getPathFromTrunk(m_PathToToolchains + toolchain));
-		File settingsFile = new File(Util.getPathFromTrunk(m_PathToSettings + settings));
+		File toolchainFile = new File(Util.getPathFromTrunk(mPathToToolchains + toolchain));
+		File settingsFile = new File(Util.getPathFromTrunk(mPathToSettings + settings));
 		Collection<File> testFiles = new ArrayList<File>();
 		for (String directory : directories) {
 			testFiles.addAll(getInputFiles(directory, fileEndings));

@@ -521,7 +521,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private <T> void reportBenchmark(ICsvProviderProvider<T> benchmark) {
-		String shortDescription = "Ultimate Automizer benchmark data";
+		String shortDescription = "Ultimate CodeCheck benchmark data";
 		BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.s_PLUGIN_NAME, shortDescription, benchmark);
 		// s_Logger.warn(res.getLongDescription());
 

@@ -20,14 +20,14 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 /**
  * This class provides functions to measure runtime and memory consumption
  * 
- * @author dietsch
+ * @author dietsch@informatik.uni-freiburg.de
  * 
  */
 public class Benchmark implements ICsvProviderProvider<Double> {
 
 	// Get maximum size of heap in bytes. The heap cannot grow beyond this
 	// size. Any attempt will result in an OutOfMemoryException.
-	private long mMaxMemorySize;
+	private long mMaxMemorySizeBytes;
 
 	private int mCurrentIndex;
 	private HashMap<String, Watch> mWatches;
@@ -116,9 +116,9 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		if (watch.mStartTime == -1) {
 			// this watch was started via startAll
 			watch.mStartTime = mGlobalWatch.mStartTime;
-			watch.mStartMemorySize = mGlobalWatch.mStartMemorySize;
-			watch.mStartMemoryFreeSize = mGlobalWatch.mStartMemoryFreeSize;
-			watch.mStartPeakMemorySize = mGlobalWatch.mStartPeakMemorySize;
+			watch.mStartMemorySizeBytes = mGlobalWatch.mStartMemorySizeBytes;
+			watch.mStartMemoryFreeSizeBytes = mGlobalWatch.mStartMemoryFreeSizeBytes;
+			watch.mStartPeakMemorySizeBytes = mGlobalWatch.mStartPeakMemorySizeBytes;
 		}
 		watch.stop(stopTime);
 	}
@@ -141,7 +141,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	public void reset() {
 		mCurrentIndex = 1;
 		mGlobalWatch = new Watch("Global", 0);
-		mMaxMemorySize = Runtime.getRuntime().maxMemory();
+		mMaxMemorySizeBytes = Runtime.getRuntime().maxMemory();
 		mWatches = new HashMap<String, Watch>();
 	}
 
@@ -187,7 +187,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		if (watch == null) {
 			return -1;
 		} else {
-			return getNanosecondsToUnit(watch.mElapsedTime, unit);
+			return getNanosecondsToUnit(watch.mElapsedTimeNs, unit);
 		}
 	}
 
@@ -196,7 +196,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		if (watch == null) {
 			return -1;
 		} else {
-			return watch.mStartMemorySize;
+			return watch.mStartMemorySizeBytes;
 		}
 	}
 
@@ -205,7 +205,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		if (watch == null) {
 			return -1;
 		} else {
-			return watch.mStopMemorySize;
+			return watch.mStopMemorySizeBytes;
 		}
 	}
 
@@ -214,7 +214,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		if (watch == null) {
 			return -1;
 		} else {
-			return watch.mStartMemoryFreeSize;
+			return watch.mStartMemoryFreeSizeBytes;
 		}
 	}
 
@@ -223,7 +223,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		if (watch == null) {
 			return -1;
 		} else {
-			return watch.mStopMemoryFreeSize;
+			return watch.mStopMemoryFreeSizeBytes;
 		}
 	}
 
@@ -232,12 +232,12 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		if (watch == null) {
 			return -1;
 		} else {
-			return watch.mPeakMemorySize - watch.mStartPeakMemorySize;
+			return watch.mPeakMemorySizeBytes - watch.mStartPeakMemorySizeBytes;
 		}
 	}
 
 	public long getMaxHeapSize(String title) {
-		return mMaxMemorySize;
+		return mMaxMemorySizeBytes;
 	}
 
 	public List<String> getTitles() {
@@ -317,16 +317,16 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		private int mIndex;
 
 		private long mStartTime;
-		private long mElapsedTime;
+		private long mElapsedTimeNs;
 
-		private long mStartMemorySize;
-		private long mStopMemorySize;
+		private long mStartMemorySizeBytes;
+		private long mStopMemorySizeBytes;
 
-		private long mStartMemoryFreeSize;
-		private long mStopMemoryFreeSize;
+		private long mStartMemoryFreeSizeBytes;
+		private long mStopMemoryFreeSizeBytes;
 
-		private long mStartPeakMemorySize;
-		private long mPeakMemorySize;
+		private long mStartPeakMemorySizeBytes;
+		private long mPeakMemorySizeBytes;
 
 		private List<MemoryPoolMXBean> mMemoryPoolBeans;
 
@@ -338,24 +338,24 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		}
 
 		private void start() {
-			mStartMemorySize = Runtime.getRuntime().totalMemory();
-			mStartMemoryFreeSize = Runtime.getRuntime().freeMemory();
+			mStartMemorySizeBytes = Runtime.getRuntime().totalMemory();
+			mStartMemoryFreeSizeBytes = Runtime.getRuntime().freeMemory();
 
-			long startMemoryUsage = 0;
+			long startMemoryUsageBytes = 0;
 			for (MemoryPoolMXBean bean : mMemoryPoolBeans) {
 				bean.resetPeakUsage();
 				if (isHeap(bean.getName())) {
-					startMemoryUsage = startMemoryUsage + bean.getPeakUsage().getUsed();
+					startMemoryUsageBytes = startMemoryUsageBytes + bean.getPeakUsage().getUsed();
 				}
 			}
-			mStartPeakMemorySize = startMemoryUsage;
+			mStartPeakMemorySizeBytes = startMemoryUsageBytes;
 			mStartTime = System.nanoTime();
 		}
 
 		private void stop(long stopTime) {
-			mElapsedTime = stopTime - mStartTime + mElapsedTime;
-			mStopMemorySize = Runtime.getRuntime().totalMemory();
-			mStopMemoryFreeSize = Runtime.getRuntime().freeMemory();
+			mElapsedTimeNs = stopTime - mStartTime + mElapsedTimeNs;
+			mStopMemorySizeBytes = Runtime.getRuntime().totalMemory();
+			mStopMemoryFreeSizeBytes = Runtime.getRuntime().freeMemory();
 
 			long stopMemoryUsage = 0;
 			for (MemoryPoolMXBean bean : mMemoryPoolBeans) {
@@ -363,21 +363,21 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 					stopMemoryUsage = stopMemoryUsage + bean.getPeakUsage().getUsed();
 				}
 			}
-			mPeakMemorySize = Math.max(mPeakMemorySize, Math.max(stopMemoryUsage, mStartPeakMemorySize));
+			mPeakMemorySizeBytes = Math.max(mPeakMemorySizeBytes, Math.max(stopMemoryUsage, mStartPeakMemorySizeBytes));
 		}
 
 		private void reset() {
 			mStartTime = -1;
-			mElapsedTime = 0;
+			mElapsedTimeNs = 0;
 
-			mStartMemorySize = 0;
-			mStartMemoryFreeSize = 0;
+			mStartMemorySizeBytes = 0;
+			mStartMemoryFreeSizeBytes = 0;
 
-			mStopMemorySize = 0;
-			mStopMemoryFreeSize = 0;
+			mStopMemorySizeBytes = 0;
+			mStopMemoryFreeSizeBytes = 0;
 
-			mStartPeakMemorySize = 0;
-			mPeakMemorySize = 0;
+			mStartPeakMemorySizeBytes = 0;
+			mPeakMemorySizeBytes = 0;
 		}
 
 		@Override
@@ -390,8 +390,8 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 				return String.format("%s was not measured", mTitle);
 			}
 
-			long memoryDelta = mStopMemorySize - mStartMemorySize;
-			long freeMemoryDelta = mStartMemoryFreeSize - mStopMemoryFreeSize;
+			long memoryDelta = mStopMemorySizeBytes - mStartMemorySizeBytes;
+			long freeMemoryDelta = mStartMemoryFreeSizeBytes - mStopMemoryFreeSizeBytes;
 			String freeMemoryDeltaPrefix = freeMemoryDelta < 0 ? "-" : "";
 			freeMemoryDelta = Math.abs(freeMemoryDelta);
 
@@ -402,28 +402,28 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 			StringBuilder sb = new StringBuilder();
 
 			sb.append(String.format("%s took %." + decimals + "f %s.", mTitle,
-					getNanosecondsToUnit(mElapsedTime, timeUnit), getUnitString(timeUnit)));
+					getNanosecondsToUnit(mElapsedTimeNs, timeUnit), getUnitString(timeUnit)));
 
 			if (memoryDelta != 0) {
 				String heapPrefix = memoryDelta < 0 ? "-" : "";
 				memoryDelta = Math.abs(memoryDelta);
 				sb.append(String.format(" Allocated memory was %s in the beginning and %s in the end (delta: %s%s).",
-						Utils.humanReadableByteCount(mStartMemorySize, true),
-						Utils.humanReadableByteCount(mStopMemorySize, true), heapPrefix,
+						Utils.humanReadableByteCount(mStartMemorySizeBytes, true),
+						Utils.humanReadableByteCount(mStopMemorySizeBytes, true), heapPrefix,
 						Utils.humanReadableByteCount(memoryDelta, true)));
 			} else {
 				sb.append(String.format(" Allocated memory is still %s.",
-						Utils.humanReadableByteCount(mStartMemorySize, true)));
+						Utils.humanReadableByteCount(mStartMemorySizeBytes, true)));
 			}
 
 			if (freeMemoryDelta != 0) {
 				sb.append(String.format(" Free memory was %s in the beginning and %s in the end (delta: %s%s).",
-						Utils.humanReadableByteCount(mStartMemoryFreeSize, true),
-						Utils.humanReadableByteCount(mStopMemoryFreeSize, true), freeMemoryDeltaPrefix,
+						Utils.humanReadableByteCount(mStartMemoryFreeSizeBytes, true),
+						Utils.humanReadableByteCount(mStopMemoryFreeSizeBytes, true), freeMemoryDeltaPrefix,
 						Utils.humanReadableByteCount(freeMemoryDelta, true)));
 			} else {
 				sb.append(String.format(" Free memory is still %s.",
-						Utils.humanReadableByteCount(mStartMemoryFreeSize, true)));
+						Utils.humanReadableByteCount(mStartMemoryFreeSizeBytes, true)));
 			}
 
 			if (peakMemoryDelta != 0) {
@@ -433,13 +433,13 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 				sb.append(" There was no memory consumed.");
 			}
 
-			sb.append(String.format(" Max. memory is %s", Utils.humanReadableByteCount(mMaxMemorySize, true)));
+			sb.append(String.format(" Max. memory is %s", Utils.humanReadableByteCount(mMaxMemorySizeBytes, true)));
 			return sb.toString();
 
 		}
 
 		public long getPeakMemoryDelta() {
-			return mPeakMemorySize - mStartPeakMemorySize;
+			return mPeakMemorySizeBytes - mStartPeakMemorySizeBytes;
 		}
 
 	}
@@ -448,26 +448,26 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	public ICsvProvider<Double> createCvsProvider() {
 
 		List<String> columHeaders = new ArrayList<>();
-		columHeaders.add("Runtime");
-		columHeaders.add("Peak memory consumption");
-		columHeaders.add("Allocated memory (Start)");
-		columHeaders.add("Allocated memory (End)");
-		columHeaders.add("Free memory (Start)");
-		columHeaders.add("Free memory (End)");
-		columHeaders.add("Max. memory available");
+		columHeaders.add("Runtime (ns)");
+		columHeaders.add("Peak memory consumption (bytes)");
+		columHeaders.add("Allocated memory start (bytes)");
+		columHeaders.add("Allocated memory end (bytes)");
+		columHeaders.add("Free memory start (bytes)");
+		columHeaders.add("Free memory end (bytes)");
+		columHeaders.add("Max. memory available (bytes)");
 
 		SimpleCsvProvider<Double> rtr = new SimpleCsvProvider<>(columHeaders);
 
 		for (Watch w : getSortedWatches()) {
 
 			List<Double> values = new ArrayList<>();
-			values.add(Double.valueOf(w.mElapsedTime));
+			values.add(Double.valueOf(w.mElapsedTimeNs));
 			values.add(Double.valueOf(w.getPeakMemoryDelta()));
-			values.add(Double.valueOf(w.mStartMemorySize));
-			values.add(Double.valueOf(w.mStopMemorySize));
-			values.add(Double.valueOf(w.mStartMemoryFreeSize));
-			values.add(Double.valueOf(w.mStopMemoryFreeSize));
-			values.add(Double.valueOf(mMaxMemorySize));
+			values.add(Double.valueOf(w.mStartMemorySizeBytes));
+			values.add(Double.valueOf(w.mStopMemorySizeBytes));
+			values.add(Double.valueOf(w.mStartMemoryFreeSizeBytes));
+			values.add(Double.valueOf(w.mStopMemoryFreeSizeBytes));
+			values.add(Double.valueOf(mMaxMemorySizeBytes));
 			rtr.addRow(w.mTitle, values);
 		}
 

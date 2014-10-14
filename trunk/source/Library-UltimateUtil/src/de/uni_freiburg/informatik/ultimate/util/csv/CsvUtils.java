@@ -1,9 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.util.csv;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -20,13 +20,26 @@ public class CsvUtils {
 	}
 
 	/**
-	 * Converts one CsvProvider to another with an explicit converter. This is
-	 * always type-safe.
+	 * Just convert one provider to another
+	 * 
+	 * @param provider
+	 * @param converter
+	 * @return
+	 */
+	public static <T extends ICsvProvider<?>, K extends ICsvProvider<?>> K convertComplete(T provider,
+			IExplicitConverter<T, K> converter) {
+		return converter.convert(provider);
+	}
+
+	/**
+	 * Converts one CsvProvider to another with an explicit converter. The
+	 * converter is called for each value in the provider. This is always
+	 * type-safe.
 	 * 
 	 * @param provider
 	 * @return
 	 */
-	public static <T, K> ICsvProvider<K> convert(ICsvProvider<T> provider, IExplicitConverter<T, K> converter) {
+	public static <T, K> ICsvProvider<K> convertPerValue(ICsvProvider<T> provider, IExplicitConverter<T, K> converter) {
 		ICsvProvider<K> rtr = new SimpleCsvProvider<>(provider.getColumnTitles());
 		List<String> rowTitles = provider.getRowHeaders();
 		List<List<T>> table = provider.getTable();
@@ -78,8 +91,28 @@ public class CsvUtils {
 		return rtr;
 	}
 
+	/**
+	 * Creates a new ICsvProvider that has only the columns in columnTitles in
+	 * the order of the original ICsvProvider.
+	 * 
+	 * @param provider
+	 * @param newColumnTitles
+	 * @return
+	 */
 	public static <T> ICsvProvider<T> projectColumn(ICsvProvider<T> provider, String columnTitle) {
 		return projectColumn(provider, Collections.singleton(columnTitle));
+	}
+
+	/**
+	 * Creates a new ICsvProvider that has only the columns in columnTitles in
+	 * the order of the original ICsvProvider.
+	 * 
+	 * @param provider
+	 * @param newColumnTitles
+	 * @return
+	 */
+	public static <T> ICsvProvider<T> projectColumn(ICsvProvider<T> provider, String[] columnsToKeep) {
+		return projectColumn(provider, Arrays.asList(columnsToKeep));
 	}
 
 	/**
@@ -97,17 +130,29 @@ public class CsvUtils {
 			return newProvider;
 		}
 
+		// build index list
+		List<Integer> indexList = new ArrayList<>();
+		for (String newColumnTitle : newColumnTitles) {
+			int newIdx = -1;
+			for (int i = 0; i < provider.getColumnTitles().size(); ++i) {
+				String oldColumnTitle = provider.getColumnTitles().get(i);
+				if (oldColumnTitle.equals(newColumnTitle)) {
+					newIdx = i;
+					break;
+				}
+			}
+			indexList.add(newIdx);
+		}
+
 		int rowIndex = 0;
 		for (String rowTitle : provider.getRowHeaders()) {
 			List<T> newRow = new ArrayList<>();
-			int i = 0;
-			int j = 0;
-			for (String originalColumnTitle : provider.getColumnTitles()) {
-				if (newColumnTitles.contains(originalColumnTitle)) {
-					newRow.add(i, provider.getRow(rowIndex).get(j));
-					i++;
+			for (int cellIndex : indexList) {
+				if (cellIndex == -1) {
+					newRow.add(null);
+				} else {
+					newRow.add(provider.getRow(rowIndex).get(cellIndex));
 				}
-				j++;
 			}
 			rowIndex++;
 			newProvider.addRow(rowTitle, newRow);
@@ -221,9 +266,16 @@ public class CsvUtils {
 			int pAindex = 0;
 			int pBindex = 0;
 			while (pAindex < providerAColumns.size() || pBindex < providerBColumns.size()) {
-				String currentPACol = providerAColumns.get(pAindex);
-				String currentPBCol = providerBColumns.get(pBindex);
-				if (currentPACol.equals(currentPBCol)) {
+				String currentPACol = null;
+				if (pAindex < providerAColumns.size()) {
+					currentPACol = providerAColumns.get(pAindex);
+				}
+				String currentPBCol = null;
+				if (pBindex < providerBColumns.size()) {
+					currentPBCol = providerBColumns.get(pBindex);
+				}
+
+				if (currentPACol != null && currentPACol.equals(currentPBCol)) {
 					resultColumns.add(currentPACol);
 					pAindex++;
 					pBindex++;
@@ -270,13 +322,13 @@ public class CsvUtils {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Given a map, return an ICsvProvider that has a single row. Its column
-	 * header are the keys of the map, the row entries are the values of the 
+	 * header are the keys of the map, the row entries are the values of the
 	 * map.
 	 */
-	public static <T> ICsvProvider<T> constructCvsProviderFromMap(Map<String,T> map) {
+	public static <T> ICsvProvider<T> constructCvsProviderFromMap(Map<String, T> map) {
 		List<String> keys = new ArrayList<String>(map.keySet());
 		SimpleCsvProvider<T> scp = new SimpleCsvProvider<T>(keys);
 		List<T> values = new ArrayList<T>();
@@ -286,5 +338,102 @@ public class CsvUtils {
 		scp.addRow(values);
 		return scp;
 	}
+
+	public static <T> StringBuilder toHTML(ICsvProvider<T> provider, StringBuilder currentBuilder,
+			boolean withHTMLHeaders, IExplicitConverter<T, String> cellDecorator) {
+		if (currentBuilder == null) {
+			currentBuilder = new StringBuilder();
+		}
+
+		if (cellDecorator == null) {
+			cellDecorator = new IExplicitConverter<T, String>() {
+				@Override
+				public String convert(T something) {
+					if(something == null){
+						return "-";
+					}
+					return something.toString();
+				}
+			};
+		}
+
+		String linebreak = System.getProperty("line.separator");
+
+		if (withHTMLHeaders) {
+			currentBuilder.append("<html><body>").append(linebreak);
+		}
+		currentBuilder.append("<table style=\"width:100%\">").append(linebreak);
+
+		if (hasRowHeaders(provider)) {
+			List<String> columnHeaders = provider.getColumnTitles();
+			currentBuilder.append("<tr><th></th>");
+			for (String header : columnHeaders) {
+				currentBuilder.append("<th>").append(header).append("</th>");
+			}
+			currentBuilder.append("</tr>").append(linebreak);
+
+			List<String> rowHeaders = provider.getRowHeaders();
+			List<List<T>> rows = provider.getTable();
+			for (int i = 0; i < rows.size(); ++i) {
+				currentBuilder.append("<tr><td>");
+				currentBuilder.append(rowHeaders.get(i));
+				currentBuilder.append("</td>");
+				for (T cell : rows.get(i)) {
+					currentBuilder.append("<td>").append(cellDecorator.convert(cell)).append("</td>");
+				}
+				currentBuilder.append("</tr>").append(linebreak);
+			}
+
+		} else {
+			List<String> columnHeaders = provider.getColumnTitles();
+			currentBuilder.append("<tr>");
+			for (String header : columnHeaders) {
+				currentBuilder.append("<th>").append(header).append("</th>");
+			}
+			currentBuilder.append("</tr>").append(linebreak);
+
+			List<List<T>> rows = provider.getTable();
+			for (int i = 0; i < rows.size(); ++i) {
+				currentBuilder.append("<tr>");
+				for (T cell : rows.get(i)) {
+					currentBuilder.append("<td>").append(cellDecorator.convert(cell)).append("</td>");
+				}
+				currentBuilder.append("</tr>").append(linebreak);
+			}
+		}
+
+		currentBuilder.append("</table>").append(linebreak);
+		if (withHTMLHeaders) {
+			currentBuilder.append("</body></html>").append(linebreak);
+		}
+
+		return currentBuilder;
+	}
+
+	private static <T> boolean hasRowHeaders(ICsvProvider<T> provider) {
+		List<String> rowHeaders = provider.getRowHeaders();
+		if (rowHeaders == null || rowHeaders.isEmpty()) {
+			return false;
+		}
+
+		for (String header : rowHeaders) {
+			if (header != null && !header.isEmpty()) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+//	public class NumbersFormatter implements IExplicitConverter<Object, String>
+//	{
+//		public NumbersFormatter(){
+//			
+//		}
+//		@Override
+//		public String convert(Object something) {
+//			return null;
+//		}
+//		
+//	}
 
 }

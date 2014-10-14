@@ -59,7 +59,7 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 		// get longest string
 		int maxLength = 0;
 		for (String rowTitle : mRowTitles) {
-			if(rowTitle == null){
+			if (rowTitle == null) {
 				continue;
 			}
 			if (rowTitle.length() > maxLength) {
@@ -101,10 +101,17 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 	}
 
 	@Override
-	public StringBuilder toCsv() {
-		StringBuilder sb = new StringBuilder();
+	public StringBuilder toCsv(StringBuilder sb, String cellSeparator) {
+		if (sb == null) {
+			sb = new StringBuilder();
+		}
+
 		String lineSeparator = System.getProperty("line.separator");
 		String separator = ",";
+		if (cellSeparator != null && !cellSeparator.isEmpty()) {
+			separator = cellSeparator;
+		}
+
 		sb.append(separator);
 		for (String s : mColumnTitles) {
 			sb.append(s).append(separator);
@@ -135,11 +142,11 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 	private void checkForSeparators(String cellString, String cellSeparator, String lineSeparator) {
 		if (cellString.contains(cellSeparator)) {
 			throw new IllegalArgumentException(
-					"The following cell contains the character that is used to separate cells: ");
+					"The following cell contains the character that is used to separate cells: " + cellString);
 		}
 		if (cellString.contains(lineSeparator)) {
 			throw new IllegalArgumentException(
-					"The following cell contains the character that is used to separate lines: ");
+					"The following cell contains the character that is used to separate lines: " + cellString);
 		}
 	}
 
@@ -160,6 +167,5 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 		}
 		return mTable.get(index);
 	}
-
 
 }

@@ -637,7 +637,7 @@ public class Util {
 			logFile.getParentFile().mkdirs();
 		}
 
-		String summaryLog = testSummary.getSummaryLog();
+		String summaryLog = testSummary.getSummaryLog().trim();
 		if (summaryLog == null || summaryLog.isEmpty()) {
 			return;
 		}

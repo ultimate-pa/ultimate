@@ -33,11 +33,11 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 public class CsvConcatenator implements ITestSummary {
 
 	private final Class<? extends UltimateTestSuite> m_UltimateTestSuite;
-	private final Class<? extends ICsvProviderProvider<Object>> m_Benchmark;
+	private final Class<? extends ICsvProviderProvider<? extends Object>> m_Benchmark;
 	private ICsvProvider<Object> m_CsvProvider;
 
 	public CsvConcatenator(Class<? extends UltimateTestSuite> ultimateTestSuite,
-			Class<? extends ICsvProviderProvider<Object>> benchmark) {
+			Class<? extends ICsvProviderProvider<? extends Object>> benchmark) {
 		super();
 		m_UltimateTestSuite = ultimateTestSuite;
 		m_Benchmark = benchmark;
@@ -47,7 +47,7 @@ public class CsvConcatenator implements ITestSummary {
 
 	@Override
 	public String getSummaryLog() {
-		return m_CsvProvider.toCsv().toString();
+		return m_CsvProvider.toCsv(null, null).toString();
 	}
 
 	@Override
@@ -71,8 +71,9 @@ public class CsvConcatenator implements ITestSummary {
 		if (resultService == null) {
 			return;
 		}
-		for (ICsvProviderProvider<Object> benchmarkResult : Util.filterBenchmarks(resultService.getResults(),
+		for (ICsvProviderProvider<?> benchmarkResultWildcard : Util.filterBenchmarks(resultService.getResults(),
 				m_Benchmark)) {
+			ICsvProviderProvider<Object> benchmarkResult = (ICsvProviderProvider<Object>) benchmarkResultWildcard;
 			ICsvProvider<Object> benchmarkCsv = benchmarkResult.createCvsProvider();
 			ICsvProvider<Object> benchmarkCsvWithRunDefinition = addUltimateRunDefinition(ultimateRunDefinition,
 					benchmarkCsv, category, message);
