@@ -7,16 +7,23 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
-public class CodeCheckBenchmarks implements ICsvProviderProvider<Integer> {
+public class CodeCheckBenchmarks implements ICsvProviderProvider<Object> {
 
-	private SimpleCsvProvider<Integer> mCsvP;
+	private SimpleCsvProvider<Object> mCsvP;
 
 	@Override
-	public ICsvProvider<Integer> createCvsProvider() {
-		ArrayList<String> columnTitles = new ArrayList<>();
-		columnTitles.add("time (ms)");
-		columnTitles.add("#iterations");
-		mCsvP = new SimpleCsvProvider<Integer>(columnTitles);
+	public ICsvProvider<Object> createCvsProvider() {
+		if (mCsvP == null) {
+			ArrayList<String> columnTitles = new ArrayList<>();
+			columnTitles.add("time (ms)");
+			columnTitles.add("#iterations");
+			columnTitles.add(CodeCheckObserver.s_NumberOfCodeBlocks);
+			columnTitles.add(CodeCheckObserver.s_SizeOfPredicates);
+			columnTitles.add(CodeCheckObserver.s_ConjunctsInSSA);
+			columnTitles.add(CodeCheckObserver.s_ConjunctsInUnsatCore);
+			columnTitles.add("InterPolantCoveringCapability");
+			mCsvP = new SimpleCsvProvider<Object>(columnTitles);
+		}
 		return mCsvP;
 	}
 
@@ -25,8 +32,8 @@ public class CodeCheckBenchmarks implements ICsvProviderProvider<Integer> {
 		StringBuilder sb = new StringBuilder();
 		sb.append("CodeCheck benchmark data:\n");
 		sb.append(mCsvP.getColumnTitles() + "\n");
-		for (List<Integer> l : mCsvP.getTable()) {
-			for (Integer i : l) {
+		for (List<Object> l : mCsvP.getTable()) {
+			for (Object i : l) {
 				sb.append(i);
 				sb.append("\t");
 			}

@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
@@ -75,6 +77,12 @@ enum Result {
 }
 
 public class CodeCheckObserver implements IUnmanagedObserver {
+
+	protected final static String s_SizeOfPredicates = "SizeOfPredicates";
+	protected final static String s_NumberOfQuantifiedPredicates = "NumberOfQuantifiedPredicates";
+	protected final static String s_ConjunctsInSSA = "Conjuncts in SSA";
+	protected final static String s_ConjunctsInUnsatCore = "Conjuncts in UnsatCore";
+	protected final static String s_NumberOfCodeBlocks = "NumberOfCodeBlocks";
 
 	public final Logger mLogger;
 	private CodeChecker codeChecker;
@@ -264,8 +272,13 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		boolean allSafe = true;
 		boolean verificationInterrupted = false;
 		RcfgProgramExecution realErrorProgramExecution = null;
+		
+		//data collector variables
 		int iterationsCount = 0;
 		long startTime = System.nanoTime();
+		BackwardCoveringInformation bwCoveringInfo = null;
+		
+		TraceChecker traceChecker = null;
 
 		for (AnnotatedProgramPoint procRoot : procRootsToCheck) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -305,7 +318,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					if (GlobalSettings._instance._predicateUnification == PredicateUnification.PER_ITERATION)
 						_predicateUnifier = new PredicateUnifier(mServices, m_smtManager);
 
-					TraceChecker traceChecker = null;
+					traceChecker = null;
 					switch (GlobalSettings._instance._solverAndInterpolator) {
 					case SMTINTERPOL:
 						traceChecker = new TraceChecker(_predicateUnifier.getTruePredicate(),
@@ -376,6 +389,17 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 									INTERPOLATION.ForwardPredicates);
 							break;
 						}
+						
+						//interpolant coverage capability stuff
+						ArrayList<ProgramPoint> programPoints = new ArrayList<>();
+						for (AnnotatedProgramPoint app : errorRun.getStateSequence())
+							programPoints.add(app.getProgramPoint());
+						BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(traceChecker,
+								programPoints, mLogger);
+						if (bwCoveringInfo == null)
+							bwCoveringInfo = bci;
+						else
+							bwCoveringInfo = new BackwardCoveringInformation(bwCoveringInfo, bci);
 
 						IPredicate[] interpolants = traceChecker.getInterpolants();
 						if (GlobalSettings._instance._memoizeNormalEdgeChecks
@@ -425,10 +449,15 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		
 		//inserted by alex: we should return this kind of benchmark result
 		CodeCheckBenchmarks ccb = new CodeCheckBenchmarks();
-		ICsvProvider<Integer> ccbcsvp = ccb.createCvsProvider();
-		ArrayList<Integer> values = new ArrayList<>();
+		ICsvProvider<Object> ccbcsvp = ccb.createCvsProvider();
+		ArrayList<Object> values = new ArrayList<>();
 		values.add((int) ((System.nanoTime() - startTime)/1000000));
 		values.add(iterationsCount);
+		values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_NumberOfCodeBlocks));
+		values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicates));
+		values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInSSA));
+		values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInUnsatCore));
+		values.add(bwCoveringInfo);
 		ccbcsvp.addRow(values);
 		reportBenchmark(ccb);
 
