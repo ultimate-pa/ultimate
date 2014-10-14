@@ -263,9 +263,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		Result overallResult = Result.UNKNOWN;
 		boolean allSafe = true;
 		boolean verificationInterrupted = false;
-		NestedRun<CodeBlock, AnnotatedProgramPoint> realErrorRun = null;
 		RcfgProgramExecution realErrorProgramExecution = null;
-		List<ILocation> realErrorFailurePath = null;
 		int iterationsCount = 0;
 		long startTime = System.nanoTime();
 
@@ -393,10 +391,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						mLogger.warn("This program is UNSAFE, Check terminated with " + iterationsCount
 								+ " iterations.");
 						allSafe = false;
-						realErrorRun = errorRun;
 						traceChecker.computeRcfgProgramExecution();
 						realErrorProgramExecution = traceChecker.getRcfgProgramExecution();
-						realErrorFailurePath = realErrorProgramExecution.getLocationList();
 
 						if (DEBUG)
 							codeChecker.debug();
@@ -421,22 +417,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				overallResult = Result.CORRECT;
 			else
 				overallResult = Result.INCORRECT;
-//
-//		mLogger.info("-----------------");
-//		mLogger.warn(overallResult);
-//		mLogger.info("-----------------");
 
-//		mLogger.info("PC#: " + m_smtManager.getInterpolQueries());
-//		mLogger.info("TIME#: " + m_smtManager.getInterpolQuriesTime());
-//		mLogger.info("ManipulationTIME#: " + m_smtManager.getTraceCheckTime());
-//		mLogger.info("EC#: " + m_smtManager.getNontrivialSatQueries());
-//		mLogger.info("TIME#: " + m_smtManager.getSatCheckTime());
-		// s_Logger.info("ManipulationTIME#: " +
-		// m_smtManager.getCodeBlockCheckTime());
-		mLogger.info("MemoizationHitsSat: " + codeChecker.memoizationHitsSat);
-		mLogger.info("MemoizationHitsUnsat: " + codeChecker.memoizationHitsUnsat);
-		mLogger.info("MemoizationReturnHitsSat: " + codeChecker.memoizationReturnHitsSat);
-		mLogger.info("MemoizationReturnHitsUnsat: " + codeChecker.memoizationReturnHitsUnsat);
+		mLogger.debug("MemoizationHitsSat: " + codeChecker.memoizationHitsSat);
+		mLogger.debug("MemoizationHitsUnsat: " + codeChecker.memoizationHitsUnsat);
+		mLogger.debug("MemoizationReturnHitsSat: " + codeChecker.memoizationReturnHitsSat);
+		mLogger.debug("MemoizationReturnHitsUnsat: " + codeChecker.memoizationReturnHitsUnsat);
 		
 		//inserted by alex: we should return this kind of benchmark result
 		CodeCheckBenchmarks ccb = new CodeCheckBenchmarks();
@@ -448,21 +433,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		reportBenchmark(ccb);
 
 		if (overallResult == Result.CORRECT) {
-			// String shortDescription = "Program is safe!";
-			// String longDescription = "Program is safe!";
 			reportPositiveResults(mErrNodesOfAllProc);
-			// GenericResult result = new GenericResult(
-			// Activator.s_PLUGIN_NAME, shortDescription, longDescription,
-			// Severity.INFO);
-			// UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID,
-			// result);
-			// reportResult(result);
 		} else if (overallResult == Result.INCORRECT) {
-			// reportCounterexampleResult(
-			// realErrorRun.getWord().getSymbol(
-			// realErrorRun.getWord().length() - 1),
-			// realErrorFailurePath,
-			// realErrorProgramExecution);
 			reportCounterexampleResult(realErrorProgramExecution);
 		} else {
 			String shortDescription = "Unable to decide if program is safe!";
